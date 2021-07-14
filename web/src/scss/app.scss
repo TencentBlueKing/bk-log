@@ -1,0 +1,76 @@
+@import './conf.scss';
+
+.tab-only-compact {
+  margin: 0;
+  padding: 0;
+  font-size: 0;
+  overflow: hidden;
+
+  .tab-item {
+    box-sizing: border-box;
+    display: inline-block;
+    margin-right: -1px;
+    border-radius: 0;
+    vertical-align: middle;
+    text-align: center;
+    font-size: 12px;
+    overflow: hidden;
+
+    &:first-child {
+      border-radius: 2px 0 0 2px;
+    }
+
+    &:last-child {
+      border-radius: 0 2px 2px 0;
+    }
+
+    &:hover {
+      position: relative;
+      z-index: 1;
+    }
+
+    &.cur-tab {
+      position: relative;
+      z-index: 1;
+
+      .tab-button {
+        border-color: #3a84ff;
+        color: #3a84ff;
+      }
+    }
+
+    .tab-button {
+      display: block;
+      padding: 0 15px;
+      height: 36px;
+      line-height: 34px;
+      border: 1px solid #c4c6cc;
+      color: #63656e;
+      background: #fff;
+      text-decoration: none;
+      cursor: pointer;
+
+      &:hover {
+        color: #3a84ff;
+        border-color: #3a84ff;
+      }
+    }
+  }
+}
+
+
+.log-version {
+  .detail-container {
+    p {
+      padding-top: 10px;
+    }
+
+    ul {
+      padding-left: 20px;
+
+      li {
+        list-style-type: disc
+      }
+    }
+  }
+}

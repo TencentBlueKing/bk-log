@@ -1,0 +1,10 @@
+mock/
+build/
+dist/
+static/
+webpack_cache/
+css/
+node_modules/
+ip-selector/
+monitor-echarts/
+*.ts

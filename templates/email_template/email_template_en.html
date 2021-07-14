@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style>
+      /* table td{ border: 1px black solid;} */
+    </style>
+  </head>
+  <body>
+    <style class="fox_global_style">
+      div.fox_html_content {
+        background: #f0f1f5;
+      }</style
+    ><style type="text/css">
+      body {
+        background: #f0f1f5;
+      }
+    </style>
+    <div style="background: #f0f1f5; width: 100%">
+      <table
+        style="
+          margin: 0 auto;
+          width: 900px;
+          word-wrap: break-word;
+          word-break: break-all;
+        "
+        border="0"
+        cellspacing="0"
+        cellpadding="0"
+      >
+        <tr style="background: #ffffff">
+          <td
+            colspan="4"
+            style="
+              height: 20px;
+              border-left: 1px solid #dcdee5;
+              border-top: 1px solid #dcdee5;
+              border-right: 1px solid #dcdee5;
+              border-top-left-radius: 6px;
+              border-top-right-radius: 6px;
+            "
+          ></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td style="border-left: 1px solid #dcdee5"></td>
+          <td
+            colspan="2"
+            style="
+              height: 36px;
+              font-size: 18px;
+              font-weight: bold;
+              color: #313238;
+            "
+          >
+            <span style="color: green">【Notice】</span>{{file.platform}}-The
+            content you downloaded is ready, please go to download.
+          </td>
+          <td style="border-right: 1px solid #dcdee5"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              border-bottom: 2px solid #f0f1f5;
+              border-left: 1px solid #dcdee5;
+            "
+          ></td>
+          <td
+            colspan="2"
+            style="
+              height: 32px;
+              border-bottom: 2px solid #f0f1f5;
+              color: #63656e;
+              font-size: 14px;
+              vertical-align: text-top;
+              padding-left: 10px;
+            "
+          >
+            {{file.created_at}}
+          </td>
+          <td
+            style="
+              border-bottom: 2px solid #f0f1f5;
+              border-right: 1px solid #dcdee5;
+            "
+          ></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            rowspan="100"
+            style="width: 4.5%; min-width: 0; border-left: 1px solid #dcdee5"
+          ></td>
+          <td width="100" style="height: 40px"></td>
+          <td></td>
+          <td
+            rowspan="100"
+            style="width: 4.5%; min-width: 0; border-right: 1px solid #dcdee5"
+          ></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            width="20%"
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            Index_set Name:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.index_set_name}}
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            Index:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.index}}
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            Export Time:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.created_at}}
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            Export Created_by:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.create_by}}
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            Package Size:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.size}}M
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            Search Params:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.request_param}}
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            align="left"
+            style="
+              background: #ffffff;
+              height: 36px;
+              color: #ffffff;
+              border-radius: 2px;
+            "
+          >
+            <a
+              href="{{file.search_url}}"
+              target="view_window"
+              style="text-decoration: none; color: #ffffff"
+              ><img
+                src="data:image/png;base64,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"
+            /></a>
+          </td>
+          <td
+            align="border-left"
+            style="
+              background: #ffffff;
+              height: 36px;
+              color: #ffffff;
+              border-radius: 2px;
+            "
+          >
+            <a
+              href="{{file.download_url}}"
+              target="view_window"
+              style="text-decoration: none; color: #ffffff"
+              ><img
+                src="data:image/png;base64,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OkEhYKEihOAIQ8METIElhERgfBEUJSBaBMYQwlLED63qddS6kWQdnfsIdO4B0bl/R9/eKwBUEOd2WVa9AwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wNi0xN1QxNTo1MDoyNiswODowMOkB3pgAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDYtMTdUMTU6NTA6MjYrMDg6MDCYXGYkAAAAEXRFWHRleGlmOkNvbG9yU3BhY2UAMQ+bAkkAAAASdEVYdGV4aWY6RXhpZk9mZnNldAAyNlMbomUAAAAYdEVYdGV4aWY6UGl4ZWxYRGltZW5zaW9uADIwMqp6nxgAAAAXdEVYdGV4aWY6UGl4ZWxZRGltZW5zaW9uADY0wS7v4gAAACB0RVh0c29mdHdhcmUAaHR0cHM6Ly9pbWFnZW1hZ2ljay5vcme8zx2dAAAAGHRFWHRUaHVtYjo6RG9jdW1lbnQ6OlBhZ2VzADGn/7svAAAAF3RFWHRUaHVtYjo6SW1hZ2U6OkhlaWdodAA2NLzgqYQAAAAXdEVYdFRodW1iOjpJbWFnZTo6V2lkdGgAMjAyACgkGAAAABl0RVh0VGh1bWI6Ok1pbWV0eXBlAGltYWdlL3BuZz+yVk4AAAAXdEVYdFRodW1iOjpNVGltZQAxNjIzOTE2MjI2lhdW/gAAABJ0RVh0VGh1bWI6OlNpemUAMzYyMUJCuGk/WgAAAEd0RVh0VGh1bWI6OlVSSQBmaWxlOi8vL2FwcC90bXAvaW1hZ2VsYy9pbWd2aWV3Ml85XzE2MjM5MTE5OTU5MTQ3MDc3XzM2N19bMF0mkayfAAAAAElFTkSuQmCC"
+            /></a>
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+      </table>
+
+      <table
+        style="margin: 0 auto; width: 900px"
+        border="0"
+        cellspacing="0"
+        cellpadding="0"
+      >
+        <tr style="background: #ffffff">
+          <td
+            style="
+              height: 58px;
+              border-top: 2px solid #f0f1f5;
+              font-size: 14px;
+              color: #979ba5;
+              border-left: 1px solid #dcdee5;
+              border-right: 1px solid #dcdee5;
+              border-bottom: 1px solid #dcdee5;
+              border-bottom-right-radius: 6px;
+              border-bottom-left-radius: 6px;
+            "
+            align="center"
+          >
+            This is a system email，sended by log platform，you don't need to
+            reply it
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
