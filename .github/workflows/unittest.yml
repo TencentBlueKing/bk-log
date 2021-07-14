@@ -18,6 +18,8 @@ jobs:
       PYTHON: '3.6'
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: 'stag'
     - name: Setup Python
       uses: actions/setup-python@master
       with:
