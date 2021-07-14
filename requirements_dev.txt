@@ -1,0 +1,11 @@
+# -*- coding: utf-8 -*-
+virtualenv==15.2
+virtualenv-clone==0.2.6
+virtualenvwrapper==4.7.1
+
+# 规范和测试mistune
+pre-commit==1.18.2
+flake8==3.7.8
+seed-isort-config==1.9.2
+coverage==4.5.4
+mistune==0.8.4

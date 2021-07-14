@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style>
+      /* table td{ border: 1px black solid;} */
+    </style>
+  </head>
+  <body>
+    <style class="fox_global_style">
+      div.fox_html_content {
+        background: #f0f1f5;
+      }</style
+    ><style type="text/css">
+      body {
+        background: #f0f1f5;
+      }
+    </style>
+    <div style="background: #f0f1f5; width: 100%">
+      <table
+        style="
+          margin: 0 auto;
+          width: 900px;
+          word-wrap: break-word;
+          word-break: break-all;
+        "
+        border="0"
+        cellspacing="0"
+        cellpadding="0"
+      >
+        <tr style="background: #ffffff">
+          <td
+            colspan="4"
+            style="
+              height: 20px;
+              border-left: 1px solid #dcdee5;
+              border-top: 1px solid #dcdee5;
+              border-right: 1px solid #dcdee5;
+              border-top-left-radius: 6px;
+              border-top-right-radius: 6px;
+            "
+          ></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td style="border-left: 1px solid #dcdee5"></td>
+          <td
+            colspan="2"
+            style="
+              height: 36px;
+              font-size: 18px;
+              font-weight: bold;
+              color: #313238;
+            "
+          >
+            <span style="color: green">【提示】</span
+            >{{file.platform}}-您下载的内容已经准备好，请前往进行下载。
+          </td>
+          <td style="border-right: 1px solid #dcdee5"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              border-bottom: 2px solid #f0f1f5;
+              border-left: 1px solid #dcdee5;
+            "
+          ></td>
+          <td
+            colspan="2"
+            style="
+              height: 32px;
+              border-bottom: 2px solid #f0f1f5;
+              color: #63656e;
+              font-size: 14px;
+              vertical-align: text-top;
+              padding-left: 10px;
+            "
+          >
+            {{file.created_at}}
+          </td>
+          <td
+            style="
+              border-bottom: 2px solid #f0f1f5;
+              border-right: 1px solid #dcdee5;
+            "
+          ></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            rowspan="100"
+            style="width: 4.5%; min-width: 0; border-left: 1px solid #dcdee5"
+          ></td>
+          <td width="100" style="height: 40px"></td>
+          <td></td>
+          <td
+            rowspan="100"
+            style="width: 4.5%; min-width: 0; border-right: 1px solid #dcdee5"
+          ></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            width="15%"
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            索引集名称:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.index_set_name}}
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            索引:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.index}}
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            导出时间:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.created_at}}
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            导出人:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.create_by}}
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            待下载包大小:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.size}}M
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            style="
+              color: #979ba5;
+              font-size: 14px;
+              height: 19px;
+              vertical-align: text-top;
+            "
+          >
+            检索条件:
+          </td>
+          <td style="color: #63656e; font-size: 14px; vertical-align: text-top">
+            {{file.request_param}}
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td
+            align="border-left"
+            style="
+              background: #ffffff;
+              height: 36px;
+              color: #ffffff;
+              border-radius: 2px;
+            "
+          >
+            <a
+              href="{{file.search_url}}"
+              target="view_window"
+              style="text-decoration: none; color: #ffffff"
+              ><img
+                src="data:image/png;base64,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VDE1OjQ1OjQzKzA4OjAwWvHsPAAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMS0wNi0xN1QxNTo0NTo0MyswODowMCusVIAAAAARdEVYdGV4aWY6Q29sb3JTcGFjZQAxD5sCSQAAABJ0RVh0ZXhpZjpFeGlmT2Zmc2V0ADI2UxuiZQAAABh0RVh0ZXhpZjpQaXhlbFhEaW1lbnNpb24AMjAyqnqfGAAAABd0RVh0ZXhpZjpQaXhlbFlEaW1lbnNpb24ANjTBLu/iAAAAIHRFWHRzb2Z0d2FyZQBodHRwczovL2ltYWdlbWFnaWNrLm9yZ7zPHZ0AAAAYdEVYdFRodW1iOjpEb2N1bWVudDo6UGFnZXMAMaf/uy8AAAAXdEVYdFRodW1iOjpJbWFnZTo6SGVpZ2h0ADY0vOCphAAAABd0RVh0VGh1bWI6OkltYWdlOjpXaWR0aAAyMDIAKCQYAAAAGXRFWHRUaHVtYjo6TWltZXR5cGUAaW1hZ2UvcG5nP7JWTgAAABd0RVh0VGh1bWI6Ok1UaW1lADE2MjM5MTU5NDOux0X4AAAAEnRFWHRUaHVtYjo6U2l6ZQAzODg3QkJsaR3tAAAARnRFWHRUaHVtYjo6VVJJAGZpbGU6Ly8vYXBwL3RtcC9pbWFnZWxjL2ltZ3ZpZXcyXzlfMTYyMzkxMjE2NjYxNzU5NjhfNTBfWzBdilfgEgAAAABJRU5ErkJggg=="
+            /></a>
+          </td>
+          <td
+            align="border-left"
+            style="
+              background: #ffffff;
+              height: 36px;
+              color: #ffffff;
+              border-radius: 2px;
+            "
+          >
+            <a
+              href="{{file.download_url}}"
+              target="view_window"
+              style="text-decoration: none; color: #ffffff"
+              ><img
+                src="data:image/png;base64,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"
+            /></a>
+          </td>
+        </tr>
+        <tr style="background: #ffffff">
+          <td colspan="4" style="height: 20px"></td>
+        </tr>
+      </table>
+
+      <table
+        style="margin: 0 auto; width: 900px"
+        border="0"
+        cellspacing="0"
+        cellpadding="0"
+      >
+        <tr style="background: #ffffff">
+          <td
+            style="
+              height: 58px;
+              border-top: 2px solid #f0f1f5;
+              font-size: 14px;
+              color: #979ba5;
+              border-left: 1px solid #dcdee5;
+              border-right: 1px solid #dcdee5;
+              border-bottom: 1px solid #dcdee5;
+              border-bottom-right-radius: 6px;
+              border-bottom-left-radius: 6px;
+            "
+            align="center"
+          >
+            此为系统邮件，由日志平台自动发送，请勿回复"
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

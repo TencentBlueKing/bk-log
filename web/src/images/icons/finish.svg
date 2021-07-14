@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="11px" viewBox="0 0 16 11" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 57.1 (83088) - https://sketch.com -->
+    <title>对勾</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <polygon id="path-1" points="22.0028483 11 23.5 12.5 14.0038452 22 8.5 16.5026245 10 15 14.0038452 19"></polygon>
+    </defs>
+    <g id="图标-小" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon/常用图标/对号" transform="translate(-8.000000, -11.000000)">
+            <mask id="mask-2" fill="white">
+                <use xlink:href="#path-1"></use>
+            </mask>
+            <use id="对勾" fill="#D8D8D8" fill-rule="nonzero" xlink:href="#path-1"></use>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,26 @@
+name: CodeCov
+on: [push, pull_request]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      OS: ubuntu-latest
+      PYTHON: '3.6'
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Python
+      uses: actions/setup-python@master
+      with:
+        python-version: 3.6
+    - name: Generate Report
+      run: |
+        source scripts/test_env.sh
+        sed -i '/APIGW_ENABLED/d' dev.env.yml
+        pip install -r requirements.txt
+        pip install coverage
+        pip uninstall pycrypto -y
+        pip uninstall pycryptodome -y
+        pip install pycryptodome
+        coverage run manage.py test apps.tests
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v1
