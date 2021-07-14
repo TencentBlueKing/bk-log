@@ -3,7 +3,9 @@
 [![license](https://img.shields.io/badge/license-mit-brightgreen.svg?style=flat)](https://github.com/TencentBlueKing/bk-log/blob/master/LICENSE.txt)
 [![Release Version](https://img.shields.io/badge/release-V4.3.0-brightgreen.svg)](https://github.com/TencentBlueKing/bk-log/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/TencentBlueKing/bk-log/pulls)
-
+[![codecov](https://codecov.io/gh/TencentBlueKing/bk-log/branch/master/graph/badge.svg?token=ATK33SUT2R)](https://codecov.io/gh/TencentBlueKing/bk-log)
+[![Web](https://github.com/TencentBlueKing/bk-log/actions/workflows/web.yml/badge.svg?event=schedule)](https://github.com/TencentBlueKing/bk-log/actions/workflows/web.yml)
+[![Test](https://github.com/TencentBlueKing/bk-log/actions/workflows/unittest.yml/badge.svg?event=schedule)](https://github.com/TencentBlueKing/bk-log/actions/workflows/unittest.yml)
 
 English | [简体中文](README.md)
 
