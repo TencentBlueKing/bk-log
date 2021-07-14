@@ -1,4 +1,4 @@
-name: CodeCov
+name: Test
 on:
   push:
     branches: [master, stag]
@@ -22,7 +22,7 @@ jobs:
       uses: actions/setup-python@master
       with:
         python-version: 3.6
-    - name: Generate Report
+    - name: Run Test
       run: |
         source scripts/test_env.sh
         sed -i '/APIGW_ENABLED/d' dev.env.yml
@@ -31,6 +31,4 @@ jobs:
         pip uninstall pycrypto -y
         pip uninstall pycryptodome -y
         pip install pycryptodome
-        coverage run manage.py test apps.tests
-    - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v1
+        python run manage.py test apps.tests
