@@ -18,6 +18,8 @@ jobs:
       PYTHON: '3.6'
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: 'stag'
     - name: Setup Python
       uses: actions/setup-python@master
       with:
@@ -31,4 +33,4 @@ jobs:
         pip uninstall pycrypto -y
         pip uninstall pycryptodome -y
         pip install pycryptodome
-        python run manage.py test apps.tests
+        python manage.py test apps.tests
