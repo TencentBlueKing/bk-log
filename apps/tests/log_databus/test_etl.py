@@ -358,7 +358,7 @@ class TestEtl(TestCase):
         for format in formsts:
             try:
                 etl_time = EtlHandler().etl_time(format["id"], 8, format["description"])
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 etl_time = {"epoch_millis": "exception:" + str(e)}
             print(f'[{format["id"]}][{format["name"]}] {format["description"]} => {etl_time}')
             self.assertEqual(etl_time["epoch_millis"], "1136185445000")

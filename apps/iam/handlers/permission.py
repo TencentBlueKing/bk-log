@@ -59,7 +59,7 @@ class Permission(object):
         else:
             try:
                 request = request or get_request()
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 raise ValueError("must provide `username` or `request` param to init")
 
             self.bk_token = request.COOKIES.get("bk_token", "")
@@ -397,7 +397,7 @@ class Permission(object):
         try:
             grant_result = self.iam_client.grant_resource_creator_actions(application, self.bk_token, self.username)
             logger.info(f"[grant_creator_action] Success! resource: {resource.to_dict()}, result: {grant_result}")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception(f"[grant_creator_action] Failed! resource: {resource.to_dict()}, result: {e}")
 
             if raise_exception:

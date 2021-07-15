@@ -75,7 +75,7 @@ class CollectorViewSet(ModelViewSet):
             # ESQUERY白名单不需要鉴权
             if auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
                 return []
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             print(e)
             pass
 

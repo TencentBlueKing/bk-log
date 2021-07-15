@@ -135,7 +135,7 @@ class Tasks(OperateRecordModel):
     def total_elapsed(self):
         try:
             task_status = task_service.get_state(self.pipeline_id)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             # 存在多主机，单主机日志下载的情况，因此有可能有些pipeline节点未执行
             logger.info("pipeline任务不存在，pipeline_id=>[{}]".format(self.pipeline_id))
             return "0s"

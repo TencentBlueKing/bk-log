@@ -114,7 +114,7 @@ def get_biz_storage_capacity(bk_biz_id, cluster):
         indices_info = ElasticHandle(domain_name, port, username, password).get_indices_cat(
             index=index_format, bytes="mb", column=["index", "store.size", "status"]
         )
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.exception(f"集群[{domain_name}] 索引cat信息获取失败，错误信息：{e}")
         return 0
 

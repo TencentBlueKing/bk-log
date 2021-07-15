@@ -133,9 +133,9 @@ class DslBkDataCreateSearchContextBodyScenarioLog(object):
         sort_list = kwargs.get("sort_list")
         size = kwargs.get("size")
         start = kwargs.get("start")
-        gseIndex = kwargs.get("gseIndex")
+        gse_index = kwargs.get("gseIndex")
         path = kwargs.get("path")
-        serverIp = kwargs.get("serverIp")
+        server_ip = kwargs.get("serverIp")
         order = kwargs.get("order")
 
         self._body = None
@@ -144,13 +144,13 @@ class DslBkDataCreateSearchContextBodyScenarioLog(object):
         if order == "-":
             order_use = "desc"
             body_data["query"]["bool"]["filter"][0]["range"]["gseIndex"] = {
-                "lt": int(gseIndex),
-                "gt": int(gseIndex) - CONTEXT_GSE_INDEX_SIZE,
+                "lt": int(gse_index),
+                "gt": int(gse_index) - CONTEXT_GSE_INDEX_SIZE,
             }
         if order == "+":
             body_data["query"]["bool"]["filter"][0]["range"]["gseIndex"] = {
-                "lt": int(gseIndex) + CONTEXT_GSE_INDEX_SIZE,
-                "gte": int(gseIndex),
+                "lt": int(gse_index) + CONTEXT_GSE_INDEX_SIZE,
+                "gte": int(gse_index),
             }
 
         sort = []
@@ -163,7 +163,7 @@ class DslBkDataCreateSearchContextBodyScenarioLog(object):
             {
                 "match": {
                     "serverIp": {
-                        "query": serverIp,
+                        "query": server_ip,
                         # "type": "phrase"
                         "operator": "and",
                     }
@@ -301,9 +301,9 @@ class DslBkDataCreateSearchTailBodyScenarioLog:
         sort_list = kwargs.get("sort_list")
         # size = kwargs.get("size")
         start = kwargs.get("start")
-        gseIndex = kwargs.get("gseIndex")
+        gse_index = kwargs.get("gseIndex")
         path = kwargs.get("path")
-        serverIp = kwargs.get("serverIp")
+        server_ip = kwargs.get("serverIp")
         zero = kwargs.get("zero", False)
 
         self._body = None
@@ -316,17 +316,17 @@ class DslBkDataCreateSearchTailBodyScenarioLog:
             body_data["query"]["bool"]["filter"][0]["range"] = {
                 "dtEventTimeStamp": {"gte": int(time.time() * 1000) - 300000, "lte": int(time.time() * 1000)}
             }
-        elif gseIndex:
+        elif gse_index:
             body_data["query"]["bool"]["filter"][0]["range"]["gseIndex"] = {
-                "lt": int(gseIndex) + CONTEXT_GSE_INDEX_SIZE,
-                "gt": int(gseIndex),
+                "lt": int(gse_index) + CONTEXT_GSE_INDEX_SIZE,
+                "gt": int(gse_index),
             }
         sort = []
         for item in sort_list:
             sort.append({item: {"order": order_use}})
         body_data["sort"] = sort
 
-        body_data["query"]["bool"]["must"].append({"match": {"serverIp": {"query": serverIp, "operator": "and"}}})
+        body_data["query"]["bool"]["must"].append({"match": {"serverIp": {"query": server_ip, "operator": "and"}}})
         body_data["query"]["bool"]["must"].append({"match": {"path": {"query": path, "operator": "and"}}})
 
         if zero:

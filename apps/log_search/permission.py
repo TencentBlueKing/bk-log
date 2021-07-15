@@ -59,7 +59,7 @@ class Permission(BasePermission):
 
         try:
             verify_data = BkJwtBackend.verify_bk_jwt_request(request)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception("[BK_JWT]校验异常: %s" % e)
             if raise_exception:
                 raise BkJwtVerifyException()

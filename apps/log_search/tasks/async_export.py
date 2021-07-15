@@ -22,9 +22,8 @@ import tarfile
 import json
 import datetime
 
-import arrow
 import pytz
-
+import arrow
 from django.utils.translation import gettext as _
 from django.utils import translation
 from celery.schedules import crontab
@@ -85,7 +84,7 @@ def async_export(
 
     try:
         async_export_util.export_package()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         async_task.failed_reason = f"export package error: {e}"
         logger.error(async_task.failed_reason)
         async_task.save()
@@ -96,7 +95,7 @@ def async_export(
 
     try:
         async_export_util.export_upload()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         async_task.failed_reason = f"export upload error: {e}"
         logger.error(async_task.failed_reason)
         async_task.save()
@@ -104,7 +103,7 @@ def async_export(
 
     try:
         url = async_export_util.generate_download_url(url_path=url_path)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         async_task.failed_reason = f"generate download url error: {e}"
         logger.error(async_task.failed_reason)
         async_task.save()
@@ -119,7 +118,7 @@ def async_export(
             search_url_path=search_url_path,
             language=language,
         )
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         async_task.failed_reason = f"send msg error: {e}"
         logger.error(async_task.failed_reason)
         async_task.save()

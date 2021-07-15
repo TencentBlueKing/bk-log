@@ -143,7 +143,7 @@ class BaseMetricCollector(object):
                         metric_method.namespace, int((time.time() - begin_time) * 1000)
                     ),
                 )
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.exception("[statistics_data] collect metric->[{}] failed: {}".format(metric_method.namespace, e))
 
         if response_format != "prometheus":
@@ -474,7 +474,7 @@ class MetricCollector(BaseMetricCollector):
                         dimensions=dimensions,
                     )
                 )
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.exception("fail to collect cluster_health metric for cluster->{}, {}".format(cluster_info, e))
         return metrics
 
@@ -531,7 +531,7 @@ class MetricCollector(BaseMetricCollector):
                             )
                         )
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.exception("fail to collect cluster_node metric for cluster->{}, {}".format(cluster_info, e))
         return metrics
 

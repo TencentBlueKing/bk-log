@@ -64,7 +64,7 @@ def run_func_with_local(items, tz, lang, request, func, *args, **kwargs):
     activate_request(request)
     try:
         data = func(*args, **kwargs)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         raise e
     finally:
         # 关闭db连接
@@ -104,7 +104,7 @@ class ThreadPool(_ThreadPool):
         for future in futures:
             try:
                 results.append(future.get())
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 if return_exception:
                     results.append(e)
                 logger.exception(e)

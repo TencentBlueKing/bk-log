@@ -19,10 +19,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import datetime
+from typing import List, Any
 from dateutil.rrule import rrule
 from dateutil.rrule import DAILY
 from apps.log_esquery.type_constants import type_index_set_string, type_index_set_list
-from typing import List, Any
 from apps.log_search.models import Scenario
 import arrow
 

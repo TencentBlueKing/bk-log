@@ -134,7 +134,7 @@ class MetaHandler(APIModel):
                     if not sub_module:
                         continue
                     children.append(sub_module)
-                if len(children):
+                if children:
                     module["children"] = children
             data.append(module)
         return data

@@ -83,7 +83,7 @@ class IndexSetPreCheckIns(object):
     @classmethod
     def _analyse_need_to_fetch_biz(cls, need_to_check_index_set) -> List:
         need_to_fetch_biz_scenario_list: list = []
-        for k, v in need_to_check_index_set.items():
+        for v in need_to_check_index_set.values():
             detail_list: List = v
             for item in detail_list:
                 bk_biz_id: int = item.get("bk_biz_id")

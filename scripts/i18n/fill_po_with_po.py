@@ -9,7 +9,7 @@ class ScanPoFile(object):
     def safe_encode(s):
         try:
             return s.decode("utf-8")
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return s
 
     def scan(self, po_file):
