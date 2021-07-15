@@ -137,10 +137,10 @@
     private selectorKey = 1
     // 节点类型和实际IP选择类型的映射关系的默认值
     private nodeTypeMap = {
-        TOPO: 'dynamic-topo',
-        INSTANCE: 'static-topo',
-        SERVICE_TEMPLATE: 'service-template',
-        SET_TEMPLATE: 'cluster',
+      TOPO: 'dynamic-topo',
+      INSTANCE: 'static-topo',
+      SERVICE_TEMPLATE: 'service-template',
+      SET_TEMPLATE: 'cluster',
     }
     // 默认激活预览面板
     private defaultActiveName = ['TOPO', 'INSTANCE', 'SERVICE_TEMPLATE', 'SET_TEMPLATE']
@@ -148,645 +148,625 @@
     private serviceTemplateData = []
 
     private get isInstance () {
-        // 采集对象为服务时，只能选择动态
-        return this.targetObjectType === 'SERVICE'
+      // 采集对象为服务时，只能选择动态
+      return this.targetObjectType === 'SERVICE'
     }
 
     private get panels (): IPanel[] {
-        const panels: IPanel[] = [
-            {
-                name: 'dynamic-topo',
-                label: this.$t('动态拓扑'),
-                tips: this.$t('不能混用'),
-                disabled: false,
-                type: 'TOPO',
-                hidden: this.hiddenTopo,
-            },
-            {
-                name: 'static-topo',
-                label: this.$t('静态拓扑'),
-                hidden: this.isInstance,
-                tips: this.$t('不能混用'),
-                disabled: false,
-                type: 'INSTANCE',
-            },
-            {
-                name: 'service-template',
-                label: this.$t('服务模板'),
-                tips: this.$t('不能混用'),
-                disabled: false,
-                type: 'TOPO',
-                hidden: this.hiddenTopo || this.hiddenTemplate,
-            },
-            {
-                name: 'cluster',
-                label: this.$t('集群模板'),
-                tips: this.$t('不能混用'),
-                disabled: false,
-                type: 'TOPO',
-                hidden: this.hiddenTopo || this.hiddenTemplate,
-            },
-            {
-                name: 'custom-input',
-                label: this.$t('自定义输入'),
-                hidden: this.isInstance,
-                tips: this.$t('不能混用'),
-                disabled: false,
-                type: 'INSTANCE',
-            },
-        ]
-        const dynamicType = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE']
-        const isDynamic = this.previewData.some(item => dynamicType.includes(item.id) && item.data.length)
-        const isStatic = this.previewData.some(item => item.id === 'INSTANCE' && item.data.length)
-        return panels.map((item) => {
-            item.disabled = (item.name !== this.active && isDynamic) || (item.type === 'TOPO' && isStatic)
-            return item
-        })
+      const panels: IPanel[] = [
+        {
+          name: 'dynamic-topo',
+          label: this.$t('动态拓扑'),
+          tips: this.$t('不能混用'),
+          disabled: false,
+          type: 'TOPO',
+          hidden: this.hiddenTopo,
+        },
+        {
+          name: 'static-topo',
+          label: this.$t('静态拓扑'),
+          hidden: this.isInstance,
+          tips: this.$t('不能混用'),
+          disabled: false,
+          type: 'INSTANCE',
+        },
+        {
+          name: 'service-template',
+          label: this.$t('服务模板'),
+          tips: this.$t('不能混用'),
+          disabled: false,
+          type: 'TOPO',
+          hidden: this.hiddenTopo || this.hiddenTemplate,
+        },
+        {
+          name: 'cluster',
+          label: this.$t('集群模板'),
+          tips: this.$t('不能混用'),
+          disabled: false,
+          type: 'TOPO',
+          hidden: this.hiddenTopo || this.hiddenTemplate,
+        },
+        {
+          name: 'custom-input',
+          label: this.$t('自定义输入'),
+          hidden: this.isInstance,
+          tips: this.$t('不能混用'),
+          disabled: false,
+          type: 'INSTANCE',
+        },
+      ]
+      const dynamicType = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE']
+      const isDynamic = this.previewData.some(item => dynamicType.includes(item.id) && item.data.length)
+      const isStatic = this.previewData.some(item => item.id === 'INSTANCE' && item.data.length)
+      return panels.map((item) => {
+          item.disabled = (item.name !== this.active && isDynamic) || (item.type === 'TOPO' && isStatic)
+          return item
+      })
     }
 
     // 更多操作配置
     private get previewOperateList () {
-        return [
-            {
-                id: 'copyIp',
-                label: this.$t('复制IP'),
-                hidden: !(['static-topo', 'custom-input'].includes(this.active)),
-            },
-            {
-                id: 'removeAll',
-                label: this.$t('移除所有'),
-            },
-        ]
+      return [
+        {
+          id: 'copyIp',
+          label: this.$t('复制IP'),
+          hidden: !(['static-topo', 'custom-input'].includes(this.active)),
+        },
+        {
+          id: 'removeAll',
+          label: this.$t('移除所有'),
+        },
+      ]
     }
     @Watch('active')
     private handleActiveChange () {
-        const activeToNodeTypeMap = {
-            'dynamic-topo': 'TOPO',
-            'static-topo': 'INSTANCE',
-            'service-template': 'SERVICE_TEMPLATE',
-            cluster: 'SET_TEMPLATE',
-            'custom-input': 'INSTANCE',
-        }
-        this.currentTargetNodeType = activeToNodeTypeMap[this.active]
-        this.staticTableData = []
-        this.topoTableData = []
-        this.setTemplateData = []
-        this.serviceTemplateData = []
+      const activeToNodeTypeMap = {
+        'dynamic-topo': 'TOPO',
+        'static-topo': 'INSTANCE',
+        'service-template': 'SERVICE_TEMPLATE',
+        cluster: 'SET_TEMPLATE',
+        'custom-input': 'INSTANCE',
+      }
+      this.currentTargetNodeType = activeToNodeTypeMap[this.active]
+      this.staticTableData = []
+      this.topoTableData = []
+      this.setTemplateData = []
+      this.serviceTemplateData = []
     }
 
     @Watch('targetNodeType', { immediate: true })
     private handleDefaultActiveChange () {
-        this.currentTargetNodeType = this.targetNodeType
-        if (this.nodeTypeMap[this.currentTargetNodeType]) {
-            this.active = this.nodeTypeMap[this.currentTargetNodeType]
-        } else {
-            const panel = this.panels.find(item => !item.disabled && !item.hidden)
-            this.active = panel ? panel.name : 'static-topo'
-        }
-        // 判断当前active的tab是否不可用
-        const panel = this.panels.find(item => item.name === this.active)
-        if (!panel || panel.hidden || panel.disabled) {
-            const firstEnablePanel = this.panels.find(item => !item.hidden && !panel.disabled)
-            this.active = firstEnablePanel?.name
-        }
+      this.currentTargetNodeType = this.targetNodeType
+      if (this.nodeTypeMap[this.currentTargetNodeType]) {
+        this.active = this.nodeTypeMap[this.currentTargetNodeType]
+      } else {
+        const panel = this.panels.find(item => !item.disabled && !item.hidden)
+        this.active = panel ? panel.name : 'static-topo'
+      }
+      // 判断当前active的tab是否不可用
+      const panel = this.panels.find(item => item.name === this.active)
+      if (!panel || panel.hidden || panel.disabled) {
+        const firstEnablePanel = this.panels.find(item => !item.hidden && !panel.disabled)
+        this.active = firstEnablePanel?.name
+      }
     }
 
     @Watch('checkedData', { immediate: true })
     private handleCheckedDataChange () {
-        const nodeTypeTextMap = {
-            TOPO: this.$t('节点'),
-            INSTANCE: this.$t('IP'),
-            SERVICE_TEMPLATE: this.$t('服务模板'),
-            SET_TEMPLATE: this.$t('集群模板')
-        }
-        const nodeTypeNameMap = {
-            TOPO: 'node_path',
-            INSTANCE: 'ip',
-            SERVICE_TEMPLATE: 'bk_inst_name',
-            SET_TEMPLATE: 'bk_inst_name'
-        }
-        this.previewData = []
-        this.previewData.push({
-            id: this.currentTargetNodeType,
-            name: nodeTypeTextMap[this.currentTargetNodeType] || '--',
-            data: [...this.checkedData],
-            dataNameKey: nodeTypeNameMap[this.currentTargetNodeType]
-        })
-        this.currentTargetNodeType === 'TOPO' && this.handleSetDefaultCheckedNodes()
+      const nodeTypeTextMap = {
+        TOPO: this.$t('节点'),
+        INSTANCE: this.$t('IP'),
+        SERVICE_TEMPLATE: this.$t('服务模板'),
+        SET_TEMPLATE: this.$t('集群模板')
+      }
+      const nodeTypeNameMap = {
+        TOPO: 'node_path',
+        INSTANCE: 'ip',
+        SERVICE_TEMPLATE: 'bk_inst_name',
+        SET_TEMPLATE: 'bk_inst_name'
+      }
+      this.previewData = []
+      this.previewData.push({
+        id: this.currentTargetNodeType,
+        name: nodeTypeTextMap[this.currentTargetNodeType] || '--',
+        data: [...this.checkedData],
+        dataNameKey: nodeTypeNameMap[this.currentTargetNodeType]
+      })
+      this.currentTargetNodeType === 'TOPO' && this.handleSetDefaultCheckedNodes()
     }
 
     private created () {
-        this.dynamicTableConfig = [
-            {
-                prop: 'node_path',
-                label: this.$t('节点名称'),
-                minWidth: 100,
-            },
-            {
-                prop: 'count',
-                label: this.$t('服务实例'),
-                hidden: this.targetObjectType === 'HOST',
-            },
-            {
-                prop: 'status',
-                label: this.$t('Agent状态'),
-                render: this.renderAgentCountStatus,
-            },
-            {
-                prop: 'labels',
-                label: this.$t('分类'),
-                render: this.renderLabels,
-                minWidth: 100,
-            },
-        ]
-        this.templateTableConfig = [
-            {
-                prop: 'node_path',
-                label: this.$t('节点名称'),
-                minWidth: 100,
-            },
-            {
-                prop: 'count',
-                label: this.$t('服务实例'),
-                hidden: this.targetObjectType === 'HOST',
-            },
-            {
-                prop: 'status',
-                label: this.$t('Agent状态'),
-                render: this.renderAgentCountStatus,
-            },
-            {
-                prop: 'labels',
-                label: this.$t('分类'),
-                render: this.renderLabels,
-                minWidth: 100,
-            },
-        ]
-        this.staticTableConfig = [
-            {
-                prop: 'ip',
-                label: 'IP',
-            },
-            {
-                prop: 'agent_status',
-                label: this.$t('Agent状态'),
-                render: this.renderIpAgentStatus,
-            },
-            {
-                prop: 'bk_cloud_name',
-                label: this.$t('云区域'),
-            },
-            {
-                prop: 'bk_os_type',
-                label: this.$t('操作系统'),
-            },
-        ]
+      const generatorTableConfig = [
+        {
+          prop: 'node_path',
+          label: this.$t('节点名称'),
+          minWidth: 100,
+        },
+        {
+          prop: 'count',
+          label: this.$t('服务实例'),
+          hidden: this.targetObjectType === 'HOST',
+        },
+        {
+          prop: 'status',
+          label: this.$t('Agent状态'),
+          render: this.renderAgentCountStatus,
+        },
+        {
+          prop: 'labels',
+          label: this.$t('分类'),
+          render: this.renderLabels,
+          minWidth: 100,
+        },
+      ]
+      
+      this.dynamicTableConfig = [...generatorTableConfig]
+      this.templateTableConfig = [...generatorTableConfig]
+      this.staticTableConfig = [
+          {
+            prop: 'ip',
+            label: 'IP',
+          },
+          {
+            prop: 'agent_status',
+            label: this.$t('Agent状态'),
+            render: this.renderIpAgentStatus,
+          },
+          {
+            prop: 'bk_cloud_name',
+            label: this.$t('云区域'),
+          },
+          {
+            prop: 'bk_os_type',
+            label: this.$t('操作系统'),
+          },
+      ]
     }
     private renderLabels (row: any) {
-        const { labels = [] } = row
-        const children = labels.map((item: any) => this.$createElement(
-            'span',
-            {
-                style: {
-                    background: '#f0f1f5',
-                    padding: '2px 6px',
-                    marginRight: '4px',
-                    height: '20px',
-                },
-            },
-            `${item.first}:${item.second}`,
-        ))
-        return this.$createElement('div', [
-            ...children,
-        ])
+      const { labels = [] } = row
+      const children = labels.map((item: any) => this.$createElement(
+        'span',
+        {
+          style: {
+            background: '#f0f1f5',
+            padding: '2px 6px',
+            marginRight: '4px',
+            height: '20px',
+          },
+        },
+        `${item.first}:${item.second}`,
+      ))
+      return this.$createElement('div', [
+        ...children,
+      ])
     }
     private renderIpAgentStatus (row: any) {
-        const textMap: any = {
-            normal: this.$t('正常'),
-            abnormal: this.$t('异常'),
-            not_exist: this.$t('未安装'),
-        }
-        const statusMap: any = {
-            normal: 'running',
-            abnormal: 'terminated',
-            not_exist: 'unknown',
-        }
-        return this.$createElement(AgentStatus, {
-            props: {
-                type: 1,
-                data: [
-                    {
-                        status: statusMap[row.agent_status],
-                        count: row.agent_error_count,
-                        display: textMap[row.agent_status],
-                        isFlag: row.isFlag
-                    },
-                ],
+      const textMap: any = {
+        normal: this.$t('正常'),
+        abnormal: this.$t('异常'),
+        not_exist: this.$t('未安装'),
+      }
+      const statusMap: any = {
+        normal: 'running',
+        abnormal: 'terminated',
+        not_exist: 'unknown',
+      }
+      return this.$createElement(AgentStatus, {
+        props: {
+          type: 1,
+          data: [
+            {
+              status: statusMap[row.agent_status],
+              count: row.agent_error_count,
+              display: textMap[row.agent_status],
+              isFlag: row.isFlag
             },
-        })
+          ],
+        },
+      })
     }
     private renderAgentCountStatus (row: any) {
-        return this.$createElement(AgentStatus, {
-            props: {
-                type: 3,
-                data: [
-                    {
-                        count: row.count,
-                        errorCount: row.agent_error_count,
-                        isFlag: row.isFlag
-                    },
-                ],
+      return this.$createElement(AgentStatus, {
+        props: {
+          type: 3,
+          data: [
+            {
+              count: row.count,
+              errorCount: row.agent_error_count,
+              isFlag: row.isFlag
             },
-        })
+          ],
+        },
+      })
     }
 
     // 获取当前tab下默认数据
     private async handleGetDefaultData () {
-        if (['dynamic-topo', 'static-topo'].includes(this.active)) {
-            // 动态拓扑默认组件数据
-            if (!this.topoTree.length) {
-                const data = await this.getTopoTree()
-                this.topoTree = this.removeIpNodes(data)
-                this.active === 'dynamic-topo' && this.handleSetDefaultCheckedNodes()
-            }
-            return [
-                {
-                    name: this.$t('根节点'),
-                    children: this.topoTree,
-                },
-            ]
+      if (['dynamic-topo', 'static-topo'].includes(this.active)) {
+        // 动态拓扑默认组件数据
+        if (!this.topoTree.length) {
+          const data = await this.getTopoTree()
+          this.topoTree = this.removeIpNodes(data)
+          this.active === 'dynamic-topo' && this.handleSetDefaultCheckedNodes()
         }
-        if (['service-template', 'cluster'].includes(this.active)) {
-            const data = await getTemplate({
-                bk_inst_type: this.isInstance ? 'SERVICE' : 'HOST',
-                bk_obj_id: this.active === 'cluster' ? 'SET_TEMPLATE' : 'SERVICE_TEMPLATE',
-                with_count: true,
-            }).catch(() => ({ children: [] }))
-            // 兼容回显数据不带name的情况
-            this.handleAddNameProperty(data.children)
-            return data.children
-        }
+        return [
+          {
+            name: this.$t('根节点'),
+            children: this.topoTree,
+          },
+        ]
+      }
+      if (['service-template', 'cluster'].includes(this.active)) {
+        const data = await getTemplate({
+          bk_inst_type: this.isInstance ? 'SERVICE' : 'HOST',
+          bk_obj_id: this.active === 'cluster' ? 'SET_TEMPLATE' : 'SERVICE_TEMPLATE',
+          with_count: true,
+        }).catch(() => ({ children: [] }))
+        // 兼容回显数据不带name的情况
+        this.handleAddNameProperty(data.children)
+        return data.children
+      }
     }
     private handleSetDefaultCheckedNodes () {
-        // todo 待优化，多处调用，性能问题
-        const { data = [] } = this.previewData.find(item => item.id === 'TOPO') || {}
-        this.defaultCheckedNodes = this.getCheckedNodesIds(this.topoTree, data)
+      // todo 待优化，多处调用，性能问题
+      const { data = [] } = this.previewData.find(item => item.id === 'TOPO') || {}
+      this.defaultCheckedNodes = this.getCheckedNodesIds(this.topoTree, data)
     }
     // 获取选中节点的ID集合
     private getCheckedNodesIds (nodes: any[], checkedData: any[] = []) {
-        if (!checkedData.length) return []
-        return nodes.reduce<(string | number)[]>((pre, item) => {
-            const { children = [], bk_inst_id = '', bk_obj_id = '', id } = item
-            const exist = checkedData.some(checkedData => checkedData.bk_inst_id === bk_inst_id
-                && checkedData.bk_obj_id === bk_obj_id)
-            if (exist) {
-                pre.push(id)
-            }
-            if (children.length) {
-                pre.push(...this.getCheckedNodesIds(children, checkedData))
-            }
-            return pre
-        }, [])
+      if (!checkedData.length) return []
+      return nodes.reduce<(string | number)[]>((pre, item) => {
+        const { children = [], bk_inst_id = '', bk_obj_id = '', id } = item
+        const exist = checkedData.some(checkedData => checkedData.bk_inst_id === bk_inst_id
+          && checkedData.bk_obj_id === bk_obj_id)
+        if (exist) {
+          pre.push(id)
+        }
+        if (children.length) {
+          pre.push(...this.getCheckedNodesIds(children, checkedData))
+        }
+        return pre
+      }, [])
     }
     // 移除树上的所有IP节点
     private removeIpNodes (data: any[]) {
-        data.forEach((item) => {
-            const { children = [] } = item
-            if (item.bk_obj_id === 'module' && children.length) {
-                this.ipNodesMap[`${item.bk_inst_id}_${item.bk_obj_id}`] = [...item.children]
-                item.children = []
-                // item.ipCount = children.length
-            } else if (children.length) {
-                this.removeIpNodes(item.children)
-                // const data = this.removeIpNodes(item.children)
-                // data.forEach((child) => {
-                //   item.ipCount = (item.ipCount || 0) + (child.ipCount || 0)
-                // })
-            }
-        })
-        return data
+      data.forEach((item) => {
+        const { children = [] } = item
+        if (item.bk_obj_id === 'module' && children.length) {
+          this.ipNodesMap[`${item.bk_inst_id}_${item.bk_obj_id}`] = [...item.children]
+          item.children = []
+          // item.ipCount = children.length
+        } else if (children.length) {
+          this.removeIpNodes(item.children)
+          // const data = this.removeIpNodes(item.children)
+          // data.forEach((child) => {
+          //   item.ipCount = (item.ipCount || 0) + (child.ipCount || 0)
+          // })
+        }
+      })
+      return data
     }
     // 获取树节点下所有IP节点
     private getNodesIpList (data: any[]) {
-        return data.reduce<any[]>((pre, item) => {
-            if (item.bk_obj_id === 'module') {
-                const ipNodes = this.ipNodesMap[`${item.bk_inst_id}_${item.bk_obj_id}`] || []
-                pre.push(...ipNodes)
-            } else if (item.children && item.children.length) {
-                pre.push(...this.getNodesIpList(item.children))
-            }
-            return pre
-        }, [])
+      return data.reduce<any[]>((pre, item) => {
+        if (item.bk_obj_id === 'module') {
+          const ipNodes = this.ipNodesMap[`${item.bk_inst_id}_${item.bk_obj_id}`] || []
+          pre.push(...ipNodes)
+        } else if (item.children && item.children.length) {
+          pre.push(...this.getNodesIpList(item.children))
+        }
+        return pre
+      }, [])
     }
     // 获取表格数据（组件内部封装了交互逻辑）
     private async handleGetSearchTableData (params: any, type?: string): Promise<{
         total: number, data: any[]
     }> {
-        if (this.active === 'dynamic-topo') {
-            return await this.getDynamicTopoTableData(params, type)
-        }
-        if (this.active === 'static-topo') {
-            return await this.getStaticTableData(params, type)
-        }
-        if (['service-template', 'cluster'].includes(this.active)) {
-            return await this.getTemplateTableData(params, type)
-        }
-        if (this.active === 'custom-input') {
-            return await this.getCustomInputTableData(params)
-        }
-        return {
-            total: 0,
-            data: [],
-        }
+      if (this.active === 'dynamic-topo') {
+        return await this.getDynamicTopoTableData(params, type)
+      }
+      if (this.active === 'static-topo') {
+        return await this.getStaticTableData(params, type)
+      }
+      if (['service-template', 'cluster'].includes(this.active)) {
+        return await this.getTemplateTableData(params, type)
+      }
+      if (this.active === 'custom-input') {
+        return await this.getCustomInputTableData(params)
+      }
+      return {
+        total: 0,
+        data: [],
+      }
     }
     // 获取动态topo表格数据
     private async getDynamicTopoTableData (params: any, type?: string) {
-        const { selections = [], tableKeyword = '', parentNode } = params
-        if (type === 'selection-change') {
-            // 如果点击的是叶子节点，则显示叶子节点本身，否则就显示子节点
-            const curSelections = !selections.length && parentNode ? [parentNode.data] : selections
-            this.topoTableData = this.targetObjectType === 'SERVICE'
-                ? await getServiceInstanceByNode({ node_list: curSelections }).catch(() => [])
-                : await getHostInstanceByNode({ node_list: curSelections }).catch(() => [])
-        }
-        const data = defaultSearch(this.topoTableData, tableKeyword)
+      const { selections = [], tableKeyword = '', parentNode } = params
+      if (type === 'selection-change') {
+        // 如果点击的是叶子节点，则显示叶子节点本身，否则就显示子节点
+        const curSelections = !selections.length && parentNode ? [parentNode.data] : selections
+        this.topoTableData = this.targetObjectType === 'SERVICE'
+            ? await getServiceInstanceByNode({ node_list: curSelections }).catch(() => [])
+            : await getHostInstanceByNode({ node_list: curSelections }).catch(() => [])
+      }
+      const data = defaultSearch(this.topoTableData, tableKeyword)
 
-        // 保证获取agent数量前后重新渲染
-        data.forEach(item => {
-            item.count = undefined
-            item.agent_error_count = undefined
-        })
+      // 保证获取agent数量前后重新渲染
+      data.forEach(item => {
+        item.count = undefined
+        item.agent_error_count = undefined
+      })
 
-        return {
-            total: data.length,
-            data,
-        }
+      return {
+        total: data.length,
+        data,
+      }
     }
     // 获取静态表格数据
     private async getStaticTableData (params: any, type?: string) {
-        const { selections = [], tableKeyword = '', current, limit } = params
-        if (type === 'selection-change' && !!selections.length) {
-            const ipNodes = this.getNodesIpList(selections).reduce<any[]>((pre, next) => {
-                // IP去重
-                const index = pre.findIndex(item => this.identityIp(item, next))
-                index === -1 && pre.push(next)
-                return pre
-            }, [])
-            
-            this.staticTableData = await getHostInstanceByIp({
-                ip_list: ipNodes.map((item) => {
-                    const { ip, bk_cloud_id } = item
-                    return {
-                        ip,
-                        bk_cloud_id,
-                    }
-                }),
-            }).catch(() => [])
-        }
-        const data = defaultSearch(this.staticTableData, tableKeyword)
+      const { selections = [], tableKeyword = '', current, limit } = params
+      if (type === 'selection-change' && !!selections.length) {
+        const ipNodes = this.getNodesIpList(selections).reduce<any[]>((pre, next) => {
+          // IP去重
+          const index = pre.findIndex(item => this.identityIp(item, next))
+          index === -1 && pre.push(next)
+          return pre
+        }, [])
+        
+        this.staticTableData = await getHostInstanceByIp({
+          ip_list: ipNodes.map((item) => {
+            const { ip, bk_cloud_id } = item
+            return {
+              ip,
+              bk_cloud_id,
+            }
+          }),
+        }).catch(() => [])
+      }
+      const data = defaultSearch(this.staticTableData, tableKeyword)
 
-        return {
-            total: data.length,
-            data
-        }
+      return {
+        total: data.length,
+        data
+      }
     }
     // 获取模板类表格数据
     private async getTemplateTableData (params: any, type?: string) {
-        const { selections = [], tableKeyword = '' } = params
-        if (type === 'selection-change' && !!selections.length) {
-            const data = await getNodesByTemplate({
-                bk_inst_type: this.isInstance ? 'SERVICE' : 'HOST',
-                bk_obj_id: this.active === 'cluster' ? 'SET_TEMPLATE' : 'SERVICE_TEMPLATE',
-                bk_inst_ids: selections.map((item: any) => item.bk_inst_id),
-            }).catch(() => [])
-            this.active === 'cluster' ? this.setTemplateData = data : this.serviceTemplateData = data
-        }
-        const data = defaultSearch(this.active === 'cluster'
-            ? this.setTemplateData : this.serviceTemplateData, tableKeyword)
+      const { selections = [], tableKeyword = '' } = params
+      if (type === 'selection-change' && !!selections.length) {
+        const data = await getNodesByTemplate({
+          bk_inst_type: this.isInstance ? 'SERVICE' : 'HOST',
+          bk_obj_id: this.active === 'cluster' ? 'SET_TEMPLATE' : 'SERVICE_TEMPLATE',
+          bk_inst_ids: selections.map((item: any) => item.bk_inst_id),
+        }).catch(() => [])
+        this.active === 'cluster' ? this.setTemplateData = data : this.serviceTemplateData = data
+      }
+      const data = defaultSearch(this.active === 'cluster'
+        ? this.setTemplateData : this.serviceTemplateData, tableKeyword)
 
-        // 保证获取agent数量前后重新渲染
-        data.forEach(item => {
-            item.count = undefined
-            item.agent_error_count = undefined
-        })
+      // 保证获取agent数量前后重新渲染
+      data.forEach(item => {
+        item.count = undefined
+        item.agent_error_count = undefined
+      })
 
-        return {
-            total: data.length,
-            data,
-        }
+      return {
+        total: data.length,
+        data,
+      }
     }
     // 兼容服务模板和集群模板接口数据不带name的情况
     private handleAddNameProperty (templateData: any[]) {
-        const previewId = this.active === 'cluster' ? 'SET_TEMPLATE' : 'SERVICE_TEMPLATE'
-        const { data = [] } = this.previewData.find(item => item.id === previewId) || {}
-        data.forEach((item) => {
-            const template = templateData.find(template => (template.bk_inst_id === item.bk_inst_id)
-                && (template.bk_obj_id === item.bk_obj_id))
-            template && this.$set(item, 'bk_inst_name', template.bk_inst_name)
-        })
+      const previewId = this.active === 'cluster' ? 'SET_TEMPLATE' : 'SERVICE_TEMPLATE'
+      const { data = [] } = this.previewData.find(item => item.id === previewId) || {}
+      data.forEach((item) => {
+        const template = templateData.find(template => (template.bk_inst_id === item.bk_inst_id)
+          && (template.bk_obj_id === item.bk_obj_id))
+        template && this.$set(item, 'bk_inst_name', template.bk_inst_name)
+      })
     }
     // 获取自定义输入表格数据
     private async getCustomInputTableData (params: any) {
-        const { ipList = [] } = params
-        const data = await getHostInstanceByIp({
-            ip_list: ipList.map((ip: any) => ({ ip })),
-            with_external_ips: this.withExternalIps,
-        }).catch(() => [])
+      const { ipList = [] } = params
+      const data = await getHostInstanceByIp({
+        ip_list: ipList.map((ip: any) => ({ ip })),
+        with_external_ips: this.withExternalIps,
+      }).catch(() => [])
 
-        // 保证获取agent数量前后重新渲染
-        data.forEach(item => {
-            item.count = undefined
-            item.agent_error_count = undefined
-        })
-        
-        return {
-            total: data.length,
-            data,
-        }
+      // 保证获取agent数量前后重新渲染
+      data.forEach(item => {
+        item.count = undefined
+        item.agent_error_count = undefined
+      })
+      
+      return {
+        total: data.length,
+        data,
+      }
     }
 
     // topo树数据
     private async getTopoTree () {
-        const params: any = {
-            instance_type: 'host',
-        }
-        return await getTopoTree(params).catch(() => [])
+      const params: any = {
+        instance_type: 'host',
+      }
+      return await getTopoTree().catch(() => [])
     }
     // 表格check表更事件(请勿修改selectionsData里面的数据)
     @Emit('check-change')
     private handleCheckChange (selectionsData: ITableCheckData) {
-        if (this.active === 'dynamic-topo') {
-            this.dynamicTableCheckChange(selectionsData)
-            this.handleSetDefaultCheckedNodes()
-        }
-        if (['service-template', 'cluster'].includes(this.active)) {
-            this.templateCheckChange(selectionsData)
-        }
-        if (['static-topo', 'custom-input'].includes(this.active)) {
-            this.staticIpTableCheckChange(selectionsData)
-        }
-        return this.getCheckedData()
+      if (this.active === 'dynamic-topo') {
+        this.dynamicTableCheckChange(selectionsData)
+        this.handleSetDefaultCheckedNodes()
+      }
+      if (['service-template', 'cluster'].includes(this.active)) {
+        this.templateCheckChange(selectionsData)
+      }
+      if (['static-topo', 'custom-input'].includes(this.active)) {
+        this.staticIpTableCheckChange(selectionsData)
+      }
+      return this.getCheckedData()
     }
     private async handleAgentStatus (data) {
-        if (!data.length || this.active === 'static-topo') return []
+      if (!data.length || this.active === 'static-topo') return []
 
-        let targetList = []
-        const nodeList = data.map(item => {
-            const { bk_obj_id, bk_inst_id, bk_inst_name } = item
-            return {
-                bk_obj_id,
-                bk_inst_id,
-                bk_inst_name,
-                bk_biz_id: window.localStorage.getItem('bk_biz_id')
-            }
-        })
-        const newList = await getNodeAgentStatus(nodeList).catch(() => [])
-        
-        return newList
+      let targetList = []
+      const nodeList = data.map(item => {
+        const { bk_obj_id, bk_inst_id, bk_inst_name } = item
+        return {
+          bk_obj_id,
+          bk_inst_id,
+          bk_inst_name,
+          bk_biz_id: window.localStorage.getItem('bk_biz_id')
+        }
+      })
+      const newList = await getNodeAgentStatus(nodeList).catch(() => [])
+      
+      return newList
     }
     // 模板类型check事件
     private templateCheckChange (selectionsData: ITableCheckData) {
-        const { selections = [] } = selectionsData
-        const type = this.active === 'service-template' ? 'SERVICE_TEMPLATE' : 'SET_TEMPLATE'
-        const index = this.previewData.findIndex(item => item.id === type)
-        if (index > -1) {
-            this.previewData[index].data = [...selections]
-        } else {
-            // 初始化分组信息(模板类型都属于动态拓扑)
-            this.previewData.push({
-                id: type,
-                name: this.active === 'service-template' ? this.$t('服务模板') : this.$t('集群模板'),
-                data: [...selections],
-                dataNameKey: 'bk_inst_name',
-            })
-        }
+      const { selections = [] } = selectionsData
+      const type = this.active === 'service-template' ? 'SERVICE_TEMPLATE' : 'SET_TEMPLATE'
+      const index = this.previewData.findIndex(item => item.id === type)
+      if (index > -1) {
+        this.previewData[index].data = [...selections]
+      } else {
+        // 初始化分组信息(模板类型都属于动态拓扑)
+        this.previewData.push({
+          id: type,
+          name: this.active === 'service-template' ? this.$t('服务模板') : this.$t('集群模板'),
+          data: [...selections],
+          dataNameKey: 'bk_inst_name',
+        })
+      }
     }
     // 动态类型表格check事件
     private dynamicTableCheckChange (selectionsData: ITableCheckData) {
-        const { selections = [], excludeData = [] } = selectionsData
-        const index = this.previewData.findIndex(item => item.id === 'TOPO')
-        if (index > -1) {
-            const { data } = this.previewData[index]
-            selections.forEach((select) => {
-                const index = data.findIndex(data => (data.bk_inst_id === select.bk_inst_id)
-                    && (data.bk_obj_id === select.bk_obj_id))
+      const { selections = [], excludeData = [] } = selectionsData
+      const index = this.previewData.findIndex(item => item.id === 'TOPO')
+      if (index > -1) {
+        const { data } = this.previewData[index]
+        selections.forEach((select) => {
+          const index = data.findIndex(data => (data.bk_inst_id === select.bk_inst_id)
+            && (data.bk_obj_id === select.bk_obj_id))
 
-                index === -1 && data.push(select)
-            })
-            excludeData.forEach((exclude) => {
-                const index = data.findIndex(data => (data.bk_inst_id === exclude.bk_inst_id)
-                    && (data.bk_obj_id === exclude.bk_obj_id))
+          index === -1 && data.push(select)
+        })
+        excludeData.forEach((exclude) => {
+          const index = data.findIndex(data => (data.bk_inst_id === exclude.bk_inst_id)
+            && (data.bk_obj_id === exclude.bk_obj_id))
 
-                index > -1 && data.splice(index, 1)
-            })
-        } else {
-            // 初始化分组信息
-            this.previewData.push({
-                id: 'TOPO',
-                name: this.$t('节点'),
-                data: [...selections],
-                dataNameKey: 'node_path',
-            })
-        }
+          index > -1 && data.splice(index, 1)
+        })
+      } else {
+        // 初始化分组信息
+        this.previewData.push({
+          id: 'TOPO',
+          name: this.$t('节点'),
+          data: [...selections],
+          dataNameKey: 'node_path',
+        })
+      }
     }
     private getIpKey (item: any, hasCloudId: boolean) {
-        return hasCloudId ? `${item.bk_cloud_id}${item.ip}` : `${item.ip}`
+      return hasCloudId ? `${item.bk_cloud_id}${item.ip}` : `${item.ip}`
     }
     // 静态类型的表格check事件
     private staticIpTableCheckChange (selectionsData: ITableCheckData) {
-        console.time()
-        const { selections = [], excludeData = [] } = selectionsData
-        const index = this.previewData.findIndex(item => item.id === 'INSTANCE')
-        if (index > -1) {
-            const { data = [] } = this.previewData[index]
-            const hasCloudId = !data[0] || Object.prototype.hasOwnProperty.call(data[0], 'bk_cloud_id') // 兼容拨测选择的IP不带云区域问题
-            const dataMap = (JSON.parse(JSON.stringify(data)) as any[]).reduce<any>((pre, next, index) => {
-                next.index = index
-                const key = this.getIpKey(next, hasCloudId)
-                pre[key] = next
-                return pre
-            }, {})
-            selections.forEach((select) => {
-                const key = this.getIpKey(select, hasCloudId)
-                !dataMap[key] && data.push(select)
-            })
-            const indexes: number[] = excludeData.reduce((pre, next) => {
-                const key = this.getIpKey(next, hasCloudId)
-                const item = dataMap[key]
-                if (item) {
-                    pre.push(item.index)
-                }
-                return pre
-            }, []).sort((pre: number, next: number) => next - pre)
+      console.time()
+      const { selections = [], excludeData = [] } = selectionsData
+      const index = this.previewData.findIndex(item => item.id === 'INSTANCE')
+      if (index > -1) {
+        const { data = [] } = this.previewData[index]
+        const hasCloudId = !data[0] || Object.prototype.hasOwnProperty.call(data[0], 'bk_cloud_id') // 兼容拨测选择的IP不带云区域问题
+        const dataMap = (JSON.parse(JSON.stringify(data)) as any[]).reduce<any>((pre, next, index) => {
+          next.index = index
+          const key = this.getIpKey(next, hasCloudId)
+          pre[key] = next
+          return pre
+        }, {})
+        selections.forEach((select) => {
+          const key = this.getIpKey(select, hasCloudId)
+          !dataMap[key] && data.push(select)
+        })
+        const indexes: number[] = excludeData.reduce((pre, next) => {
+          const key = this.getIpKey(next, hasCloudId)
+          const item = dataMap[key]
+          if (item) {
+              pre.push(item.index)
+          }
+          return pre
+        }, []).sort((pre: number, next: number) => next - pre)
 
-            indexes.forEach((index) => {
-                data.splice(index, 1)
-            })
-        } else {
-            // 初始化分组信息
-            this.previewData.push({
-                id: 'INSTANCE',
-                name: this.$t('IP'),
-                data: [...selections],
-                dataNameKey: 'ip',
-            })
-        }
-        console.timeEnd()
+        indexes.forEach((index) => {
+          data.splice(index, 1)
+        })
+      } else {
+        // 初始化分组信息
+        this.previewData.push({
+          id: 'INSTANCE',
+          name: this.$t('IP'),
+          data: [...selections],
+          dataNameKey: 'ip',
+        })
+      }
+      console.timeEnd()
     }
 
     // tree搜索勾选事件
     private async handleSearchSelectionChange (checkData: ITableCheckData) {
-        const { selections = [], excludeData = [] } = checkData
-        this.isLoading = true
-        let data = selections
-        let exclude = excludeData
-        // if (this.active === 'dynamic-topo') {
-        //   data = this.targetObjectType === 'SERVICE'
-        //     ? await getServiceInstanceByNode({ node_list: selections }).catch(() => [])
-        //     : await getHostInstanceByNode({ node_list: selections }).catch(() => [])
-        // } else {
-        //   const ipNodes = this.getNodesIpList(selections).reduce<any[]>((pre, next) => {
-        //   // IP去重
-        //     const index = pre.findIndex(item => this.identityIp(item, next))
-        //     index === -1 && pre.push(next)
-        //     return pre
-        //   }, [])
-        //   data = await getHostInstanceByIp({
-        //     ip_list: ipNodes.map((item) => {
-        //       const { ip, bk_cloud_id } = item
-        //       return {
-        //         ip,
-        //         bk_cloud_id
-        //       }
-        //     })
-        //   }).catch(() => [])
-        // }
-        if (this.active === 'static-topo') {
-            // 静态拓扑勾选节点表示获取节点下面的IP
-            data = this.getNodesIpList(selections).reduce<any[]>((pre, next) => {
-                // IP去重
-                const index = pre.findIndex(item => this.identityIp(item, next))
-                index === -1 && pre.push(next)
-                return pre
-            }, [])
-            exclude = this.getNodesIpList(excludeData).reduce<any[]>((pre, next) => {
-                // IP去重
-                const index = pre.findIndex(item => this.identityIp(item, next))
-                index === -1 && pre.push(next)
-                return pre
-            }, [])
-        } else {
-            // 拿到拓扑下面的主机数量
-            data = this.targetObjectType === 'SERVICE'
-                ? await getServiceInstanceByNode({ node_list: selections }).catch(() => [])
-                : await getHostInstanceByNode({ node_list: selections }).catch(() => [])
-        }
-        const selectionsData: ITableCheckData = {
-            selections: data,
-            excludeData: exclude,
-        }
-        this.handleCheckChange(selectionsData)
-        this.isLoading = false
+      const { selections = [], excludeData = [] } = checkData
+      this.isLoading = true
+      let data = selections
+      let exclude = excludeData
+      // if (this.active === 'dynamic-topo') {
+      //   data = this.targetObjectType === 'SERVICE'
+      //     ? await getServiceInstanceByNode({ node_list: selections }).catch(() => [])
+      //     : await getHostInstanceByNode({ node_list: selections }).catch(() => [])
+      // } else {
+      //   const ipNodes = this.getNodesIpList(selections).reduce<any[]>((pre, next) => {
+      //   // IP去重
+      //     const index = pre.findIndex(item => this.identityIp(item, next))
+      //     index === -1 && pre.push(next)
+      //     return pre
+      //   }, [])
+      //   data = await getHostInstanceByIp({
+      //     ip_list: ipNodes.map((item) => {
+      //       const { ip, bk_cloud_id } = item
+      //       return {
+      //         ip,
+      //         bk_cloud_id
+      //       }
+      //     })
+      //   }).catch(() => [])
+      // }
+      if (this.active === 'static-topo') {
+        // 静态拓扑勾选节点表示获取节点下面的IP
+        data = this.getNodesIpList(selections).reduce<any[]>((pre, next) => {
+          // IP去重
+          const index = pre.findIndex(item => this.identityIp(item, next))
+          index === -1 && pre.push(next)
+          return pre
+        }, [])
+        exclude = this.getNodesIpList(excludeData).reduce<any[]>((pre, next) => {
+          // IP去重
+          const index = pre.findIndex(item => this.identityIp(item, next))
+          index === -1 && pre.push(next)
+          return pre
+        }, [])
+      } else {
+        // 拿到拓扑下面的主机数量
+        data = this.targetObjectType === 'SERVICE'
+          ? await getServiceInstanceByNode({ node_list: selections }).catch(() => [])
+          : await getHostInstanceByNode({ node_list: selections }).catch(() => [])
+      }
+      const selectionsData: ITableCheckData = {
+        selections: data,
+        excludeData: exclude,
+      }
+      this.handleCheckChange(selectionsData)
+      this.isLoading = false
     }
 
     // 移除节点

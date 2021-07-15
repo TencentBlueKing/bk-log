@@ -160,6 +160,24 @@
 import esAccessDialog from './esAccessDialog';
 import { mapGetters } from 'vuex';
 
+const generatorFormData = () => {
+  return {
+    cluster_name: '', // 集群名
+    domain_name: '', // 地址
+    port: '', // 端口
+    schema: 'http', // 协议
+    auth_info: {
+      username: '', // 用户名
+      password: '', // 密码
+    },
+    enable_hot_warm: false, // 是否开启冷热数据
+    hot_attr_name: '', // 热节点属性名称
+    hot_attr_value: '', // 热节点属性值
+    warm_attr_name: '', // 冷节点属性名称
+    warm_attr_value: '', // 冷节点属性值
+  };
+};
+
 export default {
   components: {
     esAccessDialog,
@@ -179,21 +197,7 @@ export default {
       configDocUrl: window.BK_HOT_WARM_CONFIG_URL,
       confirmLoading: false,
       sliderLoading: false,
-      formData: {
-        cluster_name: '', // 集群名
-        domain_name: '', // 地址
-        port: '', // 端口
-        schema: 'http', // 协议
-        auth_info: {
-          username: '', // 用户名
-          password: '', // 密码
-        },
-        enable_hot_warm: false, // 是否开启冷热数据
-        hot_attr_name: '', // 热节点属性名称
-        hot_attr_value: '', // 热节点属性值
-        warm_attr_name: '', // 冷节点属性名称
-        warm_attr_value: '', // 冷节点属性值
-      },
+      formData: generatorFormData(),
       basicRules: {
         cluster_name: [{
           required: true,
@@ -247,21 +251,7 @@ export default {
         }
       } else {
         // 清空表单数据
-        this.formData = {
-          cluster_name: '', // 集群名
-          domain_name: '', // 地址
-          port: '', // 端口
-          schema: 'http', // 协议
-          auth_info: {
-            username: '', // 用户名
-            password: '', // 密码
-          },
-          enable_hot_warm: false, // 是否开启冷热数据
-          hot_attr_name: '', // 热节点属性名称
-          hot_attr_value: '', // 热节点属性值
-          warm_attr_name: '', // 冷节点属性名称
-          warm_attr_value: '', // 冷节点属性值
-        };
+        this.formData = generatorFormData();
         // 清空连通测试结果
         this.connectResult = '';
         this.connectFailedMessage = '';
