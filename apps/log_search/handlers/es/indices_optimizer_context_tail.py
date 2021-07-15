@@ -22,9 +22,9 @@ import datetime
 from typing import List, Any
 from dateutil.rrule import rrule
 from dateutil.rrule import DAILY
+import arrow
 from apps.log_esquery.type_constants import type_index_set_string, type_index_set_list
 from apps.log_search.models import Scenario
-import arrow
 
 
 class IndicesOptimizerContextTail(object):

@@ -19,7 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from blueapps.account.decorators import login_exempt
 from django.utils.decorators import method_decorator
-from apps.utils.drf import list_route, detail_route
 from rest_framework.response import Response
 
 from apps.generic import ModelViewSet
@@ -29,6 +28,7 @@ from apps.log_databus.handlers.itsm import ItsmHandler
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.serializers import CollectItsmCallbackSerializer, CollectItsmApplySerializer
 from apps.utils.local import activate_request
+from apps.utils.drf import list_route, detail_route
 
 
 class ItsmViewSet(ModelViewSet):

@@ -20,14 +20,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import random
 
 from django.utils.translation import ugettext_lazy as _
-
+from pipeline.component_framework.component import Component
+from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 from apps.log_extract.components.collections.base_component import BaseService
 from apps.log_extract import constants
 from apps.log_extract.fileserver import FileServer
 from apps.log_extract.models import Tasks, ExtractLink, ExtractLinkHost
 from apps.log_extract.utils.packing import get_packed_dir_name
-from pipeline.component_framework.component import Component
-from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 
 
 class FileDistributionService(BaseService):

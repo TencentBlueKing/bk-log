@@ -21,12 +21,12 @@ import html
 import json
 import copy
 import datetime
+from datetime import timedelta
 import hashlib
 
 from typing import List, Dict, Any, Tuple, Union
 from dateutil.rrule import rrule
 from dateutil.rrule import MINUTELY
-from datetime import timedelta
 from django.core.cache import cache
 from django.conf import settings
 

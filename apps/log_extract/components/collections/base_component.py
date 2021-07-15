@@ -18,11 +18,11 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from apps.utils.log import logger
 
 from django.utils.translation import ugettext_lazy as _
 from pipeline.core.flow.activity import Service
 
+from apps.utils.log import logger
 from apps.log_extract.models import Tasks
 from apps.log_extract.constants import DownloadStatus
 
@@ -45,7 +45,7 @@ class BaseService(Service):
             result = self._execute(data, parent_data)
             if not result and hasattr(self, "logger"):
                 self.logger.info(_("{name}失败").format(name=self.name))
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             if hasattr(self, "root_pipeline_id"):
                 logger.exception(f"[{self.name}]pipeline_id=>{self.root_pipeline_id} node_id=>{self.id} {err}")
             else:
@@ -76,7 +76,7 @@ class BaseService(Service):
             result = self._schedule(data, parent_data, callback_data)
             if not result and hasattr(self, "logger"):
                 self.logger.info(_("{name}失败").format(name=self.name))
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             logger.exception(f"[{self.name}]pipeline_id=>{self.root_pipeline_id} node_id=>{self.id} {err}")
 
             reason = _("[{name}] {reason}").format(name=self.name, reason=str(err))

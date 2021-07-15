@@ -86,7 +86,7 @@ def format_serializer_errors(errors, fields, params, prefix="  "):
                     # return sub_foramt
                     sub_message += sub_foramt
                 elif isinstance(field_errors, list):
-                    for index, error in enumerate(field_errors):
+                    for index, error in enumerate(field_errors):  # pylint: disable=unused-variable
                         field_errors[index] = field_errors[index].format(**{key: params.get(key, "")})
                         # return field_errors[index]
                         sub_message += "{index}.{error}".format(index=index + 1, error=field_errors[index])

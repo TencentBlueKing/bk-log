@@ -19,13 +19,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
-
+from pipeline.component_framework.component import Component
+from pipeline.core.flow import StaticIntervalGenerator, Service
 from apps.log_extract.constants import DownloadStatus
 from apps.log_extract.fileserver import FileServer
 from apps.log_extract.models import Tasks, ExtractLink
 from apps.log_extract.components.collections.base_component import BaseService
-from pipeline.component_framework.component import Component
-from pipeline.core.flow import StaticIntervalGenerator, Service
 from apps.log_extract.utils.packing import get_packed_file_name
 
 

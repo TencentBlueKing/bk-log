@@ -21,14 +21,13 @@ import functools
 import re
 import socket
 from collections import defaultdict
-
+from typing import Union, List
 import arrow
 
 from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.db.models import Sum
 from elasticsearch import Elasticsearch
-from typing import Union, List
 
 from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
