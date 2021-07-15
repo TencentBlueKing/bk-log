@@ -17,7 +17,6 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from apps.utils.function import ignored
 
 """
 记录线程变量
@@ -29,6 +28,7 @@ from threading import local  # noqa
 from django.conf import settings  # noqa
 
 from apps.exceptions import BaseException  # noqa
+
 
 _local = local()
 
@@ -68,6 +68,7 @@ def get_request_username():
     """
     获取请求的用户名
     """
+    from apps.utils.function import ignored
     username = ""
     with ignored(Exception):
         username = get_request().user.username
