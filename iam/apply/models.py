@@ -135,7 +135,7 @@ class RelatedResourceType(object):
         for i, r in enumerate(self.instances):
             try:
                 r.validate()
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 raise ValueError("RelatedResourceType.instances[%d] invalid: %s" % (i, e))
 
     def to_dict(self):
@@ -191,7 +191,7 @@ class ActionWithResources(BaseAction):
                 )
             try:
                 rt.validate()
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 raise ValueError("Action.related_resource_types[%d] invalid: %s" % (i, e))
 
     def to_dict(self):
@@ -227,5 +227,5 @@ class Application(object):
                 )
             try:
                 action.validate()
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 raise ValueError("Application.actions[%d] invalid: %s" % (i, e))

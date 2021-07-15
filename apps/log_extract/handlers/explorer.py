@@ -112,7 +112,7 @@ class ExplorerHandler(object):
                 time.sleep(1)
                 if time.time() - start_time > constants.FILE_SEARCH_TIMEOUT:
                     raise exceptions.ExplorerFilesTimeout
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception("[explorer] FileSearchService failed: {}".format(str(e)))
             raise exceptions.PipelineApiFailed(exceptions.PipelineApiFailed.MESSAGE.format(message=str(e)))
         return query_result
@@ -159,7 +159,7 @@ class ExplorerHandler(object):
                         }
                     )
                     exists_record.add(file_type_and_name)
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
                     logger.error("[list_files] parse output error, output=> {}, e=>{}".format(file_meta_data, e))
         return res
 
@@ -275,7 +275,7 @@ class ExplorerHandler(object):
         params = {"bk_biz_id": bk_biz_id, "instance_type": "host", "remove_empty_nodes": True}
         try:
             host_info = BizHandler(bk_biz_id).get_instance_topo(params, is_inner=True)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise exceptions.ExplorerPullTopoError(
                 exceptions.ExplorerPullTopoError.MESSAGE.format(error=e, params=params)
             )

@@ -170,7 +170,7 @@ class CustomMetric(object):
                             "data": chunk,
                         }
                     )
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.warning(f"custom_report error: {e}")
 
     def query(

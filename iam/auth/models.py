@@ -260,7 +260,7 @@ class BaseRequest(BaseObject):
         if self.subject:
             try:
                 self.subject.validate()
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 raise ValueError("Request.subject invalid: %s" % e)
 
     def validate(self):
@@ -290,7 +290,7 @@ class Request(BaseRequest):
         # Value check
         try:
             self.action.validate()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise ValueError("Request.action invalid: %s" % e)
 
         # resources can be empty
@@ -298,7 +298,7 @@ class Request(BaseRequest):
             for i, r in enumerate(self.resources):
                 try:
                     r.validate()
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
                     raise ValueError("Request.resources[%d] invalid: %s" % (i, e))
 
     def validate(self):
@@ -347,7 +347,7 @@ class MultiActionRequest(BaseRequest):
             for i, a in enumerate(self.actions):
                 try:
                     a.validate()
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
                     raise ValueError("Request.actions[%d] invalid: %s" % (i, e))
 
         # resources can be empty
@@ -355,7 +355,7 @@ class MultiActionRequest(BaseRequest):
             for i, r in enumerate(self.resources):
                 try:
                     r.validate()
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
                     raise ValueError("Request.resources[%d] invalid: %s" % (i, e))
 
     def validate(self):
@@ -392,7 +392,7 @@ class ApiAuthRequest(Request):
         # Value check
         try:
             self.action.validate()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise ValueError("ApiAuthRequest.action invalid: %s" % e)
         if not self.operate:
             raise ValueError("ApiAuthRequest.operate should not be empty")
@@ -435,7 +435,7 @@ class ApiBatchAuthRequest(Request):
         for action in self.actions:
             try:
                 action.validate()
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 raise ValueError("ApiBatchAuthRequest.action invalid: %s" % e)
         if not self.operate:
             raise ValueError("ApiBatchAuthRequest.operate should not be empty")

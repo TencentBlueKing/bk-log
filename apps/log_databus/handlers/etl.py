@@ -161,7 +161,7 @@ class EtlHandler(object):
         else:
             try:
                 epoch_second = arrow.get(data, fmt["name"], tzinfo=f"GMT{time_zone}").timestamp
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 raise EtlParseTimeFormatException()
         return {"epoch_millis": f"{epoch_second}000"}
 

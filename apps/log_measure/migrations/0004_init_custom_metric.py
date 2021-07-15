@@ -30,7 +30,7 @@ from bk_monitor.handler.monitor import BKMonitor
 def forwards_func(apps, schema_editor):
     try:
         Migration.bk_monitor_client.custom_metric().migrate(data_name_list=Migration.data_names)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.error(f"custom_metric migrate error: {e}")
 
 

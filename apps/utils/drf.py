@@ -56,7 +56,7 @@ def format_serializer_errors(errors, fields, params, prefix="  "):
                             sub_message = f"{k}:{v}\n"
                 else:
                     sub_message = json.dumps(field_errors) if not isinstance(field_errors, str) else field_errors
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 sub_message = json.dumps(field_errors)
         else:
             field = fields[key]
@@ -102,7 +102,7 @@ def custom_params_valid(serializer, params, many=False):
     except serializers.ValidationError:
         try:
             message = format_serializer_errors(_serializer.errors, _serializer.fields, params)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             if isinstance(e.message, str):
                 message = e.message
             else:
@@ -136,7 +136,7 @@ class GeneralSerializer(ModelSerializer):
                 data["updated_by"] = username
             else:
                 data["created_by"] = username
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             pass
         self.serializer_field_mapping[models.DateTimeField] = CustomDateTimeField
         super(GeneralSerializer, self).__init__(instance=instance, data=data, **kwargs)

@@ -27,4 +27,4 @@ example:
         url(r'^{}'.format(config.ENTRANCE_URL), include('{}.urls'.format(version_log_app))),
     ]
 """
-version_log_app = "version_log"
+version_log_app = "version_log"  # pylint: disable=invalid-name

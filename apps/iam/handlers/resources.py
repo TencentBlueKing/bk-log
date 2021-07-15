@@ -149,7 +149,7 @@ class EsSource(ResourceMeta):
             cluster_info = result[0]
             name = cluster_info["cluster_config"]["cluster_name"]
             bk_biz_id = cluster_info["cluster_config"]["custom_option"].get("bk_biz_id", 0)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return resource
         resource.attribute = {
             "id": str(instance_id),

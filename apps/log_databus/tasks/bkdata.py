@@ -112,7 +112,7 @@ def review_bkdata_data_id():
 
         try:
             create_bkdata_data_id(collector_config)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error(f"{collector_config.collector_config_name} create bkdata data_id failed: {e}")
             collector_config.bkdata_data_id_sync_times += 1
         else:

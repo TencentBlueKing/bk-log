@@ -198,7 +198,7 @@ class StorageHandler(object):
         try:
             time_zone = get_local_param("time_zone")
             return arrow.get(int(time_stamp)).to(time_zone).strftime("%Y-%m-%d %H:%M:%S%z")
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return time_stamp
 
     def list(self, bk_biz_id, cluster_id=None):
@@ -523,7 +523,7 @@ class StorageHandler(object):
                 raise StorageConnectInfoException(
                     StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached"))
                 )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise StorageConnectInfoException(
                 StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached, %s" % e))
             )

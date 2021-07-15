@@ -119,8 +119,8 @@ class TraceHandler(object):
     def find_children(cls, tree: dict, nodes: list):
         children: list = []
         for node in nodes:
-            spanID = node.get("spanID")
-            if not spanID:
+            span_id = node.get("spanID")
+            if not span_id:
                 continue
             reference: list = cls.get_parents(node, False)
             if not reference:

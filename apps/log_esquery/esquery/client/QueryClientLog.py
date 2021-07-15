@@ -60,7 +60,7 @@ class QueryClientLog(QueryClientTemplate):
         try:
             params = {"request_timeout": settings.ES_QUERY_TIMEOUT}
             return self._client.search(index=index, body=body, scroll=scroll, params=params)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise EsClientSearchException(EsClientSearchException.MESSAGE.format(error=e))
 
@@ -70,7 +70,7 @@ class QueryClientLog(QueryClientTemplate):
             logger.info("mapping for index=>{}, index_target=>{}".format(index, index_target))
             mapping_dict: type_mapping_dict = self._client.indices.get_mapping(index=index_target)
             return mapping_dict
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise BaseSearchFieldsException(BaseSearchFieldsException.MESSAGE.format(error=e))
 
@@ -90,7 +90,7 @@ class QueryClientLog(QueryClientTemplate):
         self._build_connection(index)
         try:
             return self._client.scroll(scroll_id=scroll_id, scroll=scroll)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise EsClientScrollException(EsClientScrollException.MESSAGE.format(error=e))
 
@@ -108,7 +108,7 @@ class QueryClientLog(QueryClientTemplate):
         self._get_index_target(index)
         try:
             return self._client.cluster.stats()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise EsException
 
@@ -118,7 +118,7 @@ class QueryClientLog(QueryClientTemplate):
             url = "/" + url
         try:
             return self._client.transport.perform_request("GET", url)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise
 
@@ -159,7 +159,7 @@ class QueryClientLog(QueryClientTemplate):
             # this status is returnback from tcpserver
             if status != 0:
                 raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=""))
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=e))
         cs.close()
 

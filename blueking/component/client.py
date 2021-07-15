@@ -33,7 +33,7 @@ from .utils import get_signature
 # shutdown urllib3's warning
 try:
     requests.packages.urllib3.disable_warnings()
-except Exception:
+except Exception:  # pylint: disable=broad-except
     pass
 
 
@@ -86,7 +86,7 @@ class BaseComponentClient(object):
             from django.utils import translation
 
             return translation.get_language()
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return None
 
     def set_bk_api_ver(self, bk_api_ver):
