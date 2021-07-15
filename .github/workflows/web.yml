@@ -17,8 +17,6 @@ jobs:
       OS: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-        ref: 'stag'
     - name: Setup Node.js environment
       uses: actions/setup-node@v2.2.0
       with:
