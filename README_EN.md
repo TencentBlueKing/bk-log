@@ -3,7 +3,7 @@
 [![license](https://img.shields.io/badge/license-mit-brightgreen.svg?style=flat)](https://github.com/TencentBlueKing/bk-log/blob/master/LICENSE.txt)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/TencentBlueKing/bk-log)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/TencentBlueKing/bk-log/pulls)
-[![codecov](https://codecov.io/gh/TencentBlueKing/bk-log/branch/stag/graph/badge.svg?token=ATK33SUT2R)](https://codecov.io/gh/TencentBlueKing/bk-log)
+[![codecov](https://codecov.io/gh/TencentBlueKing/bk-log/branch/master/graph/badge.svg?token=ATK33SUT2R)](https://codecov.io/gh/TencentBlueKing/bk-log)
 [![Web](https://github.com/TencentBlueKing/bk-log/actions/workflows/web.yml/badge.svg?event=schedule)](https://github.com/TencentBlueKing/bk-log/actions/workflows/web.yml)
 [![Test](https://github.com/TencentBlueKing/bk-log/actions/workflows/unittest.yml/badge.svg?event=schedule)](https://github.com/TencentBlueKing/bk-log/actions/workflows/unittest.yml)
 
