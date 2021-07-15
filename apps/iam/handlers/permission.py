@@ -18,10 +18,10 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from typing import Union, List, Dict
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
-from typing import Union, List, Dict
 
 from apps.utils.log import logger
 from apps.iam.exceptions import ActionNotExistError, PermissionDeniedError, GetSystemInfoError

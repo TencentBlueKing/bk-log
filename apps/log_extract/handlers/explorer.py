@@ -23,14 +23,13 @@ import time
 from itertools import product
 
 from django.conf import settings
-
+from django.utils.translation import ugettext_lazy as _
 from apps.api import CCApi
 from apps.utils.log import logger
 from apps.iam import ActionEnum, Permission
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_extract import exceptions
 from apps.log_extract import constants
-from django.utils.translation import ugettext_lazy as _
 from apps.log_extract.fileserver import FileServer
 from apps.log_extract.handlers.thread import ThreadPool
 from apps.log_extract.models import Strategies
@@ -210,7 +209,7 @@ class ExplorerHandler(object):
         # allowed_strategies = self.polish_file_type(allowed_strategies)
         # step 4: 获取用户所有IP都可以访问的目录及扩展名
         result = []
-        for ip_index, ip_allowed_strategies in enumerate(allowed_strategies):
+        for ip_allowed_strategies in allowed_strategies:
             result = self.get_intersection_strategies(result, ip_allowed_strategies)
 
         return {"allowed_dir_file_list": result, "bk_os_type": host_os_type, "operator": result[0]["operator"]}

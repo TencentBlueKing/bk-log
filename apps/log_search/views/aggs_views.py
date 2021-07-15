@@ -19,9 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from rest_framework import serializers
-from apps.utils.drf import detail_route
 from rest_framework.response import Response
 
+from apps.utils.drf import detail_route
 from apps.generic import APIViewSet
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import InstanceActionPermission

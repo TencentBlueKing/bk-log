@@ -41,7 +41,7 @@ class DslBuilder(object):
         highlight: dict = {},
         collapse={},
         search_after=[],
-    ):
+    ):  # pylint: disable=dangerous-default-value
         """
 
         :param search_string {string} "test":

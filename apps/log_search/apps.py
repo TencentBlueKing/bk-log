@@ -23,8 +23,6 @@ from django.apps.config import AppConfig
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 
-from apps.utils.log import logger
-
 try:
     from blueapps.utils.esbclient import get_client_by_user
 except Exception:  # pylint: disable=broad-except
