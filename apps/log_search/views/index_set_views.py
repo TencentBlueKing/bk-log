@@ -56,7 +56,7 @@ class IndexSetViewSet(ModelViewSet):
             # ESQUERY白名单不需要鉴权
             if auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
                 return []
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             pass
         if self.action in ["mark_favorite", "cancel_favorite"]:
             return []

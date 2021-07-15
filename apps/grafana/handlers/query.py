@@ -200,7 +200,7 @@ class GrafanaQueryHandler:
                     try:
                         # 尝试从数据源配置中获取到索引集ID
                         valid_index_set_ids.append(target["data"]["index"]["id"][1])
-                    except Exception:
+                    except Exception:  # pylint: disable=broad-except
                         pass
         return index_set_id in valid_index_set_ids
 
@@ -345,7 +345,7 @@ class GrafanaQueryHandler:
             except BaseSearchIndexSetDataDoseNotExists:
                 # 若无可用的索引，则忽略该索引集
                 continue
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.warning(
                     "[get_metric_list] index_set({}) get_fields failed: {}".format(index_set.index_set_id, e)
                 )
@@ -397,7 +397,7 @@ class GrafanaQueryHandler:
     def get_variable_field(self, bk_obj_id):
         try:
             properties = CCApi.search_object_attribute({"bk_biz_id": self.bk_biz_id, "bk_obj_id": bk_obj_id})
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("[get_variable_field] request CMDB API failed for type({}): {}".format(bk_obj_id, e))
             properties = []
 

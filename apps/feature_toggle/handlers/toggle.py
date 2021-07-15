@@ -210,7 +210,7 @@ class FeatureToggleObject(object):
         for name, param in params.items():
             try:
                 param = cls._load_plugins(name, param)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.error(f"load plugin error: {e}")
             else:
                 params[name] = param

@@ -77,7 +77,7 @@ class GrafanaProxyView(ProxyView):
                 origin_content = json.loads(response.content)
                 patched_content = json.dumps(patch_home_panels(origin_content))
                 return HttpResponse(patched_content, status=response.status_code)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.exception("patch home panels error: {}".format(e))
                 # 异常则不替换了
                 return response

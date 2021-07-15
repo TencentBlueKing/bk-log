@@ -66,7 +66,7 @@ class ComponentAPI(object):
             if e.resp is not None:
                 try:
                     return e.resp.json()
-                except Exception:
+                except Exception:  # pylint: disable=broad-except
                     pass
             return {"result": False, "message": e.error_message, "data": None}
 
@@ -82,13 +82,13 @@ class ComponentAPI(object):
             params = None
             try:
                 json.dumps(data)
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 raise ComponentAPIException(self, "Request parameter error (please pass in a dict or json string)")
 
         # Request remote server
         try:
             resp = self.client.request(self.method, self.url, params=params, data=data)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception("Error occurred when requesting method=%s url=%s", self.method, self.url)
             raise ComponentAPIException(self, u"Request component error, Exception: %s" % str(e))
 
@@ -118,7 +118,7 @@ class ComponentAPI(object):
             if not json_resp and self.default_return_value is not None:
                 return self.default_return_value
             return json_resp
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             raise ComponentAPIException(
                 self, "Return data format is incorrect, which shall be unified as json", resp=resp
             )

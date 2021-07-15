@@ -80,7 +80,7 @@ class BkDataAuthHandler(object):
             if auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
                 # 对白名单的app，不进行rt权限校验
                 return []
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             # 没有通过JWT校验
             pass
 
@@ -130,7 +130,7 @@ class BkDataAuthHandler(object):
             req = get_request()
             auth_info = EsquerySearchPermissions.get_auth_info(req)
             source_app_code = auth_info["bk_app_code"]
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             # 没有通过JWT校验
             return
 

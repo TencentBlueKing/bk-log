@@ -217,7 +217,7 @@ class DataAPI(object):
                 raw_response = self._send(params, timeout, request_id, request_cookies)
             except ReadTimeout as e:
                 raise DataAPIException(self, self.get_error_message(str(e)))
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 raise DataAPIException(self, self.get_error_message(str(e)))
 
             # http层面的处理结果
@@ -233,7 +233,7 @@ class DataAPI(object):
             # 结果层面的处理结果
             try:
                 response_result = raw_response.json()
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 error_message = "data api response not json format url->[{}] content->[{}]".format(
                     self.url,
                     raw_response.text,
@@ -385,7 +385,7 @@ class DataAPI(object):
                 local_request = None
                 try:
                     local_request = get_request()
-                except Exception:
+                except Exception:  # pylint: disable=broad-except
                     pass
 
                 if local_request and local_request.COOKIES:

@@ -44,7 +44,7 @@ def sync_index_set_mapping_snapshot():
             )
             continue
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception(
                 "[sync_index_set_mapping_snapshot] index_set({}) sync failed: {}".format(index_set.index_set_id, e)
             )
@@ -63,7 +63,7 @@ def sync_single_index_set_mapping_snapshot(index_set_id=None):  # pylint: disabl
     else:
         try:
             index_set_obj.sync_fields_snapshot()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception(
                 f"[sync_single_index_set_mapping_snapshot] index_set({index_set_obj.index_set_id}) sync failed: {e}"
             )

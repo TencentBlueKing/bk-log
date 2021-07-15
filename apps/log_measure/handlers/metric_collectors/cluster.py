@@ -79,7 +79,7 @@ class ClusterMetricCollector(object):
                         timestamp=MetricUtils.get_instance().report_ts,
                     )
                 )
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.exception("fail to collect cluster_health metric for cluster->{}, {}".format(cluster_info, e))
         return metrics
 
@@ -157,6 +157,6 @@ class ClusterMetricCollector(object):
                             )
                         )
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.exception("fail to collect cluster_node metric for cluster->{}, {}".format(cluster_info, e))
         return metrics
