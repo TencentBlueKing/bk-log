@@ -24,7 +24,11 @@ import typing
 
 from django.utils.http import urlencode
 from rest_framework.reverse import reverse
-
+from pipeline.builder import EmptyStartEvent, EmptyEndEvent, Data, Var, ServiceActivity, NodeOutput, builder
+from pipeline.conf import settings
+from pipeline.core.pipeline import Pipeline
+from pipeline.parser import PipelineParser
+from pipeline.service import task_service
 from apps.utils.log import logger
 from apps.log_extract import constants, exceptions
 from apps.log_extract.constants import ExtractLinkType
@@ -33,11 +37,6 @@ from apps.log_extract.models import Tasks, ExtractLink
 from apps.utils.cos import QcloudCos
 from apps.utils.base_crypt import BaseCrypt
 from apps.utils.local import get_request
-from pipeline.builder import EmptyStartEvent, EmptyEndEvent, Data, Var, ServiceActivity, NodeOutput, builder
-from pipeline.conf import settings
-from pipeline.core.pipeline import Pipeline
-from pipeline.parser import PipelineParser
-from pipeline.service import task_service
 
 
 def try_op(op: typing.Callable[[], bool], n=3) -> bool:

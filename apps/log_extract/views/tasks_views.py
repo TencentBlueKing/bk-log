@@ -23,8 +23,8 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.utils.translation import ugettext_lazy as _
-from apps.utils.drf import list_route
 from rest_framework.response import Response
+from apps.utils.drf import list_route
 
 from apps.generic import ModelViewSet
 from apps.log_extract import serializers, exceptions

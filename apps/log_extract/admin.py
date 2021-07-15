@@ -94,7 +94,7 @@ class ExtractLinkAdminForm(forms.ModelForm):
 
 
 @admin.register(ExtractLink)
-class ExtractLink(AppModelAdmin):
+class ExtractLinkAdmin(AppModelAdmin):
     inlines = [HostInline]
     formfield_overrides = {models.TextField: {"widget": TextInput(attrs={"class": "vTextField"})}}
     list_display = ["name"]

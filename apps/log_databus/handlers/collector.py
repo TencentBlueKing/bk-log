@@ -916,7 +916,7 @@ class CollectorHandler(object):
         try:
             task_ready = NodeApi.check_subscription_task_ready(param)
         # 如果节点管理路由不存在或服务异常等request异常情况
-        except BaseException as e:  # noqa
+        except BaseException as e:  # pylint: disable=broad-except
             task_ready = self._check_task_ready_exception(e)
         return task_ready
 

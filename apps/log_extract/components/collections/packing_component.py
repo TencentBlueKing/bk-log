@@ -20,7 +20,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import html
 
 from django.utils.translation import ugettext_lazy as _
-
+from pipeline.component_framework.component import Component
+from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 from apps.log_extract import constants
 from apps.log_extract.constants import PACK_TASK_SCRIPT_NOT_HAVE_ENOUGH_CAP_ERROR_CODE
 from apps.log_extract.fileserver import FileServer
@@ -31,8 +32,6 @@ from apps.log_extract.utils.packing import (
     get_filter_content,
 )
 from apps.log_extract.components.collections.base_component import BaseService
-from pipeline.component_framework.component import Component
-from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 
 
 class FilePackingService(BaseService):

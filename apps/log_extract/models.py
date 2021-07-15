@@ -25,7 +25,7 @@ from typing import List
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
-
+from pipeline.service import task_service
 from apps.utils.log import logger
 from apps.models import (
     OperateRecordModel,
@@ -36,7 +36,6 @@ from apps.models import (
     EncryptionField,
 )
 from apps.log_extract.constants import ExtractLinkType, PIPELINE_TIME_FORMAT
-from pipeline.service import task_service
 
 
 class Strategies(SoftDeleteModel):

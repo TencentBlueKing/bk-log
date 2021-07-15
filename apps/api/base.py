@@ -174,10 +174,8 @@ class DataAPI(object):
 
     def get_error_message(self, error_message):
         url_path = ""
-        try:
+        with ignored(Exception):
             url_path = parse.urlparse(parse.unquote(self.url)).path
-        except:
-            pass
 
         message = _("[{module}-API]{error_message}").format(module=self.module, error_message=error_message)
         logger.exception(message + f" url => {self.url}")
@@ -513,7 +511,7 @@ class DRFActionAPI(object):
         self.url_path = url_path
         self.method = method
 
-        for k, v in list(kwargs.items()):
+        for k in list(kwargs.keys()):
             if k not in DRF_DATAAPI_CONFIG:
                 raise Exception(
                     "Not support {k} config, SUPPORT_DATAAPI_CONFIG:{conf}".format(k=k, conf=DRF_DATAAPI_CONFIG)
@@ -571,7 +569,7 @@ class DataDRFAPISet(object):
         self.module = module
         self.primary_key = primary_key
 
-        for k, v in list(kwargs.items()):
+        for k in list(kwargs.keys()):
             if k not in DRF_DATAAPI_CONFIG:
                 raise Exception(
                     "Not support {k} config, SUPPORT_DATAAPI_CONFIG:{conf}".format(k=k, conf=DRF_DATAAPI_CONFIG)
@@ -646,7 +644,7 @@ class BaseApi(object):
         if isinstance(attr, ProxyDataAPI):
             # 代理类的DataApi，各个版本需要重载有差异的方法
 
-            module_path, module_name = self.__module__.rsplit(".", 1)
+            module_path, module_name = self.__module__.rsplit(".", 1)  # pylint: disable=unused-variable
             class_name = self.__class__.__name__
 
             module_str = "apps.api.sites.{run_ver}.{mod}.{api}".format(
@@ -665,7 +663,7 @@ class PassThroughAPI(DataAPI):
     直接透传API
     """
 
-    def __init__(self, module, method, url_prefix, sub_url, supported_api=list()):
+    def __init__(self, module, method, url_prefix, sub_url, supported_api=list()):  # pylint: disable=dangerous-default-value  # noqa
         is_supported = False
         for d_api in supported_api:
             if d_api["method"] == method and re.match(d_api.get("url_regex"), sub_url):

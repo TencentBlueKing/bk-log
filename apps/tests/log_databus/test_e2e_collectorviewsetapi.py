@@ -18,12 +18,12 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import arrow
 import json
 import logging
 import sys
 from unittest.mock import patch
 
+import arrow
 from django.conf import settings
 from django.test import TestCase, override_settings
 from django.utils.translation import ugettext_lazy as _

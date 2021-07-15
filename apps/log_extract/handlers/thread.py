@@ -116,7 +116,7 @@ class ThreadPool(_ThreadPool):
             self.get_func_with_local(func), iterable, chunksize=chunksize, callback=callback
         )
 
-    def apply_async(self, func, args=(), kwds={}, callback=None):
+    def apply_async(self, func, args=(), kwds={}, callback=None):  # pylint: disable=dangerous-default-value
         return super(ThreadPool, self).apply_async(
             self.get_func_with_local(func), args=args, kwds=kwds, callback=callback
         )
