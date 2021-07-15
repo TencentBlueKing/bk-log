@@ -41,7 +41,7 @@ export async function response(getArgs, postArgs, req) {
         chinese_name: faker.name.findName(),
         avatar_url: '',
         bkpaas_user_id: '023cc1ef9c8b4a90a7',
-        username: 'hieiwang',
+        username: '',
         permissions: [],
         latest_project_id: '846e8195d9ca4097b354ed190acce4b1',
         latest_project_code: 'bcs1',
