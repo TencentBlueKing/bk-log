@@ -187,6 +187,9 @@ class CollectorHandler(object):
         """
         result = context
         if not self.data.table_id:
+            collector_config.update(
+                {"table_id_prefix": f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_", "table_id": ""}
+            )
             return collector_config
         table_id_prefix, table_id = self.data.table_id.split(".")
         collector_config.update({"table_id_prefix": table_id_prefix + "_", "table_id": table_id})
@@ -203,9 +206,6 @@ class CollectorHandler(object):
                     )
                 )
             return collector_config
-        collector_config.update(
-            {"table_id_prefix": f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_", "table_id": ""}
-        )
         return collector_config
 
     def complement_nodeman_info(self, collector_config, context):
