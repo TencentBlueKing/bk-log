@@ -395,17 +395,18 @@ export default {
       }
     },
     async requestMyProjectList() {
-      const queryObj = JSON.parse(JSON.stringify(this.$route.query));
-      if (queryObj.from) {
-        this.$store.commit('updateAsIframe', queryObj.from);
-        this.$store.commit('updateIframeQuery', queryObj);
-      }
-
       try {
         const res = await this.$http.request('project/getMyProjectList');
         // 根据权限排序
         const s1 = [];
         const s2 = [];
+        const queryObj = JSON.parse(JSON.stringify(this.$route.query));
+
+        if (queryObj.from) {
+          this.$store.commit('updateAsIframe', queryObj.from);
+          this.$store.commit('updateIframeQuery', queryObj);
+        }
+
         for (const item of res.data) {
           // eslint-disable-next-line camelcase
           if (item.permission?.view_business) {

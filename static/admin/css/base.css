@@ -662,9 +662,9 @@ div.breadcrumbs a:focus, div.breadcrumbs a:hover {
 
 /* ACTION ICONS */
 
-.addlink {
+.add-link {
     padding-left: 16px;
-    background: url(../img/icon-addlink.svg) 0 1px no-repeat;
+    background: url(../img/icon-add-link.svg) 0 1px no-repeat;
 }
 
 .changelink, .inlinechangelink {
@@ -736,7 +736,7 @@ a.deletelink:focus, a.deletelink:hover {
     text-decoration: none;
 }
 
-.object-tools a.viewsitelink, .object-tools a.golink,.object-tools a.addlink {
+.object-tools a.viewsitelink, .object-tools a.golink,.object-tools a.add-link {
     background-repeat: no-repeat;
     background-position: right 7px center;
     padding-right: 26px;
@@ -746,7 +746,7 @@ a.deletelink:focus, a.deletelink:hover {
     background-image: url(../img/tooltag-arrowright.svg);
 }
 
-.object-tools a.addlink {
+.object-tools a.add-link {
     background-image: url(../img/tooltag-add.svg);
 }
 
