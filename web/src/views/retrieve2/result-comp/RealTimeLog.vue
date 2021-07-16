@@ -35,66 +35,8 @@
     </div>
 
     <div class="dialog-bars">
-      <!-- 关键字过滤、清屏 -->
-      <div class="dialog-bar filter">
-        <span class="label-text">{{ $t('configDetails.filterContent') }}</span>
-        <bk-select style="width: 100px;" v-model="filterType" :clearable="false">
-          <bk-option
-            v-for="(option, index) in filterTypeList"
-            :key="index"
-            :id="option.id"
-            :name="option.name">
-          </bk-option>
-        </bk-select>
-        <bk-input
-          :style="{ width: isScreenFull ? '500px' : '260px', margin: '0 10px' }"
-          :clearable="true"
-          :right-icon="'bk-icon icon-search'"
-          :placeholder="$t('retrieve.filterPlaceholder')"
-          v-model="filterKey"
-          @enter="filterLog"
-          @clear="filterLog"
-          @blur="filterLog"
-        ></bk-input>
-        <bk-checkbox
-          style="margin-right: 4px"
-          :true-value="true"
-          :false-value="false"
-          v-model="ignoreCase">
-        </bk-checkbox>
-        <span class="label-text">{{ $t('retrieve.ignoreCase') }}</span>
-        <!-- <span style="margin-left: 40px">翻页<span class="hot-key">(Ctrl+k)</span></span>
-                <bk-select style="width: 136px;" v-model="flipScreen" :clearable="false">
-                    <bk-option v-for="(option, index) in flipScreenList"
-                        :key="index"
-                        :id="option.id"
-                        :name="option.name">
-                    </bk-option>
-                </bk-select> -->
-        <!-- <bk-button style="margin-left: 10px;" @click="clearLogList">{{ $t('btn.clearScreen') }}</bk-button> -->
-        <div class="dialog-bar" v-if="filterType === 'include'" style="margin-left: 20px">
-          <span class="label-text">{{ $t('retrieve.showPrev') }}</span>
-          <bk-tag-input
-            style="width: 74px;margin-right: 10px"
-            v-model="interval.prev"
-            placeholder="请输入"
-            :list="lineList"
-            :max-data="1"
-            :allow-create="false">
-          </bk-tag-input>
-          <span style="margin-right: 20px">{{ $t('行') }}</span>
-          <span class="label-text">{{ $t('retrieve.showNext') }}</span>
-          <bk-tag-input
-            style="width: 74px;margin-right: 10px"
-            v-model="interval.next"
-            placeholder="请输入"
-            :list="lineList"
-            :max-data="1"
-            :allow-create="false">
-          </bk-tag-input>
-          <span>{{ $t('行') }}</span>
-        </div>
-      </div>
+      <log-filter :is-screen-full="isScreenFull" @handle-filter="handleFilter">
+      </log-filter>
       <!-- 暂停、复制、全屏 -->
       <div class="dialog-bar controls">
         <div class="control-icon" @click="togglePolling">
@@ -128,11 +70,13 @@
 
 <script>
 import logView from '@/components/logView';
+import LogFilter from '../condition-comp/Log-filter';
 
 export default {
   name: 'real-time-log',
   components: {
     logView,
+    LogFilter,
   },
   props: {
     logParams: {
@@ -144,7 +88,6 @@ export default {
   },
   data() {
     return {
-      filterKey: '',
       filterType: 'include',
       activeFilterKey: '',
       params: {},
@@ -161,10 +104,6 @@ export default {
       isScrollBottom: true,
       logWrapperEl: null,
       zero: true,
-      filterTypeList: [
-        { id: 'include', name: this.$t('retrieve.include') },
-        { id: 'uninclude', name: this.$t('retrieve.uninclude') },
-      ],
       ignoreCase: false,
       flipScreen: '',
       flipScreenList: [],
@@ -176,11 +115,6 @@ export default {
   },
   created() {
     this.deepClone(this.logParams);
-
-    this.lineList = Array.from({ length: 101 }, (v, k) => ({
-      id: k,
-      name: k.toString(),
-    }));
   },
   mounted() {
     document.addEventListener('keyup', this.handleKeyup);
@@ -193,11 +127,6 @@ export default {
     document.removeEventListener('keyup', this.handleKeyup);
 
     this.timer && clearInterval(this.timer);
-    // this.$emit('toggleScreenFull', false)
-
-    this.$nextTick(() => {
-      document.querySelector('.dialog-log-markdown').focus();
-    });
   },
   methods: {
     handleKeyup(event) {
@@ -319,8 +248,15 @@ export default {
         message: this.$t('retrieve.copySuccess'),
       });
     },
-    filterLog() {
-      this.activeFilterKey = this.filterKey;
+    filterLog(value) {
+      this.activeFilterKey = value;
+    },
+    handleFilter(field, value) {
+      if (field === 'filterKey') {
+        this.filterLog(value);
+      } else {
+        this[field] = value;
+      }
     },
   },
 };
