@@ -22,7 +22,7 @@
 
 /**
  * @file 检测 node 和 npm 的版本
- * @author v_adongtang <v_adongtang@tentcent.com>
+ * @author <>
  */
 
 import childProcess from 'child_process';

@@ -2,7 +2,7 @@
   "name": "log-manage",
   "version": "1.0.0",
   "description": "log manage",
-  "author": "v_adongtang <v_adongtang@tentcent.com>",
+  "author": "",
   "scripts": {
     "dev": "better-npm-run dev",
     "clean": "rimraf dist",

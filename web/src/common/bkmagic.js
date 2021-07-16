@@ -22,7 +22,7 @@
 
 /**
  * @file 引入 bk-magic-vue 组件
- * @author v_adongtang <v_adongtang@tentcent.com>
+ * @author <>
  */
 
 import Vue from 'vue';

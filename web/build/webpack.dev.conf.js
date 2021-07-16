@@ -22,7 +22,7 @@
 
 /**
  * @file webpack dev conf
- * @author v_adongtang <v_adongtang@tentcent.com>
+ * @author <>
  */
 
 import path from 'path';

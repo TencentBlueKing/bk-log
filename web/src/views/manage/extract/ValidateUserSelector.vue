@@ -27,7 +27,6 @@
       style="width: 400px;"
       :class="isError && 'is-error'"
       :api="api"
-      :exclude="!allowCreate"
       :placeholder="placeholder"
       @change="handleChange"
       @blur="handleBlur">
@@ -50,10 +49,6 @@ export default {
       type: Array,
       default: () => [],
     },
-    allowCreate: {
-      type: Boolean,
-      required: true,
-    },
     placeholder: {
       type: String,
       default: '',
@@ -74,23 +69,7 @@ export default {
   methods: {
     validateInitValue() {
       if (this.value.length) {
-        if (this.allowCreate) {
-          // 可以自定义用户情况下有用户就正确
-          this.isError = false;
-        } else {
-          // 有用户存在于人员列表中，才算是通过校验
-          // 外部版人员选择器数据源来源接口
-          // for (const user of this.value) {
-          //     if (this.list.length && this.list.find(item => item.username === user)) {
-          //         this.isError = false
-          //         return
-          //     }
-          // }
-          // // 虽然有用户，但是用户不存在人员列表中，用户无效
-          // this.isError = true
-          // this.$emit('change', [])
-          this.isError = false;
-        }
+        this.isError = false;
       } else {
         this.isError = true;
       }
@@ -108,17 +87,11 @@ export default {
       val.split(';').forEach((item) => {
         item = item.trim();
         if (item) {
-          if (this.allowCreate) { // tencent 版本
-            if (item.match(/^[0-9]*$/) && !users.includes(item)) {
-              users.push(item);
+          this.list.forEach((user) => {
+            if ((user.displayname === item || user.username === item) && !users.includes(user.username)) {
+              users.push(user.username);
             }
-          } else { // 内部版
-            this.list.forEach((user) => {
-              if ((user.displayname === item || user.username === item) && !users.includes(user.username)) {
-                users.push(user.username);
-              }
-            });
-          }
+          });
         }
       });
       this.$emit('change', users);

@@ -22,7 +22,7 @@
 
 /**
  * @file postcss 基本配置
- * @author v_adongtang <v_adongtang@tentcent.com>
+ * @author <>
  */
 
 const createResolver = require('postcss-import-webpack-resolver');
