@@ -208,17 +208,20 @@ class Lte(CompareBoolQueryOperation):
 class BoolMustIns(object):
     def __init__(self, filter_dict_list: List[filter_dict] = None):
         self.bool_must_dict = copy.deepcopy(bool_must_dict_template)
+        # default dict use lambda to build a dict have default value
         self.nested_map_query = defaultdict(
             lambda: {"nested": {"path": "", "query": copy.deepcopy(bool_must_dict_template)}}
         )
         for item in filter_dict_list:
             operator = item["operator"]
             field_type = item.get("type", "field")
+            # nested need deal path param, then build bool query at nested query
             if field_type == FieldDataTypeEnum.NESTED.value:
                 path, *_ = item["field"].split(".")
                 self.nested_map_query[path]["nested"]["path"] = path
                 BoolQueryOperation.get_op(operator, self.nested_map_query[path]["nested"]["query"]).op(item)
                 continue
+            # build bool query
             BoolQueryOperation.get_op(operator, self.bool_must_dict).op(item)
 
         for nested_query in self.nested_map_query.values():
