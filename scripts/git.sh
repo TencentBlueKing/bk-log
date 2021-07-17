@@ -1,10 +1,23 @@
 #!/bin/bash
 
+SCRIPT_PATH=$(dirname "$0")
+source $SCRIPT_PATH/default_env.sh
+check_upstream_config() {
+  if ! git remote -v | grep -q "upstream";then
+    git remote add upstream $DEFAULT_GIT_REP
+  fi
+}
+
+sync() {
+    git fetch upstream
+    git merge upstream/stag
+}
+
+check_upstream_config
+
 actions=(
-  release
   sync
-  tencent
-  tests
+  create_branch
 )
 
 action=$1
@@ -15,33 +28,16 @@ for item in "${actions[@]}"; do
 done
 
 if [ $is_exists -eq 0 ];then
-  echo "./script/git.sh tests|release|sync|tencent"
+  echo "./script/git.sh sync|create_branch"
   exit 1
 fi
 
-if [ "$action" = "release" ];then
-    git checkout tencent_stag
-    git pull
-
-    git checkout stag
-    git pull
-
-    git merge tencent_stag
-elif [ "$action" = "tests" ];then
-    git checkout tencent_stag
-    git pull
-    git checkout gitopen_stag
-    git pull
-    git merge tencent_stag
+if [ "$action" = "create_branch" ];then
+  git checkout stag
+  sync
+  git push -u origin stag
+  git checkout -b "$2"
 elif [ "$action" = "sync" ];then
-    git checkout master
-    git pull
-    git checkout gitopen_master
-    git merge master
-else
-    git checkout master
-    git pull
-    git checkout tencent_master
-    git merge master
+  sync
 fi
 
