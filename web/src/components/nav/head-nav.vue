@@ -840,7 +840,7 @@ export default {
   .log-search-nav {
     height: 50px;
     color: #fff;
-    background: #182132;
+    background: #000;
 
     @include clearfix;
 

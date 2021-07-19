@@ -29,6 +29,11 @@ const list = {
   url: '/result_table/',
   method: 'get',
 };
+// trace 匹配的字段情况
+const traceMatchList = {
+  url: '/result_table/trace_fields_match/',
+  method: 'post',
+};
 // 索引详情
 const info = {
   url: '/result_table/:result_table_id/',
@@ -42,6 +47,7 @@ const adapt = {
 
 export {
   list,
+  traceMatchList,
   info,
   adapt,
 };

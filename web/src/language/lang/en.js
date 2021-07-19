@@ -150,6 +150,7 @@ export default {
   复制成功: 'Copy successfully',
   共: 'Total',
   台: 'node(s)',
+  成功: 'Success',
   正常: 'Normal',
   失败: 'Failed',
   Agent未安装: 'Agent not installed',
@@ -974,6 +975,7 @@ export default {
   上一步: 'Previous Step',
   返回列表: 'Back to List',
   容量评估需要使用独立的ES集群: 'Capacity Assessment needs independent ES cluster',
+  请输入索引集名称: 'Search index set name',
   // v3迁移
   migrate: {
     description1: '1. Please confirm the collection items that need to be upgraded, and select the data classification corresponding to the collection items. After confirming that there are no errors, click Batch Upgrade.',

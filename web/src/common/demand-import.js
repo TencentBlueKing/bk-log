@@ -71,6 +71,7 @@ import {
   bkSlider,
   bkSteps,
   bkSwitcher,
+  bkTag,
   bkTab,
   bkTabPanel,
   bkTable,
@@ -135,6 +136,7 @@ Vue.use(bkTab);
 Vue.use(bkTabPanel);
 Vue.use(bkTable);
 Vue.use(bkTableColumn);
+Vue.use(bkTag);
 Vue.use(bkTagInput);
 Vue.use(bkTimePicker);
 Vue.use(bkTimeline);

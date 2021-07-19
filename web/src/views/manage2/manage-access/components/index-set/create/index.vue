@@ -108,7 +108,7 @@ import SelectCollection from './SelectCollection';
 import TraceSelect from './TraceSelect';
 import SelectEs from './SelectEs';
 import AuthPage from '@/components/common/auth-page';
-import { projectManage } from '@/common/util';
+import { projectManages } from '@/common/util';
 import { mapGetters, mapState } from 'vuex';
 
 export default {
@@ -161,7 +161,7 @@ export default {
     ...mapState('collect', ['curIndexSet']),
     ...mapGetters('globals', ['globalsData']),
     collectProject() {
-      return projectManage(this.$store.state.topMenu, 'collection-item');
+      return projectManages(this.$store.state.topMenu, 'collection-item');
     },
   },
   created() {

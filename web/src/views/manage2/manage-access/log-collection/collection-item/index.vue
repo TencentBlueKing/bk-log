@@ -676,9 +676,8 @@ export default {
     }
 
     .collect-table-operate {
-      .king-button {
-        margin-right: 8px;
-      }
+      display: flex;
+      justify-content: space-around;
     }
 
     .bk-dropdown-trigger {

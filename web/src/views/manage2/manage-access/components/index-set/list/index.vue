@@ -26,7 +26,19 @@
       @page-change="handlePageChange">
       <bk-table-column :label="$t('索引集')">
         <template slot-scope="{ row }">
-          <bk-button text @click="manageIndexSet('manage', row)">{{ row.index_set_name }}</bk-button>
+          <!-- <bk-button
+            class="indexSet-name"
+            text
+            @click="manageIndexSet('manage', row)">
+            {{ row.index_set_name }}
+          </bk-button> -->
+          <span
+            class="indexSet-name"
+            :title="row.index_set_name"
+            @click="manageIndexSet('manage', row)"
+          >
+            {{ row.index_set_name }}
+          </span>
         </template>
       </bk-table-column>
       <bk-table-column :label="$t('采集项')" prop="index_set_id" min-width="200">
@@ -72,7 +84,7 @@
 </template>
 
 <script>
-import { projectManage } from '@/common/util';
+import { projectManages } from '@/common/util';
 import { mapGetters } from 'vuex';
 
 export default {
@@ -104,7 +116,7 @@ export default {
       projectId: 'projectId',
     }),
     collectProject() {
-      return projectManage(this.$store.state.topMenu, 'collection-item');
+      return projectManages(this.$store.state.topMenu, 'collection-item');
     },
   },
   created() {
@@ -290,6 +302,16 @@ export default {
       &.success-status {
         color: #2dcb56;;
       }
+    }
+
+    .indexSet-name {
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      color: #3a84ff;
+      width: 100%;
+      text-overflow: ellipsis;
+      cursor: pointer;
     }
   }
 </style>
