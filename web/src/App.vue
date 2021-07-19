@@ -234,6 +234,31 @@ export default {
   .bk-form-control.is-error .bk-form-input {
     border-color: #ff5656;
   }
+  // 导航
+  .hack-king-navigation.bk-navigation {
+    width: 100% !important;
+    height: 100% !important;
+    .container-header {
+      display: none !important;
+    }
+    .bk-navigation-wrapper {
+      height: 100%;
+      .navigation-container {
+        max-width: calc(100% - 60px) !important;
+        .container-content {
+          height: 100% !important;
+          max-height: 100% !important;
+          padding: 0;
+          .navigation-content {
+            height: 100%;
+          }
+        }
+      }
+    }
+    .nav-slider-list {
+        height: calc(100% - 56px) !important;
+    }
+  }
   // 表格单元 v-bk-overflow-tips
   .bk-table .bk-table-body-wrapper .table-ceil-container {
     width: 100%;

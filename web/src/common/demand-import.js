@@ -52,6 +52,7 @@ import {
   bkMessage,
   bkNavigation,
   bkNavigationMenu,
+  bkNavigationMenuGroup,
   bkNavigationMenuItem,
   bkNotify,
   bkOption,
@@ -112,6 +113,7 @@ Vue.use(bkFormItem);
 Vue.use(bkInput);
 Vue.use(bkNavigation);
 Vue.use(bkNavigationMenu);
+Vue.use(bkNavigationMenuGroup);
 Vue.use(bkNavigationMenuItem);
 Vue.use(bkOption);
 Vue.use(bkOptionGroup);

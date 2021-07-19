@@ -46,33 +46,33 @@ export default class TextChart extends Vue {
 </script>
 <style lang="scss" scoped>
   .text-chart {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-  height: 30px;
-  padding: 0 16px;
-  margin: auto;
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    height: 30px;
+    padding: 0 16px;
+    margin: auto;
 
-  &-value {
-    color: #3a84ff;
-    font-size: 32px;
-    font-weight: 500;
-    line-height: 30px;
-    margin-right: 6px;
-  }
+    &-value {
+      color: #3a84ff;
+      font-size: 32px;
+      font-weight: 500;
+      line-height: 30px;
+      margin-right: 6px;
+    }
 
-  &-unit {
-    font-size: 12px;
-    color: #979ba5;
-    line-height: 20px;
-    align-self: flex-end;
-  }
+    &-unit {
+      font-size: 12px;
+      color: #979ba5;
+      line-height: 20px;
+      align-self: flex-end;
+    }
 
-  &-empty {
-    color: #dcdee5;
-    font-size: 50px;
-    line-height: 30px;
-    margin-left: -16px;
-  }
+    &-empty {
+      color: #dcdee5;
+      font-size: 50px;
+      line-height: 30px;
+      margin-left: -16px;
+    }
   }
 </style>

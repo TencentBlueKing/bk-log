@@ -62,42 +62,42 @@ export default class StatusChart extends Vue {
   $statusBgColor: #e7f9f2 #f0f1f5 #ffe8c3;
 
   .status-chart {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-
-  &-item {
     display: flex;
-    padding: 5px 14px;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
-    line-height: 20px;
-    font-size: 12px;
-    border-radius: 2px;
-    margin: 0 2px 2px 0;
-    height: 30px;
+    width: 100%;
+    height: 100%;
+    padding: 0;
 
-    @for $i from 0 through 2 {
-      &.status-#{$i} {
-        background: nth($statusBgColor, $i + 1);
-        color: nth($statusFontColor, $i + 1);
+    &-item {
+      display: flex;
+      padding: 5px 14px;
+      align-items: center;
+      justify-content: center;
+      line-height: 20px;
+      font-size: 12px;
+      border-radius: 2px;
+      margin: 0 2px 2px 0;
+      height: 30px;
 
-        &:hover {
-          background: nth($statusFontColor, $i + 1);
-          color: white;
-          cursor: pointer;
+      @for $i from 0 through 2 {
+        &.status-#{$i} {
+          background: nth($statusBgColor, $i + 1);
+          color: nth($statusFontColor, $i + 1);
+
+          &:hover {
+            background: nth($statusFontColor, $i + 1);
+            color: white;
+            cursor: pointer;
+          }
         }
       }
     }
-  }
 
-  &-empty {
-    color: #dcdee5;
-    font-size: 50px;
-    line-height: 30px;
-  }
+    &-empty {
+      color: #dcdee5;
+      font-size: 50px;
+      line-height: 30px;
+    }
   }
 </style>
