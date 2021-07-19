@@ -60,6 +60,13 @@ const index = {
   method: 'get',
 };
 
+
+// 采集索引列表
+const indexes = {
+  url: '/index_set/:index_set_id/indices/',
+  method: 'get',
+};
+
 // 创建索引
 const createIndex = {
   url: '/index_set/:index_set_id/index/',
@@ -84,4 +91,50 @@ const cancelMark = {
   method: 'post',
 };
 
-export { list, info, create, update, remove, index, removeIndex, createIndex, mark, cancelMark };
+// 使用次数趋势
+const getIndexTimes = {
+  url: '/admin/index_set/:index_set_id/history/date_histogram/',
+  method: 'get',
+};
+
+// 用户使用频次
+const getIndexFrequency = {
+  url: '/admin/index_set/:index_set_id/history/user_terms/',
+  method: 'get',
+};
+
+// 检索耗时统计
+const getIndexSpent = {
+  url: '/admin/index_set/:index_set_id/history/duration_terms/',
+  method: 'get',
+};
+
+// 检索记录（表格）
+const getIndexHistory = {
+  url: '/admin/index_set/:index_set_id/history/',
+  method: 'get',
+};
+
+// 操作记录
+const getOperationRecord = {
+  url: '/admin/audit/record/',
+};
+
+export {
+  list,
+  info,
+  create,
+  update,
+  remove,
+  index,
+  indexes,
+  removeIndex,
+  createIndex,
+  mark,
+  cancelMark,
+  getIndexTimes,
+  getIndexFrequency,
+  getIndexSpent,
+  getIndexHistory,
+  getOperationRecord,
+};

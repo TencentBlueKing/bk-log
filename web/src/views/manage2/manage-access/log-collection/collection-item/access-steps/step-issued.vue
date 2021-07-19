@@ -4,124 +4,132 @@
       <i class="bk-icon icon-info-circle-shape notice-icon"></i>
       <span class="notice-text">{{ $t('dataManage.Within_stop') }}</span>
     </div>
-    <div class="step-issued-header">
-      <div class="tab-only-compact fl">
-        <template v-for="(tabItem) in tabList">
-          <li :class="['tab-item', { 'cur-tab': tabItem.type === curTab }]" :key="tabItem.type">
-            <a
-              href="javascript:void(0);"
-              class="tab-button"
-              @click="tabHandler(tabItem)">
-              {{ `${tabItem.name}(${tabItem.num})` }}
-            </a>
-          </li>
-        </template>
-      </div>
-      <bk-button
-        v-if="hasFailed"
-        class="fr"
-        icon="refresh"
-        :title="$t('configDetails.batchRetry')"
-        :disabled="hasRunning"
-        @click="issuedRetry">{{ $t('configDetails.batchRetry') }}
-      </bk-button>
-    </div>
-    <section class="cluster-collaspse" v-if="tableList.length">
-      <template v-for="cluster in tableList">
-        <right-panel
-          v-if="cluster.child.length"
-          :class="['cluster-menu', { 'has-title-sign': cluster.is_label && isEdit }]"
-          :key="cluster.id"
-          :need-border="true"
-          :collapse-color="'#313238'"
-          :title-bg-color="'#F0F1F5'"
-          :collapse.sync="cluster.collapse"
-          :title="{
-            type: cluster.bk_obj_name,
-            number: cluster.success
-          }">
-          <div
-            :class="`heder-title-sign sign-${cluster.label_name}`"
-            v-if="cluster.is_label && isEdit"
-            slot="pre-panel">
-            {{ cluster.label_name === 'add' ?
-              $t('dataManage.add_btn') :
-              (cluster.label_name === 'modify' ?
-                $t('dataManage.amend') : $t('btn.delete')) }}
-          </div>
-          <div class="header-info" slot="title">
-            <div class="header-title fl">{{ cluster.node_path }}</div>
-            <!-- eslint-disable -->
-                        <p class="fl" v-html="collaspseHeadInfo(cluster)"></p>
-                        <!-- eslint-enabled -->
-                        <!-- <span class="success">{{ cluster.success }}</span> 个成功
-                        <span v-if="cluster.failed" class="failed">，{{ cluster.failed }}</span> 个失败 -->
-                    </div>
-                    <div class="cluster-table-wrapper" slot>
-                        <bk-table
-                            v-bkloading="{ isLoading: hasRunning }"
-                            class="cluster-table"
-                            :resizable="true"
-                            :empty-text="$t('btn.vacancy')"
-                            :data="cluster.child"
-                            :size="size"
-                            :pagination="pagination">
-                            <bk-table-column :label="$t('configDetails.goal')" prop="ip" width="180"></bk-table-column>
-
-                            <bk-table-column :label="$t('dataManage.es_host')" width="120">
-                                <template slot-scope="props">
-                                    <span :class="['status', 'status-' + props.row.status]">
-                                        <i
-                                            class="bk-icon icon-refresh"
-                                            style="display: inline-block; animation: button-icon-loading 1s linear infinite;"
-                                            v-if="props.row.status !== 'success' && props.row.status !== 'failed'"></i>
-                                        {{ props.row.status === 'success' ? $t('configDetails.success') : props.row.status === 'failed' ? $t('dataSource.failed') : $t('configDetails.Pending') }}
-                                    </span>
-                                </template>
-                            </bk-table-column>
-
-                            <!-- <bk-table-column :label="'版本' || $t('dataSource.scenario_name')" prop="plugin_version" width="100"></bk-table-column> -->
-
-                            <bk-table-column
-                                :class-name="'row-detail'"
-                                :label="$t('monitors.detail')">
-                                <template slot-scope="props" class="row-detail">
-                                    <p>
-                                        <span style="display: inline-block">{{ props.row.log }}</span>
-                                        <a href="javascript: ;" class="more" @click.stop="viewDetail(props.row)">{{ $t('dataManage.more') }}</a>
-                                    </p>
-                                </template>
-                            </bk-table-column>
-                            <bk-table-column width="80">
-                                <template slot-scope="props">
-                                    <a href="javascript: ;" class="retry"
-                                        v-if="props.row.status === 'failed'"
-                                        @click.stop="issuedRetry(props.row, cluster)">{{ $t('configDetails.retry') }}</a>
-                                </template>
-                            </bk-table-column>
-                        </bk-table>
-                    </div>
-                </right-panel>
-            </template>
-        </section>
-        <div class="step-issued-footer">
-            <bk-button v-if="isSwitch" theme="primary" :disabled="hasRunning" @click="nextHandler">{{ hasRunning ? $t('configDetails.Pending') : $t('dataManage.perform') }}</bk-button>
-            <template v-else>
-                <bk-button :disabled="hasRunning" @click="prevHandler">{{ $t('dataManage.last') }}</bk-button>
-                <bk-button theme="primary" :disabled="hasRunning" @click="nextHandler">{{ $t('dataManage.next') }}</bk-button>
-            </template>
-            <bk-button @click="cancel">{{ $t('dataManage.Return_list') }}</bk-button>
+    <template v-if="!isShowStepInfo">
+      <div class="step-issued-header">
+        <div class="tab-only-compact fl">
+          <template v-for="(tabItem) in tabList">
+            <li :class="['tab-item', { 'cur-tab': tabItem.type === curTab }]" :key="tabItem.type">
+              <a
+                href="javascript:void(0);"
+                class="tab-button"
+                @click="tabHandler(tabItem)">
+                {{ `${tabItem.name}(${tabItem.num})` }}
+              </a>
+            </li>
+          </template>
         </div>
-        <bk-sideslider
-            :width="800"
-            :quick-close="true"
-            :ext-cls="'issued-detail'"
-            :is-show.sync="detail.isShow"
-            @animation-end="closeSlider">
-            <div slot="header">{{ detail.title }}</div>
-            <div class="p20 detail-content" slot="content" v-bkloading="{ isLoading: detail.loading }" v-html="detail.content"></div>
-        </bk-sideslider>
+        <bk-button
+          v-if="hasFailed"
+          class="fr"
+          icon="refresh"
+          :title="$t('configDetails.batchRetry')"
+          :disabled="hasRunning"
+          @click="issuedRetry">{{ $t('configDetails.batchRetry') }}
+        </bk-button>
+      </div>
+      <section class="cluster-collaspse" v-if="tableList.length">
+        <template v-for="cluster in tableList">
+          <right-panel
+            v-if="cluster.child.length"
+            :class="['cluster-menu', { 'has-title-sign': cluster.is_label && isEdit }]"
+            :key="cluster.id"
+            :need-border="true"
+            :collapse-color="'#313238'"
+            :title-bg-color="'#F0F1F5'"
+            :collapse.sync="cluster.collapse"
+            :title="{
+              type: cluster.bk_obj_name,
+              number: cluster.success
+            }">
+            <div
+              :class="`heder-title-sign sign-${cluster.label_name}`"
+              v-if="cluster.is_label && isEdit"
+              slot="pre-panel">
+              {{ cluster.label_name === 'add' ?
+                $t('dataManage.add_btn') :
+                (cluster.label_name === 'modify' ?
+                  $t('dataManage.amend') : $t('btn.delete')) }}
+            </div>
+            <div class="header-info" slot="title">
+              <div class="header-title fl">{{ cluster.node_path }}</div>
+              <!-- eslint-disable -->
+                <p class="fl" v-html="collaspseHeadInfo(cluster)"></p>
+                <!-- <span class="success">{{ cluster.success }}</span> 个成功
+                <span v-if="cluster.failed" class="failed">，{{ cluster.failed }}</span> 个失败 -->
+              </div>
+              <!-- eslint-enabled -->
+              <div class="cluster-table-wrapper" slot>
+                <bk-table
+                  v-bkloading="{ isLoading: hasRunning }"
+                  class="cluster-table"
+                  :resizable="true"
+                  :empty-text="$t('btn.vacancy')"
+                  :data="cluster.child"
+                  :size="size"
+                  :pagination="pagination">
+                  <bk-table-column :label="$t('configDetails.goal')" prop="ip" width="180"></bk-table-column>
+
+                  <bk-table-column :label="$t('dataManage.es_host')" width="120">
+                      <template slot-scope="props">
+                          <span :class="['status', 'status-' + props.row.status]">
+                              <i
+                                class="bk-icon icon-refresh"
+                                style="display: inline-block; animation: button-icon-loading 1s linear infinite;"
+                                v-if="props.row.status !== 'success' && props.row.status !== 'failed'">
+                              </i>
+                              {{ props.row.status === 'success' ? $t('configDetails.success') : props.row.status === 'failed' ? $t('dataSource.failed') : $t('configDetails.Pending') }}
+                          </span>
+                      </template>
+                  </bk-table-column>
+                  <bk-table-column
+                    :class-name="'row-detail'"
+                    :label="$t('monitors.detail')">
+                    <template slot-scope="props" class="row-detail">
+                      <p>
+                        <span style="display: inline-block">{{ props.row.log }}</span>
+                        <a href="javascript: ;" class="more" @click.stop="viewDetail(props.row)">{{ $t('dataManage.more') }}</a>
+                      </p>
+                    </template>
+                  </bk-table-column>
+                  <bk-table-column width="80">
+                    <template slot-scope="props">
+                      <a 
+                      href="javascript: ;" class="retry"
+                          v-if="props.row.status === 'failed'"
+                          @click.stop="issuedRetry(props.row, cluster)">{{ $t('configDetails.retry') }}
+                      </a>
+                    </template>
+                  </bk-table-column>
+                </bk-table>
+              </div>
+            </right-panel>
+          </template>
+        </section>
+    </template>
+    <template v-else>
+      <div class="empty-view">
+        <i class="bk-icon icon-info-circle-shape"></i>
+        <div class="hint-text">{{ $t('dataManage.StepInfo') }}</div>
+      </div>
+    </template>
+    <div class="step-issued-footer">
+      <bk-button v-if="isSwitch" theme="primary" :disabled="hasRunning" @click="nextHandler">{{ hasRunning ? $t('configDetails.Pending') : $t('dataManage.perform') }}</bk-button>
+      <template v-else>
+        <bk-button :disabled="hasRunning" @click="prevHandler">{{ $t('dataManage.last') }}</bk-button>
+        <bk-button theme="primary" :disabled="hasRunning" @click="nextHandler">{{ $t('dataManage.next') }}</bk-button>
+      </template>
+      <bk-button @click="cancel">{{ $t('dataManage.Return_list') }}</bk-button>
     </div>
+    <bk-sideslider
+      :width="800"
+      :quick-close="true"
+      :ext-cls="'issued-detail'"
+      :is-show.sync="detail.isShow"
+      @animation-end="closeSlider">
+      <div slot="header">{{ detail.title }}</div>
+      <div class="p20 detail-content" slot="content" v-bkloading="{ isLoading: detail.loading }" v-html="detail.content"></div>
+    </bk-sideslider>
+  </div>
 </template>
 
 <script>
@@ -183,6 +191,7 @@ export default {
         count: 0,
         limit: 100,
       },
+      isShowStepInfo: false,
       // operateInfo: {}
     };
   },
@@ -207,11 +216,18 @@ export default {
         this.stopStatusPolling();
       }
     },
+    notReady(val) {
+      if (!val) {
+        const len = this.tableList.length;
+        this.isShowStepInfo = this.tableList.filter(item => item.child.length === 0).length === len;
+      }
+    },
   },
   created() {
     this.curCollect.task_id_list.forEach(id => this.curTaskIdList.add(id));
   },
   mounted() {
+    this.isShowStepInfo = false;
     this.requestIssuedClusterList();
   },
   destroyed() {
@@ -311,7 +327,7 @@ export default {
       this.stopStatusPolling();
       this.timer = setTimeout(() => {
         this.requestIssuedClusterList('polling');
-      }, 5000);
+      }, 500);
     },
     stopStatusPolling() {
       clearTimeout(this.timer);
@@ -482,7 +498,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
   @import '../../../../../../scss/mixins/scroller.scss';
   @import '../../../../../../scss/mixins/clearfix';
   @import '../../../../../../scss/conf';
@@ -679,24 +695,56 @@ export default {
       }
     }
 
-    /deep/ .bk-sideslider-wrapper {
-      padding-bottom: 0;
-
-      .bk-sideslider-content {
-        background-color: #313238;
-        color: #c4c6cc;
-      }
-
-      .detail-content {
-        min-height: calc(100vh - 60px);
-        white-space: pre-wrap;
-      }
-    }
-
     .step-issued-footer {
       button {
         margin-right: 10px;
       }
+    }
+
+    .empty-view {
+      height: 452px;
+      background: #fff;
+      border-radius: 2px;
+      border: 1px dashed #dcdee5;
+      position: relative;
+      // display: box;
+      display: flexbox;
+      display: flex;
+      box-pack: center;
+      flex-pack: center;
+      justify-content: center;
+
+      .hint-text {
+        min-width: 144px;
+        height: 16px;
+        line-height: 16px;
+        position: absolute;
+        top: 186px;
+        font-size: 12px;
+        color: #979ba5;
+      }
+
+      .icon-info-circle-shape {
+        position: absolute;
+        top: 142px;
+        left: calc(50% - 16px);
+        font-size: 32px;
+        color: #dcdee5;
+      }
+    }
+  }
+
+  /deep/ .bk-sideslider-wrapper {
+    padding-bottom: 0;
+
+    .bk-sideslider-content {
+      background-color: #313238;
+      color: #c4c6cc;
+    }
+
+    .detail-content {
+      min-height: calc(100vh - 60px);
+      white-space: pre-wrap;
     }
   }
 </style>

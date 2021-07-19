@@ -117,6 +117,12 @@ const detailsList = {
   method: 'get',
 };
 
+// 物理索引
+const getIndexes = {
+  url: '/databus/collectors/:collector_config_id/indices_info/',
+  method: 'get',
+};
+
 const collectList = {
   url: '/databus/collectors/:collector_config_id/subscription_status/',
   method: 'get',
@@ -148,7 +154,6 @@ export {
   connectivityDetect,
   getNodeAttrs,
   connectionStatus,
-
   getCollectList,
   getCollectStatus,
   createCollection,
@@ -159,6 +164,7 @@ export {
   // detailCollection,
   getIssuedClusterList,
   detailsList,
+  getIndexes,
   collectList,
   retryList,
   dataList,

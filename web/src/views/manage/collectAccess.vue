@@ -54,9 +54,10 @@
         @page-limit-change="handlelimitChange">
         <bk-table-column :label="$t('dataSource.collector_config_name')" min-width="90">
           <template slot-scope="props">
-            <span class="text-active"
-                  v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
-                  @click="operateHandler(props.row, 'view')">{{ props.row.collector_config_name }}</span>
+            <span
+              class="text-active"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
+              @click="operateHandler(props.row, 'view')">{{ props.row.collector_config_name }}</span>
             <span
               v-if="!props.row.table_id"
               class="table-mark mark-mini mark-default">
@@ -122,14 +123,18 @@
                 </span>
               </div>
               <div slot="content" style="padding: 7px 6px;">
-                <span style="color: #d2d5dd;">{{$t('dataSource.click_view')}}</span>{{$t('dataSource.es_host_state')}}
+                <span style="color: #d2d5dd;">
+                  {{ $t('dataSource.click_view') }}
+                </span>{{ $t('dataSource.es_host_state') }}
               </div>
             </bk-popover>
             <div
               v-else
-              v-cursor="{ active: !(props.row.permission &&
-                props.row.permission.view_collection) &&
-                props.row.status !== 'terminated' }"
+              v-cursor="{
+                active: !(props.row.permission &&
+                  props.row.permission.view_collection) &&
+                  props.row.status !== 'terminated'
+              }"
               @click.stop="operateHandler(props.row, 'status')">
               <span
                 v-if="['prepare', 'pending', 'unknown', 'running'].includes(props.row.status)"
@@ -214,7 +219,7 @@
                     href="javascript:;"
                     v-else
                     v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-                    @click.stop="operateHandler(props.row, 'stop')">{{$t('btn.block')}}</a>
+                    @click.stop="operateHandler(props.row, 'stop')">{{ $t('btn.block') }}</a>
                 </li>
                 <li v-else>
                   <a
@@ -224,13 +229,13 @@
                       props.row.status === 'running' ||
                       props.row.status === 'prepare' ||
                       !collectProject">
-                    {{$t('btn.start')}}
+                    {{ $t('btn.start') }}
                   </a>
                   <a
                     href="javascript:;"
                     v-else
                     v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-                    @click.stop="operateHandler(props.row, 'start')">{{$t('btn.start')}}</a>
+                    @click.stop="operateHandler(props.row, 'start')">{{ $t('btn.start') }}</a>
                 </li>
                 <li>
                   <a
@@ -240,7 +245,7 @@
                       props.row.status === 'running' ||
                       props.row.is_active ||
                       !collectProject">
-                    {{$t('btn.delete')}}
+                    {{ $t('btn.delete') }}
                   </a>
                   <a
                     href="javascript:;"

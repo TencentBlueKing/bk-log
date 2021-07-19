@@ -81,9 +81,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-    .ip-select-dialog-content {
-      height: 560px;
-    }
+  .ip-select-dialog-content {
+    height: 560px;
+  }
 </style>
 
 <style lang="scss">

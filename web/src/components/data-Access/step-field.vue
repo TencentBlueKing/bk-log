@@ -189,7 +189,9 @@
     <bk-form :label-width="115" :model="formData" ref="validateForm">
       <bk-form-item
         :label="$t('dataSource.storage_cluster_name')"
-        required property="storage_cluster_id" :rules="rules.cluster_id">
+        required
+        property="storage_cluster_id"
+        :rules="rules.cluster_id">
         <bk-select
           style="width: 320px;"
           v-model="formData.storage_cluster_id"
@@ -224,12 +226,14 @@
         <div class="tips_storage" v-if="formData.storage_cluster_id">
           <!-- eslint-disable-next-line vue/camelcase -->
           <div v-for="(tip, index) in tip_storage" :key="index">{{index + 1}}. {{tip}}</div>
+          <!--eslint-enable-->
         </div>
       </bk-form-item>
       <div class="form-div mt">
         <bk-form-item
           :label="$t('configDetails.storageIndexName')"
-          required class="form-inline-div"
+          required
+          class="form-inline-div"
           :rules="rules.table_id"
           :property="'table_id'">
           <div class="prefix">{{formData.table_id_prefix}}</div>
@@ -290,8 +294,13 @@
           <a href="javascript:void(0);" @click="jumpToEsAccess">{{$t('前往ES源进行设置')}}</a>
         </span>
       </bk-form-item>
-      <bk-form-item v-if="accessUserManage" :label="$t('indexSetList.jurisdiction')"
-                    required :property="'view_roles'" :rules="rules.view_roles" style="width: 435px;">
+      <bk-form-item
+        v-if="accessUserManage"
+        :label="$t('indexSetList.jurisdiction')"
+        required
+        :property="'view_roles'"
+        :rules="rules.view_roles"
+        style="width: 435px;">
         <bk-select
           style="width: 320px;"
           v-model="formData.view_roles"
@@ -328,8 +337,9 @@
           :title="$t('btn.cancel')"
           class="ml10"
           @click="handleBack"
-          :disabled="isLoading"
-        >{{$t('dataManage.Return_list')}}</bk-button>
+          :disabled="isLoading">
+          {{$t('dataManage.Return_list')}}
+        </bk-button>
       </bk-form-item>
     </bk-form>
     <bk-dialog

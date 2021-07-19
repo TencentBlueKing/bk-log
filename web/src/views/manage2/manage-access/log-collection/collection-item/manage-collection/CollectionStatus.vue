@@ -4,22 +4,40 @@
       <div class="mb15 nav-section">
         <div class="button-group">
           <span
-            v-for="(val, x) in dataButton" :key="x"
+            v-for="(val, x) in dataButton"
+            :key="x"
             :class="clickSec.selected === val.key ? 'button-bul' : 'button-wit'"
-            @click="clickSec.selected = val.key, clickSec.data = val.dataList"
+            @click="handleChangeGroup(val)"
           >{{ val.content }}({{ val.dataList.totalLenght }})</span>
         </div>
         <div>
-          <span class="bk-icon icon-question-circle" v-bk-tooltips="$t('configDetails.text')"></span>
+          <span>{{$t('configDetails.text')}}</span>
+          <!-- <span class="bk-icon icon-question-circle" v-bk-tooltips="$t('configDetails.text')"></span> -->
           <bk-button
-            theme="default" icon="right-turn-line"
-            :title="$t('configDetails.retry')" :disabled="!collectProject"
+            theme="default"
+            icon="right-turn-line"
+            :size="size"
+            class="mr10"
+            :title="$t('configDetails.retry')"
+            :disabled="!collectProject"
             @click="retryClick(dataFal, dataFir.contents.length)"
           >{{ $t('configDetails.batchRetry') }}
           </bk-button>
+          <bk-button
+            :theme="'primary'"
+            :title="$t('configDetails.dataSampling')"
+            class="mr10"
+            :size="size"
+            :disabled="!collectProject"
+            @click="jsonFormatClick">
+            {{$t('configDetails.dataSampling')}}
+          </bk-button>
         </div>
       </div>
-      <div v-for="(value, i) in dataFir.contents" :key="i" style="margin-bottom: 10px; overflow: hidden" ref="unfold">
+      <div v-for="(value, i) in renderTableList"
+           :key="i"
+           style="margin-bottom: 10px; overflow: hidden"
+           ref="unfold">
         <div class="table-detail" @click="closeTable(i)">
           <div>
             <i
@@ -41,18 +59,28 @@
             <bk-table-column :label="$t('configDetails.goal')" prop="ip"></bk-table-column>
             <bk-table-column :label="$t('alarmStrategy.active_name')">
               <template slot-scope="props">
-                <i
-                  class="bk-icon icon-refresh"
-                  style="display: inline-block; animation: button-icon-loading 1s linear infinite;"
-                  v-if="props.row.status !== 'SUCCESS' && props.row.status !== 'FAILED'"></i>
-                <span v-if="props.row.status === 'SUCCESS'" class="SUCCESS">{{ $t('configDetails.success') }}</span>
-                <span v-else-if="props.row.status === 'FAILED'" class="FAILED">{{ $t('configDetails.failed') }}</span>
-                <span v-else class="PENDING">{{ $t('configDetails.Pending') }}</span>
+                <span @click="reset(props.row)">
+                  <i
+                    class="bk-icon icon-refresh"
+                    style="display: inline-block; animation: button-icon-loading 1s linear infinite;"
+                    v-if="props.row.status !== 'SUCCESS' && props.row.status !== 'FAILED'"></i>
+                  <span
+                    v-if="props.row.status === 'SUCCESS'"
+                    class="SUCCESS">
+                    {{$t('configDetails.success')}}
+                  </span>
+                  <span
+                    v-else-if="props.row.status === 'FAILED'"
+                    class="FAILED">
+                    {{$t('configDetails.failed')}}
+                  </span>
+                  <span v-else class="PENDING">{{$t('configDetails.Pending')}}</span>
+                </span>
               </template>
             </bk-table-column>
             <bk-table-column :label="$t('configDetails.updated_at')" prop="create_time"></bk-table-column>
             <bk-table-column :label="$t('configDetails.plug_in')" prop="plugin_version"></bk-table-column>
-            <bk-table-column :label="$t('操作')">
+            <bk-table-column :label="$t('monitors.detail')">
               <template slot-scope="props">
                 <div class="text-style">
                   <span></span>
@@ -60,9 +88,23 @@
                 </div>
               </template>
             </bk-table-column>
+            <bk-table-column label="" width="120">
+              <template slot-scope="props">
+                <bk-button
+                  theme="primary"
+                  text
+                  @click="retryClick(props.row, 'odd')"
+                  v-if="props.row.status === 'FAILED'">
+                  {{$t('configDetails.retry')}}
+                </bk-button>
+              </template>
+            </bk-table-column>
           </bk-table>
         </div>
       </div>
+      <template v-if="renderTableList.length">
+        <div v-show="!isPageOver && !reloadTable" v-bkloading="{ isLoading: true }" style="height: 40px;"></div>
+      </template>
       <bk-sideslider
         :width="800"
         :quick-close="true"
@@ -81,12 +123,31 @@
 </template>
 
 <script>
-import { projectManage } from '@/common/util';
+import { projectManages } from '@/common/util';
 
 export default {
   data() {
     return {
       basicLoading: true,
+      currentPage: 0,
+      isPageOver: false, // 前端分页加载是否结束
+      dataListPaged: [], // 将列表数据按 pageSize 分页
+      count: 0, // 数据总条数
+      pageSize: 30, // 每页展示多少数据
+      totalPage: 1,
+      size: 'small',
+      renderTableList: [
+        {
+          is_label: false,
+          bk_obj_name: '-',
+          node_path: '-',
+          bk_obj_id: '-',
+          label_name: '',
+          child: [],
+          bk_inst_id: 6,
+          bk_inst_name: '-',
+        },
+      ],
       detail: {
         isShow: false,
         title: this.$t('monitors.detail'),
@@ -141,7 +202,7 @@ export default {
   },
   computed: {
     collectProject() {
-      return projectManage(this.$store.state.topMenu, 'collection-item');
+      return projectManages(this.$store.state.topMenu, 'collection-item');
     },
   },
   created() {
@@ -151,10 +212,19 @@ export default {
     // 清除定时器
     this.timer && clearInterval(this.timer);
   },
+  mounted() {
+    this.adadScrollEvent();
+  },
   methods: {
     closeTable(val) {
       this.$refs.unfold[val].style.height = this.$refs.unfold[val].style.height === '' ? '43px' : '';
       this.$refs.icon[val].classList.value = this.$refs.unfold[val].style.height === '' ? 'bk-icon title-icon icon-down-shape' : 'bk-icon title-icon icon-right-shape';
+    },
+    adadScrollEvent() {
+      this.scrollontentEl = document.querySelector('.allocation');
+      if (!this.scrollontentEl) return;
+
+      this.scrollontentEl.addEventListener('scroll', this.handleScroll, { passive: true });
     },
     // 获取采集状态
     getCollectList() {
@@ -172,6 +242,9 @@ export default {
       }).then((res) => {
         this.dataFir = res.data;
         if (this.dataFir.contents.length !== 0) {
+          // 过滤child为空的节点
+          this.dataFir.contents = this.dataFir.contents.filter(data => data.child.length);
+
           for (let x = 0; x < this.dataFir.contents.length; x++) {
             let allSet = [];
             const secSet = [];
@@ -202,6 +275,15 @@ export default {
           });
           const sel = this.clickSec.selected;
           this.clickSec.data = sel === 'pen' ? this.dataPen : sel === 'sec' ? this.dataSec : sel === 'fal' ? this.dataFal : this.dataAll;
+
+          if (!this.timer) {
+            this.dataListPaged = [];
+            this.dataListShadow = [];
+            this.renderTableList = [];
+            this.initPageConf(this.dataFir.contents);
+            this.loadPage();
+          }
+
           //  如果存在执行中添加定时器
           if (this.dataPen.totalLenght === 0) {
             clearInterval(this.timer);
@@ -223,6 +305,61 @@ export default {
         .finally(() => {
           this.basicLoading = false;
         });
+    },
+    // 采集状态过滤
+    handleChangeGroup(val) {
+      this.clickSec.selected = val.key;
+      this.clickSec.data = val.dataList;
+
+      // TODO
+      this.dataListPaged = [];
+      this.dataListShadow = [];
+      this.renderTableList = [];
+      this.initPageConf(this.dataFir.contents || []);
+      this.loadPage();
+    },
+    // 初始化前端分页
+    initPageConf(list) {
+      this.currentPage = 0;
+      this.isPageOver = false;
+
+      this.count = list.length;
+      this.totalPage = Math.ceil(this.count / this.pageSize) || 1;
+      this.dataListShadow = list;
+      this.dataListPaged = [];
+      for (let i = 0; i < this.count; i += this.pageSize) {
+        this.dataListPaged.push(this.dataListShadow.slice(i, i + this.pageSize));
+      }
+    },
+    loadPage() {
+      this.currentPage += 1;
+      this.isPageOver = this.currentPage === this.totalPage;
+
+      if (this.dataListPaged[this.currentPage - 1]) {
+        this.renderTableList.splice(this.renderTableList.length, 0, ...this.dataListPaged[this.currentPage - 1]);
+        top && this.$nextTick(() => {
+          // this.scrollontentEl.scrollTop = top
+        });
+      }
+    },
+    handleScroll() {
+      if (this.throttle) {
+        return;
+      }
+
+      this.throttle = true;
+      setTimeout(() => {
+        this.throttle = false;
+
+        const el = this.scrollontentEl;
+
+        if (this.isPageOver) {
+          return;
+        }
+        if (el.scrollHeight - el.offsetHeight - el.scrollTop < 60) {
+          this.loadPage(el.scrollTop);
+        }
+      }, 200);
     },
     // 重试
     retryClick(val, key) {
@@ -298,6 +435,17 @@ export default {
       this.detail.content = '';
       this.detail.loading = false;
     },
+    jsonFormatClick() {
+      // this.$router.push({
+      //   name: 'jsonFormat',
+      //   params: {
+      //     collectorId: this.config_id,
+      //   },
+      //   query: {
+      //     projectId: window.localStorage.getItem('project_id'),
+      //   },
+      // });
+    },
   },
 };
 </script>
@@ -310,6 +458,13 @@ export default {
     .nav-section {
       display: flex;
       justify-content: space-between;
+
+      span {
+        color: #bfc0c6;
+        font-size: 12px;
+        display: inline-block;
+        margin-right: 10px;
+      }
 
       .icon-question-circle {
         color: #979ba5;

@@ -70,7 +70,8 @@
           class="item-target"
           required
           :rules="rules.nodes"
-          :property="'target_nodes'" ref="formItemTarget">
+          :property="'target_nodes'"
+          ref="formItemTarget">
           <bk-button
             theme="default"
             :title="$t('configDetails.newly_increased')"
@@ -279,7 +280,7 @@
 import MultilineRegDialog from './multiline-reg-dialog';
 import ipSelectorDialog from './ip-selector-dialog';
 import { mapGetters, mapState } from 'vuex';
-import { projectManage } from '@/common/util';
+import { projectManages } from '@/common/util';
 
 export default {
   components: {
@@ -452,7 +453,7 @@ export default {
       return this.formData.collector_scenario_id === 'section';
     },
     collectProject() {
-      return projectManage(this.$store.state.topMenu, 'collection-item');
+      return projectManages(this.$store.state.topMenu, 'collection-item');
     },
     isCloseDataLink() {
       // 没有可上报的链路时，编辑采集配置链路ID为0或null时，隐藏链路配置框，并且不做空值校验。

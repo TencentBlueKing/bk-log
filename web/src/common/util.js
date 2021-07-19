@@ -414,6 +414,20 @@ export function projectManage(menuProject, projectName, childName) {
   return project;
 }
 
+export function projectManages(menuList, id) {
+  for (const menu of menuList) {
+    if (menu.id === id) {
+      return menu.project_manage;
+    } if (menu?.children) {
+      const recursiveResult = projectManages(menu.children, id);
+      if (recursiveResult !== undefined) {
+        return recursiveResult;
+      }
+    }
+  }
+  return undefined;
+}
+
 /**
  * 设置显示字段的最小宽度，此方法会修改第一个参数的数据
  * @param {Array} visibleFieldsList

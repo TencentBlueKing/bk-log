@@ -22,7 +22,8 @@
             height: '82px',
             'line-height': '24px',
             color: '#C4C6CC',
-            borderRadius: '2px' }"
+            borderRadius: '2px'
+          }"
           v-model.trim="logOriginal">
         </bk-input>
       </div>
@@ -92,9 +93,10 @@
         </bk-button>
         <p class="format-error ml10 fl" v-if="isJsonOrOperator && !formatResult">{{ $t('dataManage.try_methods') }}</p>
         <template v-if="params.etl_config === 'bk_log_regexp'">
-          <span v-bk-tooltips="{ allowHtml: true, placement: 'right', content: '#reg-tip' }"
-                style="margin-top: 8px; color: #979ba5; cursor: pointer;"
-                class="log-icon icon-info-fill fl"></span>
+          <span
+            v-bk-tooltips="{ allowHtml: true, placement: 'right', content: '#reg-tip' }"
+            style="margin-top: 8px; color: #979ba5; cursor: pointer;"
+            class="log-icon icon-info-fill fl"></span>
           <div id="reg-tip">
             <p>{{$t('dataManage.regular_format1')}}</p>
             <p>{{$t('dataManage.regular_format2')}}</p>
@@ -182,7 +184,8 @@
             :key="index">
             <div
               v-if="!(item.permission && item.permission.manage_es_source)"
-              class="option-slot-container no-authority" @click.stop>
+              class="option-slot-container no-authority"
+              @click.stop>
               <span class="text">{{item.storage_cluster_name}}</span>
               <span class="apply-text" @click="applySearchAccess(item)">{{$t('申请权限')}}</span>
             </div>
@@ -190,7 +193,8 @@
               <span v-bk-tooltips="{
                 content: $t('容量评估需要使用独立的ES集群'),
                 placement: 'right',
-                disabled: !(isItsm && curCollect.can_use_independent_es_cluster &&
+                disabled: !(isItsm &&
+                  curCollect.can_use_independent_es_cluster &&
                   item.registered_system === '_default')
               }">{{ item.storage_cluster_name }}</span>
             </div>
@@ -267,6 +271,28 @@
           <a href="javascript:void(0);" @click="jumpToEsAccess">{{$t('前往ES源进行设置')}}</a>
         </span>
       </bk-form-item>
+      <bk-form-item
+        v-if="accessUserManage"
+        :label="$t('indexSetList.jurisdiction')"
+        required
+        :property="'view_roles'"
+        :rules="rules.view_roles"
+        style="width: 435px;">
+        <bk-select
+          style="width: 320px;"
+          v-model="formData.view_roles"
+          searchable
+          multiple
+          :placeholder="$t('btn.select')"
+          show-select-all>
+          <bk-option
+            v-for="(role, index) in roleList"
+            :key="index"
+            :id="role.group_id"
+            :name="role.group_name">
+          </bk-option>
+        </bk-select>
+      </bk-form-item>
       <bk-form-item>
         <bk-button
           theme="default"
@@ -316,7 +342,7 @@
 <script>
 import { mapGetters, mapState } from 'vuex';
 import fieldTable from './field-table';
-import { projectManage } from '@/common/util';
+import { projectManages } from '@/common/util';
 
 export default {
   components: {
@@ -340,6 +366,7 @@ export default {
       basicLoading: true,
       isUnmodifiable: false,
       switcher: false,
+      roleList: [],
       defaultRetention: '',
       fieldType: '',
       deletedVisible: true,
@@ -366,6 +393,7 @@ export default {
           // separator_field_list: ''
         },
         fields: [],
+        view_roles: [],
         retention: '',
         allocation_min_days: '0',
         storage_cluster_id: '',
@@ -394,6 +422,12 @@ export default {
         cluster_id: [{
           validator(val) {
             return val !== '';
+          },
+          trigger: 'change',
+        }],
+        view_roles: [{
+          validator(val) {
+            return val.length >= 1;
           },
           trigger: 'change',
         }],
@@ -427,6 +461,7 @@ export default {
       projectId: 'projectId',
       curCollect: 'collect/curCollect',
       globalsData: 'globals/globalsData',
+      accessUserManage: 'accessUserManage',
     }),
     ...mapState({
       menuProject: state => state.menuProject,
@@ -446,7 +481,7 @@ export default {
       return true;
     },
     collectProject() {
-      return projectManage(this.$store.state.topMenu, 'collection-item');
+      return projectManages(this.$store.state.topMenu, 'collection-item');
     },
   },
   watch: {
@@ -584,17 +619,18 @@ export default {
         storage_cluster_id,
         retention,
         allocation_min_days,
+        view_roles,
         fields,
         etl_params,
       } = this.formData;
       this.isLoading = true;
       const data = {
-        view_roles: [], // 兼容后端历史遗留代码
         etl_config,
         table_id,
         storage_cluster_id,
         retention: Number(retention),
         allocation_min_days: Number(allocation_min_days),
+        view_roles,
         etl_params: {
           retain_original_text: etl_params.retain_original_text,
           separator_regexp: etl_params.separator_regexp,
@@ -781,6 +817,7 @@ export default {
         retention,
         allocation_min_days,
         table_id_prefix,
+        view_roles,
         etl_config,
         etl_params,
         fields,
@@ -824,6 +861,7 @@ export default {
         retention: retention ? `${retention}` : this.defaultRetention,
         // eslint-disable-next-line camelcase
         allocation_min_days: allocation_min_days ? `${allocation_min_days}` : '0',
+        view_roles,
       });
       if (!this.copyBuiltField.length) {
         this.copyBuiltField = copyFields.filter(item => item.is_built_in);
@@ -1054,7 +1092,10 @@ export default {
       this.deletedVisible = val;
     },
     judgeNumber(val) {
-      return (val.value && val.value !== ' ') ? isNaN(val.value) : true;
+      const { value } = val;
+      if (value === 0) return false;
+
+      return (value && value !== ' ') ? isNaN(value) : true;
     },
   },
 };
@@ -1362,45 +1403,5 @@ export default {
   .json-text-style {
     background-color: #313238;
     color: #c4c6cc;
-  }
-
-  .locker-style {
-    section {
-      background-color: #313238 !important;
-
-      > div:nth-child(1) {
-        height: 50px;
-
-        > div:nth-child(1) {
-          height: 50px;
-          line-height: 50px;
-        }
-
-        > div:nth-child(2) {
-          height: 50px;
-          line-height: 50px;
-          color: #737987;
-          font-size: 14px;
-
-          > div {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            span {
-              margin-right: 20px;
-              display: inline-block;
-              width: 68px;
-              height: 32px;
-              border: 1px solid #c4c6cc;
-              line-height: 32px;
-              text-align: center;
-              color: #737987;
-              cursor: pointer;
-            }
-          }
-        }
-      }
-    }
   }
 </style>

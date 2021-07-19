@@ -37,7 +37,8 @@
               v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
               @click="operateHandler(props.row, 'view')">{{ props.row.collector_config_name }}</span>
             <span
-              v-if="!props.row.table_id" class="table-mark mark-mini mark-default">
+              v-if="!props.row.table_id"
+              class="table-mark mark-mini mark-default">
               {{ $t('dataSource.collector_config_unfinished') }}
             </span>
           </template>
@@ -52,8 +53,7 @@
         </bk-table-column>
         <bk-table-column :label="$t('dataSource.storage_cluster_name')" min-width="70">
           <template slot-scope="props">
-            <span
-              :class="{ 'text-disabled': props.row.status === 'stop' }">
+            <span :class="{ 'text-disabled': props.row.status === 'stop' }">
               {{ props.row.storage_cluster_name || '--' }}
             </span>
           </template>
@@ -74,19 +74,30 @@
           <template slot-scope="props">
             <bk-popover placement="bottom" :always="true" v-if="needGuide && props.$index === 0">
               <div @click.stop="operateHandler(props.row, 'status')">
-                <span v-if="props.row.status === 'running'" class="status status-running">
+                <span
+                  v-if="['prepare', 'pending', 'unknown', 'running'].includes(props.row.status)"
+                  class="status status-running">
                   <i class="bk-icon icon-refresh"></i>
                   {{ props.row.status_name || '--' }}
                 </span>
-                <span v-else-if="props.row.status === 'stop'" class="text-disabled">
+                <span
+                  v-else-if="props.row.status === 'stop'"
+                  class="text-disabled">
                   {{ props.row.status_name || '--' }}
                 </span>
-                <span v-else-if="props.row.status === 'terminated'" class="text-disabled cursor-disabled">
+                <span
+                  v-else-if="props.row.status === 'terminated'"
+                  class="text-disabled cursor-disabled">
                   {{ props.row.status_name || '--' }}
                 </span>
                 <span v-else :class="['status', 'status-' + props.row.status, { 'cursor-disabled': !loadingStatus }]">
-                  <i class="bk-icon icon-circle-shape" v-if="props.row.status"></i>
-                  {{ props.row.status_name || '--' }}
+                  <span v-if="props.row.status">
+                    <i class="bk-icon icon-circle-shape"></i>
+                    {{ props.row.status_name || '--' }}
+                  </span>
+                  <span class="status status-running" v-if="props.row.status === ''">
+                    <i class="bk-icon icon-refresh"></i>
+                  </span>
                 </span>
               </div>
               <div slot="content" style="padding: 7px 6px;">
@@ -103,19 +114,30 @@
                   props.row.status !== 'terminated'
               }"
               @click.stop="operateHandler(props.row, 'status')">
-              <span v-if="props.row.status === 'running'" class="status status-running">
+              <span
+                v-if="['prepare', 'pending', 'unknown', 'running'].includes(props.row.status)"
+                class="status status-running">
                 <i class="bk-icon icon-refresh"></i>
                 {{ props.row.status_name || '--' }}
               </span>
-              <span v-else-if="props.row.status === 'stop'" class="text-disabled">
+              <span
+                v-else-if="props.row.status === 'stop'"
+                class="text-disabled">
                 {{ props.row.status_name || '--' }}
               </span>
-              <span v-else-if="props.row.status === 'terminated'" class="text-disabled cursor-disabled">
+              <span
+                v-else-if="props.row.status === 'terminated'"
+                class="text-disabled cursor-disabled">
                 {{ props.row.status_name || '--' }}
               </span>
               <span v-else :class="['status', 'status-' + props.row.status, { 'cursor-disabled': !loadingStatus }]">
-                <i class="bk-icon icon-circle-shape" v-if="props.row.status"></i>
-                {{ props.row.status_name || '--' }}
+                <span v-if="props.row.status">
+                  <i class="bk-icon icon-circle-shape"></i>
+                  {{ props.row.status_name || '--' }}
+                </span>
+                <span class="status status-running" v-if="props.row.status === ''">
+                  <i class="bk-icon icon-refresh"></i>
+                </span>
               </span>
             </div>
           </template>
@@ -148,6 +170,13 @@
               @click.stop="operateHandler(props.row, 'view')">
               {{ $t('编辑') }}
             </bk-button>
+            <bk-button
+              theme="primary" text
+              :disabled="!props.row.subscription_id"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              @click.stop="operateHandler(props.row, 'field')">
+              {{ $t('btn.Field') }}
+            </bk-button>
             <bk-dropdown-menu ref="dropdown" align="right">
               <i
                 class="bk-icon icon-more"
@@ -165,9 +194,11 @@
                       !collectProject">
                     {{ $t('btn.block') }}
                   </a>
-                  <a href="javascript:void(0);" v-else
-                     v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-                     @click.stop="operateHandler(props.row, 'stop')">{{ $t('btn.block') }}</a>
+                  <a
+                    href="javascript:void(0);"
+                    v-else
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    @click.stop="operateHandler(props.row, 'stop')">{{ $t('btn.block') }}</a>
                 </li>
                 <li v-else>
                   <a
@@ -179,22 +210,27 @@
                       !collectProject">
                     {{ $t('btn.start') }}
                   </a>
-                  <a href="javascript:void(0);" v-else
-                     v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-                     @click.stop="operateHandler(props.row, 'start')">{{ $t('btn.start') }}</a>
+                  <a
+                    href="javascript:void(0);"
+                    v-else
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    @click.stop="operateHandler(props.row, 'start')">{{ $t('btn.start') }}</a>
                 </li>
                 <li>
                   <a
-                    href="javascript:void(0);" class="text-disabled"
+                    href="javascript:void(0);"
+                    class="text-disabled"
                     v-if="!props.row.status ||
                       props.row.status === 'running' ||
                       props.row.is_active ||
                       !collectProject">
                     {{ $t('btn.delete') }}
                   </a>
-                  <a href="javascript:void(0);" v-else
-                     v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-                     @click.stop="operateHandler(props.row, 'delete')">{{ $t('btn.delete') }}</a>
+                  <a
+                    href="javascript:void(0);"
+                    v-else
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    @click.stop="operateHandler(props.row, 'delete')">{{ $t('btn.delete') }}</a>
                 </li>
               </ul>
             </bk-dropdown-menu>
@@ -206,7 +242,7 @@
 </template>
 
 <script>
-import { projectManage } from '@/common/util';
+import { projectManages } from '@/common/util';
 import { mapGetters } from 'vuex';
 
 export default {
@@ -229,7 +265,7 @@ export default {
       },
       collectList: [],
       collectorIdStr: '',
-      collectProject: projectManage(this.$store.state.topMenu, 'collection-item'),
+      collectProject: projectManages(this.$store.state.topMenu, 'collection-item'),
       param: '',
       isAllowedCreate: null,
     };
@@ -377,7 +413,7 @@ export default {
           return this.operateHandler(row, 'edit');
         }
       }
-      if (targetRoute === 'manage-collection' || targetRoute === 'collectEdit') {
+      if (targetRoute === 'manage-collection' || targetRoute === 'collectEdit' || targetRoute === 'collectField') {
         params.collectorId = row.collector_config_id;
       }
       if (operateType === 'status') {
@@ -457,7 +493,7 @@ export default {
             const idList = [];
             data.list.forEach((row) => {
               row.status = '';
-              row.status_name = '--';
+              row.status_name = '';
               idList.push(row.collector_config_id);
             });
             this.collectList.splice(0, this.collectList.length, ...data.list);

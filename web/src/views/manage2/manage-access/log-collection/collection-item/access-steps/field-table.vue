@@ -117,12 +117,7 @@
                       v-for="option in globalsData.field_data_type"
                       :key="option.id"
                       :id="option.id"
-                      :disabled="(props.row.verdict) ?
-                        (option.name === 'int'
-                          || option.name === 'long'
-                          || option.name === 'double'
-                          || option.name === 'float' ? true : false) :
-                        false"
+                      :disabled="isTypeDisabled(props.row, option)"
                       :name="option.name">
                     </bk-option>
                   </bk-select>
@@ -238,10 +233,22 @@
     <div class="preview-panel-right" v-if="tableList.length">
       <div class="preview-title preview-item">{{ $t('dataManage.Preview') }}</div>
       <template v-if="deletedVisible">
-        <div class="preview-item" v-for="(row, index) in hideDeletedTable" :key="index">{{ row.value }}</div>
+        <div
+          class="preview-item"
+          v-for="(row, index) in hideDeletedTable"
+          :key="index"
+          :title="row.value">
+          {{ row.value }}
+        </div>
       </template>
       <template v-else>
-        <div class="preview-item" v-for="(row, index) in tableList" :key="index">{{ row.value }}</div>
+        <div
+          class="preview-item"
+          v-for="(row, index) in tableList"
+          :key="index"
+          :title="row.value">
+          {{ row.value }}
+        </div>
       </template>
     </div>
 
@@ -302,7 +309,8 @@
           {{ $t('btn.affirm') }}
         </bk-button>
         <bk-button
-          v-else theme="primary"
+          v-else
+          theme="primary"
           :icon="checkLoading ? 'loading' : ''"
           @click.stop="confirmHandle">
           {{ $t('btn.affirm') }}
@@ -489,6 +497,15 @@ export default {
         });
       }
 
+      // 根据预览值 value 判断不是数字，则默认为字符串
+      arr.forEach((item) => {
+        const { value, field_type } = item;
+        // eslint-disable-next-line camelcase
+        if (field_type === '' && value !== '' && this.judgeNumber(value)) {
+          item.field_type = 'string';
+        }
+      });
+
       this.formData.tableList.splice(0, this.formData.tableList.length, ...arr);
     },
     resetField() {
@@ -588,6 +605,15 @@ export default {
         time_value: '',
       });
     },
+    // 当前字段类型是否禁用
+    isTypeDisabled(row, option) {
+      if (row.verdict) {
+        // 不是数值，相关数值类型选项被禁用
+        return ['int', 'long', 'double', 'float'].includes(option.id);
+      }
+      // 是数值，如果值大于 2147483647 即 2^31 - 1，int 选项被禁用
+      return option.id === 'int' && row.value > 2147483647;
+    },
     fieldTypeSelect(val, $row, $index) {
       const fieldName = $row.field_name;
       const fieldType = $row.field_type;
@@ -632,6 +658,11 @@ export default {
     },
     viewStandard() {
       this.$emit('standard');
+    },
+    judgeNumber(value) {
+      if (value === 0) return false;
+
+      return (value && value !== ' ') ? isNaN(value) : true;
     },
     getData() {
       // const data = JSON.parse(JSON.stringify(this.formData.tableList.filter(row => !row.is_delete)))
