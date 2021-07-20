@@ -21,6 +21,7 @@ import sys
 
 from blueapps.conf.log import get_logging_config_dict
 from blueapps.conf.default_settings import *  # noqa
+from django.utils.translation import ugettext_lazy as _
 
 # 这里是默认的 INSTALLED_APPS，大部分情况下，不需要改动
 # 如果你已经了解每个默认 APP 的作用，确实需要去掉某些 APP，请去掉下面的注释，然后修改
@@ -52,6 +53,7 @@ INSTALLED_APPS += (
     "apps.log_esquery",
     "apps.log_measure",
     "apps.esb",
+    "apps.bk_log_admin",
     "bk_monitor",
     "home_application",
     "pipeline",
@@ -293,18 +295,6 @@ BKDATA_DATA_TOKEN = os.getenv("BKAPP_BKDATA_DATA_TOKEN", "")
 # ===============================================================================
 FEATURE_TOGGLE = {
     # 菜单：apps.log_search.handlers.meta.MetaHandler.get_menus
-    "search": "on",
-    "trace": os.environ.get("BKAPP_FEATURE_TRACE", "on"),
-    "extract": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
-    "monitor": "off",
-    "manage": "on",
-    "dashboard": "on" if GRAFANA["HOST"] else "off",
-    "manage_access": "on",
-    "manage_index_set": "on",
-    "manage_extract": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
-    "manage_user_group": "off",
-    "manage_migrate": "off",
-    "manage_data_link": os.environ.get("BKAPP_FEATURE_DATA_LINK", "on"),
     # 索引集管理-数据源
     "scenario_log": os.environ.get("BKAPP_FEATURE_SCENARIO_LOG", "on"),  # 采集
     "scenario_bkdata": "on",  # 数据平台
@@ -324,6 +314,118 @@ FEATURE_TOGGLE = {
 
 SAAS_MONITOR = "bk_monitorv3"
 SAAS_BKDATA = "bk_dataweb"
+
+# 前端菜单配置
+MENUS = [
+    {
+        "id": "retrieve",
+        "name": _("检索"),
+        "feature": "on",
+    },
+    {
+        "id": "trace",
+        "name": _("调用链"),
+        "feature": "on",
+    },
+    {
+        "id": "extract",
+        "name": _("日志提取"),
+        "feature": "on",
+    },
+    {
+        "id": "monitor",
+        "name": _("监控策略"),
+        "feature": "on",
+    },
+    {
+        "id": "dashboard",
+        "name": _("仪表盘"),
+        "feature": "on" if GRAFANA["HOST"] else "off",
+        "children": [
+            {
+                "id": "create_dashboard",
+                "name": _("新建仪表盘"),
+                "feature": "on",
+            },
+            {
+                "id": "create_folder",
+                "name": _("新建目录"),
+                "feature": "on",
+            },
+            {
+                "id": "import_dashboard",
+                "name": _("导入仪表盘"),
+                "feature": "on",
+            },
+        ],
+    },
+    {
+        "id": "manage",
+        "name": _("管理"),
+        "feature": "on",
+        "children": [
+            {
+                "id": "manage_access",
+                "name": _("日志接入"),
+                "feature": "on",
+                "children": [
+                    {"id": "log_collection", "name": _("日志采集"), "feature": "on", "scenes": "scenario_log"},
+                    {
+                        "id": "bk_data_collection",
+                        "name": _("计算平台"),
+                        "feature": FEATURE_TOGGLE["scenario_bkdata"],
+                        "scenes": "scenario_bkdata",
+                    },
+                    {"id": "es_collection", "name": _("第三方ES"), "feature": "on", "scenes": "scenario_es"},
+                    {"id": "custom_collection", "name": _("自定义接入"), "feature": "off"},
+                ],
+            },
+            {
+                "id": "trace_track",
+                "name": _("全链路追踪"),
+                "feature": "on",
+                "children": [
+                    {"id": "collection_track", "name": _("采集接入"), "feature": "off", "scenes": "scenario_log"},
+                    {
+                        "id": "bk_data_track",
+                        "name": _("计算平台"),
+                        "feature": FEATURE_TOGGLE["scenario_bkdata"],
+                        "scenes": "scenario_bkdata",
+                    },
+                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es"},
+                    {"id": "sdk_track", "name": _("SDK接入"), "feature": "off"},
+                ],
+            },
+            {
+                "id": "manage_extract_strategy",
+                "name": _("日志提取策略"),
+                "feature": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
+                "children": [
+                    {"id": "manage_log_extract", "name": _("日志提取配置"), "feature": "on"},
+                    {"id": "extract_link_manage", "name": _("提取链路管理"), "feature": "on"},
+                ],
+            },
+            {
+                "id": "log_archive",
+                "name": _("日志归档"),
+                "feature": "off",
+                "children": [{"id": "log_archive_conf", "name": _("日志归档"), "feature": "off"}],
+            },
+            {
+                "id": "es_cluster_status",
+                "name": _("ES集群"),
+                "feature": "on",
+                "children": [{"id": "es_cluster_manage", "name": _("集群管理"), "feature": "on"}],
+            },
+            {
+                "id": "manage_data_link",
+                "name": _("管理"),
+                "feature": os.environ.get("BKAPP_FEATURE_DATA_LINK", "on"),
+                "children": [{"id": "manage_data_link_conf", "name": _("采集链路管理"), "feature": "on"}],
+            },
+        ],
+    },
+]
 
 # TAM
 TAM_AEGIS_KEY = os.environ.get("BKAPP_TAM_AEGIS_KEY", "")

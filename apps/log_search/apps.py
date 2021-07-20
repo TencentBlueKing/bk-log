@@ -90,12 +90,21 @@ class ApiConfig(AppConfig):
         if bk_apps["result"]:
             bk_apps = [item["bk_app_code"] for item in bk_apps["data"]]
             # 是否部署监控SaaS
-            settings.FEATURE_TOGGLE["monitor"] = "off"
+            for menu in settings.MENUS:
+                if menu["id"] == "monitor":
+                    monitor_menu = menu
+                    break
+
+            monitor_menu["feature"] = "off"
+            # settings.FEATURE_TOGGLE["monitor"] = "off"
+
             if settings.SAAS_MONITOR in bk_apps:
-                settings.FEATURE_TOGGLE["monitor"] = "on"
+                monitor_menu["feature"] = "on"
+                settings.FEATURE_TOGGLE["monitor_report"] = "on"
             elif "bk_monitor" in bk_apps:
-                settings.FEATURE_TOGGLE["monitor"] = "on"
+                monitor_menu["feature"] = "on"
                 settings.SAAS_MONITOR = "bk_monitor"
+                settings.FEATURE_TOGGLE["monitor_report"] = "on"
 
             if not settings.MONITOR_URL:
                 # 监控域名
