@@ -63,4 +63,12 @@ const footer = {
   method: 'get',
 };
 
-export { type, language, updateLanguage, scenario, menu, footer, getMaintainerApi };
+export {
+  type,
+  language,
+  updateLanguage,
+  scenario,
+  menu,
+  footer,
+  getMaintainerApi,
+};

@@ -422,7 +422,6 @@ export default {
     period_4H: '近 4 小时',
     period_12H: '近 12 小时',
     period_1D: '近 1 天',
-
     result1: '检索结果（找到',
     result2: '条结果，用时',
     ms: '毫秒）',
@@ -441,7 +440,6 @@ export default {
     setField: '设置列表字段',
     exportFailed: '导出失败',
     partialExport: '部分导出',
-    // dataMoreThan: '已超过一万条数据，仅下载最新的一万条数据',
     dataMoreThan: '当前数据超过1万条',
     dataMoreThanMillion: '当前数据超过100万条',
     moreThanMillionDesc: '请先缩小数据范围再进行打包下载， 或直接下载前1万条数据',
@@ -456,7 +454,6 @@ export default {
     generalTrend: '总趋势',
     notData: '未查询到数据',
     convergeCycle: '汇聚周期',
-
     fieldName: '字段名',
     setVisible: '设置显示字段',
     mustSetVisible: '显示字段不能为空',
@@ -473,7 +470,6 @@ export default {
     setDesc: '设为降序',
     asc: '升序',
     setAsc: '设为升序',
-
     chooseBusiness: '选择业务',
     options: '选择方式',
     selected: '已选择',
@@ -487,7 +483,6 @@ export default {
     topologySelection: '拓扑选择',
     manualInput: '手动输入',
     unableLocate: '无法定位上下文',
-
     ipRule: '请输入3到10个以内的字符',
     logPath: '日志路径',
     keyword: '关键字',

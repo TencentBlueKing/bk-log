@@ -52,4 +52,10 @@ const getApplyData = {
   method: 'post',
 };
 
-export { create, remove, update, checkAllowed, getApplyData };
+export {
+  create,
+  remove,
+  update,
+  checkAllowed,
+  getApplyData,
+};
