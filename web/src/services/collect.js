@@ -178,13 +178,11 @@ export {
   getEtlPreview,
   getCheckTime,
   details,
-
   getCollectList,
   getCollectStatus,
   startCollect,
   stopCollect,
   deleteCollect,
-
   getExtractBizTopo,
   getBizTopo,
   getHostByIp,

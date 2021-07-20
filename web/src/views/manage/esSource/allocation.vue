@@ -181,7 +181,8 @@
                   <i
                     class="bk-icon title-icon icon-down-shape"
                     :style="{ 'color': collapseColor }"
-                    ref="icon"></i><!--:class="[showSetting ? 'icon-down-shape' : 'icon-right-shape']"-->
+                    ref="icon">
+                  </i>
                   <span>{{value.node_path}}</span>
                   <span>{{dataSec[i] ? dataSec[i].length : ''}}</span>
                   <span>{{$t('configDetails.successful')}},</span>

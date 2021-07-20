@@ -148,7 +148,12 @@
       </bk-button>
       <template v-else>
         <bk-button :disabled="hasRunning" @click="prevHandler">{{ $t('dataManage.last') }}</bk-button>
-        <bk-button theme="primary" :disabled="hasRunning" @click="nextHandler">{{ $t('dataManage.next') }}</bk-button>
+        <bk-button
+          theme="primary"
+          :disabled="hasRunning"
+          @click="nextHandler">
+          {{ $t('dataManage.next') }}
+        </bk-button>
       </template>
       <bk-button @click="cancel">{{ $t('dataManage.Return_list') }}</bk-button>
     </div>

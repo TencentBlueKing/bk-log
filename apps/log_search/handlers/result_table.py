@@ -92,7 +92,7 @@ class ResultTableHandler(APIModel):
         date_candidate = MappingHandlers.get_date_candidate(mapping_list)
         property_dict: dict = MappingHandlers(
             result_table_id, -1, self.scenario_id, self.storage_cluster_id
-        ).find_megerd_property(mapping_list)
+        ).find_merged_property(mapping_list)
         field_list: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
         index_retrieve = {
             "date_candidate": date_candidate,

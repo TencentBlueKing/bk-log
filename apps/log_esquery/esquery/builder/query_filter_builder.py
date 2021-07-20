@@ -40,6 +40,6 @@ class QueryFilterBuilder(object):
                         "operator": item["operator"],
                         "value": item["value"],
                         "condition": item.get("condition", "and"),
-                        "type": "field",
+                        "type": item.get("type", "field"),
                     }
                 )

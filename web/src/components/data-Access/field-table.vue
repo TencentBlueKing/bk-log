@@ -32,7 +32,8 @@
           theme="primary"
           class="visible-deleted-btn"
           v-model="deletedVisible"
-          @change="visibleHandle"></bk-switcher>
+          @change="visibleHandle">
+        </bk-switcher>
       </div>
     </div>
 
@@ -74,7 +75,8 @@
             <bk-table-column
               :render-header="renderHeaderAliasName"
               :resizable="false"
-              v-if="isPreviewMode || extractMethod === 'bk_log_json'" min-width="100">
+              v-if="isPreviewMode || extractMethod === 'bk_log_json'"
+              min-width="100">
               <template slot-scope="props">
                 <span v-if="isPreviewMode">{{ props.row.alias_name }}</span>
                 <bk-form-item
@@ -83,7 +85,8 @@
                   <bk-input
                     :disabled="props.row.is_delete"
                     v-model.trim="props.row.alias_name"
-                    @blur="checkAliasNameItem(props.row)"></bk-input>
+                    @blur="checkAliasNameItem(props.row)">
+                  </bk-input>
                   <template v-if="props.row.aliasErr">
                     <i class="bk-icon icon-exclamation-circle-shape tooltips-icon"
                        style="right: 8px;"

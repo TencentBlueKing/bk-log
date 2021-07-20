@@ -25,9 +25,10 @@
     <div class="header">
       <bk-button theme="primary" style="width: 120px;" @click="createConfig">{{ $t('新建') }}</bk-button>
     </div>
-    <bk-table :data="tableData"
-              :empty-text="$t('btn.vacancy')"
-              v-bkloading="{ isLoading: tableLoading }">
+    <bk-table
+      :data="tableData"
+      :empty-text="$t('btn.vacancy')"
+      v-bkloading="{ isLoading: tableLoading }">
       <bk-table-column :label="$t('链路名称')" prop="link_group_name" min-width="20"></bk-table-column>
       <bk-table-column :label="$t('允许的业务')" prop="bk_biz_id" min-width="20">
         <template slot-scope="{ row }">

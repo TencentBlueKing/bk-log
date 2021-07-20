@@ -22,7 +22,7 @@
 
 /**
  * @file webpack base conf
- * @author v_adongtang <v_adongtang@tentcent.com>
+ * @author <>
  */
 
 import webpack from 'webpack';
