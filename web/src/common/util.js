@@ -418,7 +418,8 @@ export function projectManages(menuList, id) {
   for (const menu of menuList) {
     if (menu.id === id) {
       return menu.project_manage;
-    } if (menu?.children) {
+    }
+    if (menu.children) {
       const recursiveResult = projectManages(menu.children, id);
       if (recursiveResult !== undefined) {
         return recursiveResult;

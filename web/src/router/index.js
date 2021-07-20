@@ -72,35 +72,79 @@ const trace = () => import(/* webpackChunkName: 'logTrace' */'@/views/trace');
 
 const Manage = () => import(/* webpackChunkName: 'manage' */'@/views/manage2');
 // ---- 日志接入 ---- 日志采集（采集项）
-const CollectionItem = () => import(/* webpackChunkName: 'collection-item' */'@/views/manage2/manage-access/log-collection/collection-item');
+const CollectionItem = () => import(
+  /* webpackChunkName: 'collection-item' */
+  '@/views/manage2/manage-access/log-collection/collection-item');
 // ---- 日志接入 ---- 日志采集（采集项）---- 管理(查看)采集项
-const ManageCollection = () => import(/* webpackChunkName: 'manage-collection' */'@/views/manage2/manage-access/log-collection/collection-item/manage-collection');
+const ManageCollection = () => import(
+  /* webpackChunkName: 'manage-collection' */
+  '@/views/manage2/manage-access/log-collection/collection-item/manage-collection'
+);
 // ---- 日志接入 ---- 日志采集（采集项）---- 新建、编辑、停用、启用、字段提取
-const AccessSteps = () => import(/* webpackChunkName: 'access-steps' */'@/views/manage2/manage-access/log-collection/collection-item/access-steps');
+const AccessSteps = () => import(
+  /* webpackChunkName: 'access-steps' */
+  '@/views/manage2/manage-access/log-collection/collection-item/access-steps'
+);
 // ---- 日志接入 ---- 日志采集索引集、数据平台、第三方ES接入 ---- 索引集列表
-const IndexList = () => import(/* webpackChunkName: 'index-set' */'@/views/manage2/manage-access/components/index-set/list');
+const IndexList = () => import(
+  /* webpackChunkName: 'index-set' */
+  '@/views/manage2/manage-access/components/index-set/list'
+);
 // ---- 日志接入 ---- 日志采集索引集、数据平台、第三方ES接入---- 管理索引集
-const ManageIndex = () => import(/* webpackChunkName: 'mange-index' */'@/views/manage2/manage-access/components/index-set/manage');
+const ManageIndex = () => import(
+  /* webpackChunkName: 'mange-index' */
+  '@/views/manage2/manage-access/components/index-set/manage'
+);
 // ---- 日志接入 ---- 日志采集索引集、数据平台、第三方ES接入 ---- 新建索引集
-const CreateIndex = () => import(/* webpackChunkName: 'create-index' */'@/views/manage2/manage-access/components/index-set/create');
+const CreateIndex = () => import(
+  /* webpackChunkName: 'create-index' */
+  '@/views/manage2/manage-access/components/index-set/create'
+);
 // ---- 日志接入 ---- 自定义接入
-const CustomCollection = () => import(/* webpackChunkName: 'es-custom-collection' */'@/views/manage2/manage-access/custom-collection');
+const CustomCollection = () => import(
+  /* webpackChunkName: 'es-custom-collection' */
+  '@/views/manage2/manage-access/custom-collection'
+);
 // ---- 全链路跟踪 ---- 采集跟踪
-const CollectionTrack = () => import(/* webpackChunkName: 'collection-track' */'@/views/manage2/trace-track/collection-track');
+const CollectionTrack = () => import(
+  /* webpackChunkName: 'collection-track' */
+  '@/views/manage2/trace-track/collection-track'
+);
 // ---- 全链路跟踪 ---- SDK跟踪
-const SdkTrack = () => import(/* webpackChunkName: 'sdk-track' */'@/views/manage2/trace-track/sdk-track');
+const SdkTrack = () => import(
+  /* webpackChunkName: 'sdk-track' */
+  '@/views/manage2/trace-track/sdk-track'
+);
 // ---- 日志提取 ---- 权限管理
-const ExtractPermission = () => import(/* webpackChunkName: 'manage-extract-permission' */'@/views/manage2/manage-extract/manage-extract-permission');
+const ExtractPermission = () => import(
+  /* webpackChunkName: 'manage-extract-permission' */
+  '@/views/manage2/manage-extract/manage-extract-permission'
+);
 // ---- 日志提取 ---- 链路管理列表
-const ExtractLinkList = () => import(/* webpackChunkName: 'extract-link-manage' */'@/views/manage2/manage-extract/extract-link-manage/ExtractLinkList');
+const ExtractLinkList = () => import(
+  /* webpackChunkName: 'extract-link-manage' */
+  '@/views/manage2/manage-extract/extract-link-manage/ExtractLinkList'
+);
 // ---- 日志提取 ---- 链路管理创建/编辑
-const ExtractLinkCreate = () => import(/* webpackChunkName: 'extract-link-manage' */'@/views/manage2/manage-extract/extract-link-manage/ExtractLinkCreate');
+const ExtractLinkCreate = () => import(
+  /* webpackChunkName: 'extract-link-manage' */
+  '@/views/manage2/manage-extract/extract-link-manage/ExtractLinkCreate'
+);
 // ---- 日志归档 ---- 日志归档
-const LogArchive = () => import(/* webpackChunkName: 'log-archive-conf' */'@/views/manage2/log-archive/log-archive-conf');
+const LogArchive = () => import(
+  /* webpackChunkName: 'log-archive-conf' */
+  '@/views/manage2/log-archive/log-archive-conf'
+);
 // ---- ES集群 ---- 集群信息
-const ClusterMess = () => import(/* webpackChunkName: 'es-cluster-mess' */'@/views/manage2/es-cluster-status/es-cluster-mess');
+const ClusterMess = () => import(
+  /* webpackChunkName: 'es-cluster-mess' */
+  '@/views/manage2/es-cluster-status/es-cluster-mess'
+);
 // ---- 管理 ---- 采集链路管理
-const DataLinkConf = () => import(/* webpackChunkName: 'manage-data-link-conf' */'@/views/manage2/manage-data-link/manage-data-link-conf');
+const DataLinkConf = () => import(
+  /* webpackChunkName: 'manage-data-link-conf' */
+  '@/views/manage2/manage-data-link/manage-data-link-conf'
+);
 
 const routes = [
   {
