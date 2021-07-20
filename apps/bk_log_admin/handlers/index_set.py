@@ -1,0 +1,155 @@
+# -*- coding: utf-8 -*
+import arrow
+
+from django.conf import settings
+
+from apps.bk_log_admin.constants import (
+    BK_DATA_CUSTOM_REPORT_USER_INDEX_SET_HISTORY,
+    OPERATION_PIE_CHOICE_MAP,
+    MINUTE_GROUP_BY,
+)
+from apps.log_search.models import UserIndexSetSearchHistory
+from apps.utils.drf import DataPageNumberPagination
+from apps.models import model_to_dict
+from apps.utils.local import get_local_param
+from bk_monitor.handler.monitor import BKMonitor
+from config.domains import MONITOR_APIGATEWAY_ROOT
+
+
+class IndexSetHandler(object):
+    def __init__(self):
+        self._client = BKMonitor(
+            app_id=settings.APP_CODE,
+            app_token=settings.SECRET_KEY,
+            monitor_host=MONITOR_APIGATEWAY_ROOT,
+            report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
+            bk_username="admin",
+            bk_biz_id=settings.BLUEKING_BK_BIZ_ID,
+        )
+
+    def get_date_histogram(self, pk, user_search_history_operation_time):
+        time_zone = get_local_param("time_zone")
+        start_time = int(
+            arrow.get(user_search_history_operation_time["start_time"]).replace(tzinfo=time_zone).float_timestamp * 1000
+        )
+        end_time = int(
+            arrow.get(user_search_history_operation_time["end_time"]).replace(tzinfo=time_zone).float_timestamp * 1000
+        )
+
+        daily_data = self._client.custom_metric().query(
+            data_name=BK_DATA_CUSTOM_REPORT_USER_INDEX_SET_HISTORY,
+            fields=["count(search_history_duration) as _count"],
+            where_conditions=[f"index_set_id = '{pk}'", f"time >= {start_time}", f"time < {end_time}"],
+            group_by_conditions=[MINUTE_GROUP_BY],
+        )
+
+        daily_label_list = []
+        daily_data_list = []
+        for data in daily_data["list"]:
+            daily_label_list.append(arrow.get(data["time"] / 1000).format())
+            daily_data_list.append(data["_count"])
+
+        return {"labels": daily_label_list, "values": daily_data_list}
+
+    def get_user_terms(self, pk, user_search_history_operation_time):
+        time_zone = get_local_param("time_zone")
+        start_time = int(
+            arrow.get(user_search_history_operation_time["start_time"]).replace(tzinfo=time_zone).float_timestamp * 1000
+        )
+        end_time = int(
+            arrow.get(user_search_history_operation_time["end_time"]).replace(tzinfo=time_zone).float_timestamp * 1000
+        )
+        created_by_data = self._client.custom_metric().query(
+            data_name=BK_DATA_CUSTOM_REPORT_USER_INDEX_SET_HISTORY,
+            fields=["count(search_history_duration) as _count"],
+            where_conditions=[f"index_set_id = '{pk}'", f"time >= {start_time}", f"time < {end_time}"],
+            group_by_conditions=["created_by"],
+        )
+
+        created_by_label_list = []
+        created_by_data_list = []
+        for data in created_by_data["list"]:
+            created_by_label_list.append(data["created_by"])
+            created_by_data_list.append(data["_count"])
+
+        return {"labels": created_by_label_list, "values": created_by_data_list}
+
+    def get_duration_terms(self, pk, user_search_history_operation_time):
+        time_zone = get_local_param("time_zone")
+        start_time = int(
+            arrow.get(user_search_history_operation_time["start_time"]).replace(tzinfo=time_zone).float_timestamp * 1000
+        )
+        end_time = int(
+            arrow.get(user_search_history_operation_time["end_time"]).replace(tzinfo=time_zone).float_timestamp * 1000
+        )
+
+        pie_label_list = []
+        pie_data_list = []
+        for pie_choice in OPERATION_PIE_CHOICE_MAP:
+            pie_label_list.append(pie_choice["label"])
+            where_conditions = [f"index_set_id = '{pk}'", f"time >= {start_time}", f"time < {end_time}"]
+            if "min" in pie_choice:
+                where_conditions.append(f"search_history_duration >= {pie_choice['min']}")
+            if "max" in pie_choice:
+                where_conditions.append(f"search_history_duration < {pie_choice['max']}")
+            pie_data = self._client.custom_metric().query(
+                data_name=BK_DATA_CUSTOM_REPORT_USER_INDEX_SET_HISTORY,
+                fields=["count(search_history_duration) as _count"],
+                where_conditions=where_conditions,
+            )
+            if pie_data["list"]:
+                pie_data_list.append(pie_data["list"][0]["_count"])
+                continue
+            pie_data_list.append(0)
+
+        return {"labels": pie_label_list, "values": pie_data_list}
+
+    def list_user_set_history(self, start_time, end_time, request, view, pk):
+        time_zone = get_local_param("time_zone")
+        user_index_set_history = UserIndexSetSearchHistory.objects.filter(
+            index_set_id=pk,
+            is_deleted=False,
+            search_type="default",
+            created_at__range=[
+                start_time.replace(tzinfo=time_zone).datetime,
+                end_time.replace(tzinfo=time_zone).datetime,
+            ],
+        ).order_by("-created_at", "created_by")
+        pg = DataPageNumberPagination()
+        page_user_index_set_history = pg.paginate_queryset(queryset=user_index_set_history, request=request, view=view)
+        res = pg.get_paginated_response(
+            [
+                IndexSetHandler.build_query_string(
+                    model_to_dict(
+                        history, fields=["id", "index_set_id", "duration", "created_by", "created_at", "params"]
+                    )
+                )
+                for history in page_user_index_set_history
+            ]
+        )
+        return res
+
+    @staticmethod
+    def build_query_string(history):
+        key_word = history["params"].get("keyword", "")
+        if key_word is None:
+            key_word = ""
+        query_string = "keyword:" + key_word
+        # IP快选、过滤条件
+        host_scopes = history["params"].get("host_scopes", {})
+        if host_scopes.get("modules"):
+            modules_list = [str(_module["bk_inst_id"]) for _module in host_scopes["modules"]]
+            query_string += " ADN (modules:" + ",".join(modules_list) + ")"
+        if host_scopes.get("ips"):
+            query_string += " AND (ips:" + host_scopes["ips"] + ")"
+        additions = history["params"].get("addition", [])
+        if additions:
+            query_string += (
+                " AND ("
+                + " AND ".join(
+                    [f'{addition["field"]} {addition["operator"]} {addition["value"]}' for addition in additions]
+                )
+                + ")"
+            )
+        history["query_string"] = query_string
+        return history

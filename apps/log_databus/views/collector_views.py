@@ -54,6 +54,7 @@ from apps.log_databus.serializers import (
     CollectorRegexDebugSerializer,
     ListCollectorsByHostSerializer,
 )
+from apps.utils.function import ignored
 
 
 class CollectorViewSet(ModelViewSet):
@@ -68,14 +69,11 @@ class CollectorViewSet(ModelViewSet):
     ordering_fields = ("updated_at", "updated_by")
 
     def get_permissions(self):
-        try:
+        with ignored(Exception, log_exception=True):
             auth_info = Permission.get_auth_info(self.request)
             # ESQUERY白名单不需要鉴权
             if auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
                 return []
-        except Exception as e:  # pylint: disable=broad-except
-            print(e)
-            pass
 
         if self.action in ["list_scenarios", "batch_subscription_status"]:
             return []
@@ -336,6 +334,7 @@ class CollectorViewSet(ModelViewSet):
         @apiSuccess {String} itsm_ticket_status 采集ITSM状态
         @apiSuccess {String} itsm_ticket_status_display 采集ITSM状态显示名称
         @apiSuccess {String} ticket_url 采集ITSM流程地址
+        @apiSuccess {String} index_split_rule 分裂规则
         @apiSuccessExample {json} 成功返回:
         {
             "collector_scenario_id": "row",
@@ -431,6 +430,7 @@ class CollectorViewSet(ModelViewSet):
             "itsm_ticket_status": "success_apply",
             "itsm_ticket_status_display": "采集接入完成",
             "ticket_url": "",
+            "index_split_rule": ""
         }
         """
         return Response(CollectorHandler(collector_config_id=collector_config_id).retrieve())
