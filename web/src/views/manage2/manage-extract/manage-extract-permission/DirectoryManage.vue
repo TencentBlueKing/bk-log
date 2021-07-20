@@ -26,13 +26,12 @@
             v-bk-tooltips="{ width: 200, content: $t('permission.tips') }"></span>
         </div>
         <div class="content">
-          <ValidateTagInput
-            v-model.trim="manageStrategyData.user_list"
-            style="width: 400px;"
-            :list="users"
+          <ValidateUserSelector
+            v-model="manageStrategyData.user_list"
+            :api="userApi"
             :allow-create="allowCreate"
-            :placeholder="allowCreate ? $t('form.pleaseEnterQQ') : ''"
-          ></ValidateTagInput>
+            :placeholder="allowCreate ? $t('form.pleaseEnterQQ') : ''">
+          </ValidateUserSelector>
         </div>
       </div>
 
@@ -76,9 +75,10 @@
               :validator="validateFileExtension"
             ></ValidateInput>
             <span class="bk-icon icon-plus-circle" @click="handleAddFileType"></span>
-            <span class="bk-icon icon-minus-circle"
-                  v-show="manageStrategyData.file_type.length > 1"
-                  @click="manageStrategyData.file_type.splice(index, 1)"></span>
+            <span
+              class="bk-icon icon-minus-circle"
+              v-show="manageStrategyData.file_type.length > 1"
+              @click="manageStrategyData.file_type.splice(index, 1)"></span>
           </div>
         </div>
       </div>
@@ -143,13 +143,13 @@
 <script>
 import ModuleSelect from './ModuleSelect';
 import ValidateInput from './ValidateInput';
-import ValidateTagInput from './ValidateTagInput';
+import ValidateUserSelector from './ValidateUserSelector.vue';
 
 export default {
   components: {
     ModuleSelect,
     ValidateInput,
-    ValidateTagInput,
+    ValidateUserSelector,
   },
   props: {
     strategyData: {
@@ -164,8 +164,8 @@ export default {
         operator: '',
       },
     },
-    users: {
-      type: Array,
+    userApi: {
+      type: String,
       required: true,
     },
     allowCreate: {

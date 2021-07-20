@@ -82,11 +82,11 @@ export default {
       val.split(';').forEach((item) => {
         item = item.trim();
         if (item) {
-          if (this.allowCreate) { // tencent 版本
+          if (this.allowCreate) {
             if (item.match(/^[0-9]*$/) && !users.includes(item)) {
               users.push(item);
             }
-          } else { // 内部版
+          } else {
             this.list.forEach((user) => {
               if ((user.displayname === item || user.username === item) && !users.includes(user.username)) {
                 users.push(user.username);

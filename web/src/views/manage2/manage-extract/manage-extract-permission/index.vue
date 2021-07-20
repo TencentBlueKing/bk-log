@@ -52,7 +52,7 @@
       <DirectoryManage
         v-bkloading="{ isLoading: isSliderLoading }"
         slot="content"
-        :users="users"
+        :user-api="userApi"
         :allow-create="allowCreate"
         :strategy-data="strategyData"
         @confirm="confirmCreateOrEdit" />
@@ -80,6 +80,7 @@ export default {
       isSliderLoading: false,
       type: '', // 新增或编辑策略
       strategyData: {}, // 新增或编辑策略时传递的数据
+      userApi: '',
     };
   },
   created() {
@@ -98,12 +99,8 @@ export default {
         this.isAllowedManage = res.isAllowed;
         if (res.isAllowed) {
           this.initStrategyList();
-          if (window.runVersion === 'tencent') {
-            this.allowCreate = true;
-          } else {
-            this.allowCreate = false;
-            this.initUsers();
-          }
+          this.allowCreate = false;
+          this.userApi = window.BK_LOGIN_URL;
         } else {
           this.isLoading = false;
         }
@@ -125,21 +122,6 @@ export default {
       } finally {
         this.isLoading = false;
       }
-    },
-    initUsers() {
-      this.$http.request('meta/users/').then((res) => {
-        for (let i = 0; i < res.data.length; i++) {
-          if (res.data[i].chname) {
-            res.data[i].displayname = `${res.data[i].username}(${res.data[i].chname})`;
-          } else {
-            res.data[i].displayname = res.data[i].username;
-          }
-        }
-        this.users = res.data;
-      })
-        .catch((err) => {
-          console.warn(err);
-        });
     },
     async handleCreateStrategy() {
       if (!this.isAllowedManage) {

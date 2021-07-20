@@ -53,7 +53,8 @@
           </bk-checkbox>
         </div>
         <bk-big-tree
-          ref="moduleTreeRef" show-checkbox
+          ref="moduleTreeRef"
+          show-checkbox
           :data="moduleList"
           :default-checked-nodes="moduleCheckedNodes"
           @check-change="handleModuleNodeCheck">

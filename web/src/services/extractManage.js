@@ -40,9 +40,44 @@ const deleteStrategy = {
   method: 'delete',
 };
 
+// 日志提取链路列表
+const getLogExtractLinks = {
+  url: '/log_extract/links/',
+  method: 'get',
+};
+
+// 日志提取链路详情
+const getLogExtractLinkDetail = {
+  url: '/log_extract/links/:link_id/',
+  method: 'get',
+};
+
+// 新增日志提取链路
+const createLogExtractLink = {
+  url: '/log_extract/links/',
+  method: 'post',
+};
+
+// 更新日志提取链路
+const updateLogExtractLink = {
+  url: '/log_extract/links/:link_id/',
+  method: 'put',
+};
+
+// 删除日志提取链路
+const deleteLogExtractLink = {
+  url: '/log_extract/links/:link_id/',
+  method: 'delete',
+};
+
 export {
   getStrategyList,
   createStrategy,
   updateStrategy,
   deleteStrategy,
+  getLogExtractLinks,
+  getLogExtractLinkDetail,
+  createLogExtractLink,
+  updateLogExtractLink,
+  deleteLogExtractLink,
 };

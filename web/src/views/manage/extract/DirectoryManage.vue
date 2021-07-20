@@ -38,10 +38,14 @@
         <div class="title">
           {{$t('用户列表')}}
           <span class="required">*</span>
-          <span class="log-icon icon-info-fill" v-if="allowCreate"
-                v-bk-tooltips="{ width: 200, content: $t('permission.tencentTips') }"></span>
-          <span class="log-icon icon-info-fill" v-else
-                v-bk-tooltips="{ width: 200, content: $t('permission.tips') }"></span>
+          <span
+            class="log-icon icon-info-fill"
+            v-if="allowCreate"
+            v-bk-tooltips="{ width: 200, content: $t('permission.tencentTips') }"></span>
+          <span
+            class="log-icon icon-info-fill"
+            v-else
+            v-bk-tooltips="{ width: 200, content: $t('permission.tips') }"></span>
         </div>
         <div class="content">
           <!-- <ValidateTagInput v-model.trim="manageStrategyData.user_list"
@@ -68,14 +72,16 @@
         <div class="content">
           <div class="flex-box add-minus-component visible-dir"
                v-for="(item, index) in manageStrategyData.visible_dir" :key="index">
-            <ValidateInput v-model.trim="manageStrategyData.visible_dir[index]"
-                           style="width: 256px;margin-right: 4px;"
-                           :validator="validateVisibleDir"
+            <ValidateInput
+              v-model.trim="manageStrategyData.visible_dir[index]"
+              style="width: 256px;margin-right: 4px;"
+              :validator="validateVisibleDir"
             ></ValidateInput>
             <span class="bk-icon icon-plus-circle" @click="handleAddVisibleDir"></span>
-            <span class="bk-icon icon-minus-circle"
-                  v-show="manageStrategyData.visible_dir.length > 1"
-                  @click="manageStrategyData.visible_dir.splice(index, 1)"></span>
+            <span
+              class="bk-icon icon-minus-circle"
+              v-show="manageStrategyData.visible_dir.length > 1"
+              @click="manageStrategyData.visible_dir.splice(index, 1)"></span>
           </div>
         </div>
       </div>
@@ -115,17 +121,20 @@
             <bk-button @click="showSelectDialog = true">+ {{$t('选择目标')}}</bk-button>
             <div class="select-text">
               {{$t('已选择')}}
-              <span class="primary" v-if="manageStrategyData.modules.length">
+              <span
+                class="primary"
+                v-if="manageStrategyData.modules.length">
                 {{ manageStrategyData.modules.length }}
               </span>
               <span class="error" v-else>{{ manageStrategyData.modules.length }}</span>
               {{$t('个节点')}}
             </div>
           </div>
-          <ModuleSelect :show-select-dialog.sync="showSelectDialog"
-                        :selected-type="manageStrategyData.select_type"
-                        :selected-modules="manageStrategyData.modules"
-                        @confirm="handleConfirmSelect"></ModuleSelect>
+          <ModuleSelect
+            :show-select-dialog.sync="showSelectDialog"
+            :selected-type="manageStrategyData.select_type"
+            :selected-modules="manageStrategyData.modules"
+            @confirm="handleConfirmSelect"></ModuleSelect>
         </div>
       </div>
 
@@ -137,10 +146,11 @@
         </div>
         <div class="content">
           <div class="flex-box">
-            <bk-input readonly
-                      style="width: 256px;margin-right: 10px;"
-                      :value="manageStrategyData.operator"
-                      :class="!manageStrategyData.operator && 'is-input-error'"
+            <bk-input
+              readonly
+              style="width: 256px;margin-right: 10px;"
+              :value="manageStrategyData.operator"
+              :class="!manageStrategyData.operator && 'is-input-error'"
             ></bk-input>
             <bk-button :loading="isChangeOperatorLoading" @click="changeOperator">{{$t('改为我')}}</bk-button>
           </div>

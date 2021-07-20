@@ -71,12 +71,13 @@
     </bk-table>
 
     <bk-sideslider :is-show.sync="showManageDialog" :width="520" :title="type === 'create' ? $t('新增') : $t('编辑')">
-      <DirectoryManage v-bkloading="{ isLoading: isSliderLoading }"
-                       slot="content"
-                       :user-api="userApi"
-                       :allow-create="allowCreate"
-                       :strategy-data="strategyData"
-                       @confirm="confirmCreateOrEdit" />
+      <DirectoryManage
+        v-bkloading="{ isLoading: isSliderLoading }"
+        slot="content"
+        :user-api="userApi"
+        :allow-create="allowCreate"
+        :strategy-data="strategyData"
+        @confirm="confirmCreateOrEdit" />
     </bk-sideslider>
   </div>
 </template>
