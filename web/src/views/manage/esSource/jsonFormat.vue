@@ -23,11 +23,12 @@
 <template>
   <section id="json-format">
     <div style="margin-bottom: 80px;">
-      <bk-table style="margin-top: 15px;"
-                v-bkloading="{ isLoading: reloadTable }"
-                :data="data"
-                :empty-text="$t('btn.vacancy')"
-                :size="size">
+      <bk-table
+        style="margin-top: 15px;"
+        v-bkloading="{ isLoading: reloadTable }"
+        :data="data"
+        :empty-text="$t('btn.vacancy')"
+        :size="size">
         <bk-table-column
           type="index"
           :label="$t('configDetails.number')"
@@ -36,10 +37,11 @@
         </bk-table-column>
         <bk-table-column :label="$t('configDetails.originalLog')">
           <template slot-scope="props">
-            <div class="text-style"
-                 @click="showClick($event, props.row.etl.batch)"
-                 @mouseenter="handleEnter($event, props.row.etl.batch)"
-                 @mouseleave="handleLeave">
+            <div
+              class="text-style"
+              @click="showClick($event, props.row.etl.batch)"
+              @mouseenter="handleEnter($event, props.row.etl.batch)"
+              @mouseleave="handleLeave">
               <span v-for="(val,index) in props.row.etl.batch" :key="index">{{ val }}</span>
             </div>
           </template>
@@ -247,45 +249,5 @@ export default {
   .json-text-style {
     background-color: #313238;
     color: #c4c6cc;
-  }
-
-  .locker-style {
-    /deep/ section {
-      background-color: #313238 !important;
-
-      >div:nth-child(1) {
-        height: 50px;
-
-        >div:nth-child(1) {
-          height: 50px;
-          line-height: 50px;
-        }
-
-        >div:nth-child(2) {
-          height: 50px;
-          line-height: 50px;
-          color: #737987;
-          font-size: 14px;
-
-          >div {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            span {
-              margin-right: 20px;
-              display: inline-block;
-              width: 68px;
-              height: 32px;
-              border: 1px solid #c4c6cc;
-              line-height: 32px;
-              text-align: center;
-              color: #737987;
-              cursor: pointer;
-            }
-          }
-        }
-      }
-    }
   }
 </style>

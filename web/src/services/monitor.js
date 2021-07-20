@@ -127,8 +127,21 @@ const index = {
 };
 
 export {
-  list, create, remove, start, updata, stop, type, particulars,
-  levels, alarm,
-  shields, shieldsType, addShields, removeShields, shieldsInfo, updateShields,
+  list,
+  create,
+  remove,
+  start,
+  updata,
+  stop,
+  type,
+  particulars,
+  levels,
+  alarm,
+  shields,
+  shieldsType,
+  addShields,
+  removeShields,
+  shieldsInfo,
+  updateShields,
   index,
 };

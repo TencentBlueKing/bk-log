@@ -189,7 +189,9 @@
     <bk-form :label-width="115" :model="formData" ref="validateForm">
       <bk-form-item
         :label="$t('dataSource.storage_cluster_name')"
-        required property="storage_cluster_id" :rules="rules.cluster_id">
+        required
+        property="storage_cluster_id"
+        :rules="rules.cluster_id">
         <bk-select
           style="width: 320px;"
           v-model="formData.storage_cluster_id"
@@ -224,12 +226,14 @@
         <div class="tips_storage" v-if="formData.storage_cluster_id">
           <!-- eslint-disable-next-line vue/camelcase -->
           <div v-for="(tip, index) in tip_storage" :key="index">{{index + 1}}. {{tip}}</div>
+          <!--eslint-enable-->
         </div>
       </bk-form-item>
       <div class="form-div mt">
         <bk-form-item
           :label="$t('configDetails.storageIndexName')"
-          required class="form-inline-div"
+          required
+          class="form-inline-div"
           :rules="rules.table_id"
           :property="'table_id'">
           <div class="prefix">{{formData.table_id_prefix}}</div>
@@ -290,8 +294,13 @@
           <a href="javascript:void(0);" @click="jumpToEsAccess">{{$t('前往ES源进行设置')}}</a>
         </span>
       </bk-form-item>
-      <bk-form-item v-if="accessUserManage" :label="$t('indexSetList.jurisdiction')"
-                    required :property="'view_roles'" :rules="rules.view_roles" style="width: 435px;">
+      <bk-form-item
+        v-if="accessUserManage"
+        :label="$t('indexSetList.jurisdiction')"
+        required
+        :property="'view_roles'"
+        :rules="rules.view_roles"
+        style="width: 435px;">
         <bk-select
           style="width: 320px;"
           v-model="formData.view_roles"
@@ -328,8 +337,9 @@
           :title="$t('btn.cancel')"
           class="ml10"
           @click="handleBack"
-          :disabled="isLoading"
-        >{{$t('dataManage.Return_list')}}</bk-button>
+          :disabled="isLoading">
+          {{$t('dataManage.Return_list')}}
+        </bk-button>
       </bk-form-item>
     </bk-form>
     <bk-dialog
@@ -1422,45 +1432,5 @@ export default {
   .json-text-style {
     background-color: #313238;
     color: #c4c6cc;
-  }
-
-  .locker-style {
-    section {
-      background-color: #313238 !important;
-
-      > div:nth-child(1) {
-        height: 50px;
-
-        > div:nth-child(1) {
-          height: 50px;
-          line-height: 50px;
-        }
-
-        > div:nth-child(2) {
-          height: 50px;
-          line-height: 50px;
-          color: #737987;
-          font-size: 14px;
-
-          > div {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            span {
-              margin-right: 20px;
-              display: inline-block;
-              width: 68px;
-              height: 32px;
-              border: 1px solid #c4c6cc;
-              line-height: 32px;
-              text-align: center;
-              color: #737987;
-              cursor: pointer;
-            }
-          }
-        }
-      }
-    }
   }
 </style>

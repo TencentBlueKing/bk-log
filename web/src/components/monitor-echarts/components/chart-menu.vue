@@ -113,59 +113,59 @@ export default class ChartMenu extends Vue {
 </script>
 <style lang="scss" scoped>
   .chart-menu {
-  width: 182px;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border: 1px solid #dcdee5;
-  border-radius: 2px;
-  box-shadow: 0px 3px 6px 0px rgba(0,0,0,.15);
-  padding: 6px 0;
-  font-size: 12px;
-  position: absolute;
-  z-index: 999;
-
-  &-item {
+    width: 182px;
     display: flex;
-    width: 100%;
-    align-items: center;
-    flex: 0 0 32px;
-    padding-left: 12px;
-    color: #63656e;
-    font-weight: normal;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #dcdee5;
+    border-radius: 2px;
+    box-shadow: 0px 3px 6px 0px rgba(0,0,0,.15);
+    padding: 6px 0;
+    font-size: 12px;
+    position: absolute;
+    z-index: 999;
 
-    &:hover {
-      background: #f5f6fa;
-      color: #3a84ff;
-      cursor: pointer;
-
-      .menu-icon {
-        color: #3a84ff;
-      }
-    }
-
-    .menu-icon,
-    %menu-icon {
+    &-item {
       display: flex;
+      width: 100%;
       align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      width: 12px;
-      height: 12px;
-      margin-right: 12px;
-      color: #979ba5;
-    }
-
-    .link-icon {
-      color: #979ba5;
-      margin-left: auto;
-
-      @extend %menu-icon;
+      flex: 0 0 32px;
+      padding-left: 12px;
+      color: #63656e;
+      font-weight: normal;
 
       &:hover {
+        background: #f5f6fa;
         color: #3a84ff;
+        cursor: pointer;
+
+        .menu-icon {
+          color: #3a84ff;
+        }
+      }
+
+      .menu-icon,
+      %menu-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        width: 12px;
+        height: 12px;
+        margin-right: 12px;
+        color: #979ba5;
+      }
+
+      .link-icon {
+        color: #979ba5;
+        margin-left: auto;
+
+        @extend %menu-icon;
+
+        &:hover {
+          color: #3a84ff;
+        }
       }
     }
-  }
   }
 </style>

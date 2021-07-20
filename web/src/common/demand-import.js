@@ -22,7 +22,7 @@
 
 /**
  * @file 按需引入 bk-magic-vue 组件
- * @author v_adongtang <v_adongtang@tentcent.com>
+ * @author <>
  */
 
 /* eslint-disable import/no-duplicates */
@@ -52,6 +52,7 @@ import {
   bkMessage,
   bkNavigation,
   bkNavigationMenu,
+  bkNavigationMenuGroup,
   bkNavigationMenuItem,
   bkNotify,
   bkOption,
@@ -70,6 +71,7 @@ import {
   bkSlider,
   bkSteps,
   bkSwitcher,
+  bkTag,
   bkTab,
   bkTabPanel,
   bkTable,
@@ -112,6 +114,7 @@ Vue.use(bkFormItem);
 Vue.use(bkInput);
 Vue.use(bkNavigation);
 Vue.use(bkNavigationMenu);
+Vue.use(bkNavigationMenuGroup);
 Vue.use(bkNavigationMenuItem);
 Vue.use(bkOption);
 Vue.use(bkOptionGroup);
@@ -133,6 +136,7 @@ Vue.use(bkTab);
 Vue.use(bkTabPanel);
 Vue.use(bkTable);
 Vue.use(bkTableColumn);
+Vue.use(bkTag);
 Vue.use(bkTagInput);
 Vue.use(bkTimePicker);
 Vue.use(bkTimeline);

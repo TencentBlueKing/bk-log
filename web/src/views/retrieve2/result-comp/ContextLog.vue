@@ -36,65 +36,8 @@
     </div>
 
     <div class="dialog-bars">
-      <!-- 过滤 -->
-      <div class="filter-bar">
-        <span>{{ $t('configDetails.filterContent') }}</span>
-        <bk-select style="width: 100px;" v-model="filterType" :clearable="false">
-          <bk-option
-            v-for="(option, index) in filterTypeList"
-            :key="index"
-            :id="option.id"
-            :name="option.name">
-          </bk-option>
-        </bk-select>
-        <bk-input
-          :style="{ width: isScreenFull ? '500px' : '260px', margin: '0 10px' }"
-          :clearable="true"
-          :right-icon="'bk-icon icon-search'"
-          :placeholder="$t('retrieve.filterPlaceholder')"
-          v-model="filterKey"
-          @enter="filterLog"
-          @clear="filterLog"
-          @blur="filterLog"
-        ></bk-input>
-        <bk-checkbox
-          style="margin-right: 4px"
-          :true-value="true"
-          :false-value="false"
-          v-model="ignoreCase">
-        </bk-checkbox>
-        <span>{{ $t('retrieve.ignoreCase') }}</span>
-        <!-- <span style="margin-left: 40px">翻页<span class="hot-key">(Ctrl+k)</span></span>
-                <bk-select style="width: 136px;" v-model="flipScreen" :clearable="false">
-                    <bk-option v-for="(option, index) in flipScreenList"
-                        :key="index"
-                        :id="option.id"
-                        :name="option.name">
-                    </bk-option>
-                </bk-select> -->
-        <div class="filter-bar" v-if="filterType === 'include'" style="margin-left: 20px">
-          <span>{{ $t('retrieve.showPrev') }}</span>
-          <bk-tag-input
-            style="width: 74px;margin-right: 10px"
-            v-model="interval.prev"
-            placeholder="请输入"
-            :list="lineList"
-            :max-data="1"
-            :allow-create="false">
-          </bk-tag-input>
-          <span style="margin-right: 20px">{{ $t('行') }}</span>
-          <span>{{ $t('retrieve.showNext') }}</span>
-          <bk-tag-input
-            style="width: 74px;margin-right: 10px"
-            v-model="interval.next"
-            placeholder="请输入"
-            :list="lineList"
-            :max-data="1"
-            :allow-create="false">
-          </bk-tag-input>
-          <span>{{ $t('行') }}</span>
-        </div>
-      </div>
+      <log-filter :is-screen-full="isScreenFull" @handle-filter="handleFilter">
+      </log-filter>
       <!-- 暂停、复制、全屏 -->
       <div class="controls">
         <div class="control-icon" ref="fieldsConfigRef" v-bk-tooltips="fieldsConfigTooltip">
@@ -134,12 +77,14 @@
 <script>
 import logView from '@/components/logView';
 import FieldsConfig from '@/components/common/fields-config';
+import LogFilter from '../condition-comp/Log-filter';
 
 export default {
   name: 'context-log',
   components: {
     logView,
     FieldsConfig,
+    LogFilter,
   },
   props: {
     retrieveParams: {
@@ -158,12 +103,10 @@ export default {
 
     return {
       logLoading: true,
-
       totalFields: [], // 所有字段信息
       totalFieldNames: [], // 所有的字段名
       displayFields: [], // 按顺序展示的字段信息
       displayFieldNames: [], // 展示的字段名
-
       isConfigLoading: false,
       fieldsConfigId: id,
       fieldsConfigTooltip: {
@@ -176,26 +119,19 @@ export default {
         content: `#${id}`,
         onShow: this.requestFields,
       },
-
       rawList: [],
       logList: [], // 过滤成字符串的列表
       reverseRawList: [],
       reverseLogList: [], // 过滤成字符串的列表
-
       isScreenFull: true,
       params: {},
       zero: true,
       prevBegin: 0,
       nextBegin: 0,
       firstLogEl: null,
-      filterKey: '',
       filterType: 'include',
       activeFilterKey: '',
       throttle: false,
-      filterTypeList: [
-        { id: 'include', name: this.$t('retrieve.include') },
-        { id: 'uninclude', name: this.$t('retrieve.uninclude') },
-      ],
       ignoreCase: false,
       flipScreen: '',
       flipScreenList: [],
@@ -207,11 +143,6 @@ export default {
   },
   created() {
     this.deepClone(this.logParams);
-
-    this.lineList = Array.from({ length: 101 }, (v, k) => ({
-      id: k,
-      name: k.toString(),
-    }));
   },
   async mounted() {
     document.addEventListener('keyup', this.handleKeyup);
@@ -225,8 +156,6 @@ export default {
   },
   destroyed() {
     document.removeEventListener('keyup', this.handleKeyup);
-
-    // this.$emit('toggleScreenFull', false)
   },
   methods: {
     handleKeyup(event) {
@@ -335,11 +264,11 @@ export default {
       }
     },
     /**
-             * 将列表根据字段组合成字符串数组
-             * @param {Array} list 当前页码
-             * @param {Array} displayFieldNames 当前页码
-             * @return {Array<string>}
-             **/
+     * 将列表根据字段组合成字符串数组
+     * @param {Array} list 当前页码
+     * @param {Array} displayFieldNames 当前页码
+     * @return {Array<string>}
+     **/
     formatStringList(list, displayFieldNames) {
       const stringList = [];
       list.forEach((listItem) => {
@@ -454,9 +383,18 @@ export default {
         this.$easeScroll(top, 200, this.$refs.contextLog);
       }
     },
-    filterLog() {
+
+    handleFilter(field, value) {
+      if (field === 'filterKey') {
+        this.filterLog(value);
+      } else {
+        this[field] = value;
+      }
+    },
+
+    filterLog(value) {
       this.throttle = true;
-      this.activeFilterKey = this.filterKey;
+      this.activeFilterKey = value;
       setTimeout(() => {
         this.throttle = false;
       }, 300);
@@ -484,20 +422,6 @@ export default {
       display: flex;
       justify-content: space-between;
       margin-bottom: 14px;
-
-      .filter-bar {
-        display: flex;
-        align-items: center;
-
-        span {
-          margin-right: 10px;
-          color: #2d3542;
-        }
-
-        .hot-key {
-          color: #979ba5;
-        }
-      }
 
       .controls {
         display: flex;
