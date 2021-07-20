@@ -65,7 +65,7 @@ class IndexSetViewSet(APIViewSet):
         }
         """
         data = self.params_valid(UserSearchHistoryOperationStatisticSerializer)
-        return Response(IndexSetHandler().get_date_histogram(pk, data))
+        return Response(IndexSetHandler().get_date_histogram(index_set_id=pk, user_search_history_operation_time=data))
 
     @detail_route(methods=["get"], url_path="history/user_terms")
     def user_terms(self, request, pk=None):
@@ -99,7 +99,7 @@ class IndexSetViewSet(APIViewSet):
         }
         """
         data = self.params_valid(UserSearchHistoryOperationStatisticSerializer)
-        return Response(IndexSetHandler().get_user_terms(pk, data))
+        return Response(IndexSetHandler().get_user_terms(index_set_id=pk, user_search_history_operation_time=data))
 
     @detail_route(methods=["get"], url_path="history/duration_terms")
     def duration_terms(self, request, pk=None):
@@ -135,7 +135,7 @@ class IndexSetViewSet(APIViewSet):
         }
         """
         data = self.params_valid(UserSearchHistoryOperationStatisticSerializer)
-        return Response(IndexSetHandler().get_duration_terms(pk, data))
+        return Response(IndexSetHandler().get_duration_terms(index_set_id=pk, user_search_history_operation_time=data))
 
     @detail_route(methods=["GET"], url_path="history")
     def list_user_set_history(self, request, pk=None):
@@ -195,5 +195,5 @@ class IndexSetViewSet(APIViewSet):
         if (end_time - start_time).days >= constants.HISTORY_MAX_DAYS:
             raise ValidationError(_(f"查询时间段目前只支持{constants.HISTORY_MAX_DAYS}天"))
         return IndexSetHandler().list_user_set_history(
-            start_time=start_time, end_time=end_time, request=request, view=self, pk=pk
+            start_time=start_time, end_time=end_time, request=request, view=self, index_set_id=pk
         )
