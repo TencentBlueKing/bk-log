@@ -67,7 +67,7 @@ class EtlStorage(object):
         return {
             "regexp": "bk_log_regexp",
             "delimiter": "bk_log_delimiter",
-            "json": "json",
+            "json": "bk_log_json",
         }.get(separator_node_action, "bk_log_text")
 
     def etl_preview(self, data, etl_params) -> list:
