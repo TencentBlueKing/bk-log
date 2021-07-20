@@ -355,6 +355,9 @@ export default {
         integer: {
           name: this.$t('数字'),
         },
+        double: {
+          name: this.$t('数字'),
+        },
         long: {
           name: this.$t('文本'),
         },
@@ -669,6 +672,7 @@ export default {
       const fieldName = this.showFieldAlias ? this.fieldAliasMap[field.field_name] : field.field_name;
       const fieldType = field.field_type;
       const fieldIcon = this.getFieldIcon(field.field_type) || 'log-icon icon-unkown';
+      const content = this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].name : undefined;
 
       return h('div', {
         class: 'render-header',
@@ -678,7 +682,7 @@ export default {
           directives: [
             {
               name: 'bk-tooltips',
-              value: this.fieldTypeMap[fieldType].name,
+              value: content,
             },
           ],
         }),
