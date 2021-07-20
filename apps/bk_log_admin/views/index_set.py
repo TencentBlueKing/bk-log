@@ -1,4 +1,21 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-"""
+# Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
+# Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+# BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
+# License for BK-LOG 蓝鲸日志平台:
+# --------------------------------------------------------------------
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+# and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all copies or substantial
+# portions of the Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+# LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+# NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# """
 import arrow
 
 from rest_framework.response import Response
@@ -69,8 +86,8 @@ class IndexSetViewSet(APIViewSet):
             "result": true,
             "data": {
                 "labels": [
-                    "samuel",
-                    "samuelsheng"
+                    "test1",
+                    "test2"
                 ],
                 "values": [
                     1,
@@ -103,12 +120,14 @@ class IndexSetViewSet(APIViewSet):
             "result": true,
             "data": {
                 "labels": [
-                    "samuel",
-                    "samuelsheng"
+                    "大于30 s",
+                    "10~30 s",
+                    "0~10 s"
                 ],
                 "values": [
-                    1,
-                    3
+                    0,
+                    0,
+                    1
                 ]
             },
             "code": 0,
@@ -148,7 +167,7 @@ class IndexSetViewSet(APIViewSet):
                         "id":25,
                         "index_set_id":1,
                         "duration":723,
-                        "created_by":"samuelsheng",
+                        "created_by":"test1",
                         "created_at":"2021-02-03T02:03:41.928070Z",
                         "params":{
                             "keyword":"dtEventTimeStamp : 1612317781873",
