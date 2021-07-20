@@ -54,22 +54,7 @@ const dashboard = () => import(/* webpackChunkName: 'dashboard' */'@/views/dashb
 const extract = () => import(/* webpackChunkName: 'logExtract' */'@/views/extract');
 const trace = () => import(/* webpackChunkName: 'logTrace' */'@/views/trace');
 
-// const manage = () => import(/* webpackChunkName: 'logManage' */'@/views/manage');
-// const indexSet = () => import(/* webpackChunkName: 'logIndexSet' */'@/views/manage/indexSet');
-// const addIndexSet = () => import(/* webpackChunkName: 'logAddIndexSet' */'@/views/manage/indexSet/addIndexSet');
-// const collectAccess = () => import(/* webpackChunkName: 'logCollectAccess' */'@/views/manage/collectAccess');
-// const esAccess = () => import(/* webpackChunkName: 'logEsAccess' */'@/views/manage/esAccess');
-// const dataAccess = () => import(/* webpackChunkName: 'logAccessStep' */'@/components/data-Access');
-// // const addDataSource = () =>
-// // import(/* webpackChunkName: 'logAddDataSource' */'@/views/manage/dataSource/addDataSource')
-// const allocation = () => import(/* webpackChunkName: 'logPermissionGroup' */'@/views/manage/esSource/allocation');
-// const jsonFormat = () => import(/* webpackChunkName: 'logPermissionGroup' */'@/views/manage/esSource/jsonFormat');
-// // const handleCollection = () => import('@/views/manage/collection/handleCollection')
-// //const addCollection = () => import(/* webpackChunkName: 'addCollection'*/'@/views/manage/collection/addCollection')
-// const migrate = () => import(/* webpackChunkName: 'migrate' */'@/views/manage/migrate');
-// const manageExtract = () => import(/* webpackChunkName: 'manageExtract' */'@/views/manage/extract');
-// const linkConfiguration = () => import(/* webpackChunkName: 'linkConfiguration' */'@/views/manage/link');
-
+// 管理端
 const Manage = () => import(/* webpackChunkName: 'manage' */'@/views/manage2');
 // ---- 日志接入 ---- 日志采集（采集项）
 const CollectionItem = () => import(
@@ -171,102 +156,6 @@ const routes = [
     name: 'trace',
     component: trace,
   },
-  // {
-  //   path: '/manage',
-  //   component: manage,
-  //   children: [
-  //     {
-  //       path: '',
-  //       name: 'manage',
-  //       // alias: '/dataSource',
-  //       redirect: 'collect',
-  //     },
-  //     // 采集接入
-  //     {
-  //       path: 'collect',
-  //       name: 'collectAccess',
-  //       component: collectAccess,
-  //     },
-  //     {
-  //       path: 'collect/add',
-  //       name: 'collectAdd',
-  //       component: dataAccess,
-  //     },
-  //     {
-  //       path: 'collect/edit/:collectorId',
-  //       name: 'collectEdit',
-  //       component: dataAccess,
-  //     },
-  //     {
-  //       path: 'collect/field/:collectorId',
-  //       name: 'collectField',
-  //       component: dataAccess,
-  //     },
-  //     {
-  //       path: 'collect/start/:collectorId',
-  //       name: 'collectStart',
-  //       component: dataAccess,
-  //     },
-  //     {
-  //       path: 'collect/stop/:collectorId',
-  //       name: 'collectStop',
-  //       component: dataAccess,
-  //     },
-  //     {
-  //       path: 'collect/allocation/:collectorId',
-  //       name: 'allocation',
-  //       component: allocation,
-  //     },
-  //     {
-  //       path: 'collect/jsonFormat/:collectorId',
-  //       name: 'jsonFormat',
-  //       component: jsonFormat,
-  //     },
-  //     // es采集
-  //     {
-  //       path: 'esAccess',
-  //       name: 'esAccess',
-  //       component: esAccess,
-  //     },
-  //     // 索引集
-  //     {
-  //       path: 'indexSet',
-  //       name: 'indexSet',
-  //       component: indexSet,
-  //     },
-  //     {
-  //       path: 'indexSet/addIndexSet',
-  //       name: 'addIndexSet',
-  //       component: addIndexSet,
-  //     },
-  //     {
-  //       path: 'indexSet/editIndexSet/:id',
-  //       name: 'editIndexSet',
-  //       component: addIndexSet,
-  //     },
-  //     {
-  //       path: 'link',
-  //       name: 'linkConfiguration',
-  //       component: linkConfiguration,
-  //     },
-  //     // {
-  //     //     path: 'dataSource/addDataSource',
-  //     //     name: 'addDataSource',
-  //     //     component: addDataSource
-  //     // },
-  //     // v3迁移
-  //     {
-  //       path: 'migrate',
-  //       name: 'migrate',
-  //       component: migrate,
-  //     },
-  //     {
-  //       path: 'extract',
-  //       name: 'manageExtract',
-  //       component: manageExtract,
-  //     },
-  //   ],
-  // },
   {
     path: '/manage',
     name: 'manage',
