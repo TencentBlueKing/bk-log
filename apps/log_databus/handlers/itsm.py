@@ -25,6 +25,8 @@ from django.db import transaction
 from rest_framework.reverse import reverse
 
 from apps.api import BkItsmApi
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM, ITSM_SERVICE_ID
 from apps.utils.log import logger
 from apps.log_databus.constants import CollectItsmStatus
 from apps.log_databus.exceptions import CollectItsmTokenIllega, CollectItsmHasApply, CollectItsmNotExists
@@ -80,7 +82,9 @@ class ItsmHandler(object):
 
     def create_ticket(self, apply_params):
         params = {
-            "service_id": settings.COLLECTOR_ITSM_SERVICE_ID,
+            "service_id": FeatureToggleObject.toggle(FEATURE_COLLECTOR_ITSM).feature_config.get(
+                ITSM_SERVICE_ID, settings.COLLECTOR_ITSM_SERVICE_ID
+            ),
             "creator": get_request_username(),
             "fields": [{"key": param_key, "value": param_value} for param_key, param_value in apply_params.items()],
             "meta": {"callback_url": self._generate_callback_url()},
@@ -176,7 +180,9 @@ class ItsmHandler(object):
         form_value.extend(paths)
         return form_value
 
-    def _generate_collector_detail_itsm_form(self, collector: CollectorConfig):  # pylint: disable=function-name-too-long
+    def _generate_collector_detail_itsm_form(
+        self, collector: CollectorConfig
+    ):  # pylint: disable=function-name-too-long
         form_detail = {
             "config": {},
             "schemes": {
