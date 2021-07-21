@@ -185,7 +185,7 @@ BK_HOT_WARM_CONFIG_URL = (
 )
 
 # bulk_request limit
-BULK_REQUEST_LIMIT = os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500)
+BULK_REQUEST_LIMIT = int(os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500))
 
 # 该配置需要等待SITE_URL被patch掉才能正确配置，因此放在patch逻辑后面
 GRAFANA = {
