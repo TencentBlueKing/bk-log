@@ -344,7 +344,7 @@ const routes = [
       },
       {
         path: 'manage-log-extract',
-        name: 'manage-log-extract', // 日志提取 - 权限管理
+        name: 'manage-log-extract', // 日志提取 - 提取配置
         component: ExtractPermission,
       },
       {
