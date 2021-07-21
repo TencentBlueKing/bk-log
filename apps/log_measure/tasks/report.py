@@ -30,7 +30,7 @@ from config.domains import MONITOR_APIGATEWAY_ROOT
 from bk_monitor.handler.monitor import BKMonitor
 
 
-@periodic_task(run_every=crontab(minute="*/1"), queue="bk_monitor_report")
+@periodic_task(run_every=crontab(minute="*/1"))
 def bk_monitor_report():
     # todo 由于与菜单修改有相关性 暂时先改成跟原本monitor开关做联动
     if settings.FEATURE_TOGGLE["monitor_report"] == "off":
