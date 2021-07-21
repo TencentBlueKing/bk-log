@@ -429,7 +429,13 @@ class DataAPI(object):
         if cache.get(cache_key):
             return cache.get(cache_key)
 
-    def bulk_request(self, params=None, get_data=lambda x: x["info"], get_count=lambda x: x["count"], limit=1000):
+    def bulk_request(
+        self,
+        params=None,
+        get_data=lambda x: x["info"],
+        get_count=lambda x: x["count"],
+        limit=settings.BULK_REQUEST_LIMIT,
+    ):
         """
         并发请求接口，用于需要分页多次请求的情况
         :param params: 请求参数
@@ -663,7 +669,9 @@ class PassThroughAPI(DataAPI):
     直接透传API
     """
 
-    def __init__(self, module, method, url_prefix, sub_url, supported_api=list()):  # pylint: disable=dangerous-default-value  # noqa
+    def __init__(
+        self, module, method, url_prefix, sub_url, supported_api=list()
+    ):  # pylint: disable=dangerous-default-value  # noqa
         is_supported = False
         for d_api in supported_api:
             if d_api["method"] == method and re.match(d_api.get("url_regex"), sub_url):
