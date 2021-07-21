@@ -82,8 +82,8 @@ export default [{
     id: 'manage-extract',
     name: '日志提取',
     children: [{
-      id: 'manage-extract-permission',
-      name: '权限管理',
+      id: 'manage-log-extract',
+      name: '提取配置',
     }, {
       id: 'extract-link-manage',
       name: '链路管理',
@@ -99,7 +99,7 @@ export default [{
     id: 'es-cluster-status',
     name: 'ES集群',
     children: [{
-      id: 'es-cluster-mess',
+      id: 'es-cluster-manage',
       name: '集群列表',
     }],
   }, {
