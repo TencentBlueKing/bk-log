@@ -68,7 +68,8 @@ const ManageCollection = () => import(
 // ---- 日志接入 ---- 日志采集（采集项）---- 新建、编辑、停用、启用、字段提取
 const AccessSteps = () => import(
   /* webpackChunkName: 'access-steps' */
-  '@/views/manage2/manage-access/log-collection/collection-item/access-steps'
+  // '@/views/manage2/manage-access/log-collection/collection-item/access-steps'
+  '@/components/data-Access'
 );
 // ---- 日志接入 ---- 日志采集索引集、数据平台、第三方ES接入 ---- 索引集列表
 const IndexList = () => import(

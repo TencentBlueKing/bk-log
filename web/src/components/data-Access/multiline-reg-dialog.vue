@@ -139,7 +139,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  @import '../../../../../../scss/mixins/scroller';
+  @import '@/scss/mixins/scroller';
 
   .multiline-reg-dialog-content {
     .test-container {

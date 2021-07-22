@@ -109,7 +109,7 @@ export default {
 </script>
 
 <style lang="scss">
-  @import '../../../../../../scss/conf';
+  @import '@/scss/conf';
 
   .step-result-wrapper {
     position: relative;
