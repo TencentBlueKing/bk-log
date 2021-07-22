@@ -23,3 +23,4 @@ FEATURE_BKDATA_DATAID = "feature_bkdata_dataid"
 
 # 是否开启ITSM特性开关
 FEATURE_COLLECTOR_ITSM = "collect_itsm"
+ITSM_SERVICE_ID = "itsm_service_id"
