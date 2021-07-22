@@ -380,9 +380,9 @@ export default {
           }
         }
 
-        .bk-step-indicator {
-          background-color: #dcdee5;
-        }
+        // .bk-step-indicator {
+        //   background-color: #dcdee5;
+        // }
 
         .bk-step-title {
           color: #63656e;

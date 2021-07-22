@@ -82,7 +82,7 @@
               <!-- eslint-enabled -->
               <div class="cluster-table-wrapper" slot>
                 <bk-table
-                  v-bkloading="{ isLoading: hasRunning }"
+                  v-bkloading="{ isLoading: loading }"
                   class="cluster-table"
                   :resizable="true"
                   :empty-text="$t('btn.vacancy')"
@@ -116,9 +116,10 @@
                   <bk-table-column width="80">
                     <template slot-scope="props">
                       <a 
-                      href="javascript: ;" class="retry"
-                          v-if="props.row.status === 'failed'"
-                          @click.stop="issuedRetry(props.row, cluster)">{{ $t('configDetails.retry') }}
+                        href="javascript: ;" class="retry"
+                        v-if="props.row.status === 'failed'"
+                        @click.stop="issuedRetry(props.row, cluster)">
+                        {{ $t('configDetails.retry') }}
                       </a>
                     </template>
                   </bk-table-column>
