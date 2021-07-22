@@ -522,9 +522,9 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  @import '../../../../../../scss/mixins/scroller.scss';
-  @import '../../../../../../scss/mixins/clearfix';
-  @import '../../../../../../scss/conf';
+  @import '@/scss/mixins/scroller.scss';
+  @import '@/scss/mixins/clearfix';
+  @import '@/scss/conf';
 
   .step-issued-wrapper {
     // @include scroller(#C4C6CC, 6px);
