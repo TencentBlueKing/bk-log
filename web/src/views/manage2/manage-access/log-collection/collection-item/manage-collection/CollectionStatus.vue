@@ -45,7 +45,7 @@
             @click="retryClick(dataFal, dataFir.contents.length)"
           >{{ $t('configDetails.batchRetry') }}
           </bk-button>
-          <bk-button
+          <!-- <bk-button
             :theme="'primary'"
             :title="$t('configDetails.dataSampling')"
             class="mr10"
@@ -53,7 +53,7 @@
             :disabled="!collectProject"
             @click="jsonFormatClick">
             {{$t('configDetails.dataSampling')}}
-          </bk-button>
+          </bk-button> -->
         </div>
       </div>
       <div v-for="(value, i) in renderTableList"

@@ -46,6 +46,8 @@ const defaultOption = {
     y: 10,
     x2: 20,
     y2: 30,
+    left: '2%',   // 与容器左侧的距离
+    containLabel: true,
   },
 };
 
