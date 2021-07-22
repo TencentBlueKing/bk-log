@@ -18,6 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import functools
+import json
 
 from django.core.cache import cache
 
@@ -51,11 +52,11 @@ def using_cache(key: str, duration, need_md5=False):
             cache_result = cache.get(actual_key)
 
             if cache_result:
-                return cache_result
+                return json.loads(cache_result)
 
             result = func(*args, **kwargs)
             if result:
-                cache.set(actual_key, result, duration)
+                cache.set(actual_key, json.dumps(result), duration)
             return result
 
         return inner
