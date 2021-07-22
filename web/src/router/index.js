@@ -100,7 +100,7 @@ const SdkTrack = () => import(
   /* webpackChunkName: 'sdk-track' */
   '@/views/manage2/trace-track/sdk-track'
 );
-// ---- 日志提取 ---- 权限管理
+// ---- 日志提取 ---- 提取配置
 const ExtractPermission = () => import(
   /* webpackChunkName: 'manage-extract-permission' */
   '@/views/manage2/manage-extract/manage-extract-permission'
@@ -343,8 +343,8 @@ const routes = [
         component: SdkTrack,
       },
       {
-        path: 'manage-extract-permission',
-        name: 'manage-extract-permission', // 日志提取 - 权限管理
+        path: 'manage-log-extract',
+        name: 'manage-log-extract', // 日志提取 - 提取配置
         component: ExtractPermission,
       },
       {
@@ -375,8 +375,8 @@ const routes = [
         component: LogArchive,
       },
       {
-        path: 'es-cluster-mess',
-        name: 'es-cluster-mess', // ES集群 - 集群信息
+        path: 'es-cluster-manage',
+        name: 'es-cluster-manage', // ES集群 - 集群信息
         component: ClusterMess,
       },
       {
