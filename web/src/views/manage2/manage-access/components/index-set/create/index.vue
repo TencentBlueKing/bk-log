@@ -227,7 +227,9 @@ export default {
             time_field_type: data.time_field_type,
             time_field_unit: data.time_field_unit,
           };
-          await this.handleTraceSelected(this.formData.indexes);
+          if (this.isShowTrace) {
+            await this.handleTraceSelected(this.formData.indexes);
+          }
         }
         this.basicLoading = false;
       } catch (err) {

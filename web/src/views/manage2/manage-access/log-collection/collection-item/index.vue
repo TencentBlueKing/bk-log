@@ -189,7 +189,7 @@
               theme="primary" text
               class="king-button"
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-              @click.stop="operateHandler(props.row, 'view')">
+              @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
             <bk-button
