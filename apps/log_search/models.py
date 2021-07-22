@@ -477,6 +477,7 @@ class LogIndexSet(SoftDeleteModel):
         try:
             search_handler_esquery = SearchHandler(self.index_set_id, {}, pre_check_enable=pre_check_enable)
             fields = search_handler_esquery.fields()
+            fields = self.fields_to_string(fields=fields)
             self.fields_snapshot = fields
         except Exception as e:  # pylint: disable=broad-except
             # 如果字段获取失败，则不修改原来的值
@@ -512,6 +513,15 @@ class LogIndexSet(SoftDeleteModel):
 
     def cancel_favorite(self, username: str):
         IndexSetUserFavorite.cancel(username, self.index_set_id)
+
+    @staticmethod
+    def fields_to_string(fields):
+        """
+        translate __proxy__ obj usable_reason to str
+        @params fields {dict}
+        """
+        fields["usable_reason"] = str(fields.get("usable_reason", ""))
+        return fields
 
     class Meta:
         ordering = ("-orders", "-index_set_id")
