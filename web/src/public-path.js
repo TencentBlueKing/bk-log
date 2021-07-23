@@ -22,7 +22,7 @@
 
 /**
  * @file webpack public path config
- * @author v_adongtang <v_adongtang@tentcent.com>
+ * @author <>
  */
 
 // eslint-disable-next-line

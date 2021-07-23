@@ -39,6 +39,7 @@
     :default-expand-level="defaultExpandLevel"
     :expand-on-click="expandOnClick"
     :left-panel-width="leftPanelWidth"
+    :handle-agent-status="handleAgentStatus"
     @check-change="handleTableCheckChange"
     @search-selection-change="handleSearchSelectionChange">
   </DynamicTopo>
@@ -57,6 +58,7 @@ import {
 export default class StaticTopo extends Vue {
   // 获取组件初始化数据
   @Prop({ type: Function, required: true }) private readonly getDefaultData!: Function
+  @Prop({ type: Function }) private readonly handleAgentStatus!: Function
   // 表格搜索数据
   @Prop({ type: Function, required: true }) private readonly getSearchTableData!: SearchDataFuncType
   // 树搜索数据

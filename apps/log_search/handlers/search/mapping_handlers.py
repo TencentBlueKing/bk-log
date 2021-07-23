@@ -24,6 +24,7 @@ from collections import defaultdict
 from typing import Dict, List, Any
 
 from django.conf import settings
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import BkLogApi
@@ -32,6 +33,7 @@ from apps.log_search.constants import (
     BKDATA_ASYNC_CONTAINER_FIELDS,
     LOG_ASYNC_FIELDS,
     FEATURE_ASYNC_EXPORT_COMMON,
+    FieldDataTypeEnum,
 )
 from apps.utils.cache import cache_one_hour
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -103,6 +105,20 @@ class MappingHandlers(object):
                 raise IndexSetNotHaveConflictIndex(data=have_conflict)
             return False
 
+    def is_nested_field(self, field):
+        parent_path, *_ = field.split(".")
+        return parent_path in self.nested_fields
+
+    @cached_property
+    def nested_fields(self):
+        mapping_list: list = self._get_mapping()
+        property_dict: dict = self.find_merged_property(mapping_list)
+        nested_fields = set()
+        for key, value in property_dict.items():
+            if FieldDataTypeEnum.NESTED.value == value.get("type", ""):
+                nested_fields.add(key)
+        return nested_fields
+
     def _get_sub_fields(self, conflict_result, properties, last_key):
         for property_key, property_define in properties.items():
             if "properties" in property_define:
@@ -113,7 +129,7 @@ class MappingHandlers(object):
 
     def get_all_fields_by_index_id(self, scope="default"):
         mapping_list: list = self._get_mapping()
-        property_dict: dict = self.find_megerd_property(mapping_list)
+        property_dict: dict = self.find_merged_property(mapping_list)
         fields_result: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
         fields_list: list = [
             {
@@ -219,10 +235,14 @@ class MappingHandlers(object):
         fields_result: List = list()
         for key in properties_dict.keys():
             k_keys: list = properties_dict[key].keys()
+            if "properties" in k_keys:
+                fields_result.extend(cls.get_fields_recursively(p_key=key, properties_dict=properties_dict[key]))
+                continue
             if "type" in k_keys:
                 field_type: str = properties_dict[key]["type"]
                 doc_values_farther_dict: dict = properties_dict[key]
                 doc_values = False
+
                 if isinstance(doc_values_farther_dict, dict):
                     doc_values = doc_values_farther_dict.get("doc_values", True)
 
@@ -250,9 +270,6 @@ class MappingHandlers(object):
                     }
                 )
                 fields_result.append(data)
-                continue
-            if "properties" in k_keys:
-                fields_result.extend(cls.get_fields_recursively(p_key=key, properties_dict=properties_dict[key]))
                 continue
         return fields_result
 
@@ -341,7 +358,7 @@ class MappingHandlers(object):
 
         return (converted_index_a > converted_index_b) - (converted_index_a < converted_index_b)
 
-    def find_megerd_property(self, mapping_result) -> dict:
+    def find_merged_property(self, mapping_result) -> dict:
         return self._merge_property(self._get_all_property(mapping_result))
 
     def _get_all_property(self, mapping_result):

@@ -22,7 +22,7 @@
 
 /**
  * @file 按需引入 bk-magic-vue 组件
- * @author v_adongtang <v_adongtang@tentcent.com>
+ * @author <>
  */
 
 /* eslint-disable import/no-duplicates */

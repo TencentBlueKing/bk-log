@@ -148,7 +148,9 @@ class IndexSetPreCheckIns(object):
 
     # 找到对应的field
     @classmethod
-    def _mark_field_for_need_to_check_index_set(cls, need_to_check_index_set: dict, schema_dict_template) -> dict:  # pylint: disable=function-name-too-long
+    def _mark_field_for_need_to_check_index_set(
+        cls, need_to_check_index_set: dict, schema_dict_template
+    ) -> dict:  # pylint: disable=function-name-too-long
         for v in need_to_check_index_set.values():
             # index_set_id: int = k
             need_to_check_list: list = v
@@ -235,7 +237,7 @@ class IndexSetPreCheckIns(object):
             )
 
 
-@periodic_task(run_every=crontab(hour="*/12"), queue="pre_check_index_set")
+@periodic_task(run_every=crontab(hour="*/12"))
 def index_set_pre_check():
     IndexSetPreCheckIns.pre_check_indexset()
     return None

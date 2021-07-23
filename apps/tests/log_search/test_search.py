@@ -60,7 +60,15 @@ SEARCH_RESULT = {
 }
 
 
+@patch(
+    "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
+    lambda _, __: False,
+)
 class TestSearchHandler(TestCase):
+    @patch(
+        "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
+        lambda _, __: False,
+    )
     @patch(
         "apps.log_search.handlers.search.search_handlers_esquery.SearchHandler._init_indices_str",
         lambda _, index_set_id: "",
@@ -73,6 +81,10 @@ class TestSearchHandler(TestCase):
         self.search_handler = SearchHandler(index_set_id=INDEX_SET_ID, search_dict=SEARCH_DICT, pre_check_enable=False)
 
     @patch("apps.api.BkLogApi.search", lambda _: SEARCH_RESULT)
+    @patch(
+        "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
+        lambda _, __: False,
+    )
     def test_search_after_result(self):
         search_after_result = self.search_handler.search_after_result(
             search_result=SEARCH_RESULT, sorted_fields=LOG_ASYNC_FIELDS
@@ -84,6 +96,10 @@ class TestSearchHandler(TestCase):
         self.assertEqual(len(logs_result), 90000)
 
     @patch("apps.api.BkLogApi.scroll", lambda _: SEARCH_RESULT)
+    @patch(
+        "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
+        lambda _, __: False,
+    )
     def test_scroll_result(self):
         scroll_result = self.search_handler.scroll_result(scroll_result=SEARCH_RESULT)
 
