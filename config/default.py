@@ -356,8 +356,8 @@ MENUS = [
                         "id": "bk_data_collection",
                         "name": _("计算平台"),
                         "feature": FEATURE_TOGGLE["scenario_bkdata"],
-                        "scenes": "calculation-fill",
-                        "icon": "document",
+                        "scenes": "scenario_bkdata",
+                        "icon": "calculation-fill",
                     },
                     {
                         "id": "es_collection",
@@ -388,7 +388,7 @@ MENUS = [
                         "name": _("计算平台"),
                         "feature": FEATURE_TOGGLE["scenario_bkdata"],
                         "scenes": "scenario_bkdata",
-                        "icon": "",
+                        "icon": "cc-cabinet",
                     },
                     {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
                     {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
@@ -399,6 +399,7 @@ MENUS = [
                 "name": _("日志清洗"),
                 "feature": "on",
                 "icon": "",
+                "keyword": "清洗",
                 "children": [
                     {
                         "id": "clean_list",
@@ -449,7 +450,9 @@ MENUS = [
                 "feature": os.environ.get("BKAPP_FEATURE_DATA_LINK", "on"),
                 "icon": "",
                 "keyword": _("设置"),
-                "children": [{"id": "manage_data_link_conf", "name": _("采集链路管理"), "feature": "on", "icon": ""}],
+                "children": [
+                    {"id": "manage_data_link_conf", "name": _("采集链路管理"), "feature": "on", "icon": "log-setting"}
+                ],
             },
         ],
     },
