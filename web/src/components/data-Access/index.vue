@@ -274,8 +274,8 @@ export default {
 </script>
 
 <style lang="scss">
-  @import '../../../../../../scss/mixins/clearfix';
-  @import '../../../../../../scss/conf';
+  @import '@/scss/mixins/clearfix';
+  @import '@/scss/conf';
 
   .access-wrapper {
     padding: 20px 60px;
@@ -375,7 +375,7 @@ export default {
             transform: translate(-50%, -50%);
             background-color: #fafbfd;
             border-radius: 50%;
-            background-image: url('../../../../../../images/icons/finish.svg');
+            background-image: url('../../images/icons/finish.svg');
             background-size: 100% 100%;
           }
         }
