@@ -27,18 +27,23 @@
       navigation-type="left-right"
       head-height="0"
       header-title=""
-      default-open>
+      hover-width="200"
+      default-open
+      :theme-color="navThemeColor"
+      @toggle="handleToggle">
       <template slot="menu">
-        <bk-navigation-menu :default-active="activeManageNav.id">
+        <bk-navigation-menu :item-default-bg-color="navThemeColor" :default-active="activeManageNav.id">
           <template v-for="groupItem in manageNavList">
-            <bk-navigation-menu-group :key="groupItem.id" :group-name="groupItem.name">
+            <bk-navigation-menu-group
+              :key="groupItem.id"
+              :group-name="isExpand ? groupItem.name : groupItem.keyword">
               <template v-for="navItem in groupItem.children">
                 <bk-navigation-menu-item
                   :key="navItem.id"
                   :id="navItem.id"
-                  icon="bk-icon icon-home-shape"
+                  :icon="getMenuIcon(navItem)"
                   @click="handleClickNavItem(navItem.id)">
-                  {{ navItem.name }}
+                  {{ isExpand ? navItem.name : '' }}
                 </bk-navigation-menu-item>
               </template>
             </bk-navigation-menu-group>
@@ -64,7 +69,9 @@ export default {
   },
   data() {
     return {
+      navThemeColor: '#2c354d',
       routerKey: 0,
+      isExpand: true,
     };
   },
   computed: {
@@ -78,6 +85,13 @@ export default {
     this.getGlobalsData();
   },
   methods: {
+    getMenuIcon(item) {
+      if (item.icon) {
+        return `log-icon icon-${item.icon}`;
+      }
+
+      return 'bk-icon icon-home-shape';
+    },
     handleClickNavItem(id) {
       if (this.activeManageNav.id !== id) {
         this.$router.push({
@@ -101,6 +115,9 @@ export default {
         .catch((e) => {
           console.warn(e);
         });
+    },
+    handleToggle(data) {
+      this.isExpand = data;
     },
   },
 };
