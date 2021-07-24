@@ -1123,7 +1123,7 @@ export default {
 };
 </script>
 <style lang="scss">
-  @import '../../../../../../scss/mixins/clearfix';
+  @import '@/scss/mixins/clearfix';
 
   .step-field {
     position: relative;

@@ -738,7 +738,7 @@ export default {
         display: inline-block;
         width: 9px;
         height: 5px;
-        background: url('../../../../../../images/icons/triangle.png');
+        background: url('../../images/icons/triangle.png');
         background-size: 100% 100%;
         margin-right: 6px;
         vertical-align: middle;

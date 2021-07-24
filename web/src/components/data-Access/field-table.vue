@@ -879,7 +879,7 @@ export default {
 };
 </script>
 <style lang="scss">
-  @import '../../../../../../scss/mixins/clearfix';
+  @import '@/scss/mixins/clearfix';
 
   .field-table-container {
     position: relative;
