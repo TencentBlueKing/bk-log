@@ -17,20 +17,23 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import apps.models
+
 from django.db import migrations
+from django.core.cache import cache
+from apps.utils.log import logger
+
+
+def forwards_func(apps, schema_editor):
+    try:
+        cache.clear()
+    except Exception as e:  # noqa
+        logger.error(f"clear cache failed：{e}")
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("log_search", "0035_init_async_export"),
+        ("log_search", "0037_delete_featuretoggle"),
     ]
 
-    operations = [
-        migrations.AlterField(
-            model_name="logindexset",
-            name="view_roles",
-            field=apps.models.MultiStrSplitByCommaField(blank=True, max_length=255, null=True, verbose_name="查看权限"),
-        ),
-    ]
+    operations = [migrations.RunPython(forwards_func)]
