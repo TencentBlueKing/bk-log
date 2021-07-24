@@ -343,6 +343,7 @@ MENUS = [
                 "name": _("日志接入"),
                 "feature": "on",
                 "icon": "",
+                "keyword": _("接入"),
                 "children": [
                     {
                         "id": "log_collection",
@@ -373,6 +374,7 @@ MENUS = [
                 "name": _("全链路追踪"),
                 "feature": "on",
                 "icon": "",
+                "keyword": "trace",
                 "children": [
                     {
                         "id": "collection_track",
@@ -417,8 +419,9 @@ MENUS = [
             },
             {
                 "id": "manage_extract_strategy",
-                "name": _("日志提取策略"),
+                "name": _("日志提取"),
                 "icon": "",
+                "keyword": _("提取"),
                 "feature": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
                 "children": [
                     {"id": "manage_log_extract", "name": _("日志提取配置"), "feature": "on", "icon": "cc-log"},
@@ -437,13 +440,15 @@ MENUS = [
                 "name": _("ES集群"),
                 "feature": "on",
                 "icon": "",
+                "keyword": _("集群"),
                 "children": [{"id": "es_cluster_manage", "name": _("集群管理"), "feature": "on", "icon": "cc-influxdb"}],
             },
             {
                 "id": "manage_data_link",
-                "name": _("管理"),
+                "name": _("设置"),
                 "feature": os.environ.get("BKAPP_FEATURE_DATA_LINK", "on"),
                 "icon": "",
+                "keyword": _("设置"),
                 "children": [{"id": "manage_data_link_conf", "name": _("采集链路管理"), "feature": "on", "icon": ""}],
             },
         ],
