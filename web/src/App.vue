@@ -244,6 +244,9 @@ export default {
     }
     .bk-navigation-wrapper {
       height: 100%;
+      .navigation-nav {
+        z-index: 2500;
+      }
       .navigation-container {
         max-width: calc(100% - 60px) !important;
         .container-content {
@@ -254,6 +257,19 @@ export default {
             height: 100%;
           }
         }
+      }
+      .bk-navigation-menu-group {
+        &:first-child {
+          .group-name-wrap {
+            padding-top: 12px;
+          }
+        }
+        .group-name-wrap .group-name {
+          margin-right: 0;
+        }
+      }
+      .navigation-menu-item-icon.bk-icon {
+        min-width: 28px;
       }
     }
     .nav-slider-list {

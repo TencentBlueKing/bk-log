@@ -48,6 +48,11 @@ const ExtractLinkView = {
   template: '<router-view></router-view>',
 };
 
+const logCleanView = {
+  name: 'logCleanView',
+  template: '<router-view></router-view>',
+};
+
 const page403 = () => import(/* webpackChunkName: 'page403' */'@/views/403');
 const retrieve = () => import(/* webpackChunkName: 'logRetrieve' */'@/views/retrieve2');
 const dashboard = () => import(/* webpackChunkName: 'dashboard' */'@/views/dashboard');
@@ -100,6 +105,16 @@ const CollectionTrack = () => import(
 const SdkTrack = () => import(
   /* webpackChunkName: 'sdk-track' */
   '@/views/manage2/trace-track/sdk-track'
+);
+// ---- 日志清洗 ---- 清洗列表
+const cleanList = () => import(
+  /* webpackChunkName: 'sdk-track' */
+  '@/views/manage2/log-clean/clean-manage/list'
+);
+// ---- 模板清洗 ---- 清洗模版
+const cleanTemplate = () => import(
+  /* webpackChunkName: 'sdk-track' */
+  '@/views/manage2/log-clean/clean-template/list'
 );
 // ---- 日志提取 ---- 提取配置
 const ExtractPermission = () => import(
@@ -255,17 +270,20 @@ const routes = [
             path: 'list',
             name: 'bkdata-index-set-list',
             component: IndexList,
-          }, {
+          },
+          {
             path: 'manage/:indexSetId',
             name: 'bkdata-index-set-manage',
             meta: { needBack: true },
             component: ManageIndex,
-          }, {
+          },
+          {
             path: 'create',
             name: 'bkdata-index-set-create',
             meta: { needBack: true },
             component: CreateIndex,
-          }, {
+          },
+          {
             path: 'edit/:indexSetId',
             name: 'bkdata-index-set-edit',
             meta: { needBack: true },
@@ -283,17 +301,20 @@ const routes = [
             path: 'list',
             name: 'es-index-set-list',
             component: IndexList,
-          }, {
+          },
+          {
             path: 'manage/:indexSetId',
             name: 'es-index-set-manage',
             meta: { needBack: true },
             component: ManageIndex,
-          }, {
+          },
+          {
             path: 'create',
             name: 'es-index-set-create',
             meta: { needBack: true },
             component: CreateIndex,
-          }, {
+          },
+          {
             path: 'edit/:indexSetId',
             name: 'es-index-set-edit',
             meta: { needBack: true },
@@ -321,27 +342,49 @@ const routes = [
             path: 'list',
             name: 'bkdata-track-list',
             component: IndexList,
-          }, {
+          },
+          {
             path: 'manage/:indexSetId',
             name: 'bkdata-track-manage',
             meta: { needBack: true },
             component: ManageIndex,
-          }, {
+          },
+          {
             path: 'create',
             name: 'bkdata-track-create',
             meta: { needBack: true },
             component: CreateIndex,
-          }, {
+          },
+          {
             path: 'edit/:indexSetId',
             name: 'bkdata-track-edit',
             meta: { needBack: true },
             component: CreateIndex,
-          }],
+          },
+        ],
       },
       {
         path: 'sdk-track',
         name: 'sdk-track', // 全链路追踪 - SDK接入
         component: SdkTrack,
+      },
+      {
+        path: 'log-clean',
+        name: 'log-clean', // 日志清洗
+        component: logCleanView,
+        redirect: '/manage/log-clean/list',
+        children: [
+          {
+            path: 'list',
+            name: 'clean-list', // 日志清洗 - 清洗列表
+            component: cleanList,
+          },
+          {
+            path: 'template',
+            name: 'clean-templates', // 日志清洗 - 清洗模板
+            component: cleanTemplate,
+          },
+        ],
       },
       {
         path: 'manage-log-extract',
@@ -358,12 +401,14 @@ const routes = [
             path: 'list',
             name: 'extract-link-list',
             component: ExtractLinkList,
-          }, {
+          },
+          {
             path: 'edit/:linkId',
             name: 'extract-link-edit',
             meta: { needBack: true },
             component: ExtractLinkCreate,
-          }, {
+          },
+          {
             path: 'create',
             name: 'extract-link-create',
             meta: { needBack: true },
