@@ -72,7 +72,7 @@ class CleanViewSet(ModelViewSet):
         """
         @api {get} /databus/cleans/$collector_config_id/?bk_biz_id=$bk_biz_id&bk_data_id=$bk_data_id 2_高级清洗-刷新
         @apiName refresh_clean
-        @apiGroup 22_Clean
+        @apiGroup 22_clean
         @apiDescription 刷新高级清洗
         @apiParam {Int} bk_biz_id 业务id
         @apiParam {Int} bk_data_id 数据源id
@@ -325,7 +325,7 @@ class CleanTemplateViewSet(ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """
-        @api {delete} /databus/clean_template/$clean_template_id/ 3_清洗模板-删除
+        @api {delete} /databus/clean_template/$clean_template_id/ 5_清洗模板-删除
         @apiName destry_clean_template
         @apiGroup 23_clean_template
         @apiDescription 删除清洗模板
