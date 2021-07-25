@@ -44,7 +44,7 @@ class CleanViewSet(ModelViewSet):
         @apiParam {Int} pagesize 每页数量
         @apiSuccess {Int} count 总数
         @apiSuccess {Int} total_page 总页数
-        @apiSuccess {json} 成功返回
+        @apiSuccessExample {json} 成功返回
         {
             "message": "",
             "code": 0,
@@ -76,7 +76,7 @@ class CleanViewSet(ModelViewSet):
         @apiDescription 刷新高级清洗
         @apiParam {Int} bk_biz_id 业务id
         @apiParam {Int} bk_data_id 数据源id
-        @apiSuccess {json} 成功返回
+        @apiSuccessExample {json} 成功返回
         {
             "message": "",
             "code": 0,
@@ -86,7 +86,7 @@ class CleanViewSet(ModelViewSet):
             },
             "result": true
         }
-        @apiSuccess {json} 成功返回(未找到对应记录)
+        @apiSuccessExample {json} 成功返回(未找到对应记录)
         {
             "message": "",
             "code": 0,
@@ -117,7 +117,7 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiGroup 23_clean_template
         @apiDescription 获取清洗模板列表
         @apiParam {Int} bk_biz_id 业务id
-        @apiSuccess {json} 成功返回
+        @apiSuccessExample {json} 成功返回
             {
                 "message":"",
                 "code":0,
@@ -175,7 +175,7 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiGroup 23_clean_template
         @apiDescription 清洗模板详情
         @apiParam {Int} bk_biz_id 业务id
-        @apiSuccess {json} 成功返回
+        @apiSuccessExample {json} 成功返回
         {
             "message":"",
             "code":0,
@@ -262,7 +262,7 @@ class CleanTemplateViewSet(ModelViewSet):
                 }
             ]
         }
-        @apiSuccess {json} 成功返回
+        @apiSuccessExample {json} 成功返回
         {
             "message": "",
             "code": 0,
@@ -314,7 +314,7 @@ class CleanTemplateViewSet(ModelViewSet):
                 }
             ]
         }
-        @apiSuccess {json} 成功返回
+        @apiSuccessExample {json} 成功返回
         {
             "message": "",
             "code": 0,
@@ -329,7 +329,7 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiName destry_clean_template
         @apiGroup 23_clean_template
         @apiDescription 删除清洗模板
-        @apiSuccess {json} 成功返回
+        @apiSuccessExample {json} 成功返回
         {
             "message": "",
             "code": 0,
