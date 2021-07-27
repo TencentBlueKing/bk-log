@@ -331,6 +331,14 @@ class StorageDetectSerializer(serializers.Serializer):
     password = serializers.CharField(label=_("密码"), allow_blank=True, required=False, default="")
     version_info = serializers.BooleanField(label=_("是否包含集群信息"), allow_null=True, required=False, default=False)
     default_auth = serializers.BooleanField(label=_("是否使用默认用户信息"), allow_null=True, required=False, default=False)
+    auth_info = AuthInfoSerializer(label=_("凭据信息"), required=False)
+
+    def validate(self, attrs):
+        if not attrs.get("auth_info"):
+            return attrs
+        attrs["username"] = attrs["auth_info"].get("username", "")
+        attrs["password"] = attrs["auth_info"].get("password", "")
+        return attrs
 
 
 class NodeAttrSerializer(serializers.Serializer):
