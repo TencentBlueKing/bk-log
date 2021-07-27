@@ -322,6 +322,7 @@ class CleanTemplateViewSet(ModelViewSet):
             "result": true
         }
         """
+        pass
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -337,3 +338,4 @@ class CleanTemplateViewSet(ModelViewSet):
             "result": true
         }
         """
+        pass
