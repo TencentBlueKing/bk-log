@@ -6,3 +6,6 @@ build-web:
 
 sync:
 	sh ./scripts/git.sh sync
+
+translate:
+	django-admin makemessages --extension py --ignore env_github && django-admin compilemessages
