@@ -45,7 +45,7 @@
               </div>
               <div><span>{{$t('configDetails.logSet')}}</span><span>{{data.data_encoding || '-'}}</span></div>
               <div><span>{{$t('configDetails.target')}}</span><span>{{$t('configDetails.selected')}}
-                <p class="num-color" @click="active = 'hisitory'">{{data.target_nodes.length || '-'}}</p>
+                <p class="num-color" @click="handleTabChange('hisitory')">{{data.target_nodes.length || '-'}}</p>
                 {{data.target_node_type !== 'INSTANCE' ? $t('configDetails.Been') : $t('configDetails.staticHosts')}}
               </span></div>
               <div>
@@ -774,6 +774,7 @@ export default {
       });
     },
     handleTabChange(tab) {
+      this.active = tab;
       if (!this.requestQuene.includes(tab)) {
         this[this.tabRequestMap[tab]]();
         this.requestQuene.push(tab);
