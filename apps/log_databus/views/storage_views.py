@@ -286,10 +286,12 @@ class StorageViewSet(APIViewSet):
                 "bk_biz_id": bk_biz_id,
                 "domain_name": data["domain_name"],
                 "port": data["port"],
-                "username": data["auth_info"]["username"],
-                "password": data["auth_info"]["password"],
                 "version_info": True,
                 "schema": data["schema"],
+                "auth_info": {
+                    "username": data["auth_info"]["username"],
+                    "password": data["auth_info"]["password"],
+                },
             },
         )
         data.update(
