@@ -65,7 +65,10 @@
             </span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.table_id')" min-width="80">
+        <bk-table-column
+          v-if="checkcFields('table_id')"
+          :label="$t('dataSource.table_id')"
+          min-width="80">
           <template slot-scope="props">
             <span
               :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -73,26 +76,51 @@
             </span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.storage_cluster_name')" min-width="70">
+        <bk-table-column
+          v-if="checkcFields('storage_cluster_name')"
+          :label="$t('dataSource.storage_cluster_name')"
+          min-width="70">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
               {{ props.row.storage_cluster_name || '--' }}
             </span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.collector_scenario_name')" min-width="50">
+        <bk-table-column
+          v-if="checkcFields('collector_scenario_name')"
+          :label="$t('dataSource.collector_scenario_name')"
+          min-width="50"
+          class-name="filter-column"
+          prop="collector_scenario_name"
+          :filters="checkcFields('collector_scenario_name') ? scenarioFilters : []"
+          :filter-method="handleScenarioFilter"
+          :filter-multiple="false">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
               {{ props.row.collector_scenario_name }}
             </span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.category_name')" min-width="50">
+        <bk-table-column
+          v-if="checkcFields('category_name')"
+          :label="$t('dataSource.category_name')"
+          min-width="50"
+          class-name="filter-column"
+          prop="category_name"
+          :filters="checkcFields('category_name') ? categoryFilters : []"
+          :filter-method="handleCategoryFilter"
+          :filter-multiple="false">
           <template slot-scope="props">
-            <span :class="{ 'text-disabled': props.row.status === 'stop' }">{{ props.row.category_name }}</span>
+            <span :class="{ 'text-disabled': props.row.status === 'stop' }">
+              {{ props.row.category_name }}
+            </span>
           </template>
         </bk-table-column>
-        <bk-table-column :class-name="'td-status'" :label="$t('dataSource.es_host_state')" min-width="55">
+        <bk-table-column
+          v-if="checkcFields('es_host_state')"
+          :class-name="'td-status'"
+          :label="$t('dataSource.es_host_state')"
+          min-width="55">
           <template slot-scope="props">
             <bk-popover placement="bottom" :always="true" v-if="needGuide && props.$index === 0">
               <div @click.stop="operateHandler(props.row, 'status')">
@@ -164,12 +192,18 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.updated_by')" min-width="55">
+        <bk-table-column
+          v-if="checkcFields('updated_by')"
+          :label="$t('dataSource.updated_by')"
+          min-width="55">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">{{ props.row.updated_by }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.updated_at')" width="190">
+        <bk-table-column
+          v-if="checkcFields('updated_at')"
+          :label="$t('dataSource.updated_at')"
+          width="190">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">{{ props.row.updated_at }}</span>
           </template>
@@ -220,6 +254,14 @@
             </bk-button>
           </div>
         </bk-table-column>
+        <bk-table-column type="setting">
+          <bk-table-setting-content
+            :fields="columnSetting.fields"
+            :selected="columnSetting.selectedFields"
+            :size="columnSetting.size"
+            @setting-change="handleSettingChange">
+          </bk-table-setting-content>
+        </bk-table-column>
       </bk-table>
     </section>
   </section>
@@ -232,6 +274,56 @@ import { mapGetters } from 'vuex';
 export default {
   name: 'collection-item',
   data() {
+    const settingFields = [
+      // 采集配置名称
+      {
+        id: 'collector_config_name',
+        label: this.$t('dataSource.collector_config_name'),
+        disabled: true,
+      },
+      // 存储名
+      {
+        id: 'table_id',
+        label: this.$t('dataSource.table_id'),
+      },
+      // 日志类型
+      {
+        id: 'collector_scenario_name',
+        label: this.$t('dataSource.collector_scenario_name'),
+      },
+      // 采集状态
+      {
+        id: 'es_host_state',
+        label: this.$t('dataSource.es_host_state'),
+      },
+      // 更新人
+      {
+        id: 'updated_by',
+        label: this.$t('dataSource.updated_by'),
+      },
+      // 更新时间
+      {
+        id: 'updated_at',
+        label: this.$t('dataSource.updated_at'),
+      },
+      // 操作
+      {
+        id: 'operation',
+        label: this.$t('dataSource.operation'),
+        disabled: true,
+      },
+      // 存储集群
+      {
+        id: 'storage_cluster_name',
+        label: this.$t('dataSource.storage_cluster_name'),
+      },
+      // 数据类型
+      {
+        id: 'category_name',
+        label: this.$t('dataSource.category_name'),
+      },
+    ];
+
     return {
       keyword: '',
       count: 0,
@@ -252,6 +344,10 @@ export default {
       collectProject: projectManages(this.$store.state.topMenu, 'collection-item'),
       param: '',
       isAllowedCreate: null,
+      columnSetting: {
+        fields: settingFields,
+        selectedFields: settingFields.slice(0, 7),
+      },
     };
   },
   computed: {
@@ -259,6 +355,34 @@ export default {
       projectId: 'projectId',
       bkBizId: 'bkBizId',
     }),
+    ...mapGetters('globals', ['globalsData']),
+    scenarioFilters() {
+      const { collector_scenario } = this.globalsData;
+      const target = [];
+      // eslint-disable-next-line camelcase
+      collector_scenario && collector_scenario.forEach((data) => {
+        if (data.is_active) {
+          target.push({
+            text: data.name,
+            value: data.name,
+          });
+        }
+      });
+      return target;
+    },
+    categoryFilters() {
+      const { category } = this.globalsData;
+      const target = [];
+      category && category.forEach((data) => {
+        data.children.forEach((val) => {
+          target.push({
+            text: val.name,
+            value: val.name,
+          });
+        });
+      });
+      return target;
+    },
   },
   created() {
     this.checkCreateAuth();
@@ -276,6 +400,9 @@ export default {
     search() {
       this.param = this.keyword;
       this.handlePageChange(1);
+    },
+    checkcFields(field) {
+      return this.columnSetting.selectedFields.some(item => item.id === field);
     },
     async checkCreateAuth() {
       try {
@@ -437,6 +564,17 @@ export default {
         this.pagination.limit = page;
         this.requestData();
       }
+    },
+    // 日志类型表头过滤
+    handleScenarioFilter(value, row) {
+      return value === row.collector_scenario_name;
+    },
+    // 数据类型表头过滤
+    handleCategoryFilter(value, row) {
+      return value === row.category_name;
+    },
+    handleSettingChange({ fields }) {
+      this.columnSetting.selectedFields = fields;
     },
     // 轮询
     startStatusPolling() {
@@ -611,6 +749,12 @@ export default {
         color: #3a84ff;
         cursor: pointer;
       }
+
+      .filter-column {
+        .cell {
+          display: flex;
+        }
+      }
     }
 
     .bk-table-body-wrapper {
@@ -662,6 +806,12 @@ export default {
           margin-right: 0;
         }
       }
+    }
+  }
+  .bk-table-setting-popover-content-theme.tippy-tooltip {
+    padding: 15px 0 0;
+    .bk-table-setting-content .content-line-height {
+      display: none;
     }
   }
 </style>
