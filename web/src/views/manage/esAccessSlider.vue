@@ -308,7 +308,7 @@ export default {
           domain_name: this.formData.domain_name, // 地址
           port: this.formData.port, // 端口
           schema: this.formData.schema, // 协议
-          auth_info: {
+          es_auth_info: {
             username: this.formData.auth_info.username,
             password: this.formData.auth_info.password,
           },
@@ -316,8 +316,8 @@ export default {
         if (this.isEdit) {
           postData.cluster_id = this.editClusterId;
         }
-        if (postData.password === '******') {
-          postData.password = '';
+        if (postData.es_auth_info.password === '******') {
+          postData.es_auth_info.password = '';
         }
         this.connectLoading = true;
         const res = await this.$http.request('/source/connectivityDetect', { data: postData });
