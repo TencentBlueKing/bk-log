@@ -174,8 +174,9 @@
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">{{ props.row.updated_at }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="245">
+        <bk-table-column :label="$t('dataSource.operation')" width="180">
           <div class="collect-table-operate" slot-scope="props">
+            <!-- 检索 -->
             <!-- 启用状态下 且存在 index_set_id 才能检索 -->
             <bk-button
               theme="primary" text
@@ -185,6 +186,7 @@
               @click="operateHandler(props.row, 'search')">
               {{ $t('nav.retrieve') }}
             </bk-button>
+            <!-- 编辑 -->
             <bk-button
               theme="primary" text
               class="king-button"
@@ -192,70 +194,30 @@
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
+            <!-- 启用/停用 -->
             <bk-button
               theme="primary" text
-              :disabled="!props.row.subscription_id"
+              class="king-button"
+              :disabled="!props.row.status ||
+                props.row.status === 'running' ||
+                props.row.status === 'prepare' ||
+                !collectProject"
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-              @click.stop="operateHandler(props.row, 'field')">
-              {{ $t('btn.Field') }}
+              @click.stop="operateHandler(props.row, props.row.is_active ? 'stop' : 'start' )">
+              {{ props.row.is_active ? $t('btn.block') : $t('btn.start') }}
             </bk-button>
-            <bk-dropdown-menu ref="dropdown" align="right">
-              <i
-                class="bk-icon icon-more"
-                style="margin-left: 5px; font-size: 14px; font-weight: bold;"
-                slot="dropdown-trigger">
-              </i>
-              <ul class="bk-dropdown-list" slot="dropdown-content">
-                <li v-if="props.row.is_active">
-                  <a
-                    href="javascript:void(0);"
-                    class="text-disabled"
-                    v-if="!props.row.status ||
-                      props.row.status === 'running' ||
-                      props.row.status === 'prepare' ||
-                      !collectProject">
-                    {{ $t('btn.block') }}
-                  </a>
-                  <a
-                    href="javascript:void(0);"
-                    v-else
-                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-                    @click.stop="operateHandler(props.row, 'stop')">{{ $t('btn.block') }}</a>
-                </li>
-                <li v-else>
-                  <a
-                    href="javascript:void(0);"
-                    class="text-disabled"
-                    v-if="!props.row.status ||
-                      props.row.status === 'running' ||
-                      props.row.status === 'prepare' ||
-                      !collectProject">
-                    {{ $t('btn.start') }}
-                  </a>
-                  <a
-                    href="javascript:void(0);"
-                    v-else
-                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-                    @click.stop="operateHandler(props.row, 'start')">{{ $t('btn.start') }}</a>
-                </li>
-                <li>
-                  <a
-                    href="javascript:void(0);"
-                    class="text-disabled"
-                    v-if="!props.row.status ||
-                      props.row.status === 'running' ||
-                      props.row.is_active ||
-                      !collectProject">
-                    {{ $t('btn.delete') }}
-                  </a>
-                  <a
-                    href="javascript:void(0);"
-                    v-else
-                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-                    @click.stop="operateHandler(props.row, 'delete')">{{ $t('btn.delete') }}</a>
-                </li>
-              </ul>
-            </bk-dropdown-menu>
+            <!-- 删除 -->
+            <bk-button
+              theme="primary" text
+              class="king-button"
+              :disabled="!props.row.status ||
+                props.row.status === 'running' ||
+                props.row.is_active ||
+                !collectProject"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              @click.stop="operateHandler(props.row, 'delete')">
+              {{ $t('btn.delete') }}
+            </bk-button>
           </div>
         </bk-table-column>
       </bk-table>
@@ -692,20 +654,14 @@ export default {
       }
     }
 
-    .bk-dropdown-list a.text-disabled:hover {
-      color: #c4c6cc;
-      cursor: not-allowed;
-    }
-
     .collect-table-operate {
       display: flex;
-      justify-content: space-around;
-    }
-
-    .bk-dropdown-trigger {
-      display: flex;
-      align-items: center;
-      height: 100%;
+      .king-button {
+        margin-right: 14px;
+        &:last-child {
+          margin-right: 0;
+        }
+      }
     }
   }
 </style>
