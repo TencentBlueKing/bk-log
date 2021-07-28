@@ -409,6 +409,7 @@ class StorageHandler(object):
         password=None,
         default_auth=False,
         schema=DEFAULT_ES_SCHEMA,
+        **kwargs,
     ):
         """
         获取集群各节点的属性
