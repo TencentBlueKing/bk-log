@@ -341,16 +341,6 @@ class StorageDetectSerializer(serializers.Serializer):
         return attrs
 
 
-class NodeAttrSerializer(serializers.Serializer):
-    cluster_id = serializers.IntegerField(label=_("集群ID"), required=False)
-    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
-    domain_name = serializers.CharField(label=_("集群域名"), required=False, allow_blank=True, default="")
-    port = serializers.IntegerField(label=_("端口"), allow_null=True, required=False, default=0)
-    schema = serializers.CharField(label=_("集群协议"), allow_null=True, required=False, default="")
-    username = serializers.CharField(label=_("用户"), allow_blank=True, required=False, default="")
-    password = serializers.CharField(label=_("密码"), allow_blank=True, required=False, default="")
-
-
 class StorageBathcDetectSerializer(serializers.Serializer):
     cluster_list = serializers.ListField(child=serializers.IntegerField(), allow_empty=False)
 
