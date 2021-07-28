@@ -18,9 +18,22 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-# 创建bkdata data_id 特性开关
-FEATURE_BKDATA_DATAID = "feature_bkdata_dataid"
+from django.db import migrations
+from django.core.cache import cache
+from apps.utils.log import logger
 
-# 是否开启ITSM特性开关
-FEATURE_COLLECTOR_ITSM = "collect_itsm"
-ITSM_SERVICE_ID = "itsm_service_id"
+
+def forwards_func(apps, schema_editor):
+    try:
+        cache.clear()
+    except Exception as e:  # noqa
+        logger.error(f"clear cache failed：{e}")
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("log_search", "0037_delete_featuretoggle"),
+    ]
+
+    operations = [migrations.RunPython(forwards_func)]
