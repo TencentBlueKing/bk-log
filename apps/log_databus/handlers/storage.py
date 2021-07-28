@@ -327,7 +327,10 @@ class StorageHandler(object):
                 "port": params["port"],
                 "schema": params["schema"],
                 "cluster_id": self.cluster_id,
-                "auth_info": {"username": params["auth_info"]["username"], "password": params["auth_info"]["password"]},
+                "es_auth_info": {
+                    "username": params["auth_info"]["username"],
+                    "password": params["auth_info"]["password"],
+                },
             },
         )
 

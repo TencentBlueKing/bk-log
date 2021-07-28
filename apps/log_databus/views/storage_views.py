@@ -288,7 +288,7 @@ class StorageViewSet(APIViewSet):
                 "port": data["port"],
                 "version_info": True,
                 "schema": data["schema"],
-                "auth_info": {
+                "es_auth_info": {
                     "username": data["auth_info"]["username"],
                     "password": data["auth_info"]["password"],
                 },
