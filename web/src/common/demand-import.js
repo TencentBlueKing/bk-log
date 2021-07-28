@@ -76,6 +76,7 @@ import {
   bkTabPanel,
   bkTable,
   bkTableColumn,
+  bkTableSettingContent,
   bkTagInput,
   bkTimePicker,
   bkTimeline,
@@ -136,6 +137,7 @@ Vue.use(bkTab);
 Vue.use(bkTabPanel);
 Vue.use(bkTable);
 Vue.use(bkTableColumn);
+Vue.use(bkTableSettingContent);
 Vue.use(bkTag);
 Vue.use(bkTagInput);
 Vue.use(bkTimePicker);
