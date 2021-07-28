@@ -37,7 +37,6 @@ from apps.log_databus.serializers import (
     StorageDetectSerializer,
     StorageUpdateSerializer,
     StorageBathcDetectSerializer,
-    NodeAttrSerializer,
 )
 from apps.log_databus.exceptions import StorageNotExistException, StorageCreateException
 from apps.api import BkLogApi
@@ -452,7 +451,7 @@ class StorageViewSet(APIViewSet):
             "result": true
         }
         """
-        data = self.params_valid(NodeAttrSerializer)
+        data = self.params_valid(StorageDetectSerializer)
         cluster_id = None
         if data.get("cluster_id"):
             cluster_id = data["cluster_id"]
