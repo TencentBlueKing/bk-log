@@ -18,7 +18,8 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.generic import ModelViewSet
-from apps.log_databus.models import BKDataClean, CleanTemplate
+
+# from apps.log_databus.models import BKDataClean, CleanTemplate
 from apps.utils.drf import detail_route
 
 
@@ -28,7 +29,7 @@ class CleanViewSet(ModelViewSet):
     """
 
     lookup_field = "collector_config_id"
-    model = BKDataClean
+    # model = BKDataClean
 
     def get_permissions(self):
         pass
@@ -105,7 +106,7 @@ class CleanTemplateViewSet(ModelViewSet):
     """
 
     lookup_field = "clean_template_id"
-    model = CleanTemplate
+    # model = CleanTemplate
 
     def get_permissions(self):
         pass
