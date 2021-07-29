@@ -39,8 +39,24 @@
         :property="'collector_config_name'">
         <bk-input v-model="formData.collector_config_name" maxlength="50"></bk-input>
       </bk-form-item>
+      <bk-form-item
+        :label="$t('dataSource.source_en_name')"
+        :required="true"
+        :rules="rules.collector_config_name_en"
+        :property="'collector_config_name_en'">
+        <bk-input
+          v-model="formData.collector_config_name_en"
+          maxlength="50"
+          :placeholder="$t('dataSource.en_name_placeholder')">
+        </bk-input>
+        <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_tips') }}</p>
+      </bk-form-item>
       <bk-form-item :label="$t('configDetails.remarkExplain')">
-        <bk-input type="textarea" style="width: 320px;" v-model="formData.description" maxlength="100"></bk-input>
+        <bk-input
+          type="textarea"
+          style="width: 320px;"
+          v-model="formData.description"
+          maxlength="100"></bk-input>
       </bk-form-item>
 
       <!-- 源日志信息 -->
@@ -151,10 +167,19 @@
       <!-- 段日志正则调试 -->
       <div v-if="hasMultilineReg" class="multiline-log-container">
         <div class="row-container">
-          <bk-form-item :label="$t('行首正则')" :rules="rules.notEmptyForm" required property="params.multiline_pattern">
+          <bk-form-item
+            :label="$t('行首正则')"
+            :rules="rules.notEmptyForm"
+            required
+            property="params.multiline_pattern">
             <bk-input v-model.trim="formData.params.multiline_pattern"></bk-input>
           </bk-form-item>
-          <bk-button text size="small" class="king-button" @click="showRegDialog = true">{{ $t('调试') }}</bk-button>
+          <bk-button
+            text size="small"
+            class="king-button"
+            @click="showRegDialog = true">
+            {{ $t('调试') }}
+          </bk-button>
         </div>
         <div class="row-container second">
           {{ $t('最多匹配') }}
@@ -318,6 +343,7 @@ export default {
       linkConfigurationList: [], // 链路配置列表
       formData: {
         collector_config_name: '', // 采集项名称
+        collector_config_name_en: '', // 采集项英文名称
         category_id: '', // 数据分类
         collector_scenario_id: 'row',
         data_encoding: 'UTF-8', // 日志字符集
@@ -378,6 +404,16 @@ export default {
           },
         ],
         collector_config_name: [ // 采集名称
+          {
+            required: true,
+            trigger: 'blur',
+          },
+          {
+            max: 50,
+            trigger: 'blur',
+          },
+        ],
+        collector_config_name_en: [ // 采集英文名称
           {
             required: true,
             trigger: 'blur',
@@ -560,6 +596,7 @@ export default {
       const formData = JSON.parse(JSON.stringify(this.formData));
       const {
         collector_config_name,
+        collector_config_name_en,
         target_object_type,
         target_node_type,
         target_nodes,
@@ -584,6 +621,7 @@ export default {
         return {
           collector_config_id: Number(this.$route.params.collectorId),
           collector_config_name,
+          collector_config_name_en,
           target_node_type,
           target_object_type,
           target_nodes,
@@ -696,7 +734,7 @@ export default {
   },
 };
 </script>
-<style lang="scss" scoped>
+<style lang="scss">
   .add-collection-container {
     min-width: 950px;
     max-height: 100%;
@@ -722,11 +760,18 @@ export default {
       margin-bottom: 20px;
     }
 
-    .tips {
+    .tips,
+    .en-name-tips {
       font-size: 12px;
       color: #aeb0b7;
       margin-left: 8px;
       line-height: 32px;
+    }
+
+    .en-name-tips {
+      margin-left: 0;
+      margin-top: 8px;
+      line-height: 12px;
     }
 
     .hight-setting {

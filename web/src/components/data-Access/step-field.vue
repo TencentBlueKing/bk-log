@@ -22,18 +22,17 @@
 
 <template>
   <div class="step-field" v-bkloading="{ isLoading: basicLoading }">
-    <div class="step-field-title">{{$t('btn.Field')}}
-      <bk-switcher size="small" theme="primary" class="ml10" v-model="switcher" @change="switcherHandle"></bk-switcher>
-    </div>
-    <div class="tips">{{$t('dataManage.field_hint')}}</div>
-    <template v-if="switcher">
+    <bk-alert class="king-alert" type="info">
+      <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
+    </bk-alert>
+    <div class="step-field-title">
+      <div>{{$t('configDetails.originalLog')}}</div>
       <div class="text-nav">
-        {{$t('configDetails.originalLog')}}
-        <div>
-          <span @click="refreshClick">{{$t('dataManage.Refresh')}}</span>
-          <span @click="chickFile">{{$t('configDetails.report')}}</span>
-        </div>
+        <span @click="refreshClick">{{$t('dataManage.Refresh')}}</span>
+        <span @click="chickFile">{{$t('configDetails.report')}}</span>
       </div>
+    </div>
+    <template>
       <div class="log-style">
         <bk-input
           placeholder=" "
@@ -64,283 +63,237 @@
       </bk-sideslider>
     </template>
 
-    <section class="field-method" v-if="switcher">
+    <section class="field-method">
       <div class="field-method-head">
-        <h4 class="field-method-title fl field-text">{{ $t('dataManage.Field_extraction') }}</h4>
-        <div class="fr form-item-flex bk-form-item">
-          <label class="bk-label has-desc" v-bk-tooltips="$t('dataManage.confirm_append')">
-            <span>{{ $t('dataManage.keep_log') }}</span>
-          </label>
-          <div class="bk-form-content">
-            <bk-switcher size="small" theme="primary" v-model="formData.etl_params.retain_original_text"></bk-switcher>
-          </div>
-        </div>
+        <h4 class="field-method-title fl field-text">{{ $t('nav.Field_extraction') }}</h4>
+        <bk-tab :active.sync="activePanel" type="unborder-card" ext-cls="field-method-tab">
+          <bk-tab-panel
+            v-for="(panel, index) in panels"
+            v-bind="panel"
+            :key="index">
+          </bk-tab-panel>
+        </bk-tab>
       </div>
-      <div :class="['field-method-cause clearfix', { mb10: params.etl_config === 'bk_log_regexp' }]">
-        <bk-select
-          class="fl"
-          style="width: 130px; margin-right: 10px;"
-          v-model="params.etl_config"
-          :disabled="isExtracting"
-          :clearable="false">
-          <!-- @selected="methodHandle"> -->
-          <bk-option
-            v-for="option in globalsData.etl_config"
-            :key="option.id"
-            :id="option.id"
-            :name="option.name">
-          </bk-option>
-        </bk-select>
-        <bk-select
-          style="float: left; width: 320px; margin-right: 10px;"
-          v-if="params.etl_config === 'bk_log_delimiter'"
-          :disabled="isExtracting"
-          :clearable="false"
-          v-model="params.etl_params.separator">
-          <!-- @selected="separatorHandler"> -->
-          <bk-option
-            v-for="option in globalsData.data_delimiter"
-            :key="option.id"
-            :id="option.id"
-            :name="option.name">
-          </bk-option>
-        </bk-select>
-        <bk-button
-          v-if="showDebugBtn"
-          class="fl debug-btn"
-          theme="primary"
-          :disabled="!logOriginal || isExtracting"
-          @click="debugHandler">
-          {{ $t('dataManage.Commissioning_setup') }}
-        </bk-button>
-        <p class="format-error ml10 fl" v-if="isJsonOrOperator && !formatResult">{{ $t('dataManage.try_methods') }}</p>
-        <template v-if="params.etl_config === 'bk_log_regexp'">
-          <span
-            v-bk-tooltips="{ allowHtml: true, placement: 'right', content: '#reg-tip' }"
-            style="margin-top: 8px; color: #979ba5; cursor: pointer;"
-            class="log-icon icon-info-fill fl"></span>
-          <div id="reg-tip">
-            <p>{{$t('dataManage.regular_format1')}}</p>
-            <p>{{$t('dataManage.regular_format2')}}</p>
-            <p>{{$t('dataManage.regular_format3')}}</p>
-          </div>
-        </template>
-      </div>
-      <div class="field-method-regex" v-if="params.etl_config === 'bk_log_regexp'">
-        <div class="textarea-wrapper">
-          <pre class="mimic-textarea">
-                        {{ params.etl_params.separator_regexp }}
-                    </pre>
-          <bk-input
-            class="regex-textarea"
-            :placeholder="defaultRegex"
-            :type="'textarea'"
-            v-model="params.etl_params.separator_regexp">
-          </bk-input>
-        </div>
-        <bk-button
-          theme="primary"
-          class="debug-btn regex-btn"
-          :disabled="!logOriginal || !params.etl_params.separator_regexp || isExtracting"
-          @click="debugHandler">
-          {{ $t('dataManage.Commissioning_setup') }}
-        </bk-button>
-        <p class="format-error" v-if="!formatResult">{{ $t('dataManage.try_methods') }}</p>
-      </div>
-      <template v-if="isJsonOrOperator && hasFormat && !isExtracting">
-        <div class="field-method-head">
-          <h4 class="field-method-title fl">{{ $t('dataManage.Settings_Preview') }}</h4>
-        </div>
-        <div class="field-method-result">
-          <field-table
-            ref="fieldTable"
-            :is-edit-json="isUnmodifiable"
-            :extract-method="formData.etl_config"
-            :deleted-visible="deletedVisible"
-            :fields="formData.fields"
-            @deleteVisible="visibleHandle"
-            @standard="dialogVisible = true"
-            @reset="getDetail">
-          </field-table>
-        </div>
-      </template>
-      <template v-if="params.etl_config === 'bk_log_regexp' && hasFormat && !isExtracting">
-        <div class="field-method-head">
-          <h4 class="field-method-title fl">{{ $t('dataManage.Settings_Preview') }}</h4>
-        </div>
-        <div class="field-method-result">
-          <field-table
-            ref="fieldTable"
-            :extract-method="formData.etl_config"
-            :deleted-visible="deletedVisible"
-            :fields="formData.fields"
-            @standard="dialogVisible = true"
-            @reset="getDetail">
-          </field-table>
-        </div>
-      </template>
 
-      <div class="loading-block" v-if="isExtracting">
-        <div style="height: 100%;" v-bkloading="{ isLoading: isExtracting }"></div>
+      <!-- 基础清洗 -->
+      <div v-show="activePanel === 'base'">
+        <!-- 模式选择 -->
+        <div class="field-step field-method-step" style="margin-top: 20px;">
+          <div class="step-head">
+            <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
+            <span class="template-text">
+              <span class="log-icon icon-lianjie"></span>
+              {{ $t('dataManage.applyTemp') }}
+            </span>
+          </div>
+
+          <!-- 选择字段过滤方法 -->
+          <div class="field-button-group">
+            <div class="bk-button-group">
+              <bk-button
+                v-for="option in globalsData.etl_config"
+                :key="option.id"
+                @click="params.etl_config = option.id"
+                :class="params.etl_config === option.id ? 'is-selected' : ''">
+                {{ option.name }}
+              </bk-button>
+            </div>
+
+            <template v-if="params.etl_config === 'bk_log_regexp'">
+              <span
+                v-bk-tooltips="{ allowHtml: true, placement: 'right', content: '#reg-tip' }"
+                style="margin-left: 10px;color: #979ba5; cursor: pointer;"
+                class="log-icon icon-info-fill fl"></span>
+              <div id="reg-tip">
+                <p>{{$t('dataManage.regular_format1')}}</p>
+                <p>{{$t('dataManage.regular_format2')}}</p>
+                <p>{{$t('dataManage.regular_format3')}}</p>
+              </div>
+            </template>
+          </div>
+
+          <!-- 分隔符选择 -->
+          <bk-select
+            style="width: 320px; margin-top: 20px;"
+            v-if="params.etl_config === 'bk_log_delimiter'"
+            :disabled="isExtracting"
+            :clearable="false"
+            v-model="params.etl_params.separator">
+            <bk-option
+              v-for="option in globalsData.data_delimiter"
+              :key="option.id"
+              :id="option.id"
+              :name="option.name">
+            </bk-option>
+          </bk-select>
+
+          <!-- 正则表达式输入框 -->
+          <div class="field-method-regex" v-if="params.etl_config === 'bk_log_regexp'">
+            <div class="textarea-wrapper">
+              <pre class="mimic-textarea">
+              {{ params.etl_params.separator_regexp }}
+            </pre>
+              <bk-input
+                class="regex-textarea"
+                :placeholder="defaultRegex"
+                :type="'textarea'"
+                v-model="params.etl_params.separator_regexp">
+              </bk-input>
+            </div>
+            <p class="format-error" v-if="!formatResult">{{ $t('dataManage.try_methods') }}</p>
+          </div>
+        </div>
+
+        <!-- 调试设置字段 -->
+        <div class="field-step field-method-step">
+          <div class="step-head">
+            <span class="step-text">{{ $t('dataManage.debugField') }}</span>
+            <div class="">
+              <bk-button
+                class="fl debug-btn"
+                theme="primary"
+                :disabled="!logOriginal || isExtracting"
+                @click="debugHandler">
+                {{ $t('调试') }}
+              </bk-button>
+              <p class="format-error ml10 fl" v-if="isJsonOrOperator && !formatResult">
+                {{ $t('dataManage.try_methods') }}
+              </p>
+            </div>
+          </div>
+
+          <!-- 调试字段表格 -->
+          <template>
+            <div class="field-method-result">
+              <field-table
+                ref="fieldTable"
+                :is-edit-json="isUnmodifiable"
+                :extract-method="formData.etl_config"
+                :deleted-visible="deletedVisible"
+                :fields="formData.fields"
+                @deleteVisible="visibleHandle"
+                @handleKeepLog="handleKeepLog"
+                @standard="dialogVisible = true"
+                @reset="getDetail">
+              </field-table>
+            </div>
+          </template>
+          <!-- <template v-if="params.etl_config === 'bk_log_regexp' && hasFormat && !isExtracting">
+            <div class="field-method-result">
+              <field-table
+                ref="fieldTable"
+                :extract-method="formData.etl_config"
+                :deleted-visible="deletedVisible"
+                :fields="formData.fields"
+                @deleteVisible="visibleHandle"
+                @handleKeepLog="handleKeepLog"
+                @standard="dialogVisible = true"
+                @reset="getDetail">
+              </field-table>
+            </div>
+          </template> -->
+
+          <div class="loading-block" v-if="isExtracting">
+            <div style="height: 100%;" v-bkloading="{ isLoading: isExtracting }"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 高级清洗 -->
+      <div v-show="activePanel === 'advance'">
+        <div class="advance-clean-step-container">
+          <div class="step-item">
+            <div class="image-content">
+              <img src="../../images/clean-image1.png" alt="">
+            </div>
+            <div class="step-description">
+              <span class="step-num">1</span>
+              <span class="description-text">{{ $t('dataManage.advanceStep1') }}</span>
+            </div>
+          </div>
+          <span class="bk-icon icon-angle-double-right-line"></span>
+          <div class="step-item">
+            <div class="image-content">
+              <img src="../../images/clean-image2.png" alt="">
+            </div>
+            <div class="step-description">
+              <span class="step-num">2</span>
+              <span class="description-text">{{ $t('dataManage.advanceStep2') }}
+                <span class="link">{{ $t('dataManage.linkdocs') }}<span class="log-icon icon-lianjie"></span></span>
+              </span>
+              <p class="remark">{{ $t('dataManage.advanceRemark1') }}</p>
+            </div>
+          </div>
+          <span class="bk-icon icon-angle-double-right-line"></span>
+          <div class="step-item">
+            <div class="image-content">
+              <img src="../../images/clean-image3.png" alt="">
+            </div>
+            <div class="step-description">
+              <span class="step-num">3</span>
+              <span class="description-text">{{ $t('dataManage.advanceStep3') }}</span>
+              <p class="remark">{{ $t('dataManage.advanceRemark2') }}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
-    <div class="step-field-title">{{ $t('dataManage.storage') }}</div>
-    <bk-form :label-width="115" :model="formData" ref="validateForm">
-      <bk-form-item
-        :label="$t('dataSource.storage_cluster_name')"
-        required
-        property="storage_cluster_id"
-        :rules="rules.cluster_id">
-        <bk-select
-          style="width: 320px;"
-          v-model="formData.storage_cluster_id"
-          :disabled="isUnmodifiable"
-          :clearable="false"
-          @selected="handleSelectStorageCluster">
-          <bk-option
-            v-for="(item, index) in storageList"
-            class="custom-no-padding-option"
-            :id="item.storage_cluster_id"
-            :name="item.storage_cluster_name"
-            :disabled="isItsm && curCollect.can_use_independent_es_cluster && item.registered_system === '_default'"
-            :key="index">
-            <div
-              v-if="!(item.permission && item.permission.manage_es_source)"
-              class="option-slot-container no-authority"
-              @click.stop>
-              <span class="text">{{item.storage_cluster_name}}</span>
-              <span class="apply-text" @click="applySearchAccess(item)">{{$t('申请权限')}}</span>
-            </div>
-            <div v-else class="option-slot-container">
-              <span v-bk-tooltips="{
-                content: $t('容量评估需要使用独立的ES集群'),
-                placement: 'right',
-                disabled: !(isItsm &&
-                  curCollect.can_use_independent_es_cluster &&
-                  item.registered_system === '_default')
-              }">{{ item.storage_cluster_name }}</span>
-            </div>
-          </bk-option>
-        </bk-select>
-        <div class="tips_storage" v-if="formData.storage_cluster_id">
-          <!-- eslint-disable-next-line vue/camelcase -->
-          <div v-for="(tip, index) in tip_storage" :key="index">{{index + 1}}. {{tip}}</div>
-          <!--eslint-enable-->
-        </div>
-      </bk-form-item>
-      <div class="form-div mt">
-        <bk-form-item
-          :label="$t('configDetails.storageIndexName')"
-          required
-          class="form-inline-div"
-          :rules="rules.table_id"
-          :property="'table_id'">
-          <div class="prefix">{{formData.table_id_prefix}}</div>
-          <bk-input
-            style="width: 232px"
-            :placeholder="$t('dataManage.input_number')"
-            :disabled="isUnmodifiable"
-            v-model="formData.table_id"
-            maxlength="50" minlength="5">
-          </bk-input>
-        </bk-form-item>
-        <div class="tips">{{ $t('dataManage.start_bk') }}</div>
-      </div>
-      <!-- 过期时间 -->
-      <bk-form-item :label="$t('configDetails.expirationTime')">
-        <bk-select style="width: 320px;" v-model="formData.retention" :clearable="false">
-          <div slot="trigger" class="bk-select-name">
-            {{ formData.retention + $t('天') }}
-          </div>
-          <template v-for="(option, index) in retentionDaysList">
-            <bk-option :key="index" :id="option.id" :name="option.name"></bk-option>
-          </template>
-          <div slot="extension" style="padding: 8px 0;">
-            <bk-input
-              v-model="customRetentionDay"
-              size="small"
-              type="number"
-              :placeholder="$t('输入自定义天数')"
-              :show-controls="false"
-              @enter="enterCustomDay($event, 'retention')"
-            ></bk-input>
-          </div>
-        </bk-select>
-      </bk-form-item>
-      <!-- 热数据\冷热集群存储期限 -->
-      <bk-form-item :label="$t('热数据')" class="hot-data-form-item">
-        <bk-select
-          style="width: 320px;"
-          v-model="formData.allocation_min_days"
-          :clearable="false"
-          :disabled="!selectedStorageCluster.enable_hot_warm">
-          <template v-for="(option, index) in hotDataDaysList">
-            <bk-option :key="index" :id="option.id" :name="option.name"></bk-option>
-          </template>
-          <div slot="extension" style="padding: 8px 0;">
-            <bk-input
-              v-model="customHotDataDay"
-              size="small"
-              type="number"
-              :placeholder="$t('输入自定义天数')"
-              :show-controls="false"
-              @enter="enterCustomDay($event, 'hot')"
-            ></bk-input>
-          </div>
-        </bk-select>
-        <span v-if="!selectedStorageCluster.enable_hot_warm" class="disable-tips">
-          {{$t('该集群未开启热数据设置')}}
-          <a href="javascript:void(0);" @click="jumpToEsAccess">{{$t('前往ES源进行设置')}}</a>
-        </span>
-      </bk-form-item>
-      <bk-form-item
-        v-if="accessUserManage"
-        :label="$t('indexSetList.jurisdiction')"
-        required
-        :property="'view_roles'"
-        :rules="rules.view_roles"
-        style="width: 435px;">
-        <bk-select
-          style="width: 320px;"
-          v-model="formData.view_roles"
-          searchable
-          multiple
-          :placeholder="$t('btn.select')"
-          show-select-all>
-          <bk-option
-            v-for="(role, index) in roleList"
-            :key="index"
-            :id="role.group_id"
-            :name="role.group_name">
-          </bk-option>
-        </bk-select>
-      </bk-form-item>
-      <bk-form-item>
-        <bk-button
-          theme="default"
-          :title="$t('dataManage.last')"
-          class="mr10"
-          :disabled="isLoading"
-          @click="prevHandler">
-          {{$t('dataManage.last')}}
-        </bk-button>
-        <bk-button
-          theme="primary"
-          @click.stop.prevent="finish"
-          :loading="isLoading"
-          :disabled="!collectProject">
-          {{$t('dataManage.perform')}}
-        </bk-button>
-        <bk-button
-          theme="default"
-          :title="$t('btn.cancel')"
-          class="ml10"
-          @click="handleBack"
-          :disabled="isLoading">
-          {{$t('dataManage.Return_list')}}
-        </bk-button>
-      </bk-form-item>
-    </bk-form>
+
+    <div class="form-button">
+      <!-- 上一步 -->
+      <bk-button
+        theme="default"
+        :title="$t('dataManage.last')"
+        class="mr10"
+        :disabled="isLoading"
+        @click="prevHandler">
+        {{$t('dataManage.last')}}
+      </bk-button>
+      <!-- 前往高级清洗 -->
+      <bk-button
+        v-if="activePanel === 'advance'"
+        theme="primary"
+        :title="$t('dataManage.last')"
+        :disabled="isLoading"
+        @click="advanceHandler">
+        {{$t('dataManage.advanceClean')}}
+      </bk-button>
+      <!-- 下一步/完成 -->
+      <bk-button
+        v-if="activePanel === 'base'"
+        theme="primary"
+        @click.stop.prevent="finish"
+        :loading="isLoading"
+        :disabled="!collectProject">
+        {{$t('下一步')}}
+      </bk-button>
+      <!-- <bk-button
+        theme="default"
+        :title="$t('btn.cancel')"
+        class="ml10"
+        @click="handleBack"
+        :disabled="isLoading">
+        {{$t('dataManage.Return_list')}}
+      </bk-button> -->
+      <!-- 跳过 -->
+      <bk-button
+        theme="default"
+        :title="$t('btn.cancel')"
+        class="ml10"
+        @click="handleBack"
+        :disabled="isLoading">
+        {{$t('dataManage.skip')}}
+      </bk-button>
+      <!-- 保存模板 -->
+      <bk-button
+        v-if="activePanel === 'base'"
+        theme="default"
+        class="ml10"
+        disabled>
+        {{$t('dataManage.saveTemp')}}
+      </bk-button>
+    </div>
+
     <bk-dialog
       v-model="dialogVisible"
       width="1012"
@@ -357,6 +310,30 @@
           :fields="copyBuiltField"
           :json-text="copysText">
         </field-table>
+      </div>
+    </bk-dialog>
+
+    <!-- 选择模版 -->
+    <bk-dialog
+      v-model="templateDialogVisible"
+      width="480"
+      :header-position="'left'"
+      :mask-close="false"
+      :draggable="false"
+      :title="$t('dataManage.selectTemp')">
+      <div class="template-content">
+        <bk-select v-model="selectTemplate">
+          <bk-option
+            v-for="option in templateList"
+            :key="option.id"
+            :id="option.id"
+            :name="option.name">
+          </bk-option>
+        </bk-select>
+        <div>
+          <label style="color: #63656e;">模板名称</label>
+          <bk-input v-model="saveTempName" style="margin-top: 8px"></bk-input>
+        </div>
       </div>
     </bk-dialog>
   </div>
@@ -387,7 +364,7 @@ export default {
       isLoading: false,
       basicLoading: true,
       isUnmodifiable: false,
-      switcher: false,
+      // switcher: false,
       roleList: [],
       defaultRetention: '',
       fieldType: '',
@@ -475,6 +452,15 @@ export default {
           time_zone: '',
         },
       },
+      activePanel: 'base',
+      panels: [
+        { name: 'base', label: this.$t('dataManage.Base') },
+        { name: 'advance', label: this.$t('dataManage.Advance') },
+      ],
+      selectTemplate: '', // 应用模板
+      saveTempName: '',
+      templateList: [], // 模板列表
+      templateDialogVisible: false,
     };
   },
   computed: {
@@ -507,9 +493,6 @@ export default {
     },
   },
   watch: {
-    switcher(val) {
-      this.formData.fields = val ? this.formData.fields : [];
-    },
     'formData.storage_cluster_id'(val) {
       this.storageList.forEach((res) => {
         const arr = [];
@@ -745,7 +728,7 @@ export default {
     },
     // 完成按钮
     finish() {
-      if (this.switcher && !this.params.etl_config) {
+      if (!this.params.etl_config) {
         this.$bkMessage({
           theme: 'error',
           message: this.$t('dataManage.select_field'),
@@ -760,20 +743,18 @@ export default {
         if (this.formData.etl_config && this.formData.etl_config !== 'bk_log_text' && !this.hasFormat) return;
         let isConfigChange = false; // 提取方法或条件是否已变更
         const etlConfigParam = this.params.etl_config;
-        if (this.switcher) { // 只有当字段提取打开的时候才提醒
-          if (etlConfigParam !== 'bk_log_text') {
-            const etlConfigForm = this.formData.etl_config;
-            if (etlConfigParam !== etlConfigForm) {
-              isConfigChange = true;
-            } else {
-              const etlParams = this.params.etl_params;
-              const etlParamsForm = this.formData.etl_params;
-              if (etlConfigParam === 'bk_log_regexp') {
-                isConfigChange = etlParams.separator_regexp !== etlParamsForm.separator_regexp;
-              }
-              if (etlConfigParam === 'bk_log_delimiter') {
-                isConfigChange = etlParams.separator !== etlParamsForm.separator;
-              }
+        if (etlConfigParam !== 'bk_log_text') {
+          const etlConfigForm = this.formData.etl_config;
+          if (etlConfigParam !== etlConfigForm) {
+            isConfigChange = true;
+          } else {
+            const etlParams = this.params.etl_params;
+            const etlParamsForm = this.formData.etl_params;
+            if (etlConfigParam === 'bk_log_regexp') {
+              isConfigChange = etlParams.separator_regexp !== etlParamsForm.separator_regexp;
+            }
+            if (etlConfigParam === 'bk_log_delimiter') {
+              isConfigChange = etlParams.separator !== etlParamsForm.separator;
             }
           }
         }
@@ -830,6 +811,24 @@ export default {
     prevHandler() {
       this.$emit('stepChange', 1);
     },
+    // 即将前往高级清洗
+    advanceHandler() {
+      const h = this.$createElement;
+      // const h = this.$createElement;
+      this.$bkInfo({
+        type: 'warning',
+        title: this.$t('dataManage.jumpComputedPlatform'),
+        subHeader: h('p', {
+          style: {
+            whiteSpace: 'normal',
+            padding: '0 28px',
+            color: '#63656e',
+          },
+        }, this.$t('dataManage.advanceCleanConfirm')),
+        // okText: this.$t('retrieve.immediateExport'),
+        confirmFn: () => {},
+      });
+    },
     // 获取详情
     getDetail() {
       const tsStorageId = this.formData.storage_cluster_id;
@@ -859,15 +858,15 @@ export default {
         }
       });
       /* eslint-disable */
-                this.params.etl_config = etl_config
-                Object.assign(this.params.etl_params, {
-                    separator_regexp: etl_params.separator_regexp || '',
-                    separator: etl_params.separator || ''
-                })
-                this.isUnmodifiable = !!(table_id || storage_cluster_id)
-                this.fieldType = etl_config || 'bk_log_text'
-                this.switcher = etl_config ? etl_config !== 'bk_log_text' : false
-                /* eslint-enable */
+      this.params.etl_config = etl_config
+      Object.assign(this.params.etl_params, {
+          separator_regexp: etl_params.separator_regexp || '',
+          separator: etl_params.separator || ''
+      })
+      this.isUnmodifiable = !!(table_id || storage_cluster_id)
+      this.fieldType = etl_config || 'bk_log_text'
+      // this.switcher = etl_config ? etl_config !== 'bk_log_text' : false
+      /* eslint-enable */
       Object.assign(this.formData, {
         table_id,
         storage_cluster_id,
@@ -933,19 +932,19 @@ export default {
     requestEtlPreview(type) {
       const { etl_config, etl_params } = this.params;
       /* eslint-disable */
-                if (!this.logOriginal || !etl_config || etl_config === 'bk_log_text') return
-                if (etl_config === 'bk_log_regexp' && !etl_params.separator_regexp) return
-                if (etl_config === 'bk_log_delimiter' && !etl_params.separator) return
-                const newFields = this.$refs.fieldTable ? this.$refs.fieldTable.getData() : [] // 不能取原fileds，因字段修改后的信息保留在table组件里
-                this.isExtracting = type === 'init' ? !type : true
-                const etlParams = {}
-                if (etl_config === 'bk_log_delimiter') {
-                    etlParams.separator = etl_params.separator
-                }
-                if (etl_config === 'bk_log_regexp') {
-                    etlParams.separator_regexp = etl_params.separator_regexp
-                }
-                /* eslint-enable */
+      if (!this.logOriginal || !etl_config || etl_config === 'bk_log_text') return
+      if (etl_config === 'bk_log_regexp' && !etl_params.separator_regexp) return
+      if (etl_config === 'bk_log_delimiter' && !etl_params.separator) return
+      const newFields = this.$refs.fieldTable ? this.$refs.fieldTable.getData() : [] // 不能取原fileds，因字段修改后的信息保留在table组件里
+      this.isExtracting = type === 'init' ? !type : true
+      const etlParams = {}
+      if (etl_config === 'bk_log_delimiter') {
+          etlParams.separator = etl_params.separator
+      }
+      if (etl_config === 'bk_log_regexp') {
+          etlParams.separator_regexp = etl_params.separator_regexp
+      }
+      /* eslint-enable */
       this.$http.request('collect/getEtlPreview', {
         params: {
           collector_config_id: this.curCollect.collector_config_id,
@@ -958,8 +957,8 @@ export default {
       }).then((res) => {
         // 以下为整个页面关键逻辑
         /**
-                     * 只有点击调试按钮，并且成功了，才会改变原有的fields列表，否则只是结果失败，不做任何操作
-                     */
+         * 只有点击调试按钮，并且成功了，才会改变原有的fields列表，否则只是结果失败，不做任何操作
+         */
         // value 用于展示右边的预览值 - 编辑进入时需要触发预览
         if (res.data && res.data.fields) {
           const dataFields = res.data.fields;
@@ -969,93 +968,93 @@ export default {
           const fields = this.formData.fields;
 
           /* eslint-disable */
-                        if (!type) { // 只有点击了调试按钮，才能修改fields列表  // 原始日志更新值改边预览值
-                            if (!this.formData.etl_config || this.formData.etl_config !== etl_config || !newFields.length) { // 如果没有提取方式 || 提取方式发生变化 || 不存在任何字段
-                                const list = dataFields.reduce((arr, item) => {
-                                    const field = Object.assign({}, JSON.parse(JSON.stringify(this.rowTemplate)), item)
-                                    arr.push(field)
-                                    return arr
-                                }, [])
-                                this.formData.fields.splice(0, fields.length, ...list)
-                            } else { // 否则 - 将对table已修改值-> newFields进行操作
-                                if (etl_config === 'bk_log_json' || etl_config === 'bk_log_regexp') {
-                                    const list = dataFields.reduce((arr, item) => {
-                                        const child = newFields.find(field => {
-                                            // return  !field.is_built_in && (field.field_name === item.field_name || field.alias_name === item.field_name)
-                                            return !field.is_built_in && field.field_name === item.field_name
-                                        })
-                                        item = child ? Object.assign({}, child, item) : Object.assign(JSON.parse(JSON.stringify(this.rowTemplate)), item)
-                                        arr.push(item)
-                                        return arr
-                                    }, [])
-                                    if (etl_config === 'bk_log_json') { // json方式下已删除操作的需要拿出来合并到新的field列表里
-                                        const deletedFileds = newFields.reduce((arr, field) => {
-                                            if (field.is_delete && !dataFields.find(item => item.field_name === field.field_name)) {
-                                                arr.push(field)
-                                            }
-                                            return arr
-                                        }, [])
-                                        list.splice(list.length, 0, ...deletedFileds)
-                                    }
-                                    this.formData.fields.splice(0, fields.length, ...list)
-                                }
+          if (!type) { // 只有点击了调试按钮，才能修改fields列表  // 原始日志更新值改边预览值
+            if (!this.formData.etl_config || this.formData.etl_config !== etl_config || !newFields.length) { // 如果没有提取方式 || 提取方式发生变化 || 不存在任何字段
+              const list = dataFields.reduce((arr, item) => {
+                const field = Object.assign({}, JSON.parse(JSON.stringify(this.rowTemplate)), item)
+                arr.push(field)
+                return arr
+              }, [])
+              this.formData.fields.splice(0, fields.length, ...list)
+              } else { // 否则 - 将对table已修改值-> newFields进行操作
+                if (etl_config === 'bk_log_json' || etl_config === 'bk_log_regexp') {
+                  const list = dataFields.reduce((arr, item) => {
+                    const child = newFields.find(field => {
+                      // return  !field.is_built_in && (field.field_name === item.field_name || field.alias_name === item.field_name)
+                      return !field.is_built_in && field.field_name === item.field_name
+                    })
+                    item = child ? Object.assign({}, child, item) : Object.assign(JSON.parse(JSON.stringify(this.rowTemplate)), item)
+                    arr.push(item)
+                    return arr
+                  }, [])
+                  if (etl_config === 'bk_log_json') { // json方式下已删除操作的需要拿出来合并到新的field列表里
+                    const deletedFileds = newFields.reduce((arr, field) => {
+                      if (field.is_delete && !dataFields.find(item => item.field_name === field.field_name)) {
+                        arr.push(field)
+                      }
+                      return arr
+                    }, [])
+                    list.splice(list.length, 0, ...deletedFileds)
+                  }
+                  this.formData.fields.splice(0, fields.length, ...list)
+                }
 
-                                if (etl_config === 'bk_log_delimiter') { // 分隔符逻辑较特殊，需要单独拎出来
-                                    let index
-                                    newFields.forEach((item, idx) => { // 找到最后一个field_name不为空的下标
-                                        if (item.field_name && !item.is_delete) {
-                                            index = idx + 1
-                                        }
-                                    })
-                                    const list = []
-                                    const deletedFileds = newFields.filter(item => item.is_delete)
-                                    list.splice(list.length, 0, ...deletedFileds) // 将已删除的字段存进数组
-                                    if (index) {
-                                        newFields.forEach((item, idx) => { // 找到最后一个field_name不为空的下标
-                                            const child = dataFields.find(data => data.field_index === item.field_index)
-                                            item.value = child ? child.value : '' // 修改value值(预览值)
-                                            if (index > idx && !item.is_delete) { // 将未删除的存进数组
-                                                list.push(item)
-                                            }
-                                        })
-                                        dataFields.forEach(item => { // 新增的字段需要存进数组
-                                            const child = list.find(field => field.field_index === item.field_index)
-                                            if (!child) {
-                                                list.push(Object.assign(JSON.parse(JSON.stringify(this.rowTemplate)), item))
-                                            }
-                                        })
-                                    } else {
-                                        dataFields.reduce((arr, item) => {
-                                            const field = Object.assign(JSON.parse(JSON.stringify(this.rowTemplate)), item)
-                                            arr.push(field)
-                                            return arr
-                                        }, list)
-                                    }
-                                    list.sort((a, b) => a.field_index - b.field_index) // 按 field_index 大小进行排序
+                if (etl_config === 'bk_log_delimiter') { // 分隔符逻辑较特殊，需要单独拎出来
+                  let index
+                  newFields.forEach((item, idx) => { // 找到最后一个field_name不为空的下标
+                    if (item.field_name && !item.is_delete) {
+                      index = idx + 1
+                    }
+                  })
+                  const list = []
+                  const deletedFileds = newFields.filter(item => item.is_delete)
+                  list.splice(list.length, 0, ...deletedFileds) // 将已删除的字段存进数组
+                  if (index) {
+                    newFields.forEach((item, idx) => { // 找到最后一个field_name不为空的下标
+                      const child = dataFields.find(data => data.field_index === item.field_index)
+                      item.value = child ? child.value : '' // 修改value值(预览值)
+                      if (index > idx && !item.is_delete) { // 将未删除的存进数组
+                        list.push(item)
+                      }
+                    })
+                    dataFields.forEach(item => { // 新增的字段需要存进数组
+                      const child = list.find(field => field.field_index === item.field_index)
+                      if (!child) {
+                        list.push(Object.assign(JSON.parse(JSON.stringify(this.rowTemplate)), item))
+                      }
+                    })
+                  } else {
+                    dataFields.reduce((arr, item) => {
+                      const field = Object.assign(JSON.parse(JSON.stringify(this.rowTemplate)), item)
+                      arr.push(field)
+                      return arr
+                    }, list)
+                  }
+                  list.sort((a, b) => a.field_index - b.field_index) // 按 field_index 大小进行排序
 
-                                    this.formData.fields.splice(0, fields.length, ...list)
-                                }
-                            }
-                            this.formatResult = true // 此时才能将结果设置为成功
-                            this.savaFormData()
+                  this.formData.fields.splice(0, fields.length, ...list)
+                }
+              }
+              this.formatResult = true // 此时才能将结果设置为成功
+              this.savaFormData()
 
-                        } else { // 仅做预览赋值操作，不改变结果
-                            newFields.forEach(field => {
-                                const child = dataFields.find(item => {
-                                    if (etl_config === 'bk_log_json') {
-                                        return field.field_name === item.field_name
-                                        // return  field.field_name === item.field_name || field.alias_name === item.field_name // 同上
-                                    } else {
-                                        return etl_config === 'bk_log_delimiter' ? (field.field_index === item.field_index) : field.field_name === item.field_name
-                                    }
-                                })
-                                if (!field.is_built_in) {
-                                    field.value = child ? child.value : ''
-                                }
-                            })
-                            this.formData.fields.splice(0, fields.length, ...newFields)
-                        }
-                        /* eslint-enable */
+          } else { // 仅做预览赋值操作，不改变结果
+            newFields.forEach(field => {
+              const child = dataFields.find(item => {
+                if (etl_config === 'bk_log_json') {
+                  return field.field_name === item.field_name
+                  // return  field.field_name === item.field_name || field.alias_name === item.field_name // 同上
+                } else {
+                  return etl_config === 'bk_log_delimiter' ? (field.field_index === item.field_index) : field.field_name === item.field_name
+                }
+              })
+              if (!field.is_built_in) {
+                field.value = child ? child.value : ''
+              }
+            })
+            this.formData.fields.splice(0, fields.length, ...newFields)
+          }
+          /* eslint-enable */
         } else {
           this.formatResult = false;
         }
@@ -1113,6 +1112,9 @@ export default {
     visibleHandle(val) {
       this.deletedVisible = val;
     },
+    handleKeepLog(value) {
+      this.formData.etl_params.retain_original_text = value;
+    },
     judgeNumber(val) {
       const { value } = val;
       if (value === 0) return false;
@@ -1132,7 +1134,14 @@ export default {
     padding: 0 42px 42px;
     overflow: auto;
 
+    .king-alert {
+      margin: 30px auto -28px;
+    }
+
     .step-field-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       width: 100%;
       font-size: 14px;
       font-weight: 600;
@@ -1140,7 +1149,18 @@ export default {
       border-bottom: 1px solid #dcdee5;
       padding-top: 50px;
       padding-bottom: 10px;
-      margin-bottom: 20px;
+    }
+
+    .text-nav {
+      display: inline-block;
+      font-size: 12px;
+      color: #3a84ff;
+      font-weight: normal;
+
+      span {
+        margin-left: 10px;
+        cursor: pointer;
+      }
     }
 
     .bk-switcher-small {
@@ -1201,26 +1221,26 @@ export default {
       }
     }
 
-    .text-nav {
-      margin: 20px 0 10px 0;
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      font-weight: 600;
-      color: #63656e;
+    // .text-nav {
+    //   margin: 20px 0 10px 0;
+    //   display: flex;
+    //   justify-content: space-between;
+    //   font-size: 14px;
+    //   font-weight: 600;
+    //   color: #63656e;
 
-      div {
-        display: inline-block;
-        font-size: 12px;
-        color: #3a84ff;
-        font-weight: normal;
+    //   div {
+    //     display: inline-block;
+    //     font-size: 12px;
+    //     color: #3a84ff;
+    //     font-weight: normal;
 
-        span {
-          margin-left: 10px;
-          cursor: pointer;
-        }
-      }
-    }
+    //     span {
+    //       margin-left: 10px;
+    //       cursor: pointer;
+    //     }
+    //   }
+    // }
 
     .field-method {
       position: relative;
@@ -1241,11 +1261,24 @@ export default {
 
     .field-method-head {
       margin: 0 0 10px 0;
+      top: -34px;
 
       @include clearfix;
 
       .field-method-link {
-        margin-top: 1px;
+        margin-left: 16px;
+      }
+
+      .toggle-icon {
+        margin-right: 4px;
+        color: #3a84ff;
+        cursor: pointer;
+      }
+
+      .table-setting {
+        line-height: 18px;
+        display: flex;
+        align-items: center;
       }
     }
 
@@ -1258,9 +1291,78 @@ export default {
     }
 
     .field-text {
+      position: relative;
+      top: 10px;
+      margin-right: 22px;
       font-size: 14px;
       font-weight: 600;
       color: #63656e;
+    }
+
+    .bk-tab-label-wrapper .bk-tab-label-item .bk-tab-label {
+      font-size: 12px;
+    }
+
+    .field-method-tab.bk-tab-unborder-card {
+      .bk-tab-label-list .bk-tab-label-item {
+        min-width: 80px;
+      }
+      .bk-tab-section {
+        display: none;
+      }
+    }
+
+    .field-step {
+      position: relative;
+      margin-bottom: 12px;
+      padding-bottom: 24px;
+      padding-left: 20px;
+      &::before {
+        content: '';
+        position: absolute;
+        top: 4px;
+        left: 0;
+        width: 8px;
+        height: 8px;
+        border: 2px solid #d8d8d8;
+        border-radius: 50%;
+      }
+      &::after {
+        content: '';
+        position: absolute;
+        top: 18px;
+        left: 6px;
+        width: 1px;
+        height: 100%;
+        background: #d8d8d8;
+      }
+      &:last-child::before {
+        top: 8px;
+      }
+      &:last-child::after {
+        top: 22px;
+        height: calc(100% - 30px);
+      }
+      .step-text {
+        color: #63656e;
+        font-size: 14px;
+      }
+      .template-text {
+        margin-left: 10px;
+        font-size: 12px;
+        color: #3a84ff;
+        cursor: pointer;
+      }
+      .field-button-group {
+        display: flex;
+        align-items: center;
+        margin: 20px 0 0;
+      }
+    }
+
+    .step-head {
+      display: flex;
+      align-items: center;
     }
 
     .field-method-link {
@@ -1275,6 +1377,10 @@ export default {
     //     //     border: 1px solid #DCDEE5;
     //     // }
     // }
+    .field-method-result {
+      margin-top: 8px;
+    }
+
     .field-method-cause {
       margin-bottom: 20px;
 
@@ -1282,7 +1388,8 @@ export default {
     }
 
     .debug-btn {
-      min-width: 120px;
+      margin-left: 12px;
+      // min-width: 120px;
       background: #fff;
       color: #3a84ff;
 
@@ -1292,10 +1399,10 @@ export default {
     }
 
     .field-method-regex {
-      position: relative;
-      margin-bottom: 20px;
-      padding-right: 130px;
-      width: 100%;
+      // position: relative;
+      margin-top: 20px;
+      // padding-right: 40px;
+      // width: 100%;
 
       .regex-btn {
         position: absolute;
@@ -1366,6 +1473,7 @@ export default {
         color: #63656e;
 
         &.has-desc > span {
+          margin-right: 20px;
           border-bottom: 1px dashed #d8d8d8;
           cursor: pointer;
         }
@@ -1403,6 +1511,52 @@ export default {
       .bk-textarea-wrapper {
         border: none;
       }
+    }
+
+    .advance-clean-step-container {
+      display: flex;
+      margin-top: 40px;
+      .image-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 200px;
+      }
+      .icon-angle-double-right-line {
+        margin: 110px 30px 0;
+        color: rgba(105, 157, 244, 0.9);
+        opacity: 0.9;
+      }
+      .step-num {
+        margin-right: 8px;
+        font-size: 24px;
+        font-family: Impact, Impact-Regular;
+        color: #a3c5fd;
+        line-height: 29px;
+      }
+      .step-description {
+        margin-top: 26px;
+        width: 320px;
+        line-height: 20px;
+        color:#63656e;
+        font-size: 14px;
+      }
+      .remark {
+        margin-top: 20px;
+        color: #979ba5;
+        font-size: 12px;
+      }
+      .link {
+        color: #3a84ff;
+        cursor: pointer;
+        span {
+          margin-left: 4px;
+        }
+      }
+    }
+
+    .form-button {
+      margin-top: 28px;
     }
   }
 

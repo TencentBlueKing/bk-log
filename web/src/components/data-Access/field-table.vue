@@ -23,17 +23,42 @@
 <template>
   <div class="field-table-container">
     <div class="field-method-head" v-if="!isPreviewMode">
-      <span class="field-method-link fr" @click.stop="viewStandard">{{ $t('dataManage.View_fields') }}</span>
       <!--<span class="field-method-link fr mr10" @click.stop="isReset = true">{{ $t('dataManage.Reset') }}</span>-->
-      <div class="fr mr20" style="line-height: 18px;" v-if="extractMethod !== 'bk_log_regexp'">
-        <span class="visible-deleted-text">{{ $t('dataManage.Hide_deleted') + `（${deletedNum}）` }}</span>
-        <bk-switcher
+      <div class="table-setting" v-if="extractMethod !== 'bk_log_regexp'">
+        <div class="fr form-item-flex bk-form-item">
+          <!-- <label class="bk-label has-desc" v-bk-tooltips="$t('dataManage.confirm_append')">
+            <span>{{ $t('dataManage.keep_log') }}</span>
+          </label> -->
+          <div class="bk-form-content">
+            <bk-checkbox
+              :checked="true"
+              :true-value="true"
+              :false-value="false"
+              v-model="retainOriginalText"
+              @change="handleKeepLog">
+              <label class="bk-label has-desc" v-bk-tooltips="$t('dataManage.confirm_append')">
+                <span>{{ $t('dataManage.keep_log') }}</span>
+              </label>
+            </bk-checkbox>
+            <!-- <bk-switcher size="small" theme="primary" v-model="retainOriginalText"></bk-switcher> -->
+          </div>
+        </div>
+        <!-- <bk-switcher
           size="small"
           theme="primary"
           class="visible-deleted-btn"
           v-model="deletedVisible"
           @change="visibleHandle">
-        </bk-switcher>
+        </bk-switcher> -->
+        <span
+          :class="`bk-icon toggle-icon icon-${ deletedVisible ? 'eye-slash' : 'eye'}`"
+          @click="visibleHandle">
+        </span>
+        <span class="visible-deleted-text">
+          {{ $t('dataManage.Hide_deleted') + ` ${deletedNum} ` + $t('dataManage.Row')}}
+        </span>
+        <span class="field-method-link fr" @click.stop="viewStandard">{{ $t('dataManage.View_fields') }}</span>
+
       </div>
     </div>
 
@@ -243,16 +268,17 @@
                 <span
                   class="table-link"
                   @click="props.row.is_delete = !props.row.is_delete">
-                  {{ props.row.is_delete ? '复原' : '删除' }}
+                  {{ props.row.is_delete ? '复原' : '隐藏' }}
                 </span>
               </template>
             </bk-table-column>
+            <div slot="empty" class="empty-text">{{ $t('dataManage.emptyText') }}</div>
           </template>
         </bk-table>
       </bk-form>
     </div>
 
-    <div class="preview-panel-right" v-if="tableList.length">
+    <div class="preview-panel-right">
       <div class="preview-title preview-item">{{ $t('dataManage.Preview') }}</div>
       <template v-if="deletedVisible">
         <div
@@ -395,6 +421,7 @@ export default {
       },
       timeCheckResult: false,
       checkLoading: false,
+      retainOriginalText: true, // 保留原始日志
       rules: {
         field_name: [ // 存在bug，暂时启用
           // {
@@ -741,21 +768,21 @@ export default {
       const { field_name, is_delete } = row;
       let result = '';
       /* eslint-disable */
-                if (!is_delete) {
-                    if (!field_name) {
-                        result = this.$t('form.must')
-                    } else if (!/^(?!_)(?!.*?_$)^[A-Za-z0-9_]+$/ig.test(field_name)) {
-                        result = this.$t('dataManage.can_cannot')
-                    } else if (this.extractMethod !== 'bk_log_json' && this.globalsData.field_built_in.find(item => item.id === field_name.toLocaleLowerCase())) {
-                        result = this.extractMethod === 'bk_log_regexp' ? this.$t('dataManage.field_expression') : this.$t('dataManage.field_same')
-                    } else {
-                        result = ''
-                    }
-                } else {
-                    result = ''
-                }
-                row.fieldErr = result
-                /* eslint-enable */
+      if (!is_delete) {
+        if (!field_name) {
+          result = this.$t('form.must')
+        } else if (!/^(?!_)(?!.*?_$)^[A-Za-z0-9_]+$/ig.test(field_name)) {
+          result = this.$t('dataManage.can_cannot')
+        } else if (this.extractMethod !== 'bk_log_json' && this.globalsData.field_built_in.find(item => item.id === field_name.toLocaleLowerCase())) {
+          result = this.extractMethod === 'bk_log_regexp' ? this.$t('dataManage.field_expression') : this.$t('dataManage.field_same')
+        } else {
+          result = ''
+        }
+      } else {
+        result = ''
+      }
+      row.fieldErr = result
+      /* eslint-enable */
       return result;
     },
     checkFieldName() {
@@ -833,8 +860,11 @@ export default {
       promises.push(this.checkType());
       return promises;
     },
-    visibleHandle(val) {
-      this.$emit('deleteVisible', val);
+    visibleHandle() {
+      this.$emit('deleteVisible', !this.deletedVisible);
+    },
+    handleKeepLog(value) {
+      this.$emit('handleKeepLog', value);
     },
     renderHeaderAliasName(h) {
       return h('div', {
@@ -926,6 +956,18 @@ export default {
           height: 14px;
           font-size: 14px;
         }
+      }
+
+      .bk-table-empty-text {
+        padding: 12px 0;
+      }
+
+      .bk-table-empty-block {
+        min-height: 32px;
+      }
+
+      .empty-text {
+        color: #979ba5;
       }
     }
 

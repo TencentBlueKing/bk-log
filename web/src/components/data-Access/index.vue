@@ -31,7 +31,8 @@
             theme="primary"
             direction="vertical"
             :cur-step.sync="curStep"
-            :steps="stepList"></bk-steps>
+            :steps="stepList">
+          </bk-steps>
           <div class="step-arrow" :style="{ top: (curStep * 76 - 38) + 'px' }"></div>
         </div>
       </section>
@@ -57,6 +58,13 @@
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange">
           </step-field>
+          <step-storage
+            v-if="curStep === 5"
+            :cur-step="curStep"
+            :operate-type="operateType"
+            @changeIndexSetId="updateIndexSetId"
+            @stepChange="stepChange">
+          </step-storage>
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
@@ -81,6 +89,13 @@
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange">
           </step-field>
+          <step-storage
+            v-if="curStep === 4"
+            :cur-step="curStep"
+            :operate-type="operateType"
+            @changeIndexSetId="updateIndexSetId"
+            @stepChange="stepChange">
+          </step-storage>
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
@@ -101,6 +116,7 @@ import stepAdd from './step-add';
 import stepCapacity from './step-capacity';
 import stepIssued from './step-issued';
 import stepField from './step-field';
+import stepStorage from './step-storage.vue';
 import stepResult from './step-result';
 
 export default {
@@ -111,6 +127,7 @@ export default {
     stepCapacity,
     stepIssued,
     stepField,
+    stepStorage,
     stepResult,
   },
   data() {
@@ -142,7 +159,7 @@ export default {
     },
     isFinish() {
       if (this.isItsmAndNotStartOrStop) {
-        return this.curStep === 5;
+        return this.curStep === 6;
       }
       return finishRefer[this.operateType] === this.curStep;
     },
@@ -201,10 +218,14 @@ export default {
               this.curStep = this.curCollect.itsm_ticket_status === 'success_apply' ? 4 : 2;
             } else if (this.operateType === 'field') {
               this.curStep = 4;
+            } else if (this.operateType === 'storage') {
+              this.curStep = 5;
             }
             // 审批通过后编辑直接进入第三步字段提取，否则进入第二步容量评估
           } else if (this.operateType === 'field') {
             this.curStep = 3;
+          } else if (this.operateType === 'storage') {
+            this.curStep  = 4;
           }
         } catch (e) {
           console.warn(e);

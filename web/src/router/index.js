@@ -215,6 +215,12 @@ const routes = [
             component: AccessSteps,
           },
           {
+            path: 'collection-item/storage/:collectorId',
+            name: 'collectStorage',
+            meta: { needBack: true },
+            component: AccessSteps,
+          },
+          {
             path: 'collection-item/start/:collectorId',
             name: 'collectStart',
             meta: { needBack: true },

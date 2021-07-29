@@ -72,6 +72,7 @@ export default {
         collectAdd: this.$t('新建采集项'),
         collectEdit: collectionName,
         collectField: collectionName,
+        collectStorage: collectionName,
         collectStart: collectionName,
         collectStop: collectionName,
         'manage-collection': collectionName,
