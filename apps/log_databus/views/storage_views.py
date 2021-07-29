@@ -37,7 +37,6 @@ from apps.log_databus.serializers import (
     StorageDetectSerializer,
     StorageUpdateSerializer,
     StorageBathcDetectSerializer,
-    NodeAttrSerializer,
 )
 from apps.log_databus.exceptions import StorageNotExistException, StorageCreateException
 from apps.api import BkLogApi
@@ -286,10 +285,12 @@ class StorageViewSet(APIViewSet):
                 "bk_biz_id": bk_biz_id,
                 "domain_name": data["domain_name"],
                 "port": data["port"],
-                "username": data["auth_info"]["username"],
-                "password": data["auth_info"]["password"],
                 "version_info": True,
                 "schema": data["schema"],
+                "es_auth_info": {
+                    "username": data["auth_info"]["username"],
+                    "password": data["auth_info"]["password"],
+                },
             },
         )
         data.update(
@@ -450,7 +451,7 @@ class StorageViewSet(APIViewSet):
             "result": true
         }
         """
-        data = self.params_valid(NodeAttrSerializer)
+        data = self.params_valid(StorageDetectSerializer)
         cluster_id = None
         if data.get("cluster_id"):
             cluster_id = data["cluster_id"]

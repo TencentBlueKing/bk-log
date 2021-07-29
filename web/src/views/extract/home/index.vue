@@ -35,12 +35,12 @@
         @enter="handleSearch">
       </bk-input>
     </div>
-    <bk-table class="king-table"
-              height="calc(100% - 102px)"
-              :data="taskList"
-              :pagination="pagination"
-              @page-change="handlePageChange"
-              @page-limit-change="handlePageLimitChange">
+    <bk-table
+      class="king-table"
+      :data="taskList"
+      :pagination="pagination"
+      @page-change="handlePageChange"
+      @page-limit-change="handlePageLimitChange">
       <bk-table-column :label="$t('下载目标')" min-width="140">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ ipList(row.ip_list) }}</span>

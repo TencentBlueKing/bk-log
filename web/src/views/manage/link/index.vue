@@ -164,7 +164,7 @@ export default {
     },
     filterLinkInformation(row) {
       const kafkaName = this.selectData.kafka.find((item) => {
-        item.cluster_id === row.kafka_cluster_id;
+        return item.cluster_id === row.kafka_cluster_id;
       // eslint-disable-next-line camelcase
       })?.cluster_name;
       if (!kafkaName) {
@@ -172,7 +172,7 @@ export default {
       }
 
       const transferName = this.selectData.transfer.find((item) => {
-        item.cluster_id === row.transfer_cluster_id;
+        return item.cluster_id === row.transfer_cluster_id;
       // eslint-disable-next-line camelcase
       })?.cluster_name;
       if (!transferName) {
@@ -180,7 +180,7 @@ export default {
       }
 
       const esNameList = row.es_cluster_ids.map(id => this.selectData.es.find((item) => {
-        item.cluster_id === id;
+        return item.cluster_id === id;
       // eslint-disable-next-line camelcase
       })?.cluster_name);
       if (!esNameList.length || esNameList.includes(undefined)) {

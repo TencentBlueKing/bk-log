@@ -43,7 +43,7 @@ from apps.log_search.constants import (
     MAX_RESULT_WINDOW,
     MAX_SEARCH_SIZE,
     BK_BCS_APP_CODE,
-    ASYNC_SORTED,
+    ASYNC_SORTED, FieldDataTypeEnum,
 )
 from apps.log_search.handlers.es.es_query_mock_body import BODY_DATA_FOR_AGGS, BODY_DATA_FOR_ORIGIN_AGGS
 from apps.log_search.exceptions import (
@@ -831,24 +831,32 @@ class SearchHandler(object):
     def _init_filter(self):
 
         new_attrs: dict = self._combine_addition_host_scope(self.search_dict)
-
+        mapping_handlers = MappingHandlers(
+            index_set_id=self.index_set_id,
+            indices=self.indices,
+            scenario_id=self.scenario_id,
+            storage_cluster_id=self.storage_cluster_id,
+        )
         filter_list: list = new_attrs.get("addition", [])
         new_filter_list: list = []
         for item in filter_list:
             field: str = item.get("key") if item.get("key") else item.get("field")
+            _type = "field"
+            if mapping_handlers.is_nested_field(field):
+                _type = FieldDataTypeEnum.NESTED.value
             value = item.get("value")
             operator: str = item.get("method") if item.get("method") else item.get("operator")
             condition: str = item.get("condition", "and")
             if operator in ["exists", "does not exists"]:
                 new_filter_list.append(
-                    {"field": field, "value": "0", "operator": operator, "condition": condition, "type": "field"}
+                    {"field": field, "value": "0", "operator": operator, "condition": condition, "type": _type}
                 )
 
             if not field or not value or not operator:
                 continue
 
             new_filter_list.append(
-                {"field": field, "value": value, "operator": operator, "condition": condition, "type": "field"}
+                {"field": field, "value": value, "operator": operator, "condition": condition, "type": _type}
             )
 
         return new_filter_list

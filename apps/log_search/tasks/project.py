@@ -35,7 +35,7 @@ from apps.utils.db import array_chunk  # noqa
 from apps.utils.lock import share_lock  # noqa
 
 
-@periodic_task(run_every=crontab(minute="*/1"), queue="sync")
+@periodic_task(run_every=crontab(minute="*/1"))
 @share_lock()
 def sync():
     if settings.USING_SYNC_BUSINESS:
