@@ -209,3 +209,51 @@ class StorageUsed(OperateRecordModel):
         verbose_name_plural = _("业务已用容量")
         ordering = ("-updated_at",)
         unique_together = ("bk_biz_id", "storage_cluster_id")
+
+
+# class BKDataClean(SoftDeleteModel):
+#     status = models.CharField(_("状态"), max_length=64)
+#     status_en = models.CharField(_("状态英文名"), max_length=64)
+#     result_table_id = models.CharField(_("结果表id"), max_length=128)
+#     result_table_name = models.CharField(_("结果表名"), max_length=128)
+#     result_table_name_alias = models.CharField(_("结果表中文名"), max_length=128)
+#     raw_data_id = models.IntegerField(_("数据源id"), db_index=True)
+#     data_name = models.CharField(_("数据源名称"), max_length=128)
+#     data_alias = models.CharField(_("数据源中文名"), max_length=128)
+#     data_type = models.CharField(_("数据类型"), max_length=64)
+#     storage_type = models.CharField(_("存储类型"), max_length=64)
+#     storage_cluster = models.CharField(_("存储集群"), max_length=64)
+#     collector_config_id = models.IntegerField(_("采集项id"), db_index=True)
+#     bk_biz_id = models.IntegerField(_("业务id"))
+#
+#     class Meta:
+#         verbose_name = _("高级清洗列表")
+#         verbose_name_plural = _("高级清洗列表")
+#         ordering = ("-updated_at",)
+#
+#
+# class CleanTemplate(SoftDeleteModel):
+#     clean_template_id = models.IntegerField(_("清洗id"), primary_key=True)
+#     name = models.CharField(_("模板名"), max_length=128)
+#     clean_type = models.CharField(_("模板类型"), max_length=64)
+#     etl_params = JSONField(_("etl配置"))
+#     etl_fields = JSONField(_("etl字段"))
+#     bk_biz_id = models.IntegerField(_("业务id"))
+#
+#     class Meta:
+#         verbose_name = _("清洗模板")
+#         verbose_name_plural = _("清洗模板")
+#         ordering = ("-updated_at",)
+#
+#
+# class CleanStash(SoftDeleteModel):
+#     clean_type = models.CharField(_("模板类型"), max_length=64)
+#     etl_params = JSONField(_("etl配置"))
+#     etl_fields = JSONField(_("etl字段"))
+#     collector_config_id = models.IntegerField(_("采集项列表"), db_index=True)
+#     bk_biz_id = models.IntegerField(_("业务id"))
+#
+#     class Meta:
+#         verbose_name = _("未完成入库暂存清洗")
+#         verbose_name_plural = _("未完成入库暂存清洗")
+#         ordering = ("-updated_at",)
