@@ -173,6 +173,7 @@ export default {
       default: 1,
     },
     collectorId: String,
+    isCleanField: Boolean,
   },
   data() {
     return {
@@ -355,6 +356,14 @@ export default {
     },
   },
   async mounted() {
+    // TODO
+    if (this.isCleanField) {
+      setTimeout(() => {
+        this.basicLoading = false;
+      }, 10);
+      return;
+    }
+
     this.getStorage();
     this.defaultRetention = this.globalsData.storage_duration_time.filter(item => item.default === true)[0].id;
     this.getDataLog('init');

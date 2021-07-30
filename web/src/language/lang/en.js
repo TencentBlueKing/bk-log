@@ -1070,4 +1070,15 @@ export default {
   '权限申请单已提交？': 'Permission application form has been submitted?',
   请在权限中心填写权限申请单: 'Please fill in the permission application form in the permission center, and refresh the page after submission',
   刷新页面: 'Refresh page',
+  // 日志清洗
+  logClean: {
+    etlConfig: 'Format Method',
+    storageIndex: 'Storage Index',
+    templateName: 'Template Name',
+    新增清洗: 'Create Clean',
+    编辑清洗: 'Edit Clean',
+    清洗模板: 'Clean Template',
+    cleaning: 'Cleaning',
+    cleaningTips: 'The current process has been jumped to the computing platform for cleaning, if the cleaning is completed, the page can be refreshed in time to update the status',
+  },
 };

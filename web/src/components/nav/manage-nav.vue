@@ -90,6 +90,10 @@ export default {
         'bkdata-track-manage': this.$store.state.collect.curIndexSet?.index_set_name,
         'extract-link-create': this.$t('新建') + this.$t('提取链路'),
         'extract-link-edit': this.$t('编辑') + this.$t('提取链路'),
+        'clean-create': this.$t('logClean.新增清洗'),
+        'clean-edit': this.$t('logClean.编辑清洗'),
+        'clean-template-create': this.$t('新建') + this.$t('logClean.清洗模板'),
+        'clean-template-edit': this.$t('编辑') + this.$t('logClean.清洗模板'),
       };
       return map[this.$route.name];
     },

@@ -25,6 +25,20 @@
     <bk-alert class="king-alert" type="info">
       <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
     </bk-alert>
+    <div class="collector-select" v-if="isCleanField">
+      <label>{{ $t('采集项') }}</label>
+      <bk-select
+        style="width: 520px;"
+        :clearable="false"
+        v-model="cleanCollector">
+        <bk-option
+          v-for="option in cleanCollectorList"
+          :key="option.id"
+          :id="option.id"
+          :name="option.name">
+        </bk-option>
+      </bk-select>
+    </div>
     <div class="step-field-title">
       <div>{{$t('configDetails.originalLog')}}</div>
       <div class="text-nav">
@@ -131,8 +145,8 @@
           <div class="field-method-regex" v-if="params.etl_config === 'bk_log_regexp'">
             <div class="textarea-wrapper">
               <pre class="mimic-textarea">
-              {{ params.etl_params.separator_regexp }}
-            </pre>
+                {{ params.etl_params.separator_regexp }}
+              </pre>
               <bk-input
                 class="regex-textarea"
                 :placeholder="defaultRegex"
@@ -242,6 +256,7 @@
     <div class="form-button">
       <!-- 上一步 -->
       <bk-button
+        v-if="!isCleanField && !isTempField"
         theme="default"
         :title="$t('dataManage.last')"
         class="mr10"
@@ -260,7 +275,7 @@
       </bk-button>
       <!-- 下一步/完成 -->
       <bk-button
-        v-if="activePanel === 'base'"
+        v-if="activePanel === 'base' && !isTempField"
         theme="primary"
         @click.stop.prevent="finish"
         :loading="isLoading"
@@ -277,6 +292,7 @@
       </bk-button> -->
       <!-- 跳过 -->
       <bk-button
+        v-if="!isCleanField && !isTempField"
         theme="default"
         :title="$t('btn.cancel')"
         class="ml10"
@@ -291,6 +307,13 @@
         class="ml10"
         disabled>
         {{$t('dataManage.saveTemp')}}
+      </bk-button>
+      <!-- 日志清洗 保存模板 -->
+      <bk-button
+        v-if="isCleanField || isTempField"
+        theme="default"
+        class="ml10">
+        {{$t('取消')}}
       </bk-button>
     </div>
 
@@ -354,6 +377,8 @@ export default {
       default: 1,
     },
     collectorId: String,
+    isCleanField: Boolean,
+    isTempField: Boolean,
   },
   data() {
     return {
@@ -461,6 +486,8 @@ export default {
       saveTempName: '',
       templateList: [], // 模板列表
       templateDialogVisible: false,
+      cleanCollector: '', // 日志清洗选择的采集项
+      cleanCollectorList: [],
     };
   },
   computed: {
@@ -537,6 +564,14 @@ export default {
     },
   },
   async mounted() {
+    // TODO
+    if (this.isCleanField || this.isTempField) {
+      setTimeout(() => {
+        this.basicLoading = false;
+      }, 10);
+      return;
+    }
+
     this.getStorage();
     this.defaultRetention = this.globalsData.storage_duration_time.filter(item => item.default === true)[0].id;
     this.getDataLog('init');
@@ -584,31 +619,6 @@ export default {
           });
         });
     },
-    // 存储集群管理权限
-    async applySearchAccess(item) {
-      this.$el.click(); // 因为下拉在loading上面所以需要关闭下拉
-      try {
-        this.basicLoading = true;
-        const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_es_source'],
-          resources: [{
-            type: 'es_source',
-            id: item.storage_cluster_id,
-          }],
-        });
-        window.open(res.data.apply_url);
-      } catch (err) {
-        console.warn(err);
-      } finally {
-        this.basicLoading = false;
-      }
-    },
-    // 选择存储集群
-    handleSelectStorageCluster() {
-      // 因为有最大天数限制，不同集群限制可能不同，所以切换集群时重置
-      this.formData.retention = '7';
-      this.formData.allocation_min_days = '0';
-    },
     updateDaysList() {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
         return item.id <= (this.selectedStorageCluster.max_retention || 30);
@@ -644,20 +654,20 @@ export default {
         fields,
       };
       /* eslint-disable */
-                if (etl_config !== 'bk_log_text') {
-                    const etlParams = {
-                        retain_original_text: etl_params.retain_original_text
-                    }
-                    if (etl_config === 'bk_log_delimiter') {
-                        etlParams.separator = etl_params.separator
-                    }
-                    if (etl_config === 'bk_log_regexp') {
-                        etlParams.separator_regexp = etl_params.separator_regexp
-                    }
-                    data.etl_params = etlParams
-                    data.fields = this.$refs.fieldTable.getData()
-                }
-                /* eslint-enable */
+      if (etl_config !== 'bk_log_text') {
+        const etlParams = {
+          retain_original_text: etl_params.retain_original_text
+        }
+        if (etl_config === 'bk_log_delimiter') {
+          etlParams.separator = etl_params.separator
+        }
+        if (etl_config === 'bk_log_regexp') {
+          etlParams.separator_regexp = etl_params.separator_regexp
+        }
+        data.etl_params = etlParams
+        data.fields = this.$refs.fieldTable.getData()
+      }
+      /* eslint-enable */
       this.isLoading = true;
       this.$http.request('collect/fieldCollection', {
         params: {
@@ -1136,6 +1146,17 @@ export default {
 
     .king-alert {
       margin: 30px auto -28px;
+    }
+
+    .collector-select {
+      display: flex;
+      align-items: center;
+      margin: 50px 0 -26px;
+      label {
+        margin-right: 16px;
+        font-size: 12px;
+        color: #63656e;
+      }
     }
 
     .step-field-title {
