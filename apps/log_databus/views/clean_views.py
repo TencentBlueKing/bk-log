@@ -19,7 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.generic import ModelViewSet
 
-# from apps.log_databus.models import BKDataClean, CleanTemplate
+from apps.log_databus.models import BKDataClean, CleanTemplate
 from apps.utils.drf import detail_route
 
 
@@ -29,7 +29,7 @@ class CleanViewSet(ModelViewSet):
     """
 
     lookup_field = "collector_config_id"
-    # model = BKDataClean
+    model = BKDataClean
 
     def get_permissions(self):
         pass
@@ -106,7 +106,7 @@ class CleanTemplateViewSet(ModelViewSet):
     """
 
     lookup_field = "clean_template_id"
-    # model = CleanTemplate
+    model = CleanTemplate
 
     def get_permissions(self):
         pass
@@ -119,53 +119,52 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiDescription 获取清洗模板列表
         @apiParam {Int} bk_biz_id 业务id
         @apiSuccessExample {json} 成功返回
-            {
-                "message":"",
-                "code":0,
-                "data":{
-                    "count":10,
-                    "total_page":1,
-                    "results":[
-                        {
-                            "clean_template_id": 1,
-                            "clean_type":"bk_log_text",
-                            "etl_params":{
-                                "retain_original_text":true,
-                                "separator":" "
+        {
+            "message":"",
+            "code":0,
+            "data":{
+                "count":10,
+                "total_page":1,
+                "results":[
+                    {
+                        "clean_template_id":1,
+                        "clean_type":"bk_log_text",
+                        "etl_params":{
+                            "retain_original_text":true,
+                            "separator":" "
+                        },
+                        "etl_fields":[
+                            {
+                                "field_name":"user",
+                                "alias_name":"",
+                                "field_type":"long",
+                                "description":"字段描述",
+                                "is_analyzed":true,
+                                "is_dimension":false,
+                                "is_time":false,
+                                "is_delete":false
                             },
-                            "etl_fields":[
-                                {
-                                    "field_name":"tag_number",
-                                    "type":"float",
-                                    "tag":"dimension",
-                                    "default_value":null,
-                                    "is_config_by_user":true,
-                                    "description":"",
-                                    "unit":"",
-                                    "alias_name":"",
-                                    "option":{
-                                        "time_zone":"",
-                                        "time_format":"",
-                                        "field_index":1,
-                                        "es_type":"integer",
-                                        "real_path":"bk_separator_object.tag_number"
-                                    },
-                                    "is_built_in":false,
-                                    "is_time":false,
-                                    "field_type":"int",
-                                    "is_analyzed":false,
-                                    "is_delete":false,
-                                    "is_dimension":true,
-                                    "_nums":1,
-                                    "field_index":1,
-                                    "value":"14836"
+                            {
+                                "field_name":"report_time",
+                                "alias_name":"",
+                                "field_type":"string",
+                                "description":"字段描述",
+                                "tag":"metric",
+                                "is_analyzed":false,
+                                "is_dimension":false,
+                                "is_time":true,
+                                "is_delete":false,
+                                "option":{
+                                    "time_zone":8,
+                                    "time_format":"yyyy-MM-dd HH:mm:ss"
                                 }
-                            ]
-                        }
-                    ]
-                },
-                "result":true
-            }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "result":true
+        }
         """
         pass
 
@@ -189,30 +188,29 @@ class CleanTemplateViewSet(ModelViewSet):
                 },
                 "etl_fields":[
                     {
-                        "field_name":"tag_number",
-                        "type":"float",
-                        "tag":"dimension",
-                        "default_value":null,
-                        "is_config_by_user":true,
-                        "description":"",
-                        "unit":"",
+                        "field_name":"user",
                         "alias_name":"",
-                        "option":{
-                            "time_zone":"",
-                            "time_format":"",
-                            "field_index":1,
-                            "es_type":"integer",
-                            "real_path":"bk_separator_object.tag_number"
-                        },
-                        "is_built_in":false,
+                        "field_type":"long",
+                        "description":"字段描述",
+                        "is_analyzed":true,
+                        "is_dimension":false,
                         "is_time":false,
-                        "field_type":"int",
+                        "is_delete":false
+                    },
+                    {
+                        "field_name":"report_time",
+                        "alias_name":"",
+                        "field_type":"string",
+                        "description":"字段描述",
+                        "tag":"metric",
                         "is_analyzed":false,
+                        "is_dimension":false,
+                        "is_time":true,
                         "is_delete":false,
-                        "is_dimension":true,
-                        "_nums":1,
-                        "field_index":1,
-                        "value":"14836"
+                        "option":{
+                            "time_zone":8,
+                            "time_format":"yyyy-MM-dd HH:mm:ss"
+                        }
                     }
                 ]
             },
@@ -236,30 +234,29 @@ class CleanTemplateViewSet(ModelViewSet):
             },
             "etl_fields":[
                 {
-                    "field_name":"tag_number",
-                    "type":"float",
-                    "tag":"dimension",
-                    "default_value":null,
-                    "is_config_by_user":true,
-                    "description":"",
-                    "unit":"",
+                    "field_name":"user",
                     "alias_name":"",
-                    "option":{
-                        "time_zone":"",
-                        "time_format":"",
-                        "field_index":1,
-                        "es_type":"integer",
-                        "real_path":"bk_separator_object.tag_number"
-                    },
-                    "is_built_in":false,
+                    "field_type":"long",
+                    "description":"字段描述",
+                    "is_analyzed":true,
+                    "is_dimension":false,
                     "is_time":false,
-                    "field_type":"int",
+                    "is_delete":false
+                },
+                {
+                    "field_name":"report_time",
+                    "alias_name":"",
+                    "field_type":"string",
+                    "description":"字段描述",
+                    "tag":"metric",
                     "is_analyzed":false,
+                    "is_dimension":false,
+                    "is_time":true,
                     "is_delete":false,
-                    "is_dimension":true,
-                    "_nums":1,
-                    "field_index":1,
-                    "value":"14836"
+                    "option":{
+                        "time_zone":8,
+                        "time_format":"yyyy-MM-dd HH:mm:ss"
+                    }
                 }
             ]
         }
@@ -288,30 +285,29 @@ class CleanTemplateViewSet(ModelViewSet):
             },
             "etl_fields":[
                 {
-                    "field_name":"tag_number",
-                    "type":"float",
-                    "tag":"dimension",
-                    "default_value":null,
-                    "is_config_by_user":true,
-                    "description":"",
-                    "unit":"",
+                    "field_name":"user",
                     "alias_name":"",
-                    "option":{
-                        "time_zone":"",
-                        "time_format":"",
-                        "field_index":1,
-                        "es_type":"integer",
-                        "real_path":"bk_separator_object.tag_number"
-                    },
-                    "is_built_in":false,
+                    "field_type":"long",
+                    "description":"字段描述",
+                    "is_analyzed":true,
+                    "is_dimension":false,
                     "is_time":false,
-                    "field_type":"int",
+                    "is_delete":false
+                },
+                {
+                    "field_name":"report_time",
+                    "alias_name":"",
+                    "field_type":"string",
+                    "description":"字段描述",
+                    "tag":"metric",
                     "is_analyzed":false,
+                    "is_dimension":false,
+                    "is_time":true,
                     "is_delete":false,
-                    "is_dimension":true,
-                    "_nums":1,
-                    "field_index":1,
-                    "value":"14836"
+                    "option":{
+                        "time_zone":8,
+                        "time_format":"yyyy-MM-dd HH:mm:ss"
+                    }
                 }
             ]
         }

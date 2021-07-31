@@ -24,9 +24,9 @@ from apps.log_databus.models import (
     StorageCapacity,
     StorageUsed,
     DataLinkConfig,
-    # BKDataClean,
-    # CleanTemplate,
-    # CleanStash,
+    BKDataClean,
+    CleanTemplate,
+    CleanStash,
 )
 
 
@@ -92,32 +92,32 @@ class StorageUsedAdmin(AppModelAdmin):
     search_fields = ["bk_biz_id", "storage_cluster_id"]
 
 
-# @admin.register(BKDataClean)
-# class BKDataCleanAdmin(AppModelAdmin):
-#     list_display = [
-#         "status",
-#         "status_en",
-#         "result_table_id",
-#         "result_table_name",
-#         "result_table_name_alias",
-#         "raw_data_id",
-#         "data_name",
-#         "data_alias",
-#         "data_type",
-#         "storage_type",
-#         "storage_cluster",
-#         "collector_config_id",
-#     ]
-#     search_fields = ["result_table_id", "data_name", "collector_config_id"]
-#
-#
-# @admin.register(CleanTemplate)
-# class CleanTemplateAdmin(AppModelAdmin):
-#     list_display = ["clean_template_id", "name", "clean_type", "etl_params", "etl_fields", "bk_biz_id"]
-#     search_fields = ["name", "clean_type"]
-#
-#
-# @admin.register(CleanStash)
-# class CleanStashAdmin(AppModelAdmin):
-#     list_display = ["clean_type", "etl_params", "etl_fields", "collector_config_id", "bk_biz_id"]
-#     search_fields = ["collector_config_id", "clean_type"]
+@admin.register(BKDataClean)
+class BKDataCleanAdmin(AppModelAdmin):
+    list_display = [
+        "status",
+        "status_en",
+        "result_table_id",
+        "result_table_name",
+        "result_table_name_alias",
+        "raw_data_id",
+        "data_name",
+        "data_alias",
+        "data_type",
+        "storage_type",
+        "storage_cluster",
+        "collector_config_id",
+    ]
+    search_fields = ["result_table_id", "data_name", "collector_config_id"]
+
+
+@admin.register(CleanTemplate)
+class CleanTemplateAdmin(AppModelAdmin):
+    list_display = ["clean_template_id", "name", "clean_type", "etl_params", "etl_fields", "bk_biz_id"]
+    search_fields = ["name", "clean_type"]
+
+
+@admin.register(CleanStash)
+class CleanStashAdmin(AppModelAdmin):
+    list_display = ["clean_type", "etl_params", "etl_fields", "collector_config_id", "bk_biz_id"]
+    search_fields = ["collector_config_id", "clean_type"]

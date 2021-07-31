@@ -1474,45 +1474,44 @@ class CollectorViewSet(ModelViewSet):
         @apiGroup 10_Collector
         @apiSuccessExample {json} 成功返回(有数据)
         {
-            "result": true,
-            "data": {
-            "collector_config_id":1,
-            "clean_type":"bk_log_text",
-            "etl_params":{
-                "retain_original_text":true,
-                "separator":" "
-            },
-            "etl_fields":[
-                {
-                    "field_name":"tag_number",
-                    "type":"float",
-                    "tag":"dimension",
-                    "default_value":null,
-                    "is_config_by_user":true,
-                    "description":"",
-                    "unit":"",
-                    "alias_name":"",
-                    "option":{
-                        "time_zone":"",
-                        "time_format":"",
-                        "field_index":1,
-                        "es_type":"integer",
-                        "real_path":"bk_separator_object.tag_number"
+            "result":true,
+            "data":{
+                "collector_config_id":1,
+                "clean_type":"bk_log_text",
+                "etl_params":{
+                    "retain_original_text":true,
+                    "separator":" "
+                },
+                "etl_fields":[
+                    {
+                        "field_name":"user",
+                        "alias_name":"",
+                        "field_type":"long",
+                        "description":"字段描述",
+                        "is_analyzed":true,
+                        "is_dimension":false,
+                        "is_time":false,
+                        "is_delete":false
                     },
-                    "is_built_in":false,
-                    "is_time":false,
-                    "field_type":"int",
-                    "is_analyzed":false,
-                    "is_delete":false,
-                    "is_dimension":true,
-                    "_nums":1,
-                    "field_index":1,
-                    "value":"14836"
-                }
-            ]
-        },
-            "code": 0,
-            "message": ""
+                    {
+                        "field_name":"report_time",
+                        "alias_name":"",
+                        "field_type":"string",
+                        "description":"字段描述",
+                        "tag":"metric",
+                        "is_analyzed":false,
+                        "is_dimension":false,
+                        "is_time":true,
+                        "is_delete":false,
+                        "option":{
+                            "time_zone":8,
+                            "time_format":"yyyy-MM-dd HH:mm:ss"
+                        }
+                    }
+                ]
+            },
+            "code":0,
+            "message":""
         }
         @apiSuccessExample {json} 成功返回(空)
         {
@@ -1520,6 +1519,57 @@ class CollectorViewSet(ModelViewSet):
             "data": null,
             "code": 0,
             "message": ""
+        }
+        """
+        pass
+
+    @detail_route(methods=["POST"])
+    def create_clean_stash(self, request, *args, collector_config_id=None, **kwarg):
+        """
+        @api {POST} /databus/collectors/$collector_config_id/create_clean_stash 获取采集项清洗缓存
+        @apiName databus_collectors_create_clean_stash
+        @apiGroup 10_Collector
+        @apiParamExample {json} 成功请求
+        {
+            "clean_type":"bk_log_text",
+            "etl_params":{
+                "retain_original_text":true,
+                "separator":" "
+            },
+            "etl_fields":[
+                {
+                    "field_name":"user",
+                    "alias_name":"",
+                    "field_type":"long",
+                    "description":"字段描述",
+                    "is_analyzed":true,
+                    "is_dimension":false,
+                    "is_time":false,
+                    "is_delete":false
+                },
+                {
+                    "field_name":"report_time",
+                    "alias_name":"",
+                    "field_type":"string",
+                    "description":"字段描述",
+                    "tag":"metric",
+                    "is_analyzed":false,
+                    "is_dimension":false,
+                    "is_time":true,
+                    "is_delete":false,
+                    "option":{
+                        "time_zone":8,
+                        "time_format":"yyyy-MM-dd HH:mm:ss"
+                    }
+                }
+            ]
+        }
+        @apiSuccessExample {json} 成功返回
+        {
+            "message": "",
+            "code": 0,
+            "data": True,
+            "result": true
         }
         """
         pass
