@@ -18,6 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.apps import AppConfig
+from django.conf import settings
 
 from apps.log_trace.trace import BluekingInstrumentor
 
@@ -27,4 +28,5 @@ class TraceConfig(AppConfig):
     verbose_name = "Trace"
 
     def ready(self):
-        BluekingInstrumentor().instrument()
+        if settings.OLTP_TRACE:
+            BluekingInstrumentor().instrument()
