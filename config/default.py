@@ -188,7 +188,7 @@ if BKLOG_UDP_LOG:
         "handlers": {
             "udp": {
                 "formatter": "verbose",
-                "class": "logging.handlers.DatagramHandler",
+                "class": "apps.utils.log.UdpHandler",
                 "host": LOG_UDP_SERVER_HOST,
                 "port": LOG_UDP_SERVER_PORT,
             }
@@ -196,6 +196,7 @@ if BKLOG_UDP_LOG:
         "root": {"handlers": ["udp"], "level": os.getenv("LOG_LEVEL", "INFO")},
     }
 
+OLTP_TRACE = os.getenv("BKAPP_OLTP_TRACE", "off") == "on"
 # ===============================================================================
 # 项目配置
 # ===============================================================================
