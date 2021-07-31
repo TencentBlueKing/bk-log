@@ -56,5 +56,17 @@ mock==2.0.0
 # jinjia
 jinja2==2.10.1
 
+# opentelemetry
+opentelemetry-api==1.4.1
+opentelemetry-sdk==1.4.1
+opentelemetry-exporter-otlp==1.4.1
+opentelemetry-instrumentation-django==0.23b2
+opentelemetry-instrumentation-elasticsearch==0.23b2
+opentelemetry-instrumentation-dbapi==0.23b2
+opentelemetry-instrumentation-redis==0.23b2
+opentelemetry-instrumentation-requests==0.23b2
+
+
+
 # 各自环境所需的不同依赖, 通过 sites/${env}/deploy/requirements_env.txt得到
 -r requirements_env.txt

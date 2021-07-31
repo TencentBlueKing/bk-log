@@ -17,4 +17,14 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-default_app_config = "apps.log_trace.apps.TraceConfig"
+from django.apps import AppConfig
+
+from apps.log_trace.trace import BluekingInstrumentor
+
+
+class TraceConfig(AppConfig):
+    name = "apps.log_trace"
+    verbose_name = "Trace"
+
+    def ready(self):
+        BluekingInstrumentor().instrument()

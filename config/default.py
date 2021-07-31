@@ -51,6 +51,7 @@ INSTALLED_APPS += (
     "apps.log_databus",
     "apps.log_esquery",
     "apps.log_measure",
+    "apps.log_trace",
     "apps.esb",
     "bk_monitor",
     "home_application",
@@ -166,6 +167,34 @@ if RUN_VER != "open":
     LOGGING["handlers"]["component"]["encoding"] = "utf-8"
     LOGGING["handlers"]["mysql"]["encoding"] = "utf-8"
     LOGGING["handlers"]["blueapps"]["encoding"] = "utf-8"
+
+BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
+
+if BKLOG_UDP_LOG:
+    LOG_UDP_SERVER_HOST = os.getenv("BKAPP_UDP_LOG_SERVER_HOST", "")
+    LOG_UDP_SERVER_PORT = int(os.getenv("BKAPP_UDP_LOG_SERVER_PORT", 0))
+    LOGGING = {
+        "version": 1,
+        "formatters": {
+            "verbose": {
+                "format": (
+                    "%(levelname)s [%(asctime)s] %(pathname)s "
+                    "%(lineno)d %(funcName)s %(process)d %(thread)d "
+                    "\n \t %(message)s \n"
+                ),
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+        },
+        "handlers": {
+            "udp": {
+                "formatter": "verbose",
+                "class": "logging.handlers.DatagramHandler",
+                "host": LOG_UDP_SERVER_HOST,
+                "port": LOG_UDP_SERVER_PORT,
+            }
+        },
+        "root": {"handlers": ["udp"], "level": os.getenv("LOG_LEVEL", "INFO")},
+    }
 
 # ===============================================================================
 # 项目配置
