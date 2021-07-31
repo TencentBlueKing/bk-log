@@ -17,4 +17,37 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-default_app_config = "apps.log_trace.apps.TraceConfig"
+import functools
+import json
+
+from opentelemetry.instrumentation.django import _DjangoMiddleware
+from opentelemetry.sdk.trace import Span
+
+
+def _patch_instrumentation_django():
+    if hasattr(_DjangoMiddleware, "process_view"):
+        setattr(_DjangoMiddleware, "process_view", lambda _, __, ___, ____, _____: None)
+
+    process_response = getattr(_DjangoMiddleware, "process_response")
+
+    @functools.wraps(process_response)
+    def wrap_process_response(*args, **kwargs):
+        this, request, response = args
+        cur_span: Span = request.META[this._environ_span_key]
+        if hasattr(response, "data"):
+            result = response.data
+        else:
+            try:
+                result = json.loads(response.content)
+            except Exception:  # pylint: disable=broad-except
+                return process_response(*args, **kwargs)
+        cur_span.set_attribute("result_code", result.get("code", 0))
+        cur_span.set_attribute("error", not result.get("result", True))
+        cur_span.set_attribute("result_message", result.get("message", ""))
+        return process_response(*args, **kwargs)
+
+    setattr(_DjangoMiddleware, "process_response", wrap_process_response)
+
+
+def patch():
+    _patch_instrumentation_django()
