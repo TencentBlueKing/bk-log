@@ -1081,5 +1081,7 @@ export default {
     清洗模板: '清洗模板',
     cleaning: '高级清洗中',
     cleaningTips: '当前流程已跳转至计算平台进行清洗，若清洗完成可及时刷新页面更新状态',
+    Confirm_delete: '确认删除当前清洗项？',
+    Confirm_delete_temp: '确认删除当前模板？',
   },
 };

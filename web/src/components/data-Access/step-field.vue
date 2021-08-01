@@ -310,11 +310,12 @@
         @click="openTemplateDialog(true)">
         {{$t('dataManage.saveTemp')}}
       </bk-button>
-      <!-- 日志清洗 保存模板 -->
+      <!-- 日志清洗 保存模板 取消 -->
       <bk-button
         v-if="isCleanField || isTempField"
         theme="default"
-        class="ml10">
+        class="ml10"
+        @click="handleCancel">
         {{$t('取消')}}
       </bk-button>
     </div>
@@ -864,6 +865,15 @@ export default {
     // 跳过
     handleSkip() {
       this.$emit('stepChange', this.curStep + 1);
+    },
+    handleCancel() {
+      const routeName = this.isCleanField ? 'log-clean-list' : 'log-clean-templates';
+      this.$router.push({
+        name: routeName,
+        query: {
+          projectId: window.localStorage.getItem('project_id'),
+        },
+      });
     },
     prevHandler() {
       this.$emit('stepChange', 1);

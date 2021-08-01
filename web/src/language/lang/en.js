@@ -1082,5 +1082,7 @@ export default {
     清洗模板: 'Clean Template',
     cleaning: 'Cleaning',
     cleaningTips: 'The current process has been jumped to the computing platform for cleaning, if the cleaning is completed, the page can be refreshed in time to update the status',
+    Confirm_delete: 'Confirm_delete',
+    Confirm_delete_temp: 'Confirm to delete this item?',
   },
 };

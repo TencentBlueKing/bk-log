@@ -42,7 +42,7 @@
     <section class="clean-template-list">
       <bk-table
         class="clean-table"
-        :data="cleanList"
+        :data="templateList"
         :size="size"
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
@@ -85,6 +85,8 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   name: 'clean-template',
   data() {
@@ -98,8 +100,9 @@ export default {
         limit: 10,
         limitList: [10, 20, 50, 100],
       },
-      cleanList: [
+      templateList: [
         {
+          clean_template_id: 1,
           name: '采集',
           format: 'JSON',
           storage: '正则',
@@ -110,8 +113,19 @@ export default {
     };
   },
   computed: {
+    ...mapGetters({
+      projectId: 'projectId',
+      bkBizId: 'bkBizId',
+    }),
+  },
+  mounted() {
+    this.search();
   },
   methods: {
+    search() {
+      this.param = this.keyword;
+      this.handlePageChange(1);
+    },
     handleCreate() {
       this.$router.push({
         name: 'clean-template-create',
@@ -120,10 +134,85 @@ export default {
         },
       });
     },
-    operateHandler() {},
-    search() {},
-    handlePageChange() {},
-    handleLimitChange() {},
+    /**
+     * 分页变换
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
+    handlePageChange(page) {
+      this.pagination.current = page;
+      this.requestData();
+    },
+    /**
+     * 分页限制
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
+    handleLimitChange(page) {
+      if (this.pagination.limit !== page) {
+        this.pagination.limit = page;
+        this.requestData();
+      }
+    },
+    requestData() {
+      this.$http.request('clean/cleanTemplate', {
+        query: {
+          bk_biz_id: this.bkBizId,
+          // keyword: this.param,
+          page: this.pagination.current,
+          pagesize: this.pagination.limit,
+        },
+      }).then((res) => {
+        console.log(res);
+        // this.pagination.count = data.total;
+      })
+        .catch((err) => {
+          console.warn(err);
+        })
+        .finally(() => {
+          this.isTableLoading = false;
+        });
+    },
+    operateHandler(row, operateType) {
+      if (operateType === 'edit') {
+        this.$router.push({
+          name: 'clean-template-edit',
+          params: {
+            templateId: row.clean_template_id,
+          },
+          query: {
+            projectId: window.localStorage.getItem('project_id'),
+          },
+        });
+        return;
+      }
+      if (operateType === 'delete') {
+        // if (!this.collectProject) return;
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('logClean.Confirm_delete_temp'),
+          confirmFn: () => {
+            this.requestDeleteTemp(row);
+          },
+        });
+        return;
+      }
+    },
+    requestDeleteTemp(row) {
+      this.$http.request('clean/deleteTemplate', {
+        params: {
+          clean_template_id: row.clean_template_id,
+        },
+      }).then((res) => {
+        if (res.result) {
+          const page = this.templateList.length <= 1
+            ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
+            : this.pagination.current;
+          this.handlePageChange(page);
+        }
+      })
+        .catch(() => {});
+    },
   },
 };
 </script>

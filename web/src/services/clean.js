@@ -44,6 +44,9 @@ const refreshClean = {
   method: 'get',
 };
 
+// 删除清洗项
+const deleteClean = {};
+
 // 获取清洗模板列表
 const cleanTemplate = {
   url: '/databus/clean_template/',
@@ -71,7 +74,7 @@ const updateTemplate = {
 // 清洗模板-删除
 const deleteTemplate = {
   url: '/databus/clean_template/:clean_template_id/',
-  method: 'put',
+  method: 'delete',
 };
 
 export {
@@ -79,6 +82,7 @@ export {
   updateCleanStash,
   cleanList,
   refreshClean,
+  deleteClean,
   cleanTemplate,
   templateDetail,
   createTemplate,

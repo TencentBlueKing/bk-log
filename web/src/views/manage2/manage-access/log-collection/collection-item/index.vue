@@ -545,20 +545,20 @@ export default {
       });
     },
     /**
-             * 分页变换
-             * @param  {Number} page 当前页码
-             * @return {[type]}      [description]
-             */
+     * 分页变换
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
     handlePageChange(page) {
       this.pagination.current = page;
       this.stopStatusPolling();
       this.requestData();
     },
     /**
-             * 分页限制
-             * @param  {Number} page 当前页码
-             * @return {[type]}      [description]
-             */
+     * 分页限制
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
     handleLimitChange(page) {
       if (this.pagination.limit !== page) {
         this.pagination.limit = page;

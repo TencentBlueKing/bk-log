@@ -407,7 +407,7 @@ const routes = [
             component: cleanCreate,
           },
           {
-            path: 'edit/:id',
+            path: 'edit/:collectorId',
             name: 'clean-edit', // 日志清洗 - 编辑清洗
             meta: { needBack: true },
             component: cleanCreate,
@@ -432,7 +432,7 @@ const routes = [
             component: cleanTempCreate,
           },
           {
-            path: 'edit/:id',
+            path: 'edit/:templateId',
             name: 'clean-template-edit', // 日志清洗 - 编辑模板
             meta: { needBack: true },
             component: cleanTempCreate,

@@ -51,7 +51,7 @@
         @page-limit-change="handleLimitChange">
         <bk-table-column :label="$t('migrate.collectionItemName')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.collector_config_name }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logClean.etlConfig')">
@@ -108,11 +108,13 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   name: 'clean-list',
   data() {
     return {
-      isTableLoading: false,
+      isTableLoading: true,
       keyword: '',
       size: 'small',
       pagination: {
@@ -123,7 +125,8 @@ export default {
       },
       cleanList: [
         {
-          name: '采集',
+          collector_config_id: 1,
+          collector_config_name: '采集',
           format: 'JSON',
           storage: '正则',
           updated_by: 'zijia',
@@ -133,8 +136,58 @@ export default {
     };
   },
   computed: {
+    ...mapGetters({
+      projectId: 'projectId',
+      bkBizId: 'bkBizId',
+    }),
+  },
+  mounted() {
+    this.search();
   },
   methods: {
+    search() {
+      this.param = this.keyword;
+      this.handlePageChange(1);
+    },
+    /**
+     * 分页变换
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
+    handlePageChange(page) {
+      this.pagination.current = page;
+      this.requestData();
+    },
+    /**
+     * 分页限制
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
+    handleLimitChange(page) {
+      if (this.pagination.limit !== page) {
+        this.pagination.limit = page;
+        this.requestData();
+      }
+    },
+    requestData() {
+      this.$http.request('clean/cleanList', {
+        query: {
+          bk_biz_id: this.bkBizId,
+          // keyword: this.param,
+          page: this.pagination.current,
+          pagesize: this.pagination.limit,
+        },
+      }).then((res) => {
+        console.log(res);
+        // this.pagination.count = data.total;
+      })
+        .catch((err) => {
+          console.warn(err);
+        })
+        .finally(() => {
+          this.isTableLoading = false;
+        });
+    },
     handleCreate() {
       this.$router.push({
         name: 'clean-create',
@@ -143,10 +196,46 @@ export default {
         },
       });
     },
-    operateHandler() {},
-    search() {},
-    handlePageChange() {},
-    handleLimitChange() {},
+    operateHandler(row, operateType) {
+      if (operateType === 'edit') {
+        this.$router.push({
+          name: 'clean-edit',
+          params: {
+            collectorId: row.collector_config_id,
+          },
+          query: {
+            projectId: window.localStorage.getItem('project_id'),
+          },
+        });
+        return;
+      }
+      if (operateType === 'delete') {
+        // if (!this.collectProject) return;
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('logClean.Confirm_delete'),
+          confirmFn: () => {
+            this.requestDeleteClenItem(row);
+          },
+        });
+        return;
+      }
+    },
+    requestDeleteClenItem(row) {
+      this.$http.request('clean/deleteClean', {
+        params: {
+          collector_config_id: row.collector_config_id,
+        },
+      }).then((res) => {
+        if (res.result) {
+          const page = this.cleanList.length <= 1
+            ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
+            : this.pagination.current;
+          this.handlePageChange(page);
+        }
+      })
+        .catch(() => {});
+    },
   },
 };
 </script>
