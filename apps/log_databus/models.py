@@ -236,20 +236,22 @@ class CleanTemplate(SoftDeleteModel):
     clean_template_id = models.IntegerField(_("清洗id"), primary_key=True)
     name = models.CharField(_("模板名"), max_length=128)
     clean_type = models.CharField(_("模板类型"), max_length=64)
-    etl_params = JSONField(_("etl配置"))
-    etl_fields = JSONField(_("etl字段"))
+    etl_params = JSONField(_("etl配置"), null=True, blank=True)
+    etl_fields = JSONField(_("etl字段"), null=True, blank=True)
     bk_biz_id = models.IntegerField(_("业务id"))
 
     class Meta:
         verbose_name = _("清洗模板")
         verbose_name_plural = _("清洗模板")
         ordering = ("-updated_at",)
+        unique_together = ("name", "bk_biz_id")
 
 
 class CleanStash(SoftDeleteModel):
+    clean_stash_id = models.IntegerField(_("清洗缓存id"), primary_key=True)
     clean_type = models.CharField(_("模板类型"), max_length=64)
-    etl_params = JSONField(_("etl配置"))
-    etl_fields = JSONField(_("etl字段"))
+    etl_params = JSONField(_("etl配置"), null=True, blank=True)
+    etl_fields = JSONField(_("etl字段"), null=True, blank=True)
     collector_config_id = models.IntegerField(_("采集项列表"), db_index=True)
     bk_biz_id = models.IntegerField(_("业务id"))
 

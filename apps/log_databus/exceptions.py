@@ -235,3 +235,13 @@ class CollectNotSuccess(BaseCollectorConfigException):
 class BkdataIdFeatureNotExist(BaseCollectorConfigException):
     ERROR_CODE = "601"
     MESSAGE = _("后台bkdata_id_feature不存在")
+
+
+class CleanTemplateNotExistException(BaseCollectorConfigException):
+    ERROR_CODE = "701"
+    MESSAGE = _("清洗模板不存在")
+
+
+class CleanTemplateRepeatException(BaseCollectorConfigException):
+    ERROR_CODE = "702"
+    MESSAGE = _("该业务{bk_biz_id}已存在该模板{name}")

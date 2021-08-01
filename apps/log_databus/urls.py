@@ -20,7 +20,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from django.conf.urls import url, include
 from rest_framework import routers
 
-from apps.log_databus.views import collector_views, itsm_views
+from apps.log_databus.views import collector_views, itsm_views, clean_views
 from apps.log_databus.views import storage_views
 from apps.log_databus.views import link_views
 
@@ -32,6 +32,7 @@ router.register(r"collectors", collector_views.CollectorViewSet, basename="colle
 router.register(r"data_link", link_views.DataLinkViewSet, basename="data_link")
 router.register(r"collect_itsm", itsm_views.ItsmViewSet, basename="collect_itsm")
 router.register(r"collect_itsm_cb", itsm_views.ItsmCallbackViewSet, basename="collect_itsm_cb")
+router.register(r"clean_template", clean_views.CleanTemplateViewSet, basename="clean_template")
 
 
 urlpatterns = [

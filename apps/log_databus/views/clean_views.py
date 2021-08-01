@@ -17,10 +17,18 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from apps.generic import ModelViewSet
+from django.utils.translation import ugettext_lazy as _
+from rest_framework.response import Response
 
+
+from apps.iam.handlers.drf import ViewBusinessPermission
+
+from apps.generic import ModelViewSet
+from apps.log_databus.handlers.clean import CleanTemplateHandler
 from apps.log_databus.models import BKDataClean, CleanTemplate
+from apps.log_databus.serializers import CleanTemplateSerializer
 from apps.utils.drf import detail_route
+from apps.exceptions import ValidationError
 
 
 class CleanViewSet(ModelViewSet):
@@ -109,7 +117,7 @@ class CleanTemplateViewSet(ModelViewSet):
     model = CleanTemplate
 
     def get_permissions(self):
-        pass
+        return [ViewBusinessPermission()]
 
     def list(self, request, *args, **kwargs):
         """
@@ -159,14 +167,18 @@ class CleanTemplateViewSet(ModelViewSet):
                                     "time_format":"yyyy-MM-dd HH:mm:ss"
                                 }
                             }
-                        ]
+                        ],
+                        "bk_biz_id": 0
                     }
                 ]
             },
             "result":true
         }
         """
-        pass
+        # 强制前端必须传分页参数
+        if not request.GET.get("page") or not request.GET.get("pagesize"):
+            raise ValidationError(_("分页参数不能为空"))
+        return super().list(request, *args, **kwargs)
 
     def retrieve(self, request, *args, clean_template_id=None, **kwargs):
         """
@@ -180,6 +192,7 @@ class CleanTemplateViewSet(ModelViewSet):
             "message":"",
             "code":0,
             "data":{
+                "name": "xxx",
                 "clean_template_id":1,
                 "clean_type":"bk_log_text",
                 "etl_params":{
@@ -212,12 +225,13 @@ class CleanTemplateViewSet(ModelViewSet):
                             "time_format":"yyyy-MM-dd HH:mm:ss"
                         }
                     }
-                ]
+                ],
+                "bk_biz_id": 0
             },
             "result":true
         }
         """
-        pass
+        return Response(CleanTemplateHandler(clean_template_id=clean_template_id).retrieve())
 
     def update(self, request, *args, clean_template_id=None, **kwargs):
         """
@@ -227,6 +241,7 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiDescription 更新清洗模板
         @apiParamExample {json} 成功请求
         {
+            "name": "xxx",
             "clean_type":"bk_log_text",
             "etl_params":{
                 "retain_original_text":true,
@@ -258,17 +273,21 @@ class CleanTemplateViewSet(ModelViewSet):
                         "time_format":"yyyy-MM-dd HH:mm:ss"
                     }
                 }
-            ]
+            ],
+            "bk_biz_id": 0
         }
         @apiSuccessExample {json} 成功返回
         {
             "message": "",
             "code": 0,
-            "data": True,
+            "data": {
+                "clean_template_id": 1
+            },
             "result": true
         }
         """
-        pass
+        data = self.params_valid(CleanTemplateSerializer)
+        return Response(CleanTemplateHandler(clean_template_id=clean_template_id).create_or_update(params=data))
 
     def create(self, request, *args, **kwargs):
         """
@@ -309,19 +328,23 @@ class CleanTemplateViewSet(ModelViewSet):
                         "time_format":"yyyy-MM-dd HH:mm:ss"
                     }
                 }
-            ]
+            ],
+            "bk_biz_id": 0
         }
         @apiSuccessExample {json} 成功返回
         {
             "message": "",
             "code": 0,
-            "data": True,
+            "data": {
+                "clean_template_id": 1
+            },
             "result": true
         }
         """
-        pass
+        data = self.params_valid(CleanTemplateSerializer)
+        return Response(CleanTemplateHandler().create_or_update(params=data))
 
-    def destroy(self, request, *args, **kwargs):
+    def destroy(self, request, *args, clean_template_id=None, **kwargs):
         """
         @api {delete} /databus/clean_template/$clean_template_id/ 5_清洗模板-删除
         @apiName destry_clean_template
@@ -331,8 +354,8 @@ class CleanTemplateViewSet(ModelViewSet):
         {
             "message": "",
             "code": 0,
-            "data": True,
+            "data": 1,
             "result": true
         }
         """
-        pass
+        return Response(CleanTemplateHandler(clean_template_id=clean_template_id).destroy())

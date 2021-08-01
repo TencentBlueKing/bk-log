@@ -523,3 +523,18 @@ class ListCollectorsByHostSerializer(serializers.Serializer):
     bk_cloud_id = serializers.IntegerField(label=_("云区域Id"), required=False, default=0)
     bk_host_id = serializers.IntegerField(label=_("主机id"), required=False)
     bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
+
+
+class CleanTemplateSerializer(serializers.Serializer):
+    name = serializers.CharField(label=_("清洗模板名"), required=True)
+    clean_type = serializers.CharField(label=_("清洗类型"), required=True)
+    etl_params = serializers.DictField(label=_("清洗配置"), required=True)
+    etl_fields = serializers.ListField(child=serializers.IntegerField(), label=_("字段配置"), required=True)
+    bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
+
+
+class CleanStashSerializer(serializers.Serializer):
+    clean_type = serializers.CharField(label=_("清洗类型"), required=True)
+    etl_params = serializers.DictField(label=_("清洗配置"), required=True)
+    etl_fields = serializers.ListField(child=serializers.IntegerField(), label=_("字段配置"), required=True)
+    bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)

@@ -69,7 +69,7 @@ from apps.log_databus.exceptions import (
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig
+from apps.log_databus.models import CollectorConfig, CleanStash
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.constants import GlobalCategoriesEnum, CMDB_HOST_SEARCH_FIELDS
@@ -1532,3 +1532,17 @@ class CollectorHandler(object):
         legal_ip_set = {legal_ip["bk_host_innerip"] for legal_ip in legal_ip_list}
 
         return [ip for ip in ip_list if ip not in legal_ip_set]
+
+    def get_clean_stash(self):
+        return model_to_dict(CleanStash.objects.filter(collector_config_id=self.collector_config_id).first())
+
+    def create_clean_stash(self, params: dict):
+        model_fields = {
+            "clean_type": params["clean_type"],
+            "etl_params": params["etl_params"],
+            "etl_fields": params["etl_fields"],
+            "collector_config_id": self.collector_config_id,
+            "bk_biz_id": params["bk_biz_id"],
+        }
+        CleanStash.objects.filter(collector_config_id=self.collector_config_id).delete()
+        return model_to_dict(CleanStash.objects.update(**model_fields))

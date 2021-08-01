@@ -53,6 +53,7 @@ from apps.log_databus.serializers import (
     CollectorDataLinkListSerializer,
     CollectorRegexDebugSerializer,
     ListCollectorsByHostSerializer,
+    CleanStashSerializer,
 )
 from apps.utils.function import ignored
 
@@ -90,6 +91,7 @@ class CollectorViewSet(ModelViewSet):
             return [InstanceActionPermission([ActionEnum.VIEW_COLLECTION], ResourceEnum.COLLECTION)]
         if self.action in [
             "update",
+            "only_update",
             "destroy",
             "retry",
             "tail",
@@ -1478,6 +1480,7 @@ class CollectorViewSet(ModelViewSet):
             "data":{
                 "collector_config_id":1,
                 "clean_type":"bk_log_text",
+                "bk_biz_id": "0",
                 "etl_params":{
                     "retain_original_text":true,
                     "separator":" "
@@ -1521,16 +1524,17 @@ class CollectorViewSet(ModelViewSet):
             "message": ""
         }
         """
-        pass
+        return Response(CollectorHandler(collector_config_id=collector_config_id).get_clean_stash())
 
     @detail_route(methods=["POST"])
     def create_clean_stash(self, request, *args, collector_config_id=None, **kwarg):
         """
-        @api {POST} /databus/collectors/$collector_config_id/create_clean_stash 获取采集项清洗缓存
+        @api {POST} /databus/collectors/$collector_config_id/create_clean_stash 更新采集项清洗缓存
         @apiName databus_collectors_create_clean_stash
         @apiGroup 10_Collector
         @apiParamExample {json} 成功请求
         {
+            "bk_biz_id": 0,
             "clean_type":"bk_log_text",
             "etl_params":{
                 "retain_original_text":true,
@@ -1568,8 +1572,11 @@ class CollectorViewSet(ModelViewSet):
         {
             "message": "",
             "code": 0,
-            "data": True,
+            "data": {
+                "clean_stash_id": 1
+            },
             "result": true
         }
         """
-        pass
+        data = self.params_valid(CleanStashSerializer)
+        return CollectorHandler(collector_config_id=collector_config_id).create_clean_stash(params=data)
