@@ -20,54 +20,68 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-import * as userInfo from './userInfo';
-import * as example from './example';
-import * as retrieve from './retrieve';
-import * as source from './source';
-import * as indexSet from './indexSet';
-import * as meta from './meta';
-import * as monitor from './monitor';
-import * as auth from './auth';
-import * as plugins from './plugins';
-import * as resultTables from './resultTables';
-import * as biz from './biz';
-import * as collect from './collect';
-import * as particulars from './particulars';
-import * as migrate from './migrate';
-import * as traceDetail from './traceDetail';
-import * as trace from './trace';
-import * as extract from './extract';
-import * as extractManage from './extractManage';
-import * as linkConfiguration from './linkConfiguration';
-import * as clean from './clean';
-
-const getMyProjectList = {
-  url: '/meta/projects/mine/',
+// 获取采集项清洗缓存
+const getCleanStash = {
+  url: '/databus/collectors/:collector_config_id/clean_stash',
   method: 'get',
 };
 
-export default {
-  userInfo,
-  example,
-  retrieve,
-  project: {
-    getMyProjectList,
-  },
-  indexSet,
-  source,
-  meta,
-  monitor,
-  auth,
-  plugins,
-  resultTables,
-  biz,
-  particulars,
-  collect,
-  migrate,
-  traceDetail,
-  trace,
-  extract,
-  extractManage,
-  linkConfiguration,
-  clean,
+// 更新采集项清洗缓存
+const updateCleanStash = {
+  url: '/databus/collectors/:collector_config_id/create_clean_stash',
+  method: 'post',
+};
+
+// 获取清洗列表
+const cleanList = {
+  url: '/databus/clean/',
+  method: 'get',
+};
+
+// 刷新高级清洗
+const refreshClean = {
+  url: '/databus/cleans/:collector_config_id/',
+  method: 'get',
+};
+
+// 获取清洗模板列表
+const cleanTemplate = {
+  url: '/databus/clean_template/',
+  method: 'get',
+};
+
+// 清洗模板-详情
+const templateDetail = {
+  url: '/databus/clean_template/:clean_template_id/',
+  method: 'get',
+};
+
+// 清洗模板-新建
+const createTemplate = {
+  url: '/databus/clean_template/',
+  method: 'post',
+};
+
+// 清洗模板-更新
+const updateTemplate = {
+  url: '/databus/clean_template/:clean_template_id/',
+  method: 'put',
+};
+
+// 清洗模板-删除
+const deleteTemplate = {
+  url: '/databus/clean_template/:clean_template_id/',
+  method: 'put',
+};
+
+export {
+  getCleanStash,
+  updateCleanStash,
+  cleanList,
+  refreshClean,
+  cleanTemplate,
+  templateDetail,
+  createTemplate,
+  updateTemplate,
+  deleteTemplate,
 };

@@ -967,6 +967,8 @@ export default {
     linkdocs: '计算平台文档',
     selectTemp: '选择模版',
     saveTemp: '保存模板',
+    saveTempErrorTips: '请输入模板名称',
+    selectTempErrorTips: '请选择清洗模板',
     emptyText: '请先选择字段提取模式',
     skip: '跳过',
     advanceClean: '前往高级清洗',

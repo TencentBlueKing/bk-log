@@ -95,7 +95,7 @@
         <div class="field-step field-method-step" style="margin-top: 20px;">
           <div class="step-head">
             <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
-            <span class="template-text">
+            <span class="template-text" @click="openTemplateDialog(false)">
               <span class="log-icon icon-lianjie"></span>
               {{ $t('dataManage.applyTemp') }}
             </span>
@@ -166,7 +166,7 @@
               <bk-button
                 class="fl debug-btn"
                 theme="primary"
-                :disabled="!logOriginal || isExtracting"
+                :disabled="!logOriginal || isExtracting || !showDebugBtn"
                 @click="debugHandler">
                 {{ $t('调试') }}
               </bk-button>
@@ -185,6 +185,7 @@
                 :extract-method="formData.etl_config"
                 :deleted-visible="deletedVisible"
                 :fields="formData.fields"
+                :is-setting-disable="!logOriginal || !showDebugBtn"
                 @deleteVisible="visibleHandle"
                 @handleKeepLog="handleKeepLog"
                 @standard="dialogVisible = true"
@@ -277,9 +278,9 @@
       <bk-button
         v-if="activePanel === 'base' && !isTempField"
         theme="primary"
-        @click.stop.prevent="finish"
+        @click.stop.prevent="finish(true)"
         :loading="isLoading"
-        :disabled="!collectProject">
+        :disabled="!collectProject || !showDebugBtn || !hasFields">
         {{$t('下一步')}}
       </bk-button>
       <!-- <bk-button
@@ -296,7 +297,7 @@
         theme="default"
         :title="$t('btn.cancel')"
         class="ml10"
-        @click="handleBack"
+        @click="handleSkip"
         :disabled="isLoading">
         {{$t('dataManage.skip')}}
       </bk-button>
@@ -305,7 +306,8 @@
         v-if="activePanel === 'base'"
         theme="default"
         class="ml10"
-        disabled>
+        :disabled="!hasFields"
+        @click="openTemplateDialog(true)">
         {{$t('dataManage.saveTemp')}}
       </bk-button>
       <!-- 日志清洗 保存模板 -->
@@ -343,9 +345,14 @@
       :header-position="'left'"
       :mask-close="false"
       :draggable="false"
-      :title="$t('dataManage.selectTemp')">
+      :title="isSaveTempDialog ? $t('dataManage.saveTemp') : $t('dataManage.selectTemp')"
+      :confirm-fn="handleTemplConfirm">
       <div class="template-content">
-        <bk-select v-model="selectTemplate">
+        <div v-if="isSaveTempDialog">
+          <label style="color: #63656e;">模板名称</label>
+          <bk-input v-model="saveTempName" style="margin-top: 8px"></bk-input>
+        </div>
+        <bk-select v-else v-model="selectTemplate">
           <bk-option
             v-for="option in templateList"
             :key="option.id"
@@ -353,10 +360,6 @@
             :name="option.name">
           </bk-option>
         </bk-select>
-        <div>
-          <label style="color: #63656e;">模板名称</label>
-          <bk-input v-model="saveTempName" style="margin-top: 8px"></bk-input>
-        </div>
       </div>
     </bk-dialog>
   </div>
@@ -391,7 +394,7 @@ export default {
       isUnmodifiable: false,
       // switcher: false,
       roleList: [],
-      defaultRetention: '',
+      // defaultRetention: '',
       fieldType: '',
       deletedVisible: true,
       copysText: {},
@@ -486,6 +489,7 @@ export default {
       saveTempName: '',
       templateList: [], // 模板列表
       templateDialogVisible: false,
+      isSaveTempDialog: false,
       cleanCollector: '', // 日志清洗选择的采集项
       cleanCollectorList: [],
     };
@@ -509,14 +513,22 @@ export default {
     },
     showDebugBtn() {
       const methods = this.params.etl_config;
-      if (!methods || methods === 'bk_log_text' || methods === 'bk_log_regexp') return false;
+      if (!methods || methods === 'bk_log_text') return false;
       if (methods === 'bk_log_delimiter') {
         return this.params.etl_params.separator;
       }
       return true;
     },
+    hasFields() {
+      return this.formData.fields.length;
+    },
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
+    },
+    defaultRetention() {
+      const { storage_duration_time } = this.globalsData;
+      // eslint-disable-next-line camelcase
+      return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
     },
   },
   watch: {
@@ -572,8 +584,9 @@ export default {
       return;
     }
 
-    this.getStorage();
-    this.defaultRetention = this.globalsData.storage_duration_time.filter(item => item.default === true)[0].id;
+    // this.getStorage();
+    // this.defaultRetention = this.globalsData.storage_duration_time.filter(item => item.default === true)[0].id;
+    this.getDetail();
     this.getDataLog('init');
   },
   methods: {
@@ -581,44 +594,44 @@ export default {
       this.requestEtlPreview();
     },
     // 获取存储集群
-    getStorage() {
-      const queryData = { bk_biz_id: this.bkBizId };
-      if (this.curCollect.data_link_id) {
-        queryData.data_link_id = this.curCollect.data_link_id;
-      }
-      this.$http.request('collect/getStorage', {
-        query: queryData,
-      }).then((res) => {
-        if (res.data) {
-          // 根据权限排序
-          const s1 = [];
-          const s2 = [];
-          for (const item of res.data) {
-            if (item.permission?.manage_es_source) {
-              s1.push(item);
-            } else {
-              s2.push(item);
-            }
-          }
-          this.storageList = s1.concat(s2);
-          if (this.isItsm && this.curCollect.can_use_independent_es_cluster) {
-            // itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
-          } else {
-            const defaultItem = this.storageList.find(item => item.registered_system === '_default');
-            if (defaultItem && defaultItem?.permission?.manage_es_source) {
-              this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
-            }
-          }
-          this.getDetail();
-        }
-      })
-        .catch((res) => {
-          this.$bkMessage({
-            theme: 'error',
-            message: res.message,
-          });
-        });
-    },
+    // getStorage() {
+    //   const queryData = { bk_biz_id: this.bkBizId };
+    //   if (this.curCollect.data_link_id) {
+    //     queryData.data_link_id = this.curCollect.data_link_id;
+    //   }
+    //   this.$http.request('collect/getStorage', {
+    //     query: queryData,
+    //   }).then((res) => {
+    //     if (res.data) {
+    //       // 根据权限排序
+    //       const s1 = [];
+    //       const s2 = [];
+    //       for (const item of res.data) {
+    //         if (item.permission?.manage_es_source) {
+    //           s1.push(item);
+    //         } else {
+    //           s2.push(item);
+    //         }
+    //       }
+    //       this.storageList = s1.concat(s2);
+    //       if (this.isItsm && this.curCollect.can_use_independent_es_cluster) {
+    //         // itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
+    //       } else {
+    //         const defaultItem = this.storageList.find(item => item.registered_system === '_default');
+    //         if (defaultItem && defaultItem?.permission?.manage_es_source) {
+    //           this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
+    //         }
+    //       }
+    //       this.getDetail();
+    //     }
+    //   })
+    //     .catch((res) => {
+    //       this.$bkMessage({
+    //         theme: 'error',
+    //         message: res.message,
+    //       });
+    //     });
+    // },
     updateDaysList() {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
         return item.id <= (this.selectedStorageCluster.max_retention || 30);
@@ -627,31 +640,31 @@ export default {
       this.hotDataDaysList = [...retentionDaysList];
     },
     // 字段提取
-    fieldCollection() {
+    fieldCollection(isCollect = false) {
       const {
         etl_config,
-        table_id,
-        storage_cluster_id,
-        retention,
-        allocation_min_days,
-        view_roles,
+        // table_id,
+        // storage_cluster_id,
+        // retention,
+        // allocation_min_days,
+        // view_roles,
         fields,
         etl_params,
       } = this.formData;
       this.isLoading = true;
       const data = {
-        etl_config,
-        table_id,
-        storage_cluster_id,
-        retention: Number(retention),
-        allocation_min_days: Number(allocation_min_days),
-        view_roles,
+        clean_type: etl_config,
+        // table_id,
+        // storage_cluster_id,
+        // retention: Number(retention),
+        // allocation_min_days: Number(allocation_min_days),
+        // view_roles,
         etl_params: {
           retain_original_text: etl_params.retain_original_text,
           separator_regexp: etl_params.separator_regexp,
           separator: etl_params.separator,
         },
-        fields,
+        etl_fields: fields,
       };
       /* eslint-disable */
       if (etl_config !== 'bk_log_text') {
@@ -667,124 +680,154 @@ export default {
         data.etl_params = etlParams
         data.fields = this.$refs.fieldTable.getData()
       }
-      /* eslint-enable */
+
+      // 缓存采集项清洗配置
       this.isLoading = true;
-      this.$http.request('collect/fieldCollection', {
-        params: {
-          collector_config_id: this.curCollect.collector_config_id,
-        },
-        data,
-      }).then((res) => {
+
+      let requestUrl;
+      const urlParams = {};
+      if (isCollect) {
+        urlParamsc.collector_config_id = this.curCollect.collector_config_id,
+        requestUrl = 'clean/updateCleanStash';
+      } else {
+        requestUrl = 'clean/createTemplate';
+      }
+
+      const updateData = { params: urlParams, data };
+      this.$http.request(requestUrl, updateData).then((res) => {
         if (res.code === 0) {
-          // this.storageList = res.data
-          // this.formData.storage_cluster_id = this.storageList[0].storage_cluster_id
-          this.isLoading = false;
-          if (res.data) {
-            this.$store.commit('collect/updateCurCollect', Object.assign({}, this.formData, data, res.data));
-            this.$emit('changeIndexSetId', res.data.index_set_id || '');
-          }
           this.$emit('stepChange');
         }
       })
         .finally(() => {
+          // this.$emit('stepChange');
           this.isLoading = false;
         });
+
+      /* eslint-enable */
+      // 存储入口接口已拆分
+      // this.isLoading = true;
+      // this.$http.request('collect/fieldCollection', {
+      //   params: {
+      //     collector_config_id: this.curCollect.collector_config_id,
+      //   },
+      //   data,
+      // }).then((res) => {
+      //   if (res.code === 0) {
+      //     // this.storageList = res.data
+      //     // this.formData.storage_cluster_id = this.storageList[0].storage_cluster_id
+      //     this.isLoading = false;
+      //     if (res.data) {
+      //       this.$store.commit('collect/updateCurCollect', Object.assign({}, this.formData, data, res.data));
+      //       this.$emit('changeIndexSetId', res.data.index_set_id || '');
+      //     }
+      //     this.$emit('stepChange');
+      //   }
+      // })
+      //   .finally(() => {
+      //     this.isLoading = false;
+      //   });
     },
     // 输入自定义过期天数、冷热集群存储期限
-    enterCustomDay(val, type) {
-      const numberVal = parseInt(val.trim(), 10);
-      const stringVal = numberVal.toString();
-      const isRetention = type === 'retention'; // 过期时间 or 热数据存储时间
-      if (numberVal) {
-        const maxDays = this.selectedStorageCluster.max_retention || 30;
-        if (numberVal > maxDays) { // 超过最大天数
-          isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
-          this.messageError(this.$t('最大自定义天数为') + maxDays);
-        } else {
-          if (isRetention) {
-            if (!this.retentionDaysList.some(item => item.id === stringVal)) {
-              this.retentionDaysList.push({
-                id: stringVal,
-                name: stringVal + this.$t('天'),
-              });
-            }
-            this.formData.retention = stringVal;
-            this.customRetentionDay = '';
-          } else {
-            if (!this.hotDataDaysList.some(item => item.id === stringVal)) {
-              this.hotDataDaysList.push({
-                id: stringVal,
-                name: stringVal + this.$t('天'),
-              });
-            }
-            this.formData.allocation_min_days = stringVal;
-            this.customHotDataDay = '';
-          }
-          document.body.click();
-        }
-      } else {
-        isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
-        this.messageError(this.$t('请输入有效数值'));
-      }
-    },
+    // enterCustomDay(val, type) {
+    //   const numberVal = parseInt(val.trim(), 10);
+    //   const stringVal = numberVal.toString();
+    //   const isRetention = type === 'retention'; // 过期时间 or 热数据存储时间
+    //   if (numberVal) {
+    //     const maxDays = this.selectedStorageCluster.max_retention || 30;
+    //     if (numberVal > maxDays) { // 超过最大天数
+    //       isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
+    //       this.messageError(this.$t('最大自定义天数为') + maxDays);
+    //     } else {
+    //       if (isRetention) {
+    //         if (!this.retentionDaysList.some(item => item.id === stringVal)) {
+    //           this.retentionDaysList.push({
+    //             id: stringVal,
+    //             name: stringVal + this.$t('天'),
+    //           });
+    //         }
+    //         this.formData.retention = stringVal;
+    //         this.customRetentionDay = '';
+    //       } else {
+    //         if (!this.hotDataDaysList.some(item => item.id === stringVal)) {
+    //           this.hotDataDaysList.push({
+    //             id: stringVal,
+    //             name: stringVal + this.$t('天'),
+    //           });
+    //         }
+    //         this.formData.allocation_min_days = stringVal;
+    //         this.customHotDataDay = '';
+    //       }
+    //       document.body.click();
+    //     }
+    //   } else {
+    //     isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
+    //     this.messageError(this.$t('请输入有效数值'));
+    //   }
+    // },
     // 跳转到 es 源
-    jumpToEsAccess() {
-      window.open(this.$router.resolve({
-        name: 'es-collection',
-        query: {
-          projectId: window.localStorage.getItem('project_id'),
-        },
-      }).href, '_blank');
+    // jumpToEsAccess() {
+    //   window.open(this.$router.resolve({
+    //     name: 'es-collection',
+    //     query: {
+    //       projectId: window.localStorage.getItem('project_id'),
+    //     },
+    //   }).href, '_blank');
+    // },
+    // 检查提取方法或条件是否已变更
+    checkEtlConfChnage(isCollect = false) {
+      // 非bk_log_text类型需要有正确的结果
+      if (this.formData.etl_config && this.formData.etl_config !== 'bk_log_text' && !this.hasFormat) return;
+      let isConfigChange = false; // 提取方法或条件是否已变更
+      const etlConfigParam = this.params.etl_config;
+      if (etlConfigParam !== 'bk_log_text') {
+        const etlConfigForm = this.formData.etl_config;
+        if (etlConfigParam !== etlConfigForm) {
+          isConfigChange = true;
+        } else {
+          const etlParams = this.params.etl_params;
+          const etlParamsForm = this.formData.etl_params;
+          if (etlConfigParam === 'bk_log_regexp') {
+            isConfigChange = etlParams.separator_regexp !== etlParamsForm.separator_regexp;
+          }
+          if (etlConfigParam === 'bk_log_delimiter') {
+            isConfigChange = etlParams.separator !== etlParamsForm.separator;
+          }
+        }
+      }
+      if (isConfigChange) {
+        const h = this.$createElement;
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('dataManage.Submit'),
+          subHeader: h('p', {
+            style: {
+              whiteSpace: 'normal',
+            },
+          }, this.$t('dataManage.Debug_set')),
+          confirmFn: () => {
+            isCollect ? this.fieldCollection() : this.handleSaveTemp();
+          },
+        });
+        return;
+      }
+      isCollect ? this.fieldCollection() : this.handleSaveTemp();
     },
     // 完成按钮
-    finish() {
+    finish(isCollect = false) {
       if (!this.params.etl_config) {
         this.$bkMessage({
           theme: 'error',
           message: this.$t('dataManage.select_field'),
         });
       }
-      const promises = [this.checkStore()];
+      // const promises = [this.checkStore()];
+      const promises = [];
       if (this.formData.etl_config !== 'bk_log_text') {
         promises.splice(1, 0, ...this.checkFieldsTable());
       }
       Promise.all(promises).then(() => {
-        // 非bk_log_text类型需要有正确的结果
-        if (this.formData.etl_config && this.formData.etl_config !== 'bk_log_text' && !this.hasFormat) return;
-        let isConfigChange = false; // 提取方法或条件是否已变更
-        const etlConfigParam = this.params.etl_config;
-        if (etlConfigParam !== 'bk_log_text') {
-          const etlConfigForm = this.formData.etl_config;
-          if (etlConfigParam !== etlConfigForm) {
-            isConfigChange = true;
-          } else {
-            const etlParams = this.params.etl_params;
-            const etlParamsForm = this.formData.etl_params;
-            if (etlConfigParam === 'bk_log_regexp') {
-              isConfigChange = etlParams.separator_regexp !== etlParamsForm.separator_regexp;
-            }
-            if (etlConfigParam === 'bk_log_delimiter') {
-              isConfigChange = etlParams.separator !== etlParamsForm.separator;
-            }
-          }
-        }
-        if (isConfigChange) {
-          const h = this.$createElement;
-          this.$bkInfo({
-            type: 'warning',
-            title: this.$t('dataManage.Submit'),
-            subHeader: h('p', {
-              style: {
-                whiteSpace: 'normal',
-              },
-            }, this.$t('dataManage.Debug_set')),
-            confirmFn: () => {
-              this.fieldCollection();
-            },
-          });
-          return;
-        }
-        this.fieldCollection();
+        this.checkEtlConfChnage(isCollect);
       }, (validator) => {
         console.warn('保存失败', validator);
       });
@@ -794,29 +837,33 @@ export default {
       return this.formData.etl_config !== 'bk_log_text' ? this.$refs.fieldTable.validateFieldTable() : [];
     },
     // 存储校验
-    checkStore() {
-      return new Promise((resolve, reject) => {
-        if (!this.isUnmodifiable) {
-          this.$refs.validateForm.validate().then((validator) => {
-            resolve(validator);
-          })
-            .catch((err) => {
-              console.warn('存储校验错误');
-              reject(err);
-            });
-        } else {
-          resolve();
-        }
-      });
-    },
+    // checkStore() {
+    //   return new Promise((resolve, reject) => {
+    //     if (!this.isUnmodifiable) {
+    //       this.$refs.validateForm.validate().then((validator) => {
+    //         resolve(validator);
+    //       })
+    //         .catch((err) => {
+    //           console.warn('存储校验错误');
+    //           reject(err);
+    //         });
+    //     } else {
+    //       resolve();
+    //     }
+    //   });
+    // },
     // 返回列表
-    handleBack() {
-      this.$router.push({
-        name: 'collection-item',
-        query: {
-          projectId: window.localStorage.getItem('project_id'),
-        },
-      });
+    // handleBack() {
+    //   this.$router.push({
+    //     name: 'collection-item',
+    //     query: {
+    //       projectId: window.localStorage.getItem('project_id'),
+    //     },
+    //   });
+    // },
+    // 跳过
+    handleSkip() {
+      this.$emit('stepChange', this.curStep + 1);
     },
     prevHandler() {
       this.$emit('stepChange', 1);
@@ -870,8 +917,8 @@ export default {
       /* eslint-disable */
       this.params.etl_config = etl_config
       Object.assign(this.params.etl_params, {
-          separator_regexp: etl_params.separator_regexp || '',
-          separator: etl_params.separator || ''
+        separator_regexp: etl_params.separator_regexp || '',
+        separator: etl_params.separator || ''
       })
       this.isUnmodifiable = !!(table_id || storage_cluster_id)
       this.fieldType = etl_config || 'bk_log_text'
@@ -887,7 +934,7 @@ export default {
           separator_regexp: '',
           separator: '',
           // separator_field_list: ''
-                    }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
+        }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
         fields: copyFields.filter(item => !item.is_built_in),
         retention: retention ? `${retention}` : this.defaultRetention,
         // eslint-disable-next-line camelcase
@@ -906,16 +953,16 @@ export default {
     chickFile() {
       this.defaultSettings.isShow = true;
     },
-    switcherHandle(value) {
-      if (value) {
-        this.formData.etl_config = this.fieldType ? (this.fieldType === 'bk_log_text' ? '' : this.fieldType) : '';
-        this.params.etl_config = this.formData.etl_config;
-      } else {
-        this.fieldType = this.formData.etl_config;
-        this.formData.etl_config = 'bk_log_text';
-        this.params.etl_config = 'bk_log_text';
-      }
-    },
+    // switcherHandle(value) {
+    //   if (value) {
+    //     this.formData.etl_config = this.fieldType ? (this.fieldType === 'bk_log_text' ? '' : this.fieldType) : '';
+    //     this.params.etl_config = this.formData.etl_config;
+    //   } else {
+    //     this.fieldType = this.formData.etl_config;
+    //     this.formData.etl_config = 'bk_log_text';
+    //     this.params.etl_config = 'bk_log_text';
+    //   }
+    // },
     //  原始日志刷新
     refreshClick() {
       if (this.refresh) {
@@ -1131,6 +1178,52 @@ export default {
 
       return (value && value !== ' ') ? isNaN(value) : true;
     },
+    // 模板弹窗确认
+    handleTemplConfirm() {
+      if (this.isSaveTempDialog) {
+        if (this.saveTempName.trim() === '') {
+          this.$bkMessage({
+            theme: 'error',
+            message: this.$t('dataManage.saveTempErrorTips'),
+          });
+          return;
+        }
+        this.templateDialogVisible = false;
+      } else {
+        if (!this.selectTemplate) {
+          this.$bkMessage({
+            theme: 'error',
+            message: this.$t('dataManage.selectTempErrorTips'),
+          });
+          return;
+        }
+        console.log(1);
+      }
+    },
+    // 打开保存/选择模板弹窗
+    openTemplateDialog(isSave = false) {
+      if (isSave) { // 保存模板前往检验
+        this.finish(false);
+        return;
+      }
+
+      // 选择应用模板
+      this.isSaveTempDialog = isSave;
+      this.templateDialogVisible = true;
+      this.$http.request('clean/cleanTemplate', {
+        query: {
+          bk_biz_id: this.bkBizId,
+        },
+      }).then((res) => {
+        console.log(res);
+        // this.templateList = res.data;
+      });
+    },
+    // 保存模板
+    handleSaveTemp() {
+      this.isSaveTempDialog = true;
+      this.templateDialogVisible = true;
+    },
   },
 };
 </script>
@@ -1300,6 +1393,19 @@ export default {
         line-height: 18px;
         display: flex;
         align-items: center;
+      }
+
+      .disabled-setting {
+        .bk-label,
+        .toggle-icon,
+        .visible-deleted-text,
+        .field-method-link {
+          color: #c4c6cc;
+        }
+        .toggle-icon,
+        .field-method-link {
+          cursor: not-allowed;
+        }
       }
     }
 

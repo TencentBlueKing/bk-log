@@ -1,5 +1,5 @@
 <template>
-  <div class="step-storage">
+  <div class="step-storage" v-bkloading="{ isLoading: basicLoading }">
     <bk-form :label-width="115" :model="formData" ref="validateForm">
       <bk-form-item
         :label="$t('dataSource.storage_cluster_name')"
@@ -55,7 +55,8 @@
             :placeholder="$t('dataManage.input_number')"
             :disabled="isUnmodifiable"
             v-model="formData.table_id"
-            maxlength="50" minlength="5">
+            maxlength="50"
+            minlength="5">
             <template slot="prepend">
               <div class="group-text">{{formData.table_id_prefix}}</div>
             </template>
@@ -185,7 +186,7 @@ export default {
       isUnmodifiable: false,
       // switcher: false,
       roleList: [],
-      defaultRetention: '',
+      // defaultRetention: '',
       fieldType: '',
       deletedVisible: true,
       copysText: {},
@@ -310,6 +311,11 @@ export default {
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
+    defaultRetention() {
+      const { storage_duration_time } = this.globalsData;
+      // eslint-disable-next-line camelcase
+      return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
+    },
   },
   watch: {
     'formData.storage_cluster_id'(val) {
@@ -357,16 +363,15 @@ export default {
   },
   async mounted() {
     // TODO
-    if (this.isCleanField) {
-      setTimeout(() => {
-        this.basicLoading = false;
-      }, 10);
-      return;
-    }
-
+    // if (this.isCleanField) {
+    //   setTimeout(() => {
+    //     this.basicLoading = false;
+    //   }, 10);
+    //   return;
+    // }
     this.getStorage();
-    this.defaultRetention = this.globalsData.storage_duration_time.filter(item => item.default === true)[0].id;
-    this.getDataLog('init');
+    this.getCleanStash();
+    // this.getDataLog('init');
   },
   methods: {
     // 获取存储集群
@@ -408,6 +413,16 @@ export default {
           });
         });
     },
+    // 获取采集项清洗基础配置缓存 用于存储入库提交
+    getCleanStash() {
+      this.$http.request('clean/getCleanStash', {
+        params: {
+          collector_config_id: this.curCollect.collector_config_id,
+        },
+      }).then((res) => {
+        console.log(res);
+      });
+    },
     // 存储集群管理权限
     async applySearchAccess(item) {
       this.$el.click(); // 因为下拉在loading上面所以需要关闭下拉
@@ -440,7 +455,7 @@ export default {
       this.retentionDaysList = retentionDaysList;
       this.hotDataDaysList = [...retentionDaysList];
     },
-    // 字段提取
+    // 存储入库
     fieldCollection() {
       const {
         etl_config,
@@ -468,20 +483,20 @@ export default {
         fields,
       };
       /* eslint-disable */
-                if (etl_config !== 'bk_log_text') {
-                    const etlParams = {
-                        retain_original_text: etl_params.retain_original_text
-                    }
-                    if (etl_config === 'bk_log_delimiter') {
-                        etlParams.separator = etl_params.separator
-                    }
-                    if (etl_config === 'bk_log_regexp') {
-                        etlParams.separator_regexp = etl_params.separator_regexp
-                    }
-                    data.etl_params = etlParams
-                    data.fields = this.$refs.fieldTable.getData()
-                }
-                /* eslint-enable */
+      if (etl_config !== 'bk_log_text') {
+        const etlParams = {
+          retain_original_text: etl_params.retain_original_text
+        }
+        if (etl_config === 'bk_log_delimiter') {
+          etlParams.separator = etl_params.separator
+        }
+        if (etl_config === 'bk_log_regexp') {
+          etlParams.separator_regexp = etl_params.separator_regexp
+        }
+        data.etl_params = etlParams
+        data.fields = this.$refs.fieldTable.getData()
+      }
+      /* eslint-enable */
       this.isLoading = true;
       this.$http.request('collect/fieldCollection', {
         params: {
@@ -552,61 +567,61 @@ export default {
     },
     // 完成按钮
     finish() {
-      if (!this.params.etl_config) {
-        this.$bkMessage({
-          theme: 'error',
-          message: this.$t('dataManage.select_field'),
-        });
-      }
+      // if (!this.params.etl_config) {
+      //   this.$bkMessage({
+      //     theme: 'error',
+      //     message: this.$t('dataManage.select_field'),
+      //   });
+      // }
       const promises = [this.checkStore()];
-      if (this.formData.etl_config !== 'bk_log_text') {
-        promises.splice(1, 0, ...this.checkFieldsTable());
-      }
+      // if (this.formData.etl_config !== 'bk_log_text') {
+      //   promises.splice(1, 0, ...this.checkFieldsTable());
+      // }
       Promise.all(promises).then(() => {
-        // 非bk_log_text类型需要有正确的结果
-        if (this.formData.etl_config && this.formData.etl_config !== 'bk_log_text' && !this.hasFormat) return;
-        let isConfigChange = false; // 提取方法或条件是否已变更
-        const etlConfigParam = this.params.etl_config;
-        if (etlConfigParam !== 'bk_log_text') {
-          const etlConfigForm = this.formData.etl_config;
-          if (etlConfigParam !== etlConfigForm) {
-            isConfigChange = true;
-          } else {
-            const etlParams = this.params.etl_params;
-            const etlParamsForm = this.formData.etl_params;
-            if (etlConfigParam === 'bk_log_regexp') {
-              isConfigChange = etlParams.separator_regexp !== etlParamsForm.separator_regexp;
-            }
-            if (etlConfigParam === 'bk_log_delimiter') {
-              isConfigChange = etlParams.separator !== etlParamsForm.separator;
-            }
-          }
-        }
-        if (isConfigChange) {
-          const h = this.$createElement;
-          this.$bkInfo({
-            type: 'warning',
-            title: this.$t('dataManage.Submit'),
-            subHeader: h('p', {
-              style: {
-                whiteSpace: 'normal',
-              },
-            }, this.$t('dataManage.Debug_set')),
-            confirmFn: () => {
-              this.fieldCollection();
-            },
-          });
-          return;
-        }
+        // // 非bk_log_text类型需要有正确的结果
+        // if (this.formData.etl_config && this.formData.etl_config !== 'bk_log_text' && !this.hasFormat) return;
+        // let isConfigChange = false; // 提取方法或条件是否已变更
+        // const etlConfigParam = this.params.etl_config;
+        // if (etlConfigParam !== 'bk_log_text') {
+        //   const etlConfigForm = this.formData.etl_config;
+        //   if (etlConfigParam !== etlConfigForm) {
+        //     isConfigChange = true;
+        //   } else {
+        //     const etlParams = this.params.etl_params;
+        //     const etlParamsForm = this.formData.etl_params;
+        //     if (etlConfigParam === 'bk_log_regexp') {
+        //       isConfigChange = etlParams.separator_regexp !== etlParamsForm.separator_regexp;
+        //     }
+        //     if (etlConfigParam === 'bk_log_delimiter') {
+        //       isConfigChange = etlParams.separator !== etlParamsForm.separator;
+        //     }
+        //   }
+        // }
+        // if (isConfigChange) {
+        //   const h = this.$createElement;
+        //   this.$bkInfo({
+        //     type: 'warning',
+        //     title: this.$t('dataManage.Submit'),
+        //     subHeader: h('p', {
+        //       style: {
+        //         whiteSpace: 'normal',
+        //       },
+        //     }, this.$t('dataManage.Debug_set')),
+        //     confirmFn: () => {
+        //       this.fieldCollection();
+        //     },
+        //   });
+        //   return;
+        // }
         this.fieldCollection();
       }, (validator) => {
         console.warn('保存失败', validator);
       });
     },
     // 字段表格校验
-    checkFieldsTable() {
-      return this.formData.etl_config !== 'bk_log_text' ? this.$refs.fieldTable.validateFieldTable() : [];
-    },
+    // checkFieldsTable() {
+    //   return this.formData.etl_config !== 'bk_log_text' ? this.$refs.fieldTable.validateFieldTable() : [];
+    // },
     // 存储校验
     checkStore() {
       return new Promise((resolve, reject) => {
@@ -624,16 +639,16 @@ export default {
       });
     },
     // 返回列表
-    handleBack() {
-      this.$router.push({
-        name: 'collection-item',
-        query: {
-          projectId: window.localStorage.getItem('project_id'),
-        },
-      });
-    },
+    // handleBack() {
+    //   this.$router.push({
+    //     name: 'collection-item',
+    //     query: {
+    //       projectId: window.localStorage.getItem('project_id'),
+    //     },
+    //   });
+    // },
     prevHandler() {
-      this.$emit('stepChange', 1);
+      this.$emit('stepChange', this.curStep - 1);
     },
     // 获取详情
     getDetail() {
@@ -698,59 +713,61 @@ export default {
       }
       this.formData.storage_cluster_id = this.formData.storage_cluster_id === null
         ? tsStorageId : this.formData.storage_cluster_id;
+
+      this.basicLoading = false;
     },
-    chickFile() {
-      this.defaultSettings.isShow = true;
-    },
-    switcherHandle(value) {
-      if (value) {
-        this.formData.etl_config = this.fieldType ? (this.fieldType === 'bk_log_text' ? '' : this.fieldType) : '';
-        this.params.etl_config = this.formData.etl_config;
-      } else {
-        this.fieldType = this.formData.etl_config;
-        this.formData.etl_config = 'bk_log_text';
-        this.params.etl_config = 'bk_log_text';
-      }
-    },
-    requestEtlPreview() {
-    },
+    // chickFile() {
+    //   this.defaultSettings.isShow = true;
+    // },
+    // switcherHandle(value) {
+    //   if (value) {
+    //     this.formData.etl_config = this.fieldType ? (this.fieldType === 'bk_log_text' ? '' : this.fieldType) : '';
+    //     this.params.etl_config = this.formData.etl_config;
+    //   } else {
+    //     this.fieldType = this.formData.etl_config;
+    //     this.formData.etl_config = 'bk_log_text';
+    //     this.params.etl_config = 'bk_log_text';
+    //   }
+    // },
+    // requestEtlPreview() {
+    // },
     //  获取采样状态
-    getDataLog(isInit) {
-      this.refresh = false;
-      this.basicLoading = true;
-      this.$http.request('source/dataList', {
-        params: {
-          collector_config_id: this.curCollect.collector_config_id,
-        },
-      }).then((res) => {
-        if (res.data && res.data.length) {
-          this.copysText = res.data[0].etl || {};
-          const data = res.data[0];
-          this.jsonText = data.origin || {};
-          this.logOriginal = data.etl.data || '';
-          if (this.logOriginal) {
-            this.requestEtlPreview(isInit);
-          }
-          this.copyBuiltField.forEach((item) => {
-            const fieldName = item.field_name;
-            if (fieldName) {
-              // eslint-disable-next-line no-prototype-builtins
-              if (item.hasOwnProperty('value')) {
-                item.value = this.copysText[fieldName];
-              } else {
-                this.$set(item, 'value', this.copysText[fieldName]);
-              }
-            }
-          });
-        }
-      })
-        .catch(() => {
-        })
-        .finally(() => {
-          this.basicLoading = false;
-          this.refresh = true;
-        });
-    },
+    // getDataLog(isInit) {
+    //   this.refresh = false;
+    //   this.basicLoading = true;
+    //   this.$http.request('source/dataList', {
+    //     params: {
+    //       collector_config_id: this.curCollect.collector_config_id,
+    //     },
+    //   }).then((res) => {
+    //     if (res.data && res.data.length) {
+    //       this.copysText = res.data[0].etl || {};
+    //       const data = res.data[0];
+    //       this.jsonText = data.origin || {};
+    //       this.logOriginal = data.etl.data || '';
+    //       if (this.logOriginal) {
+    //         this.requestEtlPreview(isInit);
+    //       }
+    //       this.copyBuiltField.forEach((item) => {
+    //         const fieldName = item.field_name;
+    //         if (fieldName) {
+    //           // eslint-disable-next-line no-prototype-builtins
+    //           if (item.hasOwnProperty('value')) {
+    //             item.value = this.copysText[fieldName];
+    //           } else {
+    //             this.$set(item, 'value', this.copysText[fieldName]);
+    //           }
+    //         }
+    //       });
+    //     }
+    //   })
+    //     .catch(() => {
+    //     })
+    //     .finally(() => {
+    //       this.basicLoading = false;
+    //       this.refresh = true;
+    //     });
+    // },
   },
 };
 </script>

@@ -968,6 +968,8 @@ export default {
     linkdocs: 'Computing platform documentation',
     selectTemp: 'Choose template',
     saveTemp: 'Save template',
+    saveTempErrorTips: 'Please enter the template name',
+    selectTempErrorTips: 'Please select a template',
     emptyText: 'Please select the field extraction mode first',
     skip: 'skip',
     advanceClean: 'Advance Clean',
