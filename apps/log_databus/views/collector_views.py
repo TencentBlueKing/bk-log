@@ -1480,7 +1480,7 @@ class CollectorViewSet(ModelViewSet):
             "data":{
                 "collector_config_id":1,
                 "clean_type":"bk_log_text",
-                "bk_biz_id": "0",
+                "bk_biz_id": 0,
                 "etl_params":{
                     "retain_original_text":true,
                     "separator":" "

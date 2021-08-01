@@ -89,10 +89,9 @@ class CleanViewSet(ModelViewSet):
         {
             "message": "",
             "code": 0,
-            "data": {
-                "result": True,
-                "log_set_index_id": 1
-            },
+            "data": [
+                "test"
+            ],
             "result": true
         }
         @apiSuccessExample {json} 成功返回(未找到对应记录)
