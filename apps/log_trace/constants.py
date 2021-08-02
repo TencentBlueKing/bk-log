@@ -18,8 +18,18 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.utils.translation import ugettext_lazy as _
-
 from apps.utils import ChoicesEnum
+
+
+class TraceProto(ChoicesEnum):
+    LOG = "log"
+    OTLP = "otlp"
+
+    _choices_labels = (
+        (LOG, _("日志平台协议")),
+        (OTLP, _("opentelemetry协议")),
+    )
+
 
 TIME_DIMENSION_VALUE = 1
 FIELDS_SCOPE_VALUE = ["trace", "trace_detail", "trace_detail_log"]
