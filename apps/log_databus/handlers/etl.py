@@ -31,7 +31,6 @@ from apps.log_databus.exceptions import (
     CollectorActiveException,
 )
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario, ProjectInfo
@@ -109,9 +108,6 @@ class EtlHandler(object):
 
         # 2. 创建索引集
         index_set = self._update_or_create_index_set(etl_config, storage_cluster_id, view_roles)
-
-        # 创建数据平台data_id及更新时
-        async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         # add user_operation_record
         operation_record = {

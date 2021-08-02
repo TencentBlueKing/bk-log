@@ -104,6 +104,9 @@ class CollectorViewSet(ModelViewSet):
             return [InstanceActionPermission([ActionEnum.MANAGE_COLLECTION], ResourceEnum.COLLECTION)]
         return [ViewBusinessPermission()]
 
+    def get_queryset(self):
+        return self.model.objects.all()
+
     def get_serializer_class(self, *args, **kwargs):
         action_serializer_map = {
             "subscription_run": RunSubscriptionSerializer,

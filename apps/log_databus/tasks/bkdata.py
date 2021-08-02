@@ -74,7 +74,7 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
             "description": collector_config.description,
             "access_raw_data": {
                 "tags": BKDATA_TAGS,
-                "raw_data_name": collector_config.table_id.replace(".", "_"),
+                "raw_data_name": collector_config.collector_config_name_en or collector_config.table_id.split(".")[1],
                 "maintainer": ",".join(maintainers),
                 "raw_data_alias": collector_config.collector_config_name,
                 "data_source_tags": BKDATA_DATA_SOURCE_TAGS,

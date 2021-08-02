@@ -19,14 +19,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.response import Response
-
+from rest_framework import serializers
 
 from apps.iam.handlers.drf import ViewBusinessPermission
-
 from apps.generic import ModelViewSet
 from apps.log_databus.handlers.clean import CleanTemplateHandler
 from apps.log_databus.models import BKDataClean, CleanTemplate
-from apps.log_databus.serializers import CleanTemplateSerializer
+from apps.log_databus.serializers import CleanTemplateSerializer, CleanTemplateListSerializer
 from apps.utils.drf import detail_route
 from apps.exceptions import ValidationError
 
@@ -114,9 +113,17 @@ class CleanTemplateViewSet(ModelViewSet):
 
     lookup_field = "clean_template_id"
     model = CleanTemplate
+    filter_fields_exclude = ["etl_params", "etl_fields"]
+    search_fields = ("name", "bk_biz_id")
 
     def get_permissions(self):
         return [ViewBusinessPermission()]
+
+    def get_serializer_class(self, *args, **kwargs):
+        action_serializer_map = {
+            "list": CleanTemplateListSerializer,
+        }
+        return action_serializer_map.get(self.action, serializers.Serializer)
 
     def list(self, request, *args, **kwargs):
         """
@@ -135,6 +142,7 @@ class CleanTemplateViewSet(ModelViewSet):
                 "results":[
                     {
                         "clean_template_id":1,
+                        "name": "test",
                         "clean_type":"bk_log_text",
                         "etl_params":{
                             "retain_original_text":true,
@@ -296,6 +304,7 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiDescription 新建清洗模板
         @apiParamExample {json} 成功请求
         {
+            "name": "test",
             "clean_type":"bk_log_text",
             "etl_params":{
                 "retain_original_text":true,

@@ -79,6 +79,7 @@ from apps.log_databus.constants import EtlConfig
 from apps.decorators import user_operation_record
 from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario
 from apps.utils.time_handler import format_user_time_zone
+from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 
 
 class CollectorHandler(object):
@@ -459,6 +460,9 @@ class CollectorHandler(object):
             except IntegrityError:
                 logger.warning(f"collector config name duplicate => [{collector_config_name}]")
                 raise CollectorConfigNameDuplicateException()
+
+        # 创建数据平台data_id及更新时
+        async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         # add user_operation_record
         operation_record = {

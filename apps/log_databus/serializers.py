@@ -21,7 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
-from apps.log_databus.models import CollectorConfig
+from apps.log_databus.models import CollectorConfig, CleanTemplate
 
 from apps.log_search.constants import (
     CollectorScenarioEnum,
@@ -529,12 +529,18 @@ class CleanTemplateSerializer(serializers.Serializer):
     name = serializers.CharField(label=_("清洗模板名"), required=True)
     clean_type = serializers.CharField(label=_("清洗类型"), required=True)
     etl_params = serializers.DictField(label=_("清洗配置"), required=True)
-    etl_fields = serializers.ListField(child=serializers.IntegerField(), label=_("字段配置"), required=True)
+    etl_fields = serializers.ListField(child=serializers.DictField(), label=_("字段配置"), required=True)
     bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
 
 
 class CleanStashSerializer(serializers.Serializer):
     clean_type = serializers.CharField(label=_("清洗类型"), required=True)
     etl_params = serializers.DictField(label=_("清洗配置"), required=True)
-    etl_fields = serializers.ListField(child=serializers.IntegerField(), label=_("字段配置"), required=True)
+    etl_fields = serializers.ListField(child=serializers.DictField(), label=_("字段配置"), required=True)
     bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
+
+
+class CleanTemplateListSerializer(DataModelSerializer):
+    class Meta:
+        model = CleanTemplate
+        fields = "__all__"

@@ -107,6 +107,9 @@ class BKDataCleanAdmin(AppModelAdmin):
         "storage_type",
         "storage_cluster",
         "collector_config_id",
+        "bk_biz_id",
+        "log_index_set_id",
+        "is_authorized",
     ]
     search_fields = ["result_table_id", "data_name", "collector_config_id"]
 
@@ -119,5 +122,5 @@ class CleanTemplateAdmin(AppModelAdmin):
 
 @admin.register(CleanStash)
 class CleanStashAdmin(AppModelAdmin):
-    list_display = ["clean_type", "etl_params", "etl_fields", "collector_config_id", "bk_biz_id"]
+    list_display = ["clean_stash_id", "clean_type", "etl_params", "etl_fields", "collector_config_id", "bk_biz_id"]
     search_fields = ["collector_config_id", "clean_type"]
