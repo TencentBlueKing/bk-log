@@ -65,6 +65,7 @@ opentelemetry-instrumentation-elasticsearch==0.23b2
 opentelemetry-instrumentation-dbapi==0.23b2
 opentelemetry-instrumentation-redis==0.23b2
 opentelemetry-instrumentation-requests==0.23b2
+opentelemetry-instrumentation-celery==0.23b2
 
 
 
