@@ -64,8 +64,8 @@ class BluekingInstrumentor(BaseInstrumentor):
         trace.set_tracer_provider(tracer_provider)
         DjangoInstrumentor().instrument()
         RedisInstrumentor().instrument()
-        ElasticsearchInstrumentor().instrument(tracer_provider=tracer_provider, span_callback=requests_callback)
-        RequestsInstrumentor().instrument()
+        ElasticsearchInstrumentor().instrument()
+        RequestsInstrumentor().instrument(tracer_provider=tracer_provider, span_callback=requests_callback)
         CeleryInstrumentor().instrument()
         dbapi.wrap_connect(
             __name__,
