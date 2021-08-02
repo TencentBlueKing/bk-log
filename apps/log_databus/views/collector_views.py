@@ -999,10 +999,10 @@ class CollectorViewSet(ModelViewSet):
         """
         return Response(CollectorHandler(collector_config_id=collector_config_id).stop())
 
-    @list_route(methods=["POST"])
-    def etl_preview(self, request):
+    @detail_route(methods=["POST"])
+    def etl_preview(self, request, collector_config_id=None):
         """
-        @api {post} /databus/collectors/etl_preview/ 31_字段提取-预览提取结果
+        @api {post} /databus/collectors/${collector_config_id}/etl_preview/ 31_字段提取-预览提取结果
         @apiName collector_etl_preview
         @apiDescription 字段提取-预览提取结果
         @apiGroup 10_Collector

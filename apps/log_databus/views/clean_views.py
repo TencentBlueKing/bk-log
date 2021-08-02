@@ -24,9 +24,10 @@ from rest_framework import serializers
 from apps.iam.handlers.drf import ViewBusinessPermission
 from apps.generic import ModelViewSet
 from apps.log_databus.handlers.clean import CleanTemplateHandler
+from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.models import BKDataClean, CleanTemplate
-from apps.log_databus.serializers import CleanTemplateSerializer, CleanTemplateListSerializer
-from apps.utils.drf import detail_route
+from apps.log_databus.serializers import CleanTemplateSerializer, CleanTemplateListSerializer, CollectorEtlSerializer
+from apps.utils.drf import detail_route, list_route
 from apps.exceptions import ValidationError
 
 
@@ -367,3 +368,58 @@ class CleanTemplateViewSet(ModelViewSet):
         }
         """
         return Response(CleanTemplateHandler(clean_template_id=clean_template_id).destroy())
+
+    @list_route(methods=["POST"])
+    def etl_preview(self, request, collector_config_id=None):
+        """
+        @api {post} /databus/clean_template/etl_preview/ 6_清洗模板-预览提取结果
+        @apiName clean_template_etl_preview
+        @apiDescription 清洗模板-预览提取结果
+        @apiGroup 23_clean_template
+        @apiParam {String} etl_config 清洗类型（格式化方式）
+        @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
+        @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
+        @apiParam {String} etl_params.separator_regexp 正则表达式，当etl_config=="bk_log_regexp"时需要传递
+        @apiParam {String} data 日志内容
+
+        @apiSuccess {list} fields 字段列表
+        @apiSuccess {Int} fields.field_index 字段顺序
+        @apiSuccess {String} fields.field_name 字段名称 (分隔符默认为空)
+        @apiSuccess {String} fields.value 值
+        @apiParamExample {json} 请求样例:
+        {
+            "etl_config": "bk_log_text | bk_log_json | bk_log_regexp | bk_log_delimiter",
+            "etl_params": {
+                "separator": "|"
+            },
+            "data": "a|b|c"
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+
+            "message": "",
+            "code": 0,
+            "data": {
+                "fields": [
+                    {
+                        "field_index": 1,
+                        "field_name": "",
+                        "value": "a"
+                    },
+                    {
+                        "field_index": 2,
+                        "field_name": "",
+                        "value": "b"
+                    },
+                    {
+                        "field_index": 3,
+                        "field_name": "",
+                        "value": "c"
+                    }
+                ]
+            },
+            "result": true
+        }
+        """
+        data = self.params_valid(CollectorEtlSerializer)
+        return Response(EtlHandler.etl_preview(**data))

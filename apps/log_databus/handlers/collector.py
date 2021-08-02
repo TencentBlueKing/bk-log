@@ -316,10 +316,6 @@ class CollectorHandler(object):
 
         return data
 
-    @staticmethod
-    def add_bkdata_index_set_id(data):
-        pass
-
     @transaction.atomic
     def only_create_or_update_model(self, params):
         model_fields = {
