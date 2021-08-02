@@ -143,6 +143,7 @@ COLLECTORS_LIST = {
                 "storage_shards_size": None,
                 "storage_replies": 1,
                 "bkdata_data_id_sync_times": 0,
+                "collector_config_name_en": "",
                 "storage_cluster_id": 1,
                 "storage_cluster_name": "",
                 "table_id_prefix": "2_bklog_",
