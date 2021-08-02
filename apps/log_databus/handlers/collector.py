@@ -1545,8 +1545,8 @@ class CollectorHandler(object):
             "clean_type": params["clean_type"],
             "etl_params": params["etl_params"],
             "etl_fields": params["etl_fields"],
-            "collector_config_id": self.collector_config_id,
+            "collector_config_id": int(self.collector_config_id),
             "bk_biz_id": params["bk_biz_id"],
         }
         CleanStash.objects.filter(collector_config_id=self.collector_config_id).delete()
-        return model_to_dict(CleanStash.objects.update(**model_fields))
+        return model_to_dict(CleanStash.objects.create(**model_fields))

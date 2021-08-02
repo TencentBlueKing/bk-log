@@ -1582,4 +1582,4 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(CleanStashSerializer)
-        return CollectorHandler(collector_config_id=collector_config_id).create_clean_stash(params=data)
+        return Response(CollectorHandler(collector_config_id=collector_config_id).create_clean_stash(params=data))
