@@ -92,7 +92,7 @@ class OtlpTrace(Proto):
             "search_type": "trace_detail",
             "size": self.TRACE_SIZE,
         }
-        search_handler = SearchHandlerEsquery(index_set_id, query_data)
+        search_handler = SearchHandlerEsquery(index_set_id, query_data, can_highlight=False)
         result: dict = search_handler.search(search_type=None)
         if not result["total"]:
             raise TraceIDNotExistsException()
@@ -153,7 +153,7 @@ class OtlpTrace(Proto):
 
     def search(self, index_set_id: int, data: dict) -> dict:
         data.update({"collapse": {"field": "trace_id"}})
-        search_handler = SearchHandlerEsquery(index_set_id, data)
+        search_handler = SearchHandlerEsquery(index_set_id, data, can_highlight=False)
         result = search_handler.search(search_type="trace")
         item_list = result.get("list", [])
         result["list"] = self.map_fields_to_log(item_list)

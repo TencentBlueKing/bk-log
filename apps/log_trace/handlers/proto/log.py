@@ -123,7 +123,7 @@ class LogTrace(Proto):
             "size": self.TRACE_SIZE,
         }
 
-        search_handler = SearchHandlerEsquery(index_set_id, query_data)
+        search_handler = SearchHandlerEsquery(index_set_id, query_data, can_highlight=False)
         result: dict = search_handler.search(search_type=None)
         if not result["total"]:
             raise TraceIDNotExistsException()
@@ -181,7 +181,7 @@ class LogTrace(Proto):
 
     def search(self, index_set_id: int, data: dict) -> dict:
         data.update({"collapse": {"field": "traceID"}})
-        search_handler = SearchHandlerEsquery(index_set_id, data)
+        search_handler = SearchHandlerEsquery(index_set_id, data, can_highlight=False)
         return search_handler.search(search_type="trace")
 
     def scatter(self, index_set_id: int, data: dict):
