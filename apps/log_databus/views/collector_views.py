@@ -23,6 +23,7 @@ from rest_framework import serializers
 
 from rest_framework.response import Response
 
+from apps.log_search.constants import HAVE_DATA_ID
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.generic import ModelViewSet
@@ -105,6 +106,8 @@ class CollectorViewSet(ModelViewSet):
         return [ViewBusinessPermission()]
 
     def get_queryset(self):
+        if self.request.query_params.get(HAVE_DATA_ID):
+            return self.model.objects.filter(bk_data_id__null=False)
         return self.model.objects.all()
 
     def get_serializer_class(self, *args, **kwargs):
@@ -275,6 +278,7 @@ class CollectorViewSet(ModelViewSet):
             raise ValidationError(_("分页参数不能为空"))
         response = super().list(request, *args, **kwargs)
         response.data["list"] = CollectorHandler.add_cluster_info(response.data["list"])
+
         return response
 
     def retrieve(self, request, *args, collector_config_id=None, **kwargs):
@@ -995,10 +999,10 @@ class CollectorViewSet(ModelViewSet):
         """
         return Response(CollectorHandler(collector_config_id=collector_config_id).stop())
 
-    @detail_route(methods=["POST"])
-    def etl_preview(self, request, collector_config_id=None):
+    @list_route(methods=["POST"])
+    def etl_preview(self, request):
         """
-        @api {post} /databus/collectors/${collector_config_id}/etl_preview/ 31_字段提取-预览提取结果
+        @api {post} /databus/collectors/etl_preview/ 31_字段提取-预览提取结果
         @apiName collector_etl_preview
         @apiDescription 字段提取-预览提取结果
         @apiGroup 10_Collector
@@ -1048,7 +1052,7 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(CollectorEtlSerializer)
-        return Response(EtlHandler(collector_config_id=collector_config_id).etl_preview(**data))
+        return Response(EtlHandler.etl_preview(**data))
 
     @detail_route(methods=["POST"])
     def etl_time(self, request, collector_config_id=None):

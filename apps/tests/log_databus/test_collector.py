@@ -39,6 +39,7 @@ LAST_TASK_ID = 5
 PARAMS = {
     "bk_biz_id": 706,
     "collector_config_name": "采集项名称",
+    "collector_config_name_en": "test",
     "collector_scenario_id": "row",
     "category_id": "application",
     "target_object_type": "HOST",

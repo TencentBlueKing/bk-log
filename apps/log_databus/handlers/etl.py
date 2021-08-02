@@ -138,7 +138,8 @@ class EtlHandler(object):
             "retention": retention,
         }
 
-    def etl_preview(self, etl_config, etl_params, data):
+    @staticmethod
+    def etl_preview(etl_config, etl_params, data):
         etl_storage = EtlStorage.get_instance(etl_config=etl_config)
         fields = etl_storage.etl_preview(data, etl_params)
         return {"fields": fields}
