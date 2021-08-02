@@ -23,6 +23,7 @@ import MySQLdb
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation import dbapi
+from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.django import DjangoInstrumentor
 from opentelemetry.instrumentation.elasticsearch import ElasticsearchInstrumentor
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -63,8 +64,9 @@ class BluekingInstrumentor(BaseInstrumentor):
         trace.set_tracer_provider(tracer_provider)
         DjangoInstrumentor().instrument()
         RedisInstrumentor().instrument()
-        ElasticsearchInstrumentor().instrument(tracer_provider=tracer_provider, span_callback=requests_callback)
-        RequestsInstrumentor().instrument()
+        ElasticsearchInstrumentor().instrument()
+        RequestsInstrumentor().instrument(tracer_provider=tracer_provider, span_callback=requests_callback)
+        CeleryInstrumentor().instrument()
         dbapi.wrap_connect(
             __name__,
             MySQLdb,
