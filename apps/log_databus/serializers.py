@@ -168,6 +168,7 @@ class CollectorCreateSerializer(serializers.Serializer):
 
     bk_biz_id = serializers.IntegerField(label=_("业务ID"))
     collector_config_name = serializers.CharField(label=_("采集名称"))
+    collector_config_name_en = serializers.CharField(label=_("采集英文名称"))
     data_link_id = serializers.CharField(label=_("数据链路id"), required=False, allow_blank=True, allow_null=True)
     collector_scenario_id = serializers.ChoiceField(label=_("日志类型"), choices=CollectorScenarioEnum.get_choices())
     category_id = serializers.CharField(label=_("分类ID"))
@@ -194,6 +195,7 @@ class CollectorUpdateSerializer(serializers.Serializer):
     """
 
     collector_config_name = serializers.CharField(label=_("采集名称"))
+    collector_config_name_en = serializers.CharField(label=_("采集英文名称"))
     target_object_type = serializers.CharField(label=_("目标类型"))
     target_node_type = serializers.CharField(label=_("节点类型"))
     target_nodes = TargetNodeSerializer(label=_("目标节点"), many=True)

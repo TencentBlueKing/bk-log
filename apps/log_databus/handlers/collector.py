@@ -320,6 +320,7 @@ class CollectorHandler(object):
     def only_create_or_update_model(self, params):
         model_fields = {
             "collector_config_name": params["collector_config_name"],
+            "collector_config_name_en": params["collector_config_name_en"],
             "target_object_type": params["target_object_type"],
             "target_node_type": params["target_node_type"],
             "target_nodes": params["target_nodes"],
@@ -385,6 +386,7 @@ class CollectorHandler(object):
             raise CollectorActiveException()
 
         collector_config_name = params["collector_config_name"]
+        collector_config_name_en = params["collector_config_name_en"]
         target_object_type = params["target_object_type"]
         target_node_type = params["target_node_type"]
         target_nodes = params["target_nodes"]
@@ -395,6 +397,7 @@ class CollectorHandler(object):
         # 1. 创建CollectorConfig记录
         model_fields = {
             "collector_config_name": collector_config_name,
+            "collector_config_name_en": collector_config_name_en,
             "target_object_type": target_object_type,
             "target_node_type": target_node_type,
             "target_nodes": target_nodes,

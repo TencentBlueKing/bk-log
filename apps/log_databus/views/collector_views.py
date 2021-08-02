@@ -476,6 +476,7 @@ class CollectorViewSet(ModelViewSet):
         {
             "bk_biz_id": 706,
             "collector_config_name": "采集项名称",
+            "collector_config_name_en": "采集项英文名",
             "data_link_id": 1
             "collector_scenario_id": "line",
             "category_id": "application",
@@ -570,6 +571,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParamExample {json} 请求样例:
         {
             "collector_config_name": "采集项名称",
+            "collector_config_name_en": "采集项英文名",
             "data_link_id": 1
             "category_id": "application",
             "target_object_type": "HOST",
@@ -1260,6 +1262,7 @@ class CollectorViewSet(ModelViewSet):
         {
             "bk_biz_id": 706,
             "collector_config_name": "采集项名称",
+            "collector_config_name_en": "采集项英文名",
             "data_link_id": 1
             "collector_scenario_id": "line",
             "category_id": "application",
@@ -1353,6 +1356,7 @@ class CollectorViewSet(ModelViewSet):
         {
             "bk_biz_id": 706,
             "collector_config_name": "采集项名称",
+            "collector_config_name_en": "采集项英文名",
             "data_link_id": 1
             "collector_scenario_id": "line",
             "category_id": "application",
