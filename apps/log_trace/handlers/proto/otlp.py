@@ -6,6 +6,8 @@ from apps.log_trace.exceptions import TraceIDNotExistsException
 from apps.log_trace.handlers.proto.proto import Proto
 
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
+from apps.utils.local import get_local_param
+from apps.utils.time_handler import generate_time_range
 
 
 class OtlpTrace(Proto):
@@ -85,10 +87,13 @@ class OtlpTrace(Proto):
     }
 
     def trace_id(self, index_set_id: int, data: dict) -> dict:
+        start_time, end_time = generate_time_range("1d", "", "", get_local_param("time_zone"))
         query_data = {
             "addition": [
                 {"key": "trace_id", "method": "is", "value": data["traceID"], "condition": "and", "type": "field"}
             ],
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
             "search_type": "trace_detail",
             "size": self.TRACE_SIZE,
         }
