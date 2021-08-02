@@ -1,3 +1,22 @@
+# -*- coding: utf-8 -*-
+"""
+Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
+Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
+License for BK-LOG 蓝鲸日志平台:
+--------------------------------------------------------------------
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"""
 from typing import List
 
 import arrow
@@ -8,6 +27,7 @@ from apps.log_trace.exceptions import TraceIDNotExistsException
 from apps.log_trace.handlers.proto.proto import Proto
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.utils.local import get_local_param
+from apps.utils.time_handler import generate_time_range
 
 SCATTER_TEMPLATE = [
     {"label": _("成功"), "pointBackgroundColor": "#45E35F", "borderColor": "#45E35F", "pointRadius": 5, "data": []},
@@ -115,10 +135,13 @@ class LogTrace(Proto):
     }
 
     def trace_id(self, index_set_id: int, data: dict) -> dict:
+        start_time, end_time = generate_time_range("1d", "", "", get_local_param("time_zone"))
         query_data = {
             "addition": [
                 {"key": "traceID", "method": "is", "value": data["traceID"], "condition": "and", "type": "field"}
             ],
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
             "search_type": "trace_detail",
             "size": self.TRACE_SIZE,
         }
