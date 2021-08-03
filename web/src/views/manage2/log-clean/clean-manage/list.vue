@@ -26,7 +26,7 @@
       <bk-button
         class="fl"
         theme="primary"
-        :disabled="isTableLoading"
+        :disabled="isAllowedManage === null"
         @click="handleCreate">
         {{ $t('新增') }}
       </bk-button>
@@ -34,7 +34,7 @@
         <bk-input
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
-          v-model="keyword"
+          v-model="params.keyword"
           @enter="search">
         </bk-input>
       </div>
@@ -47,6 +47,7 @@
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
+        @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
         <bk-table-column :label="$t('migrate.collectionItemName')">
@@ -54,7 +55,13 @@
             {{ props.row.collector_config_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logClean.etlConfig')">
+        <bk-table-column
+          :label="$t('logClean.etlConfig')"
+          prop="clean_type"
+          class-name="filter-column"
+          column-key="clean_type"
+          :filters="formatFilters"
+          :filter-multiple="false">
           <template slot-scope="props">
             {{ props.row.format }}
           </template>
@@ -115,39 +122,77 @@ export default {
   data() {
     return {
       isTableLoading: true,
-      keyword: '',
       size: 'small',
+      isAllowedManage: null, // 是否有管理权限
       pagination: {
         current: 1,
         count: 100,
         limit: 10,
         limitList: [10, 20, 50, 100],
       },
-      cleanList: [
-        {
-          collector_config_id: 1,
-          collector_config_name: '采集',
-          format: 'JSON',
-          storage: '正则',
-          updated_by: 'zijia',
-          updated_at: '2020-07-30 15:00',
-        },
-      ],
+      cleanList: [],
+      params: {
+        keyword: '',
+        clean_type: '',
+      },
     };
   },
   computed: {
     ...mapGetters({
       projectId: 'projectId',
       bkBizId: 'bkBizId',
+      globalsData: 'globals/globalsData',
     }),
+    formatFilters() {
+      const { etl_config } = this.globalsData;
+      const target = [];
+      // eslint-disable-next-line camelcase
+      etl_config && etl_config.forEach((data) => {
+        target.push({
+          text: data.name,
+          value: data.id,
+        });
+      });
+      target.push({ text: '原始数据', value: 'bk_log_text' });
+      return target;
+    },
   },
-  mounted() {
-    this.search();
+  created() {
+    this.checkManageAuth();
   },
   methods: {
+    async checkManageAuth() {
+      try {
+        const res = await this.$store.dispatch('checkAllowed', {
+          // TODO
+          action_ids: ['manage_clean_config'],
+          resources: [{
+            type: 'biz',
+            id: this.bkBizId,
+          }],
+        });
+        this.isAllowedManage = res.isAllowed;
+        if (res.isAllowed) {
+          this.search();
+        } else {
+          this.isLoading = false;
+        }
+      } catch (err) {
+        console.warn(err);
+        this.isLoading = false;
+        this.isAllowedManage = false;
+      }
+    },
     search() {
-      this.param = this.keyword;
       this.handlePageChange(1);
+    },
+    handleFilterChange(data) {
+      console.log(data);
+      Object.keys(data).forEach((item) => {
+        this.params[item] = data[item].join('');
+      });
+      console.log(this.params, 1);
+      this.search();
     },
     /**
      * 分页变换
@@ -172,14 +217,16 @@ export default {
     requestData() {
       this.$http.request('clean/cleanList', {
         query: {
+          ...this.params,
           bk_biz_id: this.bkBizId,
-          // keyword: this.param,
           page: this.pagination.current,
           pagesize: this.pagination.limit,
         },
       }).then((res) => {
         console.log(res);
-        // this.pagination.count = data.total;
+        const { data } = res;
+        this.pagination.count = data.total;
+        this.cleanList = data.list;
       })
         .catch((err) => {
           console.warn(err);
@@ -209,33 +256,32 @@ export default {
         });
         return;
       }
-      if (operateType === 'delete') {
-        // if (!this.collectProject) return;
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('logClean.Confirm_delete'),
-          confirmFn: () => {
-            this.requestDeleteClenItem(row);
-          },
-        });
-        return;
-      }
+      // if (operateType === 'delete') {
+      //   this.$bkInfo({
+      //     type: 'warning',
+      //     title: this.$t('logClean.Confirm_delete'),
+      //     confirmFn: () => {
+      //       this.requestDeleteClenItem(row);
+      //     },
+      //   });
+      //   return;
+      // }
     },
-    requestDeleteClenItem(row) {
-      this.$http.request('clean/deleteClean', {
-        params: {
-          collector_config_id: row.collector_config_id,
-        },
-      }).then((res) => {
-        if (res.result) {
-          const page = this.cleanList.length <= 1
-            ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
-            : this.pagination.current;
-          this.handlePageChange(page);
-        }
-      })
-        .catch(() => {});
-    },
+    // requestDeleteClenItem(row) {
+    //   this.$http.request('clean/deleteClean', {
+    //     params: {
+    //       collector_config_id: row.collector_config_id,
+    //     },
+    //   }).then((res) => {
+    //     if (res.result) {
+    //       const page = this.cleanList.length <= 1
+    //         ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
+    //         : this.pagination.current;
+    //       this.handlePageChange(page);
+    //     }
+    //   })
+    //     .catch(() => {});
+    // },
   },
 };
 </script>
@@ -271,14 +317,6 @@ export default {
           display: flex;
         }
       }
-    }
-
-    .bk-table-body-wrapper {
-      overflow: visible;
-    }
-
-    .is-last .cell {
-      overflow: visible;
     }
   }
 </style>

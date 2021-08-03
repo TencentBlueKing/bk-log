@@ -422,6 +422,14 @@ export default {
             max: 50,
             trigger: 'blur',
           },
+          {
+            min: 5,
+            trigger: 'blur',
+          },
+          {
+            regex: /^[A-Za-z0-9_]+$/,
+            trigger: 'blur',
+          },
         ],
         category_id: [ // 数据分类
           {

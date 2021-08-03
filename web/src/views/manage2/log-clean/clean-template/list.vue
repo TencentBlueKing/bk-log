@@ -98,7 +98,7 @@ export default {
   name: 'clean-template',
   data() {
     return {
-      isTableLoading: false,
+      isTableLoading: true,
       size: 'small',
       isAllowedManage: null, // 是否有管理权限
       pagination: {
@@ -137,15 +137,12 @@ export default {
   created() {
     this.checkManageAuth();
   },
-  mounted() {
-    this.search();
-  },
   methods: {
     async checkManageAuth() {
       try {
         const res = await this.$store.dispatch('checkAllowed', {
           // TODO
-          action_ids: ['manage_extract_config'],
+          action_ids: ['manage_clean_template_config'],
           resources: [{
             type: 'biz',
             id: this.bkBizId,
@@ -153,7 +150,7 @@ export default {
         });
         this.isAllowedManage = res.isAllowed;
         if (res.isAllowed) {
-          this.initList();
+          this.search();
         } else {
           this.isLoading = false;
         }
@@ -235,7 +232,6 @@ export default {
         return;
       }
       if (operateType === 'delete') {
-        // if (!this.collectProject) return;
         this.$bkInfo({
           type: 'warning',
           title: this.$t('logClean.Confirm_delete_temp'),
@@ -298,11 +294,6 @@ export default {
       .text-active {
         color: #3a84ff;
         cursor: pointer;
-      }
-      .filter-column {
-        .cell {
-          display: flex;
-        }
       }
       .filter-column {
         .cell {

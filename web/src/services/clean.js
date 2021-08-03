@@ -22,13 +22,13 @@
 
 // 获取采集项清洗缓存
 const getCleanStash = {
-  url: '/databus/collectors/:collector_config_id/clean_stash',
+  url: '/databus/collectors/:collector_config_id/clean_stash/',
   method: 'get',
 };
 
 // 更新采集项清洗缓存
 const updateCleanStash = {
-  url: '/databus/collectors/:collector_config_id/create_clean_stash',
+  url: '/databus/collectors/:collector_config_id/create_clean_stash/',
   method: 'post',
 };
 

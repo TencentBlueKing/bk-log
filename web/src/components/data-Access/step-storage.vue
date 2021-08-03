@@ -53,7 +53,7 @@
           <bk-input
             style="width: 320px"
             :placeholder="$t('dataManage.input_number')"
-            :disabled="isUnmodifiable"
+            :disabled="isUnmodfyIndexName"
             v-model="formData.table_id"
             maxlength="50"
             minlength="5">
@@ -184,6 +184,7 @@ export default {
       isLoading: false,
       basicLoading: true,
       isUnmodifiable: false,
+      isUnmodfyIndexName: false,
       // switcher: false,
       roleList: [],
       // defaultRetention: '',
@@ -222,22 +223,27 @@ export default {
       customRetentionDay: '', // 自定义过期天数
       hotDataDaysList: [], // 冷热集群存储期限列表
       customHotDataDay: '', // 自定义冷热集群存储期限天数
-      copyBuiltField: [],
-      formatResult: true, // 验证结果是否通过
+      // copyBuiltField: [],
+      // formatResult: true, // 验证结果是否通过
       rules: {
-        table_id: [{
-          required: true,
-          trigger: 'blur',
-        }, {
-          max: 50,
-          trigger: 'blur',
-        }, {
-          min: 5,
-          trigger: 'blur',
-        }, {
-          regex: /^[A-Za-z0-9_]+$/,
-          trigger: 'blur',
-        }],
+        table_id: [
+          {
+            required: true,
+            trigger: 'blur',
+          },
+          {
+            max: 50,
+            trigger: 'blur',
+          },
+          {
+            min: 5,
+            trigger: 'blur',
+          },
+          {
+            regex: /^[A-Za-z0-9_]+$/,
+            trigger: 'blur',
+          },
+        ],
         cluster_id: [{
           validator(val) {
             return val !== '';
@@ -255,7 +261,6 @@ export default {
       tips_storage: [],
       tip_storage: [],
       storageList: [],
-      isExtracting: false,
       dialogVisible: false,
       rowTemplate: {
         alias_name: '',
@@ -281,6 +286,7 @@ export default {
       saveTempName: '',
       templateList: [], // 模板列表
       templateDialogVisible: false,
+      stashCleanConf: {}, // 清洗缓存
     };
   },
   computed: {
@@ -369,8 +375,8 @@ export default {
     //   }, 10);
     //   return;
     // }
-    this.getStorage();
     this.getCleanStash();
+    this.getStorage();
     // this.getDataLog('init');
   },
   methods: {
@@ -420,7 +426,9 @@ export default {
           collector_config_id: this.curCollect.collector_config_id,
         },
       }).then((res) => {
-        console.log(res);
+        if (res.data) {
+          this.stashCleanConf = res.data;
+        }
       });
     },
     // 存储集群管理权限
@@ -494,9 +502,10 @@ export default {
           etlParams.separator_regexp = etl_params.separator_regexp
         }
         data.etl_params = etlParams
-        data.fields = this.$refs.fieldTable.getData()
+        // data.fields = this.$refs.fieldTable.getData()
       }
       /* eslint-enable */
+      this.$emit('stepChange');
       this.isLoading = true;
       this.$http.request('collect/fieldCollection', {
         params: {
@@ -652,6 +661,7 @@ export default {
     },
     // 获取详情
     getDetail() {
+      console.log(this.curCollect);
       const tsStorageId = this.formData.storage_cluster_id;
       const {
         table_id,
@@ -663,6 +673,7 @@ export default {
         etl_config,
         etl_params,
         fields,
+        collector_config_name_en,
       } = this.curCollect;
       const option = { time_zone: '', time_format: '' };
       const copyFields = fields ? JSON.parse(JSON.stringify(fields)) : [];
@@ -681,15 +692,17 @@ export default {
       /* eslint-disable */
       this.params.etl_config = etl_config
       Object.assign(this.params.etl_params, {
-          separator_regexp: etl_params.separator_regexp || '',
-          separator: etl_params.separator || ''
+        separator_regexp: etl_params.separator_regexp || '',
+        separator: etl_params.separator || ''
       })
       this.isUnmodifiable = !!(table_id || storage_cluster_id)
+      this.isUnmodfyIndexName = !!(table_id || storage_cluster_id || collector_config_name_en)
       this.fieldType = etl_config || 'bk_log_text'
       // this.switcher = etl_config ? etl_config !== 'bk_log_text' : false
       /* eslint-enable */
       Object.assign(this.formData, {
-        table_id,
+        // eslint-disable-next-line camelcase
+        table_id: table_id || collector_config_name_en || '',
         storage_cluster_id,
         table_id_prefix,
         etl_config: this.fieldType,
@@ -705,12 +718,20 @@ export default {
         allocation_min_days: allocation_min_days ? `${allocation_min_days}` : '0',
         view_roles,
       });
-      if (!this.copyBuiltField.length) {
-        this.copyBuiltField = copyFields.filter(item => item.is_built_in);
-      }
-      if (this.curCollect.etl_config && this.curCollect.etl_config !== 'bk_log_text') {
-        this.formatResult = true;
-      }
+
+      // 缓存清洗配置
+      Object.assign(this.formData, {
+        etl_config: this.stashCleanConf.clean_type,
+        etl_params: this.stashCleanConf.etl_params,
+        fields: this.stashCleanConf.etl_fields,
+      });
+
+      // if (!this.copyBuiltField.length) {
+      //   this.copyBuiltField = copyFields.filter(item => item.is_built_in);
+      // }
+      // if (this.curCollect.etl_config && this.curCollect.etl_config !== 'bk_log_text') {
+      //   this.formatResult = true;
+      // }
       this.formData.storage_cluster_id = this.formData.storage_cluster_id === null
         ? tsStorageId : this.formData.storage_cluster_id;
 

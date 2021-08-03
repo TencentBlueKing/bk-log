@@ -180,17 +180,22 @@
             </div>
           </div>
 
+          <!-- <div class="loading-block" v-if="isExtracting">
+            <div style="height: 100%;" v-bkloading="{ isLoading: isExtracting }"></div>
+          </div> -->
+
           <!-- 调试字段表格 -->
           <template>
             <div class="field-method-result">
               <field-table
                 ref="fieldTable"
+                :key="renderKey"
+                :is-extracting="isExtracting"
                 :is-temp-field="isTempField"
                 :is-edit-json="isUnmodifiable"
                 :extract-method="formData.etl_config"
                 :deleted-visible="deletedVisible"
                 :fields="formData.fields"
-                :is-setting-disable="(!logOriginal && !isTempField) || !showDebugBtn"
                 @deleteVisible="visibleHandle"
                 @handleKeepLog="handleKeepLog"
                 @standard="dialogVisible = true"
@@ -213,9 +218,9 @@
             </div>
           </template> -->
 
-          <div class="loading-block" v-if="isExtracting">
+          <!-- <div class="loading-block" v-if="isExtracting">
             <div style="height: 100%;" v-bkloading="{ isLoading: isExtracting }"></div>
-          </div>
+          </div> -->
         </div>
       </div>
 
@@ -320,7 +325,7 @@
         v-if="isCleanField || isTempField"
         theme="default"
         class="ml10"
-        @click="handleCancel">
+        @click="handleCancel(false)">
         {{$t('取消')}}
       </bk-button>
     </div>
@@ -361,8 +366,8 @@
         <bk-select v-else v-model="selectTemplate">
           <bk-option
             v-for="option in templateList"
-            :key="option.id"
-            :id="option.id"
+            :key="option.clean_template_id"
+            :id="option.clean_template_id"
             :name="option.name">
           </bk-option>
         </bk-select>
@@ -498,6 +503,7 @@ export default {
       isSaveTempDialog: false,
       cleanCollector: '', // 日志清洗选择的采集项
       cleanCollectorList: [],
+      renderKey: 0, // key-changing
     };
   },
   computed: {
@@ -541,6 +547,9 @@ export default {
     },
   },
   watch: {
+    'formData.fields'() {
+      this.renderKey = this.renderKey + 1;
+    },
     // 'formData.storage_cluster_id'(val) {
     //   this.storageList.forEach((res) => {
     //     const arr = [];
@@ -661,7 +670,6 @@ export default {
         }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
         fields: etl_fields,
       });
-      console.log(this.formData.fields);
     },
     // 高级清洗配置
     setAdvanceCleanTab() {
@@ -683,6 +691,7 @@ export default {
       };
     },
     debugHandler() {
+      this.formData.fields.splice(0, this.formData.fields.length);
       this.requestEtlPreview();
     },
     // 获取存储集群
@@ -744,6 +753,7 @@ export default {
         etl_params,
       } = this.formData;
       this.isLoading = true;
+      this.basicLoading = true;
       const data = {
         clean_type: etl_config,
         // table_id,
@@ -776,7 +786,8 @@ export default {
       let requestUrl;
       const urlParams = {};
       if (isCollect) { // 缓存采集项清洗配置
-        urlParams.collector_config_id = this.curCollect.collector_config_id,
+        urlParams.collector_config_id = this.curCollect.collector_config_id;
+        data.bk_biz_id = this.bkBizId;
         requestUrl = 'clean/updateCleanStash';
       } else { // 新建/编辑清洗模板
         data.name = this.saveTempName
@@ -791,7 +802,8 @@ export default {
           if (isCollect) {
             this.$emit('stepChange');
           } else {
-            this.handleCancel()
+            this.handleCancel(true)
+            this.messageSuccess(this.$t('保存成功'));
           }
         }
       })
@@ -962,7 +974,9 @@ export default {
     handleSkip() {
       this.$emit('stepChange', this.curStep + 1);
     },
-    handleCancel() {
+    handleCancel(isCollect = false) {
+      if (isCollect) return;
+
       const routeName = this.isCleanField ? 'log-clean-list' : 'log-clean-templates';
       this.$router.push({
         name: routeName,
@@ -1102,10 +1116,10 @@ export default {
       this.isExtracting = type === 'init' ? !type : true
       const etlParams = {}
       if (etl_config === 'bk_log_delimiter') {
-          etlParams.separator = etl_params.separator
+        etlParams.separator = etl_params.separator
       }
       if (etl_config === 'bk_log_regexp') {
-          etlParams.separator_regexp = etl_params.separator_regexp
+        etlParams.separator_regexp = etl_params.separator_regexp
       }
 
       let requestUrl;
@@ -1301,7 +1315,6 @@ export default {
           return;
         }
         this.templateDialogVisible = false;
-        this.basicLoading = true;
         this.fieldCollection(false);
       } else {
         if (!this.selectTemplate) {
@@ -1311,7 +1324,11 @@ export default {
           });
           return;
         }
-        console.log(1);
+        // 应用模板设置
+        const curTemp = this.templateList.find(temp => temp.clean_template_id === this.selectTemplate);
+        this.formData.fields.splice(0, this.formData.fields.length);
+        this.setTempDetail(curTemp);
+        this.templateDialogVisible = false;
       }
     },
     // 打开保存/选择模板弹窗
@@ -1327,10 +1344,14 @@ export default {
       this.$http.request('clean/cleanTemplate', {
         query: {
           bk_biz_id: this.bkBizId,
+          // TODO
+          page: 1,
+          pagesize: 10,
         },
       }).then((res) => {
-        console.log(res);
-        // this.templateList = res.data;
+        if (res.data) {
+          this.templateList = res.data.list;
+        }
       });
     },
     // 保存模板

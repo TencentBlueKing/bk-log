@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="field-table-container">
+  <div class="field-table-container" v-bkloading="{ isLoading: isExtracting }">
     <div class="field-method-head" v-if="!isPreviewMode">
       <!--<span class="field-method-link fr mr10" @click.stop="isReset = true">{{ $t('dataManage.Reset') }}</span>-->
       <div
@@ -125,9 +125,10 @@
                     @blur="checkAliasNameItem(props.row)">
                   </bk-input>
                   <template v-if="props.row.aliasErr">
-                    <i class="bk-icon icon-exclamation-circle-shape tooltips-icon"
-                       style="right: 8px;"
-                       v-bk-tooltips.top="props.row.aliasErr"></i>
+                    <i
+                      class="bk-icon icon-exclamation-circle-shape tooltips-icon"
+                      style="right: 8px;"
+                      v-bk-tooltips.top="props.row.aliasErr"></i>
                   </template>
                 </bk-form-item>
               </template>
@@ -183,9 +184,10 @@
                     </bk-option>
                   </bk-select>
                   <template v-if="props.row.typeErr">
-                    <i class="bk-icon icon-exclamation-circle-shape tooltips-icon"
-                       style="right: 8px;"
-                       v-bk-tooltips.top="$t('form.must')"></i>
+                    <i
+                      class="bk-icon icon-exclamation-circle-shape tooltips-icon"
+                      style="right: 8px;"
+                      v-bk-tooltips.top="$t('form.must')"></i>
                   </template>
                 </bk-form-item>
               </template>
@@ -421,11 +423,11 @@ export default {
       type: Array,
       default: () => [],
     },
-    isSettingDisable: { // 表格设置是否可编辑
+    isTempField: {
       type: Boolean,
       default: false,
     },
-    isTempField: {
+    isExtracting: {
       type: Boolean,
       default: false,
     },
@@ -512,6 +514,9 @@ export default {
     }),
     ...mapGetters('collect', ['curCollect']),
     ...mapGetters('globals', ['globalsData']),
+    isSettingDisable() {
+      return !this.fields.length;
+    },
     hasDateField() {
       return this.tableList.find(item => item.is_time && !item.is_delete);
     },
