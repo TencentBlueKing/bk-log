@@ -26,7 +26,7 @@
       <bk-button
         class="fl"
         theme="primary"
-        :disabled="isTableLoading"
+        :disabled="isAllowedManage === null"
         @click="handleCreate">
         {{ $t('新建') }}
       </bk-button>
@@ -34,7 +34,7 @@
         <bk-input
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
-          v-model="keyword"
+          v-model="params.keyword"
           @enter="search">
         </bk-input>
       </div>
@@ -47,6 +47,7 @@
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
+        @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
         <bk-table-column :label="$t('logClean.templateName')">
@@ -54,9 +55,15 @@
             {{ props.row.name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logClean.etlConfig')">
+        <bk-table-column
+          :label="$t('logClean.etlConfig')"
+          prop="clean_type"
+          class-name="filter-column"
+          column-key="clean_type"
+          :filters="formatFilters"
+          :filter-multiple="false">
           <template slot-scope="props">
-            {{ props.row.format }}
+            {{ getFormatName(props.row) }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('dataSource.operation')" width="200">
@@ -92,38 +99,71 @@ export default {
   data() {
     return {
       isTableLoading: false,
-      keyword: '',
       size: 'small',
+      isAllowedManage: null, // 是否有管理权限
       pagination: {
         current: 1,
-        count: 100,
+        count: 0,
         limit: 10,
         limitList: [10, 20, 50, 100],
       },
-      templateList: [
-        {
-          clean_template_id: 1,
-          name: '采集',
-          format: 'JSON',
-          storage: '正则',
-          updated_by: 'zijia',
-          updated_at: '2020-07-30 15:00',
-        },
-      ],
+      templateList: [],
+      params: {
+        keyword: '',
+        clean_type: '',
+      },
     };
   },
   computed: {
     ...mapGetters({
       projectId: 'projectId',
       bkBizId: 'bkBizId',
+      globalsData: 'globals/globalsData',
     }),
+    formatFilters() {
+      const { etl_config } = this.globalsData;
+      const target = [];
+      // eslint-disable-next-line camelcase
+      etl_config && etl_config.forEach((data) => {
+        target.push({
+          text: data.name,
+          value: data.id,
+        });
+      });
+      // target.push({ text: '原始数据', value: 'bk_log_text' });
+      return target;
+    },
+  },
+  created() {
+    this.checkManageAuth();
   },
   mounted() {
     this.search();
   },
   methods: {
+    async checkManageAuth() {
+      try {
+        const res = await this.$store.dispatch('checkAllowed', {
+          // TODO
+          action_ids: ['manage_extract_config'],
+          resources: [{
+            type: 'biz',
+            id: this.bkBizId,
+          }],
+        });
+        this.isAllowedManage = res.isAllowed;
+        if (res.isAllowed) {
+          this.initList();
+        } else {
+          this.isLoading = false;
+        }
+      } catch (err) {
+        console.warn(err);
+        this.isLoading = false;
+        this.isAllowedManage = false;
+      }
+    },
     search() {
-      this.param = this.keyword;
       this.handlePageChange(1);
     },
     handleCreate() {
@@ -133,6 +173,12 @@ export default {
           projectId: window.localStorage.getItem('project_id'),
         },
       });
+    },
+    handleFilterChange(data) {
+      Object.keys(data).forEach((item) => {
+        this.params[item] = data[item].join('');
+      });
+      this.search();
     },
     /**
      * 分页变换
@@ -155,16 +201,18 @@ export default {
       }
     },
     requestData() {
+      this.isTableLoading = true;
       this.$http.request('clean/cleanTemplate', {
         query: {
+          ...this.params,
           bk_biz_id: this.bkBizId,
-          // keyword: this.param,
           page: this.pagination.current,
           pagesize: this.pagination.limit,
         },
       }).then((res) => {
-        console.log(res);
-        // this.pagination.count = data.total;
+        const { data } = res;
+        this.pagination.count = data.total;
+        this.templateList = data.list;
       })
         .catch((err) => {
           console.warn(err);
@@ -208,10 +256,18 @@ export default {
           const page = this.templateList.length <= 1
             ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
             : this.pagination.current;
+          this.messageSuccess(this.$t('删除成功'));
           this.handlePageChange(page);
         }
       })
         .catch(() => {});
+    },
+    getFormatName(row) {
+      const cleantype = row.clean_type;
+      const matchItem = this.globalsData.etl_config.find((conf) => {
+        return conf.id === cleantype;
+      });
+      return matchItem ? matchItem.name : '';
     },
   },
 };
@@ -242,6 +298,11 @@ export default {
       .text-active {
         color: #3a84ff;
         cursor: pointer;
+      }
+      .filter-column {
+        .cell {
+          display: flex;
+        }
       }
       .filter-column {
         .cell {

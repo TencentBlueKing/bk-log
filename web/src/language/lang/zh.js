@@ -974,6 +974,7 @@ export default {
     advanceClean: '前往高级清洗',
     jumpComputedPlatform: '跳转到计算平台',
     advanceCleanConfirm: '高级清洗需要跳转到计算平台并终止当前流程，请确认是否继续跳转',
+    disabledBase: '当前采集项字段提取配置方式是高级清洗',
   },
   搜索服务模板名: '搜索服务模板名',
   搜索模板名: '搜索模板名',
@@ -1083,5 +1084,7 @@ export default {
     cleaningTips: '当前流程已跳转至计算平台进行清洗，若清洗完成可及时刷新页面更新状态',
     Confirm_delete: '确认删除当前清洗项？',
     Confirm_delete_temp: '确认删除当前模板？',
+    cleaningConfirmTips: '高级清洗仍在进行中',
+    finishClean: '清洗已完成',
   },
 };

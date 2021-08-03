@@ -21,21 +21,70 @@
   -->
 
 <template>
-  <div class="advance-clean-land">
+  <div class="advance-clean-land" v-bkloading="{ isLoading: loading }">
     <span class="bk-icon icon-clock"></span>
     <p class="title">{{ $t('logClean.cleaning') }}</p>
-    <p class="remark">{{ $t('logClean.cleaningTips') }}</p>
+    <p class="remark">
+      <span v-if="isInit">
+        <span v-if="resultList.length">{{ `${resultList.join('、')}${$t('logClean.finishClean')}` }}</span>
+        <span v-else>{{ $t('logClean.cleaningConfirmTips') }}</span>
+      </span>
+      <span v-else>{{ $t('logClean.cleaningTips') }}</span>
+    </p>
     <div class="refresh-button">
       <span class="bk-icon icon-refresh-line"></span>
-      <span>{{ $t('刷新') }}</span>
+      <span @click="handleRefresh">{{ $t('刷新') }}</span>
     </div>
     <bk-button class="back-list">{{ $t('返回列表') }}</bk-button>
   </div>
 </template>
 
 <script>
-export default {
+import { mapGetters } from 'vuex';
 
+export default {
+  props: {
+    dataId: {
+      type: String,
+      dafault: '',
+    },
+    collectorId: {
+      type: String,
+      dafault: '',
+    },
+  },
+  data() {
+    return {
+      loading: false,
+      isInit: false,
+      resultList: [], // 清洗结果
+    };
+  },
+  computed: {
+    ...mapGetters({
+      bkBizId: 'bkBizId',
+    }),
+  },
+  methods: {
+    handleRefresh() {
+      this.isInit = true;
+      this.loading = true;
+      this.$http.request('clean/refreshClean', {
+        params: {
+          collector_config_id: this.collectorId,
+        },
+        query: {
+          bk_biz_id: this.bkBizId,
+          bk_data_id: this.dataId,
+        },
+      }).then((res) => {
+        this.resultList = res.data;
+      })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+  },
 };
 </script>
 

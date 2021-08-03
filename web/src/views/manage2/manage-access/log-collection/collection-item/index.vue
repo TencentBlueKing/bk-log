@@ -50,6 +50,7 @@
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
+        @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
         <bk-table-column :label="$t('dataSource.collector_config_name')" min-width="90">
@@ -544,6 +545,10 @@ export default {
         },
       });
     },
+    // 表头过滤
+    handleFilterChange(filters) {
+      console.log(filters);
+    },
     /**
      * 分页变换
      * @param  {Number} page 当前页码
@@ -566,12 +571,16 @@ export default {
       }
     },
     // 日志类型表头过滤
-    handleScenarioFilter(value, row) {
-      return value === row.collector_scenario_name;
+    handleScenarioFilter() {
+      // return value === row.collector_scenario_name;
+
+      return true;
     },
     // 数据类型表头过滤
-    handleCategoryFilter(value, row) {
-      return value === row.category_name;
+    handleCategoryFilter() {
+      // return value === row.category_name;
+
+      return true;
     },
     handleSettingChange({ fields }) {
       this.columnSetting.selectedFields = fields;

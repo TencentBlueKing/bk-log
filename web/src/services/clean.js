@@ -77,6 +77,12 @@ const deleteTemplate = {
   method: 'delete',
 };
 
+// 预览提取结果
+const getEtlPreview = {
+  url: '/databus/clean_template/etl_preview/',
+  method: 'post',
+};
+
 export {
   getCleanStash,
   updateCleanStash,
@@ -88,4 +94,5 @@ export {
   createTemplate,
   updateTemplate,
   deleteTemplate,
+  getEtlPreview,
 };

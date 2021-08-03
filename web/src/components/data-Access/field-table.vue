@@ -60,7 +60,12 @@
         <span class="visible-deleted-text">
           {{ $t('dataManage.Hide_deleted') + ` ${deletedNum} ` + $t('dataManage.Row')}}
         </span>
-        <span class="field-method-link fr" @click.stop="viewStandard">{{ $t('dataManage.View_fields') }}</span>
+        <span
+          v-if="!isTempField"
+          class="field-method-link fr"
+          @click.stop="viewStandard">
+          {{ $t('dataManage.View_fields') }}
+        </span>
 
       </div>
     </div>
@@ -420,6 +425,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    isTempField: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -554,7 +563,7 @@ export default {
         arr = arr.filter(item => !item.is_built_in);
       }
 
-      if (this.isEditJson === false) { // 新建JSON时，类型如果不是数字，则默认为字符串
+      if (this.isEditJson === false && !this.isTempField) { // 新建JSON时，类型如果不是数字，则默认为字符串
         arr.forEach((item) => {
           if (typeof item.value !== 'number') {
             item.field_type = 'string';
@@ -570,7 +579,6 @@ export default {
           item.field_type = 'string';
         }
       });
-
       this.formData.tableList.splice(0, this.formData.tableList.length, ...arr);
     },
     resetField() {

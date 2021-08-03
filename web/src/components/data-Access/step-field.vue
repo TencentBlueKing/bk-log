@@ -41,7 +41,7 @@
     </div>
     <div class="step-field-title">
       <div>{{$t('configDetails.originalLog')}}</div>
-      <div class="text-nav">
+      <div class="text-nav" v-if="!isTempField">
         <span @click="refreshClick">{{$t('dataManage.Refresh')}}</span>
         <span @click="chickFile">{{$t('configDetails.report')}}</span>
       </div>
@@ -78,9 +78,13 @@
     </template>
 
     <section class="field-method">
-      <div class="field-method-head">
+      <div :class="{ 'field-method-head': true, 'field-template-head': isTempField }">
         <h4 class="field-method-title fl field-text">{{ $t('nav.Field_extraction') }}</h4>
-        <bk-tab :active.sync="activePanel" type="unborder-card" ext-cls="field-method-tab">
+        <bk-tab
+          v-if="!isTempField"
+          :active.sync="activePanel"
+          type="unborder-card"
+          ext-cls="field-method-tab">
           <bk-tab-panel
             v-for="(panel, index) in panels"
             v-bind="panel"
@@ -95,7 +99,7 @@
         <div class="field-step field-method-step" style="margin-top: 20px;">
           <div class="step-head">
             <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
-            <span class="template-text" @click="openTemplateDialog(false)">
+            <span v-if="!isTempField" class="template-text" @click="openTemplateDialog(false)">
               <span class="log-icon icon-lianjie"></span>
               {{ $t('dataManage.applyTemp') }}
             </span>
@@ -181,11 +185,12 @@
             <div class="field-method-result">
               <field-table
                 ref="fieldTable"
+                :is-temp-field="isTempField"
                 :is-edit-json="isUnmodifiable"
                 :extract-method="formData.etl_config"
                 :deleted-visible="deletedVisible"
                 :fields="formData.fields"
-                :is-setting-disable="!logOriginal || !showDebugBtn"
+                :is-setting-disable="(!logOriginal && !isTempField) || !showDebugBtn"
                 @deleteVisible="visibleHandle"
                 @handleKeepLog="handleKeepLog"
                 @standard="dialogVisible = true"
@@ -531,57 +536,64 @@ export default {
       // eslint-disable-next-line camelcase
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
     },
+    isEditTemp() {
+      return this.$route.name === 'clean-template-edit';
+    },
   },
   watch: {
-    'formData.storage_cluster_id'(val) {
-      this.storageList.forEach((res) => {
-        const arr = [];
-        if (res.storage_cluster_id === val) {
-          this.selectedStorageCluster = res; // 当前选择的存储集群
-          this.updateDaysList();
-          this.$nextTick(() => { // 如果开启了冷热集群天数不能为0
-            if (res.enable_hot_warm && this.formData.allocation_min_days === '0') {
-              this.formData.allocation_min_days = '7';
-            }
-          });
+    // 'formData.storage_cluster_id'(val) {
+    //   this.storageList.forEach((res) => {
+    //     const arr = [];
+    //     if (res.storage_cluster_id === val) {
+    //       this.selectedStorageCluster = res; // 当前选择的存储集群
+    //       this.updateDaysList();
+    //       this.$nextTick(() => { // 如果开启了冷热集群天数不能为0
+    //         if (res.enable_hot_warm && this.formData.allocation_min_days === '0') {
+    //           this.formData.allocation_min_days = '7';
+    //         }
+    //       });
 
-          this.storage_capacity = JSON.parse(JSON.stringify(res.storage_capacity));
-          this.tips_storage = [
-            `${this.$t('dataSource.tips_capacity')} ${this.storage_capacity} G，${this.$t('dataSource.tips_development')}`,
-            this.$t('dataSource.tips_business'),
-            this.$t('dataSource.tips_formula'),
-          ];
-          if (res.storage_capacity === 0) {
-            arr.push(this.tips_storage[2]);
-          } else {
-            if (res.storage_used > res.storage_capacity) {
-              arr.push(this.tips_storage[1]);
-              arr.push(this.tips_storage[2]);
-            } else {
-              arr.push(this.tips_storage[0]);
-              arr.push(this.tips_storage[2]);
-            }
-          }
-          this.tip_storage = arr;
-        }
-      });
-    },
+    //       this.storage_capacity = JSON.parse(JSON.stringify(res.storage_capacity));
+    //       this.tips_storage = [
+    //         `${this.$t('dataSource.tips_capacity')}
+    // ${this.storage_capacity} G，${this.$t('dataSource.tips_development')}`,
+    //         this.$t('dataSource.tips_business'),
+    //         this.$t('dataSource.tips_formula'),
+    //       ];
+    //       if (res.storage_capacity === 0) {
+    //         arr.push(this.tips_storage[2]);
+    //       } else {
+    //         if (res.storage_used > res.storage_capacity) {
+    //           arr.push(this.tips_storage[1]);
+    //           arr.push(this.tips_storage[2]);
+    //         } else {
+    //           arr.push(this.tips_storage[0]);
+    //           arr.push(this.tips_storage[2]);
+    //         }
+    //       }
+    //       this.tip_storage = arr;
+    //     }
+    //   });
+    // },
     // 冷热数据天数需小于过期时间
-    'formData.allocation_min_days'(val) {
-      const max = this.formData.retention;
-      if (Number(val) > Number(max)) {
-        this.$nextTick(() => {
-          this.formData.allocation_min_days = max;
-        });
-      }
-    },
+    // 'formData.allocation_min_days'(val) {
+    //   const max = this.formData.retention;
+    //   if (Number(val) > Number(max)) {
+    //     this.$nextTick(() => {
+    //       this.formData.allocation_min_days = max;
+    //     });
+    //   }
+    // },
   },
   async mounted() {
     // TODO
-    if (this.isCleanField || this.isTempField) {
-      setTimeout(() => {
-        this.basicLoading = false;
-      }, 10);
+    if (this.isCleanField) {
+      this.initCleanItem();
+      return;
+    }
+
+    if (this.isTempField) {
+      this.initCleanTemp();
       return;
     }
 
@@ -591,6 +603,85 @@ export default {
     this.getDataLog('init');
   },
   methods: {
+    // 初始化清洗项
+    initCleanItem() {
+      setTimeout(() => {
+        this.basicLoading = false;
+      }, 100);
+    },
+    // 初始化清洗模板详情
+    initCleanTemp() {
+      if (this.isEditTemp) { // 获取模板详情
+        const { templateId } = this.$route.params;
+        this.basicLoading = true;
+        this.$http.request('clean/templateDetail', {
+          params: {
+            clean_template_id: templateId,
+          },
+          query: {
+            bk_biz_id: this.bkBizId,
+          },
+        }).then((res) => {
+          if (res.data) {
+            this.setTempDetail(res.data);
+          }
+        })
+          .finally(() => {
+            this.basicLoading = false;
+          });
+      } else {
+        setTimeout(() => {
+          this.basicLoading = false;
+        }, 100);
+      }
+    },
+    // 设置模板已有fields
+    setTempDetail(data) {
+      const {
+        name,
+        clean_type,
+        etl_params,
+        etl_fields,
+      } = data;
+      this.saveTempName = name;
+      /* eslint-disable */
+      this.params.etl_config = clean_type
+      Object.assign(this.params.etl_params, {
+        separator_regexp: etl_params.separator_regexp || '',
+        separator: etl_params.separator || ''
+      })
+      this.fieldType = clean_type
+      /* eslint-enable */
+      Object.assign(this.formData, {
+        etl_config: this.fieldType,
+        etl_params: Object.assign({
+          retain_original_text: true,
+          separator_regexp: '',
+          separator: '',
+        }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
+        fields: etl_fields,
+      });
+      console.log(this.formData.fields);
+    },
+    // 高级清洗配置
+    setAdvanceCleanTab() {
+      this.activePanel = 'advance';
+      this.panels[0].disabled = true;
+      this.panels[0].renderLabel = (h) => {
+        return h('div', {
+          class: 'render-header',
+        }, [
+          h('span', {
+            directives: [
+              {
+                name: 'bk-tooltips',
+                value: this.$t('dataManage.disabledBase'),
+              },
+            ],
+          }, this.$t('dataManage.Base')),
+        ]);
+      };
+    },
     debugHandler() {
       this.requestEtlPreview();
     },
@@ -679,30 +770,35 @@ export default {
           etlParams.separator_regexp = etl_params.separator_regexp
         }
         data.etl_params = etlParams
-        data.fields = this.$refs.fieldTable.getData()
+        data.etl_fields = this.$refs.fieldTable.getData()
       }
-
-      // 缓存采集项清洗配置
-      this.isLoading = true;
 
       let requestUrl;
       const urlParams = {};
-      if (isCollect) {
-        urlParamsc.collector_config_id = this.curCollect.collector_config_id,
+      if (isCollect) { // 缓存采集项清洗配置
+        urlParams.collector_config_id = this.curCollect.collector_config_id,
         requestUrl = 'clean/updateCleanStash';
-      } else {
-        requestUrl = 'clean/createTemplate';
+      } else { // 新建/编辑清洗模板
+        data.name = this.saveTempName
+        data.bk_biz_id = this.bkBizId
+        if (this.isEditTemp) urlParams.clean_template_id = this.$route.params.templateId
+        requestUrl = this.isEditTemp ? 'clean/updateTemplate' : 'clean/createTemplate';
       }
 
       const updateData = { params: urlParams, data };
       this.$http.request(requestUrl, updateData).then((res) => {
         if (res.code === 0) {
-          this.$emit('stepChange');
+          if (isCollect) {
+            this.$emit('stepChange');
+          } else {
+            this.handleCancel()
+          }
         }
       })
         .finally(() => {
           // this.$emit('stepChange');
           this.isLoading = false;
+          this.basicLoading = false;
         });
 
       /* eslint-enable */
@@ -807,12 +903,12 @@ export default {
             },
           }, this.$t('dataManage.Debug_set')),
           confirmFn: () => {
-            isCollect ? this.fieldCollection() : this.handleSaveTemp();
+            isCollect ? this.fieldCollection(true) : this.handleSaveTemp();
           },
         });
         return;
       }
-      isCollect ? this.fieldCollection() : this.handleSaveTemp();
+      isCollect ? this.fieldCollection(true) : this.handleSaveTemp();
     },
     // 完成按钮
     finish(isCollect = false) {
@@ -898,7 +994,7 @@ export default {
     },
     // 获取详情
     getDetail() {
-      const tsStorageId = this.formData.storage_cluster_id;
+      // const tsStorageId = this.formData.storage_cluster_id;
       const {
         table_id,
         storage_cluster_id,
@@ -957,8 +1053,8 @@ export default {
       if (this.curCollect.etl_config && this.curCollect.etl_config !== 'bk_log_text') {
         this.formatResult = true;
       }
-      this.formData.storage_cluster_id = this.formData.storage_cluster_id === null
-        ? tsStorageId : this.formData.storage_cluster_id;
+      // this.formData.storage_cluster_id = this.formData.storage_cluster_id === null
+      //   ? tsStorageId : this.formData.storage_cluster_id;
     },
     chickFile() {
       this.defaultSettings.isShow = true;
@@ -1011,17 +1107,23 @@ export default {
       if (etl_config === 'bk_log_regexp') {
           etlParams.separator_regexp = etl_params.separator_regexp
       }
-      /* eslint-enable */
-      this.$http.request('collect/getEtlPreview', {
-        params: {
-          collector_config_id: this.curCollect.collector_config_id,
-        },
-        data: {
-          etl_config,
-          etl_params: etlParams,
-          data: this.logOriginal,
-        },
-      }).then((res) => {
+
+      let requestUrl;
+      const urlParams = {};
+      const data = {
+        etl_config,
+        etl_params: etlParams,
+        data: this.logOriginal,
+      };
+
+      if (this.isTempField) {
+        requestUrl = 'clean/getEtlPreview';
+      } else {
+        urlParams.collector_config_id = this.curCollect.collector_config_id,
+        requestUrl = 'collect/getEtlPreview';
+      }
+      const updateData = { params: urlParams, data }
+      this.$http.request(requestUrl, updateData).then((res) => {
         // 以下为整个页面关键逻辑
         /**
          * 只有点击调试按钮，并且成功了，才会改变原有的fields列表，否则只是结果失败，不做任何操作
@@ -1199,6 +1301,8 @@ export default {
           return;
         }
         this.templateDialogVisible = false;
+        this.basicLoading = true;
+        this.fieldCollection(false);
       } else {
         if (!this.selectTemplate) {
           this.$bkMessage({
@@ -1368,7 +1472,7 @@ export default {
 
     .field-method {
       position: relative;
-      margin: 20px 0 0 0;
+      margin: 30px 0 0 0;
 
       .preview-panel-left {
         width: 621px;
@@ -1417,6 +1521,11 @@ export default {
           cursor: not-allowed;
         }
       }
+    }
+
+    .field-template-head {
+      padding-bottom: 20px;
+      border-bottom: 1px solid #dcdee5;
     }
 
     .field-method-title {

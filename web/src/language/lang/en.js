@@ -975,6 +975,7 @@ export default {
     advanceClean: 'Advance Clean',
     jumpComputedPlatform: 'Jump to computing platform',
     advanceCleanConfirm: 'Advanced cleaning needs to jump to the computing platform and terminate the current process, please confirm whether to continue the jump',
+    disabledBase: 'The current collection item field extraction configuration method is advanced cleaning',
   },
   搜索服务模板名: 'Search service template name',
   搜索模板名: 'Search template name',
@@ -1084,5 +1085,7 @@ export default {
     cleaningTips: 'The current process has been jumped to the computing platform for cleaning, if the cleaning is completed, the page can be refreshed in time to update the status',
     Confirm_delete: 'Confirm_delete',
     Confirm_delete_temp: 'Confirm to delete this item?',
+    cleaningConfirmTips: 'Advanced cleaning is still in progress',
+    finishClean: 'Cleaning completed',
   },
 };
