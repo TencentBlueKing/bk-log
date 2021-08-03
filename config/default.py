@@ -173,27 +173,67 @@ BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
 if BKLOG_UDP_LOG:
     LOG_UDP_SERVER_HOST = os.getenv("BKAPP_UDP_LOG_SERVER_HOST", "")
     LOG_UDP_SERVER_PORT = int(os.getenv("BKAPP_UDP_LOG_SERVER_PORT", 0))
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     LOGGING = {
         "version": 1,
         "formatters": {
-            "verbose": {
-                "format": (
-                    "%(levelname)s [%(asctime)s] %(pathname)s "
-                    "%(lineno)d %(funcName)s %(process)d %(thread)d "
-                    "\n \t %(message)s \n"
+            "json": {
+                "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+                "fmt": (
+                    "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
+                    "%(funcName)s %(process)d %(thread)d %(message)s"
                 ),
-                "datefmt": "%Y-%m-%d %H:%M:%S",
-            },
+            }
         },
         "handlers": {
             "udp": {
-                "formatter": "verbose",
+                "formatter": "json",
                 "class": "apps.utils.log.UdpHandler",
                 "host": LOG_UDP_SERVER_HOST,
                 "port": LOG_UDP_SERVER_PORT,
-            }
+            },
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "formatter": "json",
+                "stream": sys.stdout,
+            },
         },
-        "root": {"handlers": ["udp"], "level": os.getenv("LOG_LEVEL", "INFO")},
+        "loggers": {
+            "django": {"handlers": ["udp"], "level": "INFO", "propagate": True},
+            "django.server": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "django.request": {
+                "handlers": ["udp"],
+                "level": "ERROR",
+                "propagate": True,
+            },
+            "django.db.backends": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            # the root logger ,用于整个project的logger
+            "root": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            # 组件调用日志
+            "component": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "celery": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            # other loggers...
+            # blueapps
+            "blueapps": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            # 普通app日志
+            "app": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+        },
     }
 
 OLTP_TRACE = os.getenv("BKAPP_OLTP_TRACE", "off") == "on"
