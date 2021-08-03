@@ -273,6 +273,8 @@ class CollectorListSerializer(DataModelSerializer):
     target_nodes = serializers.JSONField(label=_("采集目标"))
     task_id_list = serializers.JSONField(label=_("任务ID列表"))
     target_subscription_diff = serializers.JSONField(label=_("订阅目标变更情况"))
+    create_clean_able = serializers.BooleanField(label=_("是否可以创建基础清洗"))
+    bkdata_index_set_ids = serializers.ListField(child=serializers.IntegerField(), label=_("数据平台索引集id列表"))
 
     class Meta:
         model = CollectorConfig

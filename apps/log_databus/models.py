@@ -33,7 +33,8 @@ from apps.log_databus.constants import (  # noqa
     TargetObjectTypeEnum,  # noqa
     TargetNodeTypeEnum,  # noqa
     CollectItsmStatus,  # noqa
-    ADMIN_REQUEST_USER,  # noqa
+    ADMIN_REQUEST_USER,
+    EtlConfig,  # noqa
 )
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum  # noqa
 from apps.log_search.models import ProjectInfo  # noqa
@@ -103,6 +104,22 @@ class CollectorConfig(SoftDeleteModel):
         分类名称
         """
         return GlobalCategoriesEnum.get_display(self.category_id)
+
+    @property
+    def create_clean_able(self):
+        """
+        是否可以创建基础清洗
+        """
+        return self.etl_config == EtlConfig.BK_LOG_TEXT or not self.etl_config
+
+    @property
+    def bkdata_index_set_ids(self):
+        """
+        数据平台生成的索引集id列表
+        """
+        return [
+            clean.log_index_set_id for clean in BKDataClean.objects.filter(collector_config_id=self.collector_config_id)
+        ]
 
     def get_collector_scenario_id_display(self):
         return CollectorScenarioEnum.get_choice_label(self.collector_scenario_id)
