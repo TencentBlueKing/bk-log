@@ -31,6 +31,9 @@ from django.core.cache import cache
 from django.utils import translation
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
+from opentelemetry.context import attach
+from opentelemetry.instrumentation.wsgi import wsgi_getter
+from opentelemetry.propagate import extract
 from requests.exceptions import ReadTimeout
 
 from apps.utils.log import logger
@@ -483,6 +486,7 @@ class DataAPI(object):
         处理并发请求无法activate_request的封装
         """
         activate_request(request)
+        attach(extract(request.META, getter=wsgi_getter))
         return self.__call__(
             params=params,
             files=files,
