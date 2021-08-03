@@ -23,7 +23,7 @@
 <template>
   <div id="app" v-bkloading="{ isLoading: pageLoading }">
     <head-nav
-      v-show="!asIframe"
+      v-show="!asIframe && !pageLoading"
       @reloadRouter="routerKey += 1"
       @welcome="welcomePageData = $event"
       @auth="authPageInfo = $event"
