@@ -17,26 +17,37 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import functools
+import json
 
-from apps.log_trace.handlers.proto.proto import Proto
-from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
+from opentelemetry.instrumentation.django import _DjangoMiddleware
+from opentelemetry.sdk.trace import Span
 
 
-class TraceHandler(object):
-    def __init__(self, index_set_id):
-        data = {"search_type": "trace"}
-        search_handler_esquery = SearchHandlerEsquery(index_set_id, data)
-        self._index_set_id = index_set_id
-        self._proto_type = Proto.judge_trace_type(search_handler_esquery.fields().get("fields", []))
+def _patch_instrumentation_django():
+    if hasattr(_DjangoMiddleware, "process_view"):
+        setattr(_DjangoMiddleware, "process_view", lambda _, __, ___, ____, _____: None)
 
-    def fields(self, scope: str) -> dict:
-        return Proto.get_proto(self._proto_type).fields(self._index_set_id, scope)
+    process_response = getattr(_DjangoMiddleware, "process_response")
 
-    def search(self, data: dict) -> dict:
-        return Proto.get_proto(self._proto_type).search(self._index_set_id, data)
+    @functools.wraps(process_response)
+    def wrap_process_response(*args, **kwargs):
+        this, request, response = args
+        cur_span: Span = request.META[this._environ_span_key]
+        if hasattr(response, "data"):
+            result = response.data
+        else:
+            try:
+                result = json.loads(response.content)
+            except Exception:  # pylint: disable=broad-except
+                return process_response(*args, **kwargs)
+        cur_span.set_attribute("result_code", result.get("code", 0))
+        cur_span.set_attribute("error", not result.get("result", True))
+        cur_span.set_attribute("result_message", result.get("message", ""))
+        return process_response(*args, **kwargs)
 
-    def trace_id(self, data: dict) -> dict:
-        return Proto.get_proto(self._proto_type).trace_id(self._index_set_id, data)
+    setattr(_DjangoMiddleware, "process_response", wrap_process_response)
 
-    def scatter(self, data: dict):
-        return Proto.get_proto(self._proto_type).scatter(self._index_set_id, data)
+
+def patch():
+    _patch_instrumentation_django()

@@ -17,26 +17,16 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from django.apps import AppConfig
+from django.conf import settings
 
-from apps.log_trace.handlers.proto.proto import Proto
-from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
+from apps.log_trace.trace import BluekingInstrumentor
 
 
-class TraceHandler(object):
-    def __init__(self, index_set_id):
-        data = {"search_type": "trace"}
-        search_handler_esquery = SearchHandlerEsquery(index_set_id, data)
-        self._index_set_id = index_set_id
-        self._proto_type = Proto.judge_trace_type(search_handler_esquery.fields().get("fields", []))
+class TraceConfig(AppConfig):
+    name = "apps.log_trace"
+    verbose_name = "Trace"
 
-    def fields(self, scope: str) -> dict:
-        return Proto.get_proto(self._proto_type).fields(self._index_set_id, scope)
-
-    def search(self, data: dict) -> dict:
-        return Proto.get_proto(self._proto_type).search(self._index_set_id, data)
-
-    def trace_id(self, data: dict) -> dict:
-        return Proto.get_proto(self._proto_type).trace_id(self._index_set_id, data)
-
-    def scatter(self, data: dict):
-        return Proto.get_proto(self._proto_type).scatter(self._index_set_id, data)
+    def ready(self):
+        if settings.OLTP_TRACE:
+            BluekingInstrumentor().instrument()
