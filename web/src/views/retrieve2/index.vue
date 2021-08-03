@@ -630,14 +630,18 @@ export default {
               }
               this.retrieveLog();
             } else {
+              const queryObj = {
+                projectId: window.localStorage.getItem('project_id'),
+                bizId: window.localStorage.getItem('bk_biz_id'),
+              };
+              if (this.$route.query.from) {
+                queryObj.from = this.$route.query.from;
+              }
               this.$router.push({
                 params: {
                   indexId: null,
                 },
-                query: {
-                  projectId: window.localStorage.getItem('project_id'),
-                  bizId: window.localStorage.getItem('bk_biz_id'),
-                },
+                query: queryObj,
               });
             }
           }
@@ -646,14 +650,18 @@ export default {
         } else { // 无索引集
           this.isRetrieveHome = false;
           this.isNoIndexSet = true;
+          const queryObj = {
+            projectId: window.localStorage.getItem('project_id'),
+            bizId: window.localStorage.getItem('bk_biz_id'),
+          };
+          if (this.$route.query.from) {
+            queryObj.from = this.$route.query.from;
+          }
           this.$router.push({
             params: {
               indexId: null,
             },
-            query: {
-              projectId: window.localStorage.getItem('project_id'),
-              bizId: window.localStorage.getItem('bk_biz_id'),
-            },
+            query: queryObj,
           });
           this.indexId = '';
           this.indexSetList.splice(0);
@@ -969,15 +977,19 @@ export default {
       }
       // 进入检索详情页
       this.isRetrieveHome = false;
+      const queryObj = {
+        projectId: window.localStorage.getItem('project_id'),
+        bizId: window.localStorage.getItem('bk_biz_id'),
+        ...queryParamsStr,
+      };
+      if (this.$route.query.from) {
+        queryObj.from = this.$route.query.from;
+      }
       this.$router.push({
         params: {
           indexId: this.indexId,
         },
-        query: {
-          projectId: window.localStorage.getItem('project_id'),
-          bizId: window.localStorage.getItem('bk_biz_id'),
-          ...queryParamsStr,
-        },
+        query: queryObj,
       });
       // 接口请求
       try {
