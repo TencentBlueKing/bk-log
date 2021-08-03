@@ -17,7 +17,6 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.utils.translation import ugettext_lazy as _
 from rest_framework.response import Response
 from rest_framework import serializers
 
@@ -28,7 +27,6 @@ from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.models import BKDataClean, CleanTemplate
 from apps.log_databus.serializers import CleanTemplateSerializer, CleanTemplateListSerializer, CollectorEtlSerializer
 from apps.utils.drf import detail_route, list_route
-from apps.exceptions import ValidationError
 
 
 class CleanViewSet(ModelViewSet):
@@ -183,9 +181,6 @@ class CleanTemplateViewSet(ModelViewSet):
             "result":true
         }
         """
-        # 强制前端必须传分页参数
-        if not request.GET.get("page") or not request.GET.get("pagesize"):
-            raise ValidationError(_("分页参数不能为空"))
         return super().list(request, *args, **kwargs)
 
     def retrieve(self, request, *args, clean_template_id=None, **kwargs):

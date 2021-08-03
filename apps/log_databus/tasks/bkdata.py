@@ -119,3 +119,14 @@ def review_bkdata_data_id():
             collector_config.bkdata_data_id_sync_times = 0
 
         collector_config.save()
+
+
+class BKDataCleanUtils:
+    """
+    bk data clean utils class:
+        - to get bkdata_clean
+        - to flush Quánxiàn Authority
+    """
+
+    def __init__(self, data_id=None):
+        self.data_id = data_id
