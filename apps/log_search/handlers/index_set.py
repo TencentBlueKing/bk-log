@@ -26,6 +26,7 @@ from django.utils.translation import ugettext as _
 from apps.api import TransferApi
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import ResourceEnum, Permission
+from apps.log_trace.handlers.proto.proto import Proto
 from apps.utils.bk_data_auth import BkDataAuthHandler
 from apps.log_esquery.utils.es_route import EsRoute
 from apps.log_search.tasks.mapping import sync_single_index_set_mapping_snapshot
@@ -51,10 +52,6 @@ from apps.log_databus.handlers.storage import StorageHandler
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.api import BkLogApi
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
-from apps.log_trace.handlers.trace_field_handlers import (
-    TraceMappingAdapter,
-    TRACE_TYPE_AVAILABLE,
-)
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum, DEFAULT_TIME_FIELD
 from apps.decorators import user_operation_record
 
@@ -888,15 +885,11 @@ class BaseIndexSetHandler(object):
         pass
 
     def is_trace_log_pre_check(self):
-        rt = ""
-        for index in self.indexes:
-            rt = index.get("result_table_id", None)
-            if rt:
-                break
         if self.is_trace_log:
+            rt_list = [index.get("result_table_id", "") for index in self.indexes]
             mapping_list: list = BkLogApi.mapping(
                 {
-                    "indices": rt,
+                    "indices": ",".join(rt_list),
                     "scenario_id": self.scenario_id,
                     "storage_cluster_id": self.storage_cluster_id,
                     "bkdata_authentication_method": "user",
@@ -904,21 +897,11 @@ class BaseIndexSetHandler(object):
             )
             property_dict: dict = MappingHandlers.find_property_dict_first(mapping_list)
             field_list: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
-            is_property_trace: bool = self._is_property_trace(field_list)
-            if is_property_trace:
-                pass
-            else:
-                raise IndexTraceNotAcceptException()
-        else:
-            return False
-
-    @classmethod
-    def _is_property_trace(cls, field_list: list) -> bool:
-        trace_type: str = TraceMappingAdapter.adapter(field_list)
-        if trace_type in TRACE_TYPE_AVAILABLE:
-            return True
-        else:
-            return False
+            trace_proto_type = Proto.judge_trace_type(field_list)
+            if trace_proto_type is not None:
+                return True
+            raise IndexTraceNotAcceptException()
+        return False
 
 
 class BkDataIndexSetHandler(BaseIndexSetHandler):
