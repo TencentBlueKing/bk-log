@@ -29,7 +29,6 @@ class BKDataCleanUtils:
     """
 
     def __init__(self, raw_data_id):
-        """ """
         self.raw_data_id = raw_data_id
 
     def get_bkdata_clean(self):

@@ -1543,7 +1543,7 @@ class CollectorHandler(object):
     def get_clean_stash(self):
         clean_stash = CleanStash.objects.filter(collector_config_id=self.collector_config_id).first()
         if not clean_stash:
-            return {}
+            return None
         return model_to_dict(CleanStash.objects.filter(collector_config_id=self.collector_config_id).first())
 
     def create_clean_stash(self, params: dict):

@@ -1594,6 +1594,18 @@ class CollectorViewSet(ModelViewSet):
         data = self.params_valid(CleanStashSerializer)
         return Response(CollectorHandler(collector_config_id=collector_config_id).create_clean_stash(params=data))
 
+    @insert_permission_field(
+        id_field=lambda d: d["collector_config_id"],
+        data_field=lambda d: d,
+        actions=[ActionEnum.VIEW_COLLECTION, ActionEnum.MANAGE_COLLECTION],
+        resource_meta=ResourceEnum.COLLECTION,
+    )
+    @insert_permission_field(
+        id_field=lambda d: d["index_set_id"],
+        data_field=lambda d: d,
+        actions=[ActionEnum.SEARCH_LOG],
+        resource_meta=ResourceEnum.INDICES,
+    )
     @list_route(methods=["GET"])
     def list_collectors(self, request, *args, **kwargs):
         """
@@ -1679,4 +1691,6 @@ class CollectorViewSet(ModelViewSet):
                 "message": ""
         }
         """
-        return super().list(request, *args, **kwargs)
+        response = super().list(request, *args, **kwargs)
+        response.data = CollectorHandler.add_cluster_info(response.data)
+        return response

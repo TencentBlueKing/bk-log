@@ -232,7 +232,7 @@ class StorageUsed(OperateRecordModel):
 class BKDataClean(SoftDeleteModel):
     status = models.CharField(_("状态"), max_length=64)
     status_en = models.CharField(_("状态英文名"), max_length=64)
-    result_table_id = models.CharField(_("结果表id"), max_length=128)
+    result_table_id = models.CharField(_("结果表id"), max_length=128, db_index=True)
     result_table_name = models.CharField(_("结果表名"), max_length=128)
     result_table_name_alias = models.CharField(_("结果表中文名"), max_length=128, null=True, blank=True)
     raw_data_id = models.IntegerField(_("数据源id"), db_index=True)
