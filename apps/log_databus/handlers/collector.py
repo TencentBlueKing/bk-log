@@ -1541,6 +1541,9 @@ class CollectorHandler(object):
         return [ip for ip in ip_list if ip not in legal_ip_set]
 
     def get_clean_stash(self):
+        clean_stash = CleanStash.objects.filter(collector_config_id=self.collector_config_id).first()
+        if not clean_stash:
+            return {}
         return model_to_dict(CleanStash.objects.filter(collector_config_id=self.collector_config_id).first())
 
     def create_clean_stash(self, params: dict):
