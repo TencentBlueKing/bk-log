@@ -36,7 +36,7 @@
           :placeholder="$t('dataManage.Search_index_name')"
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
-          v-model="keyword"
+          v-model="params.keyword"
           @enter="search">
         </bk-input>
       </div>
@@ -93,6 +93,7 @@
           min-width="50"
           class-name="filter-column"
           prop="collector_scenario_name"
+          column-key="collector_scenario_id"
           :filters="checkcFields('collector_scenario_name') ? scenarioFilters : []"
           :filter-method="handleScenarioFilter"
           :filter-multiple="false">
@@ -108,6 +109,7 @@
           min-width="50"
           class-name="filter-column"
           prop="category_name"
+          column-key="category_id"
           :filters="checkcFields('category_name') ? categoryFilters : []"
           :filter-method="handleCategoryFilter"
           :filter-multiple="false">
@@ -216,7 +218,7 @@
             <bk-button
               theme="primary" text
               class="king-button"
-              :disabled="!props.row.is_active || !props.row.index_set_id"
+              :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
               v-cursor="{ active: !(props.row.permission && props.row.permission.search_log) }"
               @click="operateHandler(props.row, 'search')">
               {{ $t('nav.retrieve') }}
@@ -343,7 +345,11 @@ export default {
       collectList: [],
       collectorIdStr: '',
       collectProject: projectManages(this.$store.state.topMenu, 'collection-item'),
-      param: '',
+      params: {
+        keyword: '',
+        collector_scenario_id: '',
+        category_id: '',
+      },
       isAllowedCreate: null,
       columnSetting: {
         fields: settingFields,
@@ -365,7 +371,7 @@ export default {
         if (data.is_active) {
           target.push({
             text: data.name,
-            value: data.name,
+            value: data.id,
           });
         }
       });
@@ -378,7 +384,7 @@ export default {
         data.children.forEach((val) => {
           target.push({
             text: val.name,
-            value: val.name,
+            value: val.id,
           });
         });
       });
@@ -399,7 +405,7 @@ export default {
   },
   methods: {
     search() {
-      this.param = this.keyword;
+      // this.param = this.keyword;
       this.handlePageChange(1);
     },
     checkcFields(field) {
@@ -532,8 +538,8 @@ export default {
         query.type = 'collectionStatus';
       }
       if (operateType === 'search') {
-        if (!row.index_set_id) return;
-        params.indexId = row.index_set_id;
+        if (!row.index_set_id && !row.bkdata_index_set_ids.length) return;
+        params.indexId = row.index_set_id ? row.index_set_id : row.bkdata_index_set_ids[0];
       }
       this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
@@ -546,8 +552,11 @@ export default {
       });
     },
     // 表头过滤
-    handleFilterChange(filters) {
-      console.log(filters);
+    handleFilterChange(data) {
+      Object.keys(data).forEach((item) => {
+        this.params[item] = data[item].join('');
+      });
+      this.handlePageChange(1);
     },
     /**
      * 分页变换
@@ -613,8 +622,8 @@ export default {
       return new Promise((resolve, reject) => {
         this.$http.request('collect/getCollectList', {
           query: {
+            ...this.params,
             bk_biz_id: this.bkBizId,
-            keyword: this.param,
             page: this.pagination.current,
             pagesize: this.pagination.limit,
           },

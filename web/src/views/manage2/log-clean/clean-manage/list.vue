@@ -55,6 +55,11 @@
             {{ props.row.collector_config_name }}
           </template>
         </bk-table-column>
+        <bk-table-column :label="$t('logClean.storageIndex')">
+          <template slot-scope="props">
+            {{ props.row.storage }}
+          </template>
+        </bk-table-column>
         <bk-table-column
           :label="$t('logClean.etlConfig')"
           prop="clean_type"
@@ -64,11 +69,6 @@
           :filter-multiple="false">
           <template slot-scope="props">
             {{ props.row.format }}
-          </template>
-        </bk-table-column>
-        <bk-table-column :label="$t('logClean.storageIndex')">
-          <template slot-scope="props">
-            {{ props.row.storage }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('dataSource.updated_by')">
@@ -153,7 +153,10 @@ export default {
           value: data.id,
         });
       });
-      target.push({ text: '原始数据', value: 'bk_log_text' });
+      target.push(
+        { text: this.$t('logClean.rawData'), value: 'bk_log_text' },
+        { text: this.$t('logClean.advancedClean'), value: '' },
+      );
       return target;
     },
   },

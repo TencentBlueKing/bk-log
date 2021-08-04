@@ -286,7 +286,7 @@ export default {
       saveTempName: '',
       templateList: [], // 模板列表
       templateDialogVisible: false,
-      stashCleanConf: {}, // 清洗缓存
+      stashCleanConf: null, // 清洗缓存,
     };
   },
   computed: {
@@ -375,7 +375,6 @@ export default {
     //   }, 10);
     //   return;
     // }
-    this.getCleanStash();
     this.getStorage();
     // this.getDataLog('init');
   },
@@ -388,7 +387,7 @@ export default {
       }
       this.$http.request('collect/getStorage', {
         query: queryData,
-      }).then((res) => {
+      }).then(async (res) => {
         if (res.data) {
           // 根据权限排序
           const s1 = [];
@@ -409,7 +408,8 @@ export default {
               this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
             }
           }
-          this.getDetail();
+          await this.getDetail();
+          await this.getCleanStash();
         }
       })
         .catch((res) => {
@@ -505,7 +505,6 @@ export default {
         // data.fields = this.$refs.fieldTable.getData()
       }
       /* eslint-enable */
-      this.$emit('stepChange');
       this.isLoading = true;
       this.$http.request('collect/fieldCollection', {
         params: {
@@ -521,7 +520,12 @@ export default {
             this.$store.commit('collect/updateCurCollect', Object.assign({}, this.formData, data, res.data));
             this.$emit('changeIndexSetId', res.data.index_set_id || '');
           }
-          this.$emit('stepChange');
+          if (this.isCleanField) {
+            this.messageSuccess(this.$t('保存成功'));
+            this.$emit('stepChange', 'back');
+          } else {
+            this.$emit('stepChange');
+          }
         }
       })
         .finally(() => {
@@ -702,7 +706,7 @@ export default {
       /* eslint-enable */
       Object.assign(this.formData, {
         // eslint-disable-next-line camelcase
-        table_id: table_id || collector_config_name_en || '',
+        table_id: table_id ? table_id : collector_config_name_en ? collector_config_name_en : '',
         storage_cluster_id,
         table_id_prefix,
         etl_config: this.fieldType,
@@ -719,13 +723,15 @@ export default {
         view_roles,
       });
 
-      // 缓存清洗配置
-      Object.assign(this.formData, {
-        etl_config: this.stashCleanConf.clean_type,
-        etl_params: this.stashCleanConf.etl_params,
-        fields: this.stashCleanConf.etl_fields,
-      });
-
+      if (this.stashCleanConf) {
+        // 缓存清洗配置
+        Object.assign(this.formData, {
+          etl_config: this.stashCleanConf.clean_type,
+          etl_params: this.stashCleanConf.etl_params,
+          fields: this.stashCleanConf.etl_fields,
+        });
+      }
+      // eslint-disable-next-line camelcase
       // if (!this.copyBuiltField.length) {
       //   this.copyBuiltField = copyFields.filter(item => item.is_built_in);
       // }

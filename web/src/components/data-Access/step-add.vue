@@ -824,7 +824,7 @@ export default {
           font-size: 12px;
           color: #63656e;
 
-          /deep/ .bk-form-item {
+          .bk-form-item {
             margin: 0 !important;
 
             .bk-form-content {

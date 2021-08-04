@@ -21,188 +21,201 @@
   -->
 
 <template>
-  <div class="step-field" v-bkloading="{ isLoading: basicLoading }">
-    <bk-alert class="king-alert" type="info">
-      <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
-    </bk-alert>
-    <div class="collector-select" v-if="isCleanField">
-      <label>{{ $t('采集项') }}</label>
-      <bk-select
-        style="width: 520px;"
-        :clearable="false"
-        v-model="cleanCollector">
-        <bk-option
-          v-for="option in cleanCollectorList"
-          :key="option.id"
-          :id="option.id"
-          :name="option.name">
-        </bk-option>
-      </bk-select>
-    </div>
-    <div class="step-field-title">
-      <div>{{$t('configDetails.originalLog')}}</div>
-      <div class="text-nav" v-if="!isTempField">
-        <span @click="refreshClick">{{$t('dataManage.Refresh')}}</span>
-        <span @click="chickFile">{{$t('configDetails.report')}}</span>
+  <section>
+    <auth-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-page>
+    <div class="step-field" v-bkloading="{ isLoading: basicLoading }" v-else>
+      <bk-alert class="king-alert" type="info">
+        <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
+      </bk-alert>
+      <div class="collector-select" v-if="isCleanField">
+        <label>{{ $t('采集项') }}</label>
+        <bk-select
+          style="width: 520px;"
+          :clearable="false"
+          searchable
+          :disabled="isEditCleanItem"
+          v-model="cleanCollector"
+          @change="handleCollectorChange">
+          <bk-option
+            v-for="option in cleanCollectorList"
+            :key="option.collector_config_id"
+            :id="option.collector_config_id"
+            :name="option.collector_config_name">
+          </bk-option>
+        </bk-select>
       </div>
-    </div>
-    <template>
-      <div class="log-style">
-        <bk-input
-          placeholder=" "
-          :type="'textarea'"
-          :rows="3"
-          :input-style="{
-            'background-color': '#313238',
-            height: '82px',
-            'line-height': '24px',
-            color: '#C4C6CC',
-            borderRadius: '2px'
-          }"
-          v-model.trim="logOriginal">
-        </bk-input>
-      </div>
-      <bk-sideslider
-        class="locker-style"
-        :is-show.sync="defaultSettings.isShow"
-        :quick-close="true"
-        :modal="false"
-        :width="596">
-        <div slot="header">
-          {{$t('configDetails.logDetails')}}<span @click="copyText(JSON.stringify(jsonText))">{{$t('btn.copy')}}</span>
+      <div class="step-field-title">
+        <div>{{$t('configDetails.originalLog')}}</div>
+        <div class="text-nav" v-if="!isTempField">
+          <span @click="refreshClick">{{$t('dataManage.Refresh')}}</span>
+          <span @click="chickFile">{{$t('configDetails.report')}}</span>
         </div>
-        <div class="p20 json-text-style" slot="content">
-          <VueJsonPretty :deep="5" :data="jsonText" />
-        </div>
-      </bk-sideslider>
-    </template>
-
-    <section class="field-method">
-      <div :class="{ 'field-method-head': true, 'field-template-head': isTempField }">
-        <h4 class="field-method-title fl field-text">{{ $t('nav.Field_extraction') }}</h4>
-        <bk-tab
-          v-if="!isTempField"
-          :active.sync="activePanel"
-          type="unborder-card"
-          ext-cls="field-method-tab">
-          <bk-tab-panel
-            v-for="(panel, index) in panels"
-            v-bind="panel"
-            :key="index">
-          </bk-tab-panel>
-        </bk-tab>
       </div>
-
-      <!-- 基础清洗 -->
-      <div v-show="activePanel === 'base'">
-        <!-- 模式选择 -->
-        <div class="field-step field-method-step" style="margin-top: 20px;">
-          <div class="step-head">
-            <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
-            <span v-if="!isTempField" class="template-text" @click="openTemplateDialog(false)">
-              <span class="log-icon icon-lianjie"></span>
-              {{ $t('dataManage.applyTemp') }}
-            </span>
+      <template>
+        <div class="log-style">
+          <bk-input
+            placeholder=" "
+            :type="'textarea'"
+            :rows="3"
+            :input-style="{
+              'background-color': '#313238',
+              height: '82px',
+              'line-height': '24px',
+              color: '#C4C6CC',
+              borderRadius: '2px'
+            }"
+            v-model.trim="logOriginal">
+          </bk-input>
+        </div>
+        <bk-sideslider
+          class="locker-style"
+          :is-show.sync="defaultSettings.isShow"
+          :quick-close="true"
+          :modal="false"
+          :width="596">
+          <div slot="header">
+            {{$t('configDetails.logDetails')}}
+            <span @click="copyText(JSON.stringify(jsonText))">{{$t('btn.copy')}}</span>
           </div>
+          <div class="p20 json-text-style" slot="content">
+            <VueJsonPretty :deep="5" :data="jsonText" />
+          </div>
+        </bk-sideslider>
+      </template>
 
-          <!-- 选择字段过滤方法 -->
-          <div class="field-button-group">
-            <div class="bk-button-group">
-              <bk-button
-                v-for="option in globalsData.etl_config"
-                :key="option.id"
-                @click="params.etl_config = option.id"
-                :class="params.etl_config === option.id ? 'is-selected' : ''">
-                {{ option.name }}
-              </bk-button>
+      <section class="field-method">
+        <div :class="{ 'field-method-head': true, 'field-template-head': isTempField }">
+          <h4 class="field-method-title fl field-text">{{ $t('nav.Field_extraction') }}</h4>
+          <bk-tab
+            v-if="!isTempField"
+            :active.sync="activePanel"
+            type="unborder-card"
+            ext-cls="field-method-tab">
+            <bk-tab-panel
+              v-for="(panel, index) in panels"
+              v-bind="panel"
+              :key="index">
+            </bk-tab-panel>
+          </bk-tab>
+        </div>
+
+        <!-- 基础清洗 -->
+        <div v-show="activePanel === 'base'">
+          <!-- 模式选择 -->
+          <div class="field-step field-method-step" style="margin-top: 20px;">
+            <div class="step-head">
+              <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
+              <span
+                v-if="!isTempField"
+                :class="{
+                  'template-text': true,
+                  'template-disabled': isCleanField && !cleanCollector
+                }"
+                @click="openTemplateDialog(false)">
+                <span class="log-icon icon-lianjie"></span>
+                {{ $t('dataManage.applyTemp') }}
+              </span>
             </div>
 
-            <template v-if="params.etl_config === 'bk_log_regexp'">
-              <span
-                v-bk-tooltips="{ allowHtml: true, placement: 'right', content: '#reg-tip' }"
-                style="margin-left: 10px;color: #979ba5; cursor: pointer;"
-                class="log-icon icon-info-fill fl"></span>
-              <div id="reg-tip">
-                <p>{{$t('dataManage.regular_format1')}}</p>
-                <p>{{$t('dataManage.regular_format2')}}</p>
-                <p>{{$t('dataManage.regular_format3')}}</p>
+            <!-- 选择字段过滤方法 -->
+            <div class="field-button-group">
+              <div class="bk-button-group">
+                <bk-button
+                  v-for="option in globalsData.etl_config"
+                  :key="option.id"
+                  :disabled="isCleanField && !cleanCollector"
+                  @click="params.etl_config = option.id"
+                  :class="params.etl_config === option.id ? 'is-selected' : ''">
+                  {{ option.name }}
+                </bk-button>
               </div>
-            </template>
-          </div>
 
-          <!-- 分隔符选择 -->
-          <bk-select
-            style="width: 320px; margin-top: 20px;"
-            v-if="params.etl_config === 'bk_log_delimiter'"
-            :disabled="isExtracting"
-            :clearable="false"
-            v-model="params.etl_params.separator">
-            <bk-option
-              v-for="option in globalsData.data_delimiter"
-              :key="option.id"
-              :id="option.id"
-              :name="option.name">
-            </bk-option>
-          </bk-select>
+              <template v-if="params.etl_config === 'bk_log_regexp'">
+                <span
+                  v-bk-tooltips="{ allowHtml: true, placement: 'right', content: '#reg-tip' }"
+                  style="margin-left: 10px;color: #979ba5; cursor: pointer;"
+                  class="log-icon icon-info-fill fl"></span>
+                <div id="reg-tip">
+                  <p>{{$t('dataManage.regular_format1')}}</p>
+                  <p>{{$t('dataManage.regular_format2')}}</p>
+                  <p>{{$t('dataManage.regular_format3')}}</p>
+                </div>
+              </template>
+            </div>
 
-          <!-- 正则表达式输入框 -->
-          <div class="field-method-regex" v-if="params.etl_config === 'bk_log_regexp'">
-            <div class="textarea-wrapper">
-              <pre class="mimic-textarea">
+            <!-- 分隔符选择 -->
+            <bk-select
+              style="width: 320px; margin-top: 20px;"
+              v-if="params.etl_config === 'bk_log_delimiter'"
+              :disabled="isExtracting"
+              :clearable="false"
+              v-model="params.etl_params.separator">
+              <bk-option
+                v-for="option in globalsData.data_delimiter"
+                :key="option.id"
+                :id="option.id"
+                :name="option.name">
+              </bk-option>
+            </bk-select>
+
+            <!-- 正则表达式输入框 -->
+            <div class="field-method-regex" v-if="params.etl_config === 'bk_log_regexp'">
+              <div class="textarea-wrapper">
+                <pre class="mimic-textarea">
                 {{ params.etl_params.separator_regexp }}
               </pre>
-              <bk-input
-                class="regex-textarea"
-                :placeholder="defaultRegex"
-                :type="'textarea'"
-                v-model="params.etl_params.separator_regexp">
-              </bk-input>
-            </div>
-            <p class="format-error" v-if="!formatResult">{{ $t('dataManage.try_methods') }}</p>
-          </div>
-        </div>
-
-        <!-- 调试设置字段 -->
-        <div class="field-step field-method-step">
-          <div class="step-head">
-            <span class="step-text">{{ $t('dataManage.debugField') }}</span>
-            <div class="">
-              <bk-button
-                class="fl debug-btn"
-                theme="primary"
-                :disabled="!logOriginal || isExtracting || !showDebugBtn"
-                @click="debugHandler">
-                {{ $t('调试') }}
-              </bk-button>
-              <p class="format-error ml10 fl" v-if="isJsonOrOperator && !formatResult">
-                {{ $t('dataManage.try_methods') }}
-              </p>
+                <bk-input
+                  class="regex-textarea"
+                  :placeholder="defaultRegex"
+                  :type="'textarea'"
+                  v-model="params.etl_params.separator_regexp">
+                </bk-input>
+              </div>
+              <p class="format-error" v-if="!formatResult">{{ $t('dataManage.try_methods') }}</p>
             </div>
           </div>
 
-          <!-- <div class="loading-block" v-if="isExtracting">
+          <!-- 调试设置字段 -->
+          <div class="field-step field-method-step">
+            <div class="step-head">
+              <span class="step-text">{{ $t('dataManage.debugField') }}</span>
+              <div class="">
+                <bk-button
+                  class="fl debug-btn"
+                  theme="primary"
+                  :disabled="!logOriginal || isExtracting || !showDebugBtn"
+                  @click="debugHandler">
+                  {{ $t('调试') }}
+                </bk-button>
+                <p class="format-error ml10 fl" v-if="isJsonOrOperator && !formatResult">
+                  {{ $t('dataManage.try_methods') }}
+                </p>
+              </div>
+            </div>
+
+            <!-- <div class="loading-block" v-if="isExtracting">
             <div style="height: 100%;" v-bkloading="{ isLoading: isExtracting }"></div>
           </div> -->
 
-          <!-- 调试字段表格 -->
-          <template>
-            <div class="field-method-result">
-              <field-table
-                ref="fieldTable"
-                :key="renderKey"
-                :is-extracting="isExtracting"
-                :is-temp-field="isTempField"
-                :is-edit-json="isUnmodifiable"
-                :extract-method="formData.etl_config"
-                :deleted-visible="deletedVisible"
-                :fields="formData.fields"
-                @deleteVisible="visibleHandle"
-                @handleKeepLog="handleKeepLog"
-                @standard="dialogVisible = true"
-                @reset="getDetail">
-              </field-table>
-            </div>
-          </template>
+            <!-- 调试字段表格 -->
+            <template>
+              <div class="field-method-result">
+                <field-table
+                  ref="fieldTable"
+                  :key="renderKey"
+                  :is-extracting="isExtracting"
+                  :is-temp-field="isTempField"
+                  :is-edit-json="isUnmodifiable"
+                  :extract-method="formData.etl_config"
+                  :deleted-visible="deletedVisible"
+                  :fields="formData.fields"
+                  @deleteVisible="visibleHandle"
+                  @handleKeepLog="handleKeepLog"
+                  @standard="dialogVisible = true"
+                  @reset="getDetail">
+                </field-table>
+              </div>
+            </template>
           <!-- <template v-if="params.etl_config === 'bk_log_regexp' && hasFormat && !isExtracting">
             <div class="field-method-result">
               <field-table
@@ -221,79 +234,79 @@
           <!-- <div class="loading-block" v-if="isExtracting">
             <div style="height: 100%;" v-bkloading="{ isLoading: isExtracting }"></div>
           </div> -->
-        </div>
-      </div>
-
-      <!-- 高级清洗 -->
-      <div v-show="activePanel === 'advance'">
-        <div class="advance-clean-step-container">
-          <div class="step-item">
-            <div class="image-content">
-              <img src="../../images/clean-image1.png" alt="">
-            </div>
-            <div class="step-description">
-              <span class="step-num">1</span>
-              <span class="description-text">{{ $t('dataManage.advanceStep1') }}</span>
-            </div>
-          </div>
-          <span class="bk-icon icon-angle-double-right-line"></span>
-          <div class="step-item">
-            <div class="image-content">
-              <img src="../../images/clean-image2.png" alt="">
-            </div>
-            <div class="step-description">
-              <span class="step-num">2</span>
-              <span class="description-text">{{ $t('dataManage.advanceStep2') }}
-                <span class="link">{{ $t('dataManage.linkdocs') }}<span class="log-icon icon-lianjie"></span></span>
-              </span>
-              <p class="remark">{{ $t('dataManage.advanceRemark1') }}</p>
-            </div>
-          </div>
-          <span class="bk-icon icon-angle-double-right-line"></span>
-          <div class="step-item">
-            <div class="image-content">
-              <img src="../../images/clean-image3.png" alt="">
-            </div>
-            <div class="step-description">
-              <span class="step-num">3</span>
-              <span class="description-text">{{ $t('dataManage.advanceStep3') }}</span>
-              <p class="remark">{{ $t('dataManage.advanceRemark2') }}</p>
-            </div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <div class="form-button">
-      <!-- 上一步 -->
-      <bk-button
-        v-if="!isCleanField && !isTempField"
-        theme="default"
-        :title="$t('dataManage.last')"
-        class="mr10"
-        :disabled="isLoading"
-        @click="prevHandler">
-        {{$t('dataManage.last')}}
-      </bk-button>
-      <!-- 前往高级清洗 -->
-      <bk-button
-        v-if="activePanel === 'advance'"
-        theme="primary"
-        :title="$t('dataManage.last')"
-        :disabled="isLoading"
-        @click="advanceHandler">
-        {{$t('dataManage.advanceClean')}}
-      </bk-button>
-      <!-- 下一步/完成 -->
-      <bk-button
-        v-if="activePanel === 'base' && !isTempField"
-        theme="primary"
-        @click.stop.prevent="finish(true)"
-        :loading="isLoading"
-        :disabled="!collectProject || !showDebugBtn || !hasFields">
-        {{$t('下一步')}}
-      </bk-button>
-      <!-- <bk-button
+        <!-- 高级清洗 -->
+        <div v-show="activePanel === 'advance'">
+          <div class="advance-clean-step-container">
+            <div class="step-item">
+              <div class="image-content">
+                <img src="../../images/clean-image1.png" alt="">
+              </div>
+              <div class="step-description">
+                <span class="step-num">1</span>
+                <span class="description-text">{{ $t('dataManage.advanceStep1') }}</span>
+              </div>
+            </div>
+            <span class="bk-icon icon-angle-double-right-line"></span>
+            <div class="step-item">
+              <div class="image-content">
+                <img src="../../images/clean-image2.png" alt="">
+              </div>
+              <div class="step-description">
+                <span class="step-num">2</span>
+                <span class="description-text">{{ $t('dataManage.advanceStep2') }}
+                  <span class="link">{{ $t('dataManage.linkdocs') }}<span class="log-icon icon-lianjie"></span></span>
+                </span>
+                <p class="remark">{{ $t('dataManage.advanceRemark1') }}</p>
+              </div>
+            </div>
+            <span class="bk-icon icon-angle-double-right-line"></span>
+            <div class="step-item">
+              <div class="image-content">
+                <img src="../../images/clean-image3.png" alt="">
+              </div>
+              <div class="step-description">
+                <span class="step-num">3</span>
+                <span class="description-text">{{ $t('dataManage.advanceStep3') }}</span>
+                <p class="remark">{{ $t('dataManage.advanceRemark2') }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="form-button">
+        <!-- 上一步 -->
+        <bk-button
+          v-if="!isCleanField && !isTempField"
+          theme="default"
+          :title="$t('dataManage.last')"
+          class="mr10"
+          :disabled="isLoading"
+          @click="prevHandler">
+          {{$t('dataManage.last')}}
+        </bk-button>
+        <!-- 前往高级清洗 -->
+        <bk-button
+          v-if="activePanel === 'advance'"
+          theme="primary"
+          :title="$t('dataManage.last')"
+          :disabled="isLoading"
+          @click="advanceHandler">
+          {{$t('dataManage.advanceClean')}}
+        </bk-button>
+        <!-- 下一步/完成 -->
+        <bk-button
+          v-if="activePanel === 'base' && !isTempField"
+          theme="primary"
+          @click.stop.prevent="finish(true)"
+          :loading="isLoading"
+          :disabled="!collectProject || !showDebugBtn || !hasFields">
+          {{$t('下一步')}}
+        </bk-button>
+        <!-- <bk-button
         theme="default"
         :title="$t('btn.cancel')"
         class="ml10"
@@ -301,88 +314,91 @@
         :disabled="isLoading">
         {{$t('dataManage.Return_list')}}
       </bk-button> -->
-      <!-- 跳过 -->
-      <bk-button
-        v-if="!isCleanField && !isTempField"
-        theme="default"
-        :title="$t('btn.cancel')"
-        class="ml10"
-        @click="handleSkip"
-        :disabled="isLoading">
-        {{$t('dataManage.skip')}}
-      </bk-button>
-      <!-- 保存模板 -->
-      <bk-button
-        v-if="activePanel === 'base'"
-        theme="default"
-        class="ml10"
-        :disabled="!hasFields"
-        @click="openTemplateDialog(true)">
-        {{$t('dataManage.saveTemp')}}
-      </bk-button>
-      <!-- 日志清洗 保存模板 取消 -->
-      <bk-button
-        v-if="isCleanField || isTempField"
-        theme="default"
-        class="ml10"
-        @click="handleCancel(false)">
-        {{$t('取消')}}
-      </bk-button>
-    </div>
-
-    <bk-dialog
-      v-model="dialogVisible"
-      width="1012"
-      :header-position="'left'"
-      :mask-close="false"
-      :draggable="false"
-      :show-footer="false"
-      :title="$t('dataManage.View_fields')">
-      <div class="standard-field-table">
-        <field-table
-          v-if="dialogVisible"
-          :table-type="'preview'"
-          :extract-method="formData.etl_config"
-          :fields="copyBuiltField"
-          :json-text="copysText">
-        </field-table>
+        <!-- 跳过 -->
+        <bk-button
+          v-if="!isCleanField && !isTempField"
+          theme="default"
+          :title="$t('btn.cancel')"
+          class="ml10"
+          @click="handleSkip"
+          :disabled="isLoading">
+          {{$t('dataManage.skip')}}
+        </bk-button>
+        <!-- 保存模板 -->
+        <bk-button
+          v-if="activePanel === 'base'"
+          theme="default"
+          class="ml10"
+          :disabled="!hasFields"
+          @click="openTemplateDialog(true)">
+          {{$t('dataManage.saveTemp')}}
+        </bk-button>
+        <!-- 日志清洗 保存模板 取消 -->
+        <bk-button
+          v-if="isCleanField || isTempField"
+          theme="default"
+          class="ml10"
+          @click="handleCancel(false)">
+          {{$t('取消')}}
+        </bk-button>
       </div>
-    </bk-dialog>
 
-    <!-- 选择模版 -->
-    <bk-dialog
-      v-model="templateDialogVisible"
-      width="480"
-      :header-position="'left'"
-      :mask-close="false"
-      :draggable="false"
-      :title="isSaveTempDialog ? $t('dataManage.saveTemp') : $t('dataManage.selectTemp')"
-      :confirm-fn="handleTemplConfirm">
-      <div class="template-content">
-        <div v-if="isSaveTempDialog">
-          <label style="color: #63656e;">模板名称</label>
-          <bk-input v-model="saveTempName" style="margin-top: 8px"></bk-input>
+      <bk-dialog
+        v-model="dialogVisible"
+        width="1012"
+        :header-position="'left'"
+        :mask-close="false"
+        :draggable="false"
+        :show-footer="false"
+        :title="$t('dataManage.View_fields')">
+        <div class="standard-field-table">
+          <field-table
+            v-if="dialogVisible"
+            :table-type="'preview'"
+            :extract-method="formData.etl_config"
+            :fields="copyBuiltField"
+            :json-text="copysText">
+          </field-table>
         </div>
-        <bk-select v-else v-model="selectTemplate">
-          <bk-option
-            v-for="option in templateList"
-            :key="option.clean_template_id"
-            :id="option.clean_template_id"
-            :name="option.name">
-          </bk-option>
-        </bk-select>
-      </div>
-    </bk-dialog>
-  </div>
+      </bk-dialog>
+
+      <!-- 选择模版 -->
+      <bk-dialog
+        v-model="templateDialogVisible"
+        width="480"
+        :header-position="'left'"
+        :mask-close="false"
+        :draggable="false"
+        :title="isSaveTempDialog ? $t('dataManage.saveTemp') : $t('dataManage.selectTemp')"
+        :confirm-fn="handleTemplConfirm">
+        <div class="template-content">
+          <div v-if="isSaveTempDialog">
+            <label style="color: #63656e;">模板名称</label>
+            <bk-input v-model="saveTempName" style="margin-top: 8px"></bk-input>
+          </div>
+          <bk-select v-else v-model="selectTemplate">
+            <bk-option
+              v-for="option in templateList"
+              :key="option.clean_template_id"
+              :id="option.clean_template_id"
+              :name="option.name">
+            </bk-option>
+          </bk-select>
+        </div>
+      </bk-dialog>
+    </div>
+  </section>
 </template>
 <script>
 import { mapGetters, mapState } from 'vuex';
 import fieldTable from './field-table';
+import AuthPage from '@/components/common/auth-page';
 import { projectManages } from '@/common/util';
 
 export default {
   components: {
     fieldTable,
+    AuthPage,
   },
   props: {
     operateType: String,
@@ -504,6 +520,7 @@ export default {
       cleanCollector: '', // 日志清洗选择的采集项
       cleanCollectorList: [],
       renderKey: 0, // key-changing
+      authPageInfo: null,
     };
   },
   computed: {
@@ -544,6 +561,9 @@ export default {
     },
     isEditTemp() {
       return this.$route.name === 'clean-template-edit';
+    },
+    isEditCleanItem() {
+      return this.$route.name === 'clean-edit';
     },
   },
   watch: {
@@ -614,9 +634,23 @@ export default {
   methods: {
     // 初始化清洗项
     initCleanItem() {
-      setTimeout(() => {
-        this.basicLoading = false;
-      }, 100);
+      // 获取采集项列表
+      this.$http.request('collect/getAllCollectors', {
+        query: {
+          bk_biz_id: this.bkBizId,
+        },
+      }).then((res) => {
+        const data = res.data;
+        if (data.length) {
+          this.cleanCollectorList = data;
+          if (this.isEditCleanItem) {
+            this.cleanCollector = this.$route.params.collectorId;
+          }
+        }
+      })
+        .finally(() => {
+          this.basicLoading = false;
+        });
     },
     // 初始化清洗模板详情
     initCleanTemp() {
@@ -672,23 +706,31 @@ export default {
       });
     },
     // 高级清洗配置
-    setAdvanceCleanTab() {
-      this.activePanel = 'advance';
-      this.panels[0].disabled = true;
-      this.panels[0].renderLabel = (h) => {
-        return h('div', {
-          class: 'render-header',
-        }, [
-          h('span', {
-            directives: [
-              {
-                name: 'bk-tooltips',
-                value: this.$t('dataManage.disabledBase'),
-              },
-            ],
-          }, this.$t('dataManage.Base')),
-        ]);
-      };
+    setAdvanceCleanTab(isAdvance) {
+      if (isAdvance) {
+        this.activePanel = 'advance';
+        this.panels[0].disabled = true;
+        this.panels[0].renderLabel = (h) => {
+          return h('div', {
+            class: 'render-header',
+          }, [
+            h('span', {
+              directives: [
+                {
+                  name: 'bk-tooltips',
+                  value: this.$t('dataManage.disabledBase'),
+                },
+              ],
+            }, this.$t('dataManage.Base')),
+          ]);
+        };
+      } else {
+        this.activePanel = 'base';
+        this.panels = [
+          { name: 'base', label: this.$t('dataManage.Base') },
+          { name: 'advance', label: this.$t('dataManage.Advance') },
+        ];
+      }
     },
     debugHandler() {
       this.formData.fields.splice(0, this.formData.fields.length);
@@ -1324,6 +1366,7 @@ export default {
           });
           return;
         }
+
         // 应用模板设置
         const curTemp = this.templateList.find(temp => temp.clean_template_id === this.selectTemplate);
         this.formData.fields.splice(0, this.formData.fields.length);
@@ -1338,19 +1381,19 @@ export default {
         return;
       }
 
+      // 新增清洗未选择采集项
+      if (this.isCleanField && !this.cleanCollector) return;
+
       // 选择应用模板
       this.isSaveTempDialog = isSave;
       this.templateDialogVisible = true;
       this.$http.request('clean/cleanTemplate', {
         query: {
           bk_biz_id: this.bkBizId,
-          // TODO
-          page: 1,
-          pagesize: 10,
         },
       }).then((res) => {
         if (res.data) {
-          this.templateList = res.data.list;
+          this.templateList = res.data;
         }
       });
     },
@@ -1358,6 +1401,84 @@ export default {
     handleSaveTemp() {
       this.isSaveTempDialog = true;
       this.templateDialogVisible = true;
+    },
+    // 获取采集项清洗基础配置缓存 用于存储入库提交
+    getCleanStash(id) {
+      this.$http.request('clean/getCleanStash', {
+        params: {
+          collector_config_id: id,
+        },
+      }).then((res) => {
+        if (res.data) {
+          const { clean_type, etl_params, etl_fields } = res.data;
+          this.formData.fields.splice(0, this.formData.fields.length);
+          /* eslint-disable */
+          this.params.etl_config = clean_type
+          Object.assign(this.params.etl_params, {
+            separator_regexp: etl_params.separator_regexp || '',
+            separator: etl_params.separator || ''
+          })
+          this.fieldType = clean_type
+          /* eslint-enable */
+          Object.assign(this.formData, {
+            etl_config: this.fieldType,
+            etl_params: Object.assign({
+              retain_original_text: true,
+              separator_regexp: '',
+              separator: '',
+            }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
+            fields: etl_fields,
+          });
+        }
+      })
+        .finally(() => {
+          this.basicLoading = false;
+        });
+    },
+    // 新建、编辑采集项时获取更新详情
+    async setDetail(id) {
+      this.$http.request('collect/details', {
+        params: { collector_config_id: id },
+      }).then(async (res) => {
+        if (res.data) {
+          this.$store.commit('collect/setCurCollect', res.data);
+          await this.getDetail();
+          await this.getCleanStash(id);
+        }
+      })
+        .finally(() => {
+          // this.basicLoading = false;
+        });
+    },
+    // 新增、编辑清洗选择采集项
+    async handleCollectorChange(id) {
+      this.basicLoading = true;
+      // 先校验有无采集项管理权限
+      const paramData = {
+        action_ids: ['manage_collection'],
+        resources: [{
+          type: 'collection',
+          id,
+        }],
+      };
+      const res = await this.$store.dispatch('checkAndGetData', paramData);
+      if (res.isAllowed === false) {
+        this.authPageInfo = res.data;
+        this.basicLoading = false;
+        return;
+      }
+
+      const curCollect = this.cleanCollectorList.find((item) => {
+        return item.collector_config_id.toString() === id.toString();
+      });
+      if (curCollect.create_clean_able) {
+        this.setAdvanceCleanTab(false);
+        // 获取采集项详情
+        await this.setDetail(id);
+      } else {
+        this.setAdvanceCleanTab(true);
+        this.basicLoading = false;
+      }
     },
   },
 };
@@ -1619,6 +1740,10 @@ export default {
         font-size: 12px;
         color: #3a84ff;
         cursor: pointer;
+      }
+      .template-disabled {
+        color: #c4c6cc;
+        cursor: not-allowed;
       }
       .field-button-group {
         display: flex;

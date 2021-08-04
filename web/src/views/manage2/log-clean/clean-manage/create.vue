@@ -25,10 +25,14 @@
     <article class="article" v-if="!isCleaning">
       <step-field
         v-if="curStep === 1"
-        :is-clean-field="true" />
+        :cur-step="curStep"
+        :is-clean-field="true"
+        @stepChange="stepChange" />
       <step-storage
         v-if="curStep === 2"
-        :is-clean-field="true" />
+        :cur-step="curStep"
+        :is-clean-field="true"
+        @stepChange="stepChange" />
     </article>
 
     <article class="article clean-landing" v-else>
@@ -57,9 +61,19 @@ export default {
       collectItem: '',
     };
   },
-  created() {
-  },
   methods: {
+    stepChange(type) {
+      if (type === 'back') {
+        this.$router.push({
+          name: 'log-clean-list',
+          query: {
+            projectId: window.localStorage.getItem('project_id'),
+          },
+        });
+        return;
+      }
+      this.curStep = this.curStep + 1;
+    },
   },
 };
 </script>

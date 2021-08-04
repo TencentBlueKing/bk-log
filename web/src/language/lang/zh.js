@@ -1086,5 +1086,7 @@ export default {
     Confirm_delete_temp: '确认删除当前模板？',
     cleaningConfirmTips: '高级清洗仍在进行中',
     finishClean: '清洗已完成',
+    rawData: '原始数据',
+    advancedClean: '高级清洗',
   },
 };

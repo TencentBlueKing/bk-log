@@ -1087,5 +1087,7 @@ export default {
     Confirm_delete_temp: 'Confirm to delete this item?',
     cleaningConfirmTips: 'Advanced cleaning is still in progress',
     finishClean: 'Cleaning completed',
+    rawData: 'Raw data',
+    advancedClean: 'Advanced clean',
   },
 };
