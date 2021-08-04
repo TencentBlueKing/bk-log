@@ -106,7 +106,7 @@ class CollectorViewSet(ModelViewSet):
 
     def get_queryset(self):
         if self.request.query_params.get(HAVE_DATA_ID):
-            return self.model.objects.filter(bk_data_id__null=False)
+            return self.model.objects.filter(bk_data_id__isnull=False)
         return self.model.objects.all()
 
     def get_serializer_class(self, *args, **kwargs):
