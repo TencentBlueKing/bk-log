@@ -23,6 +23,7 @@ from rest_framework import serializers
 
 from rest_framework.response import Response
 
+from apps.exceptions import ValidationError
 from apps.log_search.constants import HAVE_DATA_ID
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
@@ -117,6 +118,7 @@ class CollectorViewSet(ModelViewSet):
             "task_detail": TaskDetailSerializer,
             "list": CollectorListSerializer,
             "retry": RetrySerializer,
+            "list_collectors": CollectorListSerializer,
         }
         return action_serializer_map.get(self.action, serializers.Serializer)
 
@@ -272,6 +274,10 @@ class CollectorViewSet(ModelViewSet):
             "result": true
         }
         """
+        # 强制前端必须传分页参数
+
+        if not request.GET.get("page") or not request.GET.get("pagesize"):
+            raise ValidationError(_("分页参数不能为空"))
         response = super().list(request, *args, **kwargs)
         response.data["list"] = CollectorHandler.add_cluster_info(response.data["list"])
 
@@ -1587,3 +1593,47 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.params_valid(CleanStashSerializer)
         return Response(CollectorHandler(collector_config_id=collector_config_id).create_clean_stash(params=data))
+
+    @list_route(methods=["GET"])
+    def list_collectors(self, request, *args, **kwargs):
+        """
+        @api {get} /databus/collectors/list_collectors/?keyword=$keyword&bk_biz_id=$bk_biz_id 34_采集项-获取列表(可不带分页参数)
+        @apiName dababus_list_collector
+        @apiGroup 10_Collector
+        @apiDescription 采集项列表，运行状态通过异步接口获取，可不带分页参数
+        @apiParam {Int} bk_biz_id 业务ID
+        @apiParam {String} keyword 搜索关键字
+        @apiSuccess {Array} results 返回结果
+        @apiSuccess {Int} results.collector_config_id 采集项ID
+        @apiSuccess {Int} results.collector_config_name 采集项名称
+        @apiSuccess {String} results.collector_scenario_id 类型id
+        @apiSuccess {String} results.collector_scenario_name 类型名称
+        @apiSuccess {String} results.category_id 分类ID
+        @apiSuccess {String} results.category_name 分类名称
+        @apiSuccess {Bool} results.is_active 是否可用
+        @apiSuccess {String} results.description 描述
+        @apiSuccess {String} results.created_by 创建人
+        @apiSuccess {String} results.created_at 创建时间
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "count": 10,
+                "total_page": 1,
+                "results": [{
+                    "collector_config_id": 1,
+                    "collector_config_name": "采集项名称",
+                    "collector_scenario_id": "line",
+                    "collector_scenario_name": "行日志",
+                    "category_id": "host_os",
+                    "category_name": "主机-操作系统",
+                    "is_active": true,
+                    "created_by": "小星星"
+                    "created_at": "2019-06-12 12:00:00"
+                }]
+            },
+            "result": true
+        }
+        """
+        return super().list(request, *args, **kwargs)
