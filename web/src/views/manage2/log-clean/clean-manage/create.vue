@@ -27,7 +27,8 @@
         v-if="curStep === 1"
         :cur-step="curStep"
         :is-clean-field="true"
-        @stepChange="stepChange" />
+        @stepChange="stepChange"
+        @changeClean="isCleaning = true" />
       <step-storage
         v-if="curStep === 2"
         :cur-step="curStep"
@@ -36,7 +37,7 @@
     </article>
 
     <article class="article clean-landing" v-else>
-      <advance-clean-land />
+      <advance-clean-land back-router="log-clean-list" />
     </article>
   </div>
 </template>
@@ -93,6 +94,7 @@ export default {
       background-color: #fff;
     }
     .clean-landing {
+      border: 0;
       height: calc(100% - 24px);
       // padding: 100px;
     }

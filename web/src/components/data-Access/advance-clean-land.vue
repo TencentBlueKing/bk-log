@@ -35,7 +35,7 @@
       <span class="bk-icon icon-refresh-line"></span>
       <span @click="handleRefresh">{{ $t('刷新') }}</span>
     </div>
-    <bk-button class="back-list">{{ $t('返回列表') }}</bk-button>
+    <bk-button class="back-list" @click="backToList">{{ $t('返回列表') }}</bk-button>
   </div>
 </template>
 
@@ -49,6 +49,10 @@ export default {
       dafault: '',
     },
     collectorId: {
+      type: String,
+      dafault: '',
+    },
+    backRouter: {
       type: String,
       dafault: '',
     },
@@ -66,6 +70,14 @@ export default {
     }),
   },
   methods: {
+    backToList() {
+      this.$router.push({
+        name: this.backRouter,
+        query: {
+          projectId: window.localStorage.getItem('project_id'),
+        },
+      });
+    },
     handleRefresh() {
       this.isInit = true;
       this.loading = true;
@@ -91,7 +103,10 @@ export default {
 <style lang="scss">
   .advance-clean-land {
     padding-top: 210px;
+    height: 100%;
     text-align: center;
+    background: #fff;
+    border: 1px solid #DCDEE5;
     .icon-clock {
       font-size: 64px;
       color: #c4c6cc;

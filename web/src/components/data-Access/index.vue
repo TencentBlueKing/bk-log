@@ -23,7 +23,7 @@
 <template>
   <section class="access-wrapper" v-bkloading="{ isLoading: basicLoading }">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
-    <div class="access-container" v-else-if="!basicLoading">
+    <div class="access-container" v-else-if="!basicLoading && !isCleaning">
       <section class="access-step-wrapper">
         <div class="fixed-steps" :style="{ height: (stepList.length * 76) + 'px' }">
           <bk-steps
@@ -56,7 +56,8 @@
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
-            @stepChange="stepChange">
+            @stepChange="stepChange"
+            @changeClean="isCleaning = true">
           </step-field>
           <step-storage
             v-if="curStep === 5"
@@ -87,7 +88,8 @@
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
-            @stepChange="stepChange">
+            @stepChange="stepChange"
+            @changeClean="isCleaning = true">
           </step-field>
           <step-storage
             v-if="curStep === 4"
@@ -105,6 +107,7 @@
         </template>
       </section>
     </div>
+    <advance-clean-land v-else-if="!basicLoading && isCleaning" back-router="collection-item" />
   </section>
 </template>
 
@@ -118,6 +121,7 @@ import stepIssued from './step-issued';
 import stepField from './step-field';
 import stepStorage from './step-storage.vue';
 import stepResult from './step-result';
+import advanceCleanLand from '@/components/data-Access/advance-clean-land';
 
 export default {
   name: 'access-steps',
@@ -129,11 +133,13 @@ export default {
     stepField,
     stepStorage,
     stepResult,
+    advanceCleanLand,
   },
   data() {
     return {
       authPageInfo: null,
       basicLoading: true,
+      isCleaning: false,
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
       operateType: '',
       curStep: 1,
@@ -299,7 +305,7 @@ export default {
   @import '@/scss/conf';
 
   .access-wrapper {
-    padding: 20px 60px;
+    padding: 20px 24px;
   }
 
   .access-container {
@@ -321,7 +327,7 @@ export default {
       position: relative;
       width: 170px;
       max-height: 100%;
-      margin-top: 10px;
+      margin-top: 40px;
 
       .bk-step {
         color: #7a7c85;

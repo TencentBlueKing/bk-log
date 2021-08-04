@@ -175,6 +175,7 @@ export default {
   行到第: 'to',
   行: 'row',
   用户组: 'Name',
+  授权: 'Auth',
   授权目标: 'Authorization target',
   文件目录: 'File directory',
   文件后缀: 'File extension',

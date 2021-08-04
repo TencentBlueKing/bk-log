@@ -293,7 +293,7 @@
           v-if="activePanel === 'advance'"
           theme="primary"
           :title="$t('dataManage.last')"
-          :disabled="isLoading"
+          :disabled="advanceDisable"
           @click="advanceHandler">
           {{$t('dataManage.advanceClean')}}
         </bk-button>
@@ -564,6 +564,9 @@ export default {
     },
     isEditCleanItem() {
       return this.$route.name === 'clean-edit';
+    },
+    advanceDisable() {
+      return this.curCollect.bkdata_data_id === null || this.isLoading;
     },
   },
   watch: {
@@ -1045,7 +1048,13 @@ export default {
           },
         }, this.$t('dataManage.advanceCleanConfirm')),
         // okText: this.$t('retrieve.immediateExport'),
-        confirmFn: () => {},
+        confirmFn: () => {
+          const id = this.curCollect.bkdata_data_id;
+          const jumpUrl = `${window.BKDATA_URL}/#/data-access/data-detail/${id}/3`;
+          window.open(jumpUrl, '_blank');
+          // 前往高级清洗刷新页
+          this.$emit('changeClean');
+        },
       });
     },
     // 获取详情

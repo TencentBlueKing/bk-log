@@ -216,7 +216,8 @@
             <!-- 检索 -->
             <!-- 启用状态下 且存在 index_set_id 才能检索 -->
             <bk-button
-              theme="primary" text
+              theme="primary"
+              text
               class="king-button"
               :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
               v-cursor="{ active: !(props.row.permission && props.row.permission.search_log) }"
@@ -225,7 +226,8 @@
             </bk-button>
             <!-- 编辑 -->
             <bk-button
-              theme="primary" text
+              theme="primary"
+              text
               class="king-button"
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'edit')">
@@ -233,7 +235,8 @@
             </bk-button>
             <!-- 启用/停用 -->
             <bk-button
-              theme="primary" text
+              theme="primary"
+              text
               class="king-button"
               :disabled="!props.row.status ||
                 props.row.status === 'running' ||
@@ -245,7 +248,8 @@
             </bk-button>
             <!-- 删除 -->
             <bk-button
-              theme="primary" text
+              theme="primary"
+              text
               class="king-button"
               :disabled="!props.row.status ||
                 props.row.status === 'running' ||

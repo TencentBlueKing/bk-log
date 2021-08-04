@@ -57,7 +57,7 @@
         </bk-table-column>
         <bk-table-column :label="$t('logClean.storageIndex')">
           <template slot-scope="props">
-            {{ props.row.storage }}
+            {{ props.row.result_table_id }}
           </template>
         </bk-table-column>
         <bk-table-column
@@ -68,7 +68,7 @@
           :filters="formatFilters"
           :filter-multiple="false">
           <template slot-scope="props">
-            {{ props.row.format }}
+            {{ getFormatName(props.row) }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('dataSource.updated_by')">
@@ -83,11 +83,23 @@
         </bk-table-column>
         <bk-table-column :label="$t('dataSource.operation')" width="200">
           <div class="collect-table-operate" slot-scope="props">
-            <!-- 检索 -->
+            <!-- 高级清洗授权 -->
             <bk-button
+              v-if="props.row.bkdata_auth_url"
               theme="primary"
               text
               class="mr10 king-button"
+              @click="handleAuth(props.row)">
+              {{ $t('授权') }}
+            </bk-button>
+            <!-- 检索 -->
+            <bk-button
+              v-else
+              theme="primary"
+              text
+              class="mr10 king-button"
+              :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.search_log) }"
               @click="operateHandler">
               {{ $t('nav.retrieve') }}
             </bk-button>
@@ -96,6 +108,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
@@ -104,6 +117,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'delete')">
               {{ $t('btn.delete') }}
             </bk-button>
@@ -126,11 +140,28 @@ export default {
       isAllowedManage: null, // 是否有管理权限
       pagination: {
         current: 1,
-        count: 100,
+        count: 0,
         limit: 10,
         limitList: [10, 20, 50, 100],
       },
-      cleanList: [],
+      cleanList: [
+        {
+          collector_config_id: 1,
+          collector_config_name: 'test',
+          index_set_id: 2,
+          bkdata_auth_url: '1',
+          bk_data_id: 10,
+          etl_config: 'bk_log_json',
+          result_table_id: 'test',
+          permission: {
+            search_log: true,
+            view_collection: true,
+            manage_collection: true,
+          },
+          updated_by: 'test',
+          updated_at: '2021-07-24 17:42:32+0800',
+        },
+      ],
       params: {
         keyword: '',
         clean_type: '',
@@ -155,7 +186,7 @@ export default {
       });
       target.push(
         { text: this.$t('logClean.rawData'), value: 'bk_log_text' },
-        { text: this.$t('logClean.advancedClean'), value: '' },
+        { text: this.$t('logClean.advancedClean'), value: 'bkdata_clean' },
       );
       return target;
     },
@@ -226,7 +257,6 @@ export default {
           pagesize: this.pagination.limit,
         },
       }).then((res) => {
-        console.log(res);
         const { data } = res;
         this.pagination.count = data.total;
         this.cleanList = data.list;
@@ -270,21 +300,53 @@ export default {
       //   return;
       // }
     },
-    // requestDeleteClenItem(row) {
-    //   this.$http.request('clean/deleteClean', {
-    //     params: {
-    //       collector_config_id: row.collector_config_id,
-    //     },
-    //   }).then((res) => {
-    //     if (res.result) {
-    //       const page = this.cleanList.length <= 1
-    //         ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
-    //         : this.pagination.current;
-    //       this.handlePageChange(page);
-    //     }
-    //   })
-    //     .catch(() => {});
-    // },
+    getFormatName(row) {
+      const cleantype = row.etl_config;
+      const matchItem = this.globalsData.etl_config && this.globalsData.etl_config.find((conf) => {
+        return conf.id === cleantype;
+      });
+      return matchItem ? matchItem.name : '';
+    },
+    // 计算平台授权跳转
+    handleAuth({ bkdata_auth_url: authUrl, index_set_id: id }) {
+      let redirectUrl = ''; // 数据平台授权地址
+      if (NODE_ENV === 'development') {
+        redirectUrl = `${authUrl}&redirect_url=${window.origin}/static/auth.html`;
+      } else {
+        let siteUrl = window.SITE_URL;
+        if (siteUrl.startsWith('http')) {
+          if (!siteUrl.endsWith('/')) siteUrl += '/';
+          redirectUrl = `${authUrl}&redirect_url=${siteUrl}bkdata_auth/`;
+        } else {
+          if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
+          if (!siteUrl.endsWith('/')) siteUrl += '/';
+          redirectUrl = `${authUrl}&redirect_url=${window.origin}${siteUrl}bkdata_auth/`;
+        }
+      }
+      // auth.html 返回索引集管理的路径
+      let indexSetPath = '';
+      const { href } = this.$router.resolve({
+        name: 'log-clean-list',
+      });
+      let siteUrl = window.SITE_URL;
+      if (siteUrl.startsWith('http')) {
+        if (!siteUrl.endsWith('/')) siteUrl += '/';
+        indexSetPath = siteUrl + href;
+      } else {
+        if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
+        if (!siteUrl.endsWith('/')) siteUrl += '/';
+        redirectUrl = window.origin + siteUrl + href;
+      }
+      // auth.html 需要使用的数据
+      const urlComponent = `?indexSetId=${id}&ajaxUrl=${window.AJAX_URL_PREFIX}&redirectUrl=${indexSetPath}`;
+      redirectUrl += encodeURIComponent(urlComponent);
+      if (self !== top) { // 当前页面是 iframe
+        window.open(redirectUrl);
+        this.returnIndexList();
+      } else {
+        window.location.assign(redirectUrl);
+      }
+    },
   },
 };
 </script>
