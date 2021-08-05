@@ -28,7 +28,6 @@ from django.db import models  # noqa
 from django.utils.translation import ugettext_lazy as _  # noqa
 from django_jsonfield_backport.models import JSONField  # noqa
 
-
 from apps.log_databus.constants import (  # noqa
     TargetObjectTypeEnum,  # noqa
     TargetNodeTypeEnum,  # noqa
@@ -117,9 +116,9 @@ class CollectorConfig(SoftDeleteModel):
         """
         数据平台生成的索引集id列表
         """
-        return [
-            clean.log_index_set_id for clean in BKDataClean.objects.filter(collector_config_id=self.collector_config_id)
-        ]
+        BKDataClean.objects.filter(collector_config_id=self.collector_config_id).values_list(
+            "log_index_set_id", flat=True
+        )
 
     def get_collector_scenario_id_display(self):
         return CollectorScenarioEnum.get_choice_label(self.collector_scenario_id)

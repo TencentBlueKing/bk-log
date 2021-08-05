@@ -21,6 +21,7 @@ from apps.log_databus.exceptions import CleanTemplateNotExistException, CleanTem
 from apps.log_databus.models import CleanTemplate, BKDataClean
 from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
 from apps.models import model_to_dict
+from apps.utils.log import logger
 
 
 class CleanHandler(object):
@@ -30,7 +31,7 @@ class CleanHandler(object):
     def refresh(self, raw_data_id, bk_biz_id):
         bkdata_clean_utils = BKDataCleanUtils(raw_data_id=raw_data_id)
         bkdata_clean_utils.update_or_create_clean(collector_config_id=self.collector_config_id, bk_biz_id=bk_biz_id)
-        return [bkdata_clean.result_table_name for bkdata_clean in BKDataClean.objects.filter(raw_data_id=raw_data_id)]
+        return BKDataClean.objects.filter(raw_data_id=raw_data_id).values_list("result_table_name", flat=True)
 
 
 class CleanTemplateHandler(object):
@@ -61,25 +62,26 @@ class CleanTemplateHandler(object):
                 )
             )
         if not self.data:
-            return model_to_dict(CleanTemplate.objects.create(**model_fields))
+            clean_template = CleanTemplate.objects.create(**model_fields)
+            logger.info("create clean template {}".format(clean_template.clean_template_id))
+            return model_to_dict(clean_template)
 
         for key, value in model_fields.items():
             setattr(self.data, key, value)
         self.data.save()
+        logger.info("update clean template {}".format(self.data.clean_template_id))
         return model_to_dict(self.data)
 
     def destroy(self):
-        return self.data.delete()
+        clean_template_id = self.data.delete()
+        logger.info("delete clean template {}".format(clean_template_id))
+        return clean_template_id
 
     def _check_clean_template_exist(self, name: str, bk_biz_id: int):
         """
         judge the same bk_biz_id and same name clean_template exist
         """
-        if not self.data:
-            return CleanTemplate.objects.filter(name=name, bk_biz_id=bk_biz_id).exists()
-
-        return (
-            CleanTemplate.objects.filter(name=name, bk_biz_id=bk_biz_id)
-            .exclude(clean_template_id=self.clean_template_id)
-            .exists()
-        )
+        qs = CleanTemplate.objects.filter(name=name, bk_biz_id=bk_biz_id)
+        if self.data:
+            qs = qs.exclude(clean_template_id=self.clean_template_id)
+        return qs.exists()

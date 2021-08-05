@@ -80,7 +80,7 @@ class BKDataCleanUtils:
                 for insert_obj in insert_objs
             ]
         )
-        logger.info("insert BKDataClean collector_config_id {}".format(collector_config_id))
+        logger.info("insert BKDataClean collector_config_id {}".format(insert_objs))
 
     @classmethod
     def delete_objs(cls, delete_objs):
@@ -119,7 +119,7 @@ class BKDataCleanUtils:
     def delete_index_set(cls, delete_objs):
         for delete_obj in delete_objs:
             IndexSetHandler(index_set_id=delete_obj.log_index_set_id).delete()
-            logger.info("delete index_sey {}".format(delete_obj.log_index_set_id))
+            logger.info("delete index_set {}".format(delete_obj.log_index_set_id))
 
     def update_or_create_clean(self, collector_config_id: int, bk_biz_id: int):
         cleans = self.get_bkdata_clean()
