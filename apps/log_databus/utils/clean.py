@@ -17,7 +17,10 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import arrow
 from collections import namedtuple
+
+from django.conf import settings
 
 from apps.feature_toggle.plugins.constants import SCENARIO_BKDATA
 from apps.log_databus.constants import EtlConfig, DEFAULT_ETL_CONFIG
@@ -65,7 +68,7 @@ class CleanFilterUtils:
                     bkdata_auth_url=None,
                     index_set_id=collector_config.index_set_id,
                     updated_by=collector_config.updated_by,
-                    updated_at=collector_config.updated_at,
+                    updated_at=self._format_time_field(collector_config.updated_at),
                 )
             )
 
@@ -92,7 +95,7 @@ class CleanFilterUtils:
                     else self.get_auth_url(bk_data_clean.result_table_id),
                     index_set_id=bk_data_clean.log_index_set_id,
                     updated_by=bk_data_clean.updated_by,
-                    updated_at=bk_data_clean.updated_at,
+                    updated_at=self._format_time_field(bk_data_clean.updated_at),
                 )
             )
 
@@ -123,3 +126,7 @@ class CleanFilterUtils:
         if page and pagesize:
             return {"total": len(sorted_res), "list": sorted_res[(page - 1) * pagesize : page * pagesize]}
         return sorted_res
+
+    @classmethod
+    def _format_time_field(cls, datetime):
+        return arrow.get(datetime).to(settings.TIME_ZONE).strftime(settings.BKDATA_DATETIME_FORMAT)

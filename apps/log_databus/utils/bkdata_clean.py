@@ -38,7 +38,7 @@ class BKDataCleanUtils:
 
     def get_bkdata_clean(self):
         config_db_list = BkDataDatabusApi.get_config_db_list(params={"raw_data_id": self.raw_data_id})
-        return [config_db for config_db in config_db_list if "es" in config_db["storage_type_alias"]]
+        return [config_db for config_db in config_db_list if config_db["storage_type"].lower() == "es"]
 
     @classmethod
     def get_dict(cls, cleans, db_cleans):
