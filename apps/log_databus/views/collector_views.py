@@ -1465,3 +1465,61 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.params_valid(ListCollectorsByHostSerializer)
         return Response(CollectorHandler().list_collectors_by_host(data))
+
+    @detail_route(methods=["GET"])
+    def clean_stash(self, request, *args, collector_config_id=None, **kwarg):
+        """
+        @api {GET} /databus/collectors/$collector_config_id/clean_stash 获取采集项清洗缓存
+        @apiName databus_collectors_clean_stash
+        @apiGroup 10_Collector
+        @apiSuccessExample {json} 成功返回(有数据)
+        {
+            "result": true,
+            "data": {
+            "collector_config_id":1,
+            "clean_type":"bk_log_text",
+            "etl_params":{
+                "retain_original_text":true,
+                "separator":" "
+            },
+            "etl_fields":[
+                {
+                    "field_name":"tag_number",
+                    "type":"float",
+                    "tag":"dimension",
+                    "default_value":null,
+                    "is_config_by_user":true,
+                    "description":"",
+                    "unit":"",
+                    "alias_name":"",
+                    "option":{
+                        "time_zone":"",
+                        "time_format":"",
+                        "field_index":1,
+                        "es_type":"integer",
+                        "real_path":"bk_separator_object.tag_number"
+                    },
+                    "is_built_in":false,
+                    "is_time":false,
+                    "field_type":"int",
+                    "is_analyzed":false,
+                    "is_delete":false,
+                    "is_dimension":true,
+                    "_nums":1,
+                    "field_index":1,
+                    "value":"14836"
+                }
+            ]
+        },
+            "code": 0,
+            "message": ""
+        }
+        @apiSuccessExample {json} 成功返回(空)
+        {
+            "result": true,
+            "data": null,
+            "code": 0,
+            "message": ""
+        }
+        """
+        pass

@@ -325,10 +325,12 @@ class StorageHandler(object):
                 "bk_biz_id": bk_biz_id,
                 "domain_name": params["domain_name"],
                 "port": params["port"],
-                "username": params["auth_info"]["username"],
-                "password": params["auth_info"]["password"],
                 "schema": params["schema"],
                 "cluster_id": self.cluster_id,
+                "es_auth_info": {
+                    "username": params["auth_info"]["username"],
+                    "password": params["auth_info"]["password"],
+                },
             },
         )
 
@@ -358,6 +360,7 @@ class StorageHandler(object):
         version_info=False,
         default_auth=False,
         schema=DEFAULT_ES_SCHEMA,
+        **kwargs,
     ):
 
         # 有传用户但是没有密码，通过接口查询该cluster密码信息
@@ -406,6 +409,7 @@ class StorageHandler(object):
         password=None,
         default_auth=False,
         schema=DEFAULT_ES_SCHEMA,
+        **kwargs,
     ):
         """
         获取集群各节点的属性
