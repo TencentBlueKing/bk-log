@@ -44,10 +44,6 @@ import { mapGetters } from 'vuex';
 
 export default {
   props: {
-    dataId: {
-      type: String,
-      dafault: '',
-    },
     collectorId: {
       type: String,
       dafault: '',
@@ -67,6 +63,7 @@ export default {
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
+      curCollect: 'collect/curCollect',
     }),
   },
   methods: {
@@ -79,15 +76,16 @@ export default {
       });
     },
     handleRefresh() {
+      const { collector_config_id, bkdata_data_id } = this.curCollect;
       this.isInit = true;
       this.loading = true;
       this.$http.request('clean/refreshClean', {
         params: {
-          collector_config_id: this.collectorId,
+          collector_config_id,
         },
         query: {
           bk_biz_id: this.bkBizId,
-          bk_data_id: this.dataId,
+          bk_data_id: bkdata_data_id,
         },
       }).then((res) => {
         this.resultList = res.data;

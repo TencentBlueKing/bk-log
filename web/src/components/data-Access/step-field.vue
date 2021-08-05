@@ -193,10 +193,6 @@
               </div>
             </div>
 
-            <!-- <div class="loading-block" v-if="isExtracting">
-            <div style="height: 100%;" v-bkloading="{ isLoading: isExtracting }"></div>
-          </div> -->
-
             <!-- 调试字段表格 -->
             <template>
               <div class="field-method-result">
@@ -216,24 +212,6 @@
                 </field-table>
               </div>
             </template>
-          <!-- <template v-if="params.etl_config === 'bk_log_regexp' && hasFormat && !isExtracting">
-            <div class="field-method-result">
-              <field-table
-                ref="fieldTable"
-                :extract-method="formData.etl_config"
-                :deleted-visible="deletedVisible"
-                :fields="formData.fields"
-                @deleteVisible="visibleHandle"
-                @handleKeepLog="handleKeepLog"
-                @standard="dialogVisible = true"
-                @reset="getDetail">
-              </field-table>
-            </div>
-          </template> -->
-
-          <!-- <div class="loading-block" v-if="isExtracting">
-            <div style="height: 100%;" v-bkloading="{ isLoading: isExtracting }"></div>
-          </div> -->
           </div>
         </div>
 
@@ -306,14 +284,6 @@
           :disabled="!collectProject || !showDebugBtn || !hasFields">
           {{$t('下一步')}}
         </bk-button>
-        <!-- <bk-button
-        theme="default"
-        :title="$t('btn.cancel')"
-        class="ml10"
-        @click="handleBack"
-        :disabled="isLoading">
-        {{$t('dataManage.Return_list')}}
-      </bk-button> -->
         <!-- 跳过 -->
         <bk-button
           v-if="!isCleanField && !isTempField"
@@ -390,7 +360,7 @@
   </section>
 </template>
 <script>
-import { mapGetters, mapState } from 'vuex';
+import { mapGetters } from 'vuex';
 import fieldTable from './field-table';
 import AuthPage from '@/components/common/auth-page';
 import { projectManages } from '@/common/util';
@@ -412,16 +382,13 @@ export default {
   },
   data() {
     return {
-      isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
+      // isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
       refresh: false,
       // eslint-disable-next-line no-useless-escape
       defaultRegex: '(?P<request_ip>[\d\.]+)[^[]+\[(?P<request_time>[^]]+)\]',
       isLoading: false,
       basicLoading: true,
       isUnmodifiable: false,
-      // switcher: false,
-      roleList: [],
-      // defaultRetention: '',
       fieldType: '',
       deletedVisible: true,
       copysText: {},
@@ -444,19 +411,9 @@ export default {
           retain_original_text: true,
           separator_regexp: '',
           separator: '',
-          // separator_field_list: ''
         },
         fields: [],
-        view_roles: [],
-        retention: '',
-        allocation_min_days: '0',
-        storage_cluster_id: '',
       },
-      selectedStorageCluster: {}, // 选择的es集群
-      retentionDaysList: [], // 过期天数列表
-      customRetentionDay: '', // 自定义过期天数
-      hotDataDaysList: [], // 冷热集群存储期限列表
-      customHotDataDay: '', // 自定义冷热集群存储期限天数
       copyBuiltField: [],
       formatResult: true, // 验证结果是否通过
       rules: {
@@ -473,23 +430,7 @@ export default {
           regex: /^[A-Za-z0-9_]+$/,
           trigger: 'blur',
         }],
-        cluster_id: [{
-          validator(val) {
-            return val !== '';
-          },
-          trigger: 'change',
-        }],
-        view_roles: [{
-          validator(val) {
-            return val.length >= 1;
-          },
-          trigger: 'change',
-        }],
       },
-      storage_capacity: '',
-      tips_storage: [],
-      tip_storage: [],
-      storageList: [],
       isExtracting: false,
       dialogVisible: false,
       rowTemplate: {
@@ -529,10 +470,6 @@ export default {
       projectId: 'projectId',
       curCollect: 'collect/curCollect',
       globalsData: 'globals/globalsData',
-      accessUserManage: 'accessUserManage',
-    }),
-    ...mapState({
-      menuProject: state => state.menuProject,
     }),
     isJsonOrOperator() {
       return this.params.etl_config === 'bk_log_json' || this.params.etl_config === 'bk_log_delimiter';
@@ -554,11 +491,6 @@ export default {
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
-    defaultRetention() {
-      const { storage_duration_time } = this.globalsData;
-      // eslint-disable-next-line camelcase
-      return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
-    },
     isEditTemp() {
       return this.$route.name === 'clean-template-edit';
     },
@@ -573,49 +505,6 @@ export default {
     'formData.fields'() {
       this.renderKey = this.renderKey + 1;
     },
-    // 'formData.storage_cluster_id'(val) {
-    //   this.storageList.forEach((res) => {
-    //     const arr = [];
-    //     if (res.storage_cluster_id === val) {
-    //       this.selectedStorageCluster = res; // 当前选择的存储集群
-    //       this.updateDaysList();
-    //       this.$nextTick(() => { // 如果开启了冷热集群天数不能为0
-    //         if (res.enable_hot_warm && this.formData.allocation_min_days === '0') {
-    //           this.formData.allocation_min_days = '7';
-    //         }
-    //       });
-
-    //       this.storage_capacity = JSON.parse(JSON.stringify(res.storage_capacity));
-    //       this.tips_storage = [
-    //         `${this.$t('dataSource.tips_capacity')}
-    // ${this.storage_capacity} G，${this.$t('dataSource.tips_development')}`,
-    //         this.$t('dataSource.tips_business'),
-    //         this.$t('dataSource.tips_formula'),
-    //       ];
-    //       if (res.storage_capacity === 0) {
-    //         arr.push(this.tips_storage[2]);
-    //       } else {
-    //         if (res.storage_used > res.storage_capacity) {
-    //           arr.push(this.tips_storage[1]);
-    //           arr.push(this.tips_storage[2]);
-    //         } else {
-    //           arr.push(this.tips_storage[0]);
-    //           arr.push(this.tips_storage[2]);
-    //         }
-    //       }
-    //       this.tip_storage = arr;
-    //     }
-    //   });
-    // },
-    // 冷热数据天数需小于过期时间
-    // 'formData.allocation_min_days'(val) {
-    //   const max = this.formData.retention;
-    //   if (Number(val) > Number(max)) {
-    //     this.$nextTick(() => {
-    //       this.formData.allocation_min_days = max;
-    //     });
-    //   }
-    // },
   },
   async mounted() {
     // TODO
@@ -629,9 +518,8 @@ export default {
       return;
     }
 
-    // this.getStorage();
-    // this.defaultRetention = this.globalsData.storage_duration_time.filter(item => item.default === true)[0].id;
-    this.getDetail();
+    await this.getDetail();
+    this.getCleanStash(this.curCollect.collector_config_id);
     this.getDataLog('init');
   },
   methods: {
@@ -739,61 +627,10 @@ export default {
       this.formData.fields.splice(0, this.formData.fields.length);
       this.requestEtlPreview();
     },
-    // 获取存储集群
-    // getStorage() {
-    //   const queryData = { bk_biz_id: this.bkBizId };
-    //   if (this.curCollect.data_link_id) {
-    //     queryData.data_link_id = this.curCollect.data_link_id;
-    //   }
-    //   this.$http.request('collect/getStorage', {
-    //     query: queryData,
-    //   }).then((res) => {
-    //     if (res.data) {
-    //       // 根据权限排序
-    //       const s1 = [];
-    //       const s2 = [];
-    //       for (const item of res.data) {
-    //         if (item.permission?.manage_es_source) {
-    //           s1.push(item);
-    //         } else {
-    //           s2.push(item);
-    //         }
-    //       }
-    //       this.storageList = s1.concat(s2);
-    //       if (this.isItsm && this.curCollect.can_use_independent_es_cluster) {
-    //         // itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
-    //       } else {
-    //         const defaultItem = this.storageList.find(item => item.registered_system === '_default');
-    //         if (defaultItem && defaultItem?.permission?.manage_es_source) {
-    //           this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
-    //         }
-    //       }
-    //       this.getDetail();
-    //     }
-    //   })
-    //     .catch((res) => {
-    //       this.$bkMessage({
-    //         theme: 'error',
-    //         message: res.message,
-    //       });
-    //     });
-    // },
-    updateDaysList() {
-      const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
-        return item.id <= (this.selectedStorageCluster.max_retention || 30);
-      });
-      this.retentionDaysList = retentionDaysList;
-      this.hotDataDaysList = [...retentionDaysList];
-    },
     // 字段提取
     fieldCollection(isCollect = false) {
       const {
         etl_config,
-        // table_id,
-        // storage_cluster_id,
-        // retention,
-        // allocation_min_days,
-        // view_roles,
         fields,
         etl_params,
       } = this.formData;
@@ -801,11 +638,6 @@ export default {
       this.basicLoading = true;
       const data = {
         clean_type: etl_config,
-        // table_id,
-        // storage_cluster_id,
-        // retention: Number(retention),
-        // allocation_min_days: Number(allocation_min_days),
-        // view_roles,
         etl_params: {
           retain_original_text: etl_params.retain_original_text,
           separator_regexp: etl_params.separator_regexp,
@@ -845,89 +677,19 @@ export default {
       this.$http.request(requestUrl, updateData).then((res) => {
         if (res.code === 0) {
           if (isCollect) {
-            this.$emit('stepChange');
+            const step = this.isCleanField ? 2 : null
+            this.$emit('stepChange', step);
           } else {
-            this.handleCancel(true)
+            this.handleCancel(false)
             this.messageSuccess(this.$t('保存成功'));
           }
         }
       })
         .finally(() => {
-          // this.$emit('stepChange');
           this.isLoading = false;
           this.basicLoading = false;
         });
-
-      /* eslint-enable */
-      // 存储入口接口已拆分
-      // this.isLoading = true;
-      // this.$http.request('collect/fieldCollection', {
-      //   params: {
-      //     collector_config_id: this.curCollect.collector_config_id,
-      //   },
-      //   data,
-      // }).then((res) => {
-      //   if (res.code === 0) {
-      //     // this.storageList = res.data
-      //     // this.formData.storage_cluster_id = this.storageList[0].storage_cluster_id
-      //     this.isLoading = false;
-      //     if (res.data) {
-      //       this.$store.commit('collect/updateCurCollect', Object.assign({}, this.formData, data, res.data));
-      //       this.$emit('changeIndexSetId', res.data.index_set_id || '');
-      //     }
-      //     this.$emit('stepChange');
-      //   }
-      // })
-      //   .finally(() => {
-      //     this.isLoading = false;
-      //   });
     },
-    // 输入自定义过期天数、冷热集群存储期限
-    // enterCustomDay(val, type) {
-    //   const numberVal = parseInt(val.trim(), 10);
-    //   const stringVal = numberVal.toString();
-    //   const isRetention = type === 'retention'; // 过期时间 or 热数据存储时间
-    //   if (numberVal) {
-    //     const maxDays = this.selectedStorageCluster.max_retention || 30;
-    //     if (numberVal > maxDays) { // 超过最大天数
-    //       isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
-    //       this.messageError(this.$t('最大自定义天数为') + maxDays);
-    //     } else {
-    //       if (isRetention) {
-    //         if (!this.retentionDaysList.some(item => item.id === stringVal)) {
-    //           this.retentionDaysList.push({
-    //             id: stringVal,
-    //             name: stringVal + this.$t('天'),
-    //           });
-    //         }
-    //         this.formData.retention = stringVal;
-    //         this.customRetentionDay = '';
-    //       } else {
-    //         if (!this.hotDataDaysList.some(item => item.id === stringVal)) {
-    //           this.hotDataDaysList.push({
-    //             id: stringVal,
-    //             name: stringVal + this.$t('天'),
-    //           });
-    //         }
-    //         this.formData.allocation_min_days = stringVal;
-    //         this.customHotDataDay = '';
-    //       }
-    //       document.body.click();
-    //     }
-    //   } else {
-    //     isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
-    //     this.messageError(this.$t('请输入有效数值'));
-    //   }
-    // },
-    // 跳转到 es 源
-    // jumpToEsAccess() {
-    //   window.open(this.$router.resolve({
-    //     name: 'es-collection',
-    //     query: {
-    //       projectId: window.localStorage.getItem('project_id'),
-    //     },
-    //   }).href, '_blank');
-    // },
     // 检查提取方法或条件是否已变更
     checkEtlConfChnage(isCollect = false) {
       // 非bk_log_text类型需要有正确的结果
@@ -990,31 +752,6 @@ export default {
     checkFieldsTable() {
       return this.formData.etl_config !== 'bk_log_text' ? this.$refs.fieldTable.validateFieldTable() : [];
     },
-    // 存储校验
-    // checkStore() {
-    //   return new Promise((resolve, reject) => {
-    //     if (!this.isUnmodifiable) {
-    //       this.$refs.validateForm.validate().then((validator) => {
-    //         resolve(validator);
-    //       })
-    //         .catch((err) => {
-    //           console.warn('存储校验错误');
-    //           reject(err);
-    //         });
-    //     } else {
-    //       resolve();
-    //     }
-    //   });
-    // },
-    // 返回列表
-    // handleBack() {
-    //   this.$router.push({
-    //     name: 'collection-item',
-    //     query: {
-    //       projectId: window.localStorage.getItem('project_id'),
-    //     },
-    //   });
-    // },
     // 跳过
     handleSkip() {
       this.$emit('stepChange', this.curStep + 1);
@@ -1063,10 +800,7 @@ export default {
       const {
         table_id,
         storage_cluster_id,
-        retention,
-        allocation_min_days,
         table_id_prefix,
-        view_roles,
         etl_config,
         etl_params,
         fields,
@@ -1093,24 +827,18 @@ export default {
       })
       this.isUnmodifiable = !!(table_id || storage_cluster_id)
       this.fieldType = etl_config || 'bk_log_text'
-      // this.switcher = etl_config ? etl_config !== 'bk_log_text' : false
       /* eslint-enable */
       Object.assign(this.formData, {
         table_id,
-        storage_cluster_id,
+        // storage_cluster_id,
         table_id_prefix,
         etl_config: this.fieldType,
         etl_params: Object.assign({
           retain_original_text: true,
           separator_regexp: '',
           separator: '',
-          // separator_field_list: ''
         }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
         fields: copyFields.filter(item => !item.is_built_in),
-        retention: retention ? `${retention}` : this.defaultRetention,
-        // eslint-disable-next-line camelcase
-        allocation_min_days: allocation_min_days ? `${allocation_min_days}` : '0',
-        view_roles,
       });
       if (!this.copyBuiltField.length) {
         this.copyBuiltField = copyFields.filter(item => item.is_built_in);
@@ -1118,22 +846,10 @@ export default {
       if (this.curCollect.etl_config && this.curCollect.etl_config !== 'bk_log_text') {
         this.formatResult = true;
       }
-      // this.formData.storage_cluster_id = this.formData.storage_cluster_id === null
-      //   ? tsStorageId : this.formData.storage_cluster_id;
     },
     chickFile() {
       this.defaultSettings.isShow = true;
     },
-    // switcherHandle(value) {
-    //   if (value) {
-    //     this.formData.etl_config = this.fieldType ? (this.fieldType === 'bk_log_text' ? '' : this.fieldType) : '';
-    //     this.params.etl_config = this.formData.etl_config;
-    //   } else {
-    //     this.fieldType = this.formData.etl_config;
-    //     this.formData.etl_config = 'bk_log_text';
-    //     this.params.etl_config = 'bk_log_text';
-    //   }
-    // },
     //  原始日志刷新
     refreshClick() {
       if (this.refresh) {
@@ -1485,6 +1201,7 @@ export default {
         // 获取采集项详情
         await this.setDetail(id);
       } else {
+        this.$store.commit('collect/setCurCollect', curCollect);
         this.setAdvanceCleanTab(true);
         this.basicLoading = false;
       }

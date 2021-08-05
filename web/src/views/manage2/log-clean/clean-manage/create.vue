@@ -63,8 +63,8 @@ export default {
     };
   },
   methods: {
-    stepChange(type) {
-      if (type === 'back') {
+    stepChange(num) {
+      if (num === 'back') {
         this.$router.push({
           name: 'log-clean-list',
           query: {
@@ -73,7 +73,8 @@ export default {
         });
         return;
       }
-      this.curStep = this.curStep + 1;
+
+      this.curStep = num;
     },
   },
 };

@@ -149,21 +149,13 @@
           :disabled="!collectProject">
           {{$t('dataManage.perform')}}
         </bk-button>
-        <!-- <bk-button
-          theme="default"
-          :title="$t('btn.cancel')"
-          class="ml10"
-          @click="handleBack"
-          :disabled="isLoading">
-          {{$t('dataManage.Return_list')}}
-        </bk-button> -->
       </bk-form-item>
     </bk-form>
   </div>
 </template>
 
 <script>
-import { mapGetters, mapState } from 'vuex';
+import { mapGetters } from 'vuex';
 import { projectManages } from '@/common/util';
 
 export default {
@@ -185,9 +177,7 @@ export default {
       basicLoading: true,
       isUnmodifiable: false,
       isUnmodfyIndexName: false,
-      // switcher: false,
       roleList: [],
-      // defaultRetention: '',
       fieldType: '',
       deletedVisible: true,
       copysText: {},
@@ -223,8 +213,6 @@ export default {
       customRetentionDay: '', // 自定义过期天数
       hotDataDaysList: [], // 冷热集群存储期限列表
       customHotDataDay: '', // 自定义冷热集群存储期限天数
-      // copyBuiltField: [],
-      // formatResult: true, // 验证结果是否通过
       rules: {
         table_id: [
           {
@@ -277,15 +265,6 @@ export default {
           time_zone: '',
         },
       },
-      activePanel: 'base',
-      panels: [
-        { name: 'base', label: this.$t('dataManage.Base') },
-        { name: 'advance', label: this.$t('dataManage.Advance') },
-      ],
-      selectTemplate: '', // 应用模板
-      saveTempName: '',
-      templateList: [], // 模板列表
-      templateDialogVisible: false,
       stashCleanConf: null, // 清洗缓存,
     };
   },
@@ -297,23 +276,6 @@ export default {
       globalsData: 'globals/globalsData',
       accessUserManage: 'accessUserManage',
     }),
-    ...mapState({
-      menuProject: state => state.menuProject,
-    }),
-    isJsonOrOperator() {
-      return this.params.etl_config === 'bk_log_json' || this.params.etl_config === 'bk_log_delimiter';
-    },
-    hasFormat() { // 最后一次正确的fileds结果
-      return this.formData.fields.length;
-    },
-    showDebugBtn() {
-      const methods = this.params.etl_config;
-      if (!methods || methods === 'bk_log_text' || methods === 'bk_log_regexp') return false;
-      if (methods === 'bk_log_delimiter') {
-        return this.params.etl_params.separator;
-      }
-      return true;
-    },
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
@@ -368,15 +330,7 @@ export default {
     },
   },
   async mounted() {
-    // TODO
-    // if (this.isCleanField) {
-    //   setTimeout(() => {
-    //     this.basicLoading = false;
-    //   }, 10);
-    //   return;
-    // }
     this.getStorage();
-    // this.getDataLog('init');
   },
   methods: {
     // 获取存储集群
@@ -580,61 +534,13 @@ export default {
     },
     // 完成按钮
     finish() {
-      // if (!this.params.etl_config) {
-      //   this.$bkMessage({
-      //     theme: 'error',
-      //     message: this.$t('dataManage.select_field'),
-      //   });
-      // }
       const promises = [this.checkStore()];
-      // if (this.formData.etl_config !== 'bk_log_text') {
-      //   promises.splice(1, 0, ...this.checkFieldsTable());
-      // }
       Promise.all(promises).then(() => {
-        // // 非bk_log_text类型需要有正确的结果
-        // if (this.formData.etl_config && this.formData.etl_config !== 'bk_log_text' && !this.hasFormat) return;
-        // let isConfigChange = false; // 提取方法或条件是否已变更
-        // const etlConfigParam = this.params.etl_config;
-        // if (etlConfigParam !== 'bk_log_text') {
-        //   const etlConfigForm = this.formData.etl_config;
-        //   if (etlConfigParam !== etlConfigForm) {
-        //     isConfigChange = true;
-        //   } else {
-        //     const etlParams = this.params.etl_params;
-        //     const etlParamsForm = this.formData.etl_params;
-        //     if (etlConfigParam === 'bk_log_regexp') {
-        //       isConfigChange = etlParams.separator_regexp !== etlParamsForm.separator_regexp;
-        //     }
-        //     if (etlConfigParam === 'bk_log_delimiter') {
-        //       isConfigChange = etlParams.separator !== etlParamsForm.separator;
-        //     }
-        //   }
-        // }
-        // if (isConfigChange) {
-        //   const h = this.$createElement;
-        //   this.$bkInfo({
-        //     type: 'warning',
-        //     title: this.$t('dataManage.Submit'),
-        //     subHeader: h('p', {
-        //       style: {
-        //         whiteSpace: 'normal',
-        //       },
-        //     }, this.$t('dataManage.Debug_set')),
-        //     confirmFn: () => {
-        //       this.fieldCollection();
-        //     },
-        //   });
-        //   return;
-        // }
         this.fieldCollection();
       }, (validator) => {
         console.warn('保存失败', validator);
       });
     },
-    // 字段表格校验
-    // checkFieldsTable() {
-    //   return this.formData.etl_config !== 'bk_log_text' ? this.$refs.fieldTable.validateFieldTable() : [];
-    // },
     // 存储校验
     checkStore() {
       return new Promise((resolve, reject) => {
@@ -651,21 +557,12 @@ export default {
         }
       });
     },
-    // 返回列表
-    // handleBack() {
-    //   this.$router.push({
-    //     name: 'collection-item',
-    //     query: {
-    //       projectId: window.localStorage.getItem('project_id'),
-    //     },
-    //   });
-    // },
     prevHandler() {
-      this.$emit('stepChange', this.curStep - 1);
+      const step = this.isCleanField ? 1 : this.curStep - 1;
+      this.$emit('stepChange', step);
     },
     // 获取详情
     getDetail() {
-      console.log(this.curCollect);
       const tsStorageId = this.formData.storage_cluster_id;
       const {
         table_id,
@@ -731,70 +628,11 @@ export default {
           fields: this.stashCleanConf.etl_fields,
         });
       }
-      // eslint-disable-next-line camelcase
-      // if (!this.copyBuiltField.length) {
-      //   this.copyBuiltField = copyFields.filter(item => item.is_built_in);
-      // }
-      // if (this.curCollect.etl_config && this.curCollect.etl_config !== 'bk_log_text') {
-      //   this.formatResult = true;
-      // }
       this.formData.storage_cluster_id = this.formData.storage_cluster_id === null
         ? tsStorageId : this.formData.storage_cluster_id;
 
       this.basicLoading = false;
     },
-    // chickFile() {
-    //   this.defaultSettings.isShow = true;
-    // },
-    // switcherHandle(value) {
-    //   if (value) {
-    //     this.formData.etl_config = this.fieldType ? (this.fieldType === 'bk_log_text' ? '' : this.fieldType) : '';
-    //     this.params.etl_config = this.formData.etl_config;
-    //   } else {
-    //     this.fieldType = this.formData.etl_config;
-    //     this.formData.etl_config = 'bk_log_text';
-    //     this.params.etl_config = 'bk_log_text';
-    //   }
-    // },
-    // requestEtlPreview() {
-    // },
-    //  获取采样状态
-    // getDataLog(isInit) {
-    //   this.refresh = false;
-    //   this.basicLoading = true;
-    //   this.$http.request('source/dataList', {
-    //     params: {
-    //       collector_config_id: this.curCollect.collector_config_id,
-    //     },
-    //   }).then((res) => {
-    //     if (res.data && res.data.length) {
-    //       this.copysText = res.data[0].etl || {};
-    //       const data = res.data[0];
-    //       this.jsonText = data.origin || {};
-    //       this.logOriginal = data.etl.data || '';
-    //       if (this.logOriginal) {
-    //         this.requestEtlPreview(isInit);
-    //       }
-    //       this.copyBuiltField.forEach((item) => {
-    //         const fieldName = item.field_name;
-    //         if (fieldName) {
-    //           // eslint-disable-next-line no-prototype-builtins
-    //           if (item.hasOwnProperty('value')) {
-    //             item.value = this.copysText[fieldName];
-    //           } else {
-    //             this.$set(item, 'value', this.copysText[fieldName]);
-    //           }
-    //         }
-    //       });
-    //     }
-    //   })
-    //     .catch(() => {
-    //     })
-    //     .finally(() => {
-    //       this.basicLoading = false;
-    //       this.refresh = true;
-    //     });
-    // },
   },
 };
 </script>

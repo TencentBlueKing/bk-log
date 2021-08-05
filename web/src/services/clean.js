@@ -40,7 +40,7 @@ const cleanList = {
 
 // 刷新高级清洗
 const refreshClean = {
-  url: '/databus/cleans/:collector_config_id/',
+  url: '/databus/clean/:collector_config_id/refresh/',
   method: 'get',
 };
 

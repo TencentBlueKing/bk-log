@@ -62,9 +62,9 @@
         </bk-table-column>
         <bk-table-column
           :label="$t('logClean.etlConfig')"
-          prop="clean_type"
+          prop="etl_config"
           class-name="filter-column"
-          column-key="clean_type"
+          column-key="etl_config"
           :filters="formatFilters"
           :filter-multiple="false">
           <template slot-scope="props">
@@ -83,6 +83,7 @@
         </bk-table-column>
         <bk-table-column :label="$t('dataSource.operation')" width="200">
           <div class="collect-table-operate" slot-scope="props">
+            <!-- bkdata_auth_url不为null则表示需要跳转计算平台检索 -->
             <!-- 高级清洗授权 -->
             <bk-button
               v-if="props.row.bkdata_auth_url"
@@ -98,9 +99,9 @@
               theme="primary"
               text
               class="mr10 king-button"
-              :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
+              :disabled="(props.row.is_active || !props.row.index_set_id)"
               v-cursor="{ active: !(props.row.permission && props.row.permission.search_log) }"
-              @click="operateHandler">
+              @click="operateHandler(props.row, 'search')">
               {{ $t('nav.retrieve') }}
             </bk-button>
             <!-- 编辑 -->
@@ -117,6 +118,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              :disabled="props.row.etl_config !== 'bkdata_clean'"
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'delete')">
               {{ $t('btn.delete') }}
@@ -144,27 +146,10 @@ export default {
         limit: 10,
         limitList: [10, 20, 50, 100],
       },
-      cleanList: [
-        {
-          collector_config_id: 1,
-          collector_config_name: 'test',
-          index_set_id: 2,
-          bkdata_auth_url: '1',
-          bk_data_id: 10,
-          etl_config: 'bk_log_json',
-          result_table_id: 'test',
-          permission: {
-            search_log: true,
-            view_collection: true,
-            manage_collection: true,
-          },
-          updated_by: 'test',
-          updated_at: '2021-07-24 17:42:32+0800',
-        },
-      ],
+      cleanList: [],
       params: {
         keyword: '',
-        clean_type: '',
+        etl_config: '',
       },
     };
   },
@@ -221,11 +206,9 @@ export default {
       this.handlePageChange(1);
     },
     handleFilterChange(data) {
-      console.log(data);
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
-      console.log(this.params, 1);
       this.search();
     },
     /**
@@ -249,6 +232,7 @@ export default {
       }
     },
     requestData() {
+      this.isTableLoading = true;
       this.$http.request('clean/cleanList', {
         query: {
           ...this.params,
@@ -276,29 +260,64 @@ export default {
         },
       });
     },
+    async getOptionApplyData(paramData) {
+      try {
+        this.isTableLoading = true;
+        const res = await this.$store.dispatch('getApplyData', paramData);
+        this.$store.commit('updateAuthDialogData', res.data);
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        this.isTableLoading = false;
+      }
+    },
     operateHandler(row, operateType) {
-      if (operateType === 'edit') {
-        this.$router.push({
-          name: 'clean-edit',
-          params: {
-            collectorId: row.collector_config_id,
-          },
-          query: {
-            projectId: window.localStorage.getItem('project_id'),
-          },
-        });
+      if (['edit', 'delete'].includes(operateType) && row.etl_config === 'bkdata_clean') { // 编辑、删除操作，高级清洗跳转计算平台
+        const id = row.bk_data_id;
+        const jumpUrl = `${window.BKDATA_URL}/#/data-access/data-detail/${id}/3`;
+        window.open(jumpUrl, '_blank');
         return;
       }
-      // if (operateType === 'delete') {
-      //   this.$bkInfo({
-      //     type: 'warning',
-      //     title: this.$t('logClean.Confirm_delete'),
-      //     confirmFn: () => {
-      //       this.requestDeleteClenItem(row);
-      //     },
-      //   });
-      //   return;
-      // }
+      if (operateType === 'edit') { // 基础清洗
+        if (!(row.permission?.manage_collection)) { // 管理权限
+          return this.getOptionApplyData({
+            action_ids: ['manage_collection'],
+            resources: [{
+              type: 'collection',
+              id: row.collector_config_id,
+            }],
+          });
+        }
+      }
+      if (operateType === 'search') {
+        if (!(row.permission?.search_log)) { // 检索权限
+          return this.getOptionApplyData({
+            action_ids: ['search_log'],
+            resources: [{
+              type: 'indices',
+              id: row.index_set_id,
+            }],
+          });
+        }
+      }
+
+      let routeName = '';
+      const params = {};
+      const query = {};
+      if (operateType === 'edit') {
+        routeName = 'clean-edit';
+        query.projectId = window.localStorage.getItem('project_id');
+        params.collectorId = row.collector_config_id;
+      } else if (operateType === 'search') {
+        routeName = 'retrieve';
+        params.indexId = row.index_set_id;
+      }
+
+      this.$router.push({
+        name: routeName,
+        params,
+        query,
+      });
     },
     getFormatName(row) {
       const cleantype = row.etl_config;
