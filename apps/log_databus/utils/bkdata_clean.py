@@ -75,6 +75,7 @@ class BKDataCleanUtils:
                     collector_config_id=collector_config_id,
                     bk_biz_id=bk_biz_id,
                     log_index_set_id=index_set_dict[insert_obj["result_table_id"]],
+                    updated_by=insert_obj["created_by"],
                 )
                 for insert_obj in insert_objs
             ]
