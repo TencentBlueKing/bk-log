@@ -65,6 +65,7 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
     if not maintainers:
         raise BaseException(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
 
+    _, table_id = collector_config.table_id.split(".")
     BkDataAccessApi.deploy_plan_post(
         params={
             "bk_username": collector_config.get_updated_by(),
@@ -75,7 +76,7 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
             "description": collector_config.description,
             "access_raw_data": {
                 "tags": BKDATA_TAGS,
-                "raw_data_name": collector_config.collector_config_name_en or collector_config.table_id.split(".")[1],
+                "raw_data_name": collector_config.collector_config_name_en or table_id,
                 "maintainer": ",".join(maintainers),
                 "raw_data_alias": collector_config.collector_config_name,
                 "data_source_tags": BKDATA_DATA_SOURCE_TAGS,

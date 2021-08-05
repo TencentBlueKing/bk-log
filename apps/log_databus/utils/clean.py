@@ -45,6 +45,7 @@ class CleanFilterUtils:
             "updated_at",
         ],
     )
+    KEYWORD = ["collector_config_name", "result_table_id"]
 
     def __init__(self, bk_biz_id):
         self.bk_biz_id = bk_biz_id
@@ -104,9 +105,10 @@ class CleanFilterUtils:
         return BkDataAuthHandler.get_auth_url([result_table_id])
 
     @classmethod
-    def filter_keyword(cls, clean, keyword):
-        if keyword in clean.collector_config_name or keyword in clean.result_table_id:
-            return True
+    def filter_keyword(cls, clean, keyword, *args):
+        for arg in args:
+            if keyword in getattr(clean, arg, ""):
+                return True
         return False
 
     def filter(self, page, pagesize, keyword="", etl_config=""):
@@ -118,7 +120,7 @@ class CleanFilterUtils:
         for clean in self.cleans:
             if etl_config and clean.etl_config != etl_config:
                 continue
-            if keyword and not self.filter_keyword(clean=clean, keyword=keyword):
+            if keyword and not self.filter_keyword(clean, keyword, *self.KEYWORD):
                 continue
             res.append(dict(clean._asdict()))
 

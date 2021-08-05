@@ -19,9 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from rest_framework.response import Response
 from rest_framework import serializers
-from django.utils.translation import ugettext_lazy as _
 
-from apps.exceptions import ValidationError
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import BusinessActionPermission, insert_permission_field
 from apps.generic import ModelViewSet
@@ -33,6 +31,7 @@ from apps.log_databus.serializers import (
     CleanTemplateListSerializer,
     CollectorEtlSerializer,
     CleanRefreshSerializer,
+    CleanSerializer,
 )
 from apps.log_databus.utils.clean import CleanFilterUtils
 from apps.utils.drf import detail_route, list_route
@@ -93,18 +92,13 @@ class CleanViewSet(ModelViewSet):
             "result": true
         }
         """
-        bk_biz_id = request.GET.get("bk_biz_id")
-        if not bk_biz_id:
-            raise ValidationError(_("业务id不能为空"))
-        keyword = request.GET.get("keyword")
-        etl_config = request.GET.get("etl_config")
-        page = request.GET.get("page")
-        pagesize = request.GET.get("pagesize")
-        if not page or not pagesize:
-            raise ValidationError(_("分页参数不能为空"))
+        data = self.params_valid(CleanSerializer)
         return Response(
-            CleanFilterUtils(bk_biz_id=bk_biz_id).filter(
-                keyword=keyword, etl_config=etl_config, page=page, pagesize=pagesize
+            CleanFilterUtils(bk_biz_id=data["bk_biz_id"]).filter(
+                keyword=data.get("keyword", ""),
+                etl_config=data.get("etl_config", ""),
+                page=data["page"],
+                pagesize=data["pagesize"],
             )
         )
 
