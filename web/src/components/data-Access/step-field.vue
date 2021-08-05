@@ -235,7 +235,10 @@
               <div class="step-description">
                 <span class="step-num">2</span>
                 <span class="description-text">{{ $t('dataManage.advanceStep2') }}
-                  <span class="link">{{ $t('dataManage.linkdocs') }}<span class="log-icon icon-lianjie"></span></span>
+                  <a class="link" :href="docCenterUrl" target="_blank">
+                    {{ $t('dataManage.linkdocs') }}
+                    <span class="log-icon icon-lianjie"></span>
+                  </a>
                 </span>
                 <p class="remark">{{ $t('dataManage.advanceRemark1') }}</p>
               </div>
@@ -267,14 +270,14 @@
           {{$t('dataManage.last')}}
         </bk-button>
         <!-- 前往高级清洗 -->
-        <bk-button
+        <log-button
           v-if="activePanel === 'advance'"
           theme="primary"
-          :title="$t('dataManage.last')"
+          :tips-conf="advanceDisableTips"
+          :button-text="$t('dataManage.advanceClean')"
           :disabled="advanceDisable"
-          @click="advanceHandler">
-          {{$t('dataManage.advanceClean')}}
-        </bk-button>
+          @on-click="advanceHandler">
+        </log-button>
         <!-- 下一步/完成 -->
         <bk-button
           v-if="activePanel === 'base' && !isTempField"
@@ -462,6 +465,7 @@ export default {
       cleanCollectorList: [],
       renderKey: 0, // key-changing
       authPageInfo: null,
+      docCenterUrl: window.BK_DOC_DATA_URL,
     };
   },
   computed: {
@@ -498,7 +502,18 @@ export default {
       return this.$route.name === 'clean-edit';
     },
     advanceDisable() {
-      return this.curCollect.bkdata_data_id === null || this.isLoading;
+      return window.FEATURE_TOGGLE.scenario_bkdata !== 'on'
+              || this.curCollect.bkdata_data_id === null
+              || (this.isCleanField && !this.cleanCollector);
+    },
+    advanceDisableTips() {
+      if (window.FEATURE_TOGGLE.scenario_bkdata !== 'on') {
+        return '';
+      }
+      if (this.curCollect.bkdata_data_id === null) {
+        return '';
+      }
+      return '';
     },
   },
   watch: {

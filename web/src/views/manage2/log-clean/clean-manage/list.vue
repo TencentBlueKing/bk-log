@@ -94,16 +94,17 @@
               {{ $t('授权') }}
             </bk-button>
             <!-- 检索 -->
-            <bk-button
+            <log-button
               v-else
               theme="primary"
               text
-              class="mr10 king-button"
-              :disabled="(props.row.is_active || !props.row.index_set_id)"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.search_log) }"
-              @click="operateHandler(props.row, 'search')">
-              {{ $t('nav.retrieve') }}
-            </bk-button>
+              ext-cls="mr10 king-button"
+              :tips-conf="getTipText(props.row)"
+              :button-text="$t('nav.retrieve')"
+              :disabled="(!props.row.is_active || !props.row.index_set_id)"
+              :cursor-active="!(props.row.permission && props.row.permission.search_log)"
+              @on-click="operateHandler(props.row, 'search')">
+            </log-button>
             <!-- 编辑 -->
             <bk-button
               theme="primary"
@@ -114,15 +115,16 @@
               {{ $t('编辑') }}
             </bk-button>
             <!-- 删除 -->
-            <bk-button
+            <log-button
               theme="primary"
               text
-              class="mr10 king-button"
+              ext-cls="mr10 king-button"
+              :tips-conf="''"
+              :button-text="$t('btn.delete')"
               :disabled="props.row.etl_config !== 'bkdata_clean'"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-              @click.stop="operateHandler(props.row, 'delete')">
-              {{ $t('btn.delete') }}
-            </bk-button>
+              :cursor-active="!(props.row.permission && props.row.permission.manage_collection)"
+              @on-click="operateHandler(props.row, 'delete')">
+            </log-button>
           </div>
         </bk-table-column>
       </bk-table>
@@ -269,6 +271,15 @@ export default {
         console.warn(err);
       } finally {
         this.isTableLoading = false;
+      }
+    },
+    getTipText(row) {
+      if (!row.is_active) {
+        return '';
+      }
+
+      if (!row.index_set_id) {
+        return '';
       }
     },
     operateHandler(row, operateType) {

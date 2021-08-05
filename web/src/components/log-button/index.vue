@@ -21,15 +21,15 @@
   -->
 
 <template>
-  <section v-bk-tooltips="tipsConf">
+  <section v-bk-tooltips="tooltips" class="log-button">
     <bk-button
       :theme="theme"
       :text="text"
-      class="mr10 king-button"
-      :disabled="!props.row.bkdata_auth_url"
-      v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-      @click.stop="operateHandler(props.row, 'delete')">
-      {{ $t('btn.delete') }}
+      :ext-cls="extCls"
+      :disabled="disabled"
+      v-cursor="{ active: cursorActive }"
+      @click.stop="handleClick">
+      {{ buttonText }}
     </bk-button>
   </section>
 </template>
@@ -41,7 +41,23 @@ export default {
       type: String,
       default: 'dark',
     },
+    buttonText: {
+      type: String,
+      default: '',
+    },
     text: {
+      type: Boolean,
+      default: false,
+    },
+    extCls: {
+      type: String,
+      default: '',
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
+    cursorActive: {
       type: Boolean,
       default: false,
     },
@@ -51,6 +67,27 @@ export default {
       default: '',
     },
   },
+  computed: {
+    tooltips() {
+      const conf = typeof this.tipsConf === 'string' ? { content: this.tipsConf } : this.tipsConf;
+      return {
+        ...conf,
+        delay: 100,
+        disabled: !this.disabled || conf.content === '',
+      };
+    },
+  },
+  methods: {
+    handleClick() {
+      this.$emit('on-click');
+    },
+  },
 };
 </script>
+
+<style lang="scss" scoped>
+  .log-button {
+    display: inline-block;
+  }
+</style>
 
