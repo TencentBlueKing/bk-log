@@ -245,3 +245,8 @@ class CleanTemplateNotExistException(BaseCollectorConfigException):
 class CleanTemplateRepeatException(BaseCollectorConfigException):
     ERROR_CODE = "702"
     MESSAGE = _("该业务{bk_biz_id}已存在该模板{name}")
+
+
+class ProjectNoteExistException(BaseCollectorConfigException):
+    ERROR_CODE = "703"
+    MESSAGE = _("该业务{bk_biz_id}未找到对应project")

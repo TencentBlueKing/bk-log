@@ -33,6 +33,7 @@ router.register(r"data_link", link_views.DataLinkViewSet, basename="data_link")
 router.register(r"collect_itsm", itsm_views.ItsmViewSet, basename="collect_itsm")
 router.register(r"collect_itsm_cb", itsm_views.ItsmCallbackViewSet, basename="collect_itsm_cb")
 router.register(r"clean_template", clean_views.CleanTemplateViewSet, basename="clean_template")
+router.register(r"clean", clean_views.CleanViewSet, basename="clean")
 
 
 urlpatterns = [

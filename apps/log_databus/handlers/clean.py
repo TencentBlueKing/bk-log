@@ -18,8 +18,19 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.log_databus.exceptions import CleanTemplateNotExistException, CleanTemplateRepeatException
-from apps.log_databus.models import CleanTemplate
+from apps.log_databus.models import CleanTemplate, BKDataClean
+from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
 from apps.models import model_to_dict
+
+
+class CleanHandler(object):
+    def __init__(self, collector_config_id):
+        self.collector_config_id = collector_config_id
+
+    def refresh(self, raw_data_id, bk_biz_id):
+        bkdata_clean_utils = BKDataCleanUtils(raw_data_id=raw_data_id)
+        bkdata_clean_utils.update_or_create_clean(collector_config_id=self.collector_config_id, bk_biz_id=bk_biz_id)
+        return [bkdata_clean.result_table_name for bkdata_clean in BKDataClean.objects.filter(raw_data_id=raw_data_id)]
 
 
 class CleanTemplateHandler(object):

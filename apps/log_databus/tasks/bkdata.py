@@ -21,6 +21,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from celery.task import periodic_task, task
 from celery.schedules import crontab
 
+from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
 from apps.utils.log import logger
 from apps.api.modules.bkdata_access import BkDataAccessApi
 from apps.log_databus.constants import (
@@ -36,7 +37,7 @@ from apps.log_databus.constants import (
     META_DATA_ENCODING,
     ADMIN_REQUEST_USER,
 )
-from apps.feature_toggle.plugins.constants import FEATURE_BKDATA_DATAID
+from apps.feature_toggle.plugins.constants import FEATURE_BKDATA_DATAID, SCENARIO_BKDATA
 from apps.log_databus.models import CollectorConfig
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
@@ -119,3 +120,17 @@ def review_bkdata_data_id():
             collector_config.bkdata_data_id_sync_times = 0
 
         collector_config.save()
+
+
+@periodic_task(run_every=crontab(minute="*/30"))
+def review_clean():
+    """
+    定期同步计算平台入库列表
+    """
+    if not FeatureToggleObject.switch(name=SCENARIO_BKDATA):
+        return
+    collector_configs = CollectorConfig.objects.filter(bkdata_data_id__isnull=False)
+    for collector_config in collector_configs:
+        BKDataCleanUtils(raw_data_id=collector_config.bkdata_data_id).update_or_create_clean(
+            collector_config_id=collector_config.collector_config_id, bk_biz_id=collector_config.bk_biz_id
+        )

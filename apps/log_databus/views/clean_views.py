@@ -19,13 +19,22 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from rest_framework.response import Response
 from rest_framework import serializers
+from django.utils.translation import ugettext_lazy as _
 
-from apps.iam.handlers.drf import ViewBusinessPermission
+from apps.exceptions import ValidationError
+from apps.iam import ActionEnum, ResourceEnum
+from apps.iam.handlers.drf import BusinessActionPermission, insert_permission_field
 from apps.generic import ModelViewSet
-from apps.log_databus.handlers.clean import CleanTemplateHandler
+from apps.log_databus.handlers.clean import CleanTemplateHandler, CleanHandler
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.models import BKDataClean, CleanTemplate
-from apps.log_databus.serializers import CleanTemplateSerializer, CleanTemplateListSerializer, CollectorEtlSerializer
+from apps.log_databus.serializers import (
+    CleanTemplateSerializer,
+    CleanTemplateListSerializer,
+    CollectorEtlSerializer,
+    CleanRefreshSerializer,
+)
+from apps.log_databus.utils.clean import CleanFilterUtils
 from apps.utils.drf import detail_route, list_route
 
 
@@ -38,8 +47,20 @@ class CleanViewSet(ModelViewSet):
     model = BKDataClean
 
     def get_permissions(self):
-        pass
+        return [BusinessActionPermission([ActionEnum.MANAGE_CLEAN_CONFIG])]
 
+    @insert_permission_field(
+        id_field=lambda d: d["collector_config_id"],
+        data_field=lambda d: d["list"],
+        actions=[ActionEnum.VIEW_COLLECTION, ActionEnum.MANAGE_COLLECTION],
+        resource_meta=ResourceEnum.COLLECTION,
+    )
+    @insert_permission_field(
+        id_field=lambda d: d["index_set_id"],
+        data_field=lambda d: d["list"],
+        actions=[ActionEnum.SEARCH_LOG],
+        resource_meta=ResourceEnum.INDICES,
+    )
     def list(self, request, *args, **kwargs):
         """
         @api {get} /databus/clean/?page=$page&pagesize=$pagesize&bk_biz_id=$bk_biz_id 1_清洗-列表
@@ -72,12 +93,25 @@ class CleanViewSet(ModelViewSet):
             "result": true
         }
         """
-        pass
+        bk_biz_id = request.GET.get("bk_biz_id")
+        if not bk_biz_id:
+            raise ValidationError(_("业务id不能为空"))
+        keyword = request.GET.get("keyword")
+        etl_config = request.GET.get("etl_config")
+        page = request.GET.get("page")
+        pagesize = request.GET.get("pagesize")
+        if not page or not pagesize:
+            raise ValidationError(_("分页参数不能为空"))
+        return Response(
+            CleanFilterUtils(bk_biz_id=bk_biz_id).filter(
+                keyword=keyword, etl_config=etl_config, page=page, pagesize=pagesize
+            )
+        )
 
     @detail_route(methods=["GET"])
     def refresh(self, request, *args, collector_config_id=None, **kwarg):
         """
-        @api {get} /databus/cleans/$collector_config_id/?bk_biz_id=$bk_biz_id&bk_data_id=$bk_data_id 2_高级清洗-刷新
+        @api {get} /databus/clean/$collector_config_id/refresh/?bk_biz_id=$bk_biz_id&bk_data_id=$bk_data_id 2_高级清洗-刷新
         @apiName refresh_clean
         @apiGroup 22_clean
         @apiDescription 刷新高级清洗
@@ -103,6 +137,12 @@ class CleanViewSet(ModelViewSet):
             "result": true
         }
         """
+        data = self.params_valid(CleanRefreshSerializer)
+        return Response(
+            CleanHandler(collector_config_id=collector_config_id).refresh(
+                raw_data_id=data["bk_data_id"], bk_biz_id=data["bk_biz_id"]
+            )
+        )
 
 
 class CleanTemplateViewSet(ModelViewSet):
@@ -116,7 +156,7 @@ class CleanTemplateViewSet(ModelViewSet):
     search_fields = ("name", "bk_biz_id")
 
     def get_permissions(self):
-        return [ViewBusinessPermission()]
+        return [BusinessActionPermission([ActionEnum.MANAGE_CLEAN_TEMPLATE_CONFIG])]
 
     def get_serializer_class(self, *args, **kwargs):
         action_serializer_map = {

@@ -529,6 +529,11 @@ class ListCollectorsByHostSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
 
 
+class CleanRefreshSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    bk_data_id = serializers.IntegerField(label=_("数据源id"))
+
+
 class CleanTemplateSerializer(serializers.Serializer):
     name = serializers.CharField(label=_("清洗模板名"), required=True)
     clean_type = serializers.CharField(label=_("清洗类型"), required=True)
