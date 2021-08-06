@@ -1,13 +1,9 @@
 name: Test
 on:
   push:
-    branches: [master, stag]
-    paths:
-      - '**.py'
+    branches: [master, stag, feature*]
   pull_request:
-    branches: [master, stag]
-    paths:
-      - '**.py'
+    branches: [master, stag, feature*]
   schedule:
     - cron: "0 10 * * *"
 jobs:

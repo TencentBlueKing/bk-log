@@ -544,6 +544,9 @@ class CollectorHandler(object):
         collector_config_name = (
             self.data.collector_config_name + "_delete_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         )
+        collector_config_name_en = (
+            self.data.collector_config_name_en + "_delete_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        )
 
         # 2. 停止采集（删除配置文件）
         self.stop()
@@ -558,6 +561,7 @@ class CollectorHandler(object):
 
         # 5. 删除CollectorConfig记录
         self.data.collector_config_name = collector_config_name
+        self.data.collector_config_name_en = collector_config_name_en
         self.data.save()
         self.data.delete()
 
