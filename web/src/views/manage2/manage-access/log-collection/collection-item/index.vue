@@ -36,7 +36,7 @@
           :placeholder="$t('dataManage.Search_index_name')"
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
-          v-model="keyword"
+          v-model="params.keyword"
           @enter="search">
         </bk-input>
       </div>
@@ -50,6 +50,7 @@
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
+        @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
         <bk-table-column :label="$t('dataSource.collector_config_name')" min-width="90">
@@ -92,6 +93,7 @@
           min-width="50"
           class-name="filter-column"
           prop="collector_scenario_name"
+          column-key="collector_scenario_id"
           :filters="checkcFields('collector_scenario_name') ? scenarioFilters : []"
           :filter-method="handleScenarioFilter"
           :filter-multiple="false">
@@ -107,6 +109,7 @@
           min-width="50"
           class-name="filter-column"
           prop="category_name"
+          column-key="category_id"
           :filters="checkcFields('category_name') ? categoryFilters : []"
           :filter-method="handleCategoryFilter"
           :filter-multiple="false">
@@ -213,16 +216,18 @@
             <!-- 检索 -->
             <!-- 启用状态下 且存在 index_set_id 才能检索 -->
             <bk-button
-              theme="primary" text
+              theme="primary"
+              text
               class="king-button"
-              :disabled="!props.row.is_active || !props.row.index_set_id"
+              :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
               v-cursor="{ active: !(props.row.permission && props.row.permission.search_log) }"
               @click="operateHandler(props.row, 'search')">
               {{ $t('nav.retrieve') }}
             </bk-button>
             <!-- 编辑 -->
             <bk-button
-              theme="primary" text
+              theme="primary"
+              text
               class="king-button"
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'edit')">
@@ -230,7 +235,8 @@
             </bk-button>
             <!-- 启用/停用 -->
             <bk-button
-              theme="primary" text
+              theme="primary"
+              text
               class="king-button"
               :disabled="!props.row.status ||
                 props.row.status === 'running' ||
@@ -242,7 +248,8 @@
             </bk-button>
             <!-- 删除 -->
             <bk-button
-              theme="primary" text
+              theme="primary"
+              text
               class="king-button"
               :disabled="!props.row.status ||
                 props.row.status === 'running' ||
@@ -342,7 +349,11 @@ export default {
       collectList: [],
       collectorIdStr: '',
       collectProject: projectManages(this.$store.state.topMenu, 'collection-item'),
-      param: '',
+      params: {
+        keyword: '',
+        collector_scenario_id: '',
+        category_id: '',
+      },
       isAllowedCreate: null,
       columnSetting: {
         fields: settingFields,
@@ -364,7 +375,7 @@ export default {
         if (data.is_active) {
           target.push({
             text: data.name,
-            value: data.name,
+            value: data.id,
           });
         }
       });
@@ -377,7 +388,7 @@ export default {
         data.children.forEach((val) => {
           target.push({
             text: val.name,
-            value: val.name,
+            value: val.id,
           });
         });
       });
@@ -398,7 +409,7 @@ export default {
   },
   methods: {
     search() {
-      this.param = this.keyword;
+      // this.param = this.keyword;
       this.handlePageChange(1);
     },
     checkcFields(field) {
@@ -531,8 +542,8 @@ export default {
         query.type = 'collectionStatus';
       }
       if (operateType === 'search') {
-        if (!row.index_set_id) return;
-        params.indexId = row.index_set_id;
+        if (!row.index_set_id && !row.bkdata_index_set_ids.length) return;
+        params.indexId = row.index_set_id ? row.index_set_id : row.bkdata_index_set_ids[0];
       }
       this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
@@ -544,21 +555,28 @@ export default {
         },
       });
     },
+    // 表头过滤
+    handleFilterChange(data) {
+      Object.keys(data).forEach((item) => {
+        this.params[item] = data[item].join('');
+      });
+      this.handlePageChange(1);
+    },
     /**
-             * 分页变换
-             * @param  {Number} page 当前页码
-             * @return {[type]}      [description]
-             */
+     * 分页变换
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
     handlePageChange(page) {
       this.pagination.current = page;
       this.stopStatusPolling();
       this.requestData();
     },
     /**
-             * 分页限制
-             * @param  {Number} page 当前页码
-             * @return {[type]}      [description]
-             */
+     * 分页限制
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
     handleLimitChange(page) {
       if (this.pagination.limit !== page) {
         this.pagination.limit = page;
@@ -566,12 +584,16 @@ export default {
       }
     },
     // 日志类型表头过滤
-    handleScenarioFilter(value, row) {
-      return value === row.collector_scenario_name;
+    handleScenarioFilter() {
+      // return value === row.collector_scenario_name;
+
+      return true;
     },
     // 数据类型表头过滤
-    handleCategoryFilter(value, row) {
-      return value === row.category_name;
+    handleCategoryFilter() {
+      // return value === row.category_name;
+
+      return true;
     },
     handleSettingChange({ fields }) {
       this.columnSetting.selectedFields = fields;
@@ -604,8 +626,8 @@ export default {
       return new Promise((resolve, reject) => {
         this.$http.request('collect/getCollectList', {
           query: {
+            ...this.params,
             bk_biz_id: this.bkBizId,
-            keyword: this.param,
             page: this.pagination.current,
             pagesize: this.pagination.limit,
           },

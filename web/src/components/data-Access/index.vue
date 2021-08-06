@@ -23,7 +23,7 @@
 <template>
   <section class="access-wrapper" v-bkloading="{ isLoading: basicLoading }">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
-    <div class="access-container" v-else-if="!basicLoading">
+    <div class="access-container" v-else-if="!basicLoading && !isCleaning">
       <section class="access-step-wrapper">
         <div class="fixed-steps" :style="{ height: (stepList.length * 76) + 'px' }">
           <bk-steps
@@ -31,7 +31,8 @@
             theme="primary"
             direction="vertical"
             :cur-step.sync="curStep"
-            :steps="stepList"></bk-steps>
+            :steps="stepList">
+          </bk-steps>
           <div class="step-arrow" :style="{ top: (curStep * 76 - 38) + 'px' }"></div>
         </div>
       </section>
@@ -55,8 +56,16 @@
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
-            @stepChange="stepChange">
+            @stepChange="stepChange"
+            @changeClean="isCleaning = true">
           </step-field>
+          <step-storage
+            v-if="curStep === 5"
+            :cur-step="curStep"
+            :operate-type="operateType"
+            @changeIndexSetId="updateIndexSetId"
+            @stepChange="stepChange">
+          </step-storage>
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
@@ -79,8 +88,16 @@
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
-            @stepChange="stepChange">
+            @stepChange="stepChange"
+            @changeClean="isCleaning = true">
           </step-field>
+          <step-storage
+            v-if="curStep === 4"
+            :cur-step="curStep"
+            :operate-type="operateType"
+            @changeIndexSetId="updateIndexSetId"
+            @stepChange="stepChange">
+          </step-storage>
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
@@ -90,6 +107,7 @@
         </template>
       </section>
     </div>
+    <advance-clean-land v-else-if="!basicLoading && isCleaning" back-router="collection-item" />
   </section>
 </template>
 
@@ -101,7 +119,9 @@ import stepAdd from './step-add';
 import stepCapacity from './step-capacity';
 import stepIssued from './step-issued';
 import stepField from './step-field';
+import stepStorage from './step-storage.vue';
 import stepResult from './step-result';
+import advanceCleanLand from '@/components/data-Access/advance-clean-land';
 
 export default {
   name: 'access-steps',
@@ -111,12 +131,15 @@ export default {
     stepCapacity,
     stepIssued,
     stepField,
+    stepStorage,
     stepResult,
+    advanceCleanLand,
   },
   data() {
     return {
       authPageInfo: null,
       basicLoading: true,
+      isCleaning: false,
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
       operateType: '',
       curStep: 1,
@@ -142,7 +165,7 @@ export default {
     },
     isFinish() {
       if (this.isItsmAndNotStartOrStop) {
-        return this.curStep === 5;
+        return this.curStep === 6;
       }
       return finishRefer[this.operateType] === this.curStep;
     },
@@ -201,10 +224,14 @@ export default {
               this.curStep = this.curCollect.itsm_ticket_status === 'success_apply' ? 4 : 2;
             } else if (this.operateType === 'field') {
               this.curStep = 4;
+            } else if (this.operateType === 'storage') {
+              // this.curStep = 5;
             }
             // 审批通过后编辑直接进入第三步字段提取，否则进入第二步容量评估
           } else if (this.operateType === 'field') {
             this.curStep = 3;
+          } else if (this.operateType === 'storage') {
+            // this.curStep  = 4;
           }
         } catch (e) {
           console.warn(e);
@@ -278,7 +305,7 @@ export default {
   @import '@/scss/conf';
 
   .access-wrapper {
-    padding: 20px 60px;
+    padding: 20px 24px;
   }
 
   .access-container {
@@ -300,7 +327,7 @@ export default {
       position: relative;
       width: 170px;
       max-height: 100%;
-      margin-top: 10px;
+      margin-top: 40px;
 
       .bk-step {
         color: #7a7c85;
