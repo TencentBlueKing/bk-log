@@ -861,6 +861,7 @@ class TestCollector(TestCase):
     @patch("apps.api.CCApi.search_module", CCModuleTest())
     @patch("apps.api.CCApi.list_biz_hosts", CCBizHostsTest())
     @patch("apps.decorators.user_operation_record.delay", return_value=None)
+    @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
     @override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}})
     def test_create(self, *args, **kwargs):
         params = copy.deepcopy(PARAMS)
