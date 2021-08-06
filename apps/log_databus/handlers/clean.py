@@ -31,7 +31,12 @@ class CleanHandler(object):
     def refresh(self, raw_data_id, bk_biz_id):
         bkdata_clean_utils = BKDataCleanUtils(raw_data_id=raw_data_id)
         bkdata_clean_utils.update_or_create_clean(collector_config_id=self.collector_config_id, bk_biz_id=bk_biz_id)
-        return BKDataClean.objects.filter(raw_data_id=raw_data_id).values_list("result_table_name", flat=True)
+        result_table_names = BKDataClean.objects.filter(raw_data_id=raw_data_id).values_list(
+            "result_table_name", flat=True
+        )
+        if not result_table_names:
+            return []
+        return result_table_names
 
 
 class CleanTemplateHandler(object):

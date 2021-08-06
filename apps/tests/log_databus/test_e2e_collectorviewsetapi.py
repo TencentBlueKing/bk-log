@@ -149,6 +149,8 @@ COLLECTORS_LIST = {
                 "table_id_prefix": "2_bklog_",
                 "is_search": False,
                 "permission": {"search_log": True},
+                "create_clean_able": True,
+                "bkdata_index_set_ids": [],
             }
         ],
     },
@@ -212,6 +214,7 @@ class TestCollectorViewSetAPI(TestCase):
         logger.info(" {func_name}:{content}".format(func_name=sys._getframe().f_code.co_name, content=content))
 
         self.assertEqual(response.status_code, SUCCESS_STATUS_CODE)
+        print("xxxx", content)
         self.assertEqual(content, COLLECTORS_LIST)
 
     @override_settings(MIDDLEWARE=(OVERRIDE_MIDDLEWARE,))

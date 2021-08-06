@@ -116,9 +116,12 @@ class CollectorConfig(SoftDeleteModel):
         """
         数据平台生成的索引集id列表
         """
-        BKDataClean.objects.filter(collector_config_id=self.collector_config_id).values_list(
+        log_index_set_ids = BKDataClean.objects.filter(collector_config_id=self.collector_config_id).values_list(
             "log_index_set_id", flat=True
         )
+        if not log_index_set_ids:
+            return []
+        return log_index_set_ids
 
     def get_collector_scenario_id_display(self):
         return CollectorScenarioEnum.get_choice_label(self.collector_scenario_id)
