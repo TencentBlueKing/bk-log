@@ -327,7 +327,10 @@ class StorageHandler(object):
                 "port": params["port"],
                 "schema": params["schema"],
                 "cluster_id": self.cluster_id,
-                "auth_info": {"username": params["auth_info"]["username"], "password": params["auth_info"]["password"]},
+                "es_auth_info": {
+                    "username": params["auth_info"]["username"],
+                    "password": params["auth_info"]["password"],
+                },
             },
         )
 
@@ -406,6 +409,7 @@ class StorageHandler(object):
         password=None,
         default_auth=False,
         schema=DEFAULT_ES_SCHEMA,
+        **kwargs,
     ):
         """
         获取集群各节点的属性

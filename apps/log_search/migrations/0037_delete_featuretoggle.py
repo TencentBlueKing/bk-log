@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.DeleteModel(
-            name="FeatureToggle",
-        ),
+        # migrations.DeleteModel(
+        #     name="FeatureToggle",
+        # ),
     ]
