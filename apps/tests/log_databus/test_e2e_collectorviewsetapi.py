@@ -214,7 +214,6 @@ class TestCollectorViewSetAPI(TestCase):
         logger.info(" {func_name}:{content}".format(func_name=sys._getframe().f_code.co_name, content=content))
 
         self.assertEqual(response.status_code, SUCCESS_STATUS_CODE)
-        print("xxxx", content)
         self.assertEqual(content, COLLECTORS_LIST)
 
     @override_settings(MIDDLEWARE=(OVERRIDE_MIDDLEWARE,))
