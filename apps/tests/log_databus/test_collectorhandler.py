@@ -225,6 +225,7 @@ def subscription_statistic(params):
     ]
 
 
+@patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollectorHandler(TestCase):
     @staticmethod
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
@@ -286,7 +287,7 @@ class TestCollectorHandler(TestCase):
         self.assertEqual(res.get("collector_scenario_id"), "row")
 
     @patch("apps.api.CCApi.list_biz_hosts", CCBizHostsFilterTest())
-    def test_filter_illegal_ips(self):
+    def test_filter_illegal_ips(self, *args, **kwargs):
         self.assertEqual(
             CollectorHandler._filter_illegal_ips(
                 bk_biz_id=FILTER_ILLEGAL_IPS_BIZ_ID, ip_list=FILTER_ILLEGAL_IPS_IP_LIST
