@@ -26,7 +26,8 @@ export const stepsConf = {
     { title: global.mainComponent.$t('采集配置'), icon: '' },
     { title: global.mainComponent.$t('容量评估'), icon: '' },
     { title: global.mainComponent.$t('采集下发'), icon: '' },
-    { title: global.mainComponent.$t('字段提取&存储'), icon: '' },
+    { title: global.mainComponent.$t('btn.Field'), icon: '' },
+    { title: global.mainComponent.$t('dataManage.storage'), icon: '' },
     { title: global.mainComponent.$t('完成'), icon: '' },
   ],
 
@@ -34,28 +35,40 @@ export const stepsConf = {
   add: [
     { title: global.mainComponent.$t('采集配置'), icon: '' },
     { title: global.mainComponent.$t('采集下发'), icon: '' },
-    { title: global.mainComponent.$t('字段提取&存储'), icon: '' },
+    { title: global.mainComponent.$t('btn.Field'), icon: '' },
+    { title: global.mainComponent.$t('dataManage.storage'), icon: '' },
     { title: global.mainComponent.$t('完成'), icon: '' },
   ],
   // 采集修改
   edit: [
     { title: global.mainComponent.$t('采集配置'), icon: '' },
     { title: global.mainComponent.$t('采集下发'), icon: '' },
-    { title: global.mainComponent.$t('字段提取&存储'), icon: '' },
+    { title: global.mainComponent.$t('btn.Field'), icon: '' },
+    { title: global.mainComponent.$t('dataManage.storage'), icon: '' },
     { title: global.mainComponent.$t('完成'), icon: '' },
   ],
   // 采集修改
   editFinish: [
     { title: global.mainComponent.$t('采集配置'), icon: '' },
     { title: global.mainComponent.$t('采集下发'), icon: '' },
-    { title: global.mainComponent.$t('字段提取&存储'), icon: '' },
+    { title: global.mainComponent.$t('btn.Field'), icon: '' },
+    { title: global.mainComponent.$t('dataManage.storage'), icon: '' },
     { title: global.mainComponent.$t('完成'), icon: '' },
   ],
   // 字段提取
   field: [
     { title: global.mainComponent.$t('采集配置'), icon: '' },
     { title: global.mainComponent.$t('采集下发'), icon: '' },
-    { title: global.mainComponent.$t('字段提取&存储'), icon: '' },
+    { title: global.mainComponent.$t('btn.Field'), icon: '' },
+    { title: global.mainComponent.$t('dataManage.storage'), icon: '' },
+    { title: global.mainComponent.$t('完成'), icon: '' },
+  ],
+  // 存储
+  storage: [
+    { title: global.mainComponent.$t('采集配置'), icon: '' },
+    { title: global.mainComponent.$t('采集下发'), icon: '' },
+    { title: global.mainComponent.$t('btn.Field'), icon: '' },
+    { title: global.mainComponent.$t('dataManage.storage'), icon: '' },
     { title: global.mainComponent.$t('完成'), icon: '' },
   ],
   // 开始采集
@@ -71,10 +84,11 @@ export const stepsConf = {
 };
 
 export const finishRefer = {
-  add: 4,
-  edit: 4,
-  editFinish: 4,
-  field: 4,
+  add: 5,
+  edit: 5,
+  editFinish: 5,
+  field: 5,
+  storage: 5,
   start: 2,
   stop: 2,
 };
