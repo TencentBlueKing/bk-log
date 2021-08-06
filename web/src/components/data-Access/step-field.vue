@@ -695,8 +695,9 @@ export default {
             const step = this.isCleanField ? 2 : null
             this.$emit('stepChange', step);
           } else {
-            this.handleCancel(false)
             this.messageSuccess(this.$t('保存成功'));
+            // 清洗模板编辑则返回模板列表
+            if(this.isTempField) this.handleCancel(false)
           }
         }
       })

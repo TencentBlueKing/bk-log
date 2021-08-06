@@ -384,8 +384,7 @@ export default {
               this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
             }
           }
-          await this.getDetail();
-          await this.getCleanStash();
+          this.getCleanStash();
         }
       })
         .catch((res) => {
@@ -405,7 +404,10 @@ export default {
         if (res.data) {
           this.stashCleanConf = res.data;
         }
-      });
+      })
+        .finally(() => {
+          this.getDetail();
+        });
     },
     // 存储集群管理权限
     async applySearchAccess(item) {
