@@ -77,7 +77,6 @@ export default {
     },
     handleRefresh() {
       const { collector_config_id, bkdata_data_id } = this.curCollect;
-      this.isInit = true;
       this.loading = true;
       this.$http.request('clean/refreshClean', {
         params: {
@@ -88,6 +87,7 @@ export default {
           bk_data_id: bkdata_data_id,
         },
       }).then((res) => {
+        this.isInit = true;
         this.resultList = res.data;
       })
         .finally(() => {
