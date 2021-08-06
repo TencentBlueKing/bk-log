@@ -48,8 +48,13 @@ const ExtractLinkView = {
   template: '<router-view></router-view>',
 };
 
-const logCleanView = {
-  name: 'logCleanView',
+const LogCleanView = {
+  name: 'LogCleanView',
+  template: '<router-view></router-view>',
+};
+
+const LogCleanTempView = {
+  name: 'LogCleanTempView',
   template: '<router-view></router-view>',
 };
 
@@ -110,6 +115,16 @@ const SdkTrack = () => import(
 const cleanList = () => import(
   /* webpackChunkName: 'sdk-track' */
   '@/views/manage2/log-clean/clean-manage/list'
+);
+// ---- 日志清洗 ---- 新增/编辑 清洗
+const cleanCreate = () => import(
+  /* webpackChunkName: 'sdk-track' */
+  '@/views/manage2/log-clean/clean-manage/create'
+);
+// ---- 日志清洗 ---- 新增/编辑 清洗
+const cleanTempCreate = () => import(
+  /* webpackChunkName: 'sdk-track' */
+  '@/views/manage2/log-clean/clean-template/create'
 );
 // ---- 模板清洗 ---- 清洗模版
 const cleanTemplate = () => import(
@@ -211,6 +226,12 @@ const routes = [
           {
             path: 'collection-item/field/:collectorId',
             name: 'collectField',
+            meta: { needBack: true },
+            component: AccessSteps,
+          },
+          {
+            path: 'collection-item/storage/:collectorId',
+            name: 'collectStorage',
             meta: { needBack: true },
             component: AccessSteps,
           },
@@ -369,20 +390,52 @@ const routes = [
         component: SdkTrack,
       },
       {
-        path: 'log-clean',
-        name: 'log-clean', // 日志清洗
-        component: logCleanView,
-        redirect: '/manage/log-clean/list',
+        path: 'clean-list',
+        name: 'clean-list', // 日志清洗
+        component: LogCleanView,
+        redirect: '/manage/clean-list/list',
         children: [
           {
             path: 'list',
-            name: 'clean-list', // 日志清洗 - 清洗列表
+            name: 'log-clean-list', // 日志清洗 - 清洗列表
             component: cleanList,
           },
           {
-            path: 'template',
-            name: 'clean-templates', // 日志清洗 - 清洗模板
+            path: 'create',
+            name: 'clean-create', // 日志清洗 - 新增清洗
+            meta: { needBack: true },
+            component: cleanCreate,
+          },
+          {
+            path: 'edit/:collectorId',
+            name: 'clean-edit', // 日志清洗 - 编辑清洗
+            meta: { needBack: true },
+            component: cleanCreate,
+          },
+        ],
+      },
+      {
+        path: 'clean-templates',
+        name: 'clean-templates', // 日志清洗模板
+        component: LogCleanTempView,
+        redirect: '/manage/clean-templates/list',
+        children: [
+          {
+            path: 'list',
+            name: 'log-clean-templates', // 日志清洗 - 清洗模板
             component: cleanTemplate,
+          },
+          {
+            path: 'create',
+            name: 'clean-template-create', // 日志清洗 - 新增模板
+            meta: { needBack: true },
+            component: cleanTempCreate,
+          },
+          {
+            path: 'edit/:templateId',
+            name: 'clean-template-edit', // 日志清洗 - 编辑模板
+            meta: { needBack: true },
+            component: cleanTempCreate,
           },
         ],
       },
@@ -413,7 +466,8 @@ const routes = [
             name: 'extract-link-create',
             meta: { needBack: true },
             component: ExtractLinkCreate,
-          }],
+          },
+        ],
       },
       {
         path: 'log-archive-conf',
