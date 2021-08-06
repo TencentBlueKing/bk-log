@@ -1,11 +1,11 @@
 name: Web
 on:
   push:
-    branches: [master, stag]
+    branches: [master, stag, feature*]
     paths:
       - 'web/**'
   pull_request:
-    branches: [master, stag]
+    branches: [master, stag, feature*]
     paths:
       - 'web/**'
   schedule:
