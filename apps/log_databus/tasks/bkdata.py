@@ -56,16 +56,20 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
     if not collector_config.bk_data_id or collector_config.bkdata_data_id:
         return
 
-    # todo 待高级清洗上线英文名 该临时方案将被修改
-    if not collector_config.table_id:
-        return
-
     maintainers = {collector_config.updated_by, collector_config.created_by}
     maintainers.discard(ADMIN_REQUEST_USER)
     if not maintainers:
         raise BaseException(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
 
     _, table_id = collector_config.table_id.split(".")
+    if not (collector_config.collector_config_name_en or table_id):
+        logger.error(
+            "collector_config {} dont have enough raw_data_name to create deploy plan".format(
+                collector_config.collector_config_id
+            )
+        )
+        return
+
     BkDataAccessApi.deploy_plan_post(
         params={
             "bk_username": collector_config.get_updated_by(),
