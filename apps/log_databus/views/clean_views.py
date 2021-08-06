@@ -17,10 +17,24 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from apps.generic import ModelViewSet
+from rest_framework.response import Response
+from rest_framework import serializers
 
-# from apps.log_databus.models import BKDataClean, CleanTemplate
-from apps.utils.drf import detail_route
+from apps.iam import ActionEnum, ResourceEnum
+from apps.iam.handlers.drf import BusinessActionPermission, insert_permission_field
+from apps.generic import ModelViewSet
+from apps.log_databus.handlers.clean import CleanTemplateHandler, CleanHandler
+from apps.log_databus.handlers.etl import EtlHandler
+from apps.log_databus.models import BKDataClean, CleanTemplate
+from apps.log_databus.serializers import (
+    CleanTemplateSerializer,
+    CleanTemplateListSerializer,
+    CollectorEtlSerializer,
+    CleanRefreshSerializer,
+    CleanSerializer,
+)
+from apps.log_databus.utils.clean import CleanFilterUtils
+from apps.utils.drf import detail_route, list_route
 
 
 class CleanViewSet(ModelViewSet):
@@ -29,11 +43,23 @@ class CleanViewSet(ModelViewSet):
     """
 
     lookup_field = "collector_config_id"
-    # model = BKDataClean
+    model = BKDataClean
 
     def get_permissions(self):
-        pass
+        return [BusinessActionPermission([ActionEnum.MANAGE_CLEAN_CONFIG])]
 
+    @insert_permission_field(
+        id_field=lambda d: d["collector_config_id"],
+        data_field=lambda d: d["list"],
+        actions=[ActionEnum.VIEW_COLLECTION, ActionEnum.MANAGE_COLLECTION],
+        resource_meta=ResourceEnum.COLLECTION,
+    )
+    @insert_permission_field(
+        id_field=lambda d: d["index_set_id"],
+        data_field=lambda d: d["list"],
+        actions=[ActionEnum.SEARCH_LOG],
+        resource_meta=ResourceEnum.INDICES,
+    )
     def list(self, request, *args, **kwargs):
         """
         @api {get} /databus/clean/?page=$page&pagesize=$pagesize&bk_biz_id=$bk_biz_id 1_清洗-列表
@@ -66,12 +92,20 @@ class CleanViewSet(ModelViewSet):
             "result": true
         }
         """
-        pass
+        data = self.params_valid(CleanSerializer)
+        return Response(
+            CleanFilterUtils(bk_biz_id=data["bk_biz_id"]).filter(
+                keyword=data.get("keyword", ""),
+                etl_config=data.get("etl_config", ""),
+                page=data["page"],
+                pagesize=data["pagesize"],
+            )
+        )
 
     @detail_route(methods=["GET"])
     def refresh(self, request, *args, collector_config_id=None, **kwarg):
         """
-        @api {get} /databus/cleans/$collector_config_id/?bk_biz_id=$bk_biz_id&bk_data_id=$bk_data_id 2_高级清洗-刷新
+        @api {get} /databus/clean/$collector_config_id/refresh/?bk_biz_id=$bk_biz_id&bk_data_id=$bk_data_id 2_高级清洗-刷新
         @apiName refresh_clean
         @apiGroup 22_clean
         @apiDescription 刷新高级清洗
@@ -81,10 +115,9 @@ class CleanViewSet(ModelViewSet):
         {
             "message": "",
             "code": 0,
-            "data": {
-                "result": True,
-                "log_set_index_id": 1
-            },
+            "data": [
+                "test"
+            ],
             "result": true
         }
         @apiSuccessExample {json} 成功返回(未找到对应记录)
@@ -98,6 +131,12 @@ class CleanViewSet(ModelViewSet):
             "result": true
         }
         """
+        data = self.params_valid(CleanRefreshSerializer)
+        return Response(
+            CleanHandler(collector_config_id=collector_config_id).refresh(
+                raw_data_id=data["bk_data_id"], bk_biz_id=data["bk_biz_id"]
+            )
+        )
 
 
 class CleanTemplateViewSet(ModelViewSet):
@@ -106,10 +145,18 @@ class CleanTemplateViewSet(ModelViewSet):
     """
 
     lookup_field = "clean_template_id"
-    # model = CleanTemplate
+    model = CleanTemplate
+    filter_fields_exclude = ["etl_params", "etl_fields"]
+    search_fields = ("name", "bk_biz_id")
 
     def get_permissions(self):
-        pass
+        return [BusinessActionPermission([ActionEnum.MANAGE_CLEAN_TEMPLATE_CONFIG])]
+
+    def get_serializer_class(self, *args, **kwargs):
+        action_serializer_map = {
+            "list": CleanTemplateListSerializer,
+        }
+        return action_serializer_map.get(self.action, serializers.Serializer)
 
     def list(self, request, *args, **kwargs):
         """
@@ -119,55 +166,56 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiDescription 获取清洗模板列表
         @apiParam {Int} bk_biz_id 业务id
         @apiSuccessExample {json} 成功返回
-            {
-                "message":"",
-                "code":0,
-                "data":{
-                    "count":10,
-                    "total_page":1,
-                    "results":[
-                        {
-                            "clean_template_id": 1,
-                            "clean_type":"bk_log_text",
-                            "etl_params":{
-                                "retain_original_text":true,
-                                "separator":" "
+        {
+            "message":"",
+            "code":0,
+            "data":{
+                "count":10,
+                "total_page":1,
+                "results":[
+                    {
+                        "clean_template_id":1,
+                        "name": "test",
+                        "clean_type":"bk_log_text",
+                        "etl_params":{
+                            "retain_original_text":true,
+                            "separator":" "
+                        },
+                        "etl_fields":[
+                            {
+                                "field_name":"user",
+                                "alias_name":"",
+                                "field_type":"long",
+                                "description":"字段描述",
+                                "is_analyzed":true,
+                                "is_dimension":false,
+                                "is_time":false,
+                                "is_delete":false
                             },
-                            "etl_fields":[
-                                {
-                                    "field_name":"tag_number",
-                                    "type":"float",
-                                    "tag":"dimension",
-                                    "default_value":null,
-                                    "is_config_by_user":true,
-                                    "description":"",
-                                    "unit":"",
-                                    "alias_name":"",
-                                    "option":{
-                                        "time_zone":"",
-                                        "time_format":"",
-                                        "field_index":1,
-                                        "es_type":"integer",
-                                        "real_path":"bk_separator_object.tag_number"
-                                    },
-                                    "is_built_in":false,
-                                    "is_time":false,
-                                    "field_type":"int",
-                                    "is_analyzed":false,
-                                    "is_delete":false,
-                                    "is_dimension":true,
-                                    "_nums":1,
-                                    "field_index":1,
-                                    "value":"14836"
+                            {
+                                "field_name":"report_time",
+                                "alias_name":"",
+                                "field_type":"string",
+                                "description":"字段描述",
+                                "tag":"metric",
+                                "is_analyzed":false,
+                                "is_dimension":false,
+                                "is_time":true,
+                                "is_delete":false,
+                                "option":{
+                                    "time_zone":8,
+                                    "time_format":"yyyy-MM-dd HH:mm:ss"
                                 }
-                            ]
-                        }
-                    ]
-                },
-                "result":true
-            }
+                            }
+                        ],
+                        "bk_biz_id": 0
+                    }
+                ]
+            },
+            "result":true
+        }
         """
-        pass
+        return super().list(request, *args, **kwargs)
 
     def retrieve(self, request, *args, clean_template_id=None, **kwargs):
         """
@@ -181,6 +229,7 @@ class CleanTemplateViewSet(ModelViewSet):
             "message":"",
             "code":0,
             "data":{
+                "name": "xxx",
                 "clean_template_id":1,
                 "clean_type":"bk_log_text",
                 "etl_params":{
@@ -189,37 +238,37 @@ class CleanTemplateViewSet(ModelViewSet):
                 },
                 "etl_fields":[
                     {
-                        "field_name":"tag_number",
-                        "type":"float",
-                        "tag":"dimension",
-                        "default_value":null,
-                        "is_config_by_user":true,
-                        "description":"",
-                        "unit":"",
+                        "field_name":"user",
                         "alias_name":"",
-                        "option":{
-                            "time_zone":"",
-                            "time_format":"",
-                            "field_index":1,
-                            "es_type":"integer",
-                            "real_path":"bk_separator_object.tag_number"
-                        },
-                        "is_built_in":false,
+                        "field_type":"long",
+                        "description":"字段描述",
+                        "is_analyzed":true,
+                        "is_dimension":false,
                         "is_time":false,
-                        "field_type":"int",
+                        "is_delete":false
+                    },
+                    {
+                        "field_name":"report_time",
+                        "alias_name":"",
+                        "field_type":"string",
+                        "description":"字段描述",
+                        "tag":"metric",
                         "is_analyzed":false,
+                        "is_dimension":false,
+                        "is_time":true,
                         "is_delete":false,
-                        "is_dimension":true,
-                        "_nums":1,
-                        "field_index":1,
-                        "value":"14836"
+                        "option":{
+                            "time_zone":8,
+                            "time_format":"yyyy-MM-dd HH:mm:ss"
+                        }
                     }
-                ]
+                ],
+                "bk_biz_id": 0
             },
             "result":true
         }
         """
-        pass
+        return Response(CleanTemplateHandler(clean_template_id=clean_template_id).retrieve())
 
     def update(self, request, *args, clean_template_id=None, **kwargs):
         """
@@ -229,6 +278,7 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiDescription 更新清洗模板
         @apiParamExample {json} 成功请求
         {
+            "name": "xxx",
             "clean_type":"bk_log_text",
             "etl_params":{
                 "retain_original_text":true,
@@ -236,42 +286,45 @@ class CleanTemplateViewSet(ModelViewSet):
             },
             "etl_fields":[
                 {
-                    "field_name":"tag_number",
-                    "type":"float",
-                    "tag":"dimension",
-                    "default_value":null,
-                    "is_config_by_user":true,
-                    "description":"",
-                    "unit":"",
+                    "field_name":"user",
                     "alias_name":"",
-                    "option":{
-                        "time_zone":"",
-                        "time_format":"",
-                        "field_index":1,
-                        "es_type":"integer",
-                        "real_path":"bk_separator_object.tag_number"
-                    },
-                    "is_built_in":false,
+                    "field_type":"long",
+                    "description":"字段描述",
+                    "is_analyzed":true,
+                    "is_dimension":false,
                     "is_time":false,
-                    "field_type":"int",
+                    "is_delete":false
+                },
+                {
+                    "field_name":"report_time",
+                    "alias_name":"",
+                    "field_type":"string",
+                    "description":"字段描述",
+                    "tag":"metric",
                     "is_analyzed":false,
+                    "is_dimension":false,
+                    "is_time":true,
                     "is_delete":false,
-                    "is_dimension":true,
-                    "_nums":1,
-                    "field_index":1,
-                    "value":"14836"
+                    "option":{
+                        "time_zone":8,
+                        "time_format":"yyyy-MM-dd HH:mm:ss"
+                    }
                 }
-            ]
+            ],
+            "bk_biz_id": 0
         }
         @apiSuccessExample {json} 成功返回
         {
             "message": "",
             "code": 0,
-            "data": True,
+            "data": {
+                "clean_template_id": 1
+            },
             "result": true
         }
         """
-        pass
+        data = self.params_valid(CleanTemplateSerializer)
+        return Response(CleanTemplateHandler(clean_template_id=clean_template_id).create_or_update(params=data))
 
     def create(self, request, *args, **kwargs):
         """
@@ -281,6 +334,7 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiDescription 新建清洗模板
         @apiParamExample {json} 成功请求
         {
+            "name": "test",
             "clean_type":"bk_log_text",
             "etl_params":{
                 "retain_original_text":true,
@@ -288,44 +342,47 @@ class CleanTemplateViewSet(ModelViewSet):
             },
             "etl_fields":[
                 {
-                    "field_name":"tag_number",
-                    "type":"float",
-                    "tag":"dimension",
-                    "default_value":null,
-                    "is_config_by_user":true,
-                    "description":"",
-                    "unit":"",
+                    "field_name":"user",
                     "alias_name":"",
-                    "option":{
-                        "time_zone":"",
-                        "time_format":"",
-                        "field_index":1,
-                        "es_type":"integer",
-                        "real_path":"bk_separator_object.tag_number"
-                    },
-                    "is_built_in":false,
+                    "field_type":"long",
+                    "description":"字段描述",
+                    "is_analyzed":true,
+                    "is_dimension":false,
                     "is_time":false,
-                    "field_type":"int",
+                    "is_delete":false
+                },
+                {
+                    "field_name":"report_time",
+                    "alias_name":"",
+                    "field_type":"string",
+                    "description":"字段描述",
+                    "tag":"metric",
                     "is_analyzed":false,
+                    "is_dimension":false,
+                    "is_time":true,
                     "is_delete":false,
-                    "is_dimension":true,
-                    "_nums":1,
-                    "field_index":1,
-                    "value":"14836"
+                    "option":{
+                        "time_zone":8,
+                        "time_format":"yyyy-MM-dd HH:mm:ss"
+                    }
                 }
-            ]
+            ],
+            "bk_biz_id": 0
         }
         @apiSuccessExample {json} 成功返回
         {
             "message": "",
             "code": 0,
-            "data": True,
+            "data": {
+                "clean_template_id": 1
+            },
             "result": true
         }
         """
-        pass
+        data = self.params_valid(CleanTemplateSerializer)
+        return Response(CleanTemplateHandler().create_or_update(params=data))
 
-    def destroy(self, request, *args, **kwargs):
+    def destroy(self, request, *args, clean_template_id=None, **kwargs):
         """
         @api {delete} /databus/clean_template/$clean_template_id/ 5_清洗模板-删除
         @apiName destry_clean_template
@@ -335,8 +392,63 @@ class CleanTemplateViewSet(ModelViewSet):
         {
             "message": "",
             "code": 0,
-            "data": True,
+            "data": 1,
             "result": true
         }
         """
-        pass
+        return Response(CleanTemplateHandler(clean_template_id=clean_template_id).destroy())
+
+    @list_route(methods=["POST"])
+    def etl_preview(self, request, collector_config_id=None):
+        """
+        @api {post} /databus/clean_template/etl_preview/ 6_清洗模板-预览提取结果
+        @apiName clean_template_etl_preview
+        @apiDescription 清洗模板-预览提取结果
+        @apiGroup 23_clean_template
+        @apiParam {String} etl_config 清洗类型（格式化方式）
+        @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
+        @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
+        @apiParam {String} etl_params.separator_regexp 正则表达式，当etl_config=="bk_log_regexp"时需要传递
+        @apiParam {String} data 日志内容
+
+        @apiSuccess {list} fields 字段列表
+        @apiSuccess {Int} fields.field_index 字段顺序
+        @apiSuccess {String} fields.field_name 字段名称 (分隔符默认为空)
+        @apiSuccess {String} fields.value 值
+        @apiParamExample {json} 请求样例:
+        {
+            "etl_config": "bk_log_text | bk_log_json | bk_log_regexp | bk_log_delimiter",
+            "etl_params": {
+                "separator": "|"
+            },
+            "data": "a|b|c"
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+
+            "message": "",
+            "code": 0,
+            "data": {
+                "fields": [
+                    {
+                        "field_index": 1,
+                        "field_name": "",
+                        "value": "a"
+                    },
+                    {
+                        "field_index": 2,
+                        "field_name": "",
+                        "value": "b"
+                    },
+                    {
+                        "field_index": 3,
+                        "field_name": "",
+                        "value": "c"
+                    }
+                ]
+            },
+            "result": true
+        }
+        """
+        data = self.params_valid(CollectorEtlSerializer)
+        return Response(EtlHandler.etl_preview(**data))

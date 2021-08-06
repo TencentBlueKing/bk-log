@@ -21,7 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
-from apps.log_databus.models import CollectorConfig
+from apps.log_databus.models import CollectorConfig, CleanTemplate
 
 from apps.log_search.constants import (
     CollectorScenarioEnum,
@@ -168,6 +168,7 @@ class CollectorCreateSerializer(serializers.Serializer):
 
     bk_biz_id = serializers.IntegerField(label=_("业务ID"))
     collector_config_name = serializers.CharField(label=_("采集名称"))
+    collector_config_name_en = serializers.CharField(label=_("采集英文名称"))
     data_link_id = serializers.CharField(label=_("数据链路id"), required=False, allow_blank=True, allow_null=True)
     collector_scenario_id = serializers.ChoiceField(label=_("日志类型"), choices=CollectorScenarioEnum.get_choices())
     category_id = serializers.CharField(label=_("分类ID"))
@@ -194,6 +195,7 @@ class CollectorUpdateSerializer(serializers.Serializer):
     """
 
     collector_config_name = serializers.CharField(label=_("采集名称"))
+    collector_config_name_en = serializers.CharField(label=_("采集英文名称"))
     target_object_type = serializers.CharField(label=_("目标类型"))
     target_node_type = serializers.CharField(label=_("节点类型"))
     target_nodes = TargetNodeSerializer(label=_("目标节点"), many=True)
@@ -271,6 +273,8 @@ class CollectorListSerializer(DataModelSerializer):
     target_nodes = serializers.JSONField(label=_("采集目标"))
     task_id_list = serializers.JSONField(label=_("任务ID列表"))
     target_subscription_diff = serializers.JSONField(label=_("订阅目标变更情况"))
+    create_clean_able = serializers.BooleanField(label=_("是否可以创建基础清洗"))
+    bkdata_index_set_ids = serializers.ListField(child=serializers.IntegerField(), label=_("数据平台索引集id列表"))
 
     class Meta:
         model = CollectorConfig
@@ -523,3 +527,43 @@ class ListCollectorsByHostSerializer(serializers.Serializer):
     bk_cloud_id = serializers.IntegerField(label=_("云区域Id"), required=False, default=0)
     bk_host_id = serializers.IntegerField(label=_("主机id"), required=False)
     bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
+
+
+class CleanSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    keyword = serializers.CharField(label=_("检索关键词"), required=False)
+    etl_config = serializers.CharField(label=_("清洗配置类型"), required=False)
+    page = serializers.IntegerField(label=_("页码"))
+    pagesize = serializers.IntegerField(label=_("页面大小"))
+
+    def validate(self, attrs):
+        super().validate(attrs)
+        if attrs["page"] < 0 or attrs["pagesize"] < 0:
+            raise ValidationError(_("分页参数不能为负数"))
+        return attrs
+
+
+class CleanRefreshSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    bk_data_id = serializers.IntegerField(label=_("数据源id"))
+
+
+class CleanTemplateSerializer(serializers.Serializer):
+    name = serializers.CharField(label=_("清洗模板名"), required=True)
+    clean_type = serializers.CharField(label=_("清洗类型"), required=True)
+    etl_params = serializers.DictField(label=_("清洗配置"), required=True)
+    etl_fields = serializers.ListField(child=serializers.DictField(), label=_("字段配置"), required=True)
+    bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
+
+
+class CleanStashSerializer(serializers.Serializer):
+    clean_type = serializers.CharField(label=_("清洗类型"), required=True)
+    etl_params = serializers.DictField(label=_("清洗配置"), required=True)
+    etl_fields = serializers.ListField(child=serializers.DictField(), label=_("字段配置"), required=True)
+    bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
+
+
+class CleanTemplateListSerializer(DataModelSerializer):
+    class Meta:
+        model = CleanTemplate
+        fields = "__all__"

@@ -25,6 +25,7 @@ from celery.task import periodic_task
 from apps.utils.log import logger
 from apps.utils.bk_data_auth import BkDataAuthHandler
 from apps.log_search.models import LogIndexSetData, LogIndexSet, Scenario
+from apps.log_databus.models import BKDataClean
 
 
 @periodic_task(run_every=crontab(minute="*/30"))
@@ -53,4 +54,8 @@ def sync_auth_status():
 
     logger.info(f"[sync_auth_status] {updated_count} rows of apply_status changed to NORMAL")
 
+    update_bkdata_clean_count = BKDataClean.objects.filter(result_table_id__in=authorized_rt_list).update(
+        is_authorized=True
+    )
+    logger.info(f"[sync_bkdata_clean] {update_bkdata_clean_count} rows of is_authorized to True")
     return updated_count
