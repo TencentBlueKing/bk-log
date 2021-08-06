@@ -22,6 +22,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from apps.feature_toggle.plugins.constants import FEATURE_BKDATA_DATAID, FEATURE_COLLECTOR_ITSM
 
 FEATURE_TOGGLE_CLASSES_DICT = {
-    FEATURE_BKDATA_DATAID: "apps.feature_toggle.feature_bkdata_data_id.FeatureBKDataDataId",
+    FEATURE_BKDATA_DATAID: "apps.feature_toggle.plugins.feature_bkdata_data_id.FeatureBKDataDataId",
     FEATURE_COLLECTOR_ITSM: "apps.feature_toggle.plugins.feature_collector_itsm.FeatureCollectorITSM",
 }

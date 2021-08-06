@@ -79,4 +79,5 @@ def mysetting(request):
         "TAM_AEGIS_KEY": settings.TAM_AEGIS_KEY,
         "BK_LOGIN_URL": f"{settings.PAAS_API_HOST}/api/c/compapi/v2/usermanage/fs_list_users/",
         "MENU_LOGO_URL": f"{settings.STATIC_URL}{settings.MENU_LOGO_URL}",
+        "BK_DOC_DATA_URL": settings.BK_DOC_DATA_URL,
     }
