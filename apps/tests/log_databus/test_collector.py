@@ -890,7 +890,7 @@ class TestCollector(TestCase):
     @patch("apps.api.TransferApi.modify_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.NodeApi.update_subscription_info", lambda _: {"subscription_id": SUBSCRIPTION_ID})
     @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": NEW_TASK_ID})
-    def _test_update(self, collector_config_id):
+    def _test_update(self, collector_config_id, *args, **kwargs):
         params = copy.deepcopy(PARAMS)
         params["collector_config_id"] = collector_config_id
 

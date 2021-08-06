@@ -230,7 +230,7 @@ class TestCollectorHandler(TestCase):
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch("apps.api.NodeApi.create_subscription", lambda _: {"subscription_id": SUBSCRIPTION_ID})
     @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": TASK_ID})
-    def create(params=None):
+    def create(params=None, *args, **kwargs):
         """
         创建 CollectorHandler实例对象，并创建一个采集配置
         """
