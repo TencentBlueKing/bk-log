@@ -144,6 +144,7 @@ class TestClean(TestCase):
         self.assertEqual(get_stash_result["bk_biz_id"], CREATE_CLEAN_STASH_PARAMS["bk_biz_id"])
         self.assertEqual(get_stash_result["collector_config_id"], collector_config_id)
 
+    @patch("apps.feature_toggle.handlers.toggle.FeatureToggleObject.switch", return_value=True)
     def test_list_clean(self, *args, **kwargs):
         self.test_refresh()
         clean_list = CleanFilterUtils(bk_biz_id=706).filter(page=1, pagesize=1, keyword="", etl_config="")
