@@ -544,6 +544,7 @@ export default {
       this.$http.request('collect/getAllCollectors', {
         query: {
           bk_biz_id: this.bkBizId,
+          have_data_id: 1,
         },
       }).then((res) => {
         const data = res.data;
