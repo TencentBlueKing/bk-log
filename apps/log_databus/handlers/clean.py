@@ -47,7 +47,9 @@ class CleanTemplateHandler(object):
             try:
                 self.data = CleanTemplate.objects.get(clean_template_id=self.clean_template_id)
             except CleanTemplate.DoesNotExist:
-                raise CleanTemplateNotExistException()
+                raise CleanTemplateNotExistException(
+                    CleanTemplateNotExistException.MESSAGE.format(clean_template_id=clean_template_id)
+                )
 
     def retrieve(self):
         return model_to_dict(self.data)
@@ -78,7 +80,8 @@ class CleanTemplateHandler(object):
         return model_to_dict(self.data)
 
     def destroy(self):
-        clean_template_id = self.data.delete()
+        clean_template_id = self.data.clean_template_id
+        self.data.delete()
         logger.info("delete clean template {}".format(clean_template_id))
         return clean_template_id
 
