@@ -125,6 +125,7 @@ class IndexSet(object):
 @patch("apps.iam.handlers.drf.ViewBusinessPermission.has_permission", return_value=True)
 @patch("apps.iam.handlers.permission.Permission.batch_is_allowed", return_value=Dummy())
 @patch("apps.decorators.user_operation_record.delay", return_value=None)
+@patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestClean(TestCase):
     def test_create_clean_stash(self, *args, **kwargs):
         collector_config_id, create_stash_result = self._create_clean_stash()
