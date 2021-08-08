@@ -239,7 +239,7 @@ class BkdataIdFeatureNotExist(BaseCollectorConfigException):
 
 class CleanTemplateNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "701"
-    MESSAGE = _("清洗模板不存在")
+    MESSAGE = _("清洗模板{clean_template_id}不存在")
 
 
 class CleanTemplateRepeatException(BaseCollectorConfigException):
