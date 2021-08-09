@@ -27,6 +27,7 @@
         class="fl"
         theme="primary"
         :disabled="isAllowedManage === null"
+        v-cursor="{ active: isAllowedManage === false }"
         @click="handleCreate">
         {{ $t('新建') }}
       </bk-button>
@@ -152,11 +153,11 @@ export default {
         if (res.isAllowed) {
           this.search();
         } else {
-          this.isLoading = false;
+          this.isTableLoading = false;
         }
       } catch (err) {
         console.warn(err);
-        this.isLoading = false;
+        this.isTableLoading = false;
         this.isAllowedManage = false;
       }
     },
@@ -164,12 +165,33 @@ export default {
       this.handlePageChange(1);
     },
     handleCreate() {
+      if (!this.isAllowedManage) {
+        return this.getOptionApplyData({
+          action_ids: ['manage_clean_template_config'],
+          resources: [{
+            type: 'biz',
+            id: this.bkBizId,
+          }],
+        });
+      }
+
       this.$router.push({
         name: 'clean-template-create',
         query: {
           projectId: window.localStorage.getItem('project_id'),
         },
       });
+    },
+    async getOptionApplyData(paramData) {
+      try {
+        this.isTableLoading = true;
+        const res = await this.$store.dispatch('getApplyData', paramData);
+        this.$store.commit('updateAuthDialogData', res.data);
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        this.isTableLoading = false;
+      }
     },
     handleFilterChange(data) {
       Object.keys(data).forEach((item) => {

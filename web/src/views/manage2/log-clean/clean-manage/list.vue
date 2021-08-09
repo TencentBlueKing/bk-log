@@ -27,6 +27,7 @@
         class="fl"
         theme="primary"
         :disabled="isAllowedManage === null"
+        v-cursor="{ active: isAllowedManage === false }"
         @click="handleCreate">
         {{ $t('新增') }}
       </bk-button>
@@ -181,6 +182,9 @@ export default {
   created() {
     this.checkManageAuth();
   },
+  mounted() {
+    this.search();
+  },
   methods: {
     async checkManageAuth() {
       try {
@@ -193,14 +197,8 @@ export default {
           }],
         });
         this.isAllowedManage = res.isAllowed;
-        if (res.isAllowed) {
-          this.search();
-        } else {
-          this.isTableLoading = false;
-        }
       } catch (err) {
         console.warn(err);
-        this.isTableLoading = false;
         this.isAllowedManage = false;
       }
     },
@@ -255,6 +253,16 @@ export default {
         });
     },
     handleCreate() {
+      if (!this.isAllowedManage) {
+        return this.getOptionApplyData({
+          action_ids: ['manage_clean_config'],
+          resources: [{
+            type: 'biz',
+            id: this.bkBizId,
+          }],
+        });
+      }
+
       this.$router.push({
         name: 'clean-create',
         query: {
