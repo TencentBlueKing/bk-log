@@ -312,6 +312,9 @@ class StorageCreateSerializer(serializers.Serializer):
     warm_attr_value = serializers.CharField(label=_("冷节点属性值"), default="", allow_blank=True)
     source_type = serializers.ChoiceField(label=_("ES来源类型"), choices=EsSourceType.get_choices())
     source_name = serializers.CharField(label=_("来源名称"), required=False)
+    visible_bk_biz = serializers.ListField(
+        label=_("可见业务范围"), child=serializers.IntegerField(), required=False, default=[]
+    )
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
@@ -363,6 +366,9 @@ class StorageUpdateSerializer(serializers.Serializer):
     warm_attr_value = serializers.CharField(label=_("冷节点属性值"), default="", allow_blank=True)
     source_type = serializers.ChoiceField(label=_("ES来源类型"), choices=EsSourceType.get_choices())
     source_name = serializers.CharField(label=_("来源名称"), required=False)
+    visible_bk_biz = serializers.ListField(
+        label=_("可见业务范围"), child=serializers.IntegerField(), required=False, default=[]
+    )
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:

@@ -255,6 +255,7 @@ class StorageViewSet(APIViewSet):
         @apiParam {Object} auth_info 凭据信息
         @apiParam {String} auth_info.username 用户
         @apiParam {String} auth_info.password 密码
+        @apiParam {List} [visible_bk_biz] 可见业务范围
         @apiParamExample {Json} 请求参数
         {
             "cluster_name": "ES集群",
@@ -265,7 +266,8 @@ class StorageViewSet(APIViewSet):
                 "username": "",
                 "password": ""
             },
-            "enable_hot_warm": True
+            "enable_hot_warm": True,
+            "visible_bk_biz: [1, 2, 3]
         }
         @apiSuccess {Int} data 集群ID
         @apiSuccessExample {json} 成功返回:
@@ -308,6 +310,7 @@ class StorageViewSet(APIViewSet):
                     },
                     "source_type": data["source_type"],
                     "source_name": data.get("source_name", ""),
+                    "visible_bk_biz": data["visible_bk_biz"],
                 },
                 "version": version_num_str,
             }
@@ -326,6 +329,7 @@ class StorageViewSet(APIViewSet):
         @apiParam {String} auth_info.username 用户
         @apiParam {String} auth_info.password 密码
         @apiParam {String} cluster_name 集群名称
+        @apiParam {List} [visible_bk_biz] 可见业务范围
         @apiParamExample {Json} 请求参数
         {
             "domain_name": "127.0.0.11",
@@ -334,7 +338,8 @@ class StorageViewSet(APIViewSet):
             "auth_info":{
                 "username": "admin",
                 "password": "admin"
-            }
+            },
+            "visible_bk_biz: [1, 2, 3]
         }
         @apiSuccess {Int} data 集群ID
         @apiSuccessExample {json} 成功返回:
@@ -379,6 +384,7 @@ class StorageViewSet(APIViewSet):
                     },
                     "source_type": data["source_type"],
                     "source_name": data.get("source_name", ""),
+                    "visible_bk_biz": data["visible_bk_biz"],
                 },
                 "cluster_id": kwargs["cluster_id"],
             }

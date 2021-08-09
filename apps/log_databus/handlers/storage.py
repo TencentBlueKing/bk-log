@@ -142,8 +142,8 @@ class StorageHandler(object):
                 cluster["max_retention"] = settings.ES_PRIVATE_STORAGE_DURATION
         return cluster_groups
 
-    @staticmethod
-    def filter_cluster_groups(cluster_groups, bk_biz_id, is_default=True):
+    @classmethod
+    def filter_cluster_groups(cls, cluster_groups, bk_biz_id, is_default=True):
         """
         筛选集群，并判断集群是否可编辑
         :param cluster_groups:
@@ -183,14 +183,16 @@ class StorageHandler(object):
             # 非公共集群， 筛选bk_biz_id，密码置空处理，并添加可编辑标签
             custom_option = cluster_obj["cluster_config"]["custom_option"]
             custom_biz_id = custom_option.get("bk_biz_id")
+            custom_visible_bk_biz = custom_option.get("visible_bk_biz", [])
             cluster_obj["cluster_config"]["max_retention"] = settings.ES_PRIVATE_STORAGE_DURATION
-            if not custom_biz_id or custom_biz_id != bk_biz_id:
+            if not cls.storage_visible(bk_biz_id, custom_biz_id, custom_visible_bk_biz):
                 continue
             cluster_obj["is_editable"] = True
             cluster_obj["auth_info"]["password"] = ""
             # 第三方es权重最高
             cluster_obj["priority"] = 0
             cluster_obj["bk_biz_id"] = custom_biz_id
+            cluster_obj["visible_bk_biz"] = custom_visible_bk_biz
             # 处理来源
             cluster_obj["source_type"] = custom_option.get("source_type", EsSourceType.PRIVATE.value)
             cluster_obj["source_name"] = (
@@ -199,9 +201,17 @@ class StorageHandler(object):
                 else EsSourceType.get_choice_label(cluster_obj["source_type"])
             )
             cluster_data.append(cluster_obj)
-
-        # @todo, 筛选区域
         return cluster_data
+
+    @staticmethod
+    def storage_visible(bk_biz_id, custom_bk_biz_id, visible_bk_biz: List[int]) -> bool:
+        bk_biz_id = int(bk_biz_id)
+        if bk_biz_id in visible_bk_biz:
+            return True
+        if not custom_bk_biz_id:
+            return False
+        custom_bk_biz_id = int(custom_bk_biz_id)
+        return custom_bk_biz_id == bk_biz_id
 
     @staticmethod
     def convert_standard_time(time_stamp):
