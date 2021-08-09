@@ -61,14 +61,15 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
     if not maintainers:
         raise BaseException(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
 
-    _, table_id = collector_config.table_id.split(".")
-    if not (collector_config.collector_config_name_en or table_id):
+    if not (collector_config.collector_config_name_en or collector_config.table_id):
         logger.error(
             "collector_config {} dont have enough raw_data_name to create deploy plan".format(
                 collector_config.collector_config_id
             )
         )
         return
+
+    _, table_id = collector_config.table_id.split(".")
 
     BkDataAccessApi.deploy_plan_post(
         params={
