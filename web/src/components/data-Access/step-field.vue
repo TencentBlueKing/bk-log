@@ -552,10 +552,10 @@ export default {
           this.cleanCollectorList = data;
           if (this.isEditCleanItem) {
             this.cleanCollector = this.$route.params.collectorId;
-          }
+          } else this.basicLoading = false;
         }
       })
-        .finally(() => {
+        .catch(() => {
           this.basicLoading = false;
         });
     },
@@ -1213,11 +1213,11 @@ export default {
       const curCollect = this.cleanCollectorList.find((item) => {
         return item.collector_config_id.toString() === id.toString();
       });
-      if (curCollect.create_clean_able) {
+      if (curCollect.create_clean_able || this.isEditCleanItem) {
         this.setAdvanceCleanTab(false);
         // 获取采集项详情
         await this.setDetail(id);
-      } else {
+      } else { // 新增清洗且当前采集项已有基础清洗 则默认只能新增高级清洗
         this.$store.commit('collect/setCurCollect', curCollect);
         this.setAdvanceCleanTab(true);
         this.basicLoading = false;
