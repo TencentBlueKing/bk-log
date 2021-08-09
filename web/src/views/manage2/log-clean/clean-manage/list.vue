@@ -332,10 +332,10 @@ export default {
     },
     getFormatName(row) {
       const cleantype = row.etl_config;
-      const matchItem = this.globalsData.etl_config && this.globalsData.etl_config.find((conf) => {
-        return conf.id === cleantype;
+      const matchItem = this.formatFilters && this.formatFilters.find((conf) => {
+        return conf.value === cleantype;
       });
-      return matchItem ? matchItem.name : '';
+      return matchItem ? matchItem.text : '';
     },
     // 计算平台授权跳转
     handleAuth({ bkdata_auth_url: authUrl, index_set_id: id }) {
@@ -353,22 +353,10 @@ export default {
           redirectUrl = `${authUrl}&redirect_url=${window.origin}${siteUrl}bkdata_auth/`;
         }
       }
-      // auth.html 返回索引集管理的路径
-      let indexSetPath = '';
-      const { href } = this.$router.resolve({
-        name: 'log-clean-list',
-      });
-      let siteUrl = window.SITE_URL;
-      if (siteUrl.startsWith('http')) {
-        if (!siteUrl.endsWith('/')) siteUrl += '/';
-        indexSetPath = siteUrl + href;
-      } else {
-        if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
-        if (!siteUrl.endsWith('/')) siteUrl += '/';
-        redirectUrl = window.origin + siteUrl + href;
-      }
+      // auth.html 返回清洗列表的路径
+      const cleanPath = location.href.match(/http.*\/clean-list/)[0];
       // auth.html 需要使用的数据
-      const urlComponent = `?indexSetId=${id}&ajaxUrl=${window.AJAX_URL_PREFIX}&redirectUrl=${indexSetPath}`;
+      const urlComponent = `?indexSetId=${id}&ajaxUrl=${window.AJAX_URL_PREFIX}&redirectUrl=${cleanPath}`;
       redirectUrl += encodeURIComponent(urlComponent);
       if (self !== top) { // 当前页面是 iframe
         window.open(redirectUrl);
