@@ -196,11 +196,11 @@ export default {
         if (res.isAllowed) {
           this.search();
         } else {
-          this.isLoading = false;
+          this.isTableLoading = false;
         }
       } catch (err) {
         console.warn(err);
-        this.isLoading = false;
+        this.isTableLoading = false;
         this.isAllowedManage = false;
       }
     },
