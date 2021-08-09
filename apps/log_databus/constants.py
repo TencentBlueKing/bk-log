@@ -111,6 +111,12 @@ INTERNAL_TOPO_INDEX = 0
 # biz_topo空闲节点默认index
 BIZ_TOPO_INDEX = 0
 
+# 高级清洗创建索引集默认时间格式
+DEFAULT_TIME_FORMAT = _("微秒（microsecond）")
+# 高级清洗默认创建业务应用型索引集
+DEFAULT_CATEGORY_ID = "application_check"
+DEFAULT_ETL_CONFIG = "bkdata_clean"
+
 FIELD_TEMPLATE = {
     "field_name": "",
     "alias_name": "",

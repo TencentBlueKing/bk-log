@@ -234,26 +234,26 @@ export default class IpSelectorTable extends Vue {
 </script>
 <style lang="scss" scoped>
   .topo-table {
-  &::before {
-    height: 0;
-  }
+    &::before {
+      height: 0;
+    }
 
-  >>> th {
-    background-color: #f5f6fa;
-  }
+    >>> th {
+      background-color: #f5f6fa;
+    }
 
-  ::v-deep .selection-cell .cell {
-    padding-right: 0;
-    padding-left: 10px;
-  }
+    ::v-deep .selection-cell .cell {
+      padding-right: 0;
+      padding-left: 10px;
+    }
 
-  .column-string {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    direction: rtl;
-    text-align: left;
-    display: block;
-  }
+    .column-string {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      direction: rtl;
+      text-align: left;
+      display: block;
+    }
   }
 </style>

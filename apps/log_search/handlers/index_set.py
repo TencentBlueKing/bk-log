@@ -54,6 +54,7 @@ from apps.api import BkLogApi
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum, DEFAULT_TIME_FIELD
 from apps.decorators import user_operation_record
+from apps.utils.thread import MultiExecuteFunc
 
 
 class IndexSetHandler(APIModel):
@@ -145,12 +146,25 @@ class IndexSetHandler(APIModel):
         project_infos = ProjectInfo.objects.filter(project_id__in=list(project_ids)).values("project_id", "bk_biz_id")
         project_mapping = {info["project_id"]: info["bk_biz_id"] for info in project_infos}
 
+        multi_execute_func = MultiExecuteFunc()
         for _index in index_sets:
             _index["category_name"] = GlobalCategoriesEnum.get_display(_index["category_id"])
             _index["scenario_name"] = scenario_choices.get(_index["scenario_id"])
-            _index["storage_cluster_name"] = cluster_map.get(_index["storage_cluster_id"])
+            _index["storage_cluster_name"] = ",".join(
+                {storage_name for storage_name in cluster_map.get(_index["storage_cluster_id"], "").split(",")}
+            )
 
             normal_idx = [idx for idx in _index["indexes"] if idx["apply_status"] == LogIndexSetData.Status.NORMAL]
+
+            if _index["scenario_id"] == Scenario.BKDATA:
+                multi_execute_func.append(
+                    _index["index_set_id"],
+                    BkLogApi.cluster,
+                    {
+                        "scenario_id": Scenario.BKDATA,
+                        "indices": ",".join([index.get("result_table_id") for index in _index.get("indexes", [])]),
+                    },
+                )
 
             if len(normal_idx) == len(_index["indexes"]):
                 _index["apply_status"] = LogIndexSet.Status.NORMAL
@@ -171,6 +185,18 @@ class IndexSetHandler(APIModel):
                 _index["time_field_type"] = TimeFieldTypeEnum.DATE.value
                 _index["time_field_unit"] = TimeFieldUnitEnum.MILLISECOND.value
                 _index["time_field"] = time_field
+        result = multi_execute_func.run()
+        for _index in index_sets:
+            if _index["scenario_id"] == Scenario.BKDATA:
+                _index["storage_cluster_id"] = result.get(_index["index_set_id"], {}).get("storage_cluster_id")
+                _index["storage_cluster_name"] = ",".join(
+                    {
+                        storage_name
+                        for storage_name in result.get(_index["index_set_id"], {})
+                        .get("storage_cluster_name", "")
+                        .split(",")
+                    }
+                )
 
         return index_sets
 

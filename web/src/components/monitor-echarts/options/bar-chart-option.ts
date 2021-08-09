@@ -93,6 +93,7 @@ export default class MonitorLineSeries extends  MonitorBaseSeries implements ICh
           ...item,
           type: this.chartType,
           barMaxWidth: 20,
+          barMinHeight: 4,
           z: 4,
           markLine,
           markArea

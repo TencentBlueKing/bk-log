@@ -242,16 +242,31 @@ class BkdataIdFeatureNotExist(BaseCollectorConfigException):
     MESSAGE = _("后台bkdata_id_feature不存在")
 
 
+class CleanTemplateNotExistException(BaseCollectorConfigException):
+    ERROR_CODE = "701"
+    MESSAGE = _("清洗模板{clean_template_id}不存在")
+
+
+class CleanTemplateRepeatException(BaseCollectorConfigException):
+    ERROR_CODE = "702"
+    MESSAGE = _("该业务{bk_biz_id}已存在该模板{name}")
+
+
+class ProjectNoteExistException(BaseCollectorConfigException):
+    ERROR_CODE = "703"
+    MESSAGE = _("该业务{bk_biz_id}未找到对应project")
+
+
 class ArchiveNotFound(BaseCollectorConfigException):
-    ERROR_CODE = "700"
+    ERROR_CODE = "800"
     MESSAGE = _("归档配置不存在")
 
 
 class RestoreNotFound(BaseCollectorConfigException):
-    ERROR_CODE = "701"
+    ERROR_CODE = "801"
     MESSAGE = _("归档回溯不存在")
 
 
 class RestoreExpired(BaseCollectorConfigException):
-    ERROR_CODE = "702"
+    ERROR_CODE = "802"
     MESSAGE = _("归档回溯已经过期")

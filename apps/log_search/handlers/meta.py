@@ -17,8 +17,9 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import copy
+
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
 
 from apps.iam import Permission, ActionEnum
 from apps.utils import APIModel
@@ -27,6 +28,8 @@ from apps.api import BKLoginApi, CmsiApi
 from apps.log_search.models import ProjectInfo
 from apps.utils.cache import cache_one_hour
 from apps.utils.local import get_request_username
+from apps.log_search import exceptions
+from apps.feature_toggle.handlers import toggle
 
 
 class MetaHandler(APIModel):
@@ -89,55 +92,11 @@ class MetaHandler(APIModel):
 
     @classmethod
     def get_menus(cls, project_id, is_superuser):
-        is_project_manage = True
+
         project = ProjectInfo.objects.get(project_id=project_id)
-        modules = [
-            {"id": "search", "name": _("检索"), "router": "retrieve", "project_manage": is_project_manage},
-            {"id": "trace", "name": _("调用链"), "router": "trace", "project_manage": is_project_manage},
-            {"id": "extract", "name": _("日志提取"), "router": "extract", "project_manage": is_project_manage},
-            {"id": "monitor", "name": _("监控策略"), "router": "monitor", "project_manage": is_project_manage},
-            {
-                "id": "dashboard",
-                "name": _("仪表盘"),
-                "router": "dashboard",
-                "children": [
-                    {"id": "create_dashboard", "name": _("新建仪表盘"), "project_manage": is_project_manage},
-                    {"id": "create_folder", "name": _("新建目录"), "project_manage": is_project_manage},
-                    {"id": "import_dashboard", "name": _("导入仪表盘"), "project_manage": is_project_manage},
-                ],
-            },
-            {
-                "id": "manage",
-                "name": _("管理"),
-                "router": "manage",
-                "children": [
-                    {"id": "manage_access", "name": _("数据接入"), "project_manage": is_project_manage},
-                    {"id": "manage_index_set", "name": _("索引集管理"), "project_manage": is_project_manage},
-                    {"id": "manage_extract", "name": _("日志提取配置"), "project_manage": is_project_manage},
-                    {"id": "manage_user_group", "name": _("用户组管理"), "project_manage": is_project_manage},
-                    {"id": "manage_migrate", "name": _("V3迁移"), "project_manage": is_project_manage},
-                    {"id": "manage_data_link", "name": _("数据链路管理"), "project_manage": is_project_manage},
-                ],
-            },
-        ]
-
-        data = []
-        for module in modules:
-            module = cls.get_menu(module, is_superuser, project)
-            if not module:
-                continue
-
-            if module.get("children") and isinstance(module["children"], list):
-                children = []
-                for sub_module in module["children"]:
-                    sub_module = cls.get_menu(sub_module, is_superuser, project)
-                    if not sub_module:
-                        continue
-                    children.append(sub_module)
-                if children:
-                    module["children"] = children
-            data.append(module)
-        return data
+        modules = copy.deepcopy(settings.MENUS)
+        cls.get_present_menus(modules, is_superuser, project)
+        return modules
 
     @classmethod
     def get_menu(cls, module, is_superuser, project):
@@ -158,8 +117,12 @@ class MetaHandler(APIModel):
             ):
                 return False
 
-        # 管理员可见链路管理页面
-        if module["id"] == "manage_data_link":
+        # 管理员可见采集链路管理页面和提取链路接入
+        if (
+            module["id"] == "manage_data_link"
+            or module["id"] == "extract_link_manage"
+            or module["id"] == "manage_data_link_conf"
+        ):
             return module if is_superuser else False
 
         return module
@@ -194,3 +157,40 @@ class MetaHandler(APIModel):
         maintainer = []
         data = {"bk_biz_name": project_name, "maintainer": list(maintainer)}
         return data
+
+    @classmethod
+    def get_present_menus(cls, child_modules, is_superuser, project):
+        if not isinstance(child_modules, list):
+            raise exceptions.SettingMenuException
+
+        for child_module in child_modules[:]:
+            if "feature" not in child_module:
+                raise exceptions.SettingMenuException
+            if not cls.check_menu_feature(child_module, is_superuser, project):
+                child_modules.remove(child_module)
+                continue
+            if "scenes" in child_module and not toggle.feature_switch(child_module["scenes"]):
+                child_modules.remove(child_module)
+                continue
+            child_module["project_manage"] = True
+            if "children" in child_module:
+                cls.get_present_menus(child_module["children"], is_superuser, project)
+
+    @classmethod
+    def check_menu_feature(cls, module, is_superuser, project):
+        toggle = module["feature"]
+        if toggle == "off":
+            return False
+
+        if toggle == "debug":
+            if (
+                settings.ENVIRONMENT not in ["dev", "stag"]
+                and not is_superuser
+                and module["id"] not in project.feature_toggle
+            ):
+                return False
+
+        if module["id"] in ["manage_data_link", "extract_link_manage", "manage_data_link_conf"]:
+            return True if is_superuser else False
+
+        return True

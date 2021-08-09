@@ -107,6 +107,7 @@ export default {
   @import './scss/app.scss';
   @import './scss/animation.scss';
   @import './scss/mixins/clearfix.scss';
+  @import './scss/mixins/scroller.scss';
 
   #app {
     min-width: 1280px;
@@ -234,6 +235,47 @@ export default {
   .bk-form-control.is-error .bk-form-input {
     border-color: #ff5656;
   }
+  // 导航
+  .hack-king-navigation.bk-navigation {
+    width: 100% !important;
+    height: 100% !important;
+    .container-header {
+      display: none !important;
+    }
+    .bk-navigation-wrapper {
+      height: 100%;
+      .navigation-nav {
+        z-index: 2500;
+      }
+      .navigation-container {
+        max-width: calc(100% - 60px) !important;
+        .container-content {
+          height: 100% !important;
+          max-height: 100% !important;
+          padding: 0;
+          .navigation-content {
+            height: 100%;
+          }
+        }
+      }
+      .bk-navigation-menu-group {
+        &:first-child {
+          .group-name-wrap {
+            padding-top: 12px;
+          }
+        }
+        .group-name-wrap .group-name {
+          margin-right: 0;
+        }
+      }
+      .navigation-menu-item-icon.bk-icon {
+        min-width: 28px;
+      }
+    }
+    .nav-slider-list {
+        height: calc(100% - 56px) !important;
+    }
+  }
   // 表格单元 v-bk-overflow-tips
   .bk-table .bk-table-body-wrapper .table-ceil-container {
     width: 100%;
@@ -278,6 +320,91 @@ export default {
 
         &:hover .apply-text {
           display: flex;
+        }
+      }
+    }
+  }
+  // 采集项管理、索引集管理通用样式
+  .access-manage-container {
+    padding: 20px;
+    .bk-tab-section {
+      display: none;
+    }
+    .tab-content {
+      height: calc(100% - 43px);
+      overflow: auto;
+      @include scroller($backgroundColor: #C4C6CC, $width: 8px);
+      padding: 20px;
+      background-color: #FFF;
+      border: 1px solid #DCDEE5;
+      border-top: none;
+      .main-title {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        font-size: 14px;
+        font-weight: 700;
+        color: #63656e;
+        line-height: 20px;
+        padding: 0 0 8px 0;
+        border-bottom: 1px solid #DCDEE5;
+        margin-bottom: 20px;
+      }
+      .refresh-button {
+        display: flex;
+        align-items: center;
+        font-size: 12px;
+        font-weight: normal;
+        color: #3a84ff;
+        margin-left: 8px;
+        cursor: pointer;
+        &:hover {
+          color: #699DF4;
+        }
+        .bk-icon {
+          font-size: 13px;
+          margin-right: 4px;
+        }
+      }
+      .charts-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        .chart-container {
+          position: relative;
+          width: calc((100% - 16px) / 2);
+          padding: 0 16px;
+          border: 1px solid #f0f1f5;
+          border-radius: 3px;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+          .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 50px;
+            .title {
+              font-size: 12px;
+              font-weight: bold;
+              color: #63656e;
+              line-height: 16px;
+            }
+            .date-picker {
+              display: flex;
+              align-items: center;
+            }
+          }
+          .chart-canvas-container {
+            position: relative;
+            height: 230px;
+            &.big-chart {
+              height: 280px;
+            }
+          }
+          .king-exception {
+            position: absolute;
+            top: 80px;
+            left: 0;
+          }
         }
       }
     }

@@ -69,7 +69,7 @@ from apps.log_databus.exceptions import (
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig
+from apps.log_databus.models import CollectorConfig, CleanStash
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.constants import GlobalCategoriesEnum, CMDB_HOST_SEARCH_FIELDS
@@ -79,6 +79,7 @@ from apps.log_databus.constants import EtlConfig
 from apps.decorators import user_operation_record
 from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario
 from apps.utils.time_handler import format_user_time_zone
+from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 
 
 class CollectorHandler(object):
@@ -319,6 +320,7 @@ class CollectorHandler(object):
     def only_create_or_update_model(self, params):
         model_fields = {
             "collector_config_name": params["collector_config_name"],
+            "collector_config_name_en": params["collector_config_name_en"],
             "target_object_type": params["target_object_type"],
             "target_node_type": params["target_node_type"],
             "target_nodes": params["target_nodes"],
@@ -384,6 +386,7 @@ class CollectorHandler(object):
             raise CollectorActiveException()
 
         collector_config_name = params["collector_config_name"]
+        collector_config_name_en = params["collector_config_name_en"]
         target_object_type = params["target_object_type"]
         target_node_type = params["target_node_type"]
         target_nodes = params["target_nodes"]
@@ -394,6 +397,7 @@ class CollectorHandler(object):
         # 1. 创建CollectorConfig记录
         model_fields = {
             "collector_config_name": collector_config_name,
+            "collector_config_name_en": collector_config_name_en,
             "target_object_type": target_object_type,
             "target_node_type": target_node_type,
             "target_nodes": target_nodes,
@@ -459,6 +463,9 @@ class CollectorHandler(object):
             except IntegrityError:
                 logger.warning(f"collector config name duplicate => [{collector_config_name}]")
                 raise CollectorConfigNameDuplicateException()
+
+        # 创建数据平台data_id及更新时
+        async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         # add user_operation_record
         operation_record = {
@@ -537,6 +544,9 @@ class CollectorHandler(object):
         collector_config_name = (
             self.data.collector_config_name + "_delete_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         )
+        collector_config_name_en = (
+            self.data.collector_config_name_en + "_delete_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        )
 
         # 2. 停止采集（删除配置文件）
         self.stop()
@@ -551,6 +561,7 @@ class CollectorHandler(object):
 
         # 5. 删除CollectorConfig记录
         self.data.collector_config_name = collector_config_name
+        self.data.collector_config_name_en = collector_config_name_en
         self.data.save()
         self.data.delete()
 
@@ -1532,6 +1543,24 @@ class CollectorHandler(object):
         legal_ip_set = {legal_ip["bk_host_innerip"] for legal_ip in legal_ip_list}
 
         return [ip for ip in ip_list if ip not in legal_ip_set]
+
+    def get_clean_stash(self):
+        clean_stash = CleanStash.objects.filter(collector_config_id=self.collector_config_id).first()
+        if not clean_stash:
+            return None
+        return model_to_dict(CleanStash.objects.filter(collector_config_id=self.collector_config_id).first())
+
+    def create_clean_stash(self, params: dict):
+        model_fields = {
+            "clean_type": params["clean_type"],
+            "etl_params": params["etl_params"],
+            "etl_fields": params["etl_fields"],
+            "collector_config_id": int(self.collector_config_id),
+            "bk_biz_id": params["bk_biz_id"],
+        }
+        CleanStash.objects.filter(collector_config_id=self.collector_config_id).delete()
+        logger.info("delete clean stash {}".format(self.collector_config_id))
+        return model_to_dict(CleanStash.objects.create(**model_fields))
 
     def list_collector(self, bk_biz_id):
         return [

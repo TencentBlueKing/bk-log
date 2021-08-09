@@ -90,7 +90,7 @@ export default {
   },
   methods: {
     routeChange(type) {
-      let routeName = 'collectAccess';
+      let routeName = 'collection-item';
       if (type === 'search' || type === 'clear') {
         routeName = 'retrieve';
       }
@@ -109,7 +109,7 @@ export default {
 </script>
 
 <style lang="scss">
-  @import '../../scss/conf';
+  @import '@/scss/conf';
 
   .step-result-wrapper {
     position: relative;

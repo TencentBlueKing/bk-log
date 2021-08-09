@@ -23,10 +23,11 @@ from rest_framework import serializers
 
 from rest_framework.response import Response
 
+from apps.exceptions import ValidationError
+from apps.log_search.constants import HAVE_DATA_ID
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.generic import ModelViewSet
-from apps.exceptions import ValidationError
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import (
     InstanceActionPermission,
@@ -53,8 +54,10 @@ from apps.log_databus.serializers import (
     CollectorDataLinkListSerializer,
     CollectorRegexDebugSerializer,
     ListCollectorsByHostSerializer,
+    CleanStashSerializer,
     ListCollectorSerlalizer,
 )
+from apps.utils.function import ignored
 
 
 class CollectorViewSet(ModelViewSet):
@@ -69,14 +72,11 @@ class CollectorViewSet(ModelViewSet):
     ordering_fields = ("updated_at", "updated_by")
 
     def get_permissions(self):
-        try:
+        with ignored(Exception, log_exception=True):
             auth_info = Permission.get_auth_info(self.request)
             # ESQUERY白名单不需要鉴权
             if auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
                 return []
-        except Exception as e:  # pylint: disable=broad-except
-            print(e)
-            pass
 
         if self.action in ["list_scenarios", "batch_subscription_status"]:
             return []
@@ -93,6 +93,7 @@ class CollectorViewSet(ModelViewSet):
             return [InstanceActionPermission([ActionEnum.VIEW_COLLECTION], ResourceEnum.COLLECTION)]
         if self.action in [
             "update",
+            "only_update",
             "destroy",
             "retry",
             "tail",
@@ -105,6 +106,11 @@ class CollectorViewSet(ModelViewSet):
             return [InstanceActionPermission([ActionEnum.MANAGE_COLLECTION], ResourceEnum.COLLECTION)]
         return [ViewBusinessPermission()]
 
+    def get_queryset(self):
+        if self.request.query_params.get(HAVE_DATA_ID):
+            return self.model.objects.filter(bk_data_id__isnull=False)
+        return self.model.objects.all()
+
     def get_serializer_class(self, *args, **kwargs):
         action_serializer_map = {
             "subscription_run": RunSubscriptionSerializer,
@@ -113,6 +119,7 @@ class CollectorViewSet(ModelViewSet):
             "task_detail": TaskDetailSerializer,
             "list": CollectorListSerializer,
             "retry": RetrySerializer,
+            "list_collectors": CollectorListSerializer,
         }
         return action_serializer_map.get(self.action, serializers.Serializer)
 
@@ -269,10 +276,12 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         # 强制前端必须传分页参数
+
         if not request.GET.get("page") or not request.GET.get("pagesize"):
             raise ValidationError(_("分页参数不能为空"))
         response = super().list(request, *args, **kwargs)
         response.data["list"] = CollectorHandler.add_cluster_info(response.data["list"])
+
         return response
 
     @insert_permission_field(
@@ -366,6 +375,7 @@ class CollectorViewSet(ModelViewSet):
         @apiSuccess {String} itsm_ticket_status 采集ITSM状态
         @apiSuccess {String} itsm_ticket_status_display 采集ITSM状态显示名称
         @apiSuccess {String} ticket_url 采集ITSM流程地址
+        @apiSuccess {String} index_split_rule 分裂规则
         @apiSuccessExample {json} 成功返回:
         {
             "collector_scenario_id": "row",
@@ -461,6 +471,7 @@ class CollectorViewSet(ModelViewSet):
             "itsm_ticket_status": "success_apply",
             "itsm_ticket_status_display": "采集接入完成",
             "ticket_url": "",
+            "index_split_rule": ""
         }
         """
         return Response(CollectorHandler(collector_config_id=collector_config_id).retrieve())
@@ -501,6 +512,7 @@ class CollectorViewSet(ModelViewSet):
         {
             "bk_biz_id": 706,
             "collector_config_name": "采集项名称",
+            "collector_config_name_en": "采集项英文名",
             "data_link_id": 1
             "collector_scenario_id": "line",
             "category_id": "application",
@@ -595,6 +607,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParamExample {json} 请求样例:
         {
             "collector_config_name": "采集项名称",
+            "collector_config_name_en": "采集项英文名",
             "data_link_id": 1
             "category_id": "application",
             "target_object_type": "HOST",
@@ -1071,7 +1084,7 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(CollectorEtlSerializer)
-        return Response(EtlHandler(collector_config_id=collector_config_id).etl_preview(**data))
+        return Response(EtlHandler.etl_preview(**data))
 
     @detail_route(methods=["POST"])
     def etl_time(self, request, collector_config_id=None):
@@ -1285,6 +1298,7 @@ class CollectorViewSet(ModelViewSet):
         {
             "bk_biz_id": 706,
             "collector_config_name": "采集项名称",
+            "collector_config_name_en": "采集项英文名",
             "data_link_id": 1
             "collector_scenario_id": "line",
             "category_id": "application",
@@ -1378,6 +1392,7 @@ class CollectorViewSet(ModelViewSet):
         {
             "bk_biz_id": 706,
             "collector_config_name": "采集项名称",
+            "collector_config_name_en": "采集项英文名",
             "data_link_id": 1
             "collector_scenario_id": "line",
             "category_id": "application",
@@ -1495,3 +1510,217 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.params_valid(ListCollectorsByHostSerializer)
         return Response(CollectorHandler().list_collectors_by_host(data))
+
+    @detail_route(methods=["GET"])
+    def clean_stash(self, request, *args, collector_config_id=None, **kwarg):
+        """
+        @api {GET} /databus/collectors/$collector_config_id/clean_stash 获取采集项清洗缓存
+        @apiName databus_collectors_clean_stash
+        @apiGroup 10_Collector
+        @apiSuccessExample {json} 成功返回(有数据)
+        {
+            "result":true,
+            "data":{
+                "collector_config_id":1,
+                "clean_type":"bk_log_text",
+                "bk_biz_id": 0,
+                "etl_params":{
+                    "retain_original_text":true,
+                    "separator":" "
+                },
+                "etl_fields":[
+                    {
+                        "field_name":"user",
+                        "alias_name":"",
+                        "field_type":"long",
+                        "description":"字段描述",
+                        "is_analyzed":true,
+                        "is_dimension":false,
+                        "is_time":false,
+                        "is_delete":false
+                    },
+                    {
+                        "field_name":"report_time",
+                        "alias_name":"",
+                        "field_type":"string",
+                        "description":"字段描述",
+                        "tag":"metric",
+                        "is_analyzed":false,
+                        "is_dimension":false,
+                        "is_time":true,
+                        "is_delete":false,
+                        "option":{
+                            "time_zone":8,
+                            "time_format":"yyyy-MM-dd HH:mm:ss"
+                        }
+                    }
+                ]
+            },
+            "code":0,
+            "message":""
+        }
+        @apiSuccessExample {json} 成功返回(空)
+        {
+            "result": true,
+            "data": null,
+            "code": 0,
+            "message": ""
+        }
+        """
+        return Response(CollectorHandler(collector_config_id=collector_config_id).get_clean_stash())
+
+    @detail_route(methods=["POST"])
+    def create_clean_stash(self, request, *args, collector_config_id=None, **kwarg):
+        """
+        @api {POST} /databus/collectors/$collector_config_id/create_clean_stash 更新采集项清洗缓存
+        @apiName databus_collectors_create_clean_stash
+        @apiGroup 10_Collector
+        @apiParamExample {json} 成功请求
+        {
+            "bk_biz_id": 0,
+            "clean_type":"bk_log_text",
+            "etl_params":{
+                "retain_original_text":true,
+                "separator":" "
+            },
+            "etl_fields":[
+                {
+                    "field_name":"user",
+                    "alias_name":"",
+                    "field_type":"long",
+                    "description":"字段描述",
+                    "is_analyzed":true,
+                    "is_dimension":false,
+                    "is_time":false,
+                    "is_delete":false
+                },
+                {
+                    "field_name":"report_time",
+                    "alias_name":"",
+                    "field_type":"string",
+                    "description":"字段描述",
+                    "tag":"metric",
+                    "is_analyzed":false,
+                    "is_dimension":false,
+                    "is_time":true,
+                    "is_delete":false,
+                    "option":{
+                        "time_zone":8,
+                        "time_format":"yyyy-MM-dd HH:mm:ss"
+                    }
+                }
+            ]
+        }
+        @apiSuccessExample {json} 成功返回
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "clean_stash_id": 1
+            },
+            "result": true
+        }
+        """
+        data = self.params_valid(CleanStashSerializer)
+        return Response(CollectorHandler(collector_config_id=collector_config_id).create_clean_stash(params=data))
+
+    @insert_permission_field(
+        id_field=lambda d: d["collector_config_id"],
+        data_field=lambda d: d,
+        actions=[ActionEnum.VIEW_COLLECTION, ActionEnum.MANAGE_COLLECTION],
+        resource_meta=ResourceEnum.COLLECTION,
+    )
+    @insert_permission_field(
+        id_field=lambda d: d["index_set_id"],
+        data_field=lambda d: d,
+        actions=[ActionEnum.SEARCH_LOG],
+        resource_meta=ResourceEnum.INDICES,
+    )
+    @list_route(methods=["GET"])
+    def list_collectors(self, request, *args, **kwargs):
+        """
+                @api {get} /databus/collectors/list_collectors/ 34_采集项-获取列表(可不带分页参数)
+                @apiName dababus_list_collector
+                @apiGroup 10_Collector
+                @apiDescription 采集项列表，运行状态通过异步接口获取，可不带分页参数
+                @apiParam {Int} bk_biz_id 业务ID
+                @apiParam {String} keyword 搜索关键字
+                @apiSuccess {Array} results 返回结果
+                @apiSuccess {Int} results.collector_config_id 采集项ID
+                @apiSuccess {Int} results.collector_config_name 采集项名称
+                @apiSuccess {String} results.collector_scenario_id 类型id
+                @apiSuccess {String} results.collector_scenario_name 类型名称
+                @apiSuccess {String} results.category_id 分类ID
+                @apiSuccess {String} results.category_name 分类名称
+                @apiSuccess {Bool} results.is_active 是否可用
+                @apiSuccess {String} results.description 描述
+                @apiSuccess {String} results.created_by 创建人
+                @apiSuccess {String} results.created_at 创建时间
+                @apiSuccess {Boolean} results.create_clean_able 是否可创建基础清洗
+                @apiSuccess {List} results.bkdata_index_set_ids 采集对应的高级清洗索引集id列表
+                @apiSuccessExample {json} 成功返回:
+                {
+                "result": true,
+                "data": [
+                    {
+                        "collector_config_id": 1,
+                        "collector_scenario_name": "行日志文件",
+                        "category_name": "操作系统",
+                        "target_nodes": [
+                            {
+                                "bk_inst_id": 2000000992,
+                                "bk_obj_id": "module"
+                            }
+                        ],
+                        "task_id_list": [
+                            "3469542"
+                        ],
+                        "target_subscription_diff": [],
+                        "create_clean_able": true,
+                        "bkdata_index_set_ids": [],
+                        "created_at": "2021-07-20 12:07:25",
+                        "created_by": "test",
+                        "updated_at": "2021-08-02 16:38:26",
+                        "updated_by": "test",
+                        "is_deleted": false,
+                        "deleted_at": null,
+                        "deleted_by": null,
+                        "collector_config_name": "test",
+                        "bk_app_code": "bk_log_search",
+                        "collector_scenario_id": "row",
+                        "bk_biz_id": 215,
+                        "category_id": "os",
+                        "target_object_type": "HOST",
+                        "target_node_type": "TOPO",
+                        "description": "test",
+                        "is_active": true,
+                        "data_link_id": 0,
+                        "bk_data_id": 525452,
+                        "bk_data_name": null,
+                        "table_id": "215_bklog.test",
+                        "etl_config": "bk_log_text",
+                        "subscription_id": 3420,
+                        "bkdata_data_id": null,
+                        "index_set_id": 1,
+                        "data_encoding": "UTF-8",
+                        "params": "{}",
+                        "itsm_ticket_sn": null,
+                        "itsm_ticket_status": "not_apply",
+                        "can_use_independent_es_cluster": true,
+                        "collector_package_count": 10,
+                        "collector_output_format": null,
+                        "collector_config_overlay": null,
+                        "storage_shards_nums": 3,
+                        "storage_shards_size": 30,
+                        "storage_replies": 1,
+                        "bkdata_data_id_sync_times": 0,
+                        "collector_config_name_en": "test"
+                    }
+                ],
+                "code": 0,
+                "message": ""
+        }
+        """
+        response = super().list(request, *args, **kwargs)
+        response.data = CollectorHandler.add_cluster_info(response.data)
+        return response

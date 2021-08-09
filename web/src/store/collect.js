@@ -26,6 +26,8 @@ export default {
   namespaced: true,
   state: {
     curCollect: {},
+    curIndexSet: {},
+    scenarioMap: null,
   },
   getters: {
     curCollect: state => state.curCollect,
@@ -43,6 +45,12 @@ export default {
           vue.set(state.curCollect, key, collect[key]);
         }
       }
+    },
+    updateCurIndexSet(state, payload) {
+      state.curIndexSet = payload;
+    },
+    updateScenarioMap(state, payload) {
+      state.scenarioMap = payload;
     },
   },
   actions: {},
