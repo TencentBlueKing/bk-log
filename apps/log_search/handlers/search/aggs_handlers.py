@@ -175,7 +175,9 @@ class AggsHandlers(AggsBase):
         return s
 
     @classmethod
-    def _build_not_level_date_histogram_aggs(cls, s: Search, field, size: int) -> Search:  # pylint: disable=function-name-too-long
+    def _build_not_level_date_histogram_aggs(
+        cls, s: Search, field, size: int
+    ) -> Search:  # pylint: disable=function-name-too-long
         cls._build_date_histogram_aggs_item(
             s, field.get("term_filed"), field.get("metric_type"), field.get("metric_field"), size
         )

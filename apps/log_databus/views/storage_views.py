@@ -37,6 +37,7 @@ from apps.log_databus.serializers import (
     StorageDetectSerializer,
     StorageUpdateSerializer,
     StorageBathcDetectSerializer,
+    StorageRepositorySerlalizer,
 )
 from apps.log_databus.exceptions import StorageNotExistException, StorageCreateException
 from apps.api import BkLogApi
@@ -305,6 +306,8 @@ class StorageViewSet(APIViewSet):
                         "warm_attr_name": data["warm_attr_name"],
                         "warm_attr_value": data["warm_attr_value"],
                     },
+                    "source_type": data["source_type"],
+                    "source_name": data.get("source_name", ""),
                 },
                 "version": version_num_str,
             }
@@ -374,6 +377,8 @@ class StorageViewSet(APIViewSet):
                         "warm_attr_name": data["warm_attr_name"],
                         "warm_attr_value": data["warm_attr_value"],
                     },
+                    "source_type": data["source_type"],
+                    "source_name": data.get("source_name", ""),
                 },
                 "cluster_id": kwargs["cluster_id"],
             }
@@ -659,3 +664,86 @@ class StorageViewSet(APIViewSet):
         }
         """
         return Response(StorageHandler(cluster_id).indices())
+
+    @insert_permission_field(
+        id_field=lambda d: d["cluster_id"], actions=[ActionEnum.MANAGE_ES_SOURCE], resource_meta=ResourceEnum.ES_SOURCE
+    )
+    @list_route(methods=["GET"], url_path="list_repository")
+    def list_repository(self, request):
+        """
+        @api {post} /databus/storage/list_repository/ 存储集群-集群快照仓库列表
+        @apiName repository
+        @apiGroup 09_StorageCluster
+        @apiDescription 集群快照仓库列表
+        @apiParam {Int} bk_biz_id 业务id
+        @apiSuccess {String} repository_name 仓库名称
+        @apiSuccess {String} alias 仓库别名
+        @apiSuccess {Int} cluster_id 集群id
+        @apiSuccess {String} cluster_name 集群名称
+        @apiSuccess {String} creator 创建人
+        @apiSuccess {String} create_time 创建时间
+        @apiSuccess {String} last_modify_user 上次修改人
+        @apiSuccess {String} last_modify_time 上次修改时间
+        @apiSuccess {String} type 仓库类型 cos hdfs file
+        @apiSuccess {Dict} settings 仓库详细配置
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data":[
+                    {
+                        "repository_name": "test",
+                        "cluster_id": 3,
+                        "cluster_name": "test",
+                        "alias": "test",
+                        "creator": "xingzhaozhu",
+                        "create_time": "2021-04-30 09:49:27",
+                        "last_modify_user": "xingzhaozhu",
+                        "last_modify_time": "2021-04-30 09:49:27",
+                        "type": "cos",
+                }
+            ]
+        }
+        """
+        data = self.params_valid(StorageRepositorySerlalizer)
+        return Response(StorageHandler().repository(bk_biz_id=data.get("bk_biz_id")))
+
+    @insert_permission_field(
+        id_field=lambda d: d["cluster_id"], actions=[ActionEnum.MANAGE_ES_SOURCE], resource_meta=ResourceEnum.ES_SOURCE
+    )
+    @detail_route(methods=["GET"], url_path="repository")
+    def repository(self, request, cluster_id):
+        """
+        @api {post} /databus/storage/$cluster_id/repository/ 存储集群-对应集群快照仓库列表
+        @apiName detail_repository
+        @apiGroup 09_StorageCluster
+        @apiDescription 集群快照仓库列表
+        @apiParam {Int} bk_biz_id 业务id
+        @apiSuccess {String} repository_name 仓库名称
+        @apiSuccess {String} alias 仓库别名
+        @apiSuccess {Int} cluster_id 集群id
+        @apiSuccess {String} cluster_name 集群名称
+        @apiSuccess {String} creator 创建人
+        @apiSuccess {String} create_time 创建时间
+        @apiSuccess {String} last_modify_user 上次修改人
+        @apiSuccess {String} last_modify_time 上次修改时间
+        @apiSuccess {String} type 仓库类型 cos hdfs file
+        @apiSuccess {Dict} settings 仓库详细配置
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data":[
+                    {
+                        "repository_name": "test",
+                        "cluster_id": 3,
+                        "alias": "test",
+                        "creator": "xingzhaozhu",
+                        "create_time": "2021-04-30 09:49:27",
+                        "last_modify_user": "xingzhaozhu",
+                        "last_modify_time": "2021-04-30 09:49:27",
+                        "type": "cos",
+                }
+            ]
+        }
+        """
+        data = self.params_valid(StorageRepositorySerlalizer)
+        return Response(StorageHandler().repository(cluster_id=cluster_id, bk_biz_id=data["bk_biz_id"]))

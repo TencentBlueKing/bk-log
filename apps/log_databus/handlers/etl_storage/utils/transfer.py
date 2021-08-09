@@ -76,7 +76,9 @@ def preview(separator_node_action, data, etl_only=False, **kwargs):
         logger.info(f"[transfer][preview]{args}")
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate(bytes(json.dumps({"data": data}), encoding="utf8"))  # pylint: disable=unused-variable
+        stdout, stderr = p.communicate(
+            bytes(json.dumps({"data": data}), encoding="utf8")
+        )  # pylint: disable=unused-variable
 
         p.poll()
         result = json.loads(stdout)["result"][0]

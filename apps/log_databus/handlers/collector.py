@@ -1532,3 +1532,12 @@ class CollectorHandler(object):
         legal_ip_set = {legal_ip["bk_host_innerip"] for legal_ip in legal_ip_list}
 
         return [ip for ip in ip_list if ip not in legal_ip_set]
+
+    def list_collector(self, bk_biz_id):
+        return [
+            {
+                "collector_config_id": collector.collector_config_id,
+                "collector_config_name": collector.collector_config_name,
+            }
+            for collector in CollectorConfig.objects.filter(bk_biz_id=bk_biz_id)
+        ]

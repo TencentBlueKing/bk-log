@@ -187,5 +187,125 @@ class _TransferApi(object):
             before_request=add_esb_info_before_request,
         )
 
+        self.create_es_snapshot_repository = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_create_es_snapshot_repository/",
+            module=self.MODULE,
+            description=_("创建ES快照仓库"),
+            before_request=add_esb_info_before_request,
+        )
+        self.modify_es_snapshot_repository = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_modify_es_snapshot_repository/",
+            module=self.MODULE,
+            description=_("修改ES快照仓库"),
+            before_request=add_esb_info_before_request,
+        )
+        self.delete_es_snapshot_repository = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_delete_es_snapshot_repository/",
+            module=self.MODULE,
+            description=_("删除ES快照仓库"),
+            before_request=add_esb_info_before_request,
+        )
+        self.verify_es_snapshot_repository = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_verify_es_snapshot_repository/",
+            module=self.MODULE,
+            description=_("验证ES快照仓库"),
+            before_request=add_esb_info_before_request,
+        )
+        self.es_snapshot_repository = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_es_snapshot_repository/",
+            module=self.MODULE,
+            description=_("查看指定ES快照仓库"),
+            before_request=add_esb_info_before_request,
+        )
+        self.list_es_snapshot_repository = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_list_es_snapshot_repository/",
+            module=self.MODULE,
+            description=_("所有快照仓库列表"),
+            before_request=add_esb_info_before_request,
+        )
+        self.create_result_table_snapshot = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_create_result_table_snapshot/",
+            module=self.MODULE,
+            description=_("创建结果表快照配置"),
+            before_request=add_esb_info_before_request,
+        )
+        self.modify_result_table_snapshot = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_modify_result_table_snapshot/",
+            module=self.MODULE,
+            description=_("修改结果表快照配置"),
+            before_request=add_esb_info_before_request,
+        )
+        self.delete_result_table_snapshot = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_delete_result_table_snapshot/",
+            module=self.MODULE,
+            description=_("删除结果表快照配置"),
+            before_request=add_esb_info_before_request,
+        )
+        self.list_result_table_snapshot = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_list_result_table_snapshot/",
+            module=self.MODULE,
+            description=_("结果表快照配置列表"),
+            before_request=add_esb_info_before_request,
+        )
+        self.list_result_table_snapshot_indices = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_list_result_table_snapshot_indices/",
+            module=self.MODULE,
+            description=_("结果表快照配置列表含物理索引"),
+            before_request=add_esb_info_before_request,
+        )
+        self.get_result_table_snapshot_state = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_get_result_table_snapshot_state/",
+            module=self.MODULE,
+            description=_("获取结果表快照状态"),
+            before_request=add_esb_info_before_request,
+        )
+        self.restore_result_table_snapshot = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_restore_result_table_snapshot/",
+            module=self.MODULE,
+            description=_("快照回溯"),
+            before_request=add_esb_info_before_request,
+        )
+        self.modify_restore_result_table_snapshot = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_modify_restore_result_table_snapshot/",
+            module=self.MODULE,
+            description=_("修改快照回溯"),
+            before_request=add_esb_info_before_request,
+        )
+        self.delete_restore_result_table_snapshot = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_delete_restore_result_table_snapshot/",
+            module=self.MODULE,
+            description=_("删除快照回溯"),
+            before_request=add_esb_info_before_request,
+        )
+        self.list_restore_result_table_snapshot = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_list_restore_result_table_snapshot/",
+            module=self.MODULE,
+            description=_("快照回溯列表"),
+            before_request=add_esb_info_before_request,
+        )
+        self.get_restore_result_table_snapshot_state = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_get_restore_result_table_snapshot_state/",
+            module=self.MODULE,
+            description=_("快照回溯状态"),
+            before_request=add_esb_info_before_request,
+        )
+
 
 Transfer = _TransferApi()

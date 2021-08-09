@@ -286,6 +286,28 @@ ALLOWED_MODULES_FUNCS = {
     "apps.log_databus.views.collector_views": {"tail": "tail"},
     "apps.log_databus.views.storage_views": {"connectivity_detect": "connectivity_detect"},
 }
+# esb模块中转发meta接口的传发设置
+META_ESB_FORWARD_CONFIG = {
+    "create_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "create_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "modify_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "modify_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "delete_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "delete_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "verify_es_snapshot_repository": {"is_view_permission": True, "target_call": "verify_es_snapshot_repository"},
+}
 
 # resf_framework
 REST_FRAMEWORK = {

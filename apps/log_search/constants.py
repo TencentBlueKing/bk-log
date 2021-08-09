@@ -229,6 +229,7 @@ class GlobalTypeEnum(ChoicesEnum):
     TIME_ZONE = "time_zone"
     TIME_FIELD_TYPE = "time_field_type"
     TIME_FIELD_UNIT = "time_field_unit"
+    ES_SOURCE_TYPE = "es_source_type"
 
     _choices_labels = (
         (CATEGORY, _("数据分类")),
@@ -242,6 +243,7 @@ class GlobalTypeEnum(ChoicesEnum):
         (FIELD_BUILT_IN, _("内置字段")),
         (TIME_FIELD_TYPE, _("时间字段类型")),
         (TIME_FIELD_UNIT, _("时间字段单位")),
+        (ES_SOURCE_TYPE, _("日志来源类型")),
     )
 
 

@@ -25,10 +25,12 @@ databus
 """
 
 from django.db import models  # noqa
+from django.utils import timezone  # noqa
+from django.utils.functional import cached_property  # noqa
 from django.utils.translation import ugettext_lazy as _  # noqa
 from django_jsonfield_backport.models import JSONField  # noqa
 
-
+from apps.api import CmsiApi  # noqa
 from apps.log_databus.constants import (  # noqa
     TargetObjectTypeEnum,  # noqa
     TargetNodeTypeEnum,  # noqa
@@ -209,3 +211,79 @@ class StorageUsed(OperateRecordModel):
         verbose_name_plural = _("业务已用容量")
         ordering = ("-updated_at",)
         unique_together = ("bk_biz_id", "storage_cluster_id")
+
+
+class ArchiveConfig(SoftDeleteModel):
+    archive_config_id = models.AutoField(_("归档配置id"), primary_key=True)
+    collector_config_id = models.IntegerField(_("关联采集项id"))
+    bk_biz_id = models.IntegerField(_("业务id"))
+    # 快照存储天数
+    snapshot_days = models.IntegerField(_("快照天数"), default=0)
+    # 快照所在的快照仓库
+    target_snapshot_repository_name = models.CharField(_("快照仓库名称"), max_length=255, default="")
+
+    class Meta:
+        verbose_name = _("归档配置表")
+        verbose_name_plural = _("归档配置表")
+
+    @cached_property
+    def collector_config(self) -> "CollectorConfig":
+        return CollectorConfig.objects.get(collector_config_id=self.collector_config_id)
+
+    @property
+    def table_id(self):
+        return self.collector_config.table_id
+
+    @property
+    def collector_config_name(self):
+        return self.collector_config.collector_config_name
+
+    @classmethod
+    def get_collector_config_id(cls, archive_config_id):
+        return cls.objects.get(archive_config_id=archive_config_id).collector_config.collector_config_id
+
+
+class RestoreConfig(SoftDeleteModel):
+    restore_config_id = models.AutoField(_("采集配置ID"), primary_key=True)
+    bk_biz_id = models.IntegerField(_("业务id"))
+    archive_config_id = models.IntegerField(_("归档id"))
+    meta_restore_id = models.IntegerField(_("meta回溯id"), null=True, default=None)
+    start_time = models.DateTimeField(_("开始时间"))
+    end_time = models.DateTimeField(_("结束时间"))
+    expired_time = models.DateTimeField(_("到期时间"))
+    is_done = models.BooleanField(_("是否完成"), default=False)
+    duration = models.IntegerField(_("耗时"), default=-1)
+    total_store_size = models.BigIntegerField(_("存储大小"), null=True, default=None)
+    total_doc_count = models.BigIntegerField(_("文档数量"), null=True, default=None)
+    index_set_name = models.CharField(_("索引集名称"), max_length=64)
+    index_set_id = models.IntegerField(_("索引集id"), null=True, default=None)
+    notice_user = models.TextField(_("结果通知人"))
+
+    class Meta:
+        verbose_name = _("回溯配置表")
+        verbose_name_plural = _("回溯配置表")
+
+    @cached_property
+    def archive(self) -> "ArchiveConfig":
+        return ArchiveConfig.objects.get(archive_config_id=self.archive_config_id)
+
+    def is_expired(self) -> bool:
+        return timezone.now() > self.expired_time
+
+    def done(self, duration):
+        self.is_done = True
+        self.duration = duration
+        self.save()
+        # notify user
+        send_params = {
+            "receivers": self.notice_user,
+            "content": "你创建的归档回溯已经完成",
+            "title": _("【日志平台】"),
+        }
+        CmsiApi.send_mail(send_params)
+        CmsiApi.send_wechat(send_params)
+
+    @classmethod
+    def get_collector_config_id(cls, restore_config_id):
+        restore: "RestoreConfig" = cls.objects.get(restore_config_id=restore_config_id)
+        return restore.archive.collector_config.collector_config_id

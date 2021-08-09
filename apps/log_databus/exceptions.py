@@ -240,3 +240,18 @@ class CollectNotSuccess(BaseCollectorConfigException):
 class BkdataIdFeatureNotExist(BaseCollectorConfigException):
     ERROR_CODE = "601"
     MESSAGE = _("后台bkdata_id_feature不存在")
+
+
+class ArchiveNotFound(BaseCollectorConfigException):
+    ERROR_CODE = "700"
+    MESSAGE = _("归档配置不存在")
+
+
+class RestoreNotFound(BaseCollectorConfigException):
+    ERROR_CODE = "701"
+    MESSAGE = _("归档回溯不存在")
+
+
+class RestoreExpired(BaseCollectorConfigException):
+    ERROR_CODE = "702"
+    MESSAGE = _("归档回溯已经过期")

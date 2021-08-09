@@ -28,6 +28,7 @@ from django_jsonfield_backport.models import JSONField
 from jinja2 import Environment, FileSystemLoader
 
 from apps.feature_toggle.handlers.toggle import feature_switch
+from apps.log_databus.constants import EsSourceType
 from apps.log_search.exceptions import (
     SourceDuplicateException,
     IndexSetNameDuplicateException,
@@ -111,7 +112,8 @@ class GlobalConfig(models.Model):
         configs[GlobalTypeEnum.TIME_FIELD_UNIT.value] = TimeFieldUnitEnum.get_choices_list_dict()
         # 日志编码
         configs[GlobalTypeEnum.DATA_ENCODING.value] = EncodingsEnum.get_choices_list_dict()
-
+        # ES日志来源类型
+        configs[GlobalTypeEnum.ES_SOURCE_TYPE.value] = EsSourceType.get_choices_list_dict()
         return configs
 
     class Meta:

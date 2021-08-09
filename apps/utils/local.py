@@ -69,6 +69,7 @@ def get_request_username():
     获取请求的用户名
     """
     from apps.utils.function import ignored
+
     username = ""
     with ignored(Exception):
         username = get_request().user.username
