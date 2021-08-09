@@ -64,7 +64,7 @@ class CleanFilterUtils:
                 self.Cleans(
                     bk_data_id=collector_config.bk_data_id,
                     collector_config_name=collector_config.collector_config_name,
-                    result_table_id=collector_config.table_id,
+                    result_table_id=collector_config.table_id.replace(".", "_"),
                     collector_config_id=collector_config.collector_config_id,
                     etl_config=collector_config.etl_config,
                     bkdata_auth_url=None,
