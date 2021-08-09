@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <section>
+  <section class="step-field-container">
     <auth-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-page>
     <div class="step-field" v-bkloading="{ isLoading: basicLoading }" v-else>
       <bk-alert class="king-alert" type="info">
@@ -1229,13 +1229,13 @@ export default {
 <style lang="scss">
   @import '@/scss/mixins/clearfix';
 
-  .step-field {
-    position: relative;
+  .step-field-container {
     min-width: 950px;
     max-height: 100%;
-    padding: 0 42px 42px;
+    padding: 0 30px 42px;
     overflow: auto;
-
+  }
+  .step-field {
     .king-alert {
       margin: 30px auto -28px;
     }
