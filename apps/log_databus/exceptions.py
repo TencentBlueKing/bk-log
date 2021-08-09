@@ -137,6 +137,11 @@ class HotColdCheckException(BaseCollectorConfigException):
     MESSAGE = _("集群不支持冷热数据功能")
 
 
+class StorageHaveResource(BaseCollectorConfigException):
+    ERROR_CODE = "209"
+    MESSAGE = _("集群还有未删除的采集项、第三方集群索引集")
+
+
 class EtlNotSupportedException(BaseCollectorConfigException):
     ERROR_CODE = "301"
     MESSAGE = _("暫不支持{separator_node_action}类清洗")

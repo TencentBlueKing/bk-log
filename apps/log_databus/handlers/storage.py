@@ -34,6 +34,7 @@ from apps.utils.thread import MultiExecuteFunc
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import Permission, ResourceEnum
 from apps.log_esquery.utils.es_route import EsRoute
+from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario
 from apps.utils.cache import cache_five_minute
 from apps.utils.local import get_local_param, get_request_username
@@ -51,6 +52,7 @@ from apps.log_databus.exceptions import (
     StorageNotPermissionException,
     StorageConnectInfoException,
     StorageUnKnowEsVersionException,
+    StorageHaveResource,
 )
 from apps.decorators import user_operation_record
 
@@ -349,6 +351,16 @@ class StorageHandler(object):
         user_operation_record.delay(operation_record)
 
         return cluster_obj
+
+    def destroy(self):
+        # check index_set
+        index_sets = IndexSetHandler.get_index_set_for_storage(self.cluster_id)
+        if index_sets.filter(is_active=True).exists():
+            raise StorageHaveResource
+
+        # TODO 检查计算平台关联的集群
+
+        TransferApi.delete_cluster_info({"cluster_id": self.cluster_id})
 
     def connectivity_detect(
         self,

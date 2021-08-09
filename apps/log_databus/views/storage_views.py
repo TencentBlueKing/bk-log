@@ -381,6 +381,23 @@ class StorageViewSet(APIViewSet):
 
         return Response(StorageHandler(kwargs["cluster_id"]).update(data))
 
+    def destroy(self, request, cluster_id):
+        """
+        @api {DELETE} /databus/storage/$cluster_id/?bk_biz_id=$bk_biz_id 06_存储集群-删除
+        @apiName delete_storage
+        @apiGroup 09_StorageCluster
+        @apiParam {Int} cluster_id 集群名称
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data": {
+            },
+            "code": 0,
+            "message": ""
+        }
+        """
+        return Response(StorageHandler(cluster_id).destroy())
+
     @list_route(methods=["POST"], url_path="connectivity_detect")
     def connectivity_detect(self, request, *args, **kwargs):
         """

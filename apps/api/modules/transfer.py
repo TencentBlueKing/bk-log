@@ -42,7 +42,7 @@ def create_cluster_info_before(params):
 
 
 def get_result_table_storage_after(response_result):
-    for  cluster_obj in response_result["data"].values():
+    for cluster_obj in response_result["data"].values():
         if not cluster_obj.get("cluster_config"):
             continue
         parse_cluster_info(cluster_obj)
@@ -98,6 +98,13 @@ class _TransferApi(object):
             url=MONITOR_APIGATEWAY_ROOT + "metadata_create_result_table/",
             module=self.MODULE,
             description=_("创建结果表"),
+            before_request=add_esb_info_before_request,
+        )
+        self.delete_cluster_info = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_delete_cluster_info/",
+            module=self.MODULE,
+            description=_("删除存储集群"),
             before_request=add_esb_info_before_request,
         )
         self.modify_result_table = DataAPI(
