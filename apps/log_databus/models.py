@@ -130,7 +130,7 @@ class CollectorConfig(SoftDeleteModel):
         verbose_name = _("用户采集配置")
         verbose_name_plural = _("用户采集配置")
         ordering = ("-updated_at",)
-        unique_together = [("collector_config_name", "bk_biz_id"), ("collector_config_name_en", "bk_biz_id")]
+        unique_together = [("collector_config_name", "bk_biz_id")]
 
     def has_apply_itsm(self):
         if self.itsm_ticket_status:

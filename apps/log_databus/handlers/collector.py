@@ -66,6 +66,7 @@ from apps.log_databus.exceptions import (
     CollectorTaskRunningStatusException,
     CollectorCreateOrUpdateSubscriptionException,
     CollectorIllegalIPException,
+    CollectorConfigNameENDuplicateException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
@@ -331,6 +332,18 @@ class CollectorHandler(object):
         }
         # 判断是否存在非法IP列表
         self.cat_illegal_ips(params)
+        # 判断是否已存在同英文名collector
+        if self._pre_check_collector_config_en(model_fields=model_fields):
+            logger.error(
+                "collector_config_name_en {collector_config_name_en} already exists".format(
+                    collector_config_name_en=model_fields["collector_config_name_en"]
+                )
+            )
+            raise CollectorConfigNameENDuplicateException(
+                CollectorConfigNameENDuplicateException.MESSAGE.format(
+                    collector_config_name_en=model_fields["collector_config_name_en"]
+                )
+            )
 
         is_create = False
         collect_config = self.data
@@ -410,6 +423,19 @@ class CollectorHandler(object):
         self.cat_illegal_ips(params)
 
         is_create = False
+
+        # 判断是否已存在同英文名collector
+        if self._pre_check_collector_config_en(model_fields=model_fields):
+            logger.error(
+                "collector_config_name_en {collector_config_name_en} already exists".format(
+                    collector_config_name_en=collector_config_name_en
+                )
+            )
+            raise CollectorConfigNameENDuplicateException(
+                CollectorConfigNameENDuplicateException.MESSAGE.format(
+                    collector_config_name_en=collector_config_name_en
+                )
+            )
 
         # 2. 创建/更新采集项，并同步到bk_data_id
         with transaction.atomic():
@@ -492,6 +518,15 @@ class CollectorHandler(object):
             "task_id_list": self.data.task_id_list,
         }
 
+    def _pre_check_collector_config_en(self, model_fields: dict):
+        qs = CollectorConfig.objects.filter(
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=model_fields["bk_biz_id"],
+        )
+        if self.collector_config_id:
+            qs = qs.exclude(collector_config_id=self.collector_config_id)
+        return qs.exists()
+
     def _update_or_create_subscription(self, collector_scenario, params: dict, is_create=False):
         try:
             self.data.subscription_id = collector_scenario.update_or_create_subscription(self.data, params)
@@ -544,9 +579,6 @@ class CollectorHandler(object):
         collector_config_name = (
             self.data.collector_config_name + "_delete_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         )
-        collector_config_name_en = (
-            self.data.collector_config_name_en + "_delete_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        )
 
         # 2. 停止采集（删除配置文件）
         self.stop()
@@ -561,7 +593,6 @@ class CollectorHandler(object):
 
         # 5. 删除CollectorConfig记录
         self.data.collector_config_name = collector_config_name
-        self.data.collector_config_name_en = collector_config_name_en
         self.data.save()
         self.data.delete()
 
