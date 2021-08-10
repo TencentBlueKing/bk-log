@@ -56,6 +56,9 @@ mock==2.0.0
 # jinjia
 jinja2==2.10.1
 
+# ipython
+ipython==7.13.0
+
 # opentelemetry
 opentelemetry-api==1.4.1
 opentelemetry-sdk==1.4.1
