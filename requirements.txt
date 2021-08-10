@@ -56,5 +56,8 @@ mock==2.0.0
 # jinjia
 jinja2==2.10.1
 
+# ipython
+ipython==7.13.0
+
 # 各自环境所需的不同依赖, 通过 sites/${env}/deploy/requirements_env.txt得到
 -r requirements_env.txt
