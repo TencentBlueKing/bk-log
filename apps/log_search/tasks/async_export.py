@@ -214,9 +214,7 @@ class AsyncExportUtils(object):
         """
         index_set_obj = LogIndexSet.objects.get(index_set_id=index_set_id)
 
-        platform = (
-            settings.EMAIL_TITLE["en"] if translation.get_language() == "en" else settings.TITLE_MENU_CONFIG["zh"]
-        )
+        platform = settings.EMAIL_TITLE["en"] if translation.get_language() == "en" else settings.EMAIL_TITLE["zh"]
 
         title = self.notify.title(
             _("【{platform}】{index_set_name} 检索导出"), platform=platform, index_set_name=index_set_obj.index_set_name
