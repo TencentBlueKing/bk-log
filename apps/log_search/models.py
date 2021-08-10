@@ -283,7 +283,6 @@ class LogIndexSet(SoftDeleteModel):
     pre_check_tag = models.BooleanField(_("是否通过"), default=True)
     pre_check_msg = models.TextField(_("预查询描述"), null=True)
     is_active = models.BooleanField(_("是否可用"), default=True)
-
     # 字段快照
     fields_snapshot = JsonField(_("字段快照"), default=None, null=True)
 

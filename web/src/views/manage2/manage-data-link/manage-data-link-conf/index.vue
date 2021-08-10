@@ -147,21 +147,22 @@ export default {
       return this.projectList.find(item => item.bk_biz_id === row.bk_biz_id)?.project_name;
     },
     filterLinkInformation(row) {
-      const kafkaName = this.selectData.kafka.find(item => item.cluster_id === row.kafka_cluster_id)?.cluster_name;
+      const kafkaName = this.selectData.kafka.find((item) => {
+        return item.cluster_id === row.kafka_cluster_id;
+      })?.cluster_name;
       if (!kafkaName) {
         return '';
       }
-
       const transferName = this.selectData.transfer.find((item) => {
         return item.cluster_id === row.transfer_cluster_id;
       })?.cluster_name;
       if (!transferName) {
         return '';
       }
-
-      const esNameList = row.es_cluster_ids.map((id) => {
-        return this.selectData.es.find(item => item.cluster_id === id)?.cluster_name;
-      });
+      const esNameList = row.es_cluster_ids.map(id => this.selectData.es.find((item) => {
+        return item.cluster_id === id;
+      // eslint-disable-next-line camelcase
+      })?.cluster_name);
       if (!esNameList.length || esNameList.includes(undefined)) {
         return '';
       }

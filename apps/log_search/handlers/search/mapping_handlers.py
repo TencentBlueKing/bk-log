@@ -50,7 +50,6 @@ from apps.log_search.models import (
     Scenario,
     UserIndexSetConfig,
 )
-from apps.log_trace.handlers.trace_field_handlers import TraceFieldHandlers
 from apps.utils.local import get_local_param
 from apps.utils.time_handler import generate_time_range
 
@@ -145,9 +144,6 @@ class MappingHandlers(object):
             for field in fields_result
         ]
         fields_list = self._combine_description_field(fields_list)
-        # 针对trace场景进行description优化
-        if scope in TRACE_SCOPE:
-            fields_list = TraceFieldHandlers.trace_field_update(fields_list, scope)
         # 处理editable关系
         final_fields_list: list = self._combine_fields(fields_list)
 
@@ -167,15 +163,7 @@ class MappingHandlers(object):
                 field_name = final_field["field_name"]
                 if field_name in display_fields_list:
                     final_field["is_display"] = True
-
-            if scope in TRACE_SCOPE:
-                # 增加trace内容优先逻辑
-                display_fields_list = TraceFieldHandlers.trace_field_pop_up(display_fields_list, scope=scope)
             return final_fields_list, display_fields_list
-
-        # trace链路
-        if scope in TRACE_SCOPE:
-            return final_fields_list, TraceFieldHandlers.get_trace_fieds(final_fields_list, scope)
 
         # search_context情况，默认只显示log字段
         if scope in CONTEXT_SCOPE:

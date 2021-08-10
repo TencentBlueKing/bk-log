@@ -30,7 +30,8 @@
         class="field-type-icon"
         :class="getFieldIcon(fieldItem.field_type) || 'log-icon icon-unkown'"
         v-bk-tooltips="{
-          content: fieldTypeMap[fieldItem.field_type].name
+          content: fieldTypeMap[fieldItem.field_type] && fieldTypeMap[fieldItem.field_type].name,
+          disabled: !fieldTypeMap[fieldItem.field_type]
         }"
       ></span>
       <!-- 字段名 -->
@@ -102,6 +103,10 @@ export default {
           icon: 'log-icon icon-number',
         },
         integer: {
+          name: this.$t('数字'),
+          icon: 'log-icon icon-number',
+        },
+        double: {
           name: this.$t('数字'),
           icon: 'log-icon icon-number',
         },

@@ -51,7 +51,7 @@ from apps.utils.notify import NotifyType
 from apps.utils.remote_storage import StorageType
 
 
-@task(ignore_result=True)
+@task(ignore_result=True, queue="async_export")
 def async_export(
     search_handler: SearchHandler,
     sorted_fields: list,
