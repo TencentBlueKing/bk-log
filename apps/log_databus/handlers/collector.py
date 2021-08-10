@@ -333,7 +333,7 @@ class CollectorHandler(object):
         # 判断是否存在非法IP列表
         self.cat_illegal_ips(params)
         # 判断是否已存在同英文名collector
-        if self._pre_check_collector_config_en(model_fields=model_fields):
+        if self._pre_check_collector_config_en(model_fields=model_fields, bk_biz_id=params["bk_biz_id"]):
             logger.error(
                 "collector_config_name_en {collector_config_name_en} already exists".format(
                     collector_config_name_en=model_fields["collector_config_name_en"]
@@ -425,7 +425,7 @@ class CollectorHandler(object):
         is_create = False
 
         # 判断是否已存在同英文名collector
-        if self._pre_check_collector_config_en(model_fields=model_fields):
+        if self._pre_check_collector_config_en(model_fields=model_fields, bk_biz_id=params["bk_biz_id"]):
             logger.error(
                 "collector_config_name_en {collector_config_name_en} already exists".format(
                     collector_config_name_en=collector_config_name_en
@@ -518,10 +518,10 @@ class CollectorHandler(object):
             "task_id_list": self.data.task_id_list,
         }
 
-    def _pre_check_collector_config_en(self, model_fields: dict):
+    def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
             collector_config_name_en=model_fields["collector_config_name_en"],
-            bk_biz_id=model_fields["bk_biz_id"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
