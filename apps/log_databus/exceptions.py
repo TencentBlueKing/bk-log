@@ -97,6 +97,11 @@ class CollectorIllegalIPException(BaseCollectorConfigException):
     MESSAGE = _("采集项包含非该业务【{bk_biz_id}】IP，异常IP列表为: {illegal_ips}")
 
 
+class CollectorConfigNameENDuplicateException(BaseCollectorConfigException):
+    ERROR_CODE = "112"
+    MESSAGE = _("采集项{collector_config_name_en}英文名重复")
+
+
 class StorageNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "201"
     MESSAGE = _("集群不存在")
