@@ -17,205 +17,26 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import copy
-import datetime
-import arrow
-from apps.utils.local import get_local_param
-from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
-from apps.log_trace.handlers.trace_field_handlers import TraceMappingAdapter
-from apps.log_trace.exceptions import TraceIDNotExistsException, TraceRootException
 
-SCATTER_TEMPLATE = [
-    {"label": "成功", "pointBackgroundColor": "#45E35F", "borderColor": "#45E35F", "pointRadius": 5, "data": []},
-    {"label": "失败", "pointBackgroundColor": "#FB9C9C", "borderColor": "#FB9C9C", "pointRadius": 5, "data": []},
-]
+from apps.log_trace.handlers.proto.proto import Proto
+from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 
 
 class TraceHandler(object):
-    trace_duration_day = 1
-    trace_size = 1000
+    def __init__(self, index_set_id):
+        data = {"search_type": "trace"}
+        search_handler_esquery = SearchHandlerEsquery(index_set_id, data)
+        self._index_set_id = index_set_id
+        self._proto_type = Proto.judge_trace_type(search_handler_esquery.fields().get("fields", []))
 
-    def __init__(self):
-        pass
+    def fields(self, scope: str) -> dict:
+        return Proto.get_proto(self._proto_type).fields(self._index_set_id, scope)
 
-    @classmethod
-    def fields(cls, index_set_id: int, scope: str) -> dict:
-        data = {"search_type": scope}
-        search_handler = SearchHandlerEsquery(index_set_id, data)
-        result_dict = search_handler.fields(scope)
-        result_dict["trace"] = TraceMappingAdapter.get_trace_plan(result_dict["fields"], scope)
-        return result_dict
+    def search(self, data: dict) -> dict:
+        return Proto.get_proto(self._proto_type).search(self._index_set_id, data)
 
-    @classmethod
-    def search(cls, index_set_id: int, data: dict) -> dict:
-        data.update({"collapse": {"field": "traceID"}})
-        search_handler = SearchHandlerEsquery(index_set_id, data)
-        return search_handler.search(search_type="trace")
+    def trace_id(self, data: dict) -> dict:
+        return Proto.get_proto(self._proto_type).trace_id(self._index_set_id, data)
 
-    @classmethod
-    def trace_id(cls, index_set_id: int, data: dict) -> dict:
-        # 处理起止时间
-        start_time = arrow.get(data["startTime"][0:10])
-        begin_time = start_time - datetime.timedelta(days=cls.trace_duration_day)
-        end_time = start_time + datetime.timedelta(days=cls.trace_duration_day)
-
-        query_data = {
-            "start_time": begin_time.timestamp,
-            "end_time": end_time.timestamp,
-            "addition": [
-                {"key": "traceID", "method": "is", "value": data["traceID"], "condition": "and", "type": "field"}
-            ],
-            "search_type": "trace_detail",
-            "size": cls.trace_size,
-        }
-
-        search_handler = SearchHandlerEsquery(index_set_id, query_data)
-        result: dict = search_handler.search(search_type=None)
-        if not result["total"]:
-            raise TraceIDNotExistsException()
-        result["tree"] = cls.result_to_tree(result)
-
-        return result
-
-    @classmethod
-    def scatter(cls, index_set_id: int, data: dict):
-        data.update({"search_type": "trace_scatter"})
-        search_handler = SearchHandlerEsquery(index_set_id, data)
-        result: dict = search_handler.search(search_type=None)
-        scatter_list: list = cls.result_to_scatter(result)
-        return {"scatter": scatter_list}
-
-    @classmethod
-    def result_to_tree(cls, result) -> dict:
-        result_list: list = result.get("list", [])
-
-        # 获取根节点
-        roots = [cls.update_node(node) for node in result_list if not cls.get_parents(node)]
-        if not roots:
-            raise TraceRootException()
-        root_data = roots[0]
-
-        # 构建树
-        tree = copy.deepcopy(root_data)
-        cls.find_children(tree, result_list)
-        return tree
-
-    @classmethod
-    def update_node(cls, child: dict) -> dict:
-        child.update(
-            {
-                "group": child.get("spanID", ""),
-                "from": child.get("startTime", 0),
-                "to": child.get("startTime", 0) + child.get("duration", 0),
-                "unit": "ms",
-                "parentSpanID": child.get("parentSpanID", ""),
-                "children": [],
-            }
-        )
-        return child
-
-    @classmethod
-    def find_children(cls, tree: dict, nodes: list):
-        children: list = []
-        for node in nodes:
-            span_id = node.get("spanID")
-            if not span_id:
-                continue
-            reference: list = cls.get_parents(node, False)
-            if not reference:
-                continue
-            if tree["spanID"] in reference:
-                node = cls.update_node(node)
-                children.append(cls.find_children(node, nodes))
-        tree["children"] = children
-        return tree
-
-    @classmethod
-    def get_parents(cls, node, judge_root=True):
-        """
-        @TODO: 后续可能根据reference支持多个parents
-        获取节点的parents节点
-        """
-        # log reference
-        reference: str = node.get("parentSpanID")
-
-        # jaeger reference
-        jaeger_reference = node.get("references", [])
-        span_id = None
-        for refer in jaeger_reference:
-            span_id = refer.get("spanID", "")
-            if span_id:
-                break
-            else:
-                continue
-        jaeger_reference_span_id: str = span_id
-
-        if jaeger_reference_span_id:
-            # jaeger father 0000
-            if jaeger_reference_span_id.startswith("0000"):
-                return []
-            else:
-                # jaeger child
-                return jaeger_reference_span_id
-        else:
-            if reference:
-                span_id = node.get("spanID", "")
-                trace_id = node.get("traceID", None)
-                if cls._is_parent(span_id, reference, trace_id) and judge_root:
-                    return []
-                else:
-                    # log child
-                    return [reference]
-            else:
-                # log root
-                return []
-
-    @staticmethod
-    def _is_parent(span_id, parent_id, trace_id):
-        """
-        judge span is parent
-        major three condition:
-        1. trace_id == parent_id
-        2. trace_id == span_id
-        3. span_id == parent_id
-        """
-        return span_id == parent_id or trace_id == span_id or trace_id == parent_id
-
-    @classmethod
-    def result_to_scatter(cls, result) -> list:
-        scatter_label_true_list: list = SCATTER_TEMPLATE[0]["data"]
-        scatter_label_false_list: list = SCATTER_TEMPLATE[1]["data"]
-        result_list: list = result.get("list", [])
-        for item in result_list:
-            tmp_dict: dict = {}
-            tag = item.get("tag", None)
-            if tag:
-                tmp_dict.update(
-                    {
-                        "x": cls.mills_to_timestamp(item.get("startTime", 0)),
-                        "y": item.get("duration", 0),
-                        "traceID": item.get("traceID", ""),
-                        "spanID": item.get("spanID", ""),
-                        "startTime": item.get("startTime", ""),
-                        "duration": item.get("duration", 0),
-                        "error": tag.get("error", False),
-                        "result_code": item.get("result_code", 0),
-                    }
-                )
-
-                if tag.get("error", None) is True:
-                    scatter_label_true_list.append(tmp_dict)
-                elif tag.get("error", None) is False:
-                    scatter_label_false_list.append(tmp_dict)
-                else:
-                    pass
-            else:
-                continue
-        return SCATTER_TEMPLATE
-
-    @classmethod
-    def mills_to_timestamp(cls, mills: int) -> str:
-        seconds = int(mills / 1000)
-        d1 = arrow.get(seconds)
-        time_format_str = d1.to(get_local_param("time_zone")).format("YYYY-MM-DD HH:mm:ss")
-        return time_format_str
+    def scatter(self, data: dict):
+        return Proto.get_proto(self._proto_type).scatter(self._index_set_id, data)

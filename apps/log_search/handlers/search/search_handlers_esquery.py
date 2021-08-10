@@ -43,7 +43,8 @@ from apps.log_search.constants import (
     MAX_RESULT_WINDOW,
     MAX_SEARCH_SIZE,
     BK_BCS_APP_CODE,
-    ASYNC_SORTED, FieldDataTypeEnum,
+    ASYNC_SORTED,
+    FieldDataTypeEnum,
 )
 from apps.log_search.handlers.es.es_query_mock_body import BODY_DATA_FOR_AGGS, BODY_DATA_FOR_ORIGIN_AGGS
 from apps.log_search.exceptions import (
@@ -81,7 +82,7 @@ max_len_dict = Dict[str, int]
 
 
 class SearchHandler(object):
-    def __init__(self, index_set_id: int, search_dict: dict, pre_check_enable=True):
+    def __init__(self, index_set_id: int, search_dict: dict, pre_check_enable=True, can_highlight=True):
         self.search_dict: dict = search_dict
 
         # 透传查询类型
@@ -160,7 +161,7 @@ class SearchHandler(object):
         self.aggs: dict = self._init_aggs()
 
         # 初始化highlight
-        self.highlight: dict = self._init_highlight()
+        self.highlight: dict = self._init_highlight(can_highlight)
 
         # result fields
         self.field: Dict[str, max_len_dict] = {}
@@ -939,8 +940,9 @@ class SearchHandler(object):
             aggs_dict["group_by_histogram"]["date_histogram"].update(date_histogram)
         return aggs_dict
 
-    def _init_highlight(self):
-
+    def _init_highlight(self, can_highlight=True):
+        if not can_highlight:
+            return {}
         # 避免多字段高亮
         if self.query_string and ":" in self.query_string:
             require_field_match = True

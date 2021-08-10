@@ -52,6 +52,7 @@ INSTALLED_APPS += (
     "apps.log_databus",
     "apps.log_esquery",
     "apps.log_measure",
+    "apps.log_trace",
     "apps.esb",
     "apps.bk_log_admin",
     "bk_monitor",
@@ -169,6 +170,75 @@ if RUN_VER != "open":
     LOGGING["handlers"]["mysql"]["encoding"] = "utf-8"
     LOGGING["handlers"]["blueapps"]["encoding"] = "utf-8"
 
+BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
+
+if BKLOG_UDP_LOG:
+    LOG_UDP_SERVER_HOST = os.getenv("BKAPP_UDP_LOG_SERVER_HOST", "")
+    LOG_UDP_SERVER_PORT = int(os.getenv("BKAPP_UDP_LOG_SERVER_PORT", 0))
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    LOGGING = {
+        "version": 1,
+        "formatters": {
+            "json": {
+                "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+                "fmt": (
+                    "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
+                    "%(funcName)s %(process)d %(thread)d %(message)s"
+                ),
+            }
+        },
+        "handlers": {
+            "udp": {
+                "formatter": "json",
+                "class": "apps.utils.log.UdpHandler",
+                "host": LOG_UDP_SERVER_HOST,
+                "port": LOG_UDP_SERVER_PORT,
+            },
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "formatter": "json",
+                "stream": sys.stdout,
+            },
+        },
+        "loggers": {
+            "django": {"handlers": ["udp"], "level": "INFO", "propagate": True},
+            "django.server": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "django.request": {
+                "handlers": ["udp"],
+                "level": "ERROR",
+                "propagate": True,
+            },
+            "django.db.backends": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            # the root logger ,用于整个project的logger
+            "root": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            # 组件调用日志
+            "component": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "celery": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            # other loggers...
+            # blueapps
+            "blueapps": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            # 普通app日志
+            "app": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+        },
+    }
+
+OLTP_TRACE = os.getenv("BKAPP_OLTP_TRACE", "off") == "on"
 # ===============================================================================
 # 项目配置
 # ===============================================================================
@@ -189,7 +259,8 @@ BK_HOT_WARM_CONFIG_URL = (
 )
 
 # bulk_request limit
-BULK_REQUEST_LIMIT = os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500)
+BULK_REQUEST_LIMIT = int(os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500))
+
 
 # 该配置需要等待SITE_URL被patch掉才能正确配置，因此放在patch逻辑后面
 GRAFANA = {

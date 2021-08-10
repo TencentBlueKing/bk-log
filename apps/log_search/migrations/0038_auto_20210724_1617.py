@@ -19,20 +19,21 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from django.db import migrations
+from django.core.cache import cache
+from apps.utils.log import logger
+
+
+def forwards_func(apps, schema_editor):
+    try:
+        cache.clear()
+    except Exception as e:  # noqa
+        logger.error(f"clear cache failed：{e}")
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("log_audit", "0001_initial"),
+        ("log_search", "0037_delete_featuretoggle"),
     ]
 
-    operations = [
-        # migrations.RunSQL("drop table if exists log_auth_auditrecord;"),
-        # migrations.RunSQL("drop table if exists log_auth_authactionconfig;"),
-        # migrations.RunSQL("drop table if exists log_auth_authgroupconfig;"),
-        # migrations.RunSQL("drop table if exists log_auth_authpolicyinfo;"),
-        # migrations.RunSQL("drop table if exists log_auth_authresourceconfig;"),
-        # migrations.RunSQL("drop table if exists log_auth_authusergroup;"),
-        # migrations.RunSQL("drop table if exists log_auth_useroperationrecord;"),
-    ]
+    operations = [migrations.RunPython(forwards_func)]

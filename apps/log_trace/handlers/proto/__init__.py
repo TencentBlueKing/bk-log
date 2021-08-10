@@ -17,22 +17,3 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-
-from django.db import migrations
-
-
-class Migration(migrations.Migration):
-
-    dependencies = [
-        ("log_audit", "0001_initial"),
-    ]
-
-    operations = [
-        # migrations.RunSQL("drop table if exists log_auth_auditrecord;"),
-        # migrations.RunSQL("drop table if exists log_auth_authactionconfig;"),
-        # migrations.RunSQL("drop table if exists log_auth_authgroupconfig;"),
-        # migrations.RunSQL("drop table if exists log_auth_authpolicyinfo;"),
-        # migrations.RunSQL("drop table if exists log_auth_authresourceconfig;"),
-        # migrations.RunSQL("drop table if exists log_auth_authusergroup;"),
-        # migrations.RunSQL("drop table if exists log_auth_useroperationrecord;"),
-    ]
