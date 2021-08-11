@@ -32,6 +32,7 @@ from apps.log_databus.serializers import (
     CollectorEtlSerializer,
     CleanRefreshSerializer,
     CleanSerializer,
+    CleanSyncSerializer,
 )
 from apps.log_databus.utils.clean import CleanFilterUtils
 from apps.utils.drf import detail_route, list_route
@@ -103,7 +104,7 @@ class CleanViewSet(ModelViewSet):
         )
 
     @detail_route(methods=["GET"])
-    def refresh(self, request, *args, collector_config_id=None, **kwarg):
+    def refresh(self, request, *args, collector_config_id=None, **kwargs):
         """
         @api {get} /databus/clean/$collector_config_id/refresh/?bk_biz_id=$bk_biz_id&bk_data_id=$bk_data_id 2_高级清洗-刷新
         @apiName refresh_clean
@@ -139,7 +140,7 @@ class CleanViewSet(ModelViewSet):
         )
 
     @list_route(methods=["GET"])
-    def sync(self):
+    def sync(self, request, *args, **kwargs):
         """
         @api {get} /databus/clean/sync/?bk_biz_id=$bk_biz_id 3_高级清洗-同步
         @apiName sync_clean
@@ -165,7 +166,8 @@ class CleanViewSet(ModelViewSet):
             "result": true
         }
         """
-        pass
+        data = self.params_valid(CleanSyncSerializer)
+        return Response({"status": CleanHandler.sync(bk_biz_id=data["bk_biz_id"], polling=data["polling"])})
 
 
 class CleanTemplateViewSet(ModelViewSet):

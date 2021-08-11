@@ -17,9 +17,12 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from blueapps.utils.unique import uniqid
+from django.core.cache import cache
+
 from apps.api import BkDataDatabusApi
 from apps.utils.log import logger
-from apps.log_databus.constants import DEFAULT_TIME_FORMAT, DEFAULT_CATEGORY_ID
+from apps.log_databus.constants import DEFAULT_TIME_FORMAT, DEFAULT_CATEGORY_ID, MAX_SYNC_CLEAN_TTL
 from apps.log_databus.exceptions import ProjectNoteExistException
 from apps.log_databus.models import BKDataClean
 from apps.log_search.handlers.index_set import IndexSetHandler
@@ -140,3 +143,18 @@ class BKDataCleanUtils:
                 collector_config_id=collector_config_id, bk_biz_id=bk_biz_id
             )
         )
+
+    @staticmethod
+    def lock_sync_clean(bk_biz_id: int):
+        token = uniqid()
+        return cache.set(
+            BKDataCleanUtils._generate_sync_key(bk_biz_id=bk_biz_id), token, timeout=MAX_SYNC_CLEAN_TTL, nx=True
+        )
+
+    @staticmethod
+    def unlock_sync_clean(bk_biz_id: int):
+        cache.delete(BKDataCleanUtils._generate_sync_key(bk_biz_id=bk_biz_id))
+
+    @staticmethod
+    def _generate_sync_key(bk_biz_id: int):
+        return "sync_clean_{bk_biz_id}".format(bk_biz_id=bk_biz_id)
