@@ -517,6 +517,33 @@ MENUS = [
                 ],
             },
             {
+                "id": "log_archive",
+                "name": _("日志归档"),
+                "feature": "on",
+                "icon": "",
+                "keyword": "归档",
+                "children": [
+                    {
+                        "id": "archive_repository",
+                        "name": _("归档仓库"),
+                        "feature": "on",
+                        "icon": "_empty-fill",
+                    },
+                    {
+                        "id": "archive_list",
+                        "name": _("归档列表"),
+                        "feature": "on",
+                        "icon": "audit-fill",
+                    },
+                    {
+                        "id": "archive_restore",
+                        "name": _("归档回溯"),
+                        "feature": "on",
+                        "icon": "withdraw-fill",
+                    },
+                ],
+            },
+            {
                 "id": "manage_extract_strategy",
                 "name": _("日志提取"),
                 "icon": "",
