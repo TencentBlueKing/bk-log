@@ -22,6 +22,7 @@ from celery.task import periodic_task, task
 from celery.schedules import crontab
 
 from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
+from apps.utils.function import ignored
 from apps.utils.log import logger
 from apps.api.modules.bkdata_access import BkDataAccessApi
 from apps.log_databus.constants import (
@@ -69,7 +70,8 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
         )
         return
 
-    _, table_id = collector_config.table_id.split(".")
+    with ignored(Exception):
+        _, table_id = collector_config.table_id.split(".")
 
     BkDataAccessApi.deploy_plan_post(
         params={
