@@ -138,6 +138,35 @@ class CleanViewSet(ModelViewSet):
             )
         )
 
+    @list_route(methods=["GET"])
+    def sync(self):
+        """
+        @api {get} /databus/clean/sync/?bk_biz_id=$bk_biz_id 3_高级清洗-同步
+        @apiName sync_clean
+        @apiGroup 22_clean
+        @apiDescription 同步高级清洗
+        @apiParam {Int} bk_biz_id 业务id
+        @apiSuccessExample {json} 任务已完成
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "status": "DONE"
+            },
+            "result": true
+        }
+        @apiSuccessExample {json} 任务正在进行中
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "status": "RUNNING"
+            },
+            "result": true
+        }
+        """
+        pass
+
 
 class CleanTemplateViewSet(ModelViewSet):
     """
@@ -147,7 +176,7 @@ class CleanTemplateViewSet(ModelViewSet):
     lookup_field = "clean_template_id"
     model = CleanTemplate
     filter_fields_exclude = ["etl_params", "etl_fields"]
-    search_fields = ("name", "bk_biz_id")
+    search_fields = ("name",)
 
     def get_permissions(self):
         return [BusinessActionPermission([ActionEnum.MANAGE_CLEAN_TEMPLATE_CONFIG])]
