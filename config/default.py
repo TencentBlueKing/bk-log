@@ -448,31 +448,6 @@ MENUS = [
                 ],
             },
             {
-                "id": "trace_track",
-                "name": _("全链路追踪"),
-                "feature": "on",
-                "icon": "",
-                "keyword": "trace",
-                "children": [
-                    {
-                        "id": "collection_track",
-                        "name": _("采集接入"),
-                        "feature": "off",
-                        "scenes": "scenario_log",
-                        "icon": "",
-                    },
-                    {
-                        "id": "bk_data_track",
-                        "name": _("计算平台"),
-                        "feature": FEATURE_TOGGLE["scenario_bkdata"],
-                        "scenes": "scenario_bkdata",
-                        "icon": "cc-cabinet",
-                    },
-                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
-                    {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
-                ],
-            },
-            {
                 "id": "log_clean",
                 "name": _("日志清洗"),
                 "feature": "on",
@@ -513,6 +488,31 @@ MENUS = [
                 "feature": "off",
                 "icon": "",
                 "children": [{"id": "log_archive_conf", "name": _("日志归档"), "feature": "off", "icon": ""}],
+            },
+            {
+                "id": "trace_track",
+                "name": _("全链路追踪"),
+                "feature": "on",
+                "icon": "",
+                "keyword": "trace",
+                "children": [
+                    {
+                        "id": "collection_track",
+                        "name": _("采集接入"),
+                        "feature": "off",
+                        "scenes": "scenario_log",
+                        "icon": "",
+                    },
+                    {
+                        "id": "bk_data_track",
+                        "name": _("计算平台"),
+                        "feature": FEATURE_TOGGLE["scenario_bkdata"],
+                        "scenes": "scenario_bkdata",
+                        "icon": "cc-cabinet",
+                    },
+                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
+                    {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
+                ],
             },
             {
                 "id": "es_cluster_status",
