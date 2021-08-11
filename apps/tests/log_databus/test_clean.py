@@ -21,8 +21,10 @@ from unittest.mock import patch
 from django.test import TestCase
 from .test_collectorhandler import TestCollectorHandler
 from ..log_search.test_indexset import Dummy
+from ...log_databus.constants import AsyncStatus
 from ...log_databus.handlers.clean import CleanHandler
 from ...log_databus.handlers.collector import CollectorHandler
+from ...log_databus.utils.bkdata_clean import BKDataCleanUtils
 from ...log_databus.utils.clean import CleanFilterUtils
 from ...log_search.models import ProjectInfo
 
@@ -126,6 +128,7 @@ class IndexSet(object):
 @patch("apps.iam.handlers.permission.Permission.batch_is_allowed", return_value=Dummy())
 @patch("apps.decorators.user_operation_record.delay", return_value=None)
 @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
+@patch("apps.log_databus.tasks.bkdata.sync_clean.delay", return_value=None)
 class TestClean(TestCase):
     def test_create_clean_stash(self, *args, **kwargs):
         collector_config_id, create_stash_result = self._create_clean_stash()
@@ -179,6 +182,12 @@ class TestClean(TestCase):
             raw_data_id=self.collector.data.bk_data_id, bk_biz_id=self.collector.data.bk_biz_id
         )
         self.assertEqual([result_table_name for result_table_name in result_table_names], ["xxxx_test19"])
+
+    def test_sync(self, *args, **kwargs):
+        self.assertEqual(CleanHandler.sync(bk_biz_id=706, polling=False), AsyncStatus.RUNNING)
+        self.assertEqual(CleanHandler.sync(bk_biz_id=706, polling=True), AsyncStatus.RUNNING)
+        BKDataCleanUtils.unlock_sync_clean(bk_biz_id=706)
+        self.assertEqual(CleanHandler.sync(bk_biz_id=706, polling=True), AsyncStatus.DONE)
 
     @classmethod
     def _create_clean_stash(cls):

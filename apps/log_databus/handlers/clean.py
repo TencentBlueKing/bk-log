@@ -17,8 +17,10 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from apps.log_databus.constants import AsyncStatus
 from apps.log_databus.exceptions import CleanTemplateNotExistException, CleanTemplateRepeatException
 from apps.log_databus.models import CleanTemplate, BKDataClean
+from apps.log_databus.tasks.bkdata import sync_clean
 from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
 from apps.models import model_to_dict
 from apps.utils.log import logger
@@ -37,6 +39,21 @@ class CleanHandler(object):
         if not result_table_names:
             return []
         return result_table_names
+
+    @classmethod
+    def sync(cls, bk_biz_id: int, polling: bool):
+        """
+        to sync clean from bkdata and to create or delete log_index_set
+        @param bk_biz_id int biz_id
+        @param polling bool is polling request or not
+        """
+        lock_able = BKDataCleanUtils.lock_sync_clean(bk_biz_id=bk_biz_id)
+        if lock_able and polling:
+            BKDataCleanUtils.unlock_sync_clean(bk_biz_id=bk_biz_id)
+            return AsyncStatus.DONE
+        if lock_able and not polling:
+            sync_clean.delay(bk_biz_id=bk_biz_id)
+        return AsyncStatus.RUNNING
 
 
 class CleanTemplateHandler(object):
