@@ -130,7 +130,7 @@ export default {
     height: 100%;
 
     .navigation-content {
-      min-width: 1280px;
+      min-width: 1080px;
       height: 100%;
       background-color: #fafbfd;
 

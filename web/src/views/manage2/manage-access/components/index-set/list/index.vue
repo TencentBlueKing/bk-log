@@ -22,6 +22,11 @@
 
 <template>
   <section class="index-set-container">
+    <bk-alert
+      v-if="searchParams.is_trace_log === '0'"
+      class="alert-info"
+      type="info"
+      :title="alertText"></bk-alert>
     <div class="operate-box">
       <bk-button
         theme="primary" style="width: 120px;"
@@ -140,6 +145,14 @@ export default {
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
+    alertText() {
+      const textMap = {
+        log: this.$t('logAlertTips'),
+        es: this.$t('esAlertTips'),
+        bkdata: this.$t('bkdataAlertTips'),
+      };
+      return textMap[this.scenarioId];
+    },
   },
   created() {
     this.checkCreateAuth();
@@ -162,8 +175,8 @@ export default {
       }
     },
     /**
-             * 获取索引集列表
-             */
+     * 获取索引集列表
+     */
     getIndexSetList() {
       const query = JSON.parse(JSON.stringify(this.searchParams));
       query.page = this.pagination.current;
@@ -178,19 +191,21 @@ export default {
       });
     },
     /**
-             * 分页变换
-             * @param  {Number} page 当前页码
-             * @return {[type]}      [description]
-             */
+     * 分页变换
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.getIndexSetList();
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.getIndexSetList();
+      }
     },
     /**
-             * 分页限制
-             * @param  {Number} page 当前页码
-             * @return {[type]}      [description]
-             */
+     * 分页限制
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
     handleLimitChange(page) {
       if (this.pagination.limit !== page) {
         this.pagination.current = 1;
@@ -199,16 +214,16 @@ export default {
       }
     },
     /**
-             * 筛选条件变更，重新获取列表
-             */
+     * 筛选条件变更，重新获取列表
+     */
     reFilter() {
       this.pagination.page = 1;
       this.isTableLoading = true;
       this.getIndexSetList();
     },
     /**
-             * 跳转新增页面
-             */
+     * 跳转新增页面
+     */
     async addIndexSet() {
       if (this.isAllowedCreate === false) {
         try {
@@ -310,6 +325,10 @@ export default {
 
   .index-set-container {
     padding: 20px 60px;
+
+    .alert-info {
+      margin-bottom: 20px;
+    }
 
     .operate-box {
       display: flex;
