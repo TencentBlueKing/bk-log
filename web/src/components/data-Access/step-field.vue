@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <section>
+  <section class="step-field-container">
     <auth-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-page>
     <div class="step-field" v-bkloading="{ isLoading: basicLoading }" v-else>
       <bk-alert class="king-alert" type="info">
@@ -552,10 +552,10 @@ export default {
           this.cleanCollectorList = data;
           if (this.isEditCleanItem) {
             this.cleanCollector = this.$route.params.collectorId;
-          }
+          } else this.basicLoading = false;
         }
       })
-        .finally(() => {
+        .catch(() => {
           this.basicLoading = false;
         });
     },
@@ -1213,11 +1213,11 @@ export default {
       const curCollect = this.cleanCollectorList.find((item) => {
         return item.collector_config_id.toString() === id.toString();
       });
-      if (curCollect.create_clean_able) {
+      if (curCollect.create_clean_able || this.isEditCleanItem) {
         this.setAdvanceCleanTab(false);
         // 获取采集项详情
         await this.setDetail(id);
-      } else {
+      } else { // 新增清洗且当前采集项已有基础清洗 则默认只能新增高级清洗
         this.$store.commit('collect/setCurCollect', curCollect);
         this.setAdvanceCleanTab(true);
         this.basicLoading = false;
@@ -1229,13 +1229,13 @@ export default {
 <style lang="scss">
   @import '@/scss/mixins/clearfix';
 
-  .step-field {
-    position: relative;
+  .step-field-container {
     min-width: 950px;
     max-height: 100%;
-    padding: 0 42px 42px;
+    padding: 0 30px 42px;
     overflow: auto;
-
+  }
+  .step-field {
     .king-alert {
       margin: 30px auto -28px;
     }
