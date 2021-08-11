@@ -701,9 +701,9 @@ class StorageViewSet(APIViewSet):
                         "cluster_id": 3,
                         "cluster_name": "test",
                         "alias": "test",
-                        "creator": "xingzhaozhu",
+                        "creator": "xxx",
                         "create_time": "2021-04-30 09:49:27",
-                        "last_modify_user": "xingzhaozhu",
+                        "last_modify_user": "xxxx",
                         "last_modify_time": "2021-04-30 09:49:27",
                         "type": "cos",
                 }
@@ -742,9 +742,9 @@ class StorageViewSet(APIViewSet):
                         "repository_name": "test",
                         "cluster_id": 3,
                         "alias": "test",
-                        "creator": "xingzhaozhu",
+                        "creator": "xxx",
                         "create_time": "2021-04-30 09:49:27",
-                        "last_modify_user": "xingzhaozhu",
+                        "last_modify_user": "xxx",
                         "last_modify_time": "2021-04-30 09:49:27",
                         "type": "cos",
                 }
