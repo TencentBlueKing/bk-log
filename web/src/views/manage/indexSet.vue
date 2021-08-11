@@ -197,8 +197,11 @@ export default {
              * @return {[type]}      [description]
              */
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.getIndexSetList();
+      console.log('changepage');
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.getIndexSetList();
+      }
     },
     /**
              * 分页限制
@@ -206,6 +209,7 @@ export default {
              * @return {[type]}      [description]
              */
     handlelimitChange(page) {
+      console.log('changelimit');
       if (this.pagination.limit !== page) {
         this.pagination.limit = page;
         this.getIndexSetList();
