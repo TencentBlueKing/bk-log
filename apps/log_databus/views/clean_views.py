@@ -176,7 +176,7 @@ class CleanTemplateViewSet(ModelViewSet):
     lookup_field = "clean_template_id"
     model = CleanTemplate
     filter_fields_exclude = ["etl_params", "etl_fields"]
-    search_fields = ("name", "bk_biz_id")
+    search_fields = ("name",)
 
     def get_permissions(self):
         return [BusinessActionPermission([ActionEnum.MANAGE_CLEAN_TEMPLATE_CONFIG])]
