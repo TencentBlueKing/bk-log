@@ -20,6 +20,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from unittest.mock import patch
 from django.test import TestCase
 from .test_collectorhandler import TestCollectorHandler
+from ..log_esquery.test_qos import FakeCache
 from ..log_search.test_indexset import Dummy
 from ...log_databus.constants import AsyncStatus
 from ...log_databus.handlers.clean import CleanHandler
@@ -129,6 +130,7 @@ class IndexSet(object):
 @patch("apps.decorators.user_operation_record.delay", return_value=None)
 @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 @patch("apps.log_databus.tasks.bkdata.sync_clean.delay", return_value=None)
+@patch("django.core.cache.cache", FakeCache())
 class TestClean(TestCase):
     def test_create_clean_stash(self, *args, **kwargs):
         collector_config_id, create_stash_result = self._create_clean_stash()

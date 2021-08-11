@@ -59,6 +59,10 @@ class FakeCache:
         self._dict[key] = value
         return True
 
+    def delete(self, key):
+        self._dict.pop(key, key)
+        return True
+
 
 fake_redis = FakeRedis()
 

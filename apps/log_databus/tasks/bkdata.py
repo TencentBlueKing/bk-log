@@ -139,9 +139,10 @@ def review_clean():
         return
     collector_configs = CollectorConfig.objects.filter(bkdata_data_id__isnull=False)
     for collector_config in collector_configs:
-        BKDataCleanUtils(raw_data_id=collector_config.bkdata_data_id).update_or_create_clean(
-            collector_config_id=collector_config.collector_config_id, bk_biz_id=collector_config.bk_biz_id
-        )
+        with ignored(Exception, log_exception=True):
+            BKDataCleanUtils(raw_data_id=collector_config.bkdata_data_id).update_or_create_clean(
+                collector_config_id=collector_config.collector_config_id, bk_biz_id=collector_config.bk_biz_id
+            )
 
 
 @task(ignore_result=True)
@@ -149,10 +150,13 @@ def sync_clean(bk_biz_id: int):
     try:
         collector_configs = CollectorConfig.objects.filter(bk_biz_id=bk_biz_id)
         for collector_config in collector_configs:
-            BKDataCleanUtils(raw_data_id=collector_config.bkdata_data_id).update_or_create_clean(
-                collector_config_id=collector_config.collector_config_id, bk_biz_id=collector_config.bk_biz_id
-            )
+            with ignored(Exception, log_exception=True):
+                BKDataCleanUtils(raw_data_id=collector_config.bkdata_data_id).update_or_create_clean(
+                    collector_config_id=collector_config.collector_config_id, bk_biz_id=collector_config.bk_biz_id
+                )
     except Exception as e:  # pylint: disable=broad-except
-        logger.error("bk_biz_id: {bk_biz_id} sync_clean failed reason: {reason}".format(bk_biz_id=bk_biz_id, reason=e))
+        logger.error(
+            "bk_biz_id: {bk_biz_id} get collector_configs failed: {reason}".format(bk_biz_id=bk_biz_id, reason=e)
+        )
     finally:
         BKDataCleanUtils.unlock_sync_clean(bk_biz_id=bk_biz_id)
