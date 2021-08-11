@@ -561,6 +561,17 @@ class CleanSerializer(serializers.Serializer):
         return attrs
 
 
+class PageSerializer(serializers.Serializer):
+    page = serializers.IntegerField(label=_("页码"))
+    pagesize = serializers.IntegerField(label=_("页面大小"))
+
+    def validate(self, attrs):
+        super().validate(attrs)
+        if attrs["page"] < 0 or attrs["pagesize"] < 0:
+            raise ValidationError(_("分页参数不能为负数"))
+        return attrs
+
+
 class CleanRefreshSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务id"))
     bk_data_id = serializers.IntegerField(label=_("数据源id"))

@@ -34,7 +34,6 @@ from apps.utils.thread import MultiExecuteFunc
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import Permission, ResourceEnum
 from apps.log_esquery.utils.es_route import EsRoute
-from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario
 from apps.utils.cache import cache_five_minute
 from apps.utils.local import get_local_param, get_request_username
@@ -372,6 +371,9 @@ class StorageHandler(object):
         return cluster_obj
 
     def destroy(self):
+
+        from apps.log_search.handlers.index_set import IndexSetHandler
+
         # check index_set
         index_sets = IndexSetHandler.get_index_set_for_storage(self.cluster_id)
         if index_sets.filter(is_active=True).exists():

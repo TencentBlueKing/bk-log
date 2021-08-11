@@ -50,12 +50,18 @@ class ArchiveHandler:
         archive_group = array_group(archives, "archive_config_id", True)
         archive_config_ids = list(archive_group.keys())
         archive_objs = ArchiveConfig.objects.filter(archive_config_id__in=archive_config_ids)
+        table_ids = [archive.table_id for archive in archives]
+        archive_detail = array_group(TransferApi.list_result_table_snapshot({"table_ids": table_ids}), "table_id", True)
         for archive in archive_objs:
             archive_group[archive.archive_config_id]["collector_config_name"] = archive.collector_config_name
+            archive_group[archive.archive_config_id]["doc_count"] = archive_detail[archive.table_id]["doc_count"]
+            archive_group[archive.archive_config_id]["store_size"] = archive_detail[archive.table_id]["store_size"]
         return archives
 
-    def retrieve(self):
-        snapshot_info, *_ = TransferApi.list_result_table_snapshot_indices({"table_ids": [self.archive.table_id]})
+    def retrieve(self, page, pagesize):
+        snapshot_info, *_ = TransferApi.list_result_table_snapshot_indices(
+            {"table_ids": [self.archive.table_id], "limit": pagesize, "offset": page}
+        )
         archive = model_to_dict(self.archive)
         archive["snapshots"] = snapshot_info
         return archive

@@ -32,6 +32,7 @@ from apps.log_databus.serializers import (
     ListArchiveSerlalizer,
     UpdateArchiveSerlalizer,
     ListArhiveSwitchSerlalizer,
+    PageSerializer,
 )
 from apps.utils.drf import list_route, detail_route
 from rest_framework.response import Response
@@ -178,7 +179,8 @@ class ArchiveViewSet(ModelViewSet):
             "message": ""
         }
         """
-        return Response(ArchiveHandler(archive_config_id).retrieve())
+        data = self.params_valid(PageSerializer)
+        return Response(ArchiveHandler(archive_config_id).retrieve(**data))
 
     def destroy(self, request, *args, archive_config_id, **kwargs):
         """
