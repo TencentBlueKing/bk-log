@@ -1594,3 +1594,12 @@ class CollectorHandler(object):
         CleanStash.objects.filter(collector_config_id=self.collector_config_id).delete()
         logger.info("delete clean stash {}".format(self.collector_config_id))
         return model_to_dict(CleanStash.objects.create(**model_fields))
+
+    def list_collector(self, bk_biz_id):
+        return [
+            {
+                "collector_config_id": collector.collector_config_id,
+                "collector_config_name": collector.collector_config_name,
+            }
+            for collector in CollectorConfig.objects.filter(bk_biz_id=bk_biz_id)
+        ]

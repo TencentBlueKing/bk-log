@@ -55,6 +55,7 @@ from apps.log_databus.serializers import (
     CollectorRegexDebugSerializer,
     ListCollectorsByHostSerializer,
     CleanStashSerializer,
+    ListCollectorSerlalizer,
 )
 from apps.utils.function import ignored
 
@@ -282,6 +283,35 @@ class CollectorViewSet(ModelViewSet):
         response.data["list"] = CollectorHandler.add_cluster_info(response.data["list"])
 
         return response
+
+    @insert_permission_field(
+        id_field=lambda d: d["collector_config_id"],
+        data_field=lambda d: d["list"],
+        actions=[ActionEnum.MANAGE_COLLECTION],
+        resource_meta=ResourceEnum.COLLECTION,
+    )
+    @list_route(methods=["GET"])
+    def list_collector(self, request):
+        """
+        @api {get} /databus/collectors/list_collector?bk_biz_id=$bk_biz_id 采集项-下拉列表
+        @apiName list_collector_switch
+        @apiGroup 10_Collector
+        @apiDescription 采集项下拉列表
+        @apiParam {Int} bk_biz_id 业务ID
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "collector_config_id": 1,
+                "collector_config_name": "采集项名称",
+            },
+            "result": true
+        }
+        """
+
+        data = self.params_valid(ListCollectorSerlalizer)
+        return Response(CollectorHandler().list_collector(data["bk_biz_id"]))
 
     def retrieve(self, request, *args, collector_config_id=None, **kwargs):
         """

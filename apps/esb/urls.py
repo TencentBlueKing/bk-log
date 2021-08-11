@@ -23,4 +23,7 @@ from apps.esb import views
 
 urlpatterns = [
     url(r"^esb/.+", views.LogESBViewSet.as_view({"get": "call", "post": "call", "put": "call", "delete": "call"})),
+    url(
+        r"^meta/esb/.+", views.MetaESBViewSet.as_view({"get": "call", "post": "call", "put": "call", "delete": "call"})
+    ),
 ]

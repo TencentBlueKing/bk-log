@@ -45,12 +45,14 @@ from apps.log_databus.constants import (
     DEFAULT_ES_SCHEMA,
     NODE_ATTR_PREFIX_BLACKLIST,
     BKLOG_RESULT_TABLE_PATTERN,
+    EsSourceType,
 )
 from apps.log_databus.exceptions import (
     StorageNotExistException,
     StorageNotPermissionException,
     StorageConnectInfoException,
     StorageUnKnowEsVersionException,
+    StorageHaveResource,
 )
 from apps.decorators import user_operation_record
 
@@ -139,8 +141,8 @@ class StorageHandler(object):
                 cluster["max_retention"] = settings.ES_PRIVATE_STORAGE_DURATION
         return cluster_groups
 
-    @staticmethod
-    def filter_cluster_groups(cluster_groups, bk_biz_id, is_default=True):
+    @classmethod
+    def filter_cluster_groups(cls, cluster_groups, bk_biz_id, is_default=True):
         """
         筛选集群，并判断集群是否可编辑
         :param cluster_groups:
@@ -178,19 +180,37 @@ class StorageHandler(object):
                 continue
 
             # 非公共集群， 筛选bk_biz_id，密码置空处理，并添加可编辑标签
-            custom_biz_id = cluster_obj["cluster_config"]["custom_option"].get("bk_biz_id")
+            custom_option = cluster_obj["cluster_config"]["custom_option"]
+            custom_biz_id = custom_option.get("bk_biz_id")
+            custom_visible_bk_biz = custom_option.get("visible_bk_biz", [])
             cluster_obj["cluster_config"]["max_retention"] = settings.ES_PRIVATE_STORAGE_DURATION
-            if not custom_biz_id or custom_biz_id != bk_biz_id:
+            if not cls.storage_visible(bk_biz_id, custom_biz_id, custom_visible_bk_biz):
                 continue
             cluster_obj["is_editable"] = True
             cluster_obj["auth_info"]["password"] = ""
             # 第三方es权重最高
             cluster_obj["priority"] = 0
             cluster_obj["bk_biz_id"] = custom_biz_id
+            cluster_obj["visible_bk_biz"] = custom_visible_bk_biz
+            # 处理来源
+            cluster_obj["source_type"] = custom_option.get("source_type", EsSourceType.PRIVATE.value)
+            cluster_obj["source_name"] = (
+                custom_option.get("source_name")
+                if cluster_obj["source_type"] == EsSourceType.OTHER.value
+                else EsSourceType.get_choice_label(cluster_obj["source_type"])
+            )
             cluster_data.append(cluster_obj)
-
-        # @todo, 筛选区域
         return cluster_data
+
+    @staticmethod
+    def storage_visible(bk_biz_id, custom_bk_biz_id, visible_bk_biz: List[int]) -> bool:
+        bk_biz_id = int(bk_biz_id)
+        if bk_biz_id in visible_bk_biz:
+            return True
+        if not custom_bk_biz_id:
+            return False
+        custom_bk_biz_id = int(custom_bk_biz_id)
+        return custom_bk_biz_id == bk_biz_id
 
     @staticmethod
     def convert_standard_time(time_stamp):
@@ -200,7 +220,7 @@ class StorageHandler(object):
         except Exception:  # pylint: disable=broad-except
             return time_stamp
 
-    def list(self, bk_biz_id, cluster_id=None):
+    def list(self, bk_biz_id, cluster_id=None, is_default=True):
         """
         存储集群列表
         :return:
@@ -212,7 +232,7 @@ class StorageHandler(object):
         if cluster_id:
             cluster_info = self._get_cluster_nodes(cluster_info)
             cluster_info = self._get_cluster_detail_info(cluster_info)
-        return self.filter_cluster_groups(cluster_info, bk_biz_id)
+        return self.filter_cluster_groups(cluster_info, bk_biz_id, is_default)
 
     def _get_cluster_nodes(self, cluster_info: List[dict]):
         for cluster in cluster_info:
@@ -349,6 +369,19 @@ class StorageHandler(object):
         user_operation_record.delay(operation_record)
 
         return cluster_obj
+
+    def destroy(self):
+
+        from apps.log_search.handlers.index_set import IndexSetHandler
+
+        # check index_set
+        index_sets = IndexSetHandler.get_index_set_for_storage(self.cluster_id)
+        if index_sets.filter(is_active=True).exists():
+            raise StorageHaveResource
+
+        # TODO 检查计算平台关联的集群
+
+        TransferApi.delete_cluster_info({"cluster_id": self.cluster_id})
 
     def connectivity_detect(
         self,
@@ -669,3 +702,18 @@ class StorageHandler(object):
             return (converted_index_a > converted_index_b) - (converted_index_a < converted_index_b)
 
         return sorted(indices, key=functools.cmp_to_key(compare_indices_by_date), reverse=True)
+
+    def repository(self, bk_biz_id=None, cluster_id=None):
+        cluster_info = self.list(bk_biz_id=bk_biz_id, cluster_id=cluster_id, is_default=False)
+        cluster_info_by_id = {cluster["cluster_config"]["cluster_id"]: cluster for cluster in cluster_info}
+        repository_info = TransferApi.list_es_snapshot_repository({"cluster_ids": list(cluster_info_by_id.keys())})
+        for repository in repository_info:
+            repository.update(
+                {
+                    "cluster_name": cluster_info_by_id[repository["cluster_id"]]["cluster_config"]["cluster_name"],
+                    "cluster_source_name": cluster_info_by_id[repository["cluster_id"]].get("source_name"),
+                    "cluster_source_type": cluster_info_by_id[repository["cluster_id"]].get("source_type"),
+                }
+            )
+            repository.pop("settings")
+        return repository_info

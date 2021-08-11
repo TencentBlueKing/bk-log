@@ -291,6 +291,28 @@ ALLOWED_MODULES_FUNCS = {
     "apps.log_databus.views.collector_views": {"tail": "tail"},
     "apps.log_databus.views.storage_views": {"connectivity_detect": "connectivity_detect"},
 }
+# esb模块中转发meta接口的传发设置
+META_ESB_FORWARD_CONFIG = {
+    "create_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "create_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "modify_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "modify_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "delete_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "delete_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "verify_es_snapshot_repository": {"is_view_permission": True, "target_call": "verify_es_snapshot_repository"},
+}
 
 # resf_framework
 REST_FRAMEWORK = {
@@ -492,6 +514,33 @@ MENUS = [
                     },
                     {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
                     {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
+                ],
+            },
+            {
+                "id": "log_archive",
+                "name": _("日志归档"),
+                "feature": "on",
+                "icon": "",
+                "keyword": "归档",
+                "children": [
+                    {
+                        "id": "archive_repository",
+                        "name": _("归档仓库"),
+                        "feature": "on",
+                        "icon": "_empty-fill",
+                    },
+                    {
+                        "id": "archive_list",
+                        "name": _("归档列表"),
+                        "feature": "on",
+                        "icon": "audit-fill",
+                    },
+                    {
+                        "id": "archive_restore",
+                        "name": _("归档回溯"),
+                        "feature": "on",
+                        "icon": "withdraw-fill",
+                    },
                 ],
             },
             {
