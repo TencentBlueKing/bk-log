@@ -407,7 +407,7 @@ export default {
   methods: {
     search() {
       this.param = this.keyword;
-      this.handlePageChange(1);
+      this.requestData();
     },
     async checkCreateAuth() {
       try {
@@ -561,9 +561,12 @@ export default {
              * @return {[type]}      [description]
              */
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.stopStatusPolling();
-      this.requestData();
+      console.log('changepage');
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.stopStatusPolling();
+        this.requestData();
+      }
     },
     /**
              * 分页限制
@@ -571,6 +574,7 @@ export default {
              * @return {[type]}      [description]
              */
     handlelimitChange(page) {
+      console.log('changelimit');
       if (this.pagination.limit !== page) {
         this.pagination.limit = page;
         this.requestData();
@@ -688,7 +692,9 @@ export default {
           const page = this.collectList.length <= 1
             ? (this.pagination.current > 1
               ? this.pagination.current - 1 : 1) : this.pagination.current;
-          this.handlePageChange(page);
+          if (page !== this.pagination.current) {
+            this.handlePageChange(page);
+          } else this.requestData();
         }
       })
         .catch(() => {});
