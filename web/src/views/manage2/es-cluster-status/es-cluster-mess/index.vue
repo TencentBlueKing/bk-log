@@ -71,22 +71,22 @@
       </bk-table-column>
       <bk-table-column :label="$t('操作')" min-width="160">
         <template slot-scope="props">
-          <bk-button
+          <log-button
             theme="primary"
             text
+            :tips-conf="$t('unableEditTip')"
+            :button-text="$t('建索引集')"
             :disabled="!props.row.is_editable"
-            @click="createIndexSet">
-            {{ $t('建索引集') }}
-          </bk-button>
-          <bk-button
+            @on-click="createIndexSet(props.row)">
+          </log-button>
+          <log-button
             theme="primary"
             text
+            :tips-conf="$t('unableEditTip')"
+            :button-text="$t('编辑')"
             :disabled="!props.row.is_editable"
-            v-cursor="{
-              active: props.row.is_editable && !(props.row.permission && props.row.permission.manage_es_source)
-            }"
-            @click="editDataSource(props.row)">{{ $t('编辑') }}
-          </bk-button>
+            @on-click="editDataSource(props.row)">
+          </log-button>
         </template>
       </bk-table-column>
     </bk-table>
@@ -210,8 +210,10 @@ export default {
       return '--';
     },
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.computePageData();
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.computePageData();
+      }
     },
     handleLimitChange(limit) {
       this.pagination.current = 1;
@@ -271,11 +273,12 @@ export default {
       }
     },
     // 建索引集
-    createIndexSet() {
+    createIndexSet(row) {
       this.$router.push({
         name: 'es-index-set-create',
         query: {
           projectId: window.localStorage.getItem('project_id'),
+          cluster: row.cluster_config.cluster_id,
         },
       });
     },

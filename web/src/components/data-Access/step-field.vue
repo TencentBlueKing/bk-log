@@ -112,7 +112,7 @@
                   'template-disabled': isCleanField && !cleanCollector
                 }"
                 @click="openTemplateDialog(false)">
-                <span class="log-icon icon-lianjie"></span>
+                <span class="log-icon icon-daoru"></span>
                 {{ $t('dataManage.applyTemp') }}
               </span>
             </div>
