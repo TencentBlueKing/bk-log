@@ -203,12 +203,13 @@ export default {
       }
     },
     search() {
-      this.handlePageChange(1);
+      this.requestData();
     },
     handleFilterChange(data) {
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
+      this.pagination.current = 1;
       this.search();
     },
     /**
@@ -217,8 +218,10 @@ export default {
      * @return {[type]}      [description]
      */
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.requestData();
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.requestData();
+      }
     },
     /**
      * 分页限制

@@ -210,8 +210,10 @@ export default {
       return '--';
     },
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.computePageData();
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.computePageData();
+      }
     },
     handleLimitChange(limit) {
       this.pagination.current = 1;

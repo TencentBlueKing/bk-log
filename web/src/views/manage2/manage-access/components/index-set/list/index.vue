@@ -178,19 +178,21 @@ export default {
       });
     },
     /**
-             * 分页变换
-             * @param  {Number} page 当前页码
-             * @return {[type]}      [description]
-             */
+       * 分页变换
+       * @param  {Number} page 当前页码
+       * @return {[type]}      [description]
+       */
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.getIndexSetList();
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.getIndexSetList();
+      }
     },
     /**
-             * 分页限制
-             * @param  {Number} page 当前页码
-             * @return {[type]}      [description]
-             */
+     * 分页限制
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
     handleLimitChange(page) {
       if (this.pagination.limit !== page) {
         this.pagination.current = 1;
