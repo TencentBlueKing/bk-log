@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import re
 from collections import defaultdict
 from django.conf import settings
 from django.db import transaction
@@ -47,7 +48,7 @@ from apps.log_search.exceptions import (
 from apps.log_search.models import ProjectInfo, LogIndexSet, LogIndexSetData, Scenario, UserIndexSetConfig
 from apps.utils import APIModel
 from apps.utils.local import get_request_username, get_request_app_code
-from apps.log_search.constants import GlobalCategoriesEnum, EsHealthStatus
+from apps.log_search.constants import GlobalCategoriesEnum, EsHealthStatus, COMMON_LOG_INDEX_RE, BKDATA_INDEX_RE
 from apps.log_databus.handlers.storage import StorageHandler
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.api import BkLogApi
@@ -434,36 +435,79 @@ class IndexSetHandler(APIModel):
         scenario_id = index_set_obj.scenario_id
         storage_cluster_id = index_set_obj.storage_cluster_id
         index_list: list = [x.get("result_table_id") for x in index_set_data]
+        if scenario_id == Scenario.ES:
+            multi_execute_func = MultiExecuteFunc()
+            for index in index_list:
+
+                def get_indices(i):
+                    return EsRoute(
+                        scenario_id=scenario_id, storage_cluster_id=storage_cluster_id, indices=i
+                    ).cat_indices()
+
+                multi_execute_func.append(index, get_indices, index)
+            result = multi_execute_func.run()
+            return self._indices_result(result, index_list)
+        ret = defaultdict(list)
         indices = EsRoute(
             scenario_id=scenario_id, storage_cluster_id=storage_cluster_id, indices=",".join(index_list)
         ).cat_indices()
         indices = StorageHandler.sort_indices(indices)
-        ret = defaultdict(list)
         index_list.sort(key=lambda s: len(s), reverse=True)
         for index_es_info in indices:
             index_es_name: str = index_es_info.get("index")
             for index_name in index_list:
-                if index_name.replace(".", "_") in index_es_name:
+                if self._match_rt_for_index(index_es_name, index_name.replace(".", "_"), scenario_id):
                     ret[index_name].append(index_es_info)
                     break
+        return self._indices_result(ret, index_list)
+
+    def _match_rt_for_index(self, index_es_name: str, index_name: str, scenario_id: str) -> bool:
+        index_re = None
+        if scenario_id == Scenario.LOG:
+            index_re = re.compile(COMMON_LOG_INDEX_RE.format(index_name))
+        if scenario_id == Scenario.BKDATA:
+            index_re = re.compile(BKDATA_INDEX_RE.format(index_name))
+        if index_re.match(index_es_name):
+            return True
+        return False
+
+    def _indices_result(self, indices_for_index: dict, index_list: list):
         result = []
-        for result_table_id, indices_info in ret.items():
-            result.append(
-                {
-                    "result_table_id": result_table_id,
-                    "stat": {
-                        "health": self._get_health(indices_info),
-                        "pri": self._get_sum("pri", indices_info),
-                        "rep": self._get_sum("rep", indices_info),
-                        "docs.count": self._get_sum("docs.count", indices_info),
-                        "docs.deleted": self._get_sum("docs.deleted", indices_info),
-                        "store.size": self._get_sum("store.size", indices_info),
-                        "pri.store.size": self._get_sum("store.size", indices_info),
-                    },
-                    "details": indices_info,
-                }
-            )
-        return {"total": len(ret), "list": result}
+        for index in index_list:
+            if index in indices_for_index:
+                indices_info = indices_for_index[index]
+                result.append(
+                    {
+                        "result_table_id": index,
+                        "stat": {
+                            "health": self._get_health(indices_info),
+                            "pri": self._get_sum("pri", indices_info),
+                            "rep": self._get_sum("rep", indices_info),
+                            "docs.count": self._get_sum("docs.count", indices_info),
+                            "docs.deleted": self._get_sum("docs.deleted", indices_info),
+                            "store.size": self._get_sum("store.size", indices_info),
+                            "pri.store.size": self._get_sum("store.size", indices_info),
+                        },
+                        "details": indices_info,
+                    }
+                )
+            else:
+                result.append(
+                    {
+                        "result_table_id": index,
+                        "stat": {
+                            "health": "--",
+                            "pri": "--",
+                            "rep": "--",
+                            "docs.count": "--",
+                            "docs.deleted": "--",
+                            "store.size": 0,
+                            "pri.store.size": 0,
+                        },
+                        "details": "--",
+                    }
+                )
+        return {"total": len(index_list), "list": result}
 
     def mark_favorite(self):
         index_set_obj: LogIndexSet = self._get_data()
