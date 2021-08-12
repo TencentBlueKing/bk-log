@@ -324,7 +324,7 @@ export default {
   }
   // 采集项管理、索引集管理通用样式
   .access-manage-container {
-    padding: 20px;
+    padding: 20px 24px;
     .bk-tab-section {
       display: none;
     }

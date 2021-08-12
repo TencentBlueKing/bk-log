@@ -326,7 +326,7 @@ export default {
 
 <style lang="scss" scoped>
     .es-access-container {
-      padding: 20px 60px;
+      padding: 20px 24px;
 
       .main-operator-container {
         display: flex;

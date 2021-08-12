@@ -288,7 +288,7 @@ export default {
   @import '../../../../scss/mixins/scroller';
 
   .extract-link-create-container {
-    padding: 22px 20px;
+    padding: 20px 24px;
     height: 100%;
     overflow: auto;
 

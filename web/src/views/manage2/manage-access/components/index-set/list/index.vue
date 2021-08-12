@@ -324,7 +324,7 @@ export default {
   @import '../../../../../../scss/conf';
 
   .index-set-container {
-    padding: 20px 60px;
+    padding: 20px 24px;
 
     .alert-info {
       margin-bottom: 20px;

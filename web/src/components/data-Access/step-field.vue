@@ -71,6 +71,7 @@
         </div>
         <bk-sideslider
           class="locker-style"
+          transfer
           :is-show.sync="defaultSettings.isShow"
           :quick-close="true"
           :modal="false"

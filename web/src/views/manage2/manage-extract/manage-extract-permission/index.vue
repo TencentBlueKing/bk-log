@@ -70,7 +70,11 @@
       </bk-table-column>
     </bk-table>
 
-    <bk-sideslider :is-show.sync="showManageDialog" :width="520" :title="type === 'create' ? $t('新增') : $t('编辑')">
+    <bk-sideslider
+      transfer
+      :is-show.sync="showManageDialog"
+      :width="520"
+      :title="type === 'create' ? $t('新增') : $t('编辑')">
       <DirectoryManage
         v-bkloading="{ isLoading: isSliderLoading }"
         slot="content"
@@ -256,7 +260,7 @@ export default {
 
 <style lang="scss" scoped>
   .extract-auth-manage {
-    padding: 0 60px 20px;
+    padding: 0 24px 20px;
 
     /*表格内容样式*/
     /deep/ .king-table {
