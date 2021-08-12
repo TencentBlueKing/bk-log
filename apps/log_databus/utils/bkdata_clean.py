@@ -113,6 +113,7 @@ class BKDataCleanUtils:
                 ],
                 category_id=DEFAULT_CATEGORY_ID,
                 view_roles=[],
+                username=insert_obj["created_by"],
             )
             index_set_dict[insert_obj["result_table_id"]] = index_set.index_set_id
             logger.info("create index_set {}".format(insert_obj["result_table_name"]))

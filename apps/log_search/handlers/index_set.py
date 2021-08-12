@@ -227,6 +227,7 @@ class IndexSetHandler(APIModel):
         time_field_type=None,
         time_field_unit=None,
         bk_app_code=None,
+        username="",
     ):
         # 创建索引
         index_set_handler = cls.get_index_set_handler(scenario_id)
@@ -246,6 +247,7 @@ class IndexSetHandler(APIModel):
             time_field_type=time_field_type,
             time_field_unit=time_field_unit,
             bk_app_code=bk_app_code,
+            username=username,
         ).create_index_set()
 
         # add user_operation_record
@@ -698,6 +700,7 @@ class BaseIndexSetHandler(object):
         time_field_unit=None,
         action=None,
         bk_app_code=None,
+        username="",
     ):
         super().__init__()
 
@@ -716,6 +719,7 @@ class BaseIndexSetHandler(object):
         self.collector_config_id = collector_config_id
         self.category_id = category_id
         self.bk_app_code = bk_app_code
+        self.username = username
 
         # time_field
         self.time_field = time_field
@@ -831,7 +835,7 @@ class BaseIndexSetHandler(object):
 
     def post_create(self, index_set):
         # 新建授权
-        Permission().grant_creator_action(
+        Permission(username=self.username).grant_creator_action(
             resource=ResourceEnum.INDICES.create_simple_instance(
                 index_set.index_set_id, attribute={"name": index_set.index_set_name}
             ),
@@ -961,7 +965,7 @@ class BkDataIndexSetHandler(BaseIndexSetHandler):
         """
         判断用户是否拥有所有RT的管理权限
         """
-        unauthorized_result_tables = BkDataAuthHandler().filter_unauthorized_rt_by_user(
+        unauthorized_result_tables = BkDataAuthHandler(username=self.username).filter_unauthorized_rt_by_user(
             result_tables=[index["result_table_id"] for index in self.indexes]
         )
         if unauthorized_result_tables:
