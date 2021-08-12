@@ -244,11 +244,9 @@ export default {
     }
     .bk-navigation-wrapper {
       height: 100%;
-      .navigation-nav {
-        z-index: 2500;
-      }
       .navigation-container {
         max-width: calc(100% - 60px) !important;
+        z-index: 100;
         .container-content {
           height: 100% !important;
           max-height: 100% !important;
@@ -273,7 +271,7 @@ export default {
       }
     }
     .nav-slider-list {
-        height: calc(100% - 56px) !important;
+      height: calc(100% - 56px) !important;
     }
   }
   // 表格单元 v-bk-overflow-tips

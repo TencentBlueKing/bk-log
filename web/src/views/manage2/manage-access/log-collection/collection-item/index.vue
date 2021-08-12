@@ -487,6 +487,7 @@ export default {
   },
   methods: {
     search() {
+      this.pagination.current = 1;
       this.requestData();
     },
     checkcFields(field) {
@@ -641,7 +642,7 @@ export default {
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
-      this.handlePageChange(1);
+      this.search();
     },
     /**
      * 分页变换

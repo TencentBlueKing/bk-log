@@ -64,7 +64,8 @@
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
-            @stepChange="stepChange">
+            @stepChange="stepChange"
+            @change-submit="changeSubmit">
           </step-storage>
           <step-result
             v-if="isFinish"
@@ -96,7 +97,8 @@
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
-            @stepChange="stepChange">
+            @stepChange="stepChange"
+            @change-submit="changeSubmit">
           </step-storage>
           <step-result
             v-if="isFinish"
@@ -140,6 +142,7 @@ export default {
       authPageInfo: null,
       basicLoading: true,
       isCleaning: false,
+      isSubmit: false,
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
       operateType: '',
       curStep: 1,
@@ -170,8 +173,26 @@ export default {
       return finishRefer[this.operateType] === this.curStep;
     },
   },
+  watch: {
+    curStep() {
+      this.setSteps();
+    },
+  },
   created() {
     this.initPage();
+  },
+  // eslint-disable-next-line no-unused-vars
+  beforeRouteLeave(to, from, next) {
+    if (!this.isSubmit) {
+      this.$bkInfo({
+        title: this.$t('pageLeaveTips'),
+        confirmFn: () => {
+          next();
+        },
+      });
+      return;
+    }
+    next();
   },
   methods: {
     // 先校验页面权限再初始化
@@ -243,6 +264,9 @@ export default {
       this.basicLoading = false;
     },
     init() {
+      this.setSteps();
+    },
+    setSteps() {
       let stepList;
       if (this.isItsmAndNotStartOrStop) {
         stepList = stepsConf.itsm;
@@ -253,7 +277,7 @@ export default {
 
       this.stepList.forEach((step, index) => {
         if (index < this.curStep - 1) {
-          step.icon = 'check-1'; // 组件bug。已完成的步骤无法为空icon。或者其它样式。需优化
+          // step.icon = 'check-1'; // 组件bug。已完成的步骤无法为空icon。或者其它样式。需优化
         } else {
           step.icon = index + 1;
         }
@@ -295,6 +319,9 @@ export default {
           collector_id_list: idStr,
         },
       });
+    },
+    changeSubmit(isSubmit) {
+      this.isSubmit = isSubmit;
     },
   },
 };

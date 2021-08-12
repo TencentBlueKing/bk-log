@@ -1098,4 +1098,5 @@ export default {
   logAlertTips: 'Index set allows users to view logs across multiple collected indexes.',
   esAlertTips: 'If the logs are already stored in Electricsearch, you can add the Electricsearch cluster in the "Cluster Management", and you can use the stored log data by creating an index set.',
   bkdataAlertTips: 'The index in Electricsearch in the computing platform can be created by creating a new index set to facilitate retrieval, analysis, management, etc. in the log platform.',
+  pageLeaveTips: 'Do you want to abandon this operation?',
 };

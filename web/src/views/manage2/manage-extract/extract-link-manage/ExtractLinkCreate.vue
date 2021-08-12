@@ -115,6 +115,7 @@ export default {
     return {
       basicLoading: false,
       submitLoading: false,
+      isSubmit: false,
       formData: {
         name: '',
         link_type: 'common',
@@ -166,6 +167,19 @@ export default {
   },
   created() {
     this.init();
+  },
+  // eslint-disable-next-line no-unused-vars
+  beforeRouteLeave(to, from, next) {
+    if (!this.isSubmit) {
+      this.$bkInfo({
+        title: this.$t('pageLeaveTips'),
+        confirmFn: () => {
+          next();
+        },
+      });
+      return;
+    }
+    next();
   },
   methods: {
     async init() {
@@ -252,6 +266,7 @@ export default {
           await this.$http.request('extractManage/createLogExtractLink', {
             data: requestData,
           });
+          this.isSubmit = false;
           this.messageSuccess(this.$t('创建成功'));
         }
         this.$router.push({

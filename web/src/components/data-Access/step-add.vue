@@ -47,6 +47,7 @@
         <bk-input
           v-model="formData.collector_config_name_en"
           maxlength="50"
+          :disabled="isUpdate && !!(formData.collector_config_name_en)"
           :placeholder="$t('dataSource.en_name_placeholder')">
         </bk-input>
         <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_tips') }}</p>
@@ -56,7 +57,8 @@
           type="textarea"
           style="width: 320px;"
           v-model="formData.description"
-          maxlength="100"></bk-input>
+          maxlength="100">
+        </bk-input>
       </bk-form-item>
 
       <!-- 源日志信息 -->
