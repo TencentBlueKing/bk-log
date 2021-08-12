@@ -462,9 +462,7 @@ class IndexSetHandler(APIModel):
         return self._indices_result(ret, index_list)
 
     def _match_rt_for_index(self, index_es_name: str, index_name: str, scenario_id: str) -> bool:
-        index_re = None
-        if scenario_id == Scenario.LOG:
-            index_re = re.compile(COMMON_LOG_INDEX_RE.format(index_name))
+        index_re = re.compile(COMMON_LOG_INDEX_RE.format(index_name))
         if scenario_id == Scenario.BKDATA:
             index_re = re.compile(BKDATA_INDEX_RE.format(index_name))
         if index_re.match(index_es_name):
@@ -491,22 +489,22 @@ class IndexSetHandler(APIModel):
                         "details": indices_info,
                     }
                 )
-            else:
-                result.append(
-                    {
-                        "result_table_id": index,
-                        "stat": {
-                            "health": "--",
-                            "pri": "--",
-                            "rep": "--",
-                            "docs.count": "--",
-                            "docs.deleted": "--",
-                            "store.size": 0,
-                            "pri.store.size": 0,
-                        },
-                        "details": "--",
-                    }
-                )
+                continue
+            result.append(
+                {
+                    "result_table_id": index,
+                    "stat": {
+                        "health": "--",
+                        "pri": "--",
+                        "rep": "--",
+                        "docs.count": "--",
+                        "docs.deleted": "--",
+                        "store.size": 0,
+                        "pri.store.size": 0,
+                    },
+                    "details": "--",
+                }
+            )
         return {"total": len(index_list), "list": result}
 
     def mark_favorite(self):
