@@ -20,6 +20,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import threading
 
+from opentelemetry.context import attach
+from opentelemetry.instrumentation.wsgi import wsgi_getter
+from opentelemetry.propagate import extract
+
+from apps.utils.function import ignored
 from apps.utils.local import get_request, activate_request
 
 
@@ -30,11 +35,16 @@ class FuncThread(threading.Thread):
         self.result_key = result_key
         self.results = results
         self.use_request = use_request
-        if use_request:
+        with ignored(AttributeError):
             self.requests = get_request()
         super().__init__()
 
+    def _init_context(self):
+        with ignored(Exception):
+            attach(extract(self.requests.META, getter=wsgi_getter))
+
     def run(self):
+        self._init_context()
         if self.use_request:
             activate_request(self.requests)
         if self.params:
