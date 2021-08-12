@@ -162,6 +162,7 @@ export default {
       }
     },
     search() {
+      this.pagination.current = 1;
       this.requestData();
     },
     handleCreate() {

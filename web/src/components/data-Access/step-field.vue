@@ -24,7 +24,7 @@
   <section class="step-field-container">
     <auth-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-page>
     <div class="step-field" v-bkloading="{ isLoading: basicLoading }" v-else>
-      <bk-alert class="king-alert" type="info">
+      <bk-alert v-if="!isCleanField && !isTempField" class="king-alert" type="info">
         <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
       </bk-alert>
       <div class="collector-select" v-if="isCleanField">
@@ -41,6 +41,8 @@
             :key="option.collector_config_id"
             :id="option.collector_config_id"
             :name="option.collector_config_name">
+            <span>{{ option.collector_config_name }}</span>
+            <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
           </bk-option>
         </bk-select>
       </div>
@@ -171,7 +173,7 @@
                   v-model="params.etl_params.separator_regexp">
                 </bk-input>
               </div>
-              <p class="format-error" v-if="!formatResult">{{ $t('dataManage.try_methods') }}</p>
+              <p class="format-error" v-if="!isJsonOrOperator && !formatResult">{{ $t('dataManage.try_methods') }}</p>
             </div>
           </div>
 
@@ -487,6 +489,9 @@ export default {
       if (methods === 'bk_log_delimiter') {
         return this.params.etl_params.separator;
       }
+      if (methods === 'bk_log_regexp') {
+        return this.params.etl_params.separator_regexp !== '';
+      }
       return true;
     },
     hasFields() {
@@ -519,6 +524,9 @@ export default {
   watch: {
     'formData.fields'() {
       this.renderKey = this.renderKey + 1;
+    },
+    'params.etl_config'() {
+      this.formatResult = true;
     },
   },
   async mounted() {
@@ -698,7 +706,10 @@ export default {
           } else {
             this.messageSuccess(this.$t('保存成功'));
             // 清洗模板编辑则返回模板列表
-            if(this.isTempField) this.handleCancel(false)
+            if(this.isTempField) {
+              this.$emit('change-submit', true)
+              this.handleCancel(false)
+            }
           }
         }
       })
@@ -806,6 +817,7 @@ export default {
           const id = this.curCollect.bkdata_data_id;
           const jumpUrl = `${window.BKDATA_URL}/#/data-access/data-detail/${id}/3`;
           window.open(jumpUrl, '_blank');
+          this.$emit('change-submit', true);
           // 前往高级清洗刷新页
           this.$emit('changeClean');
         },

@@ -149,6 +149,7 @@ export default {
       basicLoading: true,
       submitLoading: false,
       authPageInfo: null,
+      isSubmit: false,
       clusterList: [], // 集群列表
 
       isShowTrace: this.$route.name.includes('track'), // 全链路追踪
@@ -197,6 +198,19 @@ export default {
   created() {
     this.checkAuth();
     this.fetchPageData();
+  },
+  // eslint-disable-next-line no-unused-vars
+  beforeRouteLeave(to, from, next) {
+    if (!this.isSubmit) {
+      this.$bkInfo({
+        title: this.$t('pageLeaveTips'),
+        confirmFn: () => {
+          next();
+        },
+      });
+      return;
+    }
+    next();
   },
   methods: {
     // 检查权限、确认基本信息
@@ -371,6 +385,7 @@ export default {
           },
           data: requestBody,
         }) : await this.$http.request('/indexSet/create', { data: requestBody });
+        this.isSubmit = true;
         this.handleCreatSuccess(res.data);
       } catch (e) {
         console.warn(e);
