@@ -449,7 +449,7 @@ export default {
 
 <style scoped lang="scss">
   .create-index-container {
-    padding: 22px 20px;
+    padding: 20px 24px;
 
     .article {
       padding: 22px 24px;

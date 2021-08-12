@@ -144,6 +144,7 @@
       <bk-button @click="cancel">{{ $t('dataManage.Return_list') }}</bk-button>
     </div>
     <bk-sideslider
+      transfer
       :width="800"
       :quick-close="true"
       :ext-cls="'issued-detail'"

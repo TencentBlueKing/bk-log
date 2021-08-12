@@ -128,6 +128,7 @@
         <div v-show="!isPageOver && !reloadTable" v-bkloading="{ isLoading: true }" style="height: 40px;"></div>
       </template>
       <bk-sideslider
+        transfer
         :width="800"
         :quick-close="true"
         :ext-cls="'issued-detail'"

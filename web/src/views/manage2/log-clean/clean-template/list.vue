@@ -305,7 +305,7 @@ export default {
   @import '@/scss/devops-common.scss';
 
   .clean-template-container {
-    padding: 20px 60px;
+    padding: 20px 24px;
     .top-operation {
       margin-bottom: 20px;
       @include clearfix;
