@@ -664,6 +664,7 @@ export default {
     handleLimitChange(page) {
       console.log('changelimit');
       if (this.pagination.limit !== page) {
+        this.pagination.current = 1;
         this.pagination.limit = page;
         this.requestData();
       }

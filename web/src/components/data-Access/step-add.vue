@@ -534,6 +534,9 @@ export default {
       if (this.formData.target?.length) { // IP 选择器预览结果回填
         this.formData.target_nodes = this.formData.target;
       }
+      if (!this.formData.collector_config_name_en) { // 兼容旧数据英文名为空
+        this.formData.collector_config_name_en = this.formData.table_id || '';
+      }
       const { params } = this.formData;
       if (params.paths.length > 0) {
         params.paths = typeof params.paths[0] === 'string' ? params.paths.map(item => ({ value: item })) : params.paths;

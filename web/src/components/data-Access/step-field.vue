@@ -1186,6 +1186,7 @@ export default {
           this.$store.commit('collect/setCurCollect', res.data);
           await this.getDetail();
           await this.getCleanStash(id);
+          this.getDataLog('init');
         }
       })
         .finally(() => {
