@@ -692,6 +692,14 @@ if REDIS_MODE == "sentinel":
     REDIS_SENTINEL_PASSWORD = os.getenv("BK_BKLOG_REDIS_SENTINEL_MASTER_PASSWORD", "")
 
 # BKLOG 后台QOS配置
+BKLOG_QOS_USE = os.getenv("BKAPP_QOS_USE", "on") == "on"
+BKLOG_QOS_LIMIT_APP = [
+    "bk_monitor",
+    "bk_bkmonitor",
+    "bk_monitorv3",
+    "bk_bkmonitorv3",
+    "bkmonitorv3",
+]
 # 窗口时间 单位分钟
 BKLOG_QOS_LIMIT_WINDOW = int(os.getenv("BK_BKLOG_QOS_LIMIT_WINDOW", 5))
 # 窗口内超时次数
