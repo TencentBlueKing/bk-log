@@ -82,10 +82,9 @@
             {{ row.stat['docs.count'] }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('存储大小(M)')">
+        <bk-table-column :label="$t('存储大小')">
           <template slot-scope="{ row }">
-            <!-- Byte 转 M，向下取整 -->
-            {{ Math.floor(row.stat['store.size'] / 1048576) }}
+            {{ getFileSize(row.stat['store.size']) }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('操作')" width="150">
@@ -135,6 +134,7 @@
 
 <script>
 import { mapState } from 'vuex';
+import { formatFileSize } from '@/common/util';
 
 export default {
   props: {
@@ -289,6 +289,9 @@ export default {
       this.recordsPagination.limit = limit;
       this.recordsPagination.current = 1;
       this.fetchRecords();
+    },
+    getFileSize(size) {
+      return formatFileSize(size);
     },
   },
 };

@@ -57,10 +57,9 @@
             {{ row['docs.count'] }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('存储大小(M)')">
+        <bk-table-column :label="$t('存储大小')">
           <template slot-scope="{ row }">
-            <!-- Byte 转 M，向下取整 -->
-            {{ Math.floor(row['store.size'] / 1048576) }}
+            {{ getFileSize(row['store.size']) }}
           </template>
         </bk-table-column>
       </bk-table>
@@ -93,6 +92,7 @@
 </template>
 
 <script>
+import { formatFileSize } from '@/common/util';
 export default {
   props: {
     collectorData: {
@@ -120,6 +120,9 @@ export default {
     this.fetchFields();
   },
   methods: {
+    getFileSize(size) {
+      return formatFileSize(size);
+    },
     async fetchIndexes() {
       try {
         const res = await this.$http.request('source/getIndexes', {
