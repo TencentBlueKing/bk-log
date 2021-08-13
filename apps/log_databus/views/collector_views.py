@@ -17,7 +17,6 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import json
 
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
@@ -113,8 +112,7 @@ class CollectorViewSet(ModelViewSet):
         qs = self.model.objects
         if self.request.query_params.get(HAVE_DATA_ID):
             qs = qs.filter(bk_data_id__isnull=False)
-        bkdata_open_switch = self.request.query_params.get(BKDATA_OPEN)
-        if bkdata_open_switch and json.loads(bkdata_open_switch.lower()):
+        if self.request.query_params.get(BKDATA_OPEN) and settings.FEATURE_TOGGLE["scenario_bkdata"] == "off":
             qs = qs.filter(Q(etl_config=EtlConfig.BK_LOG_TEXT) | Q(etl_config__isnull=True))
         return qs.all()
 
