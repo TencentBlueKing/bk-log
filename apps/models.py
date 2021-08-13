@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import json
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from django.core import exceptions
@@ -49,7 +50,7 @@ class JsonField(models.TextField):
         if value is None:
             return value
         try:
-            return json.dumps(value)
+            return json.dumps(value, cls=DjangoJSONEncoder)
         except (TypeError, ValueError):
             raise exceptions.ValidationError(
                 self.error_messages["invalid"],
@@ -61,7 +62,7 @@ class JsonField(models.TextField):
         if value is None:
             return value
         try:
-            return json.dumps(value)
+            return json.dumps(value, cls=DjangoJSONEncoder)
         except (TypeError, ValueError):
             raise exceptions.ValidationError(
                 self.error_messages["invalid"],

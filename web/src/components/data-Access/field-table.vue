@@ -21,18 +21,52 @@
   -->
 
 <template>
-  <div class="field-table-container">
+  <div class="field-table-container" v-bkloading="{ isLoading: isExtracting }">
     <div class="field-method-head" v-if="!isPreviewMode">
-      <span class="field-method-link fr" @click.stop="viewStandard">{{ $t('dataManage.View_fields') }}</span>
       <!--<span class="field-method-link fr mr10" @click.stop="isReset = true">{{ $t('dataManage.Reset') }}</span>-->
-      <div class="fr mr20" style="line-height: 18px;" v-if="extractMethod !== 'bk_log_regexp'">
-        <span class="visible-deleted-text">{{ $t('dataManage.Hide_deleted') + `（${deletedNum}）` }}</span>
-        <bk-switcher
+      <div
+        :class="{ 'table-setting': true, 'disabled-setting': isSettingDisable }"
+        v-if="extractMethod !== 'bk_log_regexp'">
+        <div class="fr form-item-flex bk-form-item">
+          <!-- <label class="bk-label has-desc" v-bk-tooltips="$t('dataManage.confirm_append')">
+            <span>{{ $t('dataManage.keep_log') }}</span>
+          </label> -->
+          <div class="bk-form-content">
+            <bk-checkbox
+              :checked="true"
+              :true-value="true"
+              :false-value="false"
+              :disabled="isSettingDisable"
+              v-model="retainOriginalText"
+              @change="handleKeepLog">
+              <label class="bk-label has-desc" v-bk-tooltips="$t('dataManage.confirm_append')">
+                <span>{{ $t('dataManage.keep_log') }}</span>
+              </label>
+            </bk-checkbox>
+            <!-- <bk-switcher size="small" theme="primary" v-model="retainOriginalText"></bk-switcher> -->
+          </div>
+        </div>
+        <!-- <bk-switcher
           size="small"
           theme="primary"
           class="visible-deleted-btn"
           v-model="deletedVisible"
-          @change="visibleHandle"></bk-switcher>
+          @change="visibleHandle">
+        </bk-switcher> -->
+        <span
+          :class="`bk-icon toggle-icon icon-${ deletedVisible ? 'eye-slash' : 'eye'}`"
+          @click="visibleHandle">
+        </span>
+        <span class="visible-deleted-text">
+          {{ $t('dataManage.Hide_deleted') + ` ${deletedNum} ` + $t('dataManage.Row')}}
+        </span>
+        <span
+          v-if="!isTempField"
+          class="field-method-link fr"
+          @click.stop="viewStandard">
+          {{ $t('dataManage.View_fields') }}
+        </span>
+
       </div>
     </div>
 
@@ -45,7 +79,7 @@
           :row-key="extractMethod === 'bk_log_delimiter' ? 'field_index' : 'field_name'"
           :data="deletedVisible ? hideDeletedTable : tableList">
           <template>
-            <bk-table-column
+            <!-- <bk-table-column
               :label="$t('configDetails.column')"
               align="center"
               :resizable="false"
@@ -54,7 +88,8 @@
               <template slot-scope="props">
                 <span>{{ props.row.field_index }}</span>
               </template>
-            </bk-table-column>
+            </bk-table-column> -->
+            <!-- 字段名 -->
             <bk-table-column :label="$t('dataManage.Field_name')" :resizable="false" min-width="100">
               <template slot-scope="props">
                 <span v-if="isPreviewMode">{{ props.row.field_name }}</span>
@@ -64,17 +99,21 @@
                     v-model.trim="props.row.field_name"
                     @blur="checkFieldNameItem(props.row)"></bk-input>
                   <template v-if="props.row.fieldErr">
-                    <i class="bk-icon icon-exclamation-circle-shape tooltips-icon"
-                       style="right: 8px;"
-                       v-bk-tooltips.top="props.row.fieldErr"></i>
+                    <i
+                      class="bk-icon icon-exclamation-circle-shape tooltips-icon"
+                      style="right: 8px;"
+                      v-bk-tooltips.top="props.row.fieldErr">
+                    </i>
                   </template>
                 </bk-form-item>
               </template>
             </bk-table-column>
+            <!-- 重命名 -->
             <bk-table-column
               :render-header="renderHeaderAliasName"
               :resizable="false"
-              v-if="isPreviewMode || extractMethod === 'bk_log_json'" min-width="100">
+              v-if="isPreviewMode || extractMethod === 'bk_log_json'"
+              min-width="100">
               <template slot-scope="props">
                 <span v-if="isPreviewMode">{{ props.row.alias_name }}</span>
                 <bk-form-item
@@ -83,28 +122,32 @@
                   <bk-input
                     :disabled="props.row.is_delete"
                     v-model.trim="props.row.alias_name"
-                    @blur="checkAliasNameItem(props.row)"></bk-input>
+                    @blur="checkAliasNameItem(props.row)">
+                  </bk-input>
                   <template v-if="props.row.aliasErr">
-                    <i class="bk-icon icon-exclamation-circle-shape tooltips-icon"
-                       style="right: 8px;"
-                       v-bk-tooltips.top="props.row.aliasErr"></i>
+                    <i
+                      class="bk-icon icon-exclamation-circle-shape tooltips-icon"
+                      style="right: 8px;"
+                      v-bk-tooltips.top="props.row.aliasErr"></i>
                   </template>
                 </bk-form-item>
               </template>
             </bk-table-column>
+            <!-- 字段说明 -->
             <bk-table-column :render-header="renderHeaderDescription" :resizable="false" min-width="100">
               <template slot-scope="props">
                 <span v-if="isPreviewMode">{{ props.row.description }}</span>
                 <bk-input v-else :disabled="props.row.is_delete" v-model.trim="props.row.description"></bk-input>
               </template>
             </bk-table-column>
+            <!-- 类型 -->
             <bk-table-column :label="$t('indexSetList.field_type')" :resizable="false" min-width="100">
               <template slot-scope="props">
                 <span v-if="isPreviewMode">{{ props.row.field_type }}</span>
-                <!-- <bk-form-item
-                      v-else :required="true"
-                      :rules="props.row.is_delete ? notCheck : rules.field_type"
-                      :property="'tableList.' + props.$index + '.field_type'">
+                <!-- <bk-form-item v-else
+                :required="true"
+                :rules="props.row.is_delete ? notCheck : rules.field_type"
+                 :property="'tableList.' + props.$index + '.field_type'">
                                     <bk-select
                                         :clearable="false"
                                         :disabled="props.row.is_delete"
@@ -120,10 +163,10 @@
                                     </bk-select>
                                 </bk-form-item> -->
                 <!-- 替代方案 -->
-                <!-- <bk-form-item
-                  v-else :class="{ 'is-required is-error': props.row.typeErr }"
-                  :rules="props.row.is_delete ? notCheck : rules.field_type"
-                  :property="'tableList.' + props.$index + '.field_type'"> -->
+                <!-- <bk-form-item v-else
+                :class="{ 'is-required is-error': props.row.typeErr }"
+                 :rules="props.row.is_delete ? notCheck : rules.field_type"
+                 :property="'tableList.' + props.$index + '.field_type'"> -->
                 <bk-form-item v-else :class="{ 'is-required is-error': props.row.typeErr }">
                   <bk-select
                     :clearable="false"
@@ -141,9 +184,10 @@
                     </bk-option>
                   </bk-select>
                   <template v-if="props.row.typeErr">
-                    <i class="bk-icon icon-exclamation-circle-shape tooltips-icon"
-                       style="right: 8px;"
-                       v-bk-tooltips.top="$t('form.must')"></i>
+                    <i
+                      class="bk-icon icon-exclamation-circle-shape tooltips-icon"
+                      style="right: 8px;"
+                      v-bk-tooltips.top="$t('form.must')"></i>
                   </template>
                 </bk-form-item>
               </template>
@@ -163,29 +207,31 @@
                             </template>
                         </bk-table-column>-->
             <!-- 字符串类型下才能设置分词， 分词和维度只能选其中一个，且分词和时间不能同时存在, 选定时间后就同时勾选维度-->
+            <!-- 分词 -->
             <bk-table-column :render-header="renderHeaderParticipleName" align="center" :resizable="false" width="50">
               <template slot-scope="props">
                 <bk-checkbox
-                  :disabled="isPreviewMode ||
-                    props.row.is_delete ||
-                    props.row.field_type !== 'string' ||
-                    props.row.is_time"
+                  :disabled="isPreviewMode
+                    || props.row.is_delete
+                    || props.row.field_type !== 'string'
+                    || props.row.is_time"
                   v-model="props.row.is_analyzed">
                 </bk-checkbox>
               </template>
             </bk-table-column>
+            <!-- 时间 -->
             <bk-table-column :label="$t('dataManage.time')" align="center" :resizable="false" width="60">
               <template slot-scope="props">
                 <template v-if="isPreviewMode">
                   <div class="field-date field-date-disable">
-                    <i :class="`log-font logfont-${ props.row.is_time ? 'field-time-check' : 'field-time'}`"></i>
+                    <i :class="{ 'log-icon': true, 'icon-date-picker': true, active: props.row.is_time }"></i>
                   </div>
                 </template>
                 <template v-else>
                   <div
                     v-if="props.row.is_delete"
                     :class="['field-date field-date-disable', { 'field-date-active': props.row.is_time }]">
-                    <i :class="`log-font logfont-${ props.row.is_time ? 'field-time-check' : 'field-time'}`"></i>
+                    <i :class="{ 'log-icon': true, 'icon-date-picker': true, active: props.row.is_time }"></i>
                   </div>
                   <template v-else>
                     <bk-popover
@@ -197,7 +243,7 @@
                       trigger="click"
                       :arrow="false">
                       <div class="field-date field-date-active">
-                        <i class="log-font logfont-field-time-check"></i>
+                        <i class="log-icon icon-date-picker"></i>
                       </div>
                       <div slot="content">
                         <ul class="field-dropdown-list" slot="dropdown-content">
@@ -219,16 +265,17 @@
                            class="field-date"
                            v-bk-tooltips.right="$t('dataManage.only_data_time')"
                            @click.stop="setDateFormat(props.row)">
-                        <i class="log-font logfont-field-time"></i>
+                        <i class="log-icon icon-date-picker"></i>
                       </div>
                       <div v-else class="field-date" @click.stop="setDateFormat(props.row)">
-                        <i class="log-font logfont-field-time"></i>
+                        <i class="log-icon icon-date-picker"></i>
                       </div>
                     </template>
                   </template>
                 </template>
               </template>
             </bk-table-column>
+            <!-- 操作 -->
             <bk-table-column
               :label="$t('permission.operation')"
               :resizable="false"
@@ -240,16 +287,17 @@
                 <span
                   class="table-link"
                   @click="props.row.is_delete = !props.row.is_delete">
-                  {{ props.row.is_delete ? '复原' : '删除' }}
+                  {{ props.row.is_delete ? '复原' : '隐藏' }}
                 </span>
               </template>
             </bk-table-column>
+            <div slot="empty" class="empty-text">{{ $t('dataManage.emptyText') }}</div>
           </template>
         </bk-table>
       </bk-form>
     </div>
 
-    <div class="preview-panel-right" v-if="tableList.length">
+    <div class="preview-panel-right">
       <div class="preview-title preview-item">{{ $t('dataManage.Preview') }}</div>
       <template v-if="deletedVisible">
         <div
@@ -337,10 +385,11 @@
         <bk-button @click.stop="resetDateDialog">{{ $t('btn.cancel') }}</bk-button>
       </div>
     </bk-dialog>
-    <bk-dialog v-model="isReset"
-               @confirm="resetField"
-               theme="primary"
-               :title="$t('dataManage.Reset_confirmation')">
+    <bk-dialog
+      v-model="isReset"
+      @confirm="resetField"
+      theme="primary"
+      :title="$t('dataManage.Reset_confirmation')">
       {{$t('dataManage.Reset_content')}}
     </bk-dialog>
   </div>
@@ -374,6 +423,14 @@ export default {
       type: Array,
       default: () => [],
     },
+    isTempField: {
+      type: Boolean,
+      default: false,
+    },
+    isExtracting: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -391,6 +448,7 @@ export default {
       },
       timeCheckResult: false,
       checkLoading: false,
+      retainOriginalText: true, // 保留原始日志
       rules: {
         field_name: [ // 存在bug，暂时启用
           // {
@@ -456,6 +514,9 @@ export default {
     }),
     ...mapGetters('collect', ['curCollect']),
     ...mapGetters('globals', ['globalsData']),
+    isSettingDisable() {
+      return !this.fields.length;
+    },
     hasDateField() {
       return this.tableList.find(item => item.is_time && !item.is_delete);
     },
@@ -507,7 +568,7 @@ export default {
         arr = arr.filter(item => !item.is_built_in);
       }
 
-      if (this.isEditJson === false) { // 新建JSON时，类型如果不是数字，则默认为字符串
+      if (this.isEditJson === false && !this.isTempField) { // 新建JSON时，类型如果不是数字，则默认为字符串
         arr.forEach((item) => {
           if (typeof item.value !== 'number') {
             item.field_type = 'string';
@@ -523,7 +584,6 @@ export default {
           item.field_type = 'string';
         }
       });
-
       this.formData.tableList.splice(0, this.formData.tableList.length, ...arr);
     },
     resetField() {
@@ -536,8 +596,8 @@ export default {
       this.curRow = row;
       const option = {
         time_zone: row.option
-          ? (row.option.time_zone || (row.option.time_zone === 0
-            ? row.option.time_zone : this.defaultZone)) : this.defaultZone,
+          ? (row.option.time_zone || (row.option.time_zone === 0 ? row.option.time_zone : this.defaultZone))
+          : this.defaultZone,
         time_format: row.option ? row.option.time_format : '',
         time_value: row.value || '',
       };
@@ -563,7 +623,8 @@ export default {
         if (!this.timeCheckResult) return;
         if (!this.curRow.is_time) {
           this.formData.tableList.forEach((row) => {
-            const isCur = this.extractMethod === 'bk_log_delimiter' ? this.curRow.field_index === row.field_index : this.curRow.field_name === row.field_name;
+            const isCur = this.extractMethod === 'bk_log_delimiter'
+              ? this.curRow.field_index === row.field_index : this.curRow.field_name === row.field_name;
             if (row.is_time && !isCur) {
               this.cancelDateFormat(row);
             }
@@ -572,9 +633,10 @@ export default {
         this.curRow.is_analyzed = false; // 分词和时间不能同时设置
         this.curRow.is_time = true;
         // this.curRow.is_dimension = true
-        Object.assign(this.curRow.option, {
-          time_zone: this.dialogField.time_zone, time_format: this.dialogField.time_format,
-        });
+        Object.assign(
+          this.curRow.option,
+          { time_zone: this.dialogField.time_zone, time_format: this.dialogField.time_format },
+        );
         this.resetDateDialog();
         this.dialogDate = false;
       }, () => {});
@@ -674,6 +736,8 @@ export default {
       this.dialogField.time_format = val;
     },
     viewStandard() {
+      if (this.isSettingDisable) return;
+
       this.$emit('standard');
     },
     judgeNumber(value) {
@@ -705,7 +769,7 @@ export default {
     // },
     // checkFieldName (val) {
     //     return this.extractMethod === 'bk_log_json' ?
-    // true : !this.globalsData.field_built_in.find(item => item.id === val.toLocaleLowerCase())
+    //             true : !this.globalsData.field_built_in.find(item => item.id === val.toLocaleLowerCase())
     // },
     checkTypeItem(row) {
       row.typeErr = row.is_delete ? false : !row.field_type;
@@ -736,21 +800,21 @@ export default {
       const { field_name, is_delete } = row;
       let result = '';
       /* eslint-disable */
-                if (!is_delete) {
-                    if (!field_name) {
-                        result = this.$t('form.must')
-                    } else if (!/^(?!_)(?!.*?_$)^[A-Za-z0-9_]+$/ig.test(field_name)) {
-                        result = this.$t('dataManage.can_cannot')
-                    } else if (this.extractMethod !== 'bk_log_json' && this.globalsData.field_built_in.find(item => item.id === field_name.toLocaleLowerCase())) {
-                        result = this.extractMethod === 'bk_log_regexp' ? this.$t('dataManage.field_expression') : this.$t('dataManage.field_same')
-                    } else {
-                        result = ''
-                    }
-                } else {
-                    result = ''
-                }
-                row.fieldErr = result
-                /* eslint-enable */
+      if (!is_delete) {
+        if (!field_name) {
+          result = this.$t('form.must')
+        } else if (!/^(?!_)(?!.*?_$)^[A-Za-z0-9_]+$/ig.test(field_name)) {
+          result = this.$t('dataManage.can_cannot')
+        } else if (this.extractMethod !== 'bk_log_json' && this.globalsData.field_built_in.find(item => item.id === field_name.toLocaleLowerCase())) {
+          result = this.extractMethod === 'bk_log_regexp' ? this.$t('dataManage.field_expression') : this.$t('dataManage.field_same')
+        } else {
+          result = ''
+        }
+      } else {
+        result = ''
+      }
+      row.fieldErr = result
+      /* eslint-enable */
       return result;
     },
     checkFieldName() {
@@ -828,8 +892,13 @@ export default {
       promises.push(this.checkType());
       return promises;
     },
-    visibleHandle(val) {
-      this.$emit('deleteVisible', val);
+    visibleHandle() {
+      if (this.isSettingDisable) return;
+
+      this.$emit('deleteVisible', !this.deletedVisible);
+    },
+    handleKeepLog(value) {
+      this.$emit('handleKeepLog', value);
     },
     renderHeaderAliasName(h) {
       return h('div', {
@@ -874,7 +943,7 @@ export default {
 };
 </script>
 <style lang="scss">
-  @import '../../scss/mixins/clearfix.scss';
+  @import '@/scss/mixins/clearfix';
 
   .field-table-container {
     position: relative;
@@ -921,6 +990,18 @@ export default {
           height: 14px;
           font-size: 14px;
         }
+      }
+
+      .bk-table-empty-text {
+        padding: 12px 0;
+      }
+
+      .bk-table-empty-block {
+        min-height: 32px;
+      }
+
+      .empty-text {
+        color: #979ba5;
       }
     }
 
@@ -974,11 +1055,20 @@ export default {
 
       &.field-date-active {
         color: #3a84ff;
+        .icon-date-picker {
+          color: #3a84ff;
+        }
       }
 
       &.field-date-disable {
         color: #dcdee5;
         cursor: not-allowed;
+      }
+    }
+    .icon-date-picker {
+      color:#979ba5;
+      &.active {
+        color: #3a84ff;
       }
     }
   }

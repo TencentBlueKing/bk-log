@@ -473,9 +473,17 @@ export default class MonitorEcharts extends Vue {
     const mapData = {}
     return {
       series: data.map(({ datapoints, target, ...item }) => {
+        const formatDataOpt = datapoints.map(data => {
+          if (data.indexOf(0) > -1) {
+            const res = data
+            res.splice(data.indexOf(0), 1, null)
+            return res
+          }
+          return data
+        })
         mapData[target] !== undefined ? (mapData[target] += 1) : (mapData[target] = 0)
         return { ...item,
-          data: datapoints.map(set => (Array.isArray(set) ? set.slice().reverse() : [])),
+          data: formatDataOpt.map(set => (Array.isArray(set) ? set.slice().reverse() : [])),
           name: !mapData[target] ? target : target + mapData[target]
         }
       })
@@ -517,6 +525,12 @@ export default class MonitorEcharts extends Vue {
         }
         setTimeout(() => {
           if (this.chart) {
+            const optSeries = optionData.options.series
+            const optData = optSeries[0] ? optSeries[0].data : []
+            const isEmptyData = optData.every(val => val.includes(null))
+
+            if (isEmptyData) optionData.options.yAxis.max = 1
+            
             this.chart.setOption(deepMerge(optionData.options, this.defaultOptions) as EChartOption, {
               notMerge: true,
               lazyUpdate: false,
@@ -576,7 +590,8 @@ export default class MonitorEcharts extends Vue {
 
   // 设置tooltip
   handleSetTooltip(params) {
-    if (!params || params.length < 1 || params.every(item => item.value[1] === null)) {
+    // if (!params || params.length < 1 || params.every(item => item.value[1] === null)) {
+    if (!params || params.length < 1) {
       this.chartType === 'line' && (this.curValue = {
         color: '',
         name: '',
@@ -588,7 +603,10 @@ export default class MonitorEcharts extends Vue {
       return
     }
     const pointTime = moment(params[0].axisValue).format('YYYY-MM-DD HH:mm:ss')
-    const data = params.map(item => ({ color: item.color, seriesName: item.seriesName, value: item.value[1] }))
+    const data = params.map(item => {
+      const value = item.value[1] === null ? 0 : item.value[1]
+      return ({ color: item.color, seriesName: item.seriesName, value: value })
+    })
       .sort((a, b) => Math.abs(a.value - (+this.curValue.yAxis)) - Math.abs(b.value - (+this.curValue.yAxis)))
     const liHtmls = params.slice().sort((a, b) => b.value[1] - a.value[1])
       .map((item) => {
@@ -604,11 +622,11 @@ export default class MonitorEcharts extends Vue {
             yAxis: item.value[1]
           })
         }
-        if (item.value[1] === null) return ''
+        // if (item.value[1] === null) return ''
         const curSeries = this.curChartOption.series[item.seriesIndex]
         const unitFormater = curSeries.unitFormatter || (v => ({ text: v }))
         const precision = curSeries.unit !== 'none' && +curSeries?.precision < 1 ?  2 : +curSeries?.precision
-        const valueObj = unitFormater(item.value[1], precision)
+        const valueObj = unitFormater(item.value[1] === null ? 0 : item.value[1], precision)
         return `<li style="display: flex;align-items: center;">
            <span style="background-color:${item.color};margin-right: 4px;width: 6px;height: 6px; border-radius: 50%;"></span>
            <span style="${markColor} flex: 1;">${valueObj.text} ${valueObj.suffix || ''}</span>

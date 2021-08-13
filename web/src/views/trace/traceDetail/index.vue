@@ -156,7 +156,7 @@
     <bk-sideslider :title="$t('trace.log')" :width="1096" :is-show.sync="isShowLog" :quick-close="true">
       <view-log slot="content" :is-show-log="isShowLog" :log-list="logList" :log-fields="logFields"></view-log>
     </bk-sideslider>
-    <bk-sideslider :title="spanID" :width="640" :is-show.sync="isShowSpan" :quick-close="true">
+    <bk-sideslider transfer :title="spanID" :width="640" :is-show.sync="isShowSpan" :quick-close="true">
       <div slot="content" class="span-detail-slot">
         <VueJsonPretty v-if="spanDetail" :data="spanDetail" />
       </div>

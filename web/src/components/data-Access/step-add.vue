@@ -39,8 +39,26 @@
         :property="'collector_config_name'">
         <bk-input v-model="formData.collector_config_name" maxlength="50"></bk-input>
       </bk-form-item>
+      <bk-form-item
+        :label="$t('dataSource.source_en_name')"
+        :required="true"
+        :rules="rules.collector_config_name_en"
+        :property="'collector_config_name_en'">
+        <bk-input
+          v-model="formData.collector_config_name_en"
+          maxlength="50"
+          :disabled="isUpdate && !!(formData.collector_config_name_en)"
+          :placeholder="$t('dataSource.en_name_placeholder')">
+        </bk-input>
+        <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_tips') }}</p>
+      </bk-form-item>
       <bk-form-item :label="$t('configDetails.remarkExplain')">
-        <bk-input type="textarea" style="width: 320px;" v-model="formData.description" maxlength="64"></bk-input>
+        <bk-input
+          type="textarea"
+          style="width: 320px;"
+          v-model="formData.description"
+          maxlength="100">
+        </bk-input>
       </bk-form-item>
 
       <!-- 源日志信息 -->
@@ -97,7 +115,8 @@
           <bk-button
             theme="default"
             :title="$t('configDetails.newly_increased')"
-            icon="plus" style="font-size: 12px"
+            icon="plus"
+            style="font-size: 12px"
             :class="colorRules ? 'rulesColor' : ''"
             :disabled="!formData.category_id"
             @click="showIpSelectorDialog = true">
@@ -120,9 +139,10 @@
       </div>
       <!-- 日志路径 -->
       <div class="form-div mt" v-for="(log, index) in logPaths" :key="index">
-        <bk-form-item :label="index === 0 ? $t('retrieve.logPath') : ''" required
-                      :rules="rules.paths"
-                      :property="'params.paths.' + index + '.value'">
+        <bk-form-item
+          :label="index === 0 ? $t('retrieve.logPath') : ''" required
+          :rules="rules.paths"
+          :property="'params.paths.' + index + '.value'">
           <bk-input v-model="log.value"></bk-input>
         </bk-form-item>
         <div class="ml9">
@@ -131,11 +151,8 @@
             :class="['bk-icon icon-minus-circle icons ml9', { disable: logPaths.length === 1 }] "
             @click="delLog(index)"></i>
         </div>
-        <div
-          class="tips"
-          v-if="index === 0">
-          {{ $t('retrieve.log_available') }}
-          <span class="font-gray">{{ $t('retrieve.log_wildcard_character') }}</span>
+        <div class="tips" v-if="index === 0">
+          {{ $t('retrieve.log_available') }}<span class="font-gray">{{ $t('retrieve.log_wildcard_character') }}</span>
         </div>
       </div>
       <!-- 日志字符集 -->
@@ -152,17 +169,29 @@
       <!-- 段日志正则调试 -->
       <div v-if="hasMultilineReg" class="multiline-log-container">
         <div class="row-container">
-          <bk-form-item :label="$t('行首正则')" :rules="rules.notEmptyForm" required property="params.multiline_pattern">
+          <bk-form-item
+            :label="$t('行首正则')"
+            :rules="rules.notEmptyForm"
+            required
+            property="params.multiline_pattern">
             <bk-input v-model.trim="formData.params.multiline_pattern"></bk-input>
           </bk-form-item>
-          <bk-button text size="small" class="king-button" @click="showRegDialog = true">{{ $t('调试') }}</bk-button>
+          <bk-button
+            text size="small"
+            class="king-button"
+            @click="showRegDialog = true">
+            {{ $t('调试') }}
+          </bk-button>
         </div>
         <div class="row-container second">
           {{ $t('最多匹配') }}
           <bk-form-item :rules="rules.maxLine" property="params.multiline_max_lines">
             <bk-input
               v-model="formData.params.multiline_max_lines"
-              type="number" :precision="0" :show-controls="false"></bk-input>
+              type="number"
+              :precision="0"
+              :show-controls="false">
+            </bk-input>
           </bk-form-item>
           {{ $t('行，最大耗时') }}
           <bk-form-item :rules="rules.maxTimeout" property="params.multiline_timeout">
@@ -170,14 +199,15 @@
               v-model="formData.params.multiline_timeout"
               type="number"
               :precision="0"
-              :show-controls="false"></bk-input>
+              :show-controls="false">
+            </bk-input>
           </bk-form-item>
           {{ $t('秒') }}
         </div>
         <multiline-reg-dialog
           :old-pattern.sync="formData.params.multiline_pattern"
-          :show-dialog.sync="showRegDialog"
-        ></multiline-reg-dialog>
+          :show-dialog.sync="showRegDialog">
+        </multiline-reg-dialog>
       </div>
 
       <!-- 日志内容过滤 -->
@@ -197,7 +227,8 @@
           </bk-form-item>
           <bk-input v-show="isString" v-model="formData.params.conditions.match_content"></bk-input>
           <bk-select
-            style="width: 254px; margin-left: 8px; height: 32px" :clearable="false"
+            style="width: 254px; margin-left: 8px; height: 32px"
+            :clearable="false"
             v-if="isString" v-model="formData.params.conditions.match_type">
             <bk-option id="include" :name="$t('retrieve.Keep_string')"></bk-option>
             <bk-option id="exclude" :name="$t('retrieve.Keep_filtering')" disabled>
@@ -205,7 +236,8 @@
             </bk-option>
           </bk-select>
           <bk-select
-            style="width: 320px; margin-right: 8px; height: 32px" v-if="!isString"
+            style="width: 320px; margin-right: 8px; height: 32px"
+            v-if="!isString"
             v-model="formData.params.conditions.separator">
             <bk-option
               v-for="(option, index) in globalsData.data_delimiter"
@@ -226,14 +258,16 @@
             <div class="choose-table-item-body">
               <div class="choose-table-item" v-for="(item, index) in separatorFilters" :key="index">
                 <div class="left">
-                  <bk-form-item label="" :rules="rules.separator_filters" style="width: 100px;"
-                                :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
+                  <bk-form-item
+                    label="" :rules="rules.separator_filters" style="width: 100px;"
+                    :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
                     <bk-input style="width: 100px;" v-model="item.fieldindex"></bk-input>
                   </bk-form-item>
                 </div>
                 <div :class="['main', { line: separatorFilters.length > 1 }] ">
-                  <bk-form-item label="" :rules="rules.separator_filters"
-                                :property="'params.conditions.separator_filters.' + index + '.word'">
+                  <bk-form-item
+                    label="" :rules="rules.separator_filters"
+                    :property="'params.conditions.separator_filters.' + index + '.word'">
                     <bk-input v-model="item.word"></bk-input>
                   </bk-form-item>
                 </div>
@@ -241,7 +275,8 @@
                   <i class="bk-icon icon-plus-circle icons" @click="addItem"></i>
                   <i
                     :class="['bk-icon icon-minus-circle icons ml9', { disable: separatorFilters.length === 1 }] "
-                    @click="delItem(index)"></i>
+                    @click="delItem(index)">
+                  </i>
                 </div>
               </div>
               <div class="choose-select" v-if="separatorFilters && separatorFilters.length > 1">
@@ -260,10 +295,11 @@
         <div class="add-collection-title">{{ $t('上报链路配置') }}</div>
         <bk-form-item required property="data_link_id" :label="$t('上报链路')" :rules="rules.linkConfig">
           <bk-select style="width: 320px;" v-model="formData.data_link_id" :clearable="false" :disabled="isUpdate">
-            <bk-option v-for="item in linkConfigurationList"
-                       :key="item.data_link_id"
-                       :id="item.data_link_id"
-                       :name="item.link_group_name">
+            <bk-option
+              v-for="item in linkConfigurationList"
+              :key="item.data_link_id"
+              :id="item.data_link_id"
+              :name="item.link_group_name">
             </bk-option>
           </bk-select>
         </bk-form-item>
@@ -278,13 +314,6 @@
           :disabled="!collectProject">
           {{ $t('retrieve.next') }}
         </bk-button>
-        <!-- <bk-button
-          theme="default"
-          title="取消"
-          class="ml10"
-          @click="cancel">
-          {{isUpdate ? '取消编辑' : '删除任务'}}
-        </bk-button> -->
         <bk-button
           theme="default"
           :title="$t('indexSetList.cancel')"
@@ -300,7 +329,7 @@
 import MultilineRegDialog from './multiline-reg-dialog';
 import ipSelectorDialog from './ip-selector-dialog';
 import { mapGetters, mapState } from 'vuex';
-import { projectManage } from '@/common/util';
+import { projectManages } from '@/common/util';
 
 export default {
   components: {
@@ -316,6 +345,7 @@ export default {
       linkConfigurationList: [], // 链路配置列表
       formData: {
         collector_config_name: '', // 采集项名称
+        collector_config_name_en: '', // 采集项英文名称
         category_id: '', // 数据分类
         collector_scenario_id: 'row',
         data_encoding: 'UTF-8', // 日志字符集
@@ -382,6 +412,24 @@ export default {
           },
           {
             max: 50,
+            trigger: 'blur',
+          },
+        ],
+        collector_config_name_en: [ // 采集英文名称
+          {
+            required: true,
+            trigger: 'blur',
+          },
+          {
+            max: 50,
+            trigger: 'blur',
+          },
+          {
+            min: 5,
+            trigger: 'blur',
+          },
+          {
+            regex: /^[A-Za-z0-9_]+$/,
             trigger: 'blur',
           },
         ],
@@ -473,7 +521,7 @@ export default {
       return this.formData.collector_scenario_id === 'section';
     },
     collectProject() {
-      return projectManage(this.menuProject, 'manage', 'manage');
+      return projectManages(this.$store.state.topMenu, 'collection-item');
     },
     isCloseDataLink() {
       // 没有可上报的链路时，编辑采集配置链路ID为0或null时，隐藏链路配置框，并且不做空值校验。
@@ -487,6 +535,9 @@ export default {
       this.formData = JSON.parse(JSON.stringify(this.curCollect));
       if (this.formData.target?.length) { // IP 选择器预览结果回填
         this.formData.target_nodes = this.formData.target;
+      }
+      if (!this.formData.collector_config_name_en) { // 兼容旧数据英文名为空
+        this.formData.collector_config_name_en = this.formData.table_id || '';
       }
       const { params } = this.formData;
       if (params.paths.length > 0) {
@@ -558,6 +609,7 @@ export default {
       const formData = JSON.parse(JSON.stringify(this.formData));
       const {
         collector_config_name,
+        collector_config_name_en,
         target_object_type,
         target_node_type,
         target_nodes,
@@ -582,6 +634,7 @@ export default {
         return {
           collector_config_id: Number(this.$route.params.collectorId),
           collector_config_name,
+          collector_config_name_en,
           target_node_type,
           target_object_type,
           target_nodes,
@@ -662,7 +715,7 @@ export default {
     // 取消操作
     cancel() {
       this.$router.push({
-        name: 'collectAccess',
+        name: 'collection-item',
         query: {
           projectId: window.localStorage.getItem('project_id'),
         },
@@ -720,11 +773,18 @@ export default {
       margin-bottom: 20px;
     }
 
-    .tips {
+    .tips,
+    .en-name-tips {
       font-size: 12px;
       color: #aeb0b7;
       margin-left: 8px;
       line-height: 32px;
+    }
+
+    .en-name-tips {
+      margin-left: 0;
+      margin-top: 8px;
+      line-height: 12px;
     }
 
     .hight-setting {
