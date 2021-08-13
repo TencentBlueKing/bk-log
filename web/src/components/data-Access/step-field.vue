@@ -521,6 +521,9 @@ export default {
       }
       return '';
     },
+    unAuthBkdata() {
+      return window.FEATURE_TOGGLE.scenario_bkdata !== 'on';
+    },
   },
   watch: {
     'formData.fields'() {
@@ -530,8 +533,26 @@ export default {
       this.formatResult = true;
     },
   },
+  created() {
+    if (this.unAuthBkdata) { // 未授权计算平台则禁用高级清洗
+      this.panels[1].disabled = true;
+      this.panels[1].renderLabel = (h) => {
+        return h('div', {
+          class: 'render-header',
+        }, [
+          h('span', {
+            directives: [
+              {
+                name: 'bk-tooltips',
+                value: this.$t('dataManage.disabledAdvance'),
+              },
+            ],
+          }, this.$t('dataManage.Advance')),
+        ]);
+      };
+    }
+  },
   async mounted() {
-    // TODO
     if (this.isCleanField) {
       this.initCleanItem();
       return;
@@ -554,6 +575,7 @@ export default {
         query: {
           bk_biz_id: this.bkBizId,
           have_data_id: 1,
+          bkdata: true,
         },
       }).then((res) => {
         const data = res.data;
@@ -641,6 +663,7 @@ export default {
           ]);
         };
       } else {
+        if (this.unAuthBkdata) return;
         this.activePanel = 'base';
         this.panels = [
           { name: 'base', label: this.$t('dataManage.Base') },
