@@ -73,7 +73,7 @@ def esquery_qos(request):
     token = uniqid()
     key = build_qos_key(request)
     window_time_point = get_window_time_point()
-    redis_client.zadd(f"{key}", {window_time_point: f"{token}_{window_time_point}"})
+    redis_client.zadd(f"{key}", {f"{token}_{window_time_point}": window_time_point})
     logger.info(f"[Esquery Qos] qos count [{build_qos_key(request)}] increment")
 
 

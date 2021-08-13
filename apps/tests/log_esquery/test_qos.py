@@ -37,8 +37,9 @@ class FakeRedis:
     def get_value(self):
         return self._zset
 
-    def zadd(self, key, sort_key, value):
-        self._zset[key].append((value, sort_key))
+    def zadd(self, key, mapping):
+        for _key, value in mapping.items:
+            self._zset[key].append((_key, value))
 
     def zrange(self, key, start, end, desc=True, withscores=True):
         self._zset[key].sort(key=lambda x: x[1], reverse=True)
@@ -71,9 +72,10 @@ fake_redis = FakeRedis()
 
 @patch("django.core.cache.cache", FakeCache())
 @patch("apps.log_esquery.qos.redis_client", fake_redis)
+@patch("apps.log_search.permission.Permission.get_auth_info", return_value={"bk_app_code": "bk_monitorv3"})
 class TestQos(TestCase):
     @override_settings(CACHES={"default": {"BACKEND": "apps.tests.log_esquery.test_qos.FakeCache"}})
-    def test_throttle(self):
+    def test_throttle(self, *args, **kwargs):
         throttle = QosThrottle()
         index_set_request_1 = self._build_request(1)
         key = build_qos_key(index_set_request_1)
@@ -85,7 +87,7 @@ class TestQos(TestCase):
         self.assertFalse(throttle.allow_request(index_set_request_1, None))
         self.assertEqual(len(fake_redis.get_value()[key]), 0)
 
-    def test_recover(self):
+    def test_recover(self, *args, **kwargs):
         index_set_request_1 = self._build_request(1)
         key = build_qos_key(index_set_request_1)
         # test not have exception
@@ -105,7 +107,7 @@ class TestQos(TestCase):
         self.assertEqual(len(fake_redis.get_value()[key]), 1)
         qos_recover(index_set_request_1, FakeResponse(False))
 
-    def test_key_build(self):
+    def test_key_build(self, *args, **kwargs):
         index_set_request_1 = self._build_request(1)
         self.assertEqual(f"{settings.APP_CODE}_qos_/test_1", build_qos_key(index_set_request_1))
         index_set_request_indices = self._build_request(scenario_id="log", indices="index")
