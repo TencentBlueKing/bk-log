@@ -38,7 +38,7 @@ class FakeRedis:
         return self._zset
 
     def zadd(self, key, mapping):
-        for _key, value in mapping.items:
+        for _key, value in mapping.items():
             self._zset[key].append((_key, value))
 
     def zrange(self, key, start, end, desc=True, withscores=True):
@@ -57,13 +57,7 @@ class FakeCache:
         return key in self._dict
 
     def set(self, key, value, timeout=0, nx=False):
-        if nx and key in self._dict:
-            return False
         self._dict[key] = value
-        return True
-
-    def delete(self, key):
-        self._dict.pop(key, key)
         return True
 
 
