@@ -383,7 +383,7 @@ export default {
   文档计算: 'Document calculation',
   文档计数: 'Document count',
   运行状态: 'Operating status',
-  '存储大小(M)': 'Storage size(M)',
+  存储大小: 'Storage size',
   操作记录: 'Operation records',
   操作日期: 'Operation date',
   操作人: 'Operator',

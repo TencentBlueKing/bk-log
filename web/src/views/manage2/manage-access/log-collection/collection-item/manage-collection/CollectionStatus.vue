@@ -724,7 +724,8 @@ export default {
         cursor: pointer;
       }
     }
-
+  }
+  .issued-detail {
     .detail-content {
       min-height: calc(100vh - 60px);
       white-space: pre-wrap;
