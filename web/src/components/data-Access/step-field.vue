@@ -570,14 +570,15 @@ export default {
   methods: {
     // 初始化清洗项
     initCleanItem() {
+      const query = {
+        bk_biz_id: this.bkBizId,
+        have_data_id: 1,
+      };
+      if (!this.isEditCleanItem) {
+        query.bkdata = true;
+      }
       // 获取采集项列表
-      this.$http.request('collect/getAllCollectors', {
-        query: {
-          bk_biz_id: this.bkBizId,
-          have_data_id: 1,
-          bkdata: true,
-        },
-      }).then((res) => {
+      this.$http.request('collect/getAllCollectors', { query }).then((res) => {
         const data = res.data;
         if (data.length) {
           this.cleanCollectorList = data;
