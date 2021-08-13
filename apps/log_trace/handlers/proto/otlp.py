@@ -120,7 +120,7 @@ class OtlpTrace(Proto):
         result: dict = search_handler.search(search_type=None)
         if not result["total"]:
             raise TraceIDNotExistsException()
-        result["list"] = self.map_fields_to_log(result.get("list", []))
+        result["list"] = self.map_fields_to_log(result.get("list", []), True)
         result["list"] = sorted(result["list"], key=lambda x: x["start_time"])
         result["tree"] = self.result_to_tree(result)
         return result
@@ -165,6 +165,8 @@ class OtlpTrace(Proto):
     def update_node(cls, child: dict) -> dict:
         child.update(
             {
+                "start_time": cls.format_time(child.get("start_time")),
+                "end_time": cls.format_time(child.get("end_time")),
                 "group": child.get("span_id", ""),
                 "from": child.get("start_time", 0),
                 "to": child.get("end_time", 0),
@@ -183,16 +185,24 @@ class OtlpTrace(Proto):
         result["list"] = self.map_fields_to_log(item_list)
         return result
 
-    def map_fields_to_log(self, field_list):
+    def map_fields_to_log(self, field_list, is_detail=False):
         for item in field_list:
-            item["start_time"] = self.format_time(item["start_time"])
-            item["end_time"] = self.format_time(item["end_time"])
             for src_key, des_key in self.FIELD_LOG_MAP.items():
                 item[des_key] = item[src_key]
+            if is_detail:
+                item["start_time"] = self.to_microseconds(item["start_time"])
+                item["end_time"] = self.to_microseconds(item["end_time"])
+                continue
+            item["start_time"] = self.format_time(item["start_time"])
+            item["end_time"] = self.format_time(item["end_time"])
         return field_list
 
-    def format_time(self, timestamp):
-        return int(timestamp / 1000 ** 2)
+    @classmethod
+    def format_time(cls, timestamp):
+        return arrow.get(str(timestamp)[0:10]).strftime("%Y-%m-%d %H:%M:%S")
+
+    def to_microseconds(self, timestamp):
+        return int(str(timestamp)[0:13])
 
     def scatter(self, index_set_id: int, data: dict):
         pass
