@@ -56,9 +56,6 @@ export default {
       isError: false,
     };
   },
-  created() {
-    this.handleBlur(this.value);
-  },
   methods: {
     handleChange(val) {
       this.$emit('change', val);

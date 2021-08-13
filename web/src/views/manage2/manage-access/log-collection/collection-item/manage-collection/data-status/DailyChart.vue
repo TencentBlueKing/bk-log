@@ -199,6 +199,7 @@ export default {
           y: 10,
           x2: 40,
           y2: 40,
+          containLabel: true,
         },
       });
     },
