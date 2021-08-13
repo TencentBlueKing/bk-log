@@ -17,14 +17,18 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import json
+
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
+from django.db.models import Q
 
 from rest_framework.response import Response
 
 from apps.exceptions import ValidationError
-from apps.log_search.constants import HAVE_DATA_ID
+from apps.log_databus.constants import EtlConfig
+from apps.log_search.constants import HAVE_DATA_ID, BKDATA_OPEN
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.generic import ModelViewSet
@@ -106,9 +110,12 @@ class CollectorViewSet(ModelViewSet):
         return [ViewBusinessPermission()]
 
     def get_queryset(self):
+        qs = self.model.objects
         if self.request.query_params.get(HAVE_DATA_ID):
-            return self.model.objects.filter(bk_data_id__isnull=False)
-        return self.model.objects.all()
+            qs = qs.filter(bk_data_id__isnull=False)
+        if json.loads(self.request.query_params.get(BKDATA_OPEN).lower()):
+            qs = qs.filter(Q(etl_config=EtlConfig.BK_LOG_TEXT) | Q(etl_config__isnull=True))
+        return qs.all()
 
     def get_serializer_class(self, *args, **kwargs):
         action_serializer_map = {
@@ -1609,86 +1616,86 @@ class CollectorViewSet(ModelViewSet):
     @list_route(methods=["GET"])
     def list_collectors(self, request, *args, **kwargs):
         """
-                @api {get} /databus/collectors/list_collectors/ 34_采集项-获取列表(可不带分页参数)
-                @apiName dababus_list_collector
-                @apiGroup 10_Collector
-                @apiDescription 采集项列表，运行状态通过异步接口获取，可不带分页参数
-                @apiParam {Int} bk_biz_id 业务ID
-                @apiParam {String} keyword 搜索关键字
-                @apiSuccess {Array} results 返回结果
-                @apiSuccess {Int} results.collector_config_id 采集项ID
-                @apiSuccess {Int} results.collector_config_name 采集项名称
-                @apiSuccess {String} results.collector_scenario_id 类型id
-                @apiSuccess {String} results.collector_scenario_name 类型名称
-                @apiSuccess {String} results.category_id 分类ID
-                @apiSuccess {String} results.category_name 分类名称
-                @apiSuccess {Bool} results.is_active 是否可用
-                @apiSuccess {String} results.description 描述
-                @apiSuccess {String} results.created_by 创建人
-                @apiSuccess {String} results.created_at 创建时间
-                @apiSuccess {Boolean} results.create_clean_able 是否可创建基础清洗
-                @apiSuccess {List} results.bkdata_index_set_ids 采集对应的高级清洗索引集id列表
-                @apiSuccessExample {json} 成功返回:
-                {
-                "result": true,
-                "data": [
+        @api {get} /databus/collectors/list_collectors/ 34_采集项-获取列表(可不带分页参数)
+        @apiName dababus_list_collector
+        @apiGroup 10_Collector
+        @apiDescription 采集项列表，运行状态通过异步接口获取，可不带分页参数
+        @apiParam {Int} bk_biz_id 业务ID
+        @apiParam {String} keyword 搜索关键字
+        @apiSuccess {Array} results 返回结果
+        @apiSuccess {Int} results.collector_config_id 采集项ID
+        @apiSuccess {Int} results.collector_config_name 采集项名称
+        @apiSuccess {String} results.collector_scenario_id 类型id
+        @apiSuccess {String} results.collector_scenario_name 类型名称
+        @apiSuccess {String} results.category_id 分类ID
+        @apiSuccess {String} results.category_name 分类名称
+        @apiSuccess {Bool} results.is_active 是否可用
+        @apiSuccess {String} results.description 描述
+        @apiSuccess {String} results.created_by 创建人
+        @apiSuccess {String} results.created_at 创建时间
+        @apiSuccess {Boolean} results.create_clean_able 是否可创建基础清洗
+        @apiSuccess {List} results.bkdata_index_set_ids 采集对应的高级清洗索引集id列表
+        @apiSuccessExample {json} 成功返回:
+        {
+        "result": true,
+        "data": [
+            {
+                "collector_config_id": 1,
+                "collector_scenario_name": "行日志文件",
+                "category_name": "操作系统",
+                "target_nodes": [
                     {
-                        "collector_config_id": 1,
-                        "collector_scenario_name": "行日志文件",
-                        "category_name": "操作系统",
-                        "target_nodes": [
-                            {
-                                "bk_inst_id": 2000000992,
-                                "bk_obj_id": "module"
-                            }
-                        ],
-                        "task_id_list": [
-                            "3469542"
-                        ],
-                        "target_subscription_diff": [],
-                        "create_clean_able": true,
-                        "bkdata_index_set_ids": [],
-                        "created_at": "2021-07-20 12:07:25",
-                        "created_by": "test",
-                        "updated_at": "2021-08-02 16:38:26",
-                        "updated_by": "test",
-                        "is_deleted": false,
-                        "deleted_at": null,
-                        "deleted_by": null,
-                        "collector_config_name": "test",
-                        "bk_app_code": "bk_log_search",
-                        "collector_scenario_id": "row",
-                        "bk_biz_id": 215,
-                        "category_id": "os",
-                        "target_object_type": "HOST",
-                        "target_node_type": "TOPO",
-                        "description": "test",
-                        "is_active": true,
-                        "data_link_id": 0,
-                        "bk_data_id": 525452,
-                        "bk_data_name": null,
-                        "table_id": "215_bklog.test",
-                        "etl_config": "bk_log_text",
-                        "subscription_id": 3420,
-                        "bkdata_data_id": null,
-                        "index_set_id": 1,
-                        "data_encoding": "UTF-8",
-                        "params": "{}",
-                        "itsm_ticket_sn": null,
-                        "itsm_ticket_status": "not_apply",
-                        "can_use_independent_es_cluster": true,
-                        "collector_package_count": 10,
-                        "collector_output_format": null,
-                        "collector_config_overlay": null,
-                        "storage_shards_nums": 3,
-                        "storage_shards_size": 30,
-                        "storage_replies": 1,
-                        "bkdata_data_id_sync_times": 0,
-                        "collector_config_name_en": "test"
+                        "bk_inst_id": 2000000992,
+                        "bk_obj_id": "module"
                     }
                 ],
-                "code": 0,
-                "message": ""
+                "task_id_list": [
+                    "3469542"
+                ],
+                "target_subscription_diff": [],
+                "create_clean_able": true,
+                "bkdata_index_set_ids": [],
+                "created_at": "2021-07-20 12:07:25",
+                "created_by": "test",
+                "updated_at": "2021-08-02 16:38:26",
+                "updated_by": "test",
+                "is_deleted": false,
+                "deleted_at": null,
+                "deleted_by": null,
+                "collector_config_name": "test",
+                "bk_app_code": "bk_log_search",
+                "collector_scenario_id": "row",
+                "bk_biz_id": 215,
+                "category_id": "os",
+                "target_object_type": "HOST",
+                "target_node_type": "TOPO",
+                "description": "test",
+                "is_active": true,
+                "data_link_id": 0,
+                "bk_data_id": 525452,
+                "bk_data_name": null,
+                "table_id": "215_bklog.test",
+                "etl_config": "bk_log_text",
+                "subscription_id": 3420,
+                "bkdata_data_id": null,
+                "index_set_id": 1,
+                "data_encoding": "UTF-8",
+                "params": "{}",
+                "itsm_ticket_sn": null,
+                "itsm_ticket_status": "not_apply",
+                "can_use_independent_es_cluster": true,
+                "collector_package_count": 10,
+                "collector_output_format": null,
+                "collector_config_overlay": null,
+                "storage_shards_nums": 3,
+                "storage_shards_size": 30,
+                "storage_replies": 1,
+                "bkdata_data_id_sync_times": 0,
+                "collector_config_name_en": "test"
+            }
+        ],
+        "code": 0,
+        "message": ""
         }
         """
         response = super().list(request, *args, **kwargs)
