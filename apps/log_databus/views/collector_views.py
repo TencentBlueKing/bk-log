@@ -113,7 +113,8 @@ class CollectorViewSet(ModelViewSet):
         qs = self.model.objects
         if self.request.query_params.get(HAVE_DATA_ID):
             qs = qs.filter(bk_data_id__isnull=False)
-        if json.loads(self.request.query_params.get(BKDATA_OPEN).lower()):
+        bkdata_open_switch = self.request.query_params.get(BKDATA_OPEN)
+        if bkdata_open_switch and json.loads(bkdata_open_switch.lower()):
             qs = qs.filter(Q(etl_config=EtlConfig.BK_LOG_TEXT) | Q(etl_config__isnull=True))
         return qs.all()
 
