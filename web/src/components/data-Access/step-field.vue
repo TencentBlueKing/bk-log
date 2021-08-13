@@ -562,7 +562,7 @@ export default {
           if (this.isEditCleanItem) {
             this.cleanCollector = this.$route.params.collectorId;
           } else this.basicLoading = false;
-        }
+        } else this.basicLoading = false;
       })
         .catch(() => {
           this.basicLoading = false;
