@@ -490,7 +490,7 @@ MENUS = [
             {
                 "id": "trace_track",
                 "name": _("全链路追踪"),
-                "feature": "on",
+                "feature": os.environ.get("BKAPP_FEATURE_TRACE", "on"),
                 "icon": "",
                 "keyword": "trace",
                 "children": [

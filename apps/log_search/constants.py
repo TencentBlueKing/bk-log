@@ -94,6 +94,7 @@ ASYNC_EXPORT_FILE_EXPIRED_DAYS = 2
 # 异步导出链接expired时间 24*60*60
 ASYNC_EXPORT_EXPIRED = 86400
 HAVE_DATA_ID = "have_data_id"
+BKDATA_OPEN = "bkdata"
 
 FIND_MODULE_WITH_RELATION_FIELDS = ["bk_module_id", "bk_module_name", "service_template_id"]
 
