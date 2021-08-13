@@ -162,30 +162,45 @@ class LogTrace(Proto):
     def build_tree(cls, nodes):
         if not nodes:
             return nodes
-        root, *_ = nodes
-        cls.update_node(root)
-        nodes.remove(root)
-        return cls._build_tree(nodes, root)
+        first_root, *_ = nodes
+        cls.update_node(first_root)
+        nodes.remove(first_root)
+        return cls._build_tree(nodes, first_root)
 
     @classmethod
     def _insert_children(cls, childrens: List[dict], nodes):
         for children in childrens:
             if "children" not in children:
                 cls.update_node(children)
-            [
-                children["children"].append(cls.update_node(node))
-                for node in nodes
-                if node.get("parentSpanID", "parentSpanID") == children.get("spanID", "spanID")
+
+            child_nodes = [
+                node for node in nodes if node.get("parentSpanID", "parentSpanID") == children.get("spanID", "spanID")
             ]
-            [nodes.remove(remove_item) for remove_item in children["children"]]
+            for c_node in child_nodes:
+                cls.update_node(c_node)
+                children["children"].append(c_node)
+                nodes.remove(c_node)
             cls._insert_children(children["children"], nodes)
 
     @classmethod
-    def _build_tree(cls, nodes: List[dict], next: dict):
-        cls._insert_children([next], nodes)
-        _next = [node for node in nodes if next.get("parentSpanID", "parentSpanID") == node.get("spanID", "spanID")]
-        [nodes.remove(remove_item) for remove_item in _next]
-        return cls._build_tree(nodes, _next[0]) if _next else next
+    def _build_tree(cls, nodes: List[dict], cur_node: dict):
+        """
+        从当前节点cur_node开始，找出父子关系，然后返回整颗树的根节点
+        """
+        # 找到子节点
+        cls._insert_children([cur_node], nodes)
+
+        # 找到父节点
+        parent_nodes = [
+            node for node in nodes if cur_node.get("parentSpanID", "parentSpanID") == node.get("spanID", "spanID")
+        ]
+        for p_node in parent_nodes:
+            cls.update_node(p_node)
+            p_node["children"].append(cur_node)
+            nodes.remove(p_node)
+
+        # 父节点继续往上查找父父节点，直到root根节点 (这里父节点只会有一个，所以递归遍历第0个即可)
+        return cls._build_tree(nodes, parent_nodes[0]) if parent_nodes else cur_node
 
     @classmethod
     def update_node(cls, child: dict) -> dict:
