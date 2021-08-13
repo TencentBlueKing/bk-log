@@ -26,7 +26,7 @@ def forwards_func(apps, schema_editor):
     collector_config = apps.get_model("log_databus", "CollectorConfig")
     collector_configs = collector_config.objects.filter(table_id__isnull=False)
     for collector in collector_configs:
-        _, collector_config_name_en = collector_config.table_id.splict(".")
+        _, collector_config_name_en = collector.table_id.split(".")
         collector.collector_config_name_en = collector_config_name_en
         collector.save()
 
