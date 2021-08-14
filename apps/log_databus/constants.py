@@ -29,6 +29,8 @@ NOT_FOUND_CODE = "[404]"
 # ESB返回节点管理check_task_ready API 404异常或非json内容
 CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE = "1306201"
 
+COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
+
 
 class StrategyKind(ChoicesEnum):
     CLUSTER_NODE = "cluster_node"
