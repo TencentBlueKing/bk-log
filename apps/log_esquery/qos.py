@@ -25,6 +25,7 @@ from django.core.cache import cache
 from django_redis import get_redis_connection
 from rest_framework import throttling
 
+from apps.log_search.permission import Permission
 from apps.utils.log import logger
 from apps.log_search.constants import TimeEnum
 
@@ -64,10 +65,15 @@ def clear_redis_zset(request):
 def esquery_qos(request):
     if not settings.USE_REDIS:
         return
+    if not settings.BKLOG_QOS_USE:
+        return
+    auth_info = Permission.get_auth_info(request)
+    if auth_info["bk_app_code"] not in settings.BKLOG_QOS_LIMIT_APP:
+        return
     token = uniqid()
     key = build_qos_key(request)
     window_time_point = get_window_time_point()
-    redis_client.zadd(f"{key}", window_time_point, f"{token}_{window_time_point}")
+    redis_client.zadd(f"{key}", {f"{token}_{window_time_point}": window_time_point})
     logger.info(f"[Esquery Qos] qos count [{build_qos_key(request)}] increment")
 
 
