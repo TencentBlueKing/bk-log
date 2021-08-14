@@ -37,15 +37,14 @@
       <bk-table-column :label="$t('configDetails.originalLog')">
         <template slot-scope="props">
           <div
-            class="text-style"
-            @click="showClick($event, props.row.etl.batch)"
+            :class="{ 'text-style': true, 'expand-style': expandIndex === props.$index }"
+            @click="showClick($event, props.$index)"
             @mouseenter="handleEnter($event, props.row.etl.batch)"
             @mouseleave="handleLeave">
             <span v-for="(val,index) in props.row.etl.batch" :key="index">{{ val }}</span>
           </div>
         </template>
       </bk-table-column>
-      <bk-table-column label="" prop=" " width="200"></bk-table-column>
       <bk-table-column :label="$t('configDetails.gatherTime')" width="200">
         <template slot-scope="props">
           <div>{{ props.row.etl.datetime }}</div>
@@ -100,18 +99,16 @@ export default {
         isShow: false,
       },
       size: 'small',
+      expandIndex: -1,
     };
   },
   methods: {
-    //  当原始日志超出三行时判断  点击选中效果
-    showClick(e, val) {
-      const labTarget = e.currentTarget;
-      if (val.length > 3 && labTarget.offsetHeight === 54) {
-        this.divClose();
-        labTarget.style.height = `${val.length * 18}px`;
-      } else {
-        labTarget.style.height = '54px';
+    showClick(e, rowIndex) {
+      if (this.expandIndex === rowIndex) {
+        this.expandIndex = -1;
+        return;
       }
+      this.expandIndex = rowIndex;
     },
     divClose() {
       const divHeight = document.getElementsByClassName('text-style');
@@ -121,18 +118,13 @@ export default {
         }
       }
     },
-    //  当原始日志超出三行时判断  鼠标选中效果
     handleEnter(e) {
-      const cWidth = e.target.clientHeight;
-      const sWidth = e.target.scrollHeight;
-      if (sWidth - cWidth > 15) {
-        this.instance = this.$bkPopover(e.target, {
-          content: this.$t('dataManage.Click_all'),
-          arrow: true,
-          placement: 'top',
-        });
-        this.instance.show(1000);
-      }
+      this.instance = this.$bkPopover(e.target, {
+        content: this.$t('dataManage.Click_all'),
+        arrow: true,
+        placement: 'top',
+      });
+      this.instance.show(1000);
     },
     handleLeave() {
       this.instance && this.instance.destroy(true);
@@ -206,7 +198,7 @@ export default {
   }
 
   .text-style {
-    height: 54px;
+    max-height: 54px;
     line-height: 18px;
     overflow: hidden;
     display: flex;
@@ -217,6 +209,13 @@ export default {
       font-size: 12px;
       overflow: hidden;
       white-space: nowrap;
+    }
+  }
+
+  .expand-style {
+    max-height: fit-content;
+    span {
+      white-space: normal;
     }
   }
 
