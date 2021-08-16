@@ -261,6 +261,8 @@ BK_HOT_WARM_CONFIG_URL = (
 # bulk_request limit
 BULK_REQUEST_LIMIT = int(os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500))
 
+# redis_version
+REDIS_VERSION = int(os.environ.get("BKAPP_REDIS_VERSION", 2))
 
 # 该配置需要等待SITE_URL被patch掉才能正确配置，因此放在patch逻辑后面
 GRAFANA = {
@@ -468,31 +470,6 @@ MENUS = [
                 ],
             },
             {
-                "id": "trace_track",
-                "name": _("全链路追踪"),
-                "feature": "on",
-                "icon": "",
-                "keyword": "trace",
-                "children": [
-                    {
-                        "id": "collection_track",
-                        "name": _("采集接入"),
-                        "feature": "off",
-                        "scenes": "scenario_log",
-                        "icon": "",
-                    },
-                    {
-                        "id": "bk_data_track",
-                        "name": _("计算平台"),
-                        "feature": FEATURE_TOGGLE["scenario_bkdata"],
-                        "scenes": "scenario_bkdata",
-                        "icon": "cc-cabinet",
-                    },
-                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
-                    {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
-                ],
-            },
-            {
                 "id": "log_clean",
                 "name": _("日志清洗"),
                 "feature": "on",
@@ -560,6 +537,31 @@ MENUS = [
                 "feature": "off",
                 "icon": "",
                 "children": [{"id": "log_archive_conf", "name": _("日志归档"), "feature": "off", "icon": ""}],
+            },
+            {
+                "id": "trace_track",
+                "name": _("全链路追踪"),
+                "feature": "on",
+                "icon": "",
+                "keyword": "trace",
+                "children": [
+                    {
+                        "id": "collection_track",
+                        "name": _("采集接入"),
+                        "feature": "off",
+                        "scenes": "scenario_log",
+                        "icon": "",
+                    },
+                    {
+                        "id": "bk_data_track",
+                        "name": _("计算平台"),
+                        "feature": FEATURE_TOGGLE["scenario_bkdata"],
+                        "scenes": "scenario_bkdata",
+                        "icon": "cc-cabinet",
+                    },
+                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
+                    {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
+                ],
             },
             {
                 "id": "es_cluster_status",
@@ -699,7 +701,7 @@ DEMO_BIZ_EDIT_ENABLED = bool(os.getenv("BKAPP_DEMO_BIZ_EDIT_ENABLED", ""))
 if os.getenv("BKAPP_CORS_ENABLED", "on") == "off":
     # allow all hosts
     CORS_ORIGIN_ALLOW_ALL = True
-
+    MIDDLEWARE += ("corsheaders.middleware.CorsMiddleware",)
     # cookies will be allowed to be included in cross-site HTTP requests
     CORS_ALLOW_CREDENTIALS = True
 
@@ -789,6 +791,7 @@ CACHES = {
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWD},
         "KEY_PREFIX": APP_CODE,
+        "VERSION": REDIS_VERSION,
     },
     "db": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",

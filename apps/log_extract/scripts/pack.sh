@@ -223,9 +223,9 @@ fi
 tmp_dir=${dst_path%/*}
 # delete history file
 bk_log_extract_path="${tmp_dir}"
-if [ -d "$bk_log_extract_path" && "${bk_log_extract_path}" == *"/tmp/bk_log_extract"* ];then
+if [[ -d "$bk_log_extract_path" && "${bk_log_extract_path}" == *"/tmp/bk_log_extract"* ]];then
   # shellcheck disable=SC2038
-  find "$bk_log_extract_path" -mmin +60 -type d | xargs rm -rf
+  find "$bk_log_extract_path/" -mmin +60 -type d | xargs rm -rf
 fi
 
 mkdir -p "$dst_path/"
