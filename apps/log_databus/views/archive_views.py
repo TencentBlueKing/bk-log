@@ -147,6 +147,8 @@ class ArchiveViewSet(ModelViewSet):
         @apiGroup Archive
         @apiDescription 归档配置详情
         @apiParam {Int} archive_config_id 归档配置id
+        @apiParam {Int} page 分页
+        @apiParam {Int} pagesize 分页
         @apiSuccessExample {json} 成功返回:
         {
             "result": true,
