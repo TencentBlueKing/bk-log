@@ -28,12 +28,14 @@
         :cur-step="curStep"
         :is-clean-field="true"
         @stepChange="stepChange"
-        @changeClean="isCleaning = true" />
+        @changeClean="isCleaning = true"
+        @change-submit="changeSubmit" />
       <step-storage
         v-if="curStep === 2"
         :cur-step="curStep"
         :is-clean-field="true"
-        @stepChange="stepChange" />
+        @stepChange="stepChange"
+        @change-submit="changeSubmit" />
     </article>
 
     <article class="article clean-landing" v-else>
@@ -59,10 +61,27 @@ export default {
       curStep: 1,
       isCleaning: false,
       loading: false,
+      isSubmit: false,
       collectItem: '',
     };
   },
+  // eslint-disable-next-line no-unused-vars
+  beforeRouteLeave(to, from, next) {
+    if (!this.isSubmit) {
+      this.$bkInfo({
+        title: this.$t('pageLeaveTips'),
+        confirmFn: () => {
+          next();
+        },
+      });
+      return;
+    }
+    next();
+  },
   methods: {
+    changeSubmit(isSubmit) {
+      this.isSubmit = isSubmit;
+    },
     stepChange(num) {
       if (num === 'back') {
         this.$router.push({
@@ -84,7 +103,7 @@ export default {
   @import '@/scss/mixins/scroller';
 
   .log-clean-create-container {
-    padding: 22px 20px;
+    padding: 20px 24px;
     height: 100%;
     overflow: auto;
     @include scroller($backgroundColor: #ADADAD, $width: 8px);

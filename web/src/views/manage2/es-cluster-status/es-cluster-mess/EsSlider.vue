@@ -23,6 +23,7 @@
 <template>
   <div class="es-access-slider-container">
     <bk-sideslider
+      transfer
       :title="isEdit ? $t('编辑数据源') : $t('新建数据源')"
       :is-show="showSlider"
       :width="640"
@@ -428,8 +429,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .es-access-slider-container {
-    .king-slider-content {
+  .king-slider-content {
       min-height: 394px;
 
       .king-form {
@@ -494,5 +494,4 @@ export default {
       line-height: 18px;
       color: #63656e;
     }
-  }
 </style>

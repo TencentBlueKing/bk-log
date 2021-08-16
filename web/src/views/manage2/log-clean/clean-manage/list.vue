@@ -38,6 +38,13 @@
           v-model="params.keyword"
           @enter="search">
         </bk-input>
+        <div
+          class="operation-icon"
+          @click="handleSync"
+          v-bk-tooltips="this.$t('logClean.syncTip')">
+          <span v-if="!syncLoading" class="log-icon icon-tongbu"></span>
+          <span v-else class="loading"></span>
+        </div>
       </div>
     </section>
     <section class="log-clean-list">
@@ -142,6 +149,7 @@ export default {
     return {
       isTableLoading: true,
       size: 'small',
+      syncLoading: false,
       isAllowedManage: null, // 是否有管理权限
       pagination: {
         current: 1,
@@ -185,6 +193,10 @@ export default {
   mounted() {
     this.search();
   },
+  beforeDestroy() {
+    // 清除定时器
+    this.timer && clearInterval(this.timer);
+  },
   methods: {
     async checkManageAuth() {
       try {
@@ -203,12 +215,14 @@ export default {
       }
     },
     search() {
-      this.handlePageChange(1);
+      this.pagination.current = 1;
+      this.requestData();
     },
     handleFilterChange(data) {
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
+      this.pagination.current = 1;
       this.search();
     },
     /**
@@ -217,8 +231,10 @@ export default {
      * @return {[type]}      [description]
      */
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.requestData();
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.requestData();
+      }
     },
     /**
      * 分页限制
@@ -227,6 +243,7 @@ export default {
      */
     handleLimitChange(page) {
       if (this.pagination.limit !== page) {
+        this.pagination.current = 1;
         this.pagination.limit = page;
         this.requestData();
       }
@@ -373,6 +390,44 @@ export default {
         window.location.assign(redirectUrl);
       }
     },
+    // 同步计算平台结果表
+    handleSync() {
+      if (!this.syncLoading) {
+        this.getSyncStatus();
+      }
+    },
+    // 同步计算平台结果表
+    getSyncStatus(isPolling = false) {
+      this.syncLoading = true;
+      this.$http.request('clean/sync', {
+        query: {
+          bk_biz_id: this.bkBizId,
+          polling: isPolling,
+        },
+      }).then((res) => {
+        const { data } = res;
+        if (data.status === 'DONE') {
+          clearInterval(this.timer);
+          this.timer = null;
+          this.syncLoading = false;
+          this.messageSuccess(this.$t('logClean.syncSuccess'));
+          this.requestData();
+        } else if (data.status === 'RUNNING') { // 轮循直至同步成功
+          if (this.timer) {
+            return 1;
+          }
+          this.timer = setInterval(() => {
+            this.getSyncStatus(true);
+          }, 2000);
+        } else {
+          this.messageError(this.$t('logClean.syncFaild'));
+          this.syncLoading = false;
+        }
+      })
+        .catch(() => {
+          this.syncLoading = false;
+        });
+    },
   },
 };
 </script>
@@ -383,7 +438,7 @@ export default {
   @import '@/scss/devops-common.scss';
 
   .log-clean-container {
-    padding: 20px 60px;
+    padding: 20px 24px;
     .top-operation {
       margin-bottom: 20px;
       @include clearfix;
@@ -392,7 +447,48 @@ export default {
       }
     }
     .clean-search {
-      width: 360px;
+      display: flex;
+      align-items: center;
+      .bk-input-text {
+        width: 320px;
+      }
+      .operation-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: 10px;
+        min-width: 32px;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        border: 1px solid #c4c6cc;
+        transition: boder-color .2s;
+        border-radius: 2px;
+        outline: none;
+        &:hover {
+          border-color: #979ba5;
+          transition: boder-color .2s;
+        }
+        &:active {
+          border-color: #3a84ff;
+          transition: boder-color .2s;
+        }
+        .icon-tongbu {
+          font-size: 14px;
+          color: #979ba5;
+        }
+        .loading {
+          width: 14px;
+          height: 14px;
+          border: 2px solid #3a84ff;
+          border-right: 2px solid transparent;
+          border-radius: 50%;
+          -webkit-animation: button-icon-loading 1s linear infinite;
+          animation: button-icon-loading 1s linear infinite;
+          margin: 0 auto;
+          display: inline-block;
+        }
+      }
     }
     .clean-table {
       overflow: visible;

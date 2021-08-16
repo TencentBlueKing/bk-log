@@ -577,6 +577,11 @@ class CleanRefreshSerializer(serializers.Serializer):
     bk_data_id = serializers.IntegerField(label=_("数据源id"))
 
 
+class CleanSyncSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    polling = serializers.BooleanField(label=_("是否是轮询请求"), required=False, default=False)
+
+
 class CleanTemplateSerializer(serializers.Serializer):
     name = serializers.CharField(label=_("清洗模板名"), required=True)
     clean_type = serializers.CharField(label=_("清洗类型"), required=True)

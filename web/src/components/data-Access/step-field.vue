@@ -24,7 +24,7 @@
   <section class="step-field-container">
     <auth-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-page>
     <div class="step-field" v-bkloading="{ isLoading: basicLoading }" v-else>
-      <bk-alert class="king-alert" type="info">
+      <bk-alert v-if="!isCleanField && !isTempField" class="king-alert" type="info">
         <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
       </bk-alert>
       <div class="collector-select" v-if="isCleanField">
@@ -41,6 +41,8 @@
             :key="option.collector_config_id"
             :id="option.collector_config_id"
             :name="option.collector_config_name">
+            <span>{{ option.collector_config_name }}</span>
+            <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
           </bk-option>
         </bk-select>
       </div>
@@ -69,6 +71,7 @@
         </div>
         <bk-sideslider
           class="locker-style"
+          transfer
           :is-show.sync="defaultSettings.isShow"
           :quick-close="true"
           :modal="false"
@@ -112,7 +115,7 @@
                   'template-disabled': isCleanField && !cleanCollector
                 }"
                 @click="openTemplateDialog(false)">
-                <span class="log-icon icon-lianjie"></span>
+                <span class="log-icon icon-daoru"></span>
                 {{ $t('dataManage.applyTemp') }}
               </span>
             </div>
@@ -171,7 +174,7 @@
                   v-model="params.etl_params.separator_regexp">
                 </bk-input>
               </div>
-              <p class="format-error" v-if="!formatResult">{{ $t('dataManage.try_methods') }}</p>
+              <p class="format-error" v-if="!isJsonOrOperator && !formatResult">{{ $t('dataManage.try_methods') }}</p>
             </div>
           </div>
 
@@ -487,6 +490,9 @@ export default {
       if (methods === 'bk_log_delimiter') {
         return this.params.etl_params.separator;
       }
+      if (methods === 'bk_log_regexp') {
+        return this.params.etl_params.separator_regexp !== '';
+      }
       return true;
     },
     hasFields() {
@@ -515,14 +521,38 @@ export default {
       }
       return '';
     },
+    unAuthBkdata() {
+      return window.FEATURE_TOGGLE.scenario_bkdata !== 'on';
+    },
   },
   watch: {
     'formData.fields'() {
       this.renderKey = this.renderKey + 1;
     },
+    'params.etl_config'() {
+      this.formatResult = true;
+    },
+  },
+  created() {
+    if (this.unAuthBkdata) { // 未授权计算平台则禁用高级清洗
+      this.panels[1].disabled = true;
+      this.panels[1].renderLabel = (h) => {
+        return h('div', {
+          class: 'render-header',
+        }, [
+          h('span', {
+            directives: [
+              {
+                name: 'bk-tooltips',
+                value: this.$t('dataManage.disabledAdvance'),
+              },
+            ],
+          }, this.$t('dataManage.Advance')),
+        ]);
+      };
+    }
   },
   async mounted() {
-    // TODO
     if (this.isCleanField) {
       this.initCleanItem();
       return;
@@ -540,20 +570,22 @@ export default {
   methods: {
     // 初始化清洗项
     initCleanItem() {
+      const query = {
+        bk_biz_id: this.bkBizId,
+        have_data_id: 1,
+      };
+      if (!this.isEditCleanItem) {
+        query.bkdata = true;
+      }
       // 获取采集项列表
-      this.$http.request('collect/getAllCollectors', {
-        query: {
-          bk_biz_id: this.bkBizId,
-          have_data_id: 1,
-        },
-      }).then((res) => {
+      this.$http.request('collect/getAllCollectors', { query }).then((res) => {
         const data = res.data;
         if (data.length) {
           this.cleanCollectorList = data;
           if (this.isEditCleanItem) {
             this.cleanCollector = this.$route.params.collectorId;
           } else this.basicLoading = false;
-        }
+        } else this.basicLoading = false;
       })
         .catch(() => {
           this.basicLoading = false;
@@ -632,6 +664,7 @@ export default {
           ]);
         };
       } else {
+        if (this.unAuthBkdata) return;
         this.activePanel = 'base';
         this.panels = [
           { name: 'base', label: this.$t('dataManage.Base') },
@@ -698,7 +731,10 @@ export default {
           } else {
             this.messageSuccess(this.$t('保存成功'));
             // 清洗模板编辑则返回模板列表
-            if(this.isTempField) this.handleCancel(false)
+            if(this.isTempField) {
+              this.$emit('change-submit', true)
+              this.handleCancel(false)
+            }
           }
         }
       })
@@ -806,6 +842,7 @@ export default {
           const id = this.curCollect.bkdata_data_id;
           const jumpUrl = `${window.BKDATA_URL}/#/data-access/data-detail/${id}/3`;
           window.open(jumpUrl, '_blank');
+          this.$emit('change-submit', true);
           // 前往高级清洗刷新页
           this.$emit('changeClean');
         },
@@ -1186,6 +1223,7 @@ export default {
           this.$store.commit('collect/setCurCollect', res.data);
           await this.getDetail();
           await this.getCleanStash(id);
+          this.getDataLog('init');
         }
       })
         .finally(() => {

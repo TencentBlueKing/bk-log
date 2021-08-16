@@ -213,7 +213,7 @@ export default {
 
 <style lang="scss" scoped>
   .link-configuration-container {
-    padding: 20px 60px;
+    padding: 20px 24px;
 
     .header {
       margin-bottom: 20px;

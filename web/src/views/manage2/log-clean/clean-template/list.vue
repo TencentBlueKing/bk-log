@@ -162,7 +162,8 @@ export default {
       }
     },
     search() {
-      this.handlePageChange(1);
+      this.pagination.current = 1;
+      this.requestData();
     },
     handleCreate() {
       if (!this.isAllowedManage) {
@@ -205,8 +206,10 @@ export default {
      * @return {[type]}      [description]
      */
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.requestData();
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.requestData();
+      }
     },
     /**
      * 分页限制
@@ -215,6 +218,7 @@ export default {
      */
     handleLimitChange(page) {
       if (this.pagination.limit !== page) {
+        this.pagination.current = 1;
         this.pagination.limit = page;
         this.requestData();
       }
@@ -275,7 +279,11 @@ export default {
             ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
             : this.pagination.current;
           this.messageSuccess(this.$t('删除成功'));
-          this.handlePageChange(page);
+          if (page !== this.pagination.current) {
+            this.handlePageChange(page);
+          } else {
+            this.requestData();
+          }
         }
       })
         .catch(() => {});
@@ -297,7 +305,7 @@ export default {
   @import '@/scss/devops-common.scss';
 
   .clean-template-container {
-    padding: 20px 60px;
+    padding: 20px 24px;
     .top-operation {
       margin-bottom: 20px;
       @include clearfix;

@@ -23,8 +23,7 @@
 <template>
   <div class="clean-template-container" v-bkloading="{ isLoading: loading }">
     <article class="article">
-      <step-field
-        :is-temp-field="true" />
+      <step-field :is-temp-field="true" @change-submit="changeSubmit" />
     </article>
   </div>
 </template>
@@ -38,11 +37,26 @@ export default {
   data() {
     return {
       loading: false,
+      isSubmit: false,
     };
   },
-  created() {
+  // eslint-disable-next-line no-unused-vars
+  beforeRouteLeave(to, from, next) {
+    if (!this.isSubmit) {
+      this.$bkInfo({
+        title: this.$t('pageLeaveTips'),
+        confirmFn: () => {
+          next();
+        },
+      });
+      return;
+    }
+    next();
   },
   methods: {
+    changeSubmit(isSubmit) {
+      this.isSubmit = isSubmit;
+    },
   },
 };
 </script>
@@ -51,7 +65,7 @@ export default {
   @import '@/scss/mixins/scroller';
 
   .clean-template-container {
-    padding: 22px 20px;
+    padding: 20px 24px;
     height: 100%;
     overflow: auto;
     @include scroller($backgroundColor: #ADADAD, $width: 8px);

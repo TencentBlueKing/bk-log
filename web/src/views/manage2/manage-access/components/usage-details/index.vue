@@ -200,8 +200,10 @@ export default {
       }
     },
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.fetchTableData();
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.fetchTableData();
+      }
     },
     handlePageLimitChange(limit) {
       this.pagination.current = 1;

@@ -61,6 +61,7 @@
       </bk-table-column>
     </bk-table>
     <bk-sideslider
+      transfer
       class="locker-style"
       :is-show.sync="defaultSettings.isShow"
       :quick-close="true"
