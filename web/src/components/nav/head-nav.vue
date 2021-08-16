@@ -522,7 +522,7 @@ export default {
       return list;
     },
     routerHandler(menu) {
-      if (menu.id === this.currentMenu.id) {
+      if (menu.id === this.activeTopMenu.id) {
         if (menu.id === 'retrieve') {
           this.$router.push({
             name: menu.id,
