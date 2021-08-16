@@ -28,11 +28,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL("drop table if exists log_auth_auditrecord;"),
-        migrations.RunSQL("drop table if exists log_auth_authactionconfig;"),
-        migrations.RunSQL("drop table if exists log_auth_authgroupconfig;"),
-        migrations.RunSQL("drop table if exists log_auth_authpolicyinfo;"),
-        migrations.RunSQL("drop table if exists log_auth_authresourceconfig;"),
-        migrations.RunSQL("drop table if exists log_auth_authusergroup;"),
-        migrations.RunSQL("drop table if exists log_auth_useroperationrecord;"),
+        # migrations.RunSQL("drop table if exists log_auth_auditrecord;"),
+        # migrations.RunSQL("drop table if exists log_auth_authactionconfig;"),
+        # migrations.RunSQL("drop table if exists log_auth_authgroupconfig;"),
+        # migrations.RunSQL("drop table if exists log_auth_authpolicyinfo;"),
+        # migrations.RunSQL("drop table if exists log_auth_authresourceconfig;"),
+        # migrations.RunSQL("drop table if exists log_auth_authusergroup;"),
+        # migrations.RunSQL("drop table if exists log_auth_useroperationrecord;"),
     ]

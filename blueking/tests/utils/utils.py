@@ -22,7 +22,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 def get_user_model():
     try:
         from account.models import BkUser as User
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         from django.contrib.auth.models import User
     return User
 

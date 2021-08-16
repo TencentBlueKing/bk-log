@@ -25,9 +25,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import serializers
 from rest_framework.authentication import SessionAuthentication
-from apps.utils.drf import list_route
 from rest_framework.response import Response
-
+from apps.utils.drf import list_route
 from apps.utils.log import logger
 from apps.generic import APIViewSet
 from apps.grafana.authentication import NoCsrfSessionAuthentication
@@ -77,7 +76,7 @@ class GrafanaProxyView(ProxyView):
                 origin_content = json.loads(response.content)
                 patched_content = json.dumps(patch_home_panels(origin_content))
                 return HttpResponse(patched_content, status=response.status_code)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.exception("patch home panels error: {}".format(e))
                 # 异常则不替换了
                 return response

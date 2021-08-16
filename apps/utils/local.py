@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+
 """
 记录线程变量
 """
@@ -27,6 +28,7 @@ from threading import local  # noqa
 from django.conf import settings  # noqa
 
 from apps.exceptions import BaseException  # noqa
+
 
 _local = local()
 
@@ -66,14 +68,12 @@ def get_request_username():
     """
     获取请求的用户名
     """
+    from apps.utils.function import ignored
     username = ""
-    try:
+    with ignored(Exception):
         username = get_request().user.username
-    except Exception:
-        pass
-    finally:
-        if not username and "celery" in sys.argv:
-            username = "admin"
+    if not username and "celery" in sys.argv:
+        username = "admin"
     return username
 
 
@@ -83,7 +83,7 @@ def get_request_app_code():
     """
     try:
         return get_request().META.get("HTTP_BK_APP_CODE", settings.APP_CODE)
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         return settings.APP_CODE
 
 
@@ -115,5 +115,5 @@ def get_request_language_code():
     """
     try:
         return get_request().LANGUAGE_CODE
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         return settings.LANGUAGE_CODE

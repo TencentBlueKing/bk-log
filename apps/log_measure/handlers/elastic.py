@@ -42,7 +42,7 @@ class ElasticHandle(object):
         if not self.es_client.ping():
             raise EsConnectFailException()
 
-    def get_indices_cat(self, index=None, bytes="b", column=COLUMN_DISPLAY_LIST):
+    def get_indices_cat(self, index=None, bytes="b", column=COLUMN_DISPLAY_LIST):  # pylint: disable=dangerous-default-value
         """
         索引统计信息
         :param index: 索引

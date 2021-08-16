@@ -61,7 +61,7 @@ class QueryClientEs(QueryClientTemplate):
         try:
             params = {"request_timeout": settings.ES_QUERY_TIMEOUT}
             return self._client.search(index=index, body=body, scroll=scroll, params=params)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise EsClientSearchException(EsClientSearchException.MESSAGE.format(error=e))
 
@@ -70,7 +70,7 @@ class QueryClientEs(QueryClientTemplate):
         try:
             mapping_dict: type_mapping_dict = self._client.indices.get_mapping(index=index)
             return mapping_dict
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise BaseSearchFieldsException(BaseSearchFieldsException.MESSAGE.format(error=e))
 
@@ -78,7 +78,7 @@ class QueryClientEs(QueryClientTemplate):
         self._build_connection()
         try:
             return self._client.scroll(scroll_id=scroll_id, scroll=scroll)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise EsClientScrollException(EsClientScrollException.MESSAGE.format(error=e))
 
@@ -86,7 +86,7 @@ class QueryClientEs(QueryClientTemplate):
         self._build_connection()
         try:
             return self._client.cluster.stats()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise EsException
 
@@ -96,7 +96,7 @@ class QueryClientEs(QueryClientTemplate):
         self._build_connection()
         try:
             return self._client.cat.indices(index=index, bytes=bytes, format=format, params=params)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise EsClientCatIndicesException(EsClientCatIndicesException.MESSAGE.format(error=e))
 
@@ -110,7 +110,7 @@ class QueryClientEs(QueryClientTemplate):
             url = "/" + url
         try:
             return self._client.transport.perform_request("GET", url)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise
 
@@ -141,7 +141,7 @@ class QueryClientEs(QueryClientTemplate):
             # this status is returnback from tcpserver
             if status != 0:
                 raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=""))
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=e))
         cs.close()
 
@@ -201,7 +201,7 @@ class QueryClientEs(QueryClientTemplate):
         self._build_connection()
         try:
             index_results = self._client.indices.get_alias(result_table_id if result_table_id else "*")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise EsClientAliasException(EsClientAliasException.MESSAGE.format(error=e))
         index_list = [{"result_table_id": item, "result_table_name_alias": item} for item in index_results.keys()]

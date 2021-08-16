@@ -20,16 +20,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 自定义装饰器
 """
-import functools  # noqa
-
-from rest_framework.response import Response  # noqa
-from rest_framework.request import Request  # noqa
 from celery.task import task  # noqa
 
 from apps.log_audit.models import UserOperationRecord  # noqa
 from apps.log_search.models import ProjectInfo  # noqa
-from blueapps.core.exceptions.base import BlueException  # noqa
-from apps.exceptions import BaseException  # noqa
 
 
 @task

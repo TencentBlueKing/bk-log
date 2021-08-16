@@ -575,7 +575,7 @@ class FieldDataTypeEnum(ChoicesEnum):
             "float": "float",
             "double": "float",
             "object": "object",
-            "nested": "object",
+            "nested": "nested",
         }.get(es_field_type, "string")
 
     @classmethod
@@ -604,6 +604,7 @@ class FieldDataTypeEnum(ChoicesEnum):
             "float": "float",
             "double": "double",
             "object": "object",
+            "nested": "nested",
         }.get(es_field_type, "string")
 
 

@@ -37,7 +37,7 @@ class Command(BaseCommand):
                 bk_biz_id=settings.BLUEKING_BK_BIZ_ID,
             )
             bk_monitor_client.custom_metric().migrate(data_name_list=DATA_NAMES)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise CommandError(f"custom_metric migrate error: {e}")
 
         self.stdout.write(self.style.SUCCESS(f"Successfully custom_metric migrate {DATA_NAMES}"))

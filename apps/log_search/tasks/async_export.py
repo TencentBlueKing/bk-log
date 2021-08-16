@@ -22,9 +22,8 @@ import tarfile
 import json
 import datetime
 
-import arrow
 import pytz
-
+import arrow
 from django.utils.translation import gettext as _
 from django.utils import translation
 from celery.schedules import crontab
@@ -52,7 +51,7 @@ from apps.utils.notify import NotifyType
 from apps.utils.remote_storage import StorageType
 
 
-@task(ignore_result=True)
+@task(ignore_result=True, queue="async_export")
 def async_export(
     search_handler: SearchHandler,
     sorted_fields: list,
@@ -85,7 +84,7 @@ def async_export(
 
     try:
         async_export_util.export_package()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         async_task.failed_reason = f"export package error: {e}"
         logger.error(async_task.failed_reason)
         async_task.save()
@@ -96,7 +95,7 @@ def async_export(
 
     try:
         async_export_util.export_upload()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         async_task.failed_reason = f"export upload error: {e}"
         logger.error(async_task.failed_reason)
         async_task.save()
@@ -104,7 +103,7 @@ def async_export(
 
     try:
         url = async_export_util.generate_download_url(url_path=url_path)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         async_task.failed_reason = f"generate download url error: {e}"
         logger.error(async_task.failed_reason)
         async_task.save()
@@ -119,7 +118,7 @@ def async_export(
             search_url_path=search_url_path,
             language=language,
         )
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         async_task.failed_reason = f"send msg error: {e}"
         logger.error(async_task.failed_reason)
         async_task.save()
@@ -215,9 +214,7 @@ class AsyncExportUtils(object):
         """
         index_set_obj = LogIndexSet.objects.get(index_set_id=index_set_id)
 
-        platform = (
-            settings.EMAIL_TITLE["en"] if translation.get_language() == "en" else settings.TITLE_MENU_CONFIG["zh"]
-        )
+        platform = settings.EMAIL_TITLE["en"] if translation.get_language() == "en" else settings.EMAIL_TITLE["zh"]
 
         title = self.notify.title(
             _("【{platform}】{index_set_name} 检索导出"), platform=platform, index_set_name=index_set_obj.index_set_name

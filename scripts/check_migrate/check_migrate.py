@@ -220,7 +220,7 @@ def main(argv=None):
                 print("if you still want to commit, try it again")
                 return 1
         return 0
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         print("Unexpected exception occurred")
         return 0
 

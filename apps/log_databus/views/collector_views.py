@@ -21,12 +21,10 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
-from apps.log_search.permission import Permission
-from apps.utils.drf import detail_route, list_route
 from rest_framework.response import Response
 
-# from django.db.models import Q
-
+from apps.log_search.permission import Permission
+from apps.utils.drf import detail_route, list_route
 from apps.generic import ModelViewSet
 from apps.exceptions import ValidationError
 from apps.iam import ActionEnum, ResourceEnum
@@ -75,7 +73,7 @@ class CollectorViewSet(ModelViewSet):
             # ESQUERY白名单不需要鉴权
             if auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
                 return []
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             print(e)
             pass
 

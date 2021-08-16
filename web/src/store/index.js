@@ -97,7 +97,7 @@ const store = new Vuex.Store({
     asIframe: state => state.asIframe,
     iframeQuery: state => state.iframeQuery,
     accessUserManage: state => Boolean(state.topMenu.find(item => item.id === 'manage')?.
-    children.some(item => (item.id === 'permissionGroup' && item.project_manage === true))),
+      children.some(item => (item.id === 'permissionGroup' && item.project_manage === true))),
   },
   // 公共 mutations
   mutations: {

@@ -19,11 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import re
 import copy
-from collections import defaultdict
-
-import arrow
 import datetime
-
+from collections import defaultdict
+import arrow
 from django.db import IntegrityError
 from django.db import transaction
 from django.conf import settings
@@ -189,6 +187,9 @@ class CollectorHandler(object):
         """
         result = context
         if not self.data.table_id:
+            collector_config.update(
+                {"table_id_prefix": f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_", "table_id": ""}
+            )
             return collector_config
         table_id_prefix, table_id = self.data.table_id.split(".")
         collector_config.update({"table_id_prefix": table_id_prefix + "_", "table_id": table_id})
@@ -205,9 +206,6 @@ class CollectorHandler(object):
                     )
                 )
             return collector_config
-        collector_config.update(
-            {"table_id_prefix": f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_", "table_id": ""}
-        )
         return collector_config
 
     def complement_nodeman_info(self, collector_config, context):
@@ -522,7 +520,7 @@ class CollectorHandler(object):
                 ),
                 creator=collector_config.created_by,
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.warning(
                 "collector_config->({}) grant creator action failed, reason: {}".format(
                     collector_config.collector_config_id, e
@@ -596,7 +594,7 @@ class CollectorHandler(object):
 
         # 存在RT则启用RT
         if self.data.table_id:
-            _, table_id = self.data.table_id.split(".")
+            _, table_id = self.data.table_id.split(".")  # pylint: disable=unused-variable
             etl_storage = EtlStorage.get_instance(self.data.etl_config)
             etl_storage.switch_result_table(collector_config=self.data, is_enable=True)
 
@@ -639,7 +637,7 @@ class CollectorHandler(object):
 
         # 存在RT则停止RT
         if self.data.table_id:
-            _, table_id = self.data.table_id.split(".")
+            _, table_id = self.data.table_id.split(".")  # pylint: disable=unused-variable
             etl_storage = EtlStorage.get_instance(self.data.etl_config)
             etl_storage.switch_result_table(collector_config=self.data, is_enable=False)
 
@@ -918,7 +916,7 @@ class CollectorHandler(object):
         try:
             task_ready = NodeApi.check_subscription_task_ready(param)
         # 如果节点管理路由不存在或服务异常等request异常情况
-        except BaseException as e:  # noqa
+        except BaseException as e:  # pylint: disable=broad-except
             task_ready = self._check_task_ready_exception(e)
         return task_ready
 
@@ -971,7 +969,7 @@ class CollectorHandler(object):
             internal_topo = self.get_biz_internal_module()
             if internal_topo:
                 biz_topo[BIZ_TOPO_INDEX]["child"].insert(INTERNAL_TOPO_INDEX, internal_topo)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error(f"call CCApi.search_biz_inst_topo error: {e}")
             pass
         return biz_topo
@@ -1257,7 +1255,7 @@ class CollectorHandler(object):
         return_data = list()
 
         for collector_id, status_obj in status_result.items():
-            if not len(status_obj):
+            if not status_obj:
                 continue
             total_count = int(status_obj[0]["instances"])
             status_group = {

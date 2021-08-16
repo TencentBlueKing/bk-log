@@ -17,21 +17,23 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-"""Django project settings
-"""
+
+from django.db import migrations
+from django.core.cache import cache
+from apps.utils.log import logger
 
 
-try:
-    from django.conf import settings
+def forwards_func(apps, schema_editor):
+    try:
+        cache.clear()
+    except Exception as e:  # noqa
+        logger.error(f"clear cache failed：{e}")
 
-    APP_CODE = settings.APP_ID
-    SECRET_KEY = settings.APP_TOKEN
-    COMPONENT_SYSTEM_HOST = getattr(settings, "BK_PAAS_INNER_HOST", settings.BK_PAAS_HOST)
-    DEFAULT_BK_API_VER = getattr(settings, "DEFAULT_BK_API_VER", "v2")
-except Exception:  # pylint: disable=broad-except
-    APP_CODE = ""
-    SECRET_KEY = ""
-    COMPONENT_SYSTEM_HOST = ""
-    DEFAULT_BK_API_VER = "v2"
 
-CLIENT_ENABLE_SIGNATURE = False
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("log_search", "0037_delete_featuretoggle"),
+    ]
+
+    operations = [migrations.RunPython(forwards_func)]

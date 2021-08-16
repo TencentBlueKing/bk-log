@@ -21,14 +21,13 @@ import functools
 import re
 import socket
 from collections import defaultdict
-
+from typing import Union, List
 import arrow
 
 from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.db.models import Sum
 from elasticsearch import Elasticsearch
-from typing import Union, List
 
 from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
@@ -198,7 +197,7 @@ class StorageHandler(object):
         try:
             time_zone = get_local_param("time_zone")
             return arrow.get(int(time_stamp)).to(time_zone).strftime("%Y-%m-%d %H:%M:%S%z")
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return time_stamp
 
     def list(self, bk_biz_id, cluster_id=None):
@@ -326,10 +325,12 @@ class StorageHandler(object):
                 "bk_biz_id": bk_biz_id,
                 "domain_name": params["domain_name"],
                 "port": params["port"],
-                "username": params["auth_info"]["username"],
-                "password": params["auth_info"]["password"],
                 "schema": params["schema"],
                 "cluster_id": self.cluster_id,
+                "es_auth_info": {
+                    "username": params["auth_info"]["username"],
+                    "password": params["auth_info"]["password"],
+                },
             },
         )
 
@@ -359,6 +360,7 @@ class StorageHandler(object):
         version_info=False,
         default_auth=False,
         schema=DEFAULT_ES_SCHEMA,
+        **kwargs,
     ):
 
         # 有传用户但是没有密码，通过接口查询该cluster密码信息
@@ -407,6 +409,7 @@ class StorageHandler(object):
         password=None,
         default_auth=False,
         schema=DEFAULT_ES_SCHEMA,
+        **kwargs,
     ):
         """
         获取集群各节点的属性
@@ -523,7 +526,7 @@ class StorageHandler(object):
                 raise StorageConnectInfoException(
                     StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached"))
                 )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise StorageConnectInfoException(
                 StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached, %s" % e))
             )

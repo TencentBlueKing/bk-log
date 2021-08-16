@@ -18,10 +18,10 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from typing import Union, List, Dict
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
-from typing import Union, List, Dict
 
 from apps.utils.log import logger
 from apps.iam.exceptions import ActionNotExistError, PermissionDeniedError, GetSystemInfoError
@@ -59,7 +59,7 @@ class Permission(object):
         else:
             try:
                 request = request or get_request()
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 raise ValueError("must provide `username` or `request` param to init")
 
             self.bk_token = request.COOKIES.get("bk_token", "")
@@ -397,7 +397,7 @@ class Permission(object):
         try:
             grant_result = self.iam_client.grant_resource_creator_actions(application, self.bk_token, self.username)
             logger.info(f"[grant_creator_action] Success! resource: {resource.to_dict()}, result: {grant_result}")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception(f"[grant_creator_action] Failed! resource: {resource.to_dict()}, result: {e}")
 
             if raise_exception:

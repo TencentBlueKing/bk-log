@@ -142,11 +142,11 @@ class SectionCollectorScenario(CollectorScenario):
                 separator_filters = []
 
             match_content = ""
-            if len(separator_filters) and separator_filters[0]["fieldindex"] == "-1":
+            if separator_filters and separator_filters[0]["fieldindex"] == "-1":
                 _type = "match"
                 match_content = separator_filters[0].get("word", "")
                 separator_filters = []
-            elif len(separator_filters) == 0:
+            elif not separator_filters:
                 _type = "match"
             else:
                 _type = "separator"

@@ -18,9 +18,8 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import copy
-import arrow
 import datetime
-
+import arrow
 from apps.utils.local import get_local_param
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.log_trace.handlers.trace_field_handlers import TraceMappingAdapter
@@ -119,8 +118,8 @@ class TraceHandler(object):
     def find_children(cls, tree: dict, nodes: list):
         children: list = []
         for node in nodes:
-            spanID = node.get("spanID")
-            if not spanID:
+            span_id = node.get("spanID")
+            if not span_id:
                 continue
             reference: list = cls.get_parents(node, False)
             if not reference:

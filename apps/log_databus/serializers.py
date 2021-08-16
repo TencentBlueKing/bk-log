@@ -331,16 +331,14 @@ class StorageDetectSerializer(serializers.Serializer):
     password = serializers.CharField(label=_("密码"), allow_blank=True, required=False, default="")
     version_info = serializers.BooleanField(label=_("是否包含集群信息"), allow_null=True, required=False, default=False)
     default_auth = serializers.BooleanField(label=_("是否使用默认用户信息"), allow_null=True, required=False, default=False)
+    es_auth_info = AuthInfoSerializer(label=_("凭据信息"), required=False, allow_null=True)
 
-
-class NodeAttrSerializer(serializers.Serializer):
-    cluster_id = serializers.IntegerField(label=_("集群ID"), required=False)
-    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
-    domain_name = serializers.CharField(label=_("集群域名"), required=False, allow_blank=True, default="")
-    port = serializers.IntegerField(label=_("端口"), allow_null=True, required=False, default=0)
-    schema = serializers.CharField(label=_("集群协议"), allow_null=True, required=False, default="")
-    username = serializers.CharField(label=_("用户"), allow_blank=True, required=False, default="")
-    password = serializers.CharField(label=_("密码"), allow_blank=True, required=False, default="")
+    def validate(self, attrs):
+        if not attrs.get("es_auth_info"):
+            return attrs
+        attrs["username"] = attrs["es_auth_info"].get("username", "")
+        attrs["password"] = attrs["es_auth_info"].get("password", "")
+        return attrs
 
 
 class StorageBathcDetectSerializer(serializers.Serializer):

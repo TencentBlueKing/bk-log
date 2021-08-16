@@ -184,6 +184,12 @@ BK_HOT_WARM_CONFIG_URL = (
     "https://www.elastic.co/guide/en/elasticsearch/reference/master/modules-cluster.html#shard-allocation-awareness"
 )
 
+# bulk_request limit
+BULK_REQUEST_LIMIT = int(os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500))
+
+# redis_version
+REDIS_VERSION = int(os.environ.get("BKAPP_REDIS_VERSION", 2))
+
 # 该配置需要等待SITE_URL被patch掉才能正确配置，因此放在patch逻辑后面
 GRAFANA = {
     "HOST": os.getenv("BKAPP_GRAFANA_URL", ""),
@@ -441,7 +447,7 @@ DEMO_BIZ_EDIT_ENABLED = bool(os.getenv("BKAPP_DEMO_BIZ_EDIT_ENABLED", ""))
 if os.getenv("BKAPP_CORS_ENABLED", "on") == "off":
     # allow all hosts
     CORS_ORIGIN_ALLOW_ALL = True
-
+    MIDDLEWARE += ("corsheaders.middleware.CorsMiddleware",)
     # cookies will be allowed to be included in cross-site HTTP requests
     CORS_ALLOW_CREDENTIALS = True
 
@@ -483,6 +489,14 @@ if REDIS_MODE == "sentinel":
     REDIS_SENTINEL_PASSWORD = os.getenv("BK_BKLOG_REDIS_SENTINEL_MASTER_PASSWORD", "")
 
 # BKLOG 后台QOS配置
+BKLOG_QOS_USE = os.getenv("BKAPP_QOS_USE", "on") == "on"
+BKLOG_QOS_LIMIT_APP = [
+    "bk_monitor",
+    "bk_bkmonitor",
+    "bk_monitorv3",
+    "bk_bkmonitorv3",
+    "bkmonitorv3",
+]
 # 窗口时间 单位分钟
 BKLOG_QOS_LIMIT_WINDOW = int(os.getenv("BK_BKLOG_QOS_LIMIT_WINDOW", 5))
 # 窗口内超时次数
@@ -531,6 +545,7 @@ CACHES = {
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWD},
         "KEY_PREFIX": APP_CODE,
+        "VERSION": REDIS_VERSION,
     },
     "db": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",

@@ -18,7 +18,6 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from rest_framework import serializers
-from apps.utils.drf import list_route, detail_route
 from rest_framework.response import Response
 
 from apps.generic import APIViewSet
@@ -29,6 +28,7 @@ from apps.iam.handlers.drf import (
     InstanceActionPermission,
     insert_permission_field,
 )
+from apps.utils.drf import list_route, detail_route
 from apps.log_databus.handlers.storage import StorageHandler
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.log_databus.serializers import (
@@ -37,7 +37,6 @@ from apps.log_databus.serializers import (
     StorageDetectSerializer,
     StorageUpdateSerializer,
     StorageBathcDetectSerializer,
-    NodeAttrSerializer,
 )
 from apps.log_databus.exceptions import StorageNotExistException, StorageCreateException
 from apps.api import BkLogApi
@@ -281,15 +280,17 @@ class StorageViewSet(APIViewSet):
             raise StorageCreateException()
         data = self.params_valid(StorageCreateSerializer)
 
-        connect_result, version_num_str = BkLogApi.connectivity_detect(
+        connect_result, version_num_str = BkLogApi.connectivity_detect(  # pylint: disable=unused-variable
             params={
                 "bk_biz_id": bk_biz_id,
                 "domain_name": data["domain_name"],
                 "port": data["port"],
-                "username": data["auth_info"]["username"],
-                "password": data["auth_info"]["password"],
                 "version_info": True,
                 "schema": data["schema"],
+                "es_auth_info": {
+                    "username": data["auth_info"]["username"],
+                    "password": data["auth_info"]["password"],
+                },
             },
         )
         data.update(
@@ -450,7 +451,7 @@ class StorageViewSet(APIViewSet):
             "result": true
         }
         """
-        data = self.params_valid(NodeAttrSerializer)
+        data = self.params_valid(StorageDetectSerializer)
         cluster_id = None
         if data.get("cluster_id"):
             cluster_id = data["cluster_id"]
