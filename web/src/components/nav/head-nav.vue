@@ -522,7 +522,7 @@ export default {
       return list;
     },
     routerHandler(menu) {
-      if (menu.id === this.currentMenu.id) {
+      if (menu.id === this.activeTopMenu.id) {
         if (menu.id === 'retrieve') {
           this.$router.push({
             name: menu.id,
@@ -753,6 +753,9 @@ export default {
         if (oldMenu.children) {
           resMenu.children.forEach((item) => {
             item.id = this.routeMap[item.id] || item.id;
+            if (resMenu.id === 'dashboard') {
+              item.id = item.id.replaceAll('-', '_');
+            }
             const menu = oldMenu.children.find(menuItem => menuItem.id === item.id);
             if (menu) {
               this.deepUpdateMenu(menu, item);
