@@ -46,7 +46,7 @@ class EmailNotify(NotifyBase):
         return EmailTemplate.get_content(name=name, language=language, **kwargs)
 
     def send(self, receivers, title, content):
-        CmsiApi.send_mail({"receiver": receivers, "title": title, "content": content})
+        CmsiApi.send_mail({"receiver__username": receivers, "title": title, "content": content})
 
 
 class NotifyType(object):

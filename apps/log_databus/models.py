@@ -28,12 +28,12 @@ from django.db import models  # noqa
 from django.utils.translation import ugettext_lazy as _  # noqa
 from django_jsonfield_backport.models import JSONField  # noqa
 
-
 from apps.log_databus.constants import (  # noqa
     TargetObjectTypeEnum,  # noqa
     TargetNodeTypeEnum,  # noqa
     CollectItsmStatus,  # noqa
-    ADMIN_REQUEST_USER,  # noqa
+    ADMIN_REQUEST_USER,
+    EtlConfig,  # noqa
 )
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum  # noqa
 from apps.log_search.models import ProjectInfo  # noqa
@@ -95,6 +95,7 @@ class CollectorConfig(SoftDeleteModel):
     storage_shards_size = models.IntegerField(_("单shards分片大小"), null=True, default=None, blank=True)
     storage_replies = models.IntegerField(_("ES副本数"), null=True, default=1, blank=True)
     bkdata_data_id_sync_times = models.IntegerField(_("调用数据平台创建data_id失败数"), default=0)
+    collector_config_name_en = models.CharField(_("采集项英文名"), max_length=255, null=True, blank=True, default="")
 
     @property
     def category_name(self):
@@ -103,6 +104,25 @@ class CollectorConfig(SoftDeleteModel):
         """
         return GlobalCategoriesEnum.get_display(self.category_id)
 
+    @property
+    def create_clean_able(self):
+        """
+        是否可以创建基础清洗
+        """
+        return self.etl_config == EtlConfig.BK_LOG_TEXT or not self.etl_config
+
+    @property
+    def bkdata_index_set_ids(self):
+        """
+        数据平台生成的索引集id列表
+        """
+        log_index_set_ids = BKDataClean.objects.filter(collector_config_id=self.collector_config_id).values_list(
+            "log_index_set_id", flat=True
+        )
+        if not log_index_set_ids:
+            return []
+        return log_index_set_ids
+
     def get_collector_scenario_id_display(self):
         return CollectorScenarioEnum.get_choice_label(self.collector_scenario_id)
 
@@ -110,7 +130,7 @@ class CollectorConfig(SoftDeleteModel):
         verbose_name = _("用户采集配置")
         verbose_name_plural = _("用户采集配置")
         ordering = ("-updated_at",)
-        unique_together = ("collector_config_name", "bk_biz_id")
+        unique_together = [("collector_config_name", "bk_biz_id")]
 
     def has_apply_itsm(self):
         if self.itsm_ticket_status:
@@ -209,3 +229,54 @@ class StorageUsed(OperateRecordModel):
         verbose_name_plural = _("业务已用容量")
         ordering = ("-updated_at",)
         unique_together = ("bk_biz_id", "storage_cluster_id")
+
+
+class BKDataClean(SoftDeleteModel):
+    status = models.CharField(_("状态"), max_length=64)
+    status_en = models.CharField(_("状态英文名"), max_length=64)
+    result_table_id = models.CharField(_("结果表id"), max_length=128, db_index=True)
+    result_table_name = models.CharField(_("结果表名"), max_length=128)
+    result_table_name_alias = models.CharField(_("结果表中文名"), max_length=128, null=True, blank=True)
+    raw_data_id = models.IntegerField(_("数据源id"), db_index=True)
+    data_name = models.CharField(_("数据源名称"), max_length=128)
+    data_alias = models.CharField(_("数据源中文名"), max_length=128, null=True, blank=True)
+    data_type = models.CharField(_("数据类型"), max_length=64)
+    storage_type = models.CharField(_("存储类型"), max_length=64)
+    storage_cluster = models.CharField(_("存储集群"), max_length=64)
+    collector_config_id = models.IntegerField(_("采集项id"), db_index=True)
+    bk_biz_id = models.IntegerField(_("业务id"))
+    log_index_set_id = models.IntegerField(_("索引集id"), blank=True, null=True, db_index=True)
+    is_authorized = models.BooleanField(_("索引集是否被授权"), default=False)
+
+    class Meta:
+        verbose_name = _("高级清洗列表")
+        verbose_name_plural = _("高级清洗列表")
+        ordering = ("-updated_at",)
+
+
+class CleanTemplate(SoftDeleteModel):
+    clean_template_id = models.AutoField(_("清洗id"), primary_key=True)
+    name = models.CharField(_("模板名"), max_length=128)
+    clean_type = models.CharField(_("模板类型"), max_length=64)
+    etl_params = JSONField(_("etl配置"), null=True, blank=True)
+    etl_fields = JSONField(_("etl字段"), null=True, blank=True)
+    bk_biz_id = models.IntegerField(_("业务id"))
+
+    class Meta:
+        verbose_name = _("清洗模板")
+        verbose_name_plural = _("清洗模板")
+        ordering = ("-updated_at",)
+
+
+class CleanStash(SoftDeleteModel):
+    clean_stash_id = models.AutoField(_("清洗缓存id"), primary_key=True)
+    clean_type = models.CharField(_("模板类型"), max_length=64)
+    etl_params = JSONField(_("etl配置"), null=True, blank=True)
+    etl_fields = JSONField(_("etl字段"), null=True, blank=True)
+    collector_config_id = models.IntegerField(_("采集项列表"), db_index=True)
+    bk_biz_id = models.IntegerField(_("业务id"))
+
+    class Meta:
+        verbose_name = _("未完成入库暂存清洗")
+        verbose_name_plural = _("未完成入库暂存清洗")
+        ordering = ("-updated_at",)

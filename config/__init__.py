@@ -31,26 +31,23 @@ __all__ = ["celery_app", "ENVIRONMENT", "RUN_VER", "APP_CODE", "SECRET_KEY", "BK
 from blueapps.core.celery import celery_app
 
 
-def get_env_or_raise(key):
+def get_env_or_raise(*keys):
     """Get an environment variable, if it does not exist, raise an exception"""
-    value = os.environ.get(key)
-    if not value:
-        raise RuntimeError(
-            ('Environment variable "{}" not found, you must set this variable to run this application.').format(key)
-        )
-    return value
+    for key in keys:
+        value = os.environ.get(key)
+        if value:
+            return value
+    raise RuntimeError(
+        ('Environment variable "{}" not found, you must set this variable to run this application.').format(keys)
+    )
 
 
 # SaaS运行版本，如非必要请勿修改
 RUN_VER = os.environ.get("BKPAAS_ENGINE_REGION", "open")
-if RUN_VER != "open":
-    APP_CODE = get_env_or_raise("BKPAAS_APP_ID")
-    # 应用用于调用云 API 的 Secret
-    SECRET_KEY = get_env_or_raise("BKPAAS_APP_SECRET")
-else:
-    APP_CODE = get_env_or_raise("APP_ID")
-    # 应用用于调用云 API 的 Secret
-    SECRET_KEY = get_env_or_raise("APP_TOKEN")
+
+APP_CODE = get_env_or_raise("APP_ID", "BKPAAS_APP_ID")
+# 应用用于调用云 API 的 Secret
+SECRET_KEY = get_env_or_raise("APP_TOKEN", "BKPAAS_APP_SECRET")
 
 
 # V3判断环境的环境变量为BKPAAS_ENVIRONMENT

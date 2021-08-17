@@ -39,6 +39,7 @@ LAST_TASK_ID = 5
 PARAMS = {
     "bk_biz_id": 706,
     "collector_config_name": "采集项名称",
+    "collector_config_name_en": "test_collector",
     "collector_scenario_id": "row",
     "category_id": "application",
     "target_object_type": "HOST",
@@ -848,6 +849,7 @@ def subscription_statistic(params):
     ]
 
 
+@patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollector(TestCase):
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
@@ -860,6 +862,7 @@ class TestCollector(TestCase):
     @patch("apps.api.CCApi.search_module", CCModuleTest())
     @patch("apps.api.CCApi.list_biz_hosts", CCBizHostsTest())
     @patch("apps.decorators.user_operation_record.delay", return_value=None)
+    @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
     @override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}})
     def test_create(self, *args, **kwargs):
         params = copy.deepcopy(PARAMS)
@@ -888,7 +891,7 @@ class TestCollector(TestCase):
     @patch("apps.api.TransferApi.modify_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.NodeApi.update_subscription_info", lambda _: {"subscription_id": SUBSCRIPTION_ID})
     @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": NEW_TASK_ID})
-    def _test_update(self, collector_config_id):
+    def _test_update(self, collector_config_id, *args, **kwargs):
         params = copy.deepcopy(PARAMS)
         params["collector_config_id"] = collector_config_id
 
@@ -975,7 +978,7 @@ class TestCollector(TestCase):
         with self.assertRaises(CollectorConfigNotExistException):
             CollectorHandler(collector_config_id=collector_config_id)
 
-    def test_format_subscription_instance_status(self):
+    def test_format_subscription_instance_status(self, *args, **kwargs):
         result = CollectorHandler.format_subscription_instance_status(PART_FAILED_INSTANCE_DATA)
         self.assertEqual(result, STATUS_DATA_RETURN)
 
@@ -999,7 +1002,7 @@ class TestCollector(TestCase):
         self.assertEqual(result2["contents"][0]["bk_obj_id"], "module")
         self.assertEqual(result2["contents"][0]["bk_inst_id"], 34)
 
-    def test_get_node_mapping(self):
+    def test_get_node_mapping(self, *args, **kwargs):
         result = CollectorHandler().get_node_mapping(TOPO_TREE)
         self.assertEqual(result, TOPO_TREE_RETURN)
 
@@ -1100,7 +1103,7 @@ class TestCollector(TestCase):
         self.assertEqual(result.get("log_result").get("task_id"), 24626)
         self.assertEqual(result.get("log_result").get("instance_id"), "host|instance|host|127.0.0.1-0-0")
 
-    def test_get_instance_log(self):
+    def test_get_instance_log(self, *args, **kwargs):
         result = CollectorHandler.get_instance_log(TASK_DETAIL_DATA)
         result2 = CollectorHandler.get_instance_log({"steps": []})
 
@@ -1143,7 +1146,7 @@ class TestCollector(TestCase):
         self.assertEqual(result2["contents"][0]["node_path"], "主机")
         self.assertEqual(result2["contents"][0]["bk_obj_id"], "host")
 
-    def test_check_task_ready_exception(self):
+    def test_check_task_ready_exception(self, *args, **kwargs):
         self.assertEqual(CollectorHandler._check_task_ready_exception(ApiRequestError("test1", 111)), True)
         self.assertEqual(
             CollectorHandler._check_task_ready_exception(ApiResultError("test2", code=1306201, errors="test2")), True

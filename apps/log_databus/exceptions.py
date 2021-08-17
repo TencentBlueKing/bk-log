@@ -97,6 +97,11 @@ class CollectorIllegalIPException(BaseCollectorConfigException):
     MESSAGE = _("采集项包含非该业务【{bk_biz_id}】IP，异常IP列表为: {illegal_ips}")
 
 
+class CollectorConfigNameENDuplicateException(BaseCollectorConfigException):
+    ERROR_CODE = "112"
+    MESSAGE = _("采集项{collector_config_name_en}英文名重复")
+
+
 class StorageNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "201"
     MESSAGE = _("集群不存在")
@@ -235,3 +240,18 @@ class CollectNotSuccess(BaseCollectorConfigException):
 class BkdataIdFeatureNotExist(BaseCollectorConfigException):
     ERROR_CODE = "601"
     MESSAGE = _("后台bkdata_id_feature不存在")
+
+
+class CleanTemplateNotExistException(BaseCollectorConfigException):
+    ERROR_CODE = "701"
+    MESSAGE = _("清洗模板{clean_template_id}不存在")
+
+
+class CleanTemplateRepeatException(BaseCollectorConfigException):
+    ERROR_CODE = "702"
+    MESSAGE = _("该业务{bk_biz_id}已存在该模板{name}")
+
+
+class ProjectNoteExistException(BaseCollectorConfigException):
+    ERROR_CODE = "703"
+    MESSAGE = _("该业务{bk_biz_id}未找到对应project")

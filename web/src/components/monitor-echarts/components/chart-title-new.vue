@@ -80,91 +80,91 @@ export default class ChartTitle extends Vue {
 </script>
 <style lang="scss" scoped>
   .title-wrapper {
-  position: relative;
-  width: 100%;
-  flex: 1;
+    position: relative;
+    width: 100%;
+    flex: 1;
 
-  .chart-title {
-    padding: 5px 10px;
-    margin-left: -10px;
-    border-radius: 2px;
-    // background-color: white;
-    color: #63656e;
-    font-size: 12px;
-    cursor: pointer;
+    .chart-title {
+      padding: 5px 10px;
+      margin-left: -10px;
+      border-radius: 2px;
+      // background-color: white;
+      color: #63656e;
+      font-size: 12px;
+      cursor: pointer;
 
-    &:hover {
-      //   background-color: #f0f1f5;
-      //   cursor: pointer;
-      .main-title {
-        // color: black;
-        &::after {
-          display: flex;
+      &:hover {
+        //   background-color: #f0f1f5;
+        //   cursor: pointer;
+        .main-title {
+          // color: black;
+          &::after {
+            display: flex;
+          }
         }
       }
-    }
 
-    .main-title {
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      flex-wrap: nowrap;
+      .main-title {
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
 
-      .title-name {
+        .title-name {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          line-height: 20px;
+          height: 20px;
+        }
+
+        .icon-down-shape {
+          font-size: 16px;
+          margin-right: 8px;
+          color: #c4c6cc;
+          transition: transform .3s;
+
+          &.is-flip {
+            transform: rotate(-90deg);
+            transition: transform .3s;
+          }
+        }
+
+        &::after {
+          /* stylelint-disable-next-line declaration-no-important */
+          font-family: 'icon-monitor' !important;
+          content: '\e61c';
+          font-size: 20px;
+          width: 24px;
+          height: 16px;
+          align-items: center;
+          justify-content: center;
+          color: #979ba5;
+          margin-right: auto;
+          display: none;
+        }
+      }
+
+      .sub-title {
+        line-height: 16px;
+        height: 16px;
+        color: #979ba5;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        line-height: 20px;
-        height: 20px;
       }
+    }
 
-      .icon-down-shape {
-        font-size: 16px;
-        margin-right: 8px;
-        color: #c4c6cc;
-        transition: transform .3s;
+    .menu-list {
+      position: absolute;
+      top: 6px;
+      right: 6px;
 
-        &.is-flip {
-          transform: rotate(-90deg);
-          transition: transform .3s;
-        }
-      }
-
-      &::after {
-        /* stylelint-disable-next-line declaration-no-important */
-        font-family: 'icon-monitor' !important;
-        content: '\e61c';
-        font-size: 20px;
-        width: 24px;
-        height: 16px;
-        align-items: center;
-        justify-content: center;
+      .log-icon {
+        font-size: 14px;
         color: #979ba5;
-        margin-right: auto;
-        display: none;
+        cursor: pointer;
       }
     }
-
-    .sub-title {
-      line-height: 16px;
-      height: 16px;
-      color: #979ba5;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-
-  .menu-list {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-
-    .log-icon {
-      font-size: 14px;
-      color: #979ba5;
-      cursor: pointer;
-    }
-  }
   }
 </style>

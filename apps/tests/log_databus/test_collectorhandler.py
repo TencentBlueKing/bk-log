@@ -34,6 +34,7 @@ LAST_TASK_ID = 5
 PARAMS = {
     "bk_biz_id": 706,
     "collector_config_name": "采集项名称",
+    "collector_config_name_en": "test_collector",
     "collector_scenario_id": "row",
     "category_id": "application",
     "target_object_type": "HOST",
@@ -224,12 +225,13 @@ def subscription_statistic(params):
     ]
 
 
+@patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollectorHandler(TestCase):
     @staticmethod
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch("apps.api.NodeApi.create_subscription", lambda _: {"subscription_id": SUBSCRIPTION_ID})
     @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": TASK_ID})
-    def create(params=None):
+    def create(params=None, *args, **kwargs):
         """
         创建 CollectorHandler实例对象，并创建一个采集配置
         """
@@ -285,7 +287,7 @@ class TestCollectorHandler(TestCase):
         self.assertEqual(res.get("collector_scenario_id"), "row")
 
     @patch("apps.api.CCApi.list_biz_hosts", CCBizHostsFilterTest())
-    def test_filter_illegal_ips(self):
+    def test_filter_illegal_ips(self, *args, **kwargs):
         self.assertEqual(
             CollectorHandler._filter_illegal_ips(
                 bk_biz_id=FILTER_ILLEGAL_IPS_BIZ_ID, ip_list=FILTER_ILLEGAL_IPS_IP_LIST

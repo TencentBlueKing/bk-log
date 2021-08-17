@@ -78,79 +78,79 @@ export default class ChartTitle extends Vue {
 </script>
 <style lang="scss" scoped>
   .title-wrapper {
-  width: 100%;
-  flex: 1;
+    width: 100%;
+    flex: 1;
 
-  .chart-title {
-    padding: 5px 10px;
-    margin-left: -10px;
-    border-radius: 2px;
-    // background-color: white;
-    color: #63656e;
-    font-size: 12px;
+    .chart-title {
+      padding: 5px 10px;
+      margin-left: -10px;
+      border-radius: 2px;
+      // background-color: white;
+      color: #63656e;
+      font-size: 12px;
 
-    &:hover {
-      background-color: #f0f1f5;
-      cursor: pointer;
+      &:hover {
+        background-color: #f0f1f5;
+        cursor: pointer;
 
-      .main-title {
-        color: black;
+        .main-title {
+          color: black;
 
-        &::after {
-          display: flex;
+          &::after {
+            display: flex;
+          }
         }
       }
-    }
 
-    .main-title {
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      flex-wrap: nowrap;
+      .main-title {
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
 
-      .title-name {
+        .title-name {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          line-height: 20px;
+          height: 20px;
+        }
+
+        .icon-down-shape {
+          font-size: 16px;
+          margin-right: 8px;
+          color: #c4c6cc;
+          transition: transform .3s;
+
+          &.is-flip {
+            transform: rotate(-90deg);
+            transition: transform .3s;
+          }
+        }
+
+        &::after {
+          /* stylelint-disable-next-line declaration-no-important */
+          font-family: 'icon-monitor' !important;
+          content: '\e61c';
+          font-size: 20px;
+          width: 24px;
+          height: 16px;
+          align-items: center;
+          justify-content: center;
+          color: #979ba5;
+          margin-right: auto;
+          display: none;
+        }
+      }
+
+      .sub-title {
+        line-height: 16px;
+        height: 16px;
+        color: #979ba5;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        line-height: 20px;
-        height: 20px;
-      }
-
-      .icon-down-shape {
-        font-size: 16px;
-        margin-right: 8px;
-        color: #c4c6cc;
-        transition: transform .3s;
-
-        &.is-flip {
-          transform: rotate(-90deg);
-          transition: transform .3s;
-        }
-      }
-
-      &::after {
-        /* stylelint-disable-next-line declaration-no-important */
-        font-family: 'icon-monitor' !important;
-        content: '\e61c';
-        font-size: 20px;
-        width: 24px;
-        height: 16px;
-        align-items: center;
-        justify-content: center;
-        color: #979ba5;
-        margin-right: auto;
-        display: none;
       }
     }
-
-    .sub-title {
-      line-height: 16px;
-      height: 16px;
-      color: #979ba5;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
   }
 </style>

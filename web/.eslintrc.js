@@ -35,5 +35,6 @@ module.exports = {
     'no-nested-ternary': 'off',
     'arrow-body-style': 'off',
     'no-restricted-properties': 'off',
+    'function-paren-newline': 'off',
   },
 };
