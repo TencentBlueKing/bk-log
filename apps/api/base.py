@@ -31,9 +31,7 @@ from django.core.cache import cache
 from django.utils import translation
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
-from opentelemetry.context import attach
-from opentelemetry.instrumentation.wsgi import wsgi_getter
-from opentelemetry.propagate import extract
+from opentelemetry.context import attach, get_current
 from requests.exceptions import ReadTimeout
 
 from apps.utils.log import logger
@@ -465,7 +463,11 @@ class DataAPI(object):
             request_params.update(params)
             # request_params["requests"] = get_request()
             futures.append(
-                pool.apply_async(self.thread_activate_request, args=(request_params,), kwds={"request": get_request()})
+                pool.apply_async(
+                    self.thread_activate_request,
+                    args=(request_params,),
+                    kwds={"request": get_request(), "context": get_current()},
+                )
             )
 
             start += limit
@@ -480,13 +482,21 @@ class DataAPI(object):
         return data
 
     def thread_activate_request(
-        self, params=None, files=None, raw=False, timeout=None, raise_exception=True, request_cookies=True, request=None
+        self,
+        params=None,
+        files=None,
+        raw=False,
+        timeout=None,
+        raise_exception=True,
+        request_cookies=True,
+        request=None,
+        context=None,
     ):
         """
         处理并发请求无法activate_request的封装
         """
         activate_request(request)
-        attach(extract(request.META, getter=wsgi_getter))
+        attach(context)
         return self.__call__(
             params=params,
             files=files,
