@@ -26,6 +26,7 @@ from apps.log_trace.exceptions import TraceIDNotExistsException
 from apps.log_trace.handlers.proto.proto import Proto
 
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
+from apps.utils.local import get_local_param
 
 
 class OtlpTrace(Proto):
@@ -199,7 +200,7 @@ class OtlpTrace(Proto):
 
     @classmethod
     def format_time(cls, timestamp):
-        return arrow.get(str(timestamp)[0:10]).strftime("%Y-%m-%d %H:%M:%S")
+        return arrow.get(str(timestamp)[0:10]).to(get_local_param("time_zone")).strftime("%Y-%m-%d %H:%M:%S")
 
     def to_microseconds(self, timestamp):
         return int(str(timestamp)[0:13])
