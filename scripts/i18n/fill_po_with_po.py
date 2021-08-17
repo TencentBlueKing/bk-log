@@ -32,7 +32,7 @@ class ScanPoFile(object):
 
     def scan(self, po_file):
         write_list = []
-        with open(po_file, "rb") as f:
+        with open(po_file, "rb", encoding="utf-8") as f:
             ori_content = []
             for line in f.readlines():
                 line = self.safe_encode(line)
@@ -51,7 +51,7 @@ class ScanPoFile(object):
                     write_list.append(line)
 
         content = "".join(write_list)
-        with open(po_file, "wb") as f:
+        with open(po_file, "wb", encoding="utf-8") as f:
             f.write(content.encode("utf-8"))
         pass
 
