@@ -26,8 +26,6 @@
       <bk-button
         class="fl"
         theme="primary"
-        :disabled="isAllowedManage === null"
-        v-cursor="{ active: isAllowedManage === false }"
         @click="handleCreate">
         {{ $t('新增') }}
       </bk-button>
@@ -150,7 +148,6 @@ export default {
       isTableLoading: true,
       size: 'small',
       syncLoading: false,
-      isAllowedManage: null, // 是否有管理权限
       pagination: {
         current: 1,
         count: 0,
@@ -187,9 +184,6 @@ export default {
       return target;
     },
   },
-  created() {
-    this.checkManageAuth();
-  },
   mounted() {
     this.search();
   },
@@ -198,22 +192,6 @@ export default {
     this.timer && clearInterval(this.timer);
   },
   methods: {
-    async checkManageAuth() {
-      try {
-        const res = await this.$store.dispatch('checkAllowed', {
-          // TODO
-          action_ids: ['manage_clean_config'],
-          resources: [{
-            type: 'biz',
-            id: this.bkBizId,
-          }],
-        });
-        this.isAllowedManage = res.isAllowed;
-      } catch (err) {
-        console.warn(err);
-        this.isAllowedManage = false;
-      }
-    },
     search() {
       this.pagination.current = 1;
       this.requestData();
@@ -270,16 +248,6 @@ export default {
         });
     },
     handleCreate() {
-      if (!this.isAllowedManage) {
-        return this.getOptionApplyData({
-          action_ids: ['manage_clean_config'],
-          resources: [{
-            type: 'biz',
-            id: this.bkBizId,
-          }],
-        });
-      }
-
       this.$router.push({
         name: 'clean-create',
         query: {

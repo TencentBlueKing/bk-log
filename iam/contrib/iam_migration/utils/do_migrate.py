@@ -36,7 +36,7 @@ def load_data(filename):
     """
     data = {}
     try:
-        with open(filename) as data_file:
+        with open(filename, encoding="utf-8") as data_file:
             data = json.load(data_file)
         print("parser json data file success!")
     except Exception as error:

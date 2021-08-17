@@ -33,7 +33,7 @@ def get_commit_message():
         print("Warning: The path of file `COMMIT_EDITMSG` not given, skipped!")
         return 0
     commit_message_filepath = args[1]
-    with open(commit_message_filepath, "r") as fd:
+    with open(commit_message_filepath, "r", encoding="utf-8") as fd:
         content = fd.read()
     return content.strip().lower()
 
