@@ -389,3 +389,8 @@ class BkJwtVerifyException(BasePermException):
 class BkJwtVerifyFailException(BasePermException):
     ERROR_CODE = "903"
     MESSAGE = _("JWT校验失败")
+
+
+class SettingMenuException(BasePermException):
+    ERROR_CODE = "1001"
+    MESSAGE = _("配置中menu对象异常")

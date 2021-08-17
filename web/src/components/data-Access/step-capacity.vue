@@ -372,7 +372,7 @@ export default {
     },
     handleCancel() {
       this.$router.push({
-        name: 'collectAccess',
+        name: 'collection-item',
         query: {
           projectId: window.localStorage.getItem('project_id'),
         },

@@ -33,6 +33,7 @@ import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
 import '@icon-cool/bk-icon-log_search';
 import cursor from '@/directives/cursor';
+import LogButton from '@/components/log-button';
 
 try {
   const id = window.TAM_AEGIS_KEY;
@@ -53,6 +54,7 @@ try {
 }
 
 Vue.component('VueJsonPretty', VueJsonPretty);
+Vue.component('LogButton', LogButton);
 Vue.directive('cursor', cursor);
 Vue.use(vClickOutside);
 Vue.use(methods);

@@ -74,7 +74,7 @@ export default {
   methods: {
     goToCreateIndex() {
       this.$router.push({
-        path: '/manage/indexSet',
+        path: '/manage/log-collection/log-index-set',
         query: {
           projectId: window.localStorage.getItem('project_id'),
         },
@@ -83,7 +83,7 @@ export default {
     goToCreateCollection() {
       if (window.FEATURE_TOGGLE.scenario_log === 'on') {
         this.$router.push({
-          path: '/manage/collect',
+          path: '/manage/log-collection',
           query: {
             projectId: window.localStorage.getItem('project_id'),
           },

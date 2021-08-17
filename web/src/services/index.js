@@ -39,6 +39,7 @@ import * as trace from './trace';
 import * as extract from './extract';
 import * as extractManage from './extractManage';
 import * as linkConfiguration from './linkConfiguration';
+import * as clean from './clean';
 
 const getMyProjectList = {
   url: '/meta/projects/mine/',
@@ -68,4 +69,5 @@ export default {
   extract,
   extractManage,
   linkConfiguration,
+  clean,
 };
