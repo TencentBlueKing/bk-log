@@ -479,64 +479,6 @@
             }
         },
         {
-            "operation":"upsert_action",
-            "data":{
-                "id":"manage_clean_config",
-                "name":"日志清洗配置管理",
-                "name_en":"Manage clean Config",
-                "type":"manage",
-                "version":1,
-                "related_resource_types":[
-                    {
-                        "id":"biz",
-                        "system_id":"bk_cmdb",
-                        "selection_mode":"instance",
-                        "related_instance_selections":[
-                            {
-                                "system_id":"bk_cmdb",
-                                "id":"business",
-                                "ignore_iam_path":true
-                            }
-                        ]
-                    }
-                ],
-                "related_actions":[
-
-                ],
-                "description":"",
-                "description_en":""
-            }
-        },
-        {
-            "operation":"upsert_action",
-            "data":{
-                "id":"manage_clean_template_config",
-                "name":"日志清洗模板配置管理",
-                "name_en":"Manage clean template Config",
-                "type":"manage",
-                "version":1,
-                "related_resource_types":[
-                    {
-                        "id":"biz",
-                        "system_id":"bk_cmdb",
-                        "selection_mode":"instance",
-                        "related_instance_selections":[
-                            {
-                                "system_id":"bk_cmdb",
-                                "id":"business",
-                                "ignore_iam_path":true
-                            }
-                        ]
-                    }
-                ],
-                "related_actions":[
-
-                ],
-                "description":"",
-                "description_en":""
-            }
-        },
-        {
             "operation":"upsert_action_groups",
             "data":[
                 {
@@ -608,18 +550,6 @@
                             "actions":[
                                 {
                                     "id":"manage_extract_config"
-                                }
-                            ]
-                        },
-                        {
-                            "name":"日志清洗",
-                            "name_en":"log clean",
-                            "actions":[
-                                {
-                                    "id":"manage_clean_config"
-                                },
-                                {
-                                    "id":"manage_clean_template_config"
                                 }
                             ]
                         }
@@ -711,12 +641,6 @@
                         },
                         {
                             "id":"manage_extract_config"
-                        },
-                        {
-                            "id":"manage_clean_config"
-                        },
-                        {
-                            "id":"manage_clean_template_config"
                         }
                     ]
                 },
