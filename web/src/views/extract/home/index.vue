@@ -248,8 +248,10 @@ export default {
       }
     },
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.initTaskList();
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.initTaskList();
+      }
     },
     handlePageLimitChange(limit) {
       this.pagination.limit = limit;

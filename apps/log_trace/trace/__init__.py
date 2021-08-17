@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import json
 from typing import Collection
 
 import MySQLdb
@@ -32,8 +33,6 @@ from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import Span
-
-from apps.log_trace.trace.patch import patch
 
 
 def requests_callback(span: Span, response):
@@ -51,6 +50,19 @@ def requests_callback(span: Span, response):
     span.set_attribute("result_message", json_result.get("message", ""))
 
 
+def django_response_hook(span, request, response):
+    if hasattr(response, "data"):
+        result = response.data
+    else:
+        try:
+            result = json.loads(response.content)
+        except Exception:  # pylint: disable=broad-except
+            return
+    span.set_attribute("result_code", result.get("code", 0))
+    span.set_attribute("error", not result.get("result", True))
+    span.set_attribute("result_message", result.get("message", ""))
+
+
 class BluekingInstrumentor(BaseInstrumentor):
     def _uninstrument(self, **kwargs):
         pass
@@ -62,7 +74,7 @@ class BluekingInstrumentor(BaseInstrumentor):
         tracer_provider = TracerProvider()
         tracer_provider.add_span_processor(span_processor)
         trace.set_tracer_provider(tracer_provider)
-        DjangoInstrumentor().instrument()
+        DjangoInstrumentor().instrument(response_hook=django_response_hook)
         RedisInstrumentor().instrument()
         ElasticsearchInstrumentor().instrument()
         RequestsInstrumentor().instrument(tracer_provider=tracer_provider, span_callback=requests_callback)
@@ -80,7 +92,6 @@ class BluekingInstrumentor(BaseInstrumentor):
             },
             tracer_provider=tracer_provider,
         )
-        patch()
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return []
