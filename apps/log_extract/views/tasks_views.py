@@ -461,7 +461,7 @@ class TasksViewSet(ModelViewSet):
         target_file_dir = os.path.join(settings.EXTRACT_SAAS_STORE_DIR, target_file)
         if not os.path.isfile(target_file_dir):
             raise TaskFileLinkNotExist
-        with open(target_file_dir, "rb") as f:
+        with open(target_file_dir, "rb", encoding="utf-8") as f:
             content = f.read()
         response = HttpResponse(content=content)
         response["Content-Type"] = "application/octet-stream"
