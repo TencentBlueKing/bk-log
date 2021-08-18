@@ -21,6 +21,7 @@ import json
 from typing import Collection
 
 import MySQLdb
+from django.conf import settings
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation import dbapi
@@ -30,6 +31,7 @@ from opentelemetry.instrumentation.elasticsearch import ElasticsearchInstrumento
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import Span
@@ -69,9 +71,14 @@ class BluekingInstrumentor(BaseInstrumentor):
 
     def _instrument(self, **kwargs):
         """Instrument the library"""
-        otlp_exporter = OTLPSpanExporter()
+        otlp_exporter = OTLPSpanExporter(endpoint=settings.OTLP_GRPC_HOST)
         span_processor = BatchSpanProcessor(otlp_exporter)
-        tracer_provider = TracerProvider()
+        tracer_provider = TracerProvider(
+            resource=Resource.create({
+                "service.name": settings.APP_CODE,
+                "bk_data_id": settings.OTLP_BK_DATA_ID,
+            }),
+        )
         tracer_provider.add_span_processor(span_processor)
         trace.set_tracer_provider(tracer_provider)
         DjangoInstrumentor().instrument(response_hook=django_response_hook)

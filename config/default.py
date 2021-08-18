@@ -238,7 +238,9 @@ if BKLOG_UDP_LOG:
         },
     }
 
-OLTP_TRACE = os.getenv("BKAPP_OLTP_TRACE", "off") == "on"
+OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
+OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST")
+OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 0))
 # ===============================================================================
 # 项目配置
 # ===============================================================================
