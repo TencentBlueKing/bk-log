@@ -489,7 +489,7 @@ export default class MonitorEcharts extends Vue {
       this.chartSubTitle = this.subtitle
       this.loading = false
       
-      if (this.isFinish || this.isFinish === undefined) {
+      if (this.isFinish) {
         clearTimeout(this.timer)
         return
       }

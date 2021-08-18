@@ -1182,6 +1182,8 @@ export default {
         this.originLogList = this.originLogList.concat(res.data.origin_log_list);
         this.statisticalFieldsData = this.getStatisticalFieldsData(this.originLogList);
         this.computeRetrieveDropdownData(this.originLogList);
+      } catch (err) {
+        this.$refs.resultMainRef.isPageOver = false;
       } finally {
         this.tableLoading = false;
         this.requesting = false;
