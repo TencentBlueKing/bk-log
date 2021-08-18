@@ -668,7 +668,7 @@ class FieldDateFormatEnum(ChoicesEnum):
             {"id": "date_hour_minute_second", "name": "YYYY-MM-DDTHH:mm:ss", "description": "2006-01-02T15:04:05"},
             {
                 "id": "date_hour_minute_second_millis",
-                "name": "YYYY-MM-DDTHH:mm:ss.000",
+                "name": "YYYY-MM-DDTHH:mm:ss.SSS",
                 "description": "2006-01-02T15:04:05.000",
             },
             {"id": "basic_date_time_no_millis", "name": "YYYYMMDDTHHmmssZ", "description": "20060102T150405-0700"},
