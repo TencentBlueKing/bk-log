@@ -926,18 +926,6 @@ class SearchHandler(object):
 
         # 存在聚合参数，且时间聚合更新默认设置
         aggs_dict = self.search_dict["aggs"]
-        if aggs_dict.get("group_by_histogram"):
-            if self.scenario_id == Scenario.BKDATA:
-                date_histogram: dict = BODY_DATA_FOR_AGGS["docs_per_minute"]["date_histogram"]
-                BODY_DATA_FOR_AGGS["docs_per_minute"]["date_histogram"]["time_zone"] = self.time_zone
-            else:
-                date_histogram: dict = BODY_DATA_FOR_ORIGIN_AGGS["docs_per_minute"]["date_histogram"]
-                BODY_DATA_FOR_ORIGIN_AGGS["docs_per_minute"]["date_histogram"] = {
-                    "field": self.time_field,
-                    "time_zone": self.time_zone,
-                }
-
-            aggs_dict["group_by_histogram"]["date_histogram"].update(date_histogram)
         return aggs_dict
 
     def _init_highlight(self, can_highlight=True):
@@ -976,27 +964,17 @@ class SearchHandler(object):
         result: dict = {
             "aggregations": result_dict.get("aggregations"),
         }
-
         # 将_shards 字段返回以供saas判断错误
         _shards = result_dict.get("_shards")
         result.update({"_shards": _shards})
-
         log_list: list = []
         agg_result: dict = {}
-        top_ip_result: list = []
-        top_path_result: list = []
         origin_log_list: list = []
         if not result_dict.get("hits", {}).get("total"):
-            docs_per5_result: list = []
-            docs_per5_result = self.fix_agg_empty_pos(docs_per5_result)
-            agg_result.update(
-                {"docs_per_minute": docs_per5_result, "top_ip": top_ip_result, "top_path": top_path_result}
-            )
             result.update(
                 {"total": 0, "took": 0, "list": log_list, "aggs": agg_result, "origin_log_list": origin_log_list}
             )
             return result
-
         # hit data
         for hit in result_dict["hits"]["hits"]:
             log = hit["_source"]
@@ -1021,19 +999,9 @@ class SearchHandler(object):
                 "origin_log_list": origin_log_list,
             }
         )
-
         # 处理聚合
         agg_dict = result_dict.get("aggregations")
-        if agg_dict:
-            agg_result.update(self._format_aggregations_data(agg_dict))
-        else:
-            docs_per5_result: list = []
-            docs_per5_result = self.fix_agg_empty_pos(docs_per5_result)
-            agg_result.update(
-                {"docs_per_minute": docs_per5_result, "top_ip": top_ip_result, "top_path": top_path_result}
-            )
-        result.update({"aggs": agg_result})
-
+        result.update({"aggs": agg_dict})
         return result
 
     @staticmethod
@@ -1042,123 +1010,6 @@ class SearchHandler(object):
             return value
         value = html.escape(value)
         return value.replace("&lt;mark&gt;", "<mark>").replace("&lt;/mark&gt;", "</mark>")
-
-    def _format_aggregations_data(self, agg_dict):
-        agg_data = {}
-        top_ip_data = []
-        top_path_data = []
-        docs_per5_result = []
-
-        for _agg_key in agg_dict:
-
-            if _agg_key == "docs_per_minute":
-                docs_per_5miniuts_buckets_list = agg_dict.get("docs_per_minute")["buckets"]
-                for docs_per5 in docs_per_5miniuts_buckets_list:
-                    docs_per5_time = datetime.datetime.fromtimestamp(docs_per5["key"] / 1000)
-                    docs_per5_time_str = docs_per5_time.strftime("%Y-%m-%d %H:%M:%S")
-                    docs_per5_result.append((docs_per5_time_str, docs_per5["doc_count"]))
-                docs_per5_result = self.fix_agg_empty_pos(docs_per5_result)
-                agg_data.update({"docs_per_minute": docs_per5_result})
-                continue
-
-            if _agg_key == "top_ip":
-                top_ips_bucket_list = agg_dict.get("top_ip")["buckets"]
-                for top_ips_item in top_ips_bucket_list:
-                    top_ip_data.append((top_ips_item["key"], top_ips_item["doc_count"]))
-                agg_data.update({"top_ip": top_ip_data})
-                continue
-
-            if _agg_key == "top_path":
-                top_paths_bucket_list = agg_dict.get("top_path")["buckets"]
-                for top_path in top_paths_bucket_list:
-                    top_path_data.append((top_path["key"], top_path["doc_count"]))
-                agg_data.update({"top_path": top_path_data})
-                continue
-
-            if _agg_key == "group_by_histogram":
-                agg_data.update({"group_by_histogram": self._format_histogram_result(agg_dict, _agg_key)})
-                continue
-
-            agg_bucket_list = agg_dict.get(_agg_key)["buckets"]
-            bucket_result = [(_bucket["key"], _bucket["doc_count"]) for _bucket in agg_bucket_list]
-            agg_data.update({_agg_key: bucket_result})
-        return agg_data
-
-    def _format_histogram_result(self, agg_dict, agg_key):
-        """
-        填充key，保证每个bucket key一致
-        :param agg_dict:
-        :param agg_key:
-        :return:
-        """
-        agg_bucket_list = agg_dict[agg_key]["buckets"]
-        bucket_result = []
-        second_aggs = self.aggs[agg_key].get("aggs", {})
-        field_keys = self._get_bucket_keys(agg_bucket_list, second_aggs)
-
-        for _bucket in agg_bucket_list:
-            second_bucket_result = [(_agg, _bucket[_agg]["buckets"]) for _agg in second_aggs]
-            second_bucket_result = self._format_bucket_result(second_bucket_result, field_keys)
-            bucket_result.append((_bucket["key"], _bucket["doc_count"], _bucket["key_as_string"], second_bucket_result))
-        return bucket_result
-
-    @staticmethod
-    def _get_bucket_keys(agg_bucket_list, agg_fields):
-        """
-        查询每个聚合桶子key的取值范围
-        :param agg_bucket_list:
-        :param agg_fields:
-        :return:
-        """
-
-        agg_field_keys = {}
-        for _agg_bucket in agg_bucket_list:
-            for _field in agg_fields:
-                field_bucket = _agg_bucket.get(_field, {}).get("buckets", [])
-                field_keys = agg_field_keys.get(_field, [])
-                for _bucket in field_bucket:
-                    if _bucket["key"] not in field_keys:
-                        field_keys.append(_bucket["key"])
-                agg_field_keys.update({_field: field_keys})
-
-        return agg_field_keys
-
-    @staticmethod
-    def _format_bucket_result(bucket_result, field_keys):
-
-        for _result in bucket_result:
-            total_keys = field_keys.get(_result[0], [])
-            bucket_keys = [_bucket["key"] for _bucket in _result[1]]
-            to_add_keys = [_key for _key in total_keys if _key not in bucket_keys]
-
-            result_list = list(_result)
-            result_list[1] += [{"key": _key, "doc_count": 0} for _key in to_add_keys]
-            _result = tuple(result_list)
-        return bucket_result
-
-    def fix_agg_empty_pos(self, docs_per_result: List[tuple]) -> List:
-        new_result_list: List[Tuple] = []
-        not_empty_key_dict: dict = {}
-        for a_agg in docs_per_result:
-            agg_key, agg_value = a_agg
-            not_empty_key_dict.update({agg_key: agg_value})
-        time_range = self.time_range
-        start_time = self.start_time
-        end_time = self.end_time
-        time_zone = self.time_zone
-        time_start_end: Tuple = generate_time_range(time_range, start_time, end_time, time_zone)
-        start_time, end_time = time_start_end
-        minutes_list: list = list(rrule(MINUTELY, interval=1, dtstart=start_time.naive, until=end_time.naive))
-        if len(minutes_list) == 1:
-            minutes_list.append(minutes_list[0] + timedelta(minutes=1))
-        for a_minutes in minutes_list:
-            minute_str = a_minutes.strftime("%Y-%m-%d %H:%M:00")
-            minute_agg_count = not_empty_key_dict.get(minute_str)
-            if minute_agg_count:
-                new_result_list.append((minute_str, minute_agg_count))
-            else:
-                new_result_list.append((minute_str, 0))
-        return new_result_list
 
     def _analyze_field_length(self, log_list: List[Dict[str, Any]]):
         for item in log_list:
