@@ -15,3 +15,4 @@
 - 【优化】管理端-支持通过基础计算平台增强清洗入库能力
 - 【优化】公共-修改open调用默认encoding为utf8以避免open异常问题
 - 【优化】采集链路配置-transfer集群去重
+- 【优化】检索-去除不必要的聚合处理代码 [#162](https://github.com/TencentBlueKing/bk-log/pull/162)
