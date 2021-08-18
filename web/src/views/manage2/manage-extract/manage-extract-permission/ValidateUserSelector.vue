@@ -63,9 +63,6 @@ export default {
       isError: false,
     };
   },
-  created() {
-    this.validateInitValue();
-  },
   methods: {
     validateInitValue() {
       if (this.value.length) {

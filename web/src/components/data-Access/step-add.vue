@@ -37,7 +37,11 @@
         :required="true"
         :rules="rules.collector_config_name"
         :property="'collector_config_name'">
-        <bk-input v-model="formData.collector_config_name" maxlength="50"></bk-input>
+        <bk-input
+          v-model="formData.collector_config_name"
+          show-word-limit
+          maxlength="50">
+        </bk-input>
       </bk-form-item>
       <bk-form-item
         :label="$t('dataSource.source_en_name')"
@@ -46,17 +50,20 @@
         :property="'collector_config_name_en'">
         <bk-input
           v-model="formData.collector_config_name_en"
+          show-word-limit
           maxlength="50"
-          :placeholder="$t('dataSource.en_name_placeholder')">
+          :disabled="isUpdate && !!(formData.collector_config_name_en)"
+          :placeholder="$t('dataSource.en_name_tips')">
         </bk-input>
-        <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_tips') }}</p>
+        <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
       </bk-form-item>
       <bk-form-item :label="$t('configDetails.remarkExplain')">
         <bk-input
           type="textarea"
           style="width: 320px;"
           v-model="formData.description"
-          maxlength="100"></bk-input>
+          maxlength="100">
+        </bk-input>
       </bk-form-item>
 
       <!-- 源日志信息 -->
@@ -533,6 +540,9 @@ export default {
       this.formData = JSON.parse(JSON.stringify(this.curCollect));
       if (this.formData.target?.length) { // IP 选择器预览结果回填
         this.formData.target_nodes = this.formData.target;
+      }
+      if (!this.formData.collector_config_name_en) { // 兼容旧数据英文名为空
+        this.formData.collector_config_name_en = this.formData.table_id || '';
       }
       const { params } = this.formData;
       if (params.paths.length > 0) {

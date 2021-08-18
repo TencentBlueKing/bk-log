@@ -499,3 +499,25 @@ export function formatDate(val) {
   const time = date.toTimeString().slice(0, 8);
   return `${yyyy}-${mm}-${dd} ${time}`;
 }
+
+/**
+ * 格式化文件大小
+ * @param {Number | String} size
+ * @return {String}
+ */
+export function formatFileSize(size) {
+  const value = Number(size);
+  if (size && !isNaN(value)) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB', 'BB'];
+    let index = 0;
+    let k = value;
+    if (value >= 1024) {
+      while (k > 1024) {
+        k = k / 1024;
+        index = index + 1;
+      }
+    }
+    return `${(k).toFixed(2)}${units[index]}`;
+  }
+  return '0';
+}

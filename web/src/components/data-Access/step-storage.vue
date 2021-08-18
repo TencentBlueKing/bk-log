@@ -498,6 +498,7 @@ export default {
             this.$store.commit('collect/updateCurCollect', Object.assign({}, this.formData, data, res.data));
             this.$emit('changeIndexSetId', res.data.index_set_id || '');
           }
+          this.$emit('change-submit', true);
           if (this.isCleanField) {
             this.messageSuccess(this.$t('保存成功'));
             this.$emit('stepChange', 'back');

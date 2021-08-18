@@ -128,6 +128,7 @@
         <div v-show="!isPageOver && !reloadTable" v-bkloading="{ isLoading: true }" style="height: 40px;"></div>
       </template>
       <bk-sideslider
+        transfer
         :width="800"
         :quick-close="true"
         :ext-cls="'issued-detail'"
@@ -723,7 +724,8 @@ export default {
         cursor: pointer;
       }
     }
-
+  }
+  .issued-detail {
     .detail-content {
       min-height: calc(100vh - 60px);
       white-space: pre-wrap;

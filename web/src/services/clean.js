@@ -44,6 +44,12 @@ const refreshClean = {
   method: 'get',
 };
 
+// 同步计算平台结果表
+const sync = {
+  url: '/databus/clean/sync/',
+  method: 'get',
+};
+
 // 删除清洗项
 const deleteClean = {};
 
@@ -88,6 +94,7 @@ export {
   updateCleanStash,
   cleanList,
   refreshClean,
+  sync,
   deleteClean,
   cleanTemplate,
   templateDetail,

@@ -33,6 +33,8 @@ NOT_FOUND_CODE = "[404]"
 # ESB返回节点管理check_task_ready API 404异常或非json内容
 CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE = "1306201"
 
+COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
+
 
 class EsSourceType(ChoicesEnum):
     OTHER = "other"
@@ -116,6 +118,15 @@ DEFAULT_TIME_FORMAT = _("微秒（microsecond）")
 # 高级清洗默认创建业务应用型索引集
 DEFAULT_CATEGORY_ID = "application_check"
 DEFAULT_ETL_CONFIG = "bkdata_clean"
+
+# 同步清洗最长ttl时间 60*10
+MAX_SYNC_CLEAN_TTL = 600
+
+
+class AsyncStatus(object):
+    RUNNING = "RUNNING"
+    DONE = "DONE"
+
 
 FIELD_TEMPLATE = {
     "field_name": "",

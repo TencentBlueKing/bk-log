@@ -183,7 +183,7 @@ class AsyncExportUtils(object):
             os.makedirs(ASYNC_DIR)
 
         result = self.search_handler.pre_get_result(sorted_fields=self.sorted_fields, size=MAX_RESULT_WINDOW)
-        with open(self.file_path, "a+") as f:
+        with open(self.file_path, "a+", encoding="utf-8") as f:
             result_list = self.search_handler._deal_query_result(result_dict=result).get("origin_log_list")
             for item in result_list:
                 f.write("%s\n" % json.dumps(item))
@@ -214,9 +214,7 @@ class AsyncExportUtils(object):
         """
         index_set_obj = LogIndexSet.objects.get(index_set_id=index_set_id)
 
-        platform = (
-            settings.EMAIL_TITLE["en"] if translation.get_language() == "en" else settings.TITLE_MENU_CONFIG["zh"]
-        )
+        platform = settings.EMAIL_TITLE["en"] if translation.get_language() == "en" else settings.EMAIL_TITLE["zh"]
 
         title = self.notify.title(
             _("【{platform}】{index_set_name} 检索导出"), platform=platform, index_set_name=index_set_obj.index_set_name

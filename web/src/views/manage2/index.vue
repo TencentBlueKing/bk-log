@@ -93,15 +93,14 @@ export default {
       return 'bk-icon icon-home-shape';
     },
     handleClickNavItem(id) {
-      if (this.activeManageNav.id !== id) {
-        this.$router.push({
-          name: id,
-          query: {
-            projectId: window.localStorage.getItem('project_id'),
-          },
-        });
-      } else {
-        this.routerKey += 1;
+      this.$router.push({
+        name: id,
+        query: {
+          projectId: window.localStorage.getItem('project_id'),
+        },
+      });
+      if (this.activeManageNav.id === id) {
+        // this.routerKey += 1;
       }
     },
     // 获取全局数据
@@ -130,7 +129,7 @@ export default {
     height: 100%;
 
     .navigation-content {
-      min-width: 1280px;
+      min-width: 1080px;
       height: 100%;
       background-color: #fafbfd;
 

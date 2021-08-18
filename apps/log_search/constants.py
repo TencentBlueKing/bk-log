@@ -94,8 +94,12 @@ ASYNC_EXPORT_FILE_EXPIRED_DAYS = 2
 # 异步导出链接expired时间 24*60*60
 ASYNC_EXPORT_EXPIRED = 86400
 HAVE_DATA_ID = "have_data_id"
+BKDATA_OPEN = "bkdata"
 
 FIND_MODULE_WITH_RELATION_FIELDS = ["bk_module_id", "bk_module_name", "service_template_id"]
+
+COMMON_LOG_INDEX_RE = r"^(v2_)?{}_(?P<datetime>\d+)_(?P<index>\d+)$"
+BKDATA_INDEX_RE = r"^{}_\d+$"
 
 
 # 数据平台mapping返回错误
@@ -666,7 +670,7 @@ class FieldDateFormatEnum(ChoicesEnum):
             {"id": "date_hour_minute_second", "name": "YYYY-MM-DDTHH:mm:ss", "description": "2006-01-02T15:04:05"},
             {
                 "id": "date_hour_minute_second_millis",
-                "name": "YYYY-MM-DDTHH:mm:ss.000",
+                "name": "YYYY-MM-DDTHH:mm:ss.SSS",
                 "description": "2006-01-02T15:04:05.000",
             },
             {"id": "basic_date_time_no_millis", "name": "YYYYMMDDTHHmmssZ", "description": "20060102T150405-0700"},

@@ -26,8 +26,6 @@
       <bk-button
         class="fl"
         theme="primary"
-        :disabled="isAllowedManage === null"
-        v-cursor="{ active: isAllowedManage === false }"
         @click="handleCreate">
         {{ $t('新建') }}
       </bk-button>
@@ -101,7 +99,6 @@ export default {
     return {
       isTableLoading: true,
       size: 'small',
-      isAllowedManage: null, // 是否有管理权限
       pagination: {
         current: 1,
         count: 0,
@@ -136,62 +133,20 @@ export default {
     },
   },
   created() {
-    this.checkManageAuth();
+    this.search();
   },
   methods: {
-    async checkManageAuth() {
-      try {
-        const res = await this.$store.dispatch('checkAllowed', {
-          // TODO
-          action_ids: ['manage_clean_template_config'],
-          resources: [{
-            type: 'biz',
-            id: this.bkBizId,
-          }],
-        });
-        this.isAllowedManage = res.isAllowed;
-        if (res.isAllowed) {
-          this.search();
-        } else {
-          this.isTableLoading = false;
-        }
-      } catch (err) {
-        console.warn(err);
-        this.isTableLoading = false;
-        this.isAllowedManage = false;
-      }
-    },
     search() {
-      this.handlePageChange(1);
+      this.pagination.current = 1;
+      this.requestData();
     },
     handleCreate() {
-      if (!this.isAllowedManage) {
-        return this.getOptionApplyData({
-          action_ids: ['manage_clean_template_config'],
-          resources: [{
-            type: 'biz',
-            id: this.bkBizId,
-          }],
-        });
-      }
-
       this.$router.push({
         name: 'clean-template-create',
         query: {
           projectId: window.localStorage.getItem('project_id'),
         },
       });
-    },
-    async getOptionApplyData(paramData) {
-      try {
-        this.isTableLoading = true;
-        const res = await this.$store.dispatch('getApplyData', paramData);
-        this.$store.commit('updateAuthDialogData', res.data);
-      } catch (err) {
-        console.warn(err);
-      } finally {
-        this.isTableLoading = false;
-      }
     },
     handleFilterChange(data) {
       Object.keys(data).forEach((item) => {
@@ -205,8 +160,10 @@ export default {
      * @return {[type]}      [description]
      */
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.requestData();
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.requestData();
+      }
     },
     /**
      * 分页限制
@@ -215,6 +172,7 @@ export default {
      */
     handleLimitChange(page) {
       if (this.pagination.limit !== page) {
+        this.pagination.current = 1;
         this.pagination.limit = page;
         this.requestData();
       }
@@ -275,7 +233,11 @@ export default {
             ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
             : this.pagination.current;
           this.messageSuccess(this.$t('删除成功'));
-          this.handlePageChange(page);
+          if (page !== this.pagination.current) {
+            this.handlePageChange(page);
+          } else {
+            this.requestData();
+          }
         }
       })
         .catch(() => {});
@@ -297,7 +259,7 @@ export default {
   @import '@/scss/devops-common.scss';
 
   .clean-template-container {
-    padding: 20px 60px;
+    padding: 20px 24px;
     .top-operation {
       margin-bottom: 20px;
       @include clearfix;

@@ -67,7 +67,7 @@
         </bk-form>
       </article>
       <article class="article">
-        <h3 class="title">{{ $t('采集项') }}</h3>
+        <h3 class="title">{{ subTitle }}</h3>
         <div class="collection-form" v-if="isShowTrace">
           <div class="collection-label">{{ $t('索引') }}</div>
           <div class="selected-collection trace">
@@ -149,6 +149,7 @@ export default {
       basicLoading: true,
       submitLoading: false,
       authPageInfo: null,
+      isSubmit: false,
       clusterList: [], // 集群列表
 
       isShowTrace: this.$route.name.includes('track'), // 全链路追踪
@@ -185,10 +186,31 @@ export default {
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
+    subTitle() {
+      const textMap = {
+        log: this.$t('采集项'),
+        es: this.$t('索引'),
+        bkdata: this.$t('数据源'),
+      };
+      return textMap[this.scenarioId];
+    },
   },
   created() {
     this.checkAuth();
     this.fetchPageData();
+  },
+  // eslint-disable-next-line no-unused-vars
+  beforeRouteLeave(to, from, next) {
+    if (!this.isSubmit) {
+      this.$bkInfo({
+        title: this.$t('pageLeaveTips'),
+        confirmFn: () => {
+          next();
+        },
+      });
+      return;
+    }
+    next();
   },
   methods: {
     // 检查权限、确认基本信息
@@ -270,6 +292,12 @@ export default {
           }
         }
         this.clusterList = s1.concat(s2);
+        if (this.$route.query.cluster) {
+          const clusterId = this.$route.query.cluster;
+          if (this.clusterList.some(item => item.storage_cluster_id === Number(clusterId))) {
+            this.formData.storage_cluster_id = Number(clusterId);
+          }
+        }
       } catch (e) {
         console.warn(e);
       }
@@ -357,6 +385,7 @@ export default {
           },
           data: requestBody,
         }) : await this.$http.request('/indexSet/create', { data: requestBody });
+        this.isSubmit = true;
         this.handleCreatSuccess(res.data);
       } catch (e) {
         console.warn(e);
@@ -382,7 +411,7 @@ export default {
         }
         // auth.html 返回索引集管理的路径
         let indexSetPath = '';
-        const href = this.$router.resolve({
+        const { href } = this.$router.resolve({
           name: `${this.scenarioId}-index-set-list`,
         });
         let siteUrl = window.SITE_URL;
@@ -392,7 +421,7 @@ export default {
         } else {
           if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
           if (!siteUrl.endsWith('/')) siteUrl += '/';
-          redirectUrl = window.origin + siteUrl + href;
+          indexSetPath = window.origin + siteUrl + href;
         }
         // auth.html 需要使用的数据
         const urlComponent = `?indexSetId=${id}&ajaxUrl=${window.AJAX_URL_PREFIX}&redirectUrl=${indexSetPath}`;
@@ -420,7 +449,7 @@ export default {
 
 <style scoped lang="scss">
   .create-index-container {
-    padding: 22px 20px;
+    padding: 20px 24px;
 
     .article {
       padding: 22px 24px;

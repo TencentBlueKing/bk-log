@@ -197,26 +197,6 @@ class ActionEnum:
         version=1,
     )
 
-    MANAGE_CLEAN_CONFIG = ActionMeta(
-        id="manage_clean_config",
-        name="日志清洗配置管理",
-        name_en="Manage clean Config",
-        type="manage",
-        related_resource_types=[ResourceEnum.BUSINESS],
-        related_actions=[],
-        version=1,
-    )
-
-    MANAGE_CLEAN_TEMPLATE_CONFIG = ActionMeta(
-        id="manage_clean_template_config",
-        name="日志清洗模板配置管理",
-        name_en="Manage clean template Config",
-        type="manage",
-        related_resource_types=[ResourceEnum.BUSINESS],
-        related_actions=[],
-        version=1,
-    )
-
 
 _all_actions = {action.id: action for action in ActionEnum.__dict__.values() if isinstance(action, ActionMeta)}
 

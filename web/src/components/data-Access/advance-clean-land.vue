@@ -22,7 +22,7 @@
 
 <template>
   <div class="advance-clean-land" v-bkloading="{ isLoading: loading }">
-    <span class="bk-icon icon-clock"></span>
+    <span class="log-icon icon-shijian"></span>
     <p class="title">{{ $t('logClean.cleaning') }}</p>
     <p class="remark">
       <span v-if="isInit">
@@ -105,7 +105,7 @@ export default {
     text-align: center;
     background: #fff;
     border: 1px solid #DCDEE5;
-    .icon-clock {
+    .icon-shijian {
       font-size: 64px;
       color: #c4c6cc;
     }

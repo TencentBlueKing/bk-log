@@ -58,7 +58,9 @@
             <span
               class="text-active"
               v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
-              @click="operateHandler(props.row, 'view')">{{ props.row.collector_config_name }}</span>
+              @click="operateHandler(props.row, 'view')">
+              {{ props.row.collector_config_name }}
+            </span>
             <span
               v-if="!props.row.table_id"
               class="table-mark mark-mini mark-default">
@@ -211,7 +213,7 @@
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">{{ props.row.updated_at }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="180">
+        <bk-table-column :label="$t('dataSource.operation')" class-name="operate-column" width="220">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 检索 -->
             <!-- 启用状态下 且存在 index_set_id 才能检索 -->
@@ -233,8 +235,27 @@
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
-            <!-- 启用/停用 -->
+            <!-- 前往清洗 -->
             <bk-button
+              theme="primary"
+              text
+              class="king-button"
+              :disabled="!props.row.table_id"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              @click.stop="operateHandler(props.row, 'clean')">
+              {{ $t('logClean.goToClean') }}
+            </bk-button>
+            <!-- 查看详情 -->
+            <bk-button
+              theme="primary"
+              text
+              class="king-button"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
+              @click="operateHandler(props.row, 'view')">
+              {{ $t('详情') }}
+            </bk-button>
+            <!-- 启用/停用 -->
+            <!-- <bk-button
               theme="primary"
               text
               class="king-button"
@@ -245,9 +266,9 @@
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, props.row.is_active ? 'stop' : 'start' )">
               {{ props.row.is_active ? $t('btn.block') : $t('btn.start') }}
-            </bk-button>
+            </bk-button> -->
             <!-- 删除 -->
-            <bk-button
+            <!-- <bk-button
               theme="primary"
               text
               class="king-button"
@@ -258,7 +279,64 @@
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'delete')">
               {{ $t('btn.delete') }}
-            </bk-button>
+            </bk-button> -->
+            <bk-dropdown-menu ref="dropdown" align="right">
+              <i
+                class="bk-icon icon-more"
+                style="margin-left: 5px; font-size: 14px; font-weight: bold;"
+                slot="dropdown-trigger">
+              </i>
+              <ul class="bk-dropdown-list" slot="dropdown-content">
+                <li v-if="props.row.is_active">
+                  <a
+                    href="javascript:;"
+                    class="text-disabled"
+                    v-if="!props.row.status ||
+                      props.row.status === 'running' ||
+                      props.row.status === 'prepare' ||
+                      !collectProject">
+                    {{$t('btn.block')}}
+                  </a>
+                  <a
+                    href="javascript:;"
+                    v-else
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    @click.stop="operateHandler(props.row, 'stop')">{{$t('btn.block')}}</a>
+                </li>
+                <li v-else>
+                  <a
+                    href="javascript:;"
+                    class="text-disabled"
+                    v-if="!props.row.status ||
+                      props.row.status === 'running' ||
+                      props.row.status === 'prepare' ||
+                      !collectProject">
+                    {{$t('btn.start')}}
+                  </a>
+                  <a
+                    href="javascript:;"
+                    v-else
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    @click.stop="operateHandler(props.row, 'start')">{{$t('btn.start')}}</a>
+                </li>
+                <li>
+                  <a
+                    href="javascript:;"
+                    class="text-disabled"
+                    v-if="!props.row.status ||
+                      props.row.status === 'running' ||
+                      props.row.is_active ||
+                      !collectProject">
+                    {{$t('btn.delete')}}
+                  </a>
+                  <a
+                    href="javascript:;"
+                    v-else
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    @click.stop="operateHandler(props.row, 'delete')">{{$t('btn.delete')}}</a>
+                </li>
+              </ul>
+            </bk-dropdown-menu>
           </div>
         </bk-table-column>
         <bk-table-column type="setting">
@@ -409,8 +487,8 @@ export default {
   },
   methods: {
     search() {
-      // this.param = this.keyword;
-      this.handlePageChange(1);
+      this.pagination.current = 1;
+      this.requestData();
     },
     checkcFields(field) {
       return this.columnSetting.selectedFields.some(item => item.id === field);
@@ -527,6 +605,7 @@ export default {
         edit: 'collectEdit',
         field: 'collectField',
         search: 'retrieve',
+        clean: 'clean-edit',
       };
       const targetRoute = routeMap[operateType];
       // 查看详情 - 如果处于未完成状态，应该跳转到编辑页面
@@ -545,6 +624,9 @@ export default {
         if (!row.index_set_id && !row.bkdata_index_set_ids.length) return;
         params.indexId = row.index_set_id ? row.index_set_id : row.bkdata_index_set_ids[0];
       }
+      if (operateType === 'clean') {
+        params.collectorId = row.collector_config_id;
+      }
       this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
         name: targetRoute,
@@ -560,7 +642,7 @@ export default {
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
-      this.handlePageChange(1);
+      this.search();
     },
     /**
      * 分页变换
@@ -568,9 +650,12 @@ export default {
      * @return {[type]}      [description]
      */
     handlePageChange(page) {
-      this.pagination.current = page;
-      this.stopStatusPolling();
-      this.requestData();
+      console.log('changepage');
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.stopStatusPolling();
+        this.requestData();
+      }
     },
     /**
      * 分页限制
@@ -578,7 +663,9 @@ export default {
      * @return {[type]}      [description]
      */
     handleLimitChange(page) {
+      console.log('changelimit');
       if (this.pagination.limit !== page) {
+        this.pagination.current = 1;
         this.pagination.limit = page;
         this.requestData();
       }
@@ -719,7 +806,11 @@ export default {
           const page = this.collectList.length <= 1
             ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
             : this.pagination.current;
-          this.handlePageChange(page);
+          if (page !== this.pagination.current) {
+            this.handlePageChange(page);
+          } else {
+            this.requestData();
+          }
         }
       })
         .catch(() => {});
@@ -744,7 +835,7 @@ export default {
   @import '../../../../../scss/devops-common.scss';
 
   .collection-item-container {
-    padding: 20px 60px;
+    padding: 20px 24px;
 
     .top-operation {
       margin-bottom: 20px;
@@ -783,7 +874,7 @@ export default {
       overflow: visible;
     }
 
-    .is-last .cell {
+    .operate-column .cell {
       overflow: visible;
     }
 
@@ -828,6 +919,19 @@ export default {
           margin-right: 0;
         }
       }
+    }
+
+    .bk-dropdown-list a.text-disabled:hover {
+      color: #C4C6CC;
+      cursor: not-allowed;
+    }
+    .collect-table-operate {
+      display: flex;
+    }
+    .bk-dropdown-trigger {
+      display: flex;
+      align-items: center;
+      height: 100%;
     }
   }
   .bk-table-setting-popover-content-theme.tippy-tooltip {

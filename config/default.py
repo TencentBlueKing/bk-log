@@ -238,7 +238,9 @@ if BKLOG_UDP_LOG:
         },
     }
 
-OLTP_TRACE = os.getenv("BKAPP_OLTP_TRACE", "off") == "on"
+OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
+OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST")
+OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 0))
 # ===============================================================================
 # 项目配置
 # ===============================================================================
@@ -261,6 +263,8 @@ BK_HOT_WARM_CONFIG_URL = (
 # bulk_request limit
 BULK_REQUEST_LIMIT = int(os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500))
 
+# redis_version
+REDIS_VERSION = int(os.environ.get("BKAPP_REDIS_VERSION", 2))
 
 # 该配置需要等待SITE_URL被patch掉才能正确配置，因此放在patch逻辑后面
 GRAFANA = {
@@ -468,31 +472,6 @@ MENUS = [
                 ],
             },
             {
-                "id": "trace_track",
-                "name": _("全链路追踪"),
-                "feature": "on",
-                "icon": "",
-                "keyword": "trace",
-                "children": [
-                    {
-                        "id": "collection_track",
-                        "name": _("采集接入"),
-                        "feature": "off",
-                        "scenes": "scenario_log",
-                        "icon": "",
-                    },
-                    {
-                        "id": "bk_data_track",
-                        "name": _("计算平台"),
-                        "feature": FEATURE_TOGGLE["scenario_bkdata"],
-                        "scenes": "scenario_bkdata",
-                        "icon": "cc-cabinet",
-                    },
-                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
-                    {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
-                ],
-            },
-            {
                 "id": "log_clean",
                 "name": _("日志清洗"),
                 "feature": "on",
@@ -510,10 +489,8 @@ MENUS = [
                         "id": "clean_templates",
                         "name": _("清洗模板"),
                         "feature": "on",
-                        "icon": "",
+                        "icon": "moban",
                     },
-                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
-                    {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
                 ],
             },
             {
@@ -560,6 +537,31 @@ MENUS = [
                 "feature": "off",
                 "icon": "",
                 "children": [{"id": "log_archive_conf", "name": _("日志归档"), "feature": "off", "icon": ""}],
+            },
+            {
+                "id": "trace_track",
+                "name": _("全链路追踪"),
+                "feature": os.environ.get("BKAPP_FEATURE_TRACE", "on"),
+                "icon": "",
+                "keyword": "trace",
+                "children": [
+                    {
+                        "id": "collection_track",
+                        "name": _("采集接入"),
+                        "feature": "off",
+                        "scenes": "scenario_log",
+                        "icon": "",
+                    },
+                    {
+                        "id": "bk_data_track",
+                        "name": _("计算平台"),
+                        "feature": FEATURE_TOGGLE["scenario_bkdata"],
+                        "scenes": "scenario_bkdata",
+                        "icon": "cc-cabinet",
+                    },
+                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
+                    {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
+                ],
             },
             {
                 "id": "es_cluster_status",
@@ -699,7 +701,7 @@ DEMO_BIZ_EDIT_ENABLED = bool(os.getenv("BKAPP_DEMO_BIZ_EDIT_ENABLED", ""))
 if os.getenv("BKAPP_CORS_ENABLED", "on") == "off":
     # allow all hosts
     CORS_ORIGIN_ALLOW_ALL = True
-
+    MIDDLEWARE += ("corsheaders.middleware.CorsMiddleware",)
     # cookies will be allowed to be included in cross-site HTTP requests
     CORS_ALLOW_CREDENTIALS = True
 
@@ -741,6 +743,14 @@ if REDIS_MODE == "sentinel":
     REDIS_SENTINEL_PASSWORD = os.getenv("BK_BKLOG_REDIS_SENTINEL_MASTER_PASSWORD", "")
 
 # BKLOG 后台QOS配置
+BKLOG_QOS_USE = os.getenv("BKAPP_QOS_USE", "on") == "on"
+BKLOG_QOS_LIMIT_APP = [
+    "bk_monitor",
+    "bk_bkmonitor",
+    "bk_monitorv3",
+    "bk_bkmonitorv3",
+    "bkmonitorv3",
+]
 # 窗口时间 单位分钟
 BKLOG_QOS_LIMIT_WINDOW = int(os.getenv("BK_BKLOG_QOS_LIMIT_WINDOW", 5))
 # 窗口内超时次数
@@ -789,6 +799,7 @@ CACHES = {
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWD},
         "KEY_PREFIX": APP_CODE,
+        "VERSION": REDIS_VERSION,
     },
     "db": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",

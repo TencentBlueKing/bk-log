@@ -192,10 +192,6 @@ case $(uname -s) in
     *CYGWIN*) export LAN_IP && LAN_IP=$(get_win_lanip | head -1) ;;
 esac
 
-if [[ "$LAN_IP" == "" ]];then
-  job_fail "get server ip fail"
-fi
-
 dst_path=$1
 #log_files=$2
 target_file_name=$3
@@ -223,9 +219,9 @@ fi
 tmp_dir=${dst_path%/*}
 # delete history file
 bk_log_extract_path="${tmp_dir}"
-if [ -d "$bk_log_extract_path" && "${bk_log_extract_path}" == *"/tmp/bk_log_extract"* ];then
+if [[ -d "$bk_log_extract_path" && "${bk_log_extract_path}" == *"/tmp/bk_log_extract"* ]];then
   # shellcheck disable=SC2038
-  find "$bk_log_extract_path" -mmin +60 -type d | xargs rm -rf
+  find "$bk_log_extract_path/" -mmin +60 -type d | xargs rm -rf
 fi
 
 mkdir -p "$dst_path/"

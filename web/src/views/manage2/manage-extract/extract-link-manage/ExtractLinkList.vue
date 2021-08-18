@@ -170,7 +170,7 @@ export default {
 
 <style lang="scss" scoped>
   .extract-link-list-container {
-    padding: 0 60px 20px;
+    padding: 0 24px 20px;
 
     /*表格内容样式*/
     /deep/ .king-table {

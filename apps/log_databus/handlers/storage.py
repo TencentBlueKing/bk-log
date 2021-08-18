@@ -34,7 +34,7 @@ from apps.utils.thread import MultiExecuteFunc
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import Permission, ResourceEnum
 from apps.log_esquery.utils.es_route import EsRoute
-from apps.log_search.models import Scenario
+from apps.log_search.models import Scenario, ProjectInfo
 from apps.utils.cache import cache_five_minute
 from apps.utils.local import get_local_param, get_request_username
 from apps.api import TransferApi, BkLogApi
@@ -151,7 +151,7 @@ class StorageHandler(object):
         :return:
         """
         cluster_data = list()
-
+        projects = ProjectInfo.get_cmdb_projects()
         # 筛选集群 & 判断是否可编辑
         for cluster_obj in cluster_groups:
             cluster_obj["cluster_config"]["create_time"] = StorageHandler.convert_standard_time(
@@ -191,7 +191,16 @@ class StorageHandler(object):
             # 第三方es权重最高
             cluster_obj["priority"] = 0
             cluster_obj["bk_biz_id"] = custom_biz_id
-            cluster_obj["visible_bk_biz"] = custom_visible_bk_biz
+            from apps.log_search.handlers.index_set import IndexSetHandler
+
+            index_sets = IndexSetHandler.get_index_set_for_storage(cluster_obj["cluster_config"]["cluster_id"])
+            cluster_obj["visible_bk_biz"] = [
+                {
+                    "bk_biz_id": bk_biz_id,
+                    "is_use": index_sets.filter(project_id=projects[bk_biz_id], is_active=True).exists(),
+                }
+                for bk_biz_id in custom_visible_bk_biz
+            ]
             # 处理来源
             cluster_obj["source_type"] = custom_option.get("source_type", EsSourceType.PRIVATE.value)
             cluster_obj["source_name"] = (
