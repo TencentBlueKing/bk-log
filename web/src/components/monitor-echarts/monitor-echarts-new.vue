@@ -239,6 +239,8 @@ export default class MonitorEcharts extends Vue {
   curChartOption: any
   chart = null
   clickTimer = null
+  timer = null
+  isFinish = true
   chartInView: ChartInView = null
   initStatus: Boolean = true
   // 监控图表默认配置
@@ -440,30 +442,60 @@ export default class MonitorEcharts extends Vue {
     })
   }
 
+  // 终止轮询
+  handleCloseTimer() {
+    if (this.timer) {
+      this.isFinish = true
+      clearTimeout(this.timer)
+    }
+  }
+
+  handleChangeInterval() {
+    this.isFinish = true
+    clearTimeout(this.timer)
+    this.timer = null
+    setTimeout(() => {
+      this.handleSeriesData()
+    }, 500);
+  }
+
   // 获取seriesData
   async handleSeriesData(startTime?: string, endTime?: string) {
-    this.loading = true
+    if (this.isFinish) this.loading = true
+
     this.intersectionObserver && this.intersectionObserver.unobserve(this.$el)
     this.intersectionObserver && this.intersectionObserver.disconnect()
     this.needObserver = false
     try {
       const isRange = (startTime && startTime.length > 0) && (endTime && endTime.length > 0)
       const data = await this.getSeriesData(startTime, endTime, isRange).catch(() => ({ series: [] }))
+      this.isFinish = data ? data[0] && data[0].isFinish : false
+      
       !this.chart && this.initChart()
       if (!this.isEchartsRender
       || (Array.isArray(data) && data.length && data.some(item => item))
       || (data && Object.prototype.hasOwnProperty.call(data, 'series') && data.series.length)) {
         await this.handleSetChartData(data)
       } else {
-        this.noData = true
+        if (this.isFinish) {
+          this.noData = true
+        }
       }
     } catch (e) {
       console.info(e)
-      this.noData = true
+      // this.noData = true
     } finally {
       this.chartTitle = this.title
       this.chartSubTitle = this.subtitle
       this.loading = false
+      
+      if (this.isFinish || this.isFinish === undefined) {
+        clearTimeout(this.timer)
+        return
+      }
+      this.timer = setTimeout(async () => {
+        this.handleSeriesData()
+      }, 500);
     }
   }
   handleTransformSeries(data) {
@@ -551,6 +583,7 @@ export default class MonitorEcharts extends Vue {
                       this.chart.dispatchAction({
                         type: 'restore'
                       })
+                      this.handleCloseTimer()
                       await this.handleSeriesData(timeFrom, timeTo)
                     }
                     this.$emit('data-zoom', this.timeRange)
