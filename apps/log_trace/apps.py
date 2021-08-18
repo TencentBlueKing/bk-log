@@ -28,5 +28,5 @@ class TraceConfig(AppConfig):
     verbose_name = "Trace"
 
     def ready(self):
-        if settings.OLTP_TRACE:
+        if settings.OTLP_TRACE:
             BluekingInstrumentor().instrument()

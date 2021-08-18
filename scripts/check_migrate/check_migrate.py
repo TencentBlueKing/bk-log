@@ -40,7 +40,7 @@ def read_csv():
 def save(content):
     if content:
         json_path = os.path.join(BASE_DIR, "field_library.json")
-        with open(json_path, "w") as fp:
+        with open(json_path, "w", encoding="utf-8") as fp:
             json.dump(content, fp)
 
 
@@ -49,7 +49,7 @@ def get_field_library():
     if not os.path.exists(json_path):
         field_library = read_csv()
         save(field_library)
-    with open(json_path, "r") as fp:
+    with open(json_path, "r", encoding="utf-8") as fp:
         content = json.load(fp)
         return content
 
@@ -62,7 +62,7 @@ def get_str_md5(content):
 
 def handle_rename_model(file_path, library):
     rename_content = {}
-    with open(file_path, "r") as fp:
+    with open(file_path, "r", encoding="utf-8") as fp:
         ret = fp.readlines()
         rename = False
         index = 0
@@ -101,7 +101,7 @@ def handle_rename_model(file_path, library):
 
 def handle_add_alter_model(file_path, library):
     add_alter_content = {}
-    with open(file_path, "r") as fp:
+    with open(file_path, "r", encoding="utf-8") as fp:
         ret = fp.readlines()
         alter = False
         index = 0
@@ -136,7 +136,7 @@ def handle_add_alter_model(file_path, library):
 
 def handle_create_model(file_path, library):
     create_content = {}
-    with open(file_path, "r") as fp:
+    with open(file_path, "r", encoding="utf-8") as fp:
         ret = fp.readlines()
         create = False
         index = 0
@@ -183,14 +183,14 @@ def handle_create_model(file_path, library):
 def get_new_field(result):
     exist_field = []
     if "field_error_detail.log" in os.listdir("."):
-        with open("field_error_detail.log", "r") as fp:
+        with open("field_error_detail.log", "r", encoding="utf-8") as fp:
             exist_field = eval(fp.read())
     new_field = []
     for line in result:
         if get_str_md5(line) not in exist_field:
             print(line)
             new_field.append(get_str_md5(line))
-    with open("field_error_detail.log", "w") as fp:
+    with open("field_error_detail.log", "w", encoding="utf-8") as fp:
         fp.write(str(exist_field + new_field))
     return new_field
 

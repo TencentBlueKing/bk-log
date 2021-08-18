@@ -21,6 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
+from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX
 from apps.log_databus.models import CleanTemplate, CollectorConfig
 
 from apps.log_databus.constants import EsSourceType
@@ -168,8 +169,10 @@ class CollectorCreateSerializer(serializers.Serializer):
     """
 
     bk_biz_id = serializers.IntegerField(label=_("业务ID"))
-    collector_config_name = serializers.CharField(label=_("采集名称"))
-    collector_config_name_en = serializers.CharField(label=_("采集英文名称"))
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
     data_link_id = serializers.CharField(label=_("数据链路id"), required=False, allow_blank=True, allow_null=True)
     collector_scenario_id = serializers.ChoiceField(label=_("日志类型"), choices=CollectorScenarioEnum.get_choices())
     category_id = serializers.CharField(label=_("分类ID"))
@@ -195,8 +198,10 @@ class CollectorUpdateSerializer(serializers.Serializer):
     更新采集项序列化
     """
 
-    collector_config_name = serializers.CharField(label=_("采集名称"))
-    collector_config_name_en = serializers.CharField(label=_("采集英文名称"))
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
     target_object_type = serializers.CharField(label=_("目标类型"))
     target_node_type = serializers.CharField(label=_("节点类型"))
     target_nodes = TargetNodeSerializer(label=_("目标节点"), many=True)
@@ -457,10 +462,10 @@ class CollectorEtlFieldsSerializer(serializers.Serializer):
             raise ValidationError(_("时间字段需配置时区、格式"))
 
         if field["field_type"] in ["int", "long"]:
-            if field["option"]["time_format"] not in ["epoch_millis", "epoch_second", "epoch_minute"]:
+            if field["option"]["time_format"] not in ["epoch_millis", "epoch_second", "epoch_minute", "epoch_micros"]:
                 raise ValidationError(_("时间字段类型与格式不匹配"))
         else:
-            if field["option"]["time_format"] in ["epoch_millis", "epoch_second", "epoch_minute"]:
+            if field["option"]["time_format"] in ["epoch_millis", "epoch_second", "epoch_minute", "epoch_micros"]:
                 raise ValidationError(_("时间字段类型与格式不匹配"))
         return True
 

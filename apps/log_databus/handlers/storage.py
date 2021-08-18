@@ -192,9 +192,13 @@ class StorageHandler(object):
             cluster_obj["priority"] = 0
             cluster_obj["bk_biz_id"] = custom_biz_id
             from apps.log_search.handlers.index_set import IndexSetHandler
+
             index_sets = IndexSetHandler.get_index_set_for_storage(cluster_obj["cluster_config"]["cluster_id"])
             cluster_obj["visible_bk_biz"] = [
-                {"bk_biz_id": bk_biz_id, "is_use": index_sets.filter(project_id=projects[bk_biz_id], is_active=True).exists()}
+                {
+                    "bk_biz_id": bk_biz_id,
+                    "is_use": index_sets.filter(project_id=projects[bk_biz_id], is_active=True).exists(),
+                }
                 for bk_biz_id in custom_visible_bk_biz
             ]
             # 处理来源

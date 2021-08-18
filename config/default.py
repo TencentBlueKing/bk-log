@@ -238,7 +238,9 @@ if BKLOG_UDP_LOG:
         },
     }
 
-OLTP_TRACE = os.getenv("BKAPP_OLTP_TRACE", "off") == "on"
+OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
+OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST")
+OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 0))
 # ===============================================================================
 # 项目配置
 # ===============================================================================
@@ -539,7 +541,7 @@ MENUS = [
             {
                 "id": "trace_track",
                 "name": _("全链路追踪"),
-                "feature": "on",
+                "feature": os.environ.get("BKAPP_FEATURE_TRACE", "on"),
                 "icon": "",
                 "keyword": "trace",
                 "children": [
@@ -741,6 +743,14 @@ if REDIS_MODE == "sentinel":
     REDIS_SENTINEL_PASSWORD = os.getenv("BK_BKLOG_REDIS_SENTINEL_MASTER_PASSWORD", "")
 
 # BKLOG 后台QOS配置
+BKLOG_QOS_USE = os.getenv("BKAPP_QOS_USE", "on") == "on"
+BKLOG_QOS_LIMIT_APP = [
+    "bk_monitor",
+    "bk_bkmonitor",
+    "bk_monitorv3",
+    "bk_bkmonitorv3",
+    "bkmonitorv3",
+]
 # 窗口时间 单位分钟
 BKLOG_QOS_LIMIT_WINDOW = int(os.getenv("BK_BKLOG_QOS_LIMIT_WINDOW", 5))
 # 窗口内超时次数

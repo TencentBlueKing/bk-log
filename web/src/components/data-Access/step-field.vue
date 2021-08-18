@@ -41,8 +41,20 @@
             :key="option.collector_config_id"
             :id="option.collector_config_id"
             :name="option.collector_config_name">
-            <span>{{ option.collector_config_name }}</span>
-            <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
+            <div
+              v-if="!(option.permission && option.permission.manage_collection)"
+              class="option-slot-container no-authority"
+              @click.stop>
+              <span class="text">
+                <span>{{ option.collector_config_name }}</span>
+                <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
+              </span>
+              <span class="apply-text" @click="applyProjectAccess(option)">{{ $t('申请权限') }}</span>
+            </div>
+            <div v-else v-bk-overflow-tips class="option-slot-container">
+              <span>{{ option.collector_config_name }}</span>
+              <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
+            </div>
           </bk-option>
         </bk-select>
       </div>
@@ -1261,6 +1273,25 @@ export default {
         this.basicLoading = false;
       }
     },
+    // 采集项列表点击申请采集项目管理权限
+    async applyProjectAccess(item) {
+      this.$el.click(); // 手动关闭下拉
+      try {
+        this.$bkLoading();
+        const res = await this.$store.dispatch('getApplyData', {
+          action_ids: ['manage_collection'],
+          resources: [{
+            type: 'collection',
+            id: item.collector_config_id,
+          }],
+        });
+        window.open(res.data.apply_url);
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        this.$bkLoading.hide();
+      }
+    },
   },
 };
 </script>
@@ -1752,5 +1783,34 @@ export default {
   .json-text-style {
     background-color: #313238;
     color: #c4c6cc;
+  }
+
+  .option-slot-container {
+    padding: 8px 0;
+    min-height: 32px;
+    line-height: 14px;
+
+    &.no-authority {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #c4c6cc;
+      cursor: not-allowed;
+
+      .text {
+        width: calc(100% - 56px);
+      }
+
+      .apply-text {
+        flex-shrink: 0;
+        display: none;
+        color: #3a84ff;
+        cursor: pointer;
+      }
+
+      &:hover .apply-text {
+        display: flex;
+      }
+    }
   }
 </style>

@@ -37,7 +37,11 @@
         :required="true"
         :rules="rules.collector_config_name"
         :property="'collector_config_name'">
-        <bk-input v-model="formData.collector_config_name" maxlength="50"></bk-input>
+        <bk-input
+          v-model="formData.collector_config_name"
+          show-word-limit
+          maxlength="50">
+        </bk-input>
       </bk-form-item>
       <bk-form-item
         :label="$t('dataSource.source_en_name')"
@@ -46,11 +50,12 @@
         :property="'collector_config_name_en'">
         <bk-input
           v-model="formData.collector_config_name_en"
+          show-word-limit
           maxlength="50"
           :disabled="isUpdate && !!(formData.collector_config_name_en)"
-          :placeholder="$t('dataSource.en_name_placeholder')">
+          :placeholder="$t('dataSource.en_name_tips')">
         </bk-input>
-        <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_tips') }}</p>
+        <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
       </bk-form-item>
       <bk-form-item :label="$t('configDetails.remarkExplain')">
         <bk-input

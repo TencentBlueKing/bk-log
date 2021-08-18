@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from rest_framework import serializers
 
 from apps.iam import ActionEnum, ResourceEnum
-from apps.iam.handlers.drf import BusinessActionPermission, insert_permission_field
+from apps.iam.handlers.drf import insert_permission_field, ViewBusinessPermission
 from apps.generic import ModelViewSet
 from apps.log_databus.handlers.clean import CleanTemplateHandler, CleanHandler
 from apps.log_databus.handlers.etl import EtlHandler
@@ -47,7 +47,7 @@ class CleanViewSet(ModelViewSet):
     model = BKDataClean
 
     def get_permissions(self):
-        return [BusinessActionPermission([ActionEnum.MANAGE_CLEAN_CONFIG])]
+        return [ViewBusinessPermission()]
 
     @insert_permission_field(
         id_field=lambda d: d["collector_config_id"],
@@ -181,7 +181,7 @@ class CleanTemplateViewSet(ModelViewSet):
     search_fields = ("name",)
 
     def get_permissions(self):
-        return [BusinessActionPermission([ActionEnum.MANAGE_CLEAN_TEMPLATE_CONFIG])]
+        return [ViewBusinessPermission()]
 
     def get_serializer_class(self, *args, **kwargs):
         action_serializer_map = {

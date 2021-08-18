@@ -202,13 +202,15 @@ class AggsViewAdapter(object):
         terms_data = defaultdict(dict)
 
         for _field in query_data["fields"]:
-            file_agg_result = aggs_result.get(_field)
-            if not file_agg_result:
+            field_agg_result = aggs_result.get(_field)
+            if not field_agg_result:
                 terms_data["aggs"].update({_field: []})
                 terms_data["aggs_items"].update({_field: []})
                 continue
-            terms_data["aggs"].update({_field: file_agg_result})
-            terms_data["aggs_items"].update({_field: list(zip(*file_agg_result))[0]})
+            terms_data["aggs"].update({_field: field_agg_result})
+            terms_data["aggs_items"].update(
+                {_field: list(map(lambda item: item.get("key"), field_agg_result.get("buckets", [])))}
+            )
         return terms_data
 
     def date_histogram(self, index_set_id, query_data: dict):
@@ -235,15 +237,14 @@ class AggsViewAdapter(object):
 
         histogram_dict = {}
         labels = []
-        for _data in histogram_data:
+        for _data in histogram_data.get("buckets", []):
 
             # labels 横坐标时间轴
-            if _data[2] not in labels:
-                labels.append(_data[2])
+            labels.append(_data.get("key_as_string"))
 
             # filed 查询结果
-            for _filed in _data[3]:
-                _filed_key = _filed[0]
+            for field in agg_fields.keys():
+                _filed_key = field
                 filed_data_dict = histogram_dict.get(_filed_key, {}).get("datasets", {})
 
                 # 获取需要返回的指标key,如：doc_count, avg_key
@@ -253,7 +254,8 @@ class AggsViewAdapter(object):
                     metric_key = _filed_key
 
                 # doc: key, count
-                for _doc in _filed[1]:
+                buckets = _data.get(field, {}).get("buckets", [])
+                for _doc in buckets:
 
                     # 获取指标值和doc_count
                     if metric_key == "doc_count":
@@ -267,11 +269,11 @@ class AggsViewAdapter(object):
                         filed_data_dict.update(
                             {
                                 doc_key: {
-                                    "label": doc_key,
+                                    "label": _doc.get("key"),
                                     "data": [
                                         {
                                             "label": timestamp_to_timeformat(
-                                                _data[0], time_multiplicator=DTEVENTTIMESTAMP_MULTIPLICATOR
+                                                _data.get("key"), time_multiplicator=DTEVENTTIMESTAMP_MULTIPLICATOR
                                             ),
                                             "value": doc_value,
                                             "count": doc_count,
@@ -284,7 +286,7 @@ class AggsViewAdapter(object):
                         filed_data_dict[doc_key]["data"].append(
                             {
                                 "label": timestamp_to_timeformat(
-                                    _data[0], time_multiplicator=DTEVENTTIMESTAMP_MULTIPLICATOR
+                                    _data.get("key"), time_multiplicator=DTEVENTTIMESTAMP_MULTIPLICATOR
                                 ),
                                 "value": doc_value,
                                 "count": doc_count,
