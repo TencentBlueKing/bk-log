@@ -124,7 +124,7 @@ class ExplorerHandler(object):
             ip_status = step_result["ip_status"]
             if ip_status == constants.JOB_SUCCESS_STATUS:
                 return step_result
-            ip_status_list.append(ip_status)
+            ip_status_list.append(str(ip_status))
         raise exceptions.ExplorerException(_("文件预览异常({})".format(",".join(ip_status_list))))
 
     def job_log_to_file_list(self, ip_logs, allowed_dir_file_list):

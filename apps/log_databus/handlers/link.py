@@ -140,15 +140,20 @@ class DataLinkHandler(object):
         """
         if cluster_type == "transfer":
             cluster_res = TransferApi.list_transfer_cluster()
-            res = [
-                {
-                    "cluster_id": t.get("cluster_id", ""),
-                    "cluster_name": t.get("cluster_id", ""),
-                    "domain_name": t.get("domain_name", ""),
-                    "port": t.get("port", ""),
-                }
-                for t in cluster_res
-            ]
+            cluster_record = set()
+            res = []
+            for cluster in cluster_res:
+                cluster_id = cluster.get("cluster_id", "")
+                if cluster_id not in cluster_record:
+                    res.append(
+                        {
+                            "cluster_id": cluster_id,
+                            "cluster_name": cluster_id,
+                            "domain_name": cluster.get("domain_name", ""),
+                            "port": cluster.get("port", ""),
+                        }
+                    )
+                    cluster_record.add(cluster_id)
             return res
         if cluster_type == "kafka":
             cluster_param = KAFKA_CLUSTER_TYPE

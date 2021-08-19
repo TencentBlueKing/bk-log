@@ -9,6 +9,14 @@
 ### 修复
 - 【修复】采集-修复采集项调整清洗时间字段显示异常的问题
 - 【修复】后台-修复升级redis库导致qos限流异常的问题
+- 【修复】清洗-修复清洗权限未包含原本采集项权限的问题
+- 【修复】提取-修复打包脚本获取不到LAN_IP直接报错问题 [#50](https://github.com/TencentBlueKing/bk-log/issues/50)
+- 【修复】清洗-当时间字段类型为epoch_micros提交报错 [#169](https://github.com/TencentBlueKing/bk-log/pull/169)
+- 【修复】清洗-时间格式类型带有000而不是SSS导致解析失败 [#169](https://github.com/TencentBlueKing/bk-log/pull/169)
+- 【修复】提取-job平台报错无法抛出异常处理报错 [#172](https://github.com/TencentBlueKing/bk-log/pull/172)
 ### 优化
 - 【优化】管理端-管理端页面功能改版
-- 【新增】管理端-支持通过基础计算平台增强清洗入库能力
+- 【优化】管理端-支持通过基础计算平台增强清洗入库能力
+- 【优化】公共-修改open调用默认encoding为utf8以避免open异常问题
+- 【优化】采集链路配置-transfer集群去重
+- 【优化】检索-去除不必要的聚合处理代码 [#162](https://github.com/TencentBlueKing/bk-log/pull/162)

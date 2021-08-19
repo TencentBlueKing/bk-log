@@ -55,7 +55,7 @@ class ApiConfig(AppConfig):
         from apps.log_search.models import GlobalConfig
 
         try:
-            with open(os.path.join(settings.PROJECT_ROOT, "VERSION")) as fd:
+            with open(os.path.join(settings.PROJECT_ROOT, "VERSION"), encoding="utf-8") as fd:
                 version = fd.read().strip()
         except Exception:  # pylint: disable=broad-except
             version = ""
