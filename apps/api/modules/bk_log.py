@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.base import DataAPI
@@ -34,6 +35,7 @@ class _BkLogApi:
             module=self.MODULE,
             description=_("查询数据"),
             before_request=add_esb_info_before_request,
+            default_timeout=settings.ES_QUERY_TIMEOUT,
         )
 
         self.mapping = DataAPI(
