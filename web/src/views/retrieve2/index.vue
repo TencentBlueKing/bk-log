@@ -400,6 +400,8 @@ export default {
       isHideAutoQueryTips: localStorage.getItem('hideAutoQueryTips') === 'true',
       showConditionPopperContent: false,
       isPollingStart: false,
+      startTimeStamp: 0,
+      endTimeStamp: 0,
       originLogList: [], // 当前搜索结果的原始日志
       isNextTime: false,
       timer: null,
@@ -1123,12 +1125,14 @@ export default {
       if (this.finishPolling || this.requesting) return;
 
       this.requesting = true;
-      const { startTimeStamp, endTimeStamp } = this.getRealTimeRange();
-      // 请求间隔时间
-      this.requestInterval = this.isPollingStart ? this.requestInterval
-        : this.handleRequestSplit(startTimeStamp, endTimeStamp);
 
       if (!this.isPollingStart) {
+        const { startTimeStamp, endTimeStamp } = this.getRealTimeRange();
+        this.startTimeStamp = startTimeStamp;
+        this.endTimeStamp = endTimeStamp;
+        // 请求间隔时间
+        this.requestInterval = this.isPollingStart ? this.requestInterval
+          : this.handleRequestSplit(startTimeStamp, endTimeStamp);
         // 获取坐标分片间隔
         this.handleIntervalSplit(startTimeStamp, endTimeStamp);
 
@@ -1144,10 +1148,10 @@ export default {
         this.pollingEndTime = this.pollingStartTime;
         this.pollingStartTime = this.pollingStartTime - this.requestInterval;
 
-        if (this.pollingStartTime < Date.parse(this.retrieveParams.start_time)) {
+        if (this.pollingStartTime < this.startTimeStamp) {
           // 轮询结束
           // this.finishPolling = true;
-          this.pollingStartTime = Date.parse(this.retrieveParams.start_time);
+          this.pollingStartTime = this.startTimeStamp;
         }
       }
 
@@ -1169,8 +1173,7 @@ export default {
           },
         });
 
-        if (this.pollingStartTime === startTimeStamp
-        || this.pollingStartTime < Date.parse(this.retrieveParams.start_time)
+        if (this.pollingStartTime <= this.startTimeStamp
         || this.requestInterval === 0) { // 分片时间已结束
           this.finishPolling = true;
         }
@@ -1198,6 +1201,9 @@ export default {
               this.requestTable();
             }, 500);
           }
+        } else {
+          clearTimeout(this.timer);
+          this.timer = null;
         }
       }
     },
