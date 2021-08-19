@@ -44,7 +44,7 @@ class MetricCollector(object):
                         metric_method["namespace"], int((time.time() - begin_time) * 1000)
                     ),
                 )
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.exception(
                     "[statistics_data] collect metric->[{}] failed: {}".format(metric_method["namespace"], e)
                 )

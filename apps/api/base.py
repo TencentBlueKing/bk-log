@@ -174,10 +174,8 @@ class DataAPI(object):
 
     def get_error_message(self, error_message):
         url_path = ""
-        try:
+        with ignored(Exception):
             url_path = parse.urlparse(parse.unquote(self.url)).path
-        except:
-            pass
 
         message = _("[{module}-API]{error_message}").format(module=self.module, error_message=error_message)
         logger.exception(message + f" url => {self.url}")
@@ -217,7 +215,7 @@ class DataAPI(object):
                 raw_response = self._send(params, timeout, request_id, request_cookies)
             except ReadTimeout as e:
                 raise DataAPIException(self, self.get_error_message(str(e)))
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 raise DataAPIException(self, self.get_error_message(str(e)))
 
             # http层面的处理结果
@@ -233,7 +231,7 @@ class DataAPI(object):
             # 结果层面的处理结果
             try:
                 response_result = raw_response.json()
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 error_message = "data api response not json format url->[{}] content->[{}]".format(
                     self.url,
                     raw_response.text,
@@ -385,7 +383,7 @@ class DataAPI(object):
                 local_request = None
                 try:
                     local_request = get_request()
-                except Exception:
+                except Exception:  # pylint: disable=broad-except
                     pass
 
                 if local_request and local_request.COOKIES:
@@ -431,7 +429,13 @@ class DataAPI(object):
         if cache.get(cache_key):
             return cache.get(cache_key)
 
-    def bulk_request(self, params=None, get_data=lambda x: x["info"], get_count=lambda x: x["count"], limit=1000):
+    def bulk_request(
+        self,
+        params=None,
+        get_data=lambda x: x["info"],
+        get_count=lambda x: x["count"],
+        limit=settings.BULK_REQUEST_LIMIT,
+    ):
         """
         并发请求接口，用于需要分页多次请求的情况
         :param params: 请求参数
@@ -513,7 +517,7 @@ class DRFActionAPI(object):
         self.url_path = url_path
         self.method = method
 
-        for k, v in list(kwargs.items()):
+        for k in list(kwargs.keys()):
             if k not in DRF_DATAAPI_CONFIG:
                 raise Exception(
                     "Not support {k} config, SUPPORT_DATAAPI_CONFIG:{conf}".format(k=k, conf=DRF_DATAAPI_CONFIG)
@@ -571,7 +575,7 @@ class DataDRFAPISet(object):
         self.module = module
         self.primary_key = primary_key
 
-        for k, v in list(kwargs.items()):
+        for k in list(kwargs.keys()):
             if k not in DRF_DATAAPI_CONFIG:
                 raise Exception(
                     "Not support {k} config, SUPPORT_DATAAPI_CONFIG:{conf}".format(k=k, conf=DRF_DATAAPI_CONFIG)
@@ -646,7 +650,7 @@ class BaseApi(object):
         if isinstance(attr, ProxyDataAPI):
             # 代理类的DataApi，各个版本需要重载有差异的方法
 
-            module_path, module_name = self.__module__.rsplit(".", 1)
+            module_path, module_name = self.__module__.rsplit(".", 1)  # pylint: disable=unused-variable
             class_name = self.__class__.__name__
 
             module_str = "apps.api.sites.{run_ver}.{mod}.{api}".format(
@@ -665,7 +669,9 @@ class PassThroughAPI(DataAPI):
     直接透传API
     """
 
-    def __init__(self, module, method, url_prefix, sub_url, supported_api=list()):
+    def __init__(
+        self, module, method, url_prefix, sub_url, supported_api=list()
+    ):  # pylint: disable=dangerous-default-value  # noqa
         is_supported = False
         for d_api in supported_api:
             if d_api["method"] == method and re.match(d_api.get("url_regex"), sub_url):

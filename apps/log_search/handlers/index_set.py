@@ -1013,7 +1013,7 @@ class LogIndexSetDataHandler(object):
         """
         往索引集添加索引
         """
-        obj, created = LogIndexSetData.objects.get_or_create(
+        obj, created = LogIndexSetData.objects.get_or_create(  # pylint: disable=unused-variable
             defaults={
                 "time_field": self.time_field,
                 "result_table_name": self.result_table_name,

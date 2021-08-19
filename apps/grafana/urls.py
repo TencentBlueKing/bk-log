@@ -19,11 +19,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from __future__ import absolute_import, unicode_literals
 
-from apps.grafana.views import GrafanaProxyView
-from bk_dataview.grafana.views import SwitchOrgView, StaticView
 from django.conf.urls import url, include
 from rest_framework import routers
-
+from apps.grafana.views import GrafanaProxyView
+from bk_dataview.grafana.views import SwitchOrgView, StaticView
 from apps.grafana import views
 
 router = routers.DefaultRouter(trailing_slash=True)

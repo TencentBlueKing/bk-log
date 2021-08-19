@@ -25,7 +25,7 @@ from typing import List
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
-
+from pipeline.service import task_service
 from apps.utils.log import logger
 from apps.models import (
     OperateRecordModel,
@@ -36,7 +36,6 @@ from apps.models import (
     EncryptionField,
 )
 from apps.log_extract.constants import ExtractLinkType, PIPELINE_TIME_FORMAT
-from pipeline.service import task_service
 
 
 class Strategies(SoftDeleteModel):
@@ -135,7 +134,7 @@ class Tasks(OperateRecordModel):
     def total_elapsed(self):
         try:
             task_status = task_service.get_state(self.pipeline_id)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             # 存在多主机，单主机日志下载的情况，因此有可能有些pipeline节点未执行
             logger.info("pipeline任务不存在，pipeline_id=>[{}]".format(self.pipeline_id))
             return "0s"

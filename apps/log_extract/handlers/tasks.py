@@ -26,7 +26,8 @@ from rest_framework.response import Response
 
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
-
+from pipeline.engine.exceptions import InvalidOperationException
+from pipeline.service import task_service
 from apps.utils.log import logger
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import ActionEnum, Permission
@@ -37,8 +38,6 @@ from apps.log_extract.handlers.extract import ExtractLinkBase
 from apps.log_extract.models import Tasks
 from apps.log_extract.serializers import PollingResultSerializer
 from apps.utils.local import get_request_username
-from pipeline.engine.exceptions import InvalidOperationException
-from pipeline.service import task_service
 from apps.decorators import user_operation_record
 
 
@@ -191,7 +190,7 @@ class TasksHandler(object):
             return Response(task)
         try:
             task_status = task_service.get_state(pipeline_id)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             # 存在多主机，单主机日志下载的情况，因此有可能有些pipeline节点未执行
             logger.info("pipeline任务不存在，pipeline_id=>[{}]".format(pipeline_id))
             task["task_step_status"] = []

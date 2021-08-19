@@ -178,14 +178,14 @@
               <template slot-scope="props">
                 <template v-if="isPreviewMode">
                   <div class="field-date field-date-disable">
-                    <i :class="`log-font logfont-${ props.row.is_time ? 'field-time-check' : 'field-time'}`"></i>
+                    <i :class="{ 'log-icon': true, 'icon-date-picker': true, active: props.row.is_time }"></i>
                   </div>
                 </template>
                 <template v-else>
                   <div
                     v-if="props.row.is_delete"
                     :class="['field-date field-date-disable', { 'field-date-active': props.row.is_time }]">
-                    <i :class="`log-font logfont-${ props.row.is_time ? 'field-time-check' : 'field-time'}`"></i>
+                    <i :class="{ 'log-icon': true, 'icon-date-picker': true, active: props.row.is_time }"></i>
                   </div>
                   <template v-else>
                     <bk-popover
@@ -197,7 +197,7 @@
                       trigger="click"
                       :arrow="false">
                       <div class="field-date field-date-active">
-                        <i class="log-font logfont-field-time-check"></i>
+                        <i class="log-icon icon-date-picker"></i>
                       </div>
                       <div slot="content">
                         <ul class="field-dropdown-list" slot="dropdown-content">
@@ -219,10 +219,10 @@
                            class="field-date"
                            v-bk-tooltips.right="$t('dataManage.only_data_time')"
                            @click.stop="setDateFormat(props.row)">
-                        <i class="log-font logfont-field-time"></i>
+                        <i class="log-icon icon-date-picker"></i>
                       </div>
                       <div v-else class="field-date" @click.stop="setDateFormat(props.row)">
-                        <i class="log-font logfont-field-time"></i>
+                        <i class="log-icon icon-date-picker"></i>
                       </div>
                     </template>
                   </template>
@@ -974,11 +974,20 @@ export default {
 
       &.field-date-active {
         color: #3a84ff;
+        .icon-date-picker {
+          color: #3a84ff;
+        }
       }
 
       &.field-date-disable {
         color: #dcdee5;
         cursor: not-allowed;
+      }
+    }
+    .icon-date-picker {
+      color:#979ba5;
+      &.active {
+        color: #3a84ff;
       }
     }
   }

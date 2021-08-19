@@ -1423,44 +1423,4 @@ export default {
     background-color: #313238;
     color: #c4c6cc;
   }
-
-  .locker-style {
-    section {
-      background-color: #313238 !important;
-
-      > div:nth-child(1) {
-        height: 50px;
-
-        > div:nth-child(1) {
-          height: 50px;
-          line-height: 50px;
-        }
-
-        > div:nth-child(2) {
-          height: 50px;
-          line-height: 50px;
-          color: #737987;
-          font-size: 14px;
-
-          > div {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            span {
-              margin-right: 20px;
-              display: inline-block;
-              width: 68px;
-              height: 32px;
-              border: 1px solid #c4c6cc;
-              line-height: 32px;
-              text-align: center;
-              color: #737987;
-              cursor: pointer;
-            }
-          }
-        }
-      }
-    }
-  }
 </style>

@@ -17,8 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.conf import settings
 
+from apps.feature_toggle.plugins.constants import ITSM_SERVICE_ID
 from apps.utils.log import logger
 from apps.feature_toggle.plugins.base import FeatureToggleBase
 
@@ -31,8 +31,8 @@ class FeatureCollectorITSM(FeatureToggleBase):
 
             try:
                 itsm_service_id = ItsmHandler().get_log_itsm_service_id()
-                settings.COLLECTOR_ITSM_SERVICE_ID = itsm_service_id
-                logger.info(f"[BKLOG] itsm service id is {settings.COLLECTOR_ITSM_SERVICE_ID}")
+                param["feature_config"] = {ITSM_SERVICE_ID: itsm_service_id}
+                logger.info(f"[BKLOG] itsm service id is {itsm_service_id}")
             except Exception as e:  # pylint: disable=broad-except
                 logger.exception("[BKLOG] get itsm service fail => %s", e)
                 param["status"] = "off"

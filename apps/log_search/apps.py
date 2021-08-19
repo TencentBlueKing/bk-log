@@ -23,11 +23,9 @@ from django.apps.config import AppConfig
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 
-from apps.utils.log import logger
-
 try:
     from blueapps.utils.esbclient import get_client_by_user
-except Exception:
+except Exception:  # pylint: disable=broad-except
     pass
 
 
@@ -59,7 +57,7 @@ class ApiConfig(AppConfig):
         try:
             with open(os.path.join(settings.PROJECT_ROOT, "VERSION")) as fd:
                 version = fd.read().strip()
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             version = ""
 
         if settings.BKAPP_IS_BKLOG_API:
@@ -80,7 +78,7 @@ class ApiConfig(AppConfig):
             # 更新版本
             config.configs = version
             config.save()
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             pass
 
     def check_feature(self):

@@ -23,9 +23,8 @@ from contextlib import contextmanager
 
 from blueapps.utils.unique import uniqid
 from django.conf import settings
-
-from apps.exceptions import LockError
 from django.core.cache import cache
+from apps.exceptions import LockError
 
 
 class BaseLock(object):

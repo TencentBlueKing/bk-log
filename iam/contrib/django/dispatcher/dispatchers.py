@@ -14,7 +14,7 @@ specific language governing permissions and limitations under the License.
 
 try:
     import ujson as json
-except Exception:
+except Exception:  # pylint: disable=broad-except
     import json
 
 import logging
@@ -84,7 +84,7 @@ class DjangoBasicResourceApiDispatcher(ResourceApiDispatcher):
         # load json data
         try:
             data = json.loads(request.body)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             logger.error("resource request({}) failed with invalid body: {}".format(request_id, request.body))
             return fail_response(400, "reqeust body is not a valid json", request_id)
 
@@ -117,7 +117,7 @@ class DjangoBasicResourceApiDispatcher(ResourceApiDispatcher):
             return fail_response(422, str(e), request_id)
         except KeywordTooShortException as e:
             return fail_response(406, str(e), request_id)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception("resource request({}) failed with exception: {}".format(request_id, e))
             return fail_response(500, str(e), request_id)
 

@@ -478,7 +478,7 @@ class LogIndexSet(SoftDeleteModel):
             search_handler_esquery = SearchHandler(self.index_set_id, {}, pre_check_enable=pre_check_enable)
             fields = search_handler_esquery.fields()
             self.fields_snapshot = fields
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             # 如果字段获取失败，则不修改原来的值
             self.fields_snapshot = self.fields_snapshot or fields
             raise e

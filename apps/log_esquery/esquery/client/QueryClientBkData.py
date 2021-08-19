@@ -56,7 +56,7 @@ class QueryClientBkData(QueryClientTemplate):
             return result
         except ApiResultError as e:
             raise EsClientSearchException(e.message, code=e.code)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)
             raise EsClientSearchException(
                 EsClientSearchException.MESSAGE.format(error=e),

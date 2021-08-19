@@ -20,7 +20,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from django.conf import settings
 from django.conf.urls import url, include
 from rest_framework import routers
-
+from blueapps.account.decorators import login_exempt
 from apps.iam import Permission
 from apps.iam.views import meta
 from apps.iam.views.resources import (
@@ -28,7 +28,6 @@ from apps.iam.views.resources import (
     EsSourceResourceProvider,
     IndicesResourceProvider,
 )
-from blueapps.account.decorators import login_exempt
 from iam.contrib.django.dispatcher import DjangoBasicResourceApiDispatcher
 
 dispatcher = DjangoBasicResourceApiDispatcher(Permission.get_iam_client(), settings.BK_IAM_SYSTEM_ID)

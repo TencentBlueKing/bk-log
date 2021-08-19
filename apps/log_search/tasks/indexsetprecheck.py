@@ -19,11 +19,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from typing import List, Dict
+from celery.task import periodic_task
+from celery.schedules import crontab
 from apps.utils.log import logger
 from apps.log_search.models import LogIndexSetData, LogIndexSet, Scenario
 from apps.api import BkDataMetaApi, TransferApi
-from celery.task import periodic_task
-from celery.schedules import crontab
 
 
 class IndexSetPreCheckIns(object):
@@ -83,7 +83,7 @@ class IndexSetPreCheckIns(object):
     @classmethod
     def _analyse_need_to_fetch_biz(cls, need_to_check_index_set) -> List:
         need_to_fetch_biz_scenario_list: list = []
-        for k, v in need_to_check_index_set.items():
+        for v in need_to_check_index_set.values():
             detail_list: List = v
             for item in detail_list:
                 bk_biz_id: int = item.get("bk_biz_id")
@@ -148,8 +148,10 @@ class IndexSetPreCheckIns(object):
 
     # 找到对应的field
     @classmethod
-    def _mark_field_for_need_to_check_index_set(cls, need_to_check_index_set: dict, schema_dict_template) -> dict:  # pylint: disable=function-name-too-long
-        for k, v in need_to_check_index_set.items():
+    def _mark_field_for_need_to_check_index_set(
+        cls, need_to_check_index_set: dict, schema_dict_template
+    ) -> dict:  # pylint: disable=function-name-too-long
+        for v in need_to_check_index_set.values():
             # index_set_id: int = k
             need_to_check_list: list = v
             for item in need_to_check_list:
@@ -235,7 +237,7 @@ class IndexSetPreCheckIns(object):
             )
 
 
-@periodic_task(run_every=crontab(hour="*/12"), queue="pre_check_index_set")
+@periodic_task(run_every=crontab(hour="*/12"))
 def index_set_pre_check():
     IndexSetPreCheckIns.pre_check_indexset()
     return None

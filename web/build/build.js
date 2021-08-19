@@ -22,7 +22,7 @@
 
 /**
  * @file build
- * @author v_adongtang <v_adongtang@tentcent.com>
+ * @author <>
  */
 
 import ora from 'ora';

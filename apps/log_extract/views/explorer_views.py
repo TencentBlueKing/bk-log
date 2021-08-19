@@ -17,11 +17,9 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from apps.utils.drf import list_route
-
-from apps.generic import APIViewSet
 from rest_framework.response import Response
-
+from apps.utils.drf import list_route
+from apps.generic import APIViewSet
 from apps.log_extract.handlers.explorer import ExplorerHandler
 from apps.log_extract import serializers
 

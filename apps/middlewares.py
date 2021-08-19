@@ -24,7 +24,6 @@ import json
 import os
 import traceback
 
-from apps.utils.log import logger
 from blueapps.core.exceptions.base import BlueException
 
 try:
@@ -42,6 +41,7 @@ from django.http import HttpResponse, JsonResponse
 from django.utils.translation import ugettext as _
 
 from apps.exceptions import BaseException
+from apps.utils.log import logger
 
 
 class AccessorSignal(Signal):

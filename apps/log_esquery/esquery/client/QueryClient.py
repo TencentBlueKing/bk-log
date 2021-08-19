@@ -18,8 +18,8 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from apps.log_search.models import Scenario
 from django.utils.module_loading import import_string
+from apps.log_search.models import Scenario
 
 
 class QueryClient(object):

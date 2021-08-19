@@ -1,13 +1,9 @@
 name: Test
 on:
   push:
-    branches: [master, stag]
-    paths:
-      - '**.py'
+    branches: [master, stag, feature*]
   pull_request:
-    branches: [master, stag]
-    paths:
-      - '**.py'
+    branches: [master, stag, feature*]
   schedule:
     - cron: "0 10 * * *"
 jobs:
@@ -31,4 +27,4 @@ jobs:
         pip uninstall pycrypto -y
         pip uninstall pycryptodome -y
         pip install pycryptodome
-        python run manage.py test apps.tests
+        python manage.py test apps.tests

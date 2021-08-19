@@ -150,7 +150,7 @@ class AsyncTaskAdmin(AppModelAdmin):
 
 
 @admin.register(EmailTemplate)
-class EmailTemplate(AppModelAdmin):
+class EmailTemplateAdmin(AppModelAdmin):
     list_display = ["name", "path"]
 
     search_fields = ["name"]

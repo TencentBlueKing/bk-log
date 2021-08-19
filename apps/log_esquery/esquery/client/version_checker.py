@@ -18,10 +18,10 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+import json
 import requests
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
-import json
 
 from apps.log_esquery.exceptions import UnKnowEsVersionException
 from apps.utils.log import logger

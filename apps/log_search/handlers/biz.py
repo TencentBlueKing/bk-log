@@ -139,7 +139,7 @@ class BizHandler(APIModel):
         params = {"bk_biz_id": self.bk_biz_id, "fields": CMDB_SET_INFO_FIELDS}
         try:
             bk_set_info = CCApi.search_set.bulk_request(params)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return
 
         bk_set_info = array_hash(bk_set_info, "bk_set_id", "bk_chn_name")

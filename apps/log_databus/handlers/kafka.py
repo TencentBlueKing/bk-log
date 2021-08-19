@@ -45,7 +45,7 @@ class KafkaConsumerHandle(object):
             self.consumer = KafkaConsumer(
                 self.topic, bootstrap_servers=self.kafka_server, request_timeout_ms=1000, consumer_timeout_ms=1000
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise KafkaConnectException(KafkaConnectException.MESSAGE.format(error=e))
 
     def get_latest_log(self):
@@ -80,7 +80,7 @@ class KafkaConsumerHandle(object):
             for _msg in self.consumer:
                 try:
                     log_content.insert(0, json.loads(_msg.value.decode()))
-                except Exception:
+                except Exception:  # pylint: disable=broad-except
                     pass
                 if len(log_content) == message_count:
                     self.consumer.close()

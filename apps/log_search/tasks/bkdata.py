@@ -27,7 +27,7 @@ from apps.utils.bk_data_auth import BkDataAuthHandler
 from apps.log_search.models import LogIndexSetData, LogIndexSet, Scenario
 
 
-@periodic_task(run_every=crontab(minute="*/30"), queue="sync_auth_status")
+@periodic_task(run_every=crontab(minute="*/30"))
 def sync_auth_status():
     """
     数据平台索引集申请单据状态同步
