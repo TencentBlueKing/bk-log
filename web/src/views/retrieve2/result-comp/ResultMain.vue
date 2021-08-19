@@ -428,6 +428,7 @@ export default {
       }
     },
     tableData(data) {
+      this.finishPolling = data && data.finishPolling;
       if (data?.list?.length) {
         if (this.isInit) {
           // 根据接口 data.fields ==> item.max_length 设置各个字段的宽度比例
@@ -441,8 +442,6 @@ export default {
           this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
         });
         this.isPageOver = false;
-      } else if (data) { // 请求所有分片时间结束
-        this.finishPolling = data.finishPolling;
       }
     },
   },
