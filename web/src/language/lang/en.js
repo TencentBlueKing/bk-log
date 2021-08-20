@@ -637,6 +637,8 @@ export default {
   名称: 'Cluster name',
   地址: 'Domain name',
   端口: 'Port',
+  来源: 'Source',
+  可见范围: 'Visible range',
   用户名: 'Username',
   密码: 'Password',
   连通性测试: 'Connectivity test',
@@ -665,6 +667,8 @@ export default {
   包含属性: 'Nodes that contain the attribute',
   的节点列表: '',
   保存成功: 'Saved successfully',
+  确认删除当前ES集群: 'Confirm to delete this item?',
+  inUseProjectTip: 'The service has been collected and used, and cannot be unavailable',
   // 告警策略
   monitors: {
     allLevel: 'All Alarm Levels',

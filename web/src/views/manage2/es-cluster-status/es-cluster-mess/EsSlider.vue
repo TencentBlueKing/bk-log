@@ -36,10 +36,30 @@
           :model="formData"
           :label-width="150"
           :rules="basicRules"
+          form-type="vertical"
           ref="validateForm"
           class="king-form">
           <bk-form-item :label="$t('名称')" required property="cluster_name">
             <bk-input v-model="formData.cluster_name" maxlength="50" :readonly="isEdit"></bk-input>
+          </bk-form-item>
+          <bk-form-item :label="$t('来源')" required property="source">
+            <div class="source-item">
+              <bk-select style="width:154px;margin-right:10px;"></bk-select>
+              <bk-input v-model="formData.cluster_name" maxlength="50" :readonly="isEdit"></bk-input>
+            </div>
+          </bk-form-item>
+          <bk-form-item :label="$t('可见范围')" required property="visible_range">
+            <div class="selected-tag">
+              <bk-tag class="tag-icon is-active" closable>业务名称1</bk-tag>
+              <bk-tag class="tag-icon is-normal" closable>业务名称2</bk-tag>
+              <bk-tag
+                class="tag-icon is-active"
+                closable
+                v-bk-tooltips="inUseProjectPopover">
+                业务名称3
+              </bk-tag>
+            </div>
+            <bk-select></bk-select>
           </bk-form-item>
           <bk-form-item :label="$t('地址')" required property="domain_name">
             <bk-input v-model="formData.domain_name" :readonly="isEdit"></bk-input>
@@ -85,11 +105,14 @@
           <template v-if="connectResult === 'success'">
             <bk-form-item :label="$t('冷热集群设置')">
               <div class="form-flex-container">
-                <bk-switcher v-model="formData.enable_hot_warm"
-                             theme="primary" :disabled="isDisableHotSetting"></bk-switcher>
+                <bk-switcher
+                  v-model="formData.enable_hot_warm"
+                  theme="primary"
+                  size="large"
+                  :disabled="isDisableHotSetting"></bk-switcher>
                 <template v-if="isDisableHotSetting && !connectLoading">
-                  <span class="bk-icon icon-exclamation-circle-shape"></span>
-                  <span>{{ $t('没有获取到正确的标签，') }}</span>
+                  <span class="bk-icon icon-info"></span>
+                  <span style="font-size:12px;">{{ $t('没有获取到正确的标签，') }}</span>
                   <a :href="configDocUrl" target="_blank" class="button-text">{{ $t('查看具体的配置方法') }}</a>
                 </template>
               </div>
@@ -98,9 +121,12 @@
               <div class="form-flex-container">
                 <bk-select v-model="selectedHotId" style="width: 300px;" @change="handleHotSelected">
                   <template v-for="option in hotColdAttrSet">
-                    <bk-option :key="option.computedId" :id="option.computedId" :disabled="option.isSelected"
-                               :name="`${option.computedName}(${option.computedCounts})`"
-                    ></bk-option>
+                    <bk-option
+                      :key="option.computedId"
+                      :id="option.computedId"
+                      :disabled="option.isSelected"
+                      :name="`${option.computedName}(${option.computedCounts})`">
+                    </bk-option>
                   </template>
                 </bk-select>
                 <div
@@ -115,8 +141,12 @@
               <div class="form-flex-container">
                 <bk-select v-model="selectedColdId" style="width: 300px;" @change="handleColdSelected">
                   <template v-for="option in hotColdAttrSet">
-                    <bk-option :key="option.computedId" :id="option.computedId" :disabled="option.isSelected"
-                               :name="`${option.computedName}(${option.computedCounts})`"></bk-option>
+                    <bk-option
+                      :key="option.computedId"
+                      :id="option.computedId"
+                      :disabled="option.isSelected"
+                      :name="`${option.computedName}(${option.computedCounts})`">
+                    </bk-option>
                   </template>
                 </bk-select>
                 <div
@@ -128,9 +158,20 @@
               </div>
             </bk-form-item>
           </template>
+          <bk-form-item style="margin-top:40px;">
+            <bk-button
+              theme="primary"
+              class="king-button mr10"
+              :loading="confirmLoading"
+              :disabled="connectResult !== 'success' || invalidHotSetting"
+              @click.stop.prevent="handleConfirm">
+              {{ $t('提交') }}
+            </bk-button>
+            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+          </bk-form-item>
         </bk-form>
       </div>
-      <div slot="footer" class="king-slider-footer">
+      <!-- <div slot="footer" class="king-slider-footer">
         <bk-button
           theme="primary" class="king-button mr20"
           :loading="confirmLoading"
@@ -138,7 +179,7 @@
           @click.stop.prevent="handleConfirm">{{ $t('确认') }}
         </bk-button>
         <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
-      </div>
+      </div> -->
     </bk-sideslider>
     <!-- 查看实例列表弹窗 -->
     <es-dialog
@@ -229,6 +270,12 @@ export default {
     // 标签数量不足，禁止开启冷热设置
     isDisableHotSetting() {
       return this.hotColdAttrSet.length < 2;
+    },
+    inUseProjectPopover() {
+      return {
+        theme: 'light',
+        content: this.$t('inUseProjectTip'),
+      };
     },
   },
   watch: {
@@ -433,25 +480,54 @@ export default {
       min-height: 394px;
 
       .king-form {
-        padding: 30px 36px 20px 0;
+        padding: 16px 140px 36px 36px;
 
         .form-flex-container {
           display: flex;
           align-items: center;
-          height: 32px;
-          font-size: 12px;
+          // height: 32px;
+          // font-size: 12px;
           color: #63656e;
 
-          .icon-exclamation-circle-shape {
-            margin: 0 8px;
+          .icon-info {
+            margin: 0 8px 0 24px;
             font-size: 14px;
-            color: #ff9c01;
+            color: #3a84ff;
           }
 
           .button-text {
+            font-size: 12px;
             .icon-eye {
               margin: 0 6px 0 16px;
             }
+          }
+        }
+        .bk-form-item {
+          margin-top: 18px;
+        }
+        .source-item {
+          display: flex;
+        }
+        .selected-tag {
+          .bk-tag {
+            position: relative;
+            margin: 0 10px 10px 0;
+            padding-left: 18px;
+          }
+          .tag-icon::before {
+            position: absolute;
+            top: 9px;
+            left: 8px;
+            content: '';
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+          }
+          .is-active::before {
+            background-color: #45e35f;
+          }
+          .is-normal::before {
+            background-color: #699df4;
           }
         }
       }
@@ -473,6 +549,7 @@ export default {
     }
 
     .test-container {
+      margin-top: 10px;
       font-size: 14px;
       color: #63656e;
       display: flex;
