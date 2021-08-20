@@ -490,7 +490,7 @@ export default {
         ],
         time_zone: [
           {
-            min: 1,
+            required: true,
             trigger: 'change',
           },
         ],
