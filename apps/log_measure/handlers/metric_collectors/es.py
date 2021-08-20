@@ -949,7 +949,7 @@ def process_pending_tasks_data(metrics, pending_tasks_url, get, base_dimensions)
 
 
 def get_index_metrics(metrics, get, version, base_dimensions):
-    index_resp = get("_cat/indices?format=json&bytes=b")
+    index_resp = get("_cat/indices?bytes=b")
     if not index_resp:
         return
     index_stats_metrics = index_stats_for_version(version)
@@ -998,7 +998,7 @@ def process_cat_allocation_data(metrics, get, version, base_dimensions):
         )
         return
     logger.debug("Collecting cat allocation metrics")
-    data = get("_cat/allocation?format=json&bytes=b")
+    data = get("_cat/allocation?bytes=b")
     if not data:
         return
     data_to_collect = {"disk.indices", "disk.used", "disk.avail", "disk.total", "disk.percent", "shards"}
