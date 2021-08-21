@@ -21,7 +21,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from django.conf import settings
 from django.core.cache import cache
 
-from apps.feature_toggle.constants import FEATURE_TOGGLE_PREFIX_CACHE, FEATURE_TOGGLE_CACHE_EXPIRED, FEATURE_TOGGLE_LIST_CACHE
+from apps.feature_toggle.constants import  FEATURE_TOGGLE_LIST_CACHE
 from apps.feature_toggle.plugins.base import FeatureToggleBase, get_feature_toggle
 from apps.utils.function import ignored
 from apps.utils.log import logger
@@ -135,7 +135,7 @@ class FeatureToggleObject(object):
             return None
 
         param = cls._load_plugins(name=name, param=param)
-        cache.set(cache_key, param, FEATURE_TOGGLE_CACHE_EXPIRED)
+        # cache.set(cache_key, param, FEATURE_TOGGLE_CACHE_EXPIRED)
         return cls._format_result(param)
 
     @classmethod
@@ -153,7 +153,7 @@ class FeatureToggleObject(object):
             return [cls._format_result(param) for param in cls._filter_params(result, kwargs)]
         params = cls._get_params()
         result = list(params.values())
-        cache.set(cache_key, result, FEATURE_TOGGLE_CACHE_EXPIRED)
+        # cache.set(cache_key, result, FEATURE_TOGGLE_CACHE_EXPIRED)
         return [cls._format_result(param) for param in cls._filter_params(result, kwargs)]
 
     @classmethod
