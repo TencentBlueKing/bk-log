@@ -220,6 +220,7 @@
                   :extract-method="formData.etl_config"
                   :deleted-visible="deletedVisible"
                   :fields="formData.fields"
+                  :retain-original-value="formData.etl_params.retain_original_text"
                   @deleteVisible="visibleHandle"
                   @handleKeepLog="handleKeepLog"
                   @standard="dialogVisible = true"
