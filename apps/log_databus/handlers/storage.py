@@ -197,7 +197,7 @@ class StorageHandler(object):
             cluster_obj["visible_bk_biz"] = [
                 {
                     "bk_biz_id": bk_biz_id,
-                    "is_use": index_sets.filter(project_id=projects[bk_biz_id], is_active=True).exists(),
+                    "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
                 }
                 for bk_biz_id in custom_visible_bk_biz
             ]
