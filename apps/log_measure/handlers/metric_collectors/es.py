@@ -894,6 +894,9 @@ def process_stats_data(metrics, stats_url, get, version, base_dimensions):
         node_name = node_data.get("name")
         if node_name:
             dimensions["node_name"] = node_name
+        ip = node_data.get("ip")
+        if ip:
+            dimensions["ip_address"] = ip
 
         for metric, value in stats_metrics.items():
             result_metric = process_metric(node_data, metric, *value, dimensions=dimensions)
