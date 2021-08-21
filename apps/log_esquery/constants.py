@@ -19,6 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 DEFAULT_SCHEMA = "http"
 
-ES_ROUTE_ALLOW_URL = ["_cat", "_cluster", "_nodes"]
+ES_ROUTE_ALLOW_URL = ["_cat", "_cluster", "_nodes", "_stats"]
 
 WILDCARD_PATTERN = "*"
