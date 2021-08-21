@@ -77,8 +77,9 @@ class BKDataCleanUtils:
                     storage_cluster=insert_obj["storage_cluster"],
                     collector_config_id=collector_config_id,
                     bk_biz_id=bk_biz_id,
-                    log_index_set_id=index_set_dict[insert_obj["result_table_id"]],
+                    log_index_set_id=index_set_dict[insert_obj["result_table_id"]]["index_set_id"],
                     updated_by=insert_obj["created_by"],
+                    is_authorized=not bool(index_set_dict[insert_obj["result_table_id"]]["bkdata_auth_url"]),
                 )
                 for insert_obj in insert_objs
             ]
@@ -115,7 +116,10 @@ class BKDataCleanUtils:
                 view_roles=[],
                 username=insert_obj["created_by"],
             )
-            index_set_dict[insert_obj["result_table_id"]] = index_set.index_set_id
+            index_set_dict[insert_obj["result_table_id"]] = {
+                "index_set_id": index_set.index_set_id,
+                "bkdata_auth_url": index_set.bkdata_auth_url,
+            }
             logger.info("create index_set {}".format(insert_obj["result_table_name"]))
         return index_set_dict
 
