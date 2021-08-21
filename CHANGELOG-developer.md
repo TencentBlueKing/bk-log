@@ -21,3 +21,4 @@
 - 【优化】公共-修改open调用默认encoding为utf8以避免open异常问题
 - 【优化】采集链路配置-transfer集群去重
 - 【优化】检索-去除不必要的聚合处理代码 [#162](https://github.com/TencentBlueKing/bk-log/pull/162)
+- 【优化】清洗-清洗配合创建数据平台索引集token权限变更
