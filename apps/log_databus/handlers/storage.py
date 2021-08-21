@@ -282,18 +282,7 @@ class StorageHandler(object):
         for cluster in cluster_info:
             cluster_id = cluster.get("cluster_config").get("cluster_id")
             cluster_stats = result.get(cluster_id)
-            if cluster_stats:
-                cluster["cluster_stats"] = {
-                    "node_count": cluster_stats["nodes"]["count"]["total"],
-                    "shards_total": cluster_stats["indices"]["shards"]["total"],
-                    "shards_pri": cluster_stats["indices"]["shards"]["primaries"],
-                    "data_node_count": cluster_stats["nodes"]["count"]["data"],
-                    "indices_count": cluster_stats["indices"]["count"],
-                    "indices_docs_count": cluster_stats["indices"]["docs"]["count"],
-                    "indices_store": cluster_stats["indices"]["store"]["size_in_bytes"],
-                    "total_store": cluster_stats["nodes"]["fs"]["total_in_bytes"],
-                    "status": cluster_stats["status"],
-                }
+            cluster["cluster_stats"] = cluster_stats
         return cluster_info
 
     def create(self, params):
