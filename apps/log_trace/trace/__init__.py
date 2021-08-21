@@ -21,6 +21,7 @@ import json
 from typing import Collection
 
 import MySQLdb
+from celery.signals import worker_process_init
 from django.conf import settings
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -35,6 +36,8 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import Span
+
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
 
 def requests_callback(span: Span, response):
@@ -66,17 +69,30 @@ def django_response_hook(span, request, response):
 
 
 class BluekingInstrumentor(BaseInstrumentor):
+    has_instrument = False
+    GRPC_HOST = "otlp_grpc_host"
+    BK_DATA_ID = "otlp_bk_data_id"
+
     def _uninstrument(self, **kwargs):
         pass
 
     def _instrument(self, **kwargs):
         """Instrument the library"""
-        otlp_exporter = OTLPSpanExporter(endpoint=settings.OTLP_GRPC_HOST)
+        if self.has_instrument:
+            return
+        toggle = FeatureToggleObject.toggle("bk_log_trace")
+        feature_config = toggle.feature_config
+        otlp_grpc_host = settings.OTLP_GRPC_HOST
+        otlp_bk_data_id = settings.OTLP_BK_DATA_ID
+        if feature_config:
+            otlp_grpc_host = feature_config.get(self.GRPC_HOST, otlp_grpc_host)
+            otlp_bk_data_id = feature_config.get(self.BK_DATA_ID, otlp_bk_data_id)
+        otlp_exporter = OTLPSpanExporter(endpoint=otlp_grpc_host)
         span_processor = BatchSpanProcessor(otlp_exporter)
         tracer_provider = TracerProvider(
             resource=Resource.create({
                 "service.name": settings.APP_CODE,
-                "bk_data_id": settings.OTLP_BK_DATA_ID,
+                "bk_data_id": otlp_bk_data_id,
             }),
         )
         tracer_provider.add_span_processor(span_processor)
@@ -99,6 +115,12 @@ class BluekingInstrumentor(BaseInstrumentor):
             },
             tracer_provider=tracer_provider,
         )
+        self.has_instrument = True
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return []
+
+
+@worker_process_init.connect(weak=False)
+def init_celery_tracing(*args, **kwargs):
+    BluekingInstrumentor().instrument()
