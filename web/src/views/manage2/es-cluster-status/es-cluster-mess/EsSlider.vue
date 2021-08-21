@@ -42,24 +42,51 @@
           <bk-form-item :label="$t('名称')" required property="cluster_name">
             <bk-input v-model="formData.cluster_name" maxlength="50" :readonly="isEdit"></bk-input>
           </bk-form-item>
-          <bk-form-item :label="$t('来源')" required property="source">
+          <bk-form-item :label="$t('来源')" required property="source_type">
             <div class="source-item">
-              <bk-select style="width:154px;margin-right:10px;"></bk-select>
-              <bk-input v-model="formData.cluster_name" maxlength="50" :readonly="isEdit"></bk-input>
+              <bk-select
+                style="width:154px;margin-right:10px;"
+                v-model="formData.source_type"
+                @change="handleChangeSource">
+                <bk-option
+                  v-for="option in globalsData.es_source_type"
+                  :key="option.id"
+                  :id="option.id"
+                  :name="option.name">
+                </bk-option>
+              </bk-select>
+              <bk-input
+                v-model="formData.source_name"
+                maxlength="50"
+                :class="{ 'source-name-input': true, 'is-error': sourceNameCheck }"
+                :disabled="formData.source_type !== 'other'">
+              </bk-input>
             </div>
           </bk-form-item>
           <bk-form-item :label="$t('可见范围')" required property="visible_range">
             <div class="selected-tag">
-              <bk-tag class="tag-icon is-active" closable>业务名称1</bk-tag>
-              <bk-tag class="tag-icon is-normal" closable>业务名称2</bk-tag>
               <bk-tag
-                class="tag-icon is-active"
-                closable
-                v-bk-tooltips="inUseProjectPopover">
-                业务名称3
+                v-for="(tag, index) in visibleList"
+                :key="tag.id"
+                :class="`tag-icon ${tag.is_use ? 'is-active' : 'is-normal'}`"
+                v-bk-tooltips="inUseProjectPopover(tag.is_use)"
+                :closable="!tag.is_use"
+                @close="handleDeleteTag(index)">
+                {{ tag.name }}
               </bk-tag>
             </div>
-            <bk-select></bk-select>
+            <bk-select
+              v-model="visibleBkBiz"
+              searchable
+              multiple
+              @toggle="handleToggleVisible">
+              <bk-option
+                v-for="item in myProjectList"
+                :key="item.project_id"
+                :id="item.bk_biz_id"
+                :name="item.project_name">
+              </bk-option>
+            </bk-select>
           </bk-form-item>
           <bk-form-item :label="$t('地址')" required property="domain_name">
             <bk-input v-model="formData.domain_name" :readonly="isEdit"></bk-input>
@@ -193,7 +220,7 @@
 
 <script>
 import EsDialog from './EsDialog';
-import { mapGetters } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 
 export default {
   components: {
@@ -216,6 +243,8 @@ export default {
       sliderLoading: false,
       formData: {
         cluster_name: '', // 集群名
+        source_type: '', // 来源
+        source_name: '',
         domain_name: '', // 地址
         port: '', // 端口
         schema: 'http', // 协议
@@ -229,7 +258,14 @@ export default {
         warm_attr_name: '', // 冷节点属性名称
         warm_attr_value: '', // 冷节点属性值
       },
+      visibleBkBiz: [],
       basicRules: {
+        source_type: [
+          {
+            required: true,
+            trigger: 'blur',
+          },
+        ],
         cluster_name: [{
           required: true,
           trigger: 'blur',
@@ -254,11 +290,16 @@ export default {
       selectedColdId: '', // 冷 attr:value
       showInstanceDialog: false, // 查看实例列表
       viewInstanceType: '', // hot、cold 查看热数据/冷数据实例列表
+      visibleList: [], // 可见范围业务
     };
   },
   computed: {
+    ...mapState({
+      myProjectList: state => state.myProjectList,
+    }),
     ...mapGetters({
       bkBizId: 'bkBizId',
+      globalsData: 'globals/globalsData',
     }),
     isEdit() {
       return this.editClusterId !== null;
@@ -271,11 +312,11 @@ export default {
     isDisableHotSetting() {
       return this.hotColdAttrSet.length < 2;
     },
-    inUseProjectPopover() {
-      return {
-        theme: 'light',
-        content: this.$t('inUseProjectTip'),
-      };
+    sourceNameCheck() {
+      const { source_type, source_name } = this.formData;
+      // eslint-disable-next-line camelcase
+      if (source_type === 'other' && source_name.trim() === '') return true;
+      return false;
     },
   },
   watch: {
@@ -290,6 +331,8 @@ export default {
         // 清空表单数据
         this.formData = {
           cluster_name: '', // 集群名
+          source_type: '',
+          source_name: '',
           domain_name: '', // 地址
           port: '', // 端口
           schema: 'http', // 协议
@@ -303,6 +346,8 @@ export default {
           warm_attr_name: '', // 冷节点属性名称
           warm_attr_value: '', // 冷节点属性值
         };
+        this.visibleBkBiz = [];
+        this.visibleList = [];
         // 清空连通测试结果
         this.connectResult = '';
         this.connectFailedMessage = '';
@@ -312,6 +357,36 @@ export default {
   methods: {
     updateIsShow(val) {
       this.$emit('update:showSlider', val);
+    },
+    inUseProjectPopover(isUse) {
+      return {
+        theme: 'light',
+        content: this.$t('inUseProjectTip'),
+        disabled: !isUse,
+      };
+    },
+    handleDeleteTag(index) {
+      this.visibleList.splice(index, 1);
+    },
+    handleChangeSource(data) {
+      if (data !== 'other') {
+        this.formData.source_name = '';
+      }
+    },
+    handleToggleVisible(data) {
+      if (!data) {
+        this.visibleBkBiz.forEach((val) => {
+          if (!this.visibleList.some(item => item.id === val)) {
+            const target = this.myProjectList.find(project => project.bk_biz_id === val);
+            this.visibleList.push({
+              id: val,
+              name: target.project_name,
+              is_use: false,
+            });
+          }
+        });
+        this.visibleBkBiz = [];
+      }
     },
     // 编辑 es 源，回填数据
     async editDataSource() {
@@ -325,6 +400,8 @@ export default {
         });
         this.formData = {
           cluster_name: res.data.cluster_config.cluster_name, // 集群名
+          source_type: res.data.source_type || '', // 来源
+          source_name: res.data.source_type === 'other' ? res.data.source_name : '',
           domain_name: res.data.cluster_config.domain_name, // 地址
           port: res.data.cluster_config.port, // 端口
           schema: res.data.cluster_config.schema, // 协议
@@ -338,6 +415,14 @@ export default {
           warm_attr_name: res.data.cluster_config.custom_option?.hot_warm_config?.warm_attr_name || '', // 冷节点属性名称
           warm_attr_value: res.data.cluster_config.custom_option?.hot_warm_config?.warm_attr_value || '', // 冷节点属性值
         };
+        res.data.visible_bk_biz.forEach((val) => {
+          const target = this.myProjectList.find(project => Number(project.bk_biz_id) === val.bk_biz_id);
+          this.visibleList.push({
+            id: val.bk_biz_id,
+            name: target.project_name,
+            is_use: val.is_use,
+          });
+        });
       } catch (e) {
         console.warn(e);
       } finally {
@@ -444,6 +529,12 @@ export default {
           delete postData.warm_attr_name;
           delete postData.warm_attr_value;
         }
+        if (postData.source_type !== 'other') {
+          delete postData.source_name;
+        }
+        if (this.visibleList.length) {
+          postData.visible_bk_biz = this.visibleList.map(item => item.id);
+        }
         if (this.isEdit) {
           url = '/source/update';
           paramsData.cluster_id = this.editClusterId;
@@ -477,98 +568,104 @@ export default {
 
 <style lang="scss" scoped>
   .king-slider-content {
-      min-height: 394px;
-
-      .king-form {
-        padding: 16px 140px 36px 36px;
-
-        .form-flex-container {
-          display: flex;
-          align-items: center;
-          // height: 32px;
-          // font-size: 12px;
-          color: #63656e;
-
-          .icon-info {
-            margin: 0 8px 0 24px;
-            font-size: 14px;
-            color: #3a84ff;
-          }
-
-          .button-text {
-            font-size: 12px;
-            .icon-eye {
-              margin: 0 6px 0 16px;
-            }
-          }
+    min-height: 394px;
+    .king-form {
+      padding: 16px 140px 36px 36px;
+      .form-flex-container {
+        display: flex;
+        align-items: center;
+        // height: 32px;
+        // font-size: 12px;
+        color: #63656e;
+        .icon-info {
+          margin: 0 8px 0 24px;
+          font-size: 14px;
+          color: #3a84ff;
         }
-        .bk-form-item {
-          margin-top: 18px;
-        }
-        .source-item {
-          display: flex;
-        }
-        .selected-tag {
-          .bk-tag {
-            position: relative;
-            margin: 0 10px 10px 0;
-            padding-left: 18px;
-          }
-          .tag-icon::before {
-            position: absolute;
-            top: 9px;
-            left: 8px;
-            content: '';
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-          }
-          .is-active::before {
-            background-color: #45e35f;
-          }
-          .is-normal::before {
-            background-color: #699df4;
+        .button-text {
+          font-size: 12px;
+          .icon-eye {
+            margin: 0 6px 0 16px;
           }
         }
       }
-    }
-
-    .king-slider-footer {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      width: 100%;
-      height: 100%;
-      padding-right: 36px;
-      background-color: #fff;
-      border-top: 1px solid #dcdee5;
-
-      .king-button {
-        min-width: 86px;
+      .bk-form-item {
+        margin-top: 18px;
+      }
+      .source-item {
+        display: flex;
+      }
+      .selected-tag {
+        .bk-tag {
+          position: relative;
+          margin: 0 10px 10px 0;
+          padding-left: 18px;
+        }
+        .tag-icon::before {
+          position: absolute;
+          top: 9px;
+          left: 8px;
+          content: '';
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+        }
+        .is-active::before {
+          background-color: #45e35f;
+        }
+        .is-normal::before {
+          background-color: #699df4;
+        }
+      }
+      .source-name-input.is-error {
+        background-color: #ffeded;
+        border-color: #fde2e2;
+        color: #f56c6c;
+        transition: all .2s;
+        &:hover {
+          background: #fbb8ac;
+          color: #fff;
+          transition: all .2s;
+        }
       }
     }
+  }
+  .king-slider-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    height: 100%;
+    padding-right: 36px;
+    background-color: #fff;
+    border-top: 1px solid #dcdee5;
 
-    .test-container {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #63656e;
-      display: flex;
-      align-items: center;
+    .king-button {
+      min-width: 86px;
+    }
+  }
 
-      .success-text .bk-icon {
-        color: rgb(45, 203, 86);
-        margin: 0 6px 0 10px;
-      }
+  .test-container {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #63656e;
+    display: flex;
+    align-items: center;
 
-      .error-text .bk-icon {
-        color: rgb(234, 54, 54);
-        margin: 0 6px 0 10px;
-      }
+    .success-text .bk-icon {
+      color: rgb(45, 203, 86);
+      margin: 0 6px 0 10px;
     }
 
-    .connect-message {
-      font-size: 14px;
-      line-height: 18px;
-      color: #63656e;
+    .error-text .bk-icon {
+      color: rgb(234, 54, 54);
+      margin: 0 6px 0 10px;
     }
+  }
+
+  .connect-message {
+    font-size: 14px;
+    line-height: 18px;
+    color: #63656e;
+  }
 </style>

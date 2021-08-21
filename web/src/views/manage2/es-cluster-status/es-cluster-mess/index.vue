@@ -44,7 +44,6 @@
       class="king-table"
       :data="tableDataPaged"
       :pagination="pagination"
-      @filter-change="handleFilterChange"
       @page-change="handlePageChange"
       @page-limit-change="handleLimitChange">
       <bk-table-column
@@ -64,12 +63,16 @@
       </bk-table-column>
       <bk-table-column
         :label="$t('来源')"
-        prop="cluster_config.source_name"
+        prop="source_type"
         min-width="80"
         class-name="filter-column"
-        column-key="source_name"
+        column-key="source_type"
         :filters="sourceFilters"
-        :filter-multiple="false">
+        :filter-multiple="false"
+        :filter-method="sourceFilterMethod">
+        <template slot-scope="props">
+          {{ props.row.source_name || '--' }}
+        </template>
       </bk-table-column>
       <bk-table-column
         :label="$t('端口')"
@@ -132,7 +135,7 @@
             :tips-conf="$t('unableEditTip')"
             :button-text="$t('删除')"
             :disabled="!props.row.is_editable"
-            @click="deleteDataSource(props.row)">
+            @on-click="deleteDataSource(props.row)">
           </log-button>
         </template>
       </bk-table-column>
@@ -181,11 +184,19 @@ export default {
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
+      globalsData: 'globals/globalsData',
     }),
     sourceFilters() {
-      return [
-        { value: 'txClould', text: '腾讯云' },
-      ];
+      const { es_source_type } = this.globalsData;
+      const target = [];
+      // eslint-disable-next-line camelcase
+      es_source_type && es_source_type.forEach((data) => {
+        target.push({
+          text: data.name,
+          value: data.id,
+        });
+      });
+      return target;
     },
   },
   created() {
@@ -278,12 +289,11 @@ export default {
       this.searchTimer && clearTimeout(this.searchTimer);
       this.searchTimer = setTimeout(this.searchCallback, 300);
     },
-    // 表头过滤
-    handleFilterChange(data) {
-      Object.keys(data).forEach((item) => {
-        this.params[item] = data[item].join('');
-      });
+    // 来源过滤
+    sourceFilterMethod(value, row, column) {
+      const property = column.property;
       this.handlePageChange(1);
+      return row[property] === value;
     },
     searchCallback() {
       if (this.params.keyword) {
@@ -369,13 +379,34 @@ export default {
       this.editClusterId = id;
     },
     // 删除ES源
-    deleteDataSource() {
+    deleteDataSource(row) {
       this.$bkInfo({
         type: 'warning',
         title: this.$t('确认删除当前ES集群'),
         confirmFn: () => {
+          this.handleDelete(row);
         },
       });
+    },
+    handleDelete(row) {
+      this.$http.request('source/deleteEs', {
+        params: {
+          bk_biz_id: this.bkBizId,
+          cluster_id: row.cluster_config.cluster_id,
+        },
+      }).then((res) => {
+        if (res.result) {
+          if (this.tableDataPaged.length <= 1) {
+            this.pagination.current = this.pagination.current > 1 ? this.pagination.current - 1 : 1;
+          }
+          const deleteIndex = this.tableDataSearched.findIndex((item) => {
+            return item.cluster_config.cluster_id === row.cluster_config.cluster_id;
+          });
+          this.tableDataSearched.splice(deleteIndex, 1);
+          this.computePageData();
+        }
+      })
+        .catch(() => {});
     },
     // 新建、编辑源更新
     handleUpdated() {
