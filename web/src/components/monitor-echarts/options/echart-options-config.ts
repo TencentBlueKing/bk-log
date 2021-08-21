@@ -109,7 +109,7 @@ export const lineOrBarOptions = {
   grid: {
     containLabel: true,
     left: 0,
-    right: 6,
+    right: 26,
     top: 16,
     bottom: 0,
     backgroundColor: 'transparent'

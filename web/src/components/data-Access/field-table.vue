@@ -145,23 +145,23 @@
               <template slot-scope="props">
                 <span v-if="isPreviewMode">{{ props.row.field_type }}</span>
                 <!-- <bk-form-item v-else
-                :required="true"
-                :rules="props.row.is_delete ? notCheck : rules.field_type"
-                 :property="'tableList.' + props.$index + '.field_type'">
-                                    <bk-select
-                                        :clearable="false"
-                                        :disabled="props.row.is_delete"
-                                        v-model="props.row.field_type"
-                                        @selected="(value) => {
-                                            fieldTypeSelect(value, props.row, props.$index)
-                                        }">
-                                        <bk-option v-for="option in globalsData.field_data_type"
-                                            :key="option.id"
-                                            :id="option.id"
-                                            :name="option.name">
-                                        </bk-option>
-                                    </bk-select>
-                                </bk-form-item> -->
+                  :required="true"
+                  :rules="props.row.is_delete ? notCheck : rules.field_type"
+                  :property="'tableList.' + props.$index + '.field_type'">
+                  <bk-select
+                    :clearable="false"
+                    :disabled="props.row.is_delete"
+                    v-model="props.row.field_type"
+                    @selected="(value) => {
+                      fieldTypeSelect(value, props.row, props.$index)
+                    }">
+                    <bk-option v-for="option in globalsData.field_data_type"
+                      :key="option.id"
+                      :id="option.id"
+                      :name="option.name">
+                    </bk-option>
+                  </bk-select>
+                </bk-form-item> -->
                 <!-- 替代方案 -->
                 <!-- <bk-form-item v-else
                 :class="{ 'is-required is-error': props.row.typeErr }"
@@ -193,19 +193,19 @@
               </template>
             </bk-table-column>
             <!--<bk-table-column :label="$t('dataManage.Polymeric')" align="center" :resizable="false" width="50">
-                           <template slot-scope="props">
-                                <bk-popover v-if="props.row.is_time" :content="$t('dataManage.time_dimensions')">
-                                   <bk-checkbox
-                                       disabled
-                                       v-model="props.row.is_dimension">
-                                    </bk-checkbox>
-                                </bk-popover>
-                                <bk-checkbox v-else
-                                    :disabled="isPreviewMode || props.row.is_delete || props.row.is_analyzed"
-                                    v-model="props.row.is_dimension">
-                                </bk-checkbox>
-                            </template>
-                        </bk-table-column>-->
+              <template slot-scope="props">
+                <bk-popover v-if="props.row.is_time" :content="$t('dataManage.time_dimensions')">
+                  <bk-checkbox
+                    disabled
+                    v-model="props.row.is_dimension">
+                  </bk-checkbox>
+                </bk-popover>
+                <bk-checkbox v-else
+                  :disabled="isPreviewMode || props.row.is_delete || props.row.is_analyzed"
+                  v-model="props.row.is_dimension">
+                </bk-checkbox>
+              </template>
+            </bk-table-column>-->
             <!-- 字符串类型下才能设置分词， 分词和维度只能选其中一个，且分词和时间不能同时存在, 选定时间后就同时勾选维度-->
             <!-- 分词 -->
             <bk-table-column :render-header="renderHeaderParticipleName" align="center" :resizable="false" width="50">
@@ -431,10 +431,13 @@ export default {
       type: Boolean,
       default: false,
     },
+    retainOriginalValue: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
-      baseUsage: '123',
       isReset: false,
       dialogDate: false,
       dialogField: {
@@ -487,7 +490,7 @@ export default {
         ],
         time_zone: [
           {
-            min: 1,
+            required: true,
             trigger: 'change',
           },
         ],
@@ -544,8 +547,12 @@ export default {
         this.reset();
       },
     },
+    retainOriginalValue(newVal) {
+      this.retainOriginalText = newVal;
+    },
   },
   async mounted() {
+    this.retainOriginalText = this.retainOriginalValue;
     this.reset();
   },
   methods: {

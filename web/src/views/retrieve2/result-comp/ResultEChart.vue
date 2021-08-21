@@ -62,12 +62,15 @@
 </template>
 
 <script>
+import { formatDate } from '@/common/util';
+import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
 import MonitorEcharts from '@/components/monitor-echarts/monitor-echarts-new';
 
 export default {
   components: {
     MonitorEcharts,
   },
+  mixins: [indexSetSearchMixin],
   props: {
     retrieveParams: {
       type: Object,
@@ -116,19 +119,32 @@ export default {
       isLoading: false,
       isRenderChart: false,
       isEmptyChart: true,
+      optionData: [],
+      totalCount: 0,
     };
   },
   computed: {
     chartKey() {
+      this.getInterval();
       return this.$store.state.retrieve.chartKey;
     },
   },
   watch: {
     chartKey: {
       handler() {
+        this.$refs.chartRef && this.$refs.chartRef.handleCloseTimer();
+        this.totalCount = 0;
         this.isRenderChart = true;
         this.isLoading = false;
+        this.finishPolling = false;
+        this.isStart = false;
       },
+    },
+    totalCount(newVal) {
+      this.$emit('change-total-count', newVal);
+    },
+    finishPolling(newVal) {
+      this.$emit('change-queue-res', newVal);
     },
   },
   mounted() {
@@ -143,28 +159,103 @@ export default {
     },
     // 汇聚周期改变
     handleIntervalChange() {
-      this.$refs.chartRef.handleSeriesData();
+      // this.getInterval();
+      // this.finishPolling = true;
+      // this.$refs.chartRef.handleCloseTimer();
+      // this.totalCount = 0;
+      // setTimeout(() => {
+      //   this.finishPolling = false;
+      //   this.isStart = false;
+      //   this.$refs.chartRef.handleChangeInterval();
+      // }, 500);
+      this.$store.commit('retrieve/updateChartKey');
     },
     // 需要更新图表数据
     async getSeriesData(startTime, endTime) {
       if (startTime && endTime) {
+        this.finishPolling = false;
+        this.isStart = false;
+        this.totalCount = 0;
         // 框选时间范围
         window.bus.$emit('changeTimeByChart', [startTime, endTime], 'customized');
       } else {
         // 初始化请求
       }
 
-      this.isEmptyChart = false;
+      // 轮循结束
+      if (this.finishPolling) return;
+
+      const { startTimeStamp, endTimeStamp } = this.getRealTimeRange();
+      // 请求间隔时间
+      this.requestInterval = this.isStart ? this.requestInterval
+        : this.handleRequestSplit(startTimeStamp, endTimeStamp);
+      if (!this.isStart) {
+        this.isEmptyChart = false;
+
+        // 获取坐标分片间隔
+        this.handleIntervalSplit(startTimeStamp, endTimeStamp);
+
+        // 获取分片起止时间
+        const curStartTimestamp = this.getIntegerTime(startTimeStamp);
+        const curEndTimestamp = this.getIntegerTime(endTimeStamp);
+
+        // 获取分片结果数组
+        this.optionData = this.getTimeRange(curStartTimestamp, curEndTimestamp);
+
+        this.pollingEndTime = endTimeStamp;
+        this.pollingStartTime = this.pollingEndTime - this.requestInterval;
+
+        if (this.pollingStartTime < startTimeStamp || this.requestInterval === 0) {
+          this.pollingStartTime = startTimeStamp;
+          // 轮询结束
+          this.finishPolling = true;
+        }
+        this.isStart = true;
+      } else {
+        this.pollingEndTime = this.pollingStartTime;
+        this.pollingStartTime = this.pollingStartTime - this.requestInterval;
+
+        if (this.pollingStartTime < Date.parse(this.retrieveParams.start_time)) {
+          this.pollingStartTime = Date.parse(this.retrieveParams.start_time);
+        }
+      }
+
       const res = await this.$http.request('retrieve/getLogChartList', {
         params: { index_set_id: this.$route.params.indexId },
-        data: this.retrieveParams,
+        data: {
+          ...this.retrieveParams,
+          time_range: 'customized',
+          interval: this.interval,
+          // 每次轮循的起始时间
+          start_time: formatDate(this.pollingStartTime),
+          end_time: formatDate(this.pollingEndTime),
+        },
       });
-      // eslint-disable-next-line camelcase
+
       const originChartData = res.data.aggs?.group_by_histogram?.buckets || [];
-      this.isEmptyChart = originChartData.length < 1;
+      const targetArr = originChartData.map((item) => {
+        this.totalCount = this.totalCount + item.doc_count;
+        return ([item.doc_count, item.key]);
+      });
+
+      if (this.pollingStartTime <= Date.parse(this.retrieveParams.start_time)) {
+        // 轮询结束
+        this.finishPolling = true;
+      }
+
+      for (let i = 0; i < targetArr.length; i++) {
+        for (let j = 0; j < this.optionData.length; j++) {
+          if (this.optionData[j][1] === targetArr[i][1] && targetArr[i][0] > 0) {
+            // 根据请求结果匹配对应时间下数量叠加
+            this.optionData[j][0] = this.optionData[j][0] + targetArr[i][0];
+          }
+        }
+      }
+
       return [{
-        datapoints: originChartData.map(item => ([item.doc_count, item.key])),
+        datapoints: this.optionData,
         target: '',
+        isFinish: this.finishPolling,
       }];
     },
     // 双击回到初始化时间范围
@@ -176,8 +267,15 @@ export default {
                     || cacheTimeRange !== this.retrieveParams.time_range
       ) {
         setTimeout(() => {
-          this.$refs.chartRef.handleSeriesData();
           window.bus.$emit('changeTimeByChart', cacheDatePickerValue, cacheTimeRange);
+          this.finishPolling = true;
+          this.totalCount = 0;
+          this.$refs.chartRef.handleCloseTimer();
+          this.$nextTick(() => {
+            this.finishPolling = false;
+            this.isStart = false;
+            this.$refs.chartRef.handleChangeInterval();
+          });
         }, 100);
       }
     },
