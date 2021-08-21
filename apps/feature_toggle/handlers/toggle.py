@@ -106,10 +106,10 @@ class FeatureToggleObject(object):
         """
         from apps.feature_toggle.models import FeatureToggle
 
-        cache_key = f"{FEATURE_TOGGLE_PREFIX_CACHE}_{name}"
-        result = cache.get(cache_key)
-        if result:
-            return cls._format_result(result)
+        # cache_key = f"{FEATURE_TOGGLE_PREFIX_CACHE}_{name}"
+        # result = cache.get(cache_key)
+        # if result:
+        #     return cls._format_result(result)
         param = {}
         if settings.FEATURE_TOGGLE.get(name):
             param["name"] = name
