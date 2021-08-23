@@ -677,7 +677,7 @@ class StorageViewSet(APIViewSet):
     @list_route(methods=["GET"], url_path="list_repository")
     def list_repository(self, request):
         """
-        @api {post} /databus/storage/list_repository/ 存储集群-集群快照仓库列表
+        @api {GET} /databus/storage/list_repository/ 存储集群-集群快照仓库列表
         @apiName repository
         @apiGroup 09_StorageCluster
         @apiDescription 集群快照仓库列表
@@ -719,7 +719,7 @@ class StorageViewSet(APIViewSet):
     @detail_route(methods=["GET"], url_path="repository")
     def repository(self, request, cluster_id):
         """
-        @api {post} /databus/storage/$cluster_id/repository/ 存储集群-对应集群快照仓库列表
+        @api {GET} /databus/storage/$cluster_id/repository/ 存储集群-对应集群快照仓库列表
         @apiName detail_repository
         @apiGroup 09_StorageCluster
         @apiDescription 集群快照仓库列表
