@@ -26,6 +26,9 @@
       <bk-button
         class="fl"
         theme="primary"
+        v-cursor="{ active: isAllowedManage === false }"
+        :disabled="isAllowedManage === null"
+        :loading="isButtonLoading"
         @click="handleCreate">
         {{ $t('新建') }}
       </bk-button>
@@ -34,14 +37,14 @@
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
-          @enter="search">
+          @enter="handleSearch">
         </bk-input>
       </div>
     </section>
     <section class="log-repository-table">
       <bk-table
         class="repository-table"
-        :data="dataList"
+        :data="tableDataPaged"
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
@@ -50,66 +53,61 @@
         @page-limit-change="handleLimitChange">
         <bk-table-column label="ID" width="80">
           <template slot-scope="props">
-            {{ props.row.id }}
+            {{ props.row.cluster_id }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.repositoryName')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.repository_name }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('ES集群')">
           <template slot-scope="props">
-            {{ props.row.es }}
+            {{ props.row.cluster_name }}
           </template>
         </bk-table-column>
         <bk-table-column
           :label="$t('logArchive.repositoryType')"
-          prop="repositoryType"
+          prop="type"
           class-name="filter-column"
-          column-key="repositoryType"
+          column-key="type"
           :filters="repositoryFilters"
           :filter-multiple="false">
           <template slot-scope="props">
-            {{ props.row.es }}
+            {{ repoTypeMap[props.row.type] }}
           </template>
         </bk-table-column>
         <bk-table-column
           :label="$t('来源')"
-          prop="source"
+          prop="es_source_type"
           class-name="filter-column"
-          column-key="source"
+          column-key="es_source_type"
           :filters="sourceFilters"
           :filter-multiple="false">
           <template slot-scope="props">
-            {{ props.row.es }}
-          </template>
-        </bk-table-column>
-        <bk-table-column :label="$t('状态')">
-          <template slot-scope="props">
-            {{ props.row.es }}
+            {{ props.row.es_source_type }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('创建人')">
           <template slot-scope="props">
-            {{ props.row.es }}
+            {{ props.row.creator }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('创建时间')">
           <template slot-scope="props">
-            {{ props.row.es }}
+            {{ props.row.create_time }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('dataSource.operation')" width="160">
           <div class="repository-table-operate" slot-scope="props">
             <!-- 编辑 -->
-            <bk-button
+            <!-- <bk-button
               theme="primary"
               text
               class="mr10 king-button"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
-            </bk-button>
+            </bk-button> -->
             <!-- 删除 -->
             <bk-button
               theme="primary"
@@ -126,11 +124,14 @@
     <RepositorySlider
       v-if="isRenderSlider"
       :show-slider.sync="showSlider"
+      :edit-cluster-id="editClusterId"
+      @updated="handleUpdated"
     />
   </section>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import RepositorySlider from './repository-slider.vue';
 
 export default {
@@ -140,11 +141,17 @@ export default {
   },
   data() {
     return {
+      isAllowedManage: null,
       isTableLoading: false,
       isRenderSlider: true,
       showSlider: false,
+      isButtonLoading: false,
       keyword: '',
+      editClusterId: null, // 编辑ES源ID,
       dataList: [],
+      tableDataOrigin: [], // 原始数据
+      tableDataSearched: [], // 搜索过滤数据
+      tableDataPaged: [], // 前端分页
       pagination: {
         current: 1,
         count: 0,
@@ -153,31 +160,138 @@ export default {
       },
       params: {
         keyword: '',
-        etl_config: '',
+      },
+      repoTypeMap: {
+        hdfs: 'HDFS',
+        fs: this.$t('logArchive.sharedDirectory'),
+        cos: 'COS',
       },
     };
   },
   computed: {
+    ...mapGetters({
+      bkBizId: 'bkBizId',
+      globalsData: 'globals/globalsData',
+    }),
     repositoryFilters() {
-      return [];
+      const target = [];
+      Object.keys(this.repoTypeMap).map((item) => {
+        target.push({
+          text: this.repoTypeMap[item],
+          value: item,
+        });
+      });
+      return target;
     },
     sourceFilters() {
-      return [];
+      const { es_source_type } = this.globalsData;
+      const target = [];
+      // eslint-disable-next-line camelcase
+      es_source_type && es_source_type.forEach((data) => {
+        target.push({
+          text: data.name,
+          value: data.id,
+        });
+      });
+      return target;
     },
   },
+  created() {
+    this.checkManageAuth();
+    this.getTableData();
+  },
   methods: {
-    search() {
+    async checkManageAuth() {
+      try {
+        const res = await this.$store.dispatch('checkAllowed', {
+          action_ids: ['manage_es_source'],
+          resources: [{
+            type: 'biz',
+            id: this.bkBizId,
+          }],
+        });
+        this.isAllowedManage = res.isAllowed;
+      } catch (err) {
+        this.isAllowedManage = false;
+      }
+    },
+    handleSearch() {
+      if (this.params.keyword) {
+        this.tableDataSearched = this.tableDataOrigin.filter((item) => {
+          if (item.repository_name) {
+            return (item.repository_name + item.cluster_name).includes(this.params.keyword);
+          }
+        });
+      } else {
+        this.tableDataSearched = this.tableDataOrigin;
+      }
       this.pagination.current = 1;
-      this.requestData();
+      this.pagination.count = this.tableDataSearched.length;
+      this.computePageData();
+    },
+    getTableData() {
+      this.isTableLoading = true;
+      this.$http.request('archive/getRepositoryList', {
+        query: {
+          bk_biz_id: this.bkBizId,
+        },
+      }).then((res) => {
+        const { data } = res;
+        if (!data.length) {
+          return;
+        }
+        this.tableDataOrigin = data;
+        this.tableDataSearched = data;
+        this.pagination.count = data.length;
+        this.computePageData();
+      })
+        .catch((err) => {
+          console.warn(err);
+        })
+        .finally(() => {
+          this.isTableLoading = false;
+        });
+    },
+    // 根据分页数据过滤表格
+    computePageData() {
+      const { current, limit } = this.pagination;
+      const start = (current - 1) * limit;
+      const end = this.pagination.current * this.pagination.limit;
+      this.tableDataPaged = this.tableDataSearched.slice(start, end);
     },
     handleFilterChange(data) {
       Object.keys(data).forEach((item) => {
-        this.params[item] = data[item].join('');
+        this.tableDataSearched = this.tableDataOrigin.filter((repo) => {
+          if (repo[item]) {
+            return repo[item] === data[item].join('');
+          }
+        });
       });
       this.pagination.current = 1;
-      this.search();
+      this.pagination.count = this.tableDataSearched.length;
+      this.computePageData();
     },
-    handleCreate() {
+    async handleCreate() {
+      if (!this.isAllowedManage) {
+        try {
+          this.isButtonLoading = true;
+          const res = await this.$store.dispatch('getApplyData', {
+            action_ids: ['manage_es_source'],
+            resources: [{
+              type: 'biz',
+              id: this.bkBizId,
+            }],
+          });
+          this.$store.commit('updateAuthDialogData', res.data);
+        } catch (err) {
+          console.warn(err);
+        } finally {
+          this.isButtonLoading = false;
+        }
+        return;
+      }
+
+      this.editClusterId = null;
       this.showSlider = true;
     },
     /**
@@ -188,7 +302,7 @@ export default {
     handlePageChange(page) {
       if (this.pagination.current !== page) {
         this.pagination.current = page;
-        this.requestData();
+        this.computePageData();
       }
     },
     /**
@@ -200,74 +314,71 @@ export default {
       if (this.pagination.limit !== page) {
         this.pagination.current = 1;
         this.pagination.limit = page;
-        this.requestData();
+        this.computePageData();
       }
     },
-    requestData() {
-      // this.isTableLoading = true;
-      // this.$http.request('clean/cleanTemplate', {
-      //   query: {
-      //     ...this.params,
-      //     bk_biz_id: this.bkBizId,
-      //     page: this.pagination.current,
-      //     pagesize: this.pagination.limit,
-      //   },
-      // }).then((res) => {
-      //   const { data } = res;
-      //   this.pagination.count = data.total;
-      //   this.templateList = data.list;
-      // })
-      //   .catch((err) => {
-      //     console.warn(err);
-      //   })
-      //   .finally(() => {
-      //     this.isTableLoading = false;
-      //   });
+    handleUpdated() {
+      this.showSlider = false;
+      this.pagination.count = 1;
+      this.getTableData();
     },
     operateHandler(row, operateType) {
-      console.log(row, operateType);
-    //   if (operateType === 'edit') {
-    //     this.$router.push({
-    //       name: 'clean-template-edit',
-    //       params: {
-    //         templateId: row.clean_template_id,
-    //       },
-    //       query: {
-    //         projectId: window.localStorage.getItem('project_id'),
-    //       },
-    //     });
-    //     return;
-    //   }
-    //   if (operateType === 'delete') {
-    //     this.$bkInfo({
-    //       type: 'warning',
-    //       title: this.$t('logClean.Confirm_delete_temp'),
-    //       confirmFn: () => {
-    //         this.requestDeleteTemp(row);
-    //       },
-    //     });
-    //     return;
-    //   }
-    // },
-    // requestDeleteTemp(row) {
-    //   this.$http.request('clean/deleteTemplate', {
-    //     params: {
-    //       clean_template_id: row.clean_template_id,
-    //     },
-    //   }).then((res) => {
-    //     if (res.result) {
-    //       const page = this.templateList.length <= 1
-    //         ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
-    //         : this.pagination.current;
-    //       this.messageSuccess(this.$t('删除成功'));
-    //       if (page !== this.pagination.current) {
-    //         this.handlePageChange(page);
-    //       } else {
-    //         this.requestData();
-    //       }
-    //     }
-    //   })
-    //     .catch(() => {});
+      if (!(row.permission?.manage_es_source)) {
+        return this.getOptionApplyData({
+          action_ids: ['manage_es_source'],
+          resources: [{
+            type: 'es_source',
+            id: row.cluster_id,
+          }],
+        });
+      }
+
+      if (operateType === 'edit') {
+        this.editClusterId = row.cluster_id;
+        this.showSlider = true;
+        return;
+      }
+      if (operateType === 'delete') {
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('logArchive.Confirm_delete_repo'),
+          confirmFn: () => {
+            this.requestDeleteRepo(row);
+          },
+        });
+        return;
+      }
+    },
+    requestDeleteRepo(row) {
+      this.$http.request('archive/deleteRepository', {
+        data: {
+          cluster_id: row.cluster_id,
+          snapshot_repository_name: row.repository_name,
+        },
+      }).then((res) => {
+        if (res.result) {
+          if (this.tableDataPaged.length <= 1) {
+            this.pagination.current = this.pagination.current > 1 ? this.pagination.current - 1 : 1;
+          }
+          const deleteIndex = this.tableDataSearched.findIndex((item) => {
+            return item.cluster_config.cluster_id === row.cluster_config.cluster_id;
+          });
+          this.tableDataSearched.splice(deleteIndex, 1);
+          this.computePageData();
+        }
+      })
+        .catch(() => {});
+    },
+    async getOptionApplyData(paramData) {
+      try {
+        this.isTableLoading = true;
+        const res = await this.$store.dispatch('getApplyData', paramData);
+        this.$store.commit('updateAuthDialogData', res.data);
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        this.isTableLoading = false;
+      }
     },
   },
 };

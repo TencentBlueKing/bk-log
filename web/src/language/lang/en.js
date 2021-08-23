@@ -1142,5 +1142,8 @@ export default {
     repositoryAlert2: '2. Put the keytab in the directory corresponding to each node of es',
     repositoryAlert3: 'Local directory configuration instructions',
     repositoryAlert4: 'The automatic creation and association of COS can only be used in Tencent Cloud',
+    Confirm_delete_repo: 'Confirm to delete this item?',
+    repoNmaeTip: 'only english, numbers or underscores',
+    region: 'Region',
   },
 };
