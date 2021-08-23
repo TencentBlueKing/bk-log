@@ -118,6 +118,7 @@ class PermissionTest(object):
 
 class IndexSet(object):
     index_set_id = 1
+    bkdata_auth_url = "test"
 
 
 @patch("apps.iam.handlers.drf.BusinessActionPermission.has_permission", return_value=True)
