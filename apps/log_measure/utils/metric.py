@@ -27,6 +27,7 @@ from apps.api import CCApi, TransferApi
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.log_measure.exceptions import EsConnectFailException
 from apps.log_search.models import ProjectInfo
+from apps.utils.cache import cache_one_hour
 from bk_monitor.utils.metric import Metric
 
 
@@ -72,6 +73,7 @@ class MetricUtils(object):
 
     # 将原本MetricCollector常用工具方法上移
     @staticmethod
+    @cache_one_hour("cluster_info_es")
     def list_cluster_info(cluster_id=None):
         """
         获取集群列表
