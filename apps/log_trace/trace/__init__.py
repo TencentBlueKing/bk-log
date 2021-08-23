@@ -35,7 +35,7 @@ from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.trace import Span
+from opentelemetry.trace import Span, Status, StatusCode
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
@@ -53,6 +53,10 @@ def requests_callback(span: Span, response):
     span.set_attribute("error", not result)
     span.set_attribute("blueking_esb_request_id", json_result.get("request_id", ""))
     span.set_attribute("result_message", json_result.get("message", ""))
+    if result:
+        span.set_status(Status(StatusCode.OK))
+        return
+    span.set_status(Status(StatusCode.ERROR))
 
 
 def django_response_hook(span, request, response):
@@ -66,6 +70,11 @@ def django_response_hook(span, request, response):
     span.set_attribute("result_code", result.get("code", 0))
     span.set_attribute("error", not result.get("result", True))
     span.set_attribute("result_message", result.get("message", ""))
+    result = result.get("result", True)
+    if result:
+        span.set_status(Status(StatusCode.OK))
+        return
+    span.set_status(Status(StatusCode.ERROR))
 
 
 class BluekingInstrumentor(BaseInstrumentor):
