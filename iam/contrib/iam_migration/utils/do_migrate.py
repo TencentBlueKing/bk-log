@@ -539,7 +539,7 @@ def do_migrate(data, bk_iam_host=BK_IAM_HOST, app_code=APP_CODE, app_secret=APP_
     if not system_id:
         print("invald json. [system_id] required, and should not be empty")
         return False
-
+    data["system_id"] = app_code
     operations = data.get("operations")
     if not operations:
         print("invald json. [operations] required, and should not be empty")
