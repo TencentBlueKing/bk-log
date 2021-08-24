@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+
 """
 时间处理模块
 """
@@ -26,7 +27,7 @@ import pytz  # noqa
 
 import arrow  # noqa
 from django.conf import settings  # noqa
-from django.utils import timezone  # noqa
+from django.utils import timezone, translation  # noqa
 from rest_framework import serializers  # noqa
 
 # 默认时间戳乘数
@@ -387,3 +388,13 @@ def format_user_time_zone(user_datetime, time_zone):
     @param time_zone {string} 时区
     """
     return arrow.get(user_datetime).to(time_zone).strftime(settings.BKDATA_DATETIME_FORMAT)
+
+
+def format_user_time_zone_humanize(user_datetime, time_zone):
+    """
+    将返回时间格式化为用户对应时区
+    @param user_datetime {datetime} 具体时间
+    @param time_zone {string} 时区
+    """
+    locale = "en" if translation.get_language() == "en" else "zh"
+    return arrow.get(user_datetime).to(time_zone).humanize(locale=locale)
