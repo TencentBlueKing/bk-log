@@ -110,7 +110,7 @@ class BluekingInstrumentor(BaseInstrumentor):
         RedisInstrumentor().instrument()
         ElasticsearchInstrumentor().instrument()
         RequestsInstrumentor().instrument(tracer_provider=tracer_provider, span_callback=requests_callback)
-        CeleryInstrumentor().instrument()
+        CeleryInstrumentor().instrument(tracer_provider=tracer_provider)
         dbapi.wrap_connect(
             __name__,
             MySQLdb,
@@ -132,4 +132,6 @@ class BluekingInstrumentor(BaseInstrumentor):
 
 @worker_process_init.connect(weak=False)
 def init_celery_tracing(*args, **kwargs):
-    BluekingInstrumentor().instrument()
+    from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+    if FeatureToggleObject.switch("bk_log_trace"):
+        BluekingInstrumentor().instrument()
