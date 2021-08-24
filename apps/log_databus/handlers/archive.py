@@ -54,8 +54,8 @@ class ArchiveHandler:
         archive_detail = array_group(TransferApi.list_result_table_snapshot({"table_ids": table_ids}), "table_id", True)
         for archive in archive_objs:
             archive_group[archive.archive_config_id]["collector_config_name"] = archive.collector_config_name
-            archive_group[archive.archive_config_id]["doc_count"] = archive_detail[archive.table_id]["doc_count"]
-            archive_group[archive.archive_config_id]["store_size"] = archive_detail[archive.table_id]["store_size"]
+            for field in ["doc_count", "store_size", "index_count"]:
+                archive_group[archive.archive_config_id][field] = archive_detail[archive.table_id][field]
         return archives
 
     def retrieve(self, page, pagesize):

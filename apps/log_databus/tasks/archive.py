@@ -62,4 +62,4 @@ def check_restore_is_done_and_notice_user():
             except Exception as e:
                 logger.error(f"deal with restore done error -> [{e}]")
                 continue
-            logger.info(f"retore->[{not_done_restore.restore_config_id}] has done")
+            logger.info(f"restore->[{not_done_restore.restore_config_id}] has done")
