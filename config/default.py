@@ -239,8 +239,8 @@ if BKLOG_UDP_LOG:
     }
 
 OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
-OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST")
-OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 0))
+OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
+OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 1000))
 # ===============================================================================
 # 项目配置
 # ===============================================================================
@@ -791,6 +791,10 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
 """
 以下为框架代码 请勿修改
 """
+IS_CELERY = False
+if "celery" in sys.argv:
+    IS_CELERY = True
+
 # celery settings
 if IS_USE_CELERY:
     CELERY_ENABLE_UTC = True

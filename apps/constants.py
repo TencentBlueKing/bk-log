@@ -21,11 +21,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
 
-FEATURE_TOGGLE_PREFIX_CACHE = "feature_toggle"
-FEATURE_TOGGLE_CACHE_EXPIRED = 180
-
-FEATURE_TOGGLE_LIST_CACHE = "feature_toggles"
-
 
 class NotifyType(ChoicesEnum):
     """

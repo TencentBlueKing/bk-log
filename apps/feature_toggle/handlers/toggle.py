@@ -20,11 +20,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from django.conf import settings
 from django.core.cache import cache
-from django.utils.module_loading import import_string
 
-from apps.constants import FEATURE_TOGGLE_PREFIX_CACHE, FEATURE_TOGGLE_CACHE_EXPIRED, FEATURE_TOGGLE_LIST_CACHE
-from apps.feature_toggle.plugins.base import FeatureToggleBase
-from apps.feature_toggle.plugins.conf import FEATURE_TOGGLE_CLASSES_DICT
+from apps.feature_toggle.constants import  FEATURE_TOGGLE_LIST_CACHE
+from apps.feature_toggle.plugins.base import FeatureToggleBase, get_feature_toggle
+from apps.utils.function import ignored
 from apps.utils.log import logger
 
 
@@ -107,10 +106,10 @@ class FeatureToggleObject(object):
         """
         from apps.feature_toggle.models import FeatureToggle
 
-        cache_key = f"{FEATURE_TOGGLE_PREFIX_CACHE}_{name}"
-        result = cache.get(cache_key)
-        if result:
-            return cls._format_result(result)
+        # cache_key = f"{FEATURE_TOGGLE_PREFIX_CACHE}_{name}"
+        # result = cache.get(cache_key)
+        # if result:
+        #     return cls._format_result(result)
         param = {}
         if settings.FEATURE_TOGGLE.get(name):
             param["name"] = name
@@ -121,21 +120,22 @@ class FeatureToggleObject(object):
             param["feature_config"] = None
             param["biz_id_white_list"] = None
 
-        feature_toggle = FeatureToggle.objects.filter(name=name).first()
-        if feature_toggle:
-            param["name"] = feature_toggle.name
-            param["alias"] = feature_toggle.alias
-            param["status"] = feature_toggle.status
-            param["description"] = feature_toggle.description
-            param["is_viewed"] = feature_toggle.is_viewed
-            param["feature_config"] = feature_toggle.feature_config
-            param["biz_id_white_list"] = feature_toggle.biz_id_white_list
+        with ignored(Exception, log_exception=True):
+            feature_toggle = FeatureToggle.objects.filter(name=name).first()
+            if feature_toggle:
+                param["name"] = feature_toggle.name
+                param["alias"] = feature_toggle.alias
+                param["status"] = feature_toggle.status
+                param["description"] = feature_toggle.description
+                param["is_viewed"] = feature_toggle.is_viewed
+                param["feature_config"] = feature_toggle.feature_config
+                param["biz_id_white_list"] = feature_toggle.biz_id_white_list
 
         if not param:
             return None
 
         param = cls._load_plugins(name=name, param=param)
-        cache.set(cache_key, param, FEATURE_TOGGLE_CACHE_EXPIRED)
+        # cache.set(cache_key, param, FEATURE_TOGGLE_CACHE_EXPIRED)
         return cls._format_result(param)
 
     @classmethod
@@ -153,7 +153,7 @@ class FeatureToggleObject(object):
             return [cls._format_result(param) for param in cls._filter_params(result, kwargs)]
         params = cls._get_params()
         result = list(params.values())
-        cache.set(cache_key, result, FEATURE_TOGGLE_CACHE_EXPIRED)
+        # cache.set(cache_key, result, FEATURE_TOGGLE_CACHE_EXPIRED)
         return [cls._format_result(param) for param in cls._filter_params(result, kwargs)]
 
     @classmethod
@@ -168,9 +168,7 @@ class FeatureToggleObject(object):
         Raises:
             BaseException: 对应cls没有继承自FutureToggleBase
         """
-        if not FEATURE_TOGGLE_CLASSES_DICT.get(name):
-            return param
-        feature_toggle_cls = import_string(FEATURE_TOGGLE_CLASSES_DICT.get(name))
+        feature_toggle_cls = get_feature_toggle(name)
         if not issubclass(feature_toggle_cls, FeatureToggleBase):
             raise BaseException(f"{feature_toggle_cls} 没有继承自FutureToggleBase")
         return feature_toggle_cls().set_status(param=param)

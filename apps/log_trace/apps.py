@@ -28,5 +28,8 @@ class TraceConfig(AppConfig):
     verbose_name = "Trace"
 
     def ready(self):
-        if settings.OTLP_TRACE:
+        if settings.IS_CELERY:
+            return
+        from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+        if FeatureToggleObject.switch("bk_log_trace"):
             BluekingInstrumentor().instrument()
