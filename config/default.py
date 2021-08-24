@@ -68,6 +68,8 @@ INSTALLED_APPS += (
     "apps.feature_toggle",
 )
 
+# smart部署使用/tmp 临时目录
+STATIC_ROOT = "/tmp"
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
 BKAPP_IS_BKLOG_API = os.environ.get("BKAPP_IS_BKLOG_API", 0)
 if BKAPP_IS_BKLOG_API:
