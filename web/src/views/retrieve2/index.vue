@@ -1174,14 +1174,14 @@ export default {
           },
         });
 
-        if (this.pollingStartTime <= this.startTimeStamp
-        || this.requestInterval === 0) { // 分片时间已结束
+        this.isNextTime = res.data.list.length < pageSize;
+        if (this.isNextTime && (this.pollingStartTime <= this.startTimeStamp
+        || this.requestInterval === 0)) { // 分片时间已结束
           this.finishPolling = true;
         }
 
         this.retrievedKeyword = this.retrieveParams.keyword;
         this.tookTime = this.tookTime + res.data.took || 0;
-        this.isNextTime = res.data.list.length < pageSize;
         this.tableData = { ...res.data, finishPolling: this.finishPolling };
         this.originLogList = this.originLogList.concat(res.data.origin_log_list);
         this.statisticalFieldsData = this.getStatisticalFieldsData(this.originLogList);
