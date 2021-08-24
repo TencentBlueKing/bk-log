@@ -49,52 +49,53 @@
         @page-limit-change="handleLimitChange">
         <bk-table-column :label="$t('索引集名称')">
           <template slot-scope="props">
-            {{ props.row.id }}
+            {{ props.row.index_set_name }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.archiveItem')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.collector_config_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.timeRange')">
+        <bk-table-column :label="$t('logArchive.timeRange')" width="300">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ `${props.row.start_time} - ${props.row.end_time}` }}
           </template>
         </bk-table-column>
         <bk-table-column
           :label="$t('logArchive.occupySize')"
-          sortable
           class-name="filter-column">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ getFileSize(props.row.total_store_size) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.remain')">
+        <bk-table-column :label="$t('过期时间')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.expired_time }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.restoreStatus')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.status }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('dataSource.operation')" width="200">
           <div class="restore-table-operate" slot-scope="props">
             <!-- 检索 -->
-            <bk-button
+            <log-button
               theme="primary"
               text
-              class="mr10 king-button"
-              @click.stop="operateHandler(props.row, 'search')">
-              {{ $t('检索') }}
-            </bk-button>
+              ext-cls="mr10 king-button"
+              :button-text="$t('检索')"
+              :cursor-active="!(props.row.permission && props.row.permission.search_log)"
+              @on-click="operateHandler(props.row, 'search')">
+            </log-button>
             <!-- 编辑 -->
             <bk-button
               theme="primary"
               text
               class="mr10 king-button"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
@@ -103,6 +104,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'delete')">
               {{ $t('btn.delete') }}
             </bk-button>
@@ -114,12 +116,16 @@
     <RestoreSlider
       v-if="isRenderSlider"
       :show-slider.sync="showSlider"
+      :edit-restore="editRestore"
+      @updated="handleUpdated"
     />
   </section>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import RestoreSlider from './restore-slider';
+import { formatFileSize } from '@/common/util';
 
 export default {
   name: 'archive-restore',
@@ -131,8 +137,12 @@ export default {
       isTableLoading: false,
       isRenderSlider: true,
       showSlider: false,
+      editRestore: null,
+      timer: null,
+      timerNum: 0,
       keyword: '',
       dataList: [],
+      restoreIds: [], // 异步获取状态参数
       pagination: {
         current: 1,
         count: 0,
@@ -141,15 +151,25 @@ export default {
       },
       params: {
         keyword: '',
-        etl_config: '',
       },
     };
   },
   computed: {
+    ...mapGetters({
+      bkBizId: 'bkBizId',
+    }),
+  },
+  created() {
+    this.search();
+  },
+  beforeDestory() {
+    this.timerNum = -1;
+    this.stopStatusPolling();
   },
   methods: {
     search() {
       this.pagination.current = 1;
+      this.stopStatusPolling();
       this.requestData();
     },
     handleFilterChange(data) {
@@ -161,6 +181,7 @@ export default {
     },
     handleCreate() {
       this.showSlider = true;
+      this.editRestore = null;
     },
     /**
      * 分页变换
@@ -170,6 +191,7 @@ export default {
     handlePageChange(page) {
       if (this.pagination.current !== page) {
         this.pagination.current = page;
+        this.stopStatusPolling();
         this.requestData();
       }
     },
@@ -182,74 +204,190 @@ export default {
       if (this.pagination.limit !== page) {
         this.pagination.current = 1;
         this.pagination.limit = page;
+        this.stopStatusPolling();
         this.requestData();
       }
     },
+    // 轮询
+    startStatusPolling() {
+      this.timerNum += 1;
+      const timerNum = this.timerNum;
+      this.stopStatusPolling();
+      this.timer = setTimeout(() => {
+        timerNum === this.timerNum && this.restoreIds && this.requestRestoreStatus(true);
+      }, 10000);
+    },
+    stopStatusPolling() {
+      clearTimeout(this.timer);
+    },
+    requestRestoreList() {
+      return new Promise((resolve, reject) => {
+        this.$http.request('archive/restoreList', {
+          query: {
+            ...this.params,
+            bk_biz_id: this.bkBizId,
+            page: this.pagination.current,
+            pagesize: this.pagination.limit,
+          },
+        }).then((res) => {
+          const { data } = res;
+          this.restoreIds = [];
+          this.pagination.count = data.total;
+          // this.dataList = data.list;
+          this.restoreIds = [];
+          data.list.forEach((row) => {
+            row.status = '';
+            this.restoreIds.push(row.restore_config_id);
+          });
+          this.dataList.splice(0, this.dataList.length, ...data.list);
+          resolve(res);
+        })
+          .catch((err) => {
+            reject(err);
+          })
+          .finally(() => {
+            this.isTableLoading = false;
+          });
+      });
+    },
     requestData() {
-      // this.isTableLoading = true;
-      // this.$http.request('clean/cleanTemplate', {
-      //   query: {
-      //     ...this.params,
-      //     bk_biz_id: this.bkBizId,
-      //     page: this.pagination.current,
-      //     pagesize: this.pagination.limit,
-      //   },
-      // }).then((res) => {
-      //   const { data } = res;
-      //   this.pagination.count = data.total;
-      //   this.templateList = data.list;
-      // })
-      //   .catch((err) => {
-      //     console.warn(err);
-      //   })
-      //   .finally(() => {
-      //     this.isTableLoading = false;
-      //   });
+      this.isTableLoading = true;
+      Promise.all([this.requestRestoreList()]).then(() => {
+        if (this.restoreIds) {
+          this.requestRestoreStatus();
+        }
+      })
+        .catch(() => {})
+        .finally(() => {
+          this.isTableLoading = false;
+        });
+    },
+    requestRestoreStatus(isPrivate) {
+      const timerNum = this.timerNum;
+      this.$http.request('archive/getRestoreStatus', {
+        data: {
+          restore_config_ids: this.restoreIds,
+        },
+      }).then((res) => {
+        if (timerNum === this.timerNum) {
+          this.statusHandler(res.data || []);
+          this.startStatusPolling();
+        }
+        if (!isPrivate) {
+          this.loadingStatus = true;
+        }
+      })
+        .catch(() => {
+          if (isPrivate) {
+            this.stopStatusPolling();
+          }
+        });
+    },
+    statusHandler(data) {
+      data.forEach((item) => {
+        this.dataList.forEach((row) => {
+          if (row.restore_config_id === item.restore_config_id) {
+            const completeCount = item.complete_doc_count;
+            const totalCount = item.total_doc_count;
+            if (completeCount === totalCount) row.status = this.$t('完成');
+            if (completeCount === 0) row.status = this.$t('logArchive.notStarted');
+            if (completeCount > 0 && completeCount < totalCount) {
+              const precent = `${Math.round(completeCount / totalCount * 100)}%`;
+              row.status = `${this.$t('logArchive.restoring')}(${precent})`;
+            }
+          }
+        });
+      });
+    },
+    handleUpdated() {
+      this.showSlider = false;
+      this.search();
     },
     operateHandler(row, operateType) {
-      console.log(row, operateType);
-    //   if (operateType === 'edit') {
-    //     this.$router.push({
-    //       name: 'clean-template-edit',
-    //       params: {
-    //         templateId: row.clean_template_id,
-    //       },
-    //       query: {
-    //         projectId: window.localStorage.getItem('project_id'),
-    //       },
-    //     });
-    //     return;
-    //   }
-    //   if (operateType === 'delete') {
-    //     this.$bkInfo({
-    //       type: 'warning',
-    //       title: this.$t('logClean.Confirm_delete_temp'),
-    //       confirmFn: () => {
-    //         this.requestDeleteTemp(row);
-    //       },
-    //     });
-    //     return;
-    //   }
-    // },
-    // requestDeleteTemp(row) {
-    //   this.$http.request('clean/deleteTemplate', {
-    //     params: {
-    //       clean_template_id: row.clean_template_id,
-    //     },
-    //   }).then((res) => {
-    //     if (res.result) {
-    //       const page = this.templateList.length <= 1
-    //         ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
-    //         : this.pagination.current;
-    //       this.messageSuccess(this.$t('删除成功'));
-    //       if (page !== this.pagination.current) {
-    //         this.handlePageChange(page);
-    //       } else {
-    //         this.requestData();
-    //       }
-    //     }
-    //   })
-    //     .catch(() => {});
+      if (operateType === 'search') {
+        if (!(row.permission?.search_log)) {
+          return this.getOptionApplyData({
+            action_ids: ['search_log'],
+            resources: [{
+              type: 'indices',
+              id: row.index_set_id,
+            }],
+          });
+        }
+      }
+
+      if (operateType === 'edit' || operateType === 'delete') {
+        if (!(row.permission?.manage_collection)) {
+          return this.getOptionApplyData({
+            action_ids: ['manage_collection'],
+            resources: [{
+              type: 'collection',
+              id: row.collector_config_id,
+            }],
+          });
+        }
+      }
+
+      if (operateType === 'search') {
+        this.$router.push({
+          name: 'retrieve',
+          params: {
+            indexId: row.index_set_id,
+          },
+        });
+        return;
+      }
+
+      if (operateType === 'edit') {
+        this.editRestore = row;
+        this.showSlider = true;
+        return;
+      }
+
+      if (operateType === 'delete') {
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('logArchive.Confirm_delete_restore'),
+          confirmFn: () => {
+            this.requestDelete(row);
+          },
+        });
+        return;
+      }
+    },
+    requestDelete(row) {
+      this.$http.request('archive/deleteRestore', {
+        params: {
+          restore_config_id: row.restore_config_id,
+        },
+      }).then((res) => {
+        if (res.result) {
+          const page = this.dataList.length <= 1
+            ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
+            : this.pagination.current;
+          this.messageSuccess(this.$t('删除成功'));
+          if (page !== this.pagination.current) {
+            this.handlePageChange(page);
+          } else {
+            this.requestData();
+          }
+        }
+      })
+        .catch(() => {});
+    },
+    getFileSize(size) {
+      return formatFileSize(size);
+    },
+    async getOptionApplyData(paramData) {
+      try {
+        this.isTableLoading = true;
+        const res = await this.$store.dispatch('getApplyData', paramData);
+        this.$store.commit('updateAuthDialogData', res.data);
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        this.isTableLoading = false;
+      }
     },
   },
 };

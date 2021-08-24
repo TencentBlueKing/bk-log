@@ -1145,5 +1145,9 @@ export default {
     Confirm_delete_repo: 'Confirm to delete this item?',
     repoNmaeTip: 'only english, numbers or underscores',
     region: 'Region',
+    Confirm_delete_archive: 'Confirm to delete this item?',
+    Confirm_delete_restore: 'Confirm to delete this item?',
+    notStarted: 'Not started',
+    restoring: 'Restoring',
   },
 };

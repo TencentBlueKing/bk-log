@@ -297,9 +297,16 @@ export default {
         }
       } else {
         // 清空表单数据
-        // this.formData = {
-
-        // };
+        this.formData = {
+          cluster_id: '',
+          snapshot_repository_name: '',
+          es_config: {
+            type: 'hdfs',
+          },
+          cosFormData: cosConfigForm(),
+          hdfsFormData: hdfsConfigForm(),
+          fsFormData: fsConfigForm(),
+        };
       }
     },
   },
@@ -386,17 +393,17 @@ export default {
         if (es_config.type === 'hdfs') {
           const { uri, path, isSecurity, security } = hdfsFormData;
           const principal = isSecurity ? security.principal : undefined;
-          paramsData.es_config.setting = {
+          paramsData.es_config.settings = {
             uri,
             path,
             'security.principal': principal,
           };
         }
         if (es_config.type === 'fs') {
-          paramsData.es_config.setting = { ...fsFormData };
+          paramsData.es_config.settings = { ...fsFormData };
         }
         if (es_config.type === 'cos') {
-          paramsData.es_config.setting = { ...cosFormData };
+          paramsData.es_config.settings = { ...cosFormData };
         }
 
         this.confirmLoading = true;

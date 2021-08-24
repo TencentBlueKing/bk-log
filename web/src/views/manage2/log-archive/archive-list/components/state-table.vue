@@ -32,39 +32,38 @@
         :limit-list="pagination.limitList"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('logArchive.indexName')" width="300">
+        <bk-table-column :label="$t('logArchive.indexName')" min-width="300">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.index_name }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.startStopTime')" min-width="200">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ `${props.row.start_time} - ${props.row.end_time}` }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.remain')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.expired_time }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.size')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ getFileSize(props.row.store_size) }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.archiveStatus')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ stateMap[props.row.state] }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.isRestore')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.is_stored ? $t('common.yes') : $t('common.no') }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="130">
+        <!-- <bk-table-column :label="$t('dataSource.operation')" width="130">
           <div class="state-table-operate" slot-scope="props">
-            <!-- 重试 -->
             <bk-button
               theme="primary"
               text
@@ -72,34 +71,44 @@
               @click.stop="operateHandler(props.row, 'restore')">
               {{ $t('configDetails.retry') }}
             </bk-button>
-            <!-- 编辑 -->
           </div>
-        </bk-table-column>
+        </bk-table-column> -->
       </bk-table>
     </section>
   </section>
 </template>
 
 <script>
+import { formatFileSize } from '@/common/util';
+
 export default {
   name: 'archive-state',
+  props: {
+    archiveConfigId: {
+      type: Object,
+      default: '',
+    },
+  },
   data() {
     return {
       isTableLoading: false,
-      dataList: [{ name: 'log' }],
+      dataList: [],
       pagination: {
         current: 1,
         count: 0,
         limit: 10,
         limitList: [10, 20, 50, 100],
       },
+      stateMap: {
+        SUCCESS: this.$t('成功'),
+        FAIL: this.$t('失败'),
+      },
     };
   },
+  created() {
+    this.requestData();
+  },
   methods: {
-    search() {
-      this.pagination.current = 1;
-      this.requestData();
-    },
     /**
      * 分页变换
      * @param  {Number} page 当前页码
@@ -125,69 +134,39 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
-      // this.$http.request('clean/cleanTemplate', {
-      //   query: {
-      //     ...this.params,
-      //     bk_biz_id: this.bkBizId,
-      //     page: this.pagination.current,
-      //     pagesize: this.pagination.limit,
-      //   },
-      // }).then((res) => {
-      //   const { data } = res;
-      //   this.pagination.count = data.total;
-      //   this.templateList = data.list;
-      // })
-      //   .catch((err) => {
-      //     console.warn(err);
-      //   })
-      //   .finally(() => {
-      //     this.isTableLoading = false;
-      //   });
+      this.$http.request('archive/archiveConfig', {
+        query: {
+          page: 0,
+          pagesize: 1,
+        },
+        params: {
+          archive_config_id: this.archiveConfigId,
+        },
+      }).then((res) => {
+        const { data } = res;
+        if (data.indices.length) {
+          // this.dataList = data.snapshots;
+          // TODO
+          const list = [];
+          // const state = data.snapshots[0].state;
+          data.indices.forEach((item) => {
+            list.push({
+              ...item,
+            });
+          });
+          this.dataList.splice(this.dataList.length, 0, ...list);
+        }
+      })
+        .catch((err) => {
+          console.warn(err);
+        })
+        .finally(() => {
+          this.isTableLoading = false;
+        });
     },
-    operateHandler(row, operateType) {
-      console.log(row, operateType);
-    //   if (operateType === 'edit') {
-    //     this.$router.push({
-    //       name: 'clean-template-edit',
-    //       params: {
-    //         templateId: row.clean_template_id,
-    //       },
-    //       query: {
-    //         projectId: window.localStorage.getItem('project_id'),
-    //       },
-    //     });
-    //     return;
-    //   }
-    //   if (operateType === 'delete') {
-    //     this.$bkInfo({
-    //       type: 'warning',
-    //       title: this.$t('logClean.Confirm_delete_temp'),
-    //       confirmFn: () => {
-    //         this.requestDeleteTemp(row);
-    //       },
-    //     });
-    //     return;
-    //   }
-    // },
-    // requestDeleteTemp(row) {
-    //   this.$http.request('clean/deleteTemplate', {
-    //     params: {
-    //       clean_template_id: row.clean_template_id,
-    //     },
-    //   }).then((res) => {
-    //     if (res.result) {
-    //       const page = this.templateList.length <= 1
-    //         ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
-    //         : this.pagination.current;
-    //       this.messageSuccess(this.$t('删除成功'));
-    //       if (page !== this.pagination.current) {
-    //         this.handlePageChange(page);
-    //       } else {
-    //         this.requestData();
-    //       }
-    //     }
-    //   })
-    //     .catch(() => {});
+    operateHandler() {},
+    getFileSize(size) {
+      return formatFileSize(size);
     },
   },
 };

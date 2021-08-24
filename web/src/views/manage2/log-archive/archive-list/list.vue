@@ -49,46 +49,42 @@
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
         <bk-table-column type="expand" width="30" align="center">
-          <template>
+          <template slot-scope="props">
             <div class="state-table-wrapper">
-              <StateTable />
+              <StateTable :archive-config-id="props.row.archive_config_id" />
             </div>
           </template>
         </bk-table-column>
         <bk-table-column label="ID" width="100">
           <template slot-scope="props">
-            {{ props.row.id }}
+            {{ props.row.archive_config_id }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.collectName')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.collector_config_name }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.expired')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ `${props.row.snapshot_days}天` }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.totalSize')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ getFileSize(props.row.store_size) }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.indexCount')">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.index_count }}
           </template>
         </bk-table-column>
         <bk-table-column
           :label="$t('logArchive.archiveRepository')"
-          prop="repositoryType"
-          class-name="filter-column"
-          column-key="repositoryType"
-          :filters="repositoryFilters"
-          :filter-multiple="false">
+          prop="target_snapshot_repository_name">
           <template slot-scope="props">
-            {{ props.row.name }}
+            {{ props.row.target_snapshot_repository_name }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('dataSource.operation')" width="200">
@@ -106,6 +102,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
@@ -125,13 +122,17 @@
     <ArchiveSlider
       v-if="isRenderSlider"
       :show-slider.sync="showSlider"
+      :edit-archive="editArchive"
+      @updated="handleUpdated"
     />
   </section>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import StateTable from './components/state-table.vue';
 import ArchiveSlider from './components/archive-slider';
+import { formatFileSize } from '@/common/util';
 
 export default {
   name: 'archive-list',
@@ -145,9 +146,9 @@ export default {
       isRenderSlider: true,
       showSlider: false,
       keyword: '',
-      dataList: [
-        { id: 1, name: '采集项1' },
-      ],
+      curExpandArchiveId: '', // 展开当前归档项
+      editArchive: null,
+      dataList: [],
       pagination: {
         current: 1,
         count: 0,
@@ -157,9 +158,15 @@ export default {
     };
   },
   computed: {
+    ...mapGetters({
+      bkBizId: 'bkBizId',
+    }),
     repositoryFilters() {
       return [];
     },
+  },
+  created() {
+    this.search();
   },
   methods: {
     search() {
@@ -168,6 +175,7 @@ export default {
     },
     handleFilterChange() {},
     handleCreate() {
+      this.editArchive = null;
       this.showSlider = true;
     },
     /**
@@ -195,69 +203,91 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
-      // this.$http.request('clean/cleanTemplate', {
-      //   query: {
-      //     ...this.params,
-      //     bk_biz_id: this.bkBizId,
-      //     page: this.pagination.current,
-      //     pagesize: this.pagination.limit,
-      //   },
-      // }).then((res) => {
-      //   const { data } = res;
-      //   this.pagination.count = data.total;
-      //   this.templateList = data.list;
-      // })
-      //   .catch((err) => {
-      //     console.warn(err);
-      //   })
-      //   .finally(() => {
-      //     this.isTableLoading = false;
-      //   });
+      this.$http.request('archive/getArchiveList', {
+        query: {
+          ...this.params,
+          keyword: this.keyword,
+          bk_biz_id: this.bkBizId,
+          page: this.pagination.current,
+          pagesize: this.pagination.limit,
+        },
+      }).then((res) => {
+        const { data } = res;
+        this.pagination.count = data.total;
+        this.dataList = data.list;
+      })
+        .catch((err) => {
+          console.warn(err);
+        })
+        .finally(() => {
+          this.isTableLoading = false;
+        });
+    },
+    handleUpdated() {
+      this.showSlider = false;
+      this.search();
     },
     operateHandler(row, operateType) {
-      console.log(row, operateType);
-    //   if (operateType === 'edit') {
-    //     this.$router.push({
-    //       name: 'clean-template-edit',
-    //       params: {
-    //         templateId: row.clean_template_id,
-    //       },
-    //       query: {
-    //         projectId: window.localStorage.getItem('project_id'),
-    //       },
-    //     });
-    //     return;
-    //   }
-    //   if (operateType === 'delete') {
-    //     this.$bkInfo({
-    //       type: 'warning',
-    //       title: this.$t('logClean.Confirm_delete_temp'),
-    //       confirmFn: () => {
-    //         this.requestDeleteTemp(row);
-    //       },
-    //     });
-    //     return;
-    //   }
-    // },
-    // requestDeleteTemp(row) {
-    //   this.$http.request('clean/deleteTemplate', {
-    //     params: {
-    //       clean_template_id: row.clean_template_id,
-    //     },
-    //   }).then((res) => {
-    //     if (res.result) {
-    //       const page = this.templateList.length <= 1
-    //         ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
-    //         : this.pagination.current;
-    //       this.messageSuccess(this.$t('删除成功'));
-    //       if (page !== this.pagination.current) {
-    //         this.handlePageChange(page);
-    //       } else {
-    //         this.requestData();
-    //       }
-    //     }
-    //   })
-    //     .catch(() => {});
+      if (!(row.permission?.manage_collection)) {
+        return this.getOptionApplyData({
+          action_ids: ['manage_collection'],
+          resources: [{
+            type: 'collection',
+            id: row.collector_config_id,
+          }],
+        });
+      }
+
+      if (operateType === 'edit') {
+        this.editArchive = row;
+        this.showSlider = true;
+        return;
+      }
+
+      if (operateType === 'delete') {
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('logArchive.Confirm_delete_archive'),
+          confirmFn: () => {
+            this.requestDelete(row);
+          },
+        });
+        return;
+      }
+    },
+    requestDelete(row) {
+      this.$http.request('archive/deleteArchive', {
+        params: {
+          archive_config_id: row.archive_config_id,
+        },
+      }).then((res) => {
+        if (res.result) {
+          const page = this.dataList.length <= 1
+            ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
+            : this.pagination.current;
+          this.messageSuccess(this.$t('删除成功'));
+          if (page !== this.pagination.current) {
+            this.handlePageChange(page);
+          } else {
+            this.requestData();
+          }
+        }
+      })
+        .catch(() => {});
+    },
+    async getOptionApplyData(paramData) {
+      try {
+        this.isTableLoading = true;
+        const res = await this.$store.dispatch('getApplyData', paramData);
+        this.$store.commit('updateAuthDialogData', res.data);
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        this.isTableLoading = false;
+      }
+    },
+    getFileSize(size) {
+      return formatFileSize(size);
     },
   },
 };

@@ -39,41 +39,51 @@
           form-type="vertical"
           ref="validateForm"
           class="king-form">
-          <bk-form-item :label="$t('索引集名称')" required property="cluster_name">
-            <bk-input></bk-input>
+          <bk-form-item :label="$t('索引集名称')" required property="index_set_name">
+            <bk-input v-model="formData.index_set_name" :disabled="isEdit"></bk-input>
           </bk-form-item>
           <bk-alert type="info" :title="$t('logArchive.restoreIndexTip')"></bk-alert>
-          <bk-form-item :label="$t('logArchive.archiveItem')" required property="cluster_name">
-            <bk-select></bk-select>
-          </bk-form-item>
-          <bk-form-item :label="$t('logArchive.timeRange')" required property="cluster_name">
-            <bk-date-picker :placeholder="'选择日期时间范围'" :type="'datetimerange'"></bk-date-picker>
-          </bk-form-item>
-          <bk-form-item :label="$t('过期时间')" required property="retention">
-            <bk-select style="width: 300px;" v-model="formData.retention" :clearable="false">
-              <div slot="trigger" class="bk-select-name">
-                {{ formData.retention + $t('天') }}
-              </div>
-              <template v-for="(option, index) in retentionDaysList">
-                <bk-option :key="index" :id="option.id" :name="option.name"></bk-option>
-              </template>
-              <div slot="extension" style="padding: 8px 0;">
-                <bk-input
-                  v-model="customRetentionDay"
-                  size="small"
-                  type="number"
-                  :placeholder="$t('输入自定义天数')"
-                  :show-controls="false"
-                  @enter="enterCustomDay($event, 'retention')"
-                ></bk-input>
-              </div>
+          <bk-form-item
+            :label="$t('logArchive.archiveItem')"
+            required
+            property="archive_config_id">
+            <bk-select v-model="formData.archive_config_id" :disabled="isEdit">
+              <bk-option
+                v-for="option in archiveList"
+                :key="option.archive_config_id"
+                :id="option.archive_config_id"
+                :name="option.collector_config_name"
+                :disabled="!option.permission.manage_collection">
+              </bk-option>
             </bk-select>
           </bk-form-item>
-          <bk-form-item :label="$t('logArchive.notifiedUser')">
+          <bk-form-item
+            :label="$t('logArchive.timeRange')"
+            required
+            property="datePickerValue">
+            <bk-date-picker
+              format="yyyy-MM-dd HH:mm"
+              :placeholder="'选择日期时间范围'"
+              :type="'datetimerange'"
+              :disabled="isEdit"
+              v-model="formData.datePickerValue"
+              @change="handleTimeChange">
+            </bk-date-picker>
+          </bk-form-item>
+          <bk-form-item :label="$t('过期时间')" required property="datePickerExpired">
+            <bk-date-picker
+              v-model="formData.datePickerExpired"
+              format="yyyy-MM-dd HH:mm"
+              :options="expiredDatePicker"
+              @change="handleExpiredChange">
+            </bk-date-picker>
+          </bk-form-item>
+          <bk-form-item :label="$t('logArchive.notifiedUser')" required>
             <ValidateUserSelector
               style="width:500px;"
-              v-model="formData.notifiedUser"
-              :api="userApi" />
+              v-model="formData.notice_user"
+              :api="userApi"
+              :disabled="isEdit" />
           </bk-form-item>
           <bk-form-item style="margin-top:30px;">
             <bk-button
@@ -104,8 +114,8 @@ export default {
       type: Boolean,
       default: false,
     },
-    archiveId: {
-      type: Number,
+    editRestore: {
+      type: Object,
       default: null,
     },
   },
@@ -116,93 +126,196 @@ export default {
       userApi: window.BK_LOGIN_URL,
       customRetentionDay: '', // 自定义过期天数
       retentionDaysList: [], // 过期天数列表
+      archiveList: [],
       formData: {
-        retention: '1',
-        notifiedUser: [],
+        index_set_name: '',
+        archive_config_id: '',
+        datePickerValue: [],
+        datePickerExpired: '',
+        expired_time: '',
+        notice_user: [],
+        start_time: '',
+        end_time: '',
       },
-      basicRules: {
-
+      basicRules: {},
+      requiredRules: {
+        required: true,
+        trigger: 'blur',
+      },
+      expiredDatePicker: {
+        disabledDate(time) {
+          return time.getTime() < Date.now();
+        },
       },
     };
   },
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
+      user: 'uesr',
       globalsData: 'globals/globalsData',
     }),
     isEdit() {
-      return this.archiveId !== null;
+      return this.editRestore !== null;
     },
   },
   watch: {
     showSlider(val) {
       if (val) {
+        this.getArchiveList();
+        this.updateDaysList();
         if (this.isEdit) {
-        } else {
-          //
+          console.log(this.editRestore);
+          const {
+            index_set_name,
+            archive_config_id,
+            expired_time,
+            notice_user,
+            start_time,
+            end_time,
+          } = this.editRestore;
+          Object.assign(this.formData, {
+            index_set_name,
+            archive_config_id,
+            expired_time,
+            notice_user,
+            start_time,
+            end_time,
+            // eslint-disable-next-line camelcase
+            datePickerValue: [start_time, end_time],
+            datePickerExpired: expired_time,
+          });
+        }
+        const { user } = this.$store.state;
+        if (user && user.username) {
+          this.formData.notice_user.push(user.username);
         }
       } else {
         // 清空表单数据
         this.formData = {
-
+          index_set_name: '',
+          archive_config_id: '',
+          datePickerValue: [],
+          expired_time: '',
+          datePickerExpired: '',
+          notice_user: [],
         };
       }
     },
   },
   created() {
+    this.basicRules = {
+      index_set_name: [this.requiredRules],
+      archive_config_id: [this.requiredRules],
+      datePickerExpired: [this.requiredRules],
+      datePickerValue: [
+        {
+          validator: (val) => {
+            if (val.length) {
+              return !!val.every(item => item);
+            }
+            return false;
+          },
+          trigger: 'blur',
+        },
+      ],
+    };
   },
   methods: {
+    getArchiveList() {
+      const query = {
+        bk_biz_id: this.bkBizId,
+      };
+      this.$http.request('archive/getAllArchives', { query }).then((res) => {
+        this.archiveList = res.data || [];
+      })
+        .catch(() => {
+          this.basicLoading = false;
+        });
+    },
     updateIsShow(val) {
       this.$emit('update:showSlider', val);
     },
     handleCancel() {
       this.$emit('update:showSlider', false);
     },
+    handleTimeChange(val) {
+      this.formData.start_time = val[0];
+      this.formData.end_time = val[1];
+    },
+    handleExpiredChange(val) {
+      this.formData.expired_time = val;
+    },
     updateDaysList() {
-      // const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
-      //   return item.id <= (this.selectedStorageCluster.max_retention || 30);
-      // });
-      // this.retentionDaysList = retentionDaysList;
+      const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
+        return item.id;
+      });
+      this.retentionDaysList = retentionDaysList;
     },
-    // 输入自定义过期天数、冷热集群存储期限
-    enterCustomDay() {
-      // const numberVal = parseInt(val.trim(), 10);
-      // const stringVal = numberVal.toString();
-      // const isRetention = type === 'retention'; // 过期时间 or 热数据存储时间
-      // if (numberVal) {
-      //   const maxDays = this.selectedStorageCluster.max_retention || 30;
-      //   if (numberVal > maxDays) { // 超过最大天数
-      //     isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
-      //     this.messageError(this.$t('最大自定义天数为') + maxDays);
-      //   } else {
-      //     if (isRetention) {
-      //       if (!this.retentionDaysList.some(item => item.id === stringVal)) {
-      //         this.retentionDaysList.push({
-      //           id: stringVal,
-      //           name: stringVal + this.$t('天'),
-      //         });
-      //       }
-      //       this.formData.retention = stringVal;
-      //       this.customRetentionDay = '';
-      //     } else {
-      //       if (!this.hotDataDaysList.some(item => item.id === stringVal)) {
-      //         this.hotDataDaysList.push({
-      //           id: stringVal,
-      //           name: stringVal + this.$t('天'),
-      //         });
-      //       }
-      //       this.formData.allocation_min_days = stringVal;
-      //       this.customHotDataDay = '';
-      //     }
-      //     document.body.click();
-      //   }
-      // } else {
-      //   isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
-      //   this.messageError(this.$t('请输入有效数值'));
-      // }
+    // 输入自定义过期天数
+    enterCustomDay(val) {
+      const numberVal = parseInt(val.trim(), 10);
+      const stringVal = numberVal.toString();
+      if (numberVal) {
+        if (!this.retentionDaysList.some(item => item.id === stringVal)) {
+          this.retentionDaysList.push({
+            id: stringVal,
+            name: stringVal + this.$t('天'),
+          });
+        }
+        this.formData.snapshot_days = stringVal;
+        this.customRetentionDay = '';
+        document.body.click();
+      } else {
+        this.customRetentionDay = '';
+        this.messageError(this.$t('请输入有效数值'));
+      }
     },
-    handleConfirm() {
+    async handleConfirm() {
+      try {
+        await this.$refs.validateForm.validate();
+        let url = '/archive/createRestore';
+        let paramsData = {
+          ...this.formData,
+          bk_biz_id: this.bkBizId,
 
+          // TODO
+          notice_user: ['admin'],
+        };
+        const params = {};
+        delete paramsData.datePickerValue;
+        delete paramsData.datePickerExpired;
+        this.confirmLoading = true;
+
+        if (this.isEdit) {
+          url = '/archive/editRestore';
+          const { expired_time } = this.formData;
+          const { restore_config_id } = this.editRestore;
+          console.log(restore_config_id);
+          paramsData = {
+            expired_time,
+            restore_config_id,
+          };
+          // eslint-disable-next-line camelcase
+          params.restore_config_id = restore_config_id;
+        }
+
+        await this.$http.request(url, {
+          data: paramsData,
+          params,
+        });
+
+        this.$bkMessage({
+          theme: 'success',
+          message: this.$t('保存成功'),
+          delay: 1500,
+        });
+        this.$emit('updated');
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        this.confirmLoading = false;
+      }
     },
   },
 };

@@ -39,16 +39,62 @@
           form-type="vertical"
           ref="validateForm"
           class="king-form">
-          <bk-form-item :label="$t('logArchive.collectFormLabel')" required property="cluster_name">
-            <bk-select></bk-select>
+          <bk-form-item
+            :label="$t('logArchive.collectFormLabel')"
+            required
+            property="collector_config_id">
+            <bk-select
+              searchable
+              v-model="formData.collector_config_id"
+              :clearable="false"
+              :disabled="isEdit"
+              @change="handleCollectorChange">
+              <bk-option
+                v-for="option in collectorList"
+                :key="option.collector_config_id"
+                :id="option.collector_config_id"
+                :name="option.collector_config_name"
+                :disabled="!option.permission.manage_collection">
+                <!-- <div
+                  v-if="!(option.permission && option.permission.manage_collection)"
+                  class="option-slot-container no-authority"
+                  @click.stop>
+                  <span class="text">
+                    <span>{{ option.collector_config_name }}</span>
+                    <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
+                  </span>
+                  <span class="apply-text" @click.stop="applyProjectAccess(option)">{{ $t('申请权限') }}</span>
+                </div>
+                <div v-else v-bk-overflow-tips class="option-slot-container">
+                  <span>{{ option.collector_config_name }}</span>
+                  <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
+                </div> -->
+              </bk-option>
+            </bk-select>
           </bk-form-item>
-          <bk-form-item :label="$t('logArchive.archiveRepository')" required property="cluster_name">
-            <bk-select></bk-select>
+          <bk-form-item
+            :label="$t('logArchive.archiveRepository')"
+            required
+            property="target_snapshot_repository_name">
+            <bk-select
+              v-model="formData.target_snapshot_repository_name"
+              :disabled="isEdit || !formData.collector_config_id">
+              <bk-option
+                v-for="option in repositoryRenderList"
+                :key="option.repository_name"
+                :id="option.repository_name"
+                :name="option.repository_name"
+                :disabled="!option.permission.manage_es_source">
+              </bk-option>
+            </bk-select>
           </bk-form-item>
-          <bk-form-item :label="$t('过期时间')" required property="cluster_name">
-            <bk-select style="width: 300px;" v-model="formData.retention" :clearable="false">
+          <bk-form-item
+            :label="$t('过期时间')"
+            required
+            property="snapshot_days">
+            <bk-select style="width: 300px;" v-model="formData.snapshot_days" :clearable="false">
               <div slot="trigger" class="bk-select-name">
-                {{ formData.retention + $t('天') }}
+                {{ formData.snapshot_days ? formData.snapshot_days + $t('天') : '' }}
               </div>
               <template v-for="(option, index) in retentionDaysList">
                 <bk-option :key="index" :id="option.id" :name="option.name"></bk-option>
@@ -60,7 +106,7 @@
                   type="number"
                   :placeholder="$t('输入自定义天数')"
                   :show-controls="false"
-                  @enter="enterCustomDay($event, 'retention')"
+                  @enter="enterCustomDay($event)"
                 ></bk-input>
               </div>
             </bk-select>
@@ -90,8 +136,8 @@ export default {
       type: Boolean,
       default: false,
     },
-    archiveId: {
-      type: Number,
+    editArchive: {
+      type: Object,
       default: null,
     },
   },
@@ -100,90 +146,214 @@ export default {
       confirmLoading: false,
       sliderLoading: false,
       customRetentionDay: '', // 自定义过期天数
+      collectorList: [], // 采集项列表
+      repositoryOriginList: [], // 仓库列表
+      // repositoryRenderList: [], // 根据采集项关联的仓库列表
       retentionDaysList: [], // 过期天数列表
       formData: {
-        retention: '1',
+        snapshot_days: '',
+        collector_config_id: '',
+        target_snapshot_repository_name: '',
       },
-      basicRules: {
-
+      basicRules: {},
+      requiredRules: {
+        required: true,
+        trigger: 'blur',
       },
     };
   },
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
+      globalsData: 'globals/globalsData',
     }),
     isEdit() {
-      return this.archiveId !== null;
+      return this.editArchive !== null;
+    },
+    repositoryRenderList() {
+      let list = [];
+      const collectorId = this.formData.collector_config_id;
+      if (collectorId && this.collectorList.length && this.repositoryOriginList.length) {
+        const curCollector = this.collectorList.find(collect => collect.collector_config_id === collectorId);
+        const clusterId = curCollector.storage_cluster_id;
+        list = this.repositoryOriginList.filter(item => item.cluster_id === clusterId);
+      }
+
+      return list;
     },
   },
   watch: {
-    showSlider(val) {
+    async showSlider(val) {
       if (val) {
-        if (this.isEdit) {
-          this.editDataSource();
-        } else {
-          //
+        try {
+          this.sliderLoading = true;
+          await this.getCollectorList();
+          await this.getRepoList();
+          this.updateDaysList();
+          if (this.isEdit) {
+            const {
+              collector_config_id,
+              target_snapshot_repository_name,
+              snapshot_days,
+            } = this.editArchive;
+            Object.assign(this.formData, {
+              collector_config_id,
+              target_snapshot_repository_name,
+              snapshot_days,
+            });
+          }
+        } finally {
+          this.sliderLoading = false;
         }
       } else {
         // 清空表单数据
         this.formData = {
-
+          snapshot_days: '',
+          collector_config_id: '',
+          target_snapshot_repository_name: '',
         };
       }
     },
   },
+  created() {
+    this.basicRules = {
+      collector_config_id: [this.requiredRules],
+      target_snapshot_repository_name: [this.requiredRules],
+      snapshot_days: [this.requiredRules],
+    };
+  },
   methods: {
+    // 获取采集项列表
+    getCollectorList() {
+      const query = {
+        bk_biz_id: this.bkBizId,
+        have_data_id: 1,
+      };
+      this.$http.request('collect/getAllCollectors', { query }).then((res) => {
+        const data = res.data;
+        if (data.length) {
+          this.collectorList = data;
+        } else this.basicLoading = false;
+      })
+        .catch(() => {
+          this.basicLoading = false;
+        });
+    },
+    // 获取归档仓库列表
+    getRepoList() {
+      this.$http.request('archive/getRepositoryList', {
+        query: {
+          bk_biz_id: this.bkBizId,
+        },
+      }).then((res) => {
+        const { data } = res;
+        this.repositoryOriginList = data || [];
+      })
+        .catch((err) => {
+          console.warn(err);
+        })
+        .finally(() => {
+          this.isTableLoading = false;
+        });
+    },
+    handleCollectorChange() {
+      this.formData.target_snapshot_repository_name = '';
+    },
     updateIsShow(val) {
       this.$emit('update:showSlider', val);
     },
     handleCancel() {
       this.$emit('update:showSlider', false);
     },
-    // 输入自定义过期天数、冷热集群存储期限
-    enterCustomDay() {
-      // const numberVal = parseInt(val.trim(), 10);
-      // const stringVal = numberVal.toString();
-      // const isRetention = type === 'retention'; // 过期时间 or 热数据存储时间
-      // if (numberVal) {
-      //   const maxDays = this.selectedStorageCluster.max_retention || 30;
-      //   if (numberVal > maxDays) { // 超过最大天数
-      //     isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
-      //     this.messageError(this.$t('最大自定义天数为') + maxDays);
-      //   } else {
-      //     if (isRetention) {
-      //       if (!this.retentionDaysList.some(item => item.id === stringVal)) {
-      //         this.retentionDaysList.push({
-      //           id: stringVal,
-      //           name: stringVal + this.$t('天'),
-      //         });
-      //       }
-      //       this.formData.retention = stringVal;
-      //       this.customRetentionDay = '';
-      //     } else {
-      //       if (!this.hotDataDaysList.some(item => item.id === stringVal)) {
-      //         this.hotDataDaysList.push({
-      //           id: stringVal,
-      //           name: stringVal + this.$t('天'),
-      //         });
-      //       }
-      //       this.formData.allocation_min_days = stringVal;
-      //       this.customHotDataDay = '';
-      //     }
-      //     document.body.click();
-      //   }
-      // } else {
-      //   isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
-      //   this.messageError(this.$t('请输入有效数值'));
-      // }
+    updateDaysList() {
+      const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
+        return item.id;
+      });
+      this.retentionDaysList = retentionDaysList;
     },
-    handleConfirm() {},
+    // 输入自定义过期天数
+    enterCustomDay(val) {
+      const numberVal = parseInt(val.trim(), 10);
+      const stringVal = numberVal.toString();
+      if (numberVal) {
+        if (!this.retentionDaysList.some(item => item.id === stringVal)) {
+          this.retentionDaysList.push({
+            id: stringVal,
+            name: stringVal + this.$t('天'),
+          });
+        }
+        this.formData.snapshot_days = stringVal;
+        this.customRetentionDay = '';
+        document.body.click();
+      } else {
+        this.customRetentionDay = '';
+        this.messageError(this.$t('请输入有效数值'));
+      }
+    },
+    // 采集项列表点击申请采集项目管理权限
+    async applyProjectAccess(item) {
+      this.$el.click(); // 手动关闭下拉
+      try {
+        this.$bkLoading();
+        const res = await this.$store.dispatch('getApplyData', {
+          action_ids: ['manage_collection'],
+          resources: [{
+            type: 'collection',
+            id: item.collector_config_id,
+          }],
+        });
+        window.open(res.data.apply_url);
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        this.$bkLoading.hide();
+      }
+    },
+    async handleConfirm() {
+      try {
+        await this.$refs.validateForm.validate();
+        let url = '/archive/createArchive';
+        const params = {};
+        let paramsData = {
+          ...this.formData,
+          bk_biz_id: this.bkBizId,
+        };
+
+        if (this.isEdit) {
+          url = '/archive/editArchive';
+          const { snapshot_days } = this.formData;
+          const { archive_config_id } = this.editArchive;
+          paramsData = {
+            snapshot_days,
+          };
+          // eslint-disable-next-line camelcase
+          params.archive_config_id = archive_config_id;
+        }
+
+        this.confirmLoading = true;
+        await this.$http.request(url, {
+          data: paramsData,
+          params,
+        });
+        this.$bkMessage({
+          theme: 'success',
+          message: this.$t('保存成功'),
+          delay: 1500,
+        });
+        this.$emit('updated');
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        this.confirmLoading = false;
+      }
+    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
   .archive-slider-content {
+    height: calc(100vh - 60px);
     min-height: 394px;
     .king-form {
       padding: 10px 0 36px 36px;

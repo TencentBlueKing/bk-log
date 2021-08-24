@@ -357,11 +357,12 @@ export default {
         },
       }).then((res) => {
         if (res.result) {
+          this.messageSuccess(this.$t('删除成功'));
           if (this.tableDataPaged.length <= 1) {
             this.pagination.current = this.pagination.current > 1 ? this.pagination.current - 1 : 1;
           }
           const deleteIndex = this.tableDataSearched.findIndex((item) => {
-            return item.cluster_config.cluster_id === row.cluster_config.cluster_id;
+            return item.repository_name === row.repository_name;
           });
           this.tableDataSearched.splice(deleteIndex, 1);
           this.computePageData();

@@ -1142,8 +1142,12 @@ export default {
     repositoryAlert2: '2. 将keytab放es每个节点对应的目录中去',
     repositoryAlert3: '本地目录配置说明',
     repositoryAlert4: 'COS的自动创建和关联，只能用于腾讯云',
-    Confirm_delete_repo: '确认删除该仓库',
+    Confirm_delete_repo: '确认删除该仓库？',
     repoNmaeTip: '只能输入英文、数字或者下划线',
     region: '区域',
+    Confirm_delete_archive: '确认删除该归档项？',
+    Confirm_delete_restore: '确认删除该回溯？',
+    notStarted: '未开始',
+    restoring: '回溯中',
   },
 };
