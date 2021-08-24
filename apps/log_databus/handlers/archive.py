@@ -50,7 +50,7 @@ class ArchiveHandler:
         archive_group = array_group(archives, "archive_config_id", True)
         archive_config_ids = list(archive_group.keys())
         archive_objs = ArchiveConfig.objects.filter(archive_config_id__in=archive_config_ids)
-        table_ids = [archive.table_id for archive in archives]
+        table_ids = [archive.table_id for archive in archive_objs]
         archive_detail = array_group(TransferApi.list_result_table_snapshot({"table_ids": table_ids}), "table_id", True)
         for archive in archive_objs:
             archive_group[archive.archive_config_id]["collector_config_name"] = archive.collector_config_name
@@ -160,7 +160,7 @@ class ArchiveHandler:
     def list_archive(cls, bk_biz_id):
         return [
             {
-                "archive_config_id": archive.archive_id,
+                "archive_config_id": archive.archive_config_id,
                 "collector_config_name": archive.collector_config_name,
                 "collector_config_id": archive.collector_config.collector_config_id,
             }
