@@ -101,6 +101,12 @@ class RestoreViewSet(ModelViewSet):
         actions=[ActionEnum.SEARCH_LOG],
         resource_meta=ResourceEnum.INDICES,
     )
+    @insert_permission_field(
+        id_field=lambda d: d["collector_config_id"],
+        data_field=lambda d: d["list"],
+        actions=[ActionEnum.VIEW_COLLECTION, ActionEnum.MANAGE_COLLECTION],
+        resource_meta=ResourceEnum.COLLECTION,
+    )
     def list(self, request, *args, **kwargs):
         """
         @api {get} /databus/restore/?bk_biz_id=$bk_biz_id&page=$page&pagesize=$page_size 日志归档-归档回溯列表

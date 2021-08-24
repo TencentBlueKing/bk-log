@@ -21,7 +21,7 @@ from django.forms import model_to_dict
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import TransferApi
-from apps.log_databus.constants import RESTORE_INDEX_SET_PREFIX, META_PARAMS_DATE_FORMAT
+from apps.log_databus.constants import RESTORE_INDEX_SET_PREFIX
 from apps.log_databus.exceptions import (
     ArchiveNotFound,
     RestoreNotFound,
@@ -34,6 +34,8 @@ from apps.log_search.constants import DEFAULT_TIME_FIELD, TimeFieldTypeEnum, Tim
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import ProjectInfo, Scenario
 from apps.utils.db import array_group, array_hash
+from apps.utils.time_handler import format_user_time_zone, format_user_time_zone_humanize
+from apps.utils.local import get_local_param
 
 
 class ArchiveHandler:
@@ -46,24 +48,41 @@ class ArchiveHandler:
                 raise ArchiveNotFound
 
     @classmethod
+    def to_user_time_format(cls, time):
+        return format_user_time_zone(time, get_local_param("time_zone"))
+
+    @classmethod
     def list(cls, archives):
         archive_group = array_group(archives, "archive_config_id", True)
         archive_config_ids = list(archive_group.keys())
         archive_objs = ArchiveConfig.objects.filter(archive_config_id__in=archive_config_ids)
-        table_ids = [archive.table_id for archive in archives]
+        table_ids = [archive.table_id for archive in archive_objs]
         archive_detail = array_group(TransferApi.list_result_table_snapshot({"table_ids": table_ids}), "table_id", True)
         for archive in archive_objs:
             archive_group[archive.archive_config_id]["collector_config_name"] = archive.collector_config_name
-            archive_group[archive.archive_config_id]["doc_count"] = archive_detail[archive.table_id]["doc_count"]
-            archive_group[archive.archive_config_id]["store_size"] = archive_detail[archive.table_id]["store_size"]
+            for field in ["doc_count", "store_size", "index_count"]:
+                archive_group[archive.archive_config_id][field] = archive_detail[archive.table_id][field]
         return archives
 
     def retrieve(self, page, pagesize):
-        snapshot_info, *_ = TransferApi.list_result_table_snapshot_indices(
-            {"table_ids": [self.archive.table_id], "limit": pagesize, "offset": page}
-        )
+        snapshot_info, *_ = TransferApi.list_result_table_snapshot_indices({"table_ids": [self.archive.table_id]})
         archive = model_to_dict(self.archive)
-        archive["snapshots"] = snapshot_info
+        indices = []
+        for snapshot in snapshot_info:
+            for indice in snapshot.get("indices", []):
+                indices.append(
+                    {
+                        **indice,
+                        "start_time": self.to_user_time_format(indice.get("start_time")),
+                        "end_time": self.to_user_time_format(indice.get("end_time")),
+                        "expired_time": format_user_time_zone_humanize(
+                            indice.get("expired_time"), get_local_param("time_zone")
+                        ),
+                        "state": snapshot.get("state"),
+                    }
+                )
+        archive["indices"] = indices[page : pagesize * page]
+
         return archive
 
     @atomic
@@ -160,7 +179,7 @@ class ArchiveHandler:
     def list_archive(cls, bk_biz_id):
         return [
             {
-                "archive_config_id": archive.archive_id,
+                "archive_config_id": archive.archive_config_id,
                 "collector_config_name": archive.collector_config_name,
                 "collector_config_id": archive.collector_config.collector_config_id,
             }
@@ -177,11 +196,13 @@ class ArchiveHandler:
                     "restore_config_id": instance.restore_config_id,
                     "index_set_name": instance.index_set_name,
                     "index_set_id": instance.index_set_id,
-                    "start_time": instance.start_time.strftime(META_PARAMS_DATE_FORMAT),
-                    "end_time": instance.end_time.strftime(META_PARAMS_DATE_FORMAT),
-                    "expired_time": instance.expired_time.strftime(META_PARAMS_DATE_FORMAT),
+                    "start_time": cls.to_user_time_format(instance.start_time),
+                    "end_time": cls.to_user_time_format(instance.end_time),
+                    "expired_time": cls.to_user_time_format(instance.expired_time),
                     "collector_config_name": instance.archive.collector_config_name,
                     "total_store_size": instance.total_store_size,
+                    "collector_config_id": instance.archive.collector_config_id,
+                    "archive_config_id": instance.archive.archive_config_id,
                 }
             )
         return ret

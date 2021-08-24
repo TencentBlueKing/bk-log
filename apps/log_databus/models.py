@@ -17,6 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from apps.log_databus.exceptions import ArchiveNotFound
+
 """
 databus
 1. 采集（collector）
@@ -312,7 +314,10 @@ class ArchiveConfig(SoftDeleteModel):
 
     @classmethod
     def get_collector_config_id(cls, archive_config_id):
-        return cls.objects.get(archive_config_id=archive_config_id).collector_config.collector_config_id
+        try:
+            return cls.objects.get(archive_config_id=archive_config_id).collector_config.collector_config_id
+        except cls.DoesNotExist:
+            raise ArchiveNotFound
 
 
 class RestoreConfig(SoftDeleteModel):
