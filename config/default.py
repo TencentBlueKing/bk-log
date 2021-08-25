@@ -158,6 +158,7 @@ CELERY_IMPORTS = (
     "apps.log_databus.tasks.collector",
     "apps.log_databus.tasks.itsm",
     "apps.log_databus.tasks.bkdata",
+    "apps.log_databus.tasks.archive",
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
 )
