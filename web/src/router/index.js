@@ -194,6 +194,10 @@ const routes = [
     redirect: '/manage/log-collection/collection-item',
     children: [
       {
+        path: 'collect', // 日志采集 支持监控跳转兼容旧版本管理端
+        redirect: '/manage/log-collection/collection-item',
+      },
+      {
         path: 'log-collection',
         name: 'log-collection', // 日志接入 - 日志采集
         component: LogCollectionView,
