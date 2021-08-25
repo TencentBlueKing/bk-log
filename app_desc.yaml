@@ -39,7 +39,7 @@ modules:
                 plan: 4C2G5R
                 replicas: 5
             flower:
-                command: python manage.py celery flower --url_prefix=/flower --basic_auth=dataweb:D^taWe13Fl0vverP^as --port=$PORT
+                command: python manage.py celery flower --url_prefix=/flower --basic_auth=dataweb:D^taWe13Fl0vverP^as --port=5000
                 plan: 4C2G5R
                 replicas: 5
             sworker:
@@ -71,6 +71,6 @@ modules:
 
         processes:
             web:
-                command: gunicorn wsgi -w $GUNICORN_WORKER_NUM -k gevent -b :$PORT -t $GUNICORN_TIMEOUT --max-requests $GUNICORN_MAX_REQUESTS --max-requests-jitter 50 --access-logfile - --error-logfile - --access-logformat '[%(h)s] %({request_id}i)s %(u)s %(t)s "%(r)s" %(s)s %(D)s %(b)s "%(f)s" "%(a)s"'
+                command: gunicorn wsgi -w 4 -k gevent -b :$5000 --access-logfile - --error-logfile - --access-logformat '[%(h)s] %({request_id}i)s %(u)s %(t)s "%(r)s" %(s)s %(D)s %(b)s "%(f)s" "%(a)s"'
                 plan: 4C2G5R
                 replicas: 5
