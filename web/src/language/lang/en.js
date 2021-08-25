@@ -1149,5 +1149,6 @@ export default {
     Confirm_delete_restore: 'Confirm to delete this item?',
     notStarted: 'Not started',
     restoring: 'Restoring',
+    isExpired: 'Is Expired',
   },
 };

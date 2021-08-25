@@ -125,6 +125,13 @@
       :edit-archive="editArchive"
       @updated="handleUpdated"
     />
+
+    <!-- 新增回溯 -->
+    <RestoreSlider
+      :show-slider.sync="showRestoreSlider"
+      :archive-id="editArchiveId"
+      @updated="handleUpdatedRestore"
+    />
   </section>
 </template>
 
@@ -132,6 +139,7 @@
 import { mapGetters } from 'vuex';
 import StateTable from './components/state-table.vue';
 import ArchiveSlider from './components/archive-slider';
+import RestoreSlider from '../archive-restore/restore-slider.vue';
 import { formatFileSize } from '@/common/util';
 
 export default {
@@ -139,14 +147,17 @@ export default {
   components: {
     StateTable,
     ArchiveSlider,
+    RestoreSlider,
   },
   data() {
     return {
       isTableLoading: false,
       isRenderSlider: true,
+      showRestoreSlider: false,
       showSlider: false,
       keyword: '',
       curExpandArchiveId: '', // 展开当前归档项
+      editArchiveId: null, // 回溯归档项id
       editArchive: null,
       dataList: [],
       pagination: {
@@ -227,6 +238,10 @@ export default {
       this.showSlider = false;
       this.search();
     },
+    handleUpdatedRestore() {
+      this.showRestoreSlider = false;
+      this.editArchiveId = null;
+    },
     operateHandler(row, operateType) {
       if (!(row.permission?.manage_collection)) {
         return this.getOptionApplyData({
@@ -236,6 +251,11 @@ export default {
             id: row.collector_config_id,
           }],
         });
+      }
+
+      if (operateType === 'restore') {
+        this.editArchiveId = row.archive_config_id;
+        this.showRestoreSlider = true;
       }
 
       if (operateType === 'edit') {

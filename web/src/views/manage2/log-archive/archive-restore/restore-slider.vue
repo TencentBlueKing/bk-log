@@ -78,7 +78,7 @@
               @change="handleExpiredChange">
             </bk-date-picker>
           </bk-form-item>
-          <bk-form-item :label="$t('logArchive.notifiedUser')" required>
+          <bk-form-item :label="$t('logArchive.notifiedUser')" required property="notice_user">
             <ValidateUserSelector
               style="width:500px;"
               v-model="formData.notice_user"
@@ -116,6 +116,10 @@ export default {
     },
     editRestore: {
       type: Object,
+      default: null,
+    },
+    archiveId: {
+      type: Number,
       default: null,
     },
   },
@@ -186,9 +190,13 @@ export default {
             datePickerExpired: expired_time,
           });
         }
-        const { user } = this.$store.state;
-        if (user && user.username) {
-          this.formData.notice_user.push(user.username);
+        const { userMeta } = this.$store.state;
+        if (userMeta && userMeta.username) {
+          this.formData.notice_user.push(userMeta.username);
+        }
+
+        if (this.archiveId) { // 从归档列表新增回溯
+          this.formData.archive_config_id = this.archiveId;
         }
       } else {
         // 清空表单数据
@@ -215,6 +223,15 @@ export default {
               return !!val.every(item => item);
             }
             return false;
+          },
+          trigger: 'blur',
+        },
+      ],
+      notice_user: [
+        {
+          validator: (val) => {
+            console.log(val.length);
+            return !!val.length;
           },
           trigger: 'blur',
         },
@@ -278,9 +295,6 @@ export default {
         let paramsData = {
           ...this.formData,
           bk_biz_id: this.bkBizId,
-
-          // TODO
-          notice_user: ['admin'],
         };
         const params = {};
         delete paramsData.datePickerValue;

@@ -79,6 +79,7 @@
               :key="card.name"
               @click="changeRepository(card)">
               <span class="repository-name">{{ card.name }}</span>
+              <img :src="card.image" class="card-image">
             </div>
           </bk-form-item>
           <bk-alert type="info">
@@ -258,9 +259,9 @@ export default {
       esClusterSource: '',
       esClusterList: [],
       repository: [
-        { id: 'hdfs', name: 'HDFS' },
-        { id: 'fs', name: this.$t('logArchive.sharedDirectory') },
-        { id: 'cos', name: 'COS' },
+        { id: 'hdfs', name: 'HDFS', image: require('@/images/hdfs.png') },
+        { id: 'fs', name: this.$t('logArchive.sharedDirectory'), image: require('@/images/fs.png') },
+        { id: 'cos', name: 'COS', image: require('@/images/cos.png') },
       ],
       formData: {
         cluster_id: '',
@@ -487,6 +488,7 @@ export default {
         display: inline-block;
       }
       .repository-card {
+        position: relative;
         float: left;
         width: 158px;
         height: 76px;
@@ -506,6 +508,11 @@ export default {
           background: #e1ecff;
           border: 1px solid #a3c5fd;
         }
+      }
+      .card-image {
+        position: absolute;
+        right: 20px;
+        bottom: 10px;
       }
     }
     .form-title {

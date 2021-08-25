@@ -79,6 +79,11 @@
             {{ props.row.status }}
           </template>
         </bk-table-column>
+        <bk-table-column :label="$t('logArchive.isExpired')">
+          <template slot-scope="props">
+            {{ props.row.is_expired ? $t('common.yes') : $t('common.no') }}
+          </template>
+        </bk-table-column>
         <bk-table-column :label="$t('dataSource.operation')" width="200">
           <div class="restore-table-operate" slot-scope="props">
             <!-- 检索 -->
@@ -87,6 +92,7 @@
               text
               ext-cls="mr10 king-button"
               :button-text="$t('检索')"
+              :disabled="props.row.is_expired"
               :cursor-active="!(props.row.permission && props.row.permission.search_log)"
               @on-click="operateHandler(props.row, 'search')">
             </log-button>
@@ -95,6 +101,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              :disabled="props.row.is_expired"
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
@@ -104,6 +111,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              :disabled="props.row.is_expired"
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'delete')">
               {{ $t('btn.delete') }}
