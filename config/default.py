@@ -158,6 +158,7 @@ CELERY_IMPORTS = (
     "apps.log_databus.tasks.collector",
     "apps.log_databus.tasks.itsm",
     "apps.log_databus.tasks.bkdata",
+    "apps.log_databus.tasks.archive",
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
 )
@@ -504,7 +505,7 @@ MENUS = [
                         "id": "archive_repository",
                         "name": _("归档仓库"),
                         "feature": "on",
-                        "icon": "_empty-fill",
+                        "icon": "new-_empty-fill",
                     },
                     {
                         "id": "archive_list",

@@ -202,7 +202,8 @@ class ArchiveHandler:
                     "total_store_size": instance.total_store_size,
                     "collector_config_id": instance.archive.collector_config_id,
                     "archive_config_id": instance.archive.archive_config_id,
-                    "notice_user": instance.notice_user.split(",")
+                    "notice_user": instance.notice_user.split(","),
+                    "is_expired": instance.is_expired(),
                 }
             )
         return ret
