@@ -187,12 +187,7 @@ class StorageViewSet(APIViewSet):
         }
         """
         data = self.params_valid(StorageListSerializer)
-        response = StorageHandler().list(bk_biz_id=data["bk_biz_id"])
-        page = self.paginate_queryset(response)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        return Response(response)
+        return Response(StorageHandler().list(bk_biz_id=data["bk_biz_id"]))
 
     def retrieve(self, request, *args, **kwargs):
         """
