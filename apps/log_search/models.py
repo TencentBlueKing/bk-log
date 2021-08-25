@@ -27,6 +27,7 @@ from django.utils.html import format_html
 from django_jsonfield_backport.models import JSONField
 from jinja2 import Environment, FileSystemLoader
 
+from apps.exceptions import BizNotExistError
 from apps.feature_toggle.handlers.toggle import feature_switch
 from apps.log_search.exceptions import (
     SourceDuplicateException,
@@ -194,6 +195,15 @@ class ProjectInfo(SoftDeleteModel):
                 continue
             feature_toggles.append(item.strip())
         return feature_toggles
+
+    @classmethod
+    def get_biz(cls, biz_id=None):
+        try:
+            project = ProjectInfo.objects.get(bk_biz_id=biz_id)
+        except ProjectInfo.DoesNotExist:
+            raise BizNotExistError(BizNotExistError.MESSAGE.format(bk_biz_id=biz_id))
+
+        return {"bk_biz_id": project.bk_biz_id, "bk_biz_name": project.project_name}
 
     class Meta:
         verbose_name = _("项目列表")
