@@ -76,13 +76,12 @@ class ArchiveHandler:
                         "start_time": self.to_user_time_format(indice.get("start_time")),
                         "end_time": self.to_user_time_format(indice.get("end_time")),
                         "expired_time": format_user_time_zone_humanize(
-                            indice.get("expired_time"), get_local_param("time_zone")
+                            snapshot.get("expired_time"), get_local_param("time_zone")
                         ),
                         "state": snapshot.get("state"),
                     }
                 )
-        archive["indices"] = indices[page : pagesize * page]
-
+        archive["indices"] = indices[page*pagesize: (page + 1) * pagesize]
         return archive
 
     @atomic
@@ -203,6 +202,7 @@ class ArchiveHandler:
                     "total_store_size": instance.total_store_size,
                     "collector_config_id": instance.archive.collector_config_id,
                     "archive_config_id": instance.archive.archive_config_id,
+                    "notice_user": instance.notice_user.split(",")
                 }
             )
         return ret
