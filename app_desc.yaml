@@ -27,7 +27,7 @@ modules:
                 plan: 4C2G5R
                 replicas: 5
             worker:
-                command: export C_FORCE_ROOT="true" && python manage.py celery worker  -O fair -l info -c 4 -Q celery,default
+                command: python manage.py celery worker  -O fair -l info -c 4 -Q celery,default
                 plan: 4C2G5R
                 replicas: 5
             beat:
