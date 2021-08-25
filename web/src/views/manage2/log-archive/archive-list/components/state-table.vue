@@ -21,17 +21,16 @@
   -->
 
 <template>
-  <section class="archive-state-list">
+  <section
+    class="archive-state-list"
+    ref="scrollContainer"
+    @scroll.passive="handleScroll">
     <section>
       <bk-table
         class="state-table"
         :data="dataList"
         v-bkloading="{ isLoading: isTableLoading }"
-        :outer-border="false"
-        :pagination="pagination"
-        :limit-list="pagination.limitList"
-        @page-change="handlePageChange"
-        @page-limit-change="handleLimitChange">
+        :outer-border="false">
         <bk-table-column :label="$t('logArchive.indexName')" min-width="300">
           <template slot-scope="props">
             {{ props.row.index_name }}
@@ -74,6 +73,13 @@
           </div>
         </bk-table-column> -->
       </bk-table>
+      <template v-if="dataList.length">
+        <div
+          v-show="!isPageOver"
+          v-bkloading="{ isLoading: true }"
+          style="height: 40px;">
+        </div>
+      </template>
     </section>
   </section>
 </template>
@@ -85,84 +91,90 @@ export default {
   name: 'archive-state',
   props: {
     archiveConfigId: {
-      type: Object,
+      type: Number,
       default: '',
     },
   },
   data() {
     return {
       isTableLoading: false,
+      throttle: false, // 滚动节流
+      isPageOver: false,
       dataList: [],
-      pagination: {
-        current: 1,
-        count: 0,
-        limit: 10,
-        limitList: [10, 20, 50, 100],
-      },
       stateMap: {
         SUCCESS: this.$t('成功'),
         FAIL: this.$t('失败'),
       },
+      curPage: 0,
+      pageSize: 20,
     };
   },
   created() {
-    this.requestData();
+    this.init();
   },
   methods: {
-    /**
-     * 分页变换
-     * @param  {Number} page 当前页码
-     * @return {[type]}      [description]
-     */
-    handlePageChange(page) {
-      if (this.pagination.current !== page) {
-        this.pagination.current = page;
-        this.requestData();
+    handleScroll() {
+      if (this.throttle || this.isPageOver) {
+        return;
       }
-    },
-    /**
-     * 分页限制
-     * @param  {Number} page 当前页码
-     * @return {[type]}      [description]
-     */
-    handleLimitChange(page) {
-      if (this.pagination.limit !== page) {
-        this.pagination.current = 1;
-        this.pagination.limit = page;
-        this.requestData();
-      }
-    },
-    requestData() {
-      this.isTableLoading = true;
-      this.$http.request('archive/archiveConfig', {
-        query: {
-          page: 0,
-          pagesize: 1,
-        },
-        params: {
-          archive_config_id: this.archiveConfigId,
-        },
-      }).then((res) => {
-        const { data } = res;
-        if (data.indices.length) {
-          // this.dataList = data.snapshots;
-          // TODO
-          const list = [];
-          // const state = data.snapshots[0].state;
-          data.indices.forEach((item) => {
-            list.push({
-              ...item,
-            });
-          });
-          this.dataList.splice(this.dataList.length, 0, ...list);
+      this.throttle = true;
+      setTimeout(() => {
+        this.throttle = false;
+        const el = this.$refs.scrollContainer;
+        if (el.scrollHeight - el.offsetHeight - el.scrollTop < 60) {
+          this.loadMore(el.scrollTop);
         }
-      })
-        .catch((err) => {
-          console.warn(err);
-        })
+      }, 200);
+    },
+    loadMore() {
+      this.curPage = this.curPage + 1;
+      this.requestData();
+    },
+    init() {
+      this.isTableLoading = true;
+      Promise.all([this.requestData()])
         .finally(() => {
           this.isTableLoading = false;
         });
+    },
+    requestData() {
+      return new Promise(() => {
+        this.$http.request('archive/archiveConfig', {
+          query: {
+            page: this.curPage,
+            pagesize: this.pageSize,
+          },
+          params: {
+            archive_config_id: this.archiveConfigId,
+          },
+        }).then((res) => {
+          const { data } = res;
+          this.isPageOver = data.indices.length < this.pageSize;
+          if (data.indices.length) {
+            const list = [];
+            data.indices.forEach((item) => {
+              list.push({
+                ...item,
+              });
+            });
+            this.dataList.splice(this.dataList.length, 0, ...list);
+          }
+
+          // // TODO
+          // const target = [];
+          // for (let index = 0; index < 20; index++) {
+          //   target.push(this.dataList[0]);
+          // }
+          // this.dataList.splice(this.dataList.length, 0, ...target);
+          // this.isPageOver = false;
+        })
+          .catch((err) => {
+            console.warn(err);
+          })
+          .finally(() => {
+            this.isTableLoading = false;
+          });
+      });
     },
     operateHandler() {},
     getFileSize(size) {
@@ -178,6 +190,8 @@ export default {
   @import '@/scss/devops-common.scss';
 
   .archive-state-list {
+    max-height: 500px;
+    overflow: auto;
     .state-table {
       th.is-first,
       td.is-first {

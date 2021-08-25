@@ -1149,5 +1149,6 @@ export default {
     Confirm_delete_restore: '确认删除该回溯？',
     notStarted: '未开始',
     restoring: '回溯中',
+    isExpired: '是否过期',
   },
 };
