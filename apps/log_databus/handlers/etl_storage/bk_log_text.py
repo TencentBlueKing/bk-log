@@ -53,9 +53,7 @@ class BkLogTextEtlStorage(EtlStorage):
                     "tag": "metric",
                     "alias_name": "data",
                     "description": "original_text",
-                    "option": {"es_type": "text", "es_include_in_all": True}
-                    if es_version.startswith("5.")
-                    else {"es_type": "text"},
+                    "option": {"es_type": "text", "es_include_in_all": True},
                 }
             ],
             "time_alias_name": built_in_config["time_field"]["alias_name"],

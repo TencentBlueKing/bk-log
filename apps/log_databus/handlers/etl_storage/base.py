@@ -101,9 +101,7 @@ class EtlStorage(object):
                     "tag": "metric",
                     "alias_name": "data",
                     "description": "original_text",
-                    "option": {"es_type": "text", "es_include_in_all": True}
-                    if es_version.startswith("5.")
-                    else {"es_type": "text"},
+                    "option": {"es_type": "text", "es_include_in_all": True},
                 }
             )
 
@@ -140,7 +138,7 @@ class EtlStorage(object):
             )
 
             # ES_INCLUDE_IN_ALL
-            if es_version.startswith("5."):
+            if field["is_analyzed"]:
                 field_option["es_include_in_all"] = True
 
             # ES_DOC_VALUES
@@ -218,6 +216,7 @@ class EtlStorage(object):
 
         # ES兼容—mapping设置
         param_mapping = {
+            "include_in_all": False,
             "dynamic_templates": [
                 {
                     "strings_as_keywords": {
@@ -225,7 +224,7 @@ class EtlStorage(object):
                         "mapping": {"norms": "false", "type": "keyword"},
                     }
                 }
-            ]
+            ],
         }
         if es_version.startswith("5."):
             param_mapping["_all"] = {"enabled": True}
