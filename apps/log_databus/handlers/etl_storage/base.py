@@ -174,16 +174,16 @@ class EtlStorage(object):
         return {"fields": field_list, "time_field": time_field}
 
     def update_or_create_result_table(
-            self,
-            collector_config: CollectorConfig,
-            table_id: str,
-            storage_cluster_id: int,
-            retention: int,
-            allocation_min_days: int,
-            fields: list = None,
-            etl_params: dict = None,
-            es_version: str = "5.X",
-            hot_warm_config: dict = None,
+        self,
+        collector_config: CollectorConfig,
+        table_id: str,
+        storage_cluster_id: int,
+        retention: int,
+        allocation_min_days: int,
+        fields: list = None,
+        etl_params: dict = None,
+        es_version: str = "5.X",
+        hot_warm_config: dict = None,
     ):
         """
         创建或更新结果表
@@ -229,7 +229,7 @@ class EtlStorage(object):
         }
         if es_version.startswith("5."):
             param_mapping["_all"] = {"enabled": True}
-            param_mapping["include_in_all"] = True
+            param_mapping["include_in_all"] = False
 
         params = {
             "bk_data_id": collector_config.bk_data_id,
