@@ -101,7 +101,9 @@ class EtlStorage(object):
                     "tag": "metric",
                     "alias_name": "data",
                     "description": "original_text",
-                    "option": {"es_type": "text", "es_include_in_all": True},
+                    "option": {"es_type": "text", "es_include_in_all": True}
+                    if es_version.startswith("5.")
+                    else {"es_type": "text"},
                 }
             )
 
@@ -138,7 +140,7 @@ class EtlStorage(object):
             )
 
             # ES_INCLUDE_IN_ALL
-            if field["is_analyzed"]:
+            if field["is_analyzed"] and es_version.startswith("5."):
                 field_option["es_include_in_all"] = True
 
             # ES_DOC_VALUES
@@ -172,16 +174,16 @@ class EtlStorage(object):
         return {"fields": field_list, "time_field": time_field}
 
     def update_or_create_result_table(
-        self,
-        collector_config: CollectorConfig,
-        table_id: str,
-        storage_cluster_id: int,
-        retention: int,
-        allocation_min_days: int,
-        fields: list = None,
-        etl_params: dict = None,
-        es_version: str = "5.X",
-        hot_warm_config: dict = None,
+            self,
+            collector_config: CollectorConfig,
+            table_id: str,
+            storage_cluster_id: int,
+            retention: int,
+            allocation_min_days: int,
+            fields: list = None,
+            etl_params: dict = None,
+            es_version: str = "5.X",
+            hot_warm_config: dict = None,
     ):
         """
         创建或更新结果表
@@ -216,7 +218,6 @@ class EtlStorage(object):
 
         # ES兼容—mapping设置
         param_mapping = {
-            "include_in_all": False,
             "dynamic_templates": [
                 {
                     "strings_as_keywords": {
@@ -228,6 +229,7 @@ class EtlStorage(object):
         }
         if es_version.startswith("5."):
             param_mapping["_all"] = {"enabled": True}
+            param_mapping["include_in_all"] = True
 
         params = {
             "bk_data_id": collector_config.bk_data_id,
