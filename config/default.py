@@ -504,7 +504,7 @@ MENUS = [
                         "id": "archive_repository",
                         "name": _("归档仓库"),
                         "feature": "on",
-                        "icon": "_empty-fill",
+                        "icon": "new-_empty-fill",
                     },
                     {
                         "id": "archive_list",
