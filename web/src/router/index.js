@@ -131,6 +131,21 @@ const cleanTemplate = () => import(
   /* webpackChunkName: 'sdk-track' */
   '@/views/manage2/log-clean/clean-template/list'
 );
+// ---- 日志归档 ---- 归档仓库
+const ArchiveRepository = () => import(
+  /* webpackChunkName: 'sdk-track' */
+  '@/views/manage2/log-archive/archive-repository/list'
+);
+// ---- 日志归档 ---- 归档列表
+const ArchiveList = () => import(
+  /* webpackChunkName: 'sdk-track' */
+  '@/views/manage2/log-archive/archive-list/list'
+);
+// ---- 日志归档 ---- 归档回溯
+const ArchiveRestore = () => import(
+  /* webpackChunkName: 'sdk-track' */
+  '@/views/manage2/log-archive/archive-restore/list'
+);
 // ---- 日志提取 ---- 提取配置
 const ExtractPermission = () => import(
   /* webpackChunkName: 'manage-extract-permission' */
@@ -145,11 +160,6 @@ const ExtractLinkList = () => import(
 const ExtractLinkCreate = () => import(
   /* webpackChunkName: 'extract-link-manage' */
   '@/views/manage2/manage-extract/extract-link-manage/ExtractLinkCreate'
-);
-// ---- 日志归档 ---- 日志归档
-const LogArchive = () => import(
-  /* webpackChunkName: 'log-archive-conf' */
-  '@/views/manage2/log-archive/log-archive-conf'
 );
 // ---- ES集群 ---- 集群信息
 const ClusterMess = () => import(
@@ -440,6 +450,21 @@ const routes = [
         ],
       },
       {
+        path: 'archive-repository',
+        name: 'archive-repository', // 日志归档 - 归档仓库
+        component: ArchiveRepository,
+      },
+      {
+        path: 'archive-list',
+        name: 'archive-list', // 日志归档 - 归档列表
+        component: ArchiveList,
+      },
+      {
+        path: 'archive-restore',
+        name: 'archive-restore', // 日志归档 - 归档回溯
+        component: ArchiveRestore,
+      },
+      {
         path: 'manage-log-extract',
         name: 'manage-log-extract', // 日志提取 - 提取配置
         component: ExtractPermission,
@@ -468,11 +493,6 @@ const routes = [
             component: ExtractLinkCreate,
           },
         ],
-      },
-      {
-        path: 'log-archive-conf',
-        name: 'log-archive-conf', // 日志归档 - 日志归档
-        component: LogArchive,
       },
       {
         path: 'es-cluster-manage',

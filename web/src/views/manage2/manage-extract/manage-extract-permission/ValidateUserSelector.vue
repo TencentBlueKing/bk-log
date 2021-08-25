@@ -28,6 +28,7 @@
       :class="isError && 'is-error'"
       :api="api"
       :placeholder="placeholder"
+      :disabled="disabled"
       @change="handleChange"
       @blur="handleBlur">
     </bk-user-selector>
@@ -56,6 +57,10 @@ export default {
     api: {
       type: String,
       default: '',
+    },
+    disabled: {
+      type: Boolean,
+      type: false,
     },
   },
   data() {
