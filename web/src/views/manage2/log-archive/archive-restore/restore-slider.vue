@@ -1,0 +1,347 @@
+<!--
+  - Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
+  - Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+  - BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
+  -
+  - License for BK-LOG 蓝鲸日志平台:
+  - -------------------------------------------------------------------
+  -
+  - Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+  - documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+  - the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+  - and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+  - The above copyright notice and this permission notice shall be included in all copies or substantial
+  - portions of the Software.
+  -
+  - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+  - LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+  - NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+  - WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+  - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+  -->
+
+<template>
+  <div class="restore-slider-container">
+    <bk-sideslider
+      transfer
+      :title="isEdit ? $t('logArchive.editRestore') : $t('logArchive.createRestore')"
+      :is-show="showSlider"
+      :width="676"
+      :quick-close="false"
+      @animation-end="$emit('hidden')"
+      @update:isShow="updateIsShow">
+      <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="restore-slider-content">
+        <bk-form
+          v-if="!sliderLoading"
+          :model="formData"
+          :label-width="150"
+          :rules="basicRules"
+          form-type="vertical"
+          ref="validateForm"
+          class="king-form">
+          <bk-form-item :label="$t('索引集名称')" required property="index_set_name">
+            <bk-input v-model="formData.index_set_name" :disabled="isEdit"></bk-input>
+          </bk-form-item>
+          <bk-alert type="info" :title="$t('logArchive.restoreIndexTip')"></bk-alert>
+          <bk-form-item
+            :label="$t('logArchive.archiveItem')"
+            required
+            property="archive_config_id">
+            <bk-select v-model="formData.archive_config_id" :disabled="isEdit">
+              <bk-option
+                v-for="option in archiveList"
+                :key="option.archive_config_id"
+                :id="option.archive_config_id"
+                :name="option.collector_config_name"
+                :disabled="!option.permission.manage_collection">
+              </bk-option>
+            </bk-select>
+          </bk-form-item>
+          <bk-form-item
+            :label="$t('logArchive.timeRange')"
+            required
+            property="datePickerValue">
+            <bk-date-picker
+              format="yyyy-MM-dd HH:mm"
+              :placeholder="'选择日期时间范围'"
+              :type="'datetimerange'"
+              :disabled="isEdit"
+              v-model="formData.datePickerValue"
+              @change="handleTimeChange">
+            </bk-date-picker>
+          </bk-form-item>
+          <bk-form-item :label="$t('过期时间')" required property="datePickerExpired">
+            <bk-date-picker
+              v-model="formData.datePickerExpired"
+              format="yyyy-MM-dd HH:mm"
+              :options="expiredDatePicker"
+              @change="handleExpiredChange">
+            </bk-date-picker>
+          </bk-form-item>
+          <bk-form-item :label="$t('logArchive.notifiedUser')" required>
+            <ValidateUserSelector
+              style="width:500px;"
+              v-model="formData.notice_user"
+              :api="userApi"
+              :disabled="isEdit" />
+          </bk-form-item>
+          <bk-form-item style="margin-top:30px;">
+            <bk-button
+              theme="primary"
+              class="king-button mr10"
+              :loading="confirmLoading"
+              @click.stop.prevent="handleConfirm">
+              {{ $t('提交') }}
+            </bk-button>
+            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+          </bk-form-item>
+        </bk-form>
+      </div>
+    </bk-sideslider>
+  </div>
+</template>
+
+<script>
+import { mapGetters } from 'vuex';
+import ValidateUserSelector from '../../manage-extract/manage-extract-permission/ValidateUserSelector.vue';
+
+export default {
+  components: {
+    ValidateUserSelector,
+  },
+  props: {
+    showSlider: {
+      type: Boolean,
+      default: false,
+    },
+    editRestore: {
+      type: Object,
+      default: null,
+    },
+  },
+  data() {
+    return {
+      confirmLoading: false,
+      sliderLoading: false,
+      userApi: window.BK_LOGIN_URL,
+      customRetentionDay: '', // 自定义过期天数
+      retentionDaysList: [], // 过期天数列表
+      archiveList: [],
+      formData: {
+        index_set_name: '',
+        archive_config_id: '',
+        datePickerValue: [],
+        datePickerExpired: '',
+        expired_time: '',
+        notice_user: [],
+        start_time: '',
+        end_time: '',
+      },
+      basicRules: {},
+      requiredRules: {
+        required: true,
+        trigger: 'blur',
+      },
+      expiredDatePicker: {
+        disabledDate(time) {
+          return time.getTime() < Date.now();
+        },
+      },
+    };
+  },
+  computed: {
+    ...mapGetters({
+      bkBizId: 'bkBizId',
+      user: 'uesr',
+      globalsData: 'globals/globalsData',
+    }),
+    isEdit() {
+      return this.editRestore !== null;
+    },
+  },
+  watch: {
+    showSlider(val) {
+      if (val) {
+        this.getArchiveList();
+        this.updateDaysList();
+        if (this.isEdit) {
+          console.log(this.editRestore);
+          const {
+            index_set_name,
+            archive_config_id,
+            expired_time,
+            notice_user,
+            start_time,
+            end_time,
+          } = this.editRestore;
+          Object.assign(this.formData, {
+            index_set_name,
+            archive_config_id,
+            expired_time,
+            notice_user,
+            start_time,
+            end_time,
+            // eslint-disable-next-line camelcase
+            datePickerValue: [start_time, end_time],
+            datePickerExpired: expired_time,
+          });
+        }
+        const { user } = this.$store.state;
+        if (user && user.username) {
+          this.formData.notice_user.push(user.username);
+        }
+      } else {
+        // 清空表单数据
+        this.formData = {
+          index_set_name: '',
+          archive_config_id: '',
+          datePickerValue: [],
+          expired_time: '',
+          datePickerExpired: '',
+          notice_user: [],
+        };
+      }
+    },
+  },
+  created() {
+    this.basicRules = {
+      index_set_name: [this.requiredRules],
+      archive_config_id: [this.requiredRules],
+      datePickerExpired: [this.requiredRules],
+      datePickerValue: [
+        {
+          validator: (val) => {
+            if (val.length) {
+              return !!val.every(item => item);
+            }
+            return false;
+          },
+          trigger: 'blur',
+        },
+      ],
+    };
+  },
+  methods: {
+    getArchiveList() {
+      const query = {
+        bk_biz_id: this.bkBizId,
+      };
+      this.$http.request('archive/getAllArchives', { query }).then((res) => {
+        this.archiveList = res.data || [];
+      })
+        .catch(() => {
+          this.basicLoading = false;
+        });
+    },
+    updateIsShow(val) {
+      this.$emit('update:showSlider', val);
+    },
+    handleCancel() {
+      this.$emit('update:showSlider', false);
+    },
+    handleTimeChange(val) {
+      this.formData.start_time = val[0];
+      this.formData.end_time = val[1];
+    },
+    handleExpiredChange(val) {
+      this.formData.expired_time = val;
+    },
+    updateDaysList() {
+      const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
+        return item.id;
+      });
+      this.retentionDaysList = retentionDaysList;
+    },
+    // 输入自定义过期天数
+    enterCustomDay(val) {
+      const numberVal = parseInt(val.trim(), 10);
+      const stringVal = numberVal.toString();
+      if (numberVal) {
+        if (!this.retentionDaysList.some(item => item.id === stringVal)) {
+          this.retentionDaysList.push({
+            id: stringVal,
+            name: stringVal + this.$t('天'),
+          });
+        }
+        this.formData.snapshot_days = stringVal;
+        this.customRetentionDay = '';
+        document.body.click();
+      } else {
+        this.customRetentionDay = '';
+        this.messageError(this.$t('请输入有效数值'));
+      }
+    },
+    async handleConfirm() {
+      try {
+        await this.$refs.validateForm.validate();
+        let url = '/archive/createRestore';
+        let paramsData = {
+          ...this.formData,
+          bk_biz_id: this.bkBizId,
+
+          // TODO
+          notice_user: ['admin'],
+        };
+        const params = {};
+        delete paramsData.datePickerValue;
+        delete paramsData.datePickerExpired;
+        this.confirmLoading = true;
+
+        if (this.isEdit) {
+          url = '/archive/editRestore';
+          const { expired_time } = this.formData;
+          const { restore_config_id } = this.editRestore;
+          console.log(restore_config_id);
+          paramsData = {
+            expired_time,
+            restore_config_id,
+          };
+          // eslint-disable-next-line camelcase
+          params.restore_config_id = restore_config_id;
+        }
+
+        await this.$http.request(url, {
+          data: paramsData,
+          params,
+        });
+
+        this.$bkMessage({
+          theme: 'success',
+          message: this.$t('保存成功'),
+          delay: 1500,
+        });
+        this.$emit('updated');
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        this.confirmLoading = false;
+      }
+    },
+  },
+};
+</script>
+
+<style lang="scss">
+  .restore-slider-content {
+    min-height: 394px;
+    height: calc(100vh - 60px);
+    .bk-form.bk-form-vertical {
+      padding: 10px 0 36px 36px;
+      .bk-form-item {
+        width: 500px;
+        margin-top: 18px;
+      }
+      .bk-alert {
+        width: 500px;
+        margin-top: 12px;
+      }
+      .bk-select,
+      .bk-date-picker {
+        width: 300px;
+      }
+      .user-selector {
+        width: 500px !important;
+      }
+    }
+  }
+</style>

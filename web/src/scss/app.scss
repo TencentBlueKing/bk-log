@@ -113,3 +113,32 @@
     }
   }
 }
+
+.option-slot-container {
+  padding: 8px 0;
+  min-height: 32px;
+  line-height: 14px;
+
+  &.no-authority {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #c4c6cc;
+    cursor: not-allowed;
+
+    .text {
+      width: calc(100% - 56px);
+    }
+
+    .apply-text {
+      flex-shrink: 0;
+      display: none;
+      color: #3a84ff;
+      cursor: pointer;
+    }
+
+    &:hover .apply-text {
+      display: flex;
+    }
+  }
+}
