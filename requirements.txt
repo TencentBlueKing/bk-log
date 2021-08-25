@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# importlib from celery support
+importlib-metadata==3.4.0
+
 Django==2.2.6
 requests==2.22.0
 celery==4.4.7
