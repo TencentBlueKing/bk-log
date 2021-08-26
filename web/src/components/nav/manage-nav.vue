@@ -22,7 +22,7 @@
 
 <template>
   <div class="sub-nav-container">
-    <div class="back-container" v-if="$route.meta.needBack" @click="$router.back()">
+    <div class="back-container" v-if="$route.meta.needBack" @click="handleBack">
       <span class="bk-icon icon-arrows-left"></span>
     </div>
     <div class="main-title">{{ $route.meta.needBack ? getTitleName() : activeManageNav.name }}</div>
@@ -59,6 +59,16 @@ export default {
       if (this.activeManageSubNav.id !== id) {
         this.$router.push({
           name: id,
+          query: {
+            projectId: window.localStorage.getItem('project_id'),
+          },
+        });
+      }
+    },
+    handleBack() {
+      if (this.$route.meta.backName) {
+        this.$router.push({
+          name: this.$route.meta.backName,
           query: {
             projectId: window.localStorage.getItem('project_id'),
           },
