@@ -140,7 +140,7 @@ class EtlStorage(object):
             )
 
             # ES_INCLUDE_IN_ALL
-            if es_version.startswith("5."):
+            if field["is_analyzed"] and es_version.startswith("5."):
                 field_option["es_include_in_all"] = True
 
             # ES_DOC_VALUES
@@ -225,10 +225,11 @@ class EtlStorage(object):
                         "mapping": {"norms": "false", "type": "keyword"},
                     }
                 }
-            ]
+            ],
         }
         if es_version.startswith("5."):
             param_mapping["_all"] = {"enabled": True}
+            param_mapping["include_in_all"] = False
 
         params = {
             "bk_data_id": collector_config.bk_data_id,
