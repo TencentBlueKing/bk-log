@@ -164,8 +164,11 @@ const DataLinkConf = () => import(
 
 const routes = [
   {
-    path: '/',
-    redirect: 'retrieve',
+    path: '',
+    redirect: () => {
+      console.log('redirect to retrieve');
+      return '/retrieve';
+    },
   },
   {
     path: '/retrieve/:indexId?',
