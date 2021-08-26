@@ -156,7 +156,7 @@ async function getPromise(method, url, data, userConfig = {}) {
         reject(error);
       }
     });
-  }).catch(error => handleReject(error, config))
+  }).catch(error => handleReject(error, config, url))
     .finally(() => {
     // console.log('finally', config)
     });
@@ -178,7 +178,6 @@ async function getPromise(method, url, data, userConfig = {}) {
  * @param {Function} promise 拒绝函数
  */
 function handleResponse({ config, response, resolve, reject }) {
-  // console.log('_spanContext===', config.span._spanContext);
   const { code } = response;
   if (code === '9900403') {
     reject({ message: response.message, code, data: response.data || {} });
@@ -202,12 +201,13 @@ function handleResponse({ config, response, resolve, reject }) {
  *
  * @return {Promise} promise 对象
  */
-function handleReject(error, config) {
-  console.error('Error Url：', config.url);
-  console.error('Error traceId：', config.span._spanContext.traceId);
+function handleReject(error, config, url) {
   if (axios.isCancel(error)) {
     return Promise.reject(error);
   }
+
+  console.error('Error Url：', url);
+  console.error('Error traceId：', config.span._spanContext.traceId);
 
   http.queue.delete(config.requestId);
 
