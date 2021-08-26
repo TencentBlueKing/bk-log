@@ -205,9 +205,10 @@ function handleReject(error, config, url) {
   if (axios.isCancel(error)) {
     return Promise.reject(error);
   }
-
-  console.error('Error Url：', url);
-  console.error('Error traceId：', config.span._spanContext.traceId);
+  const service = getHttpService(url, serviceList);
+  const ajaxUrl = service ? service.url : '';
+  console.error('Request error UrlPath：', ajaxUrl);
+  console.error('Request error TraceId：', config.span._spanContext.traceId);
 
   http.queue.delete(config.requestId);
 
@@ -327,6 +328,18 @@ function getCancelToken() {
     cancelToken,
     cancelExcutor,
   };
+}
+
+function getHttpService(url, serverList) {
+  const splitor = url.split('/').filter(f => f);
+
+  let _service = splitor[1]
+    ? serverList[splitor[0]][splitor[1]]
+    : serverList[splitor[0]];
+  if (typeof _service === 'function') {
+    _service = _service(url, serverList);
+  }
+  return _service;
 }
 
 Vue.prototype.$http = http;
