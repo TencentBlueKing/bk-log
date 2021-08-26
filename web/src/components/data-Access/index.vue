@@ -83,7 +83,8 @@
             v-if="(curStep === 2 && !isSwitch) || (curStep === 1 && isSwitch)"
             :operate-type="operateType"
             :is-switch="isSwitch"
-            @stepChange="stepChange"></step-issued>
+            @stepChange="stepChange"
+            @change-submit="changeSubmit"></step-issued>
           <step-field
             v-if="curStep === 3"
             :cur-step="curStep"
@@ -105,7 +106,8 @@
             :operate-type="operateType"
             :is-switch="isSwitch"
             :index-set-id="indexSetId"
-            @stepChange="stepChange"></step-result>
+            @stepChange="stepChange"
+            @change-submit="changeSubmit"></step-result>
         </template>
       </section>
     </div>
