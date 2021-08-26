@@ -55,6 +55,7 @@ from apps.log_databus.exceptions import (
     StorageHaveResource,
 )
 from apps.decorators import user_operation_record
+from apps.utils.time_handler import format_user_time_zone
 
 CACHE_EXPIRE_TIME = 300
 
@@ -711,6 +712,7 @@ class StorageHandler(object):
                     "cluster_name": cluster_info_by_id[repository["cluster_id"]]["cluster_config"]["cluster_name"],
                     "cluster_source_name": cluster_info_by_id[repository["cluster_id"]].get("source_name"),
                     "cluster_source_type": cluster_info_by_id[repository["cluster_id"]].get("source_type"),
+                    "create_time": format_user_time_zone(repository["create_time"], get_local_param("time_zone")),
                 }
             )
             repository.pop("settings")

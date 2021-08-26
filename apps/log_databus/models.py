@@ -355,7 +355,7 @@ class RestoreConfig(SoftDeleteModel):
         send_params = {
             "receivers": self.notice_user,
             "content": "你创建的归档回溯已经完成",
-            "title": _("【日志平台】"),
+            "title": str(_("【日志平台】")),
         }
         CmsiApi.send_mail(send_params)
         CmsiApi.send_wechat(send_params)
