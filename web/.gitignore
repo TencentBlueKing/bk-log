@@ -18,5 +18,3 @@ test/unit/coverage
 *.njsproj
 *.sln
 package.old.json
-.eslintrc.js
-build/config.js
