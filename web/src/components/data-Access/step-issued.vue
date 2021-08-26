@@ -296,6 +296,7 @@ export default {
       this.$emit('stepChange');
     },
     cancel() {
+      this.$emit('change-submit', true);
       this.$router.push({
         name: 'collection-item',
         query: {
