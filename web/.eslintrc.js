@@ -27,6 +27,7 @@ module.exports = {
     NODE_ENV: false,
   },
   rules: {
+    'linebreak-style': ['off', 'windows'],
     'no-param-reassign': 'off',
     'prefer-destructuring': 'off',
     'no-underscore-dangle': 'off',
