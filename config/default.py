@@ -170,6 +170,7 @@ if RUN_VER != "open":
     LOGGING["handlers"]["mysql"]["encoding"] = "utf-8"
     LOGGING["handlers"]["blueapps"]["encoding"] = "utf-8"
 
+
 BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
 
 if BKLOG_UDP_LOG:
@@ -183,7 +184,8 @@ if BKLOG_UDP_LOG:
                 "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
                 "fmt": (
                     "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
-                    "%(funcName)s %(process)d %(thread)d %(message)s"
+                    "%(funcName)s %(process)d %(thread)d %(message)s "
+                    "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
                 ),
             }
         },
