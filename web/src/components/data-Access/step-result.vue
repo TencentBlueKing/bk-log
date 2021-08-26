@@ -94,7 +94,6 @@ export default {
       if (type === 'search' || type === 'clear') {
         routeName = 'retrieve';
       }
-      this.$emit('change-submit', true);
       this.$router.replace({
         name: routeName,
         params: {

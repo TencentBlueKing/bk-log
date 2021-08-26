@@ -83,8 +83,7 @@
             v-if="(curStep === 2 && !isSwitch) || (curStep === 1 && isSwitch)"
             :operate-type="operateType"
             :is-switch="isSwitch"
-            @stepChange="stepChange"
-            @change-submit="changeSubmit"></step-issued>
+            @stepChange="stepChange"></step-issued>
           <step-field
             v-if="curStep === 3"
             :cur-step="curStep"
@@ -106,8 +105,7 @@
             :operate-type="operateType"
             :is-switch="isSwitch"
             :index-set-id="indexSetId"
-            @stepChange="stepChange"
-            @change-submit="changeSubmit"></step-result>
+            @stepChange="stepChange"></step-result>
         </template>
       </section>
     </div>
@@ -185,7 +183,7 @@ export default {
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
-    if (!this.isSubmit) {
+    if (!this.isSubmit && !this.isSwitch) {
       this.$bkInfo({
         title: this.$t('pageLeaveTips'),
         confirmFn: () => {
