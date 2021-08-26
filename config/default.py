@@ -169,6 +169,17 @@ if RUN_VER != "open":
     LOGGING["handlers"]["component"]["encoding"] = "utf-8"
     LOGGING["handlers"]["mysql"]["encoding"] = "utf-8"
     LOGGING["handlers"]["blueapps"]["encoding"] = "utf-8"
+    if not IS_LOCAL:
+        logging_format = {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "fmt": (
+                "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
+                "%(funcName)s %(process)d %(thread)d %(message)s"
+                "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
+            ),
+        }
+        LOGGING["formatters"]["verbose"] = logging_format
+
 
 BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
 
@@ -183,7 +194,8 @@ if BKLOG_UDP_LOG:
                 "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
                 "fmt": (
                     "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
-                    "%(funcName)s %(process)d %(thread)d %(message)s"
+                    "%(funcName)s %(process)d %(thread)d %(message)s "
+                    "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
                 ),
             }
         },
