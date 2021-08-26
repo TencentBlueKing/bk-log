@@ -297,6 +297,7 @@ class ArchiveConfig(SoftDeleteModel):
     target_snapshot_repository_name = models.CharField(_("快照仓库名称"), max_length=255, default="")
 
     class Meta:
+        ordering = ("-archive_config_id",)
         verbose_name = _("归档配置表")
         verbose_name_plural = _("归档配置表")
 
@@ -337,6 +338,7 @@ class RestoreConfig(SoftDeleteModel):
     notice_user = models.TextField(_("结果通知人"))
 
     class Meta:
+        ordering = ("-restore_config_id",)
         verbose_name = _("回溯配置表")
         verbose_name_plural = _("回溯配置表")
 

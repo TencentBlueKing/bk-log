@@ -81,7 +81,7 @@ class ArchiveHandler:
                         "state": snapshot.get("state"),
                     }
                 )
-        archive["indices"] = indices[page*pagesize: (page + 1) * pagesize]
+        archive["indices"] = indices[page * pagesize : (page + 1) * pagesize]
         return archive
 
     @atomic
