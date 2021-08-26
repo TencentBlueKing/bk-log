@@ -36,6 +36,7 @@ import RequestQueue from './request-queue';
 import HttpRequst from './_httpRequest';
 import mockList from '@/mock/index.js';
 import serviceList from '@/services/index.js';
+import { context, trace } from '@opentelemetry/api';
 
 // axios 实例
 const axiosInstance = axios.create({
@@ -127,17 +128,34 @@ async function getPromise(method, url, data, userConfig = {}) {
     return promise;
   }
 
-  promise = new Promise(async (resolve, reject) => {
-    const axiosRequest = http.$request.request(url, data, config);
+  // promise = new Promise(async (resolve, reject) => {
+  //   const axiosRequest = http.$request.request(url, data, config);
 
-    try {
-      const response = await axiosRequest;
-      Object.assign(config, response.config || {});
-      handleResponse({ config, response, resolve, reject });
-    } catch (error) {
-      Object.assign(config, error.config);
-      reject(error);
-    }
+  //   try {
+  //     const response = await axiosRequest;
+  //     Object.assign(config, response.config || {});
+  //     handleResponse({ config, response, resolve, reject });
+  //   } catch (error) {
+  //     Object.assign(config, error.config);
+  //     reject(error);
+  //   }
+  // }).catch(error => handleReject(error, config))
+  //   .finally(() => {
+  //   // console.log('finally', config)
+  //   });
+
+  promise = new Promise(async (resolve, reject) => {
+    context.with(trace.setSpan(context.active(), config.span), async () => {
+      try {
+        const axiosRequest = http.$request.request(url, data, config);
+        const response = await axiosRequest;
+        Object.assign(config, response.config || {});
+        handleResponse({ config, response, resolve, reject });
+      } catch (error) {
+        Object.assign(config, error.config);
+        reject(error);
+      }
+    });
   }).catch(error => handleReject(error, config))
     .finally(() => {
     // console.log('finally', config)
@@ -160,6 +178,7 @@ async function getPromise(method, url, data, userConfig = {}) {
  * @param {Function} promise 拒绝函数
  */
 function handleResponse({ config, response, resolve, reject }) {
+  // console.log('_spanContext===', config.span._spanContext);
   const { code } = response;
   if (code === '9900403') {
     reject({ message: response.message, code, data: response.data || {} });
@@ -184,6 +203,8 @@ function handleResponse({ config, response, resolve, reject }) {
  * @return {Promise} promise 对象
  */
 function handleReject(error, config) {
+  console.error('Error Url：', config.url);
+  console.error('Error traceId：', config.span._spanContext.traceId);
   if (axios.isCancel(error)) {
     return Promise.reject(error);
   }
@@ -287,6 +308,7 @@ function initConfig(method, url, userConfig) {
     cancelWhenRouteChange: true,
     // 取消上次请求
     cancelPrevious: true,
+    span: trace.getTracer('bk-log').startSpan('api'),
   };
   return Object.assign(defaultConfig, userConfig);
 }
