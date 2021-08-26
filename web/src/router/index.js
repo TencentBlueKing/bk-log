@@ -164,8 +164,11 @@ const DataLinkConf = () => import(
 
 const routes = [
   {
-    path: '/',
-    redirect: 'retrieve',
+    path: '',
+    redirect: () => {
+      console.log('redirect to retrieve');
+      return '/retrieve';
+    },
   },
   {
     path: '/retrieve/:indexId?',
@@ -193,6 +196,10 @@ const routes = [
     component: Manage,
     redirect: '/manage/log-collection/collection-item',
     children: [
+      {
+        path: 'collect', // 日志采集 支持监控跳转兼容旧版本管理端
+        redirect: '/manage/log-collection/collection-item',
+      },
       {
         path: 'log-collection',
         name: 'log-collection', // 日志接入 - 日志采集
