@@ -106,7 +106,7 @@
             </bk-input>
           </bk-form-item>
           <!-- HDFS -->
-          <template v-if="formData.es_config.type === 'hdfs'">
+          <div v-if="formData.es_config.type === 'hdfs'" key="hdfs">
             <bk-form-item
               :label="$t('logArchive.archiveDirectory')"
               required
@@ -139,9 +139,9 @@
                 <bk-input v-model="formData.hdfsFormData.security.principal"></bk-input>
               </div>
             </bk-form-item>
-          </template>
+          </div>
           <!-- FS -->
-          <template v-if="formData.es_config.type === 'fs'">
+          <div v-if="formData.es_config.type === 'fs'" key="fs">
             <bk-form-item
               :label="$t('logArchive.archiveDirectory')"
               required
@@ -149,9 +149,9 @@
               :property="formData.fsFormData.location">
               <bk-input v-model="formData.fsFormData.location"></bk-input>
             </bk-form-item>
-          </template>
+          </div>
           <!-- COS -->
-          <template v-if="formData.es_config.type === 'cos'">
+          <div v-if="formData.es_config.type === 'cos'" key="cos">
             <bk-form-item
               :label="$t('logArchive.archiveDirectory')"
               required
@@ -194,7 +194,7 @@
               :property="formData.cosFormData.bucket">
               <bk-input v-model="formData.cosFormData.bucket"></bk-input>
             </bk-form-item>
-          </template>
+          </div>
           <bk-form-item style="margin-top:40px;">
             <bk-button
               theme="primary"

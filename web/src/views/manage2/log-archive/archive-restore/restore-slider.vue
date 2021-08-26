@@ -166,10 +166,10 @@ export default {
   watch: {
     showSlider(val) {
       if (val) {
+        this.sliderLoading = this.isEdit;
         this.getArchiveList();
         this.updateDaysList();
         if (this.isEdit) {
-          console.log(this.editRestore);
           const {
             index_set_name,
             archive_config_id,
@@ -189,10 +189,11 @@ export default {
             datePickerValue: [start_time, end_time],
             datePickerExpired: expired_time,
           });
-        }
-        const { userMeta } = this.$store.state;
-        if (userMeta && userMeta.username) {
-          this.formData.notice_user.push(userMeta.username);
+        } else {
+          const { userMeta } = this.$store.state;
+          if (userMeta && userMeta.username) {
+            this.formData.notice_user.push(userMeta.username);
+          }
         }
 
         if (this.archiveId) { // 从归档列表新增回溯
@@ -230,7 +231,6 @@ export default {
       notice_user: [
         {
           validator: (val) => {
-            console.log(val.length);
             return !!val.length;
           },
           trigger: 'blur',
@@ -246,8 +246,8 @@ export default {
       this.$http.request('archive/getAllArchives', { query }).then((res) => {
         this.archiveList = res.data || [];
       })
-        .catch(() => {
-          this.basicLoading = false;
+        .finally(() => {
+          this.sliderLoading = false;
         });
     },
     updateIsShow(val) {
@@ -305,7 +305,7 @@ export default {
           url = '/archive/editRestore';
           const { expired_time } = this.formData;
           const { restore_config_id } = this.editRestore;
-          console.log(restore_config_id);
+
           paramsData = {
             expired_time,
             restore_config_id,

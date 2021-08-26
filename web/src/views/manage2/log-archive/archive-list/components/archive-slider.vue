@@ -185,25 +185,22 @@ export default {
   watch: {
     async showSlider(val) {
       if (val) {
-        try {
-          this.sliderLoading = true;
-          await this.getCollectorList();
-          await this.getRepoList();
-          this.updateDaysList();
-          if (this.isEdit) {
-            const {
-              collector_config_id,
-              target_snapshot_repository_name,
-              snapshot_days,
-            } = this.editArchive;
-            Object.assign(this.formData, {
-              collector_config_id,
-              target_snapshot_repository_name,
-              snapshot_days,
-            });
-          }
-        } finally {
-          this.sliderLoading = false;
+        this.sliderLoading = this.isEdit;
+        await this.getCollectorList();
+        await this.getRepoList();
+        this.updateDaysList();
+
+        if (this.isEdit) {
+          const {
+            collector_config_id,
+            target_snapshot_repository_name,
+            snapshot_days,
+          } = this.editArchive;
+          Object.assign(this.formData, {
+            collector_config_id,
+            target_snapshot_repository_name,
+            snapshot_days,
+          });
         }
       } else {
         // 清空表单数据
@@ -233,11 +230,8 @@ export default {
         const data = res.data;
         if (data.length) {
           this.collectorList = data;
-        } else this.basicLoading = false;
-      })
-        .catch(() => {
-          this.basicLoading = false;
-        });
+        }
+      });
     },
     // 获取归档仓库列表
     getRepoList() {
@@ -249,11 +243,8 @@ export default {
         const { data } = res;
         this.repositoryOriginList = data || [];
       })
-        .catch((err) => {
-          console.warn(err);
-        })
         .finally(() => {
-          this.isTableLoading = false;
+          this.sliderLoading = false;
         });
     },
     handleCollectorChange() {
