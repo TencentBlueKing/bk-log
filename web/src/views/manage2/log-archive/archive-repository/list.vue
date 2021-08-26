@@ -105,6 +105,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button> -->
@@ -113,6 +114,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
               @click.stop="operateHandler(props.row, 'delete')">
               {{ $t('btn.delete') }}
             </bk-button>
@@ -333,11 +335,12 @@ export default {
         });
       }
 
-      if (operateType === 'edit') {
-        this.editClusterId = row.cluster_id;
-        this.showSlider = true;
-        return;
-      }
+      // if (operateType === 'edit') {
+      //   this.editClusterId = row.cluster_id;
+      //   this.showSlider = true;
+      //   return;
+      // }
+
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
@@ -346,7 +349,6 @@ export default {
             this.requestDeleteRepo(row);
           },
         });
-        return;
       }
     },
     requestDeleteRepo(row) {

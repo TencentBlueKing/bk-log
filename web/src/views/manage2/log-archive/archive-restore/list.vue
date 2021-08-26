@@ -57,7 +57,7 @@
             {{ props.row.collector_config_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.timeRange')" width="300">
+        <bk-table-column :label="$t('logArchive.timeRange')" min-width="240">
           <template slot-scope="props">
             {{ `${props.row.start_time} - ${props.row.end_time}` }}
           </template>
@@ -69,14 +69,17 @@
             {{ getFileSize(props.row.total_store_size) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('过期时间')">
+        <bk-table-column :label="$t('过期时间')" min-width="120">
           <template slot-scope="props">
             {{ props.row.expired_time }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.restoreStatus')">
           <template slot-scope="props">
-            {{ props.row.status }}
+            <div class="restore-status">
+              <span :class="`status-icon is-${props.row.status}`"></span>
+              <span class="status-text">{{ props.row.status_name }}</span>
+            </div>
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.isExpired')">
@@ -84,7 +87,7 @@
             {{ props.row.is_expired ? $t('common.yes') : $t('common.no') }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="200">
+        <bk-table-column :label="$t('dataSource.operation')" width="180">
           <div class="restore-table-operate" slot-scope="props">
             <!-- 检索 -->
             <log-button
@@ -241,10 +244,10 @@ export default {
           const { data } = res;
           this.restoreIds = [];
           this.pagination.count = data.total;
-          // this.dataList = data.list;
           this.restoreIds = [];
           data.list.forEach((row) => {
             row.status = '';
+            row.status_name = '';
             this.restoreIds.push(row.restore_config_id);
           });
           this.dataList.splice(0, this.dataList.length, ...data.list);
@@ -261,7 +264,7 @@ export default {
     requestData() {
       this.isTableLoading = true;
       Promise.all([this.requestRestoreList()]).then(() => {
-        if (this.restoreIds) {
+        if (this.restoreIds.length) {
           this.requestRestoreStatus();
         }
       })
@@ -297,11 +300,19 @@ export default {
           if (row.restore_config_id === item.restore_config_id) {
             const completeCount = item.complete_doc_count;
             const totalCount = item.total_doc_count;
-            if (completeCount === totalCount) row.status = this.$t('完成');
-            if (completeCount === 0) row.status = this.$t('logArchive.notStarted');
+
+            if (completeCount >= totalCount) {
+              row.status = 'finish';
+              row.status_name = this.$t('完成');
+            }
+            if (completeCount === 0) {
+              row.statusHandler = 'unStart';
+              row.status_name = this.$t('logArchive.notStarted');
+            }
             if (completeCount > 0 && completeCount < totalCount) {
               const precent = `${Math.round(completeCount / totalCount * 100)}%`;
-              row.status = `${this.$t('logArchive.restoring')}(${precent})`;
+              row.status = 'restoring';
+              row.status_name = `${this.$t('logArchive.restoring')}(${precent})`;
             }
           }
         });
@@ -360,7 +371,6 @@ export default {
             this.requestDelete(row);
           },
         });
-        return;
       }
     },
     requestDelete(row) {
@@ -422,6 +432,27 @@ export default {
       .filter-column {
         .cell {
           display: flex;
+        }
+      }
+      .restore-status {
+        display: flex;
+        align-items: center;
+      }
+      .status-icon {
+        display: inline-block;
+        margin-right: 6px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        &.is-finish {
+          background: #6DD400;
+        }
+        &.is-unStart {
+          background: #E02020;
+
+        }
+        &.is-restoring {
+          background: #FE9C00;
         }
       }
     }
