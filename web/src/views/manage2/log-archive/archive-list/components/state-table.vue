@@ -53,10 +53,14 @@
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.archiveStatus')">
           <template slot-scope="props">
-            {{ stateMap[props.row.state] }}
+            <div class="restore-status">
+              <span :class="`status-icon is-${props.row.state}`"></span>
+              <span class="status-text">{{ stateMap[props.row.state] }}</span>
+            </div>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.isRestore')">
+        <!-- 添加操作列后可去掉此列宽度 -->
+        <bk-table-column :label="$t('logArchive.isRestore')" width="200">
           <template slot-scope="props">
             {{ props.row.is_stored ? $t('common.yes') : $t('common.no') }}
           </template>
@@ -104,6 +108,8 @@ export default {
       stateMap: {
         SUCCESS: this.$t('成功'),
         FAIL: this.$t('失败'),
+        PARTIAL: this.$t('失败'),
+        IN_PROGRESS: this.$t('logArchive.restoring'),
       },
       curPage: 0,
       pageSize: 20,
@@ -159,18 +165,7 @@ export default {
             });
             this.dataList.splice(this.dataList.length, 0, ...list);
           }
-
-          // // TODO
-          // const target = [];
-          // for (let index = 0; index < 20; index++) {
-          //   target.push(this.dataList[0]);
-          // }
-          // this.dataList.splice(this.dataList.length, 0, ...target);
-          // this.isPageOver = false;
         })
-          .catch((err) => {
-            console.warn(err);
-          })
           .finally(() => {
             this.isTableLoading = false;
           });
@@ -200,6 +195,28 @@ export default {
       .filter-column {
         .cell {
           display: flex;
+        }
+      }
+      .restore-status {
+        display: flex;
+        align-items: center;
+      }
+      .status-icon {
+        display: inline-block;
+        margin-right: 6px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        &.is-SUCCESS {
+          background: #6DD400;
+        }
+        &.is-FAIL,
+        &.is-PARTIAL {
+          background: #E02020;
+
+        }
+        &.is-IN_PROGRESS {
+          background: #FE9C00;
         }
       }
     }

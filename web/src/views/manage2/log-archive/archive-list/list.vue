@@ -94,6 +94,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'restore')">
               {{ $t('logArchive.restore') }}
             </bk-button>
@@ -111,6 +112,7 @@
               theme="primary"
               text
               class="mr10 king-button"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'delete')">
               {{ $t('btn.delete') }}
             </bk-button>
@@ -272,7 +274,6 @@ export default {
             this.requestDelete(row);
           },
         });
-        return;
       }
     },
     requestDelete(row) {
