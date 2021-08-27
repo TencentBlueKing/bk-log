@@ -47,6 +47,8 @@ def requests_callback(span: Span, response):
         json_result = response.json()
     except Exception:  # pylint: disable=broad-except
         return
+    if not isinstance(json_result, dict):
+        return
     result = json_result.get("result")
     if result is None:
         return
@@ -68,6 +70,8 @@ def django_response_hook(span, request, response):
             result = json.loads(response.content)
         except Exception:  # pylint: disable=broad-except
             return
+    if not isinstance(result, dict):
+        return
     span.set_attribute("result_code", result.get("code", 0))
     span.set_attribute("error", not result.get("result", True))
     span.set_attribute("result_message", result.get("message", ""))
