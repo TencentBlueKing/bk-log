@@ -20,16 +20,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import html
 import json
 import copy
-import datetime
-from datetime import timedelta
 import hashlib
 
-from typing import List, Dict, Any, Tuple, Union
-from dateutil.rrule import rrule
-from dateutil.rrule import MINUTELY
+from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
+from requests.exceptions import ReadTimeout
 
+from apps.api.base import DataApiRetryClass
 from apps.log_search.models import (
     LogIndexSet,
     LogIndexSetData,
@@ -45,8 +43,8 @@ from apps.log_search.constants import (
     BK_BCS_APP_CODE,
     ASYNC_SORTED,
     FieldDataTypeEnum,
+    MAX_EXPORT_REQUEST_RETRY,
 )
-from apps.log_search.handlers.es.es_query_mock_body import BODY_DATA_FOR_AGGS, BODY_DATA_FOR_ORIGIN_AGGS
 from apps.log_search.exceptions import (
     BaseSearchIndexSetException,
     BaseSearchIndexSetDataDoseNotExists,
@@ -71,7 +69,6 @@ from apps.log_search.handlers.es.dsl_bkdata_builder import (
 )
 from apps.log_search.handlers.es.indices_optimizer_context_tail import IndicesOptimizerContextTail
 from apps.utils.local import get_local_param
-from apps.utils.time_handler import generate_time_range
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilder
@@ -384,7 +381,10 @@ class SearchHandler(object):
                     "time_field_unit": self.time_field_unit,
                     "scroll": SCROLL,
                     "collapse": self.collapse,
-                }
+                },
+                data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                    stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY, exceptions=[ReadTimeout]
+                ),
             )
             return result
 
@@ -411,7 +411,10 @@ class SearchHandler(object):
                 "time_field_unit": self.time_field_unit,
                 "scroll": None,
                 "collapse": self.collapse,
-            }
+            },
+            data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY, exceptions=[ReadTimeout]
+            ),
         )
         return result
 
@@ -445,7 +448,10 @@ class SearchHandler(object):
                     "scroll": self.scroll,
                     "collapse": self.collapse,
                     "search_after": search_after,
-                }
+                },
+                data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                    stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY, exceptions=[ReadTimeout]
+                ),
             )
 
             search_after_size = len(search_result["hits"]["hits"])
@@ -464,7 +470,10 @@ class SearchHandler(object):
                     "storage_cluster_id": self.storage_cluster_id,
                     "scroll": SCROLL,
                     "scroll_id": _scroll_id,
-                }
+                },
+                data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                    stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY, exceptions=[ReadTimeout]
+                ),
             )
             scroll_size = len(scroll_result["hits"]["hits"])
             result_size += scroll_size
