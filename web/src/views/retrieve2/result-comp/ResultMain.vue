@@ -315,10 +315,6 @@ export default {
       type: String,
       default: '',
     },
-    isPollingStart: {
-      type: Boolean,
-      default: false,
-    },
   },
   data() {
     return {
@@ -416,20 +412,6 @@ export default {
     },
   },
   watch: {
-    isPollingStart(newVal) {
-      if (!newVal) {
-        this.newScrollHeight = 0;
-        this.$nextTick(() => {
-          this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
-        });
-        this.count = 0;
-        this.currentPage = 1;
-        this.originTableList = [];
-        this.tableList = [];
-        this.isInit = false;
-        this.finishPolling = false;
-      }
-    },
     tableData(data) {
       this.finishPolling = data && data.finishPolling;
       if (data?.list?.length) {
@@ -482,7 +464,18 @@ export default {
       }
       window.open(`${window.MONITOR_URL}/?${urlArr.join('&')}#/strategy-config/add`, '_blank');
     },
-
+    reset() {
+      this.newScrollHeight = 0;
+      this.$nextTick(() => {
+        this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
+      });
+      this.count = 0;
+      this.currentPage = 1;
+      this.originTableList = [];
+      this.tableList = [];
+      this.isInit = false;
+      this.finishPolling = false;
+    },
     // 滚动到顶部
     scrollToTop() {
       this.$easeScroll(0, 300, this.$refs.scrollContainer);
