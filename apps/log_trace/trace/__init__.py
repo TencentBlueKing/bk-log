@@ -21,6 +21,7 @@ import json
 from typing import Collection
 
 import MySQLdb
+from celery.signals import worker_process_init
 from django.conf import settings
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -29,12 +30,15 @@ from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.django import DjangoInstrumentor
 from opentelemetry.instrumentation.elasticsearch import ElasticsearchInstrumentor
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.trace import Span
+from opentelemetry.trace import Span, Status, StatusCode
+
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
 
 def requests_callback(span: Span, response):
@@ -43,6 +47,8 @@ def requests_callback(span: Span, response):
         json_result = response.json()
     except Exception:  # pylint: disable=broad-except
         return
+    if not isinstance(json_result, dict):
+        return
     result = json_result.get("result")
     if result is None:
         return
@@ -50,6 +56,10 @@ def requests_callback(span: Span, response):
     span.set_attribute("error", not result)
     span.set_attribute("blueking_esb_request_id", json_result.get("request_id", ""))
     span.set_attribute("result_message", json_result.get("message", ""))
+    if result:
+        span.set_status(Status(StatusCode.OK))
+        return
+    span.set_status(Status(StatusCode.ERROR))
 
 
 def django_response_hook(span, request, response):
@@ -60,24 +70,45 @@ def django_response_hook(span, request, response):
             result = json.loads(response.content)
         except Exception:  # pylint: disable=broad-except
             return
+    if not isinstance(result, dict):
+        return
     span.set_attribute("result_code", result.get("code", 0))
     span.set_attribute("error", not result.get("result", True))
     span.set_attribute("result_message", result.get("message", ""))
+    result = result.get("result", True)
+    if result:
+        span.set_status(Status(StatusCode.OK))
+        return
+    span.set_status(Status(StatusCode.ERROR))
 
 
 class BluekingInstrumentor(BaseInstrumentor):
+    has_instrument = False
+    GRPC_HOST = "otlp_grpc_host"
+    BK_DATA_ID = "otlp_bk_data_id"
+
     def _uninstrument(self, **kwargs):
         pass
 
     def _instrument(self, **kwargs):
         """Instrument the library"""
-        otlp_exporter = OTLPSpanExporter(endpoint=settings.OTLP_GRPC_HOST)
+        if self.has_instrument:
+            return
+        toggle = FeatureToggleObject.toggle("bk_log_trace")
+        feature_config = toggle.feature_config
+        otlp_grpc_host = settings.OTLP_GRPC_HOST
+        otlp_bk_data_id = settings.OTLP_BK_DATA_ID
+        if feature_config:
+            otlp_grpc_host = feature_config.get(self.GRPC_HOST, otlp_grpc_host)
+            otlp_bk_data_id = feature_config.get(self.BK_DATA_ID, otlp_bk_data_id)
+        otlp_exporter = OTLPSpanExporter(endpoint=otlp_grpc_host)
         span_processor = BatchSpanProcessor(otlp_exporter)
         tracer_provider = TracerProvider(
             resource=Resource.create(
                 {
                     "service.name": settings.APP_CODE,
-                    "bk_data_id": settings.OTLP_BK_DATA_ID,
+                    "bk_data_id": otlp_bk_data_id,
+
                 }
             ),
         )
@@ -87,7 +118,8 @@ class BluekingInstrumentor(BaseInstrumentor):
         RedisInstrumentor().instrument()
         ElasticsearchInstrumentor().instrument()
         RequestsInstrumentor().instrument(tracer_provider=tracer_provider, span_callback=requests_callback)
-        CeleryInstrumentor().instrument()
+        CeleryInstrumentor().instrument(tracer_provider=tracer_provider)
+        LoggingInstrumentor().instrument()
         dbapi.wrap_connect(
             __name__,
             MySQLdb,
@@ -101,6 +133,15 @@ class BluekingInstrumentor(BaseInstrumentor):
             },
             tracer_provider=tracer_provider,
         )
+        self.has_instrument = True
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return []
+
+
+@worker_process_init.connect(weak=False)
+def init_celery_tracing(*args, **kwargs):
+    from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+
+    if FeatureToggleObject.switch("bk_log_trace"):
+        BluekingInstrumentor().instrument()

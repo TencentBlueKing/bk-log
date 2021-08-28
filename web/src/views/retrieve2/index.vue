@@ -235,14 +235,15 @@
         ></ResultHeader>
         <NoIndexSet v-if="isNoIndexSet"></NoIndexSet>
         <ResultMain
+          ref="resultMainRef"
           v-else
           :render-table="renderTable"
           :table-loading="tableLoading"
           :retrieve-params="retrieveParams"
-          :total-count="totalCount"
           :took-time="tookTime"
           :index-set-list="indexSetList"
           :table-data="tableData"
+          :is-polling-start="isPollingStart"
           :visible-fields="visibleFields"
           :field-alias-map="fieldAliasMap"
           :show-field-alias="showFieldAlias"
@@ -252,6 +253,7 @@
           :bk-monitor-url="bkmonitorUrl"
           :async-export-usable="asyncExportUsable"
           :async-export-usable-reason="asyncExportUsableReason"
+          @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
           @addFilterCondition="addFilterCondition"
@@ -291,6 +293,7 @@ import NoIndexSet from './result-comp/NoIndexSet';
 import ResultMain from './result-comp/ResultMain';
 import AuthPage from '@/components/common/auth-page';
 import { formatDate } from '@/common/util';
+import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
 import { mapGetters, mapState } from 'vuex';
 
 export default {
@@ -312,6 +315,7 @@ export default {
     AuthPage,
     NoIndexSet,
   },
+  mixins: [indexSetSearchMixin],
   data() {
     const currentTime = Date.now();
     const startTime = formatDate(currentTime - 15 * 60 * 1000);
@@ -324,6 +328,7 @@ export default {
       renderTable: true, // 显示字段更新后手动触发重新渲染表格
       basicLoading: false, // view loading
       tableLoading: false, // 表格 loading
+      requesting: false,
       isRetrieveHome: !this.$route.params.indexId?.toString() && !this.$route.params.from, // 检索首页
       isNoIndexSet: false,
       showRetrieveCondition: true, // 详情页显示检索左侧条件
@@ -394,6 +399,12 @@ export default {
       isAutoQuery: localStorage.getItem('closeAutoQuery') !== 'true',
       isHideAutoQueryTips: localStorage.getItem('hideAutoQueryTips') === 'true',
       showConditionPopperContent: false,
+      isPollingStart: false,
+      startTimeStamp: 0,
+      endTimeStamp: 0,
+      originLogList: [], // 当前搜索结果的原始日志
+      isNextTime: false,
+      timer: null,
     };
   },
   computed: {
@@ -708,6 +719,7 @@ export default {
       // 过滤相关
       this.statisticalFieldsData = {};
       this.retrieveDropdownData = {};
+      this.originLogList = [];
       // 字段相关
       this.totalFields.splice(0);
     },
@@ -1008,6 +1020,8 @@ export default {
 
         this.retrieveParams.keyword = this.retrieveParams.keyword.trim();
         this.requestChart();
+
+        await this.handleResetTimer();
         await this.requestTable();
         this.requestSearchHistory(this.indexId);
       } catch (e) {
@@ -1099,19 +1113,100 @@ export default {
       this.renderTable = true;
     },
 
+    requestTableData() {
+      if (this.timer || this.requesting) return;
+
+      this.requestTable();
+    },
+
     // 表格
     async requestTable() {
-      const res = await this.$http.request('retrieve/getLogTableList', {
-        params: { index_set_id: this.indexId },
-        data: this.retrieveParams,
-      });
-      this.retrievedKeyword = this.retrieveParams.keyword;
-      this.totalCount = res.data.total;
-      this.tookTime = res.data.took || 0;
-      this.tableData = res.data;
-      this.statisticalFieldsData = this.getStatisticalFieldsData(res.data.origin_log_list);
-      this.computeRetrieveDropdownData(res.data.origin_log_list);
-      this.tableLoading = false;
+      // 轮循结束
+      if (this.finishPolling || this.requesting) return;
+
+      this.requesting = true;
+
+      if (!this.isPollingStart) {
+        const { startTimeStamp, endTimeStamp } = this.getRealTimeRange();
+        this.startTimeStamp = startTimeStamp;
+        this.endTimeStamp = endTimeStamp;
+        // 请求间隔时间
+        this.requestInterval = this.isPollingStart ? this.requestInterval
+          : this.handleRequestSplit(startTimeStamp, endTimeStamp);
+
+        // 获取坐标分片间隔
+        this.handleIntervalSplit(startTimeStamp, endTimeStamp);
+
+        this.pollingEndTime = endTimeStamp;
+        this.pollingStartTime = this.pollingEndTime - this.requestInterval;
+        if (this.pollingStartTime < startTimeStamp || this.requestInterval === 0) {
+          this.pollingStartTime = startTimeStamp;
+          // 轮询结束
+          // this.finishPolling = true;
+        }
+        this.isPollingStart = true;
+      } else if (this.isNextTime) {
+        this.pollingEndTime = this.pollingStartTime;
+        this.pollingStartTime = this.pollingStartTime - this.requestInterval;
+
+        if (this.pollingStartTime < this.startTimeStamp) {
+          // 轮询结束
+          // this.finishPolling = true;
+          this.pollingStartTime = this.startTimeStamp;
+        }
+      }
+
+      const { currentPage, pageSize } = this.$refs.resultMainRef;
+      const begin = currentPage === 1 ? 0 : (currentPage - 1) * pageSize;
+
+      try {
+        const res = await this.$http.request('retrieve/getLogTableList', {
+          params: { index_set_id: this.indexId },
+          data: {
+            ...this.retrieveParams,
+            time_range: 'customized',
+            begin,
+            size: pageSize,
+            interval: this.interval,
+            // 每次轮循的起始时间
+            start_time: formatDate(this.pollingStartTime),
+            end_time: formatDate(this.pollingEndTime),
+          },
+        });
+
+        this.isNextTime = res.data.list.length < pageSize;
+        if (this.isNextTime && (this.pollingStartTime <= this.startTimeStamp
+        || this.requestInterval === 0)) { // 分片时间已结束
+          this.finishPolling = true;
+        }
+
+        this.retrievedKeyword = this.retrieveParams.keyword;
+        this.tookTime = this.tookTime + res.data.took || 0;
+        this.tableData = { ...res.data, finishPolling: this.finishPolling };
+        this.originLogList = this.originLogList.concat(res.data.origin_log_list);
+        this.statisticalFieldsData = this.getStatisticalFieldsData(this.originLogList);
+        this.computeRetrieveDropdownData(this.originLogList);
+      } catch (err) {
+        this.$refs.resultMainRef.isPageOver = false;
+      } finally {
+        this.tableLoading = false;
+        this.requesting = false;
+        if (this.isNextTime) {
+          if (this.finishPolling) { // 已请求所有分片时间仍无结果
+            this.$refs.resultMainRef.isPageOver = false;
+          } else { // 往下一个时间分片获取
+            clearTimeout(this.timer);
+            this.timer = null;
+            this.timer = setTimeout(() => {
+              this.$refs.resultMainRef.currentPage = 1;
+              this.requestTable();
+            }, 500);
+          }
+        } else {
+          clearTimeout(this.timer);
+          this.timer = null;
+        }
+      }
     },
     // 根据表格数据统计字段值及出现次数
     getStatisticalFieldsData(listData) {
@@ -1192,6 +1287,8 @@ export default {
         this.tableLoading = true;
         this.resetResult();
         await this.requestFields();
+        // 表格数据重新轮询
+        await this.handleResetTimer();
         await this.requestTable();
       } catch (e) {
         console.warn(e);
@@ -1199,6 +1296,16 @@ export default {
           this.tableLoading = false;
         }
       }
+    },
+
+    // 重置轮询
+    handleResetTimer() {
+      clearTimeout(this.timer);
+      this.timer = null;
+      this.isPollingStart = false;
+      this.$nextTick(() => {
+        this.finishPolling = false;
+      });
     },
 
     // 重置搜索结果
@@ -1213,6 +1320,7 @@ export default {
       });
       // 字段值统计数据
       this.statisticalFieldsData = {};
+      this.originLogList = [];
     },
 
     // 控制页面布局宽度

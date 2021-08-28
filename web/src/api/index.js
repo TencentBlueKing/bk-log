@@ -36,6 +36,7 @@ import RequestQueue from './request-queue';
 import HttpRequst from './_httpRequest';
 import mockList from '@/mock/index.js';
 import serviceList from '@/services/index.js';
+import { context, trace } from '@opentelemetry/api';
 
 // axios 实例
 const axiosInstance = axios.create({
@@ -127,18 +128,35 @@ async function getPromise(method, url, data, userConfig = {}) {
     return promise;
   }
 
-  promise = new Promise(async (resolve, reject) => {
-    const axiosRequest = http.$request.request(url, data, config);
+  // promise = new Promise(async (resolve, reject) => {
+  //   const axiosRequest = http.$request.request(url, data, config);
 
-    try {
-      const response = await axiosRequest;
-      Object.assign(config, response.config || {});
-      handleResponse({ config, response, resolve, reject });
-    } catch (error) {
-      Object.assign(config, error.config);
-      reject(error);
-    }
-  }).catch(error => handleReject(error, config))
+  //   try {
+  //     const response = await axiosRequest;
+  //     Object.assign(config, response.config || {});
+  //     handleResponse({ config, response, resolve, reject });
+  //   } catch (error) {
+  //     Object.assign(config, error.config);
+  //     reject(error);
+  //   }
+  // }).catch(error => handleReject(error, config))
+  //   .finally(() => {
+  //   // console.log('finally', config)
+  //   });
+
+  promise = new Promise(async (resolve, reject) => {
+    context.with(trace.setSpan(context.active(), config.span), async () => {
+      try {
+        const axiosRequest = http.$request.request(url, data, config);
+        const response = await axiosRequest;
+        Object.assign(config, response.config || {});
+        handleResponse({ config, response, resolve, reject });
+      } catch (error) {
+        Object.assign(config, error.config);
+        reject(error);
+      }
+    });
+  }).catch(error => handleReject(error, config, url))
     .finally(() => {
     // console.log('finally', config)
     });
@@ -183,10 +201,14 @@ function handleResponse({ config, response, resolve, reject }) {
  *
  * @return {Promise} promise 对象
  */
-function handleReject(error, config) {
+function handleReject(error, config, url) {
   if (axios.isCancel(error)) {
     return Promise.reject(error);
   }
+  const service = getHttpService(url, serviceList);
+  const ajaxUrl = service ? service.url : '';
+  console.error('Request error UrlPath：', ajaxUrl);
+  console.error('Request error TraceId：', config.span._spanContext.traceId);
 
   http.queue.delete(config.requestId);
 
@@ -287,6 +309,7 @@ function initConfig(method, url, userConfig) {
     cancelWhenRouteChange: true,
     // 取消上次请求
     cancelPrevious: true,
+    span: trace.getTracer('bk-log').startSpan('api'),
   };
   return Object.assign(defaultConfig, userConfig);
 }
@@ -305,6 +328,18 @@ function getCancelToken() {
     cancelToken,
     cancelExcutor,
   };
+}
+
+function getHttpService(url, serverList) {
+  const splitor = url.split('/').filter(f => f);
+
+  let _service = splitor[1]
+    ? serverList[splitor[0]][splitor[1]]
+    : serverList[splitor[0]];
+  if (typeof _service === 'function') {
+    _service = _service(url, serverList);
+  }
+  return _service;
 }
 
 Vue.prototype.$http = http;

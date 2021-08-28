@@ -20,11 +20,21 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from django.contrib import admin
 
+from apps.feature_toggle.plugins.base import get_feature_toggle
 from apps.utils.admin import AppModelAdmin
 from apps.feature_toggle.models import FeatureToggle
+
+
+def do_action(modeladmin, request, queryset):
+    for obj in queryset:
+        get_feature_toggle(obj.name)().action()
+
+
+do_action.short_description = "do feature toggle action"
 
 
 @admin.register(FeatureToggle)
 class FeatureToggleAdmin(AppModelAdmin):
     list_display = ["name", "alias", "status", "description", "is_viewed", "feature_config", "biz_id_white_list"]
     search_fields = ["name", "alias"]
+    actions = [do_action]

@@ -34,6 +34,29 @@ import 'vue-json-pretty/lib/styles.css';
 import '@icon-cool/bk-icon-log_search';
 import cursor from '@/directives/cursor';
 import LogButton from '@/components/log-button';
+// 接入OTLP
+import { WebTracerProvider } from '@opentelemetry/web';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
+import { ZoneContextManager } from '@opentelemetry/context-zone';
+
+const provider = new WebTracerProvider();
+
+provider.register({
+  contextManager: new ZoneContextManager(),
+});
+
+registerInstrumentations({
+  instrumentations: [new XMLHttpRequestInstrumentation(
+    {
+      // propagateTraceHeaderCorsUrls: new RegExp('.*'),
+    },
+  )],
+});
+
+const tracer = provider.getTracer('bk-log');
+
+Vue.prototype.tracer = tracer;
 
 try {
   const id = window.TAM_AEGIS_KEY;

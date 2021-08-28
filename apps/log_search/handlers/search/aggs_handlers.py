@@ -215,7 +215,7 @@ class AggsViewAdapter(object):
 
     def date_histogram(self, index_set_id, query_data: dict):
         histogram_result = self._aggs_handlers.date_histogram(index_set_id, query_data)
-        histogram_data = histogram_result.get("aggs", {}).get("group_by_histogram", [])
+        histogram_data = histogram_result.get("aggs", {}).get("group_by_histogram", {})
         # 当返回的数据为空且包含failures字段时报错
         failures = histogram_result.get("_shards", {}).get("failures")
         if failures:

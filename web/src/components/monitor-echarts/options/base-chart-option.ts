@@ -41,7 +41,8 @@ export default class EchartsSeries {
     const minX = Array.isArray(seriesData[0]) ? seriesData[0][0] : seriesData[0].x
     const [maxX] = seriesData[seriesData.length - 1]
     minX && maxX && (formatterFunc = (v: any) => {
-      const duration = moment.duration(moment(maxX).diff(moment(minX))).asSeconds()
+      // 用绝对值兼容倒叙的情况
+      const duration = Math.abs(moment.duration(moment(maxX).diff(moment(minX))).asSeconds())
       if (duration < 60 * 60 * 24) {
         return moment(v).format('HH:mm:ss')
           .replace(/:00$/, '')

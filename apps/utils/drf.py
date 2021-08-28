@@ -42,7 +42,7 @@ def format_serializer_errors(errors, fields, params, prefix="  "):
     message = _("参数校验失败:\n") if prefix == "  " else "\n"
     for key, field_errors in errors.items():
         sub_message = ""
-        label = (key + ":") if key != "non_field_errors" else ""
+        label = (str(key) + ":") if key != "non_field_errors" else ""
         if key not in fields:
             sub_message = ""
             try:

@@ -254,7 +254,7 @@ class CleanTemplateNotExistException(BaseCollectorConfigException):
 
 class CleanTemplateRepeatException(BaseCollectorConfigException):
     ERROR_CODE = "702"
-    MESSAGE = _("该业务{bk_biz_id}已存在该模板{name}")
+    MESSAGE = _("该业务 {bk_biz} 已存在该模板{name}")
 
 
 class ProjectNoteExistException(BaseCollectorConfigException):
