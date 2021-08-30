@@ -217,7 +217,7 @@ class TasksHandler(object):
                 component_status["start_time"], get_local_param("time_zone")
             )
             component_status["end_time"] = format_user_time_zone(
-                component_status["start_time"], get_local_param("time_zone")
+                component_status["end_time"], get_local_param("time_zone")
             )
             if component_status["name"] in [
                 constants.DownloadStatus.DOWNLOADABLE.value,
