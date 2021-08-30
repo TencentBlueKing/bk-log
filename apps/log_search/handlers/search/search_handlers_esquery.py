@@ -383,7 +383,7 @@ class SearchHandler(object):
                     "collapse": self.collapse,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    *[ReadTimeout],
+                    ReadTimeout,
                     stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY,
                 ),
             )
@@ -414,7 +414,7 @@ class SearchHandler(object):
                 "collapse": self.collapse,
             },
             data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                *[ReadTimeout], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
             ),
         )
         return result
@@ -451,7 +451,7 @@ class SearchHandler(object):
                     "search_after": search_after,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    *[ReadTimeout], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
 
@@ -473,7 +473,7 @@ class SearchHandler(object):
                     "scroll_id": _scroll_id,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    *[ReadTimeout], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
             scroll_size = len(scroll_result["hits"]["hits"])
