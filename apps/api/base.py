@@ -95,9 +95,8 @@ class DataApiRetryClass(object):
         self.wait_random_max = wait_random_max
         self.fail_exceptions = []
 
-    def add_exceptions(self, exceptions=None):
-        if isinstance(exceptions, list):
-            self.fail_exceptions.extend(exceptions)
+    def add_exceptions(self, *exceptions):
+        self.fail_exceptions.extend(exceptions)
 
     @property
     def retry_on_exception(self):
@@ -110,13 +109,13 @@ class DataApiRetryClass(object):
         return wraps
 
     @staticmethod
-    def create_retry_obj(stop_max_attempt_number=1, wait_random_min=0, wait_random_max=1000, exceptions=None):
+    def create_retry_obj(*exceptions, stop_max_attempt_number=1, wait_random_min=0, wait_random_max=1000):
         retry_obj = DataApiRetryClass(
             stop_max_attempt_number=stop_max_attempt_number,
             wait_random_min=wait_random_min,
             wait_random_max=wait_random_max,
         )
-        retry_obj.add_exceptions(exceptions)
+        retry_obj.add_exceptions(*exceptions)
         return retry_obj
 
 
