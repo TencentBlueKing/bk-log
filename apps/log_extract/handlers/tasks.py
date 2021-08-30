@@ -216,9 +216,6 @@ class TasksHandler(object):
             component_status["start_time"] = format_user_time_zone(
                 component_status["start_time"], get_local_param("time_zone", settings.TIME_ZONE)
             )
-            component_status["end_time"] = format_user_time_zone(
-                component_status["end_time"], get_local_param("time_zone", settings.TIME_ZONE)
-            )
             component_status["finish_time"] = format_user_time_zone(
                 component_status["finish_time"], get_local_param("time_zone", settings.TIME_ZONE)
             )
