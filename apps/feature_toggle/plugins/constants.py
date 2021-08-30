@@ -25,3 +25,5 @@ FEATURE_BKDATA_DATAID = "feature_bkdata_dataid"
 FEATURE_COLLECTOR_ITSM = "collect_itsm"
 ITSM_SERVICE_ID = "itsm_service_id"
 SCENARIO_BKDATA = "scenario_bkdata"
+# 是否使用数据平台超级token
+BKDATA_SUPER_TOKEN = "bkdata_super_token"

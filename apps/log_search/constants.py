@@ -101,6 +101,8 @@ FIND_MODULE_WITH_RELATION_FIELDS = ["bk_module_id", "bk_module_name", "service_t
 COMMON_LOG_INDEX_RE = r"^(v2_)?{}_(?P<datetime>\d+)_(?P<index>\d+)$"
 BKDATA_INDEX_RE = r"^{}_\d+$"
 
+MAX_EXPORT_REQUEST_RETRY = 3
+
 
 # 数据平台mapping返回错误
 class BkDataErrorCode(object):
