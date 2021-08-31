@@ -972,10 +972,10 @@ class SearchHandler(object):
 
     def _deal_query_result(self, result_dict: dict) -> dict:
         result: dict = {
-            "aggregations": result_dict.get("aggregations"),
+            "aggregations": result_dict.get("aggregations", {}),
         }
         # 将_shards 字段返回以供saas判断错误
-        _shards = result_dict.get("_shards")
+        _shards = result_dict.get("_shards", {})
         result.update({"_shards": _shards})
         log_list: list = []
         agg_result: dict = {}
@@ -1010,7 +1010,7 @@ class SearchHandler(object):
             }
         )
         # 处理聚合
-        agg_dict = result_dict.get("aggregations")
+        agg_dict = result_dict.get("aggregations", {})
         result.update({"aggs": agg_dict})
         return result
 
