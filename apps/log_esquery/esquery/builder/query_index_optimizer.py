@@ -54,7 +54,7 @@ class QueryIndexOptimizer(object):
         self._index = ",".join(result_table_id_list)
 
         if not self._index:
-            result_table_id_list: List[str] = map_if(indices.split(","))
+            result_table_id_list: List[str] = map_if(indices.split(","), lambda x: f"{x}_*")
             self._index = ",".join(result_table_id_list)
         if scenario_id in [Scenario.LOG]:
             self._index = self._index.replace(".", "_")
