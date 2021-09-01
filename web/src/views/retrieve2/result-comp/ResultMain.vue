@@ -212,7 +212,9 @@
       :show-footer="false">
       <div class="export-container" v-bkloading="{ isLoading: exportLoading }">
         <span class="bk-icon bk-dialog-warning icon-exclamation"></span>
-        <div class="header">{{ $t('retrieve.dataMoreThan') }}</div>
+        <div class="header">
+          {{ totalCount > 2000000 ? $t('retrieve.dataMoreThanMillion') : $t('retrieve.dataMoreThan') }}
+        </div>
         <div class="export-type immediate-export">
           <span class="bk-icon icon-info-circle"></span>
           <span class="export-text">{{ $t('retrieve.immediateExportDesc') }}</span>
@@ -220,7 +222,8 @@
         </div>
         <div class="export-type async-export">
           <span class="bk-icon icon-info-circle"></span>
-          <span class="export-text">{{ $t('retrieve.asyncExportDesc') }}</span>
+          <span v-if="totalCount > 2000000" class="export-text">{{ $t('retrieve.asyncExportMoreDesc') }}</span>
+          <span v-else class="export-text">{{ $t('retrieve.asyncExportDesc') }}</span>
           <bk-button @click="downloadAsync">{{ $t('retrieve.asyncExport') }}</bk-button>
         </div>
       </div>
@@ -311,10 +314,6 @@ export default {
     asyncExportUsableReason: {
       type: String,
       default: '',
-    },
-    isPollingStart: {
-      type: Boolean,
-      default: false,
     },
   },
   data() {
@@ -413,20 +412,6 @@ export default {
     },
   },
   watch: {
-    isPollingStart(newVal) {
-      if (!newVal) {
-        this.newScrollHeight = 0;
-        this.$nextTick(() => {
-          this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
-        });
-        this.count = 0;
-        this.currentPage = 1;
-        this.originTableList = [];
-        this.tableList = [];
-        this.isInit = false;
-        this.finishPolling = false;
-      }
-    },
     tableData(data) {
       this.finishPolling = data && data.finishPolling;
       if (data?.list?.length) {
@@ -479,7 +464,18 @@ export default {
       }
       window.open(`${window.MONITOR_URL}/?${urlArr.join('&')}#/strategy-config/add`, '_blank');
     },
-
+    reset() {
+      this.newScrollHeight = 0;
+      this.$nextTick(() => {
+        this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
+      });
+      this.count = 0;
+      this.currentPage = 1;
+      this.originTableList = [];
+      this.tableList = [];
+      this.isInit = false;
+      this.finishPolling = false;
+    },
     // 滚动到顶部
     scrollToTop() {
       this.$easeScroll(0, 300, this.$refs.scrollContainer);
@@ -538,7 +534,7 @@ export default {
           showFooter: false,
         });
         setTimeout(() => infoDialog.close(), 3000);
-      } else if (this.totalCount > 10000 && this.totalCount <= 1000000) {
+      } else if (this.totalCount > 10000) {
         // 导出数量大于1w且小于100w 可直接下载1w 或 异步全量下载全部
         // 通过 field 判断是否支持异步下载
         if (this.asyncExportUsable) {
@@ -558,21 +554,6 @@ export default {
             confirmFn: () => this.openDownloadUrl(),
           });
         }
-      } else if (this.totalCount > 1000000) {
-        // 导出数据超过100w
-        const h = this.$createElement;
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('retrieve.dataMoreThanMillion'),
-          subHeader: h('p', {
-            style: {
-              whiteSpace: 'normal',
-              padding: '0 60px',
-            },
-          }, this.$t('retrieve.moreThanMillionDesc')),
-          okText: this.$t('retrieve.immediateExport'),
-          confirmFn: () => this.openDownloadUrl(),
-        });
       } else {
         this.openDownloadUrl();
       }

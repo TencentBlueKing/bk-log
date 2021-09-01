@@ -183,7 +183,7 @@ export default {
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
-    if (!this.isSubmit) {
+    if (!this.isSubmit && !this.isSwitch) {
       this.$bkInfo({
         title: this.$t('pageLeaveTips'),
         confirmFn: () => {

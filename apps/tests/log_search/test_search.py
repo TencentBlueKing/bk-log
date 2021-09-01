@@ -80,7 +80,7 @@ class TestSearchHandler(TestCase):
     def setUp(self) -> None:
         self.search_handler = SearchHandler(index_set_id=INDEX_SET_ID, search_dict=SEARCH_DICT, pre_check_enable=False)
 
-    @patch("apps.api.BkLogApi.search", lambda _: SEARCH_RESULT)
+    @patch("apps.api.BkLogApi.search", lambda _, data_api_retry_cls: SEARCH_RESULT)
     @patch(
         "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
         lambda _, __: False,
@@ -95,7 +95,7 @@ class TestSearchHandler(TestCase):
             logs_result.extend(result["list"])
         self.assertEqual(len(logs_result), 90000)
 
-    @patch("apps.api.BkLogApi.scroll", lambda _: SEARCH_RESULT)
+    @patch("apps.api.BkLogApi.scroll", lambda _, data_api_retry_cls: SEARCH_RESULT)
     @patch(
         "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
         lambda _, __: False,

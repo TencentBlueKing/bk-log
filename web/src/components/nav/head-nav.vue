@@ -717,9 +717,9 @@ export default {
         console.warn(e);
       } finally {
         if (this.$route.name !== 'retrieve') {
-          const RoutingHop                            = this.$route.name === 'notIndex'
+          const RoutingHop = this.$route.name === 'notIndex'
             ? 'retrieve' : this.isFirstLoad
-              ? this.$route.name : 'retrieve';
+              ? this.$route.name ? this.$route.name : 'retrieve' : 'retrieve';
           const newQuery = {
             ...this.$route.query,
             projectId,
@@ -735,6 +735,7 @@ export default {
             },
             query: newQuery,
           });
+          console.log('head route===', this.$route.name);
         }
         setTimeout(() => {
           this.$emit('auth', null); // 表示不显示无业务权限的页面
