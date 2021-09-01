@@ -699,12 +699,36 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
-      Promise.all([this.requestCollectList()]).then(() => {
+      this.$http.request('collect/getCollectList', {
+        query: {
+          bk_biz_id: this.bkBizId,
+          keyword: this.param,
+          page: this.pagination.current,
+          pagesize: this.pagination.limit,
+        },
+      }).then((res) => {
+        const { data } = res;
+        if (data && data.list) {
+          const idList = [];
+          data.list.forEach((row) => {
+            row.status = '';
+            row.status_name = '';
+            idList.push(row.collector_config_id);
+          });
+          this.collectList.splice(0, this.collectList.length, ...data.list);
+          this.pagination.count = data.total;
+          this.collectorIdStr = idList.join(',');
+          if (this.needGuide) {
+            setTimeout(() => {
+              localStorage.setItem('needGuide', 'false');
+              this.needGuide = false;
+            }, 3000);
+          }
+        }
         if (this.collectorIdStr) {
           this.requestCollectStatus();
         }
       })
-        .catch(() => {})
         .finally(() => {
           this.isTableLoading = false;
         });
