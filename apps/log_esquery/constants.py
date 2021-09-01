@@ -22,3 +22,5 @@ DEFAULT_SCHEMA = "http"
 ES_ROUTE_ALLOW_URL = ["_cat", "_cluster", "_nodes", "_stats"]
 
 WILDCARD_PATTERN = "*"
+
+BKDATA_NOT_HAVE_INDEX = "1532006"

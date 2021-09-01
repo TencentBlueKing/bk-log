@@ -21,6 +21,7 @@ from django.test import TestCase
 
 from apps.log_databus.exceptions import CleanTemplateRepeatException, CleanTemplateNotExistException
 from apps.log_databus.handlers.clean import CleanTemplateHandler
+from apps.tests.log_databus.test_clean import TestClean
 
 CREATE_PARAMS = {
     "name": "test",
@@ -38,7 +39,7 @@ CREATE_PARAMS = {
             "is_delete": True,
         }
     ],
-    "bk_biz_id": 0,
+    "bk_biz_id": 706,
 }
 
 
@@ -52,11 +53,11 @@ class TestCleanTemplate(TestCase):
         self.assertEqual(create_result["bk_biz_id"], CREATE_PARAMS["bk_biz_id"])
 
     def test_create_failed(self):
+        TestClean._init_project_info()
         self._test_create()
         with self.assertRaises(CleanTemplateRepeatException) as context:
             CleanTemplateHandler().create_or_update(params=CREATE_PARAMS)
-
-        self.assertTrue("该业务0已存在该模板test" in str(context.exception))
+        self.assertTrue("该业务 [706]test 已存在该模板test" in str(context.exception))
 
     def test_update(self):
         create_result = self._test_create()
