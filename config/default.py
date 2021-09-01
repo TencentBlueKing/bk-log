@@ -651,6 +651,13 @@ ESQUERY_WHITE_LIST = [
     "dataweb",
 ]
 
+# BK repo conf
+BKREPO_ENDPOINT_URL = os.getenv("BKAPP_BKREPO_ENDPOINT_URL")
+BKREPO_USERNAME = os.getenv("BKAPP_BKREPO_USERNAME")
+BKREPO_PASSWORD = os.getenv("BKAPP_BKREPO_PASSWORD")
+BKREPO_PROJECT = os.getenv("BKAPP_BKREPO_PROJECT")
+BKREPO_BUCKET = os.getenv("BKAPP_BKREPO_BUCKET")
+
 # ===============================================================================
 # Demo业务配置
 # ===============================================================================

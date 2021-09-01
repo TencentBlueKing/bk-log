@@ -251,6 +251,8 @@ class AsyncExportUtils(object):
         storage = StorageType.get_instance(storage_type)
         if not storage_type or storage_type == RemoteStorageType.NFS.value:
             return storage(settings.EXTRACT_SAAS_STORE_DIR)
+        if storage_type == RemoteStorageType.BKREPO.value:
+            return storage(expired=ASYNC_EXPORT_EXPIRED)
         return storage(
             toggle.get("qcloud_secret_id"),
             toggle.get("qcloud_secret_key"),
