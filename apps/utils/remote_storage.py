@@ -77,6 +77,17 @@ class NfsStorage(Storage):
         return f"{url_path}?{url_params}"
 
 
+class BKRepoStorage(Storage):
+    def __init__(self):
+        pass
+
+    def export_upload(self, file_path, file_name, **kwargs):
+        pass
+
+    def generate_download_url(self, url_path: str, file_name: str, **kwargs):
+        pass
+
+
 class StorageType(object):
     @classmethod
     def get_instance(cls, storage_type=None):
