@@ -128,10 +128,6 @@ class QueryClientLog(QueryClientTemplate):
             self._get_connection(index)
             if not self._active:
                 raise EsClientSearchException(EsClientSearchException.MESSAGE.format(error=_("EsClient链接失败")))
-            else:
-                pass
-        else:
-            pass
 
     @staticmethod
     def _get_meta_index(index: str):

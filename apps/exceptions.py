@@ -40,6 +40,7 @@ class ErrorCode(object):
     BKLOG_GRAFANA = "71"
     BKLOG_IAM = "99"
     BKLOG_ESB = "100"
+    BKLOG_ADMIN = "101"
 
 
 class BaseException(Exception):

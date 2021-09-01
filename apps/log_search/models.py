@@ -27,6 +27,7 @@ from django.utils.html import format_html
 from django_jsonfield_backport.models import JSONField
 from jinja2 import Environment, FileSystemLoader
 
+from apps.exceptions import BizNotExistError
 from apps.feature_toggle.handlers.toggle import feature_switch
 from apps.log_search.exceptions import (
     SourceDuplicateException,
@@ -195,6 +196,15 @@ class ProjectInfo(SoftDeleteModel):
             feature_toggles.append(item.strip())
         return feature_toggles
 
+    @classmethod
+    def get_biz(cls, biz_id=None):
+        try:
+            project = ProjectInfo.objects.get(bk_biz_id=biz_id)
+        except ProjectInfo.DoesNotExist:
+            raise BizNotExistError(BizNotExistError.MESSAGE.format(bk_biz_id=biz_id))
+
+        return {"bk_biz_id": project.bk_biz_id, "bk_biz_name": project.project_name}
+
     class Meta:
         verbose_name = _("项目列表")
         verbose_name_plural = _("02_项目列表")
@@ -283,7 +293,6 @@ class LogIndexSet(SoftDeleteModel):
     pre_check_tag = models.BooleanField(_("是否通过"), default=True)
     pre_check_msg = models.TextField(_("预查询描述"), null=True)
     is_active = models.BooleanField(_("是否可用"), default=True)
-
     # 字段快照
     fields_snapshot = JsonField(_("字段快照"), default=None, null=True)
 
@@ -477,6 +486,7 @@ class LogIndexSet(SoftDeleteModel):
         try:
             search_handler_esquery = SearchHandler(self.index_set_id, {}, pre_check_enable=pre_check_enable)
             fields = search_handler_esquery.fields()
+            fields = self.fields_to_string(fields=fields)
             self.fields_snapshot = fields
         except Exception as e:  # pylint: disable=broad-except
             # 如果字段获取失败，则不修改原来的值
@@ -512,6 +522,15 @@ class LogIndexSet(SoftDeleteModel):
 
     def cancel_favorite(self, username: str):
         IndexSetUserFavorite.cancel(username, self.index_set_id)
+
+    @staticmethod
+    def fields_to_string(fields):
+        """
+        translate __proxy__ obj usable_reason to str
+        @params fields {dict}
+        """
+        fields["usable_reason"] = str(fields.get("usable_reason", ""))
+        return fields
 
     class Meta:
         ordering = ("-orders", "-index_set_id")

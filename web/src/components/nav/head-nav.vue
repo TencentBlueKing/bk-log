@@ -35,9 +35,10 @@
     <div class="nav-center fl">
       <ul>
         <li v-for="menu in topMenu" :key="menu.id"
-            :class="['menu-item', { 'active': currentMenu.id === menu.router }]"
+            :class="['menu-item', { 'active': activeTopMenu.id === menu.id }]"
             @click="routerHandler(menu)">
-          <template v-if="menu.dropDown">
+          <!-- <template v-if="menu.dropDown"> -->
+          <template v-if="menu.id === 'dashboard'">
             <bk-dropdown-menu :ref="`menu${menu.router}`" align="center">
               <span slot="dropdown-trigger" style="font-size: 14px;">{{ menu.name }}</span>
               <ul class="bk-dropdown-list" slot="dropdown-content">
@@ -344,6 +345,7 @@ export default {
       topMenu: state => state.topMenu,
       menuList: state => state.menuList,
       currentMenu: state => state.currentMenu,
+      activeTopMenu: state => state.activeTopMenu,
       projectId: state => state.projectId,
       bkBizId: state => state.bkBizId,
       myProjectList: state => state.myProjectList,
@@ -355,20 +357,12 @@ export default {
       let current;
       if (this.currentMenu.dropDown && this.currentMenu.children) {
         const routeName = this.$route.name;
-        current = this.currentMenuHandler(this.currentMenu.children, routeName);
+        current = this.activeTopMenu(this.currentMenu.children, routeName);
       }
       return current || {};
     },
     isDisableSelectBiz() {
       return Boolean(this.$route.name === 'trace' && this.$route.query.traceId);
-    },
-  },
-  watch: {
-    '$route.name'(newVal) {
-      if (this.errorPage.indexOf(newVal) < 0) {
-        const currentMenu = this.currentMenuHandler(this.menuList, newVal) || {};
-        this.$store.commit('updateCurrentMenu', currentMenu);
-      }
     },
   },
   created() {
@@ -515,18 +509,30 @@ export default {
         this.$emit('reloadRouter');
       });
     },
+    replaceMenuId(list) {
+      list.forEach((item) => {
+        if (item.id === 'search') {
+          item.id = 'retrieve';
+        }
+        item.id = item.id.replaceAll('_', '-');
+        if (item.children) {
+          this.replaceMenuId(item.children);
+        }
+      });
+      return list;
+    },
     routerHandler(menu) {
-      if (menu.router === this.currentMenu.id) {
-        if (menu.router === 'retrieve') {
+      if (menu.id === this.activeTopMenu.id) {
+        if (menu.id === 'retrieve') {
           this.$router.push({
-            name: menu.router,
+            name: menu.id,
             query: {
               projectId: window.localStorage.getItem('project_id'),
             },
           });
           this.$emit('reloadRouter');
           return;
-        } if (menu.router === 'extract') {
+        } if (menu.id === 'extract') {
           if (this.$route.query.create) {
             this.$router.push({
               name: 'extract',
@@ -538,7 +544,7 @@ export default {
             this.$emit('reloadRouter');
           }
           return;
-        } if (menu.router === 'trace') {
+        } if (menu.id === 'trace') {
           if (this.$route.query.traceId) {
             this.$router.push({
               name: 'trace',
@@ -553,7 +559,7 @@ export default {
             this.$emit('reloadRouter');
           }
           return;
-        } if (menu.router === 'dashboard') {
+        } if (menu.id === 'dashboard') {
           if (this.$route.query.manageAction) {
             const newQuery = { ...this.$route.query };
             delete newQuery.manageAction;
@@ -564,15 +570,27 @@ export default {
           }
           this.$emit('reloadRouter');
           return;
+        } if (menu.id === 'manage') {
+          if (this.$route.name !== 'collection-item') {
+            this.$router.push({
+              name: 'manage',
+              query: {
+                projectId: window.localStorage.getItem('project_id'),
+              },
+            });
+          } else {
+            this.$emit('reloadRouter');
+          }
+          return;
         }
         this.$emit('reloadRouter');
         return;
       }
-      if (menu.router === 'monitor') {
+      if (menu.id === 'monitor') {
         window.open(`${window.MONITOR_URL}/?bizId=${this.bkBizId}#/strategy-config`, '_blank');
-      } else if (menu.router !== 'manage') {
+      } else {
         this.$router.push({
-          name: menu.router,
+          name: menu.id,
           query: {
             projectId: window.localStorage.getItem('project_id'),
           },
@@ -647,7 +665,7 @@ export default {
     async setRouter(projectId, bizId) {
       try {
         const res = await this.$store.dispatch('getMenuList', projectId);
-        const menuList = res.data || [];
+        const menuList = this.replaceMenuId(res.data || []);
         menuList.forEach((child) => {
           child.id = this.routeMap[child.id] || child.id;
           const menu = this.menuArr.find(menuItem => menuItem.id === child.id);
@@ -657,14 +675,51 @@ export default {
         });
         this.$store.commit('updateTopMenu', menuList);
         this.$store.commit('updateMenuProject', res.data || []);
+
+        const manageGroupNavList = menuList.find(item => item.id === 'manage')?.children || [];
+        const manageNavList = [];
+        manageGroupNavList.forEach((group) => {
+          manageNavList.push(...group.children);
+        });
+        const logCollectionNav = manageNavList.find(nav => nav.id === 'log-collection');
+        if (logCollectionNav) {
+          // 增加日志采集导航子菜单
+          logCollectionNav.children = [{
+            id: 'collection-item',
+            name: this.$t('采集项'),
+            project_manage: logCollectionNav.project_manage,
+          }, {
+            id: 'log-index-set',
+            name: this.$t('索引集'),
+            project_manage: logCollectionNav.project_manage,
+          }];
+        }
+        this.$watch('$route.name', () => {
+          const matchedList = this.$route.matched;
+          const activeTopMenu = menuList.find((item) => {
+            return matchedList.some(record => record.name === item.id);
+          }) || {};
+          this.$store.commit('updateActiveTopMenu', activeTopMenu);
+          const activeManageNav = manageNavList.find((item) => {
+            return matchedList.some(record => record.name === item.id);
+          }) || {};
+          this.$store.commit('updateActiveManageNav', activeManageNav);
+          const activeManageSubNav = activeManageNav?.children?.find((item) => {
+            return matchedList.some(record => record.name === item.id);
+          }) || {};
+          this.$store.commit('updateActiveManageSubNav', activeManageSubNav);
+        }, {
+          immediate: true,
+        });
+
         return menuList;
       } catch (e) {
         console.warn(e);
       } finally {
         if (this.$route.name !== 'retrieve') {
-          const RoutingHop                            = this.$route.name === 'notIndex'
+          const RoutingHop = this.$route.name === 'notIndex'
             ? 'retrieve' : this.isFirstLoad
-              ? this.$route.name : 'retrieve';
+              ? this.$route.name ? this.$route.name : 'retrieve' : 'retrieve';
           const newQuery = {
             ...this.$route.query,
             projectId,
@@ -680,6 +735,7 @@ export default {
             },
             query: newQuery,
           });
+          console.log('head route===', this.$route.name);
         }
         setTimeout(() => {
           this.$emit('auth', null); // 表示不显示无业务权限的页面
@@ -698,6 +754,9 @@ export default {
         if (oldMenu.children) {
           resMenu.children.forEach((item) => {
             item.id = this.routeMap[item.id] || item.id;
+            if (resMenu.id === 'dashboard') {
+              item.id = item.id.replaceAll('-', '_');
+            }
             const menu = oldMenu.children.find(menuItem => menuItem.id === item.id);
             if (menu) {
               this.deepUpdateMenu(menu, item);
@@ -752,16 +811,6 @@ export default {
       }
       this.$refs[`menu${menu.router}`][0].hide();
     },
-    currentMenuHandler(menuList, newVal) {
-      let currentMenu;
-      menuList.forEach((menu) => {
-        if (menu.id === newVal
-        || (menu.id !== newVal && menu.children && this.currentMenuHandler(menu.children, newVal))) {
-          currentMenu = menu;
-        }
-      });
-      return currentMenu;
-    },
     dropdownLanguageShow() {
       this.isShowLanguageDropdown = true;
     },
@@ -795,7 +844,7 @@ export default {
   .log-search-nav {
     height: 50px;
     color: #fff;
-    background: #182132;
+    background: #000;
 
     @include clearfix;
 

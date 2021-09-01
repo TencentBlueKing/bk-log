@@ -486,6 +486,7 @@ export default {
         console.warn(err);
       });
     this.fetchPageData();
+    console.log('retrieve===', this.$route.name);
   },
   mounted() {
     if (!this.isHideAutoQueryTips) {
@@ -644,6 +645,7 @@ export default {
                 queryObj.from = this.$route.query.from;
               }
               this.$router.push({
+                name: 'retrieve',
                 params: {
                   indexId: null,
                 },
@@ -664,6 +666,7 @@ export default {
             queryObj.from = this.$route.query.from;
           }
           this.$router.push({
+            name: 'retrieve',
             params: {
               indexId: null,
             },
@@ -681,6 +684,7 @@ export default {
         })
         .finally(() => {
           this.basicLoading = false;
+          console.log('current router===', this.$route.name);
         });
     },
     // 获取检索历史
@@ -993,6 +997,7 @@ export default {
         queryObj.from = this.$route.query.from;
       }
       this.$router.push({
+        name: 'retrieve',
         params: {
           indexId: this.indexId,
         },

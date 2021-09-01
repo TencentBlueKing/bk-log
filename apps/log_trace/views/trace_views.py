@@ -203,7 +203,7 @@ class TraceViewSet(APIViewSet):
         }
         """
         data = self.params_valid(TraceSearchAttrSerializer)
-        return Response(TraceHandler.scatter(index_set_id, data))
+        return Response(TraceHandler(index_set_id).scatter(data))
 
     @detail_route(methods=["POST"], url_path="search")
     def search(self, request, index_set_id=None):
@@ -338,7 +338,7 @@ class TraceViewSet(APIViewSet):
         }
         """
         data = self.params_valid(TraceSearchAttrSerializer)
-        return Response(TraceHandler.search(index_set_id, data))
+        return Response(TraceHandler(index_set_id).search(data))
 
     @detail_route(methods=["POST"], url_path="search/trace_id")
     def trace_id(self, request, index_set_id=None):
@@ -402,7 +402,7 @@ class TraceViewSet(APIViewSet):
         }
         """
         data = self.params_valid(TraceSearchTraceIdAttrSerializer)
-        return Response(TraceHandler.trace_id(index_set_id, data))
+        return Response(TraceHandler(index_set_id).trace_id(data))
 
     @detail_route(methods=["GET"], url_path="fields")
     def fields(self, request, *args, **kwargs):
@@ -535,7 +535,7 @@ class TraceViewSet(APIViewSet):
         scope = request.GET.get("scope")
         if scope not in FIELDS_SCOPE_VALUE:
             raise ValidationError(_("scope取值范围：trace、trace_detail、trace_detail_log"))
-        return Response(TraceHandler.fields(index_set_id, scope=scope))
+        return Response(TraceHandler(index_set_id).fields(scope=scope))
 
     @detail_route(methods=["POST"], url_path="config")
     def config(self, request, *args, **kwargs):

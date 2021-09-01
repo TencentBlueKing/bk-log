@@ -76,6 +76,9 @@ const store = new Vuex.Store({
     errorPage: ['notTraceIndex'],
     // 全局配置
     globalsData: {},
+    activeTopMenu: {},
+    activeManageNav: {},
+    activeManageSubNav: {},
     // -- id, id对应数据
     collectDetail: [0, {}],
   },
@@ -161,6 +164,15 @@ const store = new Vuex.Store({
     },
     updateMenuList(state, menuList) {
       state.menuList.splice(0, state.menuList.length, ...menuList);
+    },
+    updateActiveTopMenu(state, payload) {
+      state.activeTopMenu = payload;
+    },
+    updateActiveManageNav(state, payload) {
+      state.activeManageNav = payload;
+    },
+    updateActiveManageSubNav(state, payload) {
+      state.activeManageSubNav = payload;
     },
     updateMenuProject(state, menuProject) {
       state.menuProject.splice(0, state.menuProject.length, ...menuProject);

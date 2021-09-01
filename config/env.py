@@ -73,7 +73,7 @@ def load_env():
     project_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     env = os.path.join(project_path, f"{ENVIRONMENT}.env.yml" if not env else f"{env}.{ENVIRONMENT}.env.yml")
     assert os.path.exists(env), f"{env} not exists"
-    with open(env) as f:
+    with open(env, encoding="utf-8") as f:
         content = yaml.load(f, Loader=yaml.FullLoader)
     assert content, f"{env} must have content"
     return content

@@ -183,7 +183,7 @@ class AsyncExportUtils(object):
             os.makedirs(ASYNC_DIR)
 
         result = self.search_handler.pre_get_result(sorted_fields=self.sorted_fields, size=MAX_RESULT_WINDOW)
-        with open(self.file_path, "a+") as f:
+        with open(self.file_path, "a+", encoding="utf-8") as f:
             result_list = self.search_handler._deal_query_result(result_dict=result).get("origin_log_list")
             for item in result_list:
                 f.write("%s\n" % json.dumps(item))

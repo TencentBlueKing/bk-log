@@ -89,6 +89,11 @@ const getCollectList = {
   url: '/databus/collectors/',
   method: 'get',
 };
+// 采集列表-列表（全量）
+const getAllCollectors = {
+  url: '/databus/collectors/list_collectors/',
+  method: 'get',
+};
 // 采集列表-状态
 const getCollectStatus = { // 轮询-批量获取采集项订阅状态
   url: '/databus/collectors/batch_subscription_status/',
@@ -178,13 +183,12 @@ export {
   getEtlPreview,
   getCheckTime,
   details,
-
   getCollectList,
+  getAllCollectors,
   getCollectStatus,
   startCollect,
   stopCollect,
   deleteCollect,
-
   getExtractBizTopo,
   getBizTopo,
   getHostByIp,
