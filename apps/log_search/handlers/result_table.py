@@ -19,8 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from typing import List
 
-from django.conf import settings
-
 from apps.log_search.constants import TraceMatchResult, TraceMatchFieldType
 from apps.log_search.exceptions import (
     IndexCrossBusinessException,
@@ -66,7 +64,7 @@ class ResultTableHandler(APIModel):
         )
 
         # 如果是数据平台则只显示用户有管理权限的RT列表
-        if self.scenario_id == Scenario.BKDATA and settings.FEATURE_TOGGLE.get("bkdata_token_auth", "off") == "on":
+        if self.scenario_id == Scenario.BKDATA:
             scopes = BkDataAuthApi.get_user_perm_scope(
                 {"user_id": self.username, "action_id": "result_table.manage_auth", "show_admin_scopes": True}
             )
