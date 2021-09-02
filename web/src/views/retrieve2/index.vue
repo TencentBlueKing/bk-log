@@ -209,7 +209,8 @@
                 :show-field-alias="showFieldAlias"
                 :statistical-fields-data="statisticalFieldsData"
                 :parent-loading="tableLoading"
-                @fieldsUpdated="handleFieldsUpdated" />
+                @fieldsUpdated="handleFieldsUpdated"
+                @clearTableColumn="clearTableColumn" />
             </div>
           </div>
         </div>
@@ -1133,6 +1134,7 @@ export default {
         // 请求间隔时间
         this.requestInterval = this.isPollingStart ? this.requestInterval
           : this.handleRequestSplit(startTimeStamp, endTimeStamp);
+
         // 获取坐标分片间隔
         this.handleIntervalSplit(startTimeStamp, endTimeStamp);
 
@@ -1362,6 +1364,11 @@ export default {
     handleInitTipsHidden() {
       this.hasExpandInitTipsShown = true;
       this.showExpandInitTips = false;
+    },
+    clearTableColumn() {
+      const tableWidthObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+      tableWidthObj[this.$route.params.indexId] = {};
+      localStorage.setItem('table_column_width_obj', JSON.stringify(tableWidthObj));
     },
   },
 };

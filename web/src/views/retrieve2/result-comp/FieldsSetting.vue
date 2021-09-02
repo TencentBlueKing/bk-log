@@ -213,6 +213,7 @@ export default {
         this.messageWarn(this.$t('retrieve.mustSetVisible'));
         return;
       }
+      this.$parent.$parent.$parent.clearTableColumn();
       this.$emit('confirm', this.shadowVisible, this.showFieldAlias);
       this.$http.request('retrieve/postFieldsConfig', {
         params: { index_set_id: this.$route.params.indexId },

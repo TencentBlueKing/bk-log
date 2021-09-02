@@ -218,6 +218,7 @@ export default {
         displayFieldNames.push(fieldItem.field_name);
       }
       this.$emit('fieldsUpdated', displayFieldNames);
+      this.$emit('clearTableColumn');
       if (!displayFieldNames.length) { // 可以设置为全部隐藏，但是不请求接口
         return;
       }
