@@ -121,8 +121,9 @@
         <bk-table-column
           v-if="showHandleOption"
           :label="$t('retrieve.operate')"
-          min-width="84"
-          align="right">
+          :width="84"
+          align="right"
+          :resizable="false">
           <!-- eslint-disable-next-line -->
           <template slot-scope="{ row, column, $index }">
             <div
@@ -393,6 +394,7 @@ export default {
   computed: {
     ...mapState({
       bkBizId: state => state.bkBizId,
+      clearTableWidth: state => state.clearTableWidth,
     }),
     showAddMonitor() {
       return Boolean(window.MONITOR_URL && this.$store.state.topMenu.some(item => item.id === 'monitor'));
@@ -443,6 +445,14 @@ export default {
         });
         this.isPageOver = false;
       }
+    },
+    clearTableWidth() {
+      const tableWidthObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+      if (tableWidthObj[this.$route.params.indexId] === undefined) {
+        return;
+      }
+      delete tableWidthObj[this.$route.params.indexId];
+      localStorage.setItem('table_column_width_obj', JSON.stringify(tableWidthObj));
     },
   },
   methods: {
