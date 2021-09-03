@@ -874,6 +874,8 @@ def process_metric(data, metric, xtype, path, xform=None, dimensions=None):
     if value is not None:
         if xform:
             value = xform(value)
+        if not isinstance(value, (int, float)):
+            value = int(value)
         return Metric(
             metric_name=metric.replace(".", "_"),
             metric_value=value,
