@@ -1133,7 +1133,6 @@ export default {
         // 请求间隔时间
         this.requestInterval = this.isPollingStart ? this.requestInterval
           : this.handleRequestSplit(startTimeStamp, endTimeStamp);
-
         // 获取坐标分片间隔
         this.handleIntervalSplit(startTimeStamp, endTimeStamp);
 

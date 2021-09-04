@@ -89,7 +89,8 @@
         :empty-text="$t('retrieve.notData')"
         @row-click="tableRowClick"
         @row-mouse-enter="handleMouseEnter"
-        @row-mouse-leave="handleMouseLeave">
+        @row-mouse-leave="handleMouseLeave"
+        @header-dragend="handleHeaderDragend">
         <!-- 展开详情 -->
         <bk-table-column type="expand" width="30" align="center" v-if="visibleFields.length">
           <template slot-scope="{ $index }">
@@ -99,11 +100,15 @@
           </template>
         </bk-table-column>
         <!-- 显示字段 -->
-        <template v-for="field in visibleFields">
+        <template v-for="(field,index) in visibleFields">
           <bk-table-column
+            type="index"
+            align="left"
             :key="field.field_name"
             :min-width="field.minWidth"
-            :render-header="renderHeaderAliasName">
+            :render-header="renderHeaderAliasName"
+            :index="index"
+            :width="field.width">
             <template slot-scope="{ row }">
               <TableColumn
                 :content="tableRowDeepView(row, field.field_name, field.field_type)"
@@ -117,7 +122,8 @@
           v-if="showHandleOption"
           :label="$t('retrieve.operate')"
           :width="84"
-          align="right">
+          align="right"
+          :resizable="false">
           <!-- eslint-disable-next-line -->
           <template slot-scope="{ row, column, $index }">
             <div
@@ -388,6 +394,7 @@ export default {
   computed: {
     ...mapState({
       bkBizId: state => state.bkBizId,
+      clearTableWidth: state => state.clearTableWidth,
     }),
     showAddMonitor() {
       return Boolean(window.MONITOR_URL && this.$store.state.topMenu.some(item => item.id === 'monitor'));
@@ -408,6 +415,16 @@ export default {
     },
     showHandleOption() {
       const { showRealtimeLog, showContextLog, showWebConsole, showMonitorWeb, visibleFields } = this;
+      if (visibleFields.length !== 0) {
+        const tableWidthObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+        let widthObj = {};
+        for (const key in tableWidthObj) {
+          key === this.$route.params.indexId && (widthObj = tableWidthObj[this.$route.params.indexId]);
+        }
+        visibleFields.forEach((el, index) => {
+          el.width = widthObj[index] === undefined ? 'default' : widthObj[index];
+        });
+      }
       return (showRealtimeLog || showContextLog || showWebConsole || showMonitorWeb) && visibleFields.length;
     },
   },
@@ -428,6 +445,14 @@ export default {
         });
         this.isPageOver = false;
       }
+    },
+    clearTableWidth() {
+      const tableWidthObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+      if (tableWidthObj[this.$route.params.indexId] === undefined) {
+        return;
+      }
+      delete tableWidthObj[this.$route.params.indexId];
+      localStorage.setItem('table_column_width_obj', JSON.stringify(tableWidthObj));
     },
   },
   methods: {
@@ -601,6 +626,22 @@ export default {
     },
     handleMouseLeave() {
       this.curHoverIndex = -1;
+    },
+    handleHeaderDragend(newWidth, oldWidth, { index }) {
+      if (index === undefined) {
+        return;
+      }
+      const widthObj = {};
+      const indexId = this.$route.params.indexId;
+      widthObj[index] = newWidth;
+      let columnWidthObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+      if (columnWidthObj === null) {
+        columnWidthObj = {};
+        columnWidthObj[indexId] = {};
+      }
+      columnWidthObj[indexId] === undefined && (columnWidthObj[indexId] = {});
+      columnWidthObj[indexId] = Object.assign(columnWidthObj[indexId], widthObj);
+      localStorage.setItem('table_column_width_obj', JSON.stringify(columnWidthObj));
     },
     mouseenterHandle() {
       this.showAllHandle = true;
