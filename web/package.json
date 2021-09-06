@@ -47,7 +47,7 @@
     "@opentelemetry/sdk-trace-base": "^0.24.1-alpha.4",
     "@opentelemetry/web": "^0.24.0",
     "axios": "0.18.0",
-    "bk-magic-vue": "2.2.16",
+    "bk-magic-vue": "2.3.4",
     "cookie": "0.4.0",
     "deepmerge": "4.2.2",
     "echarts": "4.8.0",
