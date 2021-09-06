@@ -416,11 +416,18 @@ export default {
     showHandleOption() {
       const { showRealtimeLog, showContextLog, showWebConsole, showMonitorWeb, visibleFields } = this;
       if (visibleFields.length !== 0) {
-        const tableWidthObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+        const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+        const { params: { indexId }, query: { bizId } } = this.$route;
         let widthObj = {};
-        for (const key in tableWidthObj) {
-          key === this.$route.params.indexId && (widthObj = tableWidthObj[this.$route.params.indexId]);
+
+        for (const bizKey in columnObj) {
+          if (bizKey === bizId) {
+            for (const fieldKey in columnObj[bizId].fields) {
+              fieldKey === indexId && (widthObj =  columnObj[bizId].fields[indexId]);
+            }
+          }
         }
+
         visibleFields.forEach((el, index) => {
           el.width = widthObj[index] === undefined ? 'default' : widthObj[index];
         });
@@ -447,12 +454,27 @@ export default {
       }
     },
     clearTableWidth() {
-      const tableWidthObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
-      if (tableWidthObj[this.$route.params.indexId] === undefined) {
+      const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+      const { params: { indexId }, query: { bizId } } = this.$route;
+      const isHaveBizId = Object.keys(columnObj).some(el => el === bizId);
+
+      if (!isHaveBizId || columnObj[bizId].fields[indexId] === undefined) {
         return;
       }
-      delete tableWidthObj[this.$route.params.indexId];
-      localStorage.setItem('table_column_width_obj', JSON.stringify(tableWidthObj));
+
+      for (const bizKey in columnObj) {
+        if (bizKey === bizId) {
+          for (const fieldKey in columnObj[bizKey].fields) {
+            if (fieldKey === indexId) {
+              delete columnObj[bizId].fields[indexId];
+              columnObj[bizId].indexsetIds.splice(columnObj[bizId].indexsetIds.indexOf(indexId, 1));
+              columnObj[bizId].indexsetIds.length === 0 && delete columnObj[bizId];
+            }
+          }
+        }
+      }
+
+      localStorage.setItem('table_column_width_obj', JSON.stringify(columnObj));
     },
   },
   methods: {
@@ -628,20 +650,41 @@ export default {
       this.curHoverIndex = -1;
     },
     handleHeaderDragend(newWidth, oldWidth, { index }) {
-      if (index === undefined) {
+      const { params: { indexId }, query: { bizId } } = this.$route;
+      if (index === undefined || bizId === undefined || indexId === undefined) {
         return;
       }
       const widthObj = {};
-      const indexId = this.$route.params.indexId;
       widthObj[index] = newWidth;
-      let columnWidthObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
-      if (columnWidthObj === null) {
-        columnWidthObj = {};
-        columnWidthObj[indexId] = {};
+      index === this.visibleFields.length - 1 && (widthObj[index] = 'default');
+
+      let columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+      if (columnObj === null) {
+        columnObj = {};
+        columnObj[bizId] = this.initSubsetObj(bizId, indexId);
       }
-      columnWidthObj[indexId] === undefined && (columnWidthObj[indexId] = {});
-      columnWidthObj[indexId] = Object.assign(columnWidthObj[indexId], widthObj);
-      localStorage.setItem('table_column_width_obj', JSON.stringify(columnWidthObj));
+      const isIncludebizId = Object.keys(columnObj).some(el => el === bizId);
+      isIncludebizId === false && (columnObj[bizId] = this.initSubsetObj(bizId, indexId));
+
+      for (const key in columnObj) {
+        if (key === bizId) {
+          if (columnObj[bizId].fields[indexId] === undefined) {
+            columnObj[bizId].fields[indexId] = {};
+            columnObj[bizId].indexsetIds.push(indexId);
+          }
+          columnObj[bizId].fields[indexId] = Object.assign(columnObj[bizId].fields[indexId], widthObj);
+        }
+      }
+
+      localStorage.setItem('table_column_width_obj', JSON.stringify(columnObj));
+    },
+    initSubsetObj(bizId, indexId) {
+      const subsetObj = {};
+      subsetObj.bizId = bizId;
+      subsetObj.indexsetIds = [indexId];
+      subsetObj.fields = {};
+      subsetObj.fields[indexId] = {};
+      return subsetObj;
     },
     mouseenterHandle() {
       this.showAllHandle = true;
