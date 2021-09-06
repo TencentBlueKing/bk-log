@@ -156,7 +156,13 @@
     <bk-sideslider :title="$t('trace.log')" :width="1096" :is-show.sync="isShowLog" :quick-close="true">
       <view-log slot="content" :is-show-log="isShowLog" :log-list="logList" :log-fields="logFields"></view-log>
     </bk-sideslider>
-    <bk-sideslider transfer :title="spanID" :width="640" :is-show.sync="isShowSpan" :quick-close="true">
+    <bk-sideslider
+      transfer
+      ext-cls="span-detail-slider"
+      :title="spanID"
+      :width="640"
+      :is-show.sync="isShowSpan"
+      :quick-close="true">
       <div slot="content" class="span-detail-slot">
         <VueJsonPretty v-if="spanDetail" :data="spanDetail" />
       </div>
@@ -706,18 +712,19 @@ export default {
       }
     }
 
-    .span-detail-slot {
-      background: #313238;
-      height: 100%;
-      min-height: calc(100vh - 60px);
-      color: #c4c6cc;
-    }
-
     .asyncSwitch {
       display: inline-block;
       line-height: 30px;
       color: #63656e;
       margin-left: 5px;
+    }
+  }
+  .span-detail-slider {
+    .span-detail-slot {
+      background: #313238;
+      height: 100%;
+      min-height: calc(100vh - 60px);
+      color: #c4c6cc;
     }
   }
 </style>
