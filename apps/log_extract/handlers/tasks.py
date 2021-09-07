@@ -37,8 +37,9 @@ from apps.log_extract.handlers.explorer import ExplorerHandler
 from apps.log_extract.handlers.extract import ExtractLinkBase
 from apps.log_extract.models import Tasks
 from apps.log_extract.serializers import PollingResultSerializer
-from apps.utils.local import get_request_username
+from apps.utils.local import get_request_username, get_local_param
 from apps.decorators import user_operation_record
+from apps.utils.time_handler import format_user_time_zone
 
 
 class TasksHandler(object):
@@ -207,11 +208,17 @@ class TasksHandler(object):
                 component_status_list.append(task_status["children"][component_id])
             except KeyError as e:
                 logger.error(f"receive a KeyError: {e}")
-                pass
+
         # 根据start_time，finish_time排序
         component_status_list = sorted(component_status_list, key=lambda x: (x["start_time"], x["finish_time"]))
         # 输出组件名称用户状态可视化字段
         for component_status in component_status_list:
+            component_status["start_time"] = format_user_time_zone(
+                component_status["start_time"], get_local_param("time_zone", settings.TIME_ZONE)
+            )
+            component_status["finish_time"] = format_user_time_zone(
+                component_status["finish_time"], get_local_param("time_zone", settings.TIME_ZONE)
+            )
             if component_status["name"] in [
                 constants.DownloadStatus.DOWNLOADABLE.value,
                 constants.DownloadStatus.COS_UPLOAD.value,

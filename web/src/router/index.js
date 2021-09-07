@@ -164,8 +164,10 @@ const DataLinkConf = () => import(
 
 const routes = [
   {
-    path: '/',
-    redirect: 'retrieve',
+    path: '',
+    redirect: () => {
+      return '/retrieve';
+    },
   },
   {
     path: '/retrieve/:indexId?',
@@ -194,6 +196,10 @@ const routes = [
     redirect: '/manage/log-collection/collection-item',
     children: [
       {
+        path: 'collect', // 日志采集 支持监控跳转兼容旧版本管理端
+        redirect: '/manage/log-collection/collection-item',
+      },
+      {
         path: 'log-collection',
         name: 'log-collection', // 日志接入 - 日志采集
         component: LogCollectionView,
@@ -207,44 +213,65 @@ const routes = [
           {
             path: 'collection-item/manage/:collectorId',
             name: 'manage-collection', // 管理(查看)采集项
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'collection-item',
+            },
             component: ManageCollection,
           },
           {
             // =================== 采集项新建、编辑等操作，尽量复用旧代码
             path: 'collection-item/add',
             name: 'collectAdd',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'collection-item',
+            },
             component: AccessSteps,
           },
           {
             path: 'collection-item/edit/:collectorId',
             name: 'collectEdit',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'collection-item',
+            },
             component: AccessSteps,
           },
           {
             path: 'collection-item/field/:collectorId',
             name: 'collectField',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'collection-item',
+            },
             component: AccessSteps,
           },
           {
             path: 'collection-item/storage/:collectorId',
             name: 'collectStorage',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'collection-item',
+            },
             component: AccessSteps,
           },
           {
             path: 'collection-item/start/:collectorId',
             name: 'collectStart',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'collection-item',
+            },
             component: AccessSteps,
           },
           {
             path: 'collection-item/stop/:collectorId',
             name: 'collectStop',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'collection-item',
+            },
             component: AccessSteps,
           },
           {
@@ -262,19 +289,28 @@ const routes = [
               {
                 path: 'manage/:indexSetId',
                 name: 'log-index-set-manage',
-                meta: { needBack: true },
+                meta: {
+                  needBack: true,
+                  backName: 'log-index-set-list',
+                },
                 component: ManageIndex,
               },
               {
                 path: 'create',
                 name: 'log-index-set-create',
-                meta: { needBack: true },
+                meta: {
+                  needBack: true,
+                  backName: 'log-index-set-list',
+                },
                 component: CreateIndex,
               },
               {
                 path: 'edit/:indexSetId',
                 name: 'log-index-set-edit',
-                meta: { needBack: true },
+                meta: {
+                  needBack: true,
+                  backName: 'log-index-set-list',
+                },
                 component: CreateIndex,
               },
             ],
@@ -295,19 +331,28 @@ const routes = [
           {
             path: 'manage/:indexSetId',
             name: 'bkdata-index-set-manage',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'bkdata-index-set-list',
+            },
             component: ManageIndex,
           },
           {
             path: 'create',
             name: 'bkdata-index-set-create',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'bkdata-index-set-list',
+            },
             component: CreateIndex,
           },
           {
             path: 'edit/:indexSetId',
             name: 'bkdata-index-set-edit',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'bkdata-index-set-list',
+            },
             component: CreateIndex,
           },
         ],
@@ -326,19 +371,28 @@ const routes = [
           {
             path: 'manage/:indexSetId',
             name: 'es-index-set-manage',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'es-index-set-list',
+            },
             component: ManageIndex,
           },
           {
             path: 'create',
             name: 'es-index-set-create',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'es-index-set-list',
+            },
             component: CreateIndex,
           },
           {
             path: 'edit/:indexSetId',
             name: 'es-index-set-edit',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'es-index-set-list',
+            },
             component: CreateIndex,
           },
         ],
@@ -367,19 +421,28 @@ const routes = [
           {
             path: 'manage/:indexSetId',
             name: 'bkdata-track-manage',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'bkdata-track-list',
+            },
             component: ManageIndex,
           },
           {
             path: 'create',
             name: 'bkdata-track-create',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'bkdata-track-list',
+            },
             component: CreateIndex,
           },
           {
             path: 'edit/:indexSetId',
             name: 'bkdata-track-edit',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'bkdata-track-list',
+            },
             component: CreateIndex,
           },
         ],
@@ -403,13 +466,19 @@ const routes = [
           {
             path: 'create',
             name: 'clean-create', // 日志清洗 - 新增清洗
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'log-clean-list',
+            },
             component: cleanCreate,
           },
           {
             path: 'edit/:collectorId',
             name: 'clean-edit', // 日志清洗 - 编辑清洗
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'log-clean-list',
+            },
             component: cleanCreate,
           },
         ],
@@ -428,13 +497,19 @@ const routes = [
           {
             path: 'create',
             name: 'clean-template-create', // 日志清洗 - 新增模板
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'log-clean-templates',
+            },
             component: cleanTempCreate,
           },
           {
             path: 'edit/:templateId',
             name: 'clean-template-edit', // 日志清洗 - 编辑模板
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'log-clean-templates',
+            },
             component: cleanTempCreate,
           },
         ],
@@ -458,13 +533,19 @@ const routes = [
           {
             path: 'edit/:linkId',
             name: 'extract-link-edit',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'extract-link-list',
+            },
             component: ExtractLinkCreate,
           },
           {
             path: 'create',
             name: 'extract-link-create',
-            meta: { needBack: true },
+            meta: {
+              needBack: true,
+              backName: 'extract-link-list',
+            },
             component: ExtractLinkCreate,
           },
         ],

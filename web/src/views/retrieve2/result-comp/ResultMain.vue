@@ -35,7 +35,10 @@
         </a>
       </template>
     </div>
-    <ResultEChart :retrieve-params="retrieveParams" />
+    <ResultEChart
+      :retrieve-params="retrieveParams"
+      @change-queue-res="changeQueueRes"
+      @change-total-count="changeTotalCount" />
     <div class="result-table-container">
       <div class="cut-line"></div>
       <!-- 表格上的按钮 -->
@@ -67,7 +70,10 @@
             </div>
           </bk-popover>
           <!-- 导出 -->
-          <div class="operation-icon" @click="exportLog" v-bk-tooltips="$t('btn.export')">
+          <div
+            :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
+            @click="exportLog"
+            v-bk-tooltips="queueStatus ? $t('btn.export') : undefined">
             <span class="icon log-icon icon-xiazai"></span>
           </div>
         </div>
@@ -83,7 +89,8 @@
         :empty-text="$t('retrieve.notData')"
         @row-click="tableRowClick"
         @row-mouse-enter="handleMouseEnter"
-        @row-mouse-leave="handleMouseLeave">
+        @row-mouse-leave="handleMouseLeave"
+        @header-dragend="handleHeaderDragend">
         <!-- 展开详情 -->
         <bk-table-column type="expand" width="30" align="center" v-if="visibleFields.length">
           <template slot-scope="{ $index }">
@@ -93,13 +100,15 @@
           </template>
         </bk-table-column>
         <!-- 显示字段 -->
-        <template v-for="field in visibleFields">
-          <!-- <bk-table-column :key="field.field_name" :min-width="field.minWidth"
-                        :label="showFieldAlias ? fieldAliasMap[field.field_name] : field.field_name"> -->
+        <template v-for="(field,index) in visibleFields">
           <bk-table-column
+            type="index"
+            align="left"
             :key="field.field_name"
             :min-width="field.minWidth"
-            :render-header="renderHeaderAliasName">
+            :render-header="renderHeaderAliasName"
+            :index="index"
+            :width="field.width">
             <template slot-scope="{ row }">
               <TableColumn
                 :content="tableRowDeepView(row, field.field_name, field.field_type)"
@@ -113,9 +122,10 @@
           v-if="showHandleOption"
           :label="$t('retrieve.operate')"
           :width="84"
-          align="right">
+          align="right"
+          :resizable="false">
           <!-- eslint-disable-next-line -->
-                    <template slot-scope="{ row, column, $index }">
+          <template slot-scope="{ row, column, $index }">
             <div
               :class="{ 'handle-content': true, 'fix-content': showAllHandle }"
               v-if="curHoverIndex === $index"
@@ -158,11 +168,11 @@
       </bk-table>
       <!-- 表格底部内容 -->
       <template v-if="tableList.length && visibleFields.length">
-        <p class="more-desc" v-if="totalCount > 2000 && isPageOver && count === 2000">{{ $t('retrieve.showMore') }}
+        <p class="more-desc" v-if="!isPageOver && count === limitCount">{{ $t('retrieve.showMore') }}
           <a href="javascript: void(0);" @click="scrollToTop">{{ $t('btn.backToTop') }}</a>
         </p>
         <div
-          v-show="isPageOver === false || isTableRequestLoading"
+          v-if="isPageOver"
           v-bkloading="{ isLoading: true }"
           style="height: 40px;">
         </div>
@@ -208,7 +218,9 @@
       :show-footer="false">
       <div class="export-container" v-bkloading="{ isLoading: exportLoading }">
         <span class="bk-icon bk-dialog-warning icon-exclamation"></span>
-        <div class="header">{{ $t('retrieve.dataMoreThan') }}</div>
+        <div class="header">
+          {{ totalCount > 2000000 ? $t('retrieve.dataMoreThanMillion') : $t('retrieve.dataMoreThan') }}
+        </div>
         <div class="export-type immediate-export">
           <span class="bk-icon icon-info-circle"></span>
           <span class="export-text">{{ $t('retrieve.immediateExportDesc') }}</span>
@@ -216,7 +228,8 @@
         </div>
         <div class="export-type async-export">
           <span class="bk-icon icon-info-circle"></span>
-          <span class="export-text">{{ $t('retrieve.asyncExportDesc') }}</span>
+          <span v-if="totalCount > 2000000" class="export-text">{{ $t('retrieve.asyncExportMoreDesc') }}</span>
+          <span v-else class="export-text">{{ $t('retrieve.asyncExportDesc') }}</span>
           <bk-button @click="downloadAsync">{{ $t('retrieve.asyncExport') }}</bk-button>
         </div>
       </div>
@@ -256,10 +269,6 @@ export default {
     },
     retrieveParams: {
       type: Object,
-      required: true,
-    },
-    totalCount: {
-      type: Number,
       required: true,
     },
     tookTime: {
@@ -319,13 +328,17 @@ export default {
       tableList: [],
       throttle: false, // 滚动节流 是否进入cd
       isPageOver: false, // 前端分页加载是否结束
-      isTableRequestLoading: false,
-      dataListPaged: [], // 将列表数据按 pageSize 分页
+      finishPolling: false,
+      // isTableRequestLoading: false,
+      // dataListPaged: [], // 将列表数据按 pageSize 分页
       count: 0, // 数据总条数
-      begin: 0,
       pageSize: 50, // 每页展示多少数据
       totalPage: 1,
-      currentPage: 0, // 当前加载了多少页
+      currentPage: 1, // 当前加载了多少页
+      totalCount: 0,
+      scrollHeight: 0,
+      limitCount: 2000,
+      queueStatus: false,
       showFieldsSetting: false, // 字段设置
       fieldsSettingLoading: false,
       webConsoleLoading: false, // 点击 WebConsole 时表格 loading
@@ -336,6 +349,7 @@ export default {
       showScrollTop: false, // 显示滚动到顶部icon
       showAsyncExport: false, // 异步下载弹窗
       exportLoading: false,
+      isInit: false,
       logDialog: {
         title: '',
         type: '',
@@ -380,6 +394,7 @@ export default {
   computed: {
     ...mapState({
       bkBizId: state => state.bkBizId,
+      clearTableWidth: state => state.clearTableWidth,
     }),
     showAddMonitor() {
       return Boolean(window.MONITOR_URL && this.$store.state.topMenu.some(item => item.id === 'monitor'));
@@ -400,58 +415,69 @@ export default {
     },
     showHandleOption() {
       const { showRealtimeLog, showContextLog, showWebConsole, showMonitorWeb, visibleFields } = this;
+      if (visibleFields.length !== 0) {
+        const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+        const { params: { indexId }, query: { bizId } } = this.$route;
+        let widthObj = {};
+
+        for (const bizKey in columnObj) {
+          if (bizKey === bizId) {
+            for (const fieldKey in columnObj[bizId].fields) {
+              fieldKey === indexId && (widthObj =  columnObj[bizId].fields[indexId]);
+            }
+          }
+        }
+
+        visibleFields.forEach((el, index) => {
+          el.width = widthObj[index] === undefined ? 'default' : widthObj[index];
+        });
+      }
       return (showRealtimeLog || showContextLog || showWebConsole || showMonitorWeb) && visibleFields.length;
     },
   },
   watch: {
     tableData(data) {
-      this.scrollToTop();
-      this.cacheOpenMoreList = [];
+      this.finishPolling = data && data.finishPolling;
       if (data?.list?.length) {
-        this.originTableList = data.origin_log_list;
-        this.initPagination(data.list, data.fields);
-        this.loadPage();
-      } else { // 空数据
-        this.originTableList = [];
-        this.tableList = [];
-        this.dataListPaged = [];
-        this.isPageOver = true;
+        if (this.isInit) {
+          // 根据接口 data.fields ==> item.max_length 设置各个字段的宽度比例
+          setFieldsWidth(this.visibleFields, data.fields, 500);
+          this.isInit = true;
+        }
+        this.count += data.list.length;
+        this.tableList.push(...data.list);
+        this.originTableList.push(...data.origin_log_list);
+        this.$nextTick(() => {
+          this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
+        });
+        this.isPageOver = false;
       }
+    },
+    clearTableWidth() {
+      const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+      const { params: { indexId }, query: { bizId } } = this.$route;
+      const isHaveBizId = Object.keys(columnObj).some(el => el === bizId);
+
+      if (!isHaveBizId || columnObj[bizId].fields[indexId] === undefined) {
+        return;
+      }
+
+      for (const bizKey in columnObj) {
+        if (bizKey === bizId) {
+          for (const fieldKey in columnObj[bizKey].fields) {
+            if (fieldKey === indexId) {
+              delete columnObj[bizId].fields[indexId];
+              columnObj[bizId].indexsetIds.splice(columnObj[bizId].indexsetIds.indexOf(indexId, 1));
+              columnObj[bizId].indexsetIds.length === 0 && delete columnObj[bizId];
+            }
+          }
+        }
+      }
+
+      localStorage.setItem('table_column_width_obj', JSON.stringify(columnObj));
     },
   },
   methods: {
-    // 表格
-    async requestTable(top) {
-      if (this.isTableRequestLoading) return;
-
-      this.isTableRequestLoading = true;
-      this.$http.request('retrieve/getLogTableList', {
-        params: { index_set_id: this.$route.params.indexId },
-        data: {
-          ...this.retrieveParams,
-          begin: this.begin,
-          time_range: 'customized',
-        },
-      }).then((res) => {
-        const { list } = res.data;
-        if (list.length) {
-          const count = list.length;
-
-          this.count += list.length;
-          this.totalPage = Math.ceil(this.count / this.pageSize) || 1;
-
-          for (let i = 0; i < count; i += this.pageSize) {
-            this.dataListPaged.push(list.slice(i, i + this.pageSize));
-          }
-          this.$nextTick(() => {
-            this.loadPage(top);
-          });
-        } else return false;
-      })
-        .finally(() => {
-          this.isTableRequestLoading = false;
-        });
-    },
     // 跳转到监控
     jumpMonitor() {
       const indexSetId = this.$route.params.indexId;
@@ -485,38 +511,24 @@ export default {
       }
       window.open(`${window.MONITOR_URL}/?${urlArr.join('&')}#/strategy-config/add`, '_blank');
     },
-
+    reset() {
+      this.newScrollHeight = 0;
+      this.$nextTick(() => {
+        this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
+      });
+      this.count = 0;
+      this.currentPage = 1;
+      this.originTableList = [];
+      this.tableList = [];
+      this.isInit = false;
+      this.finishPolling = false;
+    },
     // 滚动到顶部
     scrollToTop() {
       this.$easeScroll(0, 300, this.$refs.scrollContainer);
     },
-    // 初始化前端分页
-    initPagination(list, fields) {
-      this.tableList = [];
-      this.isPageOver = false;
-      this.currentPage = 0;
-      this.count = list.length;
-      this.pageSize = 50;
-      this.totalPage = Math.ceil(this.count / this.pageSize) || 1;
-      this.dataListPaged = [];
-      for (let i = 0; i < this.count; i += this.pageSize) {
-        this.dataListPaged.push(list.slice(i, i + this.pageSize));
-      }
-
-      // 根据接口 data.fields ==> item.max_length 设置各个字段的宽度比例
-      setFieldsWidth(this.visibleFields, fields, 500);
-    },
-    // 加载前端分页
-    loadPage(top) {
-      this.currentPage += 1;
-      this.isPageOver = this.currentPage === this.totalPage;
-      this.tableList.splice(this.tableList.length, 0, ...this.dataListPaged[this.currentPage - 1]);
-      top && this.$nextTick(() => {
-        this.$refs.scrollContainer.scrollTop = top;
-      });
-    },
     handleScroll() {
-      if (this.throttle || this.isTableRequestLoading) {
+      if (this.throttle || this.isPageOver) {
         return;
       }
       this.throttle = true;
@@ -524,16 +536,13 @@ export default {
         this.throttle = false;
         const el = this.$refs.scrollContainer;
         this.showScrollTop = el.scrollTop > 550;
-        // 总数超过500条小于1w条的 通过接口继续请求获取
-        if (this.isPageOver === true
-                        && (el.scrollHeight - el.offsetHeight - el.scrollTop < 60)
-                        && (this.totalCount > 500 && this.count < 2000 && this.begin < 2000)) {
-          this.begin += this.retrieveParams.size;
-          this.requestTable(el.scrollTop);
-          return;
-        }
-        if (this.isPageOver === false && (el.scrollHeight - el.offsetHeight - el.scrollTop < 60)) {
-          this.loadPage(el.scrollTop);
+        if (el.scrollHeight - el.offsetHeight - el.scrollTop < 100) {
+          if (this.count === this.limitCount || this.finishPolling) return;
+
+          this.isPageOver = true;
+          this.currentPage += 1;
+          this.newScrollHeight = el.scrollTop;
+          this.$emit('request-table-data');
         }
       }, 200);
     },
@@ -553,9 +562,16 @@ export default {
       this.showFieldsSetting = false;
       this.$refs.fieldsSettingPopper.instance.hide();
     },
-
+    changeTotalCount(count) {
+      this.totalCount = count;
+    },
+    changeQueueRes(status) {
+      this.queueStatus = status;
+    },
     // 导出日志
     exportLog() {
+      if (!this.queueStatus) return;
+
       // 导出数据为空
       if (!this.totalCount) {
         const infoDialog = this.$bkInfo({
@@ -565,7 +581,7 @@ export default {
           showFooter: false,
         });
         setTimeout(() => infoDialog.close(), 3000);
-      } else if (this.totalCount > 10000 && this.totalCount <= 1000000) {
+      } else if (this.totalCount > 10000) {
         // 导出数量大于1w且小于100w 可直接下载1w 或 异步全量下载全部
         // 通过 field 判断是否支持异步下载
         if (this.asyncExportUsable) {
@@ -585,21 +601,6 @@ export default {
             confirmFn: () => this.openDownloadUrl(),
           });
         }
-      } else if (this.totalCount > 1000000) {
-        // 导出数据超过100w
-        const h = this.$createElement;
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('retrieve.dataMoreThanMillion'),
-          subHeader: h('p', {
-            style: {
-              whiteSpace: 'normal',
-              padding: '0 60px',
-            },
-          }, this.$t('retrieve.moreThanMillionDesc')),
-          okText: this.$t('retrieve.immediateExport'),
-          confirmFn: () => this.openDownloadUrl(),
-        });
       } else {
         this.openDownloadUrl();
       }
@@ -647,6 +648,43 @@ export default {
     },
     handleMouseLeave() {
       this.curHoverIndex = -1;
+    },
+    handleHeaderDragend(newWidth, oldWidth, { index }) {
+      const { params: { indexId }, query: { bizId } } = this.$route;
+      if (index === undefined || bizId === undefined || indexId === undefined) {
+        return;
+      }
+      const widthObj = {};
+      widthObj[index] = newWidth;
+      index === this.visibleFields.length - 1 && (widthObj[index] = 'default');
+
+      let columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+      if (columnObj === null) {
+        columnObj = {};
+        columnObj[bizId] = this.initSubsetObj(bizId, indexId);
+      }
+      const isIncludebizId = Object.keys(columnObj).some(el => el === bizId);
+      isIncludebizId === false && (columnObj[bizId] = this.initSubsetObj(bizId, indexId));
+
+      for (const key in columnObj) {
+        if (key === bizId) {
+          if (columnObj[bizId].fields[indexId] === undefined) {
+            columnObj[bizId].fields[indexId] = {};
+            columnObj[bizId].indexsetIds.push(indexId);
+          }
+          columnObj[bizId].fields[indexId] = Object.assign(columnObj[bizId].fields[indexId], widthObj);
+        }
+      }
+
+      localStorage.setItem('table_column_width_obj', JSON.stringify(columnObj));
+    },
+    initSubsetObj(bizId, indexId) {
+      const subsetObj = {};
+      subsetObj.bizId = bizId;
+      subsetObj.indexsetIds = [indexId];
+      subsetObj.fields = {};
+      subsetObj.fields[indexId] = {};
+      return subsetObj;
     },
     mouseenterHandle() {
       this.showAllHandle = true;
@@ -847,6 +885,16 @@ export default {
             color: #979ba5;
           }
         }
+        .disabled-icon {
+          background-color: #fff;
+          border-color: #dcdee5;
+          cursor: not-allowed;
+          &:hover,
+          .log-icon {
+            border-color: #dcdee5;
+            color: #c4c6cc;
+          }
+        }
       }
     }
 
@@ -959,7 +1007,7 @@ export default {
     color: #63656e;
     background: #f0f1f5;
     cursor: pointer;
-    z-index: 50;
+    z-index: 2100;
     transition: all .2s;
 
     &:hover {
@@ -982,7 +1030,7 @@ export default {
   // 设置列表字段
   .fields-setting-container {
     width: 725px;
-    height: 474px;
+    height: 482px;
     border: 1px solid #dcdee5;
     box-sizing: border-box;
     color: #63656e;

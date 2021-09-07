@@ -20,6 +20,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import copy
 import json
 
+from django.conf import settings
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -29,6 +30,7 @@ from rest_framework.response import Response
 from apps.utils.drf import list_route
 from apps.utils.log import logger
 from apps.generic import APIViewSet
+from apps.log_search.permission import Permission as JwtPermission
 from apps.grafana.authentication import NoCsrfSessionAuthentication
 from apps.grafana.handlers.home_dashboard import patch_home_panels
 from apps.grafana.handlers.query import GrafanaQueryHandler
@@ -85,6 +87,12 @@ class GrafanaProxyView(ProxyView):
 
 class GrafanaViewSet(APIViewSet):
     def get_permissions(self):
+        if settings.BKAPP_IS_BKLOG_API:
+            # 只在后台部署时做白名单校验
+            auth_info = JwtPermission.get_auth_info(self.request, raise_exception=False)
+            # ESQUERY白名单不需要鉴权
+            if auth_info and auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
+                return []
         return [BusinessActionPermission([ActionEnum.VIEW_DASHBOARD])]
 
     def get_authenticators(self):

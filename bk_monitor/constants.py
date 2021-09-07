@@ -42,6 +42,7 @@ class TimeFilterEnum:
     """
 
     MINUTE1 = 1
+    MINUTE2 = 2
     MINUTE5 = 5
     MINUTE10 = 10
     MINUTE30 = 30

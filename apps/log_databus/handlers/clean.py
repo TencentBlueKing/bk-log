@@ -22,6 +22,7 @@ from apps.log_databus.exceptions import CleanTemplateNotExistException, CleanTem
 from apps.log_databus.models import CleanTemplate, BKDataClean
 from apps.log_databus.tasks.bkdata import sync_clean
 from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
+from apps.log_search.models import ProjectInfo
 from apps.models import model_to_dict
 from apps.utils.log import logger
 
@@ -80,9 +81,13 @@ class CleanTemplateHandler(object):
             "bk_biz_id": params["bk_biz_id"],
         }
         if self._check_clean_template_exist(name=model_fields["name"], bk_biz_id=model_fields["bk_biz_id"]):
+            biz = ProjectInfo.get_biz(model_fields["bk_biz_id"])
             raise CleanTemplateRepeatException(
                 CleanTemplateRepeatException.MESSAGE.format(
-                    bk_biz_id=model_fields["bk_biz_id"], name=model_fields["name"]
+                    bk_biz="[{bk_biz_id}]{bk_biz_name}".format(
+                        bk_biz_id=biz["bk_biz_id"], bk_biz_name=biz["bk_biz_name"]
+                    ),
+                    name=model_fields["name"],
                 )
             )
         if not self.data:
