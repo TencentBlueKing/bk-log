@@ -97,7 +97,6 @@
           prop="collector_scenario_name"
           column-key="collector_scenario_id"
           :filters="checkcFields('collector_scenario_name') ? scenarioFilters : []"
-          :filter-method="handleScenarioFilter"
           :filter-multiple="false">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -113,7 +112,6 @@
           prop="category_name"
           column-key="category_id"
           :filters="checkcFields('category_name') ? categoryFilters : []"
-          :filter-method="handleCategoryFilter"
           :filter-multiple="false">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -669,18 +667,6 @@ export default {
         this.pagination.limit = page;
         this.requestData();
       }
-    },
-    // 日志类型表头过滤
-    handleScenarioFilter() {
-      // return value === row.collector_scenario_name;
-
-      return true;
-    },
-    // 数据类型表头过滤
-    handleCategoryFilter() {
-      // return value === row.category_name;
-
-      return true;
     },
     handleSettingChange({ fields }) {
       this.columnSetting.selectedFields = fields;

@@ -736,7 +736,6 @@ export default {
             },
             query: newQuery,
           });
-          console.log('head route===', this.$route.name);
         }
         setTimeout(() => {
           this.$emit('auth', null); // 表示不显示无业务权限的页面
