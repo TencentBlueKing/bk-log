@@ -1007,7 +1007,7 @@ export default {
     color: #63656e;
     background: #f0f1f5;
     cursor: pointer;
-    z-index: 50;
+    z-index: 2100;
     transition: all .2s;
 
     &:hover {
@@ -1030,7 +1030,7 @@ export default {
   // 设置列表字段
   .fields-setting-container {
     width: 725px;
-    height: 474px;
+    height: 482px;
     border: 1px solid #dcdee5;
     box-sizing: border-box;
     color: #63656e;
