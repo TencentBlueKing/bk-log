@@ -62,6 +62,7 @@
         class="select-business fl" style="width: 260px;"
         ext-popover-cls="select-business-dropdown-content"
         :disabled="isDisableSelectBiz"
+        :search-with-pinyin="true"
         :style="isDisableSelectBiz && { background: '#182132' }"
         :searchable="true"
         :clearable="false"

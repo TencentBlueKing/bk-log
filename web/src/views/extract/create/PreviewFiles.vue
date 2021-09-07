@@ -50,6 +50,7 @@
     <div class="flex-box" v-bkloading="{ isLoading, opacity: .7, zIndex: 0 }">
       <bk-table
         ref="previewTable"
+        class="scroll-table"
         style="background-color: #fff;"
         :data="explorerList"
         :height="300"
@@ -293,6 +294,11 @@ export default {
     .table-head-text {
       margin: 18px 0 8px;
       font-size: 12px;
+    }
+  }
+  .scroll-table {
+    /deep/ .bk-table-body-wrapper {
+      overflow-y: auto;
     }
   }
 </style>
