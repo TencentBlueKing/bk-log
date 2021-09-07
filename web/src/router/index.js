@@ -166,7 +166,6 @@ const routes = [
   {
     path: '',
     redirect: () => {
-      console.log('redirect to retrieve');
       return '/retrieve';
     },
   },
@@ -334,7 +333,7 @@ const routes = [
             name: 'bkdata-index-set-manage',
             meta: {
               needBack: true,
-              backName: 'bkdata-index-set-manage',
+              backName: 'bkdata-index-set-list',
             },
             component: ManageIndex,
           },
@@ -343,7 +342,7 @@ const routes = [
             name: 'bkdata-index-set-create',
             meta: {
               needBack: true,
-              backName: 'bkdata-index-set-manage',
+              backName: 'bkdata-index-set-list',
             },
             component: CreateIndex,
           },
@@ -352,7 +351,7 @@ const routes = [
             name: 'bkdata-index-set-edit',
             meta: {
               needBack: true,
-              backName: 'bkdata-index-set-manage',
+              backName: 'bkdata-index-set-list',
             },
             component: CreateIndex,
           },
