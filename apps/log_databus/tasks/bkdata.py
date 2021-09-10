@@ -141,7 +141,9 @@ def review_clean():
     for collector_config in collector_configs:
         with ignored(Exception, log_exception=True):
             BKDataCleanUtils(raw_data_id=collector_config.bkdata_data_id).update_or_create_clean(
-                collector_config_id=collector_config.collector_config_id, bk_biz_id=collector_config.bk_biz_id
+                collector_config_id=collector_config.collector_config_id,
+                bk_biz_id=collector_config.bk_biz_id,
+                category_id=collector_config.category_id,
             )
 
 
@@ -152,7 +154,9 @@ def sync_clean(bk_biz_id: int):
         for collector_config in collector_configs:
             with ignored(Exception, log_exception=True):
                 BKDataCleanUtils(raw_data_id=collector_config.bkdata_data_id).update_or_create_clean(
-                    collector_config_id=collector_config.collector_config_id, bk_biz_id=collector_config.bk_biz_id
+                    collector_config_id=collector_config.collector_config_id,
+                    bk_biz_id=collector_config.bk_biz_id,
+                    category_id=collector_config.category_id,
                 )
     except Exception as e:  # pylint: disable=broad-except
         logger.error(

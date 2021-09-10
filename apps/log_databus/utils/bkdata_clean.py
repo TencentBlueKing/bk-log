@@ -93,7 +93,7 @@ class BKDataCleanUtils:
         logger.info("delete BKDataClean {}".format(del_ids))
 
     @classmethod
-    def create_index_set(cls, insert_objs, bk_biz_id: int):
+    def create_index_set(cls, insert_objs, bk_biz_id: int, category_id=DEFAULT_CATEGORY_ID):
         project_info = ProjectInfo.objects.filter(bk_biz_id=bk_biz_id).first()
         if not project_info:
             raise ProjectNoteExistException(ProjectNoteExistException.MESSAGE.format(bk_biz_id=bk_biz_id))
@@ -112,7 +112,7 @@ class BKDataCleanUtils:
                         "time_format": DEFAULT_TIME_FORMAT,
                     }
                 ],
-                category_id=DEFAULT_CATEGORY_ID,
+                category_id=category_id,
                 view_roles=[],
                 username=insert_obj["created_by"],
             )
@@ -129,12 +129,12 @@ class BKDataCleanUtils:
             IndexSetHandler(index_set_id=delete_obj.log_index_set_id).delete()
             logger.info("delete index_set {}".format(delete_obj.log_index_set_id))
 
-    def update_or_create_clean(self, collector_config_id: int, bk_biz_id: int):
+    def update_or_create_clean(self, collector_config_id: int, bk_biz_id: int, category_id: str):
         cleans = self.get_bkdata_clean()
         db_cleans = BKDataClean.objects.filter(raw_data_id=self.raw_data_id)
         cleans_dict, db_cleans_dict = self.get_dict(cleans=cleans, db_cleans=db_cleans)
         insert_objs, delete_objs = self.get_update_model(clean_dict=cleans_dict, db_clean_dict=db_cleans_dict)
-        index_set_dict = self.create_index_set(insert_objs=insert_objs, bk_biz_id=bk_biz_id)
+        index_set_dict = self.create_index_set(insert_objs=insert_objs, bk_biz_id=bk_biz_id, category_id=category_id)
         self.insert_objs(
             insert_objs=insert_objs,
             collector_config_id=collector_config_id,
