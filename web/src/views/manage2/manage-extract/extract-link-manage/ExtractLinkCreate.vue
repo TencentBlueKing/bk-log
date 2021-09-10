@@ -266,9 +266,9 @@ export default {
           await this.$http.request('extractManage/createLogExtractLink', {
             data: requestData,
           });
-          this.isSubmit = false;
           this.messageSuccess(this.$t('创建成功'));
         }
+        this.isSubmit = true;
         this.$router.push({
           name: 'extract-link-list',
           query: {
