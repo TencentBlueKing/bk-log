@@ -243,7 +243,6 @@
           :took-time="tookTime"
           :index-set-list="indexSetList"
           :table-data="tableData"
-          :is-polling-start="isPollingStart"
           :visible-fields="visibleFields"
           :field-alias-map="fieldAliasMap"
           :show-field-alias="showFieldAlias"
@@ -282,11 +281,9 @@ import SelectDate from './condition-comp/SelectDate';
 import RetrieveInput from './condition-comp/RetrieveInput';
 import RetrieveDetailInput from './condition-comp/RetrieveDetailInput';
 import QueryStatement from './condition-comp/QueryStatement';
-// import FilterCondition from './condition-comp/FilterCondition'
 import FilterConditionItem from './condition-comp/FilterConditionItem';
 import IpQuick from './condition-comp/IpQuick';
 import FieldFilter from './condition-comp/FieldFilter';
-// import FavoriteList from './condition-comp/FavoriteList'
 import FavoritePopper from './condition-comp/FavoritePopper';
 import ResultHeader from './result-comp/ResultHeader';
 import NoIndexSet from './result-comp/NoIndexSet';
@@ -304,11 +301,9 @@ export default {
     RetrieveInput,
     RetrieveDetailInput,
     QueryStatement,
-    // FilterCondition,
     FilterConditionItem,
     IpQuick,
     FieldFilter,
-    // FavoriteList,
     FavoritePopper,
     ResultHeader,
     ResultMain,
@@ -649,6 +644,7 @@ export default {
                 queryObj.from = this.$route.query.from;
               }
               this.$router.push({
+                name: 'retrieve',
                 params: {
                   indexId: null,
                 },
@@ -669,6 +665,7 @@ export default {
             queryObj.from = this.$route.query.from;
           }
           this.$router.push({
+            name: 'retrieve',
             params: {
               indexId: null,
             },
@@ -998,6 +995,7 @@ export default {
         queryObj.from = this.$route.query.from;
       }
       this.$router.push({
+        name: 'retrieve',
         params: {
           indexId: this.indexId,
         },
@@ -1133,7 +1131,6 @@ export default {
         // 请求间隔时间
         this.requestInterval = this.isPollingStart ? this.requestInterval
           : this.handleRequestSplit(startTimeStamp, endTimeStamp);
-
         // 获取坐标分片间隔
         this.handleIntervalSplit(startTimeStamp, endTimeStamp);
 
@@ -1141,8 +1138,6 @@ export default {
         this.pollingStartTime = this.pollingEndTime - this.requestInterval;
         if (this.pollingStartTime < startTimeStamp || this.requestInterval === 0) {
           this.pollingStartTime = startTimeStamp;
-          // 轮询结束
-          // this.finishPolling = true;
         }
         this.isPollingStart = true;
       } else if (this.isNextTime) {
@@ -1150,8 +1145,6 @@ export default {
         this.pollingStartTime = this.pollingStartTime - this.requestInterval;
 
         if (this.pollingStartTime < this.startTimeStamp) {
-          // 轮询结束
-          // this.finishPolling = true;
           this.pollingStartTime = this.startTimeStamp;
         }
       }
@@ -1303,9 +1296,8 @@ export default {
       clearTimeout(this.timer);
       this.timer = null;
       this.isPollingStart = false;
-      this.$nextTick(() => {
-        this.finishPolling = false;
-      });
+      this.finishPolling = false;
+      this.$refs.resultMainRef.reset();
     },
 
     // 重置搜索结果

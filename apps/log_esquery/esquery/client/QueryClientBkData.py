@@ -25,6 +25,7 @@ from django.conf import settings
 
 from elasticsearch.client import _make_path
 
+from apps.log_esquery.constants import BKDATA_NOT_HAVE_INDEX
 from apps.utils.thread import MultiExecuteFunc
 from apps.log_esquery.esquery.client.QueryClientTemplate import QueryClientTemplate
 from apps.api import BkDataQueryApi, BkDataMetaApi, BkDataStorekitApi
@@ -55,6 +56,8 @@ class QueryClientBkData(QueryClientTemplate):
                 result = {"hits": {"hits": [], "total": 0}}
             return result
         except ApiResultError as e:
+            if str(e.code) == BKDATA_NOT_HAVE_INDEX:
+                return {"hits": {"hits": [], "total": 0}}
             raise EsClientSearchException(e.message, code=e.code)
         except Exception as e:  # pylint: disable=broad-except
             self.catch_timeout_raise(e)

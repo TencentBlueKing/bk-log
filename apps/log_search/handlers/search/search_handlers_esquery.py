@@ -25,7 +25,9 @@ import hashlib
 from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
+from requests.exceptions import ReadTimeout
 
+from apps.api.base import DataApiRetryClass
 from apps.log_search.models import (
     LogIndexSet,
     LogIndexSetData,
@@ -41,6 +43,7 @@ from apps.log_search.constants import (
     BK_BCS_APP_CODE,
     ASYNC_SORTED,
     FieldDataTypeEnum,
+    MAX_EXPORT_REQUEST_RETRY,
 )
 from apps.log_search.exceptions import (
     BaseSearchIndexSetException,
@@ -378,7 +381,11 @@ class SearchHandler(object):
                     "time_field_unit": self.time_field_unit,
                     "scroll": SCROLL,
                     "collapse": self.collapse,
-                }
+                },
+                data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                    ReadTimeout,
+                    stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY,
+                ),
             )
             return result
 
@@ -405,7 +412,10 @@ class SearchHandler(object):
                 "time_field_unit": self.time_field_unit,
                 "scroll": None,
                 "collapse": self.collapse,
-            }
+            },
+            data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+            ),
         )
         return result
 
@@ -439,7 +449,10 @@ class SearchHandler(object):
                     "scroll": self.scroll,
                     "collapse": self.collapse,
                     "search_after": search_after,
-                }
+                },
+                data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                    ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                ),
             )
 
             search_after_size = len(search_result["hits"]["hits"])
@@ -458,7 +471,10 @@ class SearchHandler(object):
                     "storage_cluster_id": self.storage_cluster_id,
                     "scroll": SCROLL,
                     "scroll_id": _scroll_id,
-                }
+                },
+                data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                    ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                ),
             )
             scroll_size = len(scroll_result["hits"]["hits"])
             result_size += scroll_size
@@ -956,10 +972,10 @@ class SearchHandler(object):
 
     def _deal_query_result(self, result_dict: dict) -> dict:
         result: dict = {
-            "aggregations": result_dict.get("aggregations"),
+            "aggregations": result_dict.get("aggregations", {}),
         }
         # 将_shards 字段返回以供saas判断错误
-        _shards = result_dict.get("_shards")
+        _shards = result_dict.get("_shards", {})
         result.update({"_shards": _shards})
         log_list: list = []
         agg_result: dict = {}
@@ -994,7 +1010,7 @@ class SearchHandler(object):
             }
         )
         # 处理聚合
-        agg_dict = result_dict.get("aggregations")
+        agg_dict = result_dict.get("aggregations", {})
         result.update({"aggs": agg_dict})
         return result
 

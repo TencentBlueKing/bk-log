@@ -213,8 +213,12 @@ class TasksHandler(object):
         component_status_list = sorted(component_status_list, key=lambda x: (x["start_time"], x["finish_time"]))
         # 输出组件名称用户状态可视化字段
         for component_status in component_status_list:
-            component_status["start_time"] = format_user_time_zone(component_status["start_time"], get_local_param("time_zone"))
-            component_status["end_time"] = format_user_time_zone(component_status["start_time"], get_local_param("end_time"))
+            component_status["start_time"] = format_user_time_zone(
+                component_status["start_time"], get_local_param("time_zone", settings.TIME_ZONE)
+            )
+            component_status["finish_time"] = format_user_time_zone(
+                component_status["finish_time"], get_local_param("time_zone", settings.TIME_ZONE)
+            )
             if component_status["name"] in [
                 constants.DownloadStatus.DOWNLOADABLE.value,
                 constants.DownloadStatus.COS_UPLOAD.value,

@@ -81,6 +81,8 @@ const store = new Vuex.Store({
     activeManageSubNav: {},
     // -- id, id对应数据
     collectDetail: [0, {}],
+    // 清除table表头宽度缓存
+    clearTableWidth: 0,
   },
   // 公共 getters
   getters: {
@@ -195,6 +197,9 @@ const store = new Vuex.Store({
     },
     updateIframeQuery(state, iframeQuery) {
       Object.assign(state.iframeQuery, iframeQuery);
+    },
+    updateClearTableWidth(state, clearTableWidth) {
+      state.clearTableWidth += clearTableWidth;
     },
   },
   actions: {
