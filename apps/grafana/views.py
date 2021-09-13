@@ -48,7 +48,7 @@ from apps.grafana.serializers import (
 )
 
 from apps.iam import ActionEnum, Permission, ResourceEnum
-from apps.iam.handlers.drf import BusinessActionPermission
+from apps.iam.handlers.drf import BusinessActionPermission, InstanceActionPermission
 from apps.log_search.handlers.biz import BizHandler
 from bk_dataview.grafana.views import ProxyView
 
@@ -90,6 +90,9 @@ class GrafanaProxyView(ProxyView):
 
 class GrafanaTraceViewSet(APIViewSet):
     lookup_field = "index_set_id"
+
+    def get_permissions(self):
+        return [InstanceActionPermission([ActionEnum.SEARCH_LOG], ResourceEnum.INDICES)]
 
     def get_serializer_class(self, *args, **kwargs):
         action_serializer_map = {
