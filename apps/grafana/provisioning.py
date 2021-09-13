@@ -56,7 +56,7 @@ class TraceProvisioning(BaseProvisioning):
                 type="jaeger",
                 access="direct",
                 isDefault=False,
-                url="proxy{}trace/{}".format(settings.SITE_URL, trace.index_set_id),
+                url="proxy/trace/{}".format(trace.index_set_id),
                 orgId=org_id,
             )
             for trace in qs
