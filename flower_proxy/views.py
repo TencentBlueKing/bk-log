@@ -23,7 +23,7 @@ import os
 
 # Create your views here.
 
-BKPAAS_ENGINE_REGION = os.environ.get("BKPAAS_ENGINE_REGION")
+BKPAAS_ENGINE_REGION = os.environ.get("ENGINE_REGION")
 # 注意，如果是迁移的旧应用，并且 AppID 中包含下划线(_)，这里的 BKPAAS_ENGINE_APP_NAME 需要将下划线替换成 "0us0"
 # 即 BKPAAS_ENGINE_APP_NAME = os.environ.get('BKPAAS_ENGINE_APP_NAME').replace("_", "0us0")
 BKPAAS_ENGINE_APP_NAME = os.environ.get("BKPAAS_ENGINE_APP_NAME")
