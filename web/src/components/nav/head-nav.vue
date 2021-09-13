@@ -62,6 +62,7 @@
         class="select-business fl" style="width: 260px;"
         ext-popover-cls="select-business-dropdown-content"
         :disabled="isDisableSelectBiz"
+        :search-with-pinyin="true"
         :style="isDisableSelectBiz && { background: '#182132' }"
         :searchable="true"
         :clearable="false"
@@ -735,7 +736,6 @@ export default {
             },
             query: newQuery,
           });
-          console.log('head route===', this.$route.name);
         }
         setTimeout(() => {
           this.$emit('auth', null); // 表示不显示无业务权限的页面

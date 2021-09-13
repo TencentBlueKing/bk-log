@@ -28,6 +28,9 @@ from apps.grafana import views
 router = routers.DefaultRouter(trailing_slash=True)
 router.register(r"grafana", views.GrafanaViewSet, basename="grafana_api")
 
+proxy_router = routers.DefaultRouter(trailing_slash=False)
+
+proxy_router.register(r"trace", views.GrafanaTraceViewSet, basename="trace_api")
 
 urlpatterns = [
     url(r"^api/v1/", include(router.urls)),
@@ -35,6 +38,8 @@ urlpatterns = [
     url(r"^bk-dataview/orgs/(?P<org_name>[a-zA-Z0-9\-_]+)/grafana/", SwitchOrgView.as_view()),
     # grafana访问地址, 需要和grafana前缀保持一致
     url(r"^grafana/$", SwitchOrgView.as_view()),
+    url(r"^grafana/explore$", SwitchOrgView.as_view()),
+    url(r"^grafana/proxy/", include(proxy_router.urls)),
     url(r"^grafana/public/", StaticView.as_view()),
     url(r"^grafana/", GrafanaProxyView.as_view()),
 ]

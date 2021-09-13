@@ -352,6 +352,9 @@ def generate_time_range(time_range, start_time, end_time, local_time_zone):
     elif time_range == "1d":
         _start_time = arrow.now(local_time_zone).shift(days=-1)
         _end_time = arrow.now(local_time_zone)
+    elif time_range == "36m":
+        _start_time = arrow.now(local_time_zone).shift(months=-36)
+        _end_time = arrow.now(local_time_zone)
     else:
         _start_time, _end_time = _customize_time_range(start_time, end_time, local_time_zone)
     return _start_time, _end_time
