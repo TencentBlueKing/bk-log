@@ -17,10 +17,13 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from typing import List
+
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
-
+from apps.log_search.handlers.meta import MetaHandler
+from apps.log_search.models import LogIndexSet
 from bk_dataview.grafana.provisioning import BaseProvisioning, Datasource
 
 
@@ -35,7 +38,28 @@ class Provisioning(BaseProvisioning):
                 version=1,
                 jsonData={"baseUrl": "/{}api/v1/".format(settings.SITE_URL)},
                 url="",
+                orgId=org_id,
             )
+        ]
+
+    def dashboards(self, request, org_name, org_id) -> list:
+        return []
+
+
+class TraceProvisioning(BaseProvisioning):
+    def datasources(self, request, org_name: str, org_id: int) -> List[Datasource]:
+        project_info = MetaHandler.get_project_info(org_name)
+        qs = LogIndexSet.objects.filter(is_trace_log=True, project_id=project_info["project_id"])
+        return [
+            Datasource(
+                name=trace.index_set_name,
+                type="jaeger",
+                access="direct",
+                isDefault=False,
+                url="proxy/trace/{}".format(trace.index_set_id),
+                orgId=org_id,
+            )
+            for trace in qs
         ]
 
     def dashboards(self, request, org_name, org_id) -> list:

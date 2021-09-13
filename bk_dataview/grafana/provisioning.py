@@ -45,6 +45,7 @@ class Datasource:
     database: Union[None, str] = None
     jsonData: Union[None, Dict] = None
     version: int = 0
+    orgId: int = -1
 
 
 @dataclass
