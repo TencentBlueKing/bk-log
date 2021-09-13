@@ -35,6 +35,11 @@ SCATTER_TEMPLATE = [
 
 
 class LogTrace(Proto):
+    SERVICE_NAME_FIELD = "tags.local_service"
+    OPERATION_NAME_FIELD = "operationName"
+    TRACE_ID_FIELD = "traceID"
+    TRACES_ADDITIONS = {"operation": "operationName", "service": "tags.local_service"}
+
     TYPE = TraceProto.LOG.value
     TRACE_PLAN = {
         "trace_type": "log",
@@ -263,3 +268,9 @@ class LogTrace(Proto):
         d1 = arrow.get(seconds)
         time_format_str = d1.to(get_local_param("time_zone")).format("YYYY-MM-DD HH:mm:ss")
         return time_format_str
+
+    def traces(self, index_set_id, params):
+        return []
+
+    def trace_detail(self, index_set_id, trace_id):
+        return []

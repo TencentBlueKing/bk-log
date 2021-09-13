@@ -89,3 +89,14 @@ class DimensionSerializer(serializers.Serializer):
     start_time = serializers.IntegerField(label=_("开始时间"))
     end_time = serializers.IntegerField(label=_("结束时间"))
     query_string = serializers.CharField(label=_("查询字符串"), allow_blank=True, default="")
+
+
+class TracesSerializer(serializers.Serializer):
+    operation = serializers.CharField(label=_(""), required=False)
+    service = serializers.CharField(label=_(""), required=False)
+    tags = serializers.CharField(label=_(""), required=False)
+    minDuration = serializers.IntegerField(label=_(""), required=False)
+    maxDuration = serializers.IntegerField(label=_(""), required=False)
+    limit = serializers.IntegerField(label=_(""), default=20)
+    start = serializers.IntegerField(label=_("开始时间"), required=False)
+    end = serializers.IntegerField(label=_("结束时间"), required=False)

@@ -23,6 +23,7 @@ from typing import List
 
 from django.utils.module_loading import import_string
 
+from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.log_trace.constants import TraceProto
 from apps.log_trace.exceptions import ProtoNotSupport
@@ -34,6 +35,10 @@ class Proto(ABC):
     TRACE_PLAN = None
     DISPLAY_FIELDS = None
     TRACE_SIZE = 1000
+    SERVICE_NAME_FIELD = None
+    OPERATION_NAME_FIELD = None
+    TRACE_ID_FIELD = None
+    TRACES_ADDITIONS = {"operation": "", "service": ""}
 
     LOG_DISPLAY_FIELDS = [
         {
@@ -145,4 +150,53 @@ class Proto(ABC):
         return False
 
     def scatter(self, index_set_id: int, data: dict):
+        pass
+
+    def _deal_term_result(self, term_result, field_name: str):
+        aggs = term_result.get("aggs", {})
+        return [bucket.get("key", "") for bucket in aggs.get(field_name, {}).get("buckets", [])]
+
+    def services(self, index_set_id: int) -> list:
+        query_data = {
+            "fields": [self.SERVICE_NAME_FIELD],
+        }
+        term_result = AggsHandlers.terms(index_set_id, query_data)
+        return self._deal_term_result(term_result, self.SERVICE_NAME_FIELD)
+
+    def operations(self, index_set_id, service_name):
+        query_data = {
+            "fields": [self.OPERATION_NAME_FIELD],
+            "addition": [{"method": "is", "key": self.SERVICE_NAME_FIELD, "value": service_name}],
+        }
+        term_result = AggsHandlers.terms(index_set_id, query_data)
+        return self._deal_term_result(term_result, self.OPERATION_NAME_FIELD)
+
+    def traces(self, index_set_id, params):
+        search_dict = {
+            "start_time": params["start"] / 1000000,
+            "end_time": params["end"] / 1000000,
+            "addition": self.get_traces_additions(params),
+            "begin": 0,
+            "size": params.get("limit"),
+            "keyword": "*",
+            "time_range": "customized",
+            "collapse": {"field": self.TRACE_ID_FIELD},
+        }
+        search_handler = SearchHandlerEsquery(index_set_id, search_dict)
+        return search_handler.search()
+
+    def get_traces_additions(self, params):
+        return [
+            {
+                "method": "is",
+                "key": self.TRACES_ADDITIONS.get(filter_key),
+                "value": params.get(filter_key),
+                "condition": "and",
+                "type": "field",
+            }
+            for filter_key in ["operation", "service"]
+            if params.get(filter_key)
+        ]
+
+    def trace_detail(self, index_set_id, trace_id):
         pass
