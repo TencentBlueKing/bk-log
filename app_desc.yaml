@@ -63,7 +63,7 @@ modules:
                 plan: 4C2G5R
                 replicas: 5
 
-    backend:
+    api:
         is_default: False
         source_dir: src
         language: Python
