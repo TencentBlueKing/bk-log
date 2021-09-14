@@ -688,7 +688,7 @@ export default {
       this.$http.request('collect/getCollectList', {
         query: {
           bk_biz_id: this.bkBizId,
-          keyword: this.param,
+          keyword: this.params.keyword,
           page: this.pagination.current,
           pagesize: this.pagination.limit,
         },
