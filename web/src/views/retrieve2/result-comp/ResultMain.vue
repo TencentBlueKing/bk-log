@@ -89,7 +89,8 @@
         :empty-text="$t('retrieve.notData')"
         @row-click="tableRowClick"
         @row-mouse-enter="handleMouseEnter"
-        @row-mouse-leave="handleMouseLeave">
+        @row-mouse-leave="handleMouseLeave"
+        @header-dragend="handleHeaderDragend">
         <!-- 展开详情 -->
         <bk-table-column type="expand" width="30" align="center" v-if="visibleFields.length">
           <template slot-scope="{ $index }">
@@ -99,11 +100,15 @@
           </template>
         </bk-table-column>
         <!-- 显示字段 -->
-        <template v-for="field in visibleFields">
+        <template v-for="(field,index) in visibleFields">
           <bk-table-column
+            type="index"
+            align="left"
             :key="field.field_name"
             :min-width="field.minWidth"
-            :render-header="renderHeaderAliasName">
+            :render-header="renderHeaderAliasName"
+            :index="index"
+            :width="field.width">
             <template slot-scope="{ row }">
               <TableColumn
                 :content="tableRowDeepView(row, field.field_name, field.field_type)"
@@ -117,7 +122,8 @@
           v-if="showHandleOption"
           :label="$t('retrieve.operate')"
           :width="84"
-          align="right">
+          align="right"
+          :resizable="false">
           <!-- eslint-disable-next-line -->
           <template slot-scope="{ row, column, $index }">
             <div
@@ -388,6 +394,7 @@ export default {
   computed: {
     ...mapState({
       bkBizId: state => state.bkBizId,
+      clearTableWidth: state => state.clearTableWidth,
     }),
     showAddMonitor() {
       return Boolean(window.MONITOR_URL && this.$store.state.topMenu.some(item => item.id === 'monitor'));
@@ -408,6 +415,23 @@ export default {
     },
     showHandleOption() {
       const { showRealtimeLog, showContextLog, showWebConsole, showMonitorWeb, visibleFields } = this;
+      if (visibleFields.length !== 0) {
+        const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+        const { params: { indexId }, query: { bizId } } = this.$route;
+        let widthObj = {};
+
+        for (const bizKey in columnObj) {
+          if (bizKey === bizId) {
+            for (const fieldKey in columnObj[bizId].fields) {
+              fieldKey === indexId && (widthObj =  columnObj[bizId].fields[indexId]);
+            }
+          }
+        }
+
+        visibleFields.forEach((el, index) => {
+          el.width = widthObj[index] === undefined ? 'default' : widthObj[index];
+        });
+      }
       return (showRealtimeLog || showContextLog || showWebConsole || showMonitorWeb) && visibleFields.length;
     },
   },
@@ -428,6 +452,32 @@ export default {
         });
         this.isPageOver = false;
       }
+    },
+    clearTableWidth() {
+      const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+      const { params: { indexId }, query: { bizId } } = this.$route;
+      if (columnObj === null || JSON.stringify(columnObj) === '{}') {
+        return;
+      }
+      const isHaveBizId = Object.keys(columnObj).some(el => el === bizId);
+
+      if (!isHaveBizId || columnObj[bizId].fields[indexId] === undefined) {
+        return;
+      }
+
+      for (const bizKey in columnObj) {
+        if (bizKey === bizId) {
+          for (const fieldKey in columnObj[bizKey].fields) {
+            if (fieldKey === indexId) {
+              delete columnObj[bizId].fields[indexId];
+              columnObj[bizId].indexsetIds.splice(columnObj[bizId].indexsetIds.indexOf(indexId, 1));
+              columnObj[bizId].indexsetIds.length === 0 && delete columnObj[bizId];
+            }
+          }
+        }
+      }
+
+      localStorage.setItem('table_column_width_obj', JSON.stringify(columnObj));
     },
   },
   methods: {
@@ -601,6 +651,43 @@ export default {
     },
     handleMouseLeave() {
       this.curHoverIndex = -1;
+    },
+    handleHeaderDragend(newWidth, oldWidth, { index }) {
+      const { params: { indexId }, query: { bizId } } = this.$route;
+      if (index === undefined || bizId === undefined || indexId === undefined) {
+        return;
+      }
+      const widthObj = {};
+      widthObj[index] = newWidth;
+      index === this.visibleFields.length - 1 && (widthObj[index] = 'default');
+
+      let columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
+      if (columnObj === null) {
+        columnObj = {};
+        columnObj[bizId] = this.initSubsetObj(bizId, indexId);
+      }
+      const isIncludebizId = Object.keys(columnObj).some(el => el === bizId);
+      isIncludebizId === false && (columnObj[bizId] = this.initSubsetObj(bizId, indexId));
+
+      for (const key in columnObj) {
+        if (key === bizId) {
+          if (columnObj[bizId].fields[indexId] === undefined) {
+            columnObj[bizId].fields[indexId] = {};
+            columnObj[bizId].indexsetIds.push(indexId);
+          }
+          columnObj[bizId].fields[indexId] = Object.assign(columnObj[bizId].fields[indexId], widthObj);
+        }
+      }
+
+      localStorage.setItem('table_column_width_obj', JSON.stringify(columnObj));
+    },
+    initSubsetObj(bizId, indexId) {
+      const subsetObj = {};
+      subsetObj.bizId = bizId;
+      subsetObj.indexsetIds = [indexId];
+      subsetObj.fields = {};
+      subsetObj.fields[indexId] = {};
+      return subsetObj;
     },
     mouseenterHandle() {
       this.showAllHandle = true;
@@ -923,7 +1010,7 @@ export default {
     color: #63656e;
     background: #f0f1f5;
     cursor: pointer;
-    z-index: 50;
+    z-index: 2100;
     transition: all .2s;
 
     &:hover {
@@ -946,7 +1033,7 @@ export default {
   // 设置列表字段
   .fields-setting-container {
     width: 725px;
-    height: 474px;
+    height: 482px;
     border: 1px solid #dcdee5;
     box-sizing: border-box;
     color: #63656e;
