@@ -20,6 +20,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import copy
 from abc import ABC
 from typing import List
+import json
 
 from django.utils.module_loading import import_string
 
@@ -38,7 +39,13 @@ class Proto(ABC):
     SERVICE_NAME_FIELD = None
     OPERATION_NAME_FIELD = None
     TRACE_ID_FIELD = None
-    TRACES_ADDITIONS = {"operation": "", "service": ""}
+    TAGS_FIELD = None
+    TRACES_ADDITIONS = {
+        "operation": {"method": "is", "field": ""},
+        "service": {"method": "is", "field": ""},
+        "minDuration": {"method": "gte", "field": ""},
+        "maxDuration": {"method": "lte", "field": ""},
+    }
 
     LOG_DISPLAY_FIELDS = [
         {
@@ -186,17 +193,33 @@ class Proto(ABC):
         return search_handler.search()
 
     def get_traces_additions(self, params):
-        return [
-            {
-                "method": "is",
-                "key": self.TRACES_ADDITIONS.get(filter_key),
-                "value": params.get(filter_key),
-                "condition": "and",
-                "type": "field",
-            }
-            for filter_key in ["operation", "service"]
-            if params.get(filter_key)
-        ]
+        addition = []
+        for filter_key in self.TRACES_ADDITIONS.keys():
+            if params.get(filter_key):
+                addition.append(
+                    {
+                        "method": self.TRACES_ADDITIONS.get(filter_key).get("method", "is"),
+                        "key": self.TRACES_ADDITIONS.get(filter_key).get("field", ""),
+                        "value": params.get(filter_key),
+                        "condition": "and",
+                        "type": "field",
+                    }
+                )
+        if params.get("tags"):
+
+            tags_key_value = json.loads(params.get("tags"))
+            for tag_key, tag_value in tags_key_value.items():
+                if tag_value:
+                    addition.append(
+                        {
+                            "method": "is",
+                            "key": f"{self.TAGS_FIELD}.{tag_key}",
+                            "value": tag_value,
+                            "condition": "and",
+                            "type": "field",
+                        }
+                    )
+        return addition
 
     def trace_detail(self, index_set_id, trace_id):
         pass
