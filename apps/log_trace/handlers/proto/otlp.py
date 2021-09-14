@@ -46,7 +46,14 @@ class OtlpTrace(Proto):
     SERVICE_NAME_FIELD = "resource.service.name"
     OPERATION_NAME_FIELD = "span_name"
     TRACE_ID_FIELD = "trace_id"
+    TAGS_FIELD = "attributes"
     TRACES_ADDITIONS = {"operation": "span_name", "service": "resource.service.name"}
+    TRACES_ADDITIONS = {
+        "operation": {"method": "is", "field": "span_name"},
+        "service": {"method": "is", "field": "resource.service.name"},
+        "minDuration": {"method": "gte", "field": "elapsed_time"},
+        "maxDuration": {"method": "lte", "field": "elapsed_time"},
+    }
 
     TRACE_PLAN = {
         "trace_type": "otlp",
@@ -233,6 +240,8 @@ class OtlpTrace(Proto):
     def traces(self, index_set_id, params):
         result = super(OtlpTrace, self).traces(index_set_id, params)
         trace_ids = [trace["trace_id"] for trace in result.get("list", [])]
+        if not trace_ids:
+            return []
         search_dict = {
             "start_time": params["start"] / 1000000,
             "end_time": params["end"] / 1000000,

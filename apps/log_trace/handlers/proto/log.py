@@ -37,10 +37,16 @@ SCATTER_TEMPLATE = [
 
 
 class LogTrace(Proto):
+    TAGS_FIELD = "tags"
     SERVICE_NAME_FIELD = "tags.local_service"
     OPERATION_NAME_FIELD = "operationName"
     TRACE_ID_FIELD = "traceID"
-    TRACES_ADDITIONS = {"operation": "operationName", "service": "tags.local_service"}
+    TRACES_ADDITIONS = {
+        "operation": {"field": "operationName", "method": "is"},
+        "service": {"field": "tags.local_service", "method": "is"},
+        "maxDuration": {"method": "gte", "field": "duration"},
+        "minDuration": {"method": "lte", "field": "duration"},
+    }
 
     TYPE = TraceProto.LOG.value
     TRACE_PLAN = {
@@ -274,6 +280,8 @@ class LogTrace(Proto):
     def traces(self, index_set_id, params):
         result = super(LogTrace, self).traces(index_set_id, params)
         trace_ids = [trace[self.TRACE_ID_FIELD] for trace in result.get("list", [])]
+        if not trace_ids:
+            return []
         search_dict = {
             "start_time": params["start"] / 1000000,
             "end_time": params["end"] / 1000000,
