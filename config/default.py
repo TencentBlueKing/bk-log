@@ -55,6 +55,7 @@ INSTALLED_APPS += (
     "apps.log_trace",
     "apps.esb",
     "apps.bk_log_admin",
+    "apps.grafana",
     "bk_monitor",
     "home_application",
     "pipeline",
