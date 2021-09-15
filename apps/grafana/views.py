@@ -20,15 +20,19 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import copy
 import json
 
+from django.conf import settings
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import serializers
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
-from apps.utils.drf import list_route
+
+from apps.log_trace.handlers.trace_handlers import TraceHandler
+from apps.utils.drf import list_route, detail_route
 from apps.utils.log import logger
 from apps.generic import APIViewSet
+from apps.log_search.permission import Permission as JwtPermission
 from apps.grafana.authentication import NoCsrfSessionAuthentication
 from apps.grafana.handlers.home_dashboard import patch_home_panels
 from apps.grafana.handlers.query import GrafanaQueryHandler
@@ -40,10 +44,11 @@ from apps.grafana.serializers import (
     QuerySerializer,
     QueryLogSerializer,
     DimensionSerializer,
+    TracesSerializer,
 )
 
 from apps.iam import ActionEnum, Permission, ResourceEnum
-from apps.iam.handlers.drf import BusinessActionPermission
+from apps.iam.handlers.drf import BusinessActionPermission, InstanceActionPermission
 from apps.log_search.handlers.biz import BizHandler
 from bk_dataview.grafana.views import ProxyView
 
@@ -83,8 +88,58 @@ class GrafanaProxyView(ProxyView):
         return response
 
 
+class GrafanaTraceViewSet(APIViewSet):
+    lookup_field = "index_set_id"
+
+    def get_permissions(self):
+        return [InstanceActionPermission([ActionEnum.SEARCH_LOG], ResourceEnum.INDICES)]
+
+    def get_serializer_class(self, *args, **kwargs):
+        action_serializer_map = {
+            "traces": TracesSerializer,
+        }
+        return action_serializer_map.get(self.action, serializers.Serializer)
+
+    def get_validated_data(self, many=False):
+        """
+        使用serializer校验参数，并返回校验后参数
+        :return: dict
+        """
+        if self.request.method == "GET":
+            data = self.request.query_params
+        else:
+            data = self.request.data
+
+        serializer = self.get_serializer(data=data, many=many)
+        serializer.is_valid(raise_exception=True)
+        return copy.deepcopy(serializer.validated_data)
+
+    @detail_route(methods=["GET", "POST"], url_path="api/services/(?P<service_name>[^./]+)/operations")
+    def operations(self, request, index_set_id, service_name, *args, **kwargs):
+        return Response(TraceHandler(index_set_id).operations(service_name))
+
+    @detail_route(methods=["GET", "POST"], url_path="api/traces/(?P<trace_id>[^./]+)")
+    def traces_detail(self, request, index_set_id, trace_id, *args, **kwargs):
+        return Response(TraceHandler(index_set_id).trace_detail(trace_id))
+
+    @detail_route(methods=["GET", "POST"], url_path="api/services")
+    def services(self, request, index_set_id, *args, **kwargs):
+        return Response(TraceHandler(index_set_id).services())
+
+    @detail_route(methods=["GET", "POST"], url_path="api/traces")
+    def traces(self, request, index_set_id, *args, **kwargs):
+        params = self.get_validated_data()
+        return Response(TraceHandler(index_set_id).traces(params))
+
+
 class GrafanaViewSet(APIViewSet):
     def get_permissions(self):
+        if settings.BKAPP_IS_BKLOG_API:
+            # 只在后台部署时做白名单校验
+            auth_info = JwtPermission.get_auth_info(self.request, raise_exception=False)
+            # ESQUERY白名单不需要鉴权
+            if auth_info and auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
+                return []
         return [BusinessActionPermission([ActionEnum.VIEW_DASHBOARD])]
 
     def get_authenticators(self):

@@ -62,6 +62,7 @@
         class="select-business fl" style="width: 260px;"
         ext-popover-cls="select-business-dropdown-content"
         :disabled="isDisableSelectBiz"
+        :search-with-pinyin="true"
         :style="isDisableSelectBiz && { background: '#182132' }"
         :searchable="true"
         :clearable="false"
@@ -717,9 +718,9 @@ export default {
         console.warn(e);
       } finally {
         if (this.$route.name !== 'retrieve') {
-          const RoutingHop                            = this.$route.name === 'notIndex'
+          const RoutingHop = this.$route.name === 'notIndex'
             ? 'retrieve' : this.isFirstLoad
-              ? this.$route.name : 'retrieve';
+              ? this.$route.name ? this.$route.name : 'retrieve' : 'retrieve';
           const newQuery = {
             ...this.$route.query,
             projectId,

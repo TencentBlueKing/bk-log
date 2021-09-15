@@ -97,7 +97,6 @@
           prop="collector_scenario_name"
           column-key="collector_scenario_id"
           :filters="checkcFields('collector_scenario_name') ? scenarioFilters : []"
-          :filter-method="handleScenarioFilter"
           :filter-multiple="false">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -113,7 +112,6 @@
           prop="category_name"
           column-key="category_id"
           :filters="checkcFields('category_name') ? categoryFilters : []"
-          :filter-method="handleCategoryFilter"
           :filter-multiple="false">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -670,18 +668,6 @@ export default {
         this.requestData();
       }
     },
-    // 日志类型表头过滤
-    handleScenarioFilter() {
-      // return value === row.collector_scenario_name;
-
-      return true;
-    },
-    // 数据类型表头过滤
-    handleCategoryFilter() {
-      // return value === row.category_name;
-
-      return true;
-    },
     handleSettingChange({ fields }) {
       this.columnSetting.selectedFields = fields;
     },
@@ -699,12 +685,36 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
-      Promise.all([this.requestCollectList()]).then(() => {
+      this.$http.request('collect/getCollectList', {
+        query: {
+          bk_biz_id: this.bkBizId,
+          keyword: this.params.keyword,
+          page: this.pagination.current,
+          pagesize: this.pagination.limit,
+        },
+      }).then((res) => {
+        const { data } = res;
+        if (data && data.list) {
+          const idList = [];
+          data.list.forEach((row) => {
+            row.status = '';
+            row.status_name = '';
+            idList.push(row.collector_config_id);
+          });
+          this.collectList.splice(0, this.collectList.length, ...data.list);
+          this.pagination.count = data.total;
+          this.collectorIdStr = idList.join(',');
+          if (this.needGuide) {
+            setTimeout(() => {
+              localStorage.setItem('needGuide', 'false');
+              this.needGuide = false;
+            }, 3000);
+          }
+        }
         if (this.collectorIdStr) {
           this.requestCollectStatus();
         }
       })
-        .catch(() => {})
         .finally(() => {
           this.isTableLoading = false;
         });

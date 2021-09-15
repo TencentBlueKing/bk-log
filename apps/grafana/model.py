@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -17,24 +16,11 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-
-from apps.feature_toggle.plugins.constants import ITSM_SERVICE_ID
-from apps.utils.log import logger
-from apps.feature_toggle.plugins.base import FeatureToggleBase
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 
-class FeatureCollectorITSM(FeatureToggleBase):
-    def set_status(self, param: dict) -> dict:
-        if param["status"] != "off":
-            # 如果status是打开的情况则需要前往itsm获取相关参数
-            from apps.log_databus.handlers.itsm import ItsmHandler
-
-            try:
-                itsm_service_id = ItsmHandler().get_log_itsm_service_id()
-                param["feature_config"] = {ITSM_SERVICE_ID: itsm_service_id}
-                logger.info(f"[BKLOG] itsm service id is {itsm_service_id}")
-            except Exception as e:  # pylint: disable=broad-except
-                logger.exception("[BKLOG] get itsm service fail => %s", e)
-                param["status"] = "off"
-
-        return param
+class TraceDatasourceMap(models.Model):
+    bk_biz_id = models.IntegerField("业务id")
+    index_set_id = models.IntegerField(_("trace索引集id"))
+    datasource_id = models.IntegerField(_("数据源id"), unique=True)

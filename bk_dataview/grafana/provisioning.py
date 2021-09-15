@@ -31,6 +31,8 @@ from .utils import os_env
 
 logger = logging.getLogger(__name__)
 
+DATASOURCE_NEED_CREATE = -1
+
 
 @dataclass
 class Datasource:
@@ -44,7 +46,10 @@ class Datasource:
     withCredentials: bool = True
     database: Union[None, str] = None
     jsonData: Union[None, Dict] = None
+    id: int = -1
     version: int = 0
+    orgId: int = -1
+    is_delete: bool = False
 
 
 @dataclass
@@ -85,7 +90,7 @@ class SimpleProvisioning(BaseProvisioning):
 
         paths = os.path.join(grafana_settings.PROVISIONING_PATH, name, f"*.{suffix}")
         for path in glob.glob(paths):
-            with open(path, "rb", encoding="utf-8") as fh:
+            with open(path, "rb") as fh:
                 conf = fh.read()
                 expand_conf = os.path.expandvars(conf)
                 ds = yaml.load(expand_conf)
@@ -108,7 +113,7 @@ class SimpleProvisioning(BaseProvisioning):
                         dashboard_path = os.path.expandvars(p["options"]["path"])
                         paths = os.path.join(dashboard_path, "*.json")
                         for path in glob.glob(paths):
-                            with open(path, "rb", encoding="utf-8") as fh:
+                            with open(path, "rb") as fh:
                                 dashboard = json.loads(fh.read())
                                 title = dashboard.get("title")
                                 if not title:

@@ -18,10 +18,15 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.log_databus.constants import AsyncStatus
-from apps.log_databus.exceptions import CleanTemplateNotExistException, CleanTemplateRepeatException
-from apps.log_databus.models import CleanTemplate, BKDataClean
+from apps.log_databus.exceptions import (
+    CleanTemplateNotExistException,
+    CleanTemplateRepeatException,
+    CollectorConfigNotExistException,
+)
+from apps.log_databus.models import CleanTemplate, BKDataClean, CollectorConfig
 from apps.log_databus.tasks.bkdata import sync_clean
 from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
+from apps.log_search.models import ProjectInfo
 from apps.models import model_to_dict
 from apps.utils.log import logger
 
@@ -29,10 +34,16 @@ from apps.utils.log import logger
 class CleanHandler(object):
     def __init__(self, collector_config_id):
         self.collector_config_id = collector_config_id
+        try:
+            self.data = CollectorConfig.objects.get(collector_config_id=self.collector_config_id)
+        except CollectorConfig.DoesNotExist:
+            raise CollectorConfigNotExistException()
 
     def refresh(self, raw_data_id, bk_biz_id):
         bkdata_clean_utils = BKDataCleanUtils(raw_data_id=raw_data_id)
-        bkdata_clean_utils.update_or_create_clean(collector_config_id=self.collector_config_id, bk_biz_id=bk_biz_id)
+        bkdata_clean_utils.update_or_create_clean(
+            collector_config_id=self.collector_config_id, bk_biz_id=bk_biz_id, category_id=self.data.category_id
+        )
         result_table_names = BKDataClean.objects.filter(raw_data_id=raw_data_id).values_list(
             "result_table_name", flat=True
         )
@@ -80,9 +91,13 @@ class CleanTemplateHandler(object):
             "bk_biz_id": params["bk_biz_id"],
         }
         if self._check_clean_template_exist(name=model_fields["name"], bk_biz_id=model_fields["bk_biz_id"]):
+            biz = ProjectInfo.get_biz(model_fields["bk_biz_id"])
             raise CleanTemplateRepeatException(
                 CleanTemplateRepeatException.MESSAGE.format(
-                    bk_biz_id=model_fields["bk_biz_id"], name=model_fields["name"]
+                    bk_biz="[{bk_biz_id}]{bk_biz_name}".format(
+                        bk_biz_id=biz["bk_biz_id"], bk_biz_name=biz["bk_biz_name"]
+                    ),
+                    name=model_fields["name"],
                 )
             )
         if not self.data:

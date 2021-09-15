@@ -21,13 +21,14 @@
   -->
 
 <template>
-  <bk-dialog :value="showSelectDialog"
-             header-position="left"
-             :mask-close="false"
-             :close-icon="false"
-             :width="880"
-             @value-change="handleValueChange"
-             :confirm-fn="handleConfirm">
+  <bk-dialog
+    :value="showSelectDialog"
+    header-position="left"
+    :mask-close="false"
+    :close-icon="false"
+    :width="880"
+    @value-change="handleValueChange"
+    :confirm-fn="handleConfirm">
     <div class="ip-select-container" v-bkloading="{ isLoading }">
       <div class="select-title">
         <div class="server-info">
@@ -40,18 +41,27 @@
       </div>
       <div class="select-content">
         <div class="tree-container">
-          <input type="text" class="bk-form-input tree-filter-input" :placeholder="$t('btn.search') + '...'"
-                 v-model="searchWord"
-                 @keyup.enter="search">
-          <bk-big-tree ref="treeRef" :data="topoTemplate"
-                       :default-expanded-nodes="[topoTemplate[0] && topoTemplate[0].id]"
-                       display-matched-node-descendants
-                       show-checkbox
-                       @check-change="handleNodeCheck">
+          <input
+            type="text"
+            class="bk-form-input tree-filter-input"
+            :placeholder="$t('btn.search') + '...'"
+            v-model="searchWord"
+            @keyup.enter="search">
+          <bk-big-tree
+            ref="treeRef"
+            :data="topoTemplate"
+            :default-expanded-nodes="[topoTemplate[0] && topoTemplate[0].id]"
+            display-matched-node-descendants
+            show-checkbox
+            @check-change="handleNodeCheck">
           </bk-big-tree>
         </div>
         <div class="selected-ip-list">
-          <bk-table class="king-table" :data="selectedIpNodes" :empty-text="$t('retrieve.no_data')" :height="400">
+          <bk-table
+            class="king-table scroll-table"
+            :data="selectedIpNodes"
+            :empty-text="$t('retrieve.no_data')"
+            :height="400">
             <bk-table-column prop="ip" label="IP"></bk-table-column>
             <bk-table-column prop="bk_cloud_name" :label="$t('retrieve.Cloud_area')"></bk-table-column>
             <bk-table-column :label="$t('indexSetList.operation')" align="center">
@@ -255,5 +265,9 @@ export default {
         }
       }
     }
+  }
+
+  .scroll-table {
+    overflow-y: auto;
   }
 </style>

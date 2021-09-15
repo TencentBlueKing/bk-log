@@ -28,7 +28,7 @@ class BaseHandler:
         """处理用户"""
         raise NotImplementedError(".handle_org() must be overridden.")
 
-    def handle_datasources(self, request, org_name: str, org_id: int, ds_list: int):
+    def handle_datasources(self, request, org_name: str, org_id: int, ds_list: int, provisioning):
         """批量处理datasources"""
         raise NotImplementedError(".handle_datasources() must be overridden.")
 
