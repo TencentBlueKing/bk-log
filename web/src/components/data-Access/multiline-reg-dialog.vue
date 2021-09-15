@@ -33,12 +33,20 @@
     @value-change="handleValueChange">
     <div class="multiline-reg-dialog-content">
       <bk-form :label-width="124" :model="formData" ref="formRef">
-        <bk-form-item :label="$t('日志样例')" :required="true" :rules="notEmptyRule"
-                      property="log_sample" style="margin-bottom: 20px;">
+        <bk-form-item
+          :label="$t('日志样例')"
+          :required="true"
+          :rules="notEmptyRule"
+          property="log_sample"
+          style="margin-bottom: 20px;">
           <bk-input v-model.trim="formData.log_sample" type="textarea" :rows="6"></bk-input>
         </bk-form-item>
-        <bk-form-item :label="$t('行首正则表达式')" :required="true" :rules="notEmptyRule"
-                      property="multiline_pattern" style="margin-bottom: 20px;">
+        <bk-form-item
+          :label="$t('行首正则表达式')"
+          :required="true"
+          :rules="notEmptyRule"
+          property="multiline_pattern"
+          style="margin-bottom: 20px;">
           <bk-input v-model.trim="formData.multiline_pattern"></bk-input>
         </bk-form-item>
       </bk-form>
@@ -131,7 +139,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  @import '../../scss/mixins/scroller';
+  @import '@/scss/mixins/scroller';
 
   .multiline-reg-dialog-content {
     .test-container {

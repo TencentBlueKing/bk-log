@@ -76,8 +76,13 @@ const store = new Vuex.Store({
     errorPage: ['notTraceIndex'],
     // 全局配置
     globalsData: {},
+    activeTopMenu: {},
+    activeManageNav: {},
+    activeManageSubNav: {},
     // -- id, id对应数据
     collectDetail: [0, {}],
+    // 清除table表头宽度缓存
+    clearTableWidth: 0,
   },
   // 公共 getters
   getters: {
@@ -162,6 +167,15 @@ const store = new Vuex.Store({
     updateMenuList(state, menuList) {
       state.menuList.splice(0, state.menuList.length, ...menuList);
     },
+    updateActiveTopMenu(state, payload) {
+      state.activeTopMenu = payload;
+    },
+    updateActiveManageNav(state, payload) {
+      state.activeManageNav = payload;
+    },
+    updateActiveManageSubNav(state, payload) {
+      state.activeManageSubNav = payload;
+    },
     updateMenuProject(state, menuProject) {
       state.menuProject.splice(0, state.menuProject.length, ...menuProject);
     },
@@ -183,6 +197,9 @@ const store = new Vuex.Store({
     },
     updateIframeQuery(state, iframeQuery) {
       Object.assign(state.iframeQuery, iframeQuery);
+    },
+    updateClearTableWidth(state, clearTableWidth) {
+      state.clearTableWidth += clearTableWidth;
     },
   },
   actions: {

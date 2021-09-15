@@ -36,6 +36,7 @@ COLLECTOR_IMPORT_PATHS = [
     "apps.log_measure.handlers.metric_collectors.log_extract",
     "apps.log_measure.handlers.metric_collectors.third_party",
     "apps.log_measure.handlers.metric_collectors.user",
+    "apps.log_measure.handlers.metric_collectors.es",
 ]
 
-DATA_NAMES = ["metric", "search_history"]
+DATA_NAMES = ["metric", "search_history", "es_monitor"]

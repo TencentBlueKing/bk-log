@@ -35,7 +35,7 @@ from apps.log_search.constants import (
     FEATURE_ASYNC_EXPORT_COMMON,
     FieldDataTypeEnum,
 )
-from apps.utils.cache import cache_one_hour
+from apps.utils.cache import cache_ten_minute
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.utils.local import get_request_username
 from apps.api import TransferApi, BkDataStorekitApi
@@ -50,7 +50,6 @@ from apps.log_search.models import (
     Scenario,
     UserIndexSetConfig,
 )
-from apps.log_trace.handlers.trace_field_handlers import TraceFieldHandlers
 from apps.utils.local import get_local_param
 from apps.utils.time_handler import generate_time_range
 
@@ -145,9 +144,6 @@ class MappingHandlers(object):
             for field in fields_result
         ]
         fields_list = self._combine_description_field(fields_list)
-        # 针对trace场景进行description优化
-        if scope in TRACE_SCOPE:
-            fields_list = TraceFieldHandlers.trace_field_update(fields_list, scope)
         # 处理editable关系
         final_fields_list: list = self._combine_fields(fields_list)
 
@@ -167,15 +163,7 @@ class MappingHandlers(object):
                 field_name = final_field["field_name"]
                 if field_name in display_fields_list:
                     final_field["is_display"] = True
-
-            if scope in TRACE_SCOPE:
-                # 增加trace内容优先逻辑
-                display_fields_list = TraceFieldHandlers.trace_field_pop_up(display_fields_list, scope=scope)
             return final_fields_list, display_fields_list
-
-        # trace链路
-        if scope in TRACE_SCOPE:
-            return final_fields_list, TraceFieldHandlers.get_trace_fieds(final_fields_list, scope)
 
         # search_context情况，默认只显示log字段
         if scope in CONTEXT_SCOPE:
@@ -203,7 +191,7 @@ class MappingHandlers(object):
     def _get_mapping(self):
         return self._get_latest_mapping(index_set_id=self.index_set_id)
 
-    @cache_one_hour("latest_mapping_key_{index_set_id}")
+    @cache_ten_minute("latest_mapping_key_{index_set_id}")
     def _get_latest_mapping(self, *, index_set_id):  # noqa
         start_time, end_time = generate_time_range("1d", "", "", self.time_zone)
         latest_mapping = BkLogApi.mapping(
@@ -456,7 +444,7 @@ class MappingHandlers(object):
         return self._inner_get_bkdata_schema(index=index)
 
     @staticmethod
-    @cache_one_hour("{index}_schema")
+    @cache_ten_minute("{index}_schema")
     def _inner_get_bkdata_schema(*, index):
         try:
             data: dict = BkDataStorekitApi.get_schema_and_sql({"result_table_id": index})
@@ -470,7 +458,7 @@ class MappingHandlers(object):
         return self._inner_get_meta_schema(index=index)
 
     @staticmethod
-    @cache_one_hour("{index}_schema")
+    @cache_ten_minute("{index}_schema")
     def _inner_get_meta_schema(*, index):
         try:
             data: dict = TransferApi.get_result_table({"table_id": index})

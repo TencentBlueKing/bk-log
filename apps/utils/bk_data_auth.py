@@ -23,6 +23,8 @@ import uuid
 from django.conf import settings
 
 from apps.api import BkDataAuthApi
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_SUPER_TOKEN
 from apps.utils.log import logger
 from apps.log_esquery.permission import EsquerySearchPermissions
 from apps.utils.local import get_request_username, get_request
@@ -71,6 +73,9 @@ class BkDataAuthHandler(object):
         :param result_tables: 待过滤的结果表列表
         :return:
         """
+        if FeatureToggleObject.switch(BKDATA_SUPER_TOKEN):
+            return []
+
         if not settings.FEATURE_TOGGLE.get("bkdata_token_auth", "off") == "on":
             return []
 
@@ -94,6 +99,9 @@ class BkDataAuthHandler(object):
         :param result_tables: 待过滤的结果表列表
         :return:
         """
+        if FeatureToggleObject.switch(BKDATA_SUPER_TOKEN):
+            return []
+
         if not settings.FEATURE_TOGGLE.get("bkdata_token_auth", "off") == "on":
             return []
 
@@ -123,6 +131,9 @@ class BkDataAuthHandler(object):
         """
         将结果表授权给token
         """
+        if FeatureToggleObject.switch(BKDATA_SUPER_TOKEN):
+            return
+
         if not settings.FEATURE_TOGGLE.get("bkdata_token_auth", "off") == "on":
             return
 

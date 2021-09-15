@@ -21,6 +21,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from celery.task import periodic_task, task
 from celery.schedules import crontab
 
+from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
+from apps.utils.function import ignored
 from apps.utils.log import logger
 from apps.api.modules.bkdata_access import BkDataAccessApi
 from apps.log_databus.constants import (
@@ -36,7 +38,7 @@ from apps.log_databus.constants import (
     META_DATA_ENCODING,
     ADMIN_REQUEST_USER,
 )
-from apps.feature_toggle.plugins.constants import FEATURE_BKDATA_DATAID
+from apps.feature_toggle.plugins.constants import FEATURE_BKDATA_DATAID, SCENARIO_BKDATA
 from apps.log_databus.models import CollectorConfig
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
@@ -55,14 +57,21 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
     if not collector_config.bk_data_id or collector_config.bkdata_data_id:
         return
 
-    # todo 待高级清洗上线英文名 该临时方案将被修改
-    if not collector_config.table_id:
-        return
-
     maintainers = {collector_config.updated_by, collector_config.created_by}
     maintainers.discard(ADMIN_REQUEST_USER)
     if not maintainers:
         raise BaseException(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
+
+    if not (collector_config.collector_config_name_en or collector_config.table_id):
+        logger.error(
+            "collector_config {} dont have enough raw_data_name to create deploy plan".format(
+                collector_config.collector_config_id
+            )
+        )
+        return
+
+    with ignored(Exception):
+        _, table_id = collector_config.table_id.split(".")
 
     BkDataAccessApi.deploy_plan_post(
         params={
@@ -74,7 +83,7 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
             "description": collector_config.description,
             "access_raw_data": {
                 "tags": BKDATA_TAGS,
-                "raw_data_name": collector_config.table_id.replace(".", "_"),
+                "raw_data_name": collector_config.collector_config_name_en or table_id,
                 "maintainer": ",".join(maintainers),
                 "raw_data_alias": collector_config.collector_config_name,
                 "data_source_tags": BKDATA_DATA_SOURCE_TAGS,
@@ -119,3 +128,39 @@ def review_bkdata_data_id():
             collector_config.bkdata_data_id_sync_times = 0
 
         collector_config.save()
+
+
+@periodic_task(run_every=crontab(minute="*/30"))
+def review_clean():
+    """
+    定期同步计算平台入库列表
+    """
+    if not FeatureToggleObject.switch(name=SCENARIO_BKDATA):
+        return
+    collector_configs = CollectorConfig.objects.filter(bkdata_data_id__isnull=False)
+    for collector_config in collector_configs:
+        with ignored(Exception, log_exception=True):
+            BKDataCleanUtils(raw_data_id=collector_config.bkdata_data_id).update_or_create_clean(
+                collector_config_id=collector_config.collector_config_id,
+                bk_biz_id=collector_config.bk_biz_id,
+                category_id=collector_config.category_id,
+            )
+
+
+@task(ignore_result=True)
+def sync_clean(bk_biz_id: int):
+    try:
+        collector_configs = CollectorConfig.objects.filter(bk_biz_id=bk_biz_id, bkdata_data_id__isnull=False)
+        for collector_config in collector_configs:
+            with ignored(Exception, log_exception=True):
+                BKDataCleanUtils(raw_data_id=collector_config.bkdata_data_id).update_or_create_clean(
+                    collector_config_id=collector_config.collector_config_id,
+                    bk_biz_id=collector_config.bk_biz_id,
+                    category_id=collector_config.category_id,
+                )
+    except Exception as e:  # pylint: disable=broad-except
+        logger.error(
+            "bk_biz_id: {bk_biz_id} get collector_configs failed: {reason}".format(bk_biz_id=bk_biz_id, reason=e)
+        )
+    finally:
+        BKDataCleanUtils.unlock_sync_clean(bk_biz_id=bk_biz_id)

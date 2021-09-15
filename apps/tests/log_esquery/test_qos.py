@@ -57,7 +57,13 @@ class FakeCache:
         return key in self._dict
 
     def set(self, key, value, timeout=0, nx=False):
+        if nx and key in self._dict:
+            return False
         self._dict[key] = value
+        return True
+
+    def delete(self, key):
+        self._dict.pop(key, key)
         return True
 
 

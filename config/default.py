@@ -21,6 +21,7 @@ import sys
 
 from blueapps.conf.log import get_logging_config_dict
 from blueapps.conf.default_settings import *  # noqa
+from django.utils.translation import ugettext_lazy as _
 
 # 这里是默认的 INSTALLED_APPS，大部分情况下，不需要改动
 # 如果你已经了解每个默认 APP 的作用，确实需要去掉某些 APP，请去掉下面的注释，然后修改
@@ -51,7 +52,9 @@ INSTALLED_APPS += (
     "apps.log_databus",
     "apps.log_esquery",
     "apps.log_measure",
+    "apps.log_trace",
     "apps.esb",
+    "apps.bk_log_admin",
     "bk_monitor",
     "home_application",
     "pipeline",
@@ -166,7 +169,90 @@ if RUN_VER != "open":
     LOGGING["handlers"]["component"]["encoding"] = "utf-8"
     LOGGING["handlers"]["mysql"]["encoding"] = "utf-8"
     LOGGING["handlers"]["blueapps"]["encoding"] = "utf-8"
+    if not IS_LOCAL:
+        logging_format = {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "fmt": (
+                "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
+                "%(funcName)s %(process)d %(thread)d %(message)s"
+                "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
+            ),
+        }
+        LOGGING["formatters"]["verbose"] = logging_format
 
+
+BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
+
+if BKLOG_UDP_LOG:
+    LOG_UDP_SERVER_HOST = os.getenv("BKAPP_UDP_LOG_SERVER_HOST", "")
+    LOG_UDP_SERVER_PORT = int(os.getenv("BKAPP_UDP_LOG_SERVER_PORT", 0))
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    LOGGING = {
+        "version": 1,
+        "formatters": {
+            "json": {
+                "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+                "fmt": (
+                    "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
+                    "%(funcName)s %(process)d %(thread)d %(message)s "
+                    "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
+                ),
+            }
+        },
+        "handlers": {
+            "udp": {
+                "formatter": "json",
+                "class": "apps.utils.log.UdpHandler",
+                "host": LOG_UDP_SERVER_HOST,
+                "port": LOG_UDP_SERVER_PORT,
+            },
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "formatter": "json",
+                "stream": sys.stdout,
+            },
+        },
+        "loggers": {
+            "django": {"handlers": ["udp"], "level": "INFO", "propagate": True},
+            "django.server": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "django.request": {
+                "handlers": ["udp"],
+                "level": "ERROR",
+                "propagate": True,
+            },
+            "django.db.backends": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            # the root logger ,用于整个project的logger
+            "root": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            # 组件调用日志
+            "component": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "celery": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            # other loggers...
+            # blueapps
+            "blueapps": {
+                "handlers": ["udp"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            # 普通app日志
+            "app": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+        },
+    }
+
+OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
+OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
+OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 1000))
 # ===============================================================================
 # 项目配置
 # ===============================================================================
@@ -180,6 +266,8 @@ MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
 BK_DOC_QUERY_URL = "https://bk.tencent.com/docs/document/5.1/90/3822/"
 BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
+# 计算平台文档地址
+BK_DOC_DATA_URL = ""
 BK_HOT_WARM_CONFIG_URL = (
     "https://www.elastic.co/guide/en/elasticsearch/reference/master/modules-cluster.html#shard-allocation-awareness"
 )
@@ -299,18 +387,6 @@ BKDATA_DATA_TOKEN = os.getenv("BKAPP_BKDATA_DATA_TOKEN", "")
 # ===============================================================================
 FEATURE_TOGGLE = {
     # 菜单：apps.log_search.handlers.meta.MetaHandler.get_menus
-    "search": "on",
-    "trace": os.environ.get("BKAPP_FEATURE_TRACE", "on"),
-    "extract": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
-    "monitor": "off",
-    "manage": "on",
-    "dashboard": "on" if GRAFANA["HOST"] else "off",
-    "manage_access": "on",
-    "manage_index_set": "on",
-    "manage_extract": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
-    "manage_user_group": "off",
-    "manage_migrate": "off",
-    "manage_data_link": os.environ.get("BKAPP_FEATURE_DATA_LINK", "on"),
     # 索引集管理-数据源
     "scenario_log": os.environ.get("BKAPP_FEATURE_SCENARIO_LOG", "on"),  # 采集
     "scenario_bkdata": "on",  # 数据平台
@@ -330,6 +406,147 @@ FEATURE_TOGGLE = {
 
 SAAS_MONITOR = "bk_monitorv3"
 SAAS_BKDATA = "bk_dataweb"
+
+# 前端菜单配置
+MENUS = [
+    {"id": "retrieve", "name": _("检索"), "feature": "on", "icon": ""},
+    {"id": "trace", "name": _("调用链"), "feature": "on", "icon": ""},
+    {"id": "extract", "name": _("日志提取"), "feature": "on", "icon": ""},
+    {"id": "monitor", "name": _("监控策略"), "feature": "on", "icon": ""},
+    {
+        "id": "dashboard",
+        "name": _("仪表盘"),
+        "feature": "on" if GRAFANA["HOST"] else "off",
+        "icon": "",
+        "children": [
+            {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": ""},
+            {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": ""},
+            {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": ""},
+        ],
+    },
+    {
+        "id": "manage",
+        "name": _("管理"),
+        "feature": "on",
+        "icon": "",
+        "children": [
+            {
+                "id": "manage_access",
+                "name": _("日志接入"),
+                "feature": "on",
+                "icon": "",
+                "keyword": _("接入"),
+                "children": [
+                    {
+                        "id": "log_collection",
+                        "name": _("日志采集"),
+                        "feature": "on",
+                        "scenes": "scenario_log",
+                        "icon": "document",
+                    },
+                    {
+                        "id": "bk_data_collection",
+                        "name": _("计算平台"),
+                        "feature": FEATURE_TOGGLE["scenario_bkdata"],
+                        "scenes": "scenario_bkdata",
+                        "icon": "calculation-fill",
+                    },
+                    {
+                        "id": "es_collection",
+                        "name": _("第三方ES"),
+                        "feature": "on",
+                        "scenes": "scenario_es",
+                        "icon": "elasticsearch",
+                    },
+                    {"id": "custom_collection", "name": _("自定义接入"), "feature": "off", "icon": ""},
+                ],
+            },
+            {
+                "id": "log_clean",
+                "name": _("日志清洗"),
+                "feature": "on",
+                "icon": "",
+                "keyword": "清洗",
+                "children": [
+                    {
+                        "id": "clean_list",
+                        "name": _("清洗列表"),
+                        "feature": "on",
+                        "scenes": "scenario_log",
+                        "icon": "info-fill--2",
+                    },
+                    {
+                        "id": "clean_templates",
+                        "name": _("清洗模板"),
+                        "feature": "on",
+                        "icon": "moban",
+                    },
+                ],
+            },
+            {
+                "id": "manage_extract_strategy",
+                "name": _("日志提取"),
+                "icon": "",
+                "keyword": _("提取"),
+                "feature": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
+                "children": [
+                    {"id": "manage_log_extract", "name": _("日志提取配置"), "feature": "on", "icon": "cc-log"},
+                    {"id": "extract_link_manage", "name": _("提取链路管理"), "feature": "on", "icon": "assembly-line-fill"},
+                ],
+            },
+            {
+                "id": "log_archive",
+                "name": _("日志归档"),
+                "feature": "off",
+                "icon": "",
+                "children": [{"id": "log_archive_conf", "name": _("日志归档"), "feature": "off", "icon": ""}],
+            },
+            {
+                "id": "trace_track",
+                "name": _("全链路追踪"),
+                "feature": os.environ.get("BKAPP_FEATURE_TRACE", "on"),
+                "icon": "",
+                "keyword": "trace",
+                "children": [
+                    {
+                        "id": "collection_track",
+                        "name": _("采集接入"),
+                        "feature": "off",
+                        "scenes": "scenario_log",
+                        "icon": "",
+                    },
+                    {
+                        "id": "bk_data_track",
+                        "name": _("计算平台"),
+                        "feature": FEATURE_TOGGLE["scenario_bkdata"],
+                        "scenes": "scenario_bkdata",
+                        "icon": "cc-cabinet",
+                    },
+                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
+                    {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
+                ],
+            },
+            {
+                "id": "es_cluster_status",
+                "name": _("ES集群"),
+                "feature": "on",
+                "icon": "",
+                "keyword": _("集群"),
+                "children": [{"id": "es_cluster_manage", "name": _("集群管理"), "feature": "on", "icon": "cc-influxdb"}],
+            },
+            {
+                "id": "manage_data_link",
+                "name": _("设置"),
+                "feature": os.environ.get("BKAPP_FEATURE_DATA_LINK", "on"),
+                "icon": "",
+                "keyword": _("设置"),
+                "children": [
+                    {"id": "manage_data_link_conf", "name": _("采集链路管理"), "feature": "on", "icon": "log-setting"}
+                ],
+            },
+        ],
+    },
+]
 
 # TAM
 TAM_AEGIS_KEY = os.environ.get("BKAPP_TAM_AEGIS_KEY", "")
@@ -586,6 +803,10 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
 """
 以下为框架代码 请勿修改
 """
+IS_CELERY = False
+if "celery" in sys.argv:
+    IS_CELERY = True
+
 # celery settings
 if IS_USE_CELERY:
     CELERY_ENABLE_UTC = True

@@ -192,10 +192,6 @@ case $(uname -s) in
     *CYGWIN*) export LAN_IP && LAN_IP=$(get_win_lanip | head -1) ;;
 esac
 
-if [[ "$LAN_IP" == "" ]];then
-  job_fail "get server ip fail"
-fi
-
 dst_path=$1
 #log_files=$2
 target_file_name=$3

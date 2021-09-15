@@ -24,6 +24,7 @@ import time
 from copy import deepcopy
 from multiprocessing.pool import ThreadPool
 from urllib import parse
+from retrying import Retrying
 
 import requests
 from django.conf import settings
@@ -31,6 +32,7 @@ from django.core.cache import cache
 from django.utils import translation
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
+from opentelemetry.context import attach, get_current
 from requests.exceptions import ReadTimeout
 
 from apps.utils.log import logger
@@ -86,6 +88,37 @@ class DataResponse(object):
         return self.response.get("errors", None)
 
 
+class DataApiRetryClass(object):
+    def __init__(self, stop_max_attempt_number=1, wait_random_min=0, wait_random_max=1000):
+        self.stop_max_attempt_number = stop_max_attempt_number
+        self.wait_random_min = wait_random_min
+        self.wait_random_max = wait_random_max
+        self.fail_exceptions = []
+
+    def add_exceptions(self, *exceptions):
+        self.fail_exceptions.extend(exceptions)
+
+    @property
+    def retry_on_exception(self):
+        def wraps(exception):
+            for fail_exception in self.fail_exceptions:
+                if isinstance(exception, fail_exception):
+                    return False
+            return True
+
+        return wraps
+
+    @staticmethod
+    def create_retry_obj(*exceptions, stop_max_attempt_number=1, wait_random_min=0, wait_random_max=1000):
+        retry_obj = DataApiRetryClass(
+            stop_max_attempt_number=stop_max_attempt_number,
+            wait_random_min=wait_random_min,
+            wait_random_max=wait_random_max,
+        )
+        retry_obj.add_exceptions(*exceptions)
+        return retry_obj
+
+
 class DataAPI(object):
     """Single API for DATA"""
 
@@ -107,6 +140,7 @@ class DataAPI(object):
         after_serializer=None,
         cache_time=0,
         default_timeout=60,
+        data_api_retry_cls=None,
     ):
         """
         初始化一个请求句柄
@@ -124,6 +158,7 @@ class DataAPI(object):
         @param {array.<string>} url_keys 请求地址中存在未赋值的 KEYS
         @param {int} cache_time 缓存时间
         @param {int} default_timeout 默认超时时间
+        @param {DataApiRetryClass} data_api_retry_cls 超时配置
         """
         self.url = url
         self.module = module
@@ -144,8 +179,18 @@ class DataAPI(object):
 
         self.cache_time = cache_time
         self.default_timeout = default_timeout
+        self.data_api_retry_cls = data_api_retry_cls
 
-    def __call__(self, params=None, files=None, raw=False, timeout=None, raise_exception=True, request_cookies=True):
+    def __call__(
+        self,
+        params=None,
+        files=None,
+        raw=False,
+        timeout=None,
+        raise_exception=True,
+        request_cookies=True,
+        data_api_retry_cls=None,
+    ):
         """
         调用传参
 
@@ -155,6 +200,10 @@ class DataAPI(object):
             params = {}
 
         timeout = timeout or self.default_timeout
+
+        # 重试操作
+        if data_api_retry_cls:
+            self.data_api_retry_cls = data_api_retry_cls
 
         request_id = get_request_id()
         try:
@@ -212,7 +261,15 @@ class DataAPI(object):
         start_time = time.time()
         try:
             try:
-                raw_response = self._send(params, timeout, request_id, request_cookies)
+                if self.data_api_retry_cls:
+                    raw_response = Retrying(
+                        stop_max_attempt_number=self.data_api_retry_cls.stop_max_attempt_number,
+                        wait_random_min=self.data_api_retry_cls.wait_random_min,
+                        wait_random_max=self.data_api_retry_cls.wait_random_max,
+                        retry_on_exception=self.data_api_retry_cls.retry_on_exception,
+                    ).call(self._send, params, timeout, request_id, request_cookies)
+                else:
+                    raw_response = self._send(params, timeout, request_id, request_cookies)
             except ReadTimeout as e:
                 raise DataAPIException(self, self.get_error_message(str(e)))
             except Exception as e:  # pylint: disable=broad-except
@@ -462,7 +519,11 @@ class DataAPI(object):
             request_params.update(params)
             # request_params["requests"] = get_request()
             futures.append(
-                pool.apply_async(self.thread_activate_request, args=(request_params,), kwds={"request": get_request()})
+                pool.apply_async(
+                    self.thread_activate_request,
+                    args=(request_params,),
+                    kwds={"request": get_request(), "context": get_current()},
+                )
             )
 
             start += limit
@@ -477,12 +538,21 @@ class DataAPI(object):
         return data
 
     def thread_activate_request(
-        self, params=None, files=None, raw=False, timeout=None, raise_exception=True, request_cookies=True, request=None
+        self,
+        params=None,
+        files=None,
+        raw=False,
+        timeout=None,
+        raise_exception=True,
+        request_cookies=True,
+        request=None,
+        context=None,
     ):
         """
         处理并发请求无法activate_request的封装
         """
         activate_request(request)
+        attach(context)
         return self.__call__(
             params=params,
             files=files,

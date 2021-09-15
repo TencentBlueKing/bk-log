@@ -38,3 +38,8 @@ class TraceIDNotExistsException(BaseTraceException):
 class TraceRootException(BaseTraceException):
     ERROR_CODE = "002"
     MESSAGE = _("trace日志没有找到根节点")
+
+
+class ProtoNotSupport(BaseTraceException):
+    ERROR_CODE = "003"
+    MESSAGE = _("协议未支持")

@@ -21,9 +21,9 @@
   -->
 
 <template>
-  <section class="access-wrapper" v-bkloading="{ isLoading: loading }">
+  <section class="access-wrapper" v-bkloading="{ isLoading: basicLoading }">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
-    <div class="access-container" v-else-if="!loading">
+    <div class="access-container" v-else-if="!basicLoading && !isCleaning">
       <section class="access-step-wrapper">
         <div class="fixed-steps" :style="{ height: (stepList.length * 76) + 'px' }">
           <bk-steps
@@ -31,7 +31,8 @@
             theme="primary"
             direction="vertical"
             :cur-step.sync="curStep"
-            :steps="stepList"></bk-steps>
+            :steps="stepList">
+          </bk-steps>
           <div class="step-arrow" :style="{ top: (curStep * 76 - 38) + 'px' }"></div>
         </div>
       </section>
@@ -55,8 +56,17 @@
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
-            @stepChange="stepChange">
+            @stepChange="stepChange"
+            @changeClean="isCleaning = true">
           </step-field>
+          <step-storage
+            v-if="curStep === 5"
+            :cur-step="curStep"
+            :operate-type="operateType"
+            @changeIndexSetId="updateIndexSetId"
+            @stepChange="stepChange"
+            @change-submit="changeSubmit">
+          </step-storage>
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
@@ -79,8 +89,17 @@
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
-            @stepChange="stepChange">
+            @stepChange="stepChange"
+            @changeClean="isCleaning = true">
           </step-field>
+          <step-storage
+            v-if="curStep === 4"
+            :cur-step="curStep"
+            :operate-type="operateType"
+            @changeIndexSetId="updateIndexSetId"
+            @stepChange="stepChange"
+            @change-submit="changeSubmit">
+          </step-storage>
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
@@ -90,6 +109,7 @@
         </template>
       </section>
     </div>
+    <advance-clean-land v-else-if="!basicLoading && isCleaning" back-router="collection-item" />
   </section>
 </template>
 
@@ -101,22 +121,28 @@ import stepAdd from './step-add';
 import stepCapacity from './step-capacity';
 import stepIssued from './step-issued';
 import stepField from './step-field';
+import stepStorage from './step-storage.vue';
 import stepResult from './step-result';
+import advanceCleanLand from '@/components/data-Access/advance-clean-land';
 
 export default {
-  name: 'data-access',
+  name: 'access-steps',
   components: {
     AuthPage,
     stepAdd,
     stepCapacity,
     stepIssued,
     stepField,
+    stepStorage,
     stepResult,
+    advanceCleanLand,
   },
   data() {
     return {
       authPageInfo: null,
-      loading: true,
+      basicLoading: true,
+      isCleaning: false,
+      isSubmit: false,
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
       operateType: '',
       curStep: 1,
@@ -142,13 +168,31 @@ export default {
     },
     isFinish() {
       if (this.isItsmAndNotStartOrStop) {
-        return this.curStep === 5;
+        return this.curStep === 6;
       }
       return finishRefer[this.operateType] === this.curStep;
     },
   },
+  watch: {
+    curStep() {
+      this.setSteps();
+    },
+  },
   created() {
     this.initPage();
+  },
+  // eslint-disable-next-line no-unused-vars
+  beforeRouteLeave(to, from, next) {
+    if (!this.isSubmit && !this.isSwitch) {
+      this.$bkInfo({
+        title: this.$t('pageLeaveTips'),
+        confirmFn: () => {
+          next();
+        },
+      });
+      return;
+    }
+    next();
   },
   methods: {
     // 先校验页面权限再初始化
@@ -170,18 +214,17 @@ export default {
         const res = await this.$store.dispatch('checkAndGetData', paramData);
         if (res.isAllowed === false) {
           this.authPageInfo = res.data;
-          this.loading = false;
+          this.basicLoading = false;
           return;
         }
       } catch (err) {
         console.warn(err);
-        this.loading = false;
+        this.basicLoading = false;
         return;
       }
 
       const routeType = this.$route.name.toLowerCase().replace('collect', '');
-      const router = this.$route.params;
-      if (routeType !== 'add' && !router.notAdd) {
+      if (routeType !== 'add' && !this.$route.params.notAdd) {
         try {
           const detailRes = await this.getDetail();
           this.operateType = routeType === 'edit' && detailRes.table_id ? 'editFinish' : routeType; // 若存在table_id则只有三步
@@ -202,10 +245,14 @@ export default {
               this.curStep = this.curCollect.itsm_ticket_status === 'success_apply' ? 4 : 2;
             } else if (this.operateType === 'field') {
               this.curStep = 4;
+            } else if (this.operateType === 'storage') {
+              // this.curStep = 5;
             }
             // 审批通过后编辑直接进入第三步字段提取，否则进入第二步容量评估
           } else if (this.operateType === 'field') {
             this.curStep = 3;
+          } else if (this.operateType === 'storage') {
+            // this.curStep  = 4;
           }
         } catch (e) {
           console.warn(e);
@@ -214,9 +261,12 @@ export default {
         this.operateType = routeType;
       }
       this.init();
-      this.loading = false;
+      this.basicLoading = false;
     },
     init() {
+      this.setSteps();
+    },
+    setSteps() {
       let stepList;
       if (this.isItsmAndNotStartOrStop) {
         stepList = stepsConf.itsm;
@@ -227,7 +277,7 @@ export default {
 
       this.stepList.forEach((step, index) => {
         if (index < this.curStep - 1) {
-          step.icon = 'check-1'; // 组件bug。已完成的步骤无法为空icon。或者其它样式。需优化
+          // step.icon = 'check-1'; // 组件bug。已完成的步骤无法为空icon。或者其它样式。需优化
         } else {
           step.icon = index + 1;
         }
@@ -270,16 +320,19 @@ export default {
         },
       });
     },
+    changeSubmit(isSubmit) {
+      this.isSubmit = isSubmit;
+    },
   },
 };
 </script>
 
 <style lang="scss">
-  @import '../../scss/mixins/clearfix';
-  @import '../../scss/conf';
+  @import '@/scss/mixins/clearfix';
+  @import '@/scss/conf';
 
   .access-wrapper {
-    padding: 20px 60px;
+    padding: 20px 24px;
   }
 
   .access-container {
@@ -301,7 +354,7 @@ export default {
       position: relative;
       width: 170px;
       max-height: 100%;
-      margin-top: 10px;
+      margin-top: 40px;
 
       .bk-step {
         color: #7a7c85;
@@ -380,9 +433,11 @@ export default {
             background-size: 100% 100%;
           }
         }
+
         // .bk-step-indicator {
-        //     background-color: #DCDEE5;
+        //   background-color: #dcdee5;
         // }
+
         .bk-step-title {
           color: #63656e;
         }
