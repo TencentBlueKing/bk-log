@@ -74,6 +74,7 @@
         <div v-if="asIframe" class="bk-button-group">
           <bk-button @click="handleCheckMonitor">{{ $t('指标检索') }}</bk-button>
           <bk-button class="is-selected">{{ $t('日志检索') }}</bk-button>
+          <bk-button @click="handleCheckEvent">{{ $t('事件检索') }}</bk-button>
         </div>
 
         <div class="king-tab" :class="asIframe && 'as-iframe'">
@@ -528,7 +529,10 @@ export default {
     handleCheckMonitor() {
       window.parent.postMessage('datarieval-click', '*');
     },
-
+    // 切换到监控事件检索
+    handleCheckEvent() {
+      window.parent.postMessage('event-click', '*');
+    },
     fetchPageData() {
       if (this.projectId) {
         this.requestIndexSetList();
@@ -1419,11 +1423,22 @@ export default {
         .bk-button-group {
           display: flex;
           width: 100%;
-          padding: 0 20px;
-          margin-top: 16px;
+          height: 52px;
 
           .bk-button {
-            width: 50%;
+            flex:1;
+            height: 100%;
+            background: #fafbfd;
+
+            &.is-selected{
+              background: #ffffff;
+              border: 1px solid #c4c6cc;
+              border-bottom: 1px solid #f6f6f6;
+            }
+
+            &:hover{
+              border: 1px solid #c4c6cc;
+            }
           }
         }
 
