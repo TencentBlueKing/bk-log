@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -17,21 +16,11 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 
-class BaseHandler:
-    def handle_user(self, request, username: str):
-        """处理用户"""
-        raise NotImplementedError(".handle_user() must be overridden.")
-
-    def handle_org(self, request, org_name: str, username: str):
-        """处理用户"""
-        raise NotImplementedError(".handle_org() must be overridden.")
-
-    def handle_datasources(self, request, org_name: str, org_id: int, ds_list: int, provisioning):
-        """批量处理datasources"""
-        raise NotImplementedError(".handle_datasources() must be overridden.")
-
-    def handle_dashboards(self, request, org_name: str, org_id: int, db_list):
-        """批量处理dashboards"""
-        raise NotImplementedError(".handle_dashboards() must be overridden.")
+class TraceDatasourceMap(models.Model):
+    bk_biz_id = models.IntegerField("业务id")
+    index_set_id = models.IntegerField(_("trace索引集id"))
+    datasource_id = models.IntegerField(_("数据源id"), unique=True)

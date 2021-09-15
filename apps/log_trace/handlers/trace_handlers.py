@@ -29,6 +29,18 @@ class TraceHandler(object):
         self._index_set_id = index_set_id
         self._proto_type = Proto.judge_trace_type(search_handler_esquery.fields().get("fields", []))
 
+    def trace_detail(self, trace_id):
+        return Proto.get_proto(self._proto_type).trace_detail(self._index_set_id, trace_id)
+
+    def traces(self, params):
+        return Proto.get_proto(self._proto_type).traces(self._index_set_id, params)
+
+    def operations(self, service_name):
+        return Proto.get_proto(self._proto_type).operations(self._index_set_id, service_name)
+
+    def services(self):
+        return Proto.get_proto(self._proto_type).services(self._index_set_id)
+
     def fields(self, scope: str) -> dict:
         return Proto.get_proto(self._proto_type).fields(self._index_set_id, scope)
 
