@@ -320,7 +320,7 @@ class OtlpTrace(Proto):
     def _transform_to_logs(self, events):
         return [
             {
-                "timestamp": event["timestamp"],
+                "timestamp": event["timestamp"] / 1000,
                 "fields": self._transform_to_tags({**event["attributes"], "message": event["name"]}),
             }
             for event in events
