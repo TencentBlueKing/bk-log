@@ -456,6 +456,9 @@ export default {
     clearTableWidth() {
       const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
       const { params: { indexId }, query: { bizId } } = this.$route;
+      if (columnObj === null || JSON.stringify(columnObj) === '{}') {
+        return;
+      }
       const isHaveBizId = Object.keys(columnObj).some(el => el === bizId);
 
       if (!isHaveBizId || columnObj[bizId].fields[indexId] === undefined) {

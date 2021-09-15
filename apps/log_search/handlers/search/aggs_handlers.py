@@ -175,7 +175,9 @@ class AggsHandlers(AggsBase):
         return s
 
     @classmethod
-    def _build_not_level_date_histogram_aggs(cls, s: Search, field, size: int) -> Search:  # pylint: disable=function-name-too-long
+    def _build_not_level_date_histogram_aggs(
+        cls, s: Search, field, size: int
+    ) -> Search:  # pylint: disable=function-name-too-long
         cls._build_date_histogram_aggs_item(
             s, field.get("term_filed"), field.get("metric_type"), field.get("metric_field"), size
         )
@@ -206,7 +208,9 @@ class AggsViewAdapter(object):
                 terms_data["aggs_items"].update({_field: []})
                 continue
             terms_data["aggs"].update({_field: field_agg_result})
-            terms_data["aggs_items"].update({_field: list(map(lambda item: item.get("key"), field_agg_result.get("buckets", [])))})
+            terms_data["aggs_items"].update(
+                {_field: list(map(lambda item: item.get("key"), field_agg_result.get("buckets", [])))}
+            )
         return terms_data
 
     def date_histogram(self, index_set_id, query_data: dict):
