@@ -22,6 +22,7 @@ from typing import List
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
+from apps.grafana.constants import TRACE_DATASOURCE_TYPE
 from apps.grafana.model import TraceDatasourceMap
 from apps.log_search.handlers.meta import MetaHandler
 from apps.log_search.models import LogIndexSet
@@ -67,7 +68,7 @@ class TraceProvisioning(BaseProvisioning):
             result.append(
                 Datasource(
                     name=trace_index_set_hash[index_set_id],
-                    type="jaeger",
+                    type=TRACE_DATASOURCE_TYPE,
                     access="direct",
                     isDefault=False,
                     url="proxy/trace/{}".format(index_set_id),
@@ -83,7 +84,7 @@ class TraceProvisioning(BaseProvisioning):
             result.append(
                 Datasource(
                     name=trace_index_set_hash[index_set_id],
-                    type="jaeger",
+                    type=TRACE_DATASOURCE_TYPE,
                     access="direct",
                     isDefault=False,
                     url="proxy/trace/{}".format(index_set_id),
@@ -97,7 +98,7 @@ class TraceProvisioning(BaseProvisioning):
     def datasource_callback(
         self, request, org_name: str, org_id: int, datasource: Datasource, status: bool, content: str
     ):
-        if datasource.type == "jaeger":
+        if datasource.type == TRACE_DATASOURCE_TYPE:
             TraceDatasourceMap.objects.update_or_create(
                 bk_biz_id=org_name,
                 index_set_id=datasource.jsonData["index_set_id"],

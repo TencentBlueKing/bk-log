@@ -20,6 +20,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from django.utils.translation import ugettext_lazy as _
 
+TRACE_DATASOURCE_TYPE = "jaeger"
 
 CMDB_EXTEND_FIELDS = {
     "host": [
