@@ -25,7 +25,6 @@ from celery.signals import worker_process_init
 from django.conf import settings
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as HttpOTLPSpanExporter
 from opentelemetry.instrumentation import dbapi
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.django import DjangoInstrumentor
@@ -102,8 +101,6 @@ class BluekingInstrumentor(BaseInstrumentor):
         if feature_config:
             otlp_grpc_host = feature_config.get(self.GRPC_HOST, otlp_grpc_host)
             otlp_bk_data_id = feature_config.get(self.BK_DATA_ID, otlp_bk_data_id)
-        http_otlp_exporter = HttpOTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")
-        http_span_processor = BatchSpanProcessor(http_otlp_exporter)
         otlp_exporter = OTLPSpanExporter(endpoint=otlp_grpc_host)
         span_processor = BatchSpanProcessor(otlp_exporter)
         tracer_provider = TracerProvider(
@@ -115,7 +112,6 @@ class BluekingInstrumentor(BaseInstrumentor):
             ),
         )
         tracer_provider.add_span_processor(span_processor)
-        tracer_provider.add_span_processor(http_span_processor)
         trace.set_tracer_provider(tracer_provider)
         DjangoInstrumentor().instrument(response_hook=django_response_hook)
         RedisInstrumentor().instrument()
