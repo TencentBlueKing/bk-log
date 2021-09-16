@@ -25,6 +25,7 @@ from celery.signals import worker_process_init
 from django.conf import settings
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as HttpOTLPSpanExporter
 from opentelemetry.instrumentation import dbapi
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.django import DjangoInstrumentor
@@ -53,9 +54,9 @@ def requests_callback(span: Span, response):
     if result is None:
         return
     span.set_attribute("result_code", json_result.get("code", 0))
-    span.set_attribute("error", not result)
     span.set_attribute("blueking_esb_request_id", json_result.get("request_id", ""))
     span.set_attribute("result_message", json_result.get("message", ""))
+    span.set_attribute("result_errors", str(json_result.get("errors", "")))
     if result:
         span.set_status(Status(StatusCode.OK))
         return
@@ -73,8 +74,8 @@ def django_response_hook(span, request, response):
     if not isinstance(result, dict):
         return
     span.set_attribute("result_code", result.get("code", 0))
-    span.set_attribute("error", not result.get("result", True))
     span.set_attribute("result_message", result.get("message", ""))
+    span.set_attribute("result_errors", result.get("errors", ""))
     result = result.get("result", True)
     if result:
         span.set_status(Status(StatusCode.OK))
@@ -101,6 +102,8 @@ class BluekingInstrumentor(BaseInstrumentor):
         if feature_config:
             otlp_grpc_host = feature_config.get(self.GRPC_HOST, otlp_grpc_host)
             otlp_bk_data_id = feature_config.get(self.BK_DATA_ID, otlp_bk_data_id)
+        http_otlp_exporter = HttpOTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")
+        http_span_processor = BatchSpanProcessor(http_otlp_exporter)
         otlp_exporter = OTLPSpanExporter(endpoint=otlp_grpc_host)
         span_processor = BatchSpanProcessor(otlp_exporter)
         tracer_provider = TracerProvider(
@@ -112,6 +115,7 @@ class BluekingInstrumentor(BaseInstrumentor):
             ),
         )
         tracer_provider.add_span_processor(span_processor)
+        tracer_provider.add_span_processor(http_span_processor)
         trace.set_tracer_provider(tracer_provider)
         DjangoInstrumentor().instrument(response_hook=django_response_hook)
         RedisInstrumentor().instrument()
