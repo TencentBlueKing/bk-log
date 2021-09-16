@@ -125,7 +125,7 @@ class ProxyBaseView(View):
                 if not isinstance(ds, Datasource):
                     raise ValueError("{} is not instance {}".format(type(ds), Datasource))
                 ds_list.append(ds)
-            self.handler.handle_datasources(request, org_name, org_id, ds_list)
+            self.handler.handle_datasources(request, org_name, org_id, ds_list, provisioning)
 
             # 注入面板
             for db in provisioning.dashboards(request, org_name, org_id):

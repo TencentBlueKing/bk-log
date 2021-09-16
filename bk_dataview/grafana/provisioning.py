@@ -31,6 +31,8 @@ from .utils import os_env
 
 logger = logging.getLogger(__name__)
 
+DATASOURCE_NEED_CREATE = -1
+
 
 @dataclass
 class Datasource:
@@ -44,7 +46,10 @@ class Datasource:
     withCredentials: bool = True
     database: Union[None, str] = None
     jsonData: Union[None, Dict] = None
+    id: int = -1
     version: int = 0
+    orgId: int = -1
+    is_delete: bool = False
 
 
 @dataclass

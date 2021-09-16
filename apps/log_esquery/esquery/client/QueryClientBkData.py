@@ -24,7 +24,7 @@ from typing import Dict, Any
 from django.conf import settings
 
 from elasticsearch.client import _make_path
-
+from opentelemetry import trace
 from apps.log_esquery.constants import BKDATA_NOT_HAVE_INDEX
 from apps.utils.thread import MultiExecuteFunc
 from apps.log_esquery.esquery.client.QueryClientTemplate import QueryClientTemplate
@@ -43,18 +43,22 @@ class QueryClientBkData(QueryClientTemplate):
 
     def query(self, index: str, body: Dict[str, Any], scroll=None, track_total_hits=False):
         try:
-            params = {"prefer_storage": "es", "sql": json.dumps({"index": index, "body": body})}
+            tracer = trace.get_tracer(__name__)
+            with tracer.start_as_current_span("bkdata_es_query") as span:
+                params = {"prefer_storage": "es", "sql": json.dumps({"index": index, "body": body})}
+                span.set_attribute("db.statement", str(params))
+                span.set_attribute("db.system", "elasticsearch")
 
-            if self.bkdata_authentication_method:
-                params["bkdata_authentication_method"] = self.bkdata_authentication_method
-            if self.bkdata_data_token:
-                params["bkdata_data_token"] = self.bkdata_data_token
+                if self.bkdata_authentication_method:
+                    params["bkdata_authentication_method"] = self.bkdata_authentication_method
+                if self.bkdata_data_token:
+                    params["bkdata_data_token"] = self.bkdata_data_token
 
-            result = self._client.query(params, timeout=settings.ES_QUERY_TIMEOUT)
-            result = result["list"]
-            if not result:
-                result = {"hits": {"hits": [], "total": 0}}
-            return result
+                result = self._client.query(params, timeout=settings.ES_QUERY_TIMEOUT)
+                result = result["list"]
+                if not result:
+                    result = {"hits": {"hits": [], "total": 0}}
+                return result
         except ApiResultError as e:
             if str(e.code) == BKDATA_NOT_HAVE_INDEX:
                 return {"hits": {"hits": [], "total": 0}}
