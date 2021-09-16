@@ -21,8 +21,8 @@ import logging
 
 from .. import client
 from . import BaseHandler
+from ..provisioning import DATASOURCE_NEED_CREATE
 
-_ORG_DATASOURCES_CACHE = {}
 
 logger = logging.getLogger(__name__)
 
@@ -34,31 +34,47 @@ class APIHandler(BaseHandler):
     def handle_org(self, request, org_name: str, username: str):
         pass
 
-    def handle_datasources(self, request, org_name: str, org_id: int, ds_list: list):
+    def handle_datasources(self, request, org_name: str, org_id: int, ds_list: list, provisioning):
         """API不能批量处理多个数据源"""
-        _ORG_DATASOURCES_CACHE.setdefault(org_name, {})
-
-        for ds in ds_list:
-            if ds.name in _ORG_DATASOURCES_CACHE[org_name]:
+        for datasource in ds_list:
+            if datasource.is_delete:
+                resp = client.delete_datasource(org_id, datasource.id)
+                if resp.status_code == 200:
+                    logger.info("delete provision datasource success, %s", resp)
+                    continue
+                logger.info("delete provision datasource failed, %s", resp)
                 continue
 
-            resp = client.get_datasource(org_id, ds.name)
+            if datasource.id != DATASOURCE_NEED_CREATE:
+                resp = client.get_datasource_by_id(org_id, datasource.id)
+                if resp.status_code == 200:
+                    result = resp.json()
+                    datasource.version = result["version"] + 1
+                    resp = client.update_datasource(org_id, result["id"], datasource)
+                    if resp.status_code == 200:
+                        logger.info("update provision datasource success, %s", resp)
+                continue
+
+            resp = client.get_datasource(org_id, datasource.name)
             if resp.status_code == 200:
                 result = resp.json()
-                ds.version = result["version"] + 1
-                resp = client.update_datasource(org_id, result["id"], ds)
+                datasource.version = result["version"] + 1
+                resp = client.update_datasource(org_id, result["id"], datasource)
+                datasource.id = result["id"]
                 if resp.status_code == 200:
-                    _ORG_DATASOURCES_CACHE[org_name][ds.name] = ds
+                    provisioning.datasource_callback(request, org_name, org_id, datasource, True, "")
                     logger.info("update provision datasource success, %s", resp)
-                    return
+                continue
 
             if resp.status_code == 404:
-                resp = client.create_datasource(org_id, ds)
+                resp = client.create_datasource(org_id, datasource)
                 # 412 code 代表已经存在
                 if resp.status_code == 200:
-                    _ORG_DATASOURCES_CACHE[org_name][ds.name] = ds
-
-                logger.info("create provision datasource success, %s", resp)
+                    logger.info("create provision datasource success, %s", resp)
+                    datasource.id = resp.json()["id"]
+                    provisioning.datasource_callback(request, org_name, org_id, datasource, True, "")
+                    continue
+                logger.info("create provision datasource fail, %s", resp)
 
     def handle_dashboards(self, request, org_name: str, org_id: int, db_list):
         pass

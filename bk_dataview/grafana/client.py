@@ -100,6 +100,14 @@ def get_datasource(org_id: int, name):
     return resp
 
 
+def get_datasource_by_id(org_id: int, id: int):
+    """查询数据源"""
+    url = f"{API_HOST}/api/datasources/{id}"
+    headers = {"X-Grafana-Org-Id": str(org_id)}
+    resp = rpool.get(url, headers=headers, auth=grafana_settings.ADMIN, hooks={"response": requests_curl_log})
+    return resp
+
+
 def get_datasource_id(org_id: int, name):
     """查询数据源"""
     url = f"{API_HOST}/api/datasources/id/{name}"
@@ -118,12 +126,19 @@ def create_datasource(org_id: int, ds: Datasource):
     return resp
 
 
-def update_datasource(org_id: int, datsource_id: int, ds: Datasource):
-    url = f"{API_HOST}/api/datasources/{datsource_id}"
+def update_datasource(org_id: int, datasource_id: int, ds: Datasource):
+    url = f"{API_HOST}/api/datasources/{datasource_id}"
     headers = {"X-Grafana-Org-Id": str(org_id)}
     resp = rpool.put(
         url, json=ds.__dict__, headers=headers, auth=grafana_settings.ADMIN, hooks={"response": requests_curl_log}
     )
+    return resp
+
+
+def delete_datasource(org_id: int, datasource_id: int):
+    url = f"{API_HOST}/api/datasources/{datasource_id}"
+    headers = {"X-Grafana-Org-Id": str(org_id)}
+    resp = rpool.delete(url, headers=headers, auth=grafana_settings.ADMIN, hooks={"response": requests_curl_log})
     return resp
 
 

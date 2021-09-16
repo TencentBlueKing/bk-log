@@ -53,9 +53,9 @@ def requests_callback(span: Span, response):
     if result is None:
         return
     span.set_attribute("result_code", json_result.get("code", 0))
-    span.set_attribute("error", not result)
     span.set_attribute("blueking_esb_request_id", json_result.get("request_id", ""))
     span.set_attribute("result_message", json_result.get("message", ""))
+    span.set_attribute("result_errors", str(json_result.get("errors", "")))
     if result:
         span.set_status(Status(StatusCode.OK))
         return
@@ -73,8 +73,8 @@ def django_response_hook(span, request, response):
     if not isinstance(result, dict):
         return
     span.set_attribute("result_code", result.get("code", 0))
-    span.set_attribute("error", not result.get("result", True))
     span.set_attribute("result_message", result.get("message", ""))
+    span.set_attribute("result_errors", result.get("errors", ""))
     result = result.get("result", True)
     if result:
         span.set_status(Status(StatusCode.OK))
