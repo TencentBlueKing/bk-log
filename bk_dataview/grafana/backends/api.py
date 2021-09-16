@@ -73,7 +73,7 @@ class APIHandler(BaseHandler):
                     logger.info("create provision datasource success, %s", resp)
                     datasource.id = resp.json()["id"]
                     provisioning.datasource_callback(request, org_name, org_id, datasource, True, "")
-                    return
+                    continue
                 logger.info("create provision datasource fail, %s", resp)
 
     def handle_dashboards(self, request, org_name: str, org_id: int, db_list):

@@ -31,10 +31,10 @@ from apps.utils.local import get_local_param
 from apps.utils.time_handler import generate_time_range
 
 OTLP_JAEGER_SPAN_KIND = {
-    2: "client",
-    3: "server",
-    4: "consumer",
-    5: "producer",
+    2: "server",
+    3: "client",
+    4: "producer",
+    5: "consumer",
     1: "internal",
 }
 
@@ -319,7 +319,10 @@ class OtlpTrace(Proto):
 
     def _transform_to_logs(self, events):
         return [
-            {"timestamp": event["timestamp"], "fields": {**event["attributes"], "message": event["name"]}}
+            {
+                "timestamp": event["timestamp"] / 1000,
+                "fields": self._transform_to_tags({**event["attributes"], "message": event["name"]}),
+            }
             for event in events
         ]
 
