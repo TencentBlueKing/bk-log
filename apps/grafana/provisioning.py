@@ -78,7 +78,7 @@ class TraceProvisioning(BaseProvisioning):
             )
 
         for index_set_id in need_delete_datasource:
-            result.append(Datasource(id=datasource_map_hash[index_set_id], is_delete=True))
+            result.append(Datasource(id=datasource_map_hash[index_set_id], is_delete=True, type="", name="", url=""))
 
         for index_set_id in need_update_datasource:
             result.append(
