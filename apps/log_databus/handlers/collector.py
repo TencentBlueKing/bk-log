@@ -490,9 +490,6 @@ class CollectorHandler(object):
                 logger.warning(f"collector config name duplicate => [{collector_config_name}]")
                 raise CollectorConfigNameDuplicateException()
 
-        # 创建数据平台data_id及更新时
-        async_create_bkdata_data_id.delay(self.data.collector_config_id)
-
         # add user_operation_record
         operation_record = {
             "username": get_request_username(),
@@ -510,6 +507,8 @@ class CollectorHandler(object):
             collector_scenario=collector_scenario, params=params["params"], is_create=is_create
         )
 
+        # 创建数据平台data_id及更新时
+        async_create_bkdata_data_id.delay(self.data.collector_config_id)
         return {
             "collector_config_id": self.data.collector_config_id,
             "collector_config_name": self.data.collector_config_name,
