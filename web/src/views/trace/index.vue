@@ -55,7 +55,7 @@ export default {
     },
     // iframe 页面加载完毕
     handleIframeLoad() {
-      this.isLoading = false;
+      setTimeout(() => this.isLoading = false, 1000);
     },
   },
 };
