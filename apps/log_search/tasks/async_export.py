@@ -42,6 +42,8 @@ from apps.log_search.constants import (
     FEATURE_ASYNC_EXPORT_NOTIFY_TYPE,
     FEATURE_ASYNC_EXPORT_STORAGE_TYPE,
     MAX_RESULT_WINDOW,
+    MsgModel,
+    ASYNC_EXPORT_EMAIL_ERR_TEMPLATE,
 )
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 from apps.log_search.models import Scenario, AsyncTask, LogIndexSet
@@ -77,51 +79,63 @@ def async_export(
     async_export_util = AsyncExportUtils(
         search_handler=search_handler, sorted_fields=sorted_fields, file_name=file_name, tar_file_name=tar_file_name
     )
-
-    if not async_task:
-        logger.error(f"Can not find this: id: {async_task_id} record")
-        return
-
     try:
-        async_export_util.export_package()
+        if not async_task:
+            logger.error(f"Can not find this: id: {async_task_id} record")
+            raise BaseException(f"Can not find this: id: {async_task_id} record")
+
+        try:
+            async_export_util.export_package()
+        except Exception as e:  # pylint: disable=broad-except
+            async_task.failed_reason = f"export package error: {e}"
+            logger.error(async_task.failed_reason)
+            async_task.save()
+            raise
+
+        async_task.file_name = tar_file_name
+        async_task.file_size = async_export_util.get_file_size()
+
+        try:
+            async_export_util.export_upload()
+        except Exception as e:  # pylint: disable=broad-except
+            async_task.failed_reason = f"export upload error: {e}"
+            logger.error(async_task.failed_reason)
+            async_task.save()
+            raise
+
+        try:
+            url = async_export_util.generate_download_url(url_path=url_path)
+        except Exception as e:  # pylint: disable=broad-except
+            async_task.failed_reason = f"generate download url error: {e}"
+            logger.error(async_task.failed_reason)
+            async_task.save()
+            raise
+
+        async_task.download_url = url
+
+        try:
+            async_export_util.send_msg(
+                index_set_id=search_handler.index_set_id,
+                async_task=async_task,
+                search_url_path=search_url_path,
+                language=language,
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            async_task.failed_reason = f"send msg error: {e}"
+            logger.error(async_task.failed_reason)
+            async_task.save()
+            raise
+
     except Exception as e:  # pylint: disable=broad-except
-        async_task.failed_reason = f"export package error: {e}"
-        logger.error(async_task.failed_reason)
-        async_task.save()
-        return
-
-    async_task.file_name = tar_file_name
-    async_task.file_size = async_export_util.get_file_size()
-
-    try:
-        async_export_util.export_upload()
-    except Exception as e:  # pylint: disable=broad-except
-        async_task.failed_reason = f"export upload error: {e}"
-        logger.error(async_task.failed_reason)
-        async_task.save()
-        return
-
-    try:
-        url = async_export_util.generate_download_url(url_path=url_path)
-    except Exception as e:  # pylint: disable=broad-except
-        async_task.failed_reason = f"generate download url error: {e}"
-        logger.error(async_task.failed_reason)
-        async_task.save()
-        return
-
-    async_task.download_url = url
-
-    try:
+        logger.exception(e)
         async_export_util.send_msg(
             index_set_id=search_handler.index_set_id,
             async_task=async_task,
             search_url_path=search_url_path,
             language=language,
+            name=ASYNC_EXPORT_EMAIL_ERR_TEMPLATE,
+            title_model=MsgModel.ABNORMAL,
         )
-    except Exception as e:  # pylint: disable=broad-except
-        async_task.failed_reason = f"send msg error: {e}"
-        logger.error(async_task.failed_reason)
-        async_task.save()
         return
 
     async_task.result = True
@@ -208,7 +222,15 @@ class AsyncExportUtils(object):
         """
         return self.storage.generate_download_url(url_path=url_path, file_name=self.tar_file_name)
 
-    def send_msg(self, index_set_id: int, async_task: AsyncTask, search_url_path: str, language: str):
+    def send_msg(
+        self,
+        index_set_id: int,
+        async_task: AsyncTask,
+        search_url_path: str,
+        language: str,
+        name: str = ASYNC_EXPORT_EMAIL_TEMPLATE,
+        title_model: str = MsgModel.NORMAL,
+    ):
         """
         发送邮件
         """
@@ -217,11 +239,13 @@ class AsyncExportUtils(object):
         platform = settings.EMAIL_TITLE["en"] if translation.get_language() == "en" else settings.EMAIL_TITLE["zh"]
 
         title = self.notify.title(
-            _("【{platform}】{index_set_name} 检索导出"), platform=platform, index_set_name=index_set_obj.index_set_name
+            self.generate_title_template(title_model=title_model),
+            platform=platform,
+            index_set_name=index_set_obj.index_set_name,
         )
 
         content = self.notify.content(
-            name=ASYNC_EXPORT_EMAIL_TEMPLATE,
+            name=name,
             file={
                 "platform": platform,
                 "created_at": arrow.now().format("YYYY-MM-DD HH:mm:ss"),
@@ -236,6 +260,14 @@ class AsyncExportUtils(object):
             language=language,
         )
         self.notify.send(receivers=async_task.created_by, title=title, content=content)
+
+    @classmethod
+    def generate_title_template(cls, title_model):
+        title_template_map = {
+            MsgModel.NORMAL: _("【{platform}】{index_set_name} 检索导出"),
+            MsgModel.ABNORMAL: _("【{platform}】{index_set_name} 检索导出失败"),
+        }
+        return title_template_map.get(title_model, title_template_map.get(MsgModel.NORMAL))
 
     def clean_package(self):
         """
