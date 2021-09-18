@@ -26,7 +26,7 @@ const getTaskList = {
 };
 
 const getTaskDetail = {
-  url: '/log_extract/tasks/:id',
+  url: '/log_extract/tasks/:id/',
   method: 'get',
 };
 
