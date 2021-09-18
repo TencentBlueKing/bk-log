@@ -43,7 +43,7 @@ def get_env_or_raise(*keys):
 
 
 # SaaS运行版本，如非必要请勿修改
-RUN_VER = os.environ.get("ENGINE_REGION", "open")
+RUN_VER = os.environ.get("BKAPPS_ENGINE_REGION", "open")
 
 APP_CODE = get_env_or_raise("APP_ID", "BKPAAS_APP_ID")
 # 应用用于调用云 API 的 Secret

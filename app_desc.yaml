@@ -18,7 +18,7 @@ modules:
         source_dir: src
         language: Python
         env_variables:
-            - key: ENGINE_REGION
+            - key: BKAPPS_ENGINE_REGION
               value: open
               description: 运行环境
             - key: PIP_VERSION
@@ -76,7 +76,7 @@ modules:
             - key: BKAPP_IS_BKLOG_API
               value: 1
               description: 是否启用后台配置，用于同一份代码区分SaaS和后台的差异化配置
-            - key: ENGINE_REGION
+            - key: BKAPPS_ENGINE_REGION
               value: open
               description: 运行环境
             - key: PIP_VERSION
