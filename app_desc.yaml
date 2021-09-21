@@ -63,7 +63,7 @@ modules:
                 plan: 4C2G5R
                 replicas: 5
             grafana:
-                command: ./grafana/bin/grafana-server --homepath ./ --config ./grafana/conf/grafana.ini cfg:default.paths.logs=./log cfg:default.paths.data=./data cfg:default.paths.plugins=./grafana/plugins
+                command: bash start.sh
                 plan: 4C2G5R
                 replicas: 1
         svc_discovery:
