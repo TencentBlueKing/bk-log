@@ -66,8 +66,8 @@ modules:
                 command: start.sh
                 plan: 4C2G5R
                 replicas: 1
-        svc_discovery：
-            bk_saas：
+        svc_discovery:
+            bk_saas:
                 - bk_app_code: bk_monitorv3
 
     api:
