@@ -2,7 +2,7 @@ spec_version: 2
 app_version: "4.3.0"
 app:
     region: default
-    bk_app_code: "log-search"
+    bk_app_code: "bk_log_search"
     bk_app_name: 日志平台容器部署版
     market:
         category: 运维工具
@@ -63,7 +63,7 @@ modules:
                 plan: 4C2G5R
                 replicas: 5
             grafana:
-                command: grafana/bin/grafana-server --homepath ./ --config ../grafana.ini cfg:default.paths.logs=./logs cfg:default.paths.data=./data cfg:default.paths.plugins=./plugins
+                command: bash chmod +x start.sh && bash ./start.sh
                 plan: 4C2G5R
                 replicas: 1
         svc_discovery:

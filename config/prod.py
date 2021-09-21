@@ -75,7 +75,7 @@ GRAFANA = {
 # ==============================================================================
 # IAM
 # ==============================================================================
-BK_IAM_SYSTEM_ID = "log-search"
+BK_IAM_SYSTEM_ID = "bk_log_search"
 BK_IAM_SYSTEM_NAME = "日志平台"
 
 BK_IAM_INNER_HOST = os.getenv("BK_IAM_HOST", os.getenv("BK_IAM_V3_INNER_HOST", "http://iam.service.consul"))
