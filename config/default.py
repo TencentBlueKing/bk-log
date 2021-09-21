@@ -281,7 +281,10 @@ REDIS_VERSION = int(os.environ.get("BKAPP_REDIS_VERSION", 2))
 # 该配置需要等待SITE_URL被patch掉才能正确配置，因此放在patch逻辑后面
 GRAFANA = {
     "HOST": os.getenv("BKAPP_GRAFANA_URL", "")
-    or "http://default-bkapp-{app_code}-m-web-{env}-grafana".format(app_code=APP_CODE.replace("_", "0us0"), env=""),
+    or "http://default-bkapp-{app_code}-m-web-{env}-grafana".format(
+        app_code=APP_CODE.replace("_", "0us0"),
+        env=os.getenv("BKPAAS_ENVIRONMENT", "dev") or os.getenv("BK_ENV", "development"),
+    ),
     "PREFIX": "{}grafana/".format(os.getenv("BKAPP_GRAFANA_PREFIX", SITE_URL)),
     "ADMIN": (os.getenv("BKAPP_GRAFANA_ADMIN_USERNAME", "admin"), os.getenv("BKAPP_GRAFANA_ADMIN_PASSWORD", "admin")),
     "PROVISIONING_CLASSES": ["apps.grafana.provisioning.Provisioning"],

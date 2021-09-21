@@ -2,8 +2,8 @@ spec_version: 2
 app_version: "4.3.0"
 app:
     region: default
-    bk_app_code: "log-search-test"
-    bk_app_name: 日志平台容器部署版测试
+    bk_app_code: "log-search"
+    bk_app_name: 日志平台容器部署版
     market:
         category: 运维工具
         introduction: 蓝鲸智云日志平台是为了解决运维场景中查询日志难的问题而推出的一款Saas，基于业界主流的全文检索引擎，通过蓝鲸智云的专属agent进行日志采集，无需登录各台机器，集中管理所有日志。
@@ -62,6 +62,13 @@ modules:
                 command: python manage.py celery worker -c 4 -Q pipeline_additional_task,pipeline_additional_task_priority
                 plan: 4C2G5R
                 replicas: 5
+            grafana:
+                command: start.sh
+                plan: 4C2G5R
+                replicas: 1
+        svc_discovery：
+            bk_saas：
+                - bk_app_code: bk_monitorv3
 
     api:
         is_default: False
