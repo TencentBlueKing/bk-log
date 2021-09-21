@@ -63,7 +63,7 @@ modules:
                 plan: 4C2G5R
                 replicas: 5
             grafana:
-                command: ./start.sh
+                command: chmod +x start.sh && ./start.sh
                 plan: 4C2G5R
                 replicas: 1
         svc_discovery:
