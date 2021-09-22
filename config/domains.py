@@ -53,6 +53,8 @@ API_ROOTS = [
     "JOB_APIGATEWAY_ROOT_V2",
     # AIOPS
     "AIOPS_APIGATEWAY_ROOT",
+    # DATAFLOW
+    "DATAFLOW_APIGATEWAY_ROOT",
 ]
 
 env_domains = load_domains(settings)
