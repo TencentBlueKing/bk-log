@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from collections import defaultdict
 from typing import List
 
 import arrow
@@ -27,6 +28,7 @@ from apps.log_trace.exceptions import TraceIDNotExistsException
 from apps.log_trace.handlers.proto.proto import Proto
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.utils.local import get_local_param
+from apps.utils.time_handler import generate_time_range
 
 SCATTER_TEMPLATE = [
     {"label": _("成功"), "pointBackgroundColor": "#45E35F", "borderColor": "#45E35F", "pointRadius": 5, "data": []},
@@ -35,6 +37,17 @@ SCATTER_TEMPLATE = [
 
 
 class LogTrace(Proto):
+    TAGS_FIELD = "tags"
+    SERVICE_NAME_FIELD = "tags.local_service"
+    OPERATION_NAME_FIELD = "operationName"
+    TRACE_ID_FIELD = "traceID"
+    TRACES_ADDITIONS = {
+        "operation": {"field": "operationName", "method": "is"},
+        "service": {"field": "tags.local_service", "method": "is"},
+        "maxDuration": {"method": "gte", "field": "duration"},
+        "minDuration": {"method": "lte", "field": "duration"},
+    }
+
     TYPE = TraceProto.LOG.value
     TRACE_PLAN = {
         "trace_type": "log",
@@ -263,3 +276,75 @@ class LogTrace(Proto):
         d1 = arrow.get(seconds)
         time_format_str = d1.to(get_local_param("time_zone")).format("YYYY-MM-DD HH:mm:ss")
         return time_format_str
+
+    def traces(self, index_set_id, params):
+        result = super(LogTrace, self).traces(index_set_id, params)
+        trace_ids = [trace[self.TRACE_ID_FIELD] for trace in result.get("list", [])]
+        if not trace_ids:
+            return []
+        search_dict = {
+            "start_time": params["start"] / 1000000,
+            "end_time": params["end"] / 1000000,
+            "addition": [
+                {
+                    "key": self.TRACE_ID_FIELD,
+                    "method": "is one of",
+                    "value": ",".join(trace_ids),
+                    "condition": "and",
+                    "type": "field",
+                }
+            ],
+            "begin": 0,
+            "size": 9999,
+            "keyword": "*",
+            "time_range": "customized",
+        }
+        result = SearchHandlerEsquery(index_set_id, search_dict).search()
+        return self._transform_to_jaeger(result.get("list", []))
+
+    def trace_detail(self, index_set_id, trace_id):
+        start_time, end_time = generate_time_range("36m", "", "", get_local_param("time_zone"))
+        search_dict = {
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "addition": [{"key": self.TRACE_ID_FIELD, "method": "is", "value": trace_id, "condition": "and"}],
+            "begin": 0,
+            "size": self.TRACE_SIZE,
+            "keyword": "*",
+            "time_range": "customized",
+        }
+
+        result = SearchHandlerEsquery(index_set_id, search_dict).search()
+        return self._transform_to_jaeger(result.get("list", []))
+
+    def _transform_to_jaeger(self, spans):
+        jaeger_traces = defaultdict(lambda: {"spans": [], "traceID": ""})
+        for span in spans:
+            trace_id = span[self.TRACE_ID_FIELD]
+            jaeger_traces[trace_id]["traceID"] = trace_id
+            jaeger_traces[trace_id]["spans"].append(
+                {
+                    "traceID": trace_id,
+                    "spanID": span["spanID"],
+                    "duration": span["duration"],
+                    "references": self._transform_to_refs(span),
+                    "flags": 0,
+                    "logs": [],
+                    "operationName": span["operationName"],
+                    "startTime": span["startTime"] * 1000,
+                    "tags": self._transform_to_tags(span.get("tags", {})),
+                    "processID": "",
+                },
+            )
+        return [
+            {**trace, "processes": {"": {"serviceName": "", "tags": []}}} for trace_id, trace in jaeger_traces.items()
+        ]
+
+    def _transform_to_tags(self, attributes):
+        return [{"key": key, "value": value, "type": "string"} for key, value in attributes.items()]
+
+    def _transform_to_refs(self, span):
+        refs = []
+        if span.get("parentSpanID"):
+            refs.append({"refType": "CHILD_OF", "spanID": span["parentSpanID"], "traceID": span[self.TRACE_ID_FIELD]})
+        return refs

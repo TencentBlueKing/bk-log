@@ -89,6 +89,12 @@ ASYNC_EXPORT_EMAIL_TEMPLATE = "async_export_email_template"
 ASYNC_EXPORT_EMAIL_TEMPLATE_PATH = "templates/email_template/email_template.html"
 # 异步导出邮件默认英文模板路径
 ASYNC_EXPORT_EMAIL_TEMPLATE_PATH_EN = "templates/email_template/email_template_en.html"
+# 异步导出邮件模板名
+ASYNC_EXPORT_EMAIL_ERR_TEMPLATE = "async_export_email_err_template"
+# 异步导出邮件默认中文模板路径
+ASYNC_EXPORT_EMAIL_ERR_TEMPLATE_PATH = "templates/email_template/email_template_err.html"
+# 异步导出邮件默认英文模板路径
+ASYNC_EXPORT_EMAIL_ERR_TEMPLATE_PATH_EN = "templates/email_template/email_template_err_en.html"
 # 异步导出文件过期天数
 ASYNC_EXPORT_FILE_EXPIRED_DAYS = 2
 # 异步导出链接expired时间 24*60*60
@@ -102,6 +108,12 @@ COMMON_LOG_INDEX_RE = r"^(v2_)?{}_(?P<datetime>\d+)_(?P<index>\d+)$"
 BKDATA_INDEX_RE = r"^{}_\d+$"
 
 MAX_EXPORT_REQUEST_RETRY = 3
+
+
+# 消息模式
+class MsgModel(object):
+    NORMAL = "normal"
+    ABNORMAL = "abnormal"
 
 
 # 数据平台mapping返回错误
