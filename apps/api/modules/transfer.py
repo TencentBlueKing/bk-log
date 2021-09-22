@@ -42,7 +42,7 @@ def create_cluster_info_before(params):
 
 
 def get_result_table_storage_after(response_result):
-    for  cluster_obj in response_result["data"].values():
+    for cluster_obj in response_result["data"].values():
         if not cluster_obj.get("cluster_config"):
             continue
         parse_cluster_info(cluster_obj)
