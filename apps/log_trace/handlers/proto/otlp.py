@@ -30,13 +30,7 @@ from apps.log_search.handlers.search.search_handlers_esquery import SearchHandle
 from apps.utils.local import get_local_param
 from apps.utils.time_handler import generate_time_range
 
-OTLP_JAEGER_SPAN_KIND = {
-    2: "server",
-    3: "client",
-    4: "producer",
-    5: "consumer",
-    1: "internal",
-}
+OTLP_JAEGER_SPAN_KIND = {2: "server", 3: "client", 4: "producer", 5: "consumer", 1: "internal", 0: "unset"}
 
 OTLP_ERROR_STATUS_CODE = 2
 
