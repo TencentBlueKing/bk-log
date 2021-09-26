@@ -39,6 +39,7 @@ from bk_dataview.grafana import client
 
 
 class GrafanaQueryHandler:
+    MINUTE_SECOND = 60
 
     AGG_METHOD_CHOICES = [
         {"id": "value_count", "name": "COUNT"},
@@ -74,7 +75,7 @@ class GrafanaQueryHandler:
         # datetime aggregation
         aggragations = {
             time_field: {
-                "date_histogram": {"field": time_field, "interval": f"{interval // 60}m"},
+                "date_histogram": {"field": time_field, "interval": self._parse_interval(interval)},
                 "aggregations": {metric_field: {agg_method: {"field": metric_field}}},
             },
         }
@@ -86,6 +87,11 @@ class GrafanaQueryHandler:
             aggragations = _aggs
 
         return aggragations
+
+    def _parse_interval(self, interval):
+        if interval % self.MINUTE_SECOND != 0:
+            return f"{interval}s"
+        return f"{interval // self.MINUTE_SECOND}m"
 
     def _get_buckets(self, records, record, dimensions, aggregations, metric_field, depth=0):
         """
