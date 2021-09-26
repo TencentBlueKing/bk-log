@@ -100,9 +100,9 @@ class _BkDataAIOPSApi:
         )
         self.experiments_config = DataAPI(
             method="GET",
-            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{model_experiment_id}/config/",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/config/",
             module=self.MODULE,
-            url_keys=["model_id", "model_experiment_id"],
+            url_keys=["model_id", "experiment_id"],
             description=u"获取实验配置信息",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
@@ -125,66 +125,63 @@ class _BkDataAIOPSApi:
         )
         self.execute_experiments = DataAPI(
             method="POST",
-            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{model_experiment_id}/node/execute/",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/node/execute/",
             module=self.MODULE,
-            url_keys=["model_id", "model_experiment_id"],
+            url_keys=["model_id", "experiment_id"],
             description=u"执行实验配置",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
         self.excute_experiments_node_status = DataAPI(
             method="GET",
-            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{model_experiment_id}/node/execute/status/",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/node/execute/status/",
             module=self.MODULE,
-            url_keys=["model_id", "model_experiment_id"],
+            url_keys=["model_id", "experiment_id"],
             description=u"实验步骤状态 （当前用于切分状态捕获）",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
         self.basic_models_training_status = DataAPI(
             method="POST",
-            url=AIOPS_APIGATEWAY_ROOT
-            + "models/{model_id}/experiments/{model_experiment_id}/basic_models/training_status/",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/basic_models/training_status/",
             module=self.MODULE,
-            url_keys=["model_id", "model_experiment_id"],
+            url_keys=["model_id", "experiment_id"],
             description=u"备选模型训练状态列表",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
         self.basic_models_evaluation_status = DataAPI(
             method="POST",
-            url=AIOPS_APIGATEWAY_ROOT
-            + "models/{model_id}/experiments/{model_experiment_id}/basic_models/evaluation_status/",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/basic_models/evaluation_status/",
             module=self.MODULE,
-            url_keys=["model_id", "model_experiment_id"],
+            url_keys=["model_id", "experiment_id"],
             description=u"备选模型评估状态列表",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
         self.basic_model_evaluation_result = DataAPI(
             method="GET",
-            url=AIOPS_APIGATEWAY_ROOT
-            + "models/{model_id}/experiments/{model_experiment_id}/basic_models/evaluation_result/",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/basic_models/evaluation_result/",
             module=self.MODULE,
-            url_keys=["model_id", "model_experiment_id"],
+            url_keys=["model_id", "experiment_id"],
             description=u"备选模型评估结果",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
         self.experiment_commit = DataAPI(
             method="POST",
-            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{model_experiment_id}/commit/",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/commit/",
             module=self.MODULE,
-            url_keys=["model_id", "model_experiment_id"],
+            url_keys=["model_id", "experiment_id"],
             description=u"实验提交",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
         self.release = DataAPI(
             method="POST",
-            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{model_experiment_id}/release/",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/release/",
             module=self.MODULE,
-            url_keys=["model_id", "model_experiment_id"],
+            url_keys=["model_id", "experiment_id"],
             description=u"模型发布",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
