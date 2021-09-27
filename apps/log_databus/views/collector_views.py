@@ -1120,6 +1120,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} fields.option.time_format 时间格式
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
+        @apiParam {Int} [storage_replies] 副本数量
         @apiParam {list} view_roles 查看权限
         @apiParamExample {json} 请求样例:
         {

@@ -180,6 +180,7 @@ class EtlStorage(object):
         storage_cluster_id: int,
         retention: int,
         allocation_min_days: int,
+        storage_replies: int,
         fields: list = None,
         etl_params: dict = None,
         es_version: str = "5.X",
@@ -205,8 +206,7 @@ class EtlStorage(object):
             collector_config.storage_shards_nums = settings.ES_SHARDS
 
         # ES-副本数
-        if collector_config.storage_replies is not None:
-            collector_config.storage_replies = settings.ES_REPLICAS
+        collector_config.storage_replies = storage_replies
 
         # 需要切分的大小阈值，单位（GB）
         if not collector_config.storage_shards_size:
