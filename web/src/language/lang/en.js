@@ -784,6 +784,7 @@ export default {
     filterContent: 'Filter',
     StorageCluster: 'Storage',
     expirationTime: 'Expire',
+    copyNumber: 'Copy',
     the: 'The',
     column: 'Column',
     day: 'day',

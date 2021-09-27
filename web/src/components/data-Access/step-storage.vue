@@ -107,6 +107,14 @@
           </div>
         </bk-select>
       </bk-form-item>
+      <!-- 副本数 -->
+      <bk-form-item :label="$t('configDetails.copyNumber')">
+        <bk-select style="width: 90px;" v-model="formData.storage_replies" :clearable="false">
+          <template v-for="(option, index) in coypNumberList">
+            <bk-option :key="index" :id="option" :name="option"></bk-option>
+          </template>
+        </bk-select>
+      </bk-form-item>
       <!-- 热数据\冷热集群存储期限 -->
       <bk-form-item :label="$t('热数据')" class="hot-data-form-item">
         <bk-select
@@ -227,11 +235,13 @@ export default {
         fields: [],
         view_roles: [],
         retention: '',
+        storage_replies: 1,
         allocation_min_days: '0',
         storage_cluster_id: '',
       },
       selectedStorageCluster: {}, // 选择的es集群
       retentionDaysList: [], // 过期天数列表
+      coypNumberList: [0, 1, 2, 3], // 副本数列表
       customRetentionDay: '', // 自定义过期天数
       hotDataDaysList: [], // 冷热集群存储期限列表
       customHotDataDay: '', // 自定义冷热集群存储期限天数
@@ -448,6 +458,7 @@ export default {
         table_id,
         storage_cluster_id,
         retention,
+        storage_replies,
         allocation_min_days,
         view_roles,
         fields,
@@ -459,6 +470,7 @@ export default {
         table_id,
         storage_cluster_id,
         retention: Number(retention),
+        storage_replies,
         allocation_min_days: Number(allocation_min_days),
         view_roles,
         etl_params: {
@@ -593,6 +605,7 @@ export default {
         table_id,
         storage_cluster_id,
         retention,
+        storage_replies,
         allocation_min_days,
         table_id_prefix,
         view_roles,
@@ -640,6 +653,7 @@ export default {
                     }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
         fields: copyFields.filter(item => !item.is_built_in),
         retention: retention ? `${retention}` : this.defaultRetention,
+        storage_replies,
         // eslint-disable-next-line camelcase
         allocation_min_days: allocation_min_days ? `${allocation_min_days}` : '0',
         view_roles,
