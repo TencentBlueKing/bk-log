@@ -23,6 +23,7 @@ import time
 from collections import defaultdict
 from functools import partial
 
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import CCApi
@@ -211,9 +212,11 @@ class GrafanaQueryHandler:
         return index_set_id in valid_index_set_ids
 
     def check_panel_permission(self, dashboard_id, panel_id, index_set_id):
-        is_valid = self.validate_panel_config(dashboard_id, panel_id, index_set_id)
-        if is_valid:
-            return True
+        # api module not validate
+        if not settings.BKAPP_IS_BKLOG_API:
+            is_valid = self.validate_panel_config(dashboard_id, panel_id, index_set_id)
+            if is_valid:
+                return True
 
         # 如果视图校验不通过，则检查用户是否有索引集的检索权限
         perm = Permission()
