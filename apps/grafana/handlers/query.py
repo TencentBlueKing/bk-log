@@ -23,6 +23,7 @@ import time
 from collections import defaultdict
 from functools import partial
 
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import CCApi
@@ -39,6 +40,7 @@ from bk_dataview.grafana import client
 
 
 class GrafanaQueryHandler:
+    MINUTE_SECOND = 60
 
     AGG_METHOD_CHOICES = [
         {"id": "value_count", "name": "COUNT"},
@@ -74,7 +76,7 @@ class GrafanaQueryHandler:
         # datetime aggregation
         aggragations = {
             time_field: {
-                "date_histogram": {"field": time_field, "interval": f"{interval // 60}m"},
+                "date_histogram": {"field": time_field, "interval": self._parse_interval(interval)},
                 "aggregations": {metric_field: {agg_method: {"field": metric_field}}},
             },
         }
@@ -86,6 +88,11 @@ class GrafanaQueryHandler:
             aggragations = _aggs
 
         return aggragations
+
+    def _parse_interval(self, interval):
+        if interval % self.MINUTE_SECOND != 0:
+            return f"{interval}s"
+        return f"{interval // self.MINUTE_SECOND}m"
 
     def _get_buckets(self, records, record, dimensions, aggregations, metric_field, depth=0):
         """
@@ -205,9 +212,11 @@ class GrafanaQueryHandler:
         return index_set_id in valid_index_set_ids
 
     def check_panel_permission(self, dashboard_id, panel_id, index_set_id):
-        is_valid = self.validate_panel_config(dashboard_id, panel_id, index_set_id)
-        if is_valid:
-            return True
+        # api module not validate
+        if not settings.BKAPP_IS_BKLOG_API:
+            is_valid = self.validate_panel_config(dashboard_id, panel_id, index_set_id)
+            if is_valid:
+                return True
 
         # 如果视图校验不通过，则检查用户是否有索引集的检索权限
         perm = Permission()
