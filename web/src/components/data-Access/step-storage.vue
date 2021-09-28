@@ -107,6 +107,20 @@
           </div>
         </bk-select>
       </bk-form-item>
+      <!-- 副本数 -->
+      <bk-form-item :label="$t('configDetails.copyNumber')">
+        <bk-input
+          :max="3"
+          :min="0"
+          :precision="0"
+          v-model="formData.storage_replies"
+          style="width:100px;"
+          type="number"
+          :clearable="false"
+          :show-controls="true"
+          @blur="changeCopyNumber"
+        ></bk-input>
+      </bk-form-item>
       <!-- 热数据\冷热集群存储期限 -->
       <bk-form-item :label="$t('热数据')" class="hot-data-form-item">
         <bk-select
@@ -227,6 +241,7 @@ export default {
         fields: [],
         view_roles: [],
         retention: '',
+        storage_replies: 1,
         allocation_min_days: '0',
         storage_cluster_id: '',
       },
@@ -448,6 +463,7 @@ export default {
         table_id,
         storage_cluster_id,
         retention,
+        storage_replies,
         allocation_min_days,
         view_roles,
         fields,
@@ -459,6 +475,7 @@ export default {
         table_id,
         storage_cluster_id,
         retention: Number(retention),
+        storage_replies: Number(storage_replies),
         allocation_min_days: Number(allocation_min_days),
         view_roles,
         etl_params: {
@@ -548,6 +565,10 @@ export default {
         this.messageError(this.$t('请输入有效数值'));
       }
     },
+    // 输入自定义副本数
+    changeCopyNumber(val) {
+      val === '' && (this.formData.storage_replies = 1);
+    },
     // 跳转到 es 源
     jumpToEsAccess() {
       window.open(this.$router.resolve({
@@ -593,6 +614,7 @@ export default {
         table_id,
         storage_cluster_id,
         retention,
+        storage_replies,
         allocation_min_days,
         table_id_prefix,
         view_roles,
@@ -640,6 +662,7 @@ export default {
                     }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
         fields: copyFields.filter(item => !item.is_built_in),
         retention: retention ? `${retention}` : this.defaultRetention,
+        storage_replies,
         // eslint-disable-next-line camelcase
         allocation_min_days: allocation_min_days ? `${allocation_min_days}` : '0',
         view_roles,

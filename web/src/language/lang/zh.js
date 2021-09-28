@@ -784,6 +784,7 @@ export default {
     filterContent: '过滤内容',
     StorageCluster: '存储集群',
     expirationTime: '过期时间',
+    copyNumber: '副本数',
     the: '第',
     column: '列',
     day: '天',
