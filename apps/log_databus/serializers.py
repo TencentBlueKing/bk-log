@@ -461,7 +461,9 @@ class CollectorEtlStorageSerializer(serializers.Serializer):
     storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=True)
     retention = serializers.IntegerField(label=_("有效时间"), required=True)
     allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=True)
-    storage_replies = serializers.IntegerField(label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS)
+    storage_replies = serializers.IntegerField(
+        label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
+    )
     view_roles = serializers.ListField(label=_("查看权限"), required=False, default=[])
 
     def validate(self, attrs):
