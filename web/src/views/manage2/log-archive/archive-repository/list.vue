@@ -26,9 +26,6 @@
       <bk-button
         class="fl"
         theme="primary"
-        v-cursor="{ active: isAllowedManage === false }"
-        :disabled="isAllowedManage === null"
-        :loading="isButtonLoading"
         @click="handleCreate">
         {{ $t('新建') }}
       </bk-button>
@@ -143,11 +140,9 @@ export default {
   },
   data() {
     return {
-      isAllowedManage: null,
       isTableLoading: false,
       isRenderSlider: true,
       showSlider: false,
-      isButtonLoading: false,
       keyword: '',
       editClusterId: null, // 编辑ES源ID,
       dataList: [],
@@ -199,24 +194,9 @@ export default {
     },
   },
   created() {
-    this.checkManageAuth();
     this.getTableData();
   },
   methods: {
-    async checkManageAuth() {
-      try {
-        const res = await this.$store.dispatch('checkAllowed', {
-          action_ids: ['manage_es_source'],
-          resources: [{
-            type: 'biz',
-            id: this.bkBizId,
-          }],
-        });
-        this.isAllowedManage = res.isAllowed;
-      } catch (err) {
-        this.isAllowedManage = false;
-      }
-    },
     handleSearch() {
       if (this.params.keyword) {
         this.tableDataSearched = this.tableDataOrigin.filter((item) => {
@@ -274,25 +254,6 @@ export default {
       this.computePageData();
     },
     async handleCreate() {
-      if (!this.isAllowedManage) {
-        try {
-          this.isButtonLoading = true;
-          const res = await this.$store.dispatch('getApplyData', {
-            action_ids: ['manage_es_source'],
-            resources: [{
-              type: 'biz',
-              id: this.bkBizId,
-            }],
-          });
-          this.$store.commit('updateAuthDialogData', res.data);
-        } catch (err) {
-          console.warn(err);
-        } finally {
-          this.isButtonLoading = false;
-        }
-        return;
-      }
-
       this.editClusterId = null;
       this.showSlider = true;
     },
