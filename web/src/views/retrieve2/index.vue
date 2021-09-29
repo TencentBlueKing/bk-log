@@ -434,13 +434,17 @@ export default {
       this.$store.commit('updateIndexId', val);
       val && this.requestSearchHistory(val);
     },
-    projectId() {
-      this.indexId = '';
-      this.indexSetList.splice(0);
-      this.favoriteList.splice(0);
-      this.totalFields.splice(0);
-      this.retrieveParams.bk_biz_id = this.bkBizId;
-      this.fetchPageData();
+    projectId: {
+      handler() {
+        this.indexId = '';
+        this.requestFavoriteList();
+        this.indexSetList.splice(0);
+        this.favoriteList.splice(0);
+        this.totalFields.splice(0);
+        this.retrieveParams.bk_biz_id = this.bkBizId;
+        this.fetchPageData();
+      },
+      immediate: true,
     },
     isSearchAllowed(val) {
       if (val && this.isRetrieveHome) {
@@ -657,7 +661,6 @@ export default {
             }
           }
           this.isNoIndexSet = false;
-          this.requestFavoriteList();
         } else { // 无索引集
           this.isRetrieveHome = false;
           this.isNoIndexSet = true;
