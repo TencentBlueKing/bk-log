@@ -1432,12 +1432,8 @@ export default {
 
             &.is-selected{
               background: #ffffff;
-              border: 1px solid #c4c6cc;
-              border-bottom: 1px solid #f6f6f6;
-            }
-
-            &:hover{
-              border: 1px solid #c4c6cc;
+              border-top: none;
+              border-bottom: none;
             }
           }
         }

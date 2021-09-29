@@ -102,7 +102,6 @@
         <!-- 显示字段 -->
         <template v-for="(field,index) in visibleFields">
           <bk-table-column
-            type="index"
             align="left"
             :key="field.field_name"
             :min-width="field.minWidth"
