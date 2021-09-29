@@ -20,6 +20,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import copy
 import json
 
+from blueapps.middleware.xss.decorators import escape_exempt
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -88,6 +89,8 @@ class GrafanaProxyView(ProxyView):
         return response
 
 
+@method_decorator(escape_exempt, name="dispatch")
+@method_decorator(csrf_exempt, name="dispatch")
 class GrafanaTraceViewSet(APIViewSet):
     lookup_field = "index_set_id"
 
@@ -136,7 +139,7 @@ class GrafanaViewSet(APIViewSet):
     def get_permissions(self):
         if settings.BKAPP_IS_BKLOG_API:
             # 只在后台部署时做白名单校验
-            auth_info = JwtPermission.get_auth_info(self.request, raise_exception=False)
+            auth_info = JwtPermission.get_auth_info(self.request)
             # ESQUERY白名单不需要鉴权
             if auth_info and auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
                 return []
