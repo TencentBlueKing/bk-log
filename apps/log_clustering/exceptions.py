@@ -19,26 +19,29 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.utils.translation import ugettext_lazy as _
 
-from apps.api.base import DataDRFAPISet, DRFActionAPI
-from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user
-from config.domains import META_APIGATEWAY_ROOT
+from apps.exceptions import BaseException, ErrorCode
 
 
-class _BkDataMetaApi:
+# =================================================
+# 日志聚类模块
+# =================================================
 
-    MODULE = _("计算平台元数据模块")
 
-    def __init__(self):
-        self.result_tables = DataDRFAPISet(
-            url=META_APIGATEWAY_ROOT + "result_tables/",
-            module=self.MODULE,
-            primary_key="result_table_id",
-            description=u"结果表操作",
-            default_return_value=None,
-            before_request=add_esb_info_before_request_for_bkdata_user,
-            custom_config={
-                "storages": DRFActionAPI(method="GET"),
-                "mine": DRFActionAPI(method="GET", detail=False),
-                "fields": DRFActionAPI(method="GET"),
-            },
-        )
+class BaseClusteringException(BaseException):
+    MODULE_CODE = ErrorCode.BKLOG_CLUSTERING
+    MESSAGE = _("日志聚类模块异常")
+
+
+class ClusteringClosedException(BaseClusteringException):
+    ERROR_CODE = "001"
+    MESSAGE = _("聚类未开放")
+
+
+class NodeConfigException(BaseClusteringException):
+    ERROR_CODE = "002"
+    MESSAGE = _("获取node config异常{steps}")
+
+
+class NotSupportStepNameQueryException(BaseClusteringException):
+    ERROR_CODE = "003"
+    MESSAGE = _("不支持的step_name状态获取: {step_name}")

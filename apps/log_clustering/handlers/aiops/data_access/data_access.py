@@ -17,28 +17,16 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.utils.translation import ugettext_lazy as _
-
-from apps.api.base import DataDRFAPISet, DRFActionAPI
-from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user
-from config.domains import META_APIGATEWAY_ROOT
+from apps.api import BkDataDatabusApi, BkDataMetaApi
 
 
-class _BkDataMetaApi:
+class DataAccessHandler(object):
+    def __init__(self, raw_data_id: int):
+        self.raw_data_id = raw_data_id
 
-    MODULE = _("计算平台元数据模块")
+    def get_deploy_plan(self):
+        return BkDataDatabusApi.get_config_db_list(params={"raw_data_id": self.raw_data_id})
 
-    def __init__(self):
-        self.result_tables = DataDRFAPISet(
-            url=META_APIGATEWAY_ROOT + "result_tables/",
-            module=self.MODULE,
-            primary_key="result_table_id",
-            description=u"结果表操作",
-            default_return_value=None,
-            before_request=add_esb_info_before_request_for_bkdata_user,
-            custom_config={
-                "storages": DRFActionAPI(method="GET"),
-                "mine": DRFActionAPI(method="GET", detail=False),
-                "fields": DRFActionAPI(method="GET"),
-            },
-        )
+    @classmethod
+    def get_fields(cls, result_table_id: str):
+        return BkDataMetaApi.result_tables.fields({"result_table_id": result_table_id})

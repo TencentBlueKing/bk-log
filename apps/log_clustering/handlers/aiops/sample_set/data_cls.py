@@ -26,13 +26,13 @@ from typing import Dict, List, Any
 class CreateSampleSetCls(object):
     """创建样本集"""
 
-    scene_name: str
-    sample_type: str
     project_id: int
     sample_set_name: str
     description: str
     processing_cluster_id: int
     storage_cluster_id: int
+    scene_name: str = "custom"
+    sample_type: str = "timeseries"
     ts_freq: int = 0
     sensitivity: str = "private"
     modeling_type: str = "aiops"
@@ -43,12 +43,12 @@ class FieldsCls(object):
     field_name: str
     field_type: str
     field_alias: str
-    generate_type: str
     rt_field_name: str
-    require_type: str
     attr_type: str
     field_index: int
     description: str
+    generate_type: str = "origin"
+    require_type: str = "require_type"
     properties: Dict = field(default_factory=dict)
 
 
@@ -61,6 +61,7 @@ class AddResultTableToSampleSetCls(object):
     sample_set_id: int
     result_table_id: str
     fields: List[FieldsCls]
+    project_id: int
     group_curve: bool = False
     group_fields: List[str] = field(default_factory=list)
     select_all_lines: bool = False
@@ -80,8 +81,14 @@ class AutoCollectRemoveConfigCls(object):
 
 
 @dataclass
-class AutoCollectConfigCls(object):
+class AutoCollectCollectConfigConfigCls(object):
     remove_config: List[AutoCollectRemoveConfigCls]
+    append_config: List[str] = field(default_factory=list)
+
+
+@dataclass
+class AutoCollectCollectConfigCls(object):
+    config: AutoCollectCollectConfigConfigCls
     auto_remove: bool = False
     auto_append: bool = True
 
@@ -95,7 +102,7 @@ class AutoCollectCls(object):
     result_table_id: str
     sample_set_id: int
     project_id: int
-    config: AutoCollectConfigCls
+    collect_config: AutoCollectCollectConfigCls
     apply_type: Any = None
 
 
@@ -115,13 +122,15 @@ class SubmitStatusCls(object):
     查询提交后的执行状态
     """
 
+    sample_set_id: int
     project_id: int
 
 
 @dataclass
-class DeleteSampleSet(object):
+class DeleteSampleSetCls(object):
     """
     删除样本集
     """
 
+    sample_set_id: int
     project_id: int

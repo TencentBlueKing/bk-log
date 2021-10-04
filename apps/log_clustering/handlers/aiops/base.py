@@ -17,28 +17,24 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.utils.translation import ugettext_lazy as _
+from dataclasses import asdict
 
-from apps.api.base import DataDRFAPISet, DRFActionAPI
-from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user
-from config.domains import META_APIGATEWAY_ROOT
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
+from apps.log_clustering.exceptions import ClusteringClosedException
 
 
-class _BkDataMetaApi:
-
-    MODULE = _("计算平台元数据模块")
-
+class BaseAiopsHandler(object):
     def __init__(self):
-        self.result_tables = DataDRFAPISet(
-            url=META_APIGATEWAY_ROOT + "result_tables/",
-            module=self.MODULE,
-            primary_key="result_table_id",
-            description=u"结果表操作",
-            default_return_value=None,
-            before_request=add_esb_info_before_request_for_bkdata_user,
-            custom_config={
-                "storages": DRFActionAPI(method="GET"),
-                "mine": DRFActionAPI(method="GET", detail=False),
-                "fields": DRFActionAPI(method="GET"),
-            },
-        )
+        if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
+            raise ClusteringClosedException()
+        self.conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
+
+    def _set_username(self, request_data_cls, bk_username: str = ""):
+        request_dict = asdict(request_data_cls)
+        print(request_dict)
+        if bk_username:
+            request_dict["bk_username"] = bk_username
+            return request_dict
+        request_dict["bk_username"] = self.conf.get("bk_username")
+        return request_dict

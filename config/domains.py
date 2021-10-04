@@ -55,6 +55,8 @@ API_ROOTS = [
     "AIOPS_APIGATEWAY_ROOT",
     # DATAFLOW
     "DATAFLOW_APIGATEWAY_ROOT",
+    # AIOPS modules
+    "AIOPS_MODULE_APIGATEWAY_ROOT",
 ]
 
 env_domains = load_domains(settings)

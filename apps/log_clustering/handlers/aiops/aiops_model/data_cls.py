@@ -49,6 +49,7 @@ class CreateExperimentsCls(object):
     project_id: int
     template_id: str
     experiment_alias: str
+    model_id: str
     experiment_training: bool = True
     continuous_training: bool = True
     protocol_version: str = "1.2"
@@ -61,6 +62,8 @@ class GetExperimentsConfigCls(object):
     """
 
     project_id: int
+    model_id: str
+    experiment_id: int
     protocol_version: str = "1.1"
 
 
@@ -91,6 +94,14 @@ class SessionAgentCls(object):
 
 
 @dataclass
+class SessionServerCls(object):
+    worker_nums: int = 1
+    worker_group: str = "default"
+    core: int = 2
+    memory: int = 2048
+
+
+@dataclass
 class PartitionNumberConfigCls(object):
     partition_number: int = 8
 
@@ -111,6 +122,7 @@ class ChunkedReadSampleSet(object):
 class PipelineResourcesCls(object):
     python_backend: PythonBackendCls
     session_agent: SessionAgentCls = SessionAgentCls()
+    session_server: SessionServerCls = SessionServerCls()
 
 
 @dataclass
@@ -126,9 +138,9 @@ class UpdateExecuteConfigCls(object):
     编辑实验metadata配置
     """
 
-    table_name: str
-    filter_id: str
+    filter_id: int
     execute_config: ExecuteConfigCls
+    table_name: str = "model_experiment"
 
 
 @dataclass
@@ -197,8 +209,16 @@ class NodeConfigCls(object):
 
 
 @dataclass
-class SamplePreparationContentNodeConfigCls(object):
+class SampleLoadingContentNodeConfigCls(object):
     sample_set_id: NodeConfigCls
+    data_sampling: NodeConfigCls
+    sampling_time_range: NodeConfigCls
+    sampling_conditions: NodeConfigCls
+    sampling_func: NodeConfigCls
+
+
+@dataclass
+class SamplePreparationContentNodeConfigCls(object):
     data_split: NodeConfigCls
     split_func: NodeConfigCls
     group_enable: NodeConfigCls
@@ -225,6 +245,30 @@ class ModelTrainContentNodeConfigCls(object):
 class ModelEvaluationContentNodeConfigCls(object):
     algorithm_node_id: NodeConfigCls
     evaluation_func: NodeConfigCls
+
+
+@dataclass
+class SampleLoadingContentAlgorithmConfigCls(object):
+    sample_set_table_name: Any = None
+    sample_set_table_desc: Any = None
+    feature_columns: List[str] = field(default_factory=list)
+    add_on_input: List[str] = field(default_factory=list)
+    label_columns: List[str] = field(default_factory=list)
+    training_output: List[str] = field(default_factory=list)
+    predict_output: List[str] = field(default_factory=list)
+    training_args: List[str] = field(default_factory=list)
+    predict_args: List[str] = field(default_factory=list)
+    split_args: List[str] = field(default_factory=list)
+    sampling_args: List[str] = field(default_factory=list)
+    evaluate_args: List[str] = field(default_factory=list)
+    optimize_args: List[str] = field(default_factory=list)
+    timestamp_columns: List[str] = field(default_factory=list)
+    predicted_columns: List[str] = field(default_factory=list)
+    evaluate_output: List[str] = field(default_factory=list)
+    feature_columns_changeable: bool = False
+    algorithm_properties: Dict = field(default_factory=dict)
+    data_split: bool = False
+    ts_depend: str = "0d"
 
 
 @dataclass
@@ -291,28 +335,36 @@ class AlgorithmConfigConfCls(object):
     ]
     description: Any
     used_by: str
-    origin: list[str] = field(default_factory=list)
+    origin: List[str] = field(default_factory=list)
     allowed_values: List[str] = field(default_factory=list)
 
 
 @dataclass
 class ModelTrainContentAlgorithmConfigCls(object):
+    sample_set_table_name: Any
+    sample_set_table_desc: Any
     feature_columns: List[AlgorithmConfigConfCls]
     predict_output: List[AlgorithmConfigConfCls]
     training_args: List[AlgorithmConfigConfCls]
-    feature_columns_changeable: bool
-    data_split: bool
-    ts_depend: str
+    basic_model_id: str
+    add_on_input: List[str] = field(default_factory=list)
     label_columns: List[str] = field(default_factory=list)
     training_output: List[str] = field(default_factory=list)
     predict_args: List[str] = field(default_factory=list)
     split_args: List[str] = field(default_factory=list)
+    sampling_args: List[str] = field(default_factory=list)
     evaluate_args: List[str] = field(default_factory=list)
     optimize_args: List[str] = field(default_factory=list)
     timestamp_columns: List[str] = field(default_factory=list)
     predicted_columns: List[str] = field(default_factory=list)
     evaluate_output: List[str] = field(default_factory=list)
-    algorithm_properties: List[str] = field(default_factory=list)
+    feature_columns_changeable: bool = True
+    algorithm_properties: Dict = field(default_factory=dict)
+    data_split: bool = False
+    ts_depend: str = "0d"
+    run_env: str = "python"
+    active: bool = True
+    sample_set_table_alias: Any = None
 
 
 @dataclass
@@ -348,9 +400,13 @@ class ModelEvaluationContentAlgorithmConfigCls(object):
 @dataclass
 class ContentCls(object):
     node_config: Union[
-        SamplePreparationContentNodeConfigCls, ModelTrainContentNodeConfigCls, ModelEvaluationContentNodeConfigCls
+        SampleLoadingContentNodeConfigCls,
+        SamplePreparationContentNodeConfigCls,
+        ModelTrainContentNodeConfigCls,
+        ModelEvaluationContentNodeConfigCls,
     ]
     algorithm_config: Union[
+        SampleLoadingContentAlgorithmConfigCls,
         SamplePreparationContentAlgorithmConfigCls,
         ModelTrainContentAlgorithmConfigCls,
         ModelEvaluationContentAlgorithmConfigCls,
@@ -381,20 +437,27 @@ class NodeCls(object):
 
 
 @dataclass
+class SampleLoadingCls(object):
+    model_id: str
+    experiment_id: int
+    model_experiment_id: int
+    nodes: List[NodeCls]
+    pipeline_mode: Any = None
+    step_name: str = "sample_loading"
+
+
+@dataclass
 class SamplePreparationCls(object):
     """
     执行样本切分
     """
 
     model_id: str
+    experiment_id: int
     model_experiment_id: int
     nodes: List[NodeCls]
+    pipeline_mode: Any = None
     step_name: str = "sample_preparation"
-
-
-@dataclass
-class ExecuteStatusFilterExtraCls(object):
-    offset: int
 
 
 @dataclass
@@ -403,11 +466,10 @@ class ExecuteStatusCls(object):
     获取切分步骤状态
     """
 
+    step_name: str
     model_id: str
-    model_experiment_id: int
+    experiment_id: int
     node_id_list: List[str]
-    filter_extra: ExecuteStatusFilterExtraCls
-    step_name: str = "sample_preparation"
 
 
 @dataclass
@@ -417,8 +479,10 @@ class ModelTrainCls(object):
     """
 
     model_id: str
+    experiment_id: int
     model_experiment_id: int
     nodes: List[NodeCls]
+    pipeline_mode: Any = None
     step_name: str = "model_train"
 
 
@@ -482,10 +546,20 @@ class ModelTrainTrainingStatusCls(object):
 
     model_id: str
     experiment_id: int
-    order: str
-    order_type: Any
     project_id: int
+    order: str = "algorithm_alias"
+    order_type: Any = None
     filter_extra: Dict = field(default_factory=dict)
+
+
+@dataclass
+class AiopsGetCostumAlgorithm(object):
+    """
+    获取单个自定义算法
+    """
+
+    algorithm_name: str
+    project_id: int
 
 
 @dataclass
@@ -494,9 +568,11 @@ class ModelEvaluationCls(object):
     模型评估
     """
 
-    model_experiment_id: str
+    model_experiment_id: int
     model_id: str
+    experiment_id: int
     nodes: List[NodeCls]
+    pipeline_mode: Any = None
     step_name: str = "model_evaluation"
 
 
@@ -508,11 +584,11 @@ class EvaluationStatusCls(object):
 
     project_id: int
     model_id: str
-    experiment_id: str
-    order_type: Any
-    order: str
+    experiment_id: int
     filter_extra: dict
-    experiment_instance_id: Any
+    order: str = "algorithm_alias"
+    order_type: Any = None
+    experiment_instance_id: Any = None
 
 
 @dataclass
@@ -523,10 +599,10 @@ class EvaluationResultCls(object):
 
     project_id: int
     model_id: str
-    experiment_id: str
+    experiment_id: int
     basic_model_id: str
-    filter_extra: dict
-    experiment_instance_id: Any
+    filter_extra: Dict = field(default_factory=dict)
+    experiment_instance_id: Any = None
 
 
 @dataclass
