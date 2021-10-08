@@ -196,7 +196,7 @@ class CustomReporter(object):
                 {
                     "data_id": monitor_report_config.data_id,
                     "access_token": monitor_report_config.access_token,
-                    "data": event,
+                    "data": [event],
                 }
             )
         except Exception as e:  # pylint: disable=broad-except
