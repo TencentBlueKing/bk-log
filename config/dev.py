@@ -70,7 +70,7 @@ GRAFANA = {
     "HOST": os.getenv("BKAPP_GRAFANA_URL", ""),
     "PREFIX": "{}grafana/".format(os.getenv("BKAPP_GRAFANA_PREFIX", SITE_URL)),
     "ADMIN": (os.getenv("BKAPP_GRAFANA_ADMIN_USERNAME", "admin"), os.getenv("BKAPP_GRAFANA_ADMIN_PASSWORD", "admin")),
-    "PROVISIONING_CLASSES": ["apps.grafana.provisioning.Provisioning"],
+    "PROVISIONING_CLASSES": ["apps.grafana.provisioning.Provisioning", "apps.grafana.provisioning.TraceProvisioning"],
     "PERMISSION_CLASSES": ["apps.grafana.permissions.BizPermission"],
 }
 

@@ -76,6 +76,7 @@ export default {
   // 检索页
   日志检索: 'Log Retrieve',
   指标检索: 'Index Retrieve',
+  事件检索: 'Event Retrieve',
   数据查询: 'Data Query',
   是否开启自动查询: 'Whether to open auto query',
   知道了: 'Got it',
@@ -783,6 +784,7 @@ export default {
     filterContent: 'Filter',
     StorageCluster: 'Storage',
     expirationTime: 'Expire',
+    copyNumber: 'Copy',
     the: 'The',
     column: 'Column',
     day: 'day',

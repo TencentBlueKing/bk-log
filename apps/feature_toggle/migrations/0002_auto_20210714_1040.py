@@ -50,7 +50,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('feature_toggle', '0001_initial'),
+        ("feature_toggle", "0001_initial"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]

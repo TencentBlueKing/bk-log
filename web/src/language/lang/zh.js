@@ -76,6 +76,7 @@ export default {
   // 检索页
   日志检索: '日志检索',
   指标检索: '指标检索',
+  事件检索: '事件检索',
   数据查询: '数据查询',
   是否开启自动查询: '是否开启自动查询',
   知道了: '知道了',
@@ -783,6 +784,7 @@ export default {
     filterContent: '过滤内容',
     StorageCluster: '存储集群',
     expirationTime: '过期时间',
+    copyNumber: '副本数',
     the: '第',
     column: '列',
     day: '天',

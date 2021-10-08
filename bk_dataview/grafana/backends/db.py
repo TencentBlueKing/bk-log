@@ -30,7 +30,7 @@ class DBHandler(BaseHandler):
     def handle_org(self, request, org_name: str, username: str):
         pass
 
-    def handle_datasources(self, request, org_name: str, org_id: int, ds_list: int):
+    def handle_datasources(self, request, org_name: str, org_id: int, ds_list: int, provisioning):
         created = list(
             models.DataSource.objects.filter(org_id=org_id, name__in=[ds.name for ds in ds_list]).values_list(
                 "name", flat=True

@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from collections import defaultdict
 from typing import List
 
 import arrow
@@ -27,10 +28,26 @@ from apps.log_trace.handlers.proto.proto import Proto
 
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.utils.local import get_local_param
+from apps.utils.time_handler import generate_time_range
+
+OTLP_JAEGER_SPAN_KIND = {2: "server", 3: "client", 4: "producer", 5: "consumer", 1: "internal", 0: "unset"}
+
+OTLP_ERROR_STATUS_CODE = 2
 
 
 class OtlpTrace(Proto):
     TYPE = TraceProto.OTLP.value
+    SERVICE_NAME_FIELD = "resource.service.name"
+    OPERATION_NAME_FIELD = "span_name"
+    TRACE_ID_FIELD = "trace_id"
+    TAGS_FIELD = "attributes"
+    TRACES_ADDITIONS = {"operation": "span_name", "service": "resource.service.name"}
+    TRACES_ADDITIONS = {
+        "operation": {"method": "is", "field": "span_name"},
+        "service": {"method": "is", "field": "resource.service.name"},
+        "minDuration": {"method": "gte", "field": "elapsed_time"},
+        "maxDuration": {"method": "lte", "field": "elapsed_time"},
+    }
 
     TRACE_PLAN = {
         "trace_type": "otlp",
@@ -66,16 +83,7 @@ class OtlpTrace(Proto):
                 "tips": "0",
             },
         ],
-        "charts": [
-            {
-                "chart_alias": "line",
-                "chart_name": _("曲线图"),
-                "field_name": "attributes.result_code",
-                "show_type": None,
-                "display": True,
-                "tips": _("返回码"),
-            }
-        ],
+        "charts": [],
         "chart_tree": {
             "chart_name": _("调用关系图"),
             "display_field": "span_name",
@@ -222,3 +230,107 @@ class OtlpTrace(Proto):
 
     def scatter(self, index_set_id: int, data: dict):
         pass
+
+    def traces(self, index_set_id, params):
+        result = super(OtlpTrace, self).traces(index_set_id, params)
+        trace_ids = [trace["trace_id"] for trace in result.get("list", [])]
+        if not trace_ids:
+            return []
+        search_dict = {
+            "start_time": params["start"] / 1000000,
+            "end_time": params["end"] / 1000000,
+            "addition": [
+                {
+                    "key": "trace_id",
+                    "method": "is one of",
+                    "value": ",".join(trace_ids),
+                    "condition": "and",
+                    "type": "field",
+                }
+            ],
+            "begin": 0,
+            "size": 9999,
+            "keyword": "*",
+            "time_range": "customized",
+        }
+        result = SearchHandlerEsquery(index_set_id, search_dict).search()
+        return self._transform_to_jaeger(result.get("list", []))
+
+    def _transform_to_jaeger(self, spans):
+        jaeger_traces = defaultdict(lambda: {"spans": [], "traceID": ""})
+        resources = defaultdict(list)
+        processes = defaultdict(dict)
+        for span in spans:
+            trace_id = span["trace_id"]
+            process_id = ""
+            for index, resource in enumerate(resources[trace_id], 1):
+                if span["resource"] == resource:
+                    process_id = f"p{index}"
+                    break
+            if process_id == "":
+                resources[trace_id].append(span["resource"])
+                index = len(resources[trace_id])
+                processes[trace_id][f"p{index}"] = {
+                    "serviceName": span["resource"].get("service.name", "unknown service"),
+                    "tags": self._transform_to_tags(span["resource"]),
+                }
+                process_id = f"p{index}"
+
+            jaeger_traces[span["trace_id"]]["traceID"] = span["trace_id"]
+            jaeger_traces[span["trace_id"]]["spans"].append(
+                {
+                    "traceID": span["trace_id"],
+                    "spanID": span["span_id"],
+                    "duration": span["elapsed_time"],
+                    "references": self._transform_to_refs(span),
+                    "flags": 0,
+                    "logs": self._transform_to_logs(span["events"]),
+                    "operationName": span["span_name"],
+                    "startTime": span["start_time"],
+                    "tags": self._transform_to_tags(span["attributes"])
+                    + [{"key": "span.kind", "type": "string", "value": OTLP_JAEGER_SPAN_KIND[span["kind"]]}]
+                    + self._transform_to_status(span.get("status", {})),
+                    "processID": process_id,
+                },
+            )
+        return [{**trace, "processes": processes[trace_id]} for trace_id, trace in jaeger_traces.items()]
+
+    def _transform_to_refs(self, span) -> list:
+        refs = []
+        if span["parent_span_id"]:
+            refs.append({"refType": "CHILD_OF", "spanID": span["parent_span_id"], "traceID": span["trace_id"]})
+        for link in span.get("links", []):
+            refs.append({"refType": "FOLLOWS_FROM", "traceID": link["trace_id"], "spanID": link["span_id"]})
+        return refs
+
+    def _transform_to_status(self, status):
+        if status.get("code") == OTLP_ERROR_STATUS_CODE:
+            return [{"key": "error", "type": "string", "value": True}]
+        return []
+
+    def _transform_to_tags(self, attributes):
+        return [{"key": key, "value": value, "type": "string"} for key, value in attributes.items()]
+
+    def _transform_to_logs(self, events):
+        return [
+            {
+                "timestamp": event["timestamp"] / 1000,
+                "fields": self._transform_to_tags({**event["attributes"], "message": event["name"]}),
+            }
+            for event in events
+        ]
+
+    def trace_detail(self, index_set_id, trace_id):
+        start_time, end_time = generate_time_range("36m", "", "", get_local_param("time_zone"))
+        search_dict = {
+            "start_time": start_time.timestamp,
+            "end_time": end_time.timestamp,
+            "addition": [{"key": "trace_id", "method": "is", "value": trace_id, "condition": "and", "type": "field"}],
+            "begin": 0,
+            "size": 9999,
+            "keyword": "*",
+            "time_range": "customized",
+        }
+
+        result = SearchHandlerEsquery(index_set_id, search_dict).search()
+        return self._transform_to_jaeger(result.get("list", []))

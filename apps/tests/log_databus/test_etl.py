@@ -420,6 +420,7 @@ class TestEtl(TestCase):
             storage_cluster_id=STORAGE_CLUSTER_ID,
             retention=RETENTION_TIME,
             allocation_min_days=ALLOCATION_MIN_DAYS,
+            storage_replies=1,
             fields=FIELDS,
             etl_params=ETL_PARAMS,
             hot_warm_config=HOT_WARM_CONFIG,
@@ -452,6 +453,7 @@ class TestEtl(TestCase):
             storage_cluster_id=STORAGE_CLUSTER_ID,
             retention=RETENTION_TIME,
             allocation_min_days=ALLOCATION_MIN_DAYS,
+            storage_replies=1,
             fields=FIELDS,
             etl_params=ETL_PARAMS_JSON,
             hot_warm_config=HOT_WARM_CONFIG,
@@ -520,6 +522,7 @@ class TestEtl(TestCase):
             retention=RETENTION_TIME,
             allocation_min_days=ALLOCATION_MIN_DAYS,
             fields=FIELDS_REGEXP,
+            storage_replies=1,
             etl_params=ETL_PARAMS_REGEXP,
             hot_warm_config=HOT_WARM_CONFIG,
         )
@@ -573,6 +576,7 @@ class TestEtl(TestCase):
             retention=RETENTION_TIME,
             allocation_min_days=ALLOCATION_MIN_DAYS,
             fields=FIELDS_DELIMITER,
+            storage_replies=1,
             etl_params=ETL_PARAMS_DELIMITER,
             hot_warm_config=HOT_WARM_CONFIG,
         )
