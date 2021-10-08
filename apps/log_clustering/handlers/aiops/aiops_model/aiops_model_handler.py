@@ -18,10 +18,14 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import base64
-from typing import List
+from typing import List, Dict
 
 from apps.api import BkDataAIOPSApi
-from apps.log_clustering.exceptions import NodeConfigException, NotSupportStepNameQueryException
+from apps.log_clustering.exceptions import (
+    NodeConfigException,
+    NotSupportStepNameQueryException,
+    EvaluationStatusResponseException,
+)
 from apps.log_clustering.handlers.aiops.aiops_model.constants import (
     StepName,
     TRAINING_INPUT_VALUE,
@@ -60,6 +64,10 @@ from apps.log_clustering.handlers.aiops.aiops_model.data_cls import (
     ModelEvaluationContentNodeConfigCls,
     EvaluationStatusCls,
     EvaluationResultCls,
+    PreCommitCls,
+    CommitCls,
+    ReleaseConfigCls,
+    ReleaseCls,
 )
 
 
@@ -782,6 +790,11 @@ class AiopsModelHandler(BaseAiopsHandler):
         return BkDataAIOPSApi.aiops_get_costum_algorithm(request_dict)
 
     def model_evaluation(self, model_id: str, experiment_id: int):
+        """
+        模型评估
+        @param model_id 模型id
+        @param experiment_id 实验id
+        """
         experiment_config = self.get_experiments_config(model_id=model_id, experiment_id=experiment_id)
         if not experiment_config["steps"]["model_evaluation"]["node"]:
             raise NodeConfigException(NodeConfigException.MESSAGE.format(steps="model_evaluation"))
@@ -855,6 +868,11 @@ class AiopsModelHandler(BaseAiopsHandler):
         return BkDataAIOPSApi.execute_experiments(request_dict)
 
     def basic_models_evaluation_status(self, model_id: str, experiment_id: int):
+        """
+        模型评估状态
+        @param model_id 模型id
+        @param experiment_id 实验id
+        """
         basic_models_evaluation_status_request = EvaluationStatusCls(
             project_id=self.conf.get("project_id"),
             model_id=model_id,
@@ -864,12 +882,104 @@ class AiopsModelHandler(BaseAiopsHandler):
         request_dict = self._set_username(basic_models_evaluation_status_request)
         return BkDataAIOPSApi.basic_models_evaluation_status(request_dict)
 
-    def basic_model_evaluation_result(self, model_id: str, experiment_id: int, basic_module_id: str):
+    def basic_model_evaluation_result(self, model_id: str, experiment_id: int, basic_model_id: str):
+        """
+        模型评估结果
+        @param model_id 模型id
+        @param experiment_id 实验id
+        @param basic_model_id 模型实例id
+        """
         basic_model_evaluation_result_request = EvaluationResultCls(
             project_id=self.conf.get("project_id"),
             model_id=model_id,
             experiment_id=experiment_id,
-            basic_model_id=basic_module_id,
+            basic_model_id=basic_model_id,
         )
         request_dict = self._set_username(basic_model_evaluation_result_request)
         return BkDataAIOPSApi.basic_model_evaluation_result(request_dict)
+
+    def get_passed_config(self, model_id: str, experiment_id: int):
+        evaluation_status = self.basic_models_evaluation_status(model_id=model_id, experiment_id=experiment_id)
+        if not evaluation_status.get("list"):
+            raise EvaluationStatusResponseException(
+                EvaluationStatusResponseException.MESSAGE.format(evaluation_status=evaluation_status)
+            )
+        passed_config, *_ = evaluation_status["list"]
+        return passed_config
+
+    def pre_commit(self, model_id: str, experiment_id: int, passed_config: Dict):
+        """
+        实验提交前查看配置
+        @param model_id 模型id
+        @param experiment_id 实验id
+        @param passed_config Dict 实验提交所需passed_config 可以通过_get_passed_config方法获取
+        """
+        pre_commit_request = PreCommitCls(
+            project_id=self.conf.get("project_id"),
+            model_id=model_id,
+            experiment_id=experiment_id,
+            model_experiment_id=experiment_id,
+            passed_config=passed_config,
+        )
+        request_dict = self._set_username(pre_commit_request)
+        return BkDataAIOPSApi.pre_commit(request_dict)
+
+    def commit(self, model_id: str, experiment_id: int):
+        """
+        实验提交
+        @param model_id 模型id
+        @param experiment_id 实验id
+        """
+        passed_config = self.get_passed_config(model_id=model_id, experiment_id=experiment_id)
+        serving_config = self.pre_commit(
+            model_id=model_id, experiment_id=experiment_id, passed_config=passed_config
+        ).get("serving_config")
+        commit_request = CommitCls(
+            project_id=self.conf.get("project_id"),
+            model_id=model_id,
+            model_experiment_id=experiment_id,
+            experiment_id=experiment_id,
+            serving_config=serving_config,
+            passed_config=passed_config,
+        )
+        request_dict = self._set_username(commit_request)
+        return BkDataAIOPSApi.experiment_commit(request_dict)
+
+    def release_config(self, model_id: str, experiment_id: int, basic_model_id: str):
+        """
+        获取发布配置
+        @param model_id 模型id
+        @param experiment_id 实验id
+        @param basic_model_id 模型实例id
+        """
+        release_config_request = ReleaseConfigCls(
+            project_id=self.conf.get("project_id"),
+            model_id=model_id,
+            experiment_id=experiment_id,
+            basic_model_id=basic_model_id,
+        )
+        request_dict = self._set_username(release_config_request)
+        return BkDataAIOPSApi.release_config(request_dict)
+
+    def release(self, model_id: str, experiment_id: int, basic_model_id: str, description: str):
+        """
+        模型发布
+        @param model_id 模型id
+        @param experiment_id 实验id
+        @param basic_model_id 模型实例id
+        @param description 描述
+        """
+        serving_config = self.release_config(
+            model_id=model_id, experiment_id=experiment_id, basic_model_id=basic_model_id
+        ).get("serving_config")
+        release_request = ReleaseCls(
+            project_id=self.conf.get("project_id"),
+            model_id=model_id,
+            experiment_id=experiment_id,
+            model_experiment_id=experiment_id,
+            basic_model_id=basic_model_id,
+            description=description,
+            serving_config=serving_config,
+        )
+        request_dict = self._set_username(release_request)
+        return BkDataAIOPSApi.release(request_dict)

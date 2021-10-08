@@ -606,6 +606,20 @@ class EvaluationResultCls(object):
 
 
 @dataclass
+class PreCommitCls(object):
+    """
+    实验提交前查看配置
+    """
+
+    model_id: str
+    project_id: int
+    model_experiment_id: int
+    experiment_id: int
+    passed_config: Dict
+    nodes: List[str] = field(default_factory=list)
+
+
+@dataclass
 class CommitServingConfigFeatureColumnCls(object):
     field_name: str
     field_type: str
@@ -665,9 +679,14 @@ class CommitPassedConfigCls(object):
 
 @dataclass
 class CommitCls(object):
+    """
+    实验提交
+    """
+
     project_id: int
     model_id: str
     model_experiment_id: int
+    experiment_id: int
     serving_config: CommitServingConfigCls
     passed_config: CommitPassedConfigCls
     experiment_config: Dict = field(default_factory=dict)
@@ -704,12 +723,28 @@ class ReleaseServingConfigCls(object):
 
 
 @dataclass
+class ReleaseConfigCls(object):
+    """
+    发布配置
+    """
+
+    project_id: int
+    model_id: str
+    experiment_id: int
+    basic_model_id: str
+
+
+@dataclass
 class ReleaseCls(object):
+    """
+    模型发布
+    """
+
     model_id: str
     model_experiment_id: int
     experiment_id: int
     basic_model_id: str
     project_id: int
-    sample_feedback: bool
     description: str
     serving_config: ReleaseServingConfigCls
+    sample_feedback: bool = False

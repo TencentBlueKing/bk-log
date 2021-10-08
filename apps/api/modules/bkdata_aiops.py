@@ -195,6 +195,16 @@ class _BkDataAIOPSApi:
             after_request=None,
             default_timeout=300,
         )
+        self.pre_commit = DataAPI(
+            method="POST",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/pre_commit/",
+            module=self.MODULE,
+            url_keys=["model_id", "experiment_id"],
+            description=u"实验提交前查看配置",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
         self.experiment_commit = DataAPI(
             method="POST",
             url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/commit/",
@@ -205,11 +215,21 @@ class _BkDataAIOPSApi:
             after_request=None,
             default_timeout=300,
         )
+        self.release_config = DataAPI(
+            method="GET",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/release/{experiment_id}/{basic_model_id}/config/",
+            module=self.MODULE,
+            url_keys=["model_id", "experiment_id", "basic_model_id"],
+            description=u"获取模型发布配置",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
         self.release = DataAPI(
             method="POST",
-            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/release/",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/release/{experiment_id}/{basic_model_id}",
             module=self.MODULE,
-            url_keys=["model_id", "experiment_id"],
+            url_keys=["model_id", "experiment_id", "basic_model_id"],
             description=u"模型发布",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,

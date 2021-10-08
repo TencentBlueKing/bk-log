@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from dataclasses import asdict
 
+from apps.utils.log import logger
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
 from apps.log_clustering.exceptions import ClusteringClosedException
@@ -32,7 +33,7 @@ class BaseAiopsHandler(object):
 
     def _set_username(self, request_data_cls, bk_username: str = ""):
         request_dict = asdict(request_data_cls)
-        print(request_dict)
+        logger.info("request_dict=> {}".format(request_dict))
         if bk_username:
             request_dict["bk_username"] = bk_username
             return request_dict

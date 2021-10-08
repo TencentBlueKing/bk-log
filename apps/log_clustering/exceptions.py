@@ -45,3 +45,8 @@ class NodeConfigException(BaseClusteringException):
 class NotSupportStepNameQueryException(BaseClusteringException):
     ERROR_CODE = "003"
     MESSAGE = _("不支持的step_name状态获取: {step_name}")
+
+
+class EvaluationStatusResponseException(BaseClusteringException):
+    ERROR_CODE = "004"
+    MESSAGE = _("evaluation_status返回异常: {evaluation_status}")
