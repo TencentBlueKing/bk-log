@@ -62,6 +62,7 @@ from apps.log_search.constants import (
     DEFAULT_TIME_FIELD,
     EncodingsEnum,
     TagColor,
+    InnerTag,
 )
 
 
@@ -510,6 +511,11 @@ class LogIndexSet(SoftDeleteModel):
         index_set.save()
 
     @classmethod
+    def delete_tag_by_name(cls, index_set_id, tag_name):
+        delete_tag_id = IndexSetTag.get_tag_id(tag_name)
+        cls.delete_tag(index_set_id, delete_tag_id)
+
+    @classmethod
     @atomic
     def delete_tag(cls, index_set_id, *tag_ids):
         index_set = cls.objects.select_for_update().get(index_set_id=index_set_id)
@@ -737,7 +743,11 @@ class IndexSetTag(models.Model):
 
     @classmethod
     def batch_get_tags(cls, tag_ids: list):
-        return cls.objects.filter(tag_id__in=tag_ids).values("name", "color", "tag_id")
+        tags = cls.objects.filter(tag_id__in=tag_ids).values("name", "color", "tag_id")
+        return [
+            {"name": InnerTag.get_choice_label(tag["name"]), "color": tag["color"], "tag_id": tag["tag_id"]}
+            for tag in tags
+        ]
 
 
 class AsyncTask(OperateRecordModel):

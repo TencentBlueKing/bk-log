@@ -40,8 +40,8 @@ from apps.log_databus.constants import (  # noqa
     ADMIN_REQUEST_USER,
     EtlConfig,  # noqa
 )
-from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum  # noqa
-from apps.log_search.models import ProjectInfo  # noqa
+from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag  # noqa
+from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
 from apps.models import MultiStrSplitByCommaField, JsonField, SoftDeleteModel, OperateRecordModel  # noqa
 
 
@@ -353,6 +353,8 @@ class RestoreConfig(SoftDeleteModel):
         self.is_done = True
         self.duration = duration
         self.save()
+        LogIndexSet.delete_tag_by_name(self.index_set_id, InnerTag.RESTORING.value)
+        LogIndexSet.set_tag(self.index_set_id, InnerTag.RESTORED.value)
         # notify user
         send_params = {
             "receivers": self.notice_user,
