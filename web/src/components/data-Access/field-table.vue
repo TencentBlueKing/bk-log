@@ -571,6 +571,8 @@ export default {
         list.push(Object.assign({}, errTemp, item));
         return list;
       }, arr);
+      arr.forEach(item => item.previous_type = item.field_type);
+
       if (!this.isPreviewMode) {
         arr = arr.filter(item => !item.is_built_in);
       }
@@ -579,6 +581,7 @@ export default {
         arr.forEach((item) => {
           if (typeof item.value !== 'number') {
             item.field_type = 'string';
+            item.previous_type = 'string';
           }
         });
       }
@@ -589,6 +592,7 @@ export default {
         // eslint-disable-next-line camelcase
         if (field_type === '' && value !== '' && this.judgeNumber(value)) {
           item.field_type = 'string';
+          item.previous_type = 'string';
         }
       });
       this.formData.tableList.splice(0, this.formData.tableList.length, ...arr);
@@ -703,6 +707,7 @@ export default {
     fieldTypeSelect(val, $row, $index) {
       const fieldName = $row.field_name;
       const fieldType = $row.field_type;
+      const previousType = $row.previous_type;
       if (fieldType && this.curCollect.table_id) {
         const row = this.fields.find(item => item.field_name === fieldName);
         if (row && row.field_type && row.field_type !== val) {
@@ -718,13 +723,17 @@ export default {
             type: 'warning',
             confirmFn: () => {
               this.formData.tableList[$index].field_type = val;
+              this.formData.tableList[$index].previousType = val;
               if (val !== 'string') {
                 this.formData.tableList[$index].is_analyzed = false;
               }
               this.checkTypeItem($row);
             },
             cancelFn: () => {
-              this.formData.tableList[$index].field_type = fieldType;
+              this.formData.tableList[$index].field_type = previousType;
+              if (previousType !== 'string') {
+                this.formData.tableList[$index].is_analyzed = false;
+              }
               this.checkTypeItem($row);
             },
           });
