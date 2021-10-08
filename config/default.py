@@ -67,6 +67,7 @@ INSTALLED_APPS += (
     "django_celery_results",
     "apps.log_extract",
     "apps.feature_toggle",
+    "apps.log_clustering",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
