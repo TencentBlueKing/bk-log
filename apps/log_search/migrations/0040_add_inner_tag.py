@@ -18,6 +18,22 @@ def forwards_func(apps, schema_editor):
             name=InnerTag.RESTORED.value,
             color=TagColor.BLUE.value,
         ),
+        tag_model(
+            name=InnerTag.NO_DATA.value,
+            color=TagColor.RED.value,
+        ),
+        tag_model(
+            name=InnerTag.HAVE_DELAY.value,
+            color=TagColor.YELLOW.value,
+        ),
+        tag_model(
+            name=InnerTag.BCS.value,
+            color=TagColor.BLUE.value,
+        ),
+        tag_model(
+            name=InnerTag.BKDATA.value,
+            color=TagColor.BLUE.value,
+        ),
     ]
     tag_model.objects.bulk_create(create_objs)
 
