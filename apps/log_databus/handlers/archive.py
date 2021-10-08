@@ -172,7 +172,7 @@ class ArchiveHandler:
             time_field_type=TimeFieldTypeEnum.DATE.value,
             time_field_unit=TimeFieldUnitEnum.MILLISECOND.value,
         )
-        index_set.set_tags(index_set.index_set_id, InnerTag.RESTORING.value)
+        index_set.set_tag(index_set.index_set_id, InnerTag.RESTORING.value)
         return index_set
 
     @classmethod
