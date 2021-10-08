@@ -56,7 +56,8 @@ def check_restore_is_done_and_notice_user():
     )
     for meta_restore_state in meta_restore_states:
         not_done_restore = not_done_restores_by_meta_restore_id.get(meta_restore_state["restore_id"])
-        if meta_restore_state["total_doc_count"] == meta_restore_state["complete_doc_count"]:
+        # maybe data not consistent
+        if meta_restore_state["total_doc_count"] <= meta_restore_state["complete_doc_count"]:
             try:
                 not_done_restore.done(meta_restore_state["duration"])
             except Exception as e:

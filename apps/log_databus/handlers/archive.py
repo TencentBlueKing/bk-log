@@ -30,7 +30,7 @@ from apps.log_databus.exceptions import (
     CollectorActiveException,
 )
 from apps.log_databus.models import ArchiveConfig, RestoreConfig, CollectorConfig
-from apps.log_search.constants import DEFAULT_TIME_FIELD, TimeFieldTypeEnum, TimeFieldUnitEnum
+from apps.log_search.constants import DEFAULT_TIME_FIELD, TimeFieldTypeEnum, TimeFieldUnitEnum, InnerTag
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import ProjectInfo, Scenario
 from apps.utils.db import array_group, array_hash
@@ -172,6 +172,7 @@ class ArchiveHandler:
             time_field_type=TimeFieldTypeEnum.DATE.value,
             time_field_unit=TimeFieldUnitEnum.MILLISECOND.value,
         )
+        index_set.set_tags(index_set.index_set_id, InnerTag.RESTORING.value)
         return index_set
 
     @classmethod

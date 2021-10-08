@@ -25,6 +25,18 @@ from apps.utils import ChoicesEnum
 from apps.log_databus.constants import ETL_DELIMITER_IGNORE, ETL_DELIMITER_DELETE, ETL_DELIMITER_END
 
 
+class InnerTag(ChoicesEnum):
+    TRACE = "trace"
+    RESTORING = "restoring"
+    RESTORED = "restored"
+
+    _choices_labels = (
+        (TRACE, _("trace")),
+        (RESTORING, _("回溯中")),
+        (RESTORED, _("回溯完成")),
+    )
+
+
 class TagColor(ChoicesEnum):
     RED = "red"
     YELLOW = "yellow"
