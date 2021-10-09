@@ -122,7 +122,7 @@ class PluginParamSerializer(serializers.Serializer):
     插件参数序列化
     """
 
-    paths = serializers.ListField(label=_("日志路径"), child=serializers.CharField(max_length=255))
+    paths = serializers.ListField(label=_("日志路径"), child=serializers.CharField(max_length=255), required=False)
     conditions = PluginConditionSerializer(required=False)
     multiline_pattern = serializers.CharField(label=_("行首正则"), required=False)
     multiline_max_lines = serializers.IntegerField(label=_("最多匹配行数"), required=False, max_value=1000)
@@ -135,6 +135,16 @@ class PluginParamSerializer(serializers.Serializer):
     close_inactive = serializers.IntegerField(label=_("FD关联间隔"), required=False, min_value=1)
     harvester_limit = serializers.IntegerField(label=_("同时采集数"), required=False, min_value=1)
     clean_inactive = serializers.IntegerField(label=_("采集进度清理时间"), required=False, min_value=1)
+
+    winlog_name = serializers.ListField(
+        label=_("windows事件名称"), child=serializers.CharField(max_length=255), required=False
+    )
+    winlog_level = serializers.ListField(
+        label=_("windows事件等级"), child=serializers.CharField(max_length=255), required=False
+    )
+    winlog_event_id = serializers.ListField(
+        label=_("windows事件ID"), child=serializers.CharField(max_length=255), required=False
+    )
 
 
 class DataLinkListSerializer(serializers.Serializer):
@@ -188,6 +198,11 @@ class CollectorCreateSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs["collector_scenario_id"] == "section":
             for field in ["multiline_pattern", "multiline_max_lines", "multiline_timeout"]:
+                if field not in attrs["params"]:
+                    raise ValidationError(_("{} 该字段为必填项").format(field))
+
+        if attrs["collector_scenario_id"] == "wineventlog":
+            for field in ["winlog_name"]:
                 if field not in attrs["params"]:
                     raise ValidationError(_("{} 该字段为必填项").format(field))
         return attrs
