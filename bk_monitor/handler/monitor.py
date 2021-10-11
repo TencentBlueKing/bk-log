@@ -16,6 +16,7 @@ from bk_monitor.constants import (
     TIME_SERIES_TYPE,
     TIME_SERIES_ETL_CONFIG,
     EVENT_ETL_CONFIG,
+    EVENT_TYPE,
 )
 from bk_monitor.exceptions import MonitorReportRequestException, MonitorReportResultException
 from bk_monitor.models import MonitorReportConfig
@@ -129,18 +130,32 @@ class CustomReporter(object):
             bk_monitor_config.access_token = data["access_token"]
             bk_monitor_config.custom_report_type = custom_report_type
 
-            # 判断是否已经创建time_series_group
-            if not bk_monitor_config.table_id:
-                self._client.create_time_series_group(
-                    {
-                        "bk_data_id": bk_monitor_config.data_id,
-                        "bk_biz_id": self.bk_biz_id,
-                        "time_series_group_name": data_name_builder.time_series_group_name,
-                        "label": LABEL,
-                        "table_id": data_name_builder.table_id,
-                    }
-                )
-                bk_monitor_config.table_id = data_name_builder.table_id
+            if custom_report_type == EVENT_TYPE:
+                # 判断是否已经创建event_group
+                if not bk_monitor_config.table_id:
+                    result = self._client.create_event_group(
+                        {
+                            "bk_data_id": bk_monitor_config.data_id,
+                            "bk_biz_id": self.bk_biz_id,
+                            "event_group_name": data_name_builder.time_series_group_name,
+                            "label": LABEL,
+                            "event_info_list": [],
+                        }
+                    )
+                    bk_monitor_config.table_id = result["table_id"]
+            if custom_report_type == TIME_SERIES_TYPE:
+                # 判断是否已经创建time_series_group
+                if not bk_monitor_config.table_id:
+                    self._client.create_time_series_group(
+                        {
+                            "bk_data_id": bk_monitor_config.data_id,
+                            "bk_biz_id": self.bk_biz_id,
+                            "time_series_group_name": data_name_builder.time_series_group_name,
+                            "label": LABEL,
+                            "table_id": data_name_builder.table_id,
+                        }
+                    )
+                    bk_monitor_config.table_id = data_name_builder.table_id
 
             bk_monitor_config.save()
             logger.info(f"create report config successful data_name -> {data_name}")

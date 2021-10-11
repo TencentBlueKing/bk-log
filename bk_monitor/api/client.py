@@ -63,6 +63,10 @@ class Client(object):
         path = "metadata_modify_data_id/"
         return self._call_esb_api(http_post, path, data)
 
+    def create_event_group(self, data):
+        path = "metadata_create_event_group/"
+        return self._call_esb_api(http_post, path, data)
+
     def create_time_series_group(self, data):
         path = "metadata_create_time_series_group/"
         return self._call_esb_api(http_post, path, data)
