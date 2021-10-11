@@ -19,7 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.utils.translation import ugettext_lazy as _  # noqa
 from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user  # noqa
-from config.domains import AIOPS_APIGATEWAY_ROOT, AIOPS_MODULE_APIGATEWAY_ROOT  # noqa
+from config.domains import AIOPS_APIGATEWAY_ROOT, AIOPS_MODEL_APIGATEWAY_ROOT  # noqa
 from apps.api.base import DataAPI  # noqa
 
 
@@ -186,7 +186,7 @@ class _BkDataAIOPSApi:
         )
         self.basic_model_evaluation_result = DataAPI(
             method="GET",
-            url=AIOPS_MODULE_APIGATEWAY_ROOT
+            url=AIOPS_MODEL_APIGATEWAY_ROOT
             + "models/{model_id}/experiments/{experiment_id}/basic_models/{basic_model_id}/evaluation_result/",
             module=self.MODULE,
             url_keys=["model_id", "experiment_id", "basic_model_id"],

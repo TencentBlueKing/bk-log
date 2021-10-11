@@ -281,7 +281,7 @@ class AiopsModelHandler(BaseAiopsHandler):
     def sample_set_preparation(self, model_id: str, experiment_id: int):
         """
         模型切分
-        @param model_id 模型切分
+        @param model_id 模型id
         @param experiment_id 实验id
         """
         experiment_config = self.get_experiments_config(model_id=model_id, experiment_id=experiment_id)
