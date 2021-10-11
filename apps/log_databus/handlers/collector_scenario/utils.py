@@ -45,3 +45,10 @@ def deal_collector_scenario_param(params):
             filters.append({"conditions": [{"index": "-1", "key": key, "op": "="}]})  # 目前只支持include
             params["conditions"].update({"separator": "|"})
     return filters, params
+
+
+def build_es_option_type(field_type, es_version="5.X") -> dict:
+    default_config = {"es_type": field_type}
+    if es_version.startswith("5."):
+        default_config["es_include_in_all"] = True
+    return default_config
