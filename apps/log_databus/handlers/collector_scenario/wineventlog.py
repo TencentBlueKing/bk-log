@@ -61,7 +61,7 @@ class WinEventLogScenario(CollectorScenario):
         """
         return {
             "option": {
-                "es_unique_field_list": ["cloudId", "serverIp", "path", "gseIndex", "iterationIndex"],
+                "es_unique_field_list": ["cloudId", "serverIp", "eventId", "gseIndex", "iterationIndex"],
                 "separator_node_source": "",
                 "separator_node_action": "",
                 "separator_node_name": "",
