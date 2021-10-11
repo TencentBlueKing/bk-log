@@ -267,7 +267,7 @@ class GlobalTypeEnum(ChoicesEnum):
 class CollectorScenarioEnum(ChoicesEnum):
     ROW = "row"
     SECTION = "section"
-    WIN_EVENT = "win_event"
+    WIN_EVENT = "wineventlog"
 
     _choices_labels = (
         (ROW, _("行日志文件")),
