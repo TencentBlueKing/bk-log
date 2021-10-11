@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="es-access-slider-container">
+  <div class="es-access-slider-container" data-test-id="addNewEsAccess_div_esAccessFromBox">
     <bk-sideslider
       transfer
       :title="isEdit ? $t('编辑数据源') : $t('新建数据源')"
@@ -39,13 +39,23 @@
           ref="validateForm"
           class="king-form">
           <bk-form-item :label="$t('名称')" required property="cluster_name">
-            <bk-input v-model="formData.cluster_name" maxlength="50" :readonly="isEdit"></bk-input>
+            <bk-input
+              data-test-id="esAccessFromBox_input_fillName"
+              v-model="formData.cluster_name"
+              maxlength="50"
+              :readonly="isEdit"
+            ></bk-input>
           </bk-form-item>
           <bk-form-item :label="$t('地址')" required property="domain_name">
-            <bk-input v-model="formData.domain_name" :readonly="isEdit"></bk-input>
+            <bk-input
+              data-test-id="esAccessFromBox_input_fillDomainName"
+              v-model="formData.domain_name"
+              :readonly="isEdit"
+            ></bk-input>
           </bk-form-item>
           <bk-form-item :label="$t('端口')" required property="port">
             <bk-input
+              data-test-id="esAccessFromBox_input_fillPort"
               v-model="formData.port"
               :readonly="isEdit"
               type="number"
@@ -55,20 +65,35 @@
             </bk-input>
           </bk-form-item>
           <bk-form-item :label="$t('协议')" required>
-            <bk-select v-model="formData.schema" :clearable="false">
+            <bk-select
+              data-test-id="esAccessFromBox_select_selectProtocol"
+              v-model="formData.schema"
+              :clearable="false">
               <bk-option id="http" name="http"></bk-option>
               <bk-option id="https" name="https"></bk-option>
             </bk-select>
           </bk-form-item>
           <bk-form-item :label="$t('用户名')">
-            <bk-input v-model="formData.auth_info.username"></bk-input>
+            <bk-input
+              data-test-id="esAccessFromBox_input_fillUsername"
+              v-model="formData.auth_info.username"
+            ></bk-input>
           </bk-form-item>
           <bk-form-item :label="$t('密码')">
-            <bk-input type="password" v-model="formData.auth_info.password"></bk-input>
+            <bk-input
+              data-test-id="esAccessFromBox_input_fillPassword"
+              type="password"
+              v-model="formData.auth_info.password"
+            ></bk-input>
           </bk-form-item>
           <bk-form-item label="">
             <div class="test-container">
-              <bk-button type="button" theme="primary" :loading="connectLoading" @click="handleTestConnect">
+              <bk-button
+                type="button"
+                theme="primary"
+                :loading="connectLoading"
+                @click="handleTestConnect"
+                data-test-id="esAccessFromBox_button_connectivityTest">
                 {{ $t('连通性测试') }}
               </bk-button>
               <div v-if="connectResult === 'success'" class="success-text">
@@ -135,9 +160,10 @@
           theme="primary" class="king-button mr20"
           :loading="confirmLoading"
           :disabled="connectResult !== 'success' || invalidHotSetting"
-          @click.stop.prevent="handleConfirm">{{ $t('确认') }}
+          @click.stop.prevent="handleConfirm"
+          data-test-id="esAccessFromBox_button_confirm">{{ $t('确认') }}
         </bk-button>
-        <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+        <bk-button @click="handleCancel" data-test-id="esAccessFromBox_button_cancel">{{ $t('取消') }}</bk-button>
       </div>
     </bk-sideslider>
     <!-- 查看实例列表弹窗 -->
