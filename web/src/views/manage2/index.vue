@@ -32,13 +32,17 @@
       :theme-color="navThemeColor"
       @toggle="handleToggle">
       <template slot="menu">
-        <bk-navigation-menu :item-default-bg-color="navThemeColor" :default-active="activeManageNav.id">
+        <bk-navigation-menu
+          data-test-id="manage_div_leftNavBox"
+          :item-default-bg-color="navThemeColor"
+          :default-active="activeManageNav.id">
           <template v-for="groupItem in manageNavList">
             <bk-navigation-menu-group
               :key="groupItem.id"
               :group-name="isExpand ? groupItem.name : groupItem.keyword">
               <template v-for="navItem in groupItem.children">
                 <bk-navigation-menu-item
+                  :data-test-id="`navBox_nav_${navItem.id}`"
                   :key="navItem.id"
                   :id="navItem.id"
                   :icon="getMenuIcon(navItem)"

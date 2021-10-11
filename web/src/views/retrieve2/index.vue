@@ -32,7 +32,7 @@
     </AuthPage>
     <!-- 检索页首页 -->
     <div v-if="hasAuth && isRetrieveHome" class="retrieve-home-container">
-      <div class="retrieve-home">
+      <div class="retrieve-home" data-test-id="retrieve_div_frontPageSearchBox">
         <div class="retrieve-home-title">{{ $t('nav.retrieve') }}</div>
         <div class="retrieve-home-condition">
           <!-- 选择索引集 -->
@@ -95,7 +95,7 @@
             </bk-popover>
           </div>
           <div class="tab-content">
-            <div class="tab-content-item">
+            <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
               <!-- 选择索引集 -->
               <div class="tab-item-title">{{ $t('索引集') }}</div>
               <SelectIndexSet
@@ -119,7 +119,11 @@
               <div class="tab-item-title flex-item-title">
                 <span>{{ $t('过滤条件') }}</span>
                 <div class="filter-item">
-                  <span v-if="showIpQuick" @click="openIpQuick">{{ $t('添加IP') }}</span>
+                  <span
+                    v-if="showIpQuick"
+                    @click="openIpQuick"
+                    data-test-id="dataQuery_span_addIP"
+                  >{{ $t('添加IP') }}</span>
                   <FilterConditionItem
                     :filter-condition="retrieveParams.addition"
                     :total-fields="totalFields"
@@ -160,6 +164,7 @@
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
                   style="width: 86px;"
+                  data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
                   <span class="log-icon icon-zidongchaxun" style="margin-right: 4px;font-size: 18px;"></span>
                   {{ $t('查询') }}
@@ -170,6 +175,7 @@
                   theme="primary"
                   style="width: 86px;"
                   icon="search"
+                  data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
                   {{ $t('查询') }}
                 </bk-button>
@@ -179,7 +185,7 @@
                   placement="top"
                   theme="light"
                   :on-show="handleFavoritePopperShow">
-                  <bk-button style="margin: 0 8px;">
+                  <bk-button style="margin: 0 8px;" data-test-id="dataQuery_button_collection">
                     <span style="display: flex;align-items: center">
                       <span
                         class="bk-icon icon-star"
@@ -197,10 +203,14 @@
                     @close="closeFavoritePopper"
                   ></FavoritePopper>
                 </bk-popover>
-                <bk-button @click="clearCondition">{{ $t('清空') }}</bk-button>
+                <bk-button
+                  @click="clearCondition"
+                  data-test-id="dataQuery_button_phrasesClear">
+                  {{ $t('清空') }}
+                </bk-button>
               </div>
             </div>
-            <div class="tab-content-item">
+            <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
               <!-- 字段过滤 -->
               <div class="tab-item-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
               <FieldFilter

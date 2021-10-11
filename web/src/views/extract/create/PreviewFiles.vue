@@ -26,6 +26,7 @@
       <bk-select
         v-model="previewIp"
         style="width: 190px;margin-right: 20px;background-color: #fff;"
+        data-test-id="addNewExtraction_div_selectPreviewAddress"
         :clearable="false"
         multiple
         show-select-all>
@@ -38,11 +39,16 @@
       </bk-select>
       <span>{{ $t('文件日期') }}：</span>
       <FileDatePicker :time-range.sync="timeRange" :time-value.sync="timeValue" />
-      <bk-checkbox v-model="isSearchChild" style="margin-right: 20px;">{{ $t('是否搜索子目录') }}</bk-checkbox>
+      <bk-checkbox
+        v-model="isSearchChild"
+        style="margin-right: 20px;"
+        data-test-id="addNewExtraction_div_isSearchSubdirectory"
+      >{{ $t('是否搜索子目录') }}</bk-checkbox>
       <bk-button
         theme="primary"
         :disabled="!ipList.length || !fileOrPath"
         :loading="isLoading"
+        data-test-id="addNewExtraction_button_searchFilterCondition"
         @click="getExplorerList({})">{{ $t('搜索') }}
       </bk-button>
     </div>

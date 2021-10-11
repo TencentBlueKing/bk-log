@@ -22,7 +22,7 @@
 
 <template>
   <div class="step-storage" v-bkloading="{ isLoading: basicLoading }">
-    <bk-form :label-width="115" :model="formData" ref="validateForm">
+    <bk-form :label-width="115" :model="formData" ref="validateForm" data-test-id="storage_form_storageBox">
       <bk-form-item
         :label="$t('dataSource.storage_cluster_name')"
         required
@@ -30,6 +30,7 @@
         :rules="rules.cluster_id">
         <bk-select
           style="width: 320px;"
+          data-test-id="storageBox_select_storageCluster"
           v-model="formData.storage_cluster_id"
           :disabled="isUnmodifiable"
           :clearable="false"
@@ -88,7 +89,11 @@
       </div>
       <!-- 过期时间 -->
       <bk-form-item :label="$t('configDetails.expirationTime')">
-        <bk-select style="width: 320px;" v-model="formData.retention" :clearable="false">
+        <bk-select
+          style="width: 320px;"
+          v-model="formData.retention"
+          :clearable="false"
+          data-test-id="storageBox_select_selectExpiration">
           <div slot="trigger" class="bk-select-name">
             {{ formData.retention + $t('天') }}
           </div>
@@ -100,6 +105,7 @@
               v-model="customRetentionDay"
               size="small"
               type="number"
+              data-test-id="storageBox_input_customDayNumber"
               :placeholder="$t('输入自定义天数')"
               :show-controls="false"
               @enter="enterCustomDay($event, 'retention')"
@@ -125,6 +131,7 @@
       <bk-form-item :label="$t('热数据')" class="hot-data-form-item">
         <bk-select
           style="width: 320px;"
+          data-test-id="storageBox_select_selectHotData"
           v-model="formData.allocation_min_days"
           :clearable="false"
           :disabled="!selectedStorageCluster.enable_hot_warm">
@@ -136,6 +143,7 @@
               v-model="customHotDataDay"
               size="small"
               type="number"
+              data-test-id="storageBox_input_customize"
               :placeholder="$t('输入自定义天数')"
               :show-controls="false"
               @enter="enterCustomDay($event, 'hot')"
@@ -156,6 +164,7 @@
         style="width: 435px;">
         <bk-select
           style="width: 320px;"
+          data-test-id="storageBox_select_viewPermission"
           v-model="formData.view_roles"
           searchable
           multiple
@@ -172,6 +181,7 @@
       <bk-form-item>
         <bk-button
           theme="default"
+          data-test-id="storageBox_button_previousPage"
           :title="$t('dataManage.last')"
           class="mr10"
           :disabled="isLoading"
@@ -180,6 +190,7 @@
         </bk-button>
         <bk-button
           theme="primary"
+          data-test-id="storageBox_button_nextPage"
           @click.stop.prevent="finish"
           :loading="isLoading"
           :disabled="!collectProject">
