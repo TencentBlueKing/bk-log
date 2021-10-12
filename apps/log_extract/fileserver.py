@@ -49,7 +49,7 @@ class FileServer(object):
             },
             "script_type": JOB_SCRIPT_TYPE,
             "script_language": JOB_SCRIPT_TYPE,
-            "account_id": account,
+            "account_alias": account,
             "task_name": task_name,
         }
         if script_params:
@@ -129,7 +129,7 @@ class FileServer(object):
             "bk_biz_id": bk_biz_id,
             "file_source_list": file_source_list,
             "account": account,
-            "account_id": account,
+            "account_alias": account,
             "file_target_path": file_target_path,
             "target_server": {
                 "ip_list": target_ip_list,

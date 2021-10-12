@@ -135,7 +135,7 @@ class FilePackingService(BaseService):
             ip_list = [ip_list]
         distribution_source_file_list = [
             {
-                "account": {"id": data.get_one_of_inputs("account")},
+                "account": {"alias": data.get_one_of_inputs("account")},
                 # 转换IP格式
                 "server": {"ip_list": [ip]},
                 # 这里是直接分发目录
@@ -148,8 +148,8 @@ class FilePackingService(BaseService):
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):
-        task_instance_id = (data.get_one_of_outputs("task_instance_id"),)
-        bk_biz_id = (data.get_one_of_inputs("bk_biz_id"),)
+        task_instance_id = data.get_one_of_outputs("task_instance_id")
+        bk_biz_id = data.get_one_of_inputs("bk_biz_id")
         query_result = self._poll_status(
             task_instance_id=task_instance_id,
             operator=data.get_one_of_inputs("operator"),
