@@ -15,7 +15,7 @@ class WinEventLogScenario(CollectorScenario):
         event_levels = params.get("winlog_level", [])
         local_params = {
             "event_logs": [
-                {"event_name": event_name, "level": ",".join(event_levels), "event_id": ",".join(event_ids)}
+                {"name": event_name, "level": ",".join(event_levels), "event_id": ",".join(event_ids)}
                 for event_name in event_names
             ]
         }
@@ -46,7 +46,7 @@ class WinEventLogScenario(CollectorScenario):
             event_logs = local["event_logs"]
             first_event, *_ = event_logs
             return {
-                "winlog_name": [event_log["event_name"] for event_log in event_logs],
+                "winlog_name": [event_log["name"] for event_log in event_logs],
                 "winlog_level": first_event["level"].split(","),
                 "winlog_event_id": first_event["event_id"].split(","),
             }
