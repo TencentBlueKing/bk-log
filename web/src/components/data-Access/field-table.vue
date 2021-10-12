@@ -55,6 +55,7 @@
         </bk-switcher> -->
         <span
           :class="`bk-icon toggle-icon icon-${ deletedVisible ? 'eye-slash' : 'eye'}`"
+          data-test-id="fieldExtractionBox_span_hideItem"
           @click="visibleHandle">
         </span>
         <span class="visible-deleted-text">

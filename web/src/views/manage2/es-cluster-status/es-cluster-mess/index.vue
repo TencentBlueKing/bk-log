@@ -21,19 +21,21 @@
   -->
 
 <template>
-  <div class="es-access-container">
+  <div class="es-access-container" data-test-id="esAccess_div_esAccessBox">
     <div class="main-operator-container">
       <bk-button
         theme="primary"
         style="width: 120px;"
         :disabled="isAllowedCreate === null || tableLoading"
         v-cursor="{ active: isAllowedCreate === false }"
+        data-test-id="esAccessBox_button_addNewEsAccess"
         @click="addDataSource">{{ $t('新建') }}
       </bk-button>
       <bk-input
         v-model="keyword"
         style="width: 360px;"
         right-icon="bk-icon icon-search"
+        data-test-id="esAccessBox_input_search"
         :placeholder="$t('搜索ES源名称，地址，创建人')"
         :clearable="true"
         @change="handleSearch">
@@ -41,6 +43,7 @@
     </div>
     <bk-table
       v-bkloading="{ isLoading: tableLoading }"
+      data-test-id="esAccessBox_table_esAccessTableBox"
       class="king-table"
       :data="tableDataPaged"
       :pagination="pagination"

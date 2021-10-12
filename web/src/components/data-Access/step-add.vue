@@ -29,224 +29,259 @@
         {{ $t('，尤其是在日志量大的情况下请务必提前沟通。') }}
       </div>
     </bk-alert>
-    <bk-form :label-width="115" :model="formData" ref="validateForm">
+    <bk-form
+      :label-width="115"
+      :model="formData"
+      ref="validateForm"
+      data-test-id="addNewCollectionItem_form_acquisitionConfigur">
       <!-- 基础信息 -->
-      <div class="add-collection-title">{{ $t('dataSource.basic_information') }}</div>
-      <bk-form-item
-        :label="$t('dataSource.source_name')"
-        :required="true"
-        :rules="rules.collector_config_name"
-        :property="'collector_config_name'">
-        <bk-input
-          v-model="formData.collector_config_name"
-          show-word-limit
-          maxlength="50">
-        </bk-input>
-      </bk-form-item>
-      <bk-form-item
-        :label="$t('dataSource.source_en_name')"
-        :required="true"
-        :rules="rules.collector_config_name_en"
-        :property="'collector_config_name_en'">
-        <bk-input
-          v-model="formData.collector_config_name_en"
-          show-word-limit
-          maxlength="50"
-          :disabled="isUpdate && !!(formData.collector_config_name_en)"
-          :placeholder="$t('dataSource.en_name_tips')">
-        </bk-input>
-        <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
-      </bk-form-item>
-      <bk-form-item :label="$t('configDetails.remarkExplain')">
-        <bk-input
-          type="textarea"
-          style="width: 320px;"
-          v-model="formData.description"
-          maxlength="100">
-        </bk-input>
-      </bk-form-item>
+      <div data-test-id="acquisitionConfigur_div_baseMessageBox">
+        <div class="add-collection-title">{{ $t('dataSource.basic_information') }}</div>
+        <bk-form-item
+          :label="$t('dataSource.source_name')"
+          :required="true"
+          :rules="rules.collector_config_name"
+          :property="'collector_config_name'">
+          <bk-input
+            data-test-id="baseMessage_input_fillName"
+            v-model="formData.collector_config_name"
+            show-word-limit
+            maxlength="50">
+          </bk-input>
+        </bk-form-item>
+        <bk-form-item
+          :label="$t('dataSource.source_en_name')"
+          :required="true"
+          :rules="rules.collector_config_name_en"
+          :property="'collector_config_name_en'">
+          <bk-input
+            v-model="formData.collector_config_name_en"
+            show-word-limit
+            maxlength="50"
+            data-test-id="baseMessage_input_fillEnglishName"
+            :disabled="isUpdate && !!(formData.collector_config_name_en)"
+            :placeholder="$t('dataSource.en_name_tips')">
+          </bk-input>
+          <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
+        </bk-form-item>
+        <bk-form-item :label="$t('configDetails.remarkExplain')">
+          <bk-input
+            type="textarea"
+            style="width: 320px;"
+            v-model="formData.description"
+            data-test-id="baseMessage_input_fillDetails"
+            maxlength="100">
+          </bk-input>
+        </bk-form-item>
+      </div>
 
       <!-- 源日志信息 -->
-      <div class="add-collection-title">{{ $t('dataSource.Source_log_information') }}</div>
-      <!-- 日志类型 -->
-      <bk-form-item :label="$t('configDetails.logType')" required>
-        <div class="bk-button-group log-type">
-          <bk-button
-            v-for="(item, index) in globalsData.collector_scenario"
-            :key="index"
-            :disabled="isUpdate"
-            :class="{
-              'disable': !item.is_active,
-              'is-selected': item.id === formData.collector_scenario_id,
-              'is-updated': isUpdate && item.id === formData.collector_scenario_id
-            }"
-            @click="chooseLogType(item)"
-          >{{ item.name }}
-          </bk-button>
-        </div>
-      </bk-form-item>
-      <!-- 数据分类 -->
-      <bk-form-item
-        :label="$t('configDetails.dataClassify')"
-        required
-        :rules="rules.category_id"
-        :property="'category_id'">
-        <bk-select
-          style="width: 320px;"
-          v-model="formData.category_id"
-          :disabled="isUpdate"
-          @selected="chooseDataClass">
-          <template v-for="(item, index) in globalsData.category">
-            <bk-option-group :id="item.id" :name="item.name" :key="index">
-              <bk-option
-                v-for="(option, key) in item.children"
-                :key="key"
-                :id="option.id"
-                :name="`${item.name}-${option.name}`"> {{ option.name }}
-              </bk-option>
-            </bk-option-group>
-          </template>
-        </bk-select>
-      </bk-form-item>
-      <!-- 日志种类 -->
-      <bk-form-item
-        v-if="formData.collector_scenario_id === 'wineventlog'"
-        :label="$t('configDetails.logSpecies')"
-        required>
-        <bk-checkbox-group
-          v-model="selectLogSpeciesList">
-          <div class="species-item">
-            <bk-checkbox
-              v-for=" (item, index) in logSpeciesList"
-              :disabled="selectLogSpeciesList.length === 1 && selectLogSpeciesList[0] === item.id"
-              :value="item.id"
-              :key="index">
-              {{item.name}}
-            </bk-checkbox>
-            <bk-tag-input
-              v-model="outherSpeciesList"
-              :class="outherRules ? 'tagRulesColor' : ''"
-              @blur="outherBlurRules"
-              @remove="outherBlurRules"
-              :allow-auto-match="true"
-              :has-delete-icon="true"
-              :allow-create="true">
-            </bk-tag-input>
+      <div data-test-id="acquisitionConfigur_div_sourceLogBox">
+        <div class="add-collection-title">{{ $t('dataSource.Source_log_information') }}</div>
+        <!-- 日志类型 -->
+        <bk-form-item :label="$t('configDetails.logType')" required>
+          <div class="bk-button-group log-type">
+            <bk-button
+              v-for="(item, index) in globalsData.collector_scenario"
+              :data-test-id="`sourceLogBox_buttom_checkoutType${item.id}`"
+              :key="index"
+              :disabled="isUpdate"
+              :class="{
+                'disable': !item.is_active,
+                'is-selected': item.id === formData.collector_scenario_id,
+                'is-updated': isUpdate && item.id === formData.collector_scenario_id
+              }"
+              @click="chooseLogType(item)"
+            >{{ item.name }}
+            </bk-button>
           </div>
-        </bk-checkbox-group>
-      </bk-form-item>
-      <!-- 采集目标 -->
-      <div class="form-div mt">
-        <bk-form-item
-          :label="$t('configDetails.target')"
-          class="item-target"
-          required
-          :rules="rules.nodes"
-          :property="'target_nodes'"
-          ref="formItemTarget">
-          <bk-button
-            theme="default"
-            :title="$t('configDetails.newly_increased')"
-            icon="plus"
-            style="font-size: 12px"
-            :class="colorRules ? 'rulesColor' : ''"
-            :disabled="!formData.category_id"
-            @click="showIpSelectorDialog = true">
-            {{ $t('retrieve.select_target') }}
-          </bk-button>
-          <input type="text" :value="formData.target_nodes" style="display: none">
         </bk-form-item>
-        <div class="count" v-if="formData.target_nodes.length">
-          <span>{{ collectTargetTarget[formData.target_node_type + '1'] }}</span>
-          <span class="font-blue">{{ formData.target_nodes.length }}</span>
-          <span>{{ collectTargetTarget[formData.target_node_type + '2'] }}</span>
-        </div>
-        <ip-selector-dialog
-          :show-dialog.sync="showIpSelectorDialog"
-          :target-object-type="formData.target_object_type"
-          :target-node-type="formData.target_node_type"
-          :target-nodes="formData.target_nodes"
-          @target-change="targetChange">
-        </ip-selector-dialog>
-      </div>
-      <div v-if="formData.collector_scenario_id !== 'wineventlog'">
-        <!-- 日志路径 -->
-        <div class="form-div mt" v-for="(log, index) in logPaths" :key="index">
-          <bk-form-item
-            :label="index === 0 ? $t('retrieve.logPath') : ''" required
-            :rules="rules.paths"
-            :property="'params.paths.' + index + '.value'">
-            <bk-input v-model="log.value"></bk-input>
-          </bk-form-item>
-          <div class="ml9">
-            <i class="bk-icon icon-plus-circle icons" @click="addLog"></i>
-            <i
-              :class="['bk-icon icon-minus-circle icons ml9', { disable: logPaths.length === 1 }] "
-              @click="delLog(index)"></i>
-          </div>
-          <div class="tips" v-if="index === 0">
-            {{ $t('retrieve.log_available') }}<span class="font-gray">{{ $t('retrieve.log_wildcard_character') }}</span>
-          </div>
-        </div>
-        <!-- 日志字符集 -->
-        <bk-form-item :label="$t('configDetails.logSet')" required>
-          <bk-select style="width: 320px;" searchable v-model="formData.data_encoding" :clearable="false">
-            <bk-option
-              v-for="(option, ind) in globalsData.data_encoding"
-              :key="ind"
-              :id="option.id"
-              :name="option.name">
-            </bk-option>
+        <!-- 数据分类 -->
+        <bk-form-item
+          :label="$t('configDetails.dataClassify')"
+          required
+          :rules="rules.category_id"
+          :property="'category_id'">
+          <bk-select
+            style="width: 320px;"
+            v-model="formData.category_id"
+            data-test-id="sourceLogBox_div_selectDataClassification"
+            :disabled="isUpdate"
+            @selected="chooseDataClass">
+            <template v-for="(item, index) in globalsData.category">
+              <bk-option-group :id="item.id" :name="item.name" :key="index">
+                <bk-option
+                  v-for="(option, key) in item.children"
+                  :key="key"
+                  :id="option.id"
+                  :name="`${item.name}-${option.name}`"> {{ option.name }}
+                </bk-option>
+              </bk-option-group>
+            </template>
           </bk-select>
         </bk-form-item>
-      </div>
-      <!-- 段日志正则调试 -->
-      <div v-if="hasMultilineReg" class="multiline-log-container">
-        <div class="row-container">
+        <!-- 日志种类 -->
+        <bk-form-item
+          v-if="formData.collector_scenario_id === 'wineventlog'"
+          :label="$t('configDetails.logSpecies')"
+          data-test-id="sourceLogBox_div_logSpecies"
+          required>
+          <bk-checkbox-group
+            v-model="selectLogSpeciesList"
+            @change="outherBlurRules">
+            <div class="species-item">
+              <bk-checkbox
+                v-for=" (item, index) in logSpeciesList"
+                :disabled="selectLogSpeciesList.length === 1 && selectLogSpeciesList[0] === item.id"
+                :value="item.id"
+                :key="index">
+                {{item.name}}
+              </bk-checkbox>
+              <bk-tag-input
+                v-model="outherSpeciesList"
+                :class="outherRules ? 'tagRulesColor' : ''"
+                @blur="outherBlurRules"
+                @remove="outherBlurRules"
+                :allow-auto-match="true"
+                :has-delete-icon="true"
+                :allow-create="true">
+              </bk-tag-input>
+            </div>
+          </bk-checkbox-group>
+        </bk-form-item>
+        <!-- 采集目标 -->
+        <div class="form-div mt">
           <bk-form-item
-            :label="$t('行首正则')"
-            :rules="rules.notEmptyForm"
+            :label="$t('configDetails.target')"
+            class="item-target"
             required
-            property="params.multiline_pattern">
-            <bk-input v-model.trim="formData.params.multiline_pattern"></bk-input>
+            :rules="rules.nodes"
+            :property="'target_nodes'"
+            ref="formItemTarget">
+            <bk-button
+              theme="default"
+              :title="$t('configDetails.newly_increased')"
+              icon="plus"
+              style="font-size: 12px"
+              data-test-id="sourceLogBox_button_addCollectionTarget"
+              :class="colorRules ? 'rulesColor' : ''"
+              :disabled="!formData.category_id"
+              @click="showIpSelectorDialog = true">
+              {{ $t('retrieve.select_target') }}
+            </bk-button>
+            <input type="text" :value="formData.target_nodes" style="display: none">
           </bk-form-item>
-          <bk-button
-            text size="small"
-            class="king-button"
-            @click="showRegDialog = true">
-            {{ $t('调试') }}
-          </bk-button>
+          <div class="count" v-if="formData.target_nodes.length">
+            <span>{{ collectTargetTarget[formData.target_node_type + '1'] }}</span>
+            <span class="font-blue">{{ formData.target_nodes.length }}</span>
+            <span>{{ collectTargetTarget[formData.target_node_type + '2'] }}</span>
+          </div>
+          <ip-selector-dialog
+            :show-dialog.sync="showIpSelectorDialog"
+            :target-object-type="formData.target_object_type"
+            :target-node-type="formData.target_node_type"
+            :target-nodes="formData.target_nodes"
+            @target-change="targetChange">
+          </ip-selector-dialog>
         </div>
-        <div class="row-container second">
-          {{ $t('最多匹配') }}
-          <bk-form-item :rules="rules.maxLine" property="params.multiline_max_lines">
-            <bk-input
-              v-model="formData.params.multiline_max_lines"
-              type="number"
-              :precision="0"
-              :show-controls="false">
-            </bk-input>
+        <div v-if="formData.collector_scenario_id !== 'wineventlog'">
+          <!-- 日志路径 -->
+          <div class="form-div mt" v-for="(log, index) in logPaths" :key="index">
+            <bk-form-item
+              :label="index === 0 ? $t('retrieve.logPath') : ''" required
+              :rules="rules.paths"
+              :property="'params.paths.' + index + '.value'">
+              <bk-input
+                v-model="log.value"
+                data-test-id="sourceLogBox_input_addLogPath"
+              ></bk-input>
+            </bk-form-item>
+            <div class="ml9">
+              <i class="bk-icon icon-plus-circle icons"
+                 @click="addLog"
+                 data-test-id="sourceLogBox_i_newAddLogPath"
+              ></i>
+              <i
+                :class="['bk-icon icon-minus-circle icons ml9', { disable: logPaths.length === 1 }] "
+                data-test-id="sourceLogBox_i_deleteAddLogPath"
+                @click="delLog(index)"></i>
+            </div>
+            <div class="tips" v-if="index === 0">
+              {{ $t('retrieve.log_available') }}
+              <span class="font-gray">{{ $t('retrieve.log_wildcard_character') }}</span>
+            </div>
+          </div>
+          <!-- 日志字符集 -->
+          <bk-form-item :label="$t('configDetails.logSet')" required>
+            <bk-select
+              data-test-id="sourceLogBox_div_changeLogCharacterTet"
+              style="width: 320px;"
+              searchable
+              v-model="formData.data_encoding"
+              :clearable="false">
+              <bk-option
+                v-for="(option, ind) in globalsData.data_encoding"
+                :key="ind"
+                :id="option.id"
+                :name="option.name">
+              </bk-option>
+            </bk-select>
           </bk-form-item>
-          {{ $t('行，最大耗时') }}
-          <bk-form-item :rules="rules.maxTimeout" property="params.multiline_timeout">
-            <bk-input
-              v-model="formData.params.multiline_timeout"
-              type="number"
-              :precision="0"
-              :show-controls="false">
-            </bk-input>
-          </bk-form-item>
-          {{ $t('秒') }}
         </div>
-        <multiline-reg-dialog
-          :old-pattern.sync="formData.params.multiline_pattern"
-          :show-dialog.sync="showRegDialog">
-        </multiline-reg-dialog>
+        <!-- 段日志正则调试 -->
+        <div v-if="hasMultilineReg" class="multiline-log-container">
+          <div class="row-container">
+            <bk-form-item
+              :label="$t('行首正则')"
+              :rules="rules.notEmptyForm"
+              required
+              property="params.multiline_pattern">
+              <bk-input
+                data-test-id="sourceLogBox_input_beginningRegular"
+                v-model.trim="formData.params.multiline_pattern"
+              ></bk-input>
+            </bk-form-item>
+            <bk-button
+              text size="small"
+              class="king-button"
+              data-test-id="sourceLogBox_button_debugging"
+              @click="showRegDialog = true">
+              {{ $t('调试') }}
+            </bk-button>
+          </div>
+          <div class="row-container second">
+            {{ $t('最多匹配') }}
+            <bk-form-item :rules="rules.maxLine" property="params.multiline_max_lines">
+              <bk-input
+                v-model="formData.params.multiline_max_lines"
+                type="number"
+                :precision="0"
+                data-test-id="sourceLogBox_input_mostMatches"
+                :show-controls="false">
+              </bk-input>
+            </bk-form-item>
+            {{ $t('行，最大耗时') }}
+            <bk-form-item :rules="rules.maxTimeout" property="params.multiline_timeout">
+              <bk-input
+                v-model="formData.params.multiline_timeout"
+                type="number"
+                :precision="0"
+                data-test-id="sourceLogBox_input_maximumTimeConsuming"
+                :show-controls="false">
+              </bk-input>
+            </bk-form-item>
+            {{ $t('秒') }}
+          </div>
+          <multiline-reg-dialog
+            :old-pattern.sync="formData.params.multiline_pattern"
+            :show-dialog.sync="showRegDialog">
+          </multiline-reg-dialog>
+        </div>
       </div>
 
       <!-- 日志内容过滤 -->
       <div class="add-collection-title">{{ $t('retrieve.Log_content_filtering') }}</div>
-      <div class="hight-setting">
+      <div class="hight-setting" data-test-id="acquisitionConfigur_div_contentFiltering">
         <div v-if="formData.collector_scenario_id !== 'wineventlog'">
           <div class="tips ml115">{{ $t('retrieve.suggest_clean') }}</div>
           <div class="form-div">
@@ -353,11 +388,10 @@
                   :allow-create="true">
                 </bk-tag-input>
                 <div class="ml9">
-                  <i
-                    :class="
-                      ['bk-icon icon-plus-circle icons',
-                       { disable: eventSettingList.length === selectEventList.length }]"
-                    @click="addWinEvent"
+                  <i :class="
+                       ['bk-icon icon-plus-circle icons',
+                        { disable: eventSettingList.length === selectEventList.length }]"
+                     @click="addWinEvent"
                   ></i>
                   <i
                     :class="['bk-icon icon-minus-circle icons ml9', { disable: eventSettingList.length === 1 }] "
@@ -373,7 +407,12 @@
       <template v-if="!isCloseDataLink">
         <div class="add-collection-title">{{ $t('上报链路配置') }}</div>
         <bk-form-item required property="data_link_id" :label="$t('上报链路')" :rules="rules.linkConfig">
-          <bk-select style="width: 320px;" v-model="formData.data_link_id" :clearable="false" :disabled="isUpdate">
+          <bk-select
+            data-test-id="acquisitionConfigur_div_selectReportLink"
+            style="width: 320px;"
+            v-model="formData.data_link_id"
+            :clearable="false"
+            :disabled="isUpdate">
             <bk-option
               v-for="item in linkConfigurationList"
               :key="item.data_link_id"
@@ -387,6 +426,7 @@
       <bk-form-item>
         <bk-button
           theme="primary"
+          data-test-id="acquisitionConfigur_div_nextPage"
           :title="$t('retrieve.Start_collecting')"
           @click.stop.prevent="startCollect"
           :loading="isHandle"
@@ -395,6 +435,7 @@
         </bk-button>
         <bk-button
           theme="default"
+          data-test-id="acquisitionConfigur_div_cancel"
           :title="$t('indexSetList.cancel')"
           class="ml10"
           @click="cancel">
@@ -888,6 +929,10 @@ export default {
     outherBlurRules(input, tags) {
       this.outherRules = !tags.every(el => /^[a-zA-Z_ ]*$/.test(el));
       tags.length === 0 && (this.outherRules = false);
+      const slist = this.selectLogSpeciesList;
+      if (slist.length === 1 && slist[0] === 'Outher' && this.outherSpeciesList.length === 0) {
+        this.outherRules = true;
+      }
     },
     tagBlurRules(item, index) {
       switch (item.type) {
