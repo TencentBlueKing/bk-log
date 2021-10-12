@@ -108,6 +108,33 @@
           </template>
         </bk-select>
       </bk-form-item>
+      <!-- 日志种类 -->
+      <bk-form-item
+        v-if="formData.collector_scenario_id === 'wineventlog'"
+        :label="$t('configDetails.logSpecies')"
+        required>
+        <bk-checkbox-group
+          v-model="selectLogSpeciesList">
+          <div class="species-item">
+            <bk-checkbox
+              v-for=" (item, index) in logSpeciesList"
+              :disabled="selectLogSpeciesList.length === 1 && selectLogSpeciesList[0] === item.id"
+              :value="item.id"
+              :key="index">
+              {{item.name}}
+            </bk-checkbox>
+            <bk-tag-input
+              v-model="outherSpeciesList"
+              :class="outherRules ? 'tagRulesColor' : ''"
+              @blur="outherBlurRules"
+              @remove="outherBlurRules"
+              :allow-auto-match="true"
+              :has-delete-icon="true"
+              :allow-create="true">
+            </bk-tag-input>
+          </div>
+        </bk-checkbox-group>
+      </bk-form-item>
       <!-- 采集目标 -->
       <div class="form-div mt">
         <bk-form-item
@@ -142,35 +169,37 @@
           @target-change="targetChange">
         </ip-selector-dialog>
       </div>
-      <!-- 日志路径 -->
-      <div class="form-div mt" v-for="(log, index) in logPaths" :key="index">
-        <bk-form-item
-          :label="index === 0 ? $t('retrieve.logPath') : ''" required
-          :rules="rules.paths"
-          :property="'params.paths.' + index + '.value'">
-          <bk-input v-model="log.value"></bk-input>
+      <div v-if="formData.collector_scenario_id !== 'wineventlog'">
+        <!-- 日志路径 -->
+        <div class="form-div mt" v-for="(log, index) in logPaths" :key="index">
+          <bk-form-item
+            :label="index === 0 ? $t('retrieve.logPath') : ''" required
+            :rules="rules.paths"
+            :property="'params.paths.' + index + '.value'">
+            <bk-input v-model="log.value"></bk-input>
+          </bk-form-item>
+          <div class="ml9">
+            <i class="bk-icon icon-plus-circle icons" @click="addLog"></i>
+            <i
+              :class="['bk-icon icon-minus-circle icons ml9', { disable: logPaths.length === 1 }] "
+              @click="delLog(index)"></i>
+          </div>
+          <div class="tips" v-if="index === 0">
+            {{ $t('retrieve.log_available') }}<span class="font-gray">{{ $t('retrieve.log_wildcard_character') }}</span>
+          </div>
+        </div>
+        <!-- 日志字符集 -->
+        <bk-form-item :label="$t('configDetails.logSet')" required>
+          <bk-select style="width: 320px;" searchable v-model="formData.data_encoding" :clearable="false">
+            <bk-option
+              v-for="(option, ind) in globalsData.data_encoding"
+              :key="ind"
+              :id="option.id"
+              :name="option.name">
+            </bk-option>
+          </bk-select>
         </bk-form-item>
-        <div class="ml9">
-          <i class="bk-icon icon-plus-circle icons" @click="addLog"></i>
-          <i
-            :class="['bk-icon icon-minus-circle icons ml9', { disable: logPaths.length === 1 }] "
-            @click="delLog(index)"></i>
-        </div>
-        <div class="tips" v-if="index === 0">
-          {{ $t('retrieve.log_available') }}<span class="font-gray">{{ $t('retrieve.log_wildcard_character') }}</span>
-        </div>
       </div>
-      <!-- 日志字符集 -->
-      <bk-form-item :label="$t('configDetails.logSet')" required>
-        <bk-select style="width: 320px;" searchable v-model="formData.data_encoding" :clearable="false">
-          <bk-option
-            v-for="(option, ind) in globalsData.data_encoding"
-            :key="ind"
-            :id="option.id"
-            :name="option.name">
-          </bk-option>
-        </bk-select>
-      </bk-form-item>
       <!-- 段日志正则调试 -->
       <div v-if="hasMultilineReg" class="multiline-log-container">
         <div class="row-container">
@@ -218,79 +247,124 @@
       <!-- 日志内容过滤 -->
       <div class="add-collection-title">{{ $t('retrieve.Log_content_filtering') }}</div>
       <div class="hight-setting">
-        <div class="tips ml115">{{ $t('retrieve.suggest_clean') }}</div>
-        <div class="form-div">
-          <bk-form-item :label="$t('configDetails.filterContent')">
+        <div v-if="formData.collector_scenario_id !== 'wineventlog'">
+          <div class="tips ml115">{{ $t('retrieve.suggest_clean') }}</div>
+          <div class="form-div">
+            <bk-form-item :label="$t('configDetails.filterContent')">
+              <bk-select
+                style="width: 129px; margin-right: 8px;"
+                :clearable="false"
+                v-model="formData.params.conditions.type"
+                @change="chooseType">
+                <bk-option id="match" :name="$t('retrieve.String_filtering')"></bk-option>
+                <bk-option id="separator" :name="$t('retrieve.Separator_filtering')"></bk-option>
+              </bk-select>
+            </bk-form-item>
+            <bk-input v-show="isString" v-model="formData.params.conditions.match_content"></bk-input>
             <bk-select
-              style="width: 129px; margin-right: 8px;"
+              style="width: 254px; margin-left: 8px; height: 32px"
               :clearable="false"
-              v-model="formData.params.conditions.type"
-              @change="chooseType">
-              <bk-option id="match" :name="$t('retrieve.String_filtering')"></bk-option>
-              <bk-option id="separator" :name="$t('retrieve.Separator_filtering')"></bk-option>
+              v-if="isString" v-model="formData.params.conditions.match_type">
+              <bk-option id="include" :name="$t('retrieve.Keep_string')"></bk-option>
+              <bk-option id="exclude" :name="$t('retrieve.Keep_filtering')" disabled>
+                <span v-bk-tooltips.right="$t('正在开发中')">{{ $t('retrieve.Keep_filtering') }}</span>
+              </bk-option>
             </bk-select>
-          </bk-form-item>
-          <bk-input v-show="isString" v-model="formData.params.conditions.match_content"></bk-input>
-          <bk-select
-            style="width: 254px; margin-left: 8px; height: 32px"
-            :clearable="false"
-            v-if="isString" v-model="formData.params.conditions.match_type">
-            <bk-option id="include" :name="$t('retrieve.Keep_string')"></bk-option>
-            <bk-option id="exclude" :name="$t('retrieve.Keep_filtering')" disabled>
-              <span v-bk-tooltips.right="$t('正在开发中')">{{ $t('retrieve.Keep_filtering') }}</span>
-            </bk-option>
-          </bk-select>
-          <bk-select
-            style="width: 320px; margin-right: 8px; height: 32px"
-            v-if="!isString"
-            v-model="formData.params.conditions.separator">
-            <bk-option
-              v-for="(option, index) in globalsData.data_delimiter"
-              :key="index"
-              :id="option.id"
-              :name="option.name">
-            </bk-option>
-          </bk-select>
+            <bk-select
+              style="width: 320px; margin-right: 8px; height: 32px"
+              v-if="!isString"
+              v-model="formData.params.conditions.separator">
+              <bk-option
+                v-for="(option, index) in globalsData.data_delimiter"
+                :key="index"
+                :id="option.id"
+                :name="option.name">
+              </bk-option>
+            </bk-select>
+          </div>
+          <div class="tips ml115" v-show="!isString">{{ $t('retrieve.Complex_filtering') }}</div>
+          <div class="form-div" v-if="!isString">
+            <div class="choose-table">
+              <div class="choose-table-item choose-table-item-head">
+                <div class="left">{{ $t('retrieve.How_columns') }}</div>
+                <div class="main">{{ $t('retrieve.equal_to') }}</div>
+                <div class="right">{{ $t('retrieve.To_add_delete') }}</div>
+              </div>
+              <div class="choose-table-item-body">
+                <div class="choose-table-item" v-for="(item, index) in separatorFilters" :key="index">
+                  <div class="left">
+                    <bk-form-item
+                      label="" :rules="rules.separator_filters" style="width: 100px;"
+                      :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
+                      <bk-input style="width: 100px;" v-model="item.fieldindex"></bk-input>
+                    </bk-form-item>
+                  </div>
+                  <div :class="['main', { line: separatorFilters.length > 1 }] ">
+                    <bk-form-item
+                      label="" :rules="rules.separator_filters"
+                      :property="'params.conditions.separator_filters.' + index + '.word'">
+                      <bk-input v-model="item.word"></bk-input>
+                    </bk-form-item>
+                  </div>
+                  <div class="right">
+                    <i class="bk-icon icon-plus-circle icons" @click="addItem"></i>
+                    <i
+                      :class="['bk-icon icon-minus-circle icons ml9', { disable: separatorFilters.length === 1 }] "
+                      @click="delItem(index)">
+                    </i>
+                  </div>
+                </div>
+                <div class="choose-select" v-if="separatorFilters && separatorFilters.length > 1">
+                  <bk-select class="select-div" v-model="type" @selected="changeType">
+                    <bk-option id="and" :name="$t('configDetails.and')"></bk-option>
+                    <bk-option id="or" :name="$t('configDetails.or')"></bk-option>
+                  </bk-select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="tips ml115" v-show="!isString">{{ $t('retrieve.Complex_filtering') }}</div>
-        <div class="form-div" v-if="!isString">
-          <div class="choose-table">
-            <div class="choose-table-item choose-table-item-head">
-              <div class="left">{{ $t('retrieve.How_columns') }}</div>
-              <div class="main">{{ $t('retrieve.equal_to') }}</div>
-              <div class="right">{{ $t('retrieve.To_add_delete') }}</div>
-            </div>
-            <div class="choose-table-item-body">
-              <div class="choose-table-item" v-for="(item, index) in separatorFilters" :key="index">
-                <div class="left">
-                  <bk-form-item
-                    label="" :rules="rules.separator_filters" style="width: 100px;"
-                    :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
-                    <bk-input style="width: 100px;" v-model="item.fieldindex"></bk-input>
-                  </bk-form-item>
-                </div>
-                <div :class="['main', { line: separatorFilters.length > 1 }] ">
-                  <bk-form-item
-                    label="" :rules="rules.separator_filters"
-                    :property="'params.conditions.separator_filters.' + index + '.word'">
-                    <bk-input v-model="item.word"></bk-input>
-                  </bk-form-item>
-                </div>
-                <div class="right">
-                  <i class="bk-icon icon-plus-circle icons" @click="addItem"></i>
-                  <i
-                    :class="['bk-icon icon-minus-circle icons ml9', { disable: separatorFilters.length === 1 }] "
-                    @click="delItem(index)">
-                  </i>
-                </div>
-              </div>
-              <div class="choose-select" v-if="separatorFilters && separatorFilters.length > 1">
-                <bk-select class="select-div" v-model="type" @selected="changeType">
-                  <bk-option id="and" :name="$t('configDetails.and')"></bk-option>
-                  <bk-option id="or" :name="$t('configDetails.or')"></bk-option>
+        <div v-else>
+          <div class="tips ml115">{{ $t('retrieve.suggest_clean') }}</div>
+          <div>
+            <bk-form-item :label="$t('configDetails.filterContent')">
+              <div class="form-div win-filter" v-for="(item, index) in eventSettingList" :key="index">
+                <bk-select
+                  class="select-div"
+                  :clearable="false"
+                  @selected="tagBlurRules(item,index)"
+                  v-model="item.type">
+                  <bk-option
+                    v-for="option in selectEventList"
+                    :key="option.id"
+                    :id="option.id"
+                    :disabled="option.isSelect"
+                    :name="option.name">
+                  </bk-option>
                 </bk-select>
+                <bk-tag-input
+                  class="tag-input"
+                  v-model="item.list"
+                  :class="item.isCorrect ? '' : 'tagRulesColor'"
+                  @blur="tagBlurRules(item,index)"
+                  @remove="tagBlurRules(item,index)"
+                  :allow-auto-match="true"
+                  :has-delete-icon="true"
+                  :allow-create="true">
+                </bk-tag-input>
+                <div class="ml9">
+                  <i
+                    :class="
+                      ['bk-icon icon-plus-circle icons',
+                       { disable: eventSettingList.length === selectEventList.length }]"
+                    @click="addWinEvent"
+                  ></i>
+                  <i
+                    :class="['bk-icon icon-minus-circle icons ml9', { disable: eventSettingList.length === 1 }] "
+                    @click="delWinEvent(index)"></i>
+                </div>
               </div>
-            </div>
+            </bk-form-item>
           </div>
         </div>
       </div>
@@ -375,6 +449,9 @@ export default {
               { fieldindex: '', word: '', op: '=', logic_op: 'and' },
             ],
           },
+          winlog_name: [], // windows事件名称
+          winlog_level: [], // windows事件等级
+          winlog_event_id: [], // windows事件id
         },
       },
       rules: {
@@ -491,6 +568,37 @@ export default {
         SET_TEMPLATE1: this.$t('configDetails.selected'),
         SET_TEMPLATE2: this.$t('configDetails.setTemplates'),
       },
+      logSpeciesList: [{
+        id: 'Application',
+        name: this.$t('应用程度'),
+      }, {
+        id: 'Security',
+        name: this.$t('安全'),
+      }, {
+        id: 'System',
+        name: this.$t('win系统'),
+      }, {
+        id: 'Outher',
+        name: this.$t('其他'),
+      }],
+      outherRules: false,
+      selectLogSpeciesList: ['Application', 'Security', 'System', 'Outher'],
+      outherSpeciesList: [],
+      selectEventList: [
+        {
+          id: 'winlog_event_id',
+          name: this.$t('事件ID'),
+          isSelect: false,
+        },
+        {
+          id: 'winlog_level',
+          name: this.$t('级别'),
+          isSelect: false,
+        },
+      ],
+      eventSettingList: [
+        { type: 'winlog_event_id', list: [], isCorrect: true },
+      ],
     };
   },
   computed: {
@@ -538,17 +646,42 @@ export default {
     this.isUpdate = this.$route.name !== 'collectAdd';
     if (this.isUpdate) {
       this.formData = JSON.parse(JSON.stringify(this.curCollect));
+      const { params } = this.formData;
       if (this.formData.target?.length) { // IP 选择器预览结果回填
         this.formData.target_nodes = this.formData.target;
       }
       if (!this.formData.collector_config_name_en) { // 兼容旧数据英文名为空
         this.formData.collector_config_name_en = this.formData.table_id || '';
       }
-      const { params } = this.formData;
-      if (params.paths.length > 0) {
-        params.paths = typeof params.paths[0] === 'string' ? params.paths.map(item => ({ value: item })) : params.paths;
-      } else { // 兼容原日志路径为空列表
-        params.paths = [{ value: '' }];
+      if (this.formData.collector_scenario_id !== 'wineventlog') {
+        if (params.paths.length > 0) {
+          params.paths = typeof params.paths[0] === 'string' ? params.paths.map(item => ({ value: item })) : params.paths;
+        } else { // 兼容原日志路径为空列表
+          params.paths = [{ value: '' }];
+        }
+      } else {
+        const outherList = params.winlog_name.filter(v => ['Application', 'Security', 'System'].indexOf(v) === -1);
+        if (outherList.length > 0) {
+          this.outherSpeciesList = outherList;
+          this.selectLogSpeciesList = params.winlog_name;
+          this.selectLogSpeciesList.push('Outher');
+        } else {
+          this.selectLogSpeciesList = params.winlog_name;
+        }
+        const newEventSettingList = [];
+        for (const [key, val] of Object.entries(params)) {
+          if (key !== 'winlog_name' && val[0] !== '') {
+            newEventSettingList.push({
+              type: key,
+              list: val,
+              isCorrect: true,
+            });
+          }
+        }
+        if (newEventSettingList.length !== 0) {
+          this.eventSettingList = newEventSettingList;
+        }
+        this.selectDisabledChange();
       }
     }
   },
@@ -572,10 +705,25 @@ export default {
     },
     // 开始采集
     startCollect() {
+      if (this.eventSettingList.some(el => el.isCorrect === false) || this.outherRules) {
+        return;
+      }
       this.$refs.validateForm.validate().then(() => {
         const params = this.handleParams();
         if (this.isCloseDataLink) {
           delete params.data_link_id;
+        }
+        if (this.formData.collector_scenario_id === 'wineventlog') {
+          // win_log
+          const winParmas = {};
+          if (this.selectLogSpeciesList.includes('Outher')) {
+            this.selectLogSpeciesList.splice(this.selectLogSpeciesList.indexOf('Outher'), 1);
+          }
+          winParmas.winlog_name = this.selectLogSpeciesList.concat(this.outherSpeciesList);
+          this.eventSettingList.forEach((el) => {
+            winParmas[el.type] = el.list;
+          });
+          params.params = winParmas;
         }
         this.isHandle = true;
         this.setCollection(params);
@@ -598,7 +746,9 @@ export default {
           if (this.isUpdate && this.isItsm) {
             sessionStorage.setItem('collectionUpdateData', JSON.stringify(updateData));
           }
-          params.params.paths = params.params.paths.map(item => ({ value: item }));
+          if (this.formData.collector_scenario_id !== 'wineventlog') {
+            params.params.paths = params.params.paths.map(item => ({ value: item }));
+          }
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`, Object.assign({}, this.formData, params, res.data));
           this.$emit('stepChange');
           this.setDetail(res.data.collector_config_id);
@@ -623,18 +773,20 @@ export default {
         description,
         params,
       } = formData;
-      if (!this.hasMultilineReg) { // 行首正则未开启
-        delete params.multiline_pattern;
-        delete params.multiline_max_lines;
-        delete params.multiline_timeout;
+      if (this.formData.collector_scenario_id !== 'wineventlog') {
+        if (!this.hasMultilineReg) { // 行首正则未开启
+          delete params.multiline_pattern;
+          delete params.multiline_max_lines;
+          delete params.multiline_timeout;
+        }
+        const { match_type, match_content, separator, separator_filters, type } = params.conditions;
+        params.conditions = type === 'match' ? { type, match_type, match_content } : {
+          type,
+          separator,
+          separator_filters,
+        };
+        params.paths = params.paths.map(item => item.value);
       }
-      const { match_type, match_content, separator, separator_filters, type } = params.conditions;
-      params.conditions = type === 'match' ? { type, match_type, match_content } : {
-        type,
-        separator,
-        separator_filters,
-      };
-      params.paths = params.paths.map(item => item.value);
       if (this.isUpdate) { // 编辑
         return {
           collector_config_id: Number(this.$route.params.collectorId),
@@ -701,6 +853,50 @@ export default {
     delLog(index) {
       if (this.formData.params.paths.length > 1) {
         this.formData.params.paths.splice(this.formData.params.paths.findIndex((item, ind) => ind === index), 1);
+      }
+    },
+    addWinEvent() {
+      const e = this.eventSettingList.map(el => el.type);
+      const s = this.selectEventList.map(el => el.id);
+      if (e.length !== s.length) {
+        const selectFilter = s.filter(v => e.indexOf(v) === -1);
+        this.eventSettingList.push({ type: selectFilter[0], list: [], isCorrect: true });
+        this.selectDisabledChange(true);
+      }
+    },
+    delWinEvent(index) {
+      if (this.eventSettingList.length > 1) {
+        this.eventSettingList.splice(this.eventSettingList.findIndex((el, ind) => index === ind), 1);
+        this.selectDisabledChange(false);
+      }
+    },
+    selectDisabledChange(state = true) {
+      if (this.eventSettingList.length === 1) {
+        this.selectEventList.forEach(el => el.isSelect = false);
+      }
+      if (this.eventSettingList.length === this.selectEventList.length) {
+        this.selectEventList.forEach(el => el.isSelect = true);
+      }
+      for (const eItem of this.eventSettingList) {
+        for (const sItem of this.selectEventList) {
+          if (eItem.type === sItem.id) {
+            sItem.isSelect = state;
+          }
+        }
+      }
+    },
+    outherBlurRules(input, tags) {
+      this.outherRules = !tags.every(el => /^[a-zA-Z_ ]*$/.test(el));
+      tags.length === 0 && (this.outherRules = false);
+    },
+    tagBlurRules(item, index) {
+      switch (item.type) {
+        case 'winlog_event_id':
+          this.eventSettingList[index].isCorrect =  item.list.every(el => /^[\d -]+$/.test(el));
+          break;
+        case 'winlog_level':
+          this.eventSettingList[index].isCorrect =  item.list.every(el => /^[A-Za-z]+$/.test(el));
+          break;
       }
     },
     addItem() {
@@ -903,6 +1099,16 @@ export default {
       }
     }
 
+    .win-filter{
+      .select-div{
+        width: 90px;
+        margin-right: 8px;
+      }
+      .tag-input{
+        width: 320px;
+      }
+    }
+
     .choose-table {
       background: #fff;
       width: 60%;
@@ -1035,6 +1241,22 @@ export default {
       }
     }
 
+    .species-item{
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      .bk-form-checkbox{
+        height: 30px;
+        line-height: 30px;
+      }
+      .bk-tag-selector{
+        position: absolute;
+        top: 89px;
+        left: 65px;
+        width: 320px;
+      }
+    }
+
     .ml {
       margin-left: -115px;
     }
@@ -1065,6 +1287,12 @@ export default {
 
     .rulesColor {
       border-color: #ff5656 !important;
+    }
+
+    .tagRulesColor{
+      .bk-tag-input{
+        border-color: #ff5656 !important;
+      }
     }
   }
 </style>
