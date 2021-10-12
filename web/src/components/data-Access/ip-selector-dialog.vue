@@ -30,7 +30,8 @@
     :auto-close="false"
     :value="showDialog"
     @value-change="handleValueChange"
-    @confirm="handleConfirm">
+    @confirm="handleConfirm"
+    data-test-id="addCollectionTarget_div_selectCollectionTargetBox">
     <div class="ip-select-dialog-content">
       <TopoSelector
         v-if="showDialog"

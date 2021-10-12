@@ -32,11 +32,12 @@
         <span class="logo-text">{{ logoText }}</span>
       </div>
     </div>
-    <div class="nav-center fl">
+    <div class="nav-center fl" data-test-id="topNav_div_topNavBox">
       <ul>
         <li v-for="menu in topMenu" :key="menu.id"
             :class="['menu-item', { 'active': activeTopMenu.id === menu.id }]"
-            @click="routerHandler(menu)">
+            @click="routerHandler(menu)"
+            :data-test-id="`topNavBox_li_${menu.id}`">
           <!-- <template v-if="menu.dropDown"> -->
           <template v-if="menu.id === 'dashboard'">
             <bk-dropdown-menu :ref="`menu${menu.router}`" align="center">
