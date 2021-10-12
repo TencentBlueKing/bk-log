@@ -21,7 +21,10 @@
   -->
 
 <template>
-  <div class="extract-auth-manage" v-bkloading="{ isLoading }">
+  <div
+    class="extract-auth-manage"
+    v-bkloading="{ isLoading }"
+    data-test-id="extractAuthManage_div_extractAuthManageBox">
     <div>
       <bk-button
         v-cursor="{ active: isAllowedManage === false }"
@@ -30,6 +33,7 @@
         class="king-button"
         theme="primary"
         style="margin: 20px 0;width: 120px;"
+        data-test-id="extractAuthManageBox_button_addNewExtractAuthManage"
         @click="handleCreateStrategy">
         {{$t('新增')}}
       </bk-button>

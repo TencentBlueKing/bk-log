@@ -382,6 +382,10 @@ BKDATA_DATA_APP_CODE = os.getenv("BKAPP_BKDATA_DATA_APP_CODE", APP_CODE)
 BKDATA_DATA_TOKEN_ID = os.getenv("BKAPP_BKDATA_DATA_TOKEN_ID", 0)
 BKDATA_DATA_TOKEN = os.getenv("BKAPP_BKDATA_DATA_TOKEN", "")
 
+# 登录窗口大小
+IFRAME_HEIGHT = int(os.getenv("BKAPP_IFRAME_HEIGHT", 400))
+IFRAME_WIDTH = int(os.getenv("BKAPP_IFRAME_WIDTH", 400))
+
 # ===============================================================================
 # FeatureToggle 特性开关：以内部版为准，其它版本根据需求调整
 # 此配置以V4.2.X企业版做为默认配置，其它版本按需进行调整
@@ -467,7 +471,7 @@ MENUS = [
                 "name": _("日志清洗"),
                 "feature": "on",
                 "icon": "",
-                "keyword": "清洗",
+                "keyword": _("清洗"),
                 "children": [
                     {
                         "id": "clean_list",

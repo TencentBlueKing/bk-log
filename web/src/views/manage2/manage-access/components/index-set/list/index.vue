@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <section class="index-set-container">
+  <section class="index-set-container" data-test-id="logIndexSet_section_logIndexSetBox">
     <bk-alert
       v-if="searchParams.is_trace_log === '0'"
       class="alert-info"
@@ -30,6 +30,7 @@
     <div class="operate-box">
       <bk-button
         theme="primary" style="width: 120px;"
+        data-test-id="logIndexSetBox_button_newIndexSet"
         :disabled="!collectProject || isTableLoading || isAllowedCreate === null"
         :loading="isCreateLoading"
         v-cursor="{ active: isAllowedCreate === false }"
@@ -38,6 +39,7 @@
       </bk-button>
       <bk-input
         style="width: 300px;"
+        data-test-id="logIndexSetBox_input_searchIndexSet"
         :right-icon="'bk-icon icon-search'"
         v-model="searchParams.keyword"
         @enter="reFilter"
@@ -48,6 +50,7 @@
       :empty-text="$t('btn.vacancy')"
       :data="indexSetList"
       :pagination="pagination"
+      data-test-id="logIndexSetBox_table_indexSetTable"
       v-bkloading="{ isLoading: isTableLoading }"
       @page-limit-change="handleLimitChange"
       @page-change="handlePageChange">

@@ -69,6 +69,7 @@
         <div class="auto-refresh-trigger">
           <span
             :class="['log-icon', isAutoRefresh ? 'icon-auto-refresh' : 'icon-refresh-icon']"
+            data-test-id="retrieve_span_periodicRefresh"
             @click.stop="$emit('shouldRetrieve')"></span>
           <span :class="isAutoRefresh && 'active-text'">{{refreshTimeText}}</span>
           <span class="bk-icon icon-angle-down" :class="refreshActive && 'active'"></span>
