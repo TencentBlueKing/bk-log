@@ -69,6 +69,9 @@ modules:
         svc_discovery:
             bk_saas:
                 - bk_app_code: bk_monitorv3
+                - bk_app_code: bk_log_search
+                - bk_app_code: bk_itsm
+                - bk_app_code: bk_data
 
     api:
         is_default: False
@@ -95,3 +98,9 @@ modules:
                 command: gunicorn wsgi -w 4 -k gevent -b :5000 --access-logfile - --error-logfile - --access-logformat '[%(h)s] %({request_id}i)s %(u)s %(t)s "%(r)s" %(s)s %(D)s %(b)s "%(f)s" "%(a)s"'
                 plan: 4C2G5R
                 replicas: 5
+        svc_discovery:
+            bk_saas:
+                - bk_app_code: bk_monitorv3
+                - bk_app_code: bk_log_search
+                - bk_app_code: bk_itsm
+                - bk_app_code: bk_data
