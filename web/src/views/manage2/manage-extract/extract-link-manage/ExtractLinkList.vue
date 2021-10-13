@@ -21,7 +21,10 @@
   -->
 
 <template>
-  <div class="extract-link-list-container" v-bkloading="{ isLoading }">
+  <div
+    class="extract-link-list-container"
+    v-bkloading="{ isLoading }"
+    data-test-id="extractLinkList_div_extractLinkListBox">
     <div>
       <bk-button
         v-cursor="{ active: isAllowedManage === false }"
@@ -30,11 +33,16 @@
         class="king-button"
         theme="primary"
         style="margin: 20px 0;width: 120px;"
+        data-test-id="extractLinkListBox_button_addNewLinkList"
         @click="handleCreate">
         {{ $t('新增') }}
       </bk-button>
     </div>
-    <bk-table class="king-table" :data="extractLinkList" row-key="strategy_id">
+    <bk-table
+      class="king-table"
+      :data="extractLinkList"
+      row-key="strategy_id"
+      data-test-id="extractLinkListBox_table_LinkListTableBox">
       <bk-table-column :label="$t('链路名称')">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.name }}</span>

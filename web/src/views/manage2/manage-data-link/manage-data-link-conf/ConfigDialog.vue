@@ -32,21 +32,29 @@
     header-position="left"
     @confirm="handleConfirm"
     @cancel="closeDialog">
-    <div class="link-config-form">
+    <div class="link-config-form" data-test-id="addNewLinkConfig_div_linkConfigForm">
       <bk-form class="king-form" ref="form" :label-width="220" :model="formData" :rules="rules">
         <bk-form-item
           :label="$t('链路名称')"
           required
           property="link_group_name"
           error-display-type="normal">
-          <bk-input v-model="formData.link_group_name" :clearable="true" style="width: 380px;"></bk-input>
+          <bk-input
+            data-test-id="linkConfigForm_div_linkName"
+            v-model="formData.link_group_name"
+            :clearable="true"
+            style="width: 380px;"></bk-input>
         </bk-form-item>
         <bk-form-item
           :label="$t('允许的业务')"
           required
           property="bk_biz_id"
           error-display-type="normal">
-          <bk-select v-model="formData.bk_biz_id" :clearable="false" style="width: 380px;">
+          <bk-select
+            data-test-id="linkConfigForm_select_selectPermitted"
+            v-model="formData.bk_biz_id"
+            :clearable="false"
+            style="width: 380px;">
             <template v-for="item in projectList">
               <bk-option :key="item.bk_biz_id" :id="item.bk_biz_id" :name="item.project_name"></bk-option>
             </template>
@@ -57,7 +65,11 @@
           required
           property="kafka_cluster_id"
           error-display-type="normal">
-          <bk-select v-model="formData.kafka_cluster_id" :clearable="false" style="width: 380px;">
+          <bk-select
+            data-test-id="linkConfigForm_select_selectKafka"
+            v-model="formData.kafka_cluster_id"
+            :clearable="false"
+            style="width: 380px;">
             <template v-for="item in selectData.kafka">
               <bk-option :key="item.cluster_id" :id="item.cluster_id" :name="item.cluster_name"></bk-option>
             </template>
@@ -68,7 +80,11 @@
           required
           property="transfer_cluster_id"
           error-display-type="normal">
-          <bk-select v-model="formData.transfer_cluster_id" :clearable="false" style="width: 380px;">
+          <bk-select
+            data-test-id="linkConfigForm_select_selectTransfer"
+            v-model="formData.transfer_cluster_id"
+            :clearable="false"
+            style="width: 380px;">
             <template v-for="item in selectData.transfer">
               <bk-option :key="item.cluster_id" :id="item.cluster_id" :name="item.cluster_name"></bk-option>
             </template>
@@ -79,7 +95,12 @@
           required
           property="es_cluster_ids"
           error-display-type="normal">
-          <bk-select v-model="formData.es_cluster_ids" :clearable="false" multiple style="width: 380px;">
+          <bk-select
+            data-test-id="linkConfigForm_select_selectEsClusterIds"
+            v-model="formData.es_cluster_ids"
+            :clearable="false"
+            multiple
+            style="width: 380px;">
             <template v-for="item in selectData.es">
               <bk-option :key="item.cluster_id" :id="item.cluster_id" :name="item.cluster_name"></bk-option>
             </template>
@@ -89,13 +110,17 @@
           :label="$t('是否启用')"
           property="is_active"
           error-display-type="normal">
-          <bk-checkbox v-model="formData.is_active"></bk-checkbox>
+          <bk-checkbox
+            v-model="formData.is_active"
+            data-test-id="linkConfigForm_checkbox_isEnable"
+          ></bk-checkbox>
         </bk-form-item>
         <bk-form-item
           :label="$t('备注')"
           property="description"
           error-display-type="normal">
           <bk-input
+            data-test-id="linkConfigForm_input_Remark"
             v-model="formData.description"
             type="textarea"
             :maxlength="64"

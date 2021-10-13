@@ -100,7 +100,7 @@ class EsQueryViewSet(APIViewSet):
             当传入时间戳，时区会默认为0时区；当start_time和end_time参数传入符合ISO-8601的字符串，则会根据时区转换，不填默认为系统时区
         @apiParam {String} [time_range] 时间标识符符["15m", "30m", "1h", "4h", "12h", "1d", "customized"]（非必填，默认15m）
         @apiParam {String} [query_string] 搜索语句query_string(非必填，默认为*)
-        @apiParam {List} [filter] 搜索过滤条件（非必填，默认为没有过滤，默认的操作符是is） 操作符支持 is|is one of|is not|is not one of|exists|is not exists  # pylint: disable=line-too-long
+        @apiParam {List} [filter] 搜索过滤条件（非必填，默认为没有过滤，默认的操作符是is） 操作符支持 is|is one of|is not|is not one of|exists|is not exists  # pylint: disable=line-too-long  # noqa
         @apiParam {List} [sort_list] 排序条件 支持对应field的正序倒叙，支持优先级
         @apiParam {Int} [start] 起始位置（非必填，类似数组切片，默认为0）
         @apiParam {Int} [size] 条数（非必填，控制返回条目，默认为500）
