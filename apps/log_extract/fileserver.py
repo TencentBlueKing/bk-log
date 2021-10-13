@@ -80,6 +80,10 @@ class FileServer(object):
         return step_instance["step_instance_id"]
 
     @staticmethod
+    def get_job_instance_status(query_result):
+        return query_result["job_instance"]["status"]
+
+    @staticmethod
     def get_log_content_for_single_ip(query_result):
         return query_result[0]["step_results"][0]["ip_logs"][0]["log_content"]
 
