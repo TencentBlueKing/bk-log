@@ -709,6 +709,11 @@ export default {
         } else {
           this.selectLogSpeciesList = params.winlog_name;
         }
+
+        delete params.ignore_older;
+        delete params.max_bytes;
+        delete params.tail_files;
+
         const newEventSettingList = [];
         for (const [key, val] of Object.entries(params)) {
           if (key !== 'winlog_name' && val[0] !== '') {
@@ -1146,7 +1151,7 @@ export default {
 
     .win-filter{
       .select-div{
-        width: 90px;
+        width: 129px;
         margin-right: 8px;
       }
       .tag-input{
