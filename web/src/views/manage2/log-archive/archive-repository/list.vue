@@ -76,7 +76,7 @@
         </bk-table-column>
         <bk-table-column
           :label="$t('来源')"
-          prop="value"
+          prop="cluster_source_type"
           class-name="filter-column"
           column-key="cluster_source_type"
           :filters="sourceFilters"
@@ -244,6 +244,9 @@ export default {
     handleFilterChange(data) {
       Object.keys(data).forEach((item) => {
         this.tableDataSearched = this.tableDataOrigin.filter((repo) => {
+          if (Object.values(data)[0].length === 0) {
+            return true;
+          }
           if (repo[item]) {
             return repo[item] === data[item].join('');
           }
