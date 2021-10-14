@@ -49,7 +49,7 @@
             property="archive_config_id">
             <bk-select
               v-model="formData.archive_config_id"
-              @change="handleArchiveChange"
+              @selected="handleArchiveChange"
               :disabled="isEdit">
               <bk-option
                 v-for="option in archiveList"
@@ -250,6 +250,7 @@ export default {
         this.archiveList = res.data || [];
         if (!this.isEdit) {
           this.formData.archive_config_id = res.data[0].archive_config_id || '';
+          this.handleArchiveChange(res.data[0].archive_config_id);
         }
       })
         .finally(() => {
@@ -273,7 +274,7 @@ export default {
       const selectArchive = this.archiveList.find(el => el.archive_config_id === nval);
       const date = new Date();
       const year = date.getFullYear();
-      const month = (date.getMonth() * 1) + 1 >= 10 ? (date.getMonth() * 1) + 1 : `0${date.getMonth()}`;
+      const month = (date.getMonth() * 1) + 1 >= 10 ? (date.getMonth() * 1) + 1 : `0${date.getMonth() * 1 + 1}`;
       const day = date.getDate() >= 10 ? date.getDate() : `0${date.getDate()}`;
       const hour = date.getHours() >= 10 ? date.getHours() : `0${date.getHours()}`;
       const min = date.getMinutes() >= 10 ? date.getMinutes() : `0${date.getMinutes()}`;

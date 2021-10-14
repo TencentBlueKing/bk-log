@@ -119,7 +119,7 @@
               required
               :rules="basicRules.uri"
               :property="formData.hdfsFormData.uri">
-              <bk-input placeholder="请输入" v-model="formData.hdfsFormData.uri">
+              <bk-input v-model="formData.hdfsFormData.uri">
                 <!-- <template slot="prepend">
                   <div class="group-text">hdfs://</div>
                 </template> -->
@@ -394,11 +394,12 @@ export default {
           },
         };
         if (es_config.type === 'hdfs') {
-          const { uri, path, isSecurity, security } = hdfsFormData;
+          const { uri, path, isSecurity, security, compress  } = hdfsFormData;
           const principal = isSecurity ? security.principal : undefined;
           paramsData.es_config.settings = {
             uri,
             path,
+            compress,
             'security.principal': principal,
           };
         }
