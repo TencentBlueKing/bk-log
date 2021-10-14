@@ -111,7 +111,7 @@ def load_domains(settings):
 
 
 def load_svc_discovery(key: str, module_name: str = None, environment_name: str = "prod", default=""):
-    value = os.getenv["BKPAAS_SERVICE_ADDRESSES_BKSAAS"]
+    value = os.getenv("BKPAAS_SERVICE_ADDRESSES_BKSAAS")
     if not value:
         return default
     decoded_svc = json.loads(base64.b64decode(value).decode("utf-8"))
