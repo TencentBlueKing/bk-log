@@ -44,6 +44,11 @@ class GetSystemInfoError(BaseIAMError):
     MESSAGE = _lazy("获取系统信息错误")
 
 
+class NotHaveInstanceIdError(BaseIAMError):
+    ERROR_CODE = "004"
+    MESSAGE = _lazy("没有传入鉴权实例id")
+
+
 class PermissionDeniedError(BaseIAMError):
     ERROR_CODE = "403"
     MESSAGE = _lazy("权限校验不通过")

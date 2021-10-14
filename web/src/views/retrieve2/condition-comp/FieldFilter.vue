@@ -30,6 +30,7 @@
         right-icon="icon-search"
         :placeholder="$t('搜索字段名')"
         @change="handleSearch"
+        data-test-id="fieldFilter_input_searchFieldName"
       ></bk-input>
       <div class="gap"></div>
       <bk-popover
@@ -44,7 +45,9 @@
         :on-show="handlePopoverShow"
         :on-hide="handlePopoverHide">
         <slot name="trigger">
-          <div class="filter-popover-trigger" @click="closePopoverIfOpened">
+          <div class="filter-popover-trigger"
+               @click="closePopoverIfOpened"
+               data-test-id="fieldFilter_div_phrasesSearch">
             <span class="bk-icon icon-funnel"></span>
             <span class="text">{{ $t('字段类型过滤') }}</span>
             <span v-if="filterTypeCount" class="count">{{ filterTypeCount }}</span>

@@ -29,7 +29,11 @@
       </div>
       <div class="content">
         <div class="flex-box">
-          <bk-button theme="primary" @click="showSelectDialog = true">{{ $t('选择服务器') }}</bk-button>
+          <bk-button
+            theme="primary"
+            @click="showSelectDialog = true"
+            data-test-id="addNewExtraction_button_selectTheServer"
+          >{{ $t('选择服务器') }}</bk-button>
           <div class="select-text">
             {{ $t('已选择') }}
             <span class="primary" v-if="ipList.length">{{ ipList.length }}</span>
@@ -84,7 +88,10 @@
       <div class="title">{{ $t('提取链路') }}</div>
       <div class="content">
         <!-- eslint-disable-next-line vue/camelcase -->
-        <bk-select v-model="link_id" style="width: 250px;margin-right: 20px;background-color: #fff;" :clearable="false">
+        <bk-select v-model="link_id"
+                   style="width: 250px;margin-right: 20px;background-color: #fff;"
+                   data-test-id="addNewExtraction_select_selectLink"
+                   :clearable="false">
           <bk-option
             v-for="link in extractLinks"
             :key="link.link_id"
@@ -98,10 +105,13 @@
 
     <div class="button-container">
       <bk-button theme="primary" style="margin-right: 16px;width: 120px;"
+                 data-test-id="addNewExtraction_button_submitConfigure"
                  :disabled="canSubmit" @click="handleSubmit">
         {{ $t('提交下载任务') }}
       </bk-button>
-      <bk-button style="width: 120px;" @click="goToHome">{{ $t('取消') }}</bk-button>
+      <bk-button style="width: 120px;" @click="goToHome"
+                 data-test-id="addNewExtraction_button_cancel"
+      >{{ $t('取消') }}</bk-button>
     </div>
   </div>
 </template>

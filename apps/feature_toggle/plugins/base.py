@@ -73,6 +73,7 @@ class FeatureBKDataDataId(FeatureToggleBase):
 
     def set_status(self, param):
         from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+
         if param["status"] != "off" and not FeatureToggleObject.switch("scenario_bkdata"):
             param["status"] = "off"
         return param
@@ -113,4 +114,5 @@ class BkLogTrace(FeatureToggleBase):
 
     def action(self):
         from apps.log_trace.trace import BluekingInstrumentor
+
         BluekingInstrumentor().instrument()
