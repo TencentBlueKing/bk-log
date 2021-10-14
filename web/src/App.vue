@@ -229,6 +229,7 @@ export default {
   }
 
   .tippy-tooltip .tippy-content {
+    padding: 0;
     word-break: break-all;
   }
 
