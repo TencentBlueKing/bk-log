@@ -82,7 +82,7 @@
           :filters="sourceFilters"
           :filter-multiple="false">
           <template slot-scope="props">
-            {{ props.row.es_source_type }}
+            {{ props.row.cluster_source_name }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('创建人')">

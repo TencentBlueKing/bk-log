@@ -119,10 +119,10 @@
               required
               :rules="basicRules.uri"
               :property="formData.hdfsFormData.uri">
-              <bk-input placeholder="namenode:8020/" v-model="formData.hdfsFormData.uri">
-                <template slot="prepend">
+              <bk-input placeholder="请输入" v-model="formData.hdfsFormData.uri">
+                <!-- <template slot="prepend">
                   <div class="group-text">hdfs://</div>
-                </template>
+                </template> -->
               </bk-input>
             </bk-form-item>
             <bk-form-item
@@ -188,7 +188,7 @@
               <bk-input v-model="formData.cosFormData.app_id"></bk-input>
             </bk-form-item>
             <bk-form-item
-              :label="$t('logArchive.BlucketName')"
+              :label="$t('logArchive.BucketName')"
               required
               :rules="basicRules.bucket"
               :property="formData.cosFormData.bucket">
@@ -221,6 +221,7 @@ const cosConfigForm = () => {
     access_key_secret: '',
     bucket: '',
     region: '',
+    compress: true,
   };
 };
 
@@ -229,6 +230,7 @@ const hdfsConfigForm = () => {
     uri: '',
     path: '',
     isSecurity: false,
+    compress: true,
     security: {
       principal: '',
     },

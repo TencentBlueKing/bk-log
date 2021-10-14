@@ -47,7 +47,7 @@
         :limit-list="pagination.limitList"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('索引集名称')">
+        <bk-table-column :label="$t('索引集名称')" min-width="200">
           <template slot-scope="props">
             {{ props.row.index_set_name }}
           </template>
