@@ -49,10 +49,6 @@ modules:
                 command: python manage.py celery worker -l info -c 1 -Q async_export
                 plan: 4C2G5R
                 replicas: 5
-            flower:
-                command: python manage.py celery flower --url_prefix=/flower --basic_auth=dataweb:D^taWe13Fl0vverP^as --port=5000
-                plan: 4C2G5R
-                replicas: 5
             sworker:
                 command: python manage.py celery worker -c 4 -Q service_schedule,service_schedule_priority  -l info
                 plan: 4C2G5R
