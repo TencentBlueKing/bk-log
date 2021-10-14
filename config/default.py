@@ -159,6 +159,7 @@ CELERY_IMPORTS = (
     "apps.log_databus.tasks.collector",
     "apps.log_databus.tasks.itsm",
     "apps.log_databus.tasks.bkdata",
+    "apps.log_databus.tasks.archive",
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
 )
@@ -307,6 +308,28 @@ SENSITIVE_PARAMS = ["app_code", "app_secret", "bk_app_code", "bk_app_secret", "a
 ALLOWED_MODULES_FUNCS = {
     "apps.log_databus.views.collector_views": {"tail": "tail"},
     "apps.log_databus.views.storage_views": {"connectivity_detect": "connectivity_detect"},
+}
+# esb模块中转发meta接口的传发设置
+META_ESB_FORWARD_CONFIG = {
+    "create_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "create_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "modify_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "modify_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "delete_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "delete_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "verify_es_snapshot_repository": {"is_view_permission": True, "target_call": "verify_es_snapshot_repository"},
 }
 
 # resf_framework
@@ -485,6 +508,33 @@ MENUS = [
                         "name": _("清洗模板"),
                         "feature": "on",
                         "icon": "moban",
+                    },
+                ],
+            },
+            {
+                "id": "log_archive",
+                "name": _("日志归档"),
+                "feature": "on",
+                "icon": "",
+                "keyword": "归档",
+                "children": [
+                    {
+                        "id": "archive_repository",
+                        "name": _("归档仓库"),
+                        "feature": "on",
+                        "icon": "new-_empty-fill",
+                    },
+                    {
+                        "id": "archive_list",
+                        "name": _("归档列表"),
+                        "feature": "on",
+                        "icon": "audit-fill",
+                    },
+                    {
+                        "id": "archive_restore",
+                        "name": _("归档回溯"),
+                        "feature": "on",
+                        "icon": "withdraw-fill",
                     },
                 ],
             },

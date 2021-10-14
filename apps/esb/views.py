@@ -24,7 +24,10 @@ from django.conf import settings
 
 from apps.generic import APIViewSet
 from apps.esb import exceptions
-from apps.api import BkLogApi
+from apps.api import BkLogApi, TransferApi
+from apps.iam.handlers.drf import ViewBusinessPermission, BusinessActionPermission, InstanceActionForDataPermission
+from apps.iam.handlers.actions import _all_actions
+from apps.iam.handlers.resources import _all_resources
 
 
 class LogESBViewSet(APIViewSet):
@@ -98,4 +101,66 @@ class LogESBViewSet(APIViewSet):
 
         dst_params.update(self.dst_kwargs)
 
+        return dst_params
+
+
+class MetaESBViewSet(APIViewSet):
+    def get_permissions(self):
+        permission_config = settings.META_ESB_FORWARD_CONFIG
+        target_config = permission_config.get(self._get_dst_key())
+        if not target_config:
+            raise exceptions.UrlNotImplementError
+        if not target_config.get("need_check_permission", True):
+            return []
+        if target_config.get("is_view_permission", False):
+            return [ViewBusinessPermission()]
+        if target_config.get("is_business_action_permission", False):
+            return [BusinessActionPermission(self._get_actions(target_config.get("iam_actions")))]
+        return [
+            InstanceActionForDataPermission(
+                target_config.get("iam_key"),
+                self._get_actions(target_config.get("iam_actions")),
+                _all_resources.get(target_config.get("iam_resource")),
+            )
+        ]
+
+    def _get_actions(self, actions):
+        return [_all_actions.get(action) for action in actions]
+
+    def _get_dst_key(self):
+        _, origin_url, *__ = self.request.path.split("meta/esb/")
+        return origin_url.rstrip("/")
+
+    def call(self, request):
+        """
+        @api {any} /meta/esb/$meta_call/ Meta转发接口
+        @apiName meta_esb_transform
+        @apiGroup Esb
+        @apiDescription metaesb接口转发
+        @apiParam {String} meta_call 转发的meta目标接口
+        """
+        if request.method in ["GET"]:
+            params = request.query_params
+        else:
+            params = request.data
+        esb_params = self.convert_params_to_esb_params(params, request.method in ["GET"])
+        permission_config = settings.META_ESB_FORWARD_CONFIG
+
+        dst_call = permission_config.get(self._get_dst_key()).get("target_call")
+        if not dst_call:
+            raise exceptions.UrlNotImplementError
+
+        try:
+            call_func = getattr(TransferApi, dst_call)
+        except AttributeError:
+            raise exceptions.UrlNotImplementError
+        return Response(call_func(esb_params))
+
+    def convert_params_to_esb_params(self, params, is_get=True):
+        dst_params = {}
+        if not is_get:
+            dst_params.update(params)
+            return dst_params
+        for temp_key, temp_value in params.items():
+            dst_params[temp_key], *_ = temp_value
         return dst_params
