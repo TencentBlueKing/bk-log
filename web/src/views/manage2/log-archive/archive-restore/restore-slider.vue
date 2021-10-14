@@ -42,12 +42,15 @@
           <bk-form-item :label="$t('索引集名称')" required property="index_set_name">
             <bk-input v-model="formData.index_set_name" :disabled="isEdit"></bk-input>
           </bk-form-item>
-          <bk-alert type="info" :title="$t('logArchive.restoreIndexTip')"></bk-alert>
+          <!-- <bk-alert type="info" :title="$t('logArchive.restoreIndexTip')"></bk-alert> -->
           <bk-form-item
             :label="$t('logArchive.archiveItem')"
             required
             property="archive_config_id">
-            <bk-select v-model="formData.archive_config_id" :disabled="isEdit">
+            <bk-select
+              v-model="formData.archive_config_id"
+              @change="handleArchiveChange"
+              :disabled="isEdit">
               <bk-option
                 v-for="option in archiveList"
                 :key="option.archive_config_id"
@@ -245,6 +248,9 @@ export default {
       };
       this.$http.request('archive/getAllArchives', { query }).then((res) => {
         this.archiveList = res.data || [];
+        if (!this.isEdit) {
+          this.formData.archive_config_id = res.data[0].archive_config_id || '';
+        }
       })
         .finally(() => {
           this.sliderLoading = false;
@@ -262,6 +268,17 @@ export default {
     },
     handleExpiredChange(val) {
       this.formData.expired_time = val;
+    },
+    handleArchiveChange(nval) {
+      const selectArchive = this.archiveList.find(el => el.archive_config_id === nval);
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = (date.getMonth() * 1) + 1 >= 10 ? (date.getMonth() * 1) + 1 : `0${date.getMonth()}`;
+      const day = date.getDate() >= 10 ? date.getDate() : `0${date.getDate()}`;
+      const hour = date.getHours() >= 10 ? date.getHours() : `0${date.getHours()}`;
+      const min = date.getMinutes() >= 10 ? date.getMinutes() : `0${date.getMinutes()}`;
+      const dateStr = `${year}${month}${day}${hour}${min}`;
+      this.formData.index_set_name  = selectArchive ? `${selectArchive?.collector_config_name}-回溯-${dateStr}` : '';
     },
     updateDaysList() {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {

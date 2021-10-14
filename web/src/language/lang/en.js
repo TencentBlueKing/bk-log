@@ -1139,7 +1139,7 @@ export default {
     sharedDirectory: 'Shared Directory',
     archiveDirectory: 'Archive Directory',
     HDFSAddr: 'HDFS Addr',
-    BlucketName: 'Blucket Name',
+    BucketName: 'Bucket Name',
     repositoryAlert1: '1. The user needs to create the principal used by es in the kerberos set by hdfs, and then export the corresponding keytab file',
     repositoryAlert2: '2. Put the keytab in the directory corresponding to each node of es',
     repositoryAlert3: 'Local directory configuration instructions',

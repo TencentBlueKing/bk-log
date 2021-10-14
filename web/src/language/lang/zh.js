@@ -1140,7 +1140,7 @@ export default {
     sharedDirectory: '共享目录',
     archiveDirectory: '归档目录',
     HDFSAddr: 'HDFS地址',
-    BlucketName: 'Blucket名字',
+    BucketName: 'Bucket名字',
     repositoryAlert1: '1. 用户需要在hdfs设置的kerberos中创建给es使用的principal, 然后导出对应的keytab文件',
     repositoryAlert2: '2. 将keytab放es每个节点对应的目录中去',
     repositoryAlert3: '本地目录配置说明',
