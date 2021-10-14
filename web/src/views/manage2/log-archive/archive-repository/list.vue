@@ -76,9 +76,9 @@
         </bk-table-column>
         <bk-table-column
           :label="$t('来源')"
-          prop="es_source_type"
+          prop="value"
           class-name="filter-column"
-          column-key="es_source_type"
+          column-key="cluster_source_type"
           :filters="sourceFilters"
           :filter-multiple="false">
           <template slot-scope="props">
