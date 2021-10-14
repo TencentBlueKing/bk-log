@@ -24,6 +24,9 @@ modules:
             - key: PIP_VERSION
               value: 19.3
               description: pip版本
+            - key: USE_SMART_V3
+              value: 1
+              description: 使用smart_v3
         services:
             - name: mysql
             - name: redis
@@ -72,6 +75,7 @@ modules:
                 - bk_app_code: bk_log_search
                 - bk_app_code: bk_itsm
                 - bk_app_code: bk_data
+                - bk_app_code: bk_iam
 
     api:
         is_default: False
@@ -92,6 +96,9 @@ modules:
             - key: PIP_VERSION
               value: 19.3
               description: pip版本
+            - key: USE_SMART_V3
+              value: 1
+              description: 使用smart_v3
 
         processes:
             web:
@@ -104,3 +111,4 @@ modules:
                 - bk_app_code: bk_log_search
                 - bk_app_code: bk_itsm
                 - bk_app_code: bk_data
+                - bk_app_code: bk_iam

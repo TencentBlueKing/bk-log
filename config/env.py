@@ -17,10 +17,11 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import importlib
-import os
 
 import yaml
-
+import json
+import base64
+import os
 
 # V3判断环境的环境变量为BKPAAS_ENVIRONMENT
 if "BKPAAS_ENVIRONMENT" in os.environ:
@@ -107,3 +108,17 @@ def load_domains(settings):
     for key, value in domains.items():
         result_domains[key] = value.format(**context)
     return result_domains
+
+
+def load_svc_discovery(key: str, module_name: str = None, environment_name: str = "prod", default=""):
+    value = os.getenv["BKPAAS_SERVICE_ADDRESSES_BKSAAS"]
+    if not value:
+        return default
+    decoded_svc = json.loads(base64.b64decode(value).decode("utf-8"))
+    for svc in decoded_svc:
+        if svc["key"]["bk_app_code"] == key:
+            if module_name and svc[key]["module_name"] != module_name:
+                continue
+            return svc["value"].get(environment_name, default)
+
+    return default
