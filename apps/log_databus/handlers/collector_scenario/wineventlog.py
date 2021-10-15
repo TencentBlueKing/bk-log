@@ -1,3 +1,22 @@
+# -*- coding: utf-8 -*-
+"""
+Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
+Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
+License for BK-LOG 蓝鲸日志平台:
+--------------------------------------------------------------------
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"""
 from apps.log_databus.constants import LogPluginInfo
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.utils import build_es_option_type
@@ -61,14 +80,14 @@ class WinEventLogScenario(CollectorScenario):
         """
         return {
             "option": {
-                "es_unique_field_list": ["cloudId", "serverIp", "eventId", "channel", "recordId"],
+                "es_unique_field_list": ["cloudId", "serverIp", "winEventId", "winEventChannel", "winEventRecordId"],
                 "separator_node_source": "",
                 "separator_node_action": "",
                 "separator_node_name": "",
             },
             "fields": [
                 {
-                    "field_name": "api",
+                    "field_name": "winEventApi",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "api",
@@ -76,7 +95,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "activityId",
+                    "field_name": "winEventActivityId",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "activity_id",
@@ -84,7 +103,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "channel",
+                    "field_name": "winEventChannel",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "channel",
@@ -92,7 +111,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "recordId",
+                    "field_name": "winEventRecordId",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "record_id",
@@ -100,7 +119,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "relatedActivityId",
+                    "field_name": "winEventRelatedActivityId",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "related_activity_id",
@@ -108,7 +127,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "opcode",
+                    "field_name": "winEventOpcode",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "opcode",
@@ -116,7 +135,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "eventData",
+                    "field_name": "winEventData",
                     "field_type": "object",
                     "tag": "dimension",
                     "alias_name": "event_data",
@@ -124,7 +143,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("object", es_version),
                 },
                 {
-                    "field_name": "eventId",
+                    "field_name": "winEventId",
                     "field_type": "float",
                     "tag": "dimension",
                     "alias_name": "event_id",
@@ -132,7 +151,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("integer", es_version),
                 },
                 {
-                    "field_name": "keywords",
+                    "field_name": "winEventKeywords",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "keywords",
@@ -140,7 +159,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("text", es_version),
                 },
                 {
-                    "field_name": "processPid",
+                    "field_name": "winEventProcessPid",
                     "field_type": "float",
                     "tag": "dimension",
                     "alias_name": "process_pid",
@@ -148,7 +167,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("long", es_version),
                 },
                 {
-                    "field_name": "providerGuid",
+                    "field_name": "winEventProviderGuid",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "provider_guid",
@@ -156,7 +175,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "task",
+                    "field_name": "winEventTask",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "task",
@@ -164,7 +183,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "userData",
+                    "field_name": "winEventUserData",
                     "field_type": "object",
                     "tag": "dimension",
                     "alias_name": "user_data",
@@ -172,7 +191,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("object", es_version),
                 },
                 {
-                    "field_name": "userDomain",
+                    "field_name": "winEventUserDomain",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "user_domain",
@@ -180,7 +199,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "userIdentifier",
+                    "field_name": "winEventUserIdentifier",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "user_identifier",
@@ -188,7 +207,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "userName",
+                    "field_name": "winEventUserName",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "user_name",
@@ -196,7 +215,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "userType",
+                    "field_name": "winEventUserType",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "user_type",
@@ -204,7 +223,7 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("keyword", es_version),
                 },
                 {
-                    "field_name": "version",
+                    "field_name": "winEventVersion",
                     "field_type": "float",
                     "tag": "dimension",
                     "alias_name": "version",
@@ -212,28 +231,39 @@ class WinEventLogScenario(CollectorScenario):
                     "option": build_es_option_type("long", es_version),
                 },
                 {
-                    "field_name": "processThreadId",
+                    "field_name": "winEventProcessThreadId",
                     "field_type": "float",
                     "tag": "dimension",
                     "alias_name": "process_thread_id",
                     "description": "事件线程ID",
-                    "option": build_es_option_type("integer", es_version),
+                    "option": build_es_option_type("long", es_version),
                 },
                 {
-                    "field_name": "computerName",
+                    "field_name": "winEventComputerName",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "computer_name",
                     "description": "主机名，当前活动节点的名字",
                     "option": build_es_option_type("keyword", es_version),
+                    "is_built_in": True,
                 },
                 {
-                    "field_name": "time_created",
+                    "field_name": "winEventLevel",
+                    "field_type": "string",
+                    "tag": "dimension",
+                    "alias_name": "level",
+                    "description": "日志级别",
+                    "option": build_es_option_type("keyword", es_version),
+                    "is_built_in": True,
+                },
+                {
+                    "field_name": "winEventTimeCreated",
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "time_created",
                     "description": "事件产生时间",
                     "option": build_es_option_type("keyword", es_version),
+                    "is_built_in": True,
                 },
                 {
                     "field_name": "iterationIndex",
