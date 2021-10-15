@@ -144,11 +144,11 @@ class WinEventLogScenario(CollectorScenario):
                 },
                 {
                     "field_name": "winEventId",
-                    "field_type": "float",
+                    "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "event_id",
                     "description": "事件ID",
-                    "option": build_es_option_type("integer", es_version),
+                    "option": build_es_option_type("keyword", es_version),
                 },
                 {
                     "field_name": "winEventKeywords",
