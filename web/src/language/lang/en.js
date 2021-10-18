@@ -828,7 +828,7 @@ export default {
     static: 'Static',
     dynamic: 'Dynamic',
   },
-  应用程度: 'Application',
+  应用程序: 'Application',
   安全: 'Security',
   win系统: 'System',
   其他: 'Other',
