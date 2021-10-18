@@ -25,6 +25,26 @@ from apps.utils import ChoicesEnum
 from apps.log_databus.constants import ETL_DELIMITER_IGNORE, ETL_DELIMITER_DELETE, ETL_DELIMITER_END
 
 
+class InnerTag(ChoicesEnum):
+    TRACE = "trace"
+    RESTORING = "restoring"
+    RESTORED = "restored"
+    NO_DATA = "no_data"
+    HAVE_DELAY = "have_delay"
+    BKDATA = "bkdata"
+    BCS = "bcs"
+
+    _choices_labels = (
+        (TRACE, _("trace")),
+        (RESTORING, _("回溯中")),
+        (RESTORED, _("回溯日志")),
+        (NO_DATA, _("无数据")),
+        (HAVE_DELAY, _("有延迟")),
+        (BKDATA, _("计算平台")),
+        (BCS, _("BCS")),
+    )
+
+
 class TagColor(ChoicesEnum):
     RED = "red"
     YELLOW = "yellow"
@@ -248,6 +268,7 @@ class GlobalTypeEnum(ChoicesEnum):
     TIME_ZONE = "time_zone"
     TIME_FIELD_TYPE = "time_field_type"
     TIME_FIELD_UNIT = "time_field_unit"
+    ES_SOURCE_TYPE = "es_source_type"
 
     _choices_labels = (
         (CATEGORY, _("数据分类")),
@@ -261,6 +282,7 @@ class GlobalTypeEnum(ChoicesEnum):
         (FIELD_BUILT_IN, _("内置字段")),
         (TIME_FIELD_TYPE, _("时间字段类型")),
         (TIME_FIELD_UNIT, _("时间字段单位")),
+        (ES_SOURCE_TYPE, _("日志来源类型")),
     )
 
 
@@ -852,6 +874,29 @@ RT_RESERVED_WORD_EXAC = [
     "filename",
     "items",
     "utctime",
+    # wineventlog field
+    "winEventApi",
+    "winEventActivityId",
+    "winEventChannel",
+    "winEventRecordId",
+    "winEventRelatedActivityId",
+    "winEventOpcode",
+    "winEventData",
+    "winEventId",
+    "winEventKeywords",
+    "winEventProcessPid",
+    "winEventProviderGuid",
+    "winEventTask",
+    "winEventUserData",
+    "winEventUserDomain",
+    "winEventUserIdentifier",
+    "winEventUserName",
+    "winEventUserType",
+    "winEventVersion",
+    "winEventProcessThreadId",
+    "winEventComputerName",
+    "winEventLevel",
+    "winEventTimeCreated",
     # ignore、delete、end
     ETL_DELIMITER_IGNORE,
     ETL_DELIMITER_DELETE,

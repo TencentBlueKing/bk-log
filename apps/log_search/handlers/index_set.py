@@ -64,6 +64,10 @@ class IndexSetHandler(APIModel):
         self.index_set_id = index_set_id
 
     @staticmethod
+    def get_index_set_for_storage(storage_cluster_id):
+        return LogIndexSet.objects.filter(storage_cluster_id=storage_cluster_id)
+
+    @staticmethod
     def add_field_config_record(index_set_id, display_fields, sort_list, scope="default"):
         """
         添加index字段配置
