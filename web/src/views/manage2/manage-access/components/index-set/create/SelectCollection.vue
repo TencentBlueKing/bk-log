@@ -35,6 +35,7 @@
             searchable
             :clearable="false"
             v-model="formData.resultTableId"
+            data-test-id="addIndex_select_selectIndex"
             @selected="handleCollectionSelected">
             <bk-option
               v-for="item in collectionList"
@@ -64,6 +65,7 @@
         <bk-button
           class="king-button"
           theme="primary"
+          data-test-id="addIndex_button_confirm"
           :loading="confirmLoading"
           @click="handleConfirm">
           {{ $t('添加') }}

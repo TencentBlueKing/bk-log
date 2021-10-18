@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="monitor-echarts-container" v-bkloading="{ isLoading }">
+  <div class="monitor-echarts-container" data-test-id="retrieve_div_generalTrendEcharts" v-bkloading="{ isLoading }">
     <MonitorEcharts
       v-if="isRenderChart"
       v-show="!isLoading"
@@ -49,6 +49,7 @@
         :clearable="false"
         ext-cls="select-custom"
         size="small"
+        data-test-id="generalTrendEcharts_div_selectCycle"
         @change="handleIntervalChange">
         <bk-option
           v-for="option in intervalArr"

@@ -21,7 +21,9 @@
   -->
 
 <template>
-  <div class="step-issued-wrapper" v-bkloading="{ isLoading: loading | (hasRunning && !tableList.length) }">
+  <div class="step-issued-wrapper"
+       v-bkloading="{ isLoading: loading | (hasRunning && !tableList.length) }"
+       data-test-id="addNewCollectionItem_div_collectionDistribution">
     <div class="step-issued-notice notice-primary" v-if="!curCollect.table_id">
       <i class="bk-icon icon-info-circle-shape notice-icon"></i>
       <span class="notice-text">{{ $t('dataManage.Within_stop') }}</span>
@@ -44,6 +46,7 @@
           v-if="hasFailed"
           class="fr"
           icon="refresh"
+          data-test-id="collectionDistribution_button_refresh"
           :title="$t('configDetails.batchRetry')"
           :disabled="hasRunning"
           @click="issuedRetry">{{ $t('configDetails.batchRetry') }}
@@ -138,10 +141,19 @@
     <div class="step-issued-footer">
       <bk-button v-if="isSwitch" theme="primary" :disabled="hasRunning" @click="nextHandler">{{ hasRunning ? $t('configDetails.Pending') : $t('dataManage.perform') }}</bk-button>
       <template v-else>
-        <bk-button :disabled="hasRunning" @click="prevHandler">{{ $t('dataManage.last') }}</bk-button>
-        <bk-button theme="primary" :disabled="hasRunning" @click="nextHandler">{{ $t('dataManage.next') }}</bk-button>
+        <bk-button 
+          :disabled="hasRunning" 
+          @click="prevHandler"
+          data-test-id="collectionDistribution_button_previous"
+        >{{ $t('dataManage.last') }}</bk-button>
+        <bk-button 
+          theme="primary" 
+          :disabled="hasRunning" 
+          @click="nextHandler"
+          data-test-id="collectionDistribution_button_nextStep"
+        >{{ $t('dataManage.next') }}</bk-button>
       </template>
-      <bk-button @click="cancel">{{ $t('dataManage.Return_list') }}</bk-button>
+      <bk-button @click="cancel" data-test-id="collectionDistribution_button_cancel">{{ $t('dataManage.Return_list') }}</bk-button>
     </div>
     <bk-sideslider
       transfer

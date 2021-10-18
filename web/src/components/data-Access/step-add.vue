@@ -29,7 +29,9 @@
         {{ $t('，尤其是在日志量大的情况下请务必提前沟通。') }}
       </div>
     </bk-alert>
-    <bk-form :label-width="115" :model="formData" ref="validateForm">
+    <bk-form
+      :label-width="115" :model="formData" ref="validateForm"
+      data-test-id="addNewCollectionItem_form_acquisitionConfigur">
       <!-- 基础信息 -->
       <div class="add-collection-title">{{ $t('dataSource.basic_information') }}</div>
       <bk-form-item
@@ -38,6 +40,7 @@
         :rules="rules.collector_config_name"
         :property="'collector_config_name'">
         <bk-input
+          data-test-id="acquisitionConfigur_input_fillName"
           v-model="formData.collector_config_name"
           show-word-limit
           maxlength="50">
@@ -52,6 +55,7 @@
           v-model="formData.collector_config_name_en"
           show-word-limit
           maxlength="50"
+          data-test-id="acquisitionConfigur_input_fillEnglishName"
           :disabled="isUpdate && !!(formData.collector_config_name_en)"
           :placeholder="$t('dataSource.en_name_tips')">
         </bk-input>
@@ -62,6 +66,7 @@
           type="textarea"
           style="width: 320px;"
           v-model="formData.description"
+          data-test-id="acquisitionConfigur_input_fillDetails"
           maxlength="100">
         </bk-input>
       </bk-form-item>
@@ -73,6 +78,7 @@
         <div class="bk-button-group log-type">
           <bk-button
             v-for="(item, index) in globalsData.collector_scenario"
+            :data-test-id="`acquisitionConfigur_buttom_checkoutType${item.id}`"
             :key="index"
             :disabled="isUpdate"
             :class="{
@@ -94,6 +100,7 @@
         <bk-select
           style="width: 320px;"
           v-model="formData.category_id"
+          data-test-id="acquisitionConfigur_div_selectDataClassification"
           :disabled="isUpdate"
           @selected="chooseDataClass">
           <template v-for="(item, index) in globalsData.category">
@@ -122,6 +129,7 @@
             :title="$t('configDetails.newly_increased')"
             icon="plus"
             style="font-size: 12px"
+            data-test-id="acquisitionConfigur_button_addCollectionTarget"
             :class="colorRules ? 'rulesColor' : ''"
             :disabled="!formData.category_id"
             @click="showIpSelectorDialog = true">
@@ -148,12 +156,19 @@
           :label="index === 0 ? $t('retrieve.logPath') : ''" required
           :rules="rules.paths"
           :property="'params.paths.' + index + '.value'">
-          <bk-input v-model="log.value"></bk-input>
+          <bk-input
+            v-model="log.value"
+            data-test-id="acquisitionConfigur_input_addLogPath"
+          ></bk-input>
         </bk-form-item>
         <div class="ml9">
-          <i class="bk-icon icon-plus-circle icons" @click="addLog"></i>
+          <i class="bk-icon icon-plus-circle icons"
+             @click="addLog"
+             data-test-id="acquisitionConfigur_i_newAddLogPath"
+          ></i>
           <i
             :class="['bk-icon icon-minus-circle icons ml9', { disable: logPaths.length === 1 }] "
+            data-test-id="acquisitionConfigur_i_deleteAddLogPath"
             @click="delLog(index)"></i>
         </div>
         <div class="tips" v-if="index === 0">
@@ -162,7 +177,12 @@
       </div>
       <!-- 日志字符集 -->
       <bk-form-item :label="$t('configDetails.logSet')" required>
-        <bk-select style="width: 320px;" searchable v-model="formData.data_encoding" :clearable="false">
+        <bk-select
+          data-test-id="acquisitionConfigur_div_changeLogCharacterTet"
+          style="width: 320px;"
+          searchable
+          v-model="formData.data_encoding"
+          :clearable="false">
           <bk-option
             v-for="(option, ind) in globalsData.data_encoding"
             :key="ind"
@@ -179,11 +199,15 @@
             :rules="rules.notEmptyForm"
             required
             property="params.multiline_pattern">
-            <bk-input v-model.trim="formData.params.multiline_pattern"></bk-input>
+            <bk-input
+              data-test-id="acquisitionConfigur_input_beginningRegular"
+              v-model.trim="formData.params.multiline_pattern"
+            ></bk-input>
           </bk-form-item>
           <bk-button
             text size="small"
             class="king-button"
+            data-test-id="acquisitionConfigur_button_debugging"
             @click="showRegDialog = true">
             {{ $t('调试') }}
           </bk-button>
@@ -195,6 +219,7 @@
               v-model="formData.params.multiline_max_lines"
               type="number"
               :precision="0"
+              data-test-id="acquisitionConfigur_input_mostMatches"
               :show-controls="false">
             </bk-input>
           </bk-form-item>
@@ -204,6 +229,7 @@
               v-model="formData.params.multiline_timeout"
               type="number"
               :precision="0"
+              data-test-id="acquisitionConfigur_input_maximumTimeConsuming"
               :show-controls="false">
             </bk-input>
           </bk-form-item>
@@ -223,6 +249,7 @@
           <bk-form-item :label="$t('configDetails.filterContent')">
             <bk-select
               style="width: 129px; margin-right: 8px;"
+              data-test-id="acquisitionConfigur_div_selectFilterCondition"
               :clearable="false"
               v-model="formData.params.conditions.type"
               @change="chooseType">
@@ -230,8 +257,12 @@
               <bk-option id="separator" :name="$t('retrieve.Separator_filtering')"></bk-option>
             </bk-select>
           </bk-form-item>
-          <bk-input v-show="isString" v-model="formData.params.conditions.match_content"></bk-input>
+          <bk-input
+            data-test-id="acquisitionConfigur_input_filterContent"
+            v-show="isString"
+            v-model="formData.params.conditions.match_content"></bk-input>
           <bk-select
+            data-test-id="acquisitionConfigur_div_selectFilterType"
             style="width: 254px; margin-left: 8px; height: 32px"
             :clearable="false"
             v-if="isString" v-model="formData.params.conditions.match_type">
@@ -299,7 +330,12 @@
       <template v-if="!isCloseDataLink">
         <div class="add-collection-title">{{ $t('上报链路配置') }}</div>
         <bk-form-item required property="data_link_id" :label="$t('上报链路')" :rules="rules.linkConfig">
-          <bk-select style="width: 320px;" v-model="formData.data_link_id" :clearable="false" :disabled="isUpdate">
+          <bk-select
+            data-test-id="acquisitionConfigur_div_selectReportLink"
+            style="width: 320px;"
+            v-model="formData.data_link_id"
+            :clearable="false"
+            :disabled="isUpdate">
             <bk-option
               v-for="item in linkConfigurationList"
               :key="item.data_link_id"
@@ -313,6 +349,7 @@
       <bk-form-item>
         <bk-button
           theme="primary"
+          data-test-id="acquisitionConfigur_div_nextPage"
           :title="$t('retrieve.Start_collecting')"
           @click.stop.prevent="startCollect"
           :loading="isHandle"
@@ -321,6 +358,7 @@
         </bk-button>
         <bk-button
           theme="default"
+          data-test-id="acquisitionConfigur_div_cancel"
           :title="$t('indexSetList.cancel')"
           class="ml10"
           @click="cancel">

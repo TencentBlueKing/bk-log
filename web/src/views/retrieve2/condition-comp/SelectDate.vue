@@ -31,6 +31,7 @@
       ]"
       type="datetimerange"
       format="yyyy-MM-dd HH:mm:ss"
+      data-test-id="frontPageSearch_div_timeSelect"
       :placement="isHome ? 'bottom-start' : 'bottom-end'"
       :clearable="false"
       :editable="true"

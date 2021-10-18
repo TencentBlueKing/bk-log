@@ -23,8 +23,9 @@ from rest_framework import serializers
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
 from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX
-from apps.log_databus.models import CollectorConfig, CleanTemplate
+from apps.log_databus.models import CleanTemplate, CollectorConfig
 
+from apps.log_databus.constants import EsSourceType
 from apps.log_search.constants import (
     CollectorScenarioEnum,
     EncodingsEnum,
@@ -335,6 +336,11 @@ class StorageCreateSerializer(serializers.Serializer):
     hot_attr_value = serializers.CharField(label=_("热节点属性值"), default="", allow_blank=True)
     warm_attr_name = serializers.CharField(label=_("冷节点属性名称"), default="", allow_blank=True)
     warm_attr_value = serializers.CharField(label=_("冷节点属性值"), default="", allow_blank=True)
+    source_type = serializers.ChoiceField(label=_("ES来源类型"), choices=EsSourceType.get_choices())
+    source_name = serializers.CharField(label=_("来源名称"), required=False)
+    visible_bk_biz = serializers.ListField(
+        label=_("可见业务范围"), child=serializers.IntegerField(), required=False, default=[]
+    )
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
@@ -343,6 +349,9 @@ class StorageCreateSerializer(serializers.Serializer):
             [attrs["hot_attr_name"], attrs["hot_attr_value"], attrs["warm_attr_name"], attrs["warm_attr_value"]]
         ):
             raise ValidationError(_("当冷热数据处于开启状态时，冷热节点属性配置不能为空"))
+        if attrs["source_type"] in [EsSourceType.OTHER.value]:
+            if not attrs.get("source_name"):
+                raise ValidationError(_("当来源类型为其他时，需要传入来源名称"))
         return attrs
 
 
@@ -381,6 +390,11 @@ class StorageUpdateSerializer(serializers.Serializer):
     hot_attr_value = serializers.CharField(label=_("热节点属性值"), default="", allow_blank=True)
     warm_attr_name = serializers.CharField(label=_("冷节点属性名称"), default="", allow_blank=True)
     warm_attr_value = serializers.CharField(label=_("冷节点属性值"), default="", allow_blank=True)
+    source_type = serializers.ChoiceField(label=_("ES来源类型"), choices=EsSourceType.get_choices())
+    source_name = serializers.CharField(label=_("来源名称"), required=False)
+    visible_bk_biz = serializers.ListField(
+        label=_("可见业务范围"), child=serializers.IntegerField(), required=False, default=[]
+    )
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
@@ -389,6 +403,10 @@ class StorageUpdateSerializer(serializers.Serializer):
             [attrs["hot_attr_name"], attrs["hot_attr_value"], attrs["warm_attr_name"], attrs["warm_attr_value"]]
         ):
             raise ValidationError(_("当冷热数据处于开启状态时，冷热节点属性配置不能为空"))
+
+        if attrs["source_type"] in [EsSourceType.OTHER.value]:
+            if not attrs.get("source_name"):
+                raise ValidationError(_("当来源类型为其他时，需要传入来源名称"))
         return attrs
 
 
@@ -567,6 +585,17 @@ class CleanSerializer(serializers.Serializer):
         return attrs
 
 
+class PageSerializer(serializers.Serializer):
+    page = serializers.IntegerField(label=_("页码"))
+    pagesize = serializers.IntegerField(label=_("页面大小"))
+
+    def validate(self, attrs):
+        super().validate(attrs)
+        if attrs["page"] < 0 or attrs["pagesize"] < 0:
+            raise ValidationError(_("分页参数不能为负数"))
+        return attrs
+
+
 class CleanRefreshSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务id"))
     bk_data_id = serializers.IntegerField(label=_("数据源id"))
@@ -596,3 +625,60 @@ class CleanTemplateListSerializer(DataModelSerializer):
     class Meta:
         model = CleanTemplate
         fields = "__all__"
+
+
+class StorageRepositorySerlalizer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
+
+
+class ListArhiveSwitchSerlalizer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
+
+
+class ListArchiveSerlalizer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=False)
+    page = serializers.IntegerField(label=_("分页page"), required=True)
+    pagesize = serializers.IntegerField(label=_("分页pagesize"), required=True)
+
+
+class CreateArchiveSerlalizer(serializers.Serializer):
+    collector_config_id = serializers.IntegerField(required=True, label=_("采集项id"))
+    target_snapshot_repository_name = serializers.CharField(required=True, label=_("目标es集群快照仓库"))
+    snapshot_days = serializers.IntegerField(required=True, label=_("快照存储时间配置"), min_value=0)
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
+
+
+class UpdateArchiveSerlalizer(serializers.Serializer):
+    snapshot_days = serializers.IntegerField(required=True, label=_("快照存储时间配置"), min_value=0)
+
+
+class RestoreArchiveSerlalizer(serializers.Serializer):
+    archive_config_id = serializers.IntegerField(label=_("业务ID"), required=True)
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
+    index_set_name = serializers.CharField(label=_("索引集名称"), required=True)
+    start_time = serializers.DateTimeField(required=True, label=_("数据开始时间"), format="%Y-%m-%d %H:%M:%S")
+    end_time = serializers.DateTimeField(required=True, label=_("数据结束时间"), format="%Y-%m-%d %H:%M:%S")
+    expired_time = serializers.DateTimeField(required=True, label=_("指定过期时间"), format="%Y-%m-%d %H:%M:%S")
+    notice_user = serializers.ListField(required=True, label=_("通知人"))
+
+
+class UpdateRestoreArchiveSerlalizer(serializers.Serializer):
+    expired_time = serializers.DateTimeField(required=True, label=_("指定过期时间"), format="%Y-%m-%d %H:%M:%S")
+
+
+class DeleteRestoreArchiveSerlalizer(serializers.Serializer):
+    restore_config_id = serializers.IntegerField(label=_("回溯id"))
+
+
+class ListRestoreSerlalizer(ListArchiveSerlalizer):
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=False)
+    page = serializers.IntegerField(label=_("分页page"), required=True)
+    pagesize = serializers.IntegerField(label=_("分页pagesize"), required=True)
+
+
+class ListCollectorSerlalizer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
+
+
+class BatchGetStateSerlalizer(serializers.Serializer):
+    restore_config_ids = serializers.ListField(label=_("归档回溯配置list"), required=True)

@@ -21,17 +21,23 @@
   -->
 
 <template>
-  <div class="create-index-container" v-bkloading="{ isLoading: basicLoading }">
+  <div
+    class="create-index-container"
+    v-bkloading="{ isLoading: basicLoading }"
+    data-test-id="logIndexSetBox_div_newlogIndexSetBox">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
     <template v-else>
       <article class="article">
         <h3 class="title">{{ $t('基础信息') }}</h3>
         <bk-form class="king-form" ref="formRef" :label-width="160" :model="formData" :rules="formRules">
           <bk-form-item :label="$t('索引集名称')" required property="index_set_name">
-            <bk-input v-model="formData.index_set_name"></bk-input>
+            <bk-input v-model="formData.index_set_name" data-test-id="newlogIndexSetBox_input_indexSetName"></bk-input>
           </bk-form-item>
           <bk-form-item :label="$t('数据分类')" required property="category_id">
-            <bk-select v-model="formData.category_id" :clearable="false">
+            <bk-select
+              v-model="formData.category_id"
+              :clearable="false"
+              data-test-id="newlogIndexSetBox_select_dataClassification">
               <template v-for="item in globalsData.category">
                 <bk-option-group :id="item.id" :name="item.name" :key="item.id">
                   <bk-option
@@ -45,7 +51,11 @@
             </bk-select>
           </bk-form-item>
           <bk-form-item :label="$t('集群')" required property="storage_cluster_id" v-if="scenarioId === 'es'">
-            <bk-select v-model="formData.storage_cluster_id" :clearable="false" searchable>
+            <bk-select
+              data-test-id="newlogIndexSetBox_select_selectCluster"
+              v-model="formData.storage_cluster_id"
+              :clearable="false"
+              searchable>
               <bk-option
                 v-for="option in clusterList"
                 v-show="option.storage_cluster_id"
@@ -103,7 +113,12 @@
                 {{ item.result_table_id }}
               </bk-tag>
             </template>
-            <bk-button class="king-button" icon="plus" @click="openDialog">{{ $t('新增索引') }}</bk-button>
+            <bk-button
+              class="king-button"
+              icon="plus"
+              @click="openDialog"
+              data-test-id="newlogIndexSetBox_button_addNewIndex"
+            >{{ $t('新增索引') }}</bk-button>
           </div>
         </div>
       </article>
@@ -111,6 +126,7 @@
         theme="primary"
         style="width: 86px;"
         :loading="submitLoading"
+        data-test-id="newlogIndexSetBox_button_submit"
         @click="submitForm">
         {{ $t('提交') }}
       </bk-button>

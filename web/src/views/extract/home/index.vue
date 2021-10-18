@@ -21,12 +21,17 @@
   -->
 
 <template>
-  <div class="main-container">
+  <div class="main-container" data-test-id="logExtraction_div_fromBox">
     <div class="option-container">
-      <bk-button theme="primary" style="width: 120px;" @click="handleCreateTask">{{ $t('新建') }}</bk-button>
+      <bk-button
+        theme="primary"
+        style="width: 120px;"
+        data-test-id="fromBox_button_addNewExtraction"
+        @click="handleCreateTask">{{ $t('新建') }}</bk-button>
       <bk-input
         v-model="searchKeyword"
         class="king-input-search"
+        data-test-id="fromBox_input_searchExtraction"
         :placeholder="$t('搜索文件名、创建人，按 enter 键搜索')"
         :clearable="true"
         :left-icon="'bk-icon icon-search'"
@@ -39,6 +44,7 @@
       class="king-table"
       :data="taskList"
       :pagination="pagination"
+      data-test-id="fromBox_table_tableBox"
       @page-change="handlePageChange"
       @page-limit-change="handlePageLimitChange">
       <bk-table-column :label="$t('下载目标')" min-width="140">

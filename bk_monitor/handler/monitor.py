@@ -11,15 +11,18 @@ from bk_monitor.constants import (
     LABEL,
     OPTION,
     SOURCE_LABEL,
-    TYPE_LABEL,
-    ETL_CONFIG,
     LOGGER_NAME,
     BATCH_SIZE,
+    TIME_SERIES_TYPE,
+    TIME_SERIES_ETL_CONFIG,
+    EVENT_ETL_CONFIG,
+    EVENT_TYPE,
 )
 from bk_monitor.exceptions import MonitorReportRequestException, MonitorReportResultException
 from bk_monitor.models import MonitorReportConfig
 from bk_monitor.utils.collector import MetricCollector
 from bk_monitor.utils.data_name_builder import DataNameBuilder
+from bk_monitor.utils.event import EventTrigger
 from bk_monitor.utils.query import CustomTable, SqlSplice
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -56,13 +59,16 @@ class BKMonitor(object):
 
     def custom_metric(self):
         if not self._custom_metric_instance:
-            self._custom_metric_instance = CustomMetric(
+            self._custom_metric_instance = CustomReporter(
                 client=self._client, bk_biz_id=self._bk_biz_id, app_id=self._app_id
             )
         return self._custom_metric_instance
 
+    def build_event_trigger(self, data_name: str, event_name: str) -> "EventTrigger":
+        return EventTrigger(data_name=data_name, event_name=event_name)
 
-class CustomMetric(object):
+
+class CustomReporter(object):
     """
     bk_monitor_sdk 采集，上报，查询，初始化可调用的方法
     Attributes：
@@ -76,7 +82,7 @@ class CustomMetric(object):
         self.app_id = app_id
         self._client = client
 
-    def migrate(self, data_name_list: list):
+    def migrate(self, data_name_list: list, custom_report_type: str = TIME_SERIES_TYPE):
         """
         初始化数据源相关配置
         """
@@ -104,8 +110,10 @@ class CustomMetric(object):
                 self._client.create_data_id(
                     {
                         "data_name": data_name_builder.name,
-                        "etl_config": ETL_CONFIG,
-                        "type_label": TYPE_LABEL,
+                        "etl_config": TIME_SERIES_ETL_CONFIG
+                        if custom_report_type == TIME_SERIES_TYPE
+                        else EVENT_ETL_CONFIG,
+                        "type_label": custom_report_type,
                         "source_label": SOURCE_LABEL,
                         "option": OPTION,
                     }
@@ -120,19 +128,34 @@ class CustomMetric(object):
             bk_monitor_config.table_id = data["table_id"]
             bk_monitor_config.data_id = data["data_id"]
             bk_monitor_config.access_token = data["access_token"]
+            bk_monitor_config.custom_report_type = custom_report_type
 
-            # 判断是否已经创建time_series_group
-            if not bk_monitor_config.table_id:
-                self._client.create_time_series_group(
-                    {
-                        "bk_data_id": bk_monitor_config.data_id,
-                        "bk_biz_id": self.bk_biz_id,
-                        "time_series_group_name": data_name_builder.time_series_group_name,
-                        "label": LABEL,
-                        "table_id": data_name_builder.table_id,
-                    }
-                )
-                bk_monitor_config.table_id = data_name_builder.table_id
+            if custom_report_type == EVENT_TYPE:
+                # 判断是否已经创建event_group
+                if not bk_monitor_config.table_id:
+                    result = self._client.create_event_group(
+                        {
+                            "bk_data_id": bk_monitor_config.data_id,
+                            "bk_biz_id": self.bk_biz_id,
+                            "event_group_name": data_name_builder.time_series_group_name,
+                            "label": LABEL,
+                            "event_info_list": [],
+                        }
+                    )
+                    bk_monitor_config.table_id = result["table_id"]
+            if custom_report_type == TIME_SERIES_TYPE:
+                # 判断是否已经创建time_series_group
+                if not bk_monitor_config.table_id:
+                    self._client.create_time_series_group(
+                        {
+                            "bk_data_id": bk_monitor_config.data_id,
+                            "bk_biz_id": self.bk_biz_id,
+                            "time_series_group_name": data_name_builder.time_series_group_name,
+                            "label": LABEL,
+                            "table_id": data_name_builder.table_id,
+                        }
+                    )
+                    bk_monitor_config.table_id = data_name_builder.table_id
 
             bk_monitor_config.save()
             logger.info(f"create report config successful data_name -> {data_name}")
@@ -172,6 +195,27 @@ class CustomMetric(object):
                     )
             except Exception as e:  # pylint: disable=broad-except
                 logger.warning(f"custom_report error: {e}")
+
+    def trigger_event(self, data_name: str, event: dict):
+        if not data_name:
+            logger.error("[bk_monitor] data_name is empty")
+            return
+
+        try:
+            monitor_report_config = MonitorReportConfig.objects.get(data_name=data_name, is_enable=True)
+        except MonitorReportConfig.DoesNotExist:
+            logger.error("[bk_monitor] data_name init failed please check")
+            return
+        try:
+            self._client.custom_report(
+                {
+                    "data_id": monitor_report_config.data_id,
+                    "access_token": monitor_report_config.access_token,
+                    "data": [event],
+                }
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.exception(f"custom_report event error: {e}")
 
     def query(
         self,

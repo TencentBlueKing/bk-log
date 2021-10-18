@@ -37,7 +37,10 @@
       </div>
     </div>
     <div class="menu-list" v-if="!isFold">
-        <span class="log-icon icon-xiangji" @click.stop="handleMenuClick({id: 'screenshot'})"></span>
+        <span 
+        class="log-icon icon-xiangji" 
+        @click.stop="handleMenuClick({id: 'screenshot'})"
+        data-test-id="generalTrendEcharts_span_downloadEcharts"></span>
     </div>
     <!-- <chart-menu
       v-show="showMenu"
