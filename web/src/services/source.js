@@ -43,6 +43,11 @@ const create = {
   method: 'post',
 };
 
+const deleteEs = {
+  url: '/databus/storage/:cluster_id/?bk_biz_id=:bk_biz_id',
+  method: 'delete',
+};
+
 const remove = {
   url: '/source/:source_id/',
   method: 'delete',
@@ -149,6 +154,7 @@ export {
   logList,
   remove,
   create,
+  deleteEs,
   update,
   info,
   connectivityDetect,
