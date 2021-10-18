@@ -108,6 +108,7 @@ class BluekingInstrumentor(BaseInstrumentor):
                 {
                     "service.name": settings.APP_CODE,
                     "bk_data_id": otlp_bk_data_id,
+
                 }
             ),
         )

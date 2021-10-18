@@ -22,6 +22,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
 
+
+META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+RESTORE_INDEX_SET_PREFIX = "restore_"
+
 BKLOG_RESULT_TABLE_PATTERN = fr"(\d*?_{settings.TABLE_ID_PREFIX}_.*)_.*_.*"
 
 NOT_FOUND_CODE = "[404]"
@@ -30,6 +34,24 @@ NOT_FOUND_CODE = "[404]"
 CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE = "1306201"
 
 COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
+
+
+class EsSourceType(ChoicesEnum):
+    OTHER = "other"
+    PRIVATE = "private"
+    AWS = "aws"
+    QCLOUD = "qcloud"
+    ALIYUN = "aliyun"
+    GOOGLE = "google"
+
+    _choices_labels = (
+        (OTHER, _("其他")),
+        (AWS, _("AWS")),
+        (QCLOUD, _("腾讯云")),
+        (ALIYUN, _("阿里云")),
+        (GOOGLE, _("google")),
+        (PRIVATE, _("私有自建")),
+    )
 
 
 class StrategyKind(ChoicesEnum):
