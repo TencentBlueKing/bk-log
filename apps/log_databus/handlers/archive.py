@@ -191,22 +191,26 @@ class ArchiveHandler:
         ret = []
         instances = restore_list.serializer.instance
         for instance in instances:
-            ret.append(
-                {
-                    "restore_config_id": instance.restore_config_id,
-                    "index_set_name": instance.index_set_name,
-                    "index_set_id": instance.index_set_id,
-                    "start_time": cls.to_user_time_format(instance.start_time),
-                    "end_time": cls.to_user_time_format(instance.end_time),
-                    "expired_time": cls.to_user_time_format(instance.expired_time),
-                    "collector_config_name": instance.archive.collector_config_name,
-                    "total_store_size": instance.total_store_size,
-                    "collector_config_id": instance.archive.collector_config_id,
-                    "archive_config_id": instance.archive.archive_config_id,
-                    "notice_user": instance.notice_user.split(","),
-                    "is_expired": instance.is_expired(),
-                }
-            )
+            try:
+                ret.append(
+                    {
+                        "restore_config_id": instance.restore_config_id,
+                        "index_set_name": instance.index_set_name,
+                        "index_set_id": instance.index_set_id,
+                        "start_time": cls.to_user_time_format(instance.start_time),
+                        "end_time": cls.to_user_time_format(instance.end_time),
+                        "expired_time": cls.to_user_time_format(instance.expired_time),
+                        "collector_config_name": instance.archive.collector_config_name,
+                        "total_store_size": instance.total_store_size,
+                        "collector_config_id": instance.archive.collector_config_id,
+                        "archive_config_id": instance.archive.archive_config_id,
+                        "notice_user": instance.notice_user.split(","),
+                        "is_expired": instance.is_expired(),
+                    }
+                )
+            except ArchiveConfig.DoesNotExist:
+                # archive config maybe delete so not show restore
+                continue
         return ret
 
     @classmethod
