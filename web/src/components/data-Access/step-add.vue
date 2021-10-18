@@ -611,7 +611,7 @@ export default {
       },
       logSpeciesList: [{
         id: 'Application',
-        name: this.$t('应用程度'),
+        name: this.$t('应用程序'),
       }, {
         id: 'Security',
         name: this.$t('安全'),
@@ -932,7 +932,7 @@ export default {
       }
     },
     outherBlurRules(input, tags) {
-      this.outherRules = !tags.every(el => /^[a-zA-Z_ ]*$/.test(el));
+      this.outherRules = !tags.every(el => /^[a-zA-Z /]*$/.test(el));
       tags.length === 0 && (this.outherRules = false);
       const slist = this.selectLogSpeciesList;
       if (slist.length === 1 && slist[0] === 'Outher' && this.outherSpeciesList.length === 0) {

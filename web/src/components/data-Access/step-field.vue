@@ -1117,7 +1117,7 @@ export default {
         },
       }).then((res) => {
         if (res.data && res.data.length) {
-          this.copysText = res.data[0].etl || {};
+          this.copysText = Object.assign(res.data[0].etl, res.data[0].etl.items[0]) || {};
           const data = res.data[0];
           this.jsonText = data.origin || {};
           this.logOriginal = data.etl.data || '';
