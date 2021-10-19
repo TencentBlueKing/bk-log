@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <section class="step-field-container">
+  <section class="step-field-container" data-test-id="addNewCollectionItem_section_fieldExtractionBox">
     <auth-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-page>
     <div class="step-field" v-bkloading="{ isLoading: basicLoading }" v-else>
       <bk-alert v-if="!isCleanField && !isTempField" class="king-alert" type="info">
@@ -61,14 +61,21 @@
       <div class="step-field-title">
         <div>{{$t('configDetails.originalLog')}}</div>
         <div class="text-nav" v-if="!isTempField">
-          <span @click="refreshClick">{{$t('dataManage.Refresh')}}</span>
-          <span @click="chickFile">{{$t('configDetails.report')}}</span>
+          <span
+            @click="refreshClick"
+            data-test-id="fieldExtractionBox_span_originalLogRefresh"
+          >{{$t('dataManage.Refresh')}}</span>
+          <span
+            @click="chickFile"
+            data-test-id="fieldExtractionBox_span_viewReportingLog"
+          >{{$t('configDetails.report')}}</span>
         </div>
       </div>
       <template>
         <div class="log-style">
           <bk-input
             placeholder=" "
+            data-test-id="fieldExtractionBox_input_originalLog"
             :type="'textarea'"
             :rows="3"
             :input-style="{
@@ -122,6 +129,7 @@
               <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
               <span
                 v-if="!isTempField"
+                data-test-id="fieldExtractionBox_span_applyTemp"
                 :class="{
                   'template-text': true,
                   'template-disabled': isCleanField && !cleanCollector
@@ -140,7 +148,8 @@
                   :key="option.id"
                   :disabled="isCleanField && !cleanCollector"
                   @click="params.etl_config = option.id"
-                  :class="params.etl_config === option.id ? 'is-selected' : ''">
+                  :class="params.etl_config === option.id ? 'is-selected' : ''"
+                  :data-test-id="`fieldExtractionBox_button_filterMethod${option.id}`">
                   {{ option.name }}
                 </bk-button>
               </div>
@@ -162,6 +171,7 @@
             <bk-select
               style="width: 320px; margin-top: 20px;"
               v-if="params.etl_config === 'bk_log_delimiter'"
+              data-test-id="fieldExtractionBox_div_selectSeparator"
               :disabled="isExtracting"
               :clearable="false"
               v-model="params.etl_params.separator">
@@ -181,6 +191,7 @@
               </pre>
                 <bk-input
                   class="regex-textarea"
+                  data-test-id="fieldExtractionBox_input_regular"
                   :placeholder="defaultRegex"
                   :type="'textarea'"
                   v-model="params.etl_params.separator_regexp">
@@ -191,7 +202,7 @@
           </div>
 
           <!-- 调试设置字段 -->
-          <div class="field-step field-method-step">
+          <div class="field-step field-method-step" data-test-id="fieldExtraction_div_debugSetField">
             <div class="step-head">
               <span class="step-text">{{ $t('dataManage.debugField') }}</span>
               <div class="">
@@ -199,7 +210,8 @@
                   class="fl debug-btn"
                   theme="primary"
                   :disabled="!logOriginal || isExtracting || !showDebugBtn"
-                  @click="debugHandler">
+                  @click="debugHandler"
+                  data-test-id="fieldExtractionBox_button_debugging">
                   {{ $t('调试') }}
                 </bk-button>
                 <p class="format-error ml10 fl" v-if="isJsonOrOperator && !formatResult">
@@ -279,6 +291,7 @@
         <bk-button
           v-if="!isCleanField && !isTempField"
           theme="default"
+          data-test-id="fieldExtractionBox_button_previousPage"
           :title="$t('dataManage.last')"
           class="mr10"
           :disabled="isLoading"
@@ -289,6 +302,7 @@
         <log-button
           v-if="activePanel === 'advance'"
           theme="primary"
+          data-test-id="fieldExtractionBox_button_goToAdvancedCleaning"
           :tips-conf="advanceDisableTips"
           :button-text="$t('dataManage.advanceClean')"
           :disabled="advanceDisable"
@@ -298,6 +312,7 @@
         <bk-button
           v-if="activePanel === 'base' && !isTempField"
           theme="primary"
+          data-test-id="fieldExtractionBox_button_nextPage"
           @click.stop.prevent="finish(true)"
           :loading="isLoading"
           :disabled="!collectProject || !showDebugBtn || !hasFields">
@@ -309,6 +324,7 @@
           theme="default"
           :title="$t('btn.cancel')"
           class="ml10"
+          data-test-id="fieldExtractionBox_button_Pass"
           @click="handleSkip"
           :disabled="isLoading">
           {{$t('dataManage.skip')}}
@@ -318,6 +334,7 @@
           v-if="activePanel === 'base'"
           theme="default"
           class="ml10"
+          data-test-id="fieldExtractionBox_button_saveTemplate"
           :disabled="!hasFields"
           @click="openTemplateDialog(true)">
           {{$t('dataManage.saveTemp')}}
@@ -327,6 +344,7 @@
           v-if="isCleanField || isTempField"
           theme="default"
           class="ml10"
+          data-test-id="fieldExtractionBox_button_cancelSaveTemplate"
           @click="handleCancel(false)">
           {{$t('取消')}}
         </bk-button>
@@ -365,7 +383,7 @@
             <label style="color: #63656e;">模板名称</label>
             <bk-input v-model="saveTempName" style="margin-top: 8px"></bk-input>
           </div>
-          <bk-select v-else v-model="selectTemplate">
+          <bk-select v-else v-model="selectTemplate" data-test-id="fieldExtractionBox_select_selectTemplate">
             <bk-option
               v-for="option in templateList"
               :key="option.clean_template_id"
@@ -1099,7 +1117,7 @@ export default {
         },
       }).then((res) => {
         if (res.data && res.data.length) {
-          this.copysText = res.data[0].etl || {};
+          this.copysText = Object.assign(res.data[0].etl, res.data[0].etl.items[0]) || {};
           const data = res.data[0];
           this.jsonText = data.origin || {};
           this.logOriginal = data.etl.data || '';

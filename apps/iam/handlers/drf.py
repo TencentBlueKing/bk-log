@@ -30,6 +30,7 @@ from iam import Resource  # noqa
 from . import Permission  # noqa
 from .actions import ActionMeta, ActionEnum  # noqa
 from .resources import ResourceEnum, ResourceMeta  # noqa
+from ..exceptions import NotHaveInstanceIdError  # noqa
 
 
 class IAMPermission(permissions.BasePermission):
@@ -128,6 +129,12 @@ class InstanceActionPermission(IAMPermission):
         super(InstanceActionPermission, self).__init__(actions)
 
     def has_permission(self, request, view):
+        instance_id = view.kwargs[self.get_look_url_kwarg(view)]
+        resource = self.resource_meta.create_instance(instance_id)
+        self.resources = [resource]
+        return super(InstanceActionPermission, self).has_permission(request, view)
+
+    def get_look_url_kwarg(self, view):
         # Perform the lookup filtering.
         lookup_url_kwarg = view.lookup_url_kwarg or view.lookup_field
 
@@ -136,9 +143,29 @@ class InstanceActionPermission(IAMPermission):
             'named "%s". Fix your URL conf, or set the `.lookup_field` '
             "attribute on the view correctly." % (self.__class__.__name__, lookup_url_kwarg)
         )
+        return lookup_url_kwarg
 
-        instance_id = view.kwargs[lookup_url_kwarg]
-        resource = self.resource_meta.create_instance(instance_id)
+
+class InstanceActionForDataPermission(InstanceActionPermission):
+    def __init__(
+        self,
+        iam_instance_id_key,
+        *args,
+        get_instance_id: Callable = lambda _id: _id,
+    ):
+        self.iam_instance_id_key = iam_instance_id_key
+        self.get_instance_id = get_instance_id
+        super(InstanceActionForDataPermission, self).__init__(*args)
+
+    def has_permission(self, request, view):
+        if request.method == "GET":
+            data = request.query_params
+        else:
+            data = request.data
+        instance_id = data.get(self.iam_instance_id_key) or view.kwargs.get(self.get_look_url_kwarg(view))
+        if instance_id is None:
+            raise NotHaveInstanceIdError
+        resource = self.resource_meta.create_instance(self.get_instance_id(instance_id))
         self.resources = [resource]
         return super(InstanceActionPermission, self).has_permission(request, view)
 

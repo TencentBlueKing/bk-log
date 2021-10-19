@@ -40,6 +40,7 @@ class CollectorScenario(object):
         mapping = {
             CollectorScenarioEnum.ROW.value: "RowCollectorScenario",
             CollectorScenarioEnum.SECTION.value: "SectionCollectorScenario",
+            CollectorScenarioEnum.WIN_EVENT.value: "WinEventLogScenario",
         }
         try:
             collector_scenario = import_string(

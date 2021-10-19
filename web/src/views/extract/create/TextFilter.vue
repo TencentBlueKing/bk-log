@@ -30,10 +30,12 @@
       <bk-input
         style="width: 300px;"
         :maxlength="64"
+        data-test-id="addNewExtraction_input_filterKeyword"
         :placeholder="$t('多个关键字用英文逗号')" v-model="filterContent.keyword"></bk-input>
       <bk-select
         v-model="filterContent.keyword_type"
         style="width: 60px;margin-right: 10px;background-color: #fff;"
+        data-test-id="addNewExtraction_select_filterCondition"
         :clearable="false">
         <bk-option v-for="option in keywordTypeList" :key="option.id" :id="option.id" :name="option.name"></bk-option>
       </bk-select>

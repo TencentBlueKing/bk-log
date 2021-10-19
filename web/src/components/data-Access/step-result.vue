@@ -22,7 +22,7 @@
 
 <template>
   <div class="step-result-wrapper">
-    <div class="step-result-container">
+    <div class="step-result-container" data-test-id="finish_div_finishBox">
       <i class="bk-icon icon-check-circle"></i>
       <h3 class="title">{{ finishText }}</h3>
       <!-- <p v-if="host.count"> -->
@@ -34,8 +34,14 @@
                   <span class="host-number text-failed">{{ host.failed || 0 }}</span>{{ '台主机' }}</template>
             </p> -->
       <div class="result-button-group">
-        <bk-button @click="routeChange('complete')">{{ $t('dataManage.Return_list') }}</bk-button>
-        <bk-button theme="primary" @click="routeChange('search')">{{ $t('dataManage.To_retrieve') }}</bk-button>
+        <bk-button
+          @click="routeChange('complete')"
+          data-test-id="finishBox_button_backToList"
+        >{{ $t('dataManage.Return_list') }}</bk-button>
+        <bk-button
+          theme="primary" @click="routeChange('search')"
+          data-test-id="finishBox_button_goToSearch"
+        >{{ $t('dataManage.To_retrieve') }}</bk-button>
       </div>
     </div>
   </div>
