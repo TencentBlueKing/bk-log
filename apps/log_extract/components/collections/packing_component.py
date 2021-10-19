@@ -31,7 +31,7 @@ from apps.log_extract.utils.packing import (
     get_packed_file_name,
     get_filter_content,
 )
-from apps.log_extract.components.collections.base_component import BaseService
+from apps.utils.pipline import BaseService
 
 
 class FilePackingService(BaseService):

@@ -18,7 +18,9 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import base64
-from typing import List, Dict
+from typing import Dict
+
+import arrow
 
 from apps.api import BkDataAIOPSApi
 from apps.log_clustering.exceptions import (
@@ -68,6 +70,7 @@ from apps.log_clustering.handlers.aiops.aiops_model.data_cls import (
     CommitCls,
     ReleaseConfigCls,
     ReleaseCls,
+    UpdateTrainingScheduleCls,
 )
 
 
@@ -126,7 +129,7 @@ class AiopsModelHandler(BaseAiopsHandler):
 
     def update_execute_config(self, experiment_id: int, window: str = "4h", worker_nums: int = 8, memory: int = 4096):
         """
-        变价实验meta配置
+        变更实验meta配置
         @param experiment_id int 实验id
         @param window str 窗口时间大小
         @param worker_nums int 使用worker数
@@ -390,7 +393,7 @@ class AiopsModelHandler(BaseAiopsHandler):
     def model_train(
         self,
         min_members: int,
-        max_dist_list: List[str],
+        max_dist_list: str,
         predefined_varibles: str,
         delimeter: str,
         max_log_length: int,
@@ -589,7 +592,7 @@ class AiopsModelHandler(BaseAiopsHandler):
     @staticmethod
     def _generate_training_args(
         min_members: int,
-        max_dist_list: List[str],
+        max_dist_list: str,
         predefined_varibles: str,
         delimeter: str,
         max_log_length: int,
@@ -630,7 +633,7 @@ class AiopsModelHandler(BaseAiopsHandler):
                 field_index=2,
                 default_value="0.1,0.3,0.5,0.7,0.9",
                 sample_value=None,
-                value=",".join(max_dist_list),
+                value=max_dist_list,
                 data_field_name=None,
                 data_field_alias=None,
                 field_type="string",
@@ -983,3 +986,17 @@ class AiopsModelHandler(BaseAiopsHandler):
         )
         request_dict = self._set_username(release_request)
         return BkDataAIOPSApi.release(request_dict)
+
+    def update_training_schedule(self, model_id: str):
+        """
+        更新持续发布配置
+        @param model_id 模型id
+        """
+        target_time = int(arrow.now().timestamp)
+        update_training_schedule_request = UpdateTrainingScheduleCls(
+            model_id=model_id, project_id=self.conf.get("project_id")
+        )
+        update_training_schedule_request.training_schedule["start_time"] = target_time
+        request_dict = self._set_username(update_training_schedule_request)
+        print(request_dict)
+        return BkDataAIOPSApi.update_model_info(request_dict)

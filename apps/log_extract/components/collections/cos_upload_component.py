@@ -24,7 +24,7 @@ from pipeline.core.flow import StaticIntervalGenerator, Service
 from apps.log_extract.constants import DownloadStatus
 from apps.log_extract.fileserver import FileServer
 from apps.log_extract.models import Tasks, ExtractLink
-from apps.log_extract.components.collections.base_component import BaseService
+from apps.utils.pipline import BaseService
 from apps.log_extract.utils.packing import get_packed_file_name
 
 

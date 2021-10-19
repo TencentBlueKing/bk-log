@@ -135,7 +135,7 @@ class OutputConfigCls(object):
 
 @dataclass
 class ServingSchedulerParamsCls(object):
-    recovery: Dict = field(default_factory={"enable": False, "interval_time": "5m", "retry_times": 1})
+    recovery: Dict = field(default_factory=lambda: {"enable": False, "interval_time": "5m", "retry_times": 1})
     data_period: int = 1
     data_period_unit: str = "day"
     period: int = 1
@@ -193,15 +193,15 @@ class ModelTsCustomNodeCls(object):
     id: int
     from_nodes: List[FromNodesCls]
     serving_mode: str = "realtime"
-    sample_feedback_config: Dict = field(default_factory={"result_table_feedback": False})
+    sample_feedback_config: Dict = field(default_factory=lambda: {"result_table_feedback": False})
     upgrade_config: Dict = field(
-        default_factory={
+        default_factory=lambda: {
             "auto_upgrade": True,
             "notification": False,
             "specific_update_config": {"update_time": "12:00:00", "specific_update": False},
         }
     )
-    model_extra_config: Dict = field(default_factory={"predict_args": []})
+    model_extra_config: Dict = field(default_factory=lambda: {"predict_args": []})
     scene_name: str = "custom"
     node_type: str = "model_ts_custom"
     frontend_info: FrontendInfoCls = FrontendInfoCls()

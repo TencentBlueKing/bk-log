@@ -46,6 +46,16 @@ class _BkDataAIOPSApi:
             after_request=None,
             default_timeout=300,
         )
+        self.collect_configs = DataAPI(
+            method="POST",
+            url=AIOPS_APIGATEWAY_ROOT + "sample_set/{sample_set_id}/collect_configs/",
+            module=self.MODULE,
+            url_keys=["sample_set_id"],
+            description=u"创建或更新样本采集配置",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
         self.auto_collect = DataAPI(
             method="POST",
             url=AIOPS_APIGATEWAY_ROOT
@@ -231,6 +241,16 @@ class _BkDataAIOPSApi:
             module=self.MODULE,
             url_keys=["model_id", "experiment_id", "basic_model_id"],
             description=u"模型发布",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
+        self.update_model_info = DataAPI(
+            method="PUT",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/",
+            module=self.MODULE,
+            url_keys=["model_id"],
+            description=u"修改模型",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
             default_timeout=300,

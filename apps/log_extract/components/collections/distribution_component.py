@@ -22,7 +22,7 @@ import random
 from django.utils.translation import ugettext_lazy as _
 from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
-from apps.log_extract.components.collections.base_component import BaseService
+from apps.utils.pipline import BaseService
 from apps.log_extract import constants
 from apps.log_extract.fileserver import FileServer
 from apps.log_extract.models import Tasks, ExtractLink, ExtractLinkHost
