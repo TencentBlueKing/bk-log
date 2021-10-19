@@ -34,6 +34,7 @@ from apps.log_search.constants import DEFAULT_TIME_FIELD, TimeFieldTypeEnum, Tim
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import ProjectInfo, Scenario
 from apps.utils.db import array_group, array_hash
+from apps.utils.function import ignored
 from apps.utils.time_handler import format_user_time_zone, format_user_time_zone_humanize
 from apps.utils.local import get_local_param
 
@@ -191,7 +192,8 @@ class ArchiveHandler:
         ret = []
         instances = restore_list.serializer.instance
         for instance in instances:
-            try:
+            # archive config maybe delete so not show restore
+            with ignored(ArchiveConfig.DoesNotExist):
                 ret.append(
                     {
                         "restore_config_id": instance.restore_config_id,
@@ -208,9 +210,6 @@ class ArchiveHandler:
                         "is_expired": instance.is_expired(),
                     }
                 )
-            except ArchiveConfig.DoesNotExist:
-                # archive config maybe delete so not show restore
-                continue
         return ret
 
     @classmethod
