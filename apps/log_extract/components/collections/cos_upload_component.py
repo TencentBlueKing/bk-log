@@ -33,9 +33,6 @@ class CosUploadService(BaseService):
     __need_schedule__ = True
     interval = StaticIntervalGenerator(BaseService.TASK_POLLING_INTERVAL)
 
-    def __init__(self):
-        super().__init__(name=self.name)
-
     def outputs(self):
         return [
             Service.OutputItem(name=_("job instance id"), key="task_instance_id", type="int"),

@@ -39,9 +39,6 @@ class FilePackingService(BaseService):
     __need_schedule__ = True
     interval = StaticIntervalGenerator(BaseService.TASK_POLLING_INTERVAL)
 
-    def __init__(self):
-        super().__init__(name=self.name)
-
     def inputs_format(self):
         return [
             Service.InputItem(name=_("任务ID"), key="task_id", type="int", required=True),
