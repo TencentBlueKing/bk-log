@@ -21,19 +21,21 @@
   -->
 
 <template>
-  <div class="es-access-container">
+  <div class="es-access-container" data-test-id="esAccess_div_esAccessBox">
     <div class="main-operator-container">
       <bk-button
         theme="primary"
         style="width: 120px;"
         :disabled="isAllowedCreate === null || tableLoading"
         v-cursor="{ active: isAllowedCreate === false }"
+        data-test-id="esAccessBox_button_addNewEsAccess"
         @click="addDataSource">{{ $t('新建') }}
       </bk-button>
       <bk-input
-        v-model="keyword"
+        v-model="params.keyword"
         style="width: 360px;"
         right-icon="bk-icon icon-search"
+        data-test-id="esAccessBox_input_search"
         :placeholder="$t('搜索ES源名称，地址，创建人')"
         :clearable="true"
         @change="handleSearch">
@@ -41,20 +43,50 @@
     </div>
     <bk-table
       v-bkloading="{ isLoading: tableLoading }"
+      data-test-id="esAccessBox_table_esAccessTableBox"
       class="king-table"
       :data="tableDataPaged"
       :pagination="pagination"
       @page-change="handlePageChange"
       @page-limit-change="handleLimitChange">
-      <bk-table-column label="ID" align="center" prop="cluster_config.cluster_id" width="60"></bk-table-column>
-      <bk-table-column :label="$t('名称')" prop="cluster_config.cluster_name" min-width="170"></bk-table-column>
+      <bk-table-column
+        label="ID"
+        prop="cluster_config.cluster_id"
+        min-width="60">
+      </bk-table-column>
+      <bk-table-column
+        :label="$t('名称')"
+        prop="cluster_config.cluster_name"
+        min-width="170">
+      </bk-table-column>
       <bk-table-column :label="$t('地址')" min-width="170">
         <template slot-scope="props">
           {{ props.row.cluster_config.domain_name || '--' }}
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('端口')" prop="cluster_config.port" min-width="80"></bk-table-column>
-      <bk-table-column :label="$t('协议')" prop="cluster_config.schema" min-width="80"></bk-table-column>
+      <bk-table-column
+        :label="$t('来源')"
+        prop="source_type"
+        min-width="80"
+        class-name="filter-column"
+        column-key="source_type"
+        :filters="sourceFilters"
+        :filter-multiple="false"
+        :filter-method="sourceFilterMethod">
+        <template slot-scope="props">
+          {{ props.row.source_name || '--' }}
+        </template>
+      </bk-table-column>
+      <bk-table-column
+        :label="$t('端口')"
+        prop="cluster_config.port"
+        min-width="80">
+      </bk-table-column>
+      <bk-table-column
+        :label="$t('协议')"
+        prop="cluster_config.schema"
+        min-width="80">
+      </bk-table-column>
       <bk-table-column :label="$t('连接状态')" min-width="80">
         <template slot-scope="{ row }">
           <!-- eslint-disable-next-line vue/no-v-html -->
@@ -62,30 +94,51 @@
           <!--eslint-enable-->
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('创建人')" prop="cluster_config.creator" min-width="80"></bk-table-column>
-      <bk-table-column :label="$t('创建时间')" prop="cluster_config.create_time" min-width="170"></bk-table-column>
-      <bk-table-column :label="$t('冷热数据')" min-width="80">
+      <bk-table-column
+        :label="$t('创建人')"
+        prop="cluster_config.creator"
+        min-width="80">
+      </bk-table-column>
+      <bk-table-column
+        :label="$t('创建时间')"
+        prop="cluster_config.create_time"
+        min-width="170">
+      </bk-table-column>
+      <bk-table-column
+        :label="$t('冷热数据')"
+        min-width="80">
         <template slot-scope="{ row }">
           {{ row.cluster_config.enable_hot_warm ? $t('开') : $t('关') }}
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" min-width="160">
+      <bk-table-column :label="$t('操作')" width="180">
         <template slot-scope="props">
           <log-button
             theme="primary"
             text
+            class="mr10"
             :tips-conf="$t('unableEditTip')"
             :button-text="$t('建索引集')"
             :disabled="!props.row.is_editable"
-            @on-click="createIndexSet(props.row)">
+            @on-click="createIndexSet(props.row)">>
           </log-button>
           <log-button
             theme="primary"
             text
+            class="mr10"
             :tips-conf="$t('unableEditTip')"
             :button-text="$t('编辑')"
             :disabled="!props.row.is_editable"
             @on-click="editDataSource(props.row)">
+          </log-button>
+          <log-button
+            theme="primary"
+            text
+            class="mr10"
+            :tips-conf="$t('unableEditTip')"
+            :button-text="$t('删除')"
+            :disabled="!props.row.is_editable"
+            @on-click="deleteDataSource(props.row)">
           </log-button>
         </template>
       </bk-table-column>
@@ -112,7 +165,6 @@ export default {
   },
   data() {
     return {
-      keyword: '',
       tableLoading: true,
       tableDataOrigin: [], // 原始数据
       tableDataSearched: [], // 搜索过滤数据
@@ -123,17 +175,32 @@ export default {
         current: 1,
       },
       stateMap: {},
-
+      params: {
+        keyword: '',
+      },
       isAllowedCreate: null, // 是否有权限新建
       isRenderSlider: true, // 渲染侧边栏组件，关闭侧滑时销毁组件，避免接口在 pending 时关闭侧滑后又马上打开
       showSlider: false, // 显示编辑或新建ES源侧边栏
-      editClusterId: null, // 编辑ES源ID
+      editClusterId: null, // 编辑ES源ID,
     };
   },
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
+      globalsData: 'globals/globalsData',
     }),
+    sourceFilters() {
+      const { es_source_type } = this.globalsData;
+      const target = [];
+      // eslint-disable-next-line camelcase
+      es_source_type && es_source_type.forEach((data) => {
+        target.push({
+          text: data.name,
+          value: data.id,
+        });
+      });
+      return target;
+    },
   },
   created() {
     this.checkCreateAuth();
@@ -156,8 +223,8 @@ export default {
       }
     },
     /**
-             * 获取存储集群列表
-             */
+     * 获取存储集群列表
+     */
     async getTableData() {
       try {
         this.tableLoading = true;
@@ -225,15 +292,21 @@ export default {
       this.searchTimer && clearTimeout(this.searchTimer);
       this.searchTimer = setTimeout(this.searchCallback, 300);
     },
+    // 来源过滤
+    sourceFilterMethod(value, row, column) {
+      const property = column.property;
+      this.handlePageChange(1);
+      return row[property] === value;
+    },
     searchCallback() {
-      if (this.keyword) {
+      if (this.params.keyword) {
         this.tableDataSearched = this.tableDataOrigin.filter((item) => {
           if (item.cluster_config.cluster_name) {
             return (item.cluster_config.cluster_name
                       + item.cluster_config.creator
-                      + item.cluster_config.es_host).includes(this.keyword);
+                      + item.cluster_config.es_host).includes(this.params.keyword);
           }
-          return (item.source_name + item.updated_by).includes(this.keyword);
+          return (item.source_name + item.updated_by).includes(this.params.keyword);
         });
       } else {
         this.tableDataSearched = this.tableDataOrigin;
@@ -308,6 +381,36 @@ export default {
       this.showSlider = true;
       this.editClusterId = id;
     },
+    // 删除ES源
+    deleteDataSource(row) {
+      this.$bkInfo({
+        type: 'warning',
+        title: this.$t('确认删除当前ES集群'),
+        confirmFn: () => {
+          this.handleDelete(row);
+        },
+      });
+    },
+    handleDelete(row) {
+      this.$http.request('source/deleteEs', {
+        params: {
+          bk_biz_id: this.bkBizId,
+          cluster_id: row.cluster_config.cluster_id,
+        },
+      }).then((res) => {
+        if (res.result) {
+          if (this.tableDataPaged.length <= 1) {
+            this.pagination.current = this.pagination.current > 1 ? this.pagination.current - 1 : 1;
+          }
+          const deleteIndex = this.tableDataSearched.findIndex((item) => {
+            return item.cluster_config.cluster_id === row.cluster_config.cluster_id;
+          });
+          this.tableDataSearched.splice(deleteIndex, 1);
+          this.computePageData();
+        }
+      })
+        .catch(() => {});
+    },
     // 新建、编辑源更新
     handleUpdated() {
       this.showSlider = false;
@@ -320,45 +423,60 @@ export default {
         this.isRenderSlider = true;
       });
     },
+    handleSettingChange({ fields }) {
+      this.columnSetting.selectedFields = fields;
+    },
   },
 };
 </script>
 
-<style lang="scss" scoped>
-    .es-access-container {
-      padding: 20px 24px;
+<style lang="scss">
+  .es-access-container {
+     padding: 20px 24px;
 
-      .main-operator-container {
+    .main-operator-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .king-table {
+      /deep/ .state-container {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-      }
 
-      .king-table {
-        /deep/ .state-container {
-          display: flex;
-          align-items: center;
-
-          .bk-badge {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 4px;
-          }
-
-          .bk-danger {
-            background-color: #2dcb56;
-          }
-
-          .bk-warning {
-            background-color: #ea3636;
-          }
+        .bk-badge {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          margin-right: 4px;
         }
 
-        /deep/ .cell {
-          padding: 4px 15px;
+        .bk-danger {
+          background-color: #2dcb56;
+        }
+
+        .bk-warning {
+          background-color: #ea3636;
+        }
+      }
+
+      /deep/ .cell {
+        padding: 4px 15px;
+      }
+
+      .filter-column {
+        .cell {
+          display: flex;
         }
       }
     }
+  }
+  .bk-table-setting-popover-content-theme.tippy-tooltip {
+    padding: 15px 0 0;
+    .bk-table-setting-content .content-line-height {
+      display: none;
+    }
+  }
 </style>

@@ -33,9 +33,13 @@
         <span>{{ $t('configDetails.dataClassify') }}</span><span>{{ collectorData.category_name || '-' }}</span>
       </div>
       <div>
-        <span>{{ $t('configDetails.logPath') }}</span>
-        <div class="deploy-path">
+        <span>{{collectorData.collector_scenario_id === 'wineventlog' ?
+          $t('configDetails.logSpecies') : $t('configDetails.logPath') }}</span>
+        <div v-if="collectorData.params.paths" class="deploy-path">
           <p v-for="(val, key) in collectorData.params.paths" :key="key">{{ val }}</p>
+        </div>
+        <div v-else class="deploy-path">
+          <p>{{getLogSpeciesStr}}</p>
         </div>
       </div>
       <div><span>{{ $t('configDetails.logSet') }}</span><span>{{ collectorData.data_encoding || '-' }}</span>
@@ -53,7 +57,9 @@
       </div>
       <div
         class="content-style"
-        v-if="collectorData.params.conditions.type === 'match' && collectorData.params.conditions.match_content !== ''">
+        v-if="collectorData.params.conditions &&
+          collectorData.params.conditions.type === 'match' &&
+          collectorData.params.conditions.match_content !== ''">
         <span>{{ $t('configDetails.filterContent') }}</span>
         <div>
           <p>{{ $t('configDetails.strMatching') }}</p>
@@ -70,7 +76,8 @@
       </div>
       <div
         class="content-style"
-        v-else-if="collectorData.params.conditions.type === 'separator' &&
+        v-else-if="collectorData.params.conditions &&
+          collectorData.params.conditions.type === 'separator' &&
           collectorData.params.conditions.separator_filters !== []">
         <span>{{ $t('configDetails.filterContent') }}</span>
         <div>
@@ -102,6 +109,18 @@
                   $t('configDetails.and') : $t('configDetails.or') }}
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+      <div class="content-style"
+           v-else-if="collectorData.collector_scenario_id === 'wineventlog' && isThereValue">
+        <span>{{ $t('configDetails.filterContent') }}</span>
+        <div class="win-log">
+          <div>
+            <p>{{$t('事件ID')}}:{{getEventIDStr}}</p>
+          </div>
+          <div>
+            <p>{{$t('级别')}}:{{getLevelStr}}</p>
           </div>
         </div>
       </div>
@@ -157,6 +176,18 @@ export default {
   },
   computed: {
     ...mapState(['projectId']),
+    getEventIDStr() {
+      return this.collectorData.params.winlog_event_id.join(',');
+    },
+    getLevelStr() {
+      return this.collectorData.params.winlog_level.join(',');
+    },
+    getLogSpeciesStr() {
+      return this.collectorData.params.winlog_name.join(',');
+    },
+    isThereValue() {
+      return this.collectorData.params.winlog_event_id.length > 0 || this.collectorData.params.winlog_level.length > 0;
+    },
   },
   created() {
     this.getCollectDetail();
@@ -265,6 +296,13 @@ export default {
 
     .content-style {
       display: flex;
+
+      .win-log{
+        height: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
 
       > div {
         font-size: 14px;

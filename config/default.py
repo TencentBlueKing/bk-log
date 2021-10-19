@@ -160,6 +160,7 @@ CELERY_IMPORTS = (
     "apps.log_databus.tasks.collector",
     "apps.log_databus.tasks.itsm",
     "apps.log_databus.tasks.bkdata",
+    "apps.log_databus.tasks.archive",
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
 )
@@ -309,6 +310,28 @@ ALLOWED_MODULES_FUNCS = {
     "apps.log_databus.views.collector_views": {"tail": "tail"},
     "apps.log_databus.views.storage_views": {"connectivity_detect": "connectivity_detect"},
 }
+# esb模块中转发meta接口的传发设置
+META_ESB_FORWARD_CONFIG = {
+    "create_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "create_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "modify_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "modify_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "delete_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "delete_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "verify_es_snapshot_repository": {"is_view_permission": True, "target_call": "verify_es_snapshot_repository"},
+}
 
 # resf_framework
 REST_FRAMEWORK = {
@@ -382,6 +405,10 @@ ACTION_MEASURE = "project.manage"
 BKDATA_DATA_APP_CODE = os.getenv("BKAPP_BKDATA_DATA_APP_CODE", APP_CODE)
 BKDATA_DATA_TOKEN_ID = os.getenv("BKAPP_BKDATA_DATA_TOKEN_ID", 0)
 BKDATA_DATA_TOKEN = os.getenv("BKAPP_BKDATA_DATA_TOKEN", "")
+
+# 登录窗口大小
+IFRAME_HEIGHT = int(os.getenv("BKAPP_IFRAME_HEIGHT", 400))
+IFRAME_WIDTH = int(os.getenv("BKAPP_IFRAME_WIDTH", 400))
 
 # ===============================================================================
 # FeatureToggle 特性开关：以内部版为准，其它版本根据需求调整
@@ -468,7 +495,7 @@ MENUS = [
                 "name": _("日志清洗"),
                 "feature": "on",
                 "icon": "",
-                "keyword": "清洗",
+                "keyword": _("清洗"),
                 "children": [
                     {
                         "id": "clean_list",
@@ -482,6 +509,33 @@ MENUS = [
                         "name": _("清洗模板"),
                         "feature": "on",
                         "icon": "moban",
+                    },
+                ],
+            },
+            {
+                "id": "log_archive",
+                "name": _("日志归档"),
+                "feature": "on",
+                "icon": "",
+                "keyword": "归档",
+                "children": [
+                    {
+                        "id": "archive_repository",
+                        "name": _("归档仓库"),
+                        "feature": "on",
+                        "icon": "new-_empty-fill",
+                    },
+                    {
+                        "id": "archive_list",
+                        "name": _("归档列表"),
+                        "feature": "on",
+                        "icon": "audit-fill",
+                    },
+                    {
+                        "id": "archive_restore",
+                        "name": _("归档回溯"),
+                        "feature": "on",
+                        "icon": "withdraw-fill",
                     },
                 ],
             },

@@ -20,13 +20,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from django.conf.urls import url, include
 from rest_framework import routers
 
-from apps.log_databus.views import collector_views, itsm_views, clean_views
+from apps.log_databus.views import collector_views, itsm_views, archive_views, restore_views, clean_views
 from apps.log_databus.views import storage_views
 from apps.log_databus.views import link_views
 
 
 router = routers.DefaultRouter(trailing_slash=True)
 
+router.register(r"archive", archive_views.ArchiveViewSet, basename="archive")
+router.register(r"restore", restore_views.RestoreViewSet, basename="restore")
 router.register(r"storage", storage_views.StorageViewSet, basename="databus_storage")
 router.register(r"collectors", collector_views.CollectorViewSet, basename="collectors")
 router.register(r"data_link", link_views.DataLinkViewSet, basename="data_link")

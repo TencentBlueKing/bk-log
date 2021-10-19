@@ -40,3 +40,8 @@ class UrlNotImplementError(BaseESBException):
 class MethodNotAllowedError(BaseESBException):
     ERROR_CODE = "003"
     MESSAGE = _("该method暂时不支持")
+
+
+class NotHaveInstanceIdError(BaseESBException):
+    ERROR_CODE = "004"
+    MESSAGE = _("没有传入鉴权实例id")

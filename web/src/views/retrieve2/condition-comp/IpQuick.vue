@@ -88,6 +88,7 @@
           class="ip-selector"
           type="textarea"
           :placeholder="$t('retrieve.ipPlaceholder')"
+          data-test-id="addIP_input_manualInputIP"
         ></bk-input>
       </div>
     </bk-dialog>

@@ -29,6 +29,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from apps.exceptions import BizNotExistError
 from apps.feature_toggle.handlers.toggle import feature_switch
+from apps.log_databus.constants import EsSourceType
 from apps.log_search.exceptions import (
     SourceDuplicateException,
     IndexSetNameDuplicateException,
@@ -61,6 +62,7 @@ from apps.log_search.constants import (
     DEFAULT_TIME_FIELD,
     EncodingsEnum,
     TagColor,
+    InnerTag,
 )
 
 
@@ -112,7 +114,8 @@ class GlobalConfig(models.Model):
         configs[GlobalTypeEnum.TIME_FIELD_UNIT.value] = TimeFieldUnitEnum.get_choices_list_dict()
         # 日志编码
         configs[GlobalTypeEnum.DATA_ENCODING.value] = EncodingsEnum.get_choices_list_dict()
-
+        # ES日志来源类型
+        configs[GlobalTypeEnum.ES_SOURCE_TYPE.value] = EsSourceType.get_choices_list_dict()
         return configs
 
     class Meta:
@@ -508,6 +511,11 @@ class LogIndexSet(SoftDeleteModel):
         index_set.save()
 
     @classmethod
+    def delete_tag_by_name(cls, index_set_id, tag_name):
+        delete_tag_id = IndexSetTag.get_tag_id(tag_name)
+        cls.delete_tag(index_set_id, delete_tag_id)
+
+    @classmethod
     @atomic
     def delete_tag(cls, index_set_id, *tag_ids):
         index_set = cls.objects.select_for_update().get(index_set_id=index_set_id)
@@ -735,7 +743,11 @@ class IndexSetTag(models.Model):
 
     @classmethod
     def batch_get_tags(cls, tag_ids: list):
-        return cls.objects.filter(tag_id__in=tag_ids).values("name", "color", "tag_id")
+        tags = cls.objects.filter(tag_id__in=tag_ids).values("name", "color", "tag_id")
+        return [
+            {"name": InnerTag.get_choice_label(tag["name"]), "color": tag["color"], "tag_id": tag["tag_id"]}
+            for tag in tags
+        ]
 
 
 class AsyncTask(OperateRecordModel):

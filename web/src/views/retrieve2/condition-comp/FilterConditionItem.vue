@@ -31,7 +31,7 @@
       :tippy-options="{ hideOnClick: false, boundary: 'window' }"
       :on-show="handlePopoverShow"
       :on-hide="handlePopoverHide">
-      <span class="filter-text" v-if="isAdd">{{ $t('添加条件') }}</span>
+      <span class="filter-text" v-if="isAdd" data-test-id="dataQuery_span_addConditions">{{ $t('添加条件') }}</span>
       <div class="condition-item-container" v-else>
         <div class="tag text-tag field-tag" v-bk-overflow-tips>
           <!-- <span class="bk-icon icon-close-circle-shape" @click="removeFilterCondition(coreData.field)"></span> -->
@@ -50,6 +50,7 @@
             <bk-select
               :value="coreData.field"
               style="width: 240px;"
+              data-test-id="addConditions_div_selectField"
               searchable
               :clearable="false"
               @change="handleFieldChange">
@@ -64,6 +65,7 @@
               :value="coreData.operator"
               :clearable="false"
               @change="handleOperatorChange"
+              data-test-id="addConditions_div_fieldFilter"
               style="width: 120px;">
               <template v-for="option in filterOperators">
                 <bk-option :key="option.operator" :id="option.operator" :name="option.label"></bk-option>
@@ -75,6 +77,7 @@
             <bk-tag-input
               v-model="coreData.value"
               style="width: 240px;"
+              data-test-id="addConditions_input_valueFilter"
               allow-create
               allow-auto-match
               :paste-fn="pasteFn"
