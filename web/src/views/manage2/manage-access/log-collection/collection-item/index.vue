@@ -21,18 +21,22 @@
   -->
 
 <template>
-  <section class="collection-item-container">
+  <section
+    class="collection-item-container"
+    data-test-id="logCollection_div_logCollectionBox">
     <section class="top-operation">
       <bk-button
         class="fl"
         theme="primary"
         :disabled="!collectProject || isAllowedCreate === null || isTableLoading"
         v-cursor="{ active: isAllowedCreate === false }"
-        @click="operateHandler({}, 'add')">
+        @click="operateHandler({}, 'add')"
+        data-test-id="logCollectionBox_button_addNewCollectionItem">
         {{ $t('新建采集项') }}
       </bk-button>
       <div class="collect-search fr">
         <bk-input
+          data-test-id="logCollectionBox_input_searchCollectionItems"
           :placeholder="$t('dataManage.Search_index_name')"
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
@@ -44,6 +48,7 @@
     <section class="collect-list">
       <bk-table
         class="collect-table"
+        data-test-id="logCollectionBox_table_logCollectionTable"
         :empty-text="$t('btn.vacancy')"
         :data="collectList"
         :size="size"

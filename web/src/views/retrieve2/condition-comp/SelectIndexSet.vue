@@ -24,6 +24,7 @@
   <bk-select
     style="background: #fff;"
     ext-popover-cls="retrieve-index-select-popover"
+    data-test-id="dataQuery_div_indexSetSelect"
     :searchable="true"
     :clearable="false"
     :value="indexId"
@@ -63,7 +64,8 @@
         class="custom-no-padding-option"
         :key="item.index_set_id"
         :id="item.index_set_id"
-        :name="item.indexName + item.lightenName">
+        :name="item.indexName + item.lightenName"
+        :data-test-id="`ul_li_${item.indexName}`">
         <div
           v-if="!(item.permission && item.permission.search_log)"
           class="option-slot-container no-authority" @click.stop>

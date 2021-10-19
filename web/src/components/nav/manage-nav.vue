@@ -26,10 +26,14 @@
       <span class="bk-icon icon-arrows-left"></span>
     </div>
     <div class="main-title">{{ $route.meta.needBack ? getTitleName() : activeManageNav.name }}</div>
-    <ul class="sub-nav-list" v-if="activeManageNav.children && !$route.meta.needBack">
+    <ul class="sub-nav-list"
+        v-if="activeManageNav.children && !$route.meta.needBack"
+        data-test-id="logCollection_ul_logCollectionNavBox"
+    >
       <template v-for="navItem in activeManageNav.children">
         <li :class="{ 'sub-nav-item': true, 'active': navItem.id === activeManageSubNav.id }"
-            :key="navItem.id" @click="handleClickSubNav(navItem.id)">
+            :key="navItem.id" @click="handleClickSubNav(navItem.id)"
+            :data-test-id="`logCollectionNavBox_li_${navItem.id}`">
           {{ navItem.name }}
         </li>
       </template>

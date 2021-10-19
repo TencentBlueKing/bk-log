@@ -32,6 +32,7 @@
     <slot name="trigger">
       <bk-input
         style="width: 669px;"
+        data-test-id="addNewExtraction_input_specifyFolder"
         :class="isError && 'is-error'"
         v-model="showValue"
         @change="handleChange">

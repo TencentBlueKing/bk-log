@@ -21,16 +21,23 @@
   -->
 
 <template>
-  <div v-if="!showApplyResult" v-bkloading="{ isLoading: applyLoading }" class="step-capacity-container">
+  <div v-if="!showApplyResult"
+       v-bkloading="{ isLoading: applyLoading }"
+       class="step-capacity-container"
+       data-test-id="addNewCollectionItem_div_capacityContaineBox">
     <bk-form class="king-form" ref="formRef" form-type="vertical" :label-width="260" :model="formData" :rules="rules">
       <div class="form-double-container">
         <bk-form-item :label="$t('期待接入日期')" required property="expect_access_data">
-          <bk-date-picker v-model="formData.expect_access_data" format="yyyy-MM-dd"></bk-date-picker>
+          <bk-date-picker
+            v-model="formData.expect_access_data" format="yyyy-MM-dd"
+            data-test-id="capacityContaineBox_div_selectExpectedDate"
+          ></bk-date-picker>
         </bk-form-item>
         <bk-form-item :label="$t('预计接入的主机数量')" required property="expect_host_size">
           <bk-input
             v-model="formData.expect_host_size"
             type="number"
+            data-test-id="capacityContaineBox_input_estimatedNumber"
             :show-controls="false"
             :clearable="true">
           </bk-input>
@@ -41,6 +48,7 @@
           <bk-input
             v-model="formData.single_log_size"
             type="number"
+            data-test-id="capacityContaineBox_input_logSize"
             :show-controls="false"
             :clearable="true">
           </bk-input>
@@ -49,6 +57,7 @@
           <bk-input
             v-model="formData.single_host_peak"
             type="number"
+            data-test-id="capacityContaineBox_input_peakFlow"
             :show-controls="false"
             :clearable="true">
           </bk-input>
@@ -59,17 +68,27 @@
           <bk-input
             v-model="formData.single_host_log_volume"
             type="number"
+            data-test-id="capacityContaineBox_input_increaseLogVolume"
             :show-controls="false"
             :clearable="true">
           </bk-input>
         </bk-form-item>
         <bk-form-item :label="$t('日志保留天数')" required property="log_keep_days">
-          <bk-input v-model="formData.log_keep_days" type="number" :show-controls="false" :clearable="true"></bk-input>
+          <bk-input
+            v-model="formData.log_keep_days" type="number" :show-controls="false" :clearable="true"
+            data-test-id="capacityContaineBox_input_logRetentionDays"
+          ></bk-input>
         </bk-form-item>
       </div>
       <div class="form-double-container">
         <bk-form-item :label="$t('热数据天数')" required property="hot_data_days">
-          <bk-input v-model="formData.hot_data_days" type="number" :show-controls="false" :clearable="true"></bk-input>
+          <bk-input
+            v-model="formData.hot_data_days"
+            type="number"
+            :show-controls="false"
+            :clearable="true"
+            data-test-id="capacityContaineBox_input_hotDataDays"
+          ></bk-input>
         </bk-form-item>
       </div>
       <bk-form-item :label="$t('容量说明')" class="text-form-item">
@@ -132,7 +151,12 @@
         </div>
       </bk-form-item>
       <bk-form-item :label="$t('申请原因')" required property="apply_reason" class="text-form-item">
-        <bk-input v-model="formData.apply_reason" type="textarea" :clearable="true"></bk-input>
+        <bk-input
+          v-model="formData.apply_reason"
+          type="textarea"
+          :clearable="true"
+          data-test-id="capacityContaineBox_input_applicationReason"
+        ></bk-input>
       </bk-form-item>
     </bk-form>
     <div class="button-container">
@@ -141,21 +165,29 @@
         <bk-button
           class="king-submit-button"
           theme="primary"
+          data-test-id="capacityContaineBox_button_nextPage"
           :loading="submitLoading"
           @click="handleNext">
           {{ $t('下一步') }}
         </bk-button>
-        <bk-button @click="handleCancel">{{ $t('返回列表') }}</bk-button>
+        <bk-button
+          @click="handleCancel"
+          data-test-id="capacityContaineBox_button_cancel"
+        >{{ $t('返回列表') }}</bk-button>
       </template>
       <template v-else>
         <bk-button
           class="king-submit-button"
           theme="primary"
           :loading="submitLoading"
+          data-test-id="capacityContaineBox_button_submit"
           @click="handleSubmit">
           {{ $t('提交') }}
         </bk-button>
-        <bk-button @click="handleCancel">{{ $t('返回列表') }}</bk-button>
+        <bk-button
+          @click="handleCancel"
+          data-test-id="capacityContaineBox_button_cancel"
+        >{{ $t('返回列表') }}</bk-button>
       </template>
     </div>
   </div>
@@ -163,7 +195,10 @@
     <bk-exception v-if="applyData" type="building">
       <div class="approval-text">
         <span>{{ applyData.collect_itsm_status_display }}</span>
-        <a :href="applyData.ticket_url" class="button-text" target="_blank">
+        <a :href="applyData.ticket_url"
+           class="button-text"
+           target="_blank"
+           data-test-id="capacityContaineBox_a_viewApprovalDetails">
           {{ $t('点击查看审批详情') }}
           <span class="log-icon icon-lianjie"></span>
         </a>

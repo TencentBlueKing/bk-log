@@ -21,17 +21,19 @@
   -->
 
 <template>
-  <section class="clean-template-container">
+  <section class="clean-template-container" data-test-id="cleanTemplate_section_cleanTemplateBox">
     <section class="top-operation">
       <bk-button
         class="fl"
         theme="primary"
+        data-test-id="cleanTemplateBox_button_addNewCleanTemplate"
         @click="handleCreate">
         {{ $t('新建') }}
       </bk-button>
       <div class="clean-search fr">
         <bk-input
           :clearable="true"
+          data-test-id="cleanTemplateBox_input_cleanTemplateSearch"
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
           @enter="search">
@@ -43,6 +45,7 @@
         class="clean-table"
         :data="templateList"
         :size="size"
+        data-test-id="cleanTemplateBox_table_cleanTemplateTable"
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
