@@ -23,7 +23,6 @@ from django.conf import settings
 
 from apps.log_measure.constants import DJANGO_MONITOR_DATA_NAME
 from apps.utils.log import logger
-from bk_monitor.models import MonitorReportConfig
 
 
 class MeasureConfig(AppConfig):
@@ -31,6 +30,8 @@ class MeasureConfig(AppConfig):
     verbose_name = "measure"
 
     def ready(self):
+        from bk_monitor.models import MonitorReportConfig
+
         monitor_report_config = None
         try:
             monitor_report_config = MonitorReportConfig.objects.get(data_name=DJANGO_MONITOR_DATA_NAME, is_enable=True)
