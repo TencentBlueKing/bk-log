@@ -17,27 +17,35 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from bk_monitor_report import MonitorReporter
+from django.apps import AppConfig
+from django.conf import settings
 
-INTERVAL_TYPE = ["month", "week", "day", "hour", "10m", "5m", "1m"]
-STORAGE_CLUSTER_TYPE = "elasticsearch"
-INDEX_REGEX = r"\d{1,}_bklog_.*?_\d{8}_\d{1,}"
+from apps.log_measure.constants import DJANGO_MONITOR_DATA_NAME
+from apps.utils.function import ignored
+from apps.utils.log import logger
 
-COMMON_INDEX_RE = r"^(v2_)?{}_(?P<datetime>\d+)_(?P<index>\d+)$"
 
-COLUMN_DISPLAY_LIST = ["docs.count", "docs.deleted", "index", "pri", "pri.store.size", "rep", "store.size", "status"]
-INDEX_FORMAT = "*_bklog_*"
+class MeasureConfig(AppConfig):
+    name = "apps.log_measure"
+    verbose_name = "measure"
 
-COLLECTOR_IMPORT_PATHS = [
-    "apps.log_measure.handlers.metric_collectors.business",
-    "apps.log_measure.handlers.metric_collectors.cluster",
-    "apps.log_measure.handlers.metric_collectors.collect",
-    "apps.log_measure.handlers.metric_collectors.grafana",
-    "apps.log_measure.handlers.metric_collectors.index",
-    "apps.log_measure.handlers.metric_collectors.log_extract",
-    "apps.log_measure.handlers.metric_collectors.third_party",
-    "apps.log_measure.handlers.metric_collectors.user",
-    "apps.log_measure.handlers.metric_collectors.es",
-]
+    def ready(self):
+        with ignored(Exception):
+            from bk_monitor.models import MonitorReportConfig
 
-DJANGO_MONITOR_DATA_NAME = "django_monitor"
-DATA_NAMES = ["metric", "search_history", "es_monitor", "django_monitor"]
+            monitor_report_config = None
+            try:
+                monitor_report_config = MonitorReportConfig.objects.get(
+                    data_name=DJANGO_MONITOR_DATA_NAME, is_enable=True
+                )
+            except MonitorReportConfig.DoesNotExist:
+                logger.info(f"f{DJANGO_MONITOR_DATA_NAME} data_name init failed")
+                return
+            reporter = MonitorReporter(
+                data_id=monitor_report_config.data_id,
+                access_token=monitor_report_config.access_token,
+                target=settings.APP_CODE,
+                url=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/v2/push/",
+            )
+            reporter.start()
