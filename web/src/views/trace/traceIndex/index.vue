@@ -206,7 +206,9 @@
             :field-name="fieldName"
             :char-dot-data="charDotData"
             :initial-call="initialCall"
-            :chart-cut="chartCut === 'line' ? 'line' : 'consuming'"></chartView>
+            :initial-call-show="initialCallShow"
+            :chart-cut="chartCut === 'line' ? 'line' : 'consuming'"
+            @toggle-call-show="handleToggleCallShow"></chartView>
         </div>
         <div class="table-search" v-bkloading="{ isLoading: isTableLoading, zIndex: 1 }">
           <div class="log-switch">
@@ -267,6 +269,7 @@
         <div class="fixed-scroll-top-btn" v-show="isShowScrollTop" @click="scrollToTop">
             <i class="bk-icon icon-angle-up"></i>
         </div>
+        <TraceDetail :isShow.sync="showTraceDetail" />
     </div>
 </template>
 <script>
@@ -277,6 +280,7 @@ import { mapState } from 'vuex';
 import chartView from './chart-view.vue';
 import TimeFormatter from '@/components/common/time-formatter';
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
+import TraceDetail from '@/components/trace-detail';
 
 export default {
   name: 'trace-index',
@@ -286,6 +290,7 @@ export default {
     TableStatus,
     chartView,
     TimeFormatter,
+    TraceDetail,
   },
   mixins: [tableRowDeepViewMixin],
   data() {
@@ -312,6 +317,7 @@ export default {
       },
       logAllJsonList: [],
       initialCall: false,
+      initialCallShow: false,
       Scatter: false,
       tableRowsWidth: {},
       moreTime: false,
@@ -455,6 +461,7 @@ export default {
         size: 20,
       },
       isSearchAllowed: null,
+      showTraceDetail: false,
     };
   },
   computed: {
@@ -573,13 +580,15 @@ export default {
     },
     handleCellClick(row, column) {
       if (column.label === 'traceID') {
-        const routeData = this.$router.resolve({
-          path: `/trace?indexId=${this.indexId}&traceId=${row.traceID}&startTime=${row.startTime}`,
-          query: {
-            projectId: this.projectId,
-          },
-        });
-        window.open(routeData.href, '_blank');
+        // const routeData = this.$router.resolve({
+        //   path: `/trace?indexId=${this.indexId}&traceId=${row.traceID}&startTime=${row.startTime}`,
+        //   query: {
+        //     projectId: this.projectId,
+        //   },
+        // });
+        // window.open(routeData.href, '_blank');
+
+        this.showTraceDetail = true;
       } else {
         this.$refs.logDetailTable.toggleRowExpansion(row);
       }
@@ -753,7 +762,11 @@ export default {
           }
         }
         delete this.params.fields;
-        await Promise.all([this.requestTableList(), this.requestDateHistogram(true)]);
+        const promisList = [this.requestTableList()];
+        if (this.initialCallShow) {
+          promisList.push(this.requestDateHistogram(true));
+        }
+        await Promise.all(promisList);
       } catch (e) {
         console.warn(e);
       } finally {
@@ -948,10 +961,13 @@ export default {
       }
     },
     async handleCheckChartType(val) {
+      if (!this.initialCallShow) this.initialCallShow = true;
+
       const { chart_alias: chartCut, field_name: fieldName } = val;
       if (!this.chartData[fieldName]) {
         try {
           this.isChartLoading = true;
+          if (!this.initialCallShow) this.initialCall = false;
           if (chartCut === 'line') {
             this.params.fields = [{ term_filed: fieldName }];
           } else if (chartCut === 'consuming') {
@@ -975,13 +991,21 @@ export default {
         } catch (e) {
           console.warn(e);
         } finally {
+          this.initialCall = true;
           setTimeout(() => {
+            this.isChartLoading = false;
             this.isChartLoading = false;
           }, 100);
         }
       } else {
         this.chartCut = chartCut;
         this.fieldName = fieldName;
+      }
+    },
+    handleToggleCallShow() {
+      this.initialCallShow = !this.initialCallShow;
+      if (this.initialCallShow && !this.chartData[this.fieldName]) {
+        this.requestDateHistogram(true);
       }
     },
   },

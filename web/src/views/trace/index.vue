@@ -21,15 +21,20 @@
   -->
 
 <template>
-  <div class="trace-container" v-bkloading="{ isLoading }">
+  <trace-index></trace-index>
+  <!-- <div class="trace-container" v-bkloading="{ isLoading }">
     <iframe :src="src" class="trace-iframe" @load="handleIframeLoad"></iframe>
-  </div>
+  </div> -->
 </template>
 
 <script>
+import TraceIndex from './traceIndex';
 
 export default {
   name: 'trace',
+  components: {
+    TraceIndex,
+  },
   data() {
     return {
       src: '',
@@ -50,8 +55,9 @@ export default {
       let siteUrl = window.SITE_URL;
       if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
       if (!siteUrl.endsWith('/')) siteUrl += '/';
-      const prefixUrl = window.origin + siteUrl;
-      this.src = `${prefixUrl}grafana/explore?orgName=${this.bkBizId}`;
+      // const prefixUrl = window.origin + siteUrl;
+      // this.src = `${prefixUrl}grafana/explore?orgName=${this.bkBizId}`;
+      this.src = `http://stag.bklog.oa.com/grafana/explore?orgName=${this.bkBizId}`;
     },
     // iframe 页面加载完毕
     handleIframeLoad() {
@@ -64,11 +70,5 @@ export default {
 <style scoped lang="scss">
 .trace-container {
   height: 100%;
-
-  .trace-iframe {
-    border: none;
-    width: 100%;
-    height: 100%;
-  }
 }
 </style>
