@@ -42,3 +42,8 @@ class BizPermission(BasePermission):
 
         permission.is_allowed(action=ActionEnum.VIEW_DASHBOARD, resources=resources, raise_exception=True)
         return True, GrafanaRole.Viewer
+
+
+class ExplorePermission(BasePermission):
+    def has_permission(self, request, view, org_name: str) -> Tuple[bool, GrafanaRole]:
+        return True, GrafanaRole.Viewer
