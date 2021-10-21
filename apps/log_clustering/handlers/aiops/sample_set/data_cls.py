@@ -107,6 +107,32 @@ class AutoCollectCls(object):
 
 
 @dataclass
+class CollectConfigsCls(object):
+    sample_set_id: int
+    project_id: int
+    collect_config: Dict = field(
+        default_factory=lambda: {
+            "config_alias": "",
+            "schedule_type": "interval",
+            "collect_type": "append",
+            "active": True,
+            "config": {
+                "end_time": 0,
+                "start_time": 0,
+                "aggregate_type": "all",
+                "aggregate_config": [],
+                "aggregate_ts_freq": "0",
+            },
+            "id": None,
+        }
+    )
+    apply_type: str = "all"
+    apply_result_table_ids: List = field(default_factory=list)
+    apply_line_ids: List = field(default_factory=list)
+    conflict_remove: str = "none"
+
+
+@dataclass
 class CommitApplyCls(object):
     """
     执行样本集提交

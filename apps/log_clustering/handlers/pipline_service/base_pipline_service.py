@@ -17,43 +17,35 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from apps.api import BkDataDataFlowApi
-from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
-from apps.log_clustering.handlers.dataflow.data_cls import ExportFlowCls, StopFlowCls, StartFlowCls
+from retrying import retry
+from abc import ABC, abstractmethod
+
+from pipeline.builder import Data
+from pipeline.core.pipeline import Pipeline
+from pipeline.service import task_service
 
 
-class DataFlowHandler(BaseAiopsHandler):
-    def export(self, flow_id: int):
+class BasePipeLineService(ABC):
+    @abstractmethod
+    def build_data_context(self, params, *args, **kwargs) -> Data:
         """
-        导出flow
-        @param flow_id flow id
-        """
-        export_request = ExportFlowCls(flow_id=flow_id)
-        request_dict = self._set_username(export_request)
-        return BkDataDataFlowApi.export_flow(request_dict)
-
-    def stop(self, flow_id: int):
-        """
-        停止flow
-        @param flow_id flow id
-        """
-        stop_request = StopFlowCls(flow_id=flow_id)
-        request_dict = self._set_username(stop_request)
-        return BkDataDataFlowApi.stop_flow(request_dict)
-
-    def start(self, flow_id: int, consuming_mode: str, cluster_group: str):
-        """
-        启动flow
-        @param flow_id flow id
-        @param cluster_group 计算集群组
-        @param consuming_mode 数据处理模式
-        """
-        start_request = StartFlowCls(flow_id=flow_id, consuming_mode=consuming_mode, cluster_group=cluster_group)
-        request_dict = self._set_username(start_request)
-        return BkDataDataFlowApi.start_flow(request_dict)
-
-    def create_pre_treat_flow(self):
-        """
-        创建pre-treat flow
+        生成pipeline上下文
+        @param params 原始数据对象
         """
         pass
+
+    @abstractmethod
+    def build_pipeline(self, data_context: Data, *args, **kwargs):
+        """
+        生成pipeline
+        @param data_context pipeline context
+        """
+        pass
+
+    @retry(retry_on_result=lambda val: val and val.result)
+    def start_pipeline(self, pipeline: Pipeline):
+        """
+        执行pipeline
+        @param pipeline 生成的pipeline对象
+        """
+        return task_service.run_pipeline(pipeline=pipeline)
