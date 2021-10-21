@@ -19,7 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.utils.translation import ugettext_lazy as _  # noqa
 from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user  # noqa
-from config.domains import AIOPS_APIGATEWAY_ROOT, AIOPS_MODULE_APIGATEWAY_ROOT  # noqa
+from config.domains import AIOPS_APIGATEWAY_ROOT, AIOPS_MODEL_APIGATEWAY_ROOT  # noqa
 from apps.api.base import DataAPI  # noqa
 
 
@@ -42,6 +42,16 @@ class _BkDataAIOPSApi:
             module=self.MODULE,
             url_keys=["sample_set_id"],
             description=u"RT提交, 把RT添加到 stage表中",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
+        self.collect_configs = DataAPI(
+            method="POST",
+            url=AIOPS_APIGATEWAY_ROOT + "sample_set/{sample_set_id}/collect_configs/",
+            module=self.MODULE,
+            url_keys=["sample_set_id"],
+            description=u"创建或更新样本采集配置",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
             default_timeout=300,
@@ -186,7 +196,7 @@ class _BkDataAIOPSApi:
         )
         self.basic_model_evaluation_result = DataAPI(
             method="GET",
-            url=AIOPS_MODULE_APIGATEWAY_ROOT
+            url=AIOPS_MODEL_APIGATEWAY_ROOT
             + "models/{model_id}/experiments/{experiment_id}/basic_models/{basic_model_id}/evaluation_result/",
             module=self.MODULE,
             url_keys=["model_id", "experiment_id", "basic_model_id"],
@@ -231,6 +241,16 @@ class _BkDataAIOPSApi:
             module=self.MODULE,
             url_keys=["model_id", "experiment_id", "basic_model_id"],
             description=u"模型发布",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
+        self.update_model_info = DataAPI(
+            method="PUT",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/",
+            module=self.MODULE,
+            url_keys=["model_id"],
+            description=u"修改模型",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
             default_timeout=300,

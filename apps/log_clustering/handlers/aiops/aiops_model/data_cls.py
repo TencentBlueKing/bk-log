@@ -748,3 +748,18 @@ class ReleaseCls(object):
     description: str
     serving_config: ReleaseServingConfigCls
     sample_feedback: bool = False
+
+
+@dataclass
+class UpdateTrainingScheduleCls(object):
+    model_id: str
+    project_id: int
+    training_schedule: Dict = field(
+        default_factory=lambda: {
+            "start_time": 0,
+            "training_freq": 1,
+            "success_rate_threshold": 0.8,
+            "training_freq_unit": "d",
+        }
+    )
+    release_config: Dict = field(default_factory=lambda: {"release_mode": "auto"})
