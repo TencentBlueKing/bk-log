@@ -17,33 +17,35 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from typing import Tuple
+from bk_monitor_report import MonitorReporter
+from django.apps import AppConfig
+from django.conf import settings
 
-from apps.iam import Permission, ActionEnum, ResourceEnum
-from bk_dataview.grafana.permissions import BasePermission, GrafanaRole
-
-
-class BizPermission(BasePermission):
-    """
-    业务权限
-    """
-
-    def has_permission(self, request, view, org_name: str) -> Tuple[bool, GrafanaRole]:
-        if request.user.is_superuser:
-            return True, GrafanaRole.Admin
-
-        bk_biz_id = int(org_name)
-        permission = Permission()
-
-        resources = [ResourceEnum.BUSINESS.create_instance(bk_biz_id)]
-
-        if permission.is_allowed(action=ActionEnum.MANAGE_DASHBOARD, resources=resources):
-            return True, GrafanaRole.Editor
-
-        permission.is_allowed(action=ActionEnum.VIEW_DASHBOARD, resources=resources, raise_exception=True)
-        return True, GrafanaRole.Viewer
+from apps.log_measure.constants import DJANGO_MONITOR_DATA_NAME
+from apps.utils.function import ignored
+from apps.utils.log import logger
 
 
-class ExplorePermission(BasePermission):
-    def has_permission(self, request, view, org_name: str) -> Tuple[bool, GrafanaRole]:
-        return True, GrafanaRole.Viewer
+class MeasureConfig(AppConfig):
+    name = "apps.log_measure"
+    verbose_name = "measure"
+
+    def ready(self):
+        with ignored(Exception):
+            from bk_monitor.models import MonitorReportConfig
+
+            monitor_report_config = None
+            try:
+                monitor_report_config = MonitorReportConfig.objects.get(
+                    data_name=DJANGO_MONITOR_DATA_NAME, is_enable=True
+                )
+            except MonitorReportConfig.DoesNotExist:
+                logger.info(f"f{DJANGO_MONITOR_DATA_NAME} data_name init failed")
+                return
+            reporter = MonitorReporter(
+                data_id=monitor_report_config.data_id,
+                access_token=monitor_report_config.access_token,
+                target=settings.APP_CODE,
+                url=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/v2/push/",
+            )
+            reporter.start()

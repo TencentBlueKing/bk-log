@@ -289,7 +289,7 @@ class GlobalTypeEnum(ChoicesEnum):
 class CollectorScenarioEnum(ChoicesEnum):
     ROW = "row"
     SECTION = "section"
-    WIN_EVENT = "win_event"
+    WIN_EVENT = "wineventlog"
 
     _choices_labels = (
         (ROW, _("行日志文件")),
@@ -874,6 +874,29 @@ RT_RESERVED_WORD_EXAC = [
     "filename",
     "items",
     "utctime",
+    # wineventlog field
+    "winEventApi",
+    "winEventActivityId",
+    "winEventChannel",
+    "winEventRecordId",
+    "winEventRelatedActivityId",
+    "winEventOpcode",
+    "winEventData",
+    "winEventId",
+    "winEventKeywords",
+    "winEventProcessPid",
+    "winEventProviderGuid",
+    "winEventTask",
+    "winEventUserData",
+    "winEventUserDomain",
+    "winEventUserIdentifier",
+    "winEventUserName",
+    "winEventUserType",
+    "winEventVersion",
+    "winEventProcessThreadId",
+    "winEventComputerName",
+    "winEventLevel",
+    "winEventTimeCreated",
     # ignore、delete、end
     ETL_DELIMITER_IGNORE,
     ETL_DELIMITER_DELETE,

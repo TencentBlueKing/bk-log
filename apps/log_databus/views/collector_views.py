@@ -514,6 +514,9 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} params.conditions.match_content 过滤内容
         @apiParam {String} params.conditions.separator 分隔符
         @apiParam {String} params.conditions.separator_filters 分隔符过滤条件
+        @apiParam {Array} params.winlog_name windows事件名称
+        @apiParam {Array} params.winlog_level windows事件等级
+        @apiParam {Array} params.winlog_event_id windows事件id
         @apiParamExample {json} 请求样例:
         {
             "bk_biz_id": 706,
@@ -556,9 +559,12 @@ class CollectorViewSet(ModelViewSet):
                         }
                     ]
                 },
-                multiline_pattern: ""
-                multiline_max_lines: 10
-                multiline_timeout: 60
+                "multiline_pattern": "",
+                "multiline_max_lines": 10,
+                "multiline_timeout": 60,
+                "winlog_name": ["Application", "Security"],
+                "winlog_level": ["info", "error"],
+                "winlog_event_id": ["-200", "123-1234", "123"]
             },
         }
         @apiSuccess {Int} collector_config_id 采集配置ID
