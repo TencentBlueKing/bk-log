@@ -263,6 +263,7 @@
           :bk-monitor-url="bkmonitorUrl"
           :async-export-usable="asyncExportUsable"
           :async-export-usable-reason="asyncExportUsableReason"
+          :trace-config="traceConfig"
           @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
@@ -411,6 +412,7 @@ export default {
       originLogList: [], // 当前搜索结果的原始日志
       isNextTime: false,
       timer: null,
+      traceConfig: null,
     };
   },
   computed: {
@@ -1081,6 +1083,7 @@ export default {
         this.bkmonitorUrl = res.data.bkmonitor_url;
         this.asyncExportUsable = res.data.async_export_usable;
         this.asyncExportUsableReason = res.data.async_export_usable_reason;
+        this.traceConfig = res.data.trace_config;
 
         this.totalFields = res.data.fields;
         // 后台给的 display_fields 可能有无效字段 所以进行过滤，获得排序后的字段
@@ -1105,6 +1108,7 @@ export default {
         this.bkmonitorUrl = '';
         this.asyncExportUsable = true;
         this.asyncExportUsableReason = '';
+        this.traceConfig = null;
         this.totalFields.splice(0);
         this.visibleFields.splice(0);
         throw e;

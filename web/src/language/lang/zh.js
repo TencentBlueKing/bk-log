@@ -552,6 +552,8 @@ export default {
     Return_code: '返回码',
     Method_calc: '方法名，函数名或者一个大型计算中的某个阶段或子任务',
     only_sync: '仅显示同步请求',
+    traceList: '调用链列表',
+    traceDetail: '调用链详情',
   },
   '当前业务没有接入调用链日志，': '当前业务没有接入调用链日志，',
   了解接入详情: '了解接入详情',

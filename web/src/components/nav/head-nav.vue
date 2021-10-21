@@ -39,7 +39,7 @@
             @click="routerHandler(menu)"
             :data-test-id="`topNavBox_li_${menu.id}`">
           <!-- <template v-if="menu.dropDown"> -->
-          <template v-if="menu.id === 'dashboard'">
+          <template v-if="['dashboard', 'trace'].includes(menu.id)">
             <bk-dropdown-menu :ref="`menu${menu.router}`" align="center">
               <span slot="dropdown-trigger" style="font-size: 14px;">{{ menu.name }}</span>
               <ul class="bk-dropdown-list" slot="dropdown-content">
@@ -202,6 +202,21 @@ export default {
           name: this.$t('trace.trace'),
           id: 'trace',
           level: 1,
+          dropDown: true,
+          children: [
+            {
+              id: 'trace_list',
+              name: this.$t('trace.traceList'),
+              level: 2,
+              project_manage: true,
+            },
+            {
+              id: 'trace_detail',
+              name: this.$t('trace.traceDetail'),
+              level: 2,
+              project_manage: true,
+            },
+          ],
         },
         {
           name: this.$t('nav.monitors'),
@@ -547,12 +562,9 @@ export default {
           }
           return;
         } if (menu.id === 'trace') {
-          if (this.$route.query.traceId) {
+          if (this.$route.name === 'trace-detail') {
             this.$router.push({
-              name: 'trace',
-              params: {
-                indexId: this.$route.query.indexId || '',
-              },
+              name: 'trace-list',
               query: {
                 projectId: window.localStorage.getItem('project_id'),
               },
@@ -590,6 +602,13 @@ export default {
       }
       if (menu.id === 'monitor') {
         window.open(`${window.MONITOR_URL}/?bizId=${this.bkBizId}#/strategy-config`, '_blank');
+      } else if (menu.id === 'trace') {
+        this.$router.push({
+          name: 'trace-list',
+          query: {
+            projectId: window.localStorage.getItem('project_id'),
+          },
+        });
       } else {
         this.$router.push({
           name: menu.id,
