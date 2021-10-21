@@ -51,7 +51,7 @@ from apps.grafana.serializers import (
 from apps.iam import ActionEnum, Permission, ResourceEnum
 from apps.iam.handlers.drf import BusinessActionPermission, InstanceActionPermission
 from apps.log_search.handlers.biz import BizHandler
-from bk_dataview.grafana.views import ProxyView
+from bk_dataview.grafana.views import ProxyView, SwitchOrgView
 
 
 class GrafanaProxyView(ProxyView):
@@ -455,3 +455,7 @@ class GrafanaViewSet(APIViewSet):
         params = self.get_validated_data()
         data = GrafanaQueryHandler(params["bk_biz_id"]).get_variable_value(params["type"], params["params"])
         return Response(data)
+
+
+class ExploreViewSet(SwitchOrgView):
+    permission_classes = ()

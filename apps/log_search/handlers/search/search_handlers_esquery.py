@@ -57,6 +57,7 @@ from apps.log_search.exceptions import (
     SearchNotTimeFieldType,
 )
 
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.api import BkLogApi, PaasCcApi
 from apps.utils.cache import cache_five_minute
 from apps.utils.db import array_group
@@ -229,7 +230,8 @@ class SearchHandler(object):
             else:
                 bcs_web_console_usable = False
             result_dict.update({"bcs_web_console_usable": bcs_web_console_usable})
-
+        if FeatureToggleObject.switch("bk_log_to_trace"):
+            self.bk_log_to_trace(result_dict)
         result_dict.update(MappingHandlers.analyze_fields(field_result))
         ip_topo_switch = MappingHandlers.init_ip_topo_switch(self.index_set_id)
         result_dict["bkmonitor_url"] = ""
@@ -238,6 +240,33 @@ class SearchHandler(object):
         result_dict.update({"ip_topo_switch": ip_topo_switch})
         result_dict.update(MappingHandlers.async_export_fields(field_result, self.scenario_id))
         return result_dict
+
+    def bk_log_to_trace(self, result_dict):
+        """
+        [{
+            "log_config": [{
+                "index_set_id": 111,
+                "field": "span_id"
+            }],
+            "trace_config": {
+                "index_set_name": "xxxxxx"
+            }
+        }]
+        """
+        toggle = FeatureToggleObject.toggle("bk_log_to_trace")
+        feature_config = toggle.feature_config
+        if isinstance(feature_config, dict):
+            feature_config = [feature_config]
+
+        if not feature_config:
+            return
+        for config in feature_config:
+            log_config = config.get("log_config", [])
+            target_config = [c for c in log_config if str(c["index_set_id"]) == str(self.index_set_id)]
+            if not target_config:
+                continue
+            target_config, *_ = target_config
+            result_dict.update({"trace_config": {**config.get("trace_config"), "field": target_config["field"]}})
 
     def search(self, search_type="default"):
 
