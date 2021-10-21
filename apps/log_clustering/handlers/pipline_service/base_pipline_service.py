@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from retrying import retry
 from abc import ABC, abstractmethod
 
 from pipeline.builder import Data
@@ -41,6 +42,7 @@ class BasePipeLineService(ABC):
         """
         pass
 
+    @retry(retry_on_result=lambda val: val and val.result)
     def start_pipeline(self, pipeline: Pipeline):
         """
         执行pipeline

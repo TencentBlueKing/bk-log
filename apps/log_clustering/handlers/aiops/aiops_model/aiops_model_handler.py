@@ -998,5 +998,4 @@ class AiopsModelHandler(BaseAiopsHandler):
         )
         update_training_schedule_request.training_schedule["start_time"] = target_time
         request_dict = self._set_username(update_training_schedule_request)
-        print(request_dict)
         return BkDataAIOPSApi.update_model_info(request_dict)
