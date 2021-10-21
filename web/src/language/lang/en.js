@@ -552,6 +552,8 @@ export default {
     Return_code: 'Return code',
     Method_calc: 'Method name, function name, or a stage or subtask in a large calculation',
     only_sync: 'Only show sync requests',
+    traceList: 'Trace List',
+    traceDetail: 'Trace Detail',
   },
   '当前业务没有接入调用链日志，': 'The current business is not access to the trace log. ',
   了解接入详情: 'Learn more about access',

@@ -269,7 +269,7 @@
         <div class="fixed-scroll-top-btn" v-show="isShowScrollTop" @click="scrollToTop">
             <i class="bk-icon icon-angle-up"></i>
         </div>
-        <TraceDetail :isShow.sync="showTraceDetail" />
+        <TraceDetail :isShow.sync="showTraceDetail" :traceId="traceId" :indexSetName="indexSetName" />
     </div>
 </template>
 <script>
@@ -462,6 +462,8 @@ export default {
       },
       isSearchAllowed: null,
       showTraceDetail: false,
+      traceId: '',
+      indexSetName: '',
     };
   },
   computed: {
@@ -587,8 +589,10 @@ export default {
         //   },
         // });
         // window.open(routeData.href, '_blank');
-
+        const option = this.indexSetList.find(item => item.index_set_id === this.indexId);
         this.showTraceDetail = true;
+        this.traceId = row.traceID;
+        this.indexSetName = option.index_set_name;
       } else {
         this.$refs.logDetailTable.toggleRowExpansion(row);
       }

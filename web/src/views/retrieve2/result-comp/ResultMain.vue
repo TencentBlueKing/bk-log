@@ -112,6 +112,8 @@
             <template slot-scope="{ row }">
               <TableColumn
                 :content="tableRowDeepView(row, field.field_name, field.field_type)"
+                :has-click-event="checkClickEvent(field.field_name)"
+                @contentClick="handleClickColumn(row, field.field_name)"
                 @iconClick="(type, content) => handleIconClick(type, content, field, row)"
               ></TableColumn>
             </template>
@@ -234,6 +236,8 @@
         </div>
       </div>
     </bk-dialog>
+
+    <TraceDetail :is-show.sync="showTraceDetail" :trace-id="traceId" :index-set-name="indexSetName" />
   </div>
 </template>
 
@@ -246,6 +250,7 @@ import ContextLog from './ContextLog';
 import ResultEChart from './ResultEChart';
 import FieldsSetting from './FieldsSetting';
 import TableColumn from './TableColumn';
+import TraceDetail from '@/components/trace-detail';
 import { mapState } from 'vuex';
 
 export default {
@@ -256,6 +261,7 @@ export default {
     ResultEChart,
     FieldsSetting,
     TableColumn,
+    TraceDetail,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -320,6 +326,10 @@ export default {
     asyncExportUsableReason: {
       type: String,
       default: '',
+    },
+    traceConfig: {
+      type: Object,
+      default: () => {},
     },
   },
   data() {
@@ -389,6 +399,9 @@ export default {
           icon: '',
         },
       },
+      showTraceDetail: false,
+      traceId: '',
+      indexSetName: '',
     };
   },
   computed: {
@@ -806,6 +819,16 @@ export default {
     checkIsHide(key) {
       // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
+    },
+    checkClickEvent(field) {
+      if (!this.traceConfig) return false;
+      return this.traceConfig.field === field;
+    },
+    handleClickColumn(row, field) {
+      console.log(row[field], 1, this.traceConfig);
+      this.showTraceDetail = true;
+      this.traceId = row[field];
+      this.indexSetName = this.traceConfig.index_set_name;
     },
   },
 };

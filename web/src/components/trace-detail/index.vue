@@ -26,7 +26,7 @@
     ext-cls="trace-detail-sideslider"
     :is-show.sync="isShowSlider"
     :quick-close="true"
-    :width="1000"
+    :width="sideWidth"
     @hidden="handleHidden">
     <div slot="header">
       <div class="trace-detail-header">
@@ -58,10 +58,13 @@ export default {
       type: String,
       default: '',
     },
+    indexSetName: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
-      // showTraceDetail: false,
       isShowSlider: false,
       isLoading: false,
       isFullScreen: false,
@@ -71,6 +74,12 @@ export default {
   computed: {
     bkBizId() {
       return this.$store.state.bkBizId;
+    },
+    sideWidth() {
+      const minWidth = 1000;
+      const viewWidth = document.body.clientWidth;
+      const width = (viewWidth / 2) < minWidth ? minWidth : (viewWidth / 2);
+      return width;
     },
   },
   watch: {
@@ -91,13 +100,13 @@ export default {
       let siteUrl = window.SITE_URL;
       if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
       if (!siteUrl.endsWith('/')) siteUrl += '/';
-      // const prefixUrl = window.origin + siteUrl;
-      // this.src = `${prefixUrl}grafana/explore?orgName=${this.bkBizId}`;
-      this.src = `http://stag.bklog.oa.com/grafana/explore?orgName=${this.bkBizId}`;
+      const queryParams = JSON.stringify(['now-1h', 'now', this.indexSetName, { query: this.traceId }]);
+      const prefixUrl = window.origin + siteUrl;
+      this.src = `${prefixUrl}grafana/explore?orgName=${this.bkBizId}&left=${queryParams}`;
     },
     // iframe 页面加载完毕
     handleIframeLoad() {
-      setTimeout(() => this.isLoading = false, 1000);
+      setTimeout(() => this.isLoading = false, 500);
     },
     // 设置全屏
     handleFullScreen() {

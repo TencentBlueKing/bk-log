@@ -181,7 +181,6 @@ const store = new Vuex.Store({
     },
     updateTopMenu(state, topMenu) {
       state.topMenu.splice(0, state.topMenu.length, ...topMenu);
-      console.log(state.topMenu, 9);
     },
     updateGlobalsData(state, globalsData) {
       state.globalsData = globalsData;
