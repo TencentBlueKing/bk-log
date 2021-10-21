@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div id="trace" v-bkloading="{ isLoading: basicLoading }">
+  <div id="trace" v-bkloading="{ isLoading: false }">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
     <top-nav v-show="authPageInfo === false" :menu="menu"></top-nav>
     <div v-show="authPageInfo === false" class="trace-container">
@@ -307,7 +307,7 @@ export default {
       timeZone: '',
       basicLoading: false,
       isChartLoading: false,
-      isTableLoading: false,
+      isTableLoading: true,
       docCountList: {},
       searchData: {},
       messagetop: {
@@ -707,6 +707,7 @@ export default {
       if (this.isSearchAllowed === null) {
         try {
           this.basicLoading = true;
+          this.isTableLoading = true;
           const res = await this.$store.dispatch('checkAndGetData', paramData);
           if (res.isAllowed === false) {
             this.isSearchAllowed = false;
@@ -718,25 +719,30 @@ export default {
           return;
         } finally {
           this.basicLoading = false;
+          this.isTableLoading = false;
         }
       } else if (this.isSearchAllowed === false) { // 已知当前选择索引无权限
         try {
           this.basicLoading = true;
+          this.isTableLoading = true;
           const res = await this.$store.dispatch('getApplyData', paramData);
           this.$store.commit('updateAuthDialogData', res.data);
         } catch (err) {
           console.warn(err);
         } finally {
           this.basicLoading = false;
+          this.isTableLoading = false;
         }
         return;
       }
       this.searchDisabled = true;
+      this.isTableLoading = true;
       this.params.start_time = this.initDateTimeRange[0];
       this.params.end_time = this.initDateTimeRange[1];
       try {
         if (!this.totalFields.length) {
           this.basicLoading = true;
+          this.isTableLoading = true;
           const {
             totalFields,
             sortFields,
@@ -776,6 +782,7 @@ export default {
       } finally {
         this.searchDisabled = false;
         this.basicLoading = false;
+        this.isTableLoading = false;
       }
     },
     async requestTableList() {

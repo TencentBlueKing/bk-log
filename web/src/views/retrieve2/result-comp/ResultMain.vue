@@ -825,7 +825,6 @@ export default {
       return this.traceConfig.field === field;
     },
     handleClickColumn(row, field) {
-      console.log(row[field], 1, this.traceConfig);
       this.showTraceDetail = true;
       this.traceId = row[field];
       this.indexSetName = this.traceConfig.index_set_name;
