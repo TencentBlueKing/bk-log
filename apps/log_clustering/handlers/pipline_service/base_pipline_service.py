@@ -42,7 +42,7 @@ class BasePipeLineService(ABC):
         """
         pass
 
-    @retry(retry_on_result=lambda val: val and val.result)
+    @retry(retry_on_result=lambda val: val and not val.result)
     def start_pipeline(self, pipeline: Pipeline):
         """
         执行pipeline
