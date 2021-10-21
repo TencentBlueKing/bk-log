@@ -458,4 +458,4 @@ class GrafanaViewSet(APIViewSet):
 
 
 class ExploreViewSet(SwitchOrgView):
-    permission_classes = ()
+    permission_classes = ["apps.grafana.permissions.ExplorePermission"]
