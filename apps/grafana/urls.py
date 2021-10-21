@@ -21,7 +21,7 @@ from __future__ import absolute_import, unicode_literals
 
 from django.conf.urls import url, include
 from rest_framework import routers
-from apps.grafana.views import GrafanaProxyView
+from apps.grafana.views import GrafanaProxyView, ExploreViewSet
 from bk_dataview.grafana.views import SwitchOrgView, StaticView
 from apps.grafana import views
 
@@ -38,7 +38,7 @@ urlpatterns = [
     url(r"^bk-dataview/orgs/(?P<org_name>[a-zA-Z0-9\-_]+)/grafana/", SwitchOrgView.as_view()),
     # grafana访问地址, 需要和grafana前缀保持一致
     url(r"^grafana/$", SwitchOrgView.as_view()),
-    url(r"^grafana/explore$", SwitchOrgView.as_view()),
+    url(r"^grafana/explore$", ExploreViewSet.as_view()),
     url(r"^grafana/proxy/", include(proxy_router.urls)),
     url(r"^grafana/public/", StaticView.as_view()),
     url(r"^grafana/", GrafanaProxyView.as_view()),
