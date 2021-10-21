@@ -53,6 +53,13 @@ class OtlpTrace(Proto):
         "trace_type": "otlp",
         "additions": [
             {
+                "fields_alias": _("服务"),
+                "field_name": "resource.service.name",
+                "show_type": "select",
+                "display": True,
+                "tips": _("请选择"),
+            },
+            {
                 "fields_alias": _("名称"),
                 "field_name": "span_name",
                 "show_type": "select",
@@ -74,15 +81,7 @@ class OtlpTrace(Proto):
                 "tips": _("请选择"),
             },
         ],
-        "advance_additions": [
-            {
-                "fields_alias": _("返回码"),
-                "field_name": "attributes.result_code",
-                "show_type": "text",
-                "display": True,
-                "tips": "0",
-            },
-        ],
+        "advance_additions": [],
         "charts": [],
         "chart_tree": {
             "chart_name": _("调用关系图"),

@@ -441,7 +441,16 @@ SAAS_BKDATA = "bk_dataweb"
 # 前端菜单配置
 MENUS = [
     {"id": "retrieve", "name": _("检索"), "feature": "on", "icon": ""},
-    {"id": "trace", "name": _("调用链"), "feature": "on", "icon": ""},
+    {
+        "id": "trace",
+        "name": _("调用链"),
+        "feature": "on",
+        "icon": "",
+        "children": [
+            {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": ""},
+            {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": ""},
+        ],
+    },
     {"id": "extract", "name": _("日志提取"), "feature": "on", "icon": ""},
     {"id": "monitor", "name": _("监控策略"), "feature": "on", "icon": ""},
     {
