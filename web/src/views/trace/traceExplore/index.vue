@@ -49,8 +49,7 @@ export default {
       if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
       if (!siteUrl.endsWith('/')) siteUrl += '/';
       const prefixUrl = window.origin + siteUrl;
-      const queryParams = JSON.stringify(['now-1h', 'now', '', { queryType: 'search' }]);
-      this.src = `${prefixUrl}grafana/explore?orgName=${this.bkBizId}&left=${queryParams}`;
+      this.src = `${prefixUrl}grafana/explore?orgName=${this.bkBizId}`;
     },
     // iframe 页面加载完毕
     handleIframeLoad() {
