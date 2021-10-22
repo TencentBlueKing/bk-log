@@ -40,7 +40,7 @@
       @change-queue-res="changeQueueRes"
       @change-total-count="changeTotalCount" />
     <bk-divider class="divider-line"></bk-divider>
-    <ResultTablePanel />
+    <result-table-panel />
 
     <!-- 滚动到顶部 -->
     <div class="fixed-scroll-top-btn" v-show="showScrollTop" @click="scrollToTop">
@@ -97,12 +97,6 @@
         </div>
       </div>
     </bk-dialog>
-
-    <setting-modal
-      :show-dialog="isShowSettingModal"
-      @closeSetting="closeSetting"
-    />
-
   </div>
 </template>
 
@@ -116,7 +110,6 @@ import ResultEChart from './ResultEChart';
 import ResultTablePanel from '../result-table-panel';
 // import FieldsSetting from './FieldsSetting';
 // import TableColumn from './TableColumn';
-import SettingModal from '../setting-modal';
 import { mapState } from 'vuex';
 
 export default {
@@ -128,7 +121,6 @@ export default {
     ResultTablePanel,
     // FieldsSetting,
     // TableColumn,
-    SettingModal,
   },
   mixins: [tableRowDeepViewMixin],
   props: {

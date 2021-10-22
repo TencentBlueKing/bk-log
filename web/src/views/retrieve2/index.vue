@@ -285,7 +285,10 @@
       </div>
     </div>
 
-    <SettingModal :show-dialog.sync="showSettingDialog" />
+    <setting-modal
+      :show-dialog="isShowSettingModal"
+      @closeSetting="closeSetting"
+    />
   </div>
 </template>
 
@@ -416,7 +419,7 @@ export default {
       originLogList: [], // 当前搜索结果的原始日志
       isNextTime: false,
       timer: null,
-      showSettingDialog: false,
+      isShowSettingModal: false,
     };
   },
   computed: {
@@ -762,7 +765,7 @@ export default {
       this.retrieveLog();
     },
     handleSettingMenuClick() {
-      this.showSettingDialog = true;
+      this.isShowSettingModal = true;
     },
     // 添加过滤条件
     addFilterCondition(field, operator, value, index) {
@@ -1385,6 +1388,9 @@ export default {
     handleInitTipsHidden() {
       this.hasExpandInitTipsShown = true;
       this.showExpandInitTips = false;
+    },
+    closeSetting() {
+      this.isShowSettingModal = false;
     },
   },
 };

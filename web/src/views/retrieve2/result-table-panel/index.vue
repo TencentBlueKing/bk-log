@@ -30,8 +30,8 @@
       </bk-tab-panel>
     </bk-tab>
     <div class="panel-content-wrap">
-      <OriginLog v-if="active === 'origin'" />
-      <LogClustering v-if="active === 'clustering'" />
+      <origin-log v-if="active === 'origin'" />
+      <log-clustering v-if="active === 'clustering'" />
     </div>
   </div>
 </template>
