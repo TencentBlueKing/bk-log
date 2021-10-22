@@ -757,7 +757,7 @@ export default {
           this.traceData = traceData;
           // eslint-disable-next-line camelcase
           this.fieldName = this.fieldName ? this.fieldName : (traceData.charts[0]?.field_name || '');
-          await this.getDocCountList();
+          this.getDocCountList();
           this.basicLoading = false;
           // await this.requestDateHistogram(false)
         }

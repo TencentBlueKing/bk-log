@@ -26,7 +26,9 @@
     <span
       :class="['field-container', 'add-to', { 'active': hasClickEvent }]"
       @click.stop="handleClickContent"
-      v-html="content"></span>
+      v-html="content"
+      v-bk-tooltips="{ content: $t('查看调用链'), disabled: !hasClickEvent, delay: 500 }"
+    ></span>
     <!--eslint-enable-->
     <template v-if="content !== '--'">
       <span class="icon-search-container" v-bk-tooltips.top="$t('检索')">
@@ -69,8 +71,8 @@ export default {
     .field-container {
       white-space: pre-wrap;
       tab-size: 3;
-      &.active {
-        // color: #3a84ff;
+      &.active:hover {
+        color: #3a84ff;
         cursor: pointer;
       }
     }
