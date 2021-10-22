@@ -107,6 +107,7 @@ export default {
   '保存成功，可前往查询历史查看': 'Saved successfully. You can go to "Query History" to view.',
   点击重新展开: 'Click to expand',
   请输入内容: 'Please enter content',
+  查看调用链: 'View The Trace',
   检索: 'Retrieve',
   复制: 'Copy',
   暂无数据: 'Empty Data',
