@@ -37,7 +37,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import Span, Status, StatusCode
-from opentelemetry.sdk.trace.sampling import ALWAYS_OFF, ALWAYS_ON
+from opentelemetry.sdk.trace.sampling import ALWAYS_OFF, ALWAYS_ON, ParentBased
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
@@ -107,6 +107,7 @@ class BluekingInstrumentor(BaseInstrumentor):
 
         # periord task not sampler
         sampler = ALWAYS_ON
+        sampler = ParentBased(ALWAYS_ON)
         if settings.IS_CELERY_BEAT:
             sampler = ALWAYS_OFF
 
