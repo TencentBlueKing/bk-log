@@ -39,6 +39,7 @@
       :retrieve-params="retrieveParams"
       @change-queue-res="changeQueueRes"
       @change-total-count="changeTotalCount" />
+    <!-- <bk-button @click="isShowSettingModal = true">设置</bk-button> -->
     <div class="result-table-container" data-test-id="retrieve_from_fieldForm">
       <div class="cut-line"></div>
       <!-- 表格上的按钮 -->
@@ -234,6 +235,12 @@
         </div>
       </div>
     </bk-dialog>
+
+    <setting-modal
+      :show-dialog="isShowSettingModal"
+      @closeSetting="closeSetting"
+    />
+
   </div>
 </template>
 
@@ -246,6 +253,7 @@ import ContextLog from './ContextLog';
 import ResultEChart from './ResultEChart';
 import FieldsSetting from './FieldsSetting';
 import TableColumn from './TableColumn';
+import SettingModal from '../setting-modal';
 import { mapState } from 'vuex';
 
 export default {
@@ -256,6 +264,7 @@ export default {
     ResultEChart,
     FieldsSetting,
     TableColumn,
+    SettingModal,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -389,6 +398,7 @@ export default {
           icon: '',
         },
       },
+      isShowSettingModal: false,
     };
   },
   computed: {
@@ -806,6 +816,9 @@ export default {
     checkIsHide(key) {
       // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
+    },
+    closeSetting() {
+      this.isShowSettingModal = false;
     },
   },
 };
