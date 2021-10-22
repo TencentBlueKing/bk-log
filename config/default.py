@@ -42,8 +42,9 @@ from django.utils.translation import ugettext_lazy as _
 
 # 请在这里加入你的自定义 APP
 INSTALLED_APPS += (
-    "django_prometheus",
+    # must first django_jsonfield_backport
     "django_jsonfield_backport",
+    "django_prometheus",
     "rest_framework",
     "iam.contrib.iam_migration",
     "apps.iam",
