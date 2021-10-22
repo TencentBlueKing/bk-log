@@ -20,10 +20,28 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
+from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 from apps.utils.log import logger
 from apps.exceptions import ApiResultError
 from apps.log_search.constants import BkDataErrorCode
 from apps.log_search.models import LogIndexSet
+
+
+@periodic_task(run_every=crontab(minute="*/10"))
+def sync_index_set_mapping_cache():
+    logger.info("[sync_index_set_mapping_cache] start")
+    index_set_list = LogIndexSet.objects.filter(is_active=True)
+    for index_set in index_set_list:
+        try:
+            SearchHandler(index_set_id=index_set.index_set_id, search_dict={}).fields()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.exception(
+                "[sync_index_set_mapping_cache] index_set({}) sync failed: {}".format(index_set.index_set_id, e)
+            )
+            continue
+        logger.info("[sync_index_set_mapping_cache] index_set({}) sync success".format(index_set.index_set_id))
+
+    logger.info("[sync_index_set_mapping_cache] end")
 
 
 @periodic_task(run_every=crontab(minute="0", hour="2"))
