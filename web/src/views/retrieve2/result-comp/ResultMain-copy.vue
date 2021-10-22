@@ -39,8 +39,145 @@
       :retrieve-params="retrieveParams"
       @change-queue-res="changeQueueRes"
       @change-total-count="changeTotalCount" />
-    <bk-divider class="divider-line"></bk-divider>
-    <result-table-panel />
+    <div class="result-table-container" data-test-id="retrieve_from_fieldForm">
+      <div class="cut-line"></div>
+      <!-- 表格上的按钮 -->
+      <div class="log-operation">
+        <TimeFormatter></TimeFormatter>
+        <div class="operation-icons">
+          <!-- 字段设置 -->
+          <bk-popover
+            ref="fieldsSettingPopper"
+            trigger="click"
+            placement="bottom-end"
+            theme="light bk-select-dropdown"
+            animation="slide-toggle"
+            :offset="0"
+            :distance="15"
+            :on-show="handleDropdownShow"
+            :on-hide="handleDropdownHide">
+            <slot name="trigger">
+              <div class="operation-icon">
+                <span class="icon log-icon icon-set-icon"></span>
+              </div>
+            </slot>
+            <div slot="content" class="fields-setting-container">
+              <FieldsSetting
+                v-if="showFieldsSetting"
+                :field-alias-map="fieldAliasMap"
+                :retrieve-params="retrieveParams"
+                @confirm="confirmModifyFields" @cancel="closeDropdown" />
+            </div>
+          </bk-popover>
+          <!-- 导出 -->
+          <div
+            :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
+            @click="exportLog"
+            data-test-id="fieldForm_div_exportData"
+            v-bk-tooltips="queueStatus ? $t('btn.export') : undefined">
+            <span class="icon log-icon icon-xiazai"></span>
+          </div>
+        </div>
+      </div>
+      <!-- 表格内容 -->
+      <bk-table v-if="!renderTable" class="king-table"></bk-table>
+      <bk-table
+        v-else
+        v-bkloading="{ isLoading: tableLoading || webConsoleLoading, zIndex: 0, extCls: 'result-table-loading' }"
+        ref="resultTable"
+        class="king-table"
+        :data="tableList"
+        :empty-text="$t('retrieve.notData')"
+        @row-click="tableRowClick"
+        @row-mouse-enter="handleMouseEnter"
+        @row-mouse-leave="handleMouseLeave"
+        @header-dragend="handleHeaderDragend">
+        <!-- 展开详情 -->
+        <bk-table-column type="expand" width="30" align="center" v-if="visibleFields.length">
+          <template slot-scope="{ $index }">
+            <div class="json-view-wrapper">
+              <VueJsonPretty :deep="5" :data="originTableList[$index]" />
+            </div>
+          </template>
+        </bk-table-column>
+        <!-- 显示字段 -->
+        <template v-for="(field,index) in visibleFields">
+          <bk-table-column
+            align="left"
+            :key="field.field_name"
+            :min-width="field.minWidth"
+            :render-header="renderHeaderAliasName"
+            :index="index"
+            :width="field.width">
+            <template slot-scope="{ row }">
+              <TableColumn
+                :content="tableRowDeepView(row, field.field_name, field.field_type)"
+                @iconClick="(type, content) => handleIconClick(type, content, field, row)"
+              ></TableColumn>
+            </template>
+          </bk-table-column>
+        </template>
+        <!-- 实时日志 上下文 -->
+        <bk-table-column
+          v-if="showHandleOption"
+          :label="$t('retrieve.operate')"
+          :width="84"
+          align="right"
+          :resizable="false">
+          <!-- eslint-disable-next-line -->
+          <template slot-scope="{ row, column, $index }">
+            <div
+              :class="{ 'handle-content': true, 'fix-content': showAllHandle }"
+              v-if="curHoverIndex === $index"
+              @mouseenter="mouseenterHandle"
+              @mouseleave="mouseleaveHandle">
+              <span
+                v-bk-tooltips="{ content: $t('retrieve.log'), delay: 500 }"
+                class="handle-card"
+                v-if="showRealtimeLog && !checkIsHide('showRealtimeLog')">
+                <span
+                  class="icon log-icon icon-handle icon-time"
+                  @click.stop="openLogDialog(row, 'realTimeLog')">
+                </span>
+              </span>
+              <span
+                v-bk-tooltips="{ content: $t('retrieve.context'), delay: 500 }"
+                class="handle-card"
+                v-if="showContextLog && !checkIsHide('showContextLog')">
+                <span
+                  class="icon log-icon icon-handle icon-document"
+                  @click.stop="openLogDialog(row, 'contextLog')">
+                </span>
+              </span>
+              <span
+                v-bk-tooltips="{ content: $t('retrieve.monitorAlarm'), delay: 500 }"
+                class="handle-card"
+                v-if="showMonitorWeb && !checkIsHide('showMonitorWeb')">
+                <span class="icon icon-handle log-icon icon-inform" @click.stop="openMonitorWeb(row)"></span>
+              </span>
+              <span
+                v-bk-tooltips="{ content: 'WebConsole', delay: 500 }"
+                class="handle-card"
+                v-if="showWebConsole && !checkIsHide('showWebConsole')">
+                <span class="icon icon-handle log-icon icon-teminal" @click.stop="openWebConsole(row)"></span>
+              </span>
+              <span class="bk-icon icon-more handle-card icon-handle" v-if="showMoreHandle && !showAllHandle"></span>
+            </div>
+          </template>
+        </bk-table-column>
+      </bk-table>
+      <!-- 表格底部内容 -->
+      <template v-if="tableList.length && visibleFields.length">
+        <p class="more-desc" v-if="!isPageOver && count === limitCount">{{ $t('retrieve.showMore') }}
+          <a href="javascript: void(0);" @click="scrollToTop">{{ $t('btn.backToTop') }}</a>
+        </p>
+        <div
+          v-if="isPageOver"
+          v-bkloading="{ isLoading: true }"
+          style="height: 40px;">
+        </div>
+      </template>
+    </div>
 
     <!-- 滚动到顶部 -->
     <div class="fixed-scroll-top-btn" v-show="showScrollTop" @click="scrollToTop">
@@ -103,24 +240,22 @@
 <script>
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import { setFieldsWidth } from '@/common/util';
-// import TimeFormatter from '@/components/common/time-formatter';
+import TimeFormatter from '@/components/common/time-formatter';
 import RealTimeLog from './RealTimeLog';
 import ContextLog from './ContextLog';
 import ResultEChart from './ResultEChart';
-import ResultTablePanel from '../result-table-panel';
-// import FieldsSetting from './FieldsSetting';
-// import TableColumn from './TableColumn';
+import FieldsSetting from './FieldsSetting';
+import TableColumn from './TableColumn';
 import { mapState } from 'vuex';
 
 export default {
   components: {
-    // TimeFormatter,
+    TimeFormatter,
     RealTimeLog,
     ContextLog,
     ResultEChart,
-    ResultTablePanel,
-    // FieldsSetting,
-    // TableColumn,
+    FieldsSetting,
+    TableColumn,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -254,7 +389,6 @@ export default {
           icon: '',
         },
       },
-      isShowSettingModal: false,
     };
   },
   computed: {
@@ -673,9 +807,6 @@ export default {
       // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
     },
-    closeSetting() {
-      this.isShowSettingModal = false;
-    },
   },
 };
 </script>
@@ -699,11 +830,6 @@ export default {
     .total-count {
       color: #f00;
     }
-  }
-
-  .divider-line {
-    margin: 0 20px !important;
-    width: calc(100% - 40px) !important;
   }
 
   .result-table-container {
