@@ -19,8 +19,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from typing import List
 
+import arrow
+
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
-from apps.log_clustering.handlers.aiops.data_access.data_access import DataAccessHandler
+from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.log_clustering.handlers.aiops.sample_set.constants import (
     TIMESTAMP_FIELD_TYPE,
     TS_FILED_ATTR_TYPE,
@@ -37,6 +39,7 @@ from apps.log_clustering.handlers.aiops.sample_set.data_cls import (
     CommitApplyCls,
     SubmitStatusCls,
     DeleteSampleSetCls,
+    CollectConfigsCls,
 )
 from apps.api import BkDataAIOPSApi
 
@@ -91,6 +94,18 @@ class SampleSetHandler(BaseAiopsHandler):
         )
         request_dict = self._set_username(add_rt_to_sample_set_request)
         return BkDataAIOPSApi.add_rt_to_sample_set(request_dict)
+
+    def collect_configs(self, sample_set_id: int):
+        """
+        创建或更新样本采集配置
+        @param sample_set_id int 样本集id
+        """
+        collect_config_request = CollectConfigsCls(sample_set_id=sample_set_id, project_id=self.conf.get("project_id"))
+        target_time = int(arrow.now().timestamp)
+        collect_config_request.collect_config["config"]["end_time"] = target_time
+        collect_config_request.collect_config["config"]["start_time"] = target_time
+        request_dict = self._set_username(collect_config_request)
+        return BkDataAIOPSApi.collect_configs(request_dict)
 
     def auto_collect(self, sample_set_id: int, result_table_id: str):
         """

@@ -19,7 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Any
+from typing import List, Any, Dict
 
 
 @dataclass
@@ -48,8 +48,18 @@ class StartFlowCls(object):
     开启flow
     """
 
+    flow_id: int
     consuming_mode: str
     cluster_group: str
+
+
+@dataclass
+class StopFlowCls(object):
+    """
+    停止flow
+    """
+
+    flow_id: int
 
 
 @dataclass
@@ -59,7 +69,7 @@ class FrontendInfoCls(object):
 
 
 @dataclass
-class StreamSourceNode(object):
+class StreamSourceNodeCls(object):
     """
     实时数据源node
     """
@@ -75,13 +85,13 @@ class StreamSourceNode(object):
 
 @dataclass
 class InputNodeCls(object):
-    grouped_training: bool
-    group_serving: bool
     serving_fields_mapping: dict
-    group_serving_enable: bool
-    input_fields: list
-    group_columns: list
     input_result_table: str
+    group_serving: bool = False
+    grouped_training: bool = False
+    group_serving_enable: bool = True
+    input_fields: List[str] = field(default_factory=list)
+    group_columns: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -125,20 +135,20 @@ class OutputConfigCls(object):
 
 @dataclass
 class ServingSchedulerParamsCls(object):
-    recovery: dict
-    data_period: int
-    data_period_unit: str
-    period: int
-    fixed_delay: int
-    first_run_time: str
-    dependency_rule: str
-    period_unit: str
+    recovery: Dict = field(default_factory=lambda: {"enable": False, "interval_time": "5m", "retry_times": 1})
+    data_period: int = 1
+    data_period_unit: str = "day"
+    period: int = 1
+    fixed_delay: int = 1
+    first_run_time: str = ""
+    dependency_rule: str = "all_finished"
+    period_unit: str = "day"
 
 
 @dataclass
 class ScheduleConfigCls(object):
-    training_scheduler_params: bool
     serving_scheduler_params: ServingSchedulerParamsCls
+    training_scheduler_params: Any = None
 
 
 @dataclass
@@ -166,12 +176,12 @@ class FromNodesCls(object):
 
 
 @dataclass
-class ModelTsCustomNode(object):
+class ModelTsCustomNodeCls(object):
     """
     时序模型应用
     """
 
-    bk_biz_id: str
+    bk_biz_id: int
     table_name: str
     output_name: str
     name: str
@@ -179,20 +189,26 @@ class ModelTsCustomNode(object):
     input_config: InputConfigCls
     output_config: OutputConfigCls
     schedule_config: ScheduleConfigCls
-    serving_mode: str
-    sample_feedback_config: SampleFeedbackConfigCls
-    upgrade_config: SampleFeedbackConfigCls
     model_id: str
-    model_extra_config: dict
-    scene_name: str
     id: int
     from_nodes: List[FromNodesCls]
+    serving_mode: str = "realtime"
+    sample_feedback_config: Dict = field(default_factory=lambda: {"result_table_feedback": False})
+    upgrade_config: Dict = field(
+        default_factory=lambda: {
+            "auto_upgrade": True,
+            "notification": False,
+            "specific_update_config": {"update_time": "12:00:00", "specific_update": False},
+        }
+    )
+    model_extra_config: Dict = field(default_factory=lambda: {"predict_args": []})
+    scene_name: str = "custom"
     node_type: str = "model_ts_custom"
     frontend_info: FrontendInfoCls = FrontendInfoCls()
 
 
 @dataclass
-class RealTimeNode(object):
+class RealTimeNodeCls(object):
     """
     实时计算
     """
@@ -201,25 +217,25 @@ class RealTimeNode(object):
     sql: str
     table_name: str
     name: str
-    count_freq: int
-    waiting_time: int
+    count_freq: Any
+    waiting_time: Any
     window_time: Any
     window_type: str
-    counter: Any
     output_name: str
-    session_gap: Any
-    expired_time: Any
     window_lateness: dict
-    correct_config_id: Any
-    is_open_correct: bool
     id: int
     from_nodes: List[FromNodesCls]
     node_type: str = "realtime"
+    counter: Any = None
+    session_gap: Any = None
+    expired_time: Any = None
+    correct_config_id: Any = None
+    is_open_correct: bool = False
     frontend_info: FrontendInfoCls = FrontendInfoCls()
 
 
 @dataclass
-class TspiderStorageCls(object):
+class TspiderStorageNodeCls(object):
     """
     tspider落地存储
     """
@@ -239,7 +255,7 @@ class TspiderStorageCls(object):
 
 
 @dataclass
-class QueueStorageCls(object):
+class QueueStorageNodeCls(object):
     """
     队列存储节点
     """

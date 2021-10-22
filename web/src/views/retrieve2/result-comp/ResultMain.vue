@@ -97,6 +97,12 @@
         </div>
       </div>
     </bk-dialog>
+
+    <setting-modal
+      :show-dialog="isShowSettingModal"
+      @closeSetting="closeSetting"
+    />
+
   </div>
 </template>
 
@@ -110,6 +116,7 @@ import ResultEChart from './ResultEChart';
 import ResultTablePanel from '../result-table-panel';
 // import FieldsSetting from './FieldsSetting';
 // import TableColumn from './TableColumn';
+import SettingModal from '../setting-modal';
 import { mapState } from 'vuex';
 
 export default {
@@ -121,6 +128,7 @@ export default {
     ResultTablePanel,
     // FieldsSetting,
     // TableColumn,
+    SettingModal,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -254,6 +262,7 @@ export default {
           icon: '',
         },
       },
+      isShowSettingModal: false,
     };
   },
   computed: {
@@ -671,6 +680,9 @@ export default {
     checkIsHide(key) {
       // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
+    },
+    closeSetting() {
+      this.isShowSettingModal = false;
     },
   },
 };

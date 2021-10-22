@@ -207,6 +207,16 @@ ALGORITHM_CONFIG_PREDICT_OUTPUT = [
         "used_by": "user",
     },
 ]
+# ["ip:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "datetime:datetime.datetime\\(\\d{4},\\s\\d{1,2},\\s\\d{1,2},
+# \\s\\d{1,2},\\s\\d{1,2},\\s\\d{1,2},\\s\\d{5},\\stzinfo=<\\w{3,4}>\\)>", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s
+# \\d{1,2}:\\d{1,2}:\\d{1,2}\\+\\d{2}:\\d{2}", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{2}:\\d{2}:\\d{2}",
+# "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d{6}", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}
+# \\s\\d{1,2}:\\d{1,2}:\\d{1,2},\\d{3}", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\s\\+\\d{4}",
+# "datetime:\\d{4}\\d{1,2}\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d{6}",
+# "datetime:\\d{4}/\\d{1,2}/\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}",
+# "datetime:\\d{2}/\\w{3,4}/\\d{4}:\\d{1,2}:\\d{1,2}:\\d{1,2}\\s\\+\\d{4}",
+# "date:20\\d{2}\\d{1,2}\\d{1,2}/", "date:\\d{4}-\\d{1,2}-\\d{1,2}/", "time:\\d{1,2}:\\d{1,2}:\\d{1,2}.\\d{6}",
+# "ip-port:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\s+:\\d{1,5}/", "NUMBER:^[-+]?[0-9]+$"]
 
 PREDEFINED_VARIBLES_DEFAULT_VALUE = (
     "WyJpcDpcXGR7MSwzfVxcLlxcZHsxLDN9XFwuXFxkezEsM31cXC5cXGR7MSwzfSIsICJk"
@@ -230,6 +240,8 @@ PREDEFINED_VARIBLES_DEFAULT_VALUE = (
     "ZHsxLDN9XFxzKzpcXGR7MSw1fS8iLCAiTlVNQkVSOl5bLStdP1swLTldKyQiXQ=="
 )
 
+# "\"|\\;|\\,|\\,|\\[|\\]|\\:|\\s|\\(|\\)|\\=|\\||\\{|\\}|\\>|\\<|\\||'
+# |\\\uff08|\\\uff0c|\\\uff09|\\/|\\\uff0c|\\\u3010|\\\u3011"
 DELIMETER_DEFAULT_VALUE = (
     "IlwifFxcO3xcXCx8XFwsfFxcW3xcXF18XFw6fFxcc3xcXCh8XFwpfFxcPXxcXHx8XFx7fFxcfXxcXD"
     "58XFw8fFxcfHwnfFxcXHVmZjA4fFxcXHVmZjBjfFxcXHVmZjA5fFxcL3xcXFx1ZmYwY3xcXFx1MzAx"

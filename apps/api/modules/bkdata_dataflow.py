@@ -23,7 +23,7 @@ from config.domains import DATAFLOW_APIGATEWAY_ROOT  # noqa
 from apps.api.base import DataAPI  # noqa
 
 
-class _BkDataAIOPSApi:
+class _BkDataDataFlowApi:
     MODULE = _("数据平台dataflow模块")
 
     def __init__(self):
@@ -53,7 +53,7 @@ class _BkDataAIOPSApi:
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
-        self.start_flow = DataAPI(
+        self.stop_flow = DataAPI(
             method="POST",
             url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/stop/",
             module=self.MODULE,
@@ -62,3 +62,6 @@ class _BkDataAIOPSApi:
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
+
+
+BkDataDataFlowApi = _BkDataDataFlowApi()

@@ -81,6 +81,9 @@ PaasCcApi = SimpleLazyObject(lambda: new_api_module("paascc", "_PaasCcApi"))
 # AIOPS
 BkDataAIOPSApi = SimpleLazyObject(lambda: new_api_module("bkdata_aiops", "_BkDataAIOPSApi"))
 
+# dataflow
+BkDataDataFlowApi = SimpleLazyObject(lambda: new_api_module("bkdata_dataflow", "_BkDataDataFlowApi"))
+
 __all__ = [
     "BKLoginApi",
     "BKPAASApi",
@@ -104,6 +107,7 @@ __all__ = [
     "PaasCcApi",
     "BkItsmApi",
     "BkDataAIOPSApi",
+    "BkDataDataFlowApi",
 ]
 
 
