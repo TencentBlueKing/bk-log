@@ -773,7 +773,7 @@ export default {
       this.scrollToTop();
       try {
         this.isTableLoading = true;
-        this.params.size = 500;
+        this.params.size = 50;
         const res = await this.$http.request('trace/requestTableList', {
           params: { index_set_id: this.indexId },
           data: this.params,
@@ -787,7 +787,7 @@ export default {
             this.tableRowsWidth[key] = fieldsObj[key].max_length || 0;
           }
         }
-        this.totalCount = res.data.total > 500 ? 500 : res.data.total;
+        this.totalCount = res.data.total > 50 ? 50 : res.data.total;
         this.logAllTableList = res.data.list;
         if (res.data.list.length) {
           this.initPageConf(res.data.list);
