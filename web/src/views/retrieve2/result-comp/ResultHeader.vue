@@ -88,6 +88,30 @@
         </div>
       </div>
     </bk-popover>
+    <bk-popover
+      trigger="click"
+      placement="bottom-end"
+      theme="light bk-select-dropdown"
+      animation="slide-toggle"
+      :offset="0"
+      :distance="15">
+      <slot name="trigger">
+        <div class="more-operation">
+          <i class="bk-icon icon-more"></i>
+        </div>
+      </slot>
+      <div slot="content" class="retrieve-setting-container">
+        <ul class="list-menu" ref="menu">
+          <li
+            v-for="menu in settingMenuList"
+            class="list-menu-item"
+            :key="menu.id"
+            @click="handleMenuClick(menu.id)">
+            {{ menu.name }}
+          </li>
+        </ul>
+      </div>
+    </bk-popover>
   </div>
 </template>
 
@@ -166,6 +190,11 @@ export default {
       }, {
         id: 86400000, name: '1d',
       }],
+      settingMenuList: [
+        { id: 'index', name: '全文索引' },
+        { id: 'extract', name: '字段提取' },
+        { id: 'clustering', name: '日志聚类' },
+      ],
     };
   },
   computed: {
@@ -227,6 +256,9 @@ export default {
     },
     handleVisibilityChange() { // 窗口隐藏时取消轮询，恢复时恢复轮询（原来是自动刷新就恢复自动刷新，原来不刷新就不会刷新）
       document.hidden ? clearTimeout(this.refreshTimer) : this.setRefreshTime();
+    },
+    handleMenuClick() {
+      this.$emit('settingMenuClick');
     },
   },
 };
@@ -301,6 +333,19 @@ export default {
         color: #3a84ff;
       }
     }
+    .more-operation {
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      height: 48px;
+      white-space: nowrap;
+      line-height: 22px;
+      border-left: 1px solid #f0f1f5;
+      cursor: pointer;
+      .icon-more {
+        font-size: 16px;
+      }
+    }
   }
 
   .auto-refresh-content {
@@ -308,6 +353,28 @@ export default {
 
     .bk-options .bk-option-content {
       padding: 0 13px;
+    }
+  }
+
+  .retrieve-setting-container {
+    .list-menu {
+      display: flex;
+      flex-direction: column;
+      padding: 6px 0;
+      background-color: white;
+      color: #63656e;
+      &-item {
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        height: 32px;
+        min-width: 150px;
+        &:hover {
+          cursor: pointer;
+          background-color: #eaf3ff;
+          color: #3a84ff;
+        }
+      }
     }
   }
 </style>

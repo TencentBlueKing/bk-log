@@ -243,6 +243,7 @@
           @open="openRetrieveCondition"
           @update:datePickerValue="handleDateChange"
           @datePickerChange="retrieveWhenDateChange"
+          @settingMenuClick="handleSettingMenuClick"
         ></ResultHeader>
         <NoIndexSet v-if="isNoIndexSet"></NoIndexSet>
         <ResultMain
@@ -283,6 +284,8 @@
           @mousedown.left="dragBegin">
       </div>
     </div>
+
+    <SettingModal :show-dialog.sync="showSettingDialog" />
   </div>
 </template>
 
@@ -300,6 +303,7 @@ import ResultHeader from './result-comp/ResultHeader';
 import NoIndexSet from './result-comp/NoIndexSet';
 import ResultMain from './result-comp/ResultMain';
 import AuthPage from '@/components/common/auth-page';
+import SettingModal from './setting-modal/index.vue';
 import { formatDate } from '@/common/util';
 import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
 import { mapGetters, mapState } from 'vuex';
@@ -320,6 +324,7 @@ export default {
     ResultMain,
     AuthPage,
     NoIndexSet,
+    SettingModal,
   },
   mixins: [indexSetSearchMixin],
   data() {
@@ -411,6 +416,7 @@ export default {
       originLogList: [], // 当前搜索结果的原始日志
       isNextTime: false,
       timer: null,
+      showSettingDialog: false,
     };
   },
   computed: {
@@ -755,7 +761,9 @@ export default {
       this.shouldUpdateFields = true;
       this.retrieveLog();
     },
-
+    handleSettingMenuClick() {
+      this.showSettingDialog = true;
+    },
     // 添加过滤条件
     addFilterCondition(field, operator, value, index) {
       const startIndex = index > -1 ? index : this.retrieveParams.addition.length;
