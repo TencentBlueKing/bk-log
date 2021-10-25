@@ -63,11 +63,17 @@ const DashboardTempView = {
   template: '<router-view></router-view>',
 };
 
+const TraceTempView = {
+  name: 'TraceTempView',
+  template: '<router-view></router-view>',
+};
+
 const page403 = () => import(/* webpackChunkName: 'page403' */'@/views/403');
 const retrieve = () => import(/* webpackChunkName: 'logRetrieve' */'@/views/retrieve2');
 const dashboard = () => import(/* webpackChunkName: 'dashboard' */'@/views/dashboard');
 const extract = () => import(/* webpackChunkName: 'logExtract' */'@/views/extract');
 const trace = () => import(/* webpackChunkName: 'logTrace' */'@/views/trace');
+const traceDetaid = () => import(/* webpackChunkName: 'logTraceDetail' */'@/views/trace/traceExplore');
 
 // 管理端
 const Manage = () => import(/* webpackChunkName: 'manage' */'@/views/manage2');
@@ -225,7 +231,19 @@ const routes = [
   {
     path: '/trace/:indexId?',
     name: 'trace',
-    component: trace,
+    component: TraceTempView,
+    children: [
+      {
+        path: 'trace-list',
+        name: 'trace-list', // 调用链列表
+        component: trace,
+      },
+      {
+        path: 'trace-detail',
+        name: 'trace-detail', // 调用链详情
+        component: traceDetaid,
+      },
+    ],
   },
   {
     path: '/manage',

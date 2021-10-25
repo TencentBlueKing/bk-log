@@ -323,7 +323,7 @@ class GrafanaQueryHandler:
             if field not in fields:
                 fields.append(field)
 
-        rows = [[r.get(field) for field in fields] for r in result["list"]]
+        rows = [[r.get(field) for field in fields] for r in result["origin_log_list"]]
 
         # 按照 grafana 的要求，第一个字段的名称必须为time
         fields[0] = "time"
