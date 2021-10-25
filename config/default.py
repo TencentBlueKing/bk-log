@@ -187,7 +187,6 @@ if RUN_VER != "open":
         }
         LOGGING["formatters"]["verbose"] = logging_format
 
-
 BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
 
 if BKLOG_UDP_LOG:
@@ -449,8 +448,17 @@ MENUS = [
         "feature": "on",
         "icon": "",
         "children": [
-            {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": ""},
-            {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": ""},
+            {
+                "id": "trace_search",
+                "name": _("调用链"),
+                "feature": "on",
+                "icon": "",
+                "keyword": _("trace"),
+                "children": [
+                    {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": ""},
+                    {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": ""},
+                ],
+            }
         ],
     },
     {"id": "extract", "name": _("日志提取"), "feature": "on", "icon": ""},
@@ -461,9 +469,18 @@ MENUS = [
         "feature": "on" if GRAFANA["HOST"] else "off",
         "icon": "",
         "children": [
-            {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": ""},
-            {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": ""},
-            {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": ""},
+            {
+                "id": "dashboard_manage",
+                "name": _("仪表盘"),
+                "feature": "on",
+                "icon": "",
+                "keyword": _("仪表"),
+                "children": [
+                    {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": ""},
+                    {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": ""},
+                    {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": ""},
+                ],
+            }
         ],
     },
     {
