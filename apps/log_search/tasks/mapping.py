@@ -21,26 +21,34 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
+from apps.utils.lock import share_lock
 from apps.utils.log import logger
 from apps.exceptions import ApiResultError
 from apps.log_search.constants import BkDataErrorCode
 from apps.log_search.models import LogIndexSet
+from apps.utils.thread import MultiExecuteFunc
 
 
 @periodic_task(run_every=crontab(minute="*/10"))
+@share_lock()
 def sync_index_set_mapping_cache():
     logger.info("[sync_index_set_mapping_cache] start")
     index_set_list = LogIndexSet.objects.filter(is_active=True)
-    for index_set in index_set_list:
+
+    def sync_mapping_cache(index_set_id):
         try:
-            SearchHandler(index_set_id=index_set.index_set_id, search_dict={}).fields()
+            SearchHandler(index_set_id=index_set_id, search_dict={}).fields()
         except Exception as e:  # pylint: disable=broad-except
             logger.exception(
                 "[sync_index_set_mapping_cache] index_set({}) sync failed: {}".format(index_set.index_set_id, e)
             )
-            continue
+            return
         logger.info("[sync_index_set_mapping_cache] index_set({}) sync success".format(index_set.index_set_id))
 
+    multi_execute = MultiExecuteFunc()
+    for index_set in index_set_list:
+        multi_execute.append(index_set.index_set_id, sync_mapping_cache, index_set.index_set_id)
+    multi_execute.run()
     logger.info("[sync_index_set_mapping_cache] end")
 
 
