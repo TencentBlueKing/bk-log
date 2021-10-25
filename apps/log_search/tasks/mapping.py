@@ -47,7 +47,7 @@ def sync_index_set_mapping_cache():
 
     multi_execute = MultiExecuteFunc()
     for index_set in index_set_list:
-        multi_execute.append(index_set.index_set_id, sync_mapping_cache, index_set.index_set_id)
+        multi_execute.append(index_set.index_set_id, sync_mapping_cache, index_set.index_set_id, use_request=False)
     multi_execute.run()
     logger.info("[sync_index_set_mapping_cache] end")
 
