@@ -273,6 +273,9 @@ export default {
   收藏: '收藏',
   未收藏: '未收藏',
   历史记录: '历史记录',
+  retrieveSetting: {
+
+  },
   nav: {
     logRetrieve: '日志检索',
     retrieve: '检索',
