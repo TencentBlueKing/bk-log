@@ -37,6 +37,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import Span, Status, StatusCode
+from opentelemetry.sdk.trace.sampling import ALWAYS_OFF, DEFAULT_OFF
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
@@ -103,14 +104,20 @@ class BluekingInstrumentor(BaseInstrumentor):
             otlp_bk_data_id = feature_config.get(self.BK_DATA_ID, otlp_bk_data_id)
         otlp_exporter = OTLPSpanExporter(endpoint=otlp_grpc_host)
         span_processor = BatchSpanProcessor(otlp_exporter)
+
+        # periord task not sampler
+        sampler = DEFAULT_OFF
+        if settings.IS_CELERY_BEAT:
+            sampler = ALWAYS_OFF
+
         tracer_provider = TracerProvider(
             resource=Resource.create(
                 {
                     "service.name": settings.APP_CODE,
                     "bk_data_id": otlp_bk_data_id,
-
                 }
             ),
+            sampler=sampler,
         )
         tracer_provider.add_span_processor(span_processor)
         trace.set_tracer_provider(tracer_provider)

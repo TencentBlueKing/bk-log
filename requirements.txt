@@ -63,6 +63,8 @@ jinja2==2.10.1
 # ipython
 ipython==7.13.0
 
+humanize==3.11.0
+
 # opentelemetry
 opentelemetry-api==1.4.1
 opentelemetry-sdk==1.4.1

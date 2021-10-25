@@ -25,7 +25,7 @@
     <div class="icon-sty">
       <span class="log-icon icon-camera-fill" :class="initialCallShow ? '' : 'click-stop'" @click="clickIcon"></span>
       <span :class="!initialCallShow ? 'rotate-from' : 'rotate'">
-        <i class="bk-icon icon-angle-up" @click="initialCallShow = !initialCallShow"></i>
+        <i class="bk-icon icon-angle-up" @click="handleToggleCallShow"></i>
       </span>
     </div>
     <div class="chart-views" ref="imageDom" v-if="initialCall && initialCallShow">
@@ -77,11 +77,14 @@ export default {
       type: Boolean,
       default: false,
     },
+    initialCallShow: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
       lineColor: ['#2ae0c8', '#fe6673', '#ffd591', '#fad8be', '#acf6ef', '#ffc20e', '#3A84FF', '#722ed1', '#eb2f96', '#2db7f5', '#07a2a4', '#9a7fd1', '#588dd5', '#f5994e', '#c05050', '#59678c', '#c9ab00', '#7eb00a', '#6f5553', '#c14089'],
-      initialCallShow: false,
       dataSets: [],
       labels: [],
       dataList: [],
@@ -103,7 +106,6 @@ export default {
     initialCall(val) {
       if (val) {
         this.chartAssignment();
-        this.initialCallShow = true;
       }
     },
     chartData(val) {
@@ -132,6 +134,9 @@ export default {
       if (this.initialCallShow) {
         convertDomToPng(this.$refs.imageDom);
       }
+    },
+    handleToggleCallShow() {
+      this.$emit('toggle-call-show');
     },
   },
 };

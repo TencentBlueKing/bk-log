@@ -92,6 +92,17 @@ class Proto(ABC):
             "is_analyzed": False,
             "description": "traceID",
         },
+        {
+            "field_type": "keyword",
+            "field_name": "duration",
+            "field_alias": "duration",
+            "is_display": True,
+            "is_editable": True,
+            "tag": "dimension",
+            "es_doc_values": True,
+            "is_analyzed": False,
+            "description": "duration",
+        },
     ]
 
     MUST_MATCH_FIELDS = None
