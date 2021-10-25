@@ -17,28 +17,35 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from __future__ import absolute_import, unicode_literals
+from bk_monitor_report import MonitorReporter
+from django.apps import AppConfig
+from django.conf import settings
 
-from django.conf.urls import url, include
-from rest_framework import routers
-from apps.grafana.views import GrafanaProxyView
-from bk_dataview.grafana.views import SwitchOrgView, StaticView
-from apps.grafana import views
+from apps.log_measure.constants import DJANGO_MONITOR_DATA_NAME
+from apps.utils.function import ignored
+from apps.utils.log import logger
 
-router = routers.DefaultRouter(trailing_slash=True)
-router.register(r"grafana", views.GrafanaViewSet, basename="grafana_api")
 
-proxy_router = routers.DefaultRouter(trailing_slash=False)
+class MeasureConfig(AppConfig):
+    name = "apps.log_measure"
+    verbose_name = "measure"
 
-proxy_router.register(r"trace", views.GrafanaTraceViewSet, basename="trace_api")
+    def ready(self):
+        with ignored(Exception):
+            from bk_monitor.models import MonitorReportConfig
 
-urlpatterns = [
-    url(r"^api/v1/", include(router.urls)),
-    # iframe访问地址 org_name 可以是项目id/业务id 需要保证唯一
-    url(r"^bk-dataview/orgs/(?P<org_name>[a-zA-Z0-9\-_]+)/grafana/", SwitchOrgView.as_view()),
-    # grafana访问地址, 需要和grafana前缀保持一致
-    url(r"^grafana/$", SwitchOrgView.as_view()),
-    url(r"^grafana/proxy/", include(proxy_router.urls)),
-    url(r"^grafana/public/", StaticView.as_view()),
-    url(r"^grafana/", GrafanaProxyView.as_view()),
-]
+            monitor_report_config = None
+            try:
+                monitor_report_config = MonitorReportConfig.objects.get(
+                    data_name=DJANGO_MONITOR_DATA_NAME, is_enable=True
+                )
+            except MonitorReportConfig.DoesNotExist:
+                logger.info(f"f{DJANGO_MONITOR_DATA_NAME} data_name init failed")
+                return
+            reporter = MonitorReporter(
+                data_id=monitor_report_config.data_id,
+                access_token=monitor_report_config.access_token,
+                target=settings.APP_CODE,
+                url=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/v2/push/",
+            )
+            reporter.start()

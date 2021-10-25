@@ -39,4 +39,5 @@ COLLECTOR_IMPORT_PATHS = [
     "apps.log_measure.handlers.metric_collectors.es",
 ]
 
-DATA_NAMES = ["metric", "search_history", "es_monitor"]
+DJANGO_MONITOR_DATA_NAME = "django_monitor"
+DATA_NAMES = ["metric", "search_history", "es_monitor", "django_monitor"]
