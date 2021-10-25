@@ -58,6 +58,11 @@ const LogCleanTempView = {
   template: '<router-view></router-view>',
 };
 
+const DashboardTempView = {
+  name: 'DashboardTempView',
+  template: '<router-view></router-view>',
+};
+
 const page403 = () => import(/* webpackChunkName: 'page403' */'@/views/403');
 const retrieve = () => import(/* webpackChunkName: 'logRetrieve' */'@/views/retrieve2');
 const dashboard = () => import(/* webpackChunkName: 'dashboard' */'@/views/dashboard');
@@ -187,7 +192,30 @@ const routes = [
   {
     path: '/dashboard',
     name: 'dashboard',
-    component: dashboard,
+    component: DashboardTempView,
+    redirect: '/dashboard/default-dashboard',
+    children: [
+      {
+        path: 'default-dashboard',
+        name: 'default-dashboard',
+        component: dashboard,
+      },
+      {
+        path: 'create-dashboard',
+        name: 'create-dashboard',
+        component: dashboard,
+      },
+      {
+        path: 'import-dashboard',
+        name: 'import-dashboard',
+        component: dashboard,
+      },
+      {
+        path: 'create-folder',
+        name: 'create-folder',
+        component: dashboard,
+      },
+    ],
   },
   {
     path: '/extract',

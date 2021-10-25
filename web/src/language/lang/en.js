@@ -393,6 +393,7 @@ export default {
   新建仪表盘: 'Create Dashboard',
   新建目录: 'Create Category',
   导入仪表盘: 'Import Dashboard',
+  无匹配的数据: 'No Result',
   retrieve: {
     time_zone: 'Time zone',
     node: 'Node',

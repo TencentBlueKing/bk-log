@@ -39,7 +39,7 @@
             @click="routerHandler(menu)"
             :data-test-id="`topNavBox_li_${menu.id}`">
           <!-- <template v-if="menu.dropDown"> -->
-          <template v-if="menu.id === 'dashboard'">
+          <!-- <template v-if="menu.id === 'dashboard'">
             <bk-dropdown-menu :ref="`menu${menu.router}`" align="center">
               <span slot="dropdown-trigger" style="font-size: 14px;">{{ menu.name }}</span>
               <ul class="bk-dropdown-list" slot="dropdown-content">
@@ -50,8 +50,8 @@
                 </li>
               </ul>
             </bk-dropdown-menu>
-          </template>
-          <template v-else>
+          </template> -->
+          <template>
             {{ menu.name }}
           </template>
         </li>
@@ -59,7 +59,7 @@
     </div>
     <div class="nav-right fr" v-show="usernameRequested">
       <!-- 切换业务 -->
-      <bk-select
+      <!-- <bk-select
         class="select-business fl" style="width: 260px;"
         ext-popover-cls="select-business-dropdown-content"
         :disabled="isDisableSelectBiz"
@@ -96,7 +96,7 @@
           </div>
           <div class="extension-item" @click="experienceDemo" v-if="demoProjectUrl">{{ $t('体验DEMO') }}</div>
         </div>
-      </bk-select>
+      </bk-select> -->
       <!-- 语言 -->
       <bk-dropdown-menu align="center" @show="dropdownLanguageShow" @hide="dropdownLanguageHide">
         <div class="icon-language-container" :class="isShowLanguageDropdown && 'active'" slot="dropdown-trigger">
@@ -562,14 +562,22 @@ export default {
           }
           return;
         } if (menu.id === 'dashboard') {
-          if (this.$route.query.manageAction) {
-            const newQuery = { ...this.$route.query };
-            delete newQuery.manageAction;
-            this.$router.push({
-              name: 'dashboard',
-              query: newQuery,
-            });
-          }
+          // if (this.$route.query.manageAction) {
+          //   const newQuery = { ...this.$route.query };
+          //   delete newQuery.manageAction;
+          //   this.$router.push({
+          //     name: 'dashboard',
+          //     query: newQuery,
+          //   });
+          // }
+          // this.$emit('reloadRouter');
+          // return;
+          this.$router.push({
+            name: menu.id,
+            query: {
+              projectId: window.localStorage.getItem('project_id'),
+            },
+          });
           this.$emit('reloadRouter');
           return;
         } if (menu.id === 'manage') {
@@ -642,9 +650,9 @@ export default {
         });
     },
     /**
-             * 更新当前项目
-             * @param  {String} projectId - 当前项目id
-             */
+     * 更新当前项目
+     * @param  {String} projectId - 当前项目id
+     */
     projectChange(projectId = '') {
       this.$store.commit('updateProject', projectId);
       if (projectId) {
@@ -668,6 +676,7 @@ export default {
       try {
         const res = await this.$store.dispatch('getMenuList', projectId);
         const menuList = this.replaceMenuId(res.data || []);
+
         menuList.forEach((child) => {
           child.id = this.routeMap[child.id] || child.id;
           const menu = this.menuArr.find(menuItem => menuItem.id === child.id);
@@ -684,6 +693,7 @@ export default {
           manageNavList.push(...group.children);
         });
         const logCollectionNav = manageNavList.find(nav => nav.id === 'log-collection');
+
         if (logCollectionNav) {
           // 增加日志采集导航子菜单
           logCollectionNav.children = [{
@@ -696,16 +706,29 @@ export default {
             project_manage: logCollectionNav.project_manage,
           }];
         }
+
         this.$watch('$route.name', () => {
           const matchedList = this.$route.matched;
           const activeTopMenu = menuList.find((item) => {
             return matchedList.some(record => record.name === item.id);
           }) || {};
           this.$store.commit('updateActiveTopMenu', activeTopMenu);
-          const activeManageNav = manageNavList.find((item) => {
+
+          const topMenuList =  activeTopMenu.children?.length ? activeTopMenu.children : [];
+          const topMenuChildren = topMenuList.reduce((pre, cur) => {
+            if (cur.children?.length) {
+              pre.push(...cur.children);
+            }
+            return pre;
+          }, []);
+          const activeManageNav = topMenuChildren.find((item) => {
+            if (item.id.includes('dashboard')) {
+              return item.id === 'default-dashboard';
+            }
             return matchedList.some(record => record.name === item.id);
           }) || {};
           this.$store.commit('updateActiveManageNav', activeManageNav);
+
           const activeManageSubNav = activeManageNav?.children?.find((item) => {
             return matchedList.some(record => record.name === item.id);
           }) || {};
@@ -718,26 +741,47 @@ export default {
       } catch (e) {
         console.warn(e);
       } finally {
-        if (this.$route.name !== 'retrieve') {
-          const RoutingHop = this.$route.name === 'notIndex'
-            ? 'retrieve' : this.isFirstLoad
-              ? this.$route.name ? this.$route.name : 'retrieve' : 'retrieve';
-          const newQuery = {
-            ...this.$route.query,
-            projectId,
-          };
-          if (this.$route.query.bizId) {
-            delete newQuery.projectId;
-            newQuery.bizId = bizId;
-          }
-          this.$router.push({
-            name: RoutingHop,
-            params: {
-              ...this.$route.params,
-            },
-            query: newQuery,
-          });
+        // if (this.$route.name !== 'retrieve') {
+        //   const RoutingHop = this.$route.name === 'notIndex'
+        //     ? 'retrieve' : this.isFirstLoad
+        //       ? this.$route.name ? this.$route.name : 'retrieve' : 'retrieve';
+        //   const newQuery = {
+        //     ...this.$route.query,
+        //     projectId,
+        //   };
+        //   if (this.$route.query.bizId) {
+        //     delete newQuery.projectId;
+        //     newQuery.bizId = bizId;
+        //   }
+        //   this.$router.push({
+        //     name: RoutingHop,
+        //     params: {
+        //       ...this.$route.params,
+        //     },
+        //     query: newQuery,
+        //   });
+        // }
+        // setTimeout(() => {
+        //   this.$emit('auth', null); // 表示不显示无业务权限的页面
+        //   this.$store.commit('setPageLoading', false);
+        //   this.isFirstLoad = false;
+        // }, 0);
+        this.$store.commit('setPageLoading', true);
+        const newQuery = {
+          ...this.$route.query,
+          projectId,
+        };
+        if (this.$route.query.bizId) {
+          delete newQuery.projectId;
+          newQuery.bizId = bizId;
         }
+        this.$router.push({
+          name: this.$route.name,
+          params: {
+            ...this.$route.params,
+          },
+          query: newQuery,
+        });
         setTimeout(() => {
           this.$emit('auth', null); // 表示不显示无业务权限的页面
           this.$store.commit('setPageLoading', false);
@@ -755,9 +799,9 @@ export default {
         if (oldMenu.children) {
           resMenu.children.forEach((item) => {
             item.id = this.routeMap[item.id] || item.id;
-            if (resMenu.id === 'dashboard') {
-              item.id = item.id.replaceAll('-', '_');
-            }
+            // if (resMenu.id === 'dashboard') {
+            //   item.id = item.id.replaceAll('-', '_');
+            // }
             const menu = oldMenu.children.find(menuItem => menuItem.id === item.id);
             if (menu) {
               this.deepUpdateMenu(menu, item);
@@ -794,15 +838,23 @@ export default {
       window.location.reload();
     },
     triggerHandler(item, menu) {
-      if (item.isDashboard) {
-        this.$router.push({
-          name: 'dashboard',
-          query: {
-            projectId: window.localStorage.getItem('project_id'),
-            manageAction: item.id,
-          },
-        });
-      } else if (this.$route.name !== item.id) {
+      // if (item.isDashboard) {
+      //   this.$router.push({
+      //     name: 'dashboard',
+      //     query: {
+      //       projectId: window.localStorage.getItem('project_id'),
+      //       manageAction: item.id,
+      //     },
+      //   });
+      // } else if (this.$route.name !== item.id) {
+      //   this.$router.push({
+      //     name: item.id,
+      //     query: {
+      //       projectId: window.localStorage.getItem('project_id'),
+      //     },
+      //   });
+      // }
+      if (this.$route.name !== item.id) {
         this.$router.push({
           name: item.id,
           query: {

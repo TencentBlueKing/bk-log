@@ -51,7 +51,7 @@ export default {
   watch: {
     '$route.query.projectId': {
       handler(val) {
-        val && this.handleBizChange();
+        val && this.bkBizId && this.handleBizChange();
       },
       immediate: true,
     },
@@ -62,6 +62,9 @@ export default {
       immediate: true,
     },
     '$route.query.manageAction'(manageAction) { // 在仪表盘页面点击导航管理
+      this.handleClickManage(manageAction);
+    },
+    '$route.name'(manageAction) {
       this.handleClickManage(manageAction);
     },
   },
@@ -124,7 +127,9 @@ export default {
       let siteUrl = window.SITE_URL;
       if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
       if (!siteUrl.endsWith('/')) siteUrl += '/';
-      const prefixUrl = window.origin + siteUrl;
+      // const prefixUrl = window.origin + siteUrl;
+      // todo
+      const prefixUrl = 'http://stag.bklog.oa.com/';
       // ?develop=2 开放导航栏
       let dashboardId = '';
       const dashboardData = localStorage.getItem('___grafana_dashboard_data___');
@@ -162,11 +167,18 @@ export default {
     // 有管理权限，通知 iframe 进入相关管理界面
     handleRouteManage(manageAction) {
       const idMap = {
-        create_dashboard: 'create',
-        create_folder: 'folder',
-        import_dashboard: 'import',
+        // create_dashboard: 'create',
+        // create_folder: 'folder',
+        // import_dashboard: 'import',
+        'create-dashboard': 'create',
+        'create-folder': 'folder',
+        'import-dashboard': 'import',
       };
-      this.$refs.iframeRef.contentWindow.postMessage(idMap[manageAction], '*');
+      if (idMap[manageAction]) {
+        this.$refs.iframeRef.contentWindow.postMessage(idMap[manageAction], '*');
+      } else {
+        this.$refs.iframeRef.contentWindow.postMessage('home', '*');
+      }
     },
     // 检查是否有管理权限
     async checkManageAuth() {
