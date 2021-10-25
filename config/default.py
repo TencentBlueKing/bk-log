@@ -476,6 +476,7 @@ MENUS = [
                 "icon": "",
                 "keyword": _("仪表"),
                 "children": [
+                    {"id": "default_dashboard", "name": _("默认仪表盘"), "feature": "on", "icon": ""},
                     {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": ""},
                     {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": ""},
                     {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": ""},
@@ -890,8 +891,11 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
 以下为框架代码 请勿修改
 """
 IS_CELERY = False
+IS_CELERY_BEAT = False
 if "celery" in sys.argv:
     IS_CELERY = True
+    if "beat" in sys.argv:
+        IS_CELERY_BEAT = True
 
 # celery settings
 if IS_USE_CELERY:

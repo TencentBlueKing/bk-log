@@ -23,7 +23,12 @@
 <template>
   <div class="td-log-container">
     <!-- eslint-disable vue/no-v-html -->
-    <span class="field-container add-to" v-html="content"></span>
+    <span
+      :class="['field-container', 'add-to', { 'active': hasClickEvent }]"
+      @click.stop="handleClickContent"
+      v-html="content"
+      v-bk-tooltips="{ content: $t('查看调用链'), disabled: !hasClickEvent, delay: 500 }"
+    ></span>
     <!--eslint-enable-->
     <template v-if="content !== '--'">
       <span class="icon-search-container" v-bk-tooltips.top="$t('检索')">
@@ -43,6 +48,15 @@ export default {
       type: [String, Number],
       required: true,
     },
+    hasClickEvent: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  methods: {
+    handleClickContent() {
+      if (this.hasClickEvent) this.$emit('contentClick');
+    },
   },
 };
 </script>
@@ -57,6 +71,10 @@ export default {
     .field-container {
       white-space: pre-wrap;
       tab-size: 3;
+      &.active:hover {
+        color: #3a84ff;
+        cursor: pointer;
+      }
     }
 
     .icon-search-container {
