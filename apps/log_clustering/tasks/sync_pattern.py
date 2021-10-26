@@ -21,7 +21,12 @@ from celery.task import periodic_task
 from celery.schedules import crontab
 from concurrent.futures import ThreadPoolExecutor
 
-from apps.log_clustering.constants import PATTERN_INDEX, LATEST_PUBLISH_STATUS
+from apps.log_clustering.constants import (
+    PATTERN_INDEX,
+    LATEST_PUBLISH_STATUS,
+    CONTENT_PATTERN_INDEX,
+    PATTERN_SIGNATURE_INDEX,
+)
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.models import AiopsModel, AiopsSignatureAndPattern
 
@@ -62,6 +67,22 @@ def get_release_id(model_id):
 
 def get_pattern(model_id, release_id) -> list:
     """
+    content demo:
+    [
+        '...',
+        {
+            0.1: [
+                ['if', 'checker.check'],
+                3903,
+                ['if', 'checker.check', '*', Variable(name="ip", value='9.146.124.133')],
+                ['if checker.check():', 'if checker.check()'],
+                [282. 1877],
+                27886975249790003104399390262688492018705644758766193963474214767849400520551
+            ]
+        },
+        '...',
+        '...'
+    ]
     sensitive_pattern [List]:
     - representative tokens: 符合pattern的其中一个分词
     - numbers: 属于该pattern的日志数量
@@ -76,11 +97,11 @@ def get_pattern(model_id, release_id) -> list:
         )["file_content"]
     )
     patterns = []
-    for _, sensitive_patterns in content[PATTERN_INDEX].items():
+    for _, sensitive_patterns in content[CONTENT_PATTERN_INDEX].items():
         for sensitive_pattern in sensitive_patterns:
-            signature = sensitive_pattern[5]
+            signature = sensitive_pattern[PATTERN_SIGNATURE_INDEX]
             pattern_list = []
-            for pattern in sensitive_pattern[2]:
+            for pattern in sensitive_pattern[PATTERN_INDEX]:
                 if hasattr(pattern, "name"):
                     pattern_list.append("[{}]".format(pattern.name.upper()))
                     continue
