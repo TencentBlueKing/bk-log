@@ -21,6 +21,7 @@ import base64
 from typing import Dict
 
 import arrow
+from cloudpickle import cloudpickle
 
 from apps.api import BkDataAIOPSApi
 from apps.log_clustering.exceptions import (
@@ -71,6 +72,8 @@ from apps.log_clustering.handlers.aiops.aiops_model.data_cls import (
     ReleaseConfigCls,
     ReleaseCls,
     UpdateTrainingScheduleCls,
+    AiopsReleaseCls,
+    AiopsReleaseModelReleaseIdModelFile,
 )
 
 
@@ -999,3 +1002,30 @@ class AiopsModelHandler(BaseAiopsHandler):
         update_training_schedule_request.training_schedule["start_time"] = target_time
         request_dict = self._set_username(update_training_schedule_request)
         return BkDataAIOPSApi.update_model_info(request_dict)
+
+    def aiops_release(self, model_id: str):
+        """
+        备选模型列表
+        @param model_id 模型id
+        """
+        aiops_release_request = AiopsReleaseCls(model_id=model_id, project_id=self.conf.get("project_id"))
+        request_dict = self._set_username(aiops_release_request)
+        return BkDataAIOPSApi.aiops_release(request_dict)
+
+    def aiops_release_model_release_id_model_file(self, model_id: str, model_release_id: str):
+        """
+        获取发布的模型对应的模型文件
+        @param model_id 模型id
+        @param model_release_id 发布模型配置ID
+        """
+        aiops_release_model_release_id_model_file_request = AiopsReleaseModelReleaseIdModelFile(
+            model_id=model_id, model_release_id=model_release_id
+        )
+        request_dict = self._set_username(aiops_release_model_release_id_model_file_request)
+        return BkDataAIOPSApi.aiops_release_model_release_id_model_file(request_dict)
+
+    @classmethod
+    def pickle_decode(cls, content: str):
+        model_file = base64.b64decode(content)
+        model = cloudpickle.loads(model_file)
+        return model

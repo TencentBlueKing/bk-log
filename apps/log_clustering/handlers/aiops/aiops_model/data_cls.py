@@ -763,3 +763,16 @@ class UpdateTrainingScheduleCls(object):
         }
     )
     release_config: Dict = field(default_factory=lambda: {"release_mode": "auto"})
+
+
+@dataclass
+class AiopsReleaseCls(object):
+    model_id: str
+    project_id: int
+    extra_filters: str = "{}"
+
+
+@dataclass
+class AiopsReleaseModelReleaseIdModelFile(object):
+    model_id: str
+    model_release_id: str

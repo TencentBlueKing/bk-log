@@ -45,3 +45,12 @@ class AiopsModelExperiment(SoftDeleteModel):
     def get_experiment(cls, model_name: str, experiment_alias: str):
         model_id = AiopsModel.objects.get(model_name=model_name).model_id
         return AiopsModelExperiment.objects.get(model_id=model_id, experiment_alias=experiment_alias)
+
+
+class AiopsSignatureAndPattern(SoftDeleteModel):
+    model_id = models.CharField(_("模型ID"), max_length=128)
+    signature = models.CharField(_("数据指纹"), max_length=256)
+    pattern = models.TextField("pattern")
+
+    class Meta:
+        index_together = ["model_id", "signature"]
