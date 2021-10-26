@@ -1482,66 +1482,11 @@ export default {
         }
 
         .king-tab {
-          // height: 100%;
-          // padding-top: 10px;
-          // &.as-iframe {
-          //     height: calc(100% - 48px);
-          // }
-          // /deep/ .bk-tab-label-list {
-          //     width: 100%;
-          //     .bk-tab-label-item {
-          //         width: 50%;
-          //         &:after {
-          //             left: 36px;
-          //             width: calc(100% - 72px);
-          //         }
-          //     }
-          // }
-          // /deep/ .bk-tab-section {
-          //     padding: 0;
-          //     height: calc(100% - 42px);
-          //     .bk-tab-content {
-          //         height: 100%;
-          //         overflow-y: auto;
-          //         @include scroller;
-          //     }
-          // }
-          // /deep/ .data-search {
-          //     position: relative;
-          //     padding: 0 20px 0;
-          //     overflow-y: auto;
-          //     @include scroller;
-          //     .tab-item-title {
-          //         display: flex;
-          //         align-items: center;
-          //         margin: 15px 0 6px;
-          //         line-height: 20px;
-          //         font-size: 12px;
-          //         color: #63656E;
-          //         &.ip-quick-title {
-          //             margin-top: 13px;
-          //         }
-          //     }
-          //     .add-filter-condition-container {
-          //         display: flex;
-          //         flex-wrap: wrap;
-          //     }
-          //     .retrieve-button-group {
-          //         position: sticky;
-          //         bottom: 0;
-          //         display: flex;
-          //         align-items: center;
-          //         padding: 16px 0 20px;
-          //         background-color: #FFF;
-          //         z-index: 1;
-          //     }
-          // }
-
           height: 100%;
           padding-top: 10px;
 
           .tab-content {
-            height: calc(100% - 50px);
+            height: calc(100% - 60px);
             // padding: 0 24px;
             overflow-y: auto;
             background-color: #fbfbfb;
@@ -1563,7 +1508,7 @@ export default {
           }
 
           &.as-iframe {
-            height: calc(100% - 48px);
+            height: calc(100% - 52px);
           }
 
           .tab-header {

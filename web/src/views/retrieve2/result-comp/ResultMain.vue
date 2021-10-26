@@ -682,8 +682,8 @@ export default {
 
 <style lang="scss" scoped>
   .result-scroll-container {
-    margin-top: 48px;
-    height: calc(100% - 48px);
+    margin-top: 52px;
+    height: calc(100% - 52px);
     overflow: auto;
   }
 
