@@ -21,6 +21,7 @@ from celery.task import periodic_task
 from celery.schedules import crontab
 from concurrent.futures import ThreadPoolExecutor
 
+from apps.log_clustering.constants import PATTERN_INDEX, LATEST_PUBLISH_STATUS
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.models import AiopsModel, AiopsSignatureAndPattern
 
@@ -50,7 +51,9 @@ def sync(model_id):
 
 def get_release_id(model_id):
     release_info = AiopsModelHandler().aiops_release(model_id=model_id).get("list", [])
-    release_ids = [info["model_release_id"] for info in release_info if info.get("publish_status") == "latest"]
+    release_ids = [
+        info["model_release_id"] for info in release_info if info.get("publish_status") == LATEST_PUBLISH_STATUS
+    ]
     if not release_ids:
         return None
     release_id, *_ = release_ids
@@ -58,13 +61,22 @@ def get_release_id(model_id):
 
 
 def get_pattern(model_id, release_id) -> list:
+    """
+    sensitive_pattern [List]:
+    - representative tokens: 符合pattern的其中一个分词
+    - numbers: 属于该pattern的日志数量
+    - pattern: 聚类模式
+    - raw_log: 所有原始log,list
+    - log_index： 所有原始log的index
+    - log_signature: 聚类模型signature
+    """
     content = AiopsModelHandler.pickle_decode(
         content=AiopsModelHandler().aiops_release_model_release_id_model_file(
             model_id=model_id, model_release_id=release_id
         )["file_content"]
     )
     patterns = []
-    for _, sensitive_patterns in content[1].items():
+    for _, sensitive_patterns in content[PATTERN_INDEX].items():
         for sensitive_pattern in sensitive_patterns:
             signature = sensitive_pattern[5]
             pattern_list = []

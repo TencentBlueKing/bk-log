@@ -1026,6 +1026,6 @@ class AiopsModelHandler(BaseAiopsHandler):
 
     @classmethod
     def pickle_decode(cls, content: str):
-        model_file = base64.b64decode(content)
-        model = cloudpickle.loads(model_file)
+        model_original_content = base64.b64decode(content)
+        model = cloudpickle.loads(model_original_content)
         return model
