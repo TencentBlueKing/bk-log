@@ -209,16 +209,28 @@ const routes = [
       {
         path: 'create-dashboard',
         name: 'create-dashboard',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
         component: dashboard,
       },
       {
         path: 'import-dashboard',
         name: 'import-dashboard',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
         component: dashboard,
       },
       {
         path: 'create-folder',
         name: 'create-folder',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
         component: dashboard,
       },
     ],
@@ -229,9 +241,10 @@ const routes = [
     component: extract,
   },
   {
-    path: '/trace/:indexId?',
+    path: '/trace',
     name: 'trace',
     component: TraceTempView,
+    redirect: '/trace/trace-list',
     children: [
       {
         path: 'trace-list',

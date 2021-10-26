@@ -141,12 +141,15 @@
 import { mapState } from 'vuex';
 import jsCookie from 'js-cookie';
 import LogVersion from './log-version';
+import { menuArr } from './complete-menu';
+import navMenuMixin from '@/mixins/navMenuMixin';
 
 export default {
   name: 'header-nav',
   components: {
     LogVersion,
   },
+  mixins: [navMenuMixin],
   props: {},
   data() {
     return {
@@ -163,210 +166,11 @@ export default {
       showLogVersion: false,
       language: 'zh-cn',
       languageList: [{ id: 'zh-cn', name: '中文' }, { id: 'en', name: 'English' }],
-      menuArr: [
-        {
-          name: this.$t('nav.retrieve'),
-          id: 'retrieve',
-          level: 1,
-        },
-        {
-          name: this.$t('nav.dashboard'),
-          id: 'dashboard',
-          level: 1,
-          dropDown: true,
-          children: [{
-            id: 'create_dashboard',
-            name: this.$t('新建仪表盘'),
-            level: 2,
-            isDashboard: true,
-            project_manage: true,
-          }, {
-            id: 'create_folder',
-            name: this.$t('新建目录'),
-            level: 2,
-            isDashboard: true,
-            project_manage: true,
-          }, {
-            id: 'import_dashboard',
-            name: this.$t('导入仪表盘'),
-            level: 2,
-            isDashboard: true,
-            project_manage: true,
-          }],
-        },
-        {
-          name: this.$t('nav.extract'),
-          id: 'extract',
-          level: 1,
-        },
-        {
-          name: this.$t('trace.trace'),
-          id: 'trace',
-          level: 1,
-          dropDown: true,
-          children: [
-            {
-              id: 'trace_list',
-              name: this.$t('trace.traceList'),
-              level: 2,
-              project_manage: true,
-            },
-            {
-              id: 'trace_detail',
-              name: this.$t('trace.traceDetail'),
-              level: 2,
-              project_manage: true,
-            },
-          ],
-        },
-        {
-          name: this.$t('nav.monitors'),
-          id: 'monitor',
-          level: 1,
-          children: [
-            {
-              name: this.$t('nav.alarmStrategy'),
-              id: 'alarmStrategy',
-              level: 2,
-              children: [
-                {
-                  name: this.$t('nav.addstrategy'),
-                  id: 'addstrategy',
-                  level: 3,
-                },
-                {
-                  name: this.$t('nav.editstrategy'),
-                  id: 'editstrategy',
-                  level: 3,
-                },
-              ],
-            },
-          ],
-        },
-        {
-          name: this.$t('nav.manage'),
-          id: 'manage',
-          level: 1,
-          dropDown: true,
-          children: [
-            {
-              name: this.$t('nav.dataSource'),
-              id: 'manage',
-              level: 2,
-              children: [
-                {
-                  name: this.$t('nav.collectAccess'),
-                  id: 'collectAccess',
-                  level: 3,
-                  children: [
-                    {
-                      name: this.$t('nav.New_acquisition'),
-                      id: 'collectAdd',
-                      level: 4,
-                    },
-                    {
-                      name: this.$t('nav.Edit_collection'),
-                      id: 'collectEdit',
-                      level: 4,
-                    },
-                    {
-                      name: this.$t('nav.Enable_collections'),
-                      id: 'collectStart',
-                      level: 4,
-                    },
-                    {
-                      name: this.$t('nav.Disable_collection'),
-                      id: 'collectStop',
-                      level: 4,
-                    },
-                    {
-                      name: this.$t('nav.Field_extraction'),
-                      id: 'collectField',
-                      level: 4,
-                    },
-                    {
-                      name: this.$t('nav.Configuration_details'),
-                      id: 'allocation',
-                      level: 4,
-                      children: [
-                        {
-                          name: this.$t('nav.Data_sampling'),
-                          id: 'jsonFormat',
-                          level: 5,
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  name: this.$t('nav.esAccess'),
-                  id: 'esAccess',
-                  level: 3,
-                },
-              ],
-            },
-            {
-              name: this.$t('nav.indexSet'),
-              id: 'indexSet',
-              level: 2,
-              children: [
-                {
-                  name: this.$t('nav.addIndexSet'),
-                  id: 'addIndexSet',
-                  level: 3,
-                },
-                {
-                  name: this.$t('nav.editIndexSet'),
-                  id: 'editIndexSet',
-                  level: 3,
-                },
-              ],
-            },
-            {
-              name: this.$t('链路配置'),
-              id: 'linkConfiguration',
-              level: 2,
-            },
-            {
-              name: this.$t('nav.permissionGroup'),
-              id: 'permissionGroup',
-              level: 2,
-            },
-            {
-              name: this.$t('nav.v3Migrate'),
-              id: 'migrate',
-              level: 2,
-            },
-            {
-              name: this.$t('nav.extractManage'),
-              id: 'manageExtract',
-              level: 2,
-            },
-          ],
-        },
-      ],
-      routeMap: { // 后端返回的导航id映射
-        search: 'retrieve',
-        // monitor: 'monitor',
-        // manage: 'manage',
-        manage_access: 'manage',
-        manage_index_set: 'indexSet',
-        manage_data_link: 'linkConfiguration',
-        manage_user_group: 'permissionGroup',
-        manage_migrate: 'migrate',
-        manage_extract: 'manageExtract',
-      },
     };
   },
   computed: {
     ...mapState({
-      topMenu: state => state.topMenu,
-      menuList: state => state.menuList,
       currentMenu: state => state.currentMenu,
-      activeTopMenu: state => state.activeTopMenu,
-      projectId: state => state.projectId,
-      bkBizId: state => state.bkBizId,
-      myProjectList: state => state.myProjectList,
       errorPage: state => state.errorPage,
       asIframe: state => state.asIframe,
       iframeQuery: state => state.iframeQuery,
@@ -385,7 +189,7 @@ export default {
   },
   created() {
     this.language = jsCookie.get('blueking_language') || 'zh-cn';
-    this.$store.commit('updateMenuList', this.menuArr);
+    this.$store.commit('updateMenuList', menuArr);
     this.getUserInfo();
     setTimeout(() => this.requestMyProjectList());
   },
@@ -404,93 +208,6 @@ export default {
         console.warn(e);
       } finally {
         this.usernameRequested = true;
-      }
-    },
-    async requestMyProjectList() {
-      try {
-        const res = await this.$http.request('project/getMyProjectList');
-        // 根据权限排序
-        const s1 = [];
-        const s2 = [];
-        const queryObj = JSON.parse(JSON.stringify(this.$route.query));
-
-        if (queryObj.from) {
-          this.$store.commit('updateAsIframe', queryObj.from);
-          this.$store.commit('updateIframeQuery', queryObj);
-        }
-
-        for (const item of res.data) {
-          // eslint-disable-next-line camelcase
-          if (item.permission?.view_business) {
-            s1.push(item);
-          } else {
-            s2.push(item);
-          }
-        }
-        const projectList = s1.concat(s2);
-
-        projectList.forEach((item) => {
-          item.bk_biz_id = `${item.bk_biz_id}`;
-          item.project_id = `${item.project_id}`;
-        });
-        const { bizId, projectId } = queryObj;
-        const demoId = String(window.DEMO_BIZ_ID);
-        const demoProject = projectList.find(item => item.bk_biz_id === demoId);
-        this.demoProjectUrl = demoProject ? this.getDemoProjectUrl(demoProject.project_id) : '';
-        const isOnlyDemo = demoProject && projectList.length === 1;
-        if (!projectList.length || isOnlyDemo) { // 没有一个业务或只有一个demo业务显示欢迎页面
-          const args = {
-            newBusiness: { url: window.BIZ_ACCESS_URL },
-            getAccess: {},
-          };
-          if (isOnlyDemo) {
-            this.$store.commit('updateMyProjectList', projectList);
-            if (bizId === demoProject.bk_biz_id || projectId === demoProject.project_id) {
-              // 查询参数指定查看 demo 业务
-              return this.projectChange(demoProject.project_id);
-            }
-            args.demoBusiness = {
-              url: this.demoProjectUrl,
-            };
-          }
-          if (projectId || bizId) { // 查询参数带非 demo 业务 id，获取业务名和权限链接
-            const query = bizId ? { bk_biz_id: bizId } : { project_id: projectId };
-            const [betaRes, authRes] = await Promise.all([
-              this.$http.request('/meta/getMaintainerApi', { query }),
-              this.$store.dispatch('getApplyData', {
-                action_ids: ['view_business'],
-                resources: [], // todo 需要将 url query 改成 bizId
-              }),
-            ]);
-            args.getAccess.businessName = betaRes.data.bk_biz_name;
-            args.getAccess.url = authRes.data.apply_url;
-          } else {
-            const authRes = await this.$store.dispatch('getApplyData', {
-              action_ids: ['view_business'],
-              resources: [],
-            });
-            args.getAccess.url = authRes.data.apply_url;
-          }
-          this.$store.commit('setPageLoading', false);
-          this.projectChange();
-          this.$emit('welcome', args);
-        } else { // 正常业务
-          this.$store.commit('updateMyProjectList', projectList);
-          // 首先从查询参数找，然后从storage里面找，还找不到就返回第一个不是demo的业务
-          const firstRealProjectId = projectList.find(item => item.bk_biz_id !== demoId).project_id;
-          if (projectId || bizId) {
-            const matchProject = projectList.find(item => item.project_id === projectId || item.bk_biz_id === bizId);
-            this.projectChange(matchProject ? matchProject.project_id : firstRealProjectId);
-          } else {
-            const storageProjectId = window.localStorage.getItem('project_id');
-            const hasProject = storageProjectId
-              ? projectList.some(item => item.project_id === storageProjectId) : false;
-            this.projectChange(hasProject ? storageProjectId : firstRealProjectId);
-          }
-        }
-      } catch (e) {
-        console.warn(e);
-        this.$store.commit('setPageLoading', false);
       }
     },
     getDemoProjectUrl(id) {
@@ -526,18 +243,6 @@ export default {
       setTimeout(() => {
         this.$emit('reloadRouter');
       });
-    },
-    replaceMenuId(list) {
-      list.forEach((item) => {
-        if (item.id === 'search') {
-          item.id = 'retrieve';
-        }
-        item.id = item.id.replaceAll('_', '-');
-        if (item.children) {
-          this.replaceMenuId(item.children);
-        }
-      });
-      return list;
     },
     routerHandler(menu) {
       if (menu.id === this.activeTopMenu.id) {
@@ -669,171 +374,6 @@ export default {
           this.$store.commit('setPageLoading', false);
         });
     },
-    /**
-     * 更新当前项目
-     * @param  {String} projectId - 当前项目id
-     */
-    projectChange(projectId = '') {
-      this.$store.commit('updateProject', projectId);
-      if (projectId) {
-        const project = this.myProjectList.find(item => item.project_id === projectId);
-        if (!this.checkProjectAuth(project)) {
-          return;
-        }
-      }
-      window.localStorage.setItem('project_id', projectId);
-      let bizId = '';
-      for (const item of this.myProjectList) {
-        if (item.project_id === projectId) {
-          bizId = item.bk_biz_id;
-          window.localStorage.setItem('bk_biz_id', bizId);
-          break;
-        }
-      }
-      projectId && this.setRouter(projectId, bizId); // 项目id不为空时，获取菜单
-    },
-    async setRouter(projectId, bizId) {
-      try {
-        const res = await this.$store.dispatch('getMenuList', projectId);
-        const menuList = this.replaceMenuId(res.data || []);
-
-        menuList.forEach((child) => {
-          child.id = this.routeMap[child.id] || child.id;
-          const menu = this.menuArr.find(menuItem => menuItem.id === child.id);
-          if (menu) {
-            this.deepUpdateMenu(menu, child);
-          }
-        });
-        this.$store.commit('updateTopMenu', menuList);
-        this.$store.commit('updateMenuProject', res.data || []);
-
-        const manageGroupNavList = menuList.find(item => item.id === 'manage')?.children || [];
-        const manageNavList = [];
-        manageGroupNavList.forEach((group) => {
-          manageNavList.push(...group.children);
-        });
-        const logCollectionNav = manageNavList.find(nav => nav.id === 'log-collection');
-
-        if (logCollectionNav) {
-          // 增加日志采集导航子菜单
-          logCollectionNav.children = [{
-            id: 'collection-item',
-            name: this.$t('采集项'),
-            project_manage: logCollectionNav.project_manage,
-          }, {
-            id: 'log-index-set',
-            name: this.$t('索引集'),
-            project_manage: logCollectionNav.project_manage,
-          }];
-        }
-
-        this.$watch('$route.name', () => {
-          const matchedList = this.$route.matched;
-          const activeTopMenu = menuList.find((item) => {
-            return matchedList.some(record => record.name === item.id);
-          }) || {};
-          this.$store.commit('updateActiveTopMenu', activeTopMenu);
-
-          const topMenuList =  activeTopMenu.children?.length ? activeTopMenu.children : [];
-          const topMenuChildren = topMenuList.reduce((pre, cur) => {
-            if (cur.children?.length) {
-              pre.push(...cur.children);
-            }
-            return pre;
-          }, []);
-          const activeManageNav = topMenuChildren.find((item) => {
-            if (item.id.includes('dashboard')) {
-              return item.id === 'default-dashboard';
-            }
-            return matchedList.some(record => record.name === item.id);
-          }) || {};
-          this.$store.commit('updateActiveManageNav', activeManageNav);
-
-          const activeManageSubNav = activeManageNav?.children?.find((item) => {
-            return matchedList.some(record => record.name === item.id);
-          }) || {};
-          this.$store.commit('updateActiveManageSubNav', activeManageSubNav);
-        }, {
-          immediate: true,
-        });
-
-        return menuList;
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        // if (this.$route.name !== 'retrieve') {
-        //   const RoutingHop = this.$route.name === 'notIndex'
-        //     ? 'retrieve' : this.isFirstLoad
-        //       ? this.$route.name ? this.$route.name : 'retrieve' : 'retrieve';
-        //   const newQuery = {
-        //     ...this.$route.query,
-        //     projectId,
-        //   };
-        //   if (this.$route.query.bizId) {
-        //     delete newQuery.projectId;
-        //     newQuery.bizId = bizId;
-        //   }
-        //   this.$router.push({
-        //     name: RoutingHop,
-        //     params: {
-        //       ...this.$route.params,
-        //     },
-        //     query: newQuery,
-        //   });
-        // }
-        // setTimeout(() => {
-        //   this.$emit('auth', null); // 表示不显示无业务权限的页面
-        //   this.$store.commit('setPageLoading', false);
-        //   this.isFirstLoad = false;
-        // }, 0);
-        this.$store.commit('setPageLoading', true);
-        const newQuery = {
-          ...this.$route.query,
-          projectId,
-        };
-        if (this.$route.query.bizId) {
-          delete newQuery.projectId;
-          newQuery.bizId = bizId;
-        }
-        this.$router.push({
-          name: this.$route.name,
-          params: {
-            ...this.$route.params,
-          },
-          query: newQuery,
-        });
-        setTimeout(() => {
-          this.$emit('auth', null); // 表示不显示无业务权限的页面
-          this.$store.commit('setPageLoading', false);
-          this.isFirstLoad = false;
-        }, 0);
-      }
-    },
-    deepUpdateMenu(oldMenu, resMenu) { // resMenu结果返回的menu子级
-      resMenu.name = oldMenu.name;
-      resMenu.dropDown = oldMenu.dropDown;
-      resMenu.dropDown = oldMenu.dropDown;
-      resMenu.level = oldMenu.level;
-      resMenu.isDashboard = oldMenu.isDashboard;
-      if (resMenu.children) {
-        if (oldMenu.children) {
-          resMenu.children.forEach((item) => {
-            item.id = this.routeMap[item.id] || item.id;
-            // if (resMenu.id === 'dashboard') {
-            //   item.id = item.id.replaceAll('-', '_');
-            // }
-            const menu = oldMenu.children.find(menuItem => menuItem.id === item.id);
-            if (menu) {
-              this.deepUpdateMenu(menu, item);
-            }
-          });
-        }
-      } else {
-        if (oldMenu.children) {
-          resMenu.children = oldMenu.children;
-        }
-      }
-    },
     changeLanguage(value) {
       const domainList = location.hostname.split('.');
 
@@ -858,22 +398,6 @@ export default {
       window.location.reload();
     },
     triggerHandler(item, menu) {
-      // if (item.isDashboard) {
-      //   this.$router.push({
-      //     name: 'dashboard',
-      //     query: {
-      //       projectId: window.localStorage.getItem('project_id'),
-      //       manageAction: item.id,
-      //     },
-      //   });
-      // } else if (this.$route.name !== item.id) {
-      //   this.$router.push({
-      //     name: item.id,
-      //     query: {
-      //       projectId: window.localStorage.getItem('project_id'),
-      //     },
-      //   });
-      // }
       if (this.$route.name !== item.id) {
         this.$router.push({
           name: item.id,

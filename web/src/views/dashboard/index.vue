@@ -127,9 +127,7 @@ export default {
       let siteUrl = window.SITE_URL;
       if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
       if (!siteUrl.endsWith('/')) siteUrl += '/';
-      // const prefixUrl = window.origin + siteUrl;
-      // todo
-      const prefixUrl = 'http://stag.bklog.oa.com/';
+      const prefixUrl = window.origin + siteUrl;
       // ?develop=2 开放导航栏
       let dashboardId = '';
       const dashboardData = localStorage.getItem('___grafana_dashboard_data___');

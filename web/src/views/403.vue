@@ -37,7 +37,7 @@ export default {
   methods: {
     notTraceIndex() {
       this.$router.push({
-        name: 'indexSet',
+        name: 'log-index-set',
       });
     },
   },

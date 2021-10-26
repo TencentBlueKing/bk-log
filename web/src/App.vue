@@ -28,10 +28,9 @@
       @welcome="welcomePageData = $event"
       @auth="authPageInfo = $event"
     ></head-nav>
-    <div :class="['log-search-container', asIframe && 'as-iframe']" v-show="!pageLoading">
+    <div :class="['log-search-container', asIframe && 'as-iframe']">
       <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
       <welcome-page v-else-if="welcomePageData" :data="welcomePageData"></welcome-page>
-      <!-- <router-view v-else :key="routerKey"></router-view> -->
       <!-- 导航改版 -->
       <bk-navigation
         v-if="menuList && menuList.length"
@@ -40,9 +39,10 @@
         head-height="0"
         header-title=""
         default-open
-        :theme-color="navThemeColor">
+        :theme-color="navThemeColor"
+        @toggle="handleToggle">
         <template slot="menu">
-          <biz-menu-select></biz-menu-select>
+          <biz-menu-select :is-expand="isExpand"></biz-menu-select>
           <bk-navigation-menu
             :item-default-bg-color="navThemeColor"
             :default-active="activeManageNav.id">
@@ -68,7 +68,7 @@
           <router-view class="manage-content" :key="routerKey"></router-view>
         </div>
       </bk-navigation>
-      <router-view v-else class="manage-content" :key="routerKey"></router-view>
+      <router-view v-else-if="!pageLoading" class="manage-content" :key="routerKey"></router-view>
     </div>
     <auth-dialog></auth-dialog>
     <LoginModal v-if="loginData" :login-data="loginData" />
@@ -166,6 +166,9 @@ export default {
       if (id === 'default-dashboard') {
         this.routerKey = this.routerKey + 1;
       }
+    },
+    handleToggle(val) {
+      this.isExpand = val;
     },
   },
 };
@@ -328,11 +331,6 @@ export default {
         }
       }
       .bk-navigation-menu-group {
-        &:first-child {
-          .group-name-wrap {
-            padding-top: 12px;
-          }
-        }
         .group-name-wrap .group-name {
           margin-right: 0;
         }
