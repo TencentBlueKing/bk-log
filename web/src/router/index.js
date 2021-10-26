@@ -58,6 +58,11 @@ const LogCleanTempView = {
   template: '<router-view></router-view>',
 };
 
+const DashboardTempView = {
+  name: 'DashboardTempView',
+  template: '<router-view></router-view>',
+};
+
 const TraceTempView = {
   name: 'TraceTempView',
   template: '<router-view></router-view>',
@@ -193,7 +198,42 @@ const routes = [
   {
     path: '/dashboard',
     name: 'dashboard',
-    component: dashboard,
+    component: DashboardTempView,
+    redirect: '/dashboard/default-dashboard',
+    children: [
+      {
+        path: 'default-dashboard',
+        name: 'default-dashboard',
+        component: dashboard,
+      },
+      {
+        path: 'create-dashboard',
+        name: 'create-dashboard',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
+        component: dashboard,
+      },
+      {
+        path: 'import-dashboard',
+        name: 'import-dashboard',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
+        component: dashboard,
+      },
+      {
+        path: 'create-folder',
+        name: 'create-folder',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
+        component: dashboard,
+      },
+    ],
   },
   {
     path: '/extract',
@@ -201,9 +241,10 @@ const routes = [
     component: extract,
   },
   {
-    path: '/trace/:indexId?',
+    path: '/trace',
     name: 'trace',
     component: TraceTempView,
+    redirect: '/trace/trace-list',
     children: [
       {
         path: 'trace-list',

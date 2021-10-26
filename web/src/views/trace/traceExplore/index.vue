@@ -39,6 +39,11 @@ export default {
       return this.$store.state.bkBizId;
     },
   },
+  watch: {
+    '$route.query.projectId'() {
+      this.updateIframeSrc();
+    },
+  },
   mounted() {
     this.updateIframeSrc();
   },

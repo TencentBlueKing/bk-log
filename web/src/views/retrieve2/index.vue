@@ -77,6 +77,10 @@
           <bk-button @click="handleCheckEvent">{{ $t('事件检索') }}</bk-button>
         </div>
 
+        <div class="biz-menu-box">
+          <biz-menu-select theme="light"></biz-menu-select>
+        </div>
+
         <div class="king-tab" :class="asIframe && 'as-iframe'">
           <div class="tab-header">{{ $t('数据查询') }}
             <bk-popover
@@ -310,6 +314,7 @@ import SettingModal from './setting-modal/index.vue';
 import { formatDate } from '@/common/util';
 import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
 import { mapGetters, mapState } from 'vuex';
+import BizMenuSelect from '@/components/BizMenuSelect.vue';
 
 export default {
   name: 'Retrieve',
@@ -328,6 +333,7 @@ export default {
     AuthPage,
     NoIndexSet,
     SettingModal,
+    BizMenuSelect,
   },
   mixins: [indexSetSearchMixin],
   data() {
@@ -1457,12 +1463,22 @@ export default {
             height: 100%;
             background: #fafbfd;
 
-            &.is-selected{
+            &.is-selected {
               background: #ffffff;
               border-top: none;
               border-bottom: none;
             }
+
+            &.is-selected,
+            &:hover {
+              border-color: #c4c6cc;
+              color: #63656e;
+            }
           }
+        }
+
+        .biz-menu-box {
+          margin-top: 16px;
         }
 
         .king-tab {
