@@ -18,9 +18,10 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.utils.translation import ugettext_lazy as _  # noqa
+
 from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user  # noqa
 from config.domains import AIOPS_APIGATEWAY_ROOT, AIOPS_MODEL_APIGATEWAY_ROOT  # noqa
-from apps.api.base import DataAPI  # noqa
+from apps.api.base import DataAPI, DataApiRetryClass  # noqa
 
 
 class _BkDataAIOPSApi:
@@ -251,6 +252,28 @@ class _BkDataAIOPSApi:
             module=self.MODULE,
             url_keys=["model_id"],
             description=u"修改模型",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
+
+        self.aiops_release = DataAPI(
+            method="GET",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/release/",
+            module=self.MODULE,
+            url_keys=["model_id"],
+            description=u"备选模型列表",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
+
+        self.aiops_release_model_release_id_model_file = DataAPI(
+            method="GET",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/release/{model_release_id}/model_file/",
+            module=self.MODULE,
+            url_keys=["model_id", "model_release_id"],
+            description=u"获取发布的模型对应的模型文件",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
             default_timeout=300,

@@ -167,6 +167,7 @@ CELERY_IMPORTS = (
     "apps.log_databus.tasks.archive",
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
+    "apps.log_clustering.tasks.sync_pattern",
 )
 
 # load logging settings
