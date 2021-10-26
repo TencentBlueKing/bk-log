@@ -33,7 +33,7 @@ class FuncThread(threading.Thread):
         self.result_key = result_key
         self.results = results
         self.use_request = use_request
-        with ignored(AttributeError):
+        with ignored(AttributeError, BaseException):
             self.requests = get_request()
         self.trace_context = get_current()
         super().__init__()

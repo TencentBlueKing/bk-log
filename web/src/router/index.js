@@ -58,11 +58,22 @@ const LogCleanTempView = {
   template: '<router-view></router-view>',
 };
 
+const DashboardTempView = {
+  name: 'DashboardTempView',
+  template: '<router-view></router-view>',
+};
+
+const TraceTempView = {
+  name: 'TraceTempView',
+  template: '<router-view></router-view>',
+};
+
 const page403 = () => import(/* webpackChunkName: 'page403' */'@/views/403');
 const retrieve = () => import(/* webpackChunkName: 'logRetrieve' */'@/views/retrieve2');
 const dashboard = () => import(/* webpackChunkName: 'dashboard' */'@/views/dashboard');
 const extract = () => import(/* webpackChunkName: 'logExtract' */'@/views/extract');
 const trace = () => import(/* webpackChunkName: 'logTrace' */'@/views/trace');
+const traceDetaid = () => import(/* webpackChunkName: 'logTraceDetail' */'@/views/trace/traceExplore');
 
 // 管理端
 const Manage = () => import(/* webpackChunkName: 'manage' */'@/views/manage2');
@@ -187,7 +198,42 @@ const routes = [
   {
     path: '/dashboard',
     name: 'dashboard',
-    component: dashboard,
+    component: DashboardTempView,
+    redirect: '/dashboard/default-dashboard',
+    children: [
+      {
+        path: 'default-dashboard',
+        name: 'default-dashboard',
+        component: dashboard,
+      },
+      {
+        path: 'create-dashboard',
+        name: 'create-dashboard',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
+        component: dashboard,
+      },
+      {
+        path: 'import-dashboard',
+        name: 'import-dashboard',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
+        component: dashboard,
+      },
+      {
+        path: 'create-folder',
+        name: 'create-folder',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
+        component: dashboard,
+      },
+    ],
   },
   {
     path: '/extract',
@@ -195,9 +241,22 @@ const routes = [
     component: extract,
   },
   {
-    path: '/trace/:indexId?',
+    path: '/trace',
     name: 'trace',
-    component: trace,
+    component: TraceTempView,
+    redirect: '/trace/trace-list',
+    children: [
+      {
+        path: 'trace-list',
+        name: 'trace-list', // 调用链列表
+        component: trace,
+      },
+      {
+        path: 'trace-detail',
+        name: 'trace-detail', // 调用链详情
+        component: traceDetaid,
+      },
+    ],
   },
   {
     path: '/manage',

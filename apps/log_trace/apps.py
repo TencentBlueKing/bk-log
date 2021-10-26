@@ -28,8 +28,9 @@ class TraceConfig(AppConfig):
     verbose_name = "Trace"
 
     def ready(self):
-        if settings.IS_CELERY:
+        if settings.IS_CELERY and not settings.IS_CELERY_BEAT:
             return
         from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+
         if FeatureToggleObject.switch("bk_log_trace"):
             BluekingInstrumentor().instrument()

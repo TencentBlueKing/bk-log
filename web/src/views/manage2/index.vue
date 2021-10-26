@@ -22,12 +22,11 @@
 
 <template>
   <div class="manage-container">
-    <bk-navigation
+    <!-- <bk-navigation
       class="hack-king-navigation"
       navigation-type="left-right"
       head-height="0"
       header-title=""
-      hover-width="200"
       default-open
       :theme-color="navThemeColor"
       @toggle="handleToggle">
@@ -54,22 +53,28 @@
           </template>
         </bk-navigation-menu>
       </template>
-      <div class="navigation-content">
+      <div class="navigation-content" v-if="!pageLoading">
         <sub-nav></sub-nav>
         <router-view class="manage-content" :key="routerKey"></router-view>
       </div>
-    </bk-navigation>
+    </bk-navigation> -->
+    <div v-if="!pageLoading">
+      <sub-nav></sub-nav>
+      <router-view class="manage-content" :key="routerKey"></router-view>
+    </div>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 import SubNav from '@/components/nav/manage-nav';
+// import BizMenuSelect from '@/components/BizMenuSelect.vue';
 
 export default {
   name: 'manage-index',
   components: {
     SubNav,
+    // BizMenuSelect,
   },
   data() {
     return {
@@ -81,6 +86,9 @@ export default {
   computed: {
     ...mapState(['topMenu', 'activeManageNav']),
     ...mapState('globals', ['globalsData']),
+    ...mapGetters({
+      pageLoading: 'pageLoading',
+    }),
     manageNavList() {
       return this.topMenu.find(item => item.id === 'manage')?.children || [];
     },

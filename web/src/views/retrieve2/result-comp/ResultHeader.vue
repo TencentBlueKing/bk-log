@@ -270,7 +270,7 @@ export default {
     display: flex;
     // align-items: center;
     width: 100%;
-    height: 48px;
+    height: 52px;
     color: #63656e;
     background: #fff;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
@@ -301,16 +301,15 @@ export default {
     .auto-refresh-trigger {
       display: flex;
       align-items: center;
-      height: 48px;
+      height: 52px;
       white-space: nowrap;
       line-height: 22px;
-      border-left: 1px solid #f0f1f5;
       cursor: pointer;
 
       .log-icon {
         padding: 0 5px 0 17px;
         font-size: 14px;
-        color: #979ba5;
+        color: #63656e;;
       }
 
       .active-text {
@@ -320,7 +319,7 @@ export default {
       .icon-angle-down {
         margin: 0 10px;
         font-size: 22px;
-        color: #979ba5;
+        color: #63656e;
         transition: transform .3s;
 
         &.active {
@@ -332,18 +331,48 @@ export default {
       &:hover > span {
         color: #3a84ff;
       }
+
+      &::before {
+        content: "";
+        width: 1px;
+        height: 14px;
+        background-color: #dcdee5;
+        position: absolute;
+        left: 0;
+        top: 20px;
+      }
     }
     .more-operation {
       display: flex;
       align-items: center;
-      padding: 0 16px;
-      height: 48px;
+      padding: 0 16px 0 12px;
+      height: 52px;
       white-space: nowrap;
       line-height: 22px;
-      border-left: 1px solid #f0f1f5;
       cursor: pointer;
       .icon-more {
-        font-size: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 30px;
+        height: 30px;
+        overflow: hidden;
+        font-size: 18px;
+        &:hover {
+          color: #0083ff;
+          cursor: pointer;
+          border-radius: 50%;
+          background-color: #e1ecff;
+        }
+      }
+      &::before {
+        content: "";
+        width: 1px;
+        height: 14px;
+        background-color: #dcdee5;
+        position: absolute;
+        left: 0;
+        top: 20px;
       }
     }
   }
