@@ -212,10 +212,10 @@ export default {
           }) || {};
           this.$store.commit('updateActiveManageNav', activeManageNav);
 
-          const activeManageSubNav = activeManageNav?.children?.find((item) => {
-            return matchedList.some(record => record.name === item.id);
-          }) || {};
-          this.$store.commit('updateActiveManageSubNav', activeManageSubNav);
+          // const activeManageSubNav = activeManageNav?.children?.find((item) => {
+          //   return matchedList.some(record => record.name === item.id);
+          // }) || {};
+          // this.$store.commit('updateActiveManageSubNav', activeManageSubNav);
         }, {
           immediate: true,
         });
