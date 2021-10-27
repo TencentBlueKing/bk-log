@@ -21,29 +21,146 @@
   -->
 
 <template>
-  <div class="result-scroll-container" ref="scrollContainer" @scroll.passive="handleScroll">
-    <!-- 检索结果 -->
-    <div class="result-text">
-      {{ $t('retrieve.result1') }}
-      <span class="total-count">{{ totalCount }}</span>
-      {{ $t('retrieve.result2') + tookTime + $t('retrieve.ms') }}
-      <template v-if="showAddMonitor">
-        <span>{{ $t('retrieve.result3') }}</span>
-        <a href="javascript:void(0);" class="monitor-link" @click="jumpMonitor">
-          {{ $t('retrieve.result4') }}
-          <span class="log-icon icon-lianjie"></span>
-        </a>
+  <div>
+    <div class="result-table-container" data-test-id="retrieve_from_fieldForm">
+      <!-- 表格上的按钮 -->
+      <div class="log-operation">
+        <TimeFormatter></TimeFormatter>
+        <div class="operation-icons">
+          <!-- 字段设置 -->
+          <bk-popover
+            ref="fieldsSettingPopper"
+            trigger="click"
+            placement="bottom-end"
+            theme="light bk-select-dropdown"
+            animation="slide-toggle"
+            :offset="0"
+            :distance="15"
+            :on-show="handleDropdownShow"
+            :on-hide="handleDropdownHide">
+            <slot name="trigger">
+              <div class="operation-icon">
+                <span class="icon log-icon icon-set-icon"></span>
+              </div>
+            </slot>
+            <div slot="content" class="fields-setting-container">
+              <FieldsSetting
+                v-if="showFieldsSetting"
+                :field-alias-map="fieldAliasMap"
+                :retrieve-params="retrieveParams"
+                @confirm="confirmModifyFields"
+                @cancel="closeDropdown" />
+            </div>
+          </bk-popover>
+          <!-- 导出 -->
+          <div
+            :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
+            @click="exportLog"
+            data-test-id="fieldForm_div_exportData"
+            v-bk-tooltips="queueStatus ? $t('btn.export') : undefined">
+            <span class="icon log-icon icon-xiazai"></span>
+          </div>
+        </div>
+      </div>
+      <!-- 表格内容 -->
+      <bk-table v-if="!renderTable" class="king-table"></bk-table>
+      <bk-table
+        v-else
+        v-bkloading="{ isLoading: tableLoading || webConsoleLoading, zIndex: 0, extCls: 'result-table-loading' }"
+        ref="resultTable"
+        class="king-table"
+        :data="tableList"
+        :empty-text="$t('retrieve.notData')"
+        @row-click="tableRowClick"
+        @row-mouse-enter="handleMouseEnter"
+        @row-mouse-leave="handleMouseLeave"
+        @header-dragend="handleHeaderDragend">
+        <!-- 展开详情 -->
+        <bk-table-column type="expand" width="30" align="center" v-if="visibleFields.length">
+          <template slot-scope="{ $index }">
+            <div class="json-view-wrapper">
+              <VueJsonPretty :deep="5" :data="originTableList[$index]" />
+            </div>
+          </template>
+        </bk-table-column>
+        <!-- 显示字段 -->
+        <template v-for="(field,index) in visibleFields">
+          <bk-table-column
+            align="left"
+            :key="field.field_name"
+            :min-width="field.minWidth"
+            :render-header="renderHeaderAliasName"
+            :index="index"
+            :width="field.width">
+            <template slot-scope="{ row }">
+              <TableColumn
+                :content="tableRowDeepView(row, field.field_name, field.field_type)"
+                @iconClick="(type, content) => handleIconClick(type, content, field, row)"
+              ></TableColumn>
+            </template>
+          </bk-table-column>
+        </template>
+        <!-- 实时日志 上下文 -->
+        <bk-table-column
+          v-if="showHandleOption"
+          :label="$t('retrieve.operate')"
+          :width="84"
+          align="right"
+          :resizable="false">
+          <!-- eslint-disable-next-line -->
+          <template slot-scope="{ row, column, $index }">
+            <div
+              :class="{ 'handle-content': true, 'fix-content': showAllHandle }"
+              v-if="curHoverIndex === $index"
+              @mouseenter="mouseenterHandle"
+              @mouseleave="mouseleaveHandle">
+              <span
+                v-bk-tooltips="{ content: $t('retrieve.log'), delay: 500 }"
+                class="handle-card"
+                v-if="showRealtimeLog && !checkIsHide('showRealtimeLog')">
+                <span
+                  class="icon log-icon icon-handle icon-time"
+                  @click.stop="openLogDialog(row, 'realTimeLog')">
+                </span>
+              </span>
+              <span
+                v-bk-tooltips="{ content: $t('retrieve.context'), delay: 500 }"
+                class="handle-card"
+                v-if="showContextLog && !checkIsHide('showContextLog')">
+                <span
+                  class="icon log-icon icon-handle icon-document"
+                  @click.stop="openLogDialog(row, 'contextLog')">
+                </span>
+              </span>
+              <span
+                v-bk-tooltips="{ content: $t('retrieve.monitorAlarm'), delay: 500 }"
+                class="handle-card"
+                v-if="showMonitorWeb && !checkIsHide('showMonitorWeb')">
+                <span class="icon icon-handle log-icon icon-inform" @click.stop="openMonitorWeb(row)"></span>
+              </span>
+              <span
+                v-bk-tooltips="{ content: 'WebConsole', delay: 500 }"
+                class="handle-card"
+                v-if="showWebConsole && !checkIsHide('showWebConsole')">
+                <span class="icon icon-handle log-icon icon-teminal" @click.stop="openWebConsole(row)"></span>
+              </span>
+              <span class="bk-icon icon-more handle-card icon-handle" v-if="showMoreHandle && !showAllHandle"></span>
+            </div>
+          </template>
+        </bk-table-column>
+      </bk-table>
+      <!-- 表格底部内容 -->
+      <template v-if="tableList.length && visibleFields.length">
+        <p class="more-desc" v-if="!isPageOver && count === limitCount">{{ $t('retrieve.showMore') }}
+          <a href="javascript: void(0);" @click="scrollToTop">{{ $t('btn.backToTop') }}</a>
+        </p>
+        <div
+          v-if="isPageOver"
+          v-bkloading="{ isLoading: true }"
+          style="height: 40px;">
+        </div>
       </template>
     </div>
-    <ResultEChart
-      :retrieve-params="retrieveParams"
-      @change-queue-res="changeQueueRes"
-      @change-total-count="changeTotalCount" />
-    <bk-divider class="divider-line"></bk-divider>
-    <result-table-panel
-      :retrieve-params="retrieveParams"
-      v-bind="$attrs"
-      v-on="$listeners" />
 
     <!-- 滚动到顶部 -->
     <div class="fixed-scroll-top-btn" v-show="showScrollTop" @click="scrollToTop">
@@ -106,89 +223,77 @@
 <script>
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import { setFieldsWidth } from '@/common/util';
-// import TimeFormatter from '@/components/common/time-formatter';
-import RealTimeLog from './RealTimeLog';
-import ContextLog from './ContextLog';
-import ResultEChart from './ResultEChart';
-import ResultTablePanel from '../result-table-panel';
-// import FieldsSetting from './FieldsSetting';
-// import TableColumn from './TableColumn';
+import TimeFormatter from '@/components/common/time-formatter';
+import RealTimeLog from '../../result-comp/RealTimeLog';
+import ContextLog from '../../result-comp/ContextLog';
+import FieldsSetting from '../../result-comp/FieldsSetting';
+import TableColumn from '../../result-comp/TableColumn';
 import { mapState } from 'vuex';
 
 export default {
   components: {
-    // TimeFormatter,
+    TimeFormatter,
+    FieldsSetting,
+    TableColumn,
     RealTimeLog,
     ContextLog,
-    ResultEChart,
-    ResultTablePanel,
-    // FieldsSetting,
-    // TableColumn,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
-    // renderTable: {
-    //   type: Boolean,
-    //   required: true,
-    // },
-    // tableLoading: {
-    //   type: Boolean,
-    //   required: true,
-    // },
+    renderTable: {
+      type: Boolean,
+      required: true,
+    },
+    tableLoading: {
+      type: Boolean,
+      required: true,
+    },
     retrieveParams: {
       type: Object,
       required: true,
     },
-    tookTime: {
-      type: Number,
+    tableData: {
+      type: Object,
       required: true,
     },
-    // indexSetList: {
-    //   type: Array,
-    //   required: true,
-    // },
-    // tableData: {
-    //   type: Object,
-    //   required: true,
-    // },
-    // visibleFields: {
-    //   type: Array,
-    //   required: true,
-    // },
-    // fieldAliasMap: {
-    //   type: Object,
-    //   default() {
-    //     return {};
-    //   },
-    // },
-    // showFieldAlias: {
-    //   type: Boolean,
-    //   default: false,
-    // },
-    // showRealtimeLog: {
-    //   type: Boolean,
-    //   required: true,
-    // },
-    // showContextLog: {
-    //   type: Boolean,
-    //   required: true,
-    // },
-    // showWebConsole: {
-    //   type: Boolean,
-    //   required: true,
-    // },
-    // bkMonitorUrl: {
-    //   type: String,
-    //   required: true,
-    // },
-    // asyncExportUsable: {
-    //   type: Boolean,
-    //   default: true,
-    // },
-    // asyncExportUsableReason: {
-    //   type: String,
-    //   default: '',
-    // },
+    visibleFields: {
+      type: Array,
+      required: true,
+    },
+    fieldAliasMap: {
+      type: Object,
+      default() {
+        return {};
+      },
+    },
+    showFieldAlias: {
+      type: Boolean,
+      default: false,
+    },
+    showRealtimeLog: {
+      type: Boolean,
+      required: true,
+    },
+    showContextLog: {
+      type: Boolean,
+      required: true,
+    },
+    showWebConsole: {
+      type: Boolean,
+      required: true,
+    },
+    bkMonitorUrl: {
+      type: String,
+      required: true,
+    },
+    asyncExportUsable: {
+      type: Boolean,
+      default: true,
+    },
+    asyncExportUsableReason: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
@@ -200,7 +305,7 @@ export default {
       // isTableRequestLoading: false,
       // dataListPaged: [], // 将列表数据按 pageSize 分页
       count: 0, // 数据总条数
-      pageSize: 200, // 每页展示多少数据
+      pageSize: 50, // 每页展示多少数据
       totalPage: 1,
       currentPage: 1, // 当前加载了多少页
       totalCount: 0,
@@ -257,7 +362,6 @@ export default {
           icon: '',
         },
       },
-      isShowSettingModal: false,
     };
   },
   computed: {
@@ -317,7 +421,7 @@ export default {
         this.tableList.push(...data.list);
         this.originTableList.push(...data.origin_log_list);
         this.$nextTick(() => {
-          this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
+          this.$parent.$parent.$parent.$refs.scrollContainer.scrollTop = this.newScrollHeight;
         });
         this.isPageOver = false;
       }
@@ -386,7 +490,7 @@ export default {
     reset() {
       this.newScrollHeight = 0;
       this.$nextTick(() => {
-        this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
+        this.$parent.$parent.$parent.$refs.scrollContainer.scrollTop = this.newScrollHeight;
       });
       this.count = 0;
       this.currentPage = 1;
@@ -397,26 +501,26 @@ export default {
     },
     // 滚动到顶部
     scrollToTop() {
-      this.$easeScroll(0, 300, this.$refs.scrollContainer);
+      this.$easeScroll(0, 300, this.$parent.$parent.$parent.$refs.scrollContainer);
     },
     handleScroll() {
-      // if (this.throttle || this.isPageOver) {
-      //   return;
-      // }
-      // this.throttle = true;
-      // setTimeout(() => {
-      //   this.throttle = false;
-      //   const el = this.$refs.scrollContainer;
-      //   this.showScrollTop = el.scrollTop > 550;
-      //   if (el.scrollHeight - el.offsetHeight - el.scrollTop < 100) {
-      //     if (this.count === this.limitCount || this.finishPolling) return;
+      if (this.throttle || this.isPageOver) {
+        return;
+      }
+      this.throttle = true;
+      setTimeout(() => {
+        this.throttle = false;
+        const el = this.$parent.$parent.$parent.$refs.scrollContainer;
+        this.showScrollTop = el.scrollTop > 550;
+        if (el.scrollHeight - el.offsetHeight - el.scrollTop < 100) {
+          if (this.count === this.limitCount || this.finishPolling) return;
 
-      //     this.isPageOver = true;
-      //     this.currentPage += 1;
-      //     this.newScrollHeight = el.scrollTop;
-      //     this.$emit('request-table-data');
-      //   }
-      // }, 200);
+          this.isPageOver = true;
+          this.currentPage += 1;
+          this.newScrollHeight = el.scrollTop;
+          this.$emit('request-table-data');
+        }
+      }, 200);
     },
 
     // 字段设置
@@ -676,17 +780,15 @@ export default {
       // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
     },
-    closeSetting() {
-      this.isShowSettingModal = false;
-    },
   },
 };
 </script>
 
+
 <style lang="scss" scoped>
   .result-scroll-container {
-    margin-top: 52px;
-    height: calc(100% - 52px);
+    margin-top: 48px;
+    // height: calc(100% - 48px);
     overflow: auto;
   }
 
@@ -704,18 +806,9 @@ export default {
     }
   }
 
-  .divider-line {
-    margin: 0 20px !important;
-    width: calc(100% - 40px) !important;
-  }
-
   .result-table-container {
     position: relative;
-    margin: 0 20px 16px;
-    padding: 20px 24px;
     background: #fff;
-    // border-radius: 2px;
-    // box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
     .cut-line {
       position: absolute;
       top: 0;

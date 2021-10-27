@@ -66,10 +66,10 @@ export default class ChartTitle extends Vue {
   @Prop({ default: '' }) subtitle: string
   @Prop({ default: () => [] }) menuList: string[]
   @Prop({ default: localStorage.getItem('chartIsFold') === 'true' }) isFold: boolean
+  @Prop({ default: true }) loading: boolean
   @Ref('chartTitle') chartTitleRef: HTMLDivElement
   private showMenu = false
   private menuLeft = 0
-  loading = false
   handleShowMenu(e: MouseEvent) {
     this.$emit('toggle-expand', !this.isFold)
 

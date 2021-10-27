@@ -21,5 +21,27 @@
   -->
 
 <template>
-  <div>原始日志</div>
+  <div>
+    <table-log
+      v-bind="$attrs"
+      v-on="$listeners"
+      :retrieve-params="retrieveParams"
+    ></table-log>
+  </div>
 </template>
+
+<script>
+import TableLog from './TableLog.vue';
+
+export default {
+  components: {
+    TableLog,
+  },
+  props: {
+    retrieveParams: {
+      type: Object,
+      required: true,
+    },
+  },
+};
+</script>
