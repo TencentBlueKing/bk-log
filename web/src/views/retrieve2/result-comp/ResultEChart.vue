@@ -30,6 +30,7 @@
       :title="$t('总趋势')"
       :menu-list="chartOptions.tool.list"
       :is-fold="isFold"
+      :loading="isLoading"
       @toggle-expand="toggleExpand"
       @menu-click="handleMoreToolItemSet">
     </chart-title>
@@ -303,7 +304,7 @@ export default {
       this.$refs.chartRef.handleMoreToolItemSet(event);
     },
     handleChartLoading(isLoading) {
-      this.$refs.chartTitle.loading = isLoading;
+      this.isLoading = isLoading;
     },
   },
 };
