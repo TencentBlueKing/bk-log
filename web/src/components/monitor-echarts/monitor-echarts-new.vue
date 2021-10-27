@@ -21,18 +21,10 @@
   -->
 
 <template>
-  <div class="monitor-echart-wrap"
-       :style="{ 'background-image': backgroundUrl }"
-       v-bkloading="{ isLoading: loading, zIndex: 2000 }">
-    <div class="echart-header" v-if="chartTitle || $slots.title">
-      <chart-title
-        :title="chartTitle"
-        :subtitle="chartSubTitle"
-        :menu-list="chartOption.tool.list"
-        @toggle-expand="handleToggleExpand"
-        @menu-click="handleMoreToolItemSet">
-      </chart-title>
-    </div>
+  <div 
+    class="monitor-echart-wrap"
+    :style="{ 'background-image': backgroundUrl }"
+    v-bkloading="{ isLoading: false, zIndex: 2000 }">
     <div v-show="!isFold">
       <div class="chart-wrapper"
           tabindex="-1"
@@ -134,7 +126,6 @@ export default class MonitorEcharts extends Vue {
     }
   })
   backgroundUrl: String
-  isFold: Boolean = localStorage.getItem('chartIsFold') === 'true'
 
   // 获取图标数据
   @Prop() getSeriesData: (timeFrom?: string, timeTo?: string, range?: boolean) => Promise<void>
@@ -211,6 +202,8 @@ export default class MonitorEcharts extends Vue {
   // 图表高度
   @Prop({ default: 165 }) height: number | string
   @Prop({ default: 1, type: Number }) lineWidth: number
+
+  @Prop({ default: localStorage.getItem('chartIsFold') === 'true' }) isFold: boolean
 
   // chart: Echarts.ECharts = null
   resizeHandler: ResizeCallback<HTMLDivElement>
@@ -336,6 +329,10 @@ export default class MonitorEcharts extends Vue {
   }
   get isEchartsRender() {
     return !['status', 'text'].includes(this.chartType)
+  }
+  @Watch('loading')
+  onLoadingChange(v) {
+    this.$emit('chart-loading', this.loading)
   }
   @Watch('height')
   onHeightChange() {
@@ -772,9 +769,6 @@ export default class MonitorEcharts extends Vue {
   }
   // 图表的展开收起
   handleToggleExpand (isShow) {
-    this.isFold = isShow
-    this.$emit('toggle-expand', isShow)
-
     if (this.initStatus) {
       this.init()
       this.initStatus = false
@@ -939,6 +933,7 @@ export default class MonitorEcharts extends Vue {
     color: #63656e;
     // padding-left: 10px;
     padding: 18px 24px 24px;
+    max-height: 153px;
 
     .echart-header {
       display: flex;
