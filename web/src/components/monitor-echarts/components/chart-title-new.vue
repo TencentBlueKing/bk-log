@@ -26,7 +26,7 @@
       ref="chartTitle"
       class="chart-title"
       tabindex="0"
-      @click="handleShowMenu"
+      @click.stop="handleShowMenu"
       @blur="showMenu = false">
       <div class="main-title">
         <span class="bk-icon icon-down-shape" :class="{ 'is-flip': isFold }"></span>
@@ -36,11 +36,13 @@
         {{subtitle}}
       </div>
     </div>
-    <div class="menu-list" v-if="!isFold">
-        <span 
+    <bk-spin v-if="loading" class="chart-spin"></bk-spin>
+    <div class="menu-list" v-else-if="!isFold">
+      <span 
         class="log-icon icon-xiangji" 
         @click.stop="handleMenuClick({id: 'screenshot'})"
-        data-test-id="generalTrendEcharts_span_downloadEcharts"></span>
+        data-test-id="generalTrendEcharts_span_downloadEcharts">
+      </span>
     </div>
     <!-- <chart-menu
       v-show="showMenu"
@@ -63,13 +65,13 @@ export default class ChartTitle extends Vue {
   @Prop({ default: '' }) title: string
   @Prop({ default: '' }) subtitle: string
   @Prop({ default: () => [] }) menuList: string[]
+  @Prop({ default: localStorage.getItem('chartIsFold') === 'true' }) isFold: boolean
   @Ref('chartTitle') chartTitleRef: HTMLDivElement
   private showMenu = false
   private menuLeft = 0
-  isFold: Boolean = localStorage.getItem('chartIsFold') === 'true'
+  loading = false
   handleShowMenu(e: MouseEvent) {
-    this.isFold = !this.isFold
-    this.$emit('toggle-expand', this.isFold)
+    this.$emit('toggle-expand', !this.isFold)
 
     // this.showMenu = !this.showMenu
     // const rect = this.chartTitleRef.getBoundingClientRect()
@@ -160,14 +162,19 @@ export default class ChartTitle extends Vue {
 
     .menu-list {
       position: absolute;
-      top: 6px;
-      right: 6px;
+      top: 24px;
+      right: 36px;
 
       .log-icon {
         font-size: 14px;
         color: #979ba5;
         cursor: pointer;
       }
+    }
+    .chart-spin {
+      position: absolute;
+      top: 24px;
+      right: 36px;
     }
   }
 </style>

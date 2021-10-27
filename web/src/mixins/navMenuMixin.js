@@ -224,52 +224,28 @@ export default {
       } catch (e) {
         console.warn(e);
       } finally {
-        // if (this.$route.name !== 'retrieve') {
-        //   const RoutingHop = this.$route.name === 'notIndex'
-        //     ? 'retrieve' : this.isFirstLoad
-        //       ? this.$route.name ? this.$route.name : 'retrieve' : 'retrieve';
-        //   const newQuery = {
-        //     ...this.$route.query,
-        //     projectId,
-        //   };
-        //   if (this.$route.query.bizId) {
-        //     delete newQuery.projectId;
-        //     newQuery.bizId = bizId;
-        //   }
-        //   this.$router.push({
-        //     name: RoutingHop,
-        //     params: {
-        //       ...this.$route.params,
-        //     },
-        //     query: newQuery,
-        //   });
-        // }
-        // setTimeout(() => {
-        //   this.$emit('auth', null); // 表示不显示无业务权限的页面
-        //   this.$store.commit('setPageLoading', false);
-        //   this.isFirstLoad = false;
-        // }, 0);
-
-        // 所有页面的子路由在切换业务的时候都统一返回到父级页面
-        const { name, meta, params, query } = this.$route;
-        const RoutingHop = meta.needBack ? meta.backName : name;
-        const newQuery = {
-          ...query,
-          projectId,
-        };
-        if (query.bizId) {
-          delete newQuery.projectId;
-          newQuery.bizId = bizId;
+        if (this.$route.name !== 'retrieve') {
+          // 所有页面的子路由在切换业务的时候都统一返回到父级页面
+          const { name, meta, params, query } = this.$route;
+          const RoutingHop = meta.needBack ? meta.backName : name;
+          const newQuery = {
+            ...query,
+            projectId,
+          };
+          if (query.bizId) {
+            delete newQuery.projectId;
+            newQuery.bizId = bizId;
+          }
+          if (params.indexId) delete params.indexId;
+          this.$store.commit('setPageLoading', true);
+          this.$router.push({
+            name: RoutingHop,
+            params: {
+              ...params,
+            },
+            query: newQuery,
+          });
         }
-        if (params.indexId) delete params.indexId;
-        this.$store.commit('setPageLoading', true);
-        this.$router.push({
-          name: RoutingHop,
-          params: {
-            ...params,
-          },
-          query: newQuery,
-        });
         setTimeout(() => {
           this.$emit('auth', null); // 表示不显示无业务权限的页面
           this.$store.commit('setPageLoading', false);
