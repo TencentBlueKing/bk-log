@@ -23,7 +23,7 @@
 <template>
   <div class="field-table-container" v-bkloading="{ isLoading: isExtracting }">
     <div class="field-method-head" v-if="!isPreviewMode">
-      <!--<span class="field-method-link fr mr10" @click.stop="isReset = true">{{ $t('dataManage.Reset') }}</span>-->
+      <!-- <span class="field-method-link fr mr10" @click.stop="isReset = true">{{ $t('dataManage.Reset') }}</span> -->
       <div
         :class="{ 'table-setting': true, 'disabled-setting': isSettingDisable }"
         v-if="extractMethod !== 'bk_log_regexp'">
@@ -80,7 +80,7 @@
           :row-key="extractMethod === 'bk_log_delimiter' ? 'field_index' : 'field_name'"
           :data="deletedVisible ? hideDeletedTable : tableList">
           <template>
-            <!-- <bk-table-column
+            <bk-table-column
               :label="$t('configDetails.column')"
               align="center"
               :resizable="false"
@@ -89,7 +89,7 @@
               <template slot-scope="props">
                 <span>{{ props.row.field_index }}</span>
               </template>
-            </bk-table-column> -->
+            </bk-table-column>
             <!-- 字段名 -->
             <bk-table-column :label="$t('dataManage.Field_name')" :resizable="false" min-width="100">
               <template slot-scope="props">

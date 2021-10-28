@@ -291,7 +291,8 @@
 
     <setting-modal
       :show-dialog="isShowSettingModal"
-      @closeSetting="closeSetting"
+      :select-choice="clickSettingChoice"
+      @closeSetting="isShowSettingModal = false;"
     />
   </div>
 </template>
@@ -426,6 +427,7 @@ export default {
       isNextTime: false,
       timer: null,
       isShowSettingModal: false,
+      clickSettingChoice: '',
     };
   },
   computed: {
@@ -770,7 +772,8 @@ export default {
       this.shouldUpdateFields = true;
       this.retrieveLog();
     },
-    handleSettingMenuClick() {
+    handleSettingMenuClick(val) {
+      this.clickSettingChoice = val;
       this.isShowSettingModal = true;
     },
     // 添加过滤条件
@@ -1394,9 +1397,6 @@ export default {
     handleInitTipsHidden() {
       this.hasExpandInitTipsShown = true;
       this.showExpandInitTips = false;
-    },
-    closeSetting() {
-      this.isShowSettingModal = false;
     },
   },
 };
