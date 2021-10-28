@@ -323,8 +323,9 @@
               <span v-if="dealyShowCheck" class="bk-icon icon-check-circle-shape absl" style="color: #45E35F;"></span>
             </div>
             <span v-if="isClickSubmit">
-              {{addRuleConfigure.isDetection ? $t('retrieveSetting.inspection') : $t('retrieveSetting.inspectionSuccess')}}
-              </span>
+              {{addRuleConfigure.isDetection ?
+                $t('retrieveSetting.inspection') : $t('retrieveSetting.inspectionSuccess')}}
+            </span>
           </div>
           <div>
             <bk-button
