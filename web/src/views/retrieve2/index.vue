@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="retrieve-container" v-bkloading="{ isLoading: basicLoading }">
+  <div class="retrieve-container" v-bkloading="{ isLoading: false }">
     <!-- 初始化加载时显示这个空的盒子 避免先显示内容 再显示无权限页面 -->
     <div v-if="!hasAuth && !authPageInfo && !isNoIndexSet" style="height: 100%;background: #f4f7fa;"></div>
     <!-- 单独的申请权限页面 -->
@@ -68,6 +68,9 @@
     </div>
     <!-- 检索页详情页 -->
     <div v-if="(hasAuth || isNoIndexSet) && !isRetrieveHome" class="retrieve-detail-container">
+      <div class="page-loading-wrap" v-if="basicLoading || tableLoading">
+        <div class="page-loading-bar"></div>
+      </div>
       <!-- 检索详情页左侧 -->
       <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
         <!-- 监控显示的 tab 切换 -->
@@ -347,7 +350,7 @@ export default {
       authPageInfo: null,
       isSearchAllowed: null, // true 有权限，false 无权限，null 未知权限
       renderTable: true, // 显示字段更新后手动触发重新渲染表格
-      basicLoading: false, // view loading
+      basicLoading: true, // view loading
       tableLoading: false, // 表格 loading
       requesting: false,
       isRetrieveHome: !this.$route.params.indexId?.toString() && !this.$route.params.from, // 检索首页
@@ -908,6 +911,8 @@ export default {
 
     // 检索日志
     async retrieveLog(historyParams) {
+      this.basicLoading = true;
+
       if (!this.indexId) {
         return;
       }
@@ -1068,6 +1073,7 @@ export default {
         // 搜索完毕后，如果开启了自动刷新，会在 timeout 后自动刷新
         this.$refs.resultHeader && this.$refs.resultHeader.setRefreshTime();
         this.isFavoriteSearch = false;
+        this.basicLoading = false;
       }
     },
 
@@ -1439,6 +1445,50 @@ export default {
         }
       }
     }
+
+    .page-loading-wrap {
+      position: absolute;
+      width: 100%;
+      height: 4px;
+      z-index: 2400;
+      overflow: hidden;
+      background: pink;
+      .page-loading-bar {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        position: absolute;
+        z-index: 10;
+        visibility: visible;
+        display: block;
+        animation: animate-loading-bar 2s linear infinite;
+        background-color: transparent;
+        background-image: linear-gradient(
+            to right,
+            #FF5656 0,
+            #FF5656 50%,
+            #FF9C01 50%,
+            #FF9C01 85%,
+            #2DCB56 85%,
+            #2DCB56 100%
+          );
+        background-repeat: repeat-x;
+        background-size: 50%;
+        width: 200%;
+      }
+      @keyframes animate-loading-bar {
+        0% {
+          -webkit-transform: translateX(0);
+          transform: translateX(0)
+        }
+        to {
+          -webkit-transform: translateX(-50%);
+          transform: translateX(-50%);
+        }
+      }
+    }
+
 
     /*详情页*/
     .retrieve-detail-container {
