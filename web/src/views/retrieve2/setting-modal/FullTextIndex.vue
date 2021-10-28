@@ -23,47 +23,56 @@
 <template>
   <!-- 设置-全文索引 -->
   <div>
-    <bk-form :label-width="100">
+    <bk-form :label-width="200">
       <bk-form-item
-        :label="$t('大小写敏感')"
+        :label="$t('retrieve.ignoreCase')"
         :required="true"
         :property="''">
         <br>
-        <bk-switcher class="ml100" v-model="demo1" theme="primary" size="large"></bk-switcher>
+        <bk-switcher
+          class="ml200" theme="primary" size="large"
+          v-model="demo1"
+          :disabled="!globalEditable"></bk-switcher>
       </bk-form-item>
       <bk-form-item
-        :label="$t('包含中文')"
+        :label="$t('retrieveSetting.containsChinese')"
         :required="true"
         :property="''">
         <br>
-        <bk-switcher class="ml100" v-model="demo1" theme="primary" size="large"></bk-switcher>
+        <bk-switcher
+          class="ml200" theme="primary" size="large"
+          v-model="demo1"
+          :disabled="!globalEditable"></bk-switcher>
       </bk-form-item>
       <bk-form-item
-        :label="$t('分词符')"
+        :label="$t('retrieveSetting.wordBreaker')"
         :required="true"
         :property="''">
         <br>
-        <bk-input class="ml100 w240" :clearable="true" v-model="value"></bk-input>
+        <bk-input class="ml200 w240" :clearable="true" v-model="value" :disabled="!globalEditable"></bk-input>
       </bk-form-item>
-      <bk-form-item class="ml100" style="margin-top: 40px">
+      <bk-form-item class="ml200" style="margin-top: 40px">
         <bk-button
           theme="primary"
           :title="$t('保存')"
-          @click.stop.prevent="handleSubmit"
-          :loading="isHandle">
+          :disabled="!globalEditable"
+          :loading="isHandle"
+          @click.stop.prevent="handleSubmit">
           {{ $t('保存') }}
         </bk-button>
         <bk-button
           theme="default"
-          :title="$t('重置')"
+          :title="$t('dataManage.Reset')"
+          :disabled="!globalEditable"
           @click="cancel">
-          {{ $t('重置') }}
+          {{ $t('dataManage.Reset') }}
         </bk-button>
         <bk-button
           theme="default"
-          :title="$t('恢复默认')"
+          :title="$t('retrieveSetting.reset')"
+          :disabled="!globalEditable"
           @click="handleReset">
-          {{ $t('恢复默认') }}
+          {{ $t('retrieveSetting.reset') }}
         </bk-button>
       </bk-form-item>
     </bk-form>
@@ -72,11 +81,18 @@
 
 <script>
 export default {
+  props: {
+    globalEditable: {
+      type: Boolean,
+      default: true,
+    },
+  },
   data() {
     return {
       demo1: true,
       rules: {},
       value: '',
+      formData: {},
       isHandle: false,
     };
   },
@@ -92,8 +108,8 @@ export default {
   /deep/ .bk-label{
     text-align: left;
   }
-  .ml100{
-    margin-left: -100px;
+  .ml200{
+    margin-left: -200px;
   }
   .w240{
     width: 240px;
