@@ -23,45 +23,6 @@
 <template>
   <div>
     <div class="result-table-container" data-test-id="retrieve_from_fieldForm">
-      <!-- 表格上的按钮 -->
-      <div class="log-operation">
-        <TimeFormatter></TimeFormatter>
-        <div class="operation-icons">
-          <!-- 字段设置 -->
-          <bk-popover
-            ref="fieldsSettingPopper"
-            trigger="click"
-            placement="bottom-end"
-            theme="light bk-select-dropdown"
-            animation="slide-toggle"
-            :offset="0"
-            :distance="15"
-            :on-show="handleDropdownShow"
-            :on-hide="handleDropdownHide">
-            <slot name="trigger">
-              <div class="operation-icon">
-                <span class="icon log-icon icon-set-icon"></span>
-              </div>
-            </slot>
-            <div slot="content" class="fields-setting-container">
-              <FieldsSetting
-                v-if="showFieldsSetting"
-                :field-alias-map="fieldAliasMap"
-                :retrieve-params="retrieveParams"
-                @confirm="confirmModifyFields"
-                @cancel="closeDropdown" />
-            </div>
-          </bk-popover>
-          <!-- 导出 -->
-          <div
-            :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
-            @click="exportLog"
-            data-test-id="fieldForm_div_exportData"
-            v-bk-tooltips="queueStatus ? $t('btn.export') : undefined">
-            <span class="icon log-icon icon-xiazai"></span>
-          </div>
-        </div>
-      </div>
       <!-- 表格内容 -->
       <bk-table v-if="!renderTable" class="king-table"></bk-table>
       <bk-table
@@ -192,48 +153,19 @@
         @toggleScreenFull="toggleScreenFull"
         @close-dialog="hideDialog" />
     </bk-dialog>
-
-    <bk-dialog
-      v-model="showAsyncExport"
-      theme="primary"
-      ext-cls="async-export-dialog"
-      :mask-close="false"
-      :show-footer="false">
-      <div class="export-container" v-bkloading="{ isLoading: exportLoading }">
-        <span class="bk-icon bk-dialog-warning icon-exclamation"></span>
-        <div class="header">
-          {{ totalCount > 2000000 ? $t('retrieve.dataMoreThanMillion') : $t('retrieve.dataMoreThan') }}
-        </div>
-        <div class="export-type immediate-export">
-          <span class="bk-icon icon-info-circle"></span>
-          <span class="export-text">{{ $t('retrieve.immediateExportDesc') }}</span>
-          <bk-button theme="primary" @click="openDownloadUrl">{{ $t('retrieve.immediateExport') }}</bk-button>
-        </div>
-        <div class="export-type async-export">
-          <span class="bk-icon icon-info-circle"></span>
-          <span v-if="totalCount > 2000000" class="export-text">{{ $t('retrieve.asyncExportMoreDesc') }}</span>
-          <span v-else class="export-text">{{ $t('retrieve.asyncExportDesc') }}</span>
-          <bk-button @click="downloadAsync">{{ $t('retrieve.asyncExport') }}</bk-button>
-        </div>
-      </div>
-    </bk-dialog>
   </div>
 </template>
 
 <script>
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import { setFieldsWidth } from '@/common/util';
-import TimeFormatter from '@/components/common/time-formatter';
 import RealTimeLog from '../../result-comp/RealTimeLog';
 import ContextLog from '../../result-comp/ContextLog';
-import FieldsSetting from '../../result-comp/FieldsSetting';
 import TableColumn from '../../result-comp/TableColumn';
 import { mapState } from 'vuex';
 
 export default {
   components: {
-    TimeFormatter,
-    FieldsSetting,
     TableColumn,
     RealTimeLog,
     ContextLog,
@@ -302,8 +234,6 @@ export default {
       throttle: false, // 滚动节流 是否进入cd
       isPageOver: false, // 前端分页加载是否结束
       finishPolling: false,
-      // isTableRequestLoading: false,
-      // dataListPaged: [], // 将列表数据按 pageSize 分页
       count: 0, // 数据总条数
       pageSize: 50, // 每页展示多少数据
       totalPage: 1,
@@ -311,8 +241,6 @@ export default {
       totalCount: 0,
       scrollHeight: 0,
       limitCount: 2000,
-      queueStatus: false,
-      showFieldsSetting: false, // 字段设置
       fieldsSettingLoading: false,
       webConsoleLoading: false, // 点击 WebConsole 时表格 loading
       cacheOpenMoreList: [], // 暂存点击打开的项集合
@@ -320,8 +248,6 @@ export default {
       showAllHandle: false, // hove操作区域显示全部icon
       overflowHandle: [], // 当操作按钮大于3个时 用于保存超出的icon key
       showScrollTop: false, // 显示滚动到顶部icon
-      showAsyncExport: false, // 异步下载弹窗
-      exportLoading: false,
       isInit: false,
       logDialog: {
         title: '',
@@ -369,9 +295,6 @@ export default {
       bkBizId: state => state.bkBizId,
       clearTableWidth: state => state.clearTableWidth,
     }),
-    showAddMonitor() {
-      return Boolean(window.MONITOR_URL && this.$store.state.topMenu.some(item => item.id === 'monitor'));
-    },
     showMonitorWeb() {
       return this.bkMonitorUrl !== '';
     },
@@ -454,39 +377,6 @@ export default {
     },
   },
   methods: {
-    // 跳转到监控
-    jumpMonitor() {
-      const indexSetId = this.$route.params.indexId;
-      const params = {
-        bizId: this.$store.state.bkBizId,
-        indexSetId,
-        scenarioId: '',
-        indexStatement: this.retrieveParams.keyword, // 查询语句
-        dimension: [], // 监控维度
-        condition: [], // 监控条件
-      };
-      const indexSet = this.indexSetList.find(item => item.index_set_id === indexSetId);
-      if (indexSet) {
-        params.scenarioId = indexSet.category_id;
-      }
-      this.retrieveParams.addition.forEach((item) => {
-        params.condition.push({
-          condition: 'and',
-          key: item.field,
-          method: item.operator === 'eq' ? 'is' : item.operator,
-          value: item.value,
-        });
-      });
-      const urlArr = [];
-      for (const key in params) {
-        if (key === 'dimension' || key === 'condition') {
-          urlArr.push(`${key}=${encodeURI(JSON.stringify(params[key]))}`);
-        } else {
-          urlArr.push(`${key}=${params[key]}`);
-        }
-      }
-      window.open(`${window.MONITOR_URL}/?${urlArr.join('&')}#/strategy-config/add`, '_blank');
-    },
     reset() {
       this.newScrollHeight = 0;
       this.$nextTick(() => {
@@ -522,99 +412,6 @@ export default {
         }
       }, 200);
     },
-
-    // 字段设置
-    handleDropdownShow() {
-      this.showFieldsSetting = true;
-    },
-    handleDropdownHide() {
-      this.showFieldsSetting = false;
-    },
-    confirmModifyFields(displayFieldNames, showFieldAlias) {
-      this.$emit('fieldsUpdated', displayFieldNames, showFieldAlias);
-      this.closeDropdown();
-    },
-    closeDropdown() {
-      this.showFieldsSetting = false;
-      this.$refs.fieldsSettingPopper.instance.hide();
-    },
-    changeTotalCount(count) {
-      this.totalCount = count;
-    },
-    changeQueueRes(status) {
-      this.queueStatus = status;
-    },
-    // 导出日志
-    exportLog() {
-      if (!this.queueStatus) return;
-
-      // 导出数据为空
-      if (!this.totalCount) {
-        const infoDialog = this.$bkInfo({
-          type: 'error',
-          title: this.$t('retrieve.exportFailed'),
-          subTitle: this.$t('retrieve.dataNone'),
-          showFooter: false,
-        });
-        setTimeout(() => infoDialog.close(), 3000);
-      } else if (this.totalCount > 10000) {
-        // 导出数量大于1w且小于100w 可直接下载1w 或 异步全量下载全部
-        // 通过 field 判断是否支持异步下载
-        if (this.asyncExportUsable) {
-          this.showAsyncExport = true;
-        } else {
-          const h = this.$createElement;
-          this.$bkInfo({
-            type: 'warning',
-            title: this.$t('retrieve.dataMoreThan'),
-            subHeader: h('p', {
-              style: {
-                whiteSpace: 'normal',
-                padding: '0 60px',
-              },
-            }, `${this.$t('retrieve.reasonFor')}${this.asyncExportUsableReason}${this.$t('retrieve.reasonDesc')}`),
-            okText: this.$t('retrieve.immediateExport'),
-            confirmFn: () => this.openDownloadUrl(),
-          });
-        }
-      } else {
-        this.openDownloadUrl();
-      }
-    },
-    openDownloadUrl() {
-      const exportParams = encodeURIComponent(JSON.stringify({
-        ...this.retrieveParams,
-        size: this.totalCount,
-      }));
-      // eslint-disable-next-line max-len
-      const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
-      window.open(targetUrl);
-    },
-    downloadAsync() {
-      const data = { ...this.retrieveParams };
-      data.size = this.totalCount;
-      data.time_range = 'customized';
-
-      this.exportLoading = true;
-      this.$http.request('retrieve/exportAsync', {
-        params: {
-          index_set_id: this.$route.params.indexId,
-        },
-        data,
-      }).then((res) => {
-        if (res.result) {
-          this.$bkMessage({
-            theme: 'success',
-            message: res.data.prompt,
-          });
-        }
-      })
-        .finally(() => {
-          this.showAsyncExport = false;
-          this.exportLoading = false;
-        });
-    },
-
     // 展开表格行JSON
     tableRowClick(row) {
       this.$refs.resultTable.toggleRowExpansion(row);
@@ -785,283 +582,121 @@ export default {
 </script>
 
 
-<style lang="scss" scoped>
-  .result-scroll-container {
-    margin-top: 48px;
-    // height: calc(100% - 48px);
-    overflow: auto;
-  }
-
-  .result-text {
-    font-size: 12px;
-    color: #63656e;
-    padding: 10px 20px;
-
-    .monitor-link {
-      color: #3a84ff;
-    }
-
-    .total-count {
-      color: #f00;
-    }
-  }
-
-  .result-table-container {
-    position: relative;
-    background: #fff;
-    .cut-line {
-      position: absolute;
-      top: 0;
-      left: 24px;
-      right: 24px;
-      height: 1px;
-      border-top: 1px solid#f0f1f5;;
-    }
-
-    .log-operation {
-      position: relative;
-      display: flex;
-      justify-content: space-between;
-      line-height: 30px;
-
-      .operation-icons {
+<style lang="scss">
+.tippy-tooltip.light-theme.bk-table-setting-popover-content-theme {
+  padding: 0;
+}
+.result-table-container {
+  position: relative;
+  background: #fff;
+  .king-table {
+    margin-top: 16px;
+    /deep/ .bk-table-body-wrapper {
+      min-height: calc(100vh - 560px);
+      .bk-table-empty-block {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        width: 74px;
-
-        .operation-icon {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: 32px;
-          height: 32px;
-          cursor: pointer;
-          border: 1px solid #c4c6cc;
-          transition: boder-color .2s;
-          border-radius: 2px;
-          outline: none;
-
-          &:hover {
-            border-color: #979ba5;
-            transition: boder-color .2s;
-          }
-
-          &:active {
-            border-color: #3a84ff;
-            transition: boder-color .2s;
-          }
-
-          .log-icon {
-            width: 16px;
-            font-size: 16px;
-            color: #979ba5;
-          }
-        }
-        .disabled-icon {
-          background-color: #fff;
-          border-color: #dcdee5;
-          cursor: not-allowed;
-          &:hover,
-          .log-icon {
-            border-color: #dcdee5;
-            color: #c4c6cc;
-          }
+        min-height: calc(100vh - 600px);;
+      }
+    }
+    /deep/ .cell {
+      display: inline-table;
+      .operation-button:not(:last-child) {
+        padding-right: 8px;
+      }
+    }
+    /deep/ td mark {
+      background: #f3e186;
+    }
+    .json-view-wrapper {
+      padding: 10px 0;
+      /deep/ .vjs-tree {
+        font-size: 12px !important;
+        .vjs-value__string {
+          white-space: pre-wrap;
+          tab-size: 3;
         }
       }
     }
-
-    .king-table {
-      margin-top: 16px;
-
-      /deep/ .bk-table-body-wrapper {
-        min-height: calc(100vh - 560px);
-
-        .bk-table-empty-block {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: calc(100vh - 600px);;
-        }
-      }
-
-      /deep/ .cell {
-        display: inline-table;
-
-        .operation-button:not(:last-child) {
-          padding-right: 8px;
-        }
-      }
-
-      /deep/ td mark {
-        background: #f3e186;
-      }
-
-      .json-view-wrapper {
-        padding: 10px 0;
-
-        /deep/ .vjs-tree {
-          font-size: 12px !important;
-
-          .vjs-value__string {
-            white-space: pre-wrap;
-            tab-size: 3;
-          }
-        }
-      }
-
-      /deep/ .result-table-loading {
-        width: calc(100% - 2px);
-        height: calc(100% - 2px);
-      }
-
-      .handle-card {
-        display: inline-block;
-        margin-left: 10px;
-        width: 14px;
-        height: 14px;
-
-        &:first-child {
-          margin-left: 0;
-        }
-      }
-
-      .icon-handle {
-        font-size: 14px;
-        color: #979ba5;
-        cursor: pointer;
-
-        &:hover {
-          color: #3a84ff;
-        }
-      }
-
-      .handle-content {
-        display: flex;
-        position: absolute;
-        right: 0;
-        width: 84px;
-        height: 100%;
-        padding: 0 10px;
-        align-items: center;
-        top: 0;
-        overflow: hidden;
-        justify-content: flex-end;
-      }
-
-      .fix-content {
-        width: auto;
-        background-color: #f0f1f5;
-      }
+    /deep/ .result-table-loading {
+      width: calc(100% - 2px);
+      height: calc(100% - 2px);
     }
-
-    /deep/ .render-header {
-      .field-type-icon {
-        width: 12px;
-        margin: 0 4px 0 0;
-        font-size: 12px;
-        color: #979ba5;
-      }
-    }
-  }
-
-  .fixed-scroll-top-btn {
-    position: fixed;
-    bottom: 24px;
-    right: 14px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 36px;
-    height: 36px;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .2);
-    border: 1px solid #dde4eb;
-    border-radius: 4px;
-    color: #63656e;
-    background: #f0f1f5;
-    cursor: pointer;
-    z-index: 2100;
-    transition: all .2s;
-
-    &:hover {
-      color: #fff;
-      background: #979ba5;
-      transition: all .2s;
-    }
-
-    .bk-icon {
-      font-size: 20px;
-      font-weight: bold;
-    }
-  }
-  // 日志全屏状态下的样式
-  .log-full-dialog {
-    /deep/ .bk-dialog-content {
-      margin-bottom: 0 !important;
-    }
-  }
-  // 设置列表字段
-  .fields-setting-container {
-    width: 725px;
-    height: 482px;
-    border: 1px solid #dcdee5;
-    box-sizing: border-box;
-    color: #63656e;
-    font-size: 14px;
-  }
-
-  .async-export-dialog {
-    .header {
-      padding: 18px 0px 32px !important;
-    }
-
-    .export-container {
-      text-align: center;
-    }
-
-    .bk-dialog-warning {
-      display: block;
-      margin: 0 auto;
-      width: 58px;
-      height: 58px;
-      line-height: 58px;
-      font-size: 30px;
-      color: #fff;
-      border-radius: 50%;
-      background-color: #ffb848;
-    }
-
-    .header {
-      padding: 18px 24px 32px;
+    .handle-card {
       display: inline-block;
-      width: 100%;
-      font-size: 24px;
-      color: #313238;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      line-height: 1.5;
-      margin: 0;
+      margin-left: 10px;
+      width: 14px;
+      height: 14px;
+      &:first-child {
+        margin-left: 0;
+      }
     }
-
-    .export-type {
-      margin-bottom: 24px;
-      padding: 0 22px;
+    .icon-handle {
+      font-size: 14px;
+      color: #979ba5;
+      cursor: pointer;
+      &:hover {
+        color: #3a84ff;
+      }
+    }
+    .handle-content {
       display: flex;
+      position: absolute;
+      right: 0;
+      width: 84px;
+      height: 100%;
+      padding: 0 10px;
       align-items: center;
-
-      .export-text {
-        margin-left: 8px;
-        max-width: 184px;
-        text-align: left;
-        font-size: 14px;
-        color: #313238;
-        line-height: 18px;
-      }
-
-      .bk-button {
-        margin-left: auto;
-      }
+      top: 0;
+      overflow: hidden;
+      justify-content: flex-end;
+    }
+    .fix-content {
+      width: auto;
+      background-color: #f0f1f5;
     }
   }
+  /deep/ .render-header {
+    .field-type-icon {
+      width: 12px;
+      margin: 0 4px 0 0;
+      font-size: 12px;
+      color: #979ba5;
+    }
+  }
+}
+.fixed-scroll-top-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .2);
+  border: 1px solid #dde4eb;
+  border-radius: 4px;
+  color: #63656e;
+  background: #f0f1f5;
+  cursor: pointer;
+  z-index: 2100;
+  transition: all .2s;
+  &:hover {
+    color: #fff;
+    background: #979ba5;
+    transition: all .2s;
+  }
+  .bk-icon {
+    font-size: 20px;
+    font-weight: bold;
+  }
+}
+// 日志全屏状态下的样式
+.log-full-dialog {
+  /deep/ .bk-dialog-content {
+    margin-bottom: 0 !important;
+  }
+}
 </style>

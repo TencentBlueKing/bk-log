@@ -274,6 +274,9 @@ export default {
   收藏: 'Favorites',
   未收藏: 'Not Favorites',
   历史记录: 'Search History',
+  表格: 'Table',
+  原始: 'Origin',
+  换行: 'Wrap',
   // 检索设置弹窗
   retrieveSetting: {
     setting: 'Setting',
