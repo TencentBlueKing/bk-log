@@ -21,28 +21,28 @@
   -->
 
 <template>
-  <div class="origin-log-panel">
-    <div class="origin-log-panel-tools">
+  <div class="original-log-panel">
+    <div class="original-log-panel-tools">
       <div class="bk-button-group">
         <bk-button
-          :class="contentType === 'table' ? 'is-selected' : ''"
+          :class="!showOriginalLog ? 'is-selected' : ''"
           @click="contentType = 'table'"
           size="small">
           {{ $t('表格') }}
         </bk-button>
         <bk-button
-          :class="contentType === 'origin' ? 'is-selected' : ''"
-          @click="contentType = 'origin'"
+          :class="showOriginalLog ? 'is-selected' : ''"
+          @click="contentType = 'original'"
           size="small">
           {{ $t('原始') }}
         </bk-button>
       </div>
       <div class="tools-more">
-        <div class="wrap-switch">
+        <div :style="`margin-right: ${showOriginalLog ? 0 : 26}px`">
           <span class="switch-label">{{ $t('换行') }}</span>
           <bk-switcher v-model="isWrap" theme="primary"></bk-switcher>
         </div>
-        <TimeFormatter></TimeFormatter>
+        <TimeFormatter v-show="!showOriginalLog"></TimeFormatter>
         <div class="operation-icons">
           <div
             :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
@@ -52,6 +52,7 @@
             <span class="icon log-icon icon-xiazai"></span>
           </div>
           <bk-popover
+            v-if="!showOriginalLog"
             ref="fieldsSettingPopper"
             trigger="click"
             placement="bottom-end"
@@ -78,11 +79,13 @@
         </div>
       </div>
     </div>
+
     <table-log
       v-bind="$attrs"
       v-on="$listeners"
-      :retrieve-params="retrieveParams"
-    ></table-log>
+      :show-original="showOriginalLog"
+      :retrieve-params="retrieveParams">
+    </table-log>
 
     <!-- 导出弹窗提示 -->
     <bk-dialog
@@ -147,6 +150,9 @@ export default {
     };
   },
   computed: {
+    showOriginalLog() {
+      return this.contentType === 'original';
+    },
     asyncExportUsable() {
       return this.$attrs['async-export-usable'];
     },
@@ -246,17 +252,14 @@ export default {
 <style lang="scss" scoped>
 @import '@/scss/mixins/flex.scss';
 
-.origin-log-panel {
-  .origin-log-panel-tools {
+.original-log-panel {
+  .original-log-panel-tools {
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
   .tools-more {
     @include flex-center;
-    .wrap-switch {
-      margin-right: 20px;
-    }
     .switch-label {
       margin-right: 2px;
       color: #63656E;

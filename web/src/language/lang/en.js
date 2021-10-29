@@ -277,6 +277,7 @@ export default {
   表格: 'Table',
   原始: 'Origin',
   换行: 'Wrap',
+  展开全部: 'Expand All',
   // 检索设置弹窗
   retrieveSetting: {
     setting: 'Setting',

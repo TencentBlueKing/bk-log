@@ -29,6 +29,8 @@
         ref="resultTable"
         class="king-table"
         :data="tableList"
+        :show-header="!showOriginal"
+        :outer-border="!showOriginal"
         :empty-text="$t('retrieve.notData')"
         @row-click="tableRowClick"
         @row-mouse-enter="handleMouseEnter"
@@ -43,7 +45,30 @@
           </template>
         </bk-table-column>
         <!-- 显示字段 -->
-        <template v-for="(field,index) in visibleFields">
+        <!-- 原始 -->
+        <template v-if="showOriginal">
+          <bk-table-column width="160">
+            <template slot-scope="{ row }">
+              <span class="time-field">{{ formatDate(Number(row[timeField]) || '') }}</span>
+            </template>
+          </bk-table-column>
+          <bk-table-column class-name="original-str">
+            <!-- eslint-disable-next-line -->
+            <template slot-scope="{ row, column, $index }">
+              <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+                <span>{{ JSON.stringify(row) }}</span>
+                <p
+                  v-if="!cacheExpandStr.includes($index)"
+                  :class="['show-whole-btn', { 'is-hover': curHoverIndex === $index }]"
+                  @click.stop="handleShowWhole($index)">
+                  {{ $t('展开全部') }}
+                </p>
+              </div>
+            </template>
+          </bk-table-column>
+        </template>
+        <!-- 表格 -->
+        <template v-else v-for="(field,index) in visibleFields">
           <bk-table-column
             align="left"
             :key="field.field_name"
@@ -153,6 +178,7 @@ import RealTimeLog from '../../result-comp/RealTimeLog';
 import ContextLog from '../../result-comp/ContextLog';
 import TableColumn from '../../result-comp/TableColumn';
 import { mapState } from 'vuex';
+import { formatDate } from '@/common/util';
 
 export default {
   components: {
@@ -224,9 +250,18 @@ export default {
       type: Boolean,
       required: false,
     },
+    showOriginal: {
+      type: Boolean,
+      default: false,
+    },
+    timeField: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
+      formatDate,
       throttle: false, // 滚动节流 是否进入cd
       finishPolling: false,
       count: 0, // 数据总条数
@@ -283,6 +318,7 @@ export default {
           icon: '',
         },
       },
+      cacheExpandStr: [],
     };
   },
   computed: {
@@ -327,6 +363,15 @@ export default {
     },
   },
   watch: {
+    retrieveParams: {
+      deep: true,
+      handler() {
+        this.cacheExpandStr = [];
+      },
+    },
+    '$route.params.indexId'() { // 切换索引集重置状态
+      this.cacheExpandStr = [];
+    },
     clearTableWidth() {
       const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
       const { params: { indexId }, query: { bizId } } = this.$route;
@@ -362,12 +407,19 @@ export default {
     // 展开表格行JSON
     tableRowClick(row) {
       this.$refs.resultTable.toggleRowExpansion(row);
+      setTimeout(() => {
+        this.curHoverIndex = -1;
+      }, 80);
     },
     handleMouseEnter(index) {
-      this.curHoverIndex = index;
+      setTimeout(() => {
+        this.curHoverIndex = index;
+      }, 80);
     },
     handleMouseLeave() {
-      this.curHoverIndex = -1;
+      setTimeout(() => {
+        this.curHoverIndex = -1;
+      }, 80);
     },
     handleHeaderDragend(newWidth, oldWidth, { index }) {
       const { params: { indexId }, query: { bizId } } = this.$route;
@@ -524,6 +576,9 @@ export default {
       // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
     },
+    handleShowWhole(index) {
+      this.cacheExpandStr.push(index);
+    },
   },
 };
 </script>
@@ -538,7 +593,7 @@ export default {
   background: #fff;
   .king-table {
     margin-top: 16px;
-    /deep/ .bk-table-body-wrapper {
+    .bk-table-body-wrapper {
       min-height: calc(100vh - 560px);
       .bk-table-empty-block {
         display: flex;
@@ -547,13 +602,13 @@ export default {
         min-height: calc(100vh - 600px);;
       }
     }
-    /deep/ .cell {
+    .cell {
       display: inline-table;
       .operation-button:not(:last-child) {
         padding-right: 8px;
       }
     }
-    /deep/ td mark {
+    td mark {
       background: #f3e186;
     }
     .json-view-wrapper {
@@ -602,6 +657,36 @@ export default {
     .fix-content {
       width: auto;
       background-color: #f0f1f5;
+    }
+    .time-field {
+      font-weight: 700;
+    }
+    .original-str {
+      .cell {
+        padding: 10px 14px;
+      }
+      .str-content {
+        position: relative;
+        display: inline-block;
+        line-height: 20px;
+        overflow: hidden;
+        &.is-limit {
+          max-height: 96px;
+        }
+      }
+      .show-whole-btn {
+        position: absolute;
+        top: 80px;
+        width: 100%;
+        height: 24px;
+        color: #3A84FF;
+        font-size: 12px;
+        background: #fff;
+        cursor: pointer;
+        &.is-hover {
+          background-color: #f0f1f5;
+        }
+      }
     }
   }
   /deep/ .render-header {

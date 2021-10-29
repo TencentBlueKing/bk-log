@@ -110,8 +110,8 @@ const store = new Vuex.Store({
       state.userMeta = payload;
     },
     /**
-         * 设置初始化 loading 是否显示
-         */
+     * 设置初始化 loading 是否显示
+     */
     setPageLoading(state, loading) {
       state.pageLoading = loading;
     },
@@ -122,25 +122,25 @@ const store = new Vuex.Store({
       state.isFormatDate = payload;
     },
     /**
-         * 更新当前运行环境
-         * @param {Object} state store state
-         * @param {String} runVersion 运行环境
-         */
+     * 更新当前运行环境
+     * @param {Object} state store state
+     * @param {String} runVersion 运行环境
+     */
     updateRunVersion(state, runVersion) {
       state.runVersion = runVersion;
     },
     /**
-         * 更新当前用户 user
-         *
-         * @param {Object} state store state
-         * @param {Object} user user 对象
-         */
+     * 更新当前用户 user
+     *
+     * @param {Object} state store state
+     * @param {Object} user user 对象
+     */
     updateUser(state, user) {
       state.user = Object.assign({}, user);
     },
     /**
-         * 更新当前路由对应导航
-         */
+     * 更新当前路由对应导航
+     */
     updateCurrentMenu(state, current) {
       Vue.set(state, 'currentMenu', current);
     },
