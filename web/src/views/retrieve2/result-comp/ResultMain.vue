@@ -45,7 +45,10 @@
       v-on="$listeners"
       :retrieve-params="retrieveParams"
       :total-count="totalCount"
-      :queue-status="queueStatus" />
+      :queue-status="queueStatus"
+      :table-list="tableList"
+      :origin-table-list="originTableList"
+      :is-page-over="isPageOver" />
     <!-- 滚动到顶部 -->
     <div class="fixed-scroll-top-btn" v-show="showScrollTop" @click="scrollToTop">
       <i class="bk-icon icon-angle-up"></i>
@@ -75,6 +78,10 @@ export default {
       type: Number,
       required: true,
     },
+    tableData: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
@@ -84,7 +91,7 @@ export default {
       isPageOver: false, // 前端分页加载是否结束
       finishPolling: false,
       count: 0, // 数据总条数
-      pageSize: 200, // 每页展示多少数据
+      pageSize: 50, // 每页展示多少数据
       totalPage: 1,
       currentPage: 1, // 当前加载了多少页
       totalCount: 0,
@@ -98,7 +105,6 @@ export default {
   computed: {
     ...mapState({
       bkBizId: state => state.bkBizId,
-      clearTableWidth: state => state.clearTableWidth,
     }),
     showAddMonitor() {
       return Boolean(window.MONITOR_URL && this.$store.state.topMenu.some(item => item.id === 'monitor'));
@@ -131,36 +137,10 @@ export default {
         this.tableList.push(...data.list);
         this.originTableList.push(...data.origin_log_list);
         this.$nextTick(() => {
-          this.$parent.$parent.$parent.$refs.scrollContainer.scrollTop = this.newScrollHeight;
+          this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
         });
         this.isPageOver = false;
       }
-    },
-    clearTableWidth() {
-      const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
-      const { params: { indexId }, query: { bizId } } = this.$route;
-      if (columnObj === null || JSON.stringify(columnObj) === '{}') {
-        return;
-      }
-      const isHaveBizId = Object.keys(columnObj).some(el => el === bizId);
-
-      if (!isHaveBizId || columnObj[bizId].fields[indexId] === undefined) {
-        return;
-      }
-
-      for (const bizKey in columnObj) {
-        if (bizKey === bizId) {
-          for (const fieldKey in columnObj[bizKey].fields) {
-            if (fieldKey === indexId) {
-              delete columnObj[bizId].fields[indexId];
-              columnObj[bizId].indexsetIds.splice(columnObj[bizId].indexsetIds.indexOf(indexId, 1));
-              columnObj[bizId].indexsetIds.length === 0 && delete columnObj[bizId];
-            }
-          }
-        }
-      }
-
-      localStorage.setItem('table_column_width_obj', JSON.stringify(columnObj));
     },
   },
   methods: {
@@ -214,23 +194,23 @@ export default {
       this.$easeScroll(0, 300, this.$refs.scrollContainer);
     },
     handleScroll() {
-      // if (this.throttle || this.isPageOver) {
-      //   return;
-      // }
-      // this.throttle = true;
-      // setTimeout(() => {
-      //   this.throttle = false;
-      //   const el = this.$refs.scrollContainer;
-      //   this.showScrollTop = el.scrollTop > 550;
-      //   if (el.scrollHeight - el.offsetHeight - el.scrollTop < 100) {
-      //     if (this.count === this.limitCount || this.finishPolling) return;
+      if (this.throttle || this.isPageOver) {
+        return;
+      }
+      this.throttle = true;
+      setTimeout(() => {
+        this.throttle = false;
+        const el = this.$refs.scrollContainer;
+        this.showScrollTop = el.scrollTop > 550;
+        if (el.scrollHeight - el.offsetHeight - el.scrollTop < 100) {
+          if (this.count === this.limitCount || this.finishPolling) return;
 
-      //     this.isPageOver = true;
-      //     this.currentPage += 1;
-      //     this.newScrollHeight = el.scrollTop;
-      //     this.$emit('request-table-data');
-      //   }
-      // }, 200);
+          this.isPageOver = true;
+          this.currentPage += 1;
+          this.newScrollHeight = el.scrollTop;
+          this.$emit('request-table-data');
+        }
+      }, 200);
     },
     changeTotalCount(count) {
       this.totalCount = count;

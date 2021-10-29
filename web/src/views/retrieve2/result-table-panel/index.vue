@@ -34,9 +34,6 @@
         v-show="active === 'origin'"
         v-bind="$attrs"
         v-on="$listeners"
-        :total-count="totalCount"
-        :retrieve-params="retrieveParams"
-        :queue-status="queueStatus"
       />
       <log-clustering v-show="active === 'clustering'" />
     </div>
@@ -50,18 +47,6 @@ import LogClustering from './log-clustering.vue';
 export default {
   components: { OriginLog, LogClustering },
   props: {
-    totalCount: {
-      type: Number,
-      default: 0,
-    },
-    retrieveParams: {
-      type: Object,
-      required: true,
-    },
-    queueStatus: {
-      type: Boolean,
-      default: true,
-    },
   },
   data() {
     return {

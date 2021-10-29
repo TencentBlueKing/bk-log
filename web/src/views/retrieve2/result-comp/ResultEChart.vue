@@ -30,7 +30,7 @@
       :title="$t('总趋势')"
       :menu-list="chartOptions.tool.list"
       :is-fold="isFold"
-      :loading="isLoading"
+      :loading="isLoading || !finishPolling"
       @toggle-expand="toggleExpand"
       @menu-click="handleMoreToolItemSet">
     </chart-title>

@@ -24,10 +24,8 @@
   <div>
     <div class="result-table-container" data-test-id="retrieve_from_fieldForm">
       <!-- 表格内容 -->
-      <bk-table v-if="!renderTable" class="king-table"></bk-table>
+      <!-- <bk-table v-if="!renderTable" class="king-table"></bk-table> -->
       <bk-table
-        v-else
-        v-bkloading="{ isLoading: tableLoading || webConsoleLoading, zIndex: 0, extCls: 'result-table-loading' }"
         ref="resultTable"
         class="king-table"
         :data="tableList"
@@ -111,21 +109,14 @@
         </bk-table-column>
       </bk-table>
       <!-- 表格底部内容 -->
-      <template v-if="tableList.length && visibleFields.length">
-        <p class="more-desc" v-if="!isPageOver && count === limitCount">{{ $t('retrieve.showMore') }}
-          <a href="javascript: void(0);" @click="scrollToTop">{{ $t('btn.backToTop') }}</a>
-        </p>
-        <div
-          v-if="isPageOver"
-          v-bkloading="{ isLoading: true }"
-          style="height: 40px;">
-        </div>
-      </template>
-    </div>
-
-    <!-- 滚动到顶部 -->
-    <div class="fixed-scroll-top-btn" v-show="showScrollTop" @click="scrollToTop">
-      <i class="bk-icon icon-angle-up"></i>
+      <p class="more-desc" v-if="tableList.length === limitCount">{{ $t('retrieve.showMore') }}
+        <a href="javascript: void(0);" @click="scrollToTop">{{ $t('btn.backToTop') }}</a>
+      </p>
+      <div
+        v-if="tableList.length && visibleFields.length && isPageOver"
+        v-bkloading="{ isLoading: true }"
+        style="height: 40px;">
+      </div>
     </div>
 
     <!-- 实时滚动日志/上下文 -->
@@ -158,7 +149,6 @@
 
 <script>
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
-import { setFieldsWidth } from '@/common/util';
 import RealTimeLog from '../../result-comp/RealTimeLog';
 import ContextLog from '../../result-comp/ContextLog';
 import TableColumn from '../../result-comp/TableColumn';
@@ -181,10 +171,6 @@ export default {
       required: true,
     },
     retrieveParams: {
-      type: Object,
-      required: true,
-    },
-    tableData: {
       type: Object,
       required: true,
     },
@@ -226,13 +212,22 @@ export default {
       type: String,
       default: '',
     },
+    tableList: {
+      type: Array,
+      required: true,
+    },
+    originTableList: {
+      type: Array,
+      required: true,
+    },
+    isPageOver: {
+      type: Boolean,
+      required: false,
+    },
   },
   data() {
     return {
-      originTableList: [],
-      tableList: [],
       throttle: false, // 滚动节流 是否进入cd
-      isPageOver: false, // 前端分页加载是否结束
       finishPolling: false,
       count: 0, // 数据总条数
       pageSize: 50, // 每页展示多少数据
@@ -332,23 +327,6 @@ export default {
     },
   },
   watch: {
-    tableData(data) {
-      this.finishPolling = data && data.finishPolling;
-      if (data?.list?.length) {
-        if (this.isInit) {
-          // 根据接口 data.fields ==> item.max_length 设置各个字段的宽度比例
-          setFieldsWidth(this.visibleFields, data.fields, 500);
-          this.isInit = true;
-        }
-        this.count += data.list.length;
-        this.tableList.push(...data.list);
-        this.originTableList.push(...data.origin_log_list);
-        this.$nextTick(() => {
-          this.$parent.$parent.$parent.$refs.scrollContainer.scrollTop = this.newScrollHeight;
-        });
-        this.isPageOver = false;
-      }
-    },
     clearTableWidth() {
       const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
       const { params: { indexId }, query: { bizId } } = this.$route;
@@ -377,40 +355,9 @@ export default {
     },
   },
   methods: {
-    reset() {
-      this.newScrollHeight = 0;
-      this.$nextTick(() => {
-        this.$parent.$parent.$parent.$refs.scrollContainer.scrollTop = this.newScrollHeight;
-      });
-      this.count = 0;
-      this.currentPage = 1;
-      this.originTableList = [];
-      this.tableList = [];
-      this.isInit = false;
-      this.finishPolling = false;
-    },
     // 滚动到顶部
     scrollToTop() {
       this.$easeScroll(0, 300, this.$parent.$parent.$parent.$refs.scrollContainer);
-    },
-    handleScroll() {
-      if (this.throttle || this.isPageOver) {
-        return;
-      }
-      this.throttle = true;
-      setTimeout(() => {
-        this.throttle = false;
-        const el = this.$parent.$parent.$parent.$refs.scrollContainer;
-        this.showScrollTop = el.scrollTop > 550;
-        if (el.scrollHeight - el.offsetHeight - el.scrollTop < 100) {
-          if (this.count === this.limitCount || this.finishPolling) return;
-
-          this.isPageOver = true;
-          this.currentPage += 1;
-          this.newScrollHeight = el.scrollTop;
-          this.$emit('request-table-data');
-        }
-      }, 200);
     },
     // 展开表格行JSON
     tableRowClick(row) {
