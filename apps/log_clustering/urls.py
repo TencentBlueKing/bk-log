@@ -20,8 +20,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from django.conf.urls import url, include
 from rest_framework import routers
 
+from apps.log_clustering.views.pattern_views import PatternViewSet
+
 router = routers.DefaultRouter(trailing_slash=True)
-router.register(r"sample_set", "", basename="sample_set")
+# router.register(r"sample_set", "", basename="sample_set")
+router.register(r"pattern", PatternViewSet, basename="pattern_set")
 
 urlpatterns = [
     url(r"^", include(router.urls)),
