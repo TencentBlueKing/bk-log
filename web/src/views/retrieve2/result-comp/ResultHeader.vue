@@ -257,8 +257,8 @@ export default {
     handleVisibilityChange() { // 窗口隐藏时取消轮询，恢复时恢复轮询（原来是自动刷新就恢复自动刷新，原来不刷新就不会刷新）
       document.hidden ? clearTimeout(this.refreshTimer) : this.setRefreshTime();
     },
-    handleMenuClick() {
-      this.$emit('settingMenuClick');
+    handleMenuClick(val) {
+      this.$emit('settingMenuClick', val);
     },
   },
 };

@@ -91,6 +91,7 @@ import {
   bkVirtualScroll,
   bkOverflowTips,
   bkDivider,
+  bkSpin,
 } from 'bk-magic-vue';
 
 // bkDiff 组件体积较大且不是很常用，因此注释掉。如果需要，打开注释即可
@@ -150,6 +151,7 @@ Vue.use(bkSwiper);
 Vue.use(bkRate);
 Vue.use(bkAnimateNumber);
 Vue.use(bkVirtualScroll);
+Vue.use(bkSpin);
 // bkDiff 组件体积较大且不是很常用，因此注释了。如果需要，打开注释即可
 // Vue.use(bkDiff)
 

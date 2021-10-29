@@ -23,48 +23,52 @@
 <template>
   <!-- 检索-设置 -->
   <bk-dialog
-    v-model="showDialog"
     width="100%"
-    :position="logPosition"
     ext-cls="set-dialog"
+    v-model="showDialog"
+    :position="logPosition"
     :show-mask="false"
     :close-icon="false"
     :show-footer="false"
     :draggable="false"
     :scrollable="true"
+    @value-change="changeChoice"
   >
     <div class="setting-container">
       <div class="setting-title">
-        <span>设置</span>
+        <span>{{$t('retrieveSetting.setting')}}</span>
         <span class="bk-icon icon-close" @click="closeSetting"></span>
       </div>
+
       <div class="setting-main">
         <div class="setting-left">
-          <div v-for="(item,index) of currentList"
-               :key="item.id"
-               :class="['setting-option',currentChoice === index ? 'blue-color' : '']"
-               @click.stop="handleChoice(index)">
+          <div v-for="item of currentList" :key="item.id"
+               :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
+               @click="handleChoice(item.id)">
             <span class="bk-icon icon-block-shape"></span>
             <span style="width: 110px">{{item.name}}</span>
-            <bk-switcher v-model="item.switch" theme="primary" size="small"></bk-switcher>
+            <div @click="handleStopProp">
+              <bk-switcher theme="primary" v-model="item.isEditable"></bk-switcher>
+            </div>
           </div>
         </div>
+
         <div class="setting-right">
           <div class="more-details">
             <div class="details">
-              <p><span>索引集：</span>某某日志</p>
-              <p><span>索引：</span>123</p>
-              <p><span>来源：</span>某某日志/某某</p>
+              <p><span>{{$t('indexSetList.index_set')}}：</span>某某日志</p>
+              <p><span>{{$t('索引')}}：</span>123</p>
+              <p><span>{{$t('来源')}}：</span>某某日志/某某</p>
             </div>
             <div style="color: #3A84FF;cursor: pointer;">
-              更多详情
+              {{$t('retrieveSetting.moreDetails')}}
               <span class="log-icon icon-lianjie"></span>
             </div>
           </div>
           <div class="operation-container">
-            <full-text-index v-if="currentChoice === 0" />
-            <field-extraction v-if="currentChoice === 1" />
-            <log-cluster v-if="currentChoice === 2" />
+            <full-text-index :global-editable="currentList[0].isEditable" v-if="currentChoice === 'index'" />
+            <field-extraction :global-editable="currentList[1].isEditable" v-if="currentChoice === 'extract'" />
+            <log-cluster :global-editable="currentList[2].isEditable" v-if="currentChoice === 'clustering'" />
           </div>
         </div>
       </div>
@@ -88,29 +92,32 @@ export default {
       type: Boolean,
       default: false,
     },
+    selectChoice: {
+      type: String,
+      default: 'index',
+    },
   },
   data() {
     return {
-      demo1: true,
       logPosition: {
         top: 50,
         left: 0,
       },
-      currentChoice: 0,
+      currentChoice: 'index',
       currentList: [{
-        id: 'full_text_index',
-        name: this.$t('fullTextIndex'),
-        switch: true,
+        id: 'index',
+        name: this.$t('retrieveSetting.fullTextIndex'),
+        isEditable: true,
       },
       {
-        id: 'field_extraction',
-        name: this.$t('fieldExtraction'),
-        switch: true,
+        id: 'extract',
+        name: this.$t('retrieveSetting.fieldExtraction'),
+        isEditable: true,
       },
       {
-        id: 'log_cluster',
-        name: this.$t('logCluster'),
-        switch: true,
+        id: 'clustering',
+        name: this.$t('retrieveSetting.logCluster'),
+        isEditable: true,
       }],
     };
   },
@@ -118,8 +125,14 @@ export default {
     closeSetting() {
       this.$emit('closeSetting');
     },
-    handleChoice(number) {
-      this.currentChoice = number;
+    handleChoice(val) {
+      this.currentChoice = val;
+    },
+    handleStopProp(e) {
+      e.stopPropagation();
+    },
+    changeChoice() {
+      this.currentChoice = this.selectChoice;
     },
   },
 };
@@ -142,7 +155,7 @@ export default {
 
 .setting-container{
   height: calc(100vh - 52px);
-  overflow-y: scroll;
+  overflow-y: auto;
 
   .setting-title{
     width: 100%;
@@ -171,7 +184,6 @@ export default {
     height: 100%;
     display: flex;
     position: relative;
-    z-index: 0;
 
     .setting-left{
       min-width: 240px;
@@ -188,7 +200,7 @@ export default {
         align-items: center;
         transition: all .3s;
         &:hover{
-          @extend .blue-color
+          @extend .current-color
         }
       }
       @include container-shadow
@@ -227,7 +239,7 @@ export default {
     }
   }
 
-  .blue-color{
+  .current-color{
     color: #3A84FF;
     background-color: #E1ECFF;
   }
