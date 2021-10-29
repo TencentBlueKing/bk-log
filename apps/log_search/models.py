@@ -29,6 +29,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from apps.exceptions import BizNotExistError
 from apps.feature_toggle.handlers.toggle import feature_switch
+from apps.log_clustering.constants import PatternEnum
 from apps.log_databus.constants import EsSourceType
 from apps.log_search.exceptions import (
     SourceDuplicateException,
@@ -116,6 +117,8 @@ class GlobalConfig(models.Model):
         configs[GlobalTypeEnum.DATA_ENCODING.value] = EncodingsEnum.get_choices_list_dict()
         # ES日志来源类型
         configs[GlobalTypeEnum.ES_SOURCE_TYPE.value] = EsSourceType.get_choices_list_dict()
+        # 日志聚类敏感度
+        configs[GlobalTypeEnum.LOG_CLUSTERING_LEVEL.value] = PatternEnum.get_choices()
         return configs
 
     class Meta:
