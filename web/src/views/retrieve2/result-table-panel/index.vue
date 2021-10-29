@@ -30,13 +30,10 @@
       </bk-tab-panel>
     </bk-tab>
     <div class="panel-content-wrap">
-      <origin-log
+      <original-log
         v-show="active === 'origin'"
         v-bind="$attrs"
         v-on="$listeners"
-        :total-count="totalCount"
-        :retrieve-params="retrieveParams"
-        :queue-status="queueStatus"
       />
       <log-clustering v-show="active === 'clustering'" />
     </div>
@@ -44,24 +41,12 @@
 </template>
 
 <script>
-import OriginLog from './origin-log/index.vue';
+import OriginalLog from './original-log/index.vue';
 import LogClustering from './log-clustering.vue';
 
 export default {
-  components: { OriginLog, LogClustering },
+  components: { OriginalLog, LogClustering },
   props: {
-    totalCount: {
-      type: Number,
-      default: 0,
-    },
-    retrieveParams: {
-      type: Object,
-      required: true,
-    },
-    queueStatus: {
-      type: Boolean,
-      default: true,
-    },
   },
   data() {
     return {
