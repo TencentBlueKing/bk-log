@@ -59,7 +59,7 @@
                 <span>{{ JSON.stringify(row) }}</span>
                 <p
                   v-if="!cacheExpandStr.includes($index)"
-                  :class="['show-whole-btn', { 'is-hover': curHoverIndex === $index }]"
+                  class="show-whole-btn"
                   @click.stop="handleShowWhole($index)">
                   {{ $t('展开全部') }}
                 </p>
@@ -407,19 +407,13 @@ export default {
     // 展开表格行JSON
     tableRowClick(row) {
       this.$refs.resultTable.toggleRowExpansion(row);
-      setTimeout(() => {
-        this.curHoverIndex = -1;
-      }, 80);
+      this.curHoverIndex = -1;
     },
     handleMouseEnter(index) {
-      setTimeout(() => {
-        this.curHoverIndex = index;
-      }, 80);
+      this.curHoverIndex = index;
     },
     handleMouseLeave() {
-      setTimeout(() => {
-        this.curHoverIndex = -1;
-      }, 80);
+      this.curHoverIndex = -1;
     },
     handleHeaderDragend(newWidth, oldWidth, { index }) {
       const { params: { indexId }, query: { bizId } } = this.$route;
@@ -683,9 +677,12 @@ export default {
         font-size: 12px;
         background: #fff;
         cursor: pointer;
-        &.is-hover {
-          background-color: #f0f1f5;
-        }
+        transition: background-color .25s ease;
+      }
+    }
+    .hover-row {
+      .show-whole-btn{
+        background-color: #f0f1f5;
       }
     }
   }
