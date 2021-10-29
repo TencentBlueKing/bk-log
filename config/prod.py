@@ -85,6 +85,7 @@ BK_IAM_RESOURCE_API_HOST = os.getenv("BKAPP_IAM_RESOURCE_API_HOST", "{}{}".forma
 # 权限中心 SaaS host
 BK_IAM_APP_CODE = os.getenv("BK_IAM_V3_APP_CODE", "bk_iam")
 BK_IAM_SAAS_HOST = os.environ.get("BK_IAM_V3_SAAS_HOST", BK_PAAS_HOST + "/o/{}/".format(BK_IAM_APP_CODE))
+STATIC_ROOT = "static"
 
 USE_SMART_V3 = int(os.getenv("USE_SMART_V3", 0))
 if USE_SMART_V3:
