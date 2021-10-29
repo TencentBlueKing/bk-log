@@ -17,8 +17,34 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from apps.utils import ChoicesEnum
 
 CONTENT_PATTERN_INDEX = 1
 LATEST_PUBLISH_STATUS = "latest"
 PATTERN_SIGNATURE_INDEX = 5
 PATTERN_INDEX = 2
+
+HOUR_MINUTES = 60
+PERCENTAGE_RATE = 100
+MIN_COUNT = 0
+EX_MAX_SIZE = 10000
+IS_NEW_PATTERN_PREFIX = "is_new_class"
+AGGS_FIELD_PREFIX = "log_signature"
+
+
+class PatternEnum(ChoicesEnum):
+    LEVEL_01 = "01"
+    LEVEL_03 = "03"
+    LEVEL_05 = "05"
+    LEVEL_07 = "07"
+    LEVEL_09 = "09"
+
+    @classmethod
+    def get_choices(cls) -> tuple:
+        return (
+            cls.LEVEL_01.value,
+            cls.LEVEL_03.value,
+            cls.LEVEL_05.value,
+            cls.LEVEL_07.value,
+            cls.LEVEL_09.value,
+        )

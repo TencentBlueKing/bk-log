@@ -17,8 +17,19 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.apps import AppConfig  # noqa
+from rest_framework import serializers
+
+from apps.log_clustering.constants import PatternEnum
 
 
-class LogClusteringConfig(AppConfig):
-    name = "apps.log_clustering"
+class PatternSearchSerlaizer(serializers.Serializer):
+    host_scopes = serializers.DictField(default={}, required=False)
+    addition = serializers.ListField(allow_empty=True, required=False, default=[])
+    start_time = serializers.DateTimeField(required=False, format="%Y-%m-%d %H:%M:%S")
+    end_time = serializers.DateTimeField(required=False, format="%Y-%m-%d %H:%M:%S")
+    time_range = serializers.CharField(required=False, default="customized")
+    keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    size = serializers.IntegerField(required=False, default=10000)
+    pattern_level = serializers.ChoiceField(required=True, choices=PatternEnum.get_choices())
+    show_new_pattern = serializers.BooleanField(required=True)
+    year_on_year_hour = serializers.IntegerField(required=False, default=0, min_value=0)
