@@ -83,6 +83,7 @@
     <table-log
       v-bind="$attrs"
       v-on="$listeners"
+      :is-wrap="isWrap"
       :show-original="showOriginalLog"
       :retrieve-params="retrieveParams">
     </table-log>

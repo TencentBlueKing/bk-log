@@ -204,16 +204,16 @@ const store = new Vuex.Store({
   },
   actions: {
     /**
-         * 获取用户信息
-         *
-         * @param {Function} commit store commit mutation handler
-         * @param {Object} state store state
-         * @param {Function} dispatch store dispatch action handler
-         * @param {Object} params 请求参数
-         * @param {Object} config 请求的配置
-         *
-         * @return {Promise} promise 对象
-         */
+     * 获取用户信息
+     *
+     * @param {Function} commit store commit mutation handler
+     * @param {Object} state store state
+     * @param {Function} dispatch store dispatch action handler
+     * @param {Object} params 请求参数
+     * @param {Object} config 请求的配置
+     *
+     * @return {Promise} promise 对象
+     */
     userInfo({ commit }, params, config = {}) {
       return http.request('userInfo/getUserInfo', { query: params, config }).then((response) => {
         const userData = response.data || {};
@@ -223,16 +223,16 @@ const store = new Vuex.Store({
     },
 
     /**
-         * 获取业务列表
-         *
-         * @param {Function} commit store commit mutation handler
-         * @param {Object} state store state
-         * @param {Function} dispatch store dispatch action handler
-         * @param {Object} params 请求参数
-         * @param {Object} config 请求的配置
-         *
-         * @return {Promise} promise 对象
-         */
+     * 获取业务列表
+     *
+     * @param {Function} commit store commit mutation handler
+     * @param {Object} state store state
+     * @param {Function} dispatch store dispatch action handler
+     * @param {Object} params 请求参数
+     * @param {Object} config 请求的配置
+     *
+     * @return {Promise} promise 对象
+     */
     getBkBizList({ commit }) {
       return http.request('biz/list', {}).then((response) => {
         const bizList = response.data || [];
@@ -245,16 +245,16 @@ const store = new Vuex.Store({
     },
 
     /**
-         * 获取菜单列表
-         *
-         * @param {Function} commit store commit mutation handler
-         * @param {Object} state store state
-         * @param {Function} dispatch store dispatch action handler
-         * @param {Object} params 请求参数
-         * @param {Object} config 请求的配置
-         *
-         * @return {Promise} promise 对象
-         */
+     * 获取菜单列表
+     *
+     * @param {Function} commit store commit mutation handler
+     * @param {Object} state store state
+     * @param {Function} dispatch store dispatch action handler
+     * @param {Object} params 请求参数
+     * @param {Object} config 请求的配置
+     *
+     * @return {Promise} promise 对象
+     */
     getMenuList({}, projectId) {
       return http.request('meta/menu', {
         query: {

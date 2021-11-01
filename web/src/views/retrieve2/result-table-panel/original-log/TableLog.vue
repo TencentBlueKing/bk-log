@@ -27,7 +27,7 @@
       <!-- <bk-table v-if="!renderTable" class="king-table"></bk-table> -->
       <bk-table
         ref="resultTable"
-        class="king-table"
+        :class="['king-table', { 'is-wrap': isWrap }]"
         :data="tableList"
         :show-header="!showOriginal"
         :outer-border="!showOriginal"
@@ -39,20 +39,23 @@
         <!-- 展开详情 -->
         <bk-table-column type="expand" width="30" align="center" v-if="visibleFields.length">
           <template slot-scope="{ $index }">
-            <div class="json-view-wrapper">
-              <VueJsonPretty :deep="5" :data="originTableList[$index]" />
-            </div>
+            <expand-view
+              v-bind="$attrs"
+              :data="originTableList[$index]"
+              :total-fields="totalFields"
+              @menuClick="handleMenuClick">
+            </expand-view>
           </template>
         </bk-table-column>
         <!-- 显示字段 -->
         <!-- 原始 -->
         <template v-if="showOriginal">
-          <bk-table-column width="160">
+          <bk-table-column class-name="original-time" width="160">
             <template slot-scope="{ row }">
               <span class="time-field">{{ formatDate(Number(row[timeField]) || '') }}</span>
             </template>
           </bk-table-column>
-          <bk-table-column class-name="original-str">
+          <bk-table-column :class-name="`original-str${isWrap ? ' is-wrap' : ''}`">
             <!-- eslint-disable-next-line -->
             <template slot-scope="{ row, column, $index }">
               <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
@@ -78,6 +81,7 @@
             :width="field.width">
             <template slot-scope="{ row }">
               <TableColumn
+                :is-wrap="isWrap"
                 :content="tableRowDeepView(row, field.field_name, field.field_type)"
                 @iconClick="(type, content) => handleIconClick(type, content, field, row)"
               ></TableColumn>
@@ -177,6 +181,7 @@ import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import RealTimeLog from '../../result-comp/RealTimeLog';
 import ContextLog from '../../result-comp/ContextLog';
 import TableColumn from '../../result-comp/TableColumn';
+import ExpandView from './ExpandView.vue';
 import { mapState } from 'vuex';
 import { formatDate } from '@/common/util';
 
@@ -185,6 +190,7 @@ export default {
     TableColumn,
     RealTimeLog,
     ContextLog,
+    ExpandView,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -201,6 +207,10 @@ export default {
       required: true,
     },
     visibleFields: {
+      type: Array,
+      required: true,
+    },
+    totalFields: {
       type: Array,
       required: true,
     },
@@ -257,6 +267,10 @@ export default {
     timeField: {
       type: String,
       default: '',
+    },
+    isWrap: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -573,6 +587,31 @@ export default {
     handleShowWhole(index) {
       this.cacheExpandStr.push(index);
     },
+    handleMenuClick(option) {
+      switch (option.operation) {
+        case 'is':
+        case 'is not':
+          // eslint-disable-next-line no-case-declarations
+          const { fieldName, operation, value } = option;
+          this.$emit('addFilterCondition', fieldName, operation, value);
+          break;
+        case 'copy':
+          try {
+            const input = document.createElement('input');
+            input.setAttribute('value', option.value);
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            this.messageSuccess(this.$t('复制成功'));
+          } catch (e) {
+            console.warn(e);
+          }
+          break;
+        default:
+          break;
+      }
+    },
   },
 };
 </script>
@@ -587,6 +626,9 @@ export default {
   background: #fff;
   .king-table {
     margin-top: 16px;
+    td {
+      vertical-align: top;
+    }
     .bk-table-body-wrapper {
       min-height: calc(100vh - 560px);
       .bk-table-empty-block {
@@ -597,23 +639,12 @@ export default {
       }
     }
     .cell {
-      display: inline-table;
       .operation-button:not(:last-child) {
         padding-right: 8px;
       }
     }
     td mark {
       background: #f3e186;
-    }
-    .json-view-wrapper {
-      padding: 10px 0;
-      /deep/ .vjs-tree {
-        font-size: 12px !important;
-        .vjs-value__string {
-          white-space: pre-wrap;
-          tab-size: 3;
-        }
-      }
     }
     /deep/ .result-table-loading {
       width: calc(100% - 2px);
@@ -642,8 +673,8 @@ export default {
       right: 0;
       width: 84px;
       height: 100%;
-      padding: 0 10px;
-      align-items: center;
+      padding: 12px 10px;
+      align-items: flex-start;
       top: 0;
       overflow: hidden;
       justify-content: flex-end;
@@ -657,15 +688,22 @@ export default {
     }
     .original-str {
       .cell {
-        padding: 10px 14px;
+        padding: 12px 14px 0 14px;
       }
       .str-content {
         position: relative;
-        display: inline-block;
         line-height: 20px;
-        overflow: hidden;
         &.is-limit {
           max-height: 96px;
+        }
+      }
+      &.is-wrap {
+        .cell {
+          padding: 12px 14px;
+        }
+        .str-content {
+          display: inline-block;
+          overflow: hidden;
         }
       }
       .show-whole-btn {
@@ -680,10 +718,22 @@ export default {
         transition: background-color .25s ease;
       }
     }
+    .original-time {
+      padding-top: 16px;
+    }
     .hover-row {
       .show-whole-btn{
         background-color: #f0f1f5;
       }
+    }
+    td.bk-table-expanded-cell {
+      padding: 0;
+    }
+    .bk-table-column-expand .bk-icon {
+      top: 20px;
+    }
+    &.is-wrap .cell {
+      display: inline-table;
     }
   }
   /deep/ .render-header {
