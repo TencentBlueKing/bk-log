@@ -23,8 +23,10 @@ import requests
 from django.http import Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.encoding import smart_str
+from django.utils.module_loading import import_string
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+
 
 from . import client
 from .provisioning import Datasource, Dashboard
@@ -95,6 +97,8 @@ class ProxyBaseView(View):
 
         user_role = GrafanaRole.Viewer
         for permission_cls in self.permission_classes:
+            if isinstance(permission_cls, str):
+                permission_cls = import_string(permission_cls)
             permission = permission_cls()
             ok, role = permission.has_permission(request, self, request.org_name)
             if not ok:
@@ -125,7 +129,7 @@ class ProxyBaseView(View):
                 if not isinstance(ds, Datasource):
                     raise ValueError("{} is not instance {}".format(type(ds), Datasource))
                 ds_list.append(ds)
-            self.handler.handle_datasources(request, org_name, org_id, ds_list)
+            self.handler.handle_datasources(request, org_name, org_id, ds_list, provisioning)
 
             # 注入面板
             for db in provisioning.dashboards(request, org_name, org_id):

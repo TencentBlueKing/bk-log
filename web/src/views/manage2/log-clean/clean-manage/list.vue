@@ -21,11 +21,12 @@
   -->
 
 <template>
-  <section class="log-clean-container">
+  <section class="log-clean-container" data-test-id="cleaningList_section_cleaningListBox">
     <section class="top-operation">
       <bk-button
         class="fl"
         theme="primary"
+        data-test-id="cleaningListBox_button_addNewCleaningList"
         @click="handleCreate">
         {{ $t('新增') }}
       </bk-button>
@@ -33,6 +34,7 @@
         <bk-input
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
+          data-test-id="cleaningListBox_input_searchCleaningList"
           v-model="params.keyword"
           @enter="search">
         </bk-input>
@@ -50,6 +52,7 @@
         class="clean-table"
         :data="cleanList"
         :size="size"
+        data-test-id="cleaningListBox_table_cleaningListTable"
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"

@@ -39,7 +39,7 @@
       :retrieve-params="retrieveParams"
       @change-queue-res="changeQueueRes"
       @change-total-count="changeTotalCount" />
-    <div class="result-table-container">
+    <div class="result-table-container" data-test-id="retrieve_from_fieldForm">
       <div class="cut-line"></div>
       <!-- 表格上的按钮 -->
       <div class="log-operation">
@@ -73,6 +73,7 @@
           <div
             :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
             @click="exportLog"
+            data-test-id="fieldForm_div_exportData"
             v-bk-tooltips="queueStatus ? $t('btn.export') : undefined">
             <span class="icon log-icon icon-xiazai"></span>
           </div>
@@ -102,7 +103,6 @@
         <!-- 显示字段 -->
         <template v-for="(field,index) in visibleFields">
           <bk-table-column
-            type="index"
             align="left"
             :key="field.field_name"
             :min-width="field.minWidth"

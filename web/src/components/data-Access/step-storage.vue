@@ -22,7 +22,7 @@
 
 <template>
   <div class="step-storage" v-bkloading="{ isLoading: basicLoading }">
-    <bk-form :label-width="115" :model="formData" ref="validateForm">
+    <bk-form :label-width="115" :model="formData" ref="validateForm" data-test-id="storage_form_storageBox">
       <bk-form-item
         :label="$t('dataSource.storage_cluster_name')"
         required
@@ -30,6 +30,7 @@
         :rules="rules.cluster_id">
         <bk-select
           style="width: 320px;"
+          data-test-id="storageBox_select_storageCluster"
           v-model="formData.storage_cluster_id"
           :disabled="isUnmodifiable"
           :clearable="false"
@@ -88,7 +89,11 @@
       </div>
       <!-- 过期时间 -->
       <bk-form-item :label="$t('configDetails.expirationTime')">
-        <bk-select style="width: 320px;" v-model="formData.retention" :clearable="false">
+        <bk-select
+          style="width: 320px;"
+          v-model="formData.retention"
+          :clearable="false"
+          data-test-id="storageBox_select_selectExpiration">
           <div slot="trigger" class="bk-select-name">
             {{ formData.retention + $t('天') }}
           </div>
@@ -100,6 +105,7 @@
               v-model="customRetentionDay"
               size="small"
               type="number"
+              data-test-id="storageBox_input_customDayNumber"
               :placeholder="$t('输入自定义天数')"
               :show-controls="false"
               @enter="enterCustomDay($event, 'retention')"
@@ -107,10 +113,25 @@
           </div>
         </bk-select>
       </bk-form-item>
+      <!-- 副本数 -->
+      <bk-form-item :label="$t('configDetails.copyNumber')">
+        <bk-input
+          :max="3"
+          :min="0"
+          :precision="0"
+          v-model="formData.storage_replies"
+          style="width:100px;"
+          type="number"
+          :clearable="false"
+          :show-controls="true"
+          @blur="changeCopyNumber"
+        ></bk-input>
+      </bk-form-item>
       <!-- 热数据\冷热集群存储期限 -->
       <bk-form-item :label="$t('热数据')" class="hot-data-form-item">
         <bk-select
           style="width: 320px;"
+          data-test-id="storageBox_select_selectHotData"
           v-model="formData.allocation_min_days"
           :clearable="false"
           :disabled="!selectedStorageCluster.enable_hot_warm">
@@ -122,6 +143,7 @@
               v-model="customHotDataDay"
               size="small"
               type="number"
+              data-test-id="storageBox_input_customize"
               :placeholder="$t('输入自定义天数')"
               :show-controls="false"
               @enter="enterCustomDay($event, 'hot')"
@@ -142,6 +164,7 @@
         style="width: 435px;">
         <bk-select
           style="width: 320px;"
+          data-test-id="storageBox_select_viewPermission"
           v-model="formData.view_roles"
           searchable
           multiple
@@ -158,6 +181,7 @@
       <bk-form-item>
         <bk-button
           theme="default"
+          data-test-id="storageBox_button_previousPage"
           :title="$t('dataManage.last')"
           class="mr10"
           :disabled="isLoading"
@@ -166,6 +190,7 @@
         </bk-button>
         <bk-button
           theme="primary"
+          data-test-id="storageBox_button_nextPage"
           @click.stop.prevent="finish"
           :loading="isLoading"
           :disabled="!collectProject">
@@ -227,6 +252,7 @@ export default {
         fields: [],
         view_roles: [],
         retention: '',
+        storage_replies: 1,
         allocation_min_days: '0',
         storage_cluster_id: '',
       },
@@ -448,6 +474,7 @@ export default {
         table_id,
         storage_cluster_id,
         retention,
+        storage_replies,
         allocation_min_days,
         view_roles,
         fields,
@@ -459,6 +486,7 @@ export default {
         table_id,
         storage_cluster_id,
         retention: Number(retention),
+        storage_replies: Number(storage_replies),
         allocation_min_days: Number(allocation_min_days),
         view_roles,
         etl_params: {
@@ -548,6 +576,10 @@ export default {
         this.messageError(this.$t('请输入有效数值'));
       }
     },
+    // 输入自定义副本数
+    changeCopyNumber(val) {
+      val === '' && (this.formData.storage_replies = 1);
+    },
     // 跳转到 es 源
     jumpToEsAccess() {
       window.open(this.$router.resolve({
@@ -593,6 +625,7 @@ export default {
         table_id,
         storage_cluster_id,
         retention,
+        storage_replies,
         allocation_min_days,
         table_id_prefix,
         view_roles,
@@ -640,6 +673,7 @@ export default {
                     }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
         fields: copyFields.filter(item => !item.is_built_in),
         retention: retention ? `${retention}` : this.defaultRetention,
+        storage_replies,
         // eslint-disable-next-line camelcase
         allocation_min_days: allocation_min_days ? `${allocation_min_days}` : '0',
         view_roles,

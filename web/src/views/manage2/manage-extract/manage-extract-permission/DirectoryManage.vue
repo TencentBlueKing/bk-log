@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="directory-manage-container">
+  <div class="directory-manage-container" data-test-id="addNewExtractAuthManage_div_addNewExtractBox">
     <div class="directory-manage">
       <div class="row-container">
         <div class="title">

@@ -302,7 +302,9 @@ export default {
         }).then((res) => {
           if (res.data) {
             const collect = res.data;
-            collect.params.paths = collect.params.paths.map(item => ({ value: item }));
+            if (collect.collector_scenario_id !== 'wineventlog') {
+              collect.params.paths = collect.params.paths.map(item => ({ value: item }));
+            }
             this.$store.commit('collect/setCurCollect', collect);
             resolve(res.data);
           }

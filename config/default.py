@@ -42,7 +42,9 @@ from django.utils.translation import ugettext_lazy as _
 
 # 请在这里加入你的自定义 APP
 INSTALLED_APPS += (
+    # must first django_jsonfield_backport
     "django_jsonfield_backport",
+    "django_prometheus",
     "rest_framework",
     "iam.contrib.iam_migration",
     "apps.iam",
@@ -55,6 +57,7 @@ INSTALLED_APPS += (
     "apps.log_trace",
     "apps.esb",
     "apps.bk_log_admin",
+    "apps.grafana",
     "bk_monitor",
     "home_application",
     "pipeline",
@@ -79,6 +82,7 @@ else:
 # 这里是默认的中间件，大部分情况下，不需要改动
 # 如果你已经了解每个默认 MIDDLEWARE 的作用，确实需要去掉某些 MIDDLEWARE，或者改动先后顺序，请去掉下面的注释，然后修改
 MIDDLEWARE = (
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -102,6 +106,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -158,6 +163,7 @@ CELERY_IMPORTS = (
     "apps.log_databus.tasks.collector",
     "apps.log_databus.tasks.itsm",
     "apps.log_databus.tasks.bkdata",
+    "apps.log_databus.tasks.archive",
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
 )
@@ -283,7 +289,7 @@ GRAFANA = {
     "HOST": os.getenv("BKAPP_GRAFANA_URL", ""),
     "PREFIX": "{}grafana/".format(os.getenv("BKAPP_GRAFANA_PREFIX", SITE_URL)),
     "ADMIN": (os.getenv("BKAPP_GRAFANA_ADMIN_USERNAME", "admin"), os.getenv("BKAPP_GRAFANA_ADMIN_PASSWORD", "admin")),
-    "PROVISIONING_CLASSES": ["apps.grafana.provisioning.Provisioning"],
+    "PROVISIONING_CLASSES": ["apps.grafana.provisioning.Provisioning", "apps.grafana.provisioning.TraceProvisioning"],
     "PERMISSION_CLASSES": ["apps.grafana.permissions.BizPermission"],
 }
 
@@ -306,6 +312,28 @@ SENSITIVE_PARAMS = ["app_code", "app_secret", "bk_app_code", "bk_app_secret", "a
 ALLOWED_MODULES_FUNCS = {
     "apps.log_databus.views.collector_views": {"tail": "tail"},
     "apps.log_databus.views.storage_views": {"connectivity_detect": "connectivity_detect"},
+}
+# esb模块中转发meta接口的传发设置
+META_ESB_FORWARD_CONFIG = {
+    "create_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "create_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "modify_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "modify_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "delete_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "delete_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "verify_es_snapshot_repository": {"is_view_permission": True, "target_call": "verify_es_snapshot_repository"},
 }
 
 # resf_framework
@@ -381,6 +409,10 @@ BKDATA_DATA_APP_CODE = os.getenv("BKAPP_BKDATA_DATA_APP_CODE", APP_CODE)
 BKDATA_DATA_TOKEN_ID = os.getenv("BKAPP_BKDATA_DATA_TOKEN_ID", 0)
 BKDATA_DATA_TOKEN = os.getenv("BKAPP_BKDATA_DATA_TOKEN", "")
 
+# 登录窗口大小
+IFRAME_HEIGHT = int(os.getenv("BKAPP_IFRAME_HEIGHT", 400))
+IFRAME_WIDTH = int(os.getenv("BKAPP_IFRAME_WIDTH", 400))
+
 # ===============================================================================
 # FeatureToggle 特性开关：以内部版为准，其它版本根据需求调整
 # 此配置以V4.2.X企业版做为默认配置，其它版本按需进行调整
@@ -410,7 +442,16 @@ SAAS_BKDATA = "bk_dataweb"
 # 前端菜单配置
 MENUS = [
     {"id": "retrieve", "name": _("检索"), "feature": "on", "icon": ""},
-    {"id": "trace", "name": _("调用链"), "feature": "on", "icon": ""},
+    {
+        "id": "trace",
+        "name": _("调用链"),
+        "feature": "on",
+        "icon": "",
+        "children": [
+            {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": ""},
+            {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": ""},
+        ],
+    },
     {"id": "extract", "name": _("日志提取"), "feature": "on", "icon": ""},
     {"id": "monitor", "name": _("监控策略"), "feature": "on", "icon": ""},
     {
@@ -466,7 +507,7 @@ MENUS = [
                 "name": _("日志清洗"),
                 "feature": "on",
                 "icon": "",
-                "keyword": "清洗",
+                "keyword": _("清洗"),
                 "children": [
                     {
                         "id": "clean_list",
@@ -480,6 +521,33 @@ MENUS = [
                         "name": _("清洗模板"),
                         "feature": "on",
                         "icon": "moban",
+                    },
+                ],
+            },
+            {
+                "id": "log_archive",
+                "name": _("日志归档"),
+                "feature": "on",
+                "icon": "",
+                "keyword": "归档",
+                "children": [
+                    {
+                        "id": "archive_repository",
+                        "name": _("归档仓库"),
+                        "feature": "on",
+                        "icon": "new-_empty-fill",
+                    },
+                    {
+                        "id": "archive_list",
+                        "name": _("归档列表"),
+                        "feature": "on",
+                        "icon": "audit-fill",
+                    },
+                    {
+                        "id": "archive_restore",
+                        "name": _("归档回溯"),
+                        "feature": "on",
+                        "icon": "withdraw-fill",
                     },
                 ],
             },
@@ -758,7 +826,7 @@ TEMPLATES = [
 # ==============================================================================
 CACHES = {
     "redis": {
-        "BACKEND": "django_redis.cache.RedisCache",
+        "BACKEND": "django_prometheus.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWD},
         "KEY_PREFIX": APP_CODE,
@@ -782,7 +850,7 @@ if USE_REDIS:
 if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
     DJANGO_REDIS_CONNECTION_FACTORY = "apps.utils.sentinel.SentinelConnectionFactory"
     CACHES["redis_sentinel"] = {
-        "BACKEND": "django_redis.cache.RedisCache",
+        "BACKEND": "django_prometheus.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_SENTINEL_MASTER_NAME}?is_master=1",
         "OPTIONS": {
             "CLIENT_CLASS": "apps.utils.sentinel.SentinelClient",

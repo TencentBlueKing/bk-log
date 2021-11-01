@@ -28,6 +28,7 @@
               @change="handleChange"
               @focus="handleFocus"
               @enter="handleEnter"
+              data-test-id="frontPageSearch_input_phrasesSearch"
     ></bk-input>
     <!-- 首页搜索ICON -->
     <span v-cursor="{ active: isSearchAllowed === false }"

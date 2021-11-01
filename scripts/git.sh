@@ -41,3 +41,11 @@ elif [ "$action" = "sync" ];then
   sync
 fi
 
+delete_upstream_config() {
+  if git remote -v | grep -q "upstream";then
+    git remote remove upstream
+  fi
+}
+
+delete_upstream_config
+

@@ -21,14 +21,18 @@
   -->
 
 <template>
-  <div></div>
+  <trace-detail v-if="$route.query.traceId"></trace-detail>
+  <trace-index v-else></trace-index>
 </template>
 
 <script>
+import TraceIndex from './traceIndex';
+import TraceDetail from './traceDetail';
+
 export default {
-  name: 'log-archive-conf',
-  data() {
-    return {};
+  components: {
+    TraceIndex,
+    TraceDetail,
   },
 };
 </script>

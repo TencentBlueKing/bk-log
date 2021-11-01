@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
 # 调用监控api必备常量 如果需要做成可配置建议迁移到constans文件
-ETL_CONFIG = "bk_standard_v2_time_series"
-TYPE_LABEL = "time_series"
+TIME_SERIES_ETL_CONFIG = "bk_standard_v2_time_series"
+EVENT_ETL_CONFIG = "bk_standard_v2_event"
+
+TIME_SERIES_TYPE = "time_series"
+EVENT_TYPE = "event"
 SOURCE_LABEL = "custom"
 OPTION = {"inject_local_time": True}
 

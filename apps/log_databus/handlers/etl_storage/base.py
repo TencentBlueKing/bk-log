@@ -180,6 +180,7 @@ class EtlStorage(object):
         storage_cluster_id: int,
         retention: int,
         allocation_min_days: int,
+        storage_replies: int,
         fields: list = None,
         etl_params: dict = None,
         es_version: str = "5.X",
@@ -205,8 +206,7 @@ class EtlStorage(object):
             collector_config.storage_shards_nums = settings.ES_SHARDS
 
         # ES-副本数
-        if collector_config.storage_replies is not None:
-            collector_config.storage_replies = settings.ES_REPLICAS
+        collector_config.storage_replies = storage_replies
 
         # 需要切分的大小阈值，单位（GB）
         if not collector_config.storage_shards_size:
@@ -363,7 +363,8 @@ class EtlStorage(object):
 
         for field in result_table_config["field_list"]:
             # 判断是不是标准字段
-            field["is_built_in"] = True if field["field_name"].lower() in built_in_fields else False
+            if not field.get("is_built_in", False):
+                field["is_built_in"] = True if field["field_name"].lower() in built_in_fields else False
 
             # 如果有指定别名，则需要调转位置(field_name：ES入库的字段名称；alias_name：数据源的字段名称)
             field_option = field.get("option", {})
