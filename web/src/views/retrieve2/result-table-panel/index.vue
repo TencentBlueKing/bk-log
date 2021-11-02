@@ -42,7 +42,7 @@
 
 <script>
 import OriginalLog from './original-log/index.vue';
-import LogClustering from './log-clustering.vue';
+import LogClustering from './log-clustering/index.vue';
 
 export default {
   components: { OriginalLog, LogClustering },
