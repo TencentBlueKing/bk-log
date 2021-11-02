@@ -31,6 +31,9 @@ EX_MAX_SIZE = 10000
 IS_NEW_PATTERN_PREFIX = "is_new_class"
 AGGS_FIELD_PREFIX = "log_signature"
 
+CLUSTERING_CONFIG_EXCLUDE = ["sample_set_id", "model_id"]
+CLUSTERING_CONFIG_DEFAULT = "default_clustering_config"
+
 
 class PatternEnum(ChoicesEnum):
     LEVEL_01 = "01"

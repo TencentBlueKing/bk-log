@@ -33,3 +33,24 @@ class PatternSearchSerlaizer(serializers.Serializer):
     pattern_level = serializers.ChoiceField(required=True, choices=PatternEnum.get_choices())
     show_new_pattern = serializers.BooleanField(required=True)
     year_on_year_hour = serializers.IntegerField(required=False, default=0, min_value=0)
+
+
+class FilerRuleSerializer(serializers.Serializer):
+    fields_name = serializers.CharField(required=False)
+    op = serializers.CharField(required=False)
+    value = serializers.CharField(required=False)
+
+
+class ClusteringConfigSerializer(serializers.Serializer):
+    collector_config_id = serializers.IntegerField(required=False, default=None)
+    collector_config_name_en = serializers.CharField(required=False, default=None)
+    index_set_id = serializers.IntegerField()
+    min_members = serializers.IntegerField(required=False, default=1)
+    max_dist_list = serializers.CharField(max_length=128)
+    predefined_varibles = serializers.CharField()
+    delimeter = serializers.CharField()
+    max_log_length = serializers.IntegerField()
+    is_case_sensitive = serializers.IntegerField(required=False, default=0)
+    clustering_fields = serializers.CharField(required=False, default="log")
+    bk_biz_id = serializers.IntegerField()
+    filter_rules = serializers.ListField(child=FilerRuleSerializer(), required=False, default=[])
