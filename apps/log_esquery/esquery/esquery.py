@@ -94,7 +94,12 @@ class EsQuery(object):
 
         # 优化查询索引
         index: str = QueryIndexOptimizer(
-            indices, scenario_id, start_time=start_time, end_time=end_time, time_zone=time_zone
+            indices,
+            scenario_id,
+            start_time=start_time,
+            end_time=end_time,
+            time_zone=time_zone,
+            use_time_range=use_time_range,
         ).index
 
         # 优化排序,需要预查询介入，需要client
