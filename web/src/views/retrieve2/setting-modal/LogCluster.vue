@@ -223,9 +223,9 @@
                 </transition-group>
               </vue-draggable>
             </div>
-            <div v-else class="table-row">
+            <!-- <div v-else class="table-row">
               <div>暂无聚类规则</div>
-            </div>
+            </div> -->
           </div>
         </div>
         <!-- 原始日志 -->
@@ -288,14 +288,14 @@
         </bk-button>
       </bk-form-item>
     </bk-form>
-
+    <!-- 添加规则dialog -->
     <bk-dialog
       v-model="isShowAddRule"
       :header-position="addRuleConfigure.position"
       :width="addRuleConfigure.width"
       :title="isEditRuls ? $t('retrieveSetting.editingRules') : $t('retrieveSetting.addRule')"
       :mask-close="false"
-      @after-leave="isEditRuls = false;dealyShowCheck = false;isClickSubmit = false"
+      @after-leave="cancelAddRuleContent"
       ext-cls="add-rule">
       <bk-form :label-width="200">
         <bk-form-item
@@ -338,7 +338,7 @@
         </div>
       </template>
     </bk-dialog>
-
+    <!-- 保存dialog -->
     <bk-dialog
       width="360"
       v-model="isShowSubmitDialog"
@@ -479,11 +479,6 @@ export default {
           placeholder: this.placeholder,
         });
         this.isShowAddRule = false;
-        setTimeout(() => {
-          this.regular = '';
-          this.placeholder = '';
-          this.isRuleCorrect = false;
-        }, 300);
       } else {
         this.addRuleConfigure.isDetection = true;
         this.isShowSpin = true;
@@ -495,6 +490,14 @@ export default {
           this.dealyShowCheck = true;
         }, 2000);
       }
+    },
+    cancelAddRuleContent() {
+      this.regular = '';
+      this.placeholder = '';
+      this.isRuleCorrect = false;
+      this.isEditRuls = false;
+      this.dealyShowCheck = false;
+      this.isClickSubmit = false;
     },
     handleRuleCancel() {
       this.isShowAddRule = false;
