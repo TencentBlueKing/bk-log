@@ -243,7 +243,7 @@ class EsQuery(object):
         # 调用客户端执行mapping
         scenario_id, index_set_string, storage_cluster_id = self._init_common_args()
         bkdata_authentication_method, bkdata_data_token = self._init_bkdata_args()
-        start_time, end_time, _, time_zone = self._init_time_args()
+        start_time, end_time, _, time_zone, __ = self._init_time_args()
         index_set_string = self._optimizer_mapping_time_range(
             index_set_string, scenario_id, start_time, end_time, time_zone
         )
