@@ -69,7 +69,7 @@ class EsQuery(object):
         end_time: str = self.search_dict.get("end_time")
         time_range: str = self.search_dict.get("time_range", None)
         time_zone: str = self.search_dict.get("time_zone", None)
-        use_time_range: bool = self.search_dict.get("use_time_zone", True)
+        use_time_range: bool = self.search_dict.get("use_time_range", True)
         return start_time, end_time, time_range, time_zone, use_time_range
 
     def _init_bkdata_args(self):
