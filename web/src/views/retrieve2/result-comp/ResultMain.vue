@@ -35,20 +35,22 @@
         </a>
       </template>
     </div>
-    <ResultEChart
-      :retrieve-params="retrieveParams"
-      @change-queue-res="changeQueueRes"
-      @change-total-count="changeTotalCount" />
-    <bk-divider class="divider-line"></bk-divider>
-    <result-table-panel
-      v-bind="$attrs"
-      v-on="$listeners"
-      :retrieve-params="retrieveParams"
-      :total-count="totalCount"
-      :queue-status="queueStatus"
-      :table-list="tableList"
-      :origin-table-list="originTableList"
-      :is-page-over="isPageOver" />
+    <div class="result-main">
+      <ResultEChart
+        :retrieve-params="retrieveParams"
+        @change-queue-res="changeQueueRes"
+        @change-total-count="changeTotalCount" />
+      <bk-divider class="divider-line"></bk-divider>
+      <result-table-panel
+        v-bind="$attrs"
+        v-on="$listeners"
+        :retrieve-params="retrieveParams"
+        :total-count="totalCount"
+        :queue-status="queueStatus"
+        :table-list="tableList"
+        :origin-table-list="originTableList"
+        :is-page-over="isPageOver" />
+    </div>
     <!-- 滚动到顶部 -->
     <div class="fixed-scroll-top-btn" v-show="showScrollTop" @click="scrollToTop">
       <i class="bk-icon icon-angle-up"></i>
@@ -92,11 +94,10 @@ export default {
       finishPolling: false,
       count: 0, // 数据总条数
       pageSize: 50, // 每页展示多少数据
-      totalPage: 1,
       currentPage: 1, // 当前加载了多少页
       totalCount: 0,
       scrollHeight: 0,
-      limitCount: 2000,
+      limitCount: 0,
       queueStatus: false,
       showScrollTop: false, // 显示滚动到顶部icon
       isInit: false,
@@ -108,20 +109,6 @@ export default {
     }),
     showAddMonitor() {
       return Boolean(window.MONITOR_URL && this.$store.state.topMenu.some(item => item.id === 'monitor'));
-    },
-    showMonitorWeb() {
-      return this.bkMonitorUrl !== '';
-    },
-    showMoreHandle() {
-      const handleOptions = ['showRealtimeLog', 'showContextLog', 'showWebConsole', 'showMonitorWeb'];
-      const isShowOptions = handleOptions.filter(item => this[item]);
-      const isShowMore = isShowOptions.length > 3;
-
-      if (isShowMore) {
-        this.overflowHandle.push(...isShowOptions.slice(2));
-      }
-
-      return isShowMore;
     },
   },
   watch: {
@@ -202,7 +189,7 @@ export default {
         this.throttle = false;
         const el = this.$refs.scrollContainer;
         this.showScrollTop = el.scrollTop > 550;
-        if (el.scrollHeight - el.offsetHeight - el.scrollTop < 100) {
+        if (el.scrollHeight - el.offsetHeight - el.scrollTop < 20) {
           if (this.count === this.limitCount || this.finishPolling) return;
 
           this.isPageOver = true;
@@ -223,10 +210,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import '../../../scss/mixins/scroller.scss';
+
 .result-scroll-container {
   margin-top: 52px;
   height: calc(100% - 52px);
   overflow: auto;
+  @include scroller;
 }
 .result-text {
   font-size: 12px;
@@ -239,9 +229,13 @@ export default {
     color: #f00;
   }
 }
+.result-main {
+  margin: 0 16px 16px;
+  min-height: calc(100% - 54px);
+  background-color: #fff;
+}
 .divider-line {
-  margin: 0 20px !important;
-  width: calc(100% - 40px) !important;
+  margin: 0 !important;
 }
 .fixed-scroll-top-btn {
   position: fixed;
