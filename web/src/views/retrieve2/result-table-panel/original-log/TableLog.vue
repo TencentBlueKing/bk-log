@@ -37,7 +37,11 @@
         @row-mouse-leave="handleMouseLeave"
         @header-dragend="handleHeaderDragend">
         <!-- 展开详情 -->
-        <bk-table-column type="expand" width="30" align="center" v-if="visibleFields.length">
+        <bk-table-column
+          type="expand"
+          width="30"
+          align="center"
+          v-if="showOriginal || visibleFields.length">
           <template slot-scope="{ $index }">
             <expand-view
               v-bind="$attrs"
@@ -136,16 +140,33 @@
             </div>
           </template>
         </bk-table-column>
+
+        <!-- 初次加载骨架屏loading -->
+        <bk-table-column v-if="tableLoading" slot="empty">
+          <retrieve-loader
+            is-loading
+            :is-original-field="showOriginal"
+            :visible-fields="visibleFields">
+          </retrieve-loader>
+        </bk-table-column>
+
+        <!-- 下拉刷新骨架屏loading -->
+        <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
+          <retrieve-loader
+            :is-original-field="showOriginal"
+            :visible-fields="visibleFields">
+          </retrieve-loader>
+        </template>
       </bk-table>
       <!-- 表格底部内容 -->
       <p class="more-desc" v-if="tableList.length === limitCount">{{ $t('retrieve.showMore') }}
         <a href="javascript: void(0);" @click="scrollToTop">{{ $t('btn.backToTop') }}</a>
       </p>
-      <div
+      <!-- <div
         v-if="tableList.length && visibleFields.length && isPageOver"
         v-bkloading="{ isLoading: true }"
         style="height: 40px;">
-      </div>
+      </div> -->
     </div>
 
     <!-- 实时滚动日志/上下文 -->
@@ -177,13 +198,14 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import RealTimeLog from '../../result-comp/RealTimeLog';
 import ContextLog from '../../result-comp/ContextLog';
 import TableColumn from '../../result-comp/TableColumn';
 import ExpandView from './ExpandView.vue';
-import { mapState } from 'vuex';
 import { formatDate } from '@/common/util';
+import RetrieveLoader from '@/skeleton/retrieve-loader';
 
 export default {
   components: {
@@ -191,6 +213,7 @@ export default {
     RealTimeLog,
     ContextLog,
     ExpandView,
+    RetrieveLoader,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -302,36 +325,6 @@ export default {
         fullscreen: true,
         data: {},
       },
-      fieldTypeMap: {
-        any: {
-          name: this.$t('不限'),
-        },
-        number: {
-          name: this.$t('数字'),
-        },
-        integer: {
-          name: this.$t('数字'),
-        },
-        double: {
-          name: this.$t('数字'),
-        },
-        long: {
-          name: this.$t('文本'),
-        },
-        keyword: {
-          name: this.$t('字符串'),
-        },
-        text: {
-          name: this.$t('文本'),
-        },
-        date: {
-          name: this.$t('时间'),
-        },
-        boolean: {
-          name: '',
-          icon: '',
-        },
-      },
       cacheExpandStr: [],
     };
   },
@@ -340,6 +333,7 @@ export default {
       bkBizId: state => state.bkBizId,
       clearTableWidth: state => state.clearTableWidth,
     }),
+    ...mapState('globals', ['fieldTypeMap']),
     showMonitorWeb() {
       return this.bkMonitorUrl !== '';
     },
@@ -373,7 +367,10 @@ export default {
           el.width = widthObj[index] === undefined ? 'default' : widthObj[index];
         });
       }
-      return (showRealtimeLog || showContextLog || showWebConsole || showMonitorWeb) && visibleFields.length;
+      return (showRealtimeLog
+      || showContextLog
+      || showWebConsole
+      || showMonitorWeb) && this.tableList.length;
     },
   },
   watch: {
@@ -487,25 +484,27 @@ export default {
     // eslint-disable-next-line no-unused-vars
     renderHeaderAliasName(h, { column, $index }) {
       const field = this.visibleFields[$index - 1];
-      const fieldName = this.showFieldAlias ? this.fieldAliasMap[field.field_name] : field.field_name;
-      const fieldType = field.field_type;
-      const fieldIcon = this.getFieldIcon(field.field_type) || 'log-icon icon-unkown';
-      const content = this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].name : undefined;
+      if (field) {
+        const fieldName = this.showFieldAlias ? this.fieldAliasMap[field.field_name] : field.field_name;
+        const fieldType = field.field_type;
+        const fieldIcon = this.getFieldIcon(field.field_type) || 'log-icon icon-unkown';
+        const content = this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].name : undefined;
 
-      return h('div', {
-        class: 'render-header',
-      }, [
-        h('span', {
-          class: `field-type-icon ${fieldIcon}`,
-          directives: [
-            {
-              name: 'bk-tooltips',
-              value: content,
-            },
-          ],
-        }),
-        h('span', fieldName),
-      ]);
+        return h('div', {
+          class: 'render-header',
+        }, [
+          h('span', {
+            class: `field-type-icon ${fieldIcon}`,
+            directives: [
+              {
+                name: 'bk-tooltips',
+                value: content,
+              },
+            ],
+          }),
+          h('span', fieldName),
+        ]);
+      }
     },
     handleIconClick(type, content, field, row) {
       let value = field.field_type === 'date' ? row[field.field_name] : content;
@@ -630,7 +629,7 @@ export default {
       vertical-align: top;
     }
     .bk-table-body-wrapper {
-      min-height: calc(100vh - 560px);
+      min-height: calc(100vh - 550px);
       .bk-table-empty-block {
         display: flex;
         justify-content: center;
@@ -735,6 +734,10 @@ export default {
     &.is-wrap .cell {
       display: inline-table;
     }
+    .bk-table-empty-text {
+      padding: 0;
+      width: 100%;
+    }
   }
   /deep/ .render-header {
     .field-type-icon {
@@ -743,33 +746,6 @@ export default {
       font-size: 12px;
       color: #979ba5;
     }
-  }
-}
-.fixed-scroll-top-btn {
-  position: fixed;
-  bottom: 24px;
-  right: 14px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 36px;
-  height: 36px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .2);
-  border: 1px solid #dde4eb;
-  border-radius: 4px;
-  color: #63656e;
-  background: #f0f1f5;
-  cursor: pointer;
-  z-index: 2100;
-  transition: all .2s;
-  &:hover {
-    color: #fff;
-    background: #979ba5;
-    transition: all .2s;
-  }
-  .bk-icon {
-    font-size: 20px;
-    font-weight: bold;
   }
 }
 // 日志全屏状态下的样式

@@ -70,6 +70,7 @@ export default {
         { id: 'is', icon: 'bk-icon icon-close-circle' },
         { id: 'not', icon: 'bk-icon icon-minus-circle' },
         { id: 'link', icon: 'bk-icon icon-arrows-up-circle' },
+        // { id: 'chart', icon: 'log-icon icon-chart' },
         { id: 'copy', icon: 'log-icon icon-copy' },
       ],
     };
@@ -166,17 +167,22 @@ export default {
       .icon {
         margin-right: 6px;
         font-size: 14px;
-        transform: rotate(45deg);
         cursor: pointer;
         &:hover {
           color: #3A84FF;
         }
       }
+      .bk-icon {
+        transform: rotate(45deg);
+      }
       .icon-arrows-up-circle {
         margin-right: 2px;
         font-size: 12px;
       }
-      .log-icon {
+      .icon-chart {
+        margin: 0 0 0 6px;
+      }
+      .icon-copy {
         transform: rotate(0);
         font-size: 24px;
         cursor: pointer;
