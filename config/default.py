@@ -259,8 +259,8 @@ OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 1000))
 # ===============================================================================
 BK_PAAS_HOST = os.environ.get("BK_PAAS_HOST", "")
 # ESB API调用前辍
-PAAS_API_HOST = BK_PAAS_HOST
 BK_PAAS_INNER_HOST = os.environ.get("BK_PAAS_INNER_HOST", BK_PAAS_HOST)
+PAAS_API_HOST = BK_PAAS_INNER_HOST
 BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
 BKDATA_URL = BK_PAAS_HOST
 MONITOR_URL = ""
