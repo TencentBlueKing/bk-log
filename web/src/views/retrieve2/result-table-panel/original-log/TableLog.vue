@@ -47,6 +47,7 @@
               v-bind="$attrs"
               :data="originTableList[$index]"
               :total-fields="totalFields"
+              :visible-fields="visibleFields"
               @menuClick="handleMenuClick">
             </expand-view>
           </template>
@@ -592,7 +593,7 @@ export default {
         case 'is not':
           // eslint-disable-next-line no-case-declarations
           const { fieldName, operation, value } = option;
-          this.$emit('addFilterCondition', fieldName, operation, value);
+          this.$emit('addFilterCondition', fieldName, operation, value.toString());
           break;
         case 'copy':
           try {
@@ -606,6 +607,9 @@ export default {
           } catch (e) {
             console.warn(e);
           }
+          break;
+        case 'display':
+          this.$emit('fieldsUpdated', option.displayFieldNames);
           break;
         default:
           break;
