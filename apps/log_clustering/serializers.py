@@ -54,3 +54,19 @@ class ClusteringConfigSerializer(serializers.Serializer):
     clustering_fields = serializers.CharField(required=False, default="log")
     bk_biz_id = serializers.IntegerField()
     filter_rules = serializers.ListField(child=FilerRuleSerializer(), required=False, default=[])
+
+
+class InputDataSerializer(serializers.Serializer):
+    dtEventTimeStamp = serializers.IntegerField()
+    log = serializers.CharField()
+    uuid = serializers.CharField()
+
+
+class ClusteringPreviewSerializer(serializers.Serializer):
+    input_data = serializers.ListField(child=InputDataSerializer())
+    min_members = serializers.IntegerField()
+    max_dist_list = serializers.CharField()
+    predefined_varibles = serializers.CharField()
+    delimeter = serializers.CharField()
+    max_log_length = serializers.IntegerField()
+    is_case_sensitive = serializers.IntegerField()

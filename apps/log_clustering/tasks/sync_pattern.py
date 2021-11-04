@@ -103,7 +103,7 @@ def get_pattern(model_id, release_id) -> list:
             pattern_list = []
             for pattern in sensitive_pattern[PATTERN_INDEX]:
                 if hasattr(pattern, "name"):
-                    pattern_list.append("[{}]".format(pattern.name.upper()))
+                    pattern_list.append("[$({})]".format(pattern.name))
                     continue
                 pattern_list.append(str(pattern))
             patterns.append({"signature": str(signature), "pattern": " ".join(pattern_list)})

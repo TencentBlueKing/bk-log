@@ -25,7 +25,7 @@ from apps.log_clustering.exceptions import ClusteringClosedException
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from rest_framework.response import Response
 
-from apps.log_clustering.serializers import ClusteringConfigSerializer
+from apps.log_clustering.serializers import ClusteringConfigSerializer, ClusteringPreviewSerializer
 from apps.utils.drf import detail_route, list_route
 
 
@@ -138,13 +138,13 @@ class ClusteringConfigViewSet(APIViewSet):
         @api {post} /clustering_config/default_config/ 3_聚类设置-获取默认配置
         @apiName get_default_config
         @apiGroup log_clustering
-        @apiParam {Int} min_members 最小日志数量
-        @apiParam {Str} max_dist_list 敏感度
-        @apiParam {Str} predefined_varibles 预先定义的正则表达式
-        @apiParam {Str} delimeter 分词符
-        @apiParam {Int} max_log_length 最大日志长度
-        @apiParam {Int} is_case_sensitive 是否大小写忽略
-        @apiParam {Str} clustering_fields 聚合字段
+        @apiSuccess {Int} min_members 最小日志数量
+        @apiSuccess {Str} max_dist_list 敏感度
+        @apiSuccess {Str} predefined_varibles 预先定义的正则表达式
+        @apiSuccess {Str} delimeter 分词符
+        @apiSuccess {Int} max_log_length 最大日志长度
+        @apiSuccess {Int} is_case_sensitive 是否大小写忽略
+        @apiSuccess {Str} clustering_fields 聚合字段
         @apiSuccessExample {json} 成功返回:
         {
             "message":"",
@@ -172,4 +172,53 @@ class ClusteringConfigViewSet(APIViewSet):
             raise ClusteringClosedException()
         return Response(
             FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config.get(CLUSTERING_CONFIG_DEFAULT)
+        )
+
+    @list_route(methods=["POST"], url_path="preview")
+    def preview(self, request, *args, **kwargs):
+        """
+        @api {post} /clustering_config/preview/ 4_聚类设置-调试
+        @apiName preview clustering solution
+        @apiGroup log_clustering
+        @apiParam {List} input_data 输入数据
+        @apiParam {Int} input_data.dtEventTimeStamp 时间戳
+        @apiParam {Str} input_data.log 聚类字段原始值
+        @apiParam {Str} input_data.uuid unique_id
+        @apiParam {Int} min_members 最小日志数量
+        @apiParam {Str} max_dist_list 敏感度
+        @apiParam {Str} predefined_varibles 预先定义的正则表达式
+        @apiParam {Str} delimeter 分词符
+        @apiParam {Int} max_log_length 最大日志长度
+        @apiParam {Int} is_case_sensitive 是否大小写忽略
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message":"",
+            "code":0,
+            "data":[
+                {
+                    "patterns":[
+                        {
+                            "sensitivity":"test",
+                            "pattern":"test [$(TEST)]"
+                        }
+                    ],
+                    "token_with_regex":{
+                        "TEST":"/d"
+                    }
+                }
+            ],
+            "result":true
+        }
+        """
+        params = self.params_valid(ClusteringPreviewSerializer)
+        return Response(
+            ClusteringConfigHandler().preview(
+                input_data=params["input_data"],
+                min_members=params["min_members"],
+                max_dist_list=params["max_dist_list"],
+                predefined_varibles=params["predefined_varibles"],
+                delimeter=params["delimeter"],
+                max_log_length=params["max_log_length"],
+                is_case_sensitive=params["is_case_sensitive"],
+            )
         )

@@ -17,8 +17,14 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from apps.log_clustering.constants import CLUSTERING_CONFIG_EXCLUDE
+import json
+
+from apps.log_clustering.constants import (
+    CLUSTERING_CONFIG_EXCLUDE,
+    DEFAULT_CLUSTERING_FIELDS,
+)
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
+from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.models import ClusteringConfig
 from apps.models import model_to_dict
 
@@ -79,3 +85,47 @@ class ClusteringConfigHandler(object):
             index_set_id=index_set_id,
         )
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
+
+    def preview(
+        self, input_data, min_members, max_dist_list, predefined_varibles, delimeter, max_log_length, is_case_sensitive
+    ):
+        aiops_experiments_debug_result = AiopsModelHandler().aiops_experiments_debug(
+            input_data=input_data,
+            clustering_field=DEFAULT_CLUSTERING_FIELDS,
+            min_members=min_members,
+            max_dist_list=max_dist_list,
+            predefined_varibles=predefined_varibles,
+            delimeter=delimeter,
+            max_log_length=max_log_length,
+            is_case_sensitive=is_case_sensitive,
+        )
+        return self._deal_preview(aiops_experiments_debug_result)
+
+    @classmethod
+    def _deal_preview(cls, aiops_experiments_debug_result):
+        result = []
+        for predict_output_data in aiops_experiments_debug_result["predict_output_data"]:
+            pattern = cls._deal_pattern(json.loads(predict_output_data["pattern"]))
+            token_with_regex = cls._deal_token_with_regex(json.loads(predict_output_data["token_with_regex"]))
+            result.append({"patterns": pattern, "token_with_regex": token_with_regex})
+
+    @classmethod
+    def _deal_pattern(cls, pattern_result: dict):
+        result = []
+        for sensitivity, pattern_result in pattern_result.items():
+            sensitive_pattern_list = []
+            for sensitive_pattern in pattern_result:
+                if isinstance(sensitive_pattern, dict):
+                    sensitive_pattern_list.append("[$({})]".format(sensitive_pattern["name"]))
+                    continue
+                sensitive_pattern_list.append(sensitive_pattern)
+            result.append({"sensitivity": sensitivity, "pattern": " ".join(sensitive_pattern_list)})
+        return result
+
+    @classmethod
+    def _deal_token_with_regex(cls, token_with_regex_result: list):
+        result = {}
+        for token_with_regex in token_with_regex_result:
+            if isinstance(token_with_regex, dict):
+                result[token_with_regex["name"]] = token_with_regex["regex"]
+        return result

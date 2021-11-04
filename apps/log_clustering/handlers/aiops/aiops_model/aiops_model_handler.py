@@ -73,7 +73,9 @@ from apps.log_clustering.handlers.aiops.aiops_model.data_cls import (
     ReleaseCls,
     UpdateTrainingScheduleCls,
     AiopsReleaseCls,
-    AiopsReleaseModelReleaseIdModelFile,
+    AiopsReleaseModelReleaseIdModelFileCls,
+    AiopsExperimentsDebugCls,
+    AiopsExperimentsDebugInputConfigCls,
 )
 
 
@@ -1018,7 +1020,7 @@ class AiopsModelHandler(BaseAiopsHandler):
         @param model_id 模型id
         @param model_release_id 发布模型配置ID
         """
-        aiops_release_model_release_id_model_file_request = AiopsReleaseModelReleaseIdModelFile(
+        aiops_release_model_release_id_model_file_request = AiopsReleaseModelReleaseIdModelFileCls(
             model_id=model_id, model_release_id=model_release_id
         )
         request_dict = self._set_username(aiops_release_model_release_id_model_file_request)
@@ -1029,3 +1031,40 @@ class AiopsModelHandler(BaseAiopsHandler):
         model_original_content = base64.b64decode(content)
         model = cloudpickle.loads(model_original_content)
         return model
+
+    def aiops_experiments_debug(
+        self,
+        input_data: list,
+        clustering_field: str,
+        min_members: int,
+        max_dist_list: str,
+        predefined_varibles: str,
+        delimeter: str,
+        max_log_length: int,
+        is_case_sensitive: int,
+        cache_id: str = "log_analysis",
+        use_user_cache_id: int = 0,
+    ):
+        aiops_experiment_debug_request = AiopsExperimentsDebugCls(
+            project_id=self.conf.get("project_id"),
+            input_config=AiopsExperimentsDebugInputConfigCls(
+                algorithm_name=self.conf.get("debug_algorithm_name"),
+                input_data=input_data,
+                feature_columns=[
+                    {"field_name": "log", "data_field_name": clustering_field},
+                    {"field_name": "uuid", "data_field_name": "uuid"},
+                ],
+                training_args=[
+                    {"field_name": "min_members", "value": min_members},
+                    {"field_name": "max_dist_list", "value": max_dist_list},
+                    {"field_name": "predefined_varibles", "value": predefined_varibles},
+                    {"field_name": "delimeter", "value": delimeter},
+                    {"field_name": "max_log_length", "value": max_log_length},
+                    {"field_name": "is_case_sensitive", "value": is_case_sensitive},
+                    {"field_name": "cache_id", "value": cache_id},
+                    {"field_name": "use_user_cache_id", "value": use_user_cache_id},
+                ],
+            ),
+        )
+        request_dict = self._set_username(aiops_experiment_debug_request)
+        return BkDataAIOPSApi.aiops_experiments_debug(request_dict)

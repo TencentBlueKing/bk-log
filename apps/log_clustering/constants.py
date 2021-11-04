@@ -34,6 +34,9 @@ AGGS_FIELD_PREFIX = "log_signature"
 CLUSTERING_CONFIG_EXCLUDE = ["sample_set_id", "model_id"]
 CLUSTERING_CONFIG_DEFAULT = "default_clustering_config"
 
+DEFAULT_CLUSTERING_FIELDS = "log"
+DEFAULT_IS_CASE_SENSITIVE = 0
+
 
 class PatternEnum(ChoicesEnum):
     LEVEL_01 = "01"
