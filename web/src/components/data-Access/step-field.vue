@@ -27,7 +27,10 @@
       <bk-alert v-if="!isCleanField && !isTempField" class="king-alert" type="info">
         <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
       </bk-alert>
-      <div class="collector-select" v-if="isCleanField">
+      <bk-alert v-if="settingEdit.isEdit" class="king-alert" type="info">
+        <div slot="title" class="slot-title-container">{{$t('retrieveSetting.extractionPrompt')}}</div>
+      </bk-alert>
+      <div class="collector-select" v-show="isCleanField && !settingEdit.isEdit">
         <label>{{ $t('采集项') }}</label>
         <bk-select
           style="width: 520px;"
@@ -316,7 +319,7 @@
           @click.stop.prevent="finish(true)"
           :loading="isLoading"
           :disabled="!collectProject || !showDebugBtn || !hasFields">
-          {{$t('下一步')}}
+          {{settingEdit.isEdit ? $t('保存') : $t('下一步')}}
         </bk-button>
         <!-- 跳过 -->
         <bk-button
@@ -346,7 +349,7 @@
           class="ml10"
           data-test-id="fieldExtractionBox_button_cancelSaveTemplate"
           @click="handleCancel(false)">
-          {{$t('取消')}}
+          {{settingEdit.isEdit ? $t('dataManage.Reset') : $t('取消')}}
         </bk-button>
       </div>
 
@@ -416,6 +419,13 @@ export default {
     collectorId: String,
     isCleanField: Boolean,
     isTempField: Boolean,
+    settingEdit: {
+      type: Object,
+      default: () => ({
+        isEdit: false,
+        id: 0,
+      }),
+    },
   },
   data() {
     return {
@@ -536,7 +546,7 @@ export default {
       return this.$route.name === 'clean-template-edit';
     },
     isEditCleanItem() {
-      return this.$route.name === 'clean-edit';
+      return this.$route.name === 'clean-edit' || this.settingEdit.isEdit;
     },
     advanceDisable() {
       return window.FEATURE_TOGGLE.scenario_bkdata !== 'on'
@@ -614,7 +624,11 @@ export default {
         if (data.length) {
           this.cleanCollectorList = data;
           if (this.isEditCleanItem) {
-            this.cleanCollector = this.$route.params.collectorId;
+            if (this.settingEdit.isEdit) {
+              this.cleanCollector = this.settingEdit.id;
+            } else {
+              this.cleanCollector = this.$route.params.collectorId;
+            }
           } else this.basicLoading = false;
         } else this.basicLoading = false;
       })
@@ -842,7 +856,10 @@ export default {
     },
     handleCancel(isCollect = false) {
       if (isCollect) return;
-
+      if(this.settingEdit.isEdit){
+        this.$emit('reset-page')
+        return
+      }
       const routeName = this.isCleanField ? 'log-clean-list' : 'log-clean-templates';
       this.$router.push({
         name: routeName,

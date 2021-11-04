@@ -23,23 +23,41 @@
 <template>
   <!-- 设置-字段提取 -->
   <div>
-    <!-- <step-field @change-submit="changeSubmit" /> -->
+    <!-- :setting-edit="settingEdit"  -->
+    <step-field
+      v-if="isShowFieldPage"
+      :is-clean-field="true"
+      :is-temp-field="false"
+      @reset-page="resetPage" />
   </div>
 </template>
 
 <script>
-// import StepField from '@/components/data-Access/step-field';
+import StepField from '@/components/data-Access/step-field';
 export default {
   components: {
-    // StepField,
+    StepField,
+  },
+  props: {
+    indexSetItem: {
+      type: Object,
+      default: () => {},
+    },
   },
   data() {
     return {
+      isShowFieldPage: true,
+      // settingEdit: { isEdit: true, id: 0 },
     };
   },
+  mounted() {
+  },
   methods: {
-    changeSubmit() {
-
+    resetPage() {
+      this.isShowFieldPage = false;
+      this.$nextTick(() => {
+        this.isShowFieldPage = true;
+      });
     },
   },
 };
