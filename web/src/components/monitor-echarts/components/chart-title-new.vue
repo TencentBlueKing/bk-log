@@ -36,7 +36,7 @@
         {{subtitle}}
       </div>
     </div>
-    <bk-spin v-if="loading" class="chart-spin"></bk-spin>
+    <bk-spin v-if="loading && !isFold" class="chart-spin"></bk-spin>
     <div class="menu-list" v-else-if="!isFold">
       <span 
         class="log-icon icon-xiangji" 

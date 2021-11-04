@@ -79,6 +79,24 @@ from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
 max_len_dict = Dict[str, int]
 
 
+def fields_config(name: str, is_active: bool = False):
+    def decorator(func):
+        def func_decorator(*args, **kwargs):
+            config = {"name": name, "is_active": is_active}
+            result = func(*args, **kwargs)
+            if isinstance(result, tuple):
+                config["is_active"], config["extra"] = result
+                return config
+            if result is None:
+                return config
+            config["is_active"] = result
+            return config
+
+        return func_decorator
+
+    return decorator
+
+
 class SearchHandler(object):
     def __init__(self, index_set_id: int, search_dict: dict, pre_check_enable=True, can_highlight=True):
         self.search_dict: dict = search_dict
@@ -218,30 +236,57 @@ class SearchHandler(object):
             "time_field": self.time_field,
             "time_field_type": self.time_field_type,
             "time_field_unit": self.time_field_unit,
+            "config": [],
         }
+        for fields_config in [
+            self.bcs_web_console(field_result_list),
+            self.bk_log_to_trace(),
+            self.analyze_fields(field_result),
+            self.bkmonitor(field_result_list),
+            self.async_export(field_result),
+            self.ip_topo_switch(),
+        ]:
+            result_dict["config"].append(fields_config)
 
-        if self._enable_bcs_manage():
-            if (
-                LogIndexSet.objects.get(index_set_id=self.index_set_id).source_app_code == BK_BCS_APP_CODE
-                and "cluster" in field_result_list
-                and "container_id" in field_result_list
-            ):
-                bcs_web_console_usable = True
-            else:
-                bcs_web_console_usable = False
-            result_dict.update({"bcs_web_console_usable": bcs_web_console_usable})
-        if FeatureToggleObject.switch("bk_log_to_trace"):
-            self.bk_log_to_trace(result_dict)
-        result_dict.update(MappingHandlers.analyze_fields(field_result))
-        ip_topo_switch = MappingHandlers.init_ip_topo_switch(self.index_set_id)
-        result_dict["bkmonitor_url"] = ""
-        if "ip" in field_result_list or "serverIp" in field_result_list:
-            result_dict["bkmonitor_url"] = settings.MONITOR_URL
-        result_dict.update({"ip_topo_switch": ip_topo_switch})
-        result_dict.update(MappingHandlers.async_export_fields(field_result, self.scenario_id))
         return result_dict
 
-    def bk_log_to_trace(self, result_dict):
+    @fields_config("async_export")
+    def async_export(self, field_result):
+        result = MappingHandlers.async_export_fields(field_result, self.scenario_id)
+        if result["async_export_usable"]:
+            return True, {"fields": result["async_export_fields"]}
+        return False, {"usable_reason": result["async_export_usable_reason"]}
+
+    @fields_config("bkmonitor")
+    def bkmonitor(self, field_result_list):
+        if "ip" in field_result_list or "serverIp" in field_result_list:
+            return True
+
+    @fields_config("ip_topo_switch")
+    def ip_topo_switch(self):
+        return MappingHandlers.init_ip_topo_switch(self.index_set_id)
+
+    @fields_config("context_and_realtime")
+    def analyze_fields(self, field_result):
+        result = MappingHandlers.analyze_fields(field_result)
+        if result["context_search_usable"]:
+            return True, {"reason": ""}
+        return False, {"reason": result["usable_reason"]}
+
+    @fields_config("bcs_web_console")
+    def bcs_web_console(self, field_result_list):
+        if not self._enable_bcs_manage():
+            return False
+        if (
+            LogIndexSet.objects.get(index_set_id=self.index_set_id).source_app_code == BK_BCS_APP_CODE
+            and "cluster" in field_result_list
+            and "container_id" in field_result_list
+        ):
+            return True
+        return False
+
+    @fields_config("trace")
+    def bk_log_to_trace(self):
         """
         [{
             "log_config": [{
@@ -253,20 +298,23 @@ class SearchHandler(object):
             }
         }]
         """
+        if not FeatureToggleObject.switch("bk_log_to_trace"):
+            return False
         toggle = FeatureToggleObject.toggle("bk_log_to_trace")
         feature_config = toggle.feature_config
         if isinstance(feature_config, dict):
             feature_config = [feature_config]
 
         if not feature_config:
-            return
+            return False
+
         for config in feature_config:
             log_config = config.get("log_config", [])
             target_config = [c for c in log_config if str(c["index_set_id"]) == str(self.index_set_id)]
             if not target_config:
                 continue
             target_config, *_ = target_config
-            result_dict.update({"trace_config": {**config.get("trace_config"), "field": target_config["field"]}})
+            return True, {**config.get("trace_config"), "field": target_config["field"]}
 
     def search(self, search_type="default"):
 

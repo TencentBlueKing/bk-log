@@ -36,7 +36,7 @@
           <span
             v-for="(option) in toolMenuList"
             :key="option.id"
-            :class="`icon ${option.icon}`"
+            :class="`icon ${getHandleIcon(option, field)}`"
             @click.stop="handleMenuClick(option.id, field)">
           </span>
         </div>
@@ -63,13 +63,18 @@ export default {
       type: Object,
       required: true,
     },
+    visibleFields: {
+      type: Array,
+      required: true,
+    },
   },
   data() {
     return {
       toolMenuList: [
         { id: 'is', icon: 'bk-icon icon-close-circle' },
         { id: 'not', icon: 'bk-icon icon-minus-circle' },
-        { id: 'link', icon: 'bk-icon icon-arrows-up-circle' },
+        { id: 'display', icon: 'bk-icon icon-arrows-up-circle' },
+        // { id: 'chart', icon: 'log-icon icon-chart' },
         { id: 'copy', icon: 'log-icon icon-copy' },
       ],
     };
@@ -79,6 +84,9 @@ export default {
     fieldKeyMap() {
       return Object.keys(this.statisticalFieldsData);
     },
+    hiddenFields() {
+      return this.fieldList.filter(item => !this.visibleFields.some(visibleItem => item === visibleItem));
+    },
   },
   methods: {
     formatterStr(str) {
@@ -87,6 +95,12 @@ export default {
       }
 
       return (str || str === 0) ? str : '--';
+    },
+    getHandleIcon(option, field) {
+      if (option.id !== 'display') return option.icon;
+
+      const isDisplay = this.visibleFields.some(item => item.field_name === field);
+      return `${option.icon} ${isDisplay ? 'is-hidden' : ''}`;
     },
     getFieldType(field) {
       const target = this.fieldList.find(item => item.field_name === field);
@@ -134,6 +148,18 @@ export default {
         params.value = this.data[item];
       }
 
+      if (operator === 'display') {
+        const displayFieldNames = this.visibleFields.map(field => field.field_name);
+        const isDisplay = displayFieldNames.includes(item);
+        if (isDisplay) {
+          displayFieldNames.splice(displayFieldNames.indexOf(item), 1);
+        } else {
+          displayFieldNames.push(item);
+        }
+        params.operation = 'display';
+        params.displayFieldNames = displayFieldNames;
+      }
+
       if (Object.keys(params).length) this.$emit('menuClick', params);
     },
   },
@@ -166,17 +192,25 @@ export default {
       .icon {
         margin-right: 6px;
         font-size: 14px;
-        transform: rotate(45deg);
         cursor: pointer;
         &:hover {
           color: #3A84FF;
         }
       }
+      .bk-icon {
+        transform: rotate(45deg);
+      }
       .icon-arrows-up-circle {
         margin-right: 2px;
         font-size: 12px;
+        &.is-hidden {
+          transform: rotate(225deg);
+        }
       }
-      .log-icon {
+      .icon-chart {
+        margin: 0 0 0 6px;
+      }
+      .icon-copy {
         transform: rotate(0);
         font-size: 24px;
         cursor: pointer;

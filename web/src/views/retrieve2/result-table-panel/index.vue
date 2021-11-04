@@ -63,7 +63,7 @@ export default {
 <style lang="scss">
   .result-table-panel {
     position: relative;
-    margin: 0 20px 16px;
+    margin: 0 0 16px;
     padding: 10px 24px 20px;
     background: #fff;
     .bk-tab {

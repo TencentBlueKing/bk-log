@@ -70,11 +70,6 @@ export default {
       activeExpandView: 'kv',
     };
   },
-  methods: {
-    handleMenuClicks(id) {
-      console.log(id);
-    },
-  },
 };
 </script>
 

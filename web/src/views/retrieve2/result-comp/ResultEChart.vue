@@ -313,8 +313,6 @@ export default {
 <style lang="scss" scoped>
   .monitor-echarts-container {
     position: relative;
-    margin: 0 20px;
-    width: calc(100% - 40px);
     height: 200px;
     background-color: #fff;
     overflow: hidden;
