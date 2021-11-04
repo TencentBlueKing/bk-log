@@ -785,6 +785,14 @@ export default {
     },
     // 添加过滤条件
     addFilterCondition(field, operator, value, index) {
+      const isExist = this.retrieveParams.addition.some((addition) => {
+        return addition.field === field
+        && addition.operator === operator
+        && addition.value.toString() === value.toString();
+      });
+      // 已存在相同条件
+      if (isExist) return;
+
       const startIndex = index > -1 ? index : this.retrieveParams.addition.length;
       const deleteCount = index > -1 ? 1 : 0;
       this.retrieveParams.addition.splice(startIndex, deleteCount, { field, operator, value });
