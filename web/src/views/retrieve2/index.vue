@@ -1151,6 +1151,12 @@ export default {
           }
         }
       });
+      this.$http.request('retrieve/postFieldsConfig', {
+        params: { index_set_id: this.$route.params.indexId },
+        data: { display_fields: displayFieldNames, sort_list: [] },
+      }).catch((e) => {
+        console.warn(e);
+      });
       if (showFieldAlias !== undefined) {
         this.showFieldAlias = showFieldAlias;
         window.localStorage.setItem('showFieldAlias', showFieldAlias);

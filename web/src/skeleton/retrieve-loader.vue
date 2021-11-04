@@ -39,7 +39,7 @@
         </template>
       </bk-table-column>
     </template>
-    <bk-table-column width="84"></bk-table-column>
+    <bk-table-column v-if="!isLoading" width="84"></bk-table-column>
   </bk-table>
 </template>
 
@@ -80,10 +80,12 @@ export default {
   },
   created() {
     if (this.isLoading) this.loaderLen = 12;
-    document.querySelector('.result-scroll-container').addEventListener('scroll', this.handleScroll);
+    const ele = document.querySelector('.result-scroll-container');
+    if (ele) ele.addEventListener('scroll', this.handleScroll);
   },
   beforeDestroy() {
-    document.querySelector('.result-scroll-container').removeEventListener('scroll', this.handleScroll);
+    const ele = document.querySelector('.result-scroll-container');
+    if (ele) ele.addEventListener('scroll', this.handleScroll);
   },
   methods: {
     getRandom() { // 骨架占位随机长度
