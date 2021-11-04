@@ -108,6 +108,7 @@ class ClusteringConfigHandler(object):
             pattern = cls._deal_pattern(json.loads(predict_output_data["pattern"]))
             token_with_regex = cls._deal_token_with_regex(json.loads(predict_output_data["token_with_regex"]))
             result.append({"patterns": pattern, "token_with_regex": token_with_regex})
+        return result
 
     @classmethod
     def _deal_pattern(cls, pattern_result: dict):
