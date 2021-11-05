@@ -182,9 +182,9 @@ export default {
       projectId && this.setRouter(projectId, bizId); // 项目id不为空时，获取菜单
     },
     // 选择的业务是否有权限
-    checkProjectAuth(project = '') {
+    checkProjectAuth(project) {
       // eslint-disable-next-line camelcase
-      if (project?.permission?.view_business) {
+      if (project && project.permission && project.permission.view_business) {
         return true;
       }
       this.$store.commit('updateProject', project.project_id);
@@ -258,11 +258,10 @@ export default {
           }) || {};
           this.$store.commit('updateActiveManageNav', activeManageNav);
 
-          const activeManageSubNav = activeManageNav
-            ? activeManageNav.children
-              ? activeManageNav.children.find((item) => {
-                return matchedList.some(record => record.name === item.id);
-              }) : {} : {};
+          const activeManageSubNav = activeManageNav.children
+            ? activeManageNav.children.find((item) => {
+              return matchedList.some(record => record.name === item.id);
+            }) : {};
           this.$store.commit('updateActiveManageSubNav', activeManageSubNav);
         }, {
           immediate: true,
