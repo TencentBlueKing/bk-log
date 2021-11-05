@@ -89,7 +89,7 @@ export default {
             this.$store.commit('updateMyProjectList', projectList);
             if (bizId === demoProject.bk_biz_id || projectId === demoProject.project_id) {
               // 查询参数指定查看 demo 业务
-              return this.projectChange(demoProject.project_id);
+              return this.checkProjectChange(demoProject.project_id);
             }
             args.demoBusiness = {
               url: this.demoProjectUrl,
@@ -114,7 +114,7 @@ export default {
             args.getAccess.url = authRes.data.apply_url;
           }
           this.$store.commit('setPageLoading', false);
-          this.projectChange();
+          this.checkProjectChange();
           this.$emit('welcome', args);
         } else { // 正常业务
           this.$store.commit('updateMyProjectList', projectList);
@@ -122,18 +122,41 @@ export default {
           const firstRealProjectId = projectList.find(item => item.bk_biz_id !== demoId).project_id;
           if (projectId || bizId) {
             const matchProject = projectList.find(item => item.project_id === projectId || item.bk_biz_id === bizId);
-            this.projectChange(matchProject ? matchProject.project_id : firstRealProjectId);
+            this.checkProjectChange(matchProject ? matchProject.project_id : firstRealProjectId);
           } else {
             const storageProjectId = window.localStorage.getItem('project_id');
             const hasProject = storageProjectId
               ? projectList.some(item => item.project_id === storageProjectId) : false;
-            this.projectChange(hasProject ? storageProjectId : firstRealProjectId);
+            this.checkProjectChange(hasProject ? storageProjectId : firstRealProjectId);
           }
         }
       } catch (e) {
         console.warn(e);
         this.$store.commit('setPageLoading', false);
       }
+    },
+    getDemoProjectUrl(id) {
+      let siteUrl = window.SITE_URL;
+      if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
+      if (!siteUrl.endsWith('/')) siteUrl += '/';
+      return `${window.location.origin + siteUrl}#/retrieve?projectId=${id}`;
+    },
+    checkProjectChange(projectId = '') {
+      if (!this.isFirstLoad && this.$route.meta.needBack) {
+        this.$store.commit('updateRouterLeaveTip', true);
+
+        this.$bkInfo({
+          title: this.$t('pageLeaveTips'),
+          confirmFn: () => {
+            this.projectChange(projectId);
+          },
+          cancelFn: () => {
+            this.$store.commit('updateRouterLeaveTip', false);
+          },
+        });
+        return;
+      }
+      this.projectChange(projectId);
     },
     /**
      * 更新当前项目
@@ -157,6 +180,29 @@ export default {
         }
       }
       projectId && this.setRouter(projectId, bizId); // 项目id不为空时，获取菜单
+    },
+    // 选择的业务是否有权限
+    checkProjectAuth(project) {
+      // eslint-disable-next-line camelcase
+      if (project?.permission?.view_business) {
+        return true;
+      }
+      this.$store.commit('updateProject', project.project_id);
+      this.$store.dispatch('getApplyData', {
+        action_ids: ['view_business'],
+        resources: [{
+          type: 'biz',
+          id: project.bk_biz_id,
+        }],
+      }).then((res) => {
+        this.$emit('auth', res.data);
+      })
+        .catch((err) => {
+          console.warn(err);
+        })
+        .finally(() => {
+          this.$store.commit('setPageLoading', false);
+        });
     },
     async setRouter(projectId, bizId) {
       try {
@@ -212,10 +258,10 @@ export default {
           }) || {};
           this.$store.commit('updateActiveManageNav', activeManageNav);
 
-          // const activeManageSubNav = activeManageNav?.children?.find((item) => {
-          //   return matchedList.some(record => record.name === item.id);
-          // }) || {};
-          // this.$store.commit('updateActiveManageSubNav', activeManageSubNav);
+          const activeManageSubNav = activeManageNav?.children?.find((item) => {
+            return matchedList.some(record => record.name === item.id);
+          }) || {};
+          this.$store.commit('updateActiveManageSubNav', activeManageSubNav);
         }, {
           immediate: true,
         });
@@ -250,6 +296,7 @@ export default {
           this.$emit('auth', null); // 表示不显示无业务权限的页面
           this.$store.commit('setPageLoading', false);
           this.isFirstLoad = false;
+          this.$store.commit('updateRouterLeaveTip', false);
         }, 0);
       }
     },
