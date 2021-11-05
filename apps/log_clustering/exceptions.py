@@ -50,3 +50,8 @@ class NotSupportStepNameQueryException(BaseClusteringException):
 class EvaluationStatusResponseException(BaseClusteringException):
     ERROR_CODE = "004"
     MESSAGE = _("evaluation_status返回异常: {evaluation_status}")
+
+
+class ClusteringConfigNotExistException(BaseClusteringException):
+    ERROR_CODE = "005"
+    MESSAGE = _("聚类配置不存在")
