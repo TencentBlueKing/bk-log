@@ -31,7 +31,8 @@
         :property="''">
         <br>
         <div class="form-item">
-          <bk-select v-model="value" class="ml200" style="width: 482px;" :disabled="!globalEditable">
+          <bk-select
+            v-model="formData.clustering_fields" class="ml200" style="width: 482px;" :disabled="!globalEditable">
             <bk-option v-for="option in clusterField"
                        :key="option.id"
                        :id="option.id"
@@ -76,7 +77,7 @@
           <div class="form-item">
             <bk-input
               class="ml200" type="number" style="width: 94px; overflow: hidden;"
-              v-model="value"
+              v-model="formData.max_log_length"
               :disabled="!globalEditable"></bk-input>
             <span style="margin-left: 8px">{{$t('retrieveSetting.byte')}}</span>
             <span
@@ -96,11 +97,11 @@
             <div class="filter-rule filter-rule-item" v-for="(item, index) of filterList" :key="index">
               <bk-select
                 class="icon-box and-or mr-neg1"
+                placeholder=" "
+                v-model="item.compared"
                 v-if="filterList.length !== 0 && index !== 0 && item.select !== ''"
                 :clearable="false"
-                :disabled="!globalEditable"
-                v-model="item.compared"
-                placeholder=" ">
+                :disabled="!globalEditable">
                 <bk-option v-for="option in comparedList"
                            :key="option.id"
                            :id="option.id"
@@ -110,9 +111,9 @@
 
               <bk-select
                 class="min-100 mr-neg1"
+                v-model="item.select"
                 :clearable="false"
-                :disabled="!globalEditable"
-                v-model="item.select">
+                :disabled="!globalEditable">
                 <bk-option v-for="option in filterSelectList"
                            :key="option.id"
                            :id="option.id"
@@ -125,13 +126,13 @@
 
               <bk-select
                 v-if="item.select !== ''"
+                v-model="item.condition"
+                placeholder=" "
                 class="icon-box mr-neg1"
                 style="color: #3A84FF;"
                 :disabled="!globalEditable"
                 :clearable="false"
-                :popover-min-width="120"
-                v-model="item.condition"
-                placeholder=" ">
+                :popover-min-width="120">
                 <bk-option v-for="option in conditionList"
                            :key="option.id"
                            :id="option.id"
@@ -140,9 +141,9 @@
               </bk-select>
 
               <bk-tag-input
-                class="min-100 mr-neg1"
                 v-if="item.select !== ''"
                 v-model="item.inputList"
+                class="min-100 mr-neg1"
                 placeholder=" "
                 :disabled="!globalEditable"
                 :list="inputSelectList"
@@ -196,7 +197,7 @@
               </div>
             </div>
 
-            <div v-if="tableData.length > 0">
+            <div>
               <vue-draggable v-bind="dragOptions" v-model="tableData">
                 <transition-group>
                   <li class="table-row table-row-li flbc" v-for="(item, index) in tableData" :key="item.index">
@@ -291,8 +292,8 @@
     <!-- 添加规则dialog -->
     <bk-dialog
       v-model="isShowAddRule"
-      :header-position="addRuleConfigure.position"
-      :width="addRuleConfigure.width"
+      :header-position="'left'"
+      :width="640"
       :title="isEditRuls ? $t('retrieveSetting.editingRules') : $t('retrieveSetting.addRule')"
       :mask-close="false"
       @after-leave="cancelAddRuleContent"
@@ -318,19 +319,21 @@
       <template slot="footer">
         <div class="flbc">
           <div class="inspection-status">
-            <div style="margin-right: 25px">
-              <bk-spin class="absl" v-if="isShowSpin" size="mini"></bk-spin>
-              <span v-if="dealyShowCheck" class="bk-icon icon-check-circle-shape absl" style="color: #45E35F;"></span>
+            <div class="inspection-status" v-if="isClickSubmit">
+              <div>
+                <bk-spin v-if="isDetection" class="spin" size="mini"></bk-spin>
+                <span v-else class="bk-icon icon-check-circle-shape spin" style="color: #45E35F;"></span>
+              </div>
+              <span style="margin-left: 24px;">
+                {{isDetection ?
+                  $t('retrieveSetting.inspection') : $t('retrieveSetting.inspectionSuccess')}}
+              </span>
             </div>
-            <span v-if="isClickSubmit">
-              {{addRuleConfigure.isDetection ?
-                $t('retrieveSetting.inspection') : $t('retrieveSetting.inspectionSuccess')}}
-            </span>
           </div>
           <div>
             <bk-button
               theme="primary"
-              :disabled="addRuleConfigure.isDetection"
+              :disabled="isDetection"
               @click="handleRuleSubmit">
               {{isRuleCorrect ? $t('保存') : $t('retrieveSetting.testSyntax')}}</bk-button>
             <bk-button @click="handleRuleCancel">{{$t('取消')}}</bk-button>
@@ -378,46 +381,61 @@ export default {
         regular: '11111111111111111111111111111111111111',
         placeholder: 1,
       }],
+      formData: {
+        // collector_config_id: 1,
+        // collector_config_name_en: 'test',
+        index_set_id: '', // 索引集id
+        min_members: '', // 最小日志数量
+        max_dist_list: '', // 敏感度
+        predefined_varibles: '', //	预先定义的正则表达式
+        delimeter: '', // 分词符
+        max_log_lengt: 1, // 最大日志长度
+        is_case_sensitive: 1, // 是否大小写忽略
+        clustering_fields: 'LOG', // 聚合字段
+        bk_biz_id: 1, // 业务id
+        filter_rules: [
+          {
+            fields_name: '', // 过滤规则字段名
+            op: '', // 过滤规则操作符号
+            value: 1, // 过滤规则字段值
+          },
+        ],
+      },
+      isHandle: false, // 保存loading
+      resetFormData: {}, // 重置保留的formData
+
       filterList: [], // 过滤条件数组
-      filterSelectList: [
+      filterSelectList: [ // 过滤条件选项
         { id: '1', name: '日志路径' },
         { id: '2', name: 'gse索引' },
         { id: '3', name: '云区域ID' },
       ],
-      conditionList: [
+      conditionList: [ // 过滤条件对比
         { id: '>', name: '>' },
         { id: '<', name: '<' },
         { id: '=', name: '=' },
       ],
-      comparedList: [
+      comparedList: [ // 过滤条件与或
         { id: 'AND', name: 'AND' },
         { id: 'OR', name: 'OR' },
       ],
-      inputSelectList: [
+      inputSelectList: [ // 过滤条件inputTag
         { id: '1', name: 'AND' },
         { id: '2', name: 'OR' },
       ],
       regular: '', // 添加聚类规则正则
       placeholder: '', // 添加聚类规则占位符
-      formData: {},
       logOriginal: '', // 日志源
       rules: {},
       dataFingerprint: true, // 数据指纹
       value: '',
-      isHandle: false,
       isShowAddRule: false, // 是否展开添加规则弹窗
-      isShowSubmitDialog: false, // 保存弹窗
-      isRuleCorrect: false, // 检测语法
+      isShowSubmitDialog: false, // 是否展开保存弹窗
+      isRuleCorrect: false, // 检测语法是否通过
       isShowAddFilterIcon: true, // 是否显示过滤规则增加按钮
-      isEditRuls: false, // 是否编辑聚类规则
-      isShowSpin: false,
-      dealyShowCheck: false,
-      isClickSubmit: false,
-      addRuleConfigure: {
-        width: 640,
-        position: 'left',
-        isDetection: false,
-      },
+      isEditRuls: false, // 编辑聚类规则
+      isClickSubmit: false, // 是否点击添加
+      isDetection: false, // 是否在检测
       dragOptions: {
         animation: 150,
         tag: 'ul',
@@ -446,6 +464,19 @@ export default {
     },
   },
   methods: {
+    initPage() {
+    // this.$http.request('/logClustering/clusteringDetails', {
+    //   params: {
+    //     index_set_id: this.indexId,
+    //   },
+    // }).then((res) => {
+    //   this.formData = res.data;
+    //   this.isShowMainLoding = false;
+    // })
+    //   .catch((e) => {
+    //     console.warn(e);
+    //   });
+    },
     handleSubmit() {
       this.isShowSubmitDialog = true;
     },
@@ -480,14 +511,11 @@ export default {
         });
         this.isShowAddRule = false;
       } else {
-        this.addRuleConfigure.isDetection = true;
-        this.isShowSpin = true;
+        this.isDetection = true;
         this.isClickSubmit = true;
         setTimeout(() => {
-          this.addRuleConfigure.isDetection = false;
+          this.isDetection = false;
           this.isRuleCorrect = true;
-          this.isShowSpin = false;
-          this.dealyShowCheck = true;
         }, 2000);
       }
     },
@@ -496,7 +524,6 @@ export default {
       this.placeholder = '';
       this.isRuleCorrect = false;
       this.isEditRuls = false;
-      this.dealyShowCheck = false;
       this.isClickSubmit = false;
     },
     handleRuleCancel() {
@@ -699,7 +726,7 @@ export default {
     .bk-icon{
       font-size: 18px;
     }
-    .absl{
+    .spin{
       top: 2px;
       position: absolute;
     }

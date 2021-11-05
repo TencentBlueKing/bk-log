@@ -25,14 +25,18 @@
   <bk-dialog
     width="100%"
     ext-cls="set-dialog"
-    v-model="showDialog"
-    :position="logPosition"
+    v-model="isShowDialog"
     :show-mask="false"
     :close-icon="false"
     :show-footer="false"
     :draggable="false"
     :scrollable="true"
-    @value-change="changeChoice"
+    :position="{
+      top: 50,
+      left: 0,
+    }"
+    @value-change="openPage"
+    @after-leave="closePage"
   >
     <div class="setting-container">
       <div class="setting-title">
@@ -42,9 +46,9 @@
 
       <div class="setting-main">
         <div class="setting-left">
-          <div v-for="item of currentList" :key="item.id"
+          <div v-for="(item,index) of currentList" :key="item.id"
                :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
-               @click="handleChoice(item.id)">
+               @click="handleNavClick(item.id,index)">
             <span class="bk-icon icon-block-shape"></span>
             <span style="width: 110px">{{item.name}}</span>
             <div @click="handleStopProp">
@@ -56,9 +60,9 @@
         <div class="setting-right">
           <div class="more-details">
             <div class="details">
-              <p><span>{{$t('indexSetList.index_set')}}：</span>某某日志</p>
-              <p><span>{{$t('索引')}}：</span>123</p>
-              <p><span>{{$t('来源')}}：</span>某某日志/某某</p>
+              <p><span>{{$t('indexSetList.index_set')}}：</span>{{indexSetItem.index_set_name}}</p>
+              <p><span>{{$t('索引')}}：</span>{{indexSetItem.indexName}}</p>
+              <p><span>{{$t('来源')}}：</span>{{indexSetItem.scenario_name}}</p>
             </div>
             <div style="color: #3A84FF;cursor: pointer;">
               {{$t('retrieveSetting.moreDetails')}}
@@ -66,9 +70,10 @@
             </div>
           </div>
           <div class="operation-container">
-            <full-text-index :global-editable="currentList[0].isEditable" v-if="currentChoice === 'index'" />
-            <field-extraction :global-editable="currentList[1].isEditable" v-if="currentChoice === 'extract'" />
-            <log-cluster :global-editable="currentList[2].isEditable" v-if="currentChoice === 'clustering'" />
+            <component :is="showComponent"
+                       :global-editable="globalEditable"
+                       :index-set-item="indexSetItem"
+            ></component>
           </div>
         </div>
       </div>
@@ -88,7 +93,7 @@ export default {
     LogCluster,
   },
   props: {
-    showDialog: {
+    isShowDialog: {
       type: Boolean,
       default: false,
     },
@@ -96,43 +101,65 @@ export default {
       type: String,
       default: 'index',
     },
+    indexSetItem: {
+      type: Object,
+      default: () => {},
+    },
   },
   data() {
     return {
-      logPosition: {
-        top: 50,
-        left: 0,
-      },
-      currentChoice: 'index',
-      currentList: [{
-        id: 'index',
-        name: this.$t('retrieveSetting.fullTextIndex'),
-        isEditable: true,
-      },
-      {
-        id: 'extract',
-        name: this.$t('retrieveSetting.fieldExtraction'),
-        isEditable: true,
-      },
-      {
-        id: 'clustering',
-        name: this.$t('retrieveSetting.logCluster'),
-        isEditable: true,
-      }],
+      isOpenPage: true,
+      currentChoice: '', // 当前nav选中
+      showComponent: '', // 当前显示的组件
+      currentList: [
+        // {
+        //   id: 'index',
+        //   componentsName: 'FullTextIndex',
+        //   name: this.$t('retrieveSetting.fullTextIndex'),
+        //   isEditable: true,
+        // },
+        {
+          id: 'extract',
+          componentsName: 'FieldExtraction',
+          name: this.$t('retrieveSetting.fieldExtraction'),
+          isEditable: true,
+        },
+        {
+          id: 'clustering',
+          componentsName: 'LogCluster',
+          name: this.$t('retrieveSetting.logCluster'),
+          isEditable: true,
+        }],
     };
   },
-  methods: {
-    closeSetting() {
-      this.$emit('closeSetting');
+  computed: {
+    globalEditable() {
+      return  this.currentList.find(el => el.id === this.currentChoice)?.isEditable;
     },
-    handleChoice(val) {
+  },
+  methods: {
+    handleSubmitFormData() {
+    },
+    handleNavClick(val, index) {
       this.currentChoice = val;
+      this.showComponent = this.currentList[index].componentsName;
+    },
+    // 打开设置页面
+    openPage() {
+      if (this.isOpenPage) {
+        this.currentChoice = this.selectChoice;
+        this.showComponent = this.currentList.find(el => el.id === this.selectChoice)?.componentsName;
+        this.isOpenPage = false;
+      }
     },
     handleStopProp(e) {
       e.stopPropagation();
     },
-    changeChoice() {
-      this.currentChoice = this.selectChoice;
+    closeSetting() {
+      this.$emit('closeSetting');
+    },
+    closePage() {
+      this.isOpenPage = true;
     },
   },
 };
@@ -156,11 +183,13 @@ export default {
 .setting-container{
   height: calc(100vh - 52px);
   overflow-y: auto;
-
+  min-width: 1460px;
+  display: flex;
+  justify-content: center;
   .setting-title{
-    width: 100%;
+    width: calc(100vw + 12px);
     height: 52px;
-    min-width: 1400px;
+    min-width: 1460px;
     line-height: 52px;
     font-size: 16px;
     text-align: center;
@@ -181,9 +210,9 @@ export default {
 
   .setting-main{
     padding: 72px 40px 0;
-    height: 100%;
     display: flex;
     position: relative;
+    left: -100px;
 
     .setting-left{
       min-width: 240px;
@@ -207,8 +236,7 @@ export default {
     }
 
     .setting-right{
-      width: 62.5vw;
-      min-width: 1000px;
+      width: 1000px;
       margin-left: 20px;
 
       .more-details{

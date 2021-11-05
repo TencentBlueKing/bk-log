@@ -22,42 +22,49 @@
 
 <template>
   <bk-table
-    :data="tableData"
+    :data="tableData1"
     class="log-cluster-table"
+    v-bkloading="{ isLoading: fingerLoading }"
     @row-mouse-enter="showEditIcon"
     @row-mouse-leave="hiddenEditIcon">
-    <bk-table-column label="数据指纹" width="110">
+    <bk-table-column :label="$t('数据指纹')" width="110">
       <template slot-scope="props">
         <div class="flac">
-          <span>{{props.row.number}}</span>
-          <div class="new-finger">New</div>
+          <span>{{props.row.signature}}</span>
+          <div v-if="props.row.is_new_class" class="new-finger">New</div>
         </div>
       </template>
     </bk-table-column>
 
-    <bk-table-column label="数量" :sortable="true" width="91" prop="number">
+    <bk-table-column :label="$t('数量')" :sortable="true" width="91" prop="number">
       <template slot-scope="props">
-        <span class="link-color">{{props.row.number}}</span>
+        <span class="link-color">{{props.row.count}}</span>
       </template>
     </bk-table-column>
 
-    <bk-table-column label="占比" :sortable="true" width="91" prop="source">
+    <bk-table-column :label="$t('占比')" :sortable="true" width="91" prop="source">
       <template slot-scope="props">
-        {{`${props.row.source}%`}}
+        {{`${props.row.percentage}%`}}
       </template>
     </bk-table-column>
 
     <template v-if="comparedValue === '0'">
-      <bk-table-column label="同比数量" :sortable="true" width="101" align="center" header-align="center" prop="source">
+      <bk-table-column
+        width="101" align="center" header-align="center" prop="source"
+        :label="$t('同比数量')"
+        :sortable="true">
         <template slot-scope="props">
-          <span class="link-color">{{props.row.source}}</span>
+          <span class="link-color">{{props.row.year_on_year_count}}</span>
         </template>
       </bk-table-column>
 
-      <bk-table-column label="同比变化" :sortable="true" width="101" align="center" header-align="center" prop="source">
+      <bk-table-column
+        width="101" align="center" header-align="center" prop="source"
+        :label="$t('同比变化')"
+        :sortable="true">
         <template slot-scope="props">
           <div class="flac compared-change">
-            <span class="link-color">{{`${props.row.source}%`}}</span>
+            <span class="link-color">{{`${props.row.year_on_year_percentage}%`}}</span>
             <span :class="['bk-icon', props.row.source < 122 ? 'icon-arrows-down' : 'icon-arrows-up']"></span>
           </div>
         </template>
@@ -66,8 +73,8 @@
 
     <bk-table-column label="Pattern" min-width="400">
       <template slot-scope="props">
-        <bk-popover placement="bottom" ext-cls="pattern" theme="light">
-          <span style="cursor: pointer;">{{props.row.status}}</span>
+        <bk-popover placement="bottom" ext-cls="pattern" theme="light" :delay="300">
+          <span style="cursor: pointer;">{{props.row.pattern}}</span>
           <div slot="content" class="pattern-icons">
             <span class="bk-icon icon-eye"></span>
             <span class="log-icon icon-chart"></span>
@@ -77,30 +84,32 @@
       </template>
     </bk-table-column>
 
-    <bk-table-column label="告警" width="103">
+    <bk-table-column :label="$t('告警')" width="103">
       <template slot-scope="props">
         <div class="flac">
           <bk-switcher v-model="props.row.a" theme="primary"></bk-switcher>
-          <bk-popover content="可去告警策略编辑">
-            <span class="bk-icon icon-edit2 link-color" v-show="props.$index === currentHover"></span>
+          <bk-popover content="可去告警策略编辑" :delay="300">
+            <span
+              class="bk-icon icon-edit2 link-color"
+              :style="`visibility:${props.$index === currentHover ? 'unset' : 'hidden'}`"></span>
           </bk-popover>
         </div>
       </template>
     </bk-table-column>
 
-    <bk-table-column label="标签" width="135" align="center" header-align="center">
+    <bk-table-column :label="$t('标签')" width="135" align="center" header-align="center">
       <template slot-scope="props">
-        <bk-tag>{{props.row.a}}</bk-tag>
+        <bk-tag v-for="(item,index) of props.row.labels" :key="index">{{item}}</bk-tag>
       </template>
     </bk-table-column>
 
-    <bk-table-column label="备注" width="100" prop="status"></bk-table-column>
+    <bk-table-column :label="$t('备注')" width="100" prop="remark"></bk-table-column>
 
     <div slot="empty">
       <div class="empty-text">
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>当前无可用字段，请前往日志清洗进行设置</p>
-        <span class="empty-leave">跳转到日志清洗</span>
+        <p>{{$t('goCleanMessage')}}</p>
+        <span class="empty-leave">{{$t('跳转到日志清洗')}}</span>
       </div>
     </div>
   </bk-table>
@@ -117,17 +126,21 @@ export default {
   data() {
     return {
       currentHover: '',
-      tableData: [{
-        a: 123,
-        number: 123,
-        source: 123,
-        status: 123,
-      }, {
-        a: 123,
-        number: 124,
-        source: 121,
-        status: 123,
-      }],
+      fingerLoading: false,
+      tableData1: [
+        {
+          pattern: 'xx [ip] [xxxxx] xxxxx]',
+          signature: '1234',
+          count: 123,
+          year_on_year: -10,
+          percentage: 12,
+          is_new_class: true,
+          year_on_year_count: 12,
+          year_on_year_percentage: 10,
+          labels: ['xxxx', 'xxxx'],
+          remark: 'xxxx',
+        },
+      ],
     };
   },
   methods: {
