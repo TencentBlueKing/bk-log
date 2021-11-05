@@ -1572,7 +1572,7 @@ export default {
         }
 
         .biz-menu-box {
-          margin-top: 16px;
+          margin: 16px 16px 0;
         }
 
         .king-tab {
@@ -1581,7 +1581,6 @@ export default {
 
           .tab-content {
             height: calc(100% - 60px);
-            // padding: 0 24px;
             overflow-y: auto;
             background-color: #fbfbfb;
 
