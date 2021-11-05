@@ -30,7 +30,7 @@
       :title="$t('总趋势')"
       :menu-list="chartOptions.tool.list"
       :is-fold="isFold"
-      :loading="isLoading"
+      :loading="isLoading || !finishPolling"
       @toggle-expand="toggleExpand"
       @menu-click="handleMoreToolItemSet">
     </chart-title>
@@ -313,8 +313,6 @@ export default {
 <style lang="scss" scoped>
   .monitor-echarts-container {
     position: relative;
-    margin: 0 20px;
-    width: calc(100% - 40px);
     height: 200px;
     background-color: #fff;
     overflow: hidden;

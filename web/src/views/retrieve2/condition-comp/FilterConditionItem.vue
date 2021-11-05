@@ -224,7 +224,7 @@ export default {
 
       const params = {
         ...this.editData,
-        value: this.editData.value.split(','),
+        value: this.editData.value.toString().split(','),
       };
       this.$http.request('retrieve/getOperators').then((res) => {
         this.filterOperators = res.data;

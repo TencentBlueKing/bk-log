@@ -277,6 +277,7 @@ export default {
   表格: '表格',
   原始: '原始',
   换行: '换行',
+  展开全部: '展开全部',
   // 检索设置弹窗
   retrieveSetting: {
     setting: '设置',

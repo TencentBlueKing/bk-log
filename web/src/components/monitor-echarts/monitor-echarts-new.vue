@@ -406,16 +406,28 @@ export default class MonitorEcharts extends Vue {
       //   // eslint-disable-next-line @typescript-eslint/no-require-imports
       //   require('./map/china')
       // }
-      const chart: any = echarts.init(this.chartRef)
-      this.chart = chart
-      if (this.autoresize) {
-        const handler = debounce(300, false, () => this.resize())
-        this.resizeHandler = async () => {
-          await this.$nextTick()
-          this.chartRef && this.chartRef.offsetParent !== null && handler()
+      if (this.chartRef) {
+        const chart: any = echarts.init(this.chartRef)
+        this.chart = chart
+        if (this.autoresize) {
+          const handler = debounce(300, false, () => this.resize())
+          this.resizeHandler = async () => {
+            await this.$nextTick()
+            this.chartRef && this.chartRef.offsetParent !== null && handler()
+          }
+          addListener(this.chartRef, this.resizeHandler)
         }
-        addListener(this.chartRef, this.resizeHandler)
       }
+      // const chart: any = echarts.init(this.chartRef)
+      // this.chart = chart
+      // if (this.autoresize) {
+      //   const handler = debounce(300, false, () => this.resize())
+      //   this.resizeHandler = async () => {
+      //     await this.$nextTick()
+      //     this.chartRef && this.chartRef.offsetParent !== null && handler()
+      //   }
+      //   addListener(this.chartRef, this.resizeHandler)
+      // }
     }
     this.initPropsWatcher()
   }
@@ -466,8 +478,7 @@ export default class MonitorEcharts extends Vue {
     try {
       const isRange = (startTime && startTime.length > 0) && (endTime && endTime.length > 0)
       const data = await this.getSeriesData(startTime, endTime, isRange).catch(() => ({ series: [] }))
-      this.isFinish = data ? data[0] && data[0].isFinish : false
-      
+      this.isFinish = data ? data[0] && data[0].isFinish : true
       !this.chart && this.initChart()
       if (!this.isEchartsRender
       || (Array.isArray(data) && data.length && data.some(item => item))

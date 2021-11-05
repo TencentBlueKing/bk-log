@@ -20,25 +20,43 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-import vue from 'vue';
-import { fieldTypeMap } from './constant';
+import i18n from '@/language/i18n';
 
-export default {
-  namespaced: true,
-  state: {
-    globalsData: {},
-    fieldTypeMap,
+export const fieldTypeMap = {
+  any: {
+    name: i18n.t('不限'),
+    icon: 'bk-icon icon-check-line',
   },
-  getters: {
-    globalsData: state => state.globalsData,
+  number: {
+    name: i18n.t('数字'),
+    icon: 'log-icon icon-number',
   },
-  mutations: {
-    setGlobalsData(state, globalsData) {
-      vue.set(state, 'globalsData', globalsData);
-    },
-    updateGlobalsData(state, globalsData) {
-      vue.set(state, 'globalsData', globalsData);
-    },
+  integer: {
+    name: i18n.t('数字'),
+    icon: 'log-icon icon-number',
   },
-  actions: {},
+  double: {
+    name: i18n.t('数字'),
+    icon: 'log-icon icon-number',
+  },
+  keyword: {
+    name: i18n.t('字符串'),
+    icon: 'log-icon icon-string',
+  },
+  long: {
+    name: i18n.t('文本'),
+    icon: 'log-icon icon-text',
+  },
+  text: {
+    name: i18n.t('文本'),
+    icon: 'log-icon icon-text',
+  },
+  date: {
+    name: i18n.t('时间'),
+    icon: 'bk-icon icon-clock',
+  },
+  boolean: {
+    name: '',
+    icon: '',
+  },
 };
