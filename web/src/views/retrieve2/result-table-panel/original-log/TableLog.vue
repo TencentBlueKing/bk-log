@@ -261,7 +261,7 @@ export default {
       required: true,
     },
     bkMonitorUrl: {
-      type: String,
+      type: Boolean,
       required: true,
     },
     asyncExportUsable: {
@@ -336,7 +336,7 @@ export default {
     }),
     ...mapState('globals', ['fieldTypeMap']),
     showMonitorWeb() {
-      return this.bkMonitorUrl !== '';
+      return this.bkMonitorUrl;
     },
     showMoreHandle() {
       const handleOptions = ['showRealtimeLog', 'showContextLog', 'showWebConsole', 'showMonitorWeb'];
@@ -560,7 +560,7 @@ export default {
       const ip = row.serverIp || row.ip;
       const cloudId = row.cloudId?.toString() || row.cloudid?.toString();
       const id = cloudId ? `-${cloudId}` : '';
-      const host = /\//.test(this.bkMonitorUrl) ? this.bkMonitorUrl : `${this.bkMonitorUrl}/`;
+      const host = /\//.test(window.MONITOR_URL) ? window.MONITOR_URL : `${window.MONITOR_URL}/`;
       const url = `${host}?bizId=${this.bkBizId}#/performance/detail/${ip}${id}`;
 
       window.open(url);

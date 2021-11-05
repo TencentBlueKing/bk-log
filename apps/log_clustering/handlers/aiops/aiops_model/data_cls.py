@@ -773,6 +773,24 @@ class AiopsReleaseCls(object):
 
 
 @dataclass
-class AiopsReleaseModelReleaseIdModelFile(object):
+class AiopsReleaseModelReleaseIdModelFileCls(object):
     model_id: str
     model_release_id: str
+
+
+@dataclass
+class AiopsExperimentsDebugInputConfigCls(object):
+    algorithm_name: str
+    input_data: List
+    feature_columns: List
+    training_args: List
+    result_table_id: str = "test"
+    sql: str = "test"
+    label_columns: List = field(default_factory=list)
+    predict_args: List = field(default_factory=lambda: [{"value": 0, "field_name": "__start_time__"}])
+
+
+@dataclass
+class AiopsExperimentsDebugCls(object):
+    input_config: AiopsExperimentsDebugInputConfigCls
+    project_id: int
