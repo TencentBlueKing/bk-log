@@ -1111,6 +1111,7 @@ export default {
     syncSuccess: 'Synchronize the result table of the computing platform successfully',
     syncFaild: 'Failed to synchronize the result table of the computing platform',
     syncTip: 'Synchronize the results of the computing platform',
+    storageSetting: 'Storage Settings',
   },
   logAlertTips: 'Index set allows users to view logs across multiple collected indexes.',
   esAlertTips: 'If the logs are already stored in Electricsearch, you can add the Electricsearch cluster in the "Cluster Management", and you can use the stored log data by creating an index set.',

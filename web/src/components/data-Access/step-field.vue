@@ -320,7 +320,7 @@
         </bk-button>
         <!-- 跳过 -->
         <bk-button
-          v-if="!isCleanField && !isTempField"
+          v-if="!isTempField"
           theme="default"
           :title="$t('btn.cancel')"
           class="ml10"
