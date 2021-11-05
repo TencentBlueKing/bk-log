@@ -44,7 +44,7 @@ class PatternViewSet(APIViewSet):
         @apiParam {Json} ip IP列表
         @apiParam {Json} addition 搜索条件
         @apiParam {Int} year_on_year_hour 同比周期 单位小时 n小时前
-        @apiParam [{Int}] size 条数
+        @apiParam {Int} size 条数
         @apiParamExample {Json} 请求参数
         {
             "year_on_year_hour": 1,

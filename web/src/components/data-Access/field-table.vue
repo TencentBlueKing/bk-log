@@ -80,16 +80,16 @@
           :row-key="extractMethod === 'bk_log_delimiter' ? 'field_index' : 'field_name'"
           :data="deletedVisible ? hideDeletedTable : tableList">
           <template>
-            <bk-table-column
-              :label="$t('configDetails.column')"
-              align="center"
-              :resizable="false"
-              width="40"
-              v-if="!isPreviewMode && extractMethod === 'bk_log_delimiter'">
-              <template slot-scope="props">
-                <span>{{ props.row.field_index }}</span>
-              </template>
-            </bk-table-column>
+            <!-- <bk-table-column -->
+            :label="$t('configDetails.column')"
+            align="center"
+            :resizable="false"
+            width="40"
+            v-if="!isPreviewMode && extractMethod === 'bk_log_delimiter'">
+            <template slot-scope="props">
+              <span>{{ props.row.field_index }}</span>
+            </template>
+            <!-- </bk-table-column> -->
             <!-- 字段名 -->
             <bk-table-column :label="$t('dataManage.Field_name')" :resizable="false" min-width="100">
               <template slot-scope="props">

@@ -278,6 +278,15 @@ class _BkDataAIOPSApi:
             after_request=None,
             default_timeout=300,
         )
+        self.aiops_experiments_debug = DataAPI(
+            method="POST",
+            url=AIOPS_APIGATEWAY_ROOT + "experiments/debug/",
+            module=self.MODULE,
+            description=u"训练和预测调试",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
 
 
 BkDataAIOPSApi = _BkDataAIOPSApi()
