@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="td-log-container">
+  <div :class="['td-log-container', { 'is-wrap': isWrap }]">
     <!-- eslint-disable vue/no-v-html -->
     <span
       :class="['field-container', 'add-to', { 'active': hasClickEvent }]"
@@ -30,20 +30,24 @@
       v-bk-tooltips="{ content: $t('查看调用链'), disabled: !hasClickEvent, delay: 500 }"
     ></span>
     <!--eslint-enable-->
-    <template v-if="content !== '--'">
+    <!-- <template v-if="content !== '--'">
       <span class="icon-search-container" v-bk-tooltips.top="$t('检索')">
         <i class="icon bk-icon icon-search" @click.stop="$emit('iconClick', 'search', content)"></i>
       </span>
       <span class="icon-search-container" v-bk-tooltips.top="$t('复制')">
         <i class="icon log-icon icon-copy" @click.stop="$emit('iconClick','copy', content)"></i>
       </span>
-    </template>
+    </template> -->
   </div>
 </template>
 
 <script>
 export default {
   props: {
+    isWrap: {
+      type: Boolean,
+      default: false,
+    },
     content: {
       type: [String, Number],
       required: true,
@@ -62,50 +66,48 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .td-log-container {
-    position: relative;
-    padding: 10px 15px 10px 0;
-    white-space: pre-line;
-    line-height: 14px;
-
-    .field-container {
-      white-space: pre-wrap;
-      tab-size: 3;
-      &.active:hover {
-        color: #3a84ff;
-        cursor: pointer;
-      }
-    }
-
-    .icon-search-container {
-      display: none;
-      justify-content: center;
-      align-items: center;
-      vertical-align: bottom;
-      width: 14px;
-      height: 14px;
-      margin-left: 5px;
+.td-log-container {
+  position: relative;
+  padding: 14px 15px 0 0;
+  white-space: pre-line;
+  line-height: 14px;
+  &.is-wrap {
+    padding-bottom: 10px;
+  }
+  .field-container {
+    white-space: pre-wrap;
+    tab-size: 3;
+    &.active:hover {
+      color: #3a84ff;
       cursor: pointer;
-      background: #3a84ff;
-
-      .icon {
-        font-size: 12px;
-        font-weight: bold;
-        color: #fff;
-        background: #3a84ff;
-        transform: scale(.6);
-
-        &.icon-copy {
-          font-size: 14px;
-          transform: scale(1);
-        }
-      }
     }
-
-    &:hover {
-      .icon-search-container {
-        display: inline-flex;
+  }
+  .icon-search-container {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    vertical-align: bottom;
+    width: 14px;
+    height: 14px;
+    margin-left: 5px;
+    cursor: pointer;
+    background: #3a84ff;
+    .icon {
+      font-size: 12px;
+      font-weight: bold;
+      color: #fff;
+      background: #3a84ff;
+      transform: scale(.6);
+      &.icon-copy {
+        font-size: 14px;
+        transform: scale(1);
       }
     }
   }
+  &:hover {
+    .icon-search-container {
+      display: inline-flex;
+    }
+  }
+}
 </style>

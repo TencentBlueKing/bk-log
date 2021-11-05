@@ -24,28 +24,59 @@
   <div>
     <div class="result-table-container" data-test-id="retrieve_from_fieldForm">
       <!-- 表格内容 -->
-      <bk-table v-if="!renderTable" class="king-table"></bk-table>
+      <!-- <bk-table v-if="!renderTable" class="king-table"></bk-table> -->
       <bk-table
-        v-else
-        v-bkloading="{ isLoading: tableLoading || webConsoleLoading, zIndex: 0, extCls: 'result-table-loading' }"
         ref="resultTable"
-        class="king-table"
+        :class="['king-table', { 'is-wrap': isWrap }]"
         :data="tableList"
+        :show-header="!showOriginal"
+        :outer-border="!showOriginal"
         :empty-text="$t('retrieve.notData')"
         @row-click="tableRowClick"
         @row-mouse-enter="handleMouseEnter"
         @row-mouse-leave="handleMouseLeave"
         @header-dragend="handleHeaderDragend">
         <!-- 展开详情 -->
-        <bk-table-column type="expand" width="30" align="center" v-if="visibleFields.length">
+        <bk-table-column
+          type="expand"
+          width="30"
+          align="center"
+          v-if="showOriginal || visibleFields.length">
           <template slot-scope="{ $index }">
-            <div class="json-view-wrapper">
-              <VueJsonPretty :deep="5" :data="originTableList[$index]" />
-            </div>
+            <expand-view
+              v-bind="$attrs"
+              :data="originTableList[$index]"
+              :total-fields="totalFields"
+              :visible-fields="visibleFields"
+              @menuClick="handleMenuClick">
+            </expand-view>
           </template>
         </bk-table-column>
         <!-- 显示字段 -->
-        <template v-for="(field,index) in visibleFields">
+        <!-- 原始 -->
+        <template v-if="showOriginal">
+          <bk-table-column class-name="original-time" width="160">
+            <template slot-scope="{ row }">
+              <span class="time-field">{{ formatDate(Number(row[timeField]) || '') }}</span>
+            </template>
+          </bk-table-column>
+          <bk-table-column :class-name="`original-str${isWrap ? ' is-wrap' : ''}`">
+            <!-- eslint-disable-next-line -->
+            <template slot-scope="{ row, column, $index }">
+              <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+                <span>{{ JSON.stringify(row) }}</span>
+                <p
+                  v-if="!cacheExpandStr.includes($index)"
+                  class="show-whole-btn"
+                  @click.stop="handleShowWhole($index)">
+                  {{ $t('展开全部') }}
+                </p>
+              </div>
+            </template>
+          </bk-table-column>
+        </template>
+        <!-- 表格 -->
+        <template v-else v-for="(field,index) in visibleFields">
           <bk-table-column
             align="left"
             :key="field.field_name"
@@ -55,6 +86,7 @@
             :width="field.width">
             <template slot-scope="{ row }">
               <TableColumn
+                :is-wrap="isWrap"
                 :content="tableRowDeepView(row, field.field_name, field.field_type)"
                 @iconClick="(type, content) => handleIconClick(type, content, field, row)"
               ></TableColumn>
@@ -109,23 +141,33 @@
             </div>
           </template>
         </bk-table-column>
+
+        <!-- 初次加载骨架屏loading -->
+        <bk-table-column v-if="tableLoading" slot="empty">
+          <retrieve-loader
+            is-loading
+            :is-original-field="showOriginal"
+            :visible-fields="visibleFields">
+          </retrieve-loader>
+        </bk-table-column>
+
+        <!-- 下拉刷新骨架屏loading -->
+        <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
+          <retrieve-loader
+            :is-original-field="showOriginal"
+            :visible-fields="visibleFields">
+          </retrieve-loader>
+        </template>
       </bk-table>
       <!-- 表格底部内容 -->
-      <template v-if="tableList.length && visibleFields.length">
-        <p class="more-desc" v-if="!isPageOver && count === limitCount">{{ $t('retrieve.showMore') }}
-          <a href="javascript: void(0);" @click="scrollToTop">{{ $t('btn.backToTop') }}</a>
-        </p>
-        <div
-          v-if="isPageOver"
-          v-bkloading="{ isLoading: true }"
-          style="height: 40px;">
-        </div>
-      </template>
-    </div>
-
-    <!-- 滚动到顶部 -->
-    <div class="fixed-scroll-top-btn" v-show="showScrollTop" @click="scrollToTop">
-      <i class="bk-icon icon-angle-up"></i>
+      <p class="more-desc" v-if="tableList.length === limitCount">{{ $t('retrieve.showMore') }}
+        <a href="javascript: void(0);" @click="scrollToTop">{{ $t('btn.backToTop') }}</a>
+      </p>
+      <!-- <div
+        v-if="tableList.length && visibleFields.length && isPageOver"
+        v-bkloading="{ isLoading: true }"
+        style="height: 40px;">
+      </div> -->
     </div>
 
     <!-- 实时滚动日志/上下文 -->
@@ -157,18 +199,22 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
-import { setFieldsWidth } from '@/common/util';
 import RealTimeLog from '../../result-comp/RealTimeLog';
 import ContextLog from '../../result-comp/ContextLog';
 import TableColumn from '../../result-comp/TableColumn';
-import { mapState } from 'vuex';
+import ExpandView from './ExpandView.vue';
+import { formatDate } from '@/common/util';
+import RetrieveLoader from '@/skeleton/retrieve-loader';
 
 export default {
   components: {
     TableColumn,
     RealTimeLog,
     ContextLog,
+    ExpandView,
+    RetrieveLoader,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -184,11 +230,11 @@ export default {
       type: Object,
       required: true,
     },
-    tableData: {
-      type: Object,
+    visibleFields: {
+      type: Array,
       required: true,
     },
-    visibleFields: {
+    totalFields: {
       type: Array,
       required: true,
     },
@@ -215,7 +261,7 @@ export default {
       required: true,
     },
     bkMonitorUrl: {
-      type: String,
+      type: Boolean,
       required: true,
     },
     asyncExportUsable: {
@@ -226,13 +272,35 @@ export default {
       type: String,
       default: '',
     },
+    tableList: {
+      type: Array,
+      required: true,
+    },
+    originTableList: {
+      type: Array,
+      required: true,
+    },
+    isPageOver: {
+      type: Boolean,
+      required: false,
+    },
+    showOriginal: {
+      type: Boolean,
+      default: false,
+    },
+    timeField: {
+      type: String,
+      default: '',
+    },
+    isWrap: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
-      originTableList: [],
-      tableList: [],
+      formatDate,
       throttle: false, // 滚动节流 是否进入cd
-      isPageOver: false, // 前端分页加载是否结束
       finishPolling: false,
       count: 0, // 数据总条数
       pageSize: 50, // 每页展示多少数据
@@ -258,36 +326,7 @@ export default {
         fullscreen: true,
         data: {},
       },
-      fieldTypeMap: {
-        any: {
-          name: this.$t('不限'),
-        },
-        number: {
-          name: this.$t('数字'),
-        },
-        integer: {
-          name: this.$t('数字'),
-        },
-        double: {
-          name: this.$t('数字'),
-        },
-        long: {
-          name: this.$t('文本'),
-        },
-        keyword: {
-          name: this.$t('字符串'),
-        },
-        text: {
-          name: this.$t('文本'),
-        },
-        date: {
-          name: this.$t('时间'),
-        },
-        boolean: {
-          name: '',
-          icon: '',
-        },
-      },
+      cacheExpandStr: [],
     };
   },
   computed: {
@@ -295,8 +334,9 @@ export default {
       bkBizId: state => state.bkBizId,
       clearTableWidth: state => state.clearTableWidth,
     }),
+    ...mapState('globals', ['fieldTypeMap']),
     showMonitorWeb() {
-      return this.bkMonitorUrl !== '';
+      return this.bkMonitorUrl;
     },
     showMoreHandle() {
       const handleOptions = ['showRealtimeLog', 'showContextLog', 'showWebConsole', 'showMonitorWeb'];
@@ -328,26 +368,21 @@ export default {
           el.width = widthObj[index] === undefined ? 'default' : widthObj[index];
         });
       }
-      return (showRealtimeLog || showContextLog || showWebConsole || showMonitorWeb) && visibleFields.length;
+      return (showRealtimeLog
+      || showContextLog
+      || showWebConsole
+      || showMonitorWeb) && this.tableList.length;
     },
   },
   watch: {
-    tableData(data) {
-      this.finishPolling = data && data.finishPolling;
-      if (data?.list?.length) {
-        if (this.isInit) {
-          // 根据接口 data.fields ==> item.max_length 设置各个字段的宽度比例
-          setFieldsWidth(this.visibleFields, data.fields, 500);
-          this.isInit = true;
-        }
-        this.count += data.list.length;
-        this.tableList.push(...data.list);
-        this.originTableList.push(...data.origin_log_list);
-        this.$nextTick(() => {
-          this.$parent.$parent.$parent.$refs.scrollContainer.scrollTop = this.newScrollHeight;
-        });
-        this.isPageOver = false;
-      }
+    retrieveParams: {
+      deep: true,
+      handler() {
+        this.cacheExpandStr = [];
+      },
+    },
+    '$route.params.indexId'() { // 切换索引集重置状态
+      this.cacheExpandStr = [];
     },
     clearTableWidth() {
       const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
@@ -377,44 +412,14 @@ export default {
     },
   },
   methods: {
-    reset() {
-      this.newScrollHeight = 0;
-      this.$nextTick(() => {
-        this.$parent.$parent.$parent.$refs.scrollContainer.scrollTop = this.newScrollHeight;
-      });
-      this.count = 0;
-      this.currentPage = 1;
-      this.originTableList = [];
-      this.tableList = [];
-      this.isInit = false;
-      this.finishPolling = false;
-    },
     // 滚动到顶部
     scrollToTop() {
       this.$easeScroll(0, 300, this.$parent.$parent.$parent.$refs.scrollContainer);
     },
-    handleScroll() {
-      if (this.throttle || this.isPageOver) {
-        return;
-      }
-      this.throttle = true;
-      setTimeout(() => {
-        this.throttle = false;
-        const el = this.$parent.$parent.$parent.$refs.scrollContainer;
-        this.showScrollTop = el.scrollTop > 550;
-        if (el.scrollHeight - el.offsetHeight - el.scrollTop < 100) {
-          if (this.count === this.limitCount || this.finishPolling) return;
-
-          this.isPageOver = true;
-          this.currentPage += 1;
-          this.newScrollHeight = el.scrollTop;
-          this.$emit('request-table-data');
-        }
-      }, 200);
-    },
     // 展开表格行JSON
     tableRowClick(row) {
       this.$refs.resultTable.toggleRowExpansion(row);
+      this.curHoverIndex = -1;
     },
     handleMouseEnter(index) {
       this.curHoverIndex = index;
@@ -480,25 +485,27 @@ export default {
     // eslint-disable-next-line no-unused-vars
     renderHeaderAliasName(h, { column, $index }) {
       const field = this.visibleFields[$index - 1];
-      const fieldName = this.showFieldAlias ? this.fieldAliasMap[field.field_name] : field.field_name;
-      const fieldType = field.field_type;
-      const fieldIcon = this.getFieldIcon(field.field_type) || 'log-icon icon-unkown';
-      const content = this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].name : undefined;
+      if (field) {
+        const fieldName = this.showFieldAlias ? this.fieldAliasMap[field.field_name] : field.field_name;
+        const fieldType = field.field_type;
+        const fieldIcon = this.getFieldIcon(field.field_type) || 'log-icon icon-unkown';
+        const content = this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].name : undefined;
 
-      return h('div', {
-        class: 'render-header',
-      }, [
-        h('span', {
-          class: `field-type-icon ${fieldIcon}`,
-          directives: [
-            {
-              name: 'bk-tooltips',
-              value: content,
-            },
-          ],
-        }),
-        h('span', fieldName),
-      ]);
+        return h('div', {
+          class: 'render-header',
+        }, [
+          h('span', {
+            class: `field-type-icon ${fieldIcon}`,
+            directives: [
+              {
+                name: 'bk-tooltips',
+                value: content,
+              },
+            ],
+          }),
+          h('span', fieldName),
+        ]);
+      }
     },
     handleIconClick(type, content, field, row) {
       let value = field.field_type === 'date' ? row[field.field_name] : content;
@@ -553,7 +560,7 @@ export default {
       const ip = row.serverIp || row.ip;
       const cloudId = row.cloudId?.toString() || row.cloudid?.toString();
       const id = cloudId ? `-${cloudId}` : '';
-      const host = /\//.test(this.bkMonitorUrl) ? this.bkMonitorUrl : `${this.bkMonitorUrl}/`;
+      const host = /\//.test(window.MONITOR_URL) ? window.MONITOR_URL : `${window.MONITOR_URL}/`;
       const url = `${host}?bizId=${this.bkBizId}#/performance/detail/${ip}${id}`;
 
       window.open(url);
@@ -577,6 +584,37 @@ export default {
       // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
     },
+    handleShowWhole(index) {
+      this.cacheExpandStr.push(index);
+    },
+    handleMenuClick(option) {
+      switch (option.operation) {
+        case 'is':
+        case 'is not':
+          // eslint-disable-next-line no-case-declarations
+          const { fieldName, operation, value } = option;
+          this.$emit('addFilterCondition', fieldName, operation, value.toString());
+          break;
+        case 'copy':
+          try {
+            const input = document.createElement('input');
+            input.setAttribute('value', option.value);
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            this.messageSuccess(this.$t('复制成功'));
+          } catch (e) {
+            console.warn(e);
+          }
+          break;
+        case 'display':
+          this.$emit('fieldsUpdated', option.displayFieldNames);
+          break;
+        default:
+          break;
+      }
+    },
   },
 };
 </script>
@@ -591,8 +629,11 @@ export default {
   background: #fff;
   .king-table {
     margin-top: 16px;
-    /deep/ .bk-table-body-wrapper {
-      min-height: calc(100vh - 560px);
+    td {
+      vertical-align: top;
+    }
+    .bk-table-body-wrapper {
+      min-height: calc(100vh - 550px);
       .bk-table-empty-block {
         display: flex;
         justify-content: center;
@@ -600,24 +641,13 @@ export default {
         min-height: calc(100vh - 600px);;
       }
     }
-    /deep/ .cell {
-      display: inline-table;
+    .cell {
       .operation-button:not(:last-child) {
         padding-right: 8px;
       }
     }
-    /deep/ td mark {
+    td mark {
       background: #f3e186;
-    }
-    .json-view-wrapper {
-      padding: 10px 0;
-      /deep/ .vjs-tree {
-        font-size: 12px !important;
-        .vjs-value__string {
-          white-space: pre-wrap;
-          tab-size: 3;
-        }
-      }
     }
     /deep/ .result-table-loading {
       width: calc(100% - 2px);
@@ -646,8 +676,8 @@ export default {
       right: 0;
       width: 84px;
       height: 100%;
-      padding: 0 10px;
-      align-items: center;
+      padding: 12px 10px;
+      align-items: flex-start;
       top: 0;
       overflow: hidden;
       justify-content: flex-end;
@@ -655,6 +685,62 @@ export default {
     .fix-content {
       width: auto;
       background-color: #f0f1f5;
+    }
+    .time-field {
+      font-weight: 700;
+    }
+    .original-str {
+      .cell {
+        padding: 12px 14px 0 14px;
+      }
+      .str-content {
+        position: relative;
+        line-height: 20px;
+        &.is-limit {
+          max-height: 96px;
+        }
+      }
+      &.is-wrap {
+        .cell {
+          padding: 12px 14px;
+        }
+        .str-content {
+          display: inline-block;
+          overflow: hidden;
+        }
+      }
+      .show-whole-btn {
+        position: absolute;
+        top: 80px;
+        width: 100%;
+        height: 24px;
+        color: #3A84FF;
+        font-size: 12px;
+        background: #fff;
+        cursor: pointer;
+        transition: background-color .25s ease;
+      }
+    }
+    .original-time {
+      padding-top: 16px;
+    }
+    .hover-row {
+      .show-whole-btn{
+        background-color: #f0f1f5;
+      }
+    }
+    td.bk-table-expanded-cell {
+      padding: 0;
+    }
+    .bk-table-column-expand .bk-icon {
+      top: 20px;
+    }
+    &.is-wrap .cell {
+      display: inline-table;
+    }
+    .bk-table-empty-text {
+      padding: 0;
+      width: 100%;
     }
   }
   /deep/ .render-header {
@@ -664,33 +750,6 @@ export default {
       font-size: 12px;
       color: #979ba5;
     }
-  }
-}
-.fixed-scroll-top-btn {
-  position: fixed;
-  bottom: 24px;
-  right: 14px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 36px;
-  height: 36px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .2);
-  border: 1px solid #dde4eb;
-  border-radius: 4px;
-  color: #63656e;
-  background: #f0f1f5;
-  cursor: pointer;
-  z-index: 2100;
-  transition: all .2s;
-  &:hover {
-    color: #fff;
-    background: #979ba5;
-    transition: all .2s;
-  }
-  .bk-icon {
-    font-size: 20px;
-    font-weight: bold;
   }
 }
 // 日志全屏状态下的样式

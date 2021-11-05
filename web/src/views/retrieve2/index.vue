@@ -263,6 +263,7 @@
           :index-set-list="indexSetList"
           :table-data="tableData"
           :visible-fields="visibleFields"
+          :total-fields="totalFields"
           :field-alias-map="fieldAliasMap"
           :show-field-alias="showFieldAlias"
           :show-context-log="showContextLog"
@@ -271,6 +272,8 @@
           :bk-monitor-url="bkmonitorUrl"
           :async-export-usable="asyncExportUsable"
           :async-export-usable-reason="asyncExportUsableReason"
+          :statistical-fields-data="statisticalFieldsData"
+          :time-field="timeField"
           @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
@@ -416,7 +419,7 @@ export default {
       showContextLog: false, // 上下文
       showRealtimeLog: false, // 实时日志
       showWebConsole: false, // BCS 容器
-      bkmonitorUrl: '', // 监控主机详情地址
+      bkmonitorUrl: false, // 监控主机详情地址
       asyncExportUsable: true, // 是否支持异步导出
       asyncExportUsableReason: '', // 无法异步导出原因
       isInitPage: true,
@@ -431,6 +434,8 @@ export default {
       timer: null,
       isShowSettingModal: false,
       clickSettingChoice: '',
+      timeField: '',
+      isThollteField: false,
     };
   },
   computed: {
@@ -781,6 +786,14 @@ export default {
     },
     // 添加过滤条件
     addFilterCondition(field, operator, value, index) {
+      const isExist = this.retrieveParams.addition.some((addition) => {
+        return addition.field === field
+        && addition.operator === operator
+        && addition.value.toString() === value.toString();
+      });
+      // 已存在相同条件
+      if (isExist) return;
+
       const startIndex = index > -1 ? index : this.retrieveParams.addition.length;
       const deleteCount = index > -1 ? 1 : 0;
       this.retrieveParams.addition.splice(startIndex, deleteCount, { field, operator, value });
@@ -1079,6 +1092,8 @@ export default {
 
     // 请求字段
     async requestFields() {
+      if (this.isThollteField) return;
+      this.isThollteField = true;
       try {
         const res = await this.$http.request('retrieve/getLogTableHead', {
           params: { index_set_id: this.indexId },
@@ -1089,7 +1104,26 @@ export default {
           },
         });
         const notTextTypeFields = [];
-        res.data.fields.forEach((item) => {
+        const { data } = res;
+        const {
+          fields,
+          config,
+          display_fields: displayFields,
+          time_field: timeField,
+        } = data;
+        const localConfig = {};
+        config.forEach((item) => {
+          localConfig[item.name] = { ...item };
+        });
+        const {
+          bkmonitor,
+          ip_topo_switch: ipTopoSwitch,
+          context_and_realtime: contextAndRealtime,
+          bcs_web_console: bcsWebConsole,
+          async_export: asyncExport,
+        } = localConfig;
+
+        fields.forEach((item) => {
           item.minWidth = 0;
           item.filterExpand = false; // 字段过滤展开
           item.filterVisible = true; // 字段过滤搜索字段名是否显示
@@ -1098,20 +1132,18 @@ export default {
           }
         });
         this.notTextTypeFields = notTextTypeFields;
-
-        // 如果没有 ip_topo_switch 字段默认给 true，如果有该字段根据该字段控制
-        this.ipTopoSwitch = res.data.ip_topo_switch === undefined || res.data.ip_topo_switch;
-        this.showContextLog = res.data.context_search_usable;
-        this.showRealtimeLog = res.data.realtime_search_usable;
-        this.showWebConsole = res.data.bcs_web_console_usable === true;
-        this.bkmonitorUrl = res.data.bkmonitor_url;
-        this.asyncExportUsable = res.data.async_export_usable;
-        this.asyncExportUsableReason = res.data.async_export_usable_reason;
-
-        this.totalFields = res.data.fields;
+        this.ipTopoSwitch = ipTopoSwitch.is_active;
+        this.showContextLog = contextAndRealtime.is_active;
+        this.showRealtimeLog = contextAndRealtime.is_active;
+        this.showWebConsole = bcsWebConsole.is_active;
+        this.bkmonitorUrl = bkmonitor.is_active;
+        this.asyncExportUsable = asyncExport.is_active;
+        this.asyncExportUsableReason = asyncExport.is_active ? asyncExport.extra.usable_reason : '';
+        this.timeField = timeField;
+        this.totalFields = fields;
         // 后台给的 display_fields 可能有无效字段 所以进行过滤，获得排序后的字段
-        this.visibleFields = res.data.display_fields.map((displayName) => {
-          for (const field of res.data.fields) {
+        this.visibleFields = displayFields.map((displayName) => {
+          for (const field of fields) {
             if (field.field_name === displayName) {
               return field;
             }
@@ -1119,20 +1151,23 @@ export default {
         }).filter(Boolean);
 
         const fieldAliasMap = {};
-        res.data.fields.forEach((item) => {
+        fields.forEach((item) => {
           fieldAliasMap[item.field_name] = item.field_alias || item.field_name;
         });
         this.fieldAliasMap = fieldAliasMap;
+        this.isThollteField = false;
       } catch (e) {
         this.ipTopoSwitch = true;
         this.showContextLog = false;
         this.showRealtimeLog = false;
         this.showWebConsole = false;
-        this.bkmonitorUrl = '';
+        this.bkmonitorUrl = false;
         this.asyncExportUsable = true;
         this.asyncExportUsableReason = '';
+        this.timeField = '';
         this.totalFields.splice(0);
         this.visibleFields.splice(0);
+        this.isThollteField = false;
         throw e;
       }
     },
@@ -1144,6 +1179,12 @@ export default {
             return field;
           }
         }
+      });
+      this.$http.request('retrieve/postFieldsConfig', {
+        params: { index_set_id: this.$route.params.indexId },
+        data: { display_fields: displayFieldNames, sort_list: [] },
+      }).catch((e) => {
+        console.warn(e);
       });
       if (showFieldAlias !== undefined) {
         this.showFieldAlias = showFieldAlias;
