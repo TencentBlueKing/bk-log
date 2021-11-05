@@ -54,3 +54,20 @@ class AiopsSignatureAndPattern(SoftDeleteModel):
 
     class Meta:
         index_together = ["model_id", "signature"]
+
+
+class ClusteringConfig(SoftDeleteModel):
+    collector_config_id = models.IntegerField(_("采集项id"), null=True, blank=True)
+    collector_config_name_en = models.CharField(_("采集项英文名"), max_length=255, null=True, blank=True)
+    index_set_id = models.IntegerField(_("索引集id"), db_index=True)
+    sample_set_id = models.IntegerField(_("样本集id"), null=True, blank=True)
+    model_id = models.CharField(_("模型id"), max_length=128, null=True, blank=True)
+    min_members = models.IntegerField(_("最小日志数量"))
+    max_dist_list = models.CharField(_("敏感度"), max_length=128)
+    predefined_varibles = models.TextField(_("预先定义的正则表达式"))
+    delimeter = models.TextField(_("分词符"))
+    max_log_length = models.IntegerField(_("最大日志长度"))
+    is_case_sensitive = models.IntegerField(_("是否大小写忽略"), default=0)
+    clustering_fields = models.CharField(_("聚合字段"), max_length=128)
+    filter_rules = JSONField(_("过滤规则"))
+    bk_biz_id = models.IntegerField(_("业务id"))
