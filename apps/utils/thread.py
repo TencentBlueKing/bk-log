@@ -17,8 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-
-import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from opentelemetry.context import attach, get_current
 
@@ -26,7 +25,7 @@ from apps.utils.function import ignored
 from apps.utils.local import get_request, activate_request
 
 
-class FuncThread(threading.Thread):
+class FuncThread:
     def __init__(self, func, params, result_key, results, use_request=True):
         self.func = func
         self.params = params
@@ -36,7 +35,6 @@ class FuncThread(threading.Thread):
         with ignored(AttributeError, BaseException):
             self.requests = get_request()
         self.trace_context = get_current()
-        super().__init__()
 
     def _init_context(self):
         with ignored(Exception):
@@ -50,6 +48,10 @@ class FuncThread(threading.Thread):
             self.results[self.result_key] = self.func(self.params)
         else:
             self.results[self.result_key] = self.func()
+
+
+def executor_wrap(func_thread):
+    func_thread.run()
 
 
 class MultiExecuteFunc(object):
@@ -68,9 +70,8 @@ class MultiExecuteFunc(object):
             func=func, params=params, result_key=result_key, results=self.results, use_request=use_request
         )
         self.task_list.append(task)
-        task.start()
 
     def run(self):
-        for task in self.task_list:
-            task.join()
+        with ThreadPoolExecutor() as executor:
+            executor.map(executor_wrap, self.task_list)
         return self.results
