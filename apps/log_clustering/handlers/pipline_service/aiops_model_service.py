@@ -34,6 +34,7 @@ from apps.log_clustering.components.collections.aiops_model_component import (
     CommitResult,
     Release,
     UpdateTrainingSchedule,
+    SyncPattern,
 )
 from apps.log_clustering.handlers.pipline_service.base_pipline_service import BasePipeLineService
 
@@ -90,6 +91,8 @@ class AiopsModelService(BasePipeLineService):
             CommitResult(experiment_alias=experiment_alias).commit
         ).extend(
             Release(experiment_alias=experiment_alias).release
+        ).extend(
+            SyncPattern(model_name=model_name).sync_pattern
         ).extend(
             end
         )
