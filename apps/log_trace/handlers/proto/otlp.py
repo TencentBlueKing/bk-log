@@ -344,7 +344,10 @@ class OtlpTrace(Proto):
                     "operationName": span["span_name"],
                     "startTime": span["start_time"],
                     "tags": self._transform_to_tags(span["attributes"])
-                    + [{"key": "span.kind", "type": "string", "value": OTLP_JAEGER_SPAN_KIND[span["kind"]]}]
+                    + [
+                        {"key": "span.kind", "type": "string", "value": OTLP_JAEGER_SPAN_KIND[span["kind"]]},
+                        {"key": "span_context.trace_state", "type": "string", "value": span["trace_state"]},
+                    ]
                     + self._transform_to_status(span.get("status", {})),
                     "processID": process_id,
                 },
