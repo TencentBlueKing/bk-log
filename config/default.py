@@ -250,6 +250,68 @@ if BKLOG_UDP_LOG:
         },
     }
 
+# 使用k8s部署模式
+IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
+
+if IS_K8S_DEPLOY_MODE:
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    LOGGING = {
+        "version": 1,
+        "formatters": {
+            "json": {
+                "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+                "fmt": (
+                    "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
+                    "%(funcName)s %(process)d %(thread)d %(message)s "
+                    "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
+                ),
+            }
+        },
+        "handlers": {
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "formatter": "json",
+                "stream": sys.stdout,
+            },
+        },
+        "loggers": {
+            "django": {"handlers": ["stdout"], "level": "INFO", "propagate": True},
+            "django.server": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "django.request": {
+                "handlers": ["stdout"],
+                "level": "ERROR",
+                "propagate": True,
+            },
+            "django.db.backends": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            # the root logger ,用于整个project的logger
+            "root": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            # 组件调用日志
+            "component": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "celery": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            # other loggers...
+            # blueapps
+            "blueapps": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            # 普通app日志
+            "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+        },
+    }
+
 OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
 OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
 OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 1000))
