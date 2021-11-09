@@ -95,6 +95,15 @@ if USE_SMART_V3:
     MONITOR_URL = load_svc_discovery(key="bk_monitorv3", environment_name="prod")
     BKDATA_URL = load_svc_discovery(key="bk_data", environment_name="dev")
 
+STATIC_ROOT = "static"
+
+# 加载各个版本特殊配置
+env_settings = load_settings()
+for _setting in env_settings.keys():
+    if _setting == _setting.upper():
+        locals()[_setting] = env_settings.get(_setting)
+
+
 if os.getenv("DEPLOY_MODE") == "kubernetes":
     # ===============================================================================
     # 数据库设置, 正式环境数据库设置
@@ -110,10 +119,6 @@ if os.getenv("DEPLOY_MODE") == "kubernetes":
         },
     }
 
-STATIC_ROOT = "static"
-
-# 加载各个版本特殊配置
-env_settings = load_settings()
-for _setting in env_settings.keys():
-    if _setting == _setting.upper():
-        locals()[_setting] = env_settings.get(_setting)
+    BK_DOC_URL = os.getenv("BK_DOCS_SITE_URL")
+    MONITOR_URL = os.getenv("BK_MONITOR_URL")
+    BKDATA_URL = os.getenv("BK_DADA_URL")
