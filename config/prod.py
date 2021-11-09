@@ -71,7 +71,6 @@ GRAFANA = {
     "PERMISSION_CLASSES": ["apps.grafana.permissions.BizPermission"],
 }
 
-
 # ==============================================================================
 # IAM
 # ==============================================================================
@@ -95,6 +94,23 @@ if USE_SMART_V3:
     BK_IAM_SAAS_HOST = load_svc_discovery(key="bk_iam", environment_name="prod", default=BK_IAM_SAAS_HOST)
     MONITOR_URL = load_svc_discovery(key="bk_monitorv3", environment_name="prod")
     BKDATA_URL = load_svc_discovery(key="bk_data", environment_name="dev")
+
+if os.getenv("DEPLOY_MODE") == "kubernetes":
+    # ===============================================================================
+    # 数据库设置, 正式环境数据库设置
+    # ===============================================================================
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.environ.get("DB_NAME"),
+            "USER": os.environ.get("DB_USERNAME"),
+            "PASSWORD": os.environ.get("DB_PASSWORD"),
+            "HOST": os.environ.get("DB_HOST"),
+            "PORT": os.environ.get("DB_PORT"),
+        },
+    }
+
+STATIC_ROOT = "static"
 
 # 加载各个版本特殊配置
 env_settings = load_settings()
