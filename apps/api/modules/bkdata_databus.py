@@ -47,6 +47,23 @@ class _BkDataDatabusApi:
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
         )
+        self.databus_cleans_post = DataAPI(
+            method="POST",
+            url=DATABUS_APIGATEWAY_ROOT + "cleans/",
+            module=self.MODULE,
+            description=u"创建清洗配置",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+        )
+        self.databus_cleans_put = DataAPI(
+            method="PUT",
+            url=DATABUS_APIGATEWAY_ROOT + "cleans/{processing_id}/",
+            module=self.MODULE,
+            url_keys=["processing_id"],
+            description=u"更新清洗配置",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+        )
 
 
 BkDataDatabusApi = _BkDataDatabusApi()

@@ -42,7 +42,9 @@
         :theme-color="navThemeColor"
         @toggle="handleToggle">
         <template slot="menu">
-          <biz-menu-select :is-expand="isExpand"></biz-menu-select>
+          <div class="biz-menu">
+            <biz-menu-select :is-expand="isExpand"></biz-menu-select>
+          </div>
           <bk-navigation-menu
             :item-default-bg-color="navThemeColor"
             :default-active="activeManageNav.id">
@@ -341,6 +343,10 @@ export default {
     }
     .nav-slider-list {
       height: calc(100% - 56px) !important;
+    }
+    .biz-menu {
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(240,241,245,.16);
     }
   }
   // 表格单元 v-bk-overflow-tips

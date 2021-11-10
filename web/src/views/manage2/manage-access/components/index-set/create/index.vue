@@ -196,7 +196,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId', 'bkBizId']),
+    ...mapState(['projectId', 'bkBizId', 'showRouterLeaveTip']),
     ...mapState('collect', ['curIndexSet']),
     ...mapGetters('globals', ['globalsData']),
     collectProject() {
@@ -217,7 +217,7 @@ export default {
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
-    if (!this.isSubmit) {
+    if (!this.isSubmit && !this.showRouterLeaveTip) {
       this.$bkInfo({
         title: this.$t('pageLeaveTips'),
         confirmFn: () => {

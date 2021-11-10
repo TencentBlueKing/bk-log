@@ -296,7 +296,8 @@
     </div>
 
     <setting-modal
-      :show-dialog="isShowSettingModal"
+      :index-set-item="indexSetItem"
+      :is-show-dialog="isShowSettingModal"
       :select-choice="clickSettingChoice"
       @closeSetting="isShowSettingModal = false;"
     />
@@ -368,6 +369,7 @@ export default {
       leftPanelMinWidth: 300, // 左栏最小宽度
       leftPanelMaxWidth: 750, // 左栏最大宽度
       indexId: '', // 当前选择的索引ID
+      indexSetItem: {}, // 当前索引集元素
       indexSetList: [], // 索引集列表,
       datePickerValue: [startTime, endTime], // 日期选择器
       retrievedKeyword: '*', // 记录上一次检索的关键字，避免输入框失焦时重复检索
@@ -463,6 +465,7 @@ export default {
   watch: {
     indexId(val) { // 切换索引集和初始化索引 id 时改变
       const option = this.indexSetList.find(item => item.index_set_id === val);
+      this.indexSetItem = option;
       // eslint-disable-next-line camelcase
       this.isSearchAllowed = !!option?.permission?.search_log;
       this.resetRetrieveCondition();
@@ -1569,7 +1572,7 @@ export default {
         }
 
         .biz-menu-box {
-          margin-top: 16px;
+          margin: 16px 16px 0;
         }
 
         .king-tab {
@@ -1578,7 +1581,6 @@ export default {
 
           .tab-content {
             height: calc(100% - 60px);
-            // padding: 0 24px;
             overflow-y: auto;
             background-color: #fbfbfb;
 

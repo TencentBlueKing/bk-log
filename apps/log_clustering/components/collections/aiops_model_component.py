@@ -20,6 +20,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.handlers.aiops.aiops_model.constants import StepName
 from apps.log_clustering.models import AiopsModel, AiopsModelExperiment, SampleSet
+from apps.log_clustering.tasks.sync_pattern import sync
 from apps.utils.pipline import BaseService
 from django.utils.translation import ugettext_lazy as _
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
@@ -518,3 +519,30 @@ class Release(object):
         self.release.component.inputs.model_name = Var(type=Var.SPLICE, value="${model_name}")
         self.release.component.inputs.experiment_alias = Var(type=Var.SPLICE, value="${experiment_alias}")
         self.release.component.inputs.description = Var(type=Var.SPLICE, value="${description}")
+
+
+class SyncPatternService(BaseService):
+    name = _("获取pattern")
+
+    def inputs_format(self):
+        return [
+            Service.InputItem(name="model name", key="model_name", type="str", required=True),
+        ]
+
+    def _execute(self, data, parent_data):
+        model_name = data.get_one_of_inputs("model_name")
+        model_id = AiopsModel.objects.get(model_name=model_name).model_id
+        sync(model_id=model_id)
+        return True
+
+
+class SyncPatternComponent(Component):
+    name = "SyncPattern"
+    code = "sync_pattern"
+    bound_service = SyncPatternService
+
+
+class SyncPattern(object):
+    def __init__(self, model_name: str):
+        self.sync_pattern = ServiceActivity(component_code="sync_pattern", name=f"sync_pattern:{model_name}")
+        self.sync_pattern.component.inputs.model_name = Var(type=Var.SPLICE, value="${model_name}")

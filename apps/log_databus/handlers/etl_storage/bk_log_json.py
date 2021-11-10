@@ -64,3 +64,101 @@ class BkLogJsonEtlStorage(EtlStorage):
             "time_alias_name": result_table_fields["time_field"]["alias_name"],
             "time_option": result_table_fields["time_field"]["option"],
         }
+
+    def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
+        retain_original_text = etl_params.get("retain_original_text", False)
+        built_in_fields = built_in_config.get("fields", [])
+        result_table_fields = self.get_result_table_fields(fields, etl_params, built_in_config)
+        time_field = result_table_fields.get("time_field")
+        bkdata_fields = [field for field in fields if not field["is_delete"]]
+        return {
+            "extract": {
+                "method": "from_json",
+                "next": {
+                    "next": [
+                        {
+                            "default_value": "",
+                            "default_type": "null",
+                            "next": {
+                                "method": "iterate",
+                                "next": {
+                                    "next": [
+                                        {
+                                            "default_value": "",
+                                            "default_type": "null",
+                                            "next": {
+                                                "next": [
+                                                    {
+                                                        "method": "from_json",
+                                                        "next": {
+                                                            "next": None,
+                                                            "subtype": "assign_obj",
+                                                            "label": "labela2dfe3",
+                                                            "assign": [
+                                                                self._to_bkdata_assign(field) for field in bkdata_fields
+                                                            ],
+                                                            "type": "assign",
+                                                        },
+                                                        "result": "log_json",
+                                                        "label": "label5e3d6f",
+                                                        "args": [],
+                                                        "type": "fun",
+                                                    },
+                                                ],
+                                                "name": "",
+                                                "label": None,
+                                                "type": "branch",
+                                            },
+                                            "label": "labelb140f1",
+                                            "key": "data",
+                                            "result": "log_data",
+                                            "subtype": "access_obj",
+                                            "type": "access",
+                                        },
+                                        {
+                                            "next": None,
+                                            "subtype": "assign_obj",
+                                            "label": "labelb140",
+                                            "assign": [
+                                                {"key": "iterationindex", "assign_to": "iterationIndex", "type": "int"},
+                                                {"key": "data", "assign_to": "log", "type": "text"}
+                                                if retain_original_text
+                                                else {},
+                                            ],
+                                            "type": "assign",
+                                        },
+                                    ],
+                                    "name": "",
+                                    "type": "branch",
+                                    "label": None,
+                                },
+                                "result": "iter_item",
+                                "label": "label21ca91",
+                                "args": [],
+                                "type": "fun",
+                            },
+                            "label": "label36c8ad",
+                            "key": "items",
+                            "result": "item_data",
+                            "subtype": "access_obj",
+                            "type": "access",
+                        },
+                        {
+                            "next": None,
+                            "subtype": "assign_obj",
+                            "label": "labelf676c9",
+                            "assign": self._get_bkdata_default_fields(built_in_fields, time_field),
+                            "type": "assign",
+                        },
+                    ],
+                    "name": "",
+                    "label": None,
+                    "type": "branch",
+                },
+                "result": "json_data",
+                "label": "label04a222",
+                "args": [],
+                "type": "fun",
+            },
+            "conf": self._to_bkdata_conf(time_field),
+        }

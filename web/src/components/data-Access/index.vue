@@ -114,7 +114,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 import { stepsConf, finishRefer } from './step';
 import AuthPage from '@/components/common/auth-page';
 import stepAdd from './step-add';
@@ -152,6 +152,9 @@ export default {
     };
   },
   computed: {
+    ...mapState({
+      showRouterLeaveTip: state => state.showRouterLeaveTip,
+    }),
     ...mapGetters('collect', ['curCollect']),
     ...mapGetters(['bkBizId']),
     isCommon() {
@@ -183,7 +186,7 @@ export default {
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
-    if (!this.isSubmit && !this.isSwitch) {
+    if (!this.isSubmit && !this.isSwitch && !this.showRouterLeaveTip) {
       this.$bkInfo({
         title: this.$t('pageLeaveTips'),
         confirmFn: () => {
