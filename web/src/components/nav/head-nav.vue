@@ -38,20 +38,6 @@
             :class="['menu-item', { 'active': activeTopMenu.id === menu.id }]"
             @click="routerHandler(menu)"
             :data-test-id="`topNavBox_li_${menu.id}`">
-          <!-- <template v-if="menu.dropDown"> -->
-          <!-- <template v-if="menu.id === 'dashboard'">
-          <template v-if="['dashboard', 'trace'].includes(menu.id)">
-            <bk-dropdown-menu :ref="`menu${menu.router}`" align="center">
-              <span slot="dropdown-trigger" style="font-size: 14px;">{{ menu.name }}</span>
-              <ul class="bk-dropdown-list" slot="dropdown-content">
-                <li v-for="item in menu.children" :key="item.id" class="drop-menu-item">
-                  <a href="javascript:;"
-                     :class="{ 'active': item.id === dropDownActive.id }"
-                     @click.stop="triggerHandler(item, menu)">{{ item.name }}</a>
-                </li>
-              </ul>
-            </bk-dropdown-menu>
-          </template> -->
           <template>
             {{ menu.name }}
           </template>
@@ -59,45 +45,6 @@
       </ul>
     </div>
     <div class="nav-right fr" v-show="usernameRequested">
-      <!-- 切换业务 -->
-      <!-- <bk-select
-        class="select-business fl" style="width: 260px;"
-        ext-popover-cls="select-business-dropdown-content"
-        :disabled="isDisableSelectBiz"
-        :search-with-pinyin="true"
-        :style="isDisableSelectBiz && { background: '#182132' }"
-        :searchable="true"
-        :clearable="false"
-        show-select-all
-        :value="projectId"
-        @selected="projectChange">
-        <bk-option
-          v-for="item in myProjectList"
-          class="custom-no-padding-option"
-          :key="item.project_id"
-          :id="item.project_id"
-          :name="item.project_name">
-          <div
-            v-if="!(item.permission && item.permission.view_business)"
-            class="option-slot-container no-authority"
-            @click.stop>
-            <span class="text">{{ item.project_name }}</span>
-            <span class="apply-text" @click="applyProjectAccess(item)">{{ $t('申请权限') }}</span>
-          </div>
-          <div v-else v-bk-overflow-tips class="option-slot-container">
-            <span>{{ item.project_name }}</span>
-          </div>
-        </bk-option>
-        <div slot="extension" class="select-business-extension">
-          <div
-            class="extension-item"
-            @click="applyBusinessAccess"
-            v-bkloading="{ isLoading: isSelectLoading }">
-            {{ $t('申请业务权限') }}
-          </div>
-          <div class="extension-item" @click="experienceDemo" v-if="demoProjectUrl">{{ $t('体验DEMO') }}</div>
-        </div>
-      </bk-select> -->
       <!-- 语言 -->
       <bk-dropdown-menu align="center" @show="dropdownLanguageShow" @hide="dropdownLanguageHide">
         <div class="icon-language-container" :class="isShowLanguageDropdown && 'active'" slot="dropdown-trigger">
@@ -153,10 +100,8 @@ export default {
   props: {},
   data() {
     return {
-      isSelectLoading: false,
       isFirstLoad: true,
       isOpenVersion: window.runVersion.indexOf('open') !== -1,
-      demoProjectUrl: '', // demo 业务链接
       logoText: window.TITLE_MENU || '',
       logoImgUrl: window.MENU_LOGO_URL || '',
       username: '',
@@ -208,29 +153,6 @@ export default {
         console.warn(e);
       } finally {
         this.usernameRequested = true;
-      }
-    },
-    getDemoProjectUrl(id) {
-      let siteUrl = window.SITE_URL;
-      if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
-      if (!siteUrl.endsWith('/')) siteUrl += '/';
-      return `${window.location.origin + siteUrl}#/retrieve?projectId=${id}`;
-    },
-    experienceDemo() {
-      window.open(this.demoProjectUrl);
-    },
-    async applyBusinessAccess() {
-      try {
-        this.isSelectLoading = true;
-        const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['view_business'],
-          resources: [],
-        });
-        window.open(res.data.apply_url);
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        this.isSelectLoading = false;
       }
     },
     jumpToHome() {
@@ -332,48 +254,6 @@ export default {
         });
       }
     },
-    // 业务列表点击申请业务权限
-    async applyProjectAccess(item) {
-      this.$el.click(); // 手动关闭下拉
-      try {
-        this.$bkLoading();
-        const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['view_business'],
-          resources: [{
-            type: 'biz',
-            id: item.bk_biz_id,
-          }],
-        });
-        window.open(res.data.apply_url);
-      } catch (err) {
-        console.warn(err);
-      } finally {
-        this.$bkLoading.hide();
-      }
-    },
-    // 选择的业务是否有权限
-    checkProjectAuth(project) {
-      // eslint-disable-next-line camelcase
-      if (project?.permission?.view_business) {
-        return true;
-      }
-      this.$store.commit('updateProject', project.project_id);
-      this.$store.dispatch('getApplyData', {
-        action_ids: ['view_business'],
-        resources: [{
-          type: 'biz',
-          id: project.bk_biz_id,
-        }],
-      }).then((res) => {
-        this.$emit('auth', res.data);
-      })
-        .catch((err) => {
-          console.warn(err);
-        })
-        .finally(() => {
-          this.$store.commit('setPageLoading', false);
-        });
-    },
     changeLanguage(value) {
       const domainList = location.hostname.split('.');
 
@@ -396,17 +276,6 @@ export default {
       });
 
       window.location.reload();
-    },
-    triggerHandler(item, menu) {
-      if (this.$route.name !== item.id) {
-        this.$router.push({
-          name: item.id,
-          query: {
-            projectId: window.localStorage.getItem('project_id'),
-          },
-        });
-      }
-      this.$refs[`menu${menu.router}`][0].hide();
     },
     dropdownLanguageShow() {
       this.isShowLanguageDropdown = true;

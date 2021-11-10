@@ -29,19 +29,19 @@
         {{props.row.a}}
       </template>
     </bk-table-column>
-    <bk-table-column type="index" label="序号" width="60"></bk-table-column>
-    <bk-table-column label="数量" :sortable="true" width="91" prop="number"></bk-table-column>
-    <bk-table-column label="占比" :sortable="true" width="91" prop="source">
+    <bk-table-column type="index" :label="$t('序号')" width="60"></bk-table-column>
+    <bk-table-column :label="$t('数量')" :sortable="true" width="91" prop="number"></bk-table-column>
+    <bk-table-column :label="$t('占比')" :sortable="true" width="91" prop="source">
       <template slot-scope="props">
         {{`${props.row.source}%`}}
       </template>
     </bk-table-column>
-    <bk-table-column label="取样内容" prop="status"></bk-table-column>
+    <bk-table-column :label="$t('取样内容')" prop="status"></bk-table-column>
     <div slot="empty">
       <div class="empty-text">
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>当前数据指纹未启用，请前往设置</p>
-        <span class="empty-leave">去设置</span>
+        <p>{{$t('goSettingMessage')}}</p>
+        <span class="empty-leave">{{$t('去设置')}}</span>
       </div>
     </div>
   </bk-table>

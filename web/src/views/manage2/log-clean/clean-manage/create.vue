@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import stepField from '@/components/data-Access/step-field';
 import stepStorage from '@/components/data-Access/step-storage';
 import advanceCleanLand from '@/components/data-Access/advance-clean-land';
@@ -65,9 +66,14 @@ export default {
       collectItem: '',
     };
   },
+  computed: {
+    ...mapState({
+      showRouterLeaveTip: state => state.showRouterLeaveTip,
+    }),
+  },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
-    if (!this.isSubmit) {
+    if (!this.isSubmit && !this.showRouterLeaveTip) {
       this.$bkInfo({
         title: this.$t('pageLeaveTips'),
         confirmFn: () => {
