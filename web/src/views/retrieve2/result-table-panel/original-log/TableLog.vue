@@ -26,6 +26,7 @@
       <!-- 表格内容 -->
       <!-- <bk-table v-if="!renderTable" class="king-table"></bk-table> -->
       <bk-table
+        v-show="showOriginal"
         ref="resultTable"
         :class="['king-table', { 'is-wrap': isWrap }]"
         :data="tableList"
@@ -54,7 +55,7 @@
         </bk-table-column>
         <!-- 显示字段 -->
         <!-- 原始 -->
-        <template v-if="showOriginal">
+        <template>
           <bk-table-column class-name="original-time" width="160">
             <template slot-scope="{ row }">
               <span class="time-field">{{ formatDate(Number(row[timeField]) || '') }}</span>
@@ -63,36 +64,24 @@
           <bk-table-column :class-name="`original-str${isWrap ? ' is-wrap' : ''}`">
             <!-- eslint-disable-next-line -->
             <template slot-scope="{ row, column, $index }">
-              <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
-                <span>{{ JSON.stringify(row) }}</span>
-                <p
-                  v-if="!cacheExpandStr.includes($index)"
-                  class="show-whole-btn"
-                  @click.stop="handleShowWhole($index)">
-                  {{ $t('展开全部') }}
-                </p>
-              </div>
+              <EventPopover
+                :is-search="false"
+                @eventClick="(operation) => handleMenuClick({ operation, value: JSON.stringify(row) })">
+                <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+                  <!-- eslint-disable-next-line vue/no-v-html -->
+                  <span v-html="JSON.stringify(row)"></span>
+                  <p
+                    v-if="!cacheExpandStr.includes($index)"
+                    class="show-whole-btn"
+                    @click.stop="handleShowWhole($index)">
+                    {{ $t('展开全部') }}
+                  </p>
+                </div>
+              </EventPopover>
             </template>
           </bk-table-column>
         </template>
-        <!-- 表格 -->
-        <template v-else v-for="(field,index) in visibleFields">
-          <bk-table-column
-            align="left"
-            :key="field.field_name"
-            :min-width="field.minWidth"
-            :render-header="renderHeaderAliasName"
-            :index="index"
-            :width="field.width">
-            <template slot-scope="{ row }">
-              <TableColumn
-                :is-wrap="isWrap"
-                :content="tableRowDeepView(row, field.field_name, field.field_type)"
-                @iconClick="(type, content) => handleIconClick(type, content, field, row)"
-              ></TableColumn>
-            </template>
-          </bk-table-column>
-        </template>
+
         <!-- 实时日志 上下文 -->
         <bk-table-column
           v-if="showHandleOption"
@@ -154,6 +143,127 @@
         <!-- 下拉刷新骨架屏loading -->
         <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
           <retrieve-loader
+            :is-page-over="isPageOver"
+            :is-original-field="showOriginal"
+            :visible-fields="visibleFields">
+          </retrieve-loader>
+        </template>
+      </bk-table>
+
+      <bk-table
+        v-show="!showOriginal"
+        ref="resultTable"
+        :class="['king-table', { 'is-wrap': isWrap }]"
+        :data="tableList"
+        :show-header="!showOriginal"
+        :outer-border="!showOriginal"
+        :empty-text="$t('retrieve.notData')"
+        @row-click="tableRowClick"
+        @row-mouse-enter="handleMouseEnter"
+        @row-mouse-leave="handleMouseLeave"
+        @header-dragend="handleHeaderDragend">
+        <!-- 展开详情 -->
+        <bk-table-column
+          type="expand"
+          width="30"
+          align="center"
+          v-if="showOriginal || visibleFields.length">
+          <template slot-scope="{ $index }">
+            <expand-view
+              v-bind="$attrs"
+              :data="originTableList[$index]"
+              :total-fields="totalFields"
+              :visible-fields="visibleFields"
+              @menuClick="handleMenuClick">
+            </expand-view>
+          </template>
+        </bk-table-column>
+        <!-- 显示字段 -->
+        <!-- 表格 -->
+        <template v-for="(field,index) in visibleFields">
+          <bk-table-column
+            align="left"
+            :key="field.field_name"
+            :min-width="field.minWidth"
+            :render-header="renderHeaderAliasName"
+            :index="index"
+            :width="field.width">
+            <template slot-scope="{ row }">
+              <keep-alive>
+                <TableColumn
+                  :is-wrap="isWrap"
+                  :content="tableRowDeepView(row, field.field_name, field.field_type)"
+                  :field-type="field.field_type"
+                  @iconClick="(type, content) => handleIconClick(type, content, field, row)"
+                ></TableColumn>
+              </keep-alive>
+
+            </template>
+          </bk-table-column>
+        </template>
+
+        <!-- 实时日志 上下文 -->
+        <bk-table-column
+          v-if="showHandleOption"
+          :label="$t('retrieve.operate')"
+          :width="84"
+          align="right"
+          :resizable="false">
+          <!-- eslint-disable-next-line -->
+          <template slot-scope="{ row, column, $index }">
+            <div
+              :class="{ 'handle-content': true, 'fix-content': showAllHandle }"
+              v-if="curHoverIndex === $index"
+              @mouseenter="mouseenterHandle"
+              @mouseleave="mouseleaveHandle">
+              <span
+                v-bk-tooltips="{ content: $t('retrieve.log'), delay: 500 }"
+                class="handle-card"
+                v-if="showRealtimeLog && !checkIsHide('showRealtimeLog')">
+                <span
+                  class="icon log-icon icon-handle icon-time"
+                  @click.stop="openLogDialog(row, 'realTimeLog')">
+                </span>
+              </span>
+              <span
+                v-bk-tooltips="{ content: $t('retrieve.context'), delay: 500 }"
+                class="handle-card"
+                v-if="showContextLog && !checkIsHide('showContextLog')">
+                <span
+                  class="icon log-icon icon-handle icon-document"
+                  @click.stop="openLogDialog(row, 'contextLog')">
+                </span>
+              </span>
+              <span
+                v-bk-tooltips="{ content: $t('retrieve.monitorAlarm'), delay: 500 }"
+                class="handle-card"
+                v-if="showMonitorWeb && !checkIsHide('showMonitorWeb')">
+                <span class="icon icon-handle log-icon icon-inform" @click.stop="openMonitorWeb(row)"></span>
+              </span>
+              <span
+                v-bk-tooltips="{ content: 'WebConsole', delay: 500 }"
+                class="handle-card"
+                v-if="showWebConsole && !checkIsHide('showWebConsole')">
+                <span class="icon icon-handle log-icon icon-teminal" @click.stop="openWebConsole(row)"></span>
+              </span>
+              <span class="bk-icon icon-more handle-card icon-handle" v-if="showMoreHandle && !showAllHandle"></span>
+            </div>
+          </template>
+        </bk-table-column>
+
+        <!-- 初次加载骨架屏loading -->
+        <bk-table-column v-if="tableLoading" slot="empty">
+          <retrieve-loader
+            is-loading
+            :is-original-field="showOriginal"
+            :visible-fields="visibleFields">
+          </retrieve-loader>
+        </bk-table-column>
+
+        <!-- 下拉刷新骨架屏loading -->
+        <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
+          <retrieve-loader
+            :is-page-over="isPageOver"
             :is-original-field="showOriginal"
             :visible-fields="visibleFields">
           </retrieve-loader>
@@ -207,6 +317,7 @@ import TableColumn from '../../result-comp/TableColumn';
 import ExpandView from './ExpandView.vue';
 import { formatDate } from '@/common/util';
 import RetrieveLoader from '@/skeleton/retrieve-loader';
+import EventPopover from '../../result-comp/EventPopover.vue';
 
 export default {
   components: {
@@ -215,6 +326,7 @@ export default {
     ContextLog,
     ExpandView,
     RetrieveLoader,
+    EventPopover,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -508,6 +620,7 @@ export default {
       }
     },
     handleIconClick(type, content, field, row) {
+      console.log(type, content);
       let value = field.field_type === 'date' ? row[field.field_name] : content;
       value = String(value).replace(/<mark>/g, '')
         .replace(/<\/mark>/g, '');
@@ -525,6 +638,8 @@ export default {
         } catch (e) {
           console.warn(e);
         }
+      } else if (['is', 'is not'].includes(type)) {
+        this.$emit('addFilterCondition', field.field_name, type, content.toString());
       }
     },
     // 打开实时日志或上下文弹窗

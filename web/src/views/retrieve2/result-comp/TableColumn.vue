@@ -21,28 +21,35 @@
   -->
 
 <template>
-  <div :class="['td-log-container', { 'is-wrap': isWrap }]">
+  <div :class="['td-log-container', { 'is-wrap': isWrap }]" @click.stop>
     <!-- eslint-disable vue/no-v-html -->
     <span
       :class="['field-container', 'add-to', { 'active': hasClickEvent }]"
       @click.stop="handleClickContent"
-      v-html="content"
       v-bk-tooltips="{ content: $t('查看调用链'), disabled: !hasClickEvent, delay: 500 }"
-    ></span>
-    <!--eslint-enable-->
-    <!-- <template v-if="content !== '--'">
-      <span class="icon-search-container" v-bk-tooltips.top="$t('检索')">
-        <i class="icon bk-icon icon-search" @click.stop="$emit('iconClick', 'search', content)"></i>
-      </span>
-      <span class="icon-search-container" v-bk-tooltips.top="$t('复制')">
-        <i class="icon log-icon icon-copy" @click.stop="$emit('iconClick','copy', content)"></i>
-      </span>
-    </template> -->
+    >
+      <text-segmentation
+        v-if="isInViewPort"
+        :content="content"
+        :field-type="fieldType"
+        :menu-click="handleMenuClick">
+      </text-segmentation>
+      <!-- <span v-else>{{ formatterStr(content) }}</span> -->
+      <text-highlight v-else :queries="markList">{{formatterStr(content)}}</text-highlight>
+    </span>
   </div>
 </template>
 
 <script>
+import TextSegmentation from './TextSegmentation.vue';
+// import TextSegmentation from './TextSegmentation.js';
+import TextHighlight from 'vue-text-highlight';
+
 export default {
+  components: {
+    TextSegmentation,
+    TextHighlight,
+  },
   props: {
     isWrap: {
       type: Boolean,
@@ -56,10 +63,79 @@ export default {
       type: Boolean,
       default: false,
     },
+    fieldType: {
+      type: String,
+      default: '',
+    },
+  },
+  data() {
+    return {
+      isInViewPort: false,
+    };
+  },
+  computed: {
+    // isInViewPort() {
+    //   const {
+    //     top,
+    //     bottom,
+    //   } = this.$el.getBoundingClientRect();
+    //   return (top > 0 && top <= innerHeight) || (bottom >= 0 && bottom < innerHeight);;
+    // },
+    // 高亮
+    markList() {
+      const markVal = this.content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      return markVal;
+    },
+  },
+  mounted() {
+    setTimeout(this.registerObserver, 20);
+  },
+  beforeDestroy() {
+    this.unregisterOberver();
   },
   methods: {
+    formatterStr(content) {
+      // 匹配高亮标签
+      let value = content;
+      const markVal = content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      if (markVal) {
+        value = String(value).replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, '');
+      }
+      return value;
+    },
     handleClickContent() {
       if (this.hasClickEvent) this.$emit('contentClick');
+    },
+    handleMenuClick(option, content) {
+      const operator = option === 'not' ? 'is not' : option;
+      this.$emit('iconClick', operator, content);
+    },
+    unregisterOberver() {
+      if (this.intersectionObserver) {
+        this.intersectionObserver.unobserve(this.$el);
+        // console.info('unobserve : ', this.$el, this.intersectionObserver);
+        this.intersectionObserver.disconnect();
+        this.intersectionObserver = null;
+      }
+    },
+    // 注册Intersection监听
+    registerObserver() {
+      if (this.intersectionObserver) {
+        this.unregisterOberver();
+      }
+      this.intersectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (this.intersectionObserver) {
+            if (entry.intersectionRatio > 0) {
+              this.isInViewPort = true;
+            } else {
+              this.isInViewPort = false;
+            }
+          }
+        });
+      });
+      this.intersectionObserver.observe(this.$el);
     },
   },
 };
@@ -75,7 +151,7 @@ export default {
     padding-bottom: 10px;
   }
   .field-container {
-    white-space: pre-wrap;
+    // white-space: pre-wrap;
     tab-size: 3;
     &.active:hover {
       color: #3a84ff;

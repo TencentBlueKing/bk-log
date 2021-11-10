@@ -40,7 +40,14 @@
             @click.stop="handleMenuClick(option.id, field)">
           </span>
         </div>
-        <div class="field-value">{{ formatterStr(data[field]) }}</div>
+        <!-- <div class="field-value">{{ formatterStr(data[field]) }}</div> -->
+        <div class="field-value">
+          <text-segmentation
+            :content="formatterStr(data[field])"
+            :field-type="getFieldType(field)"
+            :menu-click="(type, content) => handleMenuClick(type, content, field)">
+          </text-segmentation>
+        </div>
       </div>
     </div>
   </div>
@@ -48,8 +55,12 @@
 
 <script>
 import { mapState } from 'vuex';
+import TextSegmentation from './TextSegmentation.js';
 
 export default {
+  components: {
+    TextSegmentation,
+  },
   props: {
     data: {
       type: Object,
@@ -128,24 +139,24 @@ export default {
         disabled: !this.fieldTypeMap[fieldType],
       };
     },
-    handleMenuClick(operator, item) {
+    handleMenuClick(operator, item, field) {
       let params = {};
       if (['is', 'not'].includes(operator)) {
-        if (!this.getFieldType(item)) return;
+        if (!field && !this.getFieldType(item)) return;
 
-        if (this.data[item] === undefined) return;
+        if (!field && this.data[item] === undefined) return;
 
         params = {
-          fieldName: item,
+          fieldName: field ? field : item,
           operation: operator === 'is' ? 'is' : 'is not',
-          value: this.data[item],
+          value: field ? item : this.data[item],
         };
       }
 
       if (operator === 'copy') {
-        if (this.data[item] === undefined) return;
+        if (!field && this.data[item] === undefined) return;
         params.operation = 'copy';
-        params.value = this.data[item];
+        params.value = field ? item : this.data[item];
       }
 
       if (operator === 'display') {
