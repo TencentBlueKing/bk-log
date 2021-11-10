@@ -246,3 +246,12 @@ NODE_ATTR_PREFIX_BLACKLIST = [
     "ml.",
     "xpack.",
 ]
+
+BKDATA_ES_TYPE_MAP = {
+    "integer": "int",
+    "long": "long",
+    "keyword": "string",
+    "text": "text",
+    "double": "double",
+    "object": "text",
+}

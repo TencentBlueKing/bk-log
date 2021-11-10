@@ -24,16 +24,13 @@ from apps.log_clustering.constants import (
     AGGS_FIELD_PREFIX,
     PERCENTAGE_RATE,
     MIN_COUNT,
-    IS_NEW_PATTERN_PREFIX,
-    EX_MAX_SIZE,
     HOUR_MINUTES,
 )
-from apps.log_clustering.models import AiopsSignatureAndPattern
+from apps.log_clustering.exceptions import ClusteringConfigNotExistException
+from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig
 from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
-from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 from apps.utils.db import array_hash
-from apps.utils.local import get_local_param
-from apps.utils.time_handler import generate_time_range, generate_time_range_shift
+from apps.utils.time_handler import generate_time_range_shift
 
 
 class PatternHandler:
@@ -62,28 +59,28 @@ class PatternHandler:
         pattern_aggs = self.get_pattern_aggs_result(index_set_id, query)
         year_on_year_result = self.get_year_on_year_aggs_result(index_set_id, query)
 
-        # todo index_set_id 与 model_id的映射关系
-        model_id = None
-        pattern_map = AiopsSignatureAndPattern.objects.filter(model_id=model_id).values("signature", "pattern")
+        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
+        if not clustering_config:
+            raise ClusteringConfigNotExistException
+        pattern_map = AiopsSignatureAndPattern.objects.filter(model_id=clustering_config.model_id).values(
+            "signature", "pattern"
+        )
         signature_map_pattern = array_hash(pattern_map, "signature", "pattern")
 
-        new_pattern_set = self.new_pattern_search(
-            query["show_new_pattern"], query["pattern_level"], index_set_id, query
-        )
-
-        sum_count = sum([pattern.get("doc_count", 0) for pattern in pattern_aggs])
+        sum_count = sum([pattern.get("doc_count", MIN_COUNT) for pattern in pattern_aggs])
         result = []
         for pattern in pattern_aggs:
             count = pattern["doc_count"]
             signature = pattern["key"]
-            year_on_year_compare = year_on_year_result.get(signature, 0)
+            year_on_year_compare = year_on_year_result.get(signature, MIN_COUNT)
             result.append(
                 {
                     "pattern": signature_map_pattern.get(signature, ""),
                     "count": count,
                     "signature": signature,
                     "percentage": self.percentage(count, sum_count),
-                    "is_new_class": signature in new_pattern_set,
+                    # todo 等待dataflow完成
+                    "is_new_class": False,
                     "year_on_year_count": count - year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
                 }
@@ -113,31 +110,12 @@ class PatternHandler:
             return MIN_COUNT
         return ((target - compare) / compare) * PERCENTAGE_RATE
 
-    def new_pattern_search(self, show_new_pattern: bool, pattern_level: str, index_set_id, query: dict) -> set:
-        if not show_new_pattern:
-            return set()
-        start_time, end_time = generate_time_range("1d", "", "", get_local_param("time_zone"))
-        new_pattern_search_query = copy.deepcopy(query)
-        new_pattern_search_query["start_time"] = start_time.strftime("%Y-%m-%d %H:%M:%S")
-        new_pattern_search_query["end_time"] = end_time.strftime("%Y-%m-%d %H:%M:%S")
-        new_pattern_search_query["addition"].append(
-            {"key": self._build_is_new_judge_field(pattern_level), "method": "is", "value": "true"}
-        )
-        new_pattern_search_query["size"] = EX_MAX_SIZE
-        result = SearchHandler(index_set_id, new_pattern_search_query).search(search_type=None)
-        new_class_list = result.get("list", [])
-        return {item.get(self._build_pattern_aggs_field(pattern_level)) for item in new_class_list}
-
     @staticmethod
     def percentage(count, sum_count) -> int:
         # avoid division by zero
         if sum_count == 0:
             return MIN_COUNT
         return (count / sum_count) * PERCENTAGE_RATE
-
-    @staticmethod
-    def _build_is_new_judge_field(pattern_level: str) -> str:
-        return f"{IS_NEW_PATTERN_PREFIX}_{pattern_level}"
 
     @staticmethod
     def _build_pattern_aggs_field(pattern_level: str) -> str:

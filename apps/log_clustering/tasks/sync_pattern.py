@@ -31,7 +31,7 @@ from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import A
 from apps.log_clustering.models import AiopsModel, AiopsSignatureAndPattern
 
 
-@periodic_task(run_every=crontab(minute="00", hour="1"))
+@periodic_task(run_every=crontab(minute="25", hour="12"))
 def sync_pattern():
     model_ids = AiopsModel.objects.all().values_list("model_id", flat=True)
     with ThreadPoolExecutor() as executor:
@@ -74,7 +74,7 @@ def get_pattern(model_id, release_id) -> list:
             0.1: [
                 ['if', 'checker.check'],
                 3903,
-                ['if', 'checker.check', '*', Variable(name="ip", value='9.146.124.133')],
+                ['if', 'checker.check', '*', Variable(name="ip", value='10.0.0.1')],
                 ['if checker.check():', 'if checker.check()'],
                 [282. 1877],
                 27886975249790003104399390262688492018705644758766193963474214767849400520551

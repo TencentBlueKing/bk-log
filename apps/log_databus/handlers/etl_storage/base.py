@@ -27,7 +27,7 @@ from apps.utils import is_match_variate
 from apps.api import TransferApi
 from apps.exceptions import ValidationError
 from apps.log_search.constants import FieldBuiltInEnum, FieldDataTypeEnum
-from apps.log_databus.constants import EtlConfig, FIELD_TEMPLATE
+from apps.log_databus.constants import EtlConfig, FIELD_TEMPLATE, BKDATA_ES_TYPE_MAP
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.exceptions import EtlParseTimeFieldException, HotColdCheckException
@@ -77,6 +77,9 @@ class EtlStorage(object):
         :param etl_params: 字段提取参数
         :return: 字段列表 list
         """
+        raise NotImplementedError("功能暂未实现")
+
+    def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
         raise NotImplementedError("功能暂未实现")
 
     def get_result_table_config(self, fields, etl_params, built_in_config, es_version="5.X"):
@@ -423,3 +426,31 @@ class EtlStorage(object):
 
         collector_config["fields"] = sorted(field_list, key=lambda x: x.get("option", {}).get("field_index", 0))
         return collector_config
+
+    def _to_bkdata_assign(self, field, time_field):
+        return {
+            "key": field.get("alias_name"),
+            "assign_to": field.get("field_name")
+            if field.get("field_name") != time_field.get("field_name")
+            else field.get("alias_name"),
+            "type": BKDATA_ES_TYPE_MAP.get(field.get("option").get("es_type"), "string"),
+        }
+
+    def _to_bkdata_conf(self, time_field):
+        return {
+            "output_field_name": time_field.get("field_name"),
+            "time_format": time_field["option"]["time_format"],
+            "timezone": time_field["option"]["time_zone"],
+            "encoding": "UTF-8",
+            "timestamp_len": 0,
+            "time_field_name": time_field.get("alias_name"),
+        }
+
+    def _get_bkdata_default_fields(self, built_in_fields, time_field):
+        result = [
+            self._to_bkdata_assign(built_in_field, time_field)
+            for built_in_field in built_in_fields
+            if built_in_field.get("field_name") not in ["iterationIndex", "log"]
+        ]
+        result.append(self._to_bkdata_assign(time_field, time_field))
+        return result
