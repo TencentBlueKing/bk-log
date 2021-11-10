@@ -17,7 +17,6 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import html
 import json
 import copy
 import hashlib
@@ -1069,13 +1068,11 @@ class SearchHandler(object):
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})
-            log = {k: self.xss_safe(v) for k, v in log.items()}
             if "highlight" not in hit:
                 log_list.append(log)
                 continue
             for key in hit["highlight"]:
                 log[key] = "".join(hit["highlight"][key])
-                log[key] = self.xss_safe(log[key])
             log_list.append(log)
 
         result.update(
@@ -1090,13 +1087,6 @@ class SearchHandler(object):
         agg_dict = result_dict.get("aggregations", {})
         result.update({"aggs": agg_dict})
         return result
-
-    @staticmethod
-    def xss_safe(value):
-        if not isinstance(value, str):
-            return value
-        value = html.escape(value)
-        return value.replace("&lt;mark&gt;", "<mark>").replace("&lt;/mark&gt;", "</mark>")
 
     def _analyze_field_length(self, log_list: List[Dict[str, Any]]):
         for item in log_list:
