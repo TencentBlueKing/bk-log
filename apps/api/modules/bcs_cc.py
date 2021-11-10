@@ -20,22 +20,39 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.modules.utils import add_esb_info_before_request
-from config.domains import PAASCC_APIGATEWAY_ROOT
+from config.domains import BCS_CC_APIGATEWAY_ROOT
 from apps.api.base import DataAPI
 
 
-class _PaasCcApi(object):
+class _BcsCcApi(object):
     MODULE = _(u" 蓝鲸 PaaS 3.0 配置中心")
-    URL_PREFIX = PAASCC_APIGATEWAY_ROOT
 
     def __init__(self):
         self.get_cluster_by_cluster_id = DataAPI(
             method="GET",
-            url=PAASCC_APIGATEWAY_ROOT + "v1/clusters/{cluster_id}/",
+            url=BCS_CC_APIGATEWAY_ROOT + "v1/clusters/{cluster_id}/",
             module=self.MODULE,
             url_keys=["cluster_id"],
             description=u"根据集群id获取集群信息",
             default_return_value=None,
             before_request=add_esb_info_before_request,
             after_request=None,
+        )
+        self.list_cluster = DataAPI(
+            method="GET",
+            url=BCS_CC_APIGATEWAY_ROOT + "cluster_list/",
+            module=self.MODULE,
+            before_request=add_esb_info_before_request,
+        )
+        self.list_area = DataAPI(
+            method="GET",
+            url=BCS_CC_APIGATEWAY_ROOT + "areas/",
+            module=self.MODULE,
+            before_request=add_esb_info_before_request,
+        )
+        self.list_project = DataAPI(
+            method="GET",
+            url=BCS_CC_APIGATEWAY_ROOT + "projects/",
+            module=self.MODULE,
+            before_request=add_esb_info_before_request,
         )
