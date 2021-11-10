@@ -57,6 +57,7 @@ class ClusteringConfigViewSet(APIViewSet):
         @apiSuccess {Str} filter_rules.fields_name 过滤规则字段名
         @apiSuccess {Str} filter_rules.op 过滤规则操作符号
         @apiSuccess {Str} filter_rules.value 过滤规则字段值
+        @apiSuccess {Str} filter_rules.logic_operator 过滤规则逻辑运算符号
         @apiSuccessExample {json} 成功返回:
         {
             "collector_config_id":1,
@@ -74,7 +75,8 @@ class ClusteringConfigViewSet(APIViewSet):
                 {
                     "fields_name":"test",
                     "op":"=",
-                    "value":1
+                    "value":1，
+                    "logic_operator": ""
                 }
             ]
         }
@@ -99,9 +101,10 @@ class ClusteringConfigViewSet(APIViewSet):
         @apiParam {Str} clustering_fields 聚合字段
         @apiParam {Int} bk_biz_id 业务id
         @apiParam {List} filter_rules 过滤规则
-        @apiParam {Str} filter_rules.fields_name 过滤规则字段名
-        @apiParam {Str} filter_rules.op 过滤规则操作符号
-        @apiParam {Str} filter_rules.value 过滤规则字段值
+        @apiParam {Str} [filter_rules.fields_name] 过滤规则字段名
+        @apiParam {Str} [filter_rules.op] 过滤规则操作符号
+        @apiParam {Str} [filter_rules.value] 过滤规则字段值
+        @apiParam {Str} [filter_rules.logic_operator] 过滤规则逻辑运算符号
         @apiSuccessExample {json} 成功返回:
         {
             "message":"",
@@ -122,7 +125,8 @@ class ClusteringConfigViewSet(APIViewSet):
                     {
                         "fields_name":"test",
                         "op":"=",
-                        "value":1
+                        "value":1,
+                        "logic_operator": ""
                     }
                 ]
             },

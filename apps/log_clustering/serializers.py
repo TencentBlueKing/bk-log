@@ -39,6 +39,7 @@ class FilerRuleSerializer(serializers.Serializer):
     fields_name = serializers.CharField(required=False)
     op = serializers.CharField(required=False)
     value = serializers.CharField(required=False)
+    logic_operator = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
 class ClusteringConfigSerializer(serializers.Serializer):
