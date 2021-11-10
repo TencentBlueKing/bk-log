@@ -24,33 +24,39 @@
   <!-- 设置-全文索引 -->
   <div>
     <bk-form :label-width="200">
+      <!-- 大小写敏感 -->
       <bk-form-item
         :label="$t('retrieve.ignoreCase')"
-        :required="true"
-        :property="''">
+        :required="true">
         <br>
         <bk-switcher
           class="ml200" theme="primary" size="large"
-          v-model="demo1"
+          v-model="formData.is_case_sensitive"
           :disabled="!globalEditable"></bk-switcher>
       </bk-form-item>
+      <!-- 包含中文 -->
       <bk-form-item
         :label="$t('retrieveSetting.containsChinese')"
-        :required="true"
-        :property="''">
+        :required="true">
         <br>
         <bk-switcher
           class="ml200" theme="primary" size="large"
           v-model="demo1"
           :disabled="!globalEditable"></bk-switcher>
       </bk-form-item>
+      <!-- 分词符 -->
       <bk-form-item
         :label="$t('retrieveSetting.wordBreaker')"
         :required="true"
         :property="''">
         <br>
-        <bk-input class="ml200 w240" :clearable="true" v-model="value" :disabled="!globalEditable"></bk-input>
+        <bk-input
+          class="ml200 w240"
+          v-model="formData.delimeter"
+          :clearable="true"
+          :disabled="!globalEditable"></bk-input>
       </bk-form-item>
+
       <bk-form-item class="ml200" style="margin-top: 40px">
         <bk-button
           theme="primary"
@@ -64,14 +70,14 @@
           theme="default"
           :title="$t('dataManage.Reset')"
           :disabled="!globalEditable"
-          @click="cancel">
+          @click="handleReset">
           {{ $t('dataManage.Reset') }}
         </bk-button>
         <bk-button
           theme="default"
           :title="$t('retrieveSetting.reset')"
           :disabled="!globalEditable"
-          @click="handleReset">
+          @click="handleDefaultReset">
           {{ $t('retrieveSetting.reset') }}
         </bk-button>
       </bk-form-item>
@@ -91,15 +97,20 @@ export default {
     return {
       demo1: true,
       rules: {},
-      value: '',
-      formData: {},
-      isHandle: false,
+      formData: {
+        is_case_sensitive: 1, // 大小写敏感
+        delimeter: '', // 分词符
+      },
     };
   },
+  mounted() {
+  },
   methods: {
-    handleSubmit() {},
-    cancel() {},
-    handleReset() {},
+    handleSubmit() {
+    },
+    handleReset() {
+    },
+    handleDefaultReset() {},
   },
 };
 </script>
