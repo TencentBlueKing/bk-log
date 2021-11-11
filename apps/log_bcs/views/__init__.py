@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -17,46 +16,3 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-
-
-from django.conf import settings
-
-from apps.utils.function import ignored
-from config.env import load_domains
-
-API_ROOTS = [
-    # 蓝鲸平台模块域名
-    "BK_PAAS_APIGATEWAY_ROOT",
-    "CC_APIGATEWAY_ROOT_V2",
-    "GSE_APIGATEWAY_ROOT_V2",
-    "MONITOR_APIGATEWAY_ROOT",
-    "BCS_CC_APIGATEWAY_ROOT",
-    "USER_MANAGE_APIGATEWAY_ROOT",
-    # 数据平台模块域名
-    "ACCESS_APIGATEWAY_ROOT",
-    "AUTH_APIGATEWAY_ROOT",
-    "DATAQUERY_APIGATEWAY_ROOT",
-    "DATABUS_APIGATEWAY_ROOT",
-    "STOREKIT_APIGATEWAY_ROOT",
-    "META_APIGATEWAY_ROOT",
-    # 节点管理
-    "BK_NODE_APIGATEWAY_ROOT",
-    # LOG_SEARCH
-    "LOG_SEARCH_APIGATEWAY_ROOT",
-    # IAM
-    "IAM_APIGATEWAY_ROOT_V2",
-    # ITSM
-    "ITSM_APIGATEWAY_ROOT_V2",
-    # CMSI
-    "CMSI_APIGATEWAY_ROOT_V2",
-    # JOB
-    "JOB_APIGATEWAY_ROOT_V2",
-    "BK_SSM_ROOT",
-]
-
-env_domains = load_domains(settings)
-for _root in API_ROOTS:
-    with ignored(Exception):
-        locals()[_root] = env_domains.get(_root)
-
-__all__ = API_ROOTS

@@ -42,6 +42,12 @@ def create_cluster_info_before(params):
     return params
 
 
+def register_bcs_cluster_info_before_request(params):
+    params = add_esb_info_before_request(params)
+    params["creator"] = params["bk_username"]
+    return params
+
+
 def get_result_table_storage_after(response_result):
     for cluster_obj in response_result["data"].values():
         if not cluster_obj.get("cluster_config"):
@@ -306,6 +312,29 @@ class _TransferApi(object):
             url=MONITOR_APIGATEWAY_ROOT + "metadata_get_restore_result_table_snapshot_state/",
             module=self.MODULE,
             description=_("快照回溯状态"),
+            before_request=add_esb_info_before_request,
+        )
+
+        # bcs operate
+        self.register_bcs_cluster = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "register_bcs_cluster/",
+            module=self.MODULE,
+            description=_("注册bcs集群"),
+            before_request=register_bcs_cluster_info_before_request,
+        )
+        self.list_bcs_cluster_info = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "list_bcs_cluster_info/",
+            module=self.MODULE,
+            description=_("list bcs集群"),
+            before_request=add_esb_info_before_request,
+        )
+        self.apply_yaml_to_bcs_cluster = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "apply_yaml_to_bcs_cluster/",
+            module=self.MODULE,
+            description=_("apply yaml to bcs"),
             before_request=add_esb_info_before_request,
         )
 

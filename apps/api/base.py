@@ -137,6 +137,7 @@ class DataAPI(object):
         max_query_params_record=5000,
         method_override=None,
         url_keys=None,
+        header_keys=None,
         after_serializer=None,
         cache_time=0,
         default_timeout=60,
@@ -176,6 +177,7 @@ class DataAPI(object):
 
         self.method_override = method_override
         self.url_keys = url_keys
+        self.header_keys = header_keys
 
         self.cache_time = cache_time
         self.default_timeout = default_timeout
@@ -410,6 +412,10 @@ class DataAPI(object):
             # params['X_HTTP_METHOD_OVERRIDE'] = self.method_override
 
         session.headers.update({"blueking-language": translation.get_language(), "request-id": get_request_id()})
+
+        if self.header_keys:
+            headers = {key: params.get("key") for key in self.header_keys if key in params}
+            session.headers.update(**headers)
 
         url = self.build_actual_url(params)
 

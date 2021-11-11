@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -18,45 +17,36 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from django.utils.translation import ugettext_lazy as _
 
-from django.conf import settings
+from apps.api.modules.utils import add_esb_info_before_request
+from config.domains import BK_SSM_ROOT
 
-from apps.utils.function import ignored
-from config.env import load_domains
+from apps.api.base import DataAPI
 
-API_ROOTS = [
-    # 蓝鲸平台模块域名
-    "BK_PAAS_APIGATEWAY_ROOT",
-    "CC_APIGATEWAY_ROOT_V2",
-    "GSE_APIGATEWAY_ROOT_V2",
-    "MONITOR_APIGATEWAY_ROOT",
-    "BCS_CC_APIGATEWAY_ROOT",
-    "USER_MANAGE_APIGATEWAY_ROOT",
-    # 数据平台模块域名
-    "ACCESS_APIGATEWAY_ROOT",
-    "AUTH_APIGATEWAY_ROOT",
-    "DATAQUERY_APIGATEWAY_ROOT",
-    "DATABUS_APIGATEWAY_ROOT",
-    "STOREKIT_APIGATEWAY_ROOT",
-    "META_APIGATEWAY_ROOT",
-    # 节点管理
-    "BK_NODE_APIGATEWAY_ROOT",
-    # LOG_SEARCH
-    "LOG_SEARCH_APIGATEWAY_ROOT",
-    # IAM
-    "IAM_APIGATEWAY_ROOT_V2",
-    # ITSM
-    "ITSM_APIGATEWAY_ROOT_V2",
-    # CMSI
-    "CMSI_APIGATEWAY_ROOT_V2",
-    # JOB
-    "JOB_APIGATEWAY_ROOT_V2",
-    "BK_SSM_ROOT",
-]
 
-env_domains = load_domains(settings)
-for _root in API_ROOTS:
-    with ignored(Exception):
-        locals()[_root] = env_domains.get(_root)
+class _BcsSSM:
+    MODULE = _("bkssm")
 
-__all__ = API_ROOTS
+    def __init__(self):
+        self.get_access_token = DataAPI(
+            method="POST",
+            url=BK_SSM_ROOT + "/access-tokens/",
+            module=self.MODULE,
+            description=_("获取access_token"),
+            before_request=add_esb_info_before_request,
+        )
+        self.verify_access_token = DataAPI(
+            method="POST",
+            url=BK_SSM_ROOT + "/access-tokens/verify/",
+            module=self.MODULE,
+            description=_("verify access_token"),
+            before_request=add_esb_info_before_request,
+        )
+        self.refresh_access_token = DataAPI(
+            method="POST",
+            url=BK_SSM_ROOT + "/access-tokens/refresh/",
+            module=self.MODULE,
+            description=_("refresh access_token"),
+            before_request=add_esb_info_before_request,
+        )
