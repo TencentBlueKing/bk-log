@@ -945,11 +945,12 @@ export default {
       }
       // 通过 url 查询参数设置检索参数
       let queryParams = {};
-      const queryParamsStr = {};
+      let queryParamsStr = {};
       const urlRetrieveParams = this.$route.query.retrieveParams;
       if (urlRetrieveParams) {
         try {
           queryParams = JSON.parse(decodeURIComponent(urlRetrieveParams));
+          queryParamsStr = JSON.parse(decodeURIComponent(urlRetrieveParams));
         } catch (e) {
           console.warn('url 查询参数解析失败', e);
         }
@@ -971,7 +972,7 @@ export default {
             if (param) {
               queryParams[field] = ['keyword', 'start_time', 'end_time', 'time_range'].includes(field)
                 ? decodeURIComponent(param)
-                : JSON.parse(decodeURIComponent(param));
+                : decodeURIComponent(param) ? JSON.parse(decodeURIComponent(param)) : param;
 
               queryParamsStr[field] = param;
             }
