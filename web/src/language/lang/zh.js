@@ -278,6 +278,7 @@ export default {
   原始: '原始',
   换行: '换行',
   展开全部: '展开全部',
+  加为筛选项: '加为筛选项',
   // 检索设置弹窗
   retrieveSetting: {
     setting: '设置',

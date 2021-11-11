@@ -60,6 +60,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    isPageOver: {
+      type: Boolean,
+      required: false,
+    },
   },
   data() {
     return {
@@ -85,7 +89,7 @@ export default {
   },
   beforeDestroy() {
     const ele = document.querySelector('.result-scroll-container');
-    if (ele) ele.addEventListener('scroll', this.handleScroll);
+    if (ele) ele.removeEventListener('scroll', this.handleScroll);
   },
   methods: {
     getRandom() { // 骨架占位随机长度
