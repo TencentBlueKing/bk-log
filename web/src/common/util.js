@@ -552,8 +552,12 @@ export function readBlobRespToJson(resp) {
 
 export function parseBigNumberList(lsit) {
   return (lsit || []).map(item => Object.keys(item || {})
-    .reduce((output, key) => ({
-      ...output,
-      [key]: (item[key] || {})._isBigNumber ? item[key].toString() : item[key],
-    }), {}));
+    .reduce((output, key) => {
+      return {
+        ...output,
+        [key]: (item[key] || {})._isBigNumber
+          ? item[key].toString().length < 16
+            ? Number(item[key]) : (item[key]).toString() : item[key],
+      };
+    }, {}));
 }
