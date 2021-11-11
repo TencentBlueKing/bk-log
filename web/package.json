@@ -54,6 +54,7 @@
     "html-to-image": "0.1.1",
     "html2canvas": "1.0.0-rc.5",
     "js-cookie": "2.2.0",
+    "json-bignumber": "^1.0.2",
     "jsonp": "0.2.1",
     "moment": "2.27.0",
     "query-string": "6.5.0",
