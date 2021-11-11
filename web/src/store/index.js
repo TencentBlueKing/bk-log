@@ -83,6 +83,7 @@ const store = new Vuex.Store({
     collectDetail: [0, {}],
     // 清除table表头宽度缓存
     clearTableWidth: 0,
+    showRouterLeaveTip: false,
   },
   // 公共 getters
   getters: {
@@ -200,6 +201,9 @@ const store = new Vuex.Store({
     },
     updateClearTableWidth(state, clearTableWidth) {
       state.clearTableWidth += clearTableWidth;
+    },
+    updateRouterLeaveTip(state, isShow) {
+      state.showRouterLeaveTip = isShow;
     },
   },
   actions: {

@@ -33,7 +33,7 @@
       <div v-if="selected === '2'" class="fingerprint fljb">
         <div class="fingerprint-setting fljb">
           <div class="fljb">
-            <span>同比</span>
+            <span>{{$t('同比')}}</span>
             <bk-select
               :disabled="false"
               v-model="comparedValue"
@@ -52,15 +52,15 @@
             :true-value="'yes'"
             :false-value="'no'"
             v-model="value">
-            <span style="font-size: 12px">近24H新增</span>
+            <span style="font-size: 12px">{{$t('近24H新增')}}</span>
           </bk-checkbox>
 
           <div class="partter fljb" style="width: 200px">
             <span>Partter</span>
             <div class="partter-slider-box fljb">
-              <span>少</span>
-              <bk-slider class="partter-slider" v-model="value"></bk-slider>
-              <span>多</span>
+              <span>{{$t('少')}}</span>
+              <bk-slider class="partter-slider" v-model="number"></bk-slider>
+              <span>{{$t('多')}}</span>
             </div>
           </div>
         </div>
@@ -71,7 +71,7 @@
       </div>
     </div>
 
-    <bk-alert type="info" title="如果需要对用户提供上传附件的服务，请先在后台先行配置。" closable></bk-alert>
+    <bk-alert type="info" :title="$t('clusterAlert')" closable></bk-alert>
 
     <div>
       <ignore-table v-if="selected === '0' || selected === '1'" />
@@ -92,15 +92,16 @@ export default {
     return {
       selected: '0',
       value: '0',
+      number: 100,
       clusterNavList: [{
         id: '0',
-        name: '忽略数字',
+        name: this.$t('忽略数字'),
       }, {
         id: '1',
-        name: '忽略符号',
+        name: this.$t('忽略符号'),
       }, {
         id: '2',
-        name: '数据指纹',
+        name: this.$t('数据指纹'),
       }],
       comparedList: [{
         id: '0',

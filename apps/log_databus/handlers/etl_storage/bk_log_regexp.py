@@ -93,3 +93,105 @@ class BkLogRegexpEtlStorage(EtlStorage):
             "time_alias_name": result_table_fields["time_field"]["alias_name"],
             "time_option": result_table_fields["time_field"]["option"],
         }
+
+    def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
+        retain_original_text = etl_params.get("retain_original_text", False)
+        built_in_fields = built_in_config.get("fields", [])
+        result_table_fields = self.get_result_table_fields(fields, etl_params, built_in_config)
+        time_field = result_table_fields.get("time_field")
+        return {
+            "conf": self._to_bkdata_conf(time_field),
+            "extract": {
+                "next": {
+                    "next": [
+                        {
+                            "next": {
+                                "next": {
+                                    "next": [
+                                        {
+                                            "next": {
+                                                "next": [
+                                                    {
+                                                        "next": {
+                                                            "subtype": "assign_obj",
+                                                            "assign": [
+                                                                self._to_bkdata_assign(field) for field in fields
+                                                            ],
+                                                            "label": "labela2dfe3",
+                                                            "type": "assign",
+                                                            "next": None,
+                                                        },
+                                                        "method": "regex_extract",
+                                                        "args": [
+                                                            {
+                                                                "result": "regexp_data",
+                                                                "keys": [field["field_name"] for field in fields],
+                                                                "regexp": etl_params.get("separator_regexp", ""),
+                                                            }
+                                                        ],
+                                                        "type": "fun",
+                                                        "label": "label5e3d6f",
+                                                    }
+                                                ],
+                                                "name": "",
+                                                "type": "branch",
+                                                "label": None,
+                                            },
+                                            "result": "log_data",
+                                            "default_type": "null",
+                                            "type": "access",
+                                            "key": "data",
+                                            "label": "labelb140f1",
+                                            "subtype": "access_obj",
+                                            "default_value": "",
+                                        },
+                                        {
+                                            "next": None,
+                                            "subtype": "assign_obj",
+                                            "label": "labelb140",
+                                            "assign": [
+                                                {"key": "iterationindex", "assign_to": "iterationIndex", "type": "int"},
+                                                {"key": "data", "assign_to": "log", "type": "text"}
+                                                if retain_original_text
+                                                else {},
+                                            ],
+                                            "type": "assign",
+                                        },
+                                    ],
+                                    "name": "",
+                                    "type": "branch",
+                                    "label": None,
+                                },
+                                "result": "iter_item",
+                                "type": "fun",
+                                "label": "label21ca91",
+                                "args": [],
+                                "method": "iterate",
+                            },
+                            "result": "item_data",
+                            "default_type": "null",
+                            "type": "access",
+                            "key": "items",
+                            "label": "label36c8ad",
+                            "subtype": "access_obj",
+                            "default_value": "",
+                        },
+                        {
+                            "subtype": "assign_obj",
+                            "assign": self._get_bkdata_default_fields(built_in_fields, time_field),
+                            "label": "labelf676c9",
+                            "type": "assign",
+                            "next": None,
+                        },
+                    ],
+                    "name": "",
+                    "type": "branch",
+                    "label": None,
+                },
+                "result": "json_data",
+                "type": "fun",
+                "label": "label04a222",
+                "args": [],
+                "method": "from_json",
+            },
+        }
