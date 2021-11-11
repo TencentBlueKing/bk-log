@@ -24,6 +24,7 @@
   <span class="log-content-wrapper">
     <span
       v-if="!isNeedSegment"
+      class="valid-text"
       @click="handleClick($event, content)">{{ content }}</span>
     <template v-else class="segment-content">
       <span
@@ -79,7 +80,7 @@ export default {
     return {
       curValue: '', // 当前选中分词
       markList: [], // 高亮
-      segmentReg: /([.,&*+:;?^=!$<>{}()|[\]/\\|\s\r\n\t]|[-])/,
+      segmentReg: /([,&*+:;?^=!$<>{}()|[\]/\\|\s\r\n\t]|[-])/,
     };
   },
   computed: {
