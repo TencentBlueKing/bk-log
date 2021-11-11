@@ -108,7 +108,8 @@ class DslBuilder(object):
         self.highlight_dict = highlight
 
         if self.highlight_dict:
-            if self.search_string != WILDCARD_PATTERN:
+            # have query filter need highlight
+            if self.search_string != WILDCARD_PATTERN or filter_dict_list:
                 self._body.update({"highlight": self.highlight_dict})
 
         # 启用search_after模式
