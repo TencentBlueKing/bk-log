@@ -23,6 +23,22 @@ from django.utils.translation import ugettext_lazy as _
 
 
 class BcsClusterInfo(SoftDeleteModel):
-    cluster_id = models.CharField(_("集群ID"), max_length=128)
+    cluster_id = models.CharField(_("集群ID"), max_length=128, primary_key=True)
     bk_biz_id = models.IntegerField(_("业务ID"))
-    project_id = models.CharField(_("项目ID"))
+    project_id = models.CharField(_("项目ID"), max_length=128)
+    is_active = models.BooleanField(_("是否开启日志采集"), default=True)
+
+    @classmethod
+    def active_bcs_cluster(cls, cluster_id, bk_biz_id, project_id):
+        qs = cls.objects.filter(cluster_id=cluster_id)
+        if qs.exists():
+            qs.update(is_active=True)
+            return
+        cls.objects.create(cluster_id=cluster_id, bk_biz_id=bk_biz_id, project_id=project_id)
+
+    @classmethod
+    def stop_bcs_cluster(cls, cluster_id):
+        qs = cls.objects.filter(cluster_id=cluster_id)
+        if not qs.exists():
+            return
+        qs.update(is_active=False)

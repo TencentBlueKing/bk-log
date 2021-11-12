@@ -16,15 +16,18 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.conf.urls import url, include
-from rest_framework import routers
-
-from apps.log_bcs.views.bcs_views import BcsViewSet
-
-router = routers.DefaultRouter(trailing_slash=True)
-router.register(r"bcs", BcsViewSet, basename="bcs")
 
 
-urlpatterns = [
-    url(r"^", include(router.urls)),
-]
+def version_cmp_greater(version1: str, version2: str) -> bool:
+    """
+    version: vx.xx.xx v1.12.3
+    v1.16 > v.12.3 True
+    v1.16 > v1.16 False
+    v1.16 > v1.17 False
+    """
+    versions = [version1, version2]
+    for version in versions:
+        version = version.strip("v")
+        version = version.split(".")
+        version = [int(n) for n in version]
+    return version1 > version2

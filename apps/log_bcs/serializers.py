@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -16,15 +17,10 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.conf.urls import url, include
-from rest_framework import routers
-
-from apps.log_bcs.views.bcs_views import BcsViewSet
-
-router = routers.DefaultRouter(trailing_slash=True)
-router.register(r"bcs", BcsViewSet, basename="bcs")
+from django.utils.translation import ugettext_lazy as _
+from rest_framework import serializers
 
 
-urlpatterns = [
-    url(r"^", include(router.urls)),
-]
+class OpenBcsLogSerializer(serializers.Serializer):
+    cluster_id = serializers.CharField(label=_("集群ID"), max_length=128)
+    project_id = serializers.CharField(label=_("项目ID"), max_length=128)

@@ -20,32 +20,34 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.modules.utils import add_esb_info_before_request
+from apps.log_search.constants import TimeEnum
 from config.domains import BK_SSM_ROOT
 
 from apps.api.base import DataAPI
 
 
-class _BcsSSM:
+class _BkSSM:
     MODULE = _("bkssm")
 
     def __init__(self):
         self.get_access_token = DataAPI(
             method="POST",
-            url=BK_SSM_ROOT + "/access-tokens/",
+            url=BK_SSM_ROOT + "access-tokens",
             module=self.MODULE,
             description=_("获取access_token"),
             before_request=add_esb_info_before_request,
+            cache_time=TimeEnum.ONE_DAY_SECOND.value,
         )
         self.verify_access_token = DataAPI(
             method="POST",
-            url=BK_SSM_ROOT + "/access-tokens/verify/",
+            url=BK_SSM_ROOT + "access-tokens/verify",
             module=self.MODULE,
             description=_("verify access_token"),
             before_request=add_esb_info_before_request,
         )
         self.refresh_access_token = DataAPI(
             method="POST",
-            url=BK_SSM_ROOT + "/access-tokens/refresh/",
+            url=BK_SSM_ROOT + "access-tokens/refresh",
             module=self.MODULE,
             description=_("refresh access_token"),
             before_request=add_esb_info_before_request,

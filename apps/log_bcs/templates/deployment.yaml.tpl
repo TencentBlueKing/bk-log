@@ -134,9 +134,9 @@ spec:
         - name: bkunifylogbeat-bklog
           image: {{ bkunifylogbeat_image }}
           command:
-            - bkunifylogbeat
+            - /data/bin/bkunifylogbeat
             - -c
-            - /data/etc/bkunifylogbeat.conf
+            - /etc/bk/bkunifylogbeat.conf
           resources:
             limits:
               memory: 200Mi

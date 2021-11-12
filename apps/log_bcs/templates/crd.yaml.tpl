@@ -35,33 +35,37 @@ spec:
         spec:
           description: BkLogConfigSpec defines the desired state of BkLogConfig
           properties:
-            all_container:
+            IgnoreOlder:
+              type: string
+            PackageCount:
+              type: integer
+            ScanFrequency:
+              type: string
+            allContainer:
               description: if set all_container is true will match all container
               type: boolean
-            clean_inactive:
+            cleanInactive:
               type: string
-            close_inactive:
+            closeInactive:
               type: string
-            container_name_match:
+            containerNameMatch:
               items:
                 type: string
               type: array
-            data_id:
+            dataId:
               description: Foo is an example field of BkLogConfig. Edit bklogconfig_types.go
                 to remove/update
               format: int64
               type: integer
             encoding:
               type: string
-            ext_meta:
+            extMeta:
               additionalProperties:
                 type: string
               type: object
-            ignore_older:
-              type: string
             input:
               type: string
-            label_selector:
+            labelSelector:
               description: A label selector is a label query over a set of resources.
                 The result of matchLabels and matchExpressions are ANDed. An empty
                 label selector matches all objects. A null label selector matches
@@ -107,13 +111,10 @@ spec:
                     are ANDed.
                   type: object
               type: object
-            log_config_type:
-              description: match rule std_log_config,container_log_config,node_log_config
-              type: string
             multiline:
               description: MultilineConfig is bkunifylogbeat multiline options
               properties:
-                max_lines:
+                maxLines:
                   type: integer
                 pattern:
                   type: string
@@ -122,20 +123,21 @@ spec:
               type: object
             namespace:
               type: string
+            logConfigType:
+              description: match rule std_log_config,container_log_config,node_log_config
+              type: string
             package:
               type: boolean
-            package_count:
-              type: integer
             path:
               items:
                 type: string
               type: array
-            scan_frequency:
+            workloadName:
               type: string
-            workload_name:
+            workloadType:
               type: string
-            workload_type:
-              type: string
+          required:
+          - logConfigType
           type: object
         status:
           description: BkLogConfigStatus defines the observed state of BkLogConfig
@@ -152,6 +154,7 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
+
 {% else %}
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -189,33 +192,37 @@ spec:
           spec:
             description: BkLogConfigSpec defines the desired state of BkLogConfig
             properties:
-              all_container:
+              IgnoreOlder:
+                type: string
+              PackageCount:
+                type: integer
+              ScanFrequency:
+                type: string
+              allContainer:
                 description: if set all_container is true will match all container
                 type: boolean
-              clean_inactive:
+              cleanInactive:
                 type: string
-              close_inactive:
+              closeInactive:
                 type: string
-              container_name_match:
+              containerNameMatch:
                 items:
                   type: string
                 type: array
-              data_id:
+              dataId:
                 description: Foo is an example field of BkLogConfig. Edit bklogconfig_types.go
                   to remove/update
                 format: int64
                 type: integer
               encoding:
                 type: string
-              ext_meta:
+              extMeta:
                 additionalProperties:
                   type: string
                 type: object
-              ignore_older:
-                type: string
               input:
                 type: string
-              label_selector:
+              labelSelector:
                 description: A label selector is a label query over a set of resources.
                   The result of matchLabels and matchExpressions are ANDed. An empty
                   label selector matches all objects. A null label selector matches
@@ -262,13 +269,10 @@ spec:
                       are ANDed.
                     type: object
                 type: object
-              log_config_type:
-                description: match rule std_log_config,container_log_config,node_log_config
-                type: string
               multiline:
                 description: MultilineConfig is bkunifylogbeat multiline options
                 properties:
-                  max_lines:
+                  maxLines:
                     type: integer
                   pattern:
                     type: string
@@ -277,20 +281,21 @@ spec:
                 type: object
               namespace:
                 type: string
+              logConfigType:
+                description: match rule std_log_config,container_log_config,node_log_config
+                type: string
               package:
                 type: boolean
-              package_count:
-                type: integer
               path:
                 items:
                   type: string
                 type: array
-              scan_frequency:
+              workloadName:
                 type: string
-              workload_name:
+              workloadType:
                 type: string
-              workload_type:
-                type: string
+            required:
+            - logConfigType
             type: object
           status:
             description: BkLogConfigStatus defines the observed state of BkLogConfig

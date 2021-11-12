@@ -77,7 +77,7 @@ IAMApi = SimpleLazyObject(lambda: new_api_module("iam", "_IAMApi"))
 BkItsmApi = SimpleLazyObject(lambda: new_api_module("bk_itsm", "_BkItsm"))
 
 # BcsCC
-BcsCcApi = SimpleLazyObject(lambda: new_api_module("bcs_cc", "_PaasCcApi"))
+BcsCcApi = SimpleLazyObject(lambda: new_api_module("bcs_cc", "_BcsCcApi"))
 
 # BkSSM
 BkSSMApi = SimpleLazyObject(lambda: new_api_module("bk_ssm", "_BkSSM"))

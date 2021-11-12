@@ -28,27 +28,40 @@ from apps.api.base import DataAPI
 
 
 def bcs_cc_before_request(params):
-    params = add_esb_info_before_request()
-    bkssm_access_token = BkSSMApi.get_access_token()
+    params = add_esb_info_before_request(params)
+    bkssm_access_token = BkSSMApi.get_access_token({"grant_type": "client_credentials", "id_provider": "client"})
     access_token = bkssm_access_token["access_token"]
     params["X-BKAPI-AUTHORIZATION"] = json.dumps({"access_token": access_token})
     return params
+
+
+def bcs_get_cluster_config_after(response):
+    response["data"] = json.loads(response["data"]["configure"])
+    return response
 
 
 class _BcsCcApi(object):
     MODULE = _(u"Bcs cc 配置中心")
 
     def __init__(self):
-        self.get_cluster_by_cluster_id = DataAPI(
+        self.get_cluster_config_by_cluster_id = DataAPI(
             method="GET",
-            url=BCS_CC_APIGATEWAY_ROOT + "v1/clusters/{cluster_id}/",
+            url=BCS_CC_APIGATEWAY_ROOT + "v1/clusters/{cluster_id}/cluster_config/",
             module=self.MODULE,
             url_keys=["cluster_id"],
             description=u"根据集群id获取集群信息",
-            default_return_value=None,
             header_keys=["X-BKAPI-AUTHORIZATION"],
             before_request=bcs_cc_before_request,
-            after_request=None,
+            after_request=bcs_get_cluster_config_after,
+        )
+        self.get_cluster_by_cluster_id = DataAPI(
+            method="GET",
+            url=BCS_CC_APIGATEWAY_ROOT + "clusters/{cluster_id}/",
+            module=self.MODULE,
+            url_keys=["cluster_id"],
+            description=u"根据集群id获取集群信息",
+            header_keys=["X-BKAPI-AUTHORIZATION"],
+            before_request=bcs_cc_before_request,
         )
         self.list_cluster = DataAPI(
             method="GET",

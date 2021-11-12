@@ -55,6 +55,7 @@ INSTALLED_APPS += (
     "apps.log_esquery",
     "apps.log_measure",
     "apps.log_trace",
+    "apps.log_bcs",
     "apps.esb",
     "apps.bk_log_admin",
     "apps.grafana",
@@ -677,6 +678,8 @@ FEATURE_EXPORT_SCROLL = os.environ.get("BKAPP_FEATURE_EXPORT_SCROLL", False)
 BCS_BKLOG_HOST_PATH = os.environ.get("BKAPP_BCS_HOST_PATH", "/var/host")
 BCS_BKLOG_NAMESPACE = os.getenv("BKAPP_BCS_BKLOG_NAMESPACE", "bk-log")
 BCS_GSE_ENDPONIT = os.getenv("BKAPP_BCS_GSE_ENDPOINT", "/var/run/ipc.state.report")
+BCS_BKUNIFYLOGBEAT_IMAGE = os.getenv("BKAPP_BCS_BKUNIFYLOGBEAT_IMAGE", "")
+BCS_BK_LOG_SIDECAR_IMAGE = os.getenv("BCS_BK_LOG_SIDECAR_IMAGE", "")
 
 # 日志采集器配置
 # 日志文件多久没更新则不再读取
