@@ -74,7 +74,7 @@
     <bk-alert type="info" :title="$t('clusterAlert')" closable></bk-alert>
 
     <div>
-      <ignore-table v-if="selected === '0' || selected === '1'" />
+      <ignore-table v-if="selected === '0' || selected === '1'" v-bind="$attrs" />
       <data-fingerprint :compared-value="comparedValue" v-if="selected === '2'" />
     </div>
   </div>

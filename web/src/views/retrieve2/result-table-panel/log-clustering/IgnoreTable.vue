@@ -23,6 +23,7 @@
 <template>
   <bk-table
     :data="tableData"
+    size="large"
     class="log-cluster-table">
     <bk-table-column type="expand" width="30">
       <template slot-scope="props">
@@ -30,13 +31,13 @@
       </template>
     </bk-table-column>
     <bk-table-column type="index" :label="$t('序号')" width="60"></bk-table-column>
-    <bk-table-column :label="$t('数量')" :sortable="true" width="91" prop="number"></bk-table-column>
+    <bk-table-column :label="$t('数量')" :sortable="true" width="91" prop="count"></bk-table-column>
     <bk-table-column :label="$t('占比')" :sortable="true" width="91" prop="source">
       <template slot-scope="props">
-        {{`${props.row.source}%`}}
+        {{`${(props.row.count / originTableList.length).toFixed(2) * 100}%`}}
       </template>
     </bk-table-column>
-    <bk-table-column :label="$t('取样内容')" prop="status"></bk-table-column>
+    <bk-table-column :label="$t('取样内容')" prop="content"></bk-table-column>
     <div slot="empty">
       <div class="empty-text">
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
@@ -49,6 +50,12 @@
 
 <script>
 export default {
+  props: {
+    originTableList: {
+      type: Array,
+      required: true,
+    },
+  },
   data() {
     return {
       tableData: [{
@@ -63,6 +70,26 @@ export default {
         status: 123,
       }],
     };
+  },
+  watch: {
+    originTableList: {
+      immediate: true,
+      handler(data) {
+        this.tableData = data.reduce((pre, next) => {
+          const valStr = JSON.stringify(next).replace(/\d/g, '*');
+          const ascription = pre.find(item => item.content === valStr);
+          if (!ascription) {
+            pre.push({
+              count: 1,
+              content: valStr,
+            });
+          } else {
+            ascription.count = ascription.count + 1;
+          }
+          return pre;
+        }, []);
+      },
+    },
   },
 };
 </script>

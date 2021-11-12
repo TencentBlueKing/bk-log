@@ -31,11 +31,12 @@
     </bk-tab>
     <div class="panel-content-wrap">
       <original-log
-        v-show="active === 'origin'"
+        v-if="active === 'origin'"
         v-bind="$attrs"
-        v-on="$listeners"
-      />
-      <log-clustering v-show="active === 'clustering'" />
+        v-on="$listeners" />
+      <log-clustering
+        v-if="active === 'clustering'"
+        v-bind="$attrs" />
     </div>
   </div>
 </template>
