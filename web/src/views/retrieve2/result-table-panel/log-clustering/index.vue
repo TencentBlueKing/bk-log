@@ -88,7 +88,11 @@
     <bk-alert type="info" :title="$t('clusterAlert')" closable></bk-alert>
 
     <div>
-      <IgnoreTable v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'" />
+      <IgnoreTable
+        v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
+        v-bind="$attrs"
+        v-on="$listeners"
+        :active="active" />
       <DataFingerprint
         v-if="active === 'dataFingerprint'"
         :year-on-year-cycle="yearOnYearCycle"
