@@ -309,6 +309,8 @@ export default {
     testSyntax: '检测语法',
     inspection: '检验中',
     inspectionSuccess: '检验成功',
+    inspectionFail: '检测失败',
+    ruleEmpty: '暂无聚类规则',
     saveToTakeEffect: '保存待生效',
     clusterPrompt: '日志平台采集可以直接进行无缝的切换，需要N时间生效，存储将增加M%； 计算平台日志需要明确开启后资源将出现210%的消耗',
     extractionPrompt: '将过滤后的日志采集上来后，日志检索模块可进行日志内容格式化，方便检索和分析。',

@@ -22,7 +22,7 @@
 
 <template>
   <!-- 设置-日志聚类 -->
-  <div class="setting-log-cluster">
+  <div class="setting-log-cluster" v-bkloading="{ isLoading: globalLoading }">
     <bk-form :label-width="200">
       <!-- 聚类字段 -->
       <bk-form-item
@@ -76,8 +76,13 @@
           <br>
           <div class="form-item">
             <bk-input
-              class="ml200" type="number" style="width: 94px; overflow: hidden;"
+              class="ml200"
+              type="number"
+              style="width: 94px; overflow: hidden;"
               v-model="formData.max_log_length"
+              :min="1"
+              :max="2000000"
+              :precision="0"
               :disabled="!globalEditable"></bk-input>
             <span style="margin-left: 8px">{{$t('retrieveSetting.byte')}}</span>
             <span
@@ -94,13 +99,12 @@
         <div class="container-item">
           <p style="height: 32px">{{$t('retrieveSetting.filtrationRule')}}</p>
           <div class="filter-rule">
-            <div class="filter-rule filter-rule-item" v-for="(item, index) of filterList" :key="index">
+            <div class="filter-rule filter-rule-item" v-for="(item, index) of formData.filter_rules" :key="index">
               <bk-select
                 class="icon-box and-or mr-neg1"
-                placeholder=" "
-                v-model="item.compared"
-                v-if="filterList.length !== 0 && index !== 0 && item.select !== ''"
+                v-if="formData.filter_rules.length !== 0 && index !== 0 && item.fields_name !== ''"
                 :clearable="false"
+                v-model="item.logic_operator"
                 :disabled="!globalEditable">
                 <bk-option v-for="option in comparedList"
                            :key="option.id"
@@ -111,9 +115,10 @@
 
               <bk-select
                 class="min-100 mr-neg1"
-                v-model="item.select"
+                v-model="item.fields_name"
                 :clearable="false"
-                :disabled="!globalEditable">
+                :disabled="!globalEditable"
+                :popover-min-width="150">
                 <bk-option v-for="option in filterSelectList"
                            :key="option.id"
                            :id="option.id"
@@ -125,14 +130,14 @@
               </bk-select>
 
               <bk-select
-                v-if="item.select !== ''"
-                v-model="item.condition"
+                v-if="item.fields_name !== ''"
+                v-model="item.op"
                 placeholder=" "
                 class="icon-box mr-neg1"
                 style="color: #3A84FF;"
                 :disabled="!globalEditable"
                 :clearable="false"
-                :popover-min-width="120">
+                :popover-min-width="60">
                 <bk-option v-for="option in conditionList"
                            :key="option.id"
                            :id="option.id"
@@ -140,207 +145,48 @@
                 </bk-option>
               </bk-select>
 
-              <bk-tag-input
-                v-if="item.select !== ''"
-                v-model="item.inputList"
-                class="min-100 mr-neg1"
+              <bk-input
+                v-if="item.fields_name !== ''"
+                v-model="item.value"
+                class="mr-neg1"
                 placeholder=" "
-                :disabled="!globalEditable"
-                :list="inputSelectList"
-                :trigger="'focus'"
-                :allow-create="true"
-                :allow-auto-match="true"
-                :has-delete-icon="true">
-              </bk-tag-input>
+                :disabled="!globalEditable">
+              </bk-input>
             </div>
-            <div v-if="isShowAddFilterIcon"
-                 class="icon-box"
-                 @click="addFilterRule">
+            <button v-if="isShowAddFilterIcon"
+                    class="icon-box"
+                    :disabled="!globalEditable"
+                    @click="addFilterRule">
               <i class="bk-icon icon-plus-line"></i>
-            </div>
+            </button>
           </div>
         </div>
         <!-- 聚类规则 -->
-        <div class="container-item table-container">
-          <p style="height: 32px">{{$t('retrieveSetting.clusterRule')}}</p>
-          <div class="table-operate">
-            <bk-button
-              size="small"
-              :class="globalEditable ? 'btn-hover' : ''"
-              :disabled="!globalEditable"
-              @click="addRule">
-              {{$t('添加')}}
-            </bk-button>
-            <bk-button
-              size="small"
-              :class="globalEditable ? 'btn-hover' : ''"
-              :disabled="!globalEditable">
-              {{$t('retrieveSetting.restoreDefault')}}
-            </bk-button>
-            <bk-button
-              size="small"
-              :class="globalEditable ? 'btn-hover' : ''"
-              :disabled="!globalEditable">
-              {{$t('调试')}}
-            </bk-button>
-          </div>
+        <RuleTable
+          ref="ruleTableRef"
+          :global-editable="globalEditable"
+          :table-str="formData.predefined_varibles"
+          :default-data="defaultData" />
 
-          <div class="cluster-table">
-            <div class="table-row flbc">
-              <div class="row-left">
-                <div>{{$t('序号')}}</div>
-                <div>{{$t('retrieveSetting.regularExpression')}}</div>
-              </div>
-              <div class="row-right flbc">
-                <div>{{$t('retrieveSetting.placeholder')}}</div>
-                <div>{{$t('retrieveSetting.operate')}}</div>
-              </div>
-            </div>
-
-            <div>
-              <vue-draggable v-bind="dragOptions" v-model="tableData">
-                <transition-group>
-                  <li class="table-row table-row-li flbc" v-for="(item, index) in tableData" :key="item.index">
-                    <div class="row-left">
-                      <div><span class="icon log-icon icon-drag-dots"></span><span>{{item.index}}</span></div>
-                      <div>{{item.regular}}</div>
-                    </div>
-                    <div class="row-right flbc">
-                      <div>{{item.placeholder}}</div>
-                      <div>
-                        <bk-button
-                          :disabled="!globalEditable" theme="primary" text style="margin-right: 10px;"
-                          @click="clusterEdit(index)">
-                          {{$t('编辑')}}
-                        </bk-button>
-                        <bk-button
-                          :disabled="!globalEditable" theme="primary" text
-                          @click="clusterRemove(index)">
-                          {{$t('删除')}}
-                        </bk-button>
-                      </div>
-                    </div>
-                  </li>
-                </transition-group>
-              </vue-draggable>
-            </div>
-            <!-- <div v-else class="table-row">
-              <div>暂无聚类规则</div>
-            </div> -->
-          </div>
-        </div>
-        <!-- 原始日志 -->
-        <div class="container-item">
-          <p style="height: 32px">{{$t('configDetails.originalLog')}}</p>
-          <div class="log-style">
-            <bk-input
-              placeholder=" "
-              data-test-id=""
-              :disabled="!globalEditable"
-              :type="'textarea'"
-              :rows="3"
-              :input-style="{
-                'background-color': '#313238',
-                height: '100px',
-                'line-height': '24px',
-                color: '#C4C6CC',
-                borderRadius: '2px'
-              }"
-              v-model.trim="logOriginal">
-            </bk-input>
-          </div>
-        </div>
-        <!-- 效果 -->
-        <div class="container-item">
-          <p style="height:32px">{{$t('retrieveSetting.effect')}}</p>
-          <bk-input
-            placeholder=" "
-            data-test-id=""
-            :disabled="true"
-            :type="'textarea'"
-            :rows="3"
-            :input-style="{
-              'background-color': '#FAFBFD',
-              height: '100px',
-              'line-height': '24px',
-              color: '#000000',
-              borderRadius: '2px'
-            }"
-            v-model.trim="logOriginal">
-          </bk-input>
-        </div>
+        <bk-form-item class="submit-button">
+          <bk-button
+            theme="primary"
+            :title="$t('保存')"
+            :disabled="!globalEditable"
+            :loading="isHandle"
+            @click.stop.prevent="handleSubmit">
+            {{ $t('保存') }}
+          </bk-button>
+          <bk-button
+            theme="default"
+            :disabled="!globalEditable"
+            :title="$t('dataManage.Reset')"
+            @click="resetPage">
+            {{ $t('dataManage.Reset') }}
+          </bk-button>
+        </bk-form-item>
       </div>
-
-      <bk-form-item class="submit-button">
-        <bk-button
-          theme="primary"
-          :title="$t('保存')"
-          :disabled="!globalEditable"
-          :loading="isHandle"
-          @click.stop.prevent="handleSubmit">
-          {{ $t('保存') }}
-        </bk-button>
-        <bk-button
-          theme="default"
-          :disabled="!globalEditable"
-          :title="$t('dataManage.Reset')"
-          @click="cancel">
-          {{ $t('dataManage.Reset') }}
-        </bk-button>
-      </bk-form-item>
     </bk-form>
-    <!-- 添加规则dialog -->
-    <bk-dialog
-      v-model="isShowAddRule"
-      :header-position="'left'"
-      :width="640"
-      :title="isEditRuls ? $t('retrieveSetting.editingRules') : $t('retrieveSetting.addRule')"
-      :mask-close="false"
-      @after-leave="cancelAddRuleContent"
-      ext-cls="add-rule">
-      <bk-form :label-width="200">
-        <bk-form-item
-          :label="$t('retrieveSetting.regularExpression')"
-          :required="true"
-          :property="''">
-          <br>
-          <bk-input v-model="regular" class="ml200" style="width: 560px"></bk-input>
-          <p class="ml200">{{$t('retrieveSetting.sample')}}: char {#char_name#}</p>
-        </bk-form-item>
-        <bk-form-item
-          :label="$t('retrieveSetting.placeholder')"
-          :required="true"
-          :property="''">
-          <br>
-          <bk-input v-model="placeholder" class="ml200" style="width: 560px"></bk-input>
-          <p class="ml200">{{$t('retrieveSetting.sample')}}: char {#char_name#}</p>
-        </bk-form-item>
-      </bk-form>
-      <template slot="footer">
-        <div class="flbc">
-          <div class="inspection-status">
-            <div class="inspection-status" v-if="isClickSubmit">
-              <div>
-                <bk-spin v-if="isDetection" class="spin" size="mini"></bk-spin>
-                <span v-else class="bk-icon icon-check-circle-shape spin" style="color: #45E35F;"></span>
-              </div>
-              <span style="margin-left: 24px;">
-                {{isDetection ?
-                  $t('retrieveSetting.inspection') : $t('retrieveSetting.inspectionSuccess')}}
-              </span>
-            </div>
-          </div>
-          <div>
-            <bk-button
-              theme="primary"
-              :disabled="isDetection"
-              @click="handleRuleSubmit">
-              {{isRuleCorrect ? $t('保存') : $t('retrieveSetting.testSyntax')}}</bk-button>
-            <bk-button @click="handleRuleCancel">{{$t('取消')}}</bk-button>
-          </div>
-        </div>
-      </template>
-    </bk-dialog>
     <!-- 保存dialog -->
     <bk-dialog
       width="360"
@@ -354,7 +200,7 @@
         <bk-button
           theme="primary"
           class="submit-dialog-btn"
-          @click="handleRuleCancel">
+          @click="isShowSubmitDialog = false">
           {{$t('retrieveSetting.iSee')}}</bk-button>
       </div>
     </bk-dialog>
@@ -362,409 +208,279 @@
 </template>
 
 <script>
-import VueDraggable from 'vuedraggable';
+import RuleTable from './RuleTable';
+
 export default {
   components: {
-    VueDraggable,
+    RuleTable,
   },
   props: {
     globalEditable: {
       type: Boolean,
       default: true,
     },
+    totalFields: {
+      type: Array,
+      default: () => [],
+    },
+    indexSetItem: {
+      type: Object,
+      default: () => {},
+    },
   },
   data() {
     return {
       clusterField: [], // 聚类字段
-      tableData: [{
-        index: 0,
-        regular: '11111111111111111111111111111111111111',
-        placeholder: 1,
-      }],
+      globalLoading: true,
       formData: {
-        // collector_config_id: 1,
-        // collector_config_name_en: 'test',
-        index_set_id: '', // 索引集id
         min_members: '', // 最小日志数量
         max_dist_list: '', // 敏感度
         predefined_varibles: '', //	预先定义的正则表达式
         delimeter: '', // 分词符
-        max_log_lengt: 1, // 最大日志长度
+        max_log_length: 1, // 最大日志长度
         is_case_sensitive: 1, // 是否大小写忽略
-        clustering_fields: 'LOG', // 聚合字段
-        bk_biz_id: 1, // 业务id
-        filter_rules: [
-          {
-            fields_name: '', // 过滤规则字段名
-            op: '', // 过滤规则操作符号
-            value: 1, // 过滤规则字段值
-          },
-        ],
+        clustering_fields: '', // 聚合字段
+        filter_rules: [],
       },
-      isHandle: false, // 保存loading
-      resetFormData: {}, // 重置保留的formData
-
-      filterList: [], // 过滤条件数组
-      filterSelectList: [ // 过滤条件选项
-        { id: '1', name: '日志路径' },
-        { id: '2', name: 'gse索引' },
-        { id: '3', name: '云区域ID' },
-      ],
-      conditionList: [ // 过滤条件对比
-        { id: '>', name: '>' },
-        { id: '<', name: '<' },
-        { id: '=', name: '=' },
-      ],
-      comparedList: [ // 过滤条件与或
-        { id: 'AND', name: 'AND' },
-        { id: 'OR', name: 'OR' },
-      ],
-      inputSelectList: [ // 过滤条件inputTag
-        { id: '1', name: 'AND' },
-        { id: '2', name: 'OR' },
-      ],
-      regular: '', // 添加聚类规则正则
-      placeholder: '', // 添加聚类规则占位符
-      logOriginal: '', // 日志源
-      rules: {},
+      defaultData: {},
       dataFingerprint: true, // 数据指纹
-      value: '',
-      isShowAddRule: false, // 是否展开添加规则弹窗
-      isShowSubmitDialog: false, // 是否展开保存弹窗
-      isRuleCorrect: false, // 检测语法是否通过
       isShowAddFilterIcon: true, // 是否显示过滤规则增加按钮
-      isEditRuls: false, // 编辑聚类规则
-      isClickSubmit: false, // 是否点击添加
-      isDetection: false, // 是否在检测
-      dragOptions: {
-        animation: 150,
-        tag: 'ul',
-        handle: '.icon-drag-dots',
-        'ghost-class': 'sortable-ghost-class',
-      },
+      isShowSubmitDialog: false, // 是否展开保存弹窗
+      isHandle: false, // 保存loading
+      filterSelectList: [], // 过滤条件选项
+      conditionList: [ // 过滤条件对比
+        { id: '=', name: '=' },
+        { id: '!=', name: '!=' },
+      ],
+      comparedList: [
+        { id: 'and', name: 'AND' },
+        { id: 'or', name: 'OR' },
+      ],
     };
   },
   watch: {
-    filterList: {
+    'formData.filter_rules': {
       deep: true,
       handler(val) {
         if (val.length === 0) {
           this.isShowAddFilterIcon = true;
+          return;
         }
-        if (val.slice(-1)[0].select !== '' && val.length === 1) {
+        if (val.slice(-1)[0].fields_name !== '' && val.length === 1) {
           this.isShowAddFilterIcon = true;
         }
-        if (val.slice(-1)[0].select === '') {
+        if (val.slice(-1)[0].fields_name === '') {
           this.isShowAddFilterIcon = false;
         }
-        if (val.slice(-1)[0].inputList.length > 0) {
+        if (val.slice(-1)[0].value.length > 0) {
           this.isShowAddFilterIcon = true;
         }
       },
     },
   },
+  mounted() {
+    this.initPage();
+    this.initSelectList();
+  },
   methods: {
-    initPage() {
-    // this.$http.request('/logClustering/clusteringDetails', {
-    //   params: {
-    //     index_set_id: this.indexId,
-    //   },
-    // }).then((res) => {
-    //   this.formData = res.data;
-    //   this.isShowMainLoding = false;
-    // })
-    //   .catch((e) => {
-    //     console.warn(e);
-    //   });
-    },
-    handleSubmit() {
-      this.isShowSubmitDialog = true;
-    },
-    cancel() {},
-    addFilterRule() {
-      this.filterList.push({
-        select: '',
-        compared: 'AND',
-        condition: '=',
-        inputList: [],
-      });
-    },
-    addRule() {
-      this.isShowAddRule = true;
-    },
-    clusterEdit() {
-      this.isEditRuls = true;
-      this.isShowAddRule = true;
-    },
-    clusterRemove(index) {
-      this.tableData.splice(index, 1);
-    },
-    handleDeleteSelect(index) {
-      this.filterList.splice(index, 1);
-    },
-    handleRuleSubmit() {
-      if (this.isRuleCorrect) {
-        this.tableData.push({
-          index: this.tableData.length,
-          regular: this.regular,
-          placeholder: this.placeholder,
+    async initPage() {
+      try {
+        const res = await this.$http.request('/logClustering/getConfig', {
+          params: {
+            index_set_id: this.$route.params.indexId,
+          },
         });
-        this.isShowAddRule = false;
-      } else {
-        this.isDetection = true;
-        this.isClickSubmit = true;
-        setTimeout(() => {
-          this.isDetection = false;
-          this.isRuleCorrect = true;
-        }, 2000);
+        Object.assign(this.formData, res.data);
+        this.defaultData = res.data;
+        this.globalLoading = false;
+      } catch (error) {
+        this.$http.request('/logClustering/getDefaultConfig')
+          .then((res) => {
+            Object.assign(this.formData, res.data);
+            this.defaultData = res.data;
+          })
+          .catch((e) => {
+            console.warn(e);
+          })
+          .finally(() => {
+            this.globalLoading = false;
+          });
       }
     },
-    cancelAddRuleContent() {
-      this.regular = '';
-      this.placeholder = '';
-      this.isRuleCorrect = false;
-      this.isEditRuls = false;
-      this.isClickSubmit = false;
+    // 获取下拉框元素
+    initSelectList() {
+      this.clusterField = this.totalFields.filter(fitem => fitem.is_analyzed)
+        .map((el) => {
+          const item = {};
+          item.name = el.field_name;
+          item.id = el.field_name;
+          return item;
+        },
+        );
+      this.filterSelectList = this.totalFields.map((el) => {
+        const item = {};
+        item.id = el.field_name;
+        item.name = el.field_name;
+        return item;
+      });
     },
-    handleRuleCancel() {
-      this.isShowAddRule = false;
+    addFilterRule() {
+      this.formData.filter_rules.push({
+        fields_name: '', // 过滤规则字段名
+        op: '=', // 过滤规则操作符号
+        value: '', // 过滤规则字段值
+        logic_operator: 'and',
+      });
+    },
+    handleSubmit() {
+      this.isHandle = true;
+      this.isShowSubmitDialog = true;
+      const {
+        collector_config_id,
+        collector_config_name_en,
+        index_set_id,
+        bk_biz_id,
+      } = this.indexSetItem;
+      this.formData.predefined_varibles =  this.$refs.ruleTableRef.ruleArrToBase64();
+      this.$http.request('/logClustering/changeConfig', {
+        params: {
+          index_set_id,
+        },
+        data: {
+          ...this.formData,
+          collector_config_id,
+          collector_config_name_en,
+          index_set_id,
+          bk_biz_id },
+      })
+        .then(() => {
+          this.isShowSubmitDialog = true;
+        })
+        .catch((e) => {
+          console.warn(e);
+        })
+        .finally(() => {
+          this.isHandle = false;
+        });
+    },
+    handleDeleteSelect(index) {
+      this.formData.filter_rules.splice(index, 1);
+    },
+    resetPage() {
+      this.$emit('reset-page');
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-/deep/ .bk-label {
-  text-align: left;
-}
-// .setting-log-cluster {}
-.form-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 25px;
 
-  .left-word {
-    font-weight: 700;
-    font-size: 15px;
-    margin-right: 16px;
+  /deep/ .bk-label {
+    text-align: left;
   }
-
-  .bk-icon {
-    margin-left: 8px;
-    font-size: 18px;
-    color: #979ba5;
+  .setting-log-cluster {
+    padding: 0 20px;
   }
-}
+  .form-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
 
-.rule-container {
-  padding: 0 16px;
-
-  .container-item {
-    margin-bottom: 40px;
-
-    &.table-container{
-      position: relative;
+    .left-word {
+      font-weight: 700;
+      font-size: 15px;
+      margin-right: 16px;
     }
 
-    .cluster-table {
-      border: 1px solid #dcdee5;
-      border-bottom: none;
-      border-radius: 2px;
+    .bk-icon {
+      margin-left: 8px;
+      font-size: 18px;
+      color: #979ba5;
     }
   }
-
-  .filter-rule{
+  .filter-rule {
     display: flex;
     flex-wrap: wrap;
-    .icon-box{
+    .icon-box {
       min-width: 32px;
       height: 32px;
-      /deep/.bk-select-name{
+      background: #FFFFFF;
+      /deep/.bk-select-name {
         padding: 0 !important;
       }
       font-size: 14px;
-      line-height: 30px;
+      line-height: 28px;
       text-align: center;
       cursor: pointer;
-      border:1px solid #C4C6CC;
+      border: 1px solid #c4c6cc;
     }
   }
-  .filter-rule-item{
+  .filter-rule-item {
     margin-bottom: 6px;
-    /deep/.bk-select-angle{
+    /deep/.bk-select-angle {
       display: none;
     }
-    /deep/.bk-select{
+    /deep/.bk-select {
       border-radius: 0;
     }
-    /deep/.bk-tag-input{
+    /deep/.bk-form-control {
+      width: 100px;
       border-radius: 0;
     }
-    .and-or{
+    .and-or {
       min-width: 62px;
-      color: #FF9C01;
+      color: #ff9c01;
       font-size: 12px;
     }
-    .min-100{
+    .min-100 {
       min-width: 100px;
     }
-    .mr-neg1{
+    .mr-neg1 {
       margin-right: -1px;
     }
   }
-
-  .table-row {
-    height: 44px;
-    border-bottom: 1px solid #dcdee5;
-    background-color: #fafbfd;
-    .icon {
-      margin: 0 10px 0 4px;
-    }
-
-    .icon-drag-dots {
-      width: 16px;
-      text-align: left;
-      font-size: 14px;
-      color: #979ba5;
-      cursor: move;
-      opacity: 0;
-      transition: opacity 0.2s linear;
-    }
-    &.sortable-ghost-class {
-      background: #eaf3ff;
-      transition: background 0.2s linear;
-    }
-
-    &:hover {
-      background: #eaf3ff;
-      transition: background 0.2s linear;
-
-      .icon-drag-dots {
-        opacity: 1;
-        transition: opacity 0.2s linear;
-      }
-    }
-
-    &.table-row-li {
-      background-color: #ffffff;
-      transition: background 0.3s;
-
-      &:hover {
-        background-color: #f0f1f5;
-      }
-    }
-
-    .row-left {
-      display: flex;
-      overflow: hidden;
-
-      > :first-child {
-        width: 120px;
-        margin-left: 14px;
-      }
-
-      > :last-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    }
-
-    .row-right > div {
-      width: 150px;
-    }
+  .rule-container {
+    padding: 0 16px;
   }
-
-  .table-operate {
-    position: absolute;
-    right: 0;
-    top: 0;
-
-    .bk-button {
-      border-radius: 3px;
-      margin-left: 2px;
-      padding: 0;
+  .submit-dialog {
+    /deep/.bk-dialog-tool {
+      display: none;
     }
 
-    .btn-hover {
-      &:hover{
-        color: #3a84ff;
-        border: 1px solid #3a84ff;
+    .submit-dialog-container {
+      /deep/ .bk-button {
+        margin-left: 100px;
+      }
+      .submit-dialog-title {
+        font-weight: 700;
+        font-size: 16px;
+        margin-bottom: 7px;
+      }
+      .submit-dialog-text {
+        margin-bottom: 22px;
+      }
+      /deep/.submit-dialog-btn {
+        margin-left: 224px;
       }
     }
   }
-}
 
-.log-style {
-  height: 100px;
+  .container-item {
+    margin-bottom: 40px;
+  }
 
-  /deep/.bk-form-textarea:focus {
-    background-color: #313238 !important;
-    border-radius: 2px;
+  .submit-button {
+    margin: 40px 0 40px -200px;
   }
-  /deep/.bk-form-textarea[disabled]{
-     background-color: #313238 !important;
-    border-radius: 2px;
-  }
-  /deep/.bk-textarea-wrapper {
-    border: none;
-  }
-}
 
-.submit-button {
-  margin: 40px 0 40px -200px;
-}
-
-.add-rule {
-  .bk-form {
-    margin-left: 15px;
-    width: 560px;
+  .ml200 {
+    margin-left: -200px;
   }
-  .inspection-status{
+
+  .flbc {
     display: flex;
-    position: relative;
-    .bk-icon{
-      font-size: 18px;
-    }
-    .spin{
-      top: 2px;
-      position: absolute;
-    }
-    font-size: 14px;
+    justify-content: space-between;
+    align-items: center;
   }
-}
-
-.submit-dialog{
-  /deep/.bk-dialog-tool{
-    display: none;
-  }
-
-  .submit-dialog-container{
-    /deep/ .bk-button{
-      margin-left: 100px;
-    }
-    .submit-dialog-title{
-      font-weight: 700;
-      font-size: 16px;
-      margin-bottom: 7px;
-    }
-    .submit-dialog-text{
-      margin-bottom: 22px;
-    }
-    /deep/.submit-dialog-btn{
-      margin-left: 224px;
-    }
-  }
-}
-
-.ml200 {
-  margin-left: -200px;
-}
-
-.flbc {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
 </style>

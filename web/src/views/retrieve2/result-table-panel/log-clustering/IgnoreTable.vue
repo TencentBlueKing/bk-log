@@ -103,7 +103,7 @@ export default {
   methods: {
     setTableData() {
       this.tableData = (this.originTableList || []).reduce((pre, next) => {
-        const regExp = this.active === '0' ? this.ignoreNumberReg : this.ignoreSymbolReg;
+        const regExp = this.active === 'ignoreNumbers' ? this.ignoreNumberReg : this.ignoreSymbolReg;
         const valStr = JSON.stringify(next).replace(regExp, '*');
         const ascription = pre.find(item => item.content === valStr);
         if (!ascription) {
@@ -161,9 +161,6 @@ export default {
   td {
     padding-top: 14px;
     vertical-align: top;
-  }
-  .cell {
-    // padding: 14px;
   }
   .symbol-content {
     display: table;
