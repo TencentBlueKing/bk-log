@@ -306,7 +306,7 @@ export default {
       }
 
       &.is-defalut-picker {
-        min-width: 238px;
+        min-width: 252px;
 
         /deep/ .bk-date-picker-editor {
           padding-left: 5px;
