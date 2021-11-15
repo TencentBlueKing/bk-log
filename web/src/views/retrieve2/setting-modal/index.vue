@@ -24,7 +24,6 @@
   <!-- 检索-设置 -->
   <bk-dialog
     width="100%"
-    ext-cls="set-dialog"
     v-model="isShowDialog"
     :show-mask="false"
     :close-icon="false"
@@ -70,9 +69,13 @@
             </div>
           </div>
           <div class="operation-container">
-            <component :is="showComponent"
-                       :global-editable="globalEditable"
-                       :index-set-item="indexSetItem"
+            <component
+              v-if="isShowPage"
+              :is="showComponent"
+              :global-editable="globalEditable"
+              :index-set-item="indexSetItem"
+              :total-fields="totalFields"
+              @reset-page="resetPage"
             ></component>
           </div>
         </div>
@@ -105,10 +108,15 @@ export default {
       type: Object,
       default: () => {},
     },
+    totalFields: {
+      type: Array,
+      default: () => [],
+    },
   },
   data() {
     return {
       isOpenPage: true,
+      isShowPage: true,
       currentChoice: '', // 当前nav选中
       showComponent: '', // 当前显示的组件
       currentList: [
@@ -152,6 +160,12 @@ export default {
         this.isOpenPage = false;
       }
     },
+    resetPage() {
+      this.isShowPage = false;
+      this.$nextTick(() => {
+        this.isShowPage = true;
+      });
+    },
     handleStopProp(e) {
       e.stopPropagation();
     },
@@ -160,6 +174,8 @@ export default {
     },
     closePage() {
       this.isOpenPage = true;
+      this.currentChoice = '';
+      this.showComponent = '';
     },
   },
 };
@@ -168,6 +184,7 @@ export default {
 <style lang="scss" scoped>
 /deep/.bk-dialog-body{
   background-color: #F5F6FA;
+  overflow: hidden;
   padding: 0;
 }
 /deep/.bk-dialog-tool{
@@ -212,7 +229,7 @@ export default {
     padding: 72px 40px 0;
     display: flex;
     position: relative;
-    left: -100px;
+    left: -50px;
 
     .setting-left{
       min-width: 240px;
@@ -261,7 +278,7 @@ export default {
       .operation-container{
         margin-top: 20px;
         min-height: 770px;
-        padding: 24px 40px 100px;
+        padding: 24px 20px 100px;
         @include container-shadow
       }
     }

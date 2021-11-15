@@ -27,10 +27,10 @@
       <bk-alert v-if="!isCleanField && !isTempField" class="king-alert" type="info">
         <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
       </bk-alert>
-      <bk-alert v-if="settingEdit.isEdit" class="king-alert" type="info">
+      <bk-alert v-if="isSetEdit" class="king-alert" type="info">
         <div slot="title" class="slot-title-container">{{$t('retrieveSetting.extractionPrompt')}}</div>
       </bk-alert>
-      <div class="collector-select" v-show="isCleanField && !settingEdit.isEdit">
+      <div class="collector-select" v-show="isCleanField && !isSetEdit">
         <label>{{ $t('采集项') }}</label>
         <bk-select
           style="width: 520px;"
@@ -319,7 +319,7 @@
           @click.stop.prevent="finish(true)"
           :loading="isLoading"
           :disabled="!collectProject || !showDebugBtn || !hasFields">
-          {{settingEdit.isEdit ? $t('保存') : $t('下一步')}}
+          {{isSetEdit ? $t('保存') : $t('下一步')}}
         </bk-button>
         <!-- 跳过 -->
         <bk-button
@@ -349,7 +349,7 @@
           class="ml10"
           data-test-id="fieldExtractionBox_button_cancelSaveTemplate"
           @click="handleCancel(false)">
-          {{settingEdit.isEdit ? $t('dataManage.Reset') : $t('取消')}}
+          {{isSetEdit ? $t('dataManage.Reset') : $t('取消')}}
         </bk-button>
       </div>
 
@@ -419,13 +419,8 @@ export default {
     collectorId: String,
     isCleanField: Boolean,
     isTempField: Boolean,
-    settingEdit: {
-      type: Object,
-      default: () => ({
-        isEdit: false,
-        id: 0,
-      }),
-    },
+    isSetEdit: Boolean,
+    setId: Number,
   },
   data() {
     return {
@@ -546,7 +541,7 @@ export default {
       return this.$route.name === 'clean-template-edit';
     },
     isEditCleanItem() {
-      return this.$route.name === 'clean-edit' || this.settingEdit.isEdit;
+      return this.$route.name === 'clean-edit' || this.isSetEdit;
     },
     advanceDisable() {
       return window.FEATURE_TOGGLE.scenario_bkdata !== 'on'
@@ -624,8 +619,8 @@ export default {
         if (data.length) {
           this.cleanCollectorList = data;
           if (this.isEditCleanItem) {
-            if (this.settingEdit.isEdit) {
-              this.cleanCollector = this.settingEdit.id;
+            if (this.isSetEdit) {
+              this.cleanCollector = this.setId;
             } else {
               this.cleanCollector = this.$route.params.collectorId;
             }
@@ -856,7 +851,7 @@ export default {
     },
     handleCancel(isCollect = false) {
       if (isCollect) return;
-      if(this.settingEdit.isEdit){
+      if(this.isSetEdit){
         this.$emit('reset-page')
         return
       }

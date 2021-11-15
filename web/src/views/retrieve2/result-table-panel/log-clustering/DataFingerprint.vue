@@ -22,9 +22,9 @@
 
 <template>
   <bk-table
-    :data="tableData1"
+    :data="fingerList"
     class="log-cluster-table"
-    v-bkloading="{ isLoading: fingerLoading }"
+    v-bkloading="{ isLoading: tableLoading }"
     @row-mouse-enter="showEditIcon"
     @row-mouse-leave="hiddenEditIcon">
     <bk-table-column :label="$t('数据指纹')" width="110">
@@ -48,7 +48,7 @@
       </template>
     </bk-table-column>
 
-    <template v-if="comparedValue === '0'">
+    <template v-if="yearOnYearCycle >= 1 ">
       <bk-table-column
         width="101" align="center" header-align="center" prop="source"
         :label="$t('同比数量')"
@@ -65,7 +65,7 @@
         <template slot-scope="props">
           <div class="flac compared-change">
             <span class="link-color">{{`${props.row.year_on_year_percentage}%`}}</span>
-            <span :class="['bk-icon', props.row.source < 122 ? 'icon-arrows-down' : 'icon-arrows-up']"></span>
+            <span :class="['bk-icon', props.row.source < 0 ? 'icon-arrows-down' : 'icon-arrows-up']"></span>
           </div>
         </template>
       </bk-table-column>
@@ -78,7 +78,7 @@
           <div slot="content" class="pattern-icons">
             <span class="bk-icon icon-eye"></span>
             <span class="log-icon icon-chart"></span>
-            <span class="log-icon icon-copy"></span>
+            <span class="log-icon icon-copy" @click="handleCopyPatter(props.row.pattern)"></span>
           </div>
         </bk-popover>
       </template>
@@ -118,32 +118,38 @@
 <script>
 export default {
   props: {
-    comparedValue: {
-      type: String,
-      default: '0',
+    fingerList: {
+      type: Array,
+      require: true,
+    },
+    yearOnYearCycle: {
+      type: Number,
+      require: true,
+    },
+    tableLoading: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
     return {
       currentHover: '',
-      fingerLoading: false,
-      tableData1: [
-        {
-          pattern: 'xx [ip] [xxxxx] xxxxx]',
-          signature: '1234',
-          count: 123,
-          year_on_year: -10,
-          percentage: 12,
-          is_new_class: true,
-          year_on_year_count: 12,
-          year_on_year_percentage: 10,
-          labels: ['xxxx', 'xxxx'],
-          remark: 'xxxx',
-        },
-      ],
     };
   },
   methods: {
+    handleCopyPatter(value) {
+      try {
+        const input = document.createElement('input');
+        input.setAttribute('value', value);
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        this.messageSuccess(this.$t('复制成功'));
+      } catch (e) {
+        console.warn(e);
+      }
+    },
     showEditIcon(index) {
       this.currentHover = index;
     },
@@ -163,7 +169,7 @@ export default {
 
 .log-cluster-table {
   /deep/ .bk-table-body-wrapper {
-    min-height: calc(100vh - 601px);
+    min-height: calc(100vh - 600px);
 
     .bk-table-empty-block {
       display: flex;

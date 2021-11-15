@@ -309,6 +309,8 @@ export default {
     testSyntax: 'Test Syntax',
     inspection: 'Inspection',
     inspectionSuccess: 'Inspection Success',
+    inspectionFail: 'Inspection Fail',
+    ruleEmpty: 'No clustering rules',
     saveToTakeEffect: 'Save To Take Effect',
     clusterPrompt: 'The log platform collection can be directly switched seamlessly, and it takes N time to take effect, and the storage will increase by M%; the computing platform log needs to be clearly turned on and the resources will be consumed by 210%',
     extractionPrompt: 'After the filtered logs are collected, the log retrieval module can format the log content to facilitate retrieval and analysis.',

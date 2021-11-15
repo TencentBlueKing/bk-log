@@ -58,17 +58,7 @@ export default {
   },
   data() {
     return {
-      tableData: [{
-        a: 123,
-        number: 123,
-        source: 123,
-        status: 123,
-      }, {
-        a: 123,
-        number: 124,
-        source: 122,
-        status: 123,
-      }],
+      tableData: [],
     };
   },
   watch: {
