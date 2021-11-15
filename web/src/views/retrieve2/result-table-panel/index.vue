@@ -36,7 +36,8 @@
         v-on="$listeners" />
       <log-clustering
         v-if="active === 'clustering'"
-        v-bind="$attrs" />
+        v-bind="$attrs"
+        v-on="$listeners" />
     </div>
   </div>
 </template>

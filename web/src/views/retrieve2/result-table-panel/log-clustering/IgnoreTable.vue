@@ -23,21 +23,30 @@
 <template>
   <bk-table
     :data="tableData"
-    size="large"
     class="log-cluster-table">
     <bk-table-column type="expand" width="30">
       <template slot-scope="props">
-        {{props.row.a}}
+        <expand-view
+          v-bind="$attrs"
+          :data="props.row.sample"
+          :total-fields="totalFields"
+          :visible-fields="visibleFields"
+          @menuClick="handleMenuClick">
+        </expand-view>
       </template>
     </bk-table-column>
     <bk-table-column type="index" :label="$t('序号')" width="60"></bk-table-column>
-    <bk-table-column :label="$t('数量')" :sortable="true" width="91" prop="count"></bk-table-column>
-    <bk-table-column :label="$t('占比')" :sortable="true" width="91" prop="source">
+    <bk-table-column :label="$t('数量')" sortable width="91" prop="count"></bk-table-column>
+    <bk-table-column :label="$t('占比')" sortable :sort-by="'count'" width="91" prop="source">
       <template slot-scope="props">
-        {{`${(props.row.count / originTableList.length).toFixed(2) * 100}%`}}
+        {{computedRate(props.row.count)}}
       </template>
     </bk-table-column>
-    <bk-table-column :label="$t('取样内容')" prop="content"></bk-table-column>
+    <bk-table-column :label="$t('取样内容')" prop="content">
+      <template slot-scope="props">
+        <div class="symbol-content">{{ props.row.content }}</div>
+      </template>
+    </bk-table-column>
     <div slot="empty">
       <div class="empty-text">
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
@@ -49,56 +58,125 @@
 </template>
 
 <script>
+import ExpandView from '../original-log/ExpandView.vue';
+
 export default {
+  components: {
+    ExpandView,
+  },
   props: {
+    active: {
+      type: String,
+      required: true,
+    },
     originTableList: {
+      type: Array,
+      required: true,
+    },
+    visibleFields: {
+      type: Array,
+      required: true,
+    },
+    totalFields: {
       type: Array,
       required: true,
     },
   },
   data() {
     return {
-      tableData: [{
-        a: 123,
-        number: 123,
-        source: 123,
-        status: 123,
-      }, {
-        a: 123,
-        number: 124,
-        source: 122,
-        status: 123,
-      }],
+      tableData: [],
+      ignoreNumberReg: /(\d{1,})|([1-9]\d+)/g,
+      ignoreSymbolReg: /(\d{1,})|([-`!@#$%^&*(){}[\]_+=":,\\/\d]+)/g,
     };
   },
   watch: {
+    active() {
+      this.setTableData();
+    },
     originTableList: {
       immediate: true,
-      handler(data) {
-        this.tableData = data.reduce((pre, next) => {
-          const valStr = JSON.stringify(next).replace(/\d/g, '*');
-          const ascription = pre.find(item => item.content === valStr);
-          if (!ascription) {
-            pre.push({
-              count: 1,
-              content: valStr,
-            });
-          } else {
-            ascription.count = ascription.count + 1;
-          }
-          return pre;
-        }, []);
+      handler() {
+        this.setTableData();
       },
+    },
+  },
+  methods: {
+    setTableData() {
+      this.tableData = (this.originTableList || []).reduce((pre, next) => {
+        const regExp = this.active === '0' ? this.ignoreNumberReg : this.ignoreSymbolReg;
+        const valStr = JSON.stringify(next).replace(regExp, '*');
+        const ascription = pre.find(item => item.content === valStr);
+        if (!ascription) {
+          pre.push({
+            count: 1,
+            content: valStr,
+            sample: next,
+          });
+        } else {
+          ascription.count = ascription.count + 1;
+        }
+        return pre;
+      }, []);
+    },
+    computedRate(count) {
+      return `${((count / this.originTableList.length) * 100).toFixed(2)}%`;
+    },
+    handleMenuClick(option) {
+      switch (option.operation) {
+        case 'is':
+        case 'is not':
+          // eslint-disable-next-line no-case-declarations
+          const { fieldName, operation, value } = option;
+          this.$emit('addFilterCondition', fieldName, operation, value.toString());
+          break;
+        case 'copy':
+          try {
+            const input = document.createElement('input');
+            input.setAttribute('value', option.value);
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            this.messageSuccess(this.$t('复制成功'));
+          } catch (e) {
+            console.warn(e);
+          }
+          break;
+        case 'display':
+          this.$emit('fieldsUpdated', option.displayFieldNames);
+          break;
+        default:
+          break;
+      }
     },
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .log-cluster-table {
+  .bk-table-body td.bk-table-expanded-cell {
+    padding: 0;
+  }
+  td {
+    padding-top: 14px;
+    vertical-align: top;
+  }
+  .cell {
+    // padding: 14px;
+  }
+  .symbol-content {
+    display: table;
+    padding: 0 15px 10px 0;
+  }
+  .bk-table-column-expand {
+    padding-top: 0;
+    .bk-icon {
+      top: 20px;
+    }
+  }
   /deep/ .bk-table-body-wrapper {
     min-height: calc(100vh - 601px);
-
     .bk-table-empty-block {
       display: flex;
       justify-content: center;
@@ -106,13 +184,11 @@ export default {
       min-height: calc(100vh - 600px);
     }
   }
-
   .empty-text {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-
     .empty-leave {
       color: #3a84ff;
       margin-top: 8px;

@@ -40,10 +40,11 @@
               ext-cls="compared-select"
               :clearable="false"
               behavior="simplicity">
-              <bk-option v-for="option in comparedList"
-                         :key="option.id"
-                         :id="option.id"
-                         :name="option.name">
+              <bk-option
+                v-for="option in comparedList"
+                :key="option.id"
+                :id="option.id"
+                :name="option.name">
               </bk-option>
             </bk-select>
           </div>
@@ -74,7 +75,11 @@
     <bk-alert type="info" :title="$t('clusterAlert')" closable></bk-alert>
 
     <div>
-      <ignore-table v-if="selected === '0' || selected === '1'" v-bind="$attrs" />
+      <ignore-table
+        v-if="selected === '0' || selected === '1'"
+        v-bind="$attrs"
+        v-on="$listeners"
+        :active="selected" />
       <data-fingerprint :compared-value="comparedValue" v-if="selected === '2'" />
     </div>
   </div>
