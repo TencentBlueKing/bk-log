@@ -19,6 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.utils import ChoicesEnum
 
+from django.utils.translation import ugettext_lazy as _
+
 CONTENT_PATTERN_INDEX = 1
 LATEST_PUBLISH_STATUS = "latest"
 PATTERN_SIGNATURE_INDEX = 5
@@ -36,6 +38,26 @@ CLUSTERING_CONFIG_DEFAULT = "default_clustering_config"
 
 DEFAULT_CLUSTERING_FIELDS = "log"
 DEFAULT_IS_CASE_SENSITIVE = 0
+
+
+class YearOnYearEnum(ChoicesEnum):
+    NOT = 0
+    ONE_HOUR = 1
+    TWO_HOUR = 2
+    THREE_HOUR = 3
+    SIX_HOUR = 6
+    HALF_DAY = 12
+    ONE_DAY = 24
+
+    _choices_labels = (
+        (NOT, _("不比对")),
+        (ONE_HOUR, _("一个小时前")),
+        (TWO_HOUR, _("两个小时前")),
+        (THREE_HOUR, _("三个小时前")),
+        (SIX_HOUR, _("三个小时前")),
+        (HALF_DAY, _("半天前")),
+        (ONE_DAY, _("一天前")),
+    )
 
 
 class PatternEnum(ChoicesEnum):
