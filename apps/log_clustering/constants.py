@@ -59,7 +59,7 @@ class YearOnYearEnum(ChoicesEnum):
         (ONE_HOUR, _("一个小时前")),
         (TWO_HOUR, _("两个小时前")),
         (THREE_HOUR, _("三个小时前")),
-        (SIX_HOUR, _("三个小时前")),
+        (SIX_HOUR, _("六个小时前")),
         (HALF_DAY, _("半天前")),
         (ONE_DAY, _("一天前")),
     )

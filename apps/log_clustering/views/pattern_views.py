@@ -99,4 +99,4 @@ class PatternViewSet(APIViewSet):
         }
         """
         query_data = self.params_valid(PatternSearchSerlaizer)
-        return Response(PatternHandler().pattern_search(index_set_id, query_data))
+        return Response(PatternHandler(index_set_id, query_data).pattern_search())
