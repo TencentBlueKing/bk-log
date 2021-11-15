@@ -25,12 +25,17 @@ from apps.log_clustering.constants import (
     PERCENTAGE_RATE,
     MIN_COUNT,
     HOUR_MINUTES,
+    NEW_CLASS_QUERY_TIME_RANGE,
+    NEW_CLASS_QUERY_FIELDS,
+    NEW_CLASS_SENSITIVITY_FIELD,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig
 from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
+from apps.utils.bkdata import BkData
 from apps.utils.db import array_hash
-from apps.utils.time_handler import generate_time_range_shift
+from apps.utils.local import get_local_param
+from apps.utils.time_handler import generate_time_range_shift, generate_time_range
 
 
 class PatternHandler:
@@ -56,12 +61,16 @@ class PatternHandler:
             }
         }
         """
-        pattern_aggs = self.get_pattern_aggs_result(index_set_id, query)
-        year_on_year_result = self.get_year_on_year_aggs_result(index_set_id, query)
-
         clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         if not clustering_config:
             raise ClusteringConfigNotExistException
+
+        pattern_aggs = self.get_pattern_aggs_result(index_set_id, query)
+        year_on_year_result = self.get_year_on_year_aggs_result(index_set_id, query)
+        new_class = set()
+        if query["show_new_pattern"]:
+            new_class = self.get_new_class(clustering_config.new_cls_pattern_rt, query["pattern_level"])
+
         pattern_map = AiopsSignatureAndPattern.objects.filter(model_id=clustering_config.model_id).values(
             "signature", "pattern"
         )
@@ -79,8 +88,7 @@ class PatternHandler:
                     "count": count,
                     "signature": signature,
                     "percentage": self.percentage(count, sum_count),
-                    # todo 等待dataflow完成
-                    "is_new_class": False,
+                    "is_new_class": signature in new_class,
                     "year_on_year_count": count - year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
                 }
@@ -128,3 +136,14 @@ class PatternHandler:
         if not pattern_field_aggs:
             return []
         return pattern_field_aggs.get("buckets", [])
+
+    def get_new_class(self, result_table_id: str, pattern_level: str):
+        start_time, end_time = generate_time_range(NEW_CLASS_QUERY_TIME_RANGE, "", "", get_local_param("time_zone"))
+        new_classes = (
+            BkData(result_table_id)
+            .select(*NEW_CLASS_QUERY_FIELDS)
+            .where(NEW_CLASS_SENSITIVITY_FIELD, "=", self._build_pattern_aggs_field(pattern_level))
+            .time_range(start_time.timestamp, end_time.timestamp)
+            .query()
+        )
+        return {new_class["signature"] for new_class in new_classes}

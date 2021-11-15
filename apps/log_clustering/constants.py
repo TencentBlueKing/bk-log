@@ -31,7 +31,12 @@ PERCENTAGE_RATE = 100
 MIN_COUNT = 0
 EX_MAX_SIZE = 10000
 IS_NEW_PATTERN_PREFIX = "is_new_class"
-AGGS_FIELD_PREFIX = "log_signature"
+AGGS_FIELD_PREFIX = "dist"
+
+NEW_CLASS_SENSITIVITY_FIELD = "sensitivity"
+NEW_CLASS_QUERY_FIELDS = ["signature"]
+NEW_CLASS_QUERY_TIME_RANGE = "1d"
+
 
 CLUSTERING_CONFIG_EXCLUDE = ["sample_set_id", "model_id"]
 CLUSTERING_CONFIG_DEFAULT = "default_clustering_config"
