@@ -729,6 +729,11 @@ export default {
         }
         this.selectDisabledChange();
       }
+
+      // 分隔符过滤条件 and/or 初始值
+      if (this.curCollect.params.conditions.type === 'separator') {
+        this.type = this.curCollect.params.conditions.separator_filters[0].logic_op;
+      }
     }
   },
   mounted() {
@@ -892,6 +897,7 @@ export default {
       this.formData.params.conditions.separator_filters.map((item) => {
         item.logic_op = value;
       });
+      console.log(this.formData.params.conditions.separator_filters);
     },
     addLog() {
       this.formData.params.paths.push({ value: '' });
