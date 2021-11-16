@@ -897,7 +897,6 @@ export default {
       this.formData.params.conditions.separator_filters.map((item) => {
         item.logic_op = value;
       });
-      console.log(this.formData.params.conditions.separator_filters);
     },
     addLog() {
       this.formData.params.paths.push({ value: '' });
