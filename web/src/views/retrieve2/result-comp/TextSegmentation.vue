@@ -173,6 +173,7 @@ export default {
   }
 }
 .log-content-wrapper {
+  word-break: break-all;
   .segment-content {
     white-space: normal;
   }
