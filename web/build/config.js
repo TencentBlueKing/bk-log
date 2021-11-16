@@ -51,7 +51,7 @@ export default {
       NODE_ENV: JSON.stringify('development'),
     },
     port: 8004,
-    localDevUrl: 'http://local.stag-dot-log-search-4-t.bkapps-sz.oa.com',
+    localDevUrl: '',
     localDevPort: 8004,
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
