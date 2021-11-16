@@ -55,7 +55,8 @@
 
 <script>
 import { mapState } from 'vuex';
-import TextSegmentation from './TextSegmentation.js';
+// import TextSegmentation from './TextSegmentation.js';
+import TextSegmentation from './TextSegmentation.vue';
 
 export default {
   components: {

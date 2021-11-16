@@ -23,12 +23,35 @@
 /**
  * 通知列表
  */
-const clusteringDetails = {
-  url: '/clustering_config/:index_set_id/config',
+const getConfig = {
+  url: '/clustering_config/:index_set_id/config/',
   method: 'get',
 };
 
+const getDefaultConfig = {
+  url: '/clustering_config/default_config/',
+  method: 'get',
+};
+
+const changeConfig = {
+  url: '/clustering_config/:index_set_id/create_or_update/',
+  method: 'post',
+};
+
+const preview = {
+  url: '/clustering_config/preview/',
+  method: 'post',
+};
+
+const clusterSearch = {
+  url: '/pattern/:index_set_id/search/',
+  method: 'post',
+};
 
 export {
-  clusteringDetails,
+  getConfig,
+  getDefaultConfig,
+  changeConfig,
+  preview,
+  clusterSearch,
 };

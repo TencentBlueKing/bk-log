@@ -42,6 +42,7 @@
         @change-total-count="changeTotalCount" />
       <bk-divider class="divider-line"></bk-divider>
       <result-table-panel
+        ref="resultTablePanel"
         v-bind="$attrs"
         v-on="$listeners"
         :retrieve-params="retrieveParams"
@@ -181,7 +182,7 @@ export default {
       this.$easeScroll(0, 300, this.$refs.scrollContainer);
     },
     handleScroll() {
-      if (this.throttle || this.isPageOver) {
+      if (this.throttle || this.isPageOver || this.$refs.resultTablePanel.active === 'clustering') {
         return;
       }
       this.throttle = true;
