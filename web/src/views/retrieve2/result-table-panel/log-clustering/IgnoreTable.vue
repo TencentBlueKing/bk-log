@@ -42,18 +42,27 @@
         {{computedRate(props.row.count)}}
       </template>
     </bk-table-column>
-    <bk-table-column :label="$t('取样内容')" prop="content">
-      <template slot-scope="props">
-        <div class="symbol-content">{{ props.row.content }}</div>
+    <bk-table-column :label="$t('取样内容')" prop="content" class-name="symbol-column">
+      <!-- eslint-disable-next-line -->
+      <template slot-scope="{ row, column, $index }">
+        <div :class="['symbol-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+          <span>{{ row.content }}</span>
+          <p
+            v-if="!cacheExpandStr.includes($index)"
+            class="show-whole-btn"
+            @click.stop="handleShowWhole($index)">
+            {{ $t('展开全部') }}
+          </p>
+        </div>
       </template>
     </bk-table-column>
-    <div slot="empty">
+    <!-- <div slot="empty">
       <div class="empty-text">
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
         <p>{{$t('goSettingMessage')}}</p>
         <span class="empty-leave">{{$t('去设置')}}</span>
       </div>
-    </div>
+    </div> -->
   </bk-table>
 </template>
 
@@ -85,8 +94,9 @@ export default {
   data() {
     return {
       tableData: [],
+      cacheExpandStr: [],
       ignoreNumberReg: /(\d{1,})|([1-9]\d+)/g,
-      ignoreSymbolReg: /(\d{1,})|([-`!@#$%^&*(){}[\]_+=":,\\/\d]+)/g,
+      ignoreSymbolReg: /(\d{1,})|([-`!@#$%^&*(){}<>[\]_+=":,\\/\d]+)/g,
     };
   },
   watch: {
@@ -120,6 +130,9 @@ export default {
     },
     computedRate(count) {
       return `${((count / this.originTableList.length) * 100).toFixed(2)}%`;
+    },
+    handleShowWhole(index) {
+      this.cacheExpandStr.push(index);
     },
     handleMenuClick(option) {
       switch (option.operation) {
@@ -162,9 +175,34 @@ export default {
     padding-top: 14px;
     vertical-align: top;
   }
+  td.symbol-column {
+    padding: 10px 0 6px;
+  }
   .symbol-content {
-    display: table;
-    padding: 0 15px 10px 0;
+    display: inline-block;
+    padding-right: 15px;
+    position: relative;
+    line-height: 20px;
+    overflow: hidden;
+    &.is-limit {
+      max-height: 96px;
+    }
+  }
+  .hover-row {
+    .show-whole-btn{
+      background-color: #f0f1f5;
+    }
+  }
+  .show-whole-btn {
+    position: absolute;
+    top: 80px;
+    width: 100%;
+    height: 24px;
+    color: #3A84FF;
+    font-size: 12px;
+    background: #fff;
+    cursor: pointer;
+    transition: background-color .25s ease;
   }
   .bk-table-column-expand {
     padding-top: 0;

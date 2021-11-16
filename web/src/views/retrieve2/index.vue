@@ -151,7 +151,7 @@
                 <div class="cut-line" v-if="showFilterCutline"></div>
                 <template v-for="(item, index) in retrieveParams.addition">
                   <FilterConditionItem
-                    :key="item.field + 1"
+                    :key="item.field + random(6)"
                     :edit-index="index"
                     :is-add="false"
                     :edit-data="item"
@@ -322,7 +322,7 @@ import ResultMain from './result-comp/ResultMain';
 import AuthPage from '@/components/common/auth-page';
 import SettingModal from './setting-modal/index.vue';
 import BizMenuSelect from '@/components/BizMenuSelect.vue';
-import { formatDate, readBlobRespToJson, parseBigNumberList } from '@/common/util';
+import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/common/util';
 import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
 import axios from 'axios';
 
@@ -441,6 +441,7 @@ export default {
       timeField: '',
       isThollteField: false,
       globalsData: {},
+      random,
     };
   },
   computed: {

@@ -30,14 +30,16 @@
       </bk-tab-panel>
     </bk-tab>
     <div class="panel-content-wrap">
-      <original-log
-        v-if="active === 'origin'"
-        v-bind="$attrs"
-        v-on="$listeners" />
-      <log-clustering
-        v-if="active === 'clustering'"
-        v-bind="$attrs"
-        v-on="$listeners" />
+      <keep-alive>
+        <original-log
+          v-if="active === 'origin'"
+          v-bind="$attrs"
+          v-on="$listeners" />
+        <log-clustering
+          v-if="active === 'clustering'"
+          v-bind="$attrs"
+          v-on="$listeners" />
+      </keep-alive>
     </div>
   </div>
 </template>

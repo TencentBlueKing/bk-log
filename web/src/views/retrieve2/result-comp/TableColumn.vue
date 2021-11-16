@@ -40,7 +40,12 @@
         :menu-click="handleMenuClick">
       </text-segmentation>
       <!-- <span v-else>{{ formatterStr(content) }}</span> -->
-      <text-highlight v-else :queries="markList">{{formatterStr(content)}}</text-highlight>
+      <text-highlight
+        v-else
+        style="word-break: break-all;"
+        :queries="markList">
+        {{formatterStr(content)}}
+      </text-highlight>
     </span>
   </div>
 </template>
@@ -158,14 +163,11 @@ export default {
 .td-log-container {
   position: relative;
   padding: 14px 15px 0 0;
-  white-space: pre-line;
   line-height: 14px;
   &.is-wrap {
     padding-bottom: 10px;
   }
   .field-container {
-    // white-space: pre-wrap;
-    tab-size: 3;
     &.active:hover {
       color: #3a84ff;
       cursor: pointer;

@@ -150,14 +150,11 @@ export default {
   methods: {
     handleClickNav(id) {
       this.active = id;
-      id === 'dataFingerprint' ? this.requestFinger() : this.requestIgnore(id);
+      id === 'dataFingerprint' && this.requestFinger();
     },
     handleNear24H(state) {
       this.isNear24H = state;
       this.requestFinger();
-    },
-    requestIgnore(type) {
-      console.log(type);
     },
     requestFinger() {
       delete this.retrieveParams.bk_biz_id;
