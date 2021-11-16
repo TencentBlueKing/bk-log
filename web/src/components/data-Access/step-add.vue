@@ -761,15 +761,15 @@ export default {
         }
         if (this.formData.collector_scenario_id === 'wineventlog') {
           // win_log
-          const winParmas = {};
+          const winParams = {};
           if (this.selectLogSpeciesList.includes('Outher')) {
             this.selectLogSpeciesList.splice(this.selectLogSpeciesList.indexOf('Outher'), 1);
           }
-          winParmas.winlog_name = this.selectLogSpeciesList.concat(this.outherSpeciesList);
+          winParams.winlog_name = this.selectLogSpeciesList.concat(this.outherSpeciesList);
           this.eventSettingList.forEach((el) => {
-            winParmas[el.type] = el.list;
+            winParams[el.type] = el.list;
           });
-          params.params = winParmas;
+          params.params = winParams;
         }
         this.isHandle = true;
         this.setCollection(params);

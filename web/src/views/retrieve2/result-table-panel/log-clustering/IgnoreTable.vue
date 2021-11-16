@@ -173,12 +173,13 @@ export default {
     }
   }
   /deep/ .bk-table-body-wrapper {
-    min-height: calc(100vh - 601px);
+    min-height: calc(100vh - 541px);
+
     .bk-table-empty-block {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: calc(100vh - 600px);
+      min-height: calc(100vh - 540px);
     }
   }
   .empty-text {

@@ -162,7 +162,7 @@
           </div>
         </div>
         <!-- 聚类规则 -->
-        <RuleTable
+        <rule-table
           ref="ruleTableRef"
           :global-editable="globalEditable"
           :table-str="formData.predefined_varibles"
@@ -312,15 +312,15 @@ export default {
       this.clusterField = this.totalFields.filter(fitem => fitem.is_analyzed)
         .map((el) => {
           const item = {};
-          item.name = el.field_name;
           item.id = el.field_name;
+          item.name = el.field_alias ? `${el.field_name}(${el.field_alias})` : el.field_name;
           return item;
         },
         );
       this.filterSelectList = this.totalFields.map((el) => {
         const item = {};
         item.id = el.field_name;
-        item.name = el.field_name;
+        item.name = el.field_alias ? `${el.field_name}(${el.field_alias})` : el.field_name;
         return item;
       });
     },

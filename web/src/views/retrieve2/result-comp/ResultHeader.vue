@@ -191,7 +191,7 @@ export default {
         id: 86400000, name: '1d',
       }],
       settingMenuList: [
-        { id: 'index', name: '全文索引' },
+        // { id: 'index', name: '全文索引' },
         { id: 'extract', name: '字段提取' },
         { id: 'clustering', name: '日志聚类' },
       ],
