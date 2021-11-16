@@ -188,6 +188,7 @@ class EtlStorage(object):
         etl_params: dict = None,
         es_version: str = "5.X",
         hot_warm_config: dict = None,
+        etl_flat=False,
     ):
         """
         创建或更新结果表
@@ -200,6 +201,7 @@ class EtlStorage(object):
         :param etl_params: 清洗配置
         :param es_version: es
         :param hot_warm_config: 冷热数据配置
+        :param etl_flat: 字段不通过data清洗 聚类场景下使用
         """
 
         # 时间格式
@@ -296,6 +298,10 @@ class EtlStorage(object):
         )
         built_in_config = collector_scenario.get_built_in_config(es_version)
         result_table_config = self.get_result_table_config(fields, etl_params, built_in_config, es_version=es_version)
+
+        if etl_flat:
+            result_table_config["option"] = built_in_config.get("option", {})
+
         params.update(result_table_config)
 
         # 字段mapping优化

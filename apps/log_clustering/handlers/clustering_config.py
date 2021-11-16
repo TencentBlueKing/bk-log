@@ -19,6 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import json
 
+from django.db.transaction import atomic
+
+from apps.api import BkDataDatabusApi
 from apps.log_clustering.constants import (
     CLUSTERING_CONFIG_EXCLUDE,
     DEFAULT_CLUSTERING_FIELDS,
@@ -26,16 +29,27 @@ from apps.log_clustering.constants import (
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.models import ClusteringConfig
+from apps.log_databus.constants import BKDATA_ES_TYPE_MAP
+from apps.log_databus.handlers.collector import CollectorHandler
+from apps.log_databus.handlers.collector_scenario import CollectorScenario
+from apps.log_databus.handlers.etl_storage import EtlStorage
+from apps.log_databus.models import CollectorConfig
 from apps.models import model_to_dict
+from apps.utils.function import map_if
 
 
 class ClusteringConfigHandler(object):
-    def __init__(self, index_set_id=None):
+    def __init__(self, index_set_id=None, collector_config_id=None):
         self.index_set_id = index_set_id
         self.data = None
         if index_set_id:
             try:
                 self.data = ClusteringConfig.objects.get(index_set_id=self.index_set_id)
+            except ClusteringConfig.DoesNotExist:
+                raise ClusteringConfigNotExistException()
+        if collector_config_id:
+            try:
+                self.data = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
             except ClusteringConfig.DoesNotExist:
                 raise ClusteringConfigNotExistException()
 
@@ -130,3 +144,95 @@ class ClusteringConfigHandler(object):
             if isinstance(token_with_regex, dict):
                 result[token_with_regex["name"]] = token_with_regex["regex"]
         return result
+
+    def collector_config_reset(self, clustering_config: ClusteringConfig):
+        # todo need reset collector_config
+        # collector_config = CollectorConfig.objects.get(collector_config_id=clustering_config.collector_config_id)
+        pass
+
+    def sync_bkdata_etl(self):
+        """
+        must at change_data_stream before apply
+        :return:
+        """
+        collector_config = CollectorConfig.objects.get(collector_config_id=self.data.collector_config_id)
+        etl_config = collector_config.get_etl_config()
+        self.create_or_update_bkdata_etl(etl_config["fields"], etl_config["etl_params"])
+
+    @atomic
+    def create_or_update_bkdata_etl(self, fields, etl_params):
+        self.data.etl_fields = fields
+        self.data.etl_params = etl_params
+        self.data.save()
+
+        collector_config = CollectorConfig.objects.get(collector_config_id=self.data.collector_config_id)
+        _, table_id = collector_config.table_id.split(".")
+        etl_storage = EtlStorage.get_instance(etl_config=collector_config.etl_config)
+
+        # 获取清洗配置
+        collector_scenario = CollectorScenario.get_instance(
+            collector_scenario_id=collector_config.collector_scenario_id
+        )
+        built_in_config = collector_scenario.get_built_in_config()
+        time_field = built_in_config.get("time_field")
+        fields_config = etl_storage.get_result_table_config(fields, etl_params, built_in_config).get("field_list", [])
+        bkdata_json_config = etl_storage.get_bkdata_etl_config(fields, etl_params, built_in_config)
+        params = {
+            "raw_data_id": self.data.bkdata_data_id,
+            "result_table_name": table_id,
+            "result_table_name_alias": table_id,
+            "clean_config_name": collector_config.collector_config_name,
+            "description": collector_config.description,
+            "bk_biz_id": collector_config.bk_biz_id,
+            "fields": [
+                {
+                    "field_name": field.get("field_name")
+                    if field.get("field_name") != time_field.get("field_name")
+                    else time_field.get("alias_name"),
+                    "field_type": BKDATA_ES_TYPE_MAP.get(field.get("option").get("es_type"), "string"),
+                    "field_alias": field.get("description") if field.get("description") else field.get("field_name"),
+                    "is_dimension": field.get("tag", "dimension") == "dimension",
+                    "field_index": index,
+                }
+                for index, field in enumerate(fields_config, 1)
+            ],
+            "json_config": json.dumps(bkdata_json_config),
+        }
+        if not self.data.bkdata_etl_processing_id:
+            result = BkDataDatabusApi.databus_cleans_post(params)
+            self.data.bkdata_etl_processing_id = result["processing_id"]
+            self.data.bkdata_etl_result_table_id = result["result_table_id"]
+            self.data.save()
+            return
+
+        params.update({"processing_id": self.data.bkdata_etl_processing_id})
+        BkDataDatabusApi.databus_cleans_put(params)
+
+    def change_data_stream(self, topic: str, partition: int = 1):
+        """
+        change_data_stream
+        :param topic:
+        :param partition:
+        :return:
+        """
+        collector_handler = CollectorHandler(self.data.collector_config_id)
+        self.data.log_bk_data_id = CollectorScenario.change_data_stream(
+            collector_handler.data, mq_topic=topic, mq_partition=partition
+        )
+        self.data.save()
+        collector_detail = collector_handler.retrieve()
+
+        # need drop built in field
+        collector_detail["fields"] = map_if(collector_detail["fields"], if_func=lambda field: not field["is_built_in"])
+        from apps.log_databus.handlers.etl import EtlHandler
+
+        EtlHandler(self.data.collector_config_id).update_or_create(
+            collector_detail["etl_config"],
+            collector_detail["table_id"],
+            collector_detail["storage_cluster_id"],
+            collector_detail["retention"],
+            collector_detail["allocation_min_days"],
+            collector_detail["storage_replies"],
+            etl_params=collector_detail["etl_params"],
+            fields=collector_detail["fields"],
+        )

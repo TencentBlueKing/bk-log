@@ -207,6 +207,12 @@ class CollectorHandler(object):
                         result_table_storage=result["result_table_storage"][self.data.table_id],
                     )
                 )
+                if self.data.is_clustering:
+                    from apps.log_clustering.models import ClusteringConfig
+
+                    clustering_config = ClusteringConfig.objects.get(collector_config_id=self.data.collector_config_id)
+                    collector_config["etl_params"] = clustering_config.etl_params
+                    collector_config["fields"] = clustering_config.etl_fields
             return collector_config
         return collector_config
 
@@ -477,8 +483,8 @@ class CollectorHandler(object):
                 )
 
                 bk_data_id = collector_scenario.update_or_create_data_id(
-                    self.data.bk_data_id,
-                    self.data.data_link_id,
+                    bk_data_id=self.data.bk_data_id,
+                    data_link_id=self.data.data_link_id,
                     data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name}",
                     description=description,
                     encoding=META_DATA_ENCODING,

@@ -71,3 +71,10 @@ class ClusteringConfig(SoftDeleteModel):
     clustering_fields = models.CharField(_("聚合字段"), max_length=128)
     filter_rules = JSONField(_("过滤规则"))
     bk_biz_id = models.IntegerField(_("业务id"))
+
+    bkdata_data_id = models.IntegerField(_("计算平台接入dataid"), null=True, blank=True)
+    bkdata_etl_result_table_id = models.CharField(_("计算平台清洗结果表"), max_length=255, null=True, blank=True)
+    bkdata_etl_processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)
+    log_bk_data_id = models.IntegerField(_("入库数据源"), null=True, blank=True)
+    etl_params = JSONField(_("清洗配置"), default=None)
+    etl_fields = JSONField(_("清洗字段配置"), default=None)
