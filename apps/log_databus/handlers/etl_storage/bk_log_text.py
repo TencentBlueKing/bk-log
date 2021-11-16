@@ -61,3 +61,59 @@ class BkLogTextEtlStorage(EtlStorage):
             "time_alias_name": built_in_config["time_field"]["alias_name"],
             "time_option": built_in_config["time_field"]["option"],
         }
+
+    def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
+        built_in_fields = built_in_config.get("fields", [])
+        result_table_fields = self.get_result_table_fields(fields, etl_params, built_in_config)
+        time_field = result_table_fields.get("time_field")
+
+        return {
+            "extract": {
+                "method": "from_json",
+                "next": {
+                    "next": [
+                        {
+                            "default_type": "null",
+                            "default_value": "",
+                            "next": {
+                                "method": "iterate",
+                                "next": {
+                                    "next": None,
+                                    "subtype": "assign_obj",
+                                    "label": "labelb140f1",
+                                    "assign": [
+                                        {"key": "iterationindex", "assign_to": "iterationIndex", "type": "int"},
+                                        {"key": "data", "assign_to": "log", "type": "text"},
+                                    ],
+                                    "type": "assign",
+                                },
+                                "label": "label21ca91",
+                                "result": "iter_item",
+                                "args": [],
+                                "type": "fun",
+                            },
+                            "label": "label36c8ad",
+                            "key": "items",
+                            "result": "item_data",
+                            "subtype": "access_obj",
+                            "type": "access",
+                        },
+                        {
+                            "next": None,
+                            "subtype": "assign_obj",
+                            "label": "labelf676c9",
+                            "assign": self._get_bkdata_default_fields(built_in_fields, time_field),
+                            "type": "assign",
+                        },
+                    ],
+                    "name": "",
+                    "label": None,
+                    "type": "branch",
+                },
+                "result": "json_data",
+                "label": "label04a222",
+                "args": [],
+                "type": "fun",
+            },
+            "conf": self._to_bkdata_conf(time_field),
+        }
