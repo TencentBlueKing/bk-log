@@ -28,7 +28,6 @@ from apps.log_trace.exceptions import TraceIDNotExistsException
 from apps.log_trace.handlers.proto.proto import Proto
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.utils.local import get_local_param
-from apps.utils.time_handler import generate_time_range
 
 SCATTER_TEMPLATE = [
     {"label": _("成功"), "pointBackgroundColor": "#45E35F", "borderColor": "#45E35F", "pointRadius": 5, "data": []},
@@ -283,8 +282,7 @@ class LogTrace(Proto):
         if not trace_ids:
             return []
         search_dict = {
-            "start_time": params["start"] / 1000000,
-            "end_time": params["end"] / 1000000,
+            "use_time_range": False,
             "addition": [
                 {
                     "key": self.TRACE_ID_FIELD,
@@ -303,10 +301,8 @@ class LogTrace(Proto):
         return self._transform_to_jaeger(result.get("list", []))
 
     def trace_detail(self, index_set_id, trace_id):
-        start_time, end_time = generate_time_range("36m", "", "", get_local_param("time_zone"))
         search_dict = {
-            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
-            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "use_time_range": False,
             "addition": [{"key": self.TRACE_ID_FIELD, "method": "is", "value": trace_id, "condition": "and"}],
             "begin": 0,
             "size": self.TRACE_SIZE,

@@ -255,13 +255,17 @@ class Dsl(object):
 
         # 生成query string
         self.query_string: type_query_string = EsQueryBuilder.build_query_string(query_string)
-
-        # 生成range dict
-        self.range_dict: type_range = EsQueryBuilder.build_range(range_field_dict)
+        self.range_dict: type_range = None
+        if range_field_dict:
+            # 生成range dict
+            self.range_dict: type_range = EsQueryBuilder.build_range(range_field_dict)
 
     @property
     def dsl_dict(self):
-        return {"query": {"bool": {"filter": [self.query_string, self.range_dict, self.should_ins]}}}
+        filter = [self.query_string, self.should_ins]
+        if self.range_dict:
+            filter = [self.query_string, self.range_dict, self.should_ins]
+        return {"query": {"bool": {"filter": filter}}}
 
     def divid_filter_list(self, filter_dict_list: List):
         filters: List = []

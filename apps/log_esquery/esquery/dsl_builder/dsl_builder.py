@@ -41,6 +41,7 @@ class DslBuilder(object):
         highlight: dict = {},
         collapse={},
         search_after=[],
+        use_time_range=True,
     ):  # pylint: disable=dangerous-default-value
         """
 
@@ -67,6 +68,8 @@ class DslBuilder(object):
         self._agg_body = None
 
         self.time_range_dict = time_range_dict
+        if not use_time_range:
+            self.time_range_dict = {}
 
         self.fields_list = fields_list
         self.filter_dict_list = filter_dict_list
@@ -81,7 +84,7 @@ class DslBuilder(object):
         self.search = Search()
 
         query_bool_obj: type_query_bool_dict = Dsl(
-            query_string=search_string, filter_dict_list=self.filter_dict_list, range_field_dict=time_range_dict
+            query_string=search_string, filter_dict_list=self.filter_dict_list, range_field_dict=self.time_range_dict
         ).dsl_dict
         if not query_bool_obj:
             raise BaseSearchQueryBuilderException

@@ -1172,6 +1172,7 @@ export default {
     syncSuccess: '同步计算平台的结果表成功',
     syncFaild: '同步计算平台的结果表失败',
     syncTip: '同步计算平台的结果',
+    storageSetting: '存储设置',
   },
   logAlertTips: '索引集允许用户可以跨多个采集的索引查看日志。',
   esAlertTips: '如果日志已经存储在Electricsearch，可以在“集群管理”中添加Electricsearch集群，就可以通过创建索引集来使用存储中的日志数据。',

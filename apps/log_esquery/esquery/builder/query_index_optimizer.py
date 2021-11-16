@@ -38,6 +38,7 @@ class QueryIndexOptimizer(object):
         start_time: datetime = None,
         end_time: datetime = None,
         time_zone: str = None,
+        use_time_range: bool = True,
     ):
         self._index: str = ""
         if not indices:
@@ -50,6 +51,9 @@ class QueryIndexOptimizer(object):
             # 日志采集使用0时区区分index入库,数据平台使用服务器所在时区
             time_zone = "GMT" if scenario_id == Scenario.LOG else tz.gettz()
             result_table_id_list = self.index_filter(result_table_id_list, start_time, end_time, time_zone)
+
+        if not use_time_range:
+            result_table_id_list = []
 
         self._index = ",".join(result_table_id_list)
 

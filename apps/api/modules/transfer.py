@@ -150,7 +150,7 @@ class _TransferApi(object):
             description=_("查询一个结果表的存储信息"),
             before_request=add_esb_info_before_request,
             after_request=get_result_table_storage_after,
-            cache_time=TimeEnum.ONE_DAY_SECOND.value,
+            cache_time=TimeEnum.FIVE_MINUTE_SECOND.value,
         )
         self.get_cluster_info = DataAPI(
             method="GET",
