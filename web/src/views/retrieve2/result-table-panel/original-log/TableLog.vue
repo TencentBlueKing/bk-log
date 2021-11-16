@@ -68,7 +68,11 @@
                 @eventClick="(operation) => handleMenuClick({ operation, value: JSON.stringify(row) })">
                 <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
                   <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span>{{ JSON.stringify(row) }}</span>
+                  <!-- <span>{{ JSON.stringify(row) }}</span> -->
+                  <text-highlight
+                    :queries="getMarkList(JSON.stringify(row))">
+                    {{formatterStr(JSON.stringify(row))}}
+                  </text-highlight>
                   <p
                     v-if="!cacheExpandStr.includes($index)"
                     class="show-whole-btn"
@@ -316,6 +320,7 @@ import ExpandView from './ExpandView.vue';
 import { formatDate } from '@/common/util';
 import RetrieveLoader from '@/skeleton/retrieve-loader';
 import EventPopover from '../../result-comp/EventPopover.vue';
+import TextHighlight from 'vue-text-highlight';
 
 export default {
   components: {
@@ -325,6 +330,7 @@ export default {
     ExpandView,
     RetrieveLoader,
     EventPopover,
+    TextHighlight,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -697,6 +703,22 @@ export default {
     checkIsHide(key) {
       // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
+    },
+    formatterStr(content) {
+      // 匹配高亮标签
+      let value = content;
+
+      const markVal = content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      if (markVal) {
+        this.markList = markVal;
+        value = String(value).replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, '');
+      }
+
+      return value;
+    },
+    getMarkList(content) {
+      return content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
     },
     handleShowWhole(index) {
       this.cacheExpandStr.push(index);
