@@ -127,6 +127,7 @@
         :class="['king-table', { 'is-wrap': isWrap }]"
         :data="tableList"
         :empty-text="$t('retrieve.notData')"
+        :show-header="!tableLoading"
         @row-click="tableRowClick"
         @row-mouse-enter="handleMouseEnter"
         @row-mouse-leave="handleMouseLeave"
