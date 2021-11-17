@@ -23,7 +23,9 @@
 <template>
   <bk-table
     :data="tableData"
-    class="log-cluster-table">
+    ref="logClusterTable"
+    class="log-cluster-table"
+    @row-click="tableRowClick">
     <bk-table-column type="expand" width="30">
       <template slot-scope="props">
         <expand-view
@@ -130,6 +132,9 @@ export default {
     },
     computedRate(count) {
       return `${((count / this.originTableList.length) * 100).toFixed(2)}%`;
+    },
+    tableRowClick(row) {
+      this.$refs.logClusterTable.toggleRowExpansion(row);
     },
     handleShowWhole(index) {
       this.cacheExpandStr.push(index);

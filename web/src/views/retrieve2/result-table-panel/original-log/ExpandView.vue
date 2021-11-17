@@ -77,6 +77,7 @@ export default {
 .expand-view-wrapper {
   .view-tab {
     font-size: 0;
+    background-color: #FAFBFD;
     span {
       display: inline-block;
       width: 68px;
@@ -94,12 +95,13 @@ export default {
       &.active {
         border: 0;
         color: #3a84ff;
-        background-color: #FFF;
+        background-color: #FAFBFD;
       }
     }
   }
   .view-content {
-    padding: 10px 24px;
+    padding: 10px 30px;
+    background-color: #FAFBFD;
     /deep/ .vjs-tree {
       font-size: 12px !important;
       .vjs-value__string {
