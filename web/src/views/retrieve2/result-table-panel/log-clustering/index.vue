@@ -180,8 +180,7 @@ export default {
         },
       })
         .then((res) => {
-          console.log(res);
-          // this.fingerList = res.data;
+          this.fingerList = res.data;
         })
         .catch((e) => {
           console.warn(e);
