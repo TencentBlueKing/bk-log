@@ -256,7 +256,6 @@
         <ResultMain
           ref="resultMainRef"
           v-else
-          :render-table="renderTable"
           :table-loading="tableLoading"
           :retrieve-params="retrieveParams"
           :took-time="tookTime"
