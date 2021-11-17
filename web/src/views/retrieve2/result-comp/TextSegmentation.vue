@@ -51,7 +51,7 @@
         <span
           class="icon bk-icon icon-minus-circle"
           v-bk-tooltips.top="{ content: $t('加为筛选项'), delay: 300 }"
-          @click="handleMenuClick('is not')">
+          @click="handleMenuClick('not')">
         </span>
         <span
           class="icon log-icon icon-copy"
