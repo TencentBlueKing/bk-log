@@ -53,7 +53,7 @@
         </bk-table-column>
         <!-- 显示字段 -->
         <template>
-          <bk-table-column class-name="original-time" width="160">
+          <bk-table-column class-name="original-time" width="130">
             <template slot-scope="{ row }">
               <span class="time-field">{{ formatDate(Number(row[timeField]) || '') }}</span>
             </template>
@@ -672,7 +672,7 @@ export default {
   position: relative;
   background: #fff;
   .king-table {
-    margin-top: 16px;
+    margin-top: 12px;
     td {
       vertical-align: top;
     }
@@ -751,6 +751,9 @@ export default {
     }
     .original-time {
       padding-top: 16px;
+      .cell {
+        padding-left: 2px;
+      }
     }
     .hover-row {
       .show-whole-btn{
