@@ -27,7 +27,7 @@
       <!-- <bk-table v-if="!renderTable" class="king-table"></bk-table> -->
       <bk-table
         v-show="showOriginal"
-        ref="resultTable"
+        ref="resultOriginTable"
         :class="['king-table', { 'is-wrap': isWrap }]"
         :data="tableList"
         :show-header="!showOriginal"
@@ -41,8 +41,7 @@
         <bk-table-column
           type="expand"
           width="30"
-          align="center"
-          v-if="showOriginal || visibleFields.length">
+          align="center">
           <template slot-scope="{ $index }">
             <expand-view
               v-bind="$attrs"
@@ -69,7 +68,11 @@
                 @eventClick="(operation) => handleMenuClick({ operation, value: JSON.stringify(row) })">
                 <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
                   <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="JSON.stringify(row)"></span>
+                  <!-- <span>{{ JSON.stringify(row) }}</span> -->
+                  <text-highlight
+                    :queries="getMarkList(JSON.stringify(row))">
+                    {{formatterStr(JSON.stringify(row))}}
+                  </text-highlight>
                   <p
                     v-if="!cacheExpandStr.includes($index)"
                     class="show-whole-btn"
@@ -167,7 +170,7 @@
           type="expand"
           width="30"
           align="center"
-          v-if="showOriginal || visibleFields.length">
+          v-if="visibleFields.length">
           <template slot-scope="{ $index }">
             <expand-view
               v-bind="$attrs"
@@ -197,7 +200,6 @@
                   @iconClick="(type, content) => handleIconClick(type, content, field, row)"
                 ></TableColumn>
               </keep-alive>
-
             </template>
           </bk-table-column>
         </template>
@@ -318,6 +320,7 @@ import ExpandView from './ExpandView.vue';
 import { formatDate } from '@/common/util';
 import RetrieveLoader from '@/skeleton/retrieve-loader';
 import EventPopover from '../../result-comp/EventPopover.vue';
+import TextHighlight from 'vue-text-highlight';
 
 export default {
   components: {
@@ -327,6 +330,7 @@ export default {
     ExpandView,
     RetrieveLoader,
     EventPopover,
+    TextHighlight,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -529,8 +533,10 @@ export default {
       this.$easeScroll(0, 300, this.$parent.$parent.$parent.$refs.scrollContainer);
     },
     // 展开表格行JSON
-    tableRowClick(row) {
-      this.$refs.resultTable.toggleRowExpansion(row);
+    tableRowClick(row, option, column) {
+      if (column.className && column.className.includes('original-str')) return;
+      const ele = this.showOriginal ? this.$refs.resultOriginTable : this.$refs.resultTable;
+      ele.toggleRowExpansion(row);
       this.curHoverIndex = -1;
     },
     handleMouseEnter(index) {
@@ -698,6 +704,22 @@ export default {
       // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
     },
+    formatterStr(content) {
+      // 匹配高亮标签
+      let value = content;
+
+      const markVal = content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      if (markVal) {
+        this.markList = markVal;
+        value = String(value).replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, '');
+      }
+
+      return value;
+    },
+    getMarkList(content) {
+      return content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+    },
     handleShowWhole(index) {
       this.cacheExpandStr.push(index);
     },
@@ -816,7 +838,7 @@ export default {
       }
       &.is-wrap {
         .cell {
-          padding: 12px 14px;
+          padding: 12px 14px 8px;
         }
         .str-content {
           display: inline-block;
