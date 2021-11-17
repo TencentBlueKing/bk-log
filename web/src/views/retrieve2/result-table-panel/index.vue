@@ -38,7 +38,8 @@
         <log-clustering
           v-if="active === 'clustering'"
           v-bind="$attrs"
-          v-on="$listeners" />
+          v-on="$listeners"
+          @showOriginLog="showOriginLog" />
       </keep-alive>
     </div>
   </div>
@@ -60,6 +61,11 @@ export default {
         { name: 'clustering', label: '日志聚类' },
       ],
     };
+  },
+  methods: {
+    showOriginLog() {
+      this.active = 'origin';
+    },
   },
 };
 </script>

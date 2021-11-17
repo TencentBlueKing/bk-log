@@ -407,7 +407,7 @@ export default {
         uuid: this.generationUUID(),
       };
       const { min_members, delimeter, max_log_length, is_case_sensitive } = this.defaultData;
-      const predefinedVaribles	= this.ruleArrToBase64(this.rulesList);
+      const predefinedVaribles = this.ruleArrToBase64(this.rulesList);
       const query = {
         min_members,
         delimeter,
@@ -516,7 +516,7 @@ export default {
       }
 
       .row-left-regular {
-        width: 400px;
+        width: 600px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;

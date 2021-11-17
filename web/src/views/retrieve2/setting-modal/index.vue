@@ -229,7 +229,6 @@ export default {
     padding: 72px 40px 0;
     display: flex;
     position: relative;
-    left: -50px;
 
     .setting-left{
       min-width: 240px;
@@ -253,7 +252,7 @@ export default {
     }
 
     .setting-right{
-      width: 1000px;
+      width: 1200px;
       margin-left: 20px;
 
       .more-details{

@@ -27,7 +27,7 @@
     v-bkloading="{ isLoading: tableLoading }"
     @row-mouse-enter="showEditIcon"
     @row-mouse-leave="hiddenEditIcon">
-    <bk-table-column :label="$t('数据指纹')" width="110">
+    <bk-table-column :label="$t('数据指纹')" width="150">
       <template slot-scope="props">
         <div class="flac">
           <span>{{props.row.signature}}</span>
@@ -76,7 +76,7 @@
         <bk-popover placement="bottom" ext-cls="pattern" theme="light" :delay="300">
           <span style="cursor: pointer;">{{props.row.pattern}}</span>
           <div slot="content" class="pattern-icons">
-            <span class="bk-icon icon-eye"></span>
+            <span class="bk-icon icon-eye" @click="handleShowOriginLog(props.row.signature)"></span>
             <span class="log-icon icon-chart"></span>
             <span class="log-icon icon-copy" @click="handleCopyPatter(props.row.pattern)"></span>
           </div>
@@ -108,10 +108,21 @@
     <div slot="empty">
       <div class="empty-text">
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>{{$t('goCleanMessage')}}</p>
-        <span class="empty-leave">{{$t('跳转到日志清洗')}}</span>
+        <p>{{isPermission ? $t('goCleanMessage') : $t('goSettingMessage')}}</p>
+        <span class="empty-leave" @click="handleLeaveCurrent(isPermission)">
+          {{isPermission ? $t('跳转到日志清洗') : $t('去设置')}}
+        </span>
       </div>
     </div>
+
+    <!-- <div slot="empty">
+      <div class="empty-text">
+        <span class="bk-table-empty-icon bk-icon icon-empty"></span>
+        <p>{{$t('goSettingMessage')}}</p>
+        <span class="empty-leave">{{$t('去设置')}}</span>
+      </div>
+    </div> -->
+
   </bk-table>
 </template>
 
@@ -126,9 +137,17 @@ export default {
       type: Number,
       require: true,
     },
+    isPermission: {
+      type: Boolean,
+      require: true,
+    },
     tableLoading: {
       type: Boolean,
       default: false,
+    },
+    partterLevel: {
+      type: String,
+      default: '09',
     },
   },
   data() {
@@ -136,7 +155,12 @@ export default {
       currentHover: '',
     };
   },
+  inject: ['addFilterCondition'],
   methods: {
+    handleShowOriginLog(signature) {
+      this.addFilterCondition(`dist_${this.partterLevel}`, 'is', signature);
+      this.$emit('showOriginLog');
+    },
     handleCopyPatter(value) {
       try {
         const input = document.createElement('input');
@@ -149,6 +173,14 @@ export default {
       } catch (e) {
         console.warn(e);
       }
+    },
+    handleLeaveCurrent() {
+      // this.$router.push({
+      //   name: 'clean-edit',
+      //   params:{collectorId:},
+      //   query:{projectId:window.localStorage.getItem('project_id');},
+      // });
+      this.$emit('showSettingLog');
     },
     showEditIcon(index) {
       this.currentHover = index;
@@ -169,13 +201,13 @@ export default {
 
 .log-cluster-table {
   /deep/ .bk-table-body-wrapper {
-    min-height: calc(100vh - 600px);
+    min-height: calc(100vh - 541px);
 
     .bk-table-empty-block {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: calc(100vh - 600px);
+      min-height: calc(100vh - 540px);
     }
   }
 

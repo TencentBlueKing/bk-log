@@ -278,6 +278,7 @@
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
           @addFilterCondition="addFilterCondition"
+          @showSettingLog="handleSettingMenuClick('clustering')"
         ></ResultMain>
       </div>
       <!-- 可拖拽页面布局宽度 -->
