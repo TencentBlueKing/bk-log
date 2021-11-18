@@ -43,7 +43,7 @@
               behavior="simplicity"
               ext-cls="compared-select"
               v-model="yearOnYearCycle"
-              :disabled="!isPermission"
+              :disabled="isOperateDisable"
               :clearable="false"
               :popover-min-width="120"
               @change="requestFinger">
@@ -59,7 +59,7 @@
           <bk-checkbox
             :true-value="true"
             :false-value="false"
-            :disabled="!isPermission"
+            :disabled="isOperateDisable"
             @change="handleNear24H">
             <span style="font-size: 12px">{{$t('近24H新增')}}</span>
           </bk-checkbox>
@@ -72,7 +72,7 @@
                 class="partter-slider"
                 v-model="partterSize"
                 :show-tip="false"
-                :disable="!isPermission"
+                :disable="isOperateDisable"
                 :max-value="sliderMaxVal"
                 @change="blurPartterSize"></bk-slider>
               <span>{{$t('多')}}</span>
@@ -80,7 +80,7 @@
           </div>
         </div>
 
-        <bk-button class="download-icon" :disabled="!isPermission">
+        <bk-button class="download-icon" :disabled="isOperateDisable">
           <span class="log-icon icon-xiazai"></span>
         </bk-button>
       </div>
@@ -92,18 +92,19 @@
     </bk-alert>
 
     <div>
-      <IgnoreTable
+      <ignore-table
         v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
         v-bind="$attrs"
         v-on="$listeners"
         :active="active" />
-      <DataFingerprint
+      <data-fingerprint
         v-if="active === 'dataFingerprint'"
         v-bind="$attrs"
         v-on="$listeners"
         :year-on-year-cycle="yearOnYearCycle"
         :is-permission="isPermission"
         :partter-level="partterLevel"
+        :congfig-number="configID"
         :finger-list="fingerList" />
     </div>
   </div>
@@ -121,18 +122,23 @@ export default {
       type: Object,
       required: true,
     },
+    configData: {
+      type: Object,
+      require: true,
+    },
   },
   data() {
     return {
       active: 'ignoreNumbers',
-      partterSize: 0,
-      partterLevel: '',
-      isPermission: false,
-      sliderMaxVal: 0,
-      partterList: [],
-      isNear24H: false,
+      partterSize: 0, // slider当前值
+      partterLevel: '', // partter等级
+      sliderMaxVal: 0, // partter最大值
+      isPermission: true, // 是否打开数据指纹
+      partterList: [], // partter敏感度List
+      isNear24H: false, // 近24h
       tableLoading: false,
-      yearOnYearCycle: 0,
+      yearOnYearCycle: 0, // 同比值
+      configID: -1, // 采集项ID
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -143,14 +149,17 @@ export default {
         id: 'dataFingerprint',
         name: this.$t('数据指纹'),
       }],
-      comparedList: [],
-      fingerList: [],
+      comparedList: [], // 同比List
+      fingerList: [], // 表格List
     };
   },
   computed: {
     ...mapGetters({
       globalsData: 'globals/globalsData',
     }),
+    isOperateDisable() {
+      return !this.isPermission || this.fingerList.length === 0;
+    },
   },
   mounted() {
     this.initTable();
@@ -194,11 +203,14 @@ export default {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
       } = this.globalsData;
+      const { extra, is_active: isActive } = this.configData;
       this.comparedList = yearOnYearList;
       this.partterSize = clusterLevel.length - 1;
       this.sliderMaxVal = clusterLevel.length - 1;
       this.partterLevel = clusterLevel[clusterLevel.length - 1];
       this.partterList = clusterLevel;
+      this.isPermission = isActive;
+      this.configID = extra?.collector_config_id;
     },
     blurPartterSize(val) {
       this.partterLevel = this.partterList[val];

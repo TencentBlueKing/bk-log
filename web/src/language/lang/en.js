@@ -314,6 +314,8 @@ export default {
     saveToTakeEffect: 'Save To Take Effect',
     clusterPrompt: 'The log platform collection can be directly switched seamlessly, and it takes N time to take effect, and the storage will increase by M%; the computing platform log needs to be clearly turned on and the resources will be consumed by 210%',
     extractionPrompt: 'After the filtered logs are collected, the log retrieval module can format the log content to facilitate retrieval and analysis.',
+    ruleDeleteTips: 'Whether to delete this rule ?',
+    changeSwitchTips: 'Is the module disabled?',
   },
   // logCluster
   忽略数字: 'Ignore Numbers',

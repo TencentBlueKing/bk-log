@@ -25,7 +25,7 @@
     <div class="field-method-head" v-if="!isPreviewMode">
       <!-- <span class="field-method-link fr mr10" @click.stop="isReset = true">{{ $t('dataManage.Reset') }}</span> -->
       <div
-        :class="{ 'table-setting': true, 'disabled-setting': isSettingDisable }"
+        :class="{ 'table-setting': true, 'disabled-setting': isSettingDisable || isSetDisabled }"
         v-if="extractMethod !== 'bk_log_regexp'">
         <div class="fr form-item-flex bk-form-item">
           <!-- <label class="bk-label has-desc" v-bk-tooltips="$t('dataManage.confirm_append')">
@@ -36,7 +36,7 @@
               :checked="true"
               :true-value="true"
               :false-value="false"
-              :disabled="isSettingDisable"
+              :disabled="isSettingDisable || isSetDisabled"
               v-model="retainOriginalText"
               @change="handleKeepLog">
               <label class="bk-label has-desc" v-bk-tooltips="$t('dataManage.confirm_append')">
@@ -96,7 +96,7 @@
                 <span v-if="isPreviewMode">{{ props.row.field_name }}</span>
                 <bk-form-item v-else :class="{ 'is-required is-error': props.row.fieldErr }">
                   <bk-input
-                    :disabled="props.row.is_delete || extractMethod !== 'bk_log_delimiter'"
+                    :disabled="props.row.is_delete || extractMethod !== 'bk_log_delimiter' || isSetDisabled"
                     v-model.trim="props.row.field_name"
                     @blur="checkFieldNameItem(props.row)"></bk-input>
                   <template v-if="props.row.fieldErr">
@@ -121,7 +121,7 @@
                   v-else
                   :class="{ 'is-required is-error': props.row.aliasErr }">
                   <bk-input
-                    :disabled="props.row.is_delete"
+                    :disabled="props.row.is_delete || isSetDisabled"
                     v-model.trim="props.row.alias_name"
                     @blur="checkAliasNameItem(props.row)">
                   </bk-input>
@@ -138,7 +138,10 @@
             <bk-table-column :render-header="renderHeaderDescription" :resizable="false" min-width="100">
               <template slot-scope="props">
                 <span v-if="isPreviewMode">{{ props.row.description }}</span>
-                <bk-input v-else :disabled="props.row.is_delete" v-model.trim="props.row.description"></bk-input>
+                <bk-input
+                  v-else
+                  :disabled="props.row.is_delete || isSetDisabled"
+                  v-model.trim="props.row.description"></bk-input>
               </template>
             </bk-table-column>
             <!-- 类型 -->
@@ -171,7 +174,7 @@
                 <bk-form-item v-else :class="{ 'is-required is-error': props.row.typeErr }">
                   <bk-select
                     :clearable="false"
-                    :disabled="props.row.is_delete"
+                    :disabled="props.row.is_delete || isSetDisabled"
                     v-model="props.row.field_type"
                     @selected="(value) => {
                       fieldTypeSelect(value, props.row, props.$index)
@@ -215,7 +218,8 @@
                   :disabled="isPreviewMode
                     || props.row.is_delete
                     || props.row.field_type !== 'string'
-                    || props.row.is_time"
+                    || props.row.is_time
+                    || isSetDisabled"
                   v-model="props.row.is_analyzed">
                 </bk-checkbox>
               </template>
@@ -287,7 +291,8 @@
               <template slot-scope="props">
                 <span
                   class="table-link"
-                  @click="props.row.is_delete = !props.row.is_delete">
+                  :style="`color:${isSetDisabled ? '#dcdee5' : '#3a84ff'};`"
+                  @click="isDisableOperate(props.row)">
                   {{ props.row.is_delete ? '复原' : '隐藏' }}
                 </span>
               </template>
@@ -433,6 +438,10 @@ export default {
       default: false,
     },
     retainOriginalValue: {
+      type: Boolean,
+      default: false,
+    },
+    isSetDisabled: {
       type: Boolean,
       default: false,
     },
@@ -602,6 +611,7 @@ export default {
       this.$emit('reset');
     },
     setDateFormat(row, $index) {
+      if (this.isSetDisabled) return;
       if ($index || $index === 0) {
         this.$refs[`more${$index}`].instance.hide(); // 解决当前版本popover层在dialog层之上的问题
       }
@@ -956,6 +966,10 @@ export default {
         }, this.$t('dataManage.Participle')),
       ]);
     },
+    isDisableOperate(row) {
+      if (this.isSetDisabled) return;
+      row.is_delete = !row.is_delete;
+    },
   },
 };
 </script>
@@ -1055,7 +1069,6 @@ export default {
     }
 
     .bk-table .table-link {
-      color: #3a84ff;
       cursor: pointer;
     }
 

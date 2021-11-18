@@ -274,6 +274,7 @@
           :async-export-usable-reason="asyncExportUsableReason"
           :statistical-fields-data="statisticalFieldsData"
           :time-field="timeField"
+          :config-data="configData"
           @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
@@ -301,6 +302,7 @@
       :is-show-dialog="isShowSettingModal"
       :select-choice="clickSettingChoice"
       :total-fields="totalFields"
+      :config-data="configData"
       @closeSetting="isShowSettingModal = false;"
     />
   </div>
@@ -443,6 +445,13 @@ export default {
       isThollteField: false,
       globalsData: {},
       random,
+      configData: { // 日志聚类参数
+        name: '',
+        is_active: true,
+        extra: {
+          collector_config_id: -1,
+        },
+      },
     };
   },
   computed: {
@@ -1132,6 +1141,8 @@ export default {
           bcs_web_console: bcsWebConsole,
           async_export: asyncExport,
         } = localConfig;
+
+        localConfig.extra_config && (this.configData = localConfig.extra_config);
 
         fields.forEach((item) => {
           item.minWidth = 0;

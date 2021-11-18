@@ -300,8 +300,13 @@ export default {
       this.isShowAddRule = true;
     },
     clusterRemove(index) {
-      this.rulesList.splice(index, 1);
-      this.showTableLoading();
+      this.$bkInfo({
+        title: this.$t('retrieveSetting.ruleDeleteTips'),
+        confirmFn: () => {
+          this.rulesList.splice(index, 1);
+          this.showTableLoading();
+        },
+      });
     },
     // 聚类规则点击提交时检测
     handleRuleSubmit() {

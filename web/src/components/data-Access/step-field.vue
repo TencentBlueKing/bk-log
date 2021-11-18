@@ -135,7 +135,7 @@
                 data-test-id="fieldExtractionBox_span_applyTemp"
                 :class="{
                   'template-text': true,
-                  'template-disabled': isCleanField && !cleanCollector
+                  'template-disabled': (isCleanField && !cleanCollector) || isSetDisabled
                 }"
                 @click="openTemplateDialog(false)">
                 <span class="log-icon icon-daoru"></span>
@@ -149,7 +149,7 @@
                 <bk-button
                   v-for="option in globalsData.etl_config"
                   :key="option.id"
-                  :disabled="isCleanField && !cleanCollector"
+                  :disabled="(isCleanField && !cleanCollector) || isSetDisabled"
                   @click="params.etl_config = option.id"
                   :class="params.etl_config === option.id ? 'is-selected' : ''"
                   :data-test-id="`fieldExtractionBox_button_filterMethod${option.id}`">
@@ -212,7 +212,7 @@
                 <bk-button
                   class="fl debug-btn"
                   theme="primary"
-                  :disabled="!logOriginal || isExtracting || !showDebugBtn"
+                  :disabled="!logOriginal || isExtracting || !showDebugBtn || isSetDisabled"
                   @click="debugHandler"
                   data-test-id="fieldExtractionBox_button_debugging">
                   {{ $t('调试') }}
@@ -232,6 +232,7 @@
                   :is-extracting="isExtracting"
                   :is-temp-field="isTempField"
                   :is-edit-json="isUnmodifiable"
+                  :is-set-disabled="isSetDisabled"
                   :extract-method="formData.etl_config"
                   :deleted-visible="deletedVisible"
                   :fields="formData.fields"
@@ -318,12 +319,12 @@
           data-test-id="fieldExtractionBox_button_nextPage"
           @click.stop.prevent="finish(true)"
           :loading="isLoading"
-          :disabled="!collectProject || !showDebugBtn || !hasFields">
+          :disabled="!collectProject || !showDebugBtn || !hasFields || isSetDisabled">
           {{isSetEdit ? $t('保存') : $t('下一步')}}
         </bk-button>
         <!-- 跳过 -->
         <bk-button
-          v-if="!isTempField"
+          v-if="!isTempField && !isSetEdit"
           theme="default"
           :title="$t('btn.cancel')"
           class="ml10"
@@ -338,7 +339,7 @@
           theme="default"
           class="ml10"
           data-test-id="fieldExtractionBox_button_saveTemplate"
-          :disabled="!hasFields"
+          :disabled="!hasFields || isSetDisabled"
           @click="openTemplateDialog(true)">
           {{$t('dataManage.saveTemp')}}
         </bk-button>
@@ -421,6 +422,7 @@ export default {
     isTempField: Boolean,
     isSetEdit: Boolean,
     setId: Number,
+    setDisabled: Boolean,
   },
   data() {
     return {
@@ -559,6 +561,9 @@ export default {
     },
     unAuthBkdata() {
       return window.FEATURE_TOGGLE.scenario_bkdata !== 'on';
+    },
+    isSetDisabled() {
+      return this.isSetEdit && this.setDisabled;
     },
   },
   watch: {
@@ -1204,7 +1209,7 @@ export default {
       }
 
       // 新增清洗未选择采集项
-      if (this.isCleanField && !this.cleanCollector) return;
+      if ((this.isCleanField && !this.cleanCollector) || this.isSetDisabled) return;
 
       // 选择应用模板
       this.isSaveTempDialog = isSave;
