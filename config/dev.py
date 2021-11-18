@@ -21,9 +21,8 @@ import importlib
 
 from apps.utils.function import ignored
 from config import RUN_VER
-from config.env import load_settings
+from config.env import load_settings, load_svc_discovery
 import sys
-
 
 if RUN_VER == "open":
     from blueapps.patch.settings_open_saas import *  # noqa
@@ -74,7 +73,6 @@ GRAFANA = {
     "PERMISSION_CLASSES": ["apps.grafana.permissions.BizPermission"],
 }
 
-
 # ==============================================================================
 # IAM
 # ==============================================================================
@@ -91,6 +89,15 @@ BK_IAM_SAAS_HOST = os.environ.get("BK_IAM_V3_SAAS_HOST", f"{BK_PAAS_HOST}/o/{BK_
 
 BK_IAM_RESOURCE_API_HOST = os.getenv("BKAPP_IAM_RESOURCE_API_HOST", "{}{}".format(BK_PAAS_INNER_HOST, SITE_URL))
 
+USE_SMART_V3 = int(os.getenv("USE_SMART_V3", 0))
+if USE_SMART_V3:
+
+    BK_IAM_RESOURCE_API_HOST = load_svc_discovery(
+        key="bk_log_search", environment_name="dev", default=BK_IAM_RESOURCE_API_HOST
+    )
+    BK_IAM_SAAS_HOST = load_svc_discovery(key="bk_iam", environment_name="dev", default=BK_IAM_SAAS_HOST)
+    MONITOR_URL = load_svc_discovery(key="bk_monitorv3", environment_name="dev")
+    BKDATA_URL = load_svc_discovery(key="bk_data", environment_name="dev")
 
 # 加载各个版本特殊配置
 env_settings = load_settings()
