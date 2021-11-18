@@ -190,7 +190,6 @@ class EtlStorage(object):
         etl_params: dict = None,
         es_version: str = "5.X",
         hot_warm_config: dict = None,
-        etl_flat=False,
     ):
         """
         创建或更新结果表
@@ -300,9 +299,6 @@ class EtlStorage(object):
         )
         built_in_config = collector_scenario.get_built_in_config(es_version)
         result_table_config = self.get_result_table_config(fields, etl_params, built_in_config, es_version=es_version)
-
-        if etl_flat:
-            result_table_config["option"] = built_in_config.get("option", {})
 
         params.update(result_table_config)
 
