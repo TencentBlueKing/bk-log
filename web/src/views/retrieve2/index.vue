@@ -301,9 +301,10 @@ import ResultHeader from './result-comp/ResultHeader';
 import NoIndexSet from './result-comp/NoIndexSet';
 import ResultMain from './result-comp/ResultMain';
 import AuthPage from '@/components/common/auth-page';
-import { formatDate } from '@/common/util';
+import { formatDate, readBlobRespToJson, parseBigNumberList } from '@/common/util';
 import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
 import { mapGetters, mapState } from 'vuex';
+import axios from 'axios';
 
 export default {
   name: 'Retrieve',
@@ -944,11 +945,12 @@ export default {
       }
       // 通过 url 查询参数设置检索参数
       let queryParams = {};
-      const queryParamsStr = {};
+      let queryParamsStr = {};
       const urlRetrieveParams = this.$route.query.retrieveParams;
       if (urlRetrieveParams) {
         try {
           queryParams = JSON.parse(decodeURIComponent(urlRetrieveParams));
+          queryParamsStr = JSON.parse(decodeURIComponent(urlRetrieveParams));
         } catch (e) {
           console.warn('url 查询参数解析失败', e);
         }
@@ -970,7 +972,7 @@ export default {
             if (param) {
               queryParams[field] = ['keyword', 'start_time', 'end_time', 'time_range'].includes(field)
                 ? decodeURIComponent(param)
-                : JSON.parse(decodeURIComponent(param));
+                : decodeURIComponent(param) ? JSON.parse(decodeURIComponent(param)) : param;
 
               queryParamsStr[field] = param;
             }
@@ -1174,8 +1176,26 @@ export default {
       const begin = currentPage === 1 ? 0 : (currentPage - 1) * pageSize;
 
       try {
-        const res = await this.$http.request('retrieve/getLogTableList', {
-          params: { index_set_id: this.indexId },
+        // const res = await this.$http.request('retrieve/getLogTableList', {
+        //   params: { index_set_id: this.indexId },
+        //   data: {
+        //     ...this.retrieveParams,
+        //     time_range: 'customized',
+        //     begin,
+        //     size: pageSize,
+        //     interval: this.interval,
+        //     // 每次轮循的起始时间
+        //     start_time: formatDate(this.pollingStartTime),
+        //     end_time: formatDate(this.pollingEndTime),
+        //   },
+        // }, { responseType: 'blob' });
+
+        const res = await axios({
+          method: 'post',
+          url: `/search/index_set/${this.indexId}/search/`,
+          withCredentials: true,
+          baseURL: window.AJAX_URL_PREFIX,
+          responseType: 'blob',
           data: {
             ...this.retrieveParams,
             time_range: 'customized',
@@ -1186,6 +1206,8 @@ export default {
             start_time: formatDate(this.pollingStartTime),
             end_time: formatDate(this.pollingEndTime),
           },
+        }).then((res) => {
+          return readBlobRespToJson(res.data);
         });
 
         this.isNextTime = res.data.list.length < pageSize;
@@ -1195,9 +1217,9 @@ export default {
         }
 
         this.retrievedKeyword = this.retrieveParams.keyword;
-        this.tookTime = this.tookTime + res.data.took || 0;
+        this.tookTime = this.tookTime + Number(res.data.took) || 0;
         this.tableData = { ...res.data, finishPolling: this.finishPolling };
-        this.originLogList = this.originLogList.concat(res.data.origin_log_list);
+        this.originLogList = this.originLogList.concat(parseBigNumberList(res.data.origin_log_list));
         this.statisticalFieldsData = this.getStatisticalFieldsData(this.originLogList);
         this.computeRetrieveDropdownData(this.originLogList);
       } catch (err) {
