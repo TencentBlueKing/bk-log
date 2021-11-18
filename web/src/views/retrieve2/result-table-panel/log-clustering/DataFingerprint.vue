@@ -114,15 +114,6 @@
         </span>
       </div>
     </div>
-
-    <!-- <div slot="empty">
-      <div class="empty-text">
-        <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>{{$t('goSettingMessage')}}</p>
-        <span class="empty-leave">{{$t('去设置')}}</span>
-      </div>
-    </div> -->
-
   </bk-table>
 </template>
 
@@ -139,6 +130,10 @@ export default {
     },
     isPermission: {
       type: Boolean,
+      require: true,
+    },
+    congfigNumber: {
+      type: Number,
       require: true,
     },
     tableLoading: {
@@ -174,13 +169,17 @@ export default {
         console.warn(e);
       }
     },
-    handleLeaveCurrent() {
-      // this.$router.push({
-      //   name: 'clean-edit',
-      //   params:{collectorId:},
-      //   query:{projectId:window.localStorage.getItem('project_id');},
-      // });
-      this.$emit('showSettingLog');
+    handleLeaveCurrent(isPermission) {
+      if (isPermission && !this.congfigNumber) return;
+      if (isPermission) {
+        this.$router.push({
+          name: 'clean-edit',
+          params: { collectorId: this.congfigNumber },
+          query: { projectId: window.localStorage.getItem('project_id') },
+        });
+      } else {
+        this.$emit('showSettingLog');
+      }
     },
     showEditIcon(index) {
       this.currentHover = index;
