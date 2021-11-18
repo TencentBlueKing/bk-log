@@ -254,4 +254,5 @@ BKDATA_ES_TYPE_MAP = {
     "text": "text",
     "double": "double",
     "object": "text",
+    "nested": "text",
 }

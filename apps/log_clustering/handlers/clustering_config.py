@@ -179,8 +179,8 @@ class ClusteringConfigHandler(object):
         bkdata_json_config = etl_storage.get_bkdata_etl_config(fields, etl_params, built_in_config)
         params = {
             "raw_data_id": self.data.bkdata_data_id,
-            "result_table_name": table_id,
-            "result_table_name_alias": table_id,
+            "result_table_name": collector_config.collector_config_name_en,
+            "result_table_name_alias": collector_config.collector_config_name_en,
             "clean_config_name": collector_config.collector_config_name,
             "description": collector_config.description,
             "bk_biz_id": collector_config.bk_biz_id,

@@ -184,9 +184,11 @@ class TimeEnum(Enum):
 
 
 class CCInstanceType(ChoicesEnum):
+    BUSINESS = "biz"
     SET = "set"
     MODULE = "module"
     _choices_labels = (
+        (BUSINESS, _("业务")),
         (SET, _("集群")),
         (MODULE, _("模块")),
     )

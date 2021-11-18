@@ -146,6 +146,8 @@ class CollectorScenario(object):
             # 创建数据源，创建时一定是BK_LOG_TEXT这种直接入库的方式，后面进行字段提取时再根据情况变更清洗方式
             if not data_name:
                 raise BaseCollectorConfigException(_("创建采集项时名称不能为空"))
+            if not mq_config:
+                mq_config = {}
 
             params = {
                 "data_name": data_name,
@@ -240,7 +242,8 @@ class CollectorScenario(object):
             local_params.update(params["collector_config_overlay"])
         return local_params
 
-    def log_clustering_fields(self, es_version: str = "5.x"):
+    @staticmethod
+    def log_clustering_fields(es_version: str = "5.x"):
         return [
             {
                 "field_name": f"dist_{pattern_level}",

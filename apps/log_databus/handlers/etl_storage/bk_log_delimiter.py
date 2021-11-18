@@ -78,7 +78,9 @@ class BkLogDelimiterEtlStorage(EtlStorage):
             "separator_node_action": "delimiter",
             "separator_node_name": self.separator_node_name,
             "separator": etl_params["separator"],
+            "etl_flat": etl_params.get("etl_flat", False),
         }
+
         if built_in_config.get("option") and isinstance(built_in_config["option"], dict):
             option = dict(built_in_config["option"], **option)
 
@@ -140,6 +142,7 @@ class BkLogDelimiterEtlStorage(EtlStorage):
         # 加上内置字段
         fields += [field for field in collector_config["fields"] if field["is_built_in"]]
         collector_config["fields"] = fields
+
         return collector_config
 
     def get_bkdata_etl_config(self, fields, etl_params, built_in_config):

@@ -834,7 +834,11 @@ class BizHandler(APIModel):
         host_list = []
         for host in hosts_info:
             tmp_host = {"bk_host_innerip": host["host"]["bk_host_innerip"], "bk_cloud_id": host["host"]["bk_cloud_id"]}
-            if bk_obj_id in (CCInstanceType.MODULE.value, TemplateType.SERIVCE_TEMPLATE.value):
+            if bk_obj_id in (
+                CCInstanceType.MODULE.value,
+                TemplateType.SERIVCE_TEMPLATE.value,
+                CCInstanceType.BUSINESS.value,
+            ):
                 tmp_host["parent_inst_id"] = [
                     module["bk_module_id"] for topo in host["topo"] for module in topo["module"]
                 ]

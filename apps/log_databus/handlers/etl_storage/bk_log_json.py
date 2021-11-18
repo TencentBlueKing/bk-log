@@ -47,6 +47,7 @@ class BkLogJsonEtlStorage(EtlStorage):
             "separator_node_action": "json",
             "separator_node_name": self.separator_node_name,
             "separator_fields_remove": "",
+            "etl_flat": etl_params.get("etl_flat", False),
         }
 
         # 保存删除的字段
