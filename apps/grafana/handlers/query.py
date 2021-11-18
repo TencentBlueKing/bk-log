@@ -324,7 +324,7 @@ class GrafanaQueryHandler:
                 fields.append(field)
 
         rows = []
-        for r in result["list"]:
+        for r in result["origin_log_list"]:
             row = self._flat_row(r)
             rows.append([row.get(field) for field in fields])
 
