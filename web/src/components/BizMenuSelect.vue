@@ -383,6 +383,7 @@ export default {
     }
     &-name {
       color: #63656e;
+      font-size: 12px;
     }
     &-search {
       .bk-form-input {
