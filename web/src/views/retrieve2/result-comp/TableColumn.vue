@@ -66,7 +66,7 @@ export default {
       default: false,
     },
     content: {
-      type: [String, Number],
+      type: [String, Number, Boolean],
       required: true,
     },
     hasClickEvent: {
