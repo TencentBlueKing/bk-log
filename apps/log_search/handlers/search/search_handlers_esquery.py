@@ -27,6 +27,7 @@ from django.conf import settings
 from requests.exceptions import ReadTimeout
 
 from apps.api.base import DataApiRetryClass
+from apps.log_clustering.models import ClusteringConfig
 from apps.log_search.models import (
     LogIndexSet,
     LogIndexSetData,
@@ -245,6 +246,7 @@ class SearchHandler(object):
             self.bkmonitor(field_result_list),
             self.async_export(field_result),
             self.ip_topo_switch(),
+            self.clustering_config(),
         ]:
             result_dict["config"].append(fields_config)
 
@@ -265,6 +267,17 @@ class SearchHandler(object):
     @fields_config("ip_topo_switch")
     def ip_topo_switch(self):
         return MappingHandlers.init_ip_topo_switch(self.index_set_id)
+
+    @fields_config("clustering_config")
+    def clustering_config(self):
+        """
+        判断是否存在
+        """
+        log_index_set = LogIndexSet.objects.get(index_set_id=self.index_set_id)
+        is_clustering_config_switch = ClusteringConfig.objects.filter(index_set_id=self.index_set_id).exists()
+        if log_index_set.collector_config_id:
+            return is_clustering_config_switch, {"collector_config_id": log_index_set.collector_config_id}
+        return is_clustering_config_switch, {}
 
     @fields_config("context_and_realtime")
     def analyze_fields(self, field_result):
