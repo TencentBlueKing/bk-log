@@ -31,7 +31,7 @@ from apps.log_trace.handlers.proto.proto import Proto
 
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.utils.local import get_local_param
-from apps.utils.time_handler import generate_time_range
+from apps.utils.thread import MultiExecuteFunc
 
 OTLP_JAEGER_SPAN_KIND = {2: "server", 3: "client", 4: "producer", 5: "consumer", 1: "internal", 0: "unset"}
 
@@ -209,27 +209,42 @@ class OtlpTrace(Proto):
         trace_ids = [trace["trace_id"] for trace in result.get("list", [])]
         if not trace_ids:
             return result
-        search_dict = {
-            "start_time": data["start_time"],
-            "end_time": data["end_time"],
-            "addition": [
-                {
-                    "key": "trace_id",
-                    "method": "is one of",
-                    "value": ",".join(trace_ids),
-                    "condition": "and",
-                    "type": "field",
-                }
-            ],
-            "begin": 0,
-            "size": 9999,
-            "keyword": "*",
-            "time_range": "customized",
-        }
-        result = SearchHandlerEsquery(index_set_id, search_dict).search()
-        trace_data = self._transform_to_jaeger(result.get("list", []))
-        result["list"] = self.map_fields_to_log(trace_data)
-        return result
+
+        result = self.multi_search_trace(trace_ids, index_set_id)
+        trace_result = {"list": []}
+
+        for search_result in result.values():
+            trace_result["list"].extend(search_result.get("list", []))
+
+        trace_data = self._transform_to_jaeger(trace_result.get("list", []))
+        trace_result["list"] = self.map_fields_to_log(trace_data)
+        return trace_result
+
+    def multi_search_trace(self, trace_ids: List[str], index_set_id):
+        multi_execute = MultiExecuteFunc()
+        for trace_id in trace_ids:
+
+            def get_trace_search(param):
+                return SearchHandlerEsquery(param["index_set_id"], param["search_body"]).search()
+
+            search_dict = {
+                "use_time_range": False,
+                "addition": [
+                    {
+                        "key": "trace_id",
+                        "method": "is",
+                        "value": trace_id,
+                        "condition": "and",
+                        "type": "field",
+                    }
+                ],
+                "begin": 0,
+                "size": 10000,
+                "keyword": "*",
+                "time_range": "customized",
+            }
+            multi_execute.append(trace_id, get_trace_search, {"index_set_id": index_set_id, "search_body": search_dict})
+        return multi_execute.run()
 
     def map_fields_to_log(self, field_list, is_detail=False):
         return [self.transfer_trace_data(item) for item in field_list]
@@ -290,25 +305,12 @@ class OtlpTrace(Proto):
         trace_ids = [trace["trace_id"] for trace in result.get("list", [])]
         if not trace_ids:
             return []
-        search_dict = {
-            "start_time": params["start"] / 1000000,
-            "end_time": params["end"] / 1000000,
-            "addition": [
-                {
-                    "key": "trace_id",
-                    "method": "is one of",
-                    "value": ",".join(trace_ids),
-                    "condition": "and",
-                    "type": "field",
-                }
-            ],
-            "begin": 0,
-            "size": 9999,
-            "keyword": "*",
-            "time_range": "customized",
-        }
-        result = SearchHandlerEsquery(index_set_id, search_dict).search()
-        return self._transform_to_jaeger(result.get("list", []))
+        result = self.multi_search_trace(trace_ids, index_set_id)
+        trace_result = {"list": []}
+
+        for search_result in result.values():
+            trace_result["list"].extend(search_result.get("list", []))
+        return self._transform_to_jaeger(trace_result.get("list", []))
 
     def _transform_to_jaeger(self, spans):
         jaeger_traces = defaultdict(lambda: {"spans": [], "traceID": ""})
@@ -342,7 +344,10 @@ class OtlpTrace(Proto):
                     "operationName": span["span_name"],
                     "startTime": span["start_time"],
                     "tags": self._transform_to_tags(span["attributes"])
-                    + [{"key": "span.kind", "type": "string", "value": OTLP_JAEGER_SPAN_KIND[span["kind"]]}]
+                    + [
+                        {"key": "span.kind", "type": "string", "value": OTLP_JAEGER_SPAN_KIND[span["kind"]]},
+                        {"key": "span_context.trace_state", "type": "string", "value": span["trace_state"]},
+                    ]
                     + self._transform_to_status(span.get("status", {})),
                     "processID": process_id,
                 },
@@ -375,13 +380,11 @@ class OtlpTrace(Proto):
         ]
 
     def trace_detail(self, index_set_id, trace_id):
-        start_time, end_time = generate_time_range("36m", "", "", get_local_param("time_zone"))
         search_dict = {
-            "start_time": start_time.timestamp,
-            "end_time": end_time.timestamp,
+            "use_time_range": False,
             "addition": [{"key": "trace_id", "method": "is", "value": trace_id, "condition": "and", "type": "field"}],
             "begin": 0,
-            "size": 9999,
+            "size": 10000,
             "keyword": "*",
             "time_range": "customized",
         }

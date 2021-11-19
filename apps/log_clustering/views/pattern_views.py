@@ -21,6 +21,8 @@ from rest_framework import serializers
 from rest_framework.response import Response
 
 from apps.generic import APIViewSet
+from apps.iam import ActionEnum, ResourceEnum
+from apps.iam.handlers.drf import InstanceActionPermission
 from apps.log_clustering.handlers.pattern import PatternHandler
 from apps.log_clustering.serializers import PatternSearchSerlaizer
 from apps.utils.drf import detail_route
@@ -29,6 +31,9 @@ from apps.utils.drf import detail_route
 class PatternViewSet(APIViewSet):
     lookup_field = "index_set_id"
     serializer_class = serializers.Serializer
+
+    def get_permissions(self):
+        return [InstanceActionPermission([ActionEnum.SEARCH_LOG], ResourceEnum.INDICES)]
 
     @detail_route(methods=["POST"])
     def search(self, request, index_set_id):
@@ -99,4 +104,4 @@ class PatternViewSet(APIViewSet):
         }
         """
         query_data = self.params_valid(PatternSearchSerlaizer)
-        return Response(PatternHandler().pattern_search(index_set_id, query_data))
+        return Response(PatternHandler(index_set_id, query_data).pattern_search())

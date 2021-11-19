@@ -256,7 +256,6 @@ export default {
 .original-log-panel {
   .original-log-panel-tools {
     display: flex;
-    align-items: center;
     justify-content: space-between;
   }
   .tools-more {

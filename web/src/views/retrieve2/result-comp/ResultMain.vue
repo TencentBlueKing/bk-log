@@ -64,7 +64,7 @@ import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import ResultEChart from './ResultEChart';
 import ResultTablePanel from '../result-table-panel';
 import { mapState } from 'vuex';
-import { setFieldsWidth } from '@/common/util';
+import { setFieldsWidth, parseBigNumberList } from '@/common/util';
 
 export default {
   components: {
@@ -121,9 +121,11 @@ export default {
           setFieldsWidth(this.visibleFields, data.fields, 500);
           this.isInit = true;
         }
+        const list = parseBigNumberList(data.list);
+        const originLogList = parseBigNumberList(data.origin_log_list);
         this.count += data.list.length;
-        this.tableList.push(...data.list);
-        this.originTableList.push(...data.origin_log_list);
+        this.tableList.push(...list);
+        this.originTableList.push(...originLogList);
         this.$nextTick(() => {
           this.$refs.scrollContainer.scrollTop = this.newScrollHeight;
         });

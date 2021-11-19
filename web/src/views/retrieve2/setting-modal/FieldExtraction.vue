@@ -22,12 +22,15 @@
 
 <template>
   <!-- 设置-字段提取 -->
-  <!-- :set-id="configID" :is-set-edit="true" -->
   <div>
     <step-field
       v-if="isShowFieldPage"
+      v-bind="$attrs"
       :is-clean-field="true"
       :is-temp-field="false"
+      :is-set-edit="true"
+      :set-id="configID"
+      :set-disabled="!globalEditable"
       @reset-page="resetPage" />
   </div>
 </template>
@@ -40,13 +43,13 @@ export default {
     StepField,
   },
   props: {
-    indexSetItem: {
-      type: Object,
-      default: () => {},
-    },
     globalEditable: {
       type: Boolean,
       default: true,
+    },
+    configData: {
+      type: Object,
+      require: true,
     },
   },
   data() {
@@ -55,7 +58,8 @@ export default {
       configID: 0,
     };
   },
-  computed: {
+  mounted() {
+    this.configID = this.configData.extra?.collector_config_id;
   },
   methods: {
     resetPage() {

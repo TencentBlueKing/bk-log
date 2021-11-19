@@ -53,8 +53,8 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use((config) => {
   // 绝对路径不走 mock
   if (!/^(https|http)?:\/\//.test(config.url)) {
-    const prefix = config.url.indexOf('?') === -1 ? '?' : '&';
-    config.url += `${prefix}isAjax=1`;
+    // const prefix = config.url.indexOf('?') === -1 ? '?' : '&';
+    config.url = config.url;
   }
   return config;
 }, error => Promise.reject(error));

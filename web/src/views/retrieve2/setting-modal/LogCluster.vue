@@ -162,7 +162,7 @@
           </div>
         </div>
         <!-- 聚类规则 -->
-        <RuleTable
+        <rule-table
           ref="ruleTableRef"
           :global-editable="globalEditable"
           :table-str="formData.predefined_varibles"
@@ -178,7 +178,7 @@
             {{ $t('保存') }}
           </bk-button>
           <bk-button
-            theme="default"
+            style="margin-left: 8px"
             :disabled="!globalEditable"
             :title="$t('dataManage.Reset')"
             @click="resetPage">
@@ -226,6 +226,10 @@ export default {
     indexSetItem: {
       type: Object,
       default: () => {},
+    },
+    configData: {
+      type: Object,
+      require: true,
     },
   },
   data() {
@@ -284,43 +288,42 @@ export default {
   },
   methods: {
     async initPage() {
+      const { extra: { collector_config_id }, is_active: isActive } = this.configData;
+      let res;
       try {
-        const res = await this.$http.request('/logClustering/getConfig', {
-          params: {
-            index_set_id: this.$route.params.indexId,
-          },
-        });
-        Object.assign(this.formData, res.data);
-        this.defaultData = res.data;
-        this.globalLoading = false;
-      } catch (error) {
-        this.$http.request('/logClustering/getDefaultConfig')
-          .then((res) => {
-            Object.assign(this.formData, res.data);
-            this.defaultData = res.data;
-          })
-          .catch((e) => {
-            console.warn(e);
-          })
-          .finally(() => {
-            this.globalLoading = false;
+        if (isActive) {
+          res =  await this.$http.request('/logClustering/getConfig', {
+            params: {
+              index_set_id: this.$route.params.indexId,
+            },
+            data: {
+              collector_config_id,
+            },
           });
+        } else {
+          res = await this.$http.request('/logClustering/getDefaultConfig');
+        }
+      } catch (e) {
+        this.globalLoading = false;
       }
+      Object.assign(this.formData, res.data);
+      this.defaultData = res.data;
+      this.globalLoading = false;
+      this.dataFingerprint = isActive;
     },
     // 获取下拉框元素
     initSelectList() {
       this.clusterField = this.totalFields.filter(fitem => fitem.is_analyzed)
         .map((el) => {
           const item = {};
-          item.name = el.field_name;
           item.id = el.field_name;
+          item.name = el.field_alias ? `${el.field_name}(${el.field_alias})` : el.field_name;
           return item;
-        },
-        );
+        });
       this.filterSelectList = this.totalFields.map((el) => {
         const item = {};
         item.id = el.field_name;
-        item.name = el.field_name;
+        item.name = el.field_alias ? `${el.field_name}(${el.field_alias})` : el.field_name;
         return item;
       });
     },

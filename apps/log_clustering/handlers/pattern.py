@@ -20,21 +20,38 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import copy
 from typing import List
 
+from django.utils.functional import cached_property
+
 from apps.log_clustering.constants import (
     AGGS_FIELD_PREFIX,
     PERCENTAGE_RATE,
     MIN_COUNT,
     HOUR_MINUTES,
+    NEW_CLASS_QUERY_TIME_RANGE,
+    NEW_CLASS_QUERY_FIELDS,
+    NEW_CLASS_SENSITIVITY_FIELD,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig
 from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
+from apps.utils.bkdata import BkData
 from apps.utils.db import array_hash
-from apps.utils.time_handler import generate_time_range_shift
+from apps.utils.local import get_local_param
+from apps.utils.time_handler import generate_time_range_shift, generate_time_range
 
 
 class PatternHandler:
-    def pattern_search(self, index_set_id, query):
+    def __init__(self, index_set_id, query):
+        self._index_set_id = index_set_id
+        self._pattern_level = query["pattern_level"]
+        self._show_new_pattern = query["show_new_pattern"]
+        self._year_on_year_hour = query["year_on_year_hour"]
+        self._clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
+        self._query = query
+        if not self._clustering_config:
+            raise ClusteringConfigNotExistException
+
+    def pattern_search(self):
         """
         aggs_result
         {
@@ -56,13 +73,14 @@ class PatternHandler:
             }
         }
         """
-        pattern_aggs = self.get_pattern_aggs_result(index_set_id, query)
-        year_on_year_result = self.get_year_on_year_aggs_result(index_set_id, query)
 
-        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
-        if not clustering_config:
-            raise ClusteringConfigNotExistException
-        pattern_map = AiopsSignatureAndPattern.objects.filter(model_id=clustering_config.model_id).values(
+        pattern_aggs = self._get_pattern_aggs_result(self._index_set_id, self._query)
+        year_on_year_result = self._get_year_on_year_aggs_result()
+        new_class = set()
+        if self._show_new_pattern:
+            new_class = self._get_new_class()
+
+        pattern_map = AiopsSignatureAndPattern.objects.filter(model_id=self._clustering_config.model_id).values(
             "signature", "pattern"
         )
         signature_map_pattern = array_hash(pattern_map, "signature", "pattern")
@@ -79,30 +97,28 @@ class PatternHandler:
                     "count": count,
                     "signature": signature,
                     "percentage": self.percentage(count, sum_count),
-                    # todo 等待dataflow完成
-                    "is_new_class": False,
+                    "is_new_class": signature in new_class,
                     "year_on_year_count": count - year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
                 }
             )
         return result
 
-    def get_pattern_aggs_result(self, index_set_id, query):
-        pattern_field = self._build_pattern_aggs_field(query["pattern_level"])
-        query["fields"] = [pattern_field]
+    def _get_pattern_aggs_result(self, index_set_id, query):
+        query["fields"] = [self.pattern_aggs_field]
         aggs_result = AggsHandlers.terms(index_set_id, query)
-        return self._parse_pattern_aggs_result(pattern_field, aggs_result)
+        return self._parse_pattern_aggs_result(self.pattern_aggs_field, aggs_result)
 
-    def get_year_on_year_aggs_result(self, index_set_id, query) -> dict:
-        if query["year_on_year_hour"] == MIN_COUNT:
+    def _get_year_on_year_aggs_result(self) -> dict:
+        if self._year_on_year_hour == MIN_COUNT:
             return {}
-        new_query = copy.deepcopy(query)
+        new_query = copy.deepcopy(self._query)
         start_time, end_time = generate_time_range_shift(
-            query["start_time"], query["end_time"], query["year_on_year_hour"] * HOUR_MINUTES
+            self._query["start_time"], self._query["end_time"], self._year_on_year_hour * HOUR_MINUTES
         )
         new_query["start_time"] = start_time.strftime("%Y-%m-%d %H:%M:%S")
         new_query["end_time"] = end_time.strftime("%Y-%m-%d %H:%M:%S")
-        return array_hash(self.get_pattern_aggs_result(index_set_id, new_query), "key", "doc_count")
+        return array_hash(self._get_pattern_aggs_result(self._index_set_id, new_query), "key", "doc_count")
 
     @staticmethod
     def _year_on_year_calculate_percentage(target, compare):
@@ -117,9 +133,9 @@ class PatternHandler:
             return MIN_COUNT
         return (count / sum_count) * PERCENTAGE_RATE
 
-    @staticmethod
-    def _build_pattern_aggs_field(pattern_level: str) -> str:
-        return f"{AGGS_FIELD_PREFIX}_{pattern_level}"
+    @cached_property
+    def pattern_aggs_field(self) -> str:
+        return f"{AGGS_FIELD_PREFIX}_{self._pattern_level}"
 
     @staticmethod
     def _parse_pattern_aggs_result(pattern_field: str, aggs_result: dict) -> List[dict]:
@@ -128,3 +144,14 @@ class PatternHandler:
         if not pattern_field_aggs:
             return []
         return pattern_field_aggs.get("buckets", [])
+
+    def _get_new_class(self):
+        start_time, end_time = generate_time_range(NEW_CLASS_QUERY_TIME_RANGE, "", "", get_local_param("time_zone"))
+        new_classes = (
+            BkData(self._clustering_config.new_cls_pattern_rt)
+            .select(*NEW_CLASS_QUERY_FIELDS)
+            .where(NEW_CLASS_SENSITIVITY_FIELD, "=", self.pattern_aggs_field)
+            .time_range(start_time.timestamp, end_time.timestamp)
+            .query()
+        )
+        return {new_class["signature"] for new_class in new_classes}

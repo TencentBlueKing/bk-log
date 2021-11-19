@@ -314,6 +314,8 @@ export default {
     saveToTakeEffect: 'Save To Take Effect',
     clusterPrompt: 'The log platform collection can be directly switched seamlessly, and it takes N time to take effect, and the storage will increase by M%; the computing platform log needs to be clearly turned on and the resources will be consumed by 210%',
     extractionPrompt: 'After the filtered logs are collected, the log retrieval module can format the log content to facilitate retrieval and analysis.',
+    ruleDeleteTips: 'Whether to delete this rule ?',
+    changeSwitchTips: 'Is the module disabled?',
   },
   // logCluster
   忽略数字: 'Ignore Numbers',
@@ -321,7 +323,6 @@ export default {
   数据指纹: 'Data Fingerprint',
   同比: 'Compared',
   近24H新增: 'Near 24hNew',
-  clusterAlert: 'If you need to provide users with the service of uploading attachments, please configure it in the background first.',
   数量: 'Quantity',
   同比数量: 'Compared Quantity',
   同比变化: 'Compared Variety',
@@ -332,6 +333,7 @@ export default {
   取样内容: 'Sampling Content',
   去设置: 'Go To Set',
   跳转到日志清洗: 'Go To Log Cleaning',
+  clusterAlert: 'Log clustering must have at least one text type field. Currently, there is no such field type. Please go to log cleaning to set it up.',
   goSettingMessage: 'The current data fingerprint is not enabled, please go to settings',
   goCleanMessage: 'There is currently no field available, please go to log cleaning to set',
   nav: {
@@ -1172,6 +1174,7 @@ export default {
     syncSuccess: 'Synchronize the result table of the computing platform successfully',
     syncFaild: 'Failed to synchronize the result table of the computing platform',
     syncTip: 'Synchronize the results of the computing platform',
+    storageSetting: 'Storage Settings',
   },
   logAlertTips: 'Index set allows users to view logs across multiple collected indexes.',
   esAlertTips: 'If the logs are already stored in Electricsearch, you can add the Electricsearch cluster in the "Cluster Management", and you can use the stored log data by creating an index set.',

@@ -69,7 +69,8 @@ class EsQuery(object):
         end_time: str = self.search_dict.get("end_time")
         time_range: str = self.search_dict.get("time_range", None)
         time_zone: str = self.search_dict.get("time_zone", None)
-        return start_time, end_time, time_range, time_zone
+        use_time_range: bool = self.search_dict.get("use_time_range", True)
+        return start_time, end_time, time_range, time_zone, use_time_range
 
     def _init_bkdata_args(self):
         bkdata_authentication_method: str = self.search_dict.get("bkdata_authentication_method", "")
@@ -81,7 +82,7 @@ class EsQuery(object):
         track_total_hits = self.search_dict.get("track_total_hits", False)
         return search_after, track_total_hits
 
-    def _optimizer(self, indices, scenario_id, start_time, end_time, time_zone):
+    def _optimizer(self, indices, scenario_id, start_time, end_time, time_zone, use_time_range):
 
         # 优化query_string
         query_string: str = self.search_dict.get("query_string")
@@ -93,7 +94,12 @@ class EsQuery(object):
 
         # 优化查询索引
         index: str = QueryIndexOptimizer(
-            indices, scenario_id, start_time=start_time, end_time=end_time, time_zone=time_zone
+            indices,
+            scenario_id,
+            start_time=start_time,
+            end_time=end_time,
+            time_zone=time_zone,
+            use_time_range=use_time_range,
         ).index
 
         # 优化排序,需要预查询介入，需要client
@@ -131,7 +137,7 @@ class EsQuery(object):
         scenario_id, indices, storage_cluster_id = self._init_common_args()
         time_field, time_field_type, time_field_unit = self._init_time_field_args()
         include_start_time, include_end_time = self._init_include_time_args()
-        start_time, end_time, time_range, time_zone = self._init_time_args()
+        start_time, end_time, time_range, time_zone, use_time_range = self._init_time_args()
         # 统一开始结束时间
         start_time, end_time = self.time_start_end_builder(time_range, start_time, end_time, time_zone)
         bkdata_authentication_method, bkdata_data_token = self._init_bkdata_args()
@@ -148,7 +154,7 @@ class EsQuery(object):
         ).time_range_dict
 
         query_string, filter_dict_list, index, sort_tuple = self._optimizer(
-            indices, scenario_id, start_time, end_time, time_zone
+            indices, scenario_id, start_time, end_time, time_zone, use_time_range
         )
         size, start, aggs, highlight, scroll, collapse = self._init_other_args()
         # 调用DSL生成器
@@ -163,6 +169,7 @@ class EsQuery(object):
             highlight=highlight,
             collapse=collapse,
             search_after=search_after,
+            use_time_range=use_time_range,
         ).body
 
         logger.info(f"scenario_id => [{scenario_id}], indices => [{index}], body => [{body}]")
@@ -241,7 +248,7 @@ class EsQuery(object):
         # 调用客户端执行mapping
         scenario_id, index_set_string, storage_cluster_id = self._init_common_args()
         bkdata_authentication_method, bkdata_data_token = self._init_bkdata_args()
-        start_time, end_time, _, time_zone = self._init_time_args()
+        start_time, end_time, _, time_zone, __ = self._init_time_args()
         index_set_string = self._optimizer_mapping_time_range(
             index_set_string, scenario_id, start_time, end_time, time_zone
         )

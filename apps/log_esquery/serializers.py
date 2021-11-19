@@ -49,6 +49,10 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
     time_field_type = serializers.CharField(required=False, default="date", allow_blank=True, allow_null=True)
     time_field_unit = serializers.CharField(required=False, default="second", allow_blank=True, allow_null=True)
 
+    use_time_range = serializers.BooleanField(
+        default=True,
+        label=_("默认使用time_range的方式检索"),
+    )
     include_start_time = serializers.BooleanField(default=True, label=_("是否包含开始时间点(gte/gt)"))
     include_end_time = serializers.BooleanField(default=True, label=_("是否包含结束时间点(lte/lt)"))
     start_time = serializers.CharField(required=False, default="", allow_blank=True, allow_null=True)

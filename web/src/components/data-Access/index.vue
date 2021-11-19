@@ -249,13 +249,13 @@ export default {
             } else if (this.operateType === 'field') {
               this.curStep = 4;
             } else if (this.operateType === 'storage') {
-              // this.curStep = 5;
+              this.curStep = 5;
             }
             // 审批通过后编辑直接进入第三步字段提取，否则进入第二步容量评估
           } else if (this.operateType === 'field') {
             this.curStep = 3;
           } else if (this.operateType === 'storage') {
-            // this.curStep  = 4;
+            this.curStep  = 4;
           }
         } catch (e) {
           console.warn(e);

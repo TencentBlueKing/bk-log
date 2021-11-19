@@ -23,264 +23,24 @@
 <template>
   <div>
     <div class="result-table-container" data-test-id="retrieve_from_fieldForm">
-      <!-- 表格内容 -->
-      <!-- <bk-table v-if="!renderTable" class="king-table"></bk-table> -->
-      <bk-table
-        v-show="showOriginal"
-        ref="resultTable"
-        :class="['king-table', { 'is-wrap': isWrap }]"
-        :data="tableList"
-        :show-header="!showOriginal"
-        :outer-border="!showOriginal"
-        :empty-text="$t('retrieve.notData')"
-        @row-click="tableRowClick"
-        @row-mouse-enter="handleMouseEnter"
-        @row-mouse-leave="handleMouseLeave"
-        @header-dragend="handleHeaderDragend">
-        <!-- 展开详情 -->
-        <bk-table-column
-          type="expand"
-          width="30"
-          align="center"
-          v-if="showOriginal || visibleFields.length">
-          <template slot-scope="{ $index }">
-            <expand-view
-              v-bind="$attrs"
-              :data="originTableList[$index]"
-              :total-fields="totalFields"
-              :visible-fields="visibleFields"
-              @menuClick="handleMenuClick">
-            </expand-view>
-          </template>
-        </bk-table-column>
-        <!-- 显示字段 -->
-        <!-- 原始 -->
-        <template>
-          <bk-table-column class-name="original-time" width="160">
-            <template slot-scope="{ row }">
-              <span class="time-field">{{ formatDate(Number(row[timeField]) || '') }}</span>
-            </template>
-          </bk-table-column>
-          <bk-table-column :class-name="`original-str${isWrap ? ' is-wrap' : ''}`">
-            <!-- eslint-disable-next-line -->
-            <template slot-scope="{ row, column, $index }">
-              <EventPopover
-                :is-search="false"
-                @eventClick="(operation) => handleMenuClick({ operation, value: JSON.stringify(row) })">
-                <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <span v-html="JSON.stringify(row)"></span>
-                  <p
-                    v-if="!cacheExpandStr.includes($index)"
-                    class="show-whole-btn"
-                    @click.stop="handleShowWhole($index)">
-                    {{ $t('展开全部') }}
-                  </p>
-                </div>
-              </EventPopover>
-            </template>
-          </bk-table-column>
-        </template>
+      <keep-alive>
+        <component
+          :is="`${showOriginal ? 'OriginalList' : 'TableList'}`"
+          v-bind="$attrs"
+          v-on="$listeners"
+          :table-list="tableList"
+          :retrieve-params="retrieveParams"
+          :handle-click-tools="handleClickTools"
+        ></component>
+      </keep-alive>
 
-        <!-- 实时日志 上下文 -->
-        <bk-table-column
-          v-if="showHandleOption"
-          :label="$t('retrieve.operate')"
-          :width="84"
-          align="right"
-          :resizable="false">
-          <!-- eslint-disable-next-line -->
-          <template slot-scope="{ row, column, $index }">
-            <div
-              :class="{ 'handle-content': true, 'fix-content': showAllHandle }"
-              v-if="curHoverIndex === $index"
-              @mouseenter="mouseenterHandle"
-              @mouseleave="mouseleaveHandle">
-              <span
-                v-bk-tooltips="{ content: $t('retrieve.log'), delay: 500 }"
-                class="handle-card"
-                v-if="showRealtimeLog && !checkIsHide('showRealtimeLog')">
-                <span
-                  class="icon log-icon icon-handle icon-time"
-                  @click.stop="openLogDialog(row, 'realTimeLog')">
-                </span>
-              </span>
-              <span
-                v-bk-tooltips="{ content: $t('retrieve.context'), delay: 500 }"
-                class="handle-card"
-                v-if="showContextLog && !checkIsHide('showContextLog')">
-                <span
-                  class="icon log-icon icon-handle icon-document"
-                  @click.stop="openLogDialog(row, 'contextLog')">
-                </span>
-              </span>
-              <span
-                v-bk-tooltips="{ content: $t('retrieve.monitorAlarm'), delay: 500 }"
-                class="handle-card"
-                v-if="showMonitorWeb && !checkIsHide('showMonitorWeb')">
-                <span class="icon icon-handle log-icon icon-inform" @click.stop="openMonitorWeb(row)"></span>
-              </span>
-              <span
-                v-bk-tooltips="{ content: 'WebConsole', delay: 500 }"
-                class="handle-card"
-                v-if="showWebConsole && !checkIsHide('showWebConsole')">
-                <span class="icon icon-handle log-icon icon-teminal" @click.stop="openWebConsole(row)"></span>
-              </span>
-              <span class="bk-icon icon-more handle-card icon-handle" v-if="showMoreHandle && !showAllHandle"></span>
-            </div>
-          </template>
-        </bk-table-column>
-
-        <!-- 初次加载骨架屏loading -->
-        <bk-table-column v-if="tableLoading" slot="empty">
-          <retrieve-loader
-            is-loading
-            :is-original-field="showOriginal"
-            :visible-fields="visibleFields">
-          </retrieve-loader>
-        </bk-table-column>
-
-        <!-- 下拉刷新骨架屏loading -->
-        <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
-          <retrieve-loader
-            :is-page-over="isPageOver"
-            :is-original-field="showOriginal"
-            :visible-fields="visibleFields">
-          </retrieve-loader>
-        </template>
-      </bk-table>
-
-      <bk-table
-        v-show="!showOriginal"
-        ref="resultTable"
-        :class="['king-table', { 'is-wrap': isWrap }]"
-        :data="tableList"
-        :show-header="!showOriginal"
-        :outer-border="!showOriginal"
-        :empty-text="$t('retrieve.notData')"
-        @row-click="tableRowClick"
-        @row-mouse-enter="handleMouseEnter"
-        @row-mouse-leave="handleMouseLeave"
-        @header-dragend="handleHeaderDragend">
-        <!-- 展开详情 -->
-        <bk-table-column
-          type="expand"
-          width="30"
-          align="center"
-          v-if="showOriginal || visibleFields.length">
-          <template slot-scope="{ $index }">
-            <expand-view
-              v-bind="$attrs"
-              :data="originTableList[$index]"
-              :total-fields="totalFields"
-              :visible-fields="visibleFields"
-              @menuClick="handleMenuClick">
-            </expand-view>
-          </template>
-        </bk-table-column>
-        <!-- 显示字段 -->
-        <!-- 表格 -->
-        <template v-for="(field,index) in visibleFields">
-          <bk-table-column
-            align="left"
-            :key="field.field_name"
-            :min-width="field.minWidth"
-            :render-header="renderHeaderAliasName"
-            :index="index"
-            :width="field.width">
-            <template slot-scope="{ row }">
-              <keep-alive>
-                <TableColumn
-                  :is-wrap="isWrap"
-                  :content="tableRowDeepView(row, field.field_name, field.field_type)"
-                  :field-type="field.field_type"
-                  @iconClick="(type, content) => handleIconClick(type, content, field, row)"
-                ></TableColumn>
-              </keep-alive>
-
-            </template>
-          </bk-table-column>
-        </template>
-
-        <!-- 实时日志 上下文 -->
-        <bk-table-column
-          v-if="showHandleOption"
-          :label="$t('retrieve.operate')"
-          :width="84"
-          align="right"
-          :resizable="false">
-          <!-- eslint-disable-next-line -->
-          <template slot-scope="{ row, column, $index }">
-            <div
-              :class="{ 'handle-content': true, 'fix-content': showAllHandle }"
-              v-if="curHoverIndex === $index"
-              @mouseenter="mouseenterHandle"
-              @mouseleave="mouseleaveHandle">
-              <span
-                v-bk-tooltips="{ content: $t('retrieve.log'), delay: 500 }"
-                class="handle-card"
-                v-if="showRealtimeLog && !checkIsHide('showRealtimeLog')">
-                <span
-                  class="icon log-icon icon-handle icon-time"
-                  @click.stop="openLogDialog(row, 'realTimeLog')">
-                </span>
-              </span>
-              <span
-                v-bk-tooltips="{ content: $t('retrieve.context'), delay: 500 }"
-                class="handle-card"
-                v-if="showContextLog && !checkIsHide('showContextLog')">
-                <span
-                  class="icon log-icon icon-handle icon-document"
-                  @click.stop="openLogDialog(row, 'contextLog')">
-                </span>
-              </span>
-              <span
-                v-bk-tooltips="{ content: $t('retrieve.monitorAlarm'), delay: 500 }"
-                class="handle-card"
-                v-if="showMonitorWeb && !checkIsHide('showMonitorWeb')">
-                <span class="icon icon-handle log-icon icon-inform" @click.stop="openMonitorWeb(row)"></span>
-              </span>
-              <span
-                v-bk-tooltips="{ content: 'WebConsole', delay: 500 }"
-                class="handle-card"
-                v-if="showWebConsole && !checkIsHide('showWebConsole')">
-                <span class="icon icon-handle log-icon icon-teminal" @click.stop="openWebConsole(row)"></span>
-              </span>
-              <span class="bk-icon icon-more handle-card icon-handle" v-if="showMoreHandle && !showAllHandle"></span>
-            </div>
-          </template>
-        </bk-table-column>
-
-        <!-- 初次加载骨架屏loading -->
-        <bk-table-column v-if="tableLoading" slot="empty">
-          <retrieve-loader
-            is-loading
-            :is-original-field="showOriginal"
-            :visible-fields="visibleFields">
-          </retrieve-loader>
-        </bk-table-column>
-
-        <!-- 下拉刷新骨架屏loading -->
-        <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
-          <retrieve-loader
-            :is-page-over="isPageOver"
-            :is-original-field="showOriginal"
-            :visible-fields="visibleFields">
-          </retrieve-loader>
-        </template>
-      </bk-table>
       <!-- 表格底部内容 -->
       <p class="more-desc" v-if="tableList.length === limitCount">{{ $t('retrieve.showMore') }}
         <a href="javascript: void(0);" @click="scrollToTop">{{ $t('btn.backToTop') }}</a>
       </p>
-      <!-- <div
-        v-if="tableList.length && visibleFields.length && isPageOver"
-        v-bkloading="{ isLoading: true }"
-        style="height: 40px;">
-      </div> -->
     </div>
 
-    <!-- 实时滚动日志/上下文 -->
+    <!-- 实时滚动日志/上下文弹窗 -->
     <bk-dialog
       v-model="logDialog.visible"
       :ext-cls="logDialog.fullscreen ? 'log-dialog log-full-dialog' : 'log-dialog'"
@@ -310,44 +70,21 @@
 
 <script>
 import { mapState } from 'vuex';
-import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import RealTimeLog from '../../result-comp/RealTimeLog';
 import ContextLog from '../../result-comp/ContextLog';
-import TableColumn from '../../result-comp/TableColumn';
-import ExpandView from './ExpandView.vue';
-import { formatDate } from '@/common/util';
-import RetrieveLoader from '@/skeleton/retrieve-loader';
-import EventPopover from '../../result-comp/EventPopover.vue';
+import OriginalList from './OriginalList';
+import TableList from './TableList';
 
 export default {
   components: {
-    TableColumn,
     RealTimeLog,
     ContextLog,
-    ExpandView,
-    RetrieveLoader,
-    EventPopover,
+    OriginalList,
+    TableList,
   },
-  mixins: [tableRowDeepViewMixin],
   props: {
-    renderTable: {
-      type: Boolean,
-      required: true,
-    },
-    tableLoading: {
-      type: Boolean,
-      required: true,
-    },
     retrieveParams: {
       type: Object,
-      required: true,
-    },
-    visibleFields: {
-      type: Array,
-      required: true,
-    },
-    totalFields: {
-      type: Array,
       required: true,
     },
     fieldAliasMap: {
@@ -360,75 +97,19 @@ export default {
       type: Boolean,
       default: false,
     },
-    showRealtimeLog: {
-      type: Boolean,
-      required: true,
-    },
-    showContextLog: {
-      type: Boolean,
-      required: true,
-    },
-    showWebConsole: {
-      type: Boolean,
-      required: true,
-    },
-    bkMonitorUrl: {
-      type: Boolean,
-      required: true,
-    },
-    asyncExportUsable: {
-      type: Boolean,
-      default: true,
-    },
-    asyncExportUsableReason: {
-      type: String,
-      default: '',
-    },
     tableList: {
       type: Array,
       required: true,
     },
-    originTableList: {
-      type: Array,
-      required: true,
-    },
-    isPageOver: {
-      type: Boolean,
-      required: false,
-    },
     showOriginal: {
-      type: Boolean,
-      default: false,
-    },
-    timeField: {
-      type: String,
-      default: '',
-    },
-    isWrap: {
       type: Boolean,
       default: false,
     },
   },
   data() {
     return {
-      formatDate,
-      throttle: false, // 滚动节流 是否进入cd
-      finishPolling: false,
-      count: 0, // 数据总条数
-      pageSize: 50, // 每页展示多少数据
-      totalPage: 1,
-      currentPage: 1, // 当前加载了多少页
-      totalCount: 0,
-      scrollHeight: 0,
       limitCount: 2000,
-      fieldsSettingLoading: false,
-      webConsoleLoading: false, // 点击 WebConsole 时表格 loading
-      cacheOpenMoreList: [], // 暂存点击打开的项集合
-      curHoverIndex: -1, // 当前鼠标hover行的索引
-      showAllHandle: false, // hove操作区域显示全部icon
-      overflowHandle: [], // 当操作按钮大于3个时 用于保存超出的icon key
-      showScrollTop: false, // 显示滚动到顶部icon
-      isInit: false,
+      webConsoleLoading: false,
       logDialog: {
         title: '',
         type: '',
@@ -438,7 +119,6 @@ export default {
         fullscreen: true,
         data: {},
       },
-      cacheExpandStr: [],
     };
   },
   computed: {
@@ -450,52 +130,8 @@ export default {
     showMonitorWeb() {
       return this.bkMonitorUrl;
     },
-    showMoreHandle() {
-      const handleOptions = ['showRealtimeLog', 'showContextLog', 'showWebConsole', 'showMonitorWeb'];
-      const isShowOptions = handleOptions.filter(item => this[item]);
-      const isShowMore = isShowOptions.length > 3;
-
-      if (isShowMore) {
-        this.overflowHandle.push(...isShowOptions.slice(2));
-      }
-
-      return isShowMore;
-    },
-    showHandleOption() {
-      const { showRealtimeLog, showContextLog, showWebConsole, showMonitorWeb, visibleFields } = this;
-      if (visibleFields.length !== 0) {
-        const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
-        const { params: { indexId }, query: { bizId } } = this.$route;
-        let widthObj = {};
-
-        for (const bizKey in columnObj) {
-          if (bizKey === bizId) {
-            for (const fieldKey in columnObj[bizId].fields) {
-              fieldKey === indexId && (widthObj =  columnObj[bizId].fields[indexId]);
-            }
-          }
-        }
-
-        visibleFields.forEach((el, index) => {
-          el.width = widthObj[index] === undefined ? 'default' : widthObj[index];
-        });
-      }
-      return (showRealtimeLog
-      || showContextLog
-      || showWebConsole
-      || showMonitorWeb) && this.tableList.length;
-    },
   },
   watch: {
-    retrieveParams: {
-      deep: true,
-      handler() {
-        this.cacheExpandStr = [];
-      },
-    },
-    '$route.params.indexId'() { // 切换索引集重置状态
-      this.cacheExpandStr = [];
-    },
     clearTableWidth() {
       const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
       const { params: { indexId }, query: { bizId } } = this.$route;
@@ -527,119 +163,6 @@ export default {
     // 滚动到顶部
     scrollToTop() {
       this.$easeScroll(0, 300, this.$parent.$parent.$parent.$refs.scrollContainer);
-    },
-    // 展开表格行JSON
-    tableRowClick(row) {
-      this.$refs.resultTable.toggleRowExpansion(row);
-      this.curHoverIndex = -1;
-    },
-    handleMouseEnter(index) {
-      this.curHoverIndex = index;
-    },
-    handleMouseLeave() {
-      this.curHoverIndex = -1;
-    },
-    handleHeaderDragend(newWidth, oldWidth, { index }) {
-      const { params: { indexId }, query: { bizId } } = this.$route;
-      if (index === undefined || bizId === undefined || indexId === undefined) {
-        return;
-      }
-      const widthObj = {};
-      widthObj[index] = newWidth;
-      index === this.visibleFields.length - 1 && (widthObj[index] = 'default');
-
-      let columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
-      if (columnObj === null) {
-        columnObj = {};
-        columnObj[bizId] = this.initSubsetObj(bizId, indexId);
-      }
-      const isIncludebizId = Object.keys(columnObj).some(el => el === bizId);
-      isIncludebizId === false && (columnObj[bizId] = this.initSubsetObj(bizId, indexId));
-
-      for (const key in columnObj) {
-        if (key === bizId) {
-          if (columnObj[bizId].fields[indexId] === undefined) {
-            columnObj[bizId].fields[indexId] = {};
-            columnObj[bizId].indexsetIds.push(indexId);
-          }
-          columnObj[bizId].fields[indexId] = Object.assign(columnObj[bizId].fields[indexId], widthObj);
-        }
-      }
-
-      localStorage.setItem('table_column_width_obj', JSON.stringify(columnObj));
-    },
-    initSubsetObj(bizId, indexId) {
-      const subsetObj = {};
-      subsetObj.bizId = bizId;
-      subsetObj.indexsetIds = [indexId];
-      subsetObj.fields = {};
-      subsetObj.fields[indexId] = {};
-      return subsetObj;
-    },
-    mouseenterHandle() {
-      this.showAllHandle = true;
-    },
-    mouseleaveHandle() {
-      this.showAllHandle = false;
-    },
-    getFieldIcon(fieldType) {
-      const iconMap = {
-        number: 'log-icon icon-number',
-        keyword: 'log-icon log-icon icon-string',
-        text: 'log-icon icon-text',
-        date: 'bk-icon icon-clock',
-      };
-      if (fieldType === 'long' || fieldType === 'integer') {
-        return iconMap.number;
-      }
-      return iconMap[fieldType];
-    },
-    // eslint-disable-next-line no-unused-vars
-    renderHeaderAliasName(h, { column, $index }) {
-      const field = this.visibleFields[$index - 1];
-      if (field) {
-        const fieldName = this.showFieldAlias ? this.fieldAliasMap[field.field_name] : field.field_name;
-        const fieldType = field.field_type;
-        const fieldIcon = this.getFieldIcon(field.field_type) || 'log-icon icon-unkown';
-        const content = this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].name : undefined;
-
-        return h('div', {
-          class: 'render-header',
-        }, [
-          h('span', {
-            class: `field-type-icon ${fieldIcon}`,
-            directives: [
-              {
-                name: 'bk-tooltips',
-                value: content,
-              },
-            ],
-          }),
-          h('span', fieldName),
-        ]);
-      }
-    },
-    handleIconClick(type, content, field, row) {
-      let value = field.field_type === 'date' ? row[field.field_name] : content;
-      value = String(value).replace(/<mark>/g, '')
-        .replace(/<\/mark>/g, '');
-      if (type === 'search') { // 将表格单元添加到过滤条件
-        this.$emit('addFilterCondition', field.field_name, 'eq', value);
-      } else if (type === 'copy') { // 复制单元格内容
-        try {
-          const input = document.createElement('input');
-          input.setAttribute('value', value);
-          document.body.appendChild(input);
-          input.select();
-          document.execCommand('copy');
-          document.body.removeChild(input);
-          this.messageSuccess(this.$t('复制成功'));
-        } catch (e) {
-          console.warn(e);
-        }
-      } else if (['is', 'is not'].includes(type)) {
-        this.$emit('addFilterCondition', field.field_name, type, value.toString());
-      }
     },
     // 打开实时日志或上下文弹窗
     openLogDialog(row, type) {
@@ -679,8 +202,11 @@ export default {
 
       window.open(url);
     },
-    openMoreHandle(row, column, index) {
-      this.cacheOpenMoreList.push(index);
+    handleClickTools(event, row) {
+      if (['realTimeLog', 'contextLog'].includes(event)) {
+        this.openLogDialog(row, event);
+      } else if (event === 'monitorWeb') this.openMonitorWeb(row);
+      else if (event === 'webConsole') this.openWebConsole(row);
     },
     // 关闭实时日志或上下文弹窗后的回调
     hideDialog() {
@@ -692,42 +218,6 @@ export default {
     toggleScreenFull(isScreenFull) {
       this.logDialog.width = isScreenFull ? '100%' : 1078;
       this.logDialog.fullscreen = isScreenFull;
-    },
-    // 区分当前是否超过第3个的icon
-    checkIsHide(key) {
-      // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
-      return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
-    },
-    handleShowWhole(index) {
-      this.cacheExpandStr.push(index);
-    },
-    handleMenuClick(option) {
-      switch (option.operation) {
-        case 'is':
-        case 'is not':
-          // eslint-disable-next-line no-case-declarations
-          const { fieldName, operation, value } = option;
-          this.$emit('addFilterCondition', fieldName, operation, value.toString());
-          break;
-        case 'copy':
-          try {
-            const input = document.createElement('input');
-            input.setAttribute('value', option.value);
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-            this.messageSuccess(this.$t('复制成功'));
-          } catch (e) {
-            console.warn(e);
-          }
-          break;
-        case 'display':
-          this.$emit('fieldsUpdated', option.displayFieldNames);
-          break;
-        default:
-          break;
-      }
     },
   },
 };
@@ -742,7 +232,7 @@ export default {
   position: relative;
   background: #fff;
   .king-table {
-    margin-top: 16px;
+    margin-top: 12px;
     td {
       vertical-align: top;
     }
@@ -784,22 +274,6 @@ export default {
         color: #3a84ff;
       }
     }
-    .handle-content {
-      display: flex;
-      position: absolute;
-      right: 0;
-      width: 84px;
-      height: 100%;
-      padding: 12px 10px;
-      align-items: flex-start;
-      top: 0;
-      overflow: hidden;
-      justify-content: flex-end;
-    }
-    .fix-content {
-      width: auto;
-      background-color: #f0f1f5;
-    }
     .time-field {
       font-weight: 700;
     }
@@ -816,7 +290,7 @@ export default {
       }
       &.is-wrap {
         .cell {
-          padding: 12px 14px;
+          padding: 12px 14px 8px;
         }
         .str-content {
           display: inline-block;
@@ -837,6 +311,9 @@ export default {
     }
     .original-time {
       padding-top: 16px;
+      .cell {
+        padding-left: 2px;
+      }
     }
     .hover-row {
       .show-whole-btn{

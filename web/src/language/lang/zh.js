@@ -314,6 +314,8 @@ export default {
     saveToTakeEffect: '保存待生效',
     clusterPrompt: '日志平台采集可以直接进行无缝的切换，需要N时间生效，存储将增加M%； 计算平台日志需要明确开启后资源将出现210%的消耗',
     extractionPrompt: '将过滤后的日志采集上来后，日志检索模块可进行日志内容格式化，方便检索和分析。',
+    ruleDeleteTips: '是否删除该条规则？',
+    changeSwitchTips: '是否禁用该模块？',
   },
   // logCluster
   忽略数字: '忽略数字',
@@ -321,7 +323,6 @@ export default {
   数据指纹: '数据指纹',
   同比: '同比',
   近24H新增: '近24H新增',
-  clusterAlert: '如果需要对用户提供上传附件的服务，请先在后台先行配置。',
   数量: '数量',
   同比数量: '同比数量',
   同比变化: '同比变化',
@@ -332,6 +333,7 @@ export default {
   取样内容: '取样内容',
   去设置: '去设置',
   跳转到日志清洗: '跳转到日志清洗',
+  clusterAlert: '日志聚类必需至少有一个text类型的字段，当前无该字段类型，请前往日志清洗进行设置。',
   goSettingMessage: '当前数据指纹未启用，请前往设置',
   goCleanMessage: '当前无可用字段，请前往日志清洗进行设置',
   nav: {
@@ -1172,6 +1174,7 @@ export default {
     syncSuccess: '同步计算平台的结果表成功',
     syncFaild: '同步计算平台的结果表失败',
     syncTip: '同步计算平台的结果',
+    storageSetting: '存储设置',
   },
   logAlertTips: '索引集允许用户可以跨多个采集的索引查看日志。',
   esAlertTips: '如果日志已经存储在Electricsearch，可以在“集群管理”中添加Electricsearch集群，就可以通过创建索引集来使用存储中的日志数据。',

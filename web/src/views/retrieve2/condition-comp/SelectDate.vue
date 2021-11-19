@@ -323,7 +323,7 @@ export default {
       }
 
       &.is-defalut-picker {
-        min-width: 238px;
+        min-width: 268px;
 
         /deep/ .bk-date-picker-editor {
           padding-left: 5px;
@@ -343,7 +343,7 @@ export default {
     }
 
     .icon-angle-down {
-      margin: 0 10px;
+      margin: 0 10px 0 0;
       font-size: 22px;
       color: #63656E;
       transition: transform .3s;

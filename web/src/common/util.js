@@ -26,6 +26,7 @@
  */
 
 import html2canvas from 'html2canvas';
+import JSONBigNumber from 'json-bignumber';
 
 /**
  * 函数柯里化
@@ -521,3 +522,55 @@ export function formatFileSize(size) {
   }
   return '0';
 }
+
+/**
+ * 读取Blob格式返回数据
+ * @param {*} response
+ */
+export function readBlobResponse(response) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function () {
+      resolve(reader.result);
+    };
+
+    reader.onerror = function () {
+      reject(reader.error);
+    };
+
+    reader.readAsText(response);
+  });
+}
+
+/**
+ * 读取Blob格式返回Json数据
+ * @param {*} resp
+ */
+export function readBlobRespToJson(resp) {
+  return readBlobResponse(resp).then(resText => Promise.resolve(JSONBigNumber.parse(resText)));
+}
+
+export function parseBigNumberList(lsit) {
+  return (lsit || []).map(item => Object.keys(item || {})
+    .reduce((output, key) => {
+      return {
+        ...output,
+        [key]: (item[key] || {})._isBigNumber
+          ? item[key].toString().length < 16
+            ? Number(item[key]) : (item[key]).toString() : item[key],
+      };
+    }, {}));
+}
+
+/**
+ * 生成随机数
+ * @param {Number} n
+ */
+export const random = (n) => { // 生成n位长度的字符串
+  const str = 'abcdefghijklmnopqrstuvwxyz0123456789'; // 可以作为常量放到random外面
+  let result = '';
+  for (let i = 0; i < n; i++) {
+    result += str[parseInt(Math.random() * str.length, 10)];
+  }
+  return result;
+};

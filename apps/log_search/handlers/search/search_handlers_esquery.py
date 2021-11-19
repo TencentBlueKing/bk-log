@@ -125,6 +125,7 @@ class SearchHandler(object):
         self.addition = copy.deepcopy(search_dict.get("addition", []))
         self.host_scopes = copy.deepcopy(search_dict.get("host_scopes", {}))
 
+        self.use_time_range = search_dict.get("use_time_range", True)
         # 构建时间字段
         self.time_field, self.time_field_type, self.time_field_unit = self._init_time_field(
             index_set_id, self.scenario_id
@@ -356,6 +357,7 @@ class SearchHandler(object):
                 "size": once_size,
                 "aggs": self.aggs,
                 "highlight": self.highlight,
+                "use_time_range": self.use_time_range,
                 "time_zone": self.time_zone,
                 "time_range": self.time_range,
                 "time_field": self.time_field,

@@ -51,7 +51,9 @@
             <span class="bk-icon icon-block-shape"></span>
             <span style="width: 110px">{{item.name}}</span>
             <div @click="handleStopProp">
-              <bk-switcher theme="primary" v-model="item.isEditable"></bk-switcher>
+              <div @click="stopChangeSwitch(index)">
+                <bk-switcher theme="primary" :pre-check="() => false" v-model="item.isEditable"></bk-switcher>
+              </div>
             </div>
           </div>
         </div>
@@ -75,6 +77,7 @@
               :global-editable="globalEditable"
               :index-set-item="indexSetItem"
               :total-fields="totalFields"
+              :config-data="configData"
               @reset-page="resetPage"
             ></component>
           </div>
@@ -112,6 +115,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    configData: {
+      type: Object,
+      require: true,
+    },
   },
   data() {
     return {
@@ -146,8 +153,6 @@ export default {
     },
   },
   methods: {
-    handleSubmitFormData() {
-    },
     handleNavClick(val, index) {
       this.currentChoice = val;
       this.showComponent = this.currentList[index].componentsName;
@@ -168,6 +173,18 @@ export default {
     },
     handleStopProp(e) {
       e.stopPropagation();
+    },
+    stopChangeSwitch(index) {
+      if (!this.currentList[index].isEditable) {
+        this.currentList[index].isEditable = true;
+        return;
+      }
+      this.$bkInfo({
+        title: this.$t('retrieveSetting.changeSwitchTips'),
+        confirmFn: () => {
+          this.currentList[index].isEditable = false;
+        },
+      });
     },
     closeSetting() {
       this.$emit('closeSetting');
@@ -229,7 +246,6 @@ export default {
     padding: 72px 40px 0;
     display: flex;
     position: relative;
-    left: -50px;
 
     .setting-left{
       min-width: 240px;
@@ -253,7 +269,7 @@ export default {
     }
 
     .setting-right{
-      width: 1000px;
+      width: 1200px;
       margin-left: 20px;
 
       .more-details{

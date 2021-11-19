@@ -151,7 +151,7 @@
                 <div class="cut-line" v-if="showFilterCutline"></div>
                 <template v-for="(item, index) in retrieveParams.addition">
                   <FilterConditionItem
-                    :key="item.field + 1"
+                    :key="item.field + random(6)"
                     :edit-index="index"
                     :is-add="false"
                     :edit-data="item"
@@ -256,7 +256,6 @@
         <ResultMain
           ref="resultMainRef"
           v-else
-          :render-table="renderTable"
           :table-loading="tableLoading"
           :retrieve-params="retrieveParams"
           :took-time="tookTime"
@@ -274,10 +273,12 @@
           :async-export-usable-reason="asyncExportUsableReason"
           :statistical-fields-data="statisticalFieldsData"
           :time-field="timeField"
+          :config-data="configData"
           @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
           @addFilterCondition="addFilterCondition"
+          @showSettingLog="handleSettingMenuClick('clustering')"
         ></ResultMain>
       </div>
       <!-- 可拖拽页面布局宽度 -->
@@ -300,12 +301,14 @@
       :is-show-dialog="isShowSettingModal"
       :select-choice="clickSettingChoice"
       :total-fields="totalFields"
+      :config-data="configData"
       @closeSetting="isShowSettingModal = false;"
     />
   </div>
 </template>
 
 <script>
+import { mapGetters, mapState } from 'vuex';
 import SelectIndexSet from './condition-comp/SelectIndexSet';
 import SelectDate from './condition-comp/SelectDate';
 import RetrieveInput from './condition-comp/RetrieveInput';
@@ -320,10 +323,10 @@ import NoIndexSet from './result-comp/NoIndexSet';
 import ResultMain from './result-comp/ResultMain';
 import AuthPage from '@/components/common/auth-page';
 import SettingModal from './setting-modal/index.vue';
-import { formatDate } from '@/common/util';
-import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
-import { mapGetters, mapState } from 'vuex';
 import BizMenuSelect from '@/components/BizMenuSelect.vue';
+import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/common/util';
+import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
+import axios from 'axios';
 
 export default {
   name: 'Retrieve',
@@ -440,6 +443,14 @@ export default {
       timeField: '',
       isThollteField: false,
       globalsData: {},
+      random,
+      configData: { // 日志聚类参数
+        name: '',
+        is_active: true,
+        extra: {
+          collector_config_id: -1,
+        },
+      },
     };
   },
   computed: {
@@ -986,11 +997,12 @@ export default {
       }
       // 通过 url 查询参数设置检索参数
       let queryParams = {};
-      const queryParamsStr = {};
+      let queryParamsStr = {};
       const urlRetrieveParams = this.$route.query.retrieveParams;
       if (urlRetrieveParams) {
         try {
           queryParams = JSON.parse(decodeURIComponent(urlRetrieveParams));
+          queryParamsStr = JSON.parse(decodeURIComponent(urlRetrieveParams));
         } catch (e) {
           console.warn('url 查询参数解析失败', e);
         }
@@ -1012,7 +1024,7 @@ export default {
             if (param) {
               queryParams[field] = ['keyword', 'start_time', 'end_time', 'time_range'].includes(field)
                 ? decodeURIComponent(param)
-                : JSON.parse(decodeURIComponent(param));
+                : decodeURIComponent(param) ? JSON.parse(decodeURIComponent(param)) : param;
 
               queryParamsStr[field] = param;
             }
@@ -1129,6 +1141,8 @@ export default {
           async_export: asyncExport,
         } = localConfig;
 
+        localConfig.extra_config && (this.configData = localConfig.extra_config);
+
         fields.forEach((item) => {
           item.minWidth = 0;
           item.filterExpand = false; // 字段过滤展开
@@ -1243,8 +1257,26 @@ export default {
       const begin = currentPage === 1 ? 0 : (currentPage - 1) * pageSize;
 
       try {
-        const res = await this.$http.request('retrieve/getLogTableList', {
-          params: { index_set_id: this.indexId },
+        // const res = await this.$http.request('retrieve/getLogTableList', {
+        //   params: { index_set_id: this.indexId },
+        //   data: {
+        //     ...this.retrieveParams,
+        //     time_range: 'customized',
+        //     begin,
+        //     size: pageSize,
+        //     interval: this.interval,
+        //     // 每次轮循的起始时间
+        //     start_time: formatDate(this.pollingStartTime),
+        //     end_time: formatDate(this.pollingEndTime),
+        //   },
+        // }, { responseType: 'blob' });
+
+        const res = await axios({
+          method: 'post',
+          url: `/search/index_set/${this.indexId}/search/`,
+          withCredentials: true,
+          baseURL: window.AJAX_URL_PREFIX,
+          responseType: 'blob',
           data: {
             ...this.retrieveParams,
             time_range: 'customized',
@@ -1255,6 +1287,8 @@ export default {
             start_time: formatDate(this.pollingStartTime),
             end_time: formatDate(this.pollingEndTime),
           },
+        }).then((res) => {
+          return readBlobRespToJson(res.data);
         });
 
         this.isNextTime = res.data.list.length < pageSize;
@@ -1264,9 +1298,9 @@ export default {
         }
 
         this.retrievedKeyword = this.retrieveParams.keyword;
-        this.tookTime = this.tookTime + res.data.took || 0;
+        this.tookTime = this.tookTime + Number(res.data.took) || 0;
         this.tableData = { ...res.data, finishPolling: this.finishPolling };
-        this.originLogList = this.originLogList.concat(res.data.origin_log_list);
+        this.originLogList = this.originLogList.concat(parseBigNumberList(res.data.origin_log_list));
         this.statisticalFieldsData = this.getStatisticalFieldsData(this.originLogList);
         this.computeRetrieveDropdownData(this.originLogList);
       } catch (err) {
