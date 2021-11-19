@@ -295,10 +295,11 @@
       </div>
     </div>
 
-    <setting-modal
+    <SettingModal
       :index-set-item="indexSetItem"
       :is-show-dialog="isShowSettingModal"
       :select-choice="clickSettingChoice"
+      :total-fields="totalFields"
       @closeSetting="isShowSettingModal = false;"
     />
   </div>
@@ -438,6 +439,7 @@ export default {
       clickSettingChoice: '',
       timeField: '',
       isThollteField: false,
+      globalsData: {},
     };
   },
   computed: {
@@ -529,6 +531,7 @@ export default {
         console.warn(err);
       });
     this.fetchPageData();
+    this.getGlobalsData();
   },
   mounted() {
     if (!this.isHideAutoQueryTips) {
@@ -1447,6 +1450,18 @@ export default {
     handleInitTipsHidden() {
       this.hasExpandInitTipsShown = true;
       this.showExpandInitTips = false;
+    },
+    // 获取全局数据
+    getGlobalsData() {
+      if (Object.keys(this.globalsData).length) {
+        return;
+      }
+      this.$http.request('collect/globals').then((res) => {
+        this.$store.commit('globals/setGlobalsData', res.data);
+      })
+        .catch((e) => {
+          console.warn(e);
+        });
     },
   },
 };

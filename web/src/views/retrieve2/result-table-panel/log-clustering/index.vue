@@ -26,32 +26,42 @@
       <div class="bk-button-group">
         <bk-button
           v-for="(item) of clusterNavList" :key="item.id" size="small"
-          :class="selected === item.id ? 'is-selected' : ''"
-          @click="handleClickNav(item.id)">{{item.name}}</bk-button>
+          :class="active === item.id ? 'is-selected' : ''"
+          @click="handleClickNav(item.id)"
+        >{{item.name}}</bk-button>
       </div>
 
-      <div v-if="selected === '2'" class="fingerprint fljb">
+      <div
+        v-if="active === 'dataFingerprint'"
+        class="fingerprint fljb"
+      >
         <div class="fingerprint-setting fljb">
           <div class="fljb">
             <span>{{$t('同比')}}</span>
             <bk-select
-              :disabled="false"
-              v-model="comparedValue"
+              behavior="simplicity"
               ext-cls="compared-select"
+              v-model="yearOnYearCycle"
+              :disabled="false"
               :clearable="false"
-              behavior="simplicity">
-              <bk-option v-for="option in comparedList"
-                         :key="option.id"
-                         :id="option.id"
-                         :name="option.name">
+              :popover-min-width="120"
+              @change="requestFinger"
+            >
+              <bk-option
+                v-for="option in comparedList"
+                :key="option.id"
+                :id="option.id"
+                :name="option.name"
+              >
               </bk-option>
             </bk-select>
           </div>
 
           <bk-checkbox
-            :true-value="'yes'"
-            :false-value="'no'"
-            v-model="value">
+            :true-value="true"
+            :false-value="false"
+            @change="handleNear24H"
+          >
             <span style="font-size: 12px">{{$t('近24H新增')}}</span>
           </bk-checkbox>
 
@@ -59,7 +69,11 @@
             <span>Partter</span>
             <div class="partter-slider-box fljb">
               <span>{{$t('少')}}</span>
-              <bk-slider class="partter-slider" v-model="number"></bk-slider>
+              <bk-slider
+                class="partter-slider"
+                v-model="partterSize"
+                :show-tip="false"
+                @change="blurPartterSize"></bk-slider>
               <span>{{$t('多')}}</span>
             </div>
           </div>
@@ -74,8 +88,17 @@
     <bk-alert type="info" :title="$t('clusterAlert')" closable></bk-alert>
 
     <div>
-      <ignore-table v-if="selected === '0' || selected === '1'" />
-      <data-fingerprint :compared-value="comparedValue" v-if="selected === '2'" />
+      <IgnoreTable
+        v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
+        v-bind="$attrs"
+        v-on="$listeners"
+        :active="active" />
+      <DataFingerprint
+        v-if="active === 'dataFingerprint'"
+        :year-on-year-cycle="yearOnYearCycle"
+        :finger-list="fingerList"
+        :table-loading="tableLoading"
+      />
     </div>
   </div>
 </template>
@@ -83,105 +106,158 @@
 <script>
 import DataFingerprint from './DataFingerprint';
 import IgnoreTable from './IgnoreTable';
+import { mapGetters } from 'vuex';
 
 export default {
   components: { DataFingerprint, IgnoreTable },
   props: {
+    retrieveParams: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
-      selected: '0',
-      value: '0',
-      number: 100,
+      active: 'ignoreNumbers',
+      partterSize: 100,
+      partterLevel: '01',
+      isNear24H: false,
+      tableLoading: false,
+      yearOnYearCycle: 0,
       clusterNavList: [{
-        id: '0',
+        id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
       }, {
-        id: '1',
+        id: 'ignoreSymbol',
         name: this.$t('忽略符号'),
       }, {
-        id: '2',
+        id: 'dataFingerprint',
         name: this.$t('数据指纹'),
       }],
-      comparedList: [{
-        id: '0',
-        name: '一小时前',
-      }, {
-        id: '1',
-        name: '不对比',
-      }],
-      comparedValue: '0',
+      comparedList: [],
+      fingerList: [],
     };
+  },
+  computed: {
+    ...mapGetters({
+      globalsData: 'globals/globalsData',
+    }),
+  },
+  mounted() {
+    const { log_clustering_level_year_on_year: yearOnYearList } = this.globalsData;
+    this.comparedList = yearOnYearList;
   },
   methods: {
     handleClickNav(id) {
-      this.selected = id;
+      this.active = id;
+      id === 'dataFingerprint' ? this.requestFinger() : this.requestIgnore(id);
+    },
+    handleNear24H(state) {
+      this.isNear24H = state;
+      this.requestFinger();
+    },
+    requestIgnore(type) {
+      console.log(type);
+    },
+    requestFinger() {
+      delete this.retrieveParams.bk_biz_id;
+      delete this.retrieveParams.begin;
+      this.tableLoading = true;
+      this.$http.request('/logClustering/clusterSearch', {
+        parmas: {
+          index_set_id: this.$route.params.indexId,
+        },
+        data: {
+          ...this.retrieveParams,
+          pattern_level: this.partterLevel,
+          show_new_pattern: this.isNear24H,
+          year_on_year_hour: this.yearOnYearCycle,
+        },
+      })
+        .then((res) => {
+          this.fingerList = res.data;
+        })
+        .catch((e) => {
+          console.warn(e);
+        })
+        .finally(() => {
+          this.tableLoading = false;
+        });
+    },
+    blurPartterSize(value) {
+      const { log_clustering_level: clusterLeve } = this.globalsData;
+      let partterSize = parseInt(value / parseInt((100 / clusterLeve.length), 10), 10);
+      if (partterSize === clusterLeve.length) {
+        partterSize = clusterLeve.length - 1;
+      }
+      this.partterLevel = clusterLeve[partterSize];
+      this.requestFinger();
     },
   },
 };
 </script>
 
 <style lang="scss">
-  @import "@/scss/mixins/flex.scss";
+@import "@/scss/mixins/flex.scss";
 
-  .log-cluster-table-container {
-    .cluster-nav {
-      min-width: 760px;
-      margin-bottom: 12px;
-      color: #63656e;
+.log-cluster-table-container {
+  .cluster-nav {
+    min-width: 760px;
+    margin-bottom: 12px;
+    color: #63656e;
 
-      .fingerprint {
-        width: 535px;
-      }
+    .fingerprint {
+      width: 535px;
+    }
 
-      .fingerprint-setting {
-        width: 485px;
-        height: 24px;
-        line-height: 24px;
-        font-size: 12px;
+    .fingerprint-setting {
+      width: 485px;
+      height: 24px;
+      line-height: 24px;
+      font-size: 12px;
 
-        .partter {
-          width: 200px;
+      .partter {
+        width: 200px;
 
-          .partter-slider-box {
-            width: 154px;
-          }
+        .partter-slider-box {
+          width: 154px;
+        }
 
-          .partter-slider {
-            width: 114px;
-          }
+        .partter-slider {
+          width: 114px;
         }
       }
-
-      .download-icon {
-        width: 26px;
-        height: 26px;
-        border: 1px solid #c1c4ca;
-        position: relative;
-        color: #979ba5;
-        cursor: pointer;
-        border-radius: 2px;
-        @include flex-center;
-      }
-      @include flex-justify(space-between);
     }
 
-    .bk-alert {
-      margin-bottom: 16px;
+    .download-icon {
+      width: 26px;
+      height: 26px;
+      border: 1px solid #c1c4ca;
+      position: relative;
+      color: #979ba5;
+      cursor: pointer;
+      border-radius: 2px;
+      @include flex-center;
     }
-  }
-  .compared-select {
-    min-width: 87px;
-    margin-left: 6px;
-    position: relative;
-    top: -3px;
-
-    .bk-select-name {
-      height: 24px;
-    }
-  }
-  .fljb {
-    align-items: center;
     @include flex-justify(space-between);
   }
+
+  .bk-alert {
+    margin-bottom: 16px;
+  }
+}
+.compared-select {
+  min-width: 87px;
+  margin-left: 6px;
+  position: relative;
+  top: -3px;
+
+  .bk-select-name {
+    height: 24px;
+  }
+}
+.fljb {
+  align-items: center;
+  @include flex-justify(space-between);
+}
 </style>

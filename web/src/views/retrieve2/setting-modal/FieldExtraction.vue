@@ -22,8 +22,8 @@
 
 <template>
   <!-- 设置-字段提取 -->
+  <!-- :set-id="configID" :is-set-edit="true" -->
   <div>
-    <!-- :setting-edit="settingEdit"  -->
     <step-field
       v-if="isShowFieldPage"
       :is-clean-field="true"
@@ -34,6 +34,7 @@
 
 <script>
 import StepField from '@/components/data-Access/step-field';
+
 export default {
   components: {
     StepField,
@@ -43,14 +44,18 @@ export default {
       type: Object,
       default: () => {},
     },
+    globalEditable: {
+      type: Boolean,
+      default: true,
+    },
   },
   data() {
     return {
       isShowFieldPage: true,
-      // settingEdit: { isEdit: true, id: 0 },
+      configID: 0,
     };
   },
-  mounted() {
+  computed: {
   },
   methods: {
     resetPage() {

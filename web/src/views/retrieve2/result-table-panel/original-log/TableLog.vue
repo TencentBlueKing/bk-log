@@ -620,7 +620,6 @@ export default {
       }
     },
     handleIconClick(type, content, field, row) {
-      console.log(type, content);
       let value = field.field_type === 'date' ? row[field.field_name] : content;
       value = String(value).replace(/<mark>/g, '')
         .replace(/<\/mark>/g, '');
@@ -639,7 +638,7 @@ export default {
           console.warn(e);
         }
       } else if (['is', 'is not'].includes(type)) {
-        this.$emit('addFilterCondition', field.field_name, type, content.toString());
+        this.$emit('addFilterCondition', field.field_name, type, value.toString());
       }
     },
     // 打开实时日志或上下文弹窗

@@ -270,6 +270,7 @@ class GlobalTypeEnum(ChoicesEnum):
     TIME_FIELD_UNIT = "time_field_unit"
     ES_SOURCE_TYPE = "es_source_type"
     LOG_CLUSTERING_LEVEL = "log_clustering_level"
+    LOG_CLUSTERING_YEAR_ON_YEAR = "log_clustering_level_year_on_year"
 
     _choices_labels = (
         (CATEGORY, _("数据分类")),
@@ -285,6 +286,7 @@ class GlobalTypeEnum(ChoicesEnum):
         (TIME_FIELD_UNIT, _("时间字段单位")),
         (ES_SOURCE_TYPE, _("日志来源类型")),
         (LOG_CLUSTERING_LEVEL, _("日志聚类敏感度")),
+        (LOG_CLUSTERING_YEAR_ON_YEAR, _("日志聚类同比配置")),
     )
 
 
