@@ -56,7 +56,7 @@ export const fieldTypeMap = {
     icon: 'bk-icon icon-clock',
   },
   boolean: {
-    name: '',
-    icon: '',
+    name: i18n.t('布尔'),
+    icon: 'log-icon icon-boolean',
   },
 };
