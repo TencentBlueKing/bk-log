@@ -338,8 +338,8 @@ export default {
     width: 20px;
     min-width: 20px;
     max-width: 20px;
-    background: #a09e21;
-    color: #f4f7fa;
+    background: #FFD695;
+    color: #FFFFFF;
     font-weight: bold;
     font-size: 12px;
     @include flex-center;
