@@ -59,6 +59,8 @@
             <template slot-scope="{ row, column, $index }">
           <EventPopover
             :is-search="false"
+            :placement="'top'"
+            :tippy-options="{ offset: '0, 10' }"
             @eventClick="(operation) => handleMenuClick({ operation, value: JSON.stringify(row) })">
             <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
               <!-- eslint-disable-next-line vue/no-v-html -->
