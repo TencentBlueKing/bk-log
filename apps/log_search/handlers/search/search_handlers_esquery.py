@@ -246,7 +246,7 @@ class SearchHandler(object):
             self.bkmonitor(field_result_list),
             self.async_export(field_result),
             self.ip_topo_switch(),
-            self.clustering_config,
+            self.clustering_config(),
         ]:
             result_dict["config"].append(fields_config)
 
