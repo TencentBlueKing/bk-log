@@ -20,7 +20,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import copy
 import json
 
-from django.db.transaction import atomic
 
 from apps.api import BkDataDatabusApi
 from apps.log_clustering.constants import (
@@ -160,12 +159,7 @@ class ClusteringConfigHandler(object):
         etl_config = collector_config.get_etl_config()
         self.create_or_update_bkdata_etl(etl_config["fields"], etl_config["etl_params"])
 
-    @atomic
     def create_or_update_bkdata_etl(self, fields, etl_params):
-        self.data.etl_fields = fields
-        self.data.etl_params = etl_params
-        self.data.save()
-
         collector_config = CollectorConfig.objects.get(collector_config_id=self.data.collector_config_id)
         _, table_id = collector_config.table_id.split(".")
         etl_storage = EtlStorage.get_instance(etl_config=collector_config.etl_config)

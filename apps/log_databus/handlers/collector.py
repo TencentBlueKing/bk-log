@@ -1362,8 +1362,8 @@ class CollectorHandler(object):
         :return:
         """
         param = {"subscription_id_list": [self.data.subscription_id]}
-        status_result = NodeApi.get_subscription_instance_status(param)
-        instance_status = self.format_subscription_instance_status(status_result[0])
+        status_result, *_ = NodeApi.get_subscription_instance_status(param)
+        instance_status = self.format_subscription_instance_status(status_result)
 
         # 如果采集目标是HOST-INSTANCE
         if self.data.target_node_type == TargetNodeTypeEnum.INSTANCE.value:
