@@ -18,6 +18,8 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.log_databus.exceptions import ArchiveNotFound
+from apps.utils.function import map_if
+from apps.utils.thread import MultiExecuteFunc
 
 """
 databus
@@ -32,7 +34,7 @@ from django.utils.functional import cached_property  # noqa
 from django.utils.translation import ugettext_lazy as _  # noqa
 from django_jsonfield_backport.models import JSONField  # noqa
 
-from apps.api import CmsiApi  # noqa
+from apps.api import CmsiApi, TransferApi  # noqa
 from apps.log_databus.constants import (  # noqa
     TargetObjectTypeEnum,  # noqa
     TargetNodeTypeEnum,  # noqa
@@ -101,6 +103,37 @@ class CollectorConfig(SoftDeleteModel):
     storage_replies = models.IntegerField(_("ES副本数"), null=True, default=1, blank=True)
     bkdata_data_id_sync_times = models.IntegerField(_("调用数据平台创建data_id失败数"), default=0)
     collector_config_name_en = models.CharField(_("采集项英文名"), max_length=255, null=True, blank=True, default="")
+
+    @property
+    def is_clustering(self) -> bool:
+        from apps.log_clustering.models import ClusteringConfig
+
+        return ClusteringConfig.objects.filter(
+            collector_config_id=self.collector_config_id, signature_enable=True
+        ).exists()
+
+    def get_etl_config(self):
+        multi_execute_func = MultiExecuteFunc()
+        multi_execute_func.append(
+            "result_table_config", TransferApi.get_result_table, params={"table_id": self.table_id}, use_request=False
+        )
+        multi_execute_func.append(
+            "result_table_storage",
+            TransferApi.get_result_table_storage,
+            params={"result_table_list": self.table_id, "storage_type": "elasticsearch"},
+            use_request=False,
+        )
+        result = multi_execute_func.run()
+        from apps.log_databus.handlers.etl_storage import EtlStorage
+
+        self.etl_config = EtlStorage.get_etl_config(result["result_table_config"])
+        etl_storage = EtlStorage.get_instance(etl_config=self.etl_config)
+        etl_config = etl_storage.parse_result_table_config(
+            result_table_config=result["result_table_config"],
+            result_table_storage=result["result_table_storage"][self.table_id],
+        )
+        etl_config["fields"] = map_if(etl_config["fields"], if_func=lambda x: not x["is_built_in"])
+        return etl_config
 
     @property
     def category_name(self):

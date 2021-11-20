@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import copy
 
 from apps.log_databus.constants import EtlConfig
 from apps.log_databus.handlers.etl_storage import EtlStorage
@@ -47,6 +48,7 @@ class BkLogJsonEtlStorage(EtlStorage):
             "separator_node_action": "json",
             "separator_node_name": self.separator_node_name,
             "separator_fields_remove": "",
+            "etl_flat": etl_params.get("etl_flat", False),
         }
 
         # 保存删除的字段
@@ -68,7 +70,7 @@ class BkLogJsonEtlStorage(EtlStorage):
     def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
         retain_original_text = etl_params.get("retain_original_text", False)
         built_in_fields = built_in_config.get("fields", [])
-        result_table_fields = self.get_result_table_fields(fields, etl_params, built_in_config)
+        result_table_fields = self.get_result_table_fields(fields, etl_params, copy.deepcopy(built_in_config))
         time_field = result_table_fields.get("time_field")
         bkdata_fields = [field for field in fields if not field["is_delete"]]
         return {
@@ -120,10 +122,14 @@ class BkLogJsonEtlStorage(EtlStorage):
                                             "subtype": "assign_obj",
                                             "label": "labelb140",
                                             "assign": [
-                                                {"key": "iterationindex", "assign_to": "iterationIndex", "type": "int"},
-                                                {"key": "data", "assign_to": "log", "type": "text"}
+                                                {"key": "data", "assign_to": "data", "type": "text"}
                                                 if retain_original_text
                                                 else {},
+                                            ]
+                                            + [
+                                                self._to_bkdata_assign(built_in_field)
+                                                for built_in_field in built_in_fields
+                                                if built_in_field.get("flat_field", False)
                                             ],
                                             "type": "assign",
                                         },

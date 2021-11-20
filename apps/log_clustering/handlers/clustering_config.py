@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import json
 
+
 from apps.log_clustering.constants import (
     CLUSTERING_CONFIG_EXCLUDE,
     DEFAULT_CLUSTERING_FIELDS,
@@ -26,16 +27,24 @@ from apps.log_clustering.constants import (
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.models import ClusteringConfig
+from apps.log_databus.handlers.collector import CollectorHandler
+from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.models import model_to_dict
+from apps.utils.function import map_if
 
 
 class ClusteringConfigHandler(object):
-    def __init__(self, index_set_id=None):
+    def __init__(self, index_set_id=None, collector_config_id=None):
         self.index_set_id = index_set_id
         self.data = None
         if index_set_id:
             try:
                 self.data = ClusteringConfig.objects.get(index_set_id=self.index_set_id)
+            except ClusteringConfig.DoesNotExist:
+                raise ClusteringConfigNotExistException()
+        if collector_config_id:
+            try:
+                self.data = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
             except ClusteringConfig.DoesNotExist:
                 raise ClusteringConfigNotExistException()
 
@@ -130,3 +139,37 @@ class ClusteringConfigHandler(object):
             if isinstance(token_with_regex, dict):
                 result[token_with_regex["name"]] = token_with_regex["regex"]
         return result
+
+    def collector_config_reset(self, clustering_config: ClusteringConfig):
+        # todo need reset collector_config
+        # collector_config = CollectorConfig.objects.get(collector_config_id=clustering_config.collector_config_id)
+        pass
+
+    def change_data_stream(self, topic: str, partition: int = 1):
+        """
+        change_data_stream
+        :param topic:
+        :param partition:
+        :return:
+        """
+        collector_handler = CollectorHandler(self.data.collector_config_id)
+        self.data.log_bk_data_id = CollectorScenario.change_data_stream(
+            collector_handler.data, mq_topic=topic, mq_partition=partition
+        )
+        self.data.save()
+        collector_detail = collector_handler.retrieve()
+
+        # need drop built in field
+        collector_detail["fields"] = map_if(collector_detail["fields"], if_func=lambda field: not field["is_built_in"])
+        from apps.log_databus.handlers.etl import EtlHandler
+
+        EtlHandler(self.data.collector_config_id).update_or_create(
+            collector_detail["etl_config"],
+            collector_detail["table_id"],
+            collector_detail["storage_cluster_id"],
+            collector_detail["retention"],
+            collector_detail["allocation_min_days"],
+            collector_detail["storage_replies"],
+            etl_params=collector_detail["etl_params"],
+            fields=collector_detail["fields"],
+        )

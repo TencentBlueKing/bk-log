@@ -94,6 +94,7 @@ class EtlStorage(object):
         """
         # field_list
         field_list = built_in_config.get("fields", [])
+        etl_flat = etl_params.get("etl_flat", False)
 
         # 是否保留原文
         if etl_params.get("retain_original_text"):
@@ -149,8 +150,9 @@ class EtlStorage(object):
             # ES_DOC_VALUES
             field_option["es_doc_values"] = field["is_dimension"]
 
-            # REAL_PATH
-            field_option["real_path"] = f"{self.separator_node_name}.{source_field}"
+            if not etl_flat:
+                # REAL_PATH
+                field_option["real_path"] = f"{self.separator_node_name}.{source_field}"
 
             # 时间字段处理
             if field["is_time"]:
@@ -296,6 +298,7 @@ class EtlStorage(object):
         )
         built_in_config = collector_scenario.get_built_in_config(es_version)
         result_table_config = self.get_result_table_config(fields, etl_params, built_in_config, es_version=es_version)
+
         params.update(result_table_config)
 
         # 字段mapping优化
@@ -364,10 +367,16 @@ class EtlStorage(object):
             raise EtlParseTimeFieldException()
         time_field = copy.deepcopy(time_fields[0])
 
+        # log clustering fields
+        log_clustering_fields = {field["field_name"] for field in CollectorScenario.log_clustering_fields()}
         for field in result_table_config["field_list"]:
             # 判断是不是标准字段
             if not field.get("is_built_in", False):
                 field["is_built_in"] = True if field["field_name"].lower() in built_in_fields else False
+
+            # 聚类保留字段
+            if field["field_name"] in log_clustering_fields:
+                continue
 
             # 如果有指定别名，则需要调转位置(field_name：ES入库的字段名称；alias_name：数据源的字段名称)
             field_option = field.get("option", {})
@@ -427,12 +436,13 @@ class EtlStorage(object):
         collector_config["fields"] = sorted(field_list, key=lambda x: x.get("option", {}).get("field_index", 0))
         return collector_config
 
-    def _to_bkdata_assign(self, field, time_field):
+    def _to_bkdata_assign(self, field):
+        key = field.get("alias_name")
+        if not key:
+            key = field.get("field_name")
         return {
-            "key": field.get("alias_name"),
-            "assign_to": field.get("field_name")
-            if field.get("field_name") != time_field.get("field_name")
-            else field.get("alias_name"),
+            "key": key,
+            "assign_to": key,
             "type": BKDATA_ES_TYPE_MAP.get(field.get("option").get("es_type"), "string"),
         }
 
@@ -448,9 +458,10 @@ class EtlStorage(object):
 
     def _get_bkdata_default_fields(self, built_in_fields, time_field):
         result = [
-            self._to_bkdata_assign(built_in_field, time_field)
+            self._to_bkdata_assign(built_in_field)
             for built_in_field in built_in_fields
-            if built_in_field.get("field_name") not in ["iterationIndex", "log"]
+            if not built_in_field.get("flat_field", False)
         ]
-        result.append(self._to_bkdata_assign(time_field, time_field))
+        if not time_field.get("option", {}).get("real_path"):
+            result.append(self._to_bkdata_assign(time_field))
         return result

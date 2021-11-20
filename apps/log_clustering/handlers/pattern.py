@@ -30,6 +30,7 @@ from apps.log_clustering.constants import (
     NEW_CLASS_QUERY_TIME_RANGE,
     NEW_CLASS_QUERY_FIELDS,
     NEW_CLASS_SENSITIVITY_FIELD,
+    DOUBLE_PERCENTAGE,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig
@@ -46,7 +47,9 @@ class PatternHandler:
         self._pattern_level = query["pattern_level"]
         self._show_new_pattern = query["show_new_pattern"]
         self._year_on_year_hour = query["year_on_year_hour"]
-        self._clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
+        self._clustering_config = ClusteringConfig.objects.filter(
+            index_set_id=index_set_id, signature_enable=True
+        ).first()
         self._query = query
         if not self._clustering_config:
             raise ClusteringConfigNotExistException
@@ -123,7 +126,7 @@ class PatternHandler:
     @staticmethod
     def _year_on_year_calculate_percentage(target, compare):
         if compare == MIN_COUNT:
-            return MIN_COUNT
+            return DOUBLE_PERCENTAGE
         return ((target - compare) / compare) * PERCENTAGE_RATE
 
     @staticmethod
