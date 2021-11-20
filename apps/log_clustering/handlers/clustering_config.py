@@ -17,11 +17,9 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import copy
 import json
 
 
-from apps.api import BkDataDatabusApi
 from apps.log_clustering.constants import (
     CLUSTERING_CONFIG_EXCLUDE,
     DEFAULT_CLUSTERING_FIELDS,
@@ -29,11 +27,8 @@ from apps.log_clustering.constants import (
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.models import ClusteringConfig
-from apps.log_databus.constants import BKDATA_ES_TYPE_MAP
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
-from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig
 from apps.models import model_to_dict
 from apps.utils.function import map_if
 
@@ -149,58 +144,6 @@ class ClusteringConfigHandler(object):
         # todo need reset collector_config
         # collector_config = CollectorConfig.objects.get(collector_config_id=clustering_config.collector_config_id)
         pass
-
-    def sync_bkdata_etl(self):
-        """
-        must at change_data_stream before apply
-        :return:
-        """
-        collector_config = CollectorConfig.objects.get(collector_config_id=self.data.collector_config_id)
-        etl_config = collector_config.get_etl_config()
-        self.create_or_update_bkdata_etl(etl_config["fields"], etl_config["etl_params"])
-
-    def create_or_update_bkdata_etl(self, fields, etl_params):
-        collector_config = CollectorConfig.objects.get(collector_config_id=self.data.collector_config_id)
-        _, table_id = collector_config.table_id.split(".")
-        etl_storage = EtlStorage.get_instance(etl_config=collector_config.etl_config)
-
-        # 获取清洗配置
-        collector_scenario = CollectorScenario.get_instance(
-            collector_scenario_id=collector_config.collector_scenario_id
-        )
-        built_in_config = collector_scenario.get_built_in_config()
-        fields_config = etl_storage.get_result_table_config(fields, etl_params, copy.deepcopy(built_in_config)).get(
-            "field_list", []
-        )
-        bkdata_json_config = etl_storage.get_bkdata_etl_config(fields, etl_params, built_in_config)
-        params = {
-            "raw_data_id": self.data.bkdata_data_id,
-            "result_table_name": collector_config.collector_config_name_en,
-            "result_table_name_alias": collector_config.collector_config_name_en,
-            "clean_config_name": collector_config.collector_config_name,
-            "description": collector_config.description,
-            "bk_biz_id": collector_config.bk_biz_id,
-            "fields": [
-                {
-                    "field_name": field.get("alias_name") if field.get("alias_name") else field.get("field_name"),
-                    "field_type": BKDATA_ES_TYPE_MAP.get(field.get("option").get("es_type"), "string"),
-                    "field_alias": field.get("description") if field.get("description") else field.get("field_name"),
-                    "is_dimension": field.get("tag", "dimension") == "dimension",
-                    "field_index": index,
-                }
-                for index, field in enumerate(fields_config, 1)
-            ],
-            "json_config": json.dumps(bkdata_json_config),
-        }
-        if not self.data.bkdata_etl_processing_id:
-            result = BkDataDatabusApi.databus_cleans_post(params)
-            self.data.bkdata_etl_processing_id = result["processing_id"]
-            self.data.bkdata_etl_result_table_id = result["result_table_id"]
-            self.data.save()
-            return
-
-        params.update({"processing_id": self.data.bkdata_etl_processing_id})
-        BkDataDatabusApi.databus_cleans_put(params)
 
     def change_data_stream(self, topic: str, partition: int = 1):
         """
