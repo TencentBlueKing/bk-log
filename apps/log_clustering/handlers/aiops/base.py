@@ -31,11 +31,8 @@ class BaseAiopsHandler(object):
             raise ClusteringClosedException()
         self.conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
 
-    def _set_username(self, request_data_cls, bk_username: str = "", is_dataclass: bool = True):
-        if is_dataclass:
-            request_dict = asdict(request_data_cls)
-        else:
-            request_dict = request_data_cls
+    def _set_username(self, request_data_cls, bk_username: str = ""):
+        request_dict = asdict(request_data_cls)
 
         logger.info("request_dict=> {}".format(request_dict))
         if bk_username:

@@ -135,6 +135,9 @@ class CollectorConfig(SoftDeleteModel):
         etl_config["fields"] = map_if(etl_config["fields"], if_func=lambda x: not x["is_built_in"])
         return etl_config
 
+    def get_result_table_kafka_config(self):
+        return TransferApi.get_data_id({"bk_data_id": self.bk_data_id})["mq_config"]
+
     @property
     def category_name(self):
         """

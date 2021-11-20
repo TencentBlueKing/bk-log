@@ -20,17 +20,19 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import copy
 import json
 
-from apps.api import BkDataDatabusApi, BkDataMetaApi
+import settings
+from apps.api import BkDataDatabusApi, BkDataMetaApi, BkDataAccessApi
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.constants import BKDATA_ES_TYPE_MAP
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.models import CollectorConfig
+from apps.utils.log import logger
 
 
 class DataAccessHandler(BaseAiopsHandler):
-    def __init__(self, raw_data_id: int):
+    def __init__(self, raw_data_id: int = None):
         super(DataAccessHandler, self).__init__()
         self.raw_data_id = raw_data_id
 
@@ -41,10 +43,70 @@ class DataAccessHandler(BaseAiopsHandler):
     def get_fields(cls, result_table_id: str):
         return BkDataMetaApi.result_tables.fields({"result_table_id": result_table_id})
 
+    def create_bkdata_access(self, collector_config_id):
+        collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
+        clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
+
+        if clustering_config.bkdata_data_id:
+            logger.info("bkdata access has exists")
+            return
+
+        kafka_config = collector_config.get_result_table_kafka_config()
+
+        # 计算平台要求，raw_data_name不能超过50个字符
+        raw_data_name = "{}_{}".format("bk_log", collector_config.collector_config_name_en)[-50:]
+        params = {
+            "bk_username": self.conf.get("bk_username"),
+            "data_scenario": "queue",
+            "bk_biz_id": self.conf.get("bk_biz_id"),
+            "description": "",
+            "access_raw_data": {
+                "raw_data_name": raw_data_name,
+                "maintainer": self.conf.get("bk_username"),
+                "raw_data_alias": collector_config.collector_config_name,
+                "data_source": "kafka",
+                "data_encoding": "UTF-8",
+                "sensitivity": "private",
+                "description": f"接入配置 ({collector_config.description})",
+                "tags": [],
+                "data_source_tags": ["src_kafka"],
+            },
+            "access_conf_info": {
+                "collection_model": {"collection_type": "incr", "start_at": 1, "period": "-1"},
+                "resource": {
+                    "type": "kafka",
+                    "scope": [
+                        {
+                            "master": self._get_kafka_broker_url(kafka_config["cluster_config"]["domain_name"]),
+                            "group": f"{self.conf.get('kafka_consumer_group_prefix', 'bkmonitorv3_transfer')}"
+                            f"{kafka_config['storage_config']['topic']}",
+                            "topic": kafka_config["storage_config"]["topic"],
+                            "tasks": kafka_config["storage_config"]["partition"],
+                            "use_sasl": kafka_config["cluster_config"]["is_ssl_verify"],
+                            "security_protocol": "SASL_PLAINTEXT",
+                            "sasl_mechanism": "SCRAM-SHA-512",
+                            "user": kafka_config["auth_info"]["password"],
+                            "password": kafka_config["auth_info"]["username"],
+                            "auto_offset_reset": "latest",
+                        }
+                    ],
+                },
+            },
+        }
+        result = BkDataAccessApi.deploy_plan_post(params)
+        logger.info(f"access to bkdata, result: {result}")
+        clustering_config.bkdata_data_id = result["raw_data_id"]
+        clustering_config.save()
+
+    def _get_kafka_broker_url(self, broker):
+        if "consul" in broker and settings.DEFAULT_KAFKA_HOST:
+            return settings.DEFAULT_KAFKA_HOST
+        return broker
+
     def sync_bkdata_etl(self, collector_config_id):
         collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
         etl_config = collector_config.get_etl_config()
-        self._create_or_update_bkdata_etl(etl_config["fields"], etl_config["etl_params"])
+        self._create_or_update_bkdata_etl(collector_config_id, etl_config["fields"], etl_config["etl_params"])
 
     def _create_or_update_bkdata_etl(self, collector_config_id, fields, etl_params):
         clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
@@ -79,9 +141,9 @@ class DataAccessHandler(BaseAiopsHandler):
                 for index, field in enumerate(fields_config, 1)
             ],
             "json_config": json.dumps(bkdata_json_config),
+            "bk_username": self.conf.get("bk_username"),
         }
 
-        params = self._set_username(params)
         if not clustering_config.bkdata_etl_processing_id:
             result = BkDataDatabusApi.databus_cleans_post(params)
             clustering_config.bkdata_etl_processing_id = result["processing_id"]
