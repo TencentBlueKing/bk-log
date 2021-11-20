@@ -47,7 +47,9 @@ class PatternHandler:
         self._pattern_level = query["pattern_level"]
         self._show_new_pattern = query["show_new_pattern"]
         self._year_on_year_hour = query["year_on_year_hour"]
-        self._clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
+        self._clustering_config = ClusteringConfig.objects.filter(
+            index_set_id=index_set_id, signature_enable=True
+        ).first()
         self._query = query
         if not self._clustering_config:
             raise ClusteringConfigNotExistException

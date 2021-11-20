@@ -108,7 +108,9 @@ class CollectorConfig(SoftDeleteModel):
     def is_clustering(self) -> bool:
         from apps.log_clustering.models import ClusteringConfig
 
-        return ClusteringConfig.objects.filter(collector_config_id=self.collector_config_id).exists()
+        return ClusteringConfig.objects.filter(
+            collector_config_id=self.collector_config_id, signature_enable=True
+        ).exists()
 
     def get_etl_config(self):
         multi_execute_func = MultiExecuteFunc()
