@@ -38,6 +38,7 @@ from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
 from apps.utils.bkdata import BkData
 from apps.utils.db import array_hash
 from apps.utils.local import get_local_param
+from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import generate_time_range_shift, generate_time_range
 
 
@@ -77,11 +78,10 @@ class PatternHandler:
         }
         """
 
-        pattern_aggs = self._get_pattern_aggs_result(self._index_set_id, self._query)
-        year_on_year_result = self._get_year_on_year_aggs_result()
-        new_class = set()
-        if self._show_new_pattern:
-            new_class = self._get_new_class()
+        result = self._multi_query()
+        pattern_aggs = result.get("pattern_aggs", [])
+        year_on_year_result = result.get("year_on_year_result", {})
+        new_class = result.get("new_class", set())
 
         pattern_map = AiopsSignatureAndPattern.objects.filter(model_id=self._clustering_config.model_id).values(
             "signature", "pattern"
@@ -106,6 +106,17 @@ class PatternHandler:
                 }
             )
         return result
+
+    def _multi_query(self):
+        multi_execute_func = MultiExecuteFunc()
+        multi_execute_func.append(
+            "pattern_aggs",
+            lambda p: self._parse_pattern_aggs_result(p["index_set_id"], p["query"]),
+            {"index_set_id": self._index_set_id, "query": self._query},
+        )
+        multi_execute_func.append("year_on_year_result", lambda p: self._parse_pattern_aggs_result())
+        multi_execute_func.append("new_class", lambda p: self._get_new_class())
+        return multi_execute_func.run()
 
     def _get_pattern_aggs_result(self, index_set_id, query):
         query["fields"] = [self.pattern_aggs_field]
@@ -149,6 +160,8 @@ class PatternHandler:
         return pattern_field_aggs.get("buckets", [])
 
     def _get_new_class(self):
+        if not self._show_new_pattern:
+            return set()
         start_time, end_time = generate_time_range(NEW_CLASS_QUERY_TIME_RANGE, "", "", get_local_param("time_zone"))
         new_classes = (
             BkData(self._clustering_config.new_cls_pattern_rt)
