@@ -70,6 +70,8 @@ class ClusteringConfigAdmin(AppModelAdmin):
         "clustering_fields",
         "filter_rules",
         "bk_biz_id",
+        "result_table_id",
+        "pre_treat_flow",
     ]
     search_fields = [
         "collector_id",
@@ -83,4 +85,11 @@ class ClusteringConfigAdmin(AppModelAdmin):
         "delimeter",
         "max_log_length",
         "is_case_sensitive",
+        "result_table_id",
+        "new_cls_pattern_rt",
+        "bkdata_data_id",
+        "bkdata_etl_result_table_id",
+        "bkdata_etl_processing_id",
+        "log_bk_data_id",
+        "signature_enable",
     ]
