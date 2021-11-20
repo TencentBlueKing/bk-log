@@ -1604,7 +1604,10 @@ export default {
           .bk-button {
             flex:1;
             height: 100%;
+            border-top: 0;
             background: #fafbfd;
+            border-color: #dcdee5;
+            box-sizing: content-box;
 
             &.is-selected {
               background: #ffffff;
@@ -1612,10 +1615,12 @@ export default {
               border-bottom: none;
             }
 
-            &.is-selected,
+            &.is-selected {
+              border-color: #dcdee5;
+              color: #3a84ff;
+            }
             &:hover {
-              border-color: #c4c6cc;
-              color: #63656e;
+              border-color: #dcdee5;
             }
           }
         }

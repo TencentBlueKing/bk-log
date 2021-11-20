@@ -23,189 +23,16 @@
 <template>
   <div>
     <div class="result-table-container" data-test-id="retrieve_from_fieldForm">
-      <!-- 原始 -->
-      <bk-table
-        v-show="showOriginal"
-        ref="resultOriginTable"
-        :class="['king-table', { 'is-wrap': isWrap }]"
-        :data="tableList"
-        :show-header="false"
-        :outer-border="false"
-        :empty-text="$t('retrieve.notData')"
-        @row-click="tableRowClick"
-        @row-mouse-enter="handleMouseEnter"
-        @row-mouse-leave="handleMouseLeave"
-        @header-dragend="handleHeaderDragend">
-        <!-- 展开详情 -->
-        <bk-table-column
-          type="expand"
-          width="30"
-          align="center">
-          <template slot-scope="{ $index }">
-            <expand-view
-              v-bind="$attrs"
-              :data="originTableList[$index]"
-              :total-fields="totalFields"
-              :visible-fields="visibleFields"
-              @menuClick="handleMenuClick">
-            </expand-view>
-          </template>
-        </bk-table-column>
-        <!-- 显示字段 -->
-        <template>
-          <bk-table-column class-name="original-time" width="130">
-            <template slot-scope="{ row }">
-              <span class="time-field">{{ formatDate(Number(row[timeField]) || '') }}</span>
-            </template>
-          </bk-table-column>
-          <bk-table-column :class-name="`original-str${isWrap ? ' is-wrap' : ''}`">
-            <!-- eslint-disable-next-line -->
-            <template slot-scope="{ row, column, $index }">
-              <EventPopover
-                :is-search="false"
-                @eventClick="(operation) => handleMenuClick({ operation, value: JSON.stringify(row) })">
-                <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <!-- <span>{{ JSON.stringify(row) }}</span> -->
-                  <text-highlight
-                    :queries="getMarkList(JSON.stringify(row))">
-                    {{formatterStr(JSON.stringify(row))}}
-                  </text-highlight>
-                  <p
-                    v-if="!cacheExpandStr.includes($index)"
-                    class="show-whole-btn"
-                    @click.stop="handleShowWhole($index)">
-                    {{ $t('展开全部') }}
-                  </p>
-                </div>
-              </EventPopover>
-            </template>
-          </bk-table-column>
-        </template>
-        <!-- 操作按钮 -->
-        <bk-table-column
-          v-if="showHandleOption"
-          :label="$t('retrieve.operate')"
-          :width="84"
-          align="right"
-          :resizable="false">
-          <!-- eslint-disable-next-line -->
-          <template slot-scope="{ row, column, $index }">
-            <operator-tools
-              :index="$index"
-              :cur-hover-index="curHoverIndex"
-              :show-realtime-log="showRealtimeLog"
-              :show-context-log="showContextLog"
-              :show-monitor-web="showMonitorWeb"
-              :show-web-console="showWebConsole"
-              :handle-click="(event) => handleClickTools(event, row)">
-            </operator-tools>
-          </template>
-        </bk-table-column>
-        <!-- 初次加载骨架屏loading -->
-        <bk-table-column v-if="tableLoading" slot="empty">
-          <retrieve-loader
-            is-loading
-            :is-original-field="showOriginal"
-            :visible-fields="visibleFields">
-          </retrieve-loader>
-        </bk-table-column>
-        <!-- 下拉刷新骨架屏loading -->
-        <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
-          <retrieve-loader
-            :is-page-over="isPageOver"
-            :is-original-field="showOriginal"
-            :visible-fields="visibleFields">
-          </retrieve-loader>
-        </template>
-      </bk-table>
-
-      <!-- 表格 -->
-      <bk-table
-        v-show="!showOriginal"
-        ref="resultTable"
-        :class="['king-table', { 'is-wrap': isWrap }]"
-        :data="tableList"
-        :empty-text="$t('retrieve.notData')"
-        :show-header="!tableLoading"
-        @row-click="tableRowClick"
-        @row-mouse-enter="handleMouseEnter"
-        @row-mouse-leave="handleMouseLeave"
-        @header-dragend="handleHeaderDragend">
-        <!-- 展开详情 -->
-        <bk-table-column
-          type="expand"
-          width="30"
-          align="center"
-          v-if="visibleFields.length">
-          <template slot-scope="{ $index }">
-            <expand-view
-              v-bind="$attrs"
-              :data="originTableList[$index]"
-              :total-fields="totalFields"
-              :visible-fields="visibleFields"
-              @menuClick="handleMenuClick">
-            </expand-view>
-          </template>
-        </bk-table-column>
-        <!-- 显示字段 -->
-        <template v-for="(field,index) in visibleFields">
-          <bk-table-column
-            align="left"
-            :key="field.field_name"
-            :min-width="field.minWidth"
-            :render-header="renderHeaderAliasName"
-            :index="index"
-            :width="field.width">
-            <template slot-scope="{ row }">
-              <keep-alive>
-                <TableColumn
-                  :is-wrap="isWrap"
-                  :content="tableRowDeepView(row, field.field_name, field.field_type)"
-                  :field-type="field.field_type"
-                  @iconClick="(type, content) => handleIconClick(type, content, field, row)"
-                ></TableColumn>
-              </keep-alive>
-            </template>
-          </bk-table-column>
-        </template>
-        <!-- 操作按钮 -->
-        <bk-table-column
-          v-if="showHandleOption"
-          :label="$t('retrieve.operate')"
-          :width="84"
-          align="right"
-          :resizable="false">
-          <!-- eslint-disable-next-line -->
-          <template slot-scope="{ row, column, $index }">
-            <operator-tools
-              :index="$index"
-              :cur-hover-index="curHoverIndex"
-              :show-realtime-log="showRealtimeLog"
-              :show-context-log="showContextLog"
-              :show-monitor-web="showMonitorWeb"
-              :show-web-console="showWebConsole"
-              :handle-click="(event) => handleClickTools(event, row)">
-            </operator-tools>
-          </template>
-        </bk-table-column>
-        <!-- 初次加载骨架屏loading -->
-        <bk-table-column v-if="tableLoading" slot="empty">
-          <retrieve-loader
-            is-loading
-            :is-original-field="showOriginal"
-            :visible-fields="visibleFields">
-          </retrieve-loader>
-        </bk-table-column>
-        <!-- 下拉刷新骨架屏loading -->
-        <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
-          <retrieve-loader
-            :is-page-over="isPageOver"
-            :is-original-field="showOriginal"
-            :visible-fields="visibleFields">
-          </retrieve-loader>
-        </template>
-      </bk-table>
+      <keep-alive>
+        <component
+          :is="`${showOriginal ? 'OriginalList' : 'TableList'}`"
+          v-bind="$attrs"
+          v-on="$listeners"
+          :table-list="tableList"
+          :retrieve-params="retrieveParams"
+          :handle-click-tools="handleClickTools"
+        ></component>
+      </keep-alive>
 
       <!-- 表格底部内容 -->
       <p class="more-desc" v-if="tableList.length === limitCount">{{ $t('retrieve.showMore') }}
@@ -243,44 +70,21 @@
 
 <script>
 import { mapState } from 'vuex';
-import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import RealTimeLog from '../../result-comp/RealTimeLog';
 import ContextLog from '../../result-comp/ContextLog';
-import TableColumn from '../../result-comp/TableColumn';
-import ExpandView from './ExpandView.vue';
-import { formatDate } from '@/common/util';
-import RetrieveLoader from '@/skeleton/retrieve-loader';
-import EventPopover from '../../result-comp/EventPopover.vue';
-import TextHighlight from 'vue-text-highlight';
-import OperatorTools from './OperatorTools';
+import OriginalList from './OriginalList';
+import TableList from './TableList';
 
 export default {
   components: {
-    TableColumn,
     RealTimeLog,
     ContextLog,
-    ExpandView,
-    RetrieveLoader,
-    EventPopover,
-    TextHighlight,
-    OperatorTools,
+    OriginalList,
+    TableList,
   },
-  mixins: [tableRowDeepViewMixin],
   props: {
-    tableLoading: {
-      type: Boolean,
-      required: true,
-    },
     retrieveParams: {
       type: Object,
-      required: true,
-    },
-    visibleFields: {
-      type: Array,
-      required: true,
-    },
-    totalFields: {
-      type: Array,
       required: true,
     },
     fieldAliasMap: {
@@ -293,73 +97,19 @@ export default {
       type: Boolean,
       default: false,
     },
-    showRealtimeLog: {
-      type: Boolean,
-      required: true,
-    },
-    showContextLog: {
-      type: Boolean,
-      required: true,
-    },
-    showWebConsole: {
-      type: Boolean,
-      required: true,
-    },
-    bkMonitorUrl: {
-      type: Boolean,
-      required: true,
-    },
-    asyncExportUsable: {
-      type: Boolean,
-      default: true,
-    },
-    asyncExportUsableReason: {
-      type: String,
-      default: '',
-    },
     tableList: {
       type: Array,
       required: true,
     },
-    originTableList: {
-      type: Array,
-      required: true,
-    },
-    isPageOver: {
-      type: Boolean,
-      required: false,
-    },
     showOriginal: {
-      type: Boolean,
-      default: false,
-    },
-    timeField: {
-      type: String,
-      default: '',
-    },
-    isWrap: {
       type: Boolean,
       default: false,
     },
   },
   data() {
     return {
-      formatDate,
-      throttle: false, // 滚动节流 是否进入cd
-      finishPolling: false,
-      count: 0, // 数据总条数
-      pageSize: 50, // 每页展示多少数据
-      totalPage: 1,
-      currentPage: 1, // 当前加载了多少页
-      totalCount: 0,
-      scrollHeight: 0,
       limitCount: 2000,
-      fieldsSettingLoading: false,
-      webConsoleLoading: false, // 点击 WebConsole 时表格 loading
-      cacheOpenMoreList: [], // 暂存点击打开的项集合
-      curHoverIndex: -1, // 当前鼠标hover行的索引
-      showScrollTop: false, // 显示滚动到顶部icon
-      isInit: false,
+      webConsoleLoading: false,
       logDialog: {
         title: '',
         type: '',
@@ -369,7 +119,6 @@ export default {
         fullscreen: true,
         data: {},
       },
-      cacheExpandStr: [],
     };
   },
   computed: {
@@ -381,41 +130,8 @@ export default {
     showMonitorWeb() {
       return this.bkMonitorUrl;
     },
-    showHandleOption() {
-      const { showRealtimeLog, showContextLog, showWebConsole, showMonitorWeb, visibleFields } = this;
-      if (visibleFields.length !== 0) {
-        const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
-        const { params: { indexId }, query: { bizId } } = this.$route;
-        let widthObj = {};
-
-        for (const bizKey in columnObj) {
-          if (bizKey === bizId) {
-            for (const fieldKey in columnObj[bizId].fields) {
-              fieldKey === indexId && (widthObj =  columnObj[bizId].fields[indexId]);
-            }
-          }
-        }
-
-        visibleFields.forEach((el, index) => {
-          el.width = widthObj[index] === undefined ? 'default' : widthObj[index];
-        });
-      }
-      return (showRealtimeLog
-      || showContextLog
-      || showWebConsole
-      || showMonitorWeb) && this.tableList.length;
-    },
   },
   watch: {
-    retrieveParams: {
-      deep: true,
-      handler() {
-        this.cacheExpandStr = [];
-      },
-    },
-    '$route.params.indexId'() { // 切换索引集重置状态
-      this.cacheExpandStr = [];
-    },
     clearTableWidth() {
       const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
       const { params: { indexId }, query: { bizId } } = this.$route;
@@ -447,115 +163,6 @@ export default {
     // 滚动到顶部
     scrollToTop() {
       this.$easeScroll(0, 300, this.$parent.$parent.$parent.$refs.scrollContainer);
-    },
-    // 展开表格行JSON
-    tableRowClick(row, option, column) {
-      if (column.className && column.className.includes('original-str')) return;
-      const ele = this.showOriginal ? this.$refs.resultOriginTable : this.$refs.resultTable;
-      ele.toggleRowExpansion(row);
-      this.curHoverIndex = -1;
-    },
-    handleMouseEnter(index) {
-      this.curHoverIndex = index;
-    },
-    handleMouseLeave() {
-      this.curHoverIndex = -1;
-    },
-    handleHeaderDragend(newWidth, oldWidth, { index }) {
-      const { params: { indexId }, query: { bizId } } = this.$route;
-      if (index === undefined || bizId === undefined || indexId === undefined) {
-        return;
-      }
-      const widthObj = {};
-      widthObj[index] = newWidth;
-      index === this.visibleFields.length - 1 && (widthObj[index] = 'default');
-
-      let columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
-      if (columnObj === null) {
-        columnObj = {};
-        columnObj[bizId] = this.initSubsetObj(bizId, indexId);
-      }
-      const isIncludebizId = Object.keys(columnObj).some(el => el === bizId);
-      isIncludebizId === false && (columnObj[bizId] = this.initSubsetObj(bizId, indexId));
-
-      for (const key in columnObj) {
-        if (key === bizId) {
-          if (columnObj[bizId].fields[indexId] === undefined) {
-            columnObj[bizId].fields[indexId] = {};
-            columnObj[bizId].indexsetIds.push(indexId);
-          }
-          columnObj[bizId].fields[indexId] = Object.assign(columnObj[bizId].fields[indexId], widthObj);
-        }
-      }
-
-      localStorage.setItem('table_column_width_obj', JSON.stringify(columnObj));
-    },
-    initSubsetObj(bizId, indexId) {
-      const subsetObj = {};
-      subsetObj.bizId = bizId;
-      subsetObj.indexsetIds = [indexId];
-      subsetObj.fields = {};
-      subsetObj.fields[indexId] = {};
-      return subsetObj;
-    },
-    getFieldIcon(fieldType) {
-      const iconMap = {
-        number: 'log-icon icon-number',
-        keyword: 'log-icon log-icon icon-string',
-        text: 'log-icon icon-text',
-        date: 'bk-icon icon-clock',
-      };
-      if (fieldType === 'long' || fieldType === 'integer') {
-        return iconMap.number;
-      }
-      return iconMap[fieldType];
-    },
-    // eslint-disable-next-line no-unused-vars
-    renderHeaderAliasName(h, { column, $index }) {
-      const field = this.visibleFields[$index - 1];
-      if (field) {
-        const fieldName = this.showFieldAlias ? this.fieldAliasMap[field.field_name] : field.field_name;
-        const fieldType = field.field_type;
-        const fieldIcon = this.getFieldIcon(field.field_type) || 'log-icon icon-unkown';
-        const content = this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].name : undefined;
-
-        return h('div', {
-          class: 'render-header',
-        }, [
-          h('span', {
-            class: `field-type-icon ${fieldIcon}`,
-            directives: [
-              {
-                name: 'bk-tooltips',
-                value: content,
-              },
-            ],
-          }),
-          h('span', fieldName),
-        ]);
-      }
-    },
-    handleIconClick(type, content, field, row) {
-      let value = field.field_type === 'date' ? row[field.field_name] : content;
-      value = String(value).replace(/<mark>/g, '')
-        .replace(/<\/mark>/g, '');
-      if (type === 'search') { // 将表格单元添加到过滤条件
-        this.$emit('addFilterCondition', field.field_name, 'eq', value);
-      } else if (type === 'copy') { // 复制单元格内容
-        try {
-          const input = document.createElement('input');
-          input.setAttribute('value', value);
-          document.body.appendChild(input);
-          input.select();
-          document.execCommand('copy');
-          document.body.removeChild(input);
-          this.messageSuccess(this.$t('复制成功'));
-        } catch (e) {
-          console.warn(e);
-        }
-      } else if (['is', 'is not'].includes(type)) {
-        this.$emit('addFilterCondition', field.field_name, type, value.toString());
-      }
     },
     // 打开实时日志或上下文弹窗
     openLogDialog(row, type) {
@@ -612,53 +219,6 @@ export default {
       this.logDialog.width = isScreenFull ? '100%' : 1078;
       this.logDialog.fullscreen = isScreenFull;
     },
-    formatterStr(content) {
-      // 匹配高亮标签
-      let value = content;
-
-      const markVal = content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
-      if (markVal) {
-        this.markList = markVal;
-        value = String(value).replace(/<mark>/g, '')
-          .replace(/<\/mark>/g, '');
-      }
-
-      return value;
-    },
-    getMarkList(content) {
-      return content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
-    },
-    handleShowWhole(index) {
-      this.cacheExpandStr.push(index);
-    },
-    handleMenuClick(option) {
-      switch (option.operation) {
-        case 'is':
-        case 'is not':
-          // eslint-disable-next-line no-case-declarations
-          const { fieldName, operation, value } = option;
-          this.$emit('addFilterCondition', fieldName, operation, value.toString());
-          break;
-        case 'copy':
-          try {
-            const input = document.createElement('input');
-            input.setAttribute('value', option.value);
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-            this.messageSuccess(this.$t('复制成功'));
-          } catch (e) {
-            console.warn(e);
-          }
-          break;
-        case 'display':
-          this.$emit('fieldsUpdated', option.displayFieldNames);
-          break;
-        default:
-          break;
-      }
-    },
   },
 };
 </script>
@@ -682,7 +242,7 @@ export default {
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: calc(100vh - 600px);;
+        min-height: calc(100vh - 600px);
       }
     }
     .cell {
