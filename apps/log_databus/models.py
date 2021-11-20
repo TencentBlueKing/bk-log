@@ -113,12 +113,13 @@ class CollectorConfig(SoftDeleteModel):
     def get_etl_config(self):
         multi_execute_func = MultiExecuteFunc()
         multi_execute_func.append(
-            "result_table_config", TransferApi.get_result_table, params={"table_id": self.table_id}
+            "result_table_config", TransferApi.get_result_table, params={"table_id": self.table_id}, use_request=False
         )
         multi_execute_func.append(
             "result_table_storage",
             TransferApi.get_result_table_storage,
             params={"result_table_list": self.table_id, "storage_type": "elasticsearch"},
+            use_request=False,
         )
         result = multi_execute_func.run()
         from apps.log_databus.handlers.etl_storage import EtlStorage

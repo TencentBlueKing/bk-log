@@ -202,7 +202,6 @@ class EtlStorage(object):
         :param etl_params: 清洗配置
         :param es_version: es
         :param hot_warm_config: 冷热数据配置
-        :param etl_flat: 字段不通过data清洗 聚类场景下使用
         """
 
         # 时间格式
@@ -437,10 +436,13 @@ class EtlStorage(object):
         collector_config["fields"] = sorted(field_list, key=lambda x: x.get("option", {}).get("field_index", 0))
         return collector_config
 
-    def _to_bkdata_assign(self, field, time_field):
+    def _to_bkdata_assign(self, field):
+        key = field.get("alias_name")
+        if not key:
+            key = field.get("field_name")
         return {
-            "key": field.get("alias_name"),
-            "assign_to": field.get("alias_name"),
+            "key": key,
+            "assign_to": key,
             "type": BKDATA_ES_TYPE_MAP.get(field.get("option").get("es_type"), "string"),
         }
 
@@ -456,9 +458,10 @@ class EtlStorage(object):
 
     def _get_bkdata_default_fields(self, built_in_fields, time_field):
         result = [
-            self._to_bkdata_assign(built_in_field, time_field)
+            self._to_bkdata_assign(built_in_field)
             for built_in_field in built_in_fields
-            if built_in_field.get("field_name") not in ["iterationIndex", "log"]
+            if not built_in_field.get("flat_field", False)
         ]
-        result.append(self._to_bkdata_assign(time_field, time_field))
+        if not time_field.get("option", {}).get("real_path"):
+            result.append(self._to_bkdata_assign(time_field))
         return result

@@ -85,7 +85,6 @@ class EtlHandler(object):
         view_roles=None,
         etl_params=None,
         fields=None,
-        etl_flat=False,
     ):
         # 停止状态下不能编辑
         if self.data and not self.data.is_active:
@@ -100,7 +99,7 @@ class EtlHandler(object):
             clustering_handler = ClusteringConfigHandler(collector_config_id=self.data.collector_config_id)
             if clustering_handler.data.bkdata_etl_processing_id:
                 clustering_handler.create_or_update_bkdata_etl(fields, etl_params)
-            etl_flat = True
+            etl_params["etl_flat"] = True
             fields += CollectorScenario.log_clustering_fields(cluster_info["cluster_config"]["version"])
 
         # 1. meta-创建/修改结果表
@@ -114,7 +113,6 @@ class EtlHandler(object):
             storage_replies=storage_replies,
             fields=fields,
             etl_params=etl_params,
-            etl_flat=etl_flat,
             es_version=cluster_info["cluster_config"]["version"],
             hot_warm_config=cluster_info["cluster_config"].get("custom_option", {}).get("hot_warm_config"),
         )

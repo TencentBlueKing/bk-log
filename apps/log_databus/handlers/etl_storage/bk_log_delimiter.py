@@ -148,7 +148,7 @@ class BkLogDelimiterEtlStorage(EtlStorage):
     def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
         retain_original_text = etl_params.get("retain_original_text", False)
         built_in_fields = built_in_config.get("fields", [])
-        result_table_fields = self.get_result_table_fields(fields, etl_params, built_in_config)
+        result_table_fields = self.get_result_table_fields(fields, etl_params, copy.deepcopy(built_in_config))
         time_field = result_table_fields.get("time_field")
         bkdata_fields = [field for field in fields if not field["is_delete"]]
         return {
@@ -170,7 +170,9 @@ class BkLogDelimiterEtlStorage(EtlStorage):
                                                             "assign": [
                                                                 {
                                                                     "index": str(field["field_index"]),
-                                                                    "assign_to": field["field_name"],
+                                                                    "assign_to": field["alias_name"]
+                                                                    if field["alias_name"]
+                                                                    else field["field_name"],
                                                                     "type": BKDATA_ES_TYPE_MAP.get(
                                                                         field.get("option").get("es_type"), "string"
                                                                     ),
@@ -203,10 +205,14 @@ class BkLogDelimiterEtlStorage(EtlStorage):
                                             "subtype": "assign_obj",
                                             "label": "labelb140f1",
                                             "assign": [
-                                                {"key": "iterationindex", "assign_to": "iterationIndex", "type": "int"},
-                                                {"key": "data", "assign_to": "log", "type": "text"}
+                                                {"key": "data", "assign_to": "data", "type": "text"}
                                                 if retain_original_text
                                                 else {},
+                                            ]
+                                            + [
+                                                self._to_bkdata_assign(built_in_field)
+                                                for built_in_field in built_in_fields
+                                                if built_in_field.get("flat_field", False)
                                             ],
                                             "type": "assign",
                                         },

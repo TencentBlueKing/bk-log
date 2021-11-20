@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import copy
 import json
 
 from django.db.transaction import atomic
@@ -174,8 +175,9 @@ class ClusteringConfigHandler(object):
             collector_scenario_id=collector_config.collector_scenario_id
         )
         built_in_config = collector_scenario.get_built_in_config()
-        time_field = built_in_config.get("time_field")
-        fields_config = etl_storage.get_result_table_config(fields, etl_params, built_in_config).get("field_list", [])
+        fields_config = etl_storage.get_result_table_config(fields, etl_params, copy.deepcopy(built_in_config)).get(
+            "field_list", []
+        )
         bkdata_json_config = etl_storage.get_bkdata_etl_config(fields, etl_params, built_in_config)
         params = {
             "raw_data_id": self.data.bkdata_data_id,
@@ -186,9 +188,7 @@ class ClusteringConfigHandler(object):
             "bk_biz_id": collector_config.bk_biz_id,
             "fields": [
                 {
-                    "field_name": field.get("field_name")
-                    if field.get("field_name") != time_field.get("field_name")
-                    else time_field.get("alias_name"),
+                    "field_name": field.get("alias_name") if field.get("alias_name") else field.get("field_name"),
                     "field_type": BKDATA_ES_TYPE_MAP.get(field.get("option").get("es_type"), "string"),
                     "field_alias": field.get("description") if field.get("description") else field.get("field_name"),
                     "is_dimension": field.get("tag", "dimension") == "dimension",
