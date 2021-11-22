@@ -25,6 +25,7 @@ from itertools import product
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from apps.api import CCApi
+from apps.utils.db import array_chunk
 from apps.utils.log import logger
 from apps.iam import ActionEnum, Permission
 from apps.log_search.handlers.biz import BizHandler
@@ -35,7 +36,7 @@ from apps.log_extract.handlers.thread import ThreadPool
 from apps.log_extract.models import Strategies
 from apps.utils.local import get_request_username
 from apps.exceptions import ApiResultError
-from apps.log_extract.constants import JOB_API_PERMISSION_CODE
+from apps.log_extract.constants import JOB_API_PERMISSION_CODE, BATCH_GET_JOB_INSTANCE_IP_LOG_IP_LIST_SIZE
 
 
 class ExplorerHandler(object):
@@ -97,7 +98,13 @@ class ExplorerHandler(object):
 
         query_result = self.get_finished_result(task_result["job_instance_id"], operator, bk_biz_id)
         success_step = self.get_success_step(query_result)
-        res = self.job_log_to_file_list(success_step["ip_logs"], allowed_dir_file_list)
+        ip_list = [
+            {"ip": ip["ip"], "bk_cloud_id": ip["bk_cloud_id"]} for ip in success_step.get("step_ip_result_list", [])
+        ]
+        ip_logs = self.get_all_ip_logs(
+            ip_list, task_result["job_instance_id"], success_step["step_instance_id"], bk_biz_id
+        )
+        res = self.job_log_to_file_list(ip_logs, allowed_dir_file_list)
         res = sorted(res, key=lambda k: k["mtime"], reverse=True)
         return res
 
@@ -118,14 +125,19 @@ class ExplorerHandler(object):
 
     @staticmethod
     def get_success_step(query_result):
-        task_result, *__ = query_result
-        ip_status_list = []
-        for step_result in task_result["step_results"]:
-            ip_status = step_result["ip_status"]
-            if ip_status == constants.JOB_SUCCESS_STATUS:
-                return step_result
-            ip_status_list.append(str(ip_status))
-        raise exceptions.ExplorerException(_("文件预览异常({})".format(",".join(ip_status_list))))
+        step_result = FileServer.get_step_instance(query_result)
+        ip_status = step_result["status"]
+        if ip_status == constants.JOB_SUCCESS_STATUS:
+            return step_result
+        raise exceptions.ExplorerException(_("文件预览异常({})".format(",".join(ip_status))))
+
+    def get_all_ip_logs(self, ip_list, job_instance_id, step_instance_id, bk_biz_id):
+        ip_list_group = array_chunk(ip_list, BATCH_GET_JOB_INSTANCE_IP_LOG_IP_LIST_SIZE)
+        ip_logs = []
+        for ip_list in ip_list_group:
+            ip_list_log = FileServer.get_ip_list_log(ip_list, job_instance_id, step_instance_id, bk_biz_id)
+            ip_logs.extend(ip_list_log.get("script_task_logs", []))
+        return ip_logs
 
     def job_log_to_file_list(self, ip_logs, allowed_dir_file_list):
         res = []

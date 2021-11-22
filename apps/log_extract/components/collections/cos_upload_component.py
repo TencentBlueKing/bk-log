@@ -94,7 +94,9 @@ class CosUploadService(BaseService):
 
         for item in FileServer.get_detail_for_ips(query_result):
             if item["exit_code"] != 0:
-                raise Exception(_("上传网盘异常: {}").format(FileServer.get_job_tag(query_result)))
+                raise Exception(
+                    _("上传网盘异常: {}, status: {}").format(FileServer.get_job_tag(item), item.get("status", ""))
+                )
 
         task.download_status = DownloadStatus.DOWNLOADABLE.value
         task.cos_file_name = data.get_one_of_outputs("pack_file_name")

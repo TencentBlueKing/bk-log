@@ -51,6 +51,8 @@ API_ROOTS = [
     "CMSI_APIGATEWAY_ROOT_V2",
     # JOB
     "JOB_APIGATEWAY_ROOT_V2",
+    # JOBv3
+    "JOB_APIGATEWAY_ROOT_V3",
 ]
 
 env_domains = load_domains(settings)

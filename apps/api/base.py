@@ -361,6 +361,7 @@ class DataAPI(object):
                 "response_errors": response_errors,
                 "cost_time": (end_time - start_time),
                 "request_id": request_id,
+                "esb_request_id": raw_response.headers.get("X-Bkapi-Request-Id"),
                 "request_user": bk_username,
             }
 
