@@ -64,6 +64,7 @@ class ClusteringConfigHandler(object):
         clustering_fields = params["clustering_fields"]
         bk_biz_id = params["bk_biz_id"]
         filter_rules = params["filter_rules"]
+        signature_enable = params["signature_enable"]
         clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         if clustering_config:
             clustering_config.collector_config_id = collector_config_id
@@ -77,6 +78,7 @@ class ClusteringConfigHandler(object):
             clustering_config.clustering_fields = clustering_fields
             clustering_config.bk_biz_id = bk_biz_id
             clustering_config.filter_rules = filter_rules
+            clustering_config.signature_enable = signature_enable
             clustering_config.save()
             return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
         clustering_config = ClusteringConfig.objects.create(
@@ -92,6 +94,7 @@ class ClusteringConfigHandler(object):
             bk_biz_id=bk_biz_id,
             filter_rules=filter_rules,
             index_set_id=index_set_id,
+            signature_enable=signature_enable,
         )
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
