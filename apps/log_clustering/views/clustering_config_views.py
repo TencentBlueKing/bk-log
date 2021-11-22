@@ -101,6 +101,7 @@ class ClusteringConfigViewSet(APIViewSet):
         @apiParam {Str} clustering_fields 聚合字段
         @apiParam {Int} bk_biz_id 业务id
         @apiParam {List} filter_rules 过滤规则
+        @apiParam {Boolean} signature_enable 是否是数据指纹
         @apiParam {Str} [filter_rules.fields_name] 过滤规则字段名
         @apiParam {Str} [filter_rules.op] 过滤规则操作符号
         @apiParam {Str} [filter_rules.value] 过滤规则字段值
@@ -121,6 +122,7 @@ class ClusteringConfigViewSet(APIViewSet):
                 "is_case_sensitive":1,
                 "clustering_fields":"LOG",
                 "bk_biz_id":1,
+                "signature_enable": true,
                 "filter_rules":[
                     {
                         "fields_name":"test",
