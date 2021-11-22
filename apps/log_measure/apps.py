@@ -21,7 +21,6 @@ from bk_monitor_report import MonitorReporter
 from django.apps import AppConfig
 from django.conf import settings
 
-from apps.log_measure.constants import DJANGO_MONITOR_DATA_NAME
 from apps.utils.function import ignored
 from apps.utils.log import logger
 
@@ -31,8 +30,12 @@ class MeasureConfig(AppConfig):
     verbose_name = "measure"
 
     def ready(self):
+        if settings.FEATURE_TOGGLE["monitor_report"] == "off":
+            return
         with ignored(Exception):
             from bk_monitor.models import MonitorReportConfig
+
+            from apps.log_measure.constants import DJANGO_MONITOR_DATA_NAME
 
             monitor_report_config = None
             try:

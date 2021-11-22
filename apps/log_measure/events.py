@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -16,27 +15,16 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+XXX_EVENT_TYPE = = BK_MONITOR_CLIENT.build_event_trigger(
+    "event_name",
+    data_name=BK_LOG_EVENT_DATA_NAME
+)
+XXX_EVENT_TYPE(content="xxxxx", dimensions={"xxx": "xxxx"})
+or
+XXX_EVENT_TYPE.trigger().set_content("xxx")()
 """
-from dataclasses import asdict
 
-from apps.utils.log import logger
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
-from apps.log_clustering.exceptions import ClusteringClosedException
+from apps.log_measure.constants import BK_MONITOR_CLIENT, BK_LOG_EVENT_DATA_NAME
 
-
-class BaseAiopsHandler(object):
-    def __init__(self):
-        if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
-            raise ClusteringClosedException()
-        self.conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
-
-    def _set_username(self, request_data_cls, bk_username: str = ""):
-        request_dict = asdict(request_data_cls)
-
-        logger.info("request_dict=> {}".format(request_dict))
-        if bk_username:
-            request_dict["bk_username"] = bk_username
-            return request_dict
-        request_dict["bk_username"] = self.conf.get("bk_username")
-        return request_dict
+CLUSTERING_MONITOR_EVENT = BK_MONITOR_CLIENT.build_event_trigger("clustering_monitor", data_name=BK_LOG_EVENT_DATA_NAME)
