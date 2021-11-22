@@ -51,7 +51,12 @@
             <span style="width: 110px">{{item.name}}</span>
             <div @click="handleStopProp">
               <div @click="stopChangeSwitch(index)">
-                <bk-switcher theme="primary" :pre-check="() => false" v-model="item.isEditable"></bk-switcher>
+                <bk-switcher
+                  theme="primary"
+                  :pre-check="() => false"
+                  v-model="item.isEditable"
+                  :disabled="item.isDisabled">
+                </bk-switcher>
               </div>
             </div>
           </div>
@@ -77,6 +82,7 @@
               :index-set-item="indexSetItem"
               :total-fields="totalFields"
               :config-data="configData"
+              :is-collector="isCollector"
               @reset-page="resetPage"
             ></component>
           </div>
@@ -118,6 +124,10 @@ export default {
       type: Object,
       require: true,
     },
+    cleanConfig: {
+      type: Object,
+      require: true,
+    },
   },
   data() {
     return {
@@ -136,19 +146,27 @@ export default {
           id: 'extract',
           componentsName: 'FieldExtraction',
           name: this.$t('retrieveSetting.fieldExtraction'),
-          isEditable: true,
+          isEditable: this.isExtractActive,
+          isDisabled: !this.isCollector,
         },
         {
           id: 'clustering',
           componentsName: 'LogCluster',
           name: this.$t('retrieveSetting.logCluster'),
           isEditable: true,
+          isDisabled: false,
         }],
     };
   },
   computed: {
     globalEditable() {
       return  this.currentList.find(el => el.id === this.currentChoice)?.isEditable;
+    },
+    isCollector() { // 索引集来源是否为采集项
+      return this.cleanConfig?.extra?.collector_config_id;
+    },
+    isExtractActive() { // 字段提取是否开启
+      return this.cleanConfig?.is_active;
     },
   },
   methods: {

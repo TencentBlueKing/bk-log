@@ -47,6 +47,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import OriginalLog from './original-log/index.vue';
 import LogClustering from './log-clustering/index.vue';
 
@@ -61,11 +62,26 @@ export default {
   data() {
     return {
       active: 'origin',
-      panelList: [
-        { name: 'origin', label: '原始日志' },
-        { name: 'clustering', label: '日志聚类' },
-      ],
     };
+  },
+  computed: {
+    ...mapState({
+      bkBizId: state => state.bkBizId,
+    }),
+    isAiopsToggle() { // 日志聚类总开关
+      if (window.FEATURE_TOGGLE.bkdata_aiops_toggle !== 'on') return false;
+      const aiopsBizList = window.FEATURE_TOGGLE_WHITE_LIST?.bkdata_aiops_toggle;
+
+      return aiopsBizList ? aiopsBizList.some(item => item.toString() === this.bkBizId) : false;
+    },
+    panelList() {
+      const list = [{ name: 'origin', label: '原始日志' }];
+      if (this.isAiopsToggle) {
+        list.push({ name: 'clustering', label: '日志聚类' });
+      }
+
+      return list;
+    },
   },
   methods: {
     showOriginLog() {

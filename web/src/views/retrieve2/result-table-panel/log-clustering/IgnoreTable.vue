@@ -80,6 +80,10 @@ export default {
       type: String,
       required: true,
     },
+    clusteringField: {
+      type: String,
+      default: 'log',
+    },
     originTableList: {
       type: Array,
       required: true,
@@ -114,9 +118,12 @@ export default {
   },
   methods: {
     setTableData() {
+      if (!this.clusteringField) return;
+
       this.tableData = (this.originTableList || []).reduce((pre, next) => {
         const regExp = this.active === 'ignoreNumbers' ? this.ignoreNumberReg : this.ignoreSymbolReg;
-        const valStr = JSON.stringify(next).replace(regExp, '*');
+        const sampleField = next[this.clusteringField];
+        const valStr = sampleField.toString().replace(regExp, '*');
         const ascription = pre.find(item => item.content === valStr);
         if (!ascription) {
           pre.push({
@@ -181,7 +188,7 @@ export default {
     vertical-align: top;
   }
   td.symbol-column {
-    padding: 10px 0 6px;
+    padding: 10px 0px;
   }
   .bk-table-body-wrapper {
     min-height: calc(100vh - 550px);

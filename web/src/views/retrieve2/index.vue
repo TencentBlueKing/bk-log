@@ -301,6 +301,7 @@
       :is-show-dialog="isShowSettingModal"
       :select-choice="clickSettingChoice"
       :total-fields="totalFields"
+      :clean-config="cleanConfig"
       :config-data="clusteringData"
       @closeSetting="isShowSettingModal = false;"
     />
@@ -444,6 +445,7 @@ export default {
       isThollteField: false,
       globalsData: {},
       random,
+      cleanConfig: {},
       clusteringData: { // 日志聚类参数
         name: '',
         is_active: true,
@@ -1141,8 +1143,11 @@ export default {
           context_and_realtime: contextAndRealtime,
           bcs_web_console: bcsWebConsole,
           async_export: asyncExport,
+          clean_config: cleanConfig,
           clustering_config: clusteringConfig,
         } = localConfig;
+
+        this.cleanConfig = cleanConfig;
         this.clusteringData = clusteringConfig;
 
         fields.forEach((item) => {

@@ -96,8 +96,9 @@
         v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
         v-bind="$attrs"
         v-on="$listeners"
-        :total-fields="totalFields"
-        :active="active" />
+        :active="active"
+        :clustering-field="clusteringField"
+        :total-fields="totalFields" />
       <data-fingerprint
         v-if="active === 'dataFingerprint'"
         v-bind="$attrs"
@@ -177,6 +178,9 @@ export default {
     ...mapGetters({
       globalsData: 'globals/globalsData',
     }),
+    clusteringField() {
+      return this.configData?.extra.clustering_field;
+    },
     isOperateDisable() {
       return !this.isPermission || this.fingerList.length === 0;
     },
