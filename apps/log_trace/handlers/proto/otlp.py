@@ -214,7 +214,7 @@ class OtlpTrace(Proto):
         trace_result = {"list": []}
 
         for search_result in result.values():
-            trace_result["list"].extend(search_result.get("list", []))
+            trace_result["list"].extend(search_result.get("origin_log_list", []))
 
         trace_data = self._transform_to_jaeger(trace_result.get("list", []))
         trace_result["list"] = self.map_fields_to_log(trace_data)
@@ -309,7 +309,7 @@ class OtlpTrace(Proto):
         trace_result = {"list": []}
 
         for search_result in result.values():
-            trace_result["list"].extend(search_result.get("list", []))
+            trace_result["list"].extend(search_result.get("origin_log_list", []))
         return self._transform_to_jaeger(trace_result.get("list", []))
 
     def _transform_to_jaeger(self, spans):

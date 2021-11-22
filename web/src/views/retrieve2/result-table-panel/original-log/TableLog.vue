@@ -242,7 +242,7 @@ export default {
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: calc(100vh - 600px);;
+        min-height: calc(100vh - 600px);
       }
     }
     .cell {

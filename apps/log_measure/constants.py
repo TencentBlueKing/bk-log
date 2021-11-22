@@ -17,6 +17,19 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from django.conf import settings
+from config.domains import MONITOR_APIGATEWAY_ROOT
+from bk_monitor.handler.monitor import BKMonitor
+
+BK_MONITOR_CLIENT = BKMonitor(
+    app_id=settings.APP_CODE,
+    app_token=settings.SECRET_KEY,
+    monitor_host=MONITOR_APIGATEWAY_ROOT,
+    report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
+    bk_username="admin",
+    bk_biz_id=settings.BLUEKING_BK_BIZ_ID,
+)
+
 
 INTERVAL_TYPE = ["month", "week", "day", "hour", "10m", "5m", "1m"]
 STORAGE_CLUSTER_TYPE = "elasticsearch"
@@ -39,5 +52,6 @@ COLLECTOR_IMPORT_PATHS = [
     "apps.log_measure.handlers.metric_collectors.es",
 ]
 
+BK_LOG_EVENT_DATA_NAME = "bk_log_event"
 DJANGO_MONITOR_DATA_NAME = "django_monitor"
 DATA_NAMES = ["metric", "search_history", "es_monitor", "django_monitor"]

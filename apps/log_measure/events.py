@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -16,35 +15,16 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+XXX_EVENT_TYPE = = BK_MONITOR_CLIENT.build_event_trigger(
+    "event_name",
+    data_name=BK_LOG_EVENT_DATA_NAME
+)
+XXX_EVENT_TYPE(content="xxxxx", dimensions={"xxx": "xxxx"})
+or
+XXX_EVENT_TYPE.trigger().set_content("xxx")()
 """
-from typing import Tuple
 
-from apps.iam import Permission, ActionEnum, ResourceEnum
-from bk_dataview.grafana.permissions import BasePermission, GrafanaRole
+from apps.log_measure.constants import BK_MONITOR_CLIENT, BK_LOG_EVENT_DATA_NAME
 
-
-class BizPermission(BasePermission):
-    """
-    业务权限
-    """
-
-    def has_permission(self, request, view, org_name: str) -> Tuple[bool, GrafanaRole]:
-        if request.user.is_superuser:
-            return True, GrafanaRole.Admin
-
-        bk_biz_id = int(org_name)
-        permission = Permission()
-
-        resources = [ResourceEnum.BUSINESS.create_instance(bk_biz_id)]
-
-        if permission.is_allowed(action=ActionEnum.MANAGE_DASHBOARD, resources=resources):
-            return True, GrafanaRole.Editor
-
-        # permission.is_allowed(action=ActionEnum.VIEW_DASHBOARD, resources=resources, raise_exception=True)
-        # 不在校验查看仪表盘权限 通过索引集权限去过滤
-        return True, GrafanaRole.Viewer
-
-
-class ExplorePermission(BasePermission):
-    def has_permission(self, request, view, org_name: str) -> Tuple[bool, GrafanaRole]:
-        return True, GrafanaRole.Viewer
+CLUSTERING_MONITOR_EVENT = BK_MONITOR_CLIENT.build_event_trigger("clustering_monitor", data_name=BK_LOG_EVENT_DATA_NAME)

@@ -83,6 +83,7 @@ else:
 # 这里是默认的中间件，大部分情况下，不需要改动
 # 如果你已经了解每个默认 MIDDLEWARE 的作用，确实需要去掉某些 MIDDLEWARE，或者改动先后顺序，请去掉下面的注释，然后修改
 MIDDLEWARE = (
+    "django.middleware.gzip.GZipMiddleware",
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
@@ -456,8 +457,8 @@ MENUS = [
                 "icon": "",
                 "keyword": _("trace"),
                 "children": [
-                    {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": ""},
-                    {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": ""},
+                    {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": "liebiao"},
+                    {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": "document"},
                 ],
             }
         ],
@@ -477,10 +478,10 @@ MENUS = [
                 "icon": "",
                 "keyword": _("仪表"),
                 "children": [
-                    {"id": "default_dashboard", "name": _("默认仪表盘"), "feature": "on", "icon": ""},
-                    {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": ""},
-                    {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": ""},
-                    {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": ""},
+                    {"id": "default_dashboard", "name": _("默认仪表盘"), "feature": "on", "icon": "block-shape"},
+                    {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": "plus-circle-shape"},
+                    {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": "icon-folder-fill"},
+                    {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": "topping-fill"},
                 ],
             }
         ],

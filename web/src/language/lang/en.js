@@ -241,6 +241,7 @@ export default {
   字符串: 'Keyword',
   文本: 'Text',
   时间: 'Date',
+  布尔: 'Bool',
   确定: 'Confirm',
   提取链路: 'Extract Link',
   新建提取链路: 'Create Extract Link',

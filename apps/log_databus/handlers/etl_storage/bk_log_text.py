@@ -17,6 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import copy
+
 from apps.log_databus.constants import EtlConfig
 from apps.log_databus.handlers.etl_storage import EtlStorage
 
@@ -64,7 +66,7 @@ class BkLogTextEtlStorage(EtlStorage):
 
     def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
         built_in_fields = built_in_config.get("fields", [])
-        result_table_fields = self.get_result_table_fields(fields, etl_params, built_in_config)
+        result_table_fields = self.get_result_table_fields(fields, etl_params, copy.deepcopy(built_in_config))
         time_field = result_table_fields.get("time_field")
 
         return {
@@ -82,8 +84,12 @@ class BkLogTextEtlStorage(EtlStorage):
                                     "subtype": "assign_obj",
                                     "label": "labelb140f1",
                                     "assign": [
-                                        {"key": "iterationindex", "assign_to": "iterationIndex", "type": "int"},
-                                        {"key": "data", "assign_to": "log", "type": "text"},
+                                        {"key": "data", "assign_to": "data", "type": "text"},
+                                    ]
+                                    + [
+                                        self._to_bkdata_assign(built_in_field)
+                                        for built_in_field in built_in_fields
+                                        if built_in_field.get("flat_field", False)
                                     ],
                                     "type": "assign",
                                 },
