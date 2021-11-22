@@ -19,10 +19,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from dataclasses import asdict
 
+from apps.log_clustering.constants import LATEST_PUBLISH_STATUS
+from apps.log_clustering.handlers.aiops.aiops_model.data_cls import AiopsReleaseCls
 from apps.utils.log import logger
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
 from apps.log_clustering.exceptions import ClusteringClosedException
+from apps.api import BkDataAIOPSApi
 
 
 class BaseAiopsHandler(object):
@@ -32,11 +35,35 @@ class BaseAiopsHandler(object):
         self.conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
 
     def _set_username(self, request_data_cls, bk_username: str = ""):
-        request_dict = asdict(request_data_cls)
-
+        if isinstance(request_data_cls, dict):
+            request_dict = request_data_cls
+        else:
+            request_dict = asdict(request_data_cls)
         logger.info("request_dict=> {}".format(request_dict))
         if bk_username:
             request_dict["bk_username"] = bk_username
             return request_dict
         request_dict["bk_username"] = self.conf.get("bk_username")
         return request_dict
+
+    def aiops_release(self, model_id: str):
+        """
+        备选模型列表
+        @param model_id 模型id
+        """
+        aiops_release_request = AiopsReleaseCls(model_id=model_id, project_id=self.conf.get("project_id"))
+        request_dict = self._set_username(aiops_release_request)
+        return BkDataAIOPSApi.aiops_release(request_dict)
+
+    def get_latest_released_id(self, model_id: str):
+        """
+        获取最新release_id
+        """
+        release_info = self.aiops_release(model_id=model_id).get("list", [])
+        release_ids = [
+            info["model_release_id"] for info in release_info if info.get("publish_status") == LATEST_PUBLISH_STATUS
+        ]
+        if not release_ids:
+            return None
+        release_id, *_ = release_ids
+        return release_id

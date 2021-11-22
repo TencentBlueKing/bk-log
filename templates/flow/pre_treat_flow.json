@@ -1,0 +1,254 @@
+[
+    {
+        "result_table_id":"{{ pre_treat.stream_source.result_table_id}}",
+        "bk_biz_id":{{ pre_treat.bk_biz_id }},
+        "name":"数据输入节点",
+        "id":267335,
+        "from_nodes":[
+
+        ],
+        "node_type":"stream_source",
+        "frontend_info":{
+            "x":30,
+            "y":171
+        }
+    },
+    {
+        "bk_biz_id":{{pre_treat.bk_biz_id}},
+        "sql":"select {{ pre_treat.transform.fields }} from {{ pre_treat.filter.result_table_id}}",
+        "table_name":"{{ pre_treat.transform.table_name }}",
+        "name":"字段变换",
+        "count_freq":null,
+        "waiting_time":null,
+        "window_time":null,
+        "window_type":"none",
+        "counter":null,
+        "output_name":"字段变换",
+        "session_gap":null,
+        "expired_time":null,
+        "window_lateness":{
+            "allowed_lateness":false,
+            "lateness_time":1,
+            "lateness_count_freq":60
+        },
+        "correct_config_id":null,
+        "is_open_correct":false,
+        "id":267949,
+        "from_nodes":[
+            {
+                "id":268060,
+                "from_result_table_ids":[
+                    "{{ pre_treat.filter.result_table_id}}"
+                ]
+            }
+        ],
+        "node_type":"realtime",
+        "frontend_info":{
+            "x":656,
+            "y":169
+        }
+    },
+    {
+        "bk_biz_id":{{pre_treat.bk_biz_id}},
+        "sql":"select {{pre_treat.add_uuid.fields}} from {{ pre_treat.transform.result_table_id}}",
+        "table_name":"{{ pre_treat.add_uuid.table_name }}",
+        "name":"add UUID",
+        "count_freq":null,
+        "waiting_time":null,
+        "window_time":null,
+        "window_type":"none",
+        "counter":null,
+        "output_name":"添加uuid",
+        "session_gap":null,
+        "expired_time":null,
+        "window_lateness":{
+            "allowed_lateness":false,
+            "lateness_time":1,
+            "lateness_count_freq":60
+        },
+        "correct_config_id":null,
+        "is_open_correct":false,
+        "id":267951,
+        "from_nodes":[
+            {
+                "id":267949,
+                "from_result_table_ids":[
+                    "{{ pre_treat.transform.result_table_id }}"
+                ]
+            }
+        ],
+        "node_type":"realtime",
+        "frontend_info":{
+            "x":1002,
+            "y":166
+        }
+    },
+    {
+        "bk_biz_id":{{pre_treat.bk_biz_id}},
+        "sql":"select {{ pre_treat.sample_set.fields }} from {{ pre_treat.add_uuid.result_table_id}}",
+        "table_name":"{{ pre_treat.sample_set.table_name }}",
+        "name":"样本集数据处理",
+        "count_freq":null,
+        "waiting_time":null,
+        "window_time":null,
+        "window_type":"none",
+        "counter":null,
+        "output_name":"样本集数据处理",
+        "session_gap":null,
+        "expired_time":null,
+        "window_lateness":{
+            "allowed_lateness":false,
+            "lateness_time":1,
+            "lateness_count_freq":60
+        },
+        "correct_config_id":null,
+        "is_open_correct":false,
+        "id":268035,
+        "from_nodes":[
+            {
+                "id":267951,
+                "from_result_table_ids":[
+                    "{{ pre_treat.add_uuid.result_table_id}}"
+                ]
+            }
+        ],
+        "node_type":"realtime",
+        "frontend_info":{
+            "x":1330,
+            "y":51
+        }
+    },
+    {
+        "result_table_id":"{{ pre_treat.sample_set.result_table_id}}",
+        "name":"样本集数据处理(hdfs_storage)",
+        "bk_biz_id":{{pre_treat.bk_biz_id}},
+        "cluster":"{{pre_treat.cluster}}",
+        "expires":{{pre_treat.sample_set_hdfs.expires}},
+        "id":268036,
+        "from_nodes":[
+            {
+                "id":268035,
+                "from_result_table_ids":[
+                    "{{ pre_treat.sample_set.result_table_id}}"
+                ]
+            }
+        ],
+        "node_type":"hdfs_storage",
+        "frontend_info":{
+            "x":1655,
+            "y":51
+        }
+    },
+    {
+        "bk_biz_id":{{pre_treat.bk_biz_id}},
+        "sql":"select {{pre_treat.filter.fields}} from {{ pre_treat.stream_source.result_table_id }} {{pre_treat.filter.filter_rule}}",
+        "table_name":"{{ pre_treat.filter.table_name }}",
+        "name":"过滤器",
+        "count_freq":null,
+        "waiting_time":null,
+        "window_time":null,
+        "window_type":"none",
+        "counter":null,
+        "output_name":"过滤器",
+        "session_gap":null,
+        "expired_time":null,
+        "window_lateness":{
+            "allowed_lateness":false,
+            "lateness_time":1,
+            "lateness_count_freq":60
+        },
+        "correct_config_id":null,
+        "is_open_correct":false,
+        "id":268060,
+        "from_nodes":[
+            {
+                "id":267335,
+                "from_result_table_ids":[
+                    "{{pre_treat.stream_source.result_table_id}}"
+                ]
+            }
+        ],
+        "node_type":"realtime",
+        "frontend_info":{
+            "x":355,
+            "y":102
+        }
+    },
+    {
+        "result_table_id":"{{ pre_treat.add_uuid.result_table_id}}",
+        "name":"添加uuid(hdfs_storage)",
+        "bk_biz_id":{{pre_treat.bk_biz_id}},
+        "cluster":"{{pre_treat.cluster}}",
+        "expires":{{pre_treat.add_uuid_hdfs.expires}},
+        "id":268063,
+        "from_nodes":[
+            {
+                "id":267951,
+                "from_result_table_ids":[
+                    "{{ pre_treat.add_uuid.result_table_id}}"
+                ]
+            }
+        ],
+        "node_type":"hdfs_storage",
+        "frontend_info":{
+            "x":1330,
+            "y":153
+        }
+    },
+    {
+        "bk_biz_id":{{pre_treat.bk_biz_id}},
+        "sql":"select {{pre_treat.not_clustering.fields}}, '' as dist_01, '' as dist_03, '' as dist_05, '' as dist_07, '' as dist_09 from {{pre_treat.stream_source.result_table_id }} {{pre_treat.not_clustering.filter_rule}}",
+        "table_name":"{{pre_treat.not_clustering.table_name }}",
+        "name":"不参与聚类日志",
+        "count_freq":null,
+        "waiting_time":null,
+        "window_time":null,
+        "window_type":"none",
+        "counter":null,
+        "output_name":"不参与聚类日志",
+        "session_gap":null,
+        "expired_time":null,
+        "window_lateness":{
+            "allowed_lateness":false,
+            "lateness_time":1,
+            "lateness_count_freq":60
+        },
+        "correct_config_id":null,
+        "is_open_correct":false,
+        "id":268065,
+        "from_nodes":[
+            {
+                "id":267335,
+                "from_result_table_ids":[
+                    "{{pre_treat.stream_source.result_table_id }}"
+                ]
+            }
+        ],
+        "node_type":"realtime",
+        "frontend_info":{
+            "x":355,
+            "y":255
+        }
+    },
+    {
+        "result_table_id":"{{ pre_treat.not_clustering.result_table_id}}",
+        "name":"不参与聚类日志(hdfs_storage)",
+        "bk_biz_id":{{pre_treat.bk_biz_id}},
+        "cluster":"{{pre_treat.cluster}}",
+        "expires":{{pre_treat.not_clustering_hdfs.expires}},
+        "id":268066,
+        "from_nodes":[
+            {
+                "id":268065,
+                "from_result_table_ids":[
+                    "{{ pre_treat.not_clustering.result_table_id}}"
+                ]
+            }
+        ],
+        "node_type":"hdfs_storage",
+        "frontend_info":{
+            "x":680,
+            "y":255
+        }
+    }
+]

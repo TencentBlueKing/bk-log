@@ -72,6 +72,10 @@ class ClusteringConfigAdmin(AppModelAdmin):
         "bk_biz_id",
         "result_table_id",
         "pre_treat_flow",
+        "pre_treat_flow_id",
+        "after_treat_flow",
+        "after_treat_flow_id",
+        "modify_flow",
     ]
     search_fields = [
         "collector_id",
