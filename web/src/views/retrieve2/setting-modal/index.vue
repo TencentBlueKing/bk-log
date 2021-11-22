@@ -35,8 +35,7 @@
       left: 0,
     }"
     @value-change="openPage"
-    @after-leave="closePage"
-  >
+    @after-leave="closePage">
     <div class="setting-container">
       <div class="setting-title">
         <span>{{$t('retrieveSetting.setting')}}</span>
@@ -115,7 +114,7 @@ export default {
     },
     indexSetItem: {
       type: Object,
-      default: () => {},
+      require: true,
     },
     totalFields: {
       type: Array,

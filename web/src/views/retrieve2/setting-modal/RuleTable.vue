@@ -87,9 +87,10 @@
                          :ref="`placeholder-${index}`">{{Object.keys(item)[0]}}</p>
                     </bk-popover>
                   </div>
-                  <div>
+                  <div class="rule-btn">
                     <bk-button
-                      :disabled="!globalEditable" theme="primary" text style="margin-right: 10px;"
+                      style="margin-right: 10px;" theme="primary" text
+                      :disabled="!globalEditable"
                       @click="clusterEdit(index)">
                       {{$t('编辑')}}
                     </bk-button>
@@ -273,8 +274,6 @@ export default {
       },
     },
   },
-  mounted() {
-  },
   methods: {
     // 还原
     reductionRule() {
@@ -284,6 +283,7 @@ export default {
         this.showTableLoading();
       }
     },
+    // loading动画
     showTableLoading() {
       this.tableLoading = true;
       setTimeout(() => {
@@ -291,6 +291,7 @@ export default {
         this.setTableIsOverFlow(this.rulesList);
       }, 500);
     },
+    // 编辑规则
     clusterEdit(index) {
       const [key, val] = Object.entries(this.rulesList[index])[0];
       this.regular = val;
@@ -299,6 +300,7 @@ export default {
       this.isEditRuls = true;
       this.isShowAddRule = true;
     },
+    // 删除规则
     clusterRemove(index) {
       this.$bkInfo({
         title: this.$t('retrieveSetting.ruleDeleteTips'),
@@ -316,7 +318,7 @@ export default {
       } catch (e) {
         this.rules.isRegular = false;
       }
-      this.rules.isPlaceholder = /^[a-zA-z]+$/.test(this.placeholder);
+      this.rules.isPlaceholder = /^[a-zA-z_-]+$/.test(this.placeholder);
       if (this.isRuleCorrect) {
         this.showTableLoading();
         const newRuleObj = {};
@@ -344,6 +346,7 @@ export default {
         }, 1000);
       }
     },
+    // 关闭规则弹窗重置参数
     cancelAddRuleContent() {
       this.regular = '';
       this.placeholder = '';
@@ -357,9 +360,9 @@ export default {
     base64ToRuleArr(str) {
       try {
         const ruleStr =  window.atob(str);
-        const ruleArr = JSON.parse(ruleStr);
-        const ruleNewArr = [];
-        ruleArr.forEach((el, index) => {
+        const ruleList = JSON.parse(ruleStr);
+        const ruleNewList = [];
+        ruleList.forEach((el, index) => {
           const itemObj = {};
           const key = el.match(/[^:]*/)[0];
           const newReg = new RegExp(`(?<=${key}:)[^"]+`);
@@ -370,9 +373,9 @@ export default {
           itemObj._isLeftOverFlow = true;
           itemObj._isRightOverFlow = true;
           itemObj._isHighlight = false;
-          ruleNewArr.push(itemObj);
+          ruleNewList.push(itemObj);
         });
-        return ruleNewArr;
+        return ruleNewList;
       } catch (e) {
         return [];
       }
@@ -381,18 +384,19 @@ export default {
     ruleArrToBase64(arr = []) {
       arr.length === 0 && (arr = this.rulesList);
       try {
-        const ruleNewArr = [];
+        const ruleNewList = [];
         arr.forEach((el) => {
           const key = Object.keys(el)[0];
           const val = Object.values(el)[0];
-          ruleNewArr.push(`"${key}:${val}"`);
+          ruleNewList.push(`"${key}:${val}"`);
         });
-        const ruleArrStr = `[${ruleNewArr.join(' ,')}]`;
+        const ruleArrStr = `[${ruleNewList.join(' ,')}]`;
         return window.btoa(ruleArrStr);
       } catch (error) {
         return '';
       }
     },
+    // 长度超出提示
     setTableIsOverFlow(arr) {
       this.$nextTick(() => {
         arr.forEach((el, index) => {
@@ -404,6 +408,7 @@ export default {
     isOverFlow(index, type = 'regular') {
       return this.$refs[`${type}-${index}`][0]?.offsetWidth >= this.$refs[`${type}-${index}`][0]?.scrollWidth;
     },
+    // 调试
     debugging() {
       this.tableLoading = true;
       const inputData = {
@@ -436,7 +441,7 @@ export default {
         });
     },
     highlightPredefined(tokenRegex = {}) {
-      tokenRegex && Object.entries(tokenRegex).forEach((regexItem) => {
+      Object.entries(tokenRegex).forEach((regexItem) => {
         this.rulesList.forEach((listItem) => {
           const [regexKey, regexVal] = regexItem;
           const [listKey, listVal] =  Object.entries(listItem)[0];
@@ -475,6 +480,7 @@ export default {
     height: 44px;
     border-bottom: 1px solid #dcdee5;
     background-color: #fafbfd;
+    font-size: 12px;
     .icon {
       margin: 0 10px 0 4px;
     }
@@ -537,6 +543,9 @@ export default {
         text-overflow: ellipsis;
         white-space: nowrap;
         cursor: pointer;
+      }
+      .bk-button-text{
+        font-size: 12px;
       }
     }
   }

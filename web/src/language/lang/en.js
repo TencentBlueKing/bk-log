@@ -317,6 +317,8 @@ export default {
     extractionPrompt: 'After the filtered logs are collected, the log retrieval module can format the log content to facilitate retrieval and analysis.',
     ruleDeleteTips: 'Whether to delete this rule ?',
     changeSwitchTips: 'Is the module disabled?',
+    notCollector: '当前索引集为非采集项,无法设置数据指纹',
+    closeFinger: '是否关闭数据指纹',
   },
   // logCluster
   忽略数字: 'Ignore Numbers',
