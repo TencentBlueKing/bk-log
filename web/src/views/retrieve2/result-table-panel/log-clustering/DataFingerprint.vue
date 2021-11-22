@@ -122,7 +122,7 @@
       :visible-fields="visibleFields">
     </retrieve-loader> -->
 
-    <div slot="empty" v-if="!configData.extra.signature_switch">
+    <div slot="empty" v-if="!isPermission ">
       <div class="empty-text">
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
         <p>{{$t('goSettingMessage')}}</p>
@@ -131,7 +131,7 @@
         </span>
       </div>
     </div>
-    <div slot="empty" v-if="!isPermission">
+    <div slot="empty" v-if="isPermission && !configData.extra.signature_switch">
       <div class="empty-text">
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
         <p>{{$t('goCleanMessage')}}</p>

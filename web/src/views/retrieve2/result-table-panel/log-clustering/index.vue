@@ -170,18 +170,7 @@ export default {
         name: this.$t('数据指纹'),
       }],
       comparedList: [], // 同比List
-      fingerList: [{
-        pattern: 'xx [ip] [xxxxx] xxxxx]',
-        signature: 'xxxxxxxxxxxx',
-        count: 123,
-        year_on_year: -10,
-        percentage: 12,
-        is_new_class: true,
-        year_on_year_count: 12,
-        year_on_year_percentage: 10,
-        labels: ['xxxx', 'xxxx'],
-        remark: 'xxxx',
-      }], // 表格List
+      fingerList: [], // 表格List
     };
   },
   computed: {

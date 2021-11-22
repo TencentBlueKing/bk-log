@@ -256,6 +256,7 @@ export default {
         is_case_sensitive: 1, // 是否大小写忽略
         clustering_fields: '', // 聚合字段
         filter_rules: [], // 过滤规则
+        signature_enable: false,
       },
       conditionList: [ // 过滤条件对比
         { id: '=', name: '=' },
@@ -371,7 +372,6 @@ export default {
         this.isFilterRuleError = true;
         if (isFilterRulePass) return;
       };
-
       this.isHandle = true;
       this.isShowSubmitDialog = true;
       this.isFilterRuleError = false;
@@ -384,6 +384,7 @@ export default {
         },
         data: {
           ...this.formData,
+          signature_enable: this.dataFingerprint,
           collector_config_id,
           index_set_id,
           bk_biz_id,
