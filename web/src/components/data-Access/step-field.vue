@@ -543,7 +543,7 @@ export default {
       return this.$route.name === 'clean-template-edit';
     },
     isEditCleanItem() {
-      return this.$route.name === 'clean-edit' || this.isSetEdit;
+      return this.$route.name === 'clean-edit' || (this.isSetEdit && !!this.setId);
     },
     advanceDisable() {
       return window.FEATURE_TOGGLE.scenario_bkdata !== 'on'
@@ -1295,7 +1295,6 @@ export default {
         this.basicLoading = false;
         return;
       }
-
       const curCollect = this.cleanCollectorList.find((item) => {
         return item.collector_config_id.toString() === id.toString();
       });

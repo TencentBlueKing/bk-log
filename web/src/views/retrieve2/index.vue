@@ -273,7 +273,7 @@
           :async-export-usable-reason="asyncExportUsableReason"
           :statistical-fields-data="statisticalFieldsData"
           :time-field="timeField"
-          :config-data="configData"
+          :config-data="clusteringData"
           @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
@@ -301,7 +301,7 @@
       :is-show-dialog="isShowSettingModal"
       :select-choice="clickSettingChoice"
       :total-fields="totalFields"
-      :config-data="configData"
+      :config-data="clusteringData"
       @closeSetting="isShowSettingModal = false;"
     />
   </div>
@@ -444,11 +444,13 @@ export default {
       isThollteField: false,
       globalsData: {},
       random,
-      configData: { // 日志聚类参数
+      clusteringData: { // 日志聚类参数
         name: '',
         is_active: true,
         extra: {
-          collector_config_id: -1,
+          collector_config_id: null,
+          signature_switch: false,
+          clustering_field: '',
         },
       },
     };
@@ -478,7 +480,7 @@ export default {
   watch: {
     indexId(val) { // 切换索引集和初始化索引 id 时改变
       const option = this.indexSetList.find(item => item.index_set_id === val);
-      this.indexSetItem = option;
+      this.indexSetItem = option ? option : { index_set_name: '', indexName: '', scenario_name: '' };
       // eslint-disable-next-line camelcase
       this.isSearchAllowed = !!option?.permission?.search_log;
       this.resetRetrieveCondition();
@@ -1139,9 +1141,9 @@ export default {
           context_and_realtime: contextAndRealtime,
           bcs_web_console: bcsWebConsole,
           async_export: asyncExport,
+          clustering_config: clusteringConfig,
         } = localConfig;
-
-        localConfig.extra_config && (this.configData = localConfig.extra_config);
+        this.clusteringData = clusteringConfig;
 
         fields.forEach((item) => {
           item.minWidth = 0;
