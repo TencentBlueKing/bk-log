@@ -123,7 +123,7 @@ export default {
       this.tableData = (this.originTableList || []).reduce((pre, next) => {
         const regExp = this.active === 'ignoreNumbers' ? this.ignoreNumberReg : this.ignoreSymbolReg;
         const sampleField = next[this.clusteringField];
-        const valStr = JSON.stringify(sampleField).replace(regExp, '*');
+        const valStr = sampleField.toString().replace(regExp, '*');
         const ascription = pre.find(item => item.content === valStr);
         if (!ascription) {
           pre.push({
