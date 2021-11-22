@@ -21,8 +21,8 @@
   -->
 
 <template>
-  <div class="log-cluster-table-container">
-    <div class="cluster-nav">
+  <div class="log-cluster-table-container" v-bkloading="{ isLoading: tableLoading ,opacity: 1 }">
+    <div class="cluster-nav" v-if="isHaveText">
       <div class="bk-button-group">
         <bk-button
           v-for="(item) of clusterNavList"
@@ -91,13 +91,14 @@
       :title="$t('clusterAlert')" closable type="info">
     </bk-alert>
 
-    <div>
+    <div v-if="isHaveText">
       <ignore-table
         v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
         v-bind="$attrs"
         v-on="$listeners"
         :active="active"
-        :clustering-field="clusteringField" />
+        :clustering-field="clusteringField"
+        :total-fields="totalFields" />
       <data-fingerprint
         v-if="active === 'dataFingerprint'"
         v-bind="$attrs"
@@ -105,9 +106,23 @@
         :year-on-year-cycle="yearOnYearCycle"
         :is-permission="isPermission"
         :partter-level="partterLevel"
-        :congfig-number="configID"
+        :config-data="configData"
         :finger-list="fingerList" />
     </div>
+    <bk-table
+      v-else
+      class="no-text-table"
+      :data="[]">
+      <div slot="empty">
+        <div class="empty-text">
+          <span class="bk-table-empty-icon bk-icon icon-empty"></span>
+          <p>{{$t('goCleanMessage')}}</p>
+          <span class="empty-leave" @click="goToCleaning">
+            {{$t('跳转到日志清洗')}}
+          </span>
+        </div>
+      </div>
+    </bk-table>
   </div>
 </template>
 
@@ -127,6 +142,10 @@ export default {
       type: Object,
       require: true,
     },
+    totalFields: {
+      type: Array,
+      require: true,
+    },
   },
   data() {
     return {
@@ -140,6 +159,7 @@ export default {
       tableLoading: false,
       yearOnYearCycle: 0, // 同比值
       configID: -1, // 采集项ID
+      isHaveText: true,
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -163,6 +183,29 @@ export default {
     },
     isOperateDisable() {
       return !this.isPermission || this.fingerList.length === 0;
+    },
+  },
+  watch: {
+    configData(val) {
+      this.isPermission = val.is_active;
+      this.configID = val.extra?.collector_config_id;
+    },
+    originTableList: {
+      handler() {
+        this.requestFinger();
+      },
+    },
+    totalFields(newList) {
+      this.tableLoading = true;
+      setTimeout(() => {
+        if (newList.length !== 0) {
+          this.isHaveText = newList.some(el => el.field_type === 'text');
+          if (this.isHaveText) {
+            this.initTable();
+          }
+        }
+        this.tableLoading = false;
+      }, 500);
     },
   },
   mounted() {
@@ -214,11 +257,20 @@ export default {
       this.partterLevel = clusterLevel[clusterLevel.length - 1];
       this.partterList = clusterLevel;
       this.isPermission = isActive;
-      this.configID = extra?.collector_config_id;
+      this.configID = extra.collector_config_id;
     },
     blurPartterSize(val) {
       this.partterLevel = this.partterList[val];
       this.requestFinger();
+    },
+    goToCleaning() {
+      if (this.configID) {
+        this.$router.push({
+          name: 'clean-edit',
+          params: { collectorId: this.configID },
+          query: { projectId: window.localStorage.getItem('project_id') },
+        });
+      }
     },
   },
 };
@@ -284,6 +336,31 @@ export default {
     height: 24px;
   }
 }
+
+.no-text-table {
+  .bk-table-empty-block {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 480px);
+  }
+
+  .empty-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    .bk-icon {
+      font-size: 65px;
+    }
+    .empty-leave {
+      color: #3a84ff;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+  }
+}
+
 .fljb {
   align-items: center;
   @include flex-justify(space-between);

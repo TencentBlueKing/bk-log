@@ -29,7 +29,7 @@
       :is-clean-field="true"
       :is-temp-field="false"
       :is-set-edit="true"
-      :set-id="configID"
+      :set-id="configData.extra.collector_config_id"
       :set-disabled="!globalEditable"
       @reset-page="resetPage" />
   </div>
@@ -55,11 +55,7 @@ export default {
   data() {
     return {
       isShowFieldPage: true,
-      configID: 0,
     };
-  },
-  mounted() {
-    this.configID = this.configData.extra?.collector_config_id;
   },
   methods: {
     resetPage() {

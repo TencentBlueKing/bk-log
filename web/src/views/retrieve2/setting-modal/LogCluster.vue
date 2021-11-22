@@ -60,13 +60,17 @@
       </div>
       <div class="form-item">
         <span class="left-word">{{$t('retrieveSetting.dataFingerprint')}}</span>
-        <bk-switcher
-          class="left-word" theme="primary" size="large"
-          v-model="dataFingerprint"
-          :disabled="!globalEditable">
-        </bk-switcher>
+        <div @click="handleChangeFinger">
+          <bk-switcher
+            class="left-word" theme="primary" size="large"
+            v-model="dataFingerprint"
+            :pre-check="() => false"
+            :disabled="!globalEditable">
+          </bk-switcher>
+        </div>
         <bk-alert style="width: 780px" type="info" :title="$t('retrieveSetting.clusterPrompt')"></bk-alert>
       </div>
+
       <!-- 字段长度 -->
       <div class="rule-container">
         <bk-form-item
@@ -103,8 +107,8 @@
               <bk-select
                 class="icon-box and-or mr-neg1"
                 v-if="formData.filter_rules.length !== 0 && index !== 0 && item.fields_name !== ''"
-                :clearable="false"
                 v-model="item.logic_operator"
+                :clearable="false"
                 :disabled="!globalEditable">
                 <bk-option v-for="option in comparedList"
                            :key="option.id"
@@ -148,8 +152,8 @@
               <bk-input
                 v-if="item.fields_name !== ''"
                 v-model="item.value"
-                class="mr-neg1"
                 placeholder=" "
+                :class="['mr-neg1',item.value === '' && isFilterRuleError ? 'rule-error' : '']"
                 :disabled="!globalEditable">
               </bk-input>
             </div>
@@ -225,7 +229,7 @@ export default {
     },
     indexSetItem: {
       type: Object,
-      default: () => {},
+      require: true,
     },
     configData: {
       type: Object,
@@ -235,7 +239,14 @@ export default {
   data() {
     return {
       clusterField: [], // 聚类字段
-      globalLoading: true,
+      globalLoading: false,
+      dataFingerprint: false, // 数据指纹
+      isShowAddFilterIcon: true, // 是否显示过滤规则增加按钮
+      isShowSubmitDialog: false, // 是否展开保存弹窗
+      isHandle: false, // 保存loading
+      filterSelectList: [], // 过滤条件选项
+      isFilterRuleError: false, // 过滤规则未填警告
+      defaultData: {},
       formData: {
         min_members: '', // 最小日志数量
         max_dist_list: '', // 敏感度
@@ -244,14 +255,9 @@ export default {
         max_log_length: 1, // 最大日志长度
         is_case_sensitive: 1, // 是否大小写忽略
         clustering_fields: '', // 聚合字段
-        filter_rules: [],
+        filter_rules: [], // 过滤规则
+        signature_enable: false,
       },
-      defaultData: {},
-      dataFingerprint: true, // 数据指纹
-      isShowAddFilterIcon: true, // 是否显示过滤规则增加按钮
-      isShowSubmitDialog: false, // 是否展开保存弹窗
-      isHandle: false, // 保存loading
-      filterSelectList: [], // 过滤条件选项
       conditionList: [ // 过滤条件对比
         { id: '=', name: '=' },
         { id: '!=', name: '!=' },
@@ -279,25 +285,30 @@ export default {
         if (val.slice(-1)[0].value.length > 0) {
           this.isShowAddFilterIcon = true;
         }
+        this.isFilterRuleError = false;
       },
     },
   },
   mounted() {
-    this.initPage();
+    const { extra } = this.configData;
+    this.dataFingerprint = extra.signature_switch;
+    if (extra.signature_switch && extra.clustering_field) {
+      this.initPage();
+    }
     this.initSelectList();
   },
   methods: {
-    async initPage() {
-      const { extra: { collector_config_id }, is_active: isActive } = this.configData;
+    async initPage(isDefault = false) {
+      const { extra } = this.configData;
       let res;
       try {
-        if (isActive) {
+        if (extra.collector_config_id && !isDefault) {
           res =  await this.$http.request('/logClustering/getConfig', {
             params: {
               index_set_id: this.$route.params.indexId,
             },
             data: {
-              collector_config_id,
+              collector_config_id: extra.collector_config_id,
             },
           });
         } else {
@@ -309,23 +320,43 @@ export default {
       Object.assign(this.formData, res.data);
       this.defaultData = res.data;
       this.globalLoading = false;
-      this.dataFingerprint = isActive;
     },
     // 获取下拉框元素
     initSelectList() {
-      this.clusterField = this.totalFields.filter(fitem => fitem.is_analyzed)
+      this.clusterField = this.totalFields.filter(item => item.is_analyzed)
         .map((el) => {
-          const item = {};
-          item.id = el.field_name;
-          item.name = el.field_alias ? `${el.field_name}(${el.field_alias})` : el.field_name;
-          return item;
+          const selectItem = {};
+          selectItem.id = el.field_name;
+          selectItem.name = el.field_alias ? `${el.field_name}(${el.field_alias})` : el.field_name;
+          return selectItem;
         });
       this.filterSelectList = this.totalFields.map((el) => {
-        const item = {};
-        item.id = el.field_name;
-        item.name = el.field_alias ? `${el.field_name}(${el.field_alias})` : el.field_name;
-        return item;
+        const selectItem = {};
+        selectItem.id = el.field_name;
+        selectItem.name = el.field_alias ? `${el.field_name}(${el.field_alias})` : el.field_name;
+        return selectItem;
       });
+    },
+    handleChangeFinger() {
+      const { extra } = this.configData;
+      if (this.dataFingerprint) {
+        this.$bkInfo({
+          title: this.$t('retrieveSetting.closeFinger'),
+          confirmFn: () => {
+            this.dataFingerprint = false;
+          },
+        });
+      } else {
+        if (!extra.collector_config_id) {
+          this.$bkInfo({
+            title: this.$t('retrieveSetting.notCollector'),
+            confirmFn: () => {},
+          });
+          return;
+        }
+        this.dataFingerprint = true;
+        this.initPage(true);
+      }
     },
     addFilterRule() {
       this.formData.filter_rules.push({
@@ -336,14 +367,16 @@ export default {
       });
     },
     handleSubmit() {
+      if (this.formData.filter_rules.length > 0) {
+        const isFilterRulePass = this.formData.filter_rules.some(el => el.value === '');
+        this.isFilterRuleError = true;
+        if (isFilterRulePass) return;
+      };
       this.isHandle = true;
       this.isShowSubmitDialog = true;
-      const {
-        collector_config_id,
-        collector_config_name_en,
-        index_set_id,
-        bk_biz_id,
-      } = this.indexSetItem;
+      this.isFilterRuleError = false;
+      const { index_set_id, bk_biz_id } = this.indexSetItem;
+      const { extra: { collector_config_id } } = this.configData;
       this.formData.predefined_varibles =  this.$refs.ruleTableRef.ruleArrToBase64();
       this.$http.request('/logClustering/changeConfig', {
         params: {
@@ -351,10 +384,11 @@ export default {
         },
         data: {
           ...this.formData,
+          signature_enable: this.dataFingerprint,
           collector_config_id,
-          collector_config_name_en,
           index_set_id,
-          bk_biz_id },
+          bk_biz_id,
+        },
       })
         .then(() => {
           this.isShowSubmitDialog = true;
@@ -391,7 +425,7 @@ export default {
 
     .left-word {
       font-weight: 700;
-      font-size: 15px;
+      font-size: 14px;
       margin-right: 16px;
     }
 
@@ -408,14 +442,14 @@ export default {
       min-width: 32px;
       height: 32px;
       background: #FFFFFF;
-      /deep/.bk-select-name {
-        padding: 0 !important;
-      }
       font-size: 14px;
       line-height: 28px;
       text-align: center;
       cursor: pointer;
       border: 1px solid #c4c6cc;
+      /deep/.bk-select-name {
+        padding: 0 !important;
+      }
     }
   }
   .filter-rule-item {
@@ -427,7 +461,7 @@ export default {
       border-radius: 0;
     }
     /deep/.bk-form-control {
-      width: 100px;
+      width: 140px;
       border-radius: 0;
     }
     .and-or {
@@ -465,6 +499,11 @@ export default {
       /deep/.submit-dialog-btn {
         margin-left: 224px;
       }
+    }
+  }
+  .rule-error{
+    /deep/.bk-form-input{
+      border-color: #FE5376;
     }
   }
 

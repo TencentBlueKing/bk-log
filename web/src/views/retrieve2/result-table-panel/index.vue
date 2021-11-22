@@ -39,6 +39,7 @@
           v-if="active === 'clustering'"
           v-bind="$attrs"
           v-on="$listeners"
+          :config-data="configData"
           @showOriginLog="showOriginLog" />
       </keep-alive>
     </div>
@@ -53,6 +54,10 @@ import LogClustering from './log-clustering/index.vue';
 export default {
   components: { OriginalLog, LogClustering },
   props: {
+    configData: {
+      type: Object,
+      require: true,
+    },
   },
   data() {
     return {

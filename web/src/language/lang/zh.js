@@ -317,6 +317,8 @@ export default {
     extractionPrompt: '将过滤后的日志采集上来后，日志检索模块可进行日志内容格式化，方便检索和分析。',
     ruleDeleteTips: '是否删除该条规则？',
     changeSwitchTips: '是否禁用该模块？',
+    notCollector: '当前索引集为非采集项,无法设置数据指纹',
+    closeFinger: '是否关闭数据指纹',
   },
   // logCluster
   忽略数字: '忽略数字',
