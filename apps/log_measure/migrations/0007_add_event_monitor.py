@@ -4,20 +4,22 @@ from django.db import migrations
 
 
 from apps.utils.log import logger
-from apps.log_measure.constants import DATA_NAMES, BK_MONITOR_CLIENT
+from apps.log_measure.constants import DATA_NAMES, BK_MONITOR_CLIENT, BK_LOG_EVENT_DATA_NAME
+from bk_monitor.constants import EVENT_TYPE
 
 
 def forwards_func(apps, schema_editor):
     try:
-        BK_MONITOR_CLIENT.custom_metric().migrate(data_name_list=Migration.data_names)
+        BK_MONITOR_CLIENT.custom_metric().migrate(
+            data_name_list=[BK_LOG_EVENT_DATA_NAME], custom_report_type=EVENT_TYPE
+        )
     except Exception as e:  # pylint: disable=broad-except
         logger.error(f"custom_metric migrate error: {e}")
 
 
 class Migration(migrations.Migration):
-    data_names = DATA_NAMES
     dependencies = [
-        ("log_measure", "0005_auto_20210821_0950"),
+        ("log_measure", "0006_add_django_monitor"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]

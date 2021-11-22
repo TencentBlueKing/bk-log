@@ -93,6 +93,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "api",
                     "description": "使用的API服务，在window机器上有多套服务",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventActivityId",
@@ -101,6 +102,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "activity_id",
                     "description": "全局唯一ID，标识当前活动，同一活动的事件会是同一个ID",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventChannel",
@@ -109,6 +111,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "channel",
                     "description": "事件来源那个订阅通道，和event_logs的 name 一致",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventRecordId",
@@ -117,6 +120,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "record_id",
                     "description": "记录ID，2(32)滚动更新",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventRelatedActivityId",
@@ -125,6 +129,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "related_activity_id",
                     "description": "关联活动ID",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventOpcode",
@@ -133,6 +138,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "opcode",
                     "description": "关联的操作码",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventData",
@@ -141,6 +147,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "event_data",
                     "description": "事件数据",
                     "option": build_es_option_type("object", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventId",
@@ -149,6 +156,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "event_id",
                     "description": "事件ID",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventKeywords",
@@ -157,6 +165,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "keywords",
                     "description": "关键字",
                     "option": build_es_option_type("text", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventProcessPid",
@@ -165,6 +174,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "process_pid",
                     "description": "进程ID",
                     "option": build_es_option_type("long", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventProviderGuid",
@@ -173,6 +183,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "provider_guid",
                     "description": "来源GUID",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventTask",
@@ -181,6 +192,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "task",
                     "description": "事件关联的任务 ",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventUserData",
@@ -189,6 +201,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "user_data",
                     "description": "关联的用户数据 ",
                     "option": build_es_option_type("object", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventUserDomain",
@@ -197,6 +210,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "user_domain",
                     "description": "关联的用户数据 ",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventUserIdentifier",
@@ -205,6 +219,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "user_identifier",
                     "description": "当前事件关联的用户的 Windows 安全标识（Security Identifier，SID )",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventUserName",
@@ -213,6 +228,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "user_name",
                     "description": "账户名",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventUserType",
@@ -221,6 +237,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "user_type",
                     "description": "账户类型",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventVersion",
@@ -229,6 +246,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "version",
                     "description": "事件版本号",
                     "option": build_es_option_type("long", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventProcessThreadId",
@@ -237,6 +255,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "process_thread_id",
                     "description": "事件线程ID",
                     "option": build_es_option_type("long", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventComputerName",
@@ -245,7 +264,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "computer_name",
                     "description": "主机名，当前活动节点的名字",
                     "option": build_es_option_type("keyword", es_version),
-                    "is_built_in": True,
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventLevel",
@@ -254,7 +273,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "level",
                     "description": "日志级别",
                     "option": build_es_option_type("keyword", es_version),
-                    "is_built_in": True,
+                    "flat_field": True,
                 },
                 {
                     "field_name": "winEventTimeCreated",
@@ -263,7 +282,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "time_created",
                     "description": "事件产生时间",
                     "option": build_es_option_type("keyword", es_version),
-                    "is_built_in": True,
+                    "flat_field": True,
                 },
                 {
                     "field_name": "iterationIndex",
@@ -272,6 +291,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "iterationindex",
                     "description": "迭代ID",
                     "option": build_es_option_type("integer", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "cloudId",
@@ -280,6 +300,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "cloudid",
                     "description": "云区域ID",
                     "option": build_es_option_type("integer", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "serverIp",
@@ -288,6 +309,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "ip",
                     "description": "ip",
                     "option": build_es_option_type("keyword", es_version),
+                    "flat_field": True,
                 },
                 {
                     "field_name": "gseIndex",
@@ -296,6 +318,7 @@ class WinEventLogScenario(CollectorScenario):
                     "alias_name": "gseindex",
                     "description": "gse索引",
                     "option": build_es_option_type("long", es_version),
+                    "flat_field": True,
                 },
             ],
             "time_field": {

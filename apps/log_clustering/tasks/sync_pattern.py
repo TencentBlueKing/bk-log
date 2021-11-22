@@ -23,7 +23,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 from apps.log_clustering.constants import (
     PATTERN_INDEX,
-    LATEST_PUBLISH_STATUS,
     CONTENT_PATTERN_INDEX,
     PATTERN_SIGNATURE_INDEX,
 )
@@ -39,7 +38,7 @@ def sync_pattern():
 
 
 def sync(model_id):
-    release_id = get_release_id(model_id=model_id)
+    release_id = AiopsModelHandler.get_latest_released_id(model_id=model_id)
     if not release_id:
         return None
     patterns = get_pattern(model_id=model_id, release_id=release_id)
@@ -52,17 +51,6 @@ def sync(model_id):
             for created_pattern in created_patterns
         ]
     )
-
-
-def get_release_id(model_id):
-    release_info = AiopsModelHandler().aiops_release(model_id=model_id).get("list", [])
-    release_ids = [
-        info["model_release_id"] for info in release_info if info.get("publish_status") == LATEST_PUBLISH_STATUS
-    ]
-    if not release_ids:
-        return None
-    release_id, *_ = release_ids
-    return release_id
 
 
 def get_pattern(model_id, release_id) -> list:

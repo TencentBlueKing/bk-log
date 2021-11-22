@@ -43,6 +43,7 @@ class _BkDataDataFlowApi:
             description=u"创建flow",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
+            default_timeout=300,
         )
         self.start_flow = DataAPI(
             method="POST",
@@ -59,6 +60,33 @@ class _BkDataDataFlowApi:
             module=self.MODULE,
             url_keys=["flow_id"],
             description=u"停止flow",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+        )
+        self.get_flow_graph = DataAPI(
+            method="GET",
+            url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/graph/",
+            module=self.MODULE,
+            url_keys=["flow_id"],
+            description=u"获取DataFlow图信息",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+        )
+        self.add_flow_nodes = DataAPI(
+            method="POST",
+            url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/nodes/",
+            module=self.MODULE,
+            url_keys=["flow_id"],
+            description=u"新增节点",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+        )
+        self.put_flow_nodes = DataAPI(
+            method="PUT",
+            url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/nodes/{node_id}/",
+            module=self.MODULE,
+            url_keys=["flow_id", "node_id"],
+            description=u"新增节点",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )

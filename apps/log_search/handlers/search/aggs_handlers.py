@@ -68,6 +68,7 @@ class AggsHandlers(AggsBase):
         :return:
         """
         # 组合聚合查询字段
+        query_data = copy.deepcopy(query_data)
         s = Search()
         s = cls._build_terms_aggs(
             s,
@@ -107,6 +108,7 @@ class AggsHandlers(AggsBase):
 
     @classmethod
     def date_histogram(cls, index_set_id, query_data: dict):
+        query_data = copy.deepcopy(query_data)
         s = Search()
         # 按照日期时间聚合
         interval = query_data.get("interval")

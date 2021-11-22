@@ -74,7 +74,6 @@ from apps.log_clustering.handlers.aiops.aiops_model.data_cls import (
     ReleaseConfigCls,
     ReleaseCls,
     UpdateTrainingScheduleCls,
-    AiopsReleaseCls,
     AiopsReleaseModelReleaseIdModelFileCls,
     AiopsExperimentsDebugCls,
     AiopsExperimentsDebugInputConfigCls,
@@ -1006,15 +1005,6 @@ class AiopsModelHandler(BaseAiopsHandler):
         update_training_schedule_request.training_schedule["start_time"] = target_time
         request_dict = self._set_username(update_training_schedule_request)
         return BkDataAIOPSApi.update_model_info(request_dict)
-
-    def aiops_release(self, model_id: str):
-        """
-        备选模型列表
-        @param model_id 模型id
-        """
-        aiops_release_request = AiopsReleaseCls(model_id=model_id, project_id=self.conf.get("project_id"))
-        request_dict = self._set_username(aiops_release_request)
-        return BkDataAIOPSApi.aiops_release(request_dict)
 
     def aiops_release_model_release_id_model_file(self, model_id: str, model_release_id: str):
         """

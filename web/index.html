@@ -29,6 +29,8 @@
       // trace 新建索引集是否为trace日志
       window.FEATURE_TOGGLE = {{ FEATURE_TOGGLE | safe }}
 
+      window.FEATURE_TOGGLE_WHITE_LIST = {{ FEATURE_TOGGLE_WHITE_LIST | safe}}
+
       // 实时日志最大长度
       window.REAL_TIME_LOG_MAX_LENGTH = '{{ REAL_TIME_LOG_MAX_LENGTH }}'
       // 超过此长度删除部分日志

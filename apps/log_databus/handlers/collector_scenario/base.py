@@ -17,11 +17,16 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from typing import Optional
+
 from django.conf import settings
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import TransferApi, NodeApi
+from apps.log_clustering.constants import PatternEnum
+from apps.log_databus.constants import META_DATA_ENCODING
+from apps.log_databus.handlers.collector_scenario.utils import build_es_option_type
 from apps.log_databus.models import CollectorConfig, DataLinkConfig
 from apps.log_databus.exceptions import BaseCollectorConfigException, DataLinkConfigPartitionException
 from apps.log_search.constants import CollectorScenarioEnum
@@ -73,6 +78,34 @@ class CollectorScenario(object):
         """
         raise NotImplementedError()
 
+    @classmethod
+    def change_data_stream(
+        cls, collector_config: CollectorConfig, mq_topic: Optional[str] = None, mq_partition: int = 1
+    ):
+        """
+        change bk_data_id result_table_id
+        :return:
+        """
+        new_bk_data_id = cls.update_or_create_data_id(
+            data_link_id=collector_config.data_link_id,
+            mq_config={"topic": mq_topic, "partition": mq_partition},
+            data_name=f"{collector_config.bk_biz_id}"
+            f"_{settings.TABLE_ID_PREFIX}"
+            f"_clustering_"
+            f"{collector_config.collector_config_name_en}",
+            description=collector_config.description,
+            encoding=META_DATA_ENCODING,
+        )
+        TransferApi.modify_datasource_result_table(
+            {"bk_data_id": new_bk_data_id, "table_id": collector_config.table_id}
+        )
+        logger.info(
+            f"[change_bk_data_id] "
+            f"change bk_data_id => [{new_bk_data_id}]"
+            f" result_table_id => [{collector_config.table_id}]"
+        )
+        return new_bk_data_id
+
     @staticmethod
     def delete_data_id(bk_data_id, data_name):
         """
@@ -85,7 +118,13 @@ class CollectorScenario(object):
 
     @staticmethod
     def update_or_create_data_id(
-        bk_data_id, data_link_id, data_name=None, description=None, encoding=None, option: dict = None
+        bk_data_id=None,
+        data_link_id=None,
+        data_name=None,
+        description=None,
+        encoding=None,
+        option: dict = None,
+        mq_config: dict = None,
     ):
         """
         创建或更新数据源
@@ -94,7 +133,8 @@ class CollectorScenario(object):
         :param data_name: 数据源名称
         :param description: 描述
         :param encoding: 字符集编码
-        :param option: 附加参数
+        :param mq_config: mq配置
+        :param option: 附加参数 {"topic": "xxxx", "partition": 1}
         :return: bk_data_id
         """
         default_option = {
@@ -106,6 +146,8 @@ class CollectorScenario(object):
             # 创建数据源，创建时一定是BK_LOG_TEXT这种直接入库的方式，后面进行字段提取时再根据情况变更清洗方式
             if not data_name:
                 raise BaseCollectorConfigException(_("创建采集项时名称不能为空"))
+            if not mq_config:
+                mq_config = {}
 
             params = {
                 "data_name": data_name,
@@ -113,6 +155,7 @@ class CollectorScenario(object):
                 "data_description": description,
                 "source_label": "bk_monitor",
                 "type_label": "log",
+                "mq_config": mq_config,
                 "option": default_option,
             }
             if data_link_id:
@@ -198,3 +241,17 @@ class CollectorScenario(object):
         if params.get("collector_config_overlay"):
             local_params.update(params["collector_config_overlay"])
         return local_params
+
+    @staticmethod
+    def log_clustering_fields(es_version: str = "5.x"):
+        return [
+            {
+                "field_name": f"dist_{pattern_level}",
+                "field_type": "string",
+                "tag": "dimension",
+                "alias_name": f"dist_{pattern_level}",
+                "description": f"聚类数字签名{pattern_level}",
+                "option": build_es_option_type("keyword", es_version),
+            }
+            for pattern_level in PatternEnum.get_choices()
+        ]
