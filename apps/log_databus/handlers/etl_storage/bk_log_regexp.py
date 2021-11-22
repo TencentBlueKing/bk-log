@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import copy
 import re
 
 from django.utils.translation import ugettext_lazy as _
@@ -82,9 +83,12 @@ class BkLogRegexpEtlStorage(EtlStorage):
             "separator_node_action": "regexp",
             "separator_node_name": self.separator_node_name,
             "separator_regexp": etl_params.get("separator_regexp", ""),
+            "etl_flat": etl_params.get("etl_flat", False),
         }
+
         if built_in_config.get("option") and isinstance(built_in_config["option"], dict):
             option = dict(built_in_config["option"], **option)
+
         result_table_fields = self.get_result_table_fields(fields, etl_params, built_in_config, es_version=es_version)
 
         return {
@@ -97,7 +101,7 @@ class BkLogRegexpEtlStorage(EtlStorage):
     def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
         retain_original_text = etl_params.get("retain_original_text", False)
         built_in_fields = built_in_config.get("fields", [])
-        result_table_fields = self.get_result_table_fields(fields, etl_params, built_in_config)
+        result_table_fields = self.get_result_table_fields(fields, etl_params, copy.deepcopy(built_in_config))
         time_field = result_table_fields.get("time_field")
         return {
             "conf": self._to_bkdata_conf(time_field),
@@ -125,7 +129,12 @@ class BkLogRegexpEtlStorage(EtlStorage):
                                                         "args": [
                                                             {
                                                                 "result": "regexp_data",
-                                                                "keys": [field["field_name"] for field in fields],
+                                                                "keys": [
+                                                                    field["alias_name"]
+                                                                    if field["alias_name"]
+                                                                    else field["field_name"]
+                                                                    for field in fields
+                                                                ],
                                                                 "regexp": etl_params.get("separator_regexp", ""),
                                                             }
                                                         ],
@@ -150,10 +159,14 @@ class BkLogRegexpEtlStorage(EtlStorage):
                                             "subtype": "assign_obj",
                                             "label": "labelb140",
                                             "assign": [
-                                                {"key": "iterationindex", "assign_to": "iterationIndex", "type": "int"},
-                                                {"key": "data", "assign_to": "log", "type": "text"}
+                                                {"key": "data", "assign_to": "data", "type": "text"}
                                                 if retain_original_text
                                                 else {},
+                                            ]
+                                            + [
+                                                self._to_bkdata_assign(built_in_field)
+                                                for built_in_field in built_in_fields
+                                                if built_in_field.get("flat_field", False)
                                             ],
                                             "type": "assign",
                                         },

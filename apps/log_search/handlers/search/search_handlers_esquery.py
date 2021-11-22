@@ -27,6 +27,9 @@ from django.conf import settings
 from requests.exceptions import ReadTimeout
 
 from apps.api.base import DataApiRetryClass
+from apps.log_clustering.models import ClusteringConfig
+from apps.log_databus.constants import EtlConfig
+from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import (
     LogIndexSet,
     LogIndexSetData,
@@ -245,6 +248,8 @@ class SearchHandler(object):
             self.bkmonitor(field_result_list),
             self.async_export(field_result),
             self.ip_topo_switch(),
+            self.clustering_config(),
+            self.clean_config(),
         ]:
             result_dict["config"].append(fields_config)
 
@@ -265,6 +270,34 @@ class SearchHandler(object):
     @fields_config("ip_topo_switch")
     def ip_topo_switch(self):
         return MappingHandlers.init_ip_topo_switch(self.index_set_id)
+
+    @fields_config("clustering_config")
+    def clustering_config(self):
+        """
+        判断聚类配置
+        """
+        log_index_set = LogIndexSet.objects.get(index_set_id=self.index_set_id)
+        clustering_config = ClusteringConfig.objects.filter(index_set_id=self.index_set_id).first()
+        if clustering_config:
+            return True, {
+                "collector_config_id": log_index_set.collector_config_id,
+                "signature_switch": clustering_config.signature_enable,
+                "clustering_field": clustering_config.clustering_fields,
+            }
+        return False, {"collector_config_id": None, "signature_switch": False, "clustering_field": None}
+
+    @fields_config("clean_config")
+    def clean_config(self):
+        """
+        获取清洗配置
+        """
+        log_index_set = LogIndexSet.objects.get(index_set_id=self.index_set_id)
+        if not log_index_set.collector_config_id:
+            return False, {"collector_config_id": None}
+        collector_config = CollectorConfig.objects.get(collector_config_id=log_index_set.collector_config_id)
+        return collector_config.etl_config != EtlConfig.BK_LOG_TEXT, {
+            "collector_config_id": log_index_set.collector_config_id
+        }
 
     @fields_config("context_and_realtime")
     def analyze_fields(self, field_result):

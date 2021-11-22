@@ -37,7 +37,7 @@ class CreateFlowCls(object):
     创建flow
     """
 
-    nodes: List[dict]
+    nodes: Any
     flow_name: str
     project_id: int
 
@@ -269,3 +269,129 @@ class QueueStorageNodeCls(object):
     from_nodes: List[FromNodesCls]
     node_type: str = "queue_storage"
     frontend_info: FrontendInfoCls = FrontendInfoCls()
+
+
+@dataclass
+class StreamSourceCls(object):
+    """
+    实时数据源节点输入
+    """
+
+    result_table_id: str
+
+
+@dataclass
+class RealTimeCls(object):
+    """
+    实时计算输入
+    """
+
+    fields: str
+    table_name: str
+    result_table_id: str
+    filter_rule: Any
+
+
+@dataclass
+class HDFSStorageCls(object):
+    """
+    hdfs存储
+    """
+
+    table_name: str
+    expires: int
+
+
+@dataclass
+class PreTreatDataFlowCls(object):
+    stream_source: StreamSourceCls
+    transform: RealTimeCls
+    add_uuid: RealTimeCls
+    sample_set: RealTimeCls
+    sample_set_hdfs: HDFSStorageCls
+    filter: RealTimeCls
+    add_uuid_hdfs: HDFSStorageCls
+    not_clustering: RealTimeCls
+    not_clustering_hdfs: HDFSStorageCls
+    bk_biz_id: int
+    cluster: str
+
+
+@dataclass
+class ModelCls(object):
+    table_name: str
+    model_release_id: int
+    model_id: str
+    result_table_id: str
+
+
+@dataclass
+class MergeNodeCls(object):
+    table_name: str
+    result_table_id: str
+
+
+@dataclass
+class TspiderStorageCls(object):
+    cluster: str
+    expire: int
+
+
+@dataclass
+class IgniteStorageCls(object):
+    cluster: str
+
+
+@dataclass
+class AfterTreatDataFlowCls(object):
+    add_uuid_stream_source: StreamSourceCls
+    sample_set_stream_source: StreamSourceCls
+    non_clustering_stream_source: StreamSourceCls
+    model: ModelCls
+    join_after_treat: RealTimeCls
+    group_by: RealTimeCls
+    change_field: RealTimeCls
+    merge_table: MergeNodeCls
+    format_signature: RealTimeCls
+    join_signature_tmp: RealTimeCls
+    judge_new_class: RealTimeCls
+    join_signature: RealTimeCls
+    judge_new_class_tspider: TspiderStorageCls
+    ignite: IgniteStorageCls
+    queue_cluster: str
+    bk_biz_id: int
+
+
+@dataclass
+class AddFlowNodesCls(object):
+    flow_id: int
+    result_table_id: str
+    from_links: List = field(default_factory=list)
+    node_type: str = "unified_kv_source"
+    frontend_info: Dict = field(default_factory=lambda: {"x": 1247.0, "y": 426.0})
+    config: Dict = field(
+        default_factory=lambda: {
+            "bk_biz_id": 0,
+            "from_result_table_ids": [],
+            "name": "join signature缓存",
+            "result_table_id": "",
+        }
+    )
+
+
+@dataclass
+class RequireNodeCls(object):
+    node_id: int
+    result_table_id: str
+    id: str
+
+
+@dataclass
+class ModifyFlowCls(object):
+    id: str
+    flow_id: int
+    node_id: int
+    bk_biz_id: int
+    table_name: str
+    group_by_node: RequireNodeCls
+    ignite_node: RequireNodeCls

@@ -4,8 +4,11 @@ unittest:
 build-web:
 	cd web && npm install && npm run build
 
-sync:
+sync_stag:
 	sh ./scripts/git.sh sync
+
+sync_upstream:
+	sh ./scripts/git.sh sync_upstream
 
 translate:
 	django-admin makemessages --extension py --ignore env_github && django-admin compilemessages

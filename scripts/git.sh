@@ -8,15 +8,23 @@ check_upstream_config() {
   fi
 }
 
-sync() {
+sync_stag() {
+
     git fetch upstream
     git merge upstream/stag
+}
+
+sync_upstream() {
+  git fetch upstream
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  git merge upstream/$current_branch
 }
 
 check_upstream_config
 
 actions=(
-  sync
+  sync_upstream
+  sync_stag
   create_branch
 )
 
@@ -37,8 +45,10 @@ if [ "$action" = "create_branch" ];then
   sync
   git push -u origin stag
   git checkout -b "$2"
-elif [ "$action" = "sync" ];then
-  sync
+elif [ "$action" = "sync_stag" ];then
+  sync_stag
+elif [ "$action" = "sync_upstream" ];then
+  sync_upstream
 fi
 
 delete_upstream_config() {

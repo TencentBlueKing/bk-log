@@ -550,14 +550,30 @@ export function readBlobRespToJson(resp) {
   return readBlobResponse(resp).then(resText => Promise.resolve(JSONBigNumber.parse(resText)));
 }
 
+export function bigNumberToString(value) {
+  return (value || {})._isBigNumber
+    ? value.toString().length < 16
+      ? Number(value) : (value).toString() : value;
+}
+
+export function formatBigNumListValue(value) {
+  if (typeof value === 'object' && value !== null && !value._isBigNumber) {
+    const obj = {};
+    Object.keys(value).forEach((opt) => {
+      obj[opt] = typeof obj[opt] === 'object' && obj[opt] !== null && !obj[opt]._isBigNumber
+        ? formatBigNumListValue(obj[opt]) : bigNumberToString(value[opt] || {});
+    });
+    return obj;
+  }
+  return bigNumberToString(value || {});
+}
+
 export function parseBigNumberList(lsit) {
   return (lsit || []).map(item => Object.keys(item || {})
     .reduce((output, key) => {
       return {
         ...output,
-        [key]: (item[key] || {})._isBigNumber
-          ? item[key].toString().length < 16
-            ? Number(item[key]) : (item[key]).toString() : item[key],
+        [key]: formatBigNumListValue(item[key]),
       };
     }, {}));
 }
