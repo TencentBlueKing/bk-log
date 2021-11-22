@@ -302,6 +302,7 @@
       :select-choice="clickSettingChoice"
       :total-fields="totalFields"
       :config-data="configData"
+      :clean-config="cleanConfig"
       @closeSetting="isShowSettingModal = false;"
     />
   </div>
@@ -444,6 +445,7 @@ export default {
       isThollteField: false,
       globalsData: {},
       random,
+      cleanConfig: {},
       configData: { // 日志聚类参数
         name: '',
         is_active: true,
@@ -1139,9 +1141,11 @@ export default {
           context_and_realtime: contextAndRealtime,
           bcs_web_console: bcsWebConsole,
           async_export: asyncExport,
+          clean_config: cleanConfig,
         } = localConfig;
 
         localConfig.extra_config && (this.configData = localConfig.extra_config);
+        this.cleanConfig = cleanConfig;
 
         fields.forEach((item) => {
           item.minWidth = 0;
