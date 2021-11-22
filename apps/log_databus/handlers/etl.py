@@ -33,14 +33,14 @@ from apps.log_databus.exceptions import (
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed
+from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario, ProjectInfo
 from apps.log_search.constants import FieldDateFormatEnum
 from apps.models import model_to_dict
 from apps.utils.db import array_group
 from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.constants import REGISTERED_SYSTEM_DEFAULT
+from apps.log_databus.constants import REGISTERED_SYSTEM_DEFAULT, EtlConfig
 from apps.decorators import user_operation_record
 from apps.utils.local import get_request_username
 
@@ -89,6 +89,10 @@ class EtlHandler(object):
         # 停止状态下不能编辑
         if self.data and not self.data.is_active:
             raise CollectorActiveException()
+
+        # 当清洗为直接入库时，直接清理对应采集项清洗配置stash
+        if etl_config == EtlConfig.BK_LOG_TEXT:
+            CleanStash.objects.filter(collector_config_id=self.collector_config_id).delete()
 
         # 存储集群信息
         cluster_info = StorageHandler(storage_cluster_id).get_cluster_info_by_id()
