@@ -24,13 +24,12 @@
   <bk-table
     :data="fingerList"
     class="log-cluster-table"
-    v-bkloading="{ isLoading: tableLoading }"
     @row-mouse-enter="showEditIcon"
     @row-mouse-leave="hiddenEditIcon">
     <bk-table-column :label="$t('数据指纹')" width="150">
       <template slot-scope="props">
         <div class="flac">
-          <span>{{props.row.signature}}</span>
+          <span class="signature">{{props.row.signature}}</span>
           <div v-if="props.row.is_new_class" class="new-finger">New</div>
         </div>
       </template>
@@ -44,7 +43,7 @@
 
     <bk-table-column :label="$t('占比')" :sortable="true" width="91" prop="source">
       <template slot-scope="props">
-        {{`${props.row.percentage}%`}}
+        {{`${props.row.percentage.toFixed(4)}%`}}
       </template>
     </bk-table-column>
 
@@ -65,7 +64,7 @@
         <template slot-scope="props">
           <div class="flac compared-change">
             <span class="link-color">{{`${props.row.year_on_year_percentage}%`}}</span>
-            <span :class="['bk-icon', props.row.source < 0 ? 'icon-arrows-down' : 'icon-arrows-up']"></span>
+            <span :class="['bk-icon',showArrowsClass(props.row)]"></span>
           </div>
         </template>
       </bk-table-column>
@@ -73,18 +72,28 @@
 
     <bk-table-column label="Pattern" min-width="400">
       <template slot-scope="props">
-        <bk-popover placement="bottom" ext-cls="pattern" theme="light" :delay="300">
+        <!-- <bk-popover
+          placement="bottom"
+          ext-cls="pattern"
+          theme="light"
+          trigger="click"
+          :delay="300">
           <span style="cursor: pointer;">{{props.row.pattern}}</span>
           <div slot="content" class="pattern-icons">
             <span class="bk-icon icon-eye" @click="handleShowOriginLog(props.row.signature)"></span>
             <span class="log-icon icon-chart"></span>
             <span class="log-icon icon-copy" @click="handleCopyPatter(props.row.pattern)"></span>
           </div>
-        </bk-popover>
+        </bk-popover> -->
+        <ClusterEventPopver
+          :is-search="false"
+          @eventClick="(option) => handleMenuClick(option,props.row)">
+          {{props.row.pattern}}
+        </ClusterEventPopver>
       </template>
     </bk-table-column>
 
-    <bk-table-column :label="$t('告警')" width="103">
+    <!-- <bk-table-column :label="$t('告警')" width="103">
       <template slot-scope="props">
         <div class="flac">
           <bk-switcher v-model="props.row.a" theme="primary"></bk-switcher>
@@ -103,22 +112,51 @@
       </template>
     </bk-table-column>
 
-    <bk-table-column :label="$t('备注')" width="100" prop="remark"></bk-table-column>
+    <bk-table-column :label="$t('备注')" width="100" prop="remark"></bk-table-column> -->
 
-    <div slot="empty">
+    <!-- 初次加载骨架屏loading -->
+    <!-- <retrieve-loader
+      is-loading
+      v-if="tableLoading"
+      :is-original-field="true"
+      :visible-fields="visibleFields">
+    </retrieve-loader> -->
+
+    <div slot="empty" v-if="!configData.extra.signature_switch">
       <div class="empty-text">
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>{{isPermission ? $t('goCleanMessage') : $t('goSettingMessage')}}</p>
-        <span class="empty-leave" @click="handleLeaveCurrent(isPermission)">
-          {{isPermission ? $t('跳转到日志清洗') : $t('去设置')}}
+        <p>{{$t('goSettingMessage')}}</p>
+        <span class="empty-leave" @click="handleLeaveCurrent">
+          {{$t('去设置')}}
         </span>
+      </div>
+    </div>
+    <div slot="empty" v-if="!isPermission">
+      <div class="empty-text">
+        <span class="bk-table-empty-icon bk-icon icon-empty"></span>
+        <p>{{$t('goCleanMessage')}}</p>
+        <span class="empty-leave" @click="handleLeaveCurrent">
+          {{$t('去设置')}}
+        </span>
+      </div>
+    </div>
+    <div slot="empty" v-if="fingerList.length === 0 && configData.extra.signature_switch">
+      <div class="empty-text">
+        <span class="bk-table-empty-icon bk-icon icon-empty"></span>
+        <p>{{$t('暂无数据')}}</p>
       </div>
     </div>
   </bk-table>
 </template>
 
 <script>
+// import RetrieveLoader from '@/skeleton/retrieve-loader';
+import ClusterEventPopver from './ClusterEventPopver';
 export default {
+  components: {
+    ClusterEventPopver,
+    // RetrieveLoader,
+  },
   props: {
     fingerList: {
       type: Array,
@@ -132,17 +170,13 @@ export default {
       type: Boolean,
       require: true,
     },
-    congfigNumber: {
-      type: Number,
-      require: true,
-    },
-    tableLoading: {
-      type: Boolean,
-      default: false,
-    },
     partterLevel: {
       type: String,
       default: '09',
+    },
+    configData: {
+      type: Object,
+      require: true,
     },
   },
   data() {
@@ -152,34 +186,33 @@ export default {
   },
   inject: ['addFilterCondition'],
   methods: {
-    handleShowOriginLog(signature) {
-      this.addFilterCondition(`dist_${this.partterLevel}`, 'is', signature);
-      this.$emit('showOriginLog');
-    },
-    handleCopyPatter(value) {
-      try {
-        const input = document.createElement('input');
-        input.setAttribute('value', value);
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        this.messageSuccess(this.$t('复制成功'));
-      } catch (e) {
-        console.warn(e);
+    handleMenuClick(option, row) {
+      switch (option) {
+        case 'show original':
+          this.addFilterCondition(`dist_${this.partterLevel}`, 'is', row.signature.toString());
+          this.$emit('showOriginLog');
+          break;
+        case 'copy':
+          try {
+            const input = document.createElement('input');
+            input.setAttribute('value', row.pattern);
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            this.messageSuccess(this.$t('复制成功'));
+          } catch (e) {
+            console.warn(e);
+          }
+          break;
       }
     },
-    handleLeaveCurrent(isPermission) {
-      if (isPermission && !this.congfigNumber) return;
-      if (isPermission) {
-        this.$router.push({
-          name: 'clean-edit',
-          params: { collectorId: this.congfigNumber },
-          query: { projectId: window.localStorage.getItem('project_id') },
-        });
-      } else {
-        this.$emit('showSettingLog');
-      }
+    showArrowsClass(row) {
+      if (row === 0) return '';
+      return row.source < 0 ? 'icon-arrows-down' : 'icon-arrows-up';
+    },
+    handleLeaveCurrent() {
+      this.$emit('showSettingLog');
     },
     showEditIcon(index) {
       this.currentHover = index;
@@ -209,6 +242,15 @@ export default {
       min-height: calc(100vh - 540px);
     }
   }
+  .signature{
+    // display: inline-block;
+    width: 95px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 20px;
+    max-height: 16px;
+  }
 
   .empty-text {
     display: flex;
@@ -231,7 +273,7 @@ export default {
   height: 16px;
   font-size: 12px;
   line-height: 14px;
-  margin-left: 3px;
+  margin: 4px 0 0 3px;
   text-align: center;
   color: #ea3636;
   background: #ffdddd;
@@ -239,29 +281,28 @@ export default {
   border-radius: 9px;
 }
 
-.pattern-icons {
-  width: 60px;
-  // display: flex;
-  position: relative;
-  .bk-icon {
-    margin-right: 6px;
-  }
-  .icon-eye{
-    font-size: 14px !important;
-    cursor: pointer;
-  }
-  .icon-chart{
-    font-size: 12px !important;
-    cursor: pointer;
-  }
-  .icon-copy {
-    font-size: 26px;
-    position: absolute;
-    right: -8px;
-    top: -4px;
-    cursor: pointer;
-  }
-}
+// .pattern-icons {
+//   width: 60px;
+//   position: relative;
+//   .bk-icon {
+//     margin-right: 6px;
+//   }
+//   .icon-eye{
+//     font-size: 14px !important;
+//     cursor: pointer;
+//   }
+//   .icon-chart{
+//     font-size: 12px !important;
+//     cursor: pointer;
+//   }
+//   .icon-copy {
+//     font-size: 26px;
+//     position: absolute;
+//     right: -8px;
+//     top: -4px;
+//     cursor: pointer;
+//   }
+// }
 
 .link-color {
   color: #3a84ff;
@@ -277,6 +318,7 @@ export default {
 }
 
 .flac {
+  margin-top: -4px;
   @include flex-align;
 }
 
