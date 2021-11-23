@@ -22,7 +22,7 @@
 
 <template>
   <div class="log-cluster-table-container" v-bkloading="{ isLoading: tableLoading ,opacity: 1 }">
-    <div class="cluster-nav" v-if="isHaveText">
+    <div class="cluster-nav" v-if="exhibitAll">
       <div class="bk-button-group">
         <bk-button
           v-for="(item) of clusterNavList"
@@ -87,18 +87,17 @@
     </div>
 
     <bk-alert
-      v-if="active === 'dataFingerprint' && fingerList.length === 0 && isPermission"
+      v-if="active === 'dataFingerprint' && fingerList.length === 0 && isPermission && exhibitAll"
       :title="$t('clusterAlert')" closable type="info">
     </bk-alert>
 
-    <div v-if="isHaveText">
+    <div v-if="exhibitAll">
       <ignore-table
         v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
         v-bind="$attrs"
         v-on="$listeners"
-        :active="active"
-        :clustering-field="clusteringField"
-        :total-fields="totalFields" />
+        :total-fields="totalFields"
+        :active="active" />
       <data-fingerprint
         v-if="active === 'dataFingerprint'"
         v-bind="$attrs"
@@ -116,9 +115,9 @@
       <div slot="empty">
         <div class="empty-text">
           <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-          <p>{{$t('goCleanMessage')}}</p>
-          <span class="empty-leave" @click="goToCleaning">
-            {{$t('跳转到日志清洗')}}
+          <p>{{isPermission ? $t('goCleanMessage') : $t('goSettingMessage')}}</p>
+          <span class="empty-leave" @click="handleLeaveCurrent">
+            {{isPermission ? $t('跳转到日志清洗') : $t('去设置')}}
           </span>
         </div>
       </div>
@@ -153,13 +152,13 @@ export default {
       partterSize: 0, // slider当前值
       partterLevel: '', // partter等级
       sliderMaxVal: 0, // partter最大值
-      isPermission: true, // 是否打开数据指纹
+      isPermission: false, // 是否打开日志聚类大开关
       partterList: [], // partter敏感度List
       isNear24H: false, // 近24h
       tableLoading: false,
       yearOnYearCycle: 0, // 同比值
       configID: -1, // 采集项ID
-      isHaveText: false,
+      exhibitAll: false,
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -178,9 +177,6 @@ export default {
     ...mapGetters({
       globalsData: 'globals/globalsData',
     }),
-    clusteringField() {
-      return this.configData?.extra.clustering_field;
-    },
     isOperateDisable() {
       return !this.isPermission || this.fingerList.length === 0;
     },
@@ -196,28 +192,29 @@ export default {
       },
     },
     totalFields: {
+      deep: true,
       immediate: true,
       handler(newList) {
         this.tableLoading = true;
         setTimeout(() => {
           if (newList.length !== 0) {
-            this.isHaveText = newList.some(el => el.field_type === 'text');
-            if (this.isHaveText) {
-              this.initTable();
+            const { is_active: isActive } = this.configData;
+            if (!isActive) {
+              this.exhibitAll = false;
+              return;
             }
+            this.exhibitAll = newList.some(el => el.field_type === 'text');
+            this.exhibitAll && this.initTable();
+            this.requestFinger();
           }
           this.tableLoading = false;
         }, 500);
       },
     },
   },
-  mounted() {
-    this.initTable();
-  },
   methods: {
     handleClickNav(id) {
       this.active = id;
-      id === 'dataFingerprint' && this.requestFinger();
     },
     handleNear24H(state) {
       this.isNear24H = state;
@@ -266,7 +263,8 @@ export default {
       this.partterLevel = this.partterList[val];
       this.requestFinger();
     },
-    goToCleaning() {
+    handleLeaveCurrent() {
+      !this.isPermission && this.$emit('showSettingLog');
       if (this.configID) {
         this.$router.push({
           name: 'clean-edit',

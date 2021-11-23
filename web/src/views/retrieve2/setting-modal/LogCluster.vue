@@ -23,16 +23,22 @@
 <template>
   <!-- 设置-日志聚类 -->
   <div class="setting-log-cluster" v-bkloading="{ isLoading: globalLoading }">
-    <bk-form :label-width="200">
+    <bk-form
+      ref="validateForm"
+      :label-width="200"
+      :rules="rules">
       <!-- 聚类字段 -->
       <bk-form-item
         :label="$t('retrieveSetting.clusterField')"
         :required="true"
-        :property="''">
+        :property="'fields'">
         <br>
         <div class="form-item">
           <bk-select
-            v-model="formData.clustering_fields" class="ml200" style="width: 482px;" :disabled="!globalEditable">
+            v-model="formData.clustering_fields"
+            class="ml200"
+            style="width: 482px;"
+            :disabled="!globalEditable">
             <bk-option v-for="option in clusterField"
                        :key="option.id"
                        :id="option.id"
@@ -64,9 +70,10 @@
           <bk-switcher
             class="left-word" theme="primary" size="large"
             v-model="dataFingerprint"
-            :pre-check="() => false"
-            :disabled="!globalEditable">
+            :disabled="dataFingerprint"
+            :pre-check="() => false">
           </bk-switcher>
+          <!-- :disabled="!globalEditable" -->
         </div>
         <bk-alert style="width: 780px" type="info" :title="$t('retrieveSetting.clusterPrompt')"></bk-alert>
       </div>
@@ -247,6 +254,13 @@ export default {
       filterSelectList: [], // 过滤条件选项
       isFilterRuleError: false, // 过滤规则未填警告
       defaultData: {},
+      isFieldsError: false,
+      rules: {
+        fields: [{
+          required: true,
+          trigger: 'blur',
+        }],
+      },
       formData: {
         min_members: '', // 最小日志数量
         max_dist_list: '', // 敏感度
@@ -367,38 +381,40 @@ export default {
       });
     },
     handleSubmit() {
-      if (this.formData.filter_rules.length > 0) {
-        const isFilterRulePass = this.formData.filter_rules.some(el => el.value === '');
-        this.isFilterRuleError = true;
-        if (isFilterRulePass) return;
-      };
-      this.isHandle = true;
-      this.isShowSubmitDialog = true;
-      this.isFilterRuleError = false;
-      const { index_set_id, bk_biz_id } = this.indexSetItem;
-      const { extra: { collector_config_id } } = this.configData;
-      this.formData.predefined_varibles =  this.$refs.ruleTableRef.ruleArrToBase64();
-      this.$http.request('/logClustering/changeConfig', {
-        params: {
-          index_set_id,
-        },
-        data: {
-          ...this.formData,
-          signature_enable: this.dataFingerprint,
-          collector_config_id,
-          index_set_id,
-          bk_biz_id,
-        },
-      })
-        .then(() => {
-          this.isShowSubmitDialog = true;
+      this.$refs.validateForm.validate().then(() => {
+        if (this.formData.filter_rules.length > 0) {
+          const isFilterRulePass = this.formData.filter_rules.some(el => el.value === '');
+          this.isFilterRuleError = true;
+          if (isFilterRulePass) return;
+        };
+        this.isHandle = true;
+        this.isShowSubmitDialog = true;
+        this.isFilterRuleError = false;
+        const { index_set_id, bk_biz_id } = this.indexSetItem;
+        const { extra: { collector_config_id } } = this.configData;
+        this.formData.predefined_varibles =  this.$refs.ruleTableRef.ruleArrToBase64();
+        this.$http.request('/logClustering/changeConfig', {
+          params: {
+            index_set_id,
+          },
+          data: {
+            ...this.formData,
+            signature_enable: this.dataFingerprint,
+            collector_config_id,
+            index_set_id,
+            bk_biz_id,
+          },
         })
-        .catch((e) => {
-          console.warn(e);
-        })
-        .finally(() => {
-          this.isHandle = false;
-        });
+          .then(() => {
+            this.isShowSubmitDialog = true;
+          })
+          .catch((e) => {
+            console.warn(e);
+          })
+          .finally(() => {
+            this.isHandle = false;
+          });
+      }, () => {});
     },
     handleDeleteSelect(index) {
       this.formData.filter_rules.splice(index, 1);
@@ -503,7 +519,7 @@ export default {
   }
   .rule-error{
     /deep/.bk-form-input{
-      border-color: #FE5376;
+      border-color: #fa224d;
     }
   }
 

@@ -174,6 +174,9 @@ export default {
     isClusteringActive() { // 日志聚类是否开启
       return this.configData?.is_active;
     },
+    isSignatureActive() {
+      return this.cleanConfig?.extra?.signature_switch;
+    },
   },
   watch: {
     isShowDialog(val) {
@@ -187,7 +190,7 @@ export default {
         return {
           ...list,
           isEditable: list.id === 'extract' ? isExtractActive : isClusteringActive,
-          isDisabled: !isCollector,
+          isDisabled: !isCollector || (list.id === 'clustering' && !this.isSignatureActive),
         };
       });
     },
