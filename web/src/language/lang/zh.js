@@ -59,6 +59,7 @@ export default {
     block: '停用',
     start: '启用',
     timeFormatTips: '开启后将表格内的 UNIX 时间戳格式化为可读时间',
+    reset: '重置',
   },
   form: {
     pleaseEnter: '请输入',
@@ -337,7 +338,8 @@ export default {
   去设置: '去设置',
   跳转到日志清洗: '跳转到日志清洗',
   clusterAlert: '日志聚类必需至少有一个text类型的字段，当前无该字段类型，请前往日志清洗进行设置。',
-  goSettingMessage: '当前数据指纹未启用，请前往设置',
+  goFingerMessage: '当前数据指纹未启用，请前往设置',
+  goSettingMessage: '当前日志聚类未启用，请前往设置',
   goCleanMessage: '当前无可用字段，请前往日志清洗进行设置',
   nav: {
     logRetrieve: '日志检索',

@@ -304,6 +304,7 @@
       :clean-config="cleanConfig"
       :config-data="clusteringData"
       @closeSetting="isShowSettingModal = false;"
+      @updateLogFields="requestFields"
     />
   </div>
 </template>
