@@ -1166,7 +1166,7 @@ export default {
         this.showWebConsole = bcsWebConsole.is_active;
         this.bkmonitorUrl = bkmonitor.is_active;
         this.asyncExportUsable = asyncExport.is_active;
-        this.asyncExportUsableReason = asyncExport.is_active ? asyncExport.extra.usable_reason : '';
+        this.asyncExportUsableReason = !asyncExport.is_active ? asyncExport.extra.usable_reason : '';
         this.timeField = timeField;
         this.totalFields = fields;
         // 后台给的 display_fields 可能有无效字段 所以进行过滤，获得排序后的字段
