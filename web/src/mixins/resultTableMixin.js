@@ -227,6 +227,9 @@ export default {
         }, [
           h('span', {
             class: `field-type-icon ${fieldIcon}`,
+            style: {
+              marginRight: '4px',
+            },
             directives: [
               {
                 name: 'bk-tooltips',
