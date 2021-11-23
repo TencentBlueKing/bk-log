@@ -59,6 +59,7 @@ export default {
     block: '停用',
     start: '启用',
     timeFormatTips: '开启后将表格内的 UNIX 时间戳格式化为可读时间',
+    reset: '重置',
   },
   form: {
     pleaseEnter: '请输入',

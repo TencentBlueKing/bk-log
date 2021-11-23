@@ -59,6 +59,7 @@ export default {
     block: 'Disable',
     start: 'Enable',
     timeFormatTips: 'datetime format',
+    reset: 'Reset',
   },
   form: {
     pleaseEnter: 'Please enter',

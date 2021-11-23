@@ -159,7 +159,7 @@ export default {
       tableLoading: false,
       yearOnYearCycle: 0, // 同比值
       configID: -1, // 采集项ID
-      isHaveText: true,
+      isHaveText: false,
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -195,17 +195,20 @@ export default {
         this.requestFinger();
       },
     },
-    totalFields(newList) {
-      this.tableLoading = true;
-      setTimeout(() => {
-        if (newList.length !== 0) {
-          this.isHaveText = newList.some(el => el.field_type === 'text');
-          if (this.isHaveText) {
-            this.initTable();
+    totalFields: {
+      immediate: true,
+      handler(newList) {
+        this.tableLoading = true;
+        setTimeout(() => {
+          if (newList.length !== 0) {
+            this.isHaveText = newList.some(el => el.field_type === 'text');
+            if (this.isHaveText) {
+              this.initTable();
+            }
           }
-        }
-        this.tableLoading = false;
-      }, 500);
+          this.tableLoading = false;
+        }, 500);
+      },
     },
   },
   mounted() {
