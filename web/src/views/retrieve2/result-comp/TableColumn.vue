@@ -93,7 +93,7 @@ export default {
     // 高亮
     markList() {
       let markVal = [];
-      if (['text', 'keyword'].includes(this.fieldType)) {
+      if (['text'].includes(this.fieldType)) {
         markVal = this.content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
       }
 
@@ -111,7 +111,7 @@ export default {
       // 匹配高亮标签
       let value = content;
 
-      if (['text', 'keyword'].includes(this.fieldType)) {
+      if (['text'].includes(this.fieldType)) {
         const markVal = content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
         if (markVal) {
           value = String(value).replace(/<mark>/g, '')
