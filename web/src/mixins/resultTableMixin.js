@@ -57,6 +57,14 @@ export default {
       type: Array,
       required: true,
     },
+    showFieldAlias: {
+      type: Boolean,
+      default: false,
+    },
+    fieldAliasMap: {
+      type: Object,
+      default: () => {},
+    },
     isWrap: {
       type: Boolean,
       default: false,

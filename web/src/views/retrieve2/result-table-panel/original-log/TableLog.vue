@@ -87,16 +87,6 @@ export default {
       type: Object,
       required: true,
     },
-    fieldAliasMap: {
-      type: Object,
-      default() {
-        return {};
-      },
-    },
-    showFieldAlias: {
-      type: Boolean,
-      default: false,
-    },
     tableList: {
       type: Array,
       required: true,
