@@ -99,6 +99,9 @@ export default {
       color: #3A84FF;
     }
   }
+  .log-icon{
+    font-size: 12px;
+  }
   .icon-chart {
     margin-right: 4px;
   }

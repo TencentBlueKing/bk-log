@@ -26,12 +26,12 @@
     :data="renderList"
     :show-header="false"
     :outer-border="false"
-    v-if="columnField.length">
+    v-if="widthList.length">
     <bk-table-column width="30"></bk-table-column>
-    <template v-for="(field, index) in columnField">
+    <template v-for="(field, index) in widthList">
       <bk-table-column
-        :min-width="(!isLoading || isOriginalField) ? field.minWidth : 0"
-        :width="(!isLoading || isOriginalField) ? field.width : 'auto'"
+        :min-width="field ? field : 0"
+        :width="field ? field : 'auto'"
         :key="index">
         <!-- eslint-disable-next-line vue/no-unused-vars -->
         <template slot-scope="props">
@@ -46,69 +46,32 @@
 <script>
 export default {
   props: {
-    visibleFields: {
-      type: Array,
-      required: true,
-    },
     // 用于初次loading
     isLoading: {
       type: Boolean,
       default: false,
     },
-    // 是否原始日志
-    isOriginalField: {
-      type: Boolean,
-      default: false,
+    widthList: {
+      type: Array,
+      require: true,
     },
-    isPageOver: {
-      type: Boolean,
-      required: false,
+    loaderLen: { // 骨架行数
+      type: Number,
+      default: 24,
     },
   },
   data() {
     return {
-      throttle: false, // 滚动节流
-      loaderLen: 24, // 骨架行数
     };
   },
   computed: {
     renderList() {
       return new Array(this.loaderLen).fill('');
     },
-    columnField() {
-      return this.isOriginalField ? [
-        { width: 160, minWidth: 0, field_name: 'time' },
-        { width: '', minWidth: 0, field_name: 'log' },
-      ] : this.visibleFields;
-    },
-  },
-  created() {
-    if (this.isLoading) this.loaderLen = 12;
-    const ele = document.querySelector('.result-scroll-container');
-    if (ele) ele.addEventListener('scroll', this.handleScroll);
-  },
-  beforeDestroy() {
-    const ele = document.querySelector('.result-scroll-container');
-    if (ele) ele.removeEventListener('scroll', this.handleScroll);
   },
   methods: {
     getRandom() { // 骨架占位随机长度
       return Math.floor(Math.random() * (20 - 100) + 100);
-    },
-    handleScroll() {
-      if (this.throttle || this.isLoading) {
-        return;
-      }
-
-      const el = document.querySelector('.result-scroll-container');
-      if (el.scrollHeight - el.offsetHeight - el.scrollTop < 100) {
-        this.throttle = true;
-        setTimeout(() => {
-          this.loaderLen = this.loaderLen + 24;
-          el.scrollTop = el.scrollTop - 100;
-          this.throttle = false;
-        }, 100);
-      }
     },
   },
 };
