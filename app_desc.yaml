@@ -1,0 +1,110 @@
+spec_version: 2
+app_version: "4.3.0"
+app:
+    region: default
+    bk_app_code: "bk_log_search"
+    bk_app_name: 日志平台容器部署版
+    market:
+        category: 运维工具
+        introduction: 蓝鲸智云日志平台是为了解决运维场景中查询日志难的问题而推出的一款Saas，基于业界主流的全文检索引擎，通过蓝鲸智云的专属agent进行日志采集，无需登录各台机器，集中管理所有日志。
+        display_options:
+            width: 1300
+            height: 720
+            is_win_maximize: True
+            open_mode: "new_tab"
+modules:
+    default:
+        is_default: True
+        source_dir: src
+        language: Python
+        env_variables:
+            - key: BKAPPS_ENGINE_REGION
+              value: open
+              description: 运行环境
+            - key: PIP_VERSION
+              value: 19.3
+              description: pip版本
+            - key: USE_SMART_V3
+              value: 1
+              description: 使用smart_v3
+        services:
+            - name: mysql
+            - name: redis
+            - name: rabbitmq
+            - name: bkrepo
+        processes:
+            web:
+                command: gunicorn wsgi -w 4 -b :5000 --access-logfile - --error-logfile - --access-logformat '[%(h)s] %({request_id}i)s %(u)s %(t)s "%(r)s" %(s)s %(D)s %(b)s "%(f)s" "%(a)s"'
+                plan: 4C2G5R
+                replicas: 5
+            worker:
+                command: python manage.py celery worker  -O fair -l info -c 4 -Q celery,default
+                plan: 4C2G5R
+                replicas: 5
+            beat:
+                command: python manage.py celery beat -l info
+                plan: 4C2G5R
+                replicas: 1
+            async-worker:
+                command: python manage.py celery worker -l info -c 1 -Q async_export
+                plan: 4C2G5R
+                replicas: 5
+            sworker:
+                command: python manage.py celery worker -c 4 -Q service_schedule,service_schedule_priority  -l info
+                plan: 4C2G5R
+                replicas: 5
+            pworker:
+                command: python manage.py celery worker -c 4 -Q pipeline,pipeline_priority -l info
+                plan: 4C2G5R
+                replicas: 5
+            oworker:
+                command: python manage.py celery worker -c 4 -Q pipeline_additional_task,pipeline_additional_task_priority
+                plan: 4C2G5R
+                replicas: 5
+            grafana:
+                command: bash start.sh
+                plan: 4C2G5R
+                replicas: 1
+        svc_discovery:
+            bk_saas:
+                - bk_app_code: bk_monitorv3
+                - bk_app_code: bk_log_search
+                - bk_app_code: bk_itsm
+                - bk_app_code: bk_data
+                - bk_app_code: bk_iam
+
+    api:
+        is_default: False
+        source_dir: src
+        language: Python
+        services:
+            - name: redis
+              shared_from: default
+            - name: mysql
+              shared_from: default
+        env_variables:
+            - key: BKAPP_IS_BKLOG_API
+              value: 1
+              description: 是否启用后台配置，用于同一份代码区分SaaS和后台的差异化配置
+            - key: BKAPPS_ENGINE_REGION
+              value: open
+              description: 运行环境
+            - key: PIP_VERSION
+              value: 19.3
+              description: pip版本
+            - key: USE_SMART_V3
+              value: 1
+              description: 使用smart_v3
+
+        processes:
+            web:
+                command: gunicorn wsgi -w 4 -k gevent -b :5000 --access-logfile - --error-logfile - --access-logformat '[%(h)s] %({request_id}i)s %(u)s %(t)s "%(r)s" %(s)s %(D)s %(b)s "%(f)s" "%(a)s"'
+                plan: 4C2G5R
+                replicas: 5
+        svc_discovery:
+            bk_saas:
+                - bk_app_code: bk_monitorv3
+                - bk_app_code: bk_log_search
+                - bk_app_code: bk_itsm
+                - bk_app_code: bk_data
+                - bk_app_code: bk_iam
