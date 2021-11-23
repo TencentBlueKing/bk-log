@@ -89,6 +89,7 @@
       </div>
     </bk-popover>
     <bk-popover
+      v-if="isAiopsToggle"
       trigger="click"
       placement="bottom-end"
       theme="light bk-select-dropdown"
@@ -116,6 +117,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import SelectDate from '../condition-comp/SelectDate';
 import FavoriteCard from '../condition-comp/FavoriteCard';
 
@@ -198,11 +200,20 @@ export default {
     };
   },
   computed: {
+    ...mapState({
+      bkBizId: state => state.bkBizId,
+    }),
     refreshTimeText() {
       return this.refreshTimeList.find(item => item.id === this.refreshTimeout).name;
     },
     isAutoRefresh() {
       return this.refreshTimeout !== 0;
+    },
+    isAiopsToggle() { // 日志聚类总开关
+      if (window.FEATURE_TOGGLE.bkdata_aiops_toggle !== 'on') return false;
+      const aiopsBizList = window.FEATURE_TOGGLE_WHITE_LIST?.bkdata_aiops_toggle;
+
+      return aiopsBizList ? aiopsBizList.some(item => item.toString() === this.bkBizId) : false;
     },
   },
   mounted() {
