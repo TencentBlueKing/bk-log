@@ -215,8 +215,7 @@ export default {
       globalsData: 'globals/globalsData',
     }),
     isOperateDisable() {
-      return false;
-      // return !this.isPermission || this.fingerList.length === 0;
+      return !this.isPermission || this.fingerList.length === 0;
     },
     smallLoaderWidthList() {
       if (this.active !== 'dataFingerprint') {
@@ -265,9 +264,13 @@ export default {
     handleClickNav(id) {
       this.active = id;
       const isHandleClick = this.alreadyClickNav.some(el => el === id);
-      if (!isHandleClick && id !== 'dataFingerprint') {
-        id === 'dataFingerprint' && (this.partterLevel !== '' && this.requestFinger());
+      if (!isHandleClick) {
         this.alreadyClickNav.push(id);
+        if (this.alreadyClickNav.includes('dataFingerprint') && this.partterLevel !== '') {
+          this.requestFinger();
+          return;
+        }
+        this.showNavTableLoading();
       }
     },
     handleNear24H(state) {
@@ -291,6 +294,7 @@ export default {
         },
       })
         .then((res) => {
+          // this.fingerList = Array(50).fill(this.fingerList[0]);
           this.fingerList = res.data;
         })
         .catch((e) => {
@@ -333,6 +337,13 @@ export default {
           query: { projectId: window.localStorage.getItem('project_id') },
         });
       }
+    },
+    // navtable loading动画
+    showNavTableLoading() {
+      this.tableLoading = true;
+      setTimeout(() => {
+        this.tableLoading = false;
+      }, 500);
     },
   },
 };

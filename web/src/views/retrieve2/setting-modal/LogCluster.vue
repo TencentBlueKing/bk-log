@@ -67,10 +67,9 @@
           <bk-switcher
             class="left-word" theme="primary" size="large"
             v-model="dataFingerprint"
-            :disabled="dataFingerprint"
+            :disabled="!globalEditable || !isCollector"
             :pre-check="() => false">
           </bk-switcher>
-          <!-- :disabled="!globalEditable" -->
         </div>
         <bk-alert style="width: 780px" type="info" :title="$t('retrieveSetting.clusterPrompt')"></bk-alert>
       </div>
@@ -238,6 +237,10 @@ export default {
     },
     configData: {
       type: Object,
+      require: true,
+    },
+    isCollector: {
+      type: Boolean,
       require: true,
     },
   },
