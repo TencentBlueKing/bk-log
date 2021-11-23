@@ -23,21 +23,18 @@
 <template>
   <!-- 设置-日志聚类 -->
   <div class="setting-log-cluster" v-bkloading="{ isLoading: globalLoading }">
-    <bk-form
-      ref="validateForm"
-      :label-width="200"
-      :rules="rules">
+    <bk-form ref="validateForm" :label-width="200" :model="formData">
       <!-- 聚类字段 -->
       <bk-form-item
         :label="$t('retrieveSetting.clusterField')"
         :required="true"
-        :property="'fields'">
+        :rules="rules.clustering_fields"
+        :property="'clustering_fields'">
         <br>
         <div class="form-item">
           <bk-select
             v-model="formData.clustering_fields"
-            class="ml200"
-            style="width: 482px;"
+            class="ml200" style="width: 482px;"
             :disabled="!globalEditable">
             <bk-option v-for="option in clusterField"
                        :key="option.id"
@@ -83,7 +80,8 @@
         <bk-form-item
           :label="$t('retrieveSetting.fieldLength')"
           :required="true"
-          :property="''">
+          :rules="rules.max_log_length"
+          :property="'max_log_length'">
           <br>
           <div class="form-item">
             <bk-input
@@ -159,9 +157,9 @@
               <bk-input
                 v-if="item.fields_name !== ''"
                 v-model="item.value"
-                placeholder=" "
                 :class="['mr-neg1',item.value === '' && isFilterRuleError ? 'rule-error' : '']"
-                :disabled="!globalEditable">
+                :disabled="!globalEditable"
+                @blur="handleBlurFilter">
               </bk-input>
             </div>
             <button v-if="isShowAddFilterIcon"
@@ -256,7 +254,11 @@ export default {
       defaultData: {},
       isFieldsError: false,
       rules: {
-        fields: [{
+        clustering_fields: [{
+          required: true,
+          trigger: 'blur',
+        }],
+        max_log_length: [{
           required: true,
           trigger: 'blur',
         }],
@@ -380,16 +382,17 @@ export default {
         logic_operator: 'and',
       });
     },
+    handleBlurFilter() {
+      if (this.formData.filter_rules.length > 0) {
+        this.isFilterRuleError = this.formData.filter_rules.some(el => el.value === '');
+      };
+    },
     handleSubmit() {
+      this.handleBlurFilter();
       this.$refs.validateForm.validate().then(() => {
-        if (this.formData.filter_rules.length > 0) {
-          const isFilterRulePass = this.formData.filter_rules.some(el => el.value === '');
-          this.isFilterRuleError = true;
-          if (isFilterRulePass) return;
-        };
+        if (this.isFilterRuleError) return;
         this.isHandle = true;
         this.isShowSubmitDialog = true;
-        this.isFilterRuleError = false;
         const { index_set_id, bk_biz_id } = this.indexSetItem;
         const { extra: { collector_config_id } } = this.configData;
         this.formData.predefined_varibles =  this.$refs.ruleTableRef.ruleArrToBase64();
@@ -519,7 +522,7 @@ export default {
   }
   .rule-error{
     /deep/.bk-form-input{
-      border-color: #fa224d;
+      border-color: #ff5656;
     }
   }
 

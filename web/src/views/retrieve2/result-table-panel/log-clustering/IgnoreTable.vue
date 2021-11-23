@@ -58,13 +58,6 @@
         </div>
       </template>
     </bk-table-column>
-    <!-- <div slot="empty">
-      <div class="empty-text">
-        <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>{{$t('goSettingMessage')}}</p>
-        <span class="empty-leave">{{$t('去设置')}}</span>
-      </div>
-    </div> -->
   </bk-table>
 </template>
 

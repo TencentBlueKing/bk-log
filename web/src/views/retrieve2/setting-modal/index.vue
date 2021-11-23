@@ -154,7 +154,7 @@ export default {
           componentsName: 'LogCluster',
           name: this.$t('retrieveSetting.logCluster'),
           isEditable: true,
-          isDisabled: this.cleanConfig?.extra?.signature_switch,
+          isDisabled: this.cleanConfig?.is_active,
         }],
     };
   },
