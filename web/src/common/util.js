@@ -26,6 +26,7 @@
  */
 
 import html2canvas from 'html2canvas';
+import JSONBigNumber from 'json-bignumber';
 
 /**
  * 函数柯里化
@@ -520,4 +521,43 @@ export function formatFileSize(size) {
     return `${(k).toFixed(2)}${units[index]}`;
   }
   return '0';
+}
+
+/**
+ * 读取Blob格式返回数据
+ * @param {*} response
+ */
+export function readBlobResponse(response) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function () {
+      resolve(reader.result);
+    };
+
+    reader.onerror = function () {
+      reject(reader.error);
+    };
+
+    reader.readAsText(response);
+  });
+}
+
+/**
+ * 读取Blob格式返回Json数据
+ * @param {*} resp
+ */
+export function readBlobRespToJson(resp) {
+  return readBlobResponse(resp).then(resText => Promise.resolve(JSONBigNumber.parse(resText)));
+}
+
+export function parseBigNumberList(lsit) {
+  return (lsit || []).map(item => Object.keys(item || {})
+    .reduce((output, key) => {
+      return {
+        ...output,
+        [key]: (item[key] || {})._isBigNumber
+          ? item[key].toString().length < 16
+            ? Number(item[key]) : (item[key]).toString() : item[key],
+      };
+    }, {}));
 }
