@@ -36,7 +36,7 @@
     }"
     @value-change="openPage"
     @after-leave="closePage">
-    <div class="setting-container">
+    <div class="setting-container" v-if="isShowDialog">
       <div class="setting-title">
         <span>{{$t('retrieveSetting.setting')}}</span>
         <span class="bk-icon icon-close" @click="closeSetting"></span>
@@ -44,9 +44,10 @@
 
       <div class="setting-main">
         <div class="setting-left">
-          <div v-for="(item,index) of currentList" :key="item.id"
-               :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
-               @click="handleNavClick(item.id,index)">
+          <div
+            v-for="(item,index) of currentList" :key="item.id"
+            :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
+            @click="handleNavClick(item.id,index)">
             <span class="bk-icon icon-block-shape"></span>
             <span style="width: 110px">{{item.name}}</span>
             <div @click="handleStopProp">
@@ -82,8 +83,10 @@
               :index-set-item="indexSetItem"
               :total-fields="totalFields"
               :config-data="configData"
+              :clean-config="cleanConfig"
               :is-collector="isCollector"
               @reset-page="resetPage"
+              @updateLogFields="updateLogFields"
             ></component>
           </div>
         </div>
@@ -146,30 +149,51 @@ export default {
           id: 'extract',
           componentsName: 'FieldExtraction',
           name: this.$t('retrieveSetting.fieldExtraction'),
-          isEditable: this.isExtractActive,
-          isDisabled: !this.isCollector,
+          isEditable: false,
+          isDisabled: false,
         },
         {
           id: 'clustering',
           componentsName: 'LogCluster',
           name: this.$t('retrieveSetting.logCluster'),
-          isEditable: true,
-          isDisabled: this.cleanConfig?.extra?.signature_switch,
+          isEditable: false,
+          isDisabled: false,
         }],
     };
   },
   computed: {
     globalEditable() {
-      return  this.currentList.find(el => el.id === this.currentChoice)?.isEditable;
+      return this.currentList.find(el => el.id === this.currentChoice)?.isEditable;
     },
     isCollector() { // 索引集来源是否为采集项
-      return this.cleanConfig?.extra?.collector_config_id;
+      return this.cleanConfig?.extra?.collector_config_id !== null;
     },
     isExtractActive() { // 字段提取是否开启
       return this.cleanConfig?.is_active;
     },
+    isClusteringActive() { // 日志聚类是否开启
+      return this.configData?.is_active;
+    },
+    isSignatureActive() {
+      return this.cleanConfig?.extra?.signature_switch;
+    },
+  },
+  watch: {
+    isShowDialog(val) {
+      val && this.handleMenuStatus();
+    },
   },
   methods: {
+    handleMenuStatus() {
+      const { isExtractActive, isClusteringActive, isCollector } = this;
+      this.currentList = this.currentList.map((list) => {
+        return {
+          ...list,
+          isEditable: list.id === 'extract' ? isExtractActive : isClusteringActive,
+          isDisabled: !isCollector || (list.id === 'clustering' && !this.isSignatureActive),
+        };
+      });
+    },
     handleNavClick(val, index) {
       this.currentChoice = val;
       this.showComponent = this.currentList[index].componentsName;
@@ -193,11 +217,17 @@ export default {
     },
     stopChangeSwitch(index) {
       if (!this.currentList[index].isEditable) {
+        if (this.currentChoice !== this.currentList[index].id) {
+          // 当前tab不在操作的开关菜单 则跳转到对应菜单
+          this.currentChoice = this.currentList[index].id;
+          this.handleNavClick(this.currentList[index].id, index);
+        }
         this.currentList[index].isEditable = true;
         return;
       }
+      const msg = this.currentChoice === 'extract' ? '是否关闭字段提取？' : '是否关闭日志聚类';
       this.$bkInfo({
-        title: this.$t('retrieveSetting.changeSwitchTips'),
+        title: msg,
         confirmFn: () => {
           this.currentList[index].isEditable = false;
         },
@@ -210,6 +240,9 @@ export default {
       this.isOpenPage = true;
       this.currentChoice = '';
       this.showComponent = '';
+    },
+    updateLogFields() {
+      this.$emit('updateLogFields');
     },
   },
 };

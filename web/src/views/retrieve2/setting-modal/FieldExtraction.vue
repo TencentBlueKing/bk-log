@@ -26,12 +26,13 @@
     <step-field
       v-if="isShowFieldPage"
       v-bind="$attrs"
-      :is-clean-field="true"
+      :is-clean-field="false"
       :is-temp-field="false"
       :is-set-edit="true"
-      :set-id="configData.extra.collector_config_id"
+      :set-id="cleanConfig.extra.collector_config_id"
       :set-disabled="!globalEditable"
-      @reset-page="resetPage" />
+      @reset-page="resetPage"
+      @updateLogFields="updateLogFields" />
   </div>
 </template>
 
@@ -47,7 +48,7 @@ export default {
       type: Boolean,
       default: true,
     },
-    configData: {
+    cleanConfig: {
       type: Object,
       require: true,
     },
@@ -63,6 +64,9 @@ export default {
       this.$nextTick(() => {
         this.isShowFieldPage = true;
       });
+    },
+    updateLogFields() {
+      this.$emit('updateLogFields');
     },
   },
 };
