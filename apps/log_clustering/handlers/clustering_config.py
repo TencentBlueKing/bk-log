@@ -171,7 +171,7 @@ class ClusteringConfigHandler(object):
             collector_detail["table_id"],
             collector_detail["storage_cluster_id"],
             collector_detail["retention"],
-            collector_detail["allocation_min_days"],
+            collector_detail.get("allocation_min_days", 0),
             collector_detail["storage_replies"],
             etl_params=collector_detail["etl_params"],
             fields=collector_detail["fields"],

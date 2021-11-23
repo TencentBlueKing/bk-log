@@ -1737,3 +1737,22 @@ class CollectorViewSet(ModelViewSet):
         response = super().list(request, *args, **kwargs)
         response.data = CollectorHandler.add_cluster_info(response.data)
         return response
+
+    @detail_route(methods=["POST"], url_path="close_clean")
+    def close_clean(self, request, collector_config_id=None, *args, **kwargs):
+        """
+        @api {POST} /databus/collectors/${collector_config_id}/close_clean/ 35_采集项-关闭清洗
+        @apiName databus_collectors_close_clean
+        @apiGroup 10_Collector
+        @apiParam {int} collector_config_id 采集项id
+        @apiSuccessExample {json} 成功返回
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "collector_config_id": 1
+            },
+            "result": true
+        }
+        """
+        return Response(EtlHandler(collector_config_id=collector_config_id).close_clean())

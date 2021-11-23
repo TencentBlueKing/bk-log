@@ -239,6 +239,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 non_clustering_result_table_id=clustering_config.pre_treat_flow["not_clustering"]["result_table_id"],
                 model_id=clustering_config.model_id,
                 model_release_id=self.get_latest_released_id(clustering_config.model_id),
+                collector_config_name_en=clustering_config.collector_config_name_en,
             )
         )
         after_treat_flow = self._render_template(
@@ -284,6 +285,7 @@ class DataFlowHandler(BaseAiopsHandler):
         non_clustering_result_table_id: str,
         model_release_id: int,
         model_id: str,
+        collector_config_name_en: str,
         clustering_fields: str = "log",
     ):
         all_fields = DataAccessHandler.get_fields(result_table_id=add_uuid_result_table_id)
@@ -317,8 +319,8 @@ class DataFlowHandler(BaseAiopsHandler):
                 filter_rule="",
             ),
             merge_table=MergeNodeCls(
-                table_name="after_treat_merge_table_{}".format(time_format),
-                result_table_id="{}_after_treat_merge_table_{}".format(self.conf.get("bk_biz_id"), time_format),
+                table_name="bklog_test_{}".format(collector_config_name_en),
+                result_table_id="{}_bklog_test_{}".format(self.conf.get("bk_biz_id"), collector_config_name_en),
             ),
             format_signature=RealTimeCls(
                 fields="",

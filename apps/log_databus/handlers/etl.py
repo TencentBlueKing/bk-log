@@ -25,6 +25,7 @@ from django.conf import settings
 
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
+from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
     EtlParseTimeFormatException,
@@ -40,9 +41,10 @@ from apps.log_search.constants import FieldDateFormatEnum
 from apps.models import model_to_dict
 from apps.utils.db import array_group
 from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.constants import REGISTERED_SYSTEM_DEFAULT, EtlConfig
+from apps.log_databus.constants import REGISTERED_SYSTEM_DEFAULT, EtlConfig, ETL_PARAMS
 from apps.decorators import user_operation_record
 from apps.utils.local import get_request_username
+from apps.api import TransferApi
 
 
 class EtlHandler(object):
@@ -102,7 +104,7 @@ class EtlHandler(object):
         if self.data.is_clustering:
             clustering_handler = ClusteringConfigHandler(collector_config_id=self.data.collector_config_id)
             if clustering_handler.data.bkdata_etl_processing_id:
-                clustering_handler.create_or_update_bkdata_etl(fields, etl_params)
+                DataAccessHandler().create_or_update_bkdata_etl(self.data.collector_config_id, fields, etl_params)
             etl_params["etl_flat"] = True
             fields += CollectorScenario.log_clustering_fields(cluster_info["cluster_config"]["version"])
 
@@ -222,3 +224,24 @@ class EtlHandler(object):
         self.data.save()
 
         return model_to_dict(index_set)
+
+    def close_clean(self):
+        storage = TransferApi.get_result_table_storage(
+            params={"result_table_list": self.data.table_id, "storage_type": "elasticsearch"}
+        )[self.data.table_id]
+        storage_cluster_id = storage["cluster_config"]["cluster_id"]
+        retention = storage["storage_config"].get("retention")
+        allocation_min_days = storage["storage_config"].get("warm_phase_days")
+        storage_replies = storage["storage_config"]["index_settings"]["number_of_replicas"]
+        _, table_id = self.data.table_id.split(".")
+        self.update_or_create(
+            etl_config=EtlConfig.BK_LOG_TEXT,
+            table_id=table_id,
+            storage_cluster_id=storage_cluster_id,
+            retention=retention,
+            allocation_min_days=allocation_min_days,
+            storage_replies=storage_replies,
+            etl_params=ETL_PARAMS,
+            fields=[],
+        )
+        return {"collector_config_id": self.collector_config_id}

@@ -99,22 +99,30 @@ class CollectorHandler(object):
         multi_execute_func = MultiExecuteFunc()
         if self.data.bk_data_id:
             multi_execute_func.append(
-                "data_id_config", TransferApi.get_data_id, params={"bk_data_id": self.data.bk_data_id}
+                "data_id_config",
+                TransferApi.get_data_id,
+                params={"bk_data_id": self.data.bk_data_id},
+                use_request=False,
             )
         if self.data.table_id:
             multi_execute_func.append(
-                "result_table_config", TransferApi.get_result_table, params={"table_id": self.data.table_id}
+                "result_table_config",
+                TransferApi.get_result_table,
+                params={"table_id": self.data.table_id},
+                use_request=False,
             )
             multi_execute_func.append(
                 "result_table_storage",
                 TransferApi.get_result_table_storage,
                 params={"result_table_list": self.data.table_id, "storage_type": "elasticsearch"},
+                use_request=False,
             )
         if self.data.subscription_id:
             multi_execute_func.append(
                 "subscription_config",
                 BKNodeApi.get_subscription_info,
                 params={"subscription_id_list": [self.data.subscription_id]},
+                use_request=False,
             )
         return multi_execute_func.run()
 
@@ -207,12 +215,6 @@ class CollectorHandler(object):
                         result_table_storage=result["result_table_storage"][self.data.table_id],
                     )
                 )
-                if self.data.is_clustering:
-                    from apps.log_clustering.models import ClusteringConfig
-
-                    clustering_config = ClusteringConfig.objects.get(collector_config_id=self.data.collector_config_id)
-                    collector_config["etl_params"] = clustering_config.etl_params
-                    collector_config["fields"] = clustering_config.etl_fields
             return collector_config
         return collector_config
 
@@ -403,7 +405,7 @@ class CollectorHandler(object):
         """
         if self.data and not self.data.is_active:
             raise CollectorActiveException()
-
+        print("xxxx")
         collector_config_name = params["collector_config_name"]
         collector_config_name_en = params["collector_config_name_en"]
         target_object_type = params["target_object_type"]
@@ -707,12 +709,21 @@ class CollectorHandler(object):
             return self._run_subscription_task("STOP")
         return True
 
+    @classmethod
+    def _get_kafka_broker(cls, broker_url):
+        """
+        判断是否为内网域名
+        """
+        if "consul" in broker_url and settings.DEFAULT_KAFKA_HOST:
+            return settings.DEFAULT_KAFKA_HOST
+        return broker_url
+
     def tail(self):
         if not self.data.bk_data_id:
             raise CollectorConfigDataIdNotExistException()
         data_result = TransferApi.get_data_id({"bk_data_id": self.data.bk_data_id})
         params = {
-            "server": settings.DEFAULT_KAFKA_HOST or data_result["mq_config"]["cluster_config"]["domain_name"],
+            "server": self._get_kafka_broker(data_result["mq_config"]["cluster_config"]["domain_name"]),
             "port": data_result["mq_config"]["cluster_config"]["port"],
             "topic": data_result["mq_config"]["storage_config"]["topic"],
             "username": data_result["mq_config"]["auth_info"]["username"],
