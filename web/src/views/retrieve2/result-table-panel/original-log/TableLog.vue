@@ -277,7 +277,8 @@ export default {
     .time-field {
       font-weight: 700;
     }
-    .original-str {
+    .original-str,
+    .visiable-field {
       .cell {
         padding: 12px 14px 0 14px;
       }
@@ -332,6 +333,22 @@ export default {
     .bk-table-empty-text {
       padding: 0;
       width: 100%;
+    }
+    .visiable-field {
+      .str-content {
+        &.is-limit {
+          max-height: 72px;
+        }
+      }
+      &.is-wrap .cell {
+        padding: 12px 15px 8px;
+      }
+      .show-whole-btn {
+        top: 56px;
+      }
+    }
+    .row-hover {
+      background: #fff;
     }
   }
   /deep/ .render-header {

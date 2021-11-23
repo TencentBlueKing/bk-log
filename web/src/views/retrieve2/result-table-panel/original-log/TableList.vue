@@ -55,15 +55,25 @@
         :min-width="field.minWidth"
         :render-header="renderHeaderAliasName"
         :index="index"
-        :width="field.width">
-        <template slot-scope="{ row }">
+        :width="field.width"
+        :class-name="`visiable-field${isWrap ? ' is-wrap' : ''}`">
+        <!-- eslint-disable-next-line -->
+        <template slot-scope="{ row, column, $index }">
           <keep-alive>
-            <TableColumn
-              :is-wrap="isWrap"
-              :content="tableRowDeepView(row, field.field_name, field.field_type)"
-              :field-type="field.field_type"
-              @iconClick="(type, content) => handleIconClick(type, content, field, row)"
-            ></TableColumn>
+            <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+              <TableColumn
+                :is-wrap="isWrap"
+                :content="tableRowDeepView(row, field.field_name, field.field_type)"
+                :field-type="field.field_type"
+                @iconClick="(type, content) => handleIconClick(type, content, field, row)"
+              ></TableColumn>
+              <p
+                v-if="!cacheExpandStr.includes($index)"
+                class="show-whole-btn"
+                @click.stop="handleShowWhole($index)">
+                {{ $t('展开全部') }}
+              </p>
+            </div>
           </keep-alive>
         </template>
       </bk-table-column>
