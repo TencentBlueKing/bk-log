@@ -187,9 +187,10 @@ export default {
             subHeader: h('p', {
               style: {
                 whiteSpace: 'normal',
-                padding: '0 60px',
+                padding: '0 20px',
+                wordBreak: 'break-all',
               },
-            }, `${this.$t('retrieve.reasonFor')}${this.$attrs.asyncExportUsableReason}${this.$t('retrieve.reasonDesc')}`),
+            }, `${this.$t('retrieve.reasonFor')}${this.asyncExportUsableReason}${this.$t('retrieve.reasonDesc')}`),
             okText: this.$t('retrieve.immediateExport'),
             confirmFn: () => this.openDownloadUrl(),
           });

@@ -57,6 +57,14 @@ export default {
       type: Array,
       required: true,
     },
+    showFieldAlias: {
+      type: Boolean,
+      default: false,
+    },
+    fieldAliasMap: {
+      type: Object,
+      default: () => {},
+    },
     isWrap: {
       type: Boolean,
       default: false,
@@ -227,6 +235,9 @@ export default {
         }, [
           h('span', {
             class: `field-type-icon ${fieldIcon}`,
+            style: {
+              marginRight: '4px',
+            },
             directives: [
               {
                 name: 'bk-tooltips',
