@@ -122,19 +122,10 @@
       :visible-fields="visibleFields">
     </retrieve-loader> -->
 
-    <div slot="empty" v-if="!isPermission ">
-      <div class="empty-text">
-        <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>{{$t('goSettingMessage')}}</p>
-        <span class="empty-leave" @click="handleLeaveCurrent">
-          {{$t('去设置')}}
-        </span>
-      </div>
-    </div>
     <div slot="empty" v-if="isPermission && !configData.extra.signature_switch">
       <div class="empty-text">
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>{{$t('goCleanMessage')}}</p>
+        <p>{{$t('goFingerMessage')}}</p>
         <span class="empty-leave" @click="handleLeaveCurrent">
           {{$t('去设置')}}
         </span>
@@ -208,7 +199,7 @@ export default {
       }
     },
     showArrowsClass(row) {
-      if (row === 0) return '';
+      if (row.source === 0) return '';
       return row.source < 0 ? 'icon-arrows-down' : 'icon-arrows-up';
     },
     handleLeaveCurrent() {

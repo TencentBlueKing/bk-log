@@ -337,6 +337,7 @@ export default {
   去设置: 'Go To Set',
   跳转到日志清洗: 'Go To Log Cleaning',
   clusterAlert: 'Log clustering must have at least one text type field. Currently, there is no such field type. Please go to log cleaning to set it up.',
+  goFingerMessage: '当前数据指纹未启用，请前往设置',
   goSettingMessage: 'The current data fingerprint is not enabled, please go to settings',
   goCleanMessage: 'There is currently no field available, please go to log cleaning to set',
   nav: {
