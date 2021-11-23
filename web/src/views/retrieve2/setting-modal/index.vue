@@ -48,7 +48,7 @@
             v-for="(item,index) of currentList" :key="item.id"
             :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
             @click="handleNavClick(item.id,index)">
-            <span class="bk-icon icon-block-shape"></span>
+            <span class="log-icon icon-block-shape"></span>
             <span style="width: 110px">{{item.name}}</span>
             <div @click="handleStopProp">
               <div @click="stopChangeSwitch(index)">

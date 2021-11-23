@@ -274,6 +274,7 @@ export default {
         if (this.$route.name !== 'retrieve') {
           // 所有页面的子路由在切换业务的时候都统一返回到父级页面
           const { name, meta, params, query } = this.$route;
+          console.log('routerName===', name);
           const RoutingHop = meta.needBack ? meta.backName : name ? name : 'retrieve';
           const newQuery = {
             ...query,

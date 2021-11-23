@@ -85,7 +85,7 @@ export default {
   },
   computed: {
     isNeedSegment() {
-      return ['text', 'keyword'].includes(this.fieldType);
+      return ['text'].includes(this.fieldType);
     },
     splitList() {
       let value = this.content;

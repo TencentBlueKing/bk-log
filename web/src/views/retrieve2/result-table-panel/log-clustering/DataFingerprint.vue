@@ -21,79 +21,67 @@
   -->
 
 <template>
-  <bk-table
-    :data="fingerList"
-    class="log-cluster-table"
-    @row-mouse-enter="showEditIcon"
-    @row-mouse-leave="hiddenEditIcon">
-    <bk-table-column :label="$t('数据指纹')" width="150">
-      <template slot-scope="props">
-        <div class="flac">
-          <span class="signature">{{props.row.signature}}</span>
-          <div v-if="props.row.is_new_class" class="new-finger">New</div>
-        </div>
-      </template>
-    </bk-table-column>
-
-    <bk-table-column :label="$t('数量')" :sortable="true" width="91" prop="number">
-      <template slot-scope="props">
-        <span class="link-color">{{props.row.count}}</span>
-      </template>
-    </bk-table-column>
-
-    <bk-table-column :label="$t('占比')" :sortable="true" width="91" prop="source">
-      <template slot-scope="props">
-        {{`${props.row.percentage.toFixed(4)}%`}}
-      </template>
-    </bk-table-column>
-
-    <template v-if="yearOnYearCycle >= 1 ">
-      <bk-table-column
-        width="101" align="center" header-align="center" prop="source"
-        :label="$t('同比数量')"
-        :sortable="true">
+  <div>
+    <bk-table
+      class="log-cluster-table"
+      :data="fingerList"
+      @row-mouse-enter="showEditIcon"
+      @row-mouse-leave="hiddenEditIcon">
+      <bk-table-column :label="$t('数据指纹')" width="150">
         <template slot-scope="props">
-          <span class="link-color">{{props.row.year_on_year_count}}</span>
-        </template>
-      </bk-table-column>
-
-      <bk-table-column
-        width="101" align="center" header-align="center" prop="source"
-        :label="$t('同比变化')"
-        :sortable="true">
-        <template slot-scope="props">
-          <div class="flac compared-change">
-            <span class="link-color">{{`${props.row.year_on_year_percentage}%`}}</span>
-            <span :class="['bk-icon',showArrowsClass(props.row)]"></span>
+          <div class="flac">
+            <span class="signature">{{props.row.signature}}</span>
+            <div v-if="props.row.is_new_class" class="new-finger">New</div>
           </div>
         </template>
       </bk-table-column>
-    </template>
 
-    <bk-table-column label="Pattern" min-width="400">
-      <template slot-scope="props">
-        <!-- <bk-popover
-          placement="bottom"
-          ext-cls="pattern"
-          theme="light"
-          trigger="click"
-          :delay="300">
-          <span style="cursor: pointer;">{{props.row.pattern}}</span>
-          <div slot="content" class="pattern-icons">
-            <span class="bk-icon icon-eye" @click="handleShowOriginLog(props.row.signature)"></span>
-            <span class="log-icon icon-chart"></span>
-            <span class="log-icon icon-copy" @click="handleCopyPatter(props.row.pattern)"></span>
-          </div>
-        </bk-popover> -->
-        <ClusterEventPopver
-          :is-search="false"
-          @eventClick="(option) => handleMenuClick(option,props.row)">
-          {{props.row.pattern}}
-        </ClusterEventPopver>
+      <bk-table-column :label="$t('数量')" :sortable="true" width="91" prop="number">
+        <template slot-scope="props">
+          <span class="link-color">{{props.row.count}}</span>
+        </template>
+      </bk-table-column>
+
+      <bk-table-column :label="$t('占比')" :sortable="true" width="91" prop="source">
+        <template slot-scope="props">
+          {{`${props.row.percentage.toFixed(4)}%`}}
+        </template>
+      </bk-table-column>
+
+      <template v-if="yearOnYearCycle >= 1 ">
+        <bk-table-column
+          width="101" align="center" header-align="center" prop="source"
+          :label="$t('同比数量')"
+          :sortable="true">
+          <template slot-scope="props">
+            <span class="link-color">{{props.row.year_on_year_count}}</span>
+          </template>
+        </bk-table-column>
+
+        <bk-table-column
+          width="101" align="center" header-align="center" prop="source"
+          :label="$t('同比变化')"
+          :sortable="true">
+          <template slot-scope="props">
+            <div class="flac compared-change">
+              <span class="link-color">{{`${props.row.year_on_year_percentage}%`}}</span>
+              <span :class="['bk-icon',showArrowsClass(props.row)]"></span>
+            </div>
+          </template>
+        </bk-table-column>
       </template>
-    </bk-table-column>
 
-    <!-- <bk-table-column :label="$t('告警')" width="103">
+      <bk-table-column label="Pattern" min-width="400">
+        <template slot-scope="props">
+          <ClusterEventPopver
+            :is-search="false"
+            @eventClick="(option) => handleMenuClick(option,props.row)">
+            {{props.row.pattern}}
+          </ClusterEventPopver>
+        </template>
+      </bk-table-column>
+
+      <!-- <bk-table-column :label="$t('告警')" width="103">
       <template slot-scope="props">
         <div class="flac">
           <bk-switcher v-model="props.row.a" theme="primary"></bk-switcher>
@@ -114,39 +102,30 @@
 
     <bk-table-column :label="$t('备注')" width="100" prop="remark"></bk-table-column> -->
 
-    <!-- 初次加载骨架屏loading -->
-    <!-- <retrieve-loader
-      is-loading
-      v-if="tableLoading"
-      :is-original-field="true"
-      :visible-fields="visibleFields">
-    </retrieve-loader> -->
-
-    <div slot="empty" v-if="isPermission && !configData.extra.signature_switch">
-      <div class="empty-text">
-        <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>{{$t('goFingerMessage')}}</p>
-        <span class="empty-leave" @click="handleLeaveCurrent">
-          {{$t('去设置')}}
-        </span>
+      <div slot="empty" v-if="isPermission && !configData.extra.signature_switch">
+        <div class="empty-text">
+          <span class="bk-table-empty-icon bk-icon icon-empty"></span>
+          <p>{{$t('goFingerMessage')}}</p>
+          <span class="empty-leave" @click="handleLeaveCurrent">
+            {{$t('去设置')}}
+          </span>
+        </div>
       </div>
-    </div>
-    <div slot="empty" v-if="fingerList.length === 0 && configData.extra.signature_switch">
-      <div class="empty-text">
-        <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>{{$t('暂无数据')}}</p>
+      <div slot="empty" v-if="fingerList.length === 0 && configData.extra.signature_switch">
+        <div class="empty-text">
+          <span class="bk-table-empty-icon bk-icon icon-empty"></span>
+          <p>{{$t('暂无数据')}}</p>
+        </div>
       </div>
-    </div>
-  </bk-table>
+    </bk-table>
+  </div>
 </template>
 
 <script>
-// import RetrieveLoader from '@/skeleton/retrieve-loader';
 import ClusterEventPopver from './ClusterEventPopver';
 export default {
   components: {
     ClusterEventPopver,
-    // RetrieveLoader,
   },
   props: {
     fingerList: {
@@ -176,6 +155,8 @@ export default {
     };
   },
   inject: ['addFilterCondition'],
+  mounted() {
+  },
   methods: {
     handleMenuClick(option, row) {
       switch (option) {
@@ -199,8 +180,8 @@ export default {
       }
     },
     showArrowsClass(row) {
-      if (row.source === 0) return '';
-      return row.source < 0 ? 'icon-arrows-down' : 'icon-arrows-up';
+      if (row.year_on_year_percentage === 0) return '';
+      return row.year_on_year_percentage < 0 ? 'icon-arrows-down' : 'icon-arrows-up';
     },
     handleLeaveCurrent() {
       this.$emit('showSettingLog');
@@ -219,6 +200,7 @@ export default {
 @import "@/scss/mixins/flex.scss";
 
 .compared-change {
+  height: 24px;
   margin-left: 12px;
 }
 
