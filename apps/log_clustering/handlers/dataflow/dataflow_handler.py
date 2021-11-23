@@ -104,10 +104,12 @@ class DataFlowHandler(BaseAiopsHandler):
                 clustering_fields=clustering_config.clustering_fields,
             )
         )
+        print(pre_treat_flow_dict)
         pre_treat_flow = self._render_template(
             flow_mode=FlowMode.PRE_TREAT_FLOW.value, render_obj={"pre_treat": pre_treat_flow_dict}
         )
         flow = json.loads(pre_treat_flow)
+        print(flow)
         create_pre_treat_flow_request = CreateFlowCls(
             nodes=flow,
             flow_name="{}_pre_treat_flow".format(clustering_config.collector_config_name_en),

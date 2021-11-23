@@ -130,7 +130,7 @@ class DataAccessHandler(BaseAiopsHandler):
             "result_table_name_alias": collector_config.collector_config_name_en,
             "clean_config_name": collector_config.collector_config_name,
             "description": collector_config.description,
-            "bk_biz_id": collector_config.bk_biz_id,
+            "bk_biz_id": self.conf.get("bk_biz_id"),
             "fields": [
                 {
                     "field_name": field.get("alias_name") if field.get("alias_name") else field.get("field_name"),

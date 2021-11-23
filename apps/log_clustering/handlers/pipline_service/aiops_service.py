@@ -19,7 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
+from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.log_databus.models import CollectorConfig
+from apps.api import BkDataAuthApi
 
 
 def create_aiops_service(collector_config_id):
@@ -28,5 +30,8 @@ def create_aiops_service(collector_config_id):
     ClusteringConfigHandler(collector_config_id=collector_config_id).change_data_stream(
         topic="{}_bklog_test_{}".format(215, collector_config.collector_config_name_en)
     )
-    # DataAccessHandler().create_bkdata_access(collector_config_id=collector_config_id)
-    # DataAccessHandler().sync_bkdata_etl(collector_config_id=collector_config_id)
+    DataAccessHandler().create_bkdata_access(collector_config_id=collector_config_id)
+    DataAccessHandler().sync_bkdata_etl(collector_config_id=collector_config_id)
+    BkDataAuthApi.add_project_data(
+        params={"bk_biz_id": 215, "object_id": "215_test_samuel_1123003", "project_id": 7667}
+    )
