@@ -299,6 +299,12 @@ export default {
         cursor: pointer;
         transition: background-color .25s ease;
       }
+      .hide-whole-btn {
+        line-height: 14px;
+        margin-top: -2px;
+        color: #3A84FF;
+        cursor: pointer;
+      }
     }
     .original-time {
       padding-top: 16px;
@@ -309,6 +315,11 @@ export default {
     .hover-row {
       .show-whole-btn{
         background-color: #f0f1f5;
+      }
+    }
+    .original-str {
+      .hide-whole-btn {
+        margin-top: 4px;
       }
     }
     td.bk-table-expanded-cell {
@@ -339,6 +350,9 @@ export default {
     }
     .row-hover {
       background: #fff;
+    }
+    th .cell {
+      padding: 0 15px !important;
     }
   }
   /deep/ .render-header {

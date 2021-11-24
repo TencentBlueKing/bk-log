@@ -144,6 +144,9 @@ export default {
       this.intersectionObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (this.intersectionObserver) {
+            if (entry.boundingClientRect.height > 72) {
+              this.$emit('computedHeight');
+            }
             if (entry.intersectionRatio > 0) {
               this.isInViewPort = true;
             } else {

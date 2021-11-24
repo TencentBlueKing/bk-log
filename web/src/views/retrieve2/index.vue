@@ -170,20 +170,20 @@
                   v-if="isAutoQuery"
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
-                  style="width: 86px;"
+                  style="width: 86px;font-size:12px"
                   data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
-                  <span class="log-icon icon-zidongchaxun" style="margin-right: 4px;font-size: 18px;"></span>
+                  <span class="log-icon icon-zidongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
                   {{ $t('查询') }}
                 </bk-button>
                 <bk-button
                   v-else
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
-                  style="width: 86px;"
-                  icon="search"
+                  style="width: 86px;font-size:12px"
                   data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
+                  <span class="log-icon icon-shoudongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
                   {{ $t('查询') }}
                 </bk-button>
                 <bk-popover
@@ -192,11 +192,13 @@
                   placement="top"
                   theme="light"
                   :on-show="handleFavoritePopperShow">
-                  <bk-button style="margin: 0 8px;" data-test-id="dataQuery_button_collection">
-                    <span style="display: flex;align-items: center">
+                  <bk-button
+                    style="width: 86px;margin: 0 8px;font-size:12px"
+                    data-test-id="dataQuery_button_collection">
+                    <span style="display: flex;align-items: center;justify-content: center;">
                       <span
                         class="bk-icon icon-star"
-                        style="margin-right: 6px;margin-top: -4px;font-size: 16px;">
+                        style="margin-right: 2px;margin-top: -4px;font-size: 12px;">
                       </span>
                       <span>{{ $t('收藏') }}</span>
                     </span>
@@ -211,6 +213,7 @@
                   ></FavoritePopper>
                 </bk-popover>
                 <bk-button
+                  style="font-size:12px"
                   @click="clearCondition"
                   data-test-id="dataQuery_button_phrasesClear">
                   {{ $t('清空') }}
@@ -219,7 +222,7 @@
             </div>
             <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
               <!-- 字段过滤 -->
-              <div class="tab-item-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
+              <div class="tab-item-title field-filter-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
               <FieldFilter
                 :total-fields="totalFields"
                 :visible-fields="visibleFields"
@@ -363,7 +366,8 @@ export default {
       basicLoading: true, // view loading
       tableLoading: false, // 表格 loading
       requesting: false,
-      isRetrieveHome: !this.$route.params.indexId?.toString() && !this.$route.params.from, // 检索首页
+      // isRetrieveHome: !this.$route.params.indexId?.toString() && !this.$route.params.from, // 检索首页
+      isRetrieveHome: false,
       isNoIndexSet: false,
       showRetrieveCondition: true, // 详情页显示检索左侧条件
       showExpandInitTips: false, // 展开初始tips
@@ -1670,10 +1674,10 @@ export default {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 24px 12px;
+            padding: 6px 24px 10px;
             color: #313238;
             font-size: 14px;
-            border-bottom: 1px solid #cacedb;
+            font-weight: 500;
 
             .icon-cog {
               font-size: 18px;
@@ -1685,8 +1689,7 @@ export default {
           .tab-item-title {
             display: flex;
             align-items: center;
-            margin: 0 0 6px;
-            padding-top: 15px;
+            margin: 16px 0 6px;
             line-height: 20px;
             font-size: 12px;
             color: #63656e;
@@ -1694,6 +1697,18 @@ export default {
             &.ip-quick-title {
               margin-top: 13px;
             }
+
+            &:first-child {
+              margin-top: 0;
+            }
+          }
+
+          .field-filter-title {
+            margin-bottom: 0;
+            padding-top: 18px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #313238;
           }
 
           .flex-item-title {
@@ -1721,7 +1736,7 @@ export default {
             bottom: 0;
             display: flex;
             align-items: center;
-            padding: 16px 0 20px;
+            padding: 20px 0 24px;
             background-color: #fff;
             // z-index: 1;
           }

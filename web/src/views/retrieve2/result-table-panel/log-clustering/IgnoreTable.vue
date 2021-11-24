@@ -55,6 +55,12 @@
             @click.stop="handleShowWhole($index)">
             {{ $t('展开全部') }}
           </p>
+          <p
+            v-else
+            class="hide-whole-btn"
+            @click.stop="handleHideWhole($index)">
+            {{ $t('收起') }}
+          </p>
         </div>
       </template>
     </bk-table-column>
@@ -139,6 +145,9 @@ export default {
     handleShowWhole(index) {
       this.cacheExpandStr.push(index);
     },
+    handleHideWhole(index) {
+      this.cacheExpandStr = this.cacheExpandStr.map(item => item !== index);
+    },
     handleMenuClick(option) {
       switch (option.operation) {
         case 'is':
@@ -214,6 +223,12 @@ export default {
     background: #fff;
     cursor: pointer;
     transition: background-color .25s ease;
+  }
+  .hide-whole-btn {
+    line-height: 14px;
+    margin-top: 2px;
+    color: #3A84FF;
+    cursor: pointer;
   }
   .bk-table-column-expand {
     padding-top: 0;

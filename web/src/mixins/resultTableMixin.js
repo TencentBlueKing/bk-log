@@ -107,7 +107,8 @@ export default {
     return {
       formatDate,
       curHoverIndex: -1, // 当前鼠标hover行的索引
-      cacheExpandStr: [],
+      cacheExpandStr: [], // 记录展开收起的行
+      cacheOverFlowCol: [], // 记录超出四行高度的列
     };
   },
   computed: {
@@ -145,15 +146,23 @@ export default {
       deep: true,
       handler() {
         this.cacheExpandStr = [];
+        this.cacheOverFlowCol = [];
       },
     },
     '$route.params.indexId'() { // 切换索引集重置状态
       this.cacheExpandStr = [];
+      this.cacheOverFlowCol = [];
     },
   },
   methods: {
     handleShowWhole(index) {
       this.cacheExpandStr.push(index);
+    },
+    handleHideWhole(index) {
+      this.cacheExpandStr = this.cacheExpandStr.map(item => item !== index);
+    },
+    handleOverColumn(fieldName) {
+      if (!this.cacheOverFlowCol.includes(fieldName)) this.cacheOverFlowCol.push(fieldName);
     },
     getMarkList(content) {
       return content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
