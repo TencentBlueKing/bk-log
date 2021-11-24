@@ -73,11 +73,10 @@
 
       <bk-table-column label="Pattern" min-width="400">
         <template slot-scope="props">
-          <ClusterEventPopver
-            :is-search="false"
+          <pattern-column
+            :context="props.row.pattern"
             @eventClick="(option) => handleMenuClick(option,props.row)">
-            {{props.row.pattern}}
-          </ClusterEventPopver>
+          </pattern-column>
         </template>
       </bk-table-column>
 
@@ -122,10 +121,10 @@
 </template>
 
 <script>
-import ClusterEventPopver from './ClusterEventPopver';
+import PatternColumn from './components/PatternColumn';
 export default {
   components: {
-    ClusterEventPopver,
+    PatternColumn,
   },
   props: {
     fingerList: {
@@ -155,8 +154,6 @@ export default {
     };
   },
   inject: ['addFilterCondition'],
-  mounted() {
-  },
   methods: {
     handleMenuClick(option, row) {
       switch (option) {

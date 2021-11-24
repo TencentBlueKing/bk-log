@@ -104,6 +104,7 @@
             v-bind="$attrs"
             v-on="$listeners"
             :total-fields="totalFields"
+            :origin-table-list="originTableList"
             :active="active" />
           <data-fingerprint
             v-if="active === 'dataFingerprint'"
@@ -135,7 +136,7 @@
     <clustering-loader
       is-loading
       v-show="globalLoading"
-      :width-list="loadingWidthList.gloabl">
+      :width-list="loadingWidthList.global">
     </clustering-loader>
   </div>
 </template>
@@ -160,6 +161,10 @@ export default {
     totalFields: {
       type: Array,
       require: true,
+    },
+    originTableList: {
+      type: Array,
+      required: true,
     },
   },
   data() {
@@ -189,21 +194,21 @@ export default {
       }],
       comparedList: [], // 同比List
       fingerList: [
-        {
-          pattern: 'xx [ip] [xxxxx] xxxxx]',
-          signature: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-          count: 123,
-          year_on_year: -10,
-          percentage: 12,
-          is_new_class: true,
-          year_on_year_count: 12,
-          year_on_year_percentage: 0,
-          labels: ['xxxx', 'xxxx'],
-          remark: 'xxxx',
-        },
+        // {
+        //   pattern: 'xx [ip] [xxxxx] xxxxx]',
+        //   signature: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        //   count: 123,
+        //   year_on_year: -10,
+        //   percentage: 12,
+        //   is_new_class: true,
+        //   year_on_year_count: 12,
+        //   year_on_year_percentage: 0,
+        //   labels: ['xxxx', 'xxxx'],
+        //   remark: 'xxxx',
+        // },
       ], // 数据指纹List
       loadingWidthList: { // loading表头宽度列表
-        gloabl: [''],
+        global: [''],
         ignore: [60, 90, 90, ''],
         notCompared: [150, 90, 90, ''],
         compared: [150, 90, 90, 100, 100, ''],
@@ -245,12 +250,12 @@ export default {
           setTimeout(() => {
             this.globalLoading = false;
           }, 500);
-          const { is_active: isActive } = this.configData;
-          if (!isActive) {
+          if (!this.configData.is_active) {
             this.exhibitAll = false;
             return;
           }
           const isHaveText = newList.some(el => el.field_type === 'text');
+          this.alreadyClickNav = [];
           this.exhibitAll  = isHaveText;
           if (isHaveText) {
             this.initTable();
@@ -294,7 +299,6 @@ export default {
         },
       })
         .then((res) => {
-          // this.fingerList = Array(50).fill(this.fingerList[0]);
           this.fingerList = res.data;
         })
         .catch((e) => {
