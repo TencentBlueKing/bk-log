@@ -47,6 +47,7 @@ class BkLogTextEtlStorage(EtlStorage):
         return {
             "option": built_in_config.get("option", {}),
             "field_list": built_in_fields
+            + (fields or [])
             + [built_in_config["time_field"]]
             + [
                 {

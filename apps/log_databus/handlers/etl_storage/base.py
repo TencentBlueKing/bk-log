@@ -304,11 +304,11 @@ class EtlStorage(object):
         # 字段mapping优化
         for field in params["field_list"]:
             # 如果datetype不支持doc_values，则不设置doc_values，避免meta判断类型不一致创建新的index
-            if "es_doc_values" in field["option"]:
+            if "es_doc_values" in field.get("option", {}):
                 if field["option"]["es_doc_values"] or field["option"]["es_type"] in ["date", "text"]:
                     del field["option"]["es_doc_values"]
             # 移除计分
-            if "es_type" in field["option"] and field["option"]["es_type"] in ["text"]:
+            if "es_type" in field.get("option", {}) and field["option"]["es_type"] in ["text"]:
                 field["option"]["es_norms"] = False
 
         # 时间默认为维度

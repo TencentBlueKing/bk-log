@@ -72,3 +72,13 @@ class _BkDataAuthApi:
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
+        self.add_project_data = DataAPI(
+            method="POST",
+            url=AUTH_APIGATEWAY_ROOT + "projects/{project_id}/data/add/",
+            module=self.MODULE,
+            url_keys=["project_id"],
+            description=u"添加项目数据",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+        )
