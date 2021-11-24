@@ -363,7 +363,8 @@ export default {
       basicLoading: true, // view loading
       tableLoading: false, // 表格 loading
       requesting: false,
-      isRetrieveHome: !this.$route.params.indexId?.toString() && !this.$route.params.from, // 检索首页
+      // isRetrieveHome: !this.$route.params.indexId?.toString() && !this.$route.params.from, // 检索首页
+      isRetrieveHome: false,
       isNoIndexSet: false,
       showRetrieveCondition: true, // 详情页显示检索左侧条件
       showExpandInitTips: false, // 展开初始tips
