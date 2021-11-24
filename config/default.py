@@ -463,7 +463,6 @@ MENUS = [
             }
         ],
     },
-    {"id": "extract", "name": _("日志提取"), "feature": "on", "icon": ""},
     {"id": "monitor", "name": _("监控策略"), "feature": "on", "icon": ""},
     {
         "id": "dashboard",
@@ -580,6 +579,7 @@ MENUS = [
                 "feature": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
                 "children": [
                     {"id": "manage_log_extract", "name": _("日志提取配置"), "feature": "on", "icon": "cc-log"},
+                    {"id": "log_extract_task", "name": _("日志提取任务"), "feature": "on", "icon": "audit-fill"},
                     {"id": "extract_link_manage", "name": _("提取链路管理"), "feature": "on", "icon": "assembly-line-fill"},
                 ],
             },
