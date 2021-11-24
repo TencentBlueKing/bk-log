@@ -77,7 +77,8 @@ class DataAccessHandler(BaseAiopsHandler):
                     "type": "kafka",
                     "scope": [
                         {
-                            "master": self._get_kafka_broker_url(kafka_config["cluster_config"]["domain_name"]),
+                            "master": f"{self._get_kafka_broker_url(kafka_config['cluster_config']['domain_name'])}"
+                            f":{kafka_config['cluster_config']['port']}",
                             "group": f"{self.conf.get('kafka_consumer_group_prefix', 'bkmonitorv3_transfer')}"
                             f"{kafka_config['storage_config']['topic']}",
                             "topic": kafka_config["storage_config"]["topic"],
@@ -106,9 +107,9 @@ class DataAccessHandler(BaseAiopsHandler):
     def sync_bkdata_etl(self, collector_config_id):
         collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
         etl_config = collector_config.get_etl_config()
-        self._create_or_update_bkdata_etl(collector_config_id, etl_config["fields"], etl_config["etl_params"])
+        self.create_or_update_bkdata_etl(collector_config_id, etl_config["fields"], etl_config["etl_params"])
 
-    def _create_or_update_bkdata_etl(self, collector_config_id, fields, etl_params):
+    def create_or_update_bkdata_etl(self, collector_config_id, fields, etl_params):
         clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
         collector_config = CollectorConfig.objects.get(collector_config_id=clustering_config.collector_config_id)
         _, table_id = collector_config.table_id.split(".")
@@ -129,7 +130,7 @@ class DataAccessHandler(BaseAiopsHandler):
             "result_table_name_alias": collector_config.collector_config_name_en,
             "clean_config_name": collector_config.collector_config_name,
             "description": collector_config.description,
-            "bk_biz_id": collector_config.bk_biz_id,
+            "bk_biz_id": self.conf.get("bk_biz_id"),
             "fields": [
                 {
                     "field_name": field.get("alias_name") if field.get("alias_name") else field.get("field_name"),
