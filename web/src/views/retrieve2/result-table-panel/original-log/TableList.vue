@@ -48,7 +48,7 @@
       </template>
     </bk-table-column>
     <!-- 显示字段 -->
-    <template v-for="(field,index) in visibleFields">
+    <template v-for="(field, index) in visibleFields">
       <bk-table-column
         align="left"
         :key="field.field_name"
@@ -66,12 +66,19 @@
                 :content="tableRowDeepView(row, field.field_name, field.field_type)"
                 :field-type="field.field_type"
                 @iconClick="(type, content) => handleIconClick(type, content, field, row)"
+                @computedHeight="handleOverColumn(field.field_name)"
               ></TableColumn>
               <p
                 v-if="!cacheExpandStr.includes($index)"
                 class="show-whole-btn"
                 @click.stop="handleShowWhole($index)">
                 {{ $t('展开全部') }}
+              </p>
+              <p
+                v-else-if="cacheOverFlowCol.includes(field.field_name)"
+                class="hide-whole-btn"
+                @click.stop="handleHideWhole($index)">
+                {{ $t('收起') }}
               </p>
             </div>
           </keep-alive>

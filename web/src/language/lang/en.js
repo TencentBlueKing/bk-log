@@ -281,6 +281,7 @@ export default {
   原始: 'Origin',
   换行: 'Wrap',
   展开全部: 'Expand All',
+  收起: 'Pack Up',
   过滤项: 'Filter item',
   // 检索设置弹窗
   retrieveSetting: {
