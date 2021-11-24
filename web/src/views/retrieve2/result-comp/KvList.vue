@@ -36,7 +36,7 @@
           <span
             v-for="(option) in toolMenuList"
             :key="option.id"
-            :class="`icon ${getHandleIcon(option, field)}`"
+            :class="`icon ${getHandleIcon(option, field)} ${checkDisable(option.id, field)}`"
             @click.stop="handleMenuClick(option.id, field)">
           </span>
         </div>
@@ -140,10 +140,16 @@ export default {
         disabled: !this.fieldTypeMap[fieldType],
       };
     },
+    checkDisable(id, field) {
+      const type = this.getFieldType(field);
+      return ['is', 'not'].includes(id) && type === 'text' ? 'is-disabled' : '';
+    },
     handleMenuClick(operator, item, field) {
       let params = {};
       if (['is', 'not'].includes(operator)) {
         if (!field && !this.getFieldType(item)) return;
+
+        if (this.getFieldType(item) === 'text') return;
 
         if (!field && this.data[item] === undefined) return;
 
@@ -226,6 +232,13 @@ export default {
         transform: rotate(0);
         font-size: 24px;
         cursor: pointer;
+      }
+      .icon-close-circle,
+      .icon-minus-circle {
+        &.is-disabled {
+          color: #dcdee5;
+          cursor: not-allowed;
+        }
       }
     }
   }

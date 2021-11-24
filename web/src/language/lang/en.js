@@ -115,6 +115,7 @@ export default {
   总趋势: 'General Trend',
   // 日志提取
   日志提取: 'Log Extract',
+  日志提取任务: 'Log Extract Task',
   创建: 'Create',
   新建: 'Create',
   新增: 'Create',
@@ -280,7 +281,8 @@ export default {
   原始: 'Origin',
   换行: 'Wrap',
   展开全部: 'Expand All',
-  加为筛选项: 'Add As Search',
+  收起: 'Pack Up',
+  过滤项: 'Filter item',
   // 检索设置弹窗
   retrieveSetting: {
     setting: 'Setting',

@@ -241,7 +241,6 @@ export default {
     font-size: 12px;
     color: #63656e;
     line-height: 20px;
-    border-top: 1px solid #cacedb;
 
     .form-container {
       display: flex;

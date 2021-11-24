@@ -75,6 +75,12 @@
                 @click.stop="handleShowWhole($index)">
                 {{ $t('展开全部') }}
               </p>
+              <p
+                v-else
+                class="hide-whole-btn"
+                @click.stop="handleHideWhole($index)">
+                {{ $t('收起') }}
+              </p>
             </div>
           </EventPopover>
         </template>

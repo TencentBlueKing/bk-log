@@ -33,13 +33,13 @@
       <span
         v-if="isSearch"
         class="icon bk-icon icon-close-circle"
-        v-bk-tooltips.top="{ content: $t('加为筛选项'), delay: 300 }"
+        v-bk-tooltips.top="{ content: `${$t('添加')} is ${$t('过滤项')}`, delay: 300 }"
         @click="handleClick('is')">
       </span>
       <span
         v-if="isSearch"
         class="icon bk-icon icon-minus-circle"
-        v-bk-tooltips.top="{ content: $t('加为筛选项'), delay: 300 }"
+        v-bk-tooltips.top="{ content: `${$t('添加')} is ${$t('过滤项')}`, delay: 300 }"
         @click="handleClick('is not')">
       </span>
       <!-- <span class="icon log-icon icon-chart"></span> -->
