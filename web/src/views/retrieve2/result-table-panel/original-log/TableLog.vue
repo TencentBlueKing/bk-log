@@ -351,6 +351,9 @@ export default {
     .row-hover {
       background: #fff;
     }
+    th .cell {
+      padding: 0 15px !important;
+    }
   }
   /deep/ .render-header {
     .field-type-icon {
