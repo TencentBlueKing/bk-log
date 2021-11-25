@@ -25,7 +25,7 @@
     <span
       v-if="!isNeedSegment"
       class="valid-text"
-      @click="handleClick($event, content)">{{ content }}</span>
+      @click="handleClick($event, content)">{{ formatterStr(content) }}</span>
     <template v-else class="segment-content">
       <span
         v-for="(item, index) in splitList"
@@ -107,6 +107,17 @@ export default {
     this.handleDestroy();
   },
   methods: {
+    formatterStr(content) {
+      // 匹配高亮标签
+      let value = content;
+      const markVal = content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      if (markVal) {
+        value = String(value).replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, '');
+      }
+
+      return value;
+    },
     handleDestroy() {
       if (this.popoverInstance) {
         this.popoverInstance?.hide(0);
