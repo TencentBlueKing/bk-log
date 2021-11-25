@@ -326,7 +326,7 @@ export default {
       padding: 0;
     }
     .bk-table-column-expand .bk-icon {
-      top: 20px;
+      top: 17px;
     }
     &.is-wrap .cell {
       display: inline-table;
@@ -353,6 +353,9 @@ export default {
     }
     th .cell {
       padding: 0 15px !important;
+    }
+    &.original-table .bk-table-column-expand .bk-icon {
+      top: 20px;
     }
   }
   /deep/ .render-header {
