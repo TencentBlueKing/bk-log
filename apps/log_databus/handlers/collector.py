@@ -263,15 +263,27 @@ class CollectorHandler(object):
         return [node["bk_inst_id"] for node in nodes if node["bk_obj_id"] == node_type]
 
     @staticmethod
-    def add_cluster_info(data):
+    def bulk_cluster_infos(result_table_list: list):
+        multi_execute_func = MultiExecuteFunc()
+        for rt in result_table_list:
+            multi_execute_func.append(
+                rt, TransferApi.get_result_table_storage, {"result_table_list": rt, "storage_type": "elasticsearch"}
+            )
+        result = multi_execute_func.run()
+        cluster_infos = {}
+        for _, cluster_info in result.items():  # noqa
+            cluster_infos.update(cluster_info)
+        return cluster_infos
+
+    @classmethod
+    def add_cluster_info(cls, data):
         """
         补充集群信息
         """
         result_table_list = [_data["table_id"] for _data in data if _data.get("table_id")]
+        cluster_infos = {}
         try:
-            cluster_infos = TransferApi.get_result_table_storage(
-                {"result_table_list": ",".join(result_table_list), "storage_type": "elasticsearch"}
-            )
+            cluster_infos = cls.bulk_cluster_infos(result_table_list)
         except ApiError as error:
             logger.exception(f"request cluster info error => [{error}]")
             cluster_infos = {}
