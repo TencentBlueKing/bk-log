@@ -150,7 +150,28 @@ class DataAccessHandler(BaseAiopsHandler):
             clustering_config.bkdata_etl_processing_id = result["processing_id"]
             clustering_config.bkdata_etl_result_table_id = result["result_table_id"]
             clustering_config.save()
+            # 新建rt后需要启动清洗任务
+            self.start_bkdata_clean(result["result_table_id"])
             return
 
         params.update({"processing_id": clustering_config.bkdata_etl_processing_id})
         BkDataDatabusApi.databus_cleans_put(params)
+        # 更新rt之后需要重启清洗任务
+        self.stop_bkdata_clean(clustering_config.bkdata_etl_result_table_id)
+        self.start_bkdata_clean(clustering_config.bkdata_etl_result_table_id)
+
+    def stop_bkdata_clean(self, bkdata_result_table_id):
+        return BkDataDatabusApi.delete_tasks(
+            params={
+                "result_table_id": bkdata_result_table_id,
+                "bk_username": self.conf.get("bk_username"),
+            }
+        )
+
+    def start_bkdata_clean(self, bkdata_result_table_id):
+        return BkDataDatabusApi.delete_tasks(
+            params={
+                "result_table_id": bkdata_result_table_id,
+                "bk_username": self.conf.get("bk_username"),
+            }
+        )

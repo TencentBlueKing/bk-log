@@ -71,6 +71,7 @@ class ClusteringConfig(SoftDeleteModel):
     clustering_fields = models.CharField(_("聚合字段"), max_length=128)
     filter_rules = JSONField(_("过滤规则"), null=True, blank=True)
     bk_biz_id = models.IntegerField(_("业务id"))
+    # todo 待确认
     result_table_id = models.CharField(_("结果表id"), max_length=255, default="")
     pre_treat_flow = JSONField(_("预处理flow配置"), null=True, blank=True)
     new_cls_pattern_rt = models.CharField(_("新类结果表id"), max_length=255, default="")

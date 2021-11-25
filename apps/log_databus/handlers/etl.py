@@ -170,7 +170,7 @@ class EtlHandler(object):
         """
         fmts = array_group(FieldDateFormatEnum.get_choices_list_dict(), "id", True)
         fmt = fmts.get(time_format)
-        if len(data) != len(fmt["description"]):
+        if len(data) != len(fmt["description"]) and len(data) != len(fmt["name"]):
             raise EtlParseTimeFormatException()
 
         if time_format in ["epoch_second", "epoch_millis", "epoch_micros"]:
