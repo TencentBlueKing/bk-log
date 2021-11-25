@@ -67,7 +67,7 @@
           <bk-switcher
             class="left-word" theme="primary" size="large"
             v-model="dataFingerprint"
-            :disabled="!globalEditable || !isCollector"
+            :disabled="!globalEditable || !cleanConfig.extra.collector_config_id || dataFingerprint"
             :pre-check="() => false">
           </bk-switcher>
         </div>
@@ -239,8 +239,8 @@ export default {
       type: Object,
       require: true,
     },
-    isCollector: {
-      type: Boolean,
+    cleanConfig: {
+      type: Object,
       require: true,
     },
   },
@@ -311,14 +311,15 @@ export default {
   mounted() {
     const { extra } = this.configData;
     this.dataFingerprint = extra.signature_switch;
-    if (extra.signature_switch && extra.clustering_field) {
+    if (extra.signature_switch && this.cleanConfig.extra.collector_config_id) {
       this.initPage();
     }
     this.initSelectList();
   },
   methods: {
     async initPage(isDefault = false) {
-      const { extra } = this.configData;
+      const { extra } = this.cleanConfig;
+      this.globalLoading = true;
       let res;
       try {
         if (extra.collector_config_id && !isDefault) {
@@ -357,7 +358,6 @@ export default {
       });
     },
     handleChangeFinger() {
-      const { extra } = this.configData;
       if (this.dataFingerprint) {
         this.$bkInfo({
           title: this.$t('retrieveSetting.closeFinger'),
@@ -366,7 +366,7 @@ export default {
           },
         });
       } else {
-        if (!extra.collector_config_id) {
+        if (!this.cleanConfig.extra.collector_config_id) {
           this.$bkInfo({
             title: this.$t('retrieveSetting.notCollector'),
             confirmFn: () => {},
@@ -395,9 +395,8 @@ export default {
       this.$refs.validateForm.validate().then(() => {
         if (this.isFilterRuleError) return;
         this.isHandle = true;
-        this.isShowSubmitDialog = true;
         const { index_set_id, bk_biz_id } = this.indexSetItem;
-        const { extra: { collector_config_id } } = this.configData;
+        const { extra: { collector_config_id } } = this.cleanConfig;
         this.formData.predefined_varibles =  this.$refs.ruleTableRef.ruleArrToBase64();
         this.$http.request('/logClustering/changeConfig', {
           params: {
@@ -412,6 +411,7 @@ export default {
           },
         })
           .then(() => {
+            this.$emit('successSubmit');
             this.isShowSubmitDialog = true;
           })
           .catch((e) => {

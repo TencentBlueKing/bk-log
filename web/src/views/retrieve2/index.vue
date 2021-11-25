@@ -277,6 +277,7 @@
           :statistical-fields-data="statisticalFieldsData"
           :time-field="timeField"
           :config-data="clusteringData"
+          :clean-config="cleanConfig"
           @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"

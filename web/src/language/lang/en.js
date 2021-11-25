@@ -343,6 +343,7 @@ export default {
   goFingerMessage: '当前数据指纹未启用，请前往设置',
   goSettingMessage: 'The current data fingerprint is not enabled, please go to settings',
   goCleanMessage: 'There is currently no field available, please go to log cleaning to set',
+  noConfigIDMessage: '当前索引集不支持字段提取设置',
   nav: {
     logRetrieve: 'Log Search',
     retrieve: 'Search',

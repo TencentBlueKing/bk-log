@@ -343,6 +343,7 @@ export default {
   goFingerMessage: '当前数据指纹未启用，请前往设置',
   goSettingMessage: '当前日志聚类未启用，请前往设置',
   goCleanMessage: '当前无可用字段，请前往日志清洗进行设置',
+  noConfigIDMessage: '当前索引集不支持字段提取设置',
   nav: {
     logRetrieve: '日志检索',
     retrieve: '检索',

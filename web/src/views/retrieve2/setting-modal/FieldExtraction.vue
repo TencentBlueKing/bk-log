@@ -29,7 +29,7 @@
       :is-clean-field="false"
       :is-temp-field="false"
       :is-set-edit="true"
-      :set-id="cleanConfig.extra.collector_config_id"
+      :set-id="configID"
       :set-disabled="!globalEditable"
       @reset-page="resetPage"
       @updateLogFields="updateLogFields" />
@@ -57,6 +57,11 @@ export default {
     return {
       isShowFieldPage: true,
     };
+  },
+  computed: {
+    configID() {
+      return this.cleanConfig?.extra?.collector_config_id;
+    },
   },
   methods: {
     resetPage() {
