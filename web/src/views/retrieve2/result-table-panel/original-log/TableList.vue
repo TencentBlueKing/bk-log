@@ -25,6 +25,7 @@
     ref="resultTable"
     :class="['king-table', { 'is-wrap': isWrap }]"
     :data="tableList"
+    :key="tableRandomKey"
     :empty-text="$t('retrieve.notData')"
     :show-header="!tableLoading"
     @row-click="tableRowClick"

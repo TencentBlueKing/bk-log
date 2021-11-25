@@ -90,7 +90,7 @@ export default {
     splitList() {
       let value = this.content;
       // 高亮显示
-      const markVal = this.content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      const markVal = this.content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
       if (markVal) {
         this.markList = markVal;
         value = String(value).replace(/<mark>/g, '')
@@ -110,7 +110,7 @@ export default {
     formatterStr(content) {
       // 匹配高亮标签
       let value = content;
-      const markVal = content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      const markVal = content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
       if (markVal) {
         value = String(value).replace(/<mark>/g, '')
           .replace(/<\/mark>/g, '');

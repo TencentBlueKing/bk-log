@@ -21,7 +21,7 @@
  */
 
 import { mapState } from 'vuex';
-import { formatDate } from '@/common/util';
+import { formatDate, random } from '@/common/util';
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import EventPopover from '@/views/retrieve2/result-comp/EventPopover.vue';
 import TextHighlight from 'vue-text-highlight';
@@ -109,6 +109,7 @@ export default {
       curHoverIndex: -1, // 当前鼠标hover行的索引
       cacheExpandStr: [], // 记录展开收起的行
       cacheOverFlowCol: [], // 记录超出四行高度的列
+      tableRandomKey: '',
     };
   },
   computed: {
@@ -152,6 +153,12 @@ export default {
     '$route.params.indexId'() { // 切换索引集重置状态
       this.cacheExpandStr = [];
       this.cacheOverFlowCol = [];
+    },
+    visibleFields: {
+      deep: true,
+      handler() {
+        this.tableRandomKey = random(6);
+      },
     },
   },
   methods: {
