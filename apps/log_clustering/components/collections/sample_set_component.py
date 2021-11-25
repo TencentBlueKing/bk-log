@@ -17,13 +17,15 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from apps.log_clustering.handlers.aiops.sample_set.sample_set_handler import SampleSetHandler
-from apps.log_clustering.models import SampleSet
-from apps.utils.pipline import BaseService
 from django.utils.translation import ugettext_lazy as _
+
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 from pipeline.component_framework.component import Component
 from pipeline.builder import ServiceActivity, Var
+
+from apps.log_clustering.handlers.aiops.sample_set.sample_set_handler import SampleSetHandler
+from apps.log_clustering.models import SampleSet
+from apps.utils.pipline import BaseService
 
 
 class CreateSampleSetService(BaseService):

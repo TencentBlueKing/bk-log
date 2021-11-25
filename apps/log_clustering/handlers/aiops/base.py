@@ -67,3 +67,6 @@ class BaseAiopsHandler(object):
             return None
         release_id, *_ = release_ids
         return release_id
+
+    def transfer_fields_to_origin(self):
+        pass
