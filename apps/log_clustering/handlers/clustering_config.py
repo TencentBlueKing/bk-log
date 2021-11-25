@@ -29,6 +29,8 @@ from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import A
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
+from apps.log_databus.models import CollectorConfig
+from apps.log_search.models import LogIndexSet
 from apps.models import model_to_dict
 from apps.utils.function import map_if
 
@@ -53,8 +55,9 @@ class ClusteringConfigHandler(object):
 
     def update_or_create(self, params: dict):
         index_set_id = params["index_set_id"]
-        collector_config_id = params["collector_config_id"]
-        collector_config_name_en = params["collector_config_name_en"]
+        collector_config_id = LogIndexSet.objects.filter(index_set_id=index_set_id).first().collector_config_id
+        clustering_config = CollectorConfig.objects.filter(collector_config_id=collector_config_id).first()
+        collector_config_name_en = clustering_config.collector_config_name_en if clustering_config else None
         min_members = params["min_members"]
         max_dist_list = params["max_dist_list"]
         predefined_varibles = params["predefined_varibles"]
@@ -67,8 +70,6 @@ class ClusteringConfigHandler(object):
         signature_enable = params["signature_enable"]
         clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         if clustering_config:
-            clustering_config.collector_config_id = collector_config_id
-            clustering_config.collector_config_name_en = collector_config_name_en
             clustering_config.min_members = min_members
             clustering_config.max_dist_list = max_dist_list
             clustering_config.predefined_varibles = predefined_varibles
