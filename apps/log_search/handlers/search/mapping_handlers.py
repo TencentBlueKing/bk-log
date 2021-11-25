@@ -734,10 +734,11 @@ class MappingHandlers(object):
     @classmethod
     def _generate_async_export_reason(cls, scenario_id: str, result: dict):
         reason_map = {
-            Scenario.BKDATA: _("【异步导出缺少必备字段: {async_fields} or {async_container_fields}】").format(
-                async_fields=BKDATA_ASYNC_FIELDS, async_container_fields=BKDATA_ASYNC_CONTAINER_FIELDS
+            Scenario.BKDATA: _("缺少必备字段: {async_fields} or {async_container_fields}").format(
+                async_fields=", ".join(BKDATA_ASYNC_FIELDS),
+                async_container_fields=", ".join(BKDATA_ASYNC_CONTAINER_FIELDS),
             ),
-            Scenario.LOG: _("【异步导出缺少必备字段: {async_fields}】").format(async_fields=LOG_ASYNC_FIELDS),
+            Scenario.LOG: _("缺少必备字段: {async_fields}").format(async_fields=",".join(LOG_ASYNC_FIELDS)),
         }
 
         result["async_export_usable_reason"] = reason_map[scenario_id]
