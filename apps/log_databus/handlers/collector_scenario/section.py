@@ -196,6 +196,16 @@ class SectionCollectorScenario(CollectorScenario):
             },
             "fields": [
                 {
+                    "field_name": "ext",
+                    "field_type": "object",
+                    "tag": "dimension",
+                    "alias_name": "ext",
+                    "description": "额外信息字段",
+                    "option": {"es_type": "object", "es_include_in_all": False}
+                    if es_version.startswith("5.")
+                    else {"es_type": "object"},
+                },
+                {
                     "field_name": "cloudId",
                     "field_type": "float",
                     "tag": "dimension",

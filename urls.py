@@ -33,6 +33,8 @@ Including another URLconf
 
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.views import static
+from django.conf import settings
 from version_log import config
 
 urlpatterns = [
@@ -54,4 +56,5 @@ urlpatterns = [
     url(r"^flower/", include("flower_proxy.urls")),
     url(r"^{}".format(config.ENTRANCE_URL), include("version_log.urls")),
     url(r"^api/v1/log_extract/", include("apps.log_extract.urls")),
+    url(r"^static/(?P<path>.*)$", static.serve, {"document_root": settings.STATIC_ROOT}, name="static"),
 ]
