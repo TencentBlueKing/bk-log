@@ -353,7 +353,7 @@ class BizHandler(APIModel):
             generate_hosts.append(tmp_host)
         return generate_hosts
 
-    # @cache_five_minute("bk_inst_host_{bk_obj_id}_{bk_inst_id}", need_md5=True)
+    @cache_five_minute("bk_inst_host_{bk_obj_id}_{bk_inst_id}", need_md5=True)
     def _search_host(self, *, bk_obj_id, bk_inst_id):
         """
         调用CC接口根据条件查询主机
