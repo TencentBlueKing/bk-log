@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="main-container" data-test-id="logExtraction_div_fromBox">
+  <div class="main-container" data-test-id="logExtraction_div_fromBox" v-bkloading="{ isLoading }">
     <div class="option-container">
       <bk-button
         theme="primary"
@@ -103,7 +103,7 @@
       </bk-table-column>
     </bk-table>
     <!-- 表格侧边栏 -->
-    <bk-sideslider :is-show.sync="sideSlider.isShow" :quick-close="true" :title="$t('详情')" :width="660">
+    <bk-sideslider :is-show.sync="sideSlider.isShow" :quick-close="true" :title="$t('详情')" :width="660" transfer>
       <div slot="content" class="task-detail-content" v-bkloading="{ isLoading: sideSlider.isLoading }">
         <ListBox icon="log-icon icon-info-fill" :title="sideSlider.data.task_process_info" :mark="true" />
         <TaskStatusDetail :status-data="sideSlider.data.task_step_status" />
@@ -135,6 +135,7 @@ export default {
   data() {
     return {
       searchKeyword: '',
+      isLoading: false,
       // 列表数据
       taskList: [],
       pagination: {
@@ -177,7 +178,7 @@ export default {
     async initTaskList() {
       try {
         clearTimeout(this.timeoutID);
-        this.$emit('loading', true);
+        this.isLoading = true;
         const payload = {
           query: {
             bk_biz_id: this.$store.state.bkBizId,
@@ -196,7 +197,7 @@ export default {
       } catch (e) {
         console.warn(e);
       } finally {
-        this.$emit('loading', false);
+        this.isLoading = false;
       }
     },
     pollingTaskStatus() {
@@ -266,23 +267,14 @@ export default {
     },
     handleCreateTask() {
       this.$router.push({
-        path: '/extract',
-        query: {
-          create: '1',
-          projectId: window.localStorage.getItem('project_id'),
-        },
+        name: 'extract-create',
       });
     },
     // 克隆
     cloneTask(row) {
       sessionStorage.setItem('cloneData', JSON.stringify(row));
       this.$router.push({
-        path: '/extract',
-        query: {
-          create: '1',
-          clone: '1',
-          projectId: window.localStorage.getItem('project_id'),
-        },
+        name: 'extract-clone',
       });
     },
     // 下载文件
@@ -297,7 +289,7 @@ export default {
     // 重新下载
     async reDownloadFile({ task_id }) {
       try {
-        this.$emit('loading', true);
+        this.isLoading = true;
         await this.$http.request('extract/reDownloadFile', {
           data: {
             task_id,
@@ -307,7 +299,7 @@ export default {
         await this.initTaskList();
       } catch (e) {
         console.warn(e);
-        this.$emit('loading', false);
+        this.isLoading = false;
       }
     },
     ipList(ipList) {
@@ -322,136 +314,113 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .main-container {
-    /*新增任务样式*/
-    .option-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 0;
-
-      .king-input-search {
-        width: 486px;
-
-        /deep/ .icon-search {
-          &:hover {
-            color: #3b84ff;
-            cursor: pointer;
-          }
-        }
-      }
-    }
-
-    /*表格内容样式*/
-    /deep/ .king-table {
-      background-color: #fff;
-
-      /*分页下拉*/
-      .bk-select-name {
-        width: 76px !important;
-      }
-
-      .task-operation-container {
-        display: flex;
-        align-items: center;
-
-        .task-operation {
-          margin-right: 12px;
-          color: #3a84ff;
+.main-container {
+  /*新增任务样式*/
+  .option-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    .king-input-search {
+      width: 486px;
+      /deep/ .icon-search {
+        &:hover {
+          color: #3b84ff;
           cursor: pointer;
-        }
-      }
-
-      .task-status-warning {
-        display: flex;
-        align-items: center;
-        color: #ff9c01;
-
-        .icon-info-fill {
-          margin-left: 2px;
-          cursor: pointer;
-        }
-
-        .icon-refresh {
-          margin-right: 2px;
-          animation: refresh-rotate 1s linear infinite;
-
-          @keyframes refresh-rotate {
-            0% {transform: rotate(0deg);}
-
-            100% {transform: rotate(360deg);}
-          }
-        }
-      }
-
-      .task-status-success {
-        color: #2dcb56;
-      }
-
-      .task-status-error {
-        color: #ea3636;
-      }
-    }
-
-    /*侧边栏插槽*/
-    .task-detail-content {
-      height: calc(100vh - 60px);
-      padding-bottom: 20px;
-      overflow: auto;
-
-      /deep/ .list-box-container {
-        padding: 14px 20px 10px;
-        font-size: 15px;
-        line-height: 40px;
-        color: #63656e;
-
-        .list-title {
-          display: flex;
-          align-items: center;
-
-          .bk-icon {
-            margin-right: 6px;
-            font-size: 14px;
-          }
-
-          .text {
-            color: #313238;
-            margin: 0;
-            font-size: 16px;
-            font-weight: 500;
-            line-height: 20px;
-            padding: 10px 0;
-            word-break: break-all;
-          }
-
-          &.mark {
-            .log-icon {
-              margin-right: 4px;
-              font-size: 16px;
-              color: #ea3636;
-            }
-
-            .text {
-              color: #ea3636;
-            }
-          }
-        }
-
-        .list-box {
-          border-top: 1px solid #dcdee5;
-
-          .list-item {
-            padding: 10px 0;
-            line-height: 20px;
-            border-bottom: 1px solid #dcdee5;
-            word-break: break-all;
-
-            &:hover {
-              background-color: #f0f1f5;
-            }
-          }
         }
       }
     }
   }
+  /*表格内容样式*/
+  /deep/ .king-table {
+    background-color: #fff;
+    /*分页下拉*/
+    .bk-select-name {
+      width: 76px !important;
+    }
+    .task-operation-container {
+      display: flex;
+      align-items: center;
+      .task-operation {
+        margin-right: 12px;
+        color: #3a84ff;
+        cursor: pointer;
+      }
+    }
+    .task-status-warning {
+      display: flex;
+      align-items: center;
+      color: #ff9c01;
+      .icon-info-fill {
+        margin-left: 2px;
+        cursor: pointer;
+      }
+      .icon-refresh {
+        margin-right: 2px;
+        animation: refresh-rotate 1s linear infinite;
+        @keyframes refresh-rotate {
+          0% {transform: rotate(0deg);}
+          100% {transform: rotate(360deg);}
+        }
+      }
+    }
+    .task-status-success {
+      color: #2dcb56;
+    }
+    .task-status-error {
+      color: #ea3636;
+    }
+  }
+}
+/*侧边栏插槽*/
+.task-detail-content {
+  height: calc(100vh - 60px);
+  padding-bottom: 20px;
+  overflow: auto;
+  /deep/ .list-box-container {
+    padding: 14px 20px 10px;
+    font-size: 15px;
+    line-height: 40px;
+    color: #63656e;
+    .list-title {
+      display: flex;
+      align-items: center;
+      .bk-icon {
+        margin-right: 6px;
+        font-size: 14px;
+      }
+      .text {
+        color: #313238;
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 20px;
+        padding: 10px 0;
+        word-break: break-all;
+      }
+      &.mark {
+        .log-icon {
+          margin-right: 4px;
+          font-size: 16px;
+          color: #ea3636;
+        }
+        .text {
+          color: #ea3636;
+        }
+      }
+    }
+    .list-box {
+      border-top: 1px solid #dcdee5;
+      .list-item {
+        padding: 10px 0;
+        line-height: 20px;
+        border-bottom: 1px solid #dcdee5;
+        word-break: break-all;
+        &:hover {
+          background-color: #f0f1f5;
+        }
+      }
+    }
+  }
+}
 </style>

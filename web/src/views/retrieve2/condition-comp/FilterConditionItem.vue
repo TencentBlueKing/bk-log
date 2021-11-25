@@ -370,7 +370,8 @@ export default {
       display: none;
       margin: 0 6px;
       font-size: 12px;
-      color: #c4c6cc;
+      font-weight: 700;
+      color: #979BA5;
       cursor: pointer;
     }
 

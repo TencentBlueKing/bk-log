@@ -38,7 +38,7 @@ export default {
     const { content, fieldType,  menuClick } = this;
     const renderHtml = () => {
       // text keyword 支持分词
-      if (['text', 'keyword'].includes(fieldType)) {
+      if (['text'].includes(fieldType)) {
         let value = content;
         const reg = /([.,&*+:;?^=!$<>{}()|[\]/\\|\s\r\n\t]|[-])/;
         // 高亮显示

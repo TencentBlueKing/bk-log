@@ -48,10 +48,16 @@ const clusterSearch = {
   method: 'post',
 };
 
+const closeClean = {
+  url: '/databus/collectors/:collector_config_id/close_clean/',
+  method: 'post',
+};
+
 export {
   getConfig,
   getDefaultConfig,
   changeConfig,
   preview,
   clusterSearch,
+  closeClean,
 };

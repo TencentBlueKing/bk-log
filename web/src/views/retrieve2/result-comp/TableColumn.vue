@@ -31,8 +31,7 @@
         { 'mark': markList.includes(formatterStr(content)) }
       ]"
       @click.stop="handleClickContent"
-      v-bk-tooltips="{ content: $t('查看调用链'), disabled: !hasClickEvent, delay: 500 }"
-    >
+      v-bk-tooltips="{ content: $t('查看调用链'), disabled: !hasClickEvent, delay: 500 }">
       <text-segmentation
         v-if="isInViewPort"
         :content="content"
@@ -93,11 +92,7 @@ export default {
     // },
     // 高亮
     markList() {
-      let markVal = [];
-      if (['text', 'keyword'].includes(this.fieldType)) {
-        markVal = this.content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
-      }
-
+      const markVal = this.content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
       return markVal;
     },
   },
@@ -111,13 +106,10 @@ export default {
     formatterStr(content) {
       // 匹配高亮标签
       let value = content;
-
-      if (['text', 'keyword'].includes(this.fieldType)) {
-        const markVal = content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
-        if (markVal) {
-          value = String(value).replace(/<mark>/g, '')
-            .replace(/<\/mark>/g, '');
-        }
+      const markVal = content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      if (markVal) {
+        value = String(value).replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, '');
       }
 
       return value;
@@ -145,6 +137,9 @@ export default {
       this.intersectionObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (this.intersectionObserver) {
+            if (entry.boundingClientRect.height > 72) {
+              this.$emit('computedHeight');
+            }
             if (entry.intersectionRatio > 0) {
               this.isInViewPort = true;
             } else {
@@ -162,10 +157,9 @@ export default {
 <style lang="scss" scoped>
 .td-log-container {
   position: relative;
-  padding: 14px 15px 0 0;
   line-height: 14px;
   &.is-wrap {
-    padding-bottom: 10px;
+    padding-bottom: 4px;
   }
   .field-container {
     &.active:hover {

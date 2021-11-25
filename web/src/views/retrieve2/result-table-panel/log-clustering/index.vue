@@ -21,117 +21,134 @@
   -->
 
 <template>
-  <div class="log-cluster-table-container" v-bkloading="{ isLoading: tableLoading ,opacity: 1 }">
-    <div class="cluster-nav" v-if="exhibitAll">
-      <div class="bk-button-group">
-        <bk-button
-          v-for="(item) of clusterNavList"
-          :key="item.id"
-          :class="active === item.id ? 'is-selected' : ''"
-          @click="handleClickNav(item.id)"
-          size="small">
-          {{item.name}}
-        </bk-button>
-      </div>
+  <div>
+    <div class="log-cluster-table-container" v-show="!globalLoading">
+      <div class="cluster-nav" v-if="exhibitAll">
+        <div class="bk-button-group">
+          <bk-button
+            v-for="(item) of clusterNavList"
+            :key="item.id"
+            :class="active === item.id ? 'is-selected' : ''"
+            @click="handleClickNav(item.id)"
+            size="small">
+            {{item.name}}
+          </bk-button>
+        </div>
 
-      <div v-if="active === 'dataFingerprint'"
-           class="fingerprint fljb">
-        <div class="fingerprint-setting fljb">
-          <div class="fljb">
-            <span>{{$t('同比')}}</span>
-            <bk-select
-              behavior="simplicity"
-              ext-cls="compared-select"
-              v-model="yearOnYearCycle"
+        <div v-if="active === 'dataFingerprint'"
+             class="fingerprint fljb">
+          <div class="fingerprint-setting fljb">
+            <div class="fljb">
+              <span>{{$t('同比')}}</span>
+              <bk-select
+                behavior="simplicity"
+                ext-cls="compared-select"
+                v-model="yearOnYearCycle"
+                :disabled="isOperateDisable"
+                :clearable="false"
+                :popover-min-width="120"
+                @change="requestFinger">
+                <bk-option
+                  v-for="option in comparedList"
+                  :key="option.id"
+                  :id="option.id"
+                  :name="option.name">
+                </bk-option>
+              </bk-select>
+            </div>
+
+            <bk-checkbox
+              :true-value="true"
+              :false-value="false"
               :disabled="isOperateDisable"
-              :clearable="false"
-              :popover-min-width="120"
-              @change="requestFinger">
-              <bk-option
-                v-for="option in comparedList"
-                :key="option.id"
-                :id="option.id"
-                :name="option.name">
-              </bk-option>
-            </bk-select>
-          </div>
+              @change="handleNear24H">
+              <span style="font-size: 12px">{{$t('近24H新增')}}</span>
+            </bk-checkbox>
 
-          <bk-checkbox
-            :true-value="true"
-            :false-value="false"
-            :disabled="isOperateDisable"
-            @change="handleNear24H">
-            <span style="font-size: 12px">{{$t('近24H新增')}}</span>
-          </bk-checkbox>
-
-          <div class="partter fljb" style="width: 200px">
-            <span>Partter</span>
-            <div class="partter-slider-box fljb">
-              <span>{{$t('少')}}</span>
-              <bk-slider
-                class="partter-slider"
-                v-model="partterSize"
-                :show-tip="false"
-                :disable="isOperateDisable"
-                :max-value="sliderMaxVal"
-                @change="blurPartterSize"></bk-slider>
-              <span>{{$t('多')}}</span>
+            <div class="partter fljb" style="width: 200px">
+              <span>Partter</span>
+              <div class="partter-slider-box fljb">
+                <span>{{$t('少')}}</span>
+                <bk-slider
+                  class="partter-slider"
+                  v-model="partterSize"
+                  :show-tip="false"
+                  :disable="isOperateDisable"
+                  :max-value="sliderMaxVal"
+                  @change="blurPartterSize"></bk-slider>
+                <span>{{$t('多')}}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <bk-button class="download-icon" :disabled="isOperateDisable">
-          <span class="log-icon icon-xiazai"></span>
-        </bk-button>
-      </div>
-    </div>
-
-    <bk-alert
-      v-if="active === 'dataFingerprint' && fingerList.length === 0 && isPermission && exhibitAll"
-      :title="$t('clusterAlert')" closable type="info">
-    </bk-alert>
-
-    <div v-if="exhibitAll">
-      <ignore-table
-        v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
-        v-bind="$attrs"
-        v-on="$listeners"
-        :total-fields="totalFields"
-        :active="active" />
-      <data-fingerprint
-        v-if="active === 'dataFingerprint'"
-        v-bind="$attrs"
-        v-on="$listeners"
-        :year-on-year-cycle="yearOnYearCycle"
-        :is-permission="isPermission"
-        :partter-level="partterLevel"
-        :config-data="configData"
-        :finger-list="fingerList" />
-    </div>
-    <bk-table
-      v-else
-      class="no-text-table"
-      :data="[]">
-      <div slot="empty">
-        <div class="empty-text">
-          <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-          <p>{{isPermission ? $t('goCleanMessage') : $t('goSettingMessage')}}</p>
-          <span class="empty-leave" @click="handleLeaveCurrent">
-            {{isPermission ? $t('跳转到日志清洗') : $t('去设置')}}
-          </span>
+          <bk-button class="download-icon" :disabled="isOperateDisable">
+            <span class="log-icon icon-xiazai"></span>
+          </bk-button>
         </div>
       </div>
-    </bk-table>
+
+      <bk-alert
+        v-if="active === 'dataFingerprint' && fingerList.length === 0 && isPermission && exhibitAll"
+        :title="$t('clusterAlert')" closable type="info">
+      </bk-alert>
+
+      <div v-if="exhibitAll">
+        <clustering-loader
+          is-loading
+          v-if="tableLoading"
+          :width-list="smallLoaderWidthList">
+        </clustering-loader>
+        <div v-else>
+          <ignore-table
+            v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
+            v-bind="$attrs"
+            v-on="$listeners"
+            :total-fields="totalFields"
+            :origin-table-list="originTableList"
+            :active="active" />
+          <data-fingerprint
+            v-if="active === 'dataFingerprint'"
+            v-bind="$attrs"
+            v-on="$listeners"
+            :year-on-year-cycle="yearOnYearCycle"
+            :is-permission="isPermission"
+            :partter-level="partterLevel"
+            :config-data="configData"
+            :finger-list="fingerList" />
+        </div>
+      </div>
+
+      <bk-table
+        v-else
+        class="no-text-table"
+        :data="[]">
+        <div slot="empty">
+          <div class="empty-text">
+            <span class="bk-table-empty-icon bk-icon icon-empty"></span>
+            <p>{{isPermission ? $t('goCleanMessage') : $t('goSettingMessage')}}</p>
+            <span class="empty-leave" @click="handleLeaveCurrent">
+              {{isPermission ? $t('跳转到日志清洗') : $t('去设置')}}
+            </span>
+          </div>
+        </div>
+      </bk-table>
+    </div>
+    <clustering-loader
+      is-loading
+      v-show="globalLoading"
+      :width-list="loadingWidthList.global">
+    </clustering-loader>
   </div>
 </template>
 
 <script>
 import DataFingerprint from './DataFingerprint';
 import IgnoreTable from './IgnoreTable';
+import ClusteringLoader from '@/skeleton/clustering-loader';
 import { mapGetters } from 'vuex';
 
 export default {
-  components: { DataFingerprint, IgnoreTable },
+  components: { DataFingerprint, IgnoreTable, ClusteringLoader },
   props: {
     retrieveParams: {
       type: Object,
@@ -145,6 +162,10 @@ export default {
       type: Array,
       require: true,
     },
+    originTableList: {
+      type: Array,
+      required: true,
+    },
   },
   data() {
     return {
@@ -155,10 +176,12 @@ export default {
       isPermission: false, // 是否打开日志聚类大开关
       partterList: [], // partter敏感度List
       isNear24H: false, // 近24h
-      tableLoading: false,
       yearOnYearCycle: 0, // 同比值
       configID: -1, // 采集项ID
-      exhibitAll: false,
+      exhibitAll: false, // 是否不显示nav
+      alreadyClickNav: [], // 已加载过的nav
+      globalLoading: false, // 日志聚类大loading
+      tableLoading: false, // 详情loading
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -170,7 +193,26 @@ export default {
         name: this.$t('数据指纹'),
       }],
       comparedList: [], // 同比List
-      fingerList: [], // 表格List
+      fingerList: [
+        // {
+        //   pattern: 'xx [ip] [xxxxx] xxxxx]',
+        //   signature: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        //   count: 123,
+        //   year_on_year: -10,
+        //   percentage: 12,
+        //   is_new_class: true,
+        //   year_on_year_count: 12,
+        //   year_on_year_percentage: 0,
+        //   labels: ['xxxx', 'xxxx'],
+        //   remark: 'xxxx',
+        // },
+      ], // 数据指纹List
+      loadingWidthList: { // loading表头宽度列表
+        global: [''],
+        ignore: [60, 90, 90, ''],
+        notCompared: [150, 90, 90, ''],
+        compared: [150, 90, 90, 100, 100, ''],
+      },
     };
   },
   computed: {
@@ -180,6 +222,12 @@ export default {
     isOperateDisable() {
       return !this.isPermission || this.fingerList.length === 0;
     },
+    smallLoaderWidthList() {
+      if (this.active !== 'dataFingerprint') {
+        return this.loadingWidthList.ignore;
+      }
+      return this.yearOnYearCycle > 0 ? this.loadingWidthList.compared : this.loadingWidthList.notCompared;
+    },
   },
   watch: {
     configData(val) {
@@ -188,38 +236,53 @@ export default {
     },
     originTableList: {
       handler() {
-        this.requestFinger();
+        if (this.active === 'dataFingerprint' && this.partterLevel !== '') {
+          this.requestFinger();
+        }
       },
     },
     totalFields: {
       deep: true,
       immediate: true,
       handler(newList) {
-        this.tableLoading = true;
-        setTimeout(() => {
-          if (newList.length !== 0) {
-            const { is_active: isActive } = this.configData;
-            if (!isActive) {
-              this.exhibitAll = false;
-              return;
-            }
-            this.exhibitAll = newList.some(el => el.field_type === 'text');
-            this.exhibitAll && this.initTable();
+        if (newList.length !== 0) {
+          this.globalLoading = true;
+          setTimeout(() => {
+            this.globalLoading = false;
+          }, 500);
+          if (!this.configData.is_active) {
+            this.exhibitAll = false;
+            return;
+          }
+          const isHaveText = newList.some(el => el.field_type === 'text');
+          this.alreadyClickNav = [];
+          this.exhibitAll  = isHaveText;
+          if (isHaveText) {
+            this.initTable();
             this.requestFinger();
           }
-          this.tableLoading = false;
-        }, 500);
+        }
       },
     },
   },
   methods: {
     handleClickNav(id) {
       this.active = id;
+      const isHandleClick = this.alreadyClickNav.some(el => el === id);
+      if (!isHandleClick) {
+        this.alreadyClickNav.push(id);
+        if (this.alreadyClickNav.includes('dataFingerprint') && this.partterLevel !== '') {
+          this.requestFinger();
+          return;
+        }
+        this.showNavTableLoading();
+      }
     },
     handleNear24H(state) {
       this.isNear24H = state;
       this.requestFinger();
     },
+    // 请求数据指纹
     requestFinger() {
       delete this.retrieveParams.bk_biz_id;
       delete this.retrieveParams.begin;
@@ -245,6 +308,7 @@ export default {
           this.tableLoading = false;
         });
     },
+    // 初始化数据指纹配置
     initTable() {
       const {
         log_clustering_level_year_on_year: yearOnYearList,
@@ -259,19 +323,31 @@ export default {
       this.isPermission = isActive;
       this.configID = extra.collector_config_id;
     },
+    // 敏感度
     blurPartterSize(val) {
       this.partterLevel = this.partterList[val];
       this.requestFinger();
     },
+    // 跳转
     handleLeaveCurrent() {
-      !this.isPermission && this.$emit('showSettingLog');
-      if (this.configID) {
+      if (!this.isPermission) {
+        this.$emit('showSettingLog');
+        return;
+      }
+      if (this.configID && this.configID > 0) {
         this.$router.push({
           name: 'clean-edit',
           params: { collectorId: this.configID },
           query: { projectId: window.localStorage.getItem('project_id') },
         });
       }
+    },
+    // navtable loading动画
+    showNavTableLoading() {
+      this.tableLoading = true;
+      setTimeout(() => {
+        this.tableLoading = false;
+      }, 500);
     },
   },
 };

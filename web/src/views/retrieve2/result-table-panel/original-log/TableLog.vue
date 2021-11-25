@@ -87,16 +87,6 @@ export default {
       type: Object,
       required: true,
     },
-    fieldAliasMap: {
-      type: Object,
-      default() {
-        return {};
-      },
-    },
-    showFieldAlias: {
-      type: Boolean,
-      default: false,
-    },
     tableList: {
       type: Array,
       required: true,
@@ -277,7 +267,8 @@ export default {
     .time-field {
       font-weight: 700;
     }
-    .original-str {
+    .original-str,
+    .visiable-field {
       .cell {
         padding: 12px 14px 0 14px;
       }
@@ -308,6 +299,12 @@ export default {
         cursor: pointer;
         transition: background-color .25s ease;
       }
+      .hide-whole-btn {
+        line-height: 14px;
+        margin-top: -2px;
+        color: #3A84FF;
+        cursor: pointer;
+      }
     }
     .original-time {
       padding-top: 16px;
@@ -318,6 +315,11 @@ export default {
     .hover-row {
       .show-whole-btn{
         background-color: #f0f1f5;
+      }
+    }
+    .original-str {
+      .hide-whole-btn {
+        margin-top: 4px;
       }
     }
     td.bk-table-expanded-cell {
@@ -332,6 +334,25 @@ export default {
     .bk-table-empty-text {
       padding: 0;
       width: 100%;
+    }
+    .visiable-field {
+      .str-content {
+        &.is-limit {
+          max-height: 72px;
+        }
+      }
+      &.is-wrap .cell {
+        padding: 12px 15px 8px;
+      }
+      .show-whole-btn {
+        top: 56px;
+      }
+    }
+    .row-hover {
+      background: #fff;
+    }
+    th .cell {
+      padding: 0 15px !important;
     }
   }
   /deep/ .render-header {

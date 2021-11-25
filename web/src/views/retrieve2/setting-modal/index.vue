@@ -48,7 +48,7 @@
             v-for="(item,index) of currentList" :key="item.id"
             :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
             @click="handleNavClick(item.id,index)">
-            <span class="bk-icon icon-block-shape"></span>
+            <span class="log-icon icon-block-shape"></span>
             <span style="width: 110px">{{item.name}}</span>
             <div @click="handleStopProp">
               <div @click="stopChangeSwitch(index)">
@@ -228,10 +228,27 @@ export default {
       const msg = this.currentChoice === 'extract' ? '是否关闭字段提取？' : '是否关闭日志聚类';
       this.$bkInfo({
         title: msg,
-        confirmFn: () => {
-          this.currentList[index].isEditable = false;
+        confirmLoading: true,
+        confirmFn: async () => {
+          const isFinish = this.currentChoice === 'extract' ? await this.requestCloseClean() : await this.requestCloseCluster();
+          isFinish && (this.currentList[index].isEditable = false);
         },
       });
+    },
+    async requestCloseClean() {
+      const { extra: { collector_config_id } } = this.cleanConfig;
+      const res = await this.$http.request('/logClustering/closeClean', {
+        params: {
+          collector_config_id,
+        },
+        data: {
+          collector_config_id,
+        },
+      });
+      return res.result;
+    },
+    requestCloseCluster() {
+      return true;
     },
     closeSetting() {
       this.$emit('closeSetting');

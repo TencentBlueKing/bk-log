@@ -21,7 +21,7 @@
  */
 
 import { mapState } from 'vuex';
-import { formatDate } from '@/common/util';
+import { formatDate, random } from '@/common/util';
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import EventPopover from '@/views/retrieve2/result-comp/EventPopover.vue';
 import TextHighlight from 'vue-text-highlight';
@@ -56,6 +56,14 @@ export default {
     visibleFields: {
       type: Array,
       required: true,
+    },
+    showFieldAlias: {
+      type: Boolean,
+      default: false,
+    },
+    fieldAliasMap: {
+      type: Object,
+      default: () => {},
     },
     isWrap: {
       type: Boolean,
@@ -99,7 +107,9 @@ export default {
     return {
       formatDate,
       curHoverIndex: -1, // 当前鼠标hover行的索引
-      cacheExpandStr: [],
+      cacheExpandStr: [], // 记录展开收起的行
+      cacheOverFlowCol: [], // 记录超出四行高度的列
+      tableRandomKey: '',
     };
   },
   computed: {
@@ -137,15 +147,29 @@ export default {
       deep: true,
       handler() {
         this.cacheExpandStr = [];
+        this.cacheOverFlowCol = [];
       },
     },
     '$route.params.indexId'() { // 切换索引集重置状态
       this.cacheExpandStr = [];
+      this.cacheOverFlowCol = [];
+    },
+    visibleFields: {
+      deep: true,
+      handler() {
+        this.tableRandomKey = random(6);
+      },
     },
   },
   methods: {
     handleShowWhole(index) {
       this.cacheExpandStr.push(index);
+    },
+    handleHideWhole(index) {
+      this.cacheExpandStr = this.cacheExpandStr.map(item => item !== index);
+    },
+    handleOverColumn(fieldName) {
+      if (!this.cacheOverFlowCol.includes(fieldName)) this.cacheOverFlowCol.push(fieldName);
     },
     getMarkList(content) {
       return content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
@@ -227,6 +251,9 @@ export default {
         }, [
           h('span', {
             class: `field-type-icon ${fieldIcon}`,
+            style: {
+              marginRight: '4px',
+            },
             directives: [
               {
                 name: 'bk-tooltips',
