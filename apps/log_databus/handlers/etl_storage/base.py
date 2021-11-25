@@ -448,7 +448,7 @@ class EtlStorage(object):
 
     def _to_bkdata_conf(self, time_field):
         return {
-            "output_field_name": time_field.get("field_name"),
+            "output_field_name": "timestamp",
             "time_format": time_field["option"]["time_format"],
             "timezone": time_field["option"]["time_zone"],
             "encoding": "UTF-8",
