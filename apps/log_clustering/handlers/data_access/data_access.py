@@ -124,6 +124,8 @@ class DataAccessHandler(BaseAiopsHandler):
             "field_list", []
         )
         bkdata_json_config = etl_storage.get_bkdata_etl_config(fields, etl_params, built_in_config)
+        # 固定有time字段
+        fields_config.append({"alias_name": "time", "field_name": "time", "option": {"es_type": "long"}})
         params = {
             "raw_data_id": clustering_config.bkdata_data_id,
             "result_table_name": collector_config.collector_config_name_en,
