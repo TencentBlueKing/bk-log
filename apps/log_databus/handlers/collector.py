@@ -405,7 +405,6 @@ class CollectorHandler(object):
         """
         if self.data and not self.data.is_active:
             raise CollectorActiveException()
-        print("xxxx")
         collector_config_name = params["collector_config_name"]
         collector_config_name_en = params["collector_config_name_en"]
         target_object_type = params["target_object_type"]
