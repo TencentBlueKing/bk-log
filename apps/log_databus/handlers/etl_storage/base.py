@@ -464,4 +464,7 @@ class EtlStorage(object):
         ]
         if not time_field.get("option", {}).get("real_path"):
             result.append(self._to_bkdata_assign(time_field))
+        result.append(
+            self._to_bkdata_assign({"field_name": "time", "alias_name": "time", "option": {"es_type": "long"}})
+        )
         return result
