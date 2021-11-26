@@ -67,7 +67,7 @@
           <bk-switcher
             class="left-word" theme="primary" size="large"
             v-model="dataFingerprint"
-            :disabled="!globalEditable || !cleanConfig.extra.collector_config_id || dataFingerprint"
+            :disabled="!globalEditable || dataFingerprint"
             :pre-check="() => false">
           </bk-switcher>
         </div>
