@@ -80,7 +80,7 @@ export default {
     return {
       curValue: '', // 当前选中分词
       markList: [], // 高亮
-      segmentReg: /([,&*+:;?^=!$<>{}()|[\]/\\|\s\r\n\t]|[-])/,
+      segmentReg: /([,&*+:;?^=!$<>'"{}()|[\]/\\|\s\r\n\t]|[-])/,
     };
   },
   computed: {
