@@ -240,13 +240,17 @@ export default {
     },
   },
   watch: {
-    configData(val) {
-      this.isPermission = val.is_active;
-      this.configID = this.cleanConfig.extra?.collector_config_id;
+    configData: {
+      deep: true,
+      immediate: true,
+      handler(val) {
+        this.isPermission = val.is_active;
+        this.configID = this.cleanConfig.extra?.collector_config_id;
+      },
     },
     originTableList: {
-      handler() {
-        if (this.active === 'dataFingerprint' && this.partterLevel !== '') {
+      handler(val) {
+        if (this.active === 'dataFingerprint' && this.partterLevel !== '' && val.length > 0) {
           this.requestFinger();
         }
       },

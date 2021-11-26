@@ -244,8 +244,8 @@ export default {
       if (!this.currentList[index].isEditable) {
         if (this.currentChoice !== this.currentList[index].id) {
           // 当前tab不在操作的开关菜单 则跳转到对应菜单
-          this.currentChoice = this.currentList[index].id;
-          this.handleNavClick(this.currentList[index].id, index);
+          // this.currentChoice = this.currentList[index].id;
+          // this.handleNavClick(this.currentList[index].id, index);
         }
         this.currentList[index].isEditable = true;
         return;
