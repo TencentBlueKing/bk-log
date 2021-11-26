@@ -22,15 +22,16 @@
 
 <template>
   <div class="time-format-container">
+    <span class="switch-label">时间</span>
     <bk-switcher
       theme="primary"
       :value="isFormatDate"
       @change="handleChange"
       v-bk-tooltips="$t('btn.timeFormatTips')"
     ></bk-switcher>
-    <transition name="fade">
+    <!-- <transition name="fade">
       <span class="time-zone-text" v-if="isFormatDate">{{$t('retrieve.time_zone') + timeZone}}</span>
-    </transition>
+    </transition> -->
   </div>
 </template>
 
@@ -60,14 +61,18 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .time-format-container {
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    color: #63656e;
-
-    .time-zone-text {
-      margin-left: 8px;
-    }
+.time-format-container {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #63656e;
+  .switch-label {
+    margin-right: 6px;
+    color: #63656E;
+    font-size: 12px;
   }
+  .time-zone-text {
+    margin-left: 8px;
+  }
+}
 </style>

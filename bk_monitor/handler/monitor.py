@@ -243,7 +243,7 @@ class CustomReporter(object):
         report 参数验证
         """
         if not key:
-            logger.info(_(f"{val} data对应数据源为空，请检查数据源"))
+            logger.info(_(f"{key} data对应数据源为空，请检查数据源"))
             return False
 
         if not val:

@@ -56,6 +56,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import AggChart from './AggChart';
 
 export default {
@@ -91,49 +92,8 @@ export default {
       },
     },
   },
-  data() {
-    return {
-      fieldTypeMap: {
-        any: {
-          name: this.$t('不限'),
-          icon: 'bk-icon icon-check-line',
-        },
-        number: {
-          name: this.$t('数字'),
-          icon: 'log-icon icon-number',
-        },
-        integer: {
-          name: this.$t('数字'),
-          icon: 'log-icon icon-number',
-        },
-        double: {
-          name: this.$t('数字'),
-          icon: 'log-icon icon-number',
-        },
-        keyword: {
-          name: this.$t('字符串'),
-          icon: 'log-icon icon-string',
-        },
-        long: {
-          name: this.$t('文本'),
-          icon: 'log-icon icon-text',
-        },
-        text: {
-          name: this.$t('文本'),
-          icon: 'log-icon icon-text',
-        },
-        date: {
-          name: this.$t('时间'),
-          icon: 'bk-icon icon-clock',
-        },
-        boolean: {
-          name: '',
-          icon: '',
-        },
-      },
-    };
-  },
   computed: {
+    ...mapState('globals', ['fieldTypeMap']),
     gatherFieldsCount() { // 聚合字段有多少个
       return Object.keys(this.statisticalFieldData).length;
     },

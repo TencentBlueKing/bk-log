@@ -47,6 +47,40 @@ class _BkDataDatabusApi:
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
         )
+        self.databus_cleans_post = DataAPI(
+            method="POST",
+            url=DATABUS_APIGATEWAY_ROOT + "cleans/",
+            module=self.MODULE,
+            description=u"创建清洗配置",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+        )
+        self.databus_cleans_put = DataAPI(
+            method="PUT",
+            url=DATABUS_APIGATEWAY_ROOT + "cleans/{processing_id}/",
+            module=self.MODULE,
+            url_keys=["processing_id"],
+            description=u"更新清洗配置",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+        )
+        self.post_tasks = DataAPI(
+            method="POST",
+            url=DATABUS_APIGATEWAY_ROOT + "tasks/",
+            module=self.MODULE,
+            description=u"创建清洗分发任务",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+        )
+        self.delete_tasks = DataAPI(
+            method="DELETE",
+            url=DATABUS_APIGATEWAY_ROOT + "tasks/{result_table_id}/",
+            module=self.MODULE,
+            url_keys=["result_table_id"],
+            description=u"停止清洗，分发任务",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+        )
 
 
 BkDataDatabusApi = _BkDataDatabusApi()

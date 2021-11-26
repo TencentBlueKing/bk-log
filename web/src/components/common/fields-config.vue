@@ -126,16 +126,16 @@ export default {
   },
   methods: {
     /**
-             * 移除某个显示字段
-             * @param {Number} index
-             */
+     * 移除某个显示字段
+     * @param {Number} index
+     */
     removeItem(index) {
       !this.disabledRemove && this.displayFieldNames.splice(index, 1);
     },
     /**
-             * 增加某个字段名
-             * @param {String} fieldName
-             */
+     * 增加某个字段名
+     * @param {String} fieldName
+     */
     addItem(fieldName) {
       !this.disabledAdd && this.displayFieldNames.push(fieldName);
     },

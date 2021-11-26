@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div v-bkloading="{ isLoading: parentLoading, color: '#fbfbfb', zIndex: 0 }" class="field-filter-container">
+  <div v-bkloading="{ isLoading: false, color: '#fbfbfb', zIndex: 0 }" class="field-filter-container">
     <div class="form-container">
       <bk-input
         v-model.trim="searchKeyword"
@@ -241,7 +241,6 @@ export default {
     font-size: 12px;
     color: #63656e;
     line-height: 20px;
-    border-top: 1px solid #cacedb;
 
     .form-container {
       display: flex;

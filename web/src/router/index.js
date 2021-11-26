@@ -58,6 +58,11 @@ const LogCleanTempView = {
   template: '<router-view></router-view>',
 };
 
+const DashboardTempView = {
+  name: 'DashboardTempView',
+  template: '<router-view></router-view>',
+};
+
 const TraceTempView = {
   name: 'TraceTempView',
   template: '<router-view></router-view>',
@@ -66,7 +71,6 @@ const TraceTempView = {
 const page403 = () => import(/* webpackChunkName: 'page403' */'@/views/403');
 const retrieve = () => import(/* webpackChunkName: 'logRetrieve' */'@/views/retrieve2');
 const dashboard = () => import(/* webpackChunkName: 'dashboard' */'@/views/dashboard');
-const extract = () => import(/* webpackChunkName: 'logExtract' */'@/views/extract');
 const trace = () => import(/* webpackChunkName: 'logTrace' */'@/views/trace');
 const traceDetaid = () => import(/* webpackChunkName: 'logTraceDetail' */'@/views/trace/traceExplore');
 
@@ -157,6 +161,21 @@ const ExtractPermission = () => import(
   /* webpackChunkName: 'manage-extract-permission' */
   '@/views/manage2/manage-extract/manage-extract-permission'
 );
+// ---- 日志提取 ---- 提取任务
+const extract = () => import(
+  /* webpackChunkName: 'logExtract' */
+  '@/views/extract/index'
+);
+// ---- 日志提取 ---- 提取任务列表
+const extractHome = () => import(
+  /* webpackChunkName: 'extract-home' */
+  '@/views/extract/home'
+);
+// ---- 日志提取 ---- 新建/克隆提取任务
+const extractCreate = () => import(
+  /* webpackChunkName: 'extract-create' */
+  '@/views/extract/create'
+);
 // ---- 日志提取 ---- 链路管理列表
 const ExtractLinkList = () => import(
   /* webpackChunkName: 'extract-link-manage' */
@@ -193,17 +212,48 @@ const routes = [
   {
     path: '/dashboard',
     name: 'dashboard',
-    component: dashboard,
+    component: DashboardTempView,
+    redirect: '/dashboard/default-dashboard',
+    children: [
+      {
+        path: 'default-dashboard',
+        name: 'default-dashboard',
+        component: dashboard,
+      },
+      {
+        path: 'create-dashboard',
+        name: 'create-dashboard',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
+        component: dashboard,
+      },
+      {
+        path: 'import-dashboard',
+        name: 'import-dashboard',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
+        component: dashboard,
+      },
+      {
+        path: 'create-folder',
+        name: 'create-folder',
+        meta: {
+          needBack: true,
+          backName: 'default-dashboard',
+        },
+        component: dashboard,
+      },
+    ],
   },
   {
-    path: '/extract',
-    name: 'extract',
-    component: extract,
-  },
-  {
-    path: '/trace/:indexId?',
+    path: '/trace',
     name: 'trace',
     component: TraceTempView,
+    redirect: '/trace/trace-list',
     children: [
       {
         path: 'trace-list',
@@ -561,6 +611,37 @@ const routes = [
         path: 'manage-log-extract',
         name: 'manage-log-extract', // 日志提取 - 提取配置
         component: ExtractPermission,
+      },
+      {
+        path: 'log-extract-task',
+        name: 'log-extract-task', // 日志提取 - 提取任务
+        component: extract,
+        redirect: '/manage/log-extract-task',
+        children: [
+          {
+            path: '',
+            name: 'extract-home', // 日志提取 - 提取任务
+            component: extractHome,
+          },
+          {
+            path: 'extract-create',
+            name: 'extract-create', // 日志提取 - 新建提取任务
+            meta: {
+              needBack: true,
+              backName: 'log-extract-task',
+            },
+            component: extractCreate,
+          },
+          {
+            path: 'extract-clone',
+            name: 'extract-clone', // 日志提取 - 克隆提取任务
+            meta: {
+              needBack: true,
+              backName: 'log-extract-task',
+            },
+            component: extractCreate,
+          },
+        ],
       },
       {
         path: 'extract-link-manage',

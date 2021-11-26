@@ -232,6 +232,7 @@ class RowCollectorScenario(CollectorScenario):
                     "tag": "dimension",
                     "alias_name": "iterationindex",
                     "description": "迭代ID",
+                    "flat_field": True,
                     "option": {"es_type": "integer", "es_include_in_all": False}
                     if es_version.startswith("5.")
                     else {"es_type": "integer"},

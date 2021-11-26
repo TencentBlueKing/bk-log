@@ -288,7 +288,7 @@ class BizHandler(APIModel):
         inst_ids {set} 实例id列表
         """
         hosts = []
-        if obj_id in (CCInstanceType.SET.value, CCInstanceType.MODULE.value):
+        if obj_id in (CCInstanceType.SET.value, CCInstanceType.MODULE.value, CCInstanceType.BUSINESS.value):
             inst_ids_array = array_chunk(sorted(inst_ids), MAX_LIST_BIZ_HOSTS_PARAMS_COUNT)
             for inst_id in inst_ids_array:
                 hosts.extend(self._search_host(bk_obj_id=obj_id, bk_inst_id=inst_id))
@@ -834,7 +834,12 @@ class BizHandler(APIModel):
         host_list = []
         for host in hosts_info:
             tmp_host = {"bk_host_innerip": host["host"]["bk_host_innerip"], "bk_cloud_id": host["host"]["bk_cloud_id"]}
-            if bk_obj_id in (CCInstanceType.MODULE.value, TemplateType.SERIVCE_TEMPLATE.value):
+            if bk_obj_id in (CCInstanceType.BUSINESS.value):
+                tmp_host["parent_inst_id"] = [self.bk_biz_id]
+            if bk_obj_id in (
+                CCInstanceType.MODULE.value,
+                TemplateType.SERIVCE_TEMPLATE.value,
+            ):
                 tmp_host["parent_inst_id"] = [
                     module["bk_module_id"] for topo in host["topo"] for module in topo["module"]
                 ]

@@ -583,7 +583,7 @@ export default {
     // 跳转到 es 源
     jumpToEsAccess() {
       window.open(this.$router.resolve({
-        name: 'es-collection',
+        name: 'es-cluster-manage',
         query: {
           projectId: window.localStorage.getItem('project_id'),
         },

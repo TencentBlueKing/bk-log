@@ -94,6 +94,13 @@ class _TransferApi(object):
             description=_("修改数据源"),
             before_request=add_esb_info_before_request,
         )
+        self.modify_datasource_result_table = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_modify_datasource_result_table/",
+            module=self.MODULE,
+            description=_("修改数据源与结果表的关系"),
+            before_request=add_esb_info_before_request,
+        )
         self.create_result_table = DataAPI(
             method="POST",
             url=MONITOR_APIGATEWAY_ROOT + "metadata_create_result_table/",

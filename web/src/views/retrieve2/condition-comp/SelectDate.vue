@@ -246,7 +246,7 @@ export default {
     align-items: center;
 
     &.is-custom-picker {
-      height: 48px;
+      height: 52px;
       padding-left: 17px;
       border-left: 1px solid #f0f1f5;
     }
@@ -279,27 +279,44 @@ export default {
         .trigger {
           display: flex;
           align-items: center;
-          height: 42px;
+          height: 52px;
           white-space: nowrap;
           line-height: 22px;
-          border-left: 1px solid #f0f1f5;
           cursor: pointer;
 
           .icon-clock {
             padding: 0 5px 0 17px;
             font-size: 14px;
-            color: #979ba5;
+            color: #63656E;
           }
 
           .icon-angle-down {
             margin: 0 10px;
             font-size: 22px;
-            color: #979ba5;
+            color: #63656E;
             transition: transform .3s;
 
             &.active {
               transform: rotate(-180deg);
               transition: transform .3s;
+            }
+          }
+
+          &::before {
+            content: "";
+            width: 1px;
+            height: 14px;
+            background-color: #dcdee5;
+            position: absolute;
+            left: 0;
+            top: 20px;
+          }
+
+          &:hover {
+            color: #3a84ff;
+            .icon-clock,
+            .icon-angle-down {
+              color: #3a84ff;
             }
           }
         }
@@ -322,18 +339,26 @@ export default {
 
     .custom-clock {
       font-size: 14px;
-      color: #979ba5;
+      color: #63656e;
     }
 
     .icon-angle-down {
       margin: 0 10px 0 0;
       font-size: 22px;
-      color: #979ba5;
+      color: #63656E;
       transition: transform .3s;
 
       &.active {
         transform: rotate(-180deg);
         transition: transform .3s;
+      }
+    }
+
+    &.is-custom-picker:hover {
+      .custom-clock,
+      .icon-angle-down,
+      /deep/ .bk-date-picker-rel .bk-date-picker-editor {
+        color: #3a84ff;
       }
     }
   }
