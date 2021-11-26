@@ -94,7 +94,7 @@ class CollectorHandler(object):
             except CollectorConfig.DoesNotExist:
                 raise CollectorConfigNotExistException()
 
-    def _multi_info_get(self):
+    def _multi_info_get(self, use_request=True):
         # 并发查询所需的配置
         multi_execute_func = MultiExecuteFunc()
         if self.data.bk_data_id:
@@ -102,27 +102,27 @@ class CollectorHandler(object):
                 "data_id_config",
                 TransferApi.get_data_id,
                 params={"bk_data_id": self.data.bk_data_id},
-                use_request=False,
+                use_request=use_request,
             )
         if self.data.table_id:
             multi_execute_func.append(
                 "result_table_config",
                 TransferApi.get_result_table,
                 params={"table_id": self.data.table_id},
-                use_request=False,
+                use_request=use_request,
             )
             multi_execute_func.append(
                 "result_table_storage",
                 TransferApi.get_result_table_storage,
                 params={"result_table_list": self.data.table_id, "storage_type": "elasticsearch"},
-                use_request=False,
+                use_request=use_request,
             )
         if self.data.subscription_id:
             multi_execute_func.append(
                 "subscription_config",
                 BKNodeApi.get_subscription_info,
                 params={"subscription_id_list": [self.data.subscription_id]},
-                use_request=False,
+                use_request=use_request,
             )
         return multi_execute_func.run()
 
@@ -254,12 +254,12 @@ class CollectorHandler(object):
         collector_config["created_at"] = format_user_time_zone(collector_config["created_at"], time_zone=time_zone)
         return collector_config
 
-    def retrieve(self):
+    def retrieve(self, use_request=True):
         """
         获取采集配置
         :return:
         """
-        context = self._multi_info_get()
+        context = self._multi_info_get(use_request)
         collector_config = model_to_dict(self.data)
         for process in self.RETRIEVE_CHAIN:
             collector_config = getattr(self, process, lambda x, y: x)(collector_config, context)
