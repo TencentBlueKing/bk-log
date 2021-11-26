@@ -171,9 +171,10 @@ class DataAccessHandler(BaseAiopsHandler):
         )
 
     def start_bkdata_clean(self, bkdata_result_table_id):
-        return BkDataDatabusApi.delete_tasks(
+        return BkDataDatabusApi.post_tasks(
             params={
                 "result_table_id": bkdata_result_table_id,
+                "storages": ["kafka"],
                 "bk_username": self.conf.get("bk_username"),
             }
         )

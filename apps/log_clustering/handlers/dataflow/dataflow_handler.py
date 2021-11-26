@@ -56,6 +56,7 @@ from apps.log_clustering.handlers.dataflow.data_cls import (
     RequireNodeCls,
 )
 from apps.log_clustering.models import ClusteringConfig
+from apps.log_databus.models import CollectorConfig
 
 
 class DataFlowHandler(BaseAiopsHandler):
@@ -95,13 +96,15 @@ class DataFlowHandler(BaseAiopsHandler):
         clustering_config = ClusteringConfig.objects.filter(collector_config_id=collector_config_id).first()
         if not ClusteringConfig:
             raise ClusteringConfigNotExistException()
+        all_etl_fields = CollectorConfig.objects.get(clustering_config.collector_config_id).get_all_etl_fields()
+        all_fields_dict = {field["field_name"]: field["alias_name"] or field["field_name"] for field in all_etl_fields}
         filter_rule, not_clustering_rule = self._init_filter_rule(clustering_config.filter_rules)
         pre_treat_flow_dict = asdict(
             self._init_pre_treat_flow(
                 result_table_id=clustering_config.bkdata_etl_result_table_id,
                 filter_rule=filter_rule,
                 not_clustering_rule=not_clustering_rule,
-                clustering_fields=clustering_config.clustering_fields,
+                clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
             )
         )
         pre_treat_flow = self._render_template(
@@ -121,20 +124,24 @@ class DataFlowHandler(BaseAiopsHandler):
         return result
 
     @classmethod
-    def _init_filter_rule(cls, filter_rules):
+    def _init_filter_rule(cls, filter_rules, all_fields_dict):
         if not filter_rules:
             return "", ""
         filter_rule_list = ["where"]
-        not_clustering_rule_list = ["where", "NOT"]
+        not_clustering_rule_list = ["where", "NOT", "("]
         for filter_rule in filter_rules:
+            if not all_fields_dict.get(filter_rule.get("fields_name")):
+                continue
             rule = [
-                filter_rule.get("fields_name"),
+                all_fields_dict.get(filter_rule.get("fields_name")),
                 filter_rule.get("op"),
                 filter_rule.get("value"),
                 filter_rule.get("logic_operator"),
             ]
             filter_rule_list.extend(rule)
             not_clustering_rule_list.extend(rule)
+            # 不参与聚类日志需要增加括号修改优先级
+            not_clustering_rule_list.append(")")
         return " ".join(filter_rule_list), " ".join(not_clustering_rule_list)
 
     def _init_pre_treat_flow(
@@ -255,6 +262,7 @@ class DataFlowHandler(BaseAiopsHandler):
         result = BkDataDataFlowApi.create_flow(request_dict)
         clustering_config.after_treat_flow = after_treat_flow_dict
         clustering_config.after_treat_flow_id = result["flow_id"]
+        clustering_config.new_cls_pattern_rt = after_treat_flow_dict["judge_new_class"]["result_table_id"]
         clustering_config.save()
         self.add_kv_source_node(
             clustering_config.after_treat_flow_id,
@@ -407,3 +415,7 @@ class DataFlowHandler(BaseAiopsHandler):
             ),
         )
         return modify_flow_cls
+
+    @classmethod
+    def get_latest_deploy_data(cls, flow_id):
+        return BkDataDataFlowApi.get_latest_deploy_data(params={"flow_id": flow_id})
