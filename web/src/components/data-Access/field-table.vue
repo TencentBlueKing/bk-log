@@ -830,7 +830,7 @@ export default {
       if (!is_delete) {
         if (!field_name) {
           result = this.$t('form.must')
-        } else if (!/^(?!_)(?!.*?_$)^[A-Za-z0-9_]+$/ig.test(field_name)) {
+        } else if (this.extractMethod !== 'bk_log_json' && !/^(?!_)(?!.*?_$)^[A-Za-z0-9_]+$/ig.test(field_name)) {
           result = this.$t('dataManage.can_cannot')
         } else if (this.extractMethod !== 'bk_log_json' && this.globalsData.field_built_in.find(item => item.id === field_name.toLocaleLowerCase())) {
           result = this.extractMethod === 'bk_log_regexp' ? this.$t('dataManage.field_expression') : this.$t('dataManage.field_same')

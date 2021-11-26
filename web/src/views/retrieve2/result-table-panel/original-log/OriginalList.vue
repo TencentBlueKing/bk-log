@@ -23,7 +23,7 @@
 <template>
   <bk-table
     ref="resultTable"
-    :class="['king-table', { 'is-wrap': isWrap }]"
+    :class="['king-table original-table', { 'is-wrap': isWrap }]"
     :data="tableList"
     :show-header="false"
     :outer-border="false"
