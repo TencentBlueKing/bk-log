@@ -738,7 +738,7 @@ class MappingHandlers(object):
                 async_fields=", ".join(BKDATA_ASYNC_FIELDS),
                 async_container_fields=", ".join(BKDATA_ASYNC_CONTAINER_FIELDS),
             ),
-            Scenario.LOG: _("缺少必备字段: {async_fields}").format(async_fields=",".join(LOG_ASYNC_FIELDS)),
+            Scenario.LOG: _("缺少必备字段: {async_fields}").format(async_fields=", ".join(LOG_ASYNC_FIELDS)),
         }
 
         result["async_export_usable_reason"] = reason_map[scenario_id]
