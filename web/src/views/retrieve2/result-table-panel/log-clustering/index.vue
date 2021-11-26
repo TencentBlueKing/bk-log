@@ -231,12 +231,10 @@ export default {
       return this.yearOnYearCycle > 0 ? this.loadingWidthList.compared : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      const { extra: { collector_config_id: collectorConfigID } } = this.cleanConfig;
-      return this.isPermission ? (collectorConfigID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
+      return this.isPermission ? (this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
     },
     exhibitOperate() {
-      const { extra: { collector_config_id: collectorConfigID } } = this.cleanConfig;
-      return this.isPermission ? (collectorConfigID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
+      return this.isPermission ? (this.configID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
     },
   },
   watch: {
@@ -249,8 +247,9 @@ export default {
       },
     },
     originTableList: {
-      handler(val) {
-        if (this.active === 'dataFingerprint' && this.partterLevel !== '' && val.length > 0) {
+      handler() {
+        if (this.active === 'dataFingerprint' && this.partterLevel !== '') {
+          this.showTableLoading('table');
           this.requestFinger();
         }
       },
@@ -259,6 +258,7 @@ export default {
       deep: true,
       immediate: true,
       handler(newList) {
+        this.partterLevel = '';
         if (newList.length !== 0) {
           this.showTableLoading('global');
           if (!this.configData.is_active) {
@@ -279,8 +279,8 @@ export default {
   methods: {
     handleClickNav(id) {
       this.active = id;
-      const isHandleClick = this.alreadyClickNav.some(el => el === id);
-      if (!isHandleClick) {
+      const isClick = this.alreadyClickNav.some(el => el === id);
+      if (!isClick) {
         this.alreadyClickNav.push(id);
         if (this.alreadyClickNav.includes('dataFingerprint') && this.partterLevel !== '') {
           this.requestFinger();
