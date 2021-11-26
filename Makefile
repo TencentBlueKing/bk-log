@@ -5,7 +5,7 @@ build-web:
 	cd web && npm install && npm run build
 
 sync_stag:
-	sh ./scripts/git.sh sync
+	sh ./scripts/git.sh sync_stag
 
 sync_upstream:
 	sh ./scripts/git.sh sync_upstream
