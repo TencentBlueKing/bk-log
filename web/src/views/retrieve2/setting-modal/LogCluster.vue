@@ -66,8 +66,8 @@
         <div @click="handleChangeFinger">
           <bk-switcher
             class="left-word" theme="primary" size="large"
-            v-model="dataFingerprint"
-            :disabled="!globalEditable || dataFingerprint"
+            v-model="isOpenFinger"
+            :disabled="!globalEditable || isOpenFinger"
             :pre-check="() => false">
           </bk-switcher>
         </div>
@@ -124,6 +124,7 @@
               <bk-select
                 class="min-100 mr-neg1"
                 v-model="item.fields_name"
+                v-if="!isCloseSelect"
                 :clearable="false"
                 :disabled="!globalEditable"
                 :popover-min-width="150">
@@ -158,7 +159,7 @@
                 v-model="item.value"
                 :class="['mr-neg1',item.value === '' && isFilterRuleError ? 'rule-error' : '']"
                 :disabled="!globalEditable"
-                @blur="handleBlurFilter">
+                @blur="blurFilter">
               </bk-input>
             </div>
             <button v-if="isShowAddFilterIcon"
@@ -248,7 +249,7 @@ export default {
     return {
       clusterField: [], // 聚类字段
       globalLoading: false,
-      dataFingerprint: false, // 数据指纹
+      isOpenFinger: false, // 数据指纹
       isShowAddFilterIcon: true, // 是否显示过滤规则增加按钮
       isShowSubmitDialog: false, // 是否展开保存弹窗
       isHandle: false, // 保存loading
@@ -256,6 +257,7 @@ export default {
       isFilterRuleError: false, // 过滤规则未填警告
       defaultData: {},
       isFieldsError: false,
+      isCloseSelect: false,
       rules: {
         clustering_fields: [{
           required: true,
@@ -309,9 +311,8 @@ export default {
     },
   },
   mounted() {
-    const { extra } = this.configData;
-    this.dataFingerprint = extra.signature_switch;
-    if (extra.signature_switch && this.cleanConfig.extra.collector_config_id) {
+    this.isOpenFinger = this.configData.extra.signature_switch;
+    if (this.configData.extra.signature_switch && this.cleanConfig.extra.collector_config_id) {
       this.initPage();
     }
     this.initSelectList();
@@ -358,11 +359,12 @@ export default {
       });
     },
     handleChangeFinger() {
-      if (this.dataFingerprint) {
+      if (!this.globalEditable || this.isOpenFinger) return;
+      if (this.isOpenFinger) {
         this.$bkInfo({
           title: this.$t('retrieveSetting.closeFinger'),
           confirmFn: () => {
-            this.dataFingerprint = false;
+            this.isOpenFinger = false;
           },
         });
       } else {
@@ -373,7 +375,7 @@ export default {
           });
           return;
         }
-        this.dataFingerprint = true;
+        this.isOpenFinger = true;
         this.initPage(true);
       }
     },
@@ -385,13 +387,13 @@ export default {
         logic_operator: 'and',
       });
     },
-    handleBlurFilter() {
+    blurFilter() {
       if (this.formData.filter_rules.length > 0) {
         this.isFilterRuleError = this.formData.filter_rules.some(el => el.value === '');
       };
     },
     handleSubmit() {
-      this.handleBlurFilter();
+      this.blurFilter();
       this.$refs.validateForm.validate().then(() => {
         if (this.isFilterRuleError) return;
         this.isHandle = true;
@@ -404,7 +406,7 @@ export default {
           },
           data: {
             ...this.formData,
-            signature_enable: this.dataFingerprint,
+            signature_enable: this.isOpenFinger,
             collector_config_id,
             index_set_id,
             bk_biz_id,
@@ -423,6 +425,10 @@ export default {
       }, () => {});
     },
     handleDeleteSelect(index) {
+      this.isCloseSelect = true;
+      this.$nextTick(() => {
+        this.isCloseSelect = false;
+      });
       this.formData.filter_rules.splice(index, 1);
     },
     resetPage() {

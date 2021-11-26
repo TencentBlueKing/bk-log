@@ -50,7 +50,7 @@
             @click="handleNavClick(item.id,index)">
             <span class="log-icon icon-block-shape"></span>
             <span style="width: 110px">{{item.name}}</span>
-            <div @click.stop="stopChangeSwitch(index)">
+            <div @click.stop="stopChangeSwitch(index,item.isDisabled)">
               <bk-switcher
                 theme="primary"
                 v-model="item.isEditable"
@@ -82,7 +82,6 @@
               :total-fields="totalFields"
               :config-data="configData"
               :clean-config="cleanConfig"
-              :is-collector="isCollector"
               @reset-page="resetPage"
               @updateLogFields="updateLogFields"
               @successSubmit="isSubmit = true"
@@ -213,6 +212,7 @@ export default {
       return false;
     },
     handleNavClick(val, index) {
+      if (val === this.currentChoice) return;
       if (this.isSubmit) {
         this.currentChoice = val;
         this.showComponent = this.currentList[index].componentsName;
@@ -240,12 +240,13 @@ export default {
         this.isShowPage = true;
       });
     },
-    stopChangeSwitch(index) {
+    stopChangeSwitch(index, isDisable) {
+      if (isDisable) return;
       if (!this.currentList[index].isEditable) {
         if (this.currentChoice !== this.currentList[index].id) {
           // 当前tab不在操作的开关菜单 则跳转到对应菜单
-          // this.currentChoice = this.currentList[index].id;
-          // this.handleNavClick(this.currentList[index].id, index);
+          this.currentChoice = this.currentList[index].id;
+          this.showComponent = this.currentList[index].componentsName;
         }
         this.currentList[index].isEditable = true;
         return;
