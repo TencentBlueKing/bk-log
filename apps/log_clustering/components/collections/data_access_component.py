@@ -23,6 +23,7 @@ from pipeline.core.flow.activity import Service
 from pipeline.component_framework.component import Component
 from pipeline.builder import ServiceActivity, Var
 
+from apps.api import BkDataAuthApi
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.utils.pipline import BaseService
@@ -128,6 +129,26 @@ class AddProjectDataService(BaseService):
         ]
 
     def _execute(self, data, parent_data):
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
-        DataAccessHandler().sync_bkdata_etl(collector_config_id=collector_config_id)
+        bk_biz_id = data.get_one_of_inputs("bk_biz_id")
+        object_id = data.get_one_of_inputs("object_id")
+        project_id = data.get_one_of_inputs("project_id")
+        BkDataAuthApi.add_project_data(
+            params={"bk_biz_id": bk_biz_id, "object_id": object_id, "project_id": project_id}
+        )
         return True
+
+
+class AddProjectDataComponent(Component):
+    name = "AddProjectData"
+    code = "add_project_data"
+    bound_service = AddProjectDataService
+
+
+class AddProjectData(object):
+    def __init__(self, collector_config_id: int):
+        self.add_project_data = ServiceActivity(
+            component_code="add_project_data", name=f"add_project_data:{collector_config_id}"
+        )
+        self.add_project_data.component.inputs.bk_biz_id = Var(type=Var.SPLICE, value="${bk_biz_id}")
+        self.add_project_data.component.inputs.object_id = Var(type=Var.SPLICE, value="${object_id}")
+        self.add_project_data.component.inputs.project_id = Var(type=Var.SPLICE, value="${project_id}")
