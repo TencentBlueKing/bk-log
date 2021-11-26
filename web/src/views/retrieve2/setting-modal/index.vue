@@ -50,15 +50,13 @@
             @click="handleNavClick(item.id,index)">
             <span class="log-icon icon-block-shape"></span>
             <span style="width: 110px">{{item.name}}</span>
-            <div @click="handleStopProp">
-              <div @click="stopChangeSwitch(index)">
-                <bk-switcher
-                  theme="primary"
-                  :pre-check="() => false"
-                  v-model="item.isEditable"
-                  :disabled="item.isDisabled">
-                </bk-switcher>
-              </div>
+            <div @click.stop="stopChangeSwitch(index)">
+              <bk-switcher
+                theme="primary"
+                v-model="item.isEditable"
+                :pre-check="() => false"
+                :disabled="item.isDisabled">
+              </bk-switcher>
             </div>
           </div>
         </div>
@@ -70,7 +68,7 @@
               <p><span>{{$t('索引')}}：</span>{{indexSetItem.indexName}}</p>
               <p><span>{{$t('来源')}}：</span>{{indexSetItem.scenario_name}}</p>
             </div>
-            <div style="color: #3A84FF;cursor: pointer;">
+            <div style="color: #3A84FF; cursor: pointer;">
               {{$t('retrieveSetting.moreDetails')}}
               <span class="log-icon icon-lianjie"></span>
             </div>
@@ -87,6 +85,7 @@
               :is-collector="isCollector"
               @reset-page="resetPage"
               @updateLogFields="updateLogFields"
+              @successSubmit="isSubmit = true"
             ></component>
           </div>
         </div>
@@ -138,6 +137,7 @@ export default {
       isShowPage: true,
       currentChoice: '', // 当前nav选中
       showComponent: '', // 当前显示的组件
+      isSubmit: false, // 在当前设置页是否保存成功
       currentList: [
         // {
         //   id: 'index',
@@ -165,7 +165,7 @@ export default {
     globalEditable() {
       return this.currentList.find(el => el.id === this.currentChoice)?.isEditable;
     },
-    isCollector() { // 索引集来源是否为采集项
+    isCollector() { // 字段提取的索引集来源是否为采集项
       return this.cleanConfig?.extra?.collector_config_id !== null;
     },
     isExtractActive() { // 字段提取是否开启
@@ -174,29 +174,57 @@ export default {
     isClusteringActive() { // 日志聚类是否开启
       return this.configData?.is_active;
     },
-    isSignatureActive() {
-      return this.cleanConfig?.extra?.signature_switch;
+    isSignatureActive() { // 日志聚类的数据指纹是否开启
+      return this.configData?.extra?.signature_switch;
     },
   },
   watch: {
     isShowDialog(val) {
       val && this.handleMenuStatus();
     },
+    currentList: {
+      deep: true,
+      immediate: true,
+      handler(list) {
+        list[1].isEditable === true && (this.currentList[1].isDisabled = true);
+      },
+    },
   },
   methods: {
     handleMenuStatus() {
-      const { isExtractActive, isClusteringActive, isCollector } = this;
+      const { isExtractActive, isClusteringActive } = this;
       this.currentList = this.currentList.map((list) => {
         return {
           ...list,
           isEditable: list.id === 'extract' ? isExtractActive : isClusteringActive,
-          isDisabled: !isCollector || (list.id === 'clustering' && !this.isSignatureActive),
+          isDisabled: this.isCanDisabled(list.id),
+          // isDisabled: !isCollector || (list.id === 'clustering' && (isClusteringActive || isSignatureActive)),
         };
       });
     },
+    isCanDisabled(id) {
+      const { isClusteringActive, isCollector } = this;
+      if (id === 'extract' && !isCollector) {
+        return true;
+      }
+      if (id === 'clustering' && isClusteringActive) {
+        return true;
+      }
+      return false;
+    },
     handleNavClick(val, index) {
-      this.currentChoice = val;
-      this.showComponent = this.currentList[index].componentsName;
+      if (this.isSubmit) {
+        this.currentChoice = val;
+        this.showComponent = this.currentList[index].componentsName;
+        return;
+      }
+      this.$bkInfo({
+        title: this.$t('pageLeaveTips'),
+        confirmFn: () => {
+          this.currentChoice = val;
+          this.showComponent = this.currentList[index].componentsName;
+        },
+      });
     },
     // 打开设置页面
     openPage() {
@@ -212,9 +240,6 @@ export default {
         this.isShowPage = true;
       });
     },
-    handleStopProp(e) {
-      e.stopPropagation();
-    },
     stopChangeSwitch(index) {
       if (!this.currentList[index].isEditable) {
         if (this.currentChoice !== this.currentList[index].id) {
@@ -225,7 +250,7 @@ export default {
         this.currentList[index].isEditable = true;
         return;
       }
-      const msg = this.currentChoice === 'extract' ? '是否关闭字段提取？' : '是否关闭日志聚类';
+      const msg = this.currentChoice === 'extract' ? '是否关闭字段提取？' : '是否关闭日志聚类？';
       this.$bkInfo({
         title: msg,
         confirmLoading: true,
@@ -259,6 +284,7 @@ export default {
       this.showComponent = '';
     },
     updateLogFields() {
+      this.isSubmit = true;
       this.$emit('updateLogFields');
     },
   },

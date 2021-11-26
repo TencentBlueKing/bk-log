@@ -44,7 +44,7 @@
                 behavior="simplicity"
                 ext-cls="compared-select"
                 v-model="yearOnYearCycle"
-                :disabled="isOperateDisable"
+                :disabled="!isPermission"
                 :clearable="false"
                 :popover-min-width="120"
                 @change="requestFinger">
@@ -60,7 +60,7 @@
             <bk-checkbox
               :true-value="true"
               :false-value="false"
-              :disabled="isOperateDisable"
+              :disabled="!isPermission"
               @change="handleNear24H">
               <span style="font-size: 12px">{{$t('近24H新增')}}</span>
             </bk-checkbox>
@@ -73,7 +73,7 @@
                   class="partter-slider"
                   v-model="partterSize"
                   :show-tip="false"
-                  :disable="isOperateDisable"
+                  :disable="!isPermission"
                   :max-value="sliderMaxVal"
                   @change="blurPartterSize"></bk-slider>
                 <span>{{$t('多')}}</span>
@@ -81,7 +81,7 @@
             </div>
           </div>
 
-          <bk-button class="download-icon" :disabled="isOperateDisable">
+          <bk-button class="download-icon" :disabled="!isPermission">
             <span class="log-icon icon-xiazai"></span>
           </bk-button>
         </div>
@@ -125,9 +125,9 @@
         <div slot="empty">
           <div class="empty-text">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p>{{isPermission ? $t('goCleanMessage') : $t('goSettingMessage')}}</p>
+            <p>{{exhibitText}}</p>
             <span class="empty-leave" @click="handleLeaveCurrent">
-              {{isPermission ? $t('跳转到日志清洗') : $t('去设置')}}
+              {{exhibitOperate}}
             </span>
           </div>
         </div>
@@ -158,6 +158,10 @@ export default {
       type: Object,
       require: true,
     },
+    cleanConfig: {
+      type: Object,
+      require: true,
+    },
     totalFields: {
       type: Array,
       require: true,
@@ -182,6 +186,7 @@ export default {
       alreadyClickNav: [], // 已加载过的nav
       globalLoading: false, // 日志聚类大loading
       tableLoading: false, // 详情loading
+      isHaveText: false, // 是否有text字段
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -219,20 +224,25 @@ export default {
     ...mapGetters({
       globalsData: 'globals/globalsData',
     }),
-    isOperateDisable() {
-      return !this.isPermission || this.fingerList.length === 0;
-    },
     smallLoaderWidthList() {
       if (this.active !== 'dataFingerprint') {
         return this.loadingWidthList.ignore;
       }
       return this.yearOnYearCycle > 0 ? this.loadingWidthList.compared : this.loadingWidthList.notCompared;
     },
+    exhibitText() {
+      const { extra: { collector_config_id: collectorConfigID } } = this.cleanConfig;
+      return this.isPermission ? (collectorConfigID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
+    },
+    exhibitOperate() {
+      const { extra: { collector_config_id: collectorConfigID } } = this.cleanConfig;
+      return this.isPermission ? (collectorConfigID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
+    },
   },
   watch: {
     configData(val) {
       this.isPermission = val.is_active;
-      this.configID = val.extra?.collector_config_id;
+      this.configID = this.cleanConfig.extra?.collector_config_id;
     },
     originTableList: {
       handler() {
@@ -246,10 +256,7 @@ export default {
       immediate: true,
       handler(newList) {
         if (newList.length !== 0) {
-          this.globalLoading = true;
-          setTimeout(() => {
-            this.globalLoading = false;
-          }, 500);
+          this.showTableLoading('global');
           if (!this.configData.is_active) {
             this.exhibitAll = false;
             return;
@@ -275,7 +282,7 @@ export default {
           this.requestFinger();
           return;
         }
-        this.showNavTableLoading();
+        this.showTableLoading('table');
       }
     },
     handleNear24H(state) {
@@ -342,11 +349,11 @@ export default {
         });
       }
     },
-    // navtable loading动画
-    showNavTableLoading() {
-      this.tableLoading = true;
+    // table loading动画
+    showTableLoading(type = 'table') {
+      type === 'table' ? this.tableLoading : this.globalLoading = true;
       setTimeout(() => {
-        this.tableLoading = false;
+        type === 'table' ? this.tableLoading : this.globalLoading = false;
       }, 500);
     },
   },
