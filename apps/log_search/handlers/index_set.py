@@ -292,6 +292,7 @@ class IndexSetHandler(APIModel):
         time_field_type=None,
         time_field_unit=None,
         bk_app_code=None,
+        username="",
     ):
         index_set_handler = self.get_index_set_handler(self.scenario_id)
         view_roles = []
@@ -307,6 +308,7 @@ class IndexSetHandler(APIModel):
             time_field_type=time_field_type,
             time_field_unit=time_field_unit,
             bk_app_code=bk_app_code,
+            username=username,
         ).update_index_set(self.data)
 
         # add user_operation_record
