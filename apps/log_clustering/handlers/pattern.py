@@ -132,6 +132,7 @@ class PatternHandler:
         )
         new_query["start_time"] = start_time.strftime("%Y-%m-%d %H:%M:%S")
         new_query["end_time"] = end_time.strftime("%Y-%m-%d %H:%M:%S")
+        new_query["time_range"] = "customized"
         return array_hash(self._get_pattern_aggs_result(self._index_set_id, new_query), "key", "doc_count")
 
     @staticmethod
