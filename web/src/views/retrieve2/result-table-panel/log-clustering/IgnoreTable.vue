@@ -195,7 +195,7 @@ export default {
   .bk-table-body-wrapper {
     min-height: calc(100vh - 550px);
     .bk-table-empty-block {
-      min-height: calc(100vh - 600px);
+      min-height: calc(100vh - 550px);
     }
   }
   .symbol-content {
