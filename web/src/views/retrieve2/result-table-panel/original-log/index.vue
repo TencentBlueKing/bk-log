@@ -44,13 +44,13 @@
         </div>
         <TimeFormatter v-show="!showOriginalLog"></TimeFormatter>
         <div class="operation-icons">
-          <div
-            :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
-            @click="exportLog"
-            data-test-id="fieldForm_div_exportData"
-            v-bk-tooltips="queueStatus ? $t('btn.export') : undefined">
-            <span class="icon log-icon icon-xiazai"></span>
-          </div>
+          <export-log
+            :retrieve-params="retrieveParams"
+            :total-count="totalCount"
+            :queue-status="queueStatus"
+            :async-export-usable="asyncExportUsable"
+            :async-export-usable-reason="asyncExportUsableReason">
+          </export-log>
           <bk-popover
             v-if="!showOriginalLog"
             ref="fieldsSettingPopper"
@@ -87,32 +87,6 @@
       :show-original="showOriginalLog"
       :retrieve-params="retrieveParams">
     </table-log>
-
-    <!-- 导出弹窗提示 -->
-    <bk-dialog
-      v-model="showAsyncExport"
-      theme="primary"
-      ext-cls="async-export-dialog"
-      :mask-close="false"
-      :show-footer="false">
-      <div class="export-container" v-bkloading="{ isLoading: exportLoading }">
-        <span class="bk-icon bk-dialog-warning icon-exclamation"></span>
-        <div class="header">
-          {{ totalCount > 2000000 ? $t('retrieve.dataMoreThanMillion') : $t('retrieve.dataMoreThan') }}
-        </div>
-        <div class="export-type immediate-export">
-          <span class="bk-icon icon-info-circle"></span>
-          <span class="export-text">{{ $t('retrieve.immediateExportDesc') }}</span>
-          <bk-button theme="primary" @click="openDownloadUrl">{{ $t('retrieve.immediateExport') }}</bk-button>
-        </div>
-        <div class="export-type async-export">
-          <span class="bk-icon icon-info-circle"></span>
-          <span v-if="totalCount > 2000000" class="export-text">{{ $t('retrieve.asyncExportMoreDesc') }}</span>
-          <span v-else class="export-text">{{ $t('retrieve.asyncExportDesc') }}</span>
-          <bk-button @click="downloadAsync">{{ $t('retrieve.asyncExport') }}</bk-button>
-        </div>
-      </div>
-    </bk-dialog>
   </div>
 </template>
 
@@ -120,12 +94,14 @@
 import TimeFormatter from '@/components/common/time-formatter';
 import TableLog from './TableLog.vue';
 import FieldsSetting from '../../result-comp/FieldsSetting';
+import ExportLog from '../../result-comp/ExportLog.vue';
 
 export default {
   components: {
     TimeFormatter,
     TableLog,
     FieldsSetting,
+    ExportLog,
   },
   props: {
     retrieveParams: {
@@ -162,43 +138,6 @@ export default {
     },
   },
   methods: {
-    exportLog() {
-      if (!this.queueStatus) return;
-
-      // 导出数据为空
-      if (!this.totalCount) {
-        const infoDialog = this.$bkInfo({
-          type: 'error',
-          title: this.$t('retrieve.exportFailed'),
-          subTitle: this.$t('retrieve.dataNone'),
-          showFooter: false,
-        });
-        setTimeout(() => infoDialog.close(), 3000);
-      } else if (this.totalCount > 10000) {
-        // 导出数量大于1w且小于100w 可直接下载1w 或 异步全量下载全部
-        // 通过 field 判断是否支持异步下载
-        if (this.asyncExportUsable) {
-          this.showAsyncExport = true;
-        } else {
-          const h = this.$createElement;
-          this.$bkInfo({
-            type: 'warning',
-            title: this.$t('retrieve.dataMoreThan'),
-            subHeader: h('p', {
-              style: {
-                whiteSpace: 'normal',
-                padding: '0 20px',
-                wordBreak: 'break-all',
-              },
-            }, `${this.$t('retrieve.reasonFor')}${this.asyncExportUsableReason}${this.$t('retrieve.reasonDesc')}`),
-            okText: this.$t('retrieve.immediateExport'),
-            confirmFn: () => this.openDownloadUrl(),
-          });
-        }
-      } else {
-        this.openDownloadUrl();
-      }
-    },
     // 字段设置
     handleDropdownShow() {
       this.showFieldsSetting = true;
@@ -213,39 +152,6 @@ export default {
     closeDropdown() {
       this.showFieldsSetting = false;
       this.$refs.fieldsSettingPopper.instance.hide();
-    },
-    openDownloadUrl() {
-      const exportParams = encodeURIComponent(JSON.stringify({
-        ...this.retrieveParams,
-        size: this.totalCount,
-      }));
-      // eslint-disable-next-line max-len
-      const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
-      window.open(targetUrl);
-    },
-    downloadAsync() {
-      const data = { ...this.retrieveParams };
-      data.size = this.totalCount;
-      data.time_range = 'customized';
-
-      this.exportLoading = true;
-      this.$http.request('retrieve/exportAsync', {
-        params: {
-          index_set_id: this.$route.params.indexId,
-        },
-        data,
-      }).then((res) => {
-        if (res.result) {
-          this.$bkMessage({
-            theme: 'success',
-            message: res.data.prompt,
-          });
-        }
-      })
-        .finally(() => {
-          this.showAsyncExport = false;
-          this.exportLoading = false;
-        });
     },
   },
 };
@@ -307,54 +213,6 @@ export default {
         border-color: #dcdee5;
         color: #c4c6cc;
       }
-    }
-  }
-}
-.async-export-dialog {
-  .header {
-    padding: 18px 0px 32px !important;
-  }
-  .export-container {
-    text-align: center;
-  }
-  .bk-dialog-warning {
-    display: block;
-    margin: 0 auto;
-    width: 58px;
-    height: 58px;
-    line-height: 58px;
-    font-size: 30px;
-    color: #fff;
-    border-radius: 50%;
-    background-color: #ffb848;
-  }
-  .header {
-    padding: 18px 24px 32px;
-    display: inline-block;
-    width: 100%;
-    font-size: 24px;
-    color: #313238;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 1.5;
-    margin: 0;
-  }
-  .export-type {
-    margin-bottom: 24px;
-    padding: 0 22px;
-    display: flex;
-    align-items: center;
-    .export-text {
-      margin-left: 8px;
-      max-width: 184px;
-      text-align: left;
-      font-size: 14px;
-      color: #313238;
-      line-height: 18px;
-    }
-    .bk-button {
-      margin-left: auto;
     }
   }
 }
