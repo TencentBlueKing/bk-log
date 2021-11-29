@@ -84,7 +84,6 @@
               :clean-config="cleanConfig"
               @reset-page="resetPage"
               @updateLogFields="updateLogFields"
-              @successSubmit="isSubmit = true"
             ></component>
           </div>
         </div>
@@ -214,6 +213,7 @@ export default {
       this.$bkInfo({
         title: this.$t('pageLeaveTips'),
         confirmFn: () => {
+          this.jumpCloseSwitch();
           this.currentChoice = val;
           this.showComponent = this.currentList[index].componentsName;
         },
@@ -238,19 +238,20 @@ export default {
       if (!this.currentList[index].isEditable) {
         if (this.currentChoice !== this.currentList[index].id) {
           // 当前tab不在操作的开关菜单 则跳转到对应菜单
+          this.jumpCloseSwitch();
           this.currentChoice = this.currentList[index].id;
           this.showComponent = this.currentList[index].componentsName;
         }
         this.currentList[index].isEditable = true;
         return;
       }
-      const msg = this.currentChoice === 'extract' ? '是否关闭字段提取？' : '是否关闭日志聚类？';
-      if (this.currentChoice === 'extract') {
+      const msg = index === 0 ? '是否关闭字段提取？' : '是否关闭日志聚类？';
+      if (index === 0) {
         this.$bkInfo({
           title: msg,
           confirmLoading: true,
           confirmFn: async () => {
-            const isFinish = this.currentChoice === 'extract' ? await this.requestCloseClean() : await this.requestCloseCluster();
+            const isFinish = index === 0 ? await this.requestCloseClean() : await this.requestCloseCluster();
             isFinish && (this.currentList[index].isEditable = false);
           },
         });
@@ -280,6 +281,14 @@ export default {
       this.isOpenPage = true;
       this.currentChoice = '';
       this.showComponent = '';
+    },
+    jumpCloseSwitch() {
+      if (!this.isClusteringActive && this.currentChoice === 'clustering') {
+        this.currentList[1].isEditable = false;
+      }
+      if (!this.isSubmit && this.currentChoice === 'extract' && this.currentList[0].isDisabled !== true) {
+        this.currentList[0].isEditable = false;
+      }
     },
     updateLogFields() {
       this.isSubmit = true;

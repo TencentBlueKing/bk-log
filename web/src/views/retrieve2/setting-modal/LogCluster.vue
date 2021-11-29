@@ -35,7 +35,8 @@
           <bk-select
             v-model="formData.clustering_fields"
             class="ml200" style="width: 482px;"
-            :disabled="!globalEditable">
+            :disabled="!globalEditable"
+            :clearable="false">
             <bk-option v-for="option in clusterField"
                        :key="option.id"
                        :id="option.id"
@@ -418,7 +419,7 @@ export default {
           },
         })
           .then(() => {
-            this.$emit('successSubmit');
+            this.$emit('updateLogFields');
             this.isShowSubmitDialog = true;
           })
           .finally(() => {

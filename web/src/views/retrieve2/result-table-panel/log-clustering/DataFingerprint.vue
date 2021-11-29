@@ -52,7 +52,8 @@
         <bk-table-column
           width="101" align="center" header-align="center" prop="source"
           :label="$t('同比数量')"
-          :sortable="true">
+          :sortable="true"
+          :sort-by="'year_on_year_count'">
           <template slot-scope="props">
             <span class="link-color">{{props.row.year_on_year_count}}</span>
           </template>
@@ -61,7 +62,8 @@
         <bk-table-column
           width="101" align="center" header-align="center" prop="source"
           :label="$t('同比变化')"
-          :sortable="true">
+          :sortable="true"
+          :sort-by="'year_on_year_percentage'">
           <template slot-scope="props">
             <div class="flac compared-change">
               <span class="link-color">{{`${props.row.year_on_year_percentage.toFixed(0)}%`}}</span>
@@ -75,7 +77,7 @@
         <template slot-scope="props">
           <pattern-column
             :context="props.row.pattern"
-            :index="props.row.$index"
+            :pattern-index="props.row.$index"
             @eventClick="(option) => handleMenuClick(option,props.row)">
           </pattern-column>
         </template>
@@ -199,6 +201,7 @@ export default {
 
 .compared-change {
   height: 24px;
+  width: 100%;
   margin-left: 12px;
 }
 
