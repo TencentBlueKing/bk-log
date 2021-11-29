@@ -81,9 +81,14 @@
             </div>
           </div>
 
-          <bk-button class="download-icon" :disabled="!isPermission">
-            <span class="log-icon icon-xiazai"></span>
-          </bk-button>
+          <export-log
+            :retrieve-params="retrieveParams"
+            :total-count="totalCount"
+            :queue-status="queueStatus"
+            :async-export-usable="asyncExportUsable"
+            :async-export-usable-reason="asyncExportUsableReason">
+          </export-log>
+
         </div>
       </div>
 
@@ -147,9 +152,10 @@ import DataFingerprint from './DataFingerprint';
 import IgnoreTable from './IgnoreTable';
 import ClusteringLoader from '@/skeleton/clustering-loader';
 import { mapGetters } from 'vuex';
+import ExportLog from '../../result-comp/ExportLog.vue';
 
 export default {
-  components: { DataFingerprint, IgnoreTable, ClusteringLoader },
+  components: { DataFingerprint, IgnoreTable, ClusteringLoader, ExportLog },
   props: {
     retrieveParams: {
       type: Object,
@@ -170,6 +176,22 @@ export default {
     originTableList: {
       type: Array,
       required: true,
+    },
+    totalCount: {
+      type: Number,
+      default: 0,
+    },
+    queueStatus: {
+      type: Boolean,
+      default: true,
+    },
+    asyncExportUsable: {
+      type: Boolean,
+      default: true,
+    },
+    asyncExportUsableReason: {
+      type: String,
+      default: '',
     },
   },
   data() {
