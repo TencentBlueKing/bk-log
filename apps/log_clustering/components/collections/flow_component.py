@@ -51,3 +51,7 @@ class CreatePreTreatFlowService(BaseService):
         if deploy_data["status"] == "success":
             self.finish_schedule()
         return True
+
+
+class CreateAfterTreatFlowService(BaseService):
+    pass
