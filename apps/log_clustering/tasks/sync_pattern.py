@@ -38,7 +38,7 @@ def sync_pattern():
 
 
 def sync(model_id):
-    release_id = AiopsModelHandler.get_latest_released_id(model_id=model_id)
+    release_id = AiopsModelHandler().get_latest_released_id(model_id=model_id)
     if not release_id:
         return None
     patterns = get_pattern(model_id=model_id, release_id=release_id)

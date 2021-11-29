@@ -1,5 +1,6 @@
 from abc import ABC
 
+import settings
 from apps.api import BkDataQueryApi
 
 
@@ -91,4 +92,9 @@ class BkData(Sql):
         return f"""SELECT {fields} FROM {self._rt} WHERE {" AND ".join([where.to_sql() for where in self._where])} {order_by} LIMIT {self._limit}"""  # noqa
 
     def query(self) -> list:
-        return BkDataQueryApi.query({"sql": self.to_sql()})["list"]
+        params = {
+            "bkdata_authentication_method": "token",
+            "bkdata_data_token": settings.BKDATA_DATA_TOKEN,
+            "sql": self.to_sql(),
+        }
+        return BkDataQueryApi.query(params)["list"]
