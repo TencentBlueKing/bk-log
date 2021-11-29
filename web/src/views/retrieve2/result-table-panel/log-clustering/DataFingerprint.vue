@@ -64,17 +64,18 @@
           :sortable="true">
           <template slot-scope="props">
             <div class="flac compared-change">
-              <span class="link-color">{{`${props.row.year_on_year_percentage}%`}}</span>
+              <span class="link-color">{{`${props.row.year_on_year_percentage.toFixed(0)}%`}}</span>
               <span :class="['bk-icon',showArrowsClass(props.row)]"></span>
             </div>
           </template>
         </bk-table-column>
       </template>
 
-      <bk-table-column label="Pattern" min-width="400">
+      <bk-table-column label="Pattern" min-width="400" class-name="symbol-column">
         <template slot-scope="props">
           <pattern-column
             :context="props.row.pattern"
+            :index="props.row.$index"
             @eventClick="(option) => handleMenuClick(option,props.row)">
           </pattern-column>
         </template>
@@ -101,7 +102,7 @@
 
     <bk-table-column :label="$t('备注')" width="100" prop="remark"></bk-table-column> -->
 
-      <div slot="empty" v-if="isPermission && !configData.extra.signature_switch">
+      <div slot="empty" v-if="clusterSwitch && !configData.extra.signature_switch">
         <div class="empty-text">
           <span class="bk-table-empty-icon bk-icon icon-empty"></span>
           <p>{{$t('goFingerMessage')}}</p>
@@ -135,7 +136,7 @@ export default {
       type: Number,
       require: true,
     },
-    isPermission: {
+    clusterSwitch: {
       type: Boolean,
       require: true,
     },
@@ -213,13 +214,16 @@ export default {
     }
   }
   .signature{
-    // display: inline-block;
     width: 95px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     line-height: 20px;
     max-height: 16px;
+  }
+
+  td.symbol-column {
+    padding: 10px 0px;
   }
 
   .empty-text {

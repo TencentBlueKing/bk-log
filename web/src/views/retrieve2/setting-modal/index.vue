@@ -181,13 +181,6 @@ export default {
     isShowDialog(val) {
       val && this.handleMenuStatus();
     },
-    currentList: {
-      deep: true,
-      immediate: true,
-      handler(list) {
-        list[1].isEditable === true && (this.currentList[1].isDisabled = true);
-      },
-    },
   },
   methods: {
     handleMenuStatus() {
@@ -252,14 +245,18 @@ export default {
         return;
       }
       const msg = this.currentChoice === 'extract' ? '是否关闭字段提取？' : '是否关闭日志聚类？';
-      this.$bkInfo({
-        title: msg,
-        confirmLoading: true,
-        confirmFn: async () => {
-          const isFinish = this.currentChoice === 'extract' ? await this.requestCloseClean() : await this.requestCloseCluster();
-          isFinish && (this.currentList[index].isEditable = false);
-        },
-      });
+      if (this.currentChoice === 'extract') {
+        this.$bkInfo({
+          title: msg,
+          confirmLoading: true,
+          confirmFn: async () => {
+            const isFinish = this.currentChoice === 'extract' ? await this.requestCloseClean() : await this.requestCloseCluster();
+            isFinish && (this.currentList[index].isEditable = false);
+          },
+        });
+      } else {
+        this.currentList[index].isEditable = false;
+      }
     },
     async requestCloseClean() {
       const { extra: { collector_config_id } } = this.cleanConfig;

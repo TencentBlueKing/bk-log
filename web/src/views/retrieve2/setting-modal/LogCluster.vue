@@ -67,7 +67,7 @@
           <bk-switcher
             class="left-word" theme="primary" size="large"
             v-model="isOpenFinger"
-            :disabled="!globalEditable || isOpenFinger"
+            :disabled="!globalEditable || configData.extra.signature_switch"
             :pre-check="() => false">
           </bk-switcher>
         </div>
@@ -122,12 +122,13 @@
               </bk-select>
 
               <bk-select
-                class="min-100 mr-neg1"
                 v-model="item.fields_name"
                 v-if="!isCloseSelect"
                 :clearable="false"
                 :disabled="!globalEditable"
-                :popover-min-width="150">
+                :popover-min-width="150"
+                :class="['min-100 mr-neg1',item.fields_name === '' && isFieldsError ? 'rule-error' : '']"
+                @blur="blurFilter">
                 <bk-option v-for="option in filterSelectList"
                            :key="option.id"
                            :id="option.id"
@@ -255,9 +256,9 @@ export default {
       isHandle: false, // 保存loading
       filterSelectList: [], // 过滤条件选项
       isFilterRuleError: false, // 过滤规则未填警告
+      isFieldsError: false, // 未选过滤条件字段警告
+      isCloseSelect: false, // 过滤规则下拉框隐藏
       defaultData: {},
-      isFieldsError: false,
-      isCloseSelect: false,
       rules: {
         clustering_fields: [{
           required: true,
@@ -269,13 +270,13 @@ export default {
         }],
       },
       formData: {
-        min_members: '', // 最小日志数量
+        min_members: 0, // 最小日志数量
         max_dist_list: '', // 敏感度
         predefined_varibles: '', //	预先定义的正则表达式
         delimeter: '', // 分词符
         max_log_length: 1, // 最大日志长度
         is_case_sensitive: 1, // 是否大小写忽略
-        clustering_fields: '', // 聚合字段
+        clustering_fields: '', // 聚类字段
         filter_rules: [], // 过滤规则
         signature_enable: false,
       },
@@ -311,14 +312,16 @@ export default {
     },
   },
   mounted() {
-    this.isOpenFinger = this.configData.extra.signature_switch;
-    if (this.configData.extra.signature_switch && this.cleanConfig.extra.collector_config_id) {
-      this.initPage();
+    const { extra, is_active: isActive } = this.configData;
+    this.isOpenFinger = extra.signature_switch;
+    this.formData.clustering_fields = extra.clustering_fields;
+    if (isActive && this.cleanConfig.extra.collector_config_id) {
+      this.requestCluster();
     }
     this.initSelectList();
   },
   methods: {
-    async initPage(isDefault = false) {
+    async requestCluster(isDefault = false) {
       const { extra } = this.cleanConfig;
       this.globalLoading = true;
       let res;
@@ -359,14 +362,15 @@ export default {
       });
     },
     handleChangeFinger() {
-      if (!this.globalEditable || this.isOpenFinger) return;
+      if (!this.globalEditable) return;
       if (this.isOpenFinger) {
-        this.$bkInfo({
-          title: this.$t('retrieveSetting.closeFinger'),
-          confirmFn: () => {
-            this.isOpenFinger = false;
-          },
-        });
+        this.isOpenFinger = false;
+        // this.$bkInfo({
+        //   title: this.$t('retrieveSetting.closeFinger'),
+        //   confirmFn: () => {
+        //     this.isOpenFinger = false;
+        //   },
+        // });
       } else {
         if (!this.cleanConfig.extra.collector_config_id) {
           this.$bkInfo({
@@ -376,7 +380,7 @@ export default {
           return;
         }
         this.isOpenFinger = true;
-        this.initPage(true);
+        this.requestCluster(true);
       }
     },
     addFilterRule() {
@@ -390,12 +394,13 @@ export default {
     blurFilter() {
       if (this.formData.filter_rules.length > 0) {
         this.isFilterRuleError = this.formData.filter_rules.some(el => el.value === '');
+        this.isFieldsError = this.formData.filter_rules.some(el => el.fields_name === '');
       };
     },
     handleSubmit() {
       this.blurFilter();
       this.$refs.validateForm.validate().then(() => {
-        if (this.isFilterRuleError) return;
+        if (this.isFilterRuleError || this.isFieldsError) return;
         this.isHandle = true;
         const { index_set_id, bk_biz_id } = this.indexSetItem;
         const { extra: { collector_config_id } } = this.cleanConfig;
@@ -415,9 +420,6 @@ export default {
           .then(() => {
             this.$emit('successSubmit');
             this.isShowSubmitDialog = true;
-          })
-          .catch((e) => {
-            console.warn(e);
           })
           .finally(() => {
             this.isHandle = false;
@@ -532,6 +534,9 @@ export default {
   .rule-error{
     /deep/.bk-form-input{
       border-color: #ff5656;
+    }
+    &.bk-select{
+      border-color: #ff5656 !important;
     }
   }
 

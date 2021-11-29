@@ -41,8 +41,8 @@
         </bk-button>
         <bk-button
           size="small"
-          :class="globalEditable ? 'btn-hover' : ''"
-          :disabled="!globalEditable"
+          :class="(logOriginal !== '' && rulesList.length !== 0) ? 'btn-hover' : ''"
+          :disabled="!globalEditable || logOriginal === '' || rulesList.length === 0"
           @click="debugging">
           {{$t('调试')}}
         </bk-button>
