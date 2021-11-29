@@ -105,6 +105,7 @@
             v-on="$listeners"
             :total-fields="totalFields"
             :origin-table-list="originTableList"
+            :clustering-field="clusteringField"
             :active="active" />
           <data-fingerprint
             v-if="active === 'dataFingerprint'"
@@ -235,6 +236,9 @@ export default {
     },
     exhibitOperate() {
       return this.isPermission ? (this.configID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
+    },
+    clusteringField() {
+      return this.configData?.extra?.clustering_field || '';
     },
   },
   watch: {

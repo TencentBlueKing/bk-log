@@ -81,7 +81,7 @@ export default {
     },
     clusteringField: {
       type: String,
-      default: 'log',
+      default: '',
     },
     originTableList: {
       type: Array,
