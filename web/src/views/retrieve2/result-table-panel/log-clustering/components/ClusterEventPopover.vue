@@ -32,14 +32,14 @@
     <div slot="content" class="event-icons">
       <span
         class="icon bk-icon icon-eye"
-        v-bk-tooltips.top="{ content: $t(''), delay: 300 }"
+        v-bk-tooltips.top="{ content: $t('patternInteract'), delay: 300 }"
         @click="handleClick('show original')">
       </span>
-      <span
+      <!-- <span
         class="icon log-icon icon-chart"
         v-bk-tooltips.top="{ content: $t(''), delay: 300 }"
         @click="handleClick('a')">
-      </span>
+      </span> -->
       <!-- <span class="icon log-icon icon-chart"></span> -->
       <span
         class="icon log-icon icon-copy"

@@ -44,7 +44,7 @@
                 behavior="simplicity"
                 ext-cls="compared-select"
                 v-model="yearOnYearCycle"
-                :disabled="!isPermission"
+                :disabled="!signatureSwitch"
                 :clearable="false"
                 :popover-min-width="120"
                 @change="requestFinger">
@@ -60,7 +60,7 @@
             <bk-checkbox
               :true-value="true"
               :false-value="false"
-              :disabled="!isPermission"
+              :disabled="!signatureSwitch"
               @change="handleNear24H">
               <span style="font-size: 12px">{{$t('近24H新增')}}</span>
             </bk-checkbox>
@@ -73,7 +73,7 @@
                   class="partter-slider"
                   v-model="partterSize"
                   :show-tip="false"
-                  :disable="!isPermission"
+                  :disable="!signatureSwitch"
                   :max-value="sliderMaxVal"
                   @change="blurPartterSize"></bk-slider>
                 <span>{{$t('多')}}</span>
@@ -81,14 +81,14 @@
             </div>
           </div>
 
-          <bk-button class="download-icon" :disabled="!isPermission">
+          <bk-button class="download-icon" :disabled="!signatureSwitch">
             <span class="log-icon icon-xiazai"></span>
           </bk-button>
         </div>
       </div>
 
       <bk-alert
-        v-if="active === 'dataFingerprint' && fingerList.length === 0 && isPermission && exhibitAll"
+        v-if="active === 'dataFingerprint' && signatureSwitch && !exhibitAll"
         :title="$t('clusterAlert')" closable type="info">
       </bk-alert>
 
@@ -112,7 +112,7 @@
             v-bind="$attrs"
             v-on="$listeners"
             :year-on-year-cycle="yearOnYearCycle"
-            :is-permission="isPermission"
+            :cluster-switch="clusterSwitch"
             :partter-level="partterLevel"
             :config-data="configData"
             :finger-list="fingerList" />
@@ -178,12 +178,13 @@ export default {
       partterSize: 0, // slider当前值
       partterLevel: '', // partter等级
       sliderMaxVal: 0, // partter最大值
-      isPermission: false, // 是否打开日志聚类大开关
+      clusterSwitch: false, // 日志聚类开关
+      signatureSwitch: false, // 数据指纹开关
       partterList: [], // partter敏感度List
       isNear24H: false, // 近24h
       yearOnYearCycle: 0, // 同比值
       configID: -1, // 采集项ID
-      exhibitAll: false, // 是否不显示nav
+      exhibitAll: false, // 是否显示nav
       alreadyClickNav: [], // 已加载过的nav
       globalLoading: false, // 日志聚类大loading
       tableLoading: false, // 详情loading
@@ -232,10 +233,10 @@ export default {
       return this.yearOnYearCycle > 0 ? this.loadingWidthList.compared : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      return this.isPermission ? (this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
+      return this.clusterSwitch ? (this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
     },
     exhibitOperate() {
-      return this.isPermission ? (this.configID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
+      return this.clusterSwitch ? (this.configID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
     },
     clusteringField() {
       return this.configData?.extra?.clustering_field || '';
@@ -246,14 +247,14 @@ export default {
       deep: true,
       immediate: true,
       handler(val) {
-        this.isPermission = val.is_active;
+        this.clusterSwitch = val.is_active;
+        this.signatureSwitch = val.extra.signature_switch;
         this.configID = this.cleanConfig.extra?.collector_config_id;
       },
     },
     originTableList: {
       handler() {
-        if (this.active === 'dataFingerprint' && this.partterLevel !== '') {
-          this.showTableLoading('table');
+        if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
           this.requestFinger();
         }
       },
@@ -262,20 +263,15 @@ export default {
       deep: true,
       immediate: true,
       handler(newList) {
-        this.partterLevel = '';
         if (newList.length !== 0) {
           this.showTableLoading('global');
           if (!this.configData.is_active) {
             this.exhibitAll = false;
             return;
           }
-          const isHaveText = newList.some(el => el.field_type === 'text');
+          this.partterLevel === '' && this.initTable();
+          this.exhibitAll = newList.some(el => el.field_type === 'text');
           this.alreadyClickNav = [];
-          this.exhibitAll  = isHaveText;
-          if (isHaveText) {
-            this.initTable();
-            this.requestFinger();
-          }
         }
       },
     },
@@ -286,7 +282,7 @@ export default {
       const isClick = this.alreadyClickNav.some(el => el === id);
       if (!isClick) {
         this.alreadyClickNav.push(id);
-        if (this.alreadyClickNav.includes('dataFingerprint') && this.partterLevel !== '') {
+        if (this.alreadyClickNav.includes('dataFingerprint') && this.configData.extra.signature_switch) {
           this.requestFinger();
           return;
         }
@@ -316,9 +312,6 @@ export default {
         .then((res) => {
           this.fingerList = res.data;
         })
-        .catch((e) => {
-          console.warn(e);
-        })
         .finally(() => {
           this.tableLoading = false;
         });
@@ -329,14 +322,11 @@ export default {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
       } = this.globalsData;
-      const { extra, is_active: isActive } = this.configData;
       this.comparedList = yearOnYearList;
       this.partterSize = clusterLevel.length - 1;
       this.sliderMaxVal = clusterLevel.length - 1;
       this.partterLevel = clusterLevel[clusterLevel.length - 1];
       this.partterList = clusterLevel;
-      this.isPermission = isActive;
-      this.configID = extra.collector_config_id;
     },
     // 敏感度
     blurPartterSize(val) {
@@ -345,7 +335,7 @@ export default {
     },
     // 跳转
     handleLeaveCurrent() {
-      if (!this.isPermission) {
+      if (!this.clusterSwitch) {
         this.$emit('showSettingLog');
         return;
       }

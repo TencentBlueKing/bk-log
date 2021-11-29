@@ -21,15 +21,27 @@
   -->
 
 <template>
-  <div>
+  <div :class="['symbol-content', { 'is-limit': !cacheExpandStr.includes(patternIndex) }]">
     <cluster-event-popover
       v-if="isMountPatter"
       @eventClick="handleClickIcon">
-      {{context}}
+      <span>{{context}}</span>
     </cluster-event-popover>
     <span v-else>
       {{context}}
     </span>
+    <p
+      v-if="!cacheExpandStr.includes(patternIndex)"
+      class="show-whole-btn"
+      @click.stop="handleShowWhole(patternIndex)">
+      {{ $t('展开全部') }}
+    </p>
+    <p
+      v-else
+      class="hide-whole-btn"
+      @click.stop="handleHideWhole(patternIndex)">
+      {{ $t('收起') }}
+    </p>
   </div>
 </template>
 <script>
@@ -41,10 +53,15 @@ export default {
       type: String,
       require: true,
     },
+    patternIndex: {
+      type: String,
+      require: true,
+    },
   },
   data() {
     return {
       isMountPatter: true,
+      cacheExpandStr: [],
     };
   },
   deactivated() {
@@ -60,6 +77,12 @@ export default {
     setTimeout(this.registerObserver, 20);
   },
   methods: {
+    handleShowWhole(index) {
+      this.cacheExpandStr.push(index);
+    },
+    handleHideWhole(index) {
+      this.cacheExpandStr = this.cacheExpandStr.map(item => item !== index);
+    },
     handleClickIcon(id) {
       this.$emit('eventClick', id);
     },
@@ -93,4 +116,36 @@ export default {
 </script>
 
 <style lang="scss">
+  .symbol-content {
+    display: inline-block;
+    padding-right: 15px;
+    position: relative;
+    line-height: 20px;
+    overflow: hidden;
+    &.is-limit {
+      max-height: 96px;
+    }
+  }
+  // .hover-row {
+  //   .show-whole-btn{
+  //     background-color: #f0f1f5;
+  //   }
+  // }
+  .show-whole-btn {
+    position: absolute;
+    top: 80px;
+    width: 100%;
+    height: 24px;
+    color: #3A84FF;
+    font-size: 12px;
+    background: #fff;
+    cursor: pointer;
+    transition: background-color .25s ease;
+  }
+  .hide-whole-btn {
+    line-height: 14px;
+    margin-top: 2px;
+    color: #3A84FF;
+    cursor: pointer;
+  }
 </style>
