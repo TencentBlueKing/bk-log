@@ -111,11 +111,11 @@ class PatternHandler:
         multi_execute_func = MultiExecuteFunc()
         multi_execute_func.append(
             "pattern_aggs",
-            lambda p: self._parse_pattern_aggs_result(p["index_set_id"], p["query"]),
+            lambda p: self._get_pattern_aggs_result(p["index_set_id"], p["query"]),
             {"index_set_id": self._index_set_id, "query": self._query},
         )
-        multi_execute_func.append("year_on_year_result", lambda p: self._parse_pattern_aggs_result())
-        multi_execute_func.append("new_class", lambda p: self._get_new_class())
+        multi_execute_func.append("year_on_year_result", lambda: self._get_year_on_year_aggs_result())
+        multi_execute_func.append("new_class", lambda: self._get_new_class())
         return multi_execute_func.run()
 
     def _get_pattern_aggs_result(self, index_set_id, query):
