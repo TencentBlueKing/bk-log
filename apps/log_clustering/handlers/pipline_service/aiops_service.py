@@ -135,6 +135,8 @@ class AiopsService(BasePipeLineService):
 def create_aiops_service(collector_config_id):
     conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
     clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
+    if clustering_config.pre_treat_flow_id:
+        return
     params = {
         "bk_biz_id": conf["bk_biz_id"],
         "sample_set_name": f"{clustering_config.bk_biz_id}_bklog_sample_set_"
