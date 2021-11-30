@@ -146,7 +146,7 @@ def create_aiops_service(collector_config_id):
         "experiment_alias": f"{clustering_config.bk_biz_id}_bklog_"
         f"{clustering_config.collector_config_name_en}_experiment",
         "collector_config_id": collector_config_id,
-        "topic_name": f"{conf['bk_biz_id']}_bklog_{settings.ENVIRONMENT}_"
+        "topic_name": f"queue_{conf['bk_biz_id']}_bklog_{settings.ENVIRONMENT}_"
         f"{clustering_config.collector_config_name_en}",
         "project_id": conf["project_id"],
         "is_case_sensitive": clustering_config.is_case_sensitive,
