@@ -87,6 +87,7 @@ class EtlHandler(object):
         view_roles=None,
         etl_params=None,
         fields=None,
+        username="",
     ):
         # 停止状态下不能编辑
         if self.data and not self.data.is_active:
@@ -127,11 +128,11 @@ class EtlHandler(object):
             view_roles = []
 
         # 2. 创建索引集
-        index_set = self._update_or_create_index_set(etl_config, storage_cluster_id, view_roles)
+        index_set = self._update_or_create_index_set(etl_config, storage_cluster_id, view_roles, username=username)
 
         # add user_operation_record
         operation_record = {
-            "username": get_request_username(),
+            "username": username or get_request_username(),
             "biz_id": self.data.bk_biz_id,
             "record_type": UserOperationTypeEnum.ETL,
             "record_object_id": self.data.collector_config_id,
@@ -183,7 +184,7 @@ class EtlHandler(object):
         return {"epoch_millis": f"{epoch_second}000"}
 
     @transaction.atomic()
-    def _update_or_create_index_set(self, etl_config, storage_cluster_id, view_roles=None):
+    def _update_or_create_index_set(self, etl_config, storage_cluster_id, view_roles=None, username=""):
         """
         创建索引集
         """
@@ -203,7 +204,11 @@ class EtlHandler(object):
             if not view_roles:
                 view_roles = index_set_handler.data.view_roles
             index_set = index_set_handler.update(
-                index_set_name=index_set_name, view_roles=view_roles, category_id=self.data.category_id, indexes=indexes
+                index_set_name=index_set_name,
+                view_roles=view_roles,
+                category_id=self.data.category_id,
+                indexes=indexes,
+                username=username,
             )
         else:
             project_id = ProjectInfo.objects.filter(bk_biz_id=self.data.bk_biz_id).first().project_id
@@ -218,6 +223,7 @@ class EtlHandler(object):
                 indexes=indexes,
                 category_id=self.data.category_id,
                 collector_config_id=self.collector_config_id,
+                username=username,
             )
             self.data.index_set_id = index_set.index_set_id
         self.data.etl_config = etl_config
