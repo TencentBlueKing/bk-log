@@ -874,6 +874,7 @@ RT_RESERVED_WORD_EXAC = [
     "path",
     "gseIndex",
     "iterationIndex",
+    "ext",
     "log",
     "dtEventTimeStamp",
     "datetime",

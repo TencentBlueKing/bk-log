@@ -189,11 +189,10 @@ if RUN_VER != "open":
         }
         LOGGING["formatters"]["verbose"] = logging_format
 
-BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
+# 使用k8s部署模式
+IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
 
-if BKLOG_UDP_LOG:
-    LOG_UDP_SERVER_HOST = os.getenv("BKAPP_UDP_LOG_SERVER_HOST", "")
-    LOG_UDP_SERVER_PORT = int(os.getenv("BKAPP_UDP_LOG_SERVER_PORT", 0))
+if IS_K8S_DEPLOY_MODE:
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     LOGGING = {
         "version": 1,
@@ -208,12 +207,6 @@ if BKLOG_UDP_LOG:
             }
         },
         "handlers": {
-            "udp": {
-                "formatter": "json",
-                "class": "apps.utils.log.UdpHandler",
-                "host": LOG_UDP_SERVER_HOST,
-                "port": LOG_UDP_SERVER_PORT,
-            },
             "stdout": {
                 "class": "logging.StreamHandler",
                 "formatter": "json",
@@ -221,53 +214,53 @@ if BKLOG_UDP_LOG:
             },
         },
         "loggers": {
-            "django": {"handlers": ["udp"], "level": "INFO", "propagate": True},
+            "django": {"handlers": ["stdout"], "level": "INFO", "propagate": True},
             "django.server": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
             "django.request": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": "ERROR",
                 "propagate": True,
             },
             "django.db.backends": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
             # the root logger ,用于整个project的logger
-            "root": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            "root": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # 组件调用日志
             "component": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
-            "celery": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            "celery": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # other loggers...
             # blueapps
             "blueapps": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
             # 普通app日志
-            "app": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
 
 OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
 OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
-OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 1000))
+OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", -1))
 # ===============================================================================
 # 项目配置
 # ===============================================================================
 BK_PAAS_HOST = os.environ.get("BK_PAAS_HOST", "")
 # ESB API调用前辍
 BK_PAAS_INNER_HOST = os.environ.get("BK_PAAS_INNER_HOST", BK_PAAS_HOST)
-PAAS_API_HOST = BK_PAAS_INNER_HOST
+PAAS_API_HOST = os.environ.get("BK_COMPONENT_API_URL") or BK_PAAS_INNER_HOST
 BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
 BKDATA_URL = BK_PAAS_HOST
 MONITOR_URL = ""
@@ -740,6 +733,13 @@ ESQUERY_WHITE_LIST = [
     "data",
     "dataweb",
 ]
+
+# BK repo conf
+BKREPO_ENDPOINT_URL = os.getenv("BKAPP_BKREPO_ENDPOINT_URL")
+BKREPO_USERNAME = os.getenv("BKAPP_BKREPO_USERNAME")
+BKREPO_PASSWORD = os.getenv("BKAPP_BKREPO_PASSWORD")
+BKREPO_PROJECT = os.getenv("BKAPP_BKREPO_PROJECT")
+BKREPO_BUCKET = os.getenv("BKAPP_BKREPO_BUCKET")
 
 # ===============================================================================
 # Demo业务配置
