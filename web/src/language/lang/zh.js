@@ -283,6 +283,7 @@ export default {
   展开全部: '展开全部',
   收起: '收起',
   过滤项: '过滤项',
+  空: '空',
   // 检索设置弹窗
   retrieveSetting: {
     setting: '设置',
