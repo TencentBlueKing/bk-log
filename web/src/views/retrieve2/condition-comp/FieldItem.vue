@@ -22,7 +22,7 @@
 
 <template>
   <li class="filed-item">
-    <div class="filed-title" :class="{ 'expanded': fieldItem.filterExpand }" @click="handleClickItem(fieldItem)">
+    <div class="filed-title" :class="{ 'expanded': isExpand }" @click="handleClickItem(fieldItem)">
       <!-- 三角符号 -->
       <span class="bk-icon" :class="{ 'icon-right-shape': showFieldsChart }"></span>
       <!-- 字段类型对应的图标 -->
@@ -48,8 +48,8 @@
     <!-- 显示聚合字段图表信息 -->
     <AggChart
       v-if="showFieldsChart"
-      v-show="fieldItem.filterExpand"
-      :parent-expand="fieldItem.filterExpand"
+      v-show="isExpand"
+      :parent-expand="isExpand"
       :statistical-field-data="statisticalFieldData"
       :field-name="fieldItem.field_name" />
   </li>
@@ -92,6 +92,11 @@ export default {
       },
     },
   },
+  data() {
+    return {
+      isExpand: false,
+    };
+  },
   computed: {
     ...mapState('globals', ['fieldTypeMap']),
     gatherFieldsCount() { // 聚合字段有多少个
@@ -116,9 +121,9 @@ export default {
       return iconMap[fieldType];
     },
     // 点击字段行，展开显示聚合信息
-    handleClickItem(item) {
+    handleClickItem() {
       if (this.showFieldsChart) {
-        item.filterExpand = !item.filterExpand;
+        this.isExpand = !this.isExpand;
       }
     },
     // 显示或隐藏字段
