@@ -10,7 +10,7 @@ class BkMonitorEvent:
         self._dimensions = {}
         self._content = ""
         self._target = getattr(settings, "APP_CODE", "")
-        self._timestamp = arrow.now().timestamp
+        self._timestamp = arrow.now().timestamp * 1000
 
     def set_dimension(self, key, value) -> "BkMonitorEvent":
         self._dimensions[key] = value
