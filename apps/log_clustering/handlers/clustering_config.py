@@ -97,6 +97,9 @@ class ClusteringConfigHandler(object):
             index_set_id=index_set_id,
             signature_enable=signature_enable,
         )
+        from apps.log_clustering.handlers.pipline_service.aiops_service import create_aiops_service
+
+        create_aiops_service(collector_config_id)
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def preview(
@@ -157,10 +160,11 @@ class ClusteringConfigHandler(object):
         :return:
         """
         collector_handler = CollectorHandler(self.data.collector_config_id)
-        self.data.log_bk_data_id = CollectorScenario.change_data_stream(
-            collector_handler.data, mq_topic=topic, mq_partition=partition
-        )
-        self.data.save()
+        if not self.data.log_bk_data_id:
+            self.data.log_bk_data_id = CollectorScenario.change_data_stream(
+                collector_handler.data, mq_topic=topic, mq_partition=partition
+            )
+            self.data.save()
         collector_detail = collector_handler.retrieve(use_request=False)
 
         # need drop built in field

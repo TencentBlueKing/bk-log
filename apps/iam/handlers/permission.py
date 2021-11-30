@@ -32,7 +32,7 @@ from apps.iam.handlers.resources import (
     ResourceEnum,
     Business as BusinessResource,
 )
-from apps.utils.local import get_request
+from apps.utils.local import get_request, get_request_username
 from iam import IAM, Request, Subject, Resource, make_expression, ObjectSet, MultiActionRequest
 from iam.apply.models import (
     ActionWithoutResources,
@@ -59,11 +59,11 @@ class Permission(object):
         else:
             try:
                 request = request or get_request()
+                self.bk_token = request.COOKIES.get("bk_token", "")
+                self.username = request.user.username
             except Exception:  # pylint: disable=broad-except
-                raise ValueError("must provide `username` or `request` param to init")
-
-            self.bk_token = request.COOKIES.get("bk_token", "")
-            self.username = request.user.username
+                self.bk_token = ""
+                self.username = get_request_username()
 
         self.iam_client = self.get_iam_client()
 

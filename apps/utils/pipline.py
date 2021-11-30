@@ -17,7 +17,14 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import datetime
+import traceback
 
+from pipeline.builder import ServiceActivity, Var
+from pipeline.component_framework.component import Component
+from pipeline.core.flow import StaticIntervalGenerator
+
+from apps.log_measure.events import PIPELINE_MONITOR_EVENT
 from apps.utils.log import logger
 
 from django.utils.translation import ugettext_lazy as _
@@ -69,6 +76,7 @@ class BaseService(Service):
     def schedule(self, data, parent_data, callback_data=None):
         if hasattr(self, "logger"):
             self.logger.info(_("开始轮询结果：{name}").format(name=self.name))
+        reason = ""
         try:
             result = self._schedule(data, parent_data, callback_data)
             if not result and hasattr(self, "logger"):
@@ -81,6 +89,11 @@ class BaseService(Service):
                 self.logger.error(_("{name}失败: {reason}").format(name=self.name, reason=reason))
             result = False
 
+        if not result:
+            PIPELINE_MONITOR_EVENT(
+                content=f"{traceback.format_exc()} => {reason}",
+                dimensions={"pipeline_id": self.root_pipeline_id, "node_id": self.id, "pipeline_name": str(self.name)},
+            )
         return result
 
     def _execute(self, data, parent_data):
@@ -88,3 +101,69 @@ class BaseService(Service):
 
     def _schedule(self, data, parent_data, callback_data=None):
         raise NotImplementedError
+
+
+class SleepTimerService(BaseService):
+    __need_schedule__ = True
+    interval = StaticIntervalGenerator(0)
+    BK_TIMEMING_TICK_INTERVAL = int(60 * 60 * 24)
+    name = "sleep_timer"
+
+    def inputs_format(self):
+        return [
+            self.InputItem(
+                name=_("定时时间"),
+                key="bk_timing",
+                type="int",
+            ),
+            self.InputItem(
+                name=_("是否强制晚于当前时间"),
+                key="force_check",
+                type="bool",
+            ),
+        ]
+
+    def outputs_format(self):
+        return []
+
+    def _execute(self, data, parent_data):
+        timing = data.get_one_of_inputs("bk_timing")
+
+        now = datetime.datetime.now()
+        eta = now + datetime.timedelta(seconds=int(timing))
+        self.logger.info("planning time: {}".format(eta))
+        data.outputs.timing_time = eta
+        return True
+
+    def _schedule(self, data, parent_data, callback_data=None):
+        timing_time = data.outputs.timing_time
+
+        now = datetime.datetime.now()
+        t_delta = timing_time - now
+        if t_delta.total_seconds() < 1:
+            self.finish_schedule()
+
+        # 如果定时时间距离当前时间的时长大于唤醒消息的有效期，则设置下一次唤醒时间为消息有效期之内的时长
+        # 避免唤醒消息超过消息的有效期被清除，导致定时节点永远不会被唤醒
+        if t_delta.total_seconds() > self.BK_TIMEMING_TICK_INTERVAL > 60 * 5:
+            self.interval.interval = self.BK_TIMEMING_TICK_INTERVAL - 60 * 5
+            wake_time = now + datetime.timedelta(seconds=self.interval.interval)
+            self.logger.info("wake time: {}".format(wake_time))
+            return True
+
+        # 这里减去 0.5s 的目的是尽可能的减去 execute 执行带来的误差
+        self.interval.interval = t_delta.total_seconds() - 0.5
+        self.logger.info("wake time: {}".format(timing_time))
+        return True
+
+
+class SleepTimerComponent(Component):
+    name = _("定时")
+    code = "sleep_timer"
+    bound_service = SleepTimerService
+
+
+class SleepTimer:
+    def __init__(self, bk_timing: int):
+        self.sleep_timer = ServiceActivity(component_code="sleep_timer", name="sleep_timer")
+        self.sleep_timer.component.inputs.bk_timing = Var(type=Var.SPLICE, value=bk_timing)

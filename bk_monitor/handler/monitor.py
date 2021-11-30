@@ -65,7 +65,7 @@ class BKMonitor(object):
         return self._custom_metric_instance
 
     def build_event_trigger(self, data_name: str, event_name: str) -> "EventTrigger":
-        return EventTrigger(data_name=data_name, event_name=event_name)
+        return EventTrigger(data_name=data_name, event_name=event_name, reporter=self.custom_metric())
 
 
 class CustomReporter(object):
