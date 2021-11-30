@@ -283,6 +283,7 @@ export default {
   展开全部: 'Expand All',
   收起: 'Pack Up',
   过滤项: 'Filter item',
+  空: 'Empty',
   // 检索设置弹窗
   retrieveSetting: {
     setting: 'Setting',
@@ -711,6 +712,7 @@ export default {
     tips_development: '. If you need to support larger storage, please contact the development team or use an independent cluster',
     tips_business: ' This business has exceeded the cluster capacity limit, please contact the development team or use an independent cluster',
     tips_formula: ' ES storage ≈ daily raw log volume * 1.5 (ES conversion rate) * 2 (1 copy) * storage days',
+    dataId: 'Data ID',
   },
   新建数据源: 'Create Data Source',
   编辑数据源: 'Edit Data Source',

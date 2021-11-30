@@ -21,6 +21,7 @@ import copy
 import json
 import os
 import arrow
+from django.conf import settings
 from jinja2 import Environment, FileSystemLoader
 from dataclasses import asdict
 
@@ -96,9 +97,11 @@ class DataFlowHandler(BaseAiopsHandler):
         clustering_config = ClusteringConfig.objects.filter(collector_config_id=collector_config_id).first()
         if not ClusteringConfig:
             raise ClusteringConfigNotExistException()
-        all_etl_fields = CollectorConfig.objects.get(clustering_config.collector_config_id).get_all_etl_fields()
+        all_etl_fields = CollectorConfig.objects.get(
+            collector_config_id=clustering_config.collector_config_id
+        ).get_all_etl_fields()
         all_fields_dict = {field["field_name"]: field["alias_name"] or field["field_name"] for field in all_etl_fields}
-        filter_rule, not_clustering_rule = self._init_filter_rule(clustering_config.filter_rules)
+        filter_rule, not_clustering_rule = self._init_filter_rule(clustering_config.filter_rules, all_fields_dict)
         pre_treat_flow_dict = asdict(
             self._init_pre_treat_flow(
                 result_table_id=clustering_config.bkdata_etl_result_table_id,
@@ -238,9 +241,13 @@ class DataFlowHandler(BaseAiopsHandler):
         clustering_config = ClusteringConfig.objects.filter(collector_config_id=collector_config_id).first()
         if not ClusteringConfig:
             raise ClusteringConfigNotExistException()
+        all_etl_fields = CollectorConfig.objects.get(
+            collector_config_id=clustering_config.collector_config_id
+        ).get_all_etl_fields()
+        all_fields_dict = {field["field_name"]: field["alias_name"] or field["field_name"] for field in all_etl_fields}
         after_treat_flow_dict = asdict(
             self._init_after_treat_flow(
-                clustering_fields=clustering_config.clustering_fields,
+                clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
                 add_uuid_result_table_id=clustering_config.pre_treat_flow["add_uuid"]["result_table_id"],
                 sample_set_result_table_id=clustering_config.pre_treat_flow["sample_set"]["result_table_id"],
                 non_clustering_result_table_id=clustering_config.pre_treat_flow["not_clustering"]["result_table_id"],
@@ -327,8 +334,10 @@ class DataFlowHandler(BaseAiopsHandler):
                 filter_rule="",
             ),
             merge_table=MergeNodeCls(
-                table_name="bklog_test_{}".format(collector_config_name_en),
-                result_table_id="{}_bklog_test_{}".format(self.conf.get("bk_biz_id"), collector_config_name_en),
+                table_name="bklog_{}_{}".format(settings.ENVIRONMENT, collector_config_name_en),
+                result_table_id="{}_bklog_{}_{}".format(
+                    self.conf.get("bk_biz_id"), settings.ENVIRONMENT, collector_config_name_en
+                ),
             ),
             format_signature=RealTimeCls(
                 fields="",
@@ -416,6 +425,7 @@ class DataFlowHandler(BaseAiopsHandler):
         )
         return modify_flow_cls
 
-    @classmethod
-    def get_latest_deploy_data(cls, flow_id):
-        return BkDataDataFlowApi.get_latest_deploy_data(params={"flow_id": flow_id})
+    def get_latest_deploy_data(self, flow_id):
+        return BkDataDataFlowApi.get_latest_deploy_data(
+            params={"flow_id": flow_id, "bk_username": self.conf.get("bk_username")}
+        )

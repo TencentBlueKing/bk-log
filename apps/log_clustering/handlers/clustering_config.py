@@ -69,6 +69,8 @@ class ClusteringConfigHandler(object):
         filter_rules = params["filter_rules"]
         signature_enable = params["signature_enable"]
         clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
+        from apps.log_clustering.handlers.pipline_service.aiops_service import create_aiops_service
+
         if clustering_config:
             clustering_config.min_members = min_members
             clustering_config.max_dist_list = max_dist_list
@@ -81,6 +83,8 @@ class ClusteringConfigHandler(object):
             clustering_config.filter_rules = filter_rules
             clustering_config.signature_enable = signature_enable
             clustering_config.save()
+            if signature_enable:
+                create_aiops_service(collector_config_id)
             return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
         clustering_config = ClusteringConfig.objects.create(
             collector_config_id=collector_config_id,
@@ -97,6 +101,8 @@ class ClusteringConfigHandler(object):
             index_set_id=index_set_id,
             signature_enable=signature_enable,
         )
+        if signature_enable:
+            create_aiops_service(collector_config_id)
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def preview(
@@ -157,10 +163,11 @@ class ClusteringConfigHandler(object):
         :return:
         """
         collector_handler = CollectorHandler(self.data.collector_config_id)
-        self.data.log_bk_data_id = CollectorScenario.change_data_stream(
-            collector_handler.data, mq_topic=topic, mq_partition=partition
-        )
-        self.data.save()
+        if not self.data.log_bk_data_id:
+            self.data.log_bk_data_id = CollectorScenario.change_data_stream(
+                collector_handler.data, mq_topic=topic, mq_partition=partition
+            )
+            self.data.save()
         collector_detail = collector_handler.retrieve(use_request=False)
 
         # need drop built in field
