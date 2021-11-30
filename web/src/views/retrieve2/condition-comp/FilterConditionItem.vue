@@ -224,7 +224,7 @@ export default {
 
       const params = {
         ...this.editData,
-        value: this.editData.value.split(','),
+        value: this.editData.value.toString().split(','),
       };
       this.$http.request('retrieve/getOperators').then((res) => {
         this.filterOperators = res.data;
@@ -370,7 +370,8 @@ export default {
       display: none;
       margin: 0 6px;
       font-size: 12px;
-      color: #c4c6cc;
+      font-weight: 700;
+      color: #979BA5;
       cursor: pointer;
     }
 

@@ -22,48 +22,15 @@
 
 <template>
   <div class="manage-container">
-    <bk-navigation
-      class="hack-king-navigation"
-      navigation-type="left-right"
-      head-height="0"
-      header-title=""
-      hover-width="200"
-      default-open
-      :theme-color="navThemeColor"
-      @toggle="handleToggle">
-      <template slot="menu">
-        <bk-navigation-menu
-          data-test-id="manage_div_leftNavBox"
-          :item-default-bg-color="navThemeColor"
-          :default-active="activeManageNav.id">
-          <template v-for="groupItem in manageNavList">
-            <bk-navigation-menu-group
-              :key="groupItem.id"
-              :group-name="isExpand ? groupItem.name : groupItem.keyword">
-              <template v-for="navItem in groupItem.children">
-                <bk-navigation-menu-item
-                  :data-test-id="`navBox_nav_${navItem.id}`"
-                  :key="navItem.id"
-                  :id="navItem.id"
-                  :icon="getMenuIcon(navItem)"
-                  @click="handleClickNavItem(navItem.id)">
-                  {{ isExpand ? navItem.name : '' }}
-                </bk-navigation-menu-item>
-              </template>
-            </bk-navigation-menu-group>
-          </template>
-        </bk-navigation-menu>
-      </template>
-      <div class="navigation-content">
-        <sub-nav></sub-nav>
-        <router-view class="manage-content" :key="routerKey"></router-view>
-      </div>
-    </bk-navigation>
+    <div class="manage-main" v-if="!pageLoading">
+      <sub-nav></sub-nav>
+      <router-view class="manage-content" :key="routerKey"></router-view>
+    </div>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 import SubNav from '@/components/nav/manage-nav';
 
 export default {
@@ -81,6 +48,9 @@ export default {
   computed: {
     ...mapState(['topMenu', 'activeManageNav']),
     ...mapState('globals', ['globalsData']),
+    ...mapGetters({
+      pageLoading: 'pageLoading',
+    }),
     manageNavList() {
       return this.topMenu.find(item => item.id === 'manage')?.children || [];
     },
@@ -127,33 +97,25 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  @import '../../scss/mixins/scroller.scss';
-
-  .manage-container {
-    height: 100%;
-
-    .navigation-content {
-      min-width: 1080px;
-      height: 100%;
-      background-color: #fafbfd;
-
-      .manage-content {
-        height: calc(100% - 52px);
-
-        @include scroller($backgroundColor: #C4C6CC, $width: 8px);
-      }
+@import '../../scss/mixins/scroller.scss';
+.manage-container {
+  height: 100%;
+  .manage-content {
+      height: calc(100% - 52px);
+      overflow: auto;
+      @include scroller($backgroundColor: #C4C6CC, $width: 8px);
     }
-
-    /deep/ .bk-table {
-      background: #fff;
-
-      .cell {
-        display: block;
-      }
-
-      .bk-table-pagination-wrapper {
-        background: #fafbfd;
-      }
+  .manage-main {
+    height: 100%;
+  }
+  /deep/ .bk-table {
+    background: #fff;
+    .cell {
+      display: block;
+    }
+    .bk-table-pagination-wrapper {
+      background: #fafbfd;
     }
   }
+}
 </style>

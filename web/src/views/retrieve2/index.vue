@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="retrieve-container" v-bkloading="{ isLoading: basicLoading }">
+  <div class="retrieve-container" v-bkloading="{ isLoading: false }">
     <!-- 初始化加载时显示这个空的盒子 避免先显示内容 再显示无权限页面 -->
     <div v-if="!hasAuth && !authPageInfo && !isNoIndexSet" style="height: 100%;background: #f4f7fa;"></div>
     <!-- 单独的申请权限页面 -->
@@ -68,6 +68,9 @@
     </div>
     <!-- 检索页详情页 -->
     <div v-if="(hasAuth || isNoIndexSet) && !isRetrieveHome" class="retrieve-detail-container">
+      <div class="page-loading-wrap" v-if="basicLoading || tableLoading">
+        <div class="page-loading-bar"></div>
+      </div>
       <!-- 检索详情页左侧 -->
       <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
         <!-- 监控显示的 tab 切换 -->
@@ -75,6 +78,10 @@
           <bk-button @click="handleCheckMonitor">{{ $t('指标检索') }}</bk-button>
           <bk-button class="is-selected">{{ $t('日志检索') }}</bk-button>
           <bk-button @click="handleCheckEvent">{{ $t('事件检索') }}</bk-button>
+        </div>
+
+        <div class="biz-menu-box">
+          <biz-menu-select theme="light"></biz-menu-select>
         </div>
 
         <div class="king-tab" :class="asIframe && 'as-iframe'">
@@ -144,7 +151,7 @@
                 <div class="cut-line" v-if="showFilterCutline"></div>
                 <template v-for="(item, index) in retrieveParams.addition">
                   <FilterConditionItem
-                    :key="item.field + 1"
+                    :key="item.field + random(6)"
                     :edit-index="index"
                     :is-add="false"
                     :edit-data="item"
@@ -163,20 +170,20 @@
                   v-if="isAutoQuery"
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
-                  style="width: 86px;"
+                  style="width: 86px;font-size:12px"
                   data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
-                  <span class="log-icon icon-zidongchaxun" style="margin-right: 4px;font-size: 18px;"></span>
+                  <span class="log-icon icon-zidongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
                   {{ $t('查询') }}
                 </bk-button>
                 <bk-button
                   v-else
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
-                  style="width: 86px;"
-                  icon="search"
+                  style="width: 86px;font-size:12px"
                   data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
+                  <span class="log-icon icon-shoudongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
                   {{ $t('查询') }}
                 </bk-button>
                 <bk-popover
@@ -185,11 +192,13 @@
                   placement="top"
                   theme="light"
                   :on-show="handleFavoritePopperShow">
-                  <bk-button style="margin: 0 8px;" data-test-id="dataQuery_button_collection">
-                    <span style="display: flex;align-items: center">
+                  <bk-button
+                    style="width: 86px;margin: 0 8px;font-size:12px"
+                    data-test-id="dataQuery_button_collection">
+                    <span style="display: flex;align-items: center;justify-content: center;">
                       <span
                         class="bk-icon icon-star"
-                        style="margin-right: 6px;margin-top: -4px;font-size: 16px;">
+                        style="margin-right: 2px;margin-top: -4px;font-size: 12px;">
                       </span>
                       <span>{{ $t('收藏') }}</span>
                     </span>
@@ -204,6 +213,7 @@
                   ></FavoritePopper>
                 </bk-popover>
                 <bk-button
+                  style="font-size:12px"
                   @click="clearCondition"
                   data-test-id="dataQuery_button_phrasesClear">
                   {{ $t('清空') }}
@@ -212,7 +222,7 @@
             </div>
             <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
               <!-- 字段过滤 -->
-              <div class="tab-item-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
+              <div class="tab-item-title field-filter-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
               <FieldFilter
                 :total-fields="totalFields"
                 :visible-fields="visibleFields"
@@ -243,18 +253,19 @@
           @open="openRetrieveCondition"
           @update:datePickerValue="handleDateChange"
           @datePickerChange="retrieveWhenDateChange"
+          @settingMenuClick="handleSettingMenuClick"
         ></ResultHeader>
         <NoIndexSet v-if="isNoIndexSet"></NoIndexSet>
         <ResultMain
           ref="resultMainRef"
           v-else
-          :render-table="renderTable"
           :table-loading="tableLoading"
           :retrieve-params="retrieveParams"
           :took-time="tookTime"
           :index-set-list="indexSetList"
           :table-data="tableData"
           :visible-fields="visibleFields"
+          :total-fields="totalFields"
           :field-alias-map="fieldAliasMap"
           :show-field-alias="showFieldAlias"
           :show-context-log="showContextLog"
@@ -263,11 +274,15 @@
           :bk-monitor-url="bkmonitorUrl"
           :async-export-usable="asyncExportUsable"
           :async-export-usable-reason="asyncExportUsableReason"
-          :trace-config="traceConfig"
+          :statistical-fields-data="statisticalFieldsData"
+          :time-field="timeField"
+          :config-data="clusteringData"
+          :clean-config="cleanConfig"
           @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
           @addFilterCondition="addFilterCondition"
+          @showSettingLog="handleSettingMenuClick('clustering')"
         ></ResultMain>
       </div>
       <!-- 可拖拽页面布局宽度 -->
@@ -284,10 +299,22 @@
           @mousedown.left="dragBegin">
       </div>
     </div>
+
+    <SettingModal
+      :index-set-item="indexSetItem"
+      :is-show-dialog="isShowSettingModal"
+      :select-choice="clickSettingChoice"
+      :total-fields="totalFields"
+      :clean-config="cleanConfig"
+      :config-data="clusteringData"
+      @closeSetting="isShowSettingModal = false;"
+      @updateLogFields="requestFields"
+    />
   </div>
 </template>
 
 <script>
+import { mapGetters, mapState } from 'vuex';
 import SelectIndexSet from './condition-comp/SelectIndexSet';
 import SelectDate from './condition-comp/SelectDate';
 import RetrieveInput from './condition-comp/RetrieveInput';
@@ -301,9 +328,10 @@ import ResultHeader from './result-comp/ResultHeader';
 import NoIndexSet from './result-comp/NoIndexSet';
 import ResultMain from './result-comp/ResultMain';
 import AuthPage from '@/components/common/auth-page';
-import { formatDate, readBlobRespToJson, parseBigNumberList } from '@/common/util';
+import SettingModal from './setting-modal/index.vue';
+import BizMenuSelect from '@/components/BizMenuSelect.vue';
+import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/common/util';
 import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
-import { mapGetters, mapState } from 'vuex';
 import axios from 'axios';
 
 export default {
@@ -322,6 +350,8 @@ export default {
     ResultMain,
     AuthPage,
     NoIndexSet,
+    SettingModal,
+    BizMenuSelect,
   },
   mixins: [indexSetSearchMixin],
   data() {
@@ -334,10 +364,11 @@ export default {
       authPageInfo: null,
       isSearchAllowed: null, // true 有权限，false 无权限，null 未知权限
       renderTable: true, // 显示字段更新后手动触发重新渲染表格
-      basicLoading: false, // view loading
+      basicLoading: true, // view loading
       tableLoading: false, // 表格 loading
       requesting: false,
-      isRetrieveHome: !this.$route.params.indexId?.toString() && !this.$route.params.from, // 检索首页
+      // isRetrieveHome: !this.$route.params.indexId?.toString() && !this.$route.params.from, // 检索首页
+      isRetrieveHome: false,
       isNoIndexSet: false,
       showRetrieveCondition: true, // 详情页显示检索左侧条件
       showExpandInitTips: false, // 展开初始tips
@@ -349,6 +380,7 @@ export default {
       leftPanelMinWidth: 300, // 左栏最小宽度
       leftPanelMaxWidth: 750, // 左栏最大宽度
       indexId: '', // 当前选择的索引ID
+      indexSetItem: {}, // 当前索引集元素
       indexSetList: [], // 索引集列表,
       datePickerValue: [startTime, endTime], // 日期选择器
       retrievedKeyword: '*', // 记录上一次检索的关键字，避免输入框失焦时重复检索
@@ -400,7 +432,7 @@ export default {
       showContextLog: false, // 上下文
       showRealtimeLog: false, // 实时日志
       showWebConsole: false, // BCS 容器
-      bkmonitorUrl: '', // 监控主机详情地址
+      bkmonitorUrl: false, // 监控主机详情地址
       asyncExportUsable: true, // 是否支持异步导出
       asyncExportUsableReason: '', // 无法异步导出原因
       isInitPage: true,
@@ -413,7 +445,22 @@ export default {
       originLogList: [], // 当前搜索结果的原始日志
       isNextTime: false,
       timer: null,
-      traceConfig: null,
+      isShowSettingModal: false,
+      clickSettingChoice: '',
+      timeField: '',
+      isThollteField: false,
+      globalsData: {},
+      random,
+      cleanConfig: {},
+      clusteringData: { // 日志聚类参数
+        name: '',
+        is_active: true,
+        extra: {
+          collector_config_id: null,
+          signature_switch: false,
+          clustering_field: '',
+        },
+      },
     };
   },
   computed: {
@@ -441,6 +488,7 @@ export default {
   watch: {
     indexId(val) { // 切换索引集和初始化索引 id 时改变
       const option = this.indexSetList.find(item => item.index_set_id === val);
+      this.indexSetItem = option ? option : { index_set_name: '', indexName: '', scenario_name: '' };
       // eslint-disable-next-line camelcase
       this.isSearchAllowed = !!option?.permission?.search_log;
       this.resetRetrieveCondition();
@@ -504,6 +552,7 @@ export default {
         console.warn(err);
       });
     this.fetchPageData();
+    this.getGlobalsData();
   },
   mounted() {
     if (!this.isHideAutoQueryTips) {
@@ -758,9 +807,20 @@ export default {
       this.shouldUpdateFields = true;
       this.retrieveLog();
     },
-
+    handleSettingMenuClick(val) {
+      this.clickSettingChoice = val;
+      this.isShowSettingModal = true;
+    },
     // 添加过滤条件
     addFilterCondition(field, operator, value, index) {
+      const isExist = this.retrieveParams.addition.some((addition) => {
+        return addition.field === field
+        && addition.operator === operator
+        && addition.value.toString() === value.toString();
+      });
+      // 已存在相同条件
+      if (isExist) return;
+
       const startIndex = index > -1 ? index : this.retrieveParams.addition.length;
       const deleteCount = index > -1 ? 1 : 0;
       this.retrieveParams.addition.splice(startIndex, deleteCount, { field, operator, value });
@@ -891,6 +951,8 @@ export default {
 
     // 检索日志
     async retrieveLog(historyParams) {
+      this.basicLoading = true;
+
       if (!this.indexId) {
         return;
       }
@@ -1052,11 +1114,14 @@ export default {
         // 搜索完毕后，如果开启了自动刷新，会在 timeout 后自动刷新
         this.$refs.resultHeader && this.$refs.resultHeader.setRefreshTime();
         this.isFavoriteSearch = false;
+        this.basicLoading = false;
       }
     },
 
     // 请求字段
     async requestFields() {
+      if (this.isThollteField) return;
+      this.isThollteField = true;
       try {
         const res = await this.$http.request('retrieve/getLogTableHead', {
           params: { index_set_id: this.indexId },
@@ -1067,7 +1132,31 @@ export default {
           },
         });
         const notTextTypeFields = [];
-        res.data.fields.forEach((item) => {
+        const { data } = res;
+        const {
+          fields,
+          config,
+          display_fields: displayFields,
+          time_field: timeField,
+        } = data;
+        const localConfig = {};
+        config.forEach((item) => {
+          localConfig[item.name] = { ...item };
+        });
+        const {
+          bkmonitor,
+          ip_topo_switch: ipTopoSwitch,
+          context_and_realtime: contextAndRealtime,
+          bcs_web_console: bcsWebConsole,
+          async_export: asyncExport,
+          clean_config: cleanConfig,
+          clustering_config: clusteringConfig,
+        } = localConfig;
+
+        this.cleanConfig = cleanConfig;
+        this.clusteringData = clusteringConfig;
+
+        fields.forEach((item) => {
           item.minWidth = 0;
           item.filterExpand = false; // 字段过滤展开
           item.filterVisible = true; // 字段过滤搜索字段名是否显示
@@ -1076,21 +1165,18 @@ export default {
           }
         });
         this.notTextTypeFields = notTextTypeFields;
-
-        // 如果没有 ip_topo_switch 字段默认给 true，如果有该字段根据该字段控制
-        this.ipTopoSwitch = res.data.ip_topo_switch === undefined || res.data.ip_topo_switch;
-        this.showContextLog = res.data.context_search_usable;
-        this.showRealtimeLog = res.data.realtime_search_usable;
-        this.showWebConsole = res.data.bcs_web_console_usable === true;
-        this.bkmonitorUrl = res.data.bkmonitor_url;
-        this.asyncExportUsable = res.data.async_export_usable;
-        this.asyncExportUsableReason = res.data.async_export_usable_reason;
-        this.traceConfig = res.data.trace_config;
-
-        this.totalFields = res.data.fields;
+        this.ipTopoSwitch = ipTopoSwitch.is_active;
+        this.showContextLog = contextAndRealtime.is_active;
+        this.showRealtimeLog = contextAndRealtime.is_active;
+        this.showWebConsole = bcsWebConsole.is_active;
+        this.bkmonitorUrl = bkmonitor.is_active;
+        this.asyncExportUsable = asyncExport.is_active;
+        this.asyncExportUsableReason = !asyncExport.is_active ? asyncExport.extra.usable_reason : '';
+        this.timeField = timeField;
+        this.totalFields = fields;
         // 后台给的 display_fields 可能有无效字段 所以进行过滤，获得排序后的字段
-        this.visibleFields = res.data.display_fields.map((displayName) => {
-          for (const field of res.data.fields) {
+        this.visibleFields = displayFields.map((displayName) => {
+          for (const field of fields) {
             if (field.field_name === displayName) {
               return field;
             }
@@ -1098,21 +1184,23 @@ export default {
         }).filter(Boolean);
 
         const fieldAliasMap = {};
-        res.data.fields.forEach((item) => {
+        fields.forEach((item) => {
           fieldAliasMap[item.field_name] = item.field_alias || item.field_name;
         });
         this.fieldAliasMap = fieldAliasMap;
+        this.isThollteField = false;
       } catch (e) {
         this.ipTopoSwitch = true;
         this.showContextLog = false;
         this.showRealtimeLog = false;
         this.showWebConsole = false;
-        this.bkmonitorUrl = '';
+        this.bkmonitorUrl = false;
         this.asyncExportUsable = true;
         this.asyncExportUsableReason = '';
-        this.traceConfig = null;
+        this.timeField = '';
         this.totalFields.splice(0);
         this.visibleFields.splice(0);
+        this.isThollteField = false;
         throw e;
       }
     },
@@ -1124,6 +1212,12 @@ export default {
             return field;
           }
         }
+      });
+      this.$http.request('retrieve/postFieldsConfig', {
+        params: { index_set_id: this.$route.params.indexId },
+        data: { display_fields: displayFieldNames, sort_list: [] },
+      }).catch((e) => {
+        console.warn(e);
       });
       if (showFieldAlias !== undefined) {
         this.showFieldAlias = showFieldAlias;
@@ -1404,6 +1498,18 @@ export default {
       this.hasExpandInitTipsShown = true;
       this.showExpandInitTips = false;
     },
+    // 获取全局数据
+    getGlobalsData() {
+      if (Object.keys(this.globalsData).length) {
+        return;
+      }
+      this.$http.request('collect/globals').then((res) => {
+        this.$store.commit('globals/setGlobalsData', res.data);
+      })
+        .catch((e) => {
+          console.warn(e);
+        });
+    },
   },
 };
 </script>
@@ -1446,6 +1552,50 @@ export default {
       }
     }
 
+    .page-loading-wrap {
+      position: absolute;
+      width: 100%;
+      height: 4px;
+      z-index: 2400;
+      overflow: hidden;
+      background: pink;
+      .page-loading-bar {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        position: absolute;
+        z-index: 10;
+        visibility: visible;
+        display: block;
+        animation: animate-loading-bar 2s linear infinite;
+        background-color: transparent;
+        background-image: linear-gradient(
+            to right,
+            #FF5656 0,
+            #FF5656 50%,
+            #FF9C01 50%,
+            #FF9C01 85%,
+            #2DCB56 85%,
+            #2DCB56 100%
+          );
+        background-repeat: repeat-x;
+        background-size: 50%;
+        width: 200%;
+      }
+      @keyframes animate-loading-bar {
+        0% {
+          -webkit-transform: translateX(0);
+          transform: translateX(0)
+        }
+        to {
+          -webkit-transform: translateX(-50%);
+          transform: translateX(-50%);
+        }
+      }
+    }
+
+
     /*详情页*/
     .retrieve-detail-container {
       position: relative;
@@ -1467,78 +1617,37 @@ export default {
           .bk-button {
             flex:1;
             height: 100%;
+            border-top: 0;
             background: #fafbfd;
+            border-color: #dcdee5;
+            box-sizing: content-box;
 
-            &.is-selected{
+            &.is-selected {
               background: #ffffff;
               border-top: none;
               border-bottom: none;
             }
+
+            &.is-selected {
+              border-color: #dcdee5;
+              color: #3a84ff;
+            }
+            &:hover {
+              border-color: #dcdee5;
+            }
           }
         }
 
-        .king-tab {
-          // height: 100%;
-          // padding-top: 10px;
-          // &.as-iframe {
-          //     height: calc(100% - 48px);
-          // }
-          // /deep/ .bk-tab-label-list {
-          //     width: 100%;
-          //     .bk-tab-label-item {
-          //         width: 50%;
-          //         &:after {
-          //             left: 36px;
-          //             width: calc(100% - 72px);
-          //         }
-          //     }
-          // }
-          // /deep/ .bk-tab-section {
-          //     padding: 0;
-          //     height: calc(100% - 42px);
-          //     .bk-tab-content {
-          //         height: 100%;
-          //         overflow-y: auto;
-          //         @include scroller;
-          //     }
-          // }
-          // /deep/ .data-search {
-          //     position: relative;
-          //     padding: 0 20px 0;
-          //     overflow-y: auto;
-          //     @include scroller;
-          //     .tab-item-title {
-          //         display: flex;
-          //         align-items: center;
-          //         margin: 15px 0 6px;
-          //         line-height: 20px;
-          //         font-size: 12px;
-          //         color: #63656E;
-          //         &.ip-quick-title {
-          //             margin-top: 13px;
-          //         }
-          //     }
-          //     .add-filter-condition-container {
-          //         display: flex;
-          //         flex-wrap: wrap;
-          //     }
-          //     .retrieve-button-group {
-          //         position: sticky;
-          //         bottom: 0;
-          //         display: flex;
-          //         align-items: center;
-          //         padding: 16px 0 20px;
-          //         background-color: #FFF;
-          //         z-index: 1;
-          //     }
-          // }
+        .biz-menu-box {
+          margin: 16px 16px 0;
+        }
 
+        .king-tab {
           height: 100%;
           padding-top: 10px;
 
           .tab-content {
-            height: calc(100% - 50px);
-            // padding: 0 24px;
+            height: calc(100% - 60px);
             overflow-y: auto;
             background-color: #fbfbfb;
 
@@ -1559,17 +1668,17 @@ export default {
           }
 
           &.as-iframe {
-            height: calc(100% - 48px);
+            height: calc(100% - 52px);
           }
 
           .tab-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 24px 12px;
+            padding: 6px 24px 10px;
             color: #313238;
             font-size: 14px;
-            border-bottom: 1px solid #cacedb;
+            font-weight: 500;
 
             .icon-cog {
               font-size: 18px;
@@ -1581,8 +1690,7 @@ export default {
           .tab-item-title {
             display: flex;
             align-items: center;
-            margin: 0 0 6px;
-            padding-top: 15px;
+            margin: 16px 0 6px;
             line-height: 20px;
             font-size: 12px;
             color: #63656e;
@@ -1590,6 +1698,18 @@ export default {
             &.ip-quick-title {
               margin-top: 13px;
             }
+
+            &:first-child {
+              margin-top: 0;
+            }
+          }
+
+          .field-filter-title {
+            margin-bottom: 0;
+            padding-top: 18px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #313238;
           }
 
           .flex-item-title {
@@ -1617,7 +1737,7 @@ export default {
             bottom: 0;
             display: flex;
             align-items: center;
-            padding: 16px 0 20px;
+            padding: 20px 0 24px;
             background-color: #fff;
             // z-index: 1;
           }

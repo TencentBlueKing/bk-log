@@ -42,7 +42,7 @@ from django.utils.translation import ugettext_lazy as _
 
 # 请在这里加入你的自定义 APP
 INSTALLED_APPS += (
-    # must first
+    # must first django_jsonfield_backport
     "django_jsonfield_backport",
     "django_prometheus",
     "rest_framework",
@@ -69,6 +69,7 @@ INSTALLED_APPS += (
     "django_celery_results",
     "apps.log_extract",
     "apps.feature_toggle",
+    "apps.log_clustering",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
@@ -167,6 +168,7 @@ CELERY_IMPORTS = (
     "apps.log_databus.tasks.archive",
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
+    "apps.log_clustering.tasks.sync_pattern",
 )
 
 # load logging settings
@@ -186,7 +188,6 @@ if RUN_VER != "open":
             ),
         }
         LOGGING["formatters"]["verbose"] = logging_format
-
 
 # 使用k8s部署模式
 IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
@@ -428,6 +429,7 @@ FEATURE_TOGGLE = {
     "collect_itsm": os.environ.get("BKAPP_COLLECT_ITSM", "off"),
     # 自定义指标上报
     "monitor_report": os.environ.get("BKAPP_MONITOR_REPORT", "on"),
+    "bklog_es_config": "on",
 }
 
 SAAS_MONITOR = "bk_monitorv3"
@@ -442,11 +444,19 @@ MENUS = [
         "feature": "on",
         "icon": "",
         "children": [
-            {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": ""},
-            {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": ""},
+            {
+                "id": "trace_search",
+                "name": _("调用链"),
+                "feature": "on",
+                "icon": "",
+                "keyword": _("trace"),
+                "children": [
+                    {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": "liebiao"},
+                    {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": "document"},
+                ],
+            }
         ],
     },
-    {"id": "extract", "name": _("日志提取"), "feature": "on", "icon": ""},
     {"id": "monitor", "name": _("监控策略"), "feature": "on", "icon": ""},
     {
         "id": "dashboard",
@@ -454,9 +464,19 @@ MENUS = [
         "feature": "on" if GRAFANA["HOST"] else "off",
         "icon": "",
         "children": [
-            {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": ""},
-            {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": ""},
-            {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": ""},
+            {
+                "id": "dashboard_manage",
+                "name": _("仪表盘"),
+                "feature": "on",
+                "icon": "",
+                "keyword": _("仪表"),
+                "children": [
+                    {"id": "default_dashboard", "name": _("默认仪表盘"), "feature": "on", "icon": "block-shape"},
+                    {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": "plus-circle-shape"},
+                    {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": "folder-fill"},
+                    {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": "topping-fill"},
+                ],
+            }
         ],
     },
     {
@@ -553,6 +573,7 @@ MENUS = [
                 "feature": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
                 "children": [
                     {"id": "manage_log_extract", "name": _("日志提取配置"), "feature": "on", "icon": "cc-log"},
+                    {"id": "log_extract_task", "name": _("日志提取任务"), "feature": "on", "icon": "audit-fill"},
                     {"id": "extract_link_manage", "name": _("提取链路管理"), "feature": "on", "icon": "assembly-line-fill"},
                 ],
             },

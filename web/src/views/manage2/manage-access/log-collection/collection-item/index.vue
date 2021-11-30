@@ -125,6 +125,16 @@
           </template>
         </bk-table-column>
         <bk-table-column
+          v-if="checkcFields('bk_data_id')"
+          :label="$t('dataSource.dataId')"
+          min-width="70">
+          <template slot-scope="props">
+            <span>
+              {{ props.row.bk_data_id || '--' }}
+            </span>
+          </template>
+        </bk-table-column>
+        <bk-table-column
           v-if="checkcFields('es_host_state')"
           :class-name="'td-status'"
           :label="$t('dataSource.es_host_state')"
@@ -394,6 +404,11 @@ export default {
       {
         id: 'category_name',
         label: this.$t('dataSource.category_name'),
+      },
+      // 数据ID
+      {
+        id: 'bk_data_id',
+        label: this.$t('dataSource.dataId'),
       },
     ];
 

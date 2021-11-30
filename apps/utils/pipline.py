@@ -18,13 +18,12 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from apps.utils.log import logger
 
 from django.utils.translation import ugettext_lazy as _
-from pipeline.core.flow.activity import Service
 
-from apps.utils.log import logger
-from apps.log_extract.models import Tasks
-from apps.log_extract.constants import DownloadStatus
+from apps.utils.local import set_request_username
+from pipeline.core.flow.activity import Service
 
 
 class BaseService(Service):
@@ -33,25 +32,31 @@ class BaseService(Service):
     """
 
     TASK_POLLING_INTERVAL = 2
+    name = None
 
-    def __init__(self, name):
-        super().__init__(name=name)
+    def __init__(self):
+        if not self.name:
+            raise Exception("service name 不能为None")
+        super().__init__(name=self.name)
 
     def execute(self, data, parent_data, is_raise_exception=False):
-        reason = ""
+        username = data.get_one_of_inputs("username")
+        if username:
+            set_request_username(username)
         if hasattr(self, "logger"):
             self.logger.info(_("开始{name}").format(name=self.name))
         try:
             result = self._execute(data, parent_data)
             if not result and hasattr(self, "logger"):
                 self.logger.info(_("{name}失败").format(name=self.name))
-        except Exception as err:  # pylint: disable=broad-except
+        except Exception as err:
             if hasattr(self, "root_pipeline_id"):
                 logger.exception(f"[{self.name}]pipeline_id=>{self.root_pipeline_id} node_id=>{self.id} {err}")
             else:
                 logger.exception(f"[{self.name}] {err}")
 
             reason = _("[{name}] {reason}").format(name=self.name, reason=str(err))
+            data.outputs.ex_data = reason
             if hasattr(self, "logger"):
                 self.logger.error(_("{name}失败: {reason}").format(name=self.name, reason=reason))
 
@@ -59,37 +64,22 @@ class BaseService(Service):
                 raise Exception(reason)
             result = False
 
-        if not result:
-            task_id = data.get_one_of_inputs("task_id")
-            if task_id:
-                Tasks.objects.filter(task_id=task_id).update(
-                    download_status=DownloadStatus.FAILED.value, task_process_info=f"{reason}"
-                )
-
         return result
 
     def schedule(self, data, parent_data, callback_data=None):
-        reason = ""
         if hasattr(self, "logger"):
             self.logger.info(_("开始轮询结果：{name}").format(name=self.name))
         try:
             result = self._schedule(data, parent_data, callback_data)
             if not result and hasattr(self, "logger"):
                 self.logger.info(_("{name}失败").format(name=self.name))
-        except Exception as err:  # pylint: disable=broad-except
+        except Exception as err:
             logger.exception(f"[{self.name}]pipeline_id=>{self.root_pipeline_id} node_id=>{self.id} {err}")
 
             reason = _("[{name}] {reason}").format(name=self.name, reason=str(err))
             if hasattr(self, "logger"):
                 self.logger.error(_("{name}失败: {reason}").format(name=self.name, reason=reason))
             result = False
-
-        if not result:
-            task_id = data.get_one_of_inputs("task_id")
-            if task_id:
-                Tasks.objects.filter(task_id=task_id).update(
-                    download_status=DownloadStatus.FAILED.value, task_process_info=f"{reason}"
-                )
 
         return result
 

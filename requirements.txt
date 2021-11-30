@@ -13,6 +13,8 @@ django-redis==4.8.0
 django-celery-beat==2.2.0
 django-celery-results==2.0.1
 
+cloudpickle==1.6.0
+
 pytz==2019.3
 gunicorn==19.6.0
 urllib3==1.24.3

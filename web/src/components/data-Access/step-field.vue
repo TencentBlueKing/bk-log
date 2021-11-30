@@ -24,10 +24,13 @@
   <section class="step-field-container" data-test-id="addNewCollectionItem_section_fieldExtractionBox">
     <auth-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-page>
     <div class="step-field" v-bkloading="{ isLoading: basicLoading }" v-else>
-      <bk-alert v-if="!isCleanField && !isTempField" class="king-alert" type="info">
+      <bk-alert v-if="!isCleanField && !isTempField && !isSetEdit" class="king-alert" type="info">
         <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
       </bk-alert>
-      <div class="collector-select" v-if="isCleanField">
+      <bk-alert v-if="isSetEdit" class="king-alert" type="info">
+        <div slot="title" class="slot-title-container">{{$t('retrieveSetting.extractionPrompt')}}</div>
+      </bk-alert>
+      <div class="collector-select" v-show="isCleanField && !isSetEdit">
         <label>{{ $t('采集项') }}</label>
         <bk-select
           style="width: 520px;"
@@ -132,7 +135,7 @@
                 data-test-id="fieldExtractionBox_span_applyTemp"
                 :class="{
                   'template-text': true,
-                  'template-disabled': isCleanField && !cleanCollector
+                  'template-disabled': (isCleanField && !cleanCollector) || isSetDisabled
                 }"
                 @click="openTemplateDialog(false)">
                 <span class="log-icon icon-daoru"></span>
@@ -146,7 +149,7 @@
                 <bk-button
                   v-for="option in globalsData.etl_config"
                   :key="option.id"
-                  :disabled="isCleanField && !cleanCollector"
+                  :disabled="(isCleanField && !cleanCollector) || isSetDisabled"
                   @click="params.etl_config = option.id"
                   :class="params.etl_config === option.id ? 'is-selected' : ''"
                   :data-test-id="`fieldExtractionBox_button_filterMethod${option.id}`">
@@ -209,7 +212,7 @@
                 <bk-button
                   class="fl debug-btn"
                   theme="primary"
-                  :disabled="!logOriginal || isExtracting || !showDebugBtn"
+                  :disabled="!logOriginal || isExtracting || !showDebugBtn || isSetDisabled"
                   @click="debugHandler"
                   data-test-id="fieldExtractionBox_button_debugging">
                   {{ $t('调试') }}
@@ -229,6 +232,7 @@
                   :is-extracting="isExtracting"
                   :is-temp-field="isTempField"
                   :is-edit-json="isUnmodifiable"
+                  :is-set-disabled="isSetDisabled"
                   :extract-method="formData.etl_config"
                   :deleted-visible="deletedVisible"
                   :fields="formData.fields"
@@ -289,7 +293,7 @@
       <div class="form-button">
         <!-- 上一步 -->
         <bk-button
-          v-if="!isCleanField && !isTempField"
+          v-if="!isCleanField && !isTempField && !isSetEdit"
           theme="default"
           data-test-id="fieldExtractionBox_button_previousPage"
           :title="$t('dataManage.last')"
@@ -315,12 +319,12 @@
           data-test-id="fieldExtractionBox_button_nextPage"
           @click.stop.prevent="finish(true)"
           :loading="isLoading"
-          :disabled="!collectProject || !showDebugBtn || !hasFields">
-          {{$t('下一步')}}
+          :disabled="!collectProject || !showDebugBtn || !hasFields || isSetDisabled">
+          {{isSetEdit ? $t('保存') : $t('下一步')}}
         </bk-button>
         <!-- 跳过 -->
         <bk-button
-          v-if="!isTempField"
+          v-if="!isTempField && !isSetEdit"
           theme="default"
           :title="$t('btn.cancel')"
           class="ml10"
@@ -335,7 +339,7 @@
           theme="default"
           class="ml10"
           data-test-id="fieldExtractionBox_button_saveTemplate"
-          :disabled="!hasFields"
+          :disabled="!hasFields || isSetDisabled"
           @click="openTemplateDialog(true)">
           {{$t('dataManage.saveTemp')}}
         </bk-button>
@@ -346,7 +350,17 @@
           class="ml10"
           data-test-id="fieldExtractionBox_button_cancelSaveTemplate"
           @click="handleCancel(false)">
-          {{$t('取消')}}
+          {{isSetEdit ? $t('dataManage.Reset') : $t('取消')}}
+        </bk-button>
+        <!-- 检索字段提取设置 重置 -->
+        <bk-button
+          v-if="isSetEdit"
+          theme="default"
+          class="ml10"
+          data-test-id="fieldExtractionBox_button_cancelSaveTemplate"
+          :disabled="!collectProject || !showDebugBtn || !hasFields || isSetDisabled"
+          @click="setDetail(setId)">
+          {{$t('btn.reset')}}
         </bk-button>
       </div>
 
@@ -416,6 +430,9 @@ export default {
     collectorId: String,
     isCleanField: Boolean,
     isTempField: Boolean,
+    isSetEdit: Boolean,
+    setId: Number,
+    setDisabled: Boolean,
   },
   data() {
     return {
@@ -536,7 +553,7 @@ export default {
       return this.$route.name === 'clean-template-edit';
     },
     isEditCleanItem() {
-      return this.$route.name === 'clean-edit';
+      return this.$route.name === 'clean-edit' || this.isSetEdit;
     },
     advanceDisable() {
       return window.FEATURE_TOGGLE.scenario_bkdata !== 'on'
@@ -554,6 +571,9 @@ export default {
     },
     unAuthBkdata() {
       return window.FEATURE_TOGGLE.scenario_bkdata !== 'on';
+    },
+    isSetDisabled() {
+      return this.isSetEdit && this.setDisabled;
     },
   },
   watch: {
@@ -584,16 +604,31 @@ export default {
     }
   },
   async mounted() {
+    // 清洗列表进入
     if (this.isCleanField) {
       this.initCleanItem();
       return;
     }
 
+    // 清洗模板进入
     if (this.isTempField) {
       this.initCleanTemp();
       return;
     }
 
+    // 检索字段提取进入
+    if (this.isSetEdit) {
+      if (this.setId) { // 可设置字段提取
+        this.setDetail(this.setId);
+      } else {
+        setTimeout(() => {
+          this.basicLoading = false;
+        }, 10);
+      }
+      return;
+    }
+
+    // 采集项编辑进入
     await this.getDetail();
     this.getCleanStash(this.curCollect.collector_config_id);
     this.getDataLog('init');
@@ -614,7 +649,11 @@ export default {
         if (data.length) {
           this.cleanCollectorList = data;
           if (this.isEditCleanItem) {
-            this.cleanCollector = this.$route.params.collectorId;
+            if (this.isSetEdit) {
+              this.cleanCollector = this.setId;
+            } else {
+              this.cleanCollector = this.$route.params.collectorId;
+            }
           } else this.basicLoading = false;
         } else this.basicLoading = false;
       })
@@ -716,7 +755,7 @@ export default {
       } = this.formData;
       this.isLoading = true;
       this.basicLoading = true;
-      const data = {
+      let data = {
         clean_type: etl_config,
         etl_params: {
           retain_original_text: etl_params.retain_original_text,
@@ -742,7 +781,24 @@ export default {
 
       let requestUrl;
       const urlParams = {};
-      if (isCollect) { // 缓存采集项清洗配置
+      if (this.isSetEdit) { // 检索设置 直接入库
+        const { 
+          table_id, storage_cluster_id, retention, storage_replies, allocation_min_days, view_roles 
+        } = this.curCollect;
+        urlParams.collector_config_id = this.curCollect.collector_config_id;
+        data = {
+          table_id,
+          storage_cluster_id,
+          retention,
+          storage_replies,
+          allocation_min_days,
+          view_roles,
+          etl_config,
+          fields: data.etl_fields,
+          etl_params,
+        }
+        requestUrl = 'collect/fieldCollection'
+      } else if (isCollect) { // 缓存采集项清洗配置
         urlParams.collector_config_id = this.curCollect.collector_config_id;
         data.bk_biz_id = this.bkBizId;
         requestUrl = 'clean/updateCleanStash';
@@ -752,11 +808,14 @@ export default {
         if (this.isEditTemp) urlParams.clean_template_id = this.$route.params.templateId
         requestUrl = this.isEditTemp ? 'clean/updateTemplate' : 'clean/createTemplate';
       }
-
       const updateData = { params: urlParams, data };
+
       this.$http.request(requestUrl, updateData).then((res) => {
         if (res.code === 0) {
-          if (isCollect) {
+          if (this.isSetEdit) {
+            this.messageSuccess(this.$t('保存成功'));
+            this.$emit('updateLogFields');
+          } else if (isCollect) {
             const step = this.isCleanField ? 2 : null
             this.$emit('stepChange', step);
           } else {
@@ -842,7 +901,10 @@ export default {
     },
     handleCancel(isCollect = false) {
       if (isCollect) return;
-
+      if(this.isSetEdit){
+        this.$emit('reset-page')
+        return
+      }
       const routeName = this.isCleanField ? 'log-clean-list' : 'log-clean-templates';
       this.$router.push({
         name: routeName,
@@ -1192,7 +1254,7 @@ export default {
       }
 
       // 新增清洗未选择采集项
-      if (this.isCleanField && !this.cleanCollector) return;
+      if ((this.isCleanField && !this.cleanCollector) || this.isSetDisabled) return;
 
       // 选择应用模板
       this.isSaveTempDialog = isSave;
@@ -1247,6 +1309,7 @@ export default {
     },
     // 新建、编辑采集项时获取更新详情
     async setDetail(id) {
+      if (!id) return;
       this.$http.request('collect/details', {
         params: { collector_config_id: id },
       }).then(async (res) => {
@@ -1278,7 +1341,6 @@ export default {
         this.basicLoading = false;
         return;
       }
-
       const curCollect = this.cleanCollectorList.find((item) => {
         return item.collector_config_id.toString() === id.toString();
       });

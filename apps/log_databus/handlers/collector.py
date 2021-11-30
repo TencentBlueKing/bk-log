@@ -94,27 +94,35 @@ class CollectorHandler(object):
             except CollectorConfig.DoesNotExist:
                 raise CollectorConfigNotExistException()
 
-    def _multi_info_get(self):
+    def _multi_info_get(self, use_request=True):
         # 并发查询所需的配置
         multi_execute_func = MultiExecuteFunc()
         if self.data.bk_data_id:
             multi_execute_func.append(
-                "data_id_config", TransferApi.get_data_id, params={"bk_data_id": self.data.bk_data_id}
+                "data_id_config",
+                TransferApi.get_data_id,
+                params={"bk_data_id": self.data.bk_data_id},
+                use_request=use_request,
             )
         if self.data.table_id:
             multi_execute_func.append(
-                "result_table_config", TransferApi.get_result_table, params={"table_id": self.data.table_id}
+                "result_table_config",
+                TransferApi.get_result_table,
+                params={"table_id": self.data.table_id},
+                use_request=use_request,
             )
             multi_execute_func.append(
                 "result_table_storage",
                 TransferApi.get_result_table_storage,
                 params={"result_table_list": self.data.table_id, "storage_type": "elasticsearch"},
+                use_request=use_request,
             )
         if self.data.subscription_id:
             multi_execute_func.append(
                 "subscription_config",
                 BKNodeApi.get_subscription_info,
                 params={"subscription_id_list": [self.data.subscription_id]},
+                use_request=use_request,
             )
         return multi_execute_func.run()
 
@@ -246,12 +254,12 @@ class CollectorHandler(object):
         collector_config["created_at"] = format_user_time_zone(collector_config["created_at"], time_zone=time_zone)
         return collector_config
 
-    def retrieve(self):
+    def retrieve(self, use_request=True):
         """
         获取采集配置
         :return:
         """
-        context = self._multi_info_get()
+        context = self._multi_info_get(use_request)
         collector_config = model_to_dict(self.data)
         for process in self.RETRIEVE_CHAIN:
             collector_config = getattr(self, process, lambda x, y: x)(collector_config, context)
@@ -263,15 +271,27 @@ class CollectorHandler(object):
         return [node["bk_inst_id"] for node in nodes if node["bk_obj_id"] == node_type]
 
     @staticmethod
-    def add_cluster_info(data):
+    def bulk_cluster_infos(result_table_list: list):
+        multi_execute_func = MultiExecuteFunc()
+        for rt in result_table_list:
+            multi_execute_func.append(
+                rt, TransferApi.get_result_table_storage, {"result_table_list": rt, "storage_type": "elasticsearch"}
+            )
+        result = multi_execute_func.run()
+        cluster_infos = {}
+        for _, cluster_info in result.items():  # noqa
+            cluster_infos.update(cluster_info)
+        return cluster_infos
+
+    @classmethod
+    def add_cluster_info(cls, data):
         """
         补充集群信息
         """
         result_table_list = [_data["table_id"] for _data in data if _data.get("table_id")]
+        cluster_infos = {}
         try:
-            cluster_infos = TransferApi.get_result_table_storage(
-                {"result_table_list": ",".join(result_table_list), "storage_type": "elasticsearch"}
-            )
+            cluster_infos = cls.bulk_cluster_infos(result_table_list)
         except ApiError as error:
             logger.exception(f"request cluster info error => [{error}]")
             cluster_infos = {}
@@ -397,7 +417,6 @@ class CollectorHandler(object):
         """
         if self.data and not self.data.is_active:
             raise CollectorActiveException()
-
         collector_config_name = params["collector_config_name"]
         collector_config_name_en = params["collector_config_name_en"]
         target_object_type = params["target_object_type"]
@@ -477,8 +496,8 @@ class CollectorHandler(object):
                 )
 
                 bk_data_id = collector_scenario.update_or_create_data_id(
-                    self.data.bk_data_id,
-                    self.data.data_link_id,
+                    bk_data_id=self.data.bk_data_id,
+                    data_link_id=self.data.data_link_id,
                     data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name}",
                     description=description,
                     encoding=META_DATA_ENCODING,
@@ -701,12 +720,21 @@ class CollectorHandler(object):
             return self._run_subscription_task("STOP")
         return True
 
+    @classmethod
+    def _get_kafka_broker(cls, broker_url):
+        """
+        判断是否为内网域名
+        """
+        if "consul" in broker_url and settings.DEFAULT_KAFKA_HOST:
+            return settings.DEFAULT_KAFKA_HOST
+        return broker_url
+
     def tail(self):
         if not self.data.bk_data_id:
             raise CollectorConfigDataIdNotExistException()
         data_result = TransferApi.get_data_id({"bk_data_id": self.data.bk_data_id})
         params = {
-            "server": settings.DEFAULT_KAFKA_HOST or data_result["mq_config"]["cluster_config"]["domain_name"],
+            "server": self._get_kafka_broker(data_result["mq_config"]["cluster_config"]["domain_name"]),
             "port": data_result["mq_config"]["cluster_config"]["port"],
             "topic": data_result["mq_config"]["storage_config"]["topic"],
             "username": data_result["mq_config"]["auth_info"]["username"],
@@ -1356,8 +1384,8 @@ class CollectorHandler(object):
         :return:
         """
         param = {"subscription_id_list": [self.data.subscription_id]}
-        status_result = NodeApi.get_subscription_instance_status(param)
-        instance_status = self.format_subscription_instance_status(status_result[0])
+        status_result, *_ = NodeApi.get_subscription_instance_status(param)
+        instance_status = self.format_subscription_instance_status(status_result)
 
         # 如果采集目标是HOST-INSTANCE
         if self.data.target_node_type == TargetNodeTypeEnum.INSTANCE.value:

@@ -31,16 +31,13 @@ from apps.log_extract.utils.packing import (
     get_packed_file_name,
     get_filter_content,
 )
-from apps.log_extract.components.collections.base_component import BaseService
+from apps.utils.pipline import BaseService
 
 
 class FilePackingService(BaseService):
     name = _("文件打包")
     __need_schedule__ = True
     interval = StaticIntervalGenerator(BaseService.TASK_POLLING_INTERVAL)
-
-    def __init__(self):
-        super().__init__(name=self.name)
 
     def inputs_format(self):
         return [

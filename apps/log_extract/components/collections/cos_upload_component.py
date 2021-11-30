@@ -24,7 +24,7 @@ from pipeline.core.flow import StaticIntervalGenerator, Service
 from apps.log_extract.constants import DownloadStatus
 from apps.log_extract.fileserver import FileServer
 from apps.log_extract.models import Tasks, ExtractLink
-from apps.log_extract.components.collections.base_component import BaseService
+from apps.utils.pipline import BaseService
 from apps.log_extract.utils.packing import get_packed_file_name
 
 
@@ -32,9 +32,6 @@ class CosUploadService(BaseService):
     name = _("Cos 文件上传")
     __need_schedule__ = True
     interval = StaticIntervalGenerator(BaseService.TASK_POLLING_INTERVAL)
-
-    def __init__(self):
-        super().__init__(name=self.name)
 
     def outputs(self):
         return [

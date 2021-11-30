@@ -21,19 +21,32 @@
   -->
 
 <template>
-  <div class="monitor-echarts-container" data-test-id="retrieve_div_generalTrendEcharts" v-bkloading="{ isLoading }">
+  <div
+    :class="['monitor-echarts-container', { 'is-fold': isFold }]"
+    data-test-id="retrieve_div_generalTrendEcharts"
+    v-bkloading="{ isLoading: false }">
+    <chart-title
+      ref="chartTitle"
+      :title="$t('总趋势')"
+      :menu-list="chartOptions.tool.list"
+      :is-fold="isFold"
+      :loading="isLoading || !finishPolling"
+      @toggle-expand="toggleExpand"
+      @menu-click="handleMoreToolItemSet">
+    </chart-title>
     <MonitorEcharts
       v-if="isRenderChart"
-      v-show="!isLoading"
+      v-show="!isFold && !isLoading"
       ref="chartRef"
       chart-type="bar"
+      :is-fold="isFold"
       :title="$t('总趋势')"
       :key="chartKey"
       :line-width="2"
       :options="chartOptions"
       :get-series-data="getSeriesData"
-      @toggle-expand="toggleExpand"
-      @dblclick="handleDbClick" />
+      @dblclick="handleDbClick"
+      @chart-loading="handleChartLoading" />
     <div v-if="isEmptyChart && !isFold" class="chart-empty">
       <svg class="icon-chart" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="256" height="256">
         <path d="M128 160h64v640h704v64H128z"></path>
@@ -66,10 +79,12 @@
 import { formatDate } from '@/common/util';
 import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
 import MonitorEcharts from '@/components/monitor-echarts/monitor-echarts-new';
+import ChartTitle from '@/components/monitor-echarts/components/chart-title-new.vue';
 
 export default {
   components: {
     MonitorEcharts,
+    ChartTitle,
   },
   mixins: [indexSetSearchMixin],
   props: {
@@ -283,6 +298,13 @@ export default {
     toggleExpand(isFold) {
       this.isFold = isFold;
       localStorage.setItem('chartIsFold', isFold);
+      this.$refs.chartRef.handleToggleExpand(isFold);
+    },
+    handleMoreToolItemSet(event) {
+      this.$refs.chartRef.handleMoreToolItemSet(event);
+    },
+    handleChartLoading(isLoading) {
+      this.isLoading = isLoading;
     },
   },
 };
@@ -291,19 +313,16 @@ export default {
 <style lang="scss" scoped>
   .monitor-echarts-container {
     position: relative;
-    margin: 0 20px;
-    width: calc(100% - 40px);
-    // height: 310px;
-    // height: 200px;
-    // border: 1px solid #DCDEE5;
+    height: 200px;
     background-color: #fff;
     overflow: hidden;
-
+    &.is-fold {
+      height: 60px;
+    }
     /deep/ .echart-legend {
       display: flex;
       justify-content: center;
     }
-
     .converge-cycle {
       position: absolute;
       top: 21px;
@@ -312,14 +331,12 @@ export default {
       color: #63656e;
       display: inline-block;
       margin-left: 32px;
-
       .select-custom {
         display: inline-block;
         margin-left: 5px;
         vertical-align: middle;
       }
     }
-
     .chart-empty {
       position: absolute;
       top: 0;
@@ -330,17 +347,21 @@ export default {
       align-items: center;
       flex-direction: column;
       background: #fff;
-
       .icon-chart {
         width: 38px;
         height: 38px;
         fill: #dcdee6;
       }
-
       .text {
         color: #979ba5;
         font-size: 14px;
       }
+    }
+    .title-wrapper {
+      padding: 18px 24px 0;
+    }
+    .monitor-echart-wrap {
+      padding-top: 0;
     }
   }
 </style>

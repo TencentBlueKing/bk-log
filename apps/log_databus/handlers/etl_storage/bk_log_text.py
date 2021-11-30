@@ -17,6 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import copy
+
 from apps.log_databus.constants import EtlConfig
 from apps.log_databus.handlers.etl_storage import EtlStorage
 
@@ -45,6 +47,7 @@ class BkLogTextEtlStorage(EtlStorage):
         return {
             "option": built_in_config.get("option", {}),
             "field_list": built_in_fields
+            + (fields or [])
             + [built_in_config["time_field"]]
             + [
                 {
@@ -60,4 +63,64 @@ class BkLogTextEtlStorage(EtlStorage):
             ],
             "time_alias_name": built_in_config["time_field"]["alias_name"],
             "time_option": built_in_config["time_field"]["option"],
+        }
+
+    def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
+        built_in_fields = built_in_config.get("fields", [])
+        result_table_fields = self.get_result_table_fields(fields, etl_params, copy.deepcopy(built_in_config))
+        time_field = result_table_fields.get("time_field")
+
+        return {
+            "extract": {
+                "method": "from_json",
+                "next": {
+                    "next": [
+                        {
+                            "default_type": "null",
+                            "default_value": "",
+                            "next": {
+                                "method": "iterate",
+                                "next": {
+                                    "next": None,
+                                    "subtype": "assign_obj",
+                                    "label": "labelb140f1",
+                                    "assign": [
+                                        {"key": "data", "assign_to": "data", "type": "text"},
+                                    ]
+                                    + [
+                                        self._to_bkdata_assign(built_in_field)
+                                        for built_in_field in built_in_fields
+                                        if built_in_field.get("flat_field", False)
+                                    ],
+                                    "type": "assign",
+                                },
+                                "label": "label21ca91",
+                                "result": "iter_item",
+                                "args": [],
+                                "type": "fun",
+                            },
+                            "label": "label36c8ad",
+                            "key": "items",
+                            "result": "item_data",
+                            "subtype": "access_obj",
+                            "type": "access",
+                        },
+                        {
+                            "next": None,
+                            "subtype": "assign_obj",
+                            "label": "labelf676c9",
+                            "assign": self._get_bkdata_default_fields(built_in_fields, time_field),
+                            "type": "assign",
+                        },
+                    ],
+                    "name": "",
+                    "label": None,
+                    "type": "branch",
+                },
+                "result": "json_data",
+                "label": "label04a222",
+                "args": [],
+                "type": "fun",
+            },
+            "conf": self._to_bkdata_conf(time_field),
         }

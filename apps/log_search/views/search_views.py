@@ -518,9 +518,43 @@ class SearchViewSet(APIViewSet):
             "message": "",
             "code": 0,
             "data": {
-                "ip_topo_switch": true,
-                "context_search_usable": false,
-                "realtime_search_usable": false,
+                "config": [
+                    {
+                        "name": "bcs_web_console"
+                        "is_active": True,
+                    },
+                    {
+                        name: "bkmonitor",
+                        "is_active": True,
+                    },
+                    {
+                        "name": "ip_topo_switch",
+                        "is_active": True,
+                    },
+                    {
+                        "name": "async_export",
+                        "is_active": True, # async_export_usable
+                        "extra": {
+                            "fields": ["dtEventTimeStamp", "serverIp", "gseIndex", "iterationIndex"],
+                            "usable_reason": ""
+                        }
+                    },
+                    {
+                        "name": "context_and_realtime", # context_search_usable realtime_search_usable
+                        "is_active": True,
+                        "extra": {
+                            "reason": ""  #usable_reason
+                        }
+                    },
+                    {
+                        "name": "trace",
+                        "is_active": True,
+                        "extra": {
+                            field: "trace_id"
+                            index_set_name: "test_stag_oltp"
+                        }
+                    },
+                ],
                 "display_fields": ["dtEventTimeStamp", "log"],
                 "fields": [
                     {

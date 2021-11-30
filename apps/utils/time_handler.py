@@ -361,6 +361,22 @@ def generate_time_range(time_range, start_time, end_time, local_time_zone):
     return _start_time, _end_time
 
 
+def generate_time_range_shift(start_time, end_time, shift, local_time_zone=None):
+    """
+    :param start_time:
+    :param end_time:
+    :param shift:  分钟
+    :param local_time_zone:
+    :return:
+    """
+    if not local_time_zone:
+        from apps.utils.local import get_local_param
+
+        local_time_zone = get_local_param("time_zone")
+    start_time, end_time = _customize_time_range(start_time, end_time, local_time_zone)
+    return start_time.shift(minutes=-shift), end_time.shift(minutes=-shift)
+
+
 def _customize_time_range(start_time, end_time, local_time_zone):
     """
     自定义时间
