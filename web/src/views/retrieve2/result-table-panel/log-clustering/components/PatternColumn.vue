@@ -25,10 +25,10 @@
     <cluster-event-popover
       v-if="isMountPatter"
       @eventClick="handleClickIcon">
-      <span>{{context}}</span>
+      <span>{{showContext}}</span>
     </cluster-event-popover>
     <span v-else>
-      {{context}}
+      {{showContext}}
     </span>
     <p
       v-if="!cacheExpandStr.includes(patternIndex)"
@@ -63,6 +63,11 @@ export default {
       isMountPatter: true,
       cacheExpandStr: [],
     };
+  },
+  computed: {
+    showContext() {
+      return this.context ? this.context : this.$t('未匹配');
+    },
   },
   deactivated() {
     this.isMountPatter = false;

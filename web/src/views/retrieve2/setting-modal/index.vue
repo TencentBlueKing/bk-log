@@ -208,6 +208,7 @@ export default {
       if (this.isSubmit) {
         this.currentChoice = val;
         this.showComponent = this.currentList[index].componentsName;
+        this.isSubmit = false;
         return;
       }
       this.$bkInfo({
@@ -233,6 +234,7 @@ export default {
         this.isShowPage = true;
       });
     },
+    // nav开关
     stopChangeSwitch(index, isDisable) {
       if (isDisable) return;
       if (!this.currentList[index].isEditable) {
