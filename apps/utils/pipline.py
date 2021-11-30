@@ -47,11 +47,19 @@ class BaseService(Service):
         super().__init__(name=self.name)
 
     def execute(self, data, parent_data, is_raise_exception=False):
+        reason = ""
         username = data.get_one_of_inputs("username")
+        root_pipeline_id = getattr(self, "root_pipeline_id", "")
+        node_id = getattr(self, "id", "")
         if username:
             set_request_username(username)
         if hasattr(self, "logger"):
-            self.logger.info(_("开始{name}").format(name=self.name))
+            if hasattr(self, "root_pipeline_id"):
+                self.logger.info(
+                    _("开始{name} pipeline_id=>{pipeline_id} node_id=>{node_id} ").format(
+                        name=self.name, pipeline_id=root_pipeline_id, node_id=node_id
+                    )
+                )
         try:
             result = self._execute(data, parent_data)
             if not result and hasattr(self, "logger"):
@@ -71,11 +79,23 @@ class BaseService(Service):
                 raise Exception(reason)
             result = False
 
+        if not result:
+            PIPELINE_MONITOR_EVENT(
+                content=f"{traceback.format_exc()} => {reason}",
+                dimensions={"pipeline_id": root_pipeline_id, "node_id": node_id, "pipeline_name": str(self.name)},
+            )
         return result
 
     def schedule(self, data, parent_data, callback_data=None):
+        root_pipeline_id = getattr(self, "root_pipeline_id", "")
+        node_id = getattr(self, "id", "")
+
         if hasattr(self, "logger"):
-            self.logger.info(_("开始轮询结果：{name}").format(name=self.name))
+            self.logger.info(
+                _("开始轮询结果：{name} pipeline_id=>{pipeline_id} node_id=>{node_id} ").format(
+                    name=self.name, pipeline_id=root_pipeline_id, node_id=node_id
+                )
+            )
         reason = ""
         try:
             result = self._schedule(data, parent_data, callback_data)
@@ -92,7 +112,7 @@ class BaseService(Service):
         if not result:
             PIPELINE_MONITOR_EVENT(
                 content=f"{traceback.format_exc()} => {reason}",
-                dimensions={"pipeline_id": self.root_pipeline_id, "node_id": self.id, "pipeline_name": str(self.name)},
+                dimensions={"pipeline_id": root_pipeline_id, "node_id": node_id, "pipeline_name": str(self.name)},
             )
         return result
 
