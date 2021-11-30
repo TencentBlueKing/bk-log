@@ -26,11 +26,11 @@
       <div class="cluster-nav" v-if="exhibitAll">
         <div class="bk-button-group">
           <bk-button
+            size="small"
             v-for="(item) of clusterNavList"
             :key="item.id"
             :class="active === item.id ? 'is-selected' : ''"
-            @click="handleClickNav(item.id)"
-            size="small">
+            @click="handleClickNav(item.id)">
             {{item.name}}
           </bk-button>
         </div>
@@ -43,25 +43,40 @@
               <bk-select
                 behavior="simplicity"
                 ext-cls="compared-select"
+                ext-popover-cls="compared-select-option"
                 v-model="yearOnYearCycle"
                 :disabled="!signatureSwitch"
                 :clearable="false"
-                :popover-min-width="120"
-                @change="requestFinger">
+                :popover-min-width="140"
+                @change="requestFinger"
+                @toggle="isClickCustomize = true">
                 <bk-option
                   v-for="option in comparedList"
                   :key="option.id"
                   :id="option.id"
                   :name="option.name">
                 </bk-option>
+                <div slot="" class="compared-customize">
+                  <div class="customize-option" v-if="isClickCustomize" @click="isClickCustomize = false">
+                    <span>{{$t('自定义')}}</span>
+                  </div>
+                  <div v-else>
+                    <bk-input @enter="handleEnterCompared"></bk-input>
+                    <div class="compared-select-icon">
+                      <span v-bk-tooltips="$t('customizeTips')" class="top-end">
+                        <i class="log-icon icon-help"></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </bk-select>
             </div>
 
             <bk-checkbox
+              v-model="showNewPattern"
               :true-value="true"
               :false-value="false"
-              :disabled="!signatureSwitch"
-              @change="handleNear24H">
+              :disabled="!signatureSwitch">
               <span style="font-size: 12px">{{$t('近24H新增')}}</span>
             </bk-checkbox>
 
@@ -116,6 +131,7 @@
             v-if="active === 'dataFingerprint'"
             v-bind="$attrs"
             v-on="$listeners"
+            :show-new-pattern="showNewPattern"
             :year-on-year-cycle="yearOnYearCycle"
             :cluster-switch="clusterSwitch"
             :partter-level="partterLevel"
@@ -203,14 +219,14 @@ export default {
       clusterSwitch: false, // 日志聚类开关
       signatureSwitch: false, // 数据指纹开关
       partterList: [], // partter敏感度List
-      isNear24H: false, // 近24h
+      showNewPattern: false, // 近24h
       yearOnYearCycle: 0, // 同比值
       configID: -1, // 采集项ID
       exhibitAll: false, // 是否显示nav
       alreadyClickNav: [], // 已加载过的nav
       globalLoading: false, // 日志聚类大loading
       tableLoading: false, // 详情loading
-      isHaveText: false, // 是否有text字段
+      isClickCustomize: true, // 是否显示自定义
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -311,9 +327,27 @@ export default {
         this.showTableLoading('table');
       }
     },
-    handleNear24H(state) {
-      this.isNear24H = state;
-      this.requestFinger();
+    // 同比自定义输入
+    handleEnterCompared(val) {
+      const matchVal = val.match(/^(\d+)h$/);
+      if (!matchVal) {
+        this.$bkMessage({
+          theme: 'warning',
+          message: this.$t('请按照提示输入'),
+        });
+        return;
+      }
+      this.isClickCustomize = true;
+      const isRepeat =  this.comparedList.some(el => el.id === Number(matchVal[1]));
+      if (isRepeat) {
+        this.yearOnYearCycle = Number(matchVal[1]);
+        return;
+      }
+      this.comparedList.push({
+        id: Number(matchVal[1]),
+        name: `${matchVal[1]}小时前`,
+      });
+      this.yearOnYearCycle = Number(matchVal[1]);
     },
     // 请求数据指纹
     requestFinger() {
@@ -327,7 +361,7 @@ export default {
         data: {
           ...this.retrieveParams,
           pattern_level: this.partterLevel,
-          show_new_pattern: this.isNear24H,
+          show_new_pattern: true,
           year_on_year_hour: this.yearOnYearCycle,
         },
       })
@@ -430,6 +464,7 @@ export default {
     margin-bottom: 16px;
   }
 }
+
 .compared-select {
   min-width: 87px;
   margin-left: 6px;
@@ -438,6 +473,34 @@ export default {
 
   .bk-select-name {
     height: 24px;
+  }
+}
+
+.compared-select-option{
+  .compared-customize{
+    position: relative;
+    margin-bottom: 6px;
+  }
+  .compared-select-icon{
+    font-size: 14px;
+    position: absolute;
+    right: 18px;
+    top: 2px;
+  }
+  .customize-option{
+    padding:0 18px;
+    cursor: pointer;
+    &:hover{
+      color:#3A84FF;
+      background: #EAF3FF;
+    }
+  }
+  .bk-form-control{
+    width: 80%;
+    margin: 0 auto;
+  }
+  .bk-form-input{
+    padding: 0 18px 0 10px !important;
   }
 }
 
