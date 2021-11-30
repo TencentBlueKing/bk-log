@@ -101,7 +101,7 @@ export default {
       tableData: [],
       cacheExpandStr: [],
       ignoreNumberReg: /(\d{1,})|([1-9]\d+)/g,
-      ignoreSymbolReg: /(\d{1,})|([-`!@#$%^&*(){}<>[\]_+=":,\\/\d]+)/g,
+      ignoreSymbolReg: /(\d{1,})|([-`.!@#$%^&*(){}<>[\]_+=":;,\\/\d]+)/g,
     };
   },
   watch: {
@@ -122,7 +122,8 @@ export default {
       this.tableData = (this.originTableList || []).reduce((pre, next) => {
         const regExp = this.active === 'ignoreNumbers' ? this.ignoreNumberReg : this.ignoreSymbolReg;
         const sampleField = next[this.clusteringField];
-        const valStr = sampleField.toString().replace(regExp, '*');
+        const valStr = sampleField.toString().replace(regExp, '*')
+          .replace(/\*(\s|\*)+/g, '*');
         const ascription = pre.find(item => item.content === valStr);
         if (!ascription) {
           pre.push({
