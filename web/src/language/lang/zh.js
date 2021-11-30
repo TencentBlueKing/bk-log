@@ -283,6 +283,7 @@ export default {
   展开全部: '展开全部',
   收起: '收起',
   过滤项: '过滤项',
+  空: '空',
   // 检索设置弹窗
   retrieveSetting: {
     setting: '设置',
@@ -707,6 +708,7 @@ export default {
     tips_development: '，如果需要支持更大存储，请与开发团队联系或使用独立集群',
     tips_business: ' 此业务已超过集群容量限制，请与开发团队联系或使用独立集群',
     tips_formula: ' ES存储 ≈ 每天原始日志量 * 1.5（ES转化率） * 2（1个副本） * 存储天数',
+    dataId: '数据ID',
   },
   新建数据源: '新建数据源',
   编辑数据源: '编辑数据源',

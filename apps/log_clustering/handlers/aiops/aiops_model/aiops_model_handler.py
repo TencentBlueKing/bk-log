@@ -1034,8 +1034,6 @@ class AiopsModelHandler(BaseAiopsHandler):
         delimeter: str,
         max_log_length: int,
         is_case_sensitive: int,
-        cache_id: str = "log_analysis",
-        use_user_cache_id: int = 0,
     ):
         aiops_experiment_debug_request = AiopsExperimentsDebugCls(
             project_id=self.conf.get("project_id"),
@@ -1053,8 +1051,6 @@ class AiopsModelHandler(BaseAiopsHandler):
                     {"field_name": "delimeter", "value": delimeter},
                     {"field_name": "max_log_length", "value": max_log_length},
                     {"field_name": "is_case_sensitive", "value": is_case_sensitive},
-                    {"field_name": "cache_id", "value": cache_id},
-                    {"field_name": "use_user_cache_id", "value": use_user_cache_id},
                 ],
             ),
         )

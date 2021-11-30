@@ -24,7 +24,7 @@ from pipeline.component_framework.component import Component
 from pipeline.builder import ServiceActivity, Var
 
 from apps.log_clustering.handlers.aiops.sample_set.sample_set_handler import SampleSetHandler
-from apps.log_clustering.models import SampleSet
+from apps.log_clustering.models import SampleSet, ClusteringConfig
 from apps.utils.pipline import BaseService
 
 
@@ -40,8 +40,10 @@ class CreateSampleSetService(BaseService):
     def _execute(self, data, parent_data):
         sample_set_name = data.get_one_of_inputs("sample_set_name")
         description = data.get_one_of_inputs("description")
+        collector_config_id = data.get_one_of_inputs("collector_config_id")
         sample_set = SampleSetHandler().create(sample_set_name=sample_set_name, description=description)
         SampleSet.objects.create(**{"sample_set_id": sample_set["id"], "sample_set_name": sample_set_name})
+        ClusteringConfig.objects.filter(collector_config_id=collector_config_id).update(sample_set_id=sample_set["id"])
         return True
 
 
@@ -58,6 +60,9 @@ class CreateSampleSet(object):
         )
         self.create_sample_set.component.inputs.sample_set_name = Var(type=Var.SPLICE, value="${sample_set_name}")
         self.create_sample_set.component.inputs.description = Var(type=Var.SPLICE, value="${description}")
+        self.create_sample_set.component.inputs.collector_config_id = Var(
+            type=Var.SPLICE, value="${collector_config_id}"
+        )
 
 
 class AddRtToSampleSetService(BaseService):
@@ -71,9 +76,13 @@ class AddRtToSampleSetService(BaseService):
 
     def _execute(self, data, parent_data):
         sample_set_name = data.get_one_of_inputs("sample_set_name")
-        result_table_id = data.get_one_of_inputs("result_table_id")
+        collector_config_id = data.get_one_of_inputs("collector_config_id")
         sample_set_id = SampleSet.objects.get(sample_set_name=sample_set_name).sample_set_id
-        SampleSetHandler().add_rt_to_sample_set(sample_set_id=sample_set_id, result_table_id=result_table_id)
+        clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
+        SampleSetHandler().add_rt_to_sample_set(
+            sample_set_id=sample_set_id,
+            result_table_id=clustering_config.pre_treat_flow["sample_set"]["result_table_id"],
+        )
         return True
 
 
@@ -89,7 +98,9 @@ class AddRtToSampleSet(object):
             component_code="add_rt_to_sample_set", name=f"add_rt_to_sample_set:{sample_set_name}"
         )
         self.add_rt_to_sample_set.component.inputs.sample_set_name = Var(type=Var.SPLICE, value="${sample_set_name}")
-        self.add_rt_to_sample_set.component.inputs.result_table_id = Var(type=Var.SPLICE, value="${result_table_id}")
+        self.add_rt_to_sample_set.component.inputs.collector_config_id = Var(
+            type=Var.SPLICE, value="${collector_config_id}"
+        )
 
 
 class CollectConfigsService(BaseService):
