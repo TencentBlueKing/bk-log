@@ -19,7 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.handlers.aiops.aiops_model.constants import StepName
-from apps.log_clustering.models import AiopsModel, AiopsModelExperiment, SampleSet
+from apps.log_clustering.models import AiopsModel, AiopsModelExperiment, SampleSet, ClusteringConfig
 from apps.log_clustering.tasks.sync_pattern import sync
 from apps.utils.pipline import BaseService
 from django.utils.translation import ugettext_lazy as _
@@ -40,8 +40,12 @@ class CreateModelService(BaseService):
     def _execute(self, data, parent_data):
         model_name = data.get_one_of_inputs("model_name")
         description = data.get_one_of_inputs("description")
+        collector_config_id = data.get_one_of_inputs("collector_config_id")
         aiops_models = AiopsModelHandler().create_model(model_name=model_name, description=description)
         AiopsModel.objects.create(**{"model_id": aiops_models["model_id"], "model_name": model_name})
+        ClusteringConfig.objects.filter(collector_config_id=collector_config_id).update(
+            model_id=aiops_models["model_id"]
+        )
         return True
 
 
@@ -56,6 +60,7 @@ class CreateModel(object):
         self.create_model = ServiceActivity(component_code="create_model", name=f"create_model:{model_name}")
         self.create_model.component.inputs.model_name = Var(type=Var.SPLICE, value="${model_name}")
         self.create_model.component.inputs.description = Var(type=Var.SPLICE, value="${description}")
+        self.create_model.component.inputs.collector_config_id = Var(type=Var.SPLICE, value="${collector_config_id}")
 
 
 class UpdateTrainingScheduleService(BaseService):
