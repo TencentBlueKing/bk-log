@@ -49,7 +49,7 @@
                 :clearable="false"
                 :popover-min-width="140"
                 @change="requestFinger"
-                @toggle="isClickCustomize = true">
+                @toggle="isShowCustomize = true">
                 <bk-option
                   v-for="option in comparedList"
                   :key="option.id"
@@ -57,7 +57,7 @@
                   :name="option.name">
                 </bk-option>
                 <div slot="" class="compared-customize">
-                  <div class="customize-option" v-if="isClickCustomize" @click="isClickCustomize = false">
+                  <div class="customize-option" v-if="isShowCustomize" @click="isShowCustomize = false">
                     <span>{{$t('自定义')}}</span>
                   </div>
                   <div v-else>
@@ -226,7 +226,7 @@ export default {
       alreadyClickNav: [], // 已加载过的nav
       globalLoading: false, // 日志聚类大loading
       tableLoading: false, // 详情loading
-      isClickCustomize: true, // 是否显示自定义
+      isShowCustomize: true, // 是否显示自定义
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -308,11 +308,11 @@ export default {
           }
           this.partterLevel === '' && this.initTable();
           this.exhibitAll = newList.some(el => el.field_type === 'text');
-          this.alreadyClickNav = [];
         }
       },
     },
     '$route.params.indexId'() {
+      this.alreadyClickNav = [];
       this.showTableLoading('global');
     },
   },
@@ -339,7 +339,7 @@ export default {
         });
         return;
       }
-      this.isClickCustomize = true;
+      this.isShowCustomize = true;
       const isRepeat =  this.comparedList.some(el => el.id === Number(matchVal[1]));
       if (isRepeat) {
         this.yearOnYearCycle = Number(matchVal[1]);
