@@ -23,6 +23,9 @@ from blueapps.conf.log import get_logging_config_dict
 from blueapps.conf.default_settings import *  # noqa
 from django.utils.translation import ugettext_lazy as _
 
+# 使用k8s部署模式
+IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
+
 # 这里是默认的 INSTALLED_APPS，大部分情况下，不需要改动
 # 如果你已经了解每个默认 APP 的作用，确实需要去掉某些 APP，请去掉下面的注释，然后修改
 # INSTALLED_APPS = (
@@ -126,7 +129,10 @@ MIDDLEWARE = (
 #
 STATIC_VERSION = "1.0"
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+if IS_K8S_DEPLOY_MODE:
+    STATIC_ROOT = "static"
+else:
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 # ==============================================================================
 # SENTRY相关配置
@@ -188,9 +194,6 @@ if RUN_VER != "open":
             ),
         }
         LOGGING["formatters"]["verbose"] = logging_format
-
-# 使用k8s部署模式
-IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
 
 if IS_K8S_DEPLOY_MODE:
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
