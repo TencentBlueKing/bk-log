@@ -74,7 +74,7 @@ class FavoriteHandlers(object):
         key_word = params.get("keyword", "")
         if key_word is None:
             key_word = ""
-        query_string = "keyword:" + key_word
+        query_string = key_word
 
         # IP快选、过滤条件
         host_scopes = params.get("host_scopes", {})
