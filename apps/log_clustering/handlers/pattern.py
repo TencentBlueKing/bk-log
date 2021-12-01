@@ -31,6 +31,7 @@ from apps.log_clustering.constants import (
     NEW_CLASS_QUERY_FIELDS,
     NEW_CLASS_SENSITIVITY_FIELD,
     DOUBLE_PERCENTAGE,
+    NEW_CLASS_FIELD_PREFIX,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig
@@ -152,6 +153,10 @@ class PatternHandler:
     def pattern_aggs_field(self) -> str:
         return f"{AGGS_FIELD_PREFIX}_{self._pattern_level}"
 
+    @cached_property
+    def new_class_field(self) -> str:
+        return f"{NEW_CLASS_FIELD_PREFIX}_{self._pattern_level}"
+
     @staticmethod
     def _parse_pattern_aggs_result(pattern_field: str, aggs_result: dict) -> List[dict]:
         aggs = aggs_result.get("aggs")
@@ -167,7 +172,7 @@ class PatternHandler:
         new_classes = (
             BkData(self._clustering_config.new_cls_pattern_rt)
             .select(*NEW_CLASS_QUERY_FIELDS)
-            .where(NEW_CLASS_SENSITIVITY_FIELD, "=", self.pattern_aggs_field)
+            .where(NEW_CLASS_SENSITIVITY_FIELD, "=", self.new_class_field)
             .time_range(start_time.timestamp, end_time.timestamp)
             .query()
         )
