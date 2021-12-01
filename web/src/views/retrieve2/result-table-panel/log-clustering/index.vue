@@ -95,15 +95,6 @@
               </div>
             </div>
           </div>
-
-          <export-log
-            :retrieve-params="retrieveParams"
-            :total-count="totalCount"
-            :queue-status="queueStatus"
-            :async-export-usable="asyncExportUsable"
-            :async-export-usable-reason="asyncExportUsableReason">
-          </export-log>
-
         </div>
       </div>
 
@@ -168,10 +159,9 @@ import DataFingerprint from './DataFingerprint';
 import IgnoreTable from './IgnoreTable';
 import ClusteringLoader from '@/skeleton/clustering-loader';
 import { mapGetters } from 'vuex';
-import ExportLog from '../../result-comp/ExportLog.vue';
 
 export default {
-  components: { DataFingerprint, IgnoreTable, ClusteringLoader, ExportLog },
+  components: { DataFingerprint, IgnoreTable, ClusteringLoader },
   props: {
     retrieveParams: {
       type: Object,
@@ -192,22 +182,6 @@ export default {
     originTableList: {
       type: Array,
       required: true,
-    },
-    totalCount: {
-      type: Number,
-      default: 0,
-    },
-    queueStatus: {
-      type: Boolean,
-      default: true,
-    },
-    asyncExportUsable: {
-      type: Boolean,
-      default: true,
-    },
-    asyncExportUsableReason: {
-      type: String,
-      default: '',
     },
   },
   data() {
@@ -424,10 +398,6 @@ export default {
     min-width: 760px;
     margin-bottom: 12px;
     color: #63656e;
-
-    .fingerprint {
-      width: 535px;
-    }
 
     .fingerprint-setting {
       width: 485px;
