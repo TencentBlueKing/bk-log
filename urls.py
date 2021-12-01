@@ -58,6 +58,4 @@ urlpatterns = [
     url(r"^{}".format(config.ENTRANCE_URL), include("version_log.urls")),
     url(r"^api/v1/log_extract/", include("apps.log_extract.urls")),
     url(r"^static/(?P<path>.*)$", static.serve, {"document_root": settings.STATIC_ROOT}, name="static"),
-    # prom
-    url(r"", include("django_prometheus.urls")),
 ]
