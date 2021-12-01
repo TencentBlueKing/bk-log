@@ -22,7 +22,7 @@
 
 <template>
   <div>
-    <div class="log-cluster-table-container" v-show="!globalLoading">
+    <div class="log-cluster-table-container" v-if="!globalLoading">
       <div class="cluster-nav" v-if="exhibitAll">
         <div class="bk-button-group">
           <bk-button
@@ -157,7 +157,7 @@
     </div>
     <clustering-loader
       is-loading
-      v-show="globalLoading"
+      v-else
       :width-list="loadingWidthList.global">
     </clustering-loader>
   </div>
@@ -302,7 +302,6 @@ export default {
       immediate: true,
       handler(newList) {
         if (newList.length !== 0) {
-          this.showTableLoading('global');
           if (!this.configData.is_active) {
             this.exhibitAll = false;
             return;
@@ -312,6 +311,9 @@ export default {
           this.alreadyClickNav = [];
         }
       },
+    },
+    '$route.params.indexId'() {
+      this.showTableLoading('global');
     },
   },
   methods: {
