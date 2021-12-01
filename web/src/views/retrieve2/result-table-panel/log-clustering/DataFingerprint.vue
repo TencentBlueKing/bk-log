@@ -45,7 +45,7 @@
       <bk-table-column :label="$t('占比')" :sortable="true" width="96" prop="source">
         <template slot-scope="props">
           <span class="link-color" @click="handleMenuClick('show original',props.row)">
-            {{`${props.row.percentage.toFixed(4)}%`}}
+            {{`${props.row.percentage.toFixed(2)}%`}}
           </span>
         </template>
       </bk-table-column>
@@ -227,12 +227,7 @@ export default {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    line-height: 20px;
-    max-height: 16px;
-  }
-
-  td.symbol-column {
-    padding: 10px 0px;
+    line-height: 24px;
   }
 
   .empty-text {
@@ -256,7 +251,6 @@ export default {
   height: 16px;
   font-size: 12px;
   line-height: 14px;
-  margin: 4px 0 0 3px;
   text-align: center;
   color: #EA3636;
   background: #FFEEEE;
@@ -264,28 +258,6 @@ export default {
   border-radius: 9px;
 }
 
-// .pattern-icons {
-//   width: 60px;
-//   position: relative;
-//   .bk-icon {
-//     margin-right: 6px;
-//   }
-//   .icon-eye{
-//     font-size: 14px !important;
-//     cursor: pointer;
-//   }
-//   .icon-chart{
-//     font-size: 12px !important;
-//     cursor: pointer;
-//   }
-//   .icon-copy {
-//     font-size: 26px;
-//     position: absolute;
-//     right: -8px;
-//     top: -4px;
-//     cursor: pointer;
-//   }
-// }
 
 .link-color {
   color: #3a84ff;

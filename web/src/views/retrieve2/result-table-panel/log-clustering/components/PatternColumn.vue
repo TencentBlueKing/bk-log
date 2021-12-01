@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div :class="['symbol-content', { 'is-limit': !cacheExpandStr.includes(patternIndex) }]">
+  <div :class="['pattern-content', { 'is-limit': !cacheExpandStr.includes(patternIndex) }]">
     <cluster-event-popover
       v-if="isMountPatter"
       @eventClick="handleClickIcon">
@@ -121,21 +121,16 @@ export default {
 </script>
 
 <style lang="scss">
-  .symbol-content {
+  .pattern-content {
     display: inline-block;
     padding-right: 15px;
     position: relative;
-    line-height: 20px;
+    padding-top: 4px;
     overflow: hidden;
     &.is-limit {
       max-height: 96px;
     }
   }
-  // .hover-row {
-  //   .show-whole-btn{
-  //     background-color: #f0f1f5;
-  //   }
-  // }
   .show-whole-btn {
     position: absolute;
     top: 80px;
