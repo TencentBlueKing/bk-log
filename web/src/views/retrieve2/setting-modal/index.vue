@@ -288,7 +288,8 @@ export default {
       if (!this.isClusteringActive && this.currentChoice === 'clustering') {
         this.currentList[1].isEditable = false;
       }
-      if (!this.isSubmit && this.currentChoice === 'extract' && this.currentList[0].isDisabled !== true) {
+      if (!this.isSubmit && this.currentChoice === 'extract'
+       && this.currentList[0].isDisabled !== true && !this.isExtractActive) {
         this.currentList[0].isEditable = false;
       }
     },

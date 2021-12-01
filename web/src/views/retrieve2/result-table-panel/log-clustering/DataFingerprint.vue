@@ -167,7 +167,7 @@ export default {
     handleMenuClick(option, row) {
       switch (option) {
         case 'show original':
-          this.addFilterCondition(`dist_${this.partterLevel}`, 'is', row.signature.toString());
+          this.addFilterCondition(`__dist_${this.partterLevel}`, 'is', row.signature.toString());
           this.$emit('showOriginLog');
           break;
         case 'copy':
