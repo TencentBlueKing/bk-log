@@ -37,10 +37,11 @@
             class="ml200" style="width: 482px;"
             :disabled="!globalEditable"
             :clearable="false">
-            <bk-option v-for="option in clusterField"
-                       :key="option.id"
-                       :id="option.id"
-                       :name="option.name">
+            <bk-option
+              v-for="option in clusterField"
+              :key="option.id"
+              :id="option.id"
+              :name="option.name">
             </bk-option>
           </bk-select>
           <span
@@ -115,10 +116,11 @@
                 v-model="item.logic_operator"
                 :clearable="false"
                 :disabled="!globalEditable">
-                <bk-option v-for="option in comparedList"
-                           :key="option.id"
-                           :id="option.id"
-                           :name="option.name">
+                <bk-option
+                  v-for="option in comparedList"
+                  :key="option.id"
+                  :id="option.id"
+                  :name="option.name">
                 </bk-option>
               </bk-select>
 
@@ -130,10 +132,11 @@
                 :popover-min-width="150"
                 :class="['min-100 mr-neg1',item.fields_name === '' && isFieldsError ? 'rule-error' : '']"
                 @blur="blurFilter">
-                <bk-option v-for="option in filterSelectList"
-                           :key="option.id"
-                           :id="option.id"
-                           :name="option.name">
+                <bk-option
+                  v-for="option in filterSelectList"
+                  :key="option.id"
+                  :id="option.id"
+                  :name="option.name">
                 </bk-option>
                 <div slot="extension" @click="handleDeleteSelect(index)" style="cursor: pointer;">
                   <i class="bk-icon icon-close-circle"></i>{{$t('删除')}}
@@ -149,10 +152,11 @@
                 :disabled="!globalEditable"
                 :clearable="false"
                 :popover-min-width="60">
-                <bk-option v-for="option in conditionList"
-                           :key="option.id"
-                           :id="option.id"
-                           :name="option.name">
+                <bk-option
+                  v-for="option in conditionList"
+                  :key="option.id"
+                  :id="option.id"
+                  :name="option.name">
                 </bk-option>
               </bk-select>
 
@@ -164,10 +168,11 @@
                 @blur="blurFilter">
               </bk-input>
             </div>
-            <button v-if="isShowAddFilterIcon"
-                    class="icon-box"
-                    :disabled="!globalEditable"
-                    @click="addFilterRule">
+            <button
+              v-if="isShowAddFilterIcon"
+              class="icon-box"
+              :disabled="!globalEditable"
+              @click="addFilterRule">
               <i class="bk-icon icon-plus-line"></i>
             </button>
           </div>

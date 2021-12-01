@@ -33,6 +33,7 @@ DOUBLE_PERCENTAGE = 100
 EX_MAX_SIZE = 10000
 IS_NEW_PATTERN_PREFIX = "is_new_class"
 AGGS_FIELD_PREFIX = "__dist"
+NEW_CLASS_FIELD_PREFIX = "dist"
 
 NEW_CLASS_SENSITIVITY_FIELD = "sensitivity"
 NEW_CLASS_QUERY_FIELDS = ["signature"]
@@ -76,9 +77,9 @@ class PatternEnum(ChoicesEnum):
     @classmethod
     def get_choices(cls) -> tuple:
         return (
-            cls.LEVEL_01.value,
-            cls.LEVEL_03.value,
-            cls.LEVEL_05.value,
-            cls.LEVEL_07.value,
             cls.LEVEL_09.value,
+            cls.LEVEL_07.value,
+            cls.LEVEL_05.value,
+            cls.LEVEL_03.value,
+            cls.LEVEL_01.value,
         )
