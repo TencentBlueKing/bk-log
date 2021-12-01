@@ -654,7 +654,6 @@ export default {
      * @return {[type]}      [description]
      */
     handlePageChange(page) {
-      console.log('changepage');
       if (this.pagination.current !== page) {
         this.pagination.current = page;
         this.stopStatusPolling();

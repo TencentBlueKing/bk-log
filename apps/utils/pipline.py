@@ -51,37 +51,32 @@ class BaseService(Service):
         username = data.get_one_of_inputs("username")
         root_pipeline_id = getattr(self, "root_pipeline_id", "")
         node_id = getattr(self, "id", "")
+        exc_info = ""
         if username:
             set_request_username(username)
-        if hasattr(self, "logger"):
-            if hasattr(self, "root_pipeline_id"):
-                self.logger.info(
-                    _("开始{name} pipeline_id=>{pipeline_id} node_id=>{node_id} ").format(
-                        name=self.name, pipeline_id=root_pipeline_id, node_id=node_id
-                    )
-                )
+        logger.info(
+            _("开始{name} pipeline_id=>{pipeline_id} node_id=>{node_id} ").format(
+                name=self.name, pipeline_id=root_pipeline_id, node_id=node_id
+            )
+        )
         try:
             result = self._execute(data, parent_data)
-            if not result and hasattr(self, "logger"):
-                self.logger.info(_("{name}失败").format(name=self.name))
+            if not result:
+                logger.info(_("{name}失败").format(name=self.name))
         except Exception as err:
-            if hasattr(self, "root_pipeline_id"):
-                logger.exception(f"[{self.name}]pipeline_id=>{self.root_pipeline_id} node_id=>{self.id} {err}")
-            else:
-                logger.exception(f"[{self.name}] {err}")
-
+            logger.exception(f"[{self.name}]pipeline_id=>{self.root_pipeline_id} node_id=>{self.id} {err}")
             reason = _("[{name}] {reason}").format(name=self.name, reason=str(err))
             data.outputs.ex_data = reason
-            if hasattr(self, "logger"):
-                self.logger.error(_("{name}失败: {reason}").format(name=self.name, reason=reason))
+            logger.error(_("{name}失败: {reason}").format(name=self.name, reason=reason))
 
             if is_raise_exception:
                 raise Exception(reason)
             result = False
+            exc_info = traceback.format_exc()
 
         if not result:
             PIPELINE_MONITOR_EVENT(
-                content=f"{traceback.format_exc()} => {reason}",
+                content=f"{exc_info} => {reason}",
                 dimensions={"pipeline_id": root_pipeline_id, "node_id": node_id, "pipeline_name": str(self.name)},
             )
         return result
@@ -89,29 +84,27 @@ class BaseService(Service):
     def schedule(self, data, parent_data, callback_data=None):
         root_pipeline_id = getattr(self, "root_pipeline_id", "")
         node_id = getattr(self, "id", "")
-
-        if hasattr(self, "logger"):
-            self.logger.info(
-                _("开始轮询结果：{name} pipeline_id=>{pipeline_id} node_id=>{node_id} ").format(
-                    name=self.name, pipeline_id=root_pipeline_id, node_id=node_id
-                )
+        exec_info = ""
+        logger.info(
+            _("开始轮询结果：{name} pipeline_id=>{pipeline_id} node_id=>{node_id} ").format(
+                name=self.name, pipeline_id=root_pipeline_id, node_id=node_id
             )
+        )
         reason = ""
         try:
             result = self._schedule(data, parent_data, callback_data)
-            if not result and hasattr(self, "logger"):
-                self.logger.info(_("{name}失败").format(name=self.name))
+            if not result:
+                logger.info(_("{name}失败").format(name=self.name))
         except Exception as err:
             logger.exception(f"[{self.name}]pipeline_id=>{self.root_pipeline_id} node_id=>{self.id} {err}")
-
             reason = _("[{name}] {reason}").format(name=self.name, reason=str(err))
-            if hasattr(self, "logger"):
-                self.logger.error(_("{name}失败: {reason}").format(name=self.name, reason=reason))
+            logger.error(_("{name}失败: {reason}").format(name=self.name, reason=reason))
+            exec_info = traceback.format_exc()
             result = False
 
         if not result:
             PIPELINE_MONITOR_EVENT(
-                content=f"{traceback.format_exc()} => {reason}",
+                content=f"{exec_info} => {reason}",
                 dimensions={"pipeline_id": root_pipeline_id, "node_id": node_id, "pipeline_name": str(self.name)},
             )
         return result
