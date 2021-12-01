@@ -76,9 +76,9 @@ class PatternEnum(ChoicesEnum):
     @classmethod
     def get_choices(cls) -> tuple:
         return (
-            cls.LEVEL_01.value,
-            cls.LEVEL_03.value,
-            cls.LEVEL_05.value,
-            cls.LEVEL_07.value,
             cls.LEVEL_09.value,
+            cls.LEVEL_07.value,
+            cls.LEVEL_05.value,
+            cls.LEVEL_03.value,
+            cls.LEVEL_01.value,
         )
