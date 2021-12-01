@@ -103,7 +103,7 @@ export default {
   .manage-content {
       height: calc(100% - 52px);
       overflow: auto;
-      @include scroller($backgroundColor: #C4C6CC, $width: 8px);
+      @include scroller($backgroundColor: #C4C6CC, $width: 4px);
     }
   .manage-main {
     height: 100%;

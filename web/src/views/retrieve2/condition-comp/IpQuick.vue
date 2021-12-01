@@ -241,7 +241,7 @@ export default {
     overflow: auto;
     margin-right: 3px;
 
-    @include scroller($backgroundColor: #c4c6cc, $width: 8px);
+    @include scroller($backgroundColor: #c4c6cc, $width: 4px);
 
     .tag {
       position: relative;
