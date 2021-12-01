@@ -208,6 +208,7 @@ export default {
       flex-shrink: 0;
       font-size: 12px;
       overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
   }
