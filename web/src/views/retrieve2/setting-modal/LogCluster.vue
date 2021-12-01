@@ -181,7 +181,7 @@
         <rule-table
           ref="ruleTableRef"
           :global-editable="globalEditable"
-          :table-str="formData.predefined_varibles"
+          :table-str="defaultData.predefined_varibles"
           :default-data="defaultData" />
 
         <bk-form-item class="submit-button">
@@ -410,7 +410,7 @@ export default {
         this.isHandle = true;
         const { index_set_id, bk_biz_id } = this.indexSetItem;
         const { extra: { collector_config_id } } = this.cleanConfig;
-        this.formData.predefined_varibles =  this.$refs.ruleTableRef.ruleArrToBase64();
+        this.formData.predefined_varibles = this.$refs.ruleTableRef.ruleArrToBase64();
         this.$http.request('/logClustering/changeConfig', {
           params: {
             index_set_id,

@@ -28,21 +28,22 @@
         <bk-button
           size="small"
           :class="globalEditable ? 'btn-hover' : ''"
-          :disabled="!globalEditable"
+          :disabled="!globalEditable || debugRequest"
           @click="isShowAddRule = true">
           {{$t('添加')}}
         </bk-button>
         <bk-button
           size="small"
           :class="globalEditable ? 'btn-hover' : ''"
-          :disabled="!globalEditable"
+          :disabled="!globalEditable || debugRequest"
           @click="reductionRule">
           {{$t('retrieveSetting.restoreDefault')}}
         </bk-button>
         <bk-button
           size="small"
           :class="(logOriginal !== '' && rulesList.length !== 0) ? 'btn-hover' : ''"
-          :disabled="!globalEditable || logOriginal === '' || rulesList.length === 0 || debugRequest"
+          :disabled="!globalEditable || logOriginal === '' || rulesList.length === 0"
+          :loading="debugRequest"
           @click="debugging">
           {{$t('调试')}}
         </bk-button>
@@ -301,7 +302,7 @@ export default {
       } catch (e) {
         this.rules.isRegular = false;
       }
-      this.rules.isPlaceholder = /^[a-zA-z_-]+$/.test(this.placeholder);
+      this.rules.isPlaceholder = !/[:]/.test(this.placeholder);
       if (this.isRuleCorrect) {
         this.showTableLoading();
         const newRuleObj = {};
@@ -342,22 +343,21 @@ export default {
     // base64转聚类规则数组
     base64ToRuleArr(str) {
       try {
-        const ruleStr =  window.atob(str);
-        const ruleList = JSON.parse(ruleStr);
-        const ruleNewList = [];
-        ruleList.forEach((el, index) => {
+        const ruleList = JSON.parse(this.decode(str));
+        const ruleNewList =  ruleList.reduce((pre, cur, index) => {
           const itemObj = {};
-          const key = el.match(/[^:]*/)[0];
+          const key = cur.match(/[^:]*/)[0];
           const newReg = new RegExp(`(?<=${key}:)[^"]+`);
-          let val = JSON.stringify(el.match(newReg)[0]);
+          let val = JSON.stringify(cur.match(newReg)[0]);
           val = val.substring(1, val.length - 1);
           itemObj[key] = val;
           itemObj._index = index;
           itemObj._isLeftOverFlow = true;
           itemObj._isRightOverFlow = true;
           itemObj._isHighlight = false;
-          ruleNewList.push(itemObj);
-        });
+          pre.push(itemObj);
+          return pre;
+        }, []);
         return ruleNewList;
       } catch (e) {
         return [];
@@ -367,14 +367,14 @@ export default {
     ruleArrToBase64(arr = []) {
       arr.length === 0 && (arr = this.rulesList);
       try {
-        const ruleNewList = [];
-        arr.forEach((el) => {
-          const key = Object.keys(el)[0];
-          const val = Object.values(el)[0];
-          ruleNewList.push(`"${key}:${val}"`);
-        });
+        const ruleNewList = arr.reduce((pre, cur) => {
+          const key = Object.keys(cur)[0];
+          const val = Object.values(cur)[0];
+          pre.push(`"${key}:${val}"`);
+          return pre;
+        }, []);
         const ruleArrStr = `[${ruleNewList.join(' ,')}]`;
-        return window.btoa(ruleArrStr);
+        return this.encode(ruleArrStr);
       } catch (error) {
         return '';
       }
@@ -395,6 +395,7 @@ export default {
     debugging() {
       this.tableLoading = true;
       this.debugRequest = true;
+      this.effectOriginal = '';
       const inputData = {
         dtEventTimeStamp: Date.parse(new Date()) / 1000,
         log: this.logOriginal,
@@ -439,6 +440,16 @@ export default {
       const uuid = tempUrl.toString();
       URL.revokeObjectURL(tempUrl);
       return uuid.substr(uuid.lastIndexOf('/') + 1);
+    },
+    // base64中文支持
+    encode(str) {
+      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+        (match, p1) => String.fromCharCode(`0x${p1}`)));
+    },
+    decode(str) {
+      return decodeURIComponent(atob(str).split('')
+        .map(c => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
+        .join(''));
     },
   },
 };
