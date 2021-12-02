@@ -367,7 +367,8 @@ export default {
         const ruleNewList = arr.reduce((pre, cur) => {
           const key = Object.keys(cur)[0];
           const val = Object.values(cur)[0];
-          pre.push(`"${key}:${val}"`);
+          const rulesStr = JSON.stringify(`${key}:${val}`);
+          pre.push(rulesStr);
           return pre;
         }, []);
         const ruleArrStr = `[${ruleNewList.join(' ,')}]`;
@@ -426,7 +427,7 @@ export default {
           listItem._isHighlight = false;
           const [regexKey, regexVal] = regexItem;
           const [listKey, listVal] =  Object.entries(listItem)[0];
-          if (regexKey === listKey && regexVal === JSON.parse(`"${listVal}"`)) {
+          if (regexKey === listKey && regexVal === listVal) {
             listItem._isHighlight = true;
           }
         });
