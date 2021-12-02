@@ -124,7 +124,7 @@ class ClusteringConfigHandler(object):
     def _deal_preview(cls, aiops_experiments_debug_result):
         result = []
         for predict_output_data in aiops_experiments_debug_result["predict_output_data"]:
-            pattern = cls._deal_pattern(json.loads(predict_output_data["pattern"]))
+            pattern = cls._deal_pattrn(json.loads(predict_output_data["pattern"]))
             token_with_regex = cls._deal_token_with_regex(json.loads(predict_output_data["token_with_regex"]))
             result.append({"patterns": pattern, "token_with_regex": token_with_regex})
         return result
@@ -136,7 +136,7 @@ class ClusteringConfigHandler(object):
             sensitive_pattern_list = []
             for sensitive_pattern in pattern_result:
                 if isinstance(sensitive_pattern, dict):
-                    sensitive_pattern_list.append("[$({})]".format(sensitive_pattern["name"]))
+                    sensitive_pattern_list.append("#{}#".format(sensitive_pattern["name"]))
                     continue
                 sensitive_pattern_list.append(sensitive_pattern)
             result.append({"sensitivity": sensitivity, "pattern": " ".join(sensitive_pattern_list)})
