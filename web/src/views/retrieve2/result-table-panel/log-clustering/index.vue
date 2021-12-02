@@ -293,6 +293,7 @@ export default {
     originTableList: {
       handler() {
         if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
+          this.partterLevel === '' && this.initTable();
           this.requestFinger();
         }
       },
