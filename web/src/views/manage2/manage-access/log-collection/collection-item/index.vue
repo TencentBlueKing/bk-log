@@ -58,6 +58,16 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
+        <bk-table-column
+          v-if="checkcFields('bk_data_id')"
+          :label="$t('dataSource.dataId')"
+          min-width="60">
+          <template slot-scope="props">
+            <span>
+              {{ props.row.bk_data_id || '--' }}
+            </span>
+          </template>
+        </bk-table-column>
         <bk-table-column :label="$t('dataSource.collector_config_name')" min-width="90">
           <template slot-scope="props">
             <span
@@ -121,16 +131,6 @@
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
               {{ props.row.category_name }}
-            </span>
-          </template>
-        </bk-table-column>
-        <bk-table-column
-          v-if="checkcFields('bk_data_id')"
-          :label="$t('dataSource.dataId')"
-          min-width="70">
-          <template slot-scope="props">
-            <span>
-              {{ props.row.bk_data_id || '--' }}
             </span>
           </template>
         </bk-table-column>
@@ -358,6 +358,11 @@ export default {
   name: 'collection-item',
   data() {
     const settingFields = [
+      // 数据ID
+      {
+        id: 'bk_data_id',
+        label: this.$t('dataSource.dataId'),
+      },
       // 采集配置名称
       {
         id: 'collector_config_name',
@@ -405,11 +410,6 @@ export default {
         id: 'category_name',
         label: this.$t('dataSource.category_name'),
       },
-      // 数据ID
-      {
-        id: 'bk_data_id',
-        label: this.$t('dataSource.dataId'),
-      },
     ];
 
     return {
@@ -438,7 +438,7 @@ export default {
       isAllowedCreate: null,
       columnSetting: {
         fields: settingFields,
-        selectedFields: settingFields.slice(0, 7),
+        selectedFields: settingFields.slice(1, 8),
       },
     };
   },
@@ -654,7 +654,6 @@ export default {
      * @return {[type]}      [description]
      */
     handlePageChange(page) {
-      console.log('changepage');
       if (this.pagination.current !== page) {
         this.pagination.current = page;
         this.stopStatusPolling();

@@ -68,6 +68,7 @@ class SampleSetHandler(BaseAiopsHandler):
         @param result_table_id str 结果表id
         @param field_filter List[str] rt_name过滤
         """
+
         rt_fields = DataAccessHandler.get_fields(result_table_id=result_table_id)
         field_index = 0
         target_fields = []

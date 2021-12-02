@@ -28,14 +28,14 @@
         <bk-button
           size="small"
           :class="globalEditable ? 'btn-hover' : ''"
-          :disabled="!globalEditable"
+          :disabled="!globalEditable || debugRequest"
           @click="isShowAddRule = true">
           {{$t('添加')}}
         </bk-button>
         <bk-button
           size="small"
           :class="globalEditable ? 'btn-hover' : ''"
-          :disabled="!globalEditable"
+          :disabled="!globalEditable || debugRequest"
           @click="reductionRule">
           {{$t('retrieveSetting.restoreDefault')}}
         </bk-button>
@@ -43,6 +43,7 @@
           size="small"
           :class="(logOriginal !== '' && rulesList.length !== 0) ? 'btn-hover' : ''"
           :disabled="!globalEditable || logOriginal === '' || rulesList.length === 0"
+          :loading="debugRequest"
           @click="debugging">
           {{$t('调试')}}
         </bk-button>
@@ -69,9 +70,11 @@
                     <span class="icon log-icon icon-drag-dots"></span><span>{{index}}</span>
                   </div>
                   <div>
-                    <bk-popover theme="light" placement="top"
-                                :disabled="item._isLeftOverFlow"
-                                :content="Object.values(item)[0]">
+                    <bk-popover
+                      theme="light"
+                      placement="top"
+                      :disabled="item._isLeftOverFlow"
+                      :content="Object.values(item)[0]">
                       <p class="row-left-regular"
                          :style="`color:${item._isHighlight ? '#FE5376' : '#63656E'}`"
                          :ref="`regular-${index}`">{{Object.values(item)[0]}}</p>
@@ -80,11 +83,12 @@
                 </div>
                 <div class="row-right flbc">
                   <div>
-                    <bk-popover theme="light" placement="top"
-                                :disabled="item._isRightOverFlow"
-                                :content="Object.keys(item)[0]">
-                      <p class="row-right-item"
-                         :ref="`placeholder-${index}`">{{Object.keys(item)[0]}}</p>
+                    <bk-popover
+                      theme="light"
+                      placement="top"
+                      :disabled="item._isRightOverFlow"
+                      :content="Object.keys(item)[0]">
+                      <p class="row-right-item" :ref="`placeholder-${index}`">{{Object.keys(item)[0]}}</p>
                     </bk-popover>
                   </div>
                   <div class="rule-btn">
@@ -135,21 +139,7 @@
     <!-- 效果 -->
     <div class="container-item">
       <p style="height:32px">{{$t('retrieveSetting.effect')}}</p>
-      <bk-input
-        placeholder=" "
-        data-test-id=""
-        :disabled="!globalEditable"
-        :type="'textarea'"
-        :rows="3"
-        :input-style="{
-          'background-color': '#FAFBFD',
-          height: '100px',
-          'line-height': '24px',
-          color: '#000000',
-          borderRadius: '2px'
-        }"
-        v-model.trim="effectOriginal">
-      </bk-input>
+      <div class="effect-container">{{effectOriginal}}</div>
     </div>
     <!-- 添加规则dialog -->
     <bk-dialog
@@ -161,10 +151,7 @@
       :mask-close="false"
       @after-leave="cancelAddRuleContent">
       <bk-form :label-width="200">
-        <bk-form-item
-          :label="$t('retrieveSetting.regularExpression')"
-          :required="true"
-          :property="''">
+        <bk-form-item :label="$t('retrieveSetting.regularExpression')" :required="true" :property="''">
           <br>
           <bk-input
             v-model="regular"
@@ -174,10 +161,7 @@
           ></bk-input>
           <p class="ml200">{{$t('retrieveSetting.sample')}}: char {#char_name#}</p>
         </bk-form-item>
-        <bk-form-item
-          :label="$t('retrieveSetting.placeholder')"
-          :required="true"
-          :property="''">
+        <bk-form-item :label="$t('retrieveSetting.placeholder')" :required="true" :property="''">
           <br>
           <bk-input
             v-model="placeholder"
@@ -194,13 +178,12 @@
             <div class="inspection-status" v-if="isClickSubmit">
               <div>
                 <bk-spin v-if="isDetection" class="spin" size="mini"></bk-spin>
-                <span v-else
-                      :class="['bk-icon spin', isRuleCorrect ? 'icon-check-circle-shape' : 'icon-close-circle-shape']"
-                      :style="`color:${isRuleCorrect ? '#45E35F' : '#FE5376'}`"></span>
+                <span
+                  v-else
+                  :class="['bk-icon spin', isRuleCorrect ? 'icon-check-circle-shape' : 'icon-close-circle-shape']"
+                  :style="`color:${isRuleCorrect ? '#45E35F' : '#FE5376'}`"></span>
               </div>
-              <span style="margin-left: 24px;">
-                {{detectionStr}}
-              </span>
+              <span style="margin-left: 24px;">{{detectionStr}}</span>
             </div>
           </div>
 
@@ -251,6 +234,7 @@ export default {
       editRulsIndex: 0, // 当前编辑的index
       isClickSubmit: false, // 是否点击添加
       isDetection: false, // 是否在检测
+      debugRequest: false, // 调试中
       detectionStr: '',
       rules: {
         isRegular: true,
@@ -318,7 +302,7 @@ export default {
       } catch (e) {
         this.rules.isRegular = false;
       }
-      this.rules.isPlaceholder = /^[a-zA-z_-]+$/.test(this.placeholder);
+      this.rules.isPlaceholder = !/[:]/.test(this.placeholder);
       if (this.isRuleCorrect) {
         this.showTableLoading();
         const newRuleObj = {};
@@ -359,22 +343,21 @@ export default {
     // base64转聚类规则数组
     base64ToRuleArr(str) {
       try {
-        const ruleStr =  window.atob(str);
-        const ruleList = JSON.parse(ruleStr);
-        const ruleNewList = [];
-        ruleList.forEach((el, index) => {
+        const ruleList = JSON.parse(this.decode(str));
+        const ruleNewList =  ruleList.reduce((pre, cur, index) => {
           const itemObj = {};
-          const key = el.match(/[^:]*/)[0];
+          const key = cur.match(/[^:]*/)[0];
           const newReg = new RegExp(`(?<=${key}:)[^"]+`);
-          let val = JSON.stringify(el.match(newReg)[0]);
+          let val = JSON.stringify(cur.match(newReg)[0]);
           val = val.substring(1, val.length - 1);
           itemObj[key] = val;
           itemObj._index = index;
           itemObj._isLeftOverFlow = true;
           itemObj._isRightOverFlow = true;
           itemObj._isHighlight = false;
-          ruleNewList.push(itemObj);
-        });
+          pre.push(itemObj);
+          return pre;
+        }, []);
         return ruleNewList;
       } catch (e) {
         return [];
@@ -384,14 +367,14 @@ export default {
     ruleArrToBase64(arr = []) {
       arr.length === 0 && (arr = this.rulesList);
       try {
-        const ruleNewList = [];
-        arr.forEach((el) => {
-          const key = Object.keys(el)[0];
-          const val = Object.values(el)[0];
-          ruleNewList.push(`"${key}:${val}"`);
-        });
+        const ruleNewList = arr.reduce((pre, cur) => {
+          const key = Object.keys(cur)[0];
+          const val = Object.values(cur)[0];
+          pre.push(`"${key}:${val}"`);
+          return pre;
+        }, []);
         const ruleArrStr = `[${ruleNewList.join(' ,')}]`;
-        return window.btoa(ruleArrStr);
+        return this.encode(ruleArrStr);
       } catch (error) {
         return '';
       }
@@ -411,6 +394,8 @@ export default {
     // 调试
     debugging() {
       this.tableLoading = true;
+      this.debugRequest = true;
+      this.effectOriginal = '';
       const inputData = {
         dtEventTimeStamp: Date.parse(new Date()) / 1000,
         log: this.logOriginal,
@@ -429,20 +414,19 @@ export default {
       };
       this.$http.request('/logClustering/preview', { data: { ...query } })
         .then((res) => {
-          const { data: { patterns, token_with_regex } } = res;
+          const  { patterns, token_with_regex }  = res.data[0];
           this.effectOriginal = patterns[0].pattern;
           this.highlightPredefined(token_with_regex);
         })
-        .catch((e) => {
-          console.warn(e);
-        })
         .finally(() => {
           this.tableLoading = false;
+          this.debugRequest = false;
         });
     },
     highlightPredefined(tokenRegex = {}) {
       Object.entries(tokenRegex).forEach((regexItem) => {
         this.rulesList.forEach((listItem) => {
+          listItem._isHighlight = false;
           const [regexKey, regexVal] = regexItem;
           const [listKey, listVal] =  Object.entries(listItem)[0];
           if (regexKey === listKey && regexVal === JSON.parse(`"${listVal}"`)) {
@@ -456,6 +440,16 @@ export default {
       const uuid = tempUrl.toString();
       URL.revokeObjectURL(tempUrl);
       return uuid.substr(uuid.lastIndexOf('/') + 1);
+    },
+    // base64中文支持
+    encode(str) {
+      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+        (match, p1) => String.fromCharCode(`0x${p1}`)));
+    },
+    decode(str) {
+      return decodeURIComponent(atob(str).split('')
+        .map(c => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
+        .join(''));
     },
   },
 };
@@ -472,6 +466,17 @@ export default {
     .cluster-table {
       border: 1px solid #dcdee5;
       border-bottom: none;
+      border-radius: 2px;
+    }
+
+    .effect-container {
+      height: 100px;
+      padding: 5px 10px;
+      font-size: 12px;
+      background: #fafbfd;
+      line-height: 24px;
+      color: #000000;
+      border:1px solid#DCDEE5;
       border-radius: 2px;
     }
   }

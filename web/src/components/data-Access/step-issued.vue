@@ -540,7 +540,6 @@ export default {
   @import '@/scss/conf';
 
   .step-issued-wrapper {
-    // @include scroller(#C4C6CC, 6px);
     position: relative;
     padding: 30px 60px;
     max-height: 100%;

@@ -38,7 +38,7 @@
           {{ localData.field + (fieldAliasMap[localData.field] ? `(${fieldAliasMap[localData.field]})` : '')}}
         </div>
         <div class="tag symbol-tag">{{ localData.operator }}</div>
-        <div class="tag text-tag" v-bk-overflow-tips>{{ localData.value.join(',') }}</div>
+        <div class="tag text-tag" v-bk-overflow-tips>{{ formaterValue(localData.value) }}</div>
         <span class="bk-icon icon-close-line" @click.stop="removeFilterCondition(localData.field)"></span>
         <!-- <div class="tag symbol-tag" v-if="index !== filterCondition.length - 1">and</div> -->
       </div>
@@ -59,7 +59,7 @@
               </template>
             </bk-select>
           </div>
-          <div class="option-item">
+          <div class="option-item" style="margin-right:0">
             <label>{{ $t('indexSetList.operation') }}</label>
             <bk-select
               :value="coreData.operator"
@@ -73,7 +73,7 @@
             </bk-select>
           </div>
           <div class="option-item" v-if="!isShowValue">
-            <label>{{ $t('indexSetList.field_value') }}</label>
+            <label style="margin-left: 10px;">{{ $t('indexSetList.field_value') }}</label>
             <bk-tag-input
               v-model="coreData.value"
               style="width: 240px;"
@@ -83,6 +83,8 @@
               :paste-fn="pasteFn"
               :placeholder="filterPlaceholder"
               :list="valueList"
+              :content-width="232"
+              @change="handleValueChange"
               trigger="focus">
             </bk-tag-input>
           </div>
@@ -143,7 +145,7 @@ export default {
         value: [], // String or Array
       },
       filterOperators: [], // 过滤条件操作符
-      valueList: [], // 字段可选值列表
+      valueList: [{ id: '', name: `-${this.$t('空')}-` }], // 字段可选值列表
       filterPlaceholder: '',
       showFilterPopover: false,
       isShowValue: false,
@@ -219,6 +221,13 @@ export default {
     handlePopoverHide() {
       this.showFilterPopover = false;
     },
+    formaterValue(value) {
+      if (value.length === 1 && value[0] === '') {
+        return `-${this.$t('空')}-`;
+      }
+
+      return value.join(',');
+    },
     setDefaultEditValue() {
       if (this.isAdd) return;
 
@@ -246,12 +255,13 @@ export default {
     // 字段改变
     handleFieldChange(field) {
       this.coreData.value = [];
-      this.valueList = [];
+      this.valueList = [{ id: '', name: `-${this.$t('空')}-` }];
       this.coreData.field = field || '';
       if (field && this.statisticalFieldsData[field]) {
         const fieldValues = Object.keys(this.statisticalFieldsData[field]);
         if (fieldValues?.length) {
           this.valueList = fieldValues.map(item => ({ id: item, name: item }));
+          this.valueList.unshift({ id: '', name: `-${this.$t('空')}-` });
         }
       }
     },
@@ -260,7 +270,7 @@ export default {
       this.coreData.operator = operator;
       if (['exists', 'does not exists'].includes(operator)) {
         this.coreData.value = [];
-        this.valueList = [];
+        this.valueList = [{ id: '', name: `-${this.$t('空')}-` }];
       }
       this.isShowValue = ['exists', 'does not exists'].includes(operator);
       for (const item of this.filterOperators) {
@@ -268,6 +278,15 @@ export default {
           this.filterPlaceholder = item.placeholder || this.$t('form.pleaseEnter');
           break;
         }
+      }
+    },
+    // 值改变
+    handleValueChange(val) {
+      const newVal = val[val.length - 1];
+      if (newVal === '') { // 选择了-空-过滤值
+        this.coreData.value = [''];
+      } else if (val.length && this.coreData.value.includes('')) { // 选择了有效值但已有选项中含有空值
+        this.coreData.value = this.coreData.value.filter(item => item);
       }
     },
     // 粘贴过滤条件
@@ -306,116 +325,106 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
-  .add-condition-filter-container {
-    .condition-item-container {
-      position: relative;
-      display: flex;
-      flex-flow: wrap;
-      align-items: center;
-      border-radius: 2px;
-      margin-right: 8px;
-      margin-bottom: 2px;
-      padding: 0 22px 0 4px;
-      background: #eceef5;
+<style lang="scss">
+.add-condition-filter-container {
+  .condition-item-container {
+    position: relative;
+    display: flex;
+    flex-flow: wrap;
+    align-items: center;
+    border-radius: 2px;
+    margin-right: 8px;
+    margin-bottom: 2px;
+    padding: 0 22px 0 4px;
+    background: #eceef5;
+    cursor: pointer;
+  }
+  .filter-text {
+    margin-left: 24px;
+    color: #3a84ff;
+    cursor: pointer;
+  }
+  .tag {
+    padding: 0 4px;
+    margin-bottom: 2px;
+    font-size: 12px;
+    color: #63656e;
+    line-height: 32px;
+    white-space: nowrap;
+    &.text-tag {
+      max-width: 108px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    &.symbol-tag {
+      color: #ff9c01;
+    }
+    &.add-tag {
+      padding: 0 7px;
       cursor: pointer;
-    }
-
-    .filter-text {
-      margin-left: 24px;
-      color: #3a84ff;
-      cursor: pointer;
-    }
-
-    .tag {
-      padding: 0 4px;
-      margin-bottom: 2px;
-      font-size: 12px;
-      color: #63656e;
-      line-height: 32px;
-      white-space: nowrap;
-
-      &.text-tag {
-        max-width: 108px;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      .icon-plus-line {
+        font-size: 14px;
       }
-
-      &.symbol-tag {
-        color: #ff9c01;
+      .add-text {
+        margin-right: 3px;
       }
-
-      &.add-tag {
-        padding: 0 7px;
-        cursor: pointer;
-
-        .icon-plus-line {
-          font-size: 14px;
-        }
-
-        .add-text {
-          margin-right: 3px;
-        }
-
-        &:hover {
-          color: #3a84ff;
-        }
+      &:hover {
+        color: #3a84ff;
       }
     }
-
+  }
+  .icon-close-line {
+    position: absolute;
+    right: 2px;
+    top: 10px;
+    display: none;
+    margin: 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #979BA5;
+    cursor: pointer;
+  }
+  .condition-item-container:hover {
     .icon-close-line {
-      position: absolute;
-      right: 2px;
-      top: 10px;
-      display: none;
-      margin: 0 6px;
+      display: inline-block;
+    }
+  }
+}
+.add-condition-filter-popover {
+  .filter-title {
+    padding: 24px 24px 22px;
+    color: #313238;
+    font-size: 16px;
+  }
+  .add-filter-content {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 0 24px;
+    label {
+      display: inline-block;
+      margin-bottom: 4px;
+      color: #2d3542;
       font-size: 12px;
-      font-weight: 700;
-      color: #979BA5;
-      cursor: pointer;
     }
-
-    .condition-item-container:hover {
-      .icon-close-line {
-        display: inline-block;
-      }
+  }
+  .option-item:nth-child(2) {
+    margin: 0 10px;
+  }
+  .filter-footer {
+    padding: 8px 24px 10px 0;
+    text-align: right;
+    border-top: 1px solid #dcdee5;
+    background-color: #fafbfd;
+    .bk-primary {
+      margin-right: 6px;
     }
   }
 
-  .add-condition-filter-popover {
-    .filter-title {
-      padding: 24px 24px 22px;
-      color: #313238;
-      font-size: 16px;
-    }
-
-    .add-filter-content {
-      display: flex;
-      align-items: center;
-      margin-bottom: 24px;
-      padding: 0 24px;
-
-      label {
-        display: inline-block;
-        margin-bottom: 4px;
-        color: #2d3542;
-        font-size: 12px;
-      }
-    }
-
-    .option-item:nth-child(2) {
-      margin: 0 10px;
-    }
-
-    .filter-footer {
-      padding: 8px 24px 10px 0;
-      text-align: right;
-      border-top: 1px solid #dcdee5;
-      background-color: #fafbfd;
-
-      .bk-primary {
-        margin-right: 6px;
-      }
+  .bk-tag-selector {
+    .bk-tag-input {
+      margin-left: 10px;
     }
   }
+}
 </style>

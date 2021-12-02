@@ -455,7 +455,7 @@ export default {
       background: #f5f7fa;
       overflow-y: auto;
 
-      @include scroller($backgroundColor: #aaa, $width: 8px);
+      @include scroller($backgroundColor: #aaa, $width: 4px);
 
       &::-webkit-scrollbar {
         background-color: #dedede;

@@ -246,7 +246,7 @@ class CollectorScenario(object):
     def log_clustering_fields(es_version: str = "5.x"):
         return [
             {
-                "field_name": f"dist_{pattern_level}",
+                "field_name": f"__dist_{pattern_level}",
                 "field_type": "string",
                 "tag": "dimension",
                 "alias_name": f"dist_{pattern_level}",

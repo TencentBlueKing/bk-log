@@ -21,14 +21,14 @@
   -->
 
 <template>
-  <div :class="['symbol-content', { 'is-limit': !cacheExpandStr.includes(patternIndex) }]">
+  <div :class="['pattern-content', { 'is-limit': !cacheExpandStr.includes(patternIndex) }]">
     <cluster-event-popover
       v-if="isMountPatter"
       @eventClick="handleClickIcon">
-      <span>{{context}}</span>
+      <span>{{showContext}}</span>
     </cluster-event-popover>
     <span v-else>
-      {{context}}
+      {{showContext}}
     </span>
     <p
       v-if="!cacheExpandStr.includes(patternIndex)"
@@ -63,6 +63,11 @@ export default {
       isMountPatter: true,
       cacheExpandStr: [],
     };
+  },
+  computed: {
+    showContext() {
+      return this.context ? this.context : this.$t('未匹配');
+    },
   },
   deactivated() {
     this.isMountPatter = false;
@@ -116,21 +121,16 @@ export default {
 </script>
 
 <style lang="scss">
-  .symbol-content {
+  .pattern-content {
     display: inline-block;
     padding-right: 15px;
     position: relative;
-    line-height: 20px;
+    padding-top: 4px;
     overflow: hidden;
     &.is-limit {
       max-height: 96px;
     }
   }
-  // .hover-row {
-  //   .show-whole-btn{
-  //     background-color: #f0f1f5;
-  //   }
-  // }
   .show-whole-btn {
     position: absolute;
     top: 80px;

@@ -27,4 +27,4 @@ XXX_EVENT_TYPE.trigger().set_content("xxx")()
 
 from apps.log_measure.constants import BK_MONITOR_CLIENT, BK_LOG_EVENT_DATA_NAME
 
-CLUSTERING_MONITOR_EVENT = BK_MONITOR_CLIENT.build_event_trigger("clustering_monitor", data_name=BK_LOG_EVENT_DATA_NAME)
+PIPELINE_MONITOR_EVENT = BK_MONITOR_CLIENT.build_event_trigger(event_name="pipeline", data_name=BK_LOG_EVENT_DATA_NAME)

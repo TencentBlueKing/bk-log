@@ -283,6 +283,7 @@ export default {
   展开全部: 'Expand All',
   收起: 'Pack Up',
   过滤项: 'Filter item',
+  空: 'Empty',
   // 检索设置弹窗
   retrieveSetting: {
     setting: 'Setting',
@@ -338,7 +339,11 @@ export default {
   多: 'Many',
   取样内容: 'Sampling Content',
   去设置: 'Go To Set',
+  未匹配: 'Not match',
   跳转到日志清洗: 'Go To Log Cleaning',
+  请按照提示输入: 'Please follow the prompts to enter',
+  自定义: 'Customize',
+  customizeTips: 'Custom input format: For example, 1h represents one hour, h hour',
   clusterAlert: 'Log clustering must have at least one text type field. Currently, there is no such field type. Please go to log cleaning to set it up.',
   goFingerMessage: 'The current data fingerprint is not enabled, please go to settings',
   goSettingMessage: 'Currently log clustering is not enabled, please go to settings',
