@@ -147,7 +147,7 @@
       ext-cls="add-rule"
       :header-position="'left'"
       :width="640"
-      :title="isEditRuls ? $t('retrieveSetting.editingRules') : $t('retrieveSetting.addRule')"
+      :title="isEditRules ? $t('retrieveSetting.editingRules') : $t('retrieveSetting.addRule')"
       :mask-close="false"
       @after-leave="cancelAddRuleContent">
       <bk-form :label-width="200">
@@ -230,8 +230,8 @@ export default {
       effectOriginal: '',
       isShowAddRule: false, // 是否展开添加规则弹窗
       isRuleCorrect: false, // 检测语法是否通过
-      isEditRuls: false, // 编辑聚类规则
-      editRulsIndex: 0, // 当前编辑的index
+      isEditRules: false, // 编辑聚类规则
+      editRulesIndex: 0, // 当前编辑的index
       isClickSubmit: false, // 是否点击添加
       isDetection: false, // 是否在检测
       debugRequest: false, // 调试中
@@ -280,8 +280,8 @@ export default {
       const [key, val] = Object.entries(this.rulesList[index])[0];
       this.regular = val;
       this.placeholder = key;
-      this.editRulsIndex = index;
-      this.isEditRuls = true;
+      this.editRulesIndex = index;
+      this.isEditRules = true;
       this.isShowAddRule = true;
     },
     // 删除规则
@@ -302,14 +302,14 @@ export default {
       } catch (e) {
         this.rules.isRegular = false;
       }
-      this.rules.isPlaceholder = !/[:]/.test(this.placeholder);
+      this.rules.isPlaceholder = /^(?!.*:)\S+/.test(this.placeholder);
       if (this.isRuleCorrect) {
         this.showTableLoading();
         const newRuleObj = {};
         newRuleObj[this.placeholder] = this.regular;
         newRuleObj._index = new Date().getTime();
-        if (this.isEditRuls) {
-          this.rulesList.splice(this.editRulsIndex, 1, newRuleObj);
+        if (this.isEditRules) {
+          this.rulesList.splice(this.editRulesIndex, 1, newRuleObj);
         } else {
           this.rulesList.push(newRuleObj);
         }
@@ -335,7 +335,7 @@ export default {
       this.regular = '';
       this.placeholder = '';
       this.isRuleCorrect = false;
-      this.isEditRuls = false;
+      this.isEditRules = false;
       this.isClickSubmit = false;
       this.rules.isPlaceholder = true;
       this.rules.isRegular = true;
@@ -347,10 +347,7 @@ export default {
         const ruleNewList =  ruleList.reduce((pre, cur, index) => {
           const itemObj = {};
           const key = cur.match(/[^:]*/)[0];
-          const newReg = new RegExp(`(?<=${key}:)[^"]+`);
-          let val = JSON.stringify(cur.match(newReg)[0]);
-          val = val.substring(1, val.length - 1);
-          itemObj[key] = val;
+          itemObj[key] = cur.split(`${key}:`)[1];
           itemObj._index = index;
           itemObj._isLeftOverFlow = true;
           itemObj._isRightOverFlow = true;
@@ -370,7 +367,8 @@ export default {
         const ruleNewList = arr.reduce((pre, cur) => {
           const key = Object.keys(cur)[0];
           const val = Object.values(cur)[0];
-          pre.push(`"${key}:${val}"`);
+          const rulesStr = JSON.stringify(`${key}:${val}`);
+          pre.push(rulesStr);
           return pre;
         }, []);
         const ruleArrStr = `[${ruleNewList.join(' ,')}]`;
@@ -429,7 +427,7 @@ export default {
           listItem._isHighlight = false;
           const [regexKey, regexVal] = regexItem;
           const [listKey, listVal] =  Object.entries(listItem)[0];
-          if (regexKey === listKey && regexVal === JSON.parse(`"${listVal}"`)) {
+          if (regexKey === listKey && regexVal === listVal) {
             listItem._isHighlight = true;
           }
         });
