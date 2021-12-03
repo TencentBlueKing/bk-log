@@ -85,6 +85,10 @@ export default {
       type: Object,
       required: true,
     },
+    indexSetList: {
+      type: Array,
+      required: true,
+    },
   },
   data() {
     return {
