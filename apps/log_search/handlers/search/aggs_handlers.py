@@ -103,8 +103,35 @@ class AggsHandlers(AggsBase):
 
     @classmethod
     def _build_terms_bucket(cls, aggs, field: str, size: int, order: dict) -> Search:
-        terms = A("terms", field=field, size=size, order=order)
-        return aggs.bucket(field, terms)
+        sub_aggs = {}
+        field_name = field
+        if isinstance(field, dict):
+            field_name = field.get("field_name")
+            sub_fields = field.get("sub_fields")
+            if sub_fields:
+                sub_aggs = cls._build_sub_terms_fields(sub_fields, size, order)
+        terms = A("terms", field=field_name, size=size, order=order, aggs=sub_aggs)
+        return aggs.bucket(field_name, terms)
+
+    @classmethod
+    def _build_sub_terms_fields(cls, sub_fields, size: int, order: dict):
+        if isinstance(sub_fields, dict):
+            sub_fields = [sub_fields]
+        aggs = {}
+        for sub_field in sub_fields:
+            if isinstance(sub_field, dict):
+                field_name = sub_field.get("field_name")
+                sub_fields = sub_field.get("sub_fields")
+                aggs[sub_field] = A(
+                    "terms",
+                    field=field_name,
+                    size=size,
+                    order=order,
+                    apps=cls._build_sub_terms_fields(sub_fields, size, order),
+                )
+                continue
+            aggs[sub_field] = A("terms", field=sub_field, size=size, order=order)
+        return aggs
 
     @classmethod
     def date_histogram(cls, index_set_id, query_data: dict):

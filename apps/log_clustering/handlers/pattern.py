@@ -120,7 +120,7 @@ class PatternHandler:
         return multi_execute_func.run()
 
     def _get_pattern_aggs_result(self, index_set_id, query):
-        query["fields"] = [self.pattern_aggs_field]
+        query["fields"] = [{"field_name": self.pattern_aggs_field}]
         aggs_result = AggsHandlers.terms(index_set_id, query)
         return self._parse_pattern_aggs_result(self.pattern_aggs_field, aggs_result)
 

@@ -30,7 +30,7 @@ from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import A
 from apps.log_clustering.models import AiopsModel, AiopsSignatureAndPattern
 
 
-@periodic_task(run_every=crontab(minute="25", hour="12"))
+@periodic_task(run_every=crontab(hour="*/1"))
 def sync_pattern():
     model_ids = AiopsModel.objects.all().values_list("model_id", flat=True)
     with ThreadPoolExecutor() as executor:
@@ -91,7 +91,7 @@ def get_pattern(model_id, release_id) -> list:
             pattern_list = []
             for pattern in sensitive_pattern[PATTERN_INDEX]:
                 if hasattr(pattern, "name"):
-                    pattern_list.append("[$({})]".format(pattern.name))
+                    pattern_list.append("#{}#".format(pattern.name))
                     continue
                 pattern_list.append(str(pattern))
             patterns.append({"signature": str(signature), "pattern": " ".join(pattern_list)})

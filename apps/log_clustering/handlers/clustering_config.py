@@ -136,7 +136,7 @@ class ClusteringConfigHandler(object):
             sensitive_pattern_list = []
             for sensitive_pattern in pattern_result:
                 if isinstance(sensitive_pattern, dict):
-                    sensitive_pattern_list.append("[$({})]".format(sensitive_pattern["name"]))
+                    sensitive_pattern_list.append("#{}#".format(sensitive_pattern["name"]))
                     continue
                 sensitive_pattern_list.append(sensitive_pattern)
             result.append({"sensitivity": sensitivity, "pattern": " ".join(sensitive_pattern_list)})
