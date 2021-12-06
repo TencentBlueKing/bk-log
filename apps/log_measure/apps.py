@@ -21,6 +21,7 @@ from bk_monitor_report import MonitorReporter
 from django.apps import AppConfig
 from django.conf import settings
 
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.utils.function import ignored
 from apps.utils.log import logger
 
@@ -30,7 +31,7 @@ class MeasureConfig(AppConfig):
     verbose_name = "measure"
 
     def ready(self):
-        if settings.FEATURE_TOGGLE["monitor_report"] == "off":
+        if settings.DEBUG or not FeatureToggleObject.switch("monitor_report"):
             return
         with ignored(Exception):
             from bk_monitor.models import MonitorReportConfig
