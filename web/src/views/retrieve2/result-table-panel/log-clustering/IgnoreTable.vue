@@ -24,7 +24,7 @@
   <bk-table
     :data="tableData"
     ref="logClusterTable"
-    class="log-cluster-table"
+    :class="['log-cluster-table',tableData.length === 0 ? 'ignore-no-data' : '']"
     @row-click="tableRowClick">
     <bk-table-column type="expand" width="30">
       <template slot-scope="props">
@@ -186,6 +186,17 @@ export default {
   .bk-table-body td.bk-table-expanded-cell {
     padding: 0;
   }
+  &.bk-table-outer-border{
+    border: none;
+    &:after, &:before{
+      display: none;
+    }
+  /deep/.bk-table-row-last{
+      td{
+        border: none;
+      }
+    }
+  }
   td {
     padding-top: 14px;
     vertical-align: top;
@@ -256,6 +267,13 @@ export default {
       color: #3a84ff;
       margin-top: 8px;
       cursor: pointer;
+    }
+  }
+}
+.ignore-no-data{
+  tr{
+    >th{
+      border-bottom: none !important;
     }
   }
 }

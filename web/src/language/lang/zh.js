@@ -323,6 +323,8 @@ export default {
     changeSwitchTips: '是否禁用该模块？',
     notCollector: '当前索引集为非采集项,无法设置数据指纹',
     closeFinger: '是否关闭数据指纹',
+    debuggerAlert: '调试需要等待1分钟以上，在此区间不可进行其余操作',
+    debuggingTool: '调试工具',
   },
   // logCluster
   忽略数字: '忽略数字',

@@ -130,7 +130,7 @@
                 :clearable="false"
                 :disabled="!globalEditable"
                 :popover-min-width="150"
-                :class="['min-100 mr-neg1',item.fields_name === '' && isFieldsError ? 'rule-error' : '']"
+                :class="['min-100 mr-neg1 above',item.fields_name === '' && isFieldsError ? 'rule-error' : '']"
                 @blur="blurFilter">
                 <bk-option
                   v-for="option in filterSelectList"
@@ -163,7 +163,7 @@
               <bk-input
                 v-if="item.fields_name !== ''"
                 v-model="item.value"
-                :class="['mr-neg1',item.value === '' && isFilterRuleError ? 'rule-error' : '']"
+                :class="['mr-neg1 above',item.value === '' && isFilterRuleError ? 'rule-error' : '']"
                 :disabled="!globalEditable"
                 @blur="blurFilter">
               </bk-input>
@@ -180,6 +180,7 @@
         <!-- 聚类规则 -->
         <rule-table
           ref="ruleTableRef"
+          v-on="$listeners"
           :global-editable="globalEditable"
           :table-str="defaultData.predefined_varibles"
           :default-data="defaultData" />
@@ -509,7 +510,11 @@ export default {
       min-width: 100px;
     }
     .mr-neg1 {
+      position: relative;
       margin-right: -1px;
+    }
+    .above{
+      z-index: 99;
     }
   }
   .rule-container {

@@ -24,6 +24,7 @@ import { mapState } from 'vuex';
 import { formatDate, random } from '@/common/util';
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import EventPopover from '@/views/retrieve2/result-comp/EventPopover.vue';
+import RegisterColumn from '@/views/retrieve2/result-comp/RegisterColumn.vue';
 import TextHighlight from 'vue-text-highlight';
 import OperatorTools from '@/views/retrieve2/result-table-panel/original-log/OperatorTools';
 import RetrieveLoader from '@/skeleton/retrieve-loader';
@@ -38,6 +39,7 @@ export default {
     RetrieveLoader,
     TableColumn,
     ExpandView,
+    RegisterColumn,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -63,7 +65,7 @@ export default {
     },
     fieldAliasMap: {
       type: Object,
-      default: () => {},
+      default: () => { },
     },
     isWrap: {
       type: Boolean,
@@ -127,7 +129,7 @@ export default {
         for (const bizKey in columnObj) {
           if (bizKey === bizId) {
             for (const fieldKey in columnObj[bizId].fields) {
-              fieldKey === indexId && (widthObj =  columnObj[bizId].fields[indexId]);
+              fieldKey === indexId && (widthObj = columnObj[bizId].fields[indexId]);
             }
           }
         }
@@ -137,9 +139,9 @@ export default {
         });
       }
       return (showRealtimeLog
-      || showContextLog
-      || showWebConsole
-      || showMonitorWeb) && this.tableList.length;
+        || showContextLog
+        || showWebConsole
+        || showMonitorWeb) && this.tableList.length;
     },
   },
   watch: {

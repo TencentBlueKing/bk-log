@@ -73,10 +73,11 @@
             </div>
 
             <bk-checkbox
-              v-model="showNewPattern"
+              v-model="isNear24"
               :true-value="true"
               :false-value="false"
-              :disabled="!signatureSwitch">
+              :disabled="!signatureSwitch"
+              @change="isShowNearPattern">
               <span style="font-size: 12px">{{$t('近24H新增')}}</span>
             </bk-checkbox>
 
@@ -122,7 +123,6 @@
             v-if="active === 'dataFingerprint'"
             v-bind="$attrs"
             v-on="$listeners"
-            :show-new-pattern="showNewPattern"
             :year-on-year-cycle="yearOnYearCycle"
             :cluster-switch="clusterSwitch"
             :partter-level="partterLevel"
@@ -193,7 +193,7 @@ export default {
       clusterSwitch: false, // 日志聚类开关
       signatureSwitch: false, // 数据指纹开关
       partterList: [], // partter敏感度List
-      showNewPattern: false, // 近24h
+      isNear24: false, // 近24h
       yearOnYearCycle: 0, // 同比值
       configID: -1, // 采集项ID
       exhibitAll: false, // 是否显示nav
@@ -226,6 +226,7 @@ export default {
         //   remark: 'xxxx',
         // },
       ], // 数据指纹List
+      defaultFingerList: [],
       loadingWidthList: { // loading表头宽度列表
         global: [''],
         ignore: [60, 90, 90, ''],
@@ -344,6 +345,7 @@ export default {
       })
         .then((res) => {
           this.fingerList = res.data;
+          this.defaultFingerList = res.data;
         })
         .finally(() => {
           this.tableLoading = false;
@@ -386,6 +388,9 @@ export default {
       setTimeout(() => {
         type === 'table' ? this.tableLoading : this.globalLoading = false;
       }, 500);
+    },
+    isShowNearPattern(state) {
+      this.fingerList = state ? this.fingerList.filter(el => el.is_new_class) : this.defaultFingerList;
     },
   },
 };

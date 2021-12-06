@@ -323,6 +323,8 @@ export default {
     changeSwitchTips: 'Is the module disabled?',
     notCollector: '当前索引集为非采集项,无法设置数据指纹',
     closeFinger: '是否关闭数据指纹',
+    debuggerAlert: 'Debugging needs to wait for more than 1 minute, other operations are not allowed in this interval',
+    debuggingTool: 'Debugging Tool',
   },
   // logCluster
   忽略数字: 'Ignore Numbers',

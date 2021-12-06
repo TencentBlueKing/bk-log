@@ -22,8 +22,8 @@
 
 <template>
   <bk-popover
-    :class="['retrieve-event-popover', { 'is-inline': !isSearch }]"
-    :ext-cls="`event-tippy${!isSearch ? ' is-search' : ''}`"
+    :class="['retrieve-event-popover', { 'is-inline': !isCluster }]"
+    :ext-cls="`event-tippy${!isCluster ? ' is-cluster' : ''}`"
     :trigger="trigger"
     :placement="placement"
     :tippy-options="tippyOptions"
@@ -31,16 +31,17 @@
     <slot />
     <div slot="content" class="event-icons">
       <span
+        v-if="isCluster"
         class="icon bk-icon icon-eye"
         v-bk-tooltips.top="{ content: $t('patternInteract'), delay: 300 }"
         @click="handleClick('show original')">
       </span>
       <!-- <span
+        v-if="isCluster"
         class="icon log-icon icon-chart"
         v-bk-tooltips.top="{ content: $t(''), delay: 300 }"
         @click="handleClick('a')">
       </span> -->
-      <!-- <span class="icon log-icon icon-chart"></span> -->
       <span
         class="icon log-icon icon-copy"
         v-bk-tooltips.top="{ content: $t('复制'), delay: 300 }"
@@ -61,7 +62,7 @@ export default {
       type: String,
       default: 'click',
     },
-    isSearch: {
+    isCluster: {
       type: Boolean,
       default: true,
     },
@@ -109,7 +110,7 @@ export default {
     margin-right: 3px;
     font-size: 24px;
   }
-  &.is-search {
+  &.is-cluster {
     .tippy-tooltip {
       padding-left: 4px;
     }

@@ -77,13 +77,14 @@
             <component
               v-if="isShowPage"
               :is="showComponent"
-              :global-editable="globalEditable"
+              :global-editable="!isDebugRequest && globalEditable"
               :index-set-item="indexSetItem"
               :total-fields="totalFields"
               :config-data="configData"
               :clean-config="cleanConfig"
-              @reset-page="resetPage"
+              @resetPage="resetPage"
               @updateLogFields="updateLogFields"
+              @debugRequestChange="debugRequestChange"
             ></component>
           </div>
         </div>
@@ -136,6 +137,7 @@ export default {
       currentChoice: '', // 当前nav选中
       showComponent: '', // 当前显示的组件
       isSubmit: false, // 在当前设置页是否保存成功
+      isDebugRequest: false,
       currentList: [
         // {
         //   id: 'index',
@@ -292,6 +294,9 @@ export default {
        && this.currentList[0].isDisabled !== true && !this.isExtractActive) {
         this.currentList[0].isEditable = false;
       }
+    },
+    debugRequestChange(val) {
+      this.isDebugRequest = val;
     },
     updateLogFields() {
       this.isSubmit = true;
