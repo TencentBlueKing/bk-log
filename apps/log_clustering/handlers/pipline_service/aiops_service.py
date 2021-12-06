@@ -50,6 +50,7 @@ from apps.log_clustering.components.collections.sample_set_component import (
     CollectConfigs,
     ApplySampleSet,
 )
+from apps.log_clustering.constants import SAMPLE_SET_SLEEP_TIMER
 from apps.log_clustering.handlers.pipline_service.base_pipline_service import BasePipeLineService
 from apps.log_clustering.models import ClusteringConfig
 from apps.utils.pipline import SleepTimer
@@ -96,7 +97,7 @@ class AiopsService(BasePipeLineService):
         ).extend(
             ApplySampleSet(sample_set_name=sample_set_name).apply_sample_set
         ).extend(
-            SleepTimer(60 * 20).sleep_timer
+            SleepTimer(SAMPLE_SET_SLEEP_TIMER).sleep_timer
         ).extend(
             CreateModel(model_name=model_name).create_model
         ).extend(
