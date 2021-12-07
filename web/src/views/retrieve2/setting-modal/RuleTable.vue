@@ -26,26 +26,18 @@
       <p style="height: 32px">{{$t('retrieveSetting.clusterRule')}}</p>
       <div class="table-operate">
         <bk-button
-          size="small"
+          size="small" style="min-width: 48px"
           :class="globalEditable ? 'btn-hover' : ''"
-          :disabled="!globalEditable || debugRequest"
+          :disabled="!globalEditable"
           @click="isShowAddRule = true">
           {{$t('添加')}}
         </bk-button>
         <bk-button
-          size="small"
+          size="small" style="min-width: 72px"
           :class="globalEditable ? 'btn-hover' : ''"
-          :disabled="!globalEditable || debugRequest"
+          :disabled="!globalEditable"
           @click="reductionRule">
           {{$t('retrieveSetting.restoreDefault')}}
-        </bk-button>
-        <bk-button
-          size="small"
-          :class="(logOriginal !== '' && rulesList.length !== 0) ? 'btn-hover' : ''"
-          :disabled="!globalEditable || logOriginal === '' || rulesList.length === 0"
-          :loading="debugRequest"
-          @click="debugging">
-          {{$t('调试')}}
         </bk-button>
       </div>
 
@@ -64,32 +56,27 @@
         <div v-if="rulesList.length > 0" v-bkloading="{ isLoading: tableLoading }">
           <vue-draggable v-bind="dragOptions" v-model="rulesList">
             <transition-group>
-              <li class="table-row table-row-li flbc" v-for="(item, index) in rulesList" :key="item._index">
+              <li class="table-row table-row-li flbc" v-for="(item, index) in rulesList" :key="item._liIndex_">
                 <div class="row-left">
                   <div class="row-left-index">
                     <span class="icon log-icon icon-drag-dots"></span><span>{{index}}</span>
                   </div>
-                  <div>
-                    <bk-popover
-                      theme="light"
-                      placement="top"
-                      :disabled="item._isLeftOverFlow"
-                      :content="Object.values(item)[0]">
-                      <p class="row-left-regular"
-                         :style="`color:${item._isHighlight ? '#FE5376' : '#63656E'}`"
-                         :ref="`regular-${index}`">{{Object.values(item)[0]}}</p>
-                    </bk-popover>
+                  <div class="regular-container">
+                    <register-column :context="Object.values(item)[0]" :root-margin="'-180px 0px 0px 0px'">
+                      <cluster-event-popover
+                        :is-cluster="false"
+                        :placement="'top'"
+                        @eventClick="(operation) => handleMenuClick( operation, item )">
+                        <span class="row-left-regular"
+                              :style="`color:${item._isHighlight_ ? '#FE5376' : '#63656E'}`">
+                          {{Object.values(item)[0]}}</span>
+                      </cluster-event-popover>
+                    </register-column>
                   </div>
                 </div>
                 <div class="row-right flbc">
                   <div>
-                    <bk-popover
-                      theme="light"
-                      placement="top"
-                      :disabled="item._isRightOverFlow"
-                      :content="Object.keys(item)[0]">
-                      <p class="row-right-item" :ref="`placeholder-${index}`">{{Object.keys(item)[0]}}</p>
-                    </bk-popover>
+                    <span class="row-right-item" :ref="`placeholder-${index}`">{{Object.keys(item)[0]}}</span>
                   </div>
                   <div class="rule-btn">
                     <bk-button
@@ -116,8 +103,32 @@
       </div>
     </div>
     <!-- 原始日志 -->
-    <div class="container-item">
-      <p style="height: 32px">{{$t('configDetails.originalLog')}}</p>
+    <div class="container-item debug-container">
+      <div class="fl-jfsb debug-tool">
+        <p>{{$t('retrieveSetting.debuggingTool')}}</p>
+        <span :class="['bk-icon','icon-angle-double-up', isClickAlertIcon ? 'bk-icon-rotate' : '']"
+              @click="isClickAlertIcon = !isClickAlertIcon"></span>
+      </div>
+
+      <bk-alert
+        v-show="isClickAlertIcon"
+        class="debug-alert"
+        type="warning"
+        :title="$t('retrieveSetting.debuggerAlert')"
+        closable></bk-alert>
+
+      <div class="fl-jfsb">
+        <p style="height: 32px">{{$t('configDetails.originalLog')}}</p>
+        <bk-button
+          size="small" style="min-width: 48px"
+          :class="(logOriginal !== '' && rulesList.length !== 0) ? 'btn-hover' : ''"
+          :disabled="!globalEditable || logOriginal === '' || rulesList.length === 0"
+          :loading="debugRequest"
+          @click="debugging">
+          {{$t('调试')}}
+        </bk-button>
+      </div>
+
       <div class="log-style">
         <bk-input
           placeholder=" "
@@ -139,7 +150,7 @@
     <!-- 效果 -->
     <div class="container-item">
       <p style="height:32px">{{$t('retrieveSetting.effect')}}</p>
-      <div class="effect-container">{{effectOriginal}}</div>
+      <div class="effect-container" v-bkloading="{ isLoading: debugRequest,size: 'mini' }">{{effectOriginal}}</div>
     </div>
     <!-- 添加规则dialog -->
     <bk-dialog
@@ -156,20 +167,18 @@
           <bk-input
             v-model="regular"
             style="width: 560px"
-            :disabled="isRuleCorrect"
-            :class="`ml200 ${rules.isRegular ? '' : 'tagRulesColor'}`"
+            :class="`ml200 ${rules.isRegular ? '' : 'tag-rules-color'}`"
           ></bk-input>
-          <p class="ml200">{{$t('retrieveSetting.sample')}}: char {#char_name#}</p>
+          <p class="ml200">{{$t('retrieveSetting.sample')}}：\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}</p>
         </bk-form-item>
         <bk-form-item :label="$t('retrieveSetting.placeholder')" :required="true" :property="''">
           <br>
           <bk-input
             v-model="placeholder"
             style="width: 560px"
-            :disabled="isRuleCorrect"
-            :class="`ml200 ${rules.isPlaceholder ? '' : 'tagRulesColor'}`"
+            :class="`ml200 ${rules.isPlaceholder ? '' : 'tag-rules-color'}`"
           ></bk-input>
-          <p class="ml200">{{$t('retrieveSetting.sample')}}: char {#char_name#}</p>
+          <p class="ml200">{{$t('retrieveSetting.sample')}}：IP</p>
         </bk-form-item>
       </bk-form>
       <template slot="footer">
@@ -202,9 +211,14 @@
 </template>
 <script>
 import VueDraggable from 'vuedraggable';
+import RegisterColumn from '@/views/retrieve2/result-comp/RegisterColumn';
+import ClusterEventPopover from '@/views/retrieve2/result-table-panel/log-clustering/components/ClusterEventPopover';
+import { copyMessage } from '@/common/util';
 export default {
   components: {
     VueDraggable,
+    ClusterEventPopover,
+    RegisterColumn,
   },
   props: {
     globalEditable: {
@@ -236,6 +250,7 @@ export default {
       isDetection: false, // 是否在检测
       debugRequest: false, // 调试中
       detectionStr: '',
+      isClickAlertIcon: false,
       rules: {
         isRegular: true,
         isPlaceholder: true,
@@ -252,11 +267,22 @@ export default {
     tableStr: {
       handler(val) {
         this.rulesList = this.base64ToRuleArr(val);
-        setTimeout(() => {
-          this.setTableIsOverFlow(this.rulesList);
-        }, 500);
       },
     },
+    placeholder() {
+      this.resetDetection();
+      this.rules.isPlaceholder = true;
+    },
+    regular() {
+      this.resetDetection();
+      this.rules.isRegular = true;
+    },
+    debugRequest(val) {
+      this.$emit('debugRequestChange', val);
+    },
+  },
+  beforeDestroy() {
+    this.$emit('debugRequestChange', false);
   },
   methods: {
     // 还原
@@ -267,13 +293,8 @@ export default {
         this.showTableLoading();
       }
     },
-    // loading动画
-    showTableLoading() {
-      this.tableLoading = true;
-      setTimeout(() => {
-        this.tableLoading = false;
-        this.setTableIsOverFlow(this.rulesList);
-      }, 500);
+    handleMenuClick(option, item) {
+      copyMessage(Object.values(item)[0]);
     },
     // 编辑规则
     clusterEdit(index) {
@@ -307,11 +328,12 @@ export default {
         this.showTableLoading();
         const newRuleObj = {};
         newRuleObj[this.placeholder] = this.regular;
-        newRuleObj._index = new Date().getTime();
+        newRuleObj._liIndex_ = new Date().getTime();
         if (this.isEditRules) {
           this.rulesList.splice(this.editRulesIndex, 1, newRuleObj);
         } else {
-          this.rulesList.push(newRuleObj);
+          const isRepeat = this.isRulesRepeat(newRuleObj);
+          !isRepeat && this.rulesList.push(newRuleObj);
         }
         this.isShowAddRule = false;
       } else {
@@ -348,10 +370,8 @@ export default {
           const itemObj = {};
           const key = cur.match(/[^:]*/)[0];
           itemObj[key] = cur.split(`${key}:`)[1];
-          itemObj._index = index;
-          itemObj._isLeftOverFlow = true;
-          itemObj._isRightOverFlow = true;
-          itemObj._isHighlight = false;
+          itemObj._liIndex_ = index;
+          itemObj._isHighlight_ = false;
           pre.push(itemObj);
           return pre;
         }, []);
@@ -377,21 +397,8 @@ export default {
         return '';
       }
     },
-    // 长度超出提示
-    setTableIsOverFlow(arr) {
-      this.$nextTick(() => {
-        arr.forEach((el, index) => {
-          el._isLeftOverFlow = this.isOverFlow(index);
-          el._isRightOverFlow = this.isOverFlow(index, 'placeholder');
-        });
-      });
-    },
-    isOverFlow(index, type = 'regular') {
-      return this.$refs[`${type}-${index}`][0]?.offsetWidth >= this.$refs[`${type}-${index}`][0]?.scrollWidth;
-    },
     // 调试
     debugging() {
-      this.tableLoading = true;
       this.debugRequest = true;
       this.effectOriginal = '';
       const inputData = {
@@ -417,20 +424,26 @@ export default {
           this.highlightPredefined(token_with_regex);
         })
         .finally(() => {
-          this.tableLoading = false;
           this.debugRequest = false;
         });
     },
     highlightPredefined(tokenRegex = {}) {
       Object.entries(tokenRegex).forEach((regexItem) => {
         this.rulesList.forEach((listItem) => {
-          listItem._isHighlight = false;
+          listItem._isHighlight_ = false;
           const [regexKey, regexVal] = regexItem;
           const [listKey, listVal] =  Object.entries(listItem)[0];
           if (regexKey === listKey && regexVal === listVal) {
-            listItem._isHighlight = true;
+            listItem._isHighlight_ = true;
           }
         });
+      });
+    },
+    isRulesRepeat(newRules = {}) {
+      return this.rulesList.some((listItem) => {
+        const [regexKey, regexVal] = Object.entries(newRules)[0];
+        const [listKey, listVal] =  Object.entries(listItem)[0];
+        return regexKey === listKey && regexVal === listVal;
       });
     },
     generationUUID() {
@@ -438,6 +451,18 @@ export default {
       const uuid = tempUrl.toString();
       URL.revokeObjectURL(tempUrl);
       return uuid.substr(uuid.lastIndexOf('/') + 1);
+    },
+    resetDetection() {
+      this.isDetection = false;
+      this.isClickSubmit = false;
+      this.isRuleCorrect = false;
+    },
+    // loading动画
+    showTableLoading() {
+      this.tableLoading = true;
+      setTimeout(() => {
+        this.tableLoading = false;
+      }, 500);
     },
     // base64中文支持
     encode(str) {
@@ -453,190 +478,188 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-
-  .container-item {
-    margin-bottom: 40px;
-
-    &.table-container {
-      position: relative;
+@import "@/scss/mixins/flex.scss";
+.container-item {
+  margin-bottom: 40px;
+  &.table-container {
+    position: relative;
+  }
+  .cluster-table {
+    border: 1px solid #dcdee5;
+    border-bottom: none;
+    border-radius: 2px;
+  }
+  .effect-container {
+    height: 100px;
+    padding: 5px 10px;
+    font-size: 12px;
+    background: #fafbfd;
+    line-height: 24px;
+    color: #000000;
+    border: 1px solid#DCDEE5;
+    border-radius: 2px;
+  }
+  &.debug-container {
+    margin-top: -24px;
+    .debug-tool {
+      color: #3a84ff;
+      width: 86px;
+      font-size: 14px;
+      margin-bottom: 4px;
+      .bk-icon {
+        font-size: 24px;
+      }
+      .bk-icon-rotate {
+        transform: rotateZ(180deg) translateY(2px);
+      }
     }
-
-    .cluster-table {
-      border: 1px solid #dcdee5;
-      border-bottom: none;
-      border-radius: 2px;
-    }
-
-    .effect-container {
-      height: 100px;
-      padding: 5px 10px;
-      font-size: 12px;
-      background: #fafbfd;
-      line-height: 24px;
-      color: #000000;
-      border:1px solid#DCDEE5;
-      border-radius: 2px;
+    .debug-alert {
+      margin-bottom: 8px;
     }
   }
-
-  .table-row {
-    height: 44px;
-    border-bottom: 1px solid #dcdee5;
-    background-color: #fafbfd;
-    font-size: 12px;
-    .icon {
-      margin: 0 10px 0 4px;
-    }
+}
+.table-row {
+  min-height: 44px;
+  border-bottom: 1px solid #dcdee5;
+  background-color: #fafbfd;
+  font-size: 12px;
+  .icon {
+    margin: 0 10px 0 4px;
+  }
+  .icon-drag-dots {
+    width: 16px;
+    text-align: left;
+    font-size: 14px;
+    color: #979ba5;
+    cursor: move;
+    opacity: 0;
+    transition: opacity 0.2s linear;
+  }
+  &.sortable-ghost-class {
+    background: #eaf3ff;
+    transition: background 0.2s linear;
+  }
+  &:hover {
+    background: #eaf3ff;
+    transition: background 0.2s linear;
 
     .icon-drag-dots {
-      width: 16px;
-      text-align: left;
-      font-size: 14px;
-      color: #979ba5;
-      cursor: move;
-      opacity: 0;
+      opacity: 1;
       transition: opacity 0.2s linear;
     }
-    &.sortable-ghost-class {
-      background: #eaf3ff;
-      transition: background 0.2s linear;
-    }
-
+  }
+  &.table-row-li {
+    background-color: #ffffff;
+    transition: background 0.3s;
     &:hover {
-      background: #eaf3ff;
-      transition: background 0.2s linear;
-
-      .icon-drag-dots {
-        opacity: 1;
-        transition: opacity 0.2s linear;
-      }
+      background-color: #f0f1f5;
     }
-
-    &.table-row-li {
-      background-color: #ffffff;
-      transition: background 0.3s;
-
-      &:hover {
-        background-color: #f0f1f5;
-      }
+  }
+  .row-left {
+    display: flex;
+    align-items: center;
+    .row-left-index {
+      width: 120px;
+      margin-left: 14px;
     }
-
-    .row-left {
-      display: flex;
-
-      .row-left-index {
-        width: 120px;
-        margin-left: 14px;
-      }
-
+    .regular-container {
+      width: 600px;
+      padding: 2px;
+      word-break: break-all;
       .row-left-regular {
-        width: 600px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
         cursor: pointer;
       }
     }
-
-    .row-right > div {
-      width: 150px;
-      .row-right-item {
-        width: 130px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        cursor: pointer;
-      }
-      .bk-button-text{
-        font-size: 12px;
-      }
+  }
+  .row-right > div {
+    width: 150px;
+    .row-right-item {
+      width: 130px;
+      word-break: break-all;
+      cursor: pointer;
+    }
+    .bk-button-text {
+      font-size: 12px;
     }
   }
-
-  .table-operate {
-    position: absolute;
-    right: 0;
-    top: 0;
-
-    .bk-button {
-      border-radius: 3px;
-      margin-left: 2px;
-      padding: 0;
-    }
-
-    .btn-hover {
-      &:hover {
-        color: #3a84ff;
-        border: 1px solid #3a84ff;
-      }
+}
+.table-operate {
+  position: absolute;
+  right: 0;
+  top: 0;
+  .bk-button {
+    border-radius: 3px;
+    margin-left: 2px;
+    padding: 0;
+  }
+  .btn-hover {
+    &:hover {
+      color: #3a84ff;
+      border: 1px solid #3a84ff;
     }
   }
-
-  .no-cluster-rule {
-    height: 200px;
+}
+.no-cluster-rule {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 1px solid #dcdee5;
+  .icon-empty {
+    color: #c3cdd7;
+    font-size: 80px;
+  }
+}
+.log-style {
+  height: 100px;
+  /deep/.bk-form-textarea:focus {
+    background-color: #313238 !important;
+    border-radius: 2px;
+  }
+  /deep/.bk-form-textarea[disabled] {
+    background-color: #313238 !important;
+    border-radius: 2px;
+  }
+  /deep/.bk-textarea-wrapper {
+    border: none;
+  }
+}
+.add-rule {
+  .bk-form {
+    margin-left: 15px;
+    width: 560px;
+    /deep/.bk-label {
+      text-align: left;
+    }
+  }
+  .inspection-status {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border-bottom: 1px solid #dcdee5;
-    .icon-empty {
-      color: #c3cdd7;
-      font-size: 80px;
+    position: relative;
+    .bk-icon {
+      font-size: 18px;
     }
+    .spin {
+      top: 2px;
+      position: absolute;
+    }
+    font-size: 14px;
   }
-
-  .log-style {
-    height: 100px;
-
-    /deep/.bk-form-textarea:focus {
-      background-color: #313238 !important;
-      border-radius: 2px;
-    }
-    /deep/.bk-form-textarea[disabled] {
-      background-color: #313238 !important;
-      border-radius: 2px;
-    }
-    /deep/.bk-textarea-wrapper {
-      border: none;
-    }
+}
+.ml200 {
+  margin-left: -200px;
+}
+.tag-rules-color {
+  /deep/.bk-form-input {
+    border-color: #ff5656 !important;
   }
-
-  .add-rule {
-    .bk-form {
-      margin-left: 15px;
-      width: 560px;
-      /deep/.bk-label {
-        text-align: left;
-      }
-    }
-    .inspection-status {
-      display: flex;
-      position: relative;
-      .bk-icon {
-        font-size: 18px;
-      }
-      .spin {
-        top: 2px;
-        position: absolute;
-      }
-      font-size: 14px;
-    }
-  }
-
-  .ml200 {
-    margin-left: -200px;
-  }
-
-  .tagRulesColor {
-    /deep/.bk-form-input {
-      border-color: #ff5656 !important;
-    }
-  }
-
-  .flbc {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
+}
+.flbc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.fl-jfsb {
+  @include flex-justify(space-between);
+}
 </style>

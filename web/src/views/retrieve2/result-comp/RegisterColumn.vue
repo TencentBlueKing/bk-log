@@ -21,97 +21,63 @@
   -->
 
 <template>
-  <div :class="['pattern-content', { 'is-limit': !cacheExpandStr.includes(patternIndex) }]">
-    <cluster-event-popover
-      v-if="isMountPatter"
-      @eventClick="handleClickIcon">
-      <span>{{showContext}}</span>
-    </cluster-event-popover>
-    <span v-else>
-      {{showContext}}
-    </span>
-    <p
-      v-if="!cacheExpandStr.includes(patternIndex)"
-      class="show-whole-btn"
-      @click.stop="handleShowWhole(patternIndex)">
-      {{ $t('展开全部') }}
-    </p>
-    <p
-      v-else
-      class="hide-whole-btn"
-      @click.stop="handleHideWhole(patternIndex)">
-      {{ $t('收起') }}
-    </p>
+  <div>
+    <slot v-if="isMountContent"></slot>
+    <span v-else>{{context}}</span>
   </div>
 </template>
 <script>
-import ClusterEventPopover from './ClusterEventPopover';
 export default {
-  components: { ClusterEventPopover },
   props: {
     context: {
       type: String,
       require: true,
     },
-    patternIndex: {
+    rootMargin: {
       type: String,
-      require: true,
+      default: '0px 0px 0px 0px',
     },
   },
   data() {
     return {
-      isMountPatter: true,
-      cacheExpandStr: [],
+      isMountContent: true,
     };
   },
-  computed: {
-    showContext() {
-      return this.context ? this.context : this.$t('未匹配');
-    },
-  },
   deactivated() {
-    this.isMountPatter = false;
-    this.unregisterOberver();
+    this.isMountContent = false;
+    this.unregisterObserver();
   },
   activated() {
-    this.isMountPatter = true;
+    this.isMountContent = true;
     setTimeout(this.registerObserver, 20);
   },
   mounted() {
-    this.isMountPatter = true;
+    this.isMountContent = true;
     setTimeout(this.registerObserver, 20);
   },
   methods: {
-    handleShowWhole(index) {
-      this.cacheExpandStr.push(index);
-    },
-    handleHideWhole(index) {
-      this.cacheExpandStr = this.cacheExpandStr.map(item => item !== index);
-    },
-    handleClickIcon(id) {
-      this.$emit('eventClick', id);
-    },
     registerObserver() {
       if (this.intersectionObserver) {
-        this.unregisterOberver();
+        this.unregisterObserver();
       }
       this.intersectionObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (this.intersectionObserver) {
             if (entry.intersectionRatio > 0) {
-              this.isMountPatter = true;
+              this.isMountContent = true;
             } else {
-              this.isMountPatter = false;
+              this.isMountContent = false;
             }
           }
         });
+      }, {
+        rootMargin: this.rootMargin, // '-180px 0px 0px 0px',
       });
       this.intersectionObserver.observe(this.$el);
     },
-    unregisterOberver() {
+    unregisterObserver() {
       if (this.intersectionObserver) {
         this.intersectionObserver.unobserve(this.$el);
-        // console.info('unobserve : ', this.$el, this.intersectionObserver);
         this.intersectionObserver.disconnect();
         this.intersectionObserver = null;
       }
@@ -119,33 +85,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-  .pattern-content {
-    display: inline-block;
-    padding-right: 15px;
-    position: relative;
-    padding-top: 4px;
-    overflow: hidden;
-    &.is-limit {
-      max-height: 96px;
-    }
-  }
-  .show-whole-btn {
-    position: absolute;
-    top: 80px;
-    width: 100%;
-    height: 24px;
-    color: #3A84FF;
-    font-size: 12px;
-    background: #fff;
-    cursor: pointer;
-    transition: background-color .25s ease;
-  }
-  .hide-whole-btn {
-    line-height: 14px;
-    margin-top: 2px;
-    color: #3A84FF;
-    cursor: pointer;
-  }
-</style>

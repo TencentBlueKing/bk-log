@@ -23,15 +23,16 @@
 <template>
   <div>
     <bk-table
-      class="log-cluster-table"
+      :class="['log-cluster-table',fingerList.length === 0 ? 'table-no-data' : '']"
       :data="fingerList"
+      :outer-border="false"
       @row-mouse-enter="showEditIcon"
       @row-mouse-leave="hiddenEditIcon">
       <bk-table-column :label="$t('数据指纹')" width="150">
         <template slot-scope="props">
           <div class="flac">
             <span class="signature">{{props.row.signature}}</span>
-            <div v-show="props.row.is_new_class && showNewPattern" class="new-finger">New</div>
+            <div v-show="props.row.is_new_class" class="new-finger">New</div>
           </div>
         </template>
       </bk-table-column>
@@ -76,12 +77,29 @@
       </template>
 
       <bk-table-column label="Pattern" min-width="400" class-name="symbol-column">
-        <template slot-scope="props">
-          <pattern-column
-            :context="props.row.pattern"
-            :pattern-index="props.row.$index"
-            @eventClick="(option) => handleMenuClick(option,props.row)">
-          </pattern-column>
+        <!-- eslint-disable-next-line -->
+        <template slot-scope="{ row, column, $index }">
+          <register-column :context="row.pattern">
+            <div :class="['pattern-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+              <cluster-event-popover
+                :context="row.pattern"
+                @eventClick="(option) => handleMenuClick(option,row)">
+                <span>{{row.pattern ? row.pattern : $t('未匹配')}}</span>
+              </cluster-event-popover>
+              <p
+                v-if="!cacheExpandStr.includes($index)"
+                class="show-whole-btn"
+                @click.stop="handleShowWhole($index)">
+                {{ $t('展开全部') }}
+              </p>
+              <p
+                v-else
+                class="hide-whole-btn"
+                @click.stop="handleHideWhole($index)">
+                {{ $t('收起') }}
+              </p>
+            </div>
+          </register-column>
         </template>
       </bk-table-column>
 
@@ -126,10 +144,14 @@
 </template>
 
 <script>
-import PatternColumn from './components/PatternColumn';
+// import PatternColumn from './components/PatternColumn';
+import ClusterEventPopover from './components/ClusterEventPopover';
+import RegisterColumn from '../../result-comp/RegisterColumn';
+import { copyMessage } from '@/common/util';
 export default {
   components: {
-    PatternColumn,
+    ClusterEventPopover,
+    RegisterColumn,
   },
   props: {
     fingerList: {
@@ -152,14 +174,11 @@ export default {
       type: Object,
       require: true,
     },
-    showNewPattern: {
-      type: Boolean,
-      default: true,
-    },
   },
   data() {
     return {
       currentHover: '',
+      cacheExpandStr: [],
     };
   },
   inject: ['addFilterCondition'],
@@ -171,23 +190,19 @@ export default {
           this.$emit('showOriginLog');
           break;
         case 'copy':
-          try {
-            const input = document.createElement('input');
-            input.setAttribute('value', row.pattern);
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-            this.messageSuccess(this.$t('复制成功'));
-          } catch (e) {
-            console.warn(e);
-          }
+          copyMessage(row.pattern);
           break;
       }
     },
     showArrowsClass(row) {
       if (row.year_on_year_percentage === 0) return '';
       return row.year_on_year_percentage < 0 ? 'icon-arrows-down' : 'icon-arrows-up';
+    },
+    handleShowWhole(index) {
+      this.cacheExpandStr.push(index);
+    },
+    handleHideWhole(index) {
+      this.cacheExpandStr = this.cacheExpandStr.map(item => item !== index);
     },
     handleLeaveCurrent() {
       this.$emit('showSettingLog');
@@ -204,22 +219,27 @@ export default {
 
 <style lang="scss" scoped>
 @import "@/scss/mixins/flex.scss";
-
 .compared-change {
   height: 24px;
   width: 100%;
   margin-left: 12px;
 }
-
 .log-cluster-table {
   /deep/ .bk-table-body-wrapper {
     min-height: calc(100vh - 550px);
-
     .bk-table-empty-block {
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: calc(100vh - 550px);
+    }
+  }
+  &:before {
+    display: none;
+  }
+  /deep/.bk-table-row-last {
+    td {
+      border: none;
     }
   }
   .signature{
@@ -229,7 +249,6 @@ export default {
     white-space: nowrap;
     line-height: 24px;
   }
-
   .empty-text {
     display: flex;
     flex-direction: column;
@@ -244,8 +263,43 @@ export default {
       cursor: pointer;
     }
   }
+  .pattern-content {
+    display: inline-block;
+    padding-right: 15px;
+    position: relative;
+    padding-top: 4px;
+    overflow: hidden;
+    &.is-limit {
+      max-height: 96px;
+    }
+  }
+  .show-whole-btn {
+    position: absolute;
+    top: 80px;
+    width: 100%;
+    height: 24px;
+    color: #3A84FF;
+    font-size: 12px;
+    background: #fff;
+    cursor: pointer;
+    transition: background-color .25s ease;
+  }
+  .hide-whole-btn {
+    line-height: 14px;
+    margin-top: 2px;
+    color: #3A84FF;
+    cursor: pointer;
+  }
 }
-
+.table-no-data{
+  /deep/.bk-table-header-wrapper{
+    tr{
+      >th{
+        border-bottom: none !important;
+      }
+    }
+  }
+}
 .new-finger {
   width: 40px;
   height: 16px;
@@ -257,28 +311,21 @@ export default {
   border: 1px solid #FD9C9C;
   border-radius: 9px;
 }
-
-
 .link-color {
   color: #3a84ff;
   cursor: pointer;
 }
-
 .icon-arrows-down {
   color: #2dcb56;
 }
-
 .icon-arrows-up {
   color: #ff5656;
 }
-
 .flac {
   margin-top: -4px;
   @include flex-align;
 }
-
 .bk-icon {
   font-size: 24px;
 }
-
 </style>

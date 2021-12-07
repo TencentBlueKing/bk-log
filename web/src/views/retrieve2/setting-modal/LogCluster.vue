@@ -130,7 +130,7 @@
                 :clearable="false"
                 :disabled="!globalEditable"
                 :popover-min-width="150"
-                :class="['min-100 mr-neg1',item.fields_name === '' && isFieldsError ? 'rule-error' : '']"
+                :class="['min-100 mr-neg1 above',item.fields_name === '' && isFieldsError ? 'rule-error' : '']"
                 @blur="blurFilter">
                 <bk-option
                   v-for="option in filterSelectList"
@@ -163,7 +163,7 @@
               <bk-input
                 v-if="item.fields_name !== ''"
                 v-model="item.value"
-                :class="['mr-neg1',item.value === '' && isFilterRuleError ? 'rule-error' : '']"
+                :class="['mr-neg1 above',item.value === '' && isFilterRuleError ? 'rule-error' : '']"
                 :disabled="!globalEditable"
                 @blur="blurFilter">
               </bk-input>
@@ -180,6 +180,7 @@
         <!-- 聚类规则 -->
         <rule-table
           ref="ruleTableRef"
+          v-on="$listeners"
           :global-editable="globalEditable"
           :table-str="defaultData.predefined_varibles"
           :default-data="defaultData" />
@@ -440,128 +441,125 @@ export default {
       this.formData.filter_rules.splice(index, 1);
     },
     resetPage() {
-      this.$emit('reset-page');
+      this.$emit('resetPage');
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
+/deep/ .bk-label {
+  text-align: left;
+}
+.setting-log-cluster {
+  padding: 0 20px;
+}
+.form-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
 
-  /deep/ .bk-label {
-    text-align: left;
+  .left-word {
+    font-weight: 700;
+    font-size: 14px;
+    margin-right: 16px;
   }
-  .setting-log-cluster {
-    padding: 0 20px;
-  }
-  .form-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 25px;
 
-    .left-word {
+  .bk-icon {
+    margin-left: 8px;
+    font-size: 18px;
+    color: #979ba5;
+  }
+}
+.filter-rule {
+  display: flex;
+  flex-wrap: wrap;
+  .icon-box {
+    min-width: 32px;
+    height: 32px;
+    background: #ffffff;
+    font-size: 14px;
+    line-height: 28px;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #c4c6cc;
+    /deep/.bk-select-name {
+      padding: 0 !important;
+    }
+  }
+}
+.filter-rule-item {
+  margin-bottom: 6px;
+  /deep/.bk-select-angle {
+    display: none;
+  }
+  /deep/.bk-select {
+    border-radius: 0;
+  }
+  /deep/.bk-form-control {
+    width: 140px;
+    border-radius: 0;
+  }
+  .and-or {
+    min-width: 62px;
+    color: #ff9c01;
+    font-size: 12px;
+  }
+  .min-100 {
+    min-width: 100px;
+  }
+  .mr-neg1 {
+    position: relative;
+    margin-right: -1px;
+  }
+  .above {
+    z-index: 99;
+  }
+}
+.rule-container {
+  padding: 0 16px;
+}
+.submit-dialog {
+  /deep/.bk-dialog-tool {
+    display: none;
+  }
+  .submit-dialog-container {
+    /deep/ .bk-button {
+      margin-left: 100px;
+    }
+    .submit-dialog-title {
       font-weight: 700;
-      font-size: 14px;
-      margin-right: 16px;
+      font-size: 16px;
+      margin-bottom: 7px;
     }
-
-    .bk-icon {
-      margin-left: 8px;
-      font-size: 18px;
-      color: #979ba5;
+    .submit-dialog-text {
+      margin-bottom: 22px;
     }
-  }
-  .filter-rule {
-    display: flex;
-    flex-wrap: wrap;
-    .icon-box {
-      min-width: 32px;
-      height: 32px;
-      background: #FFFFFF;
-      font-size: 14px;
-      line-height: 28px;
-      text-align: center;
-      cursor: pointer;
-      border: 1px solid #c4c6cc;
-      /deep/.bk-select-name {
-        padding: 0 !important;
-      }
+    /deep/.submit-dialog-btn {
+      margin-left: 224px;
     }
   }
-  .filter-rule-item {
-    margin-bottom: 6px;
-    /deep/.bk-select-angle {
-      display: none;
-    }
-    /deep/.bk-select {
-      border-radius: 0;
-    }
-    /deep/.bk-form-control {
-      width: 140px;
-      border-radius: 0;
-    }
-    .and-or {
-      min-width: 62px;
-      color: #ff9c01;
-      font-size: 12px;
-    }
-    .min-100 {
-      min-width: 100px;
-    }
-    .mr-neg1 {
-      margin-right: -1px;
-    }
+}
+.rule-error {
+  /deep/.bk-form-input {
+    border-color: #ff5656;
   }
-  .rule-container {
-    padding: 0 16px;
+  &.bk-select {
+    border-color: #ff5656 !important;
   }
-  .submit-dialog {
-    /deep/.bk-dialog-tool {
-      display: none;
-    }
-
-    .submit-dialog-container {
-      /deep/ .bk-button {
-        margin-left: 100px;
-      }
-      .submit-dialog-title {
-        font-weight: 700;
-        font-size: 16px;
-        margin-bottom: 7px;
-      }
-      .submit-dialog-text {
-        margin-bottom: 22px;
-      }
-      /deep/.submit-dialog-btn {
-        margin-left: 224px;
-      }
-    }
-  }
-  .rule-error{
-    /deep/.bk-form-input{
-      border-color: #ff5656;
-    }
-    &.bk-select{
-      border-color: #ff5656 !important;
-    }
-  }
-
-  .container-item {
-    margin-bottom: 40px;
-  }
-
-  .submit-button {
-    margin: 40px 0 40px -200px;
-  }
-
-  .ml200 {
-    margin-left: -200px;
-  }
-
-  .flbc {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
+}
+.container-item {
+  margin-bottom: 40px;
+}
+.submit-button {
+  margin: 40px 0 40px -200px;
+}
+.ml200 {
+  margin-left: -200px;
+}
+.flbc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 </style>

@@ -22,9 +22,10 @@
 
 <template>
   <bk-table
-    :data="tableData"
     ref="logClusterTable"
-    class="log-cluster-table"
+    :data="tableData"
+    :outer-border="false"
+    :class="['log-cluster-table',tableData.length === 0 ? 'ignore-no-data' : '']"
     @row-click="tableRowClick">
     <bk-table-column type="expand" width="30">
       <template slot-scope="props">
@@ -69,6 +70,7 @@
 
 <script>
 import ExpandView from '../original-log/ExpandView.vue';
+import { copyMessage } from '@/common/util';
 
 export default {
   components: {
@@ -158,17 +160,7 @@ export default {
           this.$emit('addFilterCondition', fieldName, operation, value.toString());
           break;
         case 'copy':
-          try {
-            const input = document.createElement('input');
-            input.setAttribute('value', option.value);
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-            this.messageSuccess(this.$t('复制成功'));
-          } catch (e) {
-            console.warn(e);
-          }
+          copyMessage(option.value);
           break;
         case 'display':
           this.$emit('fieldsUpdated', option.displayFieldNames);
@@ -185,6 +177,9 @@ export default {
 .log-cluster-table {
   .bk-table-body td.bk-table-expanded-cell {
     padding: 0;
+  }
+  &:before{
+    display: none;
   }
   td {
     padding-top: 14px;
@@ -256,6 +251,13 @@ export default {
       color: #3a84ff;
       margin-top: 8px;
       cursor: pointer;
+    }
+  }
+}
+.ignore-no-data{
+  tr{
+    >th{
+      border-bottom: none !important;
     }
   }
 }

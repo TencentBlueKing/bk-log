@@ -65,10 +65,10 @@
           <div class="more-details">
             <div class="details">
               <p><span>{{$t('indexSetList.index_set')}}：</span>{{indexSetItem.index_set_name}}</p>
-              <p><span>{{$t('索引')}}：</span>{{indexSetItem.indexName}}</p>
+              <p><span>{{$t('索引')}}：</span>{{showResultTableID}}</p>
               <p><span>{{$t('来源')}}：</span>{{indexSetItem.scenario_name}}</p>
             </div>
-            <div style="color: #3A84FF; cursor: pointer;">
+            <div style="color: #3A84FF; cursor: pointer;" @click="handleClickDetail">
               {{$t('retrieveSetting.moreDetails')}}
               <span class="log-icon icon-lianjie"></span>
             </div>
@@ -77,13 +77,14 @@
             <component
               v-if="isShowPage"
               :is="showComponent"
-              :global-editable="globalEditable"
+              :global-editable="!isDebugRequest && globalEditable"
               :index-set-item="indexSetItem"
               :total-fields="totalFields"
               :config-data="configData"
               :clean-config="cleanConfig"
-              @reset-page="resetPage"
+              @resetPage="resetPage"
               @updateLogFields="updateLogFields"
+              @debugRequestChange="debugRequestChange"
             ></component>
           </div>
         </div>
@@ -136,6 +137,7 @@ export default {
       currentChoice: '', // 当前nav选中
       showComponent: '', // 当前显示的组件
       isSubmit: false, // 在当前设置页是否保存成功
+      isDebugRequest: false,
       currentList: [
         // {
         //   id: 'index',
@@ -174,6 +176,9 @@ export default {
     },
     isSignatureActive() { // 日志聚类的数据指纹是否开启
       return this.configData?.extra?.signature_switch;
+    },
+    showResultTableID() {
+      return this.indexSetItem?.indices[0]?.result_table_id || '';
     },
   },
   watch: {
@@ -293,9 +298,19 @@ export default {
         this.currentList[0].isEditable = false;
       }
     },
+    debugRequestChange(val) {
+      this.isDebugRequest = val;
+    },
     updateLogFields() {
       this.isSubmit = true;
       this.$emit('updateLogFields');
+    },
+    handleClickDetail() {
+      const { extra: { collector_config_id: collectorId } } = this.cleanConfig;
+      if (!collectorId) return;
+      const projectId =  window.localStorage.getItem('project_id');
+      const jumpUrl = `#/manage/log-collection/collection-item/manage/${collectorId}?projectId=${projectId}`;
+      window.open(jumpUrl, '_blank');
     },
   },
 };
@@ -335,7 +350,6 @@ export default {
     background-color: #FFFFFF;
     border-bottom: 1px solid #DCDEE5;
     // box-shadow:0 3px 6px #DEE0E7 ;
-
     .bk-icon {
       font-size: 32px;
       cursor: pointer;
@@ -344,17 +358,14 @@ export default {
       right: 24px;
     }
   }
-
   .setting-main{
     padding: 72px 40px 0;
     display: flex;
     position: relative;
-
     .setting-left{
       min-width: 240px;
       height: 365px;
       padding-top:4px;
-
       .setting-option{
         height: 40px;
         font-size: 15px;
@@ -370,18 +381,15 @@ export default {
       }
       @include container-shadow
     }
-
     .setting-right{
       width: 1200px;
       margin-left: 20px;
-
       .more-details{
         height: 48px;
         padding: 0 24px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-
         .details{
           display: flex;
           p{
@@ -393,7 +401,6 @@ export default {
         }
         @include container-shadow
       }
-
       .operation-container{
         margin-top: 20px;
         min-height: 770px;
@@ -402,7 +409,6 @@ export default {
       }
     }
   }
-
   .current-color{
     color: #3A84FF;
     background-color: #E1ECFF;
