@@ -116,13 +116,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  /deep/ .bk-label{
-    text-align: left;
-  }
-  .ml200{
-    margin-left: -200px;
-  }
-  .w240{
-    width: 240px;
-  }
+/deep/ .bk-label{
+  text-align: left;
+}
+.ml200{
+  margin-left: -200px;
+}
+.w240{
+  width: 240px;
+}
 </style>

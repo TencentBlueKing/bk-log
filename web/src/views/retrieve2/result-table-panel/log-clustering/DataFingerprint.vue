@@ -25,6 +25,7 @@
     <bk-table
       :class="['log-cluster-table',fingerList.length === 0 ? 'table-no-data' : '']"
       :data="fingerList"
+      :outer-border="false"
       @row-mouse-enter="showEditIcon"
       @row-mouse-leave="hiddenEditIcon">
       <bk-table-column :label="$t('数据指纹')" width="150">
@@ -81,6 +82,7 @@
           <register-column :context="row.pattern">
             <div :class="['pattern-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
               <cluster-event-popover
+                :context="row.pattern"
                 @eventClick="(option) => handleMenuClick(option,row)">
                 <span>{{row.pattern ? row.pattern : $t('未匹配')}}</span>
               </cluster-event-popover>
@@ -145,6 +147,7 @@
 // import PatternColumn from './components/PatternColumn';
 import ClusterEventPopover from './components/ClusterEventPopover';
 import RegisterColumn from '../../result-comp/RegisterColumn';
+import { copyMessage } from '@/common/util';
 export default {
   components: {
     ClusterEventPopover,
@@ -187,17 +190,7 @@ export default {
           this.$emit('showOriginLog');
           break;
         case 'copy':
-          try {
-            const input = document.createElement('input');
-            input.setAttribute('value', row.pattern);
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-            this.messageSuccess(this.$t('复制成功'));
-          } catch (e) {
-            console.warn(e);
-          }
+          copyMessage(row.pattern);
           break;
       }
     },
@@ -226,17 +219,14 @@ export default {
 
 <style lang="scss" scoped>
 @import "@/scss/mixins/flex.scss";
-
 .compared-change {
   height: 24px;
   width: 100%;
   margin-left: 12px;
 }
-
 .log-cluster-table {
   /deep/ .bk-table-body-wrapper {
     min-height: calc(100vh - 550px);
-
     .bk-table-empty-block {
       display: flex;
       justify-content: center;
@@ -244,15 +234,12 @@ export default {
       min-height: calc(100vh - 550px);
     }
   }
-  &.bk-table-outer-border{
-    border: none;
-    &:after, &:before{
-      display: none;
-    }
-    /deep/.bk-table-row-last{
-      td{
-        border: none;
-      }
+  &:before {
+    display: none;
+  }
+  /deep/.bk-table-row-last {
+    td {
+      border: none;
     }
   }
   .signature{
@@ -262,7 +249,6 @@ export default {
     white-space: nowrap;
     line-height: 24px;
   }
-
   .empty-text {
     display: flex;
     flex-direction: column;
@@ -277,7 +263,6 @@ export default {
       cursor: pointer;
     }
   }
-
   .pattern-content {
     display: inline-block;
     padding-right: 15px;
@@ -288,7 +273,6 @@ export default {
       max-height: 96px;
     }
   }
-
   .show-whole-btn {
     position: absolute;
     top: 80px;
@@ -300,7 +284,6 @@ export default {
     cursor: pointer;
     transition: background-color .25s ease;
   }
-
   .hide-whole-btn {
     line-height: 14px;
     margin-top: 2px;
@@ -317,7 +300,6 @@ export default {
     }
   }
 }
-
 .new-finger {
   width: 40px;
   height: 16px;
@@ -329,28 +311,21 @@ export default {
   border: 1px solid #FD9C9C;
   border-radius: 9px;
 }
-
-
 .link-color {
   color: #3a84ff;
   cursor: pointer;
 }
-
 .icon-arrows-down {
   color: #2dcb56;
 }
-
 .icon-arrows-up {
   color: #ff5656;
 }
-
 .flac {
   margin-top: -4px;
   @include flex-align;
 }
-
 .bk-icon {
   font-size: 24px;
 }
-
 </style>

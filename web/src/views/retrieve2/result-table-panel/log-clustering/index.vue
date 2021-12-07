@@ -404,26 +404,21 @@ export default {
     min-width: 760px;
     margin-bottom: 12px;
     color: #63656e;
-
     .fingerprint-setting {
       width: 485px;
       height: 24px;
       line-height: 24px;
       font-size: 12px;
-
       .partter {
         width: 200px;
-
         .partter-slider-box {
           width: 154px;
         }
-
         .partter-slider {
           width: 114px;
         }
       }
     }
-
     .download-icon {
       min-width: 26px;
       height: 26px;
@@ -437,23 +432,19 @@ export default {
     }
     @include flex-justify(space-between);
   }
-
   .bk-alert {
     margin-bottom: 16px;
   }
 }
-
 .compared-select {
   min-width: 87px;
   margin-left: 6px;
   position: relative;
   top: -3px;
-
   .bk-select-name {
     height: 24px;
   }
 }
-
 .compared-select-option{
   .compared-customize{
     position: relative;
@@ -481,7 +472,6 @@ export default {
     padding: 0 18px 0 10px !important;
   }
 }
-
 .no-text-table {
   .bk-table-empty-block {
     display: flex;
@@ -489,7 +479,6 @@ export default {
     align-items: center;
     min-height: calc(100vh - 480px);
   }
-
   .empty-text {
     display: flex;
     flex-direction: column;
@@ -505,7 +494,6 @@ export default {
     }
   }
 }
-
 .fljb {
   align-items: center;
   @include flex-justify(space-between);

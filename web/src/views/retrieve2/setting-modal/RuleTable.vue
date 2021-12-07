@@ -169,7 +169,7 @@
             style="width: 560px"
             :class="`ml200 ${rules.isRegular ? '' : 'tag-rules-color'}`"
           ></bk-input>
-          <p class="ml200">{{$t('retrieveSetting.sample')}}: char {#char_name#}</p>
+          <p class="ml200">{{$t('retrieveSetting.sample')}}：\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}</p>
         </bk-form-item>
         <bk-form-item :label="$t('retrieveSetting.placeholder')" :required="true" :property="''">
           <br>
@@ -178,7 +178,7 @@
             style="width: 560px"
             :class="`ml200 ${rules.isPlaceholder ? '' : 'tag-rules-color'}`"
           ></bk-input>
-          <p class="ml200">{{$t('retrieveSetting.sample')}}: char {#char_name#}</p>
+          <p class="ml200">{{$t('retrieveSetting.sample')}}：IP</p>
         </bk-form-item>
       </bk-form>
       <template slot="footer">
@@ -213,6 +213,7 @@
 import VueDraggable from 'vuedraggable';
 import RegisterColumn from '@/views/retrieve2/result-comp/RegisterColumn';
 import ClusterEventPopover from '@/views/retrieve2/result-table-panel/log-clustering/components/ClusterEventPopover';
+import { copyMessage } from '@/common/util';
 export default {
   components: {
     VueDraggable,
@@ -293,17 +294,7 @@ export default {
       }
     },
     handleMenuClick(option, item) {
-      try {
-        const input = document.createElement('input');
-        input.setAttribute('value', Object.values(item)[0]);
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        this.messageSuccess(this.$t('复制成功'));
-      } catch (e) {
-        console.warn(e);
-      }
+      copyMessage(Object.values(item)[0]);
     },
     // 编辑规则
     clusterEdit(index) {
@@ -341,7 +332,8 @@ export default {
         if (this.isEditRules) {
           this.rulesList.splice(this.editRulesIndex, 1, newRuleObj);
         } else {
-          this.rulesList.push(newRuleObj);
+          const isRepeat = this.isRulesRepeat(newRuleObj);
+          !isRepeat && this.rulesList.push(newRuleObj);
         }
         this.isShowAddRule = false;
       } else {
@@ -447,6 +439,13 @@ export default {
         });
       });
     },
+    isRulesRepeat(newRules = {}) {
+      return this.rulesList.some((listItem) => {
+        const [regexKey, regexVal] = Object.entries(newRules)[0];
+        const [listKey, listVal] =  Object.entries(listItem)[0];
+        return regexKey === listKey && regexVal === listVal;
+      });
+    },
     generationUUID() {
       const tempUrl = URL.createObjectURL(new Blob());
       const uuid = tempUrl.toString();
@@ -480,215 +479,187 @@ export default {
 </script>
 <style lang="scss" scoped>
 @import "@/scss/mixins/flex.scss";
-
-  .container-item {
-    margin-bottom: 40px;
-
-    &.table-container {
-      position: relative;
-    }
-
-    .cluster-table {
-      border: 1px solid #dcdee5;
-      border-bottom: none;
-      border-radius: 2px;
-    }
-
-    .effect-container {
-      height: 100px;
-      padding: 5px 10px;
-      font-size: 12px;
-      background: #fafbfd;
-      line-height: 24px;
-      color: #000000;
-      border:1px solid#DCDEE5;
-      border-radius: 2px;
-    }
-
-    &.debug-container{
-      margin-top: -24px;
-
-      .debug-tool{
-        color: #3A84FF;
-        width: 86px;
-        font-size: 14px;
-        margin-bottom: 4px;
-
-        .bk-icon{
-          font-size: 24px;
-        }
-
-        .bk-icon-rotate{
-          transform: rotateZ(180deg) translateY(2px);
-        }
+.container-item {
+  margin-bottom: 40px;
+  &.table-container {
+    position: relative;
+  }
+  .cluster-table {
+    border: 1px solid #dcdee5;
+    border-bottom: none;
+    border-radius: 2px;
+  }
+  .effect-container {
+    height: 100px;
+    padding: 5px 10px;
+    font-size: 12px;
+    background: #fafbfd;
+    line-height: 24px;
+    color: #000000;
+    border: 1px solid#DCDEE5;
+    border-radius: 2px;
+  }
+  &.debug-container {
+    margin-top: -24px;
+    .debug-tool {
+      color: #3a84ff;
+      width: 86px;
+      font-size: 14px;
+      margin-bottom: 4px;
+      .bk-icon {
+        font-size: 24px;
       }
-
-      .debug-alert{
-        margin-bottom: 8px;
+      .bk-icon-rotate {
+        transform: rotateZ(180deg) translateY(2px);
       }
+    }
+    .debug-alert {
+      margin-bottom: 8px;
     }
   }
-
-  .table-row {
-    min-height: 44px;
-    border-bottom: 1px solid #dcdee5;
-    background-color: #fafbfd;
-    font-size: 12px;
-    .icon {
-      margin: 0 10px 0 4px;
-    }
+}
+.table-row {
+  min-height: 44px;
+  border-bottom: 1px solid #dcdee5;
+  background-color: #fafbfd;
+  font-size: 12px;
+  .icon {
+    margin: 0 10px 0 4px;
+  }
+  .icon-drag-dots {
+    width: 16px;
+    text-align: left;
+    font-size: 14px;
+    color: #979ba5;
+    cursor: move;
+    opacity: 0;
+    transition: opacity 0.2s linear;
+  }
+  &.sortable-ghost-class {
+    background: #eaf3ff;
+    transition: background 0.2s linear;
+  }
+  &:hover {
+    background: #eaf3ff;
+    transition: background 0.2s linear;
 
     .icon-drag-dots {
-      width: 16px;
-      text-align: left;
-      font-size: 14px;
-      color: #979ba5;
-      cursor: move;
-      opacity: 0;
+      opacity: 1;
       transition: opacity 0.2s linear;
     }
-    &.sortable-ghost-class {
-      background: #eaf3ff;
-      transition: background 0.2s linear;
-    }
-
+  }
+  &.table-row-li {
+    background-color: #ffffff;
+    transition: background 0.3s;
     &:hover {
-      background: #eaf3ff;
-      transition: background 0.2s linear;
-
-      .icon-drag-dots {
-        opacity: 1;
-        transition: opacity 0.2s linear;
-      }
+      background-color: #f0f1f5;
     }
-
-    &.table-row-li {
-      background-color: #ffffff;
-      transition: background 0.3s;
-
-      &:hover {
-        background-color: #f0f1f5;
-      }
+  }
+  .row-left {
+    display: flex;
+    align-items: center;
+    .row-left-index {
+      width: 120px;
+      margin-left: 14px;
     }
-
-    .row-left {
-      display: flex;
-      align-items: center;
-      .row-left-index {
-        width: 120px;
-        margin-left: 14px;
-      }
-      .regular-container{
-        width: 600px;
-        padding: 2px;
-        word-break: break-all;
-        .row-left-regular {
-          cursor: pointer;
-        }
-      }
-    }
-
-    .row-right > div {
-      width: 150px;
-      .row-right-item {
-        width: 130px;
-        word-break: break-all;
+    .regular-container {
+      width: 600px;
+      padding: 2px;
+      word-break: break-all;
+      .row-left-regular {
         cursor: pointer;
       }
-      .bk-button-text{
-        font-size: 12px;
-      }
     }
   }
-
-  .table-operate {
-    position: absolute;
-    right: 0;
-    top: 0;
-
-    .bk-button {
-      border-radius: 3px;
-      margin-left: 2px;
-      padding: 0;
+  .row-right > div {
+    width: 150px;
+    .row-right-item {
+      width: 130px;
+      word-break: break-all;
+      cursor: pointer;
     }
-
-    .btn-hover {
-      &:hover {
-        color: #3a84ff;
-        border: 1px solid #3a84ff;
-      }
+    .bk-button-text {
+      font-size: 12px;
     }
   }
-
-  .no-cluster-rule {
-    height: 200px;
+}
+.table-operate {
+  position: absolute;
+  right: 0;
+  top: 0;
+  .bk-button {
+    border-radius: 3px;
+    margin-left: 2px;
+    padding: 0;
+  }
+  .btn-hover {
+    &:hover {
+      color: #3a84ff;
+      border: 1px solid #3a84ff;
+    }
+  }
+}
+.no-cluster-rule {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 1px solid #dcdee5;
+  .icon-empty {
+    color: #c3cdd7;
+    font-size: 80px;
+  }
+}
+.log-style {
+  height: 100px;
+  /deep/.bk-form-textarea:focus {
+    background-color: #313238 !important;
+    border-radius: 2px;
+  }
+  /deep/.bk-form-textarea[disabled] {
+    background-color: #313238 !important;
+    border-radius: 2px;
+  }
+  /deep/.bk-textarea-wrapper {
+    border: none;
+  }
+}
+.add-rule {
+  .bk-form {
+    margin-left: 15px;
+    width: 560px;
+    /deep/.bk-label {
+      text-align: left;
+    }
+  }
+  .inspection-status {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border-bottom: 1px solid #dcdee5;
-    .icon-empty {
-      color: #c3cdd7;
-      font-size: 80px;
+    position: relative;
+    .bk-icon {
+      font-size: 18px;
     }
-  }
-
-  .log-style {
-    height: 100px;
-
-    /deep/.bk-form-textarea:focus {
-      background-color: #313238 !important;
-      border-radius: 2px;
+    .spin {
+      top: 2px;
+      position: absolute;
     }
-    /deep/.bk-form-textarea[disabled] {
-      background-color: #313238 !important;
-      border-radius: 2px;
-    }
-    /deep/.bk-textarea-wrapper {
-      border: none;
-    }
+    font-size: 14px;
   }
-
-  .add-rule {
-    .bk-form {
-      margin-left: 15px;
-      width: 560px;
-      /deep/.bk-label {
-        text-align: left;
-      }
-    }
-    .inspection-status {
-      display: flex;
-      position: relative;
-      .bk-icon {
-        font-size: 18px;
-      }
-      .spin {
-        top: 2px;
-        position: absolute;
-      }
-      font-size: 14px;
-    }
+}
+.ml200 {
+  margin-left: -200px;
+}
+.tag-rules-color {
+  /deep/.bk-form-input {
+    border-color: #ff5656 !important;
   }
-
-  .ml200 {
-    margin-left: -200px;
-  }
-
-  .tag-rules-color {
-    /deep/.bk-form-input {
-      border-color: #ff5656 !important;
-    }
-  }
-
-  .flbc {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .fl-jfsb{
-    @include flex-justify(space-between);
-  }
-
+}
+.flbc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.fl-jfsb {
+  @include flex-justify(space-between);
+}
 </style>

@@ -43,6 +43,7 @@
         @click="handleClick('a')">
       </span> -->
       <span
+        v-if="isHavePattern"
         class="icon log-icon icon-copy"
         v-bk-tooltips.top="{ content: $t('复制'), delay: 300 }"
         @click="handleClick('copy')">
@@ -70,6 +71,15 @@ export default {
       type: Object,
       default: () => {},
     },
+    context: {
+      type: String,
+      require: true,
+    },
+  },
+  computed: {
+    isHavePattern() {
+      return this.context !== '';
+    },
   },
   methods: {
     handleClick(id) {
@@ -85,6 +95,7 @@ export default {
 }
 .event-tippy {
   .event-icons {
+    min-height: 24px;
     display: flex;
     align-items: center;
   }
@@ -93,7 +104,7 @@ export default {
   }
   .icon {
     display: inline-block;
-    margin-right: 10px;
+    margin-right: 8px;
     font-size: 14px;
     cursor: pointer;
     &:hover {

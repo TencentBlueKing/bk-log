@@ -65,10 +65,10 @@
           <div class="more-details">
             <div class="details">
               <p><span>{{$t('indexSetList.index_set')}}：</span>{{indexSetItem.index_set_name}}</p>
-              <p><span>{{$t('索引')}}：</span>{{indexSetItem.indexName}}</p>
+              <p><span>{{$t('索引')}}：</span>{{showResultTableID}}</p>
               <p><span>{{$t('来源')}}：</span>{{indexSetItem.scenario_name}}</p>
             </div>
-            <div style="color: #3A84FF; cursor: pointer;">
+            <div style="color: #3A84FF; cursor: pointer;" @click="handleClickDetail">
               {{$t('retrieveSetting.moreDetails')}}
               <span class="log-icon icon-lianjie"></span>
             </div>
@@ -176,6 +176,9 @@ export default {
     },
     isSignatureActive() { // 日志聚类的数据指纹是否开启
       return this.configData?.extra?.signature_switch;
+    },
+    showResultTableID() {
+      return this.indexSetItem?.indices[0]?.result_table_id || '';
     },
   },
   watch: {
@@ -302,6 +305,15 @@ export default {
       this.isSubmit = true;
       this.$emit('updateLogFields');
     },
+    handleClickDetail() {
+      const { extra: { collector_config_id: collectorId } } = this.cleanConfig;
+      if (!collectorId) return;
+      this.$router.push({
+        name: 'manage-collection',
+        params: { collectorId },
+        query: { projectId: window.localStorage.getItem('project_id') },
+      });
+    },
   },
 };
 </script>
@@ -340,7 +352,6 @@ export default {
     background-color: #FFFFFF;
     border-bottom: 1px solid #DCDEE5;
     // box-shadow:0 3px 6px #DEE0E7 ;
-
     .bk-icon {
       font-size: 32px;
       cursor: pointer;
@@ -349,17 +360,14 @@ export default {
       right: 24px;
     }
   }
-
   .setting-main{
     padding: 72px 40px 0;
     display: flex;
     position: relative;
-
     .setting-left{
       min-width: 240px;
       height: 365px;
       padding-top:4px;
-
       .setting-option{
         height: 40px;
         font-size: 15px;
@@ -375,18 +383,15 @@ export default {
       }
       @include container-shadow
     }
-
     .setting-right{
       width: 1200px;
       margin-left: 20px;
-
       .more-details{
         height: 48px;
         padding: 0 24px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-
         .details{
           display: flex;
           p{
@@ -398,7 +403,6 @@ export default {
         }
         @include container-shadow
       }
-
       .operation-container{
         margin-top: 20px;
         min-height: 770px;
@@ -407,7 +411,6 @@ export default {
       }
     }
   }
-
   .current-color{
     color: #3A84FF;
     background-color: #E1ECFF;
