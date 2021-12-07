@@ -192,14 +192,6 @@ export default {
       return this.collectorData.params.winlog_event_id.length > 0 || this.collectorData.params.winlog_level.length > 0;
     },
   },
-  watch: {
-    collectorData: {
-      deep: true,
-      handler() {
-        this.getCollectDetail();
-      },
-    },
-  },
   created() {
     this.getCollectDetail();
   },

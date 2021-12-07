@@ -308,11 +308,9 @@ export default {
     handleClickDetail() {
       const { extra: { collector_config_id: collectorId } } = this.cleanConfig;
       if (!collectorId) return;
-      this.$router.push({
-        name: 'manage-collection',
-        params: { collectorId },
-        query: { projectId: window.localStorage.getItem('project_id') },
-      });
+      const projectId =  window.localStorage.getItem('project_id');
+      const jumpUrl = `#/manage/log-collection/collection-item/manage/${collectorId}?projectId=${projectId}`;
+      window.open(jumpUrl, '_blank');
     },
   },
 };

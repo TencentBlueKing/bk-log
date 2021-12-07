@@ -441,7 +441,7 @@ export default {
       this.formData.filter_rules.splice(index, 1);
     },
     resetPage() {
-      this.$emit('reset-page');
+      this.$emit('resetPage');
     },
   },
 };
