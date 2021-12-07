@@ -63,6 +63,8 @@ class TagColor(ChoicesEnum):
 
 DEFAULT_TAG_COLOR = TagColor.BLUE
 
+DEFAULT_BK_CLOUD_ID = 0
+
 SEARCH_SCOPE_VALUE = ["default", "search_context"]
 MAX_RESULT_WINDOW = 10000
 MAX_SEARCH_SIZE = 100000
