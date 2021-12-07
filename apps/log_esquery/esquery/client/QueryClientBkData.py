@@ -110,8 +110,8 @@ class QueryClientBkData(QueryClientTemplate):
                 result[index] = mapping
         return result
 
-    @staticmethod
-    def indices(bk_biz_id, result_table_id=None, with_storage=False):
+    @classmethod
+    def indices(cls, bk_biz_id, result_table_id=None, with_storage=False):
         """
         查询索引列表
         :param bk_biz_id:
