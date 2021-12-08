@@ -17,6 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from apps.log_databus.constants import TargetNodeTypeEnum
+from apps.log_search.constants import DEFAULT_BK_CLOUD_ID
 from apps.log_search.models import FavoriteSearch, UserIndexSetSearchHistory
 from apps.utils.db import array_group
 
@@ -74,15 +76,32 @@ class FavoriteHandlers(object):
         key_word = params.get("keyword", "")
         if key_word is None:
             key_word = ""
-        query_string = "keyword:" + key_word
-
-        # IP快选、过滤条件
+        query_string = key_word
         host_scopes = params.get("host_scopes", {})
+        target_nodes = host_scopes.get("target_nodes", {})
+
+        if target_nodes:
+            if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
+                query_string += " AND ({})".format(
+                    ",".join([f"{target_node['bk_cloud_id']}:{target_node['ip']}" for target_node in target_nodes])
+                )
+            else:
+                first_node, *_ = target_nodes
+                target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
+                query_string += f" AND ({first_node['bk_obj_id']}:" + ",".join(target_list) + ")"
+
         if host_scopes.get("modules"):
             modules_list = [str(_module["bk_inst_id"]) for _module in host_scopes["modules"]]
             query_string += " ADN (modules:" + ",".join(modules_list) + ")"
+            host_scopes["target_node_type"] = TargetNodeTypeEnum.TOPO.value
+            host_scopes["target_nodes"] = host_scopes["modules"]
+
         if host_scopes.get("ips"):
             query_string += " AND (ips:" + host_scopes["ips"] + ")"
+            host_scopes["target_node_type"] = TargetNodeTypeEnum.INSTANCE.value
+            host_scopes["target_nodes"] = [
+                {"ip": ip, "bk_cloud_id": DEFAULT_BK_CLOUD_ID} for ip in host_scopes["ips"].split(",")
+            ]
 
         additions = params.get("addition", [])
         if additions:
