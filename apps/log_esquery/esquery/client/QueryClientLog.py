@@ -142,8 +142,10 @@ class QueryClientLog(QueryClientTemplate):
             # 2_bklog_bkesb_container_20211207*
             # 2_bklog.bkesb_container*
             # 2_bklog_bkesb_container*
+            # 2_bklog.bkesb_container_*
+            # 2_bklog_bkesb_container_*
             tmp_index: str = _index.replace("_%s_" % settings.TABLE_ID_PREFIX, "_%s." % settings.TABLE_ID_PREFIX)
-            tmp_index = tmp_index.rstrip("*")
+            tmp_index = tmp_index.rstrip("_*")
             # 如果suffix是个日期，需要去掉后缀
             new_index, no_use, suffix = tmp_index.rpartition("_")
             if DATE_RE.match(suffix):
