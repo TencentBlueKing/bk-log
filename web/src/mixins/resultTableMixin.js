@@ -21,9 +21,10 @@
  */
 
 import { mapState } from 'vuex';
-import { formatDate, random } from '@/common/util';
+import { formatDate, random, copyMessage } from '@/common/util';
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 import EventPopover from '@/views/retrieve2/result-comp/EventPopover.vue';
+import RegisterColumn from '@/views/retrieve2/result-comp/RegisterColumn.vue';
 import TextHighlight from 'vue-text-highlight';
 import OperatorTools from '@/views/retrieve2/result-table-panel/original-log/OperatorTools';
 import RetrieveLoader from '@/skeleton/retrieve-loader';
@@ -38,6 +39,7 @@ export default {
     RetrieveLoader,
     TableColumn,
     ExpandView,
+    RegisterColumn,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
@@ -63,7 +65,7 @@ export default {
     },
     fieldAliasMap: {
       type: Object,
-      default: () => {},
+      default: () => { },
     },
     isWrap: {
       type: Boolean,
@@ -127,7 +129,7 @@ export default {
         for (const bizKey in columnObj) {
           if (bizKey === bizId) {
             for (const fieldKey in columnObj[bizId].fields) {
-              fieldKey === indexId && (widthObj =  columnObj[bizId].fields[indexId]);
+              fieldKey === indexId && (widthObj = columnObj[bizId].fields[indexId]);
             }
           }
         }
@@ -137,9 +139,9 @@ export default {
         });
       }
       return (showRealtimeLog
-      || showContextLog
-      || showWebConsole
-      || showMonitorWeb) && this.tableList.length;
+        || showContextLog
+        || showWebConsole
+        || showMonitorWeb) && this.tableList.length;
     },
   },
   watch: {
@@ -272,17 +274,7 @@ export default {
       if (type === 'search') { // 将表格单元添加到过滤条件
         this.$emit('addFilterCondition', field.field_name, 'eq', value);
       } else if (type === 'copy') { // 复制单元格内容
-        try {
-          const input = document.createElement('input');
-          input.setAttribute('value', value);
-          document.body.appendChild(input);
-          input.select();
-          document.execCommand('copy');
-          document.body.removeChild(input);
-          this.messageSuccess(this.$t('复制成功'));
-        } catch (e) {
-          console.warn(e);
-        }
+        copyMessage(value);
       } else if (['is', 'is not'].includes(type)) {
         this.$emit('addFilterCondition', field.field_name, type, value.toString());
       }
@@ -308,17 +300,7 @@ export default {
           this.$emit('addFilterCondition', fieldName, operation, value.toString());
           break;
         case 'copy':
-          try {
-            const input = document.createElement('input');
-            input.setAttribute('value', option.value);
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-            this.messageSuccess(this.$t('复制成功'));
-          } catch (e) {
-            console.warn(e);
-          }
+          copyMessage(option.value);
           break;
         case 'display':
           this.$emit('fieldsUpdated', option.displayFieldNames);

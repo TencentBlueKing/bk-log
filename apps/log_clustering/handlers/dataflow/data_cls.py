@@ -395,3 +395,10 @@ class ModifyFlowCls(object):
     table_name: str
     group_by_node: RequireNodeCls
     ignite_node: RequireNodeCls
+
+
+@dataclass
+class UpdateModelInstanceCls(object):
+    filter_id: str
+    execute_config: Dict
+    table_name: str = "model_instance"
