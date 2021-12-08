@@ -127,7 +127,6 @@
                 <span>{{ $t('过滤条件') }}</span>
                 <div class="filter-item">
                   <span
-                    v-if="showIpQuick"
                     @click="openIpQuick"
                     data-test-id="dataQuery_span_addIP"
                   >{{ $t('添加IP') }}</span>
@@ -143,9 +142,8 @@
               </div>
               <div class="add-filter-condition-container">
                 <IpQuick
-                  v-if="showIpQuick"
-                  ref="ipQuick"
                   :host-scopes="retrieveParams.host_scopes"
+                  @openIpQuick="openIpQuick"
                   @confirm="handleSaveIpQuick"
                 ></IpQuick>
                 <div class="cut-line" v-if="showFilterCutline"></div>
@@ -300,6 +298,14 @@
       </div>
     </div>
 
+    <!-- 目标选择器 -->
+    <ip-selector-dialog
+      :show-dialog.sync="showIpSelectorDialog"
+      :target-nodes="retrieveParams.host_scopes.target_nodes"
+      :target-node-type="retrieveParams.host_scopes.target_node_type"
+      @target-change="handleSaveIpQuick">
+    </ip-selector-dialog>
+
     <SettingModal
       :index-set-item="indexSetItem"
       :is-show-dialog="isShowSettingModal"
@@ -322,6 +328,7 @@ import RetrieveDetailInput from './condition-comp/RetrieveDetailInput';
 import QueryStatement from './condition-comp/QueryStatement';
 import FilterConditionItem from './condition-comp/FilterConditionItem';
 import IpQuick from './condition-comp/IpQuick';
+import ipSelectorDialog from '@/components/data-Access/ip-selector-dialog';
 import FieldFilter from './condition-comp/FieldFilter';
 import FavoritePopper from './condition-comp/FavoritePopper';
 import ResultHeader from './result-comp/ResultHeader';
@@ -344,6 +351,7 @@ export default {
     QueryStatement,
     FilterConditionItem,
     IpQuick,
+    ipSelectorDialog,
     FieldFilter,
     FavoritePopper,
     ResultHeader,
@@ -398,6 +406,10 @@ export default {
           modules: [],
           // 手动输入 ip，多个 ip 用英文 , 分隔
           ips: '',
+          // 目标节点
+          target_nodes: [],
+          // 目标节点类型
+          target_node_type: '',
         },
         // 过滤条件，可添加多个，每个过滤条件格式 {field: 'time', operator: 'is', value: 'xxx'}
         // field 为过滤的字段
@@ -420,7 +432,7 @@ export default {
       statisticalFieldsData: {}, // 字段可选值统计
       retrieveDropdownData: {}, // 检索下拉字段可选值统计
       statementSearchrecords: [], // 查询语句历史记录
-      ipTopoSwitch: true, // IP快选功能相关
+      // ipTopoSwitch: true, // IP快选功能相关
       totalFields: [], // 表格字段
       visibleFields: [], // 显示的排序后的字段
       notTextTypeFields: [], // 字段类型不为 text 的字段
@@ -461,6 +473,7 @@ export default {
           clustering_field: '',
         },
       },
+      showIpSelectorDialog: false,
     };
   },
   computed: {
@@ -472,12 +485,16 @@ export default {
     }),
     ...mapGetters(['asIframe', 'iframeQuery']),
     // 是否显示IP快选功能模块
-    showIpQuick() {
-      return this.ipTopoSwitch;
-    },
+    // showIpQuick() {
+    //   return this.ipTopoSwitch;
+    // },
     showFilterCutline() {
       const { host_scopes, addition } = this.retrieveParams;
-      return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
+      // return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
+      return (host_scopes.modules.length
+      || host_scopes.ips.length
+      || host_scopes.target_nodes.length)
+      && addition.length;
     },
   },
   provide() {
@@ -532,6 +549,12 @@ export default {
       },
     },
     'retrieveParams.host_scopes.modules': {
+      deep: true,
+      handler() {
+        if (!this.isFavoriteSearch) this.latestFavoriteId = '';
+      },
+    },
+    'retrieveParams.host_scopes.target_nodes': {
       deep: true,
       handler() {
         if (!this.isFavoriteSearch) this.latestFavoriteId = '';
@@ -834,14 +857,30 @@ export default {
       this.retrieveLog();
     },
 
-    // 打开 ip 快选弹窗
+    // 打开 ip 选择弹窗
     openIpQuick() {
-      this.$refs.ipQuick.openDialog();
+      // this.$refs.ipQuick.openDialog();
+      this.showIpSelectorDialog = true;
     },
 
-    // IP 快选
+    // IP 选择
     handleSaveIpQuick(data) {
-      this.retrieveParams.host_scopes = data;
+      // this.retrieveParams.host_scopes = data;
+      const { target_node_type: targetNodeType, target_nodes: targetNodes } = data;
+      this.retrieveParams.host_scopes.target_node_type = targetNodes.length ? targetNodeType : '';
+      this.retrieveParams.host_scopes.target_nodes = targetNodes.map((node) => {
+        const targets = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE'].includes(targetNodeType)
+          ? {
+            node_path: node.node_path,
+            bk_inst_name: node.bk_inst_name,
+            bk_inst_id: node.bk_inst_id,
+            bk_obj_id: node.bk_obj_id,
+          }
+          : { ip: node.ip, bk_cloud_id: node.bk_cloud_id, bk_supplier_id: node.bk_supplier_id };
+        return targets;
+      });
+      console.log(this.retrieveParams.host_scopes);
+      this.showIpSelectorDialog = false;
       if (this.isAutoQuery) {
         this.retrieveLog();
       }
@@ -854,6 +893,8 @@ export default {
         host_scopes: {
           modules: [],
           ips: '',
+          target_nodes: [],
+          target_node_type: '',
         },
         addition: [],
       });
@@ -1001,9 +1042,9 @@ export default {
       if (historyParams) {
         Object.assign(this.retrieveParams, historyParams);
         // 禁用 IP 快选时过滤历史记录或收藏中相关字段
-        if (!this.showIpQuick) {
-          this.retrieveParams.host_scopes.ips = '';
-        }
+        // if (!this.showIpQuick) {
+        //   this.retrieveParams.host_scopes.ips = '';
+        // }
       }
       // 通过 url 查询参数设置检索参数
       let queryParams = {};
@@ -1057,7 +1098,9 @@ export default {
                 }
                 break;
               case 'host_scopes':
-                if (this.retrieveParams[field].ips !== '' || this.retrieveParams[field].modules.length) {
+                if (this.retrieveParams[field].ips !== ''
+                || this.retrieveParams[field].modules.length
+                || this.retrieveParams[field].target_nodes.length) {
                   queryParamsStr[field] = (JSON.stringify(this.retrieveParams[field]));
                 }
                 break;
@@ -1516,11 +1559,9 @@ export default {
 
 <style lang="scss" scoped>
   @import '../../scss/mixins/scroller.scss';
-
   .retrieve-container {
     min-width: 1280px;
     height: 100%;
-
     /*首页*/
     .retrieve-home-container {
       height: 100%;
@@ -1528,21 +1569,17 @@ export default {
       background-repeat: no-repeat;
       background-image: url('../../images/index_bg_01.png');
       background-color: #4a4f67;
-
       .retrieve-home {
         margin: 0 auto;
         padding-top: calc((100vh - 283px) * .2 + 60px);
         width: 1000px;
-
         .retrieve-home-title {
           margin-bottom: 35px;
           font-size: 30px;
           color: #fff;
         }
-
         .retrieve-home-condition {
           display: flex;
-
           .king-select-index-set {
             width: 320px;
             margin-right: 10px;
@@ -1551,7 +1588,6 @@ export default {
         }
       }
     }
-
     .page-loading-wrap {
       position: absolute;
       width: 100%;
@@ -1594,26 +1630,21 @@ export default {
         }
       }
     }
-
-
     /*详情页*/
     .retrieve-detail-container {
       position: relative;
       display: flex;
       height: 100%;
-
       .retrieve-condition {
         display: flow-root;
         width: 450px;
         height: 100%;
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
         background: #fff;
-
         .bk-button-group {
           display: flex;
           width: 100%;
           height: 52px;
-
           .bk-button {
             flex:1;
             height: 100%;
@@ -1621,13 +1652,11 @@ export default {
             background: #fafbfd;
             border-color: #dcdee5;
             box-sizing: content-box;
-
             &.is-selected {
               background: #ffffff;
               border-top: none;
               border-bottom: none;
             }
-
             &.is-selected {
               border-color: #dcdee5;
               color: #3a84ff;
@@ -1637,40 +1666,31 @@ export default {
             }
           }
         }
-
         .biz-menu-box {
           margin: 16px 16px 0;
         }
-
         .king-tab {
           height: 100%;
           padding-top: 10px;
-
           .tab-content {
             height: calc(100% - 60px);
             overflow-y: auto;
             background-color: #fbfbfb;
-
             @include scroller;
           }
-
           .tab-content-item {
             padding: 0 24px;
-
             &:first-child {
               padding-bottom: 4px;
               background-color: #fff;
             }
-
             &:last-child {
               padding-top: 6px;
             }
           }
-
           &.as-iframe {
             height: calc(100% - 52px);
           }
-
           .tab-header {
             display: flex;
             justify-content: space-between;
@@ -1679,14 +1699,12 @@ export default {
             color: #313238;
             font-size: 14px;
             font-weight: 500;
-
             .icon-cog {
               font-size: 18px;
               color: #979ba5;
               cursor: pointer;
             }
           }
-
           .tab-item-title {
             display: flex;
             align-items: center;
@@ -1694,16 +1712,13 @@ export default {
             line-height: 20px;
             font-size: 12px;
             color: #63656e;
-
             &.ip-quick-title {
               margin-top: 13px;
             }
-
             &:first-child {
               margin-top: 0;
             }
           }
-
           .field-filter-title {
             margin-bottom: 0;
             padding-top: 18px;
@@ -1711,14 +1726,11 @@ export default {
             font-weight: 500;
             color: #313238;
           }
-
           .flex-item-title {
             display: flex;
             justify-content: space-between;
-
             .filter-item {
               display: flex;
-
               span {
                 margin-left: 24px;
                 color: #3a84ff;
@@ -1726,12 +1738,10 @@ export default {
               }
             }
           }
-
           .add-filter-condition-container {
             display: flex;
             flex-wrap: wrap;
           }
-
           .retrieve-button-group {
             position: sticky;
             bottom: 0;
@@ -1741,7 +1751,6 @@ export default {
             background-color: #fff;
             // z-index: 1;
           }
-
           .cut-line {
             margin: 0 8px 0 4px;
             width: 1px;
@@ -1751,7 +1760,6 @@ export default {
           }
         }
       }
-
       .retrieve-result {
         position: relative;
         width: calc(100% - 450px);
@@ -1759,7 +1767,6 @@ export default {
         background: #f5f6fa;
         z-index: 1;
       }
-
       .drag-bar {
         position: absolute;
         left: 449px;
@@ -1767,7 +1774,6 @@ export default {
         width: 1px;
         height: 100%;
         background: #dcdee5;
-
         .drag-icon {
           position: absolute;
           top: 50%;
@@ -1776,7 +1782,6 @@ export default {
           cursor: col-resize;
           transform: translateY(-50%);
         }
-
         &.dragging {
           z-index: 3001;
         }
@@ -1791,20 +1796,17 @@ export default {
     align-items: center;
     padding: 6px 0;
     color: #63656e;
-
     .bk-icon {
       margin: 0 12px 0 4px;
       color: #979ba5;
       font-size: 14px;
     }
-
     .confirm-btn {
       margin-left: 12px;
       color: #3a84ff;
       cursor: pointer;
     }
   }
-
   .condition-filter-popper {
     .tippy-tooltip {
       padding: 0;

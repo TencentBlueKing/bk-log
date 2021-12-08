@@ -46,7 +46,7 @@
           </bk-select>
           <span
             v-bk-tooltips="{
-              content: '提示信息1',
+              content: $t('retrieveSetting.fieldTips'),
               placements: ['right'],
               delay: 300
             }">
@@ -57,11 +57,11 @@
 
       <div class="form-item">
         <span class="left-word">{{$t('retrieveSetting.ignoreNumbers')}}</span>
-        <span style="color:#979BA5">说明文字说明文字说明文字说明文字说明文字</span>
+        <span style="color:#979BA5">{{$t('retrieveSetting.ignoreNumbersTips')}}</span>
       </div>
       <div class="form-item">
         <span class="left-word">{{$t('retrieveSetting.ignoreCharacters')}}</span>
-        <span style="color:#979BA5">说明文字说明文字说明文字说明文字说明文字</span>
+        <span style="color:#979BA5">{{$t('retrieveSetting.ignoreCharactersTips')}}</span>
       </div>
       <div class="form-item">
         <span class="left-word">{{$t('retrieveSetting.dataFingerprint')}}</span>
@@ -73,7 +73,7 @@
             :pre-check="() => false">
           </bk-switcher>
         </div>
-        <bk-alert style="width: 780px" type="info" :title="$t('retrieveSetting.clusterPrompt')"></bk-alert>
+        <bk-alert style="width: 800px" type="info" :title="$t('retrieveSetting.dataFingerprintTips')"></bk-alert>
       </div>
 
       <!-- 字段长度 -->
@@ -97,7 +97,7 @@
             <span style="margin-left: 8px">{{$t('retrieveSetting.byte')}}</span>
             <span
               v-bk-tooltips="{
-                content: '提示信息2',
+                content: $t('retrieveSetting.fieldLengthTips'),
                 placements: ['right'],
                 delay: 300
               }">
@@ -348,6 +348,8 @@ export default {
       } catch (e) {
         this.globalLoading = false;
       }
+      const { filter_rules: filterRules } = res.data;
+      filterRules === null && (res.data.filter_rules = []);
       Object.assign(this.formData, res.data);
       this.defaultData = res.data;
       this.globalLoading = false;
