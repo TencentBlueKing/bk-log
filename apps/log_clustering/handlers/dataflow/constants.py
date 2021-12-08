@@ -25,6 +25,8 @@ UUID_FIELDS = "uuid"
 # 聚类不参与sql字段
 NOT_CONTAIN_SQL_FIELD_LIST = ["timestamp", "_startTime_", "_endTime_"]
 DIST_FIELDS = ["dist_01", "dist_03", "dist_05", "dist_07", "dist_09"]
+DEFAULT_SPARK_EXECUTOR_INSTANCES = 10
+DEFAULT_PSEUDO_SHUFFLE = 100
 
 
 class FlowMode(ChoicesEnum):
