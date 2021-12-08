@@ -210,10 +210,11 @@
       v-model="isShowSubmitDialog"
       header-position="left"
       ext-cls="submit-dialog"
+      :mask-close="false"
       :show-footer="false">
       <div class="submit-dialog-container">
         <p class="submit-dialog-title">{{$t('retrieveSetting.saveToTakeEffect')}}</p>
-        <p class="submit-dialog-text">该保存需要**时候生效,请耐心等待</p>
+        <p class="submit-dialog-text">{{$t('retrieveSetting.saveEffectMessage')}}</p>
         <bk-button
           theme="primary"
           class="submit-dialog-btn"
@@ -460,13 +461,11 @@ export default {
   display: flex;
   align-items: center;
   margin-bottom: 25px;
-
   .left-word {
     font-weight: 700;
     font-size: 14px;
     margin-right: 16px;
   }
-
   .bk-icon {
     margin-left: 8px;
     font-size: 18px;
@@ -487,6 +486,9 @@ export default {
     border: 1px solid #c4c6cc;
     /deep/.bk-select-name {
       padding: 0 !important;
+    }
+    .icon-plus-line{
+      color:#3a84ff;
     }
   }
 }

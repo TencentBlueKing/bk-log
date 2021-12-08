@@ -104,10 +104,9 @@
     </div>
     <!-- 原始日志 -->
     <div class="container-item debug-container">
-      <div class="fl-jfsb debug-tool">
+      <div class="fl-jfsb debug-tool" @click="isClickAlertIcon = !isClickAlertIcon">
         <p>{{$t('retrieveSetting.debuggingTool')}}</p>
-        <span :class="['bk-icon','icon-angle-double-up', isClickAlertIcon ? 'bk-icon-rotate' : '']"
-              @click="isClickAlertIcon = !isClickAlertIcon"></span>
+        <span :class="['bk-icon','icon-angle-double-down', isClickAlertIcon ? 'bk-icon-rotate' : '']"></span>
       </div>
 
       <bk-alert
@@ -502,15 +501,17 @@ export default {
   &.debug-container {
     margin-top: -24px;
     .debug-tool {
-      color: #3a84ff;
       width: 86px;
       font-size: 14px;
       margin-bottom: 4px;
+      color: #3a84ff;
+      cursor: pointer;
       .bk-icon {
         font-size: 24px;
+        transform: translateY(-2px);
       }
       .bk-icon-rotate {
-        transform: rotateZ(180deg) translateY(2px);
+        transform: rotateZ(180deg);
       }
     }
     .debug-alert {
@@ -577,7 +578,6 @@ export default {
       width: 120px;
       display: inline-block;
       word-break: break-all;
-      cursor: pointer;
     }
     .bk-button-text {
       font-size: 12px;
