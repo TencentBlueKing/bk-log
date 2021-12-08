@@ -117,7 +117,7 @@
         :title="$t('retrieveSetting.debuggerAlert')"
         closable></bk-alert>
 
-      <div class="fl-jfsb">
+      <div class="fl-jfsb" v-show="isClickAlertIcon">
         <p style="height: 32px">{{$t('configDetails.originalLog')}}</p>
         <bk-button
           size="small" style="min-width: 48px"
@@ -129,7 +129,7 @@
         </bk-button>
       </div>
 
-      <div class="log-style">
+      <div class="log-style" v-show="isClickAlertIcon">
         <bk-input
           placeholder=" "
           data-test-id=""
@@ -148,7 +148,7 @@
       </div>
     </div>
     <!-- 效果 -->
-    <div class="container-item">
+    <div class="container-item" v-show="isClickAlertIcon">
       <p style="height:32px">{{$t('retrieveSetting.effect')}}</p>
       <div class="effect-container" v-bkloading="{ isLoading: debugRequest,size: 'mini' }">{{effectOriginal}}</div>
     </div>
@@ -574,7 +574,8 @@ export default {
   .row-right > div {
     width: 150px;
     .row-right-item {
-      width: 130px;
+      width: 120px;
+      display: inline-block;
       word-break: break-all;
       cursor: pointer;
     }
