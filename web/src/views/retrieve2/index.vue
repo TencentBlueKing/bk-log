@@ -1319,11 +1319,11 @@ export default {
       } catch (err) {
         this.$refs.resultMainRef.isPageOver = false;
       } finally {
-        this.tableLoading = false;
         this.requesting = false;
         if (this.isNextTime) {
           if (this.finishPolling) { // 已请求所有分片时间仍无结果
             this.$refs.resultMainRef.isPageOver = false;
+            this.tableLoading = false;
           } else { // 往下一个时间分片获取
             clearTimeout(this.timer);
             this.timer = null;
@@ -1335,6 +1335,7 @@ export default {
         } else {
           clearTimeout(this.timer);
           this.timer = null;
+          this.tableLoading = false;
         }
       }
     },
