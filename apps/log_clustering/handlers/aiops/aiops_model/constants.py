@@ -17,8 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-TRAINING_HOUR = 23
-TRAINING_MINUTE = 59
+TRAINING_HOUR = 4
 
 
 class StepName(object):
@@ -209,37 +208,40 @@ ALGORITHM_CONFIG_PREDICT_OUTPUT = [
         "used_by": "user",
     },
 ]
-# ["ip:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "datetime:datetime.datetime\\(\\d{4},\\s\\d{1,2},\\s\\d{1,2},
-# \\s\\d{1,2},\\s\\d{1,2},\\s\\d{1,2},\\s\\d{5},\\stzinfo=<\\w{3,4}>\\)>", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s
-# \\d{1,2}:\\d{1,2}:\\d{1,2}\\+\\d{2}:\\d{2}", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{2}:\\d{2}:\\d{2}",
-# "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d{6}", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}
-# \\s\\d{1,2}:\\d{1,2}:\\d{1,2},\\d{3}", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\s\\+\\d{4}",
-# "datetime:\\d{4}\\d{1,2}\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d{6}",
-# "datetime:\\d{4}/\\d{1,2}/\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}",
-# "datetime:\\d{2}/\\w{3,4}/\\d{4}:\\d{1,2}:\\d{1,2}:\\d{1,2}\\s\\+\\d{4}",
-# "date:20\\d{2}\\d{1,2}\\d{1,2}/", "date:\\d{4}-\\d{1,2}-\\d{1,2}/", "time:\\d{1,2}:\\d{1,2}:\\d{1,2}.\\d{6}",
-# "ip-port:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\s+:\\d{1,5}/", "NUMBER:^[-+]?[0-9]+$"]
+
+# ["IP:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "DATETIME:datetime.datetime\\(\\d{4},\\s\\d{1,2},\\s\\d{1,2},
+# \\s\\d{1,2},\\s\\d{1,2},\\s\\d{1,2},\\s\\d{5},\\stzinfo=<\\w{3,4}>\\)>",
+# "DATETIME:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\+\\d{2}:\\d{2}",
+# "DATETIME:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{2}:\\d{2}:\\d{2}",
+# "DATETIME:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d{6}",
+# "DATETIME:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2},\\d{3}",
+# "DATETIME:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\s\\+\\d{4}",
+# "DATETIME:\\d{4}\\d{1,2}\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d{6}",
+# "DATETIME:\\d{4}/\\d{1,2}/\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}",
+# "DATETIME:\\d{2}/\\w{3,4}/\\d{4}:\\d{1,2}:\\d{1,2}:\\d{1,2}\\s\\+\\d{4}",
+# "DATE:20\\d{2}\\d{1,2}\\d{1,2}/", "DATE:\\d{4}-\\d{1,2}-\\d{1,2}/", "TIME:\\d{1,2}:\\d{1,2}:\\d{1,2}.\\d{6}",
+# "IP-PORT:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\s+:\\d{1,5}/", "NUMBER:^[-+]?[0-9]+$"]
 
 PREDEFINED_VARIBLES_DEFAULT_VALUE = (
-    "WyJpcDpcXGR7MSwzfVxcLlxcZHsxLDN9XFwuXFxkezEsM31cXC5cXGR7MSwzfSIsICJk"
-    "YXRldGltZTpkYXRldGltZS5kYXRldGltZVxcKFxcZHs0fSxcXHNcXGR7MSwyfSxcXHNc"
-    "XGR7MSwyfSxcXHNcXGR7MSwyfSxcXHNcXGR7MSwyfSxcXHNcXGR7MSwyfSxcXHNcXGR7"
-    "NX0sXFxzdHppbmZvPTxcXHd7Myw0fT5cXCk+IiwgImRhdGV0aW1lOlxcZHs0fS1cXGR7"
-    "MSwyfS1cXGR7MSwyfVxcc1xcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9XFwrXFxkezJ9"
-    "OlxcZHsyfSIsICJkYXRldGltZTpcXGR7NH0tXFxkezEsMn0tXFxkezEsMn1cXHNcXGR7"
-    "Mn06XFxkezJ9OlxcZHsyfSIsICJkYXRldGltZTpcXGR7NH0tXFxkezEsMn0tXFxkezEs"
-    "Mn1cXHNcXGR7MSwyfTpcXGR7MSwyfTpcXGR7MSwyfVxcLlxcZHs2fSIsICJkYXRldGlt"
-    "ZTpcXGR7NH0tXFxkezEsMn0tXFxkezEsMn1cXHNcXGR7MSwyfTpcXGR7MSwyfTpcXGR7"
-    "MSwyfSxcXGR7M30iLCAiZGF0ZXRpbWU6XFxkezR9LVxcZHsxLDJ9LVxcZHsxLDJ9XFxz"
-    "XFxkezEsMn06XFxkezEsMn06XFxkezEsMn1cXHNcXCtcXGR7NH0iLCAiZGF0ZXRpbWU6"
-    "XFxkezR9XFxkezEsMn1cXGR7MSwyfVxcc1xcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9"
-    "XFwuXFxkezZ9IiwgImRhdGV0aW1lOlxcZHs0fS9cXGR7MSwyfS9cXGR7MSwyfVxcc1xc"
-    "ZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9IiwgImRhdGV0aW1lOlxcZHsyfS9cXHd7Myw0"
-    "fS9cXGR7NH06XFxkezEsMn06XFxkezEsMn06XFxkezEsMn1cXHNcXCtcXGR7NH0iLCAi"
-    "ZGF0ZToyMFxcZHsyfVxcZHsxLDJ9XFxkezEsMn0vIiwgImRhdGU6XFxkezR9LVxcZHsx"
-    "LDJ9LVxcZHsxLDJ9LyIsICJ0aW1lOlxcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9Llxc"
-    "ZHs2fSIsICJpcC1wb3J0OlxcZHsxLDN9XFwuXFxkezEsM31cXC5cXGR7MSwzfVxcLlxc"
-    "ZHsxLDN9XFxzKzpcXGR7MSw1fS8iLCAiTlVNQkVSOl5bLStdP1swLTldKyQiXQ=="
+    "WyJJUDpcXGR7MSwzfVxcLlxcZHsxLDN9XFwuXFxkezEsM31cXC5cXGR7MSwzfSIsICJEQ"
+    "VRFVElNRTpkYXRldGltZS5kYXRldGltZVxcKFxcZHs0fSxcXHNcXGR7MSwyfSxcXHNcXG"
+    "R7MSwyfSxcXHNcXGR7MSwyfSxcXHNcXGR7MSwyfSxcXHNcXGR7MSwyfSxcXHNcXGR7NX0"
+    "sXFxzdHppbmZvPTxcXHd7Myw0fT5cXCk+IiwgIkRBVEVUSU1FOlxcZHs0fS1cXGR7MSwy"
+    "fS1cXGR7MSwyfVxcc1xcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9XFwrXFxkezJ9OlxcZ"
+    "HsyfSIsICJEQVRFVElNRTpcXGR7NH0tXFxkezEsMn0tXFxkezEsMn1cXHNcXGR7Mn06XF"
+    "xkezJ9OlxcZHsyfSIsICJEQVRFVElNRTpcXGR7NH0tXFxkezEsMn0tXFxkezEsMn1cXHN"
+    "cXGR7MSwyfTpcXGR7MSwyfTpcXGR7MSwyfVxcLlxcZHs2fSIsICJEQVRFVElNRTpcXGR7"
+    "NH0tXFxkezEsMn0tXFxkezEsMn1cXHNcXGR7MSwyfTpcXGR7MSwyfTpcXGR7MSwyfSxcX"
+    "GR7M30iLCAiREFURVRJTUU6XFxkezR9LVxcZHsxLDJ9LVxcZHsxLDJ9XFxzXFxkezEsMn"
+    "06XFxkezEsMn06XFxkezEsMn1cXHNcXCtcXGR7NH0iLCAiREFURVRJTUU6XFxkezR9XFx"
+    "kezEsMn1cXGR7MSwyfVxcc1xcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9XFwuXFxkezZ9"
+    "IiwgIkRBVEVUSU1FOlxcZHs0fS9cXGR7MSwyfS9cXGR7MSwyfVxcc1xcZHsxLDJ9OlxcZ"
+    "HsxLDJ9OlxcZHsxLDJ9IiwgIkRBVEVUSU1FOlxcZHsyfS9cXHd7Myw0fS9cXGR7NH06XF"
+    "xkezEsMn06XFxkezEsMn06XFxkezEsMn1cXHNcXCtcXGR7NH0iLCAiREFURToyMFxcZHs"
+    "yfVxcZHsxLDJ9XFxkezEsMn0vIiwgIkRBVEU6XFxkezR9LVxcZHsxLDJ9LVxcZHsxLDJ9"
+    "LyIsICJUSU1FOlxcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9LlxcZHs2fSIsICJJUC1QT"
+    "1JUOlxcZHsxLDN9XFwuXFxkezEsM31cXC5cXGR7MSwzfVxcLlxcZHsxLDN9XFxzKzpcXG"
+    "R7MSw1fS8iLCAiTlVNQkVSOl5bLStdP1swLTldKyQiXQ=="
 )
 
 # "\"|\\;|\\,|\\,|\\[|\\]|\\:|\\s|\\(|\\)|\\=|\\||\\{|\\}|\\>|\\<|\\||'

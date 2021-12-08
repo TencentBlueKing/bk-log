@@ -50,6 +50,7 @@ INSTALLED_APPS += (
     "django_prometheus",
     "rest_framework",
     "iam.contrib.iam_migration",
+    "django_dbconn_retry",
     "apps.iam",
     "apps.api",
     "apps.log_search",

@@ -76,7 +76,7 @@
         <div v-else v-bk-overflow-tips class="option-slot-container authority">
           <div class="index-info">
             <span
-              :class="['bk-icon', item.is_favorite ? 'icon-star-shape' : 'icon-star']"
+              :class="[item.is_favorite ? 'log-icon icon-star-shape' : 'bk-icon icon-star']"
               style="color: #fe9c00;"
               @click.stop="handleCollection(item)">
             </span>

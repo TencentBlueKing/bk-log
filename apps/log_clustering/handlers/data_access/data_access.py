@@ -157,7 +157,7 @@ class DataAccessHandler(BaseAiopsHandler):
             return
 
         params.update({"processing_id": clustering_config.bkdata_etl_processing_id})
-        BkDataDatabusApi.databus_cleans_put(params)
+        BkDataDatabusApi.databus_cleans_put(params, request_cookies=False)
         # 更新rt之后需要重启清洗任务
         self.stop_bkdata_clean(clustering_config.bkdata_etl_result_table_id)
         self.start_bkdata_clean(clustering_config.bkdata_etl_result_table_id)

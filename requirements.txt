@@ -12,6 +12,7 @@ redis-py-cluster==2.1.0
 django-redis==4.8.0
 django-celery-beat==2.2.0
 django-celery-results==2.0.1
+django-dbconn-retry==0.1.5
 
 cloudpickle==1.6.0
 
@@ -63,6 +64,7 @@ jinja2==2.10.1
 
 # ipython
 ipython==7.13.0
+jedi==0.17.2
 
 humanize==3.11.0
 
