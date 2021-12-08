@@ -283,6 +283,7 @@ export default {
   展开全部: '展开全部',
   收起: '收起',
   过滤项: '过滤项',
+  空: '空',
   // 检索设置弹窗
   retrieveSetting: {
     setting: '设置',
@@ -322,6 +323,8 @@ export default {
     changeSwitchTips: '是否禁用该模块？',
     notCollector: '当前索引集为非采集项,无法设置数据指纹',
     closeFinger: '是否关闭数据指纹',
+    debuggerAlert: '调试需要等待1分钟以上，在此区间不可进行其余操作',
+    debuggingTool: '调试工具',
   },
   // logCluster
   忽略数字: '忽略数字',
@@ -338,12 +341,17 @@ export default {
   多: '多',
   取样内容: '取样内容',
   去设置: '去设置',
+  未匹配: '未匹配',
   跳转到日志清洗: '跳转到日志清洗',
+  请按照提示输入: '请按照提示输入',
+  自定义: '自定义',
+  customizeTips: '自定义输入格式: 如 1h 代表一小时 h小时',
   clusterAlert: '日志聚类必需至少有一个text类型的字段，当前无该字段类型，请前往日志清洗进行设置。',
   goFingerMessage: '当前数据指纹未启用，请前往设置',
   goSettingMessage: '当前日志聚类未启用，请前往设置',
   goCleanMessage: '当前无可用字段，请前往日志清洗进行设置',
   noConfigIDMessage: '当前索引集不支持字段提取设置',
+  patternInteract: '查询命中pattern的日志',
   nav: {
     logRetrieve: '日志检索',
     retrieve: '检索',
@@ -706,6 +714,7 @@ export default {
     tips_development: '，如果需要支持更大存储，请与开发团队联系或使用独立集群',
     tips_business: ' 此业务已超过集群容量限制，请与开发团队联系或使用独立集群',
     tips_formula: ' ES存储 ≈ 每天原始日志量 * 1.5（ES转化率） * 2（1个副本） * 存储天数',
+    dataId: '数据ID',
   },
   新建数据源: '新建数据源',
   编辑数据源: '编辑数据源',

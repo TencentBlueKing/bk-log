@@ -35,11 +35,13 @@
           <bk-select
             v-model="formData.clustering_fields"
             class="ml200" style="width: 482px;"
-            :disabled="!globalEditable">
-            <bk-option v-for="option in clusterField"
-                       :key="option.id"
-                       :id="option.id"
-                       :name="option.name">
+            :disabled="!globalEditable"
+            :clearable="false">
+            <bk-option
+              v-for="option in clusterField"
+              :key="option.id"
+              :id="option.id"
+              :name="option.name">
             </bk-option>
           </bk-select>
           <span
@@ -67,7 +69,7 @@
           <bk-switcher
             class="left-word" theme="primary" size="large"
             v-model="isOpenFinger"
-            :disabled="!globalEditable || isOpenFinger"
+            :disabled="!globalEditable || configData.extra.signature_switch"
             :pre-check="() => false">
           </bk-switcher>
         </div>
@@ -114,24 +116,27 @@
                 v-model="item.logic_operator"
                 :clearable="false"
                 :disabled="!globalEditable">
-                <bk-option v-for="option in comparedList"
-                           :key="option.id"
-                           :id="option.id"
-                           :name="option.name">
+                <bk-option
+                  v-for="option in comparedList"
+                  :key="option.id"
+                  :id="option.id"
+                  :name="option.name">
                 </bk-option>
               </bk-select>
 
               <bk-select
-                class="min-100 mr-neg1"
                 v-model="item.fields_name"
                 v-if="!isCloseSelect"
                 :clearable="false"
                 :disabled="!globalEditable"
-                :popover-min-width="150">
-                <bk-option v-for="option in filterSelectList"
-                           :key="option.id"
-                           :id="option.id"
-                           :name="option.name">
+                :popover-min-width="150"
+                :class="['min-100 mr-neg1 above',item.fields_name === '' && isFieldsError ? 'rule-error' : '']"
+                @blur="blurFilter">
+                <bk-option
+                  v-for="option in filterSelectList"
+                  :key="option.id"
+                  :id="option.id"
+                  :name="option.name">
                 </bk-option>
                 <div slot="extension" @click="handleDeleteSelect(index)" style="cursor: pointer;">
                   <i class="bk-icon icon-close-circle"></i>{{$t('删除')}}
@@ -147,25 +152,27 @@
                 :disabled="!globalEditable"
                 :clearable="false"
                 :popover-min-width="60">
-                <bk-option v-for="option in conditionList"
-                           :key="option.id"
-                           :id="option.id"
-                           :name="option.name">
+                <bk-option
+                  v-for="option in conditionList"
+                  :key="option.id"
+                  :id="option.id"
+                  :name="option.name">
                 </bk-option>
               </bk-select>
 
               <bk-input
                 v-if="item.fields_name !== ''"
                 v-model="item.value"
-                :class="['mr-neg1',item.value === '' && isFilterRuleError ? 'rule-error' : '']"
+                :class="['mr-neg1 above',item.value === '' && isFilterRuleError ? 'rule-error' : '']"
                 :disabled="!globalEditable"
                 @blur="blurFilter">
               </bk-input>
             </div>
-            <button v-if="isShowAddFilterIcon"
-                    class="icon-box"
-                    :disabled="!globalEditable"
-                    @click="addFilterRule">
+            <button
+              v-if="isShowAddFilterIcon"
+              class="icon-box"
+              :disabled="!globalEditable"
+              @click="addFilterRule">
               <i class="bk-icon icon-plus-line"></i>
             </button>
           </div>
@@ -173,8 +180,9 @@
         <!-- 聚类规则 -->
         <rule-table
           ref="ruleTableRef"
+          v-on="$listeners"
           :global-editable="globalEditable"
-          :table-str="formData.predefined_varibles"
+          :table-str="defaultData.predefined_varibles"
           :default-data="defaultData" />
 
         <bk-form-item class="submit-button">
@@ -255,9 +263,9 @@ export default {
       isHandle: false, // 保存loading
       filterSelectList: [], // 过滤条件选项
       isFilterRuleError: false, // 过滤规则未填警告
+      isFieldsError: false, // 未选过滤条件字段警告
+      isCloseSelect: false, // 过滤规则下拉框隐藏
       defaultData: {},
-      isFieldsError: false,
-      isCloseSelect: false,
       rules: {
         clustering_fields: [{
           required: true,
@@ -269,13 +277,13 @@ export default {
         }],
       },
       formData: {
-        min_members: '', // 最小日志数量
+        min_members: 0, // 最小日志数量
         max_dist_list: '', // 敏感度
         predefined_varibles: '', //	预先定义的正则表达式
         delimeter: '', // 分词符
         max_log_length: 1, // 最大日志长度
         is_case_sensitive: 1, // 是否大小写忽略
-        clustering_fields: '', // 聚合字段
+        clustering_fields: '', // 聚类字段
         filter_rules: [], // 过滤规则
         signature_enable: false,
       },
@@ -311,14 +319,16 @@ export default {
     },
   },
   mounted() {
-    this.isOpenFinger = this.configData.extra.signature_switch;
-    if (this.configData.extra.signature_switch && this.cleanConfig.extra.collector_config_id) {
-      this.initPage();
+    const { extra, is_active: isActive } = this.configData;
+    this.isOpenFinger = extra.signature_switch;
+    this.formData.clustering_fields = extra.clustering_fields;
+    if (isActive && this.cleanConfig.extra.collector_config_id) {
+      this.requestCluster();
     }
     this.initSelectList();
   },
   methods: {
-    async initPage(isDefault = false) {
+    async requestCluster(isDefault = false) {
       const { extra } = this.cleanConfig;
       this.globalLoading = true;
       let res;
@@ -359,14 +369,15 @@ export default {
       });
     },
     handleChangeFinger() {
-      if (!this.globalEditable || this.isOpenFinger) return;
+      if (!this.globalEditable) return;
       if (this.isOpenFinger) {
-        this.$bkInfo({
-          title: this.$t('retrieveSetting.closeFinger'),
-          confirmFn: () => {
-            this.isOpenFinger = false;
-          },
-        });
+        this.isOpenFinger = false;
+        // this.$bkInfo({
+        //   title: this.$t('retrieveSetting.closeFinger'),
+        //   confirmFn: () => {
+        //     this.isOpenFinger = false;
+        //   },
+        // });
       } else {
         if (!this.cleanConfig.extra.collector_config_id) {
           this.$bkInfo({
@@ -376,7 +387,7 @@ export default {
           return;
         }
         this.isOpenFinger = true;
-        this.initPage(true);
+        this.requestCluster(true);
       }
     },
     addFilterRule() {
@@ -390,16 +401,17 @@ export default {
     blurFilter() {
       if (this.formData.filter_rules.length > 0) {
         this.isFilterRuleError = this.formData.filter_rules.some(el => el.value === '');
+        this.isFieldsError = this.formData.filter_rules.some(el => el.fields_name === '');
       };
     },
     handleSubmit() {
       this.blurFilter();
       this.$refs.validateForm.validate().then(() => {
-        if (this.isFilterRuleError) return;
+        if (this.isFilterRuleError || this.isFieldsError) return;
         this.isHandle = true;
         const { index_set_id, bk_biz_id } = this.indexSetItem;
         const { extra: { collector_config_id } } = this.cleanConfig;
-        this.formData.predefined_varibles =  this.$refs.ruleTableRef.ruleArrToBase64();
+        this.formData.predefined_varibles = this.$refs.ruleTableRef.ruleArrToBase64();
         this.$http.request('/logClustering/changeConfig', {
           params: {
             index_set_id,
@@ -413,11 +425,8 @@ export default {
           },
         })
           .then(() => {
-            this.$emit('successSubmit');
+            this.$emit('updateLogFields');
             this.isShowSubmitDialog = true;
-          })
-          .catch((e) => {
-            console.warn(e);
           })
           .finally(() => {
             this.isHandle = false;
@@ -432,125 +441,125 @@ export default {
       this.formData.filter_rules.splice(index, 1);
     },
     resetPage() {
-      this.$emit('reset-page');
+      this.$emit('resetPage');
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
+/deep/ .bk-label {
+  text-align: left;
+}
+.setting-log-cluster {
+  padding: 0 20px;
+}
+.form-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
 
-  /deep/ .bk-label {
-    text-align: left;
+  .left-word {
+    font-weight: 700;
+    font-size: 14px;
+    margin-right: 16px;
   }
-  .setting-log-cluster {
-    padding: 0 20px;
-  }
-  .form-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 25px;
 
-    .left-word {
+  .bk-icon {
+    margin-left: 8px;
+    font-size: 18px;
+    color: #979ba5;
+  }
+}
+.filter-rule {
+  display: flex;
+  flex-wrap: wrap;
+  .icon-box {
+    min-width: 32px;
+    height: 32px;
+    background: #ffffff;
+    font-size: 14px;
+    line-height: 28px;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #c4c6cc;
+    /deep/.bk-select-name {
+      padding: 0 !important;
+    }
+  }
+}
+.filter-rule-item {
+  margin-bottom: 6px;
+  /deep/.bk-select-angle {
+    display: none;
+  }
+  /deep/.bk-select {
+    border-radius: 0;
+  }
+  /deep/.bk-form-control {
+    width: 140px;
+    border-radius: 0;
+  }
+  .and-or {
+    min-width: 62px;
+    color: #ff9c01;
+    font-size: 12px;
+  }
+  .min-100 {
+    min-width: 100px;
+  }
+  .mr-neg1 {
+    position: relative;
+    margin-right: -1px;
+  }
+  .above {
+    z-index: 99;
+  }
+}
+.rule-container {
+  padding: 0 16px;
+}
+.submit-dialog {
+  /deep/.bk-dialog-tool {
+    display: none;
+  }
+  .submit-dialog-container {
+    /deep/ .bk-button {
+      margin-left: 100px;
+    }
+    .submit-dialog-title {
       font-weight: 700;
-      font-size: 14px;
-      margin-right: 16px;
+      font-size: 16px;
+      margin-bottom: 7px;
     }
-
-    .bk-icon {
-      margin-left: 8px;
-      font-size: 18px;
-      color: #979ba5;
+    .submit-dialog-text {
+      margin-bottom: 22px;
     }
-  }
-  .filter-rule {
-    display: flex;
-    flex-wrap: wrap;
-    .icon-box {
-      min-width: 32px;
-      height: 32px;
-      background: #FFFFFF;
-      font-size: 14px;
-      line-height: 28px;
-      text-align: center;
-      cursor: pointer;
-      border: 1px solid #c4c6cc;
-      /deep/.bk-select-name {
-        padding: 0 !important;
-      }
+    /deep/.submit-dialog-btn {
+      margin-left: 224px;
     }
   }
-  .filter-rule-item {
-    margin-bottom: 6px;
-    /deep/.bk-select-angle {
-      display: none;
-    }
-    /deep/.bk-select {
-      border-radius: 0;
-    }
-    /deep/.bk-form-control {
-      width: 140px;
-      border-radius: 0;
-    }
-    .and-or {
-      min-width: 62px;
-      color: #ff9c01;
-      font-size: 12px;
-    }
-    .min-100 {
-      min-width: 100px;
-    }
-    .mr-neg1 {
-      margin-right: -1px;
-    }
+}
+.rule-error {
+  /deep/.bk-form-input {
+    border-color: #ff5656;
   }
-  .rule-container {
-    padding: 0 16px;
+  &.bk-select {
+    border-color: #ff5656 !important;
   }
-  .submit-dialog {
-    /deep/.bk-dialog-tool {
-      display: none;
-    }
-
-    .submit-dialog-container {
-      /deep/ .bk-button {
-        margin-left: 100px;
-      }
-      .submit-dialog-title {
-        font-weight: 700;
-        font-size: 16px;
-        margin-bottom: 7px;
-      }
-      .submit-dialog-text {
-        margin-bottom: 22px;
-      }
-      /deep/.submit-dialog-btn {
-        margin-left: 224px;
-      }
-    }
-  }
-  .rule-error{
-    /deep/.bk-form-input{
-      border-color: #ff5656;
-    }
-  }
-
-  .container-item {
-    margin-bottom: 40px;
-  }
-
-  .submit-button {
-    margin: 40px 0 40px -200px;
-  }
-
-  .ml200 {
-    margin-left: -200px;
-  }
-
-  .flbc {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
+}
+.container-item {
+  margin-bottom: 40px;
+}
+.submit-button {
+  margin: 40px 0 40px -200px;
+}
+.ml200 {
+  margin-left: -200px;
+}
+.flbc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 </style>

@@ -24,6 +24,9 @@
   <div class="basic-info-container">
     <div class="deploy-sub">
       <div>
+        <span>{{ $t('dataSource.dataId') }}</span><span>{{ collectorData.bk_data_id || '-' }}</span>
+      </div>
+      <div>
         <span>{{ $t('configDetails.name') }}</span><span>{{ collectorData.collector_config_name || '-' }}</span>
       </div>
       <div>

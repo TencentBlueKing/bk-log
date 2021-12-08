@@ -23,28 +23,31 @@
 <template>
   <div>
     <bk-table
-      class="log-cluster-table"
+      :class="['log-cluster-table',fingerList.length === 0 ? 'table-no-data' : '']"
       :data="fingerList"
+      :outer-border="false"
       @row-mouse-enter="showEditIcon"
       @row-mouse-leave="hiddenEditIcon">
       <bk-table-column :label="$t('数据指纹')" width="150">
         <template slot-scope="props">
           <div class="flac">
             <span class="signature">{{props.row.signature}}</span>
-            <div v-if="props.row.is_new_class" class="new-finger">New</div>
+            <div v-show="props.row.is_new_class" class="new-finger">New</div>
           </div>
         </template>
       </bk-table-column>
 
       <bk-table-column :label="$t('数量')" :sortable="true" width="91" prop="number">
         <template slot-scope="props">
-          <span class="link-color">{{props.row.count}}</span>
+          <span class="link-color" @click="handleMenuClick('show original',props.row)">{{props.row.count}}</span>
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('占比')" :sortable="true" width="91" prop="source">
+      <bk-table-column :label="$t('占比')" :sortable="true" width="96" prop="source">
         <template slot-scope="props">
-          {{`${props.row.percentage.toFixed(4)}%`}}
+          <span class="link-color" @click="handleMenuClick('show original',props.row)">
+            {{`${props.row.percentage.toFixed(2)}%`}}
+          </span>
         </template>
       </bk-table-column>
 
@@ -52,31 +55,51 @@
         <bk-table-column
           width="101" align="center" header-align="center" prop="source"
           :label="$t('同比数量')"
-          :sortable="true">
+          :sortable="true"
+          :sort-by="'year_on_year_count'">
           <template slot-scope="props">
-            <span class="link-color">{{props.row.year_on_year_count}}</span>
+            <span>{{props.row.year_on_year_count}}</span>
           </template>
         </bk-table-column>
 
         <bk-table-column
           width="101" align="center" header-align="center" prop="source"
           :label="$t('同比变化')"
-          :sortable="true">
+          :sortable="true"
+          :sort-by="'year_on_year_percentage'">
           <template slot-scope="props">
             <div class="flac compared-change">
-              <span class="link-color">{{`${props.row.year_on_year_percentage}%`}}</span>
+              <span>{{`${props.row.year_on_year_percentage.toFixed(0)}%`}}</span>
               <span :class="['bk-icon',showArrowsClass(props.row)]"></span>
             </div>
           </template>
         </bk-table-column>
       </template>
 
-      <bk-table-column label="Pattern" min-width="400">
-        <template slot-scope="props">
-          <pattern-column
-            :context="props.row.pattern"
-            @eventClick="(option) => handleMenuClick(option,props.row)">
-          </pattern-column>
+      <bk-table-column label="Pattern" min-width="400" class-name="symbol-column">
+        <!-- eslint-disable-next-line -->
+        <template slot-scope="{ row, column, $index }">
+          <register-column :context="row.pattern">
+            <div :class="['pattern-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+              <cluster-event-popover
+                :context="row.pattern"
+                @eventClick="(option) => handleMenuClick(option,row)">
+                <span>{{row.pattern ? row.pattern : $t('未匹配')}}</span>
+              </cluster-event-popover>
+              <p
+                v-if="!cacheExpandStr.includes($index)"
+                class="show-whole-btn"
+                @click.stop="handleShowWhole($index)">
+                {{ $t('展开全部') }}
+              </p>
+              <p
+                v-else
+                class="hide-whole-btn"
+                @click.stop="handleHideWhole($index)">
+                {{ $t('收起') }}
+              </p>
+            </div>
+          </register-column>
         </template>
       </bk-table-column>
 
@@ -101,7 +124,7 @@
 
     <bk-table-column :label="$t('备注')" width="100" prop="remark"></bk-table-column> -->
 
-      <div slot="empty" v-if="isPermission && !configData.extra.signature_switch">
+      <div slot="empty" v-if="clusterSwitch && !configData.extra.signature_switch">
         <div class="empty-text">
           <span class="bk-table-empty-icon bk-icon icon-empty"></span>
           <p>{{$t('goFingerMessage')}}</p>
@@ -121,10 +144,14 @@
 </template>
 
 <script>
-import PatternColumn from './components/PatternColumn';
+// import PatternColumn from './components/PatternColumn';
+import ClusterEventPopover from './components/ClusterEventPopover';
+import RegisterColumn from '../../result-comp/RegisterColumn';
+import { copyMessage } from '@/common/util';
 export default {
   components: {
-    PatternColumn,
+    ClusterEventPopover,
+    RegisterColumn,
   },
   props: {
     fingerList: {
@@ -135,7 +162,7 @@ export default {
       type: Number,
       require: true,
     },
-    isPermission: {
+    clusterSwitch: {
       type: Boolean,
       require: true,
     },
@@ -151,6 +178,7 @@ export default {
   data() {
     return {
       currentHover: '',
+      cacheExpandStr: [],
     };
   },
   inject: ['addFilterCondition'],
@@ -158,27 +186,23 @@ export default {
     handleMenuClick(option, row) {
       switch (option) {
         case 'show original':
-          this.addFilterCondition(`dist_${this.partterLevel}`, 'is', row.signature.toString());
+          this.addFilterCondition(`__dist_${this.partterLevel}`, 'is', row.signature.toString());
           this.$emit('showOriginLog');
           break;
         case 'copy':
-          try {
-            const input = document.createElement('input');
-            input.setAttribute('value', row.pattern);
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-            this.messageSuccess(this.$t('复制成功'));
-          } catch (e) {
-            console.warn(e);
-          }
+          copyMessage(row.pattern);
           break;
       }
     },
     showArrowsClass(row) {
       if (row.year_on_year_percentage === 0) return '';
       return row.year_on_year_percentage < 0 ? 'icon-arrows-down' : 'icon-arrows-up';
+    },
+    handleShowWhole(index) {
+      this.cacheExpandStr.push(index);
+    },
+    handleHideWhole(index) {
+      this.cacheExpandStr = this.cacheExpandStr.map(item => item !== index);
     },
     handleLeaveCurrent() {
       this.$emit('showSettingLog');
@@ -195,33 +219,36 @@ export default {
 
 <style lang="scss" scoped>
 @import "@/scss/mixins/flex.scss";
-
 .compared-change {
   height: 24px;
+  width: 100%;
   margin-left: 12px;
 }
-
 .log-cluster-table {
   /deep/ .bk-table-body-wrapper {
-    min-height: calc(100vh - 600px);
-
+    min-height: calc(100vh - 550px);
     .bk-table-empty-block {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: calc(100vh - 600px);
+      min-height: calc(100vh - 550px);
+    }
+  }
+  &:before {
+    display: none;
+  }
+  /deep/.bk-table-row-last {
+    td {
+      border: none;
     }
   }
   .signature{
-    // display: inline-block;
     width: 95px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    line-height: 20px;
-    max-height: 16px;
+    line-height: 24px;
   }
-
   .empty-text {
     display: flex;
     flex-direction: column;
@@ -236,64 +263,69 @@ export default {
       cursor: pointer;
     }
   }
+  .pattern-content {
+    display: inline-block;
+    padding-right: 15px;
+    position: relative;
+    padding-top: 4px;
+    overflow: hidden;
+    &.is-limit {
+      max-height: 96px;
+    }
+  }
+  .show-whole-btn {
+    position: absolute;
+    top: 80px;
+    width: 100%;
+    height: 24px;
+    color: #3A84FF;
+    font-size: 12px;
+    background: #fff;
+    cursor: pointer;
+    transition: background-color .25s ease;
+  }
+  .hide-whole-btn {
+    line-height: 14px;
+    margin-top: 2px;
+    color: #3A84FF;
+    cursor: pointer;
+  }
 }
-
+.table-no-data{
+  /deep/.bk-table-header-wrapper{
+    tr{
+      >th{
+        border-bottom: none !important;
+      }
+    }
+  }
+}
 .new-finger {
-  width: 36px;
+  width: 40px;
   height: 16px;
   font-size: 12px;
   line-height: 14px;
-  margin: 4px 0 0 3px;
   text-align: center;
-  color: #ea3636;
-  background: #ffdddd;
-  border: 1px solid #fd9c9c;
+  color: #EA3636;
+  background: #FFEEEE;
+  border: 1px solid #FD9C9C;
   border-radius: 9px;
 }
-
-// .pattern-icons {
-//   width: 60px;
-//   position: relative;
-//   .bk-icon {
-//     margin-right: 6px;
-//   }
-//   .icon-eye{
-//     font-size: 14px !important;
-//     cursor: pointer;
-//   }
-//   .icon-chart{
-//     font-size: 12px !important;
-//     cursor: pointer;
-//   }
-//   .icon-copy {
-//     font-size: 26px;
-//     position: absolute;
-//     right: -8px;
-//     top: -4px;
-//     cursor: pointer;
-//   }
-// }
-
 .link-color {
   color: #3a84ff;
   cursor: pointer;
 }
-
 .icon-arrows-down {
   color: #2dcb56;
 }
-
 .icon-arrows-up {
   color: #ff5656;
 }
-
 .flac {
   margin-top: -4px;
   @include flex-align;
 }
-
 .bk-icon {
   font-size: 24px;
 }
-
 </style>

@@ -77,6 +77,7 @@
 </template>
 
 <script>
+import { copyMessage } from '@/common/util';
 export default {
   props: {
     showSelectDialog: {
@@ -180,17 +181,7 @@ export default {
       this.$emit('update:showSelectDialog', val);
     },
     copyIp() {
-      try {
-        const input = document.createElement('input');
-        input.setAttribute('value', JSON.stringify(this.selectedIpList));
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        this.messageSuccess(this.$t('复制成功'));
-      } catch (err) {
-        console.warn(err);
-      }
+      copyMessage(JSON.stringify(this.selectedIpList));
     },
     clearIp() {
       this.selectedIpNodes.splice(0);

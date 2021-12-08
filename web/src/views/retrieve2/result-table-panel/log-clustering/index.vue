@@ -22,15 +22,15 @@
 
 <template>
   <div>
-    <div class="log-cluster-table-container" v-show="!globalLoading">
+    <div class="log-cluster-table-container" v-if="!globalLoading">
       <div class="cluster-nav" v-if="exhibitAll">
         <div class="bk-button-group">
           <bk-button
+            size="small"
             v-for="(item) of clusterNavList"
             :key="item.id"
             :class="active === item.id ? 'is-selected' : ''"
-            @click="handleClickNav(item.id)"
-            size="small">
+            @click="handleClickNav(item.id)">
             {{item.name}}
           </bk-button>
         </div>
@@ -43,25 +43,41 @@
               <bk-select
                 behavior="simplicity"
                 ext-cls="compared-select"
+                ext-popover-cls="compared-select-option"
                 v-model="yearOnYearCycle"
-                :disabled="!isPermission"
+                :disabled="!signatureSwitch"
                 :clearable="false"
-                :popover-min-width="120"
-                @change="requestFinger">
+                :popover-min-width="140"
+                @change="requestFinger"
+                @toggle="isShowCustomize = true">
                 <bk-option
                   v-for="option in comparedList"
                   :key="option.id"
                   :id="option.id"
                   :name="option.name">
                 </bk-option>
+                <div slot="" class="compared-customize">
+                  <div class="customize-option" v-if="isShowCustomize" @click="isShowCustomize = false">
+                    <span>{{$t('自定义')}}</span>
+                  </div>
+                  <div v-else>
+                    <bk-input @enter="handleEnterCompared"></bk-input>
+                    <div class="compared-select-icon">
+                      <span v-bk-tooltips="$t('customizeTips')" class="top-end">
+                        <i class="log-icon icon-help"></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </bk-select>
             </div>
 
             <bk-checkbox
+              v-model="isNear24"
               :true-value="true"
               :false-value="false"
-              :disabled="!isPermission"
-              @change="handleNear24H">
+              :disabled="!signatureSwitch"
+              @change="isShowNearPattern">
               <span style="font-size: 12px">{{$t('近24H新增')}}</span>
             </bk-checkbox>
 
@@ -73,22 +89,18 @@
                   class="partter-slider"
                   v-model="partterSize"
                   :show-tip="false"
-                  :disable="!isPermission"
+                  :disable="!signatureSwitch"
                   :max-value="sliderMaxVal"
                   @change="blurPartterSize"></bk-slider>
                 <span>{{$t('多')}}</span>
               </div>
             </div>
           </div>
-
-          <bk-button class="download-icon" :disabled="!isPermission">
-            <span class="log-icon icon-xiazai"></span>
-          </bk-button>
         </div>
       </div>
 
       <bk-alert
-        v-if="active === 'dataFingerprint' && fingerList.length === 0 && isPermission && exhibitAll"
+        v-if="active === 'dataFingerprint' && signatureSwitch && !exhibitAll"
         :title="$t('clusterAlert')" closable type="info">
       </bk-alert>
 
@@ -105,13 +117,14 @@
             v-on="$listeners"
             :total-fields="totalFields"
             :origin-table-list="originTableList"
+            :clustering-field="clusteringField"
             :active="active" />
           <data-fingerprint
             v-if="active === 'dataFingerprint'"
             v-bind="$attrs"
             v-on="$listeners"
             :year-on-year-cycle="yearOnYearCycle"
-            :is-permission="isPermission"
+            :cluster-switch="clusterSwitch"
             :partter-level="partterLevel"
             :config-data="configData"
             :finger-list="fingerList" />
@@ -135,7 +148,7 @@
     </div>
     <clustering-loader
       is-loading
-      v-show="globalLoading"
+      v-else
       :width-list="loadingWidthList.global">
     </clustering-loader>
   </div>
@@ -177,16 +190,17 @@ export default {
       partterSize: 0, // slider当前值
       partterLevel: '', // partter等级
       sliderMaxVal: 0, // partter最大值
-      isPermission: false, // 是否打开日志聚类大开关
+      clusterSwitch: false, // 日志聚类开关
+      signatureSwitch: false, // 数据指纹开关
       partterList: [], // partter敏感度List
-      isNear24H: false, // 近24h
+      isNear24: false, // 近24h
       yearOnYearCycle: 0, // 同比值
       configID: -1, // 采集项ID
-      exhibitAll: false, // 是否不显示nav
+      exhibitAll: false, // 是否显示nav
       alreadyClickNav: [], // 已加载过的nav
       globalLoading: false, // 日志聚类大loading
       tableLoading: false, // 详情loading
-      isHaveText: false, // 是否有text字段
+      isShowCustomize: true, // 是否显示自定义
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -212,6 +226,7 @@ export default {
         //   remark: 'xxxx',
         // },
       ], // 数据指纹List
+      defaultFingerList: [],
       loadingWidthList: { // loading表头宽度列表
         global: [''],
         ignore: [60, 90, 90, ''],
@@ -231,10 +246,13 @@ export default {
       return this.yearOnYearCycle > 0 ? this.loadingWidthList.compared : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      return this.isPermission ? (this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
+      return this.clusterSwitch ? (this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
     },
     exhibitOperate() {
-      return this.isPermission ? (this.configID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
+      return this.clusterSwitch ? (this.configID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
+    },
+    clusteringField() {
+      return this.configData?.extra?.clustering_field || '';
     },
   },
   watch: {
@@ -242,14 +260,15 @@ export default {
       deep: true,
       immediate: true,
       handler(val) {
-        this.isPermission = val.is_active;
+        this.clusterSwitch = val.is_active;
+        this.signatureSwitch = val.extra.signature_switch;
         this.configID = this.cleanConfig.extra?.collector_config_id;
       },
     },
     originTableList: {
       handler() {
-        if (this.active === 'dataFingerprint' && this.partterLevel !== '') {
-          this.showTableLoading('table');
+        if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
+          this.partterLevel === '' && this.initTable();
           this.requestFinger();
         }
       },
@@ -258,22 +277,19 @@ export default {
       deep: true,
       immediate: true,
       handler(newList) {
-        this.partterLevel = '';
         if (newList.length !== 0) {
-          this.showTableLoading('global');
           if (!this.configData.is_active) {
             this.exhibitAll = false;
             return;
           }
-          const isHaveText = newList.some(el => el.field_type === 'text');
-          this.alreadyClickNav = [];
-          this.exhibitAll  = isHaveText;
-          if (isHaveText) {
-            this.initTable();
-            this.requestFinger();
-          }
+          this.partterLevel === '' && this.initTable();
+          this.exhibitAll = newList.some(el => el.field_type === 'text');
         }
       },
+    },
+    '$route.params.indexId'() {
+      this.alreadyClickNav = [];
+      this.showTableLoading('global');
     },
   },
   methods: {
@@ -282,16 +298,34 @@ export default {
       const isClick = this.alreadyClickNav.some(el => el === id);
       if (!isClick) {
         this.alreadyClickNav.push(id);
-        if (this.alreadyClickNav.includes('dataFingerprint') && this.partterLevel !== '') {
+        if (this.alreadyClickNav.includes('dataFingerprint') && this.configData.extra.signature_switch) {
           this.requestFinger();
           return;
         }
         this.showTableLoading('table');
       }
     },
-    handleNear24H(state) {
-      this.isNear24H = state;
-      this.requestFinger();
+    // 同比自定义输入
+    handleEnterCompared(val) {
+      const matchVal = val.match(/^(\d+)h$/);
+      if (!matchVal) {
+        this.$bkMessage({
+          theme: 'warning',
+          message: this.$t('请按照提示输入'),
+        });
+        return;
+      }
+      this.isShowCustomize = true;
+      const isRepeat =  this.comparedList.some(el => el.id === Number(matchVal[1]));
+      if (isRepeat) {
+        this.yearOnYearCycle = Number(matchVal[1]);
+        return;
+      }
+      this.comparedList.push({
+        id: Number(matchVal[1]),
+        name: `${matchVal[1]}小时前`,
+      });
+      this.yearOnYearCycle = Number(matchVal[1]);
     },
     // 请求数据指纹
     requestFinger() {
@@ -305,15 +339,13 @@ export default {
         data: {
           ...this.retrieveParams,
           pattern_level: this.partterLevel,
-          show_new_pattern: this.isNear24H,
+          show_new_pattern: true,
           year_on_year_hour: this.yearOnYearCycle,
         },
       })
         .then((res) => {
           this.fingerList = res.data;
-        })
-        .catch((e) => {
-          console.warn(e);
+          this.defaultFingerList = res.data;
         })
         .finally(() => {
           this.tableLoading = false;
@@ -325,14 +357,11 @@ export default {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
       } = this.globalsData;
-      const { extra, is_active: isActive } = this.configData;
       this.comparedList = yearOnYearList;
       this.partterSize = clusterLevel.length - 1;
       this.sliderMaxVal = clusterLevel.length - 1;
       this.partterLevel = clusterLevel[clusterLevel.length - 1];
       this.partterList = clusterLevel;
-      this.isPermission = isActive;
-      this.configID = extra.collector_config_id;
     },
     // 敏感度
     blurPartterSize(val) {
@@ -341,7 +370,7 @@ export default {
     },
     // 跳转
     handleLeaveCurrent() {
-      if (!this.isPermission) {
+      if (!this.clusterSwitch) {
         this.$emit('showSettingLog');
         return;
       }
@@ -360,6 +389,9 @@ export default {
         type === 'table' ? this.tableLoading : this.globalLoading = false;
       }, 500);
     },
+    isShowNearPattern(state) {
+      this.fingerList = state ? this.fingerList.filter(el => el.is_new_class) : this.defaultFingerList;
+    },
   },
 };
 </script>
@@ -372,30 +404,21 @@ export default {
     min-width: 760px;
     margin-bottom: 12px;
     color: #63656e;
-
-    .fingerprint {
-      width: 535px;
-    }
-
     .fingerprint-setting {
       width: 485px;
       height: 24px;
       line-height: 24px;
       font-size: 12px;
-
       .partter {
         width: 200px;
-
         .partter-slider-box {
           width: 154px;
         }
-
         .partter-slider {
           width: 114px;
         }
       }
     }
-
     .download-icon {
       min-width: 26px;
       height: 26px;
@@ -409,7 +432,6 @@ export default {
     }
     @include flex-justify(space-between);
   }
-
   .bk-alert {
     margin-bottom: 16px;
   }
@@ -419,12 +441,37 @@ export default {
   margin-left: 6px;
   position: relative;
   top: -3px;
-
   .bk-select-name {
     height: 24px;
   }
 }
-
+.compared-select-option{
+  .compared-customize{
+    position: relative;
+    margin-bottom: 6px;
+  }
+  .compared-select-icon{
+    font-size: 14px;
+    position: absolute;
+    right: 18px;
+    top: 2px;
+  }
+  .customize-option{
+    padding:0 18px;
+    cursor: pointer;
+    &:hover{
+      color:#3A84FF;
+      background: #EAF3FF;
+    }
+  }
+  .bk-form-control{
+    width: 80%;
+    margin: 0 auto;
+  }
+  .bk-form-input{
+    padding: 0 18px 0 10px !important;
+  }
+}
 .no-text-table {
   .bk-table-empty-block {
     display: flex;
@@ -432,7 +479,6 @@ export default {
     align-items: center;
     min-height: calc(100vh - 480px);
   }
-
   .empty-text {
     display: flex;
     flex-direction: column;
@@ -448,7 +494,6 @@ export default {
     }
   }
 }
-
 .fljb {
   align-items: center;
   @include flex-justify(space-between);

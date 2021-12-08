@@ -106,7 +106,7 @@ export default {
     position: relative;
     padding-bottom: 60px;
     overflow: auto;
-    @include scroller($backgroundColor: #c4c6cc, $width: 8px);
+    @include scroller($backgroundColor: #c4c6cc, $width: 4px);
   }
 }
 </style>

@@ -404,9 +404,9 @@ export default {
       display: none;
     }
     .tab-content {
-      height: calc(100% - 43px);
+      height: calc(100% - 50px);
       overflow: auto;
-      @include scroller($backgroundColor: #C4C6CC, $width: 8px);
+      @include scroller($backgroundColor: #C4C6CC, $width: 4px);
       padding: 20px;
       background-color: #FFF;
       border: 1px solid #DCDEE5;

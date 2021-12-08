@@ -22,68 +22,62 @@
 
 <template>
   <div>
-    <cluster-event-popover
-      v-if="isMountPatter"
-      @eventClick="handleClickIcon">
-      {{context}}
-    </cluster-event-popover>
-    <span v-else>
-      {{context}}
-    </span>
+    <slot v-if="isMountContent"></slot>
+    <span v-else>{{context}}</span>
   </div>
 </template>
 <script>
-import ClusterEventPopover from './ClusterEventPopover';
 export default {
-  components: { ClusterEventPopover },
   props: {
     context: {
       type: String,
       require: true,
     },
+    rootMargin: {
+      type: String,
+      default: '0px 0px 0px 0px',
+    },
   },
   data() {
     return {
-      isMountPatter: true,
+      isMountContent: true,
     };
   },
   deactivated() {
-    this.isMountPatter = false;
-    this.unregisterOberver();
+    this.isMountContent = false;
+    this.unregisterObserver();
   },
   activated() {
-    this.isMountPatter = true;
+    this.isMountContent = true;
     setTimeout(this.registerObserver, 20);
   },
   mounted() {
-    this.isMountPatter = true;
+    this.isMountContent = true;
     setTimeout(this.registerObserver, 20);
   },
   methods: {
-    handleClickIcon(id) {
-      this.$emit('eventClick', id);
-    },
     registerObserver() {
       if (this.intersectionObserver) {
-        this.unregisterOberver();
+        this.unregisterObserver();
       }
       this.intersectionObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (this.intersectionObserver) {
             if (entry.intersectionRatio > 0) {
-              this.isMountPatter = true;
+              this.isMountContent = true;
             } else {
-              this.isMountPatter = false;
+              this.isMountContent = false;
             }
           }
         });
+      }, {
+        rootMargin: this.rootMargin, // '-180px 0px 0px 0px',
       });
       this.intersectionObserver.observe(this.$el);
     },
-    unregisterOberver() {
+    unregisterObserver() {
       if (this.intersectionObserver) {
         this.intersectionObserver.unobserve(this.$el);
-        // console.info('unobserve : ', this.$el, this.intersectionObserver);
         this.intersectionObserver.disconnect();
         this.intersectionObserver = null;
       }
@@ -91,6 +85,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-</style>

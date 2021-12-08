@@ -317,7 +317,7 @@ export default {
     height: 100%;
     overflow: auto;
 
-    @include scroller($backgroundColor: #ADADAD, $width: 8px);
+    @include scroller($backgroundColor: #ADADAD, $width: 4px);
 
     .article {
       padding: 22px 24px;
