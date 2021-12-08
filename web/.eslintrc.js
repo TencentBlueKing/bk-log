@@ -26,6 +26,14 @@ module.exports = {
   globals: {
     NODE_ENV: false,
   },
+  parserOptions: {
+    // 解析器
+    parser: 'babel-eslint',
+    ecmaFeatures: {
+      // 支持装饰器
+      legacyDecorators: true,
+    },
+  },
   rules: {
     'no-param-reassign': 'off',
     'prefer-destructuring': 'off',
