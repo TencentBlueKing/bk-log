@@ -37,7 +37,7 @@ from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario, ProjectInfo
-from apps.log_search.constants import FieldDateFormatEnum
+from apps.log_search.constants import FieldDateFormatEnum, ISO_8601_TIME_FORMAT_NAME
 from apps.models import model_to_dict
 from apps.utils.db import array_group
 from apps.log_databus.handlers.storage import StorageHandler
@@ -171,16 +171,22 @@ class EtlHandler(object):
         """
         fmts = array_group(FieldDateFormatEnum.get_choices_list_dict(), "id", True)
         fmt = fmts.get(time_format)
-        if len(data) != len(fmt["description"]) and len(data) != len(fmt["name"]):
-            raise EtlParseTimeFormatException()
-
-        if time_format in ["epoch_second", "epoch_millis", "epoch_micros"]:
-            epoch_second = str(data)[0:10]
-        else:
+        if fmt["name"] == ISO_8601_TIME_FORMAT_NAME:
             try:
-                epoch_second = arrow.get(data, fmt["name"], tzinfo=f"GMT{time_zone}").timestamp
+                epoch_second = arrow.get(data, tzinfo=f"GMT{time_zone}").timestamp
             except Exception:  # pylint: disable=broad-except
                 raise EtlParseTimeFormatException()
+        else:
+            if len(data) != len(fmt["description"]) and len(data) != len(fmt["name"]):
+                raise EtlParseTimeFormatException()
+
+            if time_format in ["epoch_second", "epoch_millis", "epoch_micros"]:
+                epoch_second = str(data)[0:10]
+            else:
+                try:
+                    epoch_second = arrow.get(data, fmt["name"], tzinfo=f"GMT{time_zone}").timestamp
+                except Exception:  # pylint: disable=broad-except
+                    raise EtlParseTimeFormatException()
         return {"epoch_millis": f"{epoch_second}000"}
 
     @transaction.atomic()

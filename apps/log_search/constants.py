@@ -129,6 +129,8 @@ BKDATA_INDEX_RE = r"^{}_\d+$"
 
 MAX_EXPORT_REQUEST_RETRY = 3
 
+ISO_8601_TIME_FORMAT_NAME = "rfc3339"
+
 
 # 消息模式
 class MsgModel(object):
@@ -707,7 +709,11 @@ class FieldDateFormatEnum(ChoicesEnum):
                 "name": "DD/MMM/YYYY:HH:mm:ss ZZ",
                 "description": "02/Jan/2006:15:04:05 -07:00",
             },
-            {"id": "rfc3339", "name": "rfc3339", "description": "2006-01-02T15:04:05Z07:00"},
+            {
+                "id": ISO_8601_TIME_FORMAT_NAME,
+                "name": ISO_8601_TIME_FORMAT_NAME,
+                "description": "2006-01-02T15:04:05Z07:00",
+            },
             {"id": "date_hour_minute_second", "name": "YYYY-MM-DDTHH:mm:ss", "description": "2006-01-02T15:04:05"},
             {
                 "id": "date_hour_minute_second_millis",
