@@ -41,6 +41,7 @@
         :target-node-type="targetNodeType"
         :target-object-type="targetObjectType"
         :checked-data="targetNodes"
+        :show-dynamic-group="showDynamicGroup"
         @check-change="handleChecked" />
     </div>
   </bk-dialog>
@@ -71,6 +72,11 @@ export default {
       default() {
         return [];
       },
+    },
+    // 是否显示动态分组
+    showDynamicGroup: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {

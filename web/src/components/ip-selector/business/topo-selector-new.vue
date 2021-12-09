@@ -36,11 +36,13 @@
     :static-table-config="staticTableConfig"
     :template-table-config="templateTableConfig"
     :cluster-table-config="templateTableConfig"
+    :group-table-config="groupTableConfig"
     :custom-input-table-config="staticTableConfig"
     :get-default-selections="getDefaultSelections"
     :preview-operate-list="previewOperateList"
     :service-template-placeholder="$t('搜索服务模板名')"
     :cluster-template-placeholder="$t('搜索模板名')"
+    :dynamicGroupPlaceholder="$t('搜索动态分组名')"
     :result-width="380"
     :preview-width="previewWidth"
     :preview-range="previewRange"
@@ -109,6 +111,7 @@
     @Prop({ default: false, type: Boolean }) private readonly hiddenTemplate!: boolean
     @Prop({ default: 240, type: [Number, String] }) private readonly leftPanelWidth!: number | string
     @Prop({ default: false, type: Boolean }) private readonly showTableTab!: boolean
+    @Prop({ default: false, type: Boolean }) private readonly showDynamicGroup!: boolean
 
     @Ref('selector') private readonly selector!: IpSelector
 
@@ -131,6 +134,8 @@
     private staticTableConfig: ITableConfig[] = []
     // 模板拓扑配置
     private templateTableConfig: ITableConfig[] = []
+    // 动态分组表格拓扑配置
+    private groupTableConfig: ITableConfig[] = []
     // 预览数据
     private previewData: IPreviewData[] = []
     // v-if方式渲染选择器时需要重置Key
@@ -141,9 +146,10 @@
       INSTANCE: 'static-topo',
       SERVICE_TEMPLATE: 'service-template',
       SET_TEMPLATE: 'cluster',
+      GROUP: 'dynamic-group'
     }
     // 默认激活预览面板
-    private defaultActiveName = ['TOPO', 'INSTANCE', 'SERVICE_TEMPLATE', 'SET_TEMPLATE']
+    private defaultActiveName = ['TOPO', 'INSTANCE', 'SERVICE_TEMPLATE', 'SET_TEMPLATE', 'GROUP']
     private setTemplateData = []
     private serviceTemplateData = []
 
@@ -169,6 +175,14 @@
           tips: this.$t('不能混用'),
           disabled: false,
           type: 'INSTANCE',
+        },
+        {
+          name: 'dynamic-group',
+          label: this.$t('动态分组'),
+          tips: this.$t('不能混用'),
+          disabled: false,
+          type: 'GROUP',
+          hidden: !this.showDynamicGroup,
         },
         {
           name: 'service-template',
@@ -226,6 +240,7 @@
         'service-template': 'SERVICE_TEMPLATE',
         cluster: 'SET_TEMPLATE',
         'custom-input': 'INSTANCE',
+        'dynamic-group': 'GROUP'
       }
       this.currentTargetNodeType = activeToNodeTypeMap[this.active]
       this.staticTableData = []
@@ -257,13 +272,15 @@
         TOPO: this.$t('节点'),
         INSTANCE: this.$t('IP'),
         SERVICE_TEMPLATE: this.$t('服务模板'),
-        SET_TEMPLATE: this.$t('集群模板')
+        SET_TEMPLATE: this.$t('集群模板'),
+        GROUP: this.$t('动态分组')
       }
       const nodeTypeNameMap = {
         TOPO: 'node_path',
         INSTANCE: 'ip',
         SERVICE_TEMPLATE: 'bk_inst_name',
-        SET_TEMPLATE: 'bk_inst_name'
+        SET_TEMPLATE: 'bk_inst_name',
+        GROUP: 'bk_inst_name'
       }
       this.previewData = []
       this.previewData.push({
@@ -321,6 +338,8 @@
             label: this.$t('操作系统'),
           },
       ]
+      // TOTO
+      this.groupTableConfig = []
     }
     private renderLabels (row: any) {
       const { labels = [] } = row
@@ -406,6 +425,11 @@
         this.handleAddNameProperty(data.children)
         return data.children
       }
+      // 获取动态分组拓扑数据
+      // TODO
+      if (this.active === 'dynamic-group') {
+        
+      }
     }
     private handleSetDefaultCheckedNodes () {
       // todo 待优化，多处调用，性能问题
@@ -473,6 +497,9 @@
       }
       if (this.active === 'custom-input') {
         return await this.getCustomInputTableData(params)
+      }
+      if (this.active === 'dynamic-group') {
+        return await this.getDynamicGroupTableData(params)
       }
       return {
         total: 0,
@@ -579,6 +606,16 @@
         item.agent_error_count = undefined
       })
       
+      return {
+        total: data.length,
+        data,
+      }
+    }
+
+    // 获取动态分组表格数据
+    getDynamicGroupTableData(params: any) {
+      // TOTO
+      const data = []
       return {
         total: data.length,
         data,
@@ -804,6 +841,10 @@
         const type = this.active === 'service-template' ? 'SERVICE_TEMPLATE' : 'SET_TEMPLATE'
         const group = this.previewData.find(data => data.id === type)
         return group?.data.some(data => data.bk_inst_id === row.bk_inst_id)
+      }
+      // TODO
+      if (this.active === 'dynamic-group') {
+
       }
       return false
     }
