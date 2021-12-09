@@ -54,4 +54,5 @@ COLLECTOR_IMPORT_PATHS = [
 
 BK_LOG_EVENT_DATA_NAME = "bk_log_event"
 DJANGO_MONITOR_DATA_NAME = "django_monitor"
-DATA_NAMES = ["metric", "search_history", "es_monitor", "django_monitor"]
+# 初始化所有数据源列表
+DATA_NAMES = ["metric", "search_history", "es_monitor", "django_monitor", "bk_log_event"]
