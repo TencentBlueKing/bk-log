@@ -149,6 +149,7 @@ export default {
       filterPlaceholder: '',
       showFilterPopover: false,
       isShowValue: false,
+      isInit: true,
     };
   },
   computed: {
@@ -215,6 +216,13 @@ export default {
   },
   methods: {
     handlePopoverShow() {
+      if (this.isAdd && this.isInit) {
+        this.$http.request('retrieve/getOperators').then((res) => {
+          this.filterOperators = res.data;
+          this.handleOperatorChange(res.data?.[0].operator || 'is');
+        });
+      }
+      this.isInit = false;
       this.setDefaultEditValue();
       this.showFilterPopover = true;
     },
