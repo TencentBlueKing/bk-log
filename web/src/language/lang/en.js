@@ -317,6 +317,7 @@ export default {
     inspectionFail: 'Inspection Fail',
     ruleEmpty: 'No clustering rules',
     saveToTakeEffect: 'Save To Take Effect',
+    saveEffectMessage: 'The saving takes 1 time to take effect, please wait patiently.',
     extractionPrompt: 'After the filtered logs are collected, the log retrieval module can format the log content to facilitate retrieval and analysis.',
     ruleDeleteTips: 'Whether to delete this rule ?',
     changeSwitchTips: 'Is the module disabled?',
@@ -327,7 +328,7 @@ export default {
     fieldTips: 'Clustering can only be based on one field, and the field is the word segmentation type of text, and the default is the log field',
     ignoreNumbersTips: 'The front end ignores all numbers',
     ignoreCharactersTips: 'The front end ignores numbers and all common symbols, and only keeps the specific content of the log',
-    dataFingerprintTips: 'Through the AI ​​learning ability, extract the data fingerprints of the log to achieve log clustering. Note that the longer the training time, the better the effect. The new startup will have a specific effect at least 40 minutes, and the storage will increase by 10%',
+    dataFingerprintTips: 'Through AI learning ability, extract the data fingerprint of the log to achieve log clustering. Note that the longer the training time, the better the effect, and the storage will increase by 10%',
     fieldLengthTips: 'The maximum length of the clustering field, if it exceeds this length, it will be discarded directly, the larger the setting, the more resources will be consumed',
   },
   // logCluster
