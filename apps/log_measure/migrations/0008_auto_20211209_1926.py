@@ -17,7 +17,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
     data_names = DATA_NAMES
     dependencies = [
-        ("log_measure", "0005_auto_20210821_0950"),
+        ("log_measure", "0007_add_event_monitor"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]
