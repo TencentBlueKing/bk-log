@@ -707,6 +707,7 @@ class FieldDateFormatEnum(ChoicesEnum):
                 "name": "DD/MMM/YYYY:HH:mm:ss ZZ",
                 "description": "02/Jan/2006:15:04:05 -07:00",
             },
+            {"id": "rfc3339", "name": "rfc3339", "description": "2006-01-02T15:04:05Z07:00"},
             {"id": "date_hour_minute_second", "name": "YYYY-MM-DDTHH:mm:ss", "description": "2006-01-02T15:04:05"},
             {
                 "id": "date_hour_minute_second_millis",
