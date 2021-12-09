@@ -561,11 +561,11 @@ export function formatBigNumListValue(value) {
     const obj = {};
     Object.keys(value).forEach((opt) => {
       obj[opt] = typeof obj[opt] === 'object' && obj[opt] !== null && !obj[opt]._isBigNumber
-        ? formatBigNumListValue(obj[opt]) : bigNumberToString(value[opt] || {});
+        ? formatBigNumListValue(obj[opt]) : bigNumberToString(value[opt] || '');
     });
     return obj;
   }
-  return bigNumberToString(value || {});
+  return bigNumberToString(value || '');
 }
 
 export function parseBigNumberList(lsit) {
