@@ -151,7 +151,7 @@
                 <div class="cut-line" v-if="showFilterCutline"></div>
                 <template v-for="(item, index) in retrieveParams.addition">
                   <FilterConditionItem
-                    :key="item.field + random(6)"
+                    :key="item.field + 1"
                     :edit-index="index"
                     :is-add="false"
                     :edit-data="item"
