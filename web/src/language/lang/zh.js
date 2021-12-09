@@ -1250,4 +1250,8 @@ export default {
     restoring: '回溯中',
     isExpired: '是否过期',
   },
+  customReport: {
+    reportCreate: '新建自定义上报',
+    reportEdit: '编辑自定义上报',
+  },
 };

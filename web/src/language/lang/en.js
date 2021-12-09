@@ -1249,4 +1249,8 @@ export default {
     restoring: 'Restoring',
     isExpired: 'Is Expired',
   },
+  customReport: {
+    reportCreate: 'Create Custom Report',
+    reportEdit: 'Edit Custom Report',
+  },
 };

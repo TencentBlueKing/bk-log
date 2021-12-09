@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div></div>
+  <div>新建自定义上报</div>
 </template>
 
 <script>
