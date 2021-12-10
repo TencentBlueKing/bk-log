@@ -42,7 +42,7 @@ from apps.log_databus.constants import (  # noqa
     ADMIN_REQUEST_USER,
     EtlConfig,  # noqa
 )
-from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag  # noqa
+from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
 from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
 from apps.models import MultiStrSplitByCommaField, JsonField, SoftDeleteModel, OperateRecordModel  # noqa
 
@@ -71,10 +71,17 @@ class CollectorConfig(SoftDeleteModel):
     collector_config_name = models.CharField(_("采集配置名称"), max_length=64)
     bk_app_code = models.CharField(_("接入的来源APP"), max_length=64, default="bk_log_search")
     collector_scenario_id = models.CharField(_("采集场景"), max_length=64)
+    custom_type = models.CharField(
+        _("自定义类型"), max_length=30, choices=CustomTypeEnum.get_choices(), default=CustomTypeEnum.LOG.value
+    )
     bk_biz_id = models.IntegerField(_("业务id"))
     category_id = models.CharField(_("数据分类"), max_length=64)
-    target_object_type = models.CharField(_("对象类型"), max_length=32, choices=TargetObjectTypeEnum.get_choices())
-    target_node_type = models.CharField(_("节点类型"), max_length=32, choices=TargetNodeTypeEnum.get_choices())
+    target_object_type = models.CharField(
+        _("对象类型"), max_length=32, choices=TargetObjectTypeEnum.get_choices(), default=TargetObjectTypeEnum.HOST.value
+    )
+    target_node_type = models.CharField(
+        _("节点类型"), max_length=32, choices=TargetNodeTypeEnum.get_choices(), default=TargetNodeTypeEnum.INSTANCE.value
+    )
     target_nodes = JsonField(_("采集目标"), null=True, default=None)
     target_subscription_diff = JsonField(_("与上一次采集订阅的差异"), null=True)
     description = models.TextField(_("描述"), default="")

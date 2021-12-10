@@ -382,12 +382,11 @@ class OtlpTrace(Proto):
     def trace_detail(self, index_set_id, trace_id):
         search_dict = {
             "use_time_range": False,
-            "addition": [{"key": "trace_id", "method": "is", "value": trace_id, "condition": "and", "type": "field"}],
+            "addition": [{"key": "t4ace_id", "method": "is", "value": trace_id, "condition": "and", "type": "field"}],
             "begin": 0,
             "size": 10000,
             "keyword": "*",
             "time_range": "customized",
         }
-
         result = SearchHandlerEsquery(index_set_id, search_dict).search()
         return self._transform_to_jaeger(result.get("list", []))
