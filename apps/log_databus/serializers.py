@@ -201,6 +201,12 @@ class CustomUpateSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
+    storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=True)
+    retention = serializers.IntegerField(label=_("有效时间"), required=True)
+    allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=True)
+    storage_replies = serializers.IntegerField(
+        label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
+    )
 
 
 class CollectorCreateSerializer(serializers.Serializer):

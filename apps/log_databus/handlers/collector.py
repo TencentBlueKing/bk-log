@@ -1672,7 +1672,12 @@ class CollectorHandler(object):
             )
 
         with transaction.atomic():
-            self.data = CollectorConfig.objects.create(**collector_config_params)
+            try:
+                self.data = CollectorConfig.objects.create(**collector_config_params)
+            except IntegrityError:
+                logger.warning(f"collector config name duplicate => [{collector_config_name}]")
+                raise CollectorConfigNameDuplicateException()
+
             collector_scenario = CollectorScenario.get_instance(CollectorScenarioEnum.CUSTOM.value)
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=self.data.bk_data_id,
@@ -1699,16 +1704,48 @@ class CollectorHandler(object):
         etl_handler.update_or_create(**etl_params)
         custom_config.after_hook(self.data)
 
-    def custom_update(self, collector_config_name=None, category_id=None, description=None):
+    def custom_update(
+        self,
+        collector_config_name=None,
+        category_id=None,
+        description=None,
+        storage_cluster_id=None,
+        retention=7,
+        allocation_min_days=0,
+        storage_replies=1,
+    ):
+
         collector_config_update = {
             "collector_config_name": collector_config_name,
             "category_id": category_id,
             "description": description or collector_config_name,
         }
+        for key, value in collector_config_update.items():
+            setattr(self.data, key, value)
+        try:
+            self.data.save()
+        except IntegrityError:
+            logger.warning(f"collector config name duplicate => [{collector_config_name}]")
+            raise CollectorConfigNameDuplicateException()
+
         # collector_config_name更改后更新索引集名称
         if collector_config_name != self.data.collector_config_name and self.data.index_set_id:
             index_set_name = _("[采集项]") + self.data.collector_config_name
             LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(index_set_name=index_set_name)
-        for key, value in collector_config_update.items():
-            setattr(self.data, key, value)
-        self.data.save()
+
+        custom_config = get_custom(self.data.custom_type)
+        from apps.log_databus.handlers.etl import EtlHandler
+
+        etl_handler = EtlHandler(self.data.collector_config_id)
+        etl_params = {
+            "table_id": self.data.collector_config_name_en,
+            "storage_cluster_id": self.data.storage_cluster_id,
+            "retention": retention,
+            "allocation_min_days": allocation_min_days,
+            "storage_replies": storage_replies,
+            "etl_params": custom_config.etl_params,
+            "etl_config": custom_config.etl_config,
+            "fields": custom_config.fields,
+        }
+        etl_handler.update_or_create(**etl_params)
+        custom_config.after_hook(self.data)

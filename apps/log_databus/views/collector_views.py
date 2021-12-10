@@ -1815,11 +1815,19 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} collector_config_name 采集项名称
         @apiParam {String} category_id 数据分类 GlobalsConfig.category读取
         @apiParam {String} description 备注说明
+        @apiParam {Int} storage_cluster_id 存储集群ID
+        @apiParam {Int} retention 保留时间
+        @apiParam {Int} allocation_min_days 冷热数据时间
+        @apiParam {Int} [storage_replies] 副本数量
         @apiParamExample {json} 请求样例:
         {
             "collector_config_name": "xxxxx",
             "description": "xxxx",
             "category_id": "xx",
+            "storage_cluster_id": 3,
+            "retention": 1,
+            "storage_replies": 1,
+            "allocation_min_days":  1
         }
         @apiSuccessExample {json} 成功返回:
         {
