@@ -382,7 +382,7 @@ class OtlpTrace(Proto):
     def trace_detail(self, index_set_id, trace_id):
         search_dict = {
             "use_time_range": False,
-            "addition": [{"key": "t4ace_id", "method": "is", "value": trace_id, "condition": "and", "type": "field"}],
+            "addition": [{"key": "trace_id", "method": "is", "value": trace_id, "condition": "and", "type": "field"}],
             "begin": 0,
             "size": 10000,
             "keyword": "*",

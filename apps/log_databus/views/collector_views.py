@@ -85,7 +85,7 @@ class CollectorViewSet(ModelViewSet):
 
         if self.action in ["list_scenarios", "batch_subscription_status"]:
             return []
-        if self.action in ["create", "only_create"]:
+        if self.action in ["create", "only_create", "custom_create"]:
             return [BusinessActionPermission([ActionEnum.CREATE_COLLECTION])]
         if self.action in [
             "indices_info",
@@ -107,6 +107,7 @@ class CollectorViewSet(ModelViewSet):
             "etl_preview",
             "etl_time",
             "update_or_create_clean_config",
+            "custom_update",
         ]:
             return [InstanceActionPermission([ActionEnum.MANAGE_COLLECTION], ResourceEnum.COLLECTION)]
         return [ViewBusinessPermission()]

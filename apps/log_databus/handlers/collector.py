@@ -32,7 +32,7 @@ from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
-from apps.log_databus.handlers.collector_scenario.custom import get_custom
+from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.utils.thread import MultiExecuteFunc
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import ResourceEnum, Permission
@@ -1634,7 +1634,6 @@ class CollectorHandler(object):
             for collector in CollectorConfig.objects.filter(bk_biz_id=bk_biz_id)
         ]
 
-    @transaction.atomic
     def custom_create(
         self,
         bk_biz_id=None,
@@ -1679,7 +1678,7 @@ class CollectorHandler(object):
                 bk_data_id=self.data.bk_data_id,
                 data_link_id=self.data.data_link_id,
                 data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name}",
-                description=description,
+                description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
             self.data.save()

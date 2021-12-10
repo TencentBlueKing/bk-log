@@ -37,13 +37,14 @@ class CustomMeta:
     etl_config = None
     fields = None
 
-    def after_hook(self, collector_config):
+    @staticmethod
+    def after_hook(collector_config):
         pass
 
 
 @register
 class Log(CustomMeta):
-    custom_type = CustomTypeEnum.LOG
+    custom_type = CustomTypeEnum.LOG.value
     etl_params = {"retain_original_text": True, "separator_regexp": "", "separator": ""}
     etl_config = "bk_log_text"
     fields = []
@@ -51,7 +52,7 @@ class Log(CustomMeta):
 
 @register
 class OtlpLog(CustomMeta):
-    custom_type = CustomTypeEnum.OTLP_LOG
+    custom_type = CustomTypeEnum.OTLP_LOG.value
     etl_params = {"retain_original_text": True}
     etl_config = "bk_log_json"
     fields = [
@@ -59,10 +60,10 @@ class OtlpLog(CustomMeta):
             "field_name": "time_unix",
             "field_type": "long",
             "alias_name": "",
-            "description": "attributes",
+            "description": "",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": True,
+            "is_dimension": False,
             "is_time": True,
             "option": {"time_zone": 8, "time_format": "epoch_micros"},
         },
@@ -161,7 +162,7 @@ class OtlpLog(CustomMeta):
 
 @register
 class OtlpTrace(CustomMeta):
-    custom_type = CustomTypeEnum.OTLP_TRACE
+    custom_type = CustomTypeEnum.OTLP_TRACE.value
     etl_params = {"retain_original_text": True}
     etl_config = "bk_log_json"
     fields = [
@@ -193,17 +194,8 @@ class OtlpTrace(CustomMeta):
             "is_delete": False,
             "is_analyzed": False,
             "is_dimension": False,
-            "is_time": False,
-        },
-        {
-            "field_name": "start_time",
-            "field_type": "long",
-            "alias_name": "",
-            "description": "start_time",
-            "is_delete": False,
-            "is_analyzed": False,
-            "is_dimension": False,
-            "is_time": False,
+            "is_time": True,
+            "option": {"time_zone": 8, "time_format": "epoch_micros"},
         },
         {
             "field_name": "events",
@@ -212,7 +204,7 @@ class OtlpTrace(CustomMeta):
             "description": "events",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
         {
@@ -232,7 +224,7 @@ class OtlpTrace(CustomMeta):
             "description": "links",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
         {
@@ -252,7 +244,7 @@ class OtlpTrace(CustomMeta):
             "description": "resource",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
         {
@@ -283,8 +275,7 @@ class OtlpTrace(CustomMeta):
             "is_delete": False,
             "is_analyzed": False,
             "is_dimension": False,
-            "is_time": True,
-            "option": {"time_zone": 8, "time_format": "epoch_micros"},
+            "is_time": False,
         },
         {
             "field_name": "status",
@@ -293,7 +284,7 @@ class OtlpTrace(CustomMeta):
             "description": "status",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
         {
@@ -318,7 +309,7 @@ class OtlpTrace(CustomMeta):
         },
     ]
 
-    def after_hook(self, collector_config):
+    def after_hook(collector_config):
         from apps.log_search.models import LogIndexSet
 
         LogIndexSet.objects.filter(index_set_id=collector_config.index_set_id).update(is_trace_log=True)

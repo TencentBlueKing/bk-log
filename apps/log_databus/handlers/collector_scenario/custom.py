@@ -22,10 +22,6 @@ from apps.log_databus.handlers.collector_scenario.base import CollectorScenario
 
 
 class CustomCollectorScenario(CollectorScenario):
-    """
-    行日志采集
-    """
-
     @classmethod
     def get_built_in_config(cls, es_version="5.X"):
         """
