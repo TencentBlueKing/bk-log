@@ -63,6 +63,8 @@ class TagColor(ChoicesEnum):
 
 DEFAULT_TAG_COLOR = TagColor.BLUE
 
+DEFAULT_BK_CLOUD_ID = 0
+
 SEARCH_SCOPE_VALUE = ["default", "search_context"]
 MAX_RESULT_WINDOW = 10000
 MAX_SEARCH_SIZE = 100000
@@ -273,6 +275,7 @@ class GlobalTypeEnum(ChoicesEnum):
     ES_SOURCE_TYPE = "es_source_type"
     LOG_CLUSTERING_LEVEL = "log_clustering_level"
     LOG_CLUSTERING_YEAR_ON_YEAR = "log_clustering_level_year_on_year"
+    DATABUS_CUSTOM = "databus_custom"
 
     _choices_labels = (
         (CATEGORY, _("数据分类")),
@@ -289,6 +292,19 @@ class GlobalTypeEnum(ChoicesEnum):
         (ES_SOURCE_TYPE, _("日志来源类型")),
         (LOG_CLUSTERING_LEVEL, _("日志聚类敏感度")),
         (LOG_CLUSTERING_YEAR_ON_YEAR, _("日志聚类同比配置")),
+        (DATABUS_CUSTOM, _("自定义上报")),
+    )
+
+
+class CustomTypeEnum(ChoicesEnum):
+    LOG = "log"
+    OTLP_TRACE = "otlp_trace"
+    OTLP_LOG = "otlp_log"
+
+    _choices_labels = (
+        (LOG, _("容器日志上报")),
+        (OTLP_LOG, _("otlp日志上报")),
+        (OTLP_TRACE, _("otlpTrace上报")),
     )
 
 
@@ -296,11 +312,13 @@ class CollectorScenarioEnum(ChoicesEnum):
     ROW = "row"
     SECTION = "section"
     WIN_EVENT = "wineventlog"
+    CUSTOM = "custom"
 
     _choices_labels = (
         (ROW, _("行日志文件")),
         (SECTION, _("段日志文件")),
         (WIN_EVENT, _("win event日志")),
+        (CUSTOM, _("自定义")),
     )
 
     @classmethod
@@ -312,6 +330,7 @@ class CollectorScenarioEnum(ChoicesEnum):
         return [
             {"id": key, "name": value, "is_active": True if key in settings.COLLECTOR_SCENARIOS else False}
             for key, value in cls.get_dict_choices().items()
+            if key not in [cls.CUSTOM.value]
         ]
 
 
