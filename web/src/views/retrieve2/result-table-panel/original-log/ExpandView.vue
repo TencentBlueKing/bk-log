@@ -39,6 +39,7 @@
         v-bind="$attrs"
         :data="data"
         :field-list="totalFields"
+        :total-fields="totalFields"
         @menuClick="(val) => $emit('menuClick', val)">
       </kv-list>
     </div>

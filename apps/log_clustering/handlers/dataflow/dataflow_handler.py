@@ -25,7 +25,7 @@ from django.conf import settings
 from jinja2 import Environment, FileSystemLoader
 from dataclasses import asdict
 
-from apps.api import BkDataDataFlowApi
+from apps.api import BkDataDataFlowApi, BkDataAIOPSApi
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
@@ -37,6 +37,8 @@ from apps.log_clustering.handlers.dataflow.constants import (
     DIST_FIELDS,
     FlowMode,
     NodeType,
+    DEFAULT_SPARK_EXECUTOR_INSTANCES,
+    DEFAULT_PSEUDO_SHUFFLE,
 )
 from apps.log_clustering.handlers.dataflow.data_cls import (
     ExportFlowCls,
@@ -55,6 +57,7 @@ from apps.log_clustering.handlers.dataflow.data_cls import (
     AddFlowNodesCls,
     ModifyFlowCls,
     RequireNodeCls,
+    UpdateModelInstanceCls,
 )
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.models import CollectorConfig
@@ -291,7 +294,12 @@ class DataFlowHandler(BaseAiopsHandler):
         request_dict = self._set_username(modify_flow_json)
         clustering_config.modify_flow = modify_flow_dict
         clustering_config.save()
-        return BkDataDataFlowApi.put_flow_nodes(request_dict)
+        flow_res = BkDataDataFlowApi.put_flow_nodes(request_dict)
+        data_processing_id_config = self.get_serving_data_processing_id_config(
+            clustering_config.after_treat_flow["model"]["result_table_id"]
+        )
+        self.update_model_instance(model_instance_id=data_processing_id_config["id"])
+        return flow_res
 
     def _init_after_treat_flow(
         self,
@@ -429,3 +437,19 @@ class DataFlowHandler(BaseAiopsHandler):
         return BkDataDataFlowApi.get_latest_deploy_data(
             params={"flow_id": flow_id, "bk_username": self.conf.get("bk_username")}
         )
+
+    def get_serving_data_processing_id_config(self, result_table_id):
+        return BkDataAIOPSApi.serving_data_processing_id_config(
+            params={"data_processing_id": result_table_id, "bk_username": self.conf.get("bk_username")}
+        )
+
+    def update_model_instance(self, model_instance_id):
+        update_model_instance_request = UpdateModelInstanceCls(
+            filter_id=model_instance_id,
+            execute_config={
+                "spark.executor.instances": self.conf.get("spark.executor.instances", DEFAULT_SPARK_EXECUTOR_INSTANCES),
+                "pseudo_shuffle": self.conf.get("pseudo_shuffle", DEFAULT_PSEUDO_SHUFFLE),
+            },
+        )
+        request_dict = self._set_username(update_model_instance_request)
+        return BkDataAIOPSApi.update_execute_config(request_dict)
