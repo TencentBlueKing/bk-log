@@ -338,7 +338,7 @@
             label: this.$t('操作系统'),
           },
       ]
-      // TOTO
+      // TODO
       this.groupTableConfig = []
     }
     private renderLabels (row: any) {
@@ -426,9 +426,8 @@
         return data.children
       }
       // 获取动态分组拓扑数据
-      // TODO
       if (this.active === 'dynamic-group') {
-        
+        // TODO
       }
     }
     private handleSetDefaultCheckedNodes () {
@@ -642,6 +641,9 @@
       if (['static-topo', 'custom-input'].includes(this.active)) {
         this.staticIpTableCheckChange(selectionsData)
       }
+      if (this.active === 'dynamic-group') {
+        this.groupCheckChange(selectionsData)
+      }
       return this.getCheckedData()
     }
     private async handleAgentStatus (data) {
@@ -677,6 +679,10 @@
           dataNameKey: 'bk_inst_name',
         })
       }
+    }
+    // 动态分组check事件
+    groupCheckChange(selectionsData: ITableCheckData) {
+      // TODO
     }
     // 动态类型表格check事件
     private dynamicTableCheckChange (selectionsData: ITableCheckData) {
