@@ -1253,5 +1253,8 @@ export default {
   customReport: {
     reportCreate: '新建自定义上报',
     reportEdit: '编辑自定义上报',
+    token: '数据token',
+    dataName: '数据名称',
+    remark: '说明',
   },
 };

@@ -526,7 +526,7 @@ MENUS = [
                         "id": "custom_report",
                         "name": _("自定义上报"),
                         "feature": "on",
-                        "icon": ""
+                        "icon": "menu-custom"
                     },
                 ],
             },
