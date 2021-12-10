@@ -28,7 +28,7 @@ from requests.exceptions import ReadTimeout
 
 from apps.api.base import DataApiRetryClass
 from apps.log_clustering.models import ClusteringConfig
-from apps.log_databus.constants import EtlConfig
+from apps.log_databus.constants import EtlConfig, TargetNodeTypeEnum
 from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import (
     LogIndexSet,
@@ -46,6 +46,7 @@ from apps.log_search.constants import (
     ASYNC_SORTED,
     FieldDataTypeEnum,
     MAX_EXPORT_REQUEST_RETRY,
+    DEFAULT_BK_CLOUD_ID,
 )
 from apps.log_search.exceptions import (
     BaseSearchIndexSetException,
@@ -487,6 +488,7 @@ class SearchHandler(object):
                     "highlight": self.highlight,
                     "time_zone": self.time_zone,
                     "time_range": self.time_range,
+                    "use_time_range": self.use_time_range,
                     "time_field": self.time_field,
                     "time_field_type": self.time_field_type,
                     "time_field_unit": self.time_field_unit,
@@ -519,6 +521,7 @@ class SearchHandler(object):
                 "time_zone": self.time_zone,
                 "time_range": self.time_range,
                 "time_field": self.time_field,
+                "use_time_range": self.use_time_range,
                 "time_field_type": self.time_field_type,
                 "time_field_unit": self.time_field_unit,
                 "scroll": None,
@@ -554,6 +557,7 @@ class SearchHandler(object):
                     "highlight": self.highlight,
                     "time_zone": self.time_zone,
                     "time_range": self.time_range,
+                    "use_time_range": self.use_time_range,
                     "time_field": self.time_field,
                     "time_field_type": self.time_field_type,
                     "time_field_unit": self.time_field_unit,
@@ -659,12 +663,33 @@ class SearchHandler(object):
         # IP快选、过滤条件
         host_scopes = history["params"].get("host_scopes", {})
 
+        target_nodes = host_scopes.get("target_nodes", {})
+
+        if target_nodes:
+            if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
+                query_string += " AND ({})".format(
+                    ",".join([f"{target_node['bk_cloud_id']}:{target_node['ip']}" for target_node in target_nodes])
+                )
+            else:
+                first_node, *_ = target_nodes
+                target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
+                query_string += f" AND ({first_node['bk_obj_id']}:" + ",".join(target_list) + ")"
+
         if host_scopes.get("modules"):
             modules_list = [str(_module["bk_inst_id"]) for _module in host_scopes["modules"]]
             query_string += " ADN (modules:" + ",".join(modules_list) + ")"
+            host_scopes["target_node_type"] = TargetNodeTypeEnum.TOPO.value
+            host_scopes["target_nodes"] = host_scopes["modules"]
+
         if host_scopes.get("ips"):
             query_string += " AND (ips:" + host_scopes["ips"] + ")"
+            host_scopes["target_node_type"] = TargetNodeTypeEnum.INSTANCE.value
+            host_scopes["target_nodes"] = [
+                {"ip": ip, "bk_cloud_id": DEFAULT_BK_CLOUD_ID} for ip in host_scopes["ips"].split(",")
+            ]
+
         additions = history["params"].get("addition", [])
+
         if additions:
             query_string += (
                 " AND ("
@@ -1257,14 +1282,29 @@ class SearchHandler(object):
             log_not_empty_list.append(a_item_dict)
         return log_not_empty_list
 
+    def _get_addition_host(self, bk_biz_id, target_node_type: str, target_nodes: list) -> list:
+        if target_node_type == TargetNodeTypeEnum.INSTANCE.value:
+            return target_nodes
+        conditions = [
+            {"bk_obj_id": node_obj["bk_obj_id"], "bk_inst_id": node_obj["bk_inst_id"]} for node_obj in target_nodes
+        ]
+        host_result = BizHandler(bk_biz_id).search_host(conditions)
+        return [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
+
     def _combine_addition_host_scope(self, attrs: dict):
         host_scopes_ip_list: list = []
         ips_list: list = []
         translated_ips: list = []
-
+        target_ips = []
         host_scopes: dict = attrs.get("host_scopes")
         if host_scopes:
             modules: list = host_scopes.get("modules")
+            target_nodes = host_scopes.get("target_nodes", {})
+            target_node_type = host_scopes.get("target_node_type", "")
+            if target_nodes:
+                target_ips = [
+                    host["ip"] for host in self._get_addition_host(attrs["bk_biz_id"], target_node_type, target_nodes)
+                ]
             if modules:
                 biz_handler = BizHandler(attrs["bk_biz_id"])
                 search_list: list = biz_handler.search_host(modules)
@@ -1275,11 +1315,8 @@ class SearchHandler(object):
             if ips:
                 ips_list = ips.split(",")
 
-        host_scopes_ip_list = host_scopes_ip_list + ips_list + translated_ips
-
-        tmp_tuple: tuple = self._deal_addition(attrs)
-        addition_ip_list: list = tmp_tuple[0]
-        new_addition: list = tmp_tuple[1]
+        host_scopes_ip_list = host_scopes_ip_list + ips_list + translated_ips + target_ips
+        addition_ip_list, new_addition = self._deal_addition(attrs)
 
         if addition_ip_list:
             search_ip_list = addition_ip_list

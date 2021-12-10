@@ -71,11 +71,11 @@ export default {
       type: Array,
       default: () => [],
     },
-    statisticalFieldsData: { // 过滤条件字段可选值关系表
-      type: Object,
+    visibleFields: {
+      type: Array,
       required: true,
     },
-    visibleFields: {
+    totalFields: {
       type: Array,
       required: true,
     },
@@ -94,7 +94,7 @@ export default {
   computed: {
     ...mapState('globals', ['fieldTypeMap']),
     fieldKeyMap() {
-      return Object.keys(this.statisticalFieldsData);
+      return this.totalFields.map(item => item.field_name);
     },
     hiddenFields() {
       return this.fieldList.filter(item => !this.visibleFields.some(visibleItem => item === visibleItem));

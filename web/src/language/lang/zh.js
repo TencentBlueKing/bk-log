@@ -317,6 +317,7 @@ export default {
     inspectionFail: '检测失败',
     ruleEmpty: '暂无聚类规则',
     saveToTakeEffect: '保存待生效',
+    saveEffectMessage: '该保存需要1时候生效,请耐心等待',
     extractionPrompt: '将过滤后的日志采集上来后，日志检索模块可进行日志内容格式化，方便检索和分析。',
     ruleDeleteTips: '是否删除该条规则？',
     changeSwitchTips: '是否禁用该模块？',
@@ -327,7 +328,7 @@ export default {
     fieldTips: '只能基于一个字段进行聚类，并且字段是为text的分词类型，默认为log字段',
     ignoreNumbersTips: '前端忽略所有的数字',
     ignoreCharactersTips: '前端忽略数字和所有的常见符号，只保留日志具体内容',
-    dataFingerprintTips: '通过AI学习能力，提取日志的数据指纹实现日志聚类，注意训练时间越久效果越好，新启动至少40分钟才会有具体的效果，存储将增加10%',
+    dataFingerprintTips: '通过AI学习能力，提取日志的数据指纹实现日志聚类，注意训练时间越久效果越好，存储将增加10%',
     fieldLengthTips: '聚类字段的最大长度，如果超过这个长度将直接丢弃，设置越大将消耗更多的资源',
   },
   // logCluster
