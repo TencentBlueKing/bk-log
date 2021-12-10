@@ -65,10 +65,10 @@
           <div class="more-details">
             <div class="details">
               <p><span>{{$t('indexSetList.index_set')}}：</span>{{indexSetItem.index_set_name}}</p>
-              <p><span>{{$t('索引')}}：</span>{{indexSetItem.indexName}}</p>
+              <p><span>{{$t('索引')}}：</span>{{showResultTableID}}</p>
               <p><span>{{$t('来源')}}：</span>{{indexSetItem.scenario_name}}</p>
             </div>
-            <div style="color: #3A84FF; cursor: pointer;">
+            <div style="color: #3A84FF; cursor: pointer;" @click="handleClickDetail">
               {{$t('retrieveSetting.moreDetails')}}
               <span class="log-icon icon-lianjie"></span>
             </div>
@@ -77,14 +77,14 @@
             <component
               v-if="isShowPage"
               :is="showComponent"
-              :global-editable="globalEditable"
+              :global-editable="!isDebugRequest && globalEditable"
               :index-set-item="indexSetItem"
               :total-fields="totalFields"
               :config-data="configData"
               :clean-config="cleanConfig"
-              @reset-page="resetPage"
+              @resetPage="resetPage"
               @updateLogFields="updateLogFields"
-              @successSubmit="isSubmit = true"
+              @debugRequestChange="debugRequestChange"
             ></component>
           </div>
         </div>
@@ -137,6 +137,7 @@ export default {
       currentChoice: '', // 当前nav选中
       showComponent: '', // 当前显示的组件
       isSubmit: false, // 在当前设置页是否保存成功
+      isDebugRequest: false,
       currentList: [
         // {
         //   id: 'index',
@@ -176,17 +177,13 @@ export default {
     isSignatureActive() { // 日志聚类的数据指纹是否开启
       return this.configData?.extra?.signature_switch;
     },
+    showResultTableID() {
+      return this.indexSetItem?.indices[0]?.result_table_id || '';
+    },
   },
   watch: {
     isShowDialog(val) {
       val && this.handleMenuStatus();
-    },
-    currentList: {
-      deep: true,
-      immediate: true,
-      handler(list) {
-        list[1].isEditable === true && (this.currentList[1].isDisabled = true);
-      },
     },
   },
   methods: {
@@ -216,11 +213,13 @@ export default {
       if (this.isSubmit) {
         this.currentChoice = val;
         this.showComponent = this.currentList[index].componentsName;
+        this.isSubmit = false;
         return;
       }
       this.$bkInfo({
         title: this.$t('pageLeaveTips'),
         confirmFn: () => {
+          this.jumpCloseSwitch();
           this.currentChoice = val;
           this.showComponent = this.currentList[index].componentsName;
         },
@@ -240,26 +239,32 @@ export default {
         this.isShowPage = true;
       });
     },
+    // nav开关
     stopChangeSwitch(index, isDisable) {
       if (isDisable) return;
       if (!this.currentList[index].isEditable) {
         if (this.currentChoice !== this.currentList[index].id) {
           // 当前tab不在操作的开关菜单 则跳转到对应菜单
+          this.jumpCloseSwitch();
           this.currentChoice = this.currentList[index].id;
           this.showComponent = this.currentList[index].componentsName;
         }
         this.currentList[index].isEditable = true;
         return;
       }
-      const msg = this.currentChoice === 'extract' ? '是否关闭字段提取？' : '是否关闭日志聚类？';
-      this.$bkInfo({
-        title: msg,
-        confirmLoading: true,
-        confirmFn: async () => {
-          const isFinish = this.currentChoice === 'extract' ? await this.requestCloseClean() : await this.requestCloseCluster();
-          isFinish && (this.currentList[index].isEditable = false);
-        },
-      });
+      const msg = index === 0 ? '是否关闭字段提取？' : '是否关闭日志聚类？';
+      if (index === 0) {
+        this.$bkInfo({
+          title: msg,
+          confirmLoading: true,
+          confirmFn: async () => {
+            const isFinish = index === 0 ? await this.requestCloseClean() : await this.requestCloseCluster();
+            isFinish && (this.currentList[index].isEditable = false);
+          },
+        });
+      } else {
+        this.currentList[index].isEditable = false;
+      }
     },
     async requestCloseClean() {
       const { extra: { collector_config_id } } = this.cleanConfig;
@@ -284,9 +289,28 @@ export default {
       this.currentChoice = '';
       this.showComponent = '';
     },
+    jumpCloseSwitch() {
+      if (!this.isClusteringActive && this.currentChoice === 'clustering') {
+        this.currentList[1].isEditable = false;
+      }
+      if (!this.isSubmit && this.currentChoice === 'extract'
+       && this.currentList[0].isDisabled !== true && !this.isExtractActive) {
+        this.currentList[0].isEditable = false;
+      }
+    },
+    debugRequestChange(val) {
+      this.isDebugRequest = val;
+    },
     updateLogFields() {
       this.isSubmit = true;
       this.$emit('updateLogFields');
+    },
+    handleClickDetail() {
+      const { extra: { collector_config_id: collectorId } } = this.cleanConfig;
+      if (!collectorId) return;
+      const projectId =  window.localStorage.getItem('project_id');
+      const jumpUrl = `#/manage/log-collection/collection-item/manage/${collectorId}?projectId=${projectId}`;
+      window.open(jumpUrl, '_blank');
     },
   },
 };
@@ -326,7 +350,6 @@ export default {
     background-color: #FFFFFF;
     border-bottom: 1px solid #DCDEE5;
     // box-shadow:0 3px 6px #DEE0E7 ;
-
     .bk-icon {
       font-size: 32px;
       cursor: pointer;
@@ -335,17 +358,14 @@ export default {
       right: 24px;
     }
   }
-
   .setting-main{
     padding: 72px 40px 0;
     display: flex;
     position: relative;
-
     .setting-left{
       min-width: 240px;
       height: 365px;
       padding-top:4px;
-
       .setting-option{
         height: 40px;
         font-size: 15px;
@@ -361,18 +381,15 @@ export default {
       }
       @include container-shadow
     }
-
     .setting-right{
       width: 1200px;
       margin-left: 20px;
-
       .more-details{
         height: 48px;
         padding: 0 24px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-
         .details{
           display: flex;
           p{
@@ -384,7 +401,6 @@ export default {
         }
         @include container-shadow
       }
-
       .operation-container{
         margin-top: 20px;
         min-height: 770px;
@@ -393,7 +409,6 @@ export default {
       }
     }
   }
-
   .current-color{
     color: #3A84FF;
     background-color: #E1ECFF;

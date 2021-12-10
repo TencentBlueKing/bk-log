@@ -43,26 +43,26 @@ const IndexSetView = {
   name: 'IndexSet',
   template: '<router-view :key="Date.now()"></router-view>',
 };
+const CustomReportView = {
+  name: 'CustomReportView',
+  template: '<router-view></router-view>',
+};
 const ExtractLinkView = {
   name: 'ExtractLinkView',
   template: '<router-view></router-view>',
 };
-
 const LogCleanView = {
   name: 'LogCleanView',
   template: '<router-view></router-view>',
 };
-
 const LogCleanTempView = {
   name: 'LogCleanTempView',
   template: '<router-view></router-view>',
 };
-
 const DashboardTempView = {
   name: 'DashboardTempView',
   template: '<router-view></router-view>',
 };
-
 const TraceTempView = {
   name: 'TraceTempView',
   template: '<router-view></router-view>',
@@ -106,10 +106,15 @@ const CreateIndex = () => import(
   /* webpackChunkName: 'create-index' */
   '@/views/manage2/manage-access/components/index-set/create'
 );
-// ---- 日志接入 ---- 自定义接入
-const CustomCollection = () => import(
-  /* webpackChunkName: 'es-custom-collection' */
-  '@/views/manage2/manage-access/custom-collection'
+// ---- 日志接入 ---- 自定义上报 ---- 自定义上报列表
+const CustomReportList = () => import(
+  /* webpackChunkName: 'create-index' */
+  '@/views/manage2/manage-access/custom-report/list'
+);
+// ---- 日志接入 ---- 自定义上报 ---- 自定义上报新建/编辑
+const CustomReportCreate = () => import(
+  /* webpackChunkName: 'create-index' */
+  '@/views/manage2/manage-access/custom-report/create'
 );
 // ---- 全链路跟踪 ---- 采集跟踪
 const CollectionTrack = () => import(
@@ -476,9 +481,35 @@ const routes = [
         ],
       },
       {
-        path: 'custom-collection',
-        name: 'custom-collection', // 日志接入 - 自定义接入
-        component: CustomCollection,
+        path: 'custom-report',
+        name: 'custom-report', // 日志接入 - 自定义上报
+        component: CustomReportView,
+        redirect: '/manage/custom-report/list',
+        children: [
+          {
+            path: 'list',
+            name: 'custom-report-list', // 日志接入 - 自定义上报列表
+            component: CustomReportList,
+          },
+          {
+            path: 'create',
+            name: 'custom-report-create', // 日志接入 - 自定义上报新建
+            meta: {
+              needBack: true,
+              backName: 'custom-report-list',
+            },
+            component: CustomReportCreate,
+          },
+          {
+            path: 'edit/:reportId',
+            name: 'custom-report-edit', // 日志接入 - 自定义上报编辑
+            meta: {
+              needBack: true,
+              backName: 'custom-report-list',
+            },
+            component: CustomReportCreate,
+          },
+        ],
       },
       {
         path: 'collection-track',

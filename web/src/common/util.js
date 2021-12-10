@@ -561,11 +561,11 @@ export function formatBigNumListValue(value) {
     const obj = {};
     Object.keys(value).forEach((opt) => {
       obj[opt] = typeof obj[opt] === 'object' && obj[opt] !== null && !obj[opt]._isBigNumber
-        ? formatBigNumListValue(obj[opt]) : bigNumberToString(value[opt] || {});
+        ? formatBigNumListValue(obj[opt]) : bigNumberToString(value[opt] || '');
     });
     return obj;
   }
-  return bigNumberToString(value || {});
+  return bigNumberToString(value || '');
 }
 
 export function parseBigNumberList(lsit) {
@@ -589,4 +589,18 @@ export const random = (n) => { // 生成n位长度的字符串
     result += str[parseInt(Math.random() * str.length, 10)];
   }
   return result;
+};
+
+export const copyMessage = (val, alertMsg) => {
+  try {
+    const input = document.createElement('input');
+    input.setAttribute('value', val);
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+    global.mainComponent.messageSuccess(alertMsg ? alertMsg : global.mainComponent.$t('复制成功'));
+  } catch (e) {
+    console.warn(e);
+  }
 };

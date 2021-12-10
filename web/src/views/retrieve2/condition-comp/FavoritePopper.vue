@@ -24,7 +24,7 @@
   <div class="favorite-popper-content" :style="popperStyle" v-bkloading="{ isLoading }">
     <div class="title">{{ $t('收藏描述：') }}</div>
     <div class="content">
-      <bk-input v-model.trim="value" maxlength="50" @enter="add"></bk-input>
+      <bk-input v-model.trim="value" maxlength="50"></bk-input>
       <div class="icon-container" @click="add">
         <span class="bk-icon icon-check-line"></span>
       </div>

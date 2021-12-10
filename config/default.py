@@ -47,6 +47,7 @@ INSTALLED_APPS += (
     "django_prometheus",
     "rest_framework",
     "iam.contrib.iam_migration",
+    "django_dbconn_retry",
     "apps.iam",
     "apps.api",
     "apps.log_search",
@@ -521,7 +522,12 @@ MENUS = [
                         "scenes": "scenario_es",
                         "icon": "elasticsearch",
                     },
-                    {"id": "custom_collection", "name": _("自定义接入"), "feature": "off", "icon": ""},
+                    {
+                        "id": "custom_report",
+                        "name": _("自定义上报"),
+                        "feature": "on",
+                        "icon": ""
+                    },
                 ],
             },
             {

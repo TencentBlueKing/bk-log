@@ -21,65 +21,14 @@
   -->
 
 <template>
-  <div class="clean-template-container" v-bkloading="{ isLoading: loading }">
-    <article class="article">
-      <step-field :is-temp-field="true" @change-submit="changeSubmit" />
-    </article>
-  </div>
+  <div>自定义上报</div>
 </template>
 
 <script>
-import { mapState } from 'vuex';
-import stepField from '@/components/data-Access/step-field';
-
 export default {
-  name: 'log-clean-create',
-  components: { stepField },
+  name: 'custom-collection',
   data() {
-    return {
-      loading: false,
-      isSubmit: false,
-    };
-  },
-  computed: {
-    ...mapState({
-      showRouterLeaveTip: state => state.showRouterLeaveTip,
-    }),
-  },
-  // eslint-disable-next-line no-unused-vars
-  beforeRouteLeave(to, from, next) {
-    if (!this.isSubmit && !this.showRouterLeaveTip) {
-      this.$bkInfo({
-        title: this.$t('pageLeaveTips'),
-        confirmFn: () => {
-          next();
-        },
-      });
-      return;
-    }
-    next();
-  },
-  methods: {
-    changeSubmit(isSubmit) {
-      this.isSubmit = isSubmit;
-    },
+    return {};
   },
 };
 </script>
-
-<style lang="scss" scoped>
-  @import '@/scss/mixins/scroller';
-
-  .clean-template-container {
-    padding: 20px 24px;
-    height: 100%;
-    overflow: auto;
-    @include scroller($backgroundColor: #ADADAD, $width: 4px);
-    .article {
-      margin-bottom: 20px;
-      border: 1px solid #dcdee5;
-      border-radius: 3px;
-      background-color: #fff;
-    }
-  }
-</style>

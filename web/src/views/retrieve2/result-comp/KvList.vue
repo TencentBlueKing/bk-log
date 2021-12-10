@@ -40,10 +40,9 @@
             @click.stop="handleMenuClick(option.id, field)">
           </span>
         </div>
-        <!-- <div class="field-value">{{ formatterStr(data[field]) }}</div> -->
         <div class="field-value">
           <text-segmentation
-            :content="formatterStr(data[field])"
+            :content="formatterStr(data, field)"
             :field-type="getFieldType(field)"
             :menu-click="(type, content) => handleMenuClick(type, content, field)">
           </text-segmentation>
@@ -55,13 +54,14 @@
 
 <script>
 import { mapState } from 'vuex';
-// import TextSegmentation from './TextSegmentation.js';
 import TextSegmentation from './TextSegmentation.vue';
+import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 
 export default {
   components: {
     TextSegmentation,
   },
+  mixins: [tableRowDeepViewMixin],
   props: {
     data: {
       type: Object,
@@ -71,11 +71,11 @@ export default {
       type: Array,
       default: () => [],
     },
-    statisticalFieldsData: { // 过滤条件字段可选值关系表
-      type: Object,
+    visibleFields: {
+      type: Array,
       required: true,
     },
-    visibleFields: {
+    totalFields: {
       type: Array,
       required: true,
     },
@@ -94,19 +94,15 @@ export default {
   computed: {
     ...mapState('globals', ['fieldTypeMap']),
     fieldKeyMap() {
-      return Object.keys(this.statisticalFieldsData);
+      return this.totalFields.map(item => item.field_name);
     },
     hiddenFields() {
       return this.fieldList.filter(item => !this.visibleFields.some(visibleItem => item === visibleItem));
     },
   },
   methods: {
-    formatterStr(str) {
-      if (typeof str === 'object' && str !== null) {
-        return JSON.stringify(str);
-      }
-
-      return (str || str === 0) ? str : '--';
+    formatterStr(row, field) {
+      return this.tableRowDeepView(row, field, this.getFieldType(field));
     },
     getHandleIcon(option, field) {
       if (option.id !== 'display') return option.icon;

@@ -37,7 +37,6 @@ from apps.log_clustering.handlers.aiops.aiops_model.constants import (
     DELIMETER_DEFAULT_VALUE,
     PREDEFINED_VARIBLES_DEFAULT_VALUE,
     TRAINING_HOUR,
-    TRAINING_MINUTE,
 )
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
 from apps.log_clustering.handlers.aiops.aiops_model.data_cls import (
@@ -998,7 +997,7 @@ class AiopsModelHandler(BaseAiopsHandler):
         更新持续发布配置
         @param model_id 模型id
         """
-        target_time = int(arrow.now().replace(hour=TRAINING_HOUR, minutes=TRAINING_MINUTE).timestamp)
+        target_time = int(arrow.now().shift(hours=TRAINING_HOUR).timestamp)
         update_training_schedule_request = UpdateTrainingScheduleCls(
             model_id=model_id, project_id=self.conf.get("project_id")
         )

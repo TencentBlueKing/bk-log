@@ -30,7 +30,7 @@ from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import A
 from apps.log_clustering.models import AiopsModel, AiopsSignatureAndPattern
 
 
-@periodic_task(run_every=crontab(minute="25", hour="12"))
+@periodic_task(run_every=crontab(hour="*/1"))
 def sync_pattern():
     model_ids = AiopsModel.objects.all().values_list("model_id", flat=True)
     with ThreadPoolExecutor() as executor:

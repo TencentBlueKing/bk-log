@@ -22,9 +22,10 @@
 
 <template>
   <bk-table
-    :data="tableData"
     ref="logClusterTable"
-    class="log-cluster-table"
+    :data="tableData"
+    :outer-border="false"
+    :class="['log-cluster-table',tableData.length === 0 ? 'ignore-no-data' : '']"
     @row-click="tableRowClick">
     <bk-table-column type="expand" width="30">
       <template slot-scope="props">
@@ -69,6 +70,7 @@
 
 <script>
 import ExpandView from '../original-log/ExpandView.vue';
+import { copyMessage } from '@/common/util';
 
 export default {
   components: {
@@ -81,7 +83,7 @@ export default {
     },
     clusteringField: {
       type: String,
-      default: 'log',
+      default: '',
     },
     originTableList: {
       type: Array,
@@ -101,7 +103,7 @@ export default {
       tableData: [],
       cacheExpandStr: [],
       ignoreNumberReg: /(\d{1,})|([1-9]\d+)/g,
-      ignoreSymbolReg: /(\d{1,})|([-`!@#$%^&*(){}<>[\]_+=":,\\/\d]+)/g,
+      ignoreSymbolReg: /(\d{1,})|([-`.!@#$%^&*(){}<>[\]_+=":;,\\/\d]+)/g,
     };
   },
   watch: {
@@ -122,7 +124,8 @@ export default {
       this.tableData = (this.originTableList || []).reduce((pre, next) => {
         const regExp = this.active === 'ignoreNumbers' ? this.ignoreNumberReg : this.ignoreSymbolReg;
         const sampleField = next[this.clusteringField];
-        const valStr = sampleField.toString().replace(regExp, '*');
+        const valStr = sampleField.toString().replace(regExp, '*')
+          .replace(/\*(\s|\*)+/g, '*');
         const ascription = pre.find(item => item.content === valStr);
         if (!ascription) {
           pre.push({
@@ -157,17 +160,7 @@ export default {
           this.$emit('addFilterCondition', fieldName, operation, value.toString());
           break;
         case 'copy':
-          try {
-            const input = document.createElement('input');
-            input.setAttribute('value', option.value);
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-            this.messageSuccess(this.$t('复制成功'));
-          } catch (e) {
-            console.warn(e);
-          }
+          copyMessage(option.value);
           break;
         case 'display':
           this.$emit('fieldsUpdated', option.displayFieldNames);
@@ -185,6 +178,9 @@ export default {
   .bk-table-body td.bk-table-expanded-cell {
     padding: 0;
   }
+  &:before{
+    display: none;
+  }
   td {
     padding-top: 14px;
     vertical-align: top;
@@ -195,7 +191,7 @@ export default {
   .bk-table-body-wrapper {
     min-height: calc(100vh - 550px);
     .bk-table-empty-block {
-      min-height: calc(100vh - 600px);
+      min-height: calc(100vh - 550px);
     }
   }
   .symbol-content {
@@ -255,6 +251,13 @@ export default {
       color: #3a84ff;
       margin-top: 8px;
       cursor: pointer;
+    }
+  }
+}
+.ignore-no-data{
+  tr{
+    >th{
+      border-bottom: none !important;
     }
   }
 }
