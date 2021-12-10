@@ -64,6 +64,7 @@ from apps.log_search.constants import (
     EncodingsEnum,
     TagColor,
     InnerTag,
+    CustomTypeEnum,
 )
 
 
@@ -120,6 +121,8 @@ class GlobalConfig(models.Model):
         # 日志聚类
         configs[GlobalTypeEnum.LOG_CLUSTERING_LEVEL.value] = PatternEnum.get_choices()
         configs[GlobalTypeEnum.LOG_CLUSTERING_YEAR_ON_YEAR.value] = YearOnYearEnum.get_choices_list_dict()
+        # 自定义上报
+        configs[GlobalTypeEnum.DATABUS_CUSTOM.value] = CustomTypeEnum.get_choices_list_dict()
         return configs
 
     class Meta:
