@@ -301,6 +301,7 @@
     <!-- 目标选择器 -->
     <ip-selector-dialog
       :show-dialog.sync="showIpSelectorDialog"
+      :show-dynamic-group="true"
       :target-nodes="retrieveParams.host_scopes.target_nodes"
       :target-node-type="retrieveParams.host_scopes.target_node_type"
       @target-change="handleSaveIpQuick">
