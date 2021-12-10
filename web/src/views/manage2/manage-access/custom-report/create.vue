@@ -23,30 +23,36 @@
 <template>
   <div class="custom-create-container">
     <div class="create-form">
-      <div class="form-title">基础信息</div>
+      <div class="form-title">{{$t('基础信息')}}</div>
       <bk-form :label-width="103" :model="formData">
-        <bk-form-item label="数据ID" :required="true" :property="'name'">
+        <bk-form-item :label="$t('customReport.dataID')" :required="true" :property="'name'">
+          <bk-input class="form-input" :disabled="true" v-model="formData.name"></bk-input>
+        </bk-form-item>
+        <bk-form-item :label="$t('customReport.token')" :required="true" :property="'name'">
+          <bk-input class="form-input" :disabled="true" v-model="formData.name"></bk-input>
+        </bk-form-item>
+        <bk-form-item :label="$t('customReport.dataName')" :required="true" :property="'name'">
           <bk-input class="form-input" v-model="formData.name"></bk-input>
         </bk-form-item>
-        <bk-form-item label="数据token" :required="true" :property="'name'">
-          <bk-input class="form-input" v-model="formData.name"></bk-input>
-        </bk-form-item>
-        <bk-form-item label="数据名称" :required="true" :property="'name'">
-          <bk-input class="form-input" v-model="formData.name"></bk-input>
-        </bk-form-item>
-        <bk-form-item label="数据类型" :required="true" :property="'name'">
-          <div class="bk-button-group">
-            <bk-button class="is-selected">日志</bk-button>
-            <bk-button>trace</bk-button>
-            <bk-button>ot日志</bk-button>
+        <bk-form-item :label="$t('customReport.typeOfData')" :required="true" :property="'name'">
+          <div style="margin-top: -4px">
+            <div class="bk-button-group">
+              <bk-button
+                v-for=" (item,index) of dataTypeList"
+                :key="index"
+                :class="`${dataType === item.id ? 'is-selected' : ''}`"
+                @click="handleChangeType(item.id)">
+                {{item.name}}
+              </bk-button>
+            </div>
+            <p class="group-tip" slot="tip">{{$t('customReport.typeTips')}}</p>
           </div>
-          <p class="group-tip" slot="tip">自定义上报指标数据，可以通过HTTP等方式进行上报，自定义上报有一定的数据格式要求，具体可以查看使用说明</p>
         </bk-form-item>
-        <bk-form-item label="英文名" :required="true" :property="'name'">
+        <bk-form-item :label="$t('customReport.englishName')" :required="true" :property="'name'">
           <bk-input class="form-input" v-model="formData.name"></bk-input>
         </bk-form-item>
-        <bk-form-item label="数据分类" :required="true" :property="'name'">
-          <bk-select v-model="formData.class" style="width:250px;">
+        <bk-form-item :label="$t('customReport.dataClassification')" :required="true" :property="'name'">
+          <bk-select v-model="formData.class" style="width: 320px;">
             <bk-option
               v-for="option in classList"
               :key="option.id"
@@ -56,16 +62,37 @@
             </bk-option>
           </bk-select>
         </bk-form-item>
-        <bk-form-item label="说明">
+        <bk-form-item :label="$t('customReport.instruction')">
           <bk-input
             style="width:529px"
             type="textarea"
-            placeholder="未输入"
             v-model="formData.desc"
+            :placeholder="$t('customReport.notEntered')"
             :maxlength="100"></bk-input>
         </bk-form-item>
-        <bk-form-item label="存储集群" :required="true" :property="'name'">
-          <bk-select v-model="formData.class" style="width:250px;">
+      </bk-form>
+    </div>
+
+    <div class="create-form">
+      <div class="form-title">{{$t('customReport.storageSettings')}}</div>
+      <bk-form :label-width="103" :model="formData">
+        <bk-form-item required :label="$t('customReport.dataLink')">
+          <bk-select
+            style="width: 320px;"
+            v-model="formData.data_link_id"
+            :clearable="false"
+            :disabled="false">
+            <bk-option
+              v-for="item in classList"
+              :key="item.data_link_id"
+              :id="item.data_link_id"
+              :name="item.link_group_name">
+            </bk-option>
+          </bk-select>
+        </bk-form-item>
+
+        <bk-form-item :label="$t('dataSource.storage_cluster_name')" required :property="'name'">
+          <bk-select v-model="formData.class" style="width: 320px;">
             <bk-option
               v-for="option in classList"
               :key="option.id"
@@ -74,9 +101,14 @@
               <span>{{option.name}}</span>
             </bk-option>
           </bk-select>
-          <bk-alert class="cluster-alert" :show-icon="false" type="info" title="消息的提示文字" slot="tip"></bk-alert>
+          <bk-alert
+            class="cluster-alert"
+            type="info"
+            slot="tip"
+            :show-icon="false"
+            :title="$t('dataSource.tips_formula')"></bk-alert>
         </bk-form-item>
-        <bk-form-item label="存储索引名" :required="true" :property="'name'">
+        <bk-form-item :label="$t('configDetails.storageIndexName')" :required="true" :property="'name'">
           <div style="width: 320px;">
             <bk-input v-model="formData.name">
               <template slot="prepend">
@@ -151,23 +183,26 @@
         </bk-form-item>
       </bk-form>
     </div>
+
     <div :class="`right-button ${isOpenWindow ? 'button-active' : ''}`"
          @click="isOpenWindow = !isOpenWindow">
       <i :class="`bk-icon icon-angle-double-${isOpenWindow ? 'right' : 'left'}`"></i>
     </div>
     <div :class="`right-window ${isOpenWindow ? 'window-active' : ''}`">
-      <p class="window-top-title">帮助文档</p>
+      <p class="window-top-title">{{$t('customReport.helpDocument')}}</p>
       <div class="content">
-        <p class="content-title">使用方法</p>
+        <p class="content-title">{{$t('customReport.instructions')}}</p>
         <div class="content-row" v-for="(item,index) of list" :key="index">
           <span>{{item.title}}</span>
           <pre class="content-example">{{item.test}}</pre>
         </div>
       </div>
     </div>
+
     <div class="submit-btn">
       <bk-button
         class="fl"
+        style="width:"
         theme="primary">
         {{$t('提交')}}
       </bk-button>
@@ -191,6 +226,12 @@ export default {
       classList: [],
       hotDataDaysList: [],
       isOpenWindow: false,
+      dataType: 'log',
+      dataTypeList: [
+        { id: 'log', name: '日志' },
+        { id: 'trace', name: 'trace' },
+        { id: 'otLog', name: 'ot日志' },
+      ],
       formData: {
         name: 'test',
         scope: '',
@@ -224,6 +265,9 @@ export default {
     enterCustomDay() {},
     changeCopyNumber() {},
     jumpToEsAccess() {},
+    handleChangeType(id) {
+      this.dataType = id;
+    },
   },
 };
 </script>
@@ -232,19 +276,20 @@ export default {
 @import "../../../../scss/mixins/clearfix";
 @import "../../../../scss/mixins/flex";
 .custom-create-container {
-  padding: 20px 24px;
+  padding:0 24px;
   .create-form {
     background-color: #fff;
     padding: 24px 37px;
+    margin-top: 20px;
     border-radius: 2px;
-    box-shadow: 0px 2px 4px 0px rgba(25, 25, 41, 0.05);
     .form-title {
-      font-size: 12px;
+      font-size: 14px;
+      color: #63656e;
       font-weight: 700;
       margin-bottom: 24px;
     }
     .form-input {
-      width: 410px;
+      width: 320px;
     }
     .group-tip {
       font-size: 12px;
@@ -272,9 +317,9 @@ export default {
     border-right: none;
     background-color: #fafbfd;
     cursor: pointer;
-    position: absolute;
+    position: fixed;
     right: 0;
-    top: calc(48vh - 48px);
+    top: calc(50vh - 48px);
     transition:right .5s;
     &.button-active{
       right: 400px;
@@ -283,12 +328,12 @@ export default {
   }
   .right-window{
     width: 400px;
-    height: calc(100% - 52px);
+    height: 100vh;
     background: #fff;
     border: 1px solid #dcdee5;
-    position: absolute;
+    position: fixed;
     right: -400px;
-    top: 52px;
+    top: 102px;
     z-index: 99;
     color: #63656e;
     transition:right .5s;
@@ -318,8 +363,8 @@ export default {
     }
   }
   .submit-btn {
-    width: 160px;
-    margin: 20px 0 100px 0;
+    width: 140px;
+    margin: 20px 20px 100px ;
     @include clearfix;
   }
 }
