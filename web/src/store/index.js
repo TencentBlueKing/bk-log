@@ -84,6 +84,7 @@ const store = new Vuex.Store({
     // 清除table表头宽度缓存
     clearTableWidth: 0,
     showRouterLeaveTip: false,
+    curCustomReport: null,
   },
   // 公共 getters
   getters: {

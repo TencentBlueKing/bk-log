@@ -1252,5 +1252,8 @@ export default {
   customReport: {
     reportCreate: 'Create Custom Report',
     reportEdit: 'Edit Custom Report',
+    token: 'Data token',
+    dataName: 'Data name',
+    remark: 'Remark',
   },
 };
