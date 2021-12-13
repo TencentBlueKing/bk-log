@@ -74,7 +74,12 @@ from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.models import CollectorConfig, CleanStash
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.constants import GlobalCategoriesEnum, CMDB_HOST_SEARCH_FIELDS, CollectorScenarioEnum
+from apps.log_search.constants import (
+    GlobalCategoriesEnum,
+    CMDB_HOST_SEARCH_FIELDS,
+    CollectorScenarioEnum,
+    CustomTypeEnum,
+)
 from apps.models import model_to_dict
 from apps.log_databus.handlers.kafka import KafkaConsumerHandle
 from apps.log_databus.constants import EtlConfig
@@ -190,6 +195,7 @@ class CollectorHandler(object):
     def set_categorie_name(self, collector_config, context):
         # 分类名称
         collector_config["category_name"] = GlobalCategoriesEnum.get_display(collector_config["category_id"])
+        collector_config["custom_name"] = CustomTypeEnum.get_choice_label(collector_config["custom_type"])
         return collector_config
 
     def complement_metadata_info(self, collector_config, context):
@@ -311,6 +317,7 @@ class CollectorHandler(object):
                 _data["table_id"] = table_id
             # 分类名
             _data["category_name"] = GlobalCategoriesEnum.get_display(_data["category_id"])
+            _data["custom_name"] = CustomTypeEnum.get_choice_label(_data["custom_type"])
 
             # 时间处理
             _data["created_at"] = (
