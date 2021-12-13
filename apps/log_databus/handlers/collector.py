@@ -1696,6 +1696,22 @@ class CollectorHandler(object):
                 encoding=META_DATA_ENCODING,
             )
             self.data.save()
+
+        # add user_operation_record
+        operation_record = {
+            "username": get_request_username(),
+            "biz_id": self.data.bk_biz_id,
+            "record_type": UserOperationTypeEnum.COLLECTOR,
+            "record_object_id": self.data.collector_config_id,
+            "action": UserOperationActionEnum.CREATE,
+            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
+        }
+        user_operation_record.delay(operation_record)
+
+        self._authorization_collector(self.data)
+        # 创建数据平台data_id
+        async_create_bkdata_data_id.delay(self.data.collector_config_id)
+
         custom_config = get_custom(custom_type)
         from apps.log_databus.handlers.etl import EtlHandler
 
@@ -1712,6 +1728,11 @@ class CollectorHandler(object):
         }
         etl_handler.update_or_create(**etl_params)
         custom_config.after_hook(self.data)
+        return {
+            "collector_config_id": self.data.collector_config_id,
+            "index_set_id": self.data.index_set_id,
+            "bk_data_id": self.data.bk_data_id,
+        }
 
     def custom_update(
         self,
@@ -1758,3 +1779,14 @@ class CollectorHandler(object):
         }
         etl_handler.update_or_create(**etl_params)
         custom_config.after_hook(self.data)
+
+        # add user_operation_record
+        operation_record = {
+            "username": get_request_username(),
+            "biz_id": self.data.bk_biz_id,
+            "record_type": UserOperationTypeEnum.COLLECTOR,
+            "record_object_id": self.data.collector_config_id,
+            "action": UserOperationActionEnum.UPDATE,
+            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
+        }
+        user_operation_record.delay(operation_record)
