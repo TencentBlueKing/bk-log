@@ -84,6 +84,8 @@ const store = new Vuex.Store({
     // 清除table表头宽度缓存
     clearTableWidth: 0,
     showRouterLeaveTip: false,
+    // 新人指引
+    userGuideData: {},
   },
   // 公共 getters
   getters: {
@@ -204,6 +206,9 @@ const store = new Vuex.Store({
     },
     updateRouterLeaveTip(state, isShow) {
       state.showRouterLeaveTip = isShow;
+    },
+    setUserGuideData(state, userGuideData) {
+      state.userGuideData = userGuideData;
     },
   },
   actions: {
