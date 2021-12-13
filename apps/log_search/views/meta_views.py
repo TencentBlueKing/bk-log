@@ -24,12 +24,14 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.response import Response
 
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import USER_GUIDE_CONFIG
 from apps.utils.drf import list_route
 from apps.exceptions import LanguageDoseNotSupported, ValidationError
 from apps.generic import APIViewSet
-from apps.log_search.constants import TimeEnum
+from apps.log_search.constants import TimeEnum, UserMetaConfType
 from apps.log_search.handlers.meta import MetaHandler
-from apps.log_search.models import GlobalConfig, Scenario
+from apps.log_search.models import GlobalConfig, Scenario, UserMetaConf
 from apps.log_search.serializers import ProjectSerializer
 from apps.utils.local import get_request_username
 
@@ -330,7 +332,7 @@ class MetaViewSet(APIViewSet):
             )
         )
 
-    @list_route(method=["GET"], url_path="user_guide")
+    @list_route(methods=["GET"], url_path="user_guide")
     def get_user_guide(self, request):
         """
         @api {get} /meta/user_guide/ 获取新人指引
@@ -360,9 +362,23 @@ class MetaViewSet(APIViewSet):
             "result":true
         }
         """
-        pass
+        username = get_request_username()
+        if not username:
+            raise ValidationError(_("username 不能为空"))
 
-    @list_route(method=["POST"], url_path="update_user_guide")
+        toggle = FeatureToggleObject.toggle(USER_GUIDE_CONFIG).feature_config
+        user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
+        if not user_meta_conf:
+            meta_conf = {toggle_key: {**toggle_val, **{"current_step": 0}} for toggle_key, toggle_val in toggle.items()}
+        else:
+            meta_conf = {
+                toggle_key: {**toggle_val, **{"current_step": user_meta_conf.conf.get(toggle_key, 0)}}
+                for toggle_key, toggle_val in toggle.items()
+            }
+
+        return Response(meta_conf)
+
+    @list_route(methods=["POST"], url_path="update_user_guide")
     def update_user_guide(self, request):
         """
         @api {post} /meta/update_user_guide/ 更新新人指引
@@ -377,12 +393,20 @@ class MetaViewSet(APIViewSet):
             "message": "",
             "code": 0,
             "data": {
-                "username": "admin"
+                "username": "test"
             },
             "result": true
         }
         """
-        pass
+        username = get_request_username()
+        if not username:
+            raise ValidationError(_("username 不能为空"))
+        user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
+        if not user_meta_conf:
+            user_meta_conf = UserMetaConf.objects.create(username=username, type=UserMetaConfType.USER_GUIDE, conf={})
+        user_meta_conf.conf.update(request.data)
+        user_meta_conf.save()
+        return Response({"username": username})
 
 
 class LanguageViewSet(APIViewSet):

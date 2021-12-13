@@ -952,3 +952,11 @@ CMDB_HOST_SEARCH_FIELDS = [
 CMDB_SET_INFO_FIELDS = ["bk_set_id", "bk_chn_name"]
 
 GET_SET_INFO_FILEDS_MAX_IDS_LEN = 500
+
+
+class UserMetaConfType(object):
+    """
+    用户元数据配置类型
+    """
+
+    USER_GUIDE = "user_guide"
