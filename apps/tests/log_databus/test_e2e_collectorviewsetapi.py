@@ -115,6 +115,7 @@ COLLECTORS_LIST = {
                 "deleted_at": None,
                 "deleted_by": None,
                 "custom_type": "log",
+                "custom_name": "容器日志上报",
                 "collector_config_name": "test3333",
                 "bk_app_code": "bk_log_search",
                 "collector_scenario_id": "row",
