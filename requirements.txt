@@ -36,7 +36,7 @@ python-consul==1.1.0
 PyYAML==5.3
 dataclasses==0.7
 typing_extensions==3.7.4.3
-Markdown==3.3.6
+Markdown==3.3
 
 # for原生es
 elasticsearch==7.0.0
