@@ -330,6 +330,60 @@ class MetaViewSet(APIViewSet):
             )
         )
 
+    @list_route(method=["GET"], url_path="user_guide")
+    def get_user_guide(self, request):
+        """
+        @api {get} /meta/user_guide/ 获取新人指引
+        @apiName user_guide
+        @apiGroup 01_Meta
+        @apiSuccess {Int} current_step 当前浏览步骤
+        @apiSuccess {List} step_list 步骤列表
+        @apiSuccess {Str} step_list.title 标题
+        @apiSuccess {Str} step_list.content 内容
+        @apiSuccess {Str} step_list.target 目标节点
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message":"",
+            "code":0,
+            "data":{
+                "default":{
+                    "current_step":1,
+                    "step_list":[
+                        {
+                            "title":"组件库和图标",
+                            "content":"从基础组件、自定义业务组件、图标库中拖拽组件或图标到画布区域进行页面编排组装",
+                            "target":"#bizSelector"
+                        }
+                    ]
+                }
+            },
+            "result":true
+        }
+        """
+        pass
+
+    @list_route(method=["POST"], url_path="update_user_guide")
+    def update_user_guide(self, request):
+        """
+        @api {post} /meta/update_user_guide/ 更新新人指引
+        @apiName update_user_guide
+        @apiGroup 01_Meta
+        @apiParamExample {json} 成功请求
+        {
+            "search":1
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "username": "admin"
+            },
+            "result": true
+        }
+        """
+        pass
+
 
 class LanguageViewSet(APIViewSet):
     serializer_class = serializers.Serializer
