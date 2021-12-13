@@ -1797,7 +1797,11 @@ class CollectorViewSet(ModelViewSet):
 
             "message": "",
             "code": 0,
+
             "data": {
+                "collector_config_id": 1,
+                "index_set_id": 1,
+                "bk_data_id": 12
             },
             "result": true
         }
