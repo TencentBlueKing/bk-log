@@ -1739,7 +1739,7 @@ class CollectorHandler(object):
         etl_handler = EtlHandler(self.data.collector_config_id)
         etl_params = {
             "table_id": self.data.collector_config_name_en,
-            "storage_cluster_id": self.data.storage_cluster_id,
+            "storage_cluster_id": storage_cluster_id,
             "retention": retention,
             "allocation_min_days": allocation_min_days,
             "storage_replies": storage_replies,
