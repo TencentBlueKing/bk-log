@@ -357,10 +357,10 @@ python
     span_processor = BatchSpanProcessor(otlp_exporter)
     tracer_provider = TracerProvider(
         resource=Resource.create(
-            {{{{
+            {{
                 "service.name": "你的服务名称",
                 "bk_data_id": {{{{bk_data_id}}}},
-            }}}}
+            }}
         )
     )
     tracer_provider.add_span_processor(span_processor)

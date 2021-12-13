@@ -686,6 +686,8 @@ class CollectorHandler(object):
         return True
 
     def _itsm_start_judge(self):
+        if self.data.collector_scenario_id == CollectorScenarioEnum.CUSTOM.value:
+            return
         if not self.data.itsm_has_success() and FeatureToggleObject.switch(name=FEATURE_COLLECTOR_ITSM):
             raise CollectNotSuccessNotCanStart
 
