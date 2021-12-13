@@ -23,6 +23,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
 from apps.log_databus.constants import ETL_DELIMITER_IGNORE, ETL_DELIMITER_DELETE, ETL_DELIMITER_END
+from apps.utils.custom_report import render_otlp_report_config
 
 
 class InnerTag(ChoicesEnum):
@@ -305,10 +306,12 @@ class CustomTypeEnum(ChoicesEnum):
     def get_choices_list_dict(cls) -> list:
         import markdown
 
-        return [
-            {"id": key, "name": value, "introduction": markdown.markdown(cls._custom_introductions.value.get(key, ""))}
-            for key, value in cls.get_dict_choices().items()
-        ]
+        render_context = {"otlp_report_config": render_otlp_report_config()}
+        result = []
+        for key, value in cls.get_dict_choices().items():
+            introduction = cls._custom_introductions.value.get(key, "").format(**render_context)
+            result.append({"id": key, "name": value, "introduction": markdown.markdown(introduction)})
+        return result
 
     _choices_labels = (
         (LOG, _("容器日志上报")),
@@ -332,11 +335,46 @@ class CustomTypeEnum(ChoicesEnum):
         ),
         OTLP_TRACE: _(
             """
-        """
+# 注意事项
+
+- sdk内注入的属性类型应该一致，不然会出现入库失败的情况
+
+# 适用方法
+
+不同云区域的自定义上报服务地址
+
+{otlp_report_config}
+
+# SDK配置
+
+python
+
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    otlp_exporter = OTLPSpanExporter(endpoint=otlp_grpc_host)    
+    span_processor = BatchSpanProcessor(otlp_exporter)
+    tracer_provider = TracerProvider(
+        resource=Resource.create(
+            {{{{
+                "service.name": "你的服务名称",
+                "bk_data_id": {{{{bk_data_id}}}},
+            }}}}
+        )
+    )
+    tracer_provider.add_span_processor(span_processor)
+    trace.set_tracer_provider(tracer_provider)
+        """  # noqa
         ),
         OTLP_LOG: _(
             """
-        """
+# 注意事项
+# 适用方法
+不同云区域的自定义上报服务地址
+
+{otlp_report_config}
+"""
         ),
     }
 
