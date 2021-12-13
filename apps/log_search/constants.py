@@ -301,11 +301,44 @@ class CustomTypeEnum(ChoicesEnum):
     OTLP_TRACE = "otlp_trace"
     OTLP_LOG = "otlp_log"
 
+    @classmethod
+    def get_choices_list_dict(cls) -> list:
+        import markdown
+
+        return [
+            {"id": key, "name": value, "introduction": markdown.markdown(cls._custom_introductions.value.get(key, ""))}
+            for key, value in cls.get_dict_choices().items()
+        ]
+
     _choices_labels = (
         (LOG, _("容器日志上报")),
-        (OTLP_LOG, _("otlp日志上报")),
         (OTLP_TRACE, _("otlpTrace上报")),
+        (OTLP_LOG, _("otlp日志上报")),
     )
+
+    """
+    {{}} 为占位符 需要前端动态填充的时候
+    """
+    _custom_introductions = {
+        LOG: _(
+            """
+# 日志自定义上报
+日志自定义上报适用于自行上报的服务或者场景，如下
+
+- 容器日志采集
+- 服务自定义上报
+- 其他
+        """
+        ),
+        OTLP_TRACE: _(
+            """
+        """
+        ),
+        OTLP_LOG: _(
+            """
+        """
+        ),
+    }
 
 
 class CollectorScenarioEnum(ChoicesEnum):
