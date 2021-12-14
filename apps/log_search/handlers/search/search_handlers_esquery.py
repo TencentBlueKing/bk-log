@@ -614,7 +614,7 @@ class SearchHandler(object):
         url = (
             settings.BCS_WEB_CONSOLE_DOMAIN + "backend/web_console/projects/{project_id}/clusters/{cluster_id}/"
             "?container_id={container_id} ".format(
-                project_id=project_id, cluster_id=cluster_id, container_id=container_id
+                project_id=project_id, cluster_id=cluster_id.upper(), container_id=container_id
             )
         )
         return url
