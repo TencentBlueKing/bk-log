@@ -47,6 +47,15 @@ export default {
       myProjectList: state => state.myProjectList,
     }),
   },
+  watch: {
+    '$route.query'(val) {
+      const queryObj = JSON.parse(JSON.stringify(val));
+      if (queryObj.from) {
+        this.$store.commit('updateAsIframe', queryObj.from);
+        this.$store.commit('updateIframeQuery', queryObj);
+      }
+    },
+  },
   methods: {
     async requestMyProjectList() {
       try {
@@ -55,7 +64,6 @@ export default {
         const s1 = [];
         const s2 = [];
         const queryObj = JSON.parse(JSON.stringify(this.$route.query));
-        console.log('queryObj===', queryObj);
         if (queryObj.from) {
           this.$store.commit('updateAsIframe', queryObj.from);
           this.$store.commit('updateIframeQuery', queryObj);
