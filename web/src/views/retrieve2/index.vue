@@ -661,10 +661,12 @@ export default {
 
     // 初始化索引集
     requestIndexSetList() {
+      const projectId = (this.$route.query.projectId && this.isFirstLoad)
+        ? this.$route.query.projectId : this.projectId;
       this.basicLoading = true;
       this.$http.request('retrieve/getIndexSetList', {
         query: {
-          project_id: this.isFirstLoad ? this.$route.query.projectId : this.projectId,
+          project_id: projectId,
         },
       }).then((res) => {
         if (res.data.length) { // 有索引集
