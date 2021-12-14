@@ -189,14 +189,8 @@
       <i :class="`bk-icon icon-angle-double-${isOpenWindow ? 'right' : 'left'}`"></i>
     </div>
     <div :class="`right-window ${isOpenWindow ? 'window-active' : ''}`">
-      <p class="window-top-title">{{$t('customReport.helpDocument')}}</p>
-      <div class="content">
-        <p class="content-title">{{$t('customReport.instructions')}}</p>
-        <div class="content-row" v-for="(item,index) of list" :key="index">
-          <span>{{item.title}}</span>
-          <pre class="content-example">{{item.test}}</pre>
-        </div>
-      </div>
+      <!-- eslint-disable-next-line vue/no-v-html -->
+      <div v-html="customTypeIntro"></div>
     </div>
 
     <div class="submit-btn">
@@ -216,6 +210,8 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   name: 'custom-report-create',
   data() {
@@ -227,11 +223,6 @@ export default {
       hotDataDaysList: [],
       isOpenWindow: false,
       dataType: 'log',
-      dataTypeList: [
-        { id: 'log', name: '日志' },
-        { id: 'trace', name: 'trace' },
-        { id: 'otLog', name: 'ot日志' },
-      ],
       formData: {
         name: 'test',
         scope: '',
@@ -239,27 +230,20 @@ export default {
         storage_replies: '',
         allocation_min_days: '',
       },
-      list: [
-        {
-          title: '不同云区域Proxy信息',
-          test: `云区域 0 0.0.0.0
-云区域 1 1.1.1.1 
-云区域 2 2.2.2.2`,
-        },
-        {
-          title: '不同云区域Proxy信息',
-          test: `云区域 0 0.0.0.0
-云区域 1 1.1.1.1 
-云区域 2 2.2.2.2`,
-        },
-        {
-          title: '不同云区域Proxy信息',
-          test: `云区域 0 0.0.0.0
-云区域 1 1.1.1.1 
-云区域 2 2.2.2.2`,
-        },
-      ],
     };
+  },
+  computed: {
+    ...mapGetters({
+      globalsData: 'globals/globalsData',
+    }),
+    dataTypeList() {
+      const { databus_custom: databusCustom } = this.globalsData;
+      return databusCustom || [];
+    },
+    customTypeIntro() {
+      const curType = this.dataTypeList.find(type => type.id === this.dataType);
+      return curType ? curType.introduction : '';
+    },
   },
   methods: {
     enterCustomDay() {},
@@ -275,6 +259,8 @@ export default {
 <style lang="scss">
 @import "../../../../scss/mixins/clearfix";
 @import "../../../../scss/mixins/flex";
+@import '../../../../scss/mixins/scroller';
+
 .custom-create-container {
   padding:0 24px;
   .create-form {
@@ -337,29 +323,36 @@ export default {
     z-index: 99;
     color: #63656e;
     transition:right .5s;
+    padding: 16px 24px 0;
     &.window-active{
       right: 0;
     }
-    .window-top-title{
-      font-size: 12px;
-      padding: 14px 16px 0;
-    }
-    .content{
-      padding: 22px 20px 0;
+    h1 {
       font-size: 12px;
       font-weight: 700;
-      .content-title{
-        margin-bottom: 8px;
+      margin: 26px 0 10px;
+      &:first-child {
+        margin-top: 0;
       }
-      .content-row{
-        font-weight: 500;
-        .content-example{
-          margin-top: 6px;
-          padding: 10px 14px;
-          background: #f4f4f7;
-          overflow-x: auto;
-        }
+    }
+    ul {
+      margin-left: 10px;
+      li {
+        margin-top: 8px;
+        list-style: inside;
+        font-size: 12px;
       }
+    }
+    p {
+      font-size: 12px;
+    }
+    pre {
+      margin: 0;
+      margin-top: 6px;
+      padding: 10px 14px;
+      background: #f4f4f7;
+      overflow-x: auto;
+      @include scroller;
     }
   }
   .submit-btn {
