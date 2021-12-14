@@ -144,7 +144,6 @@ export default {
     asIframe: {
       immediate: true,
       handler(val) {
-        console.log('ischange', val, !val);
         this.isAsIframe = val;
       },
     },

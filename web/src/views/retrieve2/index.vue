@@ -502,8 +502,7 @@ export default {
       val && this.requestSearchHistory(val);
     },
     projectId: {
-      handler(val) {
-        console.log('watcher projectId ===', val);
+      handler() {
         this.indexId = '';
         this.requestFavoriteList();
         this.indexSetList.splice(0);
@@ -567,7 +566,6 @@ export default {
     },
   },
   created() {
-    console.log('router projecyId ===', this.$route.query.projectId);
     this.$http.request('meta/footer').then((res) => {
       this.footerHtml = res.data;
     })
