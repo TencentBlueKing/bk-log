@@ -463,6 +463,7 @@ export default {
       },
       isAsIframe: false,
       localIframeQuery: {},
+      isFirstLoad: true,
     };
   },
   computed: {
@@ -663,7 +664,7 @@ export default {
       this.basicLoading = true;
       this.$http.request('retrieve/getIndexSetList', {
         query: {
-          project_id: this.projectId,
+          project_id: this.isFirstLoad ? this.$route.query.projectId : this.projectId,
         },
       }).then((res) => {
         if (res.data.length) { // 有索引集
@@ -774,6 +775,7 @@ export default {
         })
         .finally(() => {
           this.basicLoading = false;
+          this.isFirstLoad = false;
         });
     },
     // 获取检索历史
