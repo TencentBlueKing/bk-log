@@ -200,14 +200,19 @@ class MetaHandler(APIModel):
 
     @classmethod
     def get_user_guide(cls, username):
-        toggle = FeatureToggleObject.toggle(USER_GUIDE_CONFIG).feature_config
+        toggle = FeatureToggleObject.toggle(USER_GUIDE_CONFIG)
+        if not toggle:
+            return {}
+        feature_config = toggle.feature_config
         user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
         if not user_meta_conf:
-            meta_conf = {toggle_key: {**toggle_val, **{"current_step": 0}} for toggle_key, toggle_val in toggle.items()}
+            meta_conf = {
+                toggle_key: {**toggle_val, **{"current_step": 0}} for toggle_key, toggle_val in feature_config.items()
+            }
         else:
             meta_conf = {
                 toggle_key: {**toggle_val, **{"current_step": user_meta_conf.conf.get(toggle_key, 0)}}
-                for toggle_key, toggle_val in toggle.items()
+                for toggle_key, toggle_val in feature_config.items()
             }
         return meta_conf
 
