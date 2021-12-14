@@ -173,6 +173,7 @@ export default {
      * @param  {String} projectId - 当前项目id
      */
     projectChange(projectId = '') {
+      console.log('projectChange===', projectId);
       this.$store.commit('updateProject', projectId);
       if (projectId) {
         const project = this.myProjectList.find(item => item.project_id === projectId);
@@ -281,7 +282,7 @@ export default {
       } catch (e) {
         console.warn(e);
       } finally {
-        if (this.$route.name !== 'retrieve') {
+        if (this.$route.name !== 'retrieve' && !this.isFirstLoad) {
           // 所有页面的子路由在切换业务的时候都统一返回到父级页面
           const { name, meta, params, query } = this.$route;
           const RoutingHop = meta.needBack && !this.isFirstLoad ? meta.backName : name ? name : 'retrieve';
@@ -295,7 +296,6 @@ export default {
           }
           if (params.indexId) delete params.indexId;
           this.$store.commit('setPageLoading', true);
-          console.log('setRouter params===', params);
           this.$router.push({
             name: RoutingHop,
             params: {

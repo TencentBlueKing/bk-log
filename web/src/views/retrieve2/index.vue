@@ -502,7 +502,7 @@ export default {
     },
     projectId: {
       handler(val) {
-        console.log('watch projectId change === ', val);
+        console.log('watcher projectId ===', val);
         this.indexId = '';
         this.requestFavoriteList();
         this.indexSetList.splice(0);
@@ -566,6 +566,7 @@ export default {
     },
   },
   created() {
+    console.log('router projecyId ===', this.$route.query.projectId);
     this.$http.request('meta/footer').then((res) => {
       this.footerHtml = res.data;
     })
@@ -711,7 +712,6 @@ export default {
           if (indexId) { // 1、初始进入页面带ID；2、检索ID时切换业务；
             const indexItem = indexSetList.find(item => item.index_set_id === indexId);
             this.indexId = indexItem ? indexItem.index_set_id : indexSetList[0].index_set_id;
-            console.log('初始进入页面带ID', this.indexId);
             this.retrieveLog();
           } else if (!this.isRetrieveHome) { // 无索引集时也在详情页，切换业务新的业务有索引集
             this.indexId = indexSetList[0].index_set_id;
@@ -1099,7 +1099,6 @@ export default {
       if (this.$route.query.from) {
         queryObj.from = this.$route.query.from;
       }
-      console.log('retrieve-router-change ====', this.indexId);
       this.$router.push({
         name: 'retrieve',
         params: {
