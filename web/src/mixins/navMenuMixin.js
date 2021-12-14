@@ -131,11 +131,13 @@ export default {
           if (projectId || bizId) {
             const matchProject = projectList.find(item => item.project_id === projectId || item.bk_biz_id === bizId);
             this.checkProjectChange(matchProject ? matchProject.project_id : firstRealProjectId);
+            console.log('找到id');
           } else {
             const storageProjectId = window.localStorage.getItem('project_id');
             const hasProject = storageProjectId
               ? projectList.some(item => item.project_id === storageProjectId) : false;
             this.checkProjectChange(hasProject ? storageProjectId : firstRealProjectId);
+            console.log('找不到id');
           }
         }
       } catch (e) {
