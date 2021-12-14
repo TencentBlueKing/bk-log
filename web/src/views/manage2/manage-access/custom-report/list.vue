@@ -27,15 +27,16 @@
         <bk-button
           class="fl"
           theme="primary"
-          @click="operateHandler({}, 'add')">
+          @click="operateHandler({}, 'add')"
+          :disabled="isRequest">
           {{ $t('customReport.reportCreate') }}
         </bk-button>
         <div class="collect-search fr">
           <bk-input
+            clearable
+            v-model="inputKeyWords"
             :placeholder="$t('')"
-            :clearable="true"
             :right-icon="'bk-icon icon-search'"
-            v-model="input"
             @enter="inputEnter">
           </bk-input>
         </div>
@@ -43,20 +44,72 @@
       <div class="table-operation">
         <bk-table
           class="custom-table"
-          :data="data"
+          v-bkloading="{ isLoading: isRequest }"
+          :data="collectList"
           :pagination="pagination"
           @page-change="handlePageChange">
-          <bk-table-column :label="$t('customReport.dataID')" prop="ip"></bk-table-column>
-          <bk-table-column :label="$t('customReport.name')" prop="source"></bk-table-column>
-          <bk-table-column :label="$t('customReport.monitoring')" prop="status"></bk-table-column>
-          <bk-table-column :label="$t('customReport.typeOfData')" prop="create_time"></bk-table-column>
-          <bk-table-column :label="$t('customReport.createRecord')" prop="create_time"></bk-table-column>
-          <bk-table-column :label="$t('customReport.updateRecord')" prop="create_time" width="239"></bk-table-column>
+          <bk-table-column :label="$t('customReport.dataID')" prop="collector_config_id">
+            <template slot-scope="props">
+              <span>
+                {{ props.row.collector_config_id || '--' }}
+              </span>
+            </template>
+          </bk-table-column>
+          <bk-table-column :label="$t('customReport.name')" prop="collector_config_name">
+            <template slot-scope="props">
+              <span>
+                {{ props.row.collector_config_name || '--' }}
+              </span>
+            </template>
+          </bk-table-column>
+          <bk-table-column :label="$t('customReport.monitoring')" prop="category_name">
+            <template slot-scope="props">
+              <span>
+                {{ props.row.category_name || '--' }}
+              </span>
+            </template>
+          </bk-table-column>
+          <bk-table-column :label="$t('customReport.typeOfData')" prop="custom_name">
+            <template slot-scope="props">
+              <span>
+                {{ props.row.custom_name || '--' }}
+              </span>
+            </template>
+          </bk-table-column>
+          <bk-table-column :label="$t('customReport.createRecord')" prop="created_at">
+            <template slot-scope="props">
+              <span>
+                {{ props.row.created_at || '--' }}
+              </span>
+            </template>
+          </bk-table-column>
+          <bk-table-column :label="$t('customReport.updateRecord')" prop="updated_at" width="239">
+            <template slot-scope="props">
+              <span>
+                {{ props.row.updated_at || '--' }}
+              </span>
+            </template>
+          </bk-table-column>
           <bk-table-column :label="$t('customReport.operation')" width="202" class-name="operate-column">
-            <div class="collect-table-operate" slot-scope="">
-              <bk-button class="king-button" theme="primary" text>{{ $t('nav.retrieve') }}</bk-button>
-              <bk-button class="king-button" theme="primary" text>{{ $t('编辑') }}</bk-button>
-              <bk-button class="king-button" theme="primary" text>{{ $t('logClean.goToClean') }}</bk-button>
+            <div class="collect-table-operate" slot-scope="props">
+              <bk-button
+                class="king-button"
+                theme="primary"
+                text
+                @click="operateHandler({}, 'search')">
+                {{ $t('nav.retrieve') }}</bk-button>
+              <bk-button
+                class="king-button"
+                theme="primary"
+                text
+                @click="operateHandler({}, 'edit')">
+                {{ $t('编辑') }}</bk-button>
+              <bk-button
+                class="king-button"
+                theme="primary"
+                text
+                @click="operateHandler({}, 'clean')">
+                {{ $t('logClean.goToClean') }}</bk-button>
               <bk-dropdown-menu ref="dropdown" align="right">
                 <i
                   class="bk-icon icon-more"
@@ -65,10 +118,56 @@
                 </i>
                 <ul class="bk-dropdown-list" slot="dropdown-content">
                   <!-- 查看详情 -->
-                  <li><a href="javascript:;">{{ $t('详情') }}</a></li>
-                  <!-- <li><a href="javascript:;" class="text-disabled">{{$t('btn.block')}}</a></li> -->
-                  <li><a href="javascript:;" class="text-disabled">{{$t('btn.start')}}</a></li>
-                  <li><a href="javascript:;">{{$t('btn.delete')}}</a></li>
+                  <li>
+                    <a
+                      href="javascript:;"
+                      @click="operateHandler(props.row, 'view')">
+                      {{ $t('详情') }}
+                    </a>
+                  </li>
+                  <li v-if="props.row.is_active">
+                    <a
+                      href="javascript:;"
+                      class="text-disabled"
+                      v-if="!props.row.status ||
+                        props.row.status === 'running' ||
+                        props.row.status === 'prepare' ||
+                        !collectProject">
+                      {{$t('btn.block')}}
+                    </a>
+                    <a
+                      href="javascript:;"
+                      v-else
+                      v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                      @click.stop="operateHandler(props.row, 'stop')">
+                      {{$t('btn.block')}}
+                    </a>
+                  </li>
+                  <li v-else>
+                    <a
+                      href="javascript:;"
+                      class="text-disabled"
+                      v-if="!props.row.status ||
+                        props.row.status === 'running' ||
+                        props.row.status === 'prepare' ||
+                        !collectProject">
+                      {{$t('btn.start')}}
+                    </a>
+                    <a
+                      href="javascript:;"
+                      v-else
+                      v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                      @click.stop="operateHandler(props.row, 'start')">
+                      {{$t('btn.start')}}
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="javascript:;"
+                      @click="operateHandler(props.row, 'view')">
+                      {{$t('btn.delete')}}
+                    </a>
+                  </li>
                 </ul>
               </bk-dropdown-menu>
             </div>
@@ -80,31 +179,14 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 export default {
   name: 'custom-report-list',
   data() {
     return {
-      input: '',
-      data: [
-        {
-          ip: '1',
-          source: '2',
-          status: '3',
-          create_time: '4',
-        },
-        {
-          ip: '1',
-          source: '2',
-          status: '3',
-          create_time: '4',
-        },
-        {
-          ip: '1',
-          source: '2',
-          status: '3',
-          create_time: '4',
-        },
-      ],
+      inputKeyWords: '',
+      collectList: [],
+      isRequest: false,
       pagination: {
         current: 1,
         count: 100,
@@ -112,7 +194,37 @@ export default {
       },
     };
   },
+  computed: {
+    ...mapGetters({
+      projectId: 'projectId',
+      bkBizId: 'bkBizId',
+    }),
+  },
+  mounted() {
+    this.requestData();
+  },
   methods: {
+    requestData() {
+      this.isRequest = true;
+      this.$http.request('collect/getCollectList', {
+        query: {
+          bk_biz_id: this.bkBizId,
+          keyword: this.inputKeyWords,
+          page: this.pagination.current,
+          pagesize: this.pagination.limit,
+          collector_scenario_id: 'custom',
+        },
+      }).then((res) => {
+        const { data } = res;
+        if (data && data.list) {
+          this.collectList.splice(0, this.collectList.length, ...data.list);
+          this.pagination.count = data.total;
+        }
+      })
+        .finally(() => {
+          this.isRequest = false;
+        });
+    },
     inputEnter() {},
     operateHandler(row, operateType) {
       const params = {};
