@@ -92,8 +92,13 @@ class QueryIndexOptimizer(object):
         now: datetime = arrow.now(time_zone).naive
         if parse(date_end) > now:
             date_end: str = now.strftime("%Y%m%d%H%M%S")
-        date_day_list: List[Any] = list(rrule(DAILY, interval=1, dtstart=parse(date_start), until=parse(date_end)))
-        date_month_list: List[Any] = list(rrule(DAILY, interval=14, dtstart=parse(date_start), until=parse(date_end)))
+
+        start, end = parse(date_start), parse(date_end)
+        date_day_list: List[Any] = list(rrule(DAILY, interval=1, dtstart=start, until=end))
+        date_day_list.append(end)
+
+        date_month_list: List[Any] = list(rrule(DAILY, interval=14, dtstart=start, until=end))
+        date_month_list.append(end)
 
         filter_list: type_index_set_list = self._generate_filter_list(
             index, date_day_list, date_month_list, date_end, now
