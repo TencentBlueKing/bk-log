@@ -124,6 +124,7 @@ ASYNC_EXPORT_FILE_EXPIRED_DAYS = 2
 ASYNC_EXPORT_EXPIRED = 86400
 HAVE_DATA_ID = "have_data_id"
 BKDATA_OPEN = "bkdata"
+NOT_CUSTOM = "not_custom"
 
 FIND_MODULE_WITH_RELATION_FIELDS = ["bk_module_id", "bk_module_name", "service_template_id"]
 
