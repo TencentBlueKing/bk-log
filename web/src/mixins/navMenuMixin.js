@@ -55,7 +55,7 @@ export default {
         const s1 = [];
         const s2 = [];
         const queryObj = JSON.parse(JSON.stringify(this.$route.query));
-
+        console.log('queryObj===', queryObj);
         if (queryObj.from) {
           this.$store.commit('updateAsIframe', queryObj.from);
           this.$store.commit('updateIframeQuery', queryObj);
@@ -285,6 +285,7 @@ export default {
           }
           if (params.indexId) delete params.indexId;
           this.$store.commit('setPageLoading', true);
+          console.log('setRouter params===', params);
           this.$router.push({
             name: RoutingHop,
             params: {
