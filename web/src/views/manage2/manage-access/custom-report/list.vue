@@ -35,7 +35,7 @@
           <bk-input
             clearable
             v-model="inputKeyWords"
-            :placeholder="$t('')"
+            :placeholder="$t('dataManage.Search_index_name')"
             :right-icon="'bk-icon icon-search'"
             @enter="search">
           </bk-input>
@@ -51,7 +51,7 @@
           :limit-list="pagination.limitList"
           @page-change="handlePageChange"
           @page-limit-change="handleLimitChange">
-          <bk-table-column :label="$t('customReport.dataID')" prop="collector_config_id">
+          <bk-table-column :label="$t('customReport.dataID')" prop="collector_config_id" width="100">
             <template slot-scope="props">
               <span>
                 {{ props.row.bk_data_id || '--' }}
@@ -99,18 +99,23 @@
                 class="king-button"
                 theme="primary"
                 text
+                :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
+                v-cursor="{ active: !(props.row.permission && props.row.permission.search_log) }"
                 @click="operateHandler(props.row, 'search')">
                 {{ $t('nav.retrieve') }}</bk-button>
               <bk-button
                 class="king-button"
                 theme="primary"
                 text
+                v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
                 @click="operateHandler(props.row, 'edit')">
                 {{ $t('编辑') }}</bk-button>
               <bk-button
                 class="king-button"
                 theme="primary"
                 text
+                :disabled="!props.row.table_id"
+                v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
                 @click="operateHandler(props.row, 'clean')">
                 {{ $t('logClean.goToClean') }}</bk-button>
               <bk-dropdown-menu ref="dropdown" align="right">
@@ -124,6 +129,7 @@
                   <li>
                     <a
                       href="javascript:;"
+                      v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
                       @click="operateHandler(props.row, 'view')">
                       {{ $t('详情') }}
                     </a>
@@ -161,6 +167,14 @@
                   <li>
                     <a
                       href="javascript:;"
+                      class="text-disabled"
+                      v-if="!collectProject">
+                      {{$t('btn.delete')}}
+                    </a>
+                    <a
+                      href="javascript:;"
+                      v-else
+                      v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
                       @click="deleteCollect(props.row)">
                       {{$t('btn.delete')}}
                     </a>
@@ -240,7 +254,7 @@ export default {
       const query = {};
       const routeMap = {
         add: 'custom-report-create',
-        edit: 'custom-report-create',
+        edit: 'custom-report-edit',
         search: 'retrieve',
         clean: 'clean-edit',
       };

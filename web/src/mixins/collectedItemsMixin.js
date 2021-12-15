@@ -92,7 +92,7 @@ export default {
     handlePageChange(page) {
       if (this.pagination.current !== page) {
         this.pagination.current = page;
-        if (this.$route === 'collection-item') {
+        if (this.$route.name === 'collection-item') {
           this.stopStatusPolling();
         }
         this.requestData();

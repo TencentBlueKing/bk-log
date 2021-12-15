@@ -506,7 +506,7 @@ const routes = [
             component: CustomReportCreate,
           },
           {
-            path: 'edit/:reportId',
+            path: 'edit/:collectorId',
             name: 'custom-report-edit', // 日志接入 - 自定义上报编辑
             meta: {
               needBack: true,
@@ -515,7 +515,7 @@ const routes = [
             component: CustomReportCreate,
           },
           {
-            path: 'detail/:reportId',
+            path: 'detail/:collectorId',
             name: 'custom-report-detail', // 日志接入 - 自定义上报详情
             meta: {
               needBack: true,
