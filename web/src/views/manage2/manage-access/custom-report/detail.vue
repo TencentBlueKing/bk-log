@@ -87,28 +87,27 @@ export default {
     async initPage() {
       // 进入路由需要先判断权限
       try {
-        // TODO
-        // const paramData = {
-        //   action_ids: ['manage_collection'],
-        //   resources: [{
-        //     type: 'collection',
-        //     id: this.$route.params.collectorId,
-        //   }],
-        // };
-        // const res = await this.$store.dispatch('checkAndGetData', paramData);
-        // if (res.isAllowed === false) {
-        //   this.authPageInfo = res.data;
-        //   // 显示无权限页面
-        // } else {
-        //   // 正常显示页面
-        //   const { data: reportDetail } = await this.$http.request('collect/details', {
-        //     params: {
-        //       collector_config_id: this.$route.params.collectorId,
-        //     },
-        //   });
-        //   this.reportDetail = reportDetail;
-        //   this.$store.commit('collect/setCurCollect', reportDetail);
-        // }
+        const paramData = {
+          action_ids: ['manage_collection'],
+          resources: [{
+            type: 'collection',
+            id: this.$route.params.collectorId,
+          }],
+        };
+        const res = await this.$store.dispatch('checkAndGetData', paramData);
+        if (res.isAllowed === false) {
+          this.authPageInfo = res.data;
+          // 显示无权限页面
+        } else {
+          // 正常显示页面
+          const { data: reportDetail } = await this.$http.request('collect/details', {
+            params: {
+              collector_config_id: this.$route.params.collectorId,
+            },
+          });
+          this.reportDetail = reportDetail;
+          this.$store.commit('collect/setCurCollect', reportDetail);
+        }
       } catch (err) {
         console.warn(err);
       } finally {
