@@ -27,7 +27,7 @@ from rest_framework.response import Response
 
 from apps.exceptions import ValidationError
 from apps.log_databus.constants import EtlConfig
-from apps.log_search.constants import HAVE_DATA_ID, BKDATA_OPEN
+from apps.log_search.constants import HAVE_DATA_ID, BKDATA_OPEN, NOT_CUSTOM, CollectorScenarioEnum
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.generic import ModelViewSet
@@ -118,6 +118,8 @@ class CollectorViewSet(ModelViewSet):
             qs = qs.filter(bk_data_id__isnull=False)
         if self.request.query_params.get(BKDATA_OPEN) and settings.FEATURE_TOGGLE["scenario_bkdata"] == "off":
             qs = qs.filter(Q(etl_config=EtlConfig.BK_LOG_TEXT) | Q(etl_config__isnull=True))
+        if self.request.query_params.get(NOT_CUSTOM):
+            qs = qs.exclude(collector_scenario_id=CollectorScenarioEnum.CUSTOM.value)
         return qs.all()
 
     def get_serializer_class(self, *args, **kwargs):
