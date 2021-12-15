@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="custom-create-container">
+  <div class="custom-create-container" v-bkloading="{ isLoading: containerLoading }">
     <bk-form :label-width="103" :model="formData" ref="validateForm">
       <div class="create-form">
         <div class="form-title">{{$t('基础信息')}}</div>
@@ -154,10 +154,7 @@
                 <span class="apply-text" @click="applySearchAccess(item)">{{$t('申请权限')}}</span>
               </div>
               <div v-else class="option-slot-container">
-                <span v-bk-tooltips="{
-                  content: $t('容量评估需要使用独立的ES集群'),
-                  placement: 'right',
-                }">{{ item.storage_cluster_name }}</span>
+                <span>{{ item.storage_cluster_name }}</span>
               </div>
             </bk-option>
           </bk-select>
@@ -301,7 +298,8 @@ export default {
       storageList: [], // 存储集群
       selectedStorageCluster: {}, // 选择的es集群
       isOpenWindow: false, // 是否展开使用列表
-      isSubmit: false,
+      isSubmit: false, // 是否提交
+      containerLoading: false, // 全局loading
       formData: {
         dataID: 1,
         collector_config_name: '',
@@ -404,8 +402,12 @@ export default {
   watch: {
   },
   mounted() {
-    this.getLinkData();
-    this.getStorage();
+    // this.getLinkData();
+    // this.getStorage();
+    this.containerLoading = true;
+    Promise.all([this.getLinkData(), this.getStorage()]).then(() => {
+      this.containerLoading = false;
+    });
   },
   methods: {
     handleChangeType(id) {

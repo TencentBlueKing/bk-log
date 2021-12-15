@@ -253,7 +253,7 @@ export default {
         params.collectorId = row.collector_config_id;
       }
       if (operateType === 'edit') {
-        params.collector_config_id = row.collector_config_id;
+        params.collectorId = row.collector_config_id;
       }
 
       const targetRoute = routeMap[operateType];
@@ -277,6 +277,7 @@ export default {
         if (res.result) {
           row.is_active = !row.is_active;
           res.result && this.messageSuccess(this.$t('修改成功'));
+          this.requestData();
         }
       })
         .catch(() => {
