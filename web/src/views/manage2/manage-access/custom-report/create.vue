@@ -395,7 +395,7 @@ export default {
       return databusCustom || [];
     },
     customTypeIntro() {
-      const curType = this.dataTypeList.find(type => type.id === this.dataType);
+      const curType = this.dataTypeList.find(type => type.id === this.formData.custom_type);
       return curType ? curType.introduction : '';
     },
   },
