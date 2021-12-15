@@ -74,7 +74,6 @@
             :placeholder="$t('dataSource.en_name_tips')"></bk-input>
         </bk-form-item>
         <!-- 数据分类 -->
-        <!-- :rules="rules.category_id" -->
         <bk-form-item
           required
           :label="$t('customReport.dataClassification')"
@@ -146,7 +145,6 @@
               class="custom-no-padding-option"
               :id="item.storage_cluster_id"
               :name="item.storage_cluster_name"
-              :disabled="isItsm && curCollect.can_use_independent_es_cluster && item.registered_system === '_default'"
               :key="index">
               <div
                 v-if="!(item.permission && item.permission.manage_es_source)"
@@ -159,9 +157,6 @@
                 <span v-bk-tooltips="{
                   content: $t('容量评估需要使用独立的ES集群'),
                   placement: 'right',
-                  disabled: !(isItsm &&
-                    curCollect.can_use_independent_es_cluster &&
-                    item.registered_system === '_default')
                 }">{{ item.storage_cluster_name }}</span>
               </div>
             </bk-option>
@@ -306,8 +301,6 @@ export default {
       storageList: [], // 存储集群
       selectedStorageCluster: {}, // 选择的es集群
       isOpenWindow: false, // 是否展开使用列表
-      isBaseRulesValidate: false,
-      isStorageRulesValidate: false,
       isSubmit: false,
       formData: {
         dataID: 1,

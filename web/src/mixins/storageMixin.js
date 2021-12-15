@@ -96,7 +96,7 @@ export default {
               this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
             }
           }
-          if (this.$route.name === 'collectEdit') {
+          if (this.$route.name !== 'custom-report-create') {
             this.getCleanStash();
           }
         }
