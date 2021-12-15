@@ -25,4 +25,12 @@ const createCustom = {
   method: 'post',
 };
 
-export { createCustom };
+const setCustom = {
+  url: '/databus/collectors/:collector_config_id/custom_update/',
+  method: 'post',
+};
+
+export {
+  createCustom,
+  setCustom,
+};

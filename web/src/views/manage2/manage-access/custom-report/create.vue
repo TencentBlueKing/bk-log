@@ -26,8 +26,8 @@
       <div class="create-form">
         <div class="form-title">{{$t('基础信息')}}</div>
         <!-- 数据ID -->
-        <bk-form-item required :label="$t('customReport.dataID')" :property="'dataID'">
-          <bk-input class="form-input" disabled v-model="formData.dataID"></bk-input>
+        <bk-form-item required :label="$t('customReport.dataID')" :property="'bk_data_id'" v-if="isEdit">
+          <bk-input class="form-input" disabled v-model="formData.bk_data_id"></bk-input>
         </bk-form-item>
         <!-- <bk-form-item :label="$t('customReport.token')" required :property="'name'">
           <bk-input class="form-input" :disabled="true" v-model="formData.name"></bk-input>
@@ -35,7 +35,7 @@
         <!-- 数据名称 -->
         <bk-form-item
           required
-          :disabled="isSubmit"
+          :disabled="submitLoading"
           :label="$t('customReport.dataName')"
           :property="'collector_config_name'"
           :rules="baseRules.collector_config_name">
@@ -70,7 +70,7 @@
             show-word-limit
             maxlength="50"
             v-model="formData.collector_config_name_en"
-            :disabled="isSubmit"
+            :disabled="submitLoading || isEdit"
             :placeholder="$t('dataSource.en_name_tips')"></bk-input>
         </bk-form-item>
         <!-- 数据分类 -->
@@ -82,7 +82,7 @@
           <bk-select
             style="width: 320px;"
             v-model="formData.category_id"
-            :disabled="isSubmit">
+            :disabled="submitLoading">
             <template v-for="(item, index) in globalsData.category">
               <bk-option-group :id="item.id" :name="item.name" :key="index">
                 <bk-option
@@ -100,7 +100,7 @@
             class="form-input"
             type="textarea"
             v-model="formData.description"
-            :disabled="isSubmit"
+            :disabled="submitLoading"
             :placeholder="$t('customReport.notEntered')"
             :maxlength="100"></bk-input>
         </bk-form-item>
@@ -118,7 +118,7 @@
             style="width: 320px;"
             v-model="formData.data_link_id"
             :clearable="false"
-            :disabled="isSubmit">
+            :disabled="submitLoading || isEdit">
             <bk-option
               v-for="item in linkConfigurationList"
               :key="item.data_link_id"
@@ -138,7 +138,7 @@
             data-test-id="storageBox_select_storageCluster"
             v-model="formData.storage_cluster_id"
             :clearable="false"
-            :disabled="isSubmit"
+            :disabled="submitLoading || isEdit"
             @selected="handleSelectStorageCluster">
             <bk-option
               v-for="(item, index) in storageList"
@@ -189,7 +189,7 @@
             style="width: 320px;"
             v-model="formData.retention"
             :clearable="false"
-            :disabled="isSubmit">
+            :disabled="submitLoading">
             <div slot="trigger" class="bk-select-name">
               {{ formData.retention + $t('天') }}
             </div>
@@ -219,7 +219,7 @@
             :precision="0"
             :clearable="false"
             :show-controls="true"
-            :disabled="isSubmit"
+            :disabled="submitLoading"
             @blur="changeCopyNumber"
           ></bk-input>
         </bk-form-item>
@@ -230,7 +230,7 @@
             data-test-id="storageBox_select_selectHotData"
             v-model="formData.allocation_min_days"
             :clearable="false"
-            :disabled="!selectedStorageCluster.enable_hot_warm || isSubmit">
+            :disabled="!selectedStorageCluster.enable_hot_warm || submitLoading">
             <template v-for="(option, index) in hotDataDaysList">
               <bk-option :key="index" :id="option.id" :name="option.name"></bk-option>
             </template>
@@ -267,7 +267,7 @@
       <bk-button
         class="fl"
         theme="primary"
-        :loading="isSubmit"
+        :loading="submitLoading"
         @click="handleSubmitChange">
         {{$t('提交')}}
       </bk-button>
@@ -300,14 +300,17 @@ export default {
       isOpenWindow: false, // 是否展开使用列表
       isSubmit: false, // 是否提交
       containerLoading: false, // 全局loading
+      isEdit: false, // 是否是编辑
+      submitLoading: false,
+      collectorId: null,
       formData: {
-        dataID: 1,
+        bk_data_id: '',
         collector_config_name: '',
         collector_config_name_en: '',
         custom_type: 'log',
         data_link_id: '',
         storage_cluster_id: '',
-        retention: 7,
+        retention: '',
         allocation_min_days: '0',
         storage_replies: 0,
         category_id: '',
@@ -398,14 +401,15 @@ export default {
       const curType = this.dataTypeList.find(type => type.id === this.formData.custom_type);
       return curType ? curType.introduction : '';
     },
-  },
-  watch: {
+    defaultRetention() {
+      const { storage_duration_time } = this.globalsData;
+      // eslint-disable-next-line camelcase
+      return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
+    },
   },
   mounted() {
-    // this.getLinkData();
-    // this.getStorage();
     this.containerLoading = true;
-    Promise.all([this.getLinkData(), this.getStorage()]).then(() => {
+    Promise.all([this.getLinkData(), this.getStorage(), this.initFormData()]).then(() => {
       this.containerLoading = false;
     });
   },
@@ -415,8 +419,11 @@ export default {
     },
     handleSubmitChange() {
       this.$refs.validateForm.validate().then(() => {
-        this.isSubmit = true;
-        this.$http.request('custom/createCustom', {
+        this.submitLoading = true;
+        this.$http.request(`custom/${this.isEdit ? 'setCustom' : 'createCustom'}`, {
+          params: {
+            collector_config_id: this.collectorId,
+          },
           data: {
             ...this.formData,
             storage_replies: Number(this.formData.storage_replies),
@@ -425,11 +432,12 @@ export default {
           },
         })
           .then((res) => {
-            const { result } = res;
-            result && this.messageSuccess(this.$t('保存成功'));
+            res.result && this.messageSuccess(this.$t('保存成功'));
+            this.isSubmit = true;
+            this.cancel();
           })
           .finally(() => {
-            this.isSubmit = false;
+            this.submitLoading = false;
           });
       }, () => {});
     },
@@ -449,9 +457,65 @@ export default {
         this.tableLoading = false;
       }
     },
+    async initFormData() {
+      const { params: { collectorId }, name } = this.$route;
+      if (collectorId && name === 'custom-report-edit') {
+        this.isEdit = true;
+        this.collectorId = collectorId;
+        const res = await this.$http.request('collect/details', {
+          params: {
+            collector_config_id: collectorId,
+          },
+        });
+        const {
+          collector_config_name,
+          collector_config_name_en,
+          custom_type,
+          data_link_id,
+          storage_cluster_id,
+          retention,
+          allocation_min_days,
+          storage_replies,
+          category_id,
+          description,
+          bk_data_id,
+        } = res.data;
+        Object.assign(this.formData, {
+          collector_config_name,
+          collector_config_name_en,
+          custom_type,
+          data_link_id,
+          storage_cluster_id,
+          retention: retention ? `${retention}` : this.defaultRetention,
+          allocation_min_days,
+          storage_replies,
+          category_id,
+          description,
+          bk_data_id,
+        });
+      } else {
+        const { retention } =  this.formData;
+        Object.assign(this.formData, {
+          retention: retention ? `${retention}` : this.defaultRetention,
+        });
+      }
+    },
     cancel() {
       this.$router.back(-1);
     },
+  },
+  // eslint-disable-next-line no-unused-vars
+  beforeRouteLeave(to, from, next) {
+    if (!this.isSubmit) {
+      this.$bkInfo({
+        title: this.$t('pageLeaveTips'),
+        confirmFn: () => {
+          next();
+        },
+      });
+      return;
+    }
+    next();
   },
 };
 </script>
