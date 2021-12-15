@@ -33,7 +33,7 @@
       </bk-button>
       <bk-input
         v-model="params.keyword"
-        style="width: 360px;"
+        style="width: 360px;float:right;"
         right-icon="bk-icon icon-search"
         data-test-id="esAccessBox_input_search"
         :placeholder="$t('搜索ES源名称，地址，创建人')"
@@ -435,9 +435,6 @@ export default {
      padding: 20px 24px;
 
     .main-operator-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       margin-bottom: 20px;
     }
 
