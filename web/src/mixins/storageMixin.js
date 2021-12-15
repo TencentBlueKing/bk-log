@@ -23,38 +23,41 @@
 
 export default {
   watch: {
-    'formData.storage_cluster_id'(val) {
-      this.storageList.forEach((res) => {
-        const arr = [];
-        if (res.storage_cluster_id === val) {
-          this.selectedStorageCluster = res; // 当前选择的存储集群
-          this.updateDaysList();
-          this.$nextTick(() => { // 如果开启了冷热集群天数不能为0
-            if (res.enable_hot_warm && this.formData.allocation_min_days === '0') {
-              this.formData.allocation_min_days = '7';
-            }
-          });
+    'formData.storage_cluster_id': {
+      immediate: true,
+      handler(val) {
+        this.storageList.forEach((res) => {
+          const arr = [];
+          if (res.storage_cluster_id === val) {
+            this.selectedStorageCluster = res; // 当前选择的存储集群
+            this.updateDaysList();
+            this.$nextTick(() => { // 如果开启了冷热集群天数不能为0
+              if (res.enable_hot_warm && this.formData.allocation_min_days === '0') {
+                this.formData.allocation_min_days = '7';
+              }
+            });
 
-          this.storage_capacity = JSON.parse(JSON.stringify(res.storage_capacity));
-          this.tips_storage = [
-            `${this.$t('dataSource.tips_capacity')} ${this.storage_capacity} G，${this.$t('dataSource.tips_development')}`,
-            this.$t('dataSource.tips_business'),
-            this.$t('dataSource.tips_formula'),
-          ];
-          if (res.storage_capacity === 0) {
-            arr.push(this.tips_storage[2]);
-          } else {
-            if (res.storage_used > res.storage_capacity) {
-              arr.push(this.tips_storage[1]);
+            this.storage_capacity = JSON.parse(JSON.stringify(res.storage_capacity));
+            this.tips_storage = [
+              `${this.$t('dataSource.tips_capacity')} ${this.storage_capacity} G，${this.$t('dataSource.tips_development')}`,
+              this.$t('dataSource.tips_business'),
+              this.$t('dataSource.tips_formula'),
+            ];
+            if (res.storage_capacity === 0) {
               arr.push(this.tips_storage[2]);
             } else {
-              arr.push(this.tips_storage[0]);
-              arr.push(this.tips_storage[2]);
+              if (res.storage_used > res.storage_capacity) {
+                arr.push(this.tips_storage[1]);
+                arr.push(this.tips_storage[2]);
+              } else {
+                arr.push(this.tips_storage[0]);
+                arr.push(this.tips_storage[2]);
+              }
             }
+            this.tip_storage = arr;
           }
-          this.tip_storage = arr;
-        }
-      });
+        });
+      },
     },
     // 冷热数据天数需小于过期时间
     'formData.allocation_min_days'(val) {
@@ -96,7 +99,8 @@ export default {
               this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
             }
           }
-          if (this.$route.name !== 'custom-report-create') {
+          const notPerformList = ['custom-report-create', 'custom-report-edit'];
+          if (!notPerformList.includes(this.$route.name)) {
             this.getCleanStash();
           }
         }

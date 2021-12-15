@@ -53,7 +53,7 @@ class Log(CustomMeta):
 @register
 class OtlpLog(CustomMeta):
     custom_type = CustomTypeEnum.OTLP_LOG.value
-    etl_params = {"retain_original_text": True}
+    etl_params = {"retain_original_text": False}
     etl_config = "bk_log_json"
     fields = [
         {
@@ -163,7 +163,7 @@ class OtlpLog(CustomMeta):
 @register
 class OtlpTrace(CustomMeta):
     custom_type = CustomTypeEnum.OTLP_TRACE.value
-    etl_params = {"retain_original_text": True}
+    etl_params = {"retain_original_text": False}
     etl_config = "bk_log_json"
     fields = [
         {
