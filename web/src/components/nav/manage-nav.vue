@@ -111,8 +111,7 @@ export default {
         'clean-template-edit': this.$t('编辑') + this.$t('logClean.清洗模板'),
         'extract-create': this.$t('新建') + this.$t('日志提取任务'),
         'extract-clone': this.$t('克隆') + this.$t('日志提取任务'),
-        'custom-report-create': this.$t('customReport.reportCreate'),
-        'custom-report-edit': this.$t('customReport.reportEdit'),
+        'custom-report-create': this.$route.params?.collector_config_id ? this.$t('customReport.reportEdit') : this.$t('customReport.reportCreate'),
         'custom-report-detail': customReportName,
       };
       return map[this.$route.name];

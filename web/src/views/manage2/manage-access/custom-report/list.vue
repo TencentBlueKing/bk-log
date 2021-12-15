@@ -28,7 +28,7 @@
           class="fl"
           theme="primary"
           @click="operateHandler({}, 'add')"
-          :disabled="isRequest">
+          :disabled="!collectProject || isAllowedCreate === null || isRequest">
           {{ $t('customReport.reportCreate') }}
         </bk-button>
         <div class="collect-search fr">
@@ -37,21 +37,24 @@
             v-model="inputKeyWords"
             :placeholder="$t('')"
             :right-icon="'bk-icon icon-search'"
-            @enter="inputEnter">
+            @enter="search">
           </bk-input>
         </div>
       </div>
+
       <div class="table-operation">
         <bk-table
           class="custom-table"
           v-bkloading="{ isLoading: isRequest }"
           :data="collectList"
           :pagination="pagination"
-          @page-change="handlePageChange">
+          :limit-list="pagination.limitList"
+          @page-change="handlePageChange"
+          @page-limit-change="handleLimitChange">
           <bk-table-column :label="$t('customReport.dataID')" prop="collector_config_id">
             <template slot-scope="props">
               <span>
-                {{ props.row.collector_config_id || '--' }}
+                {{ props.row.bk_data_id || '--' }}
               </span>
             </template>
           </bk-table-column>
@@ -96,19 +99,19 @@
                 class="king-button"
                 theme="primary"
                 text
-                @click="operateHandler({}, 'search')">
+                @click="operateHandler(props.row, 'search')">
                 {{ $t('nav.retrieve') }}</bk-button>
               <bk-button
                 class="king-button"
                 theme="primary"
                 text
-                @click="operateHandler({}, 'edit')">
+                @click="operateHandler(props.row, 'edit')">
                 {{ $t('编辑') }}</bk-button>
               <bk-button
                 class="king-button"
                 theme="primary"
                 text
-                @click="operateHandler({}, 'clean')">
+                @click="operateHandler(props.row, 'clean')">
                 {{ $t('logClean.goToClean') }}</bk-button>
               <bk-dropdown-menu ref="dropdown" align="right">
                 <i
@@ -129,10 +132,7 @@
                     <a
                       href="javascript:;"
                       class="text-disabled"
-                      v-if="!props.row.status ||
-                        props.row.status === 'running' ||
-                        props.row.status === 'prepare' ||
-                        !collectProject">
+                      v-if="!collectProject">
                       {{$t('btn.block')}}
                     </a>
                     <a
@@ -147,10 +147,7 @@
                     <a
                       href="javascript:;"
                       class="text-disabled"
-                      v-if="!props.row.status ||
-                        props.row.status === 'running' ||
-                        props.row.status === 'prepare' ||
-                        !collectProject">
+                      v-if="!collectProject">
                       {{$t('btn.start')}}
                     </a>
                     <a
@@ -164,7 +161,7 @@
                   <li>
                     <a
                       href="javascript:;"
-                      @click="operateHandler(props.row, 'view')">
+                      @click="deleteCollect(props.row)">
                       {{$t('btn.delete')}}
                     </a>
                   </li>
@@ -179,18 +176,28 @@
 </template>
 
 <script>
+import { projectManages } from '@/common/util';
+import collectedItemsMixin from '@/mixins/collectedItemsMixin';
 import { mapGetters } from 'vuex';
+
 export default {
   name: 'custom-report-list',
+  mixins: [collectedItemsMixin],
   data() {
     return {
       inputKeyWords: '',
       collectList: [],
+      isAllowedCreate: null,
+      collectProject: projectManages(this.$store.state.topMenu, 'collection-item'), // 权限
       isRequest: false,
+      params: {
+        collector_config_id: '',
+      },
       pagination: {
         current: 1,
         count: 100,
         limit: 10,
+        limitList: [10, 20, 50, 100],
       },
     };
   },
@@ -200,10 +207,94 @@ export default {
       bkBizId: 'bkBizId',
     }),
   },
+  created() {
+    this.checkCreateAuth();
+  },
   mounted() {
-    this.requestData();
+    this.search();
   },
   methods: {
+    search() {
+      this.pagination.current = 1;
+      this.requestData();
+    },
+    // 路由跳转
+    leaveCurrentPage(row, operateType) {
+      if (operateType === 'start' || operateType === 'stop') {
+        if (!this.collectProject) return;
+        if (operateType === 'stop') {
+          this.$bkInfo({
+            type: 'warning',
+            title: this.$t('retrieve.Confirm_disable'),
+            confirmFn: () => {
+              this.toggleCollect(row, operateType);
+            },
+          });
+        } else {
+          this.toggleCollect(row, operateType);
+        }
+        return;
+      }
+
+      const params = {};
+      const query = {};
+      const routeMap = {
+        add: 'custom-report-create',
+        edit: 'custom-report-create',
+        search: 'retrieve',
+        clean: 'clean-edit',
+      };
+
+      if (operateType === 'search') {
+        if (!row.index_set_id && !row.bkdata_index_set_ids.length) return;
+        params.indexId = row.index_set_id ? row.index_set_id : row.bkdata_index_set_ids[0];
+      }
+      if (operateType === 'clean') {
+        params.collectorId = row.collector_config_id;
+      }
+      if (operateType === 'edit') {
+        params.collectorId = row.collector_config_id;
+      }
+
+      const targetRoute = routeMap[operateType];
+      this.$router.push({
+        name: targetRoute,
+        params,
+        query: {
+          ...query,
+          projectId: window.localStorage.getItem('project_id'),
+        },
+      });
+    },
+    // 启用 || 停用
+    toggleCollect(row, type) {
+      const { isActive } = row;
+      this.$http.request(`collect/${type === 'start' ? 'startCollect' : 'stopCollect'}`, {
+        params: {
+          collector_config_id: row.collector_config_id,
+        },
+      }).then((res) => {
+        if (res.result) {
+          row.is_active = !row.is_active;
+          res.result && this.messageSuccess(this.$t('修改成功'));
+          this.requestData();
+        }
+      })
+        .catch(() => {
+          row.is_active = isActive;
+        });
+    },
+    // 删除
+    deleteCollect(row) {
+      this.$bkInfo({
+        type: 'warning',
+        title: this.$t('retrieve.Confirm_delete'),
+        confirmFn: () => {
+          this.requestDeleteCollect(row);
+        },
+      });
+    },
+
     requestData() {
       this.isRequest = true;
       this.$http.request('collect/getCollectList', {
@@ -224,31 +315,6 @@ export default {
         .finally(() => {
           this.isRequest = false;
         });
-    },
-    inputEnter() {},
-    operateHandler(row, operateType) {
-      const params = {};
-      const query = {};
-      const routeMap = {
-        add: 'custom-report-create',
-      };
-
-      const targetRoute = routeMap[operateType];
-      this.$router.push({
-        name: targetRoute,
-        params,
-        query: {
-          ...query,
-          projectId: window.localStorage.getItem('project_id'),
-        },
-      });
-    },
-    handlePageChange(page) {
-      this.pagination.current = page;
-    },
-    remove() {
-    },
-    reset() {
     },
   },
 };

@@ -88,15 +88,15 @@ export default {
             }
           }
           this.storageList = s1.concat(s2);
-          if (this.isItsm && this.curCollect.can_use_independent_es_cluster) {
+          if (this.isItsm && this.curCollect?.can_use_independent_es_cluster) {
             // itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
           } else {
             const defaultItem = this.storageList.find(item => item.registered_system === '_default');
-            if (defaultItem && defaultItem?.permission?.manage_es_source) {
+            if (defaultItem?.permission?.manage_es_source) {
               this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
             }
           }
-          if (this.$route.name === 'collectEdit') {
+          if (this.$route.name !== 'custom-report-create') {
             this.getCleanStash();
           }
         }
