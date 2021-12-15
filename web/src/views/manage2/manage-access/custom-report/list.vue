@@ -60,7 +60,7 @@
           </bk-table-column>
           <bk-table-column :label="$t('customReport.name')" prop="collector_config_name">
             <template slot-scope="props">
-              <span>
+              <span class="collector-config-name" @click="operateHandler(props.row, 'view')">
                 {{ props.row.collector_config_name || '--' }}
               </span>
             </template>
@@ -243,20 +243,20 @@ export default {
         edit: 'custom-report-create',
         search: 'retrieve',
         clean: 'clean-edit',
+        view: 'custom-report-detail',
       };
 
       if (operateType === 'search') {
         if (!row.index_set_id && !row.bkdata_index_set_ids.length) return;
         params.indexId = row.index_set_id ? row.index_set_id : row.bkdata_index_set_ids[0];
       }
-      if (operateType === 'clean') {
-        params.collectorId = row.collector_config_id;
-      }
-      if (operateType === 'edit') {
+
+      if (['clean', 'edit', 'view'].includes(operateType)) {
         params.collectorId = row.collector_config_id;
       }
 
       const targetRoute = routeMap[operateType];
+      this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
         name: targetRoute,
         params,
@@ -324,6 +324,7 @@ export default {
 @import "../../../../scss/mixins/clearfix";
 @import "../../../../scss/conf";
 @import "../../../../scss/devops-common.scss";
+@import "../../../../scss/mixins/cursor.scss";
 
 .custom-item-container {
   padding: 20px 24px;
@@ -363,6 +364,9 @@ export default {
         color: #c4c6cc;
         cursor: not-allowed;
       }
+    }
+    .collector-config-name {
+      @include cursor;
     }
   }
 }

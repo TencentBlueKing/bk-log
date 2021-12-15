@@ -82,7 +82,6 @@ export default {
     // 根据路由名获取菜单名称
     getTitleName() {
       const collectionName = this.$store.state.collect.curCollect?.collector_config_name;
-      const customReportName = this.$store.state.curCustomReport?.customReportName;
       const map = {
         collectAdd: this.$t('新建采集项'),
         collectEdit: collectionName,
@@ -112,7 +111,7 @@ export default {
         'extract-create': this.$t('新建') + this.$t('日志提取任务'),
         'extract-clone': this.$t('克隆') + this.$t('日志提取任务'),
         'custom-report-create': this.$route.params?.collector_config_id ? this.$t('customReport.reportEdit') : this.$t('customReport.reportCreate'),
-        'custom-report-detail': customReportName,
+        'custom-report-detail': collectionName,
       };
       return map[this.$route.name];
     },

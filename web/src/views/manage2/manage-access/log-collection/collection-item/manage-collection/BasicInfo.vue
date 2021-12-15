@@ -26,30 +26,25 @@
       <div>
         <span>{{ $t('dataSource.dataId') }}</span><span>{{ collectorData.bk_data_id || '-' }}</span>
       </div>
+      <div>
+        <span>{{ $t('configDetails.name') }}</span><span>{{ collectorData.collector_config_name || '-' }}</span>
+      </div>
       <template v-if="isCustomReport">
         <div>
-          <span>{{ $t('customReport.token') }}</span><span>{{ collectorData.token || '-' }}</span>
+          <span>{{ $t('数据类型') }}</span><span>{{ collectorData.custom_name || '-' }}</span>
         </div>
         <div>
-          <span>{{ $t('customReport.dataName') }}</span><span>{{ collectorData.name || '-' }}</span>
+          <span>{{ $t('dataSource.source_en_name') }}</span>
+          <span>{{ collectorData.collector_config_name_en || '-' }}</span>
         </div>
         <div>
-          <span>{{ $t('数据类型') }}</span><span>{{ collectorData.type || '-' }}</span>
+          <span>{{ $t('数据分类') }}</span><span>{{ collectorData.category_name || '-' }}</span>
         </div>
         <div>
-          <span>{{ $t('dataSource.source_en_name') }}</span><span>{{ collectorData.enName || '-' }}</span>
-        </div>
-        <div>
-          <span>{{ $t('数据分类') }}</span><span>{{ collectorData.category || '-' }}</span>
-        </div>
-        <div>
-          <span>{{ $t('customReport.remark') }}</span><span>{{ collectorData.remark || '-' }}</span>
+          <span>{{ $t('customReport.remark') }}</span><span>{{ collectorData.description || '-' }}</span>
         </div>
       </template>
       <template v-else>
-        <div>
-          <span>{{ $t('configDetails.name') }}</span><span>{{ collectorData.collector_config_name || '-' }}</span>
-        </div>
         <div>
           <span>{{ $t('configDetails.logType') }}</span><span>{{ collectorData.collector_scenario_name || '-' }}</span>
         </div>
@@ -220,9 +215,6 @@ export default {
     },
   },
   created() {
-    if (this.isCustomReport) {
-      return;
-    }
     this.getCollectDetail();
   },
   methods: {
@@ -275,11 +267,7 @@ export default {
     },
     handleClickEdit() {
       const params = {};
-      if (this.isCustomReport) {
-        params.reportId = 1;
-      } else {
-        params.collectorId = this.$route.params.collectorId;
-      }
+      params.collectorId = this.$route.params.collectorId;
       const routeName = this.isCustomReport ? 'custom-report-edit' : 'collectEdit';
       this.$router.push({
         name: routeName,
