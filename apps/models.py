@@ -229,6 +229,10 @@ class SoftDeleteModelManager(OperateRecordModelManager):
     默认的查询和过滤方法, 不显示被标记为删除的记录
     """
 
+    def exclude(self, *args, **kwargs):
+        # 默认都不显示被标记为删除的数据
+        return super(SoftDeleteModelManager, self).filter(is_deleted=False).exclude(*args, **kwargs)
+
     def all(self, *args, **kwargs):
         # 默认都不显示被标记为删除的数据
         return super(SoftDeleteModelManager, self).filter(is_deleted=False)
