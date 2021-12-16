@@ -116,6 +116,11 @@ const CustomReportCreate = () => import(
   /* webpackChunkName: 'create-index' */
   '@/views/manage2/manage-access/custom-report/create'
 );
+// ---- 日志接入 ---- 自定义上报 ---- 自定义上报详情
+const CustomReportDetail = () => import(
+  /* webpackChunkName: 'create-index' */
+  '@/views/manage2/manage-access/custom-report/detail'
+);
 // ---- 全链路跟踪 ---- 采集跟踪
 const CollectionTrack = () => import(
   /* webpackChunkName: 'collection-track' */
@@ -501,13 +506,22 @@ const routes = [
             component: CustomReportCreate,
           },
           {
-            path: 'edit/:reportId',
+            path: 'edit/:collectorId',
             name: 'custom-report-edit', // 日志接入 - 自定义上报编辑
             meta: {
               needBack: true,
               backName: 'custom-report-list',
             },
             component: CustomReportCreate,
+          },
+          {
+            path: 'detail/:collectorId',
+            name: 'custom-report-detail', // 日志接入 - 自定义上报详情
+            meta: {
+              needBack: true,
+              backName: 'custom-report-list',
+            },
+            component: CustomReportDetail,
           },
         ],
       },

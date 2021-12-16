@@ -352,12 +352,10 @@
 
 <script>
 import { projectManages } from '@/common/util';
-import collectedItemsMixin from '@/mixins/collectedItemsMixin';
 import { mapGetters } from 'vuex';
 
 export default {
   name: 'collection-item',
-  mixins: [collectedItemsMixin],
   data() {
     const settingFields = [
       // 数据ID
@@ -498,12 +496,78 @@ export default {
     checkcFields(field) {
       return this.columnSetting.selectedFields.some(item => item.id === field);
     },
-    // 离开当前页路由操作
-    leaveCurrentPage(row, operateType) {
+    async checkCreateAuth() {
+      try {
+        const res = await this.$store.dispatch('checkAllowed', {
+          action_ids: ['create_collection'],
+          resources: [{
+            type: 'biz',
+            id: this.bkBizId,
+          }],
+        });
+        this.isAllowedCreate = res.isAllowed;
+      } catch (err) {
+        console.warn(err);
+        this.isAllowedCreate = false;
+      }
+    },
+    async getOptionApplyData(paramData) {
+      try {
+        this.isTableLoading = true;
+        const res = await this.$store.dispatch('getApplyData', paramData);
+        this.$store.commit('updateAuthDialogData', res.data);
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        this.isTableLoading = false;
+      }
+    },
+    // 表格操作
+    async operateHandler(row, operateType) { // type: [view, status , search, edit, field, start, stop, delete]
       if (operateType === 'status' && (!this.loadingStatus || row.status === 'terminated')) return; // 已停用禁止操作
       if (operateType === 'status' && (!row.status || row.status === 'prepare')) {
         return this.operateHandler(row, 'edit');
       }
+      if (operateType === 'add') { // 新建权限控制
+        if (!this.isAllowedCreate) {
+          return this.getOptionApplyData({
+            action_ids: ['create_collection'],
+            resources: [{
+              type: 'biz',
+              id: this.bkBizId,
+            }],
+          });
+        }
+      } else if (operateType === 'view') { // 查看权限
+        if (!(row.permission?.view_collection)) {
+          return this.getOptionApplyData({
+            action_ids: ['view_collection'],
+            resources: [{
+              type: 'collection',
+              id: row.collector_config_id,
+            }],
+          });
+        }
+      } else if (operateType === 'search') { // 检索权限
+        if (!(row.permission?.search_log)) {
+          return this.getOptionApplyData({
+            action_ids: ['search_log'],
+            resources: [{
+              type: 'indices',
+              id: row.index_set_id,
+            }],
+          });
+        }
+      } else if (!(row.permission?.manage_collection)) { // 管理权限
+        return this.getOptionApplyData({
+          action_ids: ['manage_collection'],
+          resources: [{
+            type: 'collection',
+            id: row.collector_config_id,
+          }],
+        });
+      }
+
       // running、prepare 状态不能启用、停用
       if (operateType === 'start' || operateType === 'stop') {
         if (!this.loadingStatus || row.status === 'running' || row.status === 'prepare' || !this.collectProject) return;
@@ -583,6 +647,31 @@ export default {
         this.params[item] = data[item].join('');
       });
       this.search();
+    },
+    /**
+     * 分页变换
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
+    handlePageChange(page) {
+      if (this.pagination.current !== page) {
+        this.pagination.current = page;
+        this.stopStatusPolling();
+        this.requestData();
+      }
+    },
+    /**
+     * 分页限制
+     * @param  {Number} page 当前页码
+     * @return {[type]}      [description]
+     */
+    handleLimitChange(page) {
+      console.log('changelimit');
+      if (this.pagination.limit !== page) {
+        this.pagination.current = 1;
+        this.pagination.limit = page;
+        this.requestData();
+      }
     },
     handleSettingChange({ fields }) {
       this.columnSetting.selectedFields = fields;
@@ -721,6 +810,26 @@ export default {
           row.status = status;
           row.status_name = statusName;
         });
+    },
+    // 删除
+    requestDeleteCollect(row) {
+      this.$http.request('collect/deleteCollect', {
+        params: {
+          collector_config_id: row.collector_config_id,
+        },
+      }).then((res) => {
+        if (res.result) {
+          const page = this.collectList.length <= 1
+            ? (this.pagination.current > 1 ? this.pagination.current - 1 : 1)
+            : this.pagination.current;
+          if (page !== this.pagination.current) {
+            this.handlePageChange(page);
+          } else {
+            this.requestData();
+          }
+        }
+      })
+        .catch(() => {});
     },
     statusHandler(data) {
       data.forEach((item) => {
