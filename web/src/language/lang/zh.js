@@ -1263,7 +1263,7 @@ export default {
     createRecord: '创建记录',
     updateRecord: '更新记录',
     operation: '操作',
-    typeTips: '自定义上报指标数据，可以通过HTTP等方式进行上报，自定义上报有一定的数据格式要求，具体可以查看使用说明',
+    typeTips: '自定义上报数据，可以通过采集器，或者指定协议例如otlp等方式进行上报，自定义上报有一定的使用要求，具体可以查看使用说明',
     englishName: '英文名',
     dataClassification: '数据分类',
     instruction: '说明',
