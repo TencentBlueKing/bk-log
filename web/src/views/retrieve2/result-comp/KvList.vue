@@ -142,24 +142,26 @@ export default {
     },
     handleMenuClick(operator, item, field) {
       let params = {};
+      const curValue = this.tableRowDeepView(this.data, item, this.getFieldType(item), false);
+
       if (['is', 'not'].includes(operator)) {
         if (!field && !this.getFieldType(item)) return;
 
         if (this.getFieldType(item) === 'text') return;
 
-        if (!field && this.data[item] === undefined) return;
+        if (!field && curValue === undefined) return;
 
         params = {
           fieldName: field ? field : item,
           operation: operator === 'is' ? 'is' : 'is not',
-          value: field ? item : this.data[item],
+          value: field ? item : curValue,
         };
       }
 
       if (operator === 'copy') {
-        if (!field && this.data[item] === undefined) return;
+        if (!field && curValue === undefined) return;
         params.operation = 'copy';
-        params.value = field ? item : this.data[item];
+        params.value = field ? item : curValue;
       }
 
       if (operator === 'display') {
