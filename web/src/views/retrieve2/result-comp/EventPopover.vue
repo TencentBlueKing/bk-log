@@ -22,11 +22,14 @@
 
 <template>
   <bk-popover
+    ref="eventPopover"
     :class="['retrieve-event-popover', { 'is-inline': !isSearch }]"
     :ext-cls="`event-tippy-content${!isSearch ? ' is-search' : ''}`"
     :trigger="trigger"
     :placement="placement"
     :tippy-options="tippyOptions"
+    :on-show="handlePopoverShow"
+    :on-hide="handlePopoverHide"
     theme="light">
     <slot />
     <div slot="content" class="event-icons">
@@ -75,6 +78,35 @@ export default {
   methods: {
     handleClick(id) {
       this.$emit('eventClick', id);
+    },
+    unregisterOberver() {
+      if (this.intersectionObserver) {
+        this.intersectionObserver.unobserve(this.$el);
+        this.intersectionObserver.disconnect();
+        this.intersectionObserver = null;
+      }
+    },
+    // 注册Intersection监听
+    registerObserver() {
+      if (this.intersectionObserver) {
+        this.unregisterOberver();
+      }
+      this.intersectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (this.intersectionObserver) {
+            if (entry.intersectionRatio <= 0) {
+              this.$refs.eventPopover.instance.hide();
+            }
+          }
+        });
+      });
+      this.intersectionObserver.observe(this.$el);
+    },
+    handlePopoverShow() {
+      setTimeout(this.registerObserver, 20);
+    },
+    handlePopoverHide() {
+      this.unregisterOberver();
     },
   },
 };

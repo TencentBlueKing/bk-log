@@ -816,3 +816,14 @@ class EmailTemplate(OperateRecordModel):
     class Meta:
         verbose_name = _("邮件模板")
         verbose_name_plural = _("43_邮件模板")
+
+
+class UserMetaConf(models.Model):
+    username = models.CharField(_("创建者"), max_length=32, default="")
+    conf = JSONField(_("用户meta配置"), default=dict)
+    type = models.CharField(_("数据类型"), max_length=64)
+
+    class Meta:
+        verbose_name = _("用户元配置")
+        verbose_name_plural = _("44_用户元配置")
+        unique_together = (("username", "type"),)

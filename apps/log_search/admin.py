@@ -30,6 +30,7 @@ from apps.log_search.models import (
     UserIndexSetSearchHistory,
     AsyncTask,
     EmailTemplate,
+    UserMetaConf,
 )
 
 
@@ -154,3 +155,9 @@ class EmailTemplateAdmin(AppModelAdmin):
     list_display = ["name", "path"]
 
     search_fields = ["name"]
+
+
+@admin.register(UserMetaConf)
+class UserMetaConfAdmin(AppModelAdmin):
+    list_display = ["username", "conf", "type"]
+    search_fields = ["username"]
