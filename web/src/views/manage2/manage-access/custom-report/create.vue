@@ -255,14 +255,7 @@
       </div>
     </bk-form>
 
-    <div :class="`right-button ${isOpenWindow ? 'button-active' : ''}`"
-         @click="isOpenWindow = !isOpenWindow">
-      <i :class="`bk-icon icon-angle-double-${isOpenWindow ? 'right' : 'left'}`"></i>
-    </div>
-    <div :class="`right-window ${isOpenWindow ? 'window-active' : ''}`">
-      <!-- eslint-disable-next-line vue/no-v-html -->
-      <div v-html="customTypeIntro"></div>
-    </div>
+    <intro-panel :data="formData"></intro-panel>
 
     <div class="submit-btn">
       <bk-button
@@ -285,8 +278,13 @@
 <script>
 import { mapGetters } from 'vuex';
 import storageMixin from '@/mixins/storageMixin';
+import IntroPanel from './components/IntroPanel';
+
 export default {
   name: 'custom-report-create',
+  components: {
+    IntroPanel,
+  },
   mixins: [storageMixin],
   data() {
     return {
@@ -394,14 +392,6 @@ export default {
       bkBizId: 'bkBizId',
       globalsData: 'globals/globalsData',
     }),
-    dataTypeList() {
-      const { databus_custom: databusCustom } = this.globalsData;
-      return databusCustom || [];
-    },
-    customTypeIntro() {
-      const curType = this.dataTypeList.find(type => type.id === this.formData.custom_type);
-      return curType ? curType.introduction : '';
-    },
     defaultRetention() {
       const { storage_duration_time } = this.globalsData;
       // eslint-disable-next-line camelcase
@@ -578,66 +568,6 @@ export default {
           }
         }
       }
-    }
-  }
-  .right-button{
-    width: 24px;
-    height: 96px;
-    border-radius: 8px 0 0 8px;
-    border: 1px solid #dcdee5;
-    border-right: none;
-    background-color: #fafbfd;
-    cursor: pointer;
-    position: fixed;
-    right: 0;
-    top: calc(50vh - 48px);
-    transition:right .5s;
-    &.button-active{
-      right: 400px;
-    }
-    @include flex-center;
-  }
-  .right-window{
-    width: 400px;
-    height: 100vh;
-    background: #fff;
-    border: 1px solid #dcdee5;
-    position: fixed;
-    right: -400px;
-    top: 102px;
-    z-index: 99;
-    color: #63656e;
-    transition:right .5s;
-    padding: 16px 24px 0;
-    &.window-active{
-      right: 0;
-    }
-    h1 {
-      font-size: 12px;
-      font-weight: 700;
-      margin: 26px 0 10px;
-      &:first-child {
-        margin-top: 0;
-      }
-    }
-    ul {
-      margin-left: 10px;
-      li {
-        margin-top: 8px;
-        list-style: inside;
-        font-size: 12px;
-      }
-    }
-    p {
-      font-size: 12px;
-    }
-    pre {
-      margin: 0;
-      margin-top: 6px;
-      padding: 10px 14px;
-      background: #f4f4f7;
-      overflow-x: auto;
-      @include scroller;
     }
   }
   .submit-btn {

@@ -36,6 +36,8 @@
           @update-active-panel="activePanel = $event"></component>
       </keep-alive>
     </template>
+
+    <intro-panel :data="reportDetail"></intro-panel>
   </div>
 </template>
 
@@ -45,6 +47,7 @@ import BasicInfo from '../log-collection/collection-item/manage-collection/Basic
 import DataStorage from '../log-collection/collection-item/manage-collection/DataStorage';
 import DataStatus from '../log-collection/collection-item/manage-collection/data-status';
 import UsageDetails from '@/views/manage2/manage-access/components/usage-details';
+import IntroPanel from './components/IntroPanel';
 
 export default {
   name: 'collection-item',
@@ -54,6 +57,7 @@ export default {
     DataStorage,
     DataStatus,
     UsageDetails,
+    IntroPanel,
   },
   data() {
     return {
