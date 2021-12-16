@@ -57,34 +57,33 @@
       <bk-table-column :class-name="`original-str${isWrap ? ' is-wrap' : ''}`">
         <!-- eslint-disable-next-line -->
         <template slot-scope="{ row, column, $index }">
-          <RegisterColumn :context="JSON.stringify(row)" :root-margin="'-180px 0px 0px 0px'">
-            <EventPopover
-              :is-search="false"
-              :placement="'top'"
-              :tippy-options="{ offset: '0, 10' }"
-              @eventClick="(operation) => handleMenuClick({ operation, value: JSON.stringify(row) })">
-              <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <!-- <span>{{ JSON.stringify(row) }}</span> -->
-                <text-highlight
-                  :queries="getMarkList(JSON.stringify(row))">
-                  {{formatterStr(JSON.stringify(row))}}
-                </text-highlight>
-                <p
-                  v-if="!cacheExpandStr.includes($index)"
-                  class="show-whole-btn"
-                  @click.stop="handleShowWhole($index)">
-                  {{ $t('展开全部') }}
-                </p>
-                <p
-                  v-else
-                  class="hide-whole-btn"
-                  @click.stop="handleHideWhole($index)">
-                  {{ $t('收起') }}
-                </p>
-              </div>
-            </EventPopover>
-          </RegisterColumn>
+          <EventPopover
+            ref="eventPopover"
+            :is-search="false"
+            :placement="'top'"
+            :tippy-options="{ offset: '0, 10', boundary: scrollContent }"
+            @eventClick="(operation) => handleMenuClick({ operation, value: JSON.stringify(row) })">
+            <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+              <!-- eslint-disable-next-line vue/no-v-html -->
+              <!-- <span>{{ JSON.stringify(row) }}</span> -->
+              <text-highlight
+                :queries="getMarkList(JSON.stringify(row))">
+                {{formatterStr(JSON.stringify(row))}}
+              </text-highlight>
+              <p
+                v-if="!cacheExpandStr.includes($index)"
+                class="show-whole-btn"
+                @click.stop="handleShowWhole($index)">
+                {{ $t('展开全部') }}
+              </p>
+              <p
+                v-else
+                class="hide-whole-btn"
+                @click.stop="handleHideWhole($index)">
+                {{ $t('收起') }}
+              </p>
+            </div>
+          </EventPopover>
         </template>
       </bk-table-column>
     </template>
@@ -133,5 +132,10 @@ import resultTableMixin from '@/mixins/resultTableMixin';
 export default {
   name: 'OriginalList',
   mixins: [resultTableMixin],
+  computed: {
+    scrollContent() {
+      return document.querySelector('.result-scroll-container');
+    },
+  },
 };
 </script>
