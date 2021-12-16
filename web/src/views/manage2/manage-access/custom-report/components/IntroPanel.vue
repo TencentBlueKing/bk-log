@@ -22,12 +22,16 @@
 
 <template>
   <div class="intro-panel">
-    <div
-      :class="`right-button ${isOpenWindow ? 'button-active' : ''}`"
-      @click="isOpenWindow = !isOpenWindow">
-      <i :class="`bk-icon icon-angle-double-${isOpenWindow ? 'right' : 'left'}`"></i>
-    </div>
     <div :class="`right-window ${isOpenWindow ? 'window-active' : ''}`">
+      <div class="create-btn details" @click="handleActiveDetails(true)">
+        <span class="bk-icon icon-text-file" :style="`color:${isOpenWindow ? '#3A84FF;' : ''}`"></span>
+      </div>
+      <div class="top-title">
+        <p> {{$t('customReport.helpDocument')}}</p>
+        <div class="create-btn close" @click="handleActiveDetails(false)">
+          <span class="bk-icon icon-minus-line"></span>
+        </div>
+      </div>
       <!-- eslint-disable-next-line vue/no-v-html -->
       <div v-html="customTypeIntro"></div>
     </div>
@@ -43,10 +47,13 @@ export default {
       type: Object,
       required: true,
     },
+    isOpenWindow: {
+      type: Boolean,
+      default: true,
+    },
   },
   data() {
     return {
-      isOpenWindow: false, // 是否展开使用列表
     };
   },
   computed: {
@@ -73,33 +80,19 @@ export default {
 
       return str;
     },
+    handleActiveDetails(state) {
+      this.$emit('handleActiveDetails', state);
+    },
   },
 };
 </script>
 
 <style lang="scss">
 @import "../../../../../scss/mixins/flex";
-@import '../../../../../scss/mixins/scroller';
+@import "../../../../../scss/mixins/scroller";
 
 .intro-panel {
-  .right-button{
-    width: 24px;
-    height: 96px;
-    border-radius: 8px 0 0 8px;
-    border: 1px solid #dcdee5;
-    border-right: none;
-    background-color: #fafbfd;
-    cursor: pointer;
-    position: fixed;
-    right: 0;
-    top: calc(50vh - 48px);
-    transition:right .5s;
-    &.button-active{
-      right: 400px;
-    }
-    @include flex-center;
-  }
-  .right-window{
+  .right-window {
     width: 400px;
     height: 100vh;
     background: #fff;
@@ -107,11 +100,14 @@ export default {
     position: fixed;
     right: -400px;
     top: 102px;
-    z-index: 99;
+    z-index: 1;
     color: #63656e;
-    transition:right .5s;
+    transition: right 0.5s;
     padding: 16px 24px 0;
-    &.window-active{
+    .top-title{
+      height: 48px;
+    }
+    &.window-active {
       right: 0;
     }
     h1 {
@@ -141,6 +137,29 @@ export default {
       overflow-x: auto;
       @include scroller;
     }
+  }
+  .create-btn {
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    z-index: 99;
+    &.details{
+      top: 64px;
+      right: 16px;
+      position: fixed;
+      transform: rotateZ(360deg) rotateX(180deg);
+    }
+    &.close{
+      top: 10px;
+      right: 16px;
+    }
+    &:hover {
+      cursor: pointer;
+      background: #f0f1f5;
+      color: #3A84FF;
+      border-radius: 2px;
+    }
+    @include flex-center;
   }
 }
 </style>

@@ -21,7 +21,9 @@
   -->
 
 <template>
-  <div class="custom-create-container" v-bkloading="{ isLoading: containerLoading }">
+  <div
+    :class="`custom-create-container ${isOpenWindow ? 'is-active-details' : ''}`"
+    v-bkloading="{ isLoading: containerLoading }">
     <bk-form :label-width="103" :model="formData" ref="validateForm">
       <div class="create-form">
         <div class="form-title">{{$t('基础信息')}}</div>
@@ -255,7 +257,10 @@
       </div>
     </bk-form>
 
-    <intro-panel :data="formData"></intro-panel>
+    <intro-panel
+      :data="formData"
+      :is-open-window="isOpenWindow"
+      @handleActiveDetails="handleActiveDetails"></intro-panel>
 
     <div class="submit-btn">
       <bk-button
@@ -296,7 +301,7 @@ export default {
       linkConfigurationList: [], // 数据链路
       storageList: [], // 存储集群
       selectedStorageCluster: {}, // 选择的es集群
-      isOpenWindow: false, // 是否展开使用列表
+      isOpenWindow: true, // 是否展开使用列表
       isSubmit: false, // 是否提交
       containerLoading: false, // 全局loading
       isEdit: false, // 是否是编辑
@@ -494,6 +499,9 @@ export default {
     cancel() {
       this.$router.back(-1);
     },
+    handleActiveDetails(state) {
+      this.isOpenWindow = state;
+    },
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
@@ -518,6 +526,10 @@ export default {
 
 .custom-create-container {
   padding:0 24px;
+  transition: padding 0.5s;
+  &.is-active-details{
+    padding:0 420px 0 24px;
+  }
   .create-form {
     background: #fff;
     padding: 24px 37px;

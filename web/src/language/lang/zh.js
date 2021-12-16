@@ -317,7 +317,7 @@ export default {
     inspectionFail: '检测失败',
     ruleEmpty: '暂无聚类规则',
     saveToTakeEffect: '保存待生效',
-    saveEffectMessage: '该保存需要1时候生效,请耐心等待',
+    saveEffectMessage: '该保存需要1小时生效,请耐心等待',
     extractionPrompt: '将过滤后的日志采集上来后，日志检索模块可进行日志内容格式化，方便检索和分析。',
     ruleDeleteTips: '是否删除该条规则？',
     changeSwitchTips: '是否禁用该模块？',

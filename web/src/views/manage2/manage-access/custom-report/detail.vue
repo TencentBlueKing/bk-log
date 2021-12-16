@@ -21,7 +21,10 @@
   -->
 
 <template>
-  <div class="custom-report-detail-container access-manage-container" v-bkloading="{ isLoading: basicLoading }">
+  <div
+    style="transition: padding 0.5s;"
+    v-bkloading="{ isLoading: basicLoading }"
+    :class="`custom-report-detail-container access-manage-container ${isOpenWindow ? 'is-active-details' : ''}`">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
     <template v-if="!authPageInfo && !basicLoading && reportDetail">
       <bk-tab :active.sync="activePanel" type="border-card">
@@ -37,7 +40,10 @@
       </keep-alive>
     </template>
 
-    <intro-panel :data="reportDetail"></intro-panel>
+    <intro-panel
+      :data="reportDetail"
+      :is-open-window="isOpenWindow"
+      @handleActiveDetails="handleActiveDetails"></intro-panel>
   </div>
 </template>
 
@@ -65,6 +71,7 @@ export default {
       authPageInfo: null,
       reportDetail: {},
       activePanel: 'basicInfo',
+      isOpenWindow: true,
       panels: [
         { name: 'basicInfo', label: this.$t('基本信息') },
         { name: 'dataStorage', label: this.$t('数据存储') },
@@ -118,6 +125,15 @@ export default {
         this.basicLoading = false;
       }
     },
+    handleActiveDetails(state) {
+      this.isOpenWindow = state;
+    },
   },
 };
 </script>
+
+<style lang="scss">
+.is-active-details{
+  padding:20px 420px 20px 24px;
+}
+</style>

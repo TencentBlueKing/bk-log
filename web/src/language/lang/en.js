@@ -317,7 +317,7 @@ export default {
     inspectionFail: 'Inspection Fail',
     ruleEmpty: 'No clustering rules',
     saveToTakeEffect: 'Save To Take Effect',
-    saveEffectMessage: 'The saving takes 1 time to take effect, please wait patiently.',
+    saveEffectMessage: 'The saving takes 1 hour to take effect, please wait patiently.',
     extractionPrompt: 'After the filtered logs are collected, the log retrieval module can format the log content to facilitate retrieval and analysis.',
     ruleDeleteTips: 'Whether to delete this rule ?',
     changeSwitchTips: 'Is the module disabled?',
