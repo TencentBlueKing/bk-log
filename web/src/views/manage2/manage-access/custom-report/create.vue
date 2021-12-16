@@ -53,6 +53,7 @@
                 v-for=" (item,index) of globalsData.databus_custom"
                 :key="index"
                 :class="`${formData.custom_type === item.id ? 'is-selected' : ''}`"
+                :disabled="isEdit"
                 @click="handleChangeType(item.id)">
                 {{item.name}}
               </bk-button>
@@ -312,7 +313,7 @@ export default {
         storage_cluster_id: '',
         retention: '',
         allocation_min_days: '0',
-        storage_replies: 0,
+        storage_replies: 1,
         category_id: '',
         description: '',
       },

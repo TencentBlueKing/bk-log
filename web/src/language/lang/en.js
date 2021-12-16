@@ -1262,7 +1262,7 @@ export default {
     createRecord: 'Create Record',
     updateRecord: 'Update Record',
     operation: 'Operation',
-    typeTips: 'Custom report indicator data can be reported through HTTP and other methods. Custom report has certain data format requirements. For details, please refer to the instructions for use',
+    typeTips: 'Customized report data can be reported through the collector or specified protocol such as otlp. Customized report has certain usage requirements. For details, please refer to the instructions for use',
     englishName: 'English Name',
     dataClassification: 'Data Classification',
     instruction: 'Instruction',
