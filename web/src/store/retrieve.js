@@ -28,6 +28,7 @@ export default {
     chartKey: random(10), // 复用监控的图表，改变key重新请求图表
     cacheDatePickerValue: [],
     cacheTimeRange: '',
+    displayRetrieve: false,
   },
   mutations: {
     updateChartKey(state) {
@@ -38,6 +39,9 @@ export default {
     },
     updateCacheTimeRange(state, payload) {
       state.cacheTimeRange = payload;
+    },
+    updateDisplayRetrieve(state, display) {
+      state.displayRetrieve = display;
     },
   },
   actions: {},

@@ -34,10 +34,12 @@
     </div>
     <div class="nav-center fl" data-test-id="topNav_div_topNavBox">
       <ul>
-        <li v-for="menu in topMenu" :key="menu.id"
+        <li v-for="menu in topMenu"
+            :key="menu.id"
+            :id="`${menu.id}MenuGuide`"
             :class="['menu-item', { 'active': activeTopMenu.id === menu.id }]"
-            @click="routerHandler(menu)"
-            :data-test-id="`topNavBox_li_${menu.id}`">
+            :data-test-id="`topNavBox_li_${menu.id}`"
+            @click="routerHandler(menu)">
           <template>
             {{ menu.name }}
           </template>
@@ -369,6 +371,10 @@ export default {
         &:hover {
           color: #fff;
           transition: color .3s linear;
+        }
+
+        &.guide-highlight {
+          background: #000;
         }
       }
 

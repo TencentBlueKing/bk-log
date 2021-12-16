@@ -66,6 +66,7 @@ jinja2==2.10.1
 
 # ipython
 ipython==7.13.0
+jedi==0.17.2
 
 humanize==3.11.0
 

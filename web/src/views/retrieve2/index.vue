@@ -80,7 +80,7 @@
           <bk-button @click="handleCheckEvent">{{ $t('事件检索') }}</bk-button>
         </div>
 
-        <div class="biz-menu-box">
+        <div class="biz-menu-box" id="bizSelectorGuide">
           <biz-menu-select theme="light"></biz-menu-select>
         </div>
 
@@ -479,6 +479,9 @@ export default {
       const { host_scopes, addition } = this.retrieveParams;
       return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
     },
+    showSearchPage() {
+      return this.hasAuth || this.isNoIndexSet;
+    },
   },
   provide() {
     return {
@@ -542,6 +545,9 @@ export default {
       handler() {
         if (!this.isFavoriteSearch) this.latestFavoriteId = '';
       },
+    },
+    showSearchPage(val) {
+      if (val) this.$store.commit('retrieve/updateDisplayRetrieve', true);
     },
   },
   created() {
@@ -1640,6 +1646,7 @@ export default {
         }
 
         .biz-menu-box {
+          position: relative;
           margin: 16px 16px 0;
         }
 
