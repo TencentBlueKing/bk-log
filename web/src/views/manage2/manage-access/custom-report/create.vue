@@ -403,6 +403,17 @@ export default {
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
     },
   },
+  watch: {
+    linkConfigurationList: {
+      deep: true,
+      handler(val) {
+        const { params: { collectorId } } = this.$route;
+        if (val.length > 0 && !collectorId) {
+          this.formData.data_link_id = val[0]?.data_link_id;
+        }
+      },
+    },
+  },
   mounted() {
     this.containerLoading = true;
     Promise.all([this.getLinkData(), this.getStorage(), this.initFormData()]).then(() => {
