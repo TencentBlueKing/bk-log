@@ -309,6 +309,7 @@ class OtlpTrace(CustomMeta):
         },
     ]
 
+    @staticmethod
     def after_hook(collector_config):
         from apps.log_search.models import LogIndexSet
 
