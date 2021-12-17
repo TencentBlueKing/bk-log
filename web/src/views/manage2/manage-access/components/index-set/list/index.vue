@@ -100,6 +100,11 @@
           <bk-button
             theme="primary" text style="margin-right: 4px;"
             v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices) }"
+            @click="manageIndexSet('search', props.row)">{{ $t('nav.retrieve') }}
+          </bk-button>
+          <bk-button
+            theme="primary" text style="margin-right: 4px;"
+            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices) }"
             @click="manageIndexSet('edit', props.row)">{{ $t('编辑') }}
           </bk-button>
           <bk-button
@@ -285,7 +290,17 @@ export default {
             projectId: window.localStorage.getItem('project_id'),
           },
         });
-      } else if (type === 'edit') { // 编辑索引集
+      } else if (type === 'search') { // 检索
+        this.$router.push({
+          name: 'retrieve',
+          params: {
+            indexId: row.index_set_id ? row.index_set_id : row.bkdata_index_set_ids[0],
+          },
+          query: {
+            projectId: window.localStorage.getItem('project_id'),
+          },
+        });
+      }  else if (type === 'edit') { // 编辑索引集
         this.$store.commit('collect/updateCurIndexSet', row);
         this.$router.push({
           name: this.$route.name.replace('list', 'edit'),

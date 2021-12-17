@@ -270,7 +270,7 @@ export default {
       }
 
       const targetRoute = routeMap[operateType];
-      this.$store.commit('collect/setCurCollect', row);
+      // this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
         name: targetRoute,
         params,
