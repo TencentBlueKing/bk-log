@@ -165,9 +165,9 @@ export default {
 
     .expand-icon {
       position: absolute;
-      top: 12px;
+      top: 14px;
       right: 12px;
-      color: #979ba5;
+      color: #63656e;
       font-size: 22px;
       cursor: pointer;
       transition: transform .3s;

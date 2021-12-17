@@ -1,0 +1,91 @@
+{
+    "config": {
+        "outputs": [
+            {
+                "bk_biz_id": {{modify_flow.bk_biz_id}},
+                "fields": [],
+                "output_name": "format_signature",
+                "table_name": "{{modify_flow.table_name}}"
+            }
+        ],
+        "from_nodes": [
+            {
+                "id": {{modify_flow.group_by_node.node_id}},
+                "from_result_table_ids": [
+                    "{{modify_flow.group_by_node.result_table_id}}"
+                ]
+            },
+            {
+                "id": {{modify_flow.ignite_node.node_id}},
+                "from_result_table_ids": [
+                    "{{modify_flow.ignite_node.result_table_id}}"
+                ]
+            }
+        ],
+        "output_name": "format_signature",
+        "table_name": "{{modify_flow.table_name}}",
+        "name": "format_signature",
+        "bk_biz_id": {{modify_flow.bk_biz_id}},
+        "sql": "select a.event_time, if(b.event_time is null, a.event_time, b.event_time) as history_time, a.signature, a.sensitivity from {{modify_flow.group_by_node.result_table_id}} a LEFT join {{modify_flow.ignite_node.result_table_id}} b on a.signature = b.signature and a.sensitivity = b.sensitivity",
+        "window_type": "none",
+        "count_freq": 30,
+        "window_time": 10,
+        "waiting_time": 0,
+        "session_gap": 0,
+        "expired_time": 0,
+        "window_lateness": {
+            "allowed_lateness": false,
+            "lateness_time": 1,
+            "lateness_count_freq": 60
+        },
+        "data_correct": {
+            "is_open_correct": false,
+            "correct_configs": []
+        },
+        "from_result_table_ids": [
+            "{{modify_flow.group_by_node.result_table_id}}",
+            "{{modify_flow.ignite_node.result_table_id}}"
+        ],
+        "is_open_correct": false
+    },
+    "frontend_info": {
+        "x": 1332,
+        "y": 197
+    },
+    "from_links": [
+        {
+            "source": {
+                "node_id": {{modify_flow.group_by_node.node_id}},
+                "id": "{{modify_flow.group_by_node.id}}",
+                "arrow": "Left",
+                "x": 1005,
+                "y": 204
+            },
+            "target": {
+                "id": "{{modify_flow.id}}",
+                "arrow": "Left",
+                "x": 1332,
+                "y": 197,
+                "node_id": {{modify_flow.node_id}}
+            }
+        },
+        {
+            "source": {
+                "x": 1253,
+                "y": 415,
+                "id": "{{modify_flow.ignite_node.id}}",
+                "arrow": "Left",
+                "node_id": {{modify_flow.ignite_node.node_id}}
+            },
+            "target": {
+                "x": 1332,
+                "y": 197,
+                "id": "{{modify_flow.id}}",
+                "arrow": "Left",
+                "node_id": {{modify_flow.node_id}}
+            }
+        }
+    ],
+    "flow_id": "{{modify_flow.flow_id}}",
+    "node_id": "{{modify_flow.node_id}}"
+}

@@ -28,10 +28,53 @@
       @welcome="welcomePageData = $event"
       @auth="authPageInfo = $event"
     ></head-nav>
-    <div :class="['log-search-container', asIframe && 'as-iframe']" v-if="!pageLoading">
+    <div :class="['log-search-container', asIframe && 'as-iframe']">
       <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
       <welcome-page v-else-if="welcomePageData" :data="welcomePageData"></welcome-page>
-      <router-view v-else :key="routerKey"></router-view>
+      <!-- 导航改版 -->
+      <bk-navigation
+        v-if="menuList && menuList.length"
+        class="bk-log-navigation"
+        navigation-type="left-right"
+        head-height="0"
+        header-title=""
+        default-open
+        :theme-color="navThemeColor"
+        @toggle="handleToggle">
+        <template slot="menu">
+          <div class="biz-menu">
+            <biz-menu-select :is-expand="isExpand"></biz-menu-select>
+          </div>
+          <bk-navigation-menu
+            :item-default-bg-color="navThemeColor"
+            :default-active="activeManageNav.id">
+            <template v-for="groupItem in menuList">
+              <bk-navigation-menu-group
+                :key="groupItem.id"
+                :group-name="isExpand ? groupItem.name : groupItem.keyword">
+                <template v-for="navItem in groupItem.children">
+                  <bk-navigation-menu-item
+                    :data-test-id="`navBox_nav_${navItem.id}`"
+                    :key="navItem.id"
+                    :id="navItem.id"
+                    :icon="getMenuIcon(navItem)"
+                    @click="handleClickNavItem(navItem.id)">
+                    {{ isExpand ? navItem.name : '' }}
+                  </bk-navigation-menu-item>
+                </template>
+              </bk-navigation-menu-group>
+            </template>
+          </bk-navigation-menu>
+        </template>
+        <div class="navigation-content" v-if="!pageLoading">
+          <router-view class="manage-content" :key="routerKey"></router-view>
+        </div>
+      </bk-navigation>
+      <router-view v-else-if="!pageLoading" class="manage-content" :key="routerKey"></router-view>
+      <novice-guide
+        v-if="displayRetrieve"
+        :data="guideStep"
+        guide-page="default" />
     </div>
     <auth-dialog></auth-dialog>
     <LoginModal v-if="loginData" :login-data="loginData" />
@@ -39,12 +82,14 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 import headNav from '@/components/nav/head-nav';
 import LoginModal from '@/components/LoginModal';
 import WelcomePage from '@/components/common/welcome-page';
 import AuthPage from '@/components/common/auth-page';
 import AuthDialog from '@/components/common/auth-dialog';
+import BizMenuSelect from '@/components/BizMenuSelect.vue';
+import NoviceGuide from '@/components/novice-guide';
 import jsCookie from 'js-cookie';
 
 export default {
@@ -55,6 +100,8 @@ export default {
     AuthPage,
     AuthDialog,
     WelcomePage,
+    BizMenuSelect,
+    NoviceGuide,
   },
   data() {
     return {
@@ -62,13 +109,35 @@ export default {
       authPageInfo: null,
       welcomePageData: null,
       routerKey: 0,
+      navThemeColor: '#2c354d',
+      isExpand: true,
+      curGuideStep: 0,
     };
   },
   computed: {
+    ...mapState([
+      'topMenu',
+      'activeTopMenu',
+      'activeManageNav',
+      'userGuideData',
+    ]),
     ...mapGetters({
       pageLoading: 'pageLoading',
       asIframe: 'asIframe',
     }),
+    navActive() {
+      return '';
+    },
+    menuList() {
+      const list = this.topMenu.find(item => item.id === this.activeTopMenu.id)?.children;
+      return list;
+    },
+    displayRetrieve() {
+      return this.$store.state.retrieve.displayRetrieve;
+    },
+    guideStep() {
+      return this.userGuideData?.default || {};
+    },
   },
   created() {
     const platform = window.navigator.platform.toLowerCase();
@@ -95,9 +164,42 @@ export default {
         window.location.reload();
       }, 0);
     });
+
+    this.getUserGuide();
   },
   mounted() {
     this.$store.dispatch('getBkBizList');
+  },
+  methods: {
+    getMenuIcon(item) {
+      if (item.icon) {
+        return `bk-icon log-icon icon-${item.icon}`;
+      }
+
+      return 'bk-icon icon-home-shape';
+    },
+    handleClickNavItem(id) {
+      this.$router.push({
+        name: id,
+        query: {
+          projectId: window.localStorage.getItem('project_id'),
+        },
+      });
+      if (id === 'default-dashboard') {
+        this.routerKey = this.routerKey + 1;
+      }
+    },
+    handleToggle(val) {
+      this.isExpand = val;
+    },
+    getUserGuide() {
+      this.$http.request('meta/getUserGuide').then((res) => {
+        this.$store.commit('setUserGuideData', res.data);
+      })
+        .catch((e) => {
+          console.warn(e);
+        });
+    },
   },
 };
 </script>
@@ -237,6 +339,7 @@ export default {
     border-color: #ff5656;
   }
   // 导航
+  .bk-log-navigation.bk-navigation,
   .hack-king-navigation.bk-navigation {
     width: 100% !important;
     height: 100% !important;
@@ -258,11 +361,6 @@ export default {
         }
       }
       .bk-navigation-menu-group {
-        &:first-child {
-          .group-name-wrap {
-            padding-top: 12px;
-          }
-        }
         .group-name-wrap .group-name {
           margin-right: 0;
         }
@@ -273,6 +371,10 @@ export default {
     }
     .nav-slider-list {
       height: calc(100% - 56px) !important;
+    }
+    .biz-menu {
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(240,241,245,.16);
     }
   }
   // 表格单元 v-bk-overflow-tips
@@ -330,9 +432,9 @@ export default {
       display: none;
     }
     .tab-content {
-      height: calc(100% - 43px);
+      height: calc(100% - 50px);
       overflow: auto;
-      @include scroller($backgroundColor: #C4C6CC, $width: 8px);
+      @include scroller($backgroundColor: #C4C6CC, $width: 4px);
       padding: 20px;
       background-color: #FFF;
       border: 1px solid #DCDEE5;

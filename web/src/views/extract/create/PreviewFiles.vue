@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="content">
+  <div class="preview-file-content">
     <div class="flex-box">
       <bk-select
         v-model="previewIp"
@@ -56,7 +56,7 @@
     <div class="flex-box" v-bkloading="{ isLoading, opacity: .7, zIndex: 0 }">
       <bk-table
         ref="previewTable"
-        class="scroll-table"
+        class="preview-scroll-table"
         style="background-color: #fff;"
         :data="explorerList"
         :height="300"
@@ -265,46 +265,43 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
-  .content {
+<style lang="scss">
+.preview-file-content {
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  width: calc(100% - 140px);
+  max-width: 1000px;
+  min-height: 40px;
+  .flex-box {
     display: flex;
-    flex-flow: column;
-    justify-content: center;
-    width: calc(100% - 140px);
-    max-width: 1000px;
-    min-height: 40px;
-
-    .flex-box {
-      display: flex;
-      align-items: center;
-
-      .download-url-text {
-        color: #3a84ff;
-        cursor: pointer;
-
-        &:hover {
-          color: #699df4;
-        }
-
-        &:active {
-          color: #2761dd;
-        }
-
-        &.is-disabled {
-          color: #c4c6cc;
-          cursor: not-allowed;
-        }
+    align-items: center;
+    .download-url-text {
+      color: #3a84ff;
+      cursor: pointer;
+      &:hover {
+        color: #699df4;
+      }
+      &:active {
+        color: #2761dd;
+      }
+      &.is-disabled {
+        color: #c4c6cc;
+        cursor: not-allowed;
       }
     }
-
-    .table-head-text {
-      margin: 18px 0 8px;
-      font-size: 12px;
-    }
   }
-  .scroll-table {
-    /deep/ .bk-table-body-wrapper {
-      overflow-y: auto;
-    }
+  .table-head-text {
+    margin: 18px 0 8px;
+    font-size: 12px;
   }
+}
+.preview-scroll-table {
+  .bk-table-body-wrapper {
+    overflow-y: auto;
+  }
+  .cell {
+    display: flex !important;
+  }
+}
 </style>

@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div id="trace" v-bkloading="{ isLoading: basicLoading }">
+  <div id="trace" v-bkloading="{ isLoading: false }">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
     <top-nav v-show="authPageInfo === false" :menu="menu"></top-nav>
     <div v-show="authPageInfo === false" class="trace-container">
@@ -206,7 +206,9 @@
             :field-name="fieldName"
             :char-dot-data="charDotData"
             :initial-call="initialCall"
-            :chart-cut="chartCut === 'line' ? 'line' : 'consuming'"></chartView>
+            :initial-call-show="initialCallShow"
+            :chart-cut="chartCut === 'line' ? 'line' : 'consuming'"
+            @toggle-call-show="handleToggleCallShow"></chartView>
         </div>
         <div class="table-search" v-bkloading="{ isLoading: isTableLoading, zIndex: 1 }">
           <div class="log-switch">
@@ -267,6 +269,7 @@
         <div class="fixed-scroll-top-btn" v-show="isShowScrollTop" @click="scrollToTop">
             <i class="bk-icon icon-angle-up"></i>
         </div>
+        <TraceDetail :isShow.sync="showTraceDetail" :traceId="traceId" :indexSetName="indexSetName" />
     </div>
 </template>
 <script>
@@ -277,6 +280,7 @@ import { mapState } from 'vuex';
 import chartView from './chart-view.vue';
 import TimeFormatter from '@/components/common/time-formatter';
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
+import TraceDetail from '@/components/trace-detail';
 
 export default {
   name: 'trace-index',
@@ -286,6 +290,7 @@ export default {
     TableStatus,
     chartView,
     TimeFormatter,
+    TraceDetail,
   },
   mixins: [tableRowDeepViewMixin],
   data() {
@@ -302,7 +307,7 @@ export default {
       timeZone: '',
       basicLoading: false,
       isChartLoading: false,
-      isTableLoading: false,
+      isTableLoading: true,
       docCountList: {},
       searchData: {},
       messagetop: {
@@ -312,6 +317,7 @@ export default {
       },
       logAllJsonList: [],
       initialCall: false,
+      initialCallShow: false,
       Scatter: false,
       tableRowsWidth: {},
       moreTime: false,
@@ -455,6 +461,9 @@ export default {
         size: 20,
       },
       isSearchAllowed: null,
+      showTraceDetail: false,
+      traceId: '',
+      indexSetName: '',
     };
   },
   computed: {
@@ -573,13 +582,17 @@ export default {
     },
     handleCellClick(row, column) {
       if (column.label === 'traceID') {
-        const routeData = this.$router.resolve({
-          path: `/trace?indexId=${this.indexId}&traceId=${row.traceID}&startTime=${row.startTime}`,
-          query: {
-            projectId: this.projectId,
-          },
-        });
-        window.open(routeData.href, '_blank');
+        // const routeData = this.$router.resolve({
+        //   path: `/trace?indexId=${this.indexId}&traceId=${row.traceID}&startTime=${row.startTime}`,
+        //   query: {
+        //     projectId: this.projectId,
+        //   },
+        // });
+        // window.open(routeData.href, '_blank');
+        const option = this.indexSetList.find(item => item.index_set_id === this.indexId);
+        this.showTraceDetail = true;
+        this.traceId = row.traceID;
+        this.indexSetName = option.index_set_name;
       } else {
         this.$refs.logDetailTable.toggleRowExpansion(row);
       }
@@ -694,6 +707,7 @@ export default {
       if (this.isSearchAllowed === null) {
         try {
           this.basicLoading = true;
+          this.isTableLoading = true;
           const res = await this.$store.dispatch('checkAndGetData', paramData);
           if (res.isAllowed === false) {
             this.isSearchAllowed = false;
@@ -705,25 +719,30 @@ export default {
           return;
         } finally {
           this.basicLoading = false;
+          this.isTableLoading = false;
         }
       } else if (this.isSearchAllowed === false) { // 已知当前选择索引无权限
         try {
           this.basicLoading = true;
+          this.isTableLoading = true;
           const res = await this.$store.dispatch('getApplyData', paramData);
           this.$store.commit('updateAuthDialogData', res.data);
         } catch (err) {
           console.warn(err);
         } finally {
           this.basicLoading = false;
+          this.isTableLoading = false;
         }
         return;
       }
       this.searchDisabled = true;
+      this.isTableLoading = true;
       this.params.start_time = this.initDateTimeRange[0];
       this.params.end_time = this.initDateTimeRange[1];
       try {
         if (!this.totalFields.length) {
           this.basicLoading = true;
+          this.isTableLoading = true;
           const {
             totalFields,
             sortFields,
@@ -738,7 +757,7 @@ export default {
           this.traceData = traceData;
           // eslint-disable-next-line camelcase
           this.fieldName = this.fieldName ? this.fieldName : (traceData.charts[0]?.field_name || '');
-          await this.getDocCountList();
+          this.getDocCountList();
           this.basicLoading = false;
           // await this.requestDateHistogram(false)
         }
@@ -753,12 +772,17 @@ export default {
           }
         }
         delete this.params.fields;
-        await Promise.all([this.requestTableList(), this.requestDateHistogram(true)]);
+        const promisList = [this.requestTableList()];
+        if (this.initialCallShow) {
+          promisList.push(this.requestDateHistogram(true));
+        }
+        await Promise.all(promisList);
       } catch (e) {
         console.warn(e);
       } finally {
         this.searchDisabled = false;
         this.basicLoading = false;
+        this.isTableLoading = false;
       }
     },
     async requestTableList() {
@@ -773,7 +797,7 @@ export default {
       this.scrollToTop();
       try {
         this.isTableLoading = true;
-        this.params.size = 500;
+        this.params.size = 20;
         const res = await this.$http.request('trace/requestTableList', {
           params: { index_set_id: this.indexId },
           data: this.params,
@@ -787,7 +811,7 @@ export default {
             this.tableRowsWidth[key] = fieldsObj[key].max_length || 0;
           }
         }
-        this.totalCount = res.data.total > 500 ? 500 : res.data.total;
+        this.totalCount = res.data.total > 20 ? 20 : res.data.total;
         this.logAllTableList = res.data.list;
         if (res.data.list.length) {
           this.initPageConf(res.data.list);
@@ -948,10 +972,13 @@ export default {
       }
     },
     async handleCheckChartType(val) {
+      if (!this.initialCallShow) this.initialCallShow = true;
+
       const { chart_alias: chartCut, field_name: fieldName } = val;
       if (!this.chartData[fieldName]) {
         try {
           this.isChartLoading = true;
+          if (!this.initialCallShow) this.initialCall = false;
           if (chartCut === 'line') {
             this.params.fields = [{ term_filed: fieldName }];
           } else if (chartCut === 'consuming') {
@@ -975,13 +1002,21 @@ export default {
         } catch (e) {
           console.warn(e);
         } finally {
+          this.initialCall = true;
           setTimeout(() => {
+            this.isChartLoading = false;
             this.isChartLoading = false;
           }, 100);
         }
       } else {
         this.chartCut = chartCut;
         this.fieldName = fieldName;
+      }
+    },
+    handleToggleCallShow() {
+      this.initialCallShow = !this.initialCallShow;
+      if (this.initialCallShow && !this.chartData[this.fieldName]) {
+        this.requestDateHistogram(true);
       }
     },
   },
@@ -997,7 +1032,7 @@ export default {
     height: 100%;
     overflow-y: auto;
 
-    @include scroller(#ccc, 8px);
+    @include scroller(#ccc, 4px);
 
     .chart-view {
       position: relative;
@@ -1125,7 +1160,7 @@ export default {
       overflow-x: hidden;
       overflow-y: auto;
 
-      @include scroller(#ccc, 8px);
+      @include scroller(#ccc, 4px);
     }
 
     .log-switch {

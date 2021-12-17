@@ -22,7 +22,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
 
-
 META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 RESTORE_INDEX_SET_PREFIX = "restore_"
 
@@ -246,3 +245,15 @@ NODE_ATTR_PREFIX_BLACKLIST = [
     "ml.",
     "xpack.",
 ]
+
+BKDATA_ES_TYPE_MAP = {
+    "integer": "int",
+    "long": "long",
+    "keyword": "string",
+    "text": "text",
+    "double": "double",
+    "object": "text",
+    "nested": "text",
+}
+
+ETL_PARAMS = {"retain_original_text": True, "separator_regexp": "", "separator": ""}

@@ -58,6 +58,16 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
+        <bk-table-column
+          v-if="checkcFields('bk_data_id')"
+          :label="$t('dataSource.dataId')"
+          min-width="60">
+          <template slot-scope="props">
+            <span>
+              {{ props.row.bk_data_id || '--' }}
+            </span>
+          </template>
+        </bk-table-column>
         <bk-table-column :label="$t('dataSource.collector_config_name')" min-width="90">
           <template slot-scope="props">
             <span
@@ -248,41 +258,16 @@
               @click.stop="operateHandler(props.row, 'clean')">
               {{ $t('logClean.goToClean') }}
             </bk-button>
-            <!-- 查看详情 -->
+            <!-- 存储设置 -->
             <bk-button
               theme="primary"
               text
               class="king-button"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
-              @click="operateHandler(props.row, 'view')">
-              {{ $t('详情') }}
+              :disabled="!props.row.table_id"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              @click.stop="operateHandler(props.row, 'storage')">
+              {{ $t('logClean.storageSetting') }}
             </bk-button>
-            <!-- 启用/停用 -->
-            <!-- <bk-button
-              theme="primary"
-              text
-              class="king-button"
-              :disabled="!props.row.status ||
-                props.row.status === 'running' ||
-                props.row.status === 'prepare' ||
-                !collectProject"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-              @click.stop="operateHandler(props.row, props.row.is_active ? 'stop' : 'start' )">
-              {{ props.row.is_active ? $t('btn.block') : $t('btn.start') }}
-            </bk-button> -->
-            <!-- 删除 -->
-            <!-- <bk-button
-              theme="primary"
-              text
-              class="king-button"
-              :disabled="!props.row.status ||
-                props.row.status === 'running' ||
-                props.row.is_active ||
-                !collectProject"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-              @click.stop="operateHandler(props.row, 'delete')">
-              {{ $t('btn.delete') }}
-            </bk-button> -->
             <bk-dropdown-menu ref="dropdown" align="right">
               <i
                 class="bk-icon icon-more"
@@ -290,6 +275,16 @@
                 slot="dropdown-trigger">
               </i>
               <ul class="bk-dropdown-list" slot="dropdown-content">
+                <!-- 查看详情 -->
+                <li>
+                  <a
+                    href="javascript:;"
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
+                    @click="operateHandler(props.row, 'view')">
+                    {{ $t('详情') }}
+                  </a>
+                </li>
+
                 <li v-if="props.row.is_active">
                   <a
                     href="javascript:;"
@@ -363,6 +358,11 @@ export default {
   name: 'collection-item',
   data() {
     const settingFields = [
+      // 数据ID
+      {
+        id: 'bk_data_id',
+        label: this.$t('dataSource.dataId'),
+      },
       // 采集配置名称
       {
         id: 'collector_config_name',
@@ -438,7 +438,7 @@ export default {
       isAllowedCreate: null,
       columnSetting: {
         fields: settingFields,
-        selectedFields: settingFields.slice(0, 7),
+        selectedFields: settingFields.slice(1, 8),
       },
     };
   },
@@ -609,6 +609,7 @@ export default {
         field: 'collectField',
         search: 'retrieve',
         clean: 'clean-edit',
+        storage: 'collectStorage',
       };
       const targetRoute = routeMap[operateType];
       // 查看详情 - 如果处于未完成状态，应该跳转到编辑页面
@@ -617,7 +618,7 @@ export default {
           return this.operateHandler(row, 'edit');
         }
       }
-      if (targetRoute === 'manage-collection' || targetRoute === 'collectEdit' || targetRoute === 'collectField') {
+      if (['manage-collection', 'collectEdit', 'collectField', 'collectStorage'].includes(targetRoute)) {
         params.collectorId = row.collector_config_id;
       }
       if (operateType === 'status') {
@@ -653,7 +654,6 @@ export default {
      * @return {[type]}      [description]
      */
     handlePageChange(page) {
-      console.log('changepage');
       if (this.pagination.current !== page) {
         this.pagination.current = page;
         this.stopStatusPolling();

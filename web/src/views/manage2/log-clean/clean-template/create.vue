@@ -29,6 +29,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import stepField from '@/components/data-Access/step-field';
 
 export default {
@@ -40,9 +41,14 @@ export default {
       isSubmit: false,
     };
   },
+  computed: {
+    ...mapState({
+      showRouterLeaveTip: state => state.showRouterLeaveTip,
+    }),
+  },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
-    if (!this.isSubmit) {
+    if (!this.isSubmit && !this.showRouterLeaveTip) {
       this.$bkInfo({
         title: this.$t('pageLeaveTips'),
         confirmFn: () => {
@@ -68,7 +74,7 @@ export default {
     padding: 20px 24px;
     height: 100%;
     overflow: auto;
-    @include scroller($backgroundColor: #ADADAD, $width: 8px);
+    @include scroller($backgroundColor: #ADADAD, $width: 4px);
     .article {
       margin-bottom: 20px;
       border: 1px solid #dcdee5;

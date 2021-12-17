@@ -29,6 +29,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from apps.exceptions import BizNotExistError
 from apps.feature_toggle.handlers.toggle import feature_switch
+from apps.log_clustering.constants import PatternEnum, YearOnYearEnum
 from apps.log_databus.constants import EsSourceType
 from apps.log_search.exceptions import (
     SourceDuplicateException,
@@ -116,6 +117,9 @@ class GlobalConfig(models.Model):
         configs[GlobalTypeEnum.DATA_ENCODING.value] = EncodingsEnum.get_choices_list_dict()
         # ES日志来源类型
         configs[GlobalTypeEnum.ES_SOURCE_TYPE.value] = EsSourceType.get_choices_list_dict()
+        # 日志聚类
+        configs[GlobalTypeEnum.LOG_CLUSTERING_LEVEL.value] = PatternEnum.get_choices()
+        configs[GlobalTypeEnum.LOG_CLUSTERING_YEAR_ON_YEAR.value] = YearOnYearEnum.get_choices_list_dict()
         return configs
 
     class Meta:
@@ -809,3 +813,14 @@ class EmailTemplate(OperateRecordModel):
     class Meta:
         verbose_name = _("邮件模板")
         verbose_name_plural = _("43_邮件模板")
+
+
+class UserMetaConf(models.Model):
+    username = models.CharField(_("创建者"), max_length=32, default="")
+    conf = JSONField(_("用户meta配置"), default=dict)
+    type = models.CharField(_("数据类型"), max_length=64)
+
+    class Meta:
+        verbose_name = _("用户元配置")
+        verbose_name_plural = _("44_用户元配置")
+        unique_together = (("username", "type"),)

@@ -184,9 +184,11 @@ class TimeEnum(Enum):
 
 
 class CCInstanceType(ChoicesEnum):
+    BUSINESS = "biz"
     SET = "set"
     MODULE = "module"
     _choices_labels = (
+        (BUSINESS, _("业务")),
         (SET, _("集群")),
         (MODULE, _("模块")),
     )
@@ -269,6 +271,8 @@ class GlobalTypeEnum(ChoicesEnum):
     TIME_FIELD_TYPE = "time_field_type"
     TIME_FIELD_UNIT = "time_field_unit"
     ES_SOURCE_TYPE = "es_source_type"
+    LOG_CLUSTERING_LEVEL = "log_clustering_level"
+    LOG_CLUSTERING_YEAR_ON_YEAR = "log_clustering_level_year_on_year"
 
     _choices_labels = (
         (CATEGORY, _("数据分类")),
@@ -283,6 +287,8 @@ class GlobalTypeEnum(ChoicesEnum):
         (TIME_FIELD_TYPE, _("时间字段类型")),
         (TIME_FIELD_UNIT, _("时间字段单位")),
         (ES_SOURCE_TYPE, _("日志来源类型")),
+        (LOG_CLUSTERING_LEVEL, _("日志聚类敏感度")),
+        (LOG_CLUSTERING_YEAR_ON_YEAR, _("日志聚类同比配置")),
     )
 
 
@@ -946,3 +952,11 @@ CMDB_HOST_SEARCH_FIELDS = [
 CMDB_SET_INFO_FIELDS = ["bk_set_id", "bk_chn_name"]
 
 GET_SET_INFO_FILEDS_MAX_IDS_LEN = 500
+
+
+class UserMetaConfType(object):
+    """
+    用户元数据配置类型
+    """
+
+    USER_GUIDE = "user_guide"

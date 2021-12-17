@@ -17,7 +17,6 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import html
 import json
 import copy
 import hashlib
@@ -28,6 +27,9 @@ from django.conf import settings
 from requests.exceptions import ReadTimeout
 
 from apps.api.base import DataApiRetryClass
+from apps.log_clustering.models import ClusteringConfig
+from apps.log_databus.constants import EtlConfig
+from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import (
     LogIndexSet,
     LogIndexSetData,
@@ -79,6 +81,24 @@ from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
 max_len_dict = Dict[str, int]
 
 
+def fields_config(name: str, is_active: bool = False):
+    def decorator(func):
+        def func_decorator(*args, **kwargs):
+            config = {"name": name, "is_active": is_active}
+            result = func(*args, **kwargs)
+            if isinstance(result, tuple):
+                config["is_active"], config["extra"] = result
+                return config
+            if result is None:
+                return config
+            config["is_active"] = result
+            return config
+
+        return func_decorator
+
+    return decorator
+
+
 class SearchHandler(object):
     def __init__(self, index_set_id: int, search_dict: dict, pre_check_enable=True, can_highlight=True):
         self.search_dict: dict = search_dict
@@ -107,6 +127,7 @@ class SearchHandler(object):
         self.addition = copy.deepcopy(search_dict.get("addition", []))
         self.host_scopes = copy.deepcopy(search_dict.get("host_scopes", {}))
 
+        self.use_time_range = search_dict.get("use_time_range", True)
         # 构建时间字段
         self.time_field, self.time_field_type, self.time_field_unit = self._init_time_field(
             index_set_id, self.scenario_id
@@ -218,30 +239,87 @@ class SearchHandler(object):
             "time_field": self.time_field,
             "time_field_type": self.time_field_type,
             "time_field_unit": self.time_field_unit,
+            "config": [],
         }
+        for fields_config in [
+            self.bcs_web_console(field_result_list),
+            self.bk_log_to_trace(),
+            self.analyze_fields(field_result),
+            self.bkmonitor(field_result_list),
+            self.async_export(field_result),
+            self.ip_topo_switch(),
+            self.clustering_config(),
+            self.clean_config(),
+        ]:
+            result_dict["config"].append(fields_config)
 
-        if self._enable_bcs_manage():
-            if (
-                LogIndexSet.objects.get(index_set_id=self.index_set_id).source_app_code == BK_BCS_APP_CODE
-                and "cluster" in field_result_list
-                and "container_id" in field_result_list
-            ):
-                bcs_web_console_usable = True
-            else:
-                bcs_web_console_usable = False
-            result_dict.update({"bcs_web_console_usable": bcs_web_console_usable})
-        if FeatureToggleObject.switch("bk_log_to_trace"):
-            self.bk_log_to_trace(result_dict)
-        result_dict.update(MappingHandlers.analyze_fields(field_result))
-        ip_topo_switch = MappingHandlers.init_ip_topo_switch(self.index_set_id)
-        result_dict["bkmonitor_url"] = ""
-        if "ip" in field_result_list or "serverIp" in field_result_list:
-            result_dict["bkmonitor_url"] = settings.MONITOR_URL
-        result_dict.update({"ip_topo_switch": ip_topo_switch})
-        result_dict.update(MappingHandlers.async_export_fields(field_result, self.scenario_id))
         return result_dict
 
-    def bk_log_to_trace(self, result_dict):
+    @fields_config("async_export")
+    def async_export(self, field_result):
+        result = MappingHandlers.async_export_fields(field_result, self.scenario_id)
+        if result["async_export_usable"]:
+            return True, {"fields": result["async_export_fields"]}
+        return False, {"usable_reason": result["async_export_usable_reason"]}
+
+    @fields_config("bkmonitor")
+    def bkmonitor(self, field_result_list):
+        if "ip" in field_result_list or "serverIp" in field_result_list:
+            return True
+
+    @fields_config("ip_topo_switch")
+    def ip_topo_switch(self):
+        return MappingHandlers.init_ip_topo_switch(self.index_set_id)
+
+    @fields_config("clustering_config")
+    def clustering_config(self):
+        """
+        判断聚类配置
+        """
+        log_index_set = LogIndexSet.objects.get(index_set_id=self.index_set_id)
+        clustering_config = ClusteringConfig.objects.filter(index_set_id=self.index_set_id).first()
+        if clustering_config:
+            return True, {
+                "collector_config_id": log_index_set.collector_config_id,
+                "signature_switch": clustering_config.signature_enable,
+                "clustering_field": clustering_config.clustering_fields,
+            }
+        return False, {"collector_config_id": None, "signature_switch": False, "clustering_field": None}
+
+    @fields_config("clean_config")
+    def clean_config(self):
+        """
+        获取清洗配置
+        """
+        log_index_set = LogIndexSet.objects.get(index_set_id=self.index_set_id)
+        if not log_index_set.collector_config_id:
+            return False, {"collector_config_id": None}
+        collector_config = CollectorConfig.objects.get(collector_config_id=log_index_set.collector_config_id)
+        return collector_config.etl_config != EtlConfig.BK_LOG_TEXT, {
+            "collector_config_id": log_index_set.collector_config_id
+        }
+
+    @fields_config("context_and_realtime")
+    def analyze_fields(self, field_result):
+        result = MappingHandlers.analyze_fields(field_result)
+        if result["context_search_usable"]:
+            return True, {"reason": ""}
+        return False, {"reason": result["usable_reason"]}
+
+    @fields_config("bcs_web_console")
+    def bcs_web_console(self, field_result_list):
+        if not self._enable_bcs_manage():
+            return False
+        if (
+            LogIndexSet.objects.get(index_set_id=self.index_set_id).source_app_code == BK_BCS_APP_CODE
+            and "cluster" in field_result_list
+            and "container_id" in field_result_list
+        ):
+            return True
+        return False
+
+    @fields_config("trace")
+    def bk_log_to_trace(self):
         """
         [{
             "log_config": [{
@@ -253,20 +331,23 @@ class SearchHandler(object):
             }
         }]
         """
+        if not FeatureToggleObject.switch("bk_log_to_trace"):
+            return False
         toggle = FeatureToggleObject.toggle("bk_log_to_trace")
         feature_config = toggle.feature_config
         if isinstance(feature_config, dict):
             feature_config = [feature_config]
 
         if not feature_config:
-            return
+            return False
+
         for config in feature_config:
             log_config = config.get("log_config", [])
             target_config = [c for c in log_config if str(c["index_set_id"]) == str(self.index_set_id)]
             if not target_config:
                 continue
             target_config, *_ = target_config
-            result_dict.update({"trace_config": {**config.get("trace_config"), "field": target_config["field"]}})
+            return True, {**config.get("trace_config"), "field": target_config["field"]}
 
     def search(self, search_type="default"):
 
@@ -296,6 +377,7 @@ class SearchHandler(object):
                 "size": once_size,
                 "aggs": self.aggs,
                 "highlight": self.highlight,
+                "use_time_range": self.use_time_range,
                 "time_zone": self.time_zone,
                 "time_range": self.time_range,
                 "time_field": self.time_field,
@@ -573,7 +655,7 @@ class SearchHandler(object):
         key_word = history["params"].get("keyword", "")
         if key_word is None:
             key_word = ""
-        query_string = "keyword:" + key_word
+        query_string = key_word
         # IP快选、过滤条件
         host_scopes = history["params"].get("host_scopes", {})
 
@@ -1021,13 +1103,11 @@ class SearchHandler(object):
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})
-            log = {k: self.xss_safe(v) for k, v in log.items()}
             if "highlight" not in hit:
                 log_list.append(log)
                 continue
             for key in hit["highlight"]:
                 log[key] = "".join(hit["highlight"][key])
-                log[key] = self.xss_safe(log[key])
             log_list.append(log)
 
         result.update(
@@ -1042,13 +1122,6 @@ class SearchHandler(object):
         agg_dict = result_dict.get("aggregations", {})
         result.update({"aggs": agg_dict})
         return result
-
-    @staticmethod
-    def xss_safe(value):
-        if not isinstance(value, str):
-            return value
-        value = html.escape(value)
-        return value.replace("&lt;mark&gt;", "<mark>").replace("&lt;/mark&gt;", "</mark>")
 
     def _analyze_field_length(self, log_list: List[Dict[str, Any]]):
         for item in log_list:

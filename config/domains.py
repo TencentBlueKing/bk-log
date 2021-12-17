@@ -51,6 +51,12 @@ API_ROOTS = [
     "CMSI_APIGATEWAY_ROOT_V2",
     # JOB
     "JOB_APIGATEWAY_ROOT_V2",
+    # AIOPS
+    "AIOPS_APIGATEWAY_ROOT",
+    # DATAFLOW
+    "DATAFLOW_APIGATEWAY_ROOT",
+    # AIOPS modules
+    "AIOPS_MODEL_APIGATEWAY_ROOT",
 ]
 
 env_domains = load_domains(settings)

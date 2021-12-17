@@ -88,10 +88,36 @@
         </div>
       </div>
     </bk-popover>
+    <bk-popover
+      v-if="isAiopsToggle"
+      trigger="click"
+      placement="bottom-end"
+      theme="light bk-select-dropdown"
+      animation="slide-toggle"
+      :offset="0"
+      :distance="15">
+      <slot name="trigger">
+        <div class="more-operation">
+          <i class="bk-icon icon-more"></i>
+        </div>
+      </slot>
+      <div slot="content" class="retrieve-setting-container">
+        <ul class="list-menu" ref="menu">
+          <li
+            v-for="menu in settingMenuList"
+            class="list-menu-item"
+            :key="menu.id"
+            @click="handleMenuClick(menu.id)">
+            {{ menu.name }}
+          </li>
+        </ul>
+      </div>
+    </bk-popover>
   </div>
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import SelectDate from '../condition-comp/SelectDate';
 import FavoriteCard from '../condition-comp/FavoriteCard';
 
@@ -166,14 +192,28 @@ export default {
       }, {
         id: 86400000, name: '1d',
       }],
+      settingMenuList: [
+        // { id: 'index', name: '全文索引' },
+        { id: 'extract', name: '字段提取' },
+        { id: 'clustering', name: '日志聚类' },
+      ],
     };
   },
   computed: {
+    ...mapState({
+      bkBizId: state => state.bkBizId,
+    }),
     refreshTimeText() {
       return this.refreshTimeList.find(item => item.id === this.refreshTimeout).name;
     },
     isAutoRefresh() {
       return this.refreshTimeout !== 0;
+    },
+    isAiopsToggle() { // 日志聚类总开关
+      if (window.FEATURE_TOGGLE.bkdata_aiops_toggle !== 'on') return false;
+      const aiopsBizList = window.FEATURE_TOGGLE_WHITE_LIST?.bkdata_aiops_toggle;
+
+      return aiopsBizList ? aiopsBizList.some(item => item.toString() === this.bkBizId) : false;
     },
   },
   mounted() {
@@ -228,6 +268,9 @@ export default {
     handleVisibilityChange() { // 窗口隐藏时取消轮询，恢复时恢复轮询（原来是自动刷新就恢复自动刷新，原来不刷新就不会刷新）
       document.hidden ? clearTimeout(this.refreshTimer) : this.setRefreshTime();
     },
+    handleMenuClick(val) {
+      this.$emit('settingMenuClick', val);
+    },
   },
 };
 </script>
@@ -238,7 +281,7 @@ export default {
     display: flex;
     // align-items: center;
     width: 100%;
-    height: 48px;
+    height: 52px;
     color: #63656e;
     background: #fff;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
@@ -269,16 +312,15 @@ export default {
     .auto-refresh-trigger {
       display: flex;
       align-items: center;
-      height: 48px;
+      height: 52px;
       white-space: nowrap;
       line-height: 22px;
-      border-left: 1px solid #f0f1f5;
       cursor: pointer;
 
       .log-icon {
         padding: 0 5px 0 17px;
         font-size: 14px;
-        color: #979ba5;
+        color: #63656e;;
       }
 
       .active-text {
@@ -288,7 +330,7 @@ export default {
       .icon-angle-down {
         margin: 0 10px;
         font-size: 22px;
-        color: #979ba5;
+        color: #63656e;
         transition: transform .3s;
 
         &.active {
@@ -300,6 +342,49 @@ export default {
       &:hover > span {
         color: #3a84ff;
       }
+
+      &::before {
+        content: "";
+        width: 1px;
+        height: 14px;
+        background-color: #dcdee5;
+        position: absolute;
+        left: 0;
+        top: 20px;
+      }
+    }
+    .more-operation {
+      display: flex;
+      align-items: center;
+      padding: 0 16px 0 12px;
+      height: 52px;
+      white-space: nowrap;
+      line-height: 22px;
+      cursor: pointer;
+      .icon-more {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 30px;
+        height: 30px;
+        overflow: hidden;
+        font-size: 18px;
+        &:hover {
+          color: #0083ff;
+          cursor: pointer;
+          border-radius: 50%;
+          background-color: #e1ecff;
+        }
+      }
+      &::before {
+        content: "";
+        width: 1px;
+        height: 14px;
+        background-color: #dcdee5;
+        position: absolute;
+        left: 0;
+        top: 20px;
+      }
     }
   }
 
@@ -308,6 +393,28 @@ export default {
 
     .bk-options .bk-option-content {
       padding: 0 13px;
+    }
+  }
+
+  .retrieve-setting-container {
+    .list-menu {
+      display: flex;
+      flex-direction: column;
+      padding: 6px 0;
+      background-color: white;
+      color: #63656e;
+      &-item {
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        height: 32px;
+        min-width: 150px;
+        &:hover {
+          cursor: pointer;
+          background-color: #eaf3ff;
+          color: #3a84ff;
+        }
+      }
     }
   }
 </style>

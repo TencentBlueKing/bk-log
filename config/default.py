@@ -47,6 +47,7 @@ INSTALLED_APPS += (
     "django_prometheus",
     "rest_framework",
     "iam.contrib.iam_migration",
+    "django_dbconn_retry",
     "apps.iam",
     "apps.api",
     "apps.log_search",
@@ -69,6 +70,7 @@ INSTALLED_APPS += (
     "django_celery_results",
     "apps.log_extract",
     "apps.feature_toggle",
+    "apps.log_clustering",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
@@ -82,6 +84,7 @@ else:
 # 这里是默认的中间件，大部分情况下，不需要改动
 # 如果你已经了解每个默认 MIDDLEWARE 的作用，确实需要去掉某些 MIDDLEWARE，或者改动先后顺序，请去掉下面的注释，然后修改
 MIDDLEWARE = (
+    "django.middleware.gzip.GZipMiddleware",
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
@@ -160,12 +163,14 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.project",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
+    "apps.log_search.tasks.no_data",
     "apps.log_databus.tasks.collector",
     "apps.log_databus.tasks.itsm",
     "apps.log_databus.tasks.bkdata",
     "apps.log_databus.tasks.archive",
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
+    "apps.log_clustering.tasks.sync_pattern",
 )
 
 # load logging settings
@@ -185,7 +190,6 @@ if RUN_VER != "open":
             ),
         }
         LOGGING["formatters"]["verbose"] = logging_format
-
 
 BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
 
@@ -264,8 +268,8 @@ OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 1000))
 # ===============================================================================
 BK_PAAS_HOST = os.environ.get("BK_PAAS_HOST", "")
 # ESB API调用前辍
-PAAS_API_HOST = BK_PAAS_HOST
 BK_PAAS_INNER_HOST = os.environ.get("BK_PAAS_INNER_HOST", BK_PAAS_HOST)
+PAAS_API_HOST = BK_PAAS_INNER_HOST
 BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
 BKDATA_URL = BK_PAAS_HOST
 MONITOR_URL = ""
@@ -434,6 +438,7 @@ FEATURE_TOGGLE = {
     "collect_itsm": os.environ.get("BKAPP_COLLECT_ITSM", "off"),
     # 自定义指标上报
     "monitor_report": os.environ.get("BKAPP_MONITOR_REPORT", "on"),
+    "bklog_es_config": "on",
 }
 
 SAAS_MONITOR = "bk_monitorv3"
@@ -448,11 +453,19 @@ MENUS = [
         "feature": "on",
         "icon": "",
         "children": [
-            {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": ""},
-            {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": ""},
+            {
+                "id": "trace_search",
+                "name": _("调用链"),
+                "feature": "on",
+                "icon": "",
+                "keyword": _("trace"),
+                "children": [
+                    {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": "liebiao"},
+                    {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": "document"},
+                ],
+            }
         ],
     },
-    {"id": "extract", "name": _("日志提取"), "feature": "on", "icon": ""},
     {"id": "monitor", "name": _("监控策略"), "feature": "on", "icon": ""},
     {
         "id": "dashboard",
@@ -460,9 +473,19 @@ MENUS = [
         "feature": "on" if GRAFANA["HOST"] else "off",
         "icon": "",
         "children": [
-            {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": ""},
-            {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": ""},
-            {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": ""},
+            {
+                "id": "dashboard_manage",
+                "name": _("仪表盘"),
+                "feature": "on",
+                "icon": "",
+                "keyword": _("仪表"),
+                "children": [
+                    {"id": "default_dashboard", "name": _("默认仪表盘"), "feature": "on", "icon": "block-shape"},
+                    {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": "plus-circle-shape"},
+                    {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": "folder-fill"},
+                    {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": "topping-fill"},
+                ],
+            }
         ],
     },
     {
@@ -559,6 +582,7 @@ MENUS = [
                 "feature": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
                 "children": [
                     {"id": "manage_log_extract", "name": _("日志提取配置"), "feature": "on", "icon": "cc-log"},
+                    {"id": "log_extract_task", "name": _("日志提取任务"), "feature": "on", "icon": "audit-fill"},
                     {"id": "extract_link_manage", "name": _("提取链路管理"), "feature": "on", "icon": "assembly-line-fill"},
                 ],
             },
@@ -872,8 +896,11 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
 以下为框架代码 请勿修改
 """
 IS_CELERY = False
+IS_CELERY_BEAT = False
 if "celery" in sys.argv:
     IS_CELERY = True
+    if "beat" in sys.argv:
+        IS_CELERY_BEAT = True
 
 # celery settings
 if IS_USE_CELERY:

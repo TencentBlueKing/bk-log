@@ -123,10 +123,11 @@ else:
 
     def add_esb_info_before_request_for_bkdata_token(params):  # pylint: disable=function-name-too-long
         req = get_request()
-        auth_info = EsquerySearchPermissions.get_auth_info(req)
-        if auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
-            # 在白名单内的 app 使用超级权限
-            params = update_bkdata_auth_info(params)
+        if settings.BKAPP_IS_BKLOG_API:
+            auth_info = EsquerySearchPermissions.get_auth_info(req)
+            if auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
+                # 在白名单内的 app 使用超级权限
+                params = update_bkdata_auth_info(params)
 
         params = add_esb_info_before_request(params)
         params.setdefault("bkdata_authentication_method", "user")

@@ -114,7 +114,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 import { stepsConf, finishRefer } from './step';
 import AuthPage from '@/components/common/auth-page';
 import stepAdd from './step-add';
@@ -152,6 +152,9 @@ export default {
     };
   },
   computed: {
+    ...mapState({
+      showRouterLeaveTip: state => state.showRouterLeaveTip,
+    }),
     ...mapGetters('collect', ['curCollect']),
     ...mapGetters(['bkBizId']),
     isCommon() {
@@ -183,7 +186,7 @@ export default {
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
-    if (!this.isSubmit && !this.isSwitch) {
+    if (!this.isSubmit && !this.isSwitch && !this.showRouterLeaveTip) {
       this.$bkInfo({
         title: this.$t('pageLeaveTips'),
         confirmFn: () => {
@@ -246,13 +249,13 @@ export default {
             } else if (this.operateType === 'field') {
               this.curStep = 4;
             } else if (this.operateType === 'storage') {
-              // this.curStep = 5;
+              this.curStep = 5;
             }
             // 审批通过后编辑直接进入第三步字段提取，否则进入第二步容量评估
           } else if (this.operateType === 'field') {
             this.curStep = 3;
           } else if (this.operateType === 'storage') {
-            // this.curStep  = 4;
+            this.curStep  = 4;
           }
         } catch (e) {
           console.warn(e);

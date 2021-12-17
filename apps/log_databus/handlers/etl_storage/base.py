@@ -23,11 +23,12 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.module_loading import import_string
 from django.conf import settings
 
+from apps.log_databus.utils.es_config import get_es_config
 from apps.utils import is_match_variate
 from apps.api import TransferApi
 from apps.exceptions import ValidationError
 from apps.log_search.constants import FieldBuiltInEnum, FieldDataTypeEnum
-from apps.log_databus.constants import EtlConfig, FIELD_TEMPLATE
+from apps.log_databus.constants import EtlConfig, FIELD_TEMPLATE, BKDATA_ES_TYPE_MAP
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.exceptions import EtlParseTimeFieldException, HotColdCheckException
@@ -79,6 +80,9 @@ class EtlStorage(object):
         """
         raise NotImplementedError("功能暂未实现")
 
+    def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
+        raise NotImplementedError("功能暂未实现")
+
     def get_result_table_config(self, fields, etl_params, built_in_config, es_version="5.X"):
         """
         配置清洗入库策略，需兼容新增、编辑
@@ -91,6 +95,7 @@ class EtlStorage(object):
         """
         # field_list
         field_list = built_in_config.get("fields", [])
+        etl_flat = etl_params.get("etl_flat", False)
 
         # 是否保留原文
         if etl_params.get("retain_original_text"):
@@ -146,8 +151,9 @@ class EtlStorage(object):
             # ES_DOC_VALUES
             field_option["es_doc_values"] = field["is_dimension"]
 
-            # REAL_PATH
-            field_option["real_path"] = f"{self.separator_node_name}.{source_field}"
+            if not etl_flat:
+                # REAL_PATH
+                field_option["real_path"] = f"{self.separator_node_name}.{source_field}"
 
             # 时间字段处理
             if field["is_time"]:
@@ -198,23 +204,23 @@ class EtlStorage(object):
         :param es_version: es
         :param hot_warm_config: 冷热数据配置
         """
-
+        es_config = get_es_config(collector_config.bk_biz_id)
         # 时间格式
-        date_format = settings.ES_DATE_FORMAT
+        date_format = es_config["ES_DATE_FORMAT"]
         # ES-分片数
         if not collector_config.storage_shards_nums:
-            collector_config.storage_shards_nums = settings.ES_SHARDS
+            collector_config.storage_shards_nums = es_config["ES_SHARDS"]
 
         # ES-副本数
         collector_config.storage_replies = storage_replies
 
         # 需要切分的大小阈值，单位（GB）
         if not collector_config.storage_shards_size:
-            collector_config.storage_shards_size = settings.ES_SHARDS_SIZE
+            collector_config.storage_shards_size = es_config["ES_SHARDS_SIZE"]
 
         slice_size = collector_config.storage_shards_nums * collector_config.storage_shards_size
         # index分片时间间隔，单位（分钟）
-        slice_gap = settings.ES_SLICE_GAP
+        slice_gap = es_config["ES_SLICE_GAP"]
 
         # ES兼容—mapping设置
         param_mapping = {
@@ -293,16 +299,17 @@ class EtlStorage(object):
         )
         built_in_config = collector_scenario.get_built_in_config(es_version)
         result_table_config = self.get_result_table_config(fields, etl_params, built_in_config, es_version=es_version)
+
         params.update(result_table_config)
 
         # 字段mapping优化
         for field in params["field_list"]:
             # 如果datetype不支持doc_values，则不设置doc_values，避免meta判断类型不一致创建新的index
-            if "es_doc_values" in field["option"]:
+            if "es_doc_values" in field.get("option", {}):
                 if field["option"]["es_doc_values"] or field["option"]["es_type"] in ["date", "text"]:
                     del field["option"]["es_doc_values"]
             # 移除计分
-            if "es_type" in field["option"] and field["option"]["es_type"] in ["text"]:
+            if "es_type" in field.get("option", {}) and field["option"]["es_type"] in ["text"]:
                 field["option"]["es_norms"] = False
 
         # 时间默认为维度
@@ -361,10 +368,16 @@ class EtlStorage(object):
             raise EtlParseTimeFieldException()
         time_field = copy.deepcopy(time_fields[0])
 
+        # log clustering fields
+        log_clustering_fields = {field["field_name"] for field in CollectorScenario.log_clustering_fields()}
         for field in result_table_config["field_list"]:
             # 判断是不是标准字段
             if not field.get("is_built_in", False):
                 field["is_built_in"] = True if field["field_name"].lower() in built_in_fields else False
+
+            # 聚类保留字段
+            if field["field_name"] in log_clustering_fields:
+                continue
 
             # 如果有指定别名，则需要调转位置(field_name：ES入库的字段名称；alias_name：数据源的字段名称)
             field_option = field.get("option", {})
@@ -423,3 +436,36 @@ class EtlStorage(object):
 
         collector_config["fields"] = sorted(field_list, key=lambda x: x.get("option", {}).get("field_index", 0))
         return collector_config
+
+    def _to_bkdata_assign(self, field):
+        key = field.get("alias_name")
+        if not key:
+            key = field.get("field_name")
+        return {
+            "key": key,
+            "assign_to": key,
+            "type": BKDATA_ES_TYPE_MAP.get(field.get("option").get("es_type"), "string"),
+        }
+
+    def _to_bkdata_conf(self, time_field):
+        return {
+            "output_field_name": "timestamp",
+            "time_format": time_field["option"]["time_format"],
+            "timezone": time_field["option"]["time_zone"],
+            "encoding": "UTF-8",
+            "timestamp_len": 0,
+            "time_field_name": time_field.get("alias_name"),
+        }
+
+    def _get_bkdata_default_fields(self, built_in_fields, time_field):
+        result = [
+            self._to_bkdata_assign(built_in_field)
+            for built_in_field in built_in_fields
+            if not built_in_field.get("flat_field", False)
+        ]
+        if not time_field.get("option", {}).get("real_path"):
+            result.append(self._to_bkdata_assign(time_field))
+        result.append(
+            self._to_bkdata_assign({"field_name": "time", "alias_name": "time", "option": {"es_type": "long"}})
+        )
+        return result

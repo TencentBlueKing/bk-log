@@ -108,6 +108,8 @@ export default {
         'clean-edit': this.$t('logClean.编辑清洗'),
         'clean-template-create': this.$t('新建') + this.$t('logClean.清洗模板'),
         'clean-template-edit': this.$t('编辑') + this.$t('logClean.清洗模板'),
+        'extract-create': this.$t('新建') + this.$t('日志提取任务'),
+        'extract-clone': this.$t('克隆') + this.$t('日志提取任务'),
       };
       return map[this.$route.name];
     },

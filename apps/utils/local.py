@@ -78,6 +78,10 @@ def get_request_username():
     return username
 
 
+def set_request_username(username):
+    set_local_param("request.username", username)
+
+
 def get_request_app_code():
     """
     获取线程请求中的 APP_CODE

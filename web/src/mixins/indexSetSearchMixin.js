@@ -77,8 +77,8 @@ export default {
       // eslint-disable-next-line camelcase
       if (time_range === 'customized') {
         return {
-          startTimeStamp: Date.parse(this.retrieveParams.start_time),
-          endTimeStamp: Date.parse(this.retrieveParams.end_time),
+          startTimeStamp: new Date(this.retrieveParams.start_time.replace(/-/g, '/')).getTime(),
+          endTimeStamp: new Date(this.retrieveParams.end_time.replace(/-/g, '/')).getTime(),
         };
       }
 

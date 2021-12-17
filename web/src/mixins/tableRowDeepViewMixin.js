@@ -31,14 +31,14 @@ export default {
   },
   methods: {
     /**
-         * 获取 row[key] 内容
-         * @example return row.a.b || row['a.b']
-         * @param {Object} row
-         * @param {String} key
-         * @param {String} fieldType
-         * @param {Boolean} isFormatDate
-         * @return {String|Number}
-         */
+     * 获取 row[key] 内容
+     * @example return row.a.b || row['a.b']
+     * @param {Object} row
+     * @param {String} key
+     * @param {String} fieldType
+     * @param {Boolean} isFormatDate
+     * @return {String|Number}
+     */
     tableRowDeepView(row, key, fieldType, isFormatDate = this.isFormatDate) {
       const keyArr = key.split('.');
       let data;
