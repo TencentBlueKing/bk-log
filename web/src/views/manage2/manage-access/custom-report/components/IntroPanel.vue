@@ -23,7 +23,7 @@
 <template>
   <div class="intro-panel">
     <div :class="`right-window ${isOpenWindow ? 'window-active' : ''}`">
-      <div class="create-btn details" @click="handleActiveDetails(true)">
+      <div class="create-btn details" @click="handleActiveDetails(null)">
         <span class="bk-icon icon-text-file" :style="`color:${isOpenWindow ? '#3A84FF;' : ''}`"></span>
       </div>
       <div class="top-title">
@@ -81,7 +81,7 @@ export default {
       return str;
     },
     handleActiveDetails(state) {
-      this.$emit('handleActiveDetails', state);
+      this.$emit('handleActiveDetails', state ? !!state : !this.isOpenWindow);
     },
   },
 };
