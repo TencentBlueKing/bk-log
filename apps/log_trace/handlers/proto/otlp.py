@@ -388,6 +388,5 @@ class OtlpTrace(Proto):
             "keyword": "*",
             "time_range": "customized",
         }
-
         result = SearchHandlerEsquery(index_set_id, search_dict).search()
         return self._transform_to_jaeger(result.get("list", []))

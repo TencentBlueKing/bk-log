@@ -20,60 +20,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-import * as userInfo from './userInfo';
-import * as example from './example';
-import * as retrieve from './retrieve';
-import * as source from './source';
-import * as indexSet from './indexSet';
-import * as meta from './meta';
-import * as monitor from './monitor';
-import * as auth from './auth';
-import * as plugins from './plugins';
-import * as resultTables from './resultTables';
-import * as biz from './biz';
-import * as collect from './collect';
-import * as particulars from './particulars';
-import * as migrate from './migrate';
-import * as traceDetail from './traceDetail';
-import * as trace from './trace';
-import * as extract from './extract';
-import * as extractManage from './extractManage';
-import * as linkConfiguration from './linkConfiguration';
-import * as clean from './clean';
-import * as archive from './archive';
-import * as logClustering from './logClustering';
-import * as custom from './custom';
-
-const getMyProjectList = {
-  url: '/meta/projects/mine/',
-  method: 'get',
+const createCustom = {
+  url: '/databus/collectors/custom_create/',
+  method: 'post',
 };
 
-export default {
-  userInfo,
-  example,
-  retrieve,
-  project: {
-    getMyProjectList,
-  },
-  indexSet,
-  source,
-  meta,
-  monitor,
-  auth,
-  plugins,
-  resultTables,
-  biz,
-  particulars,
-  collect,
-  migrate,
-  traceDetail,
-  trace,
-  extract,
-  extractManage,
-  linkConfiguration,
-  clean,
-  archive,
-  logClustering,
-  custom,
+const setCustom = {
+  url: '/databus/collectors/:collector_config_id/custom_update/',
+  method: 'post',
+};
+
+export {
+  createCustom,
+  setCustom,
 };

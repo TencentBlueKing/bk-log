@@ -32,6 +32,7 @@ from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
+from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.utils.thread import MultiExecuteFunc
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import ResourceEnum, Permission
@@ -73,7 +74,12 @@ from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.models import CollectorConfig, CleanStash
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.constants import GlobalCategoriesEnum, CMDB_HOST_SEARCH_FIELDS
+from apps.log_search.constants import (
+    GlobalCategoriesEnum,
+    CMDB_HOST_SEARCH_FIELDS,
+    CollectorScenarioEnum,
+    CustomTypeEnum,
+)
 from apps.models import model_to_dict
 from apps.log_databus.handlers.kafka import KafkaConsumerHandle
 from apps.log_databus.constants import EtlConfig
@@ -189,6 +195,7 @@ class CollectorHandler(object):
     def set_categorie_name(self, collector_config, context):
         # 分类名称
         collector_config["category_name"] = GlobalCategoriesEnum.get_display(collector_config["category_id"])
+        collector_config["custom_name"] = CustomTypeEnum.get_choice_label(collector_config["custom_type"])
         return collector_config
 
     def complement_metadata_info(self, collector_config, context):
@@ -310,6 +317,7 @@ class CollectorHandler(object):
                 _data["table_id"] = table_id
             # 分类名
             _data["category_name"] = GlobalCategoriesEnum.get_display(_data["category_id"])
+            _data["custom_name"] = CustomTypeEnum.get_choice_label(_data["custom_type"])
 
             # 时间处理
             _data["created_at"] = (
@@ -678,6 +686,8 @@ class CollectorHandler(object):
         return True
 
     def _itsm_start_judge(self):
+        if self.data.collector_scenario_id == CollectorScenarioEnum.CUSTOM.value:
+            return
         if not self.data.itsm_has_success() and FeatureToggleObject.switch(name=FEATURE_COLLECTOR_ITSM):
             raise CollectNotSuccessNotCanStart
 
@@ -1632,3 +1642,151 @@ class CollectorHandler(object):
             }
             for collector in CollectorConfig.objects.filter(bk_biz_id=bk_biz_id)
         ]
+
+    def custom_create(
+        self,
+        bk_biz_id=None,
+        collector_config_name=None,
+        collector_config_name_en=None,
+        data_link_id=None,
+        custom_type=None,
+        category_id=None,
+        description=None,
+        storage_cluster_id=None,
+        retention=7,
+        allocation_min_days=0,
+        storage_replies=1,
+    ):
+        collector_config_params = {
+            "bk_biz_id": bk_biz_id,
+            "collector_config_name": collector_config_name,
+            "collector_config_name_en": collector_config_name_en,
+            "collector_scenario_id": CollectorScenarioEnum.CUSTOM.value,
+            "custom_type": custom_type,
+            "category_id": category_id,
+            "description": description or collector_config_name,
+            "data_link_id": int(data_link_id) if data_link_id else 0,
+        }
+        # 判断是否已存在同英文名collector
+        if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=bk_biz_id):
+            logger.error(
+                "collector_config_name_en {collector_config_name_en} already exists".format(
+                    collector_config_name_en=collector_config_name_en
+                )
+            )
+            raise CollectorConfigNameENDuplicateException(
+                CollectorConfigNameENDuplicateException.MESSAGE.format(
+                    collector_config_name_en=collector_config_name_en
+                )
+            )
+
+        with transaction.atomic():
+            try:
+                self.data = CollectorConfig.objects.create(**collector_config_params)
+            except IntegrityError:
+                logger.warning(f"collector config name duplicate => [{collector_config_name}]")
+                raise CollectorConfigNameDuplicateException()
+
+            collector_scenario = CollectorScenario.get_instance(CollectorScenarioEnum.CUSTOM.value)
+            self.data.bk_data_id = collector_scenario.update_or_create_data_id(
+                bk_data_id=self.data.bk_data_id,
+                data_link_id=self.data.data_link_id,
+                data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name}",
+                description=collector_config_params["description"],
+                encoding=META_DATA_ENCODING,
+            )
+            self.data.save()
+
+        # add user_operation_record
+        operation_record = {
+            "username": get_request_username(),
+            "biz_id": self.data.bk_biz_id,
+            "record_type": UserOperationTypeEnum.COLLECTOR,
+            "record_object_id": self.data.collector_config_id,
+            "action": UserOperationActionEnum.CREATE,
+            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
+        }
+        user_operation_record.delay(operation_record)
+
+        self._authorization_collector(self.data)
+        # 创建数据平台data_id
+        async_create_bkdata_data_id.delay(self.data.collector_config_id)
+
+        custom_config = get_custom(custom_type)
+        from apps.log_databus.handlers.etl import EtlHandler
+
+        etl_handler = EtlHandler(self.data.collector_config_id)
+        etl_params = {
+            "table_id": collector_config_name_en,
+            "storage_cluster_id": storage_cluster_id,
+            "retention": retention,
+            "allocation_min_days": allocation_min_days,
+            "storage_replies": storage_replies,
+            "etl_params": custom_config.etl_params,
+            "etl_config": custom_config.etl_config,
+            "fields": custom_config.fields,
+        }
+        etl_handler.update_or_create(**etl_params)
+        custom_config.after_hook(self.data)
+        return {
+            "collector_config_id": self.data.collector_config_id,
+            "index_set_id": self.data.index_set_id,
+            "bk_data_id": self.data.bk_data_id,
+        }
+
+    def custom_update(
+        self,
+        collector_config_name=None,
+        category_id=None,
+        description=None,
+        storage_cluster_id=None,
+        retention=7,
+        allocation_min_days=0,
+        storage_replies=1,
+    ):
+
+        collector_config_update = {
+            "collector_config_name": collector_config_name,
+            "category_id": category_id,
+            "description": description or collector_config_name,
+        }
+        for key, value in collector_config_update.items():
+            setattr(self.data, key, value)
+        try:
+            self.data.save()
+        except IntegrityError:
+            logger.warning(f"collector config name duplicate => [{collector_config_name}]")
+            raise CollectorConfigNameDuplicateException()
+
+        # collector_config_name更改后更新索引集名称
+        if collector_config_name != self.data.collector_config_name and self.data.index_set_id:
+            index_set_name = _("[采集项]") + self.data.collector_config_name
+            LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(index_set_name=index_set_name)
+
+        custom_config = get_custom(self.data.custom_type)
+        from apps.log_databus.handlers.etl import EtlHandler
+
+        etl_handler = EtlHandler(self.data.collector_config_id)
+        etl_params = {
+            "table_id": self.data.collector_config_name_en,
+            "storage_cluster_id": storage_cluster_id,
+            "retention": retention,
+            "allocation_min_days": allocation_min_days,
+            "storage_replies": storage_replies,
+            "etl_params": custom_config.etl_params,
+            "etl_config": custom_config.etl_config,
+            "fields": custom_config.fields,
+        }
+        etl_handler.update_or_create(**etl_params)
+        custom_config.after_hook(self.data)
+
+        # add user_operation_record
+        operation_record = {
+            "username": get_request_username(),
+            "biz_id": self.data.bk_biz_id,
+            "record_type": UserOperationTypeEnum.COLLECTOR,
+            "record_object_id": self.data.collector_config_id,
+            "action": UserOperationActionEnum.UPDATE,
+            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
+        }
+        user_operation_record.delay(operation_record)

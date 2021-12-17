@@ -1,0 +1,4 @@
+@mixin cursor($orign: pointer, $color: #3a84ff) {
+  cursor: $orign;
+  color: $color;
+}

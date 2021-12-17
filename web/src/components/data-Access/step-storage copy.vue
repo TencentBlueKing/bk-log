@@ -339,21 +339,6 @@ export default {
     this.getStorage();
   },
   methods: {
-    // 获取采集项清洗基础配置缓存 用于存储入库提交
-    getCleanStash() {
-      this.$http.request('clean/getCleanStash', {
-        params: {
-          collector_config_id: this.curCollect.collector_config_id,
-        },
-      }).then((res) => {
-        if (res.data) {
-          this.stashCleanConf = res.data;
-        }
-      })
-        .finally(() => {
-          this.getDetail();
-        });
-    },
     // 存储入库
     fieldCollection() {
       const {
@@ -491,6 +476,8 @@ export default {
         separator_regexp: etl_params.separator_regexp || '',
         separator: etl_params.separator || ''
       })
+      console.log(table_id);
+      console.log(storage_cluster_id);
       this.isUnmodifiable = !!(table_id || storage_cluster_id)
       this.isUnmodfyIndexName = !!(table_id || storage_cluster_id || collector_config_name_en)
       this.fieldType = etl_config || 'bk_log_text'
