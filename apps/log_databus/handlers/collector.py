@@ -1726,7 +1726,7 @@ class CollectorHandler(object):
             "etl_config": custom_config.etl_config,
             "fields": custom_config.fields,
         }
-        etl_handler.update_or_create(**etl_params)
+        self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
         custom_config.after_hook(self.data)
         return {
             "collector_config_id": self.data.collector_config_id,
