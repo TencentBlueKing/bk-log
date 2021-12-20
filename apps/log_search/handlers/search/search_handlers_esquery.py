@@ -298,7 +298,7 @@ class SearchHandler(object):
         collector_config = CollectorConfig.objects.get(collector_config_id=log_index_set.collector_config_id)
         return collector_config.etl_config != EtlConfig.BK_LOG_TEXT, {
             "collector_scenario_id": collector_config.collector_scenario_id,
-            "collector_config_id": log_index_set.collector_onfig_id,
+            "collector_config_id": log_index_set.collector_config_id,
         }
 
     @fields_config("context_and_realtime")
