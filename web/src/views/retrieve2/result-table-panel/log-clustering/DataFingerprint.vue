@@ -144,7 +144,6 @@
 </template>
 
 <script>
-// import PatternColumn from './components/PatternColumn';
 import ClusterEventPopover from './components/ClusterEventPopover';
 import RegisterColumn from '../../result-comp/RegisterColumn';
 import { copyMessage } from '@/common/util';

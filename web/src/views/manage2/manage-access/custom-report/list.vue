@@ -335,10 +335,10 @@ export default {
 </script>
 
 <style lang="scss">
-@import "../../../../scss/mixins/clearfix";
-@import "../../../../scss/conf";
-@import "../../../../scss/devops-common.scss";
-@import "../../../../scss/mixins/cursor.scss";
+@import "@/scss/mixins/clearfix";
+@import "@/scss/conf";
+@import "@/scss/devops-common.scss";
+@import "@/scss/mixins/cursor.scss";
 
 .custom-item-container {
   padding: 20px 24px;

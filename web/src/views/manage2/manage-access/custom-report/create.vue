@@ -215,7 +215,7 @@
         <bk-form-item :label="$t('configDetails.copyNumber')">
           <bk-input
             v-model="formData.storage_replies"
-            style="width:100px;"
+            class="copy-number-input"
             type="number"
             :max="3"
             :min="0"
@@ -531,9 +531,10 @@ export default {
 </script>
 
 <style lang="scss">
-@import "../../../../scss/mixins/clearfix";
-@import "../../../../scss/mixins/flex";
-@import '../../../../scss/mixins/scroller';
+@import "@/scss/mixins/clearfix";
+@import "@/scss/mixins/flex";
+@import '@/scss/mixins/scroller';
+@import '@/scss/storage';
 
 .custom-create-container {
   padding:0 24px;
@@ -560,38 +561,38 @@ export default {
       font-size: 12px;
       color: #979ba5;
     }
-    .cluster-alert {
-      margin-top: 20px;
-      padding-top: 8px;
-      width: 529px;
-      height: 50px;
-    }
-    .tips_storage {
-      width: 540px;
-      background-color: rgb(239, 248, 255);
-      border: 1px solid deepskyblue;
-      font-size: 12px;
-      padding: 10px;
-      margin-top: 15px;
-      div {
-        line-height: 24px;
-        color: #63656e;
-      }
-    }
-    .hot-data-form-item {
-      .bk-form-content {
-        display: flex;
-        align-items: center;
-        .disable-tips {
-          margin-left: 10px;
-          font-size: 12px;
-          color: #63656e;
-          a {
-            color: #3a84ff;
-          }
-        }
-      }
-    }
+    // .tips_storage {
+    //   width: 560px;
+    //   background-color: rgb(239, 248, 255);
+    //   border: 1px solid deepskyblue;
+    //   font-size: 12px;
+    //   padding: 10px;
+    //   margin-top: 15px;
+    //   div {
+    //     line-height: 24px;
+    //     color: #63656e;
+    //   }
+    // }
+    // .copy-number-input{
+    //   width:100px;
+    //   .input-number-option{
+    //     top: 2px;
+    //   }
+    // }
+    // .hot-data-form-item {
+    //   .bk-form-content {
+    //     display: flex;
+    //     align-items: center;
+    //     .disable-tips {
+    //       margin-left: 10px;
+    //       font-size: 12px;
+    //       color: #63656e;
+    //       a {
+    //         color: #3a84ff;
+    //       }
+    //     }
+    //   }
+    // }
   }
   .submit-btn {
     width: 140px;
