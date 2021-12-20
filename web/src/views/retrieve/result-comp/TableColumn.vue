@@ -50,8 +50,7 @@
 </template>
 
 <script>
-import TextSegmentation from './TextSegmentation.vue';
-// import TextSegmentation from './TextSegmentation.js';
+import TextSegmentation from './TextSegmentation';
 import TextHighlight from 'vue-text-highlight';
 
 export default {

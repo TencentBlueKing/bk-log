@@ -21,59 +21,51 @@
   -->
 
 <template>
-  <div
-    style="transition: padding 0.5s;"
-    v-bkloading="{ isLoading: basicLoading }"
-    :class="`custom-report-detail-container access-manage-container ${isOpenWindow ? 'is-active-details' : ''}`">
+  <div class="access-manage-container" v-bkloading="{ isLoading: basicLoading }">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
-    <template v-if="!authPageInfo && !basicLoading && reportDetail">
+    <template v-if="!authPageInfo && !basicLoading && collectorData">
       <bk-tab :active.sync="activePanel" type="border-card">
         <bk-tab-panel v-for="panel in panels" v-bind="panel" :key="panel.name"></bk-tab-panel>
       </bk-tab>
       <keep-alive>
         <component
           class="tab-content"
-          :collector-data="reportDetail"
-          :index-set-id="reportDetail.index_set_id || ''"
+          :collector-data="collectorData"
+          :index-set-id="collectorData.index_set_id"
           :is="dynamicComponent"
           @update-active-panel="activePanel = $event"></component>
       </keep-alive>
     </template>
-
-    <intro-panel
-      :data="reportDetail"
-      :is-open-window="isOpenWindow"
-      @handleActiveDetails="handleActiveDetails"></intro-panel>
   </div>
 </template>
 
 <script>
 import AuthPage from '@/components/common/auth-page';
-import BasicInfo from '../log-collection/collection-item/manage-collection/BasicInfo';
-import DataStorage from '../log-collection/collection-item/manage-collection/DataStorage';
-import DataStatus from '../log-collection/collection-item/manage-collection/data-status';
-import UsageDetails from '@/views/manage2/manage-access/components/usage-details';
-import IntroPanel from './components/IntroPanel';
+import BasicInfo from './BasicInfo';
+import CollectionStatus from './CollectionStatus';
+import DataStorage from './DataStorage';
+import DataStatus from './data-status';
+import UsageDetails from '@/views/manage/manage-access/components/usage-details';
 
 export default {
   name: 'collection-item',
   components: {
     AuthPage,
     BasicInfo,
+    CollectionStatus,
     DataStorage,
     DataStatus,
     UsageDetails,
-    IntroPanel,
   },
   data() {
     return {
       basicLoading: true,
       authPageInfo: null,
-      reportDetail: {},
-      activePanel: 'basicInfo',
-      isOpenWindow: true,
+      collectorData: null,
+      activePanel: this.$route.query.type || 'basicInfo',
       panels: [
         { name: 'basicInfo', label: this.$t('基本信息') },
+        { name: 'collectionStatus', label: this.$t('采集状态') },
         { name: 'dataStorage', label: this.$t('数据存储') },
         { name: 'dataStatus', label: this.$t('数据状态') },
         { name: 'usageDetails', label: this.$t('使用详情') },
@@ -84,6 +76,7 @@ export default {
     dynamicComponent() {
       const componentMaP = {
         basicInfo: 'BasicInfo',
+        collectionStatus: 'CollectionStatus',
         dataStorage: 'DataStorage',
         dataStatus: 'DataStatus',
         usageDetails: 'UsageDetails',
@@ -111,13 +104,13 @@ export default {
           // 显示无权限页面
         } else {
           // 正常显示页面
-          const { data: reportDetail } = await this.$http.request('collect/details', {
+          const { data: collectorData } = await this.$http.request('collect/details', {
             params: {
               collector_config_id: this.$route.params.collectorId,
             },
           });
-          this.reportDetail = reportDetail;
-          this.$store.commit('collect/setCurCollect', reportDetail);
+          this.collectorData = collectorData;
+          this.$store.commit('collect/setCurCollect', collectorData);
         }
       } catch (err) {
         console.warn(err);
@@ -125,15 +118,6 @@ export default {
         this.basicLoading = false;
       }
     },
-    handleActiveDetails(state) {
-      this.isOpenWindow = state;
-    },
   },
 };
 </script>
-
-<style lang="scss">
-.is-active-details{
-  padding:20px 420px 20px 24px;
-}
-</style>
