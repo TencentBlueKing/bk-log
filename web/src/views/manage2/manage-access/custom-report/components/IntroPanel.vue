@@ -81,15 +81,15 @@ export default {
       return str;
     },
     handleActiveDetails(state) {
-      this.$emit('handleActiveDetails', state ? !!state : !this.isOpenWindow);
+      this.$emit('handleActiveDetails', state ? state : !this.isOpenWindow);
     },
   },
 };
 </script>
 
 <style lang="scss">
-@import "../../../../../scss/mixins/flex";
-@import "../../../../../scss/mixins/scroller";
+@import "@/scss/mixins/flex";
+@import "@/scss/mixins/scroller";
 
 .intro-panel {
   .right-window {
@@ -136,6 +136,11 @@ export default {
       background: #f4f4f7;
       overflow-x: auto;
       @include scroller;
+    }
+    a {
+      display: inline-block;
+      margin: 10px 0;
+      color: #3a84ff;
     }
   }
   .create-btn {
