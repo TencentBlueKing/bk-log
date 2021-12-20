@@ -297,10 +297,12 @@ export default {
       this.$emit('updateLogFields');
     },
     handleClickDetail() {
-      const { extra: { collector_config_id: collectorId } } = this.cleanConfig;
-      if (!collectorId) return;
+      const { extra: { collector_config_id: collectorID, collector_scenario_id: scenarioID } } = this.cleanConfig;
+      if (!collectorID) return;
       const projectId =  window.localStorage.getItem('project_id');
-      const jumpUrl = `#/manage/log-collection/collection-item/manage/${collectorId}?projectId=${projectId}`;
+      const jumpUrl = scenarioID === 'custom'
+        ? `/#/manage/custom-report/detail/${collectorID}?projectId=${projectId}`
+        : `/#/manage/log-collection/collection-item/manage/${collectorID}?projectId=${projectId}`;
       window.open(jumpUrl, '_blank');
     },
   },
