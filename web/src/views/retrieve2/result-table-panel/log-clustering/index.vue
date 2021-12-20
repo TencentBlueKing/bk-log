@@ -36,9 +36,9 @@
         </div>
 
         <div v-if="active === 'dataFingerprint'"
-             class="fingerprint fljb">
-          <div class="fingerprint-setting fljb">
-            <div class="fljb">
+             class="fingerprint fl-sb">
+          <div class="fingerprint-setting fl-sb">
+            <div class="fl-sb">
               <span>{{$t('同比')}}</span>
               <bk-select
                 behavior="simplicity"
@@ -81,9 +81,9 @@
               <span style="font-size: 12px">{{$t('近24H新增')}}</span>
             </bk-checkbox>
 
-            <div class="partter fljb" style="width: 200px">
+            <div class="partter fl-sb" style="width: 200px">
               <span>Partter</span>
-              <div class="partter-slider-box fljb">
+              <div class="partter-slider-box fl-sb">
                 <span>{{$t('少')}}</span>
                 <bk-slider
                   class="partter-slider"
@@ -212,20 +212,7 @@ export default {
         name: this.$t('数据指纹'),
       }],
       comparedList: [], // 同比List
-      fingerList: [
-        // {
-        //   pattern: 'xx [ip] [xxxxx] xxxxx]',
-        //   signature: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        //   count: 123,
-        //   year_on_year: -10,
-        //   percentage: 12,
-        //   is_new_class: true,
-        //   year_on_year_count: 12,
-        //   year_on_year_percentage: 0,
-        //   labels: ['xxxx', 'xxxx'],
-        //   remark: 'xxxx',
-        // },
-      ], // 数据指纹List
+      fingerList: [], // 数据指纹List
       defaultFingerList: [],
       loadingWidthList: { // loading表头宽度列表
         global: [''],
@@ -329,8 +316,6 @@ export default {
     },
     // 请求数据指纹
     requestFinger() {
-      delete this.retrieveParams.bk_biz_id;
-      delete this.retrieveParams.begin;
       this.tableLoading = true;
       this.$http.request('/logClustering/clusterSearch', {
         params: {
@@ -494,7 +479,7 @@ export default {
     }
   }
 }
-.fljb {
+.fl-sb {
   align-items: center;
   @include flex-justify(space-between);
 }

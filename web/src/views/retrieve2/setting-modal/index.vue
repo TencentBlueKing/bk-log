@@ -45,12 +45,12 @@
       <div class="setting-main">
         <div class="setting-left">
           <div
-            v-for="(item,index) of currentList" :key="item.id"
+            v-for="item of currentList" :key="item.id"
             :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
-            @click="handleNavClick(item.id,index)">
+            @click="handleNavClick(item)">
             <span class="log-icon icon-block-shape"></span>
             <span style="width: 110px">{{item.name}}</span>
-            <div @click.stop="stopChangeSwitch(index,item.isDisabled)">
+            <div @click.stop="stopChangeSwitch(item)">
               <bk-switcher
                 theme="primary"
                 v-model="item.isEditable"
@@ -188,31 +188,21 @@ export default {
   },
   methods: {
     handleMenuStatus() {
-      const { isExtractActive, isClusteringActive } = this;
+      const { isExtractActive, isClusteringActive, isCollector } = this;
       this.currentList = this.currentList.map((list) => {
         return {
           ...list,
           isEditable: list.id === 'extract' ? isExtractActive : isClusteringActive,
-          isDisabled: this.isCanDisabled(list.id),
-          // isDisabled: !isCollector || (list.id === 'clustering' && (isClusteringActive || isSignatureActive)),
+          isDisabled: list.id === 'extract' ? !isCollector : isClusteringActive,
         };
       });
     },
-    isCanDisabled(id) {
-      const { isClusteringActive, isCollector } = this;
-      if (id === 'extract' && !isCollector) {
-        return true;
-      }
-      if (id === 'clustering' && isClusteringActive) {
-        return true;
-      }
-      return false;
-    },
-    handleNavClick(val, index) {
-      if (val === this.currentChoice) return;
+    handleNavClick(item) {
+      if (item.id === this.currentChoice) return;
+
       if (this.isSubmit) {
-        this.currentChoice = val;
-        this.showComponent = this.currentList[index].componentsName;
+        this.currentChoice = item.id;
+        this.showComponent = item.componentsName;
         this.isSubmit = false;
         return;
       }
@@ -220,8 +210,8 @@ export default {
         title: this.$t('pageLeaveTips'),
         confirmFn: () => {
           this.jumpCloseSwitch();
-          this.currentChoice = val;
-          this.showComponent = this.currentList[index].componentsName;
+          this.currentChoice = item.id;
+          this.showComponent = item.componentsName;
         },
       });
     },
@@ -240,30 +230,31 @@ export default {
       });
     },
     // nav开关
-    stopChangeSwitch(index, isDisable) {
-      if (isDisable) return;
-      if (!this.currentList[index].isEditable) {
-        if (this.currentChoice !== this.currentList[index].id) {
+    stopChangeSwitch(item) {
+      if (item.isDisable) return;
+
+      if (!item.isEditable) {
+        if (this.currentChoice !== item.id) {
           // 当前tab不在操作的开关菜单 则跳转到对应菜单
           this.jumpCloseSwitch();
-          this.currentChoice = this.currentList[index].id;
-          this.showComponent = this.currentList[index].componentsName;
+          this.currentChoice = item.id;
+          this.showComponent = item.componentsName;
         }
-        this.currentList[index].isEditable = true;
+        item.isEditable = true;
         return;
       }
-      const msg = index === 0 ? '是否关闭字段提取？' : '是否关闭日志聚类？';
-      if (index === 0) {
+      const msg = item.id === 'extract' ? this.$t('retrieveSetting.fieldLeaveTip') : this.$t('retrieveSetting.clusterLeaveTip');
+      if (item.id === 'extract') {
         this.$bkInfo({
           title: msg,
           confirmLoading: true,
           confirmFn: async () => {
-            const isFinish = index === 0 ? await this.requestCloseClean() : await this.requestCloseCluster();
-            isFinish && (this.currentList[index].isEditable = false);
+            const isFinish = item.id === 'extract' ? await this.requestCloseClean() : await this.requestCloseCluster();
+            isFinish && (item.isEditable = false);
           },
         });
       } else {
-        this.currentList[index].isEditable = false;
+        item.isEditable = false;
       }
     },
     async requestCloseClean() {
