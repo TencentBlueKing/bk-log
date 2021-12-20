@@ -137,6 +137,11 @@ export default {
       overflow-x: auto;
       @include scroller;
     }
+    a {
+      display: inline-block;
+      margin: 10px 0;
+      color: #3a84ff;
+    }
   }
   .create-btn {
     width: 24px;

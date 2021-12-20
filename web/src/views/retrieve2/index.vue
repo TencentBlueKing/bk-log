@@ -583,6 +583,8 @@ export default {
   },
   beforeDestroy() {
     window.bus.$off('retrieveWhenChartChange', this.retrieveWhenChartChange);
+    clearTimeout(this.timer);
+    this.timer = null;
   },
   methods: {
     checkAutoQueryTips() {
