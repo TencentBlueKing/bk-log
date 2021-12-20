@@ -340,21 +340,26 @@ class CustomTypeEnum(ChoicesEnum):
 
 - sdk内注入的属性类型应该一致，不然会出现入库失败的情况
 
-# 适用方法
+# 使用方法
+
 
 不同云区域的自定义上报服务地址
 
 {otlp_report_config}
 
+[opentelemetry官方文档](https://opentelemetry.io/)
+
 # SDK配置
 
 python
+
+[python-SDK](https://github.com/open-telemetry/opentelemetry-python)
 
     from opentelemetry import trace
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-    otlp_exporter = OTLPSpanExporter(endpoint=otlp_grpc_host)    
+    otlp_exporter = OTLPSpanExporter(endpoint="grpc 上报服务地址)    
     span_processor = BatchSpanProcessor(otlp_exporter)
     tracer_provider = TracerProvider(
         resource=Resource.create(
@@ -366,15 +371,19 @@ python
     )
     tracer_provider.add_span_processor(span_processor)
     trace.set_tracer_provider(tracer_provider)
+    
         """  # noqa
         ),
         OTLP_LOG: _(
             """
 # 注意事项
-# 适用方法
+# 使用方法
 不同云区域的自定义上报服务地址
 
 {otlp_report_config}
+
+
+[opentelemetry官方文档](https://opentelemetry.io/)
 """
         ),
     }
