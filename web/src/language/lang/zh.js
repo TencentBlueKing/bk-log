@@ -718,7 +718,7 @@ export default {
     basic_information: '基础信息',
     Source_log_information: '源日志信息',
     tips_capacity: ' 当前集群的容量额度为 ',
-    tips_development: '，如果需要支持更大存储，请与开发团队联系或使用独立集群',
+    tips_development: '如果需要更大存储，请使用独立的集群，有问题可以咨询平台管理员',
     tips_business: ' 此业务已超过集群容量限制，请与开发团队联系或使用独立集群',
     tips_formula: ' ES存储 ≈ 每天原始日志量 * 1.5（ES转化率） * 2（1个副本） * 存储天数',
     dataId: '数据ID',

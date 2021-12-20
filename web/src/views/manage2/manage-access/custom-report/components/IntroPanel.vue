@@ -81,15 +81,15 @@ export default {
       return str;
     },
     handleActiveDetails(state) {
-      this.$emit('handleActiveDetails', state ? !!state : !this.isOpenWindow);
+      this.$emit('handleActiveDetails', state ? state : !this.isOpenWindow);
     },
   },
 };
 </script>
 
 <style lang="scss">
-@import "../../../../../scss/mixins/flex";
-@import "../../../../../scss/mixins/scroller";
+@import "@/scss/mixins/flex";
+@import "@/scss/mixins/scroller";
 
 .intro-panel {
   .right-window {

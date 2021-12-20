@@ -718,7 +718,7 @@ export default {
     basic_information: 'Basic information',
     Source_log_information: 'Source log information',
     tips_capacity: 'The current capacity of the cluster is ',
-    tips_development: '. If you need to support larger storage, please contact the development team or use an independent cluster',
+    tips_development: ' If you need more storage, please use a separate cluster, if you have any questions, please consult the platform administrator',
     tips_business: ' This business has exceeded the cluster capacity limit, please contact the development team or use an independent cluster',
     tips_formula: ' ES storage ≈ daily raw log volume * 1.5 (ES conversion rate) * 2 (1 copy) * storage days',
     dataId: 'Data ID',
