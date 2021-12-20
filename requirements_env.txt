@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-blueapps-open==3.3.13
+blueapps-open==3.5.3
