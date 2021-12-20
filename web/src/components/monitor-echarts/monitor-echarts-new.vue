@@ -390,6 +390,8 @@ export default class MonitorEcharts extends Vue {
     }
     this.annotation.show = false
     this.refleshIntervalInstance && window.clearInterval(this.refleshIntervalInstance)
+    clearTimeout(this.timer)
+    this.timer = null
   }
   destroyed() {
     this.chart && this.destroy()
