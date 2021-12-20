@@ -17,34 +17,6 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from typing import Tuple
+from .custom import get_custom
 
-from apps.iam import Permission, ActionEnum, ResourceEnum
-from bk_dataview.grafana.permissions import BasePermission, GrafanaRole
-
-
-class BizPermission(BasePermission):
-    """
-    业务权限
-    """
-
-    def has_permission(self, request, view, org_name: str) -> Tuple[bool, GrafanaRole]:
-        if request.user.is_superuser:
-            return True, GrafanaRole.Admin
-
-        bk_biz_id = int(org_name)
-        permission = Permission()
-
-        resources = [ResourceEnum.BUSINESS.create_instance(bk_biz_id)]
-
-        if permission.is_allowed(action=ActionEnum.MANAGE_DASHBOARD, resources=resources):
-            return True, GrafanaRole.Editor
-
-        # permission.is_allowed(action=ActionEnum.VIEW_DASHBOARD, resources=resources, raise_exception=True)
-        # 不在校验查看仪表盘权限 通过索引集权限去过滤
-        return True, GrafanaRole.Editor
-
-
-class ExplorePermission(BasePermission):
-    def has_permission(self, request, view, org_name: str) -> Tuple[bool, GrafanaRole]:
-        return True, GrafanaRole.Viewer
+__all__ = ["get_custom"]

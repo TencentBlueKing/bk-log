@@ -236,6 +236,7 @@ export default class MonitorEcharts extends Vue {
   isFinish = true
   chartInView: ChartInView = null
   initStatus: Boolean = true
+  chartData: any = []
   // 监控图表默认配置
   get defaultOptions() {
     if (['bar', 'line'].includes(this.chartType)) {
@@ -356,10 +357,7 @@ export default class MonitorEcharts extends Vue {
   mounted() {
     if (this.isFold) {
       this.chartTitle = this.title
-      return
     }
-
-    this.initStatus = false
     this.init()
   }
 
@@ -436,16 +434,17 @@ export default class MonitorEcharts extends Vue {
     this.intersectionObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (this.needObserver) {
-          if (entry.intersectionRatio > 0) {
-            this.handleSeriesData()
-          } else {
-            // 解决临界点、慢滑不加载数据问题
-            const { top, bottom } = this.$el.getBoundingClientRect()
-            if (top === 0 && bottom === 0) return
-            const { innerHeight } = window
-            const isVisiable = (top > 0 && top <= innerHeight) || (bottom >= 0 && bottom < innerHeight)
-            isVisiable && this.handleSeriesData()
-          }
+          // if (entry.intersectionRatio > 0) {
+          //   this.handleSeriesData()
+          // } else {
+          //   // 解决临界点、慢滑不加载数据问题
+          //   const { top, bottom } = this.$el.getBoundingClientRect()
+          //   if (top === 0 && bottom === 0) return
+          //   const { innerHeight } = window
+          //   const isVisiable = (top > 0 && top <= innerHeight) || (bottom >= 0 && bottom < innerHeight)
+          //   isVisiable && this.handleSeriesData()
+          // }
+          this.handleSeriesData()
         }
       })
     })
@@ -483,7 +482,9 @@ export default class MonitorEcharts extends Vue {
       if (!this.isEchartsRender
       || (Array.isArray(data) && data.length && data.some(item => item))
       || (data && Object.prototype.hasOwnProperty.call(data, 'series') && data.series.length)) {
-        await this.handleSetChartData(data)
+        // await this.handleSetChartData(data)
+        this.chartData.splice(0, this.chartData.length, ...data);
+        if (!this.isFold) this.handleSetChartData(this.chartData)
       } else {
         if (this.isFinish) {
           this.noData = true
@@ -780,9 +781,9 @@ export default class MonitorEcharts extends Vue {
   }
   // 图表的展开收起
   handleToggleExpand (isShow) {
-    if (this.initStatus) {
-      this.init()
+    if (!isShow && this.initStatus) {
       this.initStatus = false
+      this.handleSetChartData(this.chartData)
     }
   }
   handleSetYAxisSetScale(needScale) {

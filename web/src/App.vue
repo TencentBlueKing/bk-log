@@ -23,12 +23,12 @@
 <template>
   <div id="app" v-bkloading="{ isLoading: pageLoading }">
     <head-nav
-      v-show="!asIframe && !pageLoading"
+      v-show="!isAsIframe && !pageLoading"
       @reloadRouter="routerKey += 1"
       @welcome="welcomePageData = $event"
       @auth="authPageInfo = $event"
     ></head-nav>
-    <div :class="['log-search-container', asIframe && 'as-iframe']">
+    <div :class="['log-search-container', isAsIframe && 'as-iframe']">
       <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
       <welcome-page v-else-if="welcomePageData" :data="welcomePageData"></welcome-page>
       <!-- 导航改版 -->
@@ -112,6 +112,7 @@ export default {
       navThemeColor: '#2c354d',
       isExpand: true,
       curGuideStep: 0,
+      isAsIframe: false,
     };
   },
   computed: {
@@ -137,6 +138,14 @@ export default {
     },
     guideStep() {
       return this.userGuideData?.default || {};
+    },
+  },
+  watch: {
+    asIframe: {
+      immediate: true,
+      handler(val) {
+        this.isAsIframe = val;
+      },
     },
   },
   created() {

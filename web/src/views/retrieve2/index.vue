@@ -74,7 +74,7 @@
       <!-- 检索详情页左侧 -->
       <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
         <!-- 监控显示的 tab 切换 -->
-        <div v-if="asIframe" class="bk-button-group">
+        <div v-if="isAsIframe" class="bk-button-group">
           <bk-button @click="handleCheckMonitor">{{ $t('指标检索') }}</bk-button>
           <bk-button class="is-selected">{{ $t('日志检索') }}</bk-button>
           <bk-button @click="handleCheckEvent">{{ $t('事件检索') }}</bk-button>
@@ -84,7 +84,7 @@
           <biz-menu-select theme="light"></biz-menu-select>
         </div>
 
-        <div class="king-tab" :class="asIframe && 'as-iframe'">
+        <div class="king-tab" :class="isAsIframe && 'as-iframe'">
           <div class="tab-header">{{ $t('数据查询') }}
             <bk-popover
               ref="queryTipPopover"
@@ -461,6 +461,9 @@ export default {
           clustering_field: '',
         },
       },
+      isAsIframe: false,
+      localIframeQuery: {},
+      isFirstLoad: true,
     };
   },
   computed: {
@@ -549,6 +552,18 @@ export default {
     showSearchPage(val) {
       if (val) this.$store.commit('retrieve/updateDisplayRetrieve', true);
     },
+    asIframe: {
+      immediate: true,
+      handler(val) {
+        this.isAsIframe = val;
+      },
+    },
+    iframeQuery: {
+      deep: true,
+      handler(val) {
+        this.localIframeQuery = val;
+      },
+    },
   },
   created() {
     this.$http.request('meta/footer').then((res) => {
@@ -557,7 +572,7 @@ export default {
       .catch((err) => {
         console.warn(err);
       });
-    this.fetchPageData();
+    // this.fetchPageData();
     this.getGlobalsData();
   },
   mounted() {
@@ -644,10 +659,12 @@ export default {
 
     // 初始化索引集
     requestIndexSetList() {
+      const projectId = (this.$route.query.projectId && this.isFirstLoad)
+        ? this.$route.query.projectId : this.projectId;
       this.basicLoading = true;
       this.$http.request('retrieve/getIndexSetList', {
         query: {
-          project_id: this.projectId,
+          project_id: projectId,
         },
       }).then((res) => {
         if (res.data.length) { // 有索引集
@@ -704,10 +721,10 @@ export default {
             this.indexId = indexSetList.some(item => item.index_set_id === this.storedIndexID)
               ? this.storedIndexID
               : indexSetList[0].index_set_id;
-            if (this.asIframe) { // 监控 iframe
-              if (this.iframeQuery.indexId) {
-                if (this.indexSetList.some(item => item.index_set_id === this.iframeQuery.indexId)) {
-                  this.indexId = this.iframeQuery.indexId;
+            if (this.isAsIframe) { // 监控 iframe
+              if (this.localIframeQuery.indexId) {
+                if (this.indexSetList.some(item => item.index_set_id === this.localIframeQuery.indexId)) {
+                  this.indexId = this.localIframeQuery.indexId;
                 }
               }
               this.retrieveLog();
@@ -758,6 +775,7 @@ export default {
         })
         .finally(() => {
           this.basicLoading = false;
+          this.isFirstLoad = false;
         });
     },
     // 获取检索历史

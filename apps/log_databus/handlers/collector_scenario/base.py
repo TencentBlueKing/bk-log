@@ -46,6 +46,7 @@ class CollectorScenario(object):
             CollectorScenarioEnum.ROW.value: "RowCollectorScenario",
             CollectorScenarioEnum.SECTION.value: "SectionCollectorScenario",
             CollectorScenarioEnum.WIN_EVENT.value: "WinEventLogScenario",
+            CollectorScenarioEnum.CUSTOM.value: "CustomCollectorScenario",
         }
         try:
             collector_scenario = import_string(

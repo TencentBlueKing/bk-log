@@ -138,7 +138,7 @@ export default {
     this.language = jsCookie.get('blueking_language') || 'zh-cn';
     this.$store.commit('updateMenuList', menuArr);
     this.getUserInfo();
-    setTimeout(() => this.requestMyProjectList());
+    setTimeout(() => this.requestMyProjectList(), 100);
   },
   methods: {
     async getUserInfo() {
