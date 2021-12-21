@@ -49,6 +49,7 @@ class PatternHandler:
         self._pattern_level = query["pattern_level"]
         self._show_new_pattern = query["show_new_pattern"]
         self._year_on_year_hour = query["year_on_year_hour"]
+        self._group_by = query["group_by"]
         self._clustering_config = ClusteringConfig.objects.filter(
             index_set_id=index_set_id, signature_enable=True
         ).first()
@@ -94,7 +95,8 @@ class PatternHandler:
         for pattern in pattern_aggs:
             count = pattern["doc_count"]
             signature = pattern["key"]
-            year_on_year_compare = year_on_year_result.get(signature, MIN_COUNT)
+            group_key = f"{signature}|{pattern.get('group', '')}"
+            year_on_year_compare = year_on_year_result.get(group_key, MIN_COUNT)
             result.append(
                 {
                     "pattern": signature_map_pattern.get(signature, ""),
@@ -104,6 +106,7 @@ class PatternHandler:
                     "is_new_class": signature in new_class,
                     "year_on_year_count": count - year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
+                    "group": pattern.get("group", ""),
                 }
             )
         return result
@@ -120,9 +123,19 @@ class PatternHandler:
         return multi_execute_func.run()
 
     def _get_pattern_aggs_result(self, index_set_id, query):
-        query["fields"] = [{"field_name": self.pattern_aggs_field}]
+        query["fields"] = [{"field_name": self.pattern_aggs_field, "sub_fields": self._build_aggs_group}]
         aggs_result = AggsHandlers.terms(index_set_id, query)
         return self._parse_pattern_aggs_result(self.pattern_aggs_field, aggs_result)
+
+    @property
+    def _build_aggs_group(self):
+        aggs_group = {}
+        aggs_group_reuslt = aggs_group
+        for group_key in self._group_by:
+            aggs_group["field_name"] = group_key
+            aggs_group["sub_fields"] = {}
+            aggs_group = aggs_group["sub_fields"]
+        return aggs_group_reuslt
 
     def _get_year_on_year_aggs_result(self) -> dict:
         if self._year_on_year_hour == MIN_COUNT:
@@ -134,7 +147,10 @@ class PatternHandler:
         new_query["start_time"] = start_time.strftime("%Y-%m-%d %H:%M:%S")
         new_query["end_time"] = end_time.strftime("%Y-%m-%d %H:%M:%S")
         new_query["time_range"] = "customized"
-        return array_hash(self._get_pattern_aggs_result(self._index_set_id, new_query), "key", "doc_count")
+        buckets = self._get_pattern_aggs_result(self._index_set_id, new_query)
+        for bucket in buckets:
+            bucket["key"] = f"{bucket['key']}|{bucket.get('group', '')}"
+        return array_hash(buckets, "key", "doc_count")
 
     @staticmethod
     def _year_on_year_calculate_percentage(target, compare):
@@ -157,13 +173,30 @@ class PatternHandler:
     def new_class_field(self) -> str:
         return f"{NEW_CLASS_FIELD_PREFIX}_{self._pattern_level}"
 
-    @staticmethod
-    def _parse_pattern_aggs_result(pattern_field: str, aggs_result: dict) -> List[dict]:
+    def _parse_pattern_aggs_result(self, pattern_field: str, aggs_result: dict) -> List[dict]:
         aggs = aggs_result.get("aggs")
         pattern_field_aggs = aggs.get(pattern_field)
         if not pattern_field_aggs:
             return []
-        return pattern_field_aggs.get("buckets", [])
+        return self._get_group_by_value(pattern_field_aggs.get("buckets", []))
+
+    def _get_group_by_value(self, bucket):
+        for group_key in self._group_by:
+            result_buckets = []
+            for iter_bucket in bucket:
+                doc_key = iter_bucket.get("key")
+                group_buckets = iter_bucket.get(group_key, {}).get("buckets", [])
+                for group_bucket in group_buckets:
+                    result_buckets.append(
+                        {
+                            **group_bucket,
+                            "key": doc_key,
+                            "doc_count": group_bucket.get("doc_count", 0),
+                            "group": f"{iter_bucket.get('group', '#')}|{group_bucket['key']}",
+                        }
+                    )
+            bucket = result_buckets
+        return bucket
 
     def _get_new_class(self):
         if not self._show_new_pattern:
