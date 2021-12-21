@@ -18,6 +18,8 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.conf import settings
+
+from bk_monitor.constants import EVENT_TYPE, TIME_SERIES_TYPE
 from config.domains import MONITOR_APIGATEWAY_ROOT
 from bk_monitor.handler.monitor import BKMonitor
 
@@ -29,7 +31,6 @@ BK_MONITOR_CLIENT = BKMonitor(
     bk_username="admin",
     bk_biz_id=settings.BLUEKING_BK_BIZ_ID,
 )
-
 
 INTERVAL_TYPE = ["month", "week", "day", "hour", "10m", "5m", "1m"]
 STORAGE_CLUSTER_TYPE = "elasticsearch"
@@ -54,4 +55,11 @@ COLLECTOR_IMPORT_PATHS = [
 
 BK_LOG_EVENT_DATA_NAME = "bk_log_event"
 DJANGO_MONITOR_DATA_NAME = "django_monitor"
-DATA_NAMES = ["metric", "search_history", "es_monitor", "django_monitor"]
+# 初始化所有数据源列表
+DATA_NAMES = [
+    {"name": "metric", "custom_report_type": TIME_SERIES_TYPE},
+    {"name": "search_history", "custom_report_type": TIME_SERIES_TYPE},
+    {"name": "es_monitor", "custom_report_type": TIME_SERIES_TYPE},
+    {"name": "django_monitor", "custom_report_type": TIME_SERIES_TYPE},
+    {"name": "bk_log_event", "custom_report_type": EVENT_TYPE},
+]

@@ -36,6 +36,7 @@ python-consul==1.1.0
 PyYAML==5.3
 dataclasses==0.7
 typing_extensions==3.7.4.3
+Markdown==3.3
 
 # for原生es
 elasticsearch==7.0.0
@@ -65,6 +66,7 @@ jinja2==2.10.1
 
 # ipython
 ipython==7.13.0
+jedi==0.17.2
 
 humanize==3.11.0
 

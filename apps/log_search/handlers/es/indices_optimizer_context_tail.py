@@ -84,6 +84,7 @@ class IndicesOptimizerContextTail(object):
         date_start: datetime = date_end - datetime.timedelta(hours=1)
 
         date_day_list: List[Any] = list(rrule(DAILY, interval=1, dtstart=date_start, until=date_end))
+        date_day_list.append(date_end)
 
         for x in date_day_list:
             filter_list.append("{}_{}*".format(index, x.strftime("%Y%m%d")))
@@ -104,6 +105,7 @@ class IndicesOptimizerContextTail(object):
         now: datetime = arrow.utcnow().naive
         now1hbefore: datetime = now - datetime.timedelta(hours=1)
         date_day_list: List[Any] = list(rrule(DAILY, interval=1, dtstart=now1hbefore, until=now))
+        date_day_list.append(now)
 
         for x in date_day_list:
             filter_list.append("{}_{}*".format(index, x.strftime("%Y%m%d")))

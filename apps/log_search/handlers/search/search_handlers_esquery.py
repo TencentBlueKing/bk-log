@@ -297,7 +297,8 @@ class SearchHandler(object):
             return False, {"collector_config_id": None}
         collector_config = CollectorConfig.objects.get(collector_config_id=log_index_set.collector_config_id)
         return collector_config.etl_config != EtlConfig.BK_LOG_TEXT, {
-            "collector_config_id": log_index_set.collector_config_id
+            "collector_scenario_id": collector_config.collector_scenario_id,
+            "collector_config_id": log_index_set.collector_config_id,
         }
 
     @fields_config("context_and_realtime")
@@ -614,7 +615,7 @@ class SearchHandler(object):
         url = (
             settings.BCS_WEB_CONSOLE_DOMAIN + "backend/web_console/projects/{project_id}/clusters/{cluster_id}/"
             "?container_id={container_id} ".format(
-                project_id=project_id, cluster_id=cluster_id, container_id=container_id
+                project_id=project_id, cluster_id=cluster_id.upper(), container_id=container_id
             )
         )
         return url
