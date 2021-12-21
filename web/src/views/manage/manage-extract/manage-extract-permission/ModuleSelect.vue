@@ -172,7 +172,7 @@ export default {
         if (item.bk_obj_id === 'module' && !dict[item.bk_inst_name]) {
           dict[item.bk_inst_name] = item;
         }
-        if (item?.children?.length) {
+        if (item.children?.length) {
           this.filterList(item.children, dict);
         }
       });
@@ -203,7 +203,7 @@ export default {
           }
         }
 
-        if (treeNode?.children?.length) {
+        if (treeNode.children?.length) {
           this.recursiveFindDefault(
             treeNode.children,
             treeNode,
@@ -223,15 +223,15 @@ export default {
     },
     // 按大区选择
     handleTopoNodeCheck(checkedId, checkedNode) {
-                checkedNode?.children?.length && this.inheritCheckNode(checkedNode.children, checkedNode.state.checked);
-                this.selectedTopoList = this.recursiveFindTopoNodes(this.$refs.topoTreeRef.nodes[0]);
+      checkedNode?.children?.length && this.inheritCheckNode(checkedNode.children, checkedNode.state.checked);
+      this.selectedTopoList = this.recursiveFindTopoNodes(this.$refs.topoTreeRef.nodes[0]);
     },
     // 父亲勾选或取消勾选后，子孙跟随状态变化，且父亲勾选后子孙禁用勾选
     inheritCheckNode(nodes, bool) {
       nodes.forEach((node) => {
         node.checked = bool;
         node.disabled = bool;
-                    node?.children?.length && this.inheritCheckNode(node.children, bool);
+        node.children?.length && this.inheritCheckNode(node.children, bool);
       });
     },
     // 遍历树找到勾选的节点，如果父节点已勾选，子孙节点不算在列表内
@@ -244,7 +244,7 @@ export default {
           bk_obj_id: data.bk_obj_id,
           bk_biz_id: data.bk_biz_id,
         });
-      } else if (node?.children?.length) {
+      } else if (node.children?.length) {
         node.children.forEach((child) => {
           this.recursiveFindTopoNodes(child, selectedTopoList);
         });
