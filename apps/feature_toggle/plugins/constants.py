@@ -31,3 +31,5 @@ BKDATA_SUPER_TOKEN = "bkdata_super_token"
 BKDATA_CLUSTERING_TOGGLE = "bkdata_aiops_toggle"
 # es相关配置
 BKLOG_ES_CONFIG = "bklog_es_config"
+# 新人指引相关配置
+USER_GUIDE_CONFIG = "user_guide_config"
