@@ -54,7 +54,7 @@
 
 <script>
 import { mapState } from 'vuex';
-import TextSegmentation from './TextSegmentation.vue';
+import TextSegmentation from './TextSegmentation';
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
 
 export default {

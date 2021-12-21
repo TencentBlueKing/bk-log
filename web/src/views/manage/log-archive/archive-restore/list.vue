@@ -173,7 +173,7 @@ export default {
   created() {
     this.search();
   },
-  beforeDestory() {
+  beforeDestroy() {
     this.timerNum = -1;
     this.stopStatusPolling();
   },

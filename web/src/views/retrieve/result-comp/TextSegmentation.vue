@@ -91,12 +91,10 @@ export default {
       let value = this.content;
       // 高亮显示
       const markVal = this.content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
-      if (markVal) {
-        this.markList = markVal;
+      this.markList = markVal;
+      if (markVal.length) {
         value = String(value).replace(/<mark>/g, '')
           .replace(/<\/mark>/g, '');
-      } else {
-        this.markList = [];
       }
       const arr = value.split(this.segmentReg);
 

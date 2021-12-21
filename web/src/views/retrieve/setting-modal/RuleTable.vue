@@ -209,8 +209,8 @@
 </template>
 <script>
 import VueDraggable from 'vuedraggable';
-import RegisterColumn from '@/views/retrieve2/result-comp/RegisterColumn';
-import ClusterEventPopover from '@/views/retrieve2/result-table-panel/log-clustering/components/ClusterEventPopover';
+import RegisterColumn from '@/views/retrieve/result-comp/RegisterColumn';
+import ClusterEventPopover from '@/views/retrieve/result-table-panel/log-clustering/components/ClusterEventPopover';
 import { copyMessage } from '@/common/util';
 
 export default {

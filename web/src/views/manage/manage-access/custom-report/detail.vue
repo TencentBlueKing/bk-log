@@ -21,60 +21,72 @@
   -->
 
 <template>
-  <div class="access-manage-container" v-bkloading="{ isLoading: basicLoading }">
+  <div
+    style="transition: padding 0.5s;"
+    v-bkloading="{ isLoading: basicLoading }"
+    :class="`custom-report-detail-container access-manage-container ${isOpenWindow ? 'is-active-details' : ''}`">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
-    <template v-if="!authPageInfo && !basicLoading && curIndexSet">
+    <template v-if="!authPageInfo && !basicLoading && reportDetail">
       <bk-tab :active.sync="activePanel" type="border-card">
         <bk-tab-panel v-for="panel in panels" v-bind="panel" :key="panel.name"></bk-tab-panel>
       </bk-tab>
       <keep-alive>
         <component
           class="tab-content"
-          :index-set-data="curIndexSet"
-          :index-set-id="curIndexSet.index_set_id"
+          :collector-data="reportDetail"
+          :index-set-id="reportDetail.index_set_id || ''"
           :is="dynamicComponent"
           @update-active-panel="activePanel = $event"></component>
       </keep-alive>
     </template>
+
+    <intro-panel
+      :data="reportDetail"
+      :is-open-window="isOpenWindow"
+      @handleActiveDetails="handleActiveDetails"></intro-panel>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex';
 import AuthPage from '@/components/common/auth-page';
-import BasicInfo from './BasicInfo';
-import FieldInfo from './FieldInfo';
-import UsageDetails from '@/views/manage2/manage-access/components/usage-details';
+import BasicInfo from '../log-collection/collection-item/manage-collection/BasicInfo';
+import DataStorage from '../log-collection/collection-item/manage-collection/DataStorage';
+import DataStatus from '../log-collection/collection-item/manage-collection/data-status';
+import UsageDetails from '@/views/manage/manage-access/components/usage-details';
+import IntroPanel from './components/IntroPanel';
 
 export default {
-  name: 'IndexSetManage',
+  name: 'collection-item',
   components: {
     AuthPage,
     BasicInfo,
-    FieldInfo,
+    DataStorage,
+    DataStatus,
     UsageDetails,
+    IntroPanel,
   },
   data() {
-    const scenarioId = this.$route.name.split('-')[0];
     return {
-      scenarioId,
       basicLoading: true,
       authPageInfo: null,
-      activePanel: this.$route.query.type || 'basicInfo',
+      reportDetail: {},
+      activePanel: 'basicInfo',
+      isOpenWindow: true,
       panels: [
         { name: 'basicInfo', label: this.$t('基本信息') },
+        { name: 'dataStorage', label: this.$t('数据存储') },
+        { name: 'dataStatus', label: this.$t('数据状态') },
         { name: 'usageDetails', label: this.$t('使用详情') },
-        { name: 'fieldInfo', label: this.$t('字段信息') },
       ],
     };
   },
   computed: {
-    ...mapState('collect', ['curIndexSet', 'scenarioMap']),
     dynamicComponent() {
       const componentMaP = {
         basicInfo: 'BasicInfo',
+        dataStorage: 'DataStorage',
+        dataStatus: 'DataStatus',
         usageDetails: 'UsageDetails',
-        fieldInfo: 'FieldInfo',
       };
       return componentMaP[this.activePanel] || 'BasicInfo';
     },
@@ -85,13 +97,12 @@ export default {
   methods: {
     async initPage() {
       // 进入路由需要先判断权限
-      const indexSetId = this.$route.params.indexSetId.toString();
       try {
         const paramData = {
-          action_ids: ['manage_indices'],
+          action_ids: ['manage_collection'],
           resources: [{
-            type: 'indices',
-            id: indexSetId,
+            type: 'collection',
+            id: this.$route.params.collectorId,
           }],
         };
         const res = await this.$store.dispatch('checkAndGetData', paramData);
@@ -100,10 +111,13 @@ export default {
           // 显示无权限页面
         } else {
           // 正常显示页面
-          await Promise.all([
-            this.fetchIndexSetData(indexSetId),
-            this.fetchScenarioMap(),
-          ]);
+          const { data: reportDetail } = await this.$http.request('collect/details', {
+            params: {
+              collector_config_id: this.$route.params.collectorId,
+            },
+          });
+          this.reportDetail = reportDetail;
+          this.$store.commit('collect/setCurCollect', reportDetail);
         }
       } catch (err) {
         console.warn(err);
@@ -111,28 +125,15 @@ export default {
         this.basicLoading = false;
       }
     },
-    // 索引集详情
-    async fetchIndexSetData(indexSetId) {
-      if (!this.curIndexSet.index_set_id || this.curIndexSet.index_set_id.toString() !== indexSetId) {
-        const { data: indexSetData } = await this.$http.request('indexSet/info', {
-          params: {
-            index_set_id: indexSetId,
-          },
-        });
-        this.$store.commit('collect/updateCurIndexSet', indexSetData);
-      }
-    },
-    // 数据源(场景)映射关系
-    async fetchScenarioMap() {
-      if (!this.scenarioMap) {
-        const { data } = await this.$http.request('meta/scenario');
-        const map = {};
-        data.forEach((item) => {
-          map[item.scenario_id] = item.scenario_name;
-        });
-        this.$store.commit('collect/updateScenarioMap', map);
-      }
+    handleActiveDetails(state) {
+      this.isOpenWindow = state;
     },
   },
 };
 </script>
+
+<style lang="scss">
+.is-active-details{
+  padding:20px 420px 20px 24px;
+}
+</style>
