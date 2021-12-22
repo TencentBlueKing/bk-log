@@ -35,73 +35,18 @@
           </bk-button>
         </div>
 
-        <div v-if="active === 'dataFingerprint'"
-             class="fingerprint fl-sb">
-          <div class="fingerprint-setting fl-sb">
-            <div class="fl-sb">
-              <span>{{$t('同比')}}</span>
-              <bk-select
-                behavior="simplicity"
-                ext-cls="compared-select"
-                ext-popover-cls="compared-select-option"
-                v-model="yearOnYearCycle"
-                :disabled="!signatureSwitch"
-                :clearable="false"
-                :popover-min-width="140"
-                @change="requestFinger"
-                @toggle="isShowCustomize = true">
-                <bk-option
-                  v-for="option in comparedList"
-                  :key="option.id"
-                  :id="option.id"
-                  :name="option.name">
-                </bk-option>
-                <div slot="" class="compared-customize">
-                  <div class="customize-option" v-if="isShowCustomize" @click="isShowCustomize = false">
-                    <span>{{$t('自定义')}}</span>
-                  </div>
-                  <div v-else>
-                    <bk-input @enter="handleEnterCompared"></bk-input>
-                    <div class="compared-select-icon">
-                      <span v-bk-tooltips="$t('customizeTips')" class="top-end">
-                        <i class="log-icon icon-help"></i>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </bk-select>
-            </div>
-
-            <bk-checkbox
-              v-model="isNear24"
-              :true-value="true"
-              :false-value="false"
-              :disabled="!signatureSwitch"
-              @change="isShowNearPattern">
-              <span style="font-size: 12px">{{$t('近24H新增')}}</span>
-            </bk-checkbox>
-
-            <div class="partter fl-sb" style="width: 200px">
-              <span>Partter</span>
-              <div class="partter-slider-box fl-sb">
-                <span>{{$t('少')}}</span>
-                <bk-slider
-                  class="partter-slider"
-                  v-model="partterSize"
-                  :show-tip="false"
-                  :disable="!signatureSwitch"
-                  :max-value="sliderMaxVal"
-                  @change="blurPartterSize"></bk-slider>
-                <span>{{$t('多')}}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <finger-operate
+          v-if="active === 'dataFingerprint'"
+          :finger-operate-data="fingerOperateData"
+          :request-data="requestData"
+          @handleFingerOperate="handleFingerOperate"></finger-operate>
       </div>
 
       <bk-alert
         v-if="active === 'dataFingerprint' && signatureSwitch && !exhibitAll"
-        :title="$t('clusterAlert')" closable type="info">
+        :title="$t('clusterAlert')"
+        closable
+        type="info">
       </bk-alert>
 
       <div v-if="exhibitAll">
@@ -123,9 +68,8 @@
             v-if="active === 'dataFingerprint'"
             v-bind="$attrs"
             v-on="$listeners"
-            :year-on-year-cycle="yearOnYearCycle"
             :cluster-switch="clusterSwitch"
-            :partter-level="partterLevel"
+            :request-data="requestData"
             :config-data="configData"
             :finger-list="fingerList" />
         </div>
@@ -158,10 +102,16 @@
 import DataFingerprint from './DataFingerprint';
 import IgnoreTable from './IgnoreTable';
 import ClusteringLoader from '@/skeleton/clustering-loader';
+import fingerOperate from './components/fingerOperate';
 import { mapGetters } from 'vuex';
 
 export default {
-  components: { DataFingerprint, IgnoreTable, ClusteringLoader },
+  components: {
+    DataFingerprint,
+    IgnoreTable,
+    ClusteringLoader,
+    fingerOperate,
+  },
   props: {
     retrieveParams: {
       type: Object,
@@ -187,14 +137,8 @@ export default {
   data() {
     return {
       active: 'ignoreNumbers',
-      partterSize: 0, // slider当前值
-      partterLevel: '', // partter等级
-      sliderMaxVal: 0, // partter最大值
       clusterSwitch: false, // 日志聚类开关
       signatureSwitch: false, // 数据指纹开关
-      partterList: [], // partter敏感度List
-      isNear24: false, // 近24h
-      yearOnYearCycle: 0, // 同比值
       configID: -1, // 采集项ID
       exhibitAll: false, // 是否显示nav
       alreadyClickNav: [], // 已加载过的nav
@@ -211,9 +155,23 @@ export default {
         id: 'dataFingerprint',
         name: this.$t('数据指纹'),
       }],
-      comparedList: [], // 同比List
+      fingerOperateData: {
+        partterSize: 0, // slider当前值
+        sliderMaxVal: 0, // partter最大值
+        comparedList: [], // 同比List
+        partterList: [], // partter敏感度List
+        isNear24: false, // 近24h
+        isShowCustomize: true, // 是否显示自定义
+        signatureSwitch: false, // 数据指纹开关
+      },
+      requestData: { // 数据请求
+        pattern_level: '',
+        year_on_year_hour: 0,
+        show_new_pattern: true,
+        size: 10000,
+      },
       fingerList: [], // 数据指纹List
-      defaultFingerList: [],
+      defaultFingerList: [], // 默认数据指纹List
       loadingWidthList: { // loading表头宽度列表
         global: [''],
         ignore: [60, 90, 90, ''],
@@ -248,14 +206,14 @@ export default {
       immediate: true,
       handler(val) {
         this.clusterSwitch = val.is_active;
-        this.signatureSwitch = val.extra.signature_switch;
+        this.fingerOperateData.signatureSwitch = val.extra.signature_switch;
         this.configID = this.cleanConfig.extra?.collector_config_id;
       },
     },
     originTableList: {
       handler() {
         if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
-          this.partterLevel === '' && this.initTable();
+          this.requestData.pattern_level === '' && this.initTable();
           this.requestFinger();
         }
       },
@@ -269,7 +227,7 @@ export default {
             this.exhibitAll = false;
             return;
           }
-          this.partterLevel === '' && this.initTable();
+          this.requestData.pattern_level === '' && this.initTable();
           this.exhibitAll = newList.some(el => el.field_type === 'text');
         }
       },
@@ -277,6 +235,12 @@ export default {
     '$route.params.indexId'() {
       this.alreadyClickNav = [];
       this.showTableLoading('global');
+    },
+    requestData: {
+      deep: true,
+      handler() {
+        this.requestFinger();
+      },
     },
   },
   methods: {
@@ -292,66 +256,39 @@ export default {
         this.showTableLoading('table');
       }
     },
-    // 同比自定义输入
-    handleEnterCompared(val) {
-      const matchVal = val.match(/^(\d+)h$/);
-      if (!matchVal) {
-        this.$bkMessage({
-          theme: 'warning',
-          message: this.$t('请按照提示输入'),
-        });
-        return;
-      }
-      this.isShowCustomize = true;
-      const isRepeat =  this.comparedList.some(el => el.id === Number(matchVal[1]));
-      if (isRepeat) {
-        this.yearOnYearCycle = Number(matchVal[1]);
-        return;
-      }
-      this.comparedList.push({
-        id: Number(matchVal[1]),
-        name: `${matchVal[1]}小时前`,
-      });
-      this.yearOnYearCycle = Number(matchVal[1]);
-    },
-    // 请求数据指纹
-    requestFinger() {
-      this.tableLoading = true;
-      this.$http.request('/logClustering/clusterSearch', {
-        params: {
-          index_set_id: this.$route.params.indexId,
-        },
-        data: {
-          ...this.retrieveParams,
-          pattern_level: this.partterLevel,
-          show_new_pattern: true,
-          year_on_year_hour: this.yearOnYearCycle,
-        },
-      })
-        .then((res) => {
-          this.fingerList = res.data;
-          this.defaultFingerList = res.data;
-        })
-        .finally(() => {
-          this.tableLoading = false;
-        });
-    },
     // 初始化数据指纹配置
     initTable() {
       const {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
       } = this.globalsData;
-      this.comparedList = yearOnYearList;
-      this.partterSize = clusterLevel.length - 1;
-      this.sliderMaxVal = clusterLevel.length - 1;
-      this.partterLevel = clusterLevel[clusterLevel.length - 1];
-      this.partterList = clusterLevel;
+      Object.assign(this.fingerOperateData, {
+        partterSize: clusterLevel.length - 1,
+        sliderMaxVal: clusterLevel.length - 1,
+        partterList: clusterLevel,
+        comparedList: yearOnYearList,
+      });
+      Object.assign(this.requestData, {
+        pattern_level: clusterLevel[clusterLevel.length - 1],
+      });
     },
-    // 敏感度
-    blurPartterSize(val) {
-      this.partterLevel = this.partterList[val];
-      this.requestFinger();
+    // 数据指纹操作
+    handleFingerOperate(operateType, val) {
+      if (operateType === 'compared') {
+        this.requestData.year_on_year_hour = val;
+      }
+      if (operateType === 'partterSize') {
+        this.requestData.pattern_level = val;
+      }
+      if (operateType === 'isShowNear') {
+        this.fingerList = val ? this.fingerList.filter(el => el.is_new_class) : this.defaultFingerList;
+      }
+      if (operateType === 'enterCustomize') {
+        this.handleEnterCompared(val);
+      }
+      if (operateType === 'customize') {
+        this.fingerOperateData.isShowCustomize = val;
+      }
     },
     // 跳转
     handleLeaveCurrent() {
@@ -367,15 +304,54 @@ export default {
         });
       }
     },
+    // 同比自定义输入
+    handleEnterCompared(val) {
+      const matchVal = val.match(/^(\d+)h$/);
+      if (!matchVal) {
+        this.$bkMessage({
+          theme: 'warning',
+          message: this.$t('请按照提示输入'),
+        });
+        return;
+      }
+      this.fingerOperateData.isShowCustomize = true;
+      const isRepeat =  this.fingerOperateData.comparedList.some(el => el.id === Number(matchVal[1]));
+      if (isRepeat) {
+        this.requestData.year_on_year_hour = Number(matchVal[1]);
+        return;
+      }
+      this.fingerOperateData.comparedList.push({
+        id: Number(matchVal[1]),
+        name: `${matchVal[1]}小时前`,
+      });
+      this.requestData.year_on_year_hour = Number(matchVal[1]);
+    },
+    // 请求数据指纹
+    requestFinger() {
+      this.tableLoading = true;
+      this.$http.request('/logClustering/clusterSearch', {
+        params: {
+          index_set_id: this.$route.params.indexId,
+        },
+        data: {
+          ...this.retrieveParams,
+          ...this.requestData,
+        },
+      })
+        .then((res) => {
+          this.fingerList = res.data;
+          this.defaultFingerList = res.data;
+        })
+        .finally(() => {
+          this.tableLoading = false;
+        });
+    },
     // table loading动画
     showTableLoading(type = 'table') {
       type === 'table' ? this.tableLoading : this.globalLoading = true;
       setTimeout(() => {
         type === 'table' ? this.tableLoading : this.globalLoading = false;
       }, 500);
-    },
-    isShowNearPattern(state) {
-      this.fingerList = state ? this.fingerList.filter(el => el.is_new_class) : this.defaultFingerList;
     },
   },
 };
@@ -389,72 +365,10 @@ export default {
     min-width: 760px;
     margin-bottom: 12px;
     color: #63656e;
-    .fingerprint-setting {
-      width: 485px;
-      height: 24px;
-      line-height: 24px;
-      font-size: 12px;
-      .partter {
-        width: 200px;
-        .partter-slider-box {
-          width: 154px;
-        }
-        .partter-slider {
-          width: 114px;
-        }
-      }
-    }
-    .download-icon {
-      min-width: 26px;
-      height: 26px;
-      padding: 0;
-      border: 1px solid #c1c4ca;
-      position: relative;
-      color: #979ba5;
-      cursor: pointer;
-      border-radius: 2px;
-      @include flex-center;
-    }
     @include flex-justify(space-between);
   }
   .bk-alert {
     margin-bottom: 16px;
-  }
-}
-.compared-select {
-  min-width: 87px;
-  margin-left: 6px;
-  position: relative;
-  top: -3px;
-  .bk-select-name {
-    height: 24px;
-  }
-}
-.compared-select-option{
-  .compared-customize{
-    position: relative;
-    margin-bottom: 6px;
-  }
-  .compared-select-icon{
-    font-size: 14px;
-    position: absolute;
-    right: 18px;
-    top: 2px;
-  }
-  .customize-option{
-    padding:0 18px;
-    cursor: pointer;
-    &:hover{
-      color:#3A84FF;
-      background: #EAF3FF;
-    }
-  }
-  .bk-form-control{
-    width: 80%;
-    margin: 0 auto;
-  }
-  .bk-form-input{
-    padding: 0 18px 0 10px !important;
   }
 }
 .no-text-table {
@@ -478,9 +392,5 @@ export default {
       cursor: pointer;
     }
   }
-}
-.fl-sb {
-  align-items: center;
-  @include flex-justify(space-between);
 }
 </style>
