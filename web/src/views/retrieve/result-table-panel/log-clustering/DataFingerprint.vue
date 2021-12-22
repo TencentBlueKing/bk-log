@@ -37,13 +37,16 @@
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('数量')" :sortable="true" width="91" prop="number">
+      <bk-table-column :label="$t('数量')" sortable width="91" prop="number">
         <template slot-scope="props">
-          <span class="link-color" @click="handleMenuClick('show original',props.row)">{{props.row.count}}</span>
+          <span
+            class="link-color"
+            @click="handleMenuClick('show original',props.row)">
+            {{props.row.count}}</span>
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('占比')" :sortable="true" width="96" prop="source">
+      <bk-table-column :label="$t('占比')" sortable width="96" prop="source">
         <template slot-scope="props">
           <span class="link-color" @click="handleMenuClick('show original',props.row)">
             {{`${props.row.percentage.toFixed(2)}%`}}
@@ -51,11 +54,11 @@
         </template>
       </bk-table-column>
 
-      <template v-if="yearOnYearCycle >= 1 ">
+      <template v-if="requestData.year_on_year_hour >= 1 ">
         <bk-table-column
           width="101" align="center" header-align="center" prop="source"
           :label="$t('同比数量')"
-          :sortable="true"
+          sortable
           :sort-by="'year_on_year_count'">
           <template slot-scope="props">
             <span>{{props.row.year_on_year_count}}</span>
@@ -63,9 +66,9 @@
         </bk-table-column>
 
         <bk-table-column
-          width="101" align="center" header-align="center" prop="source"
+          min-width="101" align="center" header-align="center" prop="source"
           :label="$t('同比变化')"
-          :sortable="true"
+          sortable
           :sort-by="'year_on_year_percentage'">
           <template slot-scope="props">
             <div class="flac compared-change">
@@ -76,7 +79,7 @@
         </bk-table-column>
       </template>
 
-      <bk-table-column label="Pattern" min-width="400" class-name="symbol-column">
+      <bk-table-column label="Pattern" min-width="500" class-name="symbol-column">
         <!-- eslint-disable-next-line -->
         <template slot-scope="{ row, column, $index }">
           <register-column :context="row.pattern">
@@ -105,7 +108,7 @@
 
       <!-- <bk-table-column :label="$t('告警')" width="103">
       <template slot-scope="props">
-        <div class="flac">
+        <div class="">
           <bk-switcher v-model="props.row.a" theme="primary"></bk-switcher>
           <bk-popover content="可去告警策略编辑" :delay="300">
             <span
@@ -124,17 +127,13 @@
 
     <bk-table-column :label="$t('备注')" width="100" prop="remark"></bk-table-column> -->
 
-      <div slot="empty" v-if="clusterSwitch && !configData.extra.signature_switch">
-        <div class="empty-text">
+      <div slot="empty">
+        <div class="empty-text" v-if="clusterSwitch && !configData.extra.signature_switch">
           <span class="bk-table-empty-icon bk-icon icon-empty"></span>
           <p>{{$t('goFingerMessage')}}</p>
-          <span class="empty-leave" @click="handleLeaveCurrent">
-            {{$t('去设置')}}
-          </span>
+          <span class="empty-leave" @click="handleLeaveCurrent">{{$t('去设置')}}</span>
         </div>
-      </div>
-      <div slot="empty" v-if="fingerList.length === 0 && configData.extra.signature_switch">
-        <div class="empty-text">
+        <div class="empty-text" v-if="fingerList.length === 0 && configData.extra.signature_switch">
           <span class="bk-table-empty-icon bk-icon icon-empty"></span>
           <p>{{$t('暂无数据')}}</p>
         </div>
@@ -157,12 +156,12 @@ export default {
       type: Array,
       require: true,
     },
-    yearOnYearCycle: {
-      type: Number,
-      require: true,
-    },
     clusterSwitch: {
       type: Boolean,
+      require: true,
+    },
+    requestData: {
+      type: Object,
       require: true,
     },
     partterLevel: {
@@ -185,7 +184,7 @@ export default {
     handleMenuClick(option, row) {
       switch (option) {
         case 'show original':
-          this.addFilterCondition(`__dist_${this.partterLevel}`, 'is', row.signature.toString());
+          this.addFilterCondition(`__dist_${this.requestData.partterLevel}`, 'is', row.signature.toString());
           this.$emit('showOriginLog');
           break;
         case 'copy':
@@ -221,16 +220,14 @@ export default {
 .compared-change {
   height: 24px;
   width: 100%;
-  margin-left: 12px;
+  justify-content: center;
 }
 .log-cluster-table {
   /deep/ .bk-table-body-wrapper {
     min-height: calc(100vh - 550px);
     .bk-table-empty-block {
-      display: flex;
-      justify-content: center;
-      align-items: center;
       min-height: calc(100vh - 550px);
+       @include flex-center;
     }
   }
   &:before {

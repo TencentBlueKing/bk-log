@@ -516,33 +516,33 @@ export default {
   .rule-container {
     padding: 0 16px;
   }
-  .submit-dialog {
-    /deep/.bk-dialog-tool {
-      display: none;
-    }
-    .submit-dialog-container {
-      /deep/ .bk-button {
-        margin-left: 100px;
-      }
-      .submit-dialog-title {
-        font-weight: 700;
-        font-size: 16px;
-        margin-bottom: 7px;
-      }
-      .submit-dialog-text {
-        margin-bottom: 22px;
-      }
-      /deep/.submit-dialog-btn {
-        margin-left: 224px;
-      }
-    }
-  }
   .rule-error {
     /deep/.bk-form-input {
       border-color: #ff5656;
     }
     &.bk-select {
       border-color: #ff5656 !important;
+    }
+  }
+}
+.submit-dialog {
+  /deep/.bk-dialog-tool {
+    display: none;
+  }
+  .submit-dialog-container {
+    /deep/ .bk-button {
+      margin-left: 100px;
+    }
+    .submit-dialog-title {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 7px;
+    }
+    .submit-dialog-text {
+      margin-bottom: 22px;
+    }
+    /deep/.submit-dialog-btn {
+      margin-left: 224px;
     }
   }
 }
