@@ -116,12 +116,12 @@
       <!-- 副本数 -->
       <bk-form-item :label="$t('configDetails.copyNumber')">
         <bk-input
+          class="copy-number-input"
+          v-model="formData.storage_replies"
+          type="number"
           :max="3"
           :min="0"
           :precision="0"
-          v-model="formData.storage_replies"
-          style="width:100px;"
-          type="number"
           :clearable="false"
           :show-controls="true"
           @blur="changeCopyNumber"
@@ -534,6 +534,7 @@ export default {
 </script>
 <style lang="scss">
   @import '@/scss/mixins/clearfix';
+  @import '@/scss/storage.scss';
 
   .step-storage {
     margin-top: 30px;
@@ -548,20 +549,6 @@ export default {
       color: #aeb0b7;
       margin-left: 8px;
       line-height: 32px;
-    }
-
-    .tips_storage {
-      width: 540px;
-      background-color: rgb(239, 248, 255);
-      border: 1px solid deepskyblue;
-      font-size: 12px;
-      padding: 10px;
-      margin-top: 15px;
-
-      div {
-        line-height: 24px;
-        color: #63656e;
-      }
     }
 
     .form-div {
@@ -584,23 +571,6 @@ export default {
         margin-right: 8px;
         min-width: 80px;
         text-align: right;
-      }
-    }
-
-    .hot-data-form-item {
-      .bk-form-content {
-        display: flex;
-        align-items: center;
-
-        .disable-tips {
-          margin-left: 10px;
-          font-size: 12px;
-          color: #63656e;
-
-          a {
-            color: #3a84ff;
-          }
-        }
       }
     }
   }
