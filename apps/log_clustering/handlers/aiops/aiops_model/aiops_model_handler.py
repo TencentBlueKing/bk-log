@@ -132,13 +132,16 @@ class AiopsModelHandler(BaseAiopsHandler):
         request_dict = self._set_username(retrieve_execute_config_request)
         return BkDataAIOPSApi.retrieve_execute_config(params=request_dict)
 
-    def update_execute_config(self, experiment_id: int, window: str = "4h", worker_nums: int = 8, memory: int = 4096):
+    def update_execute_config(
+        self, experiment_id: int, window: str = "1h", worker_nums: int = 16, memory: int = 8096, time_limit: int = 7200
+    ):
         """
         变更实验meta配置
         @param experiment_id int 实验id
         @param window str 窗口时间大小
         @param worker_nums int 使用worker数
         @param memory int 使用内存大小
+        @param time_limit 运行时间设置
         """
         update_execute_config_request = UpdateExecuteConfigCls(
             filter_id=experiment_id,
@@ -149,6 +152,7 @@ class AiopsModelHandler(BaseAiopsHandler):
                 pipeline_resources=PipelineResourcesCls(
                     python_backend=PythonBackendCls(worker_nums=worker_nums, memory=memory)
                 ),
+                pipeline_execute_config={"time_limit": time_limit},
             ),
         )
         request_dict = self._set_username(update_execute_config_request)
@@ -414,13 +418,15 @@ class AiopsModelHandler(BaseAiopsHandler):
         @param delimeter 分词符
         @param max_log_length 最大日志长度
         @param is_case_sensitive 是否大小写
-        @param model_id 模型切分
+        @param model_id 模型id
         @param experiment_id 实验id
         """
         experiment_config = self.get_experiments_config(model_id=model_id, experiment_id=experiment_id)
         if not experiment_config["steps"]["model_train"]["node"]:
             raise NodeConfigException(NodeConfigException.MESSAGE.format(steps="model_train"))
         model_train_steps_config, *_ = experiment_config["steps"]["model_train"]["node"]
+        # 这里是因为需要在模型训练时将最外层execute_config赋值给对应node config中的execute_config
+        execute_config = experiment_config["execute_config"]
         model_train_request = ModelTrainCls(
             model_id=model_id,
             experiment_id=experiment_id,
@@ -441,7 +447,7 @@ class AiopsModelHandler(BaseAiopsHandler):
                     properties=model_train_steps_config["properties"],
                     active=model_train_steps_config["active"],
                     node_role=model_train_steps_config["node_role"],
-                    execute_config=model_train_steps_config["execute_config"],
+                    execute_config=execute_config,
                     content=ContentCls(
                         input_config=model_train_steps_config["content"]["input_config"],
                         output_config=model_train_steps_config["content"]["output_config"],
