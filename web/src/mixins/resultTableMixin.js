@@ -23,13 +23,13 @@
 import { mapState } from 'vuex';
 import { formatDate, random, copyMessage } from '@/common/util';
 import tableRowDeepViewMixin from '@/mixins/tableRowDeepViewMixin';
-import EventPopover from '@/views/retrieve2/result-comp/EventPopover.vue';
-import RegisterColumn from '@/views/retrieve2/result-comp/RegisterColumn.vue';
+import EventPopover from '@/views/retrieve/result-comp/EventPopover.vue';
+import RegisterColumn from '@/views/retrieve/result-comp/RegisterColumn.vue';
 import TextHighlight from 'vue-text-highlight';
-import OperatorTools from '@/views/retrieve2/result-table-panel/original-log/OperatorTools';
+import OperatorTools from '@/views/retrieve/result-table-panel/original-log/OperatorTools';
 import RetrieveLoader from '@/skeleton/retrieve-loader';
-import TableColumn from '@/views/retrieve2/result-comp/TableColumn';
-import ExpandView from '@/views/retrieve2/result-table-panel/original-log/ExpandView.vue';
+import TableColumn from '@/views/retrieve/result-comp/TableColumn';
+import ExpandView from '@/views/retrieve/result-table-panel/original-log/ExpandView.vue';
 
 export default {
   components: {
