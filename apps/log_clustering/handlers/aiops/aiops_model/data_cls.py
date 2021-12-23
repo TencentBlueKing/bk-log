@@ -129,6 +129,7 @@ class PipelineResourcesCls(object):
 class ExecuteConfigCls(object):
     pipeline_resources: PipelineResourcesCls
     chunked_read_sample_set: ChunkedReadSampleSet
+    pipeline_execute_config: Dict
     pipeline_mode: str = "chunked_training"
 
 
