@@ -78,7 +78,7 @@ try {
 
 router.onError((err) => {
   console.log('err.message===', err.message);
-  const pattern = /Loading chunk (\d)+ failed/g;
+  const pattern = /Loading (CSS chunk|chunk) (\d)+ failed/g;
   const isChunkLoadFailed = err.message.match(pattern);
   const targetPath = router.history.pending.fullPath;
   console.log(isChunkLoadFailed, targetPath);
