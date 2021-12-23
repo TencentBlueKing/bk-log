@@ -76,6 +76,17 @@ try {
   console.warn('前端监控接入出错', e);
 }
 
+router.onError((err) => {
+  const pattern = /^Loading chunk (\d)+ failed\./;
+  const isChunkLoadingFailed = pattern.test(err.message);
+
+  if (isChunkLoadingFailed) {
+    window.location.replace(window.location.href);
+  }
+
+  console.log('出错了', err);
+});
+
 Vue.component('VueJsonPretty', VueJsonPretty);
 Vue.component('LogButton', LogButton);
 Vue.directive('cursor', cursor);
