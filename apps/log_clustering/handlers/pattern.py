@@ -102,7 +102,7 @@ class PatternHandler:
                     "signature": signature,
                     "percentage": self.percentage(count, sum_count),
                     "is_new_class": signature in new_class,
-                    "year_on_year_count": count - year_on_year_compare,
+                    "year_on_year_count": year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
                 }
             )
