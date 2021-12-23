@@ -28,6 +28,7 @@
         <bk-button
           size="small"
           style="min-width: 48px"
+          data-test-id="LogCluster_button_addNewRules"
           :class="globalEditable ? 'btn-hover' : ''"
           :disabled="!globalEditable"
           @click="isShowAddRule = true">
@@ -36,6 +37,7 @@
         <bk-button
           size="small"
           style="min-width: 72px"
+          data-test-id="LogCluster_button_reductionRules"
           :class="globalEditable ? 'btn-hover' : ''"
           :disabled="!globalEditable"
           @click="reductionRule">
@@ -43,7 +45,7 @@
         </bk-button>
       </div>
 
-      <div class="cluster-table">
+      <div class="cluster-table" data-test-id="LogCluster_div_rulesTable">
         <div class="table-row flbc">
           <div class="row-left">
             <div class="row-left-index">{{$t('序号')}}</div>
@@ -310,8 +312,7 @@ export default {
     // 编辑规则
     clusterEdit(index) {
       const [key, val] = Object.entries(this.rulesList[index])[0];
-      this.regular = val;
-      this.placeholder = key;
+      Object.assign(this.addRulesData, { regular: val, placeholder: key });
       this.editRulesIndex = index;
       this.isEditRules = true;
       this.isShowAddRule = true;
@@ -362,10 +363,7 @@ export default {
       this.isRuleCorrect = false;
       this.isEditRules = false;
       this.isClickSubmit = false;
-      this.addRulesData = {
-        regular: '',
-        placeholder: '',
-      };
+      Object.assign(this.addRulesData, { regular: '', placeholder: '' });
     },
     // base64转聚类规则数组
     base64ToRuleArr(str) {

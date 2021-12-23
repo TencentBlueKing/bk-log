@@ -29,6 +29,7 @@
           ext-cls="compared-select"
           ext-popover-cls="compared-select-option"
           v-model="requestData.year_on_year_hour"
+          data-test-id="fingerTable_select_selectCustomSize"
           :disabled="!fingerOperateData.signatureSwitch"
           :clearable="false"
           :popover-min-width="140"
@@ -60,6 +61,7 @@
 
       <bk-checkbox
         v-model="fingerOperateData.isNear24"
+        data-test-id="fingerTable_checkBox_selectCustomSize"
         :true-value="true"
         :false-value="false"
         :disabled="!fingerOperateData.signatureSwitch"
@@ -74,6 +76,7 @@
           <bk-slider
             class="partter-slider"
             v-model="fingerOperateData.partterSize"
+            data-test-id="fingerTable_slider_patterSize"
             :show-tip="false"
             :disable="!fingerOperateData.signatureSwitch"
             :max-value="fingerOperateData.sliderMaxVal"

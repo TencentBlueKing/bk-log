@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="repository-slider-container">
+  <div class="repository-slider-container" data-test-id="archive_div_addNewStorehouse">
     <bk-sideslider
       transfer
       :title="isEdit ? $t('logArchive.editRepository') : $t('logArchive.createRepository')"
@@ -46,7 +46,11 @@
             required
             :rules="basicRules.cluster_id"
             property="cluster_id">
-            <bk-select v-model="formData.cluster_id" searchable @change="handleChangeCluster">
+            <bk-select
+              v-model="formData.cluster_id"
+              searchable
+              data-test-id="addNewStorehouse_select_selectEsCluster"
+              @change="handleChangeCluster">
               <bk-option
                 v-for="option in esClusterList"
                 :key="option.cluster_config.cluster_id"
@@ -77,6 +81,7 @@
               :class="{ 'repository-card': true, 'is-active': formData.es_config.type === card.id }"
               v-for="card in repository"
               :key="card.name"
+              :data-test-id="`addNewStorehouse_div_${card.id}`"
               @click="changeRepository(card)">
               <span class="repository-name">{{ card.name }}</span>
               <img :src="card.image" class="card-image">
@@ -102,6 +107,7 @@
             property="snapshot_repository_name">
             <bk-input
               v-model="formData.snapshot_repository_name"
+              data-test-id="addNewStorehouse_input_repoName"
               :placeholder="$t('logArchive.repoNmaeTip')">
             </bk-input>
           </bk-form-item>
@@ -112,14 +118,18 @@
               required
               :rules="basicRules.path"
               :property="formData.hdfsFormData.path">
-              <bk-input v-model="formData.hdfsFormData.path"></bk-input>
+              <bk-input
+                v-model="formData.hdfsFormData.path"
+                data-test-id="addNewStorehouse_input_archiveCatalog"></bk-input>
             </bk-form-item>
             <bk-form-item
               :label="$t('logArchive.HDFSAddr')"
               required
               :rules="basicRules.uri"
               :property="formData.hdfsFormData.uri">
-              <bk-input v-model="formData.hdfsFormData.uri">
+              <bk-input
+                v-model="formData.hdfsFormData.uri"
+                data-test-id="addNewStorehouse_input_HDFSurl">
                 <!-- <template slot="prepend">
                   <div class="group-text">hdfs://</div>
                 </template> -->
@@ -136,7 +146,9 @@
                   theme="primary"
                   v-model="formData.hdfsFormData.isSecurity">
                 </bk-switcher>
-                <bk-input v-model="formData.hdfsFormData.security.principal"></bk-input>
+                <bk-input
+                  v-model="formData.hdfsFormData.security.principal"
+                  data-test-id="addNewStorehouse_input_principal"></bk-input>
               </div>
             </bk-form-item>
           </div>
@@ -144,6 +156,7 @@
           <div v-if="formData.es_config.type === 'fs'" key="fs">
             <bk-form-item
               :label="$t('logArchive.archiveDirectory')"
+              data-test-id="addNewStorehouse_input_archiveCatalog"
               required
               :rules="basicRules.location"
               :property="formData.fsFormData.location">
@@ -157,53 +170,68 @@
               required
               :rules="basicRules.base_path"
               :property="formData.cosFormData.base_path">
-              <bk-input v-model="formData.cosFormData.base_path"></bk-input>
+              <bk-input
+                v-model="formData.cosFormData.base_path"
+                data-test-id="addNewStorehouse_input_archiveCatalog"></bk-input>
             </bk-form-item>
             <bk-form-item
               :label="$t('logArchive.region')"
               required
               :rules="basicRules.region"
               :property="formData.cosFormData.region">
-              <bk-input v-model="formData.cosFormData.region"></bk-input>
+              <bk-input
+                v-model="formData.cosFormData.region"
+                data-test-id="addNewStorehouse_input_region"></bk-input>
             </bk-form-item>
             <bk-form-item
               label="Secretld"
               required
               :rules="basicRules.access_key_id"
               :property="formData.cosFormData.access_key_id">
-              <bk-input v-model="formData.cosFormData.access_key_id"></bk-input>
+              <bk-input
+                v-model="formData.cosFormData.access_key_id"
+                data-test-id="addNewStorehouse_input_Secretld"></bk-input>
             </bk-form-item>
             <bk-form-item
               label="SecretKey"
               required
               :rules="basicRules.access_key_secret"
               :property="formData.cosFormData.access_key_secret">
-              <bk-input v-model="formData.cosFormData.access_key_secret"></bk-input>
+              <bk-input
+                v-model="formData.cosFormData.access_key_secret"
+                data-test-id="addNewStorehouse_input_SecretKey"></bk-input>
             </bk-form-item>
             <bk-form-item
               label="APPID"
               required
               :rules="basicRules.app_id"
               :property="formData.cosFormData.app_id">
-              <bk-input v-model="formData.cosFormData.app_id"></bk-input>
+              <bk-input
+                v-model="formData.cosFormData.app_id"
+                data-test-id="addNewStorehouse_input_APPID"></bk-input>
             </bk-form-item>
             <bk-form-item
               :label="$t('logArchive.BucketName')"
               required
               :rules="basicRules.bucket"
               :property="formData.cosFormData.bucket">
-              <bk-input v-model="formData.cosFormData.bucket"></bk-input>
+              <bk-input
+                v-model="formData.cosFormData.bucket"
+                data-test-id="addNewStorehouse_input_BucketName"></bk-input>
             </bk-form-item>
           </div>
           <bk-form-item style="margin-top:40px;">
             <bk-button
               theme="primary"
               class="king-button mr10"
+              data-test-id="addNewStorehouse_button_submit"
               :loading="confirmLoading"
               @click.stop.prevent="handleConfirm">
               {{ $t('提交') }}
             </bk-button>
-            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+            <bk-button
+              data-test-id="addNewStorehouse_button_cancel"
+              @click="handleCancel">{{ $t('取消') }}</bk-button>
           </bk-form-item>
         </bk-form>
       </div>
