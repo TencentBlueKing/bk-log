@@ -86,6 +86,7 @@ const store = new Vuex.Store({
     showRouterLeaveTip: false,
     // 新人指引
     userGuideData: {},
+    curCustomReport: null,
   },
   // 公共 getters
   getters: {

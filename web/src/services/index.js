@@ -42,6 +42,7 @@ import * as linkConfiguration from './linkConfiguration';
 import * as clean from './clean';
 import * as archive from './archive';
 import * as logClustering from './logClustering';
+import * as custom from './custom';
 
 const getMyProjectList = {
   url: '/meta/projects/mine/',
@@ -74,4 +75,5 @@ export default {
   clean,
   archive,
   logClustering,
+  custom,
 };

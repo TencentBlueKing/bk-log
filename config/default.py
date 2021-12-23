@@ -522,7 +522,12 @@ MENUS = [
                         "scenes": "scenario_es",
                         "icon": "elasticsearch",
                     },
-                    {"id": "custom_collection", "name": _("自定义接入"), "feature": "off", "icon": ""},
+                    {
+                        "id": "custom_report",
+                        "name": _("自定义上报"),
+                        "feature": "on",
+                        "icon": "menu-custom"
+                    },
                 ],
             },
             {

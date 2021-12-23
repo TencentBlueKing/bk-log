@@ -43,123 +43,133 @@ const IndexSetView = {
   name: 'IndexSet',
   template: '<router-view :key="Date.now()"></router-view>',
 };
+const CustomReportView = {
+  name: 'CustomReportView',
+  template: '<router-view></router-view>',
+};
 const ExtractLinkView = {
   name: 'ExtractLinkView',
   template: '<router-view></router-view>',
 };
-
 const LogCleanView = {
   name: 'LogCleanView',
   template: '<router-view></router-view>',
 };
-
 const LogCleanTempView = {
   name: 'LogCleanTempView',
   template: '<router-view></router-view>',
 };
-
 const DashboardTempView = {
   name: 'DashboardTempView',
   template: '<router-view></router-view>',
 };
-
 const TraceTempView = {
   name: 'TraceTempView',
   template: '<router-view></router-view>',
 };
 
 const page403 = () => import(/* webpackChunkName: 'page403' */'@/views/403');
-const retrieve = () => import(/* webpackChunkName: 'logRetrieve' */'@/views/retrieve2');
+const retrieve = () => import(/* webpackChunkName: 'logRetrieve' */'@/views/retrieve');
 const dashboard = () => import(/* webpackChunkName: 'dashboard' */'@/views/dashboard');
 const trace = () => import(/* webpackChunkName: 'logTrace' */'@/views/trace');
 const traceDetaid = () => import(/* webpackChunkName: 'logTraceDetail' */'@/views/trace/traceExplore');
 
 // 管理端
-const Manage = () => import(/* webpackChunkName: 'manage' */'@/views/manage2');
+const Manage = () => import(/* webpackChunkName: 'manage' */'@/views/manage');
 // ---- 日志接入 ---- 日志采集（采集项）
 const CollectionItem = () => import(
   /* webpackChunkName: 'collection-item' */
-  '@/views/manage2/manage-access/log-collection/collection-item');
+  '@/views/manage/manage-access/log-collection/collection-item');
 // ---- 日志接入 ---- 日志采集（采集项）---- 管理(查看)采集项
 const ManageCollection = () => import(
   /* webpackChunkName: 'manage-collection' */
-  '@/views/manage2/manage-access/log-collection/collection-item/manage-collection'
+  '@/views/manage/manage-access/log-collection/collection-item/manage-collection'
 );
 // ---- 日志接入 ---- 日志采集（采集项）---- 新建、编辑、停用、启用、字段提取
 const AccessSteps = () => import(
   /* webpackChunkName: 'access-steps' */
-  // '@/views/manage2/manage-access/log-collection/collection-item/access-steps'
+  // '@/views/manage/manage-access/log-collection/collection-item/access-steps'
   '@/components/data-Access'
 );
 // ---- 日志接入 ---- 日志采集索引集、数据平台、第三方ES接入 ---- 索引集列表
 const IndexList = () => import(
   /* webpackChunkName: 'index-set' */
-  '@/views/manage2/manage-access/components/index-set/list'
+  '@/views/manage/manage-access/components/index-set/list'
 );
 // ---- 日志接入 ---- 日志采集索引集、数据平台、第三方ES接入---- 管理索引集
 const ManageIndex = () => import(
   /* webpackChunkName: 'mange-index' */
-  '@/views/manage2/manage-access/components/index-set/manage'
+  '@/views/manage/manage-access/components/index-set/manage'
 );
 // ---- 日志接入 ---- 日志采集索引集、数据平台、第三方ES接入 ---- 新建索引集
 const CreateIndex = () => import(
   /* webpackChunkName: 'create-index' */
-  '@/views/manage2/manage-access/components/index-set/create'
+  '@/views/manage/manage-access/components/index-set/create'
 );
-// ---- 日志接入 ---- 自定义接入
-const CustomCollection = () => import(
-  /* webpackChunkName: 'es-custom-collection' */
-  '@/views/manage2/manage-access/custom-collection'
+// ---- 日志接入 ---- 自定义上报 ---- 自定义上报列表
+const CustomReportList = () => import(
+  /* webpackChunkName: 'create-index' */
+  '@/views/manage/manage-access/custom-report/list'
+);
+// ---- 日志接入 ---- 自定义上报 ---- 自定义上报新建/编辑
+const CustomReportCreate = () => import(
+  /* webpackChunkName: 'create-index' */
+  '@/views/manage/manage-access/custom-report/create'
+);
+// ---- 日志接入 ---- 自定义上报 ---- 自定义上报详情
+const CustomReportDetail = () => import(
+  /* webpackChunkName: 'create-index' */
+  '@/views/manage/manage-access/custom-report/detail'
 );
 // ---- 全链路跟踪 ---- 采集跟踪
 const CollectionTrack = () => import(
   /* webpackChunkName: 'collection-track' */
-  '@/views/manage2/trace-track/collection-track'
+  '@/views/manage/trace-track/collection-track'
 );
 // ---- 全链路跟踪 ---- SDK跟踪
 const SdkTrack = () => import(
   /* webpackChunkName: 'sdk-track' */
-  '@/views/manage2/trace-track/sdk-track'
+  '@/views/manage/trace-track/sdk-track'
 );
 // ---- 日志清洗 ---- 清洗列表
 const cleanList = () => import(
   /* webpackChunkName: 'sdk-track' */
-  '@/views/manage2/log-clean/clean-manage/list'
+  '@/views/manage/log-clean/clean-manage/list'
 );
 // ---- 日志清洗 ---- 新增/编辑 清洗
 const cleanCreate = () => import(
   /* webpackChunkName: 'sdk-track' */
-  '@/views/manage2/log-clean/clean-manage/create'
+  '@/views/manage/log-clean/clean-manage/create'
 );
 // ---- 日志清洗 ---- 新增/编辑 清洗
 const cleanTempCreate = () => import(
   /* webpackChunkName: 'sdk-track' */
-  '@/views/manage2/log-clean/clean-template/create'
+  '@/views/manage/log-clean/clean-template/create'
 );
 // ---- 模板清洗 ---- 清洗模版
 const cleanTemplate = () => import(
   /* webpackChunkName: 'sdk-track' */
-  '@/views/manage2/log-clean/clean-template/list'
+  '@/views/manage/log-clean/clean-template/list'
 );
 // ---- 日志归档 ---- 归档仓库
 const ArchiveRepository = () => import(
   /* webpackChunkName: 'sdk-track' */
-  '@/views/manage2/log-archive/archive-repository/list'
+  '@/views/manage/log-archive/archive-repository/list'
 );
 // ---- 日志归档 ---- 归档列表
 const ArchiveList = () => import(
   /* webpackChunkName: 'sdk-track' */
-  '@/views/manage2/log-archive/archive-list/list'
+  '@/views/manage/log-archive/archive-list/list'
 );
 // ---- 日志归档 ---- 归档回溯
 const ArchiveRestore = () => import(
   /* webpackChunkName: 'sdk-track' */
-  '@/views/manage2/log-archive/archive-restore/list'
+  '@/views/manage/log-archive/archive-restore/list'
 );
 // ---- 日志提取 ---- 提取配置
 const ExtractPermission = () => import(
   /* webpackChunkName: 'manage-extract-permission' */
-  '@/views/manage2/manage-extract/manage-extract-permission'
+  '@/views/manage/manage-extract/manage-extract-permission'
 );
 // ---- 日志提取 ---- 提取任务
 const extract = () => import(
@@ -179,30 +189,28 @@ const extractCreate = () => import(
 // ---- 日志提取 ---- 链路管理列表
 const ExtractLinkList = () => import(
   /* webpackChunkName: 'extract-link-manage' */
-  '@/views/manage2/manage-extract/extract-link-manage/ExtractLinkList'
+  '@/views/manage/manage-extract/extract-link-manage/ExtractLinkList'
 );
 // ---- 日志提取 ---- 链路管理创建/编辑
 const ExtractLinkCreate = () => import(
   /* webpackChunkName: 'extract-link-manage' */
-  '@/views/manage2/manage-extract/extract-link-manage/ExtractLinkCreate'
+  '@/views/manage/manage-extract/extract-link-manage/ExtractLinkCreate'
 );
 // ---- ES集群 ---- 集群信息
 const ClusterMess = () => import(
   /* webpackChunkName: 'es-cluster-mess' */
-  '@/views/manage2/es-cluster-status/es-cluster-mess'
+  '@/views/manage/es-cluster-status/es-cluster-mess'
 );
 // ---- 管理 ---- 采集链路管理
 const DataLinkConf = () => import(
   /* webpackChunkName: 'manage-data-link-conf' */
-  '@/views/manage2/manage-data-link/manage-data-link-conf'
+  '@/views/manage/manage-data-link/manage-data-link-conf'
 );
 
 const routes = [
   {
     path: '',
-    redirect: () => {
-      return '/retrieve';
-    },
+    redirect: 'retrieve',
   },
   {
     path: '/retrieve/:indexId?',
@@ -476,9 +484,44 @@ const routes = [
         ],
       },
       {
-        path: 'custom-collection',
-        name: 'custom-collection', // 日志接入 - 自定义接入
-        component: CustomCollection,
+        path: 'custom-report',
+        name: 'custom-report', // 日志接入 - 自定义上报
+        component: CustomReportView,
+        redirect: '/manage/custom-report/list',
+        children: [
+          {
+            path: 'list',
+            name: 'custom-report-list', // 日志接入 - 自定义上报列表
+            component: CustomReportList,
+          },
+          {
+            path: 'create',
+            name: 'custom-report-create', // 日志接入 - 自定义上报新建
+            meta: {
+              needBack: true,
+              backName: 'custom-report-list',
+            },
+            component: CustomReportCreate,
+          },
+          {
+            path: 'edit/:collectorId',
+            name: 'custom-report-edit', // 日志接入 - 自定义上报编辑
+            meta: {
+              needBack: true,
+              backName: 'custom-report-list',
+            },
+            component: CustomReportCreate,
+          },
+          {
+            path: 'detail/:collectorId',
+            name: 'custom-report-detail', // 日志接入 - 自定义上报详情
+            meta: {
+              needBack: true,
+              backName: 'custom-report-list',
+            },
+            component: CustomReportDetail,
+          },
+        ],
       },
       {
         path: 'collection-track',

@@ -39,6 +39,7 @@ from apps.log_clustering.handlers.dataflow.constants import (
     NodeType,
     DEFAULT_SPARK_EXECUTOR_INSTANCES,
     DEFAULT_PSEUDO_SHUFFLE,
+    DEFAULT_SPARK_LOCALITY_WAIT,
 )
 from apps.log_clustering.handlers.dataflow.data_cls import (
     ExportFlowCls,
@@ -89,6 +90,7 @@ class DataFlowHandler(BaseAiopsHandler):
         @param cluster_group 计算集群组
         @param consuming_mode 数据处理模式
         """
+        cluster_group = self.conf.get("aiops_default", cluster_group)
         start_request = StartFlowCls(flow_id=flow_id, consuming_mode=consuming_mode, cluster_group=cluster_group)
         request_dict = self._set_username(start_request)
         return BkDataDataFlowApi.start_flow(request_dict)
@@ -449,6 +451,7 @@ class DataFlowHandler(BaseAiopsHandler):
             execute_config={
                 "spark.executor.instances": self.conf.get("spark.executor.instances", DEFAULT_SPARK_EXECUTOR_INSTANCES),
                 "pseudo_shuffle": self.conf.get("pseudo_shuffle", DEFAULT_PSEUDO_SHUFFLE),
+                "spark.locality.wait": self.conf.get("spark.locality.wait", DEFAULT_SPARK_LOCALITY_WAIT),
             },
         )
         request_dict = self._set_username(update_model_instance_request)

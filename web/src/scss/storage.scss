@@ -1,0 +1,32 @@
+.tips_storage {
+  width: 560px;
+  background-color: rgb(239, 248, 255);
+  border: 1px solid deepskyblue;
+  font-size: 12px;
+  padding: 10px;
+  margin-top: 15px;
+  div {
+    line-height: 24px;
+    color: #63656e;
+  }
+}
+.copy-number-input{
+  width:100px;
+  .input-number-option{
+    top: 2px;
+  }
+}
+.hot-data-form-item {
+  .bk-form-content {
+    display: flex;
+    align-items: center;
+    .disable-tips {
+      margin-left: 10px;
+      font-size: 12px;
+      color: #63656e;
+      a {
+        color: #3a84ff;
+      }
+    }
+  }
+}
