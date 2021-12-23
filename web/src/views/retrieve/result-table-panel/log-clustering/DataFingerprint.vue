@@ -23,6 +23,7 @@
 <template>
   <div>
     <bk-table
+      data-test-id="cluster_div_fingerTable"
       :class="['log-cluster-table',fingerList.length === 0 ? 'table-no-data' : '']"
       :data="fingerList"
       :outer-border="false"
@@ -66,7 +67,7 @@
         </bk-table-column>
 
         <bk-table-column
-          min-width="101" align="center" header-align="center" prop="source"
+          width="101" align="center" header-align="center" prop="source"
           :label="$t('同比变化')"
           sortable
           :sort-by="'year_on_year_percentage'">

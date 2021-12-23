@@ -36,7 +36,10 @@
     }"
     @value-change="openPage"
     @after-leave="closePage">
-    <div class="setting-container" v-if="isShowDialog">
+    <div
+      class="setting-container"
+      v-if="isShowDialog"
+      data-test-id="clusterSetting_div_settingContainer">
       <div class="setting-title">
         <span>{{$t('retrieveSetting.setting')}}</span>
         <span class="bk-icon icon-close" @click="closeSetting"></span>
@@ -47,6 +50,7 @@
           <div
             v-for="item of currentList" :key="item.id"
             :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
+            :data-test-id="`settingContainer_div_select${item.id}`"
             @click="handleNavClick(item)">
             <span class="log-icon icon-block-shape"></span>
             <span style="width: 110px">{{item.name}}</span>
@@ -73,7 +77,9 @@
               <span class="log-icon icon-lianjie"></span>
             </div>
           </div>
-          <div class="operation-container">
+          <div
+            class="operation-container"
+            :data-test-id="`settingContainer_div_${showComponent}`">
             <component
               v-if="isShowPage"
               :is="showComponent"
@@ -119,7 +125,7 @@ export default {
     },
     totalFields: {
       type: Array,
-      default: () => [],
+      default: () => ([]),
     },
     configData: {
       type: Object,

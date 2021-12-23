@@ -21,12 +21,13 @@
   -->
 
 <template>
-  <div class="custom-item-container">
+  <div class="custom-item-container" data-test-id="custom_div_customContainer">
     <section class="operation">
       <div class="top-operation">
         <bk-button
           class="fl"
           theme="primary"
+          data-test-id="customContainer_button_addNewCustom"
           @click="operateHandler({}, 'add')"
           :disabled="!collectProject || isAllowedCreate === null || isRequest">
           {{ $t('customReport.reportCreate') }}
@@ -35,6 +36,7 @@
           <bk-input
             clearable
             v-model="inputKeyWords"
+            data-test-id="customContainer_input_searchTableItem"
             :placeholder="$t('dataManage.Search_index_name')"
             :right-icon="'bk-icon icon-search'"
             @enter="search">
@@ -42,7 +44,7 @@
         </div>
       </div>
 
-      <div class="table-operation">
+      <div class="table-operation" data-test-id="customContainer_table_container">
         <bk-table
           class="custom-table"
           v-bkloading="{ isLoading: isRequest }"

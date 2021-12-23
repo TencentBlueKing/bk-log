@@ -23,6 +23,7 @@
 <template>
   <bk-table
     ref="logClusterTable"
+    data-test-id="cluster_div_ignoreTable"
     :data="tableData"
     :outer-border="false"
     :class="['log-cluster-table',tableData.length === 0 ? 'ignore-no-data' : '']"
