@@ -77,14 +77,14 @@ try {
 }
 
 router.onError((err) => {
-  const pattern = /^Loading chunk (\d)+ failed\./;
-  const isChunkLoadingFailed = pattern.test(err.message);
-
-  if (isChunkLoadingFailed) {
-    window.location.replace(window.location.href);
+  console.log('err.message===', err.message);
+  const pattern = /Loading chunk (\d)+ failed/g;
+  const isChunkLoadFailed = err.message.match(pattern);
+  const targetPath = router.history.pending.fullPath;
+  console.log(isChunkLoadFailed, targetPath);
+  if (isChunkLoadFailed) {
+    router.replace(targetPath);
   }
-
-  console.log('出错了', err);
 });
 
 Vue.component('VueJsonPretty', VueJsonPretty);
