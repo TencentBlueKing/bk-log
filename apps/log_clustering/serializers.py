@@ -33,6 +33,7 @@ class PatternSearchSerlaizer(serializers.Serializer):
     pattern_level = serializers.ChoiceField(required=True, choices=PatternEnum.get_choices())
     show_new_pattern = serializers.BooleanField(required=True)
     year_on_year_hour = serializers.IntegerField(required=False, default=0, min_value=0)
+    group_by = serializers.ListField(required=False, default=[])
 
 
 class FilerRuleSerializer(serializers.Serializer):
