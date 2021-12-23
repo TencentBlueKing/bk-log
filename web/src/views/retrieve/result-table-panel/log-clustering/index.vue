@@ -23,7 +23,10 @@
 <template>
   <div>
     <div class="log-cluster-table-container" v-if="!globalLoading">
-      <div class="cluster-nav" v-if="exhibitAll">
+      <div
+        class="cluster-nav"
+        v-if="exhibitAll"
+        data-test-id="cluster_div_fingerOperate">
         <div class="bk-button-group">
           <bk-button
             size="small"

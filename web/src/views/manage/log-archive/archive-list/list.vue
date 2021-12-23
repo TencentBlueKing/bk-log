@@ -21,11 +21,12 @@
   -->
 
 <template>
-  <section class="log-archive-list">
+  <section class="log-archive-list" data-test-id="archive_section_archiveList">
     <section class="top-operation">
       <bk-button
         class="fl"
         theme="primary"
+        data-test-id="archiveList_button_newArchive"
         @click="handleCreate">
         {{ $t('logArchive.archive') }}
       </bk-button>
@@ -34,6 +35,7 @@
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
           v-model="keyword"
+          data-test-id="archiveList_input_searchListItem"
           @enter="search">
         </bk-input>
       </div>
@@ -42,6 +44,7 @@
       <bk-table
         class="archive-table"
         :data="dataList"
+        data-test-id="archiveList_section_tableList"
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"

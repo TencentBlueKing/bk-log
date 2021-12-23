@@ -36,11 +36,15 @@
           :model="formData"
           :label-width="150"
           :rules="basicRules"
+          data-test-id="restore_div_addNewRestore"
           form-type="vertical"
           ref="validateForm"
           class="king-form">
           <bk-form-item :label="$t('索引集名称')" required property="index_set_name">
-            <bk-input v-model="formData.index_set_name" :disabled="isEdit"></bk-input>
+            <bk-input
+              v-model="formData.index_set_name"
+              data-test-id="addNewRestore_input_indexSetName"
+              :disabled="isEdit"></bk-input>
           </bk-form-item>
           <!-- <bk-alert type="info" :title="$t('logArchive.restoreIndexTip')"></bk-alert> -->
           <bk-form-item
@@ -49,6 +53,7 @@
             property="archive_config_id">
             <bk-select
               v-model="formData.archive_config_id"
+              data-test-id="addNewRestore_select_selectCollector"
               @selected="handleArchiveChange"
               :disabled="isEdit">
               <bk-option
@@ -77,6 +82,7 @@
             <bk-date-picker
               v-model="formData.datePickerExpired"
               format="yyyy-MM-dd HH:mm"
+              data-test-id="addNewRestore_div_datePickerExpired"
               :options="expiredDatePicker"
               @change="handleExpiredChange">
             </bk-date-picker>
@@ -84,6 +90,7 @@
           <bk-form-item :label="$t('logArchive.notifiedUser')" required property="notice_user">
             <ValidateUserSelector
               style="width:500px;"
+              data-test-id="addNewRestore_input_notifiedUser"
               v-model="formData.notice_user"
               :api="userApi"
               :disabled="isEdit" />
@@ -92,11 +99,14 @@
             <bk-button
               theme="primary"
               class="king-button mr10"
+              data-test-id="addNewRestore_button_submit"
               :loading="confirmLoading"
               @click.stop.prevent="handleConfirm">
               {{ $t('提交') }}
             </bk-button>
-            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+            <bk-button
+              @click="handleCancel"
+              data-test-id="addNewRestore_button_cancel">{{ $t('取消') }}</bk-button>
           </bk-form-item>
         </bk-form>
       </div>

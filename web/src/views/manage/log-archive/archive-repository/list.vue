@@ -21,11 +21,12 @@
   -->
 
 <template>
-  <section class="log-archive-repository">
+  <section class="log-archive-repository" data-test-id="archive_section_storehouseContainer">
     <section class="top-operation">
       <bk-button
         class="fl"
         theme="primary"
+        data-test-id="storehouseContainer_button_addNewStoreHouse"
         @click="handleCreate">
         {{ $t('新建') }}
       </bk-button>
@@ -34,11 +35,12 @@
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
+          data-test-id="storehouseContainer_input_searchTableItem"
           @enter="handleSearch">
         </bk-input>
       </div>
     </section>
-    <section class="log-repository-table">
+    <section class="log-repository-table" data-test-id="storehouseContainer_section_tableList">
       <bk-table
         class="repository-table"
         :data="tableDataPaged"
@@ -158,6 +160,10 @@ export default {
       params: {
         keyword: '',
       },
+      filterConditions: {
+        type: '',
+        cluster_source_type: '',
+      },
       repoTypeMap: {
         hdfs: 'HDFS',
         fs: this.$t('logArchive.sharedDirectory'),
@@ -244,12 +250,15 @@ export default {
     handleFilterChange(data) {
       Object.keys(data).forEach((item) => {
         this.tableDataSearched = this.tableDataOrigin.filter((repo) => {
-          if (Object.values(data)[0].length === 0) {
+          this.filterConditions[item] = Object.values(data)[0][0];
+          const { type, cluster_source_type: clusterType } = this.filterConditions;
+          if (!type && !clusterType) {
             return true;
           }
-          if (repo[item]) {
-            return repo[item] === data[item].join('');
+          if (type && clusterType) {
+            return repo.type === type && repo.cluster_source_type === clusterType;
           }
+          return repo.type === type || repo.cluster_source_type === clusterType;
         });
       });
       this.pagination.current = 1;

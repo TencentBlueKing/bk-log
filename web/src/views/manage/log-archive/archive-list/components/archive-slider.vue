@@ -33,6 +33,7 @@
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="archive-slider-content">
         <bk-form
           v-if="!sliderLoading"
+          data-test-id="addNewArchive_div_formContainer"
           :model="formData"
           :label-width="150"
           :rules="basicRules"
@@ -46,6 +47,7 @@
             <bk-select
               searchable
               v-model="formData.collector_config_id"
+              data-test-id="formContainer_select_selectCollector"
               :clearable="false"
               :disabled="isEdit"
               @change="handleCollectorChange">
@@ -78,6 +80,7 @@
             property="target_snapshot_repository_name">
             <bk-select
               v-model="formData.target_snapshot_repository_name"
+              data-test-id="formContainer_select_selectStorehouse"
               :disabled="isEdit || !formData.collector_config_id">
               <bk-option
                 v-for="option in repositoryRenderList"
@@ -92,7 +95,11 @@
             :label="$t('过期时间')"
             required
             property="snapshot_days">
-            <bk-select style="width: 300px;" v-model="formData.snapshot_days" :clearable="false">
+            <bk-select
+              style="width: 300px;"
+              v-model="formData.snapshot_days"
+              data-test-id="formContainer_select_selectExpireDate"
+              :clearable="false">
               <div slot="trigger" class="bk-select-name">
                 {{ formData.snapshot_days ? formData.snapshot_days + $t('天') : '' }}
               </div>
@@ -115,11 +122,14 @@
             <bk-button
               theme="primary"
               class="king-button mr10"
+              data-test-id="formContainer_button_handleSubmit"
               :loading="confirmLoading"
               @click.stop.prevent="handleConfirm">
               {{ $t('提交') }}
             </bk-button>
-            <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
+            <bk-button
+              data-test-id="formContainer_button_handleCancel"
+              @click="handleCancel">{{ $t('取消') }}</bk-button>
           </bk-form-item>
         </bk-form>
       </div>
