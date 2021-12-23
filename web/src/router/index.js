@@ -210,9 +210,7 @@ const DataLinkConf = () => import(
 const routes = [
   {
     path: '',
-    redirect: () => {
-      return '/retrieve';
-    },
+    redirect: 'retrieve',
   },
   {
     path: '/retrieve/:indexId?',

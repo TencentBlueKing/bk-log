@@ -21,11 +21,12 @@
   -->
 
 <template>
-  <section class="log-archive-restore">
+  <section class="log-archive-restore" data-test-id="archive_section_restoreContainer">
     <section class="top-operation">
       <bk-button
         class="fl"
         theme="primary"
+        data-test-id="restoreContainer_button_addNewRestore"
         @click="handleCreate">
         {{ $t('logArchive.restore') }}
       </bk-button>
@@ -34,6 +35,7 @@
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
+          data-test-id="restoreContainer_input_searchRestoreItem"
           @enter="search">
         </bk-input>
       </div>
@@ -41,6 +43,7 @@
     <section class="log-restore-table">
       <bk-table
         class="restore-table"
+        data-test-id="restoreContainer_div_restoreTable"
         :data="dataList"
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"

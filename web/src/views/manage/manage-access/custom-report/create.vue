@@ -22,8 +22,9 @@
 
 <template>
   <div
-    :class="`custom-create-container ${isOpenWindow ? 'is-active-details' : ''}`"
-    v-bkloading="{ isLoading: containerLoading }">
+    data-test-id="custom_div_addNewCustomBox"
+    v-bkloading="{ isLoading: containerLoading }"
+    :class="`custom-create-container ${isOpenWindow ? 'is-active-details' : ''}`">
     <bk-form :label-width="103" :model="formData" ref="validateForm">
       <div class="create-form">
         <div class="form-title">{{$t('基础信息')}}</div>
@@ -43,6 +44,7 @@
           :rules="baseRules.collector_config_name">
           <bk-input
             class="form-input"
+            data-test-id="addNewCustomBox_input_dataName"
             v-model="formData.collector_config_name"
             show-word-limit
             maxlength="50"></bk-input>
@@ -54,6 +56,7 @@
               <bk-button
                 v-for=" (item,index) of globalsData.databus_custom"
                 :key="index"
+                :data-test-id="`addNewCustomBox_button_typeTo${item.id}`"
                 :class="`${formData.custom_type === item.id ? 'is-selected' : ''}`"
                 :disabled="isEdit"
                 @click="handleChangeType(item.id)">
@@ -72,6 +75,7 @@
             class="form-input"
             show-word-limit
             maxlength="50"
+            data-test-id="addNewCustomBox_input_englishName"
             v-model="formData.collector_config_name_en"
             :disabled="submitLoading || isEdit"
             :placeholder="$t('dataSource.en_name_tips')"></bk-input>
@@ -85,6 +89,7 @@
           <bk-select
             style="width: 320px;"
             v-model="formData.category_id"
+            data-test-id="addNewCustomBox_select_selectDataCategory"
             :disabled="submitLoading">
             <template v-for="(item, index) in globalsData.category">
               <bk-option-group :id="item.id" :name="item.name" :key="index">
@@ -103,6 +108,7 @@
             class="form-input"
             type="textarea"
             v-model="formData.description"
+            data-test-id="addNewCustomBox_input_description"
             :disabled="submitLoading"
             :placeholder="$t('customReport.notEntered')"
             :maxlength="100"></bk-input>
@@ -120,6 +126,7 @@
           <bk-select
             style="width: 320px;"
             v-model="formData.data_link_id"
+            data-test-id="addNewCustomBox_select_selectDataLink"
             :clearable="false"
             :disabled="submitLoading || isEdit">
             <bk-option
@@ -138,7 +145,7 @@
           :rules="storageRules.cluster_id">
           <bk-select
             style="width: 320px;"
-            data-test-id="storageBox_select_storageCluster"
+            data-test-id="addNewCustomBox_select_storageCluster"
             v-model="formData.storage_cluster_id"
             :clearable="false"
             :disabled="submitLoading || isEdit"
@@ -176,11 +183,12 @@
           <!-- <div class="prefix">{{formData.table_id_prefix}}</div> -->
           <bk-input
             style="width: 320px"
-            :placeholder="$t('dataManage.input_number')"
             disabled
             v-model="formData.collector_config_name_en"
+            data-test-id="addNewCustomBox_input_configName"
             maxlength="50"
-            minlength="5">
+            minlength="5"
+            :placeholder="$t('dataManage.input_number')">
             <template slot="prepend">
               <div class="group-text">{{`${bkBizId}_bklog_`}}</div>
             </template>
@@ -191,6 +199,7 @@
           <bk-select
             style="width: 320px;"
             v-model="formData.retention"
+            data-test-id="addNewCustomBox_select_expireDate"
             :clearable="false"
             :disabled="submitLoading">
             <div slot="trigger" class="bk-select-name">
@@ -214,6 +223,7 @@
         <!-- 副本数 -->
         <bk-form-item :label="$t('configDetails.copyNumber')">
           <bk-input
+            data-test-id="addNewCustomBox_input_copyNumber"
             v-model="formData.storage_replies"
             class="copy-number-input"
             type="number"
@@ -230,7 +240,7 @@
         <bk-form-item :label="$t('热数据')" class="hot-data-form-item">
           <bk-select
             style="width: 320px;"
-            data-test-id="storageBox_select_selectHotData"
+            data-test-id="addNewCustomBox_select_selectHotData"
             v-model="formData.allocation_min_days"
             :clearable="false"
             :disabled="!selectedStorageCluster.enable_hot_warm || submitLoading">
