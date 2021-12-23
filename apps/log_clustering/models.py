@@ -35,6 +35,7 @@ class AiopsModel(SoftDeleteModel):
 
 class AiopsModelExperiment(SoftDeleteModel):
     model_id = models.CharField(_("模型ID"), db_index=True, max_length=128)
+    # experiment_id后续可能会变化，如需要进一步使用，需要手动维护
     experiment_id = models.IntegerField(_("实验id"), db_index=True)
     experiment_alias = models.CharField(_("实验名称"), db_index=True, max_length=128)
     status = models.CharField(_("实验状态"), null=True, blank=True, max_length=128)
