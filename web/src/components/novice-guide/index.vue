@@ -325,7 +325,7 @@ export default {
   },
 };
 </script>
-<style lang='postcss'>
+<style lang='scss'>
 body {
   *.guide-highlight {
     opacity: 1 !important;

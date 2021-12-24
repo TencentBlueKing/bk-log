@@ -1,57 +1,77 @@
-web
-===
+#### 日志前端构建使用说明
 
-``` bash
-# create `Dll bundle` with webpack DllPlugin
-npm run dll
+###### 安装和更新前端依赖（`nodejs`最小依赖版本为`V10.13.0`）
 
-# dev
-npm run dev
-
-# build
-npm run build
-
-# build with analyzer
-npm run build:analyzer
-
+```bash
+cd webpack
+npm ci
+#### mac
+npm run install-build
 ```
 
-## 目录结构说明
+如果您尚未安装过 `nodejs` [详细安装参见](https://nodejs.org/zh-cn/download/)
 
+###### 本地开发模式
+
+- 本地启动
+
+  ```bash
+  # pc端本地开发模式
+  npm run dev
+  ```
+
+- 前端环境变量配置
+
+  1. 新建文件 `local.settings.js`
+
+  2. 配置自定义内容 参考如下 [更多配置参见](https://webpack.docschina.org/configuration/dev-server/)
+
+     ```js
+     const devProxyUrl = ''
+     const devHost = ''
+     const loginHost = ''
+     const devPort = 
+     module.exports = {
+         port: devPort, // 启动端口
+         host: devHost, // 启动host
+         devProxyUrl, // 后端地址 用于代理转发api
+         loginHost, // 登入地址
+         proxy: { // api代理配置
+             '/rest': {
+                 target: devProxyUrl,
+                 changeOrigin: true,
+                 secure: false,
+                 toProxy: true
+             }
+     }
+
+     ```
+
+###### 生产构建
+
+- 构建
+
+  ```bash
+  npm run build
+  ```
+
+- 分析构建产物组成
+
+  ```bash
+  # pc端生产环境构建产物分析
+  npm run analyze
+  # 移动端生产环境构建产物分析
+  npm run analyze:mobile
+  ```
+
+###### 前端构建工具 `@blueking/bkmonitor-cli`
+
+```bash
+cd webpack
+git submodule update packages/cli
 ```
- ./web                                  # 日志检索-前端工程目录
- |-- build                              # 前端工程配置目录 
- |-- mock/ajax                          # 忽略            
- |-- src                                # 开发任务 - 主要文件目录  
-  |-- api                            # http相关的配置改动
-  |-- common                         # 工具类
-  |-- components                     # 主视图下需要用到的小组件放在此目录，包括导航、错误页面、权限登录
-  |-- images                         
-  |-- mock                           # mock数据来源  
-  |-- router                         # 前端路由控制  
-  |-- scss                           # scss 样式控制文件  
-  |-- services                       # HTTP请求的URL、请求方式统一在此处配置  
-  |-- store                          # store 状态管理仓库  
 
-  |-- views                          # 主视图组件
-    |-- manage                      # 管理模块
-      index.vue                   # 模块入口
-      dataSource.vue              # 数据源管理
-      indexSet.vue                # 索引集管理
-      permissionGroup.vue         # 权限组管理
-    |-- monitors                    # 监控模块  
-      index.vue                   # 模块入口
-      alarmLog.vue                # 告警记录
-      alarmStrategy.vue           # 告警策略
-      shieldStrategy.vue          # 屏蔽策略
-    |-- retrieve                    # 检索模块 
-      index.vue                   # 模块入口 
+#### help
 
-  App.vue                            # 视图入口文件  里面有一个mock数据的示例，可以直接贴后端给的数据
-  main.js                            # js入口文件  
-  .editorconfig                      
-  .eslintignore                       
-  .eslintrc.js                           
-  .gitignore                             
-  package-lock.json                     
-  package.json                          # 依赖配置     
+- 前端构建最小依赖 node 版本 V14.13.0
+- 编译过程中出现任何问题请联系 admin
