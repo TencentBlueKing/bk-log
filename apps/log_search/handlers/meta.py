@@ -21,11 +21,14 @@ import copy
 
 from django.conf import settings
 
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import USER_GUIDE_CONFIG
 from apps.iam import Permission, ActionEnum
+from apps.log_search.constants import UserMetaConfType
 from apps.utils import APIModel
 from apps.exceptions import BizNotExistError
 from apps.api import BKLoginApi, CmsiApi
-from apps.log_search.models import ProjectInfo
+from apps.log_search.models import ProjectInfo, UserMetaConf
 from apps.utils.cache import cache_one_hour
 from apps.utils.local import get_request_username
 from apps.log_search import exceptions
@@ -194,3 +197,29 @@ class MetaHandler(APIModel):
             return True if is_superuser else False
 
         return True
+
+    @classmethod
+    def get_user_guide(cls, username):
+        toggle = FeatureToggleObject.toggle(USER_GUIDE_CONFIG)
+        if not toggle:
+            return {}
+        feature_config = toggle.feature_config
+        user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
+        if not user_meta_conf:
+            meta_conf = {
+                toggle_key: {**toggle_val, **{"current_step": 0}} for toggle_key, toggle_val in feature_config.items()
+            }
+        else:
+            meta_conf = {
+                toggle_key: {**toggle_val, **{"current_step": user_meta_conf.conf.get(toggle_key, 0)}}
+                for toggle_key, toggle_val in feature_config.items()
+            }
+        return meta_conf
+
+    @classmethod
+    def update_user_guide(cls, username, user_guide_dict):
+        user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
+        if not user_meta_conf:
+            user_meta_conf = UserMetaConf.objects.create(username=username, type=UserMetaConfType.USER_GUIDE, conf={})
+        user_meta_conf.conf.update(user_guide_dict)
+        user_meta_conf.save()

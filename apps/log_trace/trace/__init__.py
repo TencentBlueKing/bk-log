@@ -51,17 +51,30 @@ def requests_callback(span: Span, response):
         return
     if not isinstance(json_result, dict):
         return
-    result = json_result.get("result")
-    if result is None:
-        return
-    span.set_attribute("result_code", json_result.get("code", 0))
-    span.set_attribute("blueking_esb_request_id", json_result.get("request_id", ""))
+
+    # NOTE: esb got a result, but apigateway  /iam backend / search-engine got not result
+    code = json_result.get("code", 0)
+    span.set_attribute("result_code", code)
     span.set_attribute("result_message", json_result.get("message", ""))
     span.set_attribute("result_errors", str(json_result.get("errors", "")))
-    if result:
+    try:
+        request_id = (
+            # new esb and apigateway
+            response.headers.get("x-bkapi-request-id")
+            # iam backend
+            or response.headers.get("x-request-id")
+            # old esb
+            or json_result.get("request_id", "")
+        )
+        if request_id:
+            span.set_attribute("bk.request_id", request_id)
+    except Exception:  # pylint: disable=broad-except
+        pass
+
+    if code in [0, "0", "00"]:
         span.set_status(Status(StatusCode.OK))
-        return
-    span.set_status(Status(StatusCode.ERROR))
+    else:
+        span.set_status(Status(StatusCode.ERROR))
 
 
 def django_response_hook(span, request, response):

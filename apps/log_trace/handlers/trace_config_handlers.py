@@ -17,9 +17,11 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-
 from apps.log_search.models import LogIndexSet
 from apps.log_search.exceptions import IndexTraceProjectIDException
+from apps.utils.function import ignored
+from bk_dataview.grafana import client
+from bk_dataview.grafana.settings import grafana_settings
 
 
 class TraceConfigHandlers(object):
@@ -27,9 +29,33 @@ class TraceConfigHandlers(object):
         pass
 
     @classmethod
-    def get_user_trace_index_set(cls, project_id, scenarios=None):
+    def get_user_trace_index_set(cls, project_id, bk_biz_id, request, scenarios=None):
         if not project_id:
             raise IndexTraceProjectIDException()
         index_set_ids = LogIndexSet.objects.filter(project_id=project_id).values_list("index_set_id", flat=True)
         index_sets = LogIndexSet.get_index_set(index_set_ids, scenarios, is_trace_log=True)
+        with ignored(Exception):
+            cls.refresh_grafana(bk_biz_id, request)
         return index_sets
+
+    @classmethod
+    def refresh_grafana(cls, bk_biz_id, request):
+        grafana_handler = grafana_settings.BACKEND_CLASS()
+        from apps.grafana.provisioning import TraceProvisioning
+
+        trace_provisioning = TraceProvisioning()
+        org_id = cls.get_grafana_org_id(bk_biz_id)
+        ds_list = trace_provisioning.datasources(request, bk_biz_id, org_id)
+        grafana_handler.handle_datasources(request, bk_biz_id, org_id, ds_list, trace_provisioning)
+
+    @staticmethod
+    def get_grafana_org_id(org_name):
+        resp = client.get_organization_by_name(org_name)
+        if resp.status_code == 200:
+            _org = resp.json()
+            return _org["id"]
+
+        if resp.status_code == 404:
+            resp = client.create_organization(org_name)
+            _org = resp.json()
+            return _org["orgId"]
