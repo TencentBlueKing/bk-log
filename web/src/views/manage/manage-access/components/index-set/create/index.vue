@@ -412,7 +412,7 @@ export default {
     handleCreatSuccess({ bkdata_auth_url: authUrl, index_set_id: id }) {
       if (authUrl) {
         let redirectUrl = ''; // 数据平台授权地址
-        if (NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === 'development') {
           redirectUrl = `${authUrl}&redirect_url=${window.origin}/static/auth.html`;
         } else {
           let siteUrl = window.SITE_URL;

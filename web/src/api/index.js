@@ -44,7 +44,7 @@ const axiosInstance = axios.create({
   xsrfCookieName: 'bklog_csrftoken',
   xsrfHeaderName: 'X-CSRFToken',
   withCredentials: true,
-  baseURL: window.AJAX_URL_PREFIX,
+  baseURL: 'api/v1',
 });
 
 /**

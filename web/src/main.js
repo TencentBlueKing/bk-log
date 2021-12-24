@@ -92,8 +92,8 @@ Vue.use(vClickOutside);
 Vue.use(methods);
 Vue.config.devtools = true;
 
-global.bus = bus;
-global.mainComponent = new Vue({
+window.bus = bus;
+window.mainComponent = new Vue({
   el: '#app',
   router,
   store,

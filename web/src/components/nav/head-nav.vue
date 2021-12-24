@@ -260,7 +260,7 @@ export default {
       const domainList = location.hostname.split('.');
 
       // 本项目开发环境因为需要配置了 host 域名比联调环境多 1 级
-      if (NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === 'development') {
         domainList.splice(0, 1);
       }
 
