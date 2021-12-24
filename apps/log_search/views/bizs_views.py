@@ -30,6 +30,7 @@ from apps.log_search.serializers import (
     NodeListSerializer,
     TemplateSerializer,
     TemplateTopoSerializer,
+    DynamicGroupSerializer,
 )
 from apps.utils.local import get_request_username
 
@@ -459,3 +460,57 @@ class BizsViewSet(APIViewSet):
 
         params = self.params_valid(NodeListSerializer)
         return Response(BizHandler(int(bk_biz_id)).list_agent_status(params["node_list"]))
+
+    @detail_route()
+    def list_dynamic_group(self, request, bk_biz_id):
+        """
+        @api {get} /bizs/$$bk_biz_id/list_dynamic_group/ 09_获取动态分组列表
+        @apiName list_dynamic_group
+        @apiGroup 02_Biz
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data": {
+                "count": 1,
+                "list": [
+                    {
+                        "bk_biz_id": 2,
+                        "name": "test1",
+                        "last_time": "2020-11-24T13:02:22.564Z",
+                        "bk_obj_id": "host",
+                        "create_user": "admin",
+                        "create_time": "2020-11-24T13:02:22.564Z",
+                        "modify_user": "admin",
+                        "id": "iamidbuug8nh0eohk9gduh29g"
+                    }
+                ]
+            },
+            "code": 0,
+            "message": ""
+        }
+        """
+        return Response(BizHandler(int(bk_biz_id)).list_dynamic_group())
+
+    @detail_route()
+    def get_dynamic_group(self, request, bk_biz_id):
+        """
+        @api {get} /bizs/$$bk_biz_id/get_dynamic_group/ 10_获取动态分组列表
+        @apiName get_dynamic_group
+        @apiGroup 02_Biz
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data": [
+                {
+                    "bk_host_name": "localhost",
+                    "bk_host_id": 1,
+                    "bk_cloud_id": 0,
+                    "bk_host_innerip": "127.0.0.1"
+                }
+            ],
+            "code": 0,
+            "message": ""
+        }``
+        """
+        params = self.params_valid(DynamicGroupSerializer)
+        return Response(BizHandler(int(bk_biz_id)).get_dynamic_group(params["dynamic_group_id"]))
