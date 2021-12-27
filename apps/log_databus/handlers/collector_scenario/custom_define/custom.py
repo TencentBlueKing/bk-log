@@ -214,7 +214,7 @@ class OtlpTrace(CustomMeta):
             "description": "kind",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
         {
@@ -234,7 +234,7 @@ class OtlpTrace(CustomMeta):
             "description": "parent_span_id",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
         {
@@ -254,7 +254,7 @@ class OtlpTrace(CustomMeta):
             "description": "span_id",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
         {
@@ -264,7 +264,7 @@ class OtlpTrace(CustomMeta):
             "description": "span_name",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
         {
@@ -274,7 +274,7 @@ class OtlpTrace(CustomMeta):
             "description": "start_time",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
         {
@@ -294,7 +294,7 @@ class OtlpTrace(CustomMeta):
             "description": "trace_id",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
         {
@@ -304,7 +304,7 @@ class OtlpTrace(CustomMeta):
             "description": "trace_state",
             "is_delete": False,
             "is_analyzed": False,
-            "is_dimension": False,
+            "is_dimension": True,
             "is_time": False,
         },
     ]
