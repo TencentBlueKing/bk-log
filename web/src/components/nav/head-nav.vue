@@ -91,7 +91,7 @@ import { mapState } from 'vuex';
 import jsCookie from 'js-cookie';
 import LogVersion from './log-version';
 import { menuArr } from './complete-menu';
-import navMenuMixin from '@/mixins/navMenuMixin';
+import navMenuMixin from '@/mixins/nav-menu-mixin';
 
 export default {
   name: 'header-nav',

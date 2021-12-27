@@ -270,7 +270,7 @@
     <intro-panel
       :data="formData"
       :is-open-window="isOpenWindow"
-      @handleActiveDetails="handleActiveDetails"></intro-panel>
+      @handleActiveDetails="handleActiveDetails" />
 
     <div class="submit-btn">
       <bk-button
@@ -292,8 +292,8 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import storageMixin from '@/mixins/storageMixin';
-import IntroPanel from './components/IntroPanel';
+import storageMixin from '@/mixins/storage-mixin';
+import IntroPanel from './components/intro-panel';
 
 export default {
   name: 'custom-report-create',
