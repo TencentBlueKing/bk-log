@@ -41,6 +41,10 @@ class CustomMeta:
     def after_hook(collector_config):
         pass
 
+    @staticmethod
+    def after_etl_hook(collector_config):
+        pass
+
 
 @register
 class Log(CustomMeta):
@@ -310,7 +314,7 @@ class OtlpTrace(CustomMeta):
     ]
 
     @staticmethod
-    def after_hook(collector_config):
+    def after_etl_hook(collector_config):
         from apps.log_search.models import LogIndexSet
 
         LogIndexSet.objects.filter(index_set_id=collector_config.index_set_id).update(is_trace_log=True)
