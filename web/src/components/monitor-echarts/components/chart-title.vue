@@ -40,8 +40,7 @@
       v-show="showMenu"
       :list="menuList"
       @menu-click="handleMenuClick"
-      :style="{ left: menuLeft + 'px' }">
-    </chart-menu>
+      :style="{ left: menuLeft + 'px' }" />
   </div>
 </template>
 <script lang="ts">

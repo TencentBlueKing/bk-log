@@ -68,7 +68,7 @@
               </div>
             </slot>
             <div slot="content" class="fields-setting-container">
-              <FieldsSetting
+              <fields-setting
                 v-if="showFieldsSetting"
                 :field-alias-map="$attrs.fieldAliasMap"
                 :retrieve-params="retrieveParams"
@@ -85,16 +85,15 @@
       v-on="$listeners"
       :is-wrap="isWrap"
       :show-original="showOriginalLog"
-      :retrieve-params="retrieveParams">
-    </table-log>
+      :retrieve-params="retrieveParams" />
   </div>
 </template>
 
 <script>
 import TimeFormatter from '@/components/common/time-formatter';
-import TableLog from './TableLog.vue';
-import FieldsSetting from '../../result-comp/FieldsSetting';
-import ExportLog from '../../result-comp/ExportLog.vue';
+import TableLog from './table-log.vue';
+import FieldsSetting from '../../result-comp/fields-setting';
+import ExportLog from '../../result-comp/export-log.vue';
 
 export default {
   components: {

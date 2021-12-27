@@ -42,7 +42,7 @@
           v-if="active === 'dataFingerprint'"
           :finger-operate-data="fingerOperateData"
           :request-data="requestData"
-          @handleFingerOperate="handleFingerOperate"></finger-operate>
+          @handleFingerOperate="handleFingerOperate" />
       </div>
 
       <bk-alert
@@ -56,8 +56,7 @@
         <clustering-loader
           is-loading
           v-if="tableLoading"
-          :width-list="smallLoaderWidthList">
-        </clustering-loader>
+          :width-list="smallLoaderWidthList" />
         <div v-else>
           <ignore-table
             v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
@@ -96,16 +95,15 @@
     <clustering-loader
       is-loading
       v-else
-      :width-list="loadingWidthList.global">
-    </clustering-loader>
+      :width-list="loadingWidthList.global" />
   </div>
 </template>
 
 <script>
-import DataFingerprint from './DataFingerprint';
-import IgnoreTable from './IgnoreTable';
+import DataFingerprint from './data-fingerprint';
+import IgnoreTable from './ignore-table';
 import ClusteringLoader from '@/skeleton/clustering-loader';
-import fingerOperate from './components/fingerOperate';
+import fingerOperate from './components/finger-operate';
 import { mapGetters } from 'vuex';
 
 export default {

@@ -24,7 +24,7 @@ import { ILegendItem, IChartInstance } from './type-interface'
 import MonitorBaseSeries from './base-chart-option'
 import deepMerge from 'deepmerge'
 import { lineOrBarOptions } from './echart-options-config'
-import { getValueFormat, ValueFormatter  } from '../valueFormats'
+import { getValueFormat, ValueFormatter  } from '../value-formats-package'
 export default class MonitorLineSeries extends  MonitorBaseSeries implements IChartInstance  {
   public defaultOption: any
   public constructor(props: any) {

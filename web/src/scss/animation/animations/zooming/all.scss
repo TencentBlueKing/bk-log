@@ -1,8 +1,8 @@
 @import 'zoom';
-@import 'zoomDown';
-@import 'zoomLeft';
-@import 'zoomRight';
-@import 'zoomUp';
+@import 'zoom-down';
+@import 'zoom-left';
+@import 'zoom-right';
+@import 'zoom-up';
 
 $zooms: Down, Left, Right, Up;
 
