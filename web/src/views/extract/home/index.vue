@@ -105,24 +105,24 @@
     <!-- 表格侧边栏 -->
     <bk-sideslider :is-show.sync="sideSlider.isShow" :quick-close="true" :title="$t('详情')" :width="660" transfer>
       <div slot="content" class="task-detail-content" v-bkloading="{ isLoading: sideSlider.isLoading }">
-        <ListBox icon="log-icon icon-info-fill" :title="sideSlider.data.task_process_info" :mark="true" />
-        <TaskStatusDetail :status-data="sideSlider.data.task_step_status" />
-        <DownloadUrl :task-id="sideSlider.data.task_id" />
-        <ListBox icon="bk-icon icon-sitemap" :title="$t('文件路径')" :list="sideSlider.data.preview_directory" />
-        <ListBox icon="bk-icon icon-data" :title="$t('下载目标')" :list="sideSlider.data.ip_list" />
-        <ListBox icon="bk-icon icon-file" :title="$t('文件列表')" :list="sideSlider.data.file_path" />
-        <ListBox icon="bk-icon icon-clock" :title="$t('过期时间')" :list="sideSlider.data.expiration_date" />
-        <TextFilterDetail v-if="sideSlider.data.filter_type" :data="sideSlider.data" />
+        <list-box icon="log-icon icon-info-fill" :title="sideSlider.data.task_process_info" :mark="true" />
+        <task-status-detail :status-data="sideSlider.data.task_step_status" />
+        <download-url :task-id="sideSlider.data.task_id" />
+        <list-box icon="bk-icon icon-sitemap" :title="$t('文件路径')" :list="sideSlider.data.preview_directory" />
+        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="sideSlider.data.ip_list" />
+        <list-box icon="bk-icon icon-file" :title="$t('文件列表')" :list="sideSlider.data.file_path" />
+        <list-box icon="bk-icon icon-clock" :title="$t('过期时间')" :list="sideSlider.data.expiration_date" />
+        <text-filter-detail v-if="sideSlider.data.filter_type" :data="sideSlider.data" />
       </div>
     </bk-sideslider>
   </div>
 </template>
 
 <script>
-import ListBox from './ListBox';
-import DownloadUrl from './DownloadUrl';
-import TaskStatusDetail from './TaskStatusDetail';
-import TextFilterDetail from './TextFilterDetail';
+import ListBox from './list-box';
+import DownloadUrl from './download-url';
+import TaskStatusDetail from './task-status-detail';
+import TextFilterDetail from './text-filter-detail';
 
 export default {
   name: 'ExtractHome',

@@ -81,7 +81,7 @@
         <div class="collection-form" v-if="isShowTrace">
           <div class="collection-label">{{ $t('索引') }}</div>
           <div class="selected-collection trace">
-            <TraceSelect :value.sync="formData.indexes" @update:value="handleTraceSelected" />
+            <trace-select :value.sync="formData.indexes" @update:value="handleTraceSelected" />
             <bk-table class="king-table" max-height="379" :data="traceMatches" v-if="traceMatches.length">
               <bk-table-column :label="$t('序号')" prop="f">
                 <div slot-scope="{ $index }">
@@ -142,9 +142,9 @@
 </template>
 
 <script>
-import SelectCollection from './SelectCollection';
-import TraceSelect from './TraceSelect';
-import SelectEs from './SelectEs';
+import SelectCollection from './select-collection';
+import TraceSelect from './trace-select';
+import SelectEs from './select-es';
 import AuthPage from '@/components/common/auth-page';
 import { projectManages } from '@/common/util';
 import { mapGetters, mapState } from 'vuex';

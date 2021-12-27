@@ -193,7 +193,7 @@
 
 <script>
 import { projectManages } from '@/common/util';
-import collectedItemsMixin from '@/mixins/collectedItemsMixin';
+import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
 
 export default {

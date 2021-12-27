@@ -88,7 +88,7 @@
             </bk-date-picker>
           </bk-form-item>
           <bk-form-item :label="$t('logArchive.notifiedUser')" required property="notice_user">
-            <ValidateUserSelector
+            <validate-user-selector
               style="width:500px;"
               data-test-id="addNewRestore_input_notifiedUser"
               v-model="formData.notice_user"
@@ -116,7 +116,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import ValidateUserSelector from '../../manage-extract/manage-extract-permission/ValidateUserSelector.vue';
+import ValidateUserSelector from '../../manage-extract/manage-extract-permission/validate-user-selector';
 
 export default {
   components: {

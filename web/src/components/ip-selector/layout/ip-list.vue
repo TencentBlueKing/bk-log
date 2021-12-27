@@ -30,7 +30,7 @@
       @change="handleKeywordChange">
     </bk-input>
     <slot name="tab"></slot>
-    <IpSelectorTable
+    <ip-selector-table
       ref="table"
       class="ip-list-table mt10"
       :data="tableData"
@@ -42,8 +42,7 @@
       :empty-text="emptyText"
       @page-change="handlePageChange"
       @check-change="handleCheckChange"
-      @page-limit-change="handleLimitChange">
-    </IpSelectorTable>
+      @page-limit-change="handleLimitChange" />
   </div>
 </template>
 <script lang="ts">

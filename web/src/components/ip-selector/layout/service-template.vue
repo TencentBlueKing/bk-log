@@ -50,15 +50,14 @@
       </bk-virtual-scroll>
     </div>
     <div class="service-template-right ml20">
-      <IpListTable
+      <ip-list-table
         ref="table"
         :get-search-table-data="getTableData"
         :ip-list-table-config="templateTableConfig"
         :show-selection-column="false"
         :disabled-loading="isLoading"
         :empty-text="emptyText"
-        :handle-agent-status="handleAgentStatus">
-      </IpListTable>
+        :handle-agent-status="handleAgentStatus" />
     </div>
   </div>
 </template>
