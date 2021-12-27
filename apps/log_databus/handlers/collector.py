@@ -33,6 +33,7 @@ from apps.api.modules.bk_node import BKNodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
+from apps.utils.function import map_if
 from apps.utils.thread import MultiExecuteFunc
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import ResourceEnum, Permission
@@ -1764,6 +1765,19 @@ class CollectorHandler(object):
             LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(index_set_name=index_set_name)
 
         custom_config = get_custom(self.data.custom_type)
+        etl_params = custom_config.etl_config
+        etl_config = custom_config.etl_config
+        fields = custom_config.fields
+        if custom_config.etl_config != self.data.etl_config:
+            collector_detail = self.retrieve()
+            # need drop built in field
+            collector_detail["fields"] = map_if(
+                collector_detail["fields"], if_func=lambda field: not field["is_built_in"]
+            )
+            etl_params = collector_detail["etl_params"]
+            etl_config = collector_detail["etl_config"]
+            fields = collector_detail["fields"]
+
         from apps.log_databus.handlers.etl import EtlHandler
 
         etl_handler = EtlHandler(self.data.collector_config_id)
@@ -1773,9 +1787,9 @@ class CollectorHandler(object):
             "retention": retention,
             "allocation_min_days": allocation_min_days,
             "storage_replies": storage_replies,
-            "etl_params": custom_config.etl_params,
-            "etl_config": custom_config.etl_config,
-            "fields": custom_config.fields,
+            "etl_params": etl_params,
+            "etl_config": etl_config,
+            "fields": fields,
         }
         etl_handler.update_or_create(**etl_params)
         custom_config.after_hook(self.data)

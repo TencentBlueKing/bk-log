@@ -17,6 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import copy
+
 from django.conf import settings
 from django.template import engines
 from django.utils import translation
@@ -24,14 +26,16 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.response import Response
 
+from apps.utils.context_processors import mysetting
 from apps.utils.drf import list_route
 from apps.exceptions import LanguageDoseNotSupported, ValidationError
 from apps.generic import APIViewSet
-from apps.log_search.constants import TimeEnum
+from apps.log_search.constants import TimeEnum, FILTER_KEY_LIST
 from apps.log_search.handlers.meta import MetaHandler
 from apps.log_search.models import GlobalConfig, Scenario
 from apps.log_search.serializers import ProjectSerializer
 from apps.utils.local import get_request_username
+from apps.utils.db import get_toggle_data
 
 
 class MetaViewSet(APIViewSet):
@@ -86,6 +90,32 @@ class MetaViewSet(APIViewSet):
         }
         """
         return Response(ProjectSerializer(MetaHandler.get_projects(), many=True).data)
+
+    @list_route(methods=["GET"], url_path="index_html_environment")
+    def get_index_settings(self, request):
+        """
+         @api {get} /meta/index_html_environment/ 获取首页环境变量
+         @apiName get_index_html_environment
+         @apiGroup 01_Meta
+         @apiSuccess {Str} RUN_MODE 版本环境
+         @apiSuccess {Str} ENVIRONMENT 运行环境
+         @apiSuccess {Str} APP_CODE 应用码
+         @apiSuccessExample {json} 成功返回:
+         {
+            "message":"",
+            "code":0,
+            "data":{
+                "RUN_MODE":"test",
+                "ENVIRONMENT":"test",
+                "APP_CODE":"test"
+            },
+            "result":true
+        }
+        """
+        my_setting = copy.copy(mysetting(request))
+        [my_setting.pop(key) for key in FILTER_KEY_LIST]
+        data = get_toggle_data()
+        return Response({**my_setting, **data})
 
     @list_route(methods=["GET"], url_path="projects/mine")
     def list_projects_mine(self, request):

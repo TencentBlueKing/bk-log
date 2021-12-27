@@ -90,7 +90,7 @@ class DataFlowHandler(BaseAiopsHandler):
         @param cluster_group 计算集群组
         @param consuming_mode 数据处理模式
         """
-        cluster_group = self.conf.get("aiops_default", cluster_group)
+        cluster_group = self.conf.get("aiops_default_cluster_group", cluster_group)
         start_request = StartFlowCls(flow_id=flow_id, consuming_mode=consuming_mode, cluster_group=cluster_group)
         request_dict = self._set_username(start_request)
         return BkDataDataFlowApi.start_flow(request_dict)
