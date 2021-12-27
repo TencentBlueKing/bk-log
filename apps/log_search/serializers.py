@@ -385,3 +385,7 @@ class TemplateSerializer(serializers.Serializer):
             if not re.findall(r"^\d+", task_id):
                 raise serializers.ValidationError(_("类型错误,请输入正确的整型数组"))
         return attrs
+
+
+class DynamicGroupSerializer(serializers.Serializer):
+    dynamic_group_id = serializers.CharField(label=_("动态分组ID"))
