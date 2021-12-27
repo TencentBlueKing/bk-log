@@ -17,6 +17,9 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import json
+
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
 
 def dictfetchall(cursor):
@@ -87,3 +90,23 @@ def array_hash(data, key, value):
 
 def array_chunk(data, size=100):
     return [data[i : i + size] for i in range(0, len(data), size)]
+
+
+def get_toggle_data():
+    toggle_list = FeatureToggleObject.toggle_list(**{"is_viewed": True})
+    data = {
+        # 实时日志最大长度
+        "REAL_TIME_LOG_MAX_LENGTH": 20000,
+        # 超过此长度删除部分日志
+        "REAL_TIME_LOG_SHIFT_LENGTH": 10000,
+        # 特性开关
+        "FEATURE_TOGGLE": json.dumps({toggle.name: toggle.status for toggle in toggle_list}),
+        "FEATURE_TOGGLE_WHITE_LIST": json.dumps(
+            {
+                toggle.name: toggle.biz_id_white_list
+                for toggle in toggle_list
+                if isinstance(toggle.biz_id_white_list, list)
+            }
+        ),
+    }
+    return data

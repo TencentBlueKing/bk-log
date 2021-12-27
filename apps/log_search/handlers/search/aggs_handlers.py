@@ -115,22 +115,26 @@ class AggsHandlers(AggsBase):
 
     @classmethod
     def _build_sub_terms_fields(cls, sub_fields, size: int, order: dict):
+        if not sub_fields:
+            return
         if isinstance(sub_fields, dict):
             sub_fields = [sub_fields]
         aggs = {}
         for sub_field in sub_fields:
+            field_name = sub_field
             if isinstance(sub_field, dict):
                 field_name = sub_field.get("field_name")
                 sub_fields = sub_field.get("sub_fields")
-                aggs[sub_field] = A(
-                    "terms",
-                    field=field_name,
-                    size=size,
-                    order=order,
-                    apps=cls._build_sub_terms_fields(sub_fields, size, order),
-                )
-                continue
-            aggs[sub_field] = A("terms", field=sub_field, size=size, order=order)
+                if sub_fields:
+                    aggs[field_name] = A(
+                        "terms",
+                        field=field_name,
+                        size=size,
+                        order=order,
+                        aggs=cls._build_sub_terms_fields(sub_fields, size, order),
+                    )
+                    continue
+            aggs[field_name] = A("terms", field=field_name, size=size, order=order)
         return aggs
 
     @classmethod

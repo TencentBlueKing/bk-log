@@ -36,6 +36,7 @@
         :property="'clustering_fields'">
         <div class="setting-item ">
           <bk-select
+            data-test-id="LogCluster_div_selectField"
             v-model="formData.clustering_fields"
             style="width: 482px;"
             :disabled="!globalEditable"
@@ -70,8 +71,11 @@
         <span class="left-word">{{$t('retrieveSetting.dataFingerprint')}}</span>
         <div @click="handleChangeFinger">
           <bk-switcher
-            class="left-word" theme="primary" size="large"
+            class="left-word"
+            theme="primary"
+            size="large"
             v-model="fingerSwitch"
+            data-test-id="LogCluster_div_isOpenSignature"
             :disabled="!globalEditable || configData.extra.signature_switch"
             :pre-check="() => false">
           </bk-switcher>
@@ -91,6 +95,7 @@
               type="number"
               style="width: 94px;"
               v-model="formData.max_log_length"
+              data-test-id="LogCluster_input_fieldLength"
               :min="1"
               :max="2000000"
               :precision="0"
@@ -188,6 +193,7 @@
         <bk-form-item>
           <bk-button
             theme="primary"
+            data-test-id="LogCluster_button_submit"
             :title="$t('保存')"
             :disabled="!globalEditable"
             :loading="isHandle"
@@ -196,6 +202,7 @@
           </bk-button>
           <bk-button
             style="margin-left: 8px"
+            data-test-id="LogCluster_button_reset"
             :disabled="!globalEditable"
             :title="$t('dataManage.Reset')"
             @click="resetPage">
@@ -339,13 +346,13 @@ export default {
         } else {
           res = await this.$http.request('/logClustering/getDefaultConfig');
         }
+        res.data.filter_rules === null && (res.data.filter_rules = []);
+        Object.assign(this.formData, res.data);
+        this.defaultData = res.data;
+        this.globalLoading = false;
       } catch (e) {
         this.globalLoading = false;
       }
-      res.data.filter_rules === null && (res.data.filter_rules = []);
-      Object.assign(this.formData, res.data);
-      this.defaultData = res.data;
-      this.globalLoading = false;
     },
     initList() {
       const { extra, is_active: isActive } = this.configData;
@@ -516,33 +523,33 @@ export default {
   .rule-container {
     padding: 0 16px;
   }
-  .submit-dialog {
-    /deep/.bk-dialog-tool {
-      display: none;
-    }
-    .submit-dialog-container {
-      /deep/ .bk-button {
-        margin-left: 100px;
-      }
-      .submit-dialog-title {
-        font-weight: 700;
-        font-size: 16px;
-        margin-bottom: 7px;
-      }
-      .submit-dialog-text {
-        margin-bottom: 22px;
-      }
-      /deep/.submit-dialog-btn {
-        margin-left: 224px;
-      }
-    }
-  }
   .rule-error {
     /deep/.bk-form-input {
       border-color: #ff5656;
     }
     &.bk-select {
       border-color: #ff5656 !important;
+    }
+  }
+}
+.submit-dialog {
+  /deep/.bk-dialog-tool {
+    display: none;
+  }
+  .submit-dialog-container {
+    /deep/ .bk-button {
+      margin-left: 100px;
+    }
+    .submit-dialog-title {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 7px;
+    }
+    .submit-dialog-text {
+      margin-bottom: 22px;
+    }
+    /deep/.submit-dialog-btn {
+      margin-left: 224px;
     }
   }
 }

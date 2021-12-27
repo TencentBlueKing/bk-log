@@ -1810,6 +1810,7 @@ export default {
           width: 7px;
           cursor: col-resize;
           transform: translateY(-50%);
+          z-index: 50;
         }
         &.dragging {
           z-index: 3001;

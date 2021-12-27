@@ -82,7 +82,7 @@ class PythonBackendCls(object):
     worker_nums: int
     memory: int
     worker_group: str = "default"
-    core: int = 2
+    core: int = 4
 
 
 @dataclass
@@ -129,6 +129,7 @@ class PipelineResourcesCls(object):
 class ExecuteConfigCls(object):
     pipeline_resources: PipelineResourcesCls
     chunked_read_sample_set: ChunkedReadSampleSet
+    pipeline_execute_config: Dict
     pipeline_mode: str = "chunked_training"
 
 
@@ -757,7 +758,7 @@ class UpdateTrainingScheduleCls(object):
     training_schedule: Dict = field(
         default_factory=lambda: {
             "start_time": 0,
-            "training_freq": 4,
+            "training_freq": 1,
             "success_rate_threshold": 0.8,
             "training_freq_unit": "h",
         }
