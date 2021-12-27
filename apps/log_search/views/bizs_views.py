@@ -494,9 +494,13 @@ class BizsViewSet(APIViewSet):
     @detail_route()
     def get_dynamic_group(self, request, bk_biz_id):
         """
-        @api {get} /bizs/$$bk_biz_id/get_dynamic_group/ 10_获取动态分组列表
+        @api {get} /bizs/$$bk_biz_id/get_dynamic_group/ 10_获取数据根据指定动态分组ID
         @apiName get_dynamic_group
         @apiGroup 02_Biz
+        @apiParamExample {json} 成功请求:
+        {
+            "dynamic_group_id":"iamidbuug8nh0eohk9gduh29g"
+        }
         @apiSuccessExample {json} 成功返回:
         {
             "result": true,
