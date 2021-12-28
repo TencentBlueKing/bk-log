@@ -1000,7 +1000,8 @@ class SearchHandler(object):
                     {"field": field, "value": "0", "operator": operator, "condition": condition, "type": _type}
                 )
 
-            if not field or not value or not operator:
+            # 此处对于前端传递filter为空字符串需要放行
+            if (not field or not value or not operator) and not isinstance(value, str):
                 continue
 
             new_filter_list.append(
@@ -1361,7 +1362,8 @@ class SearchHandler(object):
             # 处理逗号分隔in类型查询
             value = _add.get("value")
             new_value: list = []
-            if value:
+            # 对于前端传递为空字符串的场景需要放行过去
+            if isinstance(value, str) or value:
                 new_value = self._deal_normal_addition(value, _operator)
             new_addition.append(
                 {
