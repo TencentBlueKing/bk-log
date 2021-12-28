@@ -74,7 +74,10 @@
             :cluster-switch="clusterSwitch"
             :request-data="requestData"
             :config-data="configData"
-            :finger-list="fingerList" />
+            :finger-list="fingerList"
+            :loader-width-list="smallLoaderWidthList"
+            :is-page-over="isPageOver"
+            @paginationOptions="paginationOptions" />
         </div>
       </div>
 
@@ -174,6 +177,10 @@ export default {
         size: 10000,
       },
       fingerList: [], // 数据指纹List
+      isPageOver: false,
+      fingerListPage: 1,
+      fingerListPageSize: 50,
+      allFingerList: [], // 所有数据指纹List
       defaultFingerList: [], // 默认数据指纹List
       loadingWidthList: { // loading表头宽度列表
         global: [''],
@@ -191,7 +198,9 @@ export default {
       if (this.active !== 'dataFingerprint') {
         return this.loadingWidthList.ignore;
       }
-      return this.yearOnYearCycle > 0 ? this.loadingWidthList.compared : this.loadingWidthList.notCompared;
+      return this.requestData.year_on_year_hour > 0
+        ? this.loadingWidthList.compared
+        : this.loadingWidthList.notCompared;
     },
     exhibitText() {
       return this.clusterSwitch ? (this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
@@ -237,7 +246,7 @@ export default {
     },
     '$route.params.indexId'() {
       this.alreadyClickNav = [];
-      this.showTableLoading('global');
+      this.showTableLoading();
     },
     requestData: {
       deep: true,
@@ -256,7 +265,7 @@ export default {
           this.requestFinger();
           return;
         }
-        this.showTableLoading('table');
+        this.showTableLoading();
       }
     },
     // 初始化数据指纹配置
@@ -265,14 +274,22 @@ export default {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
       } = this.globalsData;
+      let patternLevel;
+      if (clusterLevel && clusterLevel.length > 0) {
+        if (clusterLevel.length % 2 === 1) {
+          patternLevel = (clusterLevel.length + 1) / 2;
+        } else {
+          patternLevel = clusterLevel.length  / 2;
+        }
+      }
       Object.assign(this.fingerOperateData, {
-        partterSize: clusterLevel.length - 1,
+        partterSize: patternLevel - 1 || 0,
         sliderMaxVal: clusterLevel.length - 1,
         partterList: clusterLevel,
         comparedList: yearOnYearList,
       });
       Object.assign(this.requestData, {
-        pattern_level: clusterLevel[clusterLevel.length - 1],
+        pattern_level: clusterLevel[patternLevel],
       });
     },
     // 数据指纹操作
@@ -342,18 +359,33 @@ export default {
         },
       })
         .then((res) => {
-          this.fingerList = res.data;
-          this.defaultFingerList = res.data;
+          this.allFingerList = res.data;
+          this.fingerList = res.data.slice(0, 50);
+          this.defaultFingerList = res.data.slice(0, 50);
         })
         .finally(() => {
           this.tableLoading = false;
         });
     },
-    // table loading动画
-    showTableLoading(type = 'table') {
-      type === 'table' ? this.tableLoading : this.globalLoading = true;
+
+    paginationOptions() {
+      if (this.isPageOver ||  this.fingerList.length >= this.allFingerList.length) {
+        return;
+      }
+      this.isPageOver = true;
+      this.fingerListPage += 1;
       setTimeout(() => {
-        type === 'table' ? this.tableLoading : this.globalLoading = false;
+        const { fingerListPageSize: size, fingerListPage: page } = this;
+        this.fingerList = this.fingerList.concat(this.allFingerList.slice((page - 1) * size, size * page));
+        this.defaultFingerList = this.fingerList;
+        this.isPageOver = false;
+      }, 1500);
+    },
+    // table loading动画
+    showTableLoading() {
+      this.globalLoading = true;
+      setTimeout(() => {
+        this.globalLoading = false;
       }, 500);
     },
   },

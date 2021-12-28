@@ -33,11 +33,12 @@ from apps.log_databus.exceptions import (
     CollectorActiveException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
+from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario, ProjectInfo
-from apps.log_search.constants import FieldDateFormatEnum
+from apps.log_search.constants import FieldDateFormatEnum, CollectorScenarioEnum
 from apps.models import model_to_dict
 from apps.utils.db import array_group
 from apps.log_databus.handlers.storage import StorageHandler
@@ -148,6 +149,10 @@ class EtlHandler(object):
             },
         }
         user_operation_record.delay(operation_record)
+        if self.data.collector_scenario_id == CollectorScenarioEnum.CUSTOM.value:
+            custom_config = get_custom(self.data.custom_type)
+            custom_config.after_etl_hook(self.data)
+
         return {
             "collector_config_id": self.data.collector_config_id,
             "collector_config_name": self.data.collector_config_name,
