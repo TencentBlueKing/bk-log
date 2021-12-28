@@ -360,8 +360,8 @@ export default {
       })
         .then((res) => {
           this.allFingerList = res.data;
-          this.fingerList = res.data.slice(0, 50);
-          this.defaultFingerList = res.data.slice(0, 50);
+          this.fingerList = res.data.slice(0, this.fingerListPageSize);
+          this.defaultFingerList = res.data.slice(0, this.fingerListPageSize);
         })
         .finally(() => {
           this.tableLoading = false;
@@ -369,7 +369,7 @@ export default {
     },
 
     paginationOptions() {
-      if (this.isPageOver ||  this.fingerList.length >= this.allFingerList.length) {
+      if (this.isPageOver || this.defaultFingerList.length >= this.allFingerList.length) {
         return;
       }
       this.isPageOver = true;
