@@ -329,7 +329,7 @@ import RetrieveDetailInput from './condition-comp/RetrieveDetailInput';
 import QueryStatement from './condition-comp/QueryStatement';
 import FilterConditionItem from './condition-comp/FilterConditionItem';
 import IpQuick from './condition-comp/IpQuick';
-import ipSelectorDialog from '@/components/data-Access/ip-selector-dialog';
+import IpSelectorDialog from '@/components/data-Access/ip-selector-dialog';
 import FieldFilter from './condition-comp/FieldFilter';
 import FavoritePopper from './condition-comp/FavoritePopper';
 import ResultHeader from './result-comp/ResultHeader';
@@ -352,7 +352,7 @@ export default {
     QueryStatement,
     FilterConditionItem,
     IpQuick,
-    ipSelectorDialog,
+    IpSelectorDialog,
     FieldFilter,
     FavoritePopper,
     ResultHeader,
@@ -896,6 +896,7 @@ export default {
       const { target_node_type: targetNodeType, target_nodes: targetNodes } = data;
       this.retrieveParams.host_scopes.target_node_type = targetNodes.length ? targetNodeType : '';
       this.retrieveParams.host_scopes.target_nodes = targetNodes.map((node) => {
+        // TODO
         const targets = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE'].includes(targetNodeType)
           ? {
             node_path: node.node_path,
@@ -903,7 +904,8 @@ export default {
             bk_inst_id: node.bk_inst_id,
             bk_obj_id: node.bk_obj_id,
           }
-          : { ip: node.ip, bk_cloud_id: node.bk_cloud_id, bk_supplier_id: node.bk_supplier_id };
+          : targetNodeType === 'DYNAMIC_GROUP' ? { id: node.id }
+            : { ip: node.ip, bk_cloud_id: node.bk_cloud_id, bk_supplier_id: node.bk_supplier_id };
         return targets;
       });
       console.log(this.retrieveParams.host_scopes);

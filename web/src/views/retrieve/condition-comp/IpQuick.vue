@@ -129,6 +129,7 @@ export default {
         INSTANCE: this.$t('IP'),
         SERVICE_TEMPLATE: this.$t('服务模板'),
         SET_TEMPLATE: this.$t('集群模板'),
+        DYNAMIC_GROUP: this.$t('动态分组'),
       };
       return nodeTypeTextMap[this.hostScopes.target_node_type] || '';
     },

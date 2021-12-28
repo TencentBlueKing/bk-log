@@ -93,9 +93,9 @@ export default class DynamicGroup extends Vue {
 
   @Prop({ default: '', type: String }) private readonly dynamicGroupPlaceholder!: string
   @Prop({ default: () => ({
-    idKey: 'bk_inst_id',
+    idKey: 'id',
     childrenKey: 'instances_count',
-    labelKey: 'bk_inst_name'
+    labelKey: 'name'
   }), type: Object }) private readonly groupOptions!: IGroupDataOptions
   // 表格字段配置
   @Prop({ default: () => [], type: Array }) private readonly groupTableConfig!: ITableConfig[]

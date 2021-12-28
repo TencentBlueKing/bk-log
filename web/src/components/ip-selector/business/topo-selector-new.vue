@@ -67,7 +67,9 @@
     IPanel,
     ITableConfig,
     IPreviewData,
-    IMenu, ITableCheckData, IpType,
+    IMenu,
+    ITableCheckData,
+    IpType,
   } from '../types/selector-type'
   import { defaultSearch } from '../common/util'
   import {
@@ -78,6 +80,8 @@
     getServiceInstanceByNode,
     getHostInstanceByNode,
     getNodeAgentStatus,
+    getDynamicGroupList,
+    getDynamicGroup,
   } from '../http.js'
 
   const copyText = (text: string) => {
@@ -146,12 +150,14 @@
       INSTANCE: 'static-topo',
       SERVICE_TEMPLATE: 'service-template',
       SET_TEMPLATE: 'cluster',
-      GROUP: 'dynamic-group'
+      DYNAMIC_GROUP: 'dynamic-group'
     }
     // 默认激活预览面板
-    private defaultActiveName = ['TOPO', 'INSTANCE', 'SERVICE_TEMPLATE', 'SET_TEMPLATE', 'GROUP']
+    private defaultActiveName = ['TOPO', 'INSTANCE', 'SERVICE_TEMPLATE', 'SET_TEMPLATE', 'DYNAMIC_GROUP']
     private setTemplateData = []
     private serviceTemplateData = []
+    private dynamicGroupData = []
+    private dynamicGroupIds = []
 
     private get isInstance () {
       // 采集对象为服务时，只能选择动态
@@ -181,7 +187,7 @@
           label: this.$t('动态分组'),
           tips: this.$t('不能混用'),
           disabled: false,
-          type: 'GROUP',
+          type: 'TOPO',
           hidden: !this.showDynamicGroup,
         },
         {
@@ -213,8 +219,9 @@
       const isDynamic = this.previewData.some(item => dynamicType.includes(item.id) && item.data.length)
       const isStatic = this.previewData.some(item => item.id === 'INSTANCE' && item.data.length)
       return panels.map((item) => {
-          item.disabled = (item.name !== this.active && isDynamic) || (item.type === 'TOPO' && isStatic)
-          return item
+        // TODO
+        item.disabled = (item.name !== this.active && isDynamic) || (item.type === 'TOPO' && isStatic)
+        return item
       })
     }
 
@@ -238,15 +245,16 @@
         'dynamic-topo': 'TOPO',
         'static-topo': 'INSTANCE',
         'service-template': 'SERVICE_TEMPLATE',
-        cluster: 'SET_TEMPLATE',
+        'cluster': 'SET_TEMPLATE',
         'custom-input': 'INSTANCE',
-        'dynamic-group': 'GROUP'
+        'dynamic-group': 'DYNAMIC_GROUP'
       }
       this.currentTargetNodeType = activeToNodeTypeMap[this.active]
       this.staticTableData = []
       this.topoTableData = []
       this.setTemplateData = []
       this.serviceTemplateData = []
+      this.dynamicGroupData = []
     }
 
     @Watch('targetNodeType', { immediate: true })
@@ -273,14 +281,14 @@
         INSTANCE: this.$t('IP'),
         SERVICE_TEMPLATE: this.$t('服务模板'),
         SET_TEMPLATE: this.$t('集群模板'),
-        GROUP: this.$t('动态分组')
+        DYNAMIC_GROUP: this.$t('动态分组')
       }
       const nodeTypeNameMap = {
         TOPO: 'node_path',
         INSTANCE: 'ip',
         SERVICE_TEMPLATE: 'bk_inst_name',
         SET_TEMPLATE: 'bk_inst_name',
-        GROUP: 'bk_inst_name'
+        DYNAMIC_GROUP: 'name'
       }
       this.previewData = []
       this.previewData.push({
@@ -320,26 +328,31 @@
       this.dynamicTableConfig = [...generatorTableConfig]
       this.templateTableConfig = [...generatorTableConfig]
       this.staticTableConfig = [
-          {
-            prop: 'ip',
-            label: 'IP',
-          },
-          {
-            prop: 'agent_status',
-            label: this.$t('Agent状态'),
-            render: this.renderIpAgentStatus,
-          },
-          {
-            prop: 'bk_cloud_name',
-            label: this.$t('云区域'),
-          },
-          {
-            prop: 'bk_os_type',
-            label: this.$t('操作系统'),
-          },
+        {
+          prop: 'ip',
+          label: 'IP',
+        },
+        {
+          prop: 'agent_status',
+          label: this.$t('Agent状态'),
+          render: this.renderIpAgentStatus,
+        },
+        {
+          prop: 'bk_cloud_name',
+          label: this.$t('云区域'),
+        },
+        {
+          prop: 'bk_os_type',
+          label: this.$t('操作系统'),
+        },
       ]
       // TODO
-      this.groupTableConfig = []
+      this.groupTableConfig = [
+        {
+          prop: 'bk_content_name',
+          label: this.$t('内容'),
+        },
+      ]
     }
     private renderLabels (row: any) {
       const { labels = [] } = row
@@ -428,6 +441,8 @@
       // 获取动态分组拓扑数据
       if (this.active === 'dynamic-group') {
         // TODO
+        const data = await getDynamicGroupList()
+        return data.list
       }
     }
     private handleSetDefaultCheckedNodes () {
@@ -498,7 +513,7 @@
         return await this.getCustomInputTableData(params)
       }
       if (this.active === 'dynamic-group') {
-        return await this.getDynamicGroupTableData(params)
+        return await this.getDynamicGroupTableData(params, type)
       }
       return {
         total: 0,
@@ -612,9 +627,25 @@
     }
 
     // 获取动态分组表格数据
-    getDynamicGroupTableData(params: any) {
-      // TOTO
-      const data = []
+    async getDynamicGroupTableData(params: any, type?: string) {
+      const { selections = [], tableKeyword = '' } = params
+      if (type === 'selection-change' && !!selections.length) {
+        this.dynamicGroupIds = selections.map(item => item.id)
+        const data = await getDynamicGroup(this.dynamicGroupIds)
+        // TODO 分组表格数据处理 添加不同类型用户展示的内容字段 bk_content_name
+        Object.keys(data).forEach(group => {
+          const temp = data[group].map(item => {
+            return {
+              ...item,
+              bk_content_name: item['ip'] ? item['ip'] : item['bk_set_name']
+            }
+          })
+          this.dynamicGroupData.push(0, this.dynamicGroupData.length, ...temp)
+        })
+      }
+
+      const data = defaultSearch(this.dynamicGroupData, tableKeyword)
+
       return {
         total: data.length,
         data,
@@ -647,7 +678,7 @@
       return this.getCheckedData()
     }
     private async handleAgentStatus (data) {
-      if (!data.length || this.active === 'static-topo') return []
+      if (!data.length || ['static-topo', 'dynamic-group'].includes(this.active)) return []
 
       let targetList = []
       const nodeList = data.map(item => {
@@ -683,6 +714,20 @@
     // 动态分组check事件
     groupCheckChange(selectionsData: ITableCheckData) {
       // TODO
+      const { selections = [] } = selectionsData
+      const index = this.previewData.findIndex(item => item.id === 'DYNAMIC_GROUP')
+      if (index > -1) {
+        this.previewData[index].data = [...selections]
+      } else {
+        // 初始化分组信息(模板类型都属于动态拓扑)
+        this.previewData.push({
+          id: 'DYNAMIC_GROUP',
+          name: this.$t('动态分组'),
+          // data: [...selections],
+          data: [...this.dynamicGroupIds],
+          dataNameKey: 'name',
+        })
+      }
     }
     // 动态类型表格check事件
     private dynamicTableCheckChange (selectionsData: ITableCheckData) {
@@ -850,7 +895,8 @@
       }
       // TODO
       if (this.active === 'dynamic-group') {
-
+        const group = this.previewData.find(data => data.id === 'DYNAMIC_GROUP')
+        return group?.data.some(data => data.id === row.id)
       }
       return false
     }
