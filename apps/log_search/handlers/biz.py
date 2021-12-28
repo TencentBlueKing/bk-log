@@ -100,13 +100,26 @@ class BizHandler(APIModel):
 
         ret = {}
         for dynamic_group_id in dynamic_group_id_list:
-            ret[dynamic_group_id] = CCApi.execute_dynamic_group.bulk_request(
+            data = CCApi.execute_dynamic_group.bulk_request(
                 params={
                     "bk_biz_id": self.bk_biz_id,
                     "id": dynamic_group_id,
-                    "fields": ["bk_host_id", "bk_cloud_id", "bk_host_innerip", "bk_supplier_account"],
+                    "fields": ["bk_cloud_id", "bk_host_innerip", "bk_supplier_account", "bk_set_id", "bk_set_name"],
                 }
             )
+            if data.get("bk_host_innerip"):
+                ret[dynamic_group_id] = {
+                    "ip": data["bk_host_innerip"],
+                    "bk_cloud_id": data["bk_cloud_id"],
+                    "bk_supplier_id": data["bk_supplier_account"],
+                }
+            else:
+                ret[dynamic_group_id] = {
+                    "bk_inst_id": data["bk_set_id"],
+                    "bk_obj_id": "set",
+                    "bk_set_name": data["bk_set_name"],
+                }
+
         return ret
 
     def get_instance_topo(self, params=None, is_inner=False):
