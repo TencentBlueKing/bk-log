@@ -167,12 +167,14 @@ class TargetNodeTypeEnum(ChoicesEnum):
     INSTANCE = "INSTANCE"
     SERVICE_TEMPLATE = "SERVICE_TEMPLATE"
     SET_TEMPLATE = "SET_TEMPLATE"
+    DYNAMIC_GROUP = "DYNAMIC_GROUP"
 
     _choices_labels = (
         (TOPO, _("TOPO")),
         (INSTANCE, _("主机实例")),
         (SERVICE_TEMPLATE, _("服务模板")),
         (SET_TEMPLATE, _("集群模板")),
+        (DYNAMIC_GROUP, _("动态分组")),
     )
 
 

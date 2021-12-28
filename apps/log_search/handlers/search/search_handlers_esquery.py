@@ -26,6 +26,7 @@ from django.core.cache import cache
 from django.conf import settings
 from requests.exceptions import ReadTimeout
 
+from apps.api import CCApi
 from apps.api.base import DataApiRetryClass
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.constants import EtlConfig, TargetNodeTypeEnum
@@ -664,13 +665,19 @@ class SearchHandler(object):
         # IP快选、过滤条件
         host_scopes = history["params"].get("host_scopes", {})
 
-        target_nodes = host_scopes.get("target_nodes", {})
+        target_nodes = host_scopes.get("target_nodes", [])
 
         if target_nodes:
             if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
                 query_string += " AND ({})".format(
                     ",".join([f"{target_node['bk_cloud_id']}:{target_node['ip']}" for target_node in target_nodes])
                 )
+            elif host_scopes["target_node_type"] == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
+                # target_nodes: [
+                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a",
+                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a"
+                # ]
+                query_string += " AND (dynamic_group_id:" + ",".join(target_nodes) + ")"
             else:
                 first_node, *_ = target_nodes
                 target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
@@ -1284,13 +1291,46 @@ class SearchHandler(object):
         return log_not_empty_list
 
     def _get_addition_host(self, bk_biz_id, target_node_type: str, target_nodes: list) -> list:
+        host_list = []
         if target_node_type == TargetNodeTypeEnum.INSTANCE.value:
-            return target_nodes
-        conditions = [
-            {"bk_obj_id": node_obj["bk_obj_id"], "bk_inst_id": node_obj["bk_inst_id"]} for node_obj in target_nodes
-        ]
-        host_result = BizHandler(bk_biz_id).search_host(conditions)
-        return [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
+            host_list = target_nodes
+        elif target_node_type == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
+            conditions = []
+            for dynamic_group_id in target_nodes:
+                data = CCApi.execute_dynamic_group.bulk_request(
+                    params={
+                        "bk_biz_id": bk_biz_id,
+                        "id": dynamic_group_id,
+                        "fields": ["bk_cloud_id", "bk_host_innerip", "bk_supplier_account", "bk_set_id", "bk_set_name"],
+                    }
+                )
+                if data.get("bk_host_innerip"):
+                    host_list.append(
+                        {
+                            "ip": data["bk_host_innerip"],
+                            "bk_cloud_id": data["bk_cloud_id"],
+                        }
+                    )
+                else:
+                    conditions.append(
+                        {
+                            "bk_inst_id": data["bk_set_id"],
+                            "bk_obj_id": "set",
+                        }
+                    )
+            host_result = BizHandler(bk_biz_id).search_host(conditions)
+            host_list.extend(
+                [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
+            )
+
+        else:
+            conditions = [
+                {"bk_obj_id": node_obj["bk_obj_id"], "bk_inst_id": node_obj["bk_inst_id"]} for node_obj in target_nodes
+            ]
+            host_result = BizHandler(bk_biz_id).search_host(conditions)
+            host_list = [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
+
+        return host_list
 
     def _combine_addition_host_scope(self, attrs: dict):
         host_scopes_ip_list: list = []
