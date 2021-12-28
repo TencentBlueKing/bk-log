@@ -155,7 +155,21 @@ class _CCApi:
             url=CC_APIGATEWAY_ROOT_V2 + "find_module_with_relation",
             module=self.MODULE,
             description="根据条件查询业务下的模块",
-            before_request=add_esb_info_before_request,
+            before_request=get_supplier_account_before,
+        )
+        self.search_dynamic_group = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "search_dynamic_group",
+            module=self.MODULE,
+            description="查询动态分组列表",
+            before_request=get_supplier_account_before,
+        )
+        self.execute_dynamic_group = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "execute_dynamic_group",
+            module=self.MODULE,
+            description="根据指定动态分组规则查询获取数据",
+            before_request=get_supplier_account_before,
         )
 
     def get_biz_location(self, *args, **kwargs):
