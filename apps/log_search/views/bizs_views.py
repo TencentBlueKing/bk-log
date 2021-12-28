@@ -491,12 +491,16 @@ class BizsViewSet(APIViewSet):
         """
         return Response(BizHandler(int(bk_biz_id)).list_dynamic_group())
 
-    @detail_route()
+    @detail_route(methods=["POST"])
     def get_dynamic_group(self, request, bk_biz_id):
         """
-        @api {get} /bizs/$$bk_biz_id/get_dynamic_group/ 10_获取动态分组列表
+        @api {get} /bizs/$$bk_biz_id/get_dynamic_group/ 10_获取数据根据指定动态分组ID
         @apiName get_dynamic_group
         @apiGroup 02_Biz
+        @apiParamExample {json} 成功请求:
+        {
+            "dynamic_group_id_list": ["iamidbuug8nh0eohk9gduh29g", "iamidbuug8nh0eohk9gduh2912"]
+        }
         @apiSuccessExample {json} 成功返回:
         {
             "result": true,
@@ -513,4 +517,4 @@ class BizsViewSet(APIViewSet):
         }``
         """
         params = self.params_valid(DynamicGroupSerializer)
-        return Response(BizHandler(int(bk_biz_id)).get_dynamic_group(params["dynamic_group_id"]))
+        return Response(BizHandler(int(bk_biz_id)).get_dynamic_group(params["dynamic_group_id_list"]))

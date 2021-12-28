@@ -388,4 +388,4 @@ class TemplateSerializer(serializers.Serializer):
 
 
 class DynamicGroupSerializer(serializers.Serializer):
-    dynamic_group_id = serializers.CharField(label=_("动态分组ID"))
+    dynamic_group_id_list = serializers.ListField(label=_("动态分组ID列表"), child=serializers.CharField(label=_("动态分组ID")))

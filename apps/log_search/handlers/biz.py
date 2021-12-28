@@ -92,17 +92,22 @@ class BizHandler(APIModel):
         dynamic_groups = CCApi.search_dynamic_group.bulk_request(params={"bk_biz_id": self.bk_biz_id})
         return {"count": len(dynamic_groups), "list": dynamic_groups or []}
 
-    def get_dynamic_group(self, dynamic_group_id):
+    def get_dynamic_group(self, dynamic_group_id_list):
         """
         根据指定动态分组规则查询获取数据
         """
-        return CCApi.execute_dynamic_group.bulk_request(
-            params={
-                "bk_biz_id": self.bk_biz_id,
-                "id": dynamic_group_id,
-                "fields": ["bk_host_id", "bk_cloud_id", "bk_host_innerip", "bk_host_name"],
-            }
-        )
+        dynamic_group_id_list = dynamic_group_id_list or []
+
+        ret = {}
+        for dynamic_group_id in dynamic_group_id_list:
+            ret[dynamic_group_id] = CCApi.execute_dynamic_group.bulk_request(
+                params={
+                    "bk_biz_id": self.bk_biz_id,
+                    "id": dynamic_group_id,
+                    "fields": ["bk_host_id", "bk_cloud_id", "bk_host_innerip", "bk_supplier_account"],
+                }
+            )
+        return ret
 
     def get_instance_topo(self, params=None, is_inner=False):
         """
