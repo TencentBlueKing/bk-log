@@ -135,6 +135,8 @@ MAX_EXPORT_REQUEST_RETRY = 3
 
 ISO_8601_TIME_FORMAT_NAME = "rfc3339"
 
+FILTER_KEY_LIST = ["gettext", "_", "LANGUAGES"]
+
 
 # 消息模式
 class MsgModel(object):
