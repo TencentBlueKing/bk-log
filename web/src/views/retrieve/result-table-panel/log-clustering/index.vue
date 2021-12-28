@@ -173,7 +173,7 @@ export default {
       requestData: { // 数据请求
         pattern_level: '',
         year_on_year_hour: 0,
-        show_new_pattern: true,
+        show_new_pattern: false,
         size: 10000,
       },
       fingerList: [], // 数据指纹List
@@ -301,7 +301,7 @@ export default {
         this.requestData.pattern_level = val;
       }
       if (operateType === 'isShowNear') {
-        this.fingerList = val ? this.fingerList.filter(el => el.is_new_class) : this.defaultFingerList;
+        this.requestData.show_new_pattern = val;
       }
       if (operateType === 'enterCustomize') {
         this.handleEnterCompared(val);
@@ -360,8 +360,8 @@ export default {
       })
         .then((res) => {
           this.allFingerList = res.data;
-          this.fingerList = res.data.slice(0, 50);
-          this.defaultFingerList = res.data.slice(0, 50);
+          this.fingerList = res.data.slice(0, this.fingerListPageSize);
+          this.defaultFingerList = res.data.slice(0, this.fingerListPageSize);
         })
         .finally(() => {
           this.tableLoading = false;
@@ -369,7 +369,7 @@ export default {
     },
 
     paginationOptions() {
-      if (this.isPageOver ||  this.fingerList.length >= this.allFingerList.length) {
+      if (this.isPageOver || this.defaultFingerList.length >= this.allFingerList.length) {
         return;
       }
       this.isPageOver = true;
