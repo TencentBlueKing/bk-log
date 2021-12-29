@@ -38,6 +38,7 @@ from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfi
 from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
 from apps.utils.bkdata import BkData
 from apps.utils.db import array_hash
+from apps.utils.function import map_if
 from apps.utils.local import get_local_param
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import generate_time_range_shift, generate_time_range
@@ -109,6 +110,8 @@ class PatternHandler:
                     "group": pattern.get("group", ""),
                 }
             )
+        if self._show_new_pattern:
+            result = map_if(result, if_func=lambda x: x["is_new_class"])
         return result
 
     def _multi_query(self):
@@ -203,8 +206,6 @@ class PatternHandler:
         return bucket
 
     def _get_new_class(self):
-        if not self._show_new_pattern:
-            return set()
         start_time, end_time = generate_time_range(NEW_CLASS_QUERY_TIME_RANGE, "", "", get_local_param("time_zone"))
         new_classes = (
             BkData(self._clustering_config.new_cls_pattern_rt)
