@@ -977,6 +977,7 @@ export default {
   成功匹配: 'Successfully matched',
   条日志: 'log lines',
   未成功匹配: 'Match failed',
+  内容: 'Content',
   dataManage: {
     normal: 'OK',
     abnormal: 'Abnormal',

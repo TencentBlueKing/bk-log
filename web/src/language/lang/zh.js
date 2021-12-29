@@ -977,6 +977,7 @@ export default {
   成功匹配: '成功匹配',
   条日志: '条日志',
   未成功匹配: '未成功匹配',
+  内容: '内容',
   dataManage: {
     normal: 'Agent 正常',
     abnormal: 'Agent 异常',
