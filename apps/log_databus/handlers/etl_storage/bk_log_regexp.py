@@ -73,7 +73,7 @@ class BkLogRegexpEtlStorage(EtlStorage):
         """
         # 判断字段是否都在正则表达式中定义
         for field in fields:
-            if field["is_config_by_user"] and f'<{field["field_name"]}>' not in etl_params["separator_regexp"]:
+            if field.get("is_config_by_user") and f'<{field["field_name"]}>' not in etl_params["separator_regexp"]:
                 raise ValidationError(_("字段未在正则表达式中定义：") + field["field_name"])
 
         # option
