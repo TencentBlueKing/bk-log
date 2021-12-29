@@ -107,19 +107,24 @@ class BizHandler(APIModel):
                     "fields": ["bk_cloud_id", "bk_host_innerip", "bk_supplier_account", "bk_set_id", "bk_set_name"],
                 }
             )
+            ret[dynamic_group_id] = []
             for each_instance in data or []:
                 if each_instance.get("bk_host_innerip"):
-                    ret[dynamic_group_id] = {
-                        "ip": each_instance["bk_host_innerip"],
-                        "bk_cloud_id": each_instance["bk_cloud_id"],
-                        "bk_supplier_id": each_instance["bk_supplier_account"],
-                    }
+                    ret[dynamic_group_id].append(
+                        {
+                            "ip": each_instance["bk_host_innerip"],
+                            "bk_cloud_id": each_instance["bk_cloud_id"],
+                            "bk_supplier_id": each_instance["bk_supplier_account"],
+                        }
+                    )
                 else:
-                    ret[dynamic_group_id] = {
-                        "bk_inst_id": each_instance["bk_set_id"],
-                        "bk_obj_id": "set",
-                        "bk_set_name": each_instance["bk_set_name"],
-                    }
+                    ret[dynamic_group_id].append(
+                        {
+                            "bk_inst_id": each_instance["bk_set_id"],
+                            "bk_obj_id": "set",
+                            "bk_set_name": each_instance["bk_set_name"],
+                        }
+                    )
 
         return ret
 
