@@ -364,7 +364,7 @@ export default {
       this.isEditRules = false;
       this.isClickSubmit = false;
       Object.assign(this.addRulesData, { regular: '', placeholder: '' });
-      this.$refs.addRulesData.clearError();
+      this.$refs.addRulesRef.clearError();
     },
     // base64转聚类规则数组
     base64ToRuleArr(str) {
