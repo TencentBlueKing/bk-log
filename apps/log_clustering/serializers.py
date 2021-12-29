@@ -34,11 +34,11 @@ class PatternSearchSerlaizer(serializers.Serializer):
     show_new_pattern = serializers.BooleanField(required=True)
     year_on_year_hour = serializers.IntegerField(required=False, default=0, min_value=0)
     group_by = serializers.ListField(required=False, default=[])
-    filter_not_clustering = serializers.BooleanField(required=False, default=False)
+    filter_not_clustering = serializers.BooleanField(required=False, default=True)
 
     def validate(self, attrs):
         super().validate(attrs)
-        if not attrs["filter_not_clustering"]:
+        if attrs["filter_not_clustering"]:
             attrs["addition"].append(
                 {
                     "field": "{}_{}".format(AGGS_FIELD_PREFIX, attrs["pattern_level"]),
