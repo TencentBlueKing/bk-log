@@ -119,7 +119,7 @@ class EtlStorage(object):
         etl_field_index = 1
         for field in fields:
             # 过滤掉删除的字段
-            if field["is_delete"]:
+            if field.get("is_delete"):
                 continue
 
             # 设置字段的来源与目标存储
