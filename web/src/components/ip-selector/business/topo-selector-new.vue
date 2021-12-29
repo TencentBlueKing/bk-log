@@ -187,7 +187,7 @@
           label: this.$t('动态分组'),
           tips: this.$t('不能混用'),
           disabled: false,
-          type: 'TOPO',
+          type: 'DYNAMIC_GROUP',
           hidden: !this.showDynamicGroup,
         },
         {
@@ -215,12 +215,12 @@
           type: 'INSTANCE',
         },
       ]
-      const dynamicType = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE']
+      const dynamicType = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE', 'DYNAMIC_GROUP']
       const isDynamic = this.previewData.some(item => dynamicType.includes(item.id) && item.data.length)
       const isStatic = this.previewData.some(item => item.id === 'INSTANCE' && item.data.length)
       return panels.map((item) => {
-        // TODO
-        item.disabled = (item.name !== this.active && isDynamic) || (item.type === 'TOPO' && isStatic)
+        item.disabled = (item.name !== this.active && isDynamic) ||
+         (['TOPO', 'DYNAMIC_GROUP'].includes(item.type) && isStatic)
         return item
       })
     }
@@ -346,7 +346,6 @@
           label: this.$t('操作系统'),
         },
       ]
-      // TODO
       this.groupTableConfig = [
         {
           prop: 'bk_content_name',
@@ -440,7 +439,6 @@
       }
       // 获取动态分组拓扑数据
       if (this.active === 'dynamic-group') {
-        // TODO
         const data = await getDynamicGroupList()
         return data.list
       }
@@ -632,7 +630,8 @@
       if (type === 'selection-change' && !!selections.length) {
         this.dynamicGroupIds = selections.map(item => item.id)
         const data = await getDynamicGroup(this.dynamicGroupIds)
-        // TODO 分组表格数据处理 添加不同类型用户展示的内容字段 bk_content_name
+        this.dynamicGroupData.splice(0, this.dynamicGroupData.length)
+        // 分组表格数据处理 添加不同类型用户展示的内容字段 bk_content_name
         Object.keys(data).forEach(group => {
           const temp = data[group].map(item => {
             return {
@@ -640,7 +639,7 @@
               bk_content_name: item['ip'] ? item['ip'] : item['bk_set_name']
             }
           })
-          this.dynamicGroupData.push(0, this.dynamicGroupData.length, ...temp)
+          this.dynamicGroupData.push(...temp)
         })
       }
 
@@ -713,7 +712,6 @@
     }
     // 动态分组check事件
     groupCheckChange(selectionsData: ITableCheckData) {
-      // TODO
       const { selections = [] } = selectionsData
       const index = this.previewData.findIndex(item => item.id === 'DYNAMIC_GROUP')
       if (index > -1) {
@@ -723,8 +721,7 @@
         this.previewData.push({
           id: 'DYNAMIC_GROUP',
           name: this.$t('动态分组'),
-          // data: [...selections],
-          data: [...this.dynamicGroupIds],
+          data: [...selections],
           dataNameKey: 'name',
         })
       }
@@ -893,7 +890,6 @@
         const group = this.previewData.find(data => data.id === type)
         return group?.data.some(data => data.bk_inst_id === row.bk_inst_id)
       }
-      // TODO
       if (this.active === 'dynamic-group') {
         const group = this.previewData.find(data => data.id === 'DYNAMIC_GROUP')
         return group?.data.some(data => data.id === row.id)

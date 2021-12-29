@@ -134,7 +134,7 @@ export function getDynamicGroup(data) {
       bk_biz_id: window.localStorage.getItem('bk_biz_id'),
     },
     data: {
-      dynamic_group_id: data,
+      dynamic_group_id_list: data,
     },
   });
   return getResData(originPromise);

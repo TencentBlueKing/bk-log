@@ -896,7 +896,6 @@ export default {
       const { target_node_type: targetNodeType, target_nodes: targetNodes } = data;
       this.retrieveParams.host_scopes.target_node_type = targetNodes.length ? targetNodeType : '';
       this.retrieveParams.host_scopes.target_nodes = targetNodes.map((node) => {
-        // TODO
         const targets = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE'].includes(targetNodeType)
           ? {
             node_path: node.node_path,
@@ -904,11 +903,10 @@ export default {
             bk_inst_id: node.bk_inst_id,
             bk_obj_id: node.bk_obj_id,
           }
-          : targetNodeType === 'DYNAMIC_GROUP' ? { id: node.id }
+          : targetNodeType === 'DYNAMIC_GROUP' ? { id: node.id, name: node.name, bk_obj_id: node.bk_obj_id }
             : { ip: node.ip, bk_cloud_id: node.bk_cloud_id, bk_supplier_id: node.bk_supplier_id };
         return targets;
       });
-      console.log(this.retrieveParams.host_scopes);
       this.showIpSelectorDialog = false;
       if (this.isAutoQuery) {
         this.retrieveLog();
