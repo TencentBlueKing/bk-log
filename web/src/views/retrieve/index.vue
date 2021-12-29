@@ -1314,7 +1314,7 @@ export default {
           method: 'post',
           url: `/search/index_set/${this.indexId}/search/`,
           withCredentials: true,
-          baseURL: 'api/v1',
+          baseURL: window.AJAX_URL_PREFIX,
           responseType: 'blob',
           data: {
             ...this.retrieveParams,

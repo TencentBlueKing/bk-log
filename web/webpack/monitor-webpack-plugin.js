@@ -15,8 +15,9 @@ module.exports = class MonitorWebpackPlugin {
     this.cacheVersionKey = this.options.cacheVersionKey;
     this.staticUrlKey = this.options.staticUrlKey;
     this.isMobile = config.mobile;
-    this.modePath = config.mobile ? '' : config.fta ? 'fta' : 'monitor';
-    this.staticUrl = !this.isMobile ? 'STATIC_URL' : 'WEIXIN_STATIC_URL';
+    // this.modePath = config.mobile ? '' : config.fta ? 'fta' : 'monitor';
+    this.modePath = '';
+    this.staticUrl = 'BK_STATIC_URL';
     this.variates = (this.isMobile ? config.mobileBuildVariates : config.pcBuildVariates) || '';
     this.hasChanged = false;
   }
@@ -24,7 +25,7 @@ module.exports = class MonitorWebpackPlugin {
   apply(compiler) {
     const hookOption = {
       name: 'MonitorWebpackPlugin',
-      stage: 'PROCESS_ASSETS_STAGE_ANALYSE'
+      stage: 'PROCESS_ASSETS_STAGE_ANALYSE',
     };
     compiler.hooks.thisCompilation.tap(hookOption, (compilation) => {
       compilation.hooks.afterProcessAssets.tap(hookOption, () => {
@@ -94,12 +95,12 @@ module.exports = class MonitorWebpackPlugin {
       urls.forEach((url) => {
         let machUrl = url.replace(`${this.staticUrl}${this.modePath}/`, '');
         if (
-          !/(data:|manifest\.json|http|\/\/)|\$\{STATIC_URL\}| \$\{WEIXIN_STATIC_URL\} |\$\{SITE_URL\}/gim.test(machUrl) &&
-          /\.(png|css|js)/gim.test(machUrl)
+          !/(data:|manifest\.json|http|\/\/)|\$\{BK_STATIC_URL\}| \$\{WEIXIN_STATIC_URL\} |\$\{SITE_URL\}/gim.test(machUrl)
+          && /\.(png|css|js)/gim.test(machUrl)
         ) {
           machUrl = machUrl.replace(
             /([^"])"([^"]+)"/gim,
-            `$1"\${${this.staticUrl}}${this.modePath}${this.isMobile ? '' : '/'}$2"`
+            `$1"\${${this.staticUrl}}${this.modePath}${this.isMobile ? '' : '/'}$2"`,
           );
         }
         if (this.isMobile) {
@@ -107,7 +108,7 @@ module.exports = class MonitorWebpackPlugin {
         }
         res = res.replace(url, machUrl);
       });
-      const scripts = res.match(/<script template>([^<]+)<\/script>/gim);
+      const scripts = res.match(/<script template>*<\/script>/gim);
       if (scripts) {
         scripts.forEach((script) => {
           res = res.replace(script, this.variates);
@@ -144,7 +145,7 @@ module.exports = class MonitorWebpackPlugin {
         },
         size() {
           return res.length;
-        }
+        },
       };
     }
     return null;
@@ -152,14 +153,14 @@ module.exports = class MonitorWebpackPlugin {
   resolveServiceWorker(chunk) {
     chunk = chunk.replace('__cache_version___', crypto.randomBytes(16).toString('hex'));
     if (this.isMobile) {
-      chunk = chunk.replace('${STATIC_URL}', '${WEIXIN_STATIC_URL}');
+      chunk = chunk.replace('${BK_STATIC_URL}', '${WEIXIN_STATIC_URL}');
     }
     return chunk;
   }
   resolveManifestJson(chunk) {
     chunk = chunk
-      .replace(/\$\{STATIC_URL\}/gm, '${WEIXIN_STATIC_URL}')
-      .replace(/\$\{SITE_URL\}/gm, '${WEIXIN_SITE_URL}');
+      .replace(/\$\{BK_STATIC_URL\}/gm, '${WEIXIN_STATIC_URL}')
+      .replace(/\$\{BK_STATIC_URL\}/gm, '${WEIXIN_SITE_URL}');
     return chunk;
   }
 };

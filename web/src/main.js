@@ -25,6 +25,7 @@ import Vue from 'vue';
 import App from './App';
 import router from './router';
 import store from './store';
+import http from './api';
 import { bus } from './common/bus';
 import i18n from '@/language/i18n';
 import vClickOutside from 'v-click-outside';
@@ -41,11 +42,9 @@ import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xm
 import { ZoneContextManager } from '@opentelemetry/context-zone';
 
 const provider = new WebTracerProvider();
-
 provider.register({
   contextManager: new ZoneContextManager(),
 });
-
 registerInstrumentations({
   instrumentations: [new XMLHttpRequestInstrumentation(
     {
@@ -53,9 +52,7 @@ registerInstrumentations({
     },
   )],
 });
-
 const tracer = provider.getTracer('bk-log');
-
 Vue.prototype.tracer = tracer;
 
 try {
@@ -90,16 +87,38 @@ Vue.component('LogButton', LogButton);
 Vue.directive('cursor', cursor);
 Vue.use(vClickOutside);
 Vue.use(methods);
-Vue.config.devtools = true;
 
-window.bus = bus;
-window.mainComponent = new Vue({
-  el: '#app',
-  router,
-  store,
-  i18n,
-  components: {
-    App,
-  },
-  template: '<App/>',
-});
+if (process.env.NODE_ENV === 'development') {
+  document.title = '日志平台 | 蓝鲸';
+  http.request('meta/getEnvConstant').then((res) => {
+    const data = res.data;
+    Object.keys(data).forEach((key) => {
+      window[key] = data[key];
+    });
+    window.bus = bus;
+    window.mainComponent = new Vue({
+      el: '#app',
+      router,
+      store,
+      i18n,
+      components: {
+        App,
+      },
+      template: '<App/>',
+    });
+    Vue.config.devtools = true;
+  });
+} else {
+  window.bus = bus;
+  window.mainComponent = new Vue({
+    el: '#app',
+    router,
+    store,
+    i18n,
+    components: {
+      App,
+    },
+    template: '<App/>',
+  });
+  Vue.config.devtools = true;
+}

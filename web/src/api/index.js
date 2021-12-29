@@ -28,7 +28,6 @@
 import Vue from 'vue';
 import axios from 'axios';
 import store from '@/store';
-
 import { bus } from '@/common/bus';
 import { messageError } from '@/common/bkmagic';
 import CachedPromise from './cached-promise';
@@ -38,13 +37,14 @@ import mockList from '@/mock/index.js';
 import serviceList from '@/services/index.js';
 import { context, trace } from '@opentelemetry/api';
 
+const baseURL = window.AJAX_URL_PREFIX || '/api/v1';
 // axios 实例
 const axiosInstance = axios.create({
   headers: { 'X-Requested-With': 'XMLHttpRequest' },
   xsrfCookieName: 'bklog_csrftoken',
   xsrfHeaderName: 'X-CSRFToken',
   withCredentials: true,
-  baseURL: 'api/v1',
+  baseURL,
 });
 
 /**

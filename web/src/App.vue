@@ -155,7 +155,7 @@ export default {
     } else {
       document.body.style['font-family'] = 'pingFang-SC-Regular, Microsoft Yahei, Helvetica, Aria, sans-serif';
     }
-    this.$store.commit('updateRunVersion', window.runVersion || '');
+    this.$store.commit('updateRunVersion', window.RUN_VER || '');
 
     // 是否转换日期类型字段格式
     const isFormatDate = jsCookie.get('operation');

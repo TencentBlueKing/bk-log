@@ -10,7 +10,7 @@
     "install-build": "cross-env execMode=install node ./webpack/exec-shell.js",
     "install-package": "cross-env execMode=install node ./webpack/exec-shell.js",
     "dev": "nodemon --exec \"bkmonitor-cli dev\"",
-    "build": "bkmonitor-cli build -f && bkmonitor-cli build -m && bkmonitor-cli build",
+    "build": "bkmonitor-cli build",
     "clean": "rimraf ../static/monitor/*",
     "analyze": "npm run clean && bkmonitor-cli build -a",
     "lint": "eslint --fix --ext .js,.vue,.ts src",
