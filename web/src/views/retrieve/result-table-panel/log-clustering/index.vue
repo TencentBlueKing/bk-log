@@ -181,7 +181,6 @@ export default {
       fingerListPage: 1,
       fingerListPageSize: 50,
       allFingerList: [], // 所有数据指纹List
-      defaultFingerList: [], // 默认数据指纹List
       loadingWidthList: { // loading表头宽度列表
         global: [''],
         ignore: [60, 90, 90, ''],
@@ -283,13 +282,13 @@ export default {
         }
       }
       Object.assign(this.fingerOperateData, {
-        partterSize: patternLevel - 1 || 0,
+        partterSize: patternLevel - 1,
         sliderMaxVal: clusterLevel.length - 1,
         partterList: clusterLevel,
         comparedList: yearOnYearList,
       });
       Object.assign(this.requestData, {
-        pattern_level: clusterLevel[patternLevel],
+        pattern_level: clusterLevel[patternLevel - 1],
       });
     },
     // 数据指纹操作
@@ -359,9 +358,9 @@ export default {
         },
       })
         .then((res) => {
+          this.fingerListPage = 1;
           this.allFingerList = res.data;
           this.fingerList = res.data.slice(0, this.fingerListPageSize);
-          this.defaultFingerList = res.data.slice(0, this.fingerListPageSize);
         })
         .finally(() => {
           this.tableLoading = false;
@@ -369,7 +368,7 @@ export default {
     },
 
     paginationOptions() {
-      if (this.isPageOver || this.defaultFingerList.length >= this.allFingerList.length) {
+      if (this.isPageOver || this.fingerList.length >= this.allFingerList.length) {
         return;
       }
       this.isPageOver = true;
@@ -377,7 +376,6 @@ export default {
       setTimeout(() => {
         const { fingerListPageSize: size, fingerListPage: page } = this;
         this.fingerList = this.fingerList.concat(this.allFingerList.slice((page - 1) * size, size * page));
-        this.defaultFingerList = this.fingerList;
         this.isPageOver = false;
       }, 1500);
     },
