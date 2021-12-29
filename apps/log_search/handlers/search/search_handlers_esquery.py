@@ -677,7 +677,8 @@ class SearchHandler(object):
                 #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a",
                 #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a"
                 # ]
-                query_string += " AND (dynamic_group_id:" + ",".join(target_nodes) + ")"
+                dynamic_name_list = [str(target_node["name"]) for target_node in target_nodes]
+                query_string += " AND (dynamic_group_name:" + ",".join(dynamic_name_list) + ")"
             else:
                 first_node, *_ = target_nodes
                 target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
@@ -1296,7 +1297,8 @@ class SearchHandler(object):
             host_list = target_nodes
         elif target_node_type == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
             conditions = []
-            for dynamic_group_id in target_nodes:
+            for target_node in target_nodes:
+                dynamic_group_id = target_node["id"]
                 data = CCApi.execute_dynamic_group.bulk_request(
                     params={
                         "bk_biz_id": bk_biz_id,

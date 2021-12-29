@@ -90,7 +90,8 @@ class FavoriteHandlers(object):
                 #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a",
                 #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a"
                 # ]
-                query_string += " AND (dynamic_group_id:" + ",".join(target_nodes) + ")"
+                dynamic_name_list = [str(target_node["name"]) for target_node in target_nodes]
+                query_string += " AND (dynamic_group_name:" + ",".join(dynamic_name_list) + ")"
             else:
                 first_node, *_ = target_nodes
                 target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
