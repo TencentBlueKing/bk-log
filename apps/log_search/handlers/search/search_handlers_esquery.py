@@ -1304,20 +1304,21 @@ class SearchHandler(object):
                         "fields": ["bk_cloud_id", "bk_host_innerip", "bk_supplier_account", "bk_set_id", "bk_set_name"],
                     }
                 )
-                if data.get("bk_host_innerip"):
-                    host_list.append(
-                        {
-                            "ip": data["bk_host_innerip"],
-                            "bk_cloud_id": data["bk_cloud_id"],
-                        }
-                    )
-                else:
-                    conditions.append(
-                        {
-                            "bk_inst_id": data["bk_set_id"],
-                            "bk_obj_id": "set",
-                        }
-                    )
+                for each_instance in data or []:
+                    if each_instance.get("bk_host_innerip"):
+                        host_list.append(
+                            {
+                                "ip": each_instance["bk_host_innerip"],
+                                "bk_cloud_id": each_instance["bk_cloud_id"],
+                            }
+                        )
+                    else:
+                        conditions.append(
+                            {
+                                "bk_inst_id": each_instance["bk_set_id"],
+                                "bk_obj_id": "set",
+                            }
+                        )
             host_result = BizHandler(bk_biz_id).search_host(conditions)
             host_list.extend(
                 [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
