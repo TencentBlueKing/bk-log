@@ -55,3 +55,8 @@ class IndexSetIdError(BaseAdminException):
 class EmptyAuditRecordRequestError(BaseAdminException):
     ERROR_CODE = "401"
     MESSAGE = _("biz_id or operate_type and operate_id 两组参数必填其中一组")
+
+
+class InitDataSourceErrorException(BaseAdminException):
+    ERROR_CODE = "501"
+    MESSAGE = _("数据源初始化异常, 请联系管理员")
