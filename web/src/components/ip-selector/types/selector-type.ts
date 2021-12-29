@@ -23,7 +23,7 @@
 import { TranslateResult } from 'vue-i18n'
 import Vue, { VNode } from 'vue'
 
-export type IpType = 'TOPO' | 'INSTANCE' | 'SERVICE_TEMPLATE' | 'SET_TEMPLATE' | 'GROUP'
+export type IpType = 'TOPO' | 'INSTANCE' | 'SERVICE_TEMPLATE' | 'SET_TEMPLATE' | 'DYNAMIC_GROUP'
 
 // tab数据源
 export interface IPanel {
