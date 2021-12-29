@@ -21,7 +21,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from django.utils.translation import ugettext_lazy as _
 from apps.api.base import DataAPI
 from apps.api.modules.utils import add_esb_info_before_request
-from config.domains import BK_PAAS_APIGATEWAY_ROOT
+from config.domains import BK_PAAS_APIGATEWAY_ROOT, BK_PAAS_V3_APIGATEWAY_ROOT
 
 
 class _BKPAASApi:
@@ -32,6 +32,15 @@ class _BKPAASApi:
         self.get_app_info = DataAPI(
             method="GET",
             url=BK_PAAS_APIGATEWAY_ROOT + "get_app_info/",
+            module=self.MODULE,
+            description=u"获取app信息",
+            before_request=add_esb_info_before_request,
+        )
+
+        # ####### 下面是apigw上的 PAAS V3 接口 ###########
+        self.get_minimal_app_list = DataAPI(
+            method="GET",
+            url=BK_PAAS_V3_APIGATEWAY_ROOT + "applications/lists/minimal/",
             module=self.MODULE,
             description=u"获取app信息",
             before_request=add_esb_info_before_request,

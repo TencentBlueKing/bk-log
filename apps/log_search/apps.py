@@ -86,7 +86,10 @@ class ApiConfig(AppConfig):
         if settings.RUN_VER != "open":
             return
         client = get_client_by_user(user_or_username=settings.SYSTEM_USE_API_ACCOUNT)
-        bk_apps = client.bk_paas.get_app_info()
+        if settings.IS_K8S_DEPLOY_MODE:
+            bk_apps = client.bk_paas.get_minimal_app_list()
+        else:
+            bk_apps = client.bk_paas.get_app_info()
         if bk_apps["result"]:
             bk_apps = [item["bk_app_code"] for item in bk_apps["data"]]
             # 是否部署监控SaaS
