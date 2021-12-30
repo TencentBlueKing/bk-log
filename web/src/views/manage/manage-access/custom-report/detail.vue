@@ -43,17 +43,17 @@
     <intro-panel
       :data="reportDetail"
       :is-open-window="isOpenWindow"
-      @handleActiveDetails="handleActiveDetails"></intro-panel>
+      @handleActiveDetails="handleActiveDetails" />
   </div>
 </template>
 
 <script>
 import AuthPage from '@/components/common/auth-page';
-import BasicInfo from '../log-collection/collection-item/manage-collection/BasicInfo';
-import DataStorage from '../log-collection/collection-item/manage-collection/DataStorage';
+import BasicInfo from '../log-collection/collection-item/manage-collection/basic-info';
+import DataStorage from '../log-collection/collection-item/manage-collection/data-storage';
 import DataStatus from '../log-collection/collection-item/manage-collection/data-status';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
-import IntroPanel from './components/IntroPanel';
+import IntroPanel from './components/intro-panel';
 
 export default {
   name: 'collection-item',

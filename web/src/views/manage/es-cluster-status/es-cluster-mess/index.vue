@@ -149,14 +149,13 @@
       :show-slider.sync="showSlider"
       :edit-cluster-id="editClusterId"
       @hidden="handleSliderHidden"
-      @updated="handleUpdated"
-    ></es-slider>
+      @updated="handleUpdated" />
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
-import EsSlider from './EsSlider';
+import EsSlider from './es-slider';
 
 export default {
   name: 'es-cluster-mess',

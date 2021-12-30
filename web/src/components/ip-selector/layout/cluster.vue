@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <ServiceTemplate
+  <service-template
     ref="service"
     :get-default-data="getDefaultData"
     :get-search-table-data="getSearchTableData"
@@ -31,8 +31,7 @@
     :service-template-placeholder="clusterTemplatePlaceholder"
     :left-panel-width="leftPanelWidth"
     :handle-agent-status="handleAgentStatus"
-    @check-change="handleCheckChange">
-  </ServiceTemplate>
+    @check-change="handleCheckChange" />
 </template>
 <script lang="ts">
 import { Component, Vue, Prop, Emit, Ref } from 'vue-property-decorator'

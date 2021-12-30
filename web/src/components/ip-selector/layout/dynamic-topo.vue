@@ -25,7 +25,7 @@
     <div class="dynamic-topo-left"
          ref="leftWrapper"
          :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
-      <TopoSearch
+      <topo-search
         v-model="treeKeyword"
         :search-method="searchTreeMethod"
         :placeholder="$t('搜索拓扑节点')"
@@ -33,9 +33,8 @@
         :options="searchDataOptions"
         :default-selection-ids="defaultSelectionIds"
         @show="handleSearchPanelShow"
-        @check-change="handleCheckChange">
-      </TopoSearch>
-      <TopoTree
+        @check-change="handleCheckChange" />
+      <topo-tree
         v-if="nodes.length"
         class="topo-tree"
         ref="tree"
@@ -48,11 +47,10 @@
         :lazy-disabled="lazyDisabled"
         :default-expand-level="defaultExpandLevel"
         :expand-on-click="expandOnClick"
-        @select-change="handleSelectChange">
-      </TopoTree>
+        @select-change="handleSelectChange" />
     </div>
     <div class="dynamic-topo-right ml10">
-      <IpListTable
+      <ip-list-table
         ref="table"
         :get-search-table-data="getTableData"
         :ip-list-table-config="dynamicTableConfig"
@@ -61,8 +59,7 @@
         :disabled-loading="isLoading"
         :empty-text="emptyText"
         :handle-agent-status="handleAgentStatus"
-        @check-change="handleTableCheckChange">
-      </IpListTable>
+        @check-change="handleTableCheckChange" />
     </div>
   </div>
 </template>

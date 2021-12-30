@@ -41,9 +41,9 @@
 
 <script>
 import AuthPage from '@/components/common/auth-page';
-import BasicInfo from './BasicInfo';
-import CollectionStatus from './CollectionStatus';
-import DataStorage from './DataStorage';
+import BasicInfo from './basic-info';
+import CollectionStatus from './collection-status';
+import DataStorage from './data-storage';
 import DataStatus from './data-status';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
 

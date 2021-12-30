@@ -79,7 +79,7 @@
       :is-show.sync="showManageDialog"
       :width="520"
       :title="type === 'create' ? $t('新增') : $t('编辑')">
-      <DirectoryManage
+      <directory-manage
         v-bkloading="{ isLoading: isSliderLoading }"
         slot="content"
         :user-api="userApi"
@@ -91,7 +91,7 @@
 </template>
 
 <script>
-import DirectoryManage from './DirectoryManage';
+import DirectoryManage from './directory-manage';
 
 export default {
   name: 'ManageExtract',

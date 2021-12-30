@@ -25,22 +25,22 @@
     <section class="partial-content">
       <div class="main-title">
         {{ $t('使用统计') }}
-        <SelectDate
+        <select-date
           :date-picker-value.sync="chartDateValue"
           :disabled="timesChartLoading || frequencyChartLoading || spentChartLoading"
           @datePickerChange="fetchChartData" />
       </div>
       <div class="charts-container">
-        <ChartComponent :type="$t('使用次数趋势')" :loading="timesChartLoading" :chart-data="timesChartData" />
-        <ChartComponent :type="$t('用户使用频次')" :loading="frequencyChartLoading" :chart-data="frequencyChartData" />
-        <ChartComponent :type="$t('检索耗时统计')" :loading="spentChartLoading" :chart-data="spentChartData" />
+        <chart-component :type="$t('使用次数趋势')" :loading="timesChartLoading" :chart-data="timesChartData" />
+        <chart-component :type="$t('用户使用频次')" :loading="frequencyChartLoading" :chart-data="frequencyChartData" />
+        <chart-component :type="$t('检索耗时统计')" :loading="spentChartLoading" :chart-data="spentChartData" />
       </div>
     </section>
 
     <section class="partial-content">
       <div class="main-title">
         {{ $t('检索记录') }}
-        <SelectDate
+        <select-date
           :date-picker-value.sync="tableDateValue"
           :disabled="tableLoading"
           @datePickerChange="fetchTableData" />
@@ -75,8 +75,8 @@
 
 <script>
 import { formatDate } from '@/common/util';
-import ChartComponent from './ChartComponent';
-import SelectDate from './SelectDate';
+import ChartComponent from './chart-component';
+import SelectDate from './select-date';
 
 export default {
   components: {

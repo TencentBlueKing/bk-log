@@ -72,7 +72,7 @@ const page403 = () => import(/* webpackChunkName: 'page403' */'@/views/403');
 const retrieve = () => import(/* webpackChunkName: 'logRetrieve' */'@/views/retrieve');
 const dashboard = () => import(/* webpackChunkName: 'dashboard' */'@/views/dashboard');
 const trace = () => import(/* webpackChunkName: 'logTrace' */'@/views/trace');
-const traceDetaid = () => import(/* webpackChunkName: 'logTraceDetail' */'@/views/trace/traceExplore');
+const traceDetaid = () => import(/* webpackChunkName: 'logTraceDetail' */'@/views/trace/trace-explore');
 
 // 管理端
 const Manage = () => import(/* webpackChunkName: 'manage' */'@/views/manage');
@@ -189,12 +189,12 @@ const extractCreate = () => import(
 // ---- 日志提取 ---- 链路管理列表
 const ExtractLinkList = () => import(
   /* webpackChunkName: 'extract-link-manage' */
-  '@/views/manage/manage-extract/extract-link-manage/ExtractLinkList'
+  '@/views/manage/manage-extract/extract-link-manage/extract-link-list'
 );
 // ---- 日志提取 ---- 链路管理创建/编辑
 const ExtractLinkCreate = () => import(
   /* webpackChunkName: 'extract-link-manage' */
-  '@/views/manage/manage-extract/extract-link-manage/ExtractLinkCreate'
+  '@/views/manage/manage-extract/extract-link-manage/extract-link-create'
 );
 // ---- ES集群 ---- 集群信息
 const ClusterMess = () => import(

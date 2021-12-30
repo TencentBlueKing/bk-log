@@ -38,7 +38,7 @@
       </bk-button>
     </div>
     <div class="custom-input-right ml20">
-      <IpListTable
+      <ip-list-table
         ref="table"
         :get-search-table-data="getTableData"
         :ip-list-table-config="customInputTableConfig"
@@ -57,7 +57,7 @@
             </li>
           </ul>
         </template>
-      </IpListTable>
+      </ip-list-table>
     </div>
   </div>
 </template>
