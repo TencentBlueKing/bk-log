@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div>
+  <div class="finger-container">
     <bk-table
       data-test-id="cluster_div_fingerTable"
       :class="['log-cluster-table',fingerList.length === 0 ? 'table-no-data' : '']"
@@ -83,27 +83,26 @@
       <bk-table-column label="Pattern" min-width="500" class-name="symbol-column">
         <!-- eslint-disable-next-line -->
         <template slot-scope="{ row, column, $index }">
-          <register-column :context="row.pattern">
-            <div :class="['pattern-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
-              <cluster-event-popover
-                :context="row.pattern"
-                @eventClick="(option) => handleMenuClick(option,row)">
-                <span>{{row.pattern ? row.pattern : $t('未匹配')}}</span>
-              </cluster-event-popover>
-              <p
-                v-if="!cacheExpandStr.includes($index)"
-                class="show-whole-btn"
-                @click.stop="handleShowWhole($index)">
-                {{ $t('展开全部') }}
-              </p>
-              <p
-                v-else
-                class="hide-whole-btn"
-                @click.stop="handleHideWhole($index)">
-                {{ $t('收起') }}
-              </p>
-            </div>
-          </register-column>
+          <div :class="['pattern-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+            <cluster-event-popover
+              :context="row.pattern"
+              :tippy-options="{ offset: '0, 10', boundary: scrollContent }"
+              @eventClick="(option) => handleMenuClick(option,row)">
+              <span>{{row.pattern ? row.pattern : $t('未匹配')}}</span>
+            </cluster-event-popover>
+            <p
+              v-if="!cacheExpandStr.includes($index)"
+              class="show-whole-btn"
+              @click.stop="handleShowWhole($index)">
+              {{ $t('展开全部') }}
+            </p>
+            <p
+              v-else
+              class="hide-whole-btn"
+              @click.stop="handleHideWhole($index)">
+              {{ $t('收起') }}
+            </p>
+          </div>
         </template>
       </bk-table-column>
 
@@ -128,6 +127,10 @@
 
     <bk-table-column :label="$t('备注')" width="100" prop="remark"></bk-table-column> -->
 
+      <template slot="append" v-if="fingerList.length && isPageOver">
+        <clustering-loader :width-list="loaderWidthList" />
+      </template>
+
       <div slot="empty">
         <div class="empty-text" v-if="clusterSwitch && !configData.extra.signature_switch">
           <span class="bk-table-empty-icon bk-icon icon-empty"></span>
@@ -145,12 +148,12 @@
 
 <script>
 import ClusterEventPopover from './components/cluster-event-popover';
-import RegisterColumn from '../../result-comp/register-column';
+import ClusteringLoader from '@/skeleton/clustering-loader';
 import { copyMessage } from '@/common/util';
 export default {
   components: {
     ClusterEventPopover,
-    RegisterColumn,
+    ClusteringLoader,
   },
   props: {
     fingerList: {
@@ -169,6 +172,14 @@ export default {
       type: Object,
       require: true,
     },
+    loaderWidthList: {
+      type: Array,
+      default: [''],
+    },
+    isPageOver: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -177,6 +188,17 @@ export default {
     };
   },
   inject: ['addFilterCondition'],
+  computed: {
+    scrollContent() {
+      return document.querySelector('.result-scroll-container');
+    },
+  },
+  mounted() {
+    this.scrollEvent('add');
+  },
+  beforeDestroy() {
+    this.scrollEvent('close');
+  },
   methods: {
     handleMenuClick(option, row) {
       switch (option) {
@@ -207,6 +229,31 @@ export default {
     },
     hiddenEditIcon() {
       this.currentHover = '';
+    },
+    scrollEvent(state = 'add') {
+      const scrollEl = document.querySelector('.result-scroll-container');
+      if (!scrollEl) return;
+      if (state === 'add') {
+        scrollEl.addEventListener('scroll', this.handleScroll, { passive: true });
+      }
+      if (state === 'close') {
+        scrollEl.removeEventListener('scroll', this.handleScroll, { passive: true });
+      }
+    },
+    handleScroll() {
+      if (this.throttle) {
+        return;
+      }
+
+      const el = document.querySelector('.result-scroll-container');
+      if (el.scrollHeight - el.offsetHeight - el.scrollTop < 5) {
+        this.throttle = true;
+        setTimeout(() => {
+          el.scrollTop = el.scrollTop - 5;
+          this.throttle = false;
+          this.$emit('paginationOptions');
+        }, 100);
+      }
     },
   },
 };

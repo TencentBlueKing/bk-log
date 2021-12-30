@@ -272,13 +272,13 @@ class Dsl(object):
         filter_bucket: List = []
         for index, item in enumerate(filter_dict_list):
             if index == 0 or item.get("condition", "and") == "and":
-                if item.get("value"):
+                if item.get("value") or isinstance(item.get("value"), str):
                     filter_bucket.append(item)
                 continue
             if len(filter_bucket) > 0:
                 filters.append(filter_bucket)
                 filter_bucket = []
-            if item.get("value"):
+            if item.get("value") or isinstance(item.get("value"), str):
                 filter_bucket.append(item)
         if len(filter_bucket) > 0:
             filters.append(filter_bucket)

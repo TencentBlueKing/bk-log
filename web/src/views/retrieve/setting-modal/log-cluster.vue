@@ -313,14 +313,11 @@ export default {
           this.isShowAddFilterIcon = true;
           return;
         }
-        if (val.slice(-1)[0].fields_name !== '' && val.length === 1) {
+        if ((val.slice(-1)[0].fields_name !== '' && val.length === 1) || val.slice(-1)[0].value.length > 0) {
           this.isShowAddFilterIcon = true;
         }
         if (val.slice(-1)[0].fields_name === '') {
           this.isShowAddFilterIcon = false;
-        }
-        if (val.slice(-1)[0].value.length > 0) {
-          this.isShowAddFilterIcon = true;
         }
         this.isFilterRuleError = false;
       },
@@ -346,11 +343,12 @@ export default {
         } else {
           res = await this.$http.request('/logClustering/getDefaultConfig');
         }
-        res.data.filter_rules === null && (res.data.filter_rules = []);
+        res.data.filter_rules = res.data.filter_rules || [];
         Object.assign(this.formData, res.data);
-        this.defaultData = res.data;
-        this.globalLoading = false;
+        Object.assign(this.defaultData, res.data);
       } catch (e) {
+        console.warn(e);
+      } finally {
         this.globalLoading = false;
       }
     },
