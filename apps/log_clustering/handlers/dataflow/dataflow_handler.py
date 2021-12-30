@@ -149,7 +149,7 @@ class DataFlowHandler(BaseAiopsHandler):
             rule = [
                 all_fields_dict.get(filter_rule.get("fields_name")),
                 filter_rule.get("op"),
-                filter_rule.get("value"),
+                "'{}'".format(filter_rule.get("value")),
                 filter_rule.get("logic_operator"),
             ]
             filter_rule_list.extend(rule)
