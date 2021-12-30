@@ -133,6 +133,8 @@ BKDATA_INDEX_RE = r"^{}_\d+$"
 
 MAX_EXPORT_REQUEST_RETRY = 3
 
+FILTER_KEY_LIST = ["gettext", "_", "LANGUAGES"]
+
 
 # 消息模式
 class MsgModel(object):
