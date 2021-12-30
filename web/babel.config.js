@@ -20,17 +20,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-/**
- * @file for hot-reload
- * @author  <>
- */
-
-/* eslint-disable */
-import 'eventsource-polyfill'
-import hotClient from 'webpack-hot-middleware/client?noInfo=true&reload=true'
-
-hotClient.subscribe(event => {
-  if (event.action === 'reload') {
-    window.location.reload()
-  }
-})
+module.exports = {
+  presets: ['@blueking/bkmonitor-cli/preset'],
+};

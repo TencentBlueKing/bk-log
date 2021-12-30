@@ -103,7 +103,7 @@ export default {
   data() {
     return {
       isFirstLoad: true,
-      isOpenVersion: window.runVersion.indexOf('open') !== -1,
+      isOpenVersion: window.RUN_VER.indexOf('open') !== -1,
       logoText: window.TITLE_MENU || '',
       logoImgUrl: window.MENU_LOGO_URL || '',
       username: '',
@@ -260,7 +260,7 @@ export default {
       const domainList = location.hostname.split('.');
 
       // 本项目开发环境因为需要配置了 host 域名比联调环境多 1 级
-      if (NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === 'development') {
         domainList.splice(0, 1);
       }
 

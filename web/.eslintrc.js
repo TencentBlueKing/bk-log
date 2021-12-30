@@ -25,6 +25,7 @@ module.exports = {
   extends: ['@bkui/eslint-config-bk/vue'],
   globals: {
     NODE_ENV: false,
+    __webpack_public_path__: false,
   },
   rules: {
     'no-param-reassign': 'off',
