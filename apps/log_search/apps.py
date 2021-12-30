@@ -85,33 +85,35 @@ class ApiConfig(AppConfig):
         # 企业版需判断是否部署数据平台、监控
         if settings.RUN_VER != "open":
             return
-        client = get_client_by_user(user_or_username=settings.SYSTEM_USE_API_ACCOUNT)
+
+        is_deploy_monitor = False
+        is_deploy_bkdata = False
         if settings.IS_K8S_DEPLOY_MODE:
-            bk_apps = client.bk_paas.get_minimal_app_list()
+            from apps.api import BKPAASApi
+
+            result = BKPAASApi.uni_apps_query_by_id(id=settings.SAAS_MONITOR)
+            is_deploy_monitor = bool(result and result[0])
+
+            result = BKPAASApi.uni_apps_query_by_id(id=settings.SAAS_BKDATA)
+            is_deploy_bkdata = bool(result and result[0])
         else:
+            client = get_client_by_user(user_or_username=settings.SYSTEM_USE_API_ACCOUNT)
             bk_apps = client.bk_paas.get_app_info()
-        if bk_apps["result"]:
-            bk_apps = [item["bk_app_code"] for item in bk_apps["data"]]
-            # 是否部署监控SaaS
-            for menu in settings.MENUS:
-                if menu["id"] == "monitor":
-                    monitor_menu = menu
-                    break
+            if bk_apps["result"]:
+                bk_apps = [item["bk_app_code"] for item in bk_apps["data"]]
 
-            monitor_menu["feature"] = "off"
-            # settings.FEATURE_TOGGLE["monitor"] = "off"
+                is_deploy_monitor = bool(settings.SAAS_MONITOR in bk_apps)
+                is_deploy_bkdata = bool(settings.SAAS_BKDATA in bk_apps)
 
-            if settings.SAAS_MONITOR in bk_apps:
-                monitor_menu["feature"] = "on"
-                settings.FEATURE_TOGGLE["monitor_report"] = "on"
-            elif "bk_monitor" in bk_apps:
-                monitor_menu["feature"] = "on"
-                settings.SAAS_MONITOR = "bk_monitor"
-                settings.FEATURE_TOGGLE["monitor_report"] = "on"
+        # 是否部署监控SaaS
+        for menu in settings.MENUS:
+            if menu["id"] == "monitor":
+                menu["feature"] = "on" if is_deploy_monitor else "off"
+                break
 
-            if not settings.MONITOR_URL:
-                # 监控域名
-                settings.MONITOR_URL = f"{os.getenv('BK_PAAS_HOST', '')}/o/{settings.SAAS_MONITOR}"
+        settings.FEATURE_TOGGLE["monitor_report"] = "on" if is_deploy_monitor else "off"
+        settings.FEATURE_TOGGLE["scenario_bkdata"] = "on" if is_deploy_bkdata else "off"
 
-            # 是否部署数据平台SaaS
-            settings.FEATURE_TOGGLE["scenario_bkdata"] = "on" if settings.SAAS_BKDATA in bk_apps else "off"
+        if not settings.MONITOR_URL:
+            # 监控域名
+            settings.MONITOR_URL = f"{os.getenv('BK_PAAS_HOST', '')}/o/{settings.SAAS_MONITOR}"

@@ -40,9 +40,17 @@ class _BKPAASApi:
         # ####### 下面是apigw上的 PAAS V3 接口 ###########
         self.get_minimal_app_list = DataAPI(
             method="GET",
-            url=BK_PAAS_V3_APIGATEWAY_ROOT + "applications/lists/minimal/",
+            url=BK_PAAS_V3_APIGATEWAY_ROOT + "bkapps/applications/lists/minimal/",
             module=self.MODULE,
             description=u"获取app信息",
+            before_request=add_esb_info_before_request,
+        )
+
+        self.uni_apps_query_by_id = DataAPI(
+            method="GET",
+            url=BK_PAAS_V3_APIGATEWAY_ROOT + "system/uni_applications/query/by_id/",
+            module=self.MODULE,
+            description=u"通过app_id查看app信息",
             before_request=add_esb_info_before_request,
         )
 
