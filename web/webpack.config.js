@@ -3,6 +3,7 @@ const wepack = require('webpack');
 const path = require('path');
 const fs = require('fs');
 const MonitorWebpackPlugin = require('./webpack/monitor-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const devProxyUrl = 'http://appdev.bktencent.com:9002';
 const devHost = 'appdev.bktencent.com';
 const loginHost = 'https://paas-dev.bktencent.com';
@@ -54,6 +55,7 @@ if (fs.existsSync(path.resolve(__dirname, './local.settings.js'))) {
 }
 module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
   const config = baseConfig;
+  const distUrl = path.resolve('../static/dist');
   if (!production) {
     config.devServer = Object.assign({}, config.devServer || {}, {
       port: devConfig.port,
@@ -91,12 +93,23 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
     );
   } else if (!email) {
     config.plugins.push(new MonitorWebpackPlugin({ ...monitorPluginConfig, mobile, fta }));
+    config.plugins.push(
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: path.resolve(__dirname, './src/images/new-logo.svg'),
+            to: path.resolve(distUrl, './img'),
+          },
+        ],
+      }),
+    );
   }
-  console.log(config.output);
+
   return {
     ...config,
     output: {
       ...config.output,
+      path: distUrl,
     },
     entry: {
       ...config.entry,

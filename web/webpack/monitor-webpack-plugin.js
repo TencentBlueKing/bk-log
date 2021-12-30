@@ -2,9 +2,6 @@
 /* eslint-disable no-underscore-dangle */
 const webpackLog = require('webpack-log');
 const crypto = require('crypto');
-const util = require('util');
-const fs = require('fs');
-const { resolve } = require('path');
 const log = webpackLog({ name: 'monitor-webpack-plugin' });
 const RawSource = require('webpack-sources/lib/RawSource');
 const CachedSource = require('webpack-sources/lib/CachedSource');
