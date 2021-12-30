@@ -9,7 +9,8 @@
     "build": "better-npm-run build",
     "build:analyzer": "better-npm-run build:analyzer",
     "lint": "eslint --fix --ext .js,.vue,.ts src",
-    "style": "stylelint 'src/**/*.(vue|scss|css)' --fix"
+    "style": "stylelint 'src/**/*.(vue|scss|css)' --fix",
+    "precommit": "lint-staged"
   },
   "keywords": [],
   "license": "ISC",
@@ -179,6 +180,10 @@
   "lint-staged": {
     "src/**/*.{js,ts,tsx,vue}": [
       "eslint --fix",
+      "git add"
+    ],
+    "src/**/*.(vue|scss|css|sass)": [
+      "stylelint --fix",
       "git add"
     ]
   }
