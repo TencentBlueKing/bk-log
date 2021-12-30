@@ -41,7 +41,7 @@
             {{ $t('个节点') }}
           </div>
         </div>
-        <IpSelect :show-select-dialog.sync="showSelectDialog" @confirm="handleConfirm"></IpSelect>
+        <ip-select :show-select-dialog.sync="showSelectDialog" @confirm="handleConfirm" />
       </div>
     </div>
 
@@ -52,29 +52,27 @@
         <span class="log-icon icon-info-fill" v-bk-tooltips="$t('查询目录提示')"></span>
       </div>
       <div class="content">
-        <FilesInput
+        <files-input
           v-model="fileOrPath"
           :available-paths="availablePaths"
-          @update:select="handleFilesSelect">
-        </FilesInput>
+          @update:select="handleFilesSelect" />
       </div>
     </div>
 
     <div class="row-container">
       <div class="title">{{ $t('预览地址') }}</div>
-      <PreviewFiles
+      <preview-files
         ref="preview"
         v-model="downloadFiles"
         :ip-list="ipList"
         :file-or-path="fileOrPath"
-        @update:fileOrPath="handleFileOrPathUpdate">
-      </PreviewFiles>
+        @update:fileOrPath="handleFileOrPathUpdate" />
     </div>
 
     <div class="row-container">
       <div class="title">{{ $t('文本过滤') }}</div>
       <div class="content">
-        <TextFilter ref="textFilter"></TextFilter>
+        <text-filter ref="textFilter" />
       </div>
     </div>
 
@@ -119,10 +117,10 @@
 </template>
 
 <script>
-import IpSelect from '@/views/extract/create/IpSelect';
-import FilesInput from '@/views/extract/create/FilesInput';
-import TextFilter from '@/views/extract/create/TextFilter';
-import PreviewFiles from '@/views/extract/create/PreviewFiles';
+import IpSelect from '@/views/extract/create/ip-select';
+import FilesInput from '@/views/extract/create/files-input';
+import TextFilter from '@/views/extract/create/test-filter';
+import PreviewFiles from '@/views/extract/create/preview-files';
 
 export default {
   name: 'ExtractCreate',

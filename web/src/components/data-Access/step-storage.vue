@@ -204,7 +204,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import { projectManages } from '@/common/util';
-import storageMixin from '@/mixins/storageMixin';
+import storageMixin from '@/mixins/storage-mixin';
 
 export default {
   mixins: [storageMixin],

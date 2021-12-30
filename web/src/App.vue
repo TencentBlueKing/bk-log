@@ -26,11 +26,10 @@
       v-show="!isAsIframe && !pageLoading"
       @reloadRouter="routerKey += 1"
       @welcome="welcomePageData = $event"
-      @auth="authPageInfo = $event"
-    ></head-nav>
+      @auth="authPageInfo = $event" />
     <div :class="['log-search-container', isAsIframe && 'as-iframe']">
-      <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
-      <welcome-page v-else-if="welcomePageData" :data="welcomePageData"></welcome-page>
+      <auth-page v-if="authPageInfo" :info="authPageInfo" />
+      <welcome-page v-else-if="welcomePageData" :data="welcomePageData" />
       <!-- 导航改版 -->
       <bk-navigation
         v-if="menuList && menuList.length"
@@ -76,19 +75,19 @@
         :data="guideStep"
         guide-page="default" />
     </div>
-    <auth-dialog></auth-dialog>
-    <LoginModal v-if="loginData" :login-data="loginData" />
+    <auth-dialog />
+    <login-modal v-if="loginData" :login-data="loginData" />
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from 'vuex';
 import headNav from '@/components/nav/head-nav';
-import LoginModal from '@/components/LoginModal';
+import LoginModal from '@/components/login-modal';
 import WelcomePage from '@/components/common/welcome-page';
 import AuthPage from '@/components/common/auth-page';
 import AuthDialog from '@/components/common/auth-dialog';
-import BizMenuSelect from '@/components/BizMenuSelect.vue';
+import BizMenuSelect from '@/components/biz-menu-select.vue';
 import NoviceGuide from '@/components/novice-guide';
 import jsCookie from 'js-cookie';
 

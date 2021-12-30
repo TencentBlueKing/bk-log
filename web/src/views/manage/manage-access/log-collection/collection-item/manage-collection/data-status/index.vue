@@ -27,8 +27,8 @@
         {{ $t('数据趋势') }}
       </div>
       <div class="charts-container">
-        <MinuteChart />
-        <DailyChart />
+        <minute-chart />
+        <daily-chart />
       </div>
     </section>
     <section class="partial-content">
@@ -39,15 +39,15 @@
           <span>{{ $t('刷新') }}</span>
         </div>
       </div>
-      <DataSampling :data="dataSamplingList" :loading="dataSamplingLoading" />
+      <data-sampling :data="dataSamplingList" :loading="dataSamplingLoading" />
     </section>
   </div>
 </template>
 
 <script>
-import DataSampling from './DataSampling';
-import MinuteChart from './MinuteChart';
-import DailyChart from './DailyChart';
+import DataSampling from './data-sampling';
+import MinuteChart from './minute-chart';
+import DailyChart from './daily-chart';
 
 export default {
   components: {

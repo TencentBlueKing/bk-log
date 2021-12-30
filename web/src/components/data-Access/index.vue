@@ -41,71 +41,67 @@
           <step-add
             v-if="curStep === 1"
             :operate-type="operateType"
-            @stepChange="stepChange"></step-add>
+            @stepChange="stepChange" />
           <step-capacity
             v-if="curStep === 2"
             :operate-type="operateType"
-            @stepChange="stepChange"></step-capacity>
+            @stepChange="stepChange" />
           <step-issued
             v-if="curStep === 3"
             :operate-type="operateType"
             :is-switch="isSwitch"
-            @stepChange="stepChange"></step-issued>
+            @stepChange="stepChange" />
           <step-field
             v-if="curStep === 4"
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
-            @changeClean="isCleaning = true">
-          </step-field>
+            @changeClean="isCleaning = true" />
           <step-storage
             v-if="curStep === 5"
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
-            @change-submit="changeSubmit">
-          </step-storage>
+            @change-submit="changeSubmit" />
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
             :is-switch="isSwitch"
             :index-set-id="indexSetId"
-            @stepChange="stepChange"></step-result>
+            @stepChange="stepChange" />
         </template>
         <template v-else>
           <step-add
             v-if="curStep === 1 && !isSwitch"
             :operate-type="operateType"
-            @stepChange="stepChange"></step-add>
+            @stepChange="stepChange" />
           <step-issued
             v-if="(curStep === 2 && !isSwitch) || (curStep === 1 && isSwitch)"
             :operate-type="operateType"
             :is-switch="isSwitch"
-            @stepChange="stepChange"></step-issued>
+            @stepChange="stepChange" />
           <step-field
             v-if="curStep === 3"
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
-            @changeClean="isCleaning = true">
-          </step-field>
+            @changeClean="isCleaning = true" />
           <step-storage
             v-if="curStep === 4"
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
-            @change-submit="changeSubmit">
-          </step-storage>
+            @change-submit="changeSubmit" />
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
             :is-switch="isSwitch"
             :index-set-id="indexSetId"
-            @stepChange="stepChange"></step-result>
+            @stepChange="stepChange" />
         </template>
       </section>
     </div>
