@@ -157,7 +157,7 @@ export default {
         case 'is not':
           // eslint-disable-next-line no-case-declarations
           const { fieldName, operation, value } = option;
-          this.$emit('addFilterCondition', fieldName, operation, value.toString());
+          this.$emit('addFilterCondition', fieldName, operation, value === '--' ? '' : value.toString());
           break;
         case 'copy':
           copyMessage(option.value);

@@ -73,7 +73,10 @@
             :cluster-switch="clusterSwitch"
             :request-data="requestData"
             :config-data="configData"
-            :finger-list="fingerList" />
+            :finger-list="fingerList"
+            :loader-width-list="smallLoaderWidthList"
+            :is-page-over="isPageOver"
+            @paginationOptions="paginationOptions" />
         </div>
       </div>
 
@@ -168,11 +171,14 @@ export default {
       requestData: { // 数据请求
         pattern_level: '',
         year_on_year_hour: 0,
-        show_new_pattern: true,
+        show_new_pattern: false,
         size: 10000,
       },
       fingerList: [], // 数据指纹List
-      defaultFingerList: [], // 默认数据指纹List
+      isPageOver: false,
+      fingerListPage: 1,
+      fingerListPageSize: 50,
+      allFingerList: [], // 所有数据指纹List
       loadingWidthList: { // loading表头宽度列表
         global: [''],
         ignore: [60, 90, 90, ''],
@@ -189,7 +195,9 @@ export default {
       if (this.active !== 'dataFingerprint') {
         return this.loadingWidthList.ignore;
       }
-      return this.yearOnYearCycle > 0 ? this.loadingWidthList.compared : this.loadingWidthList.notCompared;
+      return this.requestData.year_on_year_hour > 0
+        ? this.loadingWidthList.compared
+        : this.loadingWidthList.notCompared;
     },
     exhibitText() {
       return this.clusterSwitch ? (this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
@@ -212,10 +220,13 @@ export default {
       },
     },
     originTableList: {
-      handler() {
-        if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
-          this.requestData.pattern_level === '' && this.initTable();
-          this.requestFinger();
+      handler(newList) {
+        if (newList.length > 0) {
+          if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
+            this.alreadyClickNav.push('dataFingerprint');
+            this.requestData.pattern_level === '' && this.initTable();
+            this.requestFinger();
+          }
         }
       },
     },
@@ -223,7 +234,7 @@ export default {
       deep: true,
       immediate: true,
       handler(newList) {
-        if (newList.length !== 0) {
+        if (newList.length > 0) {
           if (!this.configData.is_active) {
             this.exhibitAll = false;
             return;
@@ -235,7 +246,10 @@ export default {
     },
     '$route.params.indexId'() {
       this.alreadyClickNav = [];
-      this.showTableLoading('global');
+      this.globalLoading = true;
+      setTimeout(() => {
+        this.globalLoading = false;
+      }, 750);
     },
     requestData: {
       deep: true,
@@ -252,9 +266,7 @@ export default {
         this.alreadyClickNav.push(id);
         if (this.alreadyClickNav.includes('dataFingerprint') && this.configData.extra.signature_switch) {
           this.requestFinger();
-          return;
         }
-        this.showTableLoading('table');
       }
     },
     // 初始化数据指纹配置
@@ -263,14 +275,22 @@ export default {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
       } = this.globalsData;
+      let patternLevel;
+      if (clusterLevel && clusterLevel.length > 0) {
+        if (clusterLevel.length % 2 === 1) {
+          patternLevel = (clusterLevel.length + 1) / 2;
+        } else {
+          patternLevel = clusterLevel.length  / 2;
+        }
+      }
       Object.assign(this.fingerOperateData, {
-        partterSize: clusterLevel.length - 1,
+        partterSize: patternLevel - 1,
         sliderMaxVal: clusterLevel.length - 1,
         partterList: clusterLevel,
         comparedList: yearOnYearList,
       });
       Object.assign(this.requestData, {
-        pattern_level: clusterLevel[clusterLevel.length - 1],
+        pattern_level: clusterLevel[patternLevel - 1],
       });
     },
     // 数据指纹操作
@@ -282,7 +302,7 @@ export default {
         this.requestData.pattern_level = val;
       }
       if (operateType === 'isShowNear') {
-        this.fingerList = val ? this.fingerList.filter(el => el.is_new_class) : this.defaultFingerList;
+        this.requestData.show_new_pattern = val;
       }
       if (operateType === 'enterCustomize') {
         this.handleEnterCompared(val);
@@ -340,19 +360,26 @@ export default {
         },
       })
         .then((res) => {
-          this.fingerList = res.data;
-          this.defaultFingerList = res.data;
+          this.fingerListPage = 1;
+          this.allFingerList = res.data;
+          this.fingerList = res.data.slice(0, this.fingerListPageSize);
         })
         .finally(() => {
           this.tableLoading = false;
         });
     },
-    // table loading动画
-    showTableLoading(type = 'table') {
-      type === 'table' ? this.tableLoading : this.globalLoading = true;
+
+    paginationOptions() {
+      if (this.isPageOver || this.fingerList.length >= this.allFingerList.length) {
+        return;
+      }
+      this.isPageOver = true;
+      this.fingerListPage += 1;
       setTimeout(() => {
-        type === 'table' ? this.tableLoading : this.globalLoading = false;
-      }, 500);
+        const { fingerListPageSize: size, fingerListPage: page } = this;
+        this.fingerList.push(...this.allFingerList.slice(size * (page - 1), size * page));
+        this.isPageOver = false;
+      }, 1500);
     },
   },
 };
