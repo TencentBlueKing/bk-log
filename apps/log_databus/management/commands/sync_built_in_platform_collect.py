@@ -109,7 +109,7 @@ class Command(BaseCommand):
                         "paths": ["/built_in/collector/ignore/me"],
                     },
                     "is_active": True,
-                    "category_id": "other_rt",
+                    "category_id": "custom",
                     "bk_biz_id": settings.BLUEKING_BK_BIZ_ID,
                     "data_link_id": default_data_link.data_link_id,
                     "collector_scenario_id": CollectorScenarioEnum.ROW.value,
