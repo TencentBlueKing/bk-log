@@ -187,7 +187,7 @@ class RowCollectorScenario(CollectorScenario):
             },
             "fields": [
                 {
-                    "field_name": "ext",
+                    "field_name": "__ext",
                     "field_type": "object",
                     "tag": "dimension",
                     "alias_name": "ext",
