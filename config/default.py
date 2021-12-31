@@ -522,12 +522,7 @@ MENUS = [
                         "scenes": "scenario_es",
                         "icon": "elasticsearch",
                     },
-                    {
-                        "id": "custom_report",
-                        "name": _("自定义上报"),
-                        "feature": "on",
-                        "icon": "menu-custom"
-                    },
+                    {"id": "custom_report", "name": _("自定义上报"), "feature": "on", "icon": "menu-custom"},
                 ],
             },
             {
@@ -833,7 +828,24 @@ VUE_INDEX = "index.html"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(PROJECT_ROOT, "templates"), os.path.join(PROJECT_ROOT, "static/dist/")],
+        "DIRS": [os.path.join(PROJECT_ROOT, "templates")],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                # the context to the templates
+                "django.contrib.messages.context_processors.messages",
+                "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.request",
+                "django.template.context_processors.csrf",
+                "apps.utils.context_processors.mysetting",  # 自定义模版context，可在页面中使用STATIC_URL等变量
+                "django.template.context_processors.i18n",
+            ],
+            "debug": DEBUG,
+        },
+    },
+    {
+        "BACKEND": "blueapps.template.backends.mako.MakoTemplates",
+        "DIRS": [os.path.join(PROJECT_ROOT, "static/dist/")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
