@@ -222,10 +222,13 @@ export default {
       },
     },
     originTableList: {
-      handler() {
-        if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
-          this.requestData.pattern_level === '' && this.initTable();
-          this.requestFinger();
+      handler(newList) {
+        if (newList.length > 0) {
+          if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
+            this.alreadyClickNav.push('dataFingerprint');
+            this.requestData.pattern_level === '' && this.initTable();
+            this.requestFinger();
+          }
         }
       },
     },
@@ -233,7 +236,7 @@ export default {
       deep: true,
       immediate: true,
       handler(newList) {
-        if (newList.length !== 0) {
+        if (newList.length > 0) {
           if (!this.configData.is_active) {
             this.exhibitAll = false;
             return;
@@ -245,7 +248,10 @@ export default {
     },
     '$route.params.indexId'() {
       this.alreadyClickNav = [];
-      this.showTableLoading();
+      this.globalLoading = true;
+      setTimeout(() => {
+        this.globalLoading = false;
+      }, 750);
     },
     requestData: {
       deep: true,
@@ -262,9 +268,7 @@ export default {
         this.alreadyClickNav.push(id);
         if (this.alreadyClickNav.includes('dataFingerprint') && this.configData.extra.signature_switch) {
           this.requestFinger();
-          return;
         }
-        this.showTableLoading();
       }
     },
     // 初始化数据指纹配置
@@ -378,13 +382,6 @@ export default {
         this.fingerList = this.fingerList.concat(this.allFingerList.slice((page - 1) * size, size * page));
         this.isPageOver = false;
       }, 1500);
-    },
-    // table loading动画
-    showTableLoading() {
-      this.globalLoading = true;
-      setTimeout(() => {
-        this.globalLoading = false;
-      }, 500);
     },
   },
 };
