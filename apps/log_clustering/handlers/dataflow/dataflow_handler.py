@@ -40,6 +40,7 @@ from apps.log_clustering.handlers.dataflow.constants import (
     DEFAULT_SPARK_EXECUTOR_INSTANCES,
     DEFAULT_PSEUDO_SHUFFLE,
     DEFAULT_SPARK_LOCALITY_WAIT,
+    OPERATOR_AND,
 )
 from apps.log_clustering.handlers.dataflow.data_cls import (
     ExportFlowCls,
@@ -106,7 +107,9 @@ class DataFlowHandler(BaseAiopsHandler):
             collector_config_id=clustering_config.collector_config_id
         ).get_all_etl_fields()
         all_fields_dict = {field["field_name"]: field["alias_name"] or field["field_name"] for field in all_etl_fields}
-        filter_rule, not_clustering_rule = self._init_filter_rule(clustering_config.filter_rules, all_fields_dict)
+        filter_rule, not_clustering_rule = self._init_filter_rule(
+            clustering_config.filter_rules, all_fields_dict, clustering_config.clustering_fields
+        )
         pre_treat_flow_dict = asdict(
             self._init_pre_treat_flow(
                 result_table_id=clustering_config.bkdata_etl_result_table_id,
@@ -132,25 +135,37 @@ class DataFlowHandler(BaseAiopsHandler):
         return result
 
     @classmethod
-    def _init_filter_rule(cls, filter_rules, all_fields_dict):
-        if not filter_rules:
-            return "", ""
-        filter_rule_list = ["where"]
-        not_clustering_rule_list = ["where", "NOT", "("]
+    def _init_filter_rule(cls, filter_rules, all_fields_dict, clustering_field):
+        # add default_filter_rule where data is not null and length(data) > 1
+        default_filter_rule = cls._init_default_filter_rule(all_fields_dict.get(clustering_field))
+        filter_rule_list = ["where", default_filter_rule]
+        not_clustering_rule_list = ["where", "NOT", "(", default_filter_rule]
+        # 这里是因为默认连接符号需要
+        filter_rule_list.append(OPERATOR_AND)
+        not_clustering_rule_list.append(OPERATOR_AND)
         for filter_rule in filter_rules:
             if not all_fields_dict.get(filter_rule.get("fields_name")):
                 continue
             rule = [
                 all_fields_dict.get(filter_rule.get("fields_name")),
                 filter_rule.get("op"),
-                filter_rule.get("value"),
+                "'{}'".format(filter_rule.get("value")),
                 filter_rule.get("logic_operator"),
             ]
             filter_rule_list.extend(rule)
             not_clustering_rule_list.extend(rule)
-            # 不参与聚类日志需要增加括号修改优先级
-            not_clustering_rule_list.append(")")
+        # 这里是因为需要去掉最后一个and（可能是前面添加的and）
+        filter_rule_list.pop(-1)
+        not_clustering_rule_list.pop(-1)
+        # 不参与聚类日志需要增加括号修改优先级
+        not_clustering_rule_list.append(")")
         return " ".join(filter_rule_list), " ".join(not_clustering_rule_list)
+
+    @classmethod
+    def _init_default_filter_rule(cls, clustering_field):
+        if not clustering_field:
+            return ""
+        return "{} is not null and length({}) > 1".format(clustering_field, clustering_field)
 
     def _init_pre_treat_flow(
         self, result_table_id: str, filter_rule: str, not_clustering_rule: str, clustering_fields="log"
