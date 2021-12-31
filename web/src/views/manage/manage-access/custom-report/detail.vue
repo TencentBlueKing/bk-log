@@ -133,7 +133,7 @@ export default {
 </script>
 
 <style lang="scss">
-.is-active-details {
-  padding: 20px 420px 20px 24px;
-}
+  .is-active-details {
+    padding: 20px 420px 20px 24px;
+  }
 </style>

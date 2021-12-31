@@ -318,118 +318,118 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-/deep/.bk-dialog-body {
-  background-color: #f5f6fa;
-  overflow: hidden;
-  padding: 0;
-}
-
-/deep/.bk-dialog-tool {
-  display: none;
-}
-
-@mixin container-shadow() {
-  background: #fff;
-  border-radius: 2px;
-  box-shadow: 0px 2px 4px 0px rgba(25, 25, 41, .05);
-}
-
-.setting-container {
-  height: calc(100vh - 52px);
-  overflow-y: auto;
-  min-width: 1460px;
-  display: flex;
-  justify-content: center;
-
-  .setting-title {
-    width: calc(100vw + 12px);
-    height: 52px;
-    min-width: 1460px;
-    line-height: 52px;
-    font-size: 16px;
-    text-align: center;
-    position: fixed;
-    z-index: 99;
-    background-color: #fff;
-    border-bottom: 1px solid #dcdee5;
-    // box-shadow:0 3px 6px #DEE0E7 ;
-    .bk-icon {
-      font-size: 32px;
-      cursor: pointer;
-      position: absolute;
-      top: 10px;
-      right: 24px;
-    }
+  /deep/.bk-dialog-body {
+    background-color: #f5f6fa;
+    overflow: hidden;
+    padding: 0;
   }
 
-  .setting-main {
-    padding: 72px 40px 0;
+  /deep/.bk-dialog-tool {
+    display: none;
+  }
+
+  @mixin container-shadow() {
+    background: #fff;
+    border-radius: 2px;
+    box-shadow: 0px 2px 4px 0px rgba(25, 25, 41, .05);
+  }
+
+  .setting-container {
+    height: calc(100vh - 52px);
+    overflow-y: auto;
+    min-width: 1460px;
     display: flex;
-    position: relative;
+    justify-content: center;
 
-    .setting-left {
-      min-width: 240px;
-      height: 365px;
-      padding-top: 4px;
-
-      @include container-shadow;
-
-      .setting-option {
-        height: 40px;
-        font-size: 15px;
-        margin: 4px 0;
-        display: flex;
+    .setting-title {
+      width: calc(100vw + 12px);
+      height: 52px;
+      min-width: 1460px;
+      line-height: 52px;
+      font-size: 16px;
+      text-align: center;
+      position: fixed;
+      z-index: 99;
+      background-color: #fff;
+      border-bottom: 1px solid #dcdee5;
+      // box-shadow:0 3px 6px #DEE0E7 ;
+      .bk-icon {
+        font-size: 32px;
         cursor: pointer;
-        justify-content: space-evenly;
-        align-items: center;
-        transition: all .3s;
-
-        &:hover {
-          @extend %current-color;
-        }
+        position: absolute;
+        top: 10px;
+        right: 24px;
       }
     }
 
-    .setting-right {
-      width: 1200px;
-      margin-left: 20px;
+    .setting-main {
+      padding: 72px 40px 0;
+      display: flex;
+      position: relative;
 
-      .more-details {
-        height: 48px;
-        padding: 0 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+      .setting-left {
+        min-width: 240px;
+        height: 365px;
+        padding-top: 4px;
 
         @include container-shadow;
 
-        .details {
+        .setting-option {
+          height: 40px;
+          font-size: 15px;
+          margin: 4px 0;
           display: flex;
+          cursor: pointer;
+          justify-content: space-evenly;
+          align-items: center;
+          transition: all .3s;
 
-          p {
-            margin-right: 40px;
-
-            span {
-              color: #979ba5;
-            }
+          &:hover {
+            @extend %current-color;
           }
         }
       }
 
-      .operation-container {
-        margin-top: 20px;
-        min-height: 770px;
-        padding: 24px 20px 100px;
+      .setting-right {
+        width: 1200px;
+        margin-left: 20px;
 
-        @include container-shadow;
+        .more-details {
+          height: 48px;
+          padding: 0 24px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          @include container-shadow;
+
+          .details {
+            display: flex;
+
+            p {
+              margin-right: 40px;
+
+              span {
+                color: #979ba5;
+              }
+            }
+          }
+        }
+
+        .operation-container {
+          margin-top: 20px;
+          min-height: 770px;
+          padding: 24px 20px 100px;
+
+          @include container-shadow;
+        }
       }
     }
-  }
 
-  %current-color,
-  .current-color {
-    color: #3a84ff;
-    background-color: #e1ecff;
+    %current-color,
+    .current-color {
+      color: #3a84ff;
+      background-color: #e1ecff;
+    }
   }
-}
 </style>

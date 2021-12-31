@@ -153,55 +153,55 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.td-log-container {
-  position: relative;
-  line-height: 14px;
+  .td-log-container {
+    position: relative;
+    line-height: 14px;
 
-  &.is-wrap {
-    padding-bottom: 4px;
-  }
+    &.is-wrap {
+      padding-bottom: 4px;
+    }
 
-  .field-container {
-    &.active:hover {
-      color: #3a84ff;
+    .field-container {
+      &.active:hover {
+        color: #3a84ff;
+        cursor: pointer;
+      }
+
+      &.mark {
+        background-color: #f3e186;
+        color: black;
+      }
+    }
+
+    .icon-search-container {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      vertical-align: bottom;
+      width: 14px;
+      height: 14px;
+      margin-left: 5px;
       cursor: pointer;
-    }
-
-    &.mark {
-      background-color: #f3e186;
-      color: black;
-    }
-  }
-
-  .icon-search-container {
-    display: none;
-    justify-content: center;
-    align-items: center;
-    vertical-align: bottom;
-    width: 14px;
-    height: 14px;
-    margin-left: 5px;
-    cursor: pointer;
-    background: #3a84ff;
-
-    .icon {
-      font-size: 12px;
-      font-weight: bold;
-      color: #fff;
       background: #3a84ff;
-      transform: scale(.6);
 
-      &.icon-copy {
-        font-size: 14px;
-        transform: scale(1);
+      .icon {
+        font-size: 12px;
+        font-weight: bold;
+        color: #fff;
+        background: #3a84ff;
+        transform: scale(.6);
+
+        &.icon-copy {
+          font-size: 14px;
+          transform: scale(1);
+        }
+      }
+    }
+
+    &:hover {
+      .icon-search-container {
+        display: inline-flex;
       }
     }
   }
-
-  &:hover {
-    .icon-search-container {
-      display: inline-flex;
-    }
-  }
-}
 </style>

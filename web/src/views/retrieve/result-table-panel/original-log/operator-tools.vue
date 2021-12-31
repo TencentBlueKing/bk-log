@@ -129,21 +129,21 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.handle-content {
-  display: flex;
-  position: absolute;
-  right: 0;
-  width: 84px;
-  height: 100%;
-  padding: 12px 10px;
-  align-items: flex-start;
-  top: 0;
-  overflow: hidden;
-  justify-content: flex-end;
-}
+  .handle-content {
+    display: flex;
+    position: absolute;
+    right: 0;
+    width: 84px;
+    height: 100%;
+    padding: 12px 10px;
+    align-items: flex-start;
+    top: 0;
+    overflow: hidden;
+    justify-content: flex-end;
+  }
 
-.fix-content {
-  width: auto;
-  background-color: #f0f1f5;
-}
+  .fix-content {
+    width: auto;
+    background-color: #f0f1f5;
+  }
 </style>

@@ -453,127 +453,127 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.setting-log-cluster {
-  padding: 0 20px;
+  .setting-log-cluster {
+    padding: 0 20px;
 
-  .setting-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 25px;
+    .setting-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 25px;
 
-    .left-word {
-      font-weight: 700;
-      font-size: 14px;
-      margin-right: 16px;
+      .left-word {
+        font-weight: 700;
+        font-size: 14px;
+        margin-right: 16px;
+      }
+
+      .bk-icon {
+        margin-left: 8px;
+        font-size: 18px;
+        color: #979ba5;
+      }
     }
 
-    .bk-icon {
-      margin-left: 8px;
-      font-size: 18px;
-      color: #979ba5;
+    .filter-rule {
+      display: flex;
+      flex-wrap: wrap;
+
+      .icon-box {
+        min-width: 32px;
+        height: 32px;
+        background: #fff;
+        font-size: 14px;
+        line-height: 28px;
+        text-align: center;
+        cursor: pointer;
+        border: 1px solid #c4c6cc;
+
+        /deep/.bk-select-name {
+          /* stylelint-disable-next-line declaration-no-important */
+          padding: 0 !important;
+        }
+
+        .icon-plus-line {
+          color: #3a84ff;
+        }
+      }
     }
-  }
 
-  .filter-rule {
-    display: flex;
-    flex-wrap: wrap;
+    .filter-rule-item {
+      margin-bottom: 6px;
 
-    .icon-box {
-      min-width: 32px;
-      height: 32px;
-      background: #fff;
-      font-size: 14px;
-      line-height: 28px;
-      text-align: center;
-      cursor: pointer;
-      border: 1px solid #c4c6cc;
+      /deep/.bk-select-angle {
+        display: none;
+      }
 
-      /deep/.bk-select-name {
+      /deep/.bk-select {
+        border-radius: 0;
+      }
+
+      /deep/.bk-form-control {
+        width: 140px;
+        border-radius: 0;
+      }
+
+      .and-or {
+        min-width: 62px;
+        font-size: 12px;
+        color: #ff9c01;
+      }
+
+      .min-100 {
+        min-width: 100px;
+      }
+
+      .mr-neg1 {
+        position: relative;
+        margin-right: -1px;
+      }
+
+      .above {
+        z-index: 99;
+      }
+    }
+
+    .rule-container {
+      padding: 0 16px;
+    }
+
+    .rule-error {
+      /deep/.bk-form-input {
+        border-color: #ff5656;
+      }
+
+      &.bk-select {
         /* stylelint-disable-next-line declaration-no-important */
-        padding: 0 !important;
-      }
-
-      .icon-plus-line {
-        color: #3a84ff;
+        border-color: #ff5656 !important;
       }
     }
   }
 
-  .filter-rule-item {
-    margin-bottom: 6px;
-
-    /deep/.bk-select-angle {
+  .submit-dialog {
+    /deep/.bk-dialog-tool {
       display: none;
     }
 
-    /deep/.bk-select {
-      border-radius: 0;
-    }
+    .submit-dialog-container {
+      /deep/ .bk-button {
+        margin-left: 100px;
+      }
 
-    /deep/.bk-form-control {
-      width: 140px;
-      border-radius: 0;
-    }
+      .submit-dialog-title {
+        font-weight: 700;
+        font-size: 16px;
+        margin-bottom: 7px;
+      }
 
-    .and-or {
-      min-width: 62px;
-      font-size: 12px;
-      color: #ff9c01;
-    }
+      .submit-dialog-text {
+        margin-bottom: 22px;
+      }
 
-    .min-100 {
-      min-width: 100px;
-    }
-
-    .mr-neg1 {
-      position: relative;
-      margin-right: -1px;
-    }
-
-    .above {
-      z-index: 99;
+      /deep/.submit-dialog-btn {
+        margin-left: 224px;
+      }
     }
   }
-
-  .rule-container {
-    padding: 0 16px;
-  }
-
-  .rule-error {
-    /deep/.bk-form-input {
-      border-color: #ff5656;
-    }
-
-    &.bk-select {
-      /* stylelint-disable-next-line declaration-no-important */
-      border-color: #ff5656 !important;
-    }
-  }
-}
-
-.submit-dialog {
-  /deep/.bk-dialog-tool {
-    display: none;
-  }
-
-  .submit-dialog-container {
-    /deep/ .bk-button {
-      margin-left: 100px;
-    }
-
-    .submit-dialog-title {
-      font-weight: 700;
-      font-size: 16px;
-      margin-bottom: 7px;
-    }
-
-    .submit-dialog-text {
-      margin-bottom: 22px;
-    }
-
-    /deep/.submit-dialog-btn {
-      margin-left: 224px;
-    }
-  }
-}
 </style>

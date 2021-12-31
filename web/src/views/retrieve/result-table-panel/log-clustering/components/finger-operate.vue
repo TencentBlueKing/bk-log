@@ -123,75 +123,75 @@ export default {
 };
 </script>
 <style lang="scss">
-@import '@/scss/mixins/flex.scss';
+  @import '@/scss/mixins/flex.scss';
 
-.fingerprint-setting {
-  width: 485px;
-  height: 24px;
-  line-height: 24px;
-  font-size: 12px;
-
-  .partter {
-    width: 200px;
-
-    .partter-slider-box {
-      width: 154px;
-    }
-
-    .partter-slider {
-      width: 114px;
-    }
-  }
-}
-
-.compared-select {
-  min-width: 87px;
-  margin-left: 6px;
-  position: relative;
-  top: -3px;
-
-  .bk-select-name {
+  .fingerprint-setting {
+    width: 485px;
     height: 24px;
-  }
-}
+    line-height: 24px;
+    font-size: 12px;
 
-.compared-select-option {
-  .compared-customize {
-    position: relative;
-    margin-bottom: 6px;
-  }
+    .partter {
+      width: 200px;
 
-  .compared-select-icon {
-    font-size: 14px;
-    position: absolute;
-    right: 18px;
-    top: 2px;
-  }
+      .partter-slider-box {
+        width: 154px;
+      }
 
-  .customize-option {
-    padding: 0 18px;
-    cursor: pointer;
-
-    &:hover {
-      color: #3a84ff;
-      background: #eaf3ff;
+      .partter-slider {
+        width: 114px;
+      }
     }
   }
 
-  .bk-form-control {
-    width: 80%;
-    margin: 0 auto;
+  .compared-select {
+    min-width: 87px;
+    margin-left: 6px;
+    position: relative;
+    top: -3px;
+
+    .bk-select-name {
+      height: 24px;
+    }
   }
 
-  .bk-form-input {
-    /* stylelint-disable-next-line declaration-no-important */
-    padding: 0 18px 0 10px !important;
+  .compared-select-option {
+    .compared-customize {
+      position: relative;
+      margin-bottom: 6px;
+    }
+
+    .compared-select-icon {
+      font-size: 14px;
+      position: absolute;
+      right: 18px;
+      top: 2px;
+    }
+
+    .customize-option {
+      padding: 0 18px;
+      cursor: pointer;
+
+      &:hover {
+        color: #3a84ff;
+        background: #eaf3ff;
+      }
+    }
+
+    .bk-form-control {
+      width: 80%;
+      margin: 0 auto;
+    }
+
+    .bk-form-input {
+      /* stylelint-disable-next-line declaration-no-important */
+      padding: 0 18px 0 10px !important;
+    }
   }
-}
 
-.fl-sb {
-  align-items: center;
+  .fl-sb {
+    align-items: center;
 
-  @include flex-justify(space-between);
-}
+    @include flex-justify(space-between);
+  }
 </style>

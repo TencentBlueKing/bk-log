@@ -217,68 +217,68 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '../../../scss/mixins/scroller.scss';
+  @import '../../../scss/mixins/scroller.scss';
 
-.result-scroll-container {
-  margin-top: 52px;
-  height: calc(100% - 52px);
-  overflow: auto;
+  .result-scroll-container {
+    margin-top: 52px;
+    height: calc(100% - 52px);
+    overflow: auto;
 
-  @include scroller;
-}
-
-.result-text {
-  font-size: 12px;
-  color: #63656e;
-  padding: 10px 20px;
-
-  .monitor-link {
-    color: #3a84ff;
+    @include scroller;
   }
 
-  .total-count {
-    color: #f00;
+  .result-text {
+    font-size: 12px;
+    color: #63656e;
+    padding: 10px 20px;
+
+    .monitor-link {
+      color: #3a84ff;
+    }
+
+    .total-count {
+      color: #f00;
+    }
   }
-}
 
-.result-main {
-  margin: 0 16px 16px;
-  min-height: calc(100% - 54px);
-  background-color: #fff;
-}
+  .result-main {
+    margin: 0 16px 16px;
+    min-height: calc(100% - 54px);
+    background-color: #fff;
+  }
 
-.divider-line {
-  /* stylelint-disable-next-line declaration-no-important */
-  margin: 0 !important;
-}
+  .divider-line {
+    /* stylelint-disable-next-line declaration-no-important */
+    margin: 0 !important;
+  }
 
-.fixed-scroll-top-btn {
-  position: fixed;
-  bottom: 24px;
-  right: 14px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 36px;
-  height: 36px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .2);
-  border: 1px solid #dde4eb;
-  border-radius: 4px;
-  color: #63656e;
-  background: #f0f1f5;
-  cursor: pointer;
-  z-index: 2100;
-  transition: all .2s;
-
-  &:hover {
-    color: #fff;
-    background: #979ba5;
+  .fixed-scroll-top-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 36px;
+    height: 36px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .2);
+    border: 1px solid #dde4eb;
+    border-radius: 4px;
+    color: #63656e;
+    background: #f0f1f5;
+    cursor: pointer;
+    z-index: 2100;
     transition: all .2s;
-  }
 
-  .bk-icon {
-    font-size: 20px;
-    font-weight: bold;
+    &:hover {
+      color: #fff;
+      background: #979ba5;
+      transition: all .2s;
+    }
+
+    .bk-icon {
+      font-size: 20px;
+      font-weight: bold;
+    }
   }
-}
 </style>

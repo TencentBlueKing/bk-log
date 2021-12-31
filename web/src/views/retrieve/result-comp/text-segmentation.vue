@@ -152,60 +152,60 @@ export default {
 </script>
 
 <style lang="scss">
-.event-tippy-content {
-  .event-icons {
-    display: flex;
-    align-items: center;
-  }
+  .event-tippy-content {
+    .event-icons {
+      display: flex;
+      align-items: center;
+    }
 
-  .tippy-tooltip {
-    padding: 4px 0 2px 8px;
-  }
+    .tippy-tooltip {
+      padding: 4px 0 2px 8px;
+    }
 
-  .icon {
-    display: inline-block;
-    margin-right: 10px;
-    font-size: 14px;
-    cursor: pointer;
+    .icon {
+      display: inline-block;
+      margin-right: 10px;
+      font-size: 14px;
+      cursor: pointer;
 
-    &:hover {
-      color: #3a84ff;
+      &:hover {
+        color: #3a84ff;
+      }
+    }
+
+    .bk-icon {
+      transform: rotate(45deg);
+    }
+
+    .icon-minus-circle,
+    .icon-chart {
+      margin-right: 4px;
+    }
+
+    .icon-copy {
+      margin-right: 3px;
+      font-size: 24px;
     }
   }
 
-  .bk-icon {
-    transform: rotate(45deg);
-  }
+  .log-content-wrapper {
+    word-break: break-all;
 
-  .icon-minus-circle,
-  .icon-chart {
-    margin-right: 4px;
-  }
+    .segment-content {
+      white-space: normal;
+    }
 
-  .icon-copy {
-    margin-right: 3px;
-    font-size: 24px;
-  }
-}
+    .menu-list {
+      display: none;
+      position: absolute;
+    }
 
-.log-content-wrapper {
-  word-break: break-all;
-
-  .segment-content {
-    white-space: normal;
-  }
-
-  .menu-list {
-    display: none;
-    position: absolute;
-  }
-
-  .valid-text {
-    cursor: pointer;
-    // word-break: keep-all;
-    &:hover {
-      color: #3a84ff;
+    .valid-text {
+      cursor: pointer;
+      // word-break: keep-all;
+      &:hover {
+        color: #3a84ff;
+      }
     }
   }
-}
 </style>

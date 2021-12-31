@@ -244,66 +244,66 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.create-task-container {
-  margin-top: 20px;
-  padding: 20px 24px;
-  background-color: #fff;
-  color: #63656e;
-  border: 1px solid #dcdee5;
+  .create-task-container {
+    margin-top: 20px;
+    padding: 20px 24px;
+    background-color: #fff;
+    color: #63656e;
+    border: 1px solid #dcdee5;
 
-  .row-container {
-    display: flex;
-    min-height: 40px;
-    margin: 20px 0 24px;
-
-    .title {
-      width: 128px;
-      margin-right: 16px;
-      font-size: 16px;
-      line-height: 40px;
-      font-size: 14px;
-      text-align: right;
-
-      .required {
-        font-size: 16px;
-        color: #ea3636;
-      }
-
-      .icon-info-fill {
-        color: #979ba5;
-        cursor: pointer;
-      }
-    }
-
-    .content {
+    .row-container {
       display: flex;
-      flex-flow: column;
-      justify-content: center;
       min-height: 40px;
+      margin: 20px 0 24px;
 
-      .flex-box {
+      .title {
+        width: 128px;
+        margin-right: 16px;
+        font-size: 16px;
+        line-height: 40px;
+        font-size: 14px;
+        text-align: right;
+
+        .required {
+          font-size: 16px;
+          color: #ea3636;
+        }
+
+        .icon-info-fill {
+          color: #979ba5;
+          cursor: pointer;
+        }
+      }
+
+      .content {
         display: flex;
-        align-items: center;
+        flex-flow: column;
+        justify-content: center;
+        min-height: 40px;
 
-        .select-text {
-          margin-left: 12px;
-          font-size: 12px;
-          line-height: 16px;
+        .flex-box {
+          display: flex;
+          align-items: center;
 
-          .primary {
-            color: #3a84ff;
-          }
+          .select-text {
+            margin-left: 12px;
+            font-size: 12px;
+            line-height: 16px;
 
-          .error {
-            color: #ea3636;
+            .primary {
+              color: #3a84ff;
+            }
+
+            .error {
+              color: #ea3636;
+            }
           }
         }
       }
     }
-  }
 
-  .button-container {
-    margin: 32px 0 0 144px;
+    .button-container {
+      margin: 32px 0 0 144px;
+    }
   }
-}
 </style>

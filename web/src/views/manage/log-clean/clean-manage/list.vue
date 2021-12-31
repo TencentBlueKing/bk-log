@@ -404,91 +404,91 @@ export default {
 </script>
 
 <style lang="scss">
-@import '@/scss/mixins/clearfix';
-@import '@/scss/conf';
-@import '@/scss/devops-common.scss';
+  @import '@/scss/mixins/clearfix';
+  @import '@/scss/conf';
+  @import '@/scss/devops-common.scss';
 
-.log-clean-container {
-  padding: 20px 24px;
+  .log-clean-container {
+    padding: 20px 24px;
 
-  .top-operation {
-    margin-bottom: 20px;
+    .top-operation {
+      margin-bottom: 20px;
 
-    @include clearfix;
+      @include clearfix;
 
-    .bk-button {
-      width: 120px;
-    }
-  }
-
-  .clean-search {
-    display: flex;
-    align-items: center;
-
-    .bk-input-text {
-      width: 320px;
+      .bk-button {
+        width: 120px;
+      }
     }
 
-    .operation-icon {
+    .clean-search {
       display: flex;
-      justify-content: center;
       align-items: center;
-      margin-left: 10px;
-      min-width: 32px;
-      width: 32px;
-      height: 32px;
-      cursor: pointer;
-      border: 1px solid #c4c6cc;
-      transition: boder-color .2s;
-      border-radius: 2px;
-      outline: none;
 
-      &:hover {
-        border-color: #979ba5;
-        transition: boder-color .2s;
+      .bk-input-text {
+        width: 320px;
       }
 
-      &:active {
-        border-color: #3a84ff;
-        transition: boder-color .2s;
-      }
-
-      .icon-tongbu {
-        font-size: 14px;
-        color: #979ba5;
-      }
-
-      .loading {
-        width: 14px;
-        height: 14px;
-        border: 2px solid #3a84ff;
-        border-right: 2px solid transparent;
-        border-radius: 50%;
-        animation: button-icon-loading 1s linear infinite;
-        animation: button-icon-loading 1s linear infinite;
-        margin: 0 auto;
-        display: inline-block;
-      }
-    }
-  }
-
-  .clean-table {
-    overflow: visible;
-
-    .text-disabled {
-      color: #c4c6cc;
-    }
-
-    .text-active {
-      color: #3a84ff;
-      cursor: pointer;
-    }
-
-    .filter-column {
-      .cell {
+      .operation-icon {
         display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: 10px;
+        min-width: 32px;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        border: 1px solid #c4c6cc;
+        transition: boder-color .2s;
+        border-radius: 2px;
+        outline: none;
+
+        &:hover {
+          border-color: #979ba5;
+          transition: boder-color .2s;
+        }
+
+        &:active {
+          border-color: #3a84ff;
+          transition: boder-color .2s;
+        }
+
+        .icon-tongbu {
+          font-size: 14px;
+          color: #979ba5;
+        }
+
+        .loading {
+          width: 14px;
+          height: 14px;
+          border: 2px solid #3a84ff;
+          border-right: 2px solid transparent;
+          border-radius: 50%;
+          animation: button-icon-loading 1s linear infinite;
+          animation: button-icon-loading 1s linear infinite;
+          margin: 0 auto;
+          display: inline-block;
+        }
+      }
+    }
+
+    .clean-table {
+      overflow: visible;
+
+      .text-disabled {
+        color: #c4c6cc;
+      }
+
+      .text-active {
+        color: #3a84ff;
+        cursor: pointer;
+      }
+
+      .filter-column {
+        .cell {
+          display: flex;
+        }
       }
     }
   }
-}
 </style>

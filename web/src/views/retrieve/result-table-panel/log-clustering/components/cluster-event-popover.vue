@@ -122,71 +122,71 @@ export default {
 </script>
 
 <style lang="scss">
-.event-icons {
-  position: relative;
-}
-
-.event-tippy {
   .event-icons {
-    min-height: 24px;
-    display: flex;
-    align-items: center;
+    position: relative;
   }
 
-  .tippy-tooltip {
-    padding: 4px 0 2px 8px;
-  }
-
-  .icon {
-    display: inline-block;
-    margin-right: 8px;
-    font-size: 14px;
-    cursor: pointer;
-
-    &:hover {
-      color: #3a84ff;
+  .event-tippy {
+    .event-icons {
+      min-height: 24px;
+      display: flex;
+      align-items: center;
     }
-  }
 
-  .log-icon {
-    font-size: 12px;
-  }
-
-  .icon-chart {
-    margin-right: 4px;
-  }
-
-  .icon-copy {
-    margin-right: 3px;
-    font-size: 24px;
-  }
-
-  &.is-cluster {
     .tippy-tooltip {
-      padding-left: 4px;
+      padding: 4px 0 2px 8px;
+    }
+
+    .icon {
+      display: inline-block;
+      margin-right: 8px;
+      font-size: 14px;
+      cursor: pointer;
+
+      &:hover {
+        color: #3a84ff;
+      }
+    }
+
+    .log-icon {
+      font-size: 12px;
+    }
+
+    .icon-chart {
+      margin-right: 4px;
+    }
+
+    .icon-copy {
+      margin-right: 3px;
+      font-size: 24px;
+    }
+
+    &.is-cluster {
+      .tippy-tooltip {
+        padding-left: 4px;
+      }
     }
   }
-}
 
-.retrieve-event-popover {
-  .bk-tooltip-ref {
-    cursor: pointer;
-
-    &:hover {
-      color: #3a84ff;
-    }
-  }
-
-  &.is-inline {
-    display: inline;
-
+  .retrieve-event-popover {
     .bk-tooltip-ref {
-      display: inline;
+      cursor: pointer;
+
+      &:hover {
+        color: #3a84ff;
+      }
     }
 
-    .tippy-tooltip {
-      padding-left: 0;
+    &.is-inline {
+      display: inline;
+
+      .bk-tooltip-ref {
+        display: inline;
+      }
+
+      .tippy-tooltip {
+        padding-left: 0;
+      }
     }
   }
-}
 </style>

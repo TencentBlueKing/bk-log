@@ -266,51 +266,51 @@ export default {
 </script>
 
 <style lang="scss">
-.preview-file-content {
-  display: flex;
-  flex-flow: column;
-  justify-content: center;
-  width: calc(100% - 140px);
-  max-width: 1000px;
-  min-height: 40px;
-
-  .flex-box {
+  .preview-file-content {
     display: flex;
-    align-items: center;
+    flex-flow: column;
+    justify-content: center;
+    width: calc(100% - 140px);
+    max-width: 1000px;
+    min-height: 40px;
 
-    .download-url-text {
-      color: #3a84ff;
-      cursor: pointer;
+    .flex-box {
+      display: flex;
+      align-items: center;
 
-      &:hover {
-        color: #699df4;
+      .download-url-text {
+        color: #3a84ff;
+        cursor: pointer;
+
+        &:hover {
+          color: #699df4;
+        }
+
+        &:active {
+          color: #2761dd;
+        }
+
+        &.is-disabled {
+          color: #c4c6cc;
+          cursor: not-allowed;
+        }
       }
+    }
 
-      &:active {
-        color: #2761dd;
-      }
-
-      &.is-disabled {
-        color: #c4c6cc;
-        cursor: not-allowed;
-      }
+    .table-head-text {
+      margin: 18px 0 8px;
+      font-size: 12px;
     }
   }
 
-  .table-head-text {
-    margin: 18px 0 8px;
-    font-size: 12px;
-  }
-}
+  .preview-scroll-table {
+    .bk-table-body-wrapper {
+      overflow-y: auto;
+    }
 
-.preview-scroll-table {
-  .bk-table-body-wrapper {
-    overflow-y: auto;
+    .cell {
+      /* stylelint-disable-next-line declaration-no-important */
+      display: flex !important;
+    }
   }
-
-  .cell {
-    /* stylelint-disable-next-line declaration-no-important */
-    display: flex !important;
-  }
-}
 </style>
