@@ -104,21 +104,25 @@ export default {
     height: 100%;
     text-align: center;
     background: #fff;
-    border: 1px solid #DCDEE5;
+    border: 1px solid #dcdee5;
+
     .icon-shijian {
       font-size: 64px;
       color: #c4c6cc;
     }
+
     .title {
       margin-top: 18px;
       font-size: 16px;
       color: #000;
     }
+
     .remark {
       margin-top: 10px;
       font-size: 12px;
       color: #63656e;
     }
+
     .refresh-button {
       margin: 18px 0 20px;
       color: #3a84ff;

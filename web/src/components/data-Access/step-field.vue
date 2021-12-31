@@ -50,13 +50,13 @@
               @click.stop>
               <span class="text">
                 <span>{{ option.collector_config_name }}</span>
-                <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
+                <span style="color: #979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
               </span>
               <span class="apply-text" @click="applyProjectAccess(option)">{{ $t('申请权限') }}</span>
             </div>
             <div v-else v-bk-overflow-tips class="option-slot-container">
               <span>{{ option.collector_config_name }}</span>
-              <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
+              <span style="color: #979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
             </div>
           </bk-option>
         </bk-select>
@@ -1385,6 +1385,7 @@ export default {
     padding: 0 30px 42px;
     overflow: auto;
   }
+
   .step-field {
     .king-alert {
       margin: 30px auto -28px;
@@ -1394,6 +1395,7 @@ export default {
       display: flex;
       align-items: center;
       margin: 50px 0 -26px;
+
       label {
         margin-right: 16px;
         font-size: 12px;
@@ -1551,6 +1553,7 @@ export default {
         .field-method-link {
           color: #c4c6cc;
         }
+
         .toggle-icon,
         .field-method-link {
           cursor: not-allowed;
@@ -1588,6 +1591,7 @@ export default {
       .bk-tab-label-list .bk-tab-label-item {
         min-width: 80px;
       }
+
       .bk-tab-section {
         display: none;
       }
@@ -1598,6 +1602,7 @@ export default {
       margin-bottom: 12px;
       padding-bottom: 24px;
       padding-left: 20px;
+
       &::before {
         content: '';
         position: absolute;
@@ -1608,6 +1613,7 @@ export default {
         border: 2px solid #d8d8d8;
         border-radius: 50%;
       }
+
       &::after {
         content: '';
         position: absolute;
@@ -1617,27 +1623,33 @@ export default {
         height: 100%;
         background: #d8d8d8;
       }
+
       &:last-child::before {
         top: 8px;
       }
+
       &:last-child::after {
         top: 22px;
         height: calc(100% - 30px);
       }
+
       .step-text {
         color: #63656e;
         font-size: 14px;
       }
+
       .template-text {
         margin-left: 10px;
         font-size: 12px;
         color: #3a84ff;
         cursor: pointer;
       }
+
       .template-disabled {
         color: #c4c6cc;
         cursor: not-allowed;
       }
+
       .field-button-group {
         display: flex;
         align-items: center;
@@ -1789,6 +1801,7 @@ export default {
 
       /*background-color: #313238;*/
       .bk-form-textarea:focus {
+        /* stylelint-disable-next-line declaration-no-important */
         background-color: #313238 !important;
         border-radius: 2px;
       }
@@ -1801,17 +1814,20 @@ export default {
     .advance-clean-step-container {
       display: flex;
       margin-top: 40px;
+
       .image-content {
         display: flex;
         align-items: center;
         justify-content: center;
         height: 200px;
       }
+
       .icon-angle-double-right-line {
         margin: 110px 30px 0;
-        color: rgba(105, 157, 244, 0.9);
-        opacity: 0.9;
+        color: rgba(105, 157, 244, .9);
+        opacity: .9;
       }
+
       .step-num {
         margin-right: 8px;
         font-size: 24px;
@@ -1819,21 +1835,25 @@ export default {
         color: #a3c5fd;
         line-height: 29px;
       }
+
       .step-description {
         margin-top: 26px;
         width: 320px;
         line-height: 20px;
-        color:#63656e;
+        color: #63656e;
         font-size: 14px;
       }
+
       .remark {
         margin-top: 20px;
         color: #979ba5;
         font-size: 12px;
       }
+
       .link {
         color: #3a84ff;
         cursor: pointer;
+
         span {
           margin-left: 4px;
         }

@@ -25,42 +25,38 @@
     <!-- 初始化加载时显示这个空的盒子 避免先显示内容 再显示无权限页面 -->
     <div v-if="!hasAuth && !authPageInfo && !isNoIndexSet" style="height: 100%;background: #f4f7fa;"></div>
     <!-- 单独的申请权限页面 -->
-    <AuthPage
+    <auth-page
       v-if="!hasAuth && authPageInfo && !isNoIndexSet"
       :info="authPageInfo"
-      style="background: #f4f7fa;">
-    </AuthPage>
+      style="background: #f4f7fa;" />
     <!-- 检索页首页 -->
     <div v-if="hasAuth && isRetrieveHome" class="retrieve-home-container">
       <div class="retrieve-home" data-test-id="retrieve_div_frontPageSearchBox">
         <div class="retrieve-home-title">{{ $t('nav.retrieve') }}</div>
         <div class="retrieve-home-condition">
           <!-- 选择索引集 -->
-          <SelectIndexSet
+          <select-indexSet
             class="king-select-index-set"
             :index-id="indexId"
             :index-set-list="indexSetList"
             :basic-loading.sync="basicLoading"
             @selected="handleSelectIndex"
-            @updateIndexSetList="updateIndexSetList"
-          ></SelectIndexSet>
+            @updateIndexSetList="updateIndexSetList" />
           <!-- 选择日期 -->
-          <SelectDate
+          <select-date
             :time-range.sync="retrieveParams.time_range"
             :date-picker-value="datePickerValue"
             @update:datePickerValue="handleDateChange"
-            @datePickerChange="retrieveWhenDateChange"
-          ></SelectDate>
+            @datePickerChange="retrieveWhenDateChange" />
         </div>
         <!-- 首页搜索框 -->
-        <RetrieveInput
+        <retrieve-input
           v-model="retrieveParams.keyword"
           :show-history.sync="showHistory"
           :history-list="historyList"
           :is-search-allowed="isSearchAllowed"
           @focus="showHistory = true"
-          @retrieve="retrieveLog"
-        ></RetrieveInput>
+          @retrieve="retrieveLog" />
       </div>
       <!-- eslint-disable vue/no-v-html -->
       <div v-if="footerHtml" v-html="footerHtml"></div>
@@ -105,16 +101,15 @@
             <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
               <!-- 选择索引集 -->
               <div class="tab-item-title">{{ $t('索引集') }}</div>
-              <SelectIndexSet
+              <select-indexSet
                 :index-id="indexId"
                 :index-set-list="indexSetList"
                 :basic-loading.sync="basicLoading"
                 @selected="handleSelectIndex"
-                @updateIndexSetList="updateIndexSetList"
-              ></SelectIndexSet>
+                @updateIndexSetList="updateIndexSetList" />
               <!-- 查询语句 -->
-              <QueryStatement></QueryStatement>
-              <RetrieveDetailInput
+              <query-statement />
+              <retrieve-detail-input
                 v-model="retrieveParams.keyword"
                 :is-auto-query="isAutoQuery"
                 :retrieved-keyword="retrievedKeyword"
@@ -130,25 +125,23 @@
                     @click="openIpQuick"
                     data-test-id="dataQuery_span_addIP"
                   >{{ $t('添加IP') }}</span>
-                  <FilterConditionItem
+                  <filter-condition-item
                     :filter-condition="retrieveParams.addition"
                     :total-fields="totalFields"
                     :field-alias-map="fieldAliasMap"
                     :statistical-fields-data="statisticalFieldsData"
                     @addFilterCondition="addFilterCondition"
-                    @removeFilterCondition="removeFilterCondition"
-                  ></FilterConditionItem>
+                    @removeFilterCondition="removeFilterCondition" />
                 </div>
               </div>
               <div class="add-filter-condition-container">
-                <IpQuick
+                <ip-quick
                   :host-scopes="retrieveParams.host_scopes"
                   @openIpQuick="openIpQuick"
-                  @confirm="handleSaveIpQuick"
-                ></IpQuick>
+                  @confirm="handleSaveIpQuick" />
                 <div class="cut-line" v-if="showFilterCutline"></div>
                 <template v-for="(item, index) in retrieveParams.addition">
-                  <FilterConditionItem
+                  <filter-condition-item
                     :key="item.field + 1"
                     :edit-index="index"
                     :is-add="false"
@@ -158,8 +151,7 @@
                     :field-alias-map="fieldAliasMap"
                     :statistical-fields-data="statisticalFieldsData"
                     @addFilterCondition="addFilterCondition"
-                    @removeFilterCondition="removeFilterCondition"
-                  ></FilterConditionItem>
+                    @removeFilterCondition="removeFilterCondition" />
                 </template>
               </div>
               <!-- 查询收藏清空按钮 -->
@@ -168,7 +160,7 @@
                   v-if="isAutoQuery"
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
-                  style="width: 86px;font-size:12px"
+                  style="width: 86px;font-size: 12px"
                   data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
                   <span class="log-icon icon-zidongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
@@ -178,7 +170,7 @@
                   v-else
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
-                  style="width: 86px;font-size:12px"
+                  style="width: 86px;font-size: 12px"
                   data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
                   <span class="log-icon icon-shoudongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
@@ -191,7 +183,7 @@
                   theme="light"
                   :on-show="handleFavoritePopperShow">
                   <bk-button
-                    style="width: 86px;margin: 0 8px;font-size:12px"
+                    style="width: 86px;margin: 0 8px;font-size: 12px"
                     data-test-id="dataQuery_button_collection">
                     <span style="display: flex;align-items: center;justify-content: center;">
                       <span
@@ -201,17 +193,16 @@
                       <span>{{ $t('收藏') }}</span>
                     </span>
                   </bk-button>
-                  <FavoritePopper
+                  <favorite-popper
                     v-if="showFavoritePopperContent"
                     :is-loading="favoritePopperLoading"
                     :panel-width="leftPanelWidth"
                     slot="content"
                     @add="addFavorite"
-                    @close="closeFavoritePopper"
-                  ></FavoritePopper>
+                    @close="closeFavoritePopper" />
                 </bk-popover>
                 <bk-button
-                  style="font-size:12px"
+                  style="font-size: 12px"
                   @click="clearCondition"
                   data-test-id="dataQuery_button_phrasesClear">
                   {{ $t('清空') }}
@@ -221,7 +212,7 @@
             <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
               <!-- 字段过滤 -->
               <div class="tab-item-title field-filter-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
-              <FieldFilter
+              <field-filter
                 :total-fields="totalFields"
                 :visible-fields="visibleFields"
                 :field-alias-map="fieldAliasMap"
@@ -235,7 +226,7 @@
       </div>
       <!-- 检索详情页右侧检索结果 -->
       <div class="retrieve-result" :style="{ width: 'calc(100% - ' + leftPanelWidth + 'px)' }">
-        <ResultHeader
+        <result-header
           ref="resultHeader"
           :show-retrieve-condition="showRetrieveCondition"
           :show-expand-init-tips="showExpandInitTips"
@@ -251,10 +242,9 @@
           @open="openRetrieveCondition"
           @update:datePickerValue="handleDateChange"
           @datePickerChange="retrieveWhenDateChange"
-          @settingMenuClick="handleSettingMenuClick"
-        ></ResultHeader>
-        <NoIndexSet v-if="isNoIndexSet"></NoIndexSet>
-        <ResultMain
+          @settingMenuClick="handleSettingMenuClick" />
+        <no-index-set v-if="isNoIndexSet" />
+        <result-main
           ref="resultMainRef"
           v-else
           :table-loading="tableLoading"
@@ -280,8 +270,7 @@
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
           @addFilterCondition="addFilterCondition"
-          @showSettingLog="handleSettingMenuClick('clustering')"
-        ></ResultMain>
+          @showSettingLog="handleSettingMenuClick('clustering')" />
       </div>
       <!-- 可拖拽页面布局宽度 -->
       <div
@@ -307,7 +296,7 @@
       @target-change="handleSaveIpQuick">
     </ip-selector-dialog>
 
-    <SettingModal
+    <setting-modal
       :index-set-item="indexSetItem"
       :is-show-dialog="isShowSettingModal"
       :select-choice="clickSettingChoice"
@@ -315,31 +304,30 @@
       :clean-config="cleanConfig"
       :config-data="clusteringData"
       @closeSetting="isShowSettingModal = false;"
-      @updateLogFields="requestFields"
-    />
+      @updateLogFields="requestFields" />
   </div>
 </template>
 
 <script>
 import { mapGetters, mapState } from 'vuex';
-import SelectIndexSet from './condition-comp/SelectIndexSet';
-import SelectDate from './condition-comp/SelectDate';
-import RetrieveInput from './condition-comp/RetrieveInput';
-import RetrieveDetailInput from './condition-comp/RetrieveDetailInput';
-import QueryStatement from './condition-comp/QueryStatement';
-import FilterConditionItem from './condition-comp/FilterConditionItem';
-import IpQuick from './condition-comp/IpQuick';
+import SelectIndexSet from './condition-comp/select-indexSet';
+import SelectDate from './condition-comp/select-date';
+import RetrieveInput from './condition-comp/retrieve-input';
+import RetrieveDetailInput from './condition-comp/retrieve-detail-input';
+import QueryStatement from './condition-comp/query-statement';
+import FilterConditionItem from './condition-comp/filter-condition-item';
+import IpQuick from './condition-comp/ip-quick';
+import FieldFilter from './condition-comp/field-filter';
 import IpSelectorDialog from '@/components/data-Access/ip-selector-dialog';
-import FieldFilter from './condition-comp/FieldFilter';
-import FavoritePopper from './condition-comp/FavoritePopper';
-import ResultHeader from './result-comp/ResultHeader';
-import NoIndexSet from './result-comp/NoIndexSet';
-import ResultMain from './result-comp/ResultMain';
+import FavoritePopper from './condition-comp/favorite-popper';
+import ResultHeader from './result-comp/result-header';
+import NoIndexSet from './result-comp/no-index-set';
+import ResultMain from './result-comp/result-main';
 import AuthPage from '@/components/common/auth-page';
 import SettingModal from './setting-modal/index.vue';
-import BizMenuSelect from '@/components/BizMenuSelect.vue';
+import BizMenuSelect from '@/components/biz-menu-select.vue';
 import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/common/util';
-import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
+import indexSetSearchMixin from '@/mixins/indexSet-search-mixin';
 import axios from 'axios';
 
 export default {
@@ -1623,6 +1611,19 @@ export default {
       z-index: 2400;
       overflow: hidden;
       background: pink;
+
+      @keyframes animate-loading-bar {
+        0% {
+          transform: translateX(0);
+          transform: translateX(0);
+        }
+
+        to {
+          transform: translateX(-50%);
+          transform: translateX(-50%);
+        }
+      }
+
       .page-loading-bar {
         top: 0;
         left: 0;
@@ -1635,27 +1636,17 @@ export default {
         animation: animate-loading-bar 2s linear infinite;
         background-color: transparent;
         background-image: linear-gradient(
-            to right,
-            #FF5656 0,
-            #FF5656 50%,
-            #FF9C01 50%,
-            #FF9C01 85%,
-            #2DCB56 85%,
-            #2DCB56 100%
-          );
+          to right,
+          #ff5656 0,
+          #ff5656 50%,
+          #ff9c01 50%,
+          #ff9c01 85%,
+          #2dcb56 85%,
+          #2dcb56 100%
+        );
         background-repeat: repeat-x;
         background-size: 50%;
         width: 200%;
-      }
-      @keyframes animate-loading-bar {
-        0% {
-          -webkit-transform: translateX(0);
-          transform: translateX(0)
-        }
-        to {
-          -webkit-transform: translateX(-50%);
-          transform: translateX(-50%);
-        }
       }
     }
     /*详情页*/
@@ -1674,14 +1665,14 @@ export default {
           width: 100%;
           height: 52px;
           .bk-button {
-            flex:1;
+            flex: 1;
             height: 100%;
             border-top: 0;
             background: #fafbfd;
             border-color: #dcdee5;
             box-sizing: content-box;
             &.is-selected {
-              background: #ffffff;
+              background: #fff;
               border-top: none;
               border-bottom: none;
             }
@@ -1689,6 +1680,7 @@ export default {
               border-color: #dcdee5;
               color: #3a84ff;
             }
+
             &:hover {
               border-color: #dcdee5;
             }

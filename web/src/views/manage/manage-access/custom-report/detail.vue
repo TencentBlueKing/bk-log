@@ -22,7 +22,7 @@
 
 <template>
   <div
-    style="transition: padding 0.5s;"
+    style="transition: padding .5s;"
     v-bkloading="{ isLoading: basicLoading }"
     :class="`custom-report-detail-container access-manage-container ${isOpenWindow ? 'is-active-details' : ''}`">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
@@ -43,17 +43,17 @@
     <intro-panel
       :data="reportDetail"
       :is-open-window="isOpenWindow"
-      @handleActiveDetails="handleActiveDetails"></intro-panel>
+      @handleActiveDetails="handleActiveDetails" />
   </div>
 </template>
 
 <script>
 import AuthPage from '@/components/common/auth-page';
-import BasicInfo from '../log-collection/collection-item/manage-collection/BasicInfo';
-import DataStorage from '../log-collection/collection-item/manage-collection/DataStorage';
+import BasicInfo from '../log-collection/collection-item/manage-collection/basic-info';
+import DataStorage from '../log-collection/collection-item/manage-collection/data-storage';
 import DataStatus from '../log-collection/collection-item/manage-collection/data-status';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
-import IntroPanel from './components/IntroPanel';
+import IntroPanel from './components/intro-panel';
 
 export default {
   name: 'collection-item',
@@ -133,7 +133,7 @@ export default {
 </script>
 
 <style lang="scss">
-.is-active-details{
-  padding:20px 420px 20px 24px;
-}
+  .is-active-details {
+    padding: 20px 420px 20px 24px;
+  }
 </style>

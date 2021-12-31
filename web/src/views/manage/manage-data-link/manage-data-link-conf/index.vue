@@ -63,7 +63,7 @@
         </template>
       </bk-table-column>
     </bk-table>
-    <ConfigDialog
+    <config-dialog
       :visible.sync="dialogSetting.visible"
       :type="dialogSetting.type"
       :project-list="projectList"
@@ -74,7 +74,7 @@
 </template>
 
 <script>
-import ConfigDialog from './ConfigDialog';
+import ConfigDialog from './config-dialog';
 
 export default {
   name: 'LinkConfiguration',

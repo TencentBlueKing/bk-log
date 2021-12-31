@@ -421,41 +421,51 @@ export default {
 
   .log-archive-restore {
     padding: 20px 24px;
+
     .top-operation {
       margin-bottom: 20px;
+
       @include clearfix;
+
       .bk-button {
         width: 120px;
       }
     }
+
     .restore-search {
       width: 320px;
     }
+
     .restore-table {
       .filter-column {
         .cell {
           display: flex;
         }
       }
+
       .restore-status {
         display: flex;
         align-items: center;
       }
+
       .status-icon {
         display: inline-block;
         margin-right: 6px;
         width: 4px;
         height: 4px;
         border-radius: 50%;
+
         &.is-finish {
-          background: #6DD400;
+          background: #6dd400;
         }
+
         &.is-unStart {
-          background: #E02020;
+          background: #e02020;
 
         }
+
         &.is-restoring {
-          background: #FE9C00;
+          background: #fe9c00;
         }
       }
     }

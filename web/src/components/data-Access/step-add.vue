@@ -1086,9 +1086,11 @@ export default {
           color: #63656e;
 
           .bk-form-item {
+            /* stylelint-disable-next-line declaration-no-important */
             margin: 0 !important;
 
             .bk-form-content {
+              /* stylelint-disable-next-line declaration-no-important */
               margin: 0 !important;
 
               .bk-form-control {
@@ -1154,12 +1156,13 @@ export default {
       }
     }
 
-    .win-filter{
-      .select-div{
+    .win-filter {
+      .select-div {
         width: 129px;
         margin-right: 8px;
       }
-      .tag-input{
+
+      .tag-input {
         width: 320px;
       }
     }
@@ -1173,10 +1176,12 @@ export default {
       padding-bottom: 14px;
 
       .bk-form-content {
+        /* stylelint-disable-next-line declaration-no-important */
         margin-left: 0 !important;
       }
 
       label {
+        /* stylelint-disable-next-line declaration-no-important */
         width: 0 !important;
       }
 
@@ -1296,15 +1301,17 @@ export default {
       }
     }
 
-    .species-item{
+    .species-item {
       display: flex;
       flex-direction: column;
       position: relative;
-      .bk-form-checkbox{
+
+      .bk-form-checkbox {
         height: 30px;
         line-height: 30px;
       }
-      .bk-tag-selector{
+
+      .bk-tag-selector {
         position: absolute;
         top: 89px;
         left: 65px;
@@ -1333,6 +1340,7 @@ export default {
     }
 
     .is-selected {
+      /* stylelint-disable-next-line declaration-no-important */
       z-index: 2 !important;
     }
 
@@ -1341,11 +1349,13 @@ export default {
     }
 
     .rulesColor {
+      /* stylelint-disable-next-line declaration-no-important */
       border-color: #ff5656 !important;
     }
 
-    .tagRulesColor{
-      .bk-tag-input{
+    .tagRulesColor {
+      .bk-tag-input {
+        /* stylelint-disable-next-line declaration-no-important */
         border-color: #ff5656 !important;
       }
     }

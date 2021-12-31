@@ -127,29 +127,34 @@ export default {
     height: 52px;
     padding: 0 20px;
     line-height: 24px;
-    background-color: #FFF;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.10);
+    background-color: #fff;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .10);
     position: relative;
     z-index: 1;
+
     .main-title {
       font-size: 16px;
       color: #313238;
     }
+
     .back-container {
       .icon-arrows-left {
         font-size: 30px;
-        color: #3A84FF;
+        color: #3a84ff;
         cursor: pointer;
+
         &:hover {
           color: #699df4;
         }
       }
     }
+
     .sub-nav-list {
       display: flex;
       font-size: 14px;
-      color: #63656E;
+      color: #63656e;
       margin-left: 35px;
+
       .sub-nav-item {
         height: 52px;
         line-height: 52px;
@@ -158,9 +163,11 @@ export default {
         cursor: pointer;
         border-bottom: 3px solid transparent;
         transition: color, border-color .3s;
-        &:hover, &.active {
-          color: #3A84FF;
-          border-bottom: 3px solid #3A84FF;
+
+        &:hover,
+        &.active {
+          color: #3a84ff;
+          border-bottom: 3px solid #3a84ff;
           transition: color, border-color .3s;
         }
       }

@@ -76,9 +76,9 @@ import ChartAnnotation from './components/chart-annotation.vue'
 import { ILegendItem, IMoreToolItem, IAnnotation, IStatusSeries,
   IStatusChartOption, ITextSeries, ITextChartOption, ChartType } from './options/type-interface'
 import EchartOptions from './options/echart-options'
-import watermarkMaker from './utils/watermarkMaker'
+import watermarkMaker from './utils/watermark-maker'
 import ChartInView from './utils/chart-in-view'
-import { getValueFormat } from './valueFormats'
+import { getValueFormat } from './value-formats-package'
 import ChartTitle from './components/chart-title.vue'
 const hexToRgbA = (hex, apacity = 1) => {
   let c

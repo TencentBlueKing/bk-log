@@ -326,162 +326,191 @@ export default {
 };
 </script>
 <style lang='postcss'>
-body {
-  *.guide-highlight {
-    opacity: 1 !important;
-    z-index: 100001 !important;
-    background: #fff;
-    pointer-events: none !important;
+  body {
+    *.guide-highlight {
+      /* stylelint-disable-next-line declaration-no-important */
+      opacity: 1 !important;
+
+      /* stylelint-disable-next-line declaration-no-important */
+      z-index: 100001 !important;
+      background: #fff;
+
+      /* stylelint-disable-next-line declaration-no-important */
+      pointer-events: none !important;
+    }
   }
-}
-.novice-guide {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 100000;
-  background: rgba(0,0,0,0.6);
-  .step-box {
-    position: absolute;
-    width: 270px;
-    min-height: 110px;
-    padding: 12px 10px 10px;
-    font-size: 12px;
-    color: #313238;
-    border-radius: 2px;
-    background: #fff;
-    &.right {
-      .target-arrow {
-        top: 30px;
-        left: -4px;
-      }
-    }
-    &.left {
-      .target-arrow {
-        top: 30px;
-        right: -4px;
-      }
-    }
-    &.bottom {
-      .target-arrow {
-        top: -4px;
-        left: 50%;
-      }
-    }
-    &.top{
-      .target-arrow {
-        bottom: -4px;
-        left: 50%;
-      }
-    }
-    .step-title{
-      font-weight: bold;
-      line-height: 16px;
-    }
-    .step-content {
-      margin-top: 7px;
-    }
-    .step-action {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 14px;
-      .action-text {
-        color: #3A84FF;
-        cursor: pointer;
-      }
-      .action-btn {
-        height: 20px;
-        padding: 0 8px;
-        margin-left: 14px;
-        line-height: 20px;
-        color: #fff;
-        border-radius: 10px;
-        background: #3A84FF;
-        cursor: pointer;
-      }
-    }
-    .target-arrow {
+
+  .novice-guide {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100000;
+    background: rgba(0,0,0,.6);
+
+    .step-box {
       position: absolute;
-      width: 8px;
-      height: 8px;
-      background: inherit;
-      transform: rotateZ(45deg);
-    }
-  }
-  .guide-finished-box {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    .wraper {
-      width: 400px;
-      height: 210px;
-      padding-top: 74px;
-      text-align: center;
-      background: #fff;
+      width: 270px;
+      min-height: 110px;
+      padding: 12px 10px 10px;
+      font-size: 12px;
+      color: #313238;
       border-radius: 2px;
-      .flag {
-        position: absolute;
-        top: 0;
-        left: 50%;
+      background: #fff;
+
+      &.right {
+        .target-arrow {
+          top: 30px;
+          left: -4px;
+        }
+      }
+
+      &.left {
+        .target-arrow {
+          top: 30px;
+          right: -4px;
+        }
+      }
+
+      &.bottom {
+        .target-arrow {
+          top: -4px;
+          left: 50%;
+        }
+      }
+
+      &.top {
+        .target-arrow {
+          bottom: -4px;
+          left: 50%;
+        }
+      }
+
+      .step-title {
+        font-weight: bold;
+        line-height: 16px;
+      }
+
+      .step-content {
+        margin-top: 7px;
+      }
+
+      .step-action {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 86px;
-        height: 86px;
-        font-size: 55px;
-        color: #fff;
-        border: 13px solid #DCFFE2;
-        border-radius: 50%;
-        background: #2DCB56;
-        transform: translate(-50%, -27px);
-        &:after {
-          content: '';
-          position: absolute;
+        justify-content: flex-end;
+        margin-top: 14px;
+
+        .action-text {
+          color: #3a84ff;
+          cursor: pointer;
+        }
+
+        .action-btn {
+          height: 20px;
+          padding: 0 8px;
+          margin-left: 14px;
+          line-height: 20px;
+          color: #fff;
+          border-radius: 10px;
+          background: #3a84ff;
+          cursor: pointer;
         }
       }
-    }
-  }
-  .guide-stop-box {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    .wraper {
-      width: 500px;
-      /* height: 390px; */
-      /* padding-top: 45px; */
-      height: 370px;
-      padding-top: 25px;
-      text-align: center;
-      border-radius: 2px;
-      background: #fff;
-      .cancal-btn {
+
+      .target-arrow {
         position: absolute;
-        top: 5px;
-        right: 5px;
-        width: 26px;
-        height: 26px;
-        font-weight: 700;
-        font-size: 22px;
-        color: #979ba5;
-        line-height: 26px;
+        width: 8px;
+        height: 8px;
+        background: inherit;
+        transform: rotateZ(45deg);
+      }
+    }
+
+    .guide-finished-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      .wraper {
+        width: 400px;
+        height: 210px;
+        padding-top: 74px;
         text-align: center;
-        border-radius: 50%;
-        cursor: pointer;
-        &:hover {
-          background-color: #f0f1f5;
+        background: #fff;
+        border-radius: 2px;
+
+        .flag {
+          position: absolute;
+          top: 0;
+          left: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 86px;
+          height: 86px;
+          font-size: 55px;
+          color: #fff;
+          border: 13px solid #dcffe2;
+          border-radius: 50%;
+          background: #2dcb56;
+          transform: translate(-50%, -27px);
+
+          &:after {
+            content: '';
+            position: absolute;
+          }
+        }
+      }
+    }
+
+    .guide-stop-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      .wraper {
+        width: 500px;
+
+        /* height: 390px; */
+
+        /* padding-top: 45px; */
+        height: 370px;
+        padding-top: 25px;
+        text-align: center;
+        border-radius: 2px;
+        background: #fff;
+
+        .cancal-btn {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          width: 26px;
+          height: 26px;
+          font-weight: 700;
+          font-size: 22px;
+          color: #979ba5;
+          line-height: 26px;
+          text-align: center;
+          border-radius: 50%;
+          cursor: pointer;
+
+          &:hover {
+            background-color: #f0f1f5;
+          }
         }
       }
     }
   }
-}
-.guide-fade-leave-active {
-  transition: visibility .15s linear, opacity .1s linear;
-}
-.guide-fade-leave-to {
-  opacity: 0;
-  visibility: hidden;
-}
+
+  .guide-fade-leave-active {
+    transition: visibility .15s linear, opacity .1s linear;
+  }
+
+  .guide-fade-leave-to {
+    opacity: 0;
+    visibility: hidden;
+  }
 </style>

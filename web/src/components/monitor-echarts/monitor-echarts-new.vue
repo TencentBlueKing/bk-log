@@ -74,9 +74,9 @@ import { ILegendItem, IMoreToolItem, IAnnotation, IStatusSeries,
   IStatusChartOption, ITextSeries, ITextChartOption, ChartType } from './options/type-interface'
 import EchartOptions from './options/echart-options'
 import { hexToRgbA } from './utils'
-import watermarkMaker from './utils/watermarkMaker'
+import watermarkMaker from './utils/watermark-maker'
 import ChartInView from './utils/chart-in-view'
-import { getValueFormat } from './valueFormats'
+import { getValueFormat } from './value-formats-package'
 import ChartTitle from './components/chart-title-new.vue'
 interface ICurValue {
   xAxis: string | number; yAxis: string | number;

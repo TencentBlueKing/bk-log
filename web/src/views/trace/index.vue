@@ -21,11 +21,11 @@
   -->
 
 <template>
-  <trace-index></trace-index>
+  <trace-index />
 </template>
 
 <script>
-import TraceIndex from './traceIndex';
+import TraceIndex from './trace-index';
 
 export default {
   name: 'trace',
@@ -36,7 +36,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.trace-container {
-  height: 100%;
-}
+  .trace-container {
+    height: 100%;
+  }
 </style>

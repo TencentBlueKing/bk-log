@@ -352,7 +352,7 @@
 
 <script>
 import { projectManages } from '@/common/util';
-import collectedItemsMixin from '@/mixins/collectedItemsMixin';
+import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
 
 export default {
@@ -820,8 +820,10 @@ export default {
 
     .collect-table-operate {
       display: flex;
+
       .king-button {
         margin-right: 14px;
+
         &:last-child {
           margin-right: 0;
         }
@@ -829,20 +831,24 @@ export default {
     }
 
     .bk-dropdown-list a.text-disabled:hover {
-      color: #C4C6CC;
+      color: #c4c6cc;
       cursor: not-allowed;
     }
+
     .collect-table-operate {
       display: flex;
     }
+
     .bk-dropdown-trigger {
       display: flex;
       align-items: center;
       height: 100%;
     }
   }
+
   .bk-table-setting-popover-content-theme.tippy-tooltip {
     padding: 15px 0 0;
+
     .bk-table-setting-content .content-line-height {
       display: none;
     }

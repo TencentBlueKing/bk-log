@@ -257,31 +257,39 @@ export default {
 </script>
 
 <style lang="scss">
-@import '@/scss/mixins/clearfix';
+  @import '@/scss/mixins/clearfix';
   @import '@/scss/conf';
   @import '@/scss/devops-common.scss';
 
   .clean-template-container {
     padding: 20px 24px;
+
     .top-operation {
       margin-bottom: 20px;
+
       @include clearfix;
+
       .bk-button {
         width: 120px;
       }
     }
+
     .clean-search {
       width: 360px;
     }
+
     .clean-table {
       overflow: visible;
+
       .text-disabled {
         color: #c4c6cc;
       }
+
       .text-active {
         color: #3a84ff;
         cursor: pointer;
       }
+
       .filter-column {
         .cell {
           display: flex;
