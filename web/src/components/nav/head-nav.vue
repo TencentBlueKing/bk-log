@@ -382,6 +382,8 @@ export default {
         line-height: normal;
         z-index: 2105;
         min-width: 112px;
+
+        /* stylelint-disable-next-line declaration-no-important */
         text-align: center !important;
       }
 
@@ -459,6 +461,7 @@ export default {
   }
 
   .select-business-dropdown-content {
+    /* stylelint-disable-next-line declaration-no-important */
     border: none !important;
 
     .bk-select-search-wrapper {

@@ -162,7 +162,7 @@
                   v-if="isAutoQuery"
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
-                  style="width: 86px;font-size:12px"
+                  style="width: 86px;font-size: 12px"
                   data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
                   <span class="log-icon icon-zidongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
@@ -172,7 +172,7 @@
                   v-else
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
-                  style="width: 86px;font-size:12px"
+                  style="width: 86px;font-size: 12px"
                   data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
                   <span class="log-icon icon-shoudongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
@@ -185,7 +185,7 @@
                   theme="light"
                   :on-show="handleFavoritePopperShow">
                   <bk-button
-                    style="width: 86px;margin: 0 8px;font-size:12px"
+                    style="width: 86px;margin: 0 8px;font-size: 12px"
                     data-test-id="dataQuery_button_collection">
                     <span style="display: flex;align-items: center;justify-content: center;">
                       <span
@@ -204,7 +204,7 @@
                     @close="closeFavoritePopper" />
                 </bk-popover>
                 <bk-button
-                  style="font-size:12px"
+                  style="font-size: 12px"
                   @click="clearCondition"
                   data-test-id="dataQuery_button_phrasesClear">
                   {{ $t('清空') }}
@@ -1575,6 +1575,19 @@ export default {
       z-index: 2400;
       overflow: hidden;
       background: pink;
+
+      @keyframes animate-loading-bar {
+        0% {
+          transform: translateX(0);
+          transform: translateX(0);
+        }
+
+        to {
+          transform: translateX(-50%);
+          transform: translateX(-50%);
+        }
+      }
+
       .page-loading-bar {
         top: 0;
         left: 0;
@@ -1587,27 +1600,17 @@ export default {
         animation: animate-loading-bar 2s linear infinite;
         background-color: transparent;
         background-image: linear-gradient(
-            to right,
-            #FF5656 0,
-            #FF5656 50%,
-            #FF9C01 50%,
-            #FF9C01 85%,
-            #2DCB56 85%,
-            #2DCB56 100%
-          );
+          to right,
+          #ff5656 0,
+          #ff5656 50%,
+          #ff9c01 50%,
+          #ff9c01 85%,
+          #2dcb56 85%,
+          #2dcb56 100%
+        );
         background-repeat: repeat-x;
         background-size: 50%;
         width: 200%;
-      }
-      @keyframes animate-loading-bar {
-        0% {
-          -webkit-transform: translateX(0);
-          transform: translateX(0)
-        }
-        to {
-          -webkit-transform: translateX(-50%);
-          transform: translateX(-50%);
-        }
       }
     }
 
@@ -1631,7 +1634,7 @@ export default {
           height: 52px;
 
           .bk-button {
-            flex:1;
+            flex: 1;
             height: 100%;
             border-top: 0;
             background: #fafbfd;
@@ -1639,7 +1642,7 @@ export default {
             box-sizing: content-box;
 
             &.is-selected {
-              background: #ffffff;
+              background: #fff;
               border-top: none;
               border-bottom: none;
             }
@@ -1648,6 +1651,7 @@ export default {
               border-color: #dcdee5;
               color: #3a84ff;
             }
+
             &:hover {
               border-color: #dcdee5;
             }

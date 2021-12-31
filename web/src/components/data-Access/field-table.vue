@@ -1085,6 +1085,7 @@ export default {
 
       &.field-date-active {
         color: #3a84ff;
+
         .icon-date-picker {
           color: #3a84ff;
         }
@@ -1095,8 +1096,10 @@ export default {
         cursor: not-allowed;
       }
     }
+
     .icon-date-picker {
-      color:#979ba5;
+      color: #979ba5;
+
       &.active {
         color: #3a84ff;
       }
@@ -1141,6 +1144,7 @@ export default {
   }
 
   .header {
+    /* stylelint-disable-next-line declaration-no-important */
     white-space: normal !important;
   }
 </style>

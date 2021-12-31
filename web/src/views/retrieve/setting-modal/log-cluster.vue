@@ -61,11 +61,11 @@
 
       <div class="setting-item ">
         <span class="left-word">{{$t('retrieveSetting.ignoreNumbers')}}</span>
-        <span style="color: #979BA5;">{{$t('retrieveSetting.ignoreNumbersTips')}}</span>
+        <span style="color: #979ba5;">{{$t('retrieveSetting.ignoreNumbersTips')}}</span>
       </div>
       <div class="setting-item ">
         <span class="left-word">{{$t('retrieveSetting.ignoreCharacters')}}</span>
-        <span style="color: #979BA5;">{{$t('retrieveSetting.ignoreCharactersTips')}}</span>
+        <span style="color: #979ba5;">{{$t('retrieveSetting.ignoreCharactersTips')}}</span>
       </div>
       <div class="setting-item ">
         <span class="left-word">{{$t('retrieveSetting.dataFingerprint')}}</span>
@@ -153,7 +153,7 @@
                 v-if="item.fields_name !== ''"
                 v-model="item.op"
                 class="icon-box mr-neg1"
-                style="color: #3A84FF;"
+                style="color: #3a84ff;"
                 :disabled="!globalEditable"
                 :clearable="false"
                 :popover-min-width="60">
@@ -455,97 +455,122 @@ export default {
 <style lang="scss" scoped>
 .setting-log-cluster {
   padding: 0 20px;
+
   .setting-item {
     display: flex;
     align-items: center;
     margin-bottom: 25px;
+
     .left-word {
       font-weight: 700;
       font-size: 14px;
       margin-right: 16px;
     }
+
     .bk-icon {
       margin-left: 8px;
       font-size: 18px;
       color: #979ba5;
     }
   }
+
   .filter-rule {
     display: flex;
     flex-wrap: wrap;
+
     .icon-box {
       min-width: 32px;
       height: 32px;
-      background: #ffffff;
+      background: #fff;
       font-size: 14px;
       line-height: 28px;
       text-align: center;
       cursor: pointer;
       border: 1px solid #c4c6cc;
+
       /deep/.bk-select-name {
+        /* stylelint-disable-next-line declaration-no-important */
         padding: 0 !important;
       }
+
       .icon-plus-line {
         color: #3a84ff;
       }
     }
   }
+
   .filter-rule-item {
     margin-bottom: 6px;
+
     /deep/.bk-select-angle {
       display: none;
     }
+
     /deep/.bk-select {
       border-radius: 0;
     }
+
     /deep/.bk-form-control {
       width: 140px;
       border-radius: 0;
     }
+
     .and-or {
       min-width: 62px;
       font-size: 12px;
       color: #ff9c01;
     }
+
     .min-100 {
       min-width: 100px;
     }
+
     .mr-neg1 {
       position: relative;
       margin-right: -1px;
     }
+
     .above {
       z-index: 99;
     }
   }
+
   .rule-container {
     padding: 0 16px;
   }
+
   .rule-error {
     /deep/.bk-form-input {
       border-color: #ff5656;
     }
+
     &.bk-select {
+      /* stylelint-disable-next-line declaration-no-important */
       border-color: #ff5656 !important;
     }
   }
 }
+
 .submit-dialog {
   /deep/.bk-dialog-tool {
     display: none;
   }
+
   .submit-dialog-container {
     /deep/ .bk-button {
       margin-left: 100px;
     }
+
     .submit-dialog-title {
       font-weight: 700;
       font-size: 16px;
       margin-bottom: 7px;
     }
+
     .submit-dialog-text {
       margin-bottom: 22px;
     }
+
     /deep/.submit-dialog-btn {
       margin-left: 224px;
     }

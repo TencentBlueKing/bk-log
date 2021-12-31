@@ -196,6 +196,7 @@ export default {
     }
 
     .skip {
+      /* stylelint-disable-next-line declaration-no-important */
       font-weight: normal !important;
       color: #64656e;
 

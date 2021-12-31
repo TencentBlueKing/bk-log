@@ -316,13 +316,16 @@ export default {
     height: 200px;
     background-color: #fff;
     overflow: hidden;
+
     &.is-fold {
       height: 60px;
     }
+
     /deep/ .echart-legend {
       display: flex;
       justify-content: center;
     }
+
     .converge-cycle {
       position: absolute;
       top: 21px;
@@ -331,12 +334,14 @@ export default {
       color: #63656e;
       display: inline-block;
       margin-left: 32px;
+
       .select-custom {
         display: inline-block;
         margin-left: 5px;
         vertical-align: middle;
       }
     }
+
     .chart-empty {
       position: absolute;
       top: 0;
@@ -347,19 +352,23 @@ export default {
       align-items: center;
       flex-direction: column;
       background: #fff;
+
       .icon-chart {
         width: 38px;
         height: 38px;
         fill: #dcdee6;
       }
+
       .text {
         color: #979ba5;
         font-size: 14px;
       }
     }
+
     .title-wrapper {
       padding: 18px 24px 0;
     }
+
     .monitor-echart-wrap {
       padding-top: 0;
     }

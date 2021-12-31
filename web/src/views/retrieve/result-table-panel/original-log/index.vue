@@ -164,19 +164,23 @@ export default {
     display: flex;
     justify-content: space-between;
   }
+
   .tools-more {
     @include flex-center;
+
     .switch-label {
       margin-right: 2px;
-      color: #63656E;
+      color: #63656e;
       font-size: 12px;
     }
   }
+
   .operation-icons {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-left: 16px;
+
     .operation-icon {
       display: flex;
       justify-content: center;
@@ -189,24 +193,29 @@ export default {
       transition: boder-color .2s;
       border-radius: 2px;
       outline: none;
+
       &:hover {
         border-color: #979ba5;
         transition: boder-color .2s;
       }
+
       &:active {
         border-color: #3a84ff;
         transition: boder-color .2s;
       }
+
       .log-icon {
         width: 16px;
         font-size: 16px;
         color: #979ba5;
       }
     }
+
     .disabled-icon {
       background-color: #fff;
       border-color: #dcdee5;
       cursor: not-allowed;
+
       &:hover,
       .log-icon {
         border-color: #dcdee5;

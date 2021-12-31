@@ -187,36 +187,43 @@ export default {
   .archive-state-list {
     max-height: 500px;
     overflow: auto;
+
     .state-table {
       th.is-first,
       td.is-first {
         padding-left: 80px;
       }
+
       .filter-column {
         .cell {
           display: flex;
         }
       }
+
       .restore-status {
         display: flex;
         align-items: center;
       }
+
       .status-icon {
         display: inline-block;
         margin-right: 6px;
         width: 4px;
         height: 4px;
         border-radius: 50%;
+
         &.is-SUCCESS {
-          background: #6DD400;
+          background: #6dd400;
         }
+
         &.is-FAIL,
         &.is-PARTIAL {
-          background: #E02020;
+          background: #e02020;
 
         }
+
         &.is-IN_PROGRESS {
-          background: #FE9C00;
+          background: #fe9c00;
         }
       }
     }

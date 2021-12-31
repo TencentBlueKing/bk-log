@@ -119,15 +119,18 @@ export default {
   &:before {
     z-index: -1;
   }
+
   .cell {
     padding-top: 14px;
     width: 100%;
   }
+
   .cell-bar {
     position: relative;
     height: 12px;
     background-color: #e9e9e9;
   }
+
   /deep/ .bk-table-empty-text {
     padding: 0;
     width: 100%;

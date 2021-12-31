@@ -149,7 +149,7 @@
     </div>
     <!-- 效果 -->
     <div class="container-item" v-show="isClickAlertIcon">
-      <p style="height:32px">{{$t('retrieveSetting.effect')}}</p>
+      <p style="height: 32px">{{$t('retrieveSetting.effect')}}</p>
       <div class="effect-container" v-bkloading="{ isLoading: debugRequest, size: 'mini' }">{{effectOriginal}}</div>
     </div>
     <!-- 添加规则dialog -->
@@ -486,56 +486,68 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-@import "@/scss/mixins/flex.scss";
+@import '@/scss/mixins/flex.scss';
+
 .container-item {
   margin-bottom: 40px;
+
   &.table-container {
     position: relative;
   }
+
   .cluster-table {
     border: 1px solid #dcdee5;
     border-bottom: none;
     border-radius: 2px;
   }
+
   .effect-container {
     height: 100px;
     padding: 5px 10px;
     font-size: 12px;
     background: #fafbfd;
     line-height: 24px;
-    color: #000000;
+    color: #000;
     border: 1px solid#DCDEE5;
     border-radius: 2px;
   }
+
   &.debug-container {
     margin-top: -24px;
+
     .debug-tool {
       width: 86px;
       font-size: 14px;
       margin-bottom: 4px;
       color: #3a84ff;
       cursor: pointer;
+
       .bk-icon {
         font-size: 24px;
         transform: translateY(-2px);
       }
+
       .bk-icon-rotate {
         transform: rotateZ(180deg);
       }
     }
+
     .debug-alert {
       margin-bottom: 8px;
     }
   }
 }
+
 .table-row {
   min-height: 44px;
   border-bottom: 1px solid #dcdee5;
   background-color: #fafbfd;
   font-size: 12px;
+
   .icon {
     margin: 0 10px 0 4px;
   }
+
   .icon-drag-dots {
     width: 16px;
     text-align: left;
@@ -543,64 +555,79 @@ export default {
     color: #979ba5;
     cursor: move;
     opacity: 0;
-    transition: opacity 0.2s linear;
+    transition: opacity .2s linear;
   }
+
   &.sortable-ghost-class {
     background: #eaf3ff;
-    transition: background 0.2s linear;
+    transition: background .2s linear;
   }
+
   &:hover {
     background: #eaf3ff;
-    transition: background 0.2s linear;
+    transition: background .2s linear;
+
     .icon-drag-dots {
       opacity: 1;
-      transition: opacity 0.2s linear;
+      transition: opacity .2s linear;
     }
   }
+
   &.table-row-li {
-    background-color: #ffffff;
-    transition: background 0.3s;
+    background-color: #fff;
+    transition: background .3s;
+
     &:hover {
       background-color: #f0f1f5;
     }
   }
+
   .row-left {
     display: flex;
     align-items: center;
+
     .row-left-index {
       width: 120px;
       margin-left: 14px;
     }
+
     .regular-container {
       width: 600px;
       padding: 2px;
       word-break: break-all;
+
       .row-left-regular {
         cursor: pointer;
       }
     }
   }
+
   .row-right > div {
     width: 150px;
+
     .row-right-item {
       width: 120px;
       display: inline-block;
       word-break: break-all;
     }
+
     .bk-button-text {
       font-size: 12px;
     }
   }
 }
+
 .table-operate {
   position: absolute;
   right: 0;
   top: 0;
+
   .bk-button {
     border-radius: 3px;
     margin-left: 2px;
     padding: 0;
   }
+
   .btn-hover {
     &:hover {
       color: #3a84ff;
@@ -608,6 +635,7 @@ export default {
     }
   }
 }
+
 .no-cluster-rule {
   height: 200px;
   display: flex;
@@ -615,51 +643,65 @@ export default {
   justify-content: center;
   align-items: center;
   border-bottom: 1px solid #dcdee5;
+
   .icon-empty {
     color: #c3cdd7;
     font-size: 80px;
   }
 }
+
 .log-style {
   height: 100px;
+
   /deep/.bk-form-textarea:focus {
+    /* stylelint-disable-next-line declaration-no-important */
     background-color: #313238 !important;
     border-radius: 2px;
   }
+
   /deep/.bk-form-textarea[disabled] {
+    /* stylelint-disable-next-line declaration-no-important */
     background-color: #313238 !important;
     border-radius: 2px;
   }
+
   /deep/.bk-textarea-wrapper {
     border: none;
   }
 }
+
 .add-rule {
   .bk-form {
     margin-left: 15px;
     width: 560px;
+
     /deep/.bk-label {
       text-align: left;
     }
   }
+
   .inspection-status {
     display: flex;
     position: relative;
+    font-size: 14px;
+
     .bk-icon {
       font-size: 18px;
     }
+
     .spin {
       top: 2px;
       position: absolute;
     }
-    font-size: 14px;
   }
 }
+
 .flbc {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .fl-jfsb {
   @include flex-justify(space-between);
 }

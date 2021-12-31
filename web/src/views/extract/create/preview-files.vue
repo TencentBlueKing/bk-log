@@ -273,34 +273,43 @@ export default {
   width: calc(100% - 140px);
   max-width: 1000px;
   min-height: 40px;
+
   .flex-box {
     display: flex;
     align-items: center;
+
     .download-url-text {
       color: #3a84ff;
       cursor: pointer;
+
       &:hover {
         color: #699df4;
       }
+
       &:active {
         color: #2761dd;
       }
+
       &.is-disabled {
         color: #c4c6cc;
         cursor: not-allowed;
       }
     }
   }
+
   .table-head-text {
     margin: 18px 0 8px;
     font-size: 12px;
   }
 }
+
 .preview-scroll-table {
   .bk-table-body-wrapper {
     overflow-y: auto;
   }
+
   .cell {
+    /* stylelint-disable-next-line declaration-no-important */
     display: flex !important;
   }
 }

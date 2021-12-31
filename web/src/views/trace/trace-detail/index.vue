@@ -719,6 +719,7 @@ export default {
       margin-left: 5px;
     }
   }
+
   .span-detail-slider {
     .span-detail-slot {
       background: #313238;

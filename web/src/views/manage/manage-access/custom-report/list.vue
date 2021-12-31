@@ -337,50 +337,63 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/scss/mixins/clearfix";
-@import "@/scss/conf";
-@import "@/scss/devops-common.scss";
-@import "@/scss/mixins/cursor.scss";
+@import '@/scss/mixins/clearfix';
+@import '@/scss/conf';
+@import '@/scss/devops-common.scss';
+@import '@/scss/mixins/cursor.scss';
 
 .custom-item-container {
   padding: 20px 24px;
+
   .top-operation {
     margin-bottom: 20px;
+
     @include clearfix;
+
     .bk-button {
       width: 150px;
     }
+
     .collect-search {
       width: 360px;
     }
   }
+
   .table-operation {
     .custom-table {
       overflow: visible;
+
       .bk-table-pagination-wrapper {
-        background-color: #FAFBFD;
+        background-color: #fafbfd;
       }
+
       .operate-column .cell {
         overflow: visible;
       }
+
       .bk-table-body-wrapper {
         overflow: visible;
       }
+
       .collect-table-operate {
         display: flex;
         align-items: center;
+
         .king-button {
           margin-right: 14px;
+
           &:last-child {
             margin-right: 0;
           }
         }
       }
+
       .bk-dropdown-list a.text-disabled:hover {
         color: #c4c6cc;
         cursor: not-allowed;
       }
     }
+
     .collector-config-name {
       @include cursor;
     }

@@ -260,111 +260,134 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "@/scss/mixins/flex.scss";
+@import '@/scss/mixins/flex.scss';
+
 .compared-change {
   height: 24px;
   width: 100%;
   justify-content: center;
 }
+
 .log-cluster-table {
   /deep/ .bk-table-body-wrapper {
     min-height: calc(100vh - 550px);
+
     .bk-table-empty-block {
       min-height: calc(100vh - 550px);
-       @include flex-center;
+
+      @include flex-center;
     }
   }
+
   &:before {
     display: none;
   }
+
   /deep/.bk-table-row-last {
     td {
       border: none;
     }
   }
-  .signature{
+
+  .signature {
     width: 95px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     line-height: 24px;
   }
+
   .empty-text {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
+
     .bk-icon {
       font-size: 65px;
     }
+
     .empty-leave {
       color: #3a84ff;
       margin-top: 8px;
       cursor: pointer;
     }
   }
+
   .pattern-content {
     display: inline-block;
     padding-right: 15px;
     position: relative;
     padding-top: 4px;
     overflow: hidden;
+
     &.is-limit {
       max-height: 96px;
     }
   }
+
   .show-whole-btn {
     position: absolute;
     top: 80px;
     width: 100%;
     height: 24px;
-    color: #3A84FF;
+    color: #3a84ff;
     font-size: 12px;
     background: #fff;
     cursor: pointer;
     transition: background-color .25s ease;
   }
+
   .hide-whole-btn {
     line-height: 14px;
     margin-top: 2px;
-    color: #3A84FF;
+    color: #3a84ff;
     cursor: pointer;
   }
 }
-.table-no-data{
-  /deep/.bk-table-header-wrapper{
-    tr{
-      >th{
+
+.table-no-data {
+  /deep/.bk-table-header-wrapper {
+    tr {
+      >th {
+        /* stylelint-disable-next-line declaration-no-important */
         border-bottom: none !important;
       }
     }
   }
 }
+
 .new-finger {
   width: 40px;
   height: 16px;
   font-size: 12px;
   line-height: 14px;
   text-align: center;
-  color: #EA3636;
-  background: #FFEEEE;
-  border: 1px solid #FD9C9C;
+  color: #ea3636;
+  background: #fee;
+  border: 1px solid #fd9c9c;
   border-radius: 9px;
 }
+
 .link-color {
   color: #3a84ff;
   cursor: pointer;
 }
+
 .icon-arrows-down {
   color: #2dcb56;
 }
+
 .icon-arrows-up {
   color: #ff5656;
 }
+
 .flac {
   margin-top: -4px;
+
   @include flex-align;
 }
+
 .bk-icon {
   font-size: 24px;
 }

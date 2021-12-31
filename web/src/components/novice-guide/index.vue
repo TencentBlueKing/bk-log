@@ -328,12 +328,18 @@ export default {
 <style lang='postcss'>
 body {
   *.guide-highlight {
+    /* stylelint-disable-next-line declaration-no-important */
     opacity: 1 !important;
+
+    /* stylelint-disable-next-line declaration-no-important */
     z-index: 100001 !important;
     background: #fff;
+
+    /* stylelint-disable-next-line declaration-no-important */
     pointer-events: none !important;
   }
 }
+
 .novice-guide {
   position: fixed;
   top: 0;
@@ -341,7 +347,8 @@ body {
   bottom: 0;
   left: 0;
   z-index: 100000;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,.6);
+
   .step-box {
     position: absolute;
     width: 270px;
@@ -351,45 +358,54 @@ body {
     color: #313238;
     border-radius: 2px;
     background: #fff;
+
     &.right {
       .target-arrow {
         top: 30px;
         left: -4px;
       }
     }
+
     &.left {
       .target-arrow {
         top: 30px;
         right: -4px;
       }
     }
+
     &.bottom {
       .target-arrow {
         top: -4px;
         left: 50%;
       }
     }
-    &.top{
+
+    &.top {
       .target-arrow {
         bottom: -4px;
         left: 50%;
       }
     }
-    .step-title{
+
+    .step-title {
       font-weight: bold;
       line-height: 16px;
     }
+
     .step-content {
       margin-top: 7px;
     }
+
     .step-action {
       display: flex;
       justify-content: flex-end;
       margin-top: 14px;
+
       .action-text {
-        color: #3A84FF;
+        color: #3a84ff;
         cursor: pointer;
       }
+
       .action-btn {
         height: 20px;
         padding: 0 8px;
@@ -397,10 +413,11 @@ body {
         line-height: 20px;
         color: #fff;
         border-radius: 10px;
-        background: #3A84FF;
+        background: #3a84ff;
         cursor: pointer;
       }
     }
+
     .target-arrow {
       position: absolute;
       width: 8px;
@@ -409,11 +426,13 @@ body {
       transform: rotateZ(45deg);
     }
   }
+
   .guide-finished-box {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+
     .wraper {
       width: 400px;
       height: 210px;
@@ -421,6 +440,7 @@ body {
       text-align: center;
       background: #fff;
       border-radius: 2px;
+
       .flag {
         position: absolute;
         top: 0;
@@ -432,10 +452,11 @@ body {
         height: 86px;
         font-size: 55px;
         color: #fff;
-        border: 13px solid #DCFFE2;
+        border: 13px solid #dcffe2;
         border-radius: 50%;
-        background: #2DCB56;
+        background: #2dcb56;
         transform: translate(-50%, -27px);
+
         &:after {
           content: '';
           position: absolute;
@@ -443,20 +464,25 @@ body {
       }
     }
   }
+
   .guide-stop-box {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+
     .wraper {
       width: 500px;
+
       /* height: 390px; */
+
       /* padding-top: 45px; */
       height: 370px;
       padding-top: 25px;
       text-align: center;
       border-radius: 2px;
       background: #fff;
+
       .cancal-btn {
         position: absolute;
         top: 5px;
@@ -470,6 +496,7 @@ body {
         text-align: center;
         border-radius: 50%;
         cursor: pointer;
+
         &:hover {
           background-color: #f0f1f5;
         }
@@ -477,9 +504,11 @@ body {
     }
   }
 }
+
 .guide-fade-leave-active {
   transition: visibility .15s linear, opacity .1s linear;
 }
+
 .guide-fade-leave-to {
   opacity: 0;
   visibility: hidden;

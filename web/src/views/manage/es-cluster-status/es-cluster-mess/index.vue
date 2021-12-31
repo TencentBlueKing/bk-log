@@ -33,7 +33,7 @@
       </bk-button>
       <bk-input
         v-model="params.keyword"
-        style="width: 360px;float:right;"
+        style="width: 360px;float: right;"
         right-icon="bk-icon icon-search"
         data-test-id="esAccessBox_input_search"
         :placeholder="$t('搜索ES源名称，地址，创建人')"
@@ -431,7 +431,7 @@ export default {
 
 <style lang="scss">
   .es-access-container {
-     padding: 20px 24px;
+    padding: 20px 24px;
 
     .main-operator-container {
       margin-bottom: 20px;
@@ -469,8 +469,10 @@ export default {
       }
     }
   }
+
   .bk-table-setting-popover-content-theme.tippy-tooltip {
     padding: 15px 0 0;
+
     .bk-table-setting-content .content-line-height {
       display: none;
     }

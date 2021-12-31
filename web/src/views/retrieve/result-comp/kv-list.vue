@@ -188,6 +188,7 @@ export default {
   .log-item {
     display: flex;
     align-items: baseline;
+
     .field-label {
       width: 160px;
       min-width: 160px;
@@ -195,41 +196,51 @@ export default {
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+
     .field-value {
       word-break: break-all;
     }
+
     .handle-option-list {
       flex-shrink: 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin: 0 20px;
+
       .icon {
         margin-right: 6px;
         font-size: 14px;
         cursor: pointer;
+
         &:hover {
-          color: #3A84FF;
+          color: #3a84ff;
         }
       }
+
       .bk-icon {
         transform: rotate(45deg);
       }
+
       .icon-arrows-up-circle {
         margin-right: 2px;
         font-size: 12px;
+
         &.is-hidden {
           transform: rotate(225deg);
         }
       }
+
       .icon-chart {
         margin: 0 0 0 6px;
       }
+
       .icon-copy {
         transform: rotate(0);
         font-size: 24px;
         cursor: pointer;
       }
+
       .icon-close-circle,
       .icon-minus-circle {
         &.is-disabled {

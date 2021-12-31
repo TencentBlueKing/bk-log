@@ -72,15 +72,18 @@ export default {
 
 <style lang="scss" scoped>
 @import '../../scss/mixins/scroller';
+
 .log-extract-container {
   padding: 0 24px 20px;
   color: #313238;
   font-size: 14px;
+
   .top-title-container {
     height: 60px;
     padding: 20px 0;
     margin: 0 60px;
     border-bottom: 1px solid #dde4eb;
+
     .top-title {
       display: flex;
       align-items: center;
@@ -90,11 +93,13 @@ export default {
       line-height: 20px;
       font-size: 14px;
       font-weight: bold;
+
       .icon-arrows-left-shape {
         color: #979ba5;
         cursor: pointer;
         padding: 2px 8px 2px 2px;
         transition: color .2s;
+
         &:hover {
           color: #3a84ff;
           transition: color .2s;
@@ -102,10 +107,12 @@ export default {
       }
     }
   }
+
   /deep/ .main-container {
     position: relative;
     padding-bottom: 60px;
     overflow: auto;
+
     @include scroller($backgroundColor: #c4c6cc, $width: 4px);
   }
 }

@@ -171,6 +171,7 @@ export default class ChartTitle extends Vue {
         cursor: pointer;
       }
     }
+
     .chart-spin {
       position: absolute;
       top: 24px;

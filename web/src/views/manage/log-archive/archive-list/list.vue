@@ -324,16 +324,21 @@ export default {
 
   .log-archive-list {
     padding: 20px 24px;
+
     .top-operation {
       margin-bottom: 20px;
+
       @include clearfix;
+
       .bk-button {
         width: 120px;
       }
     }
+
     .list-search {
       width: 320px;
     }
+
     .archive-table {
       .filter-column {
         .cell {
@@ -341,6 +346,7 @@ export default {
         }
       }
     }
+
     .bk-table-body td.bk-table-expanded-cell {
       padding: 0;
     }

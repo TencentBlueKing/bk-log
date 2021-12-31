@@ -88,8 +88,8 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/scss/mixins/flex";
-@import "@/scss/mixins/scroller";
+@import '@/scss/mixins/flex';
+@import '@/scss/mixins/scroller';
 
 .intro-panel {
   .right-window {
@@ -102,69 +102,84 @@ export default {
     top: 102px;
     z-index: 1;
     color: #63656e;
-    transition: right 0.5s;
+    transition: right .5s;
     padding: 16px 24px 0;
-    .top-title{
+
+    .top-title {
       height: 48px;
     }
+
     &.window-active {
       right: 0;
     }
+
     h1 {
       font-size: 12px;
       font-weight: 700;
       margin: 26px 0 10px;
+
       &:first-child {
         margin-top: 0;
       }
     }
+
     ul {
       margin-left: 10px;
+
       li {
         margin-top: 8px;
         list-style: inside;
         font-size: 12px;
       }
     }
+
     p {
       font-size: 12px;
     }
+
     pre {
       margin: 0;
       margin-top: 6px;
       padding: 10px 14px;
       background: #f4f4f7;
       overflow-x: auto;
+
       @include scroller;
     }
+
     a {
       display: inline-block;
       margin: 10px 0;
       color: #3a84ff;
     }
   }
+
   .create-btn {
     width: 24px;
     height: 24px;
     position: absolute;
     z-index: 99;
-    &.details{
+
+    @include flex-center;
+
+    &.details {
       top: 64px;
       right: 16px;
       position: fixed;
       transform: rotateZ(360deg) rotateX(180deg);
     }
-    &.close{
+
+    &.close {
       top: 10px;
       right: 16px;
     }
+
     &:hover {
       cursor: pointer;
       background: #f0f1f5;
-      color: #3A84FF;
+      color: #3a84ff;
       border-radius: 2px;
     }
-    @include flex-center;
   }
 }
 </style>

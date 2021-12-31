@@ -185,24 +185,29 @@ export default {
   transition: boder-color .2s;
   border-radius: 2px;
   outline: none;
+
   &:hover {
     border-color: #979ba5;
     transition: boder-color .2s;
   }
+
   &:active {
     border-color: #3a84ff;
     transition: boder-color .2s;
   }
+
   .log-icon {
     width: 16px;
     font-size: 16px;
     color: #979ba5;
   }
 }
+
 .disabled-icon {
   background-color: #fff;
   border-color: #dcdee5;
   cursor: not-allowed;
+
   &:hover,
   .log-icon {
     border-color: #dcdee5;
@@ -212,11 +217,14 @@ export default {
 
 .async-export-dialog {
   .header {
+    /* stylelint-disable-next-line declaration-no-important */
     padding: 18px 0px 32px !important;
   }
+
   .export-container {
     text-align: center;
   }
+
   .bk-dialog-warning {
     display: block;
     margin: 0 auto;
@@ -228,6 +236,7 @@ export default {
     border-radius: 50%;
     background-color: #ffb848;
   }
+
   .header {
     padding: 18px 24px 32px;
     display: inline-block;
@@ -240,11 +249,13 @@ export default {
     line-height: 1.5;
     margin: 0;
   }
+
   .export-type {
     margin-bottom: 24px;
     padding: 0 22px;
     display: flex;
     align-items: center;
+
     .export-text {
       margin-left: 8px;
       max-width: 184px;
@@ -253,6 +264,7 @@ export default {
       color: #313238;
       line-height: 18px;
     }
+
     .bk-button {
       margin-left: auto;
     }

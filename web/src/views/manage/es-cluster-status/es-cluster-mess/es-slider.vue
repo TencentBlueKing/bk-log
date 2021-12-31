@@ -50,7 +50,7 @@
           <bk-form-item :label="$t('来源')" required property="source_type">
             <div class="source-item">
               <bk-select
-                style="width:154px;margin-right:10px;"
+                style="width: 154px;margin-right: 10px;"
                 v-model="formData.source_type"
                 @change="handleChangeSource">
                 <bk-option
@@ -164,7 +164,7 @@
                   :disabled="isDisableHotSetting"></bk-switcher>
                 <template v-if="isDisableHotSetting && !connectLoading">
                   <span class="bk-icon icon-info"></span>
-                  <span style="font-size:12px;">{{ $t('没有获取到正确的标签，') }}</span>
+                  <span style="font-size: 12px;">{{ $t('没有获取到正确的标签，') }}</span>
                   <a :href="configDocUrl" target="_blank" class="button-text">{{ $t('查看具体的配置方法') }}</a>
                 </template>
               </div>
@@ -210,7 +210,7 @@
               </div>
             </bk-form-item>
           </template>
-          <bk-form-item style="margin-top:40px;">
+          <bk-form-item style="margin-top: 40px;">
             <bk-button
               theme="primary"
               class="king-button mr10"
@@ -585,38 +585,47 @@ export default {
 <style lang="scss" scoped>
   .king-slider-content {
     min-height: 394px;
+
     .king-form {
       padding: 16px 140px 36px 36px;
+
       .form-flex-container {
         display: flex;
         align-items: center;
         // height: 32px;
         // font-size: 12px;
         color: #63656e;
+
         .icon-info {
           margin: 0 8px 0 24px;
           font-size: 14px;
           color: #3a84ff;
         }
+
         .button-text {
           font-size: 12px;
+
           .icon-eye {
             margin: 0 6px 0 16px;
           }
         }
       }
+
       .bk-form-item {
         margin-top: 18px;
       }
+
       .source-item {
         display: flex;
       }
+
       .selected-tag {
         .bk-tag {
           position: relative;
           margin: 0 10px 10px 0;
           padding-left: 18px;
         }
+
         .tag-icon::before {
           position: absolute;
           top: 9px;
@@ -626,18 +635,22 @@ export default {
           height: 4px;
           border-radius: 50%;
         }
+
         .is-active::before {
           background-color: #45e35f;
         }
+
         .is-normal::before {
           background-color: #699df4;
         }
       }
+
       .source-name-input.is-error {
         background-color: #ffeded;
         border-color: #fde2e2;
         color: #f56c6c;
         transition: all .2s;
+
         &:hover {
           background: #fbb8ac;
           color: #fff;
@@ -646,6 +659,7 @@ export default {
       }
     }
   }
+
   .king-slider-footer {
     display: flex;
     align-items: center;
