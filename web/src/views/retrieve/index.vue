@@ -122,7 +122,6 @@
                 <span>{{ $t('过滤条件') }}</span>
                 <div class="filter-item">
                   <span
-                    v-if="showIpQuick"
                     @click="openIpQuick"
                     data-test-id="dataQuery_span_addIP"
                   >{{ $t('添加IP') }}</span>
@@ -137,9 +136,8 @@
               </div>
               <div class="add-filter-condition-container">
                 <ip-quick
-                  v-if="showIpQuick"
-                  ref="ipQuick"
                   :host-scopes="retrieveParams.host_scopes"
+                  @openIpQuick="openIpQuick"
                   @confirm="handleSaveIpQuick" />
                 <div class="cut-line" v-if="showFilterCutline"></div>
                 <template v-for="(item, index) in retrieveParams.addition">
@@ -289,6 +287,15 @@
       </div>
     </div>
 
+    <!-- 目标选择器 -->
+    <ip-selector-dialog
+      :show-dialog.sync="showIpSelectorDialog"
+      :show-dynamic-group="true"
+      :target-nodes="retrieveParams.host_scopes.target_nodes"
+      :target-node-type="retrieveParams.host_scopes.target_node_type"
+      @target-change="handleSaveIpQuick">
+    </ip-selector-dialog>
+
     <setting-modal
       :index-set-item="indexSetItem"
       :is-show-dialog="isShowSettingModal"
@@ -311,6 +318,7 @@ import RetrieveDetailInput from './condition-comp/retrieve-detail-input';
 import QueryStatement from './condition-comp/query-statement';
 import FilterConditionItem from './condition-comp/filter-condition-item';
 import IpQuick from './condition-comp/ip-quick';
+import IpSelectorDialog from '@/components/data-Access/ip-selector-dialog';
 import FieldFilter from './condition-comp/field-filter';
 import FavoritePopper from './condition-comp/favorite-popper';
 import ResultHeader from './result-comp/result-header';
@@ -333,6 +341,7 @@ export default {
     QueryStatement,
     FilterConditionItem,
     IpQuick,
+    IpSelectorDialog,
     FieldFilter,
     FavoritePopper,
     ResultHeader,
@@ -387,6 +396,10 @@ export default {
           modules: [],
           // 手动输入 ip，多个 ip 用英文 , 分隔
           ips: '',
+          // 目标节点
+          target_nodes: [],
+          // 目标节点类型
+          target_node_type: '',
         },
         // 过滤条件，可添加多个，每个过滤条件格式 {field: 'time', operator: 'is', value: 'xxx'}
         // field 为过滤的字段
@@ -409,7 +422,7 @@ export default {
       statisticalFieldsData: {}, // 字段可选值统计
       retrieveDropdownData: {}, // 检索下拉字段可选值统计
       statementSearchrecords: [], // 查询语句历史记录
-      ipTopoSwitch: true, // IP快选功能相关
+      // ipTopoSwitch: true, // IP快选功能相关
       totalFields: [], // 表格字段
       visibleFields: [], // 显示的排序后的字段
       notTextTypeFields: [], // 字段类型不为 text 的字段
@@ -450,6 +463,7 @@ export default {
           clustering_field: '',
         },
       },
+      showIpSelectorDialog: false,
       isAsIframe: false,
       localIframeQuery: {},
       isFirstLoad: true,
@@ -464,12 +478,16 @@ export default {
     }),
     ...mapGetters(['asIframe', 'iframeQuery']),
     // 是否显示IP快选功能模块
-    showIpQuick() {
-      return this.ipTopoSwitch;
-    },
+    // showIpQuick() {
+    //   return this.ipTopoSwitch;
+    // },
     showFilterCutline() {
       const { host_scopes, addition } = this.retrieveParams;
-      return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
+      // return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
+      return (host_scopes.modules.length
+      || host_scopes.ips.length
+      || host_scopes.target_nodes.length)
+      && addition.length;
     },
     showSearchPage() {
       return this.hasAuth || this.isNoIndexSet;
@@ -527,6 +545,12 @@ export default {
       },
     },
     'retrieveParams.host_scopes.modules': {
+      deep: true,
+      handler() {
+        if (!this.isFavoriteSearch) this.latestFavoriteId = '';
+      },
+    },
+    'retrieveParams.host_scopes.target_nodes': {
       deep: true,
       handler() {
         if (!this.isFavoriteSearch) this.latestFavoriteId = '';
@@ -849,14 +873,30 @@ export default {
       this.retrieveLog();
     },
 
-    // 打开 ip 快选弹窗
+    // 打开 ip 选择弹窗
     openIpQuick() {
-      this.$refs.ipQuick.openDialog();
+      // this.$refs.ipQuick.openDialog();
+      this.showIpSelectorDialog = true;
     },
 
-    // IP 快选
+    // IP 选择
     handleSaveIpQuick(data) {
-      this.retrieveParams.host_scopes = data;
+      // this.retrieveParams.host_scopes = data;
+      const { target_node_type: targetNodeType, target_nodes: targetNodes } = data;
+      this.retrieveParams.host_scopes.target_node_type = targetNodes.length ? targetNodeType : '';
+      this.retrieveParams.host_scopes.target_nodes = targetNodes.map((node) => {
+        const targets = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE'].includes(targetNodeType)
+          ? {
+            node_path: node.node_path,
+            bk_inst_name: node.bk_inst_name,
+            bk_inst_id: node.bk_inst_id,
+            bk_obj_id: node.bk_obj_id,
+          }
+          : targetNodeType === 'DYNAMIC_GROUP' ? { id: node.id, name: node.name, bk_obj_id: node.bk_obj_id }
+            : { ip: node.ip, bk_cloud_id: node.bk_cloud_id, bk_supplier_id: node.bk_supplier_id };
+        return targets;
+      });
+      this.showIpSelectorDialog = false;
       if (this.isAutoQuery) {
         this.retrieveLog();
       }
@@ -869,6 +909,8 @@ export default {
         host_scopes: {
           modules: [],
           ips: '',
+          target_nodes: [],
+          target_node_type: '',
         },
         addition: [],
       });
@@ -1016,9 +1058,9 @@ export default {
       if (historyParams) {
         Object.assign(this.retrieveParams, historyParams);
         // 禁用 IP 快选时过滤历史记录或收藏中相关字段
-        if (!this.showIpQuick) {
-          this.retrieveParams.host_scopes.ips = '';
-        }
+        // if (!this.showIpQuick) {
+        //   this.retrieveParams.host_scopes.ips = '';
+        // }
       }
       // 通过 url 查询参数设置检索参数
       let queryParams = {};
@@ -1072,7 +1114,9 @@ export default {
                 }
                 break;
               case 'host_scopes':
-                if (this.retrieveParams[field].ips !== '' || this.retrieveParams[field].modules.length) {
+                if (this.retrieveParams[field].ips !== ''
+                || this.retrieveParams[field].modules.length
+                || this.retrieveParams[field].target_nodes.length) {
                   queryParamsStr[field] = (JSON.stringify(this.retrieveParams[field]));
                 }
                 break;
@@ -1613,7 +1657,6 @@ export default {
         width: 200%;
       }
     }
-
 
     /*详情页*/
     .retrieve-detail-container {

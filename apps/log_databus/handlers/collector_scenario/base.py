@@ -253,6 +253,11 @@ class CollectorScenario(object):
                 "alias_name": f"dist_{pattern_level}",
                 "description": f"聚类数字签名{pattern_level}",
                 "option": build_es_option_type("keyword", es_version),
+                "is_built_in": False,
+                "is_time": False,
+                "is_analyzed": False,
+                "is_dimension": False,
+                "is_delete": False,
             }
             for pattern_level in PatternEnum.get_choices()
         ]
