@@ -856,8 +856,7 @@ TEMPLATES = [
                 "django.template.context_processors.csrf",
                 "apps.utils.context_processors.mysetting",  # 自定义模版context，可在页面中使用STATIC_URL等变量
                 "django.template.context_processors.i18n",
-            ],
-            "debug": DEBUG,
+            ]
         },
     },
 ]
