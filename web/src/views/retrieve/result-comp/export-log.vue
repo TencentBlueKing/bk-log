@@ -173,101 +173,101 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.operation-icon {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 32px;
-  height: 32px;
-  margin-left: 10px;
-  cursor: pointer;
-  border: 1px solid #c4c6cc;
-  transition: boder-color .2s;
-  border-radius: 2px;
-  outline: none;
-
-  &:hover {
-    border-color: #979ba5;
-    transition: boder-color .2s;
-  }
-
-  &:active {
-    border-color: #3a84ff;
-    transition: boder-color .2s;
-  }
-
-  .log-icon {
-    width: 16px;
-    font-size: 16px;
-    color: #979ba5;
-  }
-}
-
-.disabled-icon {
-  background-color: #fff;
-  border-color: #dcdee5;
-  cursor: not-allowed;
-
-  &:hover,
-  .log-icon {
-    border-color: #dcdee5;
-    color: #c4c6cc;
-  }
-}
-
-.async-export-dialog {
-  .header {
-    /* stylelint-disable-next-line declaration-no-important */
-    padding: 18px 0px 32px !important;
-  }
-
-  .export-container {
-    text-align: center;
-  }
-
-  .bk-dialog-warning {
-    display: block;
-    margin: 0 auto;
-    width: 58px;
-    height: 58px;
-    line-height: 58px;
-    font-size: 30px;
-    color: #fff;
-    border-radius: 50%;
-    background-color: #ffb848;
-  }
-
-  .header {
-    padding: 18px 24px 32px;
-    display: inline-block;
-    width: 100%;
-    font-size: 24px;
-    color: #313238;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 1.5;
-    margin: 0;
-  }
-
-  .export-type {
-    margin-bottom: 24px;
-    padding: 0 22px;
+  .operation-icon {
     display: flex;
+    justify-content: center;
     align-items: center;
+    width: 32px;
+    height: 32px;
+    margin-left: 10px;
+    cursor: pointer;
+    border: 1px solid #c4c6cc;
+    transition: boder-color .2s;
+    border-radius: 2px;
+    outline: none;
 
-    .export-text {
-      margin-left: 8px;
-      max-width: 184px;
-      text-align: left;
-      font-size: 14px;
-      color: #313238;
-      line-height: 18px;
+    &:hover {
+      border-color: #979ba5;
+      transition: boder-color .2s;
     }
 
-    .bk-button {
-      margin-left: auto;
+    &:active {
+      border-color: #3a84ff;
+      transition: boder-color .2s;
+    }
+
+    .log-icon {
+      width: 16px;
+      font-size: 16px;
+      color: #979ba5;
     }
   }
-}
+
+  .disabled-icon {
+    background-color: #fff;
+    border-color: #dcdee5;
+    cursor: not-allowed;
+
+    &:hover,
+    .log-icon {
+      border-color: #dcdee5;
+      color: #c4c6cc;
+    }
+  }
+
+  .async-export-dialog {
+    .header {
+      /* stylelint-disable-next-line declaration-no-important */
+      padding: 18px 0px 32px !important;
+    }
+
+    .export-container {
+      text-align: center;
+    }
+
+    .bk-dialog-warning {
+      display: block;
+      margin: 0 auto;
+      width: 58px;
+      height: 58px;
+      line-height: 58px;
+      font-size: 30px;
+      color: #fff;
+      border-radius: 50%;
+      background-color: #ffb848;
+    }
+
+    .header {
+      padding: 18px 24px 32px;
+      display: inline-block;
+      width: 100%;
+      font-size: 24px;
+      color: #313238;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .export-type {
+      margin-bottom: 24px;
+      padding: 0 22px;
+      display: flex;
+      align-items: center;
+
+      .export-text {
+        margin-left: 8px;
+        max-width: 184px;
+        text-align: left;
+        font-size: 14px;
+        color: #313238;
+        line-height: 18px;
+      }
+
+      .bk-button {
+        margin-left: auto;
+      }
+    }
+  }
 </style>

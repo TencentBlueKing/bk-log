@@ -541,80 +541,80 @@ export default {
 </script>
 
 <style lang="scss">
-@import '@/scss/mixins/clearfix';
-@import '@/scss/mixins/flex';
-@import '@/scss/mixins/scroller';
-@import '@/scss/storage';
+  @import '@/scss/mixins/clearfix';
+  @import '@/scss/mixins/flex';
+  @import '@/scss/mixins/scroller';
+  @import '@/scss/storage';
 
-.custom-create-container {
-  padding: 0 24px;
-  transition: padding .5s;
+  .custom-create-container {
+    padding: 0 24px;
+    transition: padding .5s;
 
-  &.is-active-details {
-    padding: 0 420px 0 24px;
-  }
-
-  .create-form {
-    background: #fff;
-    padding: 24px 37px;
-    margin-top: 20px;
-    border-radius: 2px;
-    border: 1px solid #dcdee5;
-
-    .form-title {
-      font-size: 14px;
-      color: #63656e;
-      font-weight: 700;
-      margin-bottom: 24px;
+    &.is-active-details {
+      padding: 0 420px 0 24px;
     }
 
-    .form-input {
-      width: 320px;
+    .create-form {
+      background: #fff;
+      padding: 24px 37px;
+      margin-top: 20px;
+      border-radius: 2px;
+      border: 1px solid #dcdee5;
+
+      .form-title {
+        font-size: 14px;
+        color: #63656e;
+        font-weight: 700;
+        margin-bottom: 24px;
+      }
+
+      .form-input {
+        width: 320px;
+      }
+
+      .group-tip {
+        font-size: 12px;
+        color: #979ba5;
+      }
+      // .tips_storage {
+      //   width: 560px;
+      //   background-color: rgb(239, 248, 255);
+      //   border: 1px solid deepskyblue;
+      //   font-size: 12px;
+      //   padding: 10px;
+      //   margin-top: 15px;
+      //   div {
+      //     line-height: 24px;
+      //     color: #63656e;
+      //   }
+      // }
+      // .copy-number-input{
+      //   width:100px;
+      //   .input-number-option{
+      //     top: 2px;
+      //   }
+      // }
+      // .hot-data-form-item {
+      //   .bk-form-content {
+      //     display: flex;
+      //     align-items: center;
+      //     .disable-tips {
+      //       margin-left: 10px;
+      //       font-size: 12px;
+      //       color: #63656e;
+      //       a {
+      //         color: #3a84ff;
+      //       }
+      //     }
+      //   }
+      // }
     }
 
-    .group-tip {
-      font-size: 12px;
-      color: #979ba5;
+    .submit-btn {
+      width: 140px;
+      margin: 20px 20px 100px ;
+
+      @include clearfix;
     }
-    // .tips_storage {
-    //   width: 560px;
-    //   background-color: rgb(239, 248, 255);
-    //   border: 1px solid deepskyblue;
-    //   font-size: 12px;
-    //   padding: 10px;
-    //   margin-top: 15px;
-    //   div {
-    //     line-height: 24px;
-    //     color: #63656e;
-    //   }
-    // }
-    // .copy-number-input{
-    //   width:100px;
-    //   .input-number-option{
-    //     top: 2px;
-    //   }
-    // }
-    // .hot-data-form-item {
-    //   .bk-form-content {
-    //     display: flex;
-    //     align-items: center;
-    //     .disable-tips {
-    //       margin-left: 10px;
-    //       font-size: 12px;
-    //       color: #63656e;
-    //       a {
-    //         color: #3a84ff;
-    //       }
-    //     }
-    //   }
-    // }
   }
-
-  .submit-btn {
-    width: 140px;
-    margin: 20px 20px 100px ;
-
-    @include clearfix;
-  }
-}
 </style>

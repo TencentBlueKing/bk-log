@@ -157,71 +157,71 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '@/scss/mixins/flex.scss';
+  @import '@/scss/mixins/flex.scss';
 
-.original-log-panel {
-  .original-log-panel-tools {
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .tools-more {
-    @include flex-center;
-
-    .switch-label {
-      margin-right: 2px;
-      color: #63656e;
-      font-size: 12px;
-    }
-  }
-
-  .operation-icons {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-left: 16px;
-
-    .operation-icon {
+  .original-log-panel {
+    .original-log-panel-tools {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 32px;
-      height: 32px;
-      margin-left: 10px;
-      cursor: pointer;
-      border: 1px solid #c4c6cc;
-      transition: boder-color .2s;
-      border-radius: 2px;
-      outline: none;
+      justify-content: space-between;
+    }
 
-      &:hover {
-        border-color: #979ba5;
-        transition: boder-color .2s;
-      }
+    .tools-more {
+      @include flex-center;
 
-      &:active {
-        border-color: #3a84ff;
-        transition: boder-color .2s;
-      }
-
-      .log-icon {
-        width: 16px;
-        font-size: 16px;
-        color: #979ba5;
+      .switch-label {
+        margin-right: 2px;
+        color: #63656e;
+        font-size: 12px;
       }
     }
 
-    .disabled-icon {
-      background-color: #fff;
-      border-color: #dcdee5;
-      cursor: not-allowed;
+    .operation-icons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-left: 16px;
 
-      &:hover,
-      .log-icon {
+      .operation-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 32px;
+        height: 32px;
+        margin-left: 10px;
+        cursor: pointer;
+        border: 1px solid #c4c6cc;
+        transition: boder-color .2s;
+        border-radius: 2px;
+        outline: none;
+
+        &:hover {
+          border-color: #979ba5;
+          transition: boder-color .2s;
+        }
+
+        &:active {
+          border-color: #3a84ff;
+          transition: boder-color .2s;
+        }
+
+        .log-icon {
+          width: 16px;
+          font-size: 16px;
+          color: #979ba5;
+        }
+      }
+
+      .disabled-icon {
+        background-color: #fff;
         border-color: #dcdee5;
-        color: #c4c6cc;
+        cursor: not-allowed;
+
+        &:hover,
+        .log-icon {
+          border-color: #dcdee5;
+          color: #c4c6cc;
+        }
       }
     }
   }
-}
 </style>

@@ -386,45 +386,45 @@ export default {
 </script>
 
 <style lang="scss">
-@import '@/scss/mixins/flex.scss';
+  @import '@/scss/mixins/flex.scss';
 
-.log-cluster-table-container {
-  .cluster-nav {
-    min-width: 760px;
-    margin-bottom: 12px;
-    color: #63656e;
+  .log-cluster-table-container {
+    .cluster-nav {
+      min-width: 760px;
+      margin-bottom: 12px;
+      color: #63656e;
 
-    @include flex-justify(space-between);
-  }
-
-  .bk-alert {
-    margin-bottom: 16px;
-  }
-}
-
-.no-text-table {
-  .bk-table-empty-block {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: calc(100vh - 480px);
-  }
-
-  .empty-text {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-
-    .bk-icon {
-      font-size: 65px;
+      @include flex-justify(space-between);
     }
 
-    .empty-leave {
-      color: #3a84ff;
-      margin-top: 8px;
-      cursor: pointer;
+    .bk-alert {
+      margin-bottom: 16px;
     }
   }
-}
+
+  .no-text-table {
+    .bk-table-empty-block {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 480px);
+    }
+
+    .empty-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+
+      .bk-icon {
+        font-size: 65px;
+      }
+
+      .empty-leave {
+        color: #3a84ff;
+        margin-top: 8px;
+        cursor: pointer;
+      }
+    }
+  }
 </style>

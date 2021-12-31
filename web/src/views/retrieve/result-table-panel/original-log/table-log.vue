@@ -215,199 +215,199 @@ export default {
 
 
 <style lang="scss">
-.tippy-tooltip.light-theme.bk-table-setting-popover-content-theme {
-  padding: 0;
-}
+  .tippy-tooltip.light-theme.bk-table-setting-popover-content-theme {
+    padding: 0;
+  }
 
-.result-table-container {
-  position: relative;
-  background: #fff;
+  .result-table-container {
+    position: relative;
+    background: #fff;
 
-  .king-table {
-    margin-top: 12px;
+    .king-table {
+      margin-top: 12px;
 
-    td {
-      vertical-align: top;
-    }
-
-    .bk-table-body-wrapper {
-      min-height: calc(100vh - 550px);
-
-      .bk-table-empty-block {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: calc(100vh - 600px);
-      }
-    }
-
-    .cell {
-      .operation-button:not(:last-child) {
-        padding-right: 8px;
-      }
-    }
-
-    td mark {
-      background: #f3e186;
-    }
-
-    /deep/ .result-table-loading {
-      width: calc(100% - 2px);
-      height: calc(100% - 2px);
-    }
-
-    .handle-card {
-      display: inline-block;
-      margin-left: 10px;
-      width: 14px;
-      height: 14px;
-
-      &:first-child {
-        margin-left: 0;
-      }
-    }
-
-    .icon-handle {
-      font-size: 14px;
-      color: #979ba5;
-      cursor: pointer;
-
-      &:hover {
-        color: #3a84ff;
-      }
-    }
-
-    .time-field {
-      font-weight: 700;
-    }
-
-    .original-str,
-    .visiable-field {
-      .cell {
-        padding: 12px 14px 0 14px;
+      td {
+        vertical-align: top;
       }
 
-      .str-content {
-        position: relative;
-        line-height: 20px;
+      .bk-table-body-wrapper {
+        min-height: calc(100vh - 550px);
 
-        &.is-limit {
-          max-height: 96px;
+        .bk-table-empty-block {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: calc(100vh - 600px);
         }
       }
 
-      &.is-wrap {
+      .cell {
+        .operation-button:not(:last-child) {
+          padding-right: 8px;
+        }
+      }
+
+      td mark {
+        background: #f3e186;
+      }
+
+      /deep/ .result-table-loading {
+        width: calc(100% - 2px);
+        height: calc(100% - 2px);
+      }
+
+      .handle-card {
+        display: inline-block;
+        margin-left: 10px;
+        width: 14px;
+        height: 14px;
+
+        &:first-child {
+          margin-left: 0;
+        }
+      }
+
+      .icon-handle {
+        font-size: 14px;
+        color: #979ba5;
+        cursor: pointer;
+
+        &:hover {
+          color: #3a84ff;
+        }
+      }
+
+      .time-field {
+        font-weight: 700;
+      }
+
+      .original-str,
+      .visiable-field {
         .cell {
-          padding: 12px 14px 8px;
+          padding: 12px 14px 0 14px;
         }
 
         .str-content {
-          display: inline-block;
-          overflow: hidden;
+          position: relative;
+          line-height: 20px;
+
+          &.is-limit {
+            max-height: 96px;
+          }
+        }
+
+        &.is-wrap {
+          .cell {
+            padding: 12px 14px 8px;
+          }
+
+          .str-content {
+            display: inline-block;
+            overflow: hidden;
+          }
+        }
+
+        .show-whole-btn {
+          position: absolute;
+          top: 80px;
+          width: 100%;
+          height: 24px;
+          color: #3a84ff;
+          font-size: 12px;
+          background: #fff;
+          cursor: pointer;
+          transition: background-color .25s ease;
+        }
+
+        .hide-whole-btn {
+          line-height: 14px;
+          margin-top: -2px;
+          color: #3a84ff;
+          cursor: pointer;
         }
       }
 
-      .show-whole-btn {
-        position: absolute;
-        top: 80px;
-        width: 100%;
-        height: 24px;
-        color: #3a84ff;
-        font-size: 12px;
-        background: #fff;
-        cursor: pointer;
-        transition: background-color .25s ease;
-      }
+      .original-time {
+        padding-top: 16px;
 
-      .hide-whole-btn {
-        line-height: 14px;
-        margin-top: -2px;
-        color: #3a84ff;
-        cursor: pointer;
-      }
-    }
-
-    .original-time {
-      padding-top: 16px;
-
-      .cell {
-        padding-left: 2px;
-      }
-    }
-
-    .hover-row {
-      .show-whole-btn {
-        background-color: #f0f1f5;
-      }
-    }
-
-    .original-str {
-      .hide-whole-btn {
-        margin-top: 4px;
-      }
-    }
-
-    td.bk-table-expanded-cell {
-      padding: 0;
-    }
-
-    .bk-table-column-expand .bk-icon {
-      top: 17px;
-    }
-
-    &.is-wrap .cell {
-      display: inline-table;
-    }
-
-    .bk-table-empty-text {
-      padding: 0;
-      width: 100%;
-    }
-
-    .visiable-field {
-      .str-content {
-        &.is-limit {
-          max-height: 72px;
+        .cell {
+          padding-left: 2px;
         }
+      }
+
+      .hover-row {
+        .show-whole-btn {
+          background-color: #f0f1f5;
+        }
+      }
+
+      .original-str {
+        .hide-whole-btn {
+          margin-top: 4px;
+        }
+      }
+
+      td.bk-table-expanded-cell {
+        padding: 0;
+      }
+
+      .bk-table-column-expand .bk-icon {
+        top: 17px;
       }
 
       &.is-wrap .cell {
-        padding: 12px 15px 8px;
+        display: inline-table;
       }
 
-      .show-whole-btn {
-        top: 56px;
+      .bk-table-empty-text {
+        padding: 0;
+        width: 100%;
+      }
+
+      .visiable-field {
+        .str-content {
+          &.is-limit {
+            max-height: 72px;
+          }
+        }
+
+        &.is-wrap .cell {
+          padding: 12px 15px 8px;
+        }
+
+        .show-whole-btn {
+          top: 56px;
+        }
+      }
+
+      .row-hover {
+        background: #fff;
+      }
+
+      th .cell {
+        /* stylelint-disable-next-line declaration-no-important */
+        padding: 0 15px !important;
+      }
+
+      &.original-table .bk-table-column-expand .bk-icon {
+        top: 20px;
       }
     }
 
-    .row-hover {
-      background: #fff;
+    /deep/ .render-header {
+      .field-type-icon {
+        width: 12px;
+        margin: 0 4px 0 0;
+        font-size: 12px;
+        color: #979ba5;
+      }
     }
-
-    th .cell {
+  }
+  // 日志全屏状态下的样式
+  .log-full-dialog {
+    /deep/ .bk-dialog-content {
       /* stylelint-disable-next-line declaration-no-important */
-      padding: 0 15px !important;
-    }
-
-    &.original-table .bk-table-column-expand .bk-icon {
-      top: 20px;
+      margin-bottom: 0 !important;
     }
   }
-
-  /deep/ .render-header {
-    .field-type-icon {
-      width: 12px;
-      margin: 0 4px 0 0;
-      font-size: 12px;
-      color: #979ba5;
-    }
-  }
-}
-// 日志全屏状态下的样式
-.log-full-dialog {
-  /deep/ .bk-dialog-content {
-    /* stylelint-disable-next-line declaration-no-important */
-    margin-bottom: 0 !important;
-  }
-}
 </style>

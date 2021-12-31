@@ -334,121 +334,121 @@ export default {
 </script>
 
 <style lang="scss">
-.add-condition-filter-container {
-  .condition-item-container {
-    position: relative;
-    display: flex;
-    flex-flow: wrap;
-    align-items: center;
-    border-radius: 2px;
-    margin-right: 8px;
-    margin-bottom: 2px;
-    padding: 0 22px 0 4px;
-    background: #eceef5;
-    cursor: pointer;
-  }
-
-  .filter-text {
-    margin-left: 24px;
-    color: #3a84ff;
-    cursor: pointer;
-  }
-
-  .tag {
-    padding: 0 4px;
-    margin-bottom: 2px;
-    font-size: 12px;
-    color: #63656e;
-    line-height: 32px;
-    white-space: nowrap;
-
-    &.text-tag {
-      max-width: 108px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    &.symbol-tag {
-      color: #ff9c01;
-    }
-
-    &.add-tag {
-      padding: 0 7px;
+  .add-condition-filter-container {
+    .condition-item-container {
+      position: relative;
+      display: flex;
+      flex-flow: wrap;
+      align-items: center;
+      border-radius: 2px;
+      margin-right: 8px;
+      margin-bottom: 2px;
+      padding: 0 22px 0 4px;
+      background: #eceef5;
       cursor: pointer;
-
-      .icon-plus-line {
-        font-size: 14px;
-      }
-
-      .add-text {
-        margin-right: 3px;
-      }
-
-      &:hover {
-        color: #3a84ff;
-      }
     }
-  }
 
-  .icon-close-line {
-    position: absolute;
-    right: 2px;
-    top: 10px;
-    display: none;
-    margin: 0 6px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #979ba5;
-    cursor: pointer;
-  }
-
-  .condition-item-container:hover {
-    .icon-close-line {
-      display: inline-block;
+    .filter-text {
+      margin-left: 24px;
+      color: #3a84ff;
+      cursor: pointer;
     }
-  }
-}
 
-.add-condition-filter-popover {
-  .filter-title {
-    padding: 24px 24px 22px;
-    color: #313238;
-    font-size: 16px;
-  }
-
-  .add-filter-content {
-    display: flex;
-    align-items: center;
-    margin-bottom: 24px;
-    padding: 0 24px;
-
-    label {
-      display: inline-block;
-      margin-bottom: 4px;
-      color: #2d3542;
+    .tag {
+      padding: 0 4px;
+      margin-bottom: 2px;
       font-size: 12px;
+      color: #63656e;
+      line-height: 32px;
+      white-space: nowrap;
+
+      &.text-tag {
+        max-width: 108px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      &.symbol-tag {
+        color: #ff9c01;
+      }
+
+      &.add-tag {
+        padding: 0 7px;
+        cursor: pointer;
+
+        .icon-plus-line {
+          font-size: 14px;
+        }
+
+        .add-text {
+          margin-right: 3px;
+        }
+
+        &:hover {
+          color: #3a84ff;
+        }
+      }
+    }
+
+    .icon-close-line {
+      position: absolute;
+      right: 2px;
+      top: 10px;
+      display: none;
+      margin: 0 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #979ba5;
+      cursor: pointer;
+    }
+
+    .condition-item-container:hover {
+      .icon-close-line {
+        display: inline-block;
+      }
     }
   }
 
-  .option-item:nth-child(2) {
-    margin: 0 10px;
-  }
+  .add-condition-filter-popover {
+    .filter-title {
+      padding: 24px 24px 22px;
+      color: #313238;
+      font-size: 16px;
+    }
 
-  .filter-footer {
-    padding: 8px 24px 10px 0;
-    text-align: right;
-    border-top: 1px solid #dcdee5;
-    background-color: #fafbfd;
+    .add-filter-content {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 0 24px;
 
-    .bk-primary {
-      margin-right: 6px;
+      label {
+        display: inline-block;
+        margin-bottom: 4px;
+        color: #2d3542;
+        font-size: 12px;
+      }
+    }
+
+    .option-item:nth-child(2) {
+      margin: 0 10px;
+    }
+
+    .filter-footer {
+      padding: 8px 24px 10px 0;
+      text-align: right;
+      border-top: 1px solid #dcdee5;
+      background-color: #fafbfd;
+
+      .bk-primary {
+        margin-right: 6px;
+      }
+    }
+
+    .bk-tag-selector {
+      .bk-tag-input {
+        margin-left: 10px;
+      }
     }
   }
-
-  .bk-tag-selector {
-    .bk-tag-input {
-      margin-left: 10px;
-    }
-  }
-}
 </style>

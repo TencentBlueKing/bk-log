@@ -65,18 +65,18 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.trace-detail-container {
-  width: 100%;
-  height: calc(100vh - 60px);
-
-  &.is-full-screen {
-    height: 100vh;
-  }
-
-  .trace-iframe {
-    border: none;
+  .trace-detail-container {
     width: 100%;
-    height: 100%;
+    height: calc(100vh - 60px);
+
+    &.is-full-screen {
+      height: 100vh;
+    }
+
+    .trace-iframe {
+      border: none;
+      width: 100%;
+      height: 100%;
+    }
   }
-}
 </style>

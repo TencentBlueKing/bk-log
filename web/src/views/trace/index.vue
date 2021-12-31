@@ -36,7 +36,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.trace-container {
-  height: 100%;
-}
+  .trace-container {
+    height: 100%;
+  }
 </style>

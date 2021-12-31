@@ -74,48 +74,48 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.expand-view-wrapper {
-  .view-tab {
-    font-size: 0;
-    background-color: #fafbfd;
+  .expand-view-wrapper {
+    .view-tab {
+      font-size: 0;
+      background-color: #fafbfd;
 
-    span {
-      display: inline-block;
-      width: 68px;
-      height: 26px;
-      line-height: 26px;
-      font-size: 12px;
-      border: 1px solid #eaebf0;
-      background-color: #f5f7fa;
-      border-top: 0;
-      text-align: center;
-      cursor: pointer;
+      span {
+        display: inline-block;
+        width: 68px;
+        height: 26px;
+        line-height: 26px;
+        font-size: 12px;
+        border: 1px solid #eaebf0;
+        background-color: #f5f7fa;
+        border-top: 0;
+        text-align: center;
+        cursor: pointer;
 
-      &:first-child {
-        border-left: 0;
+        &:first-child {
+          border-left: 0;
+        }
+
+        &.active {
+          border: 0;
+          color: #3a84ff;
+          background-color: #fafbfd;
+        }
       }
+    }
 
-      &.active {
-        border: 0;
-        color: #3a84ff;
-        background-color: #fafbfd;
+    .view-content {
+      padding: 10px 30px;
+      background-color: #fafbfd;
+
+      /deep/ .vjs-tree {
+        /* stylelint-disable-next-line declaration-no-important */
+        font-size: 12px !important;
+
+        .vjs-value__string {
+          white-space: pre-wrap;
+          tab-size: 3;
+        }
       }
     }
   }
-
-  .view-content {
-    padding: 10px 30px;
-    background-color: #fafbfd;
-
-    /deep/ .vjs-tree {
-      /* stylelint-disable-next-line declaration-no-important */
-      font-size: 12px !important;
-
-      .vjs-value__string {
-        white-space: pre-wrap;
-        tab-size: 3;
-      }
-    }
-  }
-}
 </style>
