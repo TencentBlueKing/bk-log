@@ -89,9 +89,7 @@ class BkLogRegexpEtlStorage(EtlStorage):
         if built_in_config.get("option") and isinstance(built_in_config["option"], dict):
             option = dict(built_in_config["option"], **option)
 
-        result_table_fields = self.get_result_table_fields_except_clustering(
-            fields, etl_params, built_in_config, es_version=es_version
-        )
+        result_table_fields = self.get_result_table_fields(fields, etl_params, built_in_config, es_version=es_version)
 
         return {
             "option": option,
