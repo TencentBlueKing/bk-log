@@ -395,9 +395,9 @@ export default {
       this.showWhichDropdown();
     },
     /**
-             * 显示哪个下拉列表
-             * @param {String} [param]
-             */
+     * 显示哪个下拉列表
+     * @param {String} [param]
+     */
     showWhichDropdown(param) {
       const types = ['Fields', 'Value', 'Colon', 'Continue'];
       for (const type of types) {
@@ -407,10 +407,10 @@ export default {
       this.activeIndex = null;
     },
     /**
-             * 获取某个字段可选的值列表
-             * @param {Object} valueMap
-             * @return {string[]}
-             */
+     * 获取某个字段可选的值列表
+     * @param {Object} valueMap
+     * @return {string[]}
+     */
     getValueList(valueMap) {
       if (valueMap.__fieldType === 'string') {
         return Object.keys(valueMap).map(item => `"${item}"`);
@@ -418,9 +418,9 @@ export default {
       return Object.keys(valueMap);
     },
     /**
-             * 选择某个可选字段
-             * @param {string} field
-             */
+     * 选择某个可选字段
+     * @param {string} field
+     */
     handleClickField(field) {
       this.valueList = this.getValueList(this.dropdownData[field]);
       const currentValue = this.value;
@@ -440,9 +440,9 @@ export default {
       this.showWhichDropdown('Colon');
     },
     /**
-             * 选择 : 或者 :*
-             * @param {string} type
-             */
+     * 选择 : 或者 :*
+     * @param {string} type
+     */
     handleClickColon(type) {
       this.$emit('change', `${this.value + type} `);
       this.$nextTick(() => {
@@ -450,18 +450,18 @@ export default {
       });
     },
     /**
-             * 选择某个字段可选值
-             * @param {string} value
-             */
+     * 选择某个字段可选值
+     * @param {string} value
+     */
     handleClickValue(value) {
       // 当前输入值可能的情况 【name:"a】【age:】
       this.$emit('change', this.value.replace(/:\s*[\S]*$/, `: ${value} `));
       this.showWhichDropdown('Continue');
     },
     /**
-             * 选择 AND 或者 OR
-             * @param {string} type
-             */
+     * 选择 AND 或者 OR
+     * @param {string} type
+     */
     handleClickContinue(type) {
       this.$emit('change', `${this.value + type} `);
       this.showWhichDropdown('Fields');

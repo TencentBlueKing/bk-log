@@ -169,6 +169,16 @@ const getNodeAgentStatus = {
   url: '/bizs/:bk_biz_id/list_agent_status/',
   method: 'post',
 };
+// 获取动态分组列表
+const getDynamicGroupList = {
+  url: '/bizs/:bk_biz_id/list_dynamic_group/',
+  method: 'get',
+};
+// 获取动态分组表格数据
+const getDynamicGroup = {
+  url: '/bizs/:bk_biz_id/get_dynamic_group/',
+  method: 'post',
+};
 
 export {
   getStorage,
@@ -200,4 +210,6 @@ export {
   retry,
   regexDebug,
   executDetails,
+  getDynamicGroupList,
+  getDynamicGroup,
 };
