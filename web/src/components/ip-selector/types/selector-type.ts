@@ -23,7 +23,7 @@
 import { TranslateResult } from 'vue-i18n'
 import Vue, { VNode } from 'vue'
 
-export type IpType = 'TOPO' | 'INSTANCE' | 'SERVICE_TEMPLATE' | 'SET_TEMPLATE'
+export type IpType = 'TOPO' | 'INSTANCE' | 'SERVICE_TEMPLATE' | 'SET_TEMPLATE' | 'DYNAMIC_GROUP'
 
 // tab数据源
 export interface IPanel {
@@ -117,6 +117,12 @@ export interface IPagination {
 }
 
 export interface ITemplateDataOptions {
+  idKey?: string
+  labelKey?: string
+  childrenKey?: string
+}
+
+export interface IGroupDataOptions {
   idKey?: string
   labelKey?: string
   childrenKey?: string
