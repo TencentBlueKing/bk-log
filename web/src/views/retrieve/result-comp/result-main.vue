@@ -223,27 +223,35 @@ export default {
   margin-top: 52px;
   height: calc(100% - 52px);
   overflow: auto;
+
   @include scroller;
 }
+
 .result-text {
   font-size: 12px;
   color: #63656e;
   padding: 10px 20px;
+
   .monitor-link {
     color: #3a84ff;
   }
+
   .total-count {
     color: #f00;
   }
 }
+
 .result-main {
   margin: 0 16px 16px;
   min-height: calc(100% - 54px);
   background-color: #fff;
 }
+
 .divider-line {
+  /* stylelint-disable-next-line declaration-no-important */
   margin: 0 !important;
 }
+
 .fixed-scroll-top-btn {
   position: fixed;
   bottom: 24px;
@@ -261,11 +269,13 @@ export default {
   cursor: pointer;
   z-index: 2100;
   transition: all .2s;
+
   &:hover {
     color: #fff;
     background: #979ba5;
     transition: all .2s;
   }
+
   .bk-icon {
     font-size: 20px;
     font-weight: bold;

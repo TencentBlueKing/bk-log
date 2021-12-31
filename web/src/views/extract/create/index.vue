@@ -247,13 +247,15 @@ export default {
 .create-task-container {
   margin-top: 20px;
   padding: 20px 24px;
-  background-color: #FFF;
+  background-color: #fff;
   color: #63656e;
   border: 1px solid #dcdee5;
+
   .row-container {
     display: flex;
     min-height: 40px;
     margin: 20px 0 24px;
+
     .title {
       width: 128px;
       margin-right: 16px;
@@ -261,30 +263,37 @@ export default {
       line-height: 40px;
       font-size: 14px;
       text-align: right;
+
       .required {
         font-size: 16px;
         color: #ea3636;
       }
+
       .icon-info-fill {
         color: #979ba5;
         cursor: pointer;
       }
     }
+
     .content {
       display: flex;
       flex-flow: column;
       justify-content: center;
       min-height: 40px;
+
       .flex-box {
         display: flex;
         align-items: center;
+
         .select-text {
           margin-left: 12px;
           font-size: 12px;
           line-height: 16px;
+
           .primary {
             color: #3a84ff;
           }
+
           .error {
             color: #ea3636;
           }
@@ -292,6 +301,7 @@ export default {
       }
     }
   }
+
   .button-container {
     margin: 32px 0 0 144px;
   }

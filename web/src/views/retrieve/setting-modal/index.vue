@@ -74,7 +74,7 @@
               <p><span>{{$t('来源')}}：</span>{{indexSetItem.scenario_name}}</p>
             </div>
             <div
-              style="color: #3A84FF; cursor: pointer;"
+              style="color: #3a84ff; cursor: pointer;"
               @click="handleClickDetail">
               {{$t('retrieveSetting.moreDetails')}}
               <span class="log-icon icon-lianjie"></span>
@@ -323,14 +323,15 @@ export default {
   overflow: hidden;
   padding: 0;
 }
+
 /deep/.bk-dialog-tool {
   display: none;
 }
 
 @mixin container-shadow() {
-  background: #ffffff;
+  background: #fff;
   border-radius: 2px;
-  box-shadow: 0px 2px 4px 0px rgba(25, 25, 41, 0.05);
+  box-shadow: 0px 2px 4px 0px rgba(25, 25, 41, .05);
 }
 
 .setting-container {
@@ -339,6 +340,7 @@ export default {
   min-width: 1460px;
   display: flex;
   justify-content: center;
+
   .setting-title {
     width: calc(100vw + 12px);
     height: 52px;
@@ -348,7 +350,7 @@ export default {
     text-align: center;
     position: fixed;
     z-index: 99;
-    background-color: #ffffff;
+    background-color: #fff;
     border-bottom: 1px solid #dcdee5;
     // box-shadow:0 3px 6px #DEE0E7 ;
     .bk-icon {
@@ -359,14 +361,19 @@ export default {
       right: 24px;
     }
   }
+
   .setting-main {
     padding: 72px 40px 0;
     display: flex;
     position: relative;
+
     .setting-left {
       min-width: 240px;
       height: 365px;
       padding-top: 4px;
+
+      @include container-shadow;
+
       .setting-option {
         height: 40px;
         font-size: 15px;
@@ -375,41 +382,51 @@ export default {
         cursor: pointer;
         justify-content: space-evenly;
         align-items: center;
-        transition: all 0.3s;
+        transition: all .3s;
+
         &:hover {
-          @extend .current-color;
+          @extend %current-color;
         }
       }
-      @include container-shadow;
     }
+
     .setting-right {
       width: 1200px;
       margin-left: 20px;
+
       .more-details {
         height: 48px;
         padding: 0 24px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+
+        @include container-shadow;
+
         .details {
           display: flex;
+
           p {
             margin-right: 40px;
+
             span {
               color: #979ba5;
             }
           }
         }
-        @include container-shadow;
       }
+
       .operation-container {
         margin-top: 20px;
         min-height: 770px;
         padding: 24px 20px 100px;
+
         @include container-shadow;
       }
     }
   }
+
+  %current-color,
   .current-color {
     color: #3a84ff;
     background-color: #e1ecff;

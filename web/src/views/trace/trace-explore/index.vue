@@ -68,9 +68,11 @@ export default {
 .trace-detail-container {
   width: 100%;
   height: calc(100vh - 60px);
+
   &.is-full-screen {
     height: 100vh;
   }
+
   .trace-iframe {
     border: none;
     width: 100%;

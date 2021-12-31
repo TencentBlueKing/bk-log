@@ -541,32 +541,37 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/scss/mixins/clearfix";
-@import "@/scss/mixins/flex";
+@import '@/scss/mixins/clearfix';
+@import '@/scss/mixins/flex';
 @import '@/scss/mixins/scroller';
 @import '@/scss/storage';
 
 .custom-create-container {
-  padding:0 24px;
-  transition: padding 0.5s;
-  &.is-active-details{
-    padding:0 420px 0 24px;
+  padding: 0 24px;
+  transition: padding .5s;
+
+  &.is-active-details {
+    padding: 0 420px 0 24px;
   }
+
   .create-form {
     background: #fff;
     padding: 24px 37px;
     margin-top: 20px;
     border-radius: 2px;
     border: 1px solid #dcdee5;
+
     .form-title {
       font-size: 14px;
       color: #63656e;
       font-weight: 700;
       margin-bottom: 24px;
     }
+
     .form-input {
       width: 320px;
     }
+
     .group-tip {
       font-size: 12px;
       color: #979ba5;
@@ -604,9 +609,11 @@ export default {
     //   }
     // }
   }
+
   .submit-btn {
     width: 140px;
     margin: 20px 20px 100px ;
+
     @include clearfix;
   }
 }

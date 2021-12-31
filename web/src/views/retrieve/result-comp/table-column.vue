@@ -156,19 +156,23 @@ export default {
 .td-log-container {
   position: relative;
   line-height: 14px;
+
   &.is-wrap {
     padding-bottom: 4px;
   }
+
   .field-container {
     &.active:hover {
       color: #3a84ff;
       cursor: pointer;
     }
+
     &.mark {
       background-color: #f3e186;
       color: black;
     }
   }
+
   .icon-search-container {
     display: none;
     justify-content: center;
@@ -179,18 +183,21 @@ export default {
     margin-left: 5px;
     cursor: pointer;
     background: #3a84ff;
+
     .icon {
       font-size: 12px;
       font-weight: bold;
       color: #fff;
       background: #3a84ff;
       transform: scale(.6);
+
       &.icon-copy {
         font-size: 14px;
         transform: scale(1);
       }
     }
   }
+
   &:hover {
     .icon-search-container {
       display: inline-flex;

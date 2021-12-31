@@ -9,7 +9,7 @@
     "build": "better-npm-run build",
     "build:analyzer": "better-npm-run build:analyzer",
     "lint": "eslint --fix --ext .js,.vue,.ts src",
-    "style": "stylelint 'src/**/*.(vue|scss|css)' --fix",
+    "style": "stylelint \"./src/**/*.(vue|scss|css)\" --fix",
     "precommit": "lint-staged"
   },
   "keywords": [],

@@ -287,13 +287,13 @@ export default {
           .icon-clock {
             padding: 0 5px 0 17px;
             font-size: 14px;
-            color: #63656E;
+            color: #63656e;
           }
 
           .icon-angle-down {
             margin: 0 10px;
             font-size: 22px;
-            color: #63656E;
+            color: #63656e;
             transition: transform .3s;
 
             &.active {
@@ -303,7 +303,7 @@ export default {
           }
 
           &::before {
-            content: "";
+            content: '';
             width: 1px;
             height: 14px;
             background-color: #dcdee5;
@@ -314,6 +314,7 @@ export default {
 
           &:hover {
             color: #3a84ff;
+
             .icon-clock,
             .icon-angle-down {
               color: #3a84ff;
@@ -345,7 +346,7 @@ export default {
     .icon-angle-down {
       margin: 0 10px 0 0;
       font-size: 22px;
-      color: #63656E;
+      color: #63656e;
       transition: transform .3s;
 
       &.active {

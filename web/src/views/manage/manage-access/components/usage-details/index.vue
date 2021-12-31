@@ -216,6 +216,7 @@ export default {
 
 <style lang="scss" scoped>
   .chart-container {
+    /* stylelint-disable-next-line declaration-no-important */
     width: calc((100% - 32px) / 3) !important;
   }
 </style>

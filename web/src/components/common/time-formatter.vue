@@ -66,11 +66,13 @@ export default {
   align-items: center;
   font-size: 14px;
   color: #63656e;
+
   .switch-label {
     margin-right: 6px;
-    color: #63656E;
+    color: #63656e;
     font-size: 12px;
   }
+
   .time-zone-text {
     margin-left: 8px;
   }

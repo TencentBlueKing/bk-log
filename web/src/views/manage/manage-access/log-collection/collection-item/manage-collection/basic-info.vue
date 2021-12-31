@@ -314,6 +314,8 @@ export default {
       .num-color {
         display: inline-block;
         padding: 0;
+
+        /* stylelint-disable-next-line declaration-no-important */
         color: #4e99ff !important;
         font-weight: bold;
         cursor: pointer;
@@ -323,7 +325,7 @@ export default {
     .content-style {
       display: flex;
 
-      .win-log{
+      .win-log {
         height: 60px;
         display: flex;
         flex-direction: column;

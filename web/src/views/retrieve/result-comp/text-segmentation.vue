@@ -157,39 +157,49 @@ export default {
     display: flex;
     align-items: center;
   }
+
   .tippy-tooltip {
     padding: 4px 0 2px 8px;
   }
+
   .icon {
     display: inline-block;
     margin-right: 10px;
     font-size: 14px;
     cursor: pointer;
+
     &:hover {
-      color: #3A84FF;
+      color: #3a84ff;
     }
   }
+
   .bk-icon {
     transform: rotate(45deg);
   }
+
   .icon-minus-circle,
   .icon-chart {
     margin-right: 4px;
   }
+
   .icon-copy {
     margin-right: 3px;
     font-size: 24px;
   }
 }
+
 .log-content-wrapper {
   word-break: break-all;
+
   .segment-content {
     white-space: normal;
   }
+
   .menu-list {
     display: none;
     position: absolute;
   }
+
   .valid-text {
     cursor: pointer;
     // word-break: keep-all;

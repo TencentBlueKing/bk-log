@@ -165,6 +165,7 @@ export default {
     }
 
     .click-stop {
+      /* stylelint-disable-next-line declaration-no-important */
       color: #ccc!important;
     }
 

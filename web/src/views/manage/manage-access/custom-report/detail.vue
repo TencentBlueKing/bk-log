@@ -22,7 +22,7 @@
 
 <template>
   <div
-    style="transition: padding 0.5s;"
+    style="transition: padding .5s;"
     v-bkloading="{ isLoading: basicLoading }"
     :class="`custom-report-detail-container access-manage-container ${isOpenWindow ? 'is-active-details' : ''}`">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
@@ -133,7 +133,7 @@ export default {
 </script>
 
 <style lang="scss">
-.is-active-details{
-  padding:20px 420px 20px 24px;
+.is-active-details {
+  padding: 20px 420px 20px 24px;
 }
 </style>

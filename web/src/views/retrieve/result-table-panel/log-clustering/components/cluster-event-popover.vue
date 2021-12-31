@@ -125,52 +125,65 @@ export default {
 .event-icons {
   position: relative;
 }
+
 .event-tippy {
   .event-icons {
     min-height: 24px;
     display: flex;
     align-items: center;
   }
+
   .tippy-tooltip {
     padding: 4px 0 2px 8px;
   }
+
   .icon {
     display: inline-block;
     margin-right: 8px;
     font-size: 14px;
     cursor: pointer;
+
     &:hover {
-      color: #3A84FF;
+      color: #3a84ff;
     }
   }
-  .log-icon{
+
+  .log-icon {
     font-size: 12px;
   }
+
   .icon-chart {
     margin-right: 4px;
   }
+
   .icon-copy {
     margin-right: 3px;
     font-size: 24px;
   }
+
   &.is-cluster {
     .tippy-tooltip {
       padding-left: 4px;
     }
   }
 }
+
 .retrieve-event-popover {
   .bk-tooltip-ref {
     cursor: pointer;
+
     &:hover {
       color: #3a84ff;
     }
   }
+
   &.is-inline {
     display: inline;
+
     .bk-tooltip-ref {
       display: inline;
     }
+
     .tippy-tooltip {
       padding-left: 0;
     }

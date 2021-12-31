@@ -342,7 +342,7 @@ export default {
       }
 
       &::before {
-        content: "";
+        content: '';
         width: 1px;
         height: 14px;
         background-color: #dcdee5;
@@ -351,6 +351,7 @@ export default {
         top: 20px;
       }
     }
+
     .more-operation {
       display: flex;
       align-items: center;
@@ -359,6 +360,7 @@ export default {
       white-space: nowrap;
       line-height: 22px;
       cursor: pointer;
+
       .icon-more {
         display: flex;
         justify-content: center;
@@ -367,6 +369,7 @@ export default {
         height: 30px;
         overflow: hidden;
         font-size: 18px;
+
         &:hover {
           color: #0083ff;
           cursor: pointer;
@@ -374,8 +377,9 @@ export default {
           background-color: #e1ecff;
         }
       }
+
       &::before {
-        content: "";
+        content: '';
         width: 1px;
         height: 14px;
         background-color: #dcdee5;
@@ -401,12 +405,14 @@ export default {
       padding: 6px 0;
       background-color: white;
       color: #63656e;
+
       &-item {
         display: flex;
         align-items: center;
         padding: 0 10px;
         height: 32px;
         min-width: 150px;
+
         &:hover {
           cursor: pointer;
           background-color: #eaf3ff;

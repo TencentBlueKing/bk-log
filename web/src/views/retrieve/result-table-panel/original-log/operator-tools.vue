@@ -141,6 +141,7 @@ export default {
   overflow: hidden;
   justify-content: flex-end;
 }
+
 .fix-content {
   width: auto;
   background-color: #f0f1f5;

@@ -597,10 +597,13 @@ export default {
 
       .button-wit {
         background-color: white;
+
+        /* stylelint-disable-next-line declaration-no-important */
         color: #63656e !important;
       }
 
       .button-bul {
+        /* stylelint-disable-next-line declaration-no-important */
         color: whitesmoke !important;
         background-color: #3a84ff;
       }
@@ -651,6 +654,7 @@ export default {
           }
 
           :nth-child(1) {
+            /* stylelint-disable-next-line declaration-no-important */
             margin-top: 0 !important;
           }
         }
@@ -667,6 +671,8 @@ export default {
               left: 5px;
               padding: 0 5px;
               z-index: 100;
+
+              /* stylelint-disable-next-line declaration-no-important */
               margin-right: 0 !important;
               text-align: center;
               max-width: 200px;
@@ -689,6 +695,7 @@ export default {
           }
 
           :nth-child(1) {
+            /* stylelint-disable-next-line declaration-no-important */
             margin-top: 0 !important;
           }
         }
@@ -725,6 +732,7 @@ export default {
       }
     }
   }
+
   .issued-detail {
     .detail-content {
       min-height: calc(100vh - 60px);

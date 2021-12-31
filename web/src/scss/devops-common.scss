@@ -37,6 +37,7 @@
     cursor: not-allowed;
 
     &:hover {
+      /* stylelint-disable-next-line declaration-no-important */
       color: #ccc !important;
     }
   }
@@ -92,6 +93,7 @@
     &,
     &:focus,
     &:active {
+      /* stylelint-disable-next-line declaration-no-important */
       border-color: $failColor !important;
     }
   }
@@ -101,6 +103,7 @@
     &:focus,
     &:active,
     &.active {
+      /* stylelint-disable-next-line declaration-no-important */
       border-color: $failColor !important;
       background-color: #fff4f4;
       color: $failColor;
@@ -126,6 +129,7 @@
   }
 
   .bk-selector-icon {
+    /* stylelint-disable-next-line declaration-no-important */
     color: $failColor !important;
   }
 }
@@ -141,12 +145,14 @@
 }
 
 button[disabled='disabled'] {
+  /* stylelint-disable-next-line declaration-no-important */
   cursor: not-allowed !important;
 }
 
 // 移除input的type="number"中的小三角
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
+  /* stylelint-disable-next-line declaration-no-important */
   appearance: none !important;
   margin: 0;
 }
@@ -154,16 +160,22 @@ input::-webkit-inner-spin-button {
 input[type='number'] {appearance: textfield;}
 
 input[disabled='disabled'] {
+  /* stylelint-disable-next-line declaration-no-important */
   cursor: not-allowed !important;
 }
 
 .ace-full-screen {
+  /* stylelint-disable-next-line declaration-no-important */
   position: fixed !important;
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
+
+  /* stylelint-disable-next-line declaration-no-important */
   width: 100% !important;
+
+  /* stylelint-disable-next-line declaration-no-important */
   height: 100% !important;
   z-index: 10000;
 }
@@ -203,5 +215,6 @@ input[disabled='disabled'] {
 }
 
 .bk-options .bk-option-content .bk-option-content-default {
+  /* stylelint-disable-next-line declaration-no-important */
   padding: 0!important;
 }

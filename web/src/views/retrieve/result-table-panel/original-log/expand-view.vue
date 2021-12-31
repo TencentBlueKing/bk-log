@@ -77,7 +77,8 @@ export default {
 .expand-view-wrapper {
   .view-tab {
     font-size: 0;
-    background-color: #FAFBFD;
+    background-color: #fafbfd;
+
     span {
       display: inline-block;
       width: 68px;
@@ -85,25 +86,31 @@ export default {
       line-height: 26px;
       font-size: 12px;
       border: 1px solid #eaebf0;
-      background-color: #F5F7FA;
+      background-color: #f5f7fa;
       border-top: 0;
       text-align: center;
       cursor: pointer;
+
       &:first-child {
         border-left: 0;
       }
+
       &.active {
         border: 0;
         color: #3a84ff;
-        background-color: #FAFBFD;
+        background-color: #fafbfd;
       }
     }
   }
+
   .view-content {
     padding: 10px 30px;
-    background-color: #FAFBFD;
+    background-color: #fafbfd;
+
     /deep/ .vjs-tree {
+      /* stylelint-disable-next-line declaration-no-important */
       font-size: 12px !important;
+
       .vjs-value__string {
         white-space: pre-wrap;
         tab-size: 3;

@@ -331,6 +331,7 @@ export default {
   }
   // hack 组件样式
   .bk-dialog.bk-info-box .bk-dialog-header-inner {
+    /* stylelint-disable-next-line declaration-no-important */
     white-space: normal !important;
   }
 
@@ -349,37 +350,55 @@ export default {
   // 导航
   .bk-log-navigation.bk-navigation,
   .hack-king-navigation.bk-navigation {
+    /* stylelint-disable-next-line declaration-no-important */
     width: 100% !important;
+
+    /* stylelint-disable-next-line declaration-no-important */
     height: 100% !important;
+
     .container-header {
+      /* stylelint-disable-next-line declaration-no-important */
       display: none !important;
     }
+
     .bk-navigation-wrapper {
       height: 100%;
+
       .navigation-container {
+        /* stylelint-disable-next-line declaration-no-important */
         max-width: calc(100% - 60px) !important;
         z-index: 100;
+
         .container-content {
+          /* stylelint-disable-next-line declaration-no-important */
           height: 100% !important;
+
+          /* stylelint-disable-next-line declaration-no-important */
           max-height: 100% !important;
           padding: 0;
+
           .navigation-content {
             height: 100%;
           }
         }
       }
+
       .bk-navigation-menu-group {
         .group-name-wrap .group-name {
           margin-right: 0;
         }
       }
+
       .navigation-menu-item-icon.bk-icon {
         min-width: 28px;
       }
     }
+
     .nav-slider-list {
+      /* stylelint-disable-next-line declaration-no-important */
       height: calc(100% - 56px) !important;
     }
+
     .biz-menu {
       padding-bottom: 10px;
       border-bottom: 1px solid rgba(240,241,245,.16);
@@ -436,17 +455,21 @@ export default {
   // 采集项管理、索引集管理通用样式
   .access-manage-container {
     padding: 20px 24px;
+
     .bk-tab-section {
       display: none;
     }
+
     .tab-content {
       height: calc(100% - 50px);
       overflow: auto;
-      @include scroller($backgroundColor: #C4C6CC, $width: 4px);
       padding: 20px;
-      background-color: #FFF;
-      border: 1px solid #DCDEE5;
+      background-color: #fff;
+      border: 1px solid #dcdee5;
       border-top: none;
+
+      @include scroller($backgroundColor: #C4C6CC, $width: 4px);
+
       .main-title {
         display: flex;
         align-items: flex-end;
@@ -456,9 +479,10 @@ export default {
         color: #63656e;
         line-height: 20px;
         padding: 0 0 8px 0;
-        border-bottom: 1px solid #DCDEE5;
+        border-bottom: 1px solid #dcdee5;
         margin-bottom: 20px;
       }
+
       .refresh-button {
         display: flex;
         align-items: center;
@@ -467,48 +491,58 @@ export default {
         color: #3a84ff;
         margin-left: 8px;
         cursor: pointer;
+
         &:hover {
-          color: #699DF4;
+          color: #699df4;
         }
+
         .bk-icon {
           font-size: 13px;
           margin-right: 4px;
         }
       }
+
       .charts-container {
         display: flex;
         justify-content: space-between;
         margin-bottom: 20px;
+
         .chart-container {
           position: relative;
           width: calc((100% - 16px) / 2);
           padding: 0 16px;
           border: 1px solid #f0f1f5;
           border-radius: 3px;
-          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .05);
+
           .chart-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             height: 50px;
+
             .title {
               font-size: 12px;
               font-weight: bold;
               color: #63656e;
               line-height: 16px;
             }
+
             .date-picker {
               display: flex;
               align-items: center;
             }
           }
+
           .chart-canvas-container {
             position: relative;
             height: 230px;
+
             &.big-chart {
               height: 280px;
             }
           }
+
           .king-exception {
             position: absolute;
             top: 80px;

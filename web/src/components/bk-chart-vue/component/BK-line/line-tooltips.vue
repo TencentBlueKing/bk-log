@@ -84,6 +84,7 @@ export default {
       color: #dcdee5;
 
       .tooltips-tips {
+        /* stylelint-disable-next-line declaration-no-important */
         background: #dcdee5 !important;
       }
     }

@@ -215,6 +215,7 @@ export default {
 
   .expand-style {
     max-height: fit-content;
+
     span {
       white-space: normal;
     }
@@ -227,6 +228,7 @@ export default {
 
   .locker-style {
     /deep/ section {
+      /* stylelint-disable-next-line declaration-no-important */
       background-color: #313238 !important;
 
       > div:nth-child(1) {

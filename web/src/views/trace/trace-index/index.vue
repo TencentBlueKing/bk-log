@@ -1151,6 +1151,7 @@ export default {
       margin-left: 10px;
 
       div {
+        /* stylelint-disable-next-line declaration-no-important */
         margin: 0 !important;
       }
     }
