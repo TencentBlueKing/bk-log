@@ -155,6 +155,9 @@ class AiopsModelHandler(BaseAiopsHandler):
                 pipeline_execute_config={"time_limit": time_limit},
             ),
         )
+        update_execute_config_request.execute_config.chunked_read_sample_set.chunk_policy.config.partition_number = (
+            worker_nums
+        )
         request_dict = self._set_username(update_execute_config_request)
         return BkDataAIOPSApi.update_execute_config(request_dict)
 

@@ -276,7 +276,7 @@ export default {
       } else if (type === 'copy') { // 复制单元格内容
         copyMessage(value);
       } else if (['is', 'is not'].includes(type)) {
-        this.$emit('addFilterCondition', field.field_name, type, value.toString());
+        this.$emit('addFilterCondition', field.field_name, type, value === '--' ? '' : value.toString());
       }
     },
     getFieldIcon(fieldType) {
@@ -297,7 +297,7 @@ export default {
         case 'is not':
           // eslint-disable-next-line no-case-declarations
           const { fieldName, operation, value } = option;
-          this.$emit('addFilterCondition', fieldName, operation, value.toString());
+          this.$emit('addFilterCondition', fieldName, operation, value === '--' ? '' : value.toString());
           break;
         case 'copy':
           copyMessage(option.value);
