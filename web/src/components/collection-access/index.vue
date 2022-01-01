@@ -119,7 +119,7 @@ import stepIssued from './step-issued';
 import stepField from './step-field';
 import stepStorage from './step-storage.vue';
 import stepResult from './step-result';
-import advanceCleanLand from '@/components/data-Access/advance-clean-land';
+import advanceCleanLand from '@/components/collection-access/advance-clean-land';
 
 export default {
   name: 'access-steps',

@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import StepField from '@/components/data-Access/step-field';
+import StepField from '@/components/collection-access/step-field';
 
 export default {
   components: {

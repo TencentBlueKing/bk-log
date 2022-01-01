@@ -87,7 +87,7 @@ import LoginModal from '@/components/login-modal';
 import WelcomePage from '@/components/common/welcome-page';
 import AuthPage from '@/components/common/auth-page';
 import AuthDialog from '@/components/common/auth-dialog';
-import BizMenuSelect from '@/components/biz-menu-select.vue';
+import BizMenuSelect from '@/components/biz-menu';
 import NoviceGuide from '@/components/novice-guide';
 import jsCookie from 'js-cookie';
 

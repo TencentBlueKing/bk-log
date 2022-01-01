@@ -22,7 +22,7 @@
 
 module.exports = {
   root: true,
-  extends: ['@bkui/eslint-config-bk/vue'],
+  extends: ['@blueking/eslint-config-bk/vue'],
   globals: {
     NODE_ENV: false,
   },

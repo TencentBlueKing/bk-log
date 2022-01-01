@@ -180,8 +180,8 @@ export default {
 </script>
 
 <style lang="scss">
-  @import '../scss/mixins/flex.scss';
-  @import '../scss/mixins/ellipsis.scss';
+  @import '../../scss/mixins/flex.scss';
+  @import '../../scss/mixins/ellipsis.scss';
 
   .biz-menu-select {
     .menu-select {
