@@ -6,19 +6,17 @@
   "keywords": [],
   "license": "ISC",
   "scripts": {
-    "prod": "npm i && npm run install-build && npm run build",
-    "install-build": "cross-env execMode=install node ./webpack/exec-shell.js",
-    "install-package": "cross-env execMode=install node ./webpack/exec-shell.js",
     "dev": "nodemon --exec \"bkmonitor-cli dev\"",
     "build": "bkmonitor-cli build",
-    "clean": "rimraf ../static/monitor/*",
+    "clean": "rimraf ../static/dist/*",
     "analyze": "npm run clean && bkmonitor-cli build -a",
     "lint": "eslint --fix --ext .js,.vue,.ts src",
-    "style": "stylelint 'src/**/*.(vue|scss|css)' --fix"
+    "style": "stylelint \"./src/**/*.(vue|scss|css)\" --fix",
+    "precommit": "lint-staged"
   },
   "dependencies": {
-    "@blueking/bkmonitor-cli": "1.0.0-beta.7",
     "@blueking/bkcharts": "^2.0.11-alpha.5",
+    "@blueking/bkmonitor-cli": "1.0.0-beta.7",
     "@blueking/user-selector": "^1.0.6",
     "@icon-cool/bk-icon-log_search": "^0.1.6",
     "@opentelemetry/api": "^1.0.2",
@@ -28,20 +26,17 @@
     "@opentelemetry/instrumentation-xml-http-request": "^0.24.0",
     "@opentelemetry/sdk-trace-base": "^0.24.1-alpha.4",
     "@opentelemetry/web": "^0.24.0",
-    "core-js": "^3.6.5",
-    "cross-env": "^7.0.2",
     "axios": "0.19.0",
     "bk-magic-vue": "2.3.6",
-    "cookie": "0.4.0",
+    "core-js": "^3.6.5",
+    "cross-env": "^7.0.2",
     "deepmerge": "4.2.2",
     "echarts": "4.8.0",
     "html-to-image": "0.1.1",
     "html2canvas": "1.0.0-rc.5",
     "js-cookie": "2.2.0",
     "json-bignumber": "^1.0.2",
-    "jsonp": "0.2.1",
     "moment": "2.27.0",
-    "query-string": "6.5.0",
     "resize-detector": "0.2.2",
     "throttle-debounce": "2.2.1",
     "tippy.js": "6.2.3",
@@ -62,11 +57,12 @@
     "@commitlint/cli": "^12.1.4",
     "@commitlint/config-conventional": "^12.1.4",
     "eslint": "7.0.0",
-    "eslint-loader": "4.0.2",
-    "eslint-plugin-vue": "6.2.2",
+    "babel-eslint": "10.1.0",
+    "eslint-plugin-vue": "^7.15.1",
     "husky": "^4.3.8",
     "lint-staged": "^11.0.0",
-    "nodemon": "^2.0.9"
+    "nodemon": "^2.0.9",
+    "vue-eslint-parser": "^7.10.0"
   },
   "engines": {
     "node": ">= 12.10.0",
@@ -81,6 +77,10 @@
   "lint-staged": {
     "src/**/*.{js,ts,tsx,vue}": [
       "eslint --fix",
+      "git add"
+    ],
+    "src/**/*.(vue|scss|css|sass)": [
+      "stylelint --fix",
       "git add"
     ]
   }

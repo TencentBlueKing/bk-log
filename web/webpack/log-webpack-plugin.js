@@ -24,17 +24,15 @@
 /* eslint-disable no-underscore-dangle */
 const webpackLog = require('webpack-log');
 const crypto = require('crypto');
-const log = webpackLog({ name: 'monitor-webpack-plugin' });
+const log = webpackLog({ name: 'log-webpack-plugin' });
 const RawSource = require('webpack-sources/lib/RawSource');
 const CachedSource = require('webpack-sources/lib/CachedSource');
-module.exports = class MonitorWebpackPlugin {
+module.exports = class LogWebpackPlugin {
   constructor(config, options = {}) {
     this.defaultOption = { cacheVersionKey: '__cache_version___', staticUrlKey: '__STATIC_URL__' };
     this.options = Object.assign({}, this.defaultOption, options);
     this.cacheVersionKey = this.options.cacheVersionKey;
     this.staticUrlKey = this.options.staticUrlKey;
-    // this.isMobile = config.mobile;
-    // this.modePath = config.mobile ? '' : config.fta ? 'fta' : 'monitor';
     this.modePath = '';
     this.staticUrl = 'BK_STATIC_URL';
     this.variates = config.pcBuildVariates || '';
@@ -43,7 +41,7 @@ module.exports = class MonitorWebpackPlugin {
 
   apply(compiler) {
     const hookOption = {
-      name: 'MonitorWebpackPlugin',
+      name: 'LogWebpackPlugin',
       stage: 'PROCESS_ASSETS_STAGE_ANALYSE',
     };
     compiler.hooks.thisCompilation.tap(hookOption, (compilation) => {
@@ -92,19 +90,6 @@ module.exports = class MonitorWebpackPlugin {
         }
       });
     });
-    // if(this.isMobile) {
-    //   compiler.hooks.afterEmit.tap(hookOption, (compilation) => {
-    //     const chunkItem = compilation.assets['manifest.json']
-    //     const isCahedSource = !!chunkItem._source
-    //     let chunkSource = isCahedSource ? chunkItem._source._value : chunkItem._value
-    //     chunkSource = Buffer.isBuffer(chunkSource) ? Buffer.toString('utf-8') : chunkSource
-    //     if(!isCahedSource) {
-    //       chunkItem._value = this.resolveManifestJson(chunkSource)
-    //     } else {
-    //       compilation.assets[key] = new CachedSource(new RawSource(this.resolveManifestJson(chunkSource)))
-    //     }
-    //   })
-    // }
   }
 
   resolveIndexHtml(chunk) {
@@ -170,10 +155,4 @@ module.exports = class MonitorWebpackPlugin {
     chunk = chunk.replace('__cache_version___', crypto.randomBytes(16).toString('hex'));
     return chunk;
   }
-  // resolveManifestJson(chunk) {
-  //   chunk = chunk
-  //     .replace(/\$\{BK_STATIC_URL\}/gm, '${WEIXIN_STATIC_URL}')
-  //     .replace(/\$\{BK_STATIC_URL\}/gm, '${WEIXIN_SITE_URL}');
-  //   return chunk;
-  // }
 };
