@@ -31,9 +31,18 @@
           @datePickerChange="fetchChartData" />
       </div>
       <div class="charts-container">
-        <chart-component :type="$t('使用次数趋势')" :loading="timesChartLoading" :chart-data="timesChartData" />
-        <chart-component :type="$t('用户使用频次')" :loading="frequencyChartLoading" :chart-data="frequencyChartData" />
-        <chart-component :type="$t('检索耗时统计')" :loading="spentChartLoading" :chart-data="spentChartData" />
+        <chart-component
+          :type="$t('使用次数趋势')"
+          :loading="timesChartLoading"
+          :chart-data="timesChartData" />
+        <chart-component
+          :type="$t('用户使用频次')"
+          :loading="frequencyChartLoading"
+          :chart-data="frequencyChartData" />
+        <chart-component
+          :type="$t('检索耗时统计')"
+          :loading="spentChartLoading"
+          :chart-data="spentChartData" />
       </div>
     </section>
 
@@ -57,7 +66,10 @@
             {{ formatDate(row.created_at) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('执行人')" prop="created_by" min-width="10"></bk-table-column>
+        <bk-table-column
+          :label="$t('执行人')"
+          prop="created_by"
+          min-width="10"></bk-table-column>
         <bk-table-column :label="$t('查询语句')" min-width="20">
           <div class="table-ceil-container" slot-scope="{ row }">
             <span class="table-view-span-detail" v-bk-overflow-tips>{{ row.query_string }}</span>
@@ -122,7 +134,6 @@ export default {
       this.fetchChartData();
       this.fetchTableData();
     },
-
     fetchChartData() {
       const payload = {
         params: {
@@ -173,7 +184,6 @@ export default {
         this.spentChartLoading = false;
       }
     },
-
     async fetchTableData() {
       try {
         this.tableLoading = true;

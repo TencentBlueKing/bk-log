@@ -54,7 +54,7 @@
         <bk-table-column type="expand" width="30" align="center">
           <template slot-scope="props">
             <div class="state-table-wrapper">
-              <StateTable :archive-config-id="props.row.archive_config_id" />
+              <state-table :archive-config-id="props.row.archive_config_id" />
             </div>
           </template>
         </bk-table-column>
@@ -124,7 +124,7 @@
       </bk-table>
     </section>
     <!-- 新增/编辑归档 -->
-    <ArchiveSlider
+    <archive-slider
       v-if="isRenderSlider"
       :show-slider.sync="showSlider"
       :edit-archive="editArchive"
@@ -132,7 +132,7 @@
     />
 
     <!-- 新增回溯 -->
-    <RestoreSlider
+    <restore-slider
       :show-slider.sync="showRestoreSlider"
       :archive-id="editArchiveId"
       @updated="handleUpdatedRestore"

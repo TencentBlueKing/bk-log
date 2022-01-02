@@ -56,10 +56,11 @@
           </bk-button> -->
         </div>
       </div>
-      <div v-for="(value, i) in renderTableList"
-           :key="i"
-           style="margin-bottom: 10px; overflow: hidden"
-           ref="unfold">
+      <div
+        v-for="(value, i) in renderTableList"
+        :key="i"
+        style="margin-bottom: 10px; overflow: hidden"
+        ref="unfold">
         <div class="table-detail" @click="closeTable(i)">
           <div>
             <i
@@ -241,7 +242,8 @@ export default {
   methods: {
     closeTable(val) {
       this.$refs.unfold[val].style.height = this.$refs.unfold[val].style.height === '' ? '43px' : '';
-      this.$refs.icon[val].classList.value = this.$refs.unfold[val].style.height === '' ? 'bk-icon title-icon icon-down-shape' : 'bk-icon title-icon icon-right-shape';
+      this.$refs.icon[val].classList.value = this.$refs.unfold[val].style.height === ''
+        ? 'bk-icon title-icon icon-down-shape' : 'bk-icon title-icon icon-right-shape';
     },
     adadScrollEvent() {
       this.scrollontentEl = document.querySelector('.allocation');
@@ -294,10 +296,16 @@ export default {
             this.reloadTable = false;
           }
           this.dataButton.forEach((item) => {
-            item.dataList = item.key === 'pen' ? this.dataPen : item.key === 'sec' ? this.dataSec : item.key === 'fal' ? this.dataFal : this.dataAll;
+            item.dataList = item.key === 'pen'
+              ? this.dataPen : item.key === 'sec'
+                ? this.dataSec : item.key === 'fal'
+                  ? this.dataFal : this.dataAll;
           });
           const sel = this.clickSec.selected;
-          this.clickSec.data = sel === 'pen' ? this.dataPen : sel === 'sec' ? this.dataSec : sel === 'fal' ? this.dataFal : this.dataAll;
+          this.clickSec.data = sel === 'pen'
+            ? this.dataPen : sel === 'sec'
+              ? this.dataSec : sel === 'fal'
+                ? this.dataFal : this.dataAll;
 
           if (!this.timer) {
             this.dataListPaged = [];

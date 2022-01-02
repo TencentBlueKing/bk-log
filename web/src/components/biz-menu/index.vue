@@ -85,7 +85,6 @@
 
 <script>
 import { mapState } from 'vuex';
-// import { menuArr } from './nav/complete-menu';
 import navMenuMixin from '@/mixins/nav-menu-mixin';
 
 export default {

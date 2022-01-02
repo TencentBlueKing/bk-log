@@ -34,7 +34,11 @@
     @change="handleDateChange"
     @shortcut-change="handleShortcutChange"
     @open-change="handleOpenChange">
-    <div v-if="timeRange !== 'custom'" slot="trigger" class="king-date-trigger" @click.stop="togglePicker">
+    <div
+      v-if="timeRange !== 'custom'"
+      slot="trigger"
+      class="king-date-trigger"
+      @click.stop="togglePicker">
       <div class="bk-date-picker-editor" :class="{ 'is-focus': showDatePicker }">
         {{ shortTextEnum[timeRange] }}
       </div>

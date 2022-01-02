@@ -35,8 +35,10 @@
     </template>
   </div>
 </template>
+
 <script>
 import BaseSettings from '../base-settings';
+
 export default {
   name: 'line-tooltips',
   extends: BaseSettings,
@@ -53,6 +55,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss" scoped>
   #tooltips {
     height: 60px;

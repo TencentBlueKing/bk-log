@@ -22,35 +22,36 @@
 
 <template>
   <section class="ip-selector" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
-    <SelectorTab
+    <selector-tab
       ref="tab"
       class="ip-selector-left"
       :panels="panels"
       :active="panelActive"
       :tab-visible="tabVisible"
       @tab-change="handleTabChange">
-      <SelectorContent
+      <selector-content
         ref="content"
         :active="panelActive"
         :panels="panels"
         v-bind="$attrs"
         v-on="contentEvents">
-      </SelectorContent>
-    </SelectorTab>
+      </selector-content>
+    </selector-tab>
     <div class="preview-toggle" v-if="width === 0">
-      <div class="open-preview"
-           v-bk-tooltips="{
-             content: $t('点击展开'),
-             showOnInit: true,
-             placements: ['left'],
-             delay: 300,
-             boundary: 'window'
-           }"
-           @click.stop="handleResetWidth">
+      <div 
+        class="open-preview"
+        v-bk-tooltips="{
+          content: $t('点击展开'),
+          showOnInit: true,
+          placements: ['left'],
+          delay: 300,
+          boundary: 'window'
+        }"
+        @click.stop="handleResetWidth">
         <i class="bk-icon icon-angle-left"></i>
       </div>
     </div>
-    <SelectorPreview
+    <selector-preview
       v-else
       class="ip-selector-right"
       ref="preview"
@@ -61,9 +62,10 @@
       :default-active-name="defaultActiveName"
       @menu-click="handlePreviewMenuClick"
       @remove-node="handleRemoveNode">
-    </SelectorPreview>
+    </selector-preview>
   </section>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Ref, Emit, Watch } from 'vue-property-decorator'
 import SelectorTab from './selector/selector-tab.vue'
@@ -159,6 +161,7 @@ export default class IpSelector extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   @import './style/selector.css';
 

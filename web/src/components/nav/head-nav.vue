@@ -34,12 +34,13 @@
     </div>
     <div class="nav-center fl" data-test-id="topNav_div_topNavBox">
       <ul>
-        <li v-for="menu in topMenu"
-            :key="menu.id"
-            :id="`${menu.id}MenuGuide`"
-            :class="['menu-item', { 'active': activeTopMenu.id === menu.id }]"
-            :data-test-id="`topNavBox_li_${menu.id}`"
-            @click="routerHandler(menu)">
+        <li
+          v-for="menu in topMenu"
+          :key="menu.id"
+          :id="`${menu.id}MenuGuide`"
+          :class="['menu-item', { 'active': activeTopMenu.id === menu.id }]"
+          :data-test-id="`topNavBox_li_${menu.id}`"
+          @click="routerHandler(menu)">
           <template>
             {{ menu.name }}
           </template>
@@ -48,8 +49,14 @@
     </div>
     <div class="nav-right fr" v-show="usernameRequested">
       <!-- 语言 -->
-      <bk-dropdown-menu align="center" @show="dropdownLanguageShow" @hide="dropdownLanguageHide">
-        <div class="icon-language-container" :class="isShowLanguageDropdown && 'active'" slot="dropdown-trigger">
+      <bk-dropdown-menu
+        align="center"
+        @show="dropdownLanguageShow"
+        @hide="dropdownLanguageHide">
+        <div
+          class="icon-language-container"
+          :class="isShowLanguageDropdown && 'active'"
+          slot="dropdown-trigger">
           <div class="icon-circle-container">
             <span class="icon log-icon icon-locale icon-language"></span>
           </div>
@@ -66,17 +73,36 @@
         </ul>
       </bk-dropdown-menu>
       <!-- 版本日志和文档中心 -->
-      <bk-dropdown-menu align="center" @show="dropdownHelpShow" @hide="dropdownHelpHide" ref="dropdownHelp">
-        <div class="icon-language-container" :class="isShowHelpDropdown && 'active'" slot="dropdown-trigger">
+      <bk-dropdown-menu
+        align="center"
+        @show="dropdownHelpShow"
+        @hide="dropdownHelpHide"
+        ref="dropdownHelp">
+        <div
+          class="icon-language-container"
+          :class="isShowHelpDropdown && 'active'"
+          slot="dropdown-trigger">
           <div class="icon-circle-container">
             <span class="icon log-icon icon-icon-help-document-fill" slot="dropdown-trigger"></span>
           </div>
         </div>
         <ul class="bk-dropdown-list" slot="dropdown-content">
           <li>
-            <a href="javascript:;" @click.stop="dropdownHelpTriggerHandler('docCenter')">{{ $t('nav.docCenter') }}</a>
-            <a href="javascript:;" @click.stop="dropdownHelpTriggerHandler('logVersion')">{{ $t('nav.versionLog') }}</a>
-            <a href="javascript:;" @click.stop="dropdownHelpTriggerHandler('feedback')">{{ $t('问题反馈') }}</a>
+            <a
+              href="javascript:;"
+              @click.stop="dropdownHelpTriggerHandler('docCenter')">
+              {{ $t('nav.docCenter') }}
+            </a>
+            <a
+              href="javascript:;"
+              @click.stop="dropdownHelpTriggerHandler('logVersion')">
+              {{ $t('nav.versionLog') }}
+            </a>
+            <a
+              href="javascript:;"
+              @click.stop="dropdownHelpTriggerHandler('feedback')">
+              {{ $t('问题反馈') }}
+            </a>
           </li>
         </ul>
       </bk-dropdown-menu>

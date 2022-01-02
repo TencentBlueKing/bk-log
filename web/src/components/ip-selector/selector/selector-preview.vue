@@ -21,9 +21,10 @@
   -->
 
 <template>
-  <div class="selector-preview"
-       :style="{ width: isNaN(preWidth) ? preWidth : `${preWidth}px` }"
-       v-show="isNaN(preWidth) || preWidth > 0">
+  <div 
+    class="selector-preview"
+    :style="{ width: isNaN(preWidth) ? preWidth : `${preWidth}px` }"
+    v-show="isNaN(preWidth) || preWidth > 0">
     <div class="selector-preview-title">
       <slot name="title">{{ $t('结果预览') }}</slot>
     </div>
@@ -76,6 +77,7 @@
     <div class="drag" @mousedown="handleMouseDown"></div>
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Emit, Watch } from 'vue-property-decorator'
 import { IPreviewData, IMenu, IPerateFunc } from '../types/selector-type'
@@ -210,6 +212,7 @@ export default class SelectorPreview extends Vue {
   }
 }
 </script>
+
 <style>
   .ip-selector-theme {
     /* stylelint-disable-next-line declaration-no-important */

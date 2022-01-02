@@ -25,15 +25,13 @@
     :class="{
       'log-dialog-wrapper': true,
       'log-full-dialog-wrapper': isScreenFull,
-      'log-full-width': !isScreenFull }"
-  >
+      'log-full-width': !isScreenFull }">
     <div class="dialog-label">
       <!-- IP -->
       <span style="margin-right: 10px;">IP: {{params.ip || params.serverIp}}</span>
       <!-- 日志路径 -->
       <span>{{ $t('retrieve.logPath') + ': ' + params.path || params.logfile }}</span>
     </div>
-
     <div class="dialog-bars">
       <log-filter :is-screen-full="isScreenFull" @handle-filter="handleFilter" />
       <!-- 暂停、复制、全屏 -->
@@ -50,7 +48,6 @@
         </div>
       </div>
     </div>
-
     <div class="dialog-log-markdown" tabindex="0">
       <log-view
         :log-list="logList"
@@ -116,7 +113,6 @@ export default {
   },
   mounted() {
     document.addEventListener('keyup', this.handleKeyup);
-
     this.requestRealTimeLog();
     this.togglePolling();
     this.registerScrollEvent();

@@ -21,16 +21,23 @@
   -->
 
 <template>
-  <div class="directory-manage-container" data-test-id="addNewExtractAuthManage_div_addNewExtractBox">
+  <div
+    class="directory-manage-container"
+    data-test-id="addNewExtractAuthManage_div_addNewExtractBox">
     <div class="directory-manage">
       <div class="row-container">
         <div class="title">
           {{$t('用户组')}}
           <span class="required">*</span>
-          <span class="log-icon icon-info-fill" v-bk-tooltips="{ width: 200, content: $t('不同类别的授权用户') }"></span>
+          <span
+            class="log-icon icon-info-fill"
+            v-bk-tooltips="{ width: 200, content: $t('不同类别的授权用户') }">
+          </span>
         </div>
         <div class="content">
-          <validate-input v-model.trim="manageStrategyData.strategy_name" style="width: 400px;" />
+          <validate-input
+            v-model.trim="manageStrategyData.strategy_name"
+            style="width: 400px;" />
         </div>
       </div>
 
@@ -60,11 +67,14 @@
         <div class="title">
           {{$t('授权目录')}}
           <span class="required">*</span>
-          <span class="log-icon icon-info-fill" v-bk-tooltips="{ width: 200, content: $t('授权目录提示') }"></span>
+          <span
+            class="log-icon icon-info-fill"
+            v-bk-tooltips="{ width: 200, content: $t('授权目录提示') }"></span>
         </div>
         <div class="content">
-          <div class="flex-box add-minus-component visible-dir"
-               v-for="(item, index) in manageStrategyData.visible_dir" :key="index">
+          <div
+            class="flex-box add-minus-component visible-dir"
+            v-for="(item, index) in manageStrategyData.visible_dir" :key="index">
             <validate-input
               v-model.trim="manageStrategyData.visible_dir[index]"
               style="width: 256px;margin-right: 4px;"
@@ -141,15 +151,19 @@
               readonly
               style="width: 256px;margin-right: 10px;"
               :value="manageStrategyData.operator"
-              :class="!manageStrategyData.operator && 'is-input-error'"
-            ></bk-input>
+              :class="!manageStrategyData.operator && 'is-input-error'">
+            </bk-input>
             <bk-button :loading="isChangeOperatorLoading" @click="changeOperator">{{$t('改为我')}}</bk-button>
           </div>
         </div>
       </div>
     </div>
     <div class="button-container">
-      <bk-button theme="primary" style="margin-right: 24px;" :disabled="!isValidated" @click="handleConfirm">
+      <bk-button
+        theme="primary"
+        style="margin-right: 24px;"
+        :disabled="!isValidated"
+        @click="handleConfirm">
         {{$t('确认')}}
       </bk-button>
       <bk-button @click="handleCancel">
@@ -211,11 +225,11 @@ export default {
   computed: {
     isValidated() {
       return this.manageStrategyData.strategy_name
-                    && this.manageStrategyData.user_list.length
-                    && this.manageStrategyData.visible_dir.every(item => Boolean(this.validateVisibleDir(item)))
-                    && this.manageStrategyData.file_type.every(item => Boolean(this.validateFileExtension(item)))
-                    && this.manageStrategyData.modules.length
-                    && this.manageStrategyData.operator;
+              && this.manageStrategyData.user_list.length
+              && this.manageStrategyData.visible_dir.every(item => Boolean(this.validateVisibleDir(item)))
+              && this.manageStrategyData.file_type.every(item => Boolean(this.validateFileExtension(item)))
+              && this.manageStrategyData.modules.length
+              && this.manageStrategyData.operator;
     },
   },
   methods: {

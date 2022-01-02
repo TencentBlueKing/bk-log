@@ -259,7 +259,6 @@ export default {
         },
       });
     },
-
     async fetchRecords() {
       try {
         // 获取操作记录数据

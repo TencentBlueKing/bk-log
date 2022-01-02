@@ -53,7 +53,10 @@
           :limit-list="pagination.limitList"
           @page-change="handlePageChange"
           @page-limit-change="handleLimitChange">
-          <bk-table-column :label="$t('customReport.dataID')" prop="collector_config_id" width="100">
+          <bk-table-column
+            :label="$t('customReport.dataID')"
+            prop="collector_config_id"
+            width="100">
             <template slot-scope="props">
               <span>
                 {{ props.row.bk_data_id || '--' }}
@@ -310,7 +313,6 @@ export default {
         },
       });
     },
-
     requestData() {
       this.isRequest = true;
       this.$http.request('collect/getCollectList', {

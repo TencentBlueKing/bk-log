@@ -35,8 +35,14 @@
       :empty-text="$t('btn.vacancy')"
       v-bkloading="{ isLoading: tableLoading }"
       data-test-id="linkConfigBox_table_linkConfigTable">
-      <bk-table-column :label="$t('链路名称')" prop="link_group_name" min-width="20"></bk-table-column>
-      <bk-table-column :label="$t('允许的业务')" prop="bk_biz_id" min-width="20">
+      <bk-table-column
+        :label="$t('链路名称')"
+        prop="link_group_name"
+        min-width="20"></bk-table-column>
+      <bk-table-column
+        :label="$t('允许的业务')"
+        prop="bk_biz_id"
+        min-width="20">
         <template slot-scope="{ row }">
           <div>{{ filterProjectName(row) || '--'}}</div>
         </template>
@@ -58,7 +64,12 @@
       </bk-table-column>
       <bk-table-column :label="$t('操作')" min-width="10">
         <template slot-scope="props">
-          <bk-button theme="primary" text @click="editConfig(props.row)">{{ $t('编辑') }}</bk-button>
+          <bk-button
+            theme="primary"
+            text
+            @click="editConfig(props.row)">
+            {{ $t('编辑') }}
+          </bk-button>
           <!--<bk-button theme="primary" text @click="deleteConfig(props.row)">{{ $t('删除') }}</bk-button>-->
         </template>
       </bk-table-column>

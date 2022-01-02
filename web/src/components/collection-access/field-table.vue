@@ -400,6 +400,7 @@
     </bk-dialog>
   </div>
 </template>
+
 <script>
 import { mapGetters } from 'vuex';
 
@@ -973,6 +974,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss">
   @import '@/scss/mixins/clearfix';
 

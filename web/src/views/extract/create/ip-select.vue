@@ -78,6 +78,7 @@
 
 <script>
 import { copyMessage } from '@/common/util';
+
 export default {
   props: {
     showSelectDialog: {

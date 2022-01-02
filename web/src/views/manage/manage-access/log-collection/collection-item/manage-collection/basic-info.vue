@@ -24,36 +24,45 @@
   <div class="basic-info-container">
     <div class="deploy-sub">
       <div>
-        <span>{{ $t('dataSource.dataId') }}</span><span>{{ collectorData.bk_data_id || '-' }}</span>
+        <span>{{ $t('dataSource.dataId') }}</span>
+        <span>{{ collectorData.bk_data_id || '-' }}</span>
       </div>
       <div>
-        <span>{{ $t('configDetails.name') }}</span><span>{{ collectorData.collector_config_name || '-' }}</span>
+        <span>{{ $t('configDetails.name') }}</span>
+        <span>{{ collectorData.collector_config_name || '-' }}</span>
       </div>
       <template v-if="isCustomReport">
         <div>
-          <span>{{ $t('数据类型') }}</span><span>{{ collectorData.custom_name || '-' }}</span>
+          <span>{{ $t('数据类型') }}</span>
+          <span>{{ collectorData.custom_name || '-' }}</span>
         </div>
         <div>
           <span>{{ $t('dataSource.source_en_name') }}</span>
           <span>{{ collectorData.collector_config_name_en || '-' }}</span>
         </div>
         <div>
-          <span>{{ $t('数据分类') }}</span><span>{{ collectorData.category_name || '-' }}</span>
+          <span>{{ $t('数据分类') }}</span>
+          <span>{{ collectorData.category_name || '-' }}</span>
         </div>
         <div>
-          <span>{{ $t('customReport.remark') }}</span><span>{{ collectorData.description || '-' }}</span>
+          <span>{{ $t('customReport.remark') }}</span>
+          <span>{{ collectorData.description || '-' }}</span>
         </div>
       </template>
       <template v-else>
         <div>
-          <span>{{ $t('configDetails.logType') }}</span><span>{{ collectorData.collector_scenario_name || '-' }}</span>
+          <span>{{ $t('configDetails.logType') }}</span>
+          <span>{{ collectorData.collector_scenario_name || '-' }}</span>
         </div>
         <div>
-          <span>{{ $t('configDetails.dataClassify') }}</span><span>{{ collectorData.category_name || '-' }}</span>
+          <span>{{ $t('configDetails.dataClassify') }}</span>
+          <span>{{ collectorData.category_name || '-' }}</span>
         </div>
         <div>
-          <span>{{collectorData.collector_scenario_id === 'wineventlog' ?
-            $t('configDetails.logSpecies') : $t('configDetails.logPath') }}</span>
+          <span>
+            {{collectorData.collector_scenario_id === 'wineventlog' ?
+              $t('configDetails.logSpecies') : $t('configDetails.logPath') }}
+          </span>
           <div v-if="collectorData.params.paths" class="deploy-path">
             <p v-for="(val, key) in collectorData.params.paths" :key="key">{{ val }}</p>
           </div>
@@ -61,19 +70,22 @@
             <p>{{getLogSpeciesStr}}</p>
           </div>
         </div>
-        <div><span>{{ $t('configDetails.logSet') }}</span><span>{{ collectorData.data_encoding || '-' }}</span>
+        <div><span>{{ $t('configDetails.logSet') }}</span>
+          <span>{{ collectorData.data_encoding || '-' }}</span>
         </div>
-        <div><span>{{ $t('configDetails.target') }}</span><span>{{ $t('configDetails.selected') }}
-          <p class="num-color" @click="handleClickTarget">{{ collectorData.target_nodes.length || '-' }}</p>
-          {{ collectorData.target_node_type !== 'INSTANCE' ?
-            $t('configDetails.Been') : $t('configDetails.staticHosts') }}
-        </span></div>
+        <div><span>{{ $t('configDetails.target') }}</span>
+          <span>{{ $t('configDetails.selected') }}
+            <p class="num-color" @click="handleClickTarget">{{ collectorData.target_nodes.length || '-' }}</p>
+            {{ collectorData.target_node_type !== 'INSTANCE' ?
+              $t('configDetails.Been') : $t('configDetails.staticHosts') }}
+          </span></div>
         <div>
           <span>{{ $t('configDetails.storageIndexName') }}</span>
           <span v-if="collectorData.table_id">{{ collectorData.table_id_prefix }}{{ collectorData.table_id }}</span>
           <span v-else>-</span>
         </div>
-        <div><span>{{ $t('configDetails.remarkExplain') }}</span><span>{{ collectorData.description || '-' }}</span>
+        <div><span>{{ $t('configDetails.remarkExplain') }}</span>
+          <span>{{ collectorData.description || '-' }}</span>
         </div>
         <div
           class="content-style"

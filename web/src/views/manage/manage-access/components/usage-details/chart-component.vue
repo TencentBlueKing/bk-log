@@ -24,12 +24,21 @@
   <div class="chart-container" v-bkloading="{ isLoading: loading, zIndex: 0 }">
     <div class="chart-header">
       <div class="title">{{ type }}</div>
-      <bk-button text style="font-size: 12px;" v-if="type === $t('检索耗时统计') && retrieveTimeGuide" @click="goToGuide">
+      <bk-button
+        text
+        style="font-size: 12px;"
+        v-if="type === $t('检索耗时统计') && retrieveTimeGuide"
+        @click="goToGuide">
         {{ $t('耗时优化指引 >') }}
       </bk-button>
     </div>
     <div class="chart-canvas-container" ref="chartRef"></div>
-    <bk-exception v-if="isEmpty" class="king-exception" type="empty" scene="part"></bk-exception>
+    <bk-exception
+      v-if="isEmpty"
+      class="king-exception"
+      type="empty"
+      scene="part">
+    </bk-exception>
   </div>
 </template>
 

@@ -23,7 +23,9 @@
 <template>
   <section class="log-view">
     <pre id="log-content">
-      <div v-for="(item, index) in escapedReverseLogList" :key="item.replace(/\s/g, '') + index"
+      <div
+      v-for="(item, index) in escapedReverseLogList"
+      :key="item.replace(/\s/g, '') + index"
         class="line"
         v-show="checkLineShow(item, index, 'reverse')">
         <span class="line-num">{{ index - reverseLogList.length }}</span>
@@ -35,7 +37,9 @@
         ></highlight-html>
         <span v-if="checkTextShow(item, index, 'reverse')" class="line-text">{{ item }}</span>
     </div>
-    <div v-for="(item, index) in escapedLogList" :key="item.replace(/\s/g, '') + index"
+    <div
+      v-for="(item, index) in escapedLogList"
+      :key="item.replace(/\s/g, '') + index"
       :class="['line', { 'log-init': index === 0, 'new-log-line': newIndex && index >= newIndex }]"
       v-show="checkLineShow(item, index, 'normal')">
       <span class="line-num">{{ index }}</span>
@@ -273,7 +277,6 @@ export default {
         display: flex;
         flex-direction: row;
         margin: 0;
-        // padding: 6px 15px 6px 55px;
         padding: 0 15px 0 55px;
         min-height: 16px;
         font-size: 12px;

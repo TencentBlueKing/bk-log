@@ -41,7 +41,11 @@
       @change="handleDateChange"
       @shortcut-change="handleShortcutChange"
       @open-change="handleOpenChange">
-      <div v-if="!isHome && !customTime" slot="trigger" class="trigger" @click.stop="togglePicker">
+      <div
+        v-if="!isHome && !customTime"
+        slot="trigger"
+        class="trigger"
+        @click.stop="togglePicker">
         <span class="bk-icon icon-clock"></span>
         <span>{{ shortText || `${datePickerValue[0]} - ${datePickerValue[1]}` }}</span>
         <span class="bk-icon icon-angle-down" :class="isShowDatePicker && 'active'"></span>

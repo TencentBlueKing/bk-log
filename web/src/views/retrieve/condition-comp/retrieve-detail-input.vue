@@ -22,21 +22,30 @@
 
 <template>
   <div v-click-outside="handleClickOutside" class="retrieve-detail-input">
-    <bk-input class="king-input-retrieve"
-              data-test-id="dataQuery_input_checkForPhrases"
-              :value="value"
-              type="textarea"
-              ref="inputRef"
-              @focus="handleFocus"
-              @input="handleInput"
-              @blur="handleBlur"
-              @keydown="handleKeydown"
+    <bk-input
+      class="king-input-retrieve"
+      data-test-id="dataQuery_input_checkForPhrases"
+      :value="value"
+      type="textarea"
+      ref="inputRef"
+      @focus="handleFocus"
+      @input="handleInput"
+      @blur="handleBlur"
+      @keydown="handleKeydown"
     ></bk-input>
     <!-- 搜索提示 -->
-    <ul v-if="renderDropdown" class="retrieve-dropdown" ref="dropdownRef" @click="handleClickDropdown">
+    <ul
+      v-if="renderDropdown"
+      class="retrieve-dropdown"
+      ref="dropdownRef"
+      @click="handleClickDropdown">
       <!-- 字段列表 -->
       <template v-if="showFields">
-        <li v-for="item in fieldList" :key="item" class="list-item field-list-item" @click="handleClickField(item)">
+        <li
+          v-for="item in fieldList"
+          :key="item"
+          class="list-item field-list-item"
+          @click="handleClickField(item)">
           <div class="item-type-icon">
             <span class="log-icon icon-field"></span>
           </div>
@@ -50,7 +59,11 @@
       </template>
       <!-- 字段对应值 -->
       <template v-if="showValue">
-        <li v-for="item in valueList" :key="item" class="list-item value-list-item" @click="handleClickValue(item)">
+        <li
+          v-for="item in valueList"
+          :key="item"
+          class="list-item value-list-item"
+          @click="handleClickValue(item)">
           <div class="item-type-icon">
             <span class="log-icon icon-value"></span>
           </div>
@@ -167,7 +180,11 @@ export default {
   computed: {
     renderDropdown() {
       return this.showDropdown
-             && (this.showFields || this.showValue || this.showColon || this.showContinue || this.showSearchRecord);
+             && (this.showFields
+              || this.showValue
+              || this.showColon
+              || this.showContinue
+              || this.showSearchRecord);
     },
     showSearchRecord() {
       return this.historyRecords.length;

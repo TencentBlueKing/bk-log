@@ -33,7 +33,7 @@
     @confirm="handleConfirm"
     data-test-id="addCollectionTarget_div_selectCollectionTargetBox">
     <div class="ip-select-dialog-content">
-      <TopoSelector
+      <topo-selector
         v-if="showDialog"
         ref="topoSelector"
         height="100%"

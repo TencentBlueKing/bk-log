@@ -23,7 +23,11 @@
 <template>
   <div class="bk-login-dialog">
     <div class="bk-login-wrapper">
-      <iframe :src="loginData.loginUrl" :width="loginData.width || '400'" :height="loginData.height || '400'"></iframe>
+      <iframe
+        :src="loginData.loginUrl"
+        :width="loginData.width || '400'"
+        :height="loginData.height || '400'">
+      </iframe>
     </div>
   </div>
 </template>

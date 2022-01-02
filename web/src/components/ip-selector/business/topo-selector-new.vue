@@ -58,6 +58,7 @@
     @search-selection-change="handleSearchSelectionChange">
   </ip-selector>
 </template>
+
 <script lang="ts">
   /* eslint-disable camelcase */
   import { Vue, Component, Prop, Ref, Watch, Emit } from 'vue-property-decorator'
@@ -950,6 +951,7 @@
     }
   }
 </script>
+
 <style lang="scss" scoped>
   .ip-selector {
     min-width: 600px;

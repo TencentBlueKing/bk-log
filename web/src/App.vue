@@ -42,7 +42,7 @@
         @toggle="handleToggle">
         <template slot="menu">
           <div class="biz-menu">
-            <biz-menu-select :is-expand="isExpand"></biz-menu-select>
+            <biz-menu-select :is-expand="isExpand" />
           </div>
           <bk-navigation-menu
             :item-default-bg-color="navThemeColor"
@@ -292,7 +292,6 @@ export default {
     @include clearfix;
 
     .tab-button-item {
-      // display: table-column;
       margin-left: -1px;
       padding: 0 15px;
       border: 1px solid #c4c6cc;

@@ -21,19 +21,32 @@
   -->
 
 <template>
-  <div v-if="!showApplyResult"
-       v-bkloading="{ isLoading: applyLoading }"
-       class="step-capacity-container"
-       data-test-id="addNewCollectionItem_div_capacityContaineBox">
-    <bk-form class="king-form" ref="formRef" form-type="vertical" :label-width="260" :model="formData" :rules="rules">
+  <div
+    v-if="!showApplyResult"
+    v-bkloading="{ isLoading: applyLoading }"
+    class="step-capacity-container"
+    data-test-id="addNewCollectionItem_div_capacityContaineBox">
+    <bk-form
+      class="king-form"
+      ref="formRef"
+      form-type="vertical"
+      :label-width="260"
+      :model="formData"
+      :rules="rules">
       <div class="form-double-container">
-        <bk-form-item :label="$t('期待接入日期')" required property="expect_access_data">
+        <bk-form-item
+          :label="$t('期待接入日期')"
+          required
+          property="expect_access_data">
           <bk-date-picker
             v-model="formData.expect_access_data" format="yyyy-MM-dd"
             data-test-id="capacityContaineBox_div_selectExpectedDate"
           ></bk-date-picker>
         </bk-form-item>
-        <bk-form-item :label="$t('预计接入的主机数量')" required property="expect_host_size">
+        <bk-form-item
+          :label="$t('预计接入的主机数量')"
+          required
+          property="expect_host_size">
           <bk-input
             v-model="formData.expect_host_size"
             type="number"
@@ -44,7 +57,10 @@
         </bk-form-item>
       </div>
       <div class="form-double-container">
-        <bk-form-item :label="$t('单条日志大小(Bytes)')" required property="single_log_size">
+        <bk-form-item
+          :label="$t('单条日志大小(Bytes)')"
+          required
+          property="single_log_size">
           <bk-input
             v-model="formData.single_log_size"
             type="number"
@@ -53,7 +69,10 @@
             :clearable="true">
           </bk-input>
         </bk-form-item>
-        <bk-form-item :label="$t('单机流量峰值(KB/s)')" required property="single_host_peak">
+        <bk-form-item
+          :label="$t('单机流量峰值(KB/s)')"
+          required
+          property="single_host_peak">
           <bk-input
             v-model="formData.single_host_peak"
             type="number"
@@ -64,7 +83,10 @@
         </bk-form-item>
       </div>
       <div class="form-double-container">
-        <bk-form-item :label="$t('单机增长日志量(G)')" required property="single_host_log_volume">
+        <bk-form-item
+          :label="$t('单机增长日志量(G)')"
+          required
+          property="single_host_log_volume">
           <bk-input
             v-model="formData.single_host_log_volume"
             type="number"
@@ -73,15 +95,24 @@
             :clearable="true">
           </bk-input>
         </bk-form-item>
-        <bk-form-item :label="$t('日志保留天数')" required property="log_keep_days">
+        <bk-form-item
+          :label="$t('日志保留天数')"
+          required
+          property="log_keep_days">
           <bk-input
-            v-model="formData.log_keep_days" type="number" :show-controls="false" :clearable="true"
+            v-model="formData.log_keep_days"
+            type="number"
+            :show-controls="false"
+            :clearable="true"
             data-test-id="capacityContaineBox_input_logRetentionDays"
           ></bk-input>
         </bk-form-item>
       </div>
       <div class="form-double-container">
-        <bk-form-item :label="$t('热数据天数')" required property="hot_data_days">
+        <bk-form-item
+          :label="$t('热数据天数')"
+          required
+          property="hot_data_days">
           <bk-input
             v-model="formData.hot_data_days"
             type="number"
@@ -191,7 +222,10 @@
       </template>
     </div>
   </div>
-  <div v-else v-bkloading="{ isLoading: applyLoading }" class="approval-detail-container">
+  <div
+    v-else
+    v-bkloading="{ isLoading: applyLoading }"
+    class="approval-detail-container">
     <bk-exception v-if="applyData" type="building">
       <div class="approval-text">
         <span>{{ applyData.collect_itsm_status_display }}</span>
@@ -278,8 +312,8 @@ export default {
     ...mapGetters('collect', ['curCollect']),
     showComputedCapacity() {
       return this.formData.single_host_log_volume
-                    && this.formData.expect_host_size
-                    && this.formData.log_keep_days;
+              && this.formData.expect_host_size
+              && this.formData.log_keep_days;
     },
     computedCapacity() {
       const logVolume = Number(this.formData.single_host_log_volume) || 0;

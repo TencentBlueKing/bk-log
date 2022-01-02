@@ -38,16 +38,24 @@
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('数量')" sortable width="91" prop="number">
+      <bk-table-column
+        :label="$t('数量')"
+        sortable width="91"
+        prop="number">
         <template slot-scope="props">
           <span
             class="link-color"
             @click="handleMenuClick('show original',props.row)">
-            {{props.row.count}}</span>
+            {{props.row.count}}
+          </span>
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('占比')" sortable width="96" prop="source">
+      <bk-table-column
+        :label="$t('占比')"
+        sortable
+        width="96"
+        prop="source">
         <template slot-scope="props">
           <span class="link-color" @click="handleMenuClick('show original',props.row)">
             {{`${props.row.percentage.toFixed(2)}%`}}
@@ -57,7 +65,10 @@
 
       <template v-if="requestData.year_on_year_hour >= 1 ">
         <bk-table-column
-          width="101" align="center" header-align="center" prop="source"
+          width="101"
+          align="center"
+          header-align="center"
+          prop="source"
           :label="$t('同比数量')"
           sortable
           :sort-by="'year_on_year_count'">
@@ -67,7 +78,10 @@
         </bk-table-column>
 
         <bk-table-column
-          width="101" align="center" header-align="center" prop="source"
+          width="101"
+          align="center"
+          header-align="center"
+          prop="source"
           :label="$t('同比变化')"
           sortable
           :sort-by="'year_on_year_percentage'">
@@ -80,7 +94,10 @@
         </bk-table-column>
       </template>
 
-      <bk-table-column label="Pattern" min-width="500" class-name="symbol-column">
+      <bk-table-column
+        label="Pattern"
+        min-width="500"
+        class-name="symbol-column">
         <!-- eslint-disable-next-line -->
         <template slot-scope="{ row, column, $index }">
           <div :class="['pattern-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
@@ -150,6 +167,7 @@
 import ClusterEventPopover from './components/cluster-event-popover';
 import ClusteringLoader from '@/skeleton/clustering-loader';
 import { copyMessage } from '@/common/util';
+
 export default {
   components: {
     ClusterEventPopover,

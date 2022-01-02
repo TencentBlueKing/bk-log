@@ -31,7 +31,12 @@
       :tippy-options="{ hideOnClick: false, boundary: 'window' }"
       :on-show="handlePopoverShow"
       :on-hide="handlePopoverHide">
-      <span class="filter-text" v-if="isAdd" data-test-id="dataQuery_span_addConditions">{{ $t('添加条件') }}</span>
+      <span
+        class="filter-text"
+        v-if="isAdd"
+        data-test-id="dataQuery_span_addConditions">
+        {{ $t('添加条件') }}
+      </span>
       <div class="condition-item-container" v-else>
         <div class="tag text-tag field-tag" v-bk-overflow-tips>
           <!-- <span class="bk-icon icon-close-circle-shape" @click="removeFilterCondition(coreData.field)"></span> -->
@@ -68,7 +73,11 @@
               data-test-id="addConditions_div_fieldFilter"
               style="width: 120px;">
               <template v-for="option in filterOperators">
-                <bk-option :key="option.operator" :id="option.operator" :name="option.label"></bk-option>
+                <bk-option
+                  :key="option.operator"
+                  :id="option.operator"
+                  :name="option.label">
+                </bk-option>
               </template>
             </bk-select>
           </div>
@@ -310,7 +319,13 @@ export default {
                         && ((this.coreData.operator && this.coreData.value.length)
                             || (['exists', 'does not exists'].includes(this.coreData.operator)))) {
           this.closePopoverIfOpened();
-          this.$emit('addFilterCondition', this.coreData.field, this.coreData.operator, this.coreData.value.join(','), this.editIndex);
+          this.$emit(
+            'addFilterCondition',
+            this.coreData.field,
+            this.coreData.operator,
+            this.coreData.value.join(','),
+            this.editIndex,
+          );
           this.resetData();
           this.$nextTick(() => {
             this.setDefaultEditValue();

@@ -125,7 +125,6 @@ export default {
     .clean-landing {
       border: 0;
       height: calc(100% - 24px);
-      // padding: 100px;
     }
   }
 </style>

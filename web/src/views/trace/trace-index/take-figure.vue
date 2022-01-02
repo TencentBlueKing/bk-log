@@ -239,12 +239,6 @@ export default {
       line-height: 48px;
       text-align: center;
       border-left: 1px solid  rgba(196,198,204,.8);
-
-      /*border-right: none;*/
-
-      /*border-bottom: none;*/
-
-      /*border-top: none;*/
     }
 
     .column {

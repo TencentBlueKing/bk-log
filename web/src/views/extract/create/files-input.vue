@@ -21,14 +21,15 @@
   -->
 
 <template>
-  <bk-popover class="bk-select-dropdown"
-              ref="selectDropdown"
-              trigger="click"
-              placement="bottom-start"
-              theme="light bk-select-dropdown"
-              animation="slide-toggle"
-              :offset="-1"
-              :distance="16">
+  <bk-popover
+    class="bk-select-dropdown"
+    ref="selectDropdown"
+    trigger="click"
+    placement="bottom-start"
+    theme="light bk-select-dropdown"
+    animation="slide-toggle"
+    :offset="-1"
+    :distance="16">
     <slot name="trigger">
       <bk-input
         style="width: 669px;"
@@ -38,14 +39,25 @@
         @change="handleChange">
       </bk-input>
     </slot>
-    <div slot="content" class="bk-select-dropdown-content" style="width: 671px;height: 224px;">
+    <div
+      slot="content"
+      class="bk-select-dropdown-content"
+      style="width: 671px;height: 224px;">
       <div class="bk-select-search-wrapper" style="height: 32px;">
         <i class="left-icon bk-icon icon-search"></i>
-        <input class="bk-select-search-input" type="text" :placeholder="$t('输入关键字搜索')" v-model="searchValue">
+        <input
+          class="bk-select-search-input"
+          type="text"
+          :placeholder="$t('输入关键字搜索')"
+          v-model="searchValue">
       </div>
       <div class="bk-options-wrapper" style="max-height: 190px;">
         <ul class="bk-options bk-options-single" style="max-height: 190px;">
-          <li class="bk-option" v-for="option in filesSearchedPath" :key="option" @click="handleSelectOption(option)">
+          <li
+            class="bk-option"
+            v-for="option in filesSearchedPath"
+            :key="option"
+            @click="handleSelectOption(option)">
             <div class="bk-option-content">{{option}}</div>
           </li>
         </ul>

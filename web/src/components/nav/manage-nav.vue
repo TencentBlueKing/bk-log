@@ -22,18 +22,22 @@
 
 <template>
   <div class="sub-nav-container">
-    <div class="back-container" v-if="$route.meta.needBack" @click="handleBack">
+    <div
+      class="back-container"
+      v-if="$route.meta.needBack"
+      @click="handleBack">
       <span class="bk-icon icon-arrows-left"></span>
     </div>
     <div class="main-title">{{ $route.meta.needBack ? getTitleName() : activeManageNav.name }}</div>
-    <ul class="sub-nav-list"
-        v-if="activeManageNav.children && !$route.meta.needBack"
-        data-test-id="logCollection_ul_logCollectionNavBox"
-    >
+    <ul
+      class="sub-nav-list"
+      v-if="activeManageNav.children && !$route.meta.needBack"
+      data-test-id="logCollection_ul_logCollectionNavBox">
       <template v-for="navItem in activeManageNav.children">
-        <li :class="{ 'sub-nav-item': true, 'active': navItem.id === activeManageSubNav.id }"
-            :key="navItem.id" @click="handleClickSubNav(navItem.id)"
-            :data-test-id="`logCollectionNavBox_li_${navItem.id}`">
+        <li
+          :class="{ 'sub-nav-item': true, 'active': navItem.id === activeManageSubNav.id }"
+          :key="navItem.id" @click="handleClickSubNav(navItem.id)"
+          :data-test-id="`logCollectionNavBox_li_${navItem.id}`">
           {{ navItem.name }}
         </li>
       </template>

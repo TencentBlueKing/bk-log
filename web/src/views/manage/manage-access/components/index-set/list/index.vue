@@ -29,7 +29,8 @@
       :title="alertText"></bk-alert>
     <div class="operate-box">
       <bk-button
-        theme="primary" style="width: 120px;"
+        theme="primary"
+        style="width: 120px;"
         data-test-id="logIndexSetBox_button_newIndexSet"
         :disabled="!collectProject || isTableLoading || isAllowedCreate === null"
         :loading="isCreateLoading"
@@ -65,13 +66,15 @@
           <span
             class="indexSet-name"
             :title="row.index_set_name"
-            @click="manageIndexSet('manage', row)"
-          >
+            @click="manageIndexSet('manage', row)">
             {{ row.index_set_name }}
           </span>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('采集项')" prop="index_set_id" min-width="200">
+      <bk-table-column
+        :label="$t('采集项')"
+        prop="index_set_id"
+        min-width="200">
         <template slot-scope="props">
           <span>{{ props.row.indexes.map(item => item.result_table_id).join('; ') }}</span>
         </template>

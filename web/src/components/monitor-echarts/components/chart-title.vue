@@ -29,7 +29,11 @@
       @click="handleShowMenu"
       @blur="showMenu = false">
       <div class="main-title">
-        <span class="bk-icon icon-down-shape" :class="{ 'is-flip': !isExpand }" @click.stop="toggleExpand"></span>
+        <span 
+          class="bk-icon icon-down-shape"
+          :class="{ 'is-flip': !isExpand }" 
+          @click.stop="toggleExpand">
+        </span>
         <div class="title-name">{{title}}</div>
       </div>
       <div v-if="subtitle" class="sub-title">
@@ -43,6 +47,7 @@
       :style="{ left: menuLeft + 'px' }" />
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Ref } from 'vue-property-decorator'
 import ChartMenu from './chart-menu.vue'
@@ -75,6 +80,7 @@ export default class ChartTitle extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .title-wrapper {
     width: 100%;
@@ -84,7 +90,6 @@ export default class ChartTitle extends Vue {
       padding: 5px 10px;
       margin-left: -10px;
       border-radius: 2px;
-      // background-color: white;
       color: #63656e;
       font-size: 12px;
 

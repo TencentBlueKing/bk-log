@@ -38,7 +38,11 @@
       </div>
     </div>
     <div class="chart-canvas-container big-chart" ref="chartRef"></div>
-    <bk-exception v-if="isEmpty" class="king-exception" type="empty" scene="part"></bk-exception>
+    <bk-exception
+      v-if="isEmpty"
+      class="king-exception"
+      type="empty"
+      scene="part"></bk-exception>
   </div>
 </template>
 

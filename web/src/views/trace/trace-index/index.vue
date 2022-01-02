@@ -106,7 +106,10 @@
               v-model="searchData[val.field_name]"
               @enter="searchHandle">
             </bk-input>
-            <div class="more-text" @click="moreTime = !moreTime" v-if="ind === traceData.additions.length - 1">
+            <div
+              class="more-text"
+              @click="moreTime = !moreTime"
+              v-if="ind === traceData.additions.length - 1">
               {{$t('dataManage.more')}}
               <i class="bk-icon icon-down-shape" v-if="!moreTime"></i>
               <i class="bk-icon icon-up-shape" v-else></i>
@@ -233,45 +236,53 @@
               </bk-table-column>
               <!-- 显示字段 -->
               <template v-for="(field, index) in visibleFieldsInfo">
-                <bk-table-column v-if="field.field_name === 'tag.error'" :key="field.field_name"
-                                 :label="field.field_alias || field.field_name">
+                <bk-table-column
+                  v-if="field.field_name === 'tag.error'" :key="field.field_name"
+                  :label="field.field_alias || field.field_name">
                   <div slot-scope="{ row }">
                     <table-status :is-error="Boolean(row.tag.error)"></table-status>
                   </div>
                 </bk-table-column>
-                <bk-table-column :key="index"
-                                 :label="field.field_alias ? field.field_alias : field.field_name"
-                                 :min-width="field.minWidth" v-else-if="field.field_name === 'traceID'">
+                <bk-table-column
+                  :key="index"
+                  :label="field.field_alias ? field.field_alias : field.field_name"
+                  :min-width="field.minWidth" v-else-if="field.field_name === 'traceID'">
                   <template slot-scope="item">
                     <div class="td-log-container">
-                      <!-- eslint-disable -->
-                                            <span v-if="tableRowDeepView(item.row, field.field_name)">
-                                            <span style="color: #3a84ff;cursor: pointer;">{{item.row.traceID}}</span></span>
-                                        </div>
-                                    </template>
-                                </bk-table-column>
-                                <bk-table-column :key="index"
-                                    :label="field.field_alias ? field.field_alias : field.field_name"
-                                    :min-width="field.minWidth" v-else>
-                                    <template slot-scope="{row}">
-                                        <div class="td-log-container">
-                                            <!-- eslint-disable -->
-                                            <span class="field-container add-to">{{tableRowDeepView(row, field.field_name, field.field_type)}}</span>
-                                        </div>
-                                    </template>
-                                </bk-table-column>
-                            </template>
-                        </template>
-                    </bk-table>
-                </div>
-            </div>
+                      <span v-if="tableRowDeepView(item.row, field.field_name)">
+                        <span style="color: #3a84ff;cursor: pointer;">{{item.row.traceID}}</span>
+                      </span>
+                    </div>
+                  </template>
+                </bk-table-column>
+                <bk-table-column
+                  :key="index"
+                  :label="field.field_alias ? field.field_alias : field.field_name"
+                  :min-width="field.minWidth" v-else>
+                  <template slot-scope="{ row }">
+                    <div class="td-log-container">
+                      <span class="field-container add-to">
+                        {{tableRowDeepView(row, field.field_name, field.field_type)}}
+                      </span>
+                    </div>
+                  </template>
+                </bk-table-column>
+              </template>
+            </template>
+          </bk-table>
         </div>
-        <div class="fixed-scroll-top-btn" v-show="isShowScrollTop" @click="scrollToTop">
-            <i class="bk-icon icon-angle-up"></i>
-        </div>
-        <trace-detail :isShow.sync="showTraceDetail" :traceId="traceId" :indexSetName="indexSetName" />
+      </div>
     </div>
+    <div class="fixed-scroll-top-btn" v-show="isShowScrollTop" @click="scrollToTop">
+      <i class="bk-icon icon-angle-up"></i>
+    </div>
+    <trace-detail
+      :is-show.sync="showTraceDetail"
+      :trace-id="traceId"
+      :index-set-name="indexSetName" />
+  </div>
 </template>
+
 <script>
 import topNav from '@/components/nav/top-nav';
 import AuthPage from '@/components/common/auth-page';
@@ -443,7 +454,6 @@ export default {
       logAllTableList: {},
       isShowScrollTop: false,
       totalCount: 0, // 后端搜索结果总条数
-
       throttle: false, // 滚动节流 是否进入cd
       isPageOver: false, // 前端分页加载是否结束
       dataListPaged: [], // 将列表数据按 pageSize 分页

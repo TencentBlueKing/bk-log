@@ -73,7 +73,12 @@
           </ul>
           <div class="config-buttons">
             <!-- 确定、取消按钮 -->
-            <bk-button class="king-button" theme="primary" @click="confirmConfig">{{$t('btn.affirm')}}</bk-button>
+            <bk-button
+              class="king-button"
+              theme="primary"
+              @click="confirmConfig">
+              {{$t('btn.affirm')}}
+            </bk-button>
             <bk-button class="king-button" @click="cancelConfig">{{$t('btn.cancel')}}</bk-button>
           </div>
         </div>
@@ -88,9 +93,10 @@
               :key="field.field_name"
               :label="field.field_alias || field.field_name"
               min-width="240">
-              <div slot-scope="{ row }" :class="['table-nesting-container', row.hasChildren && 'has-children']"
-                   :style="{ 'padding-left': row.tableLevel * 12 + 'px' }"
-                   @click="expandRow(row)">
+              <div
+                slot-scope="{ row }" :class="['table-nesting-container', row.hasChildren && 'has-children']"
+                :style="{ 'padding-left': row.tableLevel * 12 + 'px' }"
+                @click="expandRow(row)">
                 <div :class="['icon-container', row.showChildren && 'expanded']">
                   <span v-if="row.hasChildren" class="bk-icon icon-right-shape"></span>
                 </div>
@@ -153,8 +159,17 @@
         </bk-table>
       </div>
     </div>
-    <bk-sideslider :title="$t('trace.log')" :width="1096" :is-show.sync="isShowLog" :quick-close="true">
-      <view-log slot="content" :is-show-log="isShowLog" :log-list="logList" :log-fields="logFields"></view-log>
+    <bk-sideslider
+      :title="$t('trace.log')"
+      :width="1096"
+      :is-show.sync="isShowLog"
+      :quick-close="true">
+      <view-log
+        slot="content"
+        :is-show-log="isShowLog"
+        :log-list="logList"
+        :log-fields="logFields">
+      </view-log>
     </bk-sideslider>
     <bk-sideslider
       transfer
@@ -191,11 +206,9 @@ export default {
       asyncSwitch: false,
       isLoading: true,
       isCollapseChart: false,
-
       // 字段列表
       totalFieldsList: [],
       visibleFieldsList: [],
-
       // 字段显示设置时 clone totalFieldsList
       fieldsConfigList: [],
       // 字段显示设置tips配置
@@ -209,7 +222,6 @@ export default {
         content: '#fields-config-tippy',
         onShow: this.handleShowConfigTooltip,
       },
-
       // 树状图的配置字段
       chartTreeConfig: {
         display_field: 'operationName',
@@ -270,31 +282,31 @@ export default {
         const { fields: logTotalFields, display_fields: logDisplayFields } = logRes.data;
         const { tree, list: logList } = dataRes.data;
 
-                    // eslint-disable-next-line camelcase
-                    trace?.chart_tree && (this.chartTreeConfig = trace.chart_tree);
+        // eslint-disable-next-line camelcase
+        trace?.chart_tree && (this.chartTreeConfig = trace.chart_tree);
 
-                    // 处理表头数据
-                    this.totalFieldsList = totalFields;
-                    this.visibleFieldsList = this.formatFieldsList(totalFields, displayFields);
+        // 处理表头数据
+        this.totalFieldsList = totalFields;
+        this.visibleFieldsList = this.formatFieldsList(totalFields, displayFields);
 
-                    // 处理表格数据
-                    const resList = Object.keys(tree).length ? [tree] : []; // 如果 tree 是个空对象说明为空数据
-                    this.originTableList = JSON.parse(JSON.stringify(resList));
-                    this.formatTableList(resList, null, null);
+        // 处理表格数据
+        const resList = Object.keys(tree).length ? [tree] : []; // 如果 tree 是个空对象说明为空数据
+        this.originTableList = JSON.parse(JSON.stringify(resList));
+        this.formatTableList(resList, null, null);
 
-                    // 查看日志
-                    this.logList = logList;
-                    const logFields = [];
-                    logDisplayFields.forEach((fieldName) => {
-                      for (let i = 0; i < logTotalFields.length; i++) {
-                        const fieldInfo = logTotalFields[i];
-                        if (fieldInfo.field_name === fieldName) {
-                          logFields.push(fieldInfo);
-                          break;
-                        }
-                      }
-                    });
-                    this.logFields = logFields;
+        // 查看日志
+        this.logList = logList;
+        const logFields = [];
+        logDisplayFields.forEach((fieldName) => {
+          for (let i = 0; i < logTotalFields.length; i++) {
+            const fieldInfo = logTotalFields[i];
+            if (fieldInfo.field_name === fieldName) {
+              logFields.push(fieldInfo);
+              break;
+            }
+          }
+        });
+        this.logFields = logFields;
       } catch (e) {
         console.warn(e);
       } finally {
@@ -302,11 +314,11 @@ export default {
       }
     },
     /**
-             * 处理表头字段数据 根据 display_fields 的顺序返回可见的字段
-             * @param {Array} totalFields
-             * @param {Array} displayFields
-             * @return {Array}
-             */
+     * 处理表头字段数据 根据 display_fields 的顺序返回可见的字段
+     * @param {Array} totalFields
+     * @param {Array} displayFields
+     * @return {Array}
+     */
     formatFieldsList(totalFields, displayFields) {
       const fieldsList = [];
 
@@ -321,12 +333,12 @@ export default {
       return fieldsList;
     },
     /**
-             * 遍历递归处理表格数据
-             * @param {Array} list
-             * @param {Number} max 最大时间戳
-             * @param {Number} min 最小时间戳
-             * @return {Object}
-             */
+     * 遍历递归处理表格数据
+     * @param {Array} list
+     * @param {Number} max 最大时间戳
+     * @param {Number} min 最小时间戳
+     * @return {Object}
+     */
     formatTableList(list, max, min) {
       // 首轮循环
       let { length } = list;

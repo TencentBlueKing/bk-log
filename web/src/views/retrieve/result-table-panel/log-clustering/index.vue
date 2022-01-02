@@ -200,10 +200,15 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      return this.clusterSwitch ? (this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
+      return this.clusterSwitch
+        ? (this.configID
+          ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage'))
+        : this.$t('goSettingMessage');
     },
     exhibitOperate() {
-      return this.clusterSwitch ? (this.configID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
+      return this.clusterSwitch
+        ? (this.configID ? this.$t('跳转到日志清洗') : '')
+        : this.$t('去设置');
     },
     clusteringField() {
       return this.configData?.extra?.clustering_field || '';

@@ -60,6 +60,7 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Prop, Vue, Ref, Emit, Watch } from 'vue-property-decorator'
 import { Debounce, defaultSearch } from '../common/util'
@@ -216,6 +217,7 @@ export default class DynamicGroup extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
 .dynamic-group {
   display: flex;

@@ -21,7 +21,10 @@
   -->
 
 <template>
-  <div class="main-container" data-test-id="logExtraction_div_fromBox" v-bkloading="{ isLoading }">
+  <div
+    class="main-container"
+    data-test-id="logExtraction_div_fromBox"
+    v-bkloading="{ isLoading }">
     <div class="option-container">
       <bk-button
         theme="primary"
@@ -57,19 +60,29 @@
           <span v-bk-overflow-tips>{{ row.file_path.join('; ') }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('创建时间')" prop="created_at" min-width="120"></bk-table-column>
+      <bk-table-column
+        :label="$t('创建时间')"
+        prop="created_at"
+        min-width="120">
+      </bk-table-column>
       <bk-table-column :label="$t('备注')" min-width="120">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.remark || '--' }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('创建人')" prop="created_by" min-width="100"></bk-table-column>
+      <bk-table-column
+        :label="$t('创建人')"
+        prop="created_by"
+        min-width="100">
+      </bk-table-column>
       <bk-table-column :label="$t('任务状态')" min-width="100">
-        <div slot-scope="{ row }" :class="{
-          'task-status-warning': true,
-          'task-status-success': row.download_status === 'downloadable' || row.download_status === 'redownloadable',
-          'task-status-error': row.download_status === 'expired' || row.download_status === 'failed'
-        }">
+        <div
+          slot-scope="{ row }"
+          :class="{
+            'task-status-warning': true,
+            'task-status-success': row.download_status === 'downloadable' || row.download_status === 'redownloadable',
+            'task-status-error': row.download_status === 'expired' || row.download_status === 'failed'
+          }">
           <span class="bk-icon icon-refresh" v-if="!notLoadingStatus.includes(row.download_status)"></span>
           <span>{{ row.download_status_display }}</span>
           <span

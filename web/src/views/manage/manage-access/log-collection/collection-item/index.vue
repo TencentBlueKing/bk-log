@@ -158,7 +158,9 @@
                   class="text-disabled cursor-disabled">
                   {{ props.row.status_name || '--' }}
                 </span>
-                <span v-else :class="['status', 'status-' + props.row.status, { 'cursor-disabled': !loadingStatus }]">
+                <span
+                  v-else
+                  :class="['status', 'status-' + props.row.status, { 'cursor-disabled': !loadingStatus }]">
                   <span v-if="props.row.status">
                     <i class="bk-icon icon-circle-shape"></i>
                     {{ props.row.status_name || '--' }}
