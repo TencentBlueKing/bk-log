@@ -97,8 +97,10 @@ export default {
     margin: 0 0 16px;
     padding: 10px 24px 20px;
     background: #fff;
+
     .bk-tab {
       margin-bottom: 16px;
+
       .bk-tab-section {
         display: none;
       }

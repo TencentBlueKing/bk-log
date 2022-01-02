@@ -25,22 +25,31 @@
     <section class="partial-content">
       <div class="main-title">
         {{ $t('使用统计') }}
-        <SelectDate
+        <select-date
           :date-picker-value.sync="chartDateValue"
           :disabled="timesChartLoading || frequencyChartLoading || spentChartLoading"
           @datePickerChange="fetchChartData" />
       </div>
       <div class="charts-container">
-        <ChartComponent :type="$t('使用次数趋势')" :loading="timesChartLoading" :chart-data="timesChartData" />
-        <ChartComponent :type="$t('用户使用频次')" :loading="frequencyChartLoading" :chart-data="frequencyChartData" />
-        <ChartComponent :type="$t('检索耗时统计')" :loading="spentChartLoading" :chart-data="spentChartData" />
+        <chart-component
+          :type="$t('使用次数趋势')"
+          :loading="timesChartLoading"
+          :chart-data="timesChartData" />
+        <chart-component
+          :type="$t('用户使用频次')"
+          :loading="frequencyChartLoading"
+          :chart-data="frequencyChartData" />
+        <chart-component
+          :type="$t('检索耗时统计')"
+          :loading="spentChartLoading"
+          :chart-data="spentChartData" />
       </div>
     </section>
 
     <section class="partial-content">
       <div class="main-title">
         {{ $t('检索记录') }}
-        <SelectDate
+        <select-date
           :date-picker-value.sync="tableDateValue"
           :disabled="tableLoading"
           @datePickerChange="fetchTableData" />
@@ -57,7 +66,10 @@
             {{ formatDate(row.created_at) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('执行人')" prop="created_by" min-width="10"></bk-table-column>
+        <bk-table-column
+          :label="$t('执行人')"
+          prop="created_by"
+          min-width="10"></bk-table-column>
         <bk-table-column :label="$t('查询语句')" min-width="20">
           <div class="table-ceil-container" slot-scope="{ row }">
             <span class="table-view-span-detail" v-bk-overflow-tips>{{ row.query_string }}</span>
@@ -75,8 +87,8 @@
 
 <script>
 import { formatDate } from '@/common/util';
-import ChartComponent from './ChartComponent';
-import SelectDate from './SelectDate';
+import ChartComponent from './chart-component';
+import SelectDate from './select-date';
 
 export default {
   components: {
@@ -122,7 +134,6 @@ export default {
       this.fetchChartData();
       this.fetchTableData();
     },
-
     fetchChartData() {
       const payload = {
         params: {
@@ -173,7 +184,6 @@ export default {
         this.spentChartLoading = false;
       }
     },
-
     async fetchTableData() {
       try {
         this.tableLoading = true;
@@ -216,6 +226,7 @@ export default {
 
 <style lang="scss" scoped>
   .chart-container {
+    /* stylelint-disable-next-line declaration-no-important */
     width: calc((100% - 32px) / 3) !important;
   }
 </style>

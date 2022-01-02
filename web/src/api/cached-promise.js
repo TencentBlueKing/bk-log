@@ -31,12 +31,12 @@ export default class CachedPromise {
   }
 
   /**
-     * 根据 id 获取缓存对象，如果不传 id，则获取所有缓存
-     *
-     * @param {string?} id id
-     *
-     * @return {Array|Promise} 缓存集合或promise 缓存对象
-     */
+   * 根据 id 获取缓存对象，如果不传 id，则获取所有缓存
+   *
+   * @param {string?} id id
+   *
+   * @return {Array|Promise} 缓存集合或promise 缓存对象
+   */
   get(id) {
     if (typeof id === 'undefined') {
       return Object.keys(this.cache).map(requestId => this.cache[requestId]);
@@ -45,24 +45,24 @@ export default class CachedPromise {
   }
 
   /**
-     * 设置 promise 缓存对象
-     *
-     * @param {string} id id
-     * @param {Promise} promise 要缓存的 promise 对象
-     *
-     * @return {Promise} promise 对象
-     */
+   * 设置 promise 缓存对象
+   *
+   * @param {string} id id
+   * @param {Promise} promise 要缓存的 promise 对象
+   *
+   * @return {Promise} promise 对象
+   */
   set(id, promise) {
     Object.assign(this.cache, { [id]: promise });
   }
 
   /**
-     * 删除 promise 缓存对象
-     *
-     * @param {string|Array?} deleteIds 要删除的缓存对象的 id，如果不传则删除所有
-     *
-     * @return {Promise} 以成功的状态返回 Promise 对象
-     */
+   * 删除 promise 缓存对象
+   *
+   * @param {string|Array?} deleteIds 要删除的缓存对象的 id，如果不传则删除所有
+   *
+   * @return {Promise} 以成功的状态返回 Promise 对象
+   */
   delete(deleteIds) {
     let requestIds = [];
     if (typeof deleteIds === 'undefined') {

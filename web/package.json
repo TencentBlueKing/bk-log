@@ -11,8 +11,7 @@
     "clean": "rimraf ../static/dist/*",
     "analyze": "npm run clean && bkmonitor-cli build -a",
     "lint": "eslint --fix --ext .js,.vue,.ts src",
-    "style": "stylelint \"./src/**/*.(vue|scss|css)\" --fix",
-    "precommit": "lint-staged"
+    "style": "stylelint \"./src/**/*.(vue|scss|css)\" --fix"
   },
   "dependencies": {
     "@blueking/bkcharts": "^2.0.11-alpha.5",
@@ -52,8 +51,8 @@
     "vuex": "3.1.1"
   },
   "devDependencies": {
-    "@bkui/eslint-config-bk": "^2.0.0",
-    "@bkui/stylelint-config-bk": "^2.0.0",
+    "@blueking/eslint-config-bk": "2.0.0",
+    "@blueking/stylelint-config-bk": "2.0.0",
     "@commitlint/cli": "^12.1.4",
     "@commitlint/config-conventional": "^12.1.4",
     "eslint": "7.0.0",

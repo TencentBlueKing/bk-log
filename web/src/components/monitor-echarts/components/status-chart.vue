@@ -41,6 +41,7 @@
     </div>
   </ul>
 </template>
+
 <script lang="ts">
 import { Vue, Prop, Component } from 'vue-property-decorator'
 @Component({
@@ -57,6 +58,7 @@ export default class StatusChart extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   $statusFontColor: #10c178 #c4c6cc #ffb848;
   $statusBgColor: #e7f9f2 #f0f1f5 #ffe8c3;

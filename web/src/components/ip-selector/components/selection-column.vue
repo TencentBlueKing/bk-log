@@ -39,6 +39,7 @@
        @click="handleShowMenu"></i>
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Ref, Emit, Watch, Model } from 'vue-property-decorator'
 import Menu from './menu.vue'
@@ -171,6 +172,7 @@ export default class SelectionColumn extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .selection-header {
     .all-check {

@@ -25,12 +25,23 @@
     data-test-id="custom_div_addNewCustomBox"
     v-bkloading="{ isLoading: containerLoading }"
     :class="`custom-create-container ${isOpenWindow ? 'is-active-details' : ''}`">
-    <bk-form :label-width="103" :model="formData" ref="validateForm">
+    <bk-form
+      :label-width="103"
+      :model="formData"
+      ref="validateForm">
       <div class="create-form">
         <div class="form-title">{{$t('基础信息')}}</div>
         <!-- 数据ID -->
-        <bk-form-item required :label="$t('customReport.dataID')" :property="'bk_data_id'" v-if="isEdit">
-          <bk-input class="form-input" disabled v-model="formData.bk_data_id"></bk-input>
+        <bk-form-item
+          required
+          :label="$t('customReport.dataID')"
+          :property="'bk_data_id'"
+          v-if="isEdit">
+          <bk-input
+            class="form-input"
+            disabled
+            v-model="formData.bk_data_id">
+          </bk-input>
         </bk-form-item>
         <!-- <bk-form-item :label="$t('customReport.token')" required :property="'name'">
           <bk-input class="form-input" :disabled="true" v-model="formData.name"></bk-input>
@@ -50,7 +61,10 @@
             maxlength="50"></bk-input>
         </bk-form-item>
         <!-- 数据类型 -->
-        <bk-form-item required :label="$t('customReport.typeOfData')" :property="'name'">
+        <bk-form-item
+          required
+          :label="$t('customReport.typeOfData')"
+          :property="'name'">
           <div style="margin-top: -4px">
             <div class="bk-button-group">
               <bk-button
@@ -270,7 +284,7 @@
     <intro-panel
       :data="formData"
       :is-open-window="isOpenWindow"
-      @handleActiveDetails="handleActiveDetails"></intro-panel>
+      @handleActiveDetails="handleActiveDetails" />
 
     <div class="submit-btn">
       <bk-button
@@ -292,11 +306,11 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import storageMixin from '@/mixins/storageMixin';
-import IntroPanel from './components/IntroPanel';
+import storageMixin from '@/mixins/storage-mixin';
+import IntroPanel from './components/intro-panel';
 
 export default {
-  name: 'custom-report-create',
+  name: 'CustomReportCreate',
   components: {
     IntroPanel,
   },
@@ -541,73 +555,48 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/scss/mixins/clearfix";
-@import "@/scss/mixins/flex";
-@import '@/scss/mixins/scroller';
-@import '@/scss/storage';
+  @import '@/scss/mixins/clearfix';
+  @import '@/scss/mixins/flex';
+  @import '@/scss/mixins/scroller';
+  @import '@/scss/storage';
 
-.custom-create-container {
-  padding:0 24px;
-  transition: padding 0.5s;
-  &.is-active-details{
-    padding:0 420px 0 24px;
-  }
-  .create-form {
-    background: #fff;
-    padding: 24px 37px;
-    margin-top: 20px;
-    border-radius: 2px;
-    border: 1px solid #dcdee5;
-    .form-title {
-      font-size: 14px;
-      color: #63656e;
-      font-weight: 700;
-      margin-bottom: 24px;
+  .custom-create-container {
+    padding: 0 24px;
+    transition: padding .5s;
+
+    &.is-active-details {
+      padding: 0 420px 0 24px;
     }
-    .form-input {
-      width: 320px;
+
+    .create-form {
+      background: #fff;
+      padding: 24px 37px;
+      margin-top: 20px;
+      border-radius: 2px;
+      border: 1px solid #dcdee5;
+
+      .form-title {
+        font-size: 14px;
+        color: #63656e;
+        font-weight: 700;
+        margin-bottom: 24px;
+      }
+
+      .form-input {
+        width: 320px;
+      }
+
+      .group-tip {
+        font-size: 12px;
+        color: #979ba5;
+      }
     }
-    .group-tip {
-      font-size: 12px;
-      color: #979ba5;
+
+    .submit-btn {
+      width: 140px;
+      margin: 20px 20px 100px ;
+
+      @include clearfix;
     }
-    // .tips_storage {
-    //   width: 560px;
-    //   background-color: rgb(239, 248, 255);
-    //   border: 1px solid deepskyblue;
-    //   font-size: 12px;
-    //   padding: 10px;
-    //   margin-top: 15px;
-    //   div {
-    //     line-height: 24px;
-    //     color: #63656e;
-    //   }
-    // }
-    // .copy-number-input{
-    //   width:100px;
-    //   .input-number-option{
-    //     top: 2px;
-    //   }
-    // }
-    // .hot-data-form-item {
-    //   .bk-form-content {
-    //     display: flex;
-    //     align-items: center;
-    //     .disable-tips {
-    //       margin-left: 10px;
-    //       font-size: 12px;
-    //       color: #63656e;
-    //       a {
-    //         color: #3a84ff;
-    //       }
-    //     }
-    //   }
-    // }
   }
-  .submit-btn {
-    width: 140px;
-    margin: 20px 20px 100px ;
-    @include clearfix;
-  }
-}
 </style>

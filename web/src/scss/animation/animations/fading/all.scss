@@ -1,12 +1,12 @@
 @import 'fade';
-@import 'fadeDown';
-@import 'fadeDownBig';
-@import 'fadeLeft';
-@import 'fadeLeftBig';
-@import 'fadeRight';
-@import 'fadeRightBig';
-@import 'fadeUp';
-@import 'fadeUpBig';
+@import 'fade-down';
+@import 'fade-down-big';
+@import 'fade-left';
+@import 'fade-left-big';
+@import 'fade-right';
+@import 'fade-right-big';
+@import 'fade-up';
+@import 'fade-up-big';
 
 $fades: Down, DownBig, Left, LeftBig, Right, RightBig, Up, UpBig;
 
