@@ -33,11 +33,11 @@ module.exports = class MonitorWebpackPlugin {
     this.options = Object.assign({}, this.defaultOption, options);
     this.cacheVersionKey = this.options.cacheVersionKey;
     this.staticUrlKey = this.options.staticUrlKey;
-    this.isMobile = config.mobile;
+    // this.isMobile = config.mobile;
     // this.modePath = config.mobile ? '' : config.fta ? 'fta' : 'monitor';
     this.modePath = '';
     this.staticUrl = 'BK_STATIC_URL';
-    this.variates = (this.isMobile ? config.mobileBuildVariates : config.pcBuildVariates) || '';
+    this.variates = config.pcBuildVariates || '';
     this.hasChanged = false;
   }
 
@@ -119,11 +119,8 @@ module.exports = class MonitorWebpackPlugin {
         ) {
           machUrl = machUrl.replace(
             /([^"])"([^"]+)"/gim,
-            `$1"\${${this.staticUrl}}${this.modePath}${this.isMobile ? '' : '/'}$2"`,
+            `$1"\${${this.staticUrl}}${this.modePath}/$2"`,
           );
-        }
-        if (this.isMobile) {
-          machUrl = machUrl.replace(/\$\{SITE_URL\}/gm, '${WEIXIN_SITE_URL}');
         }
         res = res.replace(url, machUrl);
       });
@@ -171,15 +168,12 @@ module.exports = class MonitorWebpackPlugin {
   }
   resolveServiceWorker(chunk) {
     chunk = chunk.replace('__cache_version___', crypto.randomBytes(16).toString('hex'));
-    if (this.isMobile) {
-      chunk = chunk.replace('${BK_STATIC_URL}', '${WEIXIN_STATIC_URL}');
-    }
     return chunk;
   }
-  resolveManifestJson(chunk) {
-    chunk = chunk
-      .replace(/\$\{BK_STATIC_URL\}/gm, '${WEIXIN_STATIC_URL}')
-      .replace(/\$\{BK_STATIC_URL\}/gm, '${WEIXIN_SITE_URL}');
-    return chunk;
-  }
+  // resolveManifestJson(chunk) {
+  //   chunk = chunk
+  //     .replace(/\$\{BK_STATIC_URL\}/gm, '${WEIXIN_STATIC_URL}')
+  //     .replace(/\$\{BK_STATIC_URL\}/gm, '${WEIXIN_SITE_URL}');
+  //   return chunk;
+  // }
 };
