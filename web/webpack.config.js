@@ -66,7 +66,10 @@ const logPluginConfig = {
       window.TAM_AEGIS_KEY = '\${TAM_AEGIS_KEY}'
       window.BK_LOGIN_URL = '\${BK_LOGIN_URL}'
       window.BK_DOC_DATA_URL = '\${BK_DOC_DATA_URL}'
-    </script>`,
+    </script>
+    % if TAM_AEGIS_KEY != "" :
+      <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js?_bid=3977"></script>
+    % endif`,
 };
 if (fs.existsSync(path.resolve(__dirname, './local.settings.js'))) {
   const localConfig = require('./local.settings');
