@@ -33,6 +33,7 @@
     :handle-agent-status="handleAgentStatus"
     @check-change="handleCheckChange" />
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Emit, Ref } from 'vue-property-decorator'
 import ServiceTemplate from './service-template.vue'
@@ -75,6 +76,7 @@ export default class Cluster extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
 
 </style>

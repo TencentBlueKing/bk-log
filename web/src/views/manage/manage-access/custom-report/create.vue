@@ -25,12 +25,23 @@
     data-test-id="custom_div_addNewCustomBox"
     v-bkloading="{ isLoading: containerLoading }"
     :class="`custom-create-container ${isOpenWindow ? 'is-active-details' : ''}`">
-    <bk-form :label-width="103" :model="formData" ref="validateForm">
+    <bk-form
+      :label-width="103"
+      :model="formData"
+      ref="validateForm">
       <div class="create-form">
         <div class="form-title">{{$t('基础信息')}}</div>
         <!-- 数据ID -->
-        <bk-form-item required :label="$t('customReport.dataID')" :property="'bk_data_id'" v-if="isEdit">
-          <bk-input class="form-input" disabled v-model="formData.bk_data_id"></bk-input>
+        <bk-form-item
+          required
+          :label="$t('customReport.dataID')"
+          :property="'bk_data_id'"
+          v-if="isEdit">
+          <bk-input
+            class="form-input"
+            disabled
+            v-model="formData.bk_data_id">
+          </bk-input>
         </bk-form-item>
         <!-- <bk-form-item :label="$t('customReport.token')" required :property="'name'">
           <bk-input class="form-input" :disabled="true" v-model="formData.name"></bk-input>
@@ -50,7 +61,10 @@
             maxlength="50"></bk-input>
         </bk-form-item>
         <!-- 数据类型 -->
-        <bk-form-item required :label="$t('customReport.typeOfData')" :property="'name'">
+        <bk-form-item
+          required
+          :label="$t('customReport.typeOfData')"
+          :property="'name'">
           <div style="margin-top: -4px">
             <div class="bk-button-group">
               <bk-button
@@ -576,38 +590,6 @@ export default {
         font-size: 12px;
         color: #979ba5;
       }
-      // .tips_storage {
-      //   width: 560px;
-      //   background-color: rgb(239, 248, 255);
-      //   border: 1px solid deepskyblue;
-      //   font-size: 12px;
-      //   padding: 10px;
-      //   margin-top: 15px;
-      //   div {
-      //     line-height: 24px;
-      //     color: #63656e;
-      //   }
-      // }
-      // .copy-number-input{
-      //   width:100px;
-      //   .input-number-option{
-      //     top: 2px;
-      //   }
-      // }
-      // .hot-data-form-item {
-      //   .bk-form-content {
-      //     display: flex;
-      //     align-items: center;
-      //     .disable-tips {
-      //       margin-left: 10px;
-      //       font-size: 12px;
-      //       color: #63656e;
-      //       a {
-      //         color: #3a84ff;
-      //       }
-      //     }
-      //   }
-      // }
     }
 
     .submit-btn {

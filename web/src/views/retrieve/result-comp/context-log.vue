@@ -99,7 +99,6 @@ export default {
   },
   data() {
     const id = 'fields-config-tippy';
-
     return {
       logLoading: true,
       totalFields: [], // 所有字段信息
@@ -223,7 +222,10 @@ export default {
 
         const { list } = res.data;
         if (list && list.length) {
-          const stringList = this.formatStringList(list, this.displayFieldNames.length ? this.displayFieldNames : ['log']);
+          const stringList = this.formatStringList(
+            list,
+            this.displayFieldNames.length ? this.displayFieldNames : ['log'],
+          );
           if (direction) {
             if (direction === 'down') {
               this.logList.push(...stringList);
@@ -287,7 +289,6 @@ export default {
 
       return stringList;
     },
-
     // 确定设置显示字段
     async confirmConfig(list) {
       this.isConfigLoading = true;
@@ -313,7 +314,6 @@ export default {
     cancelConfig() {
       this.$refs.fieldsConfigRef._tippy.hide();
     },
-
     initLogScrollPosition() {
       // 确定第0条的位置
       this.firstLogEl = document.querySelector('.dialog-log-markdown .log-init');
@@ -382,7 +382,6 @@ export default {
         this.$easeScroll(top, 200, this.$refs.contextLog);
       }
     },
-
     handleFilter(field, value) {
       if (field === 'filterKey') {
         this.filterLog(value);
@@ -390,7 +389,6 @@ export default {
         this[field] = value;
       }
     },
-
     filterLog(value) {
       this.throttle = true;
       this.activeFilterKey = value;

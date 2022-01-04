@@ -31,7 +31,10 @@
     :popover-min-width="600"
     :popover-options="{ boundary: 'window' }"
     @selected="handleSelectIndex">
-    <div slot="trigger" class="bk-select-name" v-bk-overflow-tips="{ placement: 'right' }">
+    <div
+      slot="trigger"
+      class="bk-select-name"
+      v-bk-overflow-tips="{ placement: 'right' }">
       <span>{{ selectedItem.indexName }}</span>
       <span style="color: #979ba5;">{{ selectedItem.lightenName }}</span>
     </div>

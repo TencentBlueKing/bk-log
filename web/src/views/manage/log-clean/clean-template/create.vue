@@ -30,7 +30,7 @@
 
 <script>
 import { mapState } from 'vuex';
-import stepField from '@/components/data-Access/step-field';
+import stepField from '@/components/collection-access/step-field';
 
 export default {
   name: 'log-clean-create',

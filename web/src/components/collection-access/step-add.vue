@@ -445,6 +445,7 @@
     </bk-form>
   </div>
 </template>
+
 <script>
 import MultilineRegDialog from './multiline-reg-dialog';
 import ipSelectorDialog from './ip-selector-dialog';
@@ -867,8 +868,8 @@ export default {
     chooseDataClass() {
       // console.log(val)
       /**
-                 * 以下为预留逻辑
-                 */
+       * 以下为预留逻辑
+       */
       // 当父类为services时，仅能选取动态类型目标；其他父类型目标为静态类型时，切换为serveices时需要做清空判断操作
       // if (['services', 'module'].includes(val)) {
       //     if (this.formData.target_object_type === 'SERVICE') {
@@ -1003,6 +1004,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss">
   .add-collection-container {
     min-width: 950px;

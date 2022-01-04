@@ -45,7 +45,11 @@
         </li>
       </template>
     </ul>
-    <bk-exception v-else class="exception-wrap-item exception-part" type="empty" scene="part"></bk-exception>
+    <bk-exception
+      v-else
+      class="exception-wrap-item exception-part"
+      type="empty" scene="part">
+    </bk-exception>
   </div>
 </template>
 

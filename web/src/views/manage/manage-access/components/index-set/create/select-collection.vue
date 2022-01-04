@@ -55,7 +55,10 @@
           </bk-select>
         </bk-form-item>
         <bk-form-item label="">
-          <bk-table v-bkloading="{ isLoading: tableLoading }" :data="tableData" max-height="259">
+          <bk-table
+            v-bkloading="{ isLoading: tableLoading }"
+            :data="tableData"
+            max-height="259">
             <bk-table-column :label="$t('字段')" prop="field_name" min-width="240"></bk-table-column>
             <bk-table-column :label="$t('类型')" prop="field_type" min-width="250"></bk-table-column>
           </bk-table>
@@ -94,7 +97,6 @@ export default {
       basicLoading: false,
       tableLoading: false,
       confirmLoading: false,
-
       collectionList: [], // log bkdata 下拉列表
       tableData: [], // log bkdata 表格
       formData: {

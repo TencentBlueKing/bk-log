@@ -29,8 +29,16 @@
     :mask-close="false"
     :show-footer="false">
     <div class="slot-container">
-      <bk-form :model="formData" :label-width="100" :rules="formRules" ref="formRef">
-        <bk-form-item :label="$t('索引')" required property="resultTableId" class="add-index-input-container">
+      <bk-form
+        :model="formData"
+        :label-width="100"
+        :rules="formRules"
+        ref="formRef">
+        <bk-form-item
+          :label="$t('索引')"
+          required
+          property="resultTableId"
+          class="add-index-input-container">
           <bk-input
             v-model.trim="formData.resultTableId"
             placeholder="log_search_*'"
@@ -54,12 +62,26 @@
             <i class="bk-icon icon-check-circle-shape"></i>
             {{ $t('成功匹配x条索引', { x: matchedTableIds.length }) }}
           </div>
-          <bk-table v-bkloading="{ isLoading: tableLoading }" :data="matchedTableIds" max-height="259">
-            <bk-table-column :label="$t('索引')" property="result_table_id" min-width="490"></bk-table-column>
+          <bk-table
+            v-bkloading="{ isLoading: tableLoading }"
+            :data="matchedTableIds"
+            max-height="259">
+            <bk-table-column
+              :label="$t('索引')"
+              property="result_table_id"
+              min-width="490">
+            </bk-table-column>
           </bk-table>
         </bk-form-item>
-        <bk-form-item :label="$t('时间字段')" required property="time_field">
-          <bk-select :value="formData.time_field" searchable :clearable="false" @selected="handleSelectedTimeField">
+        <bk-form-item
+          :label="$t('时间字段')"
+          required
+          property="time_field">
+          <bk-select
+            :value="formData.time_field"
+            searchable
+            :clearable="false"
+            @selected="handleSelectedTimeField">
             <bk-option
               v-for="item in timeFields"
               :key="item.field_name"
@@ -73,8 +95,16 @@
           required
           property="time_field_unit"
           v-if="formData.time_field_type === 'long'">
-          <bk-select v-model="formData.time_field_unit" searchable :clearable="false">
-            <bk-option v-for="item in timeUnits" :key="item.id" :id="item.id" :name="item.name"></bk-option>
+          <bk-select
+            v-model="formData.time_field_unit"
+            searchable
+            :clearable="false">
+            <bk-option
+              v-for="item in timeUnits"
+              :key="item.id"
+              :id="item.id"
+              :name="item.name">
+            </bk-option>
           </bk-select>
         </bk-form-item>
       </bk-form>
@@ -114,7 +144,6 @@ export default {
       tableLoading: false,
       searchLoading: false,
       confirmLoading: false,
-
       indexErrorText: '',
       matchedTableIds: [], // 匹配到的索引 id，result table id list
       timeFields: [], // 字段类型为 date 或 long 的字段
@@ -124,7 +153,6 @@ export default {
         time_field_type: '',
         time_field_unit: 'microsecond',
       },
-
       timeUnits: [
         { name: '秒（second）', id: 'second' },
         { name: '毫秒（millisecond）', id: 'millisecond' },

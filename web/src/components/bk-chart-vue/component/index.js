@@ -20,10 +20,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-import BKLine from './BK-line/BK-line.vue';
-import LineTooltips from './BK-line/line-tooltips.vue';
+import BkLine from './bk-chart-line/bk-chart-line.vue';
+import LineTooltips from './bk-chart-line/line-tooltips.vue';
 
 export {
-  BKLine,
+  BkLine,
   LineTooltips,
 };

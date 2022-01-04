@@ -25,7 +25,10 @@
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
     <template v-if="!authPageInfo && !basicLoading && curIndexSet">
       <bk-tab :active.sync="activePanel" type="border-card">
-        <bk-tab-panel v-for="panel in panels" v-bind="panel" :key="panel.name"></bk-tab-panel>
+        <bk-tab-panel
+          v-for="panel in panels"
+          v-bind="panel"
+          :key="panel.name"></bk-tab-panel>
       </bk-tab>
       <keep-alive>
         <component

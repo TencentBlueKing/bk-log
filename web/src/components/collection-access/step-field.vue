@@ -410,6 +410,7 @@
     </div>
   </section>
 </template>
+
 <script>
 import { mapGetters } from 'vuex';
 import fieldTable from './field-table';
@@ -1376,6 +1377,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss">
   @import '@/scss/mixins/clearfix';
 
@@ -1485,27 +1487,6 @@ export default {
         text-align: right;
       }
     }
-
-    // .text-nav {
-    //   margin: 20px 0 10px 0;
-    //   display: flex;
-    //   justify-content: space-between;
-    //   font-size: 14px;
-    //   font-weight: 600;
-    //   color: #63656e;
-
-    //   div {
-    //     display: inline-block;
-    //     font-size: 12px;
-    //     color: #3a84ff;
-    //     font-weight: normal;
-
-    //     span {
-    //       margin-left: 10px;
-    //       cursor: pointer;
-    //     }
-    //   }
-    // }
 
     .field-method {
       position: relative;
@@ -1667,13 +1648,7 @@ export default {
       color: #3a84ff;
       cursor: pointer;
     }
-    // .field-method-result {
-    //     margin-top: 45px;
-    //     // & > div{
-    //     //     min-height: 257px;
-    //     //     border: 1px solid #DCDEE5;
-    //     // }
-    // }
+
     .field-method-result {
       margin-top: 8px;
     }
@@ -1686,7 +1661,6 @@ export default {
 
     .debug-btn {
       margin-left: 12px;
-      // min-width: 120px;
       background: #fff;
       color: #3a84ff;
 
@@ -1696,10 +1670,7 @@ export default {
     }
 
     .field-method-regex {
-      // position: relative;
       margin-top: 20px;
-      // padding-right: 40px;
-      // width: 100%;
 
       .regex-btn {
         position: absolute;
@@ -1787,9 +1758,7 @@ export default {
       font-size: 12px;
       color: #63656e;
     }
-    // .visible-deleted-btn {
-    //     vertical-align: top;
-    // }
+
     .format-error {
       margin-top: 8px;
       font-size: 12px;
@@ -1799,7 +1768,6 @@ export default {
     .log-style {
       height: 82px;
 
-      /*background-color: #313238;*/
       .bk-form-textarea:focus {
         /* stylelint-disable-next-line declaration-no-important */
         background-color: #313238 !important;

@@ -38,9 +38,10 @@
         {{ menu.name }}
       </div>
       <ul class="top-nav-list fl" v-if="!title && menu.children">
-        <li v-for="item in menu.children" :key="item.id"
-            :class="{ 'active': routerName === item.id, 'text-disabled': (item.id === 'esAccess' && !collectProject) }"
-            @click="routerHandler(item)">{{item.name}}
+        <li
+          v-for="item in menu.children" :key="item.id"
+          :class="{ 'active': routerName === item.id, 'text-disabled': (item.id === 'esAccess' && !collectProject) }"
+          @click="routerHandler(item)">{{item.name}}
         </li>
       </ul>
     </div>

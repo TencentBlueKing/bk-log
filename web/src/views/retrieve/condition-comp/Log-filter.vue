@@ -30,7 +30,10 @@
       v-model="ignoreCase">
     </bk-checkbox>
     <span>{{ $t('retrieve.ignoreCase') }}</span>
-    <div class="filter-bar" v-if="filterType === 'include'" style="margin-left: 20px">
+    <div
+      class="filter-bar"
+      v-if="filterType === 'include'"
+      style="margin-left: 20px">
       <span>{{ $t('retrieve.showPrev') }}</span>
       <bk-tag-input
         style="width: 74px;margin-right: 10px"

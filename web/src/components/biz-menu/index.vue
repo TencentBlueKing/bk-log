@@ -85,7 +85,6 @@
 
 <script>
 import { mapState } from 'vuex';
-// import { menuArr } from './nav/complete-menu';
 import navMenuMixin from '@/mixins/nav-menu-mixin';
 
 export default {
@@ -180,8 +179,8 @@ export default {
 </script>
 
 <style lang="scss">
-  @import '../scss/mixins/flex.scss';
-  @import '../scss/mixins/ellipsis.scss';
+  @import '../../scss/mixins/flex.scss';
+  @import '../../scss/mixins/ellipsis.scss';
 
   .biz-menu-select {
     .menu-select {

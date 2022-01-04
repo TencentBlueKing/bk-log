@@ -22,21 +22,26 @@
 
 <template>
   <div class="retrieve-input" v-click-outside="hiddenHistory">
-    <bk-input class="king-input-retrieve"
-              :value="value"
-              type="text"
-              @change="handleChange"
-              @focus="handleFocus"
-              @enter="handleEnter"
-              data-test-id="frontPageSearch_input_phrasesSearch"
+    <bk-input
+      class="king-input-retrieve"
+      :value="value"
+      type="text"
+      @change="handleChange"
+      @focus="handleFocus"
+      @enter="handleEnter"
+      data-test-id="frontPageSearch_input_phrasesSearch"
     ></bk-input>
     <!-- 首页搜索ICON -->
-    <span v-cursor="{ active: isSearchAllowed === false }"
-          class="bk-icon icon-search"
-          @click="handleEnter"
+    <span
+      v-cursor="{ active: isSearchAllowed === false }"
+      class="bk-icon icon-search"
+      @click="handleEnter"
     ></span>
     <!-- 历史搜索记录 -->
-    <ul class="retrieve-history" v-show="showHistory && historyList.length" @click.stop>
+    <ul
+      class="retrieve-history"
+      v-show="showHistory && historyList.length"
+      @click.stop>
       <li v-for="item in historyList" :key="item.id">
         <span
           v-bk-overflow-tips="{ placement: 'right' }"

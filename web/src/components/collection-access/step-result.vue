@@ -27,12 +27,14 @@
       <h3 class="title">{{ finishText }}</h3>
       <!-- <p v-if="host.count"> -->
       <!-- <p class="info">
-                {{ '共' }}<span class="host-number text-primary">{{ host.count || 0 }}</span>{{ '台主机' }}
-                <template>{{ '，成功' }}
-                  <span class="host-number text-success">{{ host.success || 0 }}</span>{{ '台主机' }}</template>
-                <template>{{ '，失败' }}
-                  <span class="host-number text-failed">{{ host.failed || 0 }}</span>{{ '台主机' }}</template>
-            </p> -->
+        {{ '共' }}<span class="host-number text-primary">{{ host.count || 0 }}</span>{{ '台主机' }}
+        <template>{{ '，成功' }}
+          <span class="host-number text-success">{{ host.success || 0 }}</span>{{ '台主机' }}
+        </template>
+        <template>{{ '，失败' }}
+          <span class="host-number text-failed">{{ host.failed || 0 }}</span>{{ '台主机' }}
+        </template>
+      </p> -->
       <div class="result-button-group">
         <bk-button
           @click="routeChange('complete')"

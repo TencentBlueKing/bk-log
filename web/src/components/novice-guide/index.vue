@@ -77,6 +77,7 @@
     </div>
   </transition>
 </template>
+
 <script>
 import _ from 'lodash';
 // import cookie from 'cookie';
@@ -325,7 +326,8 @@ export default {
   },
 };
 </script>
-<style lang='postcss'>
+
+<style lang='scss'>
   body {
     *.guide-highlight {
       /* stylelint-disable-next-line declaration-no-important */
@@ -473,10 +475,6 @@ export default {
 
       .wraper {
         width: 500px;
-
-        /* height: 390px; */
-
-        /* padding-top: 45px; */
         height: 370px;
         padding-top: 25px;
         text-align: center;

@@ -29,19 +29,40 @@
       <bk-radio value="2">{{ $t('否') }}</bk-radio>
     </bk-radio-group>
     <div class="title">{{ $t('字段类型') }}</div>
-    <bk-select v-model="fieldType" class="king-select" :clearable="false" :prefix-icon="fieldTypeMap[fieldType].icon">
+    <bk-select
+      v-model="fieldType"
+      class="king-select"
+      :clearable="false"
+      :prefix-icon="fieldTypeMap[fieldType].icon">
       <template v-for="item in fieldTypeList">
-        <bk-option :key="item" :id="item" :name="fieldTypeMap[item].name">
+        <bk-option
+          :key="item"
+          :id="item"
+          :name="fieldTypeMap[item].name">
           <div class="option-container">
-            <span class="field-filter-option-icon" :class="fieldTypeMap[item].icon"></span>
+            <span
+              class="field-filter-option-icon"
+              :class="fieldTypeMap[item].icon">
+            </span>
             <span class="bk-option-name">{{ fieldTypeMap[item].name }}</span>
           </div>
         </bk-option>
       </template>
     </bk-select>
     <div class="button-container">
-      <bk-button class="king-button" text size="small" @click="handleConfirm">{{ $t('确定') }}</bk-button>
-      <bk-button class="king-button" text size="small" @click="handleCancel">{{ $t('取消') }}</bk-button>
+      <bk-button
+        class="king-button"
+        text size="small"
+        @click="handleConfirm">
+        {{ $t('确定') }}
+      </bk-button>
+      <bk-button
+        class="king-button"
+        text
+        size="small"
+        @click="handleCancel">
+        {{ $t('取消') }}
+      </bk-button>
     </div>
   </div>
 </template>

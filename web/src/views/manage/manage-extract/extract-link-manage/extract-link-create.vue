@@ -21,16 +21,33 @@
   -->
 
 <template>
-  <div class="extract-link-create-container"
-       v-bkloading="{ isLoading: basicLoading }"
-       data-test-id="extractLinkCreate_div_extractLinkCreateBox">
-    <article class="article" data-test-id="extractLinkCreateBox_article_basicInformation">
+  <div
+    class="extract-link-create-container"
+    v-bkloading="{ isLoading: basicLoading }"
+    data-test-id="extractLinkCreate_div_extractLinkCreateBox">
+    <article
+      class="article"
+      data-test-id="extractLinkCreateBox_article_basicInformation">
       <h3 class="title">{{ $t('基础信息') }}</h3>
-      <bk-form class="king-form" ref="formRef" :label-width="160" :model="formData" :rules="formRules">
-        <bk-form-item :label="$t('链路名称')" required property="name">
-          <bk-input v-model="formData.name" data-test-id="basicInformation_input_linkName"></bk-input>
+      <bk-form
+        class="king-form"
+        ref="formRef"
+        :label-width="160"
+        :model="formData"
+        :rules="formRules">
+        <bk-form-item
+          :label="$t('链路名称')"
+          required
+          property="name">
+          <bk-input
+            v-model="formData.name"
+            data-test-id="basicInformation_input_linkName">
+          </bk-input>
         </bk-form-item>
-        <bk-form-item :label="$t('链路类型')" required property="link_type">
+        <bk-form-item
+          :label="$t('链路类型')"
+          required
+          property="link_type">
           <bk-select
             data-test-id="basicInformation_select_selectLinkType"
             v-model="formData.link_type"
@@ -39,40 +56,68 @@
             <bk-option id="qcloud_cos" :name="$t('腾讯云链路')"></bk-option>
           </bk-select>
         </bk-form-item>
-        <bk-form-item :label="$t('执行人')" required property="operator">
-          <bk-input v-model="formData.operator" data-test-id="basicInformation_input_executive"></bk-input>
+        <bk-form-item
+          :label="$t('执行人')"
+          required
+          property="operator">
+          <bk-input
+            v-model="formData.operator"
+            data-test-id="basicInformation_input_executive"></bk-input>
         </bk-form-item>
-        <bk-form-item :label="$t('执行bk_biz_id')" required property="op_bk_biz_id">
+        <bk-form-item
+          :label="$t('执行bk_biz_id')"
+          required
+          property="op_bk_biz_id">
           <bk-input
             v-model="formData.op_bk_biz_id"
             data-test-id="basicInformation_input_executivebk_biz_id"
           ></bk-input>
         </bk-form-item>
         <template v-if="formData.link_type === 'qcloud_cos'">
-          <bk-form-item :label="$t('腾讯云SecretId')" required property="qcloud_secret_id">
-            <bk-input v-model="formData.qcloud_secret_id" data-test-id="basicInformation_input_SecretId"></bk-input>
+          <bk-form-item
+            :label="$t('腾讯云SecretId')"
+            required
+            property="qcloud_secret_id">
+            <bk-input
+              v-model="formData.qcloud_secret_id"
+              data-test-id="basicInformation_input_SecretId">
+            </bk-input>
           </bk-form-item>
-          <bk-form-item :label="$t('腾讯云SecretKey')" required property="qcloud_secret_key">
+          <bk-form-item
+            :label="$t('腾讯云SecretKey')"
+            required
+            property="qcloud_secret_key">
             <bk-input
               v-model="formData.qcloud_secret_key"
               data-test-id="basicInformation_input_SecretKey"
             ></bk-input>
           </bk-form-item>
-          <bk-form-item :label="$t('腾讯云Cos桶名称')" required property="qcloud_cos_bucket">
+          <bk-form-item
+            :label="$t('腾讯云Cos桶名称')"
+            required
+            property="qcloud_cos_bucket">
             <bk-input
               v-model="formData.qcloud_cos_bucket"
               data-test-id="basicInformation_input_cosBucket"
             ></bk-input>
           </bk-form-item>
-          <bk-form-item :label="$t('腾讯云Cos区域')" required property="qcloud_cos_region">
+          <bk-form-item
+            :label="$t('腾讯云Cos区域')"
+            required
+            property="qcloud_cos_region">
             <bk-input
               v-model="formData.qcloud_cos_region"
               data-test-id="basicInformation_input_cosRegion"
             ></bk-input>
           </bk-form-item>
         </template>
-        <bk-form-item :label="$t('是否启用')" required property="is_enable">
-          <bk-radio-group v-model="formData.is_enable" data-test-id="basicInformation_radio_whetherToEnable">
+        <bk-form-item
+          :label="$t('是否启用')"
+          required
+          property="is_enable">
+          <bk-radio-group
+            v-model="formData.is_enable"
+            data-test-id="basicInformation_radio_whetherToEnable">
             <bk-radio :value="true" style="margin-right: 16px;">{{ $t('是') }}</bk-radio>
             <bk-radio :value="false">{{ $t('否') }}</bk-radio>
           </bk-radio-group>
@@ -91,15 +136,30 @@
               <div class="min-box ip-container">{{ $t('主机IP') }}</div>
               <div class="min-box operation-container">{{ $t('操作') }}</div>
             </li>
-            <li class="host-item" v-for="(item, index) in formData.hosts" :key="item.keyId">
+            <li
+              class="host-item"
+              v-for="(item, index) in formData.hosts"
+              :key="item.keyId">
               <div class="min-box dir-container">
-                <bk-input class="king-input" v-model="item.target_dir" @blur="handleInputBlur"></bk-input>
+                <bk-input
+                  class="king-input"
+                  v-model="item.target_dir"
+                  @blur="handleInputBlur">
+                </bk-input>
               </div>
               <div class="min-box id-container">
-                <bk-input class="king-input" v-model="item.bk_cloud_id" @blur="handleInputBlur"></bk-input>
+                <bk-input
+                  class="king-input"
+                  v-model="item.bk_cloud_id"
+                  @blur="handleInputBlur">
+                </bk-input>
               </div>
               <div class="min-box ip-container">
-                <bk-input class="king-input" v-model="item.ip" @blur="handleInputBlur"></bk-input>
+                <bk-input
+                  class="king-input"
+                  v-model="item.ip"
+                  @blur="handleInputBlur">
+                </bk-input>
               </div>
               <div class="min-box operation-container">
                 <bk-button

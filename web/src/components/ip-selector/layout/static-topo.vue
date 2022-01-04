@@ -43,6 +43,7 @@
     @check-change="handleTableCheckChange"
     @search-selection-change="handleSearchSelectionChange" />
 </template>
+
 <script lang="ts">
 import DynamicTopo from './dynamic-topo.vue'
 import { Component, Prop, Vue, Emit, Ref } from 'vue-property-decorator'

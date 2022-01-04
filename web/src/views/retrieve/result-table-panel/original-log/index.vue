@@ -42,7 +42,7 @@
           <span class="switch-label">{{ $t('换行') }}</span>
           <bk-switcher v-model="isWrap" theme="primary"></bk-switcher>
         </div>
-        <TimeFormatter v-show="!showOriginalLog"></TimeFormatter>
+        <time-formatter v-show="!showOriginalLog" />
         <div class="operation-icons">
           <export-log
             :retrieve-params="retrieveParams"

@@ -21,21 +21,23 @@
   -->
 
 <template>
-  <bk-select v-model="value"
-             :searchable="searchable"
-             :multiple="multiSelect"
-             :clearable="allowClear"
-             :loading="isLoading"
-             :disabled="disabled"
-             :placeholder="calcPlaceHolder"
-             :remote-method="remoteMethod"
-             @selected="handleSelected"
-             @toggle="handleToggle"
-             @clear="handleClear"
-             @change="handleChange">
-    <div class="select-option-wrapper bk-scroll-ys"
-         :style="calcStyle"
-         v-scroll-bottom="{ callback: handleScrollCallback }">
+  <bk-select
+    v-model="value"
+    :searchable="searchable"
+    :multiple="multiSelect"
+    :clearable="allowClear"
+    :loading="isLoading"
+    :disabled="disabled"
+    :placeholder="calcPlaceHolder"
+    :remote-method="remoteMethod"
+    @selected="handleSelected"
+    @toggle="handleToggle"
+    @clear="handleClear"
+    @change="handleChange">
+    <div
+      class="select-option-wrapper bk-scroll-ys"
+      :style="calcStyle"
+      v-scroll-bottom="{ callback: handleScrollCallback }">
       <template v-if="calcHasChild">
         <bk-option-group
           v-for="(group, index) in calcList"
@@ -69,9 +71,11 @@
     </div>
   </bk-select>
 </template>
+
 <script>
 import scrollBottom from './scroll-bottom.js';
 import tippy from 'tippy.js';
+
 export default {
   name: 'bkdata-selector',
   directives: {
@@ -328,7 +332,6 @@ export default {
         this.fireInstance();
       }
     },
-
     fireInstance() {
       while (this.popInstances.length) {
         const instance = this.popInstances[0];
@@ -336,7 +339,6 @@ export default {
         this.popInstances.shift();
       }
     },
-
     getCalcTip(option) {
       return (typeof this.toolTipTpl === 'function' && this.toolTipTpl(option)) || this.toolTipTpl || this.getDefaultTpl(option);
     },
@@ -355,7 +357,6 @@ export default {
         });
       }
     },
-
     getTotalCount() {
       if (!this.hasChildren) {
         return Math.ceil(this.searchedList.length / this.pageSize);
@@ -367,7 +368,6 @@ export default {
       }, 0);
       return Math.ceil(total / this.pageSize);
     },
-
     remoteMethod(val) {
       this.timerId && clearTimeout(this.timerId);
       this.timerId = setTimeout(() => {
@@ -375,7 +375,6 @@ export default {
         this.currentPage = 1;
       }, 300);
     },
-
     handleSelected(value, option) {
       this.value = value;
 
@@ -397,16 +396,13 @@ export default {
         this.$emit('item-selected', value, selectedItem, option);
       });
     },
-
     handleToggle(isOpen) {
       this.$emit('visible-toggle', isOpen);
     },
-
     handleClear(oldValue) {
       this.$emit('clear', oldValue);
       this.value = '';
     },
-
     handleChange(newValue, oldValue) {
       this.$emit('change', newValue, oldValue);
     },
@@ -416,6 +412,7 @@ export default {
   // }
 };
 </script>
+
 <style lang="scss" scoped>
   .bkdata-select-popcontainer {
     position: absolute;

@@ -391,8 +391,8 @@ export default {
       clearTimeout(this.timer);
     },
     /**
-             *  集群list，与轮询共用
-             */
+     *  集群list，与轮询共用
+     */
     requestIssuedClusterList(isPolling) {
       const params = {
         collector_config_id: this.curCollect.collector_config_id,
@@ -452,8 +452,8 @@ export default {
         });
     },
     /**
-             * 重试
-             */
+     * 重试
+     */
     issuedRetry(row, cluster) {
       const targetNodes = [];
       if (cluster) {
@@ -764,7 +764,6 @@ export default {
       border-radius: 2px;
       border: 1px dashed #dcdee5;
       position: relative;
-      // display: box;
       display: flexbox;
       display: flex;
       box-pack: center;

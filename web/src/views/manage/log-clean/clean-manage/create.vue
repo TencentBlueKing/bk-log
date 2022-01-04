@@ -46,9 +46,9 @@
 
 <script>
 import { mapState } from 'vuex';
-import stepField from '@/components/data-Access/step-field';
-import stepStorage from '@/components/data-Access/step-storage';
-import advanceCleanLand from '@/components/data-Access/advance-clean-land';
+import stepField from '@/components/collection-access/step-field';
+import stepStorage from '@/components/collection-access/step-storage';
+import advanceCleanLand from '@/components/collection-access/advance-clean-land';
 
 export default {
   name: 'log-clean-create',
@@ -125,7 +125,6 @@ export default {
     .clean-landing {
       border: 0;
       height: calc(100% - 24px);
-      // padding: 100px;
     }
   }
 </style>

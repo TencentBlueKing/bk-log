@@ -33,7 +33,12 @@
     @confirm="handleConfirm"
     @cancel="closeDialog">
     <div class="link-config-form" data-test-id="addNewLinkConfig_div_linkConfigForm">
-      <bk-form class="king-form" ref="form" :label-width="220" :model="formData" :rules="rules">
+      <bk-form
+        class="king-form"
+        ref="form"
+        :label-width="220"
+        :model="formData"
+        :rules="rules">
         <bk-form-item
           :label="$t('链路名称')"
           required
@@ -56,7 +61,11 @@
             :clearable="false"
             style="width: 380px;">
             <template v-for="item in projectList">
-              <bk-option :key="item.bk_biz_id" :id="item.bk_biz_id" :name="item.project_name"></bk-option>
+              <bk-option
+                :key="item.bk_biz_id"
+                :id="item.bk_biz_id"
+                :name="item.project_name">
+              </bk-option>
             </template>
           </bk-select>
         </bk-form-item>
@@ -71,7 +80,11 @@
             :clearable="false"
             style="width: 380px;">
             <template v-for="item in selectData.kafka">
-              <bk-option :key="item.cluster_id" :id="item.cluster_id" :name="item.cluster_name"></bk-option>
+              <bk-option
+                :key="item.cluster_id"
+                :id="item.cluster_id"
+                :name="item.cluster_name">
+              </bk-option>
             </template>
           </bk-select>
         </bk-form-item>
@@ -86,7 +99,11 @@
             :clearable="false"
             style="width: 380px;">
             <template v-for="item in selectData.transfer">
-              <bk-option :key="item.cluster_id" :id="item.cluster_id" :name="item.cluster_name"></bk-option>
+              <bk-option
+                :key="item.cluster_id"
+                :id="item.cluster_id"
+                :name="item.cluster_name">
+              </bk-option>
             </template>
           </bk-select>
         </bk-form-item>
@@ -102,7 +119,11 @@
             multiple
             style="width: 380px;">
             <template v-for="item in selectData.es">
-              <bk-option :key="item.cluster_id" :id="item.cluster_id" :name="item.cluster_name"></bk-option>
+              <bk-option
+                :key="item.cluster_id"
+                :id="item.cluster_id"
+                :name="item.cluster_name">
+              </bk-option>
             </template>
           </bk-select>
         </bk-form-item>

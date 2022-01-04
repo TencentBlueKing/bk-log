@@ -27,8 +27,7 @@
     :clearable="false"
     :value="selectedId"
     @selected="handleSelected"
-    data-test-id="newlogIndexSetBox_select_selectIndex"
-  >
+    data-test-id="newlogIndexSetBox_select_selectIndex">
     <template v-for="item in collectionList">
       <bk-option
         :key="item.result_table_id"

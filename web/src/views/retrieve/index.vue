@@ -318,7 +318,7 @@ import RetrieveDetailInput from './condition-comp/retrieve-detail-input';
 import QueryStatement from './condition-comp/query-statement';
 import FilterConditionItem from './condition-comp/filter-condition-item';
 import IpQuick from './condition-comp/ip-quick';
-import IpSelectorDialog from '@/components/data-Access/ip-selector-dialog';
+import IpSelectorDialog from '@/components/collection-access/ip-selector-dialog';
 import FieldFilter from './condition-comp/field-filter';
 import FavoritePopper from './condition-comp/favorite-popper';
 import ResultHeader from './result-comp/result-header';
@@ -326,7 +326,7 @@ import NoIndexSet from './result-comp/no-index-set';
 import ResultMain from './result-comp/result-main';
 import AuthPage from '@/components/common/auth-page';
 import SettingModal from './setting-modal/index.vue';
-import BizMenuSelect from '@/components/biz-menu-select.vue';
+import BizMenuSelect from '@/components/biz-menu';
 import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/common/util';
 import indexSetSearchMixin from '@/mixins/indexSet-search-mixin';
 import axios from 'axios';
@@ -356,7 +356,6 @@ export default {
     const currentTime = Date.now();
     const startTime = formatDate(currentTime - 15 * 60 * 1000);
     const endTime = formatDate(currentTime);
-
     return {
       hasAuth: false,
       authPageInfo: null,
@@ -640,7 +639,6 @@ export default {
         this.requestIndexSetList();
       }
     },
-
     updateIndexSetList() {
       this.$http.request('retrieve/getIndexSetList', {
         query: {
@@ -671,7 +669,6 @@ export default {
         }
       });
     },
-
     // 初始化索引集
     requestIndexSetList() {
       const projectId = (this.$route.query.projectId && this.isFirstLoad)
@@ -828,7 +825,6 @@ export default {
       // 字段相关
       this.totalFields.splice(0);
     },
-
     // 检索参数：日期改变
     handleDateChange(val) {
       this.datePickerValue = val;
@@ -872,13 +868,11 @@ export default {
       this.retrieveParams.addition.splice(index, 1);
       this.retrieveLog();
     },
-
     // 打开 ip 选择弹窗
     openIpQuick() {
       // this.$refs.ipQuick.openDialog();
       this.showIpSelectorDialog = true;
     },
-
     // IP 选择
     handleSaveIpQuick(data) {
       // this.retrieveParams.host_scopes = data;
@@ -901,7 +895,6 @@ export default {
         this.retrieveLog();
       }
     },
-
     // 清空条件
     clearCondition() {
       Object.assign(this.retrieveParams, {
@@ -916,7 +909,6 @@ export default {
       });
       this.retrieveLog();
     },
-
     // 收藏记录，和业务相关
     requestFavoriteList(isAddLater = false) {
       this.$http.request('retrieve/getRetrieveFavorite', {
@@ -1005,7 +997,6 @@ export default {
     closeFavoritePopper() {
       this.$refs.favoritePopper.instance.hide();
     },
-
     // 检索日志
     async retrieveLog(historyParams) {
       this.basicLoading = true;
@@ -1176,7 +1167,6 @@ export default {
         this.basicLoading = false;
       }
     },
-
     // 请求字段
     async requestFields() {
       if (this.isThollteField) return;
@@ -1286,13 +1276,11 @@ export default {
       await this.$nextTick();
       this.renderTable = true;
     },
-
     requestTableData() {
       if (this.timer || this.requesting) return;
 
       this.requestTable();
     },
-
     // 表格
     async requestTable() {
       // 轮循结束
@@ -1511,7 +1499,6 @@ export default {
       this.statisticalFieldsData = {};
       this.originLogList = [];
     },
-
     // 控制页面布局宽度
     dragBegin(e) {
       this.isChangingWidth = true;

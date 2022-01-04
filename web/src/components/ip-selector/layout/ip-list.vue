@@ -21,7 +21,10 @@
   -->
 
 <template>
-  <div class="ip-list" ref="ipListWrapper" v-bkloading="{ isLoading: isLoading && !disabledLoading }">
+  <div 
+    class="ip-list" 
+    ref="ipListWrapper" 
+    v-bkloading="{ isLoading: isLoading && !disabledLoading }">
     <bk-input
       clearable
       right-icon="bk-icon icon-search"
@@ -45,6 +48,7 @@
       @page-limit-change="handleLimitChange" />
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Emit, Ref, Watch } from 'vue-property-decorator'
 import { Debounce } from '../common/util'
@@ -219,6 +223,7 @@ export default class IpList extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .ip-list {
     height: 100%;

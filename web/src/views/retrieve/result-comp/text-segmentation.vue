@@ -202,7 +202,7 @@ export default {
 
     .valid-text {
       cursor: pointer;
-      // word-break: keep-all;
+
       &:hover {
         color: #3a84ff;
       }

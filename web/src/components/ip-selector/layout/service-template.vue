@@ -43,7 +43,6 @@
               </span>
             </div>
             <div class="item-count">
-<!--              <span class="count">{{ getChildrenCount(data) || 0 }}</span>-->
             </div>
           </li>
         </template>
@@ -61,6 +60,7 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Prop, Vue, Ref, Emit, Watch } from 'vue-property-decorator'
 import { Debounce, defaultSearch } from '../common/util'
@@ -220,13 +220,13 @@ export default class ServiceTemplate extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .service-template {
     display: flex;
     color: #63656e;
 
     &-left {
-      // flex-basis: 240px;
       display: flex;
       flex-direction: column;
       width: 0;

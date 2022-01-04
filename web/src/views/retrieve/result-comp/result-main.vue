@@ -36,7 +36,7 @@
       </template>
     </div>
     <div class="result-main">
-      <result-eChart
+      <result-chart
         :retrieve-params="retrieveParams"
         @change-queue-res="changeQueueRes"
         @change-total-count="changeTotalCount" />
@@ -61,14 +61,14 @@
 
 <script>
 import tableRowDeepViewMixin from '@/mixins/table-row-deep-view-mixin';
-import ResultEChart from './result-eChart';
+import ResultChart from './result-chart';
 import ResultTablePanel from '../result-table-panel';
 import { mapState } from 'vuex';
 import { setFieldsWidth, parseBigNumberList } from '@/common/util';
 
 export default {
   components: {
-    ResultEChart,
+    ResultChart,
     ResultTablePanel,
   },
   mixins: [tableRowDeepViewMixin],

@@ -31,7 +31,13 @@
       </div>
       <ul v-if="computedFavoriteList.length" class="favorite-list">
         <template v-for="item in computedFavoriteList">
-          <li :class="{ 'favorite-item': true, 'is-latest': item.isLatest }" :key="item.id" :title="item.detail">
+          <li
+            :class="{
+              'favorite-item': true,
+              'is-latest': item.isLatest
+            }"
+            :key="item.id"
+            :title="item.detail">
             <div class="title" @click.stop="$emit('shouldRetrieve', item)">{{ item.title }}</div>
             <span class="bk-icon icon-close-line-2" @click.stop="$emit('remove', item.id)"></span>
           </li>

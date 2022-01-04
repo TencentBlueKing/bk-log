@@ -89,7 +89,7 @@ const ManageCollection = () => import(
 const AccessSteps = () => import(
   /* webpackChunkName: 'access-steps' */
   // '@/views/manage/manage-access/log-collection/collection-item/access-steps'
-  '@/components/data-Access'
+  '@/components/collection-access'
 );
 // ---- 日志接入 ---- 日志采集索引集、数据平台、第三方ES接入 ---- 索引集列表
 const IndexList = () => import(

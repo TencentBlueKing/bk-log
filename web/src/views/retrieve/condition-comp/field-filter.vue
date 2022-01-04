@@ -21,7 +21,9 @@
   -->
 
 <template>
-  <div v-bkloading="{ isLoading: false, color: '#fbfbfb', zIndex: 0 }" class="field-filter-container">
+  <div
+    v-bkloading="{ isLoading: false, color: '#fbfbfb', zIndex: 0 }"
+    class="field-filter-container">
     <div class="form-container">
       <bk-input
         v-model.trim="searchKeyword"
@@ -45,9 +47,10 @@
         :on-show="handlePopoverShow"
         :on-hide="handlePopoverHide">
         <slot name="trigger">
-          <div class="filter-popover-trigger"
-               @click="closePopoverIfOpened"
-               data-test-id="fieldFilter_div_phrasesSearch">
+          <div
+            class="filter-popover-trigger"
+            @click="closePopoverIfOpened"
+            data-test-id="fieldFilter_div_phrasesSearch">
             <span class="bk-icon icon-funnel"></span>
             <span class="text">{{ $t('字段类型过滤') }}</span>
             <span v-if="filterTypeCount" class="count">{{ filterTypeCount }}</span>
@@ -191,10 +194,10 @@ export default {
                 ;[this.visibleFields, this.hiddenFields].forEach((fieldList) => {
         fieldList.forEach((fieldItem) => {
           fieldItem.filterVisible = fieldItem.field_name.includes(searchKeyword)
-                            && !((polymerizable === '1' && !fieldItem.es_doc_values)
-                                || (polymerizable === '2' && fieldItem.es_doc_values)
-                                || (fieldType === 'number' && !['long', 'integer'].includes(fieldItem.field_type))
-                                || (fieldType !== 'any' && fieldType !== 'number' && fieldItem.field_type !== fieldType));
+            && !((polymerizable === '1' && !fieldItem.es_doc_values)
+              || (polymerizable === '2' && fieldItem.es_doc_values)
+              || (fieldType === 'number' && !['long', 'integer'].includes(fieldItem.field_type))
+              || (fieldType !== 'any' && fieldType !== 'number' && fieldItem.field_type !== fieldType));
         });
       });
     },

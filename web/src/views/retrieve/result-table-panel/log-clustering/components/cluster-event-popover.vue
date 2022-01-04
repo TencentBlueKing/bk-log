@@ -54,8 +54,8 @@
     </div>
   </bk-popover>
 </template>
-<script>
 
+<script>
 export default {
   props: {
     placement: {

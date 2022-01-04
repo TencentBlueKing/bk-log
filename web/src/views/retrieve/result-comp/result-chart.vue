@@ -48,7 +48,13 @@
       @dblclick="handleDbClick"
       @chart-loading="handleChartLoading" />
     <div v-if="isEmptyChart && !isFold" class="chart-empty">
-      <svg class="icon-chart" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="256" height="256">
+      <svg
+        class="icon-chart"
+        viewBox="0 0 1024 1024"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        width="256"
+        height="256">
         <path d="M128 160h64v640h704v64H128z"></path>
         <path d="M307.2 636.8l-44.8-44.8 220.8-220.8 137.6 134.4 227.2-227.2 44.8 44.8-272 272-137.6-134.4z"></path>
       </svg>

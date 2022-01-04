@@ -21,7 +21,10 @@
   -->
 
 <template>
-  <div class="favorite-popper-content" :style="popperStyle" v-bkloading="{ isLoading }">
+  <div
+    class="favorite-popper-content"
+    :style="popperStyle"
+    v-bkloading="{ isLoading }">
     <div class="title">{{ $t('收藏描述：') }}</div>
     <div class="content">
       <bk-input v-model.trim="value" maxlength="50"></bk-input>

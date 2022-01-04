@@ -22,9 +22,10 @@
 
 <template>
   <div class="dynamic-topo" v-bkloading="{ isLoading }">
-    <div class="dynamic-topo-left"
-         ref="leftWrapper"
-         :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
+    <div 
+      class="dynamic-topo-left"
+      ref="leftWrapper"
+      :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
       <topo-search
         v-model="treeKeyword"
         :search-method="searchTreeMethod"
@@ -64,6 +65,7 @@
   </div>
 </template>
 <script lang="ts">
+
 import { Component, Prop, Vue, Ref, Emit, Watch } from 'vue-property-decorator'
 import {
   ITableConfig,
@@ -269,6 +271,7 @@ export default class DynamicTopo extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .dynamic-topo {
     display: flex;
@@ -277,7 +280,7 @@ export default class DynamicTopo extends Vue {
     &-left {
       display: flex;
       flex-direction: column;
-      // flex-basis: 240px;
+
       .topo-tree {
         margin: 12px 0;
         overflow: auto;
@@ -287,7 +290,6 @@ export default class DynamicTopo extends Vue {
     &-right {
       flex: 1;
       overflow: auto;
-      // border-left: 1px solid #dcdee5;
       padding-left: 10px;
     }
   }

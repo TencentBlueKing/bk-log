@@ -37,4 +37,4 @@ export default (userName: string): string => (userName
   ${userName}
 </text>
 </svg>`)))}`
-  : '')
+  : '');

@@ -28,10 +28,12 @@
       class="tool" />
   </div>
 </template>
+
 <script>
 import BaseSettings from '../base-settings';
 import BKChart from '@blueking/bkcharts';
 import LineTooltips from './line-tooltips.vue';
+
 export default {
   components: {
     LineTooltips,
@@ -85,11 +87,9 @@ export default {
     titleConfig() {
       return typeof this.title !== 'object' ? { display: false, text: '' } : this.title;
     },
-
     legendConfig() {
       return Object.assign({}, { display: false }, this.legend);
     },
-
     tooltipsConfig() {
       return Object.assign({}, { animateScale: true, animateRotate: true }, this.defaultTooltips);
     },
@@ -194,6 +194,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss" scoped>
   #container {
     position: relative;

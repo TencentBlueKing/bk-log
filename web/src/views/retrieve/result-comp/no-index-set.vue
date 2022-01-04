@@ -24,7 +24,6 @@
   <div class="no-index-set-container">
     <span class="icon log-icon icon-index-set"></span>
     <h2 class="main-tip">{{ $t('nav.notIndex') }}</h2>
-
     <!-- 要使用检索功能，请先创建索引集 -->
     <div class="index-manage-container" v-if="project.project_manage">
       <!-- 日志数据已进入数据平台或ES 关联已入库的数据 -->
@@ -56,7 +55,6 @@
         </bk-button>
       </div>
     </div>
-
     <!-- 请联系业务运维配索引集 -->
     <p class="side-tip" v-else>{{ $t('nav.notIndexAuth') }}</p>
   </div>

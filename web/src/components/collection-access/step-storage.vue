@@ -507,7 +507,7 @@ export default {
           separator_regexp: '',
           separator: '',
           // separator_field_list: ''
-                    }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
+        }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
         fields: copyFields.filter(item => !item.is_built_in),
         retention: retention ? `${retention}` : this.defaultRetention,
         storage_replies,
@@ -532,6 +532,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss">
   @import '@/scss/mixins/clearfix';
   @import '@/scss/storage.scss';

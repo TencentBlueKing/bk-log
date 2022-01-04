@@ -23,7 +23,9 @@
 <template>
   <div class="field-data">
     <div class="title">
-      {{ statisticalFieldData.__validCount + '/' + statisticalFieldData.__totalCount + $t('条记录中数量排名前 5 的数据值') }}
+      {{
+        statisticalFieldData.__validCount + '/' + statisticalFieldData.__totalCount + $t('条记录中数量排名前 5 的数据值')
+      }}
     </div>
     <ul class="chart-list">
       <template v-for="(item, index) in topFiveList">
@@ -38,7 +40,11 @@
             </div>
           </div>
           <div class="operation-container">
-            <span v-bk-tooltips="'is'" class="bk-icon icon-close-circle" @click="addCondition('is', item[0])"></span>
+            <span
+              v-bk-tooltips="'is'"
+              class="bk-icon icon-close-circle"
+              @click="addCondition('is', item[0])">
+            </span>
             <span
               v-bk-tooltips="'not'"
               class="bk-icon icon-minus-circle"

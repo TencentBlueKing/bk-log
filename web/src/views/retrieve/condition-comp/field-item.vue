@@ -35,7 +35,9 @@
         }"
       ></span>
       <!-- 字段名 -->
-      <span class="field-name">{{ showFieldAlias ? fieldAliasMap[fieldItem.field_name] : fieldItem.field_name }}</span>
+      <span class="field-name">
+        {{ showFieldAlias ? fieldAliasMap[fieldItem.field_name] : fieldItem.field_name }}
+      </span>
       <!-- 聚合字段数量 -->
       <span class="field-count">{{ gatherFieldsCount }}</span>
       <!-- 设置字段显示或隐藏 -->

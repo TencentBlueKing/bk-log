@@ -35,7 +35,8 @@
       </bk-radio-group>
       <div class="tree-container" v-show="selectedTypeData === 'topo'">
         <bk-big-tree
-          ref="topoTreeRef" show-checkbox
+          ref="topoTreeRef"
+          show-checkbox
           :data="topoList"
           :check-strictly="false"
           :default-checked-nodes="topoCheckedNodes"

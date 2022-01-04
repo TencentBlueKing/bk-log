@@ -38,14 +38,31 @@
           @menuClick="handleMenuClick" />
       </template>
     </bk-table-column>
-    <bk-table-column type="index" :label="$t('序号')" width="60"></bk-table-column>
-    <bk-table-column :label="$t('数量')" sortable width="91" prop="count"></bk-table-column>
-    <bk-table-column :label="$t('占比')" sortable :sort-by="'count'" width="91" prop="source">
+    <bk-table-column
+      type="index"
+      :label="$t('序号')"
+      width="60">
+    </bk-table-column>
+    <bk-table-column
+      :label="$t('数量')"
+      sortable
+      width="91"
+      prop="count">
+    </bk-table-column>
+    <bk-table-column
+      :label="$t('占比')"
+      sortable
+      :sort-by="'count'"
+      width="91"
+      prop="source">
       <template slot-scope="props">
         {{computedRate(props.row.count)}}
       </template>
     </bk-table-column>
-    <bk-table-column :label="$t('取样内容')" prop="content" class-name="symbol-column">
+    <bk-table-column
+      :label="$t('取样内容')"
+      prop="content"
+      class-name="symbol-column">
       <!-- eslint-disable-next-line -->
       <template slot-scope="{ row, column, $index }">
         <div :class="['symbol-content', { 'is-limit': !cacheExpandStr.includes($index) }]">

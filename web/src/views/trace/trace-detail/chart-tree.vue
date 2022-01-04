@@ -89,9 +89,12 @@ export default {
         const className = node.relationship === 1 ? 'subscript' : 'node-item';
         const nodeClass = isError === true ? `${className} is-error` : className;
         return `<div class="${nodeClass}">
-                            <a href="javascript:;"
-                             title="${node[this.config.display_field]}">${node[this.config.display_field]}</a>
-                        </div>`;
+                  <a
+                    href="javascript:;"
+                    title="${node[this.config.display_field]}">
+                    ${node[this.config.display_field]}
+                  </a>
+                </div>`;
       },
     });
     instance.renderTree(this.tree, 'spanID', this.config.display_field);
@@ -102,6 +105,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss">
   #graph-wrapper {
     width: 100%;

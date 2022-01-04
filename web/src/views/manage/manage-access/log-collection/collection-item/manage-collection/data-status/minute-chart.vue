@@ -37,7 +37,12 @@
       </div>
     </div>
     <div class="chart-canvas-container big-chart" ref="chartRef"></div>
-    <bk-exception v-if="isEmpty" class="king-exception" type="empty" scene="part"></bk-exception>
+    <bk-exception
+      v-if="isEmpty"
+      class="king-exception"
+      type="empty"
+      scene="part">
+    </bk-exception>
   </div>
 </template>
 
@@ -56,7 +61,6 @@ export default {
     const currentTime = Date.now();
     const startTime = formatDate(currentTime - 15 * 60 * 1000);
     const endTime = formatDate(currentTime);
-
     return {
       isEmpty: false,
       basicLoading: true,
