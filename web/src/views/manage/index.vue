@@ -34,7 +34,7 @@ import { mapState, mapGetters } from 'vuex';
 import SubNav from '@/components/nav/manage-nav';
 
 export default {
-  name: 'manage-index',
+  name: 'ManageIndex',
   components: {
     SubNav,
   },
@@ -97,25 +97,32 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '../../scss/mixins/scroller.scss';
-.manage-container {
-  height: 100%;
-  .manage-content {
+  @import '../../scss/mixins/scroller.scss';
+
+  .manage-container {
+    height: 100%;
+
+    .manage-content {
       height: calc(100% - 52px);
       overflow: auto;
+
       @include scroller($backgroundColor: #C4C6CC, $width: 4px);
     }
-  .manage-main {
-    height: 100%;
-  }
-  /deep/ .bk-table {
-    background: #fff;
-    .cell {
-      display: block;
+
+    .manage-main {
+      height: 100%;
     }
-    .bk-table-pagination-wrapper {
-      background: #fafbfd;
+
+    /deep/ .bk-table {
+      background: #fff;
+
+      .cell {
+        display: block;
+      }
+
+      .bk-table-pagination-wrapper {
+        background: #fafbfd;
+      }
     }
   }
-}
 </style>

@@ -26,16 +26,37 @@
     :style="{ 'background-image': backgroundUrl }"
     v-bkloading="{ isLoading: false, zIndex: 2000 }">
     <div v-show="!isFold">
-      <div class="chart-wrapper"
-          tabindex="-1"
-          ref="charWrapRef"
-          :style="{ flexDirection: !(chartOption.legend.toTheRight) ? 'column' : 'row', minHeight: (height - (chartTitle ? 36 : 0)) + 'px', maxHeight: (height - (chartTitle ? 36 : 0)) + 'px' }"
-          @blur="handleCharBlur">
-        <div @dblclick.prevent="handleChartDblClick" @click.stop="handleChartClick" class="echart-instance" ref="chartRef" :style="{ height: (chartHeight - 10) + 'px' }">
-          <status-chart v-if="chartType === 'status'" :series="statusSeries"></status-chart>
-          <text-chart v-else-if="chartType === 'text'" :series="textSeries"></text-chart>
+      <div
+        class="chart-wrapper"
+        tabindex="-1"
+        ref="charWrapRef"
+        :style="{
+          flexDirection: !(chartOption.legend.toTheRight) ? 'column' : 'row',
+          minHeight: (height - (chartTitle ? 36 : 0)) + 'px',
+          maxHeight: (height - (chartTitle ? 36 : 0)) + 'px' }"
+        @blur="handleCharBlur">
+        <div
+          @dblclick.prevent="handleChartDblClick"
+          @click.stop="handleChartClick"
+          class="echart-instance"
+          ref="chartRef"
+          :style="{ height: (chartHeight - 10) + 'px' }">
+          <status-chart
+            v-if="chartType === 'status'"
+            :series="statusSeries">
+          </status-chart>
+          <text-chart
+            v-else-if="chartType === 'text'"
+            :series="textSeries">
+          </text-chart>
         </div>
-        <div class="echart-legend" :style="{ maxHeight: ( chartOption.legend.toTheRight ? height - (chartTitle ? 36 : 0) - 5 : chartOption.legend.maxHeight) + 'px' }">
+        <div
+          class="echart-legend"
+          :style="{
+            maxHeight: ( chartOption.legend.toTheRight ?
+              height - (chartTitle ? 36 : 0) - 5 :
+              chartOption.legend.maxHeight) + 'px' 
+          }">
           <chart-legend
             v-if="legend.show"
             :legend-data="legend.list"
@@ -47,7 +68,10 @@
         <div v-if="chartType === 'pie'" class="echart-pie-center">
           <slot name="chartCenter"></slot>
         </div>
-        <chart-annotation v-if="chartOption.annotation.show" :annotation="annotation"></chart-annotation>
+        <chart-annotation
+          v-if="chartOption.annotation.show"
+          :annotation="annotation">
+        </chart-annotation>
       </div>
       <div class="echart-content" v-if="setNoData" v-show="noData">
         <slot name="noData">
@@ -57,6 +81,7 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import Echarts, { EChartOption } from 'echarts'
 import deepMerge from 'deepmerge'
@@ -74,9 +99,9 @@ import { ILegendItem, IMoreToolItem, IAnnotation, IStatusSeries,
   IStatusChartOption, ITextSeries, ITextChartOption, ChartType } from './options/type-interface'
 import EchartOptions from './options/echart-options'
 import { hexToRgbA } from './utils'
-import watermarkMaker from './utils/watermarkMaker'
+import watermarkMaker from './utils/watermark-maker'
 import ChartInView from './utils/chart-in-view'
-import { getValueFormat } from './valueFormats'
+import { getValueFormat } from './value-formats-package'
 import ChartTitle from './components/chart-title-new.vue'
 interface ICurValue {
   xAxis: string | number; yAxis: string | number;

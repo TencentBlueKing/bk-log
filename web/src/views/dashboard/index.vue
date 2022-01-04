@@ -23,7 +23,7 @@
 <template>
   <div class="dashboard-container" v-bkloading="{ isLoading }">
     <iframe v-if="src" :src="src" ref="iframeRef" class="dashboard-iframe" @load="handleIframeLoad"></iframe>
-    <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
+    <auth-page v-if="authPageInfo" :info="authPageInfo" />
   </div>
 </template>
 

@@ -52,9 +52,11 @@
     </chart-menu> -->
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Ref } from 'vue-property-decorator'
 import ChartMenu from './chart-menu.vue'
+
 @Component({
   name: 'chart-title',
   components: {
@@ -93,16 +95,12 @@ export default class ChartTitle extends Vue {
       padding: 5px 10px;
       margin-left: -10px;
       border-radius: 2px;
-      // background-color: white;
       color: #63656e;
       font-size: 12px;
       cursor: pointer;
 
       &:hover {
-        //   background-color: #f0f1f5;
-        //   cursor: pointer;
         .main-title {
-          // color: black;
           &::after {
             display: flex;
           }
@@ -171,6 +169,7 @@ export default class ChartTitle extends Vue {
         cursor: pointer;
       }
     }
+
     .chart-spin {
       position: absolute;
       top: 24px;

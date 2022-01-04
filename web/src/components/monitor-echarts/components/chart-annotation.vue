@@ -21,7 +21,10 @@
   -->
 
 <template>
-  <div class="echart-annotation" v-show="annotation.show" :style="{ left: annotation.x + 'px', top: annotation.y + 'px' }">
+  <div
+    class="echart-annotation"
+    v-show="annotation.show"
+    :style="{ left: annotation.x + 'px', top: annotation.y + 'px' }">
     <div class="echart-annotation-title">{{ annotation.title}}</div>
     <div class="echart-annotation-name">
       <span class="name-mark" :style="{ backgroundColor: annotation.color }"></span>{{annotation.name}}
@@ -31,7 +34,11 @@
         <li class="list-item" v-if="item.show" :key="item.id" @click="handleGotoDetail(item)">
           <span class="icon-monitor item-icon" :class="`icon-mc-${item.id}`"></span>
           <span> {{toolBarMap[item.id]}}
-            <span v-if="item.id === 'ip'" style="color: #c4c6cc">{{`(${item.value.split('-').reverse().join(':')})`}}</span>
+            <span
+              v-if="item.id === 'ip'"
+              style="color: #c4c6cc">
+              {{`(${item.value.split('-').reverse().join(':')})`}}
+            </span>
           </span>
           <i class="icon-monitor icon-mc-link list-item-link"></i>
         </li>
@@ -39,9 +46,11 @@
     </ul>
   </div>
 </template>
+
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator'
-import { IAnnotation, IAnnotationListItem } from '../options/type-interface'
+import { Component, Vue, Prop } from 'vue-property-decorator';
+import { IAnnotation, IAnnotationListItem } from '../options/type-interface';
+
 @Component({ name: 'ChartAnnotation' })
 export default class ChartAnnotation extends Vue {
   @Prop({ required: true })annotation: IAnnotation
@@ -49,27 +58,28 @@ export default class ChartAnnotation extends Vue {
     return {
       ip: this.$t('相关主机详情'),
       process: this.$t('相关进程信息'),
-      strategy: this.$t('相关策略')
-    }
+      strategy: this.$t('相关策略'),
+    };
   }
   handleGotoDetail(item: IAnnotationListItem) {
     switch (item.id) {
       case 'ip':
-        window.open(location.href.replace(location.hash, `#/performance/detail/${item.value}`))
-        break
+        window.open(location.href.replace(location.hash, `#/performance/detail/${item.value}`));
+        break;
       case 'process':
         window.open(location.href.replace(
           location.hash,
-          `#/performance/detail-new/${item.value.id}/${item.value.processId}`
-        ))
-        break
+          `#/performance/detail-new/${item.value.id}/${item.value.processId}`,
+        ));
+        break;
       case 'strategy':
-        window.open(location.href.replace(location.hash, `#/strategy-config?metricId=${item.value}`))
-        break
+        window.open(location.href.replace(location.hash, `#/strategy-config?metricId=${item.value}`));
+        break;
     }
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .echart-annotation {
     position: absolute;

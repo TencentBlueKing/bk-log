@@ -26,7 +26,7 @@
 
 <script>
 export default {
-  name: 'collection-track',
+  name: 'CollectionTrack',
   data() {
     return {};
   },

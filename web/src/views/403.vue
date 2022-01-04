@@ -26,7 +26,9 @@
     <template v-if="$route.name === 'notTraceIndex'">
       <div class="notTraceIndex">
         <img src="../../src/images/nodata.png" alt="">
-        <p>{{ $t('当前业务没有接入调用链日志，') }}<span @click="notTraceIndex">{{ $t('了解接入详情') }}</span></p>
+        <p>
+          {{ $t('当前业务没有接入调用链日志，') }}<span @click="notTraceIndex">{{ $t('了解接入详情') }}</span>
+        </p>
       </div>
     </template>
   </div>

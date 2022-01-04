@@ -78,13 +78,20 @@ class FavoriteHandlers(object):
             key_word = ""
         query_string = key_word
         host_scopes = params.get("host_scopes", {})
-        target_nodes = host_scopes.get("target_nodes", {})
+        target_nodes = host_scopes.get("target_nodes", [])
 
         if target_nodes:
             if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
                 query_string += " AND ({})".format(
                     ",".join([f"{target_node['bk_cloud_id']}:{target_node['ip']}" for target_node in target_nodes])
                 )
+            elif host_scopes["target_node_type"] == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
+                # target_nodes: [
+                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a",
+                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a"
+                # ]
+                dynamic_name_list = [str(target_node["name"]) for target_node in target_nodes]
+                query_string += " AND (dynamic_group_name:" + ",".join(dynamic_name_list) + ")"
             else:
                 first_node, *_ = target_nodes
                 target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]

@@ -41,7 +41,7 @@
             {{ $t('个节点') }}
           </div>
         </div>
-        <IpSelect :show-select-dialog.sync="showSelectDialog" @confirm="handleConfirm"></IpSelect>
+        <ip-select :show-select-dialog.sync="showSelectDialog" @confirm="handleConfirm" />
       </div>
     </div>
 
@@ -52,29 +52,27 @@
         <span class="log-icon icon-info-fill" v-bk-tooltips="$t('查询目录提示')"></span>
       </div>
       <div class="content">
-        <FilesInput
+        <files-input
           v-model="fileOrPath"
           :available-paths="availablePaths"
-          @update:select="handleFilesSelect">
-        </FilesInput>
+          @update:select="handleFilesSelect" />
       </div>
     </div>
 
     <div class="row-container">
       <div class="title">{{ $t('预览地址') }}</div>
-      <PreviewFiles
+      <preview-files
         ref="preview"
         v-model="downloadFiles"
         :ip-list="ipList"
         :file-or-path="fileOrPath"
-        @update:fileOrPath="handleFileOrPathUpdate">
-      </PreviewFiles>
+        @update:fileOrPath="handleFileOrPathUpdate" />
     </div>
 
     <div class="row-container">
       <div class="title">{{ $t('文本过滤') }}</div>
       <div class="content">
-        <TextFilter ref="textFilter"></TextFilter>
+        <text-filter ref="textFilter" />
       </div>
     </div>
 
@@ -119,10 +117,10 @@
 </template>
 
 <script>
-import IpSelect from '@/views/extract/create/IpSelect';
-import FilesInput from '@/views/extract/create/FilesInput';
-import TextFilter from '@/views/extract/create/TextFilter';
-import PreviewFiles from '@/views/extract/create/PreviewFiles';
+import IpSelect from '@/views/extract/create/ip-select';
+import FilesInput from '@/views/extract/create/files-input';
+import TextFilter from '@/views/extract/create/test-filter';
+import PreviewFiles from '@/views/extract/create/preview-files';
 
 export default {
   name: 'ExtractCreate',
@@ -246,56 +244,66 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.create-task-container {
-  margin-top: 20px;
-  padding: 20px 24px;
-  background-color: #FFF;
-  color: #63656e;
-  border: 1px solid #dcdee5;
-  .row-container {
-    display: flex;
-    min-height: 40px;
-    margin: 20px 0 24px;
-    .title {
-      width: 128px;
-      margin-right: 16px;
-      font-size: 16px;
-      line-height: 40px;
-      font-size: 14px;
-      text-align: right;
-      .required {
-        font-size: 16px;
-        color: #ea3636;
-      }
-      .icon-info-fill {
-        color: #979ba5;
-        cursor: pointer;
-      }
-    }
-    .content {
+  .create-task-container {
+    margin-top: 20px;
+    padding: 20px 24px;
+    background-color: #fff;
+    color: #63656e;
+    border: 1px solid #dcdee5;
+
+    .row-container {
       display: flex;
-      flex-flow: column;
-      justify-content: center;
       min-height: 40px;
-      .flex-box {
+      margin: 20px 0 24px;
+
+      .title {
+        width: 128px;
+        margin-right: 16px;
+        font-size: 16px;
+        line-height: 40px;
+        font-size: 14px;
+        text-align: right;
+
+        .required {
+          font-size: 16px;
+          color: #ea3636;
+        }
+
+        .icon-info-fill {
+          color: #979ba5;
+          cursor: pointer;
+        }
+      }
+
+      .content {
         display: flex;
-        align-items: center;
-        .select-text {
-          margin-left: 12px;
-          font-size: 12px;
-          line-height: 16px;
-          .primary {
-            color: #3a84ff;
-          }
-          .error {
-            color: #ea3636;
+        flex-flow: column;
+        justify-content: center;
+        min-height: 40px;
+
+        .flex-box {
+          display: flex;
+          align-items: center;
+
+          .select-text {
+            margin-left: 12px;
+            font-size: 12px;
+            line-height: 16px;
+
+            .primary {
+              color: #3a84ff;
+            }
+
+            .error {
+              color: #ea3636;
+            }
           }
         }
       }
     }
+
+    .button-container {
+      margin: 32px 0 0 144px;
+    }
   }
-  .button-container {
-    margin: 32px 0 0 144px;
-  }
-}
 </style>

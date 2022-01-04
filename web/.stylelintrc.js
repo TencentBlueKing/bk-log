@@ -22,10 +22,11 @@
 
 module.exports = {
   defaultSeverity: 'error',
-  extends: ['@bkui/stylelint-config-bk'],
+  extends: ['@blueking/stylelint-config-bk'],
   rules: {
-    'selector-max-id': 'off',
-    'declaration-no-important': 'off',
-    'declaration-property-value-disallowed-list': 'off'
+    'selector-max-id': 2,
+    'declaration-property-value-disallowed-list': {
+      "/^border/": []
+    }
   }
 }

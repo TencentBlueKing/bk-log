@@ -42,7 +42,7 @@
           v-if="active === 'dataFingerprint'"
           :finger-operate-data="fingerOperateData"
           :request-data="requestData"
-          @handleFingerOperate="handleFingerOperate"></finger-operate>
+          @handleFingerOperate="handleFingerOperate" />
       </div>
 
       <bk-alert
@@ -56,8 +56,7 @@
         <clustering-loader
           is-loading
           v-if="tableLoading"
-          :width-list="smallLoaderWidthList">
-        </clustering-loader>
+          :width-list="smallLoaderWidthList" />
         <div v-else>
           <ignore-table
             v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
@@ -99,16 +98,15 @@
     <clustering-loader
       is-loading
       v-else
-      :width-list="loadingWidthList.global">
-    </clustering-loader>
+      :width-list="loadingWidthList.global" />
   </div>
 </template>
 
 <script>
-import DataFingerprint from './DataFingerprint';
-import IgnoreTable from './IgnoreTable';
+import DataFingerprint from './data-fingerprint';
+import IgnoreTable from './ignore-table';
 import ClusteringLoader from '@/skeleton/clustering-loader';
-import fingerOperate from './components/fingerOperate';
+import fingerOperate from './components/finger-operate';
 import { mapGetters } from 'vuex';
 
 export default {
@@ -202,10 +200,15 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      return this.clusterSwitch ? (this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
+      return this.clusterSwitch
+        ? (this.configID
+          ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage'))
+        : this.$t('goSettingMessage');
     },
     exhibitOperate() {
-      return this.clusterSwitch ? (this.configID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
+      return this.clusterSwitch
+        ? (this.configID ? this.$t('跳转到日志清洗') : '')
+        : this.$t('去设置');
     },
     clusteringField() {
       return this.configData?.extra?.clustering_field || '';
@@ -379,7 +382,7 @@ export default {
       this.fingerListPage += 1;
       setTimeout(() => {
         const { fingerListPageSize: size, fingerListPage: page } = this;
-        this.fingerList = this.fingerList.concat(this.allFingerList.slice((page - 1) * size, size * page));
+        this.fingerList.push(...this.allFingerList.slice(size * (page - 1), size * page));
         this.isPageOver = false;
       }, 1500);
     },
@@ -388,39 +391,45 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/scss/mixins/flex.scss";
+  @import '@/scss/mixins/flex.scss';
 
-.log-cluster-table-container {
-  .cluster-nav {
-    min-width: 760px;
-    margin-bottom: 12px;
-    color: #63656e;
-    @include flex-justify(space-between);
-  }
-  .bk-alert {
-    margin-bottom: 16px;
-  }
-}
-.no-text-table {
-  .bk-table-empty-block {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: calc(100vh - 480px);
-  }
-  .empty-text {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    .bk-icon {
-      font-size: 65px;
+  .log-cluster-table-container {
+    .cluster-nav {
+      min-width: 760px;
+      margin-bottom: 12px;
+      color: #63656e;
+
+      @include flex-justify(space-between);
     }
-    .empty-leave {
-      color: #3a84ff;
-      margin-top: 8px;
-      cursor: pointer;
+
+    .bk-alert {
+      margin-bottom: 16px;
     }
   }
-}
+
+  .no-text-table {
+    .bk-table-empty-block {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 480px);
+    }
+
+    .empty-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+
+      .bk-icon {
+        font-size: 65px;
+      }
+
+      .empty-leave {
+        color: #3a84ff;
+        margin-top: 8px;
+        cursor: pointer;
+      }
+    }
+  }
 </style>

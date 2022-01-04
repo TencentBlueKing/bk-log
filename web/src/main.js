@@ -89,7 +89,6 @@ Vue.use(vClickOutside);
 Vue.use(methods);
 
 if (process.env.NODE_ENV === 'development') {
-  document.title = '日志平台 | 蓝鲸';
   http.request('meta/getEnvConstant').then((res) => {
     const data = res.data;
     Object.keys(data).forEach((key) => {

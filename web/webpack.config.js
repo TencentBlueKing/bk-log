@@ -24,7 +24,7 @@
 const wepack = require('webpack');
 const path = require('path');
 const fs = require('fs');
-const MonitorWebpackPlugin = require('./webpack/monitor-webpack-plugin');
+const LogWebpackPlugin = require('./webpack/log-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const devProxyUrl = 'http://appdev.bktencent.com:9002';
 const devHost = 'appdev.bktencent.com';
@@ -39,7 +39,7 @@ let devConfig = {
   proxy: {},
   cache: null,
 };
-const monitorPluginConfig = {
+const logPluginConfig = {
   pcBuildVariates: `
     <script>
     window.SITE_URL = '\${SITE_URL}'
@@ -114,7 +114,7 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
       }),
     );
   } else if (!email) {
-    config.plugins.push(new MonitorWebpackPlugin({ ...monitorPluginConfig, mobile, fta }));
+    config.plugins.push(new LogWebpackPlugin({ ...logPluginConfig, mobile, fta }));
     config.plugins.push(
       new CopyWebpackPlugin({
         patterns: [

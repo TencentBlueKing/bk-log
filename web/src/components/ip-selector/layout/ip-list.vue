@@ -21,7 +21,10 @@
   -->
 
 <template>
-  <div class="ip-list" ref="ipListWrapper" v-bkloading="{ isLoading: isLoading && !disabledLoading }">
+  <div 
+    class="ip-list" 
+    ref="ipListWrapper" 
+    v-bkloading="{ isLoading: isLoading && !disabledLoading }">
     <bk-input
       clearable
       right-icon="bk-icon icon-search"
@@ -30,7 +33,7 @@
       @change="handleKeywordChange">
     </bk-input>
     <slot name="tab"></slot>
-    <IpSelectorTable
+    <ip-selector-table
       ref="table"
       class="ip-list-table mt10"
       :data="tableData"
@@ -42,10 +45,10 @@
       :empty-text="emptyText"
       @page-change="handlePageChange"
       @check-change="handleCheckChange"
-      @page-limit-change="handleLimitChange">
-    </IpSelectorTable>
+      @page-limit-change="handleLimitChange" />
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Emit, Ref, Watch } from 'vue-property-decorator'
 import { Debounce } from '../common/util'
@@ -220,6 +223,7 @@ export default class IpList extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .ip-list {
     height: 100%;
