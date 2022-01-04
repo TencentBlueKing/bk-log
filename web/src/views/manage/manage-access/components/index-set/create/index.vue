@@ -29,28 +29,49 @@
     <template v-else>
       <article class="article">
         <h3 class="title">{{ $t('基础信息') }}</h3>
-        <bk-form class="king-form" ref="formRef" :label-width="160" :model="formData" :rules="formRules">
-          <bk-form-item :label="$t('索引集名称')" required property="index_set_name">
-            <bk-input v-model="formData.index_set_name" data-test-id="newlogIndexSetBox_input_indexSetName"></bk-input>
+        <bk-form
+          class="king-form"
+          ref="formRef"
+          :label-width="160"
+          :model="formData"
+          :rules="formRules">
+          <bk-form-item
+            :label="$t('索引集名称')"
+            required
+            property="index_set_name">
+            <bk-input
+              v-model="formData.index_set_name"
+              data-test-id="newlogIndexSetBox_input_indexSetName">
+            </bk-input>
           </bk-form-item>
-          <bk-form-item :label="$t('数据分类')" required property="category_id">
+          <bk-form-item
+            :label="$t('数据分类')"
+            required
+            property="category_id">
             <bk-select
               v-model="formData.category_id"
               :clearable="false"
               data-test-id="newlogIndexSetBox_select_dataClassification">
               <template v-for="item in globalsData.category">
-                <bk-option-group :id="item.id" :name="item.name" :key="item.id">
+                <bk-option-group
+                  :id="item.id"
+                  :name="item.name"
+                  :key="item.id">
                   <bk-option
                     v-for="option in item.children"
                     :key="option.id" :id="option.id"
-                    :name="`${item.name}-${option.name}`"
-                  >{{ option.name }}
+                    :name="`${item.name}-${option.name}`">
+                    {{ option.name }}
                   </bk-option>
                 </bk-option-group>
               </template>
             </bk-select>
           </bk-form-item>
-          <bk-form-item :label="$t('集群')" required property="storage_cluster_id" v-if="scenarioId === 'es'">
+          <bk-form-item
+            :label="$t('集群')"
+            required
+            property="storage_cluster_id"
+            v-if="scenarioId === 'es'">
             <bk-select
               data-test-id="newlogIndexSetBox_select_selectCluster"
               v-model="formData.storage_cluster_id"
@@ -63,8 +84,10 @@
                 :key="option.storage_cluster_id"
                 :id="option.storage_cluster_id"
                 :name="option.storage_cluster_name">
-                <div v-if="!(option.permission && option.permission.manage_es_source)"
-                     class="option-slot-container no-authority" @click.stop>
+                <div
+                  v-if="!(option.permission && option.permission.manage_es_source)"
+                  class="option-slot-container no-authority"
+                  @click.stop>
                   <span class="text">{{ option.storage_cluster_name }}</span>
                   <span class="apply-text" @click="applyClusterAccess(option)">{{ $t('申请权限') }}</span>
                 </div>
@@ -81,8 +104,12 @@
         <div class="collection-form" v-if="isShowTrace">
           <div class="collection-label">{{ $t('索引') }}</div>
           <div class="selected-collection trace">
-            <TraceSelect :value.sync="formData.indexes" @update:value="handleTraceSelected" />
-            <bk-table class="king-table" max-height="379" :data="traceMatches" v-if="traceMatches.length">
+            <trace-select :value.sync="formData.indexes" @update:value="handleTraceSelected" />
+            <bk-table
+              class="king-table"
+              max-height="379"
+              :data="traceMatches"
+              v-if="traceMatches.length">
               <bk-table-column :label="$t('序号')" prop="f">
                 <div slot-scope="{ $index }">
                   {{ $index + 1 }}
@@ -142,9 +169,9 @@
 </template>
 
 <script>
-import SelectCollection from './SelectCollection';
-import TraceSelect from './TraceSelect';
-import SelectEs from './SelectEs';
+import SelectCollection from './select-collection';
+import TraceSelect from './trace-select';
+import SelectEs from './select-es';
 import AuthPage from '@/components/common/auth-page';
 import { projectManages } from '@/common/util';
 import { mapGetters, mapState } from 'vuex';
@@ -167,13 +194,11 @@ export default {
       authPageInfo: null,
       isSubmit: false,
       clusterList: [], // 集群列表
-
       isShowTrace: this.$route.name.includes('track'), // 全链路追踪
       traceMatches: [], // trace index 匹配字段结果
       timeIndex: null,
       formData: {
         scenario_id: scenarioId, // 采集接入
-
         index_set_name: '', // 索引集名称
         category_id: '', // 数据分类
         storage_cluster_id: '', // 集群

@@ -33,15 +33,15 @@ export const lineOrBarOptions = {
     textStyle: {
       color: '#63656E',
       fontSize: 12,
-      fontWeight: 'bold'
+      fontWeight: 'bold',
     },
     subtext: null,
     subtextStyle: {
       color: '#979BA5',
       fontSize: 12,
       fontWeight: 'bold',
-      align: 'left'
-    }
+      align: 'left',
+    },
   },
   color: [],
   legend: {
@@ -55,9 +55,9 @@ export const lineOrBarOptions = {
     selectedMode: 'multiple',
     textStyle: {
       color: '#63656E',
-      fontSize: 12
+      fontSize: 12,
     },
-    icon: 'rect'
+    icon: 'rect',
   },
   tooltip: {
     show: true,
@@ -65,17 +65,17 @@ export const lineOrBarOptions = {
     axisPointer: {
       type: 'line',
       label: {
-        backgroundColor: '#6a7985'
-      }
+        backgroundColor: '#6a7985',
+      },
     },
     transitionDuration: 0,
     alwaysShowContent: false,
     backgroundColor: 'rgba(0,0,0,0.8)',
     borderWidth: 0,
     textStyle: {
-      fontSize: 12
+      fontSize: 12,
     },
-    extraCssText: 'border-radius: 0'
+    extraCssText: 'border-radius: 0',
   },
   toolbox: {
     showTitle: false,
@@ -86,25 +86,25 @@ export const lineOrBarOptions = {
       borderWidth: 0,
       shadowColor: '#979ba5',
       shadowOffsetX: 0,
-      shadowOffsetY: 0
+      shadowOffsetY: 0,
     },
     feature: {
       saveAsImage: {
-        icon: 'path://'
+        icon: 'path://',
       },
       dataZoom: {
         icon: {
           zoom: 'path://',
-          back: 'path://'
+          back: 'path://',
         },
         show: true,
         yAxisIndex: [],
         iconStyle: {
-          opacity: 0
-        }
+          opacity: 0,
+        },
       },
-      restore: { icon: 'path://' }
-    }
+      restore: { icon: 'path://' },
+    },
   },
   grid: {
     containLabel: true,
@@ -112,35 +112,35 @@ export const lineOrBarOptions = {
     right: 26,
     top: 16,
     bottom: 0,
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
   },
   xAxis: {
     type: 'time',
     boundaryGap: false,
     axisTick: {
-      show: false
+      show: false,
     },
     axisLine: {
       show: false,
       lineStyle: {
         color: '#ccd6eb',
         width: 1,
-        type: 'solid'
-      }
+        type: 'solid',
+      },
     },
     axisLabel: {
       fontSize: 12,
       color: '#979BA5',
       showMinLabel: false,
       showMaxLabel: false,
-      align: 'left'
+      align: 'left',
     },
     splitLine: {
-      show: false
+      show: false,
     },
     minInterval: 60 * 1000,
     splitNumber: 10,
-    scale: true
+    scale: true,
   },
   yAxis: {
     type: 'value',
@@ -149,36 +149,36 @@ export const lineOrBarOptions = {
       lineStyle: {
         color: '#ccd6eb',
         width: 1,
-        type: 'solid'
-      }
+        type: 'solid',
+      },
     },
     axisTick: {
-      show: false
+      show: false,
     },
     axisLabel: {
-      color: '#979BA5'
+      color: '#979BA5',
     },
     splitLine: {
       show: true,
       lineStyle: {
         color: '#F0F1F5',
-        type: 'dashed'
-      }
+        type: 'dashed',
+      },
     },
     scale: false,
     // splitNumber: 3,
-    z: 3
+    z: 3,
   },
   series: [],
-  animation: true
-}
+  animation: true,
+};
 
 export const pieOptions: any = {
   lengend: {
-    show: false
+    show: false,
   },
   tooltip: {
-    trigger: 'item'
+    trigger: 'item',
   },
   series: [
     {
@@ -187,11 +187,11 @@ export const pieOptions: any = {
       avoidLabelOverlap: false,
       label: {
         show: false,
-        position: 'center'
+        position: 'center',
       },
       labelLine: {
-        show: false
-      }
-    }
-  ]
-}
+        show: false,
+      },
+    },
+  ],
+};

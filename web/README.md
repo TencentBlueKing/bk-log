@@ -58,10 +58,8 @@ npm run install-build
 - 分析构建产物组成
 
   ```bash
-  # pc端生产环境构建产物分析
+  # 生产环境构建产物分析
   npm run analyze
-  # 移动端生产环境构建产物分析
-  npm run analyze:mobile
   ```
 
 ###### 前端构建工具 `@blueking/bkmonitor-cli`

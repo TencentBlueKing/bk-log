@@ -25,42 +25,38 @@
     <!-- 初始化加载时显示这个空的盒子 避免先显示内容 再显示无权限页面 -->
     <div v-if="!hasAuth && !authPageInfo && !isNoIndexSet" style="height: 100%;background: #f4f7fa;"></div>
     <!-- 单独的申请权限页面 -->
-    <AuthPage
+    <auth-page
       v-if="!hasAuth && authPageInfo && !isNoIndexSet"
       :info="authPageInfo"
-      style="background: #f4f7fa;">
-    </AuthPage>
+      style="background: #f4f7fa;" />
     <!-- 检索页首页 -->
     <div v-if="hasAuth && isRetrieveHome" class="retrieve-home-container">
       <div class="retrieve-home" data-test-id="retrieve_div_frontPageSearchBox">
         <div class="retrieve-home-title">{{ $t('nav.retrieve') }}</div>
         <div class="retrieve-home-condition">
           <!-- 选择索引集 -->
-          <SelectIndexSet
+          <select-indexSet
             class="king-select-index-set"
             :index-id="indexId"
             :index-set-list="indexSetList"
             :basic-loading.sync="basicLoading"
             @selected="handleSelectIndex"
-            @updateIndexSetList="updateIndexSetList"
-          ></SelectIndexSet>
+            @updateIndexSetList="updateIndexSetList" />
           <!-- 选择日期 -->
-          <SelectDate
+          <select-date
             :time-range.sync="retrieveParams.time_range"
             :date-picker-value="datePickerValue"
             @update:datePickerValue="handleDateChange"
-            @datePickerChange="retrieveWhenDateChange"
-          ></SelectDate>
+            @datePickerChange="retrieveWhenDateChange" />
         </div>
         <!-- 首页搜索框 -->
-        <RetrieveInput
+        <retrieve-input
           v-model="retrieveParams.keyword"
           :show-history.sync="showHistory"
           :history-list="historyList"
           :is-search-allowed="isSearchAllowed"
           @focus="showHistory = true"
-          @retrieve="retrieveLog"
-        ></RetrieveInput>
+          @retrieve="retrieveLog" />
       </div>
       <!-- eslint-disable vue/no-v-html -->
       <div v-if="footerHtml" v-html="footerHtml"></div>
@@ -105,16 +101,15 @@
             <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
               <!-- 选择索引集 -->
               <div class="tab-item-title">{{ $t('索引集') }}</div>
-              <SelectIndexSet
+              <select-indexSet
                 :index-id="indexId"
                 :index-set-list="indexSetList"
                 :basic-loading.sync="basicLoading"
                 @selected="handleSelectIndex"
-                @updateIndexSetList="updateIndexSetList"
-              ></SelectIndexSet>
+                @updateIndexSetList="updateIndexSetList" />
               <!-- 查询语句 -->
-              <QueryStatement></QueryStatement>
-              <RetrieveDetailInput
+              <query-statement />
+              <retrieve-detail-input
                 v-model="retrieveParams.keyword"
                 :is-auto-query="isAutoQuery"
                 :retrieved-keyword="retrievedKeyword"
@@ -127,30 +122,26 @@
                 <span>{{ $t('过滤条件') }}</span>
                 <div class="filter-item">
                   <span
-                    v-if="showIpQuick"
                     @click="openIpQuick"
                     data-test-id="dataQuery_span_addIP"
                   >{{ $t('添加IP') }}</span>
-                  <FilterConditionItem
+                  <filter-condition-item
                     :filter-condition="retrieveParams.addition"
                     :total-fields="totalFields"
                     :field-alias-map="fieldAliasMap"
                     :statistical-fields-data="statisticalFieldsData"
                     @addFilterCondition="addFilterCondition"
-                    @removeFilterCondition="removeFilterCondition"
-                  ></FilterConditionItem>
+                    @removeFilterCondition="removeFilterCondition" />
                 </div>
               </div>
               <div class="add-filter-condition-container">
-                <IpQuick
-                  v-if="showIpQuick"
-                  ref="ipQuick"
+                <ip-quick
                   :host-scopes="retrieveParams.host_scopes"
-                  @confirm="handleSaveIpQuick"
-                ></IpQuick>
+                  @openIpQuick="openIpQuick"
+                  @confirm="handleSaveIpQuick" />
                 <div class="cut-line" v-if="showFilterCutline"></div>
                 <template v-for="(item, index) in retrieveParams.addition">
-                  <FilterConditionItem
+                  <filter-condition-item
                     :key="item.field + 1"
                     :edit-index="index"
                     :is-add="false"
@@ -160,8 +151,7 @@
                     :field-alias-map="fieldAliasMap"
                     :statistical-fields-data="statisticalFieldsData"
                     @addFilterCondition="addFilterCondition"
-                    @removeFilterCondition="removeFilterCondition"
-                  ></FilterConditionItem>
+                    @removeFilterCondition="removeFilterCondition" />
                 </template>
               </div>
               <!-- 查询收藏清空按钮 -->
@@ -170,7 +160,7 @@
                   v-if="isAutoQuery"
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
-                  style="width: 86px;font-size:12px"
+                  style="width: 86px;font-size: 12px"
                   data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
                   <span class="log-icon icon-zidongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
@@ -180,7 +170,7 @@
                   v-else
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
-                  style="width: 86px;font-size:12px"
+                  style="width: 86px;font-size: 12px"
                   data-test-id="dataQuery_button_filterSearch"
                   @click="retrieveLog">
                   <span class="log-icon icon-shoudongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
@@ -193,7 +183,7 @@
                   theme="light"
                   :on-show="handleFavoritePopperShow">
                   <bk-button
-                    style="width: 86px;margin: 0 8px;font-size:12px"
+                    style="width: 86px;margin: 0 8px;font-size: 12px"
                     data-test-id="dataQuery_button_collection">
                     <span style="display: flex;align-items: center;justify-content: center;">
                       <span
@@ -203,17 +193,16 @@
                       <span>{{ $t('收藏') }}</span>
                     </span>
                   </bk-button>
-                  <FavoritePopper
+                  <favorite-popper
                     v-if="showFavoritePopperContent"
                     :is-loading="favoritePopperLoading"
                     :panel-width="leftPanelWidth"
                     slot="content"
                     @add="addFavorite"
-                    @close="closeFavoritePopper"
-                  ></FavoritePopper>
+                    @close="closeFavoritePopper" />
                 </bk-popover>
                 <bk-button
-                  style="font-size:12px"
+                  style="font-size: 12px"
                   @click="clearCondition"
                   data-test-id="dataQuery_button_phrasesClear">
                   {{ $t('清空') }}
@@ -223,7 +212,7 @@
             <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
               <!-- 字段过滤 -->
               <div class="tab-item-title field-filter-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
-              <FieldFilter
+              <field-filter
                 :total-fields="totalFields"
                 :visible-fields="visibleFields"
                 :field-alias-map="fieldAliasMap"
@@ -237,7 +226,7 @@
       </div>
       <!-- 检索详情页右侧检索结果 -->
       <div class="retrieve-result" :style="{ width: 'calc(100% - ' + leftPanelWidth + 'px)' }">
-        <ResultHeader
+        <result-header
           ref="resultHeader"
           :show-retrieve-condition="showRetrieveCondition"
           :show-expand-init-tips="showExpandInitTips"
@@ -253,10 +242,9 @@
           @open="openRetrieveCondition"
           @update:datePickerValue="handleDateChange"
           @datePickerChange="retrieveWhenDateChange"
-          @settingMenuClick="handleSettingMenuClick"
-        ></ResultHeader>
-        <NoIndexSet v-if="isNoIndexSet"></NoIndexSet>
-        <ResultMain
+          @settingMenuClick="handleSettingMenuClick" />
+        <no-index-set v-if="isNoIndexSet" />
+        <result-main
           ref="resultMainRef"
           v-else
           :table-loading="tableLoading"
@@ -282,8 +270,7 @@
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
           @addFilterCondition="addFilterCondition"
-          @showSettingLog="handleSettingMenuClick('clustering')"
-        ></ResultMain>
+          @showSettingLog="handleSettingMenuClick('clustering')" />
       </div>
       <!-- 可拖拽页面布局宽度 -->
       <div
@@ -300,7 +287,16 @@
       </div>
     </div>
 
-    <SettingModal
+    <!-- 目标选择器 -->
+    <ip-selector-dialog
+      :show-dialog.sync="showIpSelectorDialog"
+      :show-dynamic-group="true"
+      :target-nodes="retrieveParams.host_scopes.target_nodes"
+      :target-node-type="retrieveParams.host_scopes.target_node_type"
+      @target-change="handleSaveIpQuick">
+    </ip-selector-dialog>
+
+    <setting-modal
       :index-set-item="indexSetItem"
       :is-show-dialog="isShowSettingModal"
       :select-choice="clickSettingChoice"
@@ -315,23 +311,24 @@
 
 <script>
 import { mapGetters, mapState } from 'vuex';
-import SelectIndexSet from './condition-comp/SelectIndexSet';
-import SelectDate from './condition-comp/SelectDate';
-import RetrieveInput from './condition-comp/RetrieveInput';
-import RetrieveDetailInput from './condition-comp/RetrieveDetailInput';
-import QueryStatement from './condition-comp/QueryStatement';
-import FilterConditionItem from './condition-comp/FilterConditionItem';
-import IpQuick from './condition-comp/IpQuick';
-import FieldFilter from './condition-comp/FieldFilter';
-import FavoritePopper from './condition-comp/FavoritePopper';
-import ResultHeader from './result-comp/ResultHeader';
-import NoIndexSet from './result-comp/NoIndexSet';
-import ResultMain from './result-comp/ResultMain';
+import SelectIndexSet from './condition-comp/select-indexSet';
+import SelectDate from './condition-comp/select-date';
+import RetrieveInput from './condition-comp/retrieve-input';
+import RetrieveDetailInput from './condition-comp/retrieve-detail-input';
+import QueryStatement from './condition-comp/query-statement';
+import FilterConditionItem from './condition-comp/filter-condition-item';
+import IpQuick from './condition-comp/ip-quick';
+import IpSelectorDialog from '@/components/collection-access/ip-selector-dialog';
+import FieldFilter from './condition-comp/field-filter';
+import FavoritePopper from './condition-comp/favorite-popper';
+import ResultHeader from './result-comp/result-header';
+import NoIndexSet from './result-comp/no-index-set';
+import ResultMain from './result-comp/result-main';
 import AuthPage from '@/components/common/auth-page';
 import SettingModal from './setting-modal/index.vue';
-import BizMenuSelect from '@/components/BizMenuSelect.vue';
+import BizMenuSelect from '@/components/biz-menu';
 import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/common/util';
-import indexSetSearchMixin from '@/mixins/indexSetSearchMixin';
+import indexSetSearchMixin from '@/mixins/indexSet-search-mixin';
 import axios from 'axios';
 
 export default {
@@ -344,6 +341,7 @@ export default {
     QueryStatement,
     FilterConditionItem,
     IpQuick,
+    IpSelectorDialog,
     FieldFilter,
     FavoritePopper,
     ResultHeader,
@@ -358,7 +356,6 @@ export default {
     const currentTime = Date.now();
     const startTime = formatDate(currentTime - 15 * 60 * 1000);
     const endTime = formatDate(currentTime);
-
     return {
       hasAuth: false,
       authPageInfo: null,
@@ -398,6 +395,10 @@ export default {
           modules: [],
           // 手动输入 ip，多个 ip 用英文 , 分隔
           ips: '',
+          // 目标节点
+          target_nodes: [],
+          // 目标节点类型
+          target_node_type: '',
         },
         // 过滤条件，可添加多个，每个过滤条件格式 {field: 'time', operator: 'is', value: 'xxx'}
         // field 为过滤的字段
@@ -420,7 +421,7 @@ export default {
       statisticalFieldsData: {}, // 字段可选值统计
       retrieveDropdownData: {}, // 检索下拉字段可选值统计
       statementSearchrecords: [], // 查询语句历史记录
-      ipTopoSwitch: true, // IP快选功能相关
+      // ipTopoSwitch: true, // IP快选功能相关
       totalFields: [], // 表格字段
       visibleFields: [], // 显示的排序后的字段
       notTextTypeFields: [], // 字段类型不为 text 的字段
@@ -461,6 +462,7 @@ export default {
           clustering_field: '',
         },
       },
+      showIpSelectorDialog: false,
       isAsIframe: false,
       localIframeQuery: {},
       isFirstLoad: true,
@@ -475,12 +477,16 @@ export default {
     }),
     ...mapGetters(['asIframe', 'iframeQuery']),
     // 是否显示IP快选功能模块
-    showIpQuick() {
-      return this.ipTopoSwitch;
-    },
+    // showIpQuick() {
+    //   return this.ipTopoSwitch;
+    // },
     showFilterCutline() {
       const { host_scopes, addition } = this.retrieveParams;
-      return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
+      // return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
+      return (host_scopes.modules.length
+      || host_scopes.ips.length
+      || host_scopes.target_nodes.length)
+      && addition.length;
     },
     showSearchPage() {
       return this.hasAuth || this.isNoIndexSet;
@@ -538,6 +544,12 @@ export default {
       },
     },
     'retrieveParams.host_scopes.modules': {
+      deep: true,
+      handler() {
+        if (!this.isFavoriteSearch) this.latestFavoriteId = '';
+      },
+    },
+    'retrieveParams.host_scopes.target_nodes': {
       deep: true,
       handler() {
         if (!this.isFavoriteSearch) this.latestFavoriteId = '';
@@ -627,7 +639,6 @@ export default {
         this.requestIndexSetList();
       }
     },
-
     updateIndexSetList() {
       this.$http.request('retrieve/getIndexSetList', {
         query: {
@@ -658,7 +669,6 @@ export default {
         }
       });
     },
-
     // 初始化索引集
     requestIndexSetList() {
       const projectId = (this.$route.query.projectId && this.isFirstLoad)
@@ -815,7 +825,6 @@ export default {
       // 字段相关
       this.totalFields.splice(0);
     },
-
     // 检索参数：日期改变
     handleDateChange(val) {
       this.datePickerValue = val;
@@ -859,20 +868,33 @@ export default {
       this.retrieveParams.addition.splice(index, 1);
       this.retrieveLog();
     },
-
-    // 打开 ip 快选弹窗
+    // 打开 ip 选择弹窗
     openIpQuick() {
-      this.$refs.ipQuick.openDialog();
+      // this.$refs.ipQuick.openDialog();
+      this.showIpSelectorDialog = true;
     },
-
-    // IP 快选
+    // IP 选择
     handleSaveIpQuick(data) {
-      this.retrieveParams.host_scopes = data;
+      // this.retrieveParams.host_scopes = data;
+      const { target_node_type: targetNodeType, target_nodes: targetNodes } = data;
+      this.retrieveParams.host_scopes.target_node_type = targetNodes.length ? targetNodeType : '';
+      this.retrieveParams.host_scopes.target_nodes = targetNodes.map((node) => {
+        const targets = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE'].includes(targetNodeType)
+          ? {
+            node_path: node.node_path,
+            bk_inst_name: node.bk_inst_name,
+            bk_inst_id: node.bk_inst_id,
+            bk_obj_id: node.bk_obj_id,
+          }
+          : targetNodeType === 'DYNAMIC_GROUP' ? { id: node.id, name: node.name, bk_obj_id: node.bk_obj_id }
+            : { ip: node.ip, bk_cloud_id: node.bk_cloud_id, bk_supplier_id: node.bk_supplier_id };
+        return targets;
+      });
+      this.showIpSelectorDialog = false;
       if (this.isAutoQuery) {
         this.retrieveLog();
       }
     },
-
     // 清空条件
     clearCondition() {
       Object.assign(this.retrieveParams, {
@@ -880,12 +902,13 @@ export default {
         host_scopes: {
           modules: [],
           ips: '',
+          target_nodes: [],
+          target_node_type: '',
         },
         addition: [],
       });
       this.retrieveLog();
     },
-
     // 收藏记录，和业务相关
     requestFavoriteList(isAddLater = false) {
       this.$http.request('retrieve/getRetrieveFavorite', {
@@ -974,7 +997,6 @@ export default {
     closeFavoritePopper() {
       this.$refs.favoritePopper.instance.hide();
     },
-
     // 检索日志
     async retrieveLog(historyParams) {
       this.basicLoading = true;
@@ -1027,9 +1049,9 @@ export default {
       if (historyParams) {
         Object.assign(this.retrieveParams, historyParams);
         // 禁用 IP 快选时过滤历史记录或收藏中相关字段
-        if (!this.showIpQuick) {
-          this.retrieveParams.host_scopes.ips = '';
-        }
+        // if (!this.showIpQuick) {
+        //   this.retrieveParams.host_scopes.ips = '';
+        // }
       }
       // 通过 url 查询参数设置检索参数
       let queryParams = {};
@@ -1083,7 +1105,9 @@ export default {
                 }
                 break;
               case 'host_scopes':
-                if (this.retrieveParams[field].ips !== '' || this.retrieveParams[field].modules.length) {
+                if (this.retrieveParams[field].ips !== ''
+                || this.retrieveParams[field].modules.length
+                || this.retrieveParams[field].target_nodes.length) {
                   queryParamsStr[field] = (JSON.stringify(this.retrieveParams[field]));
                 }
                 break;
@@ -1143,7 +1167,6 @@ export default {
         this.basicLoading = false;
       }
     },
-
     // 请求字段
     async requestFields() {
       if (this.isThollteField) return;
@@ -1253,13 +1276,11 @@ export default {
       await this.$nextTick();
       this.renderTable = true;
     },
-
     requestTableData() {
       if (this.timer || this.requesting) return;
 
       this.requestTable();
     },
-
     // 表格
     async requestTable() {
       // 轮循结束
@@ -1478,7 +1499,6 @@ export default {
       this.statisticalFieldsData = {};
       this.originLogList = [];
     },
-
     // 控制页面布局宽度
     dragBegin(e) {
       this.isChangingWidth = true;
@@ -1586,6 +1606,19 @@ export default {
       z-index: 2400;
       overflow: hidden;
       background: pink;
+
+      @keyframes animate-loading-bar {
+        0% {
+          transform: translateX(0);
+          transform: translateX(0);
+        }
+
+        to {
+          transform: translateX(-50%);
+          transform: translateX(-50%);
+        }
+      }
+
       .page-loading-bar {
         top: 0;
         left: 0;
@@ -1598,30 +1631,19 @@ export default {
         animation: animate-loading-bar 2s linear infinite;
         background-color: transparent;
         background-image: linear-gradient(
-            to right,
-            #FF5656 0,
-            #FF5656 50%,
-            #FF9C01 50%,
-            #FF9C01 85%,
-            #2DCB56 85%,
-            #2DCB56 100%
-          );
+          to right,
+          #ff5656 0,
+          #ff5656 50%,
+          #ff9c01 50%,
+          #ff9c01 85%,
+          #2dcb56 85%,
+          #2dcb56 100%
+        );
         background-repeat: repeat-x;
         background-size: 50%;
         width: 200%;
       }
-      @keyframes animate-loading-bar {
-        0% {
-          -webkit-transform: translateX(0);
-          transform: translateX(0)
-        }
-        to {
-          -webkit-transform: translateX(-50%);
-          transform: translateX(-50%);
-        }
-      }
     }
-
 
     /*详情页*/
     .retrieve-detail-container {
@@ -1642,7 +1664,7 @@ export default {
           height: 52px;
 
           .bk-button {
-            flex:1;
+            flex: 1;
             height: 100%;
             border-top: 0;
             background: #fafbfd;
@@ -1650,7 +1672,7 @@ export default {
             box-sizing: content-box;
 
             &.is-selected {
-              background: #ffffff;
+              background: #fff;
               border-top: none;
               border-bottom: none;
             }
@@ -1659,6 +1681,7 @@ export default {
               border-color: #dcdee5;
               color: #3a84ff;
             }
+
             &:hover {
               border-color: #dcdee5;
             }

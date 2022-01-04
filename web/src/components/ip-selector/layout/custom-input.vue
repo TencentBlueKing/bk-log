@@ -38,7 +38,7 @@
       </bk-button>
     </div>
     <div class="custom-input-right ml20">
-      <IpListTable
+      <ip-list-table
         ref="table"
         :get-search-table-data="getTableData"
         :ip-list-table-config="customInputTableConfig"
@@ -48,19 +48,21 @@
         @check-change="handleTableCheckChange">
         <template #tab>
           <ul class="table-tab" v-if="showTableTab">
-            <li :class="['table-tab-item', { active: ipTab.active === item.id }]"
-                v-for="item in ipTab.list"
-                :key="item.id"
-                @click="handleTabClick(item)">
+            <li 
+              :class="['table-tab-item', { active: ipTab.active === item.id }]"
+              v-for="item in ipTab.list"
+              :key="item.id"
+              @click="handleTabClick(item)">
               {{ item.name }}
               <span class="count">{{ `(${tabData[item.id] ? tabData[item.id].length : 0})` }}</span>
             </li>
           </ul>
         </template>
-      </IpListTable>
+      </ip-list-table>
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Emit, Ref } from 'vue-property-decorator'
 import IpSelectorTable from '../components/ip-selector-table.vue'
@@ -233,6 +235,7 @@ export default class CustomInput extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   ::v-deep .bk-textarea-wrapper {
     height: 100%;

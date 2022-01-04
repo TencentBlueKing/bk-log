@@ -26,7 +26,7 @@
 
 <script>
 export default {
-  name: 'sdk-track',
+  name: 'SdkTrack',
   data() {
     return {};
   },
