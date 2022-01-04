@@ -74,7 +74,7 @@ def mysetting(request):
         "BK_FAQ_URL": settings.BK_FAQ_URL,
         "BK_HOT_WARM_CONFIG_URL": settings.BK_HOT_WARM_CONFIG_URL,
         "BIZ_ACCESS_URL": settings.BIZ_ACCESS_URL,
-        "DEMO_BIZ_ID": settings.DEMO_BIZ_ID,
+        "DEMO_BIZ_ID": str(settings.DEMO_BIZ_ID),
         "ES_STORAGE_CAPACITY": settings.ES_STORAGE_CAPACITY,
         "TAM_AEGIS_KEY": settings.TAM_AEGIS_KEY,
         "BK_LOGIN_URL": f"{settings.BK_PAAS_HOST}/api/c/compapi/v2/usermanage/fs_list_users/",
