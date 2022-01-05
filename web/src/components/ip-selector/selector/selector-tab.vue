@@ -22,10 +22,11 @@
 
 <template>
   <div class="selector-tab">
-    <div class="selector-tab-header"
-         ref="tabwrapper"
-         v-show="tabVisible && panels.length"
-         v-resize="handleResize">
+    <div 
+      class="selector-tab-header"
+      ref="tabwrapper"
+      v-show="tabVisible && panels.length"
+      v-resize="handleResize">
       <ul class="selector-tab-horizontal" ref="tabcontent">
         <li v-for="item in panels"
             :key="item.name"

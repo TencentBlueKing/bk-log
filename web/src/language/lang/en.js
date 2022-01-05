@@ -935,6 +935,7 @@ export default {
   级别: 'Level',
   动态拓扑: 'Danamic Topo',
   静态拓扑: 'Static Topo',
+  动态分组: 'Dynamic Group',
   不能混用: 'Can\'t mixed',
   服务模板: 'Service Template',
   集群模板: 'Set Template',
@@ -981,6 +982,7 @@ export default {
   成功匹配: 'Successfully matched',
   条日志: 'log lines',
   未成功匹配: 'Match failed',
+  内容: 'Content',
   dataManage: {
     normal: 'OK',
     abnormal: 'Abnormal',
@@ -1089,6 +1091,7 @@ export default {
   },
   搜索服务模板名: 'Search service template name',
   搜索模板名: 'Search template name',
+  搜索动态分组名: 'Search dynamic group name',
   采集配置: 'Collector',
   采集下发: 'Deploy',
   '字段提取&存储': 'Format & Storage',

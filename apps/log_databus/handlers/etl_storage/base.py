@@ -117,7 +117,12 @@ class EtlStorage(object):
         built_in_keys = FieldBuiltInEnum.get_choices()
 
         etl_field_index = 1
+        clustering_default_fields = self._get_log_clustering_default_fields()
         for field in fields:
+            # 当在聚类场景的时候 不做下面的format操作
+            if etl_flat and field["field_name"] in clustering_default_fields:
+                field_list.append(field)
+                continue
             # 过滤掉删除的字段
             if field["is_delete"]:
                 continue
@@ -369,7 +374,7 @@ class EtlStorage(object):
         time_field = copy.deepcopy(time_fields[0])
 
         # log clustering fields
-        log_clustering_fields = {field["field_name"] for field in CollectorScenario.log_clustering_fields()}
+        log_clustering_fields = cls._get_log_clustering_default_fields()
         for field in result_table_config["field_list"]:
             # 判断是不是标准字段
             if not field.get("is_built_in", False):
@@ -469,3 +474,7 @@ class EtlStorage(object):
             self._to_bkdata_assign({"field_name": "time", "alias_name": "time", "option": {"es_type": "long"}})
         )
         return result
+
+    @classmethod
+    def _get_log_clustering_default_fields(cls):
+        return {field["field_name"] for field in CollectorScenario.log_clustering_fields()}

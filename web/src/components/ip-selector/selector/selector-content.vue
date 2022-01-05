@@ -45,7 +45,7 @@ const components = layout.keys().reduce<ILayoutComponents>((pre, next) => {
   const { name, props } = com.default.options
   process.env.NODE_ENV === 'development' && props && Object.keys(props).forEach((key) => {
     if (optionsSet.has(key)) {
-      !abstractProp.includes(key) && console.log(`${name}组件${key}属性和其余layout组件重复，确保数据源一致`)
+      // !abstractProp.includes(key) && console.log(`${name}组件${key}属性和其余layout组件重复，确保数据源一致`)
     } else {
       optionsSet.add(key)
     }
