@@ -140,9 +140,7 @@ class DataFlowHandler(BaseAiopsHandler):
         default_filter_rule = cls._init_default_filter_rule(all_fields_dict.get(clustering_field))
         filter_rule_list = ["where", default_filter_rule]
         not_clustering_rule_list = ["where", "NOT", "(", default_filter_rule]
-        if not filter_rules:
-            return " ".join(filter_rule_list), " ".join(not_clustering_rule_list)
-
+        # 这里是因为默认连接符号需要
         filter_rule_list.append(OPERATOR_AND)
         not_clustering_rule_list.append(OPERATOR_AND)
         for filter_rule in filter_rules:
@@ -151,12 +149,15 @@ class DataFlowHandler(BaseAiopsHandler):
             rule = [
                 all_fields_dict.get(filter_rule.get("fields_name")),
                 filter_rule.get("op"),
-                filter_rule.get("value"),
+                "'{}'".format(filter_rule.get("value")),
                 filter_rule.get("logic_operator"),
             ]
             filter_rule_list.extend(rule)
             not_clustering_rule_list.extend(rule)
-            # 不参与聚类日志需要增加括号修改优先级
+        # 这里是因为需要去掉最后一个and（可能是前面添加的and）
+        filter_rule_list.pop(-1)
+        not_clustering_rule_list.pop(-1)
+        # 不参与聚类日志需要增加括号修改优先级
         not_clustering_rule_list.append(")")
         return " ".join(filter_rule_list), " ".join(not_clustering_rule_list)
 
