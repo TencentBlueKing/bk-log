@@ -40,6 +40,7 @@
 
         <finger-operate
           v-if="active === 'dataFingerprint'"
+          :total-fields="totalFields"
           :finger-operate-data="fingerOperateData"
           :request-data="requestData"
           @handleFingerOperate="handleFingerOperate"></finger-operate>
@@ -75,8 +76,9 @@
             :request-data="requestData"
             :config-data="configData"
             :finger-list="fingerList"
-            :loader-width-list="smallLoaderWidthList"
             :is-page-over="isPageOver"
+            :all-finger-list="allFingerList"
+            :loader-width-list="smallLoaderWidthList"
             @paginationOptions="paginationOptions" />
         </div>
       </div>
@@ -174,6 +176,7 @@ export default {
         pattern_level: '',
         year_on_year_hour: 0,
         show_new_pattern: false,
+        group_by: [],
         size: 10000,
       },
       fingerList: [], // 数据指纹List
@@ -245,7 +248,10 @@ export default {
     },
     '$route.params.indexId'() {
       this.alreadyClickNav = [];
-      this.showTableLoading();
+      this.globalLoading = true;
+      setTimeout(() => {
+        this.globalLoading = false;
+      }, 750);
     },
     requestData: {
       deep: true,
@@ -264,7 +270,6 @@ export default {
           this.requestFinger();
           return;
         }
-        this.showTableLoading();
       }
     },
     // 初始化数据指纹配置
@@ -275,7 +280,7 @@ export default {
       } = this.globalsData;
       let patternLevel;
       if (clusterLevel && clusterLevel.length > 0) {
-        if (clusterLevel.length % 2 === 1) {
+        if (clusterLevel.length % 2 === 1) { // 判断奇偶数来选择pattern中间值
           patternLevel = (clusterLevel.length + 1) / 2;
         } else {
           patternLevel = clusterLevel.length  / 2;
@@ -293,7 +298,7 @@ export default {
     },
     // 数据指纹操作
     handleFingerOperate(operateType, val) {
-      if (operateType === 'compared') {
+      if (operateType === 'compared') { // 同比
         this.requestData.year_on_year_hour = val;
       }
       if (operateType === 'partterSize') {
@@ -302,11 +307,14 @@ export default {
       if (operateType === 'isShowNear') {
         this.requestData.show_new_pattern = val;
       }
-      if (operateType === 'enterCustomize') {
+      if (operateType === 'enterCustomize') { // 自定义输入
         this.handleEnterCompared(val);
       }
-      if (operateType === 'customize') {
+      if (operateType === 'customize') { // 是否展示自定义
         this.fingerOperateData.isShowCustomize = val;
+      }
+      if (operateType === 'group') { // 分组
+        this.requestData.group_by = val;
       }
     },
     // 跳转
@@ -334,7 +342,7 @@ export default {
         return;
       }
       this.fingerOperateData.isShowCustomize = true;
-      const isRepeat =  this.fingerOperateData.comparedList.some(el => el.id === Number(matchVal[1]));
+      const isRepeat = this.fingerOperateData.comparedList.some(el => el.id === Number(matchVal[1]));
       if (isRepeat) {
         this.requestData.year_on_year_hour = Number(matchVal[1]);
         return;
@@ -366,7 +374,7 @@ export default {
           this.tableLoading = false;
         });
     },
-
+    // 数据指纹分页
     paginationOptions() {
       if (this.isPageOver || this.fingerList.length >= this.allFingerList.length) {
         return;
@@ -375,16 +383,9 @@ export default {
       this.fingerListPage += 1;
       setTimeout(() => {
         const { fingerListPageSize: size, fingerListPage: page } = this;
-        this.fingerList = this.fingerList.concat(this.allFingerList.slice((page - 1) * size, size * page));
+        this.fingerList.push(...this.allFingerList.slice(size * (page - 1), size * page));
         this.isPageOver = false;
-      }, 1500);
-    },
-    // table loading动画
-    showTableLoading() {
-      this.globalLoading = true;
-      setTimeout(() => {
-        this.globalLoading = false;
-      }, 500);
+      }, 1000);
     },
   },
 };

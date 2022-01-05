@@ -352,6 +352,8 @@ export default {
   跳转到日志清洗: 'Go To Log Cleaning',
   请按照提示输入: 'Please follow the prompts to enter',
   自定义: 'Customize',
+  分组: 'Group',
+  批量使用告警: 'Batch usage alert',
   customizeTips: 'Custom input format: For example, 1h represents one hour, h hour',
   clusterAlert: 'Log clustering must have at least one text type field. Currently, there is no such field type. Please go to log cleaning to set it up.',
   goFingerMessage: 'The current data fingerprint is not enabled, please go to settings',
@@ -359,6 +361,9 @@ export default {
   goCleanMessage: 'There is currently no field available, please go to log cleaning to set',
   noConfigIDMessage: 'The current index set does not support field extraction settings',
   patternInteract: 'Query the log that hits the pattern',
+  fingerChoose: 'Currently ',
+  fingerTotalData: 'a total of',
+  fingerSizeData: 'data',
   nav: {
     logRetrieve: 'Log Search',
     retrieve: 'Search',

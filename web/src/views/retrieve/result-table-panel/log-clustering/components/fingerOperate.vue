@@ -22,19 +22,20 @@
 <template>
   <div class="fingerprint-setting fl-sb">
     <div class="fl-sb">
-      <span>分组</span>
+      <span>{{$t('分组')}}</span>
       <bk-select
-        behavior="simplicity"
-        ext-cls="compared-select"
         multiple
         display-tag
-        :popover-min-width="140"
-        v-model="val">
+        behavior="simplicity"
+        ext-cls="compared-select"
+        v-model="group"
+        :popover-min-width="180"
+        @toggle="handleSelectGroup">
         <bk-option
-          v-for="option in list"
-          :key="option.id"
-          :id="option.id"
-          :name="option.name">
+          v-for="item in groupList"
+          :key="item.id"
+          :id="item.id"
+          :name="item.name">
         </bk-option>
       </bk-select>
     </div>
@@ -85,10 +86,11 @@
         :disabled="!fingerOperateData.signatureSwitch"
         @change="handleShowNearPattern">
       </bk-checkbox>
-      <bk-popover
+      <span>{{$t('近24H新增')}}</span>
+      <!-- <bk-popover
         :trigger="trigger"
         theme="light">
-        <span>{{$t('近24H新增')}}</span>
+        <span style="border-bottom: 1px dashed #000">{{$t('近24H新增')}}</span>
         <div slot="content" class="alarm-content">
           <span>是否要告警</span>
           <bk-switcher
@@ -97,7 +99,7 @@
             v-model="alarmSwitch">
           </bk-switcher>
         </div>
-      </bk-popover>
+      </bk-popover> -->
     </div>
 
     <div class="partter fl-sb" style="width: 200px">
@@ -128,25 +130,32 @@ export default {
       type: Object,
       require: true,
     },
+    totalFields: {
+      type: Array,
+      require: true,
+    },
   },
   data() {
     return {
       trigger: 'click',
       alarmSwitch: true,
-      val: '',
-      list: [
-        { id: 1, name: '爬山' },
-        { id: 2, name: '跑步' },
-        { id: 3, name: '打球' },
-        { id: 4, name: '跳舞' },
-        { id: 5, name: '健身' },
-        { id: 6, name: '骑车' },
-        { id: 7, name: 'k8s' },
-        { id: 8, name: 'K8S' },
-        { id: 9, name: 'mesos' },
-        { id: 10, name: 'MESOS' },
-      ],
+      group: [], // 当前选择分组的值
+      groupList: [], // 分组列表
+      isToggle: false,
     };
+  },
+  watch: {
+    group: {
+      deep: true,
+      handler(list) {
+        if (!this.isToggle) {
+          this.$emit('handleFingerOperate', 'group', list);
+        }
+      },
+    },
+  },
+  mounted() {
+    this.filterGroupList();
   },
   methods: {
     handleSelectCompared(newVal) {
@@ -163,6 +172,20 @@ export default {
     },
     changeCustomizeState(val) {
       this.$emit('handleFingerOperate', 'customize', val);
+    },
+    handleSelectGroup(state) {
+      this.isToggle = state;
+      !state && this.$emit('handleFingerOperate', 'group', this.group);
+    },
+    // 初始化分组select数组
+    filterGroupList() {
+      const filterList = this.totalFields
+        .filter(el => el.es_doc_values && !/^__/.test(el.field_name)) // 过滤数据指纹__dist字段
+        .map((item) => {
+          const { field_name: id, field_alias: alias } = item;
+          return { id, name: alias ? `${id}(${alias})` : id };
+        });
+      this.groupList = filterList;
     },
   },
 };

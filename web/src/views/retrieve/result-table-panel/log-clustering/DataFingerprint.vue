@@ -22,65 +22,81 @@
 
 <template>
   <div class="finger-container">
-    <div class="top-operate">
-      <p class="operate-message">当前已选择 <span>3</span> 条数据，共有134条数据</p>
-      <span class="operate-click">批量使用告警</span>
+    <div class="top-operate" v-if="allFingerList.length">
+      <!-- eslint-disable-next-line vue/no-v-html -->
+      <p v-html="getTipsMessage" class="operate-message"></p>
+      <span
+        v-if="selectionList.length"
+        class="operate-click"
+        @click="handleBatchUseAlarm">{{$t('批量使用告警')}}</span>
     </div>
     <bk-table
       data-test-id="cluster_div_fingerTable"
-      type="selection"
-      :class="['finger-cluster-table','table-no-data']"
+      class="finger-cluster-table table-no-data"
+      row-key="$index"
+      ref="fingerTableRef"
       :data="fingerList"
       :outer-border="false"
-      @row-mouse-enter="showEditIcon"
-      @row-mouse-leave="hiddenEditIcon">
+      :reserve-selection="true"
+      @select="handleSelectAlarm"
+      @select-all="handleSelectAllAlarm">
       <bk-table-column type="selection" width="40"></bk-table-column>
       <bk-table-column :label="$t('数据指纹')" width="150">
-        <template slot-scope="props">
-          <div class="fl-ac">
-            <span class="signature">{{props.row.signature}}</span>
-            <div v-show="props.row.is_new_class" class="new-finger">New</div>
+        <template slot-scope="{ row }">
+          <div class="fl-ac signature-box">
+            <span>{{row.signature}}</span>
+            <div v-show="row.is_new_class" class="new-finger">New</div>
           </div>
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('数量')" sortable width="91" prop="number">
-        <template slot-scope="props">
+      <bk-table-column
+        :label="$t('数量')"
+        sortable
+        width="91"
+        prop="number">
+        <template slot-scope="{ row }">
           <span
             class="link-color"
-            @click="handleMenuClick('show original',props.row)">
-            {{props.row.count}}</span>
+            @click="handleMenuClick('show original', row)">
+            {{row.count}}</span>
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('占比')" sortable width="96" prop="source">
-        <template slot-scope="props">
-          <span class="link-color" @click="handleMenuClick('show original',props.row)">
-            {{`${props.row.percentage.toFixed(2)}%`}}
+      <bk-table-column :label="$t('占比')" sortable width="96">
+        <template slot-scope="{ row }">
+          <span
+            class="link-color"
+            @click="handleMenuClick('show original', row)">
+            {{`${toFixedNumber(row.percentage, 2)}%`}}
           </span>
         </template>
       </bk-table-column>
 
       <template v-if="requestData.year_on_year_hour >= 1 ">
         <bk-table-column
-          width="101" align="center" header-align="center" prop="source"
-          :label="$t('同比数量')"
           sortable
+          width="101"
+          align="center"
+          header-align="center"
+          :label="$t('同比数量')"
           :sort-by="'year_on_year_count'">
-          <template slot-scope="props">
-            <span>{{props.row.year_on_year_count}}</span>
+          <template slot-scope="{ row }">
+            <span>{{row.year_on_year_count}}</span>
           </template>
         </bk-table-column>
 
         <bk-table-column
-          width="101" align="center" header-align="center" prop="source"
-          :label="$t('同比变化')"
           sortable
+          width="101"
+          align="center"
+          header-align="center"
+          :label="$t('同比变化')"
           :sort-by="'year_on_year_percentage'">
-          <template slot-scope="props">
+          <template slot-scope="{ row }">
             <div class="fl-ac compared-change">
-              <span>{{`${props.row.year_on_year_percentage.toFixed(0)}%`}}</span>
-              <span :class="['bk-icon',showArrowsClass(props.row)]"></span>
+              <span>{{`${toFixedNumber(row.year_on_year_percentage, 0)}%`}}</span>
+              <span :class="['bk-icon', showArrowsClass(row)]"></span>
             </div>
           </template>
         </bk-table-column>
@@ -112,30 +128,42 @@
         </template>
       </bk-table-column>
 
-      <bk-table-column label="分组" width="100" prop="remark"></bk-table-column> -->
+      <bk-table-column
+        v-if="requestData.group_by.length"
+        :label="$t('分组')"
+        class-name="symbol-column">
+        <template slot-scope="{ row }">
+          <div class="group-box">
+            <span>{{row.group}}</span>
+          </div>
+        </template>
+      </bk-table-column>
 
-      <bk-table-column :label="$t('告警')" width="103" class-name="symbol-column">
-        <template slot-scope="props">
+      <bk-table-column
+        :label="$t('告警')"
+        width="103"
+        class-name="symbol-column">
+        <template slot-scope="{ row }">
           <div class="fl-ac" style="margin-top: 2px;">
-            <bk-switcher v-model="props.row.a" theme="primary"></bk-switcher>
-            <bk-popover content="可去告警策略编辑" :delay="300">
-              <span
-                class="bk-icon icon-edit2 link-color"
-                :style="`visibility:${props.$index === currentHover ? 'unset' : 'hidden'}`"></span>
+            <bk-switcher v-model="row.is_new_class" theme="primary"></bk-switcher>
+            <bk-popover v-if="row.is_new_class" content="可去告警策略编辑">
+              <span class="bk-icon icon-edit2 link-color"></span>
             </bk-popover>
           </div>
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('标签')" min-width="105" align="center" header-align="center">
-        <template slot-scope="props">
+      <bk-table-column
+        :label="$t('标签')"
+        min-width="105">
+        <template slot-scope="{ row }">
           <div class="fl-ac">
-            <bk-tag v-for="(item,index) of props.row.labels" :key="index">{{item}}</bk-tag>
+            <bk-tag v-for="(item,index) of row.labels" :key="index">{{item}}</bk-tag>
           </div>
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('备注')" width="100" prop="remark"></bk-table-column>
+      <!-- <bk-table-column :label="$t('备注')" width="100" prop="remark"></bk-table-column> -->
 
       <template slot="append" v-if="fingerList.length && isPageOver">
         <clustering-loader :width-list="loaderWidthList" />
@@ -190,17 +218,48 @@ export default {
       type: Boolean,
       default: false,
     },
+    allFingerList: {
+      type: Array,
+      require: true,
+    },
   },
   data() {
     return {
-      currentHover: '',
-      cacheExpandStr: [],
+      cacheExpandStr: [], // 展示pattern按钮数组
+      selectSize: 0, // 当前选择几条数据
+      isSelectAll: false, // 当前是否点击全选
+      selectionList: [], // 当前选中的数组
     };
   },
   inject: ['addFilterCondition'],
   computed: {
     scrollContent() {
       return document.querySelector('.result-scroll-container');
+    },
+    getTipsMessage() {
+      return this.selectionList.length
+        ? `${this.$t('fingerChoose')}
+        <span>${this.selectSize}</span>
+        ${this.$t('fingerSizeData')} ,
+        ${this.$t('fingerTotalData')}
+        <span>${this.allFingerList.length}</span>
+        ${this.$t('fingerSizeData')}`
+        : `${this.$t('fingerTotalData')}
+        <span>${this.allFingerList.length}</span>
+        ${this.$t('fingerSizeData')}`;
+    },
+  },
+  watch: {
+    'fingerList.length': {
+      handler(newLength, oldLength) {
+        if (this.isSelectAll) {
+          this.$nextTick(() => {
+            this.fingerList.slice(oldLength, newLength).forEach((item) => {
+              this.$refs.fingerTableRef.toggleRowSelection(item, true);
+            });
+          });
+        }
+      },
     },
   },
   mounted() {
@@ -221,25 +280,31 @@ export default {
           break;
       }
     },
+
     showArrowsClass(row) {
       if (row.year_on_year_percentage === 0) return '';
       return row.year_on_year_percentage < 0 ? 'icon-arrows-down' : 'icon-arrows-up';
     },
+
     handleShowWhole(index) {
       this.cacheExpandStr.push(index);
     },
+
     handleHideWhole(index) {
       this.cacheExpandStr = this.cacheExpandStr.map(item => item !== index);
     },
+
     handleLeaveCurrent() {
       this.$emit('showSettingLog');
     },
-    showEditIcon(index) {
-      this.currentHover = index;
+
+    toFixedNumber(value, size) {
+      if (typeof value === 'number' && !isNaN(value)) {
+        return value.toFixed(size);
+      }
+      return value;
     },
-    hiddenEditIcon() {
-      this.currentHover = '';
-    },
+
     scrollEvent(state = 'add') {
       const scrollEl = document.querySelector('.result-scroll-container');
       if (!scrollEl) return;
@@ -250,11 +315,41 @@ export default {
         scrollEl.removeEventListener('scroll', this.handleScroll, { passive: true });
       }
     },
+    // 单选
+    handleSelectAlarm(selection) {
+      if (this.isSelectAll) { // 全选与非全选时显示选择的数量
+        this.selectSize = selection.length + this.allFingerList.length - this.fingerList.length;
+      } else {
+        this.selectSize = selection.length;
+      }
+      this.selectionList = selection;
+    },
+    // 全选
+    handleSelectAllAlarm(selection) {
+      if (selection.length === 0) {
+        this.isSelectAll = false;
+        this.selectSize = 0;
+        return;
+      }
+      this.isSelectAll = true;
+      this.selectSize = this.allFingerList.length;
+      this.selectionList = selection;
+    },
+    // 批量告警
+    handleBatchUseAlarm() {
+      const signatureSetList = new Set();
+      this.selectionList.forEach(el => signatureSetList.add(el.signature));
+      if (this.isSelectAll) { // 全选时获取未显示的数据指纹
+        this.allFingerList.slice(this.fingerList.length).forEach(el => signatureSetList.add(el.signature));
+      }
+      const signatureList = [...signatureSetList];
+      console.log(signatureList);
+    },
+    // table下拉分页
     handleScroll() {
       if (this.throttle) {
         return;
       }
-
       const el = document.querySelector('.result-scroll-container');
       if (el.scrollHeight - el.offsetHeight - el.scrollTop < 5) {
         this.throttle = true;
@@ -288,7 +383,7 @@ export default {
     .operate-message{
       margin: -2px 8px 0 0;
       color: #63656E;
-      span {
+      :first-child {
         font-size: 14px;
         font-weight: 700;
       }
@@ -315,16 +410,18 @@ export default {
         border: none;
       }
     }
-    .signature {
-      width: 95px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      line-height: 24px;
+    .signature-box {
+      margin-top: 1px;
+      span{
+        width: 95px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 24px;
+      }
     }
     .compared-change {
-      height: 24px;
-      width: 100%;
+      margin-top: 1px;
       justify-content: center;
     }
     .empty-text {
@@ -342,23 +439,35 @@ export default {
       }
     }
     .pattern-content {
-      display: inline-block;
-      padding-right: 15px;
       position: relative;
-      padding-top: 4px;
+      padding: 10px 15px 10px 0;
+      margin-top: 4px;
       overflow: hidden;
+      display: inline-block;
       &.is-limit {
         max-height: 96px;
       }
     }
+    .hover-row {
+      .show-whole-btn{
+        background-color: #F0F1F5;
+      }
+    }
+    .group-box{
+      min-height: 40px;
+      padding: 8px 0;
+      @include flex-align;
+    }
     .show-whole-btn {
       position: absolute;
-      top: 80px;
+      top: 72px;
       width: 100%;
       height: 24px;
       color: #3a84ff;
       font-size: 12px;
+      background: #fff;
       cursor: pointer;
+      transition: background-color .25s ease;
     }
     .hide-whole-btn {
       line-height: 14px;
