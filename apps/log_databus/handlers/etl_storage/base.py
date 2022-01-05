@@ -120,7 +120,7 @@ class EtlStorage(object):
         clustering_default_fields = self._get_log_clustering_default_fields()
         for field in fields:
             # 当在聚类场景的时候 不做下面的format操作
-            if field["field_name"] in clustering_default_fields:
+            if etl_flat and field["field_name"] in clustering_default_fields:
                 field_list.append(field)
                 continue
             # 过滤掉删除的字段

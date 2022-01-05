@@ -221,22 +221,11 @@ export default {
         this.configID = this.cleanConfig.extra?.collector_config_id;
       },
     },
-    originTableList: {
-      handler(newList) {
-        if (newList.length > 0) {
-          if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
-            this.alreadyClickNav.push('dataFingerprint');
-            this.requestData.pattern_level === '' && this.initTable();
-            this.requestFinger();
-          }
-        }
-      },
-    },
     totalFields: {
       deep: true,
       immediate: true,
       handler(newList) {
-        if (newList.length > 0) {
+        if (newList.length) {
           if (!this.configData.is_active) {
             this.exhibitAll = false;
             return;
@@ -247,7 +236,13 @@ export default {
       },
     },
     '$route.params.indexId'() {
+      // 切换索引集并且当前显示为数据指纹时发送请求
       this.alreadyClickNav = [];
+      if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
+        this.alreadyClickNav.push('dataFingerprint');
+        this.requestData.pattern_level === '' && this.initTable();
+        this.requestFinger();
+      }
       this.globalLoading = true;
       setTimeout(() => {
         this.globalLoading = false;
