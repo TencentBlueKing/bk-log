@@ -67,12 +67,14 @@ class ClusteringMonitorViewSet(APIViewSet):
                 {
                     "signature:":"xxx",
                     "strategy_id":1,
-                    "operator_result":true
+                    "operator_result":true,
+                    "operator_msg": ""
                 },
                 {
                     "signature:":"xxx",
                     "strategy_id":2,
-                    "operator_result":false
+                    "operator_result":false,
+                    "operator_msg": "xxx"
                 }
             ],
             "result":false
