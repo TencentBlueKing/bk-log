@@ -22,8 +22,8 @@
 
 <template>
   <div class="ip-quick-container">
-    <div v-if="hostScopes.target_nodes.length" class="tag" @click="openDialog">
-      {{ $t('已选择') + ' ' + hostScopes.target_nodes.length + ' ' + `${$t('个')}${nodeUnit}` }}
+    <div v-if="targetNode.length" class="tag" @click="openDialog">
+      {{ $t('已选择') + ' ' + targetNode.length + ' ' + `${$t('个')}${nodeUnit}` }}
       <span class="bk-icon icon-close-line" @click.stop="removeSelections"></span>
     </div>
   </div>
@@ -32,8 +32,12 @@
 <script>
 export default {
   props: {
-    hostScopes: {
-      type: Object,
+    targetNode: {
+      type: Array,
+      required: true,
+    },
+    targetNodeType: {
+      type: String,
       required: true,
     },
   },
@@ -46,7 +50,7 @@ export default {
         SET_TEMPLATE: this.$t('集群模板'),
         DYNAMIC_GROUP: this.$t('动态分组'),
       };
-      return nodeTypeTextMap[this.hostScopes.target_node_type] || '';
+      return nodeTypeTextMap[this.targetNodeType] || '';
     },
   },
   methods: {
