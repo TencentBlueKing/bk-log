@@ -18,7 +18,6 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import datetime
 import arrow
 from typing import List, Any
 from dateutil.rrule import rrule
@@ -78,8 +77,8 @@ class IndicesOptimizerContextTail(object):
 
     def index_time_filter_context(self, timestamp, index: str) -> type_index_set_list:
         filter_list: List[Any] = []
-        now: datetime = arrow.utcnow()
-        date_timestamp: datetime = arrow.get(int(timestamp) / 1000)
+        now = arrow.utcnow()
+        date_timestamp = arrow.get(int(timestamp) / 1000)
         date_start, date_end = self._generate_start_end(now if date_timestamp > now else date_timestamp)
         date_day_list: List[Any] = list(rrule(DAILY, interval=1, dtstart=date_start, until=date_end))
         date_day_list.append(date_end)
@@ -108,8 +107,9 @@ class IndicesOptimizerContextTail(object):
         return list(set(filter_list))
 
     def _generate_start_end(self, datetime_stamp):
+        # 数据平台场景物理索引是按照服务器所在时区进行分裂
         if self.scenario_id == Scenario.BKDATA:
             time_zone = get_local_param("time_zone", default=settings.TIME_ZONE)
             datetime_stamp = datetime_stamp.to(tz=time_zone)
-        start = datetime_stamp.shift(hours=1)
+        start = datetime_stamp.shift(hours=-1)
         return start.naive, datetime_stamp.naive
