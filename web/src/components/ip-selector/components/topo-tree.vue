@@ -79,7 +79,11 @@ export default class StaticTopo extends Vue {
   }
 
   private created() {
-    this.defaultExpandedNodes = this.handleGetExpandNodeByDeep(this.defaultExpandLevel, this.nodes)
+    const defaultExpandedNodes = this.handleGetExpandNodeByDeep(this.defaultExpandLevel, this.nodes);
+    if (this.defaultCheckedNodes?.length) {
+      defaultExpandedNodes.push(...this.defaultCheckedNodes);
+    }
+    this.defaultExpandedNodes = defaultExpandedNodes;
   }
 
   public getSelectedStatus(data: any) {
