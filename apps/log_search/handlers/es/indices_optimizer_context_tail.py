@@ -19,12 +19,16 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import datetime
+import arrow
 from typing import List, Any
 from dateutil.rrule import rrule
 from dateutil.rrule import DAILY
-import arrow
+
+from django.conf import settings
+
 from apps.log_esquery.type_constants import type_index_set_string, type_index_set_list
 from apps.log_search.models import Scenario
+from apps.utils.local import get_local_param
 
 
 class IndicesOptimizerContextTail(object):
@@ -36,6 +40,7 @@ class IndicesOptimizerContextTail(object):
         search_type_tag: str = None,
     ):
         self._index: str = ""
+        self.scenario_id: str = scenario_id
         if index_set_string:
             index_set_string = index_set_string.replace(" ", "")
             result_table_id_list: List[str] = index_set_string.split(",")
@@ -71,18 +76,11 @@ class IndicesOptimizerContextTail(object):
             final_index_list = final_index_list + a_index_list
         return ",".join(final_index_list)
 
-    @staticmethod
-    def index_time_filter_context(timestamp, index: str) -> type_index_set_list:
+    def index_time_filter_context(self, timestamp, index: str) -> type_index_set_list:
         filter_list: List[Any] = []
-        now: datetime = arrow.utcnow().naive
-        date_timestamp: datetime = arrow.get(int(timestamp) / 1000).naive
-        if date_timestamp > now:
-            date_end: datetime = now
-        else:
-            date_end: datetime = date_timestamp
-
-        date_start: datetime = date_end - datetime.timedelta(hours=1)
-
+        now: datetime = arrow.utcnow()
+        date_timestamp: datetime = arrow.get(int(timestamp) / 1000)
+        date_start, date_end = self._generate_start_end(now if date_timestamp > now else date_timestamp)
         date_day_list: List[Any] = list(rrule(DAILY, interval=1, dtstart=date_start, until=date_end))
         date_day_list.append(date_end)
 
@@ -99,14 +97,19 @@ class IndicesOptimizerContextTail(object):
             final_index_list = final_index_list + a_index_list
         return ",".join(final_index_list)
 
-    @staticmethod
-    def index_time_filter_tail(index: str) -> type_index_set_list:
+    def index_time_filter_tail(self, index: str) -> type_index_set_list:
         filter_list: List[str] = []
-        now: datetime = arrow.utcnow().naive
-        now1hbefore: datetime = now - datetime.timedelta(hours=1)
-        date_day_list: List[Any] = list(rrule(DAILY, interval=1, dtstart=now1hbefore, until=now))
+        date_start, now = self._generate_start_end(arrow.utcnow())
+        date_day_list: List[Any] = list(rrule(DAILY, interval=1, dtstart=date_start, until=now))
         date_day_list.append(now)
 
         for x in date_day_list:
             filter_list.append("{}_{}*".format(index, x.strftime("%Y%m%d")))
         return list(set(filter_list))
+
+    def _generate_start_end(self, datetime_stamp):
+        if self.scenario_id == Scenario.BKDATA:
+            time_zone = get_local_param("time_zone", default=settings.TIME_ZONE)
+            datetime_stamp = datetime_stamp.to(tz=time_zone)
+        start = datetime_stamp.shift(hours=1)
+        return start.naive, datetime_stamp.naive
