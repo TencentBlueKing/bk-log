@@ -39,11 +39,11 @@ class ClusteringMonitorViewSet(APIViewSet):
         @api {post} /clustering_monitor/$index_set_id/update_strategies 6_聚类告警策略-更改
         @apiName update_strategies
         @apiGroup log_clustering
-        @apiParam {dict} actions 操作列表
+        @apiParam {List} actions 操作列表
         @apiParam {str} actions.signature 数据指纹
         @apiParam {str} actions.pattern pattern
-        @apiParam {Int} [actions.strategy_id] 策略id 当更新的时候必传
-        @apiParam {Str} actions.action  update or create 标识创建或更新
+        @apiParam {Int} [actions.strategy_id] 策略id 当更新与删除的时候必传
+        @apiParam {Str} actions.action  update or create or delete 标识创建或更新
         @apiParam {Str} [actions.operator] 表达式
         @apiParam {Int} [actions.value] 阈值(暂留)
         @apiSuccessExample {json} 全部成功
