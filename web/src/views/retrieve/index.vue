@@ -1331,12 +1331,12 @@ export default {
         //     end_time: formatDate(this.pollingEndTime),
         //   },
         // }, { responseType: 'blob' });
-
+        const baseUrl = process.env.NODE_ENV === 'development' ? 'api/v1' : window.AJAX_URL_PREFIX;
         const res = await axios({
           method: 'post',
           url: `/search/index_set/${this.indexId}/search/`,
           withCredentials: true,
-          baseURL: window.AJAX_URL_PREFIX,
+          baseURL: baseUrl,
           responseType: 'blob',
           data: {
             ...this.retrieveParams,
