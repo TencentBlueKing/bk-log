@@ -136,7 +136,8 @@
               </div>
               <div class="add-filter-condition-container">
                 <ip-quick
-                  :host-scopes="retrieveParams.host_scopes"
+                  :target-node="retrieveParams.host_scopes.target_nodes"
+                  :target-node-type="retrieveParams.host_scopes.target_node_type"
                   @openIpQuick="openIpQuick"
                   @confirm="handleSaveIpQuick" />
                 <div class="cut-line" v-if="showFilterCutline"></div>
@@ -485,7 +486,7 @@ export default {
       // return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
       return (host_scopes.modules.length
       || host_scopes.ips.length
-      || host_scopes.target_nodes.length)
+      || host_scopes.target_nodes?.length)
       && addition.length;
     },
     showSearchPage() {

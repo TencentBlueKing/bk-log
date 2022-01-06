@@ -22,8 +22,9 @@
 
 <template>
   <div class="service-template" v-bkloading="{ isLoading }">
-    <div class="service-template-left"
-         :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
+    <div 
+      class="service-template-left"
+      :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
       <bk-input
         clearable
         right-icon="bk-icon icon-search"

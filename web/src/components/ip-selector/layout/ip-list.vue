@@ -95,7 +95,7 @@ export default class IpList extends Vue {
   private tableKeyword = ''
   private pagination: IPagination = {
     current: 1,
-    limit: this.limit,
+    limit: 20,
     count: 0,
     limitList: [10, 20, 50]
   }
@@ -108,6 +108,7 @@ export default class IpList extends Vue {
   }
 
   private created() {
+    this.pagination.limit = this.limit;
     this.handleGetDefaultData()
   }
 

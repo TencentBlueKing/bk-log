@@ -63,7 +63,7 @@
             :collapse-color="'#313238'"
             :title-bg-color="'#F0F1F5'"
             :collapse.sync="cluster.collapse"
-            :title="rightPanelTitle">
+            :title="getRightPanelTitle(cluster)">
             <div
               :class="`heder-title-sign sign-${cluster.label_name}`"
               v-if="cluster.is_label && isEdit"
@@ -258,12 +258,6 @@ export default {
     isEdit() {
       return this.operateType === 'edit' || this.operateType === 'editFinish';
     },
-    rightPanelTitle() {
-      return {
-        type: this.cluster.bk_obj_name,
-        number: this.cluster.success,
-      };
-    },
   },
   watch: {
     hasRunning(newVal, val) {
@@ -292,6 +286,12 @@ export default {
     this.stopStatusPolling();
   },
   methods: {
+    getRightPanelTitle(cluster) {
+      return {
+        type: cluster.bk_obj_name,
+        number: cluster.success,
+      };
+    },
     tabHandler(tab, manual) {
       if (this.curTab === tab.type && !manual) {
         return false;

@@ -22,8 +22,9 @@
 
 <template>
   <div class="custom-input">
-    <div class="custom-input-left"
-         :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
+    <div 
+      class="custom-input-left"
+      :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
       <bk-input
         class="ip-text"
         :placeholder="$t('多个IP以回车为分隔符')"
