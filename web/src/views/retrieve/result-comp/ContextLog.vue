@@ -32,7 +32,7 @@
     <!-- IP 日志路径 -->
     <div class="dialog-label">
       <span style="margin-right: 10px;">IP: {{params.ip || params.serverIp}}</span>
-      <span>{{ $t('retrieve.logPath') + ': ' + params.path || params.logfile }}</span>
+      <span>{{ $t('retrieve.logPath') + ': ' + (params.path || params.logfile) }}</span>
     </div>
 
     <div class="dialog-bars">
