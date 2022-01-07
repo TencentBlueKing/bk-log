@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="retrieve-input" v-click-outside="hiddenHistory">
+  <div class="retrieve-input" v-bk-clickoutside="hiddenHistory">
     <bk-input
       class="king-input-retrieve"
       :value="value"

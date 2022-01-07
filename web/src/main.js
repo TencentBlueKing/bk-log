@@ -28,7 +28,6 @@ import store from './store';
 import http from './api';
 import { bus } from './common/bus';
 import i18n from '@/language/i18n';
-import vClickOutside from 'v-click-outside';
 import methods from './plugins/methods';
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
@@ -85,7 +84,6 @@ router.onError((err) => {
 Vue.component('VueJsonPretty', VueJsonPretty);
 Vue.component('LogButton', LogButton);
 Vue.directive('cursor', cursor);
-Vue.use(vClickOutside);
 Vue.use(methods);
 
 if (process.env.NODE_ENV === 'development') {
