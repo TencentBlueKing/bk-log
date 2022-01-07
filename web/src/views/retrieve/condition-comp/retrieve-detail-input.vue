@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div v-click-outside="handleClickOutside" class="retrieve-detail-input">
+  <div v-bk-clickoutside="handleClickOutside" class="retrieve-detail-input">
     <bk-input
       class="king-input-retrieve"
       data-test-id="dataQuery_input_checkForPhrases"
