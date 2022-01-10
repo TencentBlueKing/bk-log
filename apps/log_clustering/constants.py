@@ -49,6 +49,8 @@ SAMPLE_SET_SLEEP_TIMER = 15 * 60
 
 DEFULT_FILTER_NOT_CLUSTERING_OPERATOR = "is not"
 
+NOTICE_RECEIVER = "user"
+
 
 class YearOnYearEnum(ChoicesEnum):
     NOT = 0

@@ -40,6 +40,22 @@ class _MonitorApi(object):
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
+        self.save_notice_group = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "save_notice_group/",
+            module=self.MODULE,
+            description=u"保存通知组",
+            default_return_value=None,
+            before_request=add_esb_info_before_request,
+        )
+        self.save_alarm_strategy_v2 = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "save_alarm_strategy_v2/",
+            module=self.MODULE,
+            description=u"保存告警策略V2",
+            default_return_value=None,
+            before_request=add_esb_info_before_request,
+        )
 
 
 MonitorApi = _MonitorApi()

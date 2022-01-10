@@ -17,18 +17,22 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.conf.urls import url, include
-from rest_framework import routers
+from apps.api import MonitorApi
 
-from apps.log_clustering.views.clustering_config_views import ClusteringConfigViewSet
-from apps.log_clustering.views.clustering_monitor_views import ClusteringMonitorViewSet
-from apps.log_clustering.views.pattern_views import PatternViewSet
 
-router = routers.DefaultRouter(trailing_slash=True)
-router.register(r"pattern", PatternViewSet, basename="pattern_set")
-router.register(r"clustering_config", ClusteringConfigViewSet, basename="clustering_config")
-router.register(r"clustering_monitor", ClusteringMonitorViewSet, basename="clustering_monitor")
+class MonitorUtils(object):
+    @classmethod
+    def save_notice_group(cls, bk_biz_id: int, name: str, notice_way: dict, notice_receiver: list, message: str = ""):
+        return MonitorApi.save_notice_group(
+            params={
+                "bk_biz_id": bk_biz_id,
+                "name": name,
+                "message": message,
+                "notice_way": notice_way,
+                "notice_receiver": notice_receiver,
+            }
+        )
 
-urlpatterns = [
-    url(r"^", include(router.urls)),
-]
+    @classmethod
+    def generate_notice_receiver(cls, receivers: list, notice_tye: str):
+        return [{"type": notice_tye, "id": receiver} for receiver in receivers]
