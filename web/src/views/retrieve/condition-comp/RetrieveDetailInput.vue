@@ -395,9 +395,9 @@ export default {
       this.showWhichDropdown();
     },
     /**
-             * 显示哪个下拉列表
-             * @param {String} [param]
-             */
+     * 显示哪个下拉列表
+     * @param {String} [param]
+     */
     showWhichDropdown(param) {
       const types = ['Fields', 'Value', 'Colon', 'Continue'];
       for (const type of types) {
@@ -407,10 +407,10 @@ export default {
       this.activeIndex = null;
     },
     /**
-             * 获取某个字段可选的值列表
-             * @param {Object} valueMap
-             * @return {string[]}
-             */
+     * 获取某个字段可选的值列表
+     * @param {Object} valueMap
+     * @return {string[]}
+     */
     getValueList(valueMap) {
       if (valueMap.__fieldType === 'string') {
         return Object.keys(valueMap).map(item => `"${item}"`);
@@ -418,9 +418,9 @@ export default {
       return Object.keys(valueMap);
     },
     /**
-             * 选择某个可选字段
-             * @param {string} field
-             */
+     * 选择某个可选字段
+     * @param {string} field
+     */
     handleClickField(field) {
       this.valueList = this.getValueList(this.dropdownData[field]);
       const currentValue = this.value;
@@ -440,9 +440,9 @@ export default {
       this.showWhichDropdown('Colon');
     },
     /**
-             * 选择 : 或者 :*
-             * @param {string} type
-             */
+     * 选择 : 或者 :*
+     * @param {string} type
+     */
     handleClickColon(type) {
       this.$emit('change', `${this.value + type} `);
       this.$nextTick(() => {
@@ -450,18 +450,18 @@ export default {
       });
     },
     /**
-             * 选择某个字段可选值
-             * @param {string} value
-             */
+     * 选择某个字段可选值
+     * @param {string} value
+     */
     handleClickValue(value) {
       // 当前输入值可能的情况 【name:"a】【age:】
       this.$emit('change', this.value.replace(/:\s*[\S]*$/, `: ${value} `));
       this.showWhichDropdown('Continue');
     },
     /**
-             * 选择 AND 或者 OR
-             * @param {string} type
-             */
+     * 选择 AND 或者 OR
+     * @param {string} type
+     */
     handleClickContinue(type) {
       this.$emit('change', `${this.value + type} `);
       this.showWhichDropdown('Fields');
@@ -482,16 +482,13 @@ export default {
 
 <style lang="scss" scoped>
   @import '../../../scss/mixins/scroller';
-
   .retrieve-detail-input {
     position: relative;
-
     .king-input-retrieve {
       /deep/ .bk-form-input {
         height: 64px;
       }
     }
-
     .retrieve-dropdown {
       position: absolute;
       z-index: 1;
@@ -503,28 +500,23 @@ export default {
       box-shadow: 0 2px 6px 0 rgba(0, 0, 0, .1);
       border: 1px solid #dcdee5;
       border-radius: 2px;
-
       @include scroller(#CCC);
-
       .list-item {
         display: flex;
         align-items: center;
         font-size: 12px;
         line-height: 32px;
         background-color: #fff;
-
         .item-type-icon {
           width: 32px;
           height: 32px;
           display: flex;
           justify-content: center;
           align-items: center;
-
           .log-icon {
             font-size: 16px;
           }
         }
-
         .item-text {
           flex: 1;
           min-width: 150px;
@@ -532,12 +524,10 @@ export default {
           color: #63656e;
           font-family: 'Roboto Mono', Consolas, Menlo, Courier, monospace;
         }
-
         .item-description {
           flex: 2;
           color: #979ba5;
           margin-left: 24px;
-
           .item-callout {
             padding: 0 4px;
             color: #313238;
@@ -545,33 +535,27 @@ export default {
             font-family: 'Roboto Mono', Consolas, Menlo, Courier, monospace;
           }
         }
-
         &:hover,
         &.active {
           background-color: #f4f6fa;
-
           .item-text {
             color: #313238;
           }
-
           .item-callout {
             background-color: #fff;
           }
         }
-
         &:hover {
           cursor: pointer;
           background-color: #eaf3ff;
         }
       }
-
       /* 字段 icon 样式 */
       .field-list-item.list-item {
         .item-type-icon {
           color: #936501;
           background-color: #fef6e6;
         }
-
         &:hover,
         &.active {
           .item-type-icon {
@@ -580,14 +564,12 @@ export default {
           }
         }
       }
-
       /* 值 icon 样式 */
       .value-list-item.list-item {
         .item-type-icon {
           color: #02776e;
           background-color: #e6f2f1;
         }
-
         &:hover,
         &.active {
           .item-type-icon {
@@ -596,14 +578,12 @@ export default {
           }
         }
       }
-
       /* AND OR icon 样式 */
       .continue-list-item.list-item {
         .item-type-icon {
           color: #7800a6;
           background-color: #f2e6f6;
         }
-
         &:hover,
         &.active {
           .item-type-icon {
@@ -612,14 +592,12 @@ export default {
           }
         }
       }
-
       /* : :* icon 样式 */
       .colon-list-item.list-item {
         .item-type-icon {
           color: #006bb4;
           background-color: #e6f0f8;
         }
-
         &:hover,
         &.active {
           .item-type-icon {
@@ -628,12 +606,10 @@ export default {
           }
         }
       }
-
       .history-title-item.list-item {
         border-top: 1px solid #dcdee5;
         background-color: #fff;
         cursor: default;
-
         .item-text {
           color: #979ba5;
         }
