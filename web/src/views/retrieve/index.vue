@@ -1000,12 +1000,12 @@ export default {
     },
     // 检索日志
     async retrieveLog(historyParams) {
-      this.basicLoading = true;
-
       if (!this.indexId) {
         return;
       }
+
       await this.$nextTick();
+      this.basicLoading = true;
       this.showHistory = false;
       this.activeTab = 'search';
       this.$refs.resultHeader && this.$refs.resultHeader.pauseRefresh();

@@ -83,7 +83,7 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
       port: devConfig.port,
       host: devConfig.host,
       proxy: {
-        ...['/api'].reduce(
+        ...['/api', '/version_log'].reduce(
           (pre, key) => ({
             ...pre,
             [key]: {
