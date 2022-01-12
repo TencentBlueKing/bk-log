@@ -22,6 +22,7 @@ import os
 from django.apps.config import AppConfig
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
+from apps.utils.log import logger
 
 try:
     from blueapps.utils.esbclient import get_client_by_user
@@ -91,11 +92,16 @@ class ApiConfig(AppConfig):
         if settings.IS_K8S_DEPLOY_MODE:
             from apps.api import BKPAASApi
 
-            result = BKPAASApi.uni_apps_query_by_id(id=settings.SAAS_MONITOR)
-            is_deploy_monitor = bool(result and result[0])
+            try:
+                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_MONITOR})
+                is_deploy_monitor = bool(result and result[0])
 
-            result = BKPAASApi.uni_apps_query_by_id(id=settings.SAAS_BKDATA)
-            is_deploy_bkdata = bool(result and result[0])
+                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_BKDATA})
+                is_deploy_bkdata = bool(result and result[0])
+            except Exception as e:  # noqa
+                # 忽略这个API请求的错误, 避免错误导致整个APP启动失败
+                # 错误情况下，记录下日志，同时认为对应的APP未部署
+                logger.exception(e)
         else:
             client = get_client_by_user(user_or_username=settings.SYSTEM_USE_API_ACCOUNT)
             bk_apps = client.bk_paas.get_app_info()
