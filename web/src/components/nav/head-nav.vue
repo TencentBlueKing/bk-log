@@ -106,7 +106,7 @@
           </li>
         </ul>
       </bk-dropdown-menu>
-      <LogVersion :dialog-show.sync="showLogVersion" />
+      <log-version :dialog-show.sync="showLogVersion" />
       <span class="username" v-if="username">{{ username }}</span>
     </div>
   </nav>
@@ -131,7 +131,6 @@ export default {
       isFirstLoad: true,
       isOpenVersion: window.RUN_VER.indexOf('open') !== -1,
       logoText: window.TITLE_MENU || '',
-      logoImgUrl: window.MENU_LOGO_URL || '',
       username: '',
       usernameRequested: false,
       isShowLanguageDropdown: false,
@@ -148,6 +147,9 @@ export default {
       asIframe: state => state.asIframe,
       iframeQuery: state => state.iframeQuery,
     }),
+    logoImgUrl() {
+      return process.env.NODE_ENV === 'development' ? '' : (window.MENU_LOGO_URL || '');
+    },
     dropDownActive() {
       let current;
       if (this.currentMenu.dropDown && this.currentMenu.children) {
