@@ -45,13 +45,7 @@
     <!-- 检索结果 -->
     <!-- <div class="result-text"></div> -->
     <!-- 检索日期 -->
-    <select-date
-      :is-home="false"
-      :time-range="timeRange"
-      :date-picker-value="datePickerValue"
-      @update:timeRange="handleTimeRangeChange"
-      @update:datePickerValue="handleDateChange"
-      @datePickerChange="$emit('datePickerChange')" />
+    <time-range :value="datePickerValue" @change="handleTimeRangeChange" />
     <!-- 自动刷新 -->
     <bk-popover
       ref="autoRefreshPopper"
@@ -116,13 +110,13 @@
 
 <script>
 import { mapState } from 'vuex';
-import SelectDate from '../condition-comp/select-date';
 import FavoriteCard from '../condition-comp/favorite-card';
+import TimeRange from '../../../components/time-range/time-range';
 
 export default {
   components: {
-    SelectDate,
     FavoriteCard,
+    TimeRange,
   },
   props: {
     showRetrieveCondition: {
@@ -229,15 +223,10 @@ export default {
     },
     // 日期变化
     handleTimeRangeChange(val) {
-      if (val === 'customized') { // 自定义日期关闭自动刷新
-        this.setRefreshTime(0);
-      }
-      this.$emit('update:timeRange', val);
-    },
-    handleDateChange(val) {
       this.$emit('update:datePickerValue', val);
+      this.setRefreshTime(0);
+      this.$emit('datePickerChange');
     },
-
     // 自动刷新
     handleDropdownShow() {
       this.refreshActive = true;
@@ -305,6 +294,22 @@ export default {
 
     .result-text {
       width: 100%;
+    }
+
+    .time-range-wrap {
+      display: flex;
+      align-items: center;
+      position: relative;
+
+      &::before {
+        content: '';
+        width: 1px;
+        height: 14px;
+        background-color: #dcdee5;
+        position: absolute;
+        left: 0;
+        top: 20px;
+      }
     }
 
     .auto-refresh-trigger {
