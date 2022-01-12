@@ -202,6 +202,7 @@ export default {
   methods: {
     handleMenuClick(option, row) {
       switch (option) {
+        // pattern 下钻
         case 'show original':
           this.addFilterCondition(`__dist_${this.requestData.pattern_level}`, 'is', row.signature.toString());
           this.$emit('showOriginLog');
@@ -230,6 +231,7 @@ export default {
     hiddenEditIcon() {
       this.currentHover = '';
     },
+    // 添加或删除监听分页事件
     scrollEvent(state = 'add') {
       const scrollEl = document.querySelector('.result-scroll-container');
       if (!scrollEl) return;

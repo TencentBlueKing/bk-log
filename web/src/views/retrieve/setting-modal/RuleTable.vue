@@ -327,22 +327,26 @@ export default {
         },
       });
     },
-    // 聚类规则点击提交时检测
+    // 添加规则dialog
     handleRuleSubmit() {
       if (this.isRuleCorrect) {
         this.showTableLoading();
         const newRuleObj = {};
         const { regular, placeholder } = this.addRulesData;
         newRuleObj[placeholder] = regular;
+        // 添加渲染列表时不重复的key值
         newRuleObj.__Index__ = new Date().getTime();
         if (this.isEditRules) {
+          // 编辑规则替换编辑对象
           this.rulesList.splice(this.editRulesIndex, 1, newRuleObj);
         } else {
+          // 检测正则和占位符是否都重复 重复则不添加
           const isRepeat = this.isRulesRepeat(newRuleObj);
           !isRepeat && this.rulesList.push(newRuleObj);
         }
         this.isShowAddRule = false;
       } else {
+        // 第一次点击检查时显示文案变化
         this.isDetection = true;
         this.isClickSubmit = true;
         this.detectionStr = this.$t('retrieveSetting.inspection');
@@ -431,6 +435,7 @@ export default {
           this.debugRequest = false;
         });
     },
+    // 调试返回值占位符和正则都匹配则高亮
     highlightPredefined(tokenRegex = {}) {
       Object.entries(tokenRegex).forEach((regexItem) => {
         this.rulesList.forEach((listItem) => {
@@ -443,6 +448,11 @@ export default {
         });
       });
     },
+    /**
+     * @description: 检测规则和占位符是否重复
+     * @param { Object } newRules 检测对象
+     * @returns { Boolean }
+     */
     isRulesRepeat(newRules = {}) {
       return this.rulesList.some((listItem) => {
         const [regexKey, regexVal] = Object.entries(newRules)[0];
@@ -459,6 +469,7 @@ export default {
       URL.revokeObjectURL(tempUrl);
       return uuid.substr(uuid.lastIndexOf('/') + 1);
     },
+    // 编辑规则时需重新显示检测按钮
     resetDetection() {
       this.isDetection = false;
       this.isClickSubmit = false;

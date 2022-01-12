@@ -203,6 +203,7 @@ export default {
         };
       });
     },
+    // 离开当前页
     handleNavClick(item) {
       if (item.id === this.currentChoice) return;
 
@@ -229,19 +230,13 @@ export default {
         this.isOpenPage = false;
       }
     },
-    resetPage() {
-      this.isShowPage = false;
-      this.$nextTick(() => {
-        this.isShowPage = true;
-      });
-    },
-    // nav开关
+    // 离开当前页并点击nav开关
     stopChangeSwitch(item) {
       if (item.isDisable) return;
 
       if (!item.isEditable) {
+        // 当前tab不在操作的开关菜单 则跳转到对应菜单
         if (this.currentChoice !== item.id) {
-          // 当前tab不在操作的开关菜单 则跳转到对应菜单
           this.jumpCloseSwitch();
           this.currentChoice = item.id;
           this.showComponent = item.componentsName;
@@ -249,13 +244,18 @@ export default {
         item.isEditable = true;
         return;
       }
-      const msg = item.id === 'extract' ? this.$t('retrieveSetting.fieldLeaveTip') : this.$t('retrieveSetting.clusterLeaveTip');
+      const msg = item.id === 'extract'
+        ? this.$t('retrieveSetting.fieldLeaveTip')
+        : this.$t('retrieveSetting.clusterLeaveTip');
+
       if (item.id === 'extract') {
         this.$bkInfo({
           title: msg,
           confirmLoading: true,
           confirmFn: async () => {
-            const isFinish = item.id === 'extract' ? await this.requestCloseClean() : await this.requestCloseCluster();
+            const isFinish = item.id === 'extract'
+              ? await this.requestCloseClean()
+              : await this.requestCloseCluster();
             isFinish && (item.isEditable = false);
           },
         });
@@ -263,6 +263,7 @@ export default {
         item.isEditable = false;
       }
     },
+    // 关闭字段提取请求
     async requestCloseClean() {
       const { extra: { collector_config_id } } = this.cleanConfig;
       const res = await this.$http.request('/logClustering/closeClean', {
@@ -275,33 +276,42 @@ export default {
       });
       return res.result;
     },
+
     requestCloseCluster() {
       return true;
     },
+
     closeSetting() {
       this.$emit('closeSetting');
     },
+
     closePage() {
       this.isOpenPage = true;
       this.currentChoice = '';
       this.showComponent = '';
     },
+
+    // 若nav的switch为关闭状态离开当前页面时判断是否发送保存请求，没有则关闭可编辑状态
     jumpCloseSwitch() {
       if (!this.isClusteringActive && this.currentChoice === 'clustering') {
         this.currentList[1].isEditable = false;
       }
       if (!this.isSubmit && this.currentChoice === 'extract'
-       && this.currentList[0].isDisabled !== true && !this.isExtractActive) {
+       && this.currentList[0].isDisabled !== true
+       && !this.isExtractActive) {
         this.currentList[0].isEditable = false;
       }
     },
+
     debugRequestChange(val) {
       this.isDebugRequest = val;
     },
+
     updateLogFields() {
       this.isSubmit = true;
       this.$emit('updateLogFields');
     },
+    // 更多详情
     handleClickDetail() {
       const { extra: { collector_config_id: collectorID, collector_scenario_id: scenarioID } } = this.cleanConfig;
       if (!collectorID) return;
@@ -310,6 +320,13 @@ export default {
         ? `/#/manage/custom-report/detail/${collectorID}?projectId=${projectId}`
         : `/#/manage/log-collection/collection-item/manage/${collectorID}?projectId=${projectId}`;
       window.open(jumpUrl, '_blank');
+    },
+
+    resetPage() {
+      this.isShowPage = false;
+      this.$nextTick(() => {
+        this.isShowPage = true;
+      });
     },
   },
 };
