@@ -328,9 +328,8 @@ export default {
   },
   methods: {
     /**
-     * @description: 数据指纹请求
-     * @param { Boolean } isDefault // 是否请求默认值
-     * @returns {*}
+     * @desc: 数据指纹请求
+     * @param { Boolean } isDefault 是否请求默认值
      */
     async requestCluster(isDefault = false) {
       this.globalLoading = true;
@@ -410,7 +409,6 @@ export default {
         logic_operator: 'and',
       });
     },
-    // 是否填写过滤规则
     blurFilter() {
       if (this.formData.filter_rules.length > 0) {
         this.isFilterRuleError = this.formData.filter_rules.some(el => el.value === '');

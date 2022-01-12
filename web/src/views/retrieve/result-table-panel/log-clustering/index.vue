@@ -284,7 +284,6 @@ export default {
         }
       }
     },
-    // 初始化数据指纹配置
     initTable() {
       const {
         log_clustering_level_year_on_year: yearOnYearList,
@@ -308,7 +307,11 @@ export default {
         pattern_level: clusterLevel[patternLevel - 1],
       });
     },
-    // 数据指纹操作
+    /**
+     * @desc: 数据指纹操作
+     * @param { String } operateType 操作类型
+     * @param { Any } val 具体值
+     */
     handleFingerOperate(operateType, val) {
       switch (operateType) {
         case 'compared':
@@ -333,7 +336,6 @@ export default {
           break;
       }
     },
-    // 跳转
     handleLeaveCurrent() {
       if (!this.clusterSwitch) {
         this.$emit('showSettingLog');
@@ -347,7 +349,10 @@ export default {
         });
       }
     },
-    // 同比自定义输入
+    /**
+     * @desc: 同比自定义输入
+     * @param { String } val
+     */
     handleEnterCompared(val) {
       const matchVal = val.match(/^(\d+)h$/);
       if (!matchVal) {
@@ -369,7 +374,9 @@ export default {
       });
       this.requestData.year_on_year_hour = Number(matchVal[1]);
     },
-    // 请求数据指纹
+    /**
+     * @desc: 数据指纹请求
+     */
     requestFinger() {
       this.tableLoading = true;
       this.$http.request('/logClustering/clusterSearch', {
@@ -390,7 +397,9 @@ export default {
           this.tableLoading = false;
         });
     },
-    // 数据指纹分页操作
+    /**
+     * @desc: 数据指纹分页操作
+     */
     paginationOptions() {
       if (this.isPageOver || this.fingerList.length >= this.allFingerList.length) {
         return;

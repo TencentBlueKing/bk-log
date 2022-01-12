@@ -203,7 +203,10 @@ export default {
         };
       });
     },
-    // 离开当前页
+    /**
+     * @desc: 离开当前页面无点击nav开关
+     * @param {*} item
+     */
     handleNavClick(item) {
       if (item.id === this.currentChoice) return;
 
@@ -222,7 +225,6 @@ export default {
         },
       });
     },
-    // 打开设置页面
     openPage() {
       if (this.isOpenPage) {
         this.currentChoice = this.selectChoice;
@@ -230,7 +232,10 @@ export default {
         this.isOpenPage = false;
       }
     },
-    // 离开当前页并点击nav开关
+    /**
+     * @desc: 离开当前页并点击nav开关
+     * @param { Object } item
+     */
     stopChangeSwitch(item) {
       if (item.isDisable) return;
 
@@ -263,7 +268,6 @@ export default {
         item.isEditable = false;
       }
     },
-    // 关闭字段提取请求
     async requestCloseClean() {
       const { extra: { collector_config_id } } = this.cleanConfig;
       const res = await this.$http.request('/logClustering/closeClean', {
@@ -276,22 +280,20 @@ export default {
       });
       return res.result;
     },
-
     requestCloseCluster() {
       return true;
     },
-
     closeSetting() {
       this.$emit('closeSetting');
     },
-
     closePage() {
       this.isOpenPage = true;
       this.currentChoice = '';
       this.showComponent = '';
     },
-
-    // 若nav的switch为关闭状态离开当前页面时判断是否发送保存请求，没有则关闭可编辑状态
+    /**
+     * @desc: 若nav的switch为关闭状态离开当前页面时判断是否发送保存请求，没有则关闭可编辑状态
+     */
     jumpCloseSwitch() {
       if (!this.isClusteringActive && this.currentChoice === 'clustering') {
         this.currentList[1].isEditable = false;
@@ -302,16 +304,13 @@ export default {
         this.currentList[0].isEditable = false;
       }
     },
-
     debugRequestChange(val) {
       this.isDebugRequest = val;
     },
-
     updateLogFields() {
       this.isSubmit = true;
       this.$emit('updateLogFields');
     },
-    // 更多详情
     handleClickDetail() {
       const { extra: { collector_config_id: collectorID, collector_scenario_id: scenarioID } } = this.cleanConfig;
       if (!collectorID) return;
@@ -321,7 +320,6 @@ export default {
         : `/#/manage/log-collection/collection-item/manage/${collectorID}?projectId=${projectId}`;
       window.open(jumpUrl, '_blank');
     },
-
     resetPage() {
       this.isShowPage = false;
       this.$nextTick(() => {

@@ -231,7 +231,10 @@ export default {
     hiddenEditIcon() {
       this.currentHover = '';
     },
-    // 添加或删除监听分页事件
+    /**
+     * @desc: 添加或删除监听分页事件
+     * @param { String } state 新增或删除
+     */
     scrollEvent(state = 'add') {
       const scrollEl = document.querySelector('.result-scroll-container');
       if (!scrollEl) return;

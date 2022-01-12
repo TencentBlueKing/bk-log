@@ -301,7 +301,6 @@ export default {
     this.$emit('debugRequestChange', false);
   },
   methods: {
-    // 还原
     reductionRule() {
       const ruleArr = this.base64ToRuleArr(this.tableStr);
       if (ruleArr.length > 0) {
@@ -309,7 +308,6 @@ export default {
         this.showTableLoading();
       }
     },
-    // 编辑规则
     clusterEdit(index) {
       const [key, val] = Object.entries(this.rulesList[index])[0];
       Object.assign(this.addRulesData, { regular: val, placeholder: key });
@@ -317,7 +315,6 @@ export default {
       this.isEditRules = true;
       this.isShowAddRule = true;
     },
-    // 删除规则
     clusterRemove(index) {
       this.$bkInfo({
         title: this.$t('retrieveSetting.ruleDeleteTips'),
@@ -327,7 +324,9 @@ export default {
         },
       });
     },
-    // 添加规则dialog
+    /**
+     * @desc: 添加规则dialog
+     */
     handleRuleSubmit() {
       if (this.isRuleCorrect) {
         this.showTableLoading();
@@ -362,7 +361,9 @@ export default {
         }, 1000);
       }
     },
-    // 关闭规则弹窗重置参数
+    /**
+     * @desc: 关闭添加规则弹窗重置参数
+     */
     cancelAddRuleContent() {
       this.isRuleCorrect = false;
       this.isEditRules = false;
@@ -370,7 +371,6 @@ export default {
       Object.assign(this.addRulesData, { regular: '', placeholder: '' });
       this.$refs.addRulesRef.clearError();
     },
-    // base64转聚类规则数组
     base64ToRuleArr(str) {
       try {
         const ruleList = JSON.parse(this.decode(str));
@@ -388,7 +388,6 @@ export default {
         return [];
       }
     },
-    // 聚类规则数组转base64
     ruleArrToBase64(arr = []) {
       arr.length === 0 && (arr = this.rulesList);
       try {
@@ -405,7 +404,6 @@ export default {
         return '';
       }
     },
-    // 调试
     debugging() {
       this.debugRequest = true;
       this.effectOriginal = '';
@@ -435,7 +433,9 @@ export default {
           this.debugRequest = false;
         });
     },
-    // 调试返回值占位符和正则都匹配则高亮
+    /**
+     * @desc: 调试返回值占位符和正则都匹配则高亮
+     */
     highlightPredefined(tokenRegex = {}) {
       Object.entries(tokenRegex).forEach((regexItem) => {
         this.rulesList.forEach((listItem) => {
@@ -449,7 +449,7 @@ export default {
       });
     },
     /**
-     * @description: 检测规则和占位符是否重复
+     * @desc: 检测规则和占位符是否重复
      * @param { Object } newRules 检测对象
      * @returns { Boolean }
      */
@@ -469,20 +469,17 @@ export default {
       URL.revokeObjectURL(tempUrl);
       return uuid.substr(uuid.lastIndexOf('/') + 1);
     },
-    // 编辑规则时需重新显示检测按钮
     resetDetection() {
       this.isDetection = false;
       this.isClickSubmit = false;
       this.isRuleCorrect = false;
     },
-    // loading动画
     showTableLoading() {
       this.tableLoading = true;
       setTimeout(() => {
         this.tableLoading = false;
       }, 500);
     },
-    // base64中文支持
     encode(str) {
       return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
         (match, p1) => String.fromCharCode(`0x${p1}`)));
