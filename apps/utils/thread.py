@@ -19,6 +19,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from concurrent.futures import ThreadPoolExecutor
 
+from rest_framework.test import APIRequestFactory
+from rest_framework.request import Request
+from rest_framework.parsers import MultiPartParser, FormParser
+
 from opentelemetry.context import attach, get_current
 
 from apps.utils.function import ignored
@@ -75,3 +79,14 @@ class MultiExecuteFunc(object):
         with ThreadPoolExecutor() as executor:
             executor.map(executor_wrap, self.task_list)
         return self.results
+
+
+def generate_request():
+    """
+    获取一个简单request
+    """
+    factory = APIRequestFactory()
+    request = factory.get("/")
+    r = Request(request)
+    r.parsers = (FormParser(), MultiPartParser())
+    return r
