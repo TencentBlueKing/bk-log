@@ -30,7 +30,7 @@
       <!-- IP -->
       <span style="margin-right: 10px;">IP: {{params.ip || params.serverIp}}</span>
       <!-- 日志路径 -->
-      <span>{{ $t('retrieve.logPath') + ': ' + params.path || params.logfile }}</span>
+      <span>{{ $t('retrieve.logPath') + ': ' + (params.path || params.logfile) }}</span>
     </div>
     <div class="dialog-bars">
       <log-filter :is-screen-full="isScreenFull" @handle-filter="handleFilter" />
