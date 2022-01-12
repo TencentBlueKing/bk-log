@@ -151,6 +151,7 @@ export default {
       globalLoading: false, // 日志聚类大loading
       tableLoading: false, // 详情loading
       isShowCustomize: true, // 是否显示自定义
+      indexId: -1,
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -235,6 +236,19 @@ export default {
         }
       },
     },
+    originTableList: {
+      deep: true,
+      handler(newList) {
+        if (newList.length) {
+          // 过滤条件变化及当前活跃为数据指纹时才发送数据指纹请求
+          if (this.indexId === this.$route.params.indexId && this.active === 'dataFingerprint') {
+            this.requestFinger();
+          } else {
+            this.indexId = this.$route.params.indexId;
+          }
+        }
+      },
+    },
     '$route.params.indexId'() {
       // 切换索引集并且当前显示为数据指纹时发送请求
       this.alreadyClickNav = [];
@@ -311,7 +325,7 @@ export default {
     // 跳转
     handleLeaveCurrent() {
       if (!this.clusterSwitch) {
-        this.$emit('showSettingLog');
+        this.$emit('showSettingLog'); // 日志聚类开关未开时打开设置窗口
         return;
       }
       if (this.configID && this.configID > 0) {
@@ -333,7 +347,7 @@ export default {
         return;
       }
       this.fingerOperateData.isShowCustomize = true;
-      const isRepeat =  this.fingerOperateData.comparedList.some(el => el.id === Number(matchVal[1]));
+      const isRepeat = this.fingerOperateData.comparedList.some(el => el.id === Number(matchVal[1]));
       if (isRepeat) {
         this.requestData.year_on_year_hour = Number(matchVal[1]);
         return;
@@ -365,7 +379,7 @@ export default {
           this.tableLoading = false;
         });
     },
-
+    // 数据指纹分页操作
     paginationOptions() {
       if (this.isPageOver || this.fingerList.length >= this.allFingerList.length) {
         return;
@@ -376,7 +390,7 @@ export default {
         const { fingerListPageSize: size, fingerListPage: page } = this;
         this.fingerList = this.fingerList.concat(this.allFingerList.slice((page - 1) * size, size * page));
         this.isPageOver = false;
-      }, 1500);
+      }, 1000);
     },
   },
 };
