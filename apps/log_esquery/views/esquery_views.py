@@ -62,7 +62,7 @@ class EsQueryViewSet(APIViewSet):
             return []
 
         # 暂时只对外开放查询接口
-        if self.action not in ["search"]:
+        if self.action not in ["search", "dsl"]:
             raise EsqueryAccessDenyException()
 
         data = self.request.data
@@ -74,7 +74,7 @@ class EsQueryViewSet(APIViewSet):
 
         # 其它场景必须传index_set_id
         index_set_id = data.get("index_set_id")
-        if not index_set_id:
+        if self.action != "dsl" and not index_set_id:
             raise EsqueryIndexSetIdNotExistsException()
 
         return [IAMPermission([self.ActionEnum.SEARCH_LOG], [self.ResourceEnum.INDICES.create_instance(index_set_id)])]

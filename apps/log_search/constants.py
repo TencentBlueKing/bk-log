@@ -133,6 +133,8 @@ BKDATA_INDEX_RE = r"^{}_\d+$"
 
 MAX_EXPORT_REQUEST_RETRY = 3
 
+ISO_8601_TIME_FORMAT_NAME = "rfc3339"
+
 FILTER_KEY_LIST = ["gettext", "_", "LANGUAGES"]
 
 
@@ -809,6 +811,11 @@ class FieldDateFormatEnum(ChoicesEnum):
                 "name": "DD/MMM/YYYY:HH:mm:ss ZZ",
                 "description": "02/Jan/2006:15:04:05 -07:00",
             },
+            {
+                "id": ISO_8601_TIME_FORMAT_NAME,
+                "name": ISO_8601_TIME_FORMAT_NAME,
+                "description": "2006-01-02T15:04:05Z07:00",
+            },
             {"id": "date_hour_minute_second", "name": "YYYY-MM-DDTHH:mm:ss", "description": "2006-01-02T15:04:05"},
             {
                 "id": "date_hour_minute_second_millis",
@@ -976,6 +983,7 @@ RT_RESERVED_WORD_EXAC = [
     "path",
     "gseIndex",
     "iterationIndex",
+    "__ext",
     "log",
     "dtEventTimeStamp",
     "datetime",
