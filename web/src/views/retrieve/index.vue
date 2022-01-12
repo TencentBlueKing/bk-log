@@ -1095,6 +1095,7 @@ export default {
           'time_range',
           'pickerTimeRange',
         ];
+
         for (const field of shouldCoverParamFields) {
           if (this.isInitPage) {
             const param = this.$route.query[field]; // 指定查询参数
