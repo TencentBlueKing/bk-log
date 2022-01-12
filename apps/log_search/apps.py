@@ -98,7 +98,7 @@ class ApiConfig(AppConfig):
 
                 result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_BKDATA})
                 is_deploy_bkdata = bool(result and result[0])
-            except Exception as e:  # noqa
+            except Exception as e:  # pylint: disable=broad-except
                 # 忽略这个API请求的错误, 避免错误导致整个APP启动失败
                 # 错误情况下，记录下日志，同时认为对应的APP未部署
                 logger.exception(e)

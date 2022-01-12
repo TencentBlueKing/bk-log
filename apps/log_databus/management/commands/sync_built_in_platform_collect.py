@@ -75,7 +75,7 @@ class Command(BaseCommand):
                 # 3. 创建存储相关结果表 & 创建索引集
                 self.create_etl_handle_and_index_set(collect_config)
 
-            except Exception as e:  # noqa
+            except Exception as e:  # pylint: disable=broad-except
                 print(f"create build in collect error({e}), ")
 
     @classmethod
