@@ -23,7 +23,7 @@
 <template>
   <bk-date-picker
     :class="['king-date-picker', isDaily && 'daily']"
-    type="datetimerange"
+    :type="pickerType"
     :format="isDaily ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm:ss'"
     :placement="isDaily ? 'bottom-end' : 'bottom-start'"
     :clearable="false"
@@ -59,6 +59,10 @@ export default {
     datePickerValue: {
       type: Array,
       required: true,
+    },
+    pickerType: {
+      type: String,
+      default: 'datetimerange',
     },
   },
   data() {

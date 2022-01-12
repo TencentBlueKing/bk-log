@@ -33,6 +33,8 @@ from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import LogIndexSet
 from apps.models import model_to_dict
 from apps.utils.function import map_if
+from apps.utils.local import activate_request
+from apps.utils.thread import generate_request
 
 
 class ClusteringConfigHandler(object):
@@ -173,6 +175,9 @@ class ClusteringConfigHandler(object):
         # need drop built in field
         collector_detail["fields"] = map_if(collector_detail["fields"], if_func=lambda field: not field["is_built_in"])
         from apps.log_databus.handlers.etl import EtlHandler
+
+        # 设置request线程变量
+        activate_request(generate_request())
 
         EtlHandler(self.data.collector_config_id).update_or_create(
             collector_detail["etl_config"],

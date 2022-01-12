@@ -329,6 +329,7 @@ import AuthPage from '@/components/common/auth-page';
 import SettingModal from './setting-modal/index.vue';
 import BizMenuSelect from '@/components/biz-menu';
 import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/common/util';
+import { handleTransformToTimestamp } from '../../components/time-range/utils';
 import indexSetSearchMixin from '@/mixins/indexSet-search-mixin';
 import axios from 'axios';
 
@@ -380,14 +381,14 @@ export default {
       indexId: '', // 当前选择的索引ID
       indexSetItem: {}, // 当前索引集元素
       indexSetList: [], // 索引集列表,
-      datePickerValue: [startTime, endTime], // 日期选择器
+      datePickerValue: ['now-15m', 'now'], // 日期选择器
       retrievedKeyword: '*', // 记录上一次检索的关键字，避免输入框失焦时重复检索
       retrieveParams: { // 检索参数
         bk_biz_id: this.$store.state.bkBizId,
         keyword: '*', // 搜索关键字
         // 自定义时间范围，10m 表示最近 10 分钟，10h 表示最近 10 小时，10d 表示最近 10 天
         // 当 time_range === 'customized' 时，检索时间范围为 start_time ~ end_time
-        time_range: '15m',
+        time_range: 'customized',
         start_time: startTime, // 时间范围，格式 YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z]
         end_time: endTime, // 时间范围
         // ip 快选，modules 和 ips 只能修改其一，另一个传默认值
@@ -467,6 +468,7 @@ export default {
       isAsIframe: false,
       localIframeQuery: {},
       isFirstLoad: true,
+      pickerTimeRange: [],
     };
   },
   computed: {
@@ -829,9 +831,17 @@ export default {
     // 检索参数：日期改变
     handleDateChange(val) {
       this.datePickerValue = val;
+      this.pickerTimeRange = val.every(item => item.includes('now')) ? val : [];
+      this.formatTimeRange();
+    },
+    /**
+     * @desc 时间选择组件返回时间戳格式转换
+     */
+    formatTimeRange() {
+      const tempList = handleTransformToTimestamp(this.datePickerValue);
       Object.assign(this.retrieveParams, {
-        start_time: val[0],
-        end_time: val[1],
+        start_time: formatDate(tempList[0] * 1000),
+        end_time: formatDate(tempList[1] * 1000),
       });
     },
     updateSearchParam(addition, host) {
@@ -1076,16 +1086,28 @@ export default {
         //     }
         // }
 
-        const shouldCoverParamFields = ['keyword', 'host_scopes', 'addition', 'start_time', 'end_time', 'time_range'];
+        const shouldCoverParamFields = [
+          'keyword',
+          'host_scopes',
+          'addition',
+          'start_time',
+          'end_time',
+          'time_range',
+          'pickerTimeRange',
+        ];
         for (const field of shouldCoverParamFields) {
           if (this.isInitPage) {
             const param = this.$route.query[field]; // 指定查询参数
             if (param) {
-              queryParams[field] = ['keyword', 'start_time', 'end_time', 'time_range'].includes(field)
-                ? decodeURIComponent(param)
-                : decodeURIComponent(param) ? JSON.parse(decodeURIComponent(param)) : param;
-
-              queryParamsStr[field] = param;
+              if (field === 'pickerTimeRange') {
+                queryParams.pickerTimeRange = decodeURIComponent(param).split(',');
+                queryParamsStr.pickerTimeRange = param;
+              } else {
+                queryParams[field] = ['keyword', 'start_time', 'end_time', 'time_range'].includes(field)
+                  ? decodeURIComponent(param)
+                  : decodeURIComponent(param) ? JSON.parse(decodeURIComponent(param)) : param;
+                queryParamsStr[field] = param;
+              }
             }
             if (queryParams.start_time && queryParams.end_time) {
               this.datePickerValue = [queryParams.start_time, queryParams.end_time];
@@ -1112,6 +1134,10 @@ export default {
                   queryParamsStr[field] = (JSON.stringify(this.retrieveParams[field]));
                 }
                 break;
+              case 'pickerTimeRange':
+                if (this[field].length) {
+                  queryParamsStr[field] = encodeURIComponent(this[field]);
+                }
               default:
                 break;
             }
@@ -1147,6 +1173,11 @@ export default {
 
         if (this.isInitPage) {
           Object.assign(this.retrieveParams, queryParams); // 回填查询参数中的检索条件
+          if (queryParams.pickerTimeRange?.length) {
+            this.pickerTimeRange = queryParams.pickerTimeRange;
+            this.datePickerValue = queryParams.pickerTimeRange;
+            this.formatTimeRange();
+          }
           this.isInitPage = false;
         }
 
@@ -1318,19 +1349,6 @@ export default {
       const begin = currentPage === 1 ? 0 : (currentPage - 1) * pageSize;
 
       try {
-        // const res = await this.$http.request('retrieve/getLogTableList', {
-        //   params: { index_set_id: this.indexId },
-        //   data: {
-        //     ...this.retrieveParams,
-        //     time_range: 'customized',
-        //     begin,
-        //     size: pageSize,
-        //     interval: this.interval,
-        //     // 每次轮循的起始时间
-        //     start_time: formatDate(this.pollingStartTime),
-        //     end_time: formatDate(this.pollingEndTime),
-        //   },
-        // }, { responseType: 'blob' });
         const baseUrl = process.env.NODE_ENV === 'development' ? 'api/v1' : window.AJAX_URL_PREFIX;
         const res = await axios({
           method: 'post',

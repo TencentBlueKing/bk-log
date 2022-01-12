@@ -25,11 +25,7 @@
     <div class="chart-header">
       <div class="title">{{ $t('分钟数据量') }}</div>
       <div class="date-picker">
-        <select-date
-          :time-range.sync="retrieveParams.time_range"
-          :date-picker-value="datePickerValue"
-          @update:datePickerValue="handleDateChange"
-          @datePickerChange="fetchChartData" />
+        <time-range :value="datePickerValue" @change="handleDateChange" />
         <div class="refresh-button" @click="fetchChartData">
           <span class="bk-icon icon-refresh"></span>
           <span>{{ $t('刷新') }}</span>
@@ -49,13 +45,14 @@
 <script>
 import * as echarts from 'echarts';
 import moment from 'moment';
-import SelectDate from './select-date';
+import TimeRange from '@/components/time-range/time-range';
 import { formatDate } from '@/common/util';
 import { mapGetters } from 'vuex';
+import { handleTransformToTimestamp } from '@/components/time-range/utils';
 
 export default {
   components: {
-    SelectDate,
+    TimeRange,
   },
   data() {
     const currentTime = Date.now();
@@ -64,7 +61,7 @@ export default {
     return {
       isEmpty: false,
       basicLoading: true,
-      datePickerValue: [startTime, endTime], // 日期选择器
+      datePickerValue: ['now-15m', 'now'], // 日期选择器
       retrieveParams: {
         bk_biz_id: this.$store.state.bkBizId,
         keyword: '*',
@@ -199,11 +196,22 @@ export default {
     // 检索参数：日期改变
     handleDateChange(val) {
       this.datePickerValue = val;
+      const tempList = handleTransformToTimestamp(this.datePickerValue);
       Object.assign(this.retrieveParams, {
-        start_time: val[0],
-        end_time: val[1],
+        start_time: formatDate(tempList[0] * 1000),
+        end_time: formatDate(tempList[1] * 1000),
       });
+      this.fetchChartData();
     },
   },
 };
 </script>
+
+<style lang="scss" scoped>
+  .chart-container {
+    .time-range-wrap {
+      font-weight: normal;
+      font-size: 12px;
+    }
+  }
+</style>

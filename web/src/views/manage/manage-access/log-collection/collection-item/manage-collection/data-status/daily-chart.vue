@@ -27,6 +27,7 @@
       <div class="date-picker">
         <select-date
           is-daily
+          picker-type="daterange"
           :time-range.sync="retrieveParams.time_range"
           :date-picker-value="datePickerValue"
           @update:datePickerValue="handleDateChange"
