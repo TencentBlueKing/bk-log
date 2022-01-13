@@ -90,6 +90,10 @@ META_DATA_ENCODING = "utf-8"
 # ADMIN请求用户名
 ADMIN_REQUEST_USER = "admin"
 
+# 内置dataid范围，划分出的1w个dataid，用来给蓝鲸平台作为内置的采集dataid
+BUILT_IN_MIN_DATAID = 1110001
+BUILT_IN_MAX_DATAID = 1119999
+
 # 创建bkdata_data_id 配置
 BKDATA_DATA_SCENARIO = "custom"
 BKDATA_DATA_SCENARIO_ID = 47

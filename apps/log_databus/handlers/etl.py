@@ -38,7 +38,7 @@ from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario, ProjectInfo
-from apps.log_search.constants import FieldDateFormatEnum, CollectorScenarioEnum
+from apps.log_search.constants import FieldDateFormatEnum, CollectorScenarioEnum, ISO_8601_TIME_FORMAT_NAME
 from apps.models import model_to_dict
 from apps.utils.db import array_group
 from apps.log_databus.handlers.storage import StorageHandler
@@ -88,6 +88,7 @@ class EtlHandler(object):
         view_roles=None,
         etl_params=None,
         fields=None,
+        username="",
     ):
         # 停止状态下不能编辑
         if self.data and not self.data.is_active:
@@ -128,11 +129,11 @@ class EtlHandler(object):
             view_roles = []
 
         # 2. 创建索引集
-        index_set = self._update_or_create_index_set(etl_config, storage_cluster_id, view_roles)
+        index_set = self._update_or_create_index_set(etl_config, storage_cluster_id, view_roles, username=username)
 
         # add user_operation_record
         operation_record = {
-            "username": get_request_username(),
+            "username": username or get_request_username(),
             "biz_id": self.data.bk_biz_id,
             "record_type": UserOperationTypeEnum.ETL,
             "record_object_id": self.data.collector_config_id,
@@ -175,20 +176,26 @@ class EtlHandler(object):
         """
         fmts = array_group(FieldDateFormatEnum.get_choices_list_dict(), "id", True)
         fmt = fmts.get(time_format)
-        if len(data) != len(fmt["description"]) and len(data) != len(fmt["name"]):
-            raise EtlParseTimeFormatException()
-
-        if time_format in ["epoch_second", "epoch_millis", "epoch_micros"]:
-            epoch_second = str(data)[0:10]
-        else:
+        if fmt["name"] == ISO_8601_TIME_FORMAT_NAME:
             try:
-                epoch_second = arrow.get(data, fmt["name"], tzinfo=f"GMT{time_zone}").timestamp
+                epoch_second = arrow.get(data, tzinfo=f"GMT{time_zone}").timestamp
             except Exception:  # pylint: disable=broad-except
                 raise EtlParseTimeFormatException()
+        else:
+            if len(data) != len(fmt["description"]) and len(data) != len(fmt["name"]):
+                raise EtlParseTimeFormatException()
+
+            if time_format in ["epoch_second", "epoch_millis", "epoch_micros"]:
+                epoch_second = str(data)[0:10]
+            else:
+                try:
+                    epoch_second = arrow.get(data, fmt["name"], tzinfo=f"GMT{time_zone}").timestamp
+                except Exception:  # pylint: disable=broad-except
+                    raise EtlParseTimeFormatException()
         return {"epoch_millis": f"{epoch_second}000"}
 
     @transaction.atomic()
-    def _update_or_create_index_set(self, etl_config, storage_cluster_id, view_roles=None):
+    def _update_or_create_index_set(self, etl_config, storage_cluster_id, view_roles=None, username=""):
         """
         创建索引集
         """
@@ -208,7 +215,11 @@ class EtlHandler(object):
             if not view_roles:
                 view_roles = index_set_handler.data.view_roles
             index_set = index_set_handler.update(
-                index_set_name=index_set_name, view_roles=view_roles, category_id=self.data.category_id, indexes=indexes
+                index_set_name=index_set_name,
+                view_roles=view_roles,
+                category_id=self.data.category_id,
+                indexes=indexes,
+                username=username,
             )
         else:
             project_id = ProjectInfo.objects.filter(bk_biz_id=self.data.bk_biz_id).first().project_id
@@ -223,6 +234,7 @@ class EtlHandler(object):
                 indexes=indexes,
                 category_id=self.data.category_id,
                 collector_config_id=self.collector_config_id,
+                username=username,
             )
             self.data.index_set_id = index_set.index_set_id
         self.data.etl_config = etl_config
