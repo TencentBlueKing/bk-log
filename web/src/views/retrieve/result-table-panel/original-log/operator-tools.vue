@@ -144,6 +144,6 @@ export default {
 
   .fix-content {
     width: auto;
-    background-color: #f0f1f5;
+    background-color: #f5f7fa;
   }
 </style>
