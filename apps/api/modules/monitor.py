@@ -56,6 +56,22 @@ class _MonitorApi(object):
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
+        self.search_alarm_strategy_v2 = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "search_alarm_strategy_v2/",
+            module=self.MODULE,
+            description=u"查询告警策略V2",
+            default_return_value=None,
+            before_request=add_esb_info_before_request,
+        )
+        self.delete_alarm_strategy_v2 = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "delete_alarm_strategy_v2/",
+            module=self.MODULE,
+            description=u"删除告警策略V2",
+            default_return_value=None,
+            before_request=add_esb_info_before_request,
+        )
 
 
 MonitorApi = _MonitorApi()

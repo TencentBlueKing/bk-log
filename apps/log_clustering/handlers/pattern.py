@@ -32,16 +32,19 @@ from apps.log_clustering.constants import (
     NEW_CLASS_SENSITIVITY_FIELD,
     DOUBLE_PERCENTAGE,
     NEW_CLASS_FIELD_PREFIX,
+    MAX_STRATEGY_PAGE_SIZE,
+    DEFAULT_PAGE,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
-from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig
+from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig, SignatureStrategySettings
 from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
 from apps.utils.bkdata import BkData
-from apps.utils.db import array_hash
+from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import map_if
 from apps.utils.local import get_local_param
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import generate_time_range_shift, generate_time_range
+from apps.api import MonitorApi
 
 
 class PatternHandler:
@@ -108,6 +111,7 @@ class PatternHandler:
                     "year_on_year_count": year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
                     "group": pattern.get("group", ""),
+                    "monitor": SignatureStrategySettings.get_monitor_config(signature=signature),
                 }
             )
         if self._show_new_pattern:
@@ -215,3 +219,26 @@ class PatternHandler:
             .query()
         )
         return {new_class["signature"] for new_class in new_classes}
+
+    @classmethod
+    def get_labels(cls, strategy_ids: list[int], bk_biz_id: int):
+        inst_ids_array = array_chunk(sorted(strategy_ids), MAX_STRATEGY_PAGE_SIZE)
+        result = []
+        for inst_ids in inst_ids_array:
+            strategies = MonitorApi.search_alarm_strategy_v2(
+                params={
+                    "page": DEFAULT_PAGE,
+                    "page_size": MAX_STRATEGY_PAGE_SIZE,
+                    "conditions": [{"key": "strategy_id", "value": inst_ids}],
+                    "bk_biz_id": bk_biz_id,
+                }
+            )
+            result.extend(strategies["strategy_config_list"])
+        return cls._generate_strategy_result(result)
+
+    @classmethod
+    def _generate_strategy_result(cls, strategy_result):
+        result = []
+        for strategy_obj in strategy_result:
+            result.append({"strategy_id": strategy_obj["id"], "labels": strategy_obj["labels"]})
+        return result

@@ -17,7 +17,16 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from django.utils.translation import ugettext_lazy as _  # noqa
+
 from apps.api import MonitorApi
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
+from apps.log_clustering.constants import DEFAULT_NOTIFY_RECEIVER_TYPE, DEFAULT_NOTICE_WAY
+from apps.log_clustering.exceptions import ClusteringClosedException
+from apps.log_clustering.models import NoticeGroup
+from apps.log_databus.constants import ADMIN_REQUEST_USER
+from apps.log_databus.models import CollectorConfig
 
 
 class MonitorUtils(object):
@@ -34,5 +43,36 @@ class MonitorUtils(object):
         )
 
     @classmethod
-    def generate_notice_receiver(cls, receivers: list, notice_tye: str):
+    def generate_notice_receiver(cls, receivers, notice_tye: str):
         return [{"type": notice_tye, "id": receiver} for receiver in receivers]
+
+    @classmethod
+    def get_or_create_notice_group(cls, collector_config_id, log_index_set_id, bk_biz_id):
+        notice_group = NoticeGroup.objects.filter(index_set_id=log_index_set_id).first()
+        if notice_group:
+            return notice_group.notice_group_id
+        collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
+        maintainers = cls._generate_maintainer(collector_config=collector_config)
+        notice_receiver = cls.generate_notice_receiver(receivers=maintainers, notice_tye=DEFAULT_NOTIFY_RECEIVER_TYPE)
+        group = cls.save_notice_group(
+            bk_biz_id=bk_biz_id,
+            name=_("{}运维人员").format(collector_config.collector_config_name),
+            message="",
+            notice_receiver=notice_receiver,
+            notice_way=DEFAULT_NOTICE_WAY,
+        )
+        NoticeGroup.objects.create(index_set_id=log_index_set_id, notice_group_id=group["id"])
+        return group["id"]
+
+    @classmethod
+    def _generate_maintainer(cls, collector_config: CollectorConfig):
+        maintainers = {
+            collector_config.updated_by,
+            collector_config.created_by,
+        }
+        maintainers.discard(ADMIN_REQUEST_USER)
+        if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
+            raise ClusteringClosedException()
+        conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
+        maintainers.add(conf.update("maintainers"))
+        return maintainers
