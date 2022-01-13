@@ -76,10 +76,11 @@
             :request-data="requestData"
             :config-data="configData"
             :finger-list="fingerList"
-            :is-page-over="isPageOver"
+            :is-page-over="fingerPageItem.isPageOver"
             :all-finger-list="allFingerList"
             :loader-width-list="smallLoaderWidthList"
-            @paginationOptions="paginationOptions" />
+            @paginationOptions="paginationOptions"
+            @updateRequest="updateRequest" />
         </div>
       </div>
 
@@ -179,17 +180,19 @@ export default {
         group_by: [],
         size: 10000,
       },
-      fingerList: [], // 数据指纹List
-      isPageOver: false,
-      fingerListPage: 1,
-      fingerListPageSize: 50,
-      allFingerList: [], // 所有数据指纹List
+      fingerPageItem: {
+        isPageOver: false,
+        page: 1,
+        pageSize: 10,
+      },
       loadingWidthList: { // loading表头宽度列表
         global: [''],
         ignore: [60, 90, 90, ''],
         notCompared: [150, 90, 90, ''],
         compared: [150, 90, 90, 100, 100, ''],
       },
+      fingerList: [],
+      allFingerList: [], // 所有数据指纹List
     };
   },
   computed: {
@@ -219,9 +222,20 @@ export default {
       deep: true,
       immediate: true,
       handler(val) {
-        this.clusterSwitch = val.is_active;
-        this.fingerOperateData.signatureSwitch = val.extra.signature_switch;
-        this.configID = this.cleanConfig.extra?.collector_config_id;
+        this.clusterSwitch = val.is_active; // 日志聚类开关
+        this.fingerOperateData.signatureSwitch = val.extra.signature_switch; // 数据指纹开关
+        this.configID = this.cleanConfig.extra?.collector_config_id; // config-id
+        this.requestData.pattern_level === '' && this.initTable(); // 初始化数据指纹操作参数
+        this.alreadyClickNav = [];
+        // 当前nav为数据指纹且数据指纹开启则不再重复请求
+        if (this.active === 'dataFingerprint' && val.extra.signature_switch) {
+          this.alreadyClickNav.push('dataFingerprint');
+          this.requestFinger();
+        }
+        this.globalLoading = true;
+        setTimeout(() => {
+          this.globalLoading = false;
+        }, 750);
       },
     },
     totalFields: {
@@ -233,23 +247,9 @@ export default {
             this.exhibitAll = false;
             return;
           }
-          this.requestData.pattern_level === '' && this.initTable();
           this.exhibitAll = newList.some(el => el.field_type === 'text');
         }
       },
-    },
-    '$route.params.indexId'() {
-      // 切换索引集并且当前显示为数据指纹时发送请求
-      this.alreadyClickNav = [];
-      if (this.active === 'dataFingerprint' && this.configData.extra.signature_switch) {
-        this.alreadyClickNav.push('dataFingerprint');
-        this.requestData.pattern_level === '' && this.initTable();
-        this.requestFinger();
-      }
-      this.globalLoading = true;
-      setTimeout(() => {
-        this.globalLoading = false;
-      }, 750);
     },
     requestData: {
       deep: true,
@@ -277,7 +277,7 @@ export default {
       } = this.globalsData;
       let patternLevel;
       if (clusterLevel && clusterLevel.length > 0) {
-        if (clusterLevel.length % 2 === 1) { // 判断奇偶数来选择pattern中间值
+        if (clusterLevel.length % 2 === 1) {
           patternLevel = (clusterLevel.length + 1) / 2;
         } else {
           patternLevel = clusterLevel.length  / 2;
@@ -295,23 +295,27 @@ export default {
     },
     // 数据指纹操作
     handleFingerOperate(operateType, val) {
-      if (operateType === 'compared') { // 同比
-        this.requestData.year_on_year_hour = val;
-      }
-      if (operateType === 'partterSize') {
-        this.requestData.pattern_level = val;
-      }
-      if (operateType === 'isShowNear') {
-        this.requestData.show_new_pattern = val;
-      }
-      if (operateType === 'enterCustomize') { // 自定义输入
-        this.handleEnterCompared(val);
-      }
-      if (operateType === 'customize') { // 是否展示自定义
-        this.fingerOperateData.isShowCustomize = val;
-      }
-      if (operateType === 'group') { // 分组
-        this.requestData.group_by = val;
+      switch (operateType) {
+        case 'compared':
+          this.requestData.year_on_year_hour = val;
+          break;
+        case 'partterSize':
+          this.requestData.pattern_level = val;
+          break;
+        case 'isShowNear':
+          this.requestData.show_new_pattern = val;
+          break;
+        case 'enterCustomize':
+          this.handleEnterCompared(val);
+          break;
+        case 'customize':
+          this.fingerOperateData.isShowCustomize = val;
+          break;
+        case 'group':
+          this.requestData.group_by = val;
+          break;
+        default:
+          break;
       }
     },
     // 跳转
@@ -362,27 +366,52 @@ export default {
           ...this.requestData,
         },
       })
-        .then((res) => {
-          this.fingerListPage = 1;
+        .then(async (res) => {
+          this.fingerPageItem.page = 1;
           this.allFingerList = res.data;
-          this.fingerList = res.data.slice(0, this.fingerListPageSize);
+          const sliceFingerList = res.data.slice(0, this.fingerPageItem.pageSize);
+          this.fingerList = await this.getFingerLabelsList(sliceFingerList);
         })
         .finally(() => {
           this.tableLoading = false;
         });
     },
     // 数据指纹分页
-    paginationOptions() {
-      if (this.isPageOver || this.fingerList.length >= this.allFingerList.length) {
+    async paginationOptions() {
+      const { isPageOver, page, pageSize } = this.fingerPageItem;
+      if (isPageOver || this.fingerList.length >= this.allFingerList.length) {
         return;
       }
-      this.isPageOver = true;
-      this.fingerListPage += 1;
-      setTimeout(() => {
-        const { fingerListPageSize: size, fingerListPage: page } = this;
-        this.fingerList.push(...this.allFingerList.slice(size * (page - 1), size * page));
-        this.isPageOver = false;
-      }, 1000);
+      this.fingerPageItem.isPageOver = true;
+      this.fingerPageItem.page += 1;
+      const sliceFingerList = this.allFingerList.slice(pageSize * (page - 1), pageSize * page);
+      const labelsList = await this.getFingerLabelsList(sliceFingerList);
+      this.fingerList.push(...labelsList);
+      this.fingerPageItem.isPageOver = false;
+    },
+    async getFingerLabelsList(fingerList = []) {
+      const strategyIDs = fingerList.map(el => el.monitor.strategy_id);
+      const strategyObj = {};
+      try {
+        const res = await this.$http.request('/logClustering/clusterSearch', {
+          data: {
+            strategy_ids: strategyIDs,
+          },
+        });
+        const preObj = res.data.reduce((pre, cur) => {
+          pre[cur.strategy_id] = cur.labels;
+          return pre;
+        }, {});
+        Object.assign(strategyObj, preObj);
+        return fingerList.map((el) => {
+          el.labels = strategyObj[el.monitor.strategy_id];
+        });
+      } catch (err) {
+        return [];
+      }
+    },
+    updateRequest() {
+      this.requestFinger();
     },
   },
 };

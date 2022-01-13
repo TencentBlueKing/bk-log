@@ -309,6 +309,7 @@ export default {
         this.showTableLoading();
       }
     },
+
     // 编辑规则
     clusterEdit(index) {
       const [key, val] = Object.entries(this.rulesList[index])[0];
@@ -317,6 +318,7 @@ export default {
       this.isEditRules = true;
       this.isShowAddRule = true;
     },
+
     // 删除规则
     clusterRemove(index) {
       this.$bkInfo({
@@ -327,6 +329,7 @@ export default {
         },
       });
     },
+
     // 聚类规则点击提交时检测
     handleRuleSubmit() {
       if (this.isRuleCorrect) {
@@ -358,6 +361,7 @@ export default {
         }, 1000);
       }
     },
+
     // 关闭规则弹窗重置参数
     cancelAddRuleContent() {
       this.isRuleCorrect = false;
@@ -366,6 +370,7 @@ export default {
       Object.assign(this.addRulesData, { regular: '', placeholder: '' });
       this.$refs.addRulesRef.clearError();
     },
+
     // base64转聚类规则数组
     base64ToRuleArr(str) {
       try {
@@ -384,6 +389,7 @@ export default {
         return [];
       }
     },
+
     // 聚类规则数组转base64
     ruleArrToBase64(arr = []) {
       arr.length === 0 && (arr = this.rulesList);
@@ -401,6 +407,7 @@ export default {
         return '';
       }
     },
+
     // 调试
     debugging() {
       this.debugRequest = true;
@@ -431,6 +438,7 @@ export default {
           this.debugRequest = false;
         });
     },
+
     highlightPredefined(tokenRegex = {}) {
       Object.entries(tokenRegex).forEach((regexItem) => {
         this.rulesList.forEach((listItem) => {
@@ -443,6 +451,7 @@ export default {
         });
       });
     },
+
     isRulesRepeat(newRules = {}) {
       return this.rulesList.some((listItem) => {
         const [regexKey, regexVal] = Object.entries(newRules)[0];
@@ -450,20 +459,24 @@ export default {
         return regexKey === listKey && regexVal === listVal;
       });
     },
+
     handleMenuClick(option, item) {
       copyMessage(Object.values(item)[0]);
     },
+
     generationUUID() {
       const tempUrl = URL.createObjectURL(new Blob());
       const uuid = tempUrl.toString();
       URL.revokeObjectURL(tempUrl);
       return uuid.substr(uuid.lastIndexOf('/') + 1);
     },
+
     resetDetection() {
       this.isDetection = false;
       this.isClickSubmit = false;
       this.isRuleCorrect = false;
     },
+
     // loading动画
     showTableLoading() {
       this.tableLoading = true;
@@ -471,6 +484,7 @@ export default {
         this.tableLoading = false;
       }, 500);
     },
+
     // base64中文支持
     encode(str) {
       return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,

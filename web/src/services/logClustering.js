@@ -53,6 +53,11 @@ const closeClean = {
   method: 'post',
 };
 
+const updateStrategies = {
+  url: '/clustering_monitor/:index_set_id/update_strategies/',
+  method: 'post',
+};
+
 export {
   getConfig,
   getDefaultConfig,
@@ -60,4 +65,5 @@ export {
   preview,
   clusterSearch,
   closeClean,
+  updateStrategies,
 };

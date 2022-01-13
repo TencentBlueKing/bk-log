@@ -26,7 +26,7 @@
       <!-- eslint-disable-next-line vue/no-v-html -->
       <p v-html="getTipsMessage" class="operate-message"></p>
       <span
-        v-if="selectionList.length"
+        v-if="selectList.length"
         class="operate-click"
         @click="handleBatchUseAlarm">{{$t('批量使用告警')}}</span>
     </div>
@@ -40,7 +40,13 @@
       :reserve-selection="true"
       @select="handleSelectAlarm"
       @select-all="handleSelectAllAlarm">
-      <bk-table-column type="selection" width="40"></bk-table-column>
+
+      <bk-table-column
+        v-if="!requestData.group_by.length"
+        type="selection"
+        width="40">
+      </bk-table-column>
+
       <bk-table-column :label="$t('数据指纹')" width="150">
         <template slot-scope="{ row }">
           <div class="fl-ac signature-box">
@@ -139,19 +145,26 @@
         </template>
       </bk-table-column>
 
-      <bk-table-column
+      <!-- <bk-table-column
+        v-if="!requestData.group_by.length"
         :label="$t('告警')"
         width="103"
         class-name="symbol-column">
         <template slot-scope="{ row }">
           <div class="fl-ac" style="margin-top: 2px;">
-            <bk-switcher v-model="row.is_new_class" theme="primary"></bk-switcher>
-            <bk-popover v-if="row.is_new_class" content="可去告警策略编辑">
+            <div @click.stop="handleClickAlarmSwitch(row)">
+              <bk-switcher
+                v-model="row.monitor.is_active"
+                theme="primary"
+                :pre-check="() => false">
+              </bk-switcher>
+            </div>
+            <bk-popover v-if="row.monitor.is_active" content="可去告警策略编辑">
               <span class="bk-icon icon-edit2 link-color"></span>
             </bk-popover>
           </div>
         </template>
-      </bk-table-column>
+      </bk-table-column> -->
 
       <bk-table-column
         :label="$t('标签')"
@@ -228,7 +241,7 @@ export default {
       cacheExpandStr: [], // 展示pattern按钮数组
       selectSize: 0, // 当前选择几条数据
       isSelectAll: false, // 当前是否点击全选
-      selectionList: [], // 当前选中的数组
+      selectList: [], // 当前选中的数组
     };
   },
   inject: ['addFilterCondition'],
@@ -237,7 +250,7 @@ export default {
       return document.querySelector('.result-scroll-container');
     },
     getTipsMessage() {
-      return this.selectionList.length
+      return this.selectList.length
         ? `${this.$t('fingerChoose')}
         <span>${this.selectSize}</span>
         ${this.$t('fingerSizeData')} ,
@@ -305,6 +318,7 @@ export default {
       return value;
     },
 
+    // 挂卸载分页滚动条事件
     scrollEvent(state = 'add') {
       const scrollEl = document.querySelector('.result-scroll-container');
       if (!scrollEl) return;
@@ -315,6 +329,7 @@ export default {
         scrollEl.removeEventListener('scroll', this.handleScroll, { passive: true });
       }
     },
+
     // 单选
     handleSelectAlarm(selection) {
       if (this.isSelectAll) { // 全选与非全选时显示选择的数量
@@ -322,8 +337,9 @@ export default {
       } else {
         this.selectSize = selection.length;
       }
-      this.selectionList = selection;
+      this.selectList = selection;
     },
+
     // 全选
     handleSelectAllAlarm(selection) {
       if (selection.length === 0) {
@@ -333,18 +349,74 @@ export default {
       }
       this.isSelectAll = true;
       this.selectSize = this.allFingerList.length;
-      this.selectionList = selection;
+      this.selectList = selection;
     },
-    // 批量告警
+
+    // 批量开启告警
     handleBatchUseAlarm() {
-      const signatureSetList = new Set();
-      this.selectionList.forEach(el => signatureSetList.add(el.signature));
-      if (this.isSelectAll) { // 全选时获取未显示的数据指纹
-        this.allFingerList.slice(this.fingerList.length).forEach(el => signatureSetList.add(el.signature));
-      }
-      const signatureList = [...signatureSetList];
-      console.log(signatureList);
+      this.$bkInfo({
+        title: this.$t('是否批量开启告警'),
+        confirmFn: () => {
+          const alarmList = this.selectList;
+          if (this.isSelectAll) { // 全选时获取未显示的数据指纹
+            alarmList.concat(this.allFingerList.slice(this.fingerList.length));
+          }
+          this.requestAlarm(alarmList, true);
+        },
+      });
     },
+
+    // 单独开启告警
+    handleClickAlarmSwitch(row) {
+      const msg = row.monitor.is_active ?  this.$t('是否关闭该告警') : this.$t('是否开启该告警');
+      this.$bkInfo({
+        title: msg,
+        confirmFn: () => {
+          this.requestAlarm([row], !row.monitor.is_active);
+        },
+      });
+    },
+
+    /**
+     * @description: 数据指纹告警请求
+     * @param { Array } alarmList // 告警数组
+     * @param { Boolean } state // 启用或关闭
+     * @returns {*}
+     */
+    requestAlarm(alarmList = [], state) {
+      const action = state ? 'create' : 'delete';
+      const actions = alarmList.reduce((pre, cur) => {
+        const { signature, pattern, monitor: { strategy_id } } = cur;
+        pre.push({
+          signature,
+          pattern,
+          strategy_id,
+          action,
+        });
+        return pre;
+      }, []);
+      this.$http.request('/logClustering/updateStrategies', {
+        params: {
+          index_set_id: this.$route.params.indexId,
+        },
+        data: {
+          pattern_level: this.requestData.pattern_level,
+          actions,
+        },
+      })
+        .then((res) => {
+          const theme = res.result ? 'primary' : 'error';
+          const message = res.result ? this.$t('操作成功') : this.$t('部分操作成功');
+          this.$bkMessage({
+            theme,
+            message,
+          });
+          this.$emit('updateRequest');
+        })
+        .finally(() => {
+        });
+    },
+
     // table下拉分页
     handleScroll() {
       if (this.throttle) {
@@ -440,8 +512,8 @@ export default {
     }
     .pattern-content {
       position: relative;
-      padding: 10px 15px 10px 0;
-      margin-top: 4px;
+      padding: 10px 15px 0 0;
+      margin: 4px 0 10px 0;
       overflow: hidden;
       display: inline-block;
       &.is-limit {
