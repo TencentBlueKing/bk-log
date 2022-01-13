@@ -154,6 +154,7 @@ export default {
       globalLoading: false, // 日志聚类大loading
       tableLoading: false, // 详情loading
       isShowCustomize: true, // 是否显示自定义
+      indexId: -1,
       clusterNavList: [{
         id: 'ignoreNumbers',
         name: this.$t('忽略数字'),
@@ -222,20 +223,22 @@ export default {
       deep: true,
       immediate: true,
       handler(val) {
-        this.clusterSwitch = val.is_active; // 日志聚类开关
-        this.fingerOperateData.signatureSwitch = val.extra.signature_switch; // 数据指纹开关
-        this.configID = this.cleanConfig.extra?.collector_config_id; // config-id
-        this.requestData.pattern_level === '' && this.initTable(); // 初始化数据指纹操作参数
+        // 日志聚类开关赋值
+        this.clusterSwitch = val.is_active;
+        // 数据指纹开关赋值
+        this.fingerOperateData.signatureSwitch = val.extra.signature_switch;
+        this.configID = this.cleanConfig.extra?.collector_config_id;
         this.alreadyClickNav = [];
-        // 当前nav为数据指纹且数据指纹开启则不再重复请求
+        // 当前nav为数据指纹且数据指纹开启点击指纹nav则不再重复请求
         if (this.active === 'dataFingerprint' && val.extra.signature_switch) {
           this.alreadyClickNav.push('dataFingerprint');
           this.requestFinger();
         }
+        // 判断是否可以字段提取的全局loading
         this.globalLoading = true;
         setTimeout(() => {
           this.globalLoading = false;
-        }, 750);
+        }, 700);
       },
     },
     totalFields: {
@@ -248,6 +251,21 @@ export default {
             return;
           }
           this.exhibitAll = newList.some(el => el.field_type === 'text');
+        }
+      },
+    },
+    originTableList: {
+      deep: true,
+      handler(newList) {
+        if (newList.length) {
+          // 过滤条件变化及当前活跃为数据指纹并且数据指纹打开时才发送请求
+          if (this.indexId === this.$route.params.indexId
+          && this.active === 'dataFingerprint'
+          && this.fingerOperateData.signatureSwitch) {
+            this.requestFinger();
+          } else {
+            this.indexId = this.$route.params.indexId;
+          }
         }
       },
     },
@@ -264,12 +282,13 @@ export default {
       const isClick = this.alreadyClickNav.some(el => el === id);
       if (!isClick) {
         this.alreadyClickNav.push(id);
-        if (this.alreadyClickNav.includes('dataFingerprint') && this.configData.extra.signature_switch) {
+        if (this.alreadyClickNav.includes('dataFingerprint')
+         && this.configData.extra.signature_switch
+         && id === 'dataFingerprint') {
           this.requestFinger();
         }
       }
     },
-    // 初始化数据指纹配置
     initTable() {
       const {
         log_clustering_level_year_on_year: yearOnYearList,
@@ -293,7 +312,11 @@ export default {
         pattern_level: clusterLevel[patternLevel - 1],
       });
     },
-    // 数据指纹操作
+    /**
+     * @desc: 数据指纹操作
+     * @param { String } operateType 操作类型
+     * @param { Any } val 具体值
+     */
     handleFingerOperate(operateType, val) {
       switch (operateType) {
         case 'compared':
@@ -318,7 +341,6 @@ export default {
           break;
       }
     },
-    // 跳转
     handleLeaveCurrent() {
       if (!this.clusterSwitch) {
         this.$emit('showSettingLog');
@@ -332,7 +354,10 @@ export default {
         });
       }
     },
-    // 同比自定义输入
+    /**
+     * @desc: 同比自定义输入
+     * @param { String } val
+     */
     handleEnterCompared(val) {
       const matchVal = val.match(/^(\d+)h$/);
       if (!matchVal) {
@@ -354,7 +379,9 @@ export default {
       });
       this.requestData.year_on_year_hour = Number(matchVal[1]);
     },
-    // 请求数据指纹
+    /**
+     * @desc: 数据指纹请求
+     */
     requestFinger() {
       this.tableLoading = true;
       this.$http.request('/logClustering/clusterSearch', {
@@ -376,7 +403,9 @@ export default {
           this.tableLoading = false;
         });
     },
-    // 数据指纹分页
+    /**
+     * @desc: 数据指纹分页操作
+     */
     async paginationOptions() {
       const { isPageOver, page, pageSize } = this.fingerPageItem;
       if (isPageOver || this.fingerList.length >= this.allFingerList.length) {

@@ -327,6 +327,10 @@ export default {
     this.initList();
   },
   methods: {
+    /**
+     * @desc: 数据指纹请求
+     * @param { Boolean } isDefault 是否请求默认值
+     */
     async requestCluster(isDefault = false) {
       this.globalLoading = true;
       let res;
@@ -359,8 +363,9 @@ export default {
       this.fingerSwitch = extra.signature_switch;
       this.formData.clustering_fields = extra.clustering_fields;
 
+      // 日志聚类且数据指纹同时打开则不请求默认值
       if (isActive && configID) {
-        this.requestCluster();
+        this.requestCluster(false);
       }
 
       this.clusterField = this.totalFields.filter(item => item.is_analyzed)
@@ -416,6 +421,7 @@ export default {
         if (this.isFilterRuleError || this.isFieldsError) return;
         this.isHandle = true;
         const { index_set_id, bk_biz_id } = this.indexSetItem;
+        // 获取子组件传来的聚类规则数组base64字符串
         this.formData.predefined_varibles = this.$refs.ruleTableRef.ruleArrToBase64();
         this.$http.request('/logClustering/changeConfig', {
           params: {
@@ -441,6 +447,7 @@ export default {
     handleDeleteSelect(index) {
       this.formData.filter_rules.splice(index, 1);
       this.isCloseSelect = true;
+      // 删除非最后一条过滤规则时隐藏下拉框
       this.$nextTick(() => {
         this.isCloseSelect = false;
       });
