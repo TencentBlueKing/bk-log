@@ -143,7 +143,7 @@
                 <div class="cut-line" v-if="showFilterCutline"></div>
                 <template v-for="(item, index) in retrieveParams.addition">
                   <filter-condition-item
-                    :key="item.field + 1"
+                    :key="item.field + index + item.value"
                     :edit-index="index"
                     :is-add="false"
                     :edit-data="item"
@@ -152,7 +152,7 @@
                     :field-alias-map="fieldAliasMap"
                     :statistical-fields-data="statisticalFieldsData"
                     @addFilterCondition="addFilterCondition"
-                    @removeFilterCondition="removeFilterCondition" />
+                    @removeFilterCondition="() => removeFilterCondition(index)" />
                 </template>
               </div>
               <!-- 查询收藏清空按钮 -->
@@ -874,8 +874,7 @@ export default {
         this.retrieveLog();
       }
     },
-    removeFilterCondition(field) {
-      const index = this.retrieveParams.addition.findIndex(item => item.field === field);
+    removeFilterCondition(index) {
       this.retrieveParams.addition.splice(index, 1);
       this.retrieveLog();
     },
