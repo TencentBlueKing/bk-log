@@ -43,7 +43,7 @@ class BkLogRegexpEtlStorage(EtlStorage):
             raise ValidationError(_("正则表达式不能为空"))
 
         # 先从python获取
-        regexp_match = re.compile(etl_params["separator_regexp"]).match(data)
+        regexp_match = re.compile(etl_params["separator_regexp"], re.S).match(data)
         if not regexp_match:
             raise ValidationError(_("无法匹配正则表达式"))
         groupdict = regexp_match.groupdict()
@@ -73,7 +73,7 @@ class BkLogRegexpEtlStorage(EtlStorage):
         """
         # 判断字段是否都在正则表达式中定义
         for field in fields:
-            if f'<{field["field_name"]}>' not in etl_params["separator_regexp"]:
+            if field.get("is_config_by_user") and f'<{field["field_name"]}>' not in etl_params["separator_regexp"]:
                 raise ValidationError(_("字段未在正则表达式中定义：") + field["field_name"])
 
         # option

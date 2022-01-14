@@ -90,6 +90,10 @@ META_DATA_ENCODING = "utf-8"
 # ADMIN请求用户名
 ADMIN_REQUEST_USER = "admin"
 
+# 内置dataid范围，划分出的1w个dataid，用来给蓝鲸平台作为内置的采集dataid
+BUILT_IN_MIN_DATAID = 1110001
+BUILT_IN_MAX_DATAID = 1119999
+
 # 创建bkdata_data_id 配置
 BKDATA_DATA_SCENARIO = "custom"
 BKDATA_DATA_SCENARIO_ID = 47
@@ -163,12 +167,14 @@ class TargetNodeTypeEnum(ChoicesEnum):
     INSTANCE = "INSTANCE"
     SERVICE_TEMPLATE = "SERVICE_TEMPLATE"
     SET_TEMPLATE = "SET_TEMPLATE"
+    DYNAMIC_GROUP = "DYNAMIC_GROUP"
 
     _choices_labels = (
         (TOPO, _("TOPO")),
         (INSTANCE, _("主机实例")),
         (SERVICE_TEMPLATE, _("服务模板")),
         (SET_TEMPLATE, _("集群模板")),
+        (DYNAMIC_GROUP, _("动态分组")),
     )
 
 

@@ -32,18 +32,22 @@ MIN_COUNT = 0
 DOUBLE_PERCENTAGE = 100
 EX_MAX_SIZE = 10000
 IS_NEW_PATTERN_PREFIX = "is_new_class"
-AGGS_FIELD_PREFIX = "dist"
+AGGS_FIELD_PREFIX = "__dist"
+NEW_CLASS_FIELD_PREFIX = "dist"
 
 NEW_CLASS_SENSITIVITY_FIELD = "sensitivity"
 NEW_CLASS_QUERY_FIELDS = ["signature"]
 NEW_CLASS_QUERY_TIME_RANGE = "1d"
-
 
 CLUSTERING_CONFIG_EXCLUDE = ["sample_set_id", "model_id"]
 CLUSTERING_CONFIG_DEFAULT = "default_clustering_config"
 
 DEFAULT_CLUSTERING_FIELDS = "log"
 DEFAULT_IS_CASE_SENSITIVE = 0
+
+SAMPLE_SET_SLEEP_TIMER = 15 * 60
+
+DEFULT_FILTER_NOT_CLUSTERING_OPERATOR = "is not"
 
 
 class YearOnYearEnum(ChoicesEnum):
@@ -57,12 +61,12 @@ class YearOnYearEnum(ChoicesEnum):
 
     _choices_labels = (
         (NOT, _("不比对")),
-        (ONE_HOUR, _("一个小时前")),
-        (TWO_HOUR, _("两个小时前")),
-        (THREE_HOUR, _("三个小时前")),
-        (SIX_HOUR, _("六个小时前")),
-        (HALF_DAY, _("半天前")),
-        (ONE_DAY, _("一天前")),
+        (ONE_HOUR, _("1小时前")),
+        (TWO_HOUR, _("2小时前")),
+        (THREE_HOUR, _("3小时前")),
+        (SIX_HOUR, _("6小时前")),
+        (HALF_DAY, _("12小时前")),
+        (ONE_DAY, _("24小时前")),
     )
 
 
@@ -76,9 +80,9 @@ class PatternEnum(ChoicesEnum):
     @classmethod
     def get_choices(cls) -> tuple:
         return (
-            cls.LEVEL_01.value,
-            cls.LEVEL_03.value,
-            cls.LEVEL_05.value,
-            cls.LEVEL_07.value,
             cls.LEVEL_09.value,
+            cls.LEVEL_07.value,
+            cls.LEVEL_05.value,
+            cls.LEVEL_03.value,
+            cls.LEVEL_01.value,
         )

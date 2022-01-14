@@ -23,8 +23,10 @@ from pipeline.core.flow.activity import Service
 from pipeline.component_framework.component import Component
 from pipeline.builder import ServiceActivity, Var
 
+from apps.api import BkDataAuthApi
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
+from apps.log_clustering.models import ClusteringConfig
 from apps.utils.pipline import BaseService
 
 
@@ -108,7 +110,7 @@ class SyncBkdataEtlService(BaseService):
 class SyncBkdataEtlComponent(Component):
     name = "SyncBkdataEtl"
     code = "sync_bkdata_etl"
-    bound_service = CreateBkdataAccessService
+    bound_service = SyncBkdataEtlService
 
 
 class SyncBkdataEtl(object):
@@ -128,6 +130,33 @@ class AddProjectDataService(BaseService):
         ]
 
     def _execute(self, data, parent_data):
+        bk_biz_id = data.get_one_of_inputs("bk_biz_id")
         collector_config_id = data.get_one_of_inputs("collector_config_id")
-        DataAccessHandler().sync_bkdata_etl(collector_config_id=collector_config_id)
+        project_id = data.get_one_of_inputs("project_id")
+        clustering_config = ClusteringConfig.objects.filter(collector_config_id=collector_config_id).first()
+        BkDataAuthApi.add_project_data(
+            params={
+                "bk_biz_id": bk_biz_id,
+                "object_id": clustering_config.bkdata_etl_result_table_id,
+                "project_id": project_id,
+            }
+        )
         return True
+
+
+class AddProjectDataComponent(Component):
+    name = "AddProjectData"
+    code = "add_project_data"
+    bound_service = AddProjectDataService
+
+
+class AddProjectData(object):
+    def __init__(self, collector_config_id: int):
+        self.add_project_data = ServiceActivity(
+            component_code="add_project_data", name=f"add_project_data:{collector_config_id}"
+        )
+        self.add_project_data.component.inputs.bk_biz_id = Var(type=Var.SPLICE, value="${bk_biz_id}")
+        self.add_project_data.component.inputs.collector_config_id = Var(
+            type=Var.SPLICE, value="${collector_config_id}"
+        )
+        self.add_project_data.component.inputs.project_id = Var(type=Var.SPLICE, value="${project_id}")

@@ -178,7 +178,7 @@ export default {
     }
 
     /deep/ .bk-form-textarea {
-      @include scroller($backgroundColor: #C4C6CC, $width:6px);
+      @include scroller($backgroundColor: #C4C6CC, $width:4px);
     }
   }
 </style>

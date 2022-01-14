@@ -27,6 +27,7 @@ from config.env import load_domains
 API_ROOTS = [
     # 蓝鲸平台模块域名
     "BK_PAAS_APIGATEWAY_ROOT",
+    "BK_PAAS_V3_APIGATEWAY_ROOT",
     "CC_APIGATEWAY_ROOT_V2",
     "GSE_APIGATEWAY_ROOT_V2",
     "MONITOR_APIGATEWAY_ROOT",

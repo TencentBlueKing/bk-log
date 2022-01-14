@@ -50,6 +50,7 @@ class PatternViewSet(APIViewSet):
         @apiParam {Json} addition 搜索条件
         @apiParam {Int} year_on_year_hour 同比周期 单位小时 n小时前
         @apiParam {Int} size 条数
+        @apiParam {Array} group_by 分组字段
         @apiParamExample {Json} 请求参数
         {
             "year_on_year_hour": 1,
@@ -58,6 +59,7 @@ class PatternViewSet(APIViewSet):
             "end_time": "2019-06-12 11:11:11",
             "time_range": "customized"
             "keyword": "error",
+            "group_by": ["serverIp", "cloudId", ....],
             "host_scopes": {
             "modules": [
                 {
@@ -92,12 +94,19 @@ class PatternViewSet(APIViewSet):
                     "signature": "xxxxxxxxxxxx",
                     "count": 123,
                     "year_on_year": -10,
-                    "percentage": 12, # 12%
+                    "percentage": 12,
                     "is_new_class": true,
                     "year_on_year_count": 12,
-                    "year_on_year_percentage": 10 # 10%
-                    "labels: ["xxxx", "xxxx"],
-                    "remark": "xxxx"
+                    "year_on_year_percentage": 10,
+                    "labels": ["xxxx", "xxxx"],
+                    "remark": "xxxx",
+                    "group": "xxx",
+                    "monitor":
+                    {
+                    "is_active": true,
+                    "strategy_id": 1,
+                    "strategy_labels": ["xxxx", "xxxx"]
+                    }
                 }
             ],
             "result": true

@@ -26,10 +26,12 @@ from apps.bk_log_admin.constants import (
     OPERATION_PIE_CHOICE_MAP,
     MINUTE_GROUP_BY,
 )
+from apps.bk_log_admin.exceptions import InitDataSourceErrorException
 from apps.log_search.models import UserIndexSetSearchHistory
 from apps.utils.drf import DataPageNumberPagination
 from apps.models import model_to_dict
 from apps.utils.local import get_local_param
+from bk_monitor.exceptions import GetTsDataException
 from bk_monitor.handler.monitor import BKMonitor
 from config.domains import MONITOR_APIGATEWAY_ROOT
 
@@ -55,13 +57,15 @@ class IndexSetHandler(object):
         start_time, end_time = self._get_start_end_time(
             user_search_history_operation_time=user_search_history_operation_time
         )
-
-        daily_data = self._client.custom_metric().query(
-            data_name=BK_DATA_CUSTOM_REPORT_USER_INDEX_SET_HISTORY,
-            fields=["count(search_history_duration) as _count"],
-            where_conditions=[f"index_set_id = '{index_set_id}'", f"time >= {start_time}", f"time < {end_time}"],
-            group_by_conditions=[MINUTE_GROUP_BY],
-        )
+        try:
+            daily_data = self._client.custom_metric().query(
+                data_name=BK_DATA_CUSTOM_REPORT_USER_INDEX_SET_HISTORY,
+                fields=["count(search_history_duration) as _count"],
+                where_conditions=[f"index_set_id = '{index_set_id}'", f"time >= {start_time}", f"time < {end_time}"],
+                group_by_conditions=[MINUTE_GROUP_BY],
+            )
+        except GetTsDataException:
+            raise InitDataSourceErrorException()
 
         daily_label_list = []
         daily_data_list = []
@@ -81,12 +85,15 @@ class IndexSetHandler(object):
         start_time, end_time = self._get_start_end_time(
             user_search_history_operation_time=user_search_history_operation_time
         )
-        created_by_data = self._client.custom_metric().query(
-            data_name=BK_DATA_CUSTOM_REPORT_USER_INDEX_SET_HISTORY,
-            fields=["count(search_history_duration) as _count"],
-            where_conditions=[f"index_set_id = '{index_set_id}'", f"time >= {start_time}", f"time < {end_time}"],
-            group_by_conditions=["created_by"],
-        )
+        try:
+            created_by_data = self._client.custom_metric().query(
+                data_name=BK_DATA_CUSTOM_REPORT_USER_INDEX_SET_HISTORY,
+                fields=["count(search_history_duration) as _count"],
+                where_conditions=[f"index_set_id = '{index_set_id}'", f"time >= {start_time}", f"time < {end_time}"],
+                group_by_conditions=["created_by"],
+            )
+        except GetTsDataException:
+            raise InitDataSourceErrorException()
 
         created_by_label_list = []
         created_by_data_list = []
@@ -109,22 +116,25 @@ class IndexSetHandler(object):
 
         pie_label_list = []
         pie_data_list = []
-        for pie_choice in OPERATION_PIE_CHOICE_MAP:
-            pie_label_list.append(pie_choice["label"])
-            where_conditions = [f"index_set_id = '{index_set_id}'", f"time >= {start_time}", f"time < {end_time}"]
-            if "min" in pie_choice:
-                where_conditions.append(f"search_history_duration >= {pie_choice['min']}")
-            if "max" in pie_choice:
-                where_conditions.append(f"search_history_duration < {pie_choice['max']}")
-            pie_data = self._client.custom_metric().query(
-                data_name=BK_DATA_CUSTOM_REPORT_USER_INDEX_SET_HISTORY,
-                fields=["count(search_history_duration) as _count"],
-                where_conditions=where_conditions,
-            )
-            if pie_data["list"]:
-                pie_data_list.append(pie_data["list"][0]["_count"])
-                continue
-            pie_data_list.append(0)
+        try:
+            for pie_choice in OPERATION_PIE_CHOICE_MAP:
+                pie_label_list.append(pie_choice["label"])
+                where_conditions = [f"index_set_id = '{index_set_id}'", f"time >= {start_time}", f"time < {end_time}"]
+                if "min" in pie_choice:
+                    where_conditions.append(f"search_history_duration >= {pie_choice['min']}")
+                if "max" in pie_choice:
+                    where_conditions.append(f"search_history_duration < {pie_choice['max']}")
+                pie_data = self._client.custom_metric().query(
+                    data_name=BK_DATA_CUSTOM_REPORT_USER_INDEX_SET_HISTORY,
+                    fields=["count(search_history_duration) as _count"],
+                    where_conditions=where_conditions,
+                )
+                if pie_data["list"]:
+                    pie_data_list.append(pie_data["list"][0]["_count"])
+                    continue
+                pie_data_list.append(0)
+        except GetTsDataException:
+            raise InitDataSourceErrorException()
 
         return {"labels": pie_label_list, "values": pie_data_list}
 

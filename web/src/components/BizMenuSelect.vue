@@ -279,7 +279,7 @@ export default {
         }
         &::-webkit-scrollbar {
           width: 4px;
-          height: 4px;
+          background: #363f56;
         }
         &::-webkit-scrollbar-thumb {
           border-radius: 20px;
@@ -375,6 +375,9 @@ export default {
           &.is-disable {
             color: #c4c6cc;
           }
+        }
+        &::-webkit-scrollbar {
+          background: #fff;
         }
         &::-webkit-scrollbar-thumb {
           background: #dcdee5;

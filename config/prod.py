@@ -86,8 +86,28 @@ BK_IAM_RESOURCE_API_HOST = os.getenv("BKAPP_IAM_RESOURCE_API_HOST", "{}{}".forma
 BK_IAM_APP_CODE = os.getenv("BK_IAM_V3_APP_CODE", "bk_iam")
 BK_IAM_SAAS_HOST = os.environ.get("BK_IAM_V3_SAAS_HOST", BK_PAAS_HOST + "/o/{}/".format(BK_IAM_APP_CODE))
 
+
 # 加载各个版本特殊配置
 env_settings = load_settings()
 for _setting in env_settings.keys():
     if _setting == _setting.upper():
         locals()[_setting] = env_settings.get(_setting)
+
+if os.getenv("DEPLOY_MODE") == "kubernetes":
+    # ===============================================================================
+    # 数据库设置, 正式环境数据库设置
+    # ===============================================================================
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.environ.get("DB_NAME"),
+            "USER": os.environ.get("DB_USERNAME"),
+            "PASSWORD": os.environ.get("DB_PASSWORD"),
+            "HOST": os.environ.get("DB_HOST"),
+            "PORT": os.environ.get("DB_PORT"),
+        },
+    }
+
+    BK_DOC_URL = os.getenv("BK_DOCS_SITE_URL")
+    MONITOR_URL = os.getenv("BK_MONITOR_URL")
+    BKDATA_URL = os.getenv("BK_DADA_URL")

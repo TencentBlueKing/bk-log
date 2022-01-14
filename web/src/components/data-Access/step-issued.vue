@@ -21,9 +21,10 @@
   -->
 
 <template>
-  <div class="step-issued-wrapper"
-       v-bkloading="{ isLoading: loading | (hasRunning && !tableList.length) }"
-       data-test-id="addNewCollectionItem_div_collectionDistribution">
+  <div
+    class="step-issued-wrapper"
+    v-bkloading="{ isLoading: loading | (hasRunning && !tableList.length) }"
+    data-test-id="addNewCollectionItem_div_collectionDistribution">
     <div class="step-issued-notice notice-primary" v-if="!curCollect.table_id">
       <i class="bk-icon icon-info-circle-shape notice-icon"></i>
       <span class="notice-text">{{ $t('dataManage.Within_stop') }}</span>
@@ -62,10 +63,7 @@
             :collapse-color="'#313238'"
             :title-bg-color="'#F0F1F5'"
             :collapse.sync="cluster.collapse"
-            :title="{
-              type: cluster.bk_obj_name,
-              number: cluster.success
-            }">
+            :title="getRightPanelTitle(cluster)">
             <div
               :class="`heder-title-sign sign-${cluster.label_name}`"
               v-if="cluster.is_label && isEdit"
@@ -77,60 +75,63 @@
             </div>
             <div class="header-info" slot="title">
               <div class="header-title fl">{{ cluster.node_path }}</div>
-              <!-- eslint-disable -->
-                <p class="fl" v-html="collaspseHeadInfo(cluster)"></p>
-                <!-- <span class="success">{{ cluster.success }}</span> 个成功
+              <!-- eslint-disable-next-line vue/no-v-html -->
+              <p class="fl" v-html="collaspseHeadInfo(cluster)"></p>
+              <!-- <span class="success">{{ cluster.success }}</span> 个成功
                 <span v-if="cluster.failed" class="failed">，{{ cluster.failed }}</span> 个失败 -->
-              </div>
-              <!-- eslint-enabled -->
-              <div class="cluster-table-wrapper" slot>
-                <bk-table
-                  v-bkloading="{ isLoading: loading }"
-                  class="cluster-table"
-                  :resizable="true"
-                  :empty-text="$t('btn.vacancy')"
-                  :data="cluster.child"
-                  :size="size"
-                  :pagination="pagination">
-                  <bk-table-column :label="$t('configDetails.goal')" prop="ip" width="180"></bk-table-column>
-
-                  <bk-table-column :label="$t('dataManage.es_host')" width="120">
-                      <template slot-scope="props">
-                          <span :class="['status', 'status-' + props.row.status]">
-                              <i
-                                class="bk-icon icon-refresh"
-                                style="display: inline-block; animation: button-icon-loading 1s linear infinite;"
-                                v-if="props.row.status !== 'success' && props.row.status !== 'failed'">
-                              </i>
-                              {{ props.row.status === 'success' ? $t('configDetails.success') : props.row.status === 'failed' ? $t('dataSource.failed') : $t('configDetails.Pending') }}
-                          </span>
-                      </template>
-                  </bk-table-column>
-                  <bk-table-column
-                    :class-name="'row-detail'"
-                    :label="$t('monitors.detail')">
-                    <template slot-scope="props" class="row-detail">
-                      <p>
-                        <span style="display: inline-block">{{ props.row.log }}</span>
-                        <a href="javascript: ;" class="more" @click.stop="viewDetail(props.row)">{{ $t('dataManage.more') }}</a>
-                      </p>
-                    </template>
-                  </bk-table-column>
-                  <bk-table-column width="80">
-                    <template slot-scope="props">
-                      <a 
-                        href="javascript: ;" class="retry"
-                        v-if="props.row.status === 'failed'"
-                        @click.stop="issuedRetry(props.row, cluster)">
-                        {{ $t('configDetails.retry') }}
+            </div>
+            <div class="cluster-table-wrapper" slot>
+              <bk-table
+                v-bkloading="{ isLoading: loading }"
+                class="cluster-table"
+                :resizable="true"
+                :empty-text="$t('btn.vacancy')"
+                :data="cluster.child"
+                :size="size"
+                :pagination="pagination">
+                <bk-table-column :label="$t('configDetails.goal')" prop="ip" width="180"></bk-table-column>
+                <bk-table-column :label="$t('dataManage.es_host')" width="120">
+                  <template slot-scope="props">
+                    <span :class="['status', 'status-' + props.row.status]">
+                      <i
+                        class="bk-icon icon-refresh"
+                        style="display: inline-block; animation: button-icon-loading 1s linear infinite;"
+                        v-if="props.row.status !== 'success' && props.row.status !== 'failed'">
+                      </i>
+                      {{ props.row.status === 'success' ?
+                        $t('configDetails.success') :
+                        props.row.status === 'failed' ?
+                          $t('dataSource.failed') : $t('configDetails.Pending') }}
+                    </span>
+                  </template>
+                </bk-table-column>
+                <bk-table-column
+                  :class-name="'row-detail'"
+                  :label="$t('monitors.detail')">
+                  <template slot-scope="props" class="row-detail">
+                    <p>
+                      <span style="display: inline-block">{{ props.row.log }}</span>
+                      <a href="javascript: ;" class="more" @click.stop="viewDetail(props.row)">
+                        {{ $t('dataManage.more') }}
                       </a>
-                    </template>
-                  </bk-table-column>
-                </bk-table>
-              </div>
-            </right-panel>
-          </template>
-        </section>
+                    </p>
+                  </template>
+                </bk-table-column>
+                <bk-table-column width="80">
+                  <template slot-scope="props">
+                    <a
+                      href="javascript: ;" class="retry"
+                      v-if="props.row.status === 'failed'"
+                      @click.stop="issuedRetry(props.row, cluster)">
+                      {{ $t('configDetails.retry') }}
+                    </a>
+                  </template>
+                </bk-table-column>
+              </bk-table>
+            </div>
+          </right-panel>
+        </template>
+      </section>
     </template>
     <template v-else>
       <div class="empty-view">
@@ -139,21 +140,31 @@
       </div>
     </template>
     <div class="step-issued-footer">
-      <bk-button v-if="isSwitch" theme="primary" :disabled="hasRunning" @click="nextHandler">{{ hasRunning ? $t('configDetails.Pending') : $t('dataManage.perform') }}</bk-button>
+      <bk-button
+        v-if="isSwitch"
+        theme="primary"
+        :disabled="hasRunning"
+        @click="nextHandler">
+        {{ hasRunning ? $t('configDetails.Pending') : $t('dataManage.perform') }}
+      </bk-button>
       <template v-else>
-        <bk-button 
-          :disabled="hasRunning" 
+        <bk-button
+          :disabled="hasRunning"
           @click="prevHandler"
           data-test-id="collectionDistribution_button_previous"
         >{{ $t('dataManage.last') }}</bk-button>
-        <bk-button 
-          theme="primary" 
-          :disabled="hasRunning" 
+        <bk-button
+          theme="primary"
+          :disabled="hasRunning"
           @click="nextHandler"
           data-test-id="collectionDistribution_button_nextStep"
         >{{ $t('dataManage.next') }}</bk-button>
       </template>
-      <bk-button @click="cancel" data-test-id="collectionDistribution_button_cancel">{{ $t('dataManage.Return_list') }}</bk-button>
+      <bk-button
+        @click="cancel"
+        data-test-id="collectionDistribution_button_cancel">
+        {{ $t('dataManage.Return_list') }}
+      </bk-button>
     </div>
     <bk-sideslider
       transfer
@@ -163,7 +174,12 @@
       :is-show.sync="detail.isShow"
       @animation-end="closeSlider">
       <div slot="header">{{ detail.title }}</div>
-      <div class="p20 detail-content" slot="content" v-bkloading="{ isLoading: detail.loading }" v-html="detail.content"></div>
+      <!-- eslint-disable-next-line vue/no-v-html -->
+      <div v-html="detail.content"
+           class="p20 detail-content"
+           slot="content"
+           v-bkloading="{ isLoading: detail.loading }"
+      ></div>
     </bk-sideslider>
   </div>
 </template>
@@ -270,6 +286,12 @@ export default {
     this.stopStatusPolling();
   },
   methods: {
+    getRightPanelTitle(cluster) {
+      return {
+        type: cluster.bk_obj_name,
+        number: cluster.success,
+      };
+    },
     tabHandler(tab, manual) {
       if (this.curTab === tab.type && !manual) {
         return false;
@@ -540,7 +562,6 @@ export default {
   @import '@/scss/conf';
 
   .step-issued-wrapper {
-    // @include scroller(#C4C6CC, 6px);
     position: relative;
     padding: 30px 60px;
     max-height: 100%;

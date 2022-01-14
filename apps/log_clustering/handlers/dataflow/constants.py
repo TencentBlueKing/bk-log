@@ -22,9 +22,13 @@ from apps.utils import ChoicesEnum
 DEFAULT_CLUSTERING_FIELD = "log"
 NOT_CLUSTERING_FILTER_RULE = " where ip is null"
 UUID_FIELDS = "uuid"
+OPERATOR_AND = "and"
 # 聚类不参与sql字段
 NOT_CONTAIN_SQL_FIELD_LIST = ["timestamp", "_startTime_", "_endTime_"]
 DIST_FIELDS = ["dist_01", "dist_03", "dist_05", "dist_07", "dist_09"]
+DEFAULT_SPARK_EXECUTOR_INSTANCES = 20
+DEFAULT_PSEUDO_SHUFFLE = 200
+DEFAULT_SPARK_LOCALITY_WAIT = "0s"
 
 
 class FlowMode(ChoicesEnum):

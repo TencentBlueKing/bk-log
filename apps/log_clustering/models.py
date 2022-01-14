@@ -35,6 +35,7 @@ class AiopsModel(SoftDeleteModel):
 
 class AiopsModelExperiment(SoftDeleteModel):
     model_id = models.CharField(_("模型ID"), db_index=True, max_length=128)
+    # experiment_id后续可能会变化，如需要进一步使用，需要手动维护
     experiment_id = models.IntegerField(_("实验id"), db_index=True)
     experiment_alias = models.CharField(_("实验名称"), db_index=True, max_length=128)
     status = models.CharField(_("实验状态"), null=True, blank=True, max_length=128)
@@ -71,10 +72,8 @@ class ClusteringConfig(SoftDeleteModel):
     clustering_fields = models.CharField(_("聚合字段"), max_length=128)
     filter_rules = JSONField(_("过滤规则"), null=True, blank=True)
     bk_biz_id = models.IntegerField(_("业务id"))
-    # todo 待确认
-    result_table_id = models.CharField(_("结果表id"), max_length=255, default="")
     pre_treat_flow = JSONField(_("预处理flow配置"), null=True, blank=True)
-    new_cls_pattern_rt = models.CharField(_("新类结果表id"), max_length=255, default="")
+    new_cls_pattern_rt = models.CharField(_("新类结果表id"), max_length=255, default="", null=True, blank=True)
     bkdata_data_id = models.IntegerField(_("计算平台接入dataid"), null=True, blank=True)
     bkdata_etl_result_table_id = models.CharField(_("计算平台清洗结果表"), max_length=255, null=True, blank=True)
     bkdata_etl_processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)

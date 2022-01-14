@@ -23,6 +23,9 @@ from blueapps.conf.log import get_logging_config_dict
 from blueapps.conf.default_settings import *  # noqa
 from django.utils.translation import ugettext_lazy as _
 
+# 使用k8s部署模式
+IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
+
 # 这里是默认的 INSTALLED_APPS，大部分情况下，不需要改动
 # 如果你已经了解每个默认 APP 的作用，确实需要去掉某些 APP，请去掉下面的注释，然后修改
 # INSTALLED_APPS = (
@@ -47,6 +50,7 @@ INSTALLED_APPS += (
     "django_prometheus",
     "rest_framework",
     "iam.contrib.iam_migration",
+    "django_dbconn_retry",
     "apps.iam",
     "apps.api",
     "apps.log_search",
@@ -126,7 +130,10 @@ MIDDLEWARE = (
 #
 STATIC_VERSION = "1.0"
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+if IS_K8S_DEPLOY_MODE:
+    STATIC_ROOT = "static"
+else:
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 # ==============================================================================
 # SENTRY相关配置
@@ -162,6 +169,7 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.project",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
+    "apps.log_search.tasks.no_data",
     "apps.log_databus.tasks.collector",
     "apps.log_databus.tasks.itsm",
     "apps.log_databus.tasks.bkdata",
@@ -189,11 +197,7 @@ if RUN_VER != "open":
         }
         LOGGING["formatters"]["verbose"] = logging_format
 
-BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
-
-if BKLOG_UDP_LOG:
-    LOG_UDP_SERVER_HOST = os.getenv("BKAPP_UDP_LOG_SERVER_HOST", "")
-    LOG_UDP_SERVER_PORT = int(os.getenv("BKAPP_UDP_LOG_SERVER_PORT", 0))
+if IS_K8S_DEPLOY_MODE:
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     LOGGING = {
         "version": 1,
@@ -208,12 +212,6 @@ if BKLOG_UDP_LOG:
             }
         },
         "handlers": {
-            "udp": {
-                "formatter": "json",
-                "class": "apps.utils.log.UdpHandler",
-                "host": LOG_UDP_SERVER_HOST,
-                "port": LOG_UDP_SERVER_PORT,
-            },
             "stdout": {
                 "class": "logging.StreamHandler",
                 "formatter": "json",
@@ -221,53 +219,53 @@ if BKLOG_UDP_LOG:
             },
         },
         "loggers": {
-            "django": {"handlers": ["udp"], "level": "INFO", "propagate": True},
+            "django": {"handlers": ["stdout"], "level": "INFO", "propagate": True},
             "django.server": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
             "django.request": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": "ERROR",
                 "propagate": True,
             },
             "django.db.backends": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
             # the root logger ,用于整个project的logger
-            "root": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            "root": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # 组件调用日志
             "component": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
-            "celery": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            "celery": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # other loggers...
             # blueapps
             "blueapps": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
             # 普通app日志
-            "app": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
 
 OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
 OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
-OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 1000))
+OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", -1))
 # ===============================================================================
 # 项目配置
 # ===============================================================================
 BK_PAAS_HOST = os.environ.get("BK_PAAS_HOST", "")
 # ESB API调用前辍
 BK_PAAS_INNER_HOST = os.environ.get("BK_PAAS_INNER_HOST", BK_PAAS_HOST)
-PAAS_API_HOST = BK_PAAS_INNER_HOST
+PAAS_API_HOST = os.environ.get("BK_COMPONENT_API_URL") or BK_PAAS_INNER_HOST
 BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
 BKDATA_URL = BK_PAAS_HOST
 MONITOR_URL = ""
@@ -436,6 +434,7 @@ FEATURE_TOGGLE = {
     "collect_itsm": os.environ.get("BKAPP_COLLECT_ITSM", "off"),
     # 自定义指标上报
     "monitor_report": os.environ.get("BKAPP_MONITOR_REPORT", "on"),
+    "bklog_es_config": "on",
 }
 
 SAAS_MONITOR = "bk_monitorv3"
@@ -519,7 +518,12 @@ MENUS = [
                         "scenes": "scenario_es",
                         "icon": "elasticsearch",
                     },
-                    {"id": "custom_collection", "name": _("自定义接入"), "feature": "off", "icon": ""},
+                    {
+                        "id": "custom_report",
+                        "name": _("自定义上报"),
+                        "feature": "on",
+                        "icon": "menu-custom"
+                    },
                 ],
             },
             {
@@ -739,6 +743,13 @@ ESQUERY_WHITE_LIST = [
     "data",
     "dataweb",
 ]
+
+# BK repo conf
+BKREPO_ENDPOINT_URL = os.getenv("BKAPP_BKREPO_ENDPOINT_URL")
+BKREPO_USERNAME = os.getenv("BKAPP_BKREPO_USERNAME")
+BKREPO_PASSWORD = os.getenv("BKAPP_BKREPO_PASSWORD")
+BKREPO_PROJECT = os.getenv("BKAPP_BKREPO_PROJECT")
+BKREPO_BUCKET = os.getenv("BKAPP_BKREPO_BUCKET")
 
 # ===============================================================================
 # Demo业务配置

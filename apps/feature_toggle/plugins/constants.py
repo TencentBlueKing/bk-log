@@ -29,3 +29,7 @@ SCENARIO_BKDATA = "scenario_bkdata"
 BKDATA_SUPER_TOKEN = "bkdata_super_token"
 # AIOPS相关配置
 BKDATA_CLUSTERING_TOGGLE = "bkdata_aiops_toggle"
+# es相关配置
+BKLOG_ES_CONFIG = "bklog_es_config"
+# 新人指引相关配置
+USER_GUIDE_CONFIG = "user_guide_config"

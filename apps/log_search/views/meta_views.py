@@ -17,6 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import copy
+
 from django.conf import settings
 from django.template import engines
 from django.utils import translation
@@ -24,14 +26,16 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.response import Response
 
+from apps.utils.context_processors import mysetting
 from apps.utils.drf import list_route
 from apps.exceptions import LanguageDoseNotSupported, ValidationError
 from apps.generic import APIViewSet
-from apps.log_search.constants import TimeEnum
+from apps.log_search.constants import TimeEnum, FILTER_KEY_LIST
 from apps.log_search.handlers.meta import MetaHandler
 from apps.log_search.models import GlobalConfig, Scenario
 from apps.log_search.serializers import ProjectSerializer
 from apps.utils.local import get_request_username
+from apps.utils.db import get_toggle_data
 
 
 class MetaViewSet(APIViewSet):
@@ -86,6 +90,32 @@ class MetaViewSet(APIViewSet):
         }
         """
         return Response(ProjectSerializer(MetaHandler.get_projects(), many=True).data)
+
+    @list_route(methods=["GET"], url_path="index_html_environment")
+    def get_index_settings(self, request):
+        """
+         @api {get} /meta/index_html_environment/ 获取首页环境变量
+         @apiName get_index_html_environment
+         @apiGroup 01_Meta
+         @apiSuccess {Str} RUN_MODE 版本环境
+         @apiSuccess {Str} ENVIRONMENT 运行环境
+         @apiSuccess {Str} APP_CODE 应用码
+         @apiSuccessExample {json} 成功返回:
+         {
+            "message":"",
+            "code":0,
+            "data":{
+                "RUN_MODE":"test",
+                "ENVIRONMENT":"test",
+                "APP_CODE":"test"
+            },
+            "result":true
+        }
+        """
+        my_setting = copy.copy(mysetting(request))
+        [my_setting.pop(key) for key in FILTER_KEY_LIST]
+        data = get_toggle_data()
+        return Response({**my_setting, **data})
 
     @list_route(methods=["GET"], url_path="projects/mine")
     def list_projects_mine(self, request):
@@ -329,6 +359,67 @@ class MetaViewSet(APIViewSet):
                 }
             )
         )
+
+    @list_route(methods=["GET"], url_path="user_guide")
+    def get_user_guide(self, request):
+        """
+        @api {get} /meta/user_guide/ 获取新人指引
+        @apiName user_guide
+        @apiGroup 01_Meta
+        @apiSuccess {Int} current_step 当前浏览步骤
+        @apiSuccess {List} step_list 步骤列表
+        @apiSuccess {Str} step_list.title 标题
+        @apiSuccess {Str} step_list.content 内容
+        @apiSuccess {Str} step_list.target 目标节点
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message":"",
+            "code":0,
+            "data":{
+                "default":{
+                    "current_step":1,
+                    "step_list":[
+                        {
+                            "title":"组件库和图标",
+                            "content":"从基础组件、自定义业务组件、图标库中拖拽组件或图标到画布区域进行页面编排组装",
+                            "target":"#bizSelector"
+                        }
+                    ]
+                }
+            },
+            "result":true
+        }
+        """
+        username = get_request_username()
+        if not username:
+            raise ValidationError(_("username 不能为空"))
+        return Response(MetaHandler.get_user_guide(username=username))
+
+    @list_route(methods=["POST"], url_path="update_user_guide")
+    def update_user_guide(self, request):
+        """
+        @api {post} /meta/update_user_guide/ 更新新人指引
+        @apiName update_user_guide
+        @apiGroup 01_Meta
+        @apiParamExample {json} 成功请求
+        {
+            "search":1
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "username": "test"
+            },
+            "result": true
+        }
+        """
+        username = get_request_username()
+        if not username:
+            raise ValidationError(_("username 不能为空"))
+        MetaHandler.update_user_guide(username=username, user_guide_dict=request.data)
+        return Response({"username": username})
 
 
 class LanguageViewSet(APIViewSet):

@@ -559,7 +559,7 @@ export default {
       padding-bottom: 20px;
       overflow: auto;
 
-      @include scroller($backgroundColor: #c4c6cc, $width: 8px);
+      @include scroller($backgroundColor: #c4c6cc, $width: 4px);
 
       > div {
         width: calc(100% - 120px);

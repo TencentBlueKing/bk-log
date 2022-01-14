@@ -37,7 +37,6 @@ from apps.log_clustering.handlers.aiops.aiops_model.constants import (
     DELIMETER_DEFAULT_VALUE,
     PREDEFINED_VARIBLES_DEFAULT_VALUE,
     TRAINING_HOUR,
-    TRAINING_MINUTE,
 )
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
 from apps.log_clustering.handlers.aiops.aiops_model.data_cls import (
@@ -133,13 +132,16 @@ class AiopsModelHandler(BaseAiopsHandler):
         request_dict = self._set_username(retrieve_execute_config_request)
         return BkDataAIOPSApi.retrieve_execute_config(params=request_dict)
 
-    def update_execute_config(self, experiment_id: int, window: str = "4h", worker_nums: int = 8, memory: int = 4096):
+    def update_execute_config(
+        self, experiment_id: int, window: str = "1h", worker_nums: int = 16, memory: int = 8096, time_limit: int = 7200
+    ):
         """
         变更实验meta配置
         @param experiment_id int 实验id
         @param window str 窗口时间大小
         @param worker_nums int 使用worker数
         @param memory int 使用内存大小
+        @param time_limit 运行时间设置
         """
         update_execute_config_request = UpdateExecuteConfigCls(
             filter_id=experiment_id,
@@ -150,7 +152,11 @@ class AiopsModelHandler(BaseAiopsHandler):
                 pipeline_resources=PipelineResourcesCls(
                     python_backend=PythonBackendCls(worker_nums=worker_nums, memory=memory)
                 ),
+                pipeline_execute_config={"time_limit": time_limit},
             ),
+        )
+        update_execute_config_request.execute_config.chunked_read_sample_set.chunk_policy.config.partition_number = (
+            worker_nums
         )
         request_dict = self._set_username(update_execute_config_request)
         return BkDataAIOPSApi.update_execute_config(request_dict)
@@ -415,13 +421,15 @@ class AiopsModelHandler(BaseAiopsHandler):
         @param delimeter 分词符
         @param max_log_length 最大日志长度
         @param is_case_sensitive 是否大小写
-        @param model_id 模型切分
+        @param model_id 模型id
         @param experiment_id 实验id
         """
         experiment_config = self.get_experiments_config(model_id=model_id, experiment_id=experiment_id)
         if not experiment_config["steps"]["model_train"]["node"]:
             raise NodeConfigException(NodeConfigException.MESSAGE.format(steps="model_train"))
         model_train_steps_config, *_ = experiment_config["steps"]["model_train"]["node"]
+        # 这里是因为需要在模型训练时将最外层execute_config赋值给对应node config中的execute_config
+        execute_config = experiment_config["execute_config"]
         model_train_request = ModelTrainCls(
             model_id=model_id,
             experiment_id=experiment_id,
@@ -442,7 +450,7 @@ class AiopsModelHandler(BaseAiopsHandler):
                     properties=model_train_steps_config["properties"],
                     active=model_train_steps_config["active"],
                     node_role=model_train_steps_config["node_role"],
-                    execute_config=model_train_steps_config["execute_config"],
+                    execute_config=execute_config,
                     content=ContentCls(
                         input_config=model_train_steps_config["content"]["input_config"],
                         output_config=model_train_steps_config["content"]["output_config"],
@@ -998,7 +1006,7 @@ class AiopsModelHandler(BaseAiopsHandler):
         更新持续发布配置
         @param model_id 模型id
         """
-        target_time = int(arrow.now().replace(hour=TRAINING_HOUR, minutes=TRAINING_MINUTE).timestamp)
+        target_time = int(arrow.now().shift(hours=TRAINING_HOUR).timestamp)
         update_training_schedule_request = UpdateTrainingScheduleCls(
             model_id=model_id, project_id=self.conf.get("project_id")
         )
@@ -1034,8 +1042,6 @@ class AiopsModelHandler(BaseAiopsHandler):
         delimeter: str,
         max_log_length: int,
         is_case_sensitive: int,
-        cache_id: str = "log_analysis",
-        use_user_cache_id: int = 0,
     ):
         aiops_experiment_debug_request = AiopsExperimentsDebugCls(
             project_id=self.conf.get("project_id"),
@@ -1053,8 +1059,6 @@ class AiopsModelHandler(BaseAiopsHandler):
                     {"field_name": "delimeter", "value": delimeter},
                     {"field_name": "max_log_length", "value": max_log_length},
                     {"field_name": "is_case_sensitive", "value": is_case_sensitive},
-                    {"field_name": "cache_id", "value": cache_id},
-                    {"field_name": "use_user_cache_id", "value": use_user_cache_id},
                 ],
             ),
         )

@@ -23,12 +23,12 @@
 <template>
   <div id="app" v-bkloading="{ isLoading: pageLoading }">
     <head-nav
-      v-show="!asIframe && !pageLoading"
+      v-show="!isAsIframe && !pageLoading"
       @reloadRouter="routerKey += 1"
       @welcome="welcomePageData = $event"
       @auth="authPageInfo = $event"
     ></head-nav>
-    <div :class="['log-search-container', asIframe && 'as-iframe']">
+    <div :class="['log-search-container', isAsIframe && 'as-iframe']">
       <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
       <welcome-page v-else-if="welcomePageData" :data="welcomePageData"></welcome-page>
       <!-- 导航改版 -->
@@ -71,6 +71,10 @@
         </div>
       </bk-navigation>
       <router-view v-else-if="!pageLoading" class="manage-content" :key="routerKey"></router-view>
+      <novice-guide
+        v-if="displayRetrieve"
+        :data="guideStep"
+        guide-page="default" />
     </div>
     <auth-dialog></auth-dialog>
     <LoginModal v-if="loginData" :login-data="loginData" />
@@ -85,6 +89,7 @@ import WelcomePage from '@/components/common/welcome-page';
 import AuthPage from '@/components/common/auth-page';
 import AuthDialog from '@/components/common/auth-dialog';
 import BizMenuSelect from '@/components/BizMenuSelect.vue';
+import NoviceGuide from '@/components/novice-guide';
 import jsCookie from 'js-cookie';
 
 export default {
@@ -96,6 +101,7 @@ export default {
     AuthDialog,
     WelcomePage,
     BizMenuSelect,
+    NoviceGuide,
   },
   data() {
     return {
@@ -105,10 +111,17 @@ export default {
       routerKey: 0,
       navThemeColor: '#2c354d',
       isExpand: true,
+      curGuideStep: 0,
+      isAsIframe: false,
     };
   },
   computed: {
-    ...mapState(['topMenu', 'activeTopMenu', 'activeManageNav']),
+    ...mapState([
+      'topMenu',
+      'activeTopMenu',
+      'activeManageNav',
+      'userGuideData',
+    ]),
     ...mapGetters({
       pageLoading: 'pageLoading',
       asIframe: 'asIframe',
@@ -119,6 +132,20 @@ export default {
     menuList() {
       const list = this.topMenu.find(item => item.id === this.activeTopMenu.id)?.children;
       return list;
+    },
+    displayRetrieve() {
+      return this.$store.state.retrieve.displayRetrieve;
+    },
+    guideStep() {
+      return this.userGuideData?.default || {};
+    },
+  },
+  watch: {
+    asIframe: {
+      immediate: true,
+      handler(val) {
+        this.isAsIframe = val;
+      },
     },
   },
   created() {
@@ -146,6 +173,8 @@ export default {
         window.location.reload();
       }, 0);
     });
+
+    this.getUserGuide();
   },
   mounted() {
     this.$store.dispatch('getBkBizList');
@@ -171,6 +200,14 @@ export default {
     },
     handleToggle(val) {
       this.isExpand = val;
+    },
+    getUserGuide() {
+      this.$http.request('meta/getUserGuide').then((res) => {
+        this.$store.commit('setUserGuideData', res.data);
+      })
+        .catch((e) => {
+          console.warn(e);
+        });
     },
   },
 };
@@ -404,9 +441,9 @@ export default {
       display: none;
     }
     .tab-content {
-      height: calc(100% - 43px);
+      height: calc(100% - 50px);
       overflow: auto;
-      @include scroller($backgroundColor: #C4C6CC, $width: 8px);
+      @include scroller($backgroundColor: #C4C6CC, $width: 4px);
       padding: 20px;
       background-color: #FFF;
       border: 1px solid #DCDEE5;

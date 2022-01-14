@@ -19,7 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from rest_framework import serializers
 
-from apps.log_clustering.constants import PatternEnum
+from apps.log_clustering.constants import PatternEnum, AGGS_FIELD_PREFIX, DEFULT_FILTER_NOT_CLUSTERING_OPERATOR
 
 
 class PatternSearchSerlaizer(serializers.Serializer):
@@ -33,6 +33,20 @@ class PatternSearchSerlaizer(serializers.Serializer):
     pattern_level = serializers.ChoiceField(required=True, choices=PatternEnum.get_choices())
     show_new_pattern = serializers.BooleanField(required=True)
     year_on_year_hour = serializers.IntegerField(required=False, default=0, min_value=0)
+    group_by = serializers.ListField(required=False, default=[])
+    filter_not_clustering = serializers.BooleanField(required=False, default=True)
+
+    def validate(self, attrs):
+        super().validate(attrs)
+        if attrs["filter_not_clustering"]:
+            attrs["addition"].append(
+                {
+                    "field": "{}_{}".format(AGGS_FIELD_PREFIX, attrs["pattern_level"]),
+                    "operator": DEFULT_FILTER_NOT_CLUSTERING_OPERATOR,
+                    "value": "",
+                }
+            )
+        return attrs
 
 
 class FilerRuleSerializer(serializers.Serializer):
@@ -43,16 +57,16 @@ class FilerRuleSerializer(serializers.Serializer):
 
 
 class ClusteringConfigSerializer(serializers.Serializer):
-    collector_config_id = serializers.IntegerField(required=False, default=None)
-    collector_config_name_en = serializers.CharField(required=False, default=None)
+    collector_config_id = serializers.IntegerField(required=False, allow_null=True, default=0)
+    collector_config_name_en = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     index_set_id = serializers.IntegerField()
     min_members = serializers.IntegerField(required=False, default=1, allow_null=True)
-    max_dist_list = serializers.CharField(max_length=128, required=False, allow_null=True)
-    predefined_varibles = serializers.CharField(required=False, allow_null=True)
-    delimeter = serializers.CharField(required=False, allow_null=True)
-    max_log_length = serializers.IntegerField(required=False, allow_null=True)
-    is_case_sensitive = serializers.IntegerField(required=False, default=0, allow_null=True)
-    clustering_fields = serializers.CharField(required=False, allow_null=True)
+    max_dist_list = serializers.CharField(max_length=128, required=False, allow_null=True, allow_blank=True)
+    predefined_varibles = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    delimeter = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    max_log_length = serializers.IntegerField(required=False, allow_null=True, default=100)
+    is_case_sensitive = serializers.IntegerField(required=False, allow_null=True, default=1)
+    clustering_fields = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     bk_biz_id = serializers.IntegerField()
     filter_rules = serializers.ListField(child=FilerRuleSerializer(), required=False, default=[])
     signature_enable = serializers.BooleanField(default=False)

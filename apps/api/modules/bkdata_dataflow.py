@@ -90,6 +90,15 @@ class _BkDataDataFlowApi:
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
+        self.get_latest_deploy_data = DataAPI(
+            method="GET",
+            url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/latest_deploy_data/",
+            module=self.MODULE,
+            url_keys=["flow_id"],
+            description=u"获取flow最近部署信息",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+        )
 
 
 BkDataDataFlowApi = _BkDataDataFlowApi()

@@ -1032,7 +1032,7 @@ export default {
     height: 100%;
     overflow-y: auto;
 
-    @include scroller(#ccc, 8px);
+    @include scroller(#ccc, 4px);
 
     .chart-view {
       position: relative;
@@ -1160,7 +1160,7 @@ export default {
       overflow-x: hidden;
       overflow-y: auto;
 
-      @include scroller(#ccc, 8px);
+      @include scroller(#ccc, 4px);
     }
 
     .log-switch {
