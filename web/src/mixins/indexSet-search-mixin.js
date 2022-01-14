@@ -21,6 +21,7 @@
  */
 
 import moment from 'moment';
+import { handleTransformToTimestamp } from '@/components/time-range/utils';
 
 export default {
   data() {
@@ -72,18 +73,17 @@ export default {
     },
     // 获取实际查询开始和结束时间
     getRealTimeRange() {
-      // 先判断是否 快捷时间 筛选
-      const { time_range } = this.retrieveParams;
-      // eslint-disable-next-line camelcase
-      if (time_range === 'customized') {
+      if (!this.pickerTimeRange.length) {
         return {
           startTimeStamp: new Date(this.retrieveParams.start_time.replace(/-/g, '/')).getTime(),
           endTimeStamp: new Date(this.retrieveParams.end_time.replace(/-/g, '/')).getTime(),
         };
       }
 
+      const tempList = handleTransformToTimestamp(this.datePickerValue);
+      const rangeTimes = (tempList[1] - tempList[0]) * 1000;
       return {
-        startTimeStamp: Date.now() - (this.intervalMap[time_range] * 1000),
+        startTimeStamp: Date.now() - rangeTimes,
         endTimeStamp: Date.now(),
       };
     },

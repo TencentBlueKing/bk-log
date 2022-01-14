@@ -267,6 +267,8 @@
           :time-field="timeField"
           :config-data="clusteringData"
           :clean-config="cleanConfig"
+          :picker-time-range="pickerTimeRange"
+          :date-picker-value="datePickerValue"
           @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
@@ -468,7 +470,7 @@ export default {
       isAsIframe: false,
       localIframeQuery: {},
       isFirstLoad: true,
-      pickerTimeRange: [],
+      pickerTimeRange: ['now-15m', 'now'],
     };
   },
   computed: {
