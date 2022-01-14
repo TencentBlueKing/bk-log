@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import re
 import socket
 
 from typing import Dict, Any
@@ -43,6 +44,8 @@ from apps.log_databus.models import CollectorConfig
 from apps.utils.thread import MultiExecuteFunc
 from apps.log_search.exceptions import IndexResultTableApiException
 from apps.log_esquery.constants import DEFAULT_SCHEMA
+
+DATE_RE = re.compile("[0-9]{8}")
 
 
 class QueryClientLog(QueryClientTemplate):
@@ -134,10 +137,21 @@ class QueryClientLog(QueryClientTemplate):
         index_list: list = index.split(",")
         new_index_list = []
         for _index in index_list:
+            # _index的格式兼容这些
+            # 2_bklog.bkesb_container_20211207*
+            # 2_bklog_bkesb_container_20211207*
+            # 2_bklog.bkesb_container*
+            # 2_bklog_bkesb_container*
+            # 2_bklog.bkesb_container_*
+            # 2_bklog_bkesb_container_*
             tmp_index: str = _index.replace("_%s_" % settings.TABLE_ID_PREFIX, "_%s." % settings.TABLE_ID_PREFIX)
-            tmp_index_list = tmp_index.split("_")
-            new_index: str = tmp_index.replace("_%s" % tmp_index_list[-1], "")
-            new_index_list.append(new_index)
+            tmp_index = tmp_index.rstrip("_*")
+            # 如果suffix是个日期，需要去掉后缀
+            new_index, no_use, suffix = tmp_index.rpartition("_")
+            if DATE_RE.match(suffix):
+                new_index_list.append(new_index)
+            else:
+                new_index_list.append(tmp_index)
         return new_index_list[-1]
 
     def _get_connection(self, index: str):
