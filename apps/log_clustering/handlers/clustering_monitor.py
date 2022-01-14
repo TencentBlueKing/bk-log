@@ -106,12 +106,12 @@ class ClusteringMonitorHandler(object):
             params={
                 "bk_biz_id": self.bk_biz_id,
                 "scenario": DEFAULT_SCENARIO,
-                "name": self.index_set.index_set_name,
+                "name": "{}_signature_{}".format(self.index_set.index_set_name, signature),
                 "labels": DEFAULT_LABELS,
                 "is_enabled": True,
                 "items": [
                     {
-                        "name": self.index_set.index_set_name,
+                        "name": "{}_signature_{}".format(self.index_set.index_set_name, signature),
                         "no_data_config": DEFAULT_NO_DATA_CONFIG,
                         "target": [[]],
                         "expression": DEFAULT_EXPRESSION,
