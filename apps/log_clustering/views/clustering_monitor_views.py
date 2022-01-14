@@ -65,7 +65,7 @@ class ClusteringMonitorViewSet(APIViewSet):
             "message":"",
             "code":0,
             "data":{
-                "result":true,
+                "result":false,
                 "operators":[
                     {
                         "signature:":"xxx",
