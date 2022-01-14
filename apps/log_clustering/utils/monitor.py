@@ -74,5 +74,5 @@ class MonitorUtils(object):
         if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
             raise ClusteringClosedException()
         conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
-        maintainers.add(conf.update("maintainers"))
+        maintainers.update(conf.get("maintainers", []))
         return maintainers

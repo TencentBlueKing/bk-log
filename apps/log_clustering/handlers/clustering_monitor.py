@@ -35,6 +35,7 @@ from apps.log_clustering.constants import (
 )
 from apps.log_clustering.exceptions import ClusteringIndexSetNotExistException
 from apps.api import MonitorApi
+from apps.log_clustering.models import SignatureStrategySettings
 from apps.log_clustering.utils.monitor import MonitorUtils
 from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import LogIndexSet
@@ -67,9 +68,18 @@ class ClusteringMonitorHandler(object):
                     strategy_id = self.save_strategy(
                         log_level=log_level, signature=action["signature"], pattern=action["pattern"]
                     )["id"]
+                    SignatureStrategySettings.objects.create(
+                        **{
+                            "signature": action["signature"],
+                            "index_set_id": self.index_set_id,
+                            "strategy_id": strategy_id,
+                            "bk_biz_id": self.bk_biz_id,
+                        }
+                    )
                 if actions["action"] == ActionEnum.DELETE.value:
                     strategy_id = action.get("strategy_id")
                     self.delete_strategy(strategy_id=strategy_id)
+                    SignatureStrategySettings.objects.filter(strategy_id=strategy_id).delete()
             except Exception as e:  # noqa
                 operator_result = False
                 operator_msg = str(e)
@@ -138,8 +148,10 @@ class ClusteringMonitorHandler(object):
                                 bk_biz_id=self.bk_biz_id,
                             )
                         ],
-                        "notice_template": notice_template,
-                        "recovery_template": recover_template,
+                        "notice_template": {
+                            "anomaly_template": notice_template,
+                            "recovery_template": recover_template,
+                        },
                     }
                 ],
             }
@@ -151,9 +163,9 @@ class ClusteringMonitorHandler(object):
     @classmethod
     def _generate_notice_template(cls, index_set_name, signature, pattern):
         notice_template = (
-            "{{content.level}}\n{{content.begin_time}}\n{{content.time}}\n{{content.duration}}\n"
-            "{{strategy.name}}日志聚类pattern告警\n索引集名称:{index_set_name}\n\nsignature:{signature}\n"
-            "pattern:{pattern}\n{{alarm.detail_url}}".format(
+            "{{{{content.level}}}}\n{{{{content.begin_time}}}}\n{{{{content.time}}}}\n{{{{content.duration}}}}\n"
+            "{{{{strategy.name}}}}日志聚类pattern告警\n索引集名称:{index_set_name}\n\nsignature:{signature}\n"
+            "pattern:{pattern}\n{{{{alarm.detail_url}}}}".format(
                 index_set_name=index_set_name, signature=signature, pattern=pattern
             )
         )
@@ -162,9 +174,9 @@ class ClusteringMonitorHandler(object):
     @classmethod
     def _generate_recover_template(cls, index_set_name, signature, pattern):
         recover_template = (
-            "{{content.level}}\n{{content.begin_time}}\n{{content.time}}\n{{content.duration}}\n"
-            "{{strategy.name}}日志聚类pattern告警恢复\n索引集名称:{index_set_name}\n\nsignature:{signature}\n"
-            "pattern:{pattern}\n{{alarm.detail_url}}".format(
+            "{{{{content.level}}}}\n{{{{content.begin_time}}}}\n{{{{content.time}}}}\n{{{{content.duration}}}}\n"
+            "{{{{strategy.name}}}}日志聚类pattern告警恢复\n索引集名称:{index_set_name}\n\nsignature:{signature}\n"
+            "pattern:{pattern}\n{{{{alarm.detail_url}}}}".format(
                 index_set_name=index_set_name, signature=signature, pattern=pattern
             )
         )

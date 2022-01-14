@@ -34,6 +34,7 @@ from apps.log_clustering.constants import (
     NEW_CLASS_FIELD_PREFIX,
     MAX_STRATEGY_PAGE_SIZE,
     DEFAULT_PAGE,
+    DEFAULT_LABELS,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig, SignatureStrategySettings
@@ -221,7 +222,7 @@ class PatternHandler:
         return {new_class["signature"] for new_class in new_classes}
 
     @classmethod
-    def get_labels(cls, strategy_ids: list[int], bk_biz_id: int):
+    def get_labels(cls, strategy_ids: list, bk_biz_id: int):
         inst_ids_array = array_chunk(sorted(strategy_ids), MAX_STRATEGY_PAGE_SIZE)
         result = []
         for inst_ids in inst_ids_array:
@@ -238,7 +239,9 @@ class PatternHandler:
 
     @classmethod
     def _generate_strategy_result(cls, strategy_result):
+        default_labels_set = set(DEFAULT_LABELS)
         result = []
         for strategy_obj in strategy_result:
-            result.append({"strategy_id": strategy_obj["id"], "labels": strategy_obj["labels"]})
+            labels = map_if(strategy_obj["labels"], if_func=lambda x: x not in default_labels_set)
+            result.append({"strategy_id": strategy_obj["id"], "labels": labels})
         return result
