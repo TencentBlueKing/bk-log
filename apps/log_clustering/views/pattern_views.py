@@ -115,9 +115,9 @@ class PatternViewSet(APIViewSet):
         return Response(PatternHandler(index_set_id, query_data).pattern_search())
 
     @list_route(methods=["POST"], url_path="labels")
-    def get_labels(self, request):
+    def get_labels(self, request, index_set_id):
         """
-        @api {post} /pattern/labels/ 日志聚类-获取标签列表
+        @api {post} /pattern/$index_set_id/labels/ 日志聚类-获取标签列表
         @apiName get_labels
         @apiGroup log_clustering
         @apiParam {List[Int]} strategy_ids 策略id列表

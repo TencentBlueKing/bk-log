@@ -100,7 +100,7 @@ class GetLabelsSerializer(serializers.Serializer):
 
 class UpdateStrategyAction(serializers.Serializer):
     signature = serializers.CharField()
-    pattern = serializers.CharField()
+    pattern = serializers.CharField(allow_blank=True, allow_null=True)
     strategy_id = serializers.IntegerField(required=False)
     action = serializers.ChoiceField(required=True, choices=ActionEnum.get_choices())
     operator = serializers.CharField(required=False)
