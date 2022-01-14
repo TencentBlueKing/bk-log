@@ -92,6 +92,8 @@ if (process.env.NODE_ENV === 'development') {
     Object.keys(data).forEach((key) => {
       window[key] = data[key];
     });
+    window.FEATURE_TOGGLE = JSON.parse(data.FEATURE_TOGGLE);
+    window.FEATURE_TOGGLE_WHITE_LIST = JSON.parse(data.FEATURE_TOGGLE_WHITE_LIST);
     window.bus = bus;
     window.mainComponent = new Vue({
       el: '#app',

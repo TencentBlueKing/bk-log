@@ -108,8 +108,11 @@ export default {
     isNear24() {
       return this.fingerOperateData.isNear24;
     },
-    partterSize() {
-      return this.fingerOperateData.partterSize;
+    partterSize: {
+      get() {
+        return this.fingerOperateData.partterSize;
+      },
+      set() {},
     },
     yearHour() {
       return this.requestData.year_on_year_hour;

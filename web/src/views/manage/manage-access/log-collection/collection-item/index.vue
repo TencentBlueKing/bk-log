@@ -774,7 +774,8 @@ export default {
 
       .filter-column {
         .cell {
-          display: flex;
+          /* stylelint-disable-next-line declaration-no-important */
+          display: flex !important;
         }
       }
     }

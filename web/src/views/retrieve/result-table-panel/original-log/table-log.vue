@@ -337,7 +337,7 @@ export default {
 
       .hover-row {
         .show-whole-btn {
-          background-color: #f0f1f5;
+          background-color: #f5f7fa;
         }
       }
 

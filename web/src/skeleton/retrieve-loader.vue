@@ -68,7 +68,7 @@ export default {
   data() {
     return {
       throttle: false, // 滚动节流
-      loaderLen: 24, // 骨架行数
+      loaderLen: 12, // 骨架行数
     };
   },
   computed: {

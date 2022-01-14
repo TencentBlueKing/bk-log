@@ -401,9 +401,12 @@ export default {
     async submitForm() {
       try {
         await this.$refs.formRef.validate();
+        const hasMatch = this.traceMatches.some((item) => {
+          return item.field_type === 'MUST' && item.match_result === 'FIELD_MISS';
+        });
         if (!this.formData.indexes.length) {
           return this.messageError(this.$t('请选择索引'));
-        } if (this.isShowTrace && this.traceMatches.some(item => item.field_type === 'MUST' && item.match_result === 'FIELD_MISS')) {
+        } if (this.isShowTrace && hasMatch) {
           return this.messageError(this.$t('MUST类型的字段缺失'));
         }
         this.submitLoading = true;
