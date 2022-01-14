@@ -125,7 +125,7 @@ class PatternEnum(ChoicesEnum):
 
 
 class ActionEnum(ChoicesEnum):
-    CREATE = "update"
+    CREATE = "create"
     DELETE = "delete"
 
     @classmethod
