@@ -55,3 +55,13 @@ class EvaluationStatusResponseException(BaseClusteringException):
 class ClusteringConfigNotExistException(BaseClusteringException):
     ERROR_CODE = "005"
     MESSAGE = _("聚类配置不存在")
+
+
+class ClusteringConfigStrategyException(BaseClusteringException):
+    ERROR_CODE = "006"
+    MESSAGE = _("聚类配置对应告警策略错误: {index_set_id}")
+
+
+class ClusteringIndexSetNotExistException(BaseClusteringException):
+    ERROR_CODE = "007"
+    MESSAGE = _("聚类配置对应索引集不存在: {index_set_id}")

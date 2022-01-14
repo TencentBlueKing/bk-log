@@ -83,3 +83,26 @@ class ClusteringConfig(SoftDeleteModel):
     after_treat_flow = JSONField(_("after_treat_flow配置"), null=True, blank=True)
     after_treat_flow_id = models.IntegerField(_("预处理flowid"), null=True, blank=True)
     modify_flow = JSONField(_("修改after_treat_flow调用的配置"), null=True, blank=True)
+
+
+class SignatureStrategySettings(SoftDeleteModel):
+    signature = models.CharField(_("数据指纹"), max_length=256, db_index=True)
+    index_set_id = models.IntegerField(_("索引集id"), db_index=True)
+    strategy_id = models.IntegerField(_("监控策略id"), null=True, blank=True)
+    enabled = models.BooleanField(_("是否启用"), default=True)
+    bk_biz_id = models.IntegerField(_("业务id"))
+
+    @classmethod
+    def get_monitor_config(cls, signature):
+        signature_strategy_settings = SignatureStrategySettings.objects.filter(signature=signature).first()
+        if not signature_strategy_settings:
+            return {
+                "is_active": False,
+                "strategy_id": None,
+            }
+        return {"is_active": True, "strategy_id": signature_strategy_settings.strategy_id}
+
+
+class NoticeGroup(SoftDeleteModel):
+    index_set_id = models.IntegerField(_("索引集id"), db_index=True)
+    notice_group_id = models.IntegerField(_("通知人组id"))

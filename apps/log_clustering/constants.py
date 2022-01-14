@@ -49,6 +49,42 @@ SAMPLE_SET_SLEEP_TIMER = 15 * 60
 
 DEFULT_FILTER_NOT_CLUSTERING_OPERATOR = "is not"
 
+NOTICE_RECEIVER = "user"
+
+#  查找策略page_size 设置
+DEFAULT_PAGE = 1
+MAX_STRATEGY_PAGE_SIZE = 100
+
+DEFAULT_SCENARIO = "other_rt"
+DEFAULT_LABELS = ["log_clustering"]
+DEFAULT_NOTIFY_RECEIVER_TYPE = "user"
+DEFAULT_NOTICE_WAY = {"3": ["rtx"], "2": ["rtx"], "1": ["rtx"]}
+DEFAULT_NO_DATA_CONFIG = {"level": 2, "continuous": 10, "is_enabled": False, "agg_dimension": []}
+DEFAULT_EXPRESSION = "a"
+DEFAULT_DATA_SOURCE_LABEL = "bk_log_search"
+DEFAULT_DATA_TYPE_LABEL = "log"
+DEFAULT_AGG_INTERVAL = 60
+DEFAULT_TIME_FIELD = "dtEventTimeStamp"
+DEFAULT_ALGORITHMS = [
+    {"type": "Threshold", "level": 1, "config": [[{"method": "gte", "threshold": 1}]], "unit_prefix": ""}
+]
+DEFAULT_DETECTS = [
+    {
+        "level": 2,
+        "expression": "",
+        "trigger_config": {"count": 1, "check_window": 5},
+        "recovery_config": {"check_window": 5},
+        "connector": "and",
+    }
+]
+DEFAULT_ACTION_TYPE = "notice"
+DEFAULT_ACTION_CONFIG = {
+    "alarm_start_time": "00:00:00",
+    "alarm_end_time": "23:59:59",
+    "alarm_interval": 1440,
+    "send_recovery_alarm": False,
+}
+
 
 class YearOnYearEnum(ChoicesEnum):
     NOT = 0
@@ -85,4 +121,16 @@ class PatternEnum(ChoicesEnum):
             cls.LEVEL_05.value,
             cls.LEVEL_03.value,
             cls.LEVEL_01.value,
+        )
+
+
+class ActionEnum(ChoicesEnum):
+    CREATE = "update"
+    DELETE = "delete"
+
+    @classmethod
+    def get_choices(cls) -> tuple:
+        return (
+            cls.CREATE.value,
+            cls.DELETE.value,
         )
