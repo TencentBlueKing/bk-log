@@ -76,7 +76,7 @@ class ClusteringMonitorHandler(object):
                             "bk_biz_id": self.bk_biz_id,
                         }
                     )
-                if actions["action"] == ActionEnum.DELETE.value:
+                if action["action"] == ActionEnum.DELETE.value:
                     strategy_id = action.get("strategy_id")
                     self.delete_strategy(strategy_id=strategy_id)
                     SignatureStrategySettings.objects.filter(strategy_id=strategy_id).delete()
