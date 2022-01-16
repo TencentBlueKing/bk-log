@@ -62,12 +62,16 @@ DEFAULT_NOTICE_WAY = {"3": ["rtx"], "2": ["rtx"], "1": ["rtx"]}
 DEFAULT_NO_DATA_CONFIG = {"level": 2, "continuous": 10, "is_enabled": False, "agg_dimension": []}
 DEFAULT_EXPRESSION = "a"
 DEFAULT_DATA_SOURCE_LABEL = "bk_log_search"
+DEFAULT_DATA_SOURCE_LABEL_BKDATA = "bk_data"
 DEFAULT_DATA_TYPE_LABEL = "log"
+DEFAULT_DATA_TYPE_LABEL_BKDATA = "time_series"
+DEFAULT_AGG_METHOD_BKDATA = "COUNT"
 DEFAULT_AGG_INTERVAL = 60
 DEFAULT_TIME_FIELD = "dtEventTimeStamp"
 DEFAULT_ALGORITHMS = [
     {"type": "Threshold", "level": 1, "config": [[{"method": "gte", "threshold": 1}]], "unit_prefix": ""}
 ]
+DEFAULT_METRIC = "signature"
 DEFAULT_DETECTS = [
     {
         "level": 2,
@@ -84,6 +88,11 @@ DEFAULT_ACTION_CONFIG = {
     "alarm_interval": 1440,
     "send_recovery_alarm": False,
 }
+
+
+class StrategiesType(object):
+    NEW_CLS_strategy = "now_cls_strategy"
+    NORMAL_STRATEGY = "normal_strategy"
 
 
 class YearOnYearEnum(ChoicesEnum):

@@ -86,7 +86,7 @@ class ClusteringConfig(SoftDeleteModel):
 
 
 class SignatureStrategySettings(SoftDeleteModel):
-    signature = models.CharField(_("数据指纹"), max_length=256, db_index=True)
+    signature = models.CharField(_("数据指纹"), max_length=256, db_index=True, blank=True)
     index_set_id = models.IntegerField(_("索引集id"), db_index=True)
     strategy_id = models.IntegerField(_("监控策略id"), null=True, blank=True)
     enabled = models.BooleanField(_("是否启用"), default=True)

@@ -177,6 +177,7 @@ CELERY_IMPORTS = (
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
     "apps.log_clustering.tasks.sync_pattern",
+    "apps.log_clustering.tasks.create_new_cls_strategy",
 )
 
 # load logging settings
@@ -518,12 +519,7 @@ MENUS = [
                         "scenes": "scenario_es",
                         "icon": "elasticsearch",
                     },
-                    {
-                        "id": "custom_report",
-                        "name": _("自定义上报"),
-                        "feature": "on",
-                        "icon": "menu-custom"
-                    },
+                    {"id": "custom_report", "name": _("自定义上报"), "feature": "on", "icon": "menu-custom"},
                 ],
             },
             {
