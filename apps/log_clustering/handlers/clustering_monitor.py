@@ -200,6 +200,7 @@ class ClusteringMonitorHandler(object):
                 {{{{content.duration}}}}
                 {{{{strategy.name}}}}日志聚类新类告警
                 索引集名称:{index_set_name}
+                signature:{{{{alarm.dimensions["dimension_name"].display_value}}}}
                 {{{{alarm.detail_url}}}}""".format(
                 index_set_name=index_set_name
             )
@@ -229,6 +230,7 @@ class ClusteringMonitorHandler(object):
                 {{{{content.duration}}}}
                 {{{{strategy.name}}}}日志聚类新类告警恢复
                 索引集名称:{index_set_name}
+                signature:{{{{alarm.dimensions["dimension_name"].display_value}}}}
                 {{{{alarm.detail_url}}}}""".format(
                 index_set_name=index_set_name
             )
@@ -268,7 +270,7 @@ class ClusteringMonitorHandler(object):
                     "result_table_id": table_id,
                     "agg_method": DEFAULT_AGG_METHOD_BKDATA,
                     "agg_interval": DEFAULT_AGG_INTERVAL,
-                    "agg_dimension": [],
+                    "agg_dimension": [metric],
                     "agg_condition": [],
                     "metric_field": metric,
                     "unit": "",
