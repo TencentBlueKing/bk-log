@@ -45,8 +45,9 @@ class RemoteStorageType(ChoicesEnum):
 
     COS = "cos"
     NFS = "nfs"
+    BKREPO = "bkrepo"
 
-    _choices_labels = ((COS, _("腾讯云对象存储")), (NFS, _("远程文件系统")))
+    _choices_labels = ((COS, _("腾讯云对象存储")), (NFS, _("远程文件系统")), (BKREPO, _("蓝鲸文件存储服务")))
 
     @classmethod
     def get_choice_label(cls, key: str) -> dict:

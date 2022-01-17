@@ -17,14 +17,14 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from rest_framework.response import Response
+
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
 from apps.generic import APIViewSet
 from apps.log_clustering.constants import CLUSTERING_CONFIG_DEFAULT
 from apps.log_clustering.exceptions import ClusteringClosedException
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
-from rest_framework.response import Response
-
 from apps.log_clustering.serializers import ClusteringConfigSerializer, ClusteringPreviewSerializer
 from apps.utils.drf import detail_route, list_route
 

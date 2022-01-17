@@ -1248,7 +1248,7 @@ class CollectorHandler(object):
         subscription_collector_map = dict()
 
         collector_list = CollectorConfig.objects.filter(collector_config_id__in=collector_id_list).values(
-            "collector_config_id", "subscription_id", "itsm_ticket_status"
+            "collector_config_id", "subscription_id", "itsm_ticket_status", "target_nodes"
         )
         status_result = {}
         if multi_flag:
@@ -1261,8 +1261,8 @@ class CollectorHandler(object):
                     {
                         "collector_id": collector_obj["collector_config_id"],
                         "subscription_id": None,
-                        "status": CollectStatus.PREPARE,
-                        "status_name": RunStatus.PREPARE,
+                        "status": CollectStatus.PREPARE if collector_obj["target_nodes"] else CollectStatus.SUCCESS,
+                        "status_name": RunStatus.PREPARE if collector_obj["target_nodes"] else RunStatus.SUCCESS,
                         "total": 0,
                         "success": 0,
                         "failed": 0,
@@ -1394,6 +1394,21 @@ class CollectorHandler(object):
         查看订阅的插件运行状态
         :return:
         """
+        if not self.data.subscription_id and not self.data.target_nodes:
+            return {
+                "contents": [
+                    {
+                        "is_label": False,
+                        "label_name": "",
+                        "bk_obj_name": "主机",
+                        "node_path": "主机",
+                        "bk_obj_id": "host",
+                        "bk_inst_id": "",
+                        "bk_inst_name": "",
+                        "child": [],
+                    }
+                ]
+            }
         param = {"subscription_id_list": [self.data.subscription_id]}
         status_result, *_ = NodeApi.get_subscription_instance_status(param)
         instance_status = self.format_subscription_instance_status(status_result)
