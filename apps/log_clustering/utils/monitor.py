@@ -61,7 +61,7 @@ class MonitorUtils(object):
             notice_receiver=notice_receiver,
             notice_way=DEFAULT_NOTICE_WAY,
         )
-        NoticeGroup.objects.create(index_set_id=log_index_set_id, notice_group_id=group["id"])
+        NoticeGroup.objects.create(index_set_id=log_index_set_id, notice_group_id=group["id"], bk_biz_id=bk_biz_id)
         return group["id"]
 
     @classmethod
