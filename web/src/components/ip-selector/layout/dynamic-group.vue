@@ -48,7 +48,7 @@
       </bk-virtual-scroll>
     </div>
     <div class="dynamic-group-right ml20">
-      <IpListTable
+      <ip-list-table
         ref="table"
         :get-search-table-data="getTableData"
         :ip-list-table-config="groupTableConfig"
@@ -56,7 +56,7 @@
         :disabled-loading="isLoading"
         :empty-text="emptyText"
         :handle-agent-status="handleAgentStatus">
-      </IpListTable>
+      </ip-list-table>
     </div>
   </div>
 </template>
