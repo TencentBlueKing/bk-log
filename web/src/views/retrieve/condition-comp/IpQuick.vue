@@ -39,7 +39,7 @@ export default {
     targetNodeType: {
       type: String,
       required: true,
-    }
+    },
   },
   // data() {
   //   return {
