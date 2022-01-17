@@ -41,6 +41,7 @@
       v-if="showSelectionColumn">
       <template #default="{ row }">
         <bk-checkbox
+          :key="pagination.current"
           :checked="getCheckedStatus(row)"
           :disabled="getDisabledStatus(row)"
           @change="handleRowCheckChange(row, $event)">
