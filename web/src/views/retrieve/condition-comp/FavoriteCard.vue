@@ -96,7 +96,7 @@ export default {
         payload.params.host_scopes.target_nodes = [];
       }
       this.$emit('shouldRetrieve', payload);
-    }
+    },
   },
 };
 </script>
