@@ -112,7 +112,9 @@ class PatternHandler:
                     "year_on_year_count": year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
                     "group": pattern.get("group", ""),
-                    "monitor": SignatureStrategySettings.get_monitor_config(signature=signature),
+                    "monitor": SignatureStrategySettings.get_monitor_config(
+                        signature=signature, index_set_id=self._index_set_id
+                    ),
                 }
             )
         if self._show_new_pattern:

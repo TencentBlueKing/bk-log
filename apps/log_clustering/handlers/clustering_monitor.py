@@ -32,6 +32,14 @@ from apps.log_clustering.constants import (
     DEFAULT_ACTION_TYPE,
     DEFAULT_ACTION_CONFIG,
     ActionEnum,
+    StrategiesType,
+    DEFAULT_DATA_SOURCE_LABEL_BKDATA,
+    DEFAULT_DATA_TYPE_LABEL_BKDATA,
+    DEFAULT_AGG_METHOD_BKDATA,
+    DEFAULT_PATTERN_MONITOR_MSG,
+    NEW_CLS_PATTERN_MONITOR_MSG,
+    DEFAULT_PATTERN_RECOVER_MSG,
+    NEW_CLS_PATTERN_RECOVER_MSG,
 )
 from apps.log_clustering.exceptions import ClusteringIndexSetNotExistException
 from apps.api import MonitorApi
@@ -68,19 +76,10 @@ class ClusteringMonitorHandler(object):
                     strategy_id = self.save_strategy(
                         log_level=log_level, signature=action["signature"], pattern=action["pattern"]
                     )["id"]
-                    SignatureStrategySettings.objects.create(
-                        **{
-                            "signature": action["signature"],
-                            "index_set_id": self.index_set_id,
-                            "strategy_id": strategy_id,
-                            "bk_biz_id": self.bk_biz_id,
-                        }
-                    )
                 if action["action"] == ActionEnum.DELETE.value:
                     strategy_id = action.get("strategy_id")
                     self.delete_strategy(strategy_id=strategy_id)
-                    SignatureStrategySettings.objects.filter(strategy_id=strategy_id).delete()
-            except Exception as e:  # noqa
+            except Exception as e:  # pylint:disable=broad-except
                 operator_result = False
                 operator_msg = str(e)
                 result = False
@@ -95,44 +94,53 @@ class ClusteringMonitorHandler(object):
                 )
         return {"result": result, "operators": operators}
 
-    def save_strategy(self, log_level, signature, pattern):
+    def save_strategy(
+        self,
+        log_level="",
+        signature="",
+        table_id=None,
+        pattern="",
+        metric="",
+        strategy_type=StrategiesType.NORMAL_STRATEGY,
+    ):
+        name = self._generate_name(
+            index_set_name=self.index_set.index_set_name, signature=signature, strategy_type=strategy_type
+        )
         notice_template = self._generate_notice_template(
-            index_set_name=self.index_set.index_set_name, signature=signature, pattern=pattern
+            index_set_name=self.index_set.index_set_name,
+            signature=signature,
+            pattern=pattern,
+            strategy_type=strategy_type,
         )
         recover_template = self._generate_recover_template(
-            index_set_name=self.index_set.index_set_name, signature=signature, pattern=pattern
+            index_set_name=self.index_set.index_set_name,
+            signature=signature,
+            pattern=pattern,
+            strategy_type=strategy_type,
         )
-        return MonitorApi.save_alarm_strategy_v2(
+        query_config = self._generate_query_config(
+            index_set_id=self.index_set_id,
+            log_level=log_level,
+            table_id=table_id or self.collector_config.table_id,
+            metric=metric,
+            signature=signature,
+            strategy_type=strategy_type,
+        )
+        strategy = MonitorApi.save_alarm_strategy_v2(
             params={
                 "bk_biz_id": self.bk_biz_id,
                 "scenario": DEFAULT_SCENARIO,
-                "name": "{}_signature_{}".format(self.index_set.index_set_name, signature),
+                "name": name,
                 "labels": DEFAULT_LABELS,
                 "is_enabled": True,
                 "items": [
                     {
-                        "name": "{}_signature_{}".format(self.index_set.index_set_name, signature),
+                        "name": name,
                         "no_data_config": DEFAULT_NO_DATA_CONFIG,
                         "target": [[]],
                         "expression": DEFAULT_EXPRESSION,
                         "origin_sql": "",
-                        "query_configs": [
-                            {
-                                "data_source_label": DEFAULT_DATA_SOURCE_LABEL,
-                                "data_type_label": DEFAULT_DATA_TYPE_LABEL,
-                                "alias": DEFAULT_EXPRESSION,
-                                "metric_id": "bk_log_search.index_set.{}".format(self.index_set_id),
-                                "functions": [],
-                                "query_string": '{}_{}: "{}"'.format(AGGS_FIELD_PREFIX, log_level, signature),
-                                "result_table_id": self.collector_config.table_id,
-                                "index_set_id": self.index_set_id,
-                                "agg_interval": DEFAULT_AGG_INTERVAL,
-                                "agg_dimension": [],
-                                "agg_condition": [],
-                                "time_field": DEFAULT_TIME_FIELD,
-                                "name": self.collector_config.table_id,
-                            }
-                        ],
+                        "query_configs": query_config,
                         "algorithms": DEFAULT_ALGORITHMS,
                     }
                 ],
@@ -156,28 +164,95 @@ class ClusteringMonitorHandler(object):
                 ],
             }
         )
+        strategy_id = strategy["id"]
+        SignatureStrategySettings.objects.create(
+            **{
+                "signature": signature,
+                "index_set_id": self.index_set_id,
+                "strategy_id": strategy_id,
+                "bk_biz_id": self.bk_biz_id,
+            }
+        )
+        return strategy
 
     def delete_strategy(self, strategy_id):
-        return MonitorApi.delete_alarm_strategy_v2(params={"bk_biz_id": self.bk_biz_id, "ids": [strategy_id]})
+        MonitorApi.delete_alarm_strategy_v2(params={"bk_biz_id": self.bk_biz_id, "ids": [strategy_id]})
+        SignatureStrategySettings.objects.filter(strategy_id=strategy_id).delete()
+        return strategy_id
 
     @classmethod
-    def _generate_notice_template(cls, index_set_name, signature, pattern):
-        notice_template = (
-            "{{{{content.level}}}}\n{{{{content.begin_time}}}}\n{{{{content.time}}}}\n{{{{content.duration}}}}\n"
-            "{{{{strategy.name}}}}日志聚类pattern告警\n索引集名称:{index_set_name}\n\nsignature:{signature}\n"
-            "pattern:{pattern}\n{{{{alarm.detail_url}}}}".format(
+    def _generate_notice_template(
+        cls, index_set_name, signature, pattern="", strategy_type=StrategiesType.NORMAL_STRATEGY
+    ):
+        notice_template = ""
+        if strategy_type == StrategiesType.NORMAL_STRATEGY:
+            notice_template = DEFAULT_PATTERN_MONITOR_MSG.format(
                 index_set_name=index_set_name, signature=signature, pattern=pattern
             )
-        )
+        if strategy_type == StrategiesType.NEW_CLS_strategy:
+            notice_template = NEW_CLS_PATTERN_MONITOR_MSG.format(index_set_name=index_set_name)
         return notice_template
 
     @classmethod
-    def _generate_recover_template(cls, index_set_name, signature, pattern):
-        recover_template = (
-            "{{{{content.level}}}}\n{{{{content.begin_time}}}}\n{{{{content.time}}}}\n{{{{content.duration}}}}\n"
-            "{{{{strategy.name}}}}日志聚类pattern告警恢复\n索引集名称:{index_set_name}\n\nsignature:{signature}\n"
-            "pattern:{pattern}\n{{{{alarm.detail_url}}}}".format(
+    def _generate_recover_template(
+        cls, index_set_name, signature, pattern="", strategy_type=StrategiesType.NORMAL_STRATEGY
+    ):
+        recover_template = ""
+        if strategy_type == StrategiesType.NORMAL_STRATEGY:
+            recover_template = DEFAULT_PATTERN_RECOVER_MSG.format(
                 index_set_name=index_set_name, signature=signature, pattern=pattern
             )
-        )
+        if strategy_type == StrategiesType.NEW_CLS_strategy:
+            recover_template = NEW_CLS_PATTERN_RECOVER_MSG.format(index_set_name=index_set_name)
         return recover_template
+
+    @classmethod
+    def _generate_query_config(
+        cls, index_set_id, table_id, log_level="", metric="", signature="", strategy_type=StrategiesType.NORMAL_STRATEGY
+    ):
+        query_config = []
+        if strategy_type == StrategiesType.NORMAL_STRATEGY:
+            query_config = [
+                {
+                    "data_source_label": DEFAULT_DATA_SOURCE_LABEL,
+                    "data_type_label": DEFAULT_DATA_TYPE_LABEL,
+                    "alias": DEFAULT_EXPRESSION,
+                    "metric_id": "bk_log_search.index_set.{}".format(index_set_id),
+                    "functions": [],
+                    "query_string": '{}_{}: "{}"'.format(AGGS_FIELD_PREFIX, log_level, signature),
+                    "result_table_id": table_id,
+                    "index_set_id": index_set_id,
+                    "agg_interval": DEFAULT_AGG_INTERVAL,
+                    "agg_dimension": [],
+                    "agg_condition": [],
+                    "time_field": DEFAULT_TIME_FIELD,
+                    "name": table_id,
+                }
+            ]
+        if strategy_type == StrategiesType.NEW_CLS_strategy:
+            query_config = [
+                {
+                    "data_source_label": DEFAULT_DATA_SOURCE_LABEL_BKDATA,
+                    "data_type_label": DEFAULT_DATA_TYPE_LABEL_BKDATA,
+                    "alias": DEFAULT_EXPRESSION,
+                    "metric_id": "bk_data.{table_id}.{metric}".format(table_id=table_id, metric=metric),
+                    "functions": [],
+                    "result_table_id": table_id,
+                    "agg_method": DEFAULT_AGG_METHOD_BKDATA,
+                    "agg_interval": DEFAULT_AGG_INTERVAL,
+                    "agg_dimension": [metric],
+                    "agg_condition": [],
+                    "metric_field": metric,
+                    "unit": "",
+                    "time_field": DEFAULT_TIME_FIELD,
+                    "name": table_id,
+                }
+            ]
+        return query_config
+
+    @classmethod
+    def _generate_name(cls, index_set_name, signature="", strategy_type=StrategiesType.NORMAL_STRATEGY):
+        if strategy_type == StrategiesType.NORMAL_STRATEGY:
+            return "{}_signature_{}".format(index_set_name, signature)
+        if strategy_type == StrategiesType.NEW_CLS_strategy:
+            return "{}_new_cls".format(index_set_name)

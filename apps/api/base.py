@@ -272,7 +272,7 @@ class DataAPI(object):
                     raw_response = self._send(params, timeout, request_id, request_cookies)
             except ReadTimeout as e:
                 raise DataAPIException(self, self.get_error_message(str(e)))
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=W0703
                 raise DataAPIException(self, self.get_error_message(str(e)))
 
             # http层面的处理结果

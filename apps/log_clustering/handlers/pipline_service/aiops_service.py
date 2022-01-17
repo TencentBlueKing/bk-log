@@ -43,7 +43,11 @@ from apps.log_clustering.components.collections.data_access_component import (
     SyncBkdataEtl,
     AddProjectData,
 )
-from apps.log_clustering.components.collections.flow_component import CreatePreTreatFlow, CreateAfterTreatFlow
+from apps.log_clustering.components.collections.flow_component import (
+    CreatePreTreatFlow,
+    CreateAfterTreatFlow,
+    CreateNewClsStrategy,
+)
 from apps.log_clustering.components.collections.sample_set_component import (
     CreateSampleSet,
     AddRtToSampleSet,
@@ -124,6 +128,8 @@ class AiopsService(BasePipeLineService):
             SyncPattern(model_name=model_name).sync_pattern
         ).extend(
             CreateAfterTreatFlow(collector_config_id).create_after_treat_flow
+        ).extend(
+            CreateNewClsStrategy(collector_config_id).create_new_cls_strategy
         ).extend(
             end
         )

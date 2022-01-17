@@ -17,27 +17,25 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.conf import settings
 
-from django.core.management.base import BaseCommand, CommandError
-from apps.log_measure.constants import DATA_NAMES
-from config.domains import MONITOR_APIGATEWAY_ROOT
-from bk_monitor.handler.monitor import BKMonitor
+from celery.task import task
+
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
+from apps.log_clustering.constants import StrategiesType, DEFAULT_METRIC
+from apps.log_clustering.handlers.clustering_monitor import ClusteringMonitorHandler
+from apps.log_clustering.models import ClusteringConfig
 
 
-class Command(BaseCommand):
-    def handle(self, *args, **options):
-        try:
-            bk_monitor_client = BKMonitor(
-                app_id=settings.APP_CODE,
-                app_token=settings.SECRET_KEY,
-                monitor_host=MONITOR_APIGATEWAY_ROOT,
-                report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
-                bk_username="admin",
-                bk_biz_id=settings.BLUEKING_BK_BIZ_ID,
-            )
-            bk_monitor_client.custom_metric().migrate(data_name_list=DATA_NAMES)
-        except Exception as e:  # pylint: disable=W0703
-            raise CommandError(f"custom_metric migrate error: {e}")
-
-        self.stdout.write(self.style.SUCCESS(f"Successfully custom_metric migrate {DATA_NAMES}"))
+@task(ignore_result=True)
+def create_new_cls_strategy(index_set_id):
+    if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
+        return
+    conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
+    bk_biz_id = conf.get("bk_biz_id")
+    clustering_monitor_handler = ClusteringMonitorHandler(index_set_id=index_set_id, bk_biz_id=bk_biz_id)
+    clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
+    table_id = clustering_config.after_treat_flow["judge_new_class"]["result_table_id"]
+    clustering_monitor_handler.save_strategy(
+        table_id=table_id, metric=DEFAULT_METRIC, strategy_type=StrategiesType.NEW_CLS_strategy
+    )

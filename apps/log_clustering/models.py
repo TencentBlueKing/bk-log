@@ -86,15 +86,17 @@ class ClusteringConfig(SoftDeleteModel):
 
 
 class SignatureStrategySettings(SoftDeleteModel):
-    signature = models.CharField(_("数据指纹"), max_length=256, db_index=True)
+    signature = models.CharField(_("数据指纹"), max_length=256, db_index=True, blank=True)
     index_set_id = models.IntegerField(_("索引集id"), db_index=True)
     strategy_id = models.IntegerField(_("监控策略id"), null=True, blank=True)
     enabled = models.BooleanField(_("是否启用"), default=True)
     bk_biz_id = models.IntegerField(_("业务id"))
 
     @classmethod
-    def get_monitor_config(cls, signature):
-        signature_strategy_settings = SignatureStrategySettings.objects.filter(signature=signature).first()
+    def get_monitor_config(cls, signature, index_set_id):
+        signature_strategy_settings = SignatureStrategySettings.objects.filter(
+            signature=signature, index_set_id=index_set_id
+        ).first()
         if not signature_strategy_settings:
             return {
                 "is_active": False,
@@ -106,3 +108,4 @@ class SignatureStrategySettings(SoftDeleteModel):
 class NoticeGroup(SoftDeleteModel):
     index_set_id = models.IntegerField(_("索引集id"), db_index=True)
     notice_group_id = models.IntegerField(_("通知人组id"))
+    bk_biz_id = models.IntegerField(_("业务id"), null=True, blank=True)
