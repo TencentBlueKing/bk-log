@@ -177,7 +177,6 @@ export default {
       this.isToggle = state;
       !state && this.$emit('handleFingerOperate', 'group', this.group);
     },
-    // 初始化分组select数组
     filterGroupList() {
       const filterList = this.totalFields
         .filter(el => el.es_doc_values && !/^__/.test(el.field_name)) // 过滤数据指纹__dist字段

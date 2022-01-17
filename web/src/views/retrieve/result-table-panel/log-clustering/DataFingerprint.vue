@@ -160,8 +160,10 @@
                 :pre-check="() => false">
               </bk-switcher>
             </div>
-            <bk-popover v-if="row.monitor.is_active" content="可去告警策略编辑">
-              <span class="bk-icon icon-edit2 link-color"></span>
+            <bk-popover v-if="row.monitor.is_active" :content="$t('可去告警策略编辑')">
+              <span
+                class="bk-icon icon-edit2 link-color"
+                @click="policyEditing(row.monitor.strategy_id)"></span>
             </bk-popover>
           </div>
         </template>
@@ -391,8 +393,8 @@ export default {
     requestAlarm(alarmList = [], state, callback) {
       if (!alarmList.length) {
         this.$bkMessage({
-          theme: 'primary',
-          message: '已全部开启告警',
+          theme: 'success',
+          message: this.$t('已全部开启告警'),
         });
         return;
       }
@@ -441,6 +443,9 @@ export default {
         .finally(() => {
           this.isRequestAlarm = false;
         });
+    },
+    policyEditing(strategyID) {
+      window.open(`${window.MONITOR_URL}/?bizId=${this.bkBizId}#/strategy-config/edit/${strategyID}`, '_blank');
     },
     handleScroll() {
       if (this.throttle) {

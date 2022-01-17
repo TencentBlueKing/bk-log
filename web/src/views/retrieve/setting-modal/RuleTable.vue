@@ -460,18 +460,15 @@ export default {
         return regexKey === listKey && regexVal === listVal;
       });
     },
-
     handleMenuClick(option, item) {
       copyMessage(Object.values(item)[0]);
     },
-
     generationUUID() {
       const tempUrl = URL.createObjectURL(new Blob());
       const uuid = tempUrl.toString();
       URL.revokeObjectURL(tempUrl);
       return uuid.substr(uuid.lastIndexOf('/') + 1);
     },
-
     resetDetection() {
       this.isDetection = false;
       this.isClickSubmit = false;

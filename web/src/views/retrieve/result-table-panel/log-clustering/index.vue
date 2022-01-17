@@ -300,6 +300,7 @@ export default {
       } = this.globalsData;
       let patternLevel;
       if (clusterLevel && clusterLevel.length > 0) {
+        // 判断奇偶数来取pattern中间值
         if (clusterLevel.length % 2 === 1) {
           patternLevel = (clusterLevel.length + 1) / 2;
         } else {
@@ -435,7 +436,9 @@ export default {
           setList.add(el.monitor.strategy_id);
         }
       });
+      // 获取过滤后的策略ID
       const strategyIDs = [...setList];
+      // 有策略ID时请求标签接口 无策略ID时直接返回
       if (strategyIDs.length) {
         try {
           const res = await this.$http.request('/logClustering/getFingerLabels', {
@@ -447,6 +450,7 @@ export default {
               bk_biz_id: this.bkBizId,
             },
           });
+          // 生成标签对象 key为策略ID 值为标签数组
           const strategyObj = res.data.reduce((pre, cur) => {
             pre[cur.strategy_id] = cur.labels;
             return pre;
