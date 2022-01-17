@@ -29,7 +29,6 @@ from apps.log_databus.handlers.etl_storage.utils.transfer import preview
 
 
 class BkLogRegexpEtlStorage(EtlStorage):
-
     etl_config = EtlConfig.BK_LOG_REGEXP
 
     def etl_preview(self, data, etl_params=None) -> list:
@@ -61,7 +60,7 @@ class BkLogRegexpEtlStorage(EtlStorage):
             del preview_fields[field]
             i += 1
 
-        if len(preview_fields):
+        if len(preview_fields):  # pylint:disable=len-as-condition
             for (field, value) in preview_fields.items():
                 result.append({"field_index": i, "field_name": field, "value": value})
                 i += 1

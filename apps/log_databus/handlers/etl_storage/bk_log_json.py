@@ -53,7 +53,7 @@ class BkLogJsonEtlStorage(EtlStorage):
 
         # 保存删除的字段
         remove_fields = [item["field_name"] for item in fields if item.get("is_delete", False)]
-        if len(remove_fields):
+        if len(remove_fields):  # pylint:disable=len-as-condition
             option["separator_fields_remove"] = ",".join(remove_fields)
 
         if built_in_config.get("option") and isinstance(built_in_config["option"], dict):
