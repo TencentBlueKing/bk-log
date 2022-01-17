@@ -36,7 +36,7 @@ def clean_expired_restore_index_set():
             if expired_restore.index_set_id:
                 index_set_handler = IndexSetHandler(expired_restore.index_set_id)
                 index_set_handler.stop()
-        except Exception as e:  # pylint:disable=bare-except
+        except Exception as e:  # pylint:disable=broad-except
             logger.error(f"clean expired restore ->[{expired_restore.restore_config_id}] index_set failed -> {e}")
             continue
         logger.info(

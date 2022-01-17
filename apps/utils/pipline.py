@@ -63,7 +63,7 @@ class BaseService(Service):
             result = self._execute(data, parent_data)
             if not result:
                 logger.info(_("{name}失败").format(name=self.name))
-        except Exception as err:  # pylint:disable=bare-except
+        except Exception as err:  # pylint:disable=broad-except
             logger.exception(f"[{self.name}]pipeline_id=>{self.root_pipeline_id} node_id=>{self.id} {err}")
             reason = _("[{name}] {reason}").format(name=self.name, reason=str(err))
             data.outputs.ex_data = reason
@@ -95,7 +95,7 @@ class BaseService(Service):
             result = self._schedule(data, parent_data, callback_data)
             if not result:
                 logger.info(_("{name}失败").format(name=self.name))
-        except Exception as err:  # pylint:disable=bare-except
+        except Exception as err:  # pylint:disable=broad-except
             logger.exception(f"[{self.name}]pipeline_id=>{self.root_pipeline_id} node_id=>{self.id} {err}")
             reason = _("[{name}] {reason}").format(name=self.name, reason=str(err))
             logger.error(_("{name}失败: {reason}").format(name=self.name, reason=reason))
