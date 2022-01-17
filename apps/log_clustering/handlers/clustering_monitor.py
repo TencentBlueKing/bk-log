@@ -104,7 +104,10 @@ class ClusteringMonitorHandler(object):
         strategy_type=StrategiesType.NORMAL_STRATEGY,
     ):
         name = self._generate_name(
-            index_set_name=self.index_set.index_set_name, signature=signature, strategy_type=strategy_type
+            index_set_name=self.index_set.index_set_name,
+            signature=signature,
+            strategy_type=strategy_type,
+            pattern_level=pattern_level,
         )
         notice_template = self._generate_notice_template(
             index_set_name=self.index_set.index_set_name,
@@ -258,8 +261,10 @@ class ClusteringMonitorHandler(object):
         return query_config
 
     @classmethod
-    def _generate_name(cls, index_set_name, signature="", strategy_type=StrategiesType.NORMAL_STRATEGY):
+    def _generate_name(
+        cls, index_set_name, signature="", strategy_type=StrategiesType.NORMAL_STRATEGY, pattern_level=""
+    ):
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
-            return "{}_signature_{}".format(index_set_name, signature)
+            return "{}_signature_{}_level_{}".format(index_set_name, signature, pattern_level)
         if strategy_type == StrategiesType.NEW_CLS_strategy:
             return "{}_new_cls".format(index_set_name)
