@@ -75,7 +75,7 @@ class ClusteringMonitorHandler(object):
                 if action["action"] == ActionEnum.DELETE.value:
                     strategy_id = action.get("strategy_id")
                     self.delete_strategy(strategy_id=strategy_id)
-            except Exception as e:  # noqa
+            except Exception as e:  # pylint:disable=bare-except
                 operator_result = False
                 operator_msg = str(e)
                 result = False
