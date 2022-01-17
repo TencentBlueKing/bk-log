@@ -64,7 +64,7 @@ class ClusteringMonitorHandler(object):
                 ClusteringIndexSetNotExistException.MESSAGE.format(index_set_id=self.index_set_id)
             )
 
-    def update_strategies(self, log_level, actions):
+    def update_strategies(self, pattern_level, actions):
         result = True
         operators = []
         for action in actions:
@@ -74,7 +74,7 @@ class ClusteringMonitorHandler(object):
             try:
                 if action["action"] == ActionEnum.CREATE.value:
                     strategy_id = self.save_strategy(
-                        log_level=log_level, signature=action["signature"], pattern=action["pattern"]
+                        pattern_level=pattern_level, signature=action["signature"], pattern=action["pattern"]
                     )["id"]
                 if action["action"] == ActionEnum.DELETE.value:
                     strategy_id = action.get("strategy_id")
@@ -96,7 +96,7 @@ class ClusteringMonitorHandler(object):
 
     def save_strategy(
         self,
-        log_level="",
+        pattern_level="",
         signature="",
         table_id=None,
         pattern="",
@@ -120,7 +120,7 @@ class ClusteringMonitorHandler(object):
         )
         query_config = self._generate_query_config(
             index_set_id=self.index_set_id,
-            log_level=log_level,
+            pattern_level=pattern_level,
             table_id=table_id or self.collector_config.table_id,
             metric=metric,
             signature=signature,
@@ -171,6 +171,7 @@ class ClusteringMonitorHandler(object):
                 "index_set_id": self.index_set_id,
                 "strategy_id": strategy_id,
                 "bk_biz_id": self.bk_biz_id,
+                "pattern_level": pattern_level,
             }
         )
         return strategy
@@ -208,7 +209,13 @@ class ClusteringMonitorHandler(object):
 
     @classmethod
     def _generate_query_config(
-        cls, index_set_id, table_id, log_level="", metric="", signature="", strategy_type=StrategiesType.NORMAL_STRATEGY
+        cls,
+        index_set_id,
+        table_id,
+        pattern_level="",
+        metric="",
+        signature="",
+        strategy_type=StrategiesType.NORMAL_STRATEGY,
     ):
         query_config = []
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
@@ -219,7 +226,7 @@ class ClusteringMonitorHandler(object):
                     "alias": DEFAULT_EXPRESSION,
                     "metric_id": "bk_log_search.index_set.{}".format(index_set_id),
                     "functions": [],
-                    "query_string": '{}_{}: "{}"'.format(AGGS_FIELD_PREFIX, log_level, signature),
+                    "query_string": '{}_{}: "{}"'.format(AGGS_FIELD_PREFIX, pattern_level, signature),
                     "result_table_id": table_id,
                     "index_set_id": index_set_id,
                     "agg_interval": DEFAULT_AGG_INTERVAL,

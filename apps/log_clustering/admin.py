@@ -102,10 +102,10 @@ class ClusteringConfigAdmin(AppModelAdmin):
 @admin.register(SignatureStrategySettings)
 class SignatureStrategySettingsAdmin(AppModelAdmin):
     list_display = ["signature", "index_set_id", "strategy_id", "enabled", "bk_biz_id"]
-    search_fields = ["signature", "index_set_id", "strategy_id", "enabled"]
+    search_fields = ["signature", "index_set_id", "strategy_id", "enabled", "bk_biz_id"]
 
 
 @admin.register(NoticeGroup)
 class NoticeGroupAdmin(AppModelAdmin):
-    list_display = ["index_set_id", "notice_group_id"]
-    search_fields = ["index_set_id", "notice_group_id"]
+    list_display = ["index_set_id", "notice_group_id", "bk_biz_id"]
+    search_fields = ["index_set_id", "notice_group_id", "bk_biz_id"]

@@ -91,11 +91,12 @@ class SignatureStrategySettings(SoftDeleteModel):
     strategy_id = models.IntegerField(_("监控策略id"), null=True, blank=True)
     enabled = models.BooleanField(_("是否启用"), default=True)
     bk_biz_id = models.IntegerField(_("业务id"))
+    pattern_level = models.CharField(_("聚类级别"), max_length=64, null=True, blank=True)
 
     @classmethod
-    def get_monitor_config(cls, signature, index_set_id):
+    def get_monitor_config(cls, signature, index_set_id, pattern_level):
         signature_strategy_settings = SignatureStrategySettings.objects.filter(
-            signature=signature, index_set_id=index_set_id
+            signature=signature, index_set_id=index_set_id, pattern_level=pattern_level
         ).first()
         if not signature_strategy_settings:
             return {
