@@ -99,7 +99,9 @@ class ClusteringMonitorHandler(object):
         metric="",
         strategy_type=StrategiesType.NORMAL_STRATEGY,
     ):
-        name = self._generate_name(index_set_name=self.index_set.index_set_name, signature=signature)
+        name = self._generate_name(
+            index_set_name=self.index_set.index_set_name, signature=signature, strategy_type=strategy_type
+        )
         notice_template = self._generate_notice_template(
             index_set_name=self.index_set.index_set_name,
             signature=signature,
