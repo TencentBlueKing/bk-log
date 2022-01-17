@@ -76,7 +76,7 @@
             :request-data="requestData"
             :config-data="configData"
             :finger-list="fingerList"
-            :is-page-over="fingerPageItem.isPageOver"
+            :is-page-over="isPageOver"
             :all-finger-list="allFingerList"
             :loader-width-list="smallLoaderWidthList"
             @paginationOptions="paginationOptions"
@@ -181,11 +181,9 @@ export default {
         group_by: [],
         size: 10000,
       },
-      fingerPageItem: {
-        isPageOver: false,
-        page: 1,
-        pageSize: 10,
-      },
+      isPageOver: false,
+      fingerPage: 1,
+      fingerPageSize: 50,
       loadingWidthList: { // loading表头宽度列表
         global: [''],
         ignore: [60, 90, 90, ''],
@@ -217,6 +215,9 @@ export default {
     clusteringField() {
       return this.configData?.extra?.clustering_field || '';
     },
+    bkBizId() {
+      return this.$store.state.bkBizId;
+    },
   },
   watch: {
     configData: {
@@ -233,6 +234,8 @@ export default {
         if (this.active === 'dataFingerprint' && val.extra.signature_switch) {
           this.alreadyClickNav.push('dataFingerprint');
           this.requestFinger();
+        } else {
+          this.fingerList = [];
         }
         // 判断是否可以字段提取的全局loading
         this.globalLoading = true;
@@ -250,6 +253,7 @@ export default {
             this.exhibitAll = false;
             return;
           }
+          this.requestData.pattern_level === '' && this.initTable();
           this.exhibitAll = newList.some(el => el.field_type === 'text');
         }
       },
@@ -394,10 +398,12 @@ export default {
         },
       })
         .then(async (res) => {
-          this.fingerPageItem.page = 1;
+          this.fingerPage = 1;
           this.allFingerList = res.data;
-          const sliceFingerList = res.data.slice(0, this.fingerPageItem.pageSize);
-          this.fingerList = await this.getFingerLabelsList(sliceFingerList);
+          this.fingerList = [];
+          const sliceFingerList = res.data.slice(0, this.fingerPageSize);
+          const labelsList = await this.getFingerLabelsList(sliceFingerList);
+          this.fingerList.push(...labelsList);
         })
         .finally(() => {
           this.tableLoading = false;
@@ -407,36 +413,54 @@ export default {
      * @desc: 数据指纹分页操作
      */
     async paginationOptions() {
-      const { isPageOver, page, pageSize } = this.fingerPageItem;
-      if (isPageOver || this.fingerList.length >= this.allFingerList.length) {
+      if (this.isPageOver || this.fingerList.length >= this.allFingerList.length) {
         return;
       }
-      this.fingerPageItem.isPageOver = true;
-      this.fingerPageItem.page += 1;
+      this.isPageOver = true;
+      this.fingerPage += 1;
+      const { fingerPage: page, fingerPageSize: pageSize } = this;
       const sliceFingerList = this.allFingerList.slice(pageSize * (page - 1), pageSize * page);
       const labelsList = await this.getFingerLabelsList(sliceFingerList);
       this.fingerList.push(...labelsList);
-      this.fingerPageItem.isPageOver = false;
+      this.isPageOver = false;
     },
+    /**
+     * @desc: 获取标签列表
+     * @param { Array } fingerList
+     */
     async getFingerLabelsList(fingerList = []) {
-      const strategyIDs = fingerList.map(el => el.monitor.strategy_id);
-      const strategyObj = {};
-      try {
-        const res = await this.$http.request('/logClustering/clusterSearch', {
-          data: {
-            strategy_ids: strategyIDs,
-          },
-        });
-        const preObj = res.data.reduce((pre, cur) => {
-          pre[cur.strategy_id] = cur.labels;
-          return pre;
-        }, {});
-        Object.assign(strategyObj, preObj);
-        return fingerList.map((el) => {
-          el.labels = strategyObj[el.monitor.strategy_id];
-        });
-      } catch (err) {
-        return [];
+      const setList = new Set();
+      fingerList.forEach((el) => {
+        if (el.monitor?.strategy_id) {
+          setList.add(el.monitor.strategy_id);
+        }
+      });
+      const strategyIDs = [...setList];
+      if (strategyIDs.length) {
+        try {
+          const res = await this.$http.request('/logClustering/getFingerLabels', {
+            params: {
+              index_set_id: this.$route.params.indexId,
+            },
+            data: {
+              strategy_ids: strategyIDs,
+              bk_biz_id: this.bkBizId,
+            },
+          });
+          const strategyObj = res.data.reduce((pre, cur) => {
+            pre[cur.strategy_id] = cur.labels;
+            return pre;
+          }, {});
+          const labelsList = fingerList.map((el) => {
+            el.labels = strategyObj[el.monitor.strategy_id];
+            return el;
+          });
+          return labelsList;
+        } catch (error) {
+          return fingerList;
+        }
+      } else {
+        return fingerList;
       }
     },
     updateRequest() {

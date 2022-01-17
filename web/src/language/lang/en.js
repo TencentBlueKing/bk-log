@@ -357,6 +357,8 @@ export default {
   是否关闭该告警: 'Whether to close this alarm',
   是否批量开启告警: 'Whether to enable alarms in batches',
   是否开启该告警: 'Whether to enable this alarm',
+  操作成功: 'Successful operation',
+  部分操作成功: 'Some operations succeeded',
   customizeTips: 'Custom input format: For example, 1h represents one hour, h hour',
   clusterAlert: 'Log clustering must have at least one text type field. Currently, there is no such field type. Please go to log cleaning to set it up.',
   goFingerMessage: 'The current data fingerprint is not enabled, please go to settings',

@@ -145,7 +145,7 @@
         </template>
       </bk-table-column>
 
-      <!-- <bk-table-column
+      <bk-table-column
         v-if="!requestData.group_by.length"
         :label="$t('告警')"
         width="103"
@@ -156,6 +156,7 @@
               <bk-switcher
                 v-model="row.monitor.is_active"
                 theme="primary"
+                :disabled="isRequestAlarm"
                 :pre-check="() => false">
               </bk-switcher>
             </div>
@@ -164,14 +165,17 @@
             </bk-popover>
           </div>
         </template>
-      </bk-table-column> -->
+      </bk-table-column>
 
       <bk-table-column
         :label="$t('标签')"
-        min-width="105">
+        min-width="105"
+        align="center"
+        header-align="center">
         <template slot-scope="{ row }">
-          <div class="fl-ac">
-            <bk-tag v-for="(item,index) of row.labels" :key="index">{{item}}</bk-tag>
+          <div>
+            <span v-if="!row.labels || !row.labels.length">--</span>
+            <bk-tag v-else v-for="(item,index) of row.labels" :key="index">{{item}}</bk-tag>
           </div>
         </template>
       </bk-table-column>
@@ -242,6 +246,7 @@ export default {
       selectSize: 0, // 当前选择几条数据
       isSelectAll: false, // 当前是否点击全选
       selectList: [], // 当前选中的数组
+      isRequestAlarm: false, // 是否正在请求告警接口
     };
   },
   inject: ['addFilterCondition'],
@@ -260,6 +265,9 @@ export default {
         : `${this.$t('fingerTotalData')}
         <span>${this.allFingerList.length}</span>
         ${this.$t('fingerSizeData')}`;
+    },
+    bkBizId() {
+      return this.$store.state.bkBizId;
     },
   },
   watch: {
@@ -294,24 +302,19 @@ export default {
           break;
       }
     },
-
     showArrowsClass(row) {
       if (row.year_on_year_percentage === 0) return '';
       return row.year_on_year_percentage < 0 ? 'icon-arrows-down' : 'icon-arrows-up';
     },
-
     handleShowWhole(index) {
       this.cacheExpandStr.push(index);
     },
-
     handleHideWhole(index) {
       this.cacheExpandStr = this.cacheExpandStr.map(item => item !== index);
     },
-
     handleLeaveCurrent() {
       this.$emit('showSettingLog');
     },
-
     toFixedNumber(value, size) {
       if (typeof value === 'number' && !isNaN(value)) {
         return value.toFixed(size);
@@ -332,8 +335,6 @@ export default {
         scrollEl.removeEventListener('scroll', this.handleScroll, { passive: true });
       }
     },
-
-    // 单选
     handleSelectAlarm(selection) {
       if (this.isSelectAll) { // 全选与非全选时显示选择的数量
         this.selectSize = selection.length + this.allFingerList.length - this.fingerList.length;
@@ -342,8 +343,6 @@ export default {
       }
       this.selectList = selection;
     },
-
-    // 全选
     handleSelectAllAlarm(selection) {
       if (selection.length === 0) {
         this.isSelectAll = false;
@@ -354,73 +353,95 @@ export default {
       this.selectSize = this.allFingerList.length;
       this.selectList = selection;
     },
-
-    // 批量开启告警
     handleBatchUseAlarm() {
       this.$bkInfo({
         title: this.$t('是否批量开启告警'),
         confirmFn: () => {
           const alarmList = this.selectList;
-          if (this.isSelectAll) { // 全选时获取未显示的数据指纹
+          if (this.isSelectAll) {
+            // 全选时获取未显示的数据指纹
             alarmList.concat(this.allFingerList.slice(this.fingerList.length));
           }
-          this.requestAlarm(alarmList, true);
+          // 过滤告警开启状态的元素
+          const notActiveList = alarmList.filter(el => !el.monitor.is_active);
+          this.requestAlarm(notActiveList, true, () => {
+            this.$emit('updateRequest');
+          });
         },
       });
     },
-
-    // 单独开启告警
     handleClickAlarmSwitch(row) {
-      const msg = row.monitor.is_active ?  this.$t('是否关闭该告警') : this.$t('是否开启该告警');
+      const { monitor: { is_active: isActive } } = row;
+      const msg = isActive ?  this.$t('是否关闭该告警') : this.$t('是否开启该告警');
       this.$bkInfo({
         title: msg,
         confirmFn: () => {
-          this.requestAlarm([row], !row.monitor.is_active);
+          this.requestAlarm([row], !isActive, (result) => {
+            result && (row.monitor.is_active = !isActive);
+          });
         },
       });
     },
-
     /**
-     * @description: 数据指纹告警请求
-     * @param { Array } alarmList // 告警数组
-     * @param { Boolean } state // 启用或关闭
-     * @returns {*}
+     * @desc: 数据指纹告警请求
+     * @param { Array } alarmList 告警数组
+     * @param { Boolean } state 启用或关闭
+     * @param { Function } callback 回调函数
      */
-    requestAlarm(alarmList = [], state) {
+    requestAlarm(alarmList = [], state, callback) {
+      if (!alarmList.length) {
+        this.$bkMessage({
+          theme: 'primary',
+          message: '已全部开启告警',
+        });
+        return;
+      }
+
       const action = state ? 'create' : 'delete';
       const actions = alarmList.reduce((pre, cur) => {
         const { signature, pattern, monitor: { strategy_id } } = cur;
-        pre.push({
+        const queryObj = {
           signature,
           pattern,
           strategy_id,
           action,
-        });
+        };
+        !queryObj.strategy_id && delete queryObj.strategy_id;
+        pre.push(queryObj);
         return pre;
       }, []);
+      this.isRequestAlarm = true;
       this.$http.request('/logClustering/updateStrategies', {
         params: {
           index_set_id: this.$route.params.indexId,
         },
         data: {
+          bk_biz_id: this.bkBizId,
           pattern_level: this.requestData.pattern_level,
           actions,
         },
       })
-        .then((res) => {
-          const theme = res.result ? 'primary' : 'error';
-          const message = res.result ? this.$t('操作成功') : this.$t('部分操作成功');
+        .then(({ data: { operators, result } }) => {
+          let theme;
+          let message;
+          if (result) {
+            theme = 'success';
+            message = this.$t('操作成功');
+          } else {
+            theme = this.isSelectAll ? 'warning' : 'error';
+            message = this.isSelectAll ? this.$t('部分操作成功') : operators[0].operator_msg;
+          }
           this.$bkMessage({
             theme,
             message,
+            ellipsisLine: 0,
           });
-          this.$emit('updateRequest');
+          callback(result);
         })
         .finally(() => {
+          this.isRequestAlarm = false;
         });
     },
-
-    // table下拉分页
     handleScroll() {
       if (this.throttle) {
         return;

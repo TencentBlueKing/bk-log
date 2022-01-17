@@ -58,6 +58,11 @@ const updateStrategies = {
   method: 'post',
 };
 
+const getFingerLabels = {
+  url: '/pattern/:index_set_id/labels/',
+  method: 'post',
+};
+
 export {
   getConfig,
   getDefaultConfig,
@@ -66,4 +71,5 @@ export {
   clusterSearch,
   closeClean,
   updateStrategies,
+  getFingerLabels,
 };
