@@ -26,8 +26,11 @@ from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 from apps.api import CmsiApi
 from apps.log_clustering.handlers.dataflow.dataflow_handler import DataFlowHandler
 from apps.log_clustering.models import ClusteringConfig
+from apps.log_clustering.tasks.create_new_cls_strategy import create_new_cls_strategy
+from apps.log_search.models import LogIndexSet
 from apps.utils.function import ignored
 from apps.utils.pipline import BaseService
+from apps.utils.time_handler import DAY
 
 
 class CreatePreTreatFlowService(BaseService):
@@ -120,5 +123,38 @@ class CreateAfterTreatFlow(object):
             component_code="create_after_treat_flow", name=f"create_after_treat_flow:{collector_config_id}"
         )
         self.create_after_treat_flow.component.inputs.collector_config_id = Var(
+            type=Var.SPLICE, value="${collector_config_id}"
+        )
+
+
+class CreateNewClsStrategyService(BaseService):
+    name = _("创建新类策略")
+
+    def inputs_format(self):
+        return [
+            Service.InputItem(name="collector config id", key="collector_config_id", type="int", required=True),
+        ]
+
+    def _execute(self, data, parent_data):
+        collector_config_id = data.get_one_of_inputs("collector_config_id")
+        log_index_set = LogIndexSet.objects.filter(collector_config_id=collector_config_id).first()
+        if log_index_set:
+            # 延迟24h 是为了让新类的出现趋向稳定之后再创建策略 避免疯狂告警的情况
+            create_new_cls_strategy.apply_async(kargs={"index_set_id": log_index_set.index_set_id}, countdown=DAY)
+        return True
+
+
+class CreateNewClsStrategyComponent(Component):
+    name = "CreateNewClsStrategy"
+    code = "create_new_cls_strategy"
+    bound_service = CreateNewClsStrategyService
+
+
+class CreateNewClsStrategy(object):
+    def __init__(self, collector_config_id: int):
+        self.create_new_cls_strategy = ServiceActivity(
+            component_code="create_new_cls_strategy", name=f"create_new_cls_strategy:{collector_config_id}"
+        )
+        self.create_new_cls_strategy.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
