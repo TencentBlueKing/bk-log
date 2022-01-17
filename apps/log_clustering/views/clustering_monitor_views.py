@@ -87,6 +87,6 @@ class ClusteringMonitorViewSet(APIViewSet):
         params = self.params_valid(UpdateStrategiesSerializer)
         return Response(
             ClusteringMonitorHandler(index_set_id=index_set_id, bk_biz_id=params["bk_biz_id"]).update_strategies(
-                log_level=params["pattern_level"], actions=params["actions"]
+                pattern_level=params["pattern_level"], actions=params["actions"]
             )
         )
