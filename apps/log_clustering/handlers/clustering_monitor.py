@@ -36,6 +36,10 @@ from apps.log_clustering.constants import (
     DEFAULT_DATA_SOURCE_LABEL_BKDATA,
     DEFAULT_DATA_TYPE_LABEL_BKDATA,
     DEFAULT_AGG_METHOD_BKDATA,
+    DEFAULT_PATTERN_MONITOR_MSG,
+    NEW_CLS_PATTERN_MONITOR_MSG,
+    DEFAULT_PATTERN_RECOVER_MSG,
+    NEW_CLS_PATTERN_RECOVER_MSG,
 )
 from apps.log_clustering.exceptions import ClusteringIndexSetNotExistException
 from apps.api import MonitorApi
@@ -182,28 +186,11 @@ class ClusteringMonitorHandler(object):
     ):
         notice_template = ""
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
-            notice_template = """{{{{content.level}}}}
-                {{{{content.begin_time}}}}
-                {{{{content.time}}}}
-                {{{{content.duration}}}}
-                {{{{strategy.name}}}}日志聚类pattern告警
-                索引集名称:{index_set_name}
-                signature:{signature}
-                pattern:{pattern}
-                {{{{alarm.detail_url}}}}""".format(
+            notice_template = DEFAULT_PATTERN_MONITOR_MSG.format(
                 index_set_name=index_set_name, signature=signature, pattern=pattern
             )
         if strategy_type == StrategiesType.NEW_CLS_strategy:
-            notice_template = """{{{{content.level}}}}
-                {{{{content.begin_time}}}}
-                {{{{content.time}}}}
-                {{{{content.duration}}}}
-                {{{{strategy.name}}}}日志聚类新类告警
-                索引集名称:{index_set_name}
-                signature:{{{{alarm.dimensions["dimension_name"].display_value}}}}
-                {{{{alarm.detail_url}}}}""".format(
-                index_set_name=index_set_name
-            )
+            notice_template = NEW_CLS_PATTERN_MONITOR_MSG.format(index_set_name=index_set_name)
         return notice_template
 
     @classmethod
@@ -212,28 +199,11 @@ class ClusteringMonitorHandler(object):
     ):
         recover_template = ""
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
-            recover_template = """{{{{content.level}}}}
-                {{{{content.begin_time}}}}
-                {{{{content.time}}}}
-                {{{{content.duration}}}}
-                {{{{strategy.name}}}}日志聚类pattern告警恢复
-                索引集名称:{index_set_name}
-                signature:{signature}
-                pattern:{pattern}
-                {{{{alarm.detail_url}}}}""".format(
+            recover_template = DEFAULT_PATTERN_RECOVER_MSG.format(
                 index_set_name=index_set_name, signature=signature, pattern=pattern
             )
         if strategy_type == StrategiesType.NEW_CLS_strategy:
-            recover_template = """{{{{content.level}}}}
-                {{{{content.begin_time}}}}
-                {{{{content.time}}}}
-                {{{{content.duration}}}}
-                {{{{strategy.name}}}}日志聚类新类告警恢复
-                索引集名称:{index_set_name}
-                signature:{{{{alarm.dimensions["dimension_name"].display_value}}}}
-                {{{{alarm.detail_url}}}}""".format(
-                index_set_name=index_set_name
-            )
+            recover_template = NEW_CLS_PATTERN_RECOVER_MSG.format(index_set_name=index_set_name)
         return recover_template
 
     @classmethod
@@ -282,9 +252,7 @@ class ClusteringMonitorHandler(object):
 
     @classmethod
     def _generate_name(cls, index_set_name, signature="", strategy_type=StrategiesType.NORMAL_STRATEGY):
-        name = ""
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
-            name = "{}_signature_{}".format(index_set_name, signature)
+            return "{}_signature_{}".format(index_set_name, signature)
         if strategy_type == StrategiesType.NEW_CLS_strategy:
-            name = "{}_new_cls".format(index_set_name)
-        return name
+            return "{}_new_cls".format(index_set_name)

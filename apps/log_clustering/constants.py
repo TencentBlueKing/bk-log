@@ -89,9 +89,55 @@ DEFAULT_ACTION_CONFIG = {
     "send_recovery_alarm": False,
 }
 
+DEFAULT_PATTERN_MONITOR_MSG = _(
+    """{{{{content.level}}}}
+{{{{content.begin_time}}}}
+{{{{content.time}}}}
+{{{{content.duration}}}}
+{{{{strategy.name}}}}日志聚类pattern告警
+索引集名称:{index_set_name}
+signature:{signature}
+pattern:{pattern}
+{{{{alarm.detail_url}}}}"""
+)
+
+NEW_CLS_PATTERN_MONITOR_MSG = _(
+    """{{{{content.level}}}}
+{{{{content.begin_time}}}}
+{{{{content.time}}}}
+{{{{content.duration}}}}
+{{{{strategy.name}}}}日志聚类新类告警
+索引集名称:{index_set_name}
+signature:{{{{alarm.dimensions["dimension_name"].display_value}}}}
+{{{{alarm.detail_url}}}}"""
+)
+
+DEFAULT_PATTERN_RECOVER_MSG = _(
+    """{{{{content.level}}}}
+{{{{content.begin_time}}}}
+{{{{content.time}}}}
+{{{{content.duration}}}}
+{{{{strategy.name}}}}日志聚类pattern告警恢复
+索引集名称:{index_set_name}
+signature:{signature}
+pattern:{pattern}
+{{{{alarm.detail_url}}}}"""
+)
+
+NEW_CLS_PATTERN_RECOVER_MSG = _(
+    """{{{{content.level}}}}
+{{{{content.begin_time}}}}
+{{{{content.time}}}}
+{{{{content.duration}}}}
+{{{{strategy.name}}}}日志聚类新类告警恢复
+索引集名称:{index_set_name}
+signature:{{{{alarm.dimensions["dimension_name"].display_value}}}}
+{{{{alarm.detail_url}}}}"""
+)
+
 
 class StrategiesType(object):
-    NEW_CLS_strategy = "now_cls_strategy"
+    NEW_CLS_strategy = "new_cls_strategy"
     NORMAL_STRATEGY = "normal_strategy"
 
 
