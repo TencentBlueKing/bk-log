@@ -22,24 +22,31 @@
 
 <template>
   <span class="log-content-wrapper">
-    <span
+    <text-highlight
       v-if="!isNeedSegment"
-      class="valid-text"
-      @click="handleClick($event, content)">{{ formatterStr(content) }}</span>
-    <template v-else class="segment-content">
-      <span
-        v-for="(item, index) in splitList"
-        :key="index">
+      style="word-break: break-all;"
+      :queries="markList">
+      {{formatterStr(content)}}
+    </text-highlight>
+    <span v-else class="segment-content">
+      <template
+        v-for="(item, index) in splitList">
         <!-- 分割符 -->
-        <span v-if="segmentReg.test(item)">{{item}}</span>
+        <template v-if="segmentReg.test(item)">{{item}}</template>
         <!-- 高亮 -->
         <mark
+          :key="index"
           v-else-if="markList.length && markList.includes(item)"
           @click="handleClick($event, item)">{{item}}</mark>
         <!-- 可操作分词 -->
-        <span v-else class="valid-text" @click="handleClick($event, item)">{{item}}</span>
-      </span>
-    </template>
+        <span
+          :key="index"
+          v-else-if="index < (segmentLimitIndex)"
+          class="valid-text"
+          @click="handleClick($event, item)">{{item}}</span>
+        <template v-else>{{item}}</template>
+      </template>
+    </span>
 
     <div v-show="false">
       <div ref="moreTools" class="event-icons">
@@ -64,7 +71,12 @@
 </template>
 
 <script>
+import TextHighlight from 'vue-text-highlight';
+
 export default {
+  components: {
+    TextHighlight,
+  },
   props: {
     content: {
       type: [String, Number],
@@ -79,8 +91,9 @@ export default {
   data() {
     return {
       curValue: '', // 当前选中分词
-      markList: [], // 高亮
       segmentReg: /([,&*+:;?^=!$<>'"{}()|[\]/\\|\s\r\n\t]|[-])/,
+      segmentLimitIndex: 0, // 分词超出最大数量边界下标
+      limitCount: 256, // 支持分词最大数量
     };
   },
   computed: {
@@ -90,26 +103,43 @@ export default {
     splitList() {
       let value = this.content;
       // 高亮显示
-      const markVal = this.content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
-      this.markList = markVal;
-      if (markVal.length) {
+      if (this.markList.length) {
         value = String(value).replace(/<mark>/g, '')
           .replace(/<\/mark>/g, '');
       }
-      const arr = value.split(this.segmentReg);
-
+      let arr = value.split(this.segmentReg);
+      arr = arr.filter(val => val.length);
+      this.getLimitValidIndex(arr);
       return arr;
+    },
+    markList() {
+      const markVal = this.content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      return markVal;
     },
   },
   beforeDestroy() {
     this.handleDestroy();
   },
   methods: {
+    /**
+     * @desc 获取限制最大分词数下标
+     * @param { Array } list
+     */
+    getLimitValidIndex(list) {
+      let segmentCount = 0;
+      this.segmentLimitIndex = 0;
+      for (let index = 0; index < list.length; index++) {
+        this.segmentLimitIndex += 1;
+        if (!this.segmentReg.test(list[index])) {
+          segmentCount += 1;
+        }
+        if (segmentCount > this.limitCount) break;
+      }
+    },
     formatterStr(content) {
       // 匹配高亮标签
       let value = content;
-      const markVal = content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
-      if (markVal) {
+      if (this.markList.length) {
         value = String(value).replace(/<mark>/g, '')
           .replace(/<\/mark>/g, '');
       }
