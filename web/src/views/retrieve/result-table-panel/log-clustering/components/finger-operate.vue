@@ -20,45 +20,64 @@
   - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
   -->
 <template>
-  <div class="fingerprint fl-sb">
-    <div class="fingerprint-setting fl-sb">
-      <div class="fl-sb">
-        <span>{{$t('同比')}}</span>
-        <bk-select
-          behavior="simplicity"
-          ext-cls="compared-select"
-          ext-popover-cls="compared-select-option"
-          v-model="yearHour"
-          data-test-id="fingerTable_select_selectCustomSize"
-          :disabled="!fingerOperateData.signatureSwitch"
-          :clearable="false"
-          :popover-min-width="140"
-          @change="handleSelectCompared"
-          @toggle="changeCustomizeState(true)">
-          <bk-option
-            v-for="option in fingerOperateData.comparedList"
-            :key="option.id"
-            :id="option.id"
-            :name="option.name">
-          </bk-option>
-          <div slot="" class="compared-customize">
-            <div class="customize-option"
-                 v-if="fingerOperateData.isShowCustomize"
-                 @click="changeCustomizeState(false)">
-              <span>{{$t('自定义')}}</span>
-            </div>
-            <div v-else>
-              <bk-input @enter="handleEnterCompared"></bk-input>
-              <div class="compared-select-icon">
-                <span v-bk-tooltips="$t('customizeTips')" class="top-end">
-                  <i class="log-icon icon-help"></i>
-                </span>
-              </div>
+  <div class="fingerprint-setting fl-sb">
+    <div class="fl-sb">
+      <span>{{$t('分组')}}</span>
+      <bk-select
+        multiple
+        display-tag
+        behavior="simplicity"
+        ext-cls="compared-select"
+        v-model="group"
+        :popover-min-width="180"
+        @toggle="handleSelectGroup">
+        <bk-option
+          v-for="item in fingerOperateData.groupList"
+          :key="item.id"
+          :id="item.id"
+          :name="item.name">
+        </bk-option>
+      </bk-select>
+    </div>
+
+    <div class="fl-sb">
+      <span>{{$t('同比')}}</span>
+      <bk-select
+        behavior="simplicity"
+        ext-cls="compared-select"
+        ext-popover-cls="compared-select-option"
+        v-model="yearOnYearHour"
+        data-test-id="fingerTable_select_selectCustomSize"
+        :disabled="!fingerOperateData.signatureSwitch"
+        :clearable="false"
+        :popover-min-width="140"
+        @change="handleSelectCompared"
+        @toggle="changeCustomizeState(true)">
+        <bk-option
+          v-for="option in fingerOperateData.comparedList"
+          :key="option.id"
+          :id="option.id"
+          :name="option.name">
+        </bk-option>
+        <div slot="" class="compared-customize">
+          <div class="customize-option"
+               v-if="fingerOperateData.isShowCustomize"
+               @click="changeCustomizeState(false)">
+            <span>{{$t('自定义')}}</span>
+          </div>
+          <div v-else>
+            <bk-input @enter="handleEnterCompared"></bk-input>
+            <div class="compared-select-icon">
+              <span v-bk-tooltips="$t('customizeTips')" class="top-end">
+                <i class="log-icon icon-help"></i>
+              </span>
             </div>
           </div>
-        </bk-select>
-      </div>
+        </div>
+      </bk-select>
+    </div>
 
+    <div class="is-near24">
       <bk-checkbox
         v-model="isNear24"
         data-test-id="fingerTable_checkBox_selectCustomSize"
@@ -66,23 +85,36 @@
         :false-value="false"
         :disabled="!fingerOperateData.signatureSwitch"
         @change="handleShowNearPattern">
-        <span style="font-size: 12px">{{$t('近24H新增')}}</span>
       </bk-checkbox>
-
-      <div class="partter fl-sb" style="width: 200px">
-        <span>Partter</span>
-        <div class="partter-slider-box fl-sb">
-          <span>{{$t('少')}}</span>
-          <bk-slider
-            class="partter-slider"
-            v-model="partterSize"
-            data-test-id="fingerTable_slider_patterSize"
-            :show-tip="false"
-            :disable="!fingerOperateData.signatureSwitch"
-            :max-value="fingerOperateData.sliderMaxVal"
-            @change="handleChangePartterSize"></bk-slider>
-          <span>{{$t('多')}}</span>
+      <span>{{$t('近24H新增')}}</span>
+      <!-- <bk-popover
+        :trigger="trigger"
+        theme="light">
+        <span style="border-bottom: 1px dashed #000">{{$t('近24H新增')}}</span>
+        <div slot="content" class="alarm-content">
+          <span>是否要告警</span>
+          <bk-switcher
+            theme="primary"
+            size="small"
+            v-model="alarmSwitch">
+          </bk-switcher>
         </div>
+      </bk-popover> -->
+    </div>
+
+    <div class="partter fl-sb" style="width: 200px">
+      <span>Partter</span>
+      <div class="partter-slider-box fl-sb">
+        <span>{{$t('少')}}</span>
+        <bk-slider
+          class="partter-slider"
+          v-model="partterSize"
+          data-test-id="fingerTable_slider_patterSize"
+          :show-tip="false"
+          :disable="!fingerOperateData.signatureSwitch"
+          :max-value="fingerOperateData.sliderMaxVal"
+          @change="handleChangePartterSize"></bk-slider>
+        <span>{{$t('多')}}</span>
       </div>
     </div>
   </div>
@@ -99,24 +131,36 @@ export default {
       type: Object,
       require: true,
     },
+    totalFields: {
+      type: Array,
+      require: true,
+    },
   },
   data() {
     return {
+      trigger: 'click',
+      alarmSwitch: true,
+      group: [], // 当前选择分组的值
+      isToggle: false, // 当前是否显示分组下拉框
+      partterSize: '09',
+      yearOnYearHour: 0,
     };
   },
-  computed: {
-    isNear24() {
-      return this.fingerOperateData.isNear24;
-    },
-    partterSize: {
-      get() {
-        return this.fingerOperateData.partterSize;
+  watch: {
+    group: {
+      deep: true,
+      handler(list) {
+        // 分组列表未展开时数组变化则发送请求
+        if (!this.isToggle) {
+          this.$emit('handleFingerOperate', 'group', list);
+        }
       },
-      set() {},
     },
-    yearHour() {
-      return this.requestData.year_on_year_hour;
-    },
+  },
+  mounted() {
+    this.group = this.requestData.group_by;
+    this.partterSize = this.fingerOperateData.partterSize;
+    this.yearOnYearHour = this.requestData.year_on_year_hour;
   },
   methods: {
     handleSelectCompared(newVal) {
@@ -134,28 +178,28 @@ export default {
     changeCustomizeState(val) {
       this.$emit('handleFingerOperate', 'customize', val);
     },
+    handleSelectGroup(state) {
+      this.isToggle = state;
+      !state && this.$emit('handleFingerOperate', 'group', this.group);
+    },
   },
 };
 </script>
 <style lang="scss">
-  @import '@/scss/mixins/flex.scss';
+@import '@/scss/mixins/flex.scss';
 
-  .fingerprint-setting {
-    width: 485px;
-    height: 24px;
-    line-height: 24px;
-    font-size: 12px;
+.fingerprint-setting {
+  width: 700px;
+  height: 24px;
+  line-height: 24px;
+  font-size: 12px;
 
-    .partter {
-      width: 200px;
+  .is-near24 {
+    @include flex-center;
 
-      .partter-slider-box {
-        width: 154px;
-      }
-
-      .partter-slider {
-        width: 114px;
-      }
+    span {
+      margin-left: 4px;
+      cursor: pointer;
     }
   }
 
@@ -168,45 +212,83 @@ export default {
     .bk-select-name {
       height: 24px;
     }
-  }
 
-  .compared-select-option {
-    .compared-customize {
-      position: relative;
-      margin-bottom: 6px;
-    }
-
-    .compared-select-icon {
-      font-size: 14px;
-      position: absolute;
-      right: 18px;
-      top: 2px;
-    }
-
-    .customize-option {
-      padding: 0 18px;
-      cursor: pointer;
-
-      &:hover {
-        color: #3a84ff;
-        background: #eaf3ff;
-      }
-    }
-
-    .bk-form-control {
-      width: 80%;
-      margin: 0 auto;
-    }
-
-    .bk-form-input {
-      /* stylelint-disable-next-line declaration-no-important */
-      padding: 0 18px 0 10px !important;
+    .bk-select-tag-container {
+      height: 24px;
+      min-height: 24px;
+      max-width: 170px;
     }
   }
 
-  .fl-sb {
-    align-items: center;
+  .partter {
+    width: 200px;
 
-    @include flex-justify(space-between);
+    .partter-slider-box {
+      width: 154px;
+    }
+
+    .partter-slider {
+      width: 114px;
+    }
   }
+}
+
+.compared-select-option {
+  .compared-customize {
+    position: relative;
+    top: -3px;
+
+    .bk-select-name {
+      height: 24px;
+    }
+  }
+}
+
+.compared-select-option {
+  .compared-customize {
+    position: relative;
+    margin-bottom: 6px;
+  }
+
+  .compared-select-icon {
+    font-size: 14px;
+    position: absolute;
+    right: 18px;
+    top: 2px;
+  }
+
+  .customize-option {
+    padding: 0 18px;
+    cursor: pointer;
+
+    &:hover {
+      color: #3a84ff;
+      background: #eaf3ff;
+    }
+  }
+
+  .bk-form-control {
+    width: 80%;
+    margin: 0 auto;
+  }
+
+  .bk-form-input {
+    /* stylelint-disable-next-line declaration-no-important */
+    padding: 0 18px 0 10px !important;
+  }
+}
+
+.alarm-content {
+  @include flex-center;
+
+  span {
+    margin: -2px 4px 0 0;
+  }
+}
+
+.fl-sb {
+  align-items: center;
+
+  @include flex-justify(space-between);
+}
 </style>

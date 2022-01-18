@@ -17,51 +17,25 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.utils.translation import ugettext_lazy as _
 
-from apps.exceptions import BaseException, ErrorCode
+from celery.task import task
 
-
-# =================================================
-# 日志聚类模块
-# =================================================
-
-
-class BaseClusteringException(BaseException):
-    MODULE_CODE = ErrorCode.BKLOG_CLUSTERING
-    MESSAGE = _("日志聚类模块异常")
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
+from apps.log_clustering.constants import StrategiesType, DEFAULT_METRIC
+from apps.log_clustering.handlers.clustering_monitor import ClusteringMonitorHandler
+from apps.log_clustering.models import ClusteringConfig
 
 
-class ClusteringClosedException(BaseClusteringException):
-    ERROR_CODE = "001"
-    MESSAGE = _("聚类未开放")
-
-
-class NodeConfigException(BaseClusteringException):
-    ERROR_CODE = "002"
-    MESSAGE = _("获取node config异常{steps}")
-
-
-class NotSupportStepNameQueryException(BaseClusteringException):
-    ERROR_CODE = "003"
-    MESSAGE = _("不支持的step_name状态获取: {step_name}")
-
-
-class EvaluationStatusResponseException(BaseClusteringException):
-    ERROR_CODE = "004"
-    MESSAGE = _("evaluation_status返回异常: {evaluation_status}")
-
-
-class ClusteringConfigNotExistException(BaseClusteringException):
-    ERROR_CODE = "005"
-    MESSAGE = _("聚类配置不存在")
-
-
-class ClusteringConfigStrategyException(BaseClusteringException):
-    ERROR_CODE = "006"
-    MESSAGE = _("聚类配置对应告警策略错误: {index_set_id}")
-
-
-class ClusteringIndexSetNotExistException(BaseClusteringException):
-    ERROR_CODE = "007"
-    MESSAGE = _("聚类配置对应索引集不存在: {index_set_id}")
+@task(ignore_result=True)
+def create_new_cls_strategy(index_set_id):
+    if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
+        return
+    conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
+    bk_biz_id = conf.get("bk_biz_id")
+    clustering_monitor_handler = ClusteringMonitorHandler(index_set_id=index_set_id, bk_biz_id=bk_biz_id)
+    clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
+    table_id = clustering_config.after_treat_flow["judge_new_class"]["result_table_id"]
+    clustering_monitor_handler.save_strategy(
+        table_id=table_id, metric=DEFAULT_METRIC, strategy_type=StrategiesType.NEW_CLS_strategy
+    )

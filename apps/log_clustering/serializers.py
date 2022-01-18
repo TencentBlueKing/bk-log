@@ -19,7 +19,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from rest_framework import serializers
 
-from apps.log_clustering.constants import PatternEnum, AGGS_FIELD_PREFIX, DEFULT_FILTER_NOT_CLUSTERING_OPERATOR
+from apps.log_clustering.constants import (
+    PatternEnum,
+    AGGS_FIELD_PREFIX,
+    DEFULT_FILTER_NOT_CLUSTERING_OPERATOR,
+    ActionEnum,
+)
 
 
 class PatternSearchSerlaizer(serializers.Serializer):
@@ -86,3 +91,23 @@ class ClusteringPreviewSerializer(serializers.Serializer):
     delimeter = serializers.CharField()
     max_log_length = serializers.IntegerField()
     is_case_sensitive = serializers.IntegerField()
+
+
+class GetLabelsSerializer(serializers.Serializer):
+    strategy_ids = serializers.ListField(child=serializers.IntegerField())
+    bk_biz_id = serializers.IntegerField()
+
+
+class UpdateStrategyAction(serializers.Serializer):
+    signature = serializers.CharField()
+    pattern = serializers.CharField(allow_blank=True, allow_null=True)
+    strategy_id = serializers.IntegerField(required=False)
+    action = serializers.ChoiceField(required=True, choices=ActionEnum.get_choices())
+    operator = serializers.CharField(required=False)
+    value = serializers.CharField(required=False)
+
+
+class UpdateStrategiesSerializer(serializers.Serializer):
+    pattern_level = serializers.ChoiceField(required=True, choices=PatternEnum.get_choices())
+    bk_biz_id = serializers.IntegerField()
+    actions = serializers.ListField(child=UpdateStrategyAction())

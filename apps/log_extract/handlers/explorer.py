@@ -377,7 +377,7 @@ class ExplorerHandler(object):
             topo["parents"] = parents.copy()
             user_topo.append(topo)
             return
-        if len(topo["children"]) and topo["bk_obj_id"] != "module":
+        if len(topo["children"]) and topo["bk_obj_id"] != "module":  # pylint:disable=len-as-condition
             for child in topo["children"]:
                 cls.get_user_topo(child, user_topo, auth_info, parents=parents)
         # 递归结束后把自己节点pop出去

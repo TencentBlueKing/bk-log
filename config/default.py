@@ -177,6 +177,7 @@ CELERY_IMPORTS = (
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
     "apps.log_clustering.tasks.sync_pattern",
+    "apps.log_clustering.tasks.create_new_cls_strategy",
 )
 
 # load logging settings

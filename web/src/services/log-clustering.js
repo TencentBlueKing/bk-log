@@ -53,6 +53,16 @@ const closeClean = {
   method: 'post',
 };
 
+const updateStrategies = {
+  url: '/clustering_monitor/:index_set_id/update_strategies/',
+  method: 'post',
+};
+
+const getFingerLabels = {
+  url: '/pattern/:index_set_id/labels/',
+  method: 'post',
+};
+
 export {
   getConfig,
   getDefaultConfig,
@@ -60,4 +70,6 @@ export {
   preview,
   clusterSearch,
   closeClean,
+  updateStrategies,
+  getFingerLabels,
 };
