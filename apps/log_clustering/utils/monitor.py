@@ -48,7 +48,7 @@ class MonitorUtils(object):
 
     @classmethod
     def get_or_create_notice_group(cls, collector_config_id, log_index_set_id, bk_biz_id):
-        notice_group = NoticeGroup.objects.filter(index_set_id=log_index_set_id).first()
+        notice_group = NoticeGroup.objects.filter(index_set_id=log_index_set_id, bk_biz_id=bk_biz_id).first()
         if notice_group:
             return notice_group.notice_group_id
         collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
@@ -56,12 +56,12 @@ class MonitorUtils(object):
         notice_receiver = cls.generate_notice_receiver(receivers=maintainers, notice_tye=DEFAULT_NOTIFY_RECEIVER_TYPE)
         group = cls.save_notice_group(
             bk_biz_id=bk_biz_id,
-            name=_("{}运维人员").format(collector_config.collector_config_name),
+            name=_("{}_{}运维人员").format(bk_biz_id, collector_config.collector_config_name),
             message="",
             notice_receiver=notice_receiver,
             notice_way=DEFAULT_NOTICE_WAY,
         )
-        NoticeGroup.objects.create(index_set_id=log_index_set_id, notice_group_id=group["id"])
+        NoticeGroup.objects.create(index_set_id=log_index_set_id, notice_group_id=group["id"], bk_biz_id=bk_biz_id)
         return group["id"]
 
     @classmethod

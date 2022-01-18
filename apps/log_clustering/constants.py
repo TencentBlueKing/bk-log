@@ -62,12 +62,16 @@ DEFAULT_NOTICE_WAY = {"3": ["rtx"], "2": ["rtx"], "1": ["rtx"]}
 DEFAULT_NO_DATA_CONFIG = {"level": 2, "continuous": 10, "is_enabled": False, "agg_dimension": []}
 DEFAULT_EXPRESSION = "a"
 DEFAULT_DATA_SOURCE_LABEL = "bk_log_search"
+DEFAULT_DATA_SOURCE_LABEL_BKDATA = "bk_data"
 DEFAULT_DATA_TYPE_LABEL = "log"
+DEFAULT_DATA_TYPE_LABEL_BKDATA = "time_series"
+DEFAULT_AGG_METHOD_BKDATA = "COUNT"
 DEFAULT_AGG_INTERVAL = 60
 DEFAULT_TIME_FIELD = "dtEventTimeStamp"
 DEFAULT_ALGORITHMS = [
-    {"type": "Threshold", "level": 1, "config": [[{"method": "gte", "threshold": 1}]], "unit_prefix": ""}
+    {"type": "Threshold", "level": 2, "config": [[{"method": "gte", "threshold": 1}]], "unit_prefix": ""}
 ]
+DEFAULT_METRIC = "signature"
 DEFAULT_DETECTS = [
     {
         "level": 2,
@@ -84,6 +88,57 @@ DEFAULT_ACTION_CONFIG = {
     "alarm_interval": 1440,
     "send_recovery_alarm": False,
 }
+
+DEFAULT_PATTERN_MONITOR_MSG = _(
+    """{{{{content.level}}}}
+{{{{content.begin_time}}}}
+{{{{content.time}}}}
+{{{{content.duration}}}}
+{{{{strategy.name}}}}日志聚类pattern告警
+索引集名称:{index_set_name}
+signature:{signature}
+pattern:{pattern}
+{{{{alarm.detail_url}}}}"""
+)
+
+NEW_CLS_PATTERN_MONITOR_MSG = _(
+    """{{{{content.level}}}}
+{{{{content.begin_time}}}}
+{{{{content.time}}}}
+{{{{content.duration}}}}
+{{{{strategy.name}}}}日志聚类新类告警
+索引集名称:{index_set_name}
+signature:{{{{alarm.dimensions["dimension_name"].display_value}}}}
+{{{{alarm.detail_url}}}}"""
+)
+
+DEFAULT_PATTERN_RECOVER_MSG = _(
+    """{{{{content.level}}}}
+{{{{content.begin_time}}}}
+{{{{content.time}}}}
+{{{{content.duration}}}}
+{{{{strategy.name}}}}日志聚类pattern告警恢复
+索引集名称:{index_set_name}
+signature:{signature}
+pattern:{pattern}
+{{{{alarm.detail_url}}}}"""
+)
+
+NEW_CLS_PATTERN_RECOVER_MSG = _(
+    """{{{{content.level}}}}
+{{{{content.begin_time}}}}
+{{{{content.time}}}}
+{{{{content.duration}}}}
+{{{{strategy.name}}}}日志聚类新类告警恢复
+索引集名称:{index_set_name}
+signature:{{{{alarm.dimensions["dimension_name"].display_value}}}}
+{{{{alarm.detail_url}}}}"""
+)
+
+
+class StrategiesType(object):
+    NEW_CLS_strategy = "new_cls_strategy"
+    NORMAL_STRATEGY = "normal_strategy"
 
 
 class YearOnYearEnum(ChoicesEnum):

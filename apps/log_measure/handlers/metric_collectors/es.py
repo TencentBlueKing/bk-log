@@ -855,7 +855,7 @@ def query(cluster_id):
                     "url": url,
                 }
             )
-        except Exception as e:
+        except Exception as e:  # pylint:disable=broad-except
             logger.exception(f"request es info error {e}")
             return None
 
@@ -1041,6 +1041,6 @@ class EsMonitor:
                 process_pending_tasks_data(metrics, pending_tasks_url, get_func, base_dimensions)
                 get_index_metrics(metrics, get_func, version, base_dimensions)
                 process_cat_allocation_data(metrics, get_func, version, base_dimensions)
-            except Exception as e:
+            except Exception as e:  # pylint:disable=broad-except
                 logger.exception("failed get es info {}".format(e))
         return metrics

@@ -48,7 +48,7 @@ class UdpHandler(DatagramHandler):
         try:
             msg = self.format(record)
             self.send(msg.encode())
-        except Exception:
+        except Exception:  # pylint:disable=broad-except
             self.handleError(record)
 
 
