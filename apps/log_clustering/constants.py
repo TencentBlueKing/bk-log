@@ -69,7 +69,7 @@ DEFAULT_AGG_METHOD_BKDATA = "COUNT"
 DEFAULT_AGG_INTERVAL = 60
 DEFAULT_TIME_FIELD = "dtEventTimeStamp"
 DEFAULT_ALGORITHMS = [
-    {"type": "Threshold", "level": 1, "config": [[{"method": "gte", "threshold": 1}]], "unit_prefix": ""}
+    {"type": "Threshold", "level": 2, "config": [[{"method": "gte", "threshold": 1}]], "unit_prefix": ""}
 ]
 DEFAULT_METRIC = "signature"
 DEFAULT_DETECTS = [
