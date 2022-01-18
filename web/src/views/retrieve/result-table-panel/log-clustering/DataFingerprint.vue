@@ -28,7 +28,11 @@
       <span
         v-if="selectList.length"
         class="operate-click"
-        @click="handleBatchUseAlarm">{{$t('批量使用告警')}}</span>
+        @click="handleBatchUseAlarm(true)">{{$t('批量使用告警')}}</span>
+      <span
+        v-if="selectList.length"
+        class="operate-click"
+        @click="handleBatchUseAlarm(false)">{{$t('批量停用告警')}}</span>
     </div>
     <bk-table
       data-test-id="cluster_div_fingerTable"
@@ -37,14 +41,18 @@
       ref="fingerTableRef"
       :data="fingerList"
       :outer-border="false"
-      :reserve-selection="true"
-      @select="handleSelectAlarm"
-      @select-all="handleSelectAllAlarm">
+      :reserve-selection="true">
 
       <bk-table-column
         v-if="!requestData.group_by.length"
-        type="selection"
-        width="40">
+        width="50"
+        :render-header="renderHeader">
+        <template slot-scope="{ row }">
+          <bk-checkbox
+            :checked="getCheckedStatus(row)"
+            @change="handleRowCheckChange(row, $event)">
+          </bk-checkbox>
+        </template>
       </bk-table-column>
 
       <bk-table-column :label="$t('数据指纹')" width="150">
@@ -69,7 +77,11 @@
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('占比')" sortable width="96">
+      <bk-table-column
+        :label="$t('占比')"
+        sortable
+        width="96"
+        prop="percentage">
         <template slot-scope="{ row }">
           <span
             class="link-color"
@@ -139,9 +151,12 @@
         :label="$t('分组')"
         class-name="symbol-column">
         <template slot-scope="{ row }">
-          <div class="group-box">
+          <bk-popover theme="light" content="row.group">
             <span>{{row.group}}</span>
-          </div>
+          </bk-popover>
+          <!-- <div class="group-box">
+            <span>{{row.group}}</span>
+          </div> -->
         </template>
       </bk-table-column>
 
@@ -171,14 +186,20 @@
 
       <bk-table-column
         :label="$t('标签')"
-        min-width="105"
+        width="160"
         align="center"
         header-align="center">
         <template slot-scope="{ row }">
-          <div>
-            <span v-if="!row.labels || !row.labels.length">--</span>
-            <bk-tag v-else v-for="(item,index) of row.labels" :key="index">{{item}}</bk-tag>
-          </div>
+          <span v-if="!row.labels || !row.labels.length">--</span>
+          <bk-popover v-else theme="light">
+            <div slot="content">
+              <bk-tag v-for="(item,index) of row.labels" :key="index">{{item}}</bk-tag>
+            </div>
+            <div class="fl-ac omit-box">
+              <bk-tag>{{row.labels[0]}}</bk-tag>
+              <span v-if="row.labels.length >= 2">...</span>
+            </div>
+          </bk-popover>
         </template>
       </bk-table-column>
 
@@ -186,6 +207,12 @@
 
       <template slot="append" v-if="fingerList.length && isPageOver">
         <clustering-loader :width-list="loaderWidthList" />
+      </template>
+
+      <template slot="append" v-if="isShowBottomTips">
+        <div class="bottom-tips">
+          {{$t('allLoadTips')}} <span @click="handleReturnTop">{{$t('返回顶部')}}</span>
+        </div>
       </template>
 
       <div slot="empty">
@@ -206,6 +233,7 @@
 <script>
 import ClusterEventPopover from './components/ClusterEventPopover';
 import ClusteringLoader from '@/skeleton/clustering-loader';
+import fingerSelectColumn from './components/finger-select-column';
 import { copyMessage } from '@/common/util';
 export default {
   components: {
@@ -249,6 +277,7 @@ export default {
       isSelectAll: false, // 当前是否点击全选
       selectList: [], // 当前选中的数组
       isRequestAlarm: false, // 是否正在请求告警接口
+      checkValue: 0, // 0为不选 1为半选 2为全选
     };
   },
   inject: ['addFilterCondition'],
@@ -257,6 +286,7 @@ export default {
       return document.querySelector('.result-scroll-container');
     },
     getTipsMessage() {
+      // 当有选中的元素时显示选中数量及是否批量告警
       return this.selectList.length
         ? `${this.$t('fingerChoose')}
         <span>${this.selectSize}</span>
@@ -271,18 +301,38 @@ export default {
     bkBizId() {
       return this.$store.state.bkBizId;
     },
+    isShowBottomTips() {
+      return this.fingerList.length >= 50 && this.fingerList.length === this.allFingerList.length;
+    },
   },
   watch: {
     'fingerList.length': {
       handler(newLength, oldLength) {
-        if (this.isSelectAll) {
+        // 全选时 分页下拉新增页默认选中
+        if (this.isSelectAll && !this.requestData.group_by.length) {
           this.$nextTick(() => {
-            this.fingerList.slice(oldLength, newLength).forEach((item) => {
-              this.$refs.fingerTableRef.toggleRowSelection(item, true);
-            });
+            this.selectList.push(...this.fingerList.slice(oldLength, newLength));
           });
         }
       },
+    },
+    'selectList.length'(newLength) {
+      // 选择列表数据大小计算
+      if (this.isSelectAll) {
+        this.selectSize = newLength + this.allFingerList.length - this.fingerList.length;
+      } else {
+        this.selectSize = newLength;
+      }
+      // 根据手动选择列表长度来判断全选框显示 全选 半选 不选
+      if (!newLength) {
+        this.checkValue = 0;
+        return;
+      }
+      if (newLength && newLength !== this.fingerList.length) {
+        this.checkValue = 1;
+      } else {
+        this.checkValue = 2;
+      };
     },
   },
   mounted() {
@@ -337,36 +387,29 @@ export default {
         scrollEl.removeEventListener('scroll', this.handleScroll, { passive: true });
       }
     },
-    handleSelectAlarm(selection) {
-      if (this.isSelectAll) { // 全选与非全选时显示选择的数量
-        this.selectSize = selection.length + this.allFingerList.length - this.fingerList.length;
-      } else {
-        this.selectSize = selection.length;
-      }
-      this.selectList = selection;
-    },
-    handleSelectAllAlarm(selection) {
-      if (selection.length === 0) {
-        this.isSelectAll = false;
-        this.selectSize = 0;
-        return;
-      }
-      this.isSelectAll = true;
-      this.selectSize = this.allFingerList.length;
-      this.selectList = selection;
-    },
-    handleBatchUseAlarm() {
+    /**
+     * @desc: 批量开启或者关闭告警
+     * @param { Boolean } option 开启或关闭
+     */
+    handleBatchUseAlarm(option) {
+      const title = option ? this.$t('是否批量开启告警') : this.$t('是否批量关闭告警');
       this.$bkInfo({
-        title: this.$t('是否批量开启告警'),
+        title,
         confirmFn: () => {
-          const alarmList = this.selectList;
+          let alarmList = this.selectList;
           if (this.isSelectAll) {
             // 全选时获取未显示的数据指纹
-            alarmList.concat(this.allFingerList.slice(this.fingerList.length));
+            alarmList = alarmList.concat(this.allFingerList.slice(alarmList.length));
           }
-          // 过滤告警开启状态的元素
-          const notActiveList = alarmList.filter(el => !el.monitor.is_active);
-          this.requestAlarm(notActiveList, true, () => {
+          // 过滤告警开启或者关闭状态的元素
+          let filterList;
+          if (option) {
+            filterList = alarmList.filter(el => !el.monitor.is_active);
+          } else {
+            filterList = alarmList.filter(el => !!el.monitor.is_active);
+          }
+          this.requestAlarm(filterList, option, () => {
+            // 批量成功后刷新数据指纹请求
             this.$emit('updateRequest');
           });
         },
@@ -378,8 +421,12 @@ export default {
       this.$bkInfo({
         title: msg,
         confirmFn: () => {
-          this.requestAlarm([row], !isActive, (result) => {
-            result && (row.monitor.is_active = !isActive);
+          this.requestAlarm([row], !isActive, (result, strategyID) => {
+            // 单次成功后告警状态取反
+            if (result) {
+              row.monitor.is_active = !isActive;
+              row.monitor.strategy_id = strategyID;
+            }
           });
         },
       });
@@ -394,12 +441,13 @@ export default {
       if (!alarmList.length) {
         this.$bkMessage({
           theme: 'success',
-          message: this.$t('已全部开启告警'),
+          message: state ? this.$t('已全部开启告警') : this.$t('已全部关闭告警'),
         });
         return;
       }
 
       const action = state ? 'create' : 'delete';
+      // 组合告警请求数组
       const actions = alarmList.reduce((pre, cur) => {
         const { signature, pattern, monitor: { strategy_id } } = cur;
         const queryObj = {
@@ -424,6 +472,11 @@ export default {
         },
       })
         .then(({ data: { operators, result } }) => {
+          /**
+           * 当操作成功时 统一提示操作成功
+           * 当操作失败时 分批量和单次
+           * 单次显示返回值的提示 批量则显示部分操作成功
+           */
           let theme;
           let message;
           if (result) {
@@ -438,17 +491,18 @@ export default {
             message,
             ellipsisLine: 0,
           });
-          callback(result);
+          callback(result, operators[0].strategy_id);
         })
         .finally(() => {
           this.isRequestAlarm = false;
         });
     },
     policyEditing(strategyID) {
+      // 监控编辑策略跳转
       window.open(`${window.MONITOR_URL}/?bizId=${this.bkBizId}#/strategy-config/edit/${strategyID}`, '_blank');
     },
     handleScroll() {
-      if (this.throttle) {
+      if (this.throttle || this.fingerList.length >= this.allFingerList.length) {
         return;
       }
       const el = document.querySelector('.result-scroll-container');
@@ -460,6 +514,48 @@ export default {
           this.$emit('paginationOptions');
         }, 100);
       }
+    },
+    renderHeader(h) {
+      return h(fingerSelectColumn, {
+        props: {
+          value: this.checkValue,
+          disabled: !this.fingerList.length,
+        },
+        on: {
+          change: this.handleSelectionChange,
+        },
+      });
+    },
+    /**
+     * @desc: 单选操作
+     * @param { Object } row 操作元素
+     * @param { Boolean } state 单选状态
+     */
+    handleRowCheckChange(row, state) {
+      if (state) {
+        this.selectList.push(row);
+      } else {
+        const index = this.selectList.indexOf(row);
+        this.selectList.splice(index, 1);
+      }
+    },
+    getCheckedStatus(row) {
+      return this.selectList.includes(row);
+    },
+    /**
+     * @desc: 全选和全不选操作
+     * @param { Boolean } state 是否全选
+     */
+    handleSelectionChange(state) {
+      this.isSelectAll = state;
+      this.selectSize = state ? this.allFingerList.length : 0;
+      // 先清空数组，如果是全选状态再添加当前已显示的元素
+      this.selectList.splice(0, this.selectList.length);
+      state && this.selectList.push(...this.fingerList);
+    },
+    handleReturnTop() {
+      const el = document.querySelector('.result-scroll-container');
+      el.scrollTop = 0;
     },
   },
 };
@@ -482,16 +578,13 @@ export default {
     border-bottom: 1px solid #dfe0e5;
     @include flex-center;
     .operate-message{
-      margin: -2px 8px 0 0;
+      padding-right: 6px;
       color: #63656E;
-      :first-child {
-        font-size: 14px;
-        font-weight: 700;
-      }
     }
     .operate-click{
       color: #3a84ff;
       cursor: pointer;
+      padding-right: 6px;
     }
   }
   .finger-cluster-table {
@@ -554,6 +647,11 @@ export default {
         background-color: #F0F1F5;
       }
     }
+    .omit-box{
+      span{
+        margin-right: 4px;
+      }
+    }
     .group-box{
       min-height: 40px;
       padding: 8px 0;
@@ -585,6 +683,16 @@ export default {
         border-bottom: none !important;
       }
     }
+  }
+}
+.bottom-tips{
+  height: 43px;
+  line-height: 43px;
+  text-align: center;
+  color: #979BA5;
+  span{
+    color: #3A84FF;
+    cursor: pointer;
   }
 }
 .new-finger {

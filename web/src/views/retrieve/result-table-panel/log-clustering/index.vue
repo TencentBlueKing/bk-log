@@ -173,6 +173,7 @@ export default {
         isNear24: false, // 近24h
         isShowCustomize: true, // 是否显示自定义
         signatureSwitch: false, // 数据指纹开关
+        groupList: [],
       },
       requestData: { // 数据请求
         pattern_level: '',
@@ -254,6 +255,7 @@ export default {
             return;
           }
           this.requestData.pattern_level === '' && this.initTable();
+          // 判断有无text字段 无则不显示日志聚类
           this.exhibitAll = newList.some(el => el.field_type === 'text');
         }
       },
@@ -264,7 +266,6 @@ export default {
         if (newList.length) {
           // 过滤条件变化及当前活跃为数据指纹并且数据指纹打开时才发送请求
           if (this.indexId === this.$route.params.indexId
-          && this.active === 'dataFingerprint'
           && this.fingerOperateData.signatureSwitch) {
             this.requestFinger();
           } else {
@@ -316,6 +317,7 @@ export default {
       Object.assign(this.requestData, {
         pattern_level: clusterLevel[patternLevel - 1],
       });
+      this.filterGroupList();
     },
     /**
      * @desc: 数据指纹操作
@@ -324,22 +326,22 @@ export default {
      */
     handleFingerOperate(operateType, val) {
       switch (operateType) {
-        case 'compared':
+        case 'compared': // 同比操作
           this.requestData.year_on_year_hour = val;
           break;
-        case 'partterSize':
+        case 'partterSize': // patter大小
           this.requestData.pattern_level = val;
           break;
-        case 'isShowNear':
+        case 'isShowNear': // 是否展示近24小时
           this.requestData.show_new_pattern = val;
           break;
-        case 'enterCustomize':
+        case 'enterCustomize': // 自定义同比时常
           this.handleEnterCompared(val);
           break;
-        case 'customize':
+        case 'customize': // 是否展示自定义
           this.fingerOperateData.isShowCustomize = val;
           break;
-        case 'group':
+        case 'group': // 分组操作
           this.requestData.group_by = val;
           break;
         default:
@@ -400,8 +402,8 @@ export default {
       })
         .then(async (res) => {
           this.fingerPage = 1;
-          this.allFingerList = res.data;
           this.fingerList = [];
+          this.allFingerList = res.data;
           const sliceFingerList = res.data.slice(0, this.fingerPageSize);
           const labelsList = await this.getFingerLabelsList(sliceFingerList);
           this.fingerList.push(...labelsList);
@@ -428,6 +430,7 @@ export default {
     /**
      * @desc: 获取标签列表
      * @param { Array } fingerList
+     * @returns { Array } 请求成功时添加labels后的数组
      */
     async getFingerLabelsList(fingerList = []) {
       const setList = new Set();
@@ -438,7 +441,7 @@ export default {
       });
       // 获取过滤后的策略ID
       const strategyIDs = [...setList];
-      // 有策略ID时请求标签接口 无策略ID时直接返回
+      // 有策略ID时请求标签接口 无策略ID时则直接返回
       if (strategyIDs.length) {
         try {
           const res = await this.$http.request('/logClustering/getFingerLabels', {
@@ -455,6 +458,7 @@ export default {
             pre[cur.strategy_id] = cur.labels;
             return pre;
           }, {});
+          // 数据指纹列表添加labels属性
           const labelsList = fingerList.map((el) => {
             el.labels = strategyObj[el.monitor.strategy_id];
             return el;
@@ -466,6 +470,18 @@ export default {
       } else {
         return fingerList;
       }
+    },
+    /**
+     * @desc: 初始化分组select数组
+     */
+    filterGroupList() {
+      const filterList = this.totalFields
+        .filter(el => el.es_doc_values && !/^__/.test(el.field_name)) // 过滤__dist字段
+        .map((item) => {
+          const { field_name: id, field_alias: alias } = item;
+          return { id, name: alias ? `${id}(${alias})` : id };
+        });
+      this.fingerOperateData.groupList = filterList;
     },
     updateRequest() {
       this.requestFinger();

@@ -32,7 +32,7 @@
         :popover-min-width="180"
         @toggle="handleSelectGroup">
         <bk-option
-          v-for="item in groupList"
+          v-for="item in fingerOperateData.groupList"
           :key="item.id"
           :id="item.id"
           :name="item.name">
@@ -140,14 +140,14 @@ export default {
       trigger: 'click',
       alarmSwitch: true,
       group: [], // 当前选择分组的值
-      groupList: [], // 分组列表
-      isToggle: false,
+      isToggle: false, // 当前是否显示分组下拉框
     };
   },
   watch: {
     group: {
       deep: true,
       handler(list) {
+        // 分组列表未展开时数组变化则发送请求
         if (!this.isToggle) {
           this.$emit('handleFingerOperate', 'group', list);
         }
@@ -155,7 +155,7 @@ export default {
     },
   },
   mounted() {
-    this.filterGroupList();
+    this.group = this.requestData.group_by;
   },
   methods: {
     handleSelectCompared(newVal) {
@@ -176,15 +176,6 @@ export default {
     handleSelectGroup(state) {
       this.isToggle = state;
       !state && this.$emit('handleFingerOperate', 'group', this.group);
-    },
-    filterGroupList() {
-      const filterList = this.totalFields
-        .filter(el => el.es_doc_values && !/^__/.test(el.field_name)) // 过滤数据指纹__dist字段
-        .map((item) => {
-          const { field_name: id, field_alias: alias } = item;
-          return { id, name: alias ? `${id}(${alias})` : id };
-        });
-      this.groupList = filterList;
     },
   },
 };
