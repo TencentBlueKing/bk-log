@@ -136,7 +136,7 @@ import { mapGetters } from 'vuex';
 import RepositorySlider from './repository-slider.vue';
 
 export default {
-  name: 'archive-repository',
+  name: 'ArchiveRepository',
   components: {
     RepositorySlider,
   },
@@ -367,16 +367,21 @@ export default {
 
   .log-archive-repository {
     padding: 20px 24px;
+
     .top-operation {
       margin-bottom: 20px;
+
       @include clearfix;
+
       .bk-button {
         width: 120px;
       }
     }
+
     .repository-search {
       width: 320px;
     }
+
     .repository-table {
       .filter-column {
         .cell {

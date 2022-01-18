@@ -118,7 +118,7 @@
               </div>
             </bk-select>
           </bk-form-item>
-          <bk-form-item style="margin-top:40px;">
+          <bk-form-item style="margin-top: 40px;">
             <bk-button
               theme="primary"
               class="king-button mr10"
@@ -356,11 +356,14 @@ export default {
   .archive-slider-content {
     height: calc(100vh - 60px);
     min-height: 394px;
+
     .king-form {
       padding: 10px 0 36px 36px;
+
       .bk-form-item {
         margin-top: 18px;
       }
+
       .bk-select {
         width: 300px;
       }

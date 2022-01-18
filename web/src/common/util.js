@@ -73,7 +73,7 @@ export function unifyObjectStyle(type, payload, options) {
     type = type.type;
   }
 
-  if (NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     if (typeof type !== 'string') {
       console.warn(`expects string as the type, but found ${typeof type}.`);
     }
@@ -602,7 +602,7 @@ export const copyMessage = (val, alertMsg) => {
     input.select();
     document.execCommand('copy');
     document.body.removeChild(input);
-    global.mainComponent.messageSuccess(alertMsg ? alertMsg : global.mainComponent.$t('复制成功'));
+    window.mainComponent.messageSuccess(alertMsg ? alertMsg : window.mainComponent.$t('复制成功'));
   } catch (e) {
     console.warn(e);
   }

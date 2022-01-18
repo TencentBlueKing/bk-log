@@ -374,7 +374,7 @@ store.dispatch = function (_type, _payload, config = {}) {
   const action = { type, payload, config };
   const entry = store._actions[type];
   if (!entry) {
-    if (NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       console.error(`[vuex] unknown action type: ${type}`);
     }
     return;

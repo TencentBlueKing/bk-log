@@ -61,6 +61,7 @@
   </div>
 </template>
 <script lang="ts">
+
 import { Component, Vue, Prop, Model, Emit, Ref } from 'vue-property-decorator'
 import { IPanel } from '../types/selector-type'
 import { Debounce, hasOwnProperty } from '../common/util'
@@ -179,6 +180,7 @@ export default class SelectorTab extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .selector-tab {
     display: flex;
