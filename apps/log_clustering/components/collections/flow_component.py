@@ -30,7 +30,6 @@ from apps.log_clustering.tasks.create_new_cls_strategy import create_new_cls_str
 from apps.log_search.models import LogIndexSet
 from apps.utils.function import ignored
 from apps.utils.pipline import BaseService
-from apps.utils.time_handler import DAY
 
 
 class CreatePreTreatFlowService(BaseService):
@@ -139,8 +138,7 @@ class CreateNewClsStrategyService(BaseService):
         collector_config_id = data.get_one_of_inputs("collector_config_id")
         log_index_set = LogIndexSet.objects.filter(collector_config_id=collector_config_id).first()
         if log_index_set:
-            # 延迟24h 是为了让新类的出现趋向稳定之后再创建策略 避免疯狂告警的情况
-            create_new_cls_strategy.apply_async(kargs={"index_set_id": log_index_set.index_set_id}, countdown=DAY)
+            create_new_cls_strategy(index_set_id=log_index_set.index_set_id)
         return True
 
 

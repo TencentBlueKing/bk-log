@@ -410,7 +410,7 @@ class SearchViewSet(APIViewSet):
         result = search_handler.search()
         result_list = result.get("origin_log_list")
         for item in result_list:
-            output.write(f"{json.dumps(item)}\n")
+            output.write(f"{json.dumps(item, ensure_ascii=False)}\n")
         response = HttpResponse(output.getvalue())
         response["Content-Type"] = "application/x-msdownload"
         file_name = f"bk_log_search_{index}.txt"

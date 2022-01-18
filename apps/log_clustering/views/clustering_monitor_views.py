@@ -90,3 +90,55 @@ class ClusteringMonitorViewSet(APIViewSet):
                 pattern_level=params["pattern_level"], actions=params["actions"]
             )
         )
+
+    @detail_route(methods=["get"], url_path="get_new_cls_strategy")
+    def get_new_cls_strategy(self, request, *args, index_set_id=None, **kwargs):
+        """
+        @api {get} /clustering_monitor/$index_set_id/get_new_cls_strategy 7_聚类告警策略-查询新类告警
+        @apiName get_new_cls_strategy
+        @apiGroup log_clustering
+        @apiSuccessExample {json} 开启新类告警
+        {
+            "message":"",
+            "code":0,
+            "data":{
+                "is_active": true，
+                "strategy_id": 1
+            },
+            "result":true
+        }
+        @apiSuccessExample {json} 未开启聚类
+        {
+            "message":"",
+            "code":0,
+            "data":{
+                "is_active": false，
+                "strategy_id": null
+            },
+            "result":true
+        }
+        """
+        pass
+
+    @detail_route(methods=["post"], url_path="update_new_cls_strategy")
+    def update_new_cls_strategy(self, request, *args, index_set_id=None, **kwargs):
+        """
+        @api {get} /clustering_monitor/$index_set_id/update_new_cls_strategy 8_聚类告警策略-更新新类告警
+        @apiName update_new_cls_strategy
+        @apiGroup log_clustering
+        @apiParam {int} bk_biz_id 业务id
+        @apiParam {Int} [strategy_id] 策略id 当更新与删除的时候必传
+        @apiParam {Str} action  update or create or delete 标识创建或更新
+        @apiParam {Str} [operator] 表达式(暂留)
+        @apiParam {Int} [value] 阈值(暂留)
+        @apiSuccessExample {json} 成功
+        {
+            "message":"",
+            "code":0,
+            "data":{
+                "strategy_id": 1
+            },
+            "result":true
+        }
+        """
+        pass

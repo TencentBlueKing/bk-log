@@ -17,6 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from django.db.transaction import atomic
+
 from apps.log_clustering.constants import (
     DEFAULT_SCENARIO,
     DEFAULT_LABELS,
@@ -37,9 +39,7 @@ from apps.log_clustering.constants import (
     DEFAULT_DATA_TYPE_LABEL_BKDATA,
     DEFAULT_AGG_METHOD_BKDATA,
     DEFAULT_PATTERN_MONITOR_MSG,
-    NEW_CLS_PATTERN_MONITOR_MSG,
     DEFAULT_PATTERN_RECOVER_MSG,
-    NEW_CLS_PATTERN_RECOVER_MSG,
 )
 from apps.log_clustering.exceptions import ClusteringIndexSetNotExistException
 from apps.api import MonitorApi
@@ -94,6 +94,7 @@ class ClusteringMonitorHandler(object):
                 )
         return {"result": result, "operators": operators}
 
+    @atomic
     def save_strategy(
         self,
         pattern_level="",
@@ -103,24 +104,24 @@ class ClusteringMonitorHandler(object):
         metric="",
         strategy_type=StrategiesType.NORMAL_STRATEGY,
     ):
+        signature_strategy_settings = SignatureStrategySettings.objects.create(
+            **{
+                "signature": signature,
+                "index_set_id": self.index_set_id,
+                "strategy_id": None,
+                "bk_biz_id": self.bk_biz_id,
+                "pattern_level": pattern_level,
+                "strategy_type": strategy_type,
+            }
+        )
         name = self._generate_name(
             index_set_name=self.index_set.index_set_name,
-            signature=signature,
-            strategy_type=strategy_type,
-            pattern_level=pattern_level,
-        )
-        notice_template = self._generate_notice_template(
-            index_set_name=self.index_set.index_set_name,
-            signature=signature,
-            pattern=pattern,
             strategy_type=strategy_type,
         )
-        recover_template = self._generate_recover_template(
-            index_set_name=self.index_set.index_set_name,
-            signature=signature,
-            pattern=pattern,
-            strategy_type=strategy_type,
-        )
+        notice_template = DEFAULT_PATTERN_MONITOR_MSG
+        recover_template = DEFAULT_PATTERN_RECOVER_MSG
+        item_name = self._generate_item_name(strategy_type=strategy_type, pattern=pattern)
+
         query_config = self._generate_query_config(
             index_set_id=self.index_set_id,
             pattern_level=pattern_level,
@@ -138,7 +139,7 @@ class ClusteringMonitorHandler(object):
                 "is_enabled": True,
                 "items": [
                     {
-                        "name": name,
+                        "name": item_name,
                         "no_data_config": DEFAULT_NO_DATA_CONFIG,
                         "target": [[]],
                         "expression": DEFAULT_EXPRESSION,
@@ -168,15 +169,8 @@ class ClusteringMonitorHandler(object):
             }
         )
         strategy_id = strategy["id"]
-        SignatureStrategySettings.objects.create(
-            **{
-                "signature": signature,
-                "index_set_id": self.index_set_id,
-                "strategy_id": strategy_id,
-                "bk_biz_id": self.bk_biz_id,
-                "pattern_level": pattern_level,
-            }
-        )
+        signature_strategy_settings.strategy_id = strategy_id
+        signature_strategy_settings.save()
         return strategy
 
     def delete_strategy(self, strategy_id):
@@ -184,31 +178,11 @@ class ClusteringMonitorHandler(object):
         SignatureStrategySettings.objects.filter(strategy_id=strategy_id).delete()
         return strategy_id
 
-    @classmethod
-    def _generate_notice_template(
-        cls, index_set_name, signature, pattern="", strategy_type=StrategiesType.NORMAL_STRATEGY
-    ):
-        notice_template = ""
+    def _generate_item_name(self, strategy_type=StrategiesType.NORMAL_STRATEGY, pattern=""):
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
-            notice_template = DEFAULT_PATTERN_MONITOR_MSG.format(
-                index_set_name=index_set_name, signature=signature, pattern=pattern
-            )
+            return pattern
         if strategy_type == StrategiesType.NEW_CLS_strategy:
-            notice_template = NEW_CLS_PATTERN_MONITOR_MSG.format(index_set_name=index_set_name)
-        return notice_template
-
-    @classmethod
-    def _generate_recover_template(
-        cls, index_set_name, signature, pattern="", strategy_type=StrategiesType.NORMAL_STRATEGY
-    ):
-        recover_template = ""
-        if strategy_type == StrategiesType.NORMAL_STRATEGY:
-            recover_template = DEFAULT_PATTERN_RECOVER_MSG.format(
-                index_set_name=index_set_name, signature=signature, pattern=pattern
-            )
-        if strategy_type == StrategiesType.NEW_CLS_strategy:
-            recover_template = NEW_CLS_PATTERN_RECOVER_MSG.format(index_set_name=index_set_name)
-        return recover_template
+            return
 
     @classmethod
     def _generate_query_config(
@@ -250,7 +224,7 @@ class ClusteringMonitorHandler(object):
                     "result_table_id": table_id,
                     "agg_method": DEFAULT_AGG_METHOD_BKDATA,
                     "agg_interval": DEFAULT_AGG_INTERVAL,
-                    "agg_dimension": [metric],
+                    "agg_dimension": [],
                     "agg_condition": [],
                     "metric_field": metric,
                     "unit": "",
@@ -261,10 +235,8 @@ class ClusteringMonitorHandler(object):
         return query_config
 
     @classmethod
-    def _generate_name(
-        cls, index_set_name, signature="", strategy_type=StrategiesType.NORMAL_STRATEGY, pattern_level=""
-    ):
+    def _generate_name(cls, index_set_name, strategy_type=StrategiesType.NORMAL_STRATEGY, signature_setting_id=None):
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
-            return "{}_signature_{}_level_{}".format(index_set_name, signature, pattern_level)
+            return "{}_{}".format(index_set_name, signature_setting_id)
         if strategy_type == StrategiesType.NEW_CLS_strategy:
-            return "{}_new_cls".format(index_set_name)
+            return "{}_日志聚类24H新类告警".format(index_set_name)
