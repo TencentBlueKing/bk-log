@@ -251,7 +251,7 @@ class ClusteringMonitorHandler(object):
         if action == ActionEnum.CREATE.value:
             strategy = self.create_new_cls_strategy()
             return strategy["id"]
-        if action["action"] == ActionEnum.DELETE.value:
+        if action == ActionEnum.DELETE.value:
             strategy_id = self.delete_strategy(strategy_id=strategy_id)
             return strategy_id
 
