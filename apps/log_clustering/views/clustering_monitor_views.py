@@ -124,7 +124,7 @@ class ClusteringMonitorViewSet(APIViewSet):
         """
         signature_strategy_setting = SignatureStrategySettings.objects.filter(
             index_set_id=index_set_id, strategy_type=StrategiesType.NEW_CLS_strategy
-        )
+        ).first()
         if not signature_strategy_setting:
             return Response({"is_active": False, "strategy_id": None})
         return Response({"is_active": True, "strategy_id": signature_strategy_setting.strategy_id})
