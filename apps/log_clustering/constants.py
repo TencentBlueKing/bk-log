@@ -19,7 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.utils import ChoicesEnum
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
+
+DEFAULT_NEW_CLS_HOURS = 24
 
 CONTENT_PATTERN_INDEX = 1
 LATEST_PUBLISH_STATUS = "latest"
@@ -56,7 +58,7 @@ DEFAULT_PAGE = 1
 MAX_STRATEGY_PAGE_SIZE = 100
 
 DEFAULT_SCENARIO = "other_rt"
-DEFAULT_LABELS = ["log_clustering"]
+DEFAULT_LABEL = [_("日志平台日志聚类告警")]
 DEFAULT_NOTIFY_RECEIVER_TYPE = "user"
 DEFAULT_NOTICE_WAY = {"3": ["rtx"], "2": ["rtx"], "1": ["rtx"]}
 DEFAULT_NO_DATA_CONFIG = {"level": 2, "continuous": 10, "is_enabled": False, "agg_dimension": []}
@@ -71,6 +73,7 @@ DEFAULT_TIME_FIELD = "dtEventTimeStamp"
 DEFAULT_ALGORITHMS = [
     {"type": "Threshold", "level": 2, "config": [[{"method": "gte", "threshold": 1}]], "unit_prefix": ""}
 ]
+DEFAULT_CLUSTERING_ITEM_NAME = _("日志聚类新类(近24H)")
 DEFAULT_METRIC = "signature"
 DEFAULT_DETECTS = [
     {
@@ -89,51 +92,37 @@ DEFAULT_ACTION_CONFIG = {
     "send_recovery_alarm": False,
 }
 
-DEFAULT_PATTERN_MONITOR_MSG = _(
-    """{{{{content.level}}}}
-{{{{content.begin_time}}}}
-{{{{content.time}}}}
-{{{{content.duration}}}}
-{{{{strategy.name}}}}日志聚类pattern告警
-索引集名称:{index_set_name}
-signature:{signature}
-pattern:{pattern}
-{{{{alarm.detail_url}}}}"""
-)
+DEFAULT_PATTERN_MONITOR_MSG = """{{content.level}}
+{{content.begin_time}}
+{{content.time}}
+{{content.duration}}
+{{content.target_type}}
+{{content.data_source}}
+{{content.content}}
+{{content.current_value}}
+{{content.biz}}
+{{content.target}}
+{{content.dimension}}
+{{content.detail}}
+{{content.related_info}}
+{{alarm.detail_url}}
+"""
 
-NEW_CLS_PATTERN_MONITOR_MSG = _(
-    """{{{{content.level}}}}
-{{{{content.begin_time}}}}
-{{{{content.time}}}}
-{{{{content.duration}}}}
-{{{{strategy.name}}}}日志聚类新类告警
-索引集名称:{index_set_name}
-signature:{{{{alarm.dimensions["dimension_name"].display_value}}}}
-{{{{alarm.detail_url}}}}"""
-)
-
-DEFAULT_PATTERN_RECOVER_MSG = _(
-    """{{{{content.level}}}}
-{{{{content.begin_time}}}}
-{{{{content.time}}}}
-{{{{content.duration}}}}
-{{{{strategy.name}}}}日志聚类pattern告警恢复
-索引集名称:{index_set_name}
-signature:{signature}
-pattern:{pattern}
-{{{{alarm.detail_url}}}}"""
-)
-
-NEW_CLS_PATTERN_RECOVER_MSG = _(
-    """{{{{content.level}}}}
-{{{{content.begin_time}}}}
-{{{{content.time}}}}
-{{{{content.duration}}}}
-{{{{strategy.name}}}}日志聚类新类告警恢复
-索引集名称:{index_set_name}
-signature:{{{{alarm.dimensions["dimension_name"].display_value}}}}
-{{{{alarm.detail_url}}}}"""
-)
+DEFAULT_PATTERN_RECOVER_MSG = """{{content.level}}
+{{content.begin_time}}
+{{content.time}}
+{{content.duration}}
+{{content.target_type}}
+{{content.data_source}}
+{{content.content}}
+{{content.current_value}}
+{{content.biz}}
+{{content.target}}
+{{content.dimension}}
+{{content.detail}}
+{{content.related_info}}
+{{alarm.detail_url}}
+"""
 
 
 class StrategiesType(object):

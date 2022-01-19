@@ -26,6 +26,7 @@ from jinja2 import Environment, FileSystemLoader
 from dataclasses import asdict
 
 from apps.api import BkDataDataFlowApi, BkDataAIOPSApi
+from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
@@ -328,6 +329,8 @@ class DataFlowHandler(BaseAiopsHandler):
         collector_config_name_en: str,
         clustering_fields: str = "log",
     ):
+        # 这里是为了在新类中去除
+        new_cls_timestamp = int(arrow.now().shift(hours=DEFAULT_NEW_CLS_HOURS).float_timestamp * 1000)
         all_fields = DataAccessHandler.get_fields(result_table_id=add_uuid_result_table_id)
         is_dimension_fields = [
             field["field_name"] for field in all_fields if field["field_name"] not in NOT_CONTAIN_SQL_FIELD_LIST
@@ -380,7 +383,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 fields="",
                 table_name="after_treat_judge_new_class_{}".format(time_format),
                 result_table_id="{}_after_treat_judge_new_class_{}".format(self.conf.get("bk_biz_id"), time_format),
-                filter_rule="",
+                filter_rule="AND event_time > {}".format(new_cls_timestamp),
             ),
             join_signature=RealTimeCls(
                 fields="",
