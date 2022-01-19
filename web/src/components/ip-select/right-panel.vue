@@ -45,19 +45,24 @@
     </div>
     <transition
       :css="false"
-      @before-enter="beforeEnter" @enter="enter" @after-enter="afterEnter"
-      @before-leave="beforeLeave" @leave="leave" @after-leave="afterLeave" @leave-cancelled="afterLeave">
+      @before-enter="beforeEnter"
+      @enter="enter"
+      @after-enter="afterEnter"
+      @before-leave="beforeLeave"
+      @leave="leave"
+      @after-leave="afterLeave"
+      @leave-cancelled="afterLeave">
       <div class="right-panel-content" v-show="collapse">
         <slot>
-
         </slot>
       </div>
     </transition>
   </div>
 </template>
+
 <script>
 export default {
-  name: 'right-panel',
+  name: 'RightPanel',
   model: {
     prop: 'collapse',
     event: 'change',
@@ -141,6 +146,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss" scoped>
   .right-panel {
     &.need-border {

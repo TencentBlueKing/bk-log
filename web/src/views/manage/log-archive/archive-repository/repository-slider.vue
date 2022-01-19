@@ -220,7 +220,7 @@
                 data-test-id="addNewStorehouse_input_BucketName"></bk-input>
             </bk-form-item>
           </div>
-          <bk-form-item style="margin-top:40px;">
+          <bk-form-item style="margin-top: 40px;">
             <bk-button
               theme="primary"
               class="king-button mr10"
@@ -480,44 +480,57 @@ export default {
 <style lang="scss">
   .repository-slider-content {
     min-height: 394px;
+
     .bk-form.bk-form-vertical {
       padding: 0 0 26px 36px;
+
       .bk-form-content {
         width: 500px;
       }
+
       .bk-form-item {
         margin-top: 12px;
         padding-left: 34px;
       }
+
       .bk-alert {
         width: 500px;
         margin: 10px 0 12px 34px;
       }
+
       .bk-select,
       .bk-date-picker {
         width: 300px;
       }
+
       .es-cluster-item {
         display: flex;
         margin-top: 16px;
+
         .bk-label {
+          /* stylelint-disable-next-line declaration-no-important */
           width: auto !important;
         }
+
         .bk-form-content {
           display: flex;
         }
+
         .bk-select {
           width: 240px;
         }
+
         .es-source {
           margin-left: 10px;
           font-size: 14px;
           color: #63656e;
         }
       }
+
       .repository-item {
         display: inline-block;
       }
+
       .repository-card {
         position: relative;
         float: left;
@@ -531,21 +544,25 @@ export default {
         color: #63656e;
         border: 1px solid #f5f7fa;
         cursor: pointer;
+
         &:last-child {
           margin-right: 0;
         }
+
         &.is-active {
           color: #3a84ff;
           background: #e1ecff;
           border: 1px solid #a3c5fd;
         }
       }
+
       .card-image {
         position: absolute;
         right: 20px;
         bottom: 10px;
       }
     }
+
     .form-title {
       margin: 24px 40px 0 0;
       padding: 0 0 8px 10px;
@@ -555,20 +572,25 @@ export default {
       line-height: 20px;
       border-bottom: 1px solid #dcdee5;
     }
+
     .repository-alert {
       padding-right: 10px;
     }
+
     .principal-item {
       display: flex;
       align-items: center;
+
       .bk-switcher {
         margin-right: 16px;
       }
+
       .bk-form-control {
         flex: 1;
       }
     }
   }
+
   .option-slot-container {
     padding: 8px 0;
     min-height: 32px;

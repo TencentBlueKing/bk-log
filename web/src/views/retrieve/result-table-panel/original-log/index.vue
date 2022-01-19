@@ -42,7 +42,7 @@
           <span class="switch-label">{{ $t('换行') }}</span>
           <bk-switcher v-model="isWrap" theme="primary"></bk-switcher>
         </div>
-        <TimeFormatter v-show="!showOriginalLog"></TimeFormatter>
+        <time-formatter v-show="!showOriginalLog" />
         <div class="operation-icons">
           <export-log
             :retrieve-params="retrieveParams"
@@ -68,7 +68,7 @@
               </div>
             </slot>
             <div slot="content" class="fields-setting-container">
-              <FieldsSetting
+              <fields-setting
                 v-if="showFieldsSetting"
                 :field-alias-map="$attrs.fieldAliasMap"
                 :retrieve-params="retrieveParams"
@@ -85,16 +85,15 @@
       v-on="$listeners"
       :is-wrap="isWrap"
       :show-original="showOriginalLog"
-      :retrieve-params="retrieveParams">
-    </table-log>
+      :retrieve-params="retrieveParams" />
   </div>
 </template>
 
 <script>
 import TimeFormatter from '@/components/common/time-formatter';
-import TableLog from './TableLog.vue';
-import FieldsSetting from '../../result-comp/FieldsSetting';
-import ExportLog from '../../result-comp/ExportLog.vue';
+import TableLog from './table-log.vue';
+import FieldsSetting from '../../result-comp/fields-setting';
+import ExportLog from '../../result-comp/export-log.vue';
 
 export default {
   components: {
@@ -158,62 +157,71 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '@/scss/mixins/flex.scss';
+  @import '@/scss/mixins/flex.scss';
 
-.original-log-panel {
-  .original-log-panel-tools {
-    display: flex;
-    justify-content: space-between;
-  }
-  .tools-more {
-    @include flex-center;
-    .switch-label {
-      margin-right: 2px;
-      color: #63656E;
-      font-size: 12px;
-    }
-  }
-  .operation-icons {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-left: 16px;
-    .operation-icon {
+  .original-log-panel {
+    .original-log-panel-tools {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 32px;
-      height: 32px;
-      margin-left: 10px;
-      cursor: pointer;
-      border: 1px solid #c4c6cc;
-      transition: boder-color .2s;
-      border-radius: 2px;
-      outline: none;
-      &:hover {
-        border-color: #979ba5;
-        transition: boder-color .2s;
-      }
-      &:active {
-        border-color: #3a84ff;
-        transition: boder-color .2s;
-      }
-      .log-icon {
-        width: 16px;
-        font-size: 16px;
-        color: #979ba5;
+      justify-content: space-between;
+    }
+
+    .tools-more {
+      @include flex-center;
+
+      .switch-label {
+        margin-right: 2px;
+        color: #63656e;
+        font-size: 12px;
       }
     }
-    .disabled-icon {
-      background-color: #fff;
-      border-color: #dcdee5;
-      cursor: not-allowed;
-      &:hover,
-      .log-icon {
+
+    .operation-icons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-left: 16px;
+
+      .operation-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 32px;
+        height: 32px;
+        margin-left: 10px;
+        cursor: pointer;
+        border: 1px solid #c4c6cc;
+        transition: boder-color .2s;
+        border-radius: 2px;
+        outline: none;
+
+        &:hover {
+          border-color: #979ba5;
+          transition: boder-color .2s;
+        }
+
+        &:active {
+          border-color: #3a84ff;
+          transition: boder-color .2s;
+        }
+
+        .log-icon {
+          width: 16px;
+          font-size: 16px;
+          color: #979ba5;
+        }
+      }
+
+      .disabled-icon {
+        background-color: #fff;
         border-color: #dcdee5;
-        color: #c4c6cc;
+        cursor: not-allowed;
+
+        &:hover,
+        .log-icon {
+          border-color: #dcdee5;
+          color: #c4c6cc;
+        }
       }
     }
   }
-}
 </style>

@@ -76,6 +76,7 @@
 
 .locker-style {
   section {
+    /* stylelint-disable-next-line declaration-no-important */
     background-color: #313238 !important;
 
     >div:nth-child(1) {

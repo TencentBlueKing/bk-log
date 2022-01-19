@@ -50,11 +50,12 @@
     </template>
   </bk-dialog>
 </template>
+
 <script>
 import axios from 'axios';
 
 export default {
-  name: 'log-version',
+  name: 'LogVersion',
   props: {
     // 是否显示
     dialogShow: Boolean,

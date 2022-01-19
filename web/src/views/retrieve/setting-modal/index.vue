@@ -24,7 +24,7 @@
   <!-- 检索-设置 -->
   <bk-dialog
     width="100%"
-    v-model="isShowDialog"
+    v-model="isDialogVisiable"
     :show-mask="false"
     :close-icon="false"
     :show-footer="false"
@@ -38,7 +38,7 @@
     @after-leave="closePage">
     <div
       class="setting-container"
-      v-if="isShowDialog"
+      v-if="isDialogVisiable"
       data-test-id="clusterSetting_div_settingContainer">
       <div class="setting-title">
         <span>{{$t('retrieveSetting.setting')}}</span>
@@ -48,7 +48,8 @@
       <div class="setting-main">
         <div class="setting-left">
           <div
-            v-for="item of currentList" :key="item.id"
+            v-for="item of currentList"
+            :key="item.id"
             :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
             :data-test-id="`settingContainer_div_select${item.id}`"
             @click="handleNavClick(item)">
@@ -72,7 +73,9 @@
               <p><span>{{$t('索引')}}：</span>{{showResultTableID}}</p>
               <p><span>{{$t('来源')}}：</span>{{indexSetItem.scenario_name}}</p>
             </div>
-            <div style="color: #3A84FF; cursor: pointer;" @click="handleClickDetail">
+            <div
+              style="color: #3a84ff; cursor: pointer;"
+              @click="handleClickDetail">
               {{$t('retrieveSetting.moreDetails')}}
               <span class="log-icon icon-lianjie"></span>
             </div>
@@ -90,8 +93,7 @@
               :clean-config="cleanConfig"
               @resetPage="resetPage"
               @updateLogFields="updateLogFields"
-              @debugRequestChange="debugRequestChange"
-            ></component>
+              @debugRequestChange="debugRequestChange" />
           </div>
         </div>
       </div>
@@ -100,9 +102,9 @@
 </template>
 
 <script>
-import FullTextIndex from './FullTextIndex';
-import LogCluster from './LogCluster';
-import FieldExtraction from './FieldExtraction';
+import FullTextIndex from './full-text-index';
+import LogCluster from './log-cluster';
+import FieldExtraction from './field-extraction';
 
 export default {
   components: {
@@ -168,6 +170,9 @@ export default {
     };
   },
   computed: {
+    isDialogVisiable() {
+      return this.isShowDialog;
+    },
     globalEditable() {
       return this.currentList.find(el => el.id === this.currentChoice)?.isEditable;
     },
@@ -188,7 +193,7 @@ export default {
     },
   },
   watch: {
-    isShowDialog(val) {
+    isDialogVisiable(val) {
       val && this.handleMenuStatus();
     },
   },
@@ -314,7 +319,7 @@ export default {
     handleClickDetail() {
       const { extra: { collector_config_id: collectorID, collector_scenario_id: scenarioID } } = this.cleanConfig;
       if (!collectorID) return;
-      const projectId =  window.localStorage.getItem('project_id');
+      const projectId = window.localStorage.getItem('project_id');
       const jumpUrl = scenarioID === 'custom'
         ? `/#/manage/custom-report/detail/${collectorID}?projectId=${projectId}`
         : `/#/manage/log-collection/collection-item/manage/${collectorID}?projectId=${projectId}`;
@@ -331,102 +336,118 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-/deep/.bk-dialog-body{
-  background-color: #F5F6FA;
-  overflow: hidden;
-  padding: 0;
-}
-/deep/.bk-dialog-tool{
-  display: none;
-}
-
-@mixin container-shadow(){
-  background: #FFFFFF;
-  border-radius: 2px;
-  box-shadow: 0px 2px 4px 0px rgba(25,25,41,0.05);
-}
-
-.setting-container{
-  height: calc(100vh - 52px);
-  overflow-y: auto;
-  min-width: 1460px;
-  display: flex;
-  justify-content: center;
-  .setting-title{
-    width: calc(100vw + 12px);
-    height: 52px;
-    min-width: 1460px;
-    line-height: 52px;
-    font-size: 16px;
-    text-align: center;
-    position: fixed;
-    z-index: 99;
-    background-color: #FFFFFF;
-    border-bottom: 1px solid #DCDEE5;
-    // box-shadow:0 3px 6px #DEE0E7 ;
-    .bk-icon {
-      font-size: 32px;
-      cursor: pointer;
-      position: absolute;
-      top: 10px;
-      right: 24px;
-    }
+  /deep/.bk-dialog-body {
+    background-color: #f5f6fa;
+    overflow: hidden;
+    padding: 0;
   }
-  .setting-main{
-    padding: 72px 40px 0;
+
+  /deep/.bk-dialog-tool {
+    display: none;
+  }
+
+  @mixin container-shadow() {
+    background: #fff;
+    border-radius: 2px;
+    box-shadow: 0px 2px 4px 0px rgba(25, 25, 41, .05);
+  }
+
+  .setting-container {
+    height: calc(100vh - 52px);
+    overflow-y: auto;
+    min-width: 1460px;
     display: flex;
-    position: relative;
-    .setting-left{
-      min-width: 240px;
-      height: 365px;
-      padding-top:4px;
-      .setting-option{
-        height: 40px;
-        font-size: 15px;
-        margin: 4px 0;
-        display:flex;
+    justify-content: center;
+
+    .setting-title {
+      width: calc(100vw + 12px);
+      height: 52px;
+      min-width: 1460px;
+      line-height: 52px;
+      font-size: 16px;
+      text-align: center;
+      position: fixed;
+      z-index: 99;
+      background-color: #fff;
+      border-bottom: 1px solid #dcdee5;
+      // box-shadow:0 3px 6px #DEE0E7 ;
+      .bk-icon {
+        font-size: 32px;
         cursor: pointer;
-        justify-content: space-evenly;
-        align-items: center;
-        transition: all .3s;
-        &:hover{
-          @extend .current-color
+        position: absolute;
+        top: 10px;
+        right: 24px;
+      }
+    }
+
+    .setting-main {
+      padding: 72px 40px 0;
+      display: flex;
+      position: relative;
+
+      .setting-left {
+        min-width: 240px;
+        height: 365px;
+        padding-top: 4px;
+
+        @include container-shadow;
+
+        .setting-option {
+          height: 40px;
+          font-size: 15px;
+          margin: 4px 0;
+          display: flex;
+          cursor: pointer;
+          justify-content: space-evenly;
+          align-items: center;
+          transition: all .3s;
+
+          &:hover {
+            @extend %current-color;
+          }
         }
       }
-      @include container-shadow
-    }
-    .setting-right{
-      width: 1200px;
-      margin-left: 20px;
-      .more-details{
-        height: 48px;
-        padding: 0 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        .details{
+
+      .setting-right {
+        width: 1200px;
+        margin-left: 20px;
+
+        .more-details {
+          height: 48px;
+          padding: 0 24px;
           display: flex;
-          p{
-            margin-right: 40px;
-            span{
-              color: #979BA5;
+          justify-content: space-between;
+          align-items: center;
+
+          @include container-shadow;
+
+          .details {
+            display: flex;
+
+            p {
+              margin-right: 40px;
+
+              span {
+                color: #979ba5;
+              }
             }
           }
         }
-        @include container-shadow
-      }
-      .operation-container{
-        margin-top: 20px;
-        min-height: 770px;
-        padding: 24px 20px 100px;
-        @include container-shadow
+
+        .operation-container {
+          margin-top: 20px;
+          min-height: 770px;
+          padding: 24px 20px 100px;
+
+          @include container-shadow;
+        }
       }
     }
-  }
-  .current-color{
-    color: #3A84FF;
-    background-color: #E1ECFF;
-  }
-}
 
+    %current-color,
+    .current-color {
+      color: #3a84ff;
+      background-color: #e1ecff;
+    }
+  }
 </style>

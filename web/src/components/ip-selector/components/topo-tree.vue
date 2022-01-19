@@ -46,6 +46,7 @@
     </template>
   </bk-big-tree>
 </template>
+
 <script lang="ts">
 /* eslint-disable @typescript-eslint/member-ordering */
 import { Vue, Component, Prop, Emit, Ref } from 'vue-property-decorator'
@@ -78,7 +79,11 @@ export default class StaticTopo extends Vue {
   }
 
   private created() {
-    this.defaultExpandedNodes = this.handleGetExpandNodeByDeep(this.defaultExpandLevel, this.nodes)
+    const defaultExpandedNodes = this.handleGetExpandNodeByDeep(this.defaultExpandLevel, this.nodes);
+    if (this.defaultCheckedNodes?.length) {
+      defaultExpandedNodes.push(...this.defaultCheckedNodes);
+    }
+    this.defaultExpandedNodes = defaultExpandedNodes;
   }
 
   public getSelectedStatus(data: any) {
@@ -117,6 +122,7 @@ export default class StaticTopo extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   ::v-deep .bk-big-tree-node {
     &.is-checked {

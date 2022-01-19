@@ -43,7 +43,7 @@
           :total-fields="totalFields"
           :finger-operate-data="fingerOperateData"
           :request-data="requestData"
-          @handleFingerOperate="handleFingerOperate"></finger-operate>
+          @handleFingerOperate="handleFingerOperate" />
       </div>
 
       <bk-alert
@@ -57,8 +57,7 @@
         <clustering-loader
           is-loading
           v-if="tableLoading"
-          :width-list="smallLoaderWidthList">
-        </clustering-loader>
+          :width-list="smallLoaderWidthList" />
         <div v-else>
           <ignore-table
             v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
@@ -80,7 +79,8 @@
             :all-finger-list="allFingerList"
             :loader-width-list="smallLoaderWidthList"
             @paginationOptions="paginationOptions"
-            @updateRequest="updateRequest" />
+            @updateRequest="updateRequest"
+            @handleScrollIsShow="handleScrollIsShow" />
         </div>
       </div>
 
@@ -98,20 +98,23 @@
           </div>
         </div>
       </bk-table>
+
+      <div class="fixed-scroll-top-btn" v-show="showScrollTop" @click="scrollToTop">
+        <i class="bk-icon icon-angle-up"></i>
+      </div>
     </div>
     <clustering-loader
       is-loading
       v-else
-      :width-list="loadingWidthList.global">
-    </clustering-loader>
+      :width-list="loadingWidthList.global" />
   </div>
 </template>
 
 <script>
-import DataFingerprint from './DataFingerprint';
-import IgnoreTable from './IgnoreTable';
+import DataFingerprint from './data-fingerprint';
+import IgnoreTable from './ignore-table';
 import ClusteringLoader from '@/skeleton/clustering-loader';
-import fingerOperate from './components/fingerOperate';
+import fingerOperate from './components/finger-operate';
 import { mapGetters } from 'vuex';
 
 export default {
@@ -170,9 +173,10 @@ export default {
         sliderMaxVal: 0, // partter最大值
         comparedList: [], // 同比List
         partterList: [], // partter敏感度List
-        isNear24: false, // 近24h
         isShowCustomize: true, // 是否显示自定义
         signatureSwitch: false, // 数据指纹开关
+        groupList: [], // 缓存分组列表
+        alarmObj: {}, // 是否需要告警对象
       },
       requestData: { // 数据请求
         pattern_level: '',
@@ -192,6 +196,7 @@ export default {
       },
       fingerList: [],
       allFingerList: [], // 所有数据指纹List
+      showScrollTop: false,
     };
   },
   computed: {
@@ -207,10 +212,15 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      return this.clusterSwitch ? (this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage')) : this.$t('goSettingMessage');
+      return this.clusterSwitch
+        ? (this.configID
+          ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage'))
+        : this.$t('goSettingMessage');
     },
     exhibitOperate() {
-      return this.clusterSwitch ? (this.configID ? this.$t('跳转到日志清洗') : '') : this.$t('去设置');
+      return this.clusterSwitch
+        ? (this.configID ? this.$t('跳转到日志清洗') : '')
+        : this.$t('去设置');
     },
     clusteringField() {
       return this.configData?.extra?.clustering_field || '';
@@ -254,6 +264,7 @@ export default {
             return;
           }
           this.requestData.pattern_level === '' && this.initTable();
+          // 判断有无text字段 无则不显示日志聚类
           this.exhibitAll = newList.some(el => el.field_type === 'text');
         }
       },
@@ -264,7 +275,6 @@ export default {
         if (newList.length) {
           // 过滤条件变化及当前活跃为数据指纹并且数据指纹打开时才发送请求
           if (this.indexId === this.$route.params.indexId
-          && this.active === 'dataFingerprint'
           && this.fingerOperateData.signatureSwitch) {
             this.requestFinger();
           } else {
@@ -293,7 +303,7 @@ export default {
         }
       }
     },
-    initTable() {
+    async initTable() {
       const {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
@@ -316,6 +326,11 @@ export default {
       Object.assign(this.requestData, {
         pattern_level: clusterLevel[patternLevel - 1],
       });
+      // 初始化分组下拉列表
+      this.filterGroupList();
+      this.$nextTick(() => {
+        this.scrollEl = document.querySelector('.result-scroll-container');
+      });
     },
     /**
      * @desc: 数据指纹操作
@@ -324,23 +339,26 @@ export default {
      */
     handleFingerOperate(operateType, val) {
       switch (operateType) {
-        case 'compared':
+        case 'compared': // 同比操作
           this.requestData.year_on_year_hour = val;
           break;
-        case 'partterSize':
+        case 'partterSize': // patter大小
           this.requestData.pattern_level = val;
           break;
-        case 'isShowNear':
+        case 'isShowNear': // 是否展示近24小时
           this.requestData.show_new_pattern = val;
           break;
-        case 'enterCustomize':
+        case 'enterCustomize': // 自定义同比时常
           this.handleEnterCompared(val);
           break;
-        case 'customize':
+        case 'customize': // 是否展示自定义
           this.fingerOperateData.isShowCustomize = val;
           break;
-        case 'group':
+        case 'group': // 分组操作
           this.requestData.group_by = val;
+          break;
+        case 'getNewStrategy': // 获取新类告警状态
+          this.fingerOperateData.alarmObj = val;
           break;
         default:
           break;
@@ -400,11 +418,12 @@ export default {
       })
         .then(async (res) => {
           this.fingerPage = 1;
-          this.allFingerList = res.data;
           this.fingerList = [];
+          this.allFingerList = res.data;
           const sliceFingerList = res.data.slice(0, this.fingerPageSize);
           const labelsList = await this.getFingerLabelsList(sliceFingerList);
           this.fingerList.push(...labelsList);
+          this.showScrollTop = false;
         })
         .finally(() => {
           this.tableLoading = false;
@@ -422,12 +441,15 @@ export default {
       const { fingerPage: page, fingerPageSize: pageSize } = this;
       const sliceFingerList = this.allFingerList.slice(pageSize * (page - 1), pageSize * page);
       const labelsList = await this.getFingerLabelsList(sliceFingerList);
-      this.fingerList.push(...labelsList);
-      this.isPageOver = false;
+      setTimeout(() => {
+        this.fingerList.push(...labelsList);
+        this.isPageOver = false;
+      }, 300);
     },
     /**
      * @desc: 获取标签列表
      * @param { Array } fingerList
+     * @returns { Array } 请求成功时添加labels后的数组
      */
     async getFingerLabelsList(fingerList = []) {
       const setList = new Set();
@@ -438,7 +460,7 @@ export default {
       });
       // 获取过滤后的策略ID
       const strategyIDs = [...setList];
-      // 有策略ID时请求标签接口 无策略ID时直接返回
+      // 有策略ID时请求标签接口 无策略ID时则直接返回
       if (strategyIDs.length) {
         try {
           const res = await this.$http.request('/logClustering/getFingerLabels', {
@@ -455,6 +477,7 @@ export default {
             pre[cur.strategy_id] = cur.labels;
             return pre;
           }, {});
+          // 数据指纹列表添加labels属性
           const labelsList = fingerList.map((el) => {
             el.labels = strategyObj[el.monitor.strategy_id];
             return el;
@@ -467,6 +490,24 @@ export default {
         return fingerList;
       }
     },
+    /**
+     * @desc: 初始化分组select数组
+     */
+    filterGroupList() {
+      const filterList = this.totalFields
+        .filter(el => el.es_doc_values && !/^__/.test(el.field_name)) // 过滤__dist字段
+        .map((item) => {
+          const { field_name: id, field_alias: alias } = item;
+          return { id, name: alias ? `${id}(${alias})` : id };
+        });
+      this.fingerOperateData.groupList = filterList;
+    },
+    scrollToTop() {
+      this.$easeScroll(0, 300, this.scrollEl);
+    },
+    handleScrollIsShow() {
+      this.showScrollTop = this.scrollEl.scrollTop > 550;
+    },
     updateRequest() {
       this.requestFinger();
     },
@@ -475,19 +516,22 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/scss/mixins/flex.scss";
+@import '@/scss/mixins/flex.scss';
 
 .log-cluster-table-container {
   .cluster-nav {
     min-width: 760px;
     margin-bottom: 12px;
     color: #63656e;
+
     @include flex-justify(space-between);
   }
+
   .bk-alert {
     margin-bottom: 16px;
   }
 }
+
 .no-text-table {
   .bk-table-empty-block {
     display: flex;
@@ -495,19 +539,52 @@ export default {
     align-items: center;
     min-height: calc(100vh - 480px);
   }
+
   .empty-text {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
+
     .bk-icon {
       font-size: 65px;
     }
+
     .empty-leave {
       color: #3a84ff;
       margin-top: 8px;
       cursor: pointer;
     }
+  }
+}
+
+.fixed-scroll-top-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .2);
+  border: 1px solid #dde4eb;
+  border-radius: 4px;
+  color: #63656e;
+  background: #f0f1f5;
+  cursor: pointer;
+  z-index: 2100;
+  transition: all .2s;
+
+  &:hover {
+    color: #fff;
+    background: #979ba5;
+    transition: all .2s;
+  }
+
+  .bk-icon {
+    font-size: 20px;
+    font-weight: bold;
   }
 }
 </style>

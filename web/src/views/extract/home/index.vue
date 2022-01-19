@@ -21,7 +21,10 @@
   -->
 
 <template>
-  <div class="main-container" data-test-id="logExtraction_div_fromBox" v-bkloading="{ isLoading }">
+  <div
+    class="main-container"
+    data-test-id="logExtraction_div_fromBox"
+    v-bkloading="{ isLoading }">
     <div class="option-container">
       <bk-button
         theme="primary"
@@ -57,19 +60,29 @@
           <span v-bk-overflow-tips>{{ row.file_path.join('; ') }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('创建时间')" prop="created_at" min-width="120"></bk-table-column>
+      <bk-table-column
+        :label="$t('创建时间')"
+        prop="created_at"
+        min-width="120">
+      </bk-table-column>
       <bk-table-column :label="$t('备注')" min-width="120">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.remark || '--' }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('创建人')" prop="created_by" min-width="100"></bk-table-column>
+      <bk-table-column
+        :label="$t('创建人')"
+        prop="created_by"
+        min-width="100">
+      </bk-table-column>
       <bk-table-column :label="$t('任务状态')" min-width="100">
-        <div slot-scope="{ row }" :class="{
-          'task-status-warning': true,
-          'task-status-success': row.download_status === 'downloadable' || row.download_status === 'redownloadable',
-          'task-status-error': row.download_status === 'expired' || row.download_status === 'failed'
-        }">
+        <div
+          slot-scope="{ row }"
+          :class="{
+            'task-status-warning': true,
+            'task-status-success': row.download_status === 'downloadable' || row.download_status === 'redownloadable',
+            'task-status-error': row.download_status === 'expired' || row.download_status === 'failed'
+          }">
           <span class="bk-icon icon-refresh" v-if="!notLoadingStatus.includes(row.download_status)"></span>
           <span>{{ row.download_status_display }}</span>
           <span
@@ -105,24 +118,24 @@
     <!-- 表格侧边栏 -->
     <bk-sideslider :is-show.sync="sideSlider.isShow" :quick-close="true" :title="$t('详情')" :width="660" transfer>
       <div slot="content" class="task-detail-content" v-bkloading="{ isLoading: sideSlider.isLoading }">
-        <ListBox icon="log-icon icon-info-fill" :title="sideSlider.data.task_process_info" :mark="true" />
-        <TaskStatusDetail :status-data="sideSlider.data.task_step_status" />
-        <DownloadUrl :task-id="sideSlider.data.task_id" />
-        <ListBox icon="bk-icon icon-sitemap" :title="$t('文件路径')" :list="sideSlider.data.preview_directory" />
-        <ListBox icon="bk-icon icon-data" :title="$t('下载目标')" :list="sideSlider.data.ip_list" />
-        <ListBox icon="bk-icon icon-file" :title="$t('文件列表')" :list="sideSlider.data.file_path" />
-        <ListBox icon="bk-icon icon-clock" :title="$t('过期时间')" :list="sideSlider.data.expiration_date" />
-        <TextFilterDetail v-if="sideSlider.data.filter_type" :data="sideSlider.data" />
+        <list-box icon="log-icon icon-info-fill" :title="sideSlider.data.task_process_info" :mark="true" />
+        <task-status-detail :status-data="sideSlider.data.task_step_status" />
+        <download-url :task-id="sideSlider.data.task_id" />
+        <list-box icon="bk-icon icon-sitemap" :title="$t('文件路径')" :list="sideSlider.data.preview_directory" />
+        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="sideSlider.data.ip_list" />
+        <list-box icon="bk-icon icon-file" :title="$t('文件列表')" :list="sideSlider.data.file_path" />
+        <list-box icon="bk-icon icon-clock" :title="$t('过期时间')" :list="sideSlider.data.expiration_date" />
+        <text-filter-detail v-if="sideSlider.data.filter_type" :data="sideSlider.data" />
       </div>
     </bk-sideslider>
   </div>
 </template>
 
 <script>
-import ListBox from './ListBox';
-import DownloadUrl from './DownloadUrl';
-import TaskStatusDetail from './TaskStatusDetail';
-import TextFilterDetail from './TextFilterDetail';
+import ListBox from './list-box';
+import DownloadUrl from './download-url';
+import TaskStatusDetail from './task-status-detail';
+import TextFilterDetail from './text-filter-detail';
 
 export default {
   name: 'ExtractHome',
@@ -314,113 +327,137 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.main-container {
-  /*新增任务样式*/
-  .option-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 0;
-    .king-input-search {
-      width: 486px;
-      /deep/ .icon-search {
-        &:hover {
-          color: #3b84ff;
+  .main-container {
+    /*新增任务样式*/
+    .option-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+
+      .king-input-search {
+        width: 486px;
+
+        /deep/ .icon-search {
+          &:hover {
+            color: #3b84ff;
+            cursor: pointer;
+          }
+        }
+      }
+    }
+
+    /*表格内容样式*/
+    /deep/ .king-table {
+      background-color: #fff;
+
+      /*分页下拉*/
+      .bk-select-name {
+        /* stylelint-disable-next-line declaration-no-important */
+        width: 76px !important;
+      }
+
+      .task-operation-container {
+        display: flex;
+        align-items: center;
+
+        .task-operation {
+          margin-right: 12px;
+          color: #3a84ff;
           cursor: pointer;
         }
       }
-    }
-  }
-  /*表格内容样式*/
-  /deep/ .king-table {
-    background-color: #fff;
-    /*分页下拉*/
-    .bk-select-name {
-      width: 76px !important;
-    }
-    .task-operation-container {
-      display: flex;
-      align-items: center;
-      .task-operation {
-        margin-right: 12px;
-        color: #3a84ff;
-        cursor: pointer;
-      }
-    }
-    .task-status-warning {
-      display: flex;
-      align-items: center;
-      color: #ff9c01;
-      .icon-info-fill {
-        margin-left: 2px;
-        cursor: pointer;
-      }
-      .icon-refresh {
-        margin-right: 2px;
-        animation: refresh-rotate 1s linear infinite;
-        @keyframes refresh-rotate {
-          0% {transform: rotate(0deg);}
-          100% {transform: rotate(360deg);}
+
+      .task-status-warning {
+        display: flex;
+        align-items: center;
+        color: #ff9c01;
+
+        .icon-info-fill {
+          margin-left: 2px;
+          cursor: pointer;
+        }
+
+        .icon-refresh {
+          margin-right: 2px;
+          animation: refresh-rotate 1s linear infinite;
+
+          @keyframes refresh-rotate {
+            0% {transform: rotate(0deg);}
+
+            100% {transform: rotate(360deg);}
+          }
         }
       }
-    }
-    .task-status-success {
-      color: #2dcb56;
-    }
-    .task-status-error {
-      color: #ea3636;
+
+      .task-status-success {
+        color: #2dcb56;
+      }
+
+      .task-status-error {
+        color: #ea3636;
+      }
     }
   }
-}
-/*侧边栏插槽*/
-.task-detail-content {
-  height: calc(100vh - 60px);
-  padding-bottom: 20px;
-  overflow: auto;
-  /deep/ .list-box-container {
-    padding: 14px 20px 10px;
-    font-size: 15px;
-    line-height: 40px;
-    color: #63656e;
-    .list-title {
-      display: flex;
-      align-items: center;
-      .bk-icon {
-        margin-right: 6px;
-        font-size: 14px;
-      }
-      .text {
-        color: #313238;
-        margin: 0;
-        font-size: 16px;
-        font-weight: 500;
-        line-height: 20px;
-        padding: 10px 0;
-        word-break: break-all;
-      }
-      &.mark {
-        .log-icon {
-          margin-right: 4px;
-          font-size: 16px;
-          color: #ea3636;
+
+  /*侧边栏插槽*/
+  .task-detail-content {
+    height: calc(100vh - 60px);
+    padding-bottom: 20px;
+    overflow: auto;
+
+    /deep/ .list-box-container {
+      padding: 14px 20px 10px;
+      font-size: 15px;
+      line-height: 40px;
+      color: #63656e;
+
+      .list-title {
+        display: flex;
+        align-items: center;
+
+        .bk-icon {
+          margin-right: 6px;
+          font-size: 14px;
         }
+
         .text {
-          color: #ea3636;
+          color: #313238;
+          margin: 0;
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 20px;
+          padding: 10px 0;
+          word-break: break-all;
+        }
+
+        &.mark {
+          .log-icon {
+            margin-right: 4px;
+            font-size: 16px;
+            color: #ea3636;
+          }
+
+          .text {
+            color: #ea3636;
+          }
         }
       }
-    }
-    .list-box {
-      border-top: 1px solid #dcdee5;
-      .list-item {
-        padding: 10px 0;
-        line-height: 20px;
-        border-bottom: 1px solid #dcdee5;
-        word-break: break-all;
-        &:hover {
-          background-color: #f0f1f5;
+
+      .list-box {
+        border-top: 1px solid #dcdee5;
+
+        .list-item {
+          padding: 10px 0;
+          line-height: 20px;
+          border-bottom: 1px solid #dcdee5;
+          word-break: break-all;
+
+          &:hover {
+            background-color: #f0f1f5;
+          }
         }
       }
     }
   }
-}
 </style>

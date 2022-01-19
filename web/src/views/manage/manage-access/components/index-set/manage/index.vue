@@ -25,7 +25,10 @@
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
     <template v-if="!authPageInfo && !basicLoading && curIndexSet">
       <bk-tab :active.sync="activePanel" type="border-card">
-        <bk-tab-panel v-for="panel in panels" v-bind="panel" :key="panel.name"></bk-tab-panel>
+        <bk-tab-panel
+          v-for="panel in panels"
+          v-bind="panel"
+          :key="panel.name"></bk-tab-panel>
       </bk-tab>
       <keep-alive>
         <component
@@ -33,7 +36,7 @@
           :index-set-data="curIndexSet"
           :index-set-id="curIndexSet.index_set_id"
           :is="dynamicComponent"
-          @update-active-panel="activePanel = $event"></component>
+          @update-active-panel="activePanel = $event" />
       </keep-alive>
     </template>
   </div>
@@ -42,8 +45,8 @@
 <script>
 import { mapState } from 'vuex';
 import AuthPage from '@/components/common/auth-page';
-import BasicInfo from './BasicInfo';
-import FieldInfo from './FieldInfo';
+import BasicInfo from './basic-info';
+import FieldInfo from './field-info';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
 
 export default {

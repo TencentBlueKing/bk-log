@@ -22,10 +22,11 @@
 
 <template>
   <div class="dynamic-topo" v-bkloading="{ isLoading }">
-    <div class="dynamic-topo-left"
-         ref="leftWrapper"
-         :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
-      <TopoSearch
+    <div 
+      class="dynamic-topo-left"
+      ref="leftWrapper"
+      :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
+      <topo-search
         v-model="treeKeyword"
         :search-method="searchTreeMethod"
         :placeholder="$t('搜索拓扑节点')"
@@ -33,9 +34,8 @@
         :options="searchDataOptions"
         :default-selection-ids="defaultSelectionIds"
         @show="handleSearchPanelShow"
-        @check-change="handleCheckChange">
-      </TopoSearch>
-      <TopoTree
+        @check-change="handleCheckChange" />
+      <topo-tree
         v-if="nodes.length"
         class="topo-tree"
         ref="tree"
@@ -48,11 +48,10 @@
         :lazy-disabled="lazyDisabled"
         :default-expand-level="defaultExpandLevel"
         :expand-on-click="expandOnClick"
-        @select-change="handleSelectChange">
-      </TopoTree>
+        @select-change="handleSelectChange" />
     </div>
     <div class="dynamic-topo-right ml10">
-      <IpListTable
+      <ip-list-table
         ref="table"
         :get-search-table-data="getTableData"
         :ip-list-table-config="dynamicTableConfig"
@@ -61,12 +60,12 @@
         :disabled-loading="isLoading"
         :empty-text="emptyText"
         :handle-agent-status="handleAgentStatus"
-        @check-change="handleTableCheckChange">
-      </IpListTable>
+        @check-change="handleTableCheckChange" />
     </div>
   </div>
 </template>
 <script lang="ts">
+
 import { Component, Prop, Vue, Ref, Emit, Watch } from 'vue-property-decorator'
 import {
   ITableConfig,
@@ -272,6 +271,7 @@ export default class DynamicTopo extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .dynamic-topo {
     display: flex;
@@ -280,7 +280,7 @@ export default class DynamicTopo extends Vue {
     &-left {
       display: flex;
       flex-direction: column;
-      // flex-basis: 240px;
+
       .topo-tree {
         margin: 12px 0;
         overflow: auto;
@@ -290,7 +290,6 @@ export default class DynamicTopo extends Vue {
     &-right {
       flex: 1;
       overflow: auto;
-      // border-left: 1px solid #dcdee5;
       padding-left: 10px;
     }
   }
