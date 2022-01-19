@@ -40,10 +40,11 @@ from apps.log_clustering.constants import (
     DEFAULT_AGG_METHOD_BKDATA,
     DEFAULT_PATTERN_MONITOR_MSG,
     DEFAULT_PATTERN_RECOVER_MSG,
+    DEFAULT_METRIC,
 )
 from apps.log_clustering.exceptions import ClusteringIndexSetNotExistException
 from apps.api import MonitorApi
-from apps.log_clustering.models import SignatureStrategySettings
+from apps.log_clustering.models import SignatureStrategySettings, ClusteringConfig
 from apps.log_clustering.utils.monitor import MonitorUtils
 from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import LogIndexSet
@@ -240,3 +241,18 @@ class ClusteringMonitorHandler(object):
             return "{}_{}".format(index_set_name, signature_setting_id)
         if strategy_type == StrategiesType.NEW_CLS_strategy:
             return "{}_日志聚类24H新类告警".format(index_set_name)
+
+    def update_new_cls_strategy(self, action, strategy_id=""):
+        if action == ActionEnum.CREATE.value:
+            strategy = self.create_new_cls_strategy()
+            return strategy["id"]
+        if action["action"] == ActionEnum.DELETE.value:
+            strategy_id = self.delete_strategy(strategy_id=strategy_id)
+            return strategy_id
+
+    def create_new_cls_strategy(self):
+        clustering_config = ClusteringConfig.objects.get(index_set_id=self.index_set_id)
+        table_id = clustering_config.after_treat_flow["judge_new_class"]["result_table_id"]
+        return self.save_strategy(
+            table_id=table_id, metric=DEFAULT_METRIC, strategy_type=StrategiesType.NEW_CLS_strategy
+        )

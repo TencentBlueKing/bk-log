@@ -34,6 +34,7 @@ class InnerTag(ChoicesEnum):
     HAVE_DELAY = "have_delay"
     BKDATA = "bkdata"
     BCS = "bcs"
+    CLUSTERING = "clustering"
 
     _choices_labels = (
         (TRACE, _("trace")),
@@ -43,6 +44,7 @@ class InnerTag(ChoicesEnum):
         (HAVE_DELAY, _("有延迟")),
         (BKDATA, _("计算平台")),
         (BCS, _("BCS")),
+        (CLUSTERING, _("数据指纹")),
     )
 
 
