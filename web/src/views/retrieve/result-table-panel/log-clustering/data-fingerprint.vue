@@ -146,19 +146,18 @@
         </template>
       </bk-table-column>
 
-      <bk-table-column
-        v-if="requestData.group_by.length"
-        :label="$t('分组')"
-        class-name="symbol-column">
-        <template slot-scope="{ row }">
-          <bk-popover theme="light" content="row.group">
-            <span>{{row.group}}</span>
-          </bk-popover>
-          <!-- <div class="group-box">
-            <span>{{row.group}}</span>
-          </div> -->
-        </template>
-      </bk-table-column>
+      <template v-if="requestData.group_by.length">
+        <bk-table-column
+          v-for="(item,index) of requestData.group_by"
+          :key="index"
+          :label="item"
+          width="120"
+          class-name="symbol-column">
+          <template slot-scope="{ row }">
+            <span>{{row.group[index]}}</span>
+          </template>
+        </bk-table-column>
+      </template>
 
       <bk-table-column
         v-if="!requestData.group_by.length"
@@ -190,14 +189,19 @@
         align="center"
         header-align="center">
         <template slot-scope="{ row }">
+          <!-- labels 为空或者数组为空时 不显示 labels长度为1时 不挂载popover -->
           <span v-if="!row.labels || !row.labels.length">--</span>
-          <bk-popover v-else theme="light">
+          <bk-tag v-else-if="row.labels.length === 1">{{row.labels[0]}}</bk-tag>
+          <bk-popover
+            v-else
+            theme="light"
+            ref="labelsPopover">
             <div slot="content">
               <bk-tag v-for="(item,index) of row.labels" :key="index">{{item}}</bk-tag>
             </div>
             <div class="fl-ac omit-box">
               <bk-tag>{{row.labels[0]}}</bk-tag>
-              <span v-if="row.labels.length >= 2">...</span>
+              <span v-show="row.labels.length >= 2">...</span>
             </div>
           </bk-popover>
         </template>
@@ -393,6 +397,9 @@ export default {
      * @param { Boolean } option 开启或关闭
      */
     handleBatchUseAlarm(option) {
+      if (this.isRequestAlarm) {
+        return;
+      };
       const title = option ? this.$t('是否批量开启告警') : this.$t('是否批量关闭告警');
       this.$bkInfo({
         title,
@@ -503,18 +510,26 @@ export default {
       window.open(`${window.MONITOR_URL}/?bizId=${this.bkBizId}#/strategy-config/edit/${strategyID}`, '_blank');
     },
     handleScroll() {
-      if (this.throttle || this.fingerList.length >= this.allFingerList.length) {
+      if (this.throttle) {
         return;
       }
-      const el = document.querySelector('.result-scroll-container');
-      if (el.scrollHeight - el.offsetHeight - el.scrollTop < 5) {
-        this.throttle = true;
-        setTimeout(() => {
+      this.throttle = true;
+      setTimeout(() => {
+        this.throttle = false;
+        // scroll变化时判断是否展示返回顶部的Icon
+        this.$emit('handleScrollIsShow');
+        this.$refs.groupPopover?.instance.hide();
+        this.$refs.labelsPopover?.instance.hide();
+        if (this.fingerList.length >= this.allFingerList.length) {
+          return;
+        }
+        const el = document.querySelector('.result-scroll-container');
+        if (el.scrollHeight - el.offsetHeight - el.scrollTop < 5) {
           el.scrollTop = el.scrollTop - 5;
           this.throttle = false;
           this.$emit('paginationOptions');
-        }, 100);
-      }
+        }
+      }, 200);
     },
     renderHeader(h) {
       return h(fingerSelectColumn, {
@@ -556,7 +571,7 @@ export default {
     },
     handleReturnTop() {
       const el = document.querySelector('.result-scroll-container');
-      el.scrollTop = 0;
+      this.$easeScroll(0, 300, el);
     },
   },
 };
@@ -668,16 +683,13 @@ export default {
     }
 
     .omit-box {
+      display: flex;
+      flex-direction: column;
+      padding: 8px 0;
+
       span {
         margin-right: 4px;
       }
-    }
-
-    .group-box {
-      min-height: 40px;
-      padding: 8px 0;
-
-      @include flex-align;
     }
 
     .show-whole-btn {

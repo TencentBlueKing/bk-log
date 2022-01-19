@@ -57,7 +57,7 @@ export default {
     },
     loaderLen: { // 骨架行数
       type: Number,
-      default: 12,
+      default: 24,
     },
   },
   data() {

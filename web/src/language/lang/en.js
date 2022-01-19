@@ -364,6 +364,8 @@ export default {
   可去告警策略编辑: 'Editable alert policy',
   已全部开启告警: 'All alarms are turned on',
   已全部关闭告警: 'All alarms are turned off',
+  是否要告警: 'Do you want to warn',
+  是否更新新类告警: 'Whether to update new types of alarms?',
   返回顶部: 'Back to top',
   allLoadTips: 'All data has been loaded, if you want to see more query conditions, you can',
   customizeTips: 'Custom input format: For example, 1h represents one hour, h hour',

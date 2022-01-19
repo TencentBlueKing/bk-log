@@ -63,6 +63,16 @@ const getFingerLabels = {
   method: 'post',
 };
 
+const getNewClsStrategy = {
+  url: '/clustering_monitor/:index_set_id/get_new_cls_strategy/',
+  method: 'get',
+};
+
+const updateNewClsStrategy = {
+  url: '/clustering_monitor/:index_set_id/update_new_cls_strategy/',
+  method: 'post',
+};
+
 export {
   getConfig,
   getDefaultConfig,
@@ -72,4 +82,6 @@ export {
   closeClean,
   updateStrategies,
   getFingerLabels,
+  getNewClsStrategy,
+  updateNewClsStrategy,
 };

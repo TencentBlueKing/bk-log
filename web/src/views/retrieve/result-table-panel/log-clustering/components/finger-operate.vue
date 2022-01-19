@@ -86,20 +86,24 @@
         :disabled="!fingerOperateData.signatureSwitch"
         @change="handleShowNearPattern">
       </bk-checkbox>
-      <span>{{$t('近24H新增')}}</span>
-      <!-- <bk-popover
+      <bk-popover
         :trigger="trigger"
+        :on-show="handlePopoverShow"
         theme="light">
         <span style="border-bottom: 1px dashed #000">{{$t('近24H新增')}}</span>
         <div slot="content" class="alarm-content">
-          <span>是否要告警</span>
-          <bk-switcher
-            theme="primary"
-            size="small"
-            v-model="alarmSwitch">
-          </bk-switcher>
+          <span>{{$t('是否要告警')}}</span>
+          <div @click.stop="handleChangeStrategy">
+            <bk-switcher
+              theme="primary"
+              size="small"
+              v-model="alarmSwitch"
+              :disabled="isRequestAlarm"
+              :pre-check="() => false">
+            </bk-switcher>
+          </div>
         </div>
-      </bk-popover> -->
+      </bk-popover>
     </div>
 
     <div class="partter fl-sb" style="width: 200px">
@@ -139,12 +143,19 @@ export default {
   data() {
     return {
       trigger: 'click',
-      alarmSwitch: true,
+      alarmSwitch: false,
       group: [], // 当前选择分组的值
       isToggle: false, // 当前是否显示分组下拉框
-      partterSize: '09',
+      partterSize: 0,
       yearOnYearHour: 0,
+      isNear24: false,
+      isRequestAlarm: false,
     };
+  },
+  computed: {
+    bkBizId() {
+      return this.$store.state.bkBizId;
+    },
   },
   watch: {
     group: {
@@ -158,9 +169,7 @@ export default {
     },
   },
   mounted() {
-    this.group = this.requestData.group_by;
-    this.partterSize = this.fingerOperateData.partterSize;
-    this.yearOnYearHour = this.requestData.year_on_year_hour;
+    this.initCache();
   },
   methods: {
     handleSelectCompared(newVal) {
@@ -181,6 +190,77 @@ export default {
     handleSelectGroup(state) {
       this.isToggle = state;
       !state && this.$emit('handleFingerOperate', 'group', this.group);
+    },
+    handlePopoverShow() {
+      if (JSON.stringify(this.fingerOperateData.alarmObj) === '{}') {
+        this.initNewClsStrategy();
+      }
+    },
+    initCache() {
+      // 赋值缓存
+      this.partterSize = this.fingerOperateData.partterSize;
+      this.group = this.requestData.group_by;
+      this.yearOnYearHour = this.requestData.year_on_year_hour;
+      this.isNear24 = this.requestData.show_new_pattern;
+      this.alarmSwitch = this.fingerOperateData.alarmObj?.is_active;
+    },
+    handleChangeStrategy() {
+      this.$bkInfo({
+        title: this.$t('是否更新新类告警'),
+        confirmFn: () => {
+          this.updateNewClsStrategy();
+        },
+      });
+    },
+    /**
+     * @desc: 查询新类告警
+     */
+    initNewClsStrategy() {
+      this.$http.request('/logClustering/getNewClsStrategy', {
+        params: {
+          index_set_id: this.$route.params.indexId,
+        },
+      }).then((res) => {
+        this.$emit('handleFingerOperate', 'getNewStrategy', res.data);
+        this.alarmSwitch = res.data.is_active;
+      });
+    },
+    /**
+     * @desc: 更新新类告警
+     */
+    updateNewClsStrategy() {
+      const action = this.alarmSwitch ? 'delete' : 'create';
+      const strategyID = this.fingerOperateData.alarmObj?.strategy_id;
+      const queryObj = {
+        bk_biz_id: this.bkBizId,
+        strategy_id: strategyID,
+        action,
+      };
+      // 开启新类告警时需删除strategy_id字段
+      !this.alarmSwitch && delete queryObj.strategy_id;
+      this.isRequestAlarm = true,
+      this.$http.request('/logClustering/updateNewClsStrategy', {
+        params: {
+          index_set_id: this.$route.params.indexId,
+        },
+        data: { ...queryObj },
+      }).then((res) => {
+        if (res.result) {
+          this.$emit('handleFingerOperate', 'getNewStrategy', {
+            strategy_id: res.data,
+            is_active: !this.alarmSwitch,
+          });
+          this.alarmSwitch = !this.alarmSwitch;
+          this.$bkMessage({
+            theme: 'success',
+            message: this.$t('操作成功'),
+            ellipsisLine: 0,
+          });
+        }
+      })
+        .finally(() => {
+          this.isRequestAlarm = false;
+        });
     },
   },
 };

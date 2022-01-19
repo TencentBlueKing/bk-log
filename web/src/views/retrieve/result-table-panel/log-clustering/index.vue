@@ -79,7 +79,8 @@
             :all-finger-list="allFingerList"
             :loader-width-list="smallLoaderWidthList"
             @paginationOptions="paginationOptions"
-            @updateRequest="updateRequest" />
+            @updateRequest="updateRequest"
+            @handleScrollIsShow="handleScrollIsShow" />
         </div>
       </div>
 
@@ -97,6 +98,10 @@
           </div>
         </div>
       </bk-table>
+
+      <div class="fixed-scroll-top-btn" v-show="showScrollTop" @click="scrollToTop">
+        <i class="bk-icon icon-angle-up"></i>
+      </div>
     </div>
     <clustering-loader
       is-loading
@@ -168,10 +173,10 @@ export default {
         sliderMaxVal: 0, // partter最大值
         comparedList: [], // 同比List
         partterList: [], // partter敏感度List
-        isNear24: false, // 近24h
         isShowCustomize: true, // 是否显示自定义
         signatureSwitch: false, // 数据指纹开关
-        groupList: [],
+        groupList: [], // 缓存分组列表
+        alarmObj: {}, // 是否需要告警对象
       },
       requestData: { // 数据请求
         pattern_level: '',
@@ -191,6 +196,7 @@ export default {
       },
       fingerList: [],
       allFingerList: [], // 所有数据指纹List
+      showScrollTop: false,
     };
   },
   computed: {
@@ -297,7 +303,7 @@ export default {
         }
       }
     },
-    initTable() {
+    async initTable() {
       const {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
@@ -320,7 +326,11 @@ export default {
       Object.assign(this.requestData, {
         pattern_level: clusterLevel[patternLevel - 1],
       });
+      // 初始化分组下拉列表
       this.filterGroupList();
+      this.$nextTick(() => {
+        this.scrollEl = document.querySelector('.result-scroll-container');
+      });
     },
     /**
      * @desc: 数据指纹操作
@@ -346,6 +356,9 @@ export default {
           break;
         case 'group': // 分组操作
           this.requestData.group_by = val;
+          break;
+        case 'getNewStrategy': // 获取新类告警状态
+          this.fingerOperateData.alarmObj = val;
           break;
         default:
           break;
@@ -410,6 +423,7 @@ export default {
           const sliceFingerList = res.data.slice(0, this.fingerPageSize);
           const labelsList = await this.getFingerLabelsList(sliceFingerList);
           this.fingerList.push(...labelsList);
+          this.showScrollTop = false;
         })
         .finally(() => {
           this.tableLoading = false;
@@ -427,8 +441,10 @@ export default {
       const { fingerPage: page, fingerPageSize: pageSize } = this;
       const sliceFingerList = this.allFingerList.slice(pageSize * (page - 1), pageSize * page);
       const labelsList = await this.getFingerLabelsList(sliceFingerList);
-      this.fingerList.push(...labelsList);
-      this.isPageOver = false;
+      setTimeout(() => {
+        this.fingerList.push(...labelsList);
+        this.isPageOver = false;
+      }, 300);
     },
     /**
      * @desc: 获取标签列表
@@ -486,6 +502,12 @@ export default {
         });
       this.fingerOperateData.groupList = filterList;
     },
+    scrollToTop() {
+      this.$easeScroll(0, 300, this.scrollEl);
+    },
+    handleScrollIsShow() {
+      this.showScrollTop = this.scrollEl.scrollTop > 550;
+    },
     updateRequest() {
       this.requestFinger();
     },
@@ -494,45 +516,75 @@ export default {
 </script>
 
 <style lang="scss">
-  @import '@/scss/mixins/flex.scss';
+@import '@/scss/mixins/flex.scss';
 
-  .log-cluster-table-container {
-    .cluster-nav {
-      min-width: 760px;
-      margin-bottom: 12px;
-      color: #63656e;
+.log-cluster-table-container {
+  .cluster-nav {
+    min-width: 760px;
+    margin-bottom: 12px;
+    color: #63656e;
 
-      @include flex-justify(space-between);
-    }
-
-    .bk-alert {
-      margin-bottom: 16px;
-    }
+    @include flex-justify(space-between);
   }
 
-  .no-text-table {
-    .bk-table-empty-block {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: calc(100vh - 480px);
+  .bk-alert {
+    margin-bottom: 16px;
+  }
+}
+
+.no-text-table {
+  .bk-table-empty-block {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 480px);
+  }
+
+  .empty-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+
+    .bk-icon {
+      font-size: 65px;
     }
 
-    .empty-text {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-
-      .bk-icon {
-        font-size: 65px;
-      }
-
-      .empty-leave {
-        color: #3a84ff;
-        margin-top: 8px;
-        cursor: pointer;
-      }
+    .empty-leave {
+      color: #3a84ff;
+      margin-top: 8px;
+      cursor: pointer;
     }
   }
+}
+
+.fixed-scroll-top-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .2);
+  border: 1px solid #dde4eb;
+  border-radius: 4px;
+  color: #63656e;
+  background: #f0f1f5;
+  cursor: pointer;
+  z-index: 2100;
+  transition: all .2s;
+
+  &:hover {
+    color: #fff;
+    background: #979ba5;
+    transition: all .2s;
+  }
+
+  .bk-icon {
+    font-size: 20px;
+    font-weight: bold;
+  }
+}
 </style>
