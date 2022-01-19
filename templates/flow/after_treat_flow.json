@@ -468,7 +468,7 @@
     },
     {
         "bk_biz_id":{{after_treat.bk_biz_id}},
-        "sql":"select event_time, signature, history_time, sensitivity from {{after_treat.join_signature_tmp.result_table_id}} where event_time = history_time or event_time - history_time > 86400000",
+        "sql":"select event_time, signature, history_time, sensitivity from {{after_treat.join_signature_tmp.result_table_id}} where (event_time = history_time or event_time - history_time > 86400000") {{after_treat.judge_new_class.filter_rule}},
         "table_name":"{{after_treat.judge_new_class.table_name}}",
         "name":"新类判断",
         "count_freq":null,

@@ -34,7 +34,7 @@ from apps.log_clustering.constants import (
     NEW_CLASS_FIELD_PREFIX,
     MAX_STRATEGY_PAGE_SIZE,
     DEFAULT_PAGE,
-    DEFAULT_LABELS,
+    DEFAULT_LABEL,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig, SignatureStrategySettings
@@ -111,7 +111,7 @@ class PatternHandler:
                     "is_new_class": signature in new_class,
                     "year_on_year_count": year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
-                    "group": pattern.get("group", ""),
+                    "group": str(pattern.get("group", "")).split("|"),
                     "monitor": SignatureStrategySettings.get_monitor_config(
                         signature=signature, index_set_id=self._index_set_id, pattern_level=self._pattern_level
                     ),
@@ -197,6 +197,7 @@ class PatternHandler:
                 doc_key = iter_bucket.get("key")
                 group_buckets = iter_bucket.get(group_key, {}).get("buckets", [])
                 for group_bucket in group_buckets:
+                    # 这里是为了兼容字符串空值，数值为0的情况
                     result_buckets.append(
                         {
                             **group_bucket,
@@ -204,7 +205,7 @@ class PatternHandler:
                             "doc_count": group_bucket.get("doc_count", 0),
                             "group": (
                                 f"{iter_bucket.get('group', '')}|{group_bucket['key']}"
-                                if iter_bucket.get("group", "")
+                                if iter_bucket.get("group") != None  # noqa
                                 else group_bucket["key"]
                             ),
                         }
@@ -241,7 +242,7 @@ class PatternHandler:
 
     @classmethod
     def _generate_strategy_result(cls, strategy_result):
-        default_labels_set = set(DEFAULT_LABELS)
+        default_labels_set = set(DEFAULT_LABEL)
         result = []
         for strategy_obj in strategy_result:
             labels = map_if(strategy_obj["labels"], if_func=lambda x: x not in default_labels_set)

@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from apps.log_clustering.constants import StrategiesType
 from apps.models import SoftDeleteModel
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -92,6 +93,9 @@ class SignatureStrategySettings(SoftDeleteModel):
     enabled = models.BooleanField(_("是否启用"), default=True)
     bk_biz_id = models.IntegerField(_("业务id"))
     pattern_level = models.CharField(_("聚类级别"), max_length=64, null=True, blank=True)
+    strategy_type = models.CharField(
+        _("策略类型"), max_length=64, null=True, blank=True, default=StrategiesType.NORMAL_STRATEGY
+    )
 
     @classmethod
     def get_monitor_config(cls, signature, index_set_id, pattern_level):

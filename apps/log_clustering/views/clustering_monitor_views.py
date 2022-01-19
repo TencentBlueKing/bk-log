@@ -19,9 +19,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from rest_framework.response import Response
 
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
 from apps.generic import APIViewSet
+from apps.log_clustering.constants import StrategiesType
 from apps.log_clustering.handlers.clustering_monitor import ClusteringMonitorHandler
-from apps.log_clustering.serializers import UpdateStrategiesSerializer
+from apps.log_clustering.models import SignatureStrategySettings
+from apps.log_clustering.serializers import UpdateStrategiesSerializer, UpdateNewClsStrategySerializer
 from apps.utils.drf import detail_route
 
 
@@ -88,5 +92,71 @@ class ClusteringMonitorViewSet(APIViewSet):
         return Response(
             ClusteringMonitorHandler(index_set_id=index_set_id, bk_biz_id=params["bk_biz_id"]).update_strategies(
                 pattern_level=params["pattern_level"], actions=params["actions"]
+            )
+        )
+
+    @detail_route(methods=["get"], url_path="get_new_cls_strategy")
+    def get_new_cls_strategy(self, request, *args, index_set_id=None, **kwargs):
+        """
+        @api {get} /clustering_monitor/$index_set_id/get_new_cls_strategy 7_聚类告警策略-查询新类告警
+        @apiName get_new_cls_strategy
+        @apiGroup log_clustering
+        @apiSuccessExample {json} 开启新类告警
+        {
+            "message":"",
+            "code":0,
+            "data":{
+                "is_active": true,
+                "strategy_id": 1
+            },
+            "result":true
+        }
+        @apiSuccessExample {json} 未开启聚类
+        {
+            "message":"",
+            "code":0,
+            "data":{
+                "is_active": false,
+                "strategy_id": null
+            },
+            "result":true
+        }
+        """
+        signature_strategy_setting = SignatureStrategySettings.objects.filter(
+            index_set_id=index_set_id, strategy_type=StrategiesType.NEW_CLS_strategy
+        ).first()
+        if not signature_strategy_setting:
+            return Response({"is_active": False, "strategy_id": None})
+        return Response({"is_active": True, "strategy_id": signature_strategy_setting.strategy_id})
+
+    @detail_route(methods=["post"], url_path="update_new_cls_strategy")
+    def update_new_cls_strategy(self, request, *args, index_set_id=None, **kwargs):
+        """
+        @api {get} /clustering_monitor/$index_set_id/update_new_cls_strategy 8_聚类告警策略-更新新类告警
+        @apiName update_new_cls_strategy
+        @apiGroup log_clustering
+        @apiParam {int} bk_biz_id 业务id
+        @apiParam {Int} [strategy_id] 策略id 当更新与删除的时候必传
+        @apiParam {Str} action  update or create or delete 标识创建或更新
+        @apiParam {Str} [operator] 表达式(暂留)
+        @apiParam {Int} [value] 阈值(暂留)
+        @apiSuccessExample {json} 成功
+        {
+            "message":"",
+            "code":0,
+            "data":{
+                "strategy_id": 1
+            },
+            "result":true
+        }
+        """
+        if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
+            return
+        conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
+        bk_biz_id = conf.get("bk_biz_id")
+        params = self.params_valid(UpdateNewClsStrategySerializer)
+        return Response(
+            ClusteringMonitorHandler(index_set_id=index_set_id, bk_biz_id=bk_biz_id).update_new_cls_strategy(
+                action=params["action"], strategy_id=params.get("strategy_id")
             )
         )
