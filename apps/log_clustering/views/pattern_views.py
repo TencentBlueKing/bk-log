@@ -100,7 +100,7 @@ class PatternViewSet(APIViewSet):
                     "year_on_year_percentage": 10,
                     "labels": ["xxxx", "xxxx"],
                     "remark": "xxxx",
-                    "group": "xxx",
+                    "group": ["xxx"],
                     "monitor":
                     {
                     "is_active": true,
