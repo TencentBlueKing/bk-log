@@ -17,11 +17,13 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+
+from django.utils.translation import ugettext as _
 from django.db.transaction import atomic
 
 from apps.log_clustering.constants import (
     DEFAULT_SCENARIO,
-    DEFAULT_LABELS,
+    DEFAULT_LABEL,
     DEFAULT_NO_DATA_CONFIG,
     DEFAULT_EXPRESSION,
     DEFAULT_DATA_SOURCE_LABEL,
@@ -41,6 +43,7 @@ from apps.log_clustering.constants import (
     DEFAULT_PATTERN_MONITOR_MSG,
     DEFAULT_PATTERN_RECOVER_MSG,
     DEFAULT_METRIC,
+    DEFAULT_CLUSTERING_ITEM_NAME,
 )
 from apps.log_clustering.exceptions import ClusteringIndexSetNotExistException
 from apps.api import MonitorApi
@@ -118,6 +121,7 @@ class ClusteringMonitorHandler(object):
         name = self._generate_name(
             index_set_name=self.index_set.index_set_name,
             strategy_type=strategy_type,
+            signature_setting_id=signature_strategy_settings.id,
         )
         notice_template = DEFAULT_PATTERN_MONITOR_MSG
         recover_template = DEFAULT_PATTERN_RECOVER_MSG
@@ -136,7 +140,7 @@ class ClusteringMonitorHandler(object):
                 "bk_biz_id": self.bk_biz_id,
                 "scenario": DEFAULT_SCENARIO,
                 "name": name,
-                "labels": DEFAULT_LABELS,
+                "labels": DEFAULT_LABEL,
                 "is_enabled": True,
                 "items": [
                     {
@@ -179,11 +183,12 @@ class ClusteringMonitorHandler(object):
         SignatureStrategySettings.objects.filter(strategy_id=strategy_id).delete()
         return strategy_id
 
-    def _generate_item_name(self, strategy_type=StrategiesType.NORMAL_STRATEGY, pattern=""):
+    @classmethod
+    def _generate_item_name(cls, strategy_type=StrategiesType.NORMAL_STRATEGY, pattern=""):
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
-            return pattern
+            return f"pattern: {pattern}"
         if strategy_type == StrategiesType.NEW_CLS_strategy:
-            return
+            return DEFAULT_CLUSTERING_ITEM_NAME
 
     @classmethod
     def _generate_query_config(
@@ -240,7 +245,7 @@ class ClusteringMonitorHandler(object):
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
             return "{}_{}".format(index_set_name, signature_setting_id)
         if strategy_type == StrategiesType.NEW_CLS_strategy:
-            return "{}_日志聚类24H新类告警".format(index_set_name)
+            return _("{}_日志聚类24H新类告警").format(index_set_name)
 
     def update_new_cls_strategy(self, action, strategy_id=""):
         if action == ActionEnum.CREATE.value:

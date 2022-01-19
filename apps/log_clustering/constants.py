@@ -19,7 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.utils import ChoicesEnum
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 DEFAULT_NEW_CLS_HOURS = 24
 
@@ -58,7 +58,7 @@ DEFAULT_PAGE = 1
 MAX_STRATEGY_PAGE_SIZE = 100
 
 DEFAULT_SCENARIO = "other_rt"
-DEFAULT_LABELS = [_("日志平台日志聚类告警")]
+DEFAULT_LABEL = [_("日志平台日志聚类告警")]
 DEFAULT_NOTIFY_RECEIVER_TYPE = "user"
 DEFAULT_NOTICE_WAY = {"3": ["rtx"], "2": ["rtx"], "1": ["rtx"]}
 DEFAULT_NO_DATA_CONFIG = {"level": 2, "continuous": 10, "is_enabled": False, "agg_dimension": []}

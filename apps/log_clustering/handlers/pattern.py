@@ -34,7 +34,7 @@ from apps.log_clustering.constants import (
     NEW_CLASS_FIELD_PREFIX,
     MAX_STRATEGY_PAGE_SIZE,
     DEFAULT_PAGE,
-    DEFAULT_LABELS,
+    DEFAULT_LABEL,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig, SignatureStrategySettings
@@ -242,7 +242,7 @@ class PatternHandler:
 
     @classmethod
     def _generate_strategy_result(cls, strategy_result):
-        default_labels_set = set(DEFAULT_LABELS)
+        default_labels_set = set(DEFAULT_LABEL)
         result = []
         for strategy_obj in strategy_result:
             labels = map_if(strategy_obj["labels"], if_func=lambda x: x not in default_labels_set)
