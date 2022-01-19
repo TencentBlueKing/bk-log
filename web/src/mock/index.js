@@ -34,14 +34,14 @@ import meta from './meta';
 import monitor from './monitor';
 import auth from './auth';
 import plugins from './plugins';
-import resultTables from './resultTables';
+import resultTables from './result-tables';
 import biz from './biz';
 import collect from './collect';
 import particulars from './particulars';
 import trace from './trace';
-import traceDetail from './traceDetail';
+import traceDetail from './trace-detail';
 import extract from './extract';
-import extractManage from './extractManage';
+import extractManage from './extract-manage';
 
 const getTest = {
   message: '',

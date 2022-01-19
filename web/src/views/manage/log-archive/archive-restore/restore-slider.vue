@@ -88,14 +88,14 @@
             </bk-date-picker>
           </bk-form-item>
           <bk-form-item :label="$t('logArchive.notifiedUser')" required property="notice_user">
-            <ValidateUserSelector
-              style="width:500px;"
+            <validate-user-selector
+              style="width: 500px;"
               data-test-id="addNewRestore_input_notifiedUser"
               v-model="formData.notice_user"
               :api="userApi"
               :disabled="isEdit" />
           </bk-form-item>
-          <bk-form-item style="margin-top:30px;">
+          <bk-form-item style="margin-top: 30px;">
             <bk-button
               theme="primary"
               class="king-button mr10"
@@ -116,7 +116,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import ValidateUserSelector from '../../manage-extract/manage-extract-permission/ValidateUserSelector.vue';
+import ValidateUserSelector from '../../manage-extract/manage-extract-permission/validate-user-selector';
 
 export default {
   components: {
@@ -367,21 +367,27 @@ export default {
   .restore-slider-content {
     min-height: 394px;
     height: calc(100vh - 60px);
+
     .bk-form.bk-form-vertical {
       padding: 10px 0 36px 36px;
+
       .bk-form-item {
         width: 500px;
         margin-top: 18px;
       }
+
       .bk-alert {
         width: 500px;
         margin-top: 12px;
       }
+
       .bk-select,
       .bk-date-picker {
         width: 300px;
       }
+
       .user-selector {
+        /* stylelint-disable-next-line declaration-no-important */
         width: 500px !important;
       }
     }

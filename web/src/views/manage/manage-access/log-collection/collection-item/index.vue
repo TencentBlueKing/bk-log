@@ -158,7 +158,9 @@
                   class="text-disabled cursor-disabled">
                   {{ props.row.status_name || '--' }}
                 </span>
-                <span v-else :class="['status', 'status-' + props.row.status, { 'cursor-disabled': !loadingStatus }]">
+                <span
+                  v-else
+                  :class="['status', 'status-' + props.row.status, { 'cursor-disabled': !loadingStatus }]">
                   <span v-if="props.row.status">
                     <i class="bk-icon icon-circle-shape"></i>
                     {{ props.row.status_name || '--' }}
@@ -352,11 +354,11 @@
 
 <script>
 import { projectManages } from '@/common/util';
-import collectedItemsMixin from '@/mixins/collectedItemsMixin';
+import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
 
 export default {
-  name: 'collection-item',
+  name: 'CollectionItem',
   mixins: [collectedItemsMixin],
   data() {
     const settingFields = [
@@ -772,7 +774,8 @@ export default {
 
       .filter-column {
         .cell {
-          display: flex;
+          /* stylelint-disable-next-line declaration-no-important */
+          display: flex !important;
         }
       }
     }
@@ -820,8 +823,10 @@ export default {
 
     .collect-table-operate {
       display: flex;
+
       .king-button {
         margin-right: 14px;
+
         &:last-child {
           margin-right: 0;
         }
@@ -829,20 +834,24 @@ export default {
     }
 
     .bk-dropdown-list a.text-disabled:hover {
-      color: #C4C6CC;
+      color: #c4c6cc;
       cursor: not-allowed;
     }
+
     .collect-table-operate {
       display: flex;
     }
+
     .bk-dropdown-trigger {
       display: flex;
       align-items: center;
       height: 100%;
     }
   }
+
   .bk-table-setting-popover-content-theme.tippy-tooltip {
     padding: 15px 0 0;
+
     .bk-table-setting-content .content-line-height {
       display: none;
     }

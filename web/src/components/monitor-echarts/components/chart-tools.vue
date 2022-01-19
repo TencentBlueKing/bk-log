@@ -24,8 +24,18 @@
   <div class="chart-tools">
     <i class="icon-monitor icon-mc-mark tools-icon" @click.self="handleCollectChart"></i>
     <i class="icon-monitor icon-mc-camera tools-icon" @click.self="handleStoreImage"></i>
-    <i v-if="needFullScreen" class="icon-monitor icon-fullscreen tools-icon" :class="[isFullScreen ? 'icon-unfull-screen' : 'icon-fullscreen']" @click.self="handleFullScreen"></i>
-    <i v-if="moreList.length" style="margin-right: 0" class="icon-monitor icon-mc-more tools-icon" @click="handleMoreClick"></i>
+    <i
+      v-if="needFullScreen"
+      class="icon-monitor icon-fullscreen tools-icon"
+      :class="[isFullScreen ? 'icon-unfull-screen' : 'icon-fullscreen']"
+      @click.self="handleFullScreen">
+    </i>
+    <i
+      v-if="moreList.length"
+      style="margin-right: 0"
+      class="icon-monitor icon-mc-more tools-icon"
+      @click="handleMoreClick">
+    </i>
     <div v-show="false">
       <ul class="tool-list" ref="moreTools">
         <template v-for="item in moreToolsList">
@@ -40,11 +50,12 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
-import { Vue, Component, Prop, Emit } from 'vue-property-decorator'
-import { IMoreToolItem, MoreChartToolItem } from '../options/type-interface'
+import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+import { IMoreToolItem, MoreChartToolItem } from '../options/type-interface';
 @Component({
-  name: 'ChartTools'
+  name: 'ChartTools',
 })
 export default class ChartTools extends Vue {
   @Prop({ default: false }) needFullScreen: boolean
@@ -57,44 +68,44 @@ export default class ChartTools extends Vue {
       {
         name: '检索',
         checked: false,
-        id: 'explore'
+        id: 'explore',
       },
       {
         name: 'Y轴固定最小值0',
         checked: false,
         id: 'set',
-        nextName: 'Y轴自适应'
+        nextName: 'Y轴自适应',
       },
       {
         name: '添加策略',
         checked: false,
-        id: 'strategy'
+        id: 'strategy',
       },
       {
         name: '面积图',
         checked: false,
         id: 'area',
-        nextName: '线性图'
-      }
-    ]
+        nextName: '线性图',
+      },
+    ];
   }
   beforeDestroy() {
-    this.handleDestroy()
+    this.handleDestroy();
   }
   @Emit('store-img')
   handleStoreImage(e) {
-    return e
+    return e;
   }
   @Emit('collect-chart')
   handleCollectChart(e) {
-    return e
+    return e;
   }
   @Emit('full-screen')
   handleFullScreen(e) {
-    return e
+    return e;
   }
   handleToArea() {
-    this.$emit('transform-area')
+    this.$emit('transform-area');
   }
   handleMoreClick(e: MouseEvent) {
     this.moreToolInstance = this.$bkPopover(e.target, {
@@ -106,25 +117,26 @@ export default class ChartTools extends Vue {
       offset: '50, -6',
       sticky: true,
       duration: [275, 0],
-      interactive: true
-    })
-    this.moreToolInstance && this.moreToolInstance.show(100)
+      interactive: true,
+    });
+    this.moreToolInstance && this.moreToolInstance.show(100);
   }
   @Emit('tool-item')
   handleMoreItemClick(item: IMoreToolItem) {
-    item.checked = !item.checked
-    this.handleDestroy()
-    return { ...item }
+    item.checked = !item.checked;
+    this.handleDestroy();
+    return { ...item };
   }
   handleDestroy() {
     if (this.moreToolInstance) {
-      this.moreToolInstance.hide(0)
-      this.moreToolInstance.destroy()
-      this.moreToolInstance = null
+      this.moreToolInstance.hide(0);
+      this.moreToolInstance.destroy();
+      this.moreToolInstance = null;
     }
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .chart-tools {
     display: flex;

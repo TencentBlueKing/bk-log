@@ -22,8 +22,9 @@
 
 <template>
   <div class="service-template" v-bkloading="{ isLoading }">
-    <div class="service-template-left"
-         :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
+    <div 
+      class="service-template-left"
+      :style="{ width: isNaN(leftPanelWidth) ? leftPanelWidth : `${leftPanelWidth}px` }">
       <bk-input
         clearable
         right-icon="bk-icon icon-search"
@@ -43,25 +44,24 @@
               </span>
             </div>
             <div class="item-count">
-<!--              <span class="count">{{ getChildrenCount(data) || 0 }}</span>-->
             </div>
           </li>
         </template>
       </bk-virtual-scroll>
     </div>
     <div class="service-template-right ml20">
-      <IpListTable
+      <ip-list-table
         ref="table"
         :get-search-table-data="getTableData"
         :ip-list-table-config="templateTableConfig"
         :show-selection-column="false"
         :disabled-loading="isLoading"
         :empty-text="emptyText"
-        :handle-agent-status="handleAgentStatus">
-      </IpListTable>
+        :handle-agent-status="handleAgentStatus" />
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Prop, Vue, Ref, Emit, Watch } from 'vue-property-decorator'
 import { Debounce, defaultSearch } from '../common/util'
@@ -221,13 +221,13 @@ export default class ServiceTemplate extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .service-template {
     display: flex;
     color: #63656e;
 
     &-left {
-      // flex-basis: 240px;
       display: flex;
       flex-direction: column;
       width: 0;

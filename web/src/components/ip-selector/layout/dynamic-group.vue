@@ -48,7 +48,7 @@
       </bk-virtual-scroll>
     </div>
     <div class="dynamic-group-right ml20">
-      <IpListTable
+      <ip-list-table
         ref="table"
         :get-search-table-data="getTableData"
         :ip-list-table-config="groupTableConfig"
@@ -56,10 +56,11 @@
         :disabled-loading="isLoading"
         :empty-text="emptyText"
         :handle-agent-status="handleAgentStatus">
-      </IpListTable>
+      </ip-list-table>
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Prop, Vue, Ref, Emit, Watch } from 'vue-property-decorator'
 import { Debounce, defaultSearch } from '../common/util'
@@ -216,18 +217,22 @@ export default class DynamicGroup extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
 .dynamic-group {
   display: flex;
   color: #63656e;
+
   &-left {
     display: flex;
     flex-direction: column;
     width: 0;
+
     .group-list {
       flex: 1;
       margin: 12px 0;
     }
+
     .group-list-item {
       height: 32px;
       line-height: 32px;
@@ -236,10 +241,12 @@ export default class DynamicGroup extends Vue {
       cursor: pointer;
       padding: 0 10px;
       border-radius: 2px;
+
       .item-name {
         display: flex;
         align-items: center;
         overflow: hidden;
+
         .label {
           margin-left: 8px;
           overflow: hidden;
@@ -247,6 +254,7 @@ export default class DynamicGroup extends Vue {
           flex: 1;
         }
       }
+
       .count {
         height: 20px;
         line-height: 20px;
@@ -254,11 +262,13 @@ export default class DynamicGroup extends Vue {
         padding: 0 5px;
         display: inline-block;
       }
+
       &:hover {
         background: #f5f6fa;
       }
     }
   }
+
   &-right {
     flex: 1;
     overflow: auto;

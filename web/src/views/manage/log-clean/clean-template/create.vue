@@ -30,10 +30,10 @@
 
 <script>
 import { mapState } from 'vuex';
-import stepField from '@/components/data-Access/step-field';
+import stepField from '@/components/collection-access/step-field';
 
 export default {
-  name: 'log-clean-create',
+  name: 'LogCleanCreate',
   components: { stepField },
   data() {
     return {
@@ -74,7 +74,9 @@ export default {
     padding: 20px 24px;
     height: 100%;
     overflow: auto;
+
     @include scroller($backgroundColor: #ADADAD, $width: 4px);
+
     .article {
       margin-bottom: 20px;
       border: 1px solid #dcdee5;

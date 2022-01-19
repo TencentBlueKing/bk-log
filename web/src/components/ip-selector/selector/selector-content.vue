@@ -34,6 +34,7 @@
   </div>
 </template>
 <script lang="ts">
+
 import { Component, Prop, Vue } from 'vue-property-decorator'
 import { ILayoutComponents, IPanel } from '../types/selector-type'
 
@@ -83,6 +84,7 @@ export default class SelectorContent extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .selector-content {
     padding: 24px 24px 0 24px;
