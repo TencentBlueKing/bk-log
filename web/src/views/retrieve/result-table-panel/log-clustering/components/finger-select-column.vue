@@ -19,84 +19,30 @@
   - WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
   -->
-
 <template>
-  <bk-table
-    class="skeleton-table"
-    :data="renderList"
-    :show-header="false"
-    :outer-border="false"
-    v-if="widthList.length">
-    <bk-table-column width="30"></bk-table-column>
-    <template v-for="(field, index) in widthList">
-      <bk-table-column
-        :min-width="field ? field : 0"
-        :width="field ? field : 'auto'"
-        :key="index">
-        <!-- eslint-disable-next-line vue/no-unused-vars -->
-        <template slot-scope="props">
-          <div class="cell-bar" :style="`width:${getRandom()}%`"></div>
-        </template>
-      </bk-table-column>
-    </template>
-    <bk-table-column v-if="!isLoading" width="84"></bk-table-column>
-  </bk-table>
+  <bk-checkbox
+    :value="value === 2"
+    :indeterminate="value === 1"
+    @change="handleCheckChange">
+  </bk-checkbox>
 </template>
-
 <script>
 export default {
   props: {
-    // 用于初次loading
-    isLoading: {
-      type: Boolean,
-      default: false,
-    },
-    widthList: {
-      type: Array,
-      require: true,
-    },
-    loaderLen: { // 骨架行数
+    value: {
       type: Number,
-      default: 24,
+      default: 0,
     },
   },
   data() {
     return {
     };
   },
-  computed: {
-    renderList() {
-      return new Array(this.loaderLen).fill('');
-    },
-  },
   methods: {
-    getRandom() { // 骨架占位随机长度
-      return Math.floor(Math.random() * (20 - 100) + 100);
+    handleCheckChange(state) {
+      this.$emit('change', state);
     },
   },
 };
 </script>
-
-<style lang="scss">
-  .skeleton-table {
-    &:before {
-      z-index: -1;
-    }
-
-    .cell {
-      padding-top: 14px;
-      width: 100%;
-    }
-
-    .cell-bar {
-      position: relative;
-      height: 12px;
-      background-color: #e9e9e9;
-    }
-
-    /deep/ .bk-table-empty-text {
-      padding: 0;
-      width: 100%;
-    }
-  }
-</style>
+<style lang="scss" scoped></style>

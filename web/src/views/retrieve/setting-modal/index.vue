@@ -210,7 +210,7 @@ export default {
     },
     /**
      * @desc: 离开当前页面无点击nav开关
-     * @param {*} item
+     * @param { Object } item
      */
     handleNavClick(item) {
       if (item.id === this.currentChoice) return;

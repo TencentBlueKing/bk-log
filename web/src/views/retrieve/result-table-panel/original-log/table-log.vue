@@ -410,4 +410,14 @@ export default {
       margin-bottom: 0 !important;
     }
   }
+
+  .more-desc {
+    font-size: 12px;
+    text-align: center;
+    color: #979ba5;
+
+    a {
+      color: #3a84ff;
+    }
+  }
 </style>

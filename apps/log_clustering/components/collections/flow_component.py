@@ -24,8 +24,13 @@ from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 
 from apps.api import CmsiApi
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
+from apps.log_clustering.handlers.clustering_monitor import ClusteringMonitorHandler
 from apps.log_clustering.handlers.dataflow.dataflow_handler import DataFlowHandler
 from apps.log_clustering.models import ClusteringConfig
+from apps.log_search.constants import InnerTag
+from apps.log_search.models import LogIndexSet
 from apps.utils.function import ignored
 from apps.utils.pipline import BaseService
 
@@ -120,5 +125,42 @@ class CreateAfterTreatFlow(object):
             component_code="create_after_treat_flow", name=f"create_after_treat_flow:{collector_config_id}"
         )
         self.create_after_treat_flow.component.inputs.collector_config_id = Var(
+            type=Var.SPLICE, value="${collector_config_id}"
+        )
+
+
+class CreateNewClsStrategyService(BaseService):
+    name = _("创建新类策略")
+
+    def inputs_format(self):
+        return [
+            Service.InputItem(name="collector config id", key="collector_config_id", type="int", required=True),
+        ]
+
+    def _execute(self, data, parent_data):
+        collector_config_id = data.get_one_of_inputs("collector_config_id")
+        log_index_set = LogIndexSet.objects.filter(collector_config_id=collector_config_id).first()
+        LogIndexSet.set_tag(log_index_set.index_set_id, InnerTag.CLUSTERING.value)
+        if log_index_set:
+            conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
+            bk_biz_id = conf.get("bk_biz_id")
+            ClusteringMonitorHandler(
+                index_set_id=log_index_set.index_set_id, bk_biz_id=bk_biz_id
+            ).create_new_cls_strategy()
+        return True
+
+
+class CreateNewClsStrategyComponent(Component):
+    name = "CreateNewClsStrategy"
+    code = "create_new_cls_strategy"
+    bound_service = CreateNewClsStrategyService
+
+
+class CreateNewClsStrategy(object):
+    def __init__(self, collector_config_id: int):
+        self.create_new_cls_strategy = ServiceActivity(
+            component_code="create_new_cls_strategy", name=f"create_new_cls_strategy:{collector_config_id}"
+        )
+        self.create_new_cls_strategy.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )

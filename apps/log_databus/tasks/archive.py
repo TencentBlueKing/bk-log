@@ -36,7 +36,7 @@ def clean_expired_restore_index_set():
             if expired_restore.index_set_id:
                 index_set_handler = IndexSetHandler(expired_restore.index_set_id)
                 index_set_handler.stop()
-        except Exception as e:
+        except Exception as e:  # pylint:disable=broad-except
             logger.error(f"clean expired restore ->[{expired_restore.restore_config_id}] index_set failed -> {e}")
             continue
         logger.info(
@@ -60,7 +60,7 @@ def check_restore_is_done_and_notice_user():
         if meta_restore_state["total_doc_count"] <= meta_restore_state["complete_doc_count"]:
             try:
                 not_done_restore.done(meta_restore_state["duration"])
-            except Exception as e:
+            except Exception as e:  # pylint:disable=broad-except
                 logger.error(f"deal with restore done error -> [{e}]")
                 continue
             logger.info(f"restore->[{not_done_restore.restore_config_id}] has done")
