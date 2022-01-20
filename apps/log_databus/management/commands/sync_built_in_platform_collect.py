@@ -19,16 +19,19 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import os
+import yaml
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils.translation import ugettext as _
 
 from apps.api import TransferApi
+from apps.exceptions import ApiResultError
 from apps.log_databus.constants import (
     TargetObjectTypeEnum,
     TargetNodeTypeEnum,
     BUILT_IN_MIN_DATAID,
     BUILT_IN_MAX_DATAID,
+    STORAGE_CLUSTER_TYPE,
 )
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.models import CollectorConfig, DataLinkConfig
@@ -39,6 +42,7 @@ from apps.log_search.constants import EncodingsEnum, CollectorScenarioEnum
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--data_link_id", type=int, help="data link id(default:0)")
+        parser.add_argument("--es_cluster_id", type=int, help="es storage cluster id(default:0)")
 
     def handle(self, **options):
         """
@@ -53,16 +57,39 @@ class Command(BaseCommand):
             },
         ]
         """
-        build_in_platform_data_id = os.environ.get("platBuiltInCollect", [])
+        default_es_cluster_id = options.get("es_cluster_id")
+        default_data_link_id = options.get("data_link_id")
 
-        data_link = DataLinkConfig.objects.filter(bk_biz_id=0, is_active=True).first()
+        builtin_collect_file_path = os.environ.get("BK_LOG_BUILTIN_COLLECT_CONFIG_PATH", "")
+        if not builtin_collect_file_path:
+            print("config file not exists. do nothing")
+            return
+
+        # Yaml Format:
+        # builtin_collect:
+        #    - dataid: 11000001
+        #      name: bk-log-search-saas
+        #    - dataid: 11000002
+        #      name: bk-log-search-api
+        config = {}
+        with open(builtin_collect_file_path, encoding="utf-8") as f:
+            config = yaml.load(f.read(), Loader=yaml.FullLoader)
+
+        data_link = None
+        if default_data_link_id:
+            q = DataLinkConfig.objects.filter(data_link_id=default_data_link_id)
+            if q.exists():
+                data_link = q.first()
+
         if not data_link:
-            raise ValueError("default data link not exists.")
+            data_link = DataLinkConfig.objects.filter(bk_biz_id=0, is_active=True).first()
+            if not data_link:
+                raise ValueError("default data link not exists.")
 
-        for built_in_info in build_in_platform_data_id:
+        for built_in_info in config["builtin_collect"]:
             try:
-                if not (BUILT_IN_MIN_DATAID <= int(built_in_info["data_id"]) <= BUILT_IN_MAX_DATAID):
-                    print("data id (%s) not valid, do nothing" % built_in_info["data_id"])
+                if not (BUILT_IN_MIN_DATAID <= int(built_in_info["dataId"]) <= BUILT_IN_MAX_DATAID):
+                    print("data id (%s) not valid, do nothing" % built_in_info["dataId"])
                     continue
 
                 # 1. 创建采集配置
@@ -73,15 +100,15 @@ class Command(BaseCommand):
                 self.create_data_id(collect_config, data_link)
 
                 # 3. 创建存储相关结果表 & 创建索引集
-                self.create_etl_handle_and_index_set(collect_config)
+                self.create_etl_handle_and_index_set(collect_config, default_es_cluster_id)
 
             except Exception as e:  # pylint: disable=broad-except
                 print(f"create build in collect error({e}), ")
 
     @classmethod
     def create_or_update_build_in_collect(cls, built_in_info, default_data_link):
-        data_id = built_in_info["data_id"]
-        module_name = built_in_info["module_name"]
+        data_id = built_in_info["dataId"]
+        module_name = built_in_info["moduleName"]
 
         try:
             collect_config = CollectorConfig.objects.get(bk_data_id=data_id)
@@ -109,10 +136,11 @@ class Command(BaseCommand):
                         "paths": ["/built_in/collector/ignore/me"],
                     },
                     "is_active": True,
-                    "category_id": "custom",
+                    "custom_type": "log",
+                    "category_id": "other_rt",
                     "bk_biz_id": settings.BLUEKING_BK_BIZ_ID,
                     "data_link_id": default_data_link.data_link_id,
-                    "collector_scenario_id": CollectorScenarioEnum.ROW.value,
+                    "collector_scenario_id": CollectorScenarioEnum.CUSTOM.value,
                     "created_by": settings.SYSTEM_USE_API_ACCOUNT,
                     "updated_by": settings.SYSTEM_USE_API_ACCOUNT,
                 }
@@ -136,15 +164,28 @@ class Command(BaseCommand):
             "operator": settings.SYSTEM_USE_API_ACCOUNT,
             "bk_data_id": collect_config.bk_data_id,
         }
-        return TransferApi.create_data_id(params)
+        try:
+            return TransferApi.create_data_id(params)
+        except ApiResultError:
+            params["data_id"] = params["bk_data_id"]
+            return TransferApi.modify_data_id(params)
 
     @classmethod
-    def create_etl_handle_and_index_set(cls, collect_config):
+    def create_etl_handle_and_index_set(cls, collect_config, storage_cluster_id):
+        if not storage_cluster_id:
+            es_clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
+            for es in es_clusters:
+                if es["cluster_config"]["is_default_cluster"]:
+                    storage_cluster_id = es["cluster_config"]["cluster_id"]
+
+        if not storage_cluster_id:
+            raise ValueError("default es cluster not exists.")
+
         etl_storage = CollectorEtlStorageSerializer(
             data={
                 "etl_config": "bk_log_text",
                 "table_id": collect_config.collector_config_name,
-                "storage_cluster_id": 3,
+                "storage_cluster_id": storage_cluster_id,
                 "retention": settings.ES_STORAGE_DEFAULT_DURATION,
                 "allocation_min_days": 0,
                 "etl_params": {"retain_original_text": True, "separator_regexp": "", "separator": ""},
