@@ -185,7 +185,12 @@ class QueryClientLog(QueryClientTemplate):
 
         http_auth = (self.username, self.password) if self.username and self.password else None
         self._client: Elasticsearch = self.elastic_client(
-            [self.host], http_auth=http_auth, scheme=self.schema, port=self.port, sniffer_timeout=600, verify_certs=True
+            [self.host],
+            http_auth=http_auth,
+            scheme=self.schema,
+            port=self.port,
+            sniffer_timeout=600,
+            verify_certs=False,
         )
         if not self._client.ping():
             self._active = False
