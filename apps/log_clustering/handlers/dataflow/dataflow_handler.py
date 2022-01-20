@@ -329,7 +329,7 @@ class DataFlowHandler(BaseAiopsHandler):
         collector_config_name_en: str,
         clustering_fields: str = "log",
     ):
-        # 这里是为了在新类中去除
+        # 这里是为了在新类中去除第一次启动24H内产生的大量异常新类
         new_cls_timestamp = int(arrow.now().shift(hours=DEFAULT_NEW_CLS_HOURS).float_timestamp * 1000)
         all_fields = DataAccessHandler.get_fields(result_table_id=add_uuid_result_table_id)
         is_dimension_fields = [
