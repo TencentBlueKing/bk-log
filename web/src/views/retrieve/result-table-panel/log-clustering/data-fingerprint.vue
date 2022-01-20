@@ -50,6 +50,7 @@
         <template slot-scope="{ row }">
           <bk-checkbox
             :checked="getCheckedStatus(row)"
+            :disabled="isRequestAlarm"
             @change="handleRowCheckChange(row, $event)">
           </bk-checkbox>
         </template>

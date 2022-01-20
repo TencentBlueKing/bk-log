@@ -71,6 +71,7 @@
             v-if="active === 'dataFingerprint'"
             v-bind="$attrs"
             v-on="$listeners"
+            ref="fingerTableRef"
             :cluster-switch="clusterSwitch"
             :request-data="requestData"
             :config-data="configData"
@@ -359,6 +360,14 @@ export default {
           break;
         case 'getNewStrategy': // 获取新类告警状态
           this.fingerOperateData.alarmObj = val;
+          break;
+        case 'editAlarm': {
+          // 获取新类告警状态
+          const { alarmObj: { strategy_id: strategyID } } = this.fingerOperateData;
+          if (strategyID) {
+            this.$refs.fingerTableRef.policyEditing(strategyID);
+          }
+        }
           break;
         default:
           break;
