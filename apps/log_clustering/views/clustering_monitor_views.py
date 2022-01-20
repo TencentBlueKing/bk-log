@@ -19,8 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from rest_framework.response import Response
 
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
 from apps.generic import APIViewSet
 from apps.log_clustering.constants import StrategiesType
 from apps.log_clustering.handlers.clustering_monitor import ClusteringMonitorHandler
@@ -150,13 +148,9 @@ class ClusteringMonitorViewSet(APIViewSet):
             "result":true
         }
         """
-        if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
-            return
-        conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
-        bk_biz_id = conf.get("bk_biz_id")
         params = self.params_valid(UpdateNewClsStrategySerializer)
         return Response(
-            ClusteringMonitorHandler(index_set_id=index_set_id, bk_biz_id=bk_biz_id).update_new_cls_strategy(
+            ClusteringMonitorHandler(index_set_id=index_set_id, bk_biz_id=params["bk_biz_id"]).update_new_cls_strategy(
                 action=params["action"], strategy_id=params.get("strategy_id")
             )
         )

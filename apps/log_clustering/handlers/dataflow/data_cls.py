@@ -334,12 +334,18 @@ class MergeNodeCls(object):
 @dataclass
 class TspiderStorageCls(object):
     cluster: str
-    expire: int
+    expires: int
 
 
 @dataclass
 class IgniteStorageCls(object):
     cluster: str
+
+
+@dataclass
+class SplitCls(object):
+    table_name: str
+    result_table_id: str
 
 
 @dataclass
@@ -356,10 +362,12 @@ class AfterTreatDataFlowCls(object):
     join_signature_tmp: RealTimeCls
     judge_new_class: RealTimeCls
     join_signature: RealTimeCls
-    judge_new_class_tspider: TspiderStorageCls
+    diversion_tspider: TspiderStorageCls
     ignite: IgniteStorageCls
+    diversion: SplitCls
     queue_cluster: str
     bk_biz_id: int
+    target_bk_biz_id: int
 
 
 @dataclass
