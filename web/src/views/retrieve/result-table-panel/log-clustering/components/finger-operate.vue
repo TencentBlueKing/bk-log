@@ -89,19 +89,16 @@
       <bk-popover
         :trigger="trigger"
         :on-show="handlePopoverShow"
+        :disabled="!fingerOperateData.signatureSwitch"
         theme="light">
-        <span style="border-bottom: 1px dashed #000">{{$t('近24H新增')}}</span>
+        <span style="border-bottom: 1px dashed #979ba5">{{$t('近24H新增')}}</span>
         <div slot="content" class="alarm-content">
-          <span>{{$t('是否要告警')}}</span>
-          <div @click.stop="handleChangeStrategy">
-            <bk-switcher
-              theme="primary"
-              size="small"
-              v-model="alarmSwitch"
-              :disabled="isRequestAlarm"
-              :pre-check="() => false">
-            </bk-switcher>
-          </div>
+          <span @click.stop="updateNewClsStrategy">{{!alarmSwitch ? $t('开启告警') : $t('关闭告警')}}</span>
+          <span
+            v-if="alarmSwitch"
+            class="right-alarm"
+            @click="handleEmitEditAlarm">
+            {{$t('编辑告警')}}</span>
         </div>
       </bk-popover>
     </div>
@@ -191,6 +188,9 @@ export default {
       this.isToggle = state;
       !state && this.$emit('handleFingerOperate', 'group', this.group);
     },
+    handleEmitEditAlarm() {
+      this.$emit('handleFingerOperate', 'editAlarm');
+    },
     handlePopoverShow() {
       if (JSON.stringify(this.fingerOperateData.alarmObj) === '{}') {
         this.initNewClsStrategy();
@@ -203,14 +203,6 @@ export default {
       this.yearOnYearHour = this.requestData.year_on_year_hour;
       this.isNear24 = this.requestData.show_new_pattern;
       this.alarmSwitch = this.fingerOperateData.alarmObj?.is_active;
-    },
-    handleChangeStrategy() {
-      this.$bkInfo({
-        title: this.$t('是否更新新类告警'),
-        confirmFn: () => {
-          this.updateNewClsStrategy();
-        },
-      });
     },
     /**
      * @desc: 查询新类告警
@@ -359,10 +351,19 @@ export default {
 }
 
 .alarm-content {
-  @include flex-center;
+  color: #3a84ff;
 
   span {
-    margin: -2px 4px 0 0;
+    cursor: pointer;
+  }
+
+  .right-alarm {
+    margin-left: 6px;
+
+    &:before {
+      content: '|';
+      margin-right: 6px;
+    }
   }
 }
 
