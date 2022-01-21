@@ -41,7 +41,7 @@
         <div
           class="operation-icon"
           @click="handleSync"
-          v-bk-tooltips="this.$t('logClean.syncTip')">
+          v-bk-tooltips="$t('logClean.syncTip')">
           <span v-if="!syncLoading" class="log-icon icon-tongbu"></span>
           <span v-else class="loading"></span>
         </div>
@@ -145,7 +145,7 @@
 import { mapGetters } from 'vuex';
 
 export default {
-  name: 'clean-list',
+  name: 'CleanList',
   data() {
     return {
       isTableLoading: true,
@@ -336,7 +336,7 @@ export default {
     // 计算平台授权跳转
     handleAuth({ bkdata_auth_url: authUrl, index_set_id: id }) {
       let redirectUrl = ''; // 数据平台授权地址
-      if (NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === 'development') {
         redirectUrl = `${authUrl}&redirect_url=${window.origin}/static/auth.html`;
       } else {
         let siteUrl = window.SITE_URL;
@@ -404,25 +404,31 @@ export default {
 </script>
 
 <style lang="scss">
-@import '@/scss/mixins/clearfix';
+  @import '@/scss/mixins/clearfix';
   @import '@/scss/conf';
   @import '@/scss/devops-common.scss';
 
   .log-clean-container {
     padding: 20px 24px;
+
     .top-operation {
       margin-bottom: 20px;
+
       @include clearfix;
+
       .bk-button {
         width: 120px;
       }
     }
+
     .clean-search {
       display: flex;
       align-items: center;
+
       .bk-input-text {
         width: 320px;
       }
+
       .operation-icon {
         display: flex;
         justify-content: center;
@@ -436,40 +442,48 @@ export default {
         transition: boder-color .2s;
         border-radius: 2px;
         outline: none;
+
         &:hover {
           border-color: #979ba5;
           transition: boder-color .2s;
         }
+
         &:active {
           border-color: #3a84ff;
           transition: boder-color .2s;
         }
+
         .icon-tongbu {
           font-size: 14px;
           color: #979ba5;
         }
+
         .loading {
           width: 14px;
           height: 14px;
           border: 2px solid #3a84ff;
           border-right: 2px solid transparent;
           border-radius: 50%;
-          -webkit-animation: button-icon-loading 1s linear infinite;
+          animation: button-icon-loading 1s linear infinite;
           animation: button-icon-loading 1s linear infinite;
           margin: 0 auto;
           display: inline-block;
         }
       }
     }
+
     .clean-table {
       overflow: visible;
+
       .text-disabled {
         color: #c4c6cc;
       }
+
       .text-active {
         color: #3a84ff;
         cursor: pointer;
       }
+
       .filter-column {
         .cell {
           display: flex;

@@ -81,6 +81,7 @@
   white-space: nowrap;
 
   &.is-disabled {
+    /* stylelint-disable-next-line declaration-no-important */
     color: #c3cdd7 !important;
   }
 }
@@ -103,6 +104,7 @@
 
 .bk-button-group {
   .bk-button {
+    /* stylelint-disable-next-line declaration-no-important */
     margin-left: -1px !important;
 
     > a {
@@ -178,7 +180,10 @@
 .bk-form-password[readonly],
 .bk-form-select[readonly],
 .bk-form-textarea[readonly] {
+  /* stylelint-disable-next-line declaration-no-important */
   border-color: #c3cdd7 !important;
+
+  /* stylelint-disable-next-line declaration-no-important */
   background-color: #fafafa !important;
 }
 
@@ -214,6 +219,7 @@
 }
 
 .biz-badge {
+  /* stylelint-disable-next-line declaration-no-important */
   line-height: 18px !important;
 }
 
@@ -647,6 +653,7 @@
 .biz-templateset-wrapper {
   .bk-tooltip,
   .bk-tooltip-rel {
+    /* stylelint-disable-next-line declaration-no-important */
     width: 100% !important;
   }
 }

@@ -32,16 +32,20 @@ from apps.log_clustering.constants import (
     NEW_CLASS_SENSITIVITY_FIELD,
     DOUBLE_PERCENTAGE,
     NEW_CLASS_FIELD_PREFIX,
+    MAX_STRATEGY_PAGE_SIZE,
+    DEFAULT_PAGE,
+    DEFAULT_LABEL,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
-from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig
+from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig, SignatureStrategySettings
 from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
 from apps.utils.bkdata import BkData
-from apps.utils.db import array_hash
+from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import map_if
 from apps.utils.local import get_local_param
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import generate_time_range_shift, generate_time_range
+from apps.api import MonitorApi
 
 
 class PatternHandler:
@@ -107,7 +111,10 @@ class PatternHandler:
                     "is_new_class": signature in new_class,
                     "year_on_year_count": year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
-                    "group": pattern.get("group", ""),
+                    "group": str(pattern.get("group", "")).split("|"),
+                    "monitor": SignatureStrategySettings.get_monitor_config(
+                        signature=signature, index_set_id=self._index_set_id, pattern_level=self._pattern_level
+                    ),
                 }
             )
         if self._show_new_pattern:
@@ -190,6 +197,7 @@ class PatternHandler:
                 doc_key = iter_bucket.get("key")
                 group_buckets = iter_bucket.get(group_key, {}).get("buckets", [])
                 for group_bucket in group_buckets:
+                    # 这里是为了兼容字符串空值，数值为0的情况
                     result_buckets.append(
                         {
                             **group_bucket,
@@ -197,7 +205,7 @@ class PatternHandler:
                             "doc_count": group_bucket.get("doc_count", 0),
                             "group": (
                                 f"{iter_bucket.get('group', '')}|{group_bucket['key']}"
-                                if iter_bucket.get("group", "")
+                                if iter_bucket.get("group") != None  # noqa
                                 else group_bucket["key"]
                             ),
                         }
@@ -215,3 +223,28 @@ class PatternHandler:
             .query()
         )
         return {new_class["signature"] for new_class in new_classes}
+
+    @classmethod
+    def get_labels(cls, strategy_ids: list, bk_biz_id: int):
+        inst_ids_array = array_chunk(sorted(strategy_ids), MAX_STRATEGY_PAGE_SIZE)
+        result = []
+        for inst_ids in inst_ids_array:
+            strategies = MonitorApi.search_alarm_strategy_v2(
+                params={
+                    "page": DEFAULT_PAGE,
+                    "page_size": MAX_STRATEGY_PAGE_SIZE,
+                    "conditions": [{"key": "strategy_id", "value": inst_ids}],
+                    "bk_biz_id": bk_biz_id,
+                }
+            )
+            result.extend(strategies["strategy_config_list"])
+        return cls._generate_strategy_result(result)
+
+    @classmethod
+    def _generate_strategy_result(cls, strategy_result):
+        default_labels_set = set(DEFAULT_LABEL)
+        result = []
+        for strategy_obj in strategy_result:
+            labels = map_if(strategy_obj["labels"], if_func=lambda x: x not in default_labels_set)
+            result.append({"strategy_id": strategy_obj["id"], "labels": labels})
+        return result

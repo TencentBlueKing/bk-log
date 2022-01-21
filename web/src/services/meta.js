@@ -75,6 +75,11 @@ const updateUserGuide = {
   method: 'post',
 };
 
+// 环境变量
+const getEnvConstant = {
+  url: '/meta/index_html_environment/',
+};
+
 export {
   type,
   language,
@@ -85,4 +90,5 @@ export {
   getMaintainerApi,
   getUserGuide,
   updateUserGuide,
+  getEnvConstant,
 };

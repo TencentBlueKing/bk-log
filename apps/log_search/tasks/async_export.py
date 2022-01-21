@@ -200,7 +200,7 @@ class AsyncExportUtils(object):
         with open(self.file_path, "a+", encoding="utf-8") as f:
             result_list = self.search_handler._deal_query_result(result_dict=result).get("origin_log_list")
             for item in result_list:
-                f.write("%s\n" % json.dumps(item))
+                f.write("%s\n" % json.dumps(item, ensure_ascii=False))
             if self.search_handler.scenario_id == Scenario.ES:
                 generate_result = self.search_handler.scroll_result(result)
             else:
@@ -283,6 +283,8 @@ class AsyncExportUtils(object):
         storage = StorageType.get_instance(storage_type)
         if not storage_type or storage_type == RemoteStorageType.NFS.value:
             return storage(settings.EXTRACT_SAAS_STORE_DIR)
+        if storage_type == RemoteStorageType.BKREPO.value:
+            return storage(expired=ASYNC_EXPORT_EXPIRED)
         return storage(
             toggle.get("qcloud_secret_id"),
             toggle.get("qcloud_secret_key"),

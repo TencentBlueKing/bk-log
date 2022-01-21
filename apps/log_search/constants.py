@@ -34,6 +34,7 @@ class InnerTag(ChoicesEnum):
     HAVE_DELAY = "have_delay"
     BKDATA = "bkdata"
     BCS = "bcs"
+    CLUSTERING = "clustering"
 
     _choices_labels = (
         (TRACE, _("trace")),
@@ -43,6 +44,7 @@ class InnerTag(ChoicesEnum):
         (HAVE_DELAY, _("有延迟")),
         (BKDATA, _("计算平台")),
         (BCS, _("BCS")),
+        (CLUSTERING, _("数据指纹")),
     )
 
 
@@ -132,6 +134,8 @@ COMMON_LOG_INDEX_RE = r"^(v2_)?{}_(?P<datetime>\d+)_(?P<index>\d+)$"
 BKDATA_INDEX_RE = r"^{}_\d+$"
 
 MAX_EXPORT_REQUEST_RETRY = 3
+
+ISO_8601_TIME_FORMAT_NAME = "rfc3339"
 
 FILTER_KEY_LIST = ["gettext", "_", "LANGUAGES"]
 
@@ -809,6 +813,11 @@ class FieldDateFormatEnum(ChoicesEnum):
                 "name": "DD/MMM/YYYY:HH:mm:ss ZZ",
                 "description": "02/Jan/2006:15:04:05 -07:00",
             },
+            {
+                "id": ISO_8601_TIME_FORMAT_NAME,
+                "name": ISO_8601_TIME_FORMAT_NAME,
+                "description": "2006-01-02T15:04:05Z07:00",
+            },
             {"id": "date_hour_minute_second", "name": "YYYY-MM-DDTHH:mm:ss", "description": "2006-01-02T15:04:05"},
             {
                 "id": "date_hour_minute_second_millis",
@@ -976,6 +985,7 @@ RT_RESERVED_WORD_EXAC = [
     "path",
     "gseIndex",
     "iterationIndex",
+    "__ext",
     "log",
     "dtEventTimeStamp",
     "datetime",

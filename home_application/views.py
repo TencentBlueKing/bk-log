@@ -53,3 +53,10 @@ def contact(request):
 @login_exempt
 def healthz(request):
     return JsonResponse({"server_up": 1})
+
+
+@login_exempt
+def metrics(request):
+    from django_prometheus import exports
+
+    return exports.ExportToDjangoView(request)

@@ -17,9 +17,16 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
-from apps.log_clustering.constants import PatternEnum, AGGS_FIELD_PREFIX, DEFULT_FILTER_NOT_CLUSTERING_OPERATOR
+from apps.exceptions import ValidationError
+from apps.log_clustering.constants import (
+    PatternEnum,
+    AGGS_FIELD_PREFIX,
+    DEFULT_FILTER_NOT_CLUSTERING_OPERATOR,
+    ActionEnum,
+)
 
 
 class PatternSearchSerlaizer(serializers.Serializer):
@@ -86,3 +93,36 @@ class ClusteringPreviewSerializer(serializers.Serializer):
     delimeter = serializers.CharField()
     max_log_length = serializers.IntegerField()
     is_case_sensitive = serializers.IntegerField()
+
+
+class GetLabelsSerializer(serializers.Serializer):
+    strategy_ids = serializers.ListField(child=serializers.IntegerField())
+    bk_biz_id = serializers.IntegerField()
+
+
+class UpdateStrategyAction(serializers.Serializer):
+    signature = serializers.CharField()
+    pattern = serializers.CharField(allow_blank=True, allow_null=True)
+    strategy_id = serializers.IntegerField(required=False)
+    action = serializers.ChoiceField(required=True, choices=ActionEnum.get_choices())
+    operator = serializers.CharField(required=False)
+    value = serializers.CharField(required=False)
+
+
+class UpdateStrategiesSerializer(serializers.Serializer):
+    pattern_level = serializers.ChoiceField(required=True, choices=PatternEnum.get_choices())
+    bk_biz_id = serializers.IntegerField()
+    actions = serializers.ListField(child=UpdateStrategyAction())
+
+
+class UpdateNewClsStrategySerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField()
+    action = serializers.ChoiceField(required=True, choices=ActionEnum.get_choices())
+    operator = serializers.CharField(required=False)
+    value = serializers.CharField(required=False)
+    strategy_id = serializers.IntegerField(required=False)
+
+    def validate(self, attrs):
+        if attrs["action"] == ActionEnum.DELETE.value and not attrs.get("strategy_id"):
+            raise ValidationError(_("删除操作时需要提供对应strategy_id"))
+        return attrs

@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <DynamicTopo
+  <dynamic-topo
     ref="dynamicTopo"
     :get-default-data="getDefaultData"
     :get-search-table-data="getSearchTableData"
@@ -41,9 +41,9 @@
     :left-panel-width="leftPanelWidth"
     :handle-agent-status="handleAgentStatus"
     @check-change="handleTableCheckChange"
-    @search-selection-change="handleSearchSelectionChange">
-  </DynamicTopo>
+    @search-selection-change="handleSearchSelectionChange" />
 </template>
+
 <script lang="ts">
 import DynamicTopo from './dynamic-topo.vue'
 import { Component, Prop, Vue, Emit, Ref } from 'vue-property-decorator'

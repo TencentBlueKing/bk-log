@@ -69,6 +69,7 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Model, Emit, Watch } from 'vue-property-decorator'
 import { Debounce } from '../common/util'
@@ -187,6 +188,7 @@ export default class TopoSearch extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .topo-search {
     position: relative;

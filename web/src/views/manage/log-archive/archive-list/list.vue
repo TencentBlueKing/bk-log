@@ -54,7 +54,7 @@
         <bk-table-column type="expand" width="30" align="center">
           <template slot-scope="props">
             <div class="state-table-wrapper">
-              <StateTable :archive-config-id="props.row.archive_config_id" />
+              <state-table :archive-config-id="props.row.archive_config_id" />
             </div>
           </template>
         </bk-table-column>
@@ -124,7 +124,7 @@
       </bk-table>
     </section>
     <!-- 新增/编辑归档 -->
-    <ArchiveSlider
+    <archive-slider
       v-if="isRenderSlider"
       :show-slider.sync="showSlider"
       :edit-archive="editArchive"
@@ -132,7 +132,7 @@
     />
 
     <!-- 新增回溯 -->
-    <RestoreSlider
+    <restore-slider
       :show-slider.sync="showRestoreSlider"
       :archive-id="editArchiveId"
       @updated="handleUpdatedRestore"
@@ -148,7 +148,7 @@ import RestoreSlider from '../archive-restore/restore-slider.vue';
 import { formatFileSize } from '@/common/util';
 
 export default {
-  name: 'archive-list',
+  name: 'ArchiveList',
   components: {
     StateTable,
     ArchiveSlider,
@@ -324,16 +324,21 @@ export default {
 
   .log-archive-list {
     padding: 20px 24px;
+
     .top-operation {
       margin-bottom: 20px;
+
       @include clearfix;
+
       .bk-button {
         width: 120px;
       }
     }
+
     .list-search {
       width: 320px;
     }
+
     .archive-table {
       .filter-column {
         .cell {
@@ -341,6 +346,7 @@ export default {
         }
       }
     }
+
     .bk-table-body td.bk-table-expanded-cell {
       padding: 0;
     }

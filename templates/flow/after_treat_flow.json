@@ -468,7 +468,7 @@
     },
     {
         "bk_biz_id":{{after_treat.bk_biz_id}},
-        "sql":"select event_time, signature, history_time, sensitivity from {{after_treat.join_signature_tmp.result_table_id}} where event_time = history_time or event_time - history_time > 86400000",
+        "sql":"select event_time, signature, history_time, sensitivity from {{after_treat.join_signature_tmp.result_table_id}} where (event_time = history_time or event_time - history_time > 86400000) {{after_treat.judge_new_class.filter_rule}}",
         "table_name":"{{after_treat.judge_new_class.table_name}}",
         "name":"新类判断",
         "count_freq":null,
@@ -572,35 +572,6 @@
         }
     },
     {
-        "name":"新类判断(tspider_storage)",
-        "result_table_id":"{{after_treat.judge_new_class.result_table_id}}",
-        "bk_biz_id":{{after_treat.bk_biz_id}},
-        "indexed_fields":[
-            "event_time",
-            "history_time"
-        ],
-        "cluster":"{{after_treat.judge_new_class_tspider.cluster}}",
-        "expires":{{after_treat.judge_new_class_tspider.expire}},
-        "has_unique_key":false,
-        "storage_keys":[
-
-        ],
-        "id":268243,
-        "from_nodes":[
-            {
-                "id":268099,
-                "from_result_table_ids":[
-                    "{{after_treat.judge_new_class.result_table_id}}"
-                ]
-            }
-        ],
-        "node_type":"tspider_storage",
-        "frontend_info":{
-            "x":2206,
-            "y":68
-        }
-    },
-    {
         "name":"join signature缓存(ignite)",
         "bk_biz_id":{{after_treat.bk_biz_id}},
         "cluster":"{{after_treat.ignite.cluster}}",
@@ -630,6 +601,33 @@
         "frontend_info":{
             "x":1941,
             "y":320
+        }
+    },
+    {
+        "bk_biz_id": {{after_treat.bk_biz_id}},
+        "name": "业务数据回流",
+        "table_name": "{{after_treat.diversion.table_name}}",
+        "output_name": "回流数据",
+        "description": "回流数据",
+        "config": [
+            {
+                "bk_biz_id": {{after_treat.target_bk_biz_id}},
+                "logic_exp": "true"
+            }
+        ],
+        "id": 283083,
+        "from_nodes": [
+            {
+                "id": 268099,
+                "from_result_table_ids": [
+                    "{{after_treat.judge_new_class.result_table_id}}"
+                ]
+            }
+        ],
+        "node_type": "split",
+        "frontend_info": {
+            "x": 2438.4636054742855,
+            "y": 181.10343771074696
         }
     }
 ]
