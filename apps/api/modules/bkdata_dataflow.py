@@ -86,7 +86,7 @@ class _BkDataDataFlowApi:
             url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/nodes/{node_id}/",
             module=self.MODULE,
             url_keys=["flow_id", "node_id"],
-            description=u"新增节点",
+            description=u"更新节点",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )

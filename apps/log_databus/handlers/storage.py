@@ -482,7 +482,7 @@ class StorageHandler(object):
 
         http_auth = (username, password) if username and password else None
         es_client = Elasticsearch(
-            [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=True
+            [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=False
         )
 
         nodes = es_client.cat.nodeattrs(format="json", h="name,host,attr,value,id,ip")
@@ -569,7 +569,7 @@ class StorageHandler(object):
         cs.close()
         http_auth = (username, password) if username and password else None
         es_client = Elasticsearch(
-            [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=True
+            [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=False
         )
         if not es_client.ping():
             connect_result = False

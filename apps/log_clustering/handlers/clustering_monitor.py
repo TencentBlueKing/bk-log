@@ -243,7 +243,7 @@ class ClusteringMonitorHandler(object):
     @classmethod
     def _generate_name(cls, index_set_name, strategy_type=StrategiesType.NORMAL_STRATEGY, signature_setting_id=None):
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
-            return "{}_{}".format(index_set_name, signature_setting_id)
+            return "{}_#{}".format(index_set_name, signature_setting_id)
         if strategy_type == StrategiesType.NEW_CLS_strategy:
             return _("{}_日志聚类24H新类告警").format(index_set_name)
 
@@ -257,7 +257,7 @@ class ClusteringMonitorHandler(object):
 
     def create_new_cls_strategy(self):
         clustering_config = ClusteringConfig.objects.get(index_set_id=self.index_set_id)
-        table_id = clustering_config.after_treat_flow["judge_new_class"]["result_table_id"]
+        table_id = clustering_config.new_cls_pattern_rt
         return self.save_strategy(
             table_id=table_id, metric=DEFAULT_METRIC, strategy_type=StrategiesType.NEW_CLS_strategy
         )
