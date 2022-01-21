@@ -257,7 +257,7 @@ class ClusteringMonitorHandler(object):
 
     def create_new_cls_strategy(self):
         clustering_config = ClusteringConfig.objects.get(index_set_id=self.index_set_id)
-        table_id = clustering_config.after_treat_flow["judge_new_class"]["result_table_id"]
+        table_id = clustering_config.new_cls_pattern_rt
         return self.save_strategy(
             table_id=table_id, metric=DEFAULT_METRIC, strategy_type=StrategiesType.NEW_CLS_strategy
         )
