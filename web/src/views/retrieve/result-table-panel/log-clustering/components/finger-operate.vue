@@ -30,6 +30,7 @@
         ext-cls="compared-select"
         v-model="group"
         :popover-min-width="180"
+        :disabled="!fingerOperateData.signatureSwitch"
         @toggle="handleSelectGroup">
         <bk-option
           v-for="item in fingerOperateData.groupList"
@@ -363,6 +364,7 @@ export default {
     &:before {
       content: '|';
       margin-right: 6px;
+      color: #dcdee5;
     }
   }
 }

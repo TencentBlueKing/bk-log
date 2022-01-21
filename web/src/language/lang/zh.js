@@ -379,8 +379,6 @@ export default {
   fingerChoose: '当前已选择',
   fingerTotalData: '共有',
   fingerSizeData: '条数据',
-  newAlarm: '24H内新增的Pattern将产生时告警 ， 可前往编辑策略',
-  closeAlarm: '确认要关闭24H新类告警么？',
   nav: {
     logRetrieve: '日志检索',
     retrieve: '检索',
