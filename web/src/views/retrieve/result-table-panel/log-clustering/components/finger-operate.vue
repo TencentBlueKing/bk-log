@@ -87,13 +87,14 @@
         :disabled="!fingerOperateData.signatureSwitch"
         @change="handleShowNearPattern">
       </bk-checkbox>
-      <bk-popover
-        :trigger="trigger"
-        :on-show="handlePopoverShow"
-        :disabled="!fingerOperateData.signatureSwitch"
-        theme="light">
-        <span style="border-bottom: 1px dashed #979ba5">{{$t('近24H新增')}}</span>
-        <div slot="content" class="alarm-content">
+      <span
+        @mouseenter="handleShowAlarmPopover"
+        @click="handleChangeTrigger">{{$t('近24H新增')}}</span>
+      <div v-show="false">
+        <div
+          ref="alarmPopover"
+          slot="content"
+          class="alarm-content">
           <span @click.stop="updateNewClsStrategy">{{!alarmSwitch ? $t('开启告警') : $t('关闭告警')}}</span>
           <span
             v-if="alarmSwitch"
@@ -101,7 +102,7 @@
             @click="handleEmitEditAlarm">
             {{$t('编辑告警')}}</span>
         </div>
-      </bk-popover>
+      </div>
     </div>
 
     <div class="partter fl-sb" style="width: 200px">
@@ -140,7 +141,7 @@ export default {
   },
   data() {
     return {
-      trigger: 'click',
+      interactType: false, // false 为hover true 为click
       alarmSwitch: false,
       group: [], // 当前选择分组的值
       isToggle: false, // 当前是否显示分组下拉框
@@ -148,6 +149,7 @@ export default {
       yearOnYearHour: 0,
       isNear24: false,
       isRequestAlarm: false,
+      popoverInstance: null,
     };
   },
   computed: {
@@ -168,6 +170,10 @@ export default {
   },
   mounted() {
     this.initCache();
+    this.handlePopoverShow();
+  },
+  beforeDestroy() {
+    this.popoverInstance = null;
   },
   methods: {
     handleSelectCompared(newVal) {
@@ -196,6 +202,33 @@ export default {
       if (JSON.stringify(this.fingerOperateData.alarmObj) === '{}') {
         this.initNewClsStrategy();
       }
+    },
+    /**
+     * @desc: 改变近24H新增的交互类型
+     */
+    handleChangeTrigger() {
+      if (!this.interactType) {
+        this.popoverInstance.set({
+          trigger: 'click',
+          hideOnClick: true,
+        });
+      }
+      this.interactType = true;
+    },
+    handleShowAlarmPopover(e) {
+      if (this.popoverInstance) {
+        return;
+      }
+      this.popoverInstance = this.$bkPopover(e.target, {
+        content: this.$refs.alarmPopover,
+        trigger: 'mouseenter',
+        placement: 'top',
+        arrow: true,
+        theme: 'light',
+        interactive: true,
+        hideOnClick: false,
+      });
+      this.popoverInstance && this.popoverInstance.show();
     },
     initCache() {
       // 赋值缓存
@@ -239,16 +272,19 @@ export default {
         data: { ...queryObj },
       }).then((res) => {
         if (res.result) {
+          this.popoverInstance.hide();
           this.$emit('handleFingerOperate', 'getNewStrategy', {
             strategy_id: res.data,
             is_active: !this.alarmSwitch,
           });
-          this.alarmSwitch = !this.alarmSwitch;
           this.$bkMessage({
             theme: 'success',
             message: this.$t('操作成功'),
             ellipsisLine: 0,
           });
+          setTimeout(() => {
+            this.alarmSwitch = !this.alarmSwitch;
+          }, 200);
         }
       })
         .finally(() => {
@@ -270,8 +306,10 @@ export default {
   .is-near24 {
     @include flex-center;
 
-    span {
+    > span {
+      border-bottom: 1px dashed #979ba5;
       margin-left: 4px;
+      line-height: 16px;
       cursor: pointer;
     }
   }
@@ -353,10 +391,8 @@ export default {
 
 .alarm-content {
   color: #3a84ff;
-
-  span {
-    cursor: pointer;
-  }
+  font-size: 12px;
+  cursor: pointer;
 
   .right-alarm {
     margin-left: 6px;
