@@ -69,6 +69,10 @@ export default class TimeRange extends tsc<IProps, IEvents> {
       return map;
     }, new Map());
   }
+  
+  mounted() {
+    this.$store.commit('retrieve/updateCachePickerValue', this.value);
+  }
 
   @Watch('value', { immediate: true, deep: true })
   valueChange(val: TimeRangeType) {
@@ -96,7 +100,9 @@ export default class TimeRange extends tsc<IProps, IEvents> {
       this.isShow = false;
     });
     this.handleTransformTime(this.timestamp);
-    return this.isPanelTimeRange ? this.timestamp : this.formatTime(this.localValue);
+    const value = this.isPanelTimeRange ? this.timestamp : this.formatTime(this.localValue);
+    this.$store.commit('retrieve/updateCachePickerValue', value);
+    return value
   }
 
   /** 格式化绝对时间点 */
