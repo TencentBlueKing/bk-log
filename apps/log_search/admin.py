@@ -146,6 +146,10 @@ class AsyncTaskAdmin(AppModelAdmin):
         "is_clean",
         "created_by",
         "created_at",
+        "export_status",
+        "start_time",
+        "end_time",
+        "export_type",
     ]
     search_fields = ["scenario_id", "request_param", "download_url", "file_name"]
 

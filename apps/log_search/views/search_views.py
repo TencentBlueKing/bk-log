@@ -492,6 +492,61 @@ class SearchViewSet(APIViewSet):
             }
         )
 
+    @detail_route(methods=["GET"], url_path="export_history")
+    def get_export_history(self, request, index_set_id=None):
+        """
+        @api {get} /search/index_set/$index_set_id/export_history/?page=1&pagesize=10 16_搜索-异步导出历史
+        @apiDescription 16_搜索-异步导出历史
+        @apiName export_history
+        @apiGroup 11_Search
+        @apiParam {Int} index_set_id 索引集id
+        @apiParam {Int} page 当前页
+        @apiParam {Int} pagesize 页面大小
+        @apiParam {Bool} show_all 是否展示所有历史
+        @apiSuccess {Int} total 返回大小
+        @apiSuccess {list} list 返回结果列表
+        @apiSuccess {Int} list.id 导出历史任务id
+        @apiSuccess {Str} list.search_dict 导出请求参数
+        @apiSuccess {Str} list.start_time 导出请求所选择开始时间
+        @apiSuccess {Str} list.end_time 导出请求所选择结束时间
+        @apiSuccess {Str} list.export_type 导出请求类型
+        @apiSuccess {Str} list.export_status 导出状态
+        @apiSuccess {Str} list.error_msg 导出请求异常原因
+        @apiSuccess {Str} list.download_url 异步导出下载地址
+        @apiSuccess {Str} list.export_pkg_name 异步导出打包名
+        @apiSuccess {int} list.export_pkg_size 异步导出包大小 单位M
+        @apiSuccess {Str} list.export_created_at 异步导出创建者
+        @apiSuccess {Str} list.export_created_by 异步导出创建时间
+        @apiSuccess {Str} list.export_completed_at 异步导出成功时间
+        @apiSuccessExample {json} 成功返回：
+        {
+            "result":true,
+            "data":{
+                "total":10,
+                "list":[
+                    {
+                        "id": 1
+                        "search_dict":"",
+                        "start_time": "",
+                        "end_time": "",
+                        "export_type": "",
+                        "export_status": "",
+                        "error_msg":"",
+                        "download_url":"",
+                        "export_pkg_name": "",
+                        "export_pkg_size": 1,
+                        "export_created_at":"",
+                        "export_created_by":"",
+                        "export_completed_at":""
+                    }
+                ]
+            },
+            "code":0,
+            "message":""
+        }
+        """
+        pass
+
     @detail_route(methods=["GET"], url_path="fields")
     def fields(self, request, *args, **kwargs):
         """
