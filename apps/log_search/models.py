@@ -776,6 +776,7 @@ class AsyncTask(OperateRecordModel):
     start_time = models.CharField(_("导出选择请求时间"), max_length=64, null=True, blank=True)
     end_time = models.CharField(_("导出选择结束时间"), max_length=64, null=True, blank=True)
     export_type = models.CharField(_("导出类型"), max_length=64, null=True, blank=True)
+    bk_biz_id = models.IntegerField(_("业务ID"), null=True, default=None)
 
     class Meta:
         db_table = "export_task"

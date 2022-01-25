@@ -487,7 +487,9 @@ class SearchViewSet(APIViewSet):
         )
         return Response(
             {
-                "task_id": AsyncExportHandlers(index_set_id=index_set_id, search_dict=data).async_export(),
+                "task_id": AsyncExportHandlers(
+                    index_set_id=index_set_id, bk_biz_id=data["bk_biz_id"], search_dict=data
+                ).async_export(),
                 "prompt": _("任务提交成功，系统处理后将通过{notify_type_name}通知，请留意！").format(notify_type_name=notify_type_name),
             }
         )
@@ -503,6 +505,7 @@ class SearchViewSet(APIViewSet):
         @apiParam {Int} page 当前页
         @apiParam {Int} pagesize 页面大小
         @apiParam {Bool} show_all 是否展示所有历史
+        @apiParam {Int} bk_biz_id 业务id
         @apiSuccess {Int} total 返回大小
         @apiSuccess {list} list 返回结果列表
         @apiSuccess {Int} list.id 导出历史任务id
@@ -515,8 +518,8 @@ class SearchViewSet(APIViewSet):
         @apiSuccess {Str} list.download_url 异步导出下载地址
         @apiSuccess {Str} list.export_pkg_name 异步导出打包名
         @apiSuccess {int} list.export_pkg_size 异步导出包大小 单位M
-        @apiSuccess {Str} list.export_created_at 异步导出创建者
-        @apiSuccess {Str} list.export_created_by 异步导出创建时间
+        @apiSuccess {Str} list.export_created_at 异步导出创建时间
+        @apiSuccess {Str} list.export_created_by 异步导出创建者
         @apiSuccess {Str} list.export_completed_at 异步导出成功时间
         @apiSuccessExample {json} 成功返回：
         {
