@@ -140,6 +140,8 @@ ISO_8601_TIME_FORMAT_NAME = "rfc3339"
 
 FILTER_KEY_LIST = ["gettext", "_", "LANGUAGES"]
 
+DEFAULT_FLOAT_ROUND = 2
+
 
 # 导出类型
 class ExportType(object):
