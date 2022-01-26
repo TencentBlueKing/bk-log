@@ -28,6 +28,7 @@ from apps.utils.local import get_request, get_request_language_code
 from apps.log_search.constants import (
     MAX_ASYNC_COUNT,
     ASYNC_COUNT_SIZE,
+    ExportType,
 )
 from apps.log_search.exceptions import MissAsyncExportException
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
@@ -64,6 +65,7 @@ class AsyncExportHandlers(object):
                 "bk_biz_id": self.bk_biz_id,
                 "start_time": self.search_dict["start_time"],
                 "end_time": self.search_dict["end_time"],
+                "export_type": ExportType.ASYNC,
             }
         )
 
@@ -78,7 +80,7 @@ class AsyncExportHandlers(object):
             search_url_path=search_url,
             language=get_request_language_code(),
         )
-        return async_task.id
+        return async_task.id, self.search_handler.size
 
     def _pre_check_fields(self):
         fields = self.search_handler.fields()
@@ -111,11 +113,11 @@ class AsyncExportHandlers(object):
         search_url = f"{request.scheme}://{request.get_host()}/#/retrieve/{self.index_set_id}?{url_params}"
         return search_url
 
-    def get_export_history(self, index_set_id, request, view, show_all=False):
+    def get_export_history(self, request, view, show_all=False):
         # 这里当show_all为true的时候则给前端返回当前业务全部导出历史
         query_set = AsyncTask.objects.filter(bk_biz_id=self.bk_biz_id)
         if not show_all:
-            query_set = query_set.filter(index_set_id=index_set_id)
+            query_set = query_set.filter(index_set_id=self.index_set_id)
         pg = DataPageNumberPagination()
         page_export_task_history = pg.paginate_queryset(
             queryset=query_set.order_by("-created_at", "created_by"), request=request, view=view
@@ -124,13 +126,15 @@ class AsyncExportHandlers(object):
         res = pg.get_paginated_response(
             [self.generate_export_history(model_to_dict(history)) for history in page_export_task_history]
         )
+        print(res)
         return res
 
     @classmethod
     def generate_export_history(cls, export_task_history):
         return {
             "id": export_task_history["id"],
-            "search_dict": export_task_history["search_dict"],
+            "log_index_set_id": export_task_history["index_set_id"],
+            "search_dict": export_task_history["request_param"],
             "start_time": export_task_history["start_time"],
             "end_time": export_task_history["end_time"],
             "export_type": export_task_history["export_type"],
@@ -141,5 +145,5 @@ class AsyncExportHandlers(object):
             "export_pkg_size": export_task_history["file_size"],
             "export_created_at": export_task_history["created_at"],
             "export_created_by": export_task_history["created_by"],
-            "export_completed_at": export_task_history["updated_at"] if export_task_history["result"] else "",
+            "export_completed_at": export_task_history["completed_at"],
         }

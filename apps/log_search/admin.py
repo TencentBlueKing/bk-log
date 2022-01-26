@@ -150,6 +150,8 @@ class AsyncTaskAdmin(AppModelAdmin):
         "start_time",
         "end_time",
         "export_type",
+        "bk_biz_id",
+        "completed_at",
     ]
     search_fields = ["scenario_id", "request_param", "download_url", "file_name"]
 
