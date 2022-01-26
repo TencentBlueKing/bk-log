@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import copy
 import json
 import math
 
@@ -400,6 +401,7 @@ class SearchViewSet(APIViewSet):
         params = self.params_valid(SearchExportSerializer).get("export_dict")
         data = json.loads(params)
         index_set_id = int(index_set_id)
+        request_data = copy.copy(data)
 
         tmp_index_obj = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
         if tmp_index_obj:
@@ -425,7 +427,7 @@ class SearchViewSet(APIViewSet):
         file_name = parse.unquote(file_name, encoding="ISO8859_1")
         response["Content-Disposition"] = 'attachment;filename="{}"'.format(file_name)
         AsyncTask.objects.create(
-            request_param=data,
+            request_param=request_data,
             scenario_id=data["scenario_id"],
             index_set_id=index_set_id,
             result=True,
@@ -445,7 +447,7 @@ class SearchViewSet(APIViewSet):
             "record_type": UserOperationTypeEnum.EXPORT,
             "record_object_id": index_set_id,
             "action": UserOperationActionEnum.START,
-            "params": data,
+            "params": request_data,
         }
         user_operation_record.delay(operation_record)
 
