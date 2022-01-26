@@ -24,7 +24,6 @@ import hashlib
 from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
-from requests.exceptions import ReadTimeout
 
 from apps.api import CCApi
 from apps.api.base import DataApiRetryClass
@@ -498,7 +497,7 @@ class SearchHandler(object):
                     "collapse": self.collapse,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    ReadTimeout,
+                    BaseException,
                     stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY,
                 ),
             )
@@ -530,7 +529,7 @@ class SearchHandler(object):
                 "collapse": self.collapse,
             },
             data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
             ),
         )
         return result
@@ -568,7 +567,7 @@ class SearchHandler(object):
                     "search_after": search_after,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
 
@@ -590,7 +589,7 @@ class SearchHandler(object):
                     "scroll_id": _scroll_id,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
             scroll_size = len(scroll_result["hits"]["hits"])

@@ -76,6 +76,7 @@ DEFAULT_TIME_FIELD = "dtEventTimeStamp"
 BK_SUPPLIER_ACCOUNT = "0"
 BK_BCS_APP_CODE = "bk_bcs"
 
+RESULT_WINDOW_COST_TIME = 1 / 3
 # API请求异常编码
 API_RESULT_ERROR_AUTH = "40000"
 
@@ -138,6 +139,22 @@ MAX_EXPORT_REQUEST_RETRY = 3
 ISO_8601_TIME_FORMAT_NAME = "rfc3339"
 
 FILTER_KEY_LIST = ["gettext", "_", "LANGUAGES"]
+
+
+# 导出类型
+class ExportType(object):
+    ASYNC = "async"
+    SYNC = "sync"
+
+
+# 导出状态
+class ExportStatus(object):
+    DOWNLOAD_LOG = "download_log"
+    EXPORT_PACKAGE = "export_package"
+    EXPORT_UPLOAD = "export_upload"
+    SUCCESS = "success"
+    FAILED = "failed"
+    EXPIRED = "expired"
 
 
 # 消息模式
