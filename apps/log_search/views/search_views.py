@@ -425,7 +425,7 @@ class SearchViewSet(APIViewSet):
         response["Content-Disposition"] = 'attachment;filename="{}"'.format(file_name)
         AsyncTask.objects.create(
             request_param=params,
-            scenario_id=params[""],
+            scenario_id=params["scenario_id"],
             index_set_id=index_set_id,
             result=True,
             completed_at=timezone.now(),
