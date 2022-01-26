@@ -18,6 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import json
+import math
 
 from urllib import parse
 
@@ -61,7 +62,6 @@ from apps.log_search.constants import (
     ExportType,
     MAX_RESULT_WINDOW,
     RESULT_WINDOW_COST_TIME,
-    DEFAULT_FLOAT_ROUND,
 )
 from apps.constants import NotifyType
 from apps.exceptions import ValidationError
@@ -510,7 +510,7 @@ class SearchViewSet(APIViewSet):
             {
                 "task_id": task_id,
                 "prompt": _("任务提交成功，预估等待时间{time}分钟,系统处理后将通过{notify_type_name}通知，请留意！").format(
-                    time=round(size / MAX_RESULT_WINDOW * RESULT_WINDOW_COST_TIME, DEFAULT_FLOAT_ROUND),
+                    time=math.ceil(size / MAX_RESULT_WINDOW * RESULT_WINDOW_COST_TIME),
                     notify_type_name=notify_type_name,
                 ),
             }
