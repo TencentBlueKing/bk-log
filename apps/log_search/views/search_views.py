@@ -424,16 +424,16 @@ class SearchViewSet(APIViewSet):
         file_name = parse.unquote(file_name, encoding="ISO8859_1")
         response["Content-Disposition"] = 'attachment;filename="{}"'.format(file_name)
         AsyncTask.objects.create(
-            request_param=params,
-            scenario_id=params["scenario_id"],
+            request_param=data,
+            scenario_id=data["scenario_id"],
             index_set_id=index_set_id,
             result=True,
             completed_at=timezone.now(),
             export_status=ExportStatus.SUCCESS,
-            start_time=params["start_time"],
-            end_time=params["end_time"],
+            start_time=data["start_time"],
+            end_time=data["end_time"],
             export_type=ExportType.SYNC,
-            bk_biz_id=params["bk_biz_id"],
+            bk_biz_id=data["bk_biz_id"],
         )
 
         # add user_operation_record
