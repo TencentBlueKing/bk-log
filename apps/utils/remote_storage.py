@@ -86,9 +86,8 @@ class BKREPOStorage(Storage):
     def export_upload(self, file_path, file_name, **kwargs):
         self.bk_repo_storage.client.upload_file(filepath=file_path, key=file_name)
 
-    def generate_download_url(self, url_path: str, file_name: str, **kwargs):
-        full_path = os.path.join(url_path, file_name)
-        return self.bk_repo_storage.client.generate_presigned_url(key=full_path, expires_in=self.expired)
+    def generate_download_url(self, file_name: str, **kwargs):
+        return self.bk_repo_storage.client.generate_presigned_url(key=file_name, expires_in=self.expired)
 
 
 class StorageType(object):
