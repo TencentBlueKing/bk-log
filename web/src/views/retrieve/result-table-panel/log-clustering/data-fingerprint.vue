@@ -519,7 +519,6 @@ export default {
         this.throttle = false;
         // scroll变化时判断是否展示返回顶部的Icon
         this.$emit('handleScrollIsShow');
-        this.$refs.groupPopover?.instance.hide();
         this.$refs.labelsPopover?.instance.hide();
         if (this.fingerList.length >= this.allFingerList.length) {
           return;
