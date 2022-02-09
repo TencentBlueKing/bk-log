@@ -70,6 +70,10 @@
           <template slot-scope="{ row }">
             <bk-popover placement="top" theme="light">
               <div slot="content">
+                <span
+                  class="bk-icon icon-text-file"
+                  :title="$t('复制')"
+                  @click="handleCopyMsg(row.search_dict)"></span>
                 <!-- eslint-disable-next-line vue/no-v-html -->
                 <div v-html="getSearchDictHtml(row.search_dict)"></div>
               </div>
@@ -99,7 +103,7 @@
                 <span>{{$t('exportHistory.completeTime')}}:{{getFormatDate(row.export_completed_at)}}</span>
                 <span v-if="row.error_msg">，{{$t('exportHistory.abnormalReason')}}:{{row.error_msg}}</span>
               </div>
-              <span>{{getStatusStr(row.export_status)}}</span>
+              <span style="cursor: pointer;">{{getStatusStr(row.export_status)}}</span>
             </bk-popover>
           </template>
         </bk-table-column>
@@ -167,7 +171,7 @@
 </template>
 
 <script>
-import { formatDate } from '@/common/util';
+import { formatDate, copyMessage } from '@/common/util';
 
 
 export default {
@@ -232,6 +236,7 @@ export default {
           this.pagination.count = res.data.total;
           this.exportList = res.data.list;
         }
+        // 查询所有索引集时才显示索引集IDLabel
         if (this.isSearchAll) {
           this.isShowSetLabel = true;
         }
@@ -240,31 +245,29 @@ export default {
           this.tableLoading = false;
         });
     },
-    handlePageChange(page) {
-      this.pagination.current = page;
-      this.getTableList();
-    },
-    handleLimitChange(size) {
-      if (this.pagination.limit !== size) {
-        this.pagination.current = 1;
-        this.pagination.limit = size;
-        this.getTableList();
-      }
-    },
-    closeDialog() {
-      this.isSearchAll = false;
-      this.exportList = [];
-      this.$emit('handleCloseDialog');
-    },
     downloadExport($row) {
+      // 异步导出使用downloadURL下载
       if ($row.download_url) {
         window.open($row.download_url);
         return;
       }
-      this.$emit('historyDownload', $row.search_dict);
+      this.openDownloadUrl($row.search_dict);
     },
     retryExport($row) {
-      this.$emit('historyDownload', $row.search_dict);
+      if ($row.export_status === 'failed') {
+        const time = Math.ceil(Number($row.search_dict.size) / 30000);
+        this.$bkMessage({
+          theme: 'warning',
+          message: `${this.$t('exportHistory.retryTip1')}${time}${this.$t('exportHistory.retryTip2')}`,
+        });
+      };
+      this.openDownloadUrl($row.search_dict);
+    },
+    openDownloadUrl(params) {
+      const exportParams = encodeURIComponent(JSON.stringify({ ...params }));
+      // eslint-disable-next-line max-len
+      const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
+      window.open(targetUrl);
     },
     handleSearchAll() {
       this.isSearchAll = true;
@@ -289,6 +292,26 @@ export default {
     getFormatDate(time) {
       return formatDate(time);
     },
+    handleCopyMsg(searchObj) {
+      copyMessage(JSON.stringify(searchObj));
+    },
+    handlePageChange(page) {
+      this.pagination.current = page;
+      this.getTableList();
+    },
+    handleLimitChange(size) {
+      if (this.pagination.limit !== size) {
+        this.pagination.current = 1;
+        this.pagination.limit = size;
+        this.getTableList();
+      }
+    },
+    closeDialog() {
+      this.isSearchAll = false;
+      this.isShowSetLabel = false;
+      this.exportList = [];
+      this.$emit('handleCloseDialog');
+    },
   },
 };
 </script>
@@ -305,6 +328,14 @@ export default {
   width: 100%;
   text-align: right;
   margin: 10px 0 20px 0;
+}
+
+.icon-text-file {
+  position: absolute;
+  right: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transform: rotateZ(180deg);
 }
 
 .export-table {

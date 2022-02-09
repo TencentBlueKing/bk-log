@@ -46,8 +46,7 @@
 
     <export-history
       :show-history-export="showHistoryExport"
-      @handleCloseDialog="handleCloseDialog"
-      @historyDownload="historyDownload" />
+      @handleCloseDialog="handleCloseDialog" />
 
     <!-- 导出弹窗提示 -->
     <bk-dialog
@@ -188,11 +187,8 @@ export default {
         this.openDownloadUrl();
       }
     },
-    historyDownload(params) {
-      this.openDownloadUrl(params);
-    },
-    openDownloadUrl(history) {
-      const params = Object.assign(history ? history : this.retrieveParams, { begin: 0, bk_biz_id: this.bkBizId });
+    openDownloadUrl() {
+      const params = Object.assign(this.retrieveParams, { begin: 0, bk_biz_id: this.bkBizId });
       const exportParams = encodeURIComponent(JSON.stringify({
         ...params,
         size: this.totalCount,
