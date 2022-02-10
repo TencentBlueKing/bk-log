@@ -141,7 +141,7 @@ def async_export(
 
     async_export_util.clean_package()
     # 过$ASYNC_EXPORT_EXPIRED将对应状态置为ExportStatus.EXPIRED
-    set_expired_status.apply_async(async_task.id, countdown=ASYNC_EXPORT_EXPIRED)
+    set_expired_status.apply_async(args=[async_task.id], countdown=ASYNC_EXPORT_EXPIRED)
 
 
 def set_failed_status(async_task: AsyncTask, reason):
