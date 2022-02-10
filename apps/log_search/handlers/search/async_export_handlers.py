@@ -126,7 +126,6 @@ class AsyncExportHandlers(object):
         res = pg.get_paginated_response(
             [self.generate_export_history(model_to_dict(history)) for history in page_export_task_history]
         )
-        print(res)
         return res
 
     @classmethod
