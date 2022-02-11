@@ -1324,8 +1324,6 @@ export default {
     download: 'download',
     retry: 'Retry',
     btnTip: 'View the download history of all index sets',
-    retryTip1: 'Asynchronous download is estimated to take ',
-    retryTip2: ' minutes to complete, please check the download notification email',
     async: 'async',
     sync: 'sync',
     pulling: 'pulling',
