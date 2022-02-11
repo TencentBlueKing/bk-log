@@ -1327,8 +1327,6 @@ export default {
     download: '下载',
     retry: '重试',
     btnTip: '查看所有的索引集的下载历史',
-    retryTip1: '异步下载预估需要',
-    retryTip2: '分钟完成，请注意查收下载通知邮件',
     async: '异步',
     sync: '同步',
     pulling: '拉取中',

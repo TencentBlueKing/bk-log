@@ -173,31 +173,6 @@
         </bk-table-column>
       </bk-table>
 
-      <!-- 导出弹窗提示 -->
-      <bk-dialog
-        v-model="showAsyncExport"
-        theme="primary"
-        ext-cls="async-export-dialog"
-        :mask-close="false"
-        :show-footer="false">
-        <div class="export-container" v-bkloading="{ isLoading: exportLoading }">
-          <span class="bk-icon bk-dialog-warning icon-exclamation"></span>
-          <div class="header">
-            {{ searchDict.size > 2000000 ? $t('retrieve.dataMoreThanMillion') : $t('retrieve.dataMoreThan') }}
-          </div>
-          <div class="export-type immediate-export">
-            <span class="bk-icon icon-info-circle"></span>
-            <span class="export-text">{{ $t('retrieve.immediateExportDesc') }}</span>
-            <bk-button theme="primary" @click="openDownloadUrl()">{{ $t('retrieve.immediateExport') }}</bk-button>
-          </div>
-          <div class="export-type async-export">
-            <span class="bk-icon icon-info-circle"></span>
-            <span v-if="searchDict.size > 2000000" class="export-text">{{ $t('retrieve.asyncExportMoreDesc') }}</span>
-            <span v-else class="export-text">{{ $t('retrieve.asyncExportDesc') }}</span>
-            <bk-button @click="downloadAsync">{{ $t('retrieve.asyncExport') }}</bk-button>
-          </div>
-        </div>
-      </bk-dialog>
     </div>
   </bk-dialog>
 </template>
@@ -220,11 +195,6 @@ export default {
       tableLoading: false,
       isSearchAll: false, // 是否查看所有索引集下载历史
       isShowSetLabel: false, // 是否展示索引集ID
-      exportLoading: false,
-      showAsyncExport: false, // 是否展示同异步选择弹窗
-      searchDict: { // 当前重试选择的请求参数
-        size: 0,
-      },
       exportStatusList: {
         download_log: this.$t('exportHistory.pulling'),
         export_package: this.$t('exportHistory.exportPackage'),
@@ -292,30 +262,20 @@ export default {
     },
     retryExport($row) {
       // 异常任务直接异步下载
-      if ($row.export_status === 'failed') {
-        this.downloadAsync($row.search_dict);
-        return;
-      };
-      // 数据大于1万时显示确认异步弹窗
-      if ($row.search_dict.size > 10000) {
-        this.searchDict = $row.search_dict;
-        this.showAsyncExport = true;
-      } else {
+      if ($row.export_type === 'sync') {
         this.openDownloadUrl($row.search_dict);
+      } else {
+        this.downloadAsync($row.search_dict);
       }
     },
     openDownloadUrl(params) {
-      params = params ? params : this.searchDict;
       const exportParams = encodeURIComponent(JSON.stringify({ ...params }));
       // eslint-disable-next-line max-len
       const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
       window.open(targetUrl);
     },
-    downloadAsync(dict) {
-      dict = dict ? dict : this.searchDict;
-      const data = { ...dict };
-
-      this.exportLoading = true;
+    downloadAsync(data) {
+      this.tableLoading = true;
       this.$http.request('retrieve/exportAsync', {
         params: {
           index_set_id: this.$route.params.indexId,
@@ -330,8 +290,7 @@ export default {
         }
       })
         .finally(() => {
-          this.showAsyncExport = false;
-          this.exportLoading = false;
+          this.tableLoading = false;
         });
     },
     handleSearchAll() {
@@ -382,9 +341,6 @@ export default {
         current: 1,
         count: 0,
         limit: 10,
-      };
-      this.searchDict = {
-        size: 0,
       };
       this.$emit('handleCloseDialog');
     },
@@ -445,59 +401,4 @@ export default {
   width: 140px;
 }
 
-.async-export-dialog {
-  .header {
-    /* stylelint-disable-next-line declaration-no-important */
-    padding: 18px 0px 32px !important;
-  }
-
-  .export-container {
-    text-align: center;
-  }
-
-  .bk-dialog-warning {
-    display: block;
-    margin: 0 auto;
-    width: 58px;
-    height: 58px;
-    line-height: 58px;
-    font-size: 30px;
-    color: #fff;
-    border-radius: 50%;
-    background-color: #ffb848;
-  }
-
-  .header {
-    padding: 18px 24px 32px;
-    display: inline-block;
-    width: 100%;
-    font-size: 24px;
-    color: #313238;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 1.5;
-    margin: 0;
-  }
-
-  .export-type {
-    margin-bottom: 24px;
-    padding: 0 22px;
-    display: flex;
-    align-items: center;
-
-    .export-text {
-      margin-left: 8px;
-      max-width: 184px;
-      text-align: left;
-      font-size: 14px;
-      color: #313238;
-      line-height: 18px;
-    }
-
-    .bk-button {
-      margin-left: auto;
-    }
-  }
-}
 </style>
