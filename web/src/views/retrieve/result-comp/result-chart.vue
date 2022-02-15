@@ -296,8 +296,8 @@ export default {
       const { cacheDatePickerValue, cacheTimeRange } = this.$store.state.retrieve;
       if (
         cacheDatePickerValue[0] !== this.retrieveParams.start_time
-                    || cacheDatePickerValue[1] !== this.retrieveParams.end_time
-                    || cacheTimeRange !== this.retrieveParams.time_range
+          || cacheDatePickerValue[1] !== this.retrieveParams.end_time
+          || cacheTimeRange !== this.retrieveParams.time_range
       ) {
         setTimeout(() => {
           window.bus.$emit('changeTimeByChart', cacheDatePickerValue, cacheTimeRange);
@@ -307,7 +307,8 @@ export default {
           this.$nextTick(() => {
             this.finishPolling = false;
             this.isStart = false;
-            this.$refs.chartRef.handleChangeInterval();
+            // this.$refs.chartRef.handleChangeInterval();
+            this.$store.commit('retrieve/updateChartKey');
           });
         }, 100);
       }
