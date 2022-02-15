@@ -154,7 +154,8 @@ class ExportStatus(object):
     EXPORT_UPLOAD = "export_upload"
     SUCCESS = "success"
     FAILED = "failed"
-    EXPIRED = "expired"
+    DOWNLOAD_EXPIRED = "download_expired"
+    DATA_EXPIRED = "data_expired"
 
 
 # 消息模式

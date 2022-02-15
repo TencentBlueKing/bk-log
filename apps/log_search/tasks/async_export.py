@@ -155,7 +155,7 @@ def set_failed_status(async_task: AsyncTask, reason):
 @task(ignore_result=True)
 def set_expired_status(async_task_id):
     async_task = AsyncTask.objects.get(id=async_task_id)
-    async_task.export_status = ExportStatus.EXPIRED
+    async_task.export_status = ExportStatus.DOWNLOAD_EXPIRED
     async_task.save()
 
 
