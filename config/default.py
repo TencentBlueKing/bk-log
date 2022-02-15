@@ -737,6 +737,7 @@ ESQUERY_WHITE_LIST = [
     "gem3",
     "data",
     "dataweb",
+    "bk_bcs",
 ]
 
 # BK repo conf
