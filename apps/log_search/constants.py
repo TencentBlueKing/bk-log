@@ -140,6 +140,8 @@ ISO_8601_TIME_FORMAT_NAME = "rfc3339"
 
 FILTER_KEY_LIST = ["gettext", "_", "LANGUAGES"]
 
+MAX_GET_ATTENTION_SIZE = 10
+
 
 # 导出类型
 class ExportType(object):
