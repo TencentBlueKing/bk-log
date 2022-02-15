@@ -746,6 +746,10 @@ BKREPO_PASSWORD = os.getenv("BKREPO_PASSWORD") or os.getenv("BKAPP_BKREPO_PASSWO
 BKREPO_PROJECT = os.getenv("BKREPO_PROJECT") or os.getenv("BKAPP_BKREPO_PROJECT")
 BKREPO_BUCKET = os.getenv("BKREPO_BUCKET") or os.getenv("BKAPP_BKREPO_BUCKET")
 
+BKLOG_NODE_IP = os.getenv("BK_BKLOG_NODE_IP")
+BKLOG_STORAGE_ROOT_PATH = os.getenv("BK_BKLOG_STORAGE_ROOT_PATH")
+BKLOG_CLOUD_ID = os.getenv("BK_BKLOG_CLOUD_ID", 0)
+
 # ===============================================================================
 # Demo业务配置
 # ===============================================================================

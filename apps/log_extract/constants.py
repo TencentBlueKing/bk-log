@@ -121,10 +121,12 @@ class ExtractLinkType(ChoicesEnum):
     if settings.FEATURE_TOGGLE["extract_cos"] == "on":
         COMMON = "common"
         QCLOUD_COS = "qcloud_cos"
-        _choices_labels = ((COMMON, _("内网链路")), (QCLOUD_COS, _("腾讯云cos链路")))
+        BK_REPO = "bk_repo"
+        _choices_labels = ((COMMON, _("内网链路")), (QCLOUD_COS, _("腾讯云cos链路")), (BK_REPO, _("bk repo链路")))
     else:
         COMMON = "common"
-        _choices_labels = ((COMMON, _("内网链路")),)
+        BK_REPO = "bk_repo"
+        _choices_labels = ((COMMON, _("内网链路")), (BK_REPO, _("bk repo链路")))
 
 
 class PreDateMode(ChoicesEnum):

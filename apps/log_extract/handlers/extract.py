@@ -160,15 +160,21 @@ class CommonExtractLink(QcloudCosExtractLink):
         return f"{url}?{url_params}"
 
 
+class BKRepoExtractLink(QcloudCosExtractLink):
+    def generate_download_url(self, task: Tasks) -> str:
+        pass
+
+
 class ExtractLinkFactory:
 
     if settings.FEATURE_TOGGLE["extract_cos"] == "on":
         _LINK_MAP = {
             ExtractLinkType.COMMON.value: CommonExtractLink,
             ExtractLinkType.QCLOUD_COS.value: QcloudCosExtractLink,
+            ExtractLinkType.BK_REPO.value: BKRepoExtractLink,
         }
     else:
-        _LINK_MAP = {ExtractLinkType.COMMON.value: CommonExtractLink}
+        _LINK_MAP = {ExtractLinkType.COMMON.value: CommonExtractLink, ExtractLinkType.BK_REPO.value: BKRepoExtractLink}
 
     @classmethod
     def get_link(cls, type: ExtractLinkType) -> ExtractLinkBase:
