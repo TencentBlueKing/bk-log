@@ -74,7 +74,7 @@ DEFAULT_ALGORITHMS = [
     {"type": "Threshold", "level": 2, "config": [[{"method": "gte", "threshold": 1}]], "unit_prefix": ""}
 ]
 DEFAULT_CLUSTERING_ITEM_NAME = _("日志聚类新类(近24H)")
-DEFAULT_METRIC = "signature"
+DEFAULT_METRIC = "event_time"
 DEFAULT_DETECTS = [
     {
         "level": 2,

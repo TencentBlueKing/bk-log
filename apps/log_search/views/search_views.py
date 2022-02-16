@@ -17,10 +17,13 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import copy
 import json
+import math
 
 from urllib import parse
 
+from django.utils import timezone
 from six import StringIO
 from django.conf import settings
 from django.http import HttpResponse
@@ -39,7 +42,7 @@ from apps.log_search.exceptions import BaseSearchIndexSetException
 from apps.log_search.handlers.search.async_export_handlers import AsyncExportHandlers
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import LogIndexSet
+from apps.log_search.models import LogIndexSet, AsyncTask
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.log_search.serializers import (
@@ -49,12 +52,17 @@ from apps.log_search.serializers import (
     SearchIndexSetScopeSerializer,
     BcsWebConsoleSerializer,
     SearchAsyncExportSerializer,
+    GetExportHistorySerializer,
 )
 from apps.decorators import user_operation_record
 from apps.log_search.constants import (
     SEARCH_SCOPE_VALUE,
     FEATURE_ASYNC_EXPORT_COMMON,
     FEATURE_ASYNC_EXPORT_NOTIFY_TYPE,
+    ExportStatus,
+    ExportType,
+    MAX_RESULT_WINDOW,
+    RESULT_WINDOW_COST_TIME,
 )
 from apps.constants import NotifyType
 from apps.exceptions import ValidationError
@@ -393,6 +401,7 @@ class SearchViewSet(APIViewSet):
         params = self.params_valid(SearchExportSerializer).get("export_dict")
         data = json.loads(params)
         index_set_id = int(index_set_id)
+        request_data = copy.copy(data)
 
         tmp_index_obj = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
         if tmp_index_obj:
@@ -417,6 +426,18 @@ class SearchViewSet(APIViewSet):
         file_name = parse.quote(file_name, encoding="utf8")
         file_name = parse.unquote(file_name, encoding="ISO8859_1")
         response["Content-Disposition"] = 'attachment;filename="{}"'.format(file_name)
+        AsyncTask.objects.create(
+            request_param=request_data,
+            scenario_id=data["scenario_id"],
+            index_set_id=index_set_id,
+            result=True,
+            completed_at=timezone.now(),
+            export_status=ExportStatus.SUCCESS,
+            start_time=data["start_time"],
+            end_time=data["end_time"],
+            export_type=ExportType.SYNC,
+            bk_biz_id=data["bk_biz_id"],
+        )
 
         # add user_operation_record
         operation_record = {
@@ -426,7 +447,7 @@ class SearchViewSet(APIViewSet):
             "record_type": UserOperationTypeEnum.EXPORT,
             "record_object_id": index_set_id,
             "action": UserOperationActionEnum.START,
-            "params": data,
+            "params": request_data,
         }
         user_operation_record.delay(operation_record)
 
@@ -481,15 +502,85 @@ class SearchViewSet(APIViewSet):
         }
         """
         data = self.params_valid(SearchAsyncExportSerializer)
-        index_set_id = int(index_set_id)
         notify_type_name = NotifyType.get_choice_label(
             FeatureToggleObject.toggle(FEATURE_ASYNC_EXPORT_COMMON).feature_config.get(FEATURE_ASYNC_EXPORT_NOTIFY_TYPE)
         )
+        task_id, size = AsyncExportHandlers(
+            index_set_id=int(index_set_id), bk_biz_id=data["bk_biz_id"], search_dict=data
+        ).async_export()
         return Response(
             {
-                "task_id": AsyncExportHandlers(index_set_id=index_set_id, search_dict=data).async_export(),
-                "prompt": _("任务提交成功，系统处理后将通过{notify_type_name}通知，请留意！").format(notify_type_name=notify_type_name),
+                "task_id": task_id,
+                "prompt": _("任务提交成功，预估等待时间{time}分钟,系统处理后将通过{notify_type_name}通知，请留意！").format(
+                    time=math.ceil(size / MAX_RESULT_WINDOW * RESULT_WINDOW_COST_TIME),
+                    notify_type_name=notify_type_name,
+                ),
             }
+        )
+
+    @detail_route(methods=["GET"], url_path="export_history")
+    def get_export_history(self, request, index_set_id=None):
+        """
+        @api {get} /search/index_set/$index_set_id/export_history/?page=1&pagesize=10 16_搜索-异步导出历史
+        @apiDescription 16_搜索-异步导出历史
+        @apiName export_history
+        @apiGroup 11_Search
+        @apiParam {Int} index_set_id 索引集id
+        @apiParam {Int} page 当前页
+        @apiParam {Int} pagesize 页面大小
+        @apiParam {Bool} show_all 是否展示所有历史
+        @apiParam {Int} bk_biz_id 业务id
+        @apiSuccess {Int} total 返回大小
+        @apiSuccess {list} list 返回结果列表
+        @apiSuccess {Int} list.id 导出历史任务id
+        @apiSuccess {Int} list.log_index_set_id 导出索引集id
+        @apiSuccess {Str} list.search_dict 导出请求参数
+        @apiSuccess {Str} list.start_time 导出请求所选择开始时间
+        @apiSuccess {Str} list.end_time 导出请求所选择结束时间
+        @apiSuccess {Str} list.export_type 导出请求类型
+        @apiSuccess {Str} list.export_status 导出状态
+        @apiSuccess {Str} list.error_msg 导出请求异常原因
+        @apiSuccess {Str} list.download_url 异步导出下载地址
+        @apiSuccess {Str} list.export_pkg_name 异步导出打包名
+        @apiSuccess {int} list.export_pkg_size 异步导出包大小 单位M
+        @apiSuccess {Str} list.export_created_at 异步导出创建时间
+        @apiSuccess {Str} list.export_created_by 异步导出创建者
+        @apiSuccess {Str} list.export_completed_at 异步导出成功时间
+        @apiSuccess {Bool} list.download_able 是否可下载（不可下载禁用下载按钮且hover提示"下载链接过期"）
+        @apiSuccess {Bool} list.retry_able 是否可重试（不可重试禁用对应按钮且hover提示"数据源过期"）
+        @apiSuccessExample {json} 成功返回：
+        {
+            "result":true,
+            "data":{
+                "total":10,
+                "list":[
+                    {
+                        "id": 1,
+                        "log_index_set_id": 1,
+                        "search_dict":"",
+                        "start_time": "",
+                        "end_time": "",
+                        "export_type": "",
+                        "export_status": "",
+                        "error_msg":"",
+                        "download_url":"",
+                        "export_pkg_name": "",
+                        "export_pkg_size": 1,
+                        "export_created_at":"",
+                        "export_created_by":"",
+                        "export_completed_at":""，
+                        "download_able": true,
+                        "retry_able": true
+                    }
+                ]
+            },
+            "code":0,
+            "message":""
+        }
+        """
+        data = self.params_valid(GetExportHistorySerializer)
+        return AsyncExportHandlers(index_set_id=int(index_set_id), bk_biz_id=data["bk_biz_id"]).get_export_history(
+            request=request, view=self, show_all=data["show_all"]
         )
 
     @detail_route(methods=["GET"], url_path="fields")

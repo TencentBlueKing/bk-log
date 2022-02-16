@@ -25,7 +25,7 @@ from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
 from apps.log_clustering.constants import DEFAULT_NOTIFY_RECEIVER_TYPE, DEFAULT_NOTICE_WAY
 from apps.log_clustering.exceptions import ClusteringClosedException
 from apps.log_clustering.models import NoticeGroup
-from apps.log_databus.constants import ADMIN_REQUEST_USER
+from apps.log_databus.constants import ADMIN_REQUEST_USER, EMPTY_REQUEST_USER
 from apps.log_databus.models import CollectorConfig
 
 
@@ -70,7 +70,7 @@ class MonitorUtils(object):
             collector_config.updated_by,
             collector_config.created_by,
         }
-        maintainers.discard(ADMIN_REQUEST_USER)
+        maintainers = maintainers - {ADMIN_REQUEST_USER, EMPTY_REQUEST_USER}
         if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
             raise ClusteringClosedException()
         conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config

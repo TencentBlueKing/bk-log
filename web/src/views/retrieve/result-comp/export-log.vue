@@ -22,13 +22,30 @@
 
 <template>
   <div>
-    <div
+    <!-- <div
       :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
       @click="exportLog"
       data-test-id="fieldForm_div_exportData"
       v-bk-tooltips="queueStatus ? $t('btn.export') : undefined">
       <span class="icon log-icon icon-xiazai"></span>
+    </div> -->
+    <div
+      :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
+      data-test-id="fieldForm_div_exportData"
+      @mouseenter="handleShowAlarmPopover">
+      <span class="icon log-icon icon-xiazai"></span>
     </div>
+
+    <div v-show="false">
+      <div class="download-box" ref="downloadTips">
+        <span @click="exportLog">{{$t('exportHistory.downloadLog')}}</span>
+        <span @click="downloadTable">{{$t('exportHistory.downloadHistory')}}</span>
+      </div>
+    </div>
+
+    <export-history
+      :show-history-export="showHistoryExport"
+      @handleCloseDialog="handleCloseDialog" />
 
     <!-- 导出弹窗提示 -->
     <bk-dialog
@@ -60,8 +77,12 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import exportHistory from './export-history';
 
 export default {
+  components: {
+    exportHistory,
+  },
   props: {
     retrieveParams: {
       type: Object,
@@ -88,6 +109,8 @@ export default {
     return {
       showAsyncExport: false,
       exportLoading: false,
+      showHistoryExport: false,
+      popoverInstance: null,
     };
   },
   computed: {
@@ -95,9 +118,28 @@ export default {
       bkBizId: 'bkBizId',
     }),
   },
+  beforeDestroy() {
+    this.popoverInstance = null;
+  },
   methods: {
+    handleShowAlarmPopover(e) {
+      if (this.popoverInstance || !this.queueStatus) return;
+
+      this.popoverInstance = this.$bkPopover(e.target, {
+        content: this.$refs.downloadTips,
+        trigger: 'mouseenter',
+        placement: 'top',
+        theme: 'light',
+        offset: '0, -1',
+        interactive: true,
+        hideOnClick: false,
+        arrow: true,
+      });
+      this.popoverInstance && this.popoverInstance.show();
+    },
     exportLog() {
       if (!this.queueStatus) return;
+      this.popoverInstance.hide(0);
 
       // 导出数据为空
       if (!this.totalCount) {
@@ -167,6 +209,13 @@ export default {
           this.showAsyncExport = false;
           this.exportLoading = false;
         });
+    },
+    downloadTable() {
+      this.showHistoryExport = true;
+      this.popoverInstance.hide(0);
+    },
+    handleCloseDialog() {
+      this.showHistoryExport = false;
     },
   },
 };
@@ -267,6 +316,22 @@ export default {
 
       .bk-button {
         margin-left: auto;
+      }
+    }
+  }
+
+  .download-box {
+    display: flex;
+    font-size: 12px;
+    flex-direction: column;
+    justify-content: space-evenly;
+    min-height: 60px;
+
+    span {
+      cursor: pointer;
+
+      &:hover {
+        color: #3a84ff;
       }
     }
   }
