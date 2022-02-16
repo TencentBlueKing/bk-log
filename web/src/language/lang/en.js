@@ -1336,5 +1336,6 @@ export default {
     downloadExpired: 'Download link expired',
     dataExpired: 'Data source expired',
     indexSetID: 'indexSetID',
+    btn: 'View all',
   },
 };
