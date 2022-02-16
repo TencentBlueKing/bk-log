@@ -155,8 +155,19 @@ def set_failed_status(async_task: AsyncTask, reason):
 @task(ignore_result=True)
 def set_expired_status(async_task_id):
     async_task = AsyncTask.objects.get(id=async_task_id)
-    async_task.export_status = ExportStatus.EXPIRED
+    async_task.export_status = ExportStatus.DOWNLOAD_EXPIRED
     async_task.save()
+
+
+@periodic_task(run_every=crontab(minute="10", hour="3"))
+def clean_expired_status():
+    """
+    change success status -> export_expired status
+    """
+
+    AsyncTask.objects.filter(export_status=ExportStatus.SUCCESS).filter(
+        completed_at__lt=arrow.now().shift(seconds=-ASYNC_EXPORT_EXPIRED).datetime
+    ).update(export_status=ExportStatus.DOWNLOAD_EXPIRED)
 
 
 @periodic_task(run_every=crontab(minute="0", hour="3"))
