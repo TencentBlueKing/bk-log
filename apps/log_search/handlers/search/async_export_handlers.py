@@ -117,7 +117,9 @@ class AsyncExportHandlers(object):
 
         url_params = urlencode(search_dict)
         # 这里是为了拼接前端检索请求
-        search_url = f"{request.scheme}://{request.get_host()}/#/retrieve/{self.index_set_id}?{url_params}"
+        search_url = (
+            f"{request.scheme}://{request.get_host()}{settings.SITE_URL}#/retrieve/{self.index_set_id}?{url_params}"
+        )
         return search_url
 
     def get_export_history(self, request, view, show_all=False):
