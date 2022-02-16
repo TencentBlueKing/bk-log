@@ -154,7 +154,7 @@ export default {
       signatureSwitch: false, // 数据指纹开关
       configID: -1, // 采集项ID
       exhibitAll: false, // 是否显示nav
-      alreadyClickNav: [], // 已加载过的nav
+      isClickFingerNav: false, // 是否点击过数据指纹nav
       globalLoading: false, // 日志聚类大loading
       tableLoading: false, // 详情loading
       isShowCustomize: true, // 是否显示自定义
@@ -197,7 +197,8 @@ export default {
       },
       fingerList: [],
       allFingerList: [], // 所有数据指纹List
-      showScrollTop: false,
+      showScrollTop: false, // 是否展示返回顶部icon
+      throttle: false, // 请求防抖
     };
   },
   computed: {
@@ -240,13 +241,13 @@ export default {
         // 数据指纹开关赋值
         this.fingerOperateData.signatureSwitch = val.extra.signature_switch;
         this.configID = this.cleanConfig.extra?.collector_config_id;
-        this.alreadyClickNav = [];
+        this.isClickFingerNav = false;
         // 当前nav为数据指纹且数据指纹开启点击指纹nav则不再重复请求
         if (this.active === 'dataFingerprint' && val.extra.signature_switch) {
-          this.alreadyClickNav.push('dataFingerprint');
-          this.requestFinger();
+          this.isClickFingerNav = true;
         } else {
           this.fingerList = [];
+          this.allFingerList = [];
         }
         // 判断是否可以字段提取的全局loading
         this.globalLoading = true;
@@ -264,6 +265,8 @@ export default {
             this.exhibitAll = false;
             return;
           }
+          // 初始化分组下拉列表
+          this.filterGroupList();
           this.requestData.pattern_level === '' && this.initTable();
           // 判断有无text字段 无则不显示日志聚类
           this.exhibitAll = newList.some(el => el.field_type === 'text');
@@ -287,19 +290,19 @@ export default {
     requestData: {
       deep: true,
       handler() {
-        this.requestFinger();
+        if (this.fingerOperateData.signatureSwitch) {
+          this.requestFinger();
+        }
       },
     },
   },
   methods: {
     handleClickNav(id) {
       this.active = id;
-      const isClick = this.alreadyClickNav.some(el => el === id);
-      if (!isClick) {
-        this.alreadyClickNav.push(id);
-        if (this.alreadyClickNav.includes('dataFingerprint')
-         && this.configData.extra.signature_switch
+      if (!this.isClickFingerNav) {
+        if (this.configData.extra.signature_switch
          && id === 'dataFingerprint') {
+          this.isClickFingerNav = true;
           this.requestFinger();
         }
       }
@@ -327,8 +330,6 @@ export default {
       Object.assign(this.requestData, {
         pattern_level: clusterLevel[patternLevel - 1],
       });
-      // 初始化分组下拉列表
-      this.filterGroupList();
       this.$nextTick(() => {
         this.scrollEl = document.querySelector('.result-scroll-container');
       });
@@ -362,7 +363,7 @@ export default {
           this.fingerOperateData.alarmObj = val;
           break;
         case 'editAlarm': {
-          // 获取新类告警状态
+          // 更新新类告警请求
           const { alarmObj: { strategy_id: strategyID } } = this.fingerOperateData;
           if (strategyID) {
             this.$refs.fingerTableRef.policyEditing(strategyID);
@@ -415,6 +416,10 @@ export default {
      * @desc: 数据指纹请求
      */
     requestFinger() {
+      if (this.throttle) {
+        return;
+      }
+      this.throttle = true;
       this.tableLoading = true;
       this.$http.request('/logClustering/clusterSearch', {
         params: {
@@ -437,6 +442,10 @@ export default {
         .finally(() => {
           this.tableLoading = false;
         });
+
+      setTimeout(() => {
+        this.throttle = false;
+      }, 500);
     },
     /**
      * @desc: 数据指纹分页操作
@@ -510,6 +519,7 @@ export default {
           return { id, name: alias ? `${id}(${alias})` : id };
         });
       this.fingerOperateData.groupList = filterList;
+      this.requestData.group_by = [];
     },
     scrollToTop() {
       this.$easeScroll(0, 300, this.scrollEl);
