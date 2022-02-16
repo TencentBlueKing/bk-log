@@ -1484,7 +1484,6 @@ export default {
       try {
         this.tableLoading = true;
         this.resetResult();
-        await this.requestFields();
         // 表格数据重新轮询
         await this.handleResetTimer();
         await this.requestTable();
