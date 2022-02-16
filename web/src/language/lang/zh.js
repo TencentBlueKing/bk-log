@@ -1339,5 +1339,6 @@ export default {
     downloadExpired: '下载链接过期',
     dataExpired: '数据源过期',
     indexSetID: '索引集ID',
+    btn: '查看所有',
   },
 };

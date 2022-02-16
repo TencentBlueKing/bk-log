@@ -36,7 +36,9 @@
       {{$t('exportHistory.downloadHistory')}}
     </div>
     <div class="search-history">
-      <bk-button theme="primary" @click="handleSearchAll"> {{$t('exportHistory.btnTip')}}</bk-button>
+      <span v-bk-tooltips="$t('exportHistory.btnTip')" class="top-start">
+        <bk-button theme="primary" @click="handleSearchAll"> {{$t('exportHistory.btn')}}</bk-button>
+      </span>
     </div>
     <div class="table-container" v-bkloading="{ isLoading: tableLoading }">
       <bk-table
@@ -85,7 +87,7 @@
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
-            <span :style="`color: ${row.export_type === 'async' ? '#ff5656' : ''};`">
+            <span>
               {{row.export_type === 'async' ? $t('exportHistory.async') : $t('exportHistory.sync')}}
             </span>
           </template>
