@@ -70,10 +70,6 @@
           <template slot-scope="{ row }">
             <bk-popover placement="top" theme="light">
               <div slot="content">
-                <span
-                  class="bk-icon icon-text-file"
-                  :title="$t('复制')"
-                  @click="handleCopyMsg(row.search_dict)"></span>
                 <!-- eslint-disable-next-line vue/no-v-html -->
                 <div v-html="getSearchDictHtml(row.search_dict)"></div>
               </div>
@@ -89,7 +85,9 @@
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
-            <span>{{row.export_type === 'async' ? $t('exportHistory.async') : $t('exportHistory.sync')}}</span>
+            <span :style="`color: ${row.export_type === 'async' ? '#ff5656' : ''};`">
+              {{row.export_type === 'async' ? $t('exportHistory.async') : $t('exportHistory.sync')}}
+            </span>
           </template>
         </bk-table-column>
         <!-- 导出状态 -->
@@ -103,7 +101,11 @@
                 <span>{{$t('exportHistory.completeTime')}}:{{getFormatDate(row.export_completed_at)}}</span>
                 <span v-if="row.error_msg">，{{$t('exportHistory.abnormalReason')}}:{{row.error_msg}}</span>
               </div>
-              <span style="cursor: pointer;">{{getStatusStr(row.export_status)}}</span>
+              <span :class="['status',`status-${row.export_status + ''}`]">
+                <i v-if="row.export_status === null" class="bk-icon icon-refresh"></i>
+                <i v-if="isShowShape(row.export_status)" class="bk-icon icon-circle-shape"></i>
+                {{getStatusStr(row.export_status)}}
+              </span>
             </bk-popover>
           </template>
         </bk-table-column>
@@ -152,22 +154,46 @@
         <!-- 操作 -->
         <bk-table-column
           :label="$t('exportHistory.operate')"
-          width="100"
+          width="150"
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
+            <span v-if="isShowDownload(row)" style="margin-right: 10px;">
+              <bk-button
+                text
+                v-if="row.download_able"
+                @click="downloadExport(row)">
+                {{$t('exportHistory.download')}}
+              </bk-button>
+              <span
+                v-else
+                v-bk-tooltips="$t('exportHistory.downloadExpired')"
+                class="top-start">
+                <bk-button text disabled>
+                  {{$t('exportHistory.download')}}
+                </bk-button>
+              </span>
+            </span>
+            <span v-if="isShowRetry(row)" style="margin-right: 10px;">
+              <bk-button
+                text
+                v-if="row.retry_able"
+                @click="retryExport(row)">
+                {{$t('exportHistory.retry')}}
+              </bk-button>
+              <span
+                v-else
+                v-bk-tooltips="$t('exportHistory.dataExpired')"
+                class="top-start">
+                <bk-button text disabled>
+                  {{$t('exportHistory.retry')}}
+                </bk-button>
+              </span>
+            </span>
             <bk-button
               text
-              style="margin-right: 10px;"
-              v-if="isShowDownload(row)"
-              @click="downloadExport(row)">
-              {{$t('exportHistory.download')}}
-            </bk-button>
-            <bk-button
-              text
-              v-if="isShowRetry(row)"
-              @click="retryExport(row)">
-              {{$t('exportHistory.retry')}}
+              @click="handleRetrieve(row)">
+              {{$t('exportHistory.retrieve')}}
             </bk-button>
           </template>
         </bk-table-column>
@@ -178,8 +204,7 @@
 </template>
 
 <script>
-import { formatDate, copyMessage } from '@/common/util';
-
+import { formatDate } from '@/common/util';
 
 export default {
   props: {
@@ -201,7 +226,9 @@ export default {
         export_upload: this.$t('exportHistory.exportUpload'),
         success: this.$t('exportHistory.success'),
         failed: this.$t('exportHistory.failed'),
-        expired: this.$t('exportHistory.expired'),
+        download_expired: this.$t('exportHistory.downloadExpired'),
+        data_expired: this.$t('exportHistory.dataExpired'),
+        null: this.$t('exportHistory.exporting'),
       },
       pagination: {
         current: 1,
@@ -227,7 +254,100 @@ export default {
     },
   },
   methods: {
-    getTableList() {
+    downloadExport($row) {
+      // 异步导出使用downloadURL下载
+      if ($row.download_url) {
+        window.open($row.download_url);
+        return;
+      }
+      this.openDownloadUrl($row.search_dict);
+    },
+    retryExport($row) {
+      // 异常任务直接异步下载
+      if ($row.export_type === 'sync') {
+        this.openDownloadUrl($row.search_dict);
+      } else {
+        this.downloadAsync($row.search_dict);
+      }
+    },
+    /**
+     * @desc: 同步下载
+     * @param { Object } params
+     */
+    openDownloadUrl(params) {
+      const exportParams = encodeURIComponent(JSON.stringify({ ...params }));
+      // eslint-disable-next-line max-len
+      const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
+      window.open(targetUrl);
+      setTimeout(() => {
+        this.getTableList(true);
+      }, 500);
+    },
+    /**
+     * @desc: 异步下载
+     * @param { Object } data
+     */
+    downloadAsync(data) {
+      this.tableLoading = true;
+      this.$http.request('retrieve/exportAsync', {
+        params: {
+          index_set_id: this.$route.params.indexId,
+        },
+        data,
+      }).then((res) => {
+        if (res.result) {
+          this.$bkMessage({
+            theme: 'success',
+            message: res.data.prompt,
+          });
+        }
+      })
+        .finally(() => {
+          setTimeout(() => {
+            this.getTableList(true);
+          }, 500);
+        });
+    },
+    handleSearchAll() {
+      this.isSearchAll = true;
+      this.getTableList();
+    },
+    getSearchDictStr(searchObj) {
+      return JSON.stringify(searchObj);
+    },
+    getSearchDictHtml(searchObj) {
+      const objStr = JSON.stringify(searchObj, null, 4);
+      return objStr.replace(/\n/g, '<br>').replace(/\s/g, ' ');
+    },
+    isShowDownload(row) {
+      return ['success', 'download_expired', 'data_expired'].includes(row.export_status);
+    },
+    isShowRetry(row) {
+      return ['failed', 'download_expired', 'data_expired', 'success'].includes(row.export_status);
+    },
+    isShowShape(status) {
+      return ['success', 'failed'].includes(status);
+    },
+    getStatusStr(status) {
+      return this.exportStatusList[status];
+    },
+    getFormatDate(time) {
+      return formatDate(time);
+    },
+    handleRetrieve($row) {
+      const projectId = window.localStorage.getItem('project_id');
+      const { log_index_set_id: indexSetID, search_dict: dict } = $row;
+      const jumpUrl = `/#/retrieve/${indexSetID}?projectId=${projectId}&bizId=${dict.bk_biz_id}&retrieveParams=${JSON.stringify(dict)}`;
+      window.open(jumpUrl, '_blank');
+    },
+    /**
+     * @desc: 获取table列表数据
+     * @param { Boolean } isReset 是否从1页开始查询
+     */
+    getTableList(isReset = false) {
+      if (isReset) {
+        this.pagination.current = 1;
+      }
       const { limit, current } = this.pagination;
       this.tableLoading = true;
       this.$http.request('retrieve/getExportHistoryList', {
@@ -251,73 +371,6 @@ export default {
         .finally(() => {
           this.tableLoading = false;
         });
-    },
-    downloadExport($row) {
-      // 异步导出使用downloadURL下载
-      if ($row.download_url) {
-        window.open($row.download_url);
-        return;
-      }
-      this.openDownloadUrl($row.search_dict);
-    },
-    retryExport($row) {
-      // 异常任务直接异步下载
-      if ($row.export_type === 'sync') {
-        this.openDownloadUrl($row.search_dict);
-      } else {
-        this.downloadAsync($row.search_dict);
-      }
-    },
-    openDownloadUrl(params) {
-      const exportParams = encodeURIComponent(JSON.stringify({ ...params }));
-      // eslint-disable-next-line max-len
-      const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
-      window.open(targetUrl);
-    },
-    downloadAsync(data) {
-      this.tableLoading = true;
-      this.$http.request('retrieve/exportAsync', {
-        params: {
-          index_set_id: this.$route.params.indexId,
-        },
-        data,
-      }).then((res) => {
-        if (res.result) {
-          this.$bkMessage({
-            theme: 'success',
-            message: res.data.prompt,
-          });
-        }
-      })
-        .finally(() => {
-          this.tableLoading = false;
-        });
-    },
-    handleSearchAll() {
-      this.isSearchAll = true;
-      this.getTableList();
-    },
-    getSearchDictStr(searchObj) {
-      return JSON.stringify(searchObj);
-    },
-    getSearchDictHtml(searchObj) {
-      const objStr = JSON.stringify(searchObj, null, 4);
-      return objStr.replace(/\n/g, '<br>').replace(/\s/g, ' ');
-    },
-    isShowDownload(row) {
-      return row.export_status === 'success';
-    },
-    isShowRetry(row) {
-      return ['failed', 'expired', 'success'].includes(row.export_status);
-    },
-    getStatusStr(status) {
-      return this.exportStatusList[status];
-    },
-    getFormatDate(time) {
-      return formatDate(time);
-    },
-    handleCopyMsg(searchObj) {
-      copyMessage(JSON.stringify(searchObj));
     },
     handlePageChange(page) {
       this.pagination.current = page;
@@ -350,6 +403,7 @@ export default {
 
 <style lang="scss">
 @import '@/scss/mixins/flex.scss';
+@import '@/scss/conf';
 
 .table-title {
   font-size: 16px;
@@ -401,4 +455,20 @@ export default {
   width: 140px;
 }
 
+.status {
+  cursor: pointer;
+
+  &.status-null i {
+    display: inline-block;
+    animation: button-icon-loading 1s linear infinite;
+  }
+
+  &.status-success i {
+    color: $iconSuccessColor;
+  }
+
+  &.status-failed i {
+    color: $iconFailColor;
+  }
+}
 </style>

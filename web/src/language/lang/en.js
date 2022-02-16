@@ -1331,7 +1331,10 @@ export default {
     exportUpload: 'uploading',
     success: 'success',
     failed: 'failed',
-    expired: 'expired',
+    retrieve: 'retrieve',
+    exporting: 'downloading',
+    downloadExpired: 'Download link expired',
+    dataExpired: 'Data source expired',
     indexSetID: 'indexSetID',
   },
 };
