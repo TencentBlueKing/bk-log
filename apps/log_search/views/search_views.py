@@ -546,6 +546,8 @@ class SearchViewSet(APIViewSet):
         @apiSuccess {Str} list.export_created_at 异步导出创建时间
         @apiSuccess {Str} list.export_created_by 异步导出创建者
         @apiSuccess {Str} list.export_completed_at 异步导出成功时间
+        @apiSuccess {Bool} list.download_able 是否可下载（不可下载禁用下载按钮且hover提示"下载链接过期"）
+        @apiSuccess {Bool} list.retry_able 是否可重试（不可重试禁用对应按钮且hover提示"数据源过期"）
         @apiSuccessExample {json} 成功返回：
         {
             "result":true,
@@ -566,7 +568,9 @@ class SearchViewSet(APIViewSet):
                         "export_pkg_size": 1,
                         "export_created_at":"",
                         "export_created_by":"",
-                        "export_completed_at":""
+                        "export_completed_at":""，
+                        "download_able": true,
+                        "retry_able": true
                     }
                 ]
             },

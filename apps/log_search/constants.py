@@ -140,6 +140,8 @@ ISO_8601_TIME_FORMAT_NAME = "rfc3339"
 
 FILTER_KEY_LIST = ["gettext", "_", "LANGUAGES"]
 
+MAX_GET_ATTENTION_SIZE = 10
+
 
 # 导出类型
 class ExportType(object):
@@ -154,7 +156,8 @@ class ExportStatus(object):
     EXPORT_UPLOAD = "export_upload"
     SUCCESS = "success"
     FAILED = "failed"
-    EXPIRED = "expired"
+    DOWNLOAD_EXPIRED = "download_expired"
+    DATA_EXPIRED = "data_expired"
 
 
 # 消息模式
