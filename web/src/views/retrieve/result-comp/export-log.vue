@@ -32,8 +32,7 @@
     <div
       :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
       data-test-id="fieldForm_div_exportData"
-      @mouseenter="handleShowAlarmPopover"
-      @click="changePopoverInteract">
+      @mouseenter="handleShowAlarmPopover">
       <span class="icon log-icon icon-xiazai"></span>
     </div>
 
@@ -112,7 +111,6 @@ export default {
       exportLoading: false,
       showHistoryExport: false,
       popoverInstance: null,
-      interactType: false,
     };
   },
   computed: {
@@ -125,9 +123,8 @@ export default {
   },
   methods: {
     handleShowAlarmPopover(e) {
-      if (this.popoverInstance || !this.queueStatus) {
-        return;
-      }
+      if (this.popoverInstance || !this.queueStatus) return;
+
       this.popoverInstance = this.$bkPopover(e.target, {
         content: this.$refs.downloadTips,
         trigger: 'mouseenter',
@@ -139,15 +136,6 @@ export default {
         arrow: true,
       });
       this.popoverInstance && this.popoverInstance.show();
-    },
-    changePopoverInteract() {
-      if (!this.interactType) {
-        this.popoverInstance.set({
-          trigger: 'click',
-          hideOnClick: true,
-        });
-      }
-      this.interactType = true;
     },
     exportLog() {
       if (!this.queueStatus) return;

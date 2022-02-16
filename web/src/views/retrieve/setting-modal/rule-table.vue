@@ -214,7 +214,7 @@
 import VueDraggable from 'vuedraggable';
 import RegisterColumn from '@/views/retrieve/result-comp/register-column';
 import ClusterEventPopover from '@/views/retrieve/result-table-panel/log-clustering/components/cluster-event-popover';
-import { copyMessage } from '@/common/util';
+import { copyMessage, base64Encode, base64Decode } from '@/common/util';
 
 export default {
   components: {
@@ -374,7 +374,7 @@ export default {
     },
     base64ToRuleArr(str) {
       try {
-        const ruleList = JSON.parse(this.decode(str));
+        const ruleList = JSON.parse(base64Decode(str));
         const ruleNewList =  ruleList.reduce((pre, cur, index) => {
           const itemObj = {};
           const key = cur.match(/[^:]*/)[0];
@@ -400,7 +400,7 @@ export default {
           return pre;
         }, []);
         const ruleArrStr = `[${ruleNewList.join(' ,')}]`;
-        return this.encode(ruleArrStr);
+        return base64Encode(ruleArrStr);
       } catch (error) {
         return '';
       }
@@ -480,15 +480,6 @@ export default {
       setTimeout(() => {
         this.tableLoading = false;
       }, 500);
-    },
-    encode(str) {
-      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
-        (match, p1) => String.fromCharCode(`0x${p1}`)));
-    },
-    decode(str) {
-      return decodeURIComponent(atob(str).split('')
-        .map(c => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
-        .join(''));
     },
   },
 };

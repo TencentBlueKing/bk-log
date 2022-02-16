@@ -1334,7 +1334,10 @@ export default {
     exportUpload: '上传中',
     success: '完成',
     failed: '异常',
-    expired: '过期',
+    retrieve: '检索',
+    exporting: '下载中',
+    downloadExpired: '下载链接过期',
+    dataExpired: '数据源过期',
     indexSetID: '索引集ID',
   },
 };
