@@ -43,7 +43,7 @@
               :disabled="parentData.indexes.some(selectedItem => item.result_table_id === selectedItem.result_table_id)"
               :key="item.result_table_id"
               :id="item.result_table_id"
-              :name="item.result_table_name_alias">
+              :name="`${item.result_table_name_alias}(${item.result_table_id})`">
               <div
                 v-if="scenarioId === 'log' && !(item.permission && item.permission.manage_collection)"
                 class="option-slot-container no-authority" @click.stop>
