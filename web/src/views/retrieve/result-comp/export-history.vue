@@ -98,17 +98,25 @@
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
-            <bk-popover placement="top" theme="light">
+            <bk-popover
+              v-if="isShowShape(row.export_status)"
+              placement="top"
+              theme="light">
               <div slot="content">
-                <span>{{$t('exportHistory.completeTime')}}:{{getFormatDate(row.export_completed_at)}}</span>
-                <span v-if="row.error_msg">，{{$t('exportHistory.abnormalReason')}}:{{row.error_msg}}</span>
+                <span v-if="!row.error_msg">
+                  {{$t('exportHistory.completeTime')}}: {{getFormatDate(row.export_completed_at)}}
+                </span>
+                <span v-else>{{$t('exportHistory.abnormalReason')}}: {{row.error_msg}}</span>
               </div>
               <span :class="['status',`status-${row.export_status + ''}`]">
-                <i v-if="row.export_status === null" class="bk-icon icon-refresh"></i>
-                <i v-if="isShowShape(row.export_status)" class="bk-icon icon-circle-shape"></i>
+                <i class="bk-icon icon-circle-shape"></i>
                 {{getStatusStr(row.export_status)}}
               </span>
             </bk-popover>
+            <span v-else :class="['status',`status-${row.export_status + ''}`]">
+              <i v-if="row.export_status === null" class="bk-icon icon-refresh"></i>
+              {{getStatusStr(row.export_status)}}
+            </span>
           </template>
         </bk-table-column>
         <!-- 文件名 -->
@@ -117,7 +125,10 @@
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
-            <bk-popover v-if="row.export_pkg_name" placement="top" theme="light">
+            <bk-popover
+              v-if="row.export_pkg_name"
+              placement="top"
+              theme="light">
               <div slot="content">
                 <span>{{row.export_pkg_name ? row.export_pkg_name : '--'}}</span>
               </div>
@@ -222,6 +233,7 @@ export default {
       tableLoading: false,
       isSearchAll: false, // 是否查看所有索引集下载历史
       isShowSetLabel: false, // 是否展示索引集ID
+      timer: false,
       exportStatusList: {
         download_log: this.$t('exportHistory.pulling'),
         export_package: this.$t('exportHistory.exportPackage'),
@@ -252,6 +264,7 @@ export default {
       this.isShowDialog = val;
       if (val) {
         this.getTableList();
+        this.startStatusPolling();
       }
     },
   },
@@ -263,6 +276,7 @@ export default {
         return;
       }
       this.openDownloadUrl($row.search_dict);
+      this.startStatusPolling();
     },
     retryExport($row) {
       // 异常任务直接异步下载
@@ -271,6 +285,7 @@ export default {
       } else {
         this.downloadAsync($row.search_dict);
       }
+      this.startStatusPolling();
     },
     /**
      * @desc: 同步下载
@@ -280,10 +295,11 @@ export default {
       const exportParams = encodeURIComponent(JSON.stringify({ ...params }));
       // eslint-disable-next-line max-len
       const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
-      window.open(targetUrl);
-      setTimeout(() => {
+      // window.open(targetUrl);
+      const net = window.open(targetUrl, '_blank', '', false);
+      net.addEventListener('beforeunload', () => {
         this.getTableList(true);
-      }, 500);
+				 });
     },
     /**
      * @desc: 异步下载
@@ -307,7 +323,7 @@ export default {
         .finally(() => {
           setTimeout(() => {
             this.getTableList(true);
-          }, 500);
+          }, 1000);
         });
     },
     handleSearchAll() {
@@ -339,19 +355,53 @@ export default {
     handleRetrieve($row) {
       const projectId = window.localStorage.getItem('project_id');
       const { log_index_set_id: indexSetID, search_dict: dict } = $row;
-      const jumpUrl = `/#/retrieve/${indexSetID}?projectId=${projectId}&bizId=${dict.bk_biz_id}&retrieveParams=${JSON.stringify(dict)}`;
+      const params = encodeURIComponent(JSON.stringify({ ...dict }));
+      const jumpUrl = `${window.SITE_URL}#/retrieve/${indexSetID}?projectId=${projectId}&bizId=${dict.bk_biz_id}&retrieveParams=${params}`;
       window.open(jumpUrl, '_blank');
+    },
+    /**
+     * @desc: 轮询
+     */
+    startStatusPolling() {
+      this.stopStatusPolling();
+      this.timer = setInterval(() => {
+        this.getTableList(false, true);
+      }, 10000);
+    },
+    stopStatusPolling() {
+      clearTimeout(this.timer);
+    },
+    /**
+     * @desc: 导出状态轮询
+     * @param { Array } data 数据
+     * @param { Boolean } isPolling 该次请求是否是轮询
+     */
+    setExportListData(data, isPolling) {
+      if (isPolling) {
+        data.forEach((item) => {
+          this.exportList.forEach((row) => {
+            if (row.id === item.id) {
+              row.export_status = item.export_status;
+            }
+          });
+        });
+      } else {
+        this.exportList = data;
+      }
     },
     /**
      * @desc: 获取table列表数据
      * @param { Boolean } isReset 是否从1页开始查询
+     * @param { Boolean } isPolling 该次请求是否是轮询
      */
-    getTableList(isReset = false) {
+    getTableList(isReset = false, isPolling = false) {
       if (isReset) {
         this.pagination.current = 1;
       }
+      if (!isPolling) {
+        this.tableLoading = true;
+      }
       const { limit, current } = this.pagination;
-      this.tableLoading = true;
       this.$http.request('retrieve/getExportHistoryList', {
         params: {
           index_set_id: this.$route.params.indexId,
@@ -363,7 +413,8 @@ export default {
       }).then((res) => {
         if (res.result) {
           this.pagination.count = res.data.total;
-          this.exportList = res.data.list;
+          // this.exportList = res.data.list;
+          this.setExportListData(res.data.list, isPolling);
         }
         // 查询所有索引集时才显示索引集IDLabel
         if (this.isSearchAll) {
@@ -397,6 +448,7 @@ export default {
         count: 0,
         limit: 10,
       };
+      this.stopStatusPolling();
       this.$emit('handleCloseDialog');
     },
   },
