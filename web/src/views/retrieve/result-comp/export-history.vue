@@ -327,6 +327,9 @@ export default {
         });
     },
     handleSearchAll() {
+      if (this.tableLoading) {
+        return;
+      }
       this.isSearchAll = true;
       this.getTableList();
     },
@@ -381,12 +384,13 @@ export default {
         data.forEach((item) => {
           this.exportList.forEach((row) => {
             if (row.id === item.id) {
-              row.export_status = item.export_status;
+              Object.assign(row, { ...item });
             }
           });
         });
       } else {
         this.exportList = data;
+        this.startStatusPolling();
       }
     },
     /**
