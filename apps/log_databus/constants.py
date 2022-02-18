@@ -89,6 +89,7 @@ META_DATA_ENCODING = "utf-8"
 
 # ADMIN请求用户名
 ADMIN_REQUEST_USER = "admin"
+EMPTY_REQUEST_USER = ""
 
 # 内置dataid范围，划分出的1w个dataid，用来给蓝鲸平台作为内置的采集dataid
 BUILT_IN_MIN_DATAID = 1110001

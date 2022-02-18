@@ -81,10 +81,9 @@ export default {
       }
 
       const tempList = handleTransformToTimestamp(this.datePickerValue);
-      const rangeTimes = (tempList[1] - tempList[0]) * 1000;
       return {
-        startTimeStamp: Date.now() - rangeTimes,
-        endTimeStamp: Date.now(),
+        startTimeStamp: tempList[0] * 1000,
+        endTimeStamp: tempList[1] * 1000,
       };
     },
     // 获取轮询时间间隔

@@ -21,14 +21,15 @@ import os
 import tarfile
 import json
 import datetime
-
 import pytz
 import arrow
+
 from django.utils.translation import gettext as _
 from django.utils import translation
 from celery.schedules import crontab
 from django.conf import settings
 from django.utils.crypto import get_random_string
+from django.utils import timezone
 from celery.task import task, periodic_task
 
 from apps.constants import RemoteStorageType
@@ -44,6 +45,7 @@ from apps.log_search.constants import (
     MAX_RESULT_WINDOW,
     MsgModel,
     ASYNC_EXPORT_EMAIL_ERR_TEMPLATE,
+    ExportStatus,
 )
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 from apps.log_search.models import Scenario, AsyncTask, LogIndexSet
@@ -84,31 +86,27 @@ def async_export(
             logger.error(f"Can not find this: id: {async_task_id} record")
             raise BaseException(f"Can not find this: id: {async_task_id} record")
 
+        async_task.export_status = ExportStatus.DOWNLOAD_LOG
         try:
             async_export_util.export_package()
         except Exception as e:  # pylint: disable=broad-except
-            async_task.failed_reason = f"export package error: {e}"
-            logger.error(async_task.failed_reason)
-            async_task.save()
+            async_task = set_failed_status(async_task=async_task, reason=f"export package error: {e}")
             raise
 
+        async_task.export_status = ExportStatus.EXPORT_PACKAGE
         async_task.file_name = tar_file_name
         async_task.file_size = async_export_util.get_file_size()
-
         try:
             async_export_util.export_upload()
         except Exception as e:  # pylint: disable=broad-except
-            async_task.failed_reason = f"export upload error: {e}"
-            logger.error(async_task.failed_reason)
-            async_task.save()
+            async_task = set_failed_status(async_task=async_task, reason=f"export upload error: {e}")
             raise
 
+        async_task.export_status = ExportStatus.EXPORT_UPLOAD
         try:
             url = async_export_util.generate_download_url(url_path=url_path)
         except Exception as e:  # pylint: disable=broad-except
-            async_task.failed_reason = f"generate download url error: {e}"
-            logger.error(async_task.failed_reason)
-            async_task.save()
+            async_task = set_failed_status(async_task=async_task, reason=f"generate download url error: {e}")
             raise
 
         async_task.download_url = url
@@ -121,9 +119,7 @@ def async_export(
                 language=language,
             )
         except Exception as e:  # pylint: disable=broad-except
-            async_task.failed_reason = f"send msg error: {e}"
-            logger.error(async_task.failed_reason)
-            async_task.save()
+            async_task = set_failed_status(async_task=async_task, reason=f"send msg error: {e}")
             raise
 
     except Exception as e:  # pylint: disable=broad-except
@@ -139,8 +135,39 @@ def async_export(
         return
 
     async_task.result = True
+    async_task.export_status = ExportStatus.SUCCESS
+    async_task.completed_at = timezone.now()
     async_task.save()
+
     async_export_util.clean_package()
+    # 过$ASYNC_EXPORT_EXPIRED将对应状态置为ExportStatus.EXPIRED
+    set_expired_status.apply_async(args=[async_task.id], countdown=ASYNC_EXPORT_EXPIRED)
+
+
+def set_failed_status(async_task: AsyncTask, reason):
+    async_task.failed_reason = reason
+    async_task.export_status = ExportStatus.FAILED
+    logger.error(async_task.failed_reason)
+    async_task.save()
+    return async_task
+
+
+@task(ignore_result=True)
+def set_expired_status(async_task_id):
+    async_task = AsyncTask.objects.get(id=async_task_id)
+    async_task.export_status = ExportStatus.DOWNLOAD_EXPIRED
+    async_task.save()
+
+
+@periodic_task(run_every=crontab(minute="10", hour="3"))
+def clean_expired_status():
+    """
+    change success status -> export_expired status
+    """
+
+    AsyncTask.objects.filter(export_status=ExportStatus.SUCCESS).filter(
+        completed_at__lt=arrow.now().shift(seconds=-ASYNC_EXPORT_EXPIRED).datetime
+    ).update(export_status=ExportStatus.DOWNLOAD_EXPIRED)
 
 
 @periodic_task(run_every=crontab(minute="0", hour="3"))

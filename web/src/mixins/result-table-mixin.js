@@ -174,15 +174,25 @@ export default {
       if (!this.cacheOverFlowCol.includes(fieldName)) this.cacheOverFlowCol.push(fieldName);
     },
     getMarkList(content) {
-      return content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      // 匹配高亮标签
+      let value = content;
+
+      const markVal = content.match(/(<mark>).*?(<\/mark>)/g) || [];
+      if (markVal.length) {
+        value = String(value).replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, '');
+      }
+
+      return value;
     },
     formatterStr(content) {
       // 匹配高亮标签
       let value = content;
 
-      const markVal = content.match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
-      if (markVal) {
-        this.markList = markVal;
+      const markVal = content.match(/(<mark>).*?(<\/mark>)/g) || [];
+      if (markVal.length) {
+        this.markList = markVal.map(item => item.replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, ''));
         value = String(value).replace(/<mark>/g, '')
           .replace(/<\/mark>/g, '');
       }

@@ -270,6 +270,13 @@ class SearchAsyncExportSerializer(serializers.Serializer):
         return attrs
 
 
+class GetExportHistorySerializer(serializers.Serializer):
+    page = serializers.IntegerField(label=_("页码"))
+    pagesize = serializers.IntegerField(label=_("页面大小"))
+    show_all = serializers.BooleanField(label=_("是否展示业务全量导出历史"))
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+
+
 class SourceDetectSerializer(serializers.Serializer):
     es_host = serializers.CharField(label=_("ES HOST"))
     es_port = serializers.IntegerField(label=_("ES 端口"))
