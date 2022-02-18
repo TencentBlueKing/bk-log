@@ -37,6 +37,7 @@ from apps.log_extract.models import Tasks, ExtractLink
 from apps.utils.cos import QcloudCos
 from apps.utils.base_crypt import BaseCrypt
 from apps.utils.local import get_request
+from apps.utils.remote_storage import BKREPOStorage
 
 
 def try_op(op: typing.Callable[[], bool], n=3) -> bool:
@@ -162,7 +163,7 @@ class CommonExtractLink(QcloudCosExtractLink):
 
 class BKRepoExtractLink(QcloudCosExtractLink):
     def generate_download_url(self, task: Tasks) -> str:
-        pass
+        return BKREPOStorage(expired=settings.EXTRACT_TRANSIT_EXPIRED).generate_download_url(task.cos_file_name)
 
 
 class ExtractLinkFactory:

@@ -166,6 +166,7 @@ ALLOWED_FILTER_TYPES = ("line_range", "match_word", "tail_line", "match_range")
 
 TRANSIT_SERVER_DISTRIBUTION_PATH = settings.EXTRACT_DISTRIBUTION_DIR
 TRANSIT_SERVER_PACKING_PATH = "/data/bk_log_extract/distribution_packing/"
+BKREPO_CHILD_PACKING_PATH = "bk_log_extract/distribution"
 
 # 前端轮询任务列表时间
 POLLING_TIMEOUT = 5

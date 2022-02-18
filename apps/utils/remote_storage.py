@@ -79,7 +79,7 @@ class NfsStorage(Storage):
 
 
 class BKREPOStorage(Storage):
-    def __init__(self, expired: int):
+    def __init__(self, expired: int = 0):
         self.bk_repo_storage = BKRepoStorage()
         self.expired = expired
 

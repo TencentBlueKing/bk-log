@@ -26,7 +26,7 @@ from django.utils.translation import ugettext_lazy as _
 from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 
-from apps.log_extract.constants import ExtractLinkType
+from apps.log_extract.constants import ExtractLinkType, BKREPO_CHILD_PACKING_PATH
 from apps.utils.pipline import BaseService
 from apps.log_extract import constants
 from apps.log_extract.fileserver import FileServer
@@ -72,7 +72,7 @@ class FileDistributionService(BaseService):
                     )
                 ],
                 settings.BKLOG_STORAGE_ROOT_PATH,
-                os.path.join(settings.BKLOG_STORAGE_ROOT_PATH, packed_dir_name),
+                os.path.join(settings.BKLOG_STORAGE_ROOT_PATH, BKREPO_CHILD_PACKING_PATH, packed_dir_name),
             )
         hosts = extract_link.extractlinkhost_set.all()
         if not hosts:
