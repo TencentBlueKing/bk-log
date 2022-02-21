@@ -65,9 +65,57 @@ def using_cache(key: str, duration, need_md5=False):
     return decorator
 
 
+def using_caches(key: str, need_deconstruction_name: str, duration, need_md5=False):
+    """
+    :param key: key 名可以使用format进行格式，由于是可迭代对象，请勿使用字符串参数格式化
+    :param duration:
+    :param need_deconstruction_name: 需要解构的可迭代变量名，需要显式指定传参来用于获取该参数
+    :param need_md5: 缓冲是redis的时候 key不能带有空格等字符，需要用md5 hash一下
+    :return:
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def inner(*args, **kwargs):
+            need_deconstruction_param = kwargs.get(need_deconstruction_name, list())
+            temp_result = dict()
+            in_cache_keys = list()
+            for index, value in enumerate(need_deconstruction_param):
+                actual_key = key.format(value)
+
+                if need_md5:
+                    actual_key = md5_sum(actual_key)
+                cache_result = cache.get(actual_key)
+                if cache_result:
+                    temp_result.update({value: json.loads(cache_result)})
+                    in_cache_keys.append(value)
+
+            kwargs[need_deconstruction_name] = list(set(kwargs[need_deconstruction_name]) - set(in_cache_keys))
+            result = func(*args, **kwargs)
+
+            if result:
+                for item in result:
+                    actual_key = key.format(item)
+
+                    if need_md5:
+                        actual_key = md5_sum(actual_key)
+
+                    cache.set(actual_key, json.dumps(result[item], cls=DjangoJSONEncoder), duration)
+
+            result.update(temp_result)
+
+            return result
+
+        return inner
+
+    return decorator
+
+
 cache_half_minute = functools.partial(using_cache, duration=0.5 * TimeEnum.ONE_MINUTE_SECOND.value)
 cache_one_minute = functools.partial(using_cache, duration=TimeEnum.ONE_MINUTE_SECOND.value)
 cache_five_minute = functools.partial(using_cache, duration=5 * TimeEnum.ONE_MINUTE_SECOND.value)
 cache_ten_minute = functools.partial(using_cache, duration=10 * TimeEnum.ONE_MINUTE_SECOND.value)
 cache_one_hour = functools.partial(using_cache, duration=TimeEnum.ONE_HOUR_SECOND.value)
 cache_one_day = functools.partial(using_cache, duration=TimeEnum.ONE_DAY_SECOND.value)
+
+caches_one_hour = functools.partial(using_caches, duration=TimeEnum.ONE_HOUR_SECOND.value)
