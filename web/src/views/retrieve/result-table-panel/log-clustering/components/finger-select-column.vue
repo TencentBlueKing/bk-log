@@ -23,6 +23,7 @@
   <bk-checkbox
     :value="value === 2"
     :indeterminate="value === 1"
+    :disabled="disabled"
     @change="handleCheckChange">
   </bk-checkbox>
 </template>
@@ -32,6 +33,10 @@ export default {
     value: {
       type: Number,
       default: 0,
+    },
+    disabled: {
+      type: Boolean,
+      default: true,
     },
   },
   data() {

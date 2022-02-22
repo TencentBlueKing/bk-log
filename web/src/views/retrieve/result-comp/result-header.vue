@@ -210,9 +210,11 @@ export default {
   },
   mounted() {
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    window.bus.$on('changeTimeByChart', this.handleChangeTimeByChart);
   },
   beforeDestroy() {
     document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    window.bus.$off('changeTimeByChart', this.handleChangeTimeByChart);
   },
   methods: {
     removeFavorite(id) {
@@ -226,6 +228,10 @@ export default {
       this.$emit('update:datePickerValue', val);
       this.setRefreshTime(0);
       this.$emit('datePickerChange');
+    },
+    handleChangeTimeByChart(val) {
+      this.handleTimeRangeChange(val);
+      window.bus.$emit('retrieveWhenChartChange');
     },
     // 自动刷新
     handleDropdownShow() {

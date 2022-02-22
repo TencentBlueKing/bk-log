@@ -30,6 +30,7 @@
         ext-cls="compared-select"
         v-model="group"
         :popover-min-width="180"
+        :disabled="!fingerOperateData.signatureSwitch"
         @toggle="handleSelectGroup">
         <bk-option
           v-for="item in fingerOperateData.groupList"
@@ -86,24 +87,22 @@
         :disabled="!fingerOperateData.signatureSwitch"
         @change="handleShowNearPattern">
       </bk-checkbox>
-      <bk-popover
-        :trigger="trigger"
-        :on-show="handlePopoverShow"
-        theme="light">
-        <span style="border-bottom: 1px dashed #000">{{$t('近24H新增')}}</span>
-        <div slot="content" class="alarm-content">
-          <span>{{$t('是否要告警')}}</span>
-          <div @click.stop="handleChangeStrategy">
-            <bk-switcher
-              theme="primary"
-              size="small"
-              v-model="alarmSwitch"
-              :disabled="isRequestAlarm"
-              :pre-check="() => false">
-            </bk-switcher>
-          </div>
+      <span
+        @mouseenter="handleShowAlarmPopover"
+        @click="handleChangeTrigger">{{$t('近24H新增')}}</span>
+      <div v-show="false">
+        <div
+          ref="alarmPopover"
+          slot="content"
+          class="alarm-content">
+          <span @click.stop="updateNewClsStrategy">{{!alarmSwitch ? $t('开启告警') : $t('关闭告警')}}</span>
+          <span
+            v-if="alarmSwitch"
+            class="right-alarm"
+            @click="handleEmitEditAlarm">
+            {{$t('编辑告警')}}</span>
         </div>
-      </bk-popover>
+      </div>
     </div>
 
     <div class="partter fl-sb" style="width: 200px">
@@ -142,7 +141,7 @@ export default {
   },
   data() {
     return {
-      trigger: 'click',
+      interactType: false, // false 为hover true 为click
       alarmSwitch: false,
       group: [], // 当前选择分组的值
       isToggle: false, // 当前是否显示分组下拉框
@@ -150,6 +149,7 @@ export default {
       yearOnYearHour: 0,
       isNear24: false,
       isRequestAlarm: false,
+      popoverInstance: null,
     };
   },
   computed: {
@@ -170,6 +170,10 @@ export default {
   },
   mounted() {
     this.initCache();
+    this.handlePopoverShow();
+  },
+  beforeDestroy() {
+    this.popoverInstance = null;
   },
   methods: {
     handleSelectCompared(newVal) {
@@ -191,10 +195,40 @@ export default {
       this.isToggle = state;
       !state && this.$emit('handleFingerOperate', 'group', this.group);
     },
+    handleEmitEditAlarm() {
+      this.$emit('handleFingerOperate', 'editAlarm');
+    },
     handlePopoverShow() {
       if (JSON.stringify(this.fingerOperateData.alarmObj) === '{}') {
         this.initNewClsStrategy();
       }
+    },
+    /**
+     * @desc: 改变近24H新增的交互类型
+     */
+    handleChangeTrigger() {
+      if (!this.interactType) {
+        this.popoverInstance.set({
+          trigger: 'click',
+          hideOnClick: true,
+        });
+      }
+      this.interactType = true;
+    },
+    handleShowAlarmPopover(e) {
+      if (this.popoverInstance) {
+        return;
+      }
+      this.popoverInstance = this.$bkPopover(e.target, {
+        content: this.$refs.alarmPopover,
+        trigger: 'mouseenter',
+        placement: 'top',
+        arrow: true,
+        theme: 'light',
+        interactive: true,
+        hideOnClick: false,
+      });
+      this.popoverInstance && this.popoverInstance.show();
     },
     initCache() {
       // 赋值缓存
@@ -203,14 +237,6 @@ export default {
       this.yearOnYearHour = this.requestData.year_on_year_hour;
       this.isNear24 = this.requestData.show_new_pattern;
       this.alarmSwitch = this.fingerOperateData.alarmObj?.is_active;
-    },
-    handleChangeStrategy() {
-      this.$bkInfo({
-        title: this.$t('是否更新新类告警'),
-        confirmFn: () => {
-          this.updateNewClsStrategy();
-        },
-      });
     },
     /**
      * @desc: 查询新类告警
@@ -246,16 +272,19 @@ export default {
         data: { ...queryObj },
       }).then((res) => {
         if (res.result) {
+          this.popoverInstance.hide();
           this.$emit('handleFingerOperate', 'getNewStrategy', {
             strategy_id: res.data,
             is_active: !this.alarmSwitch,
           });
-          this.alarmSwitch = !this.alarmSwitch;
           this.$bkMessage({
             theme: 'success',
             message: this.$t('操作成功'),
             ellipsisLine: 0,
           });
+          setTimeout(() => {
+            this.alarmSwitch = !this.alarmSwitch;
+          }, 200);
         }
       })
         .finally(() => {
@@ -277,8 +306,10 @@ export default {
   .is-near24 {
     @include flex-center;
 
-    span {
+    > span {
+      border-bottom: 1px dashed #979ba5;
       margin-left: 4px;
+      line-height: 16px;
       cursor: pointer;
     }
   }
@@ -359,10 +390,18 @@ export default {
 }
 
 .alarm-content {
-  @include flex-center;
+  color: #3a84ff;
+  font-size: 12px;
+  cursor: pointer;
 
-  span {
-    margin: -2px 4px 0 0;
+  .right-alarm {
+    margin-left: 6px;
+
+    &:before {
+      content: '|';
+      margin-right: 6px;
+      color: #dcdee5;
+    }
   }
 }
 

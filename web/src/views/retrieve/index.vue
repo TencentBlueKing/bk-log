@@ -1073,6 +1073,9 @@ export default {
         try {
           queryParams = JSON.parse(decodeURIComponent(urlRetrieveParams));
           queryParamsStr = JSON.parse(decodeURIComponent(urlRetrieveParams));
+          if (queryParams.start_time && queryParams.end_time) {
+            this.datePickerValue = [queryParams.start_time, queryParams.end_time];
+          }
         } catch (e) {
           console.warn('url 查询参数解析失败', e);
         }
@@ -1484,7 +1487,6 @@ export default {
       try {
         this.tableLoading = true;
         this.resetResult();
-        await this.requestFields();
         // 表格数据重新轮询
         await this.handleResetTimer();
         await this.requestTable();

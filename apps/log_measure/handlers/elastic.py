@@ -37,7 +37,7 @@ class ElasticHandle(object):
             scheme="http",
             port=self.es_port,
             sniffer_timeout=600,
-            verify_certs=True,
+            verify_certs=False,
         )
         if not self.es_client.ping():
             raise EsConnectFailException()
