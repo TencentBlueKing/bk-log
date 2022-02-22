@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from apps.log_clustering.constants import StrategiesType
 from apps.models import SoftDeleteModel
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -35,6 +36,7 @@ class AiopsModel(SoftDeleteModel):
 
 class AiopsModelExperiment(SoftDeleteModel):
     model_id = models.CharField(_("模型ID"), db_index=True, max_length=128)
+    # experiment_id后续可能会变化，如需要进一步使用，需要手动维护
     experiment_id = models.IntegerField(_("实验id"), db_index=True)
     experiment_alias = models.CharField(_("实验名称"), db_index=True, max_length=128)
     status = models.CharField(_("实验状态"), null=True, blank=True, max_length=128)
@@ -82,3 +84,33 @@ class ClusteringConfig(SoftDeleteModel):
     after_treat_flow = JSONField(_("after_treat_flow配置"), null=True, blank=True)
     after_treat_flow_id = models.IntegerField(_("预处理flowid"), null=True, blank=True)
     modify_flow = JSONField(_("修改after_treat_flow调用的配置"), null=True, blank=True)
+
+
+class SignatureStrategySettings(SoftDeleteModel):
+    signature = models.CharField(_("数据指纹"), max_length=256, db_index=True, blank=True)
+    index_set_id = models.IntegerField(_("索引集id"), db_index=True)
+    strategy_id = models.IntegerField(_("监控策略id"), null=True, blank=True)
+    enabled = models.BooleanField(_("是否启用"), default=True)
+    bk_biz_id = models.IntegerField(_("业务id"))
+    pattern_level = models.CharField(_("聚类级别"), max_length=64, null=True, blank=True)
+    strategy_type = models.CharField(
+        _("策略类型"), max_length=64, null=True, blank=True, default=StrategiesType.NORMAL_STRATEGY
+    )
+
+    @classmethod
+    def get_monitor_config(cls, signature, index_set_id, pattern_level):
+        signature_strategy_settings = SignatureStrategySettings.objects.filter(
+            signature=signature, index_set_id=index_set_id, pattern_level=pattern_level
+        ).first()
+        if not signature_strategy_settings:
+            return {
+                "is_active": False,
+                "strategy_id": None,
+            }
+        return {"is_active": True, "strategy_id": signature_strategy_settings.strategy_id}
+
+
+class NoticeGroup(SoftDeleteModel):
+    index_set_id = models.IntegerField(_("索引集id"), db_index=True)
+    notice_group_id = models.IntegerField(_("通知人组id"))
+    bk_biz_id = models.IntegerField(_("业务id"), null=True, blank=True)

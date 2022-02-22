@@ -18,13 +18,23 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.utils import ChoicesEnum
+from django.utils.translation import ugettext as _
 
 DEFAULT_CLUSTERING_FIELD = "log"
 NOT_CLUSTERING_FILTER_RULE = " where ip is null"
 UUID_FIELDS = "uuid"
+OPERATOR_AND = "and"
 # 聚类不参与sql字段
 NOT_CONTAIN_SQL_FIELD_LIST = ["timestamp", "_startTime_", "_endTime_"]
 DIST_FIELDS = ["dist_01", "dist_03", "dist_05", "dist_07", "dist_09"]
+DEFAULT_SPARK_EXECUTOR_INSTANCES = 20
+DEFAULT_PSEUDO_SHUFFLE = 200
+DEFAULT_SPARK_LOCALITY_WAIT = "0s"
+STREAM_SOURCE_NODE_TYPE = "stream_source"
+DIVERSION_NODE_NAME = _("回流数据")
+TSPIDER_STORAGE_NODE_TYPE = "tspider_storage"
+TSPIDER_STORAGE_NODE_NAME = _("回流数据(tspider_storage)")
+TSPIDER_STORAGE_INDEX_FIELDS = ["history_time", "event_time"]
 
 
 class FlowMode(ChoicesEnum):

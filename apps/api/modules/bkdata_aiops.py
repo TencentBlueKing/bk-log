@@ -287,6 +287,16 @@ class _BkDataAIOPSApi:
             after_request=None,
             default_timeout=300,
         )
+        self.serving_data_processing_id_config = DataAPI(
+            method="GET",
+            url=AIOPS_APIGATEWAY_ROOT + "serving/{data_processing_id}/config/",
+            module=self.MODULE,
+            url_keys=["data_processing_id"],
+            description=u"AIOps 模型实例信息",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
 
 
 BkDataAIOPSApi = _BkDataAIOPSApi()

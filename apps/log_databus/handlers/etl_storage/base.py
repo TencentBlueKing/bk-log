@@ -23,6 +23,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.module_loading import import_string
 from django.conf import settings
 
+from apps.log_databus.utils.es_config import get_es_config
 from apps.utils import is_match_variate
 from apps.api import TransferApi
 from apps.exceptions import ValidationError
@@ -116,7 +117,12 @@ class EtlStorage(object):
         built_in_keys = FieldBuiltInEnum.get_choices()
 
         etl_field_index = 1
+        clustering_default_fields = self._get_log_clustering_default_fields()
         for field in fields:
+            # 当在聚类场景的时候 不做下面的format操作
+            if etl_flat and field["field_name"] in clustering_default_fields:
+                field_list.append(field)
+                continue
             # 过滤掉删除的字段
             if field["is_delete"]:
                 continue
@@ -203,23 +209,23 @@ class EtlStorage(object):
         :param es_version: es
         :param hot_warm_config: 冷热数据配置
         """
-
+        es_config = get_es_config(collector_config.bk_biz_id)
         # 时间格式
-        date_format = settings.ES_DATE_FORMAT
+        date_format = es_config["ES_DATE_FORMAT"]
         # ES-分片数
         if not collector_config.storage_shards_nums:
-            collector_config.storage_shards_nums = settings.ES_SHARDS
+            collector_config.storage_shards_nums = es_config["ES_SHARDS"]
 
         # ES-副本数
         collector_config.storage_replies = storage_replies
 
         # 需要切分的大小阈值，单位（GB）
         if not collector_config.storage_shards_size:
-            collector_config.storage_shards_size = settings.ES_SHARDS_SIZE
+            collector_config.storage_shards_size = es_config["ES_SHARDS_SIZE"]
 
         slice_size = collector_config.storage_shards_nums * collector_config.storage_shards_size
         # index分片时间间隔，单位（分钟）
-        slice_gap = settings.ES_SLICE_GAP
+        slice_gap = es_config["ES_SLICE_GAP"]
 
         # ES兼容—mapping设置
         param_mapping = {
@@ -368,7 +374,7 @@ class EtlStorage(object):
         time_field = copy.deepcopy(time_fields[0])
 
         # log clustering fields
-        log_clustering_fields = {field["field_name"] for field in CollectorScenario.log_clustering_fields()}
+        log_clustering_fields = cls._get_log_clustering_default_fields()
         for field in result_table_config["field_list"]:
             # 判断是不是标准字段
             if not field.get("is_built_in", False):
@@ -468,3 +474,7 @@ class EtlStorage(object):
             self._to_bkdata_assign({"field_name": "time", "alias_name": "time", "option": {"es_type": "long"}})
         )
         return result
+
+    @classmethod
+    def _get_log_clustering_default_fields(cls):
+        return {field["field_name"] for field in CollectorScenario.log_clustering_fields()}

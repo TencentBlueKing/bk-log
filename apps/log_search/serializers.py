@@ -270,6 +270,13 @@ class SearchAsyncExportSerializer(serializers.Serializer):
         return attrs
 
 
+class GetExportHistorySerializer(serializers.Serializer):
+    page = serializers.IntegerField(label=_("页码"))
+    pagesize = serializers.IntegerField(label=_("页面大小"))
+    show_all = serializers.BooleanField(label=_("是否展示业务全量导出历史"))
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+
+
 class SourceDetectSerializer(serializers.Serializer):
     es_host = serializers.CharField(label=_("ES HOST"))
     es_port = serializers.IntegerField(label=_("ES 端口"))
@@ -385,3 +392,7 @@ class TemplateSerializer(serializers.Serializer):
             if not re.findall(r"^\d+", task_id):
                 raise serializers.ValidationError(_("类型错误,请输入正确的整型数组"))
         return attrs
+
+
+class DynamicGroupSerializer(serializers.Serializer):
+    dynamic_group_id_list = serializers.ListField(label=_("动态分组ID列表"), child=serializers.CharField(label=_("动态分组ID")))

@@ -25,6 +25,8 @@ from apps.log_clustering.models import (
     AiopsModelExperiment,
     AiopsSignatureAndPattern,
     ClusteringConfig,
+    SignatureStrategySettings,
+    NoticeGroup,
 )
 from apps.utils.admin import AppModelAdmin
 
@@ -95,3 +97,31 @@ class ClusteringConfigAdmin(AppModelAdmin):
         "log_bk_data_id",
         "signature_enable",
     ]
+
+
+@admin.register(SignatureStrategySettings)
+class SignatureStrategySettingsAdmin(AppModelAdmin):
+    list_display = [
+        "signature",
+        "index_set_id",
+        "strategy_id",
+        "enabled",
+        "bk_biz_id",
+        "pattern_level",
+        "strategy_type",
+    ]
+    search_fields = [
+        "signature",
+        "index_set_id",
+        "strategy_id",
+        "enabled",
+        "bk_biz_id",
+        "pattern_level",
+        "strategy_type",
+    ]
+
+
+@admin.register(NoticeGroup)
+class NoticeGroupAdmin(AppModelAdmin):
+    list_display = ["index_set_id", "notice_group_id", "bk_biz_id"]
+    search_fields = ["index_set_id", "notice_group_id", "bk_biz_id"]

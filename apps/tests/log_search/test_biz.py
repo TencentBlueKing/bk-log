@@ -171,6 +171,86 @@ DST_HOST_LIST = [
 ]
 
 
+DYNAMIC_GROUP_ID_LIST = ["11c290dc-66e8-11ec-84ba-1e84cfcf753a", "fb40d723-66e7-11ec-84ba-1e84cfcf753a"]
+DYNAMIC_GROUP_LIST = [
+    {
+        "bk_biz_id": 2,
+        "id": DYNAMIC_GROUP_ID_LIST[0],
+        "name": "test_dynamic_group_set",
+        "bk_obj_id": "set",
+        "info": {
+            "condition": [
+                {
+                    "bk_obj_id": "set",
+                    "condition": [{"field": "bk_set_name", "operator": "$in", "value": ["空闲机池", "蓝鲸平台"]}],
+                }
+            ]
+        },
+        "create_user": "admin",
+        "modify_user": "admin",
+        "create_time": "2021-12-27T07:39:05.805Z",
+        "last_time": "2021-12-28T09:04:56.386Z",
+    },
+    {
+        "bk_biz_id": 2,
+        "id": DYNAMIC_GROUP_ID_LIST[1],
+        "name": "test_dynamic_group_host",
+        "bk_obj_id": "host",
+        "info": {
+            "condition": [
+                {
+                    "bk_obj_id": "host",
+                    "condition": [{"field": "bk_host_innerip", "operator": "$in", "value": ["127.0.0.1", "127.0.0.1"]}],
+                }
+            ]
+        },
+        "create_user": "admin",
+        "modify_user": "admin",
+        "create_time": "2021-12-27T07:38:28.045Z",
+        "last_time": "2021-12-29T02:52:31.947Z",
+    },
+]
+DYNAMIC_GROUP_TO_INSTANCE = {
+    "fb40d723-66e7-11ec-84ba-1e84cfcf753a": [
+        {"bk_host_innerip": "127.0.0.1", "bk_cloud_id": 0, "bk_supplier_account": "0"},
+        {"bk_host_innerip": "127.0.0.2", "bk_cloud_id": 0, "bk_supplier_account": "0"},
+    ],
+    "11c290dc-66e8-11ec-84ba-1e84cfcf753a": [
+        {"bk_set_id": 2, "bk_set_name": "空闲机池"},
+        {"bk_set_id": 3, "bk_set_name": "蓝鲸平台"},
+    ],
+}
+DYNAMIC_GROUP_TO_INSTANCE_RETURN = {
+    "fb40d723-66e7-11ec-84ba-1e84cfcf753a": [
+        {"ip": "127.0.0.1", "bk_cloud_id": 0, "bk_supplier_id": "0"},
+        {"ip": "127.0.0.2", "bk_cloud_id": 0, "bk_supplier_id": "0"},
+    ],
+    "11c290dc-66e8-11ec-84ba-1e84cfcf753a": [
+        {"bk_inst_id": 2, "bk_obj_id": "set", "bk_set_name": "空闲机池"},
+        {"bk_inst_id": 3, "bk_obj_id": "set", "bk_set_name": "蓝鲸平台"},
+    ],
+}
+
+
+class ExecDynamicGroup(object):
+    """
+    mock CCApi.execute_dynamic_group
+    """
+
+    def bulk_request(self, params=None):
+        dynamic_group_id = params["id"]
+        return DYNAMIC_GROUP_TO_INSTANCE.get(dynamic_group_id, [])
+
+
+class SearchDynamicGroup(object):
+    """
+    mock CCApi.search_dynamic_group
+    """
+
+    def bulk_request(self, params=None):
+        return DYNAMIC_GROUP_LIST
+
+
 class TestBiz(TestCase):
     def setUp(self) -> None:
         self.biz_handler = BizHandler(bk_biz_id=BK_BIZ_ID)
@@ -180,3 +260,13 @@ class TestBiz(TestCase):
     def test_get_node_path(self):
         result = self.biz_handler.get_node_path(node_list=NODE_LIST)
         self.assertEqual(result, GET_NODE_PATH)
+
+    @patch("apps.api.CCApi.execute_dynamic_group", ExecDynamicGroup())
+    def test_get_dynamic_group(self):
+        result = self.biz_handler.get_dynamic_group(dynamic_group_id_list=DYNAMIC_GROUP_ID_LIST)
+        self.assertEqual(result, DYNAMIC_GROUP_TO_INSTANCE_RETURN)
+
+    @patch("apps.api.CCApi.search_dynamic_group", SearchDynamicGroup())
+    def test_list_dynamic_group(self):
+        result = self.biz_handler.list_dynamic_group()
+        self.assertEqual(result["list"], DYNAMIC_GROUP_LIST)

@@ -21,11 +21,13 @@ from django.conf.urls import url, include
 from rest_framework import routers
 
 from apps.log_clustering.views.clustering_config_views import ClusteringConfigViewSet
+from apps.log_clustering.views.clustering_monitor_views import ClusteringMonitorViewSet
 from apps.log_clustering.views.pattern_views import PatternViewSet
 
 router = routers.DefaultRouter(trailing_slash=True)
 router.register(r"pattern", PatternViewSet, basename="pattern_set")
 router.register(r"clustering_config", ClusteringConfigViewSet, basename="clustering_config")
+router.register(r"clustering_monitor", ClusteringMonitorViewSet, basename="clustering_monitor")
 
 urlpatterns = [
     url(r"^", include(router.urls)),

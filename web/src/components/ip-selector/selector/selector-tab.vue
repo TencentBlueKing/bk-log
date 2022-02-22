@@ -22,10 +22,11 @@
 
 <template>
   <div class="selector-tab">
-    <div class="selector-tab-header"
-         ref="tabwrapper"
-         v-show="tabVisible && panels.length"
-         v-resize="handleResize">
+    <div 
+      class="selector-tab-header"
+      ref="tabwrapper"
+      v-show="tabVisible && panels.length"
+      v-resize="handleResize">
       <ul class="selector-tab-horizontal" ref="tabcontent">
         <li v-for="item in panels"
             :key="item.name"
@@ -60,6 +61,7 @@
   </div>
 </template>
 <script lang="ts">
+
 import { Component, Vue, Prop, Model, Emit, Ref } from 'vue-property-decorator'
 import { IPanel } from '../types/selector-type'
 import { Debounce, hasOwnProperty } from '../common/util'
@@ -178,6 +180,7 @@ export default class SelectorTab extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .selector-tab {
     display: flex;

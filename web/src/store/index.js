@@ -84,6 +84,9 @@ const store = new Vuex.Store({
     // 清除table表头宽度缓存
     clearTableWidth: 0,
     showRouterLeaveTip: false,
+    // 新人指引
+    userGuideData: {},
+    curCustomReport: null,
   },
   // 公共 getters
   getters: {
@@ -204,6 +207,9 @@ const store = new Vuex.Store({
     },
     updateRouterLeaveTip(state, isShow) {
       state.showRouterLeaveTip = isShow;
+    },
+    setUserGuideData(state, userGuideData) {
+      state.userGuideData = userGuideData;
     },
   },
   actions: {
@@ -368,7 +374,7 @@ store.dispatch = function (_type, _payload, config = {}) {
   const action = { type, payload, config };
   const entry = store._actions[type];
   if (!entry) {
-    if (NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       console.error(`[vuex] unknown action type: ${type}`);
     }
     return;

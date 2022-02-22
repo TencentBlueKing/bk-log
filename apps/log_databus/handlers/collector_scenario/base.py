@@ -46,6 +46,7 @@ class CollectorScenario(object):
             CollectorScenarioEnum.ROW.value: "RowCollectorScenario",
             CollectorScenarioEnum.SECTION.value: "SectionCollectorScenario",
             CollectorScenarioEnum.WIN_EVENT.value: "WinEventLogScenario",
+            CollectorScenarioEnum.CUSTOM.value: "CustomCollectorScenario",
         }
         try:
             collector_scenario = import_string(
@@ -246,12 +247,17 @@ class CollectorScenario(object):
     def log_clustering_fields(es_version: str = "5.x"):
         return [
             {
-                "field_name": f"dist_{pattern_level}",
+                "field_name": f"__dist_{pattern_level}",
                 "field_type": "string",
                 "tag": "dimension",
                 "alias_name": f"dist_{pattern_level}",
                 "description": f"聚类数字签名{pattern_level}",
                 "option": build_es_option_type("keyword", es_version),
+                "is_built_in": False,
+                "is_time": False,
+                "is_analyzed": False,
+                "is_dimension": False,
+                "is_delete": False,
             }
             for pattern_level in PatternEnum.get_choices()
         ]

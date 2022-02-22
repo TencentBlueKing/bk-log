@@ -133,10 +133,11 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
                 field: str = __filter.get("key") if __filter.get("key") else __filter.get("field")
                 value = __filter.get("value")
                 operator: str = __filter.get("method") if __filter.get("method") else __filter.get("operator")
-                if isinstance(value, list):
+
+                if isinstance(value, list) and len(value):  # pylint:len-as-condition
                     value = ",".join([str(v) for v in value])
 
-                if field and operator and value:
+                if field and operator and value or isinstance(value, str):
                     if operator in ["is", "eq"]:
                         new_value = value
                     elif operator == "is one of":

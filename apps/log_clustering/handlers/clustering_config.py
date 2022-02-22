@@ -33,6 +33,8 @@ from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import LogIndexSet
 from apps.models import model_to_dict
 from apps.utils.function import map_if
+from apps.utils.local import activate_request
+from apps.utils.thread import generate_request
 
 
 class ClusteringConfigHandler(object):
@@ -69,6 +71,8 @@ class ClusteringConfigHandler(object):
         filter_rules = params["filter_rules"]
         signature_enable = params["signature_enable"]
         clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
+        from apps.log_clustering.handlers.pipline_service.aiops_service import create_aiops_service
+
         if clustering_config:
             clustering_config.min_members = min_members
             clustering_config.max_dist_list = max_dist_list
@@ -81,6 +85,8 @@ class ClusteringConfigHandler(object):
             clustering_config.filter_rules = filter_rules
             clustering_config.signature_enable = signature_enable
             clustering_config.save()
+            if signature_enable:
+                create_aiops_service(collector_config_id)
             return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
         clustering_config = ClusteringConfig.objects.create(
             collector_config_id=collector_config_id,
@@ -97,6 +103,8 @@ class ClusteringConfigHandler(object):
             index_set_id=index_set_id,
             signature_enable=signature_enable,
         )
+        if signature_enable:
+            create_aiops_service(collector_config_id)
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def preview(
@@ -130,7 +138,7 @@ class ClusteringConfigHandler(object):
             sensitive_pattern_list = []
             for sensitive_pattern in pattern_result:
                 if isinstance(sensitive_pattern, dict):
-                    sensitive_pattern_list.append("[$({})]".format(sensitive_pattern["name"]))
+                    sensitive_pattern_list.append("#{}#".format(sensitive_pattern["name"]))
                     continue
                 sensitive_pattern_list.append(sensitive_pattern)
             result.append({"sensitivity": sensitivity, "pattern": " ".join(sensitive_pattern_list)})
@@ -157,15 +165,19 @@ class ClusteringConfigHandler(object):
         :return:
         """
         collector_handler = CollectorHandler(self.data.collector_config_id)
-        self.data.log_bk_data_id = CollectorScenario.change_data_stream(
-            collector_handler.data, mq_topic=topic, mq_partition=partition
-        )
-        self.data.save()
-        collector_detail = collector_handler.retrieve()
+        if not self.data.log_bk_data_id:
+            self.data.log_bk_data_id = CollectorScenario.change_data_stream(
+                collector_handler.data, mq_topic=topic, mq_partition=partition
+            )
+            self.data.save()
+        collector_detail = collector_handler.retrieve(use_request=False)
 
         # need drop built in field
         collector_detail["fields"] = map_if(collector_detail["fields"], if_func=lambda field: not field["is_built_in"])
         from apps.log_databus.handlers.etl import EtlHandler
+
+        # 设置request线程变量
+        activate_request(generate_request())
 
         EtlHandler(self.data.collector_config_id).update_or_create(
             collector_detail["etl_config"],

@@ -24,11 +24,11 @@ import hashlib
 from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
-from requests.exceptions import ReadTimeout
 
+from apps.api import CCApi
 from apps.api.base import DataApiRetryClass
 from apps.log_clustering.models import ClusteringConfig
-from apps.log_databus.constants import EtlConfig
+from apps.log_databus.constants import EtlConfig, TargetNodeTypeEnum
 from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import (
     LogIndexSet,
@@ -46,6 +46,7 @@ from apps.log_search.constants import (
     ASYNC_SORTED,
     FieldDataTypeEnum,
     MAX_EXPORT_REQUEST_RETRY,
+    DEFAULT_BK_CLOUD_ID,
 )
 from apps.log_search.exceptions import (
     BaseSearchIndexSetException,
@@ -296,7 +297,8 @@ class SearchHandler(object):
             return False, {"collector_config_id": None}
         collector_config = CollectorConfig.objects.get(collector_config_id=log_index_set.collector_config_id)
         return collector_config.etl_config != EtlConfig.BK_LOG_TEXT, {
-            "collector_config_id": log_index_set.collector_config_id
+            "collector_scenario_id": collector_config.collector_scenario_id,
+            "collector_config_id": log_index_set.collector_config_id,
         }
 
     @fields_config("context_and_realtime")
@@ -487,6 +489,7 @@ class SearchHandler(object):
                     "highlight": self.highlight,
                     "time_zone": self.time_zone,
                     "time_range": self.time_range,
+                    "use_time_range": self.use_time_range,
                     "time_field": self.time_field,
                     "time_field_type": self.time_field_type,
                     "time_field_unit": self.time_field_unit,
@@ -494,7 +497,7 @@ class SearchHandler(object):
                     "collapse": self.collapse,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    ReadTimeout,
+                    BaseException,
                     stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY,
                 ),
             )
@@ -519,13 +522,14 @@ class SearchHandler(object):
                 "time_zone": self.time_zone,
                 "time_range": self.time_range,
                 "time_field": self.time_field,
+                "use_time_range": self.use_time_range,
                 "time_field_type": self.time_field_type,
                 "time_field_unit": self.time_field_unit,
                 "scroll": None,
                 "collapse": self.collapse,
             },
             data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
             ),
         )
         return result
@@ -554,6 +558,7 @@ class SearchHandler(object):
                     "highlight": self.highlight,
                     "time_zone": self.time_zone,
                     "time_range": self.time_range,
+                    "use_time_range": self.use_time_range,
                     "time_field": self.time_field,
                     "time_field_type": self.time_field_type,
                     "time_field_unit": self.time_field_unit,
@@ -562,7 +567,7 @@ class SearchHandler(object):
                     "search_after": search_after,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
 
@@ -584,7 +589,7 @@ class SearchHandler(object):
                     "scroll_id": _scroll_id,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    ReadTimeout, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
             scroll_size = len(scroll_result["hits"]["hits"])
@@ -610,7 +615,7 @@ class SearchHandler(object):
         url = (
             settings.BCS_WEB_CONSOLE_DOMAIN + "backend/web_console/projects/{project_id}/clusters/{cluster_id}/"
             "?container_id={container_id} ".format(
-                project_id=project_id, cluster_id=cluster_id, container_id=container_id
+                project_id=project_id, cluster_id=cluster_id.upper(), container_id=container_id
             )
         )
         return url
@@ -655,16 +660,44 @@ class SearchHandler(object):
         key_word = history["params"].get("keyword", "")
         if key_word is None:
             key_word = ""
-        query_string = "keyword:" + key_word
+        query_string = key_word
         # IP快选、过滤条件
         host_scopes = history["params"].get("host_scopes", {})
+
+        target_nodes = host_scopes.get("target_nodes", [])
+
+        if target_nodes:
+            if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
+                query_string += " AND ({})".format(
+                    ",".join([f"{target_node['bk_cloud_id']}:{target_node['ip']}" for target_node in target_nodes])
+                )
+            elif host_scopes["target_node_type"] == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
+                # target_nodes: [
+                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a",
+                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a"
+                # ]
+                dynamic_name_list = [str(target_node["name"]) for target_node in target_nodes]
+                query_string += " AND (dynamic_group_name:" + ",".join(dynamic_name_list) + ")"
+            else:
+                first_node, *_ = target_nodes
+                target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
+                query_string += f" AND ({first_node['bk_obj_id']}:" + ",".join(target_list) + ")"
 
         if host_scopes.get("modules"):
             modules_list = [str(_module["bk_inst_id"]) for _module in host_scopes["modules"]]
             query_string += " ADN (modules:" + ",".join(modules_list) + ")"
+            host_scopes["target_node_type"] = TargetNodeTypeEnum.TOPO.value
+            host_scopes["target_nodes"] = host_scopes["modules"]
+
         if host_scopes.get("ips"):
             query_string += " AND (ips:" + host_scopes["ips"] + ")"
+            host_scopes["target_node_type"] = TargetNodeTypeEnum.INSTANCE.value
+            host_scopes["target_nodes"] = [
+                {"ip": ip, "bk_cloud_id": DEFAULT_BK_CLOUD_ID} for ip in host_scopes["ips"].split(",")
+            ]
+
         additions = history["params"].get("addition", [])
+
         if additions:
             query_string += (
                 " AND ("
@@ -974,7 +1007,8 @@ class SearchHandler(object):
                     {"field": field, "value": "0", "operator": operator, "condition": condition, "type": _type}
                 )
 
-            if not field or not value or not operator:
+            # 此处对于前端传递filter为空字符串需要放行
+            if (not field or not value or not operator) and not isinstance(value, str):
                 continue
 
             new_filter_list.append(
@@ -1257,14 +1291,64 @@ class SearchHandler(object):
             log_not_empty_list.append(a_item_dict)
         return log_not_empty_list
 
+    def _get_addition_host(self, bk_biz_id, target_node_type: str, target_nodes: list) -> list:
+        host_list = []
+        if target_node_type == TargetNodeTypeEnum.INSTANCE.value:
+            host_list = target_nodes
+        elif target_node_type == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
+            conditions = []
+            for target_node in target_nodes:
+                dynamic_group_id = target_node["id"]
+                data = CCApi.execute_dynamic_group.bulk_request(
+                    params={
+                        "bk_biz_id": bk_biz_id,
+                        "id": dynamic_group_id,
+                        "fields": ["bk_cloud_id", "bk_host_innerip", "bk_supplier_account", "bk_set_id", "bk_set_name"],
+                    }
+                )
+                for each_instance in data or []:
+                    if each_instance.get("bk_host_innerip"):
+                        host_list.append(
+                            {
+                                "ip": each_instance["bk_host_innerip"],
+                                "bk_cloud_id": each_instance["bk_cloud_id"],
+                            }
+                        )
+                    else:
+                        conditions.append(
+                            {
+                                "bk_inst_id": each_instance["bk_set_id"],
+                                "bk_obj_id": "set",
+                            }
+                        )
+            host_result = BizHandler(bk_biz_id).search_host(conditions)
+            host_list.extend(
+                [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
+            )
+
+        else:
+            conditions = [
+                {"bk_obj_id": node_obj["bk_obj_id"], "bk_inst_id": node_obj["bk_inst_id"]} for node_obj in target_nodes
+            ]
+            host_result = BizHandler(bk_biz_id).search_host(conditions)
+            host_list = [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
+
+        return host_list
+
     def _combine_addition_host_scope(self, attrs: dict):
         host_scopes_ip_list: list = []
         ips_list: list = []
         translated_ips: list = []
-
+        target_ips = []
         host_scopes: dict = attrs.get("host_scopes")
         if host_scopes:
             modules: list = host_scopes.get("modules")
+            target_nodes = host_scopes.get("target_nodes", {})
+            target_node_type = host_scopes.get("target_node_type", "")
+            if target_nodes:
+                target_ips = [
+                    host["ip"] for host in self._get_addition_host(attrs["bk_biz_id"], target_node_type, target_nodes)
+                ]
             if modules:
                 biz_handler = BizHandler(attrs["bk_biz_id"])
                 search_list: list = biz_handler.search_host(modules)
@@ -1275,11 +1359,8 @@ class SearchHandler(object):
             if ips:
                 ips_list = ips.split(",")
 
-        host_scopes_ip_list = host_scopes_ip_list + ips_list + translated_ips
-
-        tmp_tuple: tuple = self._deal_addition(attrs)
-        addition_ip_list: list = tmp_tuple[0]
-        new_addition: list = tmp_tuple[1]
+        host_scopes_ip_list = host_scopes_ip_list + ips_list + translated_ips + target_ips
+        addition_ip_list, new_addition = self._deal_addition(attrs)
 
         if addition_ip_list:
             search_ip_list = addition_ip_list
@@ -1323,7 +1404,8 @@ class SearchHandler(object):
             # 处理逗号分隔in类型查询
             value = _add.get("value")
             new_value: list = []
-            if value:
+            # 对于前端传递为空字符串的场景需要放行过去
+            if isinstance(value, str) or value:
                 new_value = self._deal_normal_addition(value, _operator)
             new_addition.append(
                 {

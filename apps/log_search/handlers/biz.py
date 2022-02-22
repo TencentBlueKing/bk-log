@@ -85,6 +85,49 @@ class BizHandler(APIModel):
 
         return {"count": len(clouds), "info": clouds}
 
+    def list_dynamic_group(self):
+        """
+        获取动态分组列表
+        """
+        dynamic_groups = CCApi.search_dynamic_group.bulk_request(params={"bk_biz_id": self.bk_biz_id})
+        return {"count": len(dynamic_groups), "list": dynamic_groups or []}
+
+    def get_dynamic_group(self, dynamic_group_id_list):
+        """
+        根据指定动态分组规则查询获取数据
+        """
+        dynamic_group_id_list = dynamic_group_id_list or []
+
+        ret = {}
+        for dynamic_group_id in dynamic_group_id_list:
+            data = CCApi.execute_dynamic_group.bulk_request(
+                params={
+                    "bk_biz_id": self.bk_biz_id,
+                    "id": dynamic_group_id,
+                    "fields": ["bk_cloud_id", "bk_host_innerip", "bk_supplier_account", "bk_set_id", "bk_set_name"],
+                }
+            )
+            ret[dynamic_group_id] = []
+            for each_instance in data or []:
+                if each_instance.get("bk_host_innerip"):
+                    ret[dynamic_group_id].append(
+                        {
+                            "ip": each_instance["bk_host_innerip"],
+                            "bk_cloud_id": each_instance["bk_cloud_id"],
+                            "bk_supplier_id": each_instance["bk_supplier_account"],
+                        }
+                    )
+                else:
+                    ret[dynamic_group_id].append(
+                        {
+                            "bk_inst_id": each_instance["bk_set_id"],
+                            "bk_obj_id": "set",
+                            "bk_set_name": each_instance["bk_set_name"],
+                        }
+                    )
+
+        return ret
+
     def get_instance_topo(self, params=None, is_inner=False):
         """
         获取CC各个层级构成TOPO，不仅仅支持 set、moudlehas_auth

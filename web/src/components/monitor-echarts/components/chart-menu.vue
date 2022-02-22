@@ -28,15 +28,19 @@
         :key="item.id"
         v-if="list.includes(item.id)"
         @mousedown="handleMenuClick(item)">
-        <i class="menu-icon icon-monitor" :class="'icon-' + (!item.checked ? item.icon : item.nextIcon || item.icon)"></i>
+        <i
+          class="menu-icon icon-monitor"
+          :class="'icon-' + (!item.checked ? item.icon : item.nextIcon || item.icon)">
+        </i>
         {{!item.checked ? item.name : item.nextName || item.name}}
         <i v-if="item.hasLink" class="icon-monitor icon-mc-link link-icon"></i>
       </li>
     </template>
   </ul>
 </template>
+
 <script lang="ts">
-import { Component, Vue, Emit, Prop } from 'vue-property-decorator'
+import { Component, Vue, Emit, Prop } from 'vue-property-decorator';
 interface menuItem {
   id: string;
   name: string;
@@ -47,7 +51,7 @@ interface menuItem {
   nextIcon?: string
 }
 @Component({
-  name: 'chart-menu'
+  name: 'chart-menu',
 })
 export default class ChartMenu extends Vue {
   @Prop({ default: () => [] }) list: string[]
@@ -58,33 +62,33 @@ export default class ChartMenu extends Vue {
         name: '保存到仪表盘',
         checked: false,
         id: 'save',
-        icon: 'mc-mark'
+        icon: 'mc-mark',
       },
       {
         name: '截图到本地',
         checked: false,
         id: 'screenshot',
-        icon: 'mc-camera'
+        icon: 'mc-camera',
       },
       {
         name: '查看大图',
         checked: false,
         id: 'fullscreen',
-        icon: 'fullscreen'
+        icon: 'fullscreen',
       },
       {
         name: '检索',
         checked: false,
         id: 'explore',
         icon: 'mc-retrieval',
-        hasLink: true
+        hasLink: true,
       },
       {
         name: '添加策略',
         checked: false,
         id: 'strategy',
         icon: 'menu-strategy',
-        hasLink: true
+        hasLink: true,
       },
       {
         name: 'Y轴固定最小值为0',
@@ -92,7 +96,7 @@ export default class ChartMenu extends Vue {
         id: 'set',
         nextName: 'Y轴自适应',
         icon: 'mc-yaxis',
-        nextIcon: 'mc-yaxis-scale'
+        nextIcon: 'mc-yaxis-scale',
       },
       {
         name: '面积图',
@@ -100,17 +104,18 @@ export default class ChartMenu extends Vue {
         id: 'area',
         nextName: '线性图',
         icon: 'mc-area',
-        nextIcon: 'mc-line'
-      }
-    ]
+        nextIcon: 'mc-line',
+      },
+    ];
   }
   @Emit('menu-click')
   handleMenuClick(item: menuItem) {
-    item.checked = !item.checked
-    return item
+    item.checked = !item.checked;
+    return item;
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .chart-menu {
     width: 182px;

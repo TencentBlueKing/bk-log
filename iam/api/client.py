@@ -82,6 +82,7 @@ class Client(object):
             "X-BK-APP-CODE": self._app_code,
             "X-BK-APP-SECRET": self._app_secret,
             "X-Bk-IAM-Version": BK_IAM_VERSION,
+            "X-Bkapi-Authorization": json.dumps({"bk_app_code": self._app_code, "bk_app_secret": self._app_secret}),
         }
         return self._call_api(http_func, self._host, path, data, headers, timeout=timeout)
 

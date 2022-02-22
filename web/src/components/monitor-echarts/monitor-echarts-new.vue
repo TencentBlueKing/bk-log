@@ -26,16 +26,37 @@
     :style="{ 'background-image': backgroundUrl }"
     v-bkloading="{ isLoading: false, zIndex: 2000 }">
     <div v-show="!isFold">
-      <div class="chart-wrapper"
-          tabindex="-1"
-          ref="charWrapRef"
-          :style="{ flexDirection: !(chartOption.legend.toTheRight) ? 'column' : 'row', minHeight: (height - (chartTitle ? 36 : 0)) + 'px', maxHeight: (height - (chartTitle ? 36 : 0)) + 'px' }"
-          @blur="handleCharBlur">
-        <div @dblclick.prevent="handleChartDblClick" @click.stop="handleChartClick" class="echart-instance" ref="chartRef" :style="{ height: (chartHeight - 10) + 'px' }">
-          <status-chart v-if="chartType === 'status'" :series="statusSeries"></status-chart>
-          <text-chart v-else-if="chartType === 'text'" :series="textSeries"></text-chart>
+      <div
+        class="chart-wrapper"
+        tabindex="-1"
+        ref="charWrapRef"
+        :style="{
+          flexDirection: !(chartOption.legend.toTheRight) ? 'column' : 'row',
+          minHeight: (height - (chartTitle ? 36 : 0)) + 'px',
+          maxHeight: (height - (chartTitle ? 36 : 0)) + 'px' }"
+        @blur="handleCharBlur">
+        <div
+          @dblclick.prevent="handleChartDblClick"
+          @click.stop="handleChartClick"
+          class="echart-instance"
+          ref="chartRef"
+          :style="{ height: (chartHeight - 10) + 'px' }">
+          <status-chart
+            v-if="chartType === 'status'"
+            :series="statusSeries">
+          </status-chart>
+          <text-chart
+            v-else-if="chartType === 'text'"
+            :series="textSeries">
+          </text-chart>
         </div>
-        <div class="echart-legend" :style="{ maxHeight: ( chartOption.legend.toTheRight ? height - (chartTitle ? 36 : 0) - 5 : chartOption.legend.maxHeight) + 'px' }">
+        <div
+          class="echart-legend"
+          :style="{
+            maxHeight: ( chartOption.legend.toTheRight ?
+              height - (chartTitle ? 36 : 0) - 5 :
+              chartOption.legend.maxHeight) + 'px' 
+          }">
           <chart-legend
             v-if="legend.show"
             :legend-data="legend.list"
@@ -47,7 +68,10 @@
         <div v-if="chartType === 'pie'" class="echart-pie-center">
           <slot name="chartCenter"></slot>
         </div>
-        <chart-annotation v-if="chartOption.annotation.show" :annotation="annotation"></chart-annotation>
+        <chart-annotation
+          v-if="chartOption.annotation.show"
+          :annotation="annotation">
+        </chart-annotation>
       </div>
       <div class="echart-content" v-if="setNoData" v-show="noData">
         <slot name="noData">
@@ -57,6 +81,7 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import Echarts, { EChartOption } from 'echarts'
 import deepMerge from 'deepmerge'
@@ -74,9 +99,9 @@ import { ILegendItem, IMoreToolItem, IAnnotation, IStatusSeries,
   IStatusChartOption, ITextSeries, ITextChartOption, ChartType } from './options/type-interface'
 import EchartOptions from './options/echart-options'
 import { hexToRgbA } from './utils'
-import watermarkMaker from './utils/watermarkMaker'
+import watermarkMaker from './utils/watermark-maker'
 import ChartInView from './utils/chart-in-view'
-import { getValueFormat } from './valueFormats'
+import { getValueFormat } from './value-formats-package'
 import ChartTitle from './components/chart-title-new.vue'
 interface ICurValue {
   xAxis: string | number; yAxis: string | number;
@@ -236,6 +261,7 @@ export default class MonitorEcharts extends Vue {
   isFinish = true
   chartInView: ChartInView = null
   initStatus: Boolean = true
+  chartData: any = []
   // 监控图表默认配置
   get defaultOptions() {
     if (['bar', 'line'].includes(this.chartType)) {
@@ -356,10 +382,7 @@ export default class MonitorEcharts extends Vue {
   mounted() {
     if (this.isFold) {
       this.chartTitle = this.title
-      return
     }
-
-    this.initStatus = false
     this.init()
   }
 
@@ -392,6 +415,8 @@ export default class MonitorEcharts extends Vue {
     }
     this.annotation.show = false
     this.refleshIntervalInstance && window.clearInterval(this.refleshIntervalInstance)
+    clearTimeout(this.timer)
+    this.timer = null
   }
   destroyed() {
     this.chart && this.destroy()
@@ -436,16 +461,17 @@ export default class MonitorEcharts extends Vue {
     this.intersectionObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (this.needObserver) {
-          if (entry.intersectionRatio > 0) {
-            this.handleSeriesData()
-          } else {
-            // 解决临界点、慢滑不加载数据问题
-            const { top, bottom } = this.$el.getBoundingClientRect()
-            if (top === 0 && bottom === 0) return
-            const { innerHeight } = window
-            const isVisiable = (top > 0 && top <= innerHeight) || (bottom >= 0 && bottom < innerHeight)
-            isVisiable && this.handleSeriesData()
-          }
+          // if (entry.intersectionRatio > 0) {
+          //   this.handleSeriesData()
+          // } else {
+          //   // 解决临界点、慢滑不加载数据问题
+          //   const { top, bottom } = this.$el.getBoundingClientRect()
+          //   if (top === 0 && bottom === 0) return
+          //   const { innerHeight } = window
+          //   const isVisiable = (top > 0 && top <= innerHeight) || (bottom >= 0 && bottom < innerHeight)
+          //   isVisiable && this.handleSeriesData()
+          // }
+          this.handleSeriesData()
         }
       })
     })
@@ -483,7 +509,9 @@ export default class MonitorEcharts extends Vue {
       if (!this.isEchartsRender
       || (Array.isArray(data) && data.length && data.some(item => item))
       || (data && Object.prototype.hasOwnProperty.call(data, 'series') && data.series.length)) {
-        await this.handleSetChartData(data)
+        // await this.handleSetChartData(data)
+        this.chartData.splice(0, this.chartData.length, ...data);
+        if (!this.isFold) this.handleSetChartData(this.chartData)
       } else {
         if (this.isFinish) {
           this.noData = true
@@ -780,9 +808,9 @@ export default class MonitorEcharts extends Vue {
   }
   // 图表的展开收起
   handleToggleExpand (isShow) {
-    if (this.initStatus) {
-      this.init()
+    if (!isShow && this.initStatus) {
       this.initStatus = false
+      this.handleSetChartData(this.chartData)
     }
   }
   handleSetYAxisSetScale(needScale) {

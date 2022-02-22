@@ -17,40 +17,22 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+
 from django.conf import settings
 from django.shortcuts import render
 from django.http import JsonResponse
 from blueapps.account.decorators import login_exempt
-import json
-
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-
 
 # 开发框架中通过中间件默认是需要登录态的，如有不需要登录的，可添加装饰器login_exempt
 # 装饰器引入 from blueapps.account.decorators import login_exempt
+from apps.utils.db import get_toggle_data
 
 
 def home(request):
     """
     首页
     """
-    toggle_list = FeatureToggleObject.toggle_list(**{"is_viewed": True})
-    data = {
-        # 实时日志最大长度
-        "REAL_TIME_LOG_MAX_LENGTH": 20000,
-        # 超过此长度删除部分日志
-        "REAL_TIME_LOG_SHIFT_LENGTH": 10000,
-        # 特性开关
-        "FEATURE_TOGGLE": json.dumps({toggle.name: toggle.status for toggle in toggle_list}),
-        "FEATURE_TOGGLE_WHITE_LIST": json.dumps(
-            {
-                toggle.name: toggle.biz_id_white_list
-                for toggle in toggle_list
-                if isinstance(toggle.biz_id_white_list, list)
-            }
-        ),
-    }
-    return render(request, settings.VUE_INDEX, data)
+    return render(request, settings.VUE_INDEX, get_toggle_data())
 
 
 def bkdata_auth(request):
@@ -71,3 +53,10 @@ def contact(request):
 @login_exempt
 def healthz(request):
     return JsonResponse({"server_up": 1})
+
+
+@login_exempt
+def metrics(request):
+    from django_prometheus import exports
+
+    return exports.ExportToDjangoView(request)

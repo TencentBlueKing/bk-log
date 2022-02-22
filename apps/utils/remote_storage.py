@@ -26,6 +26,7 @@ from django.utils.http import urlencode
 from apps.constants import RemoteStorageType
 from apps.utils.cos import QcloudCos
 from apps.utils.base_crypt import BaseCrypt
+from bkstorages.backends.bkrepo import BKRepoStorage
 
 
 class Storage(ABC):
@@ -77,8 +78,24 @@ class NfsStorage(Storage):
         return f"{url_path}?{url_params}"
 
 
+class BKREPOStorage(Storage):
+    def __init__(self, expired: int):
+        self.bk_repo_storage = BKRepoStorage()
+        self.expired = expired
+
+    def export_upload(self, file_path, file_name, **kwargs):
+        self.bk_repo_storage.client.upload_file(filepath=file_path, key=file_name)
+
+    def generate_download_url(self, file_name: str, **kwargs):
+        return self.bk_repo_storage.client.generate_presigned_url(key=file_name, expires_in=self.expired)
+
+
 class StorageType(object):
     @classmethod
     def get_instance(cls, storage_type=None):
-        mapping = {RemoteStorageType.COS.value: CosStorage, RemoteStorageType.NFS.value: NfsStorage}
+        mapping = {
+            RemoteStorageType.COS.value: CosStorage,
+            RemoteStorageType.NFS.value: NfsStorage,
+            RemoteStorageType.BKREPO.value: BKREPOStorage,
+        }
         return mapping.get(storage_type, NfsStorage)

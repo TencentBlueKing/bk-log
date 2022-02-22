@@ -66,6 +66,7 @@ class GrafanaProxyView(ProxyView):
             has_manage_permission = Permission().is_allowed(
                 action=ActionEnum.MANAGE_DASHBOARD,
                 resources=[ResourceEnum.BUSINESS.create_instance(request.org_name)],
+                raise_exception=True,
             )
             if has_manage_permission or request.user.is_superuser:
                 headers["X-WEBAUTH-USER"] = "admin"

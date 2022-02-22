@@ -17,8 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-TRAINING_HOUR = 23
-TRAINING_MINUTE = 59
+TRAINING_HOUR = 1
 
 
 class StepName(object):
@@ -209,43 +208,59 @@ ALGORITHM_CONFIG_PREDICT_OUTPUT = [
         "used_by": "user",
     },
 ]
-# ["ip:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "datetime:datetime.datetime\\(\\d{4},\\s\\d{1,2},\\s\\d{1,2},
-# \\s\\d{1,2},\\s\\d{1,2},\\s\\d{1,2},\\s\\d{5},\\stzinfo=<\\w{3,4}>\\)>", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s
-# \\d{1,2}:\\d{1,2}:\\d{1,2}\\+\\d{2}:\\d{2}", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{2}:\\d{2}:\\d{2}",
-# "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d{6}", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}
-# \\s\\d{1,2}:\\d{1,2}:\\d{1,2},\\d{3}", "datetime:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\s\\+\\d{4}",
-# "datetime:\\d{4}\\d{1,2}\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d{6}",
-# "datetime:\\d{4}/\\d{1,2}/\\d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}",
-# "datetime:\\d{2}/\\w{3,4}/\\d{4}:\\d{1,2}:\\d{1,2}:\\d{1,2}\\s\\+\\d{4}",
-# "date:20\\d{2}\\d{1,2}\\d{1,2}/", "date:\\d{4}-\\d{1,2}-\\d{1,2}/", "time:\\d{1,2}:\\d{1,2}:\\d{1,2}.\\d{6}",
-# "ip-port:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\s+:\\d{1,5}/", "NUMBER:^[-+]?[0-9]+$"]
+
+# ["IP-PORT:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\s+:\\d{1,5}/","IP:
+# \\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}","DATETIME:datetime.datetime
+# \\(\\d{4},\\s\\d{1,2},\\s\\d{1,2},\\s\\d{1,2},\\s\\d{1,2},\\s\\d{1,2},
+# \\s\\d{5},\\stzinfo=<\\w{3,4}>\\)>","DATETIME:\\d{2}/\\w{3,4}/\\d{4}:
+# \\d{1,2}:\\d{1,2}:\\d{1,2}\\s\\+\\d{4}","DATETIME:\\d{4}-\\d{1,2}-\
+# \d{1,2}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d*\\+\\d{2}:\\d{2}","DATETIME
+# :\\d{4}-\\d{1,2}-\\d{1,2}T\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d*\\+\\d{2}
+# :\\d{2}","DATETIME:\\d{6,8}\\s\\d{1,2}:\\d{1,2}:\\d{1,2}\\.\\d*\\+\
+# \d{2}:\\d{2}","DATETIME:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}:\\d{1,2}
+# :\\d{1,2}\\+\\d{2}:\\d{2}","DATETIME:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}
+# :\\d{1,2}:\\d{1,2}\\.\\d{6}","DATETIME:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}
+# :\\d{1,2}:\\d{1,2},\\d{3}","DATETIME:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{1,2}
+# :\\d{1,2}:\\d{1,2}\\s\\+\\d{4}","DATETIME:\\d{4}\\d{1,2}\\d{1,2}\\s\\d{1,2}
+# :\\d{1,2}:\\d{1,2}\\.\\d{6}","DATETIME:\\d{4}/\\d{1,2}/\\d{1,2}\\s\\d{1,2}
+# :\\d{1,2}:\\d{1,2}","DATETIME:\\d{4}-\\d{1,2}-\\d{1,2}\\s\\d{2}:\\d{2}:
+# \\d{2}","DATE:20\\d{2}\\d{1,2}\\d{1,2}/","DATE:\\d{4}-\\d{1,2}-\\d{1,2}/"
+# ,"TIME:\\d{1,2}:\\d{1,2}:\\d{1,2}.\\d{6}","NUMBER:^[-+]?[0-9]+$","
+# NUMBER:^[-+]?[0-9]*\\.[0-9]+","UUID:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}
+# -[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}","UUID:[0-9a-fA-F]{32}"]
 
 PREDEFINED_VARIBLES_DEFAULT_VALUE = (
-    "WyJpcDpcXGR7MSwzfVxcLlxcZHsxLDN9XFwuXFxkezEsM31cXC5cXGR7MSwzfSIsICJk"
-    "YXRldGltZTpkYXRldGltZS5kYXRldGltZVxcKFxcZHs0fSxcXHNcXGR7MSwyfSxcXHNc"
-    "XGR7MSwyfSxcXHNcXGR7MSwyfSxcXHNcXGR7MSwyfSxcXHNcXGR7MSwyfSxcXHNcXGR7"
-    "NX0sXFxzdHppbmZvPTxcXHd7Myw0fT5cXCk+IiwgImRhdGV0aW1lOlxcZHs0fS1cXGR7"
-    "MSwyfS1cXGR7MSwyfVxcc1xcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9XFwrXFxkezJ9"
-    "OlxcZHsyfSIsICJkYXRldGltZTpcXGR7NH0tXFxkezEsMn0tXFxkezEsMn1cXHNcXGR7"
-    "Mn06XFxkezJ9OlxcZHsyfSIsICJkYXRldGltZTpcXGR7NH0tXFxkezEsMn0tXFxkezEs"
-    "Mn1cXHNcXGR7MSwyfTpcXGR7MSwyfTpcXGR7MSwyfVxcLlxcZHs2fSIsICJkYXRldGlt"
-    "ZTpcXGR7NH0tXFxkezEsMn0tXFxkezEsMn1cXHNcXGR7MSwyfTpcXGR7MSwyfTpcXGR7"
-    "MSwyfSxcXGR7M30iLCAiZGF0ZXRpbWU6XFxkezR9LVxcZHsxLDJ9LVxcZHsxLDJ9XFxz"
-    "XFxkezEsMn06XFxkezEsMn06XFxkezEsMn1cXHNcXCtcXGR7NH0iLCAiZGF0ZXRpbWU6"
-    "XFxkezR9XFxkezEsMn1cXGR7MSwyfVxcc1xcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9"
-    "XFwuXFxkezZ9IiwgImRhdGV0aW1lOlxcZHs0fS9cXGR7MSwyfS9cXGR7MSwyfVxcc1xc"
-    "ZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9IiwgImRhdGV0aW1lOlxcZHsyfS9cXHd7Myw0"
-    "fS9cXGR7NH06XFxkezEsMn06XFxkezEsMn06XFxkezEsMn1cXHNcXCtcXGR7NH0iLCAi"
-    "ZGF0ZToyMFxcZHsyfVxcZHsxLDJ9XFxkezEsMn0vIiwgImRhdGU6XFxkezR9LVxcZHsx"
-    "LDJ9LVxcZHsxLDJ9LyIsICJ0aW1lOlxcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9Llxc"
-    "ZHs2fSIsICJpcC1wb3J0OlxcZHsxLDN9XFwuXFxkezEsM31cXC5cXGR7MSwzfVxcLlxc"
-    "ZHsxLDN9XFxzKzpcXGR7MSw1fS8iLCAiTlVNQkVSOl5bLStdP1swLTldKyQiXQ=="
+    "WyJJUC1QT1JUOlxcZHsxLDN9XFwuXFxkezEsM31cXC5cXGR7MSwzfVxcLlxcZHsxLDN9XFx"
+    "zKzpcXGR7MSw1fS8iLCJJUDpcXGR7MSwzfVxcLlxcZHsxLDN9XFwuXFxkezEsM31cXC5cXG"
+    "R7MSwzfSIsIkRBVEVUSU1FOmRhdGV0aW1lLmRhdGV0aW1lXFwoXFxkezR9LFxcc1xcZHsxL"
+    "DJ9LFxcc1xcZHsxLDJ9LFxcc1xcZHsxLDJ9LFxcc1xcZHsxLDJ9LFxcc1xcZHsxLDJ9LFxc"
+    "c1xcZHs1fSxcXHN0emluZm89PFxcd3szLDR9PlxcKT4iLCJEQVRFVElNRTpcXGR7Mn0vXFx"
+    "3ezMsNH0vXFxkezR9OlxcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9XFxzXFwrXFxkezR9Ii"
+    "wiREFURVRJTUU6XFxkezR9LVxcZHsxLDJ9LVxcZHsxLDJ9XFxzXFxkezEsMn06XFxkezEsM"
+    "n06XFxkezEsMn1cXC5cXGQqXFwrXFxkezJ9OlxcZHsyfSIsIkRBVEVUSU1FOlxcZHs0fS1c"
+    "XGR7MSwyfS1cXGR7MSwyfVRcXGR7MSwyfTpcXGR7MSwyfTpcXGR7MSwyfVxcLlxcZCpcXCt"
+    "cXGR7Mn06XFxkezJ9IiwiREFURVRJTUU6XFxkezYsOH1cXHNcXGR7MSwyfTpcXGR7MSwyfT"
+    "pcXGR7MSwyfVxcLlxcZCpcXCtcXGR7Mn06XFxkezJ9IiwiREFURVRJTUU6XFxkezR9LVxcZ"
+    "HsxLDJ9LVxcZHsxLDJ9XFxzXFxkezEsMn06XFxkezEsMn06XFxkezEsMn1cXCtcXGR7Mn06"
+    "XFxkezJ9IiwiREFURVRJTUU6XFxkezR9LVxcZHsxLDJ9LVxcZHsxLDJ9XFxzXFxkezEsMn0"
+    "6XFxkezEsMn06XFxkezEsMn1cXC5cXGR7Nn0iLCJEQVRFVElNRTpcXGR7NH0tXFxkezEsMn"
+    "0tXFxkezEsMn1cXHNcXGR7MSwyfTpcXGR7MSwyfTpcXGR7MSwyfSxcXGR7M30iLCJEQVRFVE"
+    "lNRTpcXGR7NH0tXFxkezEsMn0tXFxkezEsMn1cXHNcXGR7MSwyfTpcXGR7MSwyfTpcXGR7MS"
+    "wyfVxcc1xcK1xcZHs0fSIsIkRBVEVUSU1FOlxcZHs0fVxcZHsxLDJ9XFxkezEsMn1cXHNcXG"
+    "R7MSwyfTpcXGR7MSwyfTpcXGR7MSwyfVxcLlxcZHs2fSIsIkRBVEVUSU1FOlxcZHs0fS9cXG"
+    "R7MSwyfS9cXGR7MSwyfVxcc1xcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9IiwiREFURVRJTU"
+    "U6XFxkezR9LVxcZHsxLDJ9LVxcZHsxLDJ9XFxzXFxkezJ9OlxcZHsyfTpcXGR7Mn0iLCJEQV"
+    "RFOjIwXFxkezJ9XFxkezEsMn1cXGR7MSwyfS8iLCJEQVRFOlxcZHs0fS1cXGR7MSwyfS1cXG"
+    "R7MSwyfS8iLCJUSU1FOlxcZHsxLDJ9OlxcZHsxLDJ9OlxcZHsxLDJ9LlxcZHs2fSIsIk5VTU"
+    "JFUjpeWy0rXT9bMC05XSskIiwiTlVNQkVSOl5bLStdP1swLTldKlxcLlswLTldKyIsIlVVSU"
+    "Q6WzAtOWEtZkEtRl17OH0tWzAtOWEtZkEtRl17NH0tWzAtOWEtZkEtRl17NH0tWzAtOWEtZk"
+    "EtRl17NH0tWzAtOWEtZkEtRl17MTJ9IiwiVVVJRDpbMC05YS1mQS1GXXszMn0iXQ"
 )
 
-# "\"|\\;|\\,|\\,|\\[|\\]|\\:|\\s|\\(|\\)|\\=|\\||\\{|\\}|\\>|\\<|\\||'
-# |\\\uff08|\\\uff0c|\\\uff09|\\/|\\\uff0c|\\\u3010|\\\u3011"
+# ""\"|\\;|\\,|\\,|\\[|\\]|\\:|\\s|\\(|\\)|\\=|\\||\\{|\\}|\\>|\\<|\\
+# ||'|\\\uff08|\\\uff0c|\\\uff09|\\/|\\\uff0c|\\\u3010|\\\u3011|\\。|\\:""
 DELIMETER_DEFAULT_VALUE = (
-    "IlwifFxcO3xcXCx8XFwsfFxcW3xcXF18XFw6fFxcc3xcXCh8XFwpfFxcPXxcXHx8XFx7fFxcfXxcXD"
-    "58XFw8fFxcfHwnfFxcXHVmZjA4fFxcXHVmZjBjfFxcXHVmZjA5fFxcL3xcXFx1ZmYwY3xcXFx1MzAx"
-    "MHxcXFx1MzAxMSI="
+    "IlwifFxcO3xcXCx8XFwsfFxcW3xcXF18XFw6fFxcc3xcXCh8XFwpfFxcPXxcXHx8XFx7fF"
+    "xcfXxcXD58XFw8fFxcfHwnfFxcXHVmZjA4fFxcXHVmZjBjfFxcXHVmZjA5fFxcL3xcXFx1Z"
+    "mYwY3xcXFx1MzAxMHxcXFx1MzAxMXxcXOOAgnxcXDoi"
 )
