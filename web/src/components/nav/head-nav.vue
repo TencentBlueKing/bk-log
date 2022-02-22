@@ -623,7 +623,7 @@ export default {
       if (project?.permission?.view_business) {
         return true;
       }
-      this.$store.commit('updateProject', project.project_id);
+      this.$store.commit('updateProject', project?.project_id);
       this.$store.dispatch('getApplyData', {
         action_ids: ['view_business'],
         resources: [{
