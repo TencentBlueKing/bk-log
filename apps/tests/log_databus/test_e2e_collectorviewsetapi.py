@@ -46,7 +46,8 @@ PARAMS = {"bk_biz_id": BK_BIZ_ID, "page": 1, "pagesize": 2, "keyword": ""}
 
 OVERRIDE_MIDDLEWARE = "apps.tests.middlewares.OverrideMiddleware"
 
-CLUSTER_INFOS = {"2_bklog.test3333": {"cluster_config": {"cluster_id": 1, "cluster_name": ""}}}
+CLUSTER_INFOS = {"2_bklog.test3333": {"cluster_config": {"cluster_id": 1, "cluster_name": ""},
+                                      "storage_config": {"retention": 7}}}
 
 BATCH_IS_ALLOWED = {"231": {"search_log": True}}
 
@@ -153,6 +154,7 @@ COLLECTORS_LIST = {
                 "permission": {"search_log": True},
                 "create_clean_able": True,
                 "bkdata_index_set_ids": [],
+                "retention": 7
             }
         ],
     },
