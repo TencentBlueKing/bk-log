@@ -231,7 +231,7 @@ export default {
       nodes.forEach((node) => {
         node.checked = bool;
         node.disabled = bool;
-                    node?.children.length && this.inheritCheckNode(node.children, bool);
+        node.children?.length && this.inheritCheckNode(node.children, bool);
       });
     },
     // 遍历树找到勾选的节点，如果父节点已勾选，子孙节点不算在列表内

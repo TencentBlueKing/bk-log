@@ -628,7 +628,7 @@ export default {
         action_ids: ['view_business'],
         resources: [{
           type: 'biz',
-          id: project.bk_biz_id,
+          id: project?.bk_biz_id,
         }],
       }).then((res) => {
         this.$emit('auth', res.data);
