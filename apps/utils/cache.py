@@ -67,9 +67,10 @@ def using_cache(key: str, duration, need_md5=False):
 
 def using_caches(key: str, need_deconstruction_name: str, duration, need_md5=False):
     """
+    批量获取缓存装饰器，要求：需要被修饰的方法显式传参key列表，以及方法执行结果为dict类型
     :param key: key 名可以使用format进行格式，由于是可迭代对象，请勿使用字符串参数格式化
     :param duration:
-    :param need_deconstruction_name: 需要解构的可迭代变量名，需要显式指定传参来用于获取该参数
+    :param need_deconstruction_name: key列表名，该参数需要key列表显式传参，通过key列表名获得入参的key列表
     :param need_md5: 缓冲是redis的时候 key不能带有空格等字符，需要用md5 hash一下
     :return:
     """
@@ -79,7 +80,7 @@ def using_caches(key: str, need_deconstruction_name: str, duration, need_md5=Fal
         def inner(*args, **kwargs):
             need_deconstruction_param = kwargs.get(need_deconstruction_name, list())
             temp_result = dict()
-            in_cache_keys = list()
+            in_cache_keys = set()
             for index, value in enumerate(need_deconstruction_param):
                 actual_key = key.format(value)
 
@@ -88,10 +89,18 @@ def using_caches(key: str, need_deconstruction_name: str, duration, need_md5=Fal
                 cache_result = cache.get(actual_key)
                 if cache_result:
                     temp_result.update({value: json.loads(cache_result)})
-                    in_cache_keys.append(value)
+                    in_cache_keys.add(value)
 
-            kwargs[need_deconstruction_name] = list(set(kwargs[need_deconstruction_name]) - set(in_cache_keys))
-            result = func(*args, **kwargs)
+            not_in_cache_keys = list(set(kwargs[need_deconstruction_name]) - in_cache_keys)
+            result = dict()
+
+            if not_in_cache_keys:
+                kwargs[need_deconstruction_name] = not_in_cache_keys
+                func_result = func(*args, **kwargs)
+                if not isinstance(func_result, dict):
+                    logger.warning("decorated method execute result non-dictionary")
+                else:
+                    result.update(func_result)
 
             if result:
                 for item in result:

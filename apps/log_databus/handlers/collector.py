@@ -34,6 +34,7 @@ from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.utils.cache import caches_one_hour
+from apps.utils.db import array_chunk
 from apps.utils.function import map_if
 from apps.utils.thread import MultiExecuteFunc
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
@@ -283,8 +284,9 @@ class CollectorHandler(object):
     @caches_one_hour(key="bulk_cluster_info_{}", need_deconstruction_name="result_table_list")
     def bulk_cluster_infos(result_table_list: list):
         multi_execute_func = MultiExecuteFunc()
-        for i in range(0, len(result_table_list), BULK_CLUSTER_INFOS_LIMIT):
-            rt = ",".join(result_table_list[i:i + BULK_CLUSTER_INFOS_LIMIT])
+        table_chunk = array_chunk(result_table_list, BULK_CLUSTER_INFOS_LIMIT)
+        for item in table_chunk:
+            rt = ",".join(item)
             multi_execute_func.append(
                 rt, TransferApi.get_result_table_storage, {"result_table_list": rt, "storage_type": "elasticsearch"}
             )
