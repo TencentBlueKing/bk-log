@@ -55,7 +55,8 @@ from apps.log_databus.constants import (
     CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE,
     SEARCH_BIZ_INST_TOPO_LEVEL,
     INTERNAL_TOPO_INDEX,
-    BIZ_TOPO_INDEX, BULK_CLUSTER_INFOS_LIMIT,
+    BIZ_TOPO_INDEX,
+    BULK_CLUSTER_INFOS_LIMIT,
 )
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
@@ -1789,7 +1790,9 @@ class CollectorHandler(object):
         etl_params = custom_config.etl_config
         etl_config = custom_config.etl_config
         fields = custom_config.fields
-        if custom_config.etl_config != self.data.etl_config:
+
+        # 可能创建报错导致没有清洗配置 导致更新失败
+        if self.data.etl_config and custom_config.etl_config != self.data.etl_config:
             collector_detail = self.retrieve()
             # need drop built in field
             collector_detail["fields"] = map_if(

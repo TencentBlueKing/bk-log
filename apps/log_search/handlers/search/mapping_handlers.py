@@ -610,6 +610,7 @@ class MappingHandlers(object):
             {"gseindex", "container_id", "logfile", "_iteration_idx"},
             {"gseIndex", "serverIp", "path", "_iteration_idx"},
             {"gseIndex", "serverIp", "path", "iterationIndex"},
+            {"gseIndex", "path", "iterationIndex", "__ext.container_id"},
         ]
         if any(fields_list.issuperset(judge) for judge in context_and_realtime_judge_fields):
             context_search_usable = True
