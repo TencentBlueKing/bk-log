@@ -179,6 +179,9 @@ export default {
     finishPolling(newVal) {
       this.$emit('change-queue-res', newVal);
     },
+    'retrieveParams.interval'(newVal) {
+      this.chartInterval = newVal;
+    },
   },
   mounted() {
     window.bus.$on('openChartLoading', this.openChartLoading);

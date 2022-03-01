@@ -751,6 +751,7 @@ export default {
     tips_business: ' This business has exceeded the cluster capacity limit, please contact the development team or use an independent cluster',
     tips_formula: ' ES storage ≈ daily raw log volume * 1.5 (ES conversion rate) * 2 (1 copy) * storage days',
     dataId: 'Data ID',
+    retention: 'Expiration time',
   },
   新建数据源: 'Create Data Source',
   编辑数据源: 'Edit Data Source',
