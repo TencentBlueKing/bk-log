@@ -22,7 +22,6 @@ import base64
 
 from django.utils.translation import ugettext_lazy as _
 
-from apps.log_search.constants import TimeEnum
 from apps.api.base import DataAPI
 from apps.api.modules.utils import add_esb_info_before_request
 from config.domains import MONITOR_APIGATEWAY_ROOT
@@ -157,7 +156,6 @@ class _TransferApi(object):
             description=_("查询一个结果表的存储信息"),
             before_request=add_esb_info_before_request,
             after_request=get_result_table_storage_after,
-            cache_time=TimeEnum.FIVE_MINUTE_SECOND.value,
         )
         self.get_cluster_info = DataAPI(
             method="GET",

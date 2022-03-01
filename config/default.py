@@ -747,6 +747,9 @@ BKREPO_PASSWORD = os.getenv("BKREPO_PASSWORD") or os.getenv("BKAPP_BKREPO_PASSWO
 BKREPO_PROJECT = os.getenv("BKREPO_PROJECT") or os.getenv("BKAPP_BKREPO_PROJECT")
 BKREPO_BUCKET = os.getenv("BKREPO_BUCKET") or os.getenv("BKAPP_BKREPO_BUCKET")
 
+# custom report
+CUSTOM_REPORT_TYPE = os.getenv("BKAPP_CUSTOM_REPORT_TYPE", "log")
+
 # ===============================================================================
 # Demo业务配置
 # ===============================================================================
