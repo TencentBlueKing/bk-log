@@ -121,10 +121,12 @@ class ExtractLinkType(ChoicesEnum):
     if settings.FEATURE_TOGGLE["extract_cos"] == "on":
         COMMON = "common"
         QCLOUD_COS = "qcloud_cos"
-        _choices_labels = ((COMMON, _("内网链路")), (QCLOUD_COS, _("腾讯云cos链路")))
+        BK_REPO = "bk_repo"
+        _choices_labels = ((COMMON, _("内网链路")), (QCLOUD_COS, _("腾讯云cos链路")), (BK_REPO, _("bk repo链路")))
     else:
         COMMON = "common"
-        _choices_labels = ((COMMON, _("内网链路")),)
+        BK_REPO = "bk_repo"
+        _choices_labels = ((COMMON, _("内网链路")), (BK_REPO, _("bk repo链路")))
 
 
 class PreDateMode(ChoicesEnum):
@@ -164,6 +166,7 @@ ALLOWED_FILTER_TYPES = ("line_range", "match_word", "tail_line", "match_range")
 
 TRANSIT_SERVER_DISTRIBUTION_PATH = settings.EXTRACT_DISTRIBUTION_DIR
 TRANSIT_SERVER_PACKING_PATH = "/data/bk_log_extract/distribution_packing/"
+BKREPO_CHILD_PACKING_PATH = "bk_log_extract/distribution"
 
 # 前端轮询任务列表时间
 POLLING_TIMEOUT = 5
