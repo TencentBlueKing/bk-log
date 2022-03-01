@@ -433,6 +433,7 @@ class TestEsquery(TestCase):
         with self.assertRaises(IndexResultTableApiException):
             EsQuery(params).get_cluster_info()
 
-        config_data.return_value = GET_CLUSTER_INFO_EXCEPTION_CONFIG_DATA.update({"result_table_storage": {}})
+        GET_CLUSTER_INFO_EXCEPTION_CONFIG_DATA.update({"result_table_storage": {}})
+        config_data.return_value = GET_CLUSTER_INFO_EXCEPTION_CONFIG_DATA
         with self.assertRaises(IndexResultTableApiException):
             EsQuery(params).get_cluster_info()
