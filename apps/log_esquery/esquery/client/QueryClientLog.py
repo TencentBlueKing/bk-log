@@ -156,7 +156,7 @@ class QueryClientLog(QueryClientTemplate):
         return new_index_list[-1]
 
     def _get_connection(self, index: str):
-        self.host, self.port, self.username, self.password, self.version, self.schema = self._connect_info(index)
+        self.host, self.port, self.username, self.password, self.version, self.schema = self._connect_info(index=index)
         self._active: bool = False
 
         if not self.host or not self.port:
@@ -201,7 +201,7 @@ class QueryClientLog(QueryClientTemplate):
 
     @staticmethod
     @cache_five_minute("data_id_conf_{index}")
-    def _connect_info(index: str) -> tuple:
+    def _connect_info(index: str = "") -> tuple:
         transfer_api_response: dict = TransferApi.get_result_table_storage(
             {"result_table_list": index, "storage_type": "elasticsearch"}
         )
@@ -256,8 +256,8 @@ class QueryClientLog(QueryClientTemplate):
 
         # 补充索引集群信息
         if with_storage and index_list:
-            indices = ",".join([_collect.table_id for _collect in collect_obj])
-            storage_info = cls.bulk_cluster_infos(indices)
+            indices = [_collect.table_id for _collect in collect_obj]
+            storage_info = cls.bulk_cluster_infos(result_table_list=indices)
             for _index in index_list:
                 cluster_config = storage_info.get(_index["result_table_id"], {}).get("cluster_config", {})
                 _index.update(
@@ -270,7 +270,7 @@ class QueryClientLog(QueryClientTemplate):
 
     @staticmethod
     @cache_five_minute("data_id_conf_{result_table_list}", need_md5=True)
-    def bulk_cluster_infos(result_table_list: list):
+    def bulk_cluster_infos(result_table_list: list = None):
         multi_execute_func = MultiExecuteFunc()
         for rt in result_table_list:
             multi_execute_func.append(
@@ -283,7 +283,7 @@ class QueryClientLog(QueryClientTemplate):
         return cluster_infos
 
     @cache_five_minute("data_id_conf_{result_table_id}")
-    def get_cluster_info(self, result_table_id):
+    def get_cluster_info(self, result_table_id=None):
         result_table_id = result_table_id.split(",")[0]
         # 并发查询所需的配置
         multi_execute_func = MultiExecuteFunc()
