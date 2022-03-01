@@ -222,6 +222,12 @@ def insert_permission_field(
             if not resources:
                 return response
 
+            if settings.IGNORE_IAM_PERMISSION:
+                for item in result_list:
+                    item.setdefault("permission", {})
+                    item["permission"].update({action.id: True for action in actions})
+                return response
+
             permission_result = Permission().batch_is_allowed(actions, resources)
 
             for item in result_list:
