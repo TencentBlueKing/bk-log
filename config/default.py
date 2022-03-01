@@ -696,6 +696,9 @@ FEATURE_EXPORT_SCROLL = os.environ.get("BKAPP_FEATURE_EXPORT_SCROLL", False)
 # BCS
 PAASCC_APIGATEWAY = ""
 
+# 是否关闭权限中心校验
+IGNORE_IAM_PERMISSION = os.environ.get("BKAPP_IGNORE_IAM_PERMISSION", False)
+
 # 日志采集器配置
 # 日志文件多久没更新则不再读取
 COLLECTOR_CLOSE_INACTIVE = 86400
