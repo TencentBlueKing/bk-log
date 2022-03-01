@@ -30,6 +30,7 @@ from apps.log_search.exceptions import (
     IndexResultTableApiException,
 )
 from apps.log_search.models import Scenario
+from django_fakeredis import FakeRedis
 
 BK_BIZ_ID = 2
 STORAGE_CLUSTER_NAME = "cluster_name"
@@ -203,6 +204,7 @@ GET_CLUSTER_INFO_RESULT = {
 }
 
 
+@FakeRedis("apps.utils.cache.cache")
 class TestEsquery(TestCase):
     def test_search_debug(self):
         """
