@@ -39,6 +39,7 @@ from apps.log_esquery.exceptions import (
     EsException,
 )
 from apps.log_esquery.type_constants import type_mapping_dict
+from apps.utils.cache import cache_five_minute
 from apps.utils.log import logger
 from apps.log_databus.models import CollectorConfig
 from apps.utils.thread import MultiExecuteFunc
@@ -199,6 +200,7 @@ class QueryClientLog(QueryClientTemplate):
             self._active = True
 
     @staticmethod
+    @cache_five_minute("data_id_conf_{index}")
     def _connect_info(index: str) -> tuple:
         transfer_api_response: dict = TransferApi.get_result_table_storage(
             {"result_table_list": index, "storage_type": "elasticsearch"}
@@ -267,6 +269,7 @@ class QueryClientLog(QueryClientTemplate):
         return index_list
 
     @staticmethod
+    @cache_five_minute("data_id_conf_{result_table_list}", need_md5=True)
     def bulk_cluster_infos(result_table_list: list):
         multi_execute_func = MultiExecuteFunc()
         for rt in result_table_list:
@@ -279,6 +282,7 @@ class QueryClientLog(QueryClientTemplate):
             cluster_infos.update(cluster_info)
         return cluster_infos
 
+    @cache_five_minute("data_id_conf_{result_table_id}")
     def get_cluster_info(self, result_table_id):
         result_table_id = result_table_id.split(",")[0]
         # 并发查询所需的配置

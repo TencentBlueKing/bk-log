@@ -313,7 +313,8 @@ class CollectorHandler(object):
         time_zone = get_local_param("time_zone")
         for _data in data:
             cluster_info = cluster_infos.get(
-                _data["table_id"], {"cluster_config": {"cluster_id": -1, "cluster_name": ""}}
+                _data["table_id"],
+                {"cluster_config": {"cluster_id": -1, "cluster_name": ""}, "storage_config": {"retention": 0}},
             )
             _data["storage_cluster_id"] = cluster_info["cluster_config"]["cluster_id"]
             _data["storage_cluster_name"] = cluster_info["cluster_config"]["cluster_name"]
