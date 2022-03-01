@@ -71,7 +71,7 @@ class FileDistributionService(BaseService):
                         bk_cloud_id=settings.BKLOG_CLOUD_ID,
                     )
                 ],
-                settings.BKLOG_STORAGE_ROOT_PATH,
+                constants.TRANSIT_SERVER_PACKING_PATH,
                 os.path.join(settings.BKLOG_STORAGE_ROOT_PATH, BKREPO_CHILD_PACKING_PATH, packed_dir_name),
             )
         hosts = extract_link.extractlinkhost_set.all()
@@ -79,7 +79,7 @@ class FileDistributionService(BaseService):
             raise Exception(_("请配置链路中转服务器"))
         return (
             [TransitServer(ip=host.ip, target_dir=host.target_dir, bk_cloud_id=host.bk_cloud_id) for host in hosts],
-            constants.TRANSIT_SERVER_DISTRIBUTION_PATH,
+            constants.TRANSIT_SERVER_PACKING_PATH,
             os.path.join(constants.TRANSIT_SERVER_DISTRIBUTION_PATH, packed_dir_name),
         )
 
@@ -95,7 +95,7 @@ class FileDistributionService(BaseService):
             extract_link, task_id=task_id
         )
         transit_server: ExtractLinkHost = random.choice(transit_servers)
-        file_target_path = os.path.join(transit_server_file_path, "/[FILESRCIP]")
+        file_target_path = os.path.join(transit_server_file_path, "[FILESRCIP]")
         # 将文件分发到中转服务器目录
         task_result = FileServer.file_distribution(
             file_source_list=data.get_one_of_inputs("file_source_list"),
