@@ -84,6 +84,15 @@
               </span>
             </template>
           </bk-table-column>
+          <bk-table-column
+            :label="$t('dataSource.retention')"
+            min-width="50">
+            <template slot-scope="props">
+              <span>
+                {{ props.row.retention ? `${props.row.retention}${$t('天')}` : '--' }}
+              </span>
+            </template>
+          </bk-table-column>
           <bk-table-column :label="$t('customReport.createRecord')" prop="created_at">
             <template slot-scope="props">
               <span>

@@ -180,6 +180,7 @@ export default {
       const exportParams = encodeURIComponent(JSON.stringify({
         ...params,
         size: this.totalCount,
+        time_range: 'customized',
       }));
       // eslint-disable-next-line max-len
       const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
