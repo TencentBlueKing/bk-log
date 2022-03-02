@@ -1679,6 +1679,7 @@ class CollectorHandler(object):
         retention=7,
         allocation_min_days=0,
         storage_replies=1,
+        bk_app_code=settings.APP_CODE,
     ):
         collector_config_params = {
             "bk_biz_id": bk_biz_id,
@@ -1689,6 +1690,7 @@ class CollectorHandler(object):
             "category_id": category_id,
             "description": description or collector_config_name,
             "data_link_id": int(data_link_id) if data_link_id else 0,
+            "bk_app_code": bk_app_code,
         }
         # 判断是否已存在同英文名collector
         if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=bk_biz_id):
