@@ -98,10 +98,10 @@ class CosUploadService(BaseService):
 
         # 如果是提取链路bkrepo类型 需要上传bkrepo
         if extract_link.link_type == ExtractLinkType.BK_REPO.value:
-            transit_server_file_path = data.get_one_of_inputs("transit_server_file_path")[0]
+            transit_server = data.get_one_of_inputs("transit_server")[0]
             cos_pack_file_name = get_packed_file_name(task_id)
             BKREPOStorage().export_upload(
-                file_path=os.path.join(transit_server_file_path, cos_pack_file_name), file_name=cos_pack_file_name
+                file_path=os.path.join(transit_server.target_dir, cos_pack_file_name), file_name=cos_pack_file_name
             )
 
         task.download_status = DownloadStatus.DOWNLOADABLE.value
