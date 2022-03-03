@@ -244,6 +244,7 @@ export default {
   文本: 'Text',
   时间: 'Date',
   布尔: 'Bool',
+  冲突字段: 'Conflict field',
   确定: 'Confirm',
   提取链路: 'Extract Link',
   新建提取链路: 'Create Extract Link',
