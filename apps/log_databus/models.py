@@ -236,7 +236,7 @@ class CollectorConfig(SoftDeleteModel):
         return self.updated_by
 
     @staticmethod
-    @cache_one_hour("data_id_conf_{bk_data_id}")
+    @cache_one_hour("data_id_conf_{bk_data_id}", need_md5=True)
     def get_data_id_conf(bk_data_id):
         return TransferApi.get_data_id({"bk_data_id": bk_data_id, "no_request": True})
 
