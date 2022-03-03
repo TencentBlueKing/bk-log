@@ -200,7 +200,7 @@ class QueryClientLog(QueryClientTemplate):
             self._active = True
 
     @staticmethod
-    @cache_five_minute("data_id_conf_{index}")
+    @cache_five_minute("_connect_info_{index}", need_md5=True)
     def _connect_info(index: str = "") -> tuple:
         transfer_api_response: dict = TransferApi.get_result_table_storage(
             {"result_table_list": index, "storage_type": "elasticsearch"}
@@ -269,7 +269,7 @@ class QueryClientLog(QueryClientTemplate):
         return index_list
 
     @staticmethod
-    @cache_five_minute("data_id_conf_{result_table_list}", need_md5=True)
+    @cache_five_minute("bulk_cluster_info_{result_table_list}", need_md5=True)
     def bulk_cluster_infos(result_table_list: list = None):
         multi_execute_func = MultiExecuteFunc()
         for rt in result_table_list:
@@ -282,7 +282,7 @@ class QueryClientLog(QueryClientTemplate):
             cluster_infos.update(cluster_info)
         return cluster_infos
 
-    @cache_five_minute("data_id_conf_{result_table_id}")
+    @cache_five_minute("get_cluster_info_{result_table_id}", need_md5=True)
     def get_cluster_info(self, result_table_id=None):
         result_table_id = result_table_id.split(",")[0]
         # 并发查询所需的配置
