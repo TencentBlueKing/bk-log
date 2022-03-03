@@ -78,6 +78,10 @@ export default {
       type: Array,
       required: true,
     },
+    kvShowFieldsList: {
+      type: Array,
+      require: true,
+    },
   },
   data() {
     return {
@@ -93,7 +97,7 @@ export default {
   computed: {
     ...mapState('globals', ['fieldTypeMap']),
     fieldKeyMap() {
-      return this.totalFields.map(item => item.field_name);
+      return this.totalFields.filter(item => this.kvShowFieldsList.includes(item.field_name)).map(el => el.field_name);
     },
     hiddenFields() {
       return this.fieldList.filter(item => !this.visibleFields.some(visibleItem => item === visibleItem));

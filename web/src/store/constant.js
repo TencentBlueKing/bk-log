@@ -59,4 +59,8 @@ export const fieldTypeMap = {
     name: i18n.t('布尔'),
     icon: 'log-icon icon-boolean',
   },
+  conflict: {
+    name: i18n.t('冲突字段'),
+    icon: 'bk-icon icon-exclamation-triangle',
+  },
 };
