@@ -21,6 +21,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import os
 import yaml
 from django.conf import settings
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.utils.translation import ugettext as _
 
@@ -84,7 +85,10 @@ class Command(BaseCommand):
         if not data_link:
             data_link = DataLinkConfig.objects.filter(bk_biz_id=0, is_active=True).first()
             if not data_link:
-                raise ValueError("default data link not exists.")
+                call_command("init_data_link")
+                data_link = DataLinkConfig.objects.filter(bk_biz_id=0, is_active=True).first()
+                if not data_link:
+                    raise ValueError("default data link not exists and create failed.")
 
         for built_in_info in config["builtin_collect"]:
             try:
