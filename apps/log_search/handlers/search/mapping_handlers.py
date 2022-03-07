@@ -363,10 +363,9 @@ class MappingHandlers(object):
                     merge_dict[property_key] = property_define
                     continue
                 if merge_dict[property_key]["type"] != property_define["type"]:
+                    merge_dict[property_key]["type"] = "conflict"
                     merge_dict[property_key]["is_conflict"] = True
-        return {
-            property_key: property for property_key, property in merge_dict.items() if not property.get("is_conflict")
-        }
+        return {property_key: property for property_key, property in merge_dict.items()}
 
     def _mapping_group(self, index_result_tables: list, mapping_result: list):
         # 第三方不合并mapping
