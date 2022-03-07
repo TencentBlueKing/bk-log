@@ -20,13 +20,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import os
 import random
 
-from dataclasses import dataclass
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 
-from apps.log_extract.constants import ExtractLinkType, BKREPO_CHILD_PACKING_PATH
+from apps.log_extract.constants import ExtractLinkType, BKREPO_CHILD_PACKING_PATH, TransitServer
 from apps.utils.pipline import BaseService
 from apps.log_extract import constants
 from apps.log_extract.fileserver import FileServer
@@ -147,10 +146,3 @@ class FileDistributionComponent(Component):
     name = "FileDistributionComponent"
     code = "file_dist_comp"
     bound_service = FileDistributionService
-
-
-@dataclass
-class TransitServer(object):
-    ip: str
-    target_dir: str
-    bk_cloud_id: int

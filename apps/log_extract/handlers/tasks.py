@@ -28,6 +28,8 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from pipeline.engine.exceptions import InvalidOperationException
 from pipeline.service import task_service
+
+from apps.log_extract.tasks.extract import log_extract_task
 from apps.utils.log import logger
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import ActionEnum, Permission
@@ -158,7 +160,8 @@ class TasksHandler(object):
             }
         )
         # 其他参数在运行pipeline的过程中更新
-        self.run_pipeline(task=task, **params)
+        # self.run_pipeline(task=task, **params)
+        log_extract_task.delay(task_id=task.task_id, **params)
 
         # add user_operation_record
         operation_record = {
