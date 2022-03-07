@@ -129,11 +129,13 @@ export default {
     display: flex;
     align-items: center;
     height: 52px;
+    width: 100%;
     padding: 0 20px;
     line-height: 24px;
     background-color: #fff;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .10);
-    position: relative;
+    position: fixed;
+    top: 51px;
     z-index: 1;
 
     .main-title {
