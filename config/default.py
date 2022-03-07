@@ -741,6 +741,7 @@ ESQUERY_WHITE_LIST = [
     "gem3",
     "data",
     "dataweb",
+    "bk_bcs",
 ]
 
 # BK repo conf
@@ -753,6 +754,8 @@ BKREPO_BUCKET = os.getenv("BKREPO_BUCKET") or os.getenv("BKAPP_BKREPO_BUCKET")
 BKLOG_NODE_IP = os.getenv("BK_BKLOG_NODE_IP")
 BKLOG_STORAGE_ROOT_PATH = os.getenv("BK_BKLOG_STORAGE_ROOT_PATH")
 BKLOG_CLOUD_ID = os.getenv("BK_BKLOG_CLOUD_ID", 0)
+# custom report
+CUSTOM_REPORT_TYPE = os.getenv("BKAPP_CUSTOM_REPORT_TYPE", "log")
 
 # ===============================================================================
 # Demo业务配置

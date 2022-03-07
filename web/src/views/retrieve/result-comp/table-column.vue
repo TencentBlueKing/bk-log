@@ -90,7 +90,11 @@ export default {
     // },
     // 高亮
     markList() {
-      const markVal = this.content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      let markVal = this.content.toString().match(/(<mark>).*?(<\/mark>)/g) || [];
+      if (markVal.length) {
+        markVal = markVal.map(item => item.replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, ''));
+      }
       return markVal;
     },
   },
@@ -104,8 +108,8 @@ export default {
     formatterStr(content) {
       // 匹配高亮标签
       let value = content;
-      const markVal = content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
-      if (markVal) {
+      const markVal = content.toString().match(/(<mark>).*?(<\/mark>)/g) || [];
+      if (markVal.length) {
         value = String(value).replace(/<mark>/g, '')
           .replace(/<\/mark>/g, '');
       }

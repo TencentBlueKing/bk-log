@@ -18,6 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.log_databus.exceptions import ArchiveNotFound
+from apps.utils.cache import cache_one_hour
 from apps.utils.function import map_if
 from apps.utils.thread import MultiExecuteFunc
 
@@ -233,6 +234,11 @@ class CollectorConfig(SoftDeleteModel):
         if self.updated_by == ADMIN_REQUEST_USER:
             return self.created_by
         return self.updated_by
+
+    @staticmethod
+    @cache_one_hour("data_id_conf_{bk_data_id}", need_md5=True)
+    def get_data_id_conf(bk_data_id):
+        return TransferApi.get_data_id({"bk_data_id": bk_data_id, "no_request": True})
 
 
 class DataLinkConfig(SoftDeleteModel):

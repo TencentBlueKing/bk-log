@@ -20,21 +20,28 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import copy
 import json
 
+import arrow
+from django.conf import settings
 from rest_framework.reverse import reverse
 from django.utils.http import urlencode
 
+from apps.log_databus.models import CollectorConfig
 from apps.models import model_to_dict
+from apps.utils.db import array_chunk
 from apps.utils.local import get_request, get_request_language_code
 from apps.log_search.constants import (
     MAX_ASYNC_COUNT,
     ASYNC_COUNT_SIZE,
     ExportType,
+    MAX_GET_ATTENTION_SIZE,
+    ExportStatus,
 )
 from apps.log_search.exceptions import MissAsyncExportException
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
-from apps.log_search.models import AsyncTask, ProjectInfo
+from apps.log_search.models import AsyncTask, ProjectInfo, LogIndexSet
 from apps.log_search.tasks.async_export import async_export
 from apps.utils.drf import DataPageNumberPagination
+from concurrent.futures import ThreadPoolExecutor
 
 
 class AsyncExportHandlers(object):
@@ -110,7 +117,9 @@ class AsyncExportHandlers(object):
 
         url_params = urlencode(search_dict)
         # 这里是为了拼接前端检索请求
-        search_url = f"{request.scheme}://{request.get_host()}/#/retrieve/{self.index_set_id}?{url_params}"
+        search_url = (
+            f"{request.scheme}://{request.get_host()}{settings.SITE_URL}#/retrieve/{self.index_set_id}?{url_params}"
+        )
         return search_url
 
     def get_export_history(self, request, view, show_all=False):
@@ -122,14 +131,23 @@ class AsyncExportHandlers(object):
         page_export_task_history = pg.paginate_queryset(
             queryset=query_set.order_by("-created_at", "created_by"), request=request, view=view
         )
-
+        index_set_retention = self.get_index_set_retention(
+            index_set_ids=[history.index_set_id for history in page_export_task_history]
+        )
         res = pg.get_paginated_response(
-            [self.generate_export_history(model_to_dict(history)) for history in page_export_task_history]
+            [
+                self.generate_export_history(model_to_dict(history), index_set_retention)
+                for history in page_export_task_history
+            ]
         )
         return res
 
     @classmethod
-    def generate_export_history(cls, export_task_history):
+    def generate_export_history(cls, export_task_history, index_set_retention):
+        download_able = cls.judge_download_able(export_task_history["export_status"])
+        retry_able = cls.judge_retry_able(
+            export_task_history["end_time"], retention=index_set_retention.get(export_task_history["index_set_id"])
+        )
         return {
             "id": export_task_history["id"],
             "log_index_set_id": export_task_history["index_set_id"],
@@ -137,7 +155,7 @@ class AsyncExportHandlers(object):
             "start_time": export_task_history["start_time"],
             "end_time": export_task_history["end_time"],
             "export_type": export_task_history["export_type"],
-            "export_status": export_task_history["export_status"],
+            "export_status": export_task_history["export_status"] if retry_able else ExportStatus.DATA_EXPIRED,
             "error_msg": export_task_history["failed_reason"],
             "download_url": export_task_history["download_url"],
             "export_pkg_name": export_task_history["file_name"],
@@ -145,4 +163,58 @@ class AsyncExportHandlers(object):
             "export_created_at": export_task_history["created_at"],
             "export_created_by": export_task_history["created_by"],
             "export_completed_at": export_task_history["completed_at"],
+            "download_able": download_able,
+            "retry_able": retry_able,
         }
+
+    @classmethod
+    def judge_download_able(cls, status):
+        if status == ExportStatus.DOWNLOAD_EXPIRED:
+            return False
+        return True
+
+    @classmethod
+    def judge_retry_able(cls, end_time, retention):
+        if retention and end_time:
+            return arrow.now() < arrow.get(end_time, tzinfo=settings.TIME_ZONE).shift(days=retention)
+        return True
+
+    @classmethod
+    def get_index_set_retention(cls, index_set_ids):
+        index_set_id_dict = cls.get_data_id(index_set_ids)
+        data_id_retention_dict = cls.get_retention(list(index_set_id_dict.keys()))
+        return {index_set_id_dict.get(data_id): retention for data_id, retention in data_id_retention_dict.items()}
+
+    @classmethod
+    def get_data_id(cls, index_set_ids: list):
+        log_index_sets = LogIndexSet.objects.filter(index_set_id__in=index_set_ids)
+        log_index_set_dict = {
+            log_index_set.collector_config_id: log_index_set.index_set_id
+            for log_index_set in log_index_sets
+            if log_index_set.collector_config_id
+        }
+        collector_configs = CollectorConfig.objects.filter(collector_config_id__in=log_index_set_dict.keys())
+        return {
+            collector_config.bk_data_id: log_index_set_dict.get(collector_config.collector_config_id)
+            for collector_config in collector_configs
+        }
+
+    @classmethod
+    def get_retention(cls, data_ids):
+        data_ids_array = array_chunk(data_ids, size=MAX_GET_ATTENTION_SIZE)
+        result = {}
+        for data_id_array in data_ids_array:
+            with ThreadPoolExecutor() as executor:
+                # 这里这样写是因为只有这种方式executor.map才能把kwargs传进去 方能cache的时候取到对应的key
+                # https://stackoverflow.com/questions/59520376/how-to-use-executor-map-function-in-python-on-keyword-arguments
+                res = executor.map(
+                    lambda kwargs: CollectorConfig.get_data_id_conf(**kwargs),
+                    [{"bk_data_id": data_id} for data_id in data_id_array],
+                )
+            for val in res:
+                if not val["result_table_list"]:
+                    continue
+                result_table, *_ = val["result_table_list"]
+                shipper, *_ = result_table["shipper_list"]
+                result[val["bk_data_id"]] = shipper["storage_config"]["retention"]
+        return result
