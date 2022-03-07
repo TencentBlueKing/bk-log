@@ -382,45 +382,50 @@ class LogExtractUtils(object):
     def extract(self):
         logger.info(_("文件提取开始: {}").format(self.task_id))
         logger.info(_("文件打包中: {}").format(self.task_id))
-        self._packing()
-        for val in range(MAX_SCHEDULE_TIMES):
-            time.sleep(self.task_polling_interval)
-            logger.info(_("确认文件打包结果: {}, 确认次数: {}").format(self.task_id, val))
-            result = self._packing_schedule()
-            if result == ScheduleStatus.SUCCESS:
-                logger.info(_("文件打包成功: {}").format(self.task_id))
-                break
-        else:
-            raise Exception(_("文件打包异常(超出设定次数: {})").format(self.task_polling_interval))
+        try:
+            self._packing()
+            for val in range(MAX_SCHEDULE_TIMES):
+                time.sleep(self.task_polling_interval)
+                logger.info(_("确认文件打包结果: {}, 确认次数: {}").format(self.task_id, val))
+                result = self._packing_schedule()
+                if result == ScheduleStatus.SUCCESS:
+                    logger.info(_("文件打包成功: {}").format(self.task_id))
+                    break
+            else:
+                raise Exception(_("文件打包异常(超出设定次数: {})").format(self.task_polling_interval))
 
-        logger.info(_("文件分发中: {}").format(self.task_id))
-        self._distribution()
-        for val in range(MAX_SCHEDULE_TIMES):
-            time.sleep(self.task_polling_interval)
-            logger.info(_("确认文件分发结果: {}, 确认次数: {}").format(self.task_id, val))
-            result = self._distribution_schedule()
-            if result == ScheduleStatus.SUCCESS:
-                logger.info(_("文件分发成功: {}").format(self.task_id))
-                break
-        else:
-            raise Exception(_("文件分发异常(超出设定次数: {})").format(self.task_polling_interval))
+            logger.info(_("文件分发中: {}").format(self.task_id))
+            self._distribution()
+            for val in range(MAX_SCHEDULE_TIMES):
+                time.sleep(self.task_polling_interval)
+                logger.info(_("确认文件分发结果: {}, 确认次数: {}").format(self.task_id, val))
+                result = self._distribution_schedule()
+                if result == ScheduleStatus.SUCCESS:
+                    logger.info(_("文件分发成功: {}").format(self.task_id))
+                    break
+            else:
+                raise Exception(_("文件分发异常(超出设定次数: {})").format(self.task_polling_interval))
 
-        logger.info(_("文件上传至cos中: {}").format(self.task_id))
-        self._cos_upload()
-        for val in range(MAX_SCHEDULE_TIMES):
-            time.sleep(self.task_polling_interval)
-            logger.info(_("确认文件上传至cos结果: {}, 确认次数: {}").format(self.task_id, val))
-            result = self._cos_upload_schedule()
-            if result == ScheduleStatus.SUCCESS:
-                logger.info(_("文件上传至cos成功: {}").format(self.task_id))
-                break
-        else:
-            raise Exception(_("文件上传至cos异常(超出设定次数: {})").format(self.task_polling_interval))
+            logger.info(_("文件上传至cos中: {}").format(self.task_id))
+            self._cos_upload()
+            for val in range(MAX_SCHEDULE_TIMES):
+                time.sleep(self.task_polling_interval)
+                logger.info(_("确认文件上传至cos结果: {}, 确认次数: {}").format(self.task_id, val))
+                result = self._cos_upload_schedule()
+                if result == ScheduleStatus.SUCCESS:
+                    logger.info(_("文件上传至cos成功: {}").format(self.task_id))
+                    break
+            else:
+                raise Exception(_("文件上传至cos异常(超出设定次数: {})").format(self.task_polling_interval))
 
-        task = Tasks.objects.get(task_id=self.task_id)
-        extract_link: ExtractLink = task.get_link()
-        if extract_link.link_type == ExtractLinkType.BK_REPO.value:
-            logger.info(_("文件上传至bkrepo准备中: {}").format(self.task_id))
-            self._bkrepo_upload()
-            logger.info(_("文件上传至bkrepo成功: {}").format(self.task_id))
+            task = Tasks.objects.get(task_id=self.task_id)
+            extract_link: ExtractLink = task.get_link()
+            if extract_link.link_type == ExtractLinkType.BK_REPO.value:
+                logger.info(_("文件上传至bkrepo准备中: {}").format(self.task_id))
+                self._bkrepo_upload()
+                logger.info(_("文件上传至bkrepo成功: {}").format(self.task_id))
+        except BaseException as e:  # pylint: disable=broad-except
+            Tasks.objects.filter(task_id=self.task_id).update(
+                download_status=constants.DownloadStatus.FAILED.value, task_process_info=e
+            )
         logger.info(_("文件提取成功: {}").format(self.task_id))
