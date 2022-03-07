@@ -44,8 +44,8 @@ export const fieldTypeMap = {
     icon: 'log-icon icon-string',
   },
   long: {
-    name: i18n.t('文本'),
-    icon: 'log-icon icon-text',
+    name: i18n.t('数字'),
+    icon: 'log-icon icon-number',
   },
   text: {
     name: i18n.t('文本'),

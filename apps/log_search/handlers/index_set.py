@@ -835,14 +835,6 @@ class BaseIndexSetHandler(object):
         1.检查trace结构是否符合
         :return:
         """
-        # 检查索引是否字段冲突
-        # bkdata可能还没有授权导致无法获取mapping
-        MappingHandlers(
-            ",".join([index.get("result_table_id") for index in self.indexes]),
-            -1,
-            self.scenario_id,
-            self.storage_cluster_id,
-        ).check_fields_not_conflict()
         if self.is_trace_log:
             self.is_trace_log_pre_check()
 
@@ -893,12 +885,6 @@ class BaseIndexSetHandler(object):
         return True
 
     def pre_update(self):
-        MappingHandlers(
-            ",".join([index.get("result_table_id") for index in self.indexes]),
-            -1,
-            self.scenario_id,
-            self.storage_cluster_id,
-        ).check_fields_not_conflict()
         if self.is_trace_log:
             self.is_trace_log_pre_check()
 

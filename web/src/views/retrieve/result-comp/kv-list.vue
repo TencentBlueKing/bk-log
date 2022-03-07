@@ -27,7 +27,7 @@
         <div class="field-label">
           <span
             class="field-type-icon mr5"
-            :class="getFieldIcon(field) || 'log-icon icon-unkown'"
+            :class="getFieldIcon(field)"
             v-bk-tooltips="fieldTypePopover(field)"
           ></span>
           <span :title="field">{{ field }}</span>
@@ -118,17 +118,8 @@ export default {
       return target ? target.field_type : '';
     },
     getFieldIcon(field) {
-      const iconMap = {
-        number: 'log-icon icon-number',
-        keyword: 'log-icon log-icon icon-string',
-        text: 'log-icon icon-text',
-        date: 'bk-icon icon-clock',
-      };
       const fieldType = this.getFieldType(field);
-      if (fieldType === 'long' || fieldType === 'integer') {
-        return iconMap.number;
-      }
-      return iconMap[fieldType];
+      return this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].icon : 'log-icon icon-unkown';
     },
     fieldTypePopover(field) {
       const target = this.fieldList.find(item => item.field_name === field);
