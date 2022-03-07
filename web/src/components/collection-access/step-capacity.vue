@@ -453,7 +453,8 @@ export default {
 
 <style lang="scss" scoped>
   .step-capacity-container {
-    min-height: 120%;
+    height: 100%;
+    overflow: auto;
 
     .king-form {
       padding: 24px 60px;
@@ -509,7 +510,7 @@ export default {
     }
 
     .button-container {
-      padding: 0 60px;
+      padding: 0 60px 100px;
 
       .king-submit-button {
         min-width: 86px;
