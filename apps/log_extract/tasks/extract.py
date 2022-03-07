@@ -398,7 +398,7 @@ class LogExtractUtils(object):
         for val in range(MAX_SCHEDULE_TIMES):
             time.sleep(self.task_polling_interval)
             logger.info(_("确认文件分发结果: {}, 确认次数: {}").format(self.task_id, val))
-            result = self._packing_schedule()
+            result = self._distribution_schedule()
             if result == ScheduleStatus.SUCCESS:
                 logger.info(_("文件分发成功: {}").format(self.task_id))
                 break
@@ -410,7 +410,7 @@ class LogExtractUtils(object):
         for val in range(MAX_SCHEDULE_TIMES):
             time.sleep(self.task_polling_interval)
             logger.info(_("确认文件上传至cos结果: {}, 确认次数: {}").format(self.task_id, val))
-            result = self._packing_schedule()
+            result = self._cos_upload_schedule()
             if result == ScheduleStatus.SUCCESS:
                 logger.info(_("文件上传至cos成功: {}").format(self.task_id))
                 break
