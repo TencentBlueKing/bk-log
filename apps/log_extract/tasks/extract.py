@@ -273,7 +273,7 @@ class LogExtractUtils(object):
         file_target_path = os.path.join(transit_server_file_path, "[FILESRCIP]")
         # 将文件分发到中转服务器目录
         task_result = FileServer.file_distribution(
-            file_source_list=self.file_source_list,
+            file_source_list=self.distribution_source_file_list,
             file_target_path=file_target_path,
             target_ip_list=[{"ip": transit_server.ip, "bk_cloud_id": transit_server.bk_cloud_id}],
             bk_biz_id=bk_biz_id,
