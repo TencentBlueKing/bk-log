@@ -17,7 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-
+from dataclasses import dataclass
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
@@ -138,6 +138,14 @@ class PreDateMode(ChoicesEnum):
     _choices_labels = ((DAY, _("近一天")), (WEEK, _("近一周")), (MONTH, _("近一月")), (ALL, _("所有")), (CUSTOM, _("自定义")))
 
 
+class ScheduleStatus(object):
+    SUCCESS = "success"
+    EXECUTING = "executing"
+
+
+TASK_POLLING_INTERVAL = 5
+MAX_SCHEDULE_TIMES = 10 * 60 / TASK_POLLING_INTERVAL
+
 PREDATEMODE_CUSTOM_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # 允许创建的目录前缀
@@ -197,3 +205,10 @@ PIPELINE_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # jobapi权限code
 JOB_API_PERMISSION_CODE = 9900403
+
+
+@dataclass
+class TransitServer(object):
+    ip: str
+    target_dir: str
+    bk_cloud_id: int
