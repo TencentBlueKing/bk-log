@@ -158,9 +158,9 @@ export default {
       this.getInterval();
       return this.$store.state.retrieve.chartKey;
     },
-    chartInterval() {
-      return this.retrieveParams.interval;
-    },
+    // chartInterval() {
+    //   return this.retrieveParams.interval;
+    // },
   },
   watch: {
     chartKey: {
@@ -179,9 +179,13 @@ export default {
     finishPolling(newVal) {
       this.$emit('change-queue-res', newVal);
     },
+    'retrieveParams.interval'(newVal) {
+      this.chartInterval = newVal;
+    },
   },
   mounted() {
     window.bus.$on('openChartLoading', this.openChartLoading);
+    this.chartInterval = this.retrieveParams.interval;
   },
   beforeDestroy() {
     window.bus.$on('openChartLoading', this.openChartLoading);
@@ -296,8 +300,8 @@ export default {
       const { cacheDatePickerValue, cacheTimeRange } = this.$store.state.retrieve;
       if (
         cacheDatePickerValue[0] !== this.retrieveParams.start_time
-                    || cacheDatePickerValue[1] !== this.retrieveParams.end_time
-                    || cacheTimeRange !== this.retrieveParams.time_range
+          || cacheDatePickerValue[1] !== this.retrieveParams.end_time
+          || cacheTimeRange !== this.retrieveParams.time_range
       ) {
         setTimeout(() => {
           window.bus.$emit('changeTimeByChart', cacheDatePickerValue, cacheTimeRange);
@@ -307,7 +311,8 @@ export default {
           this.$nextTick(() => {
             this.finishPolling = false;
             this.isStart = false;
-            this.$refs.chartRef.handleChangeInterval();
+            // this.$refs.chartRef.handleChangeInterval();
+            this.$store.commit('retrieve/updateChartKey');
           });
         }, 100);
       }

@@ -44,7 +44,6 @@
       :reserve-selection="true">
 
       <bk-table-column
-        v-if="!requestData.group_by.length"
         width="50"
         :render-header="renderHeader">
         <template slot-scope="{ row }">
@@ -152,7 +151,7 @@
           v-for="(item,index) of requestData.group_by"
           :key="index"
           :label="item"
-          width="120"
+          width="130"
           class-name="symbol-column">
           <template slot-scope="{ row }">
             <span>{{row.group[index]}}</span>
@@ -161,7 +160,6 @@
       </template>
 
       <bk-table-column
-        v-if="!requestData.group_by.length"
         :label="$t('告警')"
         width="103"
         class-name="symbol-column">
@@ -315,7 +313,7 @@ export default {
     'fingerList.length': {
       handler(newLength, oldLength) {
         // 全选时 分页下拉新增页默认选中
-        if (this.isSelectAll && !this.requestData.group_by.length) {
+        if (this.isSelectAll) {
           this.$nextTick(() => {
             this.selectList.push(...this.fingerList.slice(oldLength, newLength));
           });
@@ -397,7 +395,7 @@ export default {
      * @desc: 批量开启或者关闭告警
      * @param { Boolean } option 开启或关闭
      */
-    handleBatchUseAlarm(option) {
+    handleBatchUseAlarm(option = true) {
       if (this.isRequestAlarm) {
         return;
       };
@@ -417,6 +415,10 @@ export default {
           } else {
             filterList = alarmList.filter(el => !!el.monitor.is_active);
           }
+          // 分组情况下过滤重复的列表元素
+          if (this.requestData.group_by.length) {
+            filterList = this.getSetList(filterList);
+          }
           this.requestAlarm(filterList, option, () => {
             // 批量成功后刷新数据指纹请求
             this.$emit('updateRequest');
@@ -431,6 +433,10 @@ export default {
         title: msg,
         confirmFn: () => {
           this.requestAlarm([row], !isActive, (result, strategyID) => {
+            if (this.requestData.group_by.length) {
+              this.$emit('updateRequest');
+              return;
+            }
             // 单次成功后告警状态取反
             if (result) {
               row.monitor.is_active = !isActive;
@@ -439,6 +445,16 @@ export default {
           });
         },
       });
+    },
+    getSetList(list = []) {
+      const setIDList = new Set();
+      const returnList = list.filter((el) => {
+        if (!setIDList.has(el.signature)) {
+          setIDList.add(el.signature);
+          return true;
+        }
+      });
+      return returnList;
     },
     /**
      * @desc: 数据指纹告警请求

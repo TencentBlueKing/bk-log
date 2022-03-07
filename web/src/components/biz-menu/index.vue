@@ -116,7 +116,7 @@ export default {
     },
     // 业务列表
     bizList() {
-      return this.myProjectList.filter(item => item.project_name.includes(this.keyword));
+      return this.myProjectList.filter(item => item.project_name.toUpperCase().includes(this.keyword.toUpperCase()));
     },
     bizNameIcon() {
       return this.bizName.split(']')[1][1].toLocaleUpperCase();

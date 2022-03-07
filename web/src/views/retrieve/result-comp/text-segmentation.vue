@@ -113,7 +113,11 @@ export default {
       return arr;
     },
     markList() {
-      const markVal = this.content.toString().match(/(?<=<mark>).*?(?=<\/mark>)/g) || [];
+      let markVal = this.content.toString().match(/(<mark>).*?(<\/mark>)/g) || [];
+      if (markVal.length) {
+        markVal = markVal.map(item => item.replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, ''));
+      }
       return markVal;
     },
   },

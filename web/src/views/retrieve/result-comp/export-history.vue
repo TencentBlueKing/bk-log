@@ -36,7 +36,9 @@
       {{$t('exportHistory.downloadHistory')}}
     </div>
     <div class="search-history">
-      <bk-button theme="primary" @click="handleSearchAll"> {{$t('exportHistory.btnTip')}}</bk-button>
+      <span v-bk-tooltips="$t('exportHistory.btnTip')" class="top-start">
+        <bk-button theme="primary" @click="handleSearchAll"> {{$t('exportHistory.btn')}}</bk-button>
+      </span>
     </div>
     <div class="table-container" v-bkloading="{ isLoading: tableLoading }">
       <bk-table
@@ -70,10 +72,6 @@
           <template slot-scope="{ row }">
             <bk-popover placement="top" theme="light">
               <div slot="content">
-                <span
-                  class="bk-icon icon-text-file"
-                  :title="$t('复制')"
-                  @click="handleCopyMsg(row.search_dict)"></span>
                 <!-- eslint-disable-next-line vue/no-v-html -->
                 <div v-html="getSearchDictHtml(row.search_dict)"></div>
               </div>
@@ -89,7 +87,9 @@
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
-            <span>{{row.export_type === 'async' ? $t('exportHistory.async') : $t('exportHistory.sync')}}</span>
+            <span>
+              {{row.export_type === 'async' ? $t('exportHistory.async') : $t('exportHistory.sync')}}
+            </span>
           </template>
         </bk-table-column>
         <!-- 导出状态 -->
@@ -98,13 +98,25 @@
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
-            <bk-popover placement="top" theme="light">
+            <bk-popover
+              v-if="isShowShape(row.export_status)"
+              placement="top"
+              theme="light">
               <div slot="content">
-                <span>{{$t('exportHistory.completeTime')}}:{{getFormatDate(row.export_completed_at)}}</span>
-                <span v-if="row.error_msg">，{{$t('exportHistory.abnormalReason')}}:{{row.error_msg}}</span>
+                <span v-if="!row.error_msg">
+                  {{$t('exportHistory.completeTime')}}: {{getFormatDate(row.export_completed_at)}}
+                </span>
+                <span v-else>{{$t('exportHistory.abnormalReason')}}: {{row.error_msg}}</span>
               </div>
-              <span style="cursor: pointer;">{{getStatusStr(row.export_status)}}</span>
+              <span :class="['status',`status-${row.export_status + ''}`]">
+                <i class="bk-icon icon-circle-shape"></i>
+                {{getStatusStr(row.export_status)}}
+              </span>
             </bk-popover>
+            <span v-else :class="['status',`status-${row.export_status + ''}`]">
+              <i v-if="row.export_status === null" class="bk-icon icon-refresh"></i>
+              {{getStatusStr(row.export_status)}}
+            </span>
           </template>
         </bk-table-column>
         <!-- 文件名 -->
@@ -113,7 +125,10 @@
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
-            <bk-popover v-if="row.export_pkg_name" placement="top" theme="light">
+            <bk-popover
+              v-if="row.export_pkg_name"
+              placement="top"
+              theme="light">
               <div slot="content">
                 <span>{{row.export_pkg_name ? row.export_pkg_name : '--'}}</span>
               </div>
@@ -152,59 +167,57 @@
         <!-- 操作 -->
         <bk-table-column
           :label="$t('exportHistory.operate')"
-          width="100"
+          width="150"
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
+            <span v-if="isShowDownload(row)" style="margin-right: 10px;">
+              <bk-button
+                text
+                v-if="row.download_able"
+                @click="downloadExport(row)">
+                {{$t('exportHistory.download')}}
+              </bk-button>
+              <span
+                v-else
+                v-bk-tooltips="$t('exportHistory.downloadExpired')"
+                class="top-start">
+                <bk-button text disabled>
+                  {{$t('exportHistory.download')}}
+                </bk-button>
+              </span>
+            </span>
+            <span v-if="isShowRetry(row)" style="margin-right: 10px;">
+              <bk-button
+                text
+                v-if="row.retry_able"
+                @click="retryExport(row)">
+                {{$t('exportHistory.retry')}}
+              </bk-button>
+              <span
+                v-else
+                v-bk-tooltips="$t('exportHistory.dataExpired')"
+                class="top-start">
+                <bk-button text disabled>
+                  {{$t('exportHistory.retry')}}
+                </bk-button>
+              </span>
+            </span>
             <bk-button
               text
-              style="margin-right: 10px;"
-              v-if="isShowDownload(row)"
-              @click="downloadExport(row)">
-              {{$t('exportHistory.download')}}
-            </bk-button>
-            <bk-button
-              text
-              v-if="isShowRetry(row)"
-              @click="retryExport(row)">
-              {{$t('exportHistory.retry')}}
+              @click="handleRetrieve(row)">
+              {{$t('exportHistory.retrieve')}}
             </bk-button>
           </template>
         </bk-table-column>
       </bk-table>
 
-      <!-- 导出弹窗提示 -->
-      <bk-dialog
-        v-model="showAsyncExport"
-        theme="primary"
-        ext-cls="async-export-dialog"
-        :mask-close="false"
-        :show-footer="false">
-        <div class="export-container" v-bkloading="{ isLoading: exportLoading }">
-          <span class="bk-icon bk-dialog-warning icon-exclamation"></span>
-          <div class="header">
-            {{ searchDict.size > 2000000 ? $t('retrieve.dataMoreThanMillion') : $t('retrieve.dataMoreThan') }}
-          </div>
-          <div class="export-type immediate-export">
-            <span class="bk-icon icon-info-circle"></span>
-            <span class="export-text">{{ $t('retrieve.immediateExportDesc') }}</span>
-            <bk-button theme="primary" @click="openDownloadUrl()">{{ $t('retrieve.immediateExport') }}</bk-button>
-          </div>
-          <div class="export-type async-export">
-            <span class="bk-icon icon-info-circle"></span>
-            <span v-if="searchDict.size > 2000000" class="export-text">{{ $t('retrieve.asyncExportMoreDesc') }}</span>
-            <span v-else class="export-text">{{ $t('retrieve.asyncExportDesc') }}</span>
-            <bk-button @click="downloadAsync">{{ $t('retrieve.asyncExport') }}</bk-button>
-          </div>
-        </div>
-      </bk-dialog>
     </div>
   </bk-dialog>
 </template>
 
 <script>
-import { formatDate, copyMessage } from '@/common/util';
-
+import { formatDate } from '@/common/util';
 
 export default {
   props: {
@@ -220,18 +233,16 @@ export default {
       tableLoading: false,
       isSearchAll: false, // 是否查看所有索引集下载历史
       isShowSetLabel: false, // 是否展示索引集ID
-      exportLoading: false,
-      showAsyncExport: false, // 是否展示同异步选择弹窗
-      searchDict: { // 当前重试选择的请求参数
-        size: 0,
-      },
+      timer: false,
       exportStatusList: {
         download_log: this.$t('exportHistory.pulling'),
         export_package: this.$t('exportHistory.exportPackage'),
         export_upload: this.$t('exportHistory.exportUpload'),
         success: this.$t('exportHistory.success'),
         failed: this.$t('exportHistory.failed'),
-        expired: this.$t('exportHistory.expired'),
+        download_expired: this.$t('exportHistory.downloadExpired'),
+        data_expired: this.$t('exportHistory.dataExpired'),
+        null: this.$t('exportHistory.exporting'),
       },
       pagination: {
         current: 1,
@@ -253,35 +264,11 @@ export default {
       this.isShowDialog = val;
       if (val) {
         this.getTableList();
+        this.startStatusPolling();
       }
     },
   },
   methods: {
-    getTableList() {
-      const { limit, current } = this.pagination;
-      this.tableLoading = true;
-      this.$http.request('retrieve/getExportHistoryList', {
-        params: {
-          index_set_id: this.$route.params.indexId,
-          bk_biz_id: this.bkBizId,
-          page: current,
-          pagesize: limit,
-          show_all: this.isSearchAll,
-        },
-      }).then((res) => {
-        if (res.result) {
-          this.pagination.count = res.data.total;
-          this.exportList = res.data.list;
-        }
-        // 查询所有索引集时才显示索引集IDLabel
-        if (this.isSearchAll) {
-          this.isShowSetLabel = true;
-        }
-      })
-        .finally(() => {
-          this.tableLoading = false;
-        });
-    },
     downloadExport($row) {
       // 异步导出使用downloadURL下载
       if ($row.download_url) {
@@ -289,33 +276,37 @@ export default {
         return;
       }
       this.openDownloadUrl($row.search_dict);
+      this.startStatusPolling();
     },
     retryExport($row) {
       // 异常任务直接异步下载
-      if ($row.export_status === 'failed') {
-        this.downloadAsync($row.search_dict);
-        return;
-      };
-      // 数据大于1万时显示确认异步弹窗
-      if ($row.search_dict.size > 10000) {
-        this.searchDict = $row.search_dict;
-        this.showAsyncExport = true;
-      } else {
+      if ($row.export_type === 'sync') {
         this.openDownloadUrl($row.search_dict);
+      } else {
+        this.downloadAsync($row.search_dict);
       }
+      this.startStatusPolling();
     },
+    /**
+     * @desc: 同步下载
+     * @param { Object } params
+     */
     openDownloadUrl(params) {
-      params = params ? params : this.searchDict;
       const exportParams = encodeURIComponent(JSON.stringify({ ...params }));
       // eslint-disable-next-line max-len
       const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
-      window.open(targetUrl);
+      // window.open(targetUrl);
+      const net = window.open(targetUrl, '_blank', '', false);
+      net.addEventListener('beforeunload', () => {
+        this.getTableList(true);
+				 });
     },
-    downloadAsync(dict) {
-      dict = dict ? dict : this.searchDict;
-      const data = { ...dict };
-
-      this.exportLoading = true;
+    /**
+     * @desc: 异步下载
+     * @param { Object } data
+     */
+    downloadAsync(data) {
+      this.tableLoading = true;
       this.$http.request('retrieve/exportAsync', {
         params: {
           index_set_id: this.$route.params.indexId,
@@ -330,11 +321,15 @@ export default {
         }
       })
         .finally(() => {
-          this.showAsyncExport = false;
-          this.exportLoading = false;
+          setTimeout(() => {
+            this.getTableList(true);
+          }, 1000);
         });
     },
     handleSearchAll() {
+      if (this.tableLoading) {
+        return;
+      }
       this.isSearchAll = true;
       this.getTableList();
     },
@@ -346,10 +341,13 @@ export default {
       return objStr.replace(/\n/g, '<br>').replace(/\s/g, ' ');
     },
     isShowDownload(row) {
-      return row.export_status === 'success';
+      return ['success', 'download_expired', 'data_expired'].includes(row.export_status);
     },
     isShowRetry(row) {
-      return ['failed', 'expired', 'success'].includes(row.export_status);
+      return ['failed', 'download_expired', 'data_expired', 'success'].includes(row.export_status);
+    },
+    isShowShape(status) {
+      return ['success', 'failed'].includes(status);
     },
     getStatusStr(status) {
       return this.exportStatusList[status];
@@ -357,8 +355,79 @@ export default {
     getFormatDate(time) {
       return formatDate(time);
     },
-    handleCopyMsg(searchObj) {
-      copyMessage(JSON.stringify(searchObj));
+    handleRetrieve($row) {
+      const projectId = window.localStorage.getItem('project_id');
+      const { log_index_set_id: indexSetID, search_dict: dict } = $row;
+      const params = encodeURIComponent(JSON.stringify({ ...dict }));
+      const jumpUrl = `${window.SITE_URL}#/retrieve/${indexSetID}?projectId=${projectId}&bizId=${dict.bk_biz_id}&retrieveParams=${params}`;
+      window.open(jumpUrl, '_blank');
+    },
+    /**
+     * @desc: 轮询
+     */
+    startStatusPolling() {
+      this.stopStatusPolling();
+      this.timer = setInterval(() => {
+        this.getTableList(false, true);
+      }, 10000);
+    },
+    stopStatusPolling() {
+      clearTimeout(this.timer);
+    },
+    /**
+     * @desc: 导出状态轮询
+     * @param { Array } data 数据
+     * @param { Boolean } isPolling 该次请求是否是轮询
+     */
+    setExportListData(data, isPolling) {
+      if (isPolling) {
+        data.forEach((item) => {
+          this.exportList.forEach((row) => {
+            if (row.id === item.id) {
+              Object.assign(row, { ...item });
+            }
+          });
+        });
+      } else {
+        this.exportList = data;
+        this.startStatusPolling();
+      }
+    },
+    /**
+     * @desc: 获取table列表数据
+     * @param { Boolean } isReset 是否从1页开始查询
+     * @param { Boolean } isPolling 该次请求是否是轮询
+     */
+    getTableList(isReset = false, isPolling = false) {
+      if (isReset) {
+        this.pagination.current = 1;
+      }
+      if (!isPolling) {
+        this.tableLoading = true;
+      }
+      const { limit, current } = this.pagination;
+      this.$http.request('retrieve/getExportHistoryList', {
+        params: {
+          index_set_id: this.$route.params.indexId,
+          bk_biz_id: this.bkBizId,
+          page: current,
+          pagesize: limit,
+          show_all: this.isSearchAll,
+        },
+      }).then((res) => {
+        if (res.result) {
+          this.pagination.count = res.data.total;
+          // this.exportList = res.data.list;
+          this.setExportListData(res.data.list, isPolling);
+        }
+        // 查询所有索引集时才显示索引集IDLabel
+        if (this.isSearchAll) {
+          this.isShowSetLabel = true;
+        }
+      })
+        .finally(() => {
+          this.tableLoading = false;
+        });
     },
     handlePageChange(page) {
       this.pagination.current = page;
@@ -383,9 +452,7 @@ export default {
         count: 0,
         limit: 10,
       };
-      this.searchDict = {
-        size: 0,
-      };
+      this.stopStatusPolling();
       this.$emit('handleCloseDialog');
     },
   },
@@ -394,6 +461,7 @@ export default {
 
 <style lang="scss">
 @import '@/scss/mixins/flex.scss';
+@import '@/scss/conf';
 
 .table-title {
   font-size: 16px;
@@ -445,59 +513,20 @@ export default {
   width: 140px;
 }
 
-.async-export-dialog {
-  .header {
-    /* stylelint-disable-next-line declaration-no-important */
-    padding: 18px 0px 32px !important;
-  }
+.status {
+  cursor: pointer;
 
-  .export-container {
-    text-align: center;
-  }
-
-  .bk-dialog-warning {
-    display: block;
-    margin: 0 auto;
-    width: 58px;
-    height: 58px;
-    line-height: 58px;
-    font-size: 30px;
-    color: #fff;
-    border-radius: 50%;
-    background-color: #ffb848;
-  }
-
-  .header {
-    padding: 18px 24px 32px;
+  &.status-null i {
     display: inline-block;
-    width: 100%;
-    font-size: 24px;
-    color: #313238;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 1.5;
-    margin: 0;
+    animation: button-icon-loading 1s linear infinite;
   }
 
-  .export-type {
-    margin-bottom: 24px;
-    padding: 0 22px;
-    display: flex;
-    align-items: center;
+  &.status-success i {
+    color: $iconSuccessColor;
+  }
 
-    .export-text {
-      margin-left: 8px;
-      max-width: 184px;
-      text-align: left;
-      font-size: 14px;
-      color: #313238;
-      line-height: 18px;
-    }
-
-    .bk-button {
-      margin-left: auto;
-    }
+  &.status-failed i {
+    color: $iconFailColor;
   }
 }
 </style>
