@@ -381,7 +381,7 @@ class LogExtractUtils(object):
 
     def extract(self):
         logger.info(_("文件提取开始: {}").format(self.task_id))
-        logger.info(_("文件打包中: {}").format(self.task_id))
+        logger.info(_("文件打包ka: {}").format(self.task_id))
         try:
             self._packing()
             for val in range(MAX_SCHEDULE_TIMES):
@@ -425,7 +425,9 @@ class LogExtractUtils(object):
                 self._bkrepo_upload()
                 logger.info(_("文件上传至bkrepo成功: {}").format(self.task_id))
         except BaseException as e:  # pylint: disable=broad-except
+            logger.info(_("文件提取成功: {}, 失败原因: {}").format(self.task_id, e))
             Tasks.objects.filter(task_id=self.task_id).update(
                 download_status=constants.DownloadStatus.FAILED.value, task_process_info=e
             )
+            raise
         logger.info(_("文件提取成功: {}").format(self.task_id))
