@@ -453,7 +453,7 @@ export default {
 
 <style lang="scss" scoped>
   .step-capacity-container {
-    height: 100%;
+    min-height: 120%;
 
     .king-form {
       padding: 24px 60px;

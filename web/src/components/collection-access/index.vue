@@ -464,5 +464,6 @@ export default {
     flex: 1;
     width: calc(100% - 200px);
     background: #fff;
+    overflow: auto;
   }
 </style>
