@@ -394,13 +394,12 @@ class MappingHandlers(object):
         :return:
         """
         sorted_result_list = sorted(result_list, key=functools.cmp_to_key(cls.compare_indices_by_date), reverse=True)
-        property_result_dict: dict = {}
         property_list = []
         for _inner_dict in sorted_result_list:
             property_dict = cls.get_property_dict(_inner_dict)
             if property_dict:
                 property_list.append(property_dict)
-        return cls._merge_property(property_result_dict)
+        return cls._merge_property(property_list)
 
     def _combine_description_field(self, fields_list=None, scope=None):
         if fields_list is None:
