@@ -34,10 +34,10 @@ from apps.utils.log import logger
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import ActionEnum, Permission
 from apps.log_extract import constants, exceptions
-from apps.log_extract.constants import TASK_IP_INDEX, TASK_BK_CLOUD_ID_INDEX
+from apps.log_extract.constants import TASK_IP_INDEX, TASK_BK_CLOUD_ID_INDEX, ExtractLinkType
 from apps.log_extract.handlers.explorer import ExplorerHandler
 from apps.log_extract.handlers.extract import ExtractLinkBase
-from apps.log_extract.models import Tasks
+from apps.log_extract.models import Tasks, ExtractLink
 from apps.log_extract.serializers import PollingResultSerializer
 from apps.utils.local import get_request_username, get_local_param
 from apps.decorators import user_operation_record
@@ -160,8 +160,12 @@ class TasksHandler(object):
             }
         )
         # 其他参数在运行pipeline的过程中更新
-        # self.run_pipeline(task=task, **params)
-        log_extract_task.delay(task_id=task.task_id, **params)
+        extract_link: ExtractLink = ExtractLink.objects.filter(link_id=task.link_id).first()
+        # bkrepo时为worker调用
+        if extract_link.link_type == ExtractLinkType.BK_REPO.value:
+            log_extract_task.delay(task_id=task.task_id, **params)
+        else:
+            self.run_pipeline(task=task, **params)
 
         # add user_operation_record
         operation_record = {
