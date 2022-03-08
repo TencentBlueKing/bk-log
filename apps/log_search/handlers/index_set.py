@@ -959,7 +959,7 @@ class BaseIndexSetHandler(object):
                     "bkdata_authentication_method": "user",
                 }
             )
-            property_dict: dict = MappingHandlers.find_property_dict_first(mapping_list)
+            property_dict: dict = MappingHandlers.find_property_dict(mapping_list)
             field_list: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
             trace_proto_type = Proto.judge_trace_type(field_list)
             if trace_proto_type is not None:
