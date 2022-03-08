@@ -755,7 +755,7 @@ export default {
           resMenu.children.forEach((item) => {
             item.id = this.routeMap[item.id] || item.id;
             if (resMenu.id === 'dashboard') {
-              item.id = item.id.replace(/_/g, '-');
+              item.id = item.id.replace(/-/g, '_');
             }
             const menu = oldMenu.children.find(menuItem => menuItem.id === item.id);
             if (menu) {
