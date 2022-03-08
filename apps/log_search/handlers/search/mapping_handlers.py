@@ -353,9 +353,10 @@ class MappingHandlers(object):
         index_es_rt: str = self.indices.replace(".", "_")
         index_es_rts = index_es_rt.split(",")
         mapping_group: dict = self._mapping_group(index_es_rts, mapping_result)
-        return [self.find_property_dict_first(mapping_list) for mapping_list in mapping_group.values()]
+        return [self.find_property_dict(mapping_list) for mapping_list in mapping_group.values()]
 
-    def _merge_property(self, propertys: list):
+    @classmethod
+    def _merge_property(cls, propertys: list):
         merge_dict = {}
         for property in propertys:
             for property_key, property_define in property.items():
@@ -386,20 +387,19 @@ class MappingHandlers(object):
         return mapping_group
 
     @classmethod
-    def find_property_dict_first(cls, result_list: list) -> Dict:
+    def find_property_dict(cls, result_list: list) -> Dict:
         """
         获取最新索引mapping
         :param result_list:
         :return:
         """
         sorted_result_list = sorted(result_list, key=functools.cmp_to_key(cls.compare_indices_by_date), reverse=True)
-        property_result_dict: dict = {}
+        property_list = []
         for _inner_dict in sorted_result_list:
             property_dict = cls.get_property_dict(_inner_dict)
             if property_dict:
-                property_result_dict = property_dict
-                break
-        return property_result_dict
+                property_list.append(property_dict)
+        return cls._merge_property(property_list)
 
     def _combine_description_field(self, fields_list=None, scope=None):
         if fields_list is None:
