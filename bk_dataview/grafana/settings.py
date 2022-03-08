@@ -33,26 +33,69 @@ DEFAULTS = {
     "CODE_INJECTIONS": {
         "<head>": """<head>
 <style>
-      .sidemenu {
+      .sidemenu {{
         display: none !important;
-      }
-      .navbar-page-btn .gicon-dashboard {
+      }}
+      .navbar-page-btn .gicon-dashboard {{
         display: none !important;
-      }
-      .navbar .navbar-buttons--tv {
+      }}
+      .navbar .navbar-buttons--tv {{
         display: none !important;
-      }
-    .css-1jrggg2 {
+      }}
+    .css-1jrggg2 {{
           left: 0 !important;
-      }
-      .css-9nwlx8 {
+      }}
+      .css-9nwlx8 {{
         display: none;
-      }
+      }}
 </style>
-<script src="http://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js?_bid=3977"></script>
-<script>"""
+{}
+<script>""".format(
+            """<script src="http://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js?_bid=3977"></script>"""
+            if settings.TAM_AEGIS_KEY
+            else ""
+        )
         + f"""window.ageisId = "{settings.TAM_AEGIS_KEY}";"""
         + """
+{}
+
+var _wr = function(type) {{
+    var orig = history[type];
+    return function() {{
+        var rv = orig.apply(this, arguments);
+        var e = new Event(type);
+        e.arguments = arguments;
+        window.dispatchEvent(e);
+        return rv;
+    }};
+}};
+   history.pushState = _wr('pushState');
+   history.replaceState = _wr('replaceState');
+  ["popstate", "replaceState", "pushState"].forEach(function(eventName) {{
+    window.addEventListener(eventName, function() {{
+      window.parent.postMessage({{ pathname: this.location.pathname }}, "*");
+    }});
+  }});
+   window.addEventListener('message', function(e) {{
+        if(e && e.data ) {{
+        var dom = null;
+        switch(e.data) {{
+            case 'create':
+            dom = document.querySelector('.sidemenu__top .sidemenu-item:nth-child(2) .dropdown-menu li:nth-child(2) a');
+            break;
+            case 'folder':
+            dom = document.querySelector('.sidemenu__top .sidemenu-item:nth-child(2) .dropdown-menu li:nth-child(3) a');
+            break;
+            case 'import':
+            dom = document.querySelector('.sidemenu__top .sidemenu-item:nth-child(2) .dropdown-menu li:nth-child(4) a');
+            break;
+        }}
+        dom && dom.click()
+        }}
+    }})
+</script>
+        """.format(
+            """
 setTimeout(function(){
     if(window.ageisId) {
         const aegis = new Aegis({
@@ -69,50 +112,15 @@ setTimeout(function(){
             spa: true
         })
     }
-},5000);
-
-var _wr = function(type) {
-    var orig = history[type];
-    return function() {
-        var rv = orig.apply(this, arguments);
-        var e = new Event(type);
-        e.arguments = arguments;
-        window.dispatchEvent(e);
-        return rv;
-    };
-};
-   history.pushState = _wr('pushState');
-   history.replaceState = _wr('replaceState');
-  ["popstate", "replaceState", "pushState"].forEach(function(eventName) {
-    window.addEventListener(eventName, function() {
-      window.parent.postMessage({ pathname: this.location.pathname }, "*");
-    });
-  });
-   window.addEventListener('message', function(e) {
-        if(e && e.data ) {
-        var dom = null;
-        switch(e.data) {
-            case 'create':
-            dom = document.querySelector('.sidemenu__top .sidemenu-item:nth-child(2) .dropdown-menu li:nth-child(2) a');
-            break;
-            case 'folder':
-            dom = document.querySelector('.sidemenu__top .sidemenu-item:nth-child(2) .dropdown-menu li:nth-child(3) a');
-            break;
-            case 'import':
-            dom = document.querySelector('.sidemenu__top .sidemenu-item:nth-child(2) .dropdown-menu li:nth-child(4) a');
-            break;
-        }
-        dom && dom.click()
-        }
-    })
-</script>
-        """
+},5000);"""
+            if settings.TAM_AEGIS_KEY
+            else ""
+        )
     },
     "BACKEND_CLASS": "bk_dataview.grafana.backends.api.APIHandler",
 }
 
 IMPORT_STRINGS = ["AUTHENTICATION_CLASSES", "PERMISSION_CLASSES", "PROVISIONING_CLASSES", "BACKEND_CLASS"]
-
 
 APP_LABEL = "grafana"
 
