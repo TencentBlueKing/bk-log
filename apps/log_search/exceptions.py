@@ -358,7 +358,7 @@ class DateHistogramException(BaseException):
 
 class MissAsyncExportException(BaseException):
     ERROR_CODE = "501"
-    MESSAGE = _("对应索引集{index_set_id}缺少异步导出必备fields")
+    MESSAGE = _("对应索引集缺少异步导出必备fields{}")
 
 
 class OverAsyncExportMaxCount(BaseException):

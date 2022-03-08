@@ -40,8 +40,9 @@ class BizPermission(BasePermission):
         if permission.is_allowed(action=ActionEnum.MANAGE_DASHBOARD, resources=resources):
             return True, GrafanaRole.Editor
 
-        permission.is_allowed(action=ActionEnum.VIEW_DASHBOARD, resources=resources, raise_exception=True)
-        return True, GrafanaRole.Viewer
+        # permission.is_allowed(action=ActionEnum.VIEW_DASHBOARD, resources=resources, raise_exception=True)
+        # 不在校验查看仪表盘权限 通过索引集权限去过滤
+        return True, GrafanaRole.Editor
 
 
 class ExplorePermission(BasePermission):

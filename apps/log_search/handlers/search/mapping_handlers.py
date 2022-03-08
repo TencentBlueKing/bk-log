@@ -363,10 +363,9 @@ class MappingHandlers(object):
                     merge_dict[property_key] = property_define
                     continue
                 if merge_dict[property_key]["type"] != property_define["type"]:
+                    merge_dict[property_key]["type"] = "conflict"
                     merge_dict[property_key]["is_conflict"] = True
-        return {
-            property_key: property for property_key, property in merge_dict.items() if not property.get("is_conflict")
-        }
+        return {property_key: property for property_key, property in merge_dict.items()}
 
     def _mapping_group(self, index_result_tables: list, mapping_result: list):
         # 第三方不合并mapping
@@ -610,6 +609,7 @@ class MappingHandlers(object):
             {"gseindex", "container_id", "logfile", "_iteration_idx"},
             {"gseIndex", "serverIp", "path", "_iteration_idx"},
             {"gseIndex", "serverIp", "path", "iterationIndex"},
+            {"gseIndex", "path", "iterationIndex", "__ext.container_id"},
         ]
         if any(fields_list.issuperset(judge) for judge in context_and_realtime_judge_fields):
             context_search_usable = True
@@ -734,10 +734,11 @@ class MappingHandlers(object):
     @classmethod
     def _generate_async_export_reason(cls, scenario_id: str, result: dict):
         reason_map = {
-            Scenario.BKDATA: _("【异步导出缺少必备字段: {async_fields} or {async_container_fields}】").format(
-                async_fields=BKDATA_ASYNC_FIELDS, async_container_fields=BKDATA_ASYNC_CONTAINER_FIELDS
+            Scenario.BKDATA: _("缺少必备字段: {async_fields} or {async_container_fields}").format(
+                async_fields=", ".join(BKDATA_ASYNC_FIELDS),
+                async_container_fields=", ".join(BKDATA_ASYNC_CONTAINER_FIELDS),
             ),
-            Scenario.LOG: _("【异步导出缺少必备字段: {async_fields}】").format(async_fields=LOG_ASYNC_FIELDS),
+            Scenario.LOG: _("缺少必备字段: {async_fields}").format(async_fields=", ".join(LOG_ASYNC_FIELDS)),
         }
 
         result["async_export_usable_reason"] = reason_map[scenario_id]

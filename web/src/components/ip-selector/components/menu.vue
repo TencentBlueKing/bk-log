@@ -33,6 +33,7 @@
     </li>
   </ul>
 </template>
+
 <script lang="ts">
 import { Vue, Component, Prop, Emit } from 'vue-property-decorator'
 import { IMenu } from '../types/selector-type'
@@ -48,6 +49,7 @@ export default class Menu extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .menu {
     font-size: 12px;

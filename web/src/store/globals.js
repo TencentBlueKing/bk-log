@@ -21,10 +21,13 @@
  */
 
 import vue from 'vue';
+import { fieldTypeMap } from './constant';
+
 export default {
   namespaced: true,
   state: {
     globalsData: {},
+    fieldTypeMap,
   },
   getters: {
     globalsData: state => state.globalsData,

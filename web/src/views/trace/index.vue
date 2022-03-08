@@ -21,54 +21,22 @@
   -->
 
 <template>
-  <div class="trace-container" v-bkloading="{ isLoading }">
-    <iframe :src="src" class="trace-iframe" @load="handleIframeLoad"></iframe>
-  </div>
+  <trace-index />
 </template>
 
 <script>
+import TraceIndex from './trace-index';
 
 export default {
-  name: 'trace',
-  data() {
-    return {
-      src: '',
-      isLoading: true,
-    };
-  },
-  computed: {
-    bkBizId() {
-      return this.$store.state.bkBizId;
-    },
-  },
-  mounted() {
-    this.updateIframeSrc();
-  },
-  methods: {
-    // 初始化 iframe 页面
-    updateIframeSrc() {
-      let siteUrl = window.SITE_URL;
-      if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
-      if (!siteUrl.endsWith('/')) siteUrl += '/';
-      const prefixUrl = window.origin + siteUrl;
-      this.src = `${prefixUrl}grafana/explore?orgName=${this.bkBizId}`;
-    },
-    // iframe 页面加载完毕
-    handleIframeLoad() {
-      setTimeout(() => this.isLoading = false, 1000);
-    },
+  name: 'Trace',
+  components: {
+    TraceIndex,
   },
 };
 </script>
 
 <style scoped lang="scss">
-.trace-container {
-  height: 100%;
-
-  .trace-iframe {
-    border: none;
-    width: 100%;
+  .trace-container {
     height: 100%;
   }
-}
 </style>

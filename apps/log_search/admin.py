@@ -30,6 +30,7 @@ from apps.log_search.models import (
     UserIndexSetSearchHistory,
     AsyncTask,
     EmailTemplate,
+    UserMetaConf,
 )
 
 
@@ -145,6 +146,12 @@ class AsyncTaskAdmin(AppModelAdmin):
         "is_clean",
         "created_by",
         "created_at",
+        "export_status",
+        "start_time",
+        "end_time",
+        "export_type",
+        "bk_biz_id",
+        "completed_at",
     ]
     search_fields = ["scenario_id", "request_param", "download_url", "file_name"]
 
@@ -154,3 +161,9 @@ class EmailTemplateAdmin(AppModelAdmin):
     list_display = ["name", "path"]
 
     search_fields = ["name"]
+
+
+@admin.register(UserMetaConf)
+class UserMetaConfAdmin(AppModelAdmin):
+    list_display = ["username", "conf", "type"]
+    search_fields = ["username"]

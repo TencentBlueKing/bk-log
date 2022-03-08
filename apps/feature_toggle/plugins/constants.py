@@ -27,3 +27,9 @@ ITSM_SERVICE_ID = "itsm_service_id"
 SCENARIO_BKDATA = "scenario_bkdata"
 # 是否使用数据平台超级token
 BKDATA_SUPER_TOKEN = "bkdata_super_token"
+# AIOPS相关配置
+BKDATA_CLUSTERING_TOGGLE = "bkdata_aiops_toggle"
+# es相关配置
+BKLOG_ES_CONFIG = "bklog_es_config"
+# 新人指引相关配置
+USER_GUIDE_CONFIG = "user_guide_config"

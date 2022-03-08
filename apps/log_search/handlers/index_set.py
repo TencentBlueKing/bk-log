@@ -296,6 +296,7 @@ class IndexSetHandler(APIModel):
         time_field_type=None,
         time_field_unit=None,
         bk_app_code=None,
+        username="",
     ):
         index_set_handler = self.get_index_set_handler(self.scenario_id)
         view_roles = []
@@ -311,6 +312,7 @@ class IndexSetHandler(APIModel):
             time_field_type=time_field_type,
             time_field_unit=time_field_unit,
             bk_app_code=bk_app_code,
+            username=username,
         ).update_index_set(self.data)
 
         # add user_operation_record
@@ -833,14 +835,6 @@ class BaseIndexSetHandler(object):
         1.检查trace结构是否符合
         :return:
         """
-        # 检查索引是否字段冲突
-        # bkdata可能还没有授权导致无法获取mapping
-        MappingHandlers(
-            ",".join([index.get("result_table_id") for index in self.indexes]),
-            -1,
-            self.scenario_id,
-            self.storage_cluster_id,
-        ).check_fields_not_conflict()
         if self.is_trace_log:
             self.is_trace_log_pre_check()
 
@@ -891,12 +885,6 @@ class BaseIndexSetHandler(object):
         return True
 
     def pre_update(self):
-        MappingHandlers(
-            ",".join([index.get("result_table_id") for index in self.indexes]),
-            -1,
-            self.scenario_id,
-            self.storage_cluster_id,
-        ).check_fields_not_conflict()
         if self.is_trace_log:
             self.is_trace_log_pre_check()
 

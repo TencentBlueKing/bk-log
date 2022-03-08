@@ -21,9 +21,10 @@
   -->
 
 <template>
-  <div class="selector-preview"
-       :style="{ width: isNaN(preWidth) ? preWidth : `${preWidth}px` }"
-       v-show="isNaN(preWidth) || preWidth > 0">
+  <div 
+    class="selector-preview"
+    :style="{ width: isNaN(preWidth) ? preWidth : `${preWidth}px` }"
+    v-show="isNaN(preWidth) || preWidth > 0">
     <div class="selector-preview-title">
       <slot name="title">{{ $t('结果预览') }}</slot>
     </div>
@@ -76,6 +77,7 @@
     <div class="drag" @mousedown="handleMouseDown"></div>
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Emit, Watch } from 'vue-property-decorator'
 import { IPreviewData, IMenu, IPerateFunc } from '../types/selector-type'
@@ -91,12 +93,18 @@ export default class SelectorPreview extends Vue {
   @Prop({ default: () => [], type: [Array, Function] }) private readonly operateList!: IMenu[] | IPerateFunc
   @Prop({ default: () => [], type: Array }) private readonly defaultActiveName!: string[]
 
-  private preWidth = this.width
-  private activeName = this.defaultActiveName
-  private hoverChild = null
-  private menuInstance = new Menu().$mount()
-  private popoverInstance: any = null
-  private previewItem: IPreviewData = null
+  private preWidth: number | string = 280;
+  private activeName: string[] = [];
+  private hoverChild = null;
+  private menuInstance = null;
+  private popoverInstance: any = null;
+  private previewItem: IPreviewData = null;
+
+  created() {
+    this.preWidth = this.width;
+    this.activeName = this.defaultActiveName;
+    this.menuInstance = new Menu().$mount();
+  }
 
   @Watch('width')
   private handleChange(width: number) {
@@ -210,6 +218,7 @@ export default class SelectorPreview extends Vue {
   }
 }
 </script>
+
 <style>
   .ip-selector-theme {
     /* stylelint-disable-next-line declaration-no-important */
