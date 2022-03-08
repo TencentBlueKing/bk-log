@@ -31,6 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.views import collector_views
 from apps.iam.handlers import permission
+from django_fakeredis import FakeRedis
 
 logging.basicConfig(level=logging.NOTSET)
 logger = logging.getLogger("root")
@@ -46,7 +47,11 @@ PARAMS = {"bk_biz_id": BK_BIZ_ID, "page": 1, "pagesize": 2, "keyword": ""}
 
 OVERRIDE_MIDDLEWARE = "apps.tests.middlewares.OverrideMiddleware"
 
-CLUSTER_INFOS = {"2_bklog.test3333": {"cluster_config": {"cluster_id": 1, "cluster_name": ""}}}
+CLUSTER_INFOS = {
+    "2_bklog.test3333": {"cluster_config": {"cluster_id": 1, "cluster_name": ""}, "storage_config": {"retention": 7}}
+}
+
+FAKE_CACHE = CLUSTER_INFOS
 
 BATCH_IS_ALLOWED = {"231": {"search_log": True}}
 
@@ -153,6 +158,7 @@ COLLECTORS_LIST = {
                 "permission": {"search_log": True},
                 "create_clean_able": True,
                 "bkdata_index_set_ids": [],
+                "retention": 7,
             }
         ],
     },
@@ -168,9 +174,11 @@ class TestCollectorViewSetAPI(TestCase):
 
     @patch("apps.api.TransferApi.get_result_table_storage", lambda _: CLUSTER_INFOS)
     @patch("apps.log_databus.views.collector_views.CollectorViewSet.get_permissions", lambda _: [])
+    @patch("apps.utils.cache.caches_one_hour", lambda _: FAKE_CACHE)
     @patch.object(collector_views.CollectorViewSet, "get_permissions", lambda _: [])
     @patch.object(permission.Permission, "batch_is_allowed", lambda _, actions, resources: BATCH_IS_ALLOWED)
     @override_settings(MIDDLEWARE=(OVERRIDE_MIDDLEWARE,))
+    @FakeRedis("apps.utils.cache.cache")
     def test_list_collector(self):
         """
         测试 api.v1.databus.collectors

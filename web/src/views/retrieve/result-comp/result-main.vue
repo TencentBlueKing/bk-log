@@ -52,6 +52,7 @@
         :queue-status="queueStatus"
         :table-list="tableList"
         :origin-table-list="originTableList"
+        :kv-show-fields-list="kvShowFieldsList"
         :is-page-over="isPageOver" />
     </div>
     <!-- 滚动到顶部 -->
@@ -116,6 +117,7 @@ export default {
       queueStatus: false,
       showScrollTop: false, // 显示滚动到顶部icon
       isInit: false,
+      kvShowFieldsList: [],
     };
   },
   computed: {
@@ -138,6 +140,7 @@ export default {
         const list = parseBigNumberList(data.list);
         const originLogList = parseBigNumberList(data.origin_log_list);
         this.count += data.list.length;
+        this.kvShowFieldsList = Object.keys(data.fields || []);
         this.tableList.push(...list);
         this.originTableList.push(...originLogList);
         this.$nextTick(() => {

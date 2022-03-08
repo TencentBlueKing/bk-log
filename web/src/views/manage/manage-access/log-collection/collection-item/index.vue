@@ -135,6 +135,16 @@
           </template>
         </bk-table-column>
         <bk-table-column
+          v-if="checkcFields('retention')"
+          :label="$t('dataSource.retention')"
+          min-width="50">
+          <template slot-scope="props">
+            <span :class="{ 'text-disabled': props.row.status === 'stop' }">
+              {{ props.row.retention ? `${props.row.retention}${$t('天')}` : '--' }}
+            </span>
+          </template>
+        </bk-table-column>
+        <bk-table-column
           v-if="checkcFields('es_host_state')"
           :class-name="'td-status'"
           :label="$t('dataSource.es_host_state')"
@@ -382,6 +392,11 @@ export default {
       {
         id: 'collector_scenario_name',
         label: this.$t('dataSource.collector_scenario_name'),
+      },
+      // 过期时间
+      {
+        id: 'retention',
+        label: this.$t('dataSource.retention'),
       },
       // 采集状态
       {

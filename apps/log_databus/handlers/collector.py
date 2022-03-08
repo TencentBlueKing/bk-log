@@ -33,6 +33,8 @@ from apps.api.modules.bk_node import BKNodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
+from apps.utils.cache import caches_one_hour
+from apps.utils.db import array_chunk
 from apps.utils.function import map_if
 from apps.utils.thread import MultiExecuteFunc
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
@@ -54,6 +56,7 @@ from apps.log_databus.constants import (
     SEARCH_BIZ_INST_TOPO_LEVEL,
     INTERNAL_TOPO_INDEX,
     BIZ_TOPO_INDEX,
+    BULK_CLUSTER_INFOS_LIMIT,
 )
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
@@ -279,9 +282,12 @@ class CollectorHandler(object):
         return [node["bk_inst_id"] for node in nodes if node["bk_obj_id"] == node_type]
 
     @staticmethod
+    @caches_one_hour(key="bulk_cluster_info_{}", need_deconstruction_name="result_table_list")
     def bulk_cluster_infos(result_table_list: list):
         multi_execute_func = MultiExecuteFunc()
-        for rt in result_table_list:
+        table_chunk = array_chunk(result_table_list, BULK_CLUSTER_INFOS_LIMIT)
+        for item in table_chunk:
+            rt = ",".join(item)
             multi_execute_func.append(
                 rt, TransferApi.get_result_table_storage, {"result_table_list": rt, "storage_type": "elasticsearch"}
             )
@@ -299,7 +305,7 @@ class CollectorHandler(object):
         result_table_list = [_data["table_id"] for _data in data if _data.get("table_id")]
         cluster_infos = {}
         try:
-            cluster_infos = cls.bulk_cluster_infos(result_table_list)
+            cluster_infos = cls.bulk_cluster_infos(result_table_list=result_table_list)
         except ApiError as error:
             logger.exception(f"request cluster info error => [{error}]")
             cluster_infos = {}
@@ -307,10 +313,12 @@ class CollectorHandler(object):
         time_zone = get_local_param("time_zone")
         for _data in data:
             cluster_info = cluster_infos.get(
-                _data["table_id"], {"cluster_config": {"cluster_id": -1, "cluster_name": ""}}
+                _data["table_id"],
+                {"cluster_config": {"cluster_id": -1, "cluster_name": ""}, "storage_config": {"retention": 0}},
             )
             _data["storage_cluster_id"] = cluster_info["cluster_config"]["cluster_id"]
             _data["storage_cluster_name"] = cluster_info["cluster_config"]["cluster_name"]
+            _data["retention"] = cluster_info["storage_config"]["retention"]
             # table_id
             if _data.get("table_id"):
                 table_id_prefix, table_id = _data["table_id"].split(".")
@@ -1672,6 +1680,7 @@ class CollectorHandler(object):
         retention=7,
         allocation_min_days=0,
         storage_replies=1,
+        bk_app_code=settings.APP_CODE,
     ):
         collector_config_params = {
             "bk_biz_id": bk_biz_id,
@@ -1682,6 +1691,7 @@ class CollectorHandler(object):
             "category_id": category_id,
             "description": description or collector_config_name,
             "data_link_id": int(data_link_id) if data_link_id else 0,
+            "bk_app_code": bk_app_code,
         }
         # 判断是否已存在同英文名collector
         if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=bk_biz_id):
@@ -1783,7 +1793,9 @@ class CollectorHandler(object):
         etl_params = custom_config.etl_config
         etl_config = custom_config.etl_config
         fields = custom_config.fields
-        if custom_config.etl_config != self.data.etl_config:
+
+        # 可能创建报错导致没有清洗配置 导致更新失败
+        if self.data.etl_config and custom_config.etl_config != self.data.etl_config:
             collector_detail = self.retrieve()
             # need drop built in field
             collector_detail["fields"] = map_if(
