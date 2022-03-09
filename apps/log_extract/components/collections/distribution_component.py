@@ -17,11 +17,15 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import os
 import random
 
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
+
+from apps.log_extract.constants import ExtractLinkType, BKREPO_CHILD_PACKING_PATH, TransitServer
 from apps.utils.pipline import BaseService
 from apps.log_extract import constants
 from apps.log_extract.fileserver import FileServer
@@ -55,6 +59,29 @@ class FileDistributionService(BaseService):
     def _poll_status(self, task_instance_id, operator, bk_biz_id):
         return FileServer.query_task_result(task_instance_id, operator, bk_biz_id)
 
+    def _get_transit_server(self, extract_link: ExtractLink, task_id):
+        packed_dir_name = get_packed_dir_name("", task_id=task_id)
+        if extract_link.link_type == ExtractLinkType.BK_REPO.value:
+            return (
+                [
+                    TransitServer(
+                        ip=settings.BKLOG_NODE_IP,
+                        target_dir=settings.BKLOG_STORAGE_ROOT_PATH,
+                        bk_cloud_id=settings.BKLOG_CLOUD_ID,
+                    )
+                ],
+                constants.TRANSIT_SERVER_PACKING_PATH,
+                os.path.join(settings.BKLOG_STORAGE_ROOT_PATH, BKREPO_CHILD_PACKING_PATH, packed_dir_name),
+            )
+        hosts = extract_link.extractlinkhost_set.all()
+        if not hosts:
+            raise Exception(_("请配置链路中转服务器"))
+        return (
+            [TransitServer(ip=host.ip, target_dir=host.target_dir, bk_cloud_id=host.bk_cloud_id) for host in hosts],
+            constants.TRANSIT_SERVER_PACKING_PATH,
+            os.path.join(constants.TRANSIT_SERVER_DISTRIBUTION_PATH, packed_dir_name),
+        )
+
     def _execute(self, data, parent_data):
         # 更新任务状态
         task_id = data.get_one_of_inputs("task_id")
@@ -63,14 +90,11 @@ class FileDistributionService(BaseService):
         Tasks.objects.filter(task_id=task_id).update(download_status=constants.DownloadStatus.DISTRIBUTING.value)
         task = Tasks.objects.get(task_id=task_id)
         extract_link: ExtractLink = ExtractLink.objects.filter(link_id=task.link_id).first()
-        if not extract_link:
-            raise Exception(_("提取链路不存在"))
-        hosts = extract_link.extractlinkhost_set.all()
-        try:
-            transit_server: ExtractLinkHost = random.choice(hosts)
-        except IndexError:
-            raise Exception(_("请配置链路中转服务器"))
-        file_target_path = f"{constants.TRANSIT_SERVER_DISTRIBUTION_PATH}{get_packed_dir_name('', task_id)}/[FILESRCIP]"
+        transit_servers, transit_server_packing_file_path, transit_server_file_path = self._get_transit_server(
+            extract_link, task_id=task_id
+        )
+        transit_server: ExtractLinkHost = random.choice(transit_servers)
+        file_target_path = os.path.join(transit_server_file_path, "[FILESRCIP]")
         # 将文件分发到中转服务器目录
         task_result = FileServer.file_distribution(
             file_source_list=data.get_one_of_inputs("file_source_list"),
@@ -91,10 +115,8 @@ class FileDistributionService(BaseService):
         # 以下代码为下载, 中转后打包组件传递数据
         data.outputs.distribution_ip = [transit_server]
         # 输出中转后打包步骤的文件路径和打包路径
-        data.outputs.transit_server_file_path = [
-            get_packed_dir_name(constants.TRANSIT_SERVER_DISTRIBUTION_PATH, task_id)
-        ]
-        data.outputs.transit_server_packing_file_path = constants.TRANSIT_SERVER_PACKING_PATH
+        data.outputs.transit_server_file_path = [transit_server_file_path]
+        data.outputs.transit_server_packing_file_path = transit_server_packing_file_path
 
         return True
 
