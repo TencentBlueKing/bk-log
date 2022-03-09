@@ -23,7 +23,7 @@ from unittest.mock import MagicMock
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.log_extract.constants import DownloadStatus
+from apps.log_extract.constants import DownloadStatus, ExtractLinkType, TransitServer
 from apps.log_extract.models import Tasks
 from apps.log_extract.utils.packing import get_packed_dir_name
 from apps.log_extract.components.collections.distribution_component import (
@@ -42,6 +42,7 @@ class HostPatch(object):
     def __init__(self):
         self.ip = "1.1.1.1"
         self.bk_cloud_id = 1
+        self.target_dir = ""
 
     def all(self):
         return [self]
@@ -52,6 +53,7 @@ class LinkPatch(object):
 
     def __init__(self):
         self.extractlinkhost_set = HostPatch()
+        self.link_type = ExtractLinkType.COMMON.value
 
 
 class FileDistributionComponentTest(TestCase, ComponentTestMixin):
@@ -116,6 +118,7 @@ class FileDistributionComponentTest(TestCase, ComponentTestMixin):
         link_objects.return_value.first.return_value = test_link
 
         Tasks.objects.create(**params)
+        transit_server = TransitServer(ip="1.1.1.1", target_dir="", bk_cloud_id=1)
         return [
             ComponentTestCase(
                 patchers=[
@@ -137,7 +140,7 @@ class FileDistributionComponentTest(TestCase, ComponentTestMixin):
                     success=True,
                     outputs={
                         "task_instance_id": 123,
-                        "distribution_ip": test_link.extractlinkhost_set.all(),
+                        "distribution_ip": [transit_server],
                         "transit_server_file_path": [get_packed_dir_name("/data/bk_log_extract/distribution/", 123)],
                         "transit_server_packing_file_path": "/data/bk_log_extract/distribution_packing/",
                     },
@@ -147,7 +150,7 @@ class FileDistributionComponentTest(TestCase, ComponentTestMixin):
                         success=True,
                         outputs={
                             "task_instance_id": 123,
-                            "distribution_ip": test_link.extractlinkhost_set.all(),
+                            "distribution_ip": [transit_server],
                             "transit_server_file_path": [
                                 get_packed_dir_name("/data/bk_log_extract/distribution/", 123)
                             ],

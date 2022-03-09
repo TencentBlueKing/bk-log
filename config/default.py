@@ -177,6 +177,7 @@ CELERY_IMPORTS = (
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
     "apps.log_clustering.tasks.sync_pattern",
+    "apps.log_extract.tasks.extract",
 )
 
 # load logging settings
@@ -698,6 +699,9 @@ FEATURE_EXPORT_SCROLL = os.environ.get("BKAPP_FEATURE_EXPORT_SCROLL", False)
 # BCS
 PAASCC_APIGATEWAY = ""
 
+# 是否关闭权限中心校验
+IGNORE_IAM_PERMISSION = os.environ.get("BKAPP_IGNORE_IAM_PERMISSION", False)
+
 # 日志采集器配置
 # 日志文件多久没更新则不再读取
 COLLECTOR_CLOSE_INACTIVE = 86400
@@ -749,6 +753,9 @@ BKREPO_PASSWORD = os.getenv("BKREPO_PASSWORD") or os.getenv("BKAPP_BKREPO_PASSWO
 BKREPO_PROJECT = os.getenv("BKREPO_PROJECT") or os.getenv("BKAPP_BKREPO_PROJECT")
 BKREPO_BUCKET = os.getenv("BKREPO_BUCKET") or os.getenv("BKAPP_BKREPO_BUCKET")
 
+BKLOG_NODE_IP = os.getenv("BK_BKLOG_NODE_IP")
+BKLOG_STORAGE_ROOT_PATH = os.getenv("BK_BKLOG_STORAGE_ROOT_PATH")
+BKLOG_CLOUD_ID = os.getenv("BK_BKLOG_CLOUD_ID", 0)
 # custom report
 CUSTOM_REPORT_TYPE = os.getenv("BKAPP_CUSTOM_REPORT_TYPE", "log")
 

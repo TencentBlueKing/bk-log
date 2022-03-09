@@ -315,6 +315,9 @@ class Permission(object):
             from apps.log_search.models import ProjectInfo
 
             business_list = ProjectInfo.objects.all()
+        # 跳过权限检验
+        if settings.IGNORE_IAM_PERMISSION:
+            return business_list
 
         # 拉取策略
         request = self.make_request(action=action)
