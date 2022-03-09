@@ -1307,6 +1307,7 @@ export default {
     notEntered: 'Not Entered',
     helpDocument: 'Help Document',
     instructions: 'Instructions',
+    esID: 'ES cluster ID',
   },
   exportHistory: {
     downloadLog: 'Download log',

@@ -1032,7 +1032,7 @@ class SearchHandler(object):
                     "storage_cluster_id": self.storage_cluster_id,
                 }
             )
-            property_dict: dict = MappingHandlers.find_property_dict_first(mapping_from_es)
+            property_dict: dict = MappingHandlers.find_property_dict(mapping_from_es)
             fields_result: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
             fields_from_es: list = [
                 {
