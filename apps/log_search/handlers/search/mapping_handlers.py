@@ -686,15 +686,26 @@ class MappingHandlers(object):
         return date_candidate
 
     @classmethod
-    def get_property_dict(cls, dict_item, match_key="properties"):
+    def get_property_dict(cls, dict_item, prefix_key="", match_key="properties"):
         """
-        根据ES-mapping获取首个properties的字段列表
+        根据ES-mapping递归获取所有properties的字段列表
         """
+        result = {}
         if match_key in dict_item:
-            return dict_item[match_key]
+            property_dict = dict_item[match_key]
+            for k, v in property_dict.items():
+                p_key = k
+                if prefix_key:
+                    p_key = "{}.{}".format(prefix_key, k)
+                if match_key in v:
+                    result.update(cls.get_property_dict(v, prefix_key=p_key, match_key=match_key))
+                else:
+                    result[p_key] = v
+            return result
+
         for _key, _value in dict_item.items():
             if isinstance(_value, dict):
-                result = cls.get_property_dict(_value, match_key)
+                result = cls.get_property_dict(_value, prefix_key, match_key)
                 if result:
                     return result
         return None
