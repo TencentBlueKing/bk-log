@@ -514,15 +514,13 @@ export default {
     },
     projectId: {
       handler() {
-        if (this.showSearchPage) {
-          this.indexId = '';
-          this.requestFavoriteList();
-          this.indexSetList.splice(0);
-          this.favoriteList.splice(0);
-          this.totalFields.splice(0);
-          this.retrieveParams.bk_biz_id = this.bkBizId;
-          this.fetchPageData();
-        }
+        this.indexId = '';
+        this.requestFavoriteList();
+        this.indexSetList.splice(0);
+        this.favoriteList.splice(0);
+        this.totalFields.splice(0);
+        this.retrieveParams.bk_biz_id = this.bkBizId;
+        this.fetchPageData();
       },
       immediate: true,
     },
