@@ -103,7 +103,7 @@ class AsyncExportHandlers(object):
 
     def _get_search_url(self):
         request = get_request()
-        project_id = ProjectInfo.objects.get(bk_biz_id=self.search_dict["bk_biz_id"]).project_id
+        project_id = ProjectInfo.objects.filter(bk_biz_id=self.search_dict["bk_biz_id"]).first().project_id
         search_dict = copy.deepcopy(self.search_dict)
         search_dict["projectId"] = project_id
         if "host_scopes" in search_dict:
