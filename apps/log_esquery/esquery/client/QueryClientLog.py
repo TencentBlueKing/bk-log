@@ -39,6 +39,7 @@ from apps.log_esquery.exceptions import (
     EsException,
 )
 from apps.log_esquery.type_constants import type_mapping_dict
+from apps.utils.cache import cache_five_minute
 from apps.utils.log import logger
 from apps.log_databus.models import CollectorConfig
 from apps.utils.thread import MultiExecuteFunc
@@ -155,7 +156,7 @@ class QueryClientLog(QueryClientTemplate):
         return new_index_list[-1]
 
     def _get_connection(self, index: str):
-        self.host, self.port, self.username, self.password, self.version, self.schema = self._connect_info(index)
+        self.host, self.port, self.username, self.password, self.version, self.schema = self._connect_info(index=index)
         self._active: bool = False
 
         if not self.host or not self.port:
@@ -199,7 +200,8 @@ class QueryClientLog(QueryClientTemplate):
             self._active = True
 
     @staticmethod
-    def _connect_info(index: str) -> tuple:
+    @cache_five_minute("_connect_info_{index}", need_md5=True)
+    def _connect_info(index: str = "") -> tuple:
         transfer_api_response: dict = TransferApi.get_result_table_storage(
             {"result_table_list": index, "storage_type": "elasticsearch"}
         )
@@ -254,8 +256,8 @@ class QueryClientLog(QueryClientTemplate):
 
         # 补充索引集群信息
         if with_storage and index_list:
-            indices = ",".join([_collect.table_id for _collect in collect_obj])
-            storage_info = cls.bulk_cluster_infos(indices)
+            indices = [_collect.table_id for _collect in collect_obj]
+            storage_info = cls.bulk_cluster_infos(result_table_list=indices)
             for _index in index_list:
                 cluster_config = storage_info.get(_index["result_table_id"], {}).get("cluster_config", {})
                 _index.update(
@@ -267,7 +269,8 @@ class QueryClientLog(QueryClientTemplate):
         return index_list
 
     @staticmethod
-    def bulk_cluster_infos(result_table_list: list):
+    @cache_five_minute("bulk_cluster_info_{result_table_list}", need_md5=True)
+    def bulk_cluster_infos(result_table_list: list = None):
         multi_execute_func = MultiExecuteFunc()
         for rt in result_table_list:
             multi_execute_func.append(
@@ -279,7 +282,8 @@ class QueryClientLog(QueryClientTemplate):
             cluster_infos.update(cluster_info)
         return cluster_infos
 
-    def get_cluster_info(self, result_table_id):
+    @cache_five_minute("get_cluster_info_{result_table_id}", need_md5=True)
+    def get_cluster_info(self, result_table_id=None):
         result_table_id = result_table_id.split(",")[0]
         # 并发查询所需的配置
         multi_execute_func = MultiExecuteFunc()

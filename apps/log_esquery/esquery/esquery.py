@@ -307,7 +307,7 @@ class EsQuery(object):
             scenario_id,
             storage_cluster_id=storage_cluster_id,
         ).get_instance()
-        return client.get_cluster_info(indices)
+        return client.get_cluster_info(result_table_id=indices)
 
     def cat_indices(self):
         scenario_id, indices, storage_cluster_id = self._init_common_args()

@@ -5,6 +5,8 @@ importlib-metadata==3.4.0
 ujson==4.1.0
 
 Django==2.2.6
+# 单元测试
+django-fakeredis==0.1.2
 requests==2.22.0
 celery==4.4.7
 redis==3.2.0

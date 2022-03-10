@@ -244,6 +244,7 @@ export default {
   文本: 'Text',
   时间: 'Date',
   布尔: 'Bool',
+  冲突字段: 'Conflict field',
   确定: 'Confirm',
   提取链路: 'Extract Link',
   新建提取链路: 'Create Extract Link',
@@ -751,6 +752,7 @@ export default {
     tips_business: ' This business has exceeded the cluster capacity limit, please contact the development team or use an independent cluster',
     tips_formula: ' ES storage ≈ daily raw log volume * 1.5 (ES conversion rate) * 2 (1 copy) * storage days',
     dataId: 'Data ID',
+    retention: 'Expiration time',
   },
   新建数据源: 'Create Data Source',
   编辑数据源: 'Edit Data Source',
@@ -1305,6 +1307,7 @@ export default {
     notEntered: 'Not Entered',
     helpDocument: 'Help Document',
     instructions: 'Instructions',
+    esID: 'ES cluster ID',
   },
   exportHistory: {
     downloadLog: 'Download log',

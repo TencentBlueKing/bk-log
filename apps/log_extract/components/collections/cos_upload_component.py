@@ -17,15 +17,18 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import os
+
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from pipeline.component_framework.component import Component
 from pipeline.core.flow import StaticIntervalGenerator, Service
-from apps.log_extract.constants import DownloadStatus
+from apps.log_extract.constants import DownloadStatus, ExtractLinkType
 from apps.log_extract.fileserver import FileServer
 from apps.log_extract.models import Tasks, ExtractLink
 from apps.utils.pipline import BaseService
 from apps.log_extract.utils.packing import get_packed_file_name
+from apps.utils.remote_storage import BKREPOStorage
 
 
 class CosUploadService(BaseService):
@@ -92,6 +95,14 @@ class CosUploadService(BaseService):
         for item in FileServer.get_detail_for_ips(query_result):
             if item["exit_code"] != 0:
                 raise Exception(_("上传网盘异常: {}").format(FileServer.get_job_tag(query_result)))
+
+        # 如果是提取链路bkrepo类型 需要上传bkrepo
+        if extract_link.link_type == ExtractLinkType.BK_REPO.value:
+            transit_server = data.get_one_of_inputs("transit_server")[0]
+            cos_pack_file_name = get_packed_file_name(task_id)
+            BKREPOStorage().export_upload(
+                file_path=os.path.join(transit_server.target_dir, cos_pack_file_name), file_name=cos_pack_file_name
+            )
 
         task.download_status = DownloadStatus.DOWNLOADABLE.value
         task.cos_file_name = data.get_one_of_outputs("pack_file_name")

@@ -42,7 +42,6 @@ from apps.log_search.constants import (
     SCROLL,
     MAX_RESULT_WINDOW,
     MAX_SEARCH_SIZE,
-    BK_BCS_APP_CODE,
     ASYNC_SORTED,
     FieldDataTypeEnum,
     MAX_EXPORT_REQUEST_RETRY,
@@ -312,10 +311,8 @@ class SearchHandler(object):
     def bcs_web_console(self, field_result_list):
         if not self._enable_bcs_manage():
             return False
-        if (
-            LogIndexSet.objects.get(index_set_id=self.index_set_id).source_app_code == BK_BCS_APP_CODE
-            and "cluster" in field_result_list
-            and "container_id" in field_result_list
+        if ("cluster" in field_result_list and "container_id" in field_result_list) or (
+            "__ext.container_id" in field_result_list and "__ext.io_tencent_bcs_cluster" in field_result_list
         ):
             return True
         return False
@@ -610,7 +607,7 @@ class SearchHandler(object):
     @staticmethod
     def get_bcs_manage_url(cluster_id, container_id):
 
-        bcs_cluster_info = PaasCcApi.get_cluster_by_cluster_id({"cluster_id": cluster_id})
+        bcs_cluster_info = PaasCcApi.get_cluster_by_cluster_id({"cluster_id": cluster_id.upper()})
         project_id = bcs_cluster_info["project_id"]
         url = (
             settings.BCS_WEB_CONSOLE_DOMAIN + "backend/web_console/projects/{project_id}/clusters/{cluster_id}/"
@@ -1035,7 +1032,7 @@ class SearchHandler(object):
                     "storage_cluster_id": self.storage_cluster_id,
                 }
             )
-            property_dict: dict = MappingHandlers.find_property_dict_first(mapping_from_es)
+            property_dict: dict = MappingHandlers.find_property_dict(mapping_from_es)
             fields_result: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
             fields_from_es: list = [
                 {

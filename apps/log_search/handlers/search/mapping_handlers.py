@@ -353,9 +353,10 @@ class MappingHandlers(object):
         index_es_rt: str = self.indices.replace(".", "_")
         index_es_rts = index_es_rt.split(",")
         mapping_group: dict = self._mapping_group(index_es_rts, mapping_result)
-        return [self.find_property_dict_first(mapping_list) for mapping_list in mapping_group.values()]
+        return [self.find_property_dict(mapping_list) for mapping_list in mapping_group.values()]
 
-    def _merge_property(self, propertys: list):
+    @classmethod
+    def _merge_property(cls, propertys: list):
         merge_dict = {}
         for property in propertys:
             for property_key, property_define in property.items():
@@ -363,10 +364,9 @@ class MappingHandlers(object):
                     merge_dict[property_key] = property_define
                     continue
                 if merge_dict[property_key]["type"] != property_define["type"]:
+                    merge_dict[property_key]["type"] = "conflict"
                     merge_dict[property_key]["is_conflict"] = True
-        return {
-            property_key: property for property_key, property in merge_dict.items() if not property.get("is_conflict")
-        }
+        return {property_key: property for property_key, property in merge_dict.items()}
 
     def _mapping_group(self, index_result_tables: list, mapping_result: list):
         # 第三方不合并mapping
@@ -387,20 +387,19 @@ class MappingHandlers(object):
         return mapping_group
 
     @classmethod
-    def find_property_dict_first(cls, result_list: list) -> Dict:
+    def find_property_dict(cls, result_list: list) -> Dict:
         """
         获取最新索引mapping
         :param result_list:
         :return:
         """
         sorted_result_list = sorted(result_list, key=functools.cmp_to_key(cls.compare_indices_by_date), reverse=True)
-        property_result_dict: dict = {}
+        property_list = []
         for _inner_dict in sorted_result_list:
             property_dict = cls.get_property_dict(_inner_dict)
             if property_dict:
-                property_result_dict = property_dict
-                break
-        return property_result_dict
+                property_list.append(property_dict)
+        return cls._merge_property(property_list)
 
     def _combine_description_field(self, fields_list=None, scope=None):
         if fields_list is None:
@@ -610,6 +609,7 @@ class MappingHandlers(object):
             {"gseindex", "container_id", "logfile", "_iteration_idx"},
             {"gseIndex", "serverIp", "path", "_iteration_idx"},
             {"gseIndex", "serverIp", "path", "iterationIndex"},
+            {"gseIndex", "path", "iterationIndex", "__ext.container_id"},
         ]
         if any(fields_list.issuperset(judge) for judge in context_and_realtime_judge_fields):
             context_search_usable = True
@@ -686,15 +686,26 @@ class MappingHandlers(object):
         return date_candidate
 
     @classmethod
-    def get_property_dict(cls, dict_item, match_key="properties"):
+    def get_property_dict(cls, dict_item, prefix_key="", match_key="properties"):
         """
-        根据ES-mapping获取首个properties的字段列表
+        根据ES-mapping递归获取所有properties的字段列表
         """
+        result = {}
         if match_key in dict_item:
-            return dict_item[match_key]
+            property_dict = dict_item[match_key]
+            for k, v in property_dict.items():
+                p_key = k
+                if prefix_key:
+                    p_key = "{}.{}".format(prefix_key, k)
+                if match_key in v:
+                    result.update(cls.get_property_dict(v, prefix_key=p_key, match_key=match_key))
+                else:
+                    result[p_key] = v
+            return result
+
         for _key, _value in dict_item.items():
             if isinstance(_value, dict):
-                result = cls.get_property_dict(_value, match_key)
+                result = cls.get_property_dict(_value, prefix_key, match_key)
                 if result:
                     return result
         return None

@@ -158,9 +158,9 @@ export default {
       this.getInterval();
       return this.$store.state.retrieve.chartKey;
     },
-    chartInterval() {
-      return this.retrieveParams.interval;
-    },
+    // chartInterval() {
+    //   return this.retrieveParams.interval;
+    // },
   },
   watch: {
     chartKey: {
@@ -179,9 +179,13 @@ export default {
     finishPolling(newVal) {
       this.$emit('change-queue-res', newVal);
     },
+    'retrieveParams.interval'(newVal) {
+      this.chartInterval = newVal;
+    },
   },
   mounted() {
     window.bus.$on('openChartLoading', this.openChartLoading);
+    this.chartInterval = this.retrieveParams.interval;
   },
   beforeDestroy() {
     window.bus.$on('openChartLoading', this.openChartLoading);

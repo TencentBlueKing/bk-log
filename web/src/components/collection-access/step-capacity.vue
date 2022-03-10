@@ -509,7 +509,7 @@ export default {
     }
 
     .button-container {
-      padding: 0 60px;
+      padding: 0 60px 100px;
 
       .king-submit-button {
         min-width: 86px;

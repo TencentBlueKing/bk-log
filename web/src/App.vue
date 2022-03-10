@@ -69,7 +69,7 @@
           <router-view class="manage-content" :key="routerKey"></router-view>
         </div>
       </bk-navigation>
-      <router-view v-else-if="!pageLoading" class="manage-content" :key="routerKey"></router-view>
+      <router-view v-else-if="!pageLoading && !authPageInfo" class="manage-content" :key="routerKey"></router-view>
       <novice-guide
         v-if="displayRetrieve"
         :data="guideStep"

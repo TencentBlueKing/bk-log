@@ -336,6 +336,8 @@ class CustomTypeEnum(ChoicesEnum):
         render_context = {"otlp_report_config": render_otlp_report_config()}
         result = []
         for key, value in cls.get_dict_choices().items():
+            if key not in settings.CUSTOM_REPORT_TYPE.split(","):
+                continue
             introduction = cls._custom_introductions.value.get(key, "").format(**render_context)
             result.append({"id": key, "name": value, "introduction": markdown.markdown(introduction)})
         return result
