@@ -36,7 +36,7 @@ def get_logging_config_dict(settings_module):
     else:
         log_dir = settings_module.get("LOG_DIR_PREFIX", "/app/v3logs/")
         # rand_str = "".join(random.sample(string.ascii_letters + string.digits, 4))
-        rand_str = "with"
+        rand_str = "with"  # 这里固定字符串，如果随机的话，会导致日志文件太多，在worker的场景下，会不停重启，另外长期运行的也会，日志轮转没办法管理
         log_name_prefix = "{}-{}".format(os.getenv("BKPAAS_PROCESS_TYPE"), rand_str)
 
         logging_format = {
