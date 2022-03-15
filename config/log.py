@@ -36,8 +36,8 @@ def get_logging_config_dict(settings_module):
     else:
         log_dir = settings_module.get("LOG_DIR_PREFIX", "/app/v3logs/")
         # rand_str = "".join(random.sample(string.ascii_letters + string.digits, 4))
-        # log_name_prefix = "{}-{}".format(os.getenv("BKPAAS_PROCESS_TYPE"), rand_str)
-        log_name_prefix = os.getenv("BKPAAS_PROCESS_TYPE", "")
+        rand_str = "with"
+        log_name_prefix = "{}-{}".format(os.getenv("BKPAAS_PROCESS_TYPE"), rand_str)
 
         logging_format = {
             "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
