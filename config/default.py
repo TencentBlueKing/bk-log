@@ -19,7 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import sys
 
-from blueapps.conf.log import get_logging_config_dict
+from config.log import get_logging_config_dict
 from blueapps.conf.default_settings import *  # noqa
 from django.utils.translation import ugettext_lazy as _
 
