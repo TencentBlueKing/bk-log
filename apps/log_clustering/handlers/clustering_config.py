@@ -178,14 +178,14 @@ class ClusteringConfigHandler(object):
                 collector_handler.data, mq_topic=topic, mq_partition=partition
             )
             self.data.save()
+        # 设置request线程变量
+        activate_request(generate_request())
+
         collector_detail = collector_handler.retrieve(use_request=False)
 
         # need drop built in field
         collector_detail["fields"] = map_if(collector_detail["fields"], if_func=lambda field: not field["is_built_in"])
         from apps.log_databus.handlers.etl import EtlHandler
-
-        # 设置request线程变量
-        activate_request(generate_request())
 
         EtlHandler(self.data.collector_config_id).update_or_create(
             collector_detail["etl_config"],

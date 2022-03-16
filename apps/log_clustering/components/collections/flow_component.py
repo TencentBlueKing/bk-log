@@ -24,8 +24,6 @@ from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 
 from apps.api import CmsiApi
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
 from apps.log_clustering.handlers.clustering_monitor import ClusteringMonitorHandler
 from apps.log_clustering.handlers.dataflow.dataflow_handler import DataFlowHandler
 from apps.log_clustering.models import ClusteringConfig
@@ -141,9 +139,9 @@ class CreateNewClsStrategyService(BaseService):
         collector_config_id = data.get_one_of_inputs("collector_config_id")
         log_index_set = LogIndexSet.objects.filter(collector_config_id=collector_config_id).first()
         LogIndexSet.set_tag(log_index_set.index_set_id, InnerTag.CLUSTERING.value)
+        clustering_config = ClusteringConfig.objects.filter(collector_config_id=collector_config_id).first()
         if log_index_set:
-            conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
-            bk_biz_id = conf.get("bk_biz_id")
+            bk_biz_id = clustering_config.bk_biz_id
             ClusteringMonitorHandler(
                 index_set_id=log_index_set.index_set_id, bk_biz_id=bk_biz_id
             ).create_new_cls_strategy()

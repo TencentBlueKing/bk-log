@@ -297,7 +297,7 @@ class DataFlowHandler(BaseAiopsHandler):
         result = BkDataDataFlowApi.create_flow(request_dict)
         clustering_config.after_treat_flow = after_treat_flow_dict
         clustering_config.after_treat_flow_id = result["flow_id"]
-        clustering_config.new_cls_pattern_rt = (after_treat_flow_dict["diversion"]["result_table_id"],)
+        clustering_config.new_cls_pattern_rt = after_treat_flow_dict["diversion"]["result_table_id"]
         clustering_config.save()
         self.add_kv_source_node(
             clustering_config.after_treat_flow_id,
