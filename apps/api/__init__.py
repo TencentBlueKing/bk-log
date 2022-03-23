@@ -79,6 +79,9 @@ BkItsmApi = SimpleLazyObject(lambda: new_api_module("bk_itsm", "_BkItsm"))
 # BcsCC
 BcsCcApi = SimpleLazyObject(lambda: new_api_module("bcs_cc", "_BcsCcApi"))
 
+# BcsApi
+BcsApi = SimpleLazyObject(lambda: new_api_module("bcs", "_BcsApi"))
+
 # BkSSM
 BkSSMApi = SimpleLazyObject(lambda: new_api_module("bk_ssm", "_BkSSM"))
 
@@ -103,6 +106,7 @@ __all__ = [
     "GrafanaApi",
     "IAMApi",
     "BcsCcApi",
+    "BcsApi",
     "BkItsmApi",
     "BkSSMApi",
 ]

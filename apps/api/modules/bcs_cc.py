@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import json
 
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import BkSSMApi
@@ -29,9 +30,10 @@ from apps.api.base import DataAPI
 
 def bcs_cc_before_request(params):
     params = add_esb_info_before_request(params)
-    bkssm_access_token = BkSSMApi.get_access_token({"grant_type": "client_credentials", "id_provider": "client"})
-    access_token = bkssm_access_token["access_token"]
-    params["X-BKAPI-AUTHORIZATION"] = json.dumps({"access_token": access_token})
+    if settings.BCS_CC_SSM_SWITCH:
+        bkssm_access_token = BkSSMApi.get_access_token({"grant_type": "client_credentials", "id_provider": "client"})
+        access_token = bkssm_access_token["access_token"]
+        params["X-BKAPI-AUTHORIZATION"] = json.dumps({"access_token": access_token})
     return params
 
 

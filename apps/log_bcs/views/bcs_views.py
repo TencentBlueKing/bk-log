@@ -21,34 +21,12 @@ from rest_framework.response import Response
 
 from apps.generic import APIViewSet
 from apps.log_bcs.handlers.bcs_handler import BcsHandler
-from apps.log_bcs.serializers import OpenBcsLogSerializer
 from apps.utils.drf import detail_route
 
 
 class BcsViewSet(APIViewSet):
     lookup_field = "bk_biz_id"
     serializer_class = serializers.Serializer
-
-    @detail_route(methods=["POST"])
-    def open_bcs_log(self, request, bk_biz_id):
-        """
-        @api {POST} /bcs/$bk_biz_id/open_bcs_log/ 开启bcs日志采集
-        @apiName open_bcs_log
-        @apiGroup Bcs
-        @apiDescription 开启bcs日志采集
-        @apiParam {Int} bk_biz_id 业务ID
-        @apiParam {String} cluster_id 集群ID
-        @apiParam {String} project_id 项目ID
-        @apiSuccessExample {json} 成功返回:
-        {
-            "result": true,
-            "data": null,
-            "code": 0,
-            "message": ""
-        }
-        """
-        params = self.params_valid(OpenBcsLogSerializer)
-        return Response(BcsHandler().register_bklog_to_bcs(params["cluster_id"], params["project_id"], bk_biz_id))
 
     @detail_route(methods=["GET"])
     def list_cluster(self, request, bk_biz_id):

@@ -675,11 +675,8 @@ ES_COMPATIBILITY = int(os.environ.get("BKAPP_ES_COMPATIBILITY", 0))
 FEATURE_EXPORT_SCROLL = os.environ.get("BKAPP_FEATURE_EXPORT_SCROLL", False)
 
 # BCS
-BCS_BKLOG_HOST_PATH = os.environ.get("BKAPP_BCS_HOST_PATH", "/var/host")
-BCS_BKLOG_NAMESPACE = os.getenv("BKAPP_BCS_BKLOG_NAMESPACE", "bk-log")
-BCS_GSE_ENDPONIT = os.getenv("BKAPP_BCS_GSE_ENDPOINT", "/var/run/ipc.state.report")
-BCS_BKUNIFYLOGBEAT_IMAGE = os.getenv("BKAPP_BCS_BKUNIFYLOGBEAT_IMAGE", "")
-BCS_BK_LOG_SIDECAR_IMAGE = os.getenv("BCS_BK_LOG_SIDECAR_IMAGE", "")
+BCS_API_GATEWAY_TOKEN = os.getenv("BKAPP_BCS_API_GATEWAY_TOKEN", "")
+BCS_CC_SSM_SWITCH = os.getenv("BKAPP_BCS_CC_SSM_SWITCH", "off") == "on"
 
 # 日志采集器配置
 # 日志文件多久没更新则不再读取

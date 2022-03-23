@@ -16,29 +16,3 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.db import models
-
-from apps.models import SoftDeleteModel
-from django.utils.translation import ugettext_lazy as _
-
-
-class BcsClusterInfo(SoftDeleteModel):
-    cluster_id = models.CharField(_("集群ID"), max_length=128, primary_key=True)
-    bk_biz_id = models.IntegerField(_("业务ID"))
-    project_id = models.CharField(_("项目ID"), max_length=128)
-    is_active = models.BooleanField(_("是否开启日志采集"), default=True)
-
-    @classmethod
-    def active_bcs_cluster(cls, cluster_id, bk_biz_id, project_id):
-        qs = cls.objects.filter(cluster_id=cluster_id)
-        if qs.exists():
-            qs.update(is_active=True)
-            return
-        cls.objects.create(cluster_id=cluster_id, bk_biz_id=bk_biz_id, project_id=project_id)
-
-    @classmethod
-    def stop_bcs_cluster(cls, cluster_id):
-        qs = cls.objects.filter(cluster_id=cluster_id)
-        if not qs.exists():
-            return
-        qs.update(is_active=False)
