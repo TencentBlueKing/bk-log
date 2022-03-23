@@ -208,11 +208,11 @@ class ProjectInfo(SoftDeleteModel):
 
     @classmethod
     def get_biz(cls, biz_id=None):
-        try:
-            project = ProjectInfo.objects.get(bk_biz_id=biz_id)
-        except ProjectInfo.DoesNotExist:
+        projects = ProjectInfo.objects.filter(bk_biz_id=biz_id)
+        if not projects.exists():
             raise BizNotExistError(BizNotExistError.MESSAGE.format(bk_biz_id=biz_id))
 
+        project = projects.first()
         return {"bk_biz_id": project.bk_biz_id, "bk_biz_name": project.project_name}
 
     class Meta:

@@ -1285,6 +1285,7 @@ export default {
     notStarted: '未开始',
     restoring: '回溯中',
     isExpired: '是否过期',
+    esID: 'ES集群ID',
   },
   customReport: {
     reportCreate: '新建自定义上报',

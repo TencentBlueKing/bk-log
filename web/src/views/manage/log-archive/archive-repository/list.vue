@@ -50,7 +50,7 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column label="ID" width="80">
+        <bk-table-column :label="$t('logArchive.esID')" width="120">
           <template slot-scope="props">
             {{ props.row.cluster_id }}
           </template>
