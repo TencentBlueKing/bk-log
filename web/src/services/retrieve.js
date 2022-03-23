@@ -107,6 +107,10 @@ const getSearchHistory = {
   url: '/search/index_set/:index_set_id/history/',
   method: 'get',
 };
+const getExportHistoryList = {
+  url: '/search/index_set/:index_set_id/export_history/?bk_biz_id=:bk_biz_id&page=:page&pagesize=:pagesize&show_all=:show_all',
+  method: 'get',
+};
 
 export {
   getIndexSetList,
@@ -130,4 +134,5 @@ export {
   postFieldsConfig,
   getWebConsoleUrl,
   getSearchHistory,
+  getExportHistoryList,
 };

@@ -63,6 +63,23 @@ const footer = {
   method: 'get',
 };
 
+// 获取新人指引
+const getUserGuide = {
+  url: '/meta/user_guide/',
+  method: 'get',
+};
+
+// 更新新人指引
+const updateUserGuide = {
+  url: '/meta/update_user_guide/',
+  method: 'post',
+};
+
+// 环境变量
+const getEnvConstant = {
+  url: '/meta/index_html_environment/',
+};
+
 export {
   type,
   language,
@@ -71,4 +88,7 @@ export {
   menu,
   footer,
   getMaintainerApi,
+  getUserGuide,
+  updateUserGuide,
+  getEnvConstant,
 };

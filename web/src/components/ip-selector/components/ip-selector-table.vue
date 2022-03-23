@@ -41,6 +41,7 @@
       v-if="showSelectionColumn">
       <template #default="{ row }">
         <bk-checkbox
+          :key="pagination.current"
           :checked="getCheckedStatus(row)"
           :disabled="getDisabledStatus(row)"
           @change="handleRowCheckChange(row, $event)">
@@ -69,6 +70,7 @@
     </bk-table-column>
   </bk-table>
 </template>
+
 <script lang="ts">
 import { Vue, Component, Prop, Emit, Watch } from 'vue-property-decorator'
 import SelectionColumn from '../components/selection-column.vue'
@@ -232,6 +234,7 @@ export default class IpSelectorTable extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .topo-table {
     &::before {

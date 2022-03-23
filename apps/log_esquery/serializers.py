@@ -49,6 +49,10 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
     time_field_type = serializers.CharField(required=False, default="date", allow_blank=True, allow_null=True)
     time_field_unit = serializers.CharField(required=False, default="second", allow_blank=True, allow_null=True)
 
+    use_time_range = serializers.BooleanField(
+        default=True,
+        label=_("默认使用time_range的方式检索"),
+    )
     include_start_time = serializers.BooleanField(default=True, label=_("是否包含开始时间点(gte/gt)"))
     include_end_time = serializers.BooleanField(default=True, label=_("是否包含结束时间点(lte/lt)"))
     start_time = serializers.CharField(required=False, default="", allow_blank=True, allow_null=True)
@@ -129,10 +133,11 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
                 field: str = __filter.get("key") if __filter.get("key") else __filter.get("field")
                 value = __filter.get("value")
                 operator: str = __filter.get("method") if __filter.get("method") else __filter.get("operator")
-                if isinstance(value, list):
+
+                if isinstance(value, list) and len(value):  # pylint:len-as-condition
                     value = ",".join([str(v) for v in value])
 
-                if field and operator and value:
+                if field and operator and value or isinstance(value, str):
                     if operator in ["is", "eq"]:
                         new_value = value
                     elif operator == "is one of":

@@ -69,12 +69,17 @@ def get_request_username():
     获取请求的用户名
     """
     from apps.utils.function import ignored
+
     username = ""
     with ignored(Exception):
         username = get_request().user.username
     if not username and "celery" in sys.argv:
         username = "admin"
     return username
+
+
+def set_request_username(username):
+    set_local_param("request.username", username)
 
 
 def get_request_app_code():

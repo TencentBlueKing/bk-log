@@ -20,6 +20,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import copy
 import json
 
+from blueapps.middleware.xss.decorators import escape_exempt
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -50,7 +51,7 @@ from apps.grafana.serializers import (
 from apps.iam import ActionEnum, Permission, ResourceEnum
 from apps.iam.handlers.drf import BusinessActionPermission, InstanceActionPermission
 from apps.log_search.handlers.biz import BizHandler
-from bk_dataview.grafana.views import ProxyView
+from bk_dataview.grafana.views import ProxyView, SwitchOrgView
 
 
 class GrafanaProxyView(ProxyView):
@@ -65,6 +66,7 @@ class GrafanaProxyView(ProxyView):
             has_manage_permission = Permission().is_allowed(
                 action=ActionEnum.MANAGE_DASHBOARD,
                 resources=[ResourceEnum.BUSINESS.create_instance(request.org_name)],
+                raise_exception=True,
             )
             if has_manage_permission or request.user.is_superuser:
                 headers["X-WEBAUTH-USER"] = "admin"
@@ -88,6 +90,8 @@ class GrafanaProxyView(ProxyView):
         return response
 
 
+@method_decorator(escape_exempt, name="dispatch")
+@method_decorator(csrf_exempt, name="dispatch")
 class GrafanaTraceViewSet(APIViewSet):
     lookup_field = "index_set_id"
 
@@ -136,7 +140,7 @@ class GrafanaViewSet(APIViewSet):
     def get_permissions(self):
         if settings.BKAPP_IS_BKLOG_API:
             # 只在后台部署时做白名单校验
-            auth_info = JwtPermission.get_auth_info(self.request, raise_exception=False)
+            auth_info = JwtPermission.get_auth_info(self.request)
             # ESQUERY白名单不需要鉴权
             if auth_info and auth_info["bk_app_code"] in settings.ESQUERY_WHITE_LIST:
                 return []
@@ -452,3 +456,7 @@ class GrafanaViewSet(APIViewSet):
         params = self.get_validated_data()
         data = GrafanaQueryHandler(params["bk_biz_id"]).get_variable_value(params["type"], params["params"])
         return Response(data)
+
+
+class ExploreViewSet(SwitchOrgView):
+    permission_classes = ["apps.grafana.permissions.ExplorePermission"]

@@ -43,6 +43,9 @@ class DslBkDataCreateSearchContextBody(object):
         container_id = kwargs.get("container_id", "")
         logfile = kwargs.get("logfile", "")
 
+        # 日志链路容器字段
+        ext_container_id = kwargs.get("__ext", {}).get("container_id", "")
+
         self._body = None
         body_data = copy.deepcopy(BODY_DATA_FOR_CONTEXT)
 
@@ -112,6 +115,18 @@ class DslBkDataCreateSearchContextBody(object):
                     }
                 },
             ]
+
+        if ext_container_id:
+            body_data["query"]["bool"]["must"].append(
+                {
+                    "match": {
+                        "__ext.container_id": {
+                            "query": ext_container_id,
+                            "operator": "and",
+                        }
+                    }
+                }
+            )
 
         body_data["size"] = size
 
@@ -210,6 +225,9 @@ class DslBkDataCreateSearchTailBody:
         logfile = kwargs.get("logfile", "")
         zero = kwargs.get("zero", False)
 
+        # 日志链路容器字段
+        ext_container_id = kwargs.get("__ext", {}).get("container_id", "")
+
         self._body = None
         body_data = copy.deepcopy(BODY_DATA_FOR_CONTEXT)
 
@@ -279,6 +297,18 @@ class DslBkDataCreateSearchTailBody:
                     }
                 },
             ]
+
+        if ext_container_id:
+            body_data["query"]["bool"]["must"].append(
+                {
+                    "match": {
+                        "__ext.container_id": {
+                            "query": ext_container_id,
+                            "operator": "and",
+                        }
+                    }
+                }
+            )
 
         if zero:
             body_data["size"] = 500

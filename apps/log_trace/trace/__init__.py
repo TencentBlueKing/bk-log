@@ -18,6 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import json
+import threading
 from typing import Collection
 
 import MySQLdb
@@ -34,9 +35,10 @@ from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace import TracerProvider, ReadableSpan
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import Span, Status, StatusCode
+from opentelemetry.sdk.trace.sampling import ALWAYS_OFF, DEFAULT_OFF
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
@@ -49,17 +51,30 @@ def requests_callback(span: Span, response):
         return
     if not isinstance(json_result, dict):
         return
-    result = json_result.get("result")
-    if result is None:
-        return
-    span.set_attribute("result_code", json_result.get("code", 0))
-    span.set_attribute("blueking_esb_request_id", json_result.get("request_id", ""))
+
+    # NOTE: esb got a result, but apigateway  /iam backend / search-engine got not result
+    code = json_result.get("code", 0)
+    span.set_attribute("result_code", code)
     span.set_attribute("result_message", json_result.get("message", ""))
     span.set_attribute("result_errors", str(json_result.get("errors", "")))
-    if result:
+    try:
+        request_id = (
+            # new esb and apigateway
+            response.headers.get("x-bkapi-request-id")
+            # iam backend
+            or response.headers.get("x-request-id")
+            # old esb
+            or json_result.get("request_id", "")
+        )
+        if request_id:
+            span.set_attribute("bk.request_id", request_id)
+    except Exception:  # pylint: disable=broad-except
+        pass
+
+    if code in [0, "0", "00"]:
         span.set_status(Status(StatusCode.OK))
-        return
-    span.set_status(Status(StatusCode.ERROR))
+    else:
+        span.set_status(Status(StatusCode.ERROR))
 
 
 def django_response_hook(span, request, response):
@@ -82,6 +97,24 @@ def django_response_hook(span, request, response):
     span.set_status(Status(StatusCode.ERROR))
 
 
+class LazyBatchSpanProcessor(BatchSpanProcessor):
+    def __init__(self, *args, **kwargs):
+        super(LazyBatchSpanProcessor, self).__init__(*args, **kwargs)
+        # 停止默认线程
+        self.done = True
+        with self.condition:
+            self.condition.notify_all()
+        self.worker_thread.join()
+        self.done = False
+        self.worker_thread = None
+
+    def on_end(self, span: ReadableSpan) -> None:
+        if self.worker_thread is None:
+            self.worker_thread = threading.Thread(target=self.worker, daemon=True)
+            self.worker_thread.start()
+        super(LazyBatchSpanProcessor, self).on_end(span)
+
+
 class BluekingInstrumentor(BaseInstrumentor):
     has_instrument = False
     GRPC_HOST = "otlp_grpc_host"
@@ -102,7 +135,13 @@ class BluekingInstrumentor(BaseInstrumentor):
             otlp_grpc_host = feature_config.get(self.GRPC_HOST, otlp_grpc_host)
             otlp_bk_data_id = feature_config.get(self.BK_DATA_ID, otlp_bk_data_id)
         otlp_exporter = OTLPSpanExporter(endpoint=otlp_grpc_host)
-        span_processor = BatchSpanProcessor(otlp_exporter)
+        span_processor = LazyBatchSpanProcessor(otlp_exporter)
+
+        # periord task not sampler
+        sampler = DEFAULT_OFF
+        if settings.IS_CELERY_BEAT:
+            sampler = ALWAYS_OFF
+
         tracer_provider = TracerProvider(
             resource=Resource.create(
                 {
@@ -110,7 +149,9 @@ class BluekingInstrumentor(BaseInstrumentor):
                     "bk_data_id": otlp_bk_data_id,
                 }
             ),
+            sampler=sampler,
         )
+
         tracer_provider.add_span_processor(span_processor)
         trace.set_tracer_provider(tracer_provider)
         DjangoInstrumentor().instrument(response_hook=django_response_hook)

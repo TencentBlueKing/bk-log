@@ -148,7 +148,7 @@ class ResultTableHandler(APIModel):
             ):
                 raise IndexCrossBusinessException()
 
-        return self.check_fields_consistency(basic_fields, append_fields, raise_exception=True)
+        return self.check_fields_consistency(basic_fields, append_fields, raise_exception=False)
 
     @staticmethod
     def check_fields_consistency(fields_one, fields_two, raise_exception=False):

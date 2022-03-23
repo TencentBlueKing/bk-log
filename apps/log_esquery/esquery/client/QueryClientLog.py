@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import re
 import socket
 
 from typing import Dict, Any
@@ -38,11 +39,14 @@ from apps.log_esquery.exceptions import (
     EsException,
 )
 from apps.log_esquery.type_constants import type_mapping_dict
+from apps.utils.cache import cache_five_minute
 from apps.utils.log import logger
 from apps.log_databus.models import CollectorConfig
 from apps.utils.thread import MultiExecuteFunc
 from apps.log_search.exceptions import IndexResultTableApiException
 from apps.log_esquery.constants import DEFAULT_SCHEMA
+
+DATE_RE = re.compile("[0-9]{8}")
 
 
 class QueryClientLog(QueryClientTemplate):
@@ -134,14 +138,25 @@ class QueryClientLog(QueryClientTemplate):
         index_list: list = index.split(",")
         new_index_list = []
         for _index in index_list:
+            # _index的格式兼容这些
+            # 2_bklog.bkesb_container_20211207*
+            # 2_bklog_bkesb_container_20211207*
+            # 2_bklog.bkesb_container*
+            # 2_bklog_bkesb_container*
+            # 2_bklog.bkesb_container_*
+            # 2_bklog_bkesb_container_*
             tmp_index: str = _index.replace("_%s_" % settings.TABLE_ID_PREFIX, "_%s." % settings.TABLE_ID_PREFIX)
-            tmp_index_list = tmp_index.split("_")
-            new_index: str = tmp_index.replace("_%s" % tmp_index_list[-1], "")
-            new_index_list.append(new_index)
+            tmp_index = tmp_index.rstrip("_*")
+            # 如果suffix是个日期，需要去掉后缀
+            new_index, no_use, suffix = tmp_index.rpartition("_")
+            if DATE_RE.match(suffix):
+                new_index_list.append(new_index)
+            else:
+                new_index_list.append(tmp_index)
         return new_index_list[-1]
 
     def _get_connection(self, index: str):
-        self.host, self.port, self.username, self.password, self.version, self.schema = self._connect_info(index)
+        self.host, self.port, self.username, self.password, self.version, self.schema = self._connect_info(index=index)
         self._active: bool = False
 
         if not self.host or not self.port:
@@ -171,7 +186,12 @@ class QueryClientLog(QueryClientTemplate):
 
         http_auth = (self.username, self.password) if self.username and self.password else None
         self._client: Elasticsearch = self.elastic_client(
-            [self.host], http_auth=http_auth, scheme=self.schema, port=self.port, sniffer_timeout=600, verify_certs=True
+            [self.host],
+            http_auth=http_auth,
+            scheme=self.schema,
+            port=self.port,
+            sniffer_timeout=600,
+            verify_certs=False,
         )
         if not self._client.ping():
             self._active = False
@@ -180,7 +200,8 @@ class QueryClientLog(QueryClientTemplate):
             self._active = True
 
     @staticmethod
-    def _connect_info(index: str) -> tuple:
+    @cache_five_minute("_connect_info_{index}", need_md5=True)
+    def _connect_info(index: str = "") -> tuple:
         transfer_api_response: dict = TransferApi.get_result_table_storage(
             {"result_table_list": index, "storage_type": "elasticsearch"}
         )
@@ -210,8 +231,8 @@ class QueryClientLog(QueryClientTemplate):
                 EsClientMetaInfoException.MESSAGE.format(message=transfer_api_response.get("message"))
             )
 
-    @staticmethod
-    def indices(bk_biz_id, result_table_id=None, with_storage=False):
+    @classmethod
+    def indices(cls, bk_biz_id, result_table_id=None, with_storage=False):
         """
         获取索引列表
         :param bk_biz_id:
@@ -235,10 +256,8 @@ class QueryClientLog(QueryClientTemplate):
 
         # 补充索引集群信息
         if with_storage and index_list:
-            indices = ",".join([_collect.table_id for _collect in collect_obj])
-            storage_info = TransferApi.get_result_table_storage(
-                {"result_table_list": indices, "storage_type": "elasticsearch"}
-            )
+            indices = [_collect.table_id for _collect in collect_obj]
+            storage_info = cls.bulk_cluster_infos(result_table_list=indices)
             for _index in index_list:
                 cluster_config = storage_info.get(_index["result_table_id"], {}).get("cluster_config", {})
                 _index.update(
@@ -249,7 +268,22 @@ class QueryClientLog(QueryClientTemplate):
                 )
         return index_list
 
-    def get_cluster_info(self, result_table_id):
+    @staticmethod
+    @cache_five_minute("bulk_cluster_info_{result_table_list}", need_md5=True)
+    def bulk_cluster_infos(result_table_list: list = None):
+        multi_execute_func = MultiExecuteFunc()
+        for rt in result_table_list:
+            multi_execute_func.append(
+                rt, TransferApi.get_result_table_storage, {"result_table_list": rt, "storage_type": "elasticsearch"}
+            )
+        result = multi_execute_func.run()
+        cluster_infos = {}
+        for _, cluster_info in result.items():  # noqa
+            cluster_infos.update(cluster_info)
+        return cluster_infos
+
+    @cache_five_minute("get_cluster_info_{result_table_id}", need_md5=True)
+    def get_cluster_info(self, result_table_id=None):
         result_table_id = result_table_id.split(",")[0]
         # 并发查询所需的配置
         multi_execute_func = MultiExecuteFunc()

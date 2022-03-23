@@ -23,6 +23,29 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
 from apps.log_databus.constants import ETL_DELIMITER_IGNORE, ETL_DELIMITER_DELETE, ETL_DELIMITER_END
+from apps.utils.custom_report import render_otlp_report_config
+
+
+class InnerTag(ChoicesEnum):
+    TRACE = "trace"
+    RESTORING = "restoring"
+    RESTORED = "restored"
+    NO_DATA = "no_data"
+    HAVE_DELAY = "have_delay"
+    BKDATA = "bkdata"
+    BCS = "bcs"
+    CLUSTERING = "clustering"
+
+    _choices_labels = (
+        (TRACE, _("trace")),
+        (RESTORING, _("回溯中")),
+        (RESTORED, _("回溯日志")),
+        (NO_DATA, _("无数据")),
+        (HAVE_DELAY, _("有延迟")),
+        (BKDATA, _("计算平台")),
+        (BCS, _("BCS")),
+        (CLUSTERING, _("数据指纹")),
+    )
 
 
 class TagColor(ChoicesEnum):
@@ -43,6 +66,8 @@ class TagColor(ChoicesEnum):
 
 DEFAULT_TAG_COLOR = TagColor.BLUE
 
+DEFAULT_BK_CLOUD_ID = 0
+
 SEARCH_SCOPE_VALUE = ["default", "search_context"]
 MAX_RESULT_WINDOW = 10000
 MAX_SEARCH_SIZE = 100000
@@ -51,6 +76,7 @@ DEFAULT_TIME_FIELD = "dtEventTimeStamp"
 BK_SUPPLIER_ACCOUNT = "0"
 BK_BCS_APP_CODE = "bk_bcs"
 
+RESULT_WINDOW_COST_TIME = 1 / 3
 # API请求异常编码
 API_RESULT_ERROR_AUTH = "40000"
 
@@ -101,6 +127,7 @@ ASYNC_EXPORT_FILE_EXPIRED_DAYS = 2
 ASYNC_EXPORT_EXPIRED = 86400
 HAVE_DATA_ID = "have_data_id"
 BKDATA_OPEN = "bkdata"
+NOT_CUSTOM = "not_custom"
 
 FIND_MODULE_WITH_RELATION_FIELDS = ["bk_module_id", "bk_module_name", "service_template_id"]
 
@@ -108,6 +135,29 @@ COMMON_LOG_INDEX_RE = r"^(v2_)?{}_(?P<datetime>\d+)_(?P<index>\d+)$"
 BKDATA_INDEX_RE = r"^{}_\d+$"
 
 MAX_EXPORT_REQUEST_RETRY = 3
+
+ISO_8601_TIME_FORMAT_NAME = "rfc3339"
+
+FILTER_KEY_LIST = ["gettext", "_", "LANGUAGES"]
+
+MAX_GET_ATTENTION_SIZE = 10
+
+
+# 导出类型
+class ExportType(object):
+    ASYNC = "async"
+    SYNC = "sync"
+
+
+# 导出状态
+class ExportStatus(object):
+    DOWNLOAD_LOG = "download_log"
+    EXPORT_PACKAGE = "export_package"
+    EXPORT_UPLOAD = "export_upload"
+    SUCCESS = "success"
+    FAILED = "failed"
+    DOWNLOAD_EXPIRED = "download_expired"
+    DATA_EXPIRED = "data_expired"
 
 
 # 消息模式
@@ -164,9 +214,11 @@ class TimeEnum(Enum):
 
 
 class CCInstanceType(ChoicesEnum):
+    BUSINESS = "biz"
     SET = "set"
     MODULE = "module"
     _choices_labels = (
+        (BUSINESS, _("业务")),
         (SET, _("集群")),
         (MODULE, _("模块")),
     )
@@ -248,6 +300,10 @@ class GlobalTypeEnum(ChoicesEnum):
     TIME_ZONE = "time_zone"
     TIME_FIELD_TYPE = "time_field_type"
     TIME_FIELD_UNIT = "time_field_unit"
+    ES_SOURCE_TYPE = "es_source_type"
+    LOG_CLUSTERING_LEVEL = "log_clustering_level"
+    LOG_CLUSTERING_YEAR_ON_YEAR = "log_clustering_level_year_on_year"
+    DATABUS_CUSTOM = "databus_custom"
 
     _choices_labels = (
         (CATEGORY, _("数据分类")),
@@ -261,18 +317,117 @@ class GlobalTypeEnum(ChoicesEnum):
         (FIELD_BUILT_IN, _("内置字段")),
         (TIME_FIELD_TYPE, _("时间字段类型")),
         (TIME_FIELD_UNIT, _("时间字段单位")),
+        (ES_SOURCE_TYPE, _("日志来源类型")),
+        (LOG_CLUSTERING_LEVEL, _("日志聚类敏感度")),
+        (LOG_CLUSTERING_YEAR_ON_YEAR, _("日志聚类同比配置")),
+        (DATABUS_CUSTOM, _("自定义上报")),
     )
+
+
+class CustomTypeEnum(ChoicesEnum):
+    LOG = "log"
+    OTLP_TRACE = "otlp_trace"
+    OTLP_LOG = "otlp_log"
+
+    @classmethod
+    def get_choices_list_dict(cls) -> list:
+        import markdown
+
+        render_context = {"otlp_report_config": render_otlp_report_config()}
+        result = []
+        for key, value in cls.get_dict_choices().items():
+            if key not in settings.CUSTOM_REPORT_TYPE.split(","):
+                continue
+            introduction = cls._custom_introductions.value.get(key, "").format(**render_context)
+            result.append({"id": key, "name": value, "introduction": markdown.markdown(introduction)})
+        return result
+
+    _choices_labels = (
+        (LOG, _("容器日志上报")),
+        (OTLP_TRACE, _("otlpTrace上报")),
+        (OTLP_LOG, _("otlp日志上报")),
+    )
+
+    """
+    {{}} 为占位符 需要前端动态填充的时候
+    """
+    _custom_introductions = {
+        LOG: _(
+            """
+# 日志自定义上报
+日志自定义上报适用于自行上报的服务或者场景，如下
+
+- 容器日志采集
+- 服务自定义上报
+- 其他
+        """
+        ),
+        OTLP_TRACE: _(
+            """
+# 注意事项
+
+- sdk内注入的属性类型应该一致，不然会出现入库失败的情况
+
+# 使用方法
+
+
+不同云区域的自定义上报服务地址
+
+{otlp_report_config}
+
+[opentelemetry官方文档](https://opentelemetry.io/)
+
+# SDK配置
+
+python
+
+[python-SDK](https://github.com/open-telemetry/opentelemetry-python)
+
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    otlp_exporter = OTLPSpanExporter(endpoint="grpc 上报服务地址)    
+    span_processor = BatchSpanProcessor(otlp_exporter)
+    tracer_provider = TracerProvider(
+        resource=Resource.create(
+            {{
+                "service.name": "你的服务名称",
+                "bk_data_id": {{{{bk_data_id}}}},
+            }}
+        )
+    )
+    tracer_provider.add_span_processor(span_processor)
+    trace.set_tracer_provider(tracer_provider)
+    
+        """  # noqa
+        ),
+        OTLP_LOG: _(
+            """
+# 注意事项
+# 使用方法
+不同云区域的自定义上报服务地址
+
+{otlp_report_config}
+
+
+[opentelemetry官方文档](https://opentelemetry.io/)
+"""
+        ),
+    }
 
 
 class CollectorScenarioEnum(ChoicesEnum):
     ROW = "row"
     SECTION = "section"
-    WIN_EVENT = "win_event"
+    WIN_EVENT = "wineventlog"
+    CUSTOM = "custom"
 
     _choices_labels = (
         (ROW, _("行日志文件")),
         (SECTION, _("段日志文件")),
         (WIN_EVENT, _("win event日志")),
+        (CUSTOM, _("自定义")),
     )
 
     @classmethod
@@ -284,6 +439,7 @@ class CollectorScenarioEnum(ChoicesEnum):
         return [
             {"id": key, "name": value, "is_active": True if key in settings.COLLECTOR_SCENARIOS else False}
             for key, value in cls.get_dict_choices().items()
+            if key not in [cls.CUSTOM.value]
         ]
 
 
@@ -679,6 +835,11 @@ class FieldDateFormatEnum(ChoicesEnum):
                 "name": "DD/MMM/YYYY:HH:mm:ss ZZ",
                 "description": "02/Jan/2006:15:04:05 -07:00",
             },
+            {
+                "id": ISO_8601_TIME_FORMAT_NAME,
+                "name": ISO_8601_TIME_FORMAT_NAME,
+                "description": "2006-01-02T15:04:05Z07:00",
+            },
             {"id": "date_hour_minute_second", "name": "YYYY-MM-DDTHH:mm:ss", "description": "2006-01-02T15:04:05"},
             {
                 "id": "date_hour_minute_second_millis",
@@ -846,12 +1007,36 @@ RT_RESERVED_WORD_EXAC = [
     "path",
     "gseIndex",
     "iterationIndex",
+    "__ext",
     "log",
     "dtEventTimeStamp",
     "datetime",
     "filename",
     "items",
     "utctime",
+    # wineventlog field
+    "winEventApi",
+    "winEventActivityId",
+    "winEventChannel",
+    "winEventRecordId",
+    "winEventRelatedActivityId",
+    "winEventOpcode",
+    "winEventData",
+    "winEventId",
+    "winEventKeywords",
+    "winEventProcessPid",
+    "winEventProviderGuid",
+    "winEventTask",
+    "winEventUserData",
+    "winEventUserDomain",
+    "winEventUserIdentifier",
+    "winEventUserName",
+    "winEventUserType",
+    "winEventVersion",
+    "winEventProcessThreadId",
+    "winEventComputerName",
+    "winEventLevel",
+    "winEventTimeCreated",
     # ignore、delete、end
     ETL_DELIMITER_IGNORE,
     ETL_DELIMITER_DELETE,
@@ -901,3 +1086,11 @@ CMDB_HOST_SEARCH_FIELDS = [
 CMDB_SET_INFO_FIELDS = ["bk_set_id", "bk_chn_name"]
 
 GET_SET_INFO_FILEDS_MAX_IDS_LEN = 500
+
+
+class UserMetaConfType(object):
+    """
+    用户元数据配置类型
+    """
+
+    USER_GUIDE = "user_guide"

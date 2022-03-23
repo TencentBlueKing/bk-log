@@ -23,6 +23,9 @@ from blueapps.conf.log import get_logging_config_dict
 from blueapps.conf.default_settings import *  # noqa
 from django.utils.translation import ugettext_lazy as _
 
+# 使用k8s部署模式
+IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
+
 # 这里是默认的 INSTALLED_APPS，大部分情况下，不需要改动
 # 如果你已经了解每个默认 APP 的作用，确实需要去掉某些 APP，请去掉下面的注释，然后修改
 # INSTALLED_APPS = (
@@ -42,9 +45,12 @@ from django.utils.translation import ugettext_lazy as _
 
 # 请在这里加入你的自定义 APP
 INSTALLED_APPS += (
+    # must first django_jsonfield_backport
     "django_jsonfield_backport",
+    "django_prometheus",
     "rest_framework",
     "iam.contrib.iam_migration",
+    "django_dbconn_retry",
     "apps.iam",
     "apps.api",
     "apps.log_search",
@@ -67,6 +73,7 @@ INSTALLED_APPS += (
     "django_celery_results",
     "apps.log_extract",
     "apps.feature_toggle",
+    "apps.log_clustering",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
@@ -80,6 +87,8 @@ else:
 # 这里是默认的中间件，大部分情况下，不需要改动
 # 如果你已经了解每个默认 MIDDLEWARE 的作用，确实需要去掉某些 MIDDLEWARE，或者改动先后顺序，请去掉下面的注释，然后修改
 MIDDLEWARE = (
+    "django.middleware.gzip.GZipMiddleware",
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -103,6 +112,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -120,7 +130,10 @@ MIDDLEWARE = (
 #
 STATIC_VERSION = "1.0"
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+if IS_K8S_DEPLOY_MODE:
+    STATIC_ROOT = "static"
+else:
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 # ==============================================================================
 # SENTRY相关配置
@@ -156,11 +169,14 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.project",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
+    "apps.log_search.tasks.no_data",
     "apps.log_databus.tasks.collector",
     "apps.log_databus.tasks.itsm",
     "apps.log_databus.tasks.bkdata",
+    "apps.log_databus.tasks.archive",
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
+    "apps.log_clustering.tasks.sync_pattern",
 )
 
 # load logging settings
@@ -181,12 +197,7 @@ if RUN_VER != "open":
         }
         LOGGING["formatters"]["verbose"] = logging_format
 
-
-BKLOG_UDP_LOG = os.getenv("BKAPP_UDP_LOG", "off") == "on"
-
-if BKLOG_UDP_LOG:
-    LOG_UDP_SERVER_HOST = os.getenv("BKAPP_UDP_LOG_SERVER_HOST", "")
-    LOG_UDP_SERVER_PORT = int(os.getenv("BKAPP_UDP_LOG_SERVER_PORT", 0))
+if IS_K8S_DEPLOY_MODE:
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     LOGGING = {
         "version": 1,
@@ -201,12 +212,6 @@ if BKLOG_UDP_LOG:
             }
         },
         "handlers": {
-            "udp": {
-                "formatter": "json",
-                "class": "apps.utils.log.UdpHandler",
-                "host": LOG_UDP_SERVER_HOST,
-                "port": LOG_UDP_SERVER_PORT,
-            },
             "stdout": {
                 "class": "logging.StreamHandler",
                 "formatter": "json",
@@ -214,53 +219,53 @@ if BKLOG_UDP_LOG:
             },
         },
         "loggers": {
-            "django": {"handlers": ["udp"], "level": "INFO", "propagate": True},
+            "django": {"handlers": ["stdout"], "level": "INFO", "propagate": True},
             "django.server": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
             "django.request": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": "ERROR",
                 "propagate": True,
             },
             "django.db.backends": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
             # the root logger ,用于整个project的logger
-            "root": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            "root": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # 组件调用日志
             "component": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
-            "celery": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            "celery": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # other loggers...
             # blueapps
             "blueapps": {
-                "handlers": ["udp"],
+                "handlers": ["stdout"],
                 "level": LOG_LEVEL,
                 "propagate": True,
             },
             # 普通app日志
-            "app": {"handlers": ["udp"], "level": LOG_LEVEL, "propagate": True},
+            "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
 
 OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
 OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
-OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", 1000))
+OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", -1))
 # ===============================================================================
 # 项目配置
 # ===============================================================================
 BK_PAAS_HOST = os.environ.get("BK_PAAS_HOST", "")
 # ESB API调用前辍
 BK_PAAS_INNER_HOST = os.environ.get("BK_PAAS_INNER_HOST", BK_PAAS_HOST)
-PAAS_API_HOST = BK_PAAS_INNER_HOST
+PAAS_API_HOST = os.environ.get("BK_COMPONENT_API_URL") or BK_PAAS_INNER_HOST
 BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
 BKDATA_URL = BK_PAAS_HOST
 MONITOR_URL = ""
@@ -307,6 +312,28 @@ SENSITIVE_PARAMS = ["app_code", "app_secret", "bk_app_code", "bk_app_secret", "a
 ALLOWED_MODULES_FUNCS = {
     "apps.log_databus.views.collector_views": {"tail": "tail"},
     "apps.log_databus.views.storage_views": {"connectivity_detect": "connectivity_detect"},
+}
+# esb模块中转发meta接口的传发设置
+META_ESB_FORWARD_CONFIG = {
+    "create_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "create_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "modify_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "modify_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "delete_es_snapshot_repository": {
+        "iam_key": "cluster_id",
+        "target_call": "delete_es_snapshot_repository",
+        "iam_actions": ["manage_es_source"],
+        "iam_resource": "es_source",
+    },
+    "verify_es_snapshot_repository": {"is_view_permission": True, "target_call": "verify_es_snapshot_repository"},
 }
 
 # resf_framework
@@ -407,6 +434,7 @@ FEATURE_TOGGLE = {
     "collect_itsm": os.environ.get("BKAPP_COLLECT_ITSM", "off"),
     # 自定义指标上报
     "monitor_report": os.environ.get("BKAPP_MONITOR_REPORT", "on"),
+    "bklog_es_config": "on",
 }
 
 SAAS_MONITOR = "bk_monitorv3"
@@ -415,8 +443,25 @@ SAAS_BKDATA = "bk_dataweb"
 # 前端菜单配置
 MENUS = [
     {"id": "retrieve", "name": _("检索"), "feature": "on", "icon": ""},
-    {"id": "trace", "name": _("调用链"), "feature": "on", "icon": ""},
-    {"id": "extract", "name": _("日志提取"), "feature": "on", "icon": ""},
+    {
+        "id": "trace",
+        "name": _("调用链"),
+        "feature": "on",
+        "icon": "",
+        "children": [
+            {
+                "id": "trace_search",
+                "name": _("调用链"),
+                "feature": "on",
+                "icon": "",
+                "keyword": _("trace"),
+                "children": [
+                    {"id": "trace_list", "name": _("调用链列表"), "feature": "on", "icon": "liebiao"},
+                    {"id": "trace_detail", "name": _("调用链详情"), "feature": "on", "icon": "document"},
+                ],
+            }
+        ],
+    },
     {"id": "monitor", "name": _("监控策略"), "feature": "on", "icon": ""},
     {
         "id": "dashboard",
@@ -424,9 +469,19 @@ MENUS = [
         "feature": "on" if GRAFANA["HOST"] else "off",
         "icon": "",
         "children": [
-            {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": ""},
-            {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": ""},
-            {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": ""},
+            {
+                "id": "dashboard_manage",
+                "name": _("仪表盘"),
+                "feature": "on",
+                "icon": "",
+                "keyword": _("仪表"),
+                "children": [
+                    {"id": "default_dashboard", "name": _("默认仪表盘"), "feature": "on", "icon": "block-shape"},
+                    {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": "plus-circle-shape"},
+                    {"id": "create_folder", "name": _("新建目录"), "feature": "on", "icon": "folder-fill"},
+                    {"id": "import_dashboard", "name": _("导入仪表盘"), "feature": "on", "icon": "topping-fill"},
+                ],
+            }
         ],
     },
     {
@@ -463,7 +518,7 @@ MENUS = [
                         "scenes": "scenario_es",
                         "icon": "elasticsearch",
                     },
-                    {"id": "custom_collection", "name": _("自定义接入"), "feature": "off", "icon": ""},
+                    {"id": "custom_report", "name": _("自定义上报"), "feature": "on", "icon": "menu-custom"},
                 ],
             },
             {
@@ -489,6 +544,33 @@ MENUS = [
                 ],
             },
             {
+                "id": "log_archive",
+                "name": _("日志归档"),
+                "feature": "on",
+                "icon": "",
+                "keyword": "归档",
+                "children": [
+                    {
+                        "id": "archive_repository",
+                        "name": _("归档仓库"),
+                        "feature": "on",
+                        "icon": "new-_empty-fill",
+                    },
+                    {
+                        "id": "archive_list",
+                        "name": _("归档列表"),
+                        "feature": "on",
+                        "icon": "audit-fill",
+                    },
+                    {
+                        "id": "archive_restore",
+                        "name": _("归档回溯"),
+                        "feature": "on",
+                        "icon": "withdraw-fill",
+                    },
+                ],
+            },
+            {
                 "id": "manage_extract_strategy",
                 "name": _("日志提取"),
                 "icon": "",
@@ -496,6 +578,7 @@ MENUS = [
                 "feature": os.environ.get("BKAPP_FEATURE_EXTRACT", "on"),
                 "children": [
                     {"id": "manage_log_extract", "name": _("日志提取配置"), "feature": "on", "icon": "cc-log"},
+                    {"id": "log_extract_task", "name": _("日志提取任务"), "feature": "on", "icon": "audit-fill"},
                     {"id": "extract_link_manage", "name": _("提取链路管理"), "feature": "on", "icon": "assembly-line-fill"},
                 ],
             },
@@ -654,7 +737,18 @@ ESQUERY_WHITE_LIST = [
     "gem3",
     "data",
     "dataweb",
+    "bk_bcs",
 ]
+
+# BK repo conf
+BKREPO_ENDPOINT_URL = os.getenv("BKREPO_ENDPOINT_URL") or os.getenv("BKAPP_BKREPO_ENDPOINT_URL")
+BKREPO_USERNAME = os.getenv("BKREPO_USERNAME") or os.getenv("BKAPP_BKREPO_USERNAME")
+BKREPO_PASSWORD = os.getenv("BKREPO_PASSWORD") or os.getenv("BKAPP_BKREPO_PASSWORD")
+BKREPO_PROJECT = os.getenv("BKREPO_PROJECT") or os.getenv("BKAPP_BKREPO_PROJECT")
+BKREPO_BUCKET = os.getenv("BKREPO_BUCKET") or os.getenv("BKAPP_BKREPO_BUCKET")
+
+# custom report
+CUSTOM_REPORT_TYPE = os.getenv("BKAPP_CUSTOM_REPORT_TYPE", "log")
 
 # ===============================================================================
 # Demo业务配置
@@ -741,7 +835,7 @@ VUE_INDEX = "index.html"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(PROJECT_ROOT, "templates"), os.path.join(PROJECT_ROOT, "static/dist/")],
+        "DIRS": [os.path.join(PROJECT_ROOT, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -756,6 +850,22 @@ TEMPLATES = [
             "debug": DEBUG,
         },
     },
+    {
+        "BACKEND": "blueapps.template.backends.mako.MakoTemplates",
+        "DIRS": [os.path.join(PROJECT_ROOT, "static/dist/")],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                # the context to the templates
+                "django.contrib.messages.context_processors.messages",
+                "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.request",
+                "django.template.context_processors.csrf",
+                "apps.utils.context_processors.mysetting",  # 自定义模版context，可在页面中使用STATIC_URL等变量
+                "django.template.context_processors.i18n",
+            ]
+        },
+    },
 ]
 
 # ==============================================================================
@@ -763,7 +873,7 @@ TEMPLATES = [
 # ==============================================================================
 CACHES = {
     "redis": {
-        "BACKEND": "django_redis.cache.RedisCache",
+        "BACKEND": "django_prometheus.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWD},
         "KEY_PREFIX": APP_CODE,
@@ -787,7 +897,7 @@ if USE_REDIS:
 if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
     DJANGO_REDIS_CONNECTION_FACTORY = "apps.utils.sentinel.SentinelConnectionFactory"
     CACHES["redis_sentinel"] = {
-        "BACKEND": "django_redis.cache.RedisCache",
+        "BACKEND": "django_prometheus.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_SENTINEL_MASTER_NAME}?is_master=1",
         "OPTIONS": {
             "CLIENT_CLASS": "apps.utils.sentinel.SentinelClient",
@@ -809,8 +919,11 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
 以下为框架代码 请勿修改
 """
 IS_CELERY = False
+IS_CELERY_BEAT = False
 if "celery" in sys.argv:
     IS_CELERY = True
+    if "beat" in sys.argv:
+        IS_CELERY_BEAT = True
 
 # celery settings
 if IS_USE_CELERY:

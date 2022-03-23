@@ -29,7 +29,11 @@
       </div>
       <div class="content">
         <div class="flex-box">
-          <bk-button theme="primary" @click="showSelectDialog = true">{{ $t('选择服务器') }}</bk-button>
+          <bk-button
+            theme="primary"
+            @click="showSelectDialog = true"
+            data-test-id="addNewExtraction_button_selectTheServer"
+          >{{ $t('选择服务器') }}</bk-button>
           <div class="select-text">
             {{ $t('已选择') }}
             <span class="primary" v-if="ipList.length">{{ ipList.length }}</span>
@@ -37,7 +41,7 @@
             {{ $t('个节点') }}
           </div>
         </div>
-        <IpSelect :show-select-dialog.sync="showSelectDialog" @confirm="handleConfirm"></IpSelect>
+        <ip-select :show-select-dialog.sync="showSelectDialog" @confirm="handleConfirm" />
       </div>
     </div>
 
@@ -48,29 +52,27 @@
         <span class="log-icon icon-info-fill" v-bk-tooltips="$t('查询目录提示')"></span>
       </div>
       <div class="content">
-        <FilesInput
+        <files-input
           v-model="fileOrPath"
           :available-paths="availablePaths"
-          @update:select="handleFilesSelect">
-        </FilesInput>
+          @update:select="handleFilesSelect" />
       </div>
     </div>
 
     <div class="row-container">
       <div class="title">{{ $t('预览地址') }}</div>
-      <PreviewFiles
+      <preview-files
         ref="preview"
         v-model="downloadFiles"
         :ip-list="ipList"
         :file-or-path="fileOrPath"
-        @update:fileOrPath="handleFileOrPathUpdate">
-      </PreviewFiles>
+        @update:fileOrPath="handleFileOrPathUpdate" />
     </div>
 
     <div class="row-container">
       <div class="title">{{ $t('文本过滤') }}</div>
       <div class="content">
-        <TextFilter ref="textFilter"></TextFilter>
+        <text-filter ref="textFilter" />
       </div>
     </div>
 
@@ -84,7 +86,10 @@
       <div class="title">{{ $t('提取链路') }}</div>
       <div class="content">
         <!-- eslint-disable-next-line vue/camelcase -->
-        <bk-select v-model="link_id" style="width: 250px;margin-right: 20px;background-color: #fff;" :clearable="false">
+        <bk-select v-model="link_id"
+                   style="width: 250px;margin-right: 20px;background-color: #fff;"
+                   data-test-id="addNewExtraction_select_selectLink"
+                   :clearable="false">
           <bk-option
             v-for="link in extractLinks"
             :key="link.link_id"
@@ -97,20 +102,25 @@
     </div>
 
     <div class="button-container">
-      <bk-button theme="primary" style="margin-right: 16px;width: 120px;"
-                 :disabled="canSubmit" @click="handleSubmit">
+      <bk-button
+        theme="primary" style="margin-right: 16px;width: 120px;"
+        data-test-id="addNewExtraction_button_submitConfigure"
+        :disabled="canSubmit" @click="handleSubmit">
         {{ $t('提交下载任务') }}
       </bk-button>
-      <bk-button style="width: 120px;" @click="goToHome">{{ $t('取消') }}</bk-button>
+      <bk-button
+        style="width: 120px;" @click="goToHome"
+        data-test-id="addNewExtraction_button_cancel"
+      >{{ $t('取消') }}</bk-button>
     </div>
   </div>
 </template>
 
 <script>
-import IpSelect from '@/views/extract/create/IpSelect';
-import FilesInput from '@/views/extract/create/FilesInput';
-import TextFilter from '@/views/extract/create/TextFilter';
-import PreviewFiles from '@/views/extract/create/PreviewFiles';
+import IpSelect from '@/views/extract/create/ip-select';
+import FilesInput from '@/views/extract/create/files-input';
+import TextFilter from '@/views/extract/create/test-filter';
+import PreviewFiles from '@/views/extract/create/preview-files';
 
 export default {
   name: 'ExtractCreate',
@@ -144,7 +154,7 @@ export default {
   },
   methods: {
     async checkIsClone() {
-      if (this.$route.query.clone && sessionStorage.getItem('cloneData')) {
+      if (this.$route.name === 'extract-clone' && sessionStorage.getItem('cloneData')) {
         const cloneData = JSON.parse(sessionStorage.getItem('cloneData'));
         sessionStorage.removeItem('cloneData');
 
@@ -223,7 +233,7 @@ export default {
     },
     goToHome() {
       this.$router.push({
-        name: 'extract',
+        name: 'log-extract-task',
         query: {
           projectId: window.localStorage.getItem('project_id'),
         },
@@ -235,7 +245,11 @@ export default {
 
 <style lang="scss" scoped>
   .create-task-container {
+    margin-top: 20px;
+    padding: 20px 24px;
+    background-color: #fff;
     color: #63656e;
+    border: 1px solid #dcdee5;
 
     .row-container {
       display: flex;
@@ -247,7 +261,8 @@ export default {
         margin-right: 16px;
         font-size: 16px;
         line-height: 40px;
-        color: #313238;
+        font-size: 14px;
+        text-align: right;
 
         .required {
           font-size: 16px;

@@ -191,7 +191,7 @@ class ModelViewSet(FlowMixin, ValidationMixin, IAMPermissionMixin, _ModelViewSet
     filter_fields_exclude = []
     pagination_class = DataPageNumberPagination
     filter_backends = (filters.OrderingFilter, filters.SearchFilter, django_filters.DjangoFilterBackend)
-    serializer_meta = type("Meta", (Meta,), {"model": None})
+    serializer_meta = type("Meta", (Meta,), {"model": None, "fields": "__all__"})
 
     def __init__(self, *args, **kwargs):
         super(ModelViewSet, self).__init__(**kwargs)

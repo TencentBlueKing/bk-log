@@ -27,7 +27,7 @@ from rest_framework.response import Response
 
 from apps.exceptions import ValidationError
 from apps.log_databus.constants import EtlConfig
-from apps.log_search.constants import HAVE_DATA_ID, BKDATA_OPEN
+from apps.log_search.constants import HAVE_DATA_ID, BKDATA_OPEN, NOT_CUSTOM, CollectorScenarioEnum
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.generic import ModelViewSet
@@ -58,6 +58,9 @@ from apps.log_databus.serializers import (
     CollectorRegexDebugSerializer,
     ListCollectorsByHostSerializer,
     CleanStashSerializer,
+    ListCollectorSerlalizer,
+    CustomCreateSerializer,
+    CustomUpateSerializer,
 )
 from apps.utils.function import ignored
 
@@ -82,7 +85,7 @@ class CollectorViewSet(ModelViewSet):
 
         if self.action in ["list_scenarios", "batch_subscription_status"]:
             return []
-        if self.action in ["create", "only_create"]:
+        if self.action in ["create", "only_create", "custom_create"]:
             return [BusinessActionPermission([ActionEnum.CREATE_COLLECTION])]
         if self.action in [
             "indices_info",
@@ -104,6 +107,7 @@ class CollectorViewSet(ModelViewSet):
             "etl_preview",
             "etl_time",
             "update_or_create_clean_config",
+            "custom_update",
         ]:
             return [InstanceActionPermission([ActionEnum.MANAGE_COLLECTION], ResourceEnum.COLLECTION)]
         return [ViewBusinessPermission()]
@@ -114,6 +118,8 @@ class CollectorViewSet(ModelViewSet):
             qs = qs.filter(bk_data_id__isnull=False)
         if self.request.query_params.get(BKDATA_OPEN) and settings.FEATURE_TOGGLE["scenario_bkdata"] == "off":
             qs = qs.filter(Q(etl_config=EtlConfig.BK_LOG_TEXT) | Q(etl_config__isnull=True))
+        if self.request.query_params.get(NOT_CUSTOM):
+            qs = qs.exclude(collector_scenario_id=CollectorScenarioEnum.CUSTOM.value)
         return qs.all()
 
     def get_serializer_class(self, *args, **kwargs):
@@ -288,6 +294,35 @@ class CollectorViewSet(ModelViewSet):
         response.data["list"] = CollectorHandler.add_cluster_info(response.data["list"])
 
         return response
+
+    @insert_permission_field(
+        id_field=lambda d: d["collector_config_id"],
+        data_field=lambda d: d["list"],
+        actions=[ActionEnum.MANAGE_COLLECTION],
+        resource_meta=ResourceEnum.COLLECTION,
+    )
+    @list_route(methods=["GET"])
+    def list_collector(self, request):
+        """
+        @api {get} /databus/collectors/list_collector?bk_biz_id=$bk_biz_id 采集项-下拉列表
+        @apiName list_collector_switch
+        @apiGroup 10_Collector
+        @apiDescription 采集项下拉列表
+        @apiParam {Int} bk_biz_id 业务ID
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "collector_config_id": 1,
+                "collector_config_name": "采集项名称",
+            },
+            "result": true
+        }
+        """
+
+        data = self.params_valid(ListCollectorSerlalizer)
+        return Response(CollectorHandler().list_collector(data["bk_biz_id"]))
 
     def retrieve(self, request, *args, collector_config_id=None, **kwargs):
         """
@@ -484,6 +519,9 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} params.conditions.match_content 过滤内容
         @apiParam {String} params.conditions.separator 分隔符
         @apiParam {String} params.conditions.separator_filters 分隔符过滤条件
+        @apiParam {Array} params.winlog_name windows事件名称
+        @apiParam {Array} params.winlog_level windows事件等级
+        @apiParam {Array} params.winlog_event_id windows事件id
         @apiParamExample {json} 请求样例:
         {
             "bk_biz_id": 706,
@@ -526,9 +564,12 @@ class CollectorViewSet(ModelViewSet):
                         }
                     ]
                 },
-                multiline_pattern: ""
-                multiline_max_lines: 10
-                multiline_timeout: 60
+                "multiline_pattern": "",
+                "multiline_max_lines": 10,
+                "multiline_timeout": 60,
+                "winlog_name": ["Application", "Security"],
+                "winlog_level": ["info", "error"],
+                "winlog_event_id": ["-200", "123-1234", "123"]
             },
         }
         @apiSuccess {Int} collector_config_id 采集配置ID
@@ -1120,6 +1161,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} fields.option.time_format 时间格式
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
+        @apiParam {Int} [storage_replies] 副本数量
         @apiParam {list} view_roles 查看权限
         @apiParamExample {json} 请求样例:
         {
@@ -1700,3 +1742,110 @@ class CollectorViewSet(ModelViewSet):
         response = super().list(request, *args, **kwargs)
         response.data = CollectorHandler.add_cluster_info(response.data)
         return response
+
+    @detail_route(methods=["POST"], url_path="close_clean")
+    def close_clean(self, request, collector_config_id=None, *args, **kwargs):
+        """
+        @api {POST} /databus/collectors/${collector_config_id}/close_clean/ 35_采集项-关闭清洗
+        @apiName databus_collectors_close_clean
+        @apiGroup 10_Collector
+        @apiParam {int} collector_config_id 采集项id
+        @apiSuccessExample {json} 成功返回
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "collector_config_id": 1
+            },
+            "result": true
+        }
+        """
+        return Response(EtlHandler(collector_config_id=collector_config_id).close_clean())
+
+    @list_route(methods=["POST"])
+    def custom_create(self, request):
+        """
+        @api {post} /databus/collectors/custom_create/ 自定义上报-创建自定义采集配置
+        @apiName create_custom
+        @apiDescription 创建自定义配置
+        @apiGroup 10_Collector
+        @apiParam {Int} bk_biz_id 所属业务
+        @apiParam {String} collector_config_name 采集项名称
+        @apiParam {String} collector_config_name_en 采集项名称英文名
+        @apiParam {String} custom_type 自定义类型从global_config获取
+        @apiParam {Int} data_link_id 数据链路id
+        @apiParam {Int} storage_cluster_id 存储集群ID
+        @apiParam {Int} retention 保留时间
+        @apiParam {Int} allocation_min_days 冷热数据时间
+        @apiParam {Int} [storage_replies] 副本数量
+        @apiParam {String} category_id 数据分类 GlobalsConfig.category读取
+        @apiParam {String} description 备注说明
+        @apiParamExample {json} 请求样例:
+        {
+            "bk_biz_id": 2,
+            "collector_config_name": "xxxxx",
+            "collector_config_name_en": "xxx,
+            "data_link_id": 1,
+            "description": "xxxx",
+            "custom_type": "log",
+            "category_id": "xx",
+            "storage_cluster_id": 3,
+            "retention": 1,
+            "storage_replies": 1,
+            "allocation_min_days":  1
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+
+            "message": "",
+            "code": 0,
+
+            "data": {
+                "collector_config_id": 1,
+                "index_set_id": 1,
+                "bk_data_id": 12
+            },
+            "result": true
+        }
+        """
+        data = self.params_valid(CustomCreateSerializer)
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if auth_info:
+            data["bk_app_code"] = auth_info["bk_app_code"]
+        return Response(CollectorHandler().custom_create(**data))
+
+    @detail_route(methods=["POST"])
+    def custom_update(self, request, collector_config_id):
+        """
+        @api {post} /databus/collectors/${collector_config_id}/custom_update/ 自定义上报-更新自定义采集配置
+        @apiName update_custom
+        @apiDescription 创建自定义配置
+        @apiGroup 10_Collector
+        @apiParam {String} collector_config_name 采集项名称
+        @apiParam {String} category_id 数据分类 GlobalsConfig.category读取
+        @apiParam {String} description 备注说明
+        @apiParam {Int} storage_cluster_id 存储集群ID
+        @apiParam {Int} retention 保留时间
+        @apiParam {Int} allocation_min_days 冷热数据时间
+        @apiParam {Int} [storage_replies] 副本数量
+        @apiParamExample {json} 请求样例:
+        {
+            "collector_config_name": "xxxxx",
+            "description": "xxxx",
+            "category_id": "xx",
+            "storage_cluster_id": 3,
+            "retention": 1,
+            "storage_replies": 1,
+            "allocation_min_days":  1
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+            },
+            "result": true
+        }
+        """
+        data = self.params_valid(CustomUpateSerializer)
+        return Response(CollectorHandler(collector_config_id).custom_update(**data))

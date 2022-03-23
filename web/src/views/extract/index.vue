@@ -22,34 +22,18 @@
 
 <template>
   <div class="log-extract-container" v-bkloading="{ isLoading }">
-    <div class="top-title-container">
-      <h2 class="top-title" v-show="!$route.query.create">{{$t('日志提取')}}</h2>
-      <h2 class="top-title" v-show="$route.query.create">
-        <span class="bk-icon icon-arrows-left-shape" @click="backHome"></span>
-        <span>{{$t('新建')}}</span>
-      </h2>
-    </div>
-    <template v-if="isRender">
-      <ExtractCreate v-if="$route.query.create" @loading="handleLoading"></ExtractCreate>
-      <ExtractHome v-else @loading="handleLoading"></ExtractHome>
-    </template>
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-import ExtractHome from './home';
-import ExtractCreate from './create';
 
 export default {
   name: 'Extract',
-  components: {
-    ExtractHome,
-    ExtractCreate,
-  },
   data() {
     return {
       isRender: true,
-      isLoading: !this.$route.query.create,
+      isLoading: false,
     };
   },
   computed: {
@@ -90,7 +74,7 @@ export default {
   @import '../../scss/mixins/scroller';
 
   .log-extract-container {
-    height: 100%;
+    padding: 0 24px 20px;
     color: #313238;
     font-size: 14px;
 
@@ -126,12 +110,10 @@ export default {
 
     /deep/ .main-container {
       position: relative;
-      margin: 0 60px;
-      padding-bottom: 20px;
-      height: calc(100% - 61px);
+      padding-bottom: 60px;
       overflow: auto;
 
-      @include scroller($backgroundColor: #c4c6cc, $width: 8px);
+      @include scroller($backgroundColor: #c4c6cc, $width: 4px);
     }
   }
 </style>

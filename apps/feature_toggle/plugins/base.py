@@ -19,6 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from abc import ABC, abstractmethod
 
+from django.conf import settings
+
 from apps.feature_toggle.plugins.constants import ITSM_SERVICE_ID
 from apps.utils.log import logger
 
@@ -73,6 +75,7 @@ class FeatureBKDataDataId(FeatureToggleBase):
 
     def set_status(self, param):
         from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+
         if param["status"] != "off" and not FeatureToggleObject.switch("scenario_bkdata"):
             param["status"] = "off"
         return param
@@ -113,4 +116,59 @@ class BkLogTrace(FeatureToggleBase):
 
     def action(self):
         from apps.log_trace.trace import BluekingInstrumentor
+
         BluekingInstrumentor().instrument()
+
+
+@register
+class EsConfig(FeatureToggleBase):
+    target = "bklog_es_config"
+
+    def set_status(self, param: dict):
+        """
+        {
+            "global_es_config": {
+                "": ""
+            }
+            "bk_biz_es_config: [{
+                "bk_biz_id": 1,
+                "es_config": {
+
+                }
+            }]
+        }
+        :param param:
+        :return:
+        """
+        config_fields = [
+            "ES_DATE_FORMAT",
+            "ES_SHARDS_SIZE",
+            "ES_SLICE_GAP",
+            "ES_SHARDS",
+            "ES_REPLICAS",
+            "ES_PRIVATE_STORAGE_DURATION",
+            "ES_PUBLIC_STORAGE_DURATION",
+        ]
+        if param["feature_config"]:
+            global_config = param["feature_config"].get("global_es_config", {})
+            for config_field in config_fields:
+                global_config[config_field] = global_config.get(config_field, getattr(settings, config_field))
+            param["feature_config"]["global_es_config"] = global_config
+
+            biz_es_configs = param["feature_config"].get("bk_biz_es_config", [])
+            for biz_es_config in biz_es_configs:
+                es_config = biz_es_config.get("es_config", {})
+                for config_field in config_fields:
+                    es_config[config_field] = es_config.get(config_field, getattr(settings, config_field))
+                biz_es_config["es_config"] = es_config
+            return param
+
+        param["feature_config"] = {}
+        global_config = param["feature_config"].get("global_es_config", {})
+        for config_field in config_fields:
+            global_config[config_field] = global_config.get(config_field, getattr(settings, config_field))
+        param["feature_config"]["global_es_config"] = global_config
+        return param
+
+    def action(self):
+        pass

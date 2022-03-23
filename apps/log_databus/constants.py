@@ -22,6 +22,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
 
+META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+RESTORE_INDEX_SET_PREFIX = "restore_"
+
 BKLOG_RESULT_TABLE_PATTERN = fr"(\d*?_{settings.TABLE_ID_PREFIX}_.*)_.*_.*"
 
 NOT_FOUND_CODE = "[404]"
@@ -30,6 +33,26 @@ NOT_FOUND_CODE = "[404]"
 CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE = "1306201"
 
 COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
+
+BULK_CLUSTER_INFOS_LIMIT = 20
+
+
+class EsSourceType(ChoicesEnum):
+    OTHER = "other"
+    PRIVATE = "private"
+    AWS = "aws"
+    QCLOUD = "qcloud"
+    ALIYUN = "aliyun"
+    GOOGLE = "google"
+
+    _choices_labels = (
+        (OTHER, _("其他")),
+        (AWS, _("AWS")),
+        (QCLOUD, _("腾讯云")),
+        (ALIYUN, _("阿里云")),
+        (GOOGLE, _("google")),
+        (PRIVATE, _("私有自建")),
+    )
 
 
 class StrategyKind(ChoicesEnum):
@@ -68,6 +91,11 @@ META_DATA_ENCODING = "utf-8"
 
 # ADMIN请求用户名
 ADMIN_REQUEST_USER = "admin"
+EMPTY_REQUEST_USER = ""
+
+# 内置dataid范围，划分出的1w个dataid，用来给蓝鲸平台作为内置的采集dataid
+BUILT_IN_MIN_DATAID = 1110001
+BUILT_IN_MAX_DATAID = 1119999
 
 # 创建bkdata_data_id 配置
 BKDATA_DATA_SCENARIO = "custom"
@@ -142,12 +170,14 @@ class TargetNodeTypeEnum(ChoicesEnum):
     INSTANCE = "INSTANCE"
     SERVICE_TEMPLATE = "SERVICE_TEMPLATE"
     SET_TEMPLATE = "SET_TEMPLATE"
+    DYNAMIC_GROUP = "DYNAMIC_GROUP"
 
     _choices_labels = (
         (TOPO, _("TOPO")),
         (INSTANCE, _("主机实例")),
         (SERVICE_TEMPLATE, _("服务模板")),
         (SET_TEMPLATE, _("集群模板")),
+        (DYNAMIC_GROUP, _("动态分组")),
     )
 
 
@@ -224,3 +254,15 @@ NODE_ATTR_PREFIX_BLACKLIST = [
     "ml.",
     "xpack.",
 ]
+
+BKDATA_ES_TYPE_MAP = {
+    "integer": "int",
+    "long": "long",
+    "keyword": "string",
+    "text": "text",
+    "double": "double",
+    "object": "text",
+    "nested": "text",
+}
+
+ETL_PARAMS = {"retain_original_text": True, "separator_regexp": "", "separator": ""}

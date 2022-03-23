@@ -36,5 +36,9 @@ class _BkDataMetaApi:
             description=u"结果表操作",
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
-            custom_config={"storages": DRFActionAPI(method="GET"), "mine": DRFActionAPI(method="GET", detail=False)},
+            custom_config={
+                "storages": DRFActionAPI(method="GET"),
+                "mine": DRFActionAPI(method="GET", detail=False),
+                "fields": DRFActionAPI(method="GET"),
+            },
         )

@@ -34,16 +34,23 @@
           @click="handleSortChange(title)">
           {{title}}
           <span class="caret-wrapper">
-            <i class="sort-caret is-asc" @click.self.stop="handleSortChange(title, 1)" :class="{ active: sortTitle === title && sort === 1 }"></i>
-            <i class="sort-caret is-desc" @click.self.stop="handleSortChange(title, 2)" :class="{ active: sortTitle === title && sort === 2 }"></i>
+            <i 
+              class="sort-caret is-asc"
+              @click.self.stop="handleSortChange(title, 1)" 
+              :class="{ active: sortTitle === title && sort === 1 }">
+            </i>
+            <i 
+              class="sort-caret is-desc"
+              @click.self.stop="handleSortChange(title, 2)"
+              :class="{ active: sortTitle === title && sort === 2 }">
+            </i>
           </span>
         </th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="(item, index) in list" :key="index">
-        <td v-for="title in headList"
-            :key="title">
+        <td v-for="title in headList" :key="title">
           <div
             class="content-wrapper"
             :style="{ 'width': title === 'Min' ? '228px' : '68px' }">
@@ -54,7 +61,11 @@
               @mouseenter="(e) => handleLegendEvent(e,'highlight', item)"
               @mouseleave="(e) => handleLegendEvent(e,'downplay', item)">
               <span class="metric-label" :style="{ backgroundColor: item.show ? item.color : '#ccc' }"></span>
-              <span v-bk-overflow-tips="{ placement: 'top', 'offset': '100, 0' }" class="metric-name" :style="{ color: item.show ? '#63656e' : '#ccc' }">{{item.name}}</span>
+              <span 
+                v-bk-overflow-tips="{ placement: 'top', 'offset': '100, 0' }" class="metric-name" 
+                :style="{ color: item.show ? '#63656e' : '#ccc' }">
+                {{item.name}}
+              </span>
             </div>
             <div class="legend-value">
               {{item[title.toLocaleLowerCase()]}}
@@ -77,12 +88,15 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import { Component, Vue, Prop, Emit, Watch } from 'vue-property-decorator'
 import { ILegendItem } from '../options/type-interface'
+
 @Component({
   name: 'chart-legend'
 })
+
 export default class ChartLegend extends Vue {
   @Prop({ required: true }) readonly legendData: ILegendItem[]
   @Prop({ default: 'common' }) readonly legendType: 'common' | 'table'
@@ -128,6 +142,7 @@ export default class ChartLegend extends Vue {
   }
 }
 </script>
+
 <style lang="scss" scoped>
   .chart-legend {
     font-size: 12px;

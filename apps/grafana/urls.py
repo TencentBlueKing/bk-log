@@ -38,7 +38,6 @@ urlpatterns = [
     url(r"^bk-dataview/orgs/(?P<org_name>[a-zA-Z0-9\-_]+)/grafana/", SwitchOrgView.as_view()),
     # grafana访问地址, 需要和grafana前缀保持一致
     url(r"^grafana/$", SwitchOrgView.as_view()),
-    url(r"^grafana/explore$", SwitchOrgView.as_view()),
     url(r"^grafana/proxy/", include(proxy_router.urls)),
     url(r"^grafana/public/", StaticView.as_view()),
     url(r"^grafana/", GrafanaProxyView.as_view()),
