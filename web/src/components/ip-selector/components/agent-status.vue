@@ -50,6 +50,7 @@
     </li>
   </ul>
 </template>
+
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator'
 import { IAgentStatusData } from '../types/selector-type'
@@ -60,6 +61,7 @@ export default class AgentStatus extends Vue {
   @Prop({ default: () => [], type: Array }) private readonly data!: IAgentStatusData[]
 }
 </script>
+
 <style lang="scss" scoped>
 
   @mixin normal {

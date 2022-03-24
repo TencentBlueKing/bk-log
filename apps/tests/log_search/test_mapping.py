@@ -74,12 +74,12 @@ class TestMappingHandler(TestCase):
 
     def test_generate_async_export_reason(self):
         self.assertEqual(
-            "【异步导出缺少必备字段: ['dtEventTimeStamp', 'ip', 'gseindex', '_iteration_idx'] or ['dtEventTimeStamp',"
-            + " 'container_id', 'gseindex', '_iteration_idx']】",
+            "缺少必备字段: dtEventTimeStamp, ip, gseindex, _iteration_idx or dtEventTimeStamp,"
+            + " container_id, gseindex, _iteration_idx",
             MappingHandlers._generate_async_export_reason(Scenario.BKDATA, {})["async_export_usable_reason"],
         )
         self.assertEqual(
-            "【异步导出缺少必备字段: ['dtEventTimeStamp', 'serverIp', 'gseIndex', 'iterationIndex']】",
+            "缺少必备字段: dtEventTimeStamp, serverIp, gseIndex, iterationIndex",
             MappingHandlers._generate_async_export_reason(Scenario.LOG, {})["async_export_usable_reason"],
         )
 

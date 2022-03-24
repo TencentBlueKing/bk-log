@@ -31,19 +31,22 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
-import { Vue, Prop, Component } from 'vue-property-decorator'
-import { ITextSeries } from '../options/type-interface'
+import { Vue, Prop, Component } from 'vue-property-decorator';
+import { ITextSeries } from '../options/type-interface';
+
 @Component({
-  name: 'TextChart'
+  name: 'TextChart',
 })
 export default class TextChart extends Vue {
   @Prop({ default() {
     return {
-    }
+    };
   } }) series: ITextSeries
 }
 </script>
+
 <style lang="scss" scoped>
   .text-chart {
     display: flex;

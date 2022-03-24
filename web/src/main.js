@@ -25,9 +25,9 @@ import Vue from 'vue';
 import App from './App';
 import router from './router';
 import store from './store';
+import http from './api';
 import { bus } from './common/bus';
 import i18n from '@/language/i18n';
-import vClickOutside from 'v-click-outside';
 import methods from './plugins/methods';
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
@@ -41,11 +41,9 @@ import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xm
 import { ZoneContextManager } from '@opentelemetry/context-zone';
 
 const provider = new WebTracerProvider();
-
 provider.register({
   contextManager: new ZoneContextManager(),
 });
-
 registerInstrumentations({
   instrumentations: [new XMLHttpRequestInstrumentation(
     {
@@ -53,9 +51,7 @@ registerInstrumentations({
     },
   )],
 });
-
 const tracer = provider.getTracer('bk-log');
-
 Vue.prototype.tracer = tracer;
 
 try {
@@ -76,21 +72,52 @@ try {
   console.warn('前端监控接入出错', e);
 }
 
+router.onError((err) => {
+  const pattern = /Loading (CSS chunk|chunk) (\d)+ failed/g;
+  const isChunkLoadFailed = err.message.match(pattern);
+  const targetPath = router.history.pending.fullPath;
+  if (isChunkLoadFailed) {
+    router.replace(targetPath);
+  }
+});
+
 Vue.component('VueJsonPretty', VueJsonPretty);
 Vue.component('LogButton', LogButton);
 Vue.directive('cursor', cursor);
-Vue.use(vClickOutside);
 Vue.use(methods);
-Vue.config.devtools = true;
 
-global.bus = bus;
-global.mainComponent = new Vue({
-  el: '#app',
-  router,
-  store,
-  i18n,
-  components: {
-    App,
-  },
-  template: '<App/>',
-});
+if (process.env.NODE_ENV === 'development') {
+  http.request('meta/getEnvConstant').then((res) => {
+    const data = res.data;
+    Object.keys(data).forEach((key) => {
+      window[key] = data[key];
+    });
+    window.FEATURE_TOGGLE = JSON.parse(data.FEATURE_TOGGLE);
+    window.FEATURE_TOGGLE_WHITE_LIST = JSON.parse(data.FEATURE_TOGGLE_WHITE_LIST);
+    window.bus = bus;
+    window.mainComponent = new Vue({
+      el: '#app',
+      router,
+      store,
+      i18n,
+      components: {
+        App,
+      },
+      template: '<App/>',
+    });
+    Vue.config.devtools = true;
+  });
+} else {
+  window.bus = bus;
+  window.mainComponent = new Vue({
+    el: '#app',
+    router,
+    store,
+    i18n,
+    components: {
+      App,
+    },
+    template: '<App/>',
+  });
+  Vue.config.devtools = true;
+}

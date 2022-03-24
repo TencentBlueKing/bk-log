@@ -25,7 +25,7 @@ from django.utils.translation import ugettext_lazy as _
 from apps.utils.db import array_group
 from apps.exceptions import ValidationError
 from apps.utils.log import logger
-from apps.log_databus.constants import EtlConfig
+from apps.log_databus.constants import EtlConfig, BKDATA_ES_TYPE_MAP
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.exceptions import EtlDelimiterParseException
 from apps.log_databus.handlers.etl_storage.utils.transfer import preview
@@ -78,7 +78,9 @@ class BkLogDelimiterEtlStorage(EtlStorage):
             "separator_node_action": "delimiter",
             "separator_node_name": self.separator_node_name,
             "separator": etl_params["separator"],
+            "etl_flat": etl_params.get("etl_flat", False),
         }
+
         if built_in_config.get("option") and isinstance(built_in_config["option"], dict):
             option = dict(built_in_config["option"], **option)
 
@@ -140,4 +142,116 @@ class BkLogDelimiterEtlStorage(EtlStorage):
         # 加上内置字段
         fields += [field for field in collector_config["fields"] if field["is_built_in"]]
         collector_config["fields"] = fields
+
         return collector_config
+
+    def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
+        retain_original_text = etl_params.get("retain_original_text", False)
+        built_in_fields = built_in_config.get("fields", [])
+        result_table_fields = self.get_result_table_fields(fields, etl_params, copy.deepcopy(built_in_config))
+        time_field = result_table_fields.get("time_field")
+        bkdata_fields = [field for field in fields if not field["is_delete"]]
+        return {
+            "extract": {
+                "next": {
+                    "next": [
+                        {
+                            "next": {
+                                "next": {
+                                    "next": [
+                                        {
+                                            "next": {
+                                                "next": [
+                                                    {
+                                                        "next": {
+                                                            "next": None,
+                                                            "subtype": "assign_pos",
+                                                            "label": "labela2dfe3",
+                                                            "assign": [
+                                                                {
+                                                                    "index": str(field["field_index"]),
+                                                                    "assign_to": field["alias_name"]
+                                                                    if field["alias_name"]
+                                                                    else field["field_name"],
+                                                                    "type": BKDATA_ES_TYPE_MAP.get(
+                                                                        field.get("option").get("es_type"), "string"
+                                                                    ),
+                                                                }
+                                                                for field in bkdata_fields
+                                                            ],
+                                                            "type": "assign",
+                                                        },
+                                                        "label": "label5e3d6f",
+                                                        "type": "fun",
+                                                        "method": "split",
+                                                        "args": [etl_params["separator"]],
+                                                        "result": "split_log",
+                                                    }
+                                                ],
+                                                "name": "",
+                                                "label": None,
+                                                "type": "branch",
+                                            },
+                                            "result": "log_data",
+                                            "type": "access",
+                                            "default_value": "",
+                                            "subtype": "access_obj",
+                                            "label": "labelb140",
+                                            "default_type": "null",
+                                            "key": "data",
+                                        },
+                                        {
+                                            "next": None,
+                                            "subtype": "assign_obj",
+                                            "label": "labelb140f1",
+                                            "assign": [
+                                                {"key": "data", "assign_to": "data", "type": "text"}
+                                                if retain_original_text
+                                                else {},
+                                            ]
+                                            + [
+                                                self._to_bkdata_assign(built_in_field)
+                                                for built_in_field in built_in_fields
+                                                if built_in_field.get("flat_field", False)
+                                            ],
+                                            "type": "assign",
+                                        },
+                                    ],
+                                    "name": "",
+                                    "type": "branch",
+                                    "label": None,
+                                },
+                                "label": "label21ca91",
+                                "type": "fun",
+                                "method": "iterate",
+                                "args": [],
+                                "result": "iter_item",
+                            },
+                            "result": "item_data",
+                            "type": "access",
+                            "default_value": "",
+                            "subtype": "access_obj",
+                            "label": "label36c8ad",
+                            "default_type": "null",
+                            "key": "items",
+                        },
+                        {
+                            "next": None,
+                            "subtype": "assign_obj",
+                            "label": "labelf676c9",
+                            "assign": self._get_bkdata_default_fields(built_in_fields, time_field),
+                            "type": "assign",
+                        },
+                    ],
+                    "name": "",
+                    "label": None,
+                    "type": "branch",
+                },
+                "label": "label04a222",
+                "type": "fun",
+                "method": "from_json",
+                "args": [],
+                "result": "json_data",
+            },
+            "conf": self._to_bkdata_conf(time_field),
+        }

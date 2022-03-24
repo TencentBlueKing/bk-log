@@ -20,94 +20,172 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-// 支持的完整的菜单
-export default [{
-  name: '检索',
-  id: 'retrieve',
-}, {
-  name: '仪表盘',
-  id: 'dashboard',
-  children: [{
-    id: 'create-dashboard',
-    name: '新建仪表盘',
-  }, {
-    id: 'create-folder',
-    name: '新建目录',
-  }, {
-    id: 'import-dashboard',
-    name: '导入仪表盘',
-  }],
-}, {
-  name: '日志提取',
-  id: 'extract',
-}, {
-  name: '调用链',
-  id: 'trace',
-}, {
-  name: '监控策略',
-  id: 'monitor',
-}, {
-  name: '管理',
-  id: 'manage',
-  children: [{
-    id: 'manage-access',
-    name: '日志接入',
+import i18n from '@/language/i18n';
+
+export const menuArr = [
+  {
+    name: i18n.t('nav.retrieve'),
+    id: 'retrieve',
+    level: 1,
+  },
+  {
+    name: i18n.t('nav.dashboard'),
+    id: 'dashboard',
+    level: 1,
+    dropDown: true,
     children: [{
-      id: 'log-collection',
-      name: '日志采集',
+      id: 'create_dashboard',
+      name: i18n.t('新建仪表盘'),
+      level: 2,
+      isDashboard: true,
+      project_manage: true,
     }, {
-      id: 'bk-data-collection',
-      name: '数据平台',
+      id: 'create_folder',
+      name: i18n.t('新建目录'),
+      level: 2,
+      isDashboard: true,
+      project_manage: true,
     }, {
-      id: 'es-collection',
-      name: '第三方ES接入',
-    }, {
-      id: 'custom-collection',
-      name: '自定义接入',
+      id: 'import_dashboard',
+      name: i18n.t('导入仪表盘'),
+      level: 2,
+      isDashboard: true,
+      project_manage: true,
     }],
-  }, {
-    id: 'trace-track',
-    name: '全链路追踪',
-    children: [{
-      id: 'collection-track',
-      name: '采集接入',
-    }, {
-      id: 'bk-data-track',
-      name: '数据平台接入',
-    }, {
-      id: 'sdk-track',
-      name: 'SDK接入',
-    }],
-  }, {
-    id: 'manage-extract',
-    name: '日志提取',
-    children: [{
-      id: 'manage-log-extract',
-      name: '提取配置',
-    }, {
-      id: 'extract-link-manage',
-      name: '链路管理',
-    }],
-  }, {
-    id: 'log-archive',
-    name: '日志归档',
-    children: [{
-      id: 'log-archive-conf',
-      name: '日志归档',
-    }],
-  }, {
-    id: 'es-cluster-status',
-    name: 'ES集群',
-    children: [{
-      id: 'es-cluster-manage',
-      name: '集群列表',
-    }],
-  }, {
-    id: 'manage-data-link',
-    name: '管理',
-    children: [{
-      id: 'manage-data-link-conf',
-      name: '采集链路管理',
-    }],
-  }],
-}];
+  },
+  {
+    name: i18n.t('nav.extract'),
+    id: 'extract',
+    level: 1,
+  },
+  {
+    name: i18n.t('trace.trace'),
+    id: 'trace',
+    level: 1,
+  },
+  {
+    name: i18n.t('nav.monitors'),
+    id: 'monitor',
+    level: 1,
+    children: [
+      {
+        name: i18n.t('nav.alarmStrategy'),
+        id: 'alarmStrategy',
+        level: 2,
+        children: [
+          {
+            name: i18n.t('nav.addstrategy'),
+            id: 'addstrategy',
+            level: 3,
+          },
+          {
+            name: i18n.t('nav.editstrategy'),
+            id: 'editstrategy',
+            level: 3,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    name: i18n.t('nav.manage'),
+    id: 'manage',
+    level: 1,
+    dropDown: true,
+    children: [
+      {
+        name: i18n.t('nav.dataSource'),
+        id: 'manage',
+        level: 2,
+        children: [
+          {
+            name: i18n.t('nav.collectAccess'),
+            id: 'collectAccess',
+            level: 3,
+            children: [
+              {
+                name: i18n.t('nav.New_acquisition'),
+                id: 'collectAdd',
+                level: 4,
+              },
+              {
+                name: i18n.t('nav.Edit_collection'),
+                id: 'collectEdit',
+                level: 4,
+              },
+              {
+                name: i18n.t('nav.Enable_collections'),
+                id: 'collectStart',
+                level: 4,
+              },
+              {
+                name: i18n.t('nav.Disable_collection'),
+                id: 'collectStop',
+                level: 4,
+              },
+              {
+                name: i18n.t('nav.Field_extraction'),
+                id: 'collectField',
+                level: 4,
+              },
+              {
+                name: i18n.t('nav.Configuration_details'),
+                id: 'allocation',
+                level: 4,
+                children: [
+                  {
+                    name: i18n.t('nav.Data_sampling'),
+                    id: 'jsonFormat',
+                    level: 5,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: i18n.t('nav.esAccess'),
+            id: 'esAccess',
+            level: 3,
+          },
+        ],
+      },
+      {
+        name: i18n.t('nav.indexSet'),
+        id: 'indexSet',
+        level: 2,
+        children: [
+          {
+            name: i18n.t('nav.addIndexSet'),
+            id: 'addIndexSet',
+            level: 3,
+          },
+          {
+            name: i18n.t('nav.editIndexSet'),
+            id: 'editIndexSet',
+            level: 3,
+          },
+        ],
+      },
+      {
+        name: i18n.t('链路配置'),
+        id: 'linkConfiguration',
+        level: 2,
+      },
+      {
+        name: i18n.t('nav.permissionGroup'),
+        id: 'permissionGroup',
+        level: 2,
+      },
+      {
+        name: i18n.t('nav.v3Migrate'),
+        id: 'migrate',
+        level: 2,
+      },
+      {
+        name: i18n.t('nav.extractManage'),
+        id: 'manageExtract',
+        level: 2,
+      },
+    ],
+  },
+];

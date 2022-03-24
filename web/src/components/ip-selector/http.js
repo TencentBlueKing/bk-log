@@ -116,3 +116,26 @@ export function getNodeAgentStatus(data) {
   });
   return getResData(originPromise);
 }
+
+// 获取动态分组列表
+export function getDynamicGroupList() {
+  const originPromise = http.request('collect/getDynamicGroupList', {
+    params: {
+      bk_biz_id: window.localStorage.getItem('bk_biz_id'),
+    },
+  });
+  return getResData(originPromise);
+}
+
+// 获取动态分组表格数据
+export function getDynamicGroup(data) {
+  const originPromise = http.request('collect/getDynamicGroup', {
+    params: {
+      bk_biz_id: window.localStorage.getItem('bk_biz_id'),
+    },
+    data: {
+      dynamic_group_id_list: data,
+    },
+  });
+  return getResData(originPromise);
+}

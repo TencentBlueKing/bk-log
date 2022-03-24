@@ -41,7 +41,8 @@ class ErrorCode(object):
     BKLOG_IAM = "99"
     BKLOG_ESB = "100"
     BKLOG_ADMIN = "101"
-    BKLOG_BCS = "102"
+    BKLOG_CLUSTERING = "102"
+    BKLOG_BCS = "103"
 
 
 class BaseException(Exception):

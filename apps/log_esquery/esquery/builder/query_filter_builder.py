@@ -33,7 +33,7 @@ class QueryFilterBuilder(object):
     # 构建索引集的filter，传入DSL构建器
     def set_filter_dict_list(self, addition: type_addition):
         for item in addition:
-            if item.get("field") and item.get("value"):
+            if item.get("field") and (item.get("value") or isinstance(item.get("value"), str)):
                 self._filter_dict_list.append(
                     {
                         "field": item["field"],

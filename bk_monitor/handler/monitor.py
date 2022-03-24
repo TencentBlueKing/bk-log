@@ -65,7 +65,7 @@ class BKMonitor(object):
         return self._custom_metric_instance
 
     def build_event_trigger(self, data_name: str, event_name: str) -> "EventTrigger":
-        return EventTrigger(data_name=data_name, event_name=event_name)
+        return EventTrigger(data_name=data_name, event_name=event_name, reporter=self.custom_metric())
 
 
 class CustomReporter(object):
@@ -82,12 +82,14 @@ class CustomReporter(object):
         self.app_id = app_id
         self._client = client
 
-    def migrate(self, data_name_list: list, custom_report_type: str = TIME_SERIES_TYPE):
+    def migrate(self, data_name_list: list):
         """
         初始化数据源相关配置
         """
-        for data_name in data_name_list:
+        for data_name_obj in data_name_list:
             # data_name是否合法验证
+            data_name = data_name_obj["name"]
+            custom_report_type = data_name_obj["custom_report_type"]
             if not data_name:
                 logger.exception(_("数据源名称不能为空"))
                 raise MonitorReportRequestException(ErrorEnum.PARAMS_VERIFY_ERROR, "name can not be empty")
@@ -161,7 +163,7 @@ class CustomReporter(object):
             logger.info(f"create report config successful data_name -> {data_name}")
 
         # 维护data_id 是否enable
-        self._enable_data_id(data_name_list)
+        self._enable_data_id([data_name_obj["name"] for data_name_obj in data_name_list])
         logger.info("enable data_id successful")
 
     def report(self, collector_import_paths: list = None, namespaces: list = None):
@@ -243,7 +245,7 @@ class CustomReporter(object):
         report 参数验证
         """
         if not key:
-            logger.info(_(f"{val} data对应数据源为空，请检查数据源"))
+            logger.info(_(f"{key} data对应数据源为空，请检查数据源"))
             return False
 
         if not val:

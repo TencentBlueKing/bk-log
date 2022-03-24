@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from logging.handlers import DatagramHandler
 from opentelemetry import trace
+from opentelemetry.trace import format_trace_id
 
 """
 Usage:
@@ -47,7 +48,7 @@ class UdpHandler(DatagramHandler):
         try:
             msg = self.format(record)
             self.send(msg.encode())
-        except Exception:
+        except Exception:  # pylint:disable=broad-except
             self.handleError(record)
 
 
@@ -105,7 +106,7 @@ class logger_traceback:
     @staticmethod
     def build_message(message):
         trace_id = trace.get_current_span().get_span_context().trace_id
-        return "{} | {}".format(trace_id, message)
+        return "{} | {}".format(format_trace_id(trace_id), message)
 
 
 # traceback--打印详细错误日志

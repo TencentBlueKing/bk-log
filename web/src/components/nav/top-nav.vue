@@ -38,9 +38,10 @@
         {{ menu.name }}
       </div>
       <ul class="top-nav-list fl" v-if="!title && menu.children">
-        <li v-for="item in menu.children" :key="item.id"
-            :class="{ 'active': routerName === item.id, 'text-disabled': (item.id === 'esAccess' && !collectProject) }"
-            @click="routerHandler(item)">{{item.name}}
+        <li
+          v-for="item in menu.children" :key="item.id"
+          :class="{ 'active': routerName === item.id, 'text-disabled': (item.id === 'esAccess' && !collectProject) }"
+          @click="routerHandler(item)">{{item.name}}
         </li>
       </ul>
     </div>
@@ -52,7 +53,7 @@ import { mapState } from 'vuex';
 import { projectManage } from '@/common/util';
 
 export default {
-  name: 'top-nav',
+  name: 'TopNav',
   components: {},
   props: {
     title: {
@@ -196,6 +197,7 @@ export default {
     }
 
     .skip {
+      /* stylelint-disable-next-line declaration-no-important */
       font-weight: normal !important;
       color: #64656e;
 
