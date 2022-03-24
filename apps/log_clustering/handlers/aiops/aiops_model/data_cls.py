@@ -119,10 +119,26 @@ class ChunkedReadSampleSet(object):
 
 
 @dataclass
+class SparkSessionCls(object):
+    worker_nums: int = 1
+    worker_group: str = "default"
+    core: int = 2
+    memory: int = 2048
+
+
+@dataclass
+class SessionWorkspaceCls(object):
+    worker_group: str = "default"
+    core: int = 2
+    memory: int = 1024
+    worker_nums: int = 1
+
+
+@dataclass
 class PipelineResourcesCls(object):
     python_backend: PythonBackendCls
-    session_agent: SessionAgentCls = SessionAgentCls()
-    session_server: SessionServerCls = SessionServerCls()
+    spark_session: SparkSessionCls = SparkSessionCls()
+    session_workspace: SessionWorkspaceCls = SessionWorkspaceCls()
 
 
 @dataclass

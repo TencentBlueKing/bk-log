@@ -44,11 +44,14 @@ class FlowMode(ChoicesEnum):
     AFTER_TREAT_FLOW = "after_treat_flow"
     # 修改flow的某些节点
     MODIFY_FLOW = "modify_flow"
+    # 计算平台rt flow
+    AFTER_TREAT_FLOW_BKDATA = "after_treat_flow_bkdata"
 
     _choices_labels = (
         (PRE_TREAT_FLOW, "templates/flow/pre_treat_flow.json"),
         (AFTER_TREAT_FLOW, "templates/flow/after_treat_flow.json"),
         (MODIFY_FLOW, "templates/flow/modify_flow.json"),
+        (AFTER_TREAT_FLOW_BKDATA, "templates/flow/after_treat_flow_bkdata.json"),
     )
 
 

@@ -17,6 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.handlers.aiops.aiops_model.constants import StepName
 from apps.log_clustering.models import AiopsModel, AiopsModelExperiment, SampleSet, ClusteringConfig
@@ -40,12 +42,10 @@ class CreateModelService(BaseService):
     def _execute(self, data, parent_data):
         model_name = data.get_one_of_inputs("model_name")
         description = data.get_one_of_inputs("description")
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
+        index_set_id = data.get_one_of_inputs("index_set_id")
         aiops_models = AiopsModelHandler().create_model(model_name=model_name, description=description)
         AiopsModel.objects.create(**{"model_id": aiops_models["model_id"], "model_name": model_name})
-        ClusteringConfig.objects.filter(collector_config_id=collector_config_id).update(
-            model_id=aiops_models["model_id"]
-        )
+        ClusteringConfig.objects.filter(index_set_id=index_set_id).update(model_id=aiops_models["model_id"])
         return True
 
 
@@ -60,7 +60,7 @@ class CreateModel(object):
         self.create_model = ServiceActivity(component_code="create_model", name=f"create_model:{model_name}")
         self.create_model.component.inputs.model_name = Var(type=Var.SPLICE, value="${model_name}")
         self.create_model.component.inputs.description = Var(type=Var.SPLICE, value="${description}")
-        self.create_model.component.inputs.collector_config_id = Var(type=Var.SPLICE, value="${collector_config_id}")
+        self.create_model.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class UpdateTrainingScheduleService(BaseService):
@@ -135,11 +135,25 @@ class UpdateExecuteConfigService(BaseService):
 
     def _execute(self, data, parent_data):
         # todo 决定是否需要变更配置
+        index_set_id = data.get_one_of_inputs("index_set_id")
+        clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
+        python_backend = clustering_config.python_backend
+        conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
+        python_backend = python_backend if python_backend else conf.get("python_backend")
         model_name = data.get_one_of_inputs("model_name")
         experiment_alias = data.get_one_of_inputs("experiment_alias")
         experiment_model = AiopsModelExperiment.get_experiment(experiment_alias=experiment_alias, model_name=model_name)
         experiment_id = experiment_model.experiment_id
-        AiopsModelHandler().update_execute_config(experiment_id)
+
+        if python_backend:
+            AiopsModelHandler().update_execute_config(
+                experiment_id,
+                worker_nums=python_backend["worker_nums"],
+                memory=python_backend["memory"],
+                core=python_backend["core"],
+            )
+        else:
+            AiopsModelHandler().update_execute_config(experiment_id)
         experiment_model.status = "update_execute_config"
         experiment_model.save()
         return True

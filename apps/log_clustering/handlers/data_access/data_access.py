@@ -21,7 +21,7 @@ import copy
 import json
 
 import settings
-from apps.api import BkDataDatabusApi, BkDataMetaApi, BkDataAccessApi
+from apps.api import BkDataDatabusApi, BkDataMetaApi, BkDataAccessApi, BkDataResourceCenterApi, BkDataAuthApi
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.constants import BKDATA_ES_TYPE_MAP
@@ -178,3 +178,21 @@ class DataAccessHandler(BaseAiopsHandler):
                 "bk_username": self.conf.get("bk_username"),
             }
         )
+
+    def add_cluster_group(self, result_table_id):
+        storage_config = BkDataMetaApi.result_tables.storages({"result_table_id": result_table_id})
+        cluster_resource_group = BkDataResourceCenterApi.cluster_query_digest(
+            params={
+                "resource_type": "storage",
+                "service_type": "es",
+                "cluster_name": storage_config["es"]["storage_cluster"]["cluster_name"],
+            }
+        )
+        BkDataAuthApi.add_cluster_group(
+            params={
+                "project_id": self.conf.get("project_id"),
+                "cluster_group_id": cluster_resource_group["resource_group_id"],
+            }
+        )
+
+        return storage_config["es"]["storage_cluster"]["cluster_name"]

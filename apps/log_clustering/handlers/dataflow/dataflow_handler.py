@@ -25,9 +25,10 @@ from django.conf import settings
 from jinja2 import Environment, FileSystemLoader
 from dataclasses import asdict
 
-from apps.api import BkDataDataFlowApi, BkDataAIOPSApi
-from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS
-from apps.log_clustering.exceptions import ClusteringConfigNotExistException
+from apps.log_search.models import LogIndexSet
+from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi
+from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum
+from apps.log_clustering.exceptions import ClusteringConfigNotExistException, BkdataStorageNotExistException
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.log_clustering.handlers.dataflow.constants import (
@@ -103,17 +104,24 @@ class DataFlowHandler(BaseAiopsHandler):
         request_dict = self._set_username(start_request)
         return BkDataDataFlowApi.start_flow(request_dict)
 
-    def create_pre_treat_flow(self, collector_config_id: int):
+    @classmethod
+    def get_fields_dict(cls, clustering_config):
+        if clustering_config.collector_config_id:
+            all_etl_fields = CollectorConfig.objects.get(
+                collector_config_id=clustering_config.collector_config_id
+            ).get_all_etl_fields()
+            return {field["field_name"]: field["alias_name"] or field["field_name"] for field in all_etl_fields}
+        log_index_set_all_fields = LogIndexSet.objects.get(index_set_id=clustering_config.index_set_id).get_fields()
+        return {field["field_name"]: field["field_alias"] for field in log_index_set_all_fields["fields"]}
+
+    def create_pre_treat_flow(self, index_set_id: int):
         """
         创建pre-treat flow
         """
-        clustering_config = ClusteringConfig.objects.filter(collector_config_id=collector_config_id).first()
+        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         if not ClusteringConfig:
             raise ClusteringConfigNotExistException()
-        all_etl_fields = CollectorConfig.objects.get(
-            collector_config_id=clustering_config.collector_config_id
-        ).get_all_etl_fields()
-        all_fields_dict = {field["field_name"]: field["alias_name"] or field["field_name"] for field in all_etl_fields}
+        all_fields_dict = self.get_fields_dict(clustering_config=clustering_config)
         filter_rule, not_clustering_rule = self._init_filter_rule(
             clustering_config.filter_rules, all_fields_dict, clustering_config.clustering_fields
         )
@@ -131,7 +139,11 @@ class DataFlowHandler(BaseAiopsHandler):
         flow = json.loads(pre_treat_flow)
         create_pre_treat_flow_request = CreateFlowCls(
             nodes=flow,
-            flow_name="{}_pre_treat_flow".format(clustering_config.collector_config_name_en),
+            flow_name="{}_pre_treat_flow".format(
+                clustering_config.collector_config_name_en
+                if clustering_config.collector_config_name_en
+                else clustering_config.source_rt_name
+            ),
             project_id=self.conf.get("project_id"),
         )
         request_dict = self._set_username(create_pre_treat_flow_request)
@@ -264,14 +276,16 @@ class DataFlowHandler(BaseAiopsHandler):
         template = env.get_template(file_name)
         return template.render(**render_obj)
 
-    def create_after_treat_flow(self, collector_config_id):
-        clustering_config = ClusteringConfig.objects.filter(collector_config_id=collector_config_id).first()
+    def create_after_treat_flow(self, index_set_id):
+        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         if not ClusteringConfig:
             raise ClusteringConfigNotExistException()
-        all_etl_fields = CollectorConfig.objects.get(
-            collector_config_id=clustering_config.collector_config_id
-        ).get_all_etl_fields()
-        all_fields_dict = {field["field_name"]: field["alias_name"] or field["field_name"] for field in all_etl_fields}
+        all_fields_dict = self.get_fields_dict(clustering_config=clustering_config)
+        source_rt_name = (
+            clustering_config.collector_config_name_en
+            if clustering_config.collector_config_name_en
+            else clustering_config.source_rt_name
+        )
         after_treat_flow_dict = asdict(
             self._init_after_treat_flow(
                 clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
@@ -280,17 +294,21 @@ class DataFlowHandler(BaseAiopsHandler):
                 non_clustering_result_table_id=clustering_config.pre_treat_flow["not_clustering"]["result_table_id"],
                 model_id=clustering_config.model_id,
                 model_release_id=self.get_latest_released_id(clustering_config.model_id),
-                collector_config_name_en=clustering_config.collector_config_name_en,
+                src_rt_name=source_rt_name,
                 target_bk_biz_id=clustering_config.bk_biz_id,
+                clustering_config=clustering_config,
             )
         )
         after_treat_flow = self._render_template(
-            flow_mode=FlowMode.AFTER_TREAT_FLOW.value, render_obj={"after_treat": after_treat_flow_dict}
+            flow_mode=FlowMode.AFTER_TREAT_FLOW.value
+            if clustering_config.collector_config_id
+            else FlowMode.AFTER_TREAT_FLOW_BKDATA.value,
+            render_obj={"after_treat": after_treat_flow_dict},
         )
         flow = json.loads(after_treat_flow)
         create_pre_treat_flow_request = CreateFlowCls(
             nodes=flow,
-            flow_name="{}_after_treat_flow".format(clustering_config.collector_config_name_en),
+            flow_name="{}_after_treat_flow".format(clustering_config.source_rt_name),
             project_id=self.conf.get("project_id"),
         )
         request_dict = self._set_username(create_pre_treat_flow_request)
@@ -347,7 +365,8 @@ class DataFlowHandler(BaseAiopsHandler):
         model_release_id: int,
         model_id: str,
         target_bk_biz_id: int,
-        collector_config_name_en: str,
+        src_rt_name: str,
+        clustering_config,
         clustering_fields: str = "log",
     ):
         # 这里是为了在新类中去除第一次启动24H内产生的大量异常新类
@@ -383,10 +402,8 @@ class DataFlowHandler(BaseAiopsHandler):
                 filter_rule="",
             ),
             merge_table=MergeNodeCls(
-                table_name="bklog_{}_{}".format(settings.ENVIRONMENT, collector_config_name_en),
-                result_table_id="{}_bklog_{}_{}".format(
-                    self.conf.get("bk_biz_id"), settings.ENVIRONMENT, collector_config_name_en
-                ),
+                table_name="bklog_{}_{}".format(settings.ENVIRONMENT, src_rt_name),
+                result_table_id="{}_bklog_{}_{}".format(self.conf.get("bk_biz_id"), settings.ENVIRONMENT, src_rt_name),
             ),
             format_signature=RealTimeCls(
                 fields="",
@@ -430,7 +447,36 @@ class DataFlowHandler(BaseAiopsHandler):
             bk_biz_id=self.conf.get("bk_biz_id"),
             target_bk_biz_id=target_bk_biz_id,
         )
+        if not clustering_config.collector_config_id:
+            es_storage = self.get_es_storage_fields(clustering_config.bkdata_etl_result_table_id)
+            if not es_storage:
+                raise BkdataStorageNotExistException(
+                    BkdataStorageNotExistException.MESSAGE.formate(index_set_id=clustering_config.index_set_id)
+                )
+
+            after_treat_flow.es_cluster = clustering_config.es_storage
+            after_treat_flow.es.expires = es_storage["expires"]
+            after_treat_flow.es.has_replica = es_storage["has_replica"]
+            after_treat_flow.es.json_fields = es_storage["json_fields"]
+            after_treat_flow.es.analyzed_fields = es_storage["analyzed_fields"]
+            doc_values_fields = es_storage["analyzed_fields"]
+            doc_values_fields.extend(
+                [f"{AGGS_FIELD_PREFIX}_{pattern_level}" for pattern_level in PatternEnum.get_choices()]
+            )
+            after_treat_flow.es.doc_values_fields = doc_values_fields
         return after_treat_flow
+
+    @classmethod
+    def get_es_storage_fields(cls, result_table_id):
+        # 获取计算平台rt存储字段
+        result = BkDataMetaApi.result_tables.storages({"result_table_id": result_table_id})
+        es = result.get("es")
+        if not es:
+            return None
+        storage_config = json.loads(es)
+        # "expires": "3d"
+        storage_config["expires"] = int(es["expires"][:-1])
+        return storage_config
 
     def add_kv_source_node(self, flow_id, kv_source_result_table_id):
         """

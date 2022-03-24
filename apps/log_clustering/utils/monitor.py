@@ -26,7 +26,7 @@ from apps.log_clustering.constants import DEFAULT_NOTIFY_RECEIVER_TYPE, DEFAULT_
 from apps.log_clustering.exceptions import ClusteringClosedException
 from apps.log_clustering.models import NoticeGroup
 from apps.log_databus.constants import ADMIN_REQUEST_USER, EMPTY_REQUEST_USER
-from apps.log_databus.models import CollectorConfig
+from apps.log_search.models import LogIndexSet
 
 
 class MonitorUtils(object):
@@ -47,16 +47,16 @@ class MonitorUtils(object):
         return [{"type": notice_tye, "id": receiver} for receiver in receivers]
 
     @classmethod
-    def get_or_create_notice_group(cls, collector_config_id, log_index_set_id, bk_biz_id):
+    def get_or_create_notice_group(cls, log_index_set_id, bk_biz_id):
         notice_group = NoticeGroup.objects.filter(index_set_id=log_index_set_id, bk_biz_id=bk_biz_id).first()
         if notice_group:
             return notice_group.notice_group_id
-        collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
-        maintainers = cls._generate_maintainer(collector_config=collector_config)
+        log_index_set = LogIndexSet.objects.filter(index_set_id=log_index_set_id)
+        maintainers = cls._generate_maintainer(log_index_set=log_index_set)
         notice_receiver = cls.generate_notice_receiver(receivers=maintainers, notice_tye=DEFAULT_NOTIFY_RECEIVER_TYPE)
         group = cls.save_notice_group(
             bk_biz_id=bk_biz_id,
-            name=_("{}_{}运维人员").format(bk_biz_id, collector_config.collector_config_name),
+            name=_("{}_{}运维人员").format(bk_biz_id, log_index_set.index_set_name),
             message="",
             notice_receiver=notice_receiver,
             notice_way=DEFAULT_NOTICE_WAY,
@@ -65,10 +65,10 @@ class MonitorUtils(object):
         return group["id"]
 
     @classmethod
-    def _generate_maintainer(cls, collector_config: CollectorConfig):
+    def _generate_maintainer(cls, log_index_set: LogIndexSet):
         maintainers = {
-            collector_config.updated_by,
-            collector_config.created_by,
+            log_index_set.updated_by,
+            log_index_set.created_by,
         }
         maintainers = maintainers - {ADMIN_REQUEST_USER, EMPTY_REQUEST_USER}
         if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):

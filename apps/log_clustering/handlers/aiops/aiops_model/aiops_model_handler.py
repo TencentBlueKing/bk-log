@@ -133,7 +133,13 @@ class AiopsModelHandler(BaseAiopsHandler):
         return BkDataAIOPSApi.retrieve_execute_config(params=request_dict)
 
     def update_execute_config(
-        self, experiment_id: int, window: str = "1h", worker_nums: int = 16, memory: int = 8096, time_limit: int = 7200
+        self,
+        experiment_id: int,
+        window: str = "1h",
+        worker_nums: int = 16,
+        memory: int = 8096,
+        time_limit: int = 7200,
+        core: int = 4,
     ):
         """
         变更实验meta配置
@@ -142,6 +148,7 @@ class AiopsModelHandler(BaseAiopsHandler):
         @param worker_nums int 使用worker数
         @param memory int 使用内存大小
         @param time_limit 运行时间设置
+        @param core 核数
         """
         update_execute_config_request = UpdateExecuteConfigCls(
             filter_id=experiment_id,
@@ -150,7 +157,7 @@ class AiopsModelHandler(BaseAiopsHandler):
                     window=window,
                 ),
                 pipeline_resources=PipelineResourcesCls(
-                    python_backend=PythonBackendCls(worker_nums=worker_nums, memory=memory)
+                    python_backend=PythonBackendCls(worker_nums=worker_nums, memory=memory, core=core)
                 ),
                 pipeline_execute_config={"time_limit": time_limit},
             ),

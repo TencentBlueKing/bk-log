@@ -86,6 +86,8 @@ class ClusteringConfig(SoftDeleteModel):
     modify_flow = JSONField(_("修改after_treat_flow调用的配置"), null=True, blank=True)
     source_rt_name = models.CharField(_("源rt名"), max_length=255, null=True, blank=True)
     category_id = models.CharField(_("数据分类"), max_length=64, null=True, blank=True, default=None)
+    python_backend = JSONField(_("模型训练配置"), null=True, blank=True)
+    es_storage = models.CharField(_("es 集群"), max_length=64, null=True, blank=True, default=None)
 
 
 class SignatureStrategySettings(SoftDeleteModel):

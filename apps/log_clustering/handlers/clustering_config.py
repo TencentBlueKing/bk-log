@@ -61,9 +61,14 @@ class ClusteringConfigHandler(object):
         category_id = log_index_set.category_id
         log_index_set_data, *_ = log_index_set.indexes
         collector_config_name_en = ""
+        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         if collector_config_id:
-            clustering_config = CollectorConfig.objects.filter(collector_config_id=collector_config_id).first()
-            collector_config_name_en = clustering_config.collector_config_name_en if clustering_config else None
+            collector_config = CollectorConfig.objects.filter(collector_config_id=collector_config_id).first()
+            collector_config_name_en = (
+                clustering_config.collector_config_name_en
+                if clustering_config
+                else collector_config.collector_config_name_en
+            )
         source_rt_name = log_index_set_data["result_table_id"]
         min_members = params["min_members"]
         max_dist_list = params["max_dist_list"]
@@ -75,7 +80,6 @@ class ClusteringConfigHandler(object):
         bk_biz_id = params["bk_biz_id"]
         filter_rules = params["filter_rules"]
         signature_enable = params["signature_enable"]
-        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         from apps.log_clustering.handlers.pipline_service.aiops_service import create_aiops_service
 
         if clustering_config:
@@ -112,7 +116,7 @@ class ClusteringConfigHandler(object):
             category_id=category_id,
         )
         if signature_enable:
-            create_aiops_service(collector_config_id)
+            create_aiops_service(index_set_id)
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def preview(
