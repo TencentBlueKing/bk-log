@@ -240,7 +240,8 @@ class SoftDeleteModelManager(OperateRecordModelManager):
     def filter(self, *args, **kwargs):
         # 默认都不显示被标记为删除的数据
         if not kwargs.get("is_deleted"):
-            kwargs["is_deleted"] = False
+            if not kwargs.get("is_deleted__in"):
+                kwargs["is_deleted"] = False
         return super(SoftDeleteModelManager, self).filter(*args, **kwargs)
 
     def get(self, *args, **kwargs):

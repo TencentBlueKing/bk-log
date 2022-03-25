@@ -23,7 +23,10 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 
 from apps.log_databus.exceptions import CollectorConfigNotExistException
-from apps.log_databus.handlers.collector import CollectorHandler
+from apps.log_databus.handlers.collector import (
+    CollectorHandler,
+    build_bk_data_name
+)
 from apps.log_databus.constants import LogPluginInfo
 from apps.exceptions import ApiRequestError, ApiResultError
 from .test_collectorhandler import TestCollectorHandler
@@ -31,7 +34,7 @@ from ...log_databus.serializers import CollectorCreateSerializer
 from ...utils.drf import custom_params_valid
 
 BK_DATA_ID = 1
-TABLE_ID = "2_log.test_table"
+TABLE_ID = "2_log.test_collector"
 SUBSCRIPTION_ID = 2
 TASK_ID = 3
 NEW_TASK_ID = 4
@@ -1156,3 +1159,38 @@ class TestCollector(TestCase):
 
         with self.assertRaises(BaseException):
             CollectorHandler._check_task_ready_exception(BaseException())
+
+    @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
+    @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
+    @patch("apps.api.NodeApi.create_subscription", lambda _: {"subscription_id": SUBSCRIPTION_ID})
+    @patch("apps.api.NodeApi.subscription_statistic", subscription_statistic)
+    @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": TASK_ID})
+    @patch("apps.api.NodeApi.switch_subscription", lambda _: {})
+    @patch("apps.api.NodeApi.check_subscription_task_ready", lambda _: True)
+    @patch("apps.api.TransferApi.modify_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
+    @patch("apps.api.CCApi.search_module", CCModuleTest())
+    @patch("apps.api.CCApi.list_biz_hosts", CCBizHostsTest())
+    @patch("apps.decorators.user_operation_record.delay", return_value=None)
+    @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
+    @override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}})
+    def test_pre_check_bk_data_name(self, *args, **kwargs):
+        params = copy.deepcopy(PARAMS)
+        params = custom_params_valid(serializer=CollectorCreateSerializer, params=params)
+        params["params"]["conditions"]["type"] = "separator"
+        create_collector_result = CollectorHandler().update_or_create(params)
+
+        bk_biz_id = params["bk_biz_id"]
+        collector_config_name = params["collector_config_name"]
+
+        bk_data_name = build_bk_data_name(bk_biz_id=bk_biz_id, collector_config_name=collector_config_name)
+        result = CollectorHandler().pre_check_bk_data_name(params=params)
+
+        self.assertEqual(result[0]["bk_data_name"], bk_data_name)
+        self.assertEqual(result[0]["is_deleted"], False)
+        self._test_destroy(create_collector_result["collector_config_id"])
+
+        bk_data_name = build_bk_data_name(bk_biz_id=bk_biz_id, collector_config_name=collector_config_name)
+        result = CollectorHandler().pre_check_bk_data_name(params=params)
+
+        self.assertEqual(result[0]["bk_data_name"], bk_data_name)
+        self.assertEqual(result[0]["is_deleted"], True)

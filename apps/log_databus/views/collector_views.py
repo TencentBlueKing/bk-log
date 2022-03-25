@@ -61,6 +61,8 @@ from apps.log_databus.serializers import (
     ListCollectorSerlalizer,
     CustomCreateSerializer,
     CustomUpateSerializer,
+    PreCheckBkDataNameSerializer,
+    PreCheckResultTableIDSerializer,
 )
 from apps.utils.function import ignored
 
@@ -1849,3 +1851,47 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.params_valid(CustomUpateSerializer)
         return Response(CollectorHandler(collector_config_id).custom_update(**data))
+
+    @list_route(methods=["GET"], url_path="pre_check_bk_data_name")
+    def pre_check_bk_data_name(self, request):
+        """
+        @api {get} /databus/collectors/pre_check_bk_data_name/ 预检查bk_data_name
+        @apiName pre_check_bk_data_name
+        @apiGroup 10_Collector
+        @apiSuccess {list} data.bk_data_name 满足条件的bk_data_name列表
+        @apiSuccess {Bool} data.is_deleted 是否删除
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": [{
+                "bk_data_name": {bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name},
+                "is_deleted": False
+            }],
+            "result": true
+        }
+        """
+        data = self.params_valid(PreCheckBkDataNameSerializer)
+        return Response(CollectorHandler().pre_check_bk_data_name(data))
+
+    @list_route(methods=["GET"], url_path="pre_check_result_table_id")
+    def pre_check_result_table_id(self, request):
+        """
+        @api {get} /databus/collectors/pre_check_result_table_id/ 预检查result_table_id
+        @apiName pre_check_result_table_id
+        @apiGroup 10_Collector
+        @apiSuccess {list} data.result_table_id 满足条件的result_table_id列表
+        @apiSuccess {Bool} data.is_deleted 是否删除
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": [{
+                "result_table_id": {bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en},
+                "is_deleted": False
+            }],
+            "result": true
+        }
+        """
+        data = self.params_valid(PreCheckResultTableIDSerializer)
+        return Response(CollectorHandler().pre_check_result_table_id(data))
