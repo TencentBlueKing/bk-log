@@ -236,6 +236,7 @@
           :date-picker-value="datePickerValue"
           :favorite-list="favoriteList"
           :latest-favorite-id="latestFavoriteId"
+          :index-set-item="indexSetItem"
           @remove="removeFavorite"
           @shouldRetrieve="retrieveLog"
           @retrieveFavorite="retrieveFavorite"
@@ -269,6 +270,7 @@
           :clean-config="cleanConfig"
           :picker-time-range="pickerTimeRange"
           :date-picker-value="datePickerValue"
+          :index-set-item="indexSetItem"
           @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
@@ -505,7 +507,7 @@ export default {
   watch: {
     indexId(val) { // 切换索引集和初始化索引 id 时改变
       const option = this.indexSetList.find(item => item.index_set_id === val);
-      this.indexSetItem = option ? option : { index_set_name: '', indexName: '', scenario_name: '' };
+      this.indexSetItem = option ? option : { index_set_name: '', indexName: '', scenario_name: '', scenario_id: '' };
       // eslint-disable-next-line camelcase
       this.isSearchAllowed = !!option?.permission?.search_log;
       this.resetRetrieveCondition();
