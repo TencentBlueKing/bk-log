@@ -377,7 +377,7 @@ class AfterTreatDataFlowCls(object):
     queue_cluster: str
     bk_biz_id: int
     target_bk_biz_id: int
-    es: ElasticsearchCls = ElasticsearchCls
+    es: ElasticsearchCls = ElasticsearchCls()
     es_cluster: str = ""
 
 

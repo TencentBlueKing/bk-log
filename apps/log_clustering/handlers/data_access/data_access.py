@@ -181,13 +181,14 @@ class DataAccessHandler(BaseAiopsHandler):
 
     def add_cluster_group(self, result_table_id):
         storage_config = BkDataMetaApi.result_tables.storages({"result_table_id": result_table_id})
-        cluster_resource_group = BkDataResourceCenterApi.cluster_query_digest(
+        cluster_resource_groups = BkDataResourceCenterApi.cluster_query_digest(
             params={
                 "resource_type": "storage",
                 "service_type": "es",
                 "cluster_name": storage_config["es"]["storage_cluster"]["cluster_name"],
             }
         )
+        cluster_resource_group, *_ = cluster_resource_groups
         BkDataAuthApi.add_cluster_group(
             params={
                 "project_id": self.conf.get("project_id"),

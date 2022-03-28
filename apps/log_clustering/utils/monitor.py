@@ -51,7 +51,7 @@ class MonitorUtils(object):
         notice_group = NoticeGroup.objects.filter(index_set_id=log_index_set_id, bk_biz_id=bk_biz_id).first()
         if notice_group:
             return notice_group.notice_group_id
-        log_index_set = LogIndexSet.objects.filter(index_set_id=log_index_set_id)
+        log_index_set = LogIndexSet.objects.filter(index_set_id=log_index_set_id).first()
         maintainers = cls._generate_maintainer(log_index_set=log_index_set)
         notice_receiver = cls.generate_notice_receiver(receivers=maintainers, notice_tye=DEFAULT_NOTIFY_RECEIVER_TYPE)
         group = cls.save_notice_group(

@@ -48,6 +48,7 @@ from apps.log_clustering.handlers.dataflow.constants import (
     TSPIDER_STORAGE_NODE_NAME,
     TSPIDER_STORAGE_NODE_TYPE,
     TSPIDER_STORAGE_INDEX_FIELDS,
+    SPLIT_TYPE,
 )
 from apps.log_clustering.handlers.dataflow.data_cls import (
     ExportFlowCls,
@@ -306,6 +307,10 @@ class DataFlowHandler(BaseAiopsHandler):
             render_obj={"after_treat": after_treat_flow_dict},
         )
         flow = json.loads(after_treat_flow)
+        new_cls_pattern_rt = after_treat_flow_dict["diversion"]["result_table_id"]
+        # 这里是为了越过分流节点
+        if clustering_config.bk_biz_id == self.conf.get("bk_biz_id"):
+            flow, new_cls_pattern_rt = self.deal_diversion_node(flow=flow, after_treat_flow_dict=after_treat_flow_dict)
         create_pre_treat_flow_request = CreateFlowCls(
             nodes=flow,
             flow_name="{}_after_treat_flow".format(clustering_config.source_rt_name),
@@ -315,25 +320,26 @@ class DataFlowHandler(BaseAiopsHandler):
         result = BkDataDataFlowApi.create_flow(request_dict)
         clustering_config.after_treat_flow = after_treat_flow_dict
         clustering_config.after_treat_flow_id = result["flow_id"]
-        clustering_config.new_cls_pattern_rt = after_treat_flow_dict["diversion"]["result_table_id"]
+        clustering_config.new_cls_pattern_rt = new_cls_pattern_rt
         clustering_config.save()
         self.add_kv_source_node(
             clustering_config.after_treat_flow_id,
             clustering_config.after_treat_flow["join_signature_tmp"]["result_table_id"],
         )
-        stream_source_node = self.add_stream_source(
-            flow_id=clustering_config.after_treat_flow_id,
-            stream_source_table_id=clustering_config.after_treat_flow["diversion"]["result_table_id"],
-            target_bk_biz_id=clustering_config.bk_biz_id,
-        )
-        self.add_tspider_storage(
-            flow_id=clustering_config.after_treat_flow_id,
-            tspider_storage_table_id=clustering_config.after_treat_flow["diversion"]["result_table_id"],
-            target_bk_biz_id=clustering_config.bk_biz_id,
-            expires=clustering_config.after_treat_flow["diversion_tspider"]["expires"],
-            cluster=clustering_config.after_treat_flow["diversion_tspider"]["cluster"],
-            source_node_id=stream_source_node["node_id"],
-        )
+        if clustering_config.bk_biz_id != self.conf.get("bk_biz_id"):
+            stream_source_node = self.add_stream_source(
+                flow_id=clustering_config.after_treat_flow_id,
+                stream_source_table_id=clustering_config.after_treat_flow["diversion"]["result_table_id"],
+                target_bk_biz_id=clustering_config.bk_biz_id,
+            )
+            self.add_tspider_storage(
+                flow_id=clustering_config.after_treat_flow_id,
+                tspider_storage_table_id=clustering_config.after_treat_flow["diversion"]["result_table_id"],
+                target_bk_biz_id=clustering_config.bk_biz_id,
+                expires=clustering_config.after_treat_flow["diversion_tspider"]["expires"],
+                cluster=clustering_config.after_treat_flow["diversion_tspider"]["cluster"],
+                source_node_id=stream_source_node["node_id"],
+            )
         modify_flow_dict = asdict(
             self.modify_flow(
                 after_treat_flow_id=clustering_config.after_treat_flow_id,
@@ -356,6 +362,34 @@ class DataFlowHandler(BaseAiopsHandler):
         )
         self.update_model_instance(model_instance_id=data_processing_id_config["id"])
         return flow_res
+
+    def deal_diversion_node(self, flow, after_treat_flow_dict):
+        # 为了处理分流节点不能分流到同业务id
+        for flow_obj in flow:
+            if flow_obj["node_type"] == SPLIT_TYPE:
+                flow.remove(flow_obj)
+                flow.append(
+                    {
+                        "name": "新类判断(tspider_storage)",
+                        "result_table_id": after_treat_flow_dict["judge_new_class"]["result_table_id"],
+                        "bk_biz_id": after_treat_flow_dict["target_bk_biz_id"],
+                        "indexed_fields": TSPIDER_STORAGE_INDEX_FIELDS,
+                        "cluster": after_treat_flow_dict["diversion_tspider"]["cluster"],
+                        "expires": after_treat_flow_dict["diversion_tspider"]["expires"],
+                        "has_unique_key": False,
+                        "storage_keys": [],
+                        "id": 283090,
+                        "from_nodes": [
+                            {
+                                "id": 268099,
+                                "from_result_table_ids": [after_treat_flow_dict["judge_new_class"]["result_table_id"]],
+                            }
+                        ],
+                        "node_type": TSPIDER_STORAGE_NODE_TYPE,
+                        "frontend_info": {"x": 2231, "y": 73},
+                    }
+                )
+        return flow, after_treat_flow_dict["judge_new_class"]["result_table_id"]
 
     def _init_after_treat_flow(
         self,
@@ -456,14 +490,14 @@ class DataFlowHandler(BaseAiopsHandler):
 
             after_treat_flow.es_cluster = clustering_config.es_storage
             after_treat_flow.es.expires = es_storage["expires"]
-            after_treat_flow.es.has_replica = es_storage["has_replica"]
-            after_treat_flow.es.json_fields = es_storage["json_fields"]
-            after_treat_flow.es.analyzed_fields = es_storage["analyzed_fields"]
-            doc_values_fields = es_storage["analyzed_fields"]
+            after_treat_flow.es.has_replica = json.dumps(es_storage["has_replica"])
+            after_treat_flow.es.json_fields = json.dumps(es_storage["json_fields"])
+            after_treat_flow.es.analyzed_fields = json.dumps(es_storage["analyzed_fields"])
+            doc_values_fields = es_storage["doc_values_fields"]
             doc_values_fields.extend(
                 [f"{AGGS_FIELD_PREFIX}_{pattern_level}" for pattern_level in PatternEnum.get_choices()]
             )
-            after_treat_flow.es.doc_values_fields = doc_values_fields
+            after_treat_flow.es.doc_values_fields = json.dumps(doc_values_fields)
         return after_treat_flow
 
     @classmethod
@@ -473,7 +507,7 @@ class DataFlowHandler(BaseAiopsHandler):
         es = result.get("es")
         if not es:
             return None
-        storage_config = json.loads(es)
+        storage_config = json.loads(es["storage_config"])
         # "expires": "3d"
         storage_config["expires"] = int(es["expires"][:-1])
         return storage_config

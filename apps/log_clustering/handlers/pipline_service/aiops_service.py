@@ -230,7 +230,7 @@ def create_aiops_service(index_set_id):
     rt_name = (
         clustering_config.collector_config_name_en
         if clustering_config.collector_config_name_en
-        else clustering_config.source_rt_name
+        else "bkdata_{}".format(clustering_config.source_rt_name.split("_", 2)[-1])
     )
     params = {
         "bk_biz_id": conf["bk_biz_id"],

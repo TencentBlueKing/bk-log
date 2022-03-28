@@ -134,7 +134,6 @@ class UpdateExecuteConfigService(BaseService):
         return [Service.InputItem(name="experiment alias", key="experiment_alias", type="str", required=True)]
 
     def _execute(self, data, parent_data):
-        # todo 决定是否需要变更配置
         index_set_id = data.get_one_of_inputs("index_set_id")
         clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         python_backend = clustering_config.python_backend
@@ -198,6 +197,7 @@ class SampleSetLoadingService(BaseService):
             sample_set_id=sample_set_id, model_id=model_id, experiment_id=experiment_id
         )
         experiment_model.node_id_list = sample_set_loading_result["nodes"]
+        experiment_model.save()
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):
@@ -256,6 +256,7 @@ class SampleSetPreparationService(BaseService):
             model_id=model_id, experiment_id=experiment_id
         )
         experiment_model.node_id_list = sample_set_preparation_result["nodes"]
+        experiment_model.save()
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):
@@ -338,6 +339,7 @@ class ModelTrainService(BaseService):
             min_members=min_members,
         )
         experiment_model.node_id_list = model_train_result["nodes"]
+        experiment_model.save()
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):
@@ -394,6 +396,7 @@ class ModelEvaluationService(BaseService):
         experiment_id = experiment_model.experiment_id
         model_evaluation_result = AiopsModelHandler().model_evaluation(model_id=model_id, experiment_id=experiment_id)
         experiment_model.node_id_list = model_evaluation_result["nodes"]
+        experiment_model.save()
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):

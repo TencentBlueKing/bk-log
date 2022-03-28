@@ -140,6 +140,7 @@ class AddProjectDataService(BaseService):
         # 当计算平台rt场景时需要将对应rt设置为相应字段
         if not clustering_config.bkdata_etl_result_table_id:
             clustering_config.bkdata_etl_result_table_id = clustering_config.source_rt_name
+            clustering_config.save()
         BkDataAuthApi.add_project_data(
             params={
                 "bk_biz_id": bk_biz_id,
@@ -182,7 +183,7 @@ class AddResourceGroupService(BaseService):
         clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         if clustering_config.es_storage:
             return True
-        es_storage_name = DataAccessHandler.add_cluster_group(clustering_config.source_rt_name)
+        es_storage_name = DataAccessHandler().add_cluster_group(clustering_config.source_rt_name)
         clustering_config.es_storage = es_storage_name
         clustering_config.save()
         return True

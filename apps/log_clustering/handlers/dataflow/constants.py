@@ -36,6 +36,8 @@ TSPIDER_STORAGE_NODE_TYPE = "tspider_storage"
 TSPIDER_STORAGE_NODE_NAME = _("回流数据(tspider_storage)")
 TSPIDER_STORAGE_INDEX_FIELDS = ["history_time", "event_time"]
 
+SPLIT_TYPE = "split"
+
 
 class FlowMode(ChoicesEnum):
     # 预处理flow
