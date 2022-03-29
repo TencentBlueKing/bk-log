@@ -92,10 +92,17 @@
         <div slot="empty">
           <div class="empty-text">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p>{{exhibitText}}</p>
-            <span class="empty-leave" @click="handleLeaveCurrent">
-              {{exhibitOperate}}
-            </span>
+            <p v-if="indexSetItem.scenario_id !== 'log'">
+              {{$t('canNotFieldMessage1')}}
+              <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
+              {{$t('canNotFieldMessage2')}}
+            </p>
+            <div v-else>
+              <p>{{exhibitText}}</p>
+              <span class="empty-leave" @click="handleLeaveCurrent">
+                {{exhibitOperate}}
+              </span>
+            </div>
           </div>
         </div>
       </bk-table>
@@ -144,6 +151,10 @@ export default {
     },
     originTableList: {
       type: Array,
+      required: true,
+    },
+    indexSetItem: {
+      type: Object,
       required: true,
     },
   },
@@ -214,12 +225,14 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
+      if (this.indexSetItem.scenario_id !== 'log') return '';
       return this.clusterSwitch
         ? (this.configID
           ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage'))
         : this.$t('goSettingMessage');
     },
     exhibitOperate() {
+      if (this.indexSetItem.scenario_id !== 'log') return '';
       return this.clusterSwitch
         ? (this.configID ? this.$t('跳转到日志清洗') : '')
         : this.$t('去设置');
@@ -236,6 +249,7 @@ export default {
       deep: true,
       immediate: true,
       handler(val) {
+        this.globalLoading = true;
         // 日志聚类开关赋值
         this.clusterSwitch = val.is_active;
         // 数据指纹开关赋值
@@ -250,7 +264,6 @@ export default {
           this.allFingerList = [];
         }
         // 判断是否可以字段提取的全局loading
-        this.globalLoading = true;
         setTimeout(() => {
           this.globalLoading = false;
         }, 700);
@@ -261,13 +274,14 @@ export default {
       immediate: true,
       handler(newList) {
         if (newList.length) {
-          if (!this.configData.is_active) {
+          // 无字段提取或者聚类开关没开时直接不显示聚类nav和table
+          if (this.indexSetItem.scenario_id !== 'log' || !this.configData.is_active) {
             this.exhibitAll = false;
             return;
           }
           // 初始化分组下拉列表
           this.filterGroupList();
-          this.requestData.pattern_level === '' && this.initTable();
+          this.initTable();
           // 判断有无text字段 无则不显示日志聚类
           this.exhibitAll = newList.some(el => el.field_type === 'text');
         }
@@ -307,7 +321,7 @@ export default {
         }
       }
     },
-    async initTable() {
+    initTable() {
       const {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
@@ -375,10 +389,18 @@ export default {
       }
     },
     handleLeaveCurrent() {
+      // 不显示字段提取时跳转计算平台
+      if (this.indexSetItem.scenario_id !== 'log') {
+        const jumpUrl = `${window.BKDATA_URL}`;
+        window.open(jumpUrl, '_blank');
+        return;
+      }
+      // 未开启日志聚类去设置
       if (!this.clusterSwitch) {
         this.$emit('showSettingLog');
         return;
       }
+      // 无清洗 去清洗
       if (this.configID && this.configID > 0) {
         this.$router.push({
           name: 'clean-edit',
