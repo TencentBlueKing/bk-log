@@ -29,7 +29,6 @@ python-dateutil==2.7.5
 djangorestframework==3.12.4
 django-filter==2.4.0
 arrow==0.14.2
-whitenoise==3.3.0
 arrow==0.14.2
 mistune==0.8.4
 gevent==1.2.2
