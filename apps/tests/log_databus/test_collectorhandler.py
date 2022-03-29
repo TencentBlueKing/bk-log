@@ -228,6 +228,8 @@ def subscription_statistic(params):
 @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollectorHandler(TestCase):
     @staticmethod
+    @patch("apps.api.TransferApi.get_data_id",
+           lambda x: {"data_name": "2_log_test_collector"} if x["data_name"] == "2_log_test_collector" else {})
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch("apps.api.NodeApi.create_subscription", lambda _: {"subscription_id": SUBSCRIPTION_ID})
     @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": TASK_ID})

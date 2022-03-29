@@ -854,6 +854,8 @@ def subscription_statistic(params):
 
 @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollector(TestCase):
+    @patch("apps.api.TransferApi.get_data_id",
+           lambda x: {"data_name": "2_log_test_collector"} if x["data_name"] == "2_log_test_collector" else {})
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.NodeApi.create_subscription", lambda _: {"subscription_id": SUBSCRIPTION_ID})
@@ -890,6 +892,8 @@ class TestCollector(TestCase):
         self._test_stop(result["collector_config_id"])
         self._test_destroy(result["collector_config_id"])
 
+    @patch("apps.api.TransferApi.get_data_id",
+           lambda x: {"data_name": "2_log_test_collector"} if x["data_name"] == "2_log_test_collector" else {})
     @patch("apps.api.TransferApi.modify_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch("apps.api.TransferApi.modify_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.NodeApi.update_subscription_info", lambda _: {"subscription_id": SUBSCRIPTION_ID})
