@@ -371,8 +371,8 @@ class CollectorHandler(object):
         }
 
         bk_biz_id = params.get("bk_biz_id") or self.data.bk_biz_id
-        collector_config_name = params["collector_config_name"]
         collector_config_name_en = params["collector_config_name_en"]
+        bk_data_name = build_bk_data_name(bk_biz_id=bk_biz_id, collector_config_name_en=collector_config_name_en)
 
         # 判断是否存在非法IP列表
         self.cat_illegal_ips(params)
@@ -386,40 +386,6 @@ class CollectorHandler(object):
             raise CollectorConfigNameENDuplicateException(
                 CollectorConfigNameENDuplicateException.MESSAGE.format(
                     collector_config_name_en=collector_config_name_en
-                )
-            )
-
-        # 判断是否已存在同bk_data_name
-        bk_data_name = build_bk_data_name(
-            bk_biz_id=bk_biz_id,
-            collector_config_name=collector_config_name
-        )
-        if self._pre_check_bk_data_name(bk_biz_id=bk_biz_id, bk_data_name=bk_data_name):
-            logger.error(
-                "bk_data_name {bk_data_name} already exists".format(
-                    bk_data_name=bk_data_name
-                )
-            )
-            raise CollectorBkDataNameDuplicateException(
-                CollectorBkDataNameDuplicateException.MESSAGE.format(
-                    bk_data_name=bk_data_name
-                )
-            )
-
-        # 判断是否已存在同result_table_id
-        result_table_id = build_result_table_id(
-            bk_biz_id=bk_biz_id,
-            collector_config_name_en=collector_config_name_en
-        )
-        if self._pre_check_result_table_id(bk_biz_id=bk_biz_id, result_table_id=result_table_id):
-            logger.error(
-                "result_table_id {result_table_id} already exists".format(
-                    result_table_id=result_table_id
-                )
-            )
-            raise CollectorResultTableIDDuplicateException(
-                CollectorResultTableIDDuplicateException.MESSAGE.format(
-                    result_table_id=result_table_id
                 )
             )
 
@@ -439,6 +405,16 @@ class CollectorHandler(object):
                 is_create = True
             else:
                 model_fields["target_subscription_diff"] = self.diff_target_nodes(params["target_nodes"])
+                if self.data.bk_data_name != bk_data_name:
+                    TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
+                    self.data.bk_data_name = bk_data_name
+                    logger.info(
+                        "[modify_data_name] bk_data_id=>{}, data_name {}=>{}".format(
+                            self.data.bk_data_id,
+                            self.data.bk_data_name,
+                            bk_data_name
+                        )
+                    )
                 for key, value in model_fields.items():
                     setattr(self.data, key, value)
                 self.data.save()
@@ -518,34 +494,14 @@ class CollectorHandler(object):
         # 判断是否已存在同bk_data_name
         bk_data_name = build_bk_data_name(
             bk_biz_id=bk_biz_id,
-            collector_config_name=collector_config_name
+            collector_config_name_en=collector_config_name_en
         )
-        if self._pre_check_bk_data_name(bk_biz_id=bk_biz_id, bk_data_name=bk_data_name):
-            logger.error(
-                "bk_data_name {bk_data_name} already exists".format(
-                    bk_data_name=bk_data_name
-                )
-            )
+
+        if CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name():
+            logger.error(f"bk_data_name {bk_data_name} already exists")
             raise CollectorBkDataNameDuplicateException(
                 CollectorBkDataNameDuplicateException.MESSAGE.format(
                     bk_data_name=bk_data_name
-                )
-            )
-
-        # 判断是否已存在同result_table_id
-        result_table_id = build_result_table_id(
-            bk_biz_id=bk_biz_id,
-            collector_config_name_en=collector_config_name_en
-        )
-        if self._pre_check_result_table_id(bk_biz_id=bk_biz_id, result_table_id=result_table_id):
-            logger.error(
-                "result_table_id {result_table_id} already exists".format(
-                    result_table_id=result_table_id
-                )
-            )
-            raise CollectorResultTableIDDuplicateException(
-                CollectorResultTableIDDuplicateException.MESSAGE.format(
-                    result_table_id=result_table_id
                 )
             )
 
@@ -568,6 +524,16 @@ class CollectorHandler(object):
                     is_create = True
                 else:
                     _collector_config_name = copy.deepcopy(self.data.collector_config_name)
+                    if self.data.bk_data_name != bk_data_name:
+                        TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
+                        logger.info(
+                            "[modify_data_name] bk_data_id=>{}, data_name {}=>{}".format(
+                                self.data.bk_data_id,
+                                self.data.bk_data_name,
+                                bk_data_name
+                            )
+                        )
+                        self.data.bk_data_name = bk_data_name
 
                     # 当更新itsm流程时 将diff更新前移
                     if not FeatureToggleObject.switch(name=FEATURE_COLLECTOR_ITSM):
@@ -1784,14 +1750,11 @@ class CollectorHandler(object):
         # 判断是否已存在同bk_data_name
         bk_data_name = build_bk_data_name(
             bk_biz_id=bk_biz_id,
-            collector_config_name=collector_config_name
+            collector_config_name_en=collector_config_name_en
         )
-        if self._pre_check_bk_data_name(bk_biz_id=bk_biz_id, bk_data_name=bk_data_name):
-            logger.error(
-                "bk_data_name {bk_data_name} already exists".format(
-                    bk_data_name=bk_data_name
-                )
-            )
+
+        if CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name():
+            logger.error(f"bk_data_name {bk_data_name} already exists")
             raise CollectorBkDataNameDuplicateException(
                 CollectorBkDataNameDuplicateException.MESSAGE.format(
                     bk_data_name=bk_data_name
@@ -1803,12 +1766,8 @@ class CollectorHandler(object):
             bk_biz_id=bk_biz_id,
             collector_config_name_en=collector_config_name_en
         )
-        if self._pre_check_result_table_id(bk_biz_id=bk_biz_id, result_table_id=result_table_id):
-            logger.error(
-                "result_table_id {result_table_id} already exists".format(
-                    result_table_id=result_table_id
-                )
-            )
+        if CollectorConfig(table_id=result_table_id).get_result_table_by_id():
+            logger.error(f"result_table_id {result_table_id} already exists")
             raise CollectorResultTableIDDuplicateException(
                 CollectorResultTableIDDuplicateException.MESSAGE.format(
                     result_table_id=result_table_id
@@ -1885,6 +1844,22 @@ class CollectorHandler(object):
             "category_id": category_id,
             "description": description or collector_config_name,
         }
+
+        bk_data_name = build_bk_data_name(
+            bk_biz_id=self.data.bk_biz_id,
+            collector_config_name_en=self.data.collector_config_name_en
+        )
+        if self.data.bk_data_name != bk_data_name:
+            TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
+            self.data.bk_data_name = bk_data_name
+            logger.info(
+                "[modify_data_name] bk_data_id=>{}, data_name {}=>{}".format(
+                    self.data.bk_data_id,
+                    self.data.bk_data_name,
+                    bk_data_name
+                )
+            )
+
         for key, value in collector_config_update.items():
             setattr(self.data, key, value)
         try:
@@ -1941,79 +1916,42 @@ class CollectorHandler(object):
         }
         user_operation_record.delay(operation_record)
 
-    def pre_check_bk_data_name(self, params: dict):
-        """根据bk_biz_id，collector_config_name查询bk_data_name"""
-        bk_biz_id = params.get("bk_biz_id")
-        collector_config_name = params.get("collector_config_name")
-
-        bk_data_name = build_bk_data_name(bk_biz_id=bk_biz_id, collector_config_name=collector_config_name)
-
-        qs = self._get_by_bk_data_name(bk_biz_id=bk_biz_id, bk_data_name=bk_data_name)
-
-        return [
-            {
-                "bk_data_name": ci["bk_data_name"],
-                "is_deleted": ci["is_deleted"]
-            }
-            for ci in qs.values()
-        ]
-
-    def pre_check_result_table_id(self, params: dict):
-        """根据bk_biz_id，collector_config_name_en查询result_table_id"""
+    def pre_check(self, params: dict):
         bk_biz_id = params.get("bk_biz_id")
         collector_config_name_en = params.get("collector_config_name_en")
 
-        result_table_id = build_result_table_id(bk_biz_id=bk_biz_id, collector_config_name_en=collector_config_name_en)
-
-        qs = self._get_by_result_table_id(bk_biz_id=bk_biz_id, result_table_id=result_table_id)
-
-        return [
-            {
-                "result_table_id": ci["table_id"],
-                "is_deleted": ci["is_deleted"]
+        if self._pre_check_collector_config_en(params, bk_biz_id):
+            return {
+                "collector_config_name_en": collector_config_name_en
             }
-            for ci in qs.values()
-        ]
 
-    def _get_by_bk_data_name(self, bk_biz_id: int, bk_data_name: str):
-        """根据bk_biz_id，collector_config_name查询bk_data_name"""
-
-        qs = CollectorConfig.objects.filter(
-            bk_data_name=bk_data_name,
+        bk_data_name = params.get("bk_data_name") or build_bk_data_name(
             bk_biz_id=bk_biz_id,
-            is_deleted__in=[True, False],
+            collector_config_name_en=collector_config_name_en
         )
-        if self.collector_config_id:
-            qs = qs.exclude(collector_config_id=self.collector_config_id)
 
-        return qs
+        bk_data = CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name()
+        if bk_data:
+            return {
+                "bk_data_name": bk_data["data_name"]
+            }
 
-    def _pre_check_bk_data_name(self, bk_biz_id: int, bk_data_name: str) -> bool:
-        """预检查采集链路data_name是否存在"""
-
-        return self._get_by_bk_data_name(bk_biz_id, bk_data_name).exists()
-
-    def _get_by_result_table_id(self, bk_biz_id: int, result_table_id: str):
-        """根据bk_biz_id，collector_config_name_en查询result_table_id"""
-
-        qs = CollectorConfig.objects.filter(
-            table_id=result_table_id,
+        result_table_id = params.get("result_table_id") or build_result_table_id(
             bk_biz_id=bk_biz_id,
-            is_deleted__in=[True, False],
+            collector_config_name_en=collector_config_name_en
         )
-        if self.collector_config_id:
-            qs = qs.exclude(collector_config_id=self.collector_config_id)
+        result_table = CollectorConfig(table_id=result_table_id).get_result_table_by_id()
+        if result_table:
+            return {
+                "result_table_id": result_table["result_table_id"]
+            }
 
-        return qs
-
-    def _pre_check_result_table_id(self, bk_biz_id: int, result_table_id: str) -> bool:
-        """预检查结果表ID result_table_id是否存在"""
-        return self._get_by_result_table_id(bk_biz_id, result_table_id).exists()
+        return dict()
 
 
-def build_bk_data_name(bk_biz_id: int, collector_config_name: str) -> str:
-    """根据bk_biz_id和collector_config_name构建bk_data_name"""
-    bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name}"
+def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
+    """根据bk_biz_id和collector_config_name_en构建bk_data_name"""
+    bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
 
     return bk_data_name
 

@@ -30,7 +30,7 @@ from apps.log_databus.handlers.collector import (
 from apps.log_databus.constants import LogPluginInfo
 from apps.exceptions import ApiRequestError, ApiResultError
 from .test_collectorhandler import TestCollectorHandler
-from ...log_databus.serializers import CollectorCreateSerializer
+from ...log_databus.serializers import CollectorCreateSerializer, PreCheckSerializer
 from ...utils.drf import custom_params_valid
 
 BK_DATA_ID = 1
@@ -1161,6 +1161,10 @@ class TestCollector(TestCase):
             CollectorHandler._check_task_ready_exception(BaseException())
 
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
+    @patch("apps.api.TransferApi.get_data_id",
+           lambda x: {"data_name": "2_log_test_collector"} if x["data_name"] == "2_log_test_collector" else {})
+    @patch("apps.api.TransferApi.get_result_table",
+           lambda x: {"result_table_id": TABLE_ID} if x["table_id"] == TABLE_ID else {})
     @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.NodeApi.create_subscription", lambda _: {"subscription_id": SUBSCRIPTION_ID})
     @patch("apps.api.NodeApi.subscription_statistic", subscription_statistic)
@@ -1173,24 +1177,52 @@ class TestCollector(TestCase):
     @patch("apps.decorators.user_operation_record.delay", return_value=None)
     @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
     @override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}})
-    def test_pre_check_bk_data_name(self, *args, **kwargs):
+    def test_pre_check(self, *args, **kwargs):
         params = copy.deepcopy(PARAMS)
         params = custom_params_valid(serializer=CollectorCreateSerializer, params=params)
         params["params"]["conditions"]["type"] = "separator"
         create_collector_result = CollectorHandler().update_or_create(params)
 
-        bk_biz_id = params["bk_biz_id"]
-        collector_config_name = params["collector_config_name"]
+        # 测试collector_config_name_en同名
+        params = copy.deepcopy(PARAMS)
+        result = CollectorHandler().pre_check(params={
+            "bk_biz_id": params["bk_biz_id"],
+            "collector_config_name_en": params["collector_config_name_en"]
+        })
+        self.assertEqual(result["collector_config_name_en"], params["collector_config_name_en"])
 
-        bk_data_name = build_bk_data_name(bk_biz_id=bk_biz_id, collector_config_name=collector_config_name)
-        result = CollectorHandler().pre_check_bk_data_name(params=params)
+        result = CollectorHandler().pre_check(params={
+            "bk_biz_id": params["bk_biz_id"],
+            "collector_config_name_en": '1'
+        })
+        self.assertEqual(result, dict())
 
-        self.assertEqual(result[0]["bk_data_name"], bk_data_name)
-        self.assertEqual(result[0]["is_deleted"], False)
-        self._test_destroy(create_collector_result["collector_config_id"])
+        # 测试bk_data_name同名
+        result = CollectorHandler().pre_check(params={
+            "bk_biz_id": params["bk_biz_id"],
+            "collector_config_name_en": '1',
+            "bk_data_name": "2_log_test_collector"
+        })
+        self.assertEqual(result["bk_data_name"], "2_log_test_collector")
 
-        bk_data_name = build_bk_data_name(bk_biz_id=bk_biz_id, collector_config_name=collector_config_name)
-        result = CollectorHandler().pre_check_bk_data_name(params=params)
+        result = CollectorHandler().pre_check(params={
+            "bk_biz_id": params["bk_biz_id"],
+            "collector_config_name_en": '1',
+            "bk_data_name": '1'
+        })
+        self.assertEqual(result, dict())
 
-        self.assertEqual(result[0]["bk_data_name"], bk_data_name)
-        self.assertEqual(result[0]["is_deleted"], True)
+        # 测试result_table_id同名
+        result = CollectorHandler().pre_check(params={
+            "bk_biz_id": params["bk_biz_id"],
+            "collector_config_name_en": '1',
+            "result_table_id": TABLE_ID
+        })
+        self.assertEqual(result["result_table_id"], TABLE_ID)
+
+        result = CollectorHandler().pre_check(params={
+            "bk_biz_id": params["bk_biz_id"],
+            "collector_config_name_en": '1',
+            "result_table_id": '1'
+        })
+        self.assertEqual(result, dict())

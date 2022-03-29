@@ -61,8 +61,7 @@ from apps.log_databus.serializers import (
     ListCollectorSerlalizer,
     CustomCreateSerializer,
     CustomUpateSerializer,
-    PreCheckBkDataNameSerializer,
-    PreCheckResultTableIDSerializer,
+    PreCheckSerializer,
 )
 from apps.utils.function import ignored
 
@@ -1852,46 +1851,28 @@ class CollectorViewSet(ModelViewSet):
         data = self.params_valid(CustomUpateSerializer)
         return Response(CollectorHandler(collector_config_id).custom_update(**data))
 
-    @list_route(methods=["GET"], url_path="pre_check_bk_data_name")
-    def pre_check_bk_data_name(self, request):
+    @list_route(methods=["GET"], url_path="pre_check")
+    def pre_check(self, request):
         """
-        @api {get} /databus/collectors/pre_check_bk_data_name/ 预检查bk_data_name
-        @apiName pre_check_bk_data_name
+        @api {get} /databus/collectors/pre_check/ 预检查创建采集项的参数
+        @apiName pre_check
         @apiGroup 10_Collector
-        @apiSuccess {list} data.bk_data_name 满足条件的bk_data_name列表
-        @apiSuccess {Bool} data.is_deleted 是否删除
+        @apiParam {Int} bk_biz_id 所属业务
+        @apiParam {String} collector_config_name_en 采集项英文名
+        @apiSuccess {dict} data.collector_config_name_en 如果英文名已经存在, 则返回, 否则没有该字段
+        @apiSuccess {dict} data.bk_data_name 如果bk_data_name已经存在, 则返回, 否则没有该字段
+        @apiSuccess {dict} data.result_table_id 如果result_table_id已经存在, 则返回, 否则没有该字段
         @apiSuccessExample {json} 成功返回:
         {
             "message": "",
             "code": 0,
-            "data": [{
-                "bk_data_name": {bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name},
-                "is_deleted": False
-            }],
+            "data": {
+                "collector_config_name_en": collector_config_name_en,
+                "bk_data_name": bk_data_name,
+                "result_table_id": result_table_id
+            },
             "result": true
         }
         """
-        data = self.params_valid(PreCheckBkDataNameSerializer)
-        return Response(CollectorHandler().pre_check_bk_data_name(data))
-
-    @list_route(methods=["GET"], url_path="pre_check_result_table_id")
-    def pre_check_result_table_id(self, request):
-        """
-        @api {get} /databus/collectors/pre_check_result_table_id/ 预检查result_table_id
-        @apiName pre_check_result_table_id
-        @apiGroup 10_Collector
-        @apiSuccess {list} data.result_table_id 满足条件的result_table_id列表
-        @apiSuccess {Bool} data.is_deleted 是否删除
-        @apiSuccessExample {json} 成功返回:
-        {
-            "message": "",
-            "code": 0,
-            "data": [{
-                "result_table_id": {bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en},
-                "is_deleted": False
-            }],
-            "result": true
-        }
-        """
-        data = self.params_valid(PreCheckResultTableIDSerializer)
-        return Response(CollectorHandler().pre_check_result_table_id(data))
+        data = self.params_valid(PreCheckSerializer)
+        return Response(CollectorHandler().pre_check(data))
