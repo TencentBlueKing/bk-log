@@ -95,6 +95,8 @@ django-prometheus==2.1.0
 
 # blueapps
 blueapps==4.1.2
+# blueapps依赖
+whitenoise==5.0
 
 # 各自环境所需的不同依赖, 通过 sites/${env}/deploy/requirements_env.txt得到
 -r requirements_env.txt
