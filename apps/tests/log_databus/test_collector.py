@@ -1192,7 +1192,7 @@ class TestCollector(TestCase):
             "bk_biz_id": params["bk_biz_id"],
             "collector_config_name_en": params["collector_config_name_en"]
         })
-        self.assertEqual(result["collector_config_name_en"], params["collector_config_name_en"])
+        self.assertEqual(result["allowed"], True)
 
         params = custom_params_valid(serializer=CollectorCreateSerializer, params=params)
         params["params"]["conditions"]["type"] = "separator"
@@ -1204,10 +1204,10 @@ class TestCollector(TestCase):
             "bk_biz_id": params["bk_biz_id"],
             "collector_config_name_en": params["collector_config_name_en"]
         })
-        self.assertEqual(result, None)
+        self.assertEqual(result["allowed"], False)
 
         result = CollectorHandler().pre_check(params={
             "bk_biz_id": params["bk_biz_id"],
             "collector_config_name_en": '1'
         })
-        self.assertEqual(result["collector_config_name_en"], '1')
+        self.assertEqual(result["allowed"], True)

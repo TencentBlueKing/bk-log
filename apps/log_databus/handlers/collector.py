@@ -1954,11 +1954,14 @@ class CollectorHandler(object):
         user_operation_record.delay(operation_record)
 
     def pre_check(self, params: dict):
+        data = {
+            "allowed": False
+        }
         bk_biz_id = params.get("bk_biz_id")
         collector_config_name_en = params.get("collector_config_name_en")
 
         if self._pre_check_collector_config_en(params, bk_biz_id):
-            return None
+            return data
 
         bk_data_name = params.get("bk_data_name") or build_bk_data_name(
             bk_biz_id=bk_biz_id,
@@ -1966,7 +1969,7 @@ class CollectorHandler(object):
         )
         bk_data = CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name()
         if bk_data:
-            return None
+            return data
 
         result_table_id = params.get("result_table_id") or build_result_table_id(
             bk_biz_id=bk_biz_id,
@@ -1974,11 +1977,10 @@ class CollectorHandler(object):
         )
         result_table = CollectorConfig(table_id=result_table_id).get_result_table_by_id()
         if result_table:
-            return None
+            return data
 
-        return {
-            "collector_config_name_en": collector_config_name_en
-        }
+        data["allowed"] = True
+        return data
 
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
