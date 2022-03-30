@@ -162,7 +162,7 @@ class CollectorConfig(SoftDeleteModel):
         except ApiResultError:
             logger.debug(f"bk_data_name: {self.bk_data_name} is not exist.")
 
-        return dict()
+        return None
 
     def get_result_table_by_id(self):
         try:
@@ -173,7 +173,7 @@ class CollectorConfig(SoftDeleteModel):
         except ApiResultError:
             logger.debug(f"result_table_id: {self.table_id} is not exist.")
 
-        return dict()
+        return None
 
     @property
     def category_name(self):

@@ -372,7 +372,6 @@ class CollectorHandler(object):
 
         bk_biz_id = params.get("bk_biz_id") or self.data.bk_biz_id
         collector_config_name_en = params["collector_config_name_en"]
-        bk_data_name = build_bk_data_name(bk_biz_id=bk_biz_id, collector_config_name_en=collector_config_name_en)
 
         # 判断是否存在非法IP列表
         self.cat_illegal_ips(params)
@@ -386,6 +385,32 @@ class CollectorHandler(object):
             raise CollectorConfigNameENDuplicateException(
                 CollectorConfigNameENDuplicateException.MESSAGE.format(
                     collector_config_name_en=collector_config_name_en
+                )
+            )
+
+        # 判断是否已存在同bk_data_name
+        bk_data_name = build_bk_data_name(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+        if CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name():
+            logger.error(f"bk_data_name {bk_data_name} already exists")
+            raise CollectorBkDataNameDuplicateException(
+                CollectorBkDataNameDuplicateException.MESSAGE.format(
+                    bk_data_name=bk_data_name
+                )
+            )
+
+        # 判断是否已存在同result_table_id
+        result_table_id = build_result_table_id(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+        if CollectorConfig(table_id=result_table_id).get_result_table_by_id():
+            logger.error(f"result_table_id {result_table_id} already exists")
+            raise CollectorResultTableIDDuplicateException(
+                CollectorResultTableIDDuplicateException.MESSAGE.format(
+                    result_table_id=result_table_id
                 )
             )
 
@@ -496,12 +521,24 @@ class CollectorHandler(object):
             bk_biz_id=bk_biz_id,
             collector_config_name_en=collector_config_name_en
         )
-
         if CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name():
             logger.error(f"bk_data_name {bk_data_name} already exists")
             raise CollectorBkDataNameDuplicateException(
                 CollectorBkDataNameDuplicateException.MESSAGE.format(
                     bk_data_name=bk_data_name
+                )
+            )
+
+        # 判断是否已存在同result_table_id
+        result_table_id = build_result_table_id(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+        if CollectorConfig(table_id=result_table_id).get_result_table_by_id():
+            logger.error(f"result_table_id {result_table_id} already exists")
+            raise CollectorResultTableIDDuplicateException(
+                CollectorResultTableIDDuplicateException.MESSAGE.format(
+                    result_table_id=result_table_id
                 )
             )
 
@@ -1921,20 +1958,15 @@ class CollectorHandler(object):
         collector_config_name_en = params.get("collector_config_name_en")
 
         if self._pre_check_collector_config_en(params, bk_biz_id):
-            return {
-                "collector_config_name_en": collector_config_name_en
-            }
+            return None
 
         bk_data_name = params.get("bk_data_name") or build_bk_data_name(
             bk_biz_id=bk_biz_id,
             collector_config_name_en=collector_config_name_en
         )
-
         bk_data = CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name()
         if bk_data:
-            return {
-                "bk_data_name": bk_data["data_name"]
-            }
+            return None
 
         result_table_id = params.get("result_table_id") or build_result_table_id(
             bk_biz_id=bk_biz_id,
@@ -1942,11 +1974,11 @@ class CollectorHandler(object):
         )
         result_table = CollectorConfig(table_id=result_table_id).get_result_table_by_id()
         if result_table:
-            return {
-                "result_table_id": result_table["result_table_id"]
-            }
+            return None
 
-        return dict()
+        return {
+            "collector_config_name_en": collector_config_name_en
+        }
 
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:

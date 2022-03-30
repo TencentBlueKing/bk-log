@@ -26,6 +26,7 @@ from apps.log_databus.constants import LogPluginInfo
 from apps.log_databus.handlers.collector import CollectorHandler
 
 BK_DATA_ID = 1
+BK_DATA_NAME = "2_log_test_collector"
 TABLE_ID = "2_log.test_table"
 SUBSCRIPTION_ID = 2
 TASK_ID = 3
@@ -229,7 +230,9 @@ def subscription_statistic(params):
 class TestCollectorHandler(TestCase):
     @staticmethod
     @patch("apps.api.TransferApi.get_data_id",
-           lambda x: {"data_name": "2_log_test_collector"} if x["data_name"] == "2_log_test_collector" else {})
+           lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {})
+    @patch("apps.api.TransferApi.get_result_table",
+           lambda x: {"result_table_id": TABLE_ID} if x["table_id"] == TABLE_ID else {})
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch("apps.api.NodeApi.create_subscription", lambda _: {"subscription_id": SUBSCRIPTION_ID})
     @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": TASK_ID})

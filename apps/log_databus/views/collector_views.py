@@ -1859,17 +1859,13 @@ class CollectorViewSet(ModelViewSet):
         @apiGroup 10_Collector
         @apiParam {Int} bk_biz_id 所属业务
         @apiParam {String} collector_config_name_en 采集项英文名
-        @apiSuccess {dict} data.collector_config_name_en 如果英文名已经存在, 则返回, 否则没有该字段
-        @apiSuccess {dict} data.bk_data_name 如果bk_data_name已经存在, 则返回, 否则没有该字段
-        @apiSuccess {dict} data.result_table_id 如果result_table_id已经存在, 则返回, 否则没有该字段
+        @apiSuccess {dict} data.collector_config_name_en 如果英文名不存在, 则返回
         @apiSuccessExample {json} 成功返回:
         {
             "message": "",
             "code": 0,
             "data": {
                 "collector_config_name_en": collector_config_name_en,
-                "bk_data_name": bk_data_name,
-                "result_table_id": result_table_id
             },
             "result": true
         }
