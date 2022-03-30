@@ -108,7 +108,7 @@ class CollectorConfig(SoftDeleteModel):
     can_use_independent_es_cluster = models.BooleanField(_("是否能够使用独立es集群"), default=True, blank=True)
     collector_package_count = models.IntegerField(_("采集打包数量"), null=True, default=10)
     collector_output_format = models.CharField(_("输出格式"), null=True, default=None, max_length=32, blank=True)
-    collector_config_overlay = JSONField(_("采集器配置覆盖"), null=True, default=None, max_length=32, blank=True)
+    collector_config_overlay = models.JSONField(_("采集器配置覆盖"), null=True, default=None, max_length=32, blank=True)
     storage_shards_nums = models.IntegerField(_("ES分片数量"), null=True, default=None, blank=True)
     storage_shards_size = models.IntegerField(_("单shards分片大小"), null=True, default=None, blank=True)
     storage_replies = models.IntegerField(_("ES副本数"), null=True, default=1, blank=True)
@@ -341,8 +341,8 @@ class CleanTemplate(SoftDeleteModel):
     clean_template_id = models.AutoField(_("清洗id"), primary_key=True)
     name = models.CharField(_("模板名"), max_length=128)
     clean_type = models.CharField(_("模板类型"), max_length=64)
-    etl_params = JSONField(_("etl配置"), null=True, blank=True)
-    etl_fields = JSONField(_("etl字段"), null=True, blank=True)
+    etl_params = models.JSONField(_("etl配置"), null=True, blank=True)
+    etl_fields = models.JSONField(_("etl字段"), null=True, blank=True)
     bk_biz_id = models.IntegerField(_("业务id"))
 
     class Meta:
@@ -354,8 +354,8 @@ class CleanTemplate(SoftDeleteModel):
 class CleanStash(SoftDeleteModel):
     clean_stash_id = models.AutoField(_("清洗缓存id"), primary_key=True)
     clean_type = models.CharField(_("模板类型"), max_length=64)
-    etl_params = JSONField(_("etl配置"), null=True, blank=True)
-    etl_fields = JSONField(_("etl字段"), null=True, blank=True)
+    etl_params = models.JSONField(_("etl配置"), null=True, blank=True)
+    etl_fields = models.JSONField(_("etl字段"), null=True, blank=True)
     collector_config_id = models.IntegerField(_("采集项列表"), db_index=True)
     bk_biz_id = models.IntegerField(_("业务id"))
 
