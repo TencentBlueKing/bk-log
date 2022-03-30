@@ -728,6 +728,8 @@ BKMONITOR_CUSTOM_PROXY_IP = os.environ.get(
 ES_QUERY_ACCESS_LIST: list = ["bkdata", "es", "log"]
 ES_QUERY_TIMEOUT = int(os.environ.get("BKAPP_ES_QUERY_TIMEOUT", 55))
 
+DEFAULT_HTTPS_HOST = os.environ.get("BKAPP_DEFAULT_HTTPS_HOST")
+
 # ESQUERY 查询白名单，直接透传
 ESQUERY_WHITE_LIST = [
     "bk_log_search",
