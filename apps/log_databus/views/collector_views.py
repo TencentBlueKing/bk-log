@@ -1859,13 +1859,13 @@ class CollectorViewSet(ModelViewSet):
         @apiGroup 10_Collector
         @apiParam {Int} bk_biz_id 所属业务
         @apiParam {String} collector_config_name_en 采集项英文名
-        @apiSuccess {dict} data.collector_config_name_en 如果英文名不存在, 则返回
+        @apiSuccess {dict} data.allowed 如果英文名不存在, 则返回True, 反之返回False
         @apiSuccessExample {json} 成功返回:
         {
             "message": "",
             "code": 0,
             "data": {
-                "collector_config_name_en": collector_config_name_en,
+                "allowed": True,
             },
             "result": true
         }
