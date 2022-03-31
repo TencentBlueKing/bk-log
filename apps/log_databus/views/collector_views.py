@@ -1856,10 +1856,11 @@ class CollectorViewSet(ModelViewSet):
         """
         @api {get} /databus/collectors/pre_check/ 预检查创建采集项的参数
         @apiName pre_check
+        @apiDescription 预检查采集项英文名是否可以使用
         @apiGroup 10_Collector
         @apiParam {Int} bk_biz_id 所属业务ID
         @apiParam {String} collector_config_name_en 采集项英文名
-        @apiSuccess {dict} data.allowed 如果英文名不存在, 则返回True, 反之返回False
+        @apiSuccess {bool} data.allowed 如果英文名不存在, 则返回True, 反之返回False
         @apiSuccessExample {json} 成功返回:
         {
             "message": "",
