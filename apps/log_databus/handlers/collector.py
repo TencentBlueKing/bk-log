@@ -430,16 +430,6 @@ class CollectorHandler(object):
                 is_create = True
             else:
                 model_fields["target_subscription_diff"] = self.diff_target_nodes(params["target_nodes"])
-                if self.data.bk_data_name != bk_data_name:
-                    TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
-                    self.data.bk_data_name = bk_data_name
-                    logger.info(
-                        "[modify_data_name] bk_data_id=>{}, data_name {}=>{}".format(
-                            self.data.bk_data_id,
-                            self.data.bk_data_name,
-                            bk_data_name
-                        )
-                    )
                 for key, value in model_fields.items():
                     setattr(self.data, key, value)
                 self.data.save()
