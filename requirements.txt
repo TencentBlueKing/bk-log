@@ -58,7 +58,7 @@ idna==2.9
 cos-python-sdk-v5==1.9.0
 
 # pipeline
-bamboo-pipeline==3.4.0
+bamboo-pipeline==3.9.0
 mock==2.0.0
 
 # jinjia
