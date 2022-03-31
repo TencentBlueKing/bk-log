@@ -422,7 +422,7 @@ class CollectorHandler(object):
                     {
                         "category_id": params["category_id"],
                         "collector_scenario_id": params["collector_scenario_id"],
-                        "bk_biz_id": "bk_biz_id",
+                        "bk_biz_id": bk_biz_id,
                         "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
                     }
                 )
