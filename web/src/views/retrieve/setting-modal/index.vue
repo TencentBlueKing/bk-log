@@ -48,7 +48,7 @@
       <div class="setting-main">
         <div class="setting-left">
           <div
-            v-for="item of currentList"
+            v-for="item of showCurrentList"
             :key="item.id"
             :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
             :data-test-id="`settingContainer_div_select${item.id}`"
@@ -167,6 +167,7 @@ export default {
           isEditable: false,
           isDisabled: false,
         }],
+      showCurrentList: [],
     };
   },
   computed: {
@@ -174,7 +175,7 @@ export default {
       return this.isShowDialog;
     },
     globalEditable() {
-      return this.currentList.find(el => el.id === this.currentChoice)?.isEditable;
+      return this.showCurrentList.find(el => el.id === this.currentChoice)?.isEditable;
     },
     isCollector() { // 字段提取的索引集来源是否为采集项
       return this.cleanConfig?.extra?.collector_config_id !== null;
@@ -196,11 +197,17 @@ export default {
     isDialogVisiable(val) {
       val && this.handleMenuStatus();
     },
+    'indexSetItem.scenario_id': {
+      immediate: true,
+      handler(val) {
+        this.setIsShowExtract(val === 'log');
+      },
+    },
   },
   methods: {
     handleMenuStatus() {
       const { isExtractActive, isClusteringActive, isCollector } = this;
-      this.currentList = this.currentList.map((list) => {
+      this.showCurrentList = this.showCurrentList.map((list) => {
         return {
           ...list,
           isEditable: list.id === 'extract' ? isExtractActive : isClusteringActive,
@@ -233,7 +240,7 @@ export default {
     openPage() {
       if (this.isOpenPage) {
         this.currentChoice = this.selectChoice;
-        this.showComponent = this.currentList.find(el => el.id === this.selectChoice)?.componentsName;
+        this.showComponent = this.showCurrentList.find(el => el.id === this.selectChoice)?.componentsName;
         this.isOpenPage = false;
       }
     },
@@ -301,12 +308,12 @@ export default {
      */
     jumpCloseSwitch() {
       if (!this.isClusteringActive && this.currentChoice === 'clustering') {
-        this.currentList[1].isEditable = false;
+        this.showCurrentList[1].isEditable = false;
       }
       if (!this.isSubmit && this.currentChoice === 'extract'
-       && this.currentList[0].isDisabled !== true
+       && this.showCurrentList[0].isDisabled !== true
        && !this.isExtractActive) {
-        this.currentList[0].isEditable = false;
+        this.showCurrentList[0].isEditable = false;
       }
     },
     debugRequestChange(val) {
@@ -324,6 +331,16 @@ export default {
         ? `/#/manage/custom-report/detail/${collectorID}?projectId=${projectId}`
         : `/#/manage/log-collection/collection-item/manage/${collectorID}?projectId=${projectId}`;
       window.open(jumpUrl, '_blank');
+    },
+    setIsShowExtract(state) {
+      if (state) {
+        this.showCurrentList = this.currentList;
+      } else {
+        const spliceIndex = this.currentList.findIndex(item => item.id === 'extract');
+        const sliceCurrentList = JSON.parse(JSON.stringify(this.currentList));
+        sliceCurrentList.splice(spliceIndex, 1);
+        this.showCurrentList = sliceCurrentList;
+      }
     },
     resetPage() {
       this.isShowPage = false;

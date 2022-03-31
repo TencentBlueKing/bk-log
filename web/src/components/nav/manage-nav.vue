@@ -128,13 +128,15 @@ export default {
   .sub-nav-container {
     display: flex;
     align-items: center;
+    width: 100%;
     height: 52px;
     padding: 0 20px;
     line-height: 24px;
     background-color: #fff;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .10);
-    position: relative;
-    z-index: 1;
+    position: fixed;
+    top: 51px;
+    z-index: 999;
 
     .main-title {
       font-size: 16px;

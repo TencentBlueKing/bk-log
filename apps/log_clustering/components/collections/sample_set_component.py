@@ -40,10 +40,10 @@ class CreateSampleSetService(BaseService):
     def _execute(self, data, parent_data):
         sample_set_name = data.get_one_of_inputs("sample_set_name")
         description = data.get_one_of_inputs("description")
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
+        index_set_id = data.get_one_of_inputs("index_set_id")
         sample_set = SampleSetHandler().create(sample_set_name=sample_set_name, description=description)
         SampleSet.objects.create(**{"sample_set_id": sample_set["id"], "sample_set_name": sample_set_name})
-        ClusteringConfig.objects.filter(collector_config_id=collector_config_id).update(sample_set_id=sample_set["id"])
+        ClusteringConfig.objects.filter(index_set_id=index_set_id).update(sample_set_id=sample_set["id"])
         return True
 
 
@@ -76,9 +76,9 @@ class AddRtToSampleSetService(BaseService):
 
     def _execute(self, data, parent_data):
         sample_set_name = data.get_one_of_inputs("sample_set_name")
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
+        index_set_id = data.get_one_of_inputs("index_set_id")
         sample_set_id = SampleSet.objects.get(sample_set_name=sample_set_name).sample_set_id
-        clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
+        clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         SampleSetHandler().add_rt_to_sample_set(
             sample_set_id=sample_set_id,
             result_table_id=clustering_config.pre_treat_flow["sample_set"]["result_table_id"],

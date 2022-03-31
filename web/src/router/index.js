@@ -273,6 +273,15 @@ const routes = [
         name: 'trace-detail', // 调用链详情
         component: traceDetaid,
       },
+      {
+        path: '/notTraceIndex',
+        name: 'notTraceIndex',
+        component: page403,
+        meta: {
+          needBack: true,
+          backName: 'trace',
+        },
+      },
     ],
   },
   {
@@ -729,11 +738,11 @@ const routes = [
       },
     ],
   },
-  {
-    path: '/notTraceIndex',
-    name: 'notTraceIndex',
-    component: page403,
-  },
+  // {
+  //   path: '/notTraceIndex',
+  //   name: 'notTraceIndex',
+  //   component: page403,
+  // },
   {
     path: '*',
     name: 'page404',

@@ -349,6 +349,15 @@ class SplitCls(object):
 
 
 @dataclass
+class ElasticsearchCls(object):
+    analyzed_fields: str = ""
+    doc_values_fields: str = ""
+    json_fields: str = ""
+    expires: str = ""
+    has_replica: bool = False
+
+
+@dataclass
 class AfterTreatDataFlowCls(object):
     add_uuid_stream_source: StreamSourceCls
     sample_set_stream_source: StreamSourceCls
@@ -368,6 +377,8 @@ class AfterTreatDataFlowCls(object):
     queue_cluster: str
     bk_biz_id: int
     target_bk_biz_id: int
+    es: ElasticsearchCls = ElasticsearchCls()
+    es_cluster: str = ""
 
 
 @dataclass

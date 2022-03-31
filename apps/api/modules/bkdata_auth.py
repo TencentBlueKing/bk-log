@@ -82,3 +82,14 @@ class _BkDataAuthApi:
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
+
+        self.add_cluster_group = DataAPI(
+            method="POST",
+            url=AUTH_APIGATEWAY_ROOT + "projects/{project_id}/cluster_group/",
+            module=self.MODULE,
+            url_keys=["project_id"],
+            description=u"申请资源组",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+        )

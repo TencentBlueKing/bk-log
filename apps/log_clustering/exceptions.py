@@ -65,3 +65,8 @@ class ClusteringConfigStrategyException(BaseClusteringException):
 class ClusteringIndexSetNotExistException(BaseClusteringException):
     ERROR_CODE = "007"
     MESSAGE = _("聚类配置对应索引集不存在: {index_set_id}")
+
+
+class BkdataStorageNotExistException(BaseClusteringException):
+    ERROR_CODE = "009"
+    MESSAGE = _("计算平台落地存储不存在: {index_set_id}")

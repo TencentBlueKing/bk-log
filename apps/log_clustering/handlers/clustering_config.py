@@ -19,7 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import json
 
-
 from apps.log_clustering.constants import (
     CLUSTERING_CONFIG_EXCLUDE,
     DEFAULT_CLUSTERING_FIELDS,
@@ -57,9 +56,20 @@ class ClusteringConfigHandler(object):
 
     def update_or_create(self, params: dict):
         index_set_id = params["index_set_id"]
-        collector_config_id = LogIndexSet.objects.filter(index_set_id=index_set_id).first().collector_config_id
-        clustering_config = CollectorConfig.objects.filter(collector_config_id=collector_config_id).first()
-        collector_config_name_en = clustering_config.collector_config_name_en if clustering_config else None
+        log_index_set = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
+        collector_config_id = log_index_set.collector_config_id
+        category_id = log_index_set.category_id
+        log_index_set_data, *_ = log_index_set.indexes
+        collector_config_name_en = ""
+        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
+        if collector_config_id:
+            collector_config = CollectorConfig.objects.filter(collector_config_id=collector_config_id).first()
+            collector_config_name_en = (
+                clustering_config.collector_config_name_en
+                if clustering_config
+                else collector_config.collector_config_name_en
+            )
+        source_rt_name = log_index_set_data["result_table_id"]
         min_members = params["min_members"]
         max_dist_list = params["max_dist_list"]
         predefined_varibles = params["predefined_varibles"]
@@ -70,7 +80,6 @@ class ClusteringConfigHandler(object):
         bk_biz_id = params["bk_biz_id"]
         filter_rules = params["filter_rules"]
         signature_enable = params["signature_enable"]
-        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         from apps.log_clustering.handlers.pipline_service.aiops_service import create_aiops_service
 
         if clustering_config:
@@ -84,9 +93,10 @@ class ClusteringConfigHandler(object):
             clustering_config.bk_biz_id = bk_biz_id
             clustering_config.filter_rules = filter_rules
             clustering_config.signature_enable = signature_enable
+            clustering_config.source_rt_name = source_rt_name
+            clustering_config.category_id = category_id
             clustering_config.save()
-            if signature_enable:
-                create_aiops_service(collector_config_id)
+            # todo 更新对应flow
             return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
         clustering_config = ClusteringConfig.objects.create(
             collector_config_id=collector_config_id,
@@ -102,9 +112,11 @@ class ClusteringConfigHandler(object):
             filter_rules=filter_rules,
             index_set_id=index_set_id,
             signature_enable=signature_enable,
+            source_rt_name=source_rt_name,
+            category_id=category_id,
         )
         if signature_enable:
-            create_aiops_service(collector_config_id)
+            create_aiops_service(index_set_id)
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def preview(
@@ -170,14 +182,14 @@ class ClusteringConfigHandler(object):
                 collector_handler.data, mq_topic=topic, mq_partition=partition
             )
             self.data.save()
+        # 设置request线程变量
+        activate_request(generate_request())
+
         collector_detail = collector_handler.retrieve(use_request=False)
 
         # need drop built in field
         collector_detail["fields"] = map_if(collector_detail["fields"], if_func=lambda field: not field["is_built_in"])
         from apps.log_databus.handlers.etl import EtlHandler
-
-        # 设置request线程变量
-        activate_request(generate_request())
 
         EtlHandler(self.data.collector_config_id).update_or_create(
             collector_detail["etl_config"],

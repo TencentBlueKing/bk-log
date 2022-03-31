@@ -41,6 +41,10 @@ class IAMMigrator(object):
         app_code = settings.APP_CODE
         app_secret = settings.SECRET_KEY
 
+        # 开启跳过权限中心
+        if settings.IGNORE_IAM_PERMISSION:
+            return
+
         # only trigger migrator at db migrate
         if "migrate" not in sys.argv:
             return

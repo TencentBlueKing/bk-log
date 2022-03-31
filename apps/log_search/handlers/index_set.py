@@ -835,14 +835,6 @@ class BaseIndexSetHandler(object):
         1.检查trace结构是否符合
         :return:
         """
-        # 检查索引是否字段冲突
-        # bkdata可能还没有授权导致无法获取mapping
-        MappingHandlers(
-            ",".join([index.get("result_table_id") for index in self.indexes]),
-            -1,
-            self.scenario_id,
-            self.storage_cluster_id,
-        ).check_fields_not_conflict()
         if self.is_trace_log:
             self.is_trace_log_pre_check()
 
@@ -893,12 +885,6 @@ class BaseIndexSetHandler(object):
         return True
 
     def pre_update(self):
-        MappingHandlers(
-            ",".join([index.get("result_table_id") for index in self.indexes]),
-            -1,
-            self.scenario_id,
-            self.storage_cluster_id,
-        ).check_fields_not_conflict()
         if self.is_trace_log:
             self.is_trace_log_pre_check()
 
@@ -973,7 +959,7 @@ class BaseIndexSetHandler(object):
                     "bkdata_authentication_method": "user",
                 }
             )
-            property_dict: dict = MappingHandlers.find_property_dict_first(mapping_list)
+            property_dict: dict = MappingHandlers.find_property_dict(mapping_list)
             field_list: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
             trace_proto_type = Proto.judge_trace_type(field_list)
             if trace_proto_type is not None:

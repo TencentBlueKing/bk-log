@@ -77,6 +77,7 @@ class ClusteringConfigAdmin(AppModelAdmin):
         "after_treat_flow",
         "after_treat_flow_id",
         "modify_flow",
+        "source_rt_name",
     ]
     search_fields = [
         "collector_id",
@@ -96,6 +97,7 @@ class ClusteringConfigAdmin(AppModelAdmin):
         "bkdata_etl_processing_id",
         "log_bk_data_id",
         "signature_enable",
+        "source_rt_name",
     ]
 
 

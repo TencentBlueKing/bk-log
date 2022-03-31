@@ -96,7 +96,7 @@
       <div slot="content" class="retrieve-setting-container">
         <ul class="list-menu" ref="menu">
           <li
-            v-for="menu in settingMenuList"
+            v-for="menu in showSettingMenuList"
             class="list-menu-item"
             :key="menu.id"
             @click="handleMenuClick(menu.id)">
@@ -147,6 +147,10 @@ export default {
       type: [Number, String],
       default: '',
     },
+    indexSetItem: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
@@ -189,6 +193,7 @@ export default {
         { id: 'extract', name: '字段提取' },
         { id: 'clustering', name: '日志聚类' },
       ],
+      showSettingMenuList: [],
     };
   },
   computed: {
@@ -206,6 +211,14 @@ export default {
       const aiopsBizList = window.FEATURE_TOGGLE_WHITE_LIST?.bkdata_aiops_toggle;
 
       return aiopsBizList ? aiopsBizList.some(item => item.toString() === this.bkBizId) : false;
+    },
+  },
+  watch: {
+    'indexSetItem.scenario_id': {
+      immediate: true,
+      handler(val) {
+        this.setIsShowExtract(val === 'log');
+      },
     },
   },
   mounted() {
@@ -263,6 +276,16 @@ export default {
     },
     handleMenuClick(val) {
       this.$emit('settingMenuClick', val);
+    },
+    setIsShowExtract(state) {
+      if (state) {
+        this.showSettingMenuList = this.settingMenuList;
+      } else {
+        const spliceIndex = this.settingMenuList.findIndex(item => item.id === 'extract');
+        const sliceSettingMenuList = JSON.parse(JSON.stringify(this.settingMenuList));
+        sliceSettingMenuList.splice(spliceIndex, 1);
+        this.showSettingMenuList = sliceSettingMenuList;
+      }
     },
   },
 };

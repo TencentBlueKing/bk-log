@@ -30,6 +30,7 @@ from apps.log_search.exceptions import (
     IndexResultTableApiException,
 )
 from apps.log_search.models import Scenario
+from django_fakeredis import FakeRedis
 
 BK_BIZ_ID = 2
 STORAGE_CLUSTER_NAME = "cluster_name"
@@ -85,6 +86,8 @@ INDICES_DICT = {"scenario_id": Scenario.LOG, "indices": "2_bklog.test3333", "bk_
 
 GET_CLUSTER_INFO_DICT = {"scenario_id": Scenario.LOG, "indices": "2_bklog.test3333", "bk_biz_id": BK_BIZ_ID}
 
+GET_CLUSTER_INFO_EXCEPTION_DICT = {"scenario_id": Scenario.LOG, "indices": "2_bklog.test4444", "bk_biz_id": BK_BIZ_ID}
+
 SEARCH_RESULT = {
     "scenario": Scenario.LOG,
     "indices": "2_bklog_search_20200322*,2_bklog_search_20200320*,2_bklog_search_20200321*",
@@ -130,7 +133,6 @@ SEARCH_RESULT = {
         },
     },
 }
-
 
 ES_QUERY_LOG_INDICES = "2_bklog_search_20200320*,2_bklog_search_20200321*,2_bklog_search_20200322*"
 ES_QUERY_BKDATA_INDICES = "2_bklog.search_20200321*,2_bklog.search_20200322*"
@@ -196,6 +198,13 @@ CONFIG_DATA = {
     },
 }
 
+GET_CLUSTER_INFO_EXCEPTION_CONFIG_DATA = {
+    "result_table_config": {"bk_biz_id": BK_BIZ_ID},
+    "result_table_storage": {
+        "2_bklog.test444": {"cluster_config": {"cluster_id": 231, "cluster_name": STORAGE_CLUSTER_NAME}}
+    },
+}
+
 GET_CLUSTER_INFO_RESULT = {
     "bk_biz_id": BK_BIZ_ID,
     "storage_cluster_id": 231,
@@ -203,6 +212,7 @@ GET_CLUSTER_INFO_RESULT = {
 }
 
 
+@FakeRedis("apps.utils.cache.cache")
 class TestEsquery(TestCase):
     def test_search_debug(self):
         """
@@ -413,17 +423,17 @@ class TestEsquery(TestCase):
         """
         测试 IndexResultTableApiException
         """
-        params = copy.deepcopy(GET_CLUSTER_INFO_DICT)
+        params = copy.deepcopy(GET_CLUSTER_INFO_EXCEPTION_DICT)
 
-        config_data.return_value = copy.deepcopy(CONFIG_DATA).pop("result_table_config")
+        config_data.return_value = copy.deepcopy(GET_CLUSTER_INFO_EXCEPTION_CONFIG_DATA).pop("result_table_config")
         with self.assertRaises(IndexResultTableApiException):
             EsQuery(params).get_cluster_info()
 
-        config_data.return_value = copy.deepcopy(CONFIG_DATA).pop("result_table_storage")
+        config_data.return_value = copy.deepcopy(GET_CLUSTER_INFO_EXCEPTION_CONFIG_DATA).pop("result_table_storage")
         with self.assertRaises(IndexResultTableApiException):
             EsQuery(params).get_cluster_info()
 
-        CONFIG_DATA.update({"result_table_storage": {}})
-        config_data.return_value = CONFIG_DATA
+        GET_CLUSTER_INFO_EXCEPTION_CONFIG_DATA.update({"result_table_storage": {}})
+        config_data.return_value = GET_CLUSTER_INFO_EXCEPTION_CONFIG_DATA
         with self.assertRaises(IndexResultTableApiException):
             EsQuery(params).get_cluster_info()

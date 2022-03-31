@@ -1049,7 +1049,7 @@ class BizHandler(APIModel):
             response_data = CCApi.list_service_template.bulk_request(params)
         if template_type == TemplateType.SET_TEMPLATE.value:
             response_data = CCApi.list_set_template.bulk_request(params)
-        project = ProjectInfo.objects.get(bk_biz_id=self.bk_biz_id)
+        project = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first()
         result = {
             "bk_biz_id": self.bk_biz_id,
             "bk_biz_name": project.project_name,
