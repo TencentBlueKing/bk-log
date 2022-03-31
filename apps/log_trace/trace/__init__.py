@@ -38,7 +38,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider, ReadableSpan
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import Span, Status, StatusCode
-from opentelemetry.sdk.trace.sampling import ALWAYS_OFF, DEFAULT_OFF
+from opentelemetry.sdk.trace.sampling import ALWAYS_OFF, DEFAULT_OFF, ALWAYS_ON
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
@@ -119,6 +119,8 @@ class BluekingInstrumentor(BaseInstrumentor):
     has_instrument = False
     GRPC_HOST = "otlp_grpc_host"
     BK_DATA_ID = "otlp_bk_data_id"
+    BK_DATA_TOKEN = "otlp_bk_data_token"
+    SAMPLE_ALL = "sample_all"
 
     def _uninstrument(self, **kwargs):
         pass
@@ -131,22 +133,39 @@ class BluekingInstrumentor(BaseInstrumentor):
         feature_config = toggle.feature_config
         otlp_grpc_host = settings.OTLP_GRPC_HOST
         otlp_bk_data_id = settings.OTLP_BK_DATA_ID
+        otlp_bk_data_token = ""
+        sample_all = False
         if feature_config:
             otlp_grpc_host = feature_config.get(self.GRPC_HOST, otlp_grpc_host)
             otlp_bk_data_id = feature_config.get(self.BK_DATA_ID, otlp_bk_data_id)
+            otlp_bk_data_token = feature_config.get(self.BK_DATA_TOKEN, otlp_bk_data_token)
+            sample_all = feature_config.get(self.SAMPLE_ALL, sample_all)
         otlp_exporter = OTLPSpanExporter(endpoint=otlp_grpc_host)
         span_processor = LazyBatchSpanProcessor(otlp_exporter)
+        suffix = ""
+        if settings.BKAPP_IS_BKLOG_API:
+            suffix = "_api"
+
+        if settings.IS_CELERY:
+            suffix = "_worker"
+
+        if settings.IS_CELERY_BEAT:
+            suffix = "_beat"
 
         # periord task not sampler
         sampler = DEFAULT_OFF
         if settings.IS_CELERY_BEAT:
             sampler = ALWAYS_OFF
 
+        if sample_all:
+            sampler = ALWAYS_ON
+
         tracer_provider = TracerProvider(
             resource=Resource.create(
                 {
-                    "service.name": settings.APP_CODE,
+                    "service.name": settings.APP_CODE + suffix,
                     "bk_data_id": otlp_bk_data_id,
+                    "bk.data.token": otlp_bk_data_token,
                 }
             ),
             sampler=sampler,

@@ -319,9 +319,6 @@ export default {
         if (oldMenu.children) {
           resMenu.children.forEach((item) => {
             item.id = this.routeMap[item.id] || item.id;
-            // if (resMenu.id === 'dashboard') {
-            //   item.id = item.id.replaceAll('-', '_');
-            // }
             const menu = oldMenu.children.find(menuItem => menuItem.id === item.id);
             if (menu) {
               this.deepUpdateMenu(menu, item);
@@ -339,7 +336,7 @@ export default {
         if (item.id === 'search') {
           item.id = 'retrieve';
         }
-        item.id = item.id.replaceAll('_', '-');
+        item.id = item.id.replace(/_/g, '-');
         if (item.children) {
           this.replaceMenuId(item.children);
         }

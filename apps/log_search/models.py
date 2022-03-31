@@ -24,7 +24,6 @@ from django.db import models
 from django.db.transaction import atomic
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import format_html
-from django_jsonfield_backport.models import JSONField
 from jinja2 import Environment, FileSystemLoader
 
 from apps.exceptions import BizNotExistError
@@ -208,11 +207,11 @@ class ProjectInfo(SoftDeleteModel):
 
     @classmethod
     def get_biz(cls, biz_id=None):
-        try:
-            project = ProjectInfo.objects.get(bk_biz_id=biz_id)
-        except ProjectInfo.DoesNotExist:
+        projects = ProjectInfo.objects.filter(bk_biz_id=biz_id)
+        if not projects.exists():
             raise BizNotExistError(BizNotExistError.MESSAGE.format(bk_biz_id=biz_id))
 
+        project = projects.first()
         return {"bk_biz_id": project.bk_biz_id, "bk_biz_name": project.project_name}
 
     class Meta:
@@ -762,8 +761,8 @@ class AsyncTask(OperateRecordModel):
     导出任务状态表
     """
 
-    request_param = JSONField(_("检索请求参数"))
-    sorted_param = JSONField(_("异步导出排序字段"), null=True, blank=True)
+    request_param = models.JSONField(_("检索请求参数"))
+    sorted_param = models.JSONField(_("异步导出排序字段"), null=True, blank=True)
     scenario_id = models.CharField(_("接入场景"), max_length=64)
     index_set_id = models.IntegerField(_("索引集id"))
     result = models.BooleanField(_("异步导出结果"), default=False)
@@ -827,7 +826,7 @@ class EmailTemplate(OperateRecordModel):
 
 class UserMetaConf(models.Model):
     username = models.CharField(_("创建者"), max_length=32, default="")
-    conf = JSONField(_("用户meta配置"), default=dict)
+    conf = models.JSONField(_("用户meta配置"), default=dict)
     type = models.CharField(_("数据类型"), max_length=64)
 
     class Meta:
