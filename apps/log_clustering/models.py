@@ -21,7 +21,6 @@ from apps.log_clustering.constants import StrategiesType
 from apps.models import SoftDeleteModel
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django_jsonfield_backport.models import JSONField
 
 
 class SampleSet(SoftDeleteModel):
@@ -41,7 +40,7 @@ class AiopsModelExperiment(SoftDeleteModel):
     experiment_alias = models.CharField(_("实验名称"), db_index=True, max_length=128)
     status = models.CharField(_("实验状态"), null=True, blank=True, max_length=128)
     basic_model_id = models.CharField(_("最新模型实例id"), null=True, blank=True, max_length=128)
-    node_id_list = JSONField(_("节点列表"), null=True, blank=True)
+    node_id_list = models.JSONField(_("节点列表"), null=True, blank=True)
 
     @classmethod
     def get_experiment(cls, model_name: str, experiment_alias: str):
@@ -71,9 +70,9 @@ class ClusteringConfig(SoftDeleteModel):
     max_log_length = models.IntegerField(_("最大日志长度"))
     is_case_sensitive = models.IntegerField(_("是否大小写忽略"), default=0)
     clustering_fields = models.CharField(_("聚合字段"), max_length=128)
-    filter_rules = JSONField(_("过滤规则"), null=True, blank=True)
+    filter_rules = models.JSONField(_("过滤规则"), null=True, blank=True)
     bk_biz_id = models.IntegerField(_("业务id"))
-    pre_treat_flow = JSONField(_("预处理flow配置"), null=True, blank=True)
+    pre_treat_flow = models.JSONField(_("预处理flow配置"), null=True, blank=True)
     new_cls_pattern_rt = models.CharField(_("新类结果表id"), max_length=255, default="", null=True, blank=True)
     bkdata_data_id = models.IntegerField(_("计算平台接入dataid"), null=True, blank=True)
     bkdata_etl_result_table_id = models.CharField(_("计算平台清洗结果表"), max_length=255, null=True, blank=True)
@@ -81,9 +80,9 @@ class ClusteringConfig(SoftDeleteModel):
     log_bk_data_id = models.IntegerField(_("入库数据源"), null=True, blank=True)
     signature_enable = models.BooleanField(_("数据指纹开关"), default=False)
     pre_treat_flow_id = models.IntegerField(_("预处理flowid"), null=True, blank=True)
-    after_treat_flow = JSONField(_("after_treat_flow配置"), null=True, blank=True)
+    after_treat_flow = models.JSONField(_("after_treat_flow配置"), null=True, blank=True)
     after_treat_flow_id = models.IntegerField(_("预处理flowid"), null=True, blank=True)
-    modify_flow = JSONField(_("修改after_treat_flow调用的配置"), null=True, blank=True)
+    modify_flow = models.JSONField(_("修改after_treat_flow调用的配置"), null=True, blank=True)
 
 
 class SignatureStrategySettings(SoftDeleteModel):
