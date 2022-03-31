@@ -21,7 +21,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from django.db import models
 
 from django.utils.translation import ugettext_lazy as _
-from django_jsonfield_backport.models import JSONField
 
 from apps.models import SoftDeleteModel
 
@@ -36,8 +35,8 @@ class FeatureToggle(SoftDeleteModel):
     status = models.CharField(_("特性开关status"), max_length=32, default="off")
     description = models.TextField(_("特性开关描述"), null=True, blank=True)
     is_viewed = models.BooleanField(_("是否在前端展示"), default=True)
-    feature_config = JSONField(_("特性开关配置"), null=True, blank=True)
-    biz_id_white_list = JSONField(_("业务白名单"), null=True, blank=True)
+    feature_config = models.JSONField(_("特性开关配置"), null=True, blank=True)
+    biz_id_white_list = models.JSONField(_("业务白名单"), null=True, blank=True)
 
     class Meta:
         verbose_name = _("日志平台特性开关")

@@ -64,7 +64,7 @@ class FlowMixin(object):
             response.status_code = status.HTTP_200_OK
 
         # 返回响应头禁用浏览器的类型猜测行为
-        response._headers["x-content-type-options"] = ("X-Content-Type-Options", "nosniff")
+        response.headers["x-content-type-options"] = ("X-Content-Type-Options", "nosniff")
         return super(FlowMixin, self).finalize_response(request, response, *args, **kwargs)
 
     def valid(self, form_class, filter_blank=False, filter_none=False):
