@@ -130,6 +130,8 @@ MIDDLEWARE = (
 #
 STATIC_VERSION = "1.0"
 
+DEFAULT_HTTPS_HOST = ""
+
 if IS_K8S_DEPLOY_MODE:
     STATIC_ROOT = "static"
 else:
@@ -727,7 +729,6 @@ BKMONITOR_CUSTOM_PROXY_IP = os.environ.get(
 # ===============================================================================
 ES_QUERY_ACCESS_LIST: list = ["bkdata", "es", "log"]
 ES_QUERY_TIMEOUT = int(os.environ.get("BKAPP_ES_QUERY_TIMEOUT", 55))
-
 
 # ESQUERY 查询白名单，直接透传
 ESQUERY_WHITE_LIST = [
