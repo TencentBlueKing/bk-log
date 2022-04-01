@@ -61,7 +61,8 @@
               maxlength="50"
               data-test-id="baseMessage_input_fillEnglishName"
               :disabled="isUpdate && !!(formData.collector_config_name_en)"
-              :placeholder="$t('dataSource.en_name_tips')">
+              :placeholder="$t('dataSource.en_name_tips')"
+              @change="clearError">
             </bk-input>
             <p v-show="!configNameEnIsNotRepeat" class="repeat-message">{{$t('dataSource.en_name_repeat')}}</p>
           </div>
@@ -1028,6 +1029,9 @@ export default {
         this.configNameEnIsNotRepeat = false;
         return false;
       }
+    },
+    clearError() {
+      this.configNameEnIsNotRepeat = true;
     },
   },
 };
