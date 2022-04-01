@@ -75,8 +75,9 @@ export default {
     },
     handleBack() {
       if (this.$route.meta.backName) {
+        const { query: { backRoute } } = this.$route;
         this.$router.push({
-          name: this.$route.meta.backName,
+          name: !!backRoute ? backRoute : this.$route.meta.backName,
           query: {
             projectId: window.localStorage.getItem('project_id'),
           },
