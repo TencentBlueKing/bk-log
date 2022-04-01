@@ -717,3 +717,15 @@ class ListCollectorSerlalizer(serializers.Serializer):
 
 class BatchGetStateSerlalizer(serializers.Serializer):
     restore_config_ids = serializers.ListField(label=_("归档回溯配置list"), required=True)
+
+
+class PreCheckSerializer(serializers.Serializer):
+    """
+    预检查bk_data_name
+    """
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"))
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+    bk_data_name = serializers.CharField(label=_("采集链路data_name"), required=False)
+    result_table_id = serializers.CharField(label=_("结果表ID"), required=False)

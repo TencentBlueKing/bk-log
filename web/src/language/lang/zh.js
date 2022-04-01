@@ -756,6 +756,7 @@ export default {
     tips_formula: ' ES存储 ≈ 每天原始日志量 * 1.5（ES转化率） * 2（1个副本） * 存储天数',
     dataId: '数据ID',
     retention: '过期时间',
+    en_name_repeat: '该英文名已重复',
   },
   新建数据源: '新建数据源',
   编辑数据源: '编辑数据源',
