@@ -281,7 +281,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 BK_HOT_WARM_CONFIG_URL = (
     "https://www.elastic.co/guide/en/elasticsearch/reference/master/modules-cluster.html#shard-allocation-awareness"
 )
-
+BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 DEPLOY_MODE = os.environ.get("DEPLOY_MODE", "")
 
 # bulk_request limit
