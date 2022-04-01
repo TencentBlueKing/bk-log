@@ -54,14 +54,18 @@
           :required="true"
           :rules="rules.collector_config_name_en"
           :property="'collector_config_name_en'">
-          <bk-input
-            v-model="formData.collector_config_name_en"
-            show-word-limit
-            maxlength="50"
-            data-test-id="baseMessage_input_fillEnglishName"
-            :disabled="isUpdate && !!(formData.collector_config_name_en)"
-            :placeholder="$t('dataSource.en_name_tips')">
-          </bk-input>
+          <div class="config-enName-box">
+            <bk-input
+              v-model="formData.collector_config_name_en"
+              show-word-limit
+              maxlength="50"
+              data-test-id="baseMessage_input_fillEnglishName"
+              :disabled="isUpdate && !!(formData.collector_config_name_en)"
+              :placeholder="$t('dataSource.en_name_tips')"
+              @change="clearError">
+            </bk-input>
+            <p v-show="!configNameEnIsNotRepeat" class="repeat-message">{{$t('dataSource.en_name_repeat')}}</p>
+          </div>
           <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
         </bk-form-item>
         <bk-form-item :label="$t('configDetails.remarkExplain')">
@@ -556,6 +560,11 @@ export default {
             regex: /^[A-Za-z0-9_]+$/,
             trigger: 'blur',
           },
+          {
+            // 检查英文名是否可用
+            validator: this.checkEnName,
+            trigger: 'blur',
+          },
         ],
         category_id: [ // 数据分类
           {
@@ -641,6 +650,7 @@ export default {
       eventSettingList: [
         { type: 'winlog_event_id', list: [], isCorrect: true },
       ],
+      configNameEnIsNotRepeat: true,
     };
   },
   computed: {
@@ -1001,6 +1011,28 @@ export default {
         }
       });
     },
+    async checkEnName(val) {
+      const result = await this.getEnNameIsRepeat(val);
+      return result;
+    },
+    // 检测英文名是否可用
+    async getEnNameIsRepeat(val) {
+      try {
+        const res =  await this.$http.request('collect/getPreCheck', {
+          params: { collector_config_name_en: val, bk_biz_id: this.$store.state.bkBizId },
+        });
+        if (res.data) {
+          this.configNameEnIsNotRepeat = res.data.allowed;
+          return res.data.allowed;
+        }
+      } catch (error) {
+        this.configNameEnIsNotRepeat = false;
+        return false;
+      }
+    },
+    clearError() {
+      this.configNameEnIsNotRepeat = true;
+    },
   },
 };
 </script>
@@ -1359,6 +1391,16 @@ export default {
       .bk-tag-input {
         /* stylelint-disable-next-line declaration-no-important */
         border-color: #ff5656 !important;
+      }
+    }
+
+    .config-enName-box {
+      display: flex;
+
+      .repeat-message {
+        font-size: 14px;
+        margin-left: 6px;
+        color: #ff5656;
       }
     }
   }
