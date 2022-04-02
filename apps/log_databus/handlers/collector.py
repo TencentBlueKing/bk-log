@@ -72,6 +72,8 @@ from apps.log_databus.exceptions import (
     CollectorCreateOrUpdateSubscriptionException,
     CollectorIllegalIPException,
     CollectorConfigNameENDuplicateException,
+    CollectorBkDataNameDuplicateException,
+    CollectorResultTableIDDuplicateException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
@@ -367,18 +369,48 @@ class CollectorHandler(object):
             "data_encoding": params["data_encoding"],
             "params": params["params"],
         }
+
+        bk_biz_id = params.get("bk_biz_id") or self.data.bk_biz_id
+        collector_config_name_en = params["collector_config_name_en"]
+
         # 判断是否存在非法IP列表
         self.cat_illegal_ips(params)
         # 判断是否已存在同英文名collector
-        if self._pre_check_collector_config_en(model_fields=model_fields, bk_biz_id=params.get("bk_biz_id")):
+        if self._pre_check_collector_config_en(model_fields=model_fields, bk_biz_id=bk_biz_id):
             logger.error(
                 "collector_config_name_en {collector_config_name_en} already exists".format(
-                    collector_config_name_en=model_fields["collector_config_name_en"]
+                    collector_config_name_en=collector_config_name_en
                 )
             )
             raise CollectorConfigNameENDuplicateException(
                 CollectorConfigNameENDuplicateException.MESSAGE.format(
-                    collector_config_name_en=model_fields["collector_config_name_en"]
+                    collector_config_name_en=collector_config_name_en
+                )
+            )
+
+        # 判断是否已存在同bk_data_name
+        bk_data_name = build_bk_data_name(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+        if CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name():
+            logger.error(f"bk_data_name {bk_data_name} already exists")
+            raise CollectorBkDataNameDuplicateException(
+                CollectorBkDataNameDuplicateException.MESSAGE.format(
+                    bk_data_name=bk_data_name
+                )
+            )
+
+        # 判断是否已存在同result_table_id
+        result_table_id = build_result_table_id(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+        if CollectorConfig(table_id=result_table_id).get_result_table_by_id():
+            logger.error(f"result_table_id {result_table_id} already exists")
+            raise CollectorResultTableIDDuplicateException(
+                CollectorResultTableIDDuplicateException.MESSAGE.format(
+                    result_table_id=result_table_id
                 )
             )
 
@@ -390,7 +422,7 @@ class CollectorHandler(object):
                     {
                         "category_id": params["category_id"],
                         "collector_scenario_id": params["collector_scenario_id"],
-                        "bk_biz_id": params["bk_biz_id"],
+                        "bk_biz_id": bk_biz_id,
                         "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
                     }
                 )
@@ -441,6 +473,7 @@ class CollectorHandler(object):
         target_nodes = params["target_nodes"]
         data_encoding = params["data_encoding"]
         description = params.get("description") or collector_config_name
+        bk_biz_id = params.get("bk_biz_id") or self.data.bk_biz_id
         params["params"]["encoding"] = data_encoding
         params["params"]["run_task"] = params.get("run_task", True)
         # 1. 创建CollectorConfig记录
@@ -461,7 +494,7 @@ class CollectorHandler(object):
         is_create = False
 
         # 判断是否已存在同英文名collector
-        if self._pre_check_collector_config_en(model_fields=model_fields, bk_biz_id=params.get("bk_biz_id")):
+        if self._pre_check_collector_config_en(model_fields=model_fields, bk_biz_id=bk_biz_id):
             logger.error(
                 "collector_config_name_en {collector_config_name_en} already exists".format(
                     collector_config_name_en=collector_config_name_en
@@ -470,6 +503,32 @@ class CollectorHandler(object):
             raise CollectorConfigNameENDuplicateException(
                 CollectorConfigNameENDuplicateException.MESSAGE.format(
                     collector_config_name_en=collector_config_name_en
+                )
+            )
+
+        # 判断是否已存在同bk_data_name
+        bk_data_name = build_bk_data_name(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+        if CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name():
+            logger.error(f"bk_data_name {bk_data_name} already exists")
+            raise CollectorBkDataNameDuplicateException(
+                CollectorBkDataNameDuplicateException.MESSAGE.format(
+                    bk_data_name=bk_data_name
+                )
+            )
+
+        # 判断是否已存在同result_table_id
+        result_table_id = build_result_table_id(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+        if CollectorConfig(table_id=result_table_id).get_result_table_by_id():
+            logger.error(f"result_table_id {result_table_id} already exists")
+            raise CollectorResultTableIDDuplicateException(
+                CollectorResultTableIDDuplicateException.MESSAGE.format(
+                    result_table_id=result_table_id
                 )
             )
 
@@ -483,7 +542,7 @@ class CollectorHandler(object):
                         {
                             "category_id": params["category_id"],
                             "collector_scenario_id": params["collector_scenario_id"],
-                            "bk_biz_id": params["bk_biz_id"],
+                            "bk_biz_id": bk_biz_id,
                             "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
                         }
                     )
@@ -492,6 +551,16 @@ class CollectorHandler(object):
                     is_create = True
                 else:
                     _collector_config_name = copy.deepcopy(self.data.collector_config_name)
+                    if self.data.bk_data_name != bk_data_name:
+                        TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
+                        logger.info(
+                            "[modify_data_name] bk_data_id=>{}, data_name {}=>{}".format(
+                                self.data.bk_data_id,
+                                self.data.bk_data_name,
+                                bk_data_name
+                            )
+                        )
+                        self.data.bk_data_name = bk_data_name
 
                     # 当更新itsm流程时 将diff更新前移
                     if not FeatureToggleObject.switch(name=FEATURE_COLLECTOR_ITSM):
@@ -515,11 +584,12 @@ class CollectorHandler(object):
                 bk_data_id = collector_scenario.update_or_create_data_id(
                     bk_data_id=self.data.bk_data_id,
                     data_link_id=self.data.data_link_id,
-                    data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name}",
+                    data_name=bk_data_name,
                     description=description,
                     encoding=META_DATA_ENCODING,
                 )
                 self.data.bk_data_id = bk_data_id
+                self.data.bk_data_name = bk_data_name
                 self.data.save()
 
             except IntegrityError:
@@ -556,8 +626,6 @@ class CollectorHandler(object):
         }
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
-        if not bk_biz_id:
-            bk_biz_id = self.data.bk_biz_id
         qs = CollectorConfig.objects.filter(
             collector_config_name_en=model_fields["collector_config_name_en"],
             bk_biz_id=bk_biz_id,
@@ -583,7 +651,7 @@ class CollectorHandler(object):
                     self._run_subscription_task()
                 else:
                     self._run_subscription_task("START")
-            # start nodeman sunscrption
+            # start nodeman subscription
             NodeApi.switch_subscription({"subscription_id": self.data.subscription_id, "action": "enable"})
         except Exception as error:  # pylint: disable=broad-except
             logger.exception(f"create or update collector config failed => [{error}]")
@@ -1706,6 +1774,33 @@ class CollectorHandler(object):
                 )
             )
 
+        # 判断是否已存在同bk_data_name
+        bk_data_name = build_bk_data_name(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+
+        if CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name():
+            logger.error(f"bk_data_name {bk_data_name} already exists")
+            raise CollectorBkDataNameDuplicateException(
+                CollectorBkDataNameDuplicateException.MESSAGE.format(
+                    bk_data_name=bk_data_name
+                )
+            )
+
+        # 判断是否已存在同result_table_id
+        result_table_id = build_result_table_id(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+        if CollectorConfig(table_id=result_table_id).get_result_table_by_id():
+            logger.error(f"result_table_id {result_table_id} already exists")
+            raise CollectorResultTableIDDuplicateException(
+                CollectorResultTableIDDuplicateException.MESSAGE.format(
+                    result_table_id=result_table_id
+                )
+            )
+
         with transaction.atomic():
             try:
                 self.data = CollectorConfig.objects.create(**collector_config_params)
@@ -1776,6 +1871,22 @@ class CollectorHandler(object):
             "category_id": category_id,
             "description": description or collector_config_name,
         }
+
+        bk_data_name = build_bk_data_name(
+            bk_biz_id=self.data.bk_biz_id,
+            collector_config_name_en=self.data.collector_config_name_en
+        )
+        if self.data.bk_data_name != bk_data_name:
+            TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
+            self.data.bk_data_name = bk_data_name
+            logger.info(
+                "[modify_data_name] bk_data_id=>{}, data_name {}=>{}".format(
+                    self.data.bk_data_id,
+                    self.data.bk_data_name,
+                    bk_data_name
+                )
+            )
+
         for key, value in collector_config_update.items():
             setattr(self.data, key, value)
         try:
@@ -1831,3 +1942,46 @@ class CollectorHandler(object):
             "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
         }
         user_operation_record.delay(operation_record)
+
+    def pre_check(self, params: dict):
+        data = {
+            "allowed": False
+        }
+        bk_biz_id = params.get("bk_biz_id")
+        collector_config_name_en = params.get("collector_config_name_en")
+
+        if self._pre_check_collector_config_en(params, bk_biz_id):
+            return data
+
+        bk_data_name = params.get("bk_data_name") or build_bk_data_name(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+        bk_data = CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name()
+        if bk_data:
+            return data
+
+        result_table_id = params.get("result_table_id") or build_result_table_id(
+            bk_biz_id=bk_biz_id,
+            collector_config_name_en=collector_config_name_en
+        )
+        result_table = CollectorConfig(table_id=result_table_id).get_result_table_by_id()
+        if result_table:
+            return data
+
+        data["allowed"] = True
+        return data
+
+
+def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
+    """根据bk_biz_id和collector_config_name_en构建bk_data_name"""
+    bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+
+    return bk_data_name
+
+
+def build_result_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
+    """根据bk_biz_id和collector_config_name_en构建result_table_id"""
+    result_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
+
+    return result_table_id

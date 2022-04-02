@@ -102,6 +102,16 @@ class CollectorConfigNameENDuplicateException(BaseCollectorConfigException):
     MESSAGE = _("采集项{collector_config_name_en}英文名重复")
 
 
+class CollectorBkDataNameDuplicateException(BaseCollectorConfigException):
+    ERROR_CODE = "113"
+    MESSAGE = _("采集项{bk_data_name}采集链路data_name重复")
+
+
+class CollectorResultTableIDDuplicateException(BaseCollectorConfigException):
+    ERROR_CODE = "114"
+    MESSAGE = _("采集项{result_table_id}结果表ID重复")
+
+
 class StorageNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "201"
     MESSAGE = _("集群不存在")
