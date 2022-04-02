@@ -1012,6 +1012,7 @@ export default {
       });
     },
     async checkEnName(val) {
+      if (this.$route.name === 'collectEdit') return true;
       const result = await this.getEnNameIsRepeat(val);
       return result;
     },
@@ -1026,12 +1027,14 @@ export default {
           return res.data.allowed;
         }
       } catch (error) {
-        this.configNameEnIsNotRepeat = false;
+        this.configNameEnIsNotRepeat = true;
         return false;
       }
     },
     clearError() {
-      this.configNameEnIsNotRepeat = true;
+      if (!this.configNameEnIsNotRepeat) {
+        this.configNameEnIsNotRepeat = true;
+      }
     },
   },
 };

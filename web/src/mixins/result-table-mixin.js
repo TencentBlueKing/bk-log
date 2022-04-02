@@ -175,15 +175,15 @@ export default {
     },
     getMarkList(content) {
       // 匹配高亮标签
-      let value = content;
+      let markList = [];
 
       const markVal = content.match(/(<mark>).*?(<\/mark>)/g) || [];
       if (markVal.length) {
-        value = String(value).replace(/<mark>/g, '')
-          .replace(/<\/mark>/g, '');
+        markList = markVal.map(item => item.replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, ''));
       }
 
-      return value;
+      return markList;
     },
     formatterStr(content) {
       // 匹配高亮标签
@@ -191,8 +191,6 @@ export default {
 
       const markVal = content.match(/(<mark>).*?(<\/mark>)/g) || [];
       if (markVal.length) {
-        this.markList = markVal.map(item => item.replace(/<mark>/g, '')
-          .replace(/<\/mark>/g, ''));
         value = String(value).replace(/<mark>/g, '')
           .replace(/<\/mark>/g, '');
       }
