@@ -177,6 +177,11 @@ export default {
       }
     }
 
+    mark {
+      color: #575961;
+      background: #f0f1f5;
+    }
+
     &.is-inline {
       display: inline;
 
