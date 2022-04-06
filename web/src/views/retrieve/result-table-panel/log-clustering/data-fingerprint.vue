@@ -128,7 +128,10 @@
               :context="row.pattern"
               :tippy-options="{ offset: '0, 10', boundary: scrollContent }"
               @eventClick="(option) => handleMenuClick(option,row)">
-              <span>{{row.pattern ? row.pattern : $t('未匹配')}}</span>
+              <text-highlight
+                :queries="getHeightLightList(row.pattern)">
+                {{getHeightLightStr(row.pattern)}}
+              </text-highlight>
             </cluster-event-popover>
             <p
               v-if="!cacheExpandStr.includes($index)"
@@ -238,11 +241,13 @@ import ClusterEventPopover from './components/cluster-event-popover';
 import ClusteringLoader from '@/skeleton/clustering-loader';
 import fingerSelectColumn from './components/finger-select-column';
 import { copyMessage } from '@/common/util';
+import TextHighlight from 'vue-text-highlight';
 
 export default {
   components: {
     ClusterEventPopover,
     ClusteringLoader,
+    TextHighlight,
   },
   props: {
     fingerList: {
@@ -588,6 +593,12 @@ export default {
     handleReturnTop() {
       const el = document.querySelector('.result-scroll-container');
       this.$easeScroll(0, 300, el);
+    },
+    getHeightLightStr(str) {
+      return !!str ? str : this.$t('未匹配');
+    },
+    getHeightLightList(str) {
+      return str.match(/\[\$\(.*?\)\]/g) || [];
     },
   },
 };
