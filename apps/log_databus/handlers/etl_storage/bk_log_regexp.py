@@ -103,58 +103,38 @@ class BkLogRegexpEtlStorage(EtlStorage):
         result_table_fields = self.get_result_table_fields(fields, etl_params, copy.deepcopy(built_in_config))
         time_field = result_table_fields.get("time_field")
         return {
-            "conf": self._to_bkdata_conf(time_field),
             "extract": {
+                "type": "fun",
+                "method": "from_json",
+                "result": "json_data",
+                "label": "label04a222",
+                "args": [],
                 "next": {
+                    "type": "branch",
+                    "name": "",
+                    "label": None,
                     "next": [
                         {
+                            "type": "access",
+                            "subtype": "access_obj",
+                            "label": "label36c8ad",
+                            "key": "items",
+                            "result": "item_data",
+                            "default_type": "null",
+                            "default_value": "",
                             "next": {
+                                "type": "fun",
+                                "result": "iter_item",
+                                "label": "label21ca91",
+                                "args": [],
+                                "method": "iterate",
                                 "next": {
+                                    "name": "",
+                                    "type": "branch",
+                                    "label": None,
                                     "next": [
                                         {
-                                            "next": {
-                                                "next": [
-                                                    {
-                                                        "next": {
-                                                            "subtype": "assign_obj",
-                                                            "assign": [
-                                                                self._to_bkdata_assign(field) for field in fields
-                                                            ],
-                                                            "label": "labela2dfe3",
-                                                            "type": "assign",
-                                                            "next": None,
-                                                        },
-                                                        "method": "regex_extract",
-                                                        "args": [
-                                                            {
-                                                                "result": "regexp_data",
-                                                                "keys": [
-                                                                    field["alias_name"]
-                                                                    if field["alias_name"]
-                                                                    else field["field_name"]
-                                                                    for field in fields
-                                                                ],
-                                                                "regexp": etl_params.get("separator_regexp", ""),
-                                                            }
-                                                        ],
-                                                        "type": "fun",
-                                                        "label": "label5e3d6f",
-                                                    }
-                                                ],
-                                                "name": "",
-                                                "type": "branch",
-                                                "label": None,
-                                            },
-                                            "result": "log_data",
-                                            "default_type": "null",
-                                            "type": "access",
-                                            "key": "data",
-                                            "label": "labelb140f1",
-                                            "subtype": "access_obj",
-                                            "default_value": "",
-                                        },
-                                        {
-                                            "next": None,
+                                            "type": "assign",
                                             "subtype": "assign_obj",
                                             "label": "labelb140",
                                             "assign": [
@@ -167,43 +147,54 @@ class BkLogRegexpEtlStorage(EtlStorage):
                                                 for built_in_field in built_in_fields
                                                 if built_in_field.get("flat_field", False)
                                             ],
-                                            "type": "assign",
+                                            "next": None,
+                                        },
+                                        {
+                                            "type": "access",
+                                            "subtype": "access_obj",
+                                            "label": "labelb140f1",
+                                            "key": "data",
+                                            "result": "log_data",
+                                            "default_type": "null",
+                                            "default_value": "",
+                                            "next": {
+                                                "type": "fun",
+                                                "method": "regex_extract",
+                                                "label": "label5e3d6f",
+                                                "args": [
+                                                    {
+                                                        "result": "regexp_data",
+                                                        "keys": [
+                                                            field["alias_name"]
+                                                            if field["alias_name"]
+                                                            else field["field_name"]
+                                                            for field in fields
+                                                        ],
+                                                        "regexp": etl_params.get("separator_regexp", ""),
+                                                    }
+                                                ],
+                                                "next": {
+                                                    "type": "assign",
+                                                    "subtype": "assign_obj",
+                                                    "label": "labela2dfe3",
+                                                    "assign": [self._to_bkdata_assign(field) for field in fields],
+                                                    "next": None,
+                                                },
+                                            },
                                         },
                                     ],
-                                    "name": "",
-                                    "type": "branch",
-                                    "label": None,
                                 },
-                                "result": "iter_item",
-                                "type": "fun",
-                                "label": "label21ca91",
-                                "args": [],
-                                "method": "iterate",
                             },
-                            "result": "item_data",
-                            "default_type": "null",
-                            "type": "access",
-                            "key": "items",
-                            "label": "label36c8ad",
-                            "subtype": "access_obj",
-                            "default_value": "",
                         },
                         {
-                            "subtype": "assign_obj",
-                            "assign": self._get_bkdata_default_fields(built_in_fields, time_field),
-                            "label": "labelf676c9",
                             "type": "assign",
+                            "subtype": "assign_obj",
+                            "label": "labelf676c9",
+                            "assign": self._get_bkdata_default_fields(built_in_fields, time_field),
                             "next": None,
                         },
                     ],
-                    "name": "",
-                    "type": "branch",
-                    "label": None,
                 },
-                "result": "json_data",
-                "type": "fun",
-                "label": "label04a222",
-                "args": [],
-                "method": "from_json",
             },
+            "conf": self._to_bkdata_conf(time_field),
         }

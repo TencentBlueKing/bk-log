@@ -401,7 +401,7 @@ class SearchViewSet(APIViewSet):
         params = self.params_valid(SearchExportSerializer).get("export_dict")
         data = json.loads(params)
         index_set_id = int(index_set_id)
-        request_data = copy.copy(data)
+        request_data = copy.deepcopy(data)
 
         tmp_index_obj = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
         if tmp_index_obj:
