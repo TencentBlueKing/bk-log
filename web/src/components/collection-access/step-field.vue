@@ -908,9 +908,9 @@ export default {
       }
       const { query: { backRoute } } = this.$route;
       let routeName;
-      if(!this.isSetEdit && !!backRoute){
+      if (!this.isSetEdit && !!backRoute) {
         routeName = backRoute
-      }else{
+      } else {
         routeName = this.isCleanField ? 'log-clean-list' : 'log-clean-templates';
       }
       this.$router.push({
