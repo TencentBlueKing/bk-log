@@ -29,7 +29,7 @@ class ClusteringMetricCollector(object):
     @staticmethod
     @register_metric("clustering_count", description=_("聚类计数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
     def clustering_count():
-        clustering_query_set = ClusteringConfig.objects.all()
+        clustering_query_set = ClusteringConfig.objects.filter(modify_flow__isnull=False)
         metrics = [
             Metric(
                 metric_name="count",
@@ -37,6 +37,7 @@ class ClusteringMetricCollector(object):
                 dimensions={
                     "bk_biz_id": clustering_obj.bk_biz_id,
                     "index_set_id": clustering_obj.index_set_id,
+                    "clustering_config_id": clustering_obj.id,
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
