@@ -906,7 +906,13 @@ export default {
         this.$emit('reset-page')
         return
       }
-      const routeName = this.isCleanField ? 'log-clean-list' : 'log-clean-templates';
+      const { query: { backRoute } } = this.$route;
+      let routeName;
+      if(!this.isSetEdit && !!backRoute){
+        routeName = backRoute
+      }else{
+        routeName = this.isCleanField ? 'log-clean-list' : 'log-clean-templates';
+      }
       this.$router.push({
         name: routeName,
         query: {
