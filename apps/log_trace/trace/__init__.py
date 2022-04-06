@@ -114,6 +114,15 @@ class LazyBatchSpanProcessor(BatchSpanProcessor):
             self.worker_thread.start()
         super(LazyBatchSpanProcessor, self).on_end(span)
 
+    def shutdown(self) -> None:
+        # signal the worker thread to finish and then wait for it
+        self.done = True
+        with self.condition:
+            self.condition.notify_all()
+        if self.worker_thread:
+            self.worker_thread.join()
+        self.span_exporter.shutdown()
+
 
 class BluekingInstrumentor(BaseInstrumentor):
     has_instrument = False

@@ -30,7 +30,7 @@ from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
     EtlParseTimeFormatException,
     EtlStorageUsedException,
-    CollectorActiveException,
+    CollectorActiveException, CollectorResultTableIDDuplicateException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
@@ -45,6 +45,7 @@ from apps.log_databus.handlers.storage import StorageHandler
 from apps.log_databus.constants import REGISTERED_SYSTEM_DEFAULT, EtlConfig, ETL_PARAMS
 from apps.decorators import user_operation_record
 from apps.utils.local import get_request_username
+from apps.utils.log import logger
 from apps.api import TransferApi
 
 
@@ -110,6 +111,15 @@ class EtlHandler(object):
             etl_params["etl_flat"] = True
             log_clustering_fields = CollectorScenario.log_clustering_fields(cluster_info["cluster_config"]["version"])
             fields = CollectorScenario.fields_insert_field_index(source_fields=fields, dst_fields=log_clustering_fields)
+
+        # 判断是否已存在同result_table_id
+        if CollectorConfig(table_id=table_id).get_result_table_by_id():
+            logger.error(f"result_table_id {table_id} already exists")
+            raise CollectorResultTableIDDuplicateException(
+                CollectorResultTableIDDuplicateException.MESSAGE.format(
+                    result_table_id=table_id
+                )
+            )
 
         # 1. meta-创建/修改结果表
         etl_storage = EtlStorage.get_instance(etl_config=etl_config)
