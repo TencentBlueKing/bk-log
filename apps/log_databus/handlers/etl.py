@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import arrow
 
@@ -30,7 +32,8 @@ from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
     EtlParseTimeFormatException,
     EtlStorageUsedException,
-    CollectorActiveException, CollectorResultTableIDDuplicateException,
+    CollectorActiveException,
+    CollectorResultTableIDDuplicateException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
@@ -116,9 +119,7 @@ class EtlHandler(object):
         if CollectorConfig(table_id=table_id).get_result_table_by_id():
             logger.error(f"result_table_id {table_id} already exists")
             raise CollectorResultTableIDDuplicateException(
-                CollectorResultTableIDDuplicateException.MESSAGE.format(
-                    result_table_id=table_id
-                )
+                CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=table_id)
             )
 
         # 1. meta-创建/修改结果表
