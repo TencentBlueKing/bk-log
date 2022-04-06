@@ -129,6 +129,7 @@
               :tippy-options="{ offset: '0, 10', boundary: scrollContent }"
               @eventClick="(option) => handleMenuClick(option,row)">
               <text-highlight
+                style="word-break: break-all;"
                 :queries="getHeightLightList(row.pattern)">
                 {{getHeightLightStr(row.pattern)}}
               </text-highlight>
