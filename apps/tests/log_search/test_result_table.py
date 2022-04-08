@@ -38,7 +38,7 @@ from apps.log_search.exceptions import (
 )
 from apps.log_search.views.result_table_views import ResultTablesViewSet
 
-logger = logging.getLogger("root")
+logger = logging.getLogger()
 
 BK_BIZ_ID = 2
 SCENARIO_ID_ROW = "row"

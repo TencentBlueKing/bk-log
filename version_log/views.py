@@ -20,7 +20,7 @@ from django.utils.translation import ugettext_lazy as _
 from version_log import config
 from version_log.utils import get_version_list, get_parsed_html
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 def version_logs_page(request):

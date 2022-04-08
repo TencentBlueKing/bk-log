@@ -256,6 +256,13 @@ if IS_K8S_DEPLOY_MODE:
             },
             # 普通app日志
             "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            "bk_dataview": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            "iam": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
 

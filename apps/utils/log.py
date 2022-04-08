@@ -56,52 +56,49 @@ class UdpHandler(DatagramHandler):
 # 自定义添加打印内容
 # ===============================================================================
 # traceback--打印详细错误日志
-class logger_traceback:
+class LoggerTraceback(object):
     """
     详细异常信息追踪
     """
 
-    def __init__(self):
-        pass
-
-    def error(self, message=""):
+    def error(self, message="", *args, **kwargs):
         """
         打印 error 日志方法
         """
         message = self.build_message(message)
-        logger_detail.error(message)
+        logger_detail.error(message, *args, **kwargs)
 
-    def info(self, message=""):
+    def info(self, message="", *args, **kwargs):
         """
         info 日志
         """
         message = self.build_message(message)
-        logger_detail.info(message)
+        logger_detail.info(message, *args, **kwargs)
 
-    def warning(self, message=""):
+    def warning(self, message="", *args, **kwargs):
         """
         warning 日志
         """
         message = self.build_message(message)
-        logger_detail.warning(message)
+        logger_detail.warning(message, *args, **kwargs)
 
-    def debug(self, message=""):
+    def debug(self, message="", *args, **kwargs):
         """
         debug 日志
         """
         message = self.build_message(message)
-        logger_detail.debug(message)
+        logger_detail.debug(message, *args, **kwargs)
 
-    def critical(self, message=""):
+    def critical(self, message="", *args, **kwargs):
         """
         critical 日志
         """
         message = self.build_message(message)
-        logger_detail.critical(message)
+        logger_detail.critical(message, *args, **kwargs)
 
-    def exception(self, message="", *args):
+    def exception(self, message="", *args, **kwargs):
         message = self.build_message(message)
-        logger_detail.exception(message, *args)
+        logger_detail.exception(message, *args, **kwargs)
 
     @staticmethod
     def build_message(message):
@@ -110,4 +107,4 @@ class logger_traceback:
 
 
 # traceback--打印详细错误日志
-logger = logger_traceback()
+logger = LoggerTraceback()
