@@ -22,7 +22,8 @@
 
 <template>
   <div class="intro-panel">
-    <div :class="`right-window ${isOpenWindow ? 'window-active' : ''}`">
+    <div :class="`right-window ${isOpenWindow ? 'window-active' : ''}`" :style="{ width: `${setWidth}px` }">
+      <!-- <span class="bk-icon icon-more"></span> -->
       <div class="create-btn details" @click="handleActiveDetails(null)">
         <span class="bk-icon icon-text-file" :style="`color:${isOpenWindow ? '#3A84FF;' : ''}`"></span>
       </div>
@@ -50,6 +51,10 @@ export default {
     isOpenWindow: {
       type: Boolean,
       default: true,
+    },
+    setWidth: {
+      type: [String, Number],
+      default: '400',
     },
   },
   data() {
@@ -93,14 +98,14 @@ export default {
 
   .intro-panel {
     .right-window {
-      width: 400px;
+      // width: 400px;
       height: 100vh;
       background: #fff;
       border: 1px solid #dcdee5;
       position: fixed;
       right: -400px;
-      top: 102px;
-      z-index: 1;
+      top: 103px;
+      z-index: 9999;
       color: #63656e;
       transition: right .5s;
       padding: 16px 24px 0;
@@ -152,13 +157,25 @@ export default {
         margin: 10px 0;
         color: #3a84ff;
       }
+
+      // .icon-more{
+      //   position: absolute;
+      //   left: 0;
+      //   top: 45%;
+      //   cursor: pointer;
+      //   &::after{
+      //     content: "\e189";
+      //     position: absolute;
+      //     left: 0;
+      //     top: 8px;
+      //   }
+      // }
     }
 
     .create-btn {
       width: 24px;
       height: 24px;
       position: absolute;
-      z-index: 99;
 
       @include flex-center;
 
@@ -167,6 +184,8 @@ export default {
         right: 16px;
         position: fixed;
         transform: rotateZ(360deg) rotateX(180deg);
+
+        @include flex-center;
       }
 
       &.close {
