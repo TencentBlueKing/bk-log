@@ -249,6 +249,7 @@ export default {
 
       td mark {
         background: #f3e186;
+        color: #575961;
       }
 
       /deep/ .result-table-loading {
