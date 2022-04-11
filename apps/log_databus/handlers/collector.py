@@ -551,7 +551,7 @@ class CollectorHandler(object):
                     is_create = True
                 else:
                     _collector_config_name = copy.deepcopy(self.data.collector_config_name)
-                    if self.data.bk_data_name != bk_data_name:
+                    if self.data.bk_data_id and self.data.bk_data_name != bk_data_name:
                         TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
                         logger.info(
                             "[modify_data_name] bk_data_id=>{}, data_name {}=>{}".format(
@@ -1876,7 +1876,7 @@ class CollectorHandler(object):
             bk_biz_id=self.data.bk_biz_id,
             collector_config_name_en=self.data.collector_config_name_en
         )
-        if self.data.bk_data_name != bk_data_name:
+        if self.data.bk_data_id and self.data.bk_data_name != bk_data_name:
             TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
             self.data.bk_data_name = bk_data_name
             logger.info(

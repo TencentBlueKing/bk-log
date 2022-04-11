@@ -188,7 +188,6 @@ if RUN_VER != "open":
     LOGGING["handlers"]["root"]["encoding"] = "utf-8"
     LOGGING["handlers"]["component"]["encoding"] = "utf-8"
     LOGGING["handlers"]["mysql"]["encoding"] = "utf-8"
-    LOGGING["handlers"]["blueapps"]["encoding"] = "utf-8"
     if not IS_LOCAL:
         logging_format = {
             "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
@@ -256,6 +255,13 @@ if IS_K8S_DEPLOY_MODE:
             },
             # 普通app日志
             "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            "bk_dataview": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            "iam": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
 
