@@ -756,6 +756,7 @@ export default {
     tips_formula: ' ES storage ≈ daily raw log volume * 1.5 (ES conversion rate) * 2 (1 copy) * storage days',
     dataId: 'Data ID',
     retention: 'Expiration time',
+    en_name_repeat: 'The English name has been repeated',
   },
   新建数据源: 'Create Data Source',
   编辑数据源: 'Edit Data Source',
