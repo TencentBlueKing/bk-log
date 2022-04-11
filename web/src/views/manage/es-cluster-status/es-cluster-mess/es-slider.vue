@@ -24,7 +24,7 @@
   <div class="es-access-slider-container" data-test-id="addNewEsAccess_div_esAccessFromBox">
     <bk-sideslider
       transfer
-      :title="isEdit ? $t('编辑数据源') : $t('新建数据源')"
+      :title="isEdit ? $t('编辑集群') : $t('新建集群')"
       :is-show="showSlider"
       :width="640"
       :quick-close="false"
@@ -39,7 +39,8 @@
           form-type="vertical"
           ref="validateForm"
           class="king-form">
-          <bk-form-item :label="$t('名称')" required property="cluster_name">
+          <div class="add-collection-title">{{ $t('dataSource.basic_information') }}</div>
+          <bk-form-item :label="$t('数据源名称')" required property="cluster_name">
             <bk-input
               data-test-id="esAccessFromBox_input_fillName"
               v-model="formData.cluster_name"
@@ -47,92 +48,72 @@
               :readonly="isEdit"
             ></bk-input>
           </bk-form-item>
-          <bk-form-item :label="$t('来源')" required property="source_type">
-            <div class="source-item">
-              <bk-select
-                style="width: 154px;margin-right: 10px;"
-                v-model="formData.source_type"
-                @change="handleChangeSource">
-                <bk-option
-                  v-for="option in globalsData.es_source_type"
-                  :key="option.id"
-                  :id="option.id"
-                  :name="option.name">
-                </bk-option>
-              </bk-select>
+          <!-- 来源 es地址 -->
+          <div class="form-item-container">
+            <bk-form-item :label="$t('来源')" required property="source_type">
+              <div class="source-item">
+                <bk-select
+                  style="width: 154px;margin-right: 10px;"
+                  v-model="formData.source_type"
+                  @change="handleChangeSource">
+                  <bk-option
+                    v-for="option in globalsData.es_source_type"
+                    :key="option.id"
+                    :id="option.id"
+                    :name="option.name">
+                  </bk-option>
+                </bk-select>
+              </div>
+            </bk-form-item>
+            <bk-form-item class="es-address" :label="$t('ES地址')" required property="domain_name">
               <bk-input
-                v-model="formData.source_name"
-                maxlength="50"
-                :class="{ 'source-name-input': true, 'is-error': sourceNameCheck }"
-                :disabled="formData.source_type !== 'other'">
+                class="address-input"
+                data-test-id="esAccessFromBox_input_fillDomainName"
+                v-model="formData.domain_name"
+                :readonly="isEdit"
+              ></bk-input>
+            </bk-form-item>
+          </div>
+          <!-- 端口  协议 -->
+          <div class="form-item-container">
+            <bk-form-item :label="$t('端口')" required property="port">
+              <bk-input
+                data-test-id="esAccessFromBox_input_fillPort"
+                v-model="formData.port"
+                :readonly="isEdit"
+                type="number"
+                :min="0"
+                :max="65535"
+                :show-controls="false">
               </bk-input>
-            </div>
-          </bk-form-item>
-          <bk-form-item :label="$t('可见范围')" required property="visible_range">
-            <div class="selected-tag">
-              <bk-tag
-                v-for="(tag, index) in visibleList"
-                :key="tag.id"
-                :class="`tag-icon ${tag.is_use ? 'is-active' : 'is-normal'}`"
-                v-bk-tooltips="inUseProjectPopover(tag.is_use)"
-                :closable="!tag.is_use"
-                @close="handleDeleteTag(index)">
-                {{ tag.name }}
-              </bk-tag>
-            </div>
-            <bk-select
-              v-model="visibleBkBiz"
-              searchable
-              multiple
-              @toggle="handleToggleVisible">
-              <bk-option
-                v-for="item in myProjectList"
-                :key="item.project_id"
-                :id="item.bk_biz_id"
-                :name="item.project_name">
-              </bk-option>
-            </bk-select>
-          </bk-form-item>
-          <bk-form-item :label="$t('地址')" required property="domain_name">
-            <bk-input
-              data-test-id="esAccessFromBox_input_fillDomainName"
-              v-model="formData.domain_name"
-              :readonly="isEdit"
-            ></bk-input>
-          </bk-form-item>
-          <bk-form-item :label="$t('端口')" required property="port">
-            <bk-input
-              data-test-id="esAccessFromBox_input_fillPort"
-              v-model="formData.port"
-              :readonly="isEdit"
-              type="number"
-              :min="0"
-              :max="65535"
-              :show-controls="false">
-            </bk-input>
-          </bk-form-item>
-          <bk-form-item :label="$t('协议')" required>
-            <bk-select
-              data-test-id="esAccessFromBox_select_selectProtocol"
-              v-model="formData.schema"
-              :clearable="false">
-              <bk-option id="http" name="http"></bk-option>
-              <bk-option id="https" name="https"></bk-option>
-            </bk-select>
-          </bk-form-item>
-          <bk-form-item :label="$t('用户名')">
-            <bk-input
-              data-test-id="esAccessFromBox_input_fillUsername"
-              v-model="formData.auth_info.username"
-            ></bk-input>
-          </bk-form-item>
-          <bk-form-item :label="$t('密码')">
-            <bk-input
-              data-test-id="esAccessFromBox_input_fillPassword"
-              type="password"
-              v-model="formData.auth_info.password"
-            ></bk-input>
-          </bk-form-item>
+            </bk-form-item>
+            <bk-form-item :label="$t('协议')" required>
+              <bk-select
+                data-test-id="esAccessFromBox_select_selectProtocol"
+                v-model="formData.schema"
+                :clearable="false">
+                <bk-option id="http" name="http"></bk-option>
+                <bk-option id="https" name="https"></bk-option>
+              </bk-select>
+            </bk-form-item>
+          </div>
+          <!-- 用户名 密码 -->
+          <div class="form-item-container">
+            <bk-form-item :label="$t('用户名')">
+              <bk-input
+                data-test-id="esAccessFromBox_input_fillUsername"
+                v-model="formData.auth_info.username"
+              ></bk-input>
+            </bk-form-item>
+            <bk-form-item :label="$t('密码')">
+              <bk-input
+                data-test-id="esAccessFromBox_input_fillPassword"
+                type="password"
+                v-model="formData.auth_info.password"
+              ></bk-input>
+            </bk-form-item>
+          </div>
+          <!-- 连通性测试 -->
           <bk-form-item label="">
             <div class="test-container">
               <bk-button
@@ -154,8 +135,149 @@
           <bk-form-item label="" v-if="connectResult === 'failed' && connectFailedMessage">
             <div class="connect-message">{{ connectFailedMessage }}</div>
           </bk-form-item>
-          <template v-if="connectResult === 'success'">
-            <bk-form-item :label="$t('冷热集群设置')">
+
+          <bk-form-item>
+            <div class="es-cluster-management button-text" @click="isShowManagement = !isShowManagement">
+              <span>{{ $t('ES集群管理') }}</span>
+              <span :class="['bk-icon icon-angle-double-down', isShowManagement && 'is-active']"></span>
+            </div>
+          </bk-form-item>
+
+          <div v-show="isShowManagement">
+            <!-- 可见范围 -->
+            <bk-form-item :label="$t('可见范围')" style="margin-top: 4px">
+              <bk-radio-group v-model="visibleScopeValue">
+                <bk-radio
+                  class="scope-radio"
+                  v-for="item of visibleScopeSelectList"
+                  :key="item.id"
+                  :value="item.id">
+                  {{item.name}}
+                </bk-radio>
+              </bk-radio-group>
+              <bk-select
+                v-model="visibleBkBiz"
+                searchable
+                multiple
+                display-tag
+                :disabled="scopeValueType"
+                @toggle="handleToggleVisible">
+                <template #trigger>
+                  <div class="visible-scope-box">
+                    <div class="selected-tag">
+                      <bk-tag
+                        v-for="(tag, index) in visibleList"
+                        :key="tag.id"
+                        :class="`tag-icon ${tag.is_use ? 'is-active' : 'is-normal'}`"
+                        v-bk-tooltips="inUseProjectPopover(tag.is_use)"
+                        :closable="!tag.is_use"
+                        @close="handleDeleteTag(index)">
+                        {{ tag.name }}
+                      </bk-tag>
+                    </div>
+                    <span class="please-select" v-if="!visibleList.length">{{$t('请选择')}}</span>
+                    <span :class="['bk-icon','icon-angle-down',!visibleIsToggle ? '' : 'icon-rotate']"></span>
+                  </div>
+                </template>
+                <bk-option
+                  v-for="item in myProjectList"
+                  :key="item.project_id"
+                  :id="item.bk_biz_id"
+                  :name="item.project_name">
+                  <div>{{item.project_name}}</div>
+                </bk-option>
+              </bk-select>
+            </bk-form-item>
+            <!-- 过期时间 -->
+            <bk-form-item :label="$t('过期时间')" required>
+              <div class="flex-space">
+                <div class="flex-space-item">
+                  <div class="space-item-label">{{$t('默认')}}</div>
+                  <bk-select
+                    style="width: 320px;"
+                    v-model="formData.retention_day"
+                    :clearable="false"
+                    data-test-id="storageBox_select_selectExpiration">
+                    <div slot="trigger" class="bk-select-name">
+                      {{ formData.retention_day + $t('天') }}
+                    </div>
+                    <template v-for="(option, index) in retentionDaysList">
+                      <bk-option
+                        :key="index"
+                        :id="option.id"
+                        :name="option.name"
+                        :disabled="option.disabled">
+                      </bk-option>
+                    </template>
+                    <div slot="extension" style="padding: 8px 0;">
+                      <bk-input
+                        v-model="customRetentionDay"
+                        size="small"
+                        type="number"
+                        :placeholder="$t('输入自定义天数')"
+                        :show-controls="false"
+                        @enter="enterCustomDay($event, 'retention')"
+                      ></bk-input>
+                    </div>
+                  </bk-select>
+                </div>
+                <div class="flex-space-item">
+                  <div class="space-item-label">{{$t('最大')}}</div>
+                  <bk-select
+                    style="width: 320px;"
+                    v-model="formData.max_day"
+                    :clearable="false"
+                    data-test-id="storageBox_select_selectExpiration">
+                    <div slot="trigger" class="bk-select-name">
+                      {{ formData.max_day + $t('天') }}
+                    </div>
+                    <template v-for="(option, index) in maxDaysList">
+                      <bk-option
+                        :key="index"
+                        :id="option.id"
+                        :name="option.name"
+                        :disabled="option.disabled">
+                      </bk-option>
+                    </template>
+                    <div slot="extension" style="padding: 8px 0;">
+                      <bk-input
+                        v-model="customMaxDay"
+                        size="small"
+                        type="number"
+                        :placeholder="$t('输入自定义天数')"
+                        :show-controls="false"
+                        @enter="enterCustomDay($event, 'max')"
+                      ></bk-input>
+                    </div>
+                  </bk-select>
+                </div>
+              </div>
+            </bk-form-item>
+            <!-- 副本数 -->
+            <bk-form-item :label="$t('副本数')" required>
+              <div class="flex-space">
+                <div class="flex-space-item">
+                  <div class="space-item-label">{{$t('默认')}}</div>
+                  <bk-input
+                    type="number"
+                    :max="formData.max_number - 1"
+                    :min="0"
+                    v-model="formData.retention_number">
+                  </bk-input>
+                </div>
+                <div class="flex-space-item">
+                  <div class="space-item-label">{{$t('最大')}}</div>
+                  <bk-input
+                    type="number"
+                    :max="7"
+                    :min="formData.retention_number + 1"
+                    v-model="formData.max_number">
+                  </bk-input>
+                </div>
+              </div>
+            </bk-form-item>
+            <!-- 冷热数据 -->
+            <bk-form-item :label="$t('冷热数据')" v-if="connectResult === 'success'">
               <div class="form-flex-container">
                 <bk-switcher
                   v-model="formData.enable_hot_warm"
@@ -169,9 +291,19 @@
                 </template>
               </div>
             </bk-form-item>
-            <bk-form-item v-if="formData.enable_hot_warm" :label="$t('热数据标签')">
-              <div class="form-flex-container">
-                <bk-select v-model="selectedHotId" style="width: 300px;" @change="handleHotSelected">
+            <!-- 冷热数据标签 -->
+            <div class="form-item-container" v-if="formData.enable_hot_warm">
+              <div class="bk-form-item">
+                <div class="form-item-label">
+                  <p>{{$t('热数据标签')}}</p>
+                  <div
+                    v-if="formData.hot_attr_name && formData.hot_attr_value"
+                    class="button-text"
+                    @click="handleViewInstanceList('cold')">
+                    <span class="bk-icon icon-eye"></span>{{ $t('查看实例列表') }}
+                  </div>
+                </div>
+                <bk-select v-model="selectedHotId" @change="handleHotSelected">
                   <template v-for="option in hotColdAttrSet">
                     <bk-option
                       :key="option.computedId"
@@ -181,16 +313,17 @@
                     </bk-option>
                   </template>
                 </bk-select>
-                <div
-                  v-if="formData.hot_attr_name && formData.hot_attr_value"
-                  class="button-text"
-                  @click="handleViewInstanceList('hot')">
-                  <span class="bk-icon icon-eye"></span>{{ $t('查看实例列表') }}
-                </div>
               </div>
-            </bk-form-item>
-            <bk-form-item v-if="formData.enable_hot_warm" :label="$t('冷数据标签')">
-              <div class="form-flex-container">
+              <div class="bk-form-item" v-if="formData.enable_hot_warm">
+                <div class="form-item-label">
+                  <p>{{$t('冷数据标签')}}</p>
+                  <div
+                    class="button-text"
+                    v-if="formData.warm_attr_name && formData.warm_attr_value"
+                    @click="handleViewInstanceList('cold')">
+                    <span class="bk-icon icon-eye"></span>{{ $t('查看实例列表') }}
+                  </div>
+                </div>
                 <bk-select v-model="selectedColdId" style="width: 300px;" @change="handleColdSelected">
                   <template v-for="option in hotColdAttrSet">
                     <bk-option
@@ -201,28 +334,56 @@
                     </bk-option>
                   </template>
                 </bk-select>
-                <div
-                  v-if="formData.warm_attr_name && formData.warm_attr_value"
-                  class="button-text"
-                  @click="handleViewInstanceList('cold')">
-                  <span class="bk-icon icon-eye"></span>{{ $t('查看实例列表') }}
-                </div>
               </div>
+            </div>
+            <!-- 日志归档 容量评估 -->
+            <div class="form-item-container">
+              <bk-form-item :label="$t('日志归档')">
+                <div class="document-container">
+                  <bk-switcher v-model="switchOpen" size="large" theme="primary"></bk-switcher>
+                  <div class="check-document button-text">
+                    <div class="rotate-div">
+                      <span class="bk-icon icon-text-file"></span>
+                    </div>
+                    <span>{{$t('查看说明文档')}}</span>
+                  </div>
+                </div>
+              </bk-form-item>
+              <bk-form-item :label="$t('容量评估')">
+                <bk-switcher v-model="switchOpen" size="large" theme="primary"></bk-switcher>
+              </bk-form-item>
+            </div>
+            <!-- 集群负责人 -->
+            <bk-form-item :label="$t('集群负责人')" :desc="customDesc" required>
+              <bk-input
+                v-model="formData.cluster_principal"
+                maxlength="50"
+              ></bk-input>
             </bk-form-item>
-          </template>
-          <bk-form-item style="margin-top: 40px;">
-            <bk-button
-              theme="primary"
-              class="king-button mr10"
-              :loading="confirmLoading"
-              :disabled="connectResult !== 'success' || invalidHotSetting"
-              @click.stop.prevent="handleConfirm"
-              data-test-id="esAccessFromBox_button_confirm">
-              {{ $t('提交') }}
-            </bk-button>
-            <bk-button @click="handleCancel" data-test-id="esAccessFromBox_button_cancel">{{ $t('取消') }}</bk-button>
-          </bk-form-item>
+            <!-- 集群说明 -->
+            <bk-form-item :label="$t('集群说明')" class="illustrate">
+              <bk-input
+                type="textarea"
+                :rows="3"
+                :maxlength="100"
+                v-model="customDesc">
+              </bk-input>
+            </bk-form-item>
+          </div>
         </bk-form>
+
+        <div class="submit-container">
+          <bk-button
+            theme="primary"
+            class="king-button mr10"
+            :loading="confirmLoading"
+            :disabled="connectResult !== 'success' || invalidHotSetting"
+            @click.stop.prevent="handleConfirm"
+            data-test-id="esAccessFromBox_button_confirm">
+            {{ $t('提交') }}
+          </bk-button>
+          <bk-button @click="handleCancel" data-test-id="esAccessFromBox_button_cancel">{{ $t('取消') }}</bk-button>
+        </div>
       </div>
     </bk-sideslider>
     <!-- 查看实例列表弹窗 -->
@@ -273,6 +434,11 @@ export default {
         hot_attr_value: '', // 热节点属性值
         warm_attr_name: '', // 冷节点属性名称
         warm_attr_value: '', // 冷节点属性值
+        retention_day: 7,
+        max_day: 14,
+        retention_number: 3,
+        max_number: 7,
+        cluster_principal: 'admin',
       },
       visibleBkBiz: [],
       basicRules: {
@@ -306,7 +472,22 @@ export default {
       selectedColdId: '', // 冷 attr:value
       showInstanceDialog: false, // 查看实例列表
       viewInstanceType: '', // hot、cold 查看热数据/冷数据实例列表
+      visibleScopeValue: 1,
+      visibleScopeSelectList: [
+        { id: 1, name: '当前业务可见' },
+        { id: 2, name: '多业务选择' },
+        { id: 3, name: '全平台' },
+        { id: 4, name: '按照业务属性选择' },
+      ],
       visibleList: [], // 可见范围业务
+      visibleIsToggle: false,
+      switchOpen: false,
+      customDesc: '集群负责人',
+      isShowManagement: false,
+      retentionDaysList: [],
+      maxDaysList: [],
+      customRetentionDay: '',
+      customMaxDay: '',
     };
   },
   computed: {
@@ -332,6 +513,11 @@ export default {
       const { source_type, source_name } = this.formData;
       // eslint-disable-next-line camelcase
       if (source_type === 'other' && source_name.trim() === '') return true;
+      return false;
+    },
+    // 可见范围单选判断，禁用下拉框
+    scopeValueType() {
+      if (this.visibleScopeValue === 1 || this.visibleScopeValue === 3) return true;
       return false;
     },
   },
@@ -368,6 +554,17 @@ export default {
         this.connectResult = '';
         this.connectFailedMessage = '';
       }
+      this.updateDaysList();
+    },
+    'formData.retention_day': {
+      handler() {
+        this.daySelectAddToDisable();
+      },
+    },
+    'formData.max_day': {
+      handler() {
+        this.daySelectAddToDisable();
+      },
     },
   },
   methods: {
@@ -390,6 +587,7 @@ export default {
       }
     },
     handleToggleVisible(data) {
+      this.visibleIsToggle = data;
       if (!data) {
         this.visibleBkBiz.forEach((val) => {
           if (!this.visibleList.some(item => item.id === val)) {
@@ -578,124 +776,315 @@ export default {
     handleCancel() {
       this.$emit('update:showSlider', false);
     },
+    updateDaysList() {
+      const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
+        return item.id;
+      });
+      this.retentionDaysList = retentionDaysList;
+      this.maxDaysList = JSON.parse(JSON.stringify(retentionDaysList));
+      this.daySelectAddToDisable();
+    },
+    /**
+     * @desc: 判断过期时间输入的值
+     * @param { String } val 输入的值
+     * @param { type } type 默认或最大
+     */
+    enterCustomDay(val, type) {
+      const numberVal = parseInt(val.trim(), 10);
+      const stringVal = numberVal.toString();
+      const isRetention = type === 'retention';
+      if (numberVal) {
+        const maxDays = 30;
+        if (numberVal > maxDays) { // 超过最大天数
+          isRetention ? this.customRetentionDay = '' : this.customMaxDay = '';
+          this.messageError(this.$t('最大自定义天数为') + maxDays);
+        } else {
+          const isExceed = isRetention ? this.formData.max_day <= numberVal : this.formData.retention_day >= numberVal;
+          if (isExceed) {
+            this.messageError(this.$t('默认天数不能大于或等于最大天数'));
+            return;
+          }
+          if (isRetention) {
+            if (!this.retentionDaysList.some(item => item.id === stringVal)) {
+              this.retentionDaysList.push({
+                id: stringVal,
+                name: stringVal + this.$t('天'),
+              });
+            }
+            this.formData.retention_day = stringVal;
+            this.customRetentionDay = '';
+          } else {
+            if (!this.maxDaysList.some(item => item.id === stringVal)) {
+              this.maxDaysList.push({
+                id: stringVal,
+                name: stringVal + this.$t('天'),
+              });
+            }
+            this.formData.max_day = stringVal;
+            this.customMaxDay = '';
+          }
+          document.body.click();
+        }
+      } else {
+        isRetention ? this.customRetentionDay = '' : this.customMaxDay = '';
+        this.messageError(this.$t('请输入有效数值'));
+      }
+    },
+    /**
+     * @desc: 更新过期时间列表里禁止选中的情况
+     */
+    daySelectAddToDisable() {
+      this.retentionDaysList.forEach(el => el.disabled = Number(this.formData.max_day) <= Number(el.id));
+      this.maxDaysList.forEach(el => el.disabled = Number(this.formData.retention_day) >= Number(el.id));
+    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-  .king-slider-content {
-    min-height: 394px;
+@import '@/scss/mixins/flex.scss';
 
-    .king-form {
-      padding: 16px 140px 36px 36px;
+.king-slider-content {
+  min-height: 394px;
+  overflow-y: auto;
 
-      .form-flex-container {
-        display: flex;
-        align-items: center;
-        // height: 32px;
-        // font-size: 12px;
-        color: #63656e;
+  .add-collection-title {
+    width: 100%;
+    font-size: 14px;
+    font-weight: 600;
+    color: #63656e;
+    padding-top: 18px;
+  }
 
-        .icon-info {
-          margin: 0 8px 0 24px;
-          font-size: 14px;
-          color: #3a84ff;
-        }
+  .king-form {
+    padding: 16px 36px 36px;
 
-        .button-text {
-          font-size: 12px;
+    .form-flex-container {
+      display: flex;
+      align-items: center;
+      // height: 32px;
+      font-size: 12px;
+      color: #63656e;
 
-          .icon-eye {
-            margin: 0 6px 0 16px;
-          }
-        }
+      .icon-info {
+        margin: 0 8px 0 24px;
+        font-size: 14px;
+        color: #3a84ff;
       }
+    }
+
+    .bk-form-item {
+      margin-top: 18px;
+    }
+
+    .source-item {
+      display: flex;
+    }
+
+    .selected-tag {
+      max-width: 94%;
+
+      .bk-tag {
+        position: relative;
+        margin-left: 10px;
+        padding-left: 18px;
+      }
+
+      .tag-icon::before {
+        position: absolute;
+        top: 9px;
+        left: 8px;
+        content: '';
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+      }
+
+      .is-active::before {
+        background-color: #45e35f;
+      }
+
+      .is-normal::before {
+        background-color: #699df4;
+      }
+    }
+
+    .source-name-input.is-error {
+      background-color: #ffeded;
+      border-color: #fde2e2;
+      color: #f56c6c;
+      transition: all .2s;
+
+      &:hover {
+        background: #fbb8ac;
+        color: #fff;
+        transition: all .2s;
+      }
+    }
+
+    .form-item-container {
+      @include flex-justify(space-between);
 
       .bk-form-item {
-        margin-top: 18px;
+        position: relative;
+        width: 49%;
       }
 
-      .source-item {
-        display: flex;
+      .es-address {
+        width: 140%;
       }
 
-      .selected-tag {
-        .bk-tag {
-          position: relative;
-          margin: 0 10px 10px 0;
-          padding-left: 18px;
-        }
+      .form-item-label {
+        font-size: 14px;
+        color: #63656e;
+        margin-bottom: 8px;
 
-        .tag-icon::before {
-          position: absolute;
-          top: 9px;
-          left: 8px;
-          content: '';
-          width: 4px;
-          height: 4px;
-          border-radius: 50%;
-        }
+        @include flex-align;
+      }
 
-        .is-active::before {
-          background-color: #45e35f;
-        }
+      .button-text {
+        font-size: 12px;
 
-        .is-normal::before {
-          background-color: #699df4;
+        .icon-eye {
+          margin: 0 6px 0 8px;
         }
       }
 
-      .source-name-input.is-error {
-        background-color: #ffeded;
-        border-color: #fde2e2;
-        color: #f56c6c;
-        transition: all .2s;
+      .document-container {
+        transform: translateY(2px);
 
-        &:hover {
-          background: #fbb8ac;
-          color: #fff;
-          transition: all .2s;
+        @include flex-align;
+
+        .check-document {
+          font-size: 12px;
+          margin: 0 6px 0 20px;
+        }
+
+        .rotate-div {
+          display: inline-block;
+          transform: rotateZ(360deg) rotateX(180deg) translateY(-2px);
         }
       }
     }
-  }
 
-  .king-slider-footer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    width: 100%;
-    height: 100%;
-    padding-right: 36px;
-    background-color: #fff;
-    border-top: 1px solid #dcdee5;
+    .es-cluster-management {
+      max-width: 120px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
 
-    .king-button {
-      min-width: 86px;
+      .icon-angle-double-down {
+        font-size: 24px;
+
+        &.is-active {
+          transform: rotateZ(180deg);
+        }
+      }
+    }
+
+    .scope-radio {
+      margin: 0 26px 14px 0;
+    }
+
+    .visible-scope-box {
+      min-height: 30px;
+      display: flex;
+      position: relative;
+
+      .please-select {
+        color: #c3cdd7;
+        margin-left: 10px;
+      }
+
+      .icon-angle-down {
+        position: absolute;
+        font-size: 20px;
+        top: 4px;
+        right: 0;
+        transform: rotateZ(0deg);
+        transition: all .3s;
+      }
+
+      .icon-rotate {
+        transform: rotateZ(-180deg);
+      }
     }
   }
+}
 
-  .test-container {
-    margin-top: 10px;
-    font-size: 14px;
+.king-slider-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+  padding-right: 36px;
+  background-color: #fff;
+  border-top: 1px solid #dcdee5;
+
+  .king-button {
+    min-width: 86px;
+  }
+}
+
+.submit-container {
+  position: fixed;
+  bottom: 0;
+  padding: 8px 0 8px 20px;
+  border-top: 1px solid #dcdee5 ;
+  width: 100%;
+  background: #fafbfd;
+}
+
+.illustrate {
+  margin-bottom: 80px;
+}
+
+.test-container {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #63656e;
+  display: flex;
+  align-items: center;
+
+  .success-text .bk-icon {
+    color: rgb(45, 203, 86);
+    margin: 0 6px 0 10px;
+  }
+
+  .error-text .bk-icon {
+    color: rgb(234, 54, 54);
+    margin: 0 6px 0 10px;
+  }
+}
+
+.connect-message {
+  font-size: 14px;
+  line-height: 18px;
+  color: #63656e;
+}
+
+.flex-space {
+  display: flex;
+
+  @include flex-justify(space-between);
+
+  .flex-space-item {
+    width: 48%;
+
+    @include flex-justify(space-between);
+  }
+
+  .space-item-label {
+    min-width: 48px;
+    font-size: 12px;
     color: #63656e;
-    display: flex;
-    align-items: center;
+    background: #fafbfd;
+    border: 1px solid #c4c6cc;
+    border-radius: 2px 0 0 2px;
+    transform: translateX(1px);
 
-    .success-text .bk-icon {
-      color: rgb(45, 203, 86);
-      margin: 0 6px 0 10px;
-    }
-
-    .error-text .bk-icon {
-      color: rgb(234, 54, 54);
-      margin: 0 6px 0 10px;
-    }
+    @include flex-center;
   }
-
-  .connect-message {
-    font-size: 14px;
-    line-height: 18px;
-    color: #63656e;
-  }
+}
 </style>

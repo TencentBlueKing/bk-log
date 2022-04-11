@@ -21,7 +21,9 @@
   -->
 
 <template>
-  <div class="es-access-container" data-test-id="esAccess_div_esAccessBox">
+  <div
+    :class="`es-access-container ${isOpenWindow ? 'is-active-details' : ''}`"
+    data-test-id="esAccess_div_esAccessBox">
     <div class="main-operator-container">
       <bk-button
         theme="primary"
@@ -87,7 +89,15 @@
         prop="cluster_config.schema"
         min-width="80">
       </bk-table-column>
-      <bk-table-column :label="$t('连接状态')" min-width="80">
+      <bk-table-column
+        :label="$t('连接状态')"
+        min-width="80"
+        class-name="filter-column"
+        prop="cluster_config.cluster_id"
+        column-key="cluster_config.cluster_id"
+        :filters="sourceStateFilters"
+        :filter-method="sourceStateFilterMethod"
+        :filter-multiple="false">
         <template slot-scope="{ row }">
           <!-- eslint-disable-next-line vue/no-v-html -->
           <div class="state-container" v-html="getStateText(row.cluster_config.cluster_id)"></div>
@@ -101,8 +111,10 @@
       </bk-table-column>
       <bk-table-column
         :label="$t('创建时间')"
+        class-name="filter-column"
         prop="cluster_config.create_time"
-        min-width="170">
+        min-width="170"
+        sortable>
       </bk-table-column>
       <bk-table-column
         :label="$t('冷热数据')"
@@ -150,17 +162,25 @@
       :edit-cluster-id="editClusterId"
       @hidden="handleSliderHidden"
       @updated="handleUpdated" />
+
+    <!-- <intro-panel
+      :data="stateMap"
+      :set-width="320"
+      :is-open-window="isOpenWindow"
+      @handleActiveDetails="handleActiveDetails" /> -->
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
+// import IntroPanel from '../../manage-access/custom-report/components/intro-panel';
 
 export default {
   name: 'EsClusterMess',
   components: {
     EsSlider,
+    // IntroPanel,
   },
   data() {
     return {
@@ -181,6 +201,8 @@ export default {
       isRenderSlider: true, // 渲染侧边栏组件，关闭侧滑时销毁组件，避免接口在 pending 时关闭侧滑后又马上打开
       showSlider: false, // 显示编辑或新建ES源侧边栏
       editClusterId: null, // 编辑ES源ID,
+      isOpenWindow: false,
+      sourceStateFilters: [{ text: '正常', value: true }, { text: '失败', value: false }],
     };
   },
   computed: {
@@ -425,6 +447,15 @@ export default {
     handleSettingChange({ fields }) {
       this.columnSetting.selectedFields = fields;
     },
+    handleActiveDetails(state) {
+      this.isOpenWindow = state;
+    },
+    // 状态过滤
+    sourceStateFilterMethod(value, row) {
+      const info = this.stateMap[row.cluster_config.cluster_id]; // 兼容接口布尔值和对象
+      const state = (typeof info === 'boolean') ? info : info?.status;
+      return state === value;
+    },
   },
 };
 </script>
@@ -432,6 +463,11 @@ export default {
 <style lang="scss">
   .es-access-container {
     padding: 20px 24px;
+    transition: padding .5s;
+
+    &.is-active-details {
+      padding: 20px 340px 24px 24px;
+    }
 
     .main-operator-container {
       margin-bottom: 20px;
