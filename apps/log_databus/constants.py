@@ -18,9 +18,11 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.conf import settings
+from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
 META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 RESTORE_INDEX_SET_PREFIX = "restore_"
@@ -53,6 +55,14 @@ class EsSourceType(ChoicesEnum):
         (GOOGLE, _("google")),
         (PRIVATE, _("私有自建")),
     )
+
+    def get_choices_list_dict():
+        es_config = FeatureToggleObject.toggle("es_cluster_doc").feature_config
+        return [ {
+            "id": es_config[key]["id"],
+            "name": es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"],
+            "help_md": es_config[key]["help_md"]
+        } for key in es_config]
 
 
 class StrategyKind(ChoicesEnum):
