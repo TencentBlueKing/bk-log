@@ -23,12 +23,49 @@
 <template>
   <div class="step-storage" v-bkloading="{ isLoading: basicLoading }">
     <bk-form :label-width="115" :model="formData" ref="validateForm" data-test-id="storage_form_storageBox">
-      <div class="add-collection-title">{{ $t('集群选择') }}</div>
-      <cluster-table :table-list="tableList" :table-params="tableParams" />
-      <cluster-table :table-params="tableParams" />
-
-      <div class="add-collection-title">{{ $t('存储信息') }}</div>
-      <!-- 存储索索引名 -->
+      <bk-form-item
+        :label="$t('dataSource.storage_cluster_name')"
+        required
+        property="storage_cluster_id"
+        :rules="rules.cluster_id">
+        <bk-select
+          style="width: 320px;"
+          data-test-id="storageBox_select_storageCluster"
+          v-model="formData.storage_cluster_id"
+          :disabled="isUnmodifiable"
+          :clearable="false"
+          @selected="handleSelectStorageCluster">
+          <bk-option
+            v-for="(item, index) in storageList"
+            class="custom-no-padding-option"
+            :id="item.storage_cluster_id"
+            :name="item.storage_cluster_name"
+            :disabled="isItsm && curCollect.can_use_independent_es_cluster && item.registered_system === '_default'"
+            :key="index">
+            <div
+              v-if="!(item.permission && item.permission.manage_es_source)"
+              class="option-slot-container no-authority"
+              @click.stop>
+              <span class="text">{{item.storage_cluster_name}}</span>
+              <span class="apply-text" @click="applySearchAccess(item)">{{$t('申请权限')}}</span>
+            </div>
+            <div v-else class="option-slot-container">
+              <span v-bk-tooltips="{
+                content: $t('容量评估需要使用独立的ES集群'),
+                placement: 'right',
+                disabled: !(isItsm &&
+                  curCollect.can_use_independent_es_cluster &&
+                  item.registered_system === '_default')
+              }">{{ item.storage_cluster_name }}</span>
+            </div>
+          </bk-option>
+        </bk-select>
+        <div class="tips_storage" v-if="formData.storage_cluster_id">
+          <!-- eslint-disable-next-line vue/camelcase -->
+          <div v-for="(tip, index) in tip_storage" :key="index">{{index + 1}}. {{tip}}</div>
+          <!--eslint-enable-->
+        </div>
+      </bk-form-item>
       <div class="form-div mt">
         <bk-form-item
           :label="$t('configDetails.storageIndexName')"
@@ -76,8 +113,22 @@
           </div>
         </bk-select>
       </bk-form-item>
+      <!-- 副本数 -->
+      <bk-form-item :label="$t('configDetails.copyNumber')">
+        <bk-input
+          class="copy-number-input"
+          v-model="formData.storage_replies"
+          type="number"
+          :max="3"
+          :min="0"
+          :precision="0"
+          :clearable="false"
+          :show-controls="true"
+          @blur="changeCopyNumber"
+        ></bk-input>
+      </bk-form-item>
       <!-- 热数据\冷热集群存储期限 -->
-      <bk-form-item :label="$t('热数据天数')" class="hot-data-form-item">
+      <bk-form-item :label="$t('热数据')" class="hot-data-form-item">
         <bk-select
           style="width: 320px;"
           data-test-id="storageBox_select_selectHotData"
@@ -104,65 +155,7 @@
           <a href="javascript:void(0);" @click="jumpToEsAccess">{{$t('前往ES源进行设置')}}</a>
         </span>
       </bk-form-item>
-      <!-- 副本数 -->
-      <bk-form-item :label="$t('configDetails.copyNumber')">
-        <bk-input
-          class="copy-number-input"
-          v-model="formData.storage_replies"
-          type="number"
-          :max="3"
-          :min="0"
-          :precision="0"
-          :clearable="false"
-          :show-controls="true"
-          @blur="changeCopyNumber"
-        ></bk-input>
-      </bk-form-item>
-      <div class="capacity-assessment">
-        <div class="button-text" @click="isShowAssessment = !isShowAssessment">
-          <span>{{ $t('容量评估') }}</span>
-          <span :class="['bk-icon','icon-angle-double-down',isShowAssessment && 'is-active']"></span>
-        </div>
-        <div class="capacity-message">
-          <span class="bk-icon icon-info"></span>
-          <span style="font-size: 12px;">{{ $t('当前主机数较多，建议进行容量评估') }}</span>
-        </div>
-      </div>
-
-      <div v-show="isShowAssessment">
-        <div class="capacity-illustrate">
-          <p class="illustrate-title">{{$t('容量说明')}}</p>
-          <p>容量计算公式：单机日志增量主机数量存储转化率分片数（日志保留天数 + 1）</p>
-          <p>存储转化率（1.5）：即原始日志增加日志采集元数据并存储到ES到实际占有的空间</p>
-          <p>分片数（2）：1个主分片+1个副本数，避免节点故障导致数据丢失</p>
-        </div>
-
-        <bk-form-item required :label="$t('每日单台日志量')">
-          <bk-input
-            style="width: 320px;"
-            v-model="formData.storage_replies"
-          ></bk-input>
-        </bk-form-item>
-
-        <div class="need-approval">
-          <bk-checkbox
-            class="bk-checkbox"
-            v-model="isNeedApproval">
-            {{$t('需要审批')}}
-          </bk-checkbox>
-          <bk-alert
-            style="width: 607px"
-            type="warning"
-            title="勾选需要审批后需等待审批通过后，才会继续进行存储流程">
-          </bk-alert>
-        </div>
-
-        <bk-form-item :label="$t('审批人')">
-          <span class="approver">{{$t('集群负责人')}}（ {{getApprover}} ）</span>
-        </bk-form-item>
-      </div>
-      <!-- 查看权限 -->
-      <!-- <bk-form-item
+      <bk-form-item
         v-if="accessUserManage"
         :label="$t('indexSetList.jurisdiction')"
         required
@@ -184,30 +177,24 @@
             :name="role.group_name">
           </bk-option>
         </bk-select>
-      </bk-form-item> -->
+      </bk-form-item>
       <bk-form-item>
         <bk-button
           theme="default"
-          class="mr10"
           data-test-id="storageBox_button_previousPage"
           :title="$t('dataManage.last')"
+          class="mr10"
           :disabled="isLoading"
           @click="prevHandler">
           {{$t('dataManage.last')}}
         </bk-button>
         <bk-button
           theme="primary"
-          class="mr10"
           data-test-id="storageBox_button_nextPage"
+          @click.stop.prevent="finish"
           :loading="isLoading"
-          :disabled="!collectProject"
-          @click.stop.prevent="finish">
+          :disabled="!collectProject">
           {{$t('dataManage.perform')}}
-        </bk-button>
-        <bk-button
-          theme="default"
-          @click="cancel">
-          {{$t('取消')}}
         </bk-button>
       </bk-form-item>
     </bk-form>
@@ -218,12 +205,8 @@
 import { mapGetters } from 'vuex';
 import { projectManages } from '@/common/util';
 import storageMixin from '@/mixins/storage-mixin';
-import ClusterTable from './components/cluster-table';
 
 export default {
-  components: {
-    ClusterTable,
-  },
   mixins: [storageMixin],
   props: {
     operateType: String,
@@ -240,10 +223,10 @@ export default {
       refresh: false,
       // eslint-disable-next-line no-useless-escape
       isLoading: false,
-      basicLoading: false,
+      basicLoading: true,
       isUnmodifiable: false,
       isUnmodfyIndexName: false,
-      // roleList: [],
+      roleList: [],
       fieldType: '',
       deletedVisible: true,
       copysText: {},
@@ -333,32 +316,6 @@ export default {
         },
       },
       stashCleanConf: null, // 清洗缓存,
-      tableList: [
-        {
-          ip: '公共集群1',
-          source: '123',
-          status: '创建中',
-          create_time: '2018-05-25 15:02:24',
-        },
-        {
-          ip: '公共集群2',
-          source: '456',
-          status: '创建中',
-          create_time: '2018-05-25 15:02:24',
-        },
-        {
-          ip: '公共集群3',
-          source: '789',
-          status: '创建中',
-          create_time: '2018-05-25 15:02:24',
-        },
-      ],
-      tableParams: {
-        clusterSelect: '公共集群1',
-      },
-      approval: ['javanzhang', 'admin'],
-      isNeedApproval: false,
-      isShowAssessment: false,
     };
   },
   computed: {
@@ -376,9 +333,6 @@ export default {
       const { storage_duration_time } = this.globalsData;
       // eslint-disable-next-line camelcase
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
-    },
-    getApprover() {
-      return this.approval.join(', ');
     },
   },
   async mounted() {
@@ -575,14 +529,6 @@ export default {
 
       this.basicLoading = false;
     },
-    cancel() {
-      this.$router.push({
-        name: 'collection-item',
-        query: {
-          projectId: window.localStorage.getItem('project_id'),
-        },
-      });
-    },
   },
 };
 </script>
@@ -590,18 +536,14 @@ export default {
 <style lang="scss">
   @import '@/scss/mixins/clearfix';
   @import '@/scss/storage.scss';
-  @import '@/scss/mixins/flex.scss';
 
   .step-storage {
+    margin-top: 30px;
     position: relative;
     min-width: 950px;
     max-height: 100%;
     padding: 0 42px 42px;
     overflow: auto;
-
-    .bk-label {
-      font-size: 12px;
-    }
 
     .tips {
       font-size: 12px;
@@ -631,74 +573,6 @@ export default {
         min-width: 80px;
         text-align: right;
       }
-    }
-
-    .add-collection-title {
-      width: 100%;
-      font-size: 14px;
-      font-weight: 600;
-      color: #63656e;
-      border-bottom: 1px solid #dcdee5;
-      padding-bottom: 10px;
-      margin: 30px 0 20px 0;
-    }
-
-    .capacity-assessment {
-      margin: 20px 0;
-      font-size: 14px;
-
-      @include flex-align;
-
-      .icon-angle-double-down {
-        font-size: 24px;
-
-        &.is-active {
-          transform: rotateZ(180deg) translateY(-2px);
-        }
-      }
-
-      .button-text {
-        @include flex-align;
-      }
-
-      .capacity-message {
-        color: #63656e;
-        margin-left: 20px;
-      }
-    }
-
-    .capacity-illustrate {
-      height: 104px;
-      background: #fafbfd;
-      border: 1px solid #dcdee5;
-      border-radius: 2px;
-      padding: 12px 20px;
-      margin-bottom: 20px;
-
-      .illustrate-title {
-        font-weight: 700;
-      }
-
-      p {
-        color: #63656e;
-        margin-bottom: 4px;
-        font-size: 12px;
-      }
-    }
-
-    .need-approval {
-      margin: 12px 0 12px 116px;
-
-      @include flex-align;
-
-      .bk-checkbox-text {
-        font-size: 12px;
-        margin-right: 12px;
-      }
-    }
-
-    .approver {
-      font-size: 12px;
     }
   }
 </style>
