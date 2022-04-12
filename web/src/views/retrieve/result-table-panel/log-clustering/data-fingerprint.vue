@@ -625,7 +625,7 @@ export default {
   }
 
   .finger-cluster-table {
-    /deep/ .bk-table-body-wrapper {
+    ::v-deep .bk-table-body-wrapper {
       margin-top: 32px;
       min-height: calc(100vh - 570px);
 
@@ -640,7 +640,7 @@ export default {
       display: none;
     }
 
-    /deep/.bk-table-row-last {
+    ::v-deep.bk-table-row-last {
       td {
         border: none;
       }
@@ -730,7 +730,7 @@ export default {
 }
 
 .table-no-data {
-  /deep/.bk-table-header-wrapper {
+  ::v-deep.bk-table-header-wrapper {
     tr {
       > th {
         /* stylelint-disable-next-line declaration-no-important */

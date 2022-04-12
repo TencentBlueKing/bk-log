@@ -438,7 +438,7 @@ export default {
     }
 
     .king-table {
-      /deep/ .state-container {
+      ::v-deep .state-container {
         display: flex;
         align-items: center;
 
@@ -458,7 +458,7 @@ export default {
         }
       }
 
-      /deep/ .cell {
+      ::v-deep .cell {
         padding: 4px 15px;
       }
 
