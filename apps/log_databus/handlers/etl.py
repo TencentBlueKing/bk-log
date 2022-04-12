@@ -99,7 +99,7 @@ class EtlHandler(object):
                 }
             )
             collect_config.set_itsm_success()
-            if data["need_approval"]:
+            if data["assessment_config"]["need_approval"]:
                 collect_config.set_itsm_applying(sn)
                 ItsmEtlConfig.objects.create(ticket_sn=sn, request_para=data)
                 return itsm_handler.collect_itsm_status(collect_config_id), False
