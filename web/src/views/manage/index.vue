@@ -116,7 +116,7 @@ export default {
       height: 100%;
     }
 
-    /deep/ .bk-table {
+    ::v-deep .bk-table {
       background: #fff;
 
       .cell {

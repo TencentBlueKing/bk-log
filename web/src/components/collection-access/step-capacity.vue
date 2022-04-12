@@ -469,7 +469,7 @@ export default {
           margin: 0;
         }
 
-        /deep/ .bk-date-picker {
+        ::v-deep .bk-date-picker {
           width: 100%;
         }
       }

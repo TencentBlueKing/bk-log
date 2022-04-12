@@ -353,13 +353,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  /deep/.bk-dialog-body {
+  ::v-deep.bk-dialog-body {
     background-color: #f5f6fa;
     overflow: hidden;
     padding: 0;
   }
 
-  /deep/.bk-dialog-tool {
+  ::v-deep.bk-dialog-tool {
     display: none;
   }
 
