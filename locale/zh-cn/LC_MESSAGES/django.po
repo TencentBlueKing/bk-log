@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-11 21:15+0800\n"
+"POT-Creation-Date: 2022-04-12 12:08+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -492,6 +492,38 @@ msgstr ""
 
 #: apps/grafana/exceptions.py:57
 msgid "获取组织中的用户失败"
+msgstr ""
+
+#: apps/grafana/handlers/home_dashboard.py:32
+msgid "欢迎使用仪表盘"
+msgstr ""
+
+#: apps/grafana/handlers/home_dashboard.py:59
+msgid "所有仪表盘"
+msgstr ""
+
+#: apps/grafana/handlers/home_dashboard.py:78
+msgid "收藏和最近查看的仪表盘"
+msgstr ""
+
+#: apps/grafana/handlers/home_dashboard.py:104
+msgid "还没有仪表盘？快速创建您的仪表盘吧！"
+msgstr ""
+
+#: apps/grafana/handlers/home_dashboard.py:105
+msgid "为方便管理仪表盘，可以创建目录。"
+msgstr ""
+
+#: apps/grafana/handlers/home_dashboard.py:106
+msgid "本地有仪表盘配置文件，直接导入即可。"
+msgstr ""
+
+#: apps/grafana/handlers/home_dashboard.py:106
+msgid "更多使用方法查看产品文档"
+msgstr ""
+
+#: apps/grafana/handlers/home_dashboard.py:113
+msgid "仪表盘使用指引"
 msgstr ""
 
 #: apps/grafana/handlers/query.py:52 apps/grafana/handlers/query.py:54
@@ -1660,8 +1692,7 @@ msgstr ""
 msgid "端口"
 msgstr ""
 
-#: apps/log_databus/serializers.py:339 templates/admin/login.html:12
-#: templates/admin/login.html:14
+#: apps/log_databus/serializers.py:339
 msgid "用户"
 msgstr ""
 
@@ -4574,8 +4605,7 @@ msgstr ""
 msgid "导入仪表盘"
 msgstr ""
 
-#: config/default.py:434 templates/admin/base_site.html:4
-#: templates/admin/base_site.html:7
+#: config/default.py:434
 msgid "管理"
 msgstr ""
 
@@ -4651,26 +4681,6 @@ msgstr ""
 msgid "采集链路管理"
 msgstr ""
 
-#: templates/admin/login.html:6
-msgid "您暂时不能访问该站点的后台管理，这是以下原因造成的："
-msgstr ""
-
-#: templates/admin/login.html:9
-msgid "你还没登录，请重新刷新页面！"
-msgstr ""
-
-#: templates/admin/login.html:12
-msgid "未激活！"
-msgstr ""
-
-#: templates/admin/login.html:14
-msgid "没有管理员权限，请联系管理员！"
-msgstr ""
-
-#: templates/admin/login.html:18
-msgid "如有需要，请联系管理员或开发者为您解决上述问题。"
-msgstr ""
-
 #: version_log/config.py:31
 msgid "版本日志"
 msgstr ""
@@ -4681,10 +4691,6 @@ msgstr ""
 
 #: version_log/models.py:48
 msgid "版本日志访问记录"
-msgstr ""
-
-#: version_log/templates/version_log/version_logs_page.html:27
-msgid "返回"
 msgstr ""
 
 #: version_log/views.py:56

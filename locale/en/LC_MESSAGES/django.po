@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-11 21:15+0800\n"
+"POT-Creation-Date: 2022-04-12 12:08+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -553,6 +553,41 @@ msgstr "Failed to obtain Grafana organization"
 msgid "获取组织中的用户失败"
 msgstr "Failed to get users in the organization"
 
+#: apps/grafana/handlers/home_dashboard.py:32
+msgid "欢迎使用仪表盘"
+msgstr " to the Dashboard"
+
+#: apps/grafana/handlers/home_dashboard.py:59
+msgid "所有仪表盘"
+msgstr "All dashboards"
+
+#: apps/grafana/handlers/home_dashboard.py:78
+msgid "收藏和最近查看的仪表盘"
+msgstr "Favorites and Recently Viewed Dashboards"
+
+#: apps/grafana/handlers/home_dashboard.py:104
+msgid "还没有仪表盘？快速创建您的仪表盘吧！"
+msgstr "Don't have a dashboard yet? Create your dashboards quickly！"
+
+#: apps/grafana/handlers/home_dashboard.py:105
+msgid "为方便管理仪表盘，可以创建目录。"
+msgstr ""
+"To facilitate the management of dashboards, directories can be created."
+
+#: apps/grafana/handlers/home_dashboard.py:106
+msgid "本地有仪表盘配置文件，直接导入即可。"
+msgstr ""
+"There is a dashboard configuration file locally, which can be imported "
+"directly."
+
+#: apps/grafana/handlers/home_dashboard.py:106
+msgid "更多使用方法查看产品文档"
+msgstr "See product documentation for more usage"
+
+#: apps/grafana/handlers/home_dashboard.py:113
+msgid "仪表盘使用指引"
+msgstr "Dashboard Usage Guidelines"
+
 #: apps/grafana/handlers/query.py:52 apps/grafana/handlers/query.py:54
 #: apps/log_search/views/search_views.py:656
 #: apps/log_search/views/search_views.py:658
@@ -795,12 +830,16 @@ msgid "操作对象类型"
 msgstr "Object type"
 
 #: apps/log_audit/models.py:31
+#, fuzzy
+#| msgid "对象类型"
 msgid "操作对象子类型"
-msgstr ""
+msgstr "Object type"
 
 #: apps/log_audit/models.py:32
+#, fuzzy
+#| msgid "对象类型"
 msgid "操作对象id"
-msgstr ""
+msgstr "Object type"
 
 #: apps/log_audit/models.py:33
 msgid "操作方法"
@@ -879,8 +918,10 @@ msgid "集群模板"
 msgstr ""
 
 #: apps/log_databus/constants.py:163
+#, fuzzy
+#| msgid "Transfer元数据"
 msgid "Transfer"
-msgstr ""
+msgstr "Transfer metadata"
 
 #: apps/log_databus/constants.py:164
 #: apps/log_search/migrations/0002_bklog_initial.py:37
@@ -1454,8 +1495,10 @@ msgid "索引集是否被授权"
 msgstr ""
 
 #: apps/log_databus/models.py:252 apps/log_databus/models.py:253
+#, fuzzy
+#| msgid "清洗列表"
 msgid "高级清洗列表"
-msgstr ""
+msgstr "Clean List"
 
 #: apps/log_databus/models.py:258
 msgid "清洗id"
@@ -1804,8 +1847,7 @@ msgstr ""
 msgid "端口"
 msgstr "Port"
 
-#: apps/log_databus/serializers.py:339 templates/admin/login.html:12
-#: templates/admin/login.html:14
+#: apps/log_databus/serializers.py:339
 msgid "用户"
 msgstr "User"
 
@@ -2065,8 +2107,10 @@ msgid "是否是轮询请求"
 msgstr ""
 
 #: apps/log_databus/serializers.py:562
+#, fuzzy
+#| msgid "清洗模板"
 msgid "清洗模板名"
-msgstr ""
+msgstr "Clean Templates"
 
 #: apps/log_databus/views/collector_views.py:183
 #: apps/log_search/constants.py:304
@@ -2517,8 +2561,6 @@ msgid "分发到网盘中"
 msgstr "Distribute to the network disk"
 
 #: apps/log_extract/constants.py:52
-#, fuzzy
-#| msgid "同步完成"
 msgid "已完成"
 msgstr "Sync complete"
 
@@ -2842,8 +2884,10 @@ msgid "查找的日志提取链路不存在"
 msgstr "Extraction link does not exist"
 
 #: apps/log_extract/exceptions.py:255
+#, fuzzy
+#| msgid "提取链路不存在"
 msgid "查找的日志提取链路type不支持"
-msgstr ""
+msgstr "Extraction link does not exist"
 
 #: apps/log_extract/exceptions.py:260
 msgid "不能修改或者删除还在进行中任务的链路"
@@ -3007,12 +3051,16 @@ msgid "预览是否搜索子目录"
 msgstr "Is search child"
 
 #: apps/log_extract/models.py:110
+#, fuzzy
+#| msgid "开始时间"
 msgid "预览开始日期"
-msgstr ""
+msgstr "StartTime"
 
 #: apps/log_extract/models.py:111
+#, fuzzy
+#| msgid "过期时间 "
 msgid "预览结束日期"
-msgstr ""
+msgstr "Expire date"
 
 #: apps/log_extract/models.py:113
 msgid "额外数据"
@@ -3024,8 +3072,10 @@ msgstr ""
 
 #: apps/log_extract/models.py:115 apps/log_extract/models.py:190
 #: apps/log_extract/serializers.py:408
+#, fuzzy
+#| msgid "采集链路data_id"
 msgid "链路id"
-msgstr ""
+msgstr "Collection link data_id"
 
 #: apps/log_extract/models.py:166
 #, fuzzy
@@ -3062,8 +3112,10 @@ msgstr ""
 
 #: apps/log_extract/models.py:194 apps/log_extract/models.py:195
 #: apps/log_extract/models.py:197 apps/log_extract/models.py:200
+#, fuzzy
+#| msgid "内网链路"
 msgid "内网链路不需要填写"
-msgstr ""
+msgstr "Intranet link"
 
 #: apps/log_extract/models.py:195 apps/log_extract/serializers.py:430
 msgid "腾讯云SecretKey"
@@ -3103,8 +3155,10 @@ msgid "主机ip"
 msgstr ""
 
 #: apps/log_extract/models.py:217 apps/log_extract/models.py:218
+#, fuzzy
+#| msgid "请配置中转服务器"
 msgid "链路中转机"
-msgstr ""
+msgstr "Please configure the transit server"
 
 #: apps/log_extract/serializers.py:56
 #, fuzzy
@@ -3581,8 +3635,10 @@ msgid "JSON"
 msgstr ""
 
 #: apps/log_search/constants.py:306
+#, fuzzy
+#| msgid "win event日志"
 msgid "win event"
-msgstr ""
+msgstr "WinEvent"
 
 #: apps/log_search/constants.py:395
 msgid "操作系统"
@@ -4885,7 +4941,7 @@ msgstr ""
 #, fuzzy
 #| msgid "JWT校验失败"
 msgid "参数校验失败:\n"
-msgstr "JWT verification failed"
+msgstr "JWT verification failed\n"
 
 #: apps/utils/drf.py:76
 #, python-brace-format
@@ -4961,7 +5017,6 @@ msgid "检索"
 msgstr "Search"
 
 #: config/default.py:418
-#, fuzzy
 #| msgid "调用链跟踪"
 msgid "调用链"
 msgstr "Trace"
@@ -4971,10 +5026,9 @@ msgid "日志提取"
 msgstr "Log Extract"
 
 #: config/default.py:420
-#, fuzzy
 #| msgid "迁移监控策略"
 msgid "监控策略"
-msgstr "Migration monitoring strategy"
+msgstr "Monitoring strategy"
 
 #: config/default.py:423
 msgid "仪表盘"
@@ -4992,8 +5046,7 @@ msgstr "New directory"
 msgid "导入仪表盘"
 msgstr "Import dashboard"
 
-#: config/default.py:434 templates/admin/base_site.html:4
-#: templates/admin/base_site.html:7
+#: config/default.py:434
 msgid "管理"
 msgstr "Management"
 
@@ -5024,7 +5077,6 @@ msgid "日志清洗"
 msgstr "Log Clean"
 
 #: config/default.py:474
-#| msgid "清洗配置"
 msgid "清洗"
 msgstr "Clean"
 
@@ -5072,32 +5124,6 @@ msgstr "Settings"
 msgid "采集链路管理"
 msgstr "Collection Link Manage"
 
-#: templates/admin/login.html:6
-msgid "您暂时不能访问该站点的后台管理，这是以下原因造成的："
-msgstr ""
-"You are temporarily unable to access the site's background management due to "
-"the following reasons:"
-
-#: templates/admin/login.html:9
-msgid "你还没登录，请重新刷新页面！"
-msgstr "You are not logged in, please refresh the page again!"
-
-#: templates/admin/login.html:12
-msgid "未激活！"
-msgstr "Inactivated!"
-
-#: templates/admin/login.html:14
-#, fuzzy
-#| msgid "系统错误，请联系管理员"
-msgid "没有管理员权限，请联系管理员！"
-msgstr "System error, please contact the administrator"
-
-#: templates/admin/login.html:18
-msgid "如有需要，请联系管理员或开发者为您解决上述问题。"
-msgstr ""
-"If necessary, contact your administrator or developer to resolve the issue "
-"for you."
-
 #: version_log/config.py:31
 msgid "版本日志"
 msgstr ""
@@ -5109,12 +5135,6 @@ msgstr ""
 #: version_log/models.py:48
 msgid "版本日志访问记录"
 msgstr ""
-
-#: version_log/templates/version_log/version_logs_page.html:27
-#, fuzzy
-#| msgid "返回码"
-msgid "返回"
-msgstr "ReturnCode"
 
 #: version_log/views.py:56
 #, fuzzy
@@ -5133,6 +5153,32 @@ msgstr ""
 #: version_log/views.py:69
 msgid "日志详情获取成功"
 msgstr ""
+
+#~ msgid "您暂时不能访问该站点的后台管理，这是以下原因造成的："
+#~ msgstr ""
+#~ "You are temporarily unable to access the site's background management due "
+#~ "to the following reasons:"
+
+#~ msgid "你还没登录，请重新刷新页面！"
+#~ msgstr "You are not logged in, please refresh the page again!"
+
+#~ msgid "未激活！"
+#~ msgstr "Inactivated!"
+
+#, fuzzy
+#~| msgid "系统错误，请联系管理员"
+#~ msgid "没有管理员权限，请联系管理员！"
+#~ msgstr "System error, please contact the administrator"
+
+#~ msgid "如有需要，请联系管理员或开发者为您解决上述问题。"
+#~ msgstr ""
+#~ "If necessary, contact your administrator or developer to resolve the "
+#~ "issue for you."
+
+#, fuzzy
+#~| msgid "返回码"
+#~ msgid "返回"
+#~ msgstr "ReturnCode"
 
 #~ msgid "索引集管理"
 #~ msgstr "IndexSetManagement"
