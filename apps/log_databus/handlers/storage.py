@@ -178,7 +178,7 @@ class StorageHandler(object):
         return cluster_groups
 
     @classmethod
-    def filter_cluster_groups(cls, cluster_groups, bk_biz_id, is_default=True):
+    def filter_cluster_groups(cls, cluster_groups, bk_biz_id, is_default=True, enable_archive=False):
         """
         筛选集群，并判断集群是否可编辑
         :param cluster_groups:
@@ -320,7 +320,11 @@ class StorageHandler(object):
                 ]
 
             cluster_data.append(cluster_obj)
-        return cluster_data
+        return [
+            cluster
+            for cluster in cluster_data
+            if (not enable_archive) or (enable_archive and cluster["cluster_config"]["custom_option"]["enable_archive"])
+        ]
 
     @staticmethod
     def storage_visible(bk_biz_id, custom_bk_biz_id) -> bool:
@@ -338,7 +342,7 @@ class StorageHandler(object):
         except Exception:  # pylint: disable=broad-except
             return time_stamp
 
-    def list(self, bk_biz_id, cluster_id=None, is_default=True):
+    def list(self, bk_biz_id, cluster_id=None, is_default=True, enable_archive=False):
         """
         存储集群列表
         :return:
@@ -350,7 +354,7 @@ class StorageHandler(object):
         if cluster_id:
             cluster_info = self._get_cluster_nodes(cluster_info)
             cluster_info = self._get_cluster_detail_info(cluster_info)
-        return self.filter_cluster_groups(cluster_info, bk_biz_id, is_default)
+        return self.filter_cluster_groups(cluster_info, bk_biz_id, is_default, enable_archive)
 
     def _get_cluster_nodes(self, cluster_info: List[dict]):
         for cluster in cluster_info:

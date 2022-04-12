@@ -227,7 +227,9 @@ class StorageViewSet(APIViewSet):
         }
         """
         data = self.params_valid(StorageListSerializer)
-        return Response(StorageHandler().list(bk_biz_id=data["bk_biz_id"]))
+        return Response(
+            StorageHandler().list(bk_biz_id=data["bk_biz_id"], enable_archive=data.get("enable_archive", False))
+        )
 
     def retrieve(self, request, *args, **kwargs):
         """

@@ -344,6 +344,7 @@ class RetrySerializer(serializers.Serializer):
 
 class StorageListSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
+    enable_archive = serializers.BooleanField(label=_("是否启用归档"), required=False)
 
 
 class StorageIndicesInfoSerializer(serializers.Serializer):
