@@ -820,7 +820,14 @@ class StorageHandler(object):
             return []
         cluster_info_by_id = {cluster["cluster_config"]["cluster_id"]: cluster for cluster in cluster_info}
         repository_info = TransferApi.list_es_snapshot_repository({"cluster_ids": list(cluster_info_by_id.keys())})
+        name_prefix = f"{bk_biz_id}_bklog_"
+
         for repository in repository_info:
+            if (
+                not repository["repository_name"].startswith(name_prefix)
+                or "bklog" not in repository["repository_name"]
+            ):
+                continue
             repository.update(
                 {
                     "cluster_name": cluster_info_by_id[repository["cluster_id"]]["cluster_config"]["cluster_name"],

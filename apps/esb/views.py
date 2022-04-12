@@ -149,7 +149,8 @@ class MetaESBViewSet(APIViewSet):
         dst_call = permission_config.get(self._get_dst_key()).get("target_call")
         if not dst_call:
             raise exceptions.UrlNotImplementError
-
+        if dst_call == "create_es_snapshot_repository":
+            return self.create_create_es_snapshot_repository(esb_params)
         try:
             call_func = getattr(TransferApi, dst_call)
         except AttributeError:
@@ -164,3 +165,9 @@ class MetaESBViewSet(APIViewSet):
         for temp_key, temp_value in params.items():
             dst_params[temp_key], *_ = temp_value
         return dst_params
+
+    def create_create_es_snapshot_repository(self, params):
+        if "bk_biz_id" not in params:
+            raise ValueError("bk_biz_id is required")
+        params["snapshot_repository_name"] = f"{params['bk_biz_id']}_bklog_{params['snapshot_repository_name']}"
+        return Response(BkLogApi.create_es_snapshot_repository(params))
