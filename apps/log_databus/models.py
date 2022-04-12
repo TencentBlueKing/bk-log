@@ -262,6 +262,11 @@ class CollectorConfig(SoftDeleteModel):
         return TransferApi.get_data_id({"bk_data_id": bk_data_id, "no_request": True})
 
 
+class ItsmEtlConfig(SoftDeleteModel):
+    ticket_sn = models.CharField(_("itsm单据号"), max_length=255)
+    request_param = models.JSONField(_("请求参数"))
+
+
 class DataLinkConfig(SoftDeleteModel):
     """
     数据采集链路配置

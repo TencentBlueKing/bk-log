@@ -86,7 +86,7 @@ class StorageHandler(object):
 
         return False
 
-    def get_cluster_groups(self, bk_biz_id, is_default=True):
+    def get_cluster_groups(self, bk_biz_id, is_default=True, enable_archive=False):
         """
         获取集群列表
         :param bk_biz_id:
@@ -94,7 +94,10 @@ class StorageHandler(object):
         :return:
         """
         cluster_groups = self.filter_cluster_groups(
-            TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE}), bk_biz_id, is_default=is_default
+            TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE}),
+            bk_biz_id,
+            is_default=is_default,
+            enable_archive=enable_archive,
         )
 
         cluster_groups = [
@@ -141,7 +144,7 @@ class StorageHandler(object):
             if i
         ]
 
-    def get_cluster_groups_filter(self, bk_biz_id, is_default=True):
+    def get_cluster_groups_filter(self, bk_biz_id, is_default=True, enable_archive=False):
         """
         获取集群列表并过滤
         :param bk_biz_id:
@@ -823,6 +826,7 @@ class StorageHandler(object):
         name_prefix = f"{bk_biz_id}_bklog_"
 
         for repository in repository_info:
+            # 需要兼容历史的仓库名称
             if (
                 not repository["repository_name"].startswith(name_prefix)
                 or "bklog" not in repository["repository_name"]

@@ -129,7 +129,11 @@ class StorageViewSet(APIViewSet):
         }
         """
         data = self.params_valid(StorageListSerializer)
-        return Response(StorageHandler().get_cluster_groups_filter(bk_biz_id=data["bk_biz_id"]))
+        return Response(
+            StorageHandler().get_cluster_groups_filter(
+                bk_biz_id=data["bk_biz_id"], enable_archive=data.get("enable_archive", False)
+            )
+        )
 
     @insert_permission_field(
         id_field=lambda d: d["cluster_config"]["cluster_id"],
