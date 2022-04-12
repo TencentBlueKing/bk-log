@@ -96,6 +96,7 @@ class EtlHandler(object):
                     "bk_biz_id": collect_config.bk_biz_id,
                     "approvals": ",".join(data["assessment_config"]["approvals"]),
                     "log_assessment": data["assessment_config"]["log_assessment"],
+                    "collector_detail": itsm_handler.generate_collector_detail_itsm_form(collect_config),
                 }
             )
             collect_config.set_itsm_success()
