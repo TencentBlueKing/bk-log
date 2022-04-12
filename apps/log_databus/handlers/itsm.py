@@ -123,6 +123,10 @@ class ItsmHandler(object):
     def update_collect_itsm_status(self, ticket_info: dict):
         collector_process = CollectorConfig.objects.get(itsm_ticket_sn=ticket_info.get("sn"))
         ticket_detail_info = self.ticket_info(ticket_info.get("sn"))
+
+        if collector_process.itsm_has_success():
+            logger.info("don't set itsm status, because it has success")
+            return
         if self._ticket_is_finish(ticket_info):
             if self._ticket_approve_result(ticket_detail_info):
                 collector_process.set_itsm_success()
