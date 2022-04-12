@@ -60,12 +60,13 @@ class ItsmHandler(object):
             "collect_itsm_status": collect_config.itsm_ticket_status,
             "collect_itsm_status_display": CollectItsmStatus.get_choice_label(collect_config.itsm_ticket_status),
             "ticket_url": settings.ITSM_LOG_DISPLAY_ROLE,
+            "iframe_ticket_url": "",
         }
         if collect_config.has_apply_itsm():
             ticket_info = self.ticket_status(collect_config.itsm_ticket_sn)
             ticket_detail_info = self.ticket_info(collect_config.itsm_ticket_sn)
             apply_info = {field.get("key"): field.get("value") for field in ticket_detail_info.get("fields", [])}
-            ret.update({"ticket_url": ticket_info["ticket_url"]})
+            ret.update({"ticket_url": ticket_info["ticket_url"], "iframe_ticket_url": ticket_info["iframe_ticket_url"]})
             ret.update(apply_info)
         return ret
 
