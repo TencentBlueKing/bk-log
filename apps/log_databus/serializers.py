@@ -569,7 +569,7 @@ class CollectorEtlStorageSerializer(serializers.Serializer):
     def validate(self, attrs):
         super().validate(attrs)
 
-        if attrs["need_assessment"] and not attrs.get("assessment_config"):
+        if attrs.get("need_assessment", False) and not attrs.get("assessment_config"):
             raise ValidationError(_("评估配置不能为空"))
 
         if attrs["etl_config"] in EtlConfigEnum.get_dict_choices():
