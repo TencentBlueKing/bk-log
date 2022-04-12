@@ -169,5 +169,7 @@ class MetaESBViewSet(APIViewSet):
     def create_create_es_snapshot_repository(self, params):
         if "bk_biz_id" not in params:
             raise ValueError("bk_biz_id is required")
+        if "bklog" in params["snapshot_repository_name"]:
+            raise ValueError("bklog is not allowed in snapshot_repository_name")
         params["snapshot_repository_name"] = f"{params['bk_biz_id']}_bklog_{params['snapshot_repository_name']}"
         return Response(BkLogApi.create_es_snapshot_repository(params))

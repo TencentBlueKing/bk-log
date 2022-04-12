@@ -442,9 +442,10 @@ class StorageHandler(object):
         cluster_objs = TransferApi.get_cluster_info(get_cluster_info_params)
         if not cluster_objs:
             raise StorageNotExistException()
-        # 判断该集群是否可编辑
-        if cluster_objs[0]["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
-            raise StorageNotPermissionException()
+        # # 判断该集群是否可编辑
+        # if cluster_objs[0]["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
+        #     raise StorageNotPermissionException()
+
         # 判断该集群是否属于该业务
         if cluster_objs[0]["cluster_config"]["custom_option"].get("bk_biz_id") != bk_biz_id:
             raise StorageNotPermissionException()
