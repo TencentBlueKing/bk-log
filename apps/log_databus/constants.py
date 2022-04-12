@@ -38,6 +38,9 @@ COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
 
 BULK_CLUSTER_INFOS_LIMIT = 20
 
+# ES集群类型配置特性开关key
+FEATURE_TOGGLE_ES_CLUSTER_TYPE = "es_cluster_type_setup"
+
 
 class EsSourceType(ChoicesEnum):
     OTHER = "other"
@@ -57,7 +60,7 @@ class EsSourceType(ChoicesEnum):
     )
 
     def get_choices_list_dict():
-        es_config = FeatureToggleObject.toggle("es_cluster_doc").feature_config
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE).feature_config
         return [ {
             "id": es_config[key]["id"],
             "name": es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"],

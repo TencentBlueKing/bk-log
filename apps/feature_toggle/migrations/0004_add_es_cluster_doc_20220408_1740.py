@@ -19,16 +19,16 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from django.db import migrations
-from apps.log_databus.constants import EsSourceType
+from apps.log_databus.constants import EsSourceType, FEATURE_TOGGLE_ES_CLUSTER_TYPE
 
 
 def forwards_func(apps, schema_editor):
     feature_toggle = apps.get_model("feature_toggle", "FeatureToggle")
     feature_toggle.objects.create(
-        name="es_cluster_doc",
-        alias="es集群说明文档",
+        name=FEATURE_TOGGLE_ES_CLUSTER_TYPE,
+        alias="集群类型配置",
         status="on",
-        description="es集群各种集群类型的说明文档",
+        description="ES集群各种集群类型的说明文档",
         is_viewed=True,
         feature_config={
             EsSourceType.OTHER.value: {
