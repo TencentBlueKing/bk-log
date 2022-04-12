@@ -44,7 +44,7 @@ class ItsmHandler(object):
         collect_config = CollectorConfig.objects.get(collector_config_id=collect_config_id)
         params.update(
             {
-                "collector_detail": self._generate_collector_detail_itsm_form(collect_config),
+                "collector_detail": self.generate_collector_detail_itsm_form(collect_config),
                 "capacity_formula": self._generate_capacity_formula(params),
             }
         )
@@ -178,9 +178,7 @@ class ItsmHandler(object):
         form_value.extend(paths)
         return form_value
 
-    def _generate_collector_detail_itsm_form(
-        self, collector: CollectorConfig
-    ):  # pylint: disable=function-name-too-long
+    def generate_collector_detail_itsm_form(self, collector: CollectorConfig):  # pylint: disable=function-name-too-long
         form_detail = {
             "config": {},
             "schemes": {
