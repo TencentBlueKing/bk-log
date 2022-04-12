@@ -504,7 +504,7 @@ export default {
     position: relative;
 
     .king-input-retrieve {
-      /deep/ .bk-form-input {
+      ::v-deep .bk-form-input {
         height: 64px;
       }
     }

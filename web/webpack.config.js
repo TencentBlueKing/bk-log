@@ -22,6 +22,7 @@
 
 /* eslint-disable no-nested-ternary */
 const wepack = require('webpack');
+const WebpackBar = require('webpackbar');
 const path = require('path');
 const fs = require('fs');
 const LogWebpackPlugin = require('./webpack/log-webpack-plugin');
@@ -144,6 +145,12 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
         '@': path.resolve('src'),
       },
     },
+    plugins: baseConfig.plugins.map((plugin) => {
+      return plugin instanceof wepack.ProgressPlugin ?  new WebpackBar({
+        profile: true,
+        name: `日志平台 ${production ? 'Production模式' : 'Development模式'} 构建`,
+      }) : plugin;
+    }),
     cache: typeof devConfig.cache === 'boolean' ? devConfig.cache : config.cache,
   };
 };

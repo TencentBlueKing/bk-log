@@ -108,7 +108,7 @@ export default {
       }
     }
 
-    /deep/ .main-container {
+    ::v-deep .main-container {
       position: relative;
       padding-bottom: 60px;
       overflow: auto;
