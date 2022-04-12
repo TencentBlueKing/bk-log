@@ -1164,6 +1164,11 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} retention 保留时间
         @apiParam {Int} [storage_replies] 副本数量
         @apiParam {list} view_roles 查看权限
+        @apiParam {Boolean} need_assessment 需要评估
+        @apiParam {Object} assessment_config 评估配置
+        @apiParam {String} assessment_config.log_assessment 单机日志量
+        @apiParam {Boolean} assessment_config.need_approval 需要审批
+        @apiParam {List} assessment_config.approvals 审批人
         @apiParamExample {json} 请求样例:
         {
             "table_id": "xxx",
@@ -1201,7 +1206,13 @@ class CollectorViewSet(ModelViewSet):
             ],
             "storage_cluster_id": 3,
             "retention": 1,
-            "view_roles": [1,2]
+            "view_roles": [1,2],
+            "need_assessment": true,
+            "assessment_config": {
+                "log_assessment": "10M",
+                "need_approval": true,
+                "approvals": ["admin"]
+            }
         }
         @apiSuccessExample {json} 成功返回:
         {
@@ -1214,6 +1225,9 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(CollectorEtlStorageSerializer)
+        data, can_apply = EtlHandler(collector_config_id=collector_config_id).itsm_pre_hook(data, collector_config_id)
+        if not can_apply:
+            return data
         return Response(EtlHandler(collector_config_id=collector_config_id).update_or_create(**data))
 
     @detail_route(methods=["GET"], url_path="get_data_link_list")

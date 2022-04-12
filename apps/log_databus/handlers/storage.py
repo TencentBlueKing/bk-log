@@ -823,6 +823,7 @@ class StorageHandler(object):
         name_prefix = f"{bk_biz_id}_bklog_"
 
         for repository in repository_info:
+            # 需要兼容历史的仓库名称
             if (
                 not repository["repository_name"].startswith(name_prefix)
                 or "bklog" not in repository["repository_name"]

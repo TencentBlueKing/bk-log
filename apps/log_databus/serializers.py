@@ -545,6 +545,12 @@ class CollectorEtlFieldsSerializer(serializers.Serializer):
         return True
 
 
+class AssessmentConfig(serializers.Serializer):
+    log_assessment = serializers.CharField(label=_("日志评估 （单机日志量）"))
+    need_approval = serializers.BooleanField(label=_("是否需要审批"), default=False)
+    approvals = serializers.ListField(label=_("审批人"), child=serializers.CharField(), required=True)
+
+
 class CollectorEtlStorageSerializer(serializers.Serializer):
     table_id = serializers.CharField(label=_("结果表ID"), required=True)
     etl_config = serializers.CharField(label=_("清洗类型"), required=True)
@@ -557,9 +563,14 @@ class CollectorEtlStorageSerializer(serializers.Serializer):
         label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
     )
     view_roles = serializers.ListField(label=_("查看权限"), required=False, default=[])
+    need_assessment = serializers.BooleanField(label=_("是否需要评估配置"), required=False)
+    assessment_config = AssessmentConfig(label=_("评估配置"), required=False)
 
     def validate(self, attrs):
         super().validate(attrs)
+
+        if attrs["need_assessment"] and not attrs.get("assessment_config"):
+            raise ValidationError(_("评估配置不能为空"))
 
         if attrs["etl_config"] in EtlConfigEnum.get_dict_choices():
             if not attrs.get("fields"):
