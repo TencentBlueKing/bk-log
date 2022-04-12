@@ -1228,6 +1228,8 @@ class CollectorViewSet(ModelViewSet):
         data, can_apply = EtlHandler(collector_config_id=collector_config_id).itsm_pre_hook(data, collector_config_id)
         if not can_apply:
             return data
+        for key in ["need_assessment", "assessment_config"]:
+            data.pop(key, None)
         return Response(EtlHandler(collector_config_id=collector_config_id).update_or_create(**data))
 
     @detail_route(methods=["GET"], url_path="get_data_link_list")
