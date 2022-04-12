@@ -262,6 +262,8 @@ class SoftDeleteModel(OperateRecordModel):
 
     objects = SoftDeleteModelManager()
 
+    origin_objects = models.Manager()
+
     is_deleted = models.BooleanField(_("是否删除"), default=False)
     deleted_at = models.DateTimeField(_("删除时间"), blank=True, null=True)
     deleted_by = models.CharField(_("删除者"), max_length=32, blank=True, null=True)

@@ -18,6 +18,8 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import datetime
+from collections import defaultdict
+
 import pytz
 
 from celery.task import periodic_task
@@ -26,7 +28,7 @@ from celery.schedules import crontab
 from apps.api.modules.bkdata_databus import BkDataDatabusApi
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.handlers.collector import CollectorHandler
-from apps.api import TransferApi
+from apps.api import TransferApi, BkLogApi
 from apps.log_databus.constants import (
     STORAGE_CLUSTER_TYPE,
     REGISTERED_SYSTEM_DEFAULT,
@@ -75,28 +77,85 @@ def sync_storage_capacity():
     # 2、获取所有集群
     params = {"cluster_type": STORAGE_CLUSTER_TYPE}
     cluster_obj = TransferApi.get_cluster_info(params)
-    for _cluster in cluster_obj:
 
-        # 2-1公共集群：所有业务都需要查询
-        if _cluster["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
-            for _business in business_list:
-                storage_used = get_biz_storage_capacity(_business["bk_biz_id"], _cluster)
+    from apps.log_search.models import LogIndexSet
+
+    cluster_biz_cnt_map = defaultdict(lambda: defaultdict(int))
+    for index_set in LogIndexSet.objects.all():
+        cluster_biz_cnt_map[index_set.storage_cluster_id][index_set.project_id] += 1
+
+    for _cluster in cluster_obj:
+        try:
+            usage, total = get_storage_usage_and_all(_cluster["cluster_config"]["cluster_id"])
+
+            index_count = LogIndexSet.objects.filter(
+                storage_cluster_id=_cluster["cluster_config"]["cluster_id"]
+            ).count()
+
+            StorageUsed.objects.update_or_create(
+                bk_biz_id=0,
+                storage_cluster_id=_cluster["cluster_config"]["cluster_id"],
+                defaults={
+                    "storage_used": 0,
+                    "storage_total": total,
+                    "storage_usage": usage,
+                    "index_count": index_count,
+                    "biz_count": len(cluster_biz_cnt_map.get(_cluster["cluster_config"]["cluster_id"], {}).keys()),
+                },
+            )
+
+            # 2-1公共集群：所有业务都需要查询
+            if _cluster["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
+                for _business in business_list:
+                    storage_used = get_biz_storage_capacity(_business["bk_biz_id"], _cluster)
+
+                    StorageUsed.objects.update_or_create(
+                        bk_biz_id=_business["bk_biz_id"],
+                        storage_cluster_id=_cluster["cluster_config"]["cluster_id"],
+                        defaults={"storage_used": storage_used},
+                    )
+            # 2-2第三方集群：只需查询指定业务
+            else:
+                bk_biz_id = _cluster["cluster_config"].get("custom_option", {}).get("bk_biz_id")
+                if not bk_biz_id:
+                    continue
+                storage_used = get_biz_storage_capacity(bk_biz_id, _cluster)
                 StorageUsed.objects.update_or_create(
-                    bk_biz_id=_business["bk_biz_id"],
+                    bk_biz_id=bk_biz_id,
                     storage_cluster_id=_cluster["cluster_config"]["cluster_id"],
                     defaults={"storage_used": storage_used},
                 )
-        # 2-2第三方集群：只需查询指定业务
-        else:
-            bk_biz_id = _cluster["cluster_config"].get("custom_option", {}).get("bk_biz_id")
-            if not bk_biz_id:
-                continue
-            storage_used = get_biz_storage_capacity(bk_biz_id, _cluster)
-            StorageUsed.objects.update_or_create(
-                bk_biz_id=bk_biz_id,
-                storage_cluster_id=_cluster["cluster_config"]["cluster_id"],
-                defaults={"storage_used": storage_used},
+        except Exception as e:
+            logger.exception("sync_storage_info error: %s" % e)
+
+
+def query(cluster_id):
+    def get(url):
+        try:
+            return BkLogApi.es_route(
+                {
+                    "scenario_id": "es",
+                    "storage_cluster_id": cluster_id,
+                    "url": url,
+                }
             )
+        except Exception as e:  # pylint:disable=broad-except
+            logger.exception(f"request es info error {e}")
+            return None
+
+    return get
+
+
+def get_storage_usage_and_all(cluster_id):
+    storage_config = query(cluster_id)("_cat/allocation?bytes=b")
+    usage = 0
+    total = 0
+    if not storage_config:
+        return usage, total
+    for _storage in storage_config:
+        usage += int(_storage.get("disk.total") or 0)
+        total += int(_storage.get("disk.used") or 0)
+    return int(usage / total), total
 
 
 def get_biz_storage_capacity(bk_biz_id, cluster):
