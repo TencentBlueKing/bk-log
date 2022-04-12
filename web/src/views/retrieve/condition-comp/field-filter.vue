@@ -263,7 +263,7 @@ export default {
         margin: 0 16px;
       }
 
-      /deep/ .bk-tooltip {
+      ::v-deep .bk-tooltip {
         flex-shrink: 0;
       }
 

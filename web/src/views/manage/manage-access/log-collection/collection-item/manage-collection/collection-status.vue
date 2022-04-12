@@ -503,7 +503,7 @@ export default {
         margin-right: 10px;
       }
 
-      /deep/ .bk-button {
+      ::v-deep .bk-button {
         font-size: 12px;
         padding: 0 10px;
 
@@ -747,7 +747,7 @@ export default {
       white-space: pre-wrap;
     }
 
-    /deep/ .bk-sideslider-wrapper {
+    ::v-deep .bk-sideslider-wrapper {
       padding-bottom: 0;
 
       .bk-sideslider-content {

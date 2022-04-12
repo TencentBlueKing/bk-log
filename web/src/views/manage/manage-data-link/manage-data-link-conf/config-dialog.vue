@@ -264,7 +264,7 @@ export default {
 
 <style lang="scss" scoped>
   .link-config-form {
-    /deep/ .bk-form-content {
+    ::v-deep .bk-form-content {
       position: relative;
 
       .form-error-tip {
