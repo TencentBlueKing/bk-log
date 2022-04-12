@@ -18,7 +18,6 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import json
-import math
 
 from django.conf import settings
 from django.db import transaction
@@ -45,7 +44,6 @@ class ItsmHandler(object):
         params.update(
             {
                 "collector_detail": self.generate_collector_detail_itsm_form(collect_config),
-                "capacity_formula": self._generate_capacity_formula(params),
             }
         )
         if not collect_config.can_apply_itsm():
@@ -135,9 +133,6 @@ class ItsmHandler(object):
                 return
             collector_process.set_itsm_fail()
 
-    def _get_can_use_es_cluster(self, ticket_info: dict):
-        return self._get_detail_ticket_info_field("can_use_independent_es_cluster", ticket_info)
-
     def _create_task(self, collect_id, sn):
         itsm_etl_config = ItsmEtlConfig.objects.filter(ticket_sn=sn).first()
         if not itsm_etl_config:
@@ -198,34 +193,3 @@ class ItsmHandler(object):
             ],
         }
         return json.dumps(form_detail)
-
-    def _generate_capacity_formula(self, params):
-        single_host_log_volume = params["single_host_log_volume"]
-        expect_host_size = params["expect_host_size"]
-        log_keep_days = params["log_keep_days"]
-        formula_result = self._capacity_formula(single_host_log_volume, expect_host_size, log_keep_days)
-        form_detail = {
-            "config": {},
-            "schemes": {
-                "base_text_scheme": {
-                    "type": "text",
-                    "attrs": {"styles": {"label": ["border"], "value": ["highlight", "border"]}},
-                }
-            },
-            "form_data": [
-                {"label": "", "scheme": "base_text_scheme", "value": "单机日志增量 * 主机数量 * 存储转化率 * 分片数 * （日志保留天数 + 1）"},
-                {
-                    "label": "",
-                    "scheme": "base_text_scheme",
-                    "value": f"{single_host_log_volume} "
-                    f"* {expect_host_size} "
-                    f"* 1.5 * 2 * "
-                    f"{log_keep_days + 1}  "
-                    f"= {formula_result}(GB)",
-                },
-            ],
-        }
-        return json.dumps(form_detail)
-
-    def _capacity_formula(self, single_host_log_volume, expect_host_size, log_keep_days):
-        return math.ceil(single_host_log_volume * expect_host_size * (log_keep_days + 1) * 1.5 * 2)

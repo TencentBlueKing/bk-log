@@ -26,9 +26,9 @@ from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import InstanceActionPermission
 from apps.log_databus.handlers.itsm import ItsmHandler
 from apps.log_databus.models import CollectorConfig
-from apps.log_databus.serializers import CollectItsmCallbackSerializer, CollectItsmApplySerializer
+from apps.log_databus.serializers import CollectItsmCallbackSerializer
 from apps.utils.local import activate_request
-from apps.utils.drf import list_route, detail_route
+from apps.utils.drf import list_route
 
 
 class ItsmViewSet(ModelViewSet):
@@ -81,53 +81,6 @@ class ItsmViewSet(ModelViewSet):
         }
         """
         return Response(ItsmHandler().collect_itsm_status(kwargs.get("collector_config_id")))
-
-    @detail_route(methods=["post"])
-    def apply_itsm_ticket(self, request, *args, **kwargs):
-        """
-        @api {post} /databus/collect_itsm/$collector_config_id/apply_itsm_ticket 创建采集ITSM单据
-        @apiName create_itsm_ticket
-        @apiGroup collect_itsm
-        @apiParam {String} expect_access_data 期待接入日期 2020-01-01
-        @apiParam {Int} single_log_size 单条日志大小(bytes)
-        @apiParam {Int} single_host_peak 单机流量峰值（kB/S）
-        @apiParam {Int} single_host_log_volume 单机增长日志量
-        @apiParam {Int} expect_host_size 预计接入主机数
-        @apiParam {Int} log_keep_days 日志保留天数
-        @apiParam {Int}  hot_data_days 热数据天数
-        @apiParam {Int}  expect_increment_log_size 预计增长日志量（GB/day）
-        @apiParam {String}  capacity_description 容量说明
-        @apiParam {String}  apply_reason 申请原因
-        @apiParamExample {json} 请求样例:
-        {
-            "expect_access_data": "2020-01-01",
-            "single_log_size": 10,
-            "single_host_peak": 10,
-            "single_host_log_volume": 10,
-            "expect_host_size": 10,
-            "log_keep_days": 10,
-            "hot_data_days": 10,
-            "expect_increment_log_size": 10,
-            "capacity_description": "aestdfasdfgasf",
-            "apply_reason": "asdfsdaf"
-        }
-        @apiSuccess {String} collect_itsm_status 采集ITSM状态
-        @apiSuccess {String} collect_itsm_status_display 采集ITSM状态显示名称
-        @apiSuccess {String} ticket_url 采集ITSM流程地址
-        @apiSuccessExample {json} 成功返回:
-        {
-            "message": "",
-            "code": 0,
-            "data": {
-                "collect_itsm_status": "applying",
-                "collect_itsm_status_display": "采集接入进行中",
-                "ticket_url": "",
-            },
-            "result": true
-        }
-        """
-        params = self.params_valid(CollectItsmApplySerializer)
-        return Response(ItsmHandler().apply_itsm_ticket(kwargs.get("collector_config_id"), params))
 
 
 @method_decorator(login_exempt, name="dispatch")
