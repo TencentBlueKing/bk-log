@@ -155,9 +155,7 @@ class CollectorConfig(SoftDeleteModel):
 
     def get_bk_data_by_name(self):
         try:
-            bk_data = TransferApi.get_data_id({
-                "data_name": self.bk_data_name
-            })
+            bk_data = TransferApi.get_data_id({"data_name": self.bk_data_name})
             return bk_data
         except ApiResultError:
             logger.debug(f"bk_data_name: {self.bk_data_name} is not exist.")
@@ -166,9 +164,7 @@ class CollectorConfig(SoftDeleteModel):
 
     def get_result_table_by_id(self):
         try:
-            result_table = TransferApi.get_result_table({
-                "table_id": self.table_id
-            })
+            result_table = TransferApi.get_result_table({"table_id": self.table_id})
             return result_table
         except ApiResultError:
             logger.debug(f"result_table_id: {self.table_id} is not exist.")
@@ -303,9 +299,15 @@ class StorageCapacity(OperateRecordModel):
 
 
 class StorageUsed(OperateRecordModel):
+    CLUSTER_INFO_BIZ_ID = 0
+
     bk_biz_id = models.IntegerField(_("业务id"))
     storage_cluster_id = models.IntegerField(_("集群ID"))
-    storage_used = models.FloatField(_("已用容量"))
+    storage_used = models.FloatField(_("已用容量"), default=0)
+    storage_usage = models.IntegerField(_("容量使用率"), default=0)
+    storage_total = models.BigIntegerField(_("总容量"), default=0)
+    index_count = models.IntegerField(_("索引数量"), default=0)
+    biz_count = models.IntegerField(_("业务数量"), default=0)
 
     class Meta:
         verbose_name = _("业务已用容量")

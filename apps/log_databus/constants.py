@@ -37,6 +37,24 @@ COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
 BULK_CLUSTER_INFOS_LIMIT = 20
 
 
+class VisibleEnum(ChoicesEnum):
+    # 当前业务可见
+    CURRENT_BIZ = "current_biz"
+    # 多业务可见
+    MULTI_BIZ = "multi_biz"
+    # 全业务
+    ALL_BIZ = "all_biz"
+    # 业务属性可见
+    BIZ_ATTR = "biz_attr"
+
+    _choices_labels = (
+        (CURRENT_BIZ, _("当前业务")),
+        (MULTI_BIZ, _("多业务")),
+        (ALL_BIZ, _("全业务")),
+        (BIZ_ATTR, _("业务属性")),
+    )
+
+
 class EsSourceType(ChoicesEnum):
     OTHER = "other"
     PRIVATE = "private"
