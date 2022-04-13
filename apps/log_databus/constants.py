@@ -59,13 +59,24 @@ class EsSourceType(ChoicesEnum):
         (PRIVATE, _("私有自建")),
     )
 
-    def get_choices_list_dict():
+    def get_choices_list_dict(self):
         es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE).feature_config
-        return [ {
+        return [{
             "id": es_config[key]["id"],
             "name": es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"],
             "help_md": es_config[key]["help_md"]
         } for key in es_config]
+
+    @classmethod
+    def get_choices(cls):
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE).feature_config
+        return [es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"]
+                for key in es_config]
+
+    @classmethod
+    def get_keys(cls):
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE).feature_config
+        return [key for key in es_config]
 
 
 class StrategyKind(ChoicesEnum):
