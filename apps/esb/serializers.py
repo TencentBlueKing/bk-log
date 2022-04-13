@@ -17,18 +17,11 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.conf.urls import url, include
-from rest_framework import routers
+from django.utils.translation import ugettext_lazy as _
 
-from apps.esb import views
+from rest_framework import serializers
 
-router = routers.DefaultRouter(trailing_slash=True)
-router.register("wework", views.WeWorkViewSet, basename="wework")
 
-urlpatterns = [
-    url(r"^esb/.+", views.LogESBViewSet.as_view({"get": "call", "post": "call", "put": "call", "delete": "call"})),
-    url(
-        r"^meta/esb/.+", views.MetaESBViewSet.as_view({"get": "call", "post": "call", "put": "call", "delete": "call"})
-    ),
-    url("^esb_api/", include(router.urls)),
-]
+class WeWorkCreateChat(serializers.Serializer):
+    user_list = serializers.ListField(label=_("用户列表"))
+    name = serializers.CharField(label=_("群名称"), max_length=50)

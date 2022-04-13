@@ -212,7 +212,6 @@ class StorageHandler(object):
                 if not is_default:
                     continue
                 cluster_obj.update({"auth_info": {"username": "", "password": ""}, "is_editable": True})
-                cluster_obj["cluster_config"]["domain_name"] = ""
                 cluster_obj["cluster_config"]["max_retention"] = es_config["ES_PUBLIC_STORAGE_DURATION"]
                 # 默认集群权重：推荐集群 > 其他
                 cluster_obj["priority"] = 1 if cluster_obj["cluster_config"].get("is_default_cluster") else 2
