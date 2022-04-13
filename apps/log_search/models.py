@@ -835,7 +835,7 @@ class UserMetaConf(models.Model):
         unique_together = (("username", "type"),)
 
 
-class BizProperty(SoftDeleteModel):
+class BizProperty(models.Model):
     bk_biz_id = models.IntegerField(_("业务ID"), null=True, default=None)
     biz_property_id = models.CharField(_("业务属性ID"), max_length=64, null=True, default="")
     biz_property_name = models.CharField(_("业务属性名称"), max_length=64, null=True, default="")

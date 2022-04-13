@@ -17,6 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import markdown
+
 from django.conf import settings
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
@@ -64,7 +66,7 @@ class EsSourceType(ChoicesEnum):
         return [{
             "id": es_config[key]["id"],
             "name": es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"],
-            "help_md": es_config[key]["help_md"]
+            "help_md": markdown.markdown(es_config[key]["help_md"])
         } for key in es_config]
 
     @classmethod

@@ -36,12 +36,7 @@ def forwards_func(apps, schema_editor):
                 "id": EsSourceType.OTHER.value,
                 "name": "其他",
                 "name_en": EsSourceType.OTHER.name,
-                "button_list": [
-                    {
-                        "type": "blank",
-                        "url": "xxxx.xxxx.xx"
-                    }
-                ]
+                "button_list": []
             },
             EsSourceType.AWS.value: {
                 "help_md": """# AWS
@@ -79,12 +74,7 @@ OpenSearch 是一种分布式开源搜索和分析套件，可用于一组广泛
                 "id": EsSourceType.ALIYUN.value,
                 "name": "阿里云",
                 "name_en": EsSourceType.ALIYUN.name,
-                "button_list": [
-                    {
-                        "type": "blank",
-                        "url": "xxxx.xxxx.xx"
-                    }
-                ]
+                "button_list": []
             },
             EsSourceType.GOOGLE.value: {
                 "help_md": """# Google
@@ -107,12 +97,7 @@ Elastic 和 Google Cloud 已建立稳固的合作关系，可以帮助各种规�
                 "id": EsSourceType.PRIVATE.value,
                 "name": "私有自建",
                 "name_en": EsSourceType.PRIVATE.name,
-                "button_list": [
-                    {
-                        "type": "blank",
-                        "url": "xxxx.xxxx.xx"
-                    }
-                ]
+                "button_list": []
             },
         },
     )
