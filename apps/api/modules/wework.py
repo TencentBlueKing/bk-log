@@ -17,18 +17,32 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from django.conf.urls import url, include
-from rest_framework import routers
 
-from apps.esb import views
+from django.utils.translation import ugettext_lazy as _
 
-router = routers.DefaultRouter(trailing_slash=True)
-router.register("wework", views.WeWorkViewSet, basename="wework")
+from apps.api.base import DataAPI
+from apps.api.modules.utils import add_esb_info_before_request
+from config.domains import WEWORK_APIGATEWAY_ROOT
 
-urlpatterns = [
-    url(r"^esb/.+", views.LogESBViewSet.as_view({"get": "call", "post": "call", "put": "call", "delete": "call"})),
-    url(
-        r"^meta/esb/.+", views.MetaESBViewSet.as_view({"get": "call", "post": "call", "put": "call", "delete": "call"})
-    ),
-    url("^esb_api/", include(router.urls)),
-]
+
+class _WeWork(object):
+    MODULE = _("Wework")
+
+    def __init__(self):
+        self.create_appchat = DataAPI(
+            method="POST",
+            url=WEWORK_APIGATEWAY_ROOT + "create_appchat/",
+            module=self.MODULE,
+            description="创建企业微信群聊",
+            before_request=add_esb_info_before_request,
+        )
+        self.send_appchat = DataAPI(
+            method="POST",
+            url=WEWORK_APIGATEWAY_ROOT + "send_appchat/",
+            module=self.MODULE,
+            description="发送企业微信群聊",
+            before_request=add_esb_info_before_request,
+        )
+
+
+WeWork = _WeWork()
