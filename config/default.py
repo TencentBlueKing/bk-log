@@ -281,6 +281,10 @@ MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
 BK_DOC_QUERY_URL = "https://bk.tencent.com/docs/document/5.1/90/3822/"
 BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
+
+# 日志归档文档
+BK_ARCHIVE_DOC_URL = os.getenv("BKAPP_ARCHIVE_DOC_URL", "")
+
 # 计算平台文档地址
 BK_DOC_DATA_URL = ""
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
