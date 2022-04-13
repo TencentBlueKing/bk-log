@@ -854,16 +854,6 @@ class BizProperty(models.Model):
             "biz_property_value": []
         })
         for bi in biz_properties:
-            # biz_property_id = bi.biz_property_id
-            # biz_property_name = bi.biz_property_name
-            # biz_property_value = bi.biz_property_value
-            # if not biz_properties_dict.get(biz_property_id):
-            #     biz_properties_dict[biz_property_id] =
-            #         "biz_property_name": biz_property_name,
-            #         "biz_property_value": []
-            #     }
-            # if biz_property_value not in biz_properties_dict[biz_property_id]["biz_property_value"]:
-            #     biz_properties_dict[biz_property_id]["biz_property_value"].append(biz_property_value)
             biz_properties_dict[bi.biz_property_id]["biz_property_name"] = bi.biz_property_name
             biz_properties_dict[bi.biz_property_id]["biz_property_value"].append(bi.biz_property_value)
 
