@@ -70,12 +70,6 @@ class EsSourceType(ChoicesEnum):
         } for key in es_config]
 
     @classmethod
-    def get_choices(cls):
-        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE).feature_config
-        return [es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"]
-                for key in es_config]
-
-    @classmethod
     def get_keys(cls):
         es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE).feature_config
         return [key for key in es_config]
