@@ -18,6 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import os
+from collections import defaultdict
 
 from django.conf import settings
 from django.db import models
@@ -848,23 +849,28 @@ class BizProperty(models.Model):
     @classmethod
     def list_biz_property(cls) -> list:
         biz_properties = BizProperty.objects.all()
-        biz_properties_dict = {}
+        biz_properties_dict = defaultdict(lambda: {
+            "biz_property_name": "",
+            "biz_property_value": []
+        })
         for bi in biz_properties:
-            biz_property_id = bi.biz_property_id
-            biz_property_name = bi.biz_property_name
-            biz_property_value = bi.biz_property_value
-            if not biz_properties_dict.get(biz_property_id):
-                biz_properties_dict[biz_property_id] = {
-                    "biz_property_name": biz_property_name,
-                    "biz_property_value": []
-                }
-            if biz_property_value not in biz_properties_dict[biz_property_id]["biz_property_value"]:
-                biz_properties_dict[biz_property_id]["biz_property_value"].append(biz_property_value)
+            # biz_property_id = bi.biz_property_id
+            # biz_property_name = bi.biz_property_name
+            # biz_property_value = bi.biz_property_value
+            # if not biz_properties_dict.get(biz_property_id):
+            #     biz_properties_dict[biz_property_id] =
+            #         "biz_property_name": biz_property_name,
+            #         "biz_property_value": []
+            #     }
+            # if biz_property_value not in biz_properties_dict[biz_property_id]["biz_property_value"]:
+            #     biz_properties_dict[biz_property_id]["biz_property_value"].append(biz_property_value)
+            biz_properties_dict[bi.biz_property_id]["biz_property_name"] = bi.biz_property_name
+            biz_properties_dict[bi.biz_property_id]["biz_property_value"].append(bi.biz_property_value)
 
         return [
             {
                 "biz_property_id": biz_property_id,
                 "biz_property_name": biz_properties_dict[biz_property_id]["biz_property_name"],
-                "biz_property_value": biz_properties_dict[biz_property_id]["biz_property_value"]
+                "biz_property_value": list(set(biz_properties_dict[biz_property_id]["biz_property_value"]))
             } for biz_property_id in biz_properties_dict
         ]

@@ -127,17 +127,11 @@ def sync_biz_property():
             biz_property_id = bi.biz_property_id
             if biz_properties.get(bk_biz_id) and biz_properties[bk_biz_id].get(biz_property_id):
                 # 判断是否有满足bk_biz_id和biz_property_id的记录
-                if bi.biz_property_name == biz_properties[bk_biz_id][biz_property_id]["biz_property_name"] and \
-                        bi.biz_property_value == biz_properties[bk_biz_id][biz_property_id]["biz_property_value"]:
+                if (bi.biz_property_name, bi.biz_property_value) == \
+                        (biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],
+                         biz_properties[bk_biz_id][biz_property_id]["biz_property_value"]):
                     del biz_properties[bk_biz_id][biz_property_id]
                 else:
-                    has_deleted = BizProperty.objects.filter(
-                        bk_biz_id=bk_biz_id,
-                        biz_property_id=biz_property_id,
-                        is_deleted=True)
-                    if has_deleted:
-                        has_deleted.update(is_deleted=False)
-
                     # 修改属性
                     BizProperty.objects.filter(bk_biz_id=bk_biz_id, biz_property_id=biz_property_id).update(
                         biz_property_name=biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],

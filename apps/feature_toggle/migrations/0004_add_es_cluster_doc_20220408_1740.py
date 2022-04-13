@@ -41,9 +41,7 @@ def forwards_func(apps, schema_editor):
             EsSourceType.AWS.value: {
                 "help_md": """# AWS
 
-OpenSearch 是一种分布式开源搜索和分析套件，可用于一组广泛的使用案例，如实时应用程序监控、日志分析和网站搜索。OpenSearch 提供了一个高度可扩展的系统，通过集成的可视化工具 OpenSearch 控制面板为大量数据提供快速访问和响应，使用户可以轻松地探索他们的数据。与 Elasticsearch 和 Apache Solr 相同的是，OpenSearch 由 Apache Lucene 搜索库提供支持。
-
-<a target="_blank" id="blank" url="https://aws.amazon.com/cn/opensearch-service/the-elk-stack/what-is-opensearch/">跳转AWS</a>""",
+OpenSearch 是一种分布式开源搜索和分析套件，可用于一组广泛的使用案例，如实时应用程序监控、日志分析和网站搜索。OpenSearch 提供了一个高度可扩展的系统，通过集成的可视化工具 OpenSearch 控制面板为大量数据提供快速访问和响应，使用户可以轻松地探索他们的数据。与 Elasticsearch 和 Apache Solr 相同的是，OpenSearch 由 Apache Lucene 搜索库提供支持。""",
                 "id": EsSourceType.AWS.value,
                 "name": "AWS",
                 "name_en": EsSourceType.AWS.name,
@@ -56,9 +54,7 @@ OpenSearch 是一种分布式开源搜索和分析套件，可用于一组广泛
             },
             EsSourceType.QCLOUD.value: {
                 "help_md": """# 腾讯云
-腾讯云 Elasticsearch Service（ES）是基于开源搜索引擎 Elasticsearch 打造的高可用、可伸缩的云端全托管的 Elasticsearch 服务，包含 Kibana 及常用插件，并集成了安全、SQL、机器学习、告警、监控等高级特性（X-Pack）。使用腾讯云 ES，您可以快速部署、轻松管理、按需扩展您的集群，简化复杂运维操作，快速构建日志分析、异常监控、网站搜索、企业搜索、BI 分析等各类业务。
-
-<a target="_blank" id="blank" url="https://cloud.tencent.com/document/product/845">跳转腾讯云</a>""",
+腾讯云 Elasticsearch Service（ES）是基于开源搜索引擎 Elasticsearch 打造的高可用、可伸缩的云端全托管的 Elasticsearch 服务，包含 Kibana 及常用插件，并集成了安全、SQL、机器学习、告警、监控等高级特性（X-Pack）。使用腾讯云 ES，您可以快速部署、轻松管理、按需扩展您的集群，简化复杂运维操作，快速构建日志分析、异常监控、网站搜索、企业搜索、BI 分析等各类业务。""",
                 "id": EsSourceType.QCLOUD.value,
                 "name": "腾讯云",
                 "name_en": EsSourceType.QCLOUD.name,
@@ -79,9 +75,7 @@ OpenSearch 是一种分布式开源搜索和分析套件，可用于一组广泛
             EsSourceType.GOOGLE.value: {
                 "help_md": """# Google
 
-Elastic 和 Google Cloud 已建立稳固的合作关系，可以帮助各种规模的企业在 Google Cloud 上部署 Elastic 企业搜索、可观测性和安全解决方案，让您能够在数分钟内从数据中获得强大的实时见解。
-
-<a target="_blank" id="blank" url="https://www.elastic.co/cn/partners/google-cloud">跳转Goole</a>""",
+Elastic 和 Google Cloud 已建立稳固的合作关系，可以帮助各种规模的企业在 Google Cloud 上部署 Elastic 企业搜索、可观测性和安全解决方案，让您能够在数分钟内从数据中获得强大的实时见解。""",
                 "id": EsSourceType.GOOGLE.value,
                 "name": "google",
                 "name_en": EsSourceType.GOOGLE.name,
