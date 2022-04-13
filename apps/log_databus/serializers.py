@@ -455,7 +455,7 @@ class StorageUpdateSerializer(serializers.Serializer):
     visible_config = VisibleSerializer(label=_("可见范围配置"))
     setup_config = SetupSerializer(label=_("es设置"))
     admin = serializers.ListField(label=_("负责人"))
-    description = serializers.CharField(label=_("集群描述"))
+    description = serializers.CharField(label=_("集群描述"), required=False, default="", allow_blank=True)
     enable_archive = serializers.BooleanField(label=_("是否开启日志归档"))
     enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
 
