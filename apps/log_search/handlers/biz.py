@@ -65,7 +65,7 @@ class BizHandler(APIModel):
                 "bk_biz_productor",
             ]
         }
-        biz_list = CCApi.get_app_list(params).get("info", [])
+        biz_list = CCApi.get_app_list.bulk_request(params)
         if not fields or not biz_list:
             return biz_list
         business = []
@@ -1178,7 +1178,7 @@ class BizHandler(APIModel):
 
         params = {"fields": [pi for pi in biz_properties_dict]}
         params["fields"].append("bk_biz_id")
-        biz_list = CCApi.get_app_list(params).get("info", [])
+        biz_list = CCApi.get_app_list.bulk_request(params)
         result = {}
         for biz in biz_list:
             bk_biz_id = int(biz["bk_biz_id"])
