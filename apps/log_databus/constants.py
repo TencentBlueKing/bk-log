@@ -29,7 +29,7 @@ from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 RESTORE_INDEX_SET_PREFIX = "restore_"
 
-BKLOG_RESULT_TABLE_PATTERN = fr"(\d*?_{settings.TABLE_ID_PREFIX}_.*)_.*_.*"
+BKLOG_RESULT_TABLE_PATTERN = rf"(\d*?_{settings.TABLE_ID_PREFIX}_.*)_.*_.*"
 
 NOT_FOUND_CODE = "[404]"
 
@@ -85,10 +85,12 @@ class EsSourceType(ChoicesEnum):
         if not es_config:
             return super().get_choices()
         es_config = es_config.feature_config
-        return [
-            es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"]
-            for key in es_config
-        ]
+        return tuple(
+            [
+                es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"]
+                for key in es_config
+            ]
+        )
 
     @classmethod
     def get_choices_list_dict(cls):
