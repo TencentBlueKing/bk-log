@@ -59,6 +59,7 @@ const logPluginConfig = {
       window.MENU_LOGO_URL = '\${MENU_LOGO_URL}'
       window.APP_CODE = '\${APP_CODE}'
       window.BK_DOC_URL = '\${BK_DOC_URL}'
+      window.BK_FAQ_URL = '\${BK_FAQ_URL}'
       window.BK_DOC_QUERY_URL = '\${BK_DOC_QUERY_URL}'
       window.BK_HOT_WARM_CONFIG_URL = '\${BK_HOT_WARM_CONFIG_URL}'
       window.BIZ_ACCESS_URL = '\${BIZ_ACCESS_URL}'
