@@ -79,17 +79,37 @@ class EsSourceType(ChoicesEnum):
         (PRIVATE, _("私有自建")),
     )
 
+    @classmethod
+    def get_choices(cls) -> tuple:
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
+        if not es_config:
+            return super().get_choices()
+        es_config = es_config.feature_config
+        return [
+            es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"]
+            for key in es_config
+        ]
+
     def get_choices_list_dict(self):
-        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE).feature_config
-        return [{
-            "id": es_config[key]["id"],
-            "name": es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"],
-            "help_md": markdown.markdown(es_config[key]["help_md"])
-        } for key in es_config]
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
+        if not es_config:
+            return super().get_choices_list_dict()
+        es_config = es_config.feature_config
+        return [
+            {
+                "id": es_config[key]["id"],
+                "name": es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"],
+                "help_md": markdown.markdown(es_config[key]["help_md"]),
+            }
+            for key in es_config
+        ]
 
     @classmethod
     def get_keys(cls):
-        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE).feature_config
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
+        if not es_config:
+            return super().get_keys()
+        es_config = es_config.feature_config
         return [key for key in es_config]
 
 
