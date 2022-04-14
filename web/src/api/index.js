@@ -226,18 +226,8 @@ function handleReject(error, config, url) {
       const loginData = error.response.data;
       if (loginData.has_plain) {
         try {
-          let loginUrl = loginData.login_url;
-          if (!loginUrl.includes('?')) {
-            loginUrl += '?';
-          }
-          if (!loginUrl.includes('app_code')) {
-            loginUrl += '&app_code=bk_log_search';
-          }
-          if (!loginUrl.includes('c_url')) {
-            loginUrl += `&c_url=${window.origin + window.SITE_URL}login_success/`;
-          }
-          loginData.loginUrl = loginUrl;
-          window.bus.$emit('show-login-modal', loginData);
+          window.LoginModal.$props.loginUrl = loginData.login_url;
+          window.LoginModal.show();
         } catch (_) {
           handleLoginExpire();
         }
