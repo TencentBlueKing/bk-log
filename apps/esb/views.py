@@ -22,12 +22,43 @@ from django.urls import Resolver404
 from django.urls import resolve
 from django.conf import settings
 
+from apps.esb.serializers import WeWorkCreateChat
 from apps.generic import APIViewSet
 from apps.esb import exceptions
-from apps.api import BkLogApi, TransferApi
+from apps.api import BkLogApi, TransferApi, WeWorkApi
 from apps.iam.handlers.drf import ViewBusinessPermission, BusinessActionPermission, InstanceActionForDataPermission
 from apps.iam.handlers.actions import _all_actions
 from apps.iam.handlers.resources import _all_resources
+from apps.utils.drf import list_route
+from django.utils.translation import ugettext_lazy as _
+
+
+class WeWorkViewSet(APIViewSet):
+    @list_route(methods=["POST"], url_path="create_chat")
+    def create_chat(self, request):
+        """
+        @api {post} /api/v1/esb_api/wework/create_chat/ 创建群聊
+        @apiName create_chat
+        @apiDescription 创建群聊
+        @apiGroup esb_wework
+        @apiParam {List} user_list 用户群员列表
+        @apiParam {String} name 群名称
+        @apiParamExample {Json} 请求参数
+        {
+            "user_list": ["admin", "xxx"]
+            "name": "xxx"
+        }
+        """
+        data = self.params_valid(WeWorkCreateChat)
+        chatid = WeWorkApi.create_appchat(
+            {
+                "userlist": data["user_list"],
+                "name": data["name"],
+                "owner": request.user.username,
+            }
+        )["chatid"]
+        WeWorkApi.send_appchat({"chatid": chatid, "msgtype": "text", "text": {"content": str(_("日志平台咨询群已创建，请@群里咨询"))}})
+        return Response({"chatid": chatid})
 
 
 class LogESBViewSet(APIViewSet):
@@ -169,5 +200,7 @@ class MetaESBViewSet(APIViewSet):
     def create_create_es_snapshot_repository(self, params):
         if "bk_biz_id" not in params:
             raise ValueError("bk_biz_id is required")
+        if "bklog" in params["snapshot_repository_name"]:
+            raise ValueError("bklog is not allowed in snapshot_repository_name")
         params["snapshot_repository_name"] = f"{params['bk_biz_id']}_bklog_{params['snapshot_repository_name']}"
         return Response(BkLogApi.create_es_snapshot_repository(params))

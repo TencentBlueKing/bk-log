@@ -96,12 +96,13 @@ class EtlHandler(object):
                     "bk_biz_id": collect_config.bk_biz_id,
                     "approvals": ",".join(data["assessment_config"]["approvals"]),
                     "log_assessment": data["assessment_config"]["log_assessment"],
+                    "collector_detail": itsm_handler.generate_collector_detail_itsm_form(collect_config),
                 }
             )
             collect_config.set_itsm_success()
-            if data["need_approval"]:
+            if data["assessment_config"]["need_approval"]:
                 collect_config.set_itsm_applying(sn)
-                ItsmEtlConfig.objects.create(ticket_sn=sn, request_para=data)
+                ItsmEtlConfig.objects.create(ticket_sn=sn, request_param=data)
                 return itsm_handler.collect_itsm_status(collect_config_id), False
         return data, True
 

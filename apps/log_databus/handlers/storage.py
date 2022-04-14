@@ -18,6 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import functools
+import operator
 import re
 import socket
 from collections import defaultdict
@@ -26,7 +27,7 @@ import arrow
 
 from django.conf import settings
 from django.utils.translation import ugettext as _
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from elasticsearch import Elasticsearch
 
 from apps.log_databus.utils.es_config import get_es_config
@@ -35,7 +36,7 @@ from apps.utils.thread import MultiExecuteFunc
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import Permission, ResourceEnum
 from apps.log_esquery.utils.es_route import EsRoute
-from apps.log_search.models import Scenario, ProjectInfo
+from apps.log_search.models import Scenario, ProjectInfo, BizProperty
 from apps.utils.cache import cache_five_minute
 from apps.utils.local import get_local_param, get_request_username
 from apps.api import TransferApi, BkLogApi
@@ -80,10 +81,20 @@ class StorageHandler(object):
         if visible_config["visible_type"] == VisibleEnum.MULTI_BIZ.value:
             return str(bk_biz_id) in [str(bk_biz["bk_biz_id"]) for bk_biz in visible_config["visible_bk_biz"]]
 
-        # todo: 业务属性可见
         if visible_config["visible_type"] == VisibleEnum.BIZ_ATTR.value:
-            return True
-
+            bk_biz_labels = visible_config.get("bk_biz_labels", {})
+            if not bk_biz_labels:
+                return False
+            q_filter = Q()
+            for label_key, label_values in bk_biz_labels.items():
+                q_filter &= functools.reduce(
+                    operator.or_,
+                    [
+                        Q(bk_biz_id=bk_biz_id, bk_property_id=label_key, bk_property_value=label_value)
+                        for label_value in label_values
+                    ],
+                )
+            return BizProperty.objects.filter(q_filter).exists()
         return False
 
     def get_cluster_groups(self, bk_biz_id, is_default=True, enable_archive=False):
@@ -211,8 +222,8 @@ class StorageHandler(object):
             if cluster_obj["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
                 if not is_default:
                     continue
-                cluster_obj.update({"auth_info": {"username": "", "password": ""}, "is_editable": True})
-                cluster_obj["cluster_config"]["domain_name"] = ""
+                cluster_obj["is_editable"] = True
+                cluster_obj["auth_info"]["password"] = ""
                 cluster_obj["cluster_config"]["max_retention"] = es_config["ES_PUBLIC_STORAGE_DURATION"]
                 # 默认集群权重：推荐集群 > 其他
                 cluster_obj["priority"] = 1 if cluster_obj["cluster_config"].get("is_default_cluster") else 2
@@ -442,9 +453,11 @@ class StorageHandler(object):
         cluster_objs = TransferApi.get_cluster_info(get_cluster_info_params)
         if not cluster_objs:
             raise StorageNotExistException()
-        # 判断该集群是否可编辑
-        if cluster_objs[0]["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
-            raise StorageNotPermissionException()
+
+        # # 判断该集群是否可编辑
+        # if cluster_objs[0]["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
+        #     raise StorageNotPermissionException()
+
         # 判断该集群是否属于该业务
         if cluster_objs[0]["cluster_config"]["custom_option"].get("bk_biz_id") != bk_biz_id:
             raise StorageNotPermissionException()

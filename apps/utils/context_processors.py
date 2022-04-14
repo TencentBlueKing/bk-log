@@ -87,4 +87,5 @@ def mysetting(request):
         "BK_LOGIN_URL": "{}/api/c/compapi/v2/usermanage/fs_list_users/".format(bk_login_url_prefix),
         "MENU_LOGO_URL": f"{settings.STATIC_URL}{settings.MENU_LOGO_URL}",
         "BK_DOC_DATA_URL": settings.BK_DOC_DATA_URL,
+        "BK_ARCHIVE_DOC_URL": settings.BK_ARCHIVE_DOC_URL,
     }

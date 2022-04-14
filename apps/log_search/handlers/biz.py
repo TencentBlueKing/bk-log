@@ -37,10 +37,11 @@ from apps.log_search.constants import (
     MAX_LIST_BIZ_HOSTS_PARAMS_COUNT,
     CCInstanceType,
     FIND_MODULE_WITH_RELATION_FIELDS,
+    BK_PROPERTY_GROUP_ROLE,
 )
 from apps.utils import APIModel
 from apps.utils.cache import cache_five_minute, cache_one_hour
-from apps.log_search.models import ProjectInfo
+from apps.log_search.models import ProjectInfo, BizProperty
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
 
@@ -64,7 +65,7 @@ class BizHandler(APIModel):
                 "bk_biz_productor",
             ]
         }
-        biz_list = CCApi.get_app_list(params).get("info", [])
+        biz_list = CCApi.get_app_list.bulk_request(params)
         if not fields or not biz_list:
             return biz_list
         business = []
@@ -1162,6 +1163,39 @@ class BizHandler(APIModel):
         host_dict = self.get_node_path(sets_info)
         host_result = self.get_service_category(host_dict, is_dynamic=True)
         return host_result
+
+    @staticmethod
+    def get_biz_properties() -> dict:
+        """
+        获取CMDB业务属性值信息
+        """
+        biz_properties_dict = {}
+        biz_properties = CCApi.search_object_attribute({"bk_obj_id": "biz"})
+        for bi in biz_properties:
+            if bi["bk_property_group"] == BK_PROPERTY_GROUP_ROLE:
+                continue
+            biz_properties_dict[bi["bk_property_id"]] = bi["bk_property_name"]
+
+        params = {"fields": [pi for pi in biz_properties_dict]}
+        params["fields"].append("bk_biz_id")
+        biz_list = CCApi.get_app_list.bulk_request(params)
+        result = {}
+        for biz in biz_list:
+            bk_biz_id = int(biz["bk_biz_id"])
+            result[bk_biz_id] = {}
+            for bk_property_id in biz_properties_dict:
+                biz_property_value = biz.get(bk_property_id)
+                if not biz_property_value:
+                    continue
+                result[bk_biz_id][bk_property_id] = {
+                    "biz_property_name": biz_properties_dict[bk_property_id],
+                    "biz_property_value": biz_property_value,
+                }
+
+        return result
+
+    def list_biz_property(self):
+        return BizProperty.list_biz_property()
 
 
 class ServiceCategorySearcher(object):
