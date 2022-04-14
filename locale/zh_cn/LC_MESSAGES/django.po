@@ -18,68 +18,62 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: apps/api/base.py:229
-#, fuzzy, python-brace-format
-#| msgid "[{module}]API请求异常：({error_message})"
+#, python-brace-format
 msgid "[{module}-API]{error_message}"
-msgstr "[{module}]API request exception：({error_message})"
+msgstr ""
 
 #: apps/api/base.py:298
 msgid "返回数据格式不正确，结果格式非json."
-msgstr "The returned data format is incorrect, the result format is not json."
+msgstr ""
 
 #: apps/api/base.py:367
-#, fuzzy, python-brace-format
-#| msgid "[FLOW-API-LOG] {info}"
+#, python-brace-format
 msgid "[BKLOGAPI] {info}"
-msgstr "[FLOW-API-LOG] {info}"
+msgstr ""
 
 #: apps/api/base.py:787
 msgid "请求缺少org_id"
-msgstr "Request is missing org_id"
+msgstr ""
 
 #: apps/api/modules/bk_itsm.py:29
 msgid "ITSM"
-msgstr "ITSM"
+msgstr ""
 
 #: apps/api/modules/bk_log.py:29
 msgid "log_search元数据"
-msgstr "log_search metadata"
+msgstr ""
 
 #: apps/api/modules/bk_log.py:36
 msgid "查询数据"
-msgstr "Query data"
+msgstr ""
 
 #: apps/api/modules/bk_log.py:45
 msgid "拉取索引mapping"
-msgstr "Pull index mapping"
+msgstr ""
 
 #: apps/api/modules/bk_log.py:53
 msgid "查询数据DSL模式"
-msgstr "Query data DSL mode"
+msgstr ""
 
 #: apps/api/modules/bk_log.py:61
 msgid "scroll滚动查询"
-msgstr "scroll query"
+msgstr ""
 
 #: apps/api/modules/bk_log.py:69
-#, fuzzy
-#| msgid "获取数据入库列表"
 msgid "获取索引列表"
-msgstr "Get data storage list"
+msgstr ""
 
 #: apps/api/modules/bk_log.py:77
-#, fuzzy
-#| msgid "路径信息"
 msgid "获取集群信息"
-msgstr "Path information"
+msgstr ""
 
 #: apps/api/modules/bk_log.py:86
 msgid "获取kafka采样"
-msgstr "get kafka"
+msgstr ""
 
 #: apps/api/modules/bk_log.py:93
 msgid "es请求转发"
-msgstr "es request route"
+msgstr ""
 
 #: apps/api/modules/bk_log.py:101
 msgid "连通性测试"
@@ -87,73 +81,59 @@ msgstr ""
 
 #: apps/api/modules/bk_login.py:54
 msgid "PaaS平台登录模块"
-msgstr "PaaS platform login module"
+msgstr ""
 
 #: apps/api/modules/bk_paas.py:29
 msgid "PaaS平台"
-msgstr "PaaS platform"
+msgstr ""
 
 #: apps/api/modules/bkdata_access.py:32
-#, fuzzy
-#| msgid "数据平台查询模块"
 msgid "数据平台接入模块"
-msgstr "Data system query module"
+msgstr ""
 
 #: apps/api/modules/bkdata_aiops.py:28
-#, fuzzy
-#| msgid "数据平台查询模块"
 msgid "数据平台aiops模块"
-msgstr "Data system query module"
+msgstr ""
 
 #: apps/api/modules/bkdata_auth.py:32
-#, fuzzy
-#| msgid "数据平台权限模块"
 msgid "数据平台鉴权模块"
-msgstr "Data platform permission module"
+msgstr ""
 
 #: apps/api/modules/bkdata_databus.py:29
-#, fuzzy
-#| msgid "数据平台元数据模块"
 msgid "计算平台总线模块"
-msgstr "Data platform metadata module"
+msgstr ""
 
 #: apps/api/modules/bkdata_dataflow.py:27
-#, fuzzy
-#| msgid "数据平台查询模块"
 msgid "数据平台dataflow模块"
-msgstr "Data system query module"
+msgstr ""
 
 #: apps/api/modules/bkdata_meta.py:29
-#, fuzzy
-#| msgid "数据平台元数据模块"
 msgid "计算平台元数据模块"
-msgstr "Data platform metadata module"
+msgstr ""
 
 #: apps/api/modules/bkdata_query.py:30
-#, fuzzy
-#| msgid "数据平台查询模块"
 msgid "计算平台数据查询模块"
-msgstr "Data platform query module"
+msgstr ""
 
 #: apps/api/modules/bkdata_storekit.py:29
 msgid "数据平台存储模块"
-msgstr "Data platform storage module"
+msgstr ""
 
 #: apps/api/modules/cc.py:49 apps/iam/handlers/permission.py:366
 msgid "配置平台"
-msgstr "Configuration platform"
+msgstr ""
 
 #: apps/api/modules/cmsi.py:55
 msgid "CMSI"
-msgstr "CMSI"
+msgstr ""
 
 #: apps/api/modules/gse.py:49
 msgid "GSE"
-msgstr "GSE"
+msgstr ""
 
 #: apps/api/modules/gse.py:56
 msgid "获取agent状态"
-msgstr "Get agent status"
+msgstr ""
 
 #: apps/api/modules/iam.py:32
 msgid "IAM"
@@ -165,17 +145,15 @@ msgstr ""
 
 #: apps/api/modules/job.py:37
 msgid "快速执行脚本"
-msgstr "Fast execute script"
+msgstr ""
 
 #: apps/api/modules/job.py:44
 msgid "快速分发文件"
-msgstr "Distribute files"
+msgstr ""
 
 #: apps/api/modules/job.py:51
-#, fuzzy
-#| msgid "根据作业实例ID查询作业执行日志"
 msgid "根据作业id获取执行日志"
-msgstr "Get"
+msgstr ""
 
 #: apps/api/modules/monitor.py:32
 msgid "MONITOR"
@@ -183,19 +161,19 @@ msgstr ""
 
 #: apps/api/modules/paascc.py:28
 msgid " 蓝鲸 PaaS 3.0 配置中心"
-msgstr "Blueking PaaS 3.0 Configuration Center"
+msgstr ""
 
 #: apps/api/modules/transfer.py:79
 msgid "Transfer元数据"
-msgstr "Transfer metadata"
+msgstr ""
 
 #: apps/api/modules/transfer.py:86
 msgid "创建数据源"
-msgstr "Create data source"
+msgstr ""
 
 #: apps/api/modules/transfer.py:93
 msgid "修改数据源"
-msgstr "Create data source"
+msgstr ""
 
 #: apps/api/modules/transfer.py:100
 msgid "修改数据源与结果表的关系"
@@ -203,55 +181,51 @@ msgstr ""
 
 #: apps/api/modules/transfer.py:107
 msgid "创建结果表"
-msgstr "Create result table"
+msgstr ""
 
 #: apps/api/modules/transfer.py:114
-#, fuzzy
-#| msgid "存储集群ID"
 msgid "删除存储集群"
-msgstr "Storage cluster ID"
+msgstr ""
 
 #: apps/api/modules/transfer.py:121
 msgid "修改结果表"
-msgstr "Modify result table"
+msgstr ""
 
 #: apps/api/modules/transfer.py:128
 msgid "结果表起停"
-msgstr "Start or stop result table"
+msgstr ""
 
 #: apps/api/modules/transfer.py:135
 msgid "获取数据源标签"
-msgstr "Get data source tags"
+msgstr ""
 
 #: apps/api/modules/transfer.py:142
 msgid "查询一个数据源的ID"
-msgstr "Query the ID of a data source"
+msgstr ""
 
 #: apps/api/modules/transfer.py:149
 msgid "查询一个结果表的信息"
-msgstr "Query the information of a result table"
+msgstr ""
 
 #: apps/api/modules/transfer.py:156
 msgid "查询一个结果表的存储信息"
-msgstr "Query the storage information of a result table"
+msgstr ""
 
 #: apps/api/modules/transfer.py:164
 msgid "查询存储集群列表"
-msgstr "Querying the Storage Cluster List"
+msgstr ""
 
 #: apps/api/modules/transfer.py:172 apps/api/modules/transfer.py:186
 msgid "创建存储集群"
-msgstr "Create storage cluster"
+msgstr ""
 
 #: apps/api/modules/transfer.py:179
 msgid "修改存储集群"
-msgstr "Modify storage cluster"
+msgstr ""
 
 #: apps/api/modules/transfer.py:193
-#, fuzzy
-#| msgid "路径信息"
 msgid "获取所有transfer集群信息"
-msgstr "Path information"
+msgstr ""
 
 #: apps/api/modules/transfer.py:201
 msgid "创建ES快照仓库"
@@ -278,16 +252,12 @@ msgid "所有快照仓库列表"
 msgstr ""
 
 #: apps/api/modules/transfer.py:243
-#, fuzzy
-#| msgid "创建结果表"
 msgid "创建结果表快照配置"
-msgstr "Create result table"
+msgstr ""
 
 #: apps/api/modules/transfer.py:250
-#, fuzzy
-#| msgid "修改结果表"
 msgid "修改结果表快照配置"
-msgstr "Modify result table"
+msgstr ""
 
 #: apps/api/modules/transfer.py:257
 msgid "删除结果表快照配置"
@@ -302,10 +272,8 @@ msgid "结果表快照配置列表含物理索引"
 msgstr ""
 
 #: apps/api/modules/transfer.py:278
-#, fuzzy
-#| msgid "获取结果表信息失败"
 msgid "获取结果表快照状态"
-msgstr "Failed to get result table information"
+msgstr ""
 
 #: apps/api/modules/transfer.py:285
 msgid "快照回溯"
@@ -340,20 +308,16 @@ msgid "0~10 s"
 msgstr ""
 
 #: apps/bk_log_admin/exceptions.py:27
-#, fuzzy
-#| msgid "管理模块异常"
 msgid "管理端模块异常"
-msgstr "Management module exception"
+msgstr ""
 
 #: apps/bk_log_admin/exceptions.py:32
-#, fuzzy
-#| msgid "索引集用户检索记录"
 msgid "检索历史不存在"
-msgstr "Indices user search records"
+msgstr ""
 
 #: apps/bk_log_admin/exceptions.py:37 apps/exceptions.py:80
 msgid "参数验证失败"
-msgstr "Parameter validation failed"
+msgstr ""
 
 #: apps/bk_log_admin/exceptions.py:42
 msgid "获取自定义上报token异常"
@@ -364,26 +328,20 @@ msgid "获取globalConfig中custom_report_setting 异常"
 msgstr ""
 
 #: apps/bk_log_admin/exceptions.py:52
-#, fuzzy
-#| msgid "source_id不能为空"
 msgid "index_set_id不应该为空"
-msgstr "source_id cannot be empty"
+msgstr ""
 
 #: apps/bk_log_admin/exceptions.py:57
 msgid "biz_id or operate_type and operate_id 两组参数必填其中一组"
 msgstr ""
 
 #: apps/bk_log_admin/exceptions.py:62
-#, fuzzy
-#| msgid "系统错误，请联系管理员"
 msgid "数据源初始化异常, 请联系管理员"
-msgstr "System error, please contact the administrator"
+msgstr ""
 
 #: apps/bk_log_admin/handlers/audit_record.py:34
-#, fuzzy
-#| msgid "空格"
 msgid "空"
-msgstr "Space"
+msgstr ""
 
 #: apps/bk_log_admin/handlers/audit_record.py:39
 msgid "请求内容"
@@ -394,7 +352,7 @@ msgstr ""
 #: apps/log_extract/views/tasks_views.py:119
 #: apps/log_search/views/index_set_views.py:259
 msgid "分页参数不能为空"
-msgstr "Pagination parameter cannot be empty"
+msgstr ""
 
 #: apps/bk_log_admin/views/index_set.py:196
 #, python-brace-format
@@ -418,21 +376,17 @@ msgid "蓝鲸文件存储服务"
 msgstr ""
 
 #: apps/constants.py:71
-#, fuzzy
-#| msgid "[采集项]"
 msgid "采集项"
-msgstr "[Collection item]"
+msgstr ""
 
 #: apps/constants.py:72 apps/log_databus/models.py:303
-#, fuzzy
-#| msgid "存储集群ID"
 msgid "存储集群"
-msgstr "Storage cluster ID"
+msgstr ""
 
 #: apps/constants.py:73 apps/log_measure/handlers/metric_collectors/index.py:31
 #: apps/log_measure/handlers/metrics.py:376 apps/log_search/models.py:661
 msgid "索引集"
-msgstr "Indices"
+msgstr ""
 
 #: apps/constants.py:74
 msgid "检索配置"
@@ -441,7 +395,7 @@ msgstr ""
 #: apps/constants.py:75 apps/log_databus/models.py:94
 #: apps/log_databus/serializers.py:647 apps/log_databus/serializers.py:654
 msgid "清洗配置"
-msgstr "Cleaning configuration"
+msgstr ""
 
 #: apps/constants.py:76
 msgid "导出"
@@ -450,50 +404,38 @@ msgstr ""
 #: apps/constants.py:77
 #: apps/log_measure/handlers/metric_collectors/log_extract.py:32
 #: apps/log_measure/handlers/metrics.py:583
-#, fuzzy
-#| msgid "日志平台"
 msgid "日志提取策略"
-msgstr "Log platform"
+msgstr ""
 
 #: apps/constants.py:78
-#, fuzzy
-#| msgid "日志平台"
 msgid "日志提取链路"
-msgstr "Log platform"
+msgstr ""
 
 #: apps/constants.py:79
 #: apps/log_measure/handlers/metric_collectors/log_extract.py:56
 #: apps/log_measure/handlers/metrics.py:605 config/default.py:587
 msgid "日志提取任务"
-msgstr "Log platform"
+msgstr ""
 
 #: apps/constants.py:95
-#, fuzzy
-#| msgid "创建者"
 msgid "创建"
-msgstr "CreateBy"
+msgstr ""
 
 #: apps/constants.py:96
-#, fuzzy
-#| msgid "更新时间"
 msgid "更新"
-msgstr "UpdateTime"
+msgstr ""
 
 #: apps/constants.py:97
-#, fuzzy
-#| msgid "删除者"
 msgid "删除"
-msgstr "DeleteBy"
+msgstr ""
 
 #: apps/constants.py:98
 msgid "任务重试"
 msgstr ""
 
 #: apps/constants.py:99
-#, fuzzy
-#| msgid "开始时间"
 msgid "启动"
-msgstr "StartTime"
+msgstr ""
 
 #: apps/constants.py:100
 msgid "停止"
@@ -508,28 +450,24 @@ msgid "替换"
 msgstr ""
 
 #: apps/constants.py:103
-#, fuzzy
-#| msgid "配置平台"
 msgid "配置"
-msgstr "Configuration platform"
+msgstr ""
 
 #: apps/esb/exceptions.py:27
-#, fuzzy
-#| msgid "管理模块异常"
 msgid "esb转发模块异常"
-msgstr "Management module exception"
+msgstr ""
 
 #: apps/esb/exceptions.py:32
 msgid "请检查对应请求path"
-msgstr "Please check the corresponding request path"
+msgstr ""
 
 #: apps/esb/exceptions.py:37
 msgid "该url暂时不支持转发"
-msgstr "This url does not support forwarding for the time being"
+msgstr ""
 
 #: apps/esb/exceptions.py:42
 msgid "该method暂时不支持"
-msgstr "This method is temporarily not supported"
+msgstr ""
 
 #: apps/esb/exceptions.py:47
 msgid "没有传入鉴权实例id"
@@ -537,25 +475,24 @@ msgstr ""
 
 #: apps/exceptions.py:50
 msgid "系统异常"
-msgstr "System exception"
+msgstr ""
 
 #: apps/exceptions.py:85
 msgid "远程服务请求结果异常"
-msgstr "Remote service request result exception"
+msgstr ""
 
 #: apps/exceptions.py:90
 msgid "组件调用异常"
-msgstr "Remote service request result exception"
+msgstr ""
 
 #: apps/exceptions.py:95
-#, fuzzy, python-brace-format
-#| msgid "业务不存在"
+#, python-brace-format
 msgid "业务不存在: {bk_biz_id}"
-msgstr "Business not exist {bk_biz_id}"
+msgstr ""
 
 #: apps/exceptions.py:100
 msgid "语言不支持"
-msgstr "Language is not supported"
+msgstr ""
 
 #: apps/exceptions.py:105
 msgid "获取锁失败"
@@ -563,11 +500,11 @@ msgstr ""
 
 #: apps/exceptions.py:110
 msgid "权限不足"
-msgstr "Insufficient permissions"
+msgstr ""
 
 #: apps/exceptions.py:116
 msgid "服务不稳定，请检查组件健康状况"
-msgstr "Service is unstable, please check component health"
+msgstr ""
 
 #: apps/feature_toggle/models.py:33
 msgid "特性开关name"
@@ -598,31 +535,25 @@ msgid "业务白名单"
 msgstr ""
 
 #: apps/feature_toggle/models.py:42
-#, fuzzy
-#| msgid "日志平台"
 msgid "日志平台特性开关"
-msgstr "Log platform"
+msgstr ""
 
 #: apps/feature_toggle/models.py:43
-#, fuzzy
-#| msgid "日志平台"
 msgid "41_日志平台特性开关"
-msgstr "Log platform"
+msgstr ""
 
 #: apps/generic.py:335 apps/middlewares.py:142
 #, python-brace-format
 msgid "【APP 自定义异常】{message}, code={code}, args={args}"
-msgstr "【APP custom exception】 {message}, code = {code}, args = {args}"
+msgstr ""
 
 #: apps/generic.py:348
 msgid "系统错误，请联系管理员"
-msgstr "System error, please contact the administrator"
+msgstr ""
 
 #: apps/grafana/constants.py:27
-#, fuzzy
-#| msgid "主机IP"
 msgid "主机ID"
-msgstr "Host IP"
+msgstr ""
 
 #: apps/grafana/constants.py:28 apps/grafana/constants.py:33
 #: apps/grafana/constants.py:35 apps/log_databus/models.py:282
@@ -630,83 +561,79 @@ msgstr "Host IP"
 #: apps/log_databus/serializers.py:394 apps/log_databus/serializers.py:529
 #: apps/log_search/serializers.py:58
 msgid "集群ID"
-msgstr "Cluster ID"
+msgstr ""
 
 #: apps/grafana/constants.py:29 apps/grafana/constants.py:32
-#, fuzzy
-#| msgid "TOF模块"
 msgid "模块ID"
-msgstr "TOF module"
+msgstr ""
 
 #: apps/grafana/exceptions.py:27
-#, fuzzy
-#| msgid "管理模块异常"
 msgid "Grafana 模块异常"
-msgstr "Management module exception"
+msgstr ""
 
 #: apps/grafana/exceptions.py:37
 msgid "创建Grafana用户失败"
-msgstr "Failed to create Grafana user"
+msgstr ""
 
 #: apps/grafana/exceptions.py:42
 msgid "获取Grafana用户失败"
-msgstr "Failed to obtain Grafana user"
+msgstr ""
 
 #: apps/grafana/exceptions.py:47
 msgid "创建Grafana组织失败"
-msgstr "Failed to create Grafana organization"
+msgstr ""
 
 #: apps/grafana/exceptions.py:52
 msgid "获取Grafana组织失败"
-msgstr "Failed to obtain Grafana organization"
+msgstr ""
 
 #: apps/grafana/exceptions.py:57
 msgid "获取组织中的用户失败"
-msgstr "Failed to get users in the organization"
+msgstr ""
 
 #: apps/grafana/handlers/home_dashboard.py:33
 msgid "欢迎使用仪表盘"
-msgstr " to the Dashboard"
+msgstr ""
 
 #: apps/grafana/handlers/home_dashboard.py:61
 msgid "所有仪表盘"
-msgstr "All dashboards"
+msgstr ""
 
 #: apps/grafana/handlers/home_dashboard.py:80
 msgid "收藏和最近查看的仪表盘"
-msgstr "Favorites and Recently Viewed Dashboards"
+msgstr ""
 
 #: apps/grafana/handlers/home_dashboard.py:108
 msgid "还没有仪表盘？快速创建您的仪表盘吧！"
-msgstr "Don't have a dashboard yet? Create your dashboards quickly！"
+msgstr ""
 
 #: apps/grafana/handlers/home_dashboard.py:110
 msgid "为方便管理仪表盘，可以创建目录。"
-msgstr "To facilitate the management of dashboards, directories can be created."
+msgstr ""
 
 #: apps/grafana/handlers/home_dashboard.py:112
 msgid "本地有仪表盘配置文件，直接导入即可。"
-msgstr "here is a dashboard configuration file locally, which can be imported directly."
+msgstr ""
 
 #: apps/grafana/handlers/home_dashboard.py:114
 msgid "更多使用方法查看产品文档"
-msgstr "See product documentation for more usage"
+msgstr ""
 
 #: apps/grafana/handlers/home_dashboard.py:122
 msgid "仪表盘使用指引"
-msgstr "Please enter, pay attention to the space symbol"
+msgstr ""
 
 #: apps/grafana/handlers/query.py:54 apps/grafana/handlers/query.py:56
 #: apps/log_search/views/search_views.py:781
 #: apps/log_search/views/search_views.py:783
 msgid "请输入，注意空格符号"
-msgstr "Please enter, pay attention to the space symbol"
+msgstr ""
 
 #: apps/grafana/handlers/query.py:55 apps/grafana/handlers/query.py:57
 #: apps/log_search/views/search_views.py:782
 #: apps/log_search/views/search_views.py:784
 msgid "逗号分隔"
-msgstr "Comma separated"
+msgstr ""
 
 #: apps/grafana/handlers/query.py:58 apps/grafana/handlers/query.py:59
 #: apps/grafana/handlers/query.py:60 apps/grafana/handlers/query.py:61
@@ -716,20 +643,14 @@ msgstr "Comma separated"
 #: apps/log_search/views/search_views.py:788
 msgid "请输入可以支持范围过滤字段相应的值，如整数"
 msgstr ""
-"Please enter a value that can support range filtering fields, such as "
-"integers"
 
 #: apps/grafana/handlers/query.py:386
-#, fuzzy
-#| msgid "分类ID"
 msgid "未分类"
-msgstr "Category ID"
+msgstr ""
 
 #: apps/grafana/model.py:25
-#, fuzzy
-#| msgid "索引集id"
 msgid "trace索引集id"
-msgstr "Indices id"
+msgstr ""
 
 #: apps/grafana/model.py:26 apps/log_databus/models.py:298
 #: apps/log_databus/serializers.py:636
@@ -737,10 +658,8 @@ msgid "数据源id"
 msgstr ""
 
 #: apps/grafana/provisioning.py:37
-#, fuzzy
-#| msgid "日志平台"
 msgid "日志平台-时序数据"
-msgstr "Log platform"
+msgstr ""
 
 #: apps/grafana/serializers.py:27 apps/grafana/serializers.py:32
 #: apps/grafana/serializers.py:38 apps/grafana/serializers.py:47
@@ -763,83 +682,73 @@ msgstr "Log platform"
 #: apps/log_search/serializers.py:198 apps/log_search/serializers.py:359
 #: apps/log_trace/serializers.py:40 apps/log_trace/serializers.py:52
 msgid "业务ID"
-msgstr "Business ID"
+msgstr ""
 
 #: apps/grafana/serializers.py:28 apps/grafana/serializers.py:33
-#, fuzzy
-#| msgid "日志类型"
 msgid "查询类型"
-msgstr "Log type"
+msgstr ""
 
 #: apps/grafana/serializers.py:34
-#, fuzzy
-#| msgid "查询数据"
 msgid "查询参数"
-msgstr "Query data"
+msgstr ""
 
 #: apps/grafana/serializers.py:39 apps/log_databus/serializers.py:186
 #: apps/log_databus/serializers.py:200 apps/log_databus/serializers.py:224
 msgid "分类ID"
-msgstr "Category ID"
+msgstr ""
 
 #: apps/grafana/serializers.py:48 apps/log_extract/serializers.py:382
 #: apps/log_search/serializers.py:309
 msgid "实例类型"
-msgstr "Instance type"
+msgstr ""
 
 #: apps/grafana/serializers.py:49 apps/log_extract/serializers.py:383
 #: apps/log_search/serializers.py:310
 msgid "是否删除空节点"
-msgstr "Whether to delete empty nodes"
+msgstr ""
 
 #: apps/grafana/serializers.py:53 apps/grafana/serializers.py:72
 msgid "仪表盘ID"
-msgstr "Dashboard ID"
+msgstr ""
 
 #: apps/grafana/serializers.py:54 apps/grafana/serializers.py:73
 msgid "面板ID"
-msgstr "Panel IDj"
+msgstr ""
 
 #: apps/grafana/serializers.py:57
-#, fuzzy
-#| msgid "监控"
 msgid "监控指标"
-msgstr "Monitor"
+msgstr ""
 
 #: apps/grafana/serializers.py:58 apps/grafana/serializers.py:76
 #: apps/grafana/serializers.py:87 apps/log_databus/models.py:93
 #: apps/log_databus/serializers.py:525
 msgid "结果表ID"
-msgstr "Result Table ID"
+msgstr ""
 
 #: apps/grafana/serializers.py:59 apps/grafana/serializers.py:77
 msgid "过滤条件"
-msgstr "Filter Condition"
+msgstr ""
 
 #: apps/grafana/serializers.py:60 apps/log_clustering/models.py:72
 msgid "聚合字段"
-msgstr "Aggregation field"
+msgstr ""
 
 #: apps/grafana/serializers.py:61 apps/grafana/serializers.py:78
 #: apps/grafana/serializers.py:91
-#, fuzzy
-#| msgid "字符串"
 msgid "查询字符串"
-msgstr "String"
+msgstr ""
 
 #: apps/grafana/serializers.py:63
 msgid "聚合方法"
-msgstr "Aggregation method"
+msgstr ""
 
 #: apps/grafana/serializers.py:64
 msgid "时间间隔"
-msgstr "time interval"
+msgstr ""
 
 #: apps/grafana/serializers.py:65 apps/grafana/serializers.py:79
-#, fuzzy
-#| msgid "监控"
 msgid "监控目标"
-msgstr "Monitor"
+msgstr ""
 
 #: apps/grafana/serializers.py:67 apps/grafana/serializers.py:81
 #: apps/grafana/serializers.py:89 apps/grafana/serializers.py:101
@@ -848,26 +757,22 @@ msgstr "Monitor"
 #: apps/log_trace/handlers/trace_field_handlers.py:44
 #: apps/log_trace/handlers/trace_field_handlers.py:51
 msgid "开始时间"
-msgstr "StartTime"
+msgstr ""
 
 #: apps/grafana/serializers.py:68 apps/grafana/serializers.py:82
 #: apps/grafana/serializers.py:90 apps/grafana/serializers.py:102
 #: apps/log_databus/models.py:383 apps/log_extract/serializers.py:66
 #: apps/log_search/serializers.py:253
-#, fuzzy
-#| msgid "过期时间 "
 msgid "结束时间"
-msgstr "Expire date"
+msgstr ""
 
 #: apps/grafana/serializers.py:80
 msgid "日志条数"
-msgstr "Number of logs"
+msgstr ""
 
 #: apps/grafana/serializers.py:88
-#, fuzzy
-#| msgid "查询数据"
 msgid "查询字段"
-msgstr "Query data"
+msgstr ""
 
 #: apps/grafana/serializers.py:95
 msgid "operation"
@@ -896,34 +801,30 @@ msgstr ""
 #: apps/iam/exceptions.py:57
 #, python-brace-format
 msgid "当前用户无 [{action_name}] 权限"
-msgstr "The current user does not have [{action_name}] permission"
+msgstr ""
 
 #: apps/iam/handlers/actions.py:213
 #, python-brace-format
 msgid "动作ID不存在：{action_id}"
-msgstr "Action ID does not exist: {action_id}"
+msgstr ""
 
 #: apps/iam/handlers/permission.py:306
 #, python-brace-format
 msgid "获取系统信息错误：{message}"
-msgstr "Error getting system information: {message}"
+msgstr ""
 
 #: apps/iam/handlers/resources.py:212
 #, python-brace-format
 msgid "资源ID不存在：{resource_id}"
-msgstr "Resource ID does not exist: {resource_id}"
+msgstr ""
 
 #: apps/log_audit/models.py:27
-#, fuzzy
-#| msgid "有效时间"
 msgid "操作时间"
-msgstr "Effective time"
+msgstr ""
 
 #: apps/log_audit/models.py:28
-#, fuzzy
-#| msgid "操作标识"
 msgid "操作者"
-msgstr "Operation ID"
+msgstr ""
 
 #: apps/log_audit/models.py:29 apps/log_clustering/models.py:74
 #: apps/log_clustering/models.py:93 apps/log_clustering/models.py:115
@@ -940,13 +841,11 @@ msgstr "Operation ID"
 #: apps/log_extract/models.py:74 apps/log_search/serializers.py:249
 #: apps/log_search/serializers.py:277 apps/log_search/serializers.py:321
 msgid "业务id"
-msgstr "Business id"
+msgstr ""
 
 #: apps/log_audit/models.py:30
-#, fuzzy
-#| msgid "对象类型"
 msgid "操作对象类型"
-msgstr "Object type"
+msgstr ""
 
 #: apps/log_audit/models.py:31
 msgid "操作对象子类型"
@@ -962,7 +861,7 @@ msgstr ""
 
 #: apps/log_audit/models.py:34
 msgid "请求参数"
-msgstr "Request parameter"
+msgstr ""
 
 #: apps/log_audit/models.py:37 apps/log_audit/models.py:38
 msgid "操作日志"
@@ -1042,10 +941,8 @@ msgstr ""
 
 #: apps/log_clustering/components/collections/flow_component.py:108
 #: apps/log_databus/models.py:415
-#, fuzzy
-#| msgid "日志平台"
 msgid "【日志平台】"
-msgstr "Log platform"
+msgstr ""
 
 #: apps/log_clustering/components/collections/flow_component.py:133
 msgid "创建新类策略"
@@ -1104,10 +1001,8 @@ msgid "24小时前"
 msgstr ""
 
 #: apps/log_clustering/exceptions.py:32
-#, fuzzy
-#| msgid "数据源模块异常"
 msgid "日志聚类模块异常"
-msgstr "Data source module exception"
+msgstr ""
 
 #: apps/log_clustering/exceptions.py:37
 msgid "聚类未开放"
@@ -1129,10 +1024,8 @@ msgid "evaluation_status返回异常: {evaluation_status}"
 msgstr ""
 
 #: apps/log_clustering/exceptions.py:57
-#, fuzzy
-#| msgid "采集配置不存在"
 msgid "聚类配置不存在"
-msgstr "Collection configuration does not exist"
+msgstr ""
 
 #: apps/log_clustering/exceptions.py:62
 #, python-brace-format
@@ -1186,10 +1079,8 @@ msgid "实验状态"
 msgstr ""
 
 #: apps/log_clustering/models.py:42
-#, fuzzy
-#| msgid "服务实例id"
 msgid "最新模型实例id"
-msgstr "Service instance id"
+msgstr ""
 
 #: apps/log_clustering/models.py:43
 msgid "节点列表"
@@ -1214,7 +1105,7 @@ msgstr ""
 #: apps/log_databus/models.py:306 apps/log_databus/models.py:390
 #: apps/log_search/models.py:707 apps/log_search/models.py:767
 msgid "索引集id"
-msgstr "Indices id"
+msgstr ""
 
 #: apps/log_clustering/models.py:64
 msgid "样本集id"
@@ -1233,16 +1124,12 @@ msgid "敏感度"
 msgstr ""
 
 #: apps/log_clustering/models.py:68
-#, fuzzy
-#| msgid "正则表达式"
 msgid "预先定义的正则表达式"
-msgstr "Regular"
+msgstr ""
 
 #: apps/log_clustering/models.py:69
-#, fuzzy
-#| msgid "分隔符"
 msgid "分词符"
-msgstr "Separator"
+msgstr ""
 
 #: apps/log_clustering/models.py:70
 msgid "最大日志长度"
@@ -1254,7 +1141,7 @@ msgstr ""
 
 #: apps/log_clustering/models.py:73 apps/log_databus/serializers.py:108
 msgid "过滤规则"
-msgstr "Filter rule"
+msgstr ""
 
 #: apps/log_clustering/models.py:75
 msgid "预处理flow配置"
@@ -1265,22 +1152,16 @@ msgid "新类结果表id"
 msgstr ""
 
 #: apps/log_clustering/models.py:77
-#, fuzzy
-#| msgid "数据平台元数据模块"
 msgid "计算平台接入dataid"
-msgstr "Data platform metadata module"
+msgstr ""
 
 #: apps/log_clustering/models.py:78
-#, fuzzy
-#| msgid "数据平台元数据模块"
 msgid "计算平台清洗结果表"
-msgstr "Data platform metadata module"
+msgstr ""
 
 #: apps/log_clustering/models.py:79
-#, fuzzy
-#| msgid "数据平台元数据模块"
 msgid "计算平台清洗id"
-msgstr "Data platform metadata module"
+msgstr ""
 
 #: apps/log_clustering/models.py:80
 msgid "入库数据源"
@@ -1303,15 +1184,13 @@ msgid "修改after_treat_flow调用的配置"
 msgstr ""
 
 #: apps/log_clustering/models.py:91
-#, fuzzy
-#| msgid "迁移监控策略"
 msgid "监控策略id"
-msgstr "Migration monitoring strategy"
+msgstr ""
 
 #: apps/log_clustering/models.py:92 apps/log_databus/serializers.py:170
 #: apps/log_extract/models.py:202 apps/log_extract/serializers.py:433
 msgid "是否启用"
-msgstr "Whether to enable"
+msgstr ""
 
 #: apps/log_clustering/models.py:94
 msgid "聚类级别"
@@ -1330,25 +1209,21 @@ msgid "删除操作时需要提供对应strategy_id"
 msgstr ""
 
 #: apps/log_clustering/utils/monitor.py:59
-#, fuzzy
-#| msgid "运维人员"
 msgid "{}_{}运维人员"
-msgstr "Maintainer"
+msgstr ""
 
 #: apps/log_databus/constants.py:49 apps/log_search/constants.py:199
 #: apps/log_search/constants.py:565
 msgid "其他"
-msgstr "Other"
+msgstr ""
 
 #: apps/log_databus/constants.py:50
 msgid "AWS"
 msgstr ""
 
 #: apps/log_databus/constants.py:51
-#, fuzzy
-#| msgid "腾讯云cos链路"
 msgid "腾讯云"
-msgstr "Tencent cloud cos link"
+msgstr ""
 
 #: apps/log_databus/constants.py:52
 msgid "阿里云"
@@ -1366,36 +1241,28 @@ msgstr ""
 #: apps/log_measure/handlers/metric_collectors/cluster.py:87
 #: apps/log_measure/handlers/metrics.py:481
 msgid "集群节点"
-msgstr "Cluster node"
+msgstr ""
 
 #: apps/log_databus/constants.py:62
 #: apps/log_measure/handlers/metric_collectors/collect.py:61
 msgid "采集项容量"
-msgstr "Collectior capacity"
+msgstr ""
 
 #: apps/log_databus/constants.py:72
-#, fuzzy
-#| msgid "采集接入"
 msgid "未申请采集接入"
-msgstr "Collector"
+msgstr ""
 
 #: apps/log_databus/constants.py:73
-#, fuzzy
-#| msgid "采集接入"
 msgid "采集接入进行中"
-msgstr "Collector"
+msgstr ""
 
 #: apps/log_databus/constants.py:74
-#, fuzzy
-#| msgid "采集接入"
 msgid "采集接入失败"
-msgstr "Collector"
+msgstr ""
 
 #: apps/log_databus/constants.py:75
-#, fuzzy
-#| msgid "采集接入"
 msgid "采集接入完成"
-msgstr "Collector"
+msgstr ""
 
 #: apps/log_databus/constants.py:123
 msgid "微秒（microsecond）"
@@ -1404,11 +1271,11 @@ msgstr ""
 #: apps/log_databus/constants.py:159 apps/log_search/constants.py:283
 #: apps/log_search/constants.py:551
 msgid "主机"
-msgstr "Host"
+msgstr ""
 
 #: apps/log_databus/constants.py:160
 msgid "服务实例"
-msgstr "Service instance"
+msgstr ""
 
 #: apps/log_databus/constants.py:176
 msgid "TOPO"
@@ -1416,7 +1283,7 @@ msgstr ""
 
 #: apps/log_databus/constants.py:177
 msgid "主机实例"
-msgstr "Host instance"
+msgstr ""
 
 #: apps/log_databus/constants.py:178
 msgid "服务模板"
@@ -1438,80 +1305,78 @@ msgstr ""
 #: apps/log_search/migrations/0002_bklog_initial.py:37
 #: apps/log_search/models.py:148
 msgid "数据平台"
-msgstr "Data System"
+msgstr ""
 
 #: apps/log_databus/constants.py:236
 msgid "部署中"
-msgstr "Deploy"
+msgstr ""
 
 #: apps/log_databus/constants.py:237 apps/log_search/constants.py:196
 #: apps/log_search/constants.py:258 apps/log_search/handlers/index_set.py:172
 #: apps/log_search/models.py:568
 msgid "正常"
-msgstr "OK"
+msgstr ""
 
 #: apps/log_databus/constants.py:238 apps/log_extract/constants.py:85
 #: apps/log_trace/handlers/proto/log.py:34
 msgid "失败"
-msgstr "Failed"
+msgstr ""
 
 #: apps/log_databus/constants.py:239
 msgid "部分失败"
-msgstr "Exception"
+msgstr ""
 
 #: apps/log_databus/constants.py:240
 msgid "已停用"
-msgstr "Terminated"
+msgstr ""
 
 #: apps/log_databus/constants.py:241
 msgid "未知"
-msgstr "Unknown"
+msgstr ""
 
 #: apps/log_databus/constants.py:242
 msgid "准备中"
-msgstr "preparing"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:32
 msgid "采集配置模块异常"
-msgstr "Collection configuration module is abnormal"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:37
 msgid "采集配置不存在"
-msgstr "Collection configuration does not exist"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:42
-#, fuzzy
-#| msgid "采集配置不存在"
 msgid "链路配置不存在"
-msgstr "Collection configuration does not exist"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:47
 msgid "参数校验异常：采集项ID不存在"
-msgstr "Parameter check exception: Collection item ID does not exist"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:52
 msgid "参数校验异常：采集任务ID不存在"
-msgstr "Parameter check exception: Collection task ID does not exist"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:57
 msgid "参数校验异常：采集实例ID不存在"
-msgstr "Parameter check exception: Collection instance ID does not exist"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:62
 msgid "采集项名称已存在"
-msgstr "Collection item name already exists"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:67
 msgid "数据链路ID不存在"
-msgstr "Data link ID does not exist"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:72
 msgid "无法查询到该订阅配置信息"
-msgstr "Unable to query the subscription configuration information"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:77
 msgid "采集项在停止状态下不能编辑"
-msgstr "The collection item cannot be edited in the stopped state"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:82
 msgid "采集项已存在正在部署中的任务，请不要重复部署"
@@ -1539,39 +1404,39 @@ msgstr ""
 
 #: apps/log_databus/exceptions.py:107 apps/log_measure/exceptions.py:37
 msgid "集群不存在"
-msgstr "The cluster does not exist"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:112
 msgid "bk_biz_id为必填字段，且为整数"
-msgstr "bk_biz_id is a required field and is an integer"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:117 apps/log_esquery/exceptions.py:31
 #: apps/log_search/exceptions.py:30
 msgid "权限异常"
-msgstr "Permission exception"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:122
 msgid "集群连接异常"
-msgstr "Cluster connection is abnormal"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:127
 #, python-brace-format
 msgid "集群连接异常, 异常信息{info}"
-msgstr "Cluster connection is abnormal, abnormal information {info}"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:132 apps/log_esquery/exceptions.py:121
 #, python-brace-format
 msgid "未知的ES服务端版本类型\"{ip}\":\"{port}\""
-msgstr "Unknown ES server version type \"{ip}\":\"{port}\""
+msgstr ""
 
 #: apps/log_databus/exceptions.py:137
 #, python-brace-format
 msgid "http探测ES版本错误, \"{msg}\""
-msgstr "http detect ES version error, \"{msg}\""
+msgstr ""
 
 #: apps/log_databus/exceptions.py:142
 msgid "集群不支持冷热数据功能"
-msgstr "The cluster does not support hot and cold data functions"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:147
 msgid "集群还有未删除的采集项、第三方集群索引集"
@@ -1580,92 +1445,81 @@ msgstr ""
 #: apps/log_databus/exceptions.py:152
 #, python-brace-format
 msgid "暫不支持{separator_node_action}类清洗"
-msgstr "{separator_node_action} class cleaning is not supported at this time"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:157
 msgid "分隔符配置解析异常"
-msgstr "Delimiter configuration parsing exception"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:162
 msgid "字段提取预览失败，请检查提取规则与数据是否匹配"
 msgstr ""
-"Field extraction preview failed, please check if the extraction rule matches "
-"the data"
 
 #: apps/log_databus/exceptions.py:167
 msgid "解析数据时间字段异常"
-msgstr "Parsing data time field exception"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:172
 msgid "解析时间格式异常"
-msgstr "Parsing time format exception"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:177
 msgid "字段名总长度超过256，暂不支持"
 msgstr ""
-"The total length of the field name exceeds 256. It is not currently "
-"supported."
 
 #: apps/log_databus/exceptions.py:182
 msgid "该业务已超出公共集群容量限制"
-msgstr "The business has exceeded the public cluster capacity limit"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:187
 msgid "该数据链路名已被使用"
-msgstr "The data link name is already in use"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:192
 msgid "数据链路kafka、transfer集群不可修改，es集群不可删除"
 msgstr ""
-"The data link kafka and transfer clusters cannot be modified, and the es "
-"cluster cannot be deleted"
 
 #: apps/log_databus/exceptions.py:197
 msgid "无法匹配到行首，请确认"
-msgstr "Cannot match to the beginning of the line, please confirm"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:202
 #, python-brace-format
 msgid "正则表达式不合法: \"{error}\" 请确认"
-msgstr "Regular expression is illegal: \"{error}\" Please confirm"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:207
 #, python-brace-format
 msgid "kafka连接失败\"{error}\""
-msgstr "Kafka connect fail: \"{error}\""
+msgstr ""
 
 #: apps/log_databus/exceptions.py:212
 msgid "Partition信息获取失败"
-msgstr "Partition information collection failed"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:217
 msgid "数据链路配置获取失败"
-msgstr "Failed to obtain data link configuration"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:222
-#, fuzzy
-#| msgid "采集接入"
 msgid "采集接入ITSM-TOKEN非法"
-msgstr "Collector"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:227
 msgid "已经提交采集接入申请"
-msgstr "Application for collection access has been submitted"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:232
 msgid "采集接入ITSM流程服务不存在"
-msgstr "Collection access ITSM process service does not exist"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:237
 msgid "采集接入流程未完成，无法启动采集"
 msgstr ""
-"The collection access process is not completed and cannot start collection"
 
 #: apps/log_databus/exceptions.py:242
-#, fuzzy
-#| msgid "采集接入"
 msgid "采集接入未完成"
-msgstr "Collector"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:247
 msgid "后台bkdata_id_feature不存在"
@@ -1687,10 +1541,8 @@ msgid "该业务{bk_biz_id}未找到对应project"
 msgstr ""
 
 #: apps/log_databus/exceptions.py:267
-#, fuzzy
-#| msgid "采集配置不存在"
 msgid "归档配置不存在"
-msgstr "Collection configuration does not exist"
+msgstr ""
 
 #: apps/log_databus/exceptions.py:272
 msgid "归档回溯不存在"
@@ -1706,57 +1558,55 @@ msgstr ""
 
 #: apps/log_databus/handlers/collector.py:181
 msgid "ES索引主分片大小达到{}G后分裂"
-msgstr "Split after ES Index Main slice size reaches {}GB"
+msgstr ""
 
 #: apps/log_databus/handlers/collector.py:505
 #: apps/log_databus/handlers/collector.py:1789
 #: apps/log_databus/handlers/etl.py:211
 msgid "[采集项]"
-msgstr "[Collection item]"
+msgstr ""
 
 #: apps/log_databus/handlers/collector.py:1551 apps/log_search/constants.py:222
 #: apps/log_search/handlers/biz.py:206 config/default.py:628
 msgid "集群"
-msgstr "Cluster"
+msgstr ""
 
 #: apps/log_databus/handlers/collector.py:1557 apps/log_search/constants.py:223
 #: apps/log_search/handlers/biz.py:212
-#, fuzzy
-#| msgid "TOF模块"
 msgid "模块"
-msgstr "TOF module"
+msgstr ""
 
 #: apps/log_databus/handlers/collector_scenario/base.py:149
 msgid "创建采集项时名称不能为空"
-msgstr "Name cannot be empty when creating a collection"
+msgstr ""
 
 #: apps/log_databus/handlers/etl_storage/base.py:137
 msgid "字段不能与标准字段重复"
-msgstr "Field cannot be duplicated with standard field"
+msgstr ""
 
 #: apps/log_databus/handlers/etl_storage/base.py:140
 msgid "字段名不符合变量规则"
-msgstr "Field name does not conform to variable rules"
+msgstr ""
 
 #: apps/log_databus/handlers/etl_storage/bk_log_delimiter.py:51
 msgid "分隔符不能为空"
-msgstr "Delimiter cannot be empty"
+msgstr ""
 
 #: apps/log_databus/handlers/etl_storage/bk_log_regexp.py:42
 msgid "正则表达式不能为空"
-msgstr "Regular expression cannot be empty"
+msgstr ""
 
 #: apps/log_databus/handlers/etl_storage/bk_log_regexp.py:47
 msgid "无法匹配正则表达式"
-msgstr "Can't match regular expression"
+msgstr ""
 
 #: apps/log_databus/handlers/etl_storage/bk_log_regexp.py:76
 msgid "字段未在正则表达式中定义："
-msgstr "Field is not defined in regular expression"
+msgstr ""
 
 #: apps/log_databus/handlers/etl_storage/utils/transfer.py:66
 msgid "separator_field_list类型不符合"
-msgstr "separator_field_list type does not match"
+msgstr ""
 
 #: apps/log_databus/handlers/storage.py:563
 msgid "IP or PORT can not be reached"
@@ -1773,19 +1623,19 @@ msgstr ""
 
 #: apps/log_databus/models.py:71 apps/log_databus/models.py:378
 msgid "采集配置ID"
-msgstr "Collection Configuration ID"
+msgstr ""
 
 #: apps/log_databus/models.py:72
 msgid "采集配置名称"
-msgstr "Collection configuration name"
+msgstr ""
 
 #: apps/log_databus/models.py:73 apps/log_search/models.py:165
 msgid "接入的来源APP"
-msgstr "Access source APP"
+msgstr ""
 
 #: apps/log_databus/models.py:74 apps/log_search/constants.py:310
 msgid "采集场景"
-msgstr "Collection scenario"
+msgstr ""
 
 #: apps/log_databus/models.py:76
 msgid "自定义类型"
@@ -1794,66 +1644,64 @@ msgstr ""
 #: apps/log_databus/models.py:79 apps/log_search/constants.py:309
 #: apps/log_search/models.py:291
 msgid "数据分类"
-msgstr "Data Classification"
+msgstr ""
 
 #: apps/log_databus/models.py:81
 msgid "对象类型"
-msgstr "Object type"
+msgstr ""
 
 #: apps/log_databus/models.py:84 apps/log_databus/serializers.py:226
 #: apps/log_databus/serializers.py:257
 msgid "节点类型"
-msgstr "Node type"
+msgstr ""
 
 #: apps/log_databus/models.py:86 apps/log_databus/serializers.py:293
 #: apps/log_databus/serializers.py:330 apps/log_databus/serializers.py:342
 msgid "采集目标"
-msgstr "Collection target"
+msgstr ""
 
 #: apps/log_databus/models.py:87
 msgid "与上一次采集订阅的差异"
-msgstr "Difference from last collection subscription"
+msgstr ""
 
 #: apps/log_databus/models.py:88 apps/log_databus/serializers.py:478
 #: apps/log_search/models.py:167
 msgid "描述"
-msgstr "Description"
+msgstr ""
 
 #: apps/log_databus/models.py:89 apps/log_databus/models.py:261
 #: apps/log_search/models.py:304
 msgid "是否可用"
-msgstr "Available"
+msgstr ""
 
 #: apps/log_databus/models.py:90
-#, fuzzy
-#| msgid "采集链路data_id"
 msgid "采集链路id"
-msgstr "Collection link data_id"
+msgstr ""
 
 #: apps/log_databus/models.py:91
 msgid "采集链路data_id"
-msgstr "Collection link data_id"
+msgstr ""
 
 #: apps/log_databus/models.py:92
 msgid "采集链路data_name"
-msgstr "Collection link data_name"
+msgstr ""
 
 #: apps/log_databus/models.py:95
 msgid "节点管理订阅ID"
-msgstr "Node Management Subscription ID"
+msgstr ""
 
 #: apps/log_databus/models.py:96
 msgid "最后一次部署任务"
-msgstr "Last deployment task"
+msgstr ""
 
 #: apps/log_databus/models.py:97
 msgid "接入数据平台data id"
-msgstr "Access data platform data id"
+msgstr ""
 
 #: apps/log_databus/models.py:99 apps/log_databus/serializers.py:228
 #: apps/log_databus/serializers.py:259
 msgid "日志字符集"
-msgstr "Log character set"
+msgstr ""
 
 #: apps/log_databus/models.py:100
 msgid "params"
@@ -1861,25 +1709,23 @@ msgstr ""
 
 #: apps/log_databus/models.py:101
 msgid "itsm单据号"
-msgstr "itsm ticket"
+msgstr ""
 
 #: apps/log_databus/models.py:103
-#, fuzzy
-#| msgid "采集接入"
 msgid "采集接入单据状态"
-msgstr "Collector"
+msgstr ""
 
 #: apps/log_databus/models.py:105
 msgid "是否能够使用独立es集群"
-msgstr "Is it possible to use a standalone ES cluster"
+msgstr ""
 
 #: apps/log_databus/models.py:106
 msgid "采集打包数量"
-msgstr "Collection packing qty"
+msgstr ""
 
 #: apps/log_databus/models.py:107
 msgid "输出格式"
-msgstr "Output format"
+msgstr ""
 
 #: apps/log_databus/models.py:108
 msgid "采集器配置覆盖"
@@ -1887,15 +1733,15 @@ msgstr ""
 
 #: apps/log_databus/models.py:109
 msgid "ES分片数量"
-msgstr "Number of ES slices"
+msgstr ""
 
 #: apps/log_databus/models.py:110
 msgid "单shards分片大小"
-msgstr "Single shards slice size"
+msgstr ""
 
 #: apps/log_databus/models.py:111
 msgid "ES副本数"
-msgstr "Number of ES rep"
+msgstr ""
 
 #: apps/log_databus/models.py:112
 msgid "调用数据平台创建data_id失败数"
@@ -1903,84 +1749,68 @@ msgstr ""
 
 #: apps/log_databus/models.py:183 apps/log_databus/models.py:184
 msgid "用户采集配置"
-msgstr "User collection configuration"
+msgstr ""
 
 #: apps/log_databus/models.py:223
 msgid "【日志采集】{}-{}-{}"
-msgstr "【Log Collection】{}-{}-{}"
+msgstr ""
 
 #: apps/log_databus/models.py:255 apps/log_databus/serializers.py:347
 msgid "链路ID"
-msgstr "Link ID"
+msgstr ""
 
 #: apps/log_databus/models.py:256 apps/log_databus/serializers.py:364
 #: apps/log_databus/serializers.py:418
 msgid "集群名称"
-msgstr "Cluster name"
+msgstr ""
 
 #: apps/log_databus/models.py:258
-#, fuzzy
-#| msgid "集群ID"
 msgid "kafka集群ID"
-msgstr "Cluster ID"
+msgstr ""
 
 #: apps/log_databus/models.py:259
-#, fuzzy
-#| msgid "集群ID"
 msgid "transfer集群ID"
-msgstr "Cluster ID"
+msgstr ""
 
 #: apps/log_databus/models.py:260
-#, fuzzy
-#| msgid "集群ID"
 msgid "es集群ID"
-msgstr "Cluster ID"
+msgstr ""
 
 #: apps/log_databus/models.py:262 apps/log_databus/serializers.py:171
 #: apps/log_extract/models.py:104 apps/log_extract/serializers.py:108
 #: apps/log_extract/serializers.py:236 apps/log_extract/serializers.py:387
-#, fuzzy
-#| msgid "备注说明"
 msgid "备注"
-msgstr "Instruction manual"
+msgstr ""
 
 #: apps/log_databus/models.py:265 apps/log_databus/models.py:266
-#, fuzzy
-#| msgid "数据链路ID不存在"
 msgid "数据链路配置"
-msgstr "Data link ID does not exist"
+msgstr ""
 
 #: apps/log_databus/models.py:272
 msgid "容量"
-msgstr "capacity"
+msgstr ""
 
 #: apps/log_databus/models.py:275
 msgid "公共集群容量限制"
-msgstr "Public cluster capacity limit"
+msgstr ""
 
 #: apps/log_databus/models.py:276
-#, fuzzy
-#| msgid "存储集群ID"
 msgid "存储集群容量限制"
-msgstr "Storage cluster ID"
+msgstr ""
 
 #: apps/log_databus/models.py:283
 msgid "已用容量"
-msgstr "Used capacity"
+msgstr ""
 
 #: apps/log_databus/models.py:286 apps/log_databus/models.py:287
-#, fuzzy
-#| msgid "业务应用"
 msgid "业务已用容量"
-msgstr "Application"
+msgstr ""
 
 #: apps/log_databus/models.py:293 apps/log_trace/constants.py:92
 #: apps/log_trace/handlers/trace_field_handlers.py:49
 #: apps/log_trace/handlers/trace_field_handlers.py:178
-#, fuzzy
-#| msgid "权限状态"
 msgid "状态"
-msgstr "Permission status"
+msgstr ""
 
 #: apps/log_databus/models.py:294
 msgid "状态英文名"
@@ -1991,10 +1821,8 @@ msgid "结果表id"
 msgstr ""
 
 #: apps/log_databus/models.py:296 bk_monitor/models.py:18
-#, fuzzy
-#| msgid "结果表名称"
 msgid "结果表名"
-msgstr "Result table name"
+msgstr ""
 
 #: apps/log_databus/models.py:297
 msgid "结果表中文名"
@@ -2003,17 +1831,15 @@ msgstr ""
 #: apps/log_databus/models.py:299 apps/log_search/models.py:228
 #: bk_monitor/models.py:16
 msgid "数据源名称"
-msgstr "Data source name"
+msgstr ""
 
 #: apps/log_databus/models.py:300
 msgid "数据源中文名"
 msgstr ""
 
 #: apps/log_databus/models.py:301 apps/log_search/models.py:830
-#, fuzzy
-#| msgid "数据类型不匹配"
 msgid "数据类型"
-msgstr "field type not match"
+msgstr ""
 
 #: apps/log_databus/models.py:302
 msgid "存储类型"
@@ -2032,10 +1858,8 @@ msgid "清洗id"
 msgstr ""
 
 #: apps/log_databus/models.py:317 apps/log_search/models.py:792
-#, fuzzy
-#| msgid "数据名称"
 msgid "模板名"
-msgstr "Data name"
+msgstr ""
 
 #: apps/log_databus/models.py:318 apps/log_databus/models.py:331
 msgid "模板类型"
@@ -2052,7 +1876,7 @@ msgstr ""
 #: apps/log_databus/models.py:324 apps/log_databus/models.py:325
 #: config/default.py:546
 msgid "清洗模板"
-msgstr "Clean Templates"
+msgstr ""
 
 #: apps/log_databus/models.py:330
 msgid "清洗缓存id"
@@ -2060,7 +1884,7 @@ msgstr ""
 
 #: apps/log_databus/models.py:334
 msgid "采集项列表"
-msgstr "Collector List"
+msgstr ""
 
 #: apps/log_databus/models.py:338 apps/log_databus/models.py:339
 msgid "未完成入库暂存清洗"
@@ -2105,7 +1929,7 @@ msgstr ""
 #: apps/log_databus/models.py:386 apps/log_trace/constants.py:78
 #: apps/log_trace/handlers/trace_field_handlers.py:45
 msgid "耗时"
-msgstr "TimeConsuming"
+msgstr ""
 
 #: apps/log_databus/models.py:387
 msgid "存储大小"
@@ -2118,7 +1942,7 @@ msgstr ""
 #: apps/log_databus/models.py:389 apps/log_databus/serializers.py:693
 #: apps/log_search/models.py:289
 msgid "索引集名称"
-msgstr "Indices name"
+msgstr ""
 
 #: apps/log_databus/models.py:391
 msgid "结果通知人"
@@ -2130,63 +1954,63 @@ msgstr ""
 
 #: apps/log_databus/serializers.py:45
 msgid "管理组id列表"
-msgstr "Management group id list"
+msgstr ""
 
 #: apps/log_databus/serializers.py:46
 msgid "可见人员列表"
-msgstr "Visible people list"
+msgstr ""
 
 #: apps/log_databus/serializers.py:54 apps/log_databus/serializers.py:64
 msgid "分类标识"
-msgstr "Classification ID"
+msgstr ""
 
 #: apps/log_databus/serializers.py:55 apps/log_databus/serializers.py:65
 msgid "分类名称"
-msgstr "Category Name"
+msgstr ""
 
 #: apps/log_databus/serializers.py:74
 msgid "服务实例id"
-msgstr "Service instance id"
+msgstr ""
 
 #: apps/log_databus/serializers.py:75
 msgid "节点实例id"
-msgstr "Node instance id"
+msgstr ""
 
 #: apps/log_databus/serializers.py:76
 msgid "节点对象"
-msgstr "Node object"
+msgstr ""
 
 #: apps/log_databus/serializers.py:77 apps/log_databus/serializers.py:289
 msgid "主机实例ip"
-msgstr "Host instance ip"
+msgstr ""
 
 #: apps/log_databus/serializers.py:78 apps/log_databus/serializers.py:290
 msgid "蓝鲸云区域id"
-msgstr "BlueKing cloud id"
+msgstr ""
 
 #: apps/log_databus/serializers.py:79 apps/log_databus/serializers.py:291
 msgid "供应商id"
-msgstr "Supplier id"
+msgstr ""
 
 #: apps/log_databus/serializers.py:83
 msgid "匹配项所在位置"
-msgstr "Location of the matching item"
+msgstr ""
 
 #: apps/log_databus/serializers.py:84
 msgid "匹配值"
-msgstr "Match value"
+msgstr ""
 
 #: apps/log_databus/serializers.py:85
 msgid "匹配方式"
-msgstr "Matching method"
+msgstr ""
 
 #: apps/log_databus/serializers.py:86
 msgid "逻辑操作符"
-msgstr "Logical operator"
+msgstr ""
 
 #: apps/log_databus/serializers.py:94
 msgid "过滤方式类型"
-msgstr "Filter type"
+msgstr ""
 
 #: apps/log_databus/serializers.py:96
 #: apps/log_databus/views/collector_views.py:202
@@ -2194,24 +2018,22 @@ msgstr "Filter type"
 #: apps/tests/log_databus/test_e2e_collectorviewsetapi.py:74
 #: apps/tests/log_databus/test_e2e_collectorviewsetapi.py:95
 msgid "过滤方式"
-msgstr "Filter method"
+msgstr ""
 
 #: apps/log_databus/serializers.py:103
 #: apps/log_extract/components/collections/packing_component.py:51
 #: apps/log_extract/models.py:79 apps/log_extract/serializers.py:343
 msgid "过滤内容"
-msgstr "Filter content"
+msgstr ""
 
 #: apps/log_databus/serializers.py:106 apps/log_databus/serializers.py:451
 #: apps/log_search/constants.py:453 apps/log_search/constants.py:640
 msgid "分隔符"
-msgstr "Separator"
+msgstr ""
 
 #: apps/log_databus/serializers.py:117
-#, fuzzy
-#| msgid "分隔符不能为空"
 msgid "过滤分隔符不能为空"
-msgstr "Delimiter cannot be empty"
+msgstr ""
 
 #: apps/log_databus/serializers.py:127
 #: apps/log_databus/views/collector_views.py:195
@@ -2219,47 +2041,47 @@ msgstr "Delimiter cannot be empty"
 #: apps/tests/log_databus/test_e2e_collectorviewsetapi.py:67
 #: apps/tests/log_databus/test_e2e_collectorviewsetapi.py:88
 msgid "日志路径"
-msgstr "Log path"
+msgstr ""
 
 #: apps/log_databus/serializers.py:129
 msgid "行首正则"
-msgstr "Regular"
+msgstr ""
 
 #: apps/log_databus/serializers.py:130
 msgid "最多匹配行数"
-msgstr "Maximum number of matching rows"
+msgstr ""
 
 #: apps/log_databus/serializers.py:131
 msgid "最大耗时"
-msgstr "Maximum time"
+msgstr ""
 
 #: apps/log_databus/serializers.py:132
 msgid "是否增量采集"
-msgstr "Incremental acquisition"
+msgstr ""
 
 #: apps/log_databus/serializers.py:133
 msgid "文件扫描忽略时间"
-msgstr "File scan ignore time"
+msgstr ""
 
 #: apps/log_databus/serializers.py:134
 msgid "单行日志最大长度"
-msgstr "Single line log maximum length"
+msgstr ""
 
 #: apps/log_databus/serializers.py:136
 msgid "文件扫描间隔"
-msgstr "File scan interval"
+msgstr ""
 
 #: apps/log_databus/serializers.py:137
 msgid "FD关联间隔"
-msgstr "FD Correlation interval"
+msgstr ""
 
 #: apps/log_databus/serializers.py:138
 msgid "同时采集数"
-msgstr "Number of simultaneous acquisitions"
+msgstr ""
 
 #: apps/log_databus/serializers.py:139
 msgid "采集进度清理时间"
-msgstr "Collection progress cleaning time"
+msgstr ""
 
 #: apps/log_databus/serializers.py:142
 msgid "windows事件名称"
@@ -2274,35 +2096,33 @@ msgid "windows事件ID"
 msgstr ""
 
 #: apps/log_databus/serializers.py:165
-#, fuzzy
-#| msgid "集群名称"
 msgid "链路集群名称"
-msgstr "Cluster name"
+msgstr ""
 
 #: apps/log_databus/serializers.py:166
 msgid "链路允许的业务id"
-msgstr "bk_biz_id allowed by the link"
+msgstr ""
 
 #: apps/log_databus/serializers.py:167
 msgid "kafka集群id"
-msgstr "Kafka cluster id"
+msgstr ""
 
 #: apps/log_databus/serializers.py:168
 msgid "transfer集群id"
-msgstr "transfer cluster id"
+msgstr ""
 
 #: apps/log_databus/serializers.py:169
 msgid "es集群id"
-msgstr "es cluster id"
+msgstr ""
 
 #: apps/log_databus/serializers.py:175
 msgid "集群种类"
-msgstr "Cluster type"
+msgstr ""
 
 #: apps/log_databus/serializers.py:180 apps/log_databus/serializers.py:199
 #: apps/log_databus/serializers.py:218 apps/log_databus/serializers.py:252
 msgid "采集名称"
-msgstr "Collection name"
+msgstr ""
 
 #: apps/log_databus/serializers.py:182 apps/log_databus/serializers.py:220
 #: apps/log_databus/serializers.py:254
@@ -2310,52 +2130,48 @@ msgid "采集英文名称"
 msgstr ""
 
 #: apps/log_databus/serializers.py:184 apps/log_databus/serializers.py:222
-#, fuzzy
-#| msgid "数据链路ID不存在"
 msgid "数据链路id"
-msgstr "Data link ID does not exist"
+msgstr ""
 
 #: apps/log_databus/serializers.py:185 apps/log_databus/serializers.py:223
 msgid "日志类型"
-msgstr "Log type"
+msgstr ""
 
 #: apps/log_databus/serializers.py:188 apps/log_databus/serializers.py:205
 #: apps/log_databus/serializers.py:530
 msgid "有效时间"
-msgstr "Effective time"
+msgstr ""
 
 #: apps/log_databus/serializers.py:189 apps/log_databus/serializers.py:206
 #: apps/log_databus/serializers.py:531
 msgid "冷热数据生效时间"
-msgstr "Effective time of hot and cold data"
+msgstr ""
 
 #: apps/log_databus/serializers.py:191 apps/log_databus/serializers.py:208
 #: apps/log_databus/serializers.py:533
-#, fuzzy
-#| msgid "ES副本数"
 msgid "ES副本数量"
-msgstr "Number of ES rep"
+msgstr ""
 
 #: apps/log_databus/serializers.py:194 apps/log_databus/serializers.py:202
 #: apps/log_databus/serializers.py:230 apps/log_databus/serializers.py:261
 msgid "备注说明"
-msgstr "Instruction manual"
+msgstr ""
 
 #: apps/log_databus/serializers.py:225 apps/log_databus/serializers.py:256
 msgid "目标类型"
-msgstr "Target type"
+msgstr ""
 
 #: apps/log_databus/serializers.py:227 apps/log_databus/serializers.py:258
 msgid "目标节点"
-msgstr "Target node"
+msgstr ""
 
 #: apps/log_databus/serializers.py:238 apps/log_databus/serializers.py:243
 msgid "{} 该字段为必填项"
-msgstr "{} This field is required"
+msgstr ""
 
 #: apps/log_databus/serializers.py:297
 msgid "采集项ID"
-msgstr "Collection item ID"
+msgstr ""
 
 #: apps/log_databus/serializers.py:301
 msgid "collector_id_list不符合格式，采集项ID（多个ID用半角,分隔）"
@@ -2363,7 +2179,7 @@ msgstr ""
 
 #: apps/log_databus/serializers.py:306
 msgid "部署任务ID"
-msgstr "Deployment task ID"
+msgstr ""
 
 #: apps/log_databus/serializers.py:313
 msgid "task_id_list不符合格式，部署任务ID（多个ID用半角,分隔）"
@@ -2371,25 +2187,25 @@ msgstr ""
 
 #: apps/log_databus/serializers.py:318 apps/log_extract/serializers.py:244
 msgid "实例ID"
-msgstr "Instance ID"
+msgstr ""
 
 #: apps/log_databus/serializers.py:319
 #: apps/log_extract/components/collections/distribution_component.py:43
 #: apps/log_extract/components/collections/packing_component.py:44
 msgid "任务ID"
-msgstr "Task ID"
+msgstr ""
 
 #: apps/log_databus/serializers.py:329
 msgid "数据分类名称"
-msgstr "Data classification name"
+msgstr ""
 
 #: apps/log_databus/serializers.py:331
 msgid "任务ID列表"
-msgstr "Task ID list"
+msgstr ""
 
 #: apps/log_databus/serializers.py:332
 msgid "订阅目标变更情况"
-msgstr "Subscription target changes"
+msgstr ""
 
 #: apps/log_databus/serializers.py:333
 msgid "是否可以创建基础清洗"
@@ -2404,50 +2220,50 @@ msgstr ""
 #: apps/log_extract/components/collections/packing_component.py:49
 #: version_log/models.py:42
 msgid "用户名"
-msgstr "Username"
+msgstr ""
 
 #: apps/log_databus/serializers.py:356 apps/log_databus/serializers.py:400
 msgid "密码"
-msgstr "Password"
+msgstr ""
 
 #: apps/log_databus/serializers.py:365 apps/log_databus/serializers.py:396
 #: apps/log_databus/serializers.py:419
 msgid "集群域名"
-msgstr "Cluster domain name"
+msgstr ""
 
 #: apps/log_databus/serializers.py:366
 msgid "集群端口"
-msgstr "Cluster port"
+msgstr ""
 
 #: apps/log_databus/serializers.py:367 apps/log_databus/serializers.py:398
 #: apps/log_databus/serializers.py:421
 msgid "集群协议"
-msgstr "Cluster protocol"
+msgstr ""
 
 #: apps/log_databus/serializers.py:368 apps/log_databus/serializers.py:403
 #: apps/log_databus/serializers.py:422
 msgid "凭据信息"
-msgstr "Credential information"
+msgstr ""
 
 #: apps/log_databus/serializers.py:369 apps/log_databus/serializers.py:423
 msgid "是否开启冷热数据"
-msgstr "Whether to open hot and cold data"
+msgstr ""
 
 #: apps/log_databus/serializers.py:370 apps/log_databus/serializers.py:424
 msgid "热节点属性名称"
-msgstr "Hot node attribute name"
+msgstr ""
 
 #: apps/log_databus/serializers.py:371 apps/log_databus/serializers.py:425
 msgid "热节点属性值"
-msgstr "Hot node attribute value"
+msgstr ""
 
 #: apps/log_databus/serializers.py:372 apps/log_databus/serializers.py:426
 msgid "冷节点属性名称"
-msgstr "Cold node attribute name"
+msgstr ""
 
 #: apps/log_databus/serializers.py:373 apps/log_databus/serializers.py:427
 msgid "冷节点属性值"
-msgstr "Cold node attribute value"
+msgstr ""
 
 #: apps/log_databus/serializers.py:374 apps/log_databus/serializers.py:428
 msgid "ES来源类型"
@@ -2464,8 +2280,6 @@ msgstr ""
 #: apps/log_databus/serializers.py:386 apps/log_databus/serializers.py:440
 msgid "当冷热数据处于开启状态时，冷热节点属性配置不能为空"
 msgstr ""
-"When the hot and cold data is turned on, the hot and cold node attribute "
-"configuration cannot be empty"
 
 #: apps/log_databus/serializers.py:389 apps/log_databus/serializers.py:444
 msgid "当来源类型为其他时，需要传入来源名称"
@@ -2473,17 +2287,15 @@ msgstr ""
 
 #: apps/log_databus/serializers.py:397 apps/log_databus/serializers.py:420
 msgid "端口"
-msgstr "Port"
+msgstr ""
 
 #: apps/log_databus/serializers.py:399
 msgid "用户"
-msgstr "User"
+msgstr ""
 
 #: apps/log_databus/serializers.py:401
-#, fuzzy
-#| msgid "路径信息"
 msgid "是否包含集群信息"
-msgstr "Path information"
+msgstr ""
 
 #: apps/log_databus/serializers.py:402
 msgid "是否使用默认用户信息"
@@ -2491,163 +2303,159 @@ msgstr ""
 
 #: apps/log_databus/serializers.py:449 apps/log_search/constants.py:454
 msgid "正则表达式"
-msgstr "Regular"
+msgstr ""
 
 #: apps/log_databus/serializers.py:453
 msgid "是否保留原文"
-msgstr "Whether to keep the original text"
+msgstr ""
 
 #: apps/log_databus/serializers.py:457 apps/log_databus/serializers.py:526
 #: apps/log_databus/serializers.py:646 apps/log_databus/serializers.py:653
 msgid "清洗类型"
-msgstr "Cleaning type"
+msgstr ""
 
 #: apps/log_databus/serializers.py:459
 msgid "日志内容"
-msgstr "Log content"
+msgstr ""
 
 #: apps/log_databus/serializers.py:463
 msgid "日志样例"
-msgstr "Sample log"
+msgstr ""
 
 #: apps/log_databus/serializers.py:464
-#, fuzzy
-#| msgid "正则表达式"
 msgid "行首正则表达式"
-msgstr "Regular"
+msgstr ""
 
 #: apps/log_databus/serializers.py:468 apps/log_search/constants.py:316
 msgid "时间格式"
-msgstr "Time format"
+msgstr ""
 
 #: apps/log_databus/serializers.py:469 apps/log_search/models.py:166
 msgid "时区"
-msgstr "Time zone"
+msgstr ""
 
 #: apps/log_databus/serializers.py:470
 msgid "时间内容"
-msgstr "Time content"
+msgstr ""
 
 #: apps/log_databus/serializers.py:474
 msgid "字段顺序"
-msgstr "Field order"
+msgstr ""
 
 #: apps/log_databus/serializers.py:475
 msgid "字段名称"
-msgstr "Field Name"
+msgstr ""
 
 #: apps/log_databus/serializers.py:476
 msgid "别名"
-msgstr "Alias"
+msgstr ""
 
 #: apps/log_databus/serializers.py:477 apps/log_trace/handlers/proto/otlp.py:73
 #: bk_monitor/models.py:21
 msgid "类型"
-msgstr "Type"
+msgstr ""
 
 #: apps/log_databus/serializers.py:479
 msgid "是否分词"
-msgstr "Word segmentation"
+msgstr ""
 
 #: apps/log_databus/serializers.py:480
 msgid "是否维度"
-msgstr "Whether dimension"
+msgstr ""
 
 #: apps/log_databus/serializers.py:481
 msgid "是否时间字段"
-msgstr "Whether time field"
+msgstr ""
 
 #: apps/log_databus/serializers.py:482 apps/models.py:265
 msgid "是否删除"
-msgstr "Delete or not"
+msgstr ""
 
 #: apps/log_databus/serializers.py:483
 msgid "是否内置字段"
-msgstr "Whether the field is built-in"
+msgstr ""
 
 #: apps/log_databus/serializers.py:484 apps/log_databus/serializers.py:528
 #: apps/log_databus/serializers.py:648 apps/log_databus/serializers.py:655
 #: apps/log_search/models.py:594
 msgid "字段配置"
-msgstr "Field configuration"
+msgstr ""
 
 #: apps/log_databus/serializers.py:490
 msgid "参数不能为空：field_name/field_type"
-msgstr "Parameter cannot be empty：field_name/field_type"
+msgstr ""
 
 #: apps/log_databus/serializers.py:495
 msgid "字段别名不能与标准字段重复"
-msgstr "Field aliases cannot be duplicated with standard fields"
+msgstr ""
 
 #: apps/log_databus/serializers.py:497
 msgid "字段名称不能与标准字段重复"
-msgstr "Field names cannot be duplicated with standard fields"
+msgstr ""
 
 #: apps/log_databus/serializers.py:508
 msgid "只有字符串类型的字段才可以设置为分词"
-msgstr "Only fields of type string can be set to tokenization"
+msgstr ""
 
 #: apps/log_databus/serializers.py:513
 msgid "时间字段需配置时区、格式"
-msgstr "Time field needs to be configured with time zone and format"
+msgstr ""
 
 #: apps/log_databus/serializers.py:517 apps/log_databus/serializers.py:520
 msgid "时间字段类型与格式不匹配"
-msgstr "Time field type does not match format"
+msgstr ""
 
 #: apps/log_databus/serializers.py:535 apps/log_search/models.py:299
 msgid "查看权限"
-msgstr "View permissions"
+msgstr ""
 
 #: apps/log_databus/serializers.py:542
 msgid "[字段提取]请输入需要提取的字段信息"
-msgstr "[Field extraction] Please enter the field information to be extracted"
+msgstr ""
 
 #: apps/log_databus/serializers.py:546
 msgid "存储索引名不能包含bklog关键字"
-msgstr "The storage index name cannot contain the bklog keyword"
+msgstr ""
 
 #: apps/log_databus/serializers.py:561
 msgid "分隔符必须指定field_index"
-msgstr "Delimiter must specify field_index"
+msgstr ""
 
 #: apps/log_databus/serializers.py:570
 msgid "仅可以设置一个时间字段"
-msgstr "Only one time field can be set"
+msgstr ""
 
 #: apps/log_databus/serializers.py:573
 msgid "清洗需要配置有效字段"
-msgstr "Cleaning needs to configure valid fields"
+msgstr ""
 
 #: apps/log_databus/serializers.py:581
 msgid "itsm单号"
-msgstr "itsm ticket"
+msgstr ""
 
 #: apps/log_databus/serializers.py:582
 msgid "itsm单据标题"
-msgstr "itsm ticket title"
+msgstr ""
 
 #: apps/log_databus/serializers.py:583
 msgid "itsm单据地址"
-msgstr "itsm ticket url"
+msgstr ""
 
 #: apps/log_databus/serializers.py:584
 msgid "itsm单据状态"
-msgstr "itsm ticket status"
+msgstr ""
 
 #: apps/log_databus/serializers.py:585
 msgid "itsm最近更新者"
-msgstr "itsm last update_by"
+msgstr ""
 
 #: apps/log_databus/serializers.py:586
-#, fuzzy
-#| msgid "更新时间"
 msgid "itsm最近更新时间"
-msgstr "UpdateTime"
+msgstr ""
 
 #: apps/log_databus/serializers.py:587
 msgid "itsm审批结果"
-msgstr "itsm result"
+msgstr ""
 
 #: apps/log_databus/serializers.py:588
 msgid "itsmtoken"
@@ -2655,45 +2463,43 @@ msgstr ""
 
 #: apps/log_databus/serializers.py:592
 msgid "期待接入日期"
-msgstr "Expected access date"
+msgstr ""
 
 #: apps/log_databus/serializers.py:593
 msgid "单条日志大小(bytes)"
-msgstr "Single log size"
+msgstr ""
 
 #: apps/log_databus/serializers.py:594
 msgid "单机流量峰值（kB/S）"
-msgstr "Peak single machine traffic"
+msgstr ""
 
 #: apps/log_databus/serializers.py:595
 msgid "单机增长日志量"
-msgstr "Single machine growth log volume"
+msgstr ""
 
 #: apps/log_databus/serializers.py:596
 msgid "预计接入主机数"
-msgstr "Estimated number of connected hosts"
+msgstr ""
 
 #: apps/log_databus/serializers.py:597
 msgid "日志保留天数"
-msgstr "Log retention days"
+msgstr ""
 
 #: apps/log_databus/serializers.py:598
 msgid "热数据天数"
-msgstr "Hot data days"
+msgstr ""
 
 #: apps/log_databus/serializers.py:599
 msgid "申请原因"
-msgstr "Reason for application"
+msgstr ""
 
 #: apps/log_databus/serializers.py:603
 msgid "内网ip"
 msgstr ""
 
 #: apps/log_databus/serializers.py:604
-#, fuzzy
-#| msgid "云区域ID"
 msgid "云区域Id"
-msgstr "Cloud ID"
+msgstr ""
 
 #: apps/log_databus/serializers.py:605
 msgid "主机id"
@@ -2704,15 +2510,13 @@ msgid "检索关键词"
 msgstr ""
 
 #: apps/log_databus/serializers.py:612
-#, fuzzy
-#| msgid "清洗配置"
 msgid "清洗配置类型"
-msgstr "Cleaning configuration"
+msgstr ""
 
 #: apps/log_databus/serializers.py:613 apps/log_databus/serializers.py:624
 #: apps/log_search/serializers.py:45 apps/log_search/serializers.py:274
 msgid "页码"
-msgstr "PageNumber"
+msgstr ""
 
 #: apps/log_databus/serializers.py:614 apps/log_databus/serializers.py:625
 #: apps/log_search/serializers.py:275
@@ -2720,10 +2524,8 @@ msgid "页面大小"
 msgstr ""
 
 #: apps/log_databus/serializers.py:619 apps/log_databus/serializers.py:630
-#, fuzzy
-#| msgid "分页参数不能为空"
 msgid "分页参数不能为负数"
-msgstr "Pagination parameter cannot be empty"
+msgstr ""
 
 #: apps/log_databus/serializers.py:641
 msgid "是否是轮询请求"
@@ -2750,22 +2552,16 @@ msgid "快照存储时间配置"
 msgstr ""
 
 #: apps/log_databus/serializers.py:694
-#, fuzzy
-#| msgid "开始时间"
 msgid "数据开始时间"
-msgstr "StartTime"
+msgstr ""
 
 #: apps/log_databus/serializers.py:695
-#, fuzzy
-#| msgid "过期时间 "
 msgid "数据结束时间"
-msgstr "Expire date"
+msgstr ""
 
 #: apps/log_databus/serializers.py:696 apps/log_databus/serializers.py:701
-#, fuzzy
-#| msgid "过期时间 "
 msgid "指定过期时间"
-msgstr "Expire date"
+msgstr ""
 
 #: apps/log_databus/serializers.py:697
 msgid "通知人"
@@ -2783,81 +2579,71 @@ msgstr ""
 #: apps/log_search/constants.py:460
 #: apps/tests/log_databus/test_e2e_collectorviewsetapi.py:61
 msgid "行日志"
-msgstr "Line"
+msgstr ""
 
 #: apps/log_databus/views/collector_views.py:210
 #: apps/log_search/constants.py:461
 #: apps/tests/log_databus/test_e2e_collectorviewsetapi.py:82
 msgid "段日志"
-msgstr "Section"
+msgstr ""
 
 #: apps/log_esquery/esquery/client/QueryClientEs.py:121
 #: apps/log_esquery/esquery/client/QueryClientLog.py:134
 #: apps/log_search/exceptions.py:68
 msgid "EsClient链接失败"
-msgstr "EsClient connection failed"
+msgstr ""
 
 #: apps/log_esquery/esquery/client/QueryClientLog.py:305
 msgid "结果表不存在"
-msgstr "The result table does not exist"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:36
 #, python-format, python-brace-format
 msgid "查询的接入类型\"{scenario_id}\"不在接入范围%s"
-msgstr "The query access type \"{scenario_id}\" is not in the access range %s"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:41
 msgid "请输入索引集ID"
-msgstr "Please enter the Indices ID"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:46
 msgid "此接口暂未对外，请确认"
-msgstr "This interface is not external, please confirm"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:56
 msgid "场景类型异常"
-msgstr "Scenario type exception"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:61
 #, python-brace-format
 msgid ""
 "该索引\"{result_table_id}\"不存在，所在的scenario_id不存在\"{scenario_id}\""
 msgstr ""
-"This index \"{result_table_id}\"does not exist, the scenario_id it exists "
-"does not exist \"{scenario_id}\""
 
 #: apps/log_esquery/exceptions.py:66
 #, python-brace-format
 msgid "该索引所在的scenario_id不唯一\"{scenario_id_list}\""
 msgstr ""
-"The scenario_id where the index is located is not unique "
-"\"{scenario_id_list}\""
 
 #: apps/log_esquery/exceptions.py:71
 msgid "scenario空异常"
-msgstr "Scenario empty exception"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:76
 #, python-brace-format
 msgid "该索引所在的source_id不唯一\"{source_id_list}\""
 msgstr ""
-"The source_id where this index is located is not unique \"{source_id_list} \""
 
 #: apps/log_esquery/exceptions.py:81
 msgid ""
 "存储集群ID(storage_cluster_id)信息空异常，当查询场景（scenario_id）不是bkdata"
 "时候需要传入正确的storage_cluster_id"
 msgstr ""
-"Storage cluster ID (storage_cluster_id) information is empty, you need to "
-"enter thecorrect storage_cluster_id when the query scenario (scenario_id) is "
-"not bkdata"
 
 #: apps/log_esquery/exceptions.py:86
 #, python-brace-format
 msgid "该索引\"{result_table_id}\"不存在，所在的Source_id不存在\"{source_id}\""
 msgstr ""
-"This index \"{result_table_id}\"does not exist, and the Source_id at it does "
-"not exist \"{source_id}\""
 
 #: apps/log_esquery/exceptions.py:91
 #, python-brace-format
@@ -2865,76 +2651,66 @@ msgid ""
 "该索引\"{result_table_id}\"所在查询场景\"{scenario_id}\"与查询连接信息所需场"
 "景不匹配"
 msgstr ""
-"The index \"{result_table_id}\" is located in the query scenario "
-"\"{scenario_id}\" does not match the scenario required to query the "
-"connection information"
 
 #: apps/log_esquery/exceptions.py:101
 msgid "时间异常"
-msgstr "Time abnormal"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:106
 msgid "时间字段空异常"
-msgstr "Time field empty exception"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:116 apps/log_esquery/exceptions.py:131
 msgid "客户端版本异常"
-msgstr "Client version is abnormal"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:136
 msgid "缺少连接ES的账号密码"
-msgstr "Missing account password for ES connection"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:141
 #, python-brace-format
 msgid "连接ES错误\"{error}\""
-msgstr "Connection ES error \"{error}\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:146
 #, python-brace-format
 msgid "加载EsClient客户端失败，场景\"{scenario_id}\"，版本\"{version}"
 msgstr ""
-"Loading EsClient client failed, scenario \"{scenario_id}\", version "
-"\"{version}"
 
 #: apps/log_esquery/exceptions.py:151
 #, python-brace-format
 msgid "EsClient查询错误\"{error}\""
-msgstr "EsClient query error \"{error}\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:156
 #, python-brace-format
 msgid "原生ES主机\"{host}\"和端口\"{port}错误\""
-msgstr "Native ES host \"{host}\" and port \"{port} error\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:161
 #, python-brace-format
 msgid "从meta获取连接信息失败{message}"
-msgstr "Failed to get connection information from meta {message}"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:166
-#, fuzzy, python-brace-format
-#| msgid "EsClient查询错误\"{error}\""
+#, python-brace-format
 msgid "EsClient scroll查询错误\"{error}\""
-msgstr "EsClient query error \"{error}\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:171
-#, fuzzy, python-brace-format
-#| msgid "EsClient查询错误\"{error}\""
+#, python-brace-format
 msgid "EsClient Alias查询错误\"{error}\""
-msgstr "EsClient query error \"{error}\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:176
-#, fuzzy, python-brace-format
-#| msgid "EsClient查询错误\"{error}\""
+#, python-brace-format
 msgid "EsClient cat indices查询错误\"{error}\""
-msgstr "EsClient query error \"{error}\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:181
-#, fuzzy
-#| msgid "EsClient查询错误\"{error}\""
 msgid "EsClient 查询错误"
-msgstr "EsClient query error \"{error}\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:186
 msgid "Es 查询超时"
@@ -2942,41 +2718,41 @@ msgstr ""
 
 #: apps/log_esquery/exceptions.py:196 apps/log_trace/exceptions.py:30
 msgid "查询异常"
-msgstr "Query exception"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:201 apps/log_search/exceptions.py:291
 msgid "构建查询参数失败"
-msgstr "Failed to build query parameters"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:206
 #, python-brace-format
 msgid "拉取ES字段失败, ERROR: \"{error}\""
-msgstr "Failed to pull ES field, ERROR: \"{error}\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:211
 #, python-brace-format
 msgid "查询上下文场景错误, ERROR Scenario_id is : \"{scenario_id}\""
-msgstr "Query context scenario error, ERROR Scenario_id is : \"{scenario_id}\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:216
 #, python-brace-format
 msgid "查询DSL错误, ERROR DSL is : \"{dsl}\""
-msgstr "Query DSL error, ERROR DSL is : \"{dsl}\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:221 apps/log_search/exceptions.py:286
 #, python-brace-format
 msgid "索引集【{index_set_id}】没有已审批通过的索引信息"
-msgstr "Indices 【{index_set_id}】 has no approved index information"
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:226 apps/log_search/exceptions.py:236
 #, python-brace-format
 msgid "找不到索引集\"{index_set_id}\"的相关信息"
-msgstr "No information found for Indices \"{index_set_id}\""
+msgstr ""
 
 #: apps/log_esquery/exceptions.py:231
 #, python-brace-format
 msgid "找不到索引集\"{index_set_id}\"的相关信息time_field信息"
-msgstr "No information found for Indices \"{index_set_id}\" time_field"
+msgstr ""
 
 #: apps/log_esquery/serializers.py:54
 msgid "默认使用time_range的方式检索"
@@ -2984,60 +2760,56 @@ msgstr ""
 
 #: apps/log_esquery/serializers.py:56
 msgid "是否包含开始时间点(gte/gt)"
-msgstr "Whether to include the start time point (gte/gt)"
+msgstr ""
 
 #: apps/log_esquery/serializers.py:57
 msgid "是否包含结束时间点(lte/lt)"
-msgstr "Whether to include the end time point (lte/lt)"
+msgstr ""
 
 #: apps/log_esquery/serializers.py:116 apps/log_esquery/serializers.py:319
 #: apps/log_esquery/serializers.py:358
 msgid "第三方ES需传集群ID：storage_cluster_id"
-msgstr "Third-party ES needs to pass the cluster ID：storage_cluster_id"
+msgstr ""
 
 #: apps/log_esquery/serializers.py:122
 msgid "请提供时间字段"
-msgstr "Please provide time field"
+msgstr ""
 
 #: apps/log_esquery/serializers.py:189 apps/log_esquery/serializers.py:227
 #: apps/log_esquery/serializers.py:246 apps/log_esquery/serializers.py:298
 msgid "indices该字段是必填项"
-msgstr "indices field is required"
+msgstr ""
 
 #: apps/log_esquery/serializers.py:208
 msgid "bk_biz_id该字段是必填项"
-msgstr "bk_biz_id required"
+msgstr ""
 
 #: apps/log_esquery/serializers.py:210 apps/log_esquery/serializers.py:229
 #: apps/log_esquery/serializers.py:248 apps/log_esquery/serializers.py:280
 #: apps/log_esquery/serializers.py:300
 msgid "storage_cluster_id该字段是必填项"
-msgstr "storage_cluster_id this field is required"
+msgstr ""
 
 #: apps/log_esquery/serializers.py:253
 msgid "转发的url"
-msgstr "url of route"
+msgstr ""
 
 #: apps/log_esquery/serializers.py:264
 msgid "非法的url路径"
-msgstr "url invalid"
+msgstr ""
 
 #: apps/log_esquery/serializers.py:282
-#, fuzzy
-#| msgid "indices该字段是必填项"
 msgid "indices 该字段是必填项"
-msgstr "indices field is required"
+msgstr ""
 
 #: apps/log_extract/admin.py:70 apps/log_extract/models.py:191
 #: apps/log_extract/serializers.py:409 apps/log_extract/serializers.py:426
 msgid "链路类型"
-msgstr "Link type"
+msgstr ""
 
 #: apps/log_extract/components/collections/cos_upload_component.py:35
-#, fuzzy
-#| msgid "文件上传"
 msgid "Cos 文件上传"
-msgstr "Uploading files"
+msgstr ""
 
 #: apps/log_extract/components/collections/cos_upload_component.py:41
 msgid "job instance id"
@@ -3049,10 +2821,8 @@ msgstr ""
 
 #: apps/log_extract/components/collections/cos_upload_component.py:92
 #: apps/log_extract/tasks/extract.py:362
-#, fuzzy
-#| msgid "执行中"
 msgid "Cos Upload 正在执行中"
-msgstr "Running"
+msgstr ""
 
 #: apps/log_extract/components/collections/cos_upload_component.py:97
 #: apps/log_extract/tasks/extract.py:367
@@ -3061,227 +2831,208 @@ msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:37
 msgid "文件分发"
-msgstr "Distributing Files"
+msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:44
-#, fuzzy
-#| msgid "源数据列表"
 msgid "源文件信息列表"
-msgstr "Source data"
+msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:46
 #: apps/log_extract/components/collections/packing_component.py:53
 msgid "执行脚本机器的用户名"
-msgstr "operator"
+msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:48
 #: apps/log_extract/components/collections/packing_component.py:48
 #: apps/log_extract/models.py:52 apps/log_extract/serializers.py:285
 msgid "作业执行人"
-msgstr "operator"
+msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:53
 msgid "分发任务instance id"
-msgstr "Task instance ID"
+msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:54
 msgid "分发服务器IP地址"
-msgstr "Destination IP"
+msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:55
 msgid "分发服务器中转文件路径"
-msgstr "Transit server file path"
+msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:56
 msgid "分发后打包步骤的打包路径"
-msgstr "Transit server packing file path"
+msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:78
 #: apps/log_extract/tasks/extract.py:254
-#, fuzzy
-#| msgid "请配置中转服务器"
 msgid "请配置链路中转服务器"
-msgstr "Please configure the transit server"
+msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:133
 #: apps/log_extract/components/collections/packing_component.py:152
 #: apps/log_extract/tasks/extract.py:202 apps/log_extract/tasks/extract.py:308
-#, fuzzy
-#| msgid "执行中"
 msgid "脚本正在执行中"
-msgstr "Running"
+msgstr ""
 
 #: apps/log_extract/components/collections/distribution_component.py:139
 #: apps/log_extract/tasks/extract.py:314
 msgid "文件分发异常({})"
-msgstr "Exception in file distributing({})"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:38
 msgid "文件打包"
-msgstr "Packing the files"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:45
 #: apps/log_extract/models.py:76 apps/log_extract/serializers.py:330
 #: apps/log_extract/serializers.py:340
-#, fuzzy
-#| msgid "任务ID列表"
 msgid "文件列表"
-msgstr "Task ID list"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:46
-#, fuzzy
-#| msgid "项目列表"
 msgid "目标ip列表"
-msgstr "Project list"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:50
 #: apps/log_extract/models.py:78 apps/log_extract/serializers.py:106
 #: apps/log_extract/serializers.py:342
-#, fuzzy
-#| msgid "过滤方式类型"
 msgid "过滤类型"
-msgstr "Filter type"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:52
-#, fuzzy
-#| msgid "日志路径"
 msgid "打包路径"
-msgstr "Log path"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:58
-#, fuzzy
-#| msgid "实例ID"
 msgid "任务实例ID"
-msgstr "Instance ID"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:59
 msgid "task输出内容"
-msgstr "Task Script Output"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:60
 msgid "打包后的文件路径"
-msgstr "Packed File Path"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:61
 msgid "上传的服务器IP"
-msgstr "Uploaded Destination Server IP"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:162
 #: apps/log_extract/tasks/extract.py:212
 msgid "目标机器没有足够的储存"
-msgstr "The target machine does not have enough storage"
+msgstr ""
 
 #: apps/log_extract/components/collections/packing_component.py:167
 #: apps/log_extract/tasks/extract.py:217
 msgid "任务打包异常: {}"
-msgstr "Exception in the packing process"
+msgstr ""
 
 #: apps/log_extract/constants.py:45
 msgid "初始化"
-msgstr "Init Creation"
+msgstr ""
 
 #: apps/log_extract/constants.py:46
 msgid "初始化任务调度"
-msgstr "Init Process"
+msgstr ""
 
 #: apps/log_extract/constants.py:47
 msgid "文件打包中"
-msgstr "Packing"
+msgstr ""
 
 #: apps/log_extract/constants.py:48
 msgid "文件分发中"
-msgstr "Distributing"
+msgstr ""
 
 #: apps/log_extract/constants.py:49
 msgid "分发文件打包中"
-msgstr "Distribution Packing"
+msgstr ""
 
 #: apps/log_extract/constants.py:50
 msgid "文件上传中"
-msgstr "Uploading"
+msgstr ""
 
 #: apps/log_extract/constants.py:51 apps/log_extract/handlers/tasks.py:233
 msgid "分发到网盘中"
-msgstr "Distribute to the network disk"
+msgstr ""
 
 #: apps/log_extract/constants.py:52
-#| msgid "同步完成"
 msgid "已完成"
-msgstr "Sync complete"
+msgstr ""
 
 #: apps/log_extract/constants.py:53
 msgid "已过期"
-msgstr "Expired"
+msgstr ""
 
 #: apps/log_extract/constants.py:54
 msgid "文件提取异常"
-msgstr "Failed"
+msgstr ""
 
 #: apps/log_extract/constants.py:68
 msgid "按关键字过滤行"
-msgstr "Match Word"
+msgstr ""
 
 #: apps/log_extract/constants.py:69
 msgid "按行数过滤"
-msgstr "Line Range"
+msgstr ""
 
 #: apps/log_extract/constants.py:70
 msgid "获取最新n行"
-msgstr "Tail Line"
+msgstr ""
 
 #: apps/log_extract/constants.py:71
 msgid "按关键字范围过滤行"
-msgstr "Match Range"
+msgstr ""
 
 #: apps/log_extract/constants.py:83
-#, fuzzy
-#| msgid "执行中"
 msgid "未执行"
-msgstr "Running"
+msgstr ""
 
 #: apps/log_extract/constants.py:84
 msgid "执行中"
-msgstr "Running"
+msgstr ""
 
 #: apps/log_extract/constants.py:86
 msgid "暂停"
-msgstr "Pause"
+msgstr ""
 
 #: apps/log_extract/constants.py:87
 msgid "已经终止"
-msgstr "Terminated"
+msgstr ""
 
 #: apps/log_extract/constants.py:88
 msgid "已经结束"
-msgstr "Is over"
+msgstr ""
 
 #: apps/log_extract/constants.py:102
 msgid "与"
-msgstr "and"
+msgstr ""
 
 #: apps/log_extract/constants.py:103
 msgid "或"
-msgstr "or"
+msgstr ""
 
 #: apps/log_extract/constants.py:104
 msgid "非"
-msgstr "not"
+msgstr ""
 
 #: apps/log_extract/constants.py:115
 msgid "按topo选择目标"
-msgstr "Topo"
+msgstr ""
 
 #: apps/log_extract/constants.py:115
 msgid "按module选择目标"
-msgstr "Module"
+msgstr ""
 
 #: apps/log_extract/constants.py:125 apps/log_extract/constants.py:129
 msgid "内网链路"
-msgstr "Intranet link"
+msgstr ""
 
 #: apps/log_extract/constants.py:125
 msgid "腾讯云cos链路"
-msgstr "Tencent cloud cos link"
+msgstr ""
 
 #: apps/log_extract/constants.py:125 apps/log_extract/constants.py:129
 msgid "bk repo链路"
@@ -3289,233 +3040,199 @@ msgstr ""
 
 #: apps/log_extract/constants.py:138
 msgid "近一天"
-msgstr "Nearly one day"
+msgstr ""
 
 #: apps/log_extract/constants.py:138
 msgid "近一周"
-msgstr "Nearly a week"
+msgstr ""
 
 #: apps/log_extract/constants.py:138
 msgid "近一月"
-msgstr "Nearly one month"
+msgstr ""
 
 #: apps/log_extract/constants.py:138
 msgid "所有"
-msgstr "all"
+msgstr ""
 
 #: apps/log_extract/constants.py:138 apps/log_search/constants.py:430
 msgid "自定义"
-msgstr "Customize"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:27
-#, fuzzy
-#| msgid "数据源模块异常"
 msgid "日志提取模块异常"
-msgstr "Data source module exception"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:32
 msgid "请配置云石账密信息"
-msgstr "Requiring account password of Cstone"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:37
 msgid "请配置中转服务器信息"
-msgstr "Requiring information of transit server"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:42
-#, fuzzy
-#| msgid "数据链路ID不存在"
 msgid "该Task ID 不存在"
-msgstr "Data link ID does not exist"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:47 apps/log_extract/exceptions.py:167
 #, python-brace-format
 msgid "拉取topo结构失败：{error}, 请求参数：{params} "
-msgstr "Fetching topo failed: {error}, params: {params}"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:52
 #, python-brace-format
 msgid "获取全部topo为空,请求参数：{params} "
-msgstr "topo is empty, params: {params}"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:57
 msgid "获取任务详情失败，您不是该任务的创建者"
 msgstr ""
-"Failed to fetch the details of task, you are not the original creator of the "
-"task"
 
 #: apps/log_extract/exceptions.py:62
 #, python-brace-format
 msgid ""
 "选择文件不可下载，请确认所配置策略，不可下载文件：{failed_download_file_list}"
 msgstr ""
-"Can not download the files, please ensure that you are in the strategy "
-"configuration state, non-downloadable files: {failed_download_file_list}"
 
 #: apps/log_extract/exceptions.py:67
 msgid "重新创建任务失败，您不是原任务的创建者"
 msgstr ""
-"Failed to recreate the task, you are not the original creator of the task"
 
 #: apps/log_extract/exceptions.py:72
 msgid "禁止删除任务！"
-msgstr "Deletion of task if prohibited!"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:77 apps/log_extract/exceptions.py:112
 #, python-brace-format
 msgid "{message}"
-msgstr "{message}"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:82
 msgid "当前任务已过期"
-msgstr "Task expired"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:87
 msgid "当前任务已达最大下载次数"
-msgstr "The maximum number of downloads has been reached"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:92
 msgid "创建任务异常"
-msgstr "Exception to task creation"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:97
 msgid "当前任务不可下载"
-msgstr "Task is non-downloadable"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:102
 msgid "下载任务失败，您没有此任务的下载权限"
 msgstr ""
-"The download task failed, you do not have the download permission for this "
-"task"
 
 #: apps/log_extract/exceptions.py:107
-#, fuzzy
-#| msgid "重新创建任务失败，您不是原任务的创建者"
 msgid "更新任务信息失败，你不是此任务的创建者"
 msgstr ""
-"Failed to recreate the task, you are not the original creator of the task"
 
 #: apps/log_extract/exceptions.py:117
 msgid "请管理员配置提取链路"
-msgstr "Ask the administrator to configure the extraction link"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:122
 msgid "提取链路不存在，请管理员检查"
-msgstr "The extraction link does not exist, please check by the administrator"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:127
 msgid "下载目标文件不存在"
-msgstr "Download target file does not exist"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:132
 #, python-brace-format
 msgid "访问{request_dir}目录错误，请检查是否已授权"
 msgstr ""
-"The {request_dir} is not accessible, please check if the strategy is "
-"configured"
 
 #: apps/log_extract/exceptions.py:137
 msgid "用户获取可访问目录失败，请重新选择服务器"
 msgstr ""
-"Failed to get an accessible directory, please select the correct server"
 
 #: apps/log_extract/exceptions.py:142
 #, python-brace-format
 msgid "未对用户授权模块{request_module}"
-msgstr "you are not allowed to access the module: {request_module}"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:147
 msgid "文件或目录不存在"
-msgstr "No such file or directory"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:152
-#, fuzzy
-#| msgid "所选服务器系统不一致，请重新选择服务器"
 msgid "所选服务器器中同时包含windows与linux，请重新选择服务器"
-msgstr "Please select the server with the same operating system"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:157
 #, python-brace-format
 msgid "存在{mismatch_number}个服务器无对应TOPO，请重新选择服务器"
 msgstr ""
-"There is(are) {mismatch_number} server without topo, please select the "
-"server again"
 
 #: apps/log_extract/exceptions.py:162
 msgid "所选择的服务器授权目录或文件后缀无交集，请重新选择服务器"
 msgstr ""
-"The selected server license directory or file extensions do not intersect, "
-"please select the server again"
 
 #: apps/log_extract/exceptions.py:172
 #, python-brace-format
 msgid "获取topo为空,请求参数：{params} "
-msgstr "Empty topo, params: {params}"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:177
 msgid "暂无权限访问此页面,请联系管理员"
-msgstr "Permission denied, please contact the administrator"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:182
 msgid "过滤topo为空,请检查策略配置"
-msgstr "Empty topo, please check if the strategy is configured"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:187
 msgid "预览文件超时，请重试"
-msgstr "Explorer timeout, please try again"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:192
-#, fuzzy
-#| msgid "文件分发异常({})"
 msgid "文件预览异常"
-msgstr "Exception in file distributing({})"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:197
 #, python-brace-format
 msgid "ID为{strategy_id}的策略不存在!"
-msgstr "The strategy which this ID is {strategy_id} does not exist"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:202
-#, fuzzy
-#| msgid "参数异常：用户组ID不存在"
 msgid "参数异常：策略ID不存在"
-msgstr "Parameter exception: user group ID does not exist"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:207
 msgid "该业务下已存在相同的策略名"
-msgstr "Duplicate strategy name in this business"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:212
 msgid "您在该业务下尚未拥有下载策略，联系业务运维进行下载策略授权"
 msgstr ""
-"You do not have a download strategy under this business, please contact "
-"business operation and maintenance for download strategy authorization"
 
 #: apps/log_extract/exceptions.py:217
 msgid "您在该业务下尚未拥有下载策略，请先通过'管理-日志提取配置'添加策略"
 msgstr ""
-"You do not have a download strategy under this business, please add the "
-"strategy through the Management-Log Extraction Configuration"
 
 #: apps/log_extract/exceptions.py:222
 msgid "策略执行人配置不合法"
-msgstr "Incorrect strategy operator"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:227
-#, fuzzy
-#| msgid "用户组不存在"
 msgid "该用户组不存在"
-msgstr "User group does not exist"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:232
-#, fuzzy, python-brace-format
-#| msgid "EsClient查询失败,失败原因:{e}"
+#, python-brace-format
 msgid "搜索文件失败,失败原因: {message}"
-msgstr "EsClient query failed with reason:{message}"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:237
 #, python-brace-format
 msgid " {message}"
-msgstr " {message}"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:243
 #, python-brace-format
@@ -3523,14 +3240,10 @@ msgid ""
 "[periodic_clear_timeout_pipeline_task]撤销超时pipeline任务失败：{exceptions} "
 "task_id=>{task_id}, pipeline_id=>{pipeline_id}"
 msgstr ""
-"[periodic_clear_timeout_pipeline_task]Failed to Revoked pipeline task："
-"{exceptions} task_id=>{task_id}, pipeline_id=>{pipeline_id}"
 
 #: apps/log_extract/exceptions.py:250
-#, fuzzy
-#| msgid "提取链路不存在"
 msgid "查找的日志提取链路不存在"
-msgstr "Extraction link does not exist"
+msgstr ""
 
 #: apps/log_extract/exceptions.py:255
 msgid "查找的日志提取链路type不支持"
@@ -3541,161 +3254,137 @@ msgid "不能修改或者删除还在进行中任务的链路"
 msgstr ""
 
 #: apps/log_extract/exceptions.py:265
-#, fuzzy
-#| msgid "提取链路不存在"
 msgid "同名日志提取链路已存在"
-msgstr "Extraction link does not exist"
+msgstr ""
 
 #: apps/log_extract/fileserver.py:166
 msgid "获取脚本内容异常({})"
-msgstr "Get script content exception ({})"
+msgstr ""
 
 #: apps/log_extract/handlers/explorer.py:89
 #, python-brace-format
 msgid ""
 "{strategy_name} 策略中的执行人 {operator} 没有JOB的操作权限,无法执行下载操作"
 msgstr ""
-"{strategy_name} The executor {operator} in the strategy does not have JOB "
-"operation permission and cannot perform the download operation"
 
 #: apps/log_extract/handlers/explorer.py:128
-#, fuzzy
-#| msgid "文件分发异常({})"
 msgid "文件预览异常({})"
-msgstr "Exception in file distributing({})"
+msgstr ""
 
 #: apps/log_extract/models.py:44
 msgid "策略ID"
-msgstr "Strategy ID"
+msgstr ""
 
 #: apps/log_extract/models.py:46 apps/log_extract/serializers.py:278
 msgid "策略名称"
-msgstr "Strategy name"
+msgstr ""
 
 #: apps/log_extract/models.py:47 apps/log_extract/serializers.py:251
 msgid "用户ID"
-msgstr "User ID"
+msgstr ""
 
 #: apps/log_extract/models.py:48 apps/log_extract/serializers.py:252
 #: apps/log_extract/serializers.py:281
-#, fuzzy
-#| msgid "目标类型"
 msgid "目标选择类型"
-msgstr "Target type"
+msgstr ""
 
 #: apps/log_extract/models.py:49 apps/log_extract/serializers.py:253
-#, fuzzy
-#| msgid "成员列表"
 msgid "模块列表"
-msgstr "Member list"
+msgstr ""
 
 #: apps/log_extract/models.py:50 apps/log_extract/serializers.py:254
-#, fuzzy
-#| msgid "项目列表"
 msgid "目录列表"
-msgstr "Project list"
+msgstr ""
 
 #: apps/log_extract/models.py:51 apps/log_extract/serializers.py:255
-#, fuzzy
-#| msgid "操作类型"
 msgid "文件类型"
-msgstr "Operation type"
+msgstr ""
 
 #: apps/log_extract/models.py:73
 msgid "任务记录id"
-msgstr "Task ID"
+msgstr ""
 
 #: apps/log_extract/models.py:75 apps/log_extract/serializers.py:55
 #: apps/log_extract/serializers.py:329 apps/log_extract/serializers.py:339
-#, fuzzy
-#| msgid "业务id"
 msgid "业务机器ip"
-msgstr "Business id"
+msgstr ""
 
 #: apps/log_extract/models.py:81
 msgid "当前文件下载状态"
-msgstr "Download status"
+msgstr ""
 
 #: apps/log_extract/models.py:82
-#, fuzzy
-#| msgid "过期时间 "
 msgid "任务过期时间"
-msgstr "Expire date"
+msgstr ""
 
 #: apps/log_extract/models.py:83
 msgid "流水线ID"
-msgstr "Pipeline ID"
+msgstr ""
 
 #: apps/log_extract/models.py:84
 msgid "流水线组件ID"
-msgstr "Pipeline components ID"
+msgstr ""
 
 #: apps/log_extract/models.py:86
 msgid "文件分发ID"
-msgstr "Job task ID"
+msgstr ""
 
 #: apps/log_extract/models.py:89
 msgid "上传票据"
-msgstr "Cstone upload ticket"
+msgstr ""
 
 #: apps/log_extract/models.py:90
 msgid "上传随机值"
-msgstr "Cstone upload random"
+msgstr ""
 
 #: apps/log_extract/models.py:93
-#, fuzzy
-#| msgid "任务ID"
 msgid "任务上传ID"
-msgstr "Task ID"
+msgstr ""
 
 #: apps/log_extract/models.py:94
 msgid "云石上传ID"
-msgstr "Cstone upload task ID"
+msgstr ""
 
 #: apps/log_extract/models.py:97
 msgid "云石文件路径"
-msgstr "Cstone File Path"
+msgstr ""
 
 #: apps/log_extract/models.py:99
-#, fuzzy
-#| msgid "任务ID"
 msgid "云石任务ID"
-msgstr "Task ID"
+msgstr ""
 
 #: apps/log_extract/models.py:100
 msgid "云石下载业务ID"
-msgstr "Cstone download task ID"
+msgstr ""
 
 #: apps/log_extract/models.py:101
 msgid "下载票据"
-msgstr "Cstone download ticket"
+msgstr ""
 
 #: apps/log_extract/models.py:102
 msgid "下载随机值"
-msgstr "Cstone download random"
+msgstr ""
 
 #: apps/log_extract/models.py:103 apps/log_extract/serializers.py:235
 #: apps/log_extract/serializers.py:344
 msgid "任务过程信息"
-msgstr "Task process information"
+msgstr ""
 
 #: apps/log_extract/models.py:106 apps/log_extract/serializers.py:109
 msgid "预览目录"
-msgstr "Preview catalog"
+msgstr ""
 
 #: apps/log_extract/models.py:107 apps/log_extract/serializers.py:110
 msgid "预览地址ip"
-msgstr "Preview address ip"
+msgstr ""
 
 #: apps/log_extract/models.py:108 apps/log_extract/serializers.py:111
 msgid "预览日期"
-msgstr "Preview date"
+msgstr ""
 
 #: apps/log_extract/models.py:109 apps/log_extract/serializers.py:114
-#, fuzzy
-#| msgid "是否搜索子目录"
 msgid "预览是否搜索子目录"
-msgstr "Is search child"
+msgstr ""
 
 #: apps/log_extract/models.py:110
 msgid "预览开始日期"
@@ -3719,10 +3408,8 @@ msgid "链路id"
 msgstr ""
 
 #: apps/log_extract/models.py:166
-#, fuzzy
-#| msgid "耗时"
 msgid "总耗时"
-msgstr "TimeConsuming"
+msgstr ""
 
 #: apps/log_extract/models.py:171
 msgid "IP数量"
@@ -3738,10 +3425,8 @@ msgid "链路名称"
 msgstr ""
 
 #: apps/log_extract/models.py:192 apps/log_extract/serializers.py:427
-#, fuzzy
-#| msgid "执行中"
 msgid "执行人"
-msgstr "Running"
+msgstr ""
 
 #: apps/log_extract/models.py:193 apps/log_extract/serializers.py:428
 msgid "执行bk_biz_id"
@@ -3771,7 +3456,7 @@ msgstr ""
 #: apps/log_extract/models.py:203 apps/log_extract/serializers.py:411
 #: apps/models.py:204
 msgid "创建时间"
-msgstr "CreateTime"
+msgstr ""
 
 #: apps/log_extract/models.py:206 apps/log_extract/models.py:207
 msgid ""
@@ -3784,10 +3469,8 @@ msgid "挂载目录"
 msgstr ""
 
 #: apps/log_extract/models.py:212 apps/log_extract/serializers.py:420
-#, fuzzy
-#| msgid "蓝鲸云区域id"
 msgid "主机云区域id"
-msgstr "BlueKing cloud id"
+msgstr ""
 
 #: apps/log_extract/models.py:213 apps/log_extract/serializers.py:421
 msgid "主机ip"
@@ -3798,43 +3481,37 @@ msgid "链路中转机"
 msgstr ""
 
 #: apps/log_extract/serializers.py:56
-#, fuzzy
-#| msgid "业务id"
 msgid "业务机器云区域id"
-msgstr "Business id"
+msgstr ""
 
 #: apps/log_extract/serializers.py:61 apps/log_extract/serializers.py:94
-#, fuzzy
-#| msgid "任务ID列表"
 msgid "业务机器列表"
-msgstr "Task ID list"
+msgstr ""
 
 #: apps/log_extract/serializers.py:62
 msgid "文件路径"
-msgstr "File path"
+msgstr ""
 
 #: apps/log_extract/serializers.py:63
 msgid "是否搜索子目录"
-msgstr "Is search child"
+msgstr ""
 
 #: apps/log_extract/serializers.py:64
 msgid "时间跨度"
-msgstr "Time range"
+msgstr ""
 
 #: apps/log_extract/serializers.py:71 apps/log_extract/serializers.py:140
 #: apps/log_extract/serializers.py:307
 msgid "请指定正确的目录"
-msgstr "Please enter the correct directory"
+msgstr ""
 
 #: apps/log_extract/serializers.py:73
 msgid "请指定正确的时间跨度"
-msgstr "Please specify the correct time range"
+msgstr ""
 
 #: apps/log_extract/serializers.py:84
-#, fuzzy
-#| msgid "时间格式"
 msgid "时间格式不正确"
-msgstr "Time format"
+msgstr ""
 
 #: apps/log_extract/serializers.py:86
 msgid "请指定开始和结束时间"
@@ -3842,265 +3519,218 @@ msgstr ""
 
 #: apps/log_extract/serializers.py:99 apps/log_search/serializers.py:250
 msgid "搜索关键字"
-msgstr "Search keyword"
+msgstr ""
 
 #: apps/log_extract/serializers.py:104
-#, fuzzy
-#| msgid "业务ID"
 msgid "业务机器IP"
-msgstr "Business ID"
+msgstr ""
 
 #: apps/log_extract/serializers.py:105
 msgid "目标文件路径"
-msgstr "File path"
+msgstr ""
 
 #: apps/log_extract/serializers.py:107
-#, fuzzy
-#| msgid "过滤方式"
 msgid "过滤参数"
-msgstr "Filter method"
+msgstr ""
 
 #: apps/log_extract/serializers.py:112
-#, fuzzy
-#| msgid "开始时间"
 msgid "预览开始时间"
-msgstr "StartTime"
+msgstr ""
 
 #: apps/log_extract/serializers.py:113
-#, fuzzy
-#| msgid "过期时间 "
 msgid "预览结束时间"
-msgstr "Expire date"
+msgstr ""
 
 #: apps/log_extract/serializers.py:115
 msgid "提取链路id"
-msgstr "Extract link id"
+msgstr ""
 
 #: apps/log_extract/serializers.py:122
 msgid "请指定正确的过滤类型"
-msgstr "Please specify the correct filter type"
+msgstr ""
 
 #: apps/log_extract/serializers.py:131
 msgid "提取链路不存在"
-msgstr "Extraction link does not exist"
+msgstr ""
 
 #: apps/log_extract/serializers.py:135
 msgid "同时下载的文件数不能超过{}"
-msgstr "The number of files downloaded at the same time cannot exceed {}"
+msgstr ""
 
 #: apps/log_extract/serializers.py:145
-#, fuzzy
-#| msgid "请指定正确的时间跨度"
 msgid "请指定正确的预览日期模式"
-msgstr "Please specify the correct time range"
+msgstr ""
 
 #: apps/log_extract/serializers.py:157 apps/log_extract/serializers.py:203
-#, fuzzy
-#| msgid "字段类型必须为字典类型"
 msgid "过滤关键词必须为字符串类型"
-msgstr "Field type must be a dictionary type"
+msgstr ""
 
 #: apps/log_extract/serializers.py:159
-#, fuzzy
-#| msgid "分隔符不能为空"
 msgid "过滤关键词不可为空"
-msgstr "Delimiter cannot be empty"
+msgstr ""
 
 #: apps/log_extract/serializers.py:161 apps/log_extract/serializers.py:207
 msgid "过滤关键字超过长度"
-msgstr "Key words are too long"
+msgstr ""
 
 #: apps/log_extract/serializers.py:164
-#, fuzzy
-#| msgid "分隔符不能为空"
 msgid "过滤关键词请勿包含空格"
-msgstr "Delimiter cannot be empty"
+msgstr ""
 
 #: apps/log_extract/serializers.py:169
-#, fuzzy
-#| msgid "字段类型必须为字典类型"
 msgid "过滤关键字类型不正确"
-msgstr "Field type must be a dictionary type"
+msgstr ""
 
 #: apps/log_extract/serializers.py:177
 msgid "行数必须为整型"
-msgstr "The number of lines must be Integer "
+msgstr ""
 
 #: apps/log_extract/serializers.py:180 apps/log_extract/serializers.py:192
 msgid "行数不可为空"
-msgstr "The number of line parameter cannot be empty"
+msgstr ""
 
 #: apps/log_extract/serializers.py:183 apps/log_extract/serializers.py:186
 msgid "请确认起始行数与终止行数的大小关系"
 msgstr ""
-"Please confirm the relationship between the size of the starting line and "
-"the ending line."
 
 #: apps/log_extract/serializers.py:194
 msgid "最新行数请输入整数"
-msgstr "Please enter an integer for the latest line number."
+msgstr ""
 
 #: apps/log_extract/serializers.py:196
 msgid "请保证最新行数大于0"
-msgstr "Please ensure that the latest line number is greater than 0"
+msgstr ""
 
 #: apps/log_extract/serializers.py:201 apps/log_extract/serializers.py:205
 msgid "过滤条件包含空关键词"
-msgstr "Filter conditions with empty keywords"
+msgstr ""
 
 #: apps/log_extract/serializers.py:211 apps/log_extract/serializers.py:215
 #: apps/log_extract/serializers.py:233 apps/log_extract/serializers.py:240
 #: apps/log_extract/serializers.py:338
-#, fuzzy
-#| msgid "任务ID"
 msgid "下载任务ID"
-msgstr "Task ID"
+msgstr ""
 
 #: apps/log_extract/serializers.py:216
 msgid "是否直接返回url"
-msgstr "Whether to return url directly"
+msgstr ""
 
 #: apps/log_extract/serializers.py:220 apps/log_search/serializers.py:384
-#, fuzzy
-#| msgid "任务ID列表"
 msgid "下载任务ID列表"
-msgstr "Task ID list"
+msgstr ""
 
 #: apps/log_extract/serializers.py:228
 msgid "任务列表类型错误,请输入正确的整型数组"
 msgstr ""
-"The task list is of the wrong type, please enter the correct integer array."
 
 #: apps/log_extract/serializers.py:234
 msgid "当前下载状态"
-msgstr "Current Download Status"
+msgstr ""
 
 #: apps/log_extract/serializers.py:245 apps/log_search/serializers.py:319
 msgid "实例名称"
-msgstr "Instance name"
+msgstr ""
 
 #: apps/log_extract/serializers.py:246
-#, fuzzy
-#| msgid "对象类型"
 msgid "对象ID"
-msgstr "Object type"
+msgstr ""
 
 #: apps/log_extract/serializers.py:279 apps/log_search/models.py:665
 msgid "用户组ID"
-msgstr "User Group ID"
+msgstr ""
 
 #: apps/log_extract/serializers.py:280
-#, fuzzy
-#| msgid "业务ID"
 msgid "授权的业务ID"
-msgstr "Business ID"
+msgstr ""
 
 #: apps/log_extract/serializers.py:282
 msgid "授权的模板实例列表"
-msgstr "Module List"
+msgstr ""
 
 #: apps/log_extract/serializers.py:283
 msgid "授权的目录列表"
-msgstr "Directory List"
+msgstr ""
 
 #: apps/log_extract/serializers.py:284
 msgid "授权的文件类型"
-msgstr "File Type"
+msgstr ""
 
 #: apps/log_extract/serializers.py:303
 msgid "请指定正确的目标选择类型"
-msgstr "Please specify the correct type of target selection"
+msgstr ""
 
 #: apps/log_extract/serializers.py:309
 msgid "目录请以 '/' 结尾"
-msgstr "Please end the directory with '/'"
+msgstr ""
 
 #: apps/log_extract/serializers.py:314
 msgid "文件后缀格式有误"
-msgstr "Wrong file extension format"
+msgstr ""
 
 #: apps/log_extract/serializers.py:317
 msgid "文件后缀不需要使用.开头"
-msgstr "File extensions are not required. beginning of a file"
+msgstr ""
 
 #: apps/log_extract/serializers.py:341
 msgid "任务状态"
-msgstr "Task status"
+msgstr ""
 
 #: apps/log_extract/serializers.py:345
-#, fuzzy
-#| msgid "创建者"
 msgid "任务创建者"
-msgstr "CreateBy"
+msgstr ""
 
 #: apps/log_extract/serializers.py:400
-#, fuzzy
-#| msgid "目标文件路径"
 msgid "加密的目标文件名"
-msgstr "File path"
+msgstr ""
 
 #: apps/log_extract/serializers.py:410 apps/log_search/models.py:828
 #: apps/models.py:205
 msgid "创建者"
-msgstr "CreateBy"
+msgstr ""
 
 #: apps/log_extract/serializers.py:434
 msgid "中转机列表"
 msgstr ""
 
 #: apps/log_extract/tasks/extract.py:383
-#, fuzzy
-#| msgid "文件提取异常"
 msgid "文件提取开始: {}"
-msgstr "Failed"
+msgstr ""
 
 #: apps/log_extract/tasks/extract.py:384
-#, fuzzy
-#| msgid "文件打包"
 msgid "文件打包ka: {}"
-msgstr "Packing the files"
+msgstr ""
 
 #: apps/log_extract/tasks/extract.py:389
 msgid "确认文件打包结果: {}, 确认次数: {}"
 msgstr ""
 
 #: apps/log_extract/tasks/extract.py:392
-#, fuzzy
-#| msgid "文件打包"
 msgid "文件打包成功: {}"
-msgstr "Packing the files"
+msgstr ""
 
 #: apps/log_extract/tasks/extract.py:395
 msgid "文件打包异常(超出设定次数: {})"
 msgstr ""
 
 #: apps/log_extract/tasks/extract.py:397
-#, fuzzy
-#| msgid "文件分发中"
 msgid "文件分发中: {}"
-msgstr "Distributing"
+msgstr ""
 
 #: apps/log_extract/tasks/extract.py:401
 msgid "确认文件分发结果: {}, 确认次数: {}"
 msgstr ""
 
 #: apps/log_extract/tasks/extract.py:404
-#, fuzzy
-#| msgid "文件分发"
 msgid "文件分发成功: {}"
-msgstr "Distributing Files"
+msgstr ""
 
 #: apps/log_extract/tasks/extract.py:407
-#, fuzzy
-#| msgid "文件分发异常({})"
 msgid "文件分发异常(超出设定次数: {})"
-msgstr "Exception in file distributing({})"
+msgstr ""
 
 #: apps/log_extract/tasks/extract.py:409
-#, fuzzy
-#| msgid "文件上传中"
 msgid "文件上传至cos中: {}"
-msgstr "Uploading"
+msgstr ""
 
 #: apps/log_extract/tasks/extract.py:413
 msgid "确认文件上传至cos结果: {}, 确认次数: {}"
@@ -4115,63 +3745,47 @@ msgid "文件上传至cos异常(超出设定次数: {})"
 msgstr ""
 
 #: apps/log_extract/tasks/extract.py:424
-#, fuzzy
-#| msgid "文件上传中"
 msgid "文件上传至bkrepo准备中: {}"
-msgstr "Uploading"
+msgstr ""
 
 #: apps/log_extract/tasks/extract.py:426
 msgid "文件上传至bkrepo成功: {}"
 msgstr ""
 
 #: apps/log_extract/tasks/extract.py:428
-#, fuzzy
-#| msgid "EsClient查询失败,失败原因:{e}"
 msgid "文件提取失败: {}, 失败原因: {}"
-msgstr "EsClient query failed with reason:{message}"
+msgstr ""
 
 #: apps/log_extract/tasks/extract.py:433
-#, fuzzy
-#| msgid "文件提取异常"
 msgid "文件提取成功: {}"
-msgstr "Failed"
+msgstr ""
 
 #: apps/log_measure/exceptions.py:32
-#, fuzzy
-#| msgid "管理模块异常"
 msgid "容量管理模块异常"
-msgstr "Management module exception"
+msgstr ""
 
 #: apps/log_measure/exceptions.py:42
-#, fuzzy
-#| msgid "权限异常"
 msgid "集群权限异常"
-msgstr "Permission exception"
+msgstr ""
 
 #: apps/log_measure/exceptions.py:47
-#, fuzzy
-#| msgid "kafka连接失败\"{error}\""
 msgid "ES连接失败"
-msgstr "Kafka connect fail: \"{error}\""
+msgstr ""
 
 #: apps/log_measure/handlers/metric_collectors/business.py:32
 #: apps/log_measure/handlers/metrics.py:271
-#, fuzzy
-#| msgid "业务id"
 msgid "活跃业务"
-msgstr "Business id"
+msgstr ""
 
 #: apps/log_measure/handlers/metric_collectors/cluster.py:31
 #: apps/log_measure/handlers/metrics.py:425
 msgid "集群健康度"
-msgstr "Cluster health"
+msgstr ""
 
 #: apps/log_measure/handlers/metric_collectors/collect.py:36
 #: apps/log_measure/handlers/metrics.py:313
-#, fuzzy
-#| msgid "采集配置ID"
 msgid "采集配置"
-msgstr "Collection Configuration ID"
+msgstr ""
 
 #: apps/log_measure/handlers/metric_collectors/es.py:1022
 msgid "es 监控信息"
@@ -4180,32 +3794,26 @@ msgstr ""
 #: apps/log_measure/handlers/metric_collectors/grafana.py:33
 #: apps/log_measure/handlers/metrics.py:538
 msgid "Grafana 仪表盘"
-msgstr "Grafana dashboard"
+msgstr ""
 
 #: apps/log_measure/handlers/metric_collectors/third_party.py:32
 #: apps/log_measure/handlers/metrics.py:400 apps/log_search/models.py:149
 #: config/default.py:522 config/default.py:619
 msgid "第三方ES"
-msgstr "Custom ES"
+msgstr ""
 
 #: apps/log_measure/handlers/metric_collectors/user.py:38
 #: apps/log_measure/handlers/metrics.py:300
-#, fuzzy
-#| msgid "请求用户"
 msgid "活跃用户"
-msgstr "Request user"
+msgstr ""
 
 #: apps/log_measure/handlers/metric_collectors/user.py:64
-#, fuzzy
-#| msgid "索引集用户检索记录"
 msgid "用户检索历史"
-msgstr "Indices user search records"
+msgstr ""
 
 #: apps/log_measure/handlers/metrics.py:338
-#, fuzzy
-#| msgid "主机"
 msgid "采集主机"
-msgstr "Host"
+msgstr ""
 
 #: apps/log_measure/models.py:28 apps/log_search/models.py:162
 #: apps/log_search/models.py:230 apps/log_search/models.py:290
@@ -4213,31 +3821,29 @@ msgstr "Host"
 #: apps/log_search/serializers.py:197 apps/log_search/serializers.py:337
 #: apps/log_search/serializers.py:358 apps/log_trace/serializers.py:41
 msgid "项目ID"
-msgstr "Project ID"
+msgstr ""
 
 #: apps/log_measure/models.py:29 apps/log_search/models.py:288
 #: apps/log_search/models.py:574 apps/log_search/models.py:593
 #: apps/log_search/models.py:604 apps/log_search/serializers.py:338
 msgid "索引集ID"
-msgstr "Indices ID"
+msgstr ""
 
 #: apps/log_measure/models.py:30
 msgid "访问次数"
-msgstr "Visits"
+msgstr ""
 
 #: apps/log_measure/models.py:31
 msgid "访问日期"
-msgstr "Date of visit"
+msgstr ""
 
 #: apps/log_measure/models.py:34 apps/log_measure/models.py:35
 msgid "索引集搜索统计"
-msgstr "Index set search statistics"
+msgstr ""
 
 #: apps/log_search/constants.py:40 config/default.py:463
-#, fuzzy
-#| msgid "是否trace"
 msgid "trace"
-msgstr "Whether trace"
+msgstr ""
 
 #: apps/log_search/constants.py:41
 msgid "回溯中"
@@ -4249,17 +3855,15 @@ msgstr ""
 
 #: apps/log_search/constants.py:43 apps/log_search/constants.py:261
 msgid "无数据"
-msgstr "No data"
+msgstr ""
 
 #: apps/log_search/constants.py:44
 msgid "有延迟"
 msgstr ""
 
 #: apps/log_search/constants.py:45 config/default.py:515 config/default.py:614
-#, fuzzy
-#| msgid "数据平台元数据模块"
 msgid "计算平台"
-msgstr "Data platform metadata module"
+msgstr ""
 
 #: apps/log_search/constants.py:46
 msgid "BCS"
@@ -4287,49 +3891,47 @@ msgstr ""
 
 #: apps/log_search/constants.py:186
 msgid "必须"
-msgstr "must"
+msgstr ""
 
 #: apps/log_search/constants.py:186
 msgid "建议"
-msgstr "suggest"
+msgstr ""
 
 #: apps/log_search/constants.py:186
 msgid "用户自定义"
-msgstr "user define"
+msgstr ""
 
 #: apps/log_search/constants.py:197
 msgid "字段缺失"
-msgstr "field not have"
+msgstr ""
 
 #: apps/log_search/constants.py:198
 msgid "数据类型不匹配"
-msgstr "field type not match"
+msgstr ""
 
 #: apps/log_search/constants.py:221
-#, fuzzy
-#| msgid "业务ID"
 msgid "业务"
-msgstr "Business ID"
+msgstr ""
 
 #: apps/log_search/constants.py:232
 msgid "服务模版"
-msgstr "Service template"
+msgstr ""
 
 #: apps/log_search/constants.py:233
 msgid "集群模版"
-msgstr "Cluster template"
+msgstr ""
 
 #: apps/log_search/constants.py:257
 msgid "异常（未知）"
-msgstr "Abnormal (unknown)"
+msgstr ""
 
 #: apps/log_search/constants.py:259
 msgid "关闭"
-msgstr "Closed"
+msgstr ""
 
 #: apps/log_search/constants.py:260
 msgid "Agent未安装"
-msgstr "Agent is not installed"
+msgstr ""
 
 #: apps/log_search/constants.py:283 apps/log_search/constants.py:555
 #: apps/log_trace/constants.py:90 apps/log_trace/handlers/proto/log.py:62
@@ -4341,43 +3943,39 @@ msgstr "Agent is not installed"
 #: apps/log_trace/handlers/trace_field_handlers.py:156
 #: apps/log_trace/handlers/trace_field_handlers.py:187
 msgid "服务"
-msgstr "Service"
+msgstr ""
 
 #: apps/log_search/constants.py:311
 msgid "分隔符列表"
-msgstr "Delimiter list"
+msgstr ""
 
 #: apps/log_search/constants.py:312
 msgid "编码格式"
-msgstr "Encoding format"
+msgstr ""
 
 #: apps/log_search/constants.py:313
 msgid "数据保留时间"
-msgstr "Data retention time"
+msgstr ""
 
 #: apps/log_search/constants.py:314
 msgid "字段提取方式"
-msgstr "Field extraction method"
+msgstr ""
 
 #: apps/log_search/constants.py:315
 msgid "字段类型"
-msgstr "Field Type"
+msgstr ""
 
 #: apps/log_search/constants.py:317
 msgid "内置字段"
-msgstr "Built-in fields"
+msgstr ""
 
 #: apps/log_search/constants.py:318 apps/log_search/models.py:315
-#, fuzzy
-#| msgid "字段类型"
 msgid "时间字段类型"
-msgstr "Field Type"
+msgstr ""
 
 #: apps/log_search/constants.py:319 apps/log_search/models.py:316
-#, fuzzy
-#| msgid "时间字段"
 msgid "时间字段单位"
-msgstr "Time field"
+msgstr ""
 
 #: apps/log_search/constants.py:320
 msgid "日志来源类型"
@@ -4479,15 +4077,15 @@ msgstr ""
 
 #: apps/log_search/constants.py:427
 msgid "行日志文件"
-msgstr "Line"
+msgstr ""
 
 #: apps/log_search/constants.py:428
 msgid "段日志文件"
-msgstr "Section"
+msgstr ""
 
 #: apps/log_search/constants.py:429
 msgid "win event日志"
-msgstr "WinEvent"
+msgstr ""
 
 #: apps/log_search/constants.py:452
 msgid "JSON"
@@ -4499,67 +4097,67 @@ msgstr ""
 
 #: apps/log_search/constants.py:551
 msgid "操作系统"
-msgstr "OS"
+msgstr ""
 
 #: apps/log_search/constants.py:556
 msgid "服务模块"
-msgstr "Service module"
+msgstr ""
 
 #: apps/log_search/constants.py:562
 msgid "业务应用"
-msgstr "Application"
+msgstr ""
 
 #: apps/log_search/constants.py:625
 msgid "包含"
-msgstr "Include"
+msgstr ""
 
 #: apps/log_search/constants.py:626
 msgid "不包含"
-msgstr "Exclude"
+msgstr ""
 
 #: apps/log_search/constants.py:639
 msgid "字符串"
-msgstr "String"
+msgstr ""
 
 #: apps/log_search/constants.py:656
 msgid "竖线(|)"
-msgstr "VerticalLine(|)"
+msgstr ""
 
 #: apps/log_search/constants.py:657
 msgid "逗号(,)"
-msgstr "Comma(,)"
+msgstr ""
 
 #: apps/log_search/constants.py:658
 msgid "反引号(`)"
-msgstr "Backticks(`)"
+msgstr ""
 
 #: apps/log_search/constants.py:659
 msgid "空格"
-msgstr "Space"
+msgstr ""
 
 #: apps/log_search/constants.py:660
 msgid "分号(;)"
-msgstr "Semicolon(;)"
+msgstr ""
 
 #: apps/log_search/constants.py:687
 msgid "1天"
-msgstr "1d"
+msgstr ""
 
 #: apps/log_search/constants.py:688
 msgid "3天"
-msgstr "3d"
+msgstr ""
 
 #: apps/log_search/constants.py:689
 msgid "7天"
-msgstr "7d"
+msgstr ""
 
 #: apps/log_search/constants.py:690
 msgid "14天"
-msgstr "14d"
+msgstr ""
 
 #: apps/log_search/constants.py:691
 msgid "30天"
-msgstr "30d"
+msgstr ""
 
 #: apps/log_search/constants.py:704
 msgid "date"
@@ -4583,269 +4181,236 @@ msgstr ""
 
 #: apps/log_search/exceptions.py:35
 msgid "参数校验异常：项目ID不存在"
-msgstr "Parameter check exception: Project ID does not exist"
+msgstr ""
 
 #: apps/log_search/exceptions.py:43
 msgid "管理模块异常"
-msgstr "Management module exception"
+msgstr ""
 
 #: apps/log_search/exceptions.py:53
 msgid "接入场景异常"
-msgstr "Access scenario is abnormal"
+msgstr ""
 
 #: apps/log_search/exceptions.py:58
 #, python-brace-format
 msgid "暂不支持\"{scenario_id}\"场景的操作"
-msgstr "\"{scenario_id}\" scenario operations are not supported at this time"
+msgstr ""
 
 #: apps/log_search/exceptions.py:63
 #, python-brace-format
 msgid "探测ES连通性失败,失败原因：\"{es_fail_reason}\""
 msgstr ""
-"Failed to detect ES connectivity. Reason for failure：\"{es_fail_reason}\""
 
 #: apps/log_search/exceptions.py:73
 #, python-brace-format
 msgid "EsClient查询index失败,失败原因:\"{es_fail_reason}\""
 msgstr ""
-"EsClient failed to query index. Reason for failure:\"{es_fail_reason}\""
 
 #: apps/log_search/exceptions.py:81
 msgid "数据源模块异常"
-msgstr "Data source module exception"
+msgstr ""
 
 #: apps/log_search/exceptions.py:86
 #, python-brace-format
 msgid "该项目下已存在名称为\"{source_name}\"的数据源"
-msgstr "A data source named \"{source_name}\" already exists under the project"
+msgstr ""
 
 #: apps/log_search/exceptions.py:91
 msgid "数据源不存在"
-msgstr "The data source does not exist"
+msgstr ""
 
 #: apps/log_search/exceptions.py:96
 msgid "此数据源不允许编辑"
-msgstr "This data source does not allow editing"
+msgstr ""
 
 #: apps/log_search/exceptions.py:101
 msgid "ES服务器连接异常"
-msgstr "ES server connection is abnormal"
+msgstr ""
 
 #: apps/log_search/exceptions.py:106
 msgid "此数据源已有关联的索引集，无法直接删除"
 msgstr ""
-"This data source already has an associated Indices and cannot be deleted "
-"directly"
 
 #: apps/log_search/exceptions.py:116
 msgid "索引集模块异常"
-msgstr "Indices module exception"
+msgstr ""
 
 #: apps/log_search/exceptions.py:121
 msgid "索引集不存在"
-msgstr "Indices does not exist"
+msgstr ""
 
 #: apps/log_search/exceptions.py:126
 #, python-brace-format
 msgid "索引\"{result_table_id}\"在数据平台中不存在"
-msgstr "Index \"{result_table_id}\" does not exist in the data platform"
+msgstr ""
 
 #: apps/log_search/exceptions.py:131
 #, python-brace-format
 msgid "该项目下已存在名称为\"{index_set_name}\"的数据集"
-msgstr "Data set named \"{index_set_name}\" already exists under the project"
+msgstr ""
 
 #: apps/log_search/exceptions.py:136
 #, python-brace-format
 msgid "索引\"{result_table_id}\"在此ES中不存在"
-msgstr "Index \"{result_table_id}\" does not exist in this ES"
+msgstr ""
 
 #: apps/log_search/exceptions.py:141
 #, python-brace-format
 msgid "该索引集下已存在\"{result_table_id}\"结果表"
-msgstr "The \"{result_table_id}\" result table already exists in the Indices"
+msgstr ""
 
 #: apps/log_search/exceptions.py:146
 msgid "索引字段不一致，无法添加索引到同一个索引集中"
-msgstr "Index fields are inconsistent and cannot be added to the same Indices"
+msgstr ""
 
 #: apps/log_search/exceptions.py:151
 msgid "索引已存在，请勿添加相同索引"
-msgstr "Index already exists, do not add the same index"
+msgstr ""
 
 #: apps/log_search/exceptions.py:156
 msgid "索引集不支持跨业务"
-msgstr "Indices does not support cross-business"
+msgstr ""
 
 #: apps/log_search/exceptions.py:161
 msgid "获取结果表信息失败"
-msgstr "Failed to get result table information"
+msgstr ""
 
 #: apps/log_search/exceptions.py:166
 msgid "索引集不支持跨集群"
-msgstr "Indices does not support cross-clustering"
+msgstr ""
 
 #: apps/log_search/exceptions.py:171
 msgid "索引列表数据异常"
-msgstr "Index list data exception"
+msgstr ""
 
 #: apps/log_search/exceptions.py:176
 msgid "索引列表不满足Trace要求"
-msgstr "Index list does not meet Trace requirements"
+msgstr ""
 
 #: apps/log_search/exceptions.py:181
 msgid "项目ID不存在无法搜索TRACE类型索引集"
 msgstr ""
-"The project ID does not exist and the Indices of TRACE type cannot be "
-"searched"
 
 #: apps/log_search/exceptions.py:186
-#, fuzzy, python-brace-format
-#| msgid "索引字段不一致，无法添加索引到同一个索引集中"
+#, python-brace-format
 msgid "索引字段{field_type}类型不一致，无法添加索引到同一个索引集中"
 msgstr ""
-"Index fields {field_type} are inconsistent and cannot be added to the same "
-"Indices"
 
 #: apps/log_search/exceptions.py:191
-#, fuzzy
-#| msgid "索引字段不一致，无法添加索引到同一个索引集中"
 msgid "索引缺少时间字段，无法添加索引到同一个索引集中"
-msgstr "Index fields are inconsistent and cannot be added to the same Indices"
+msgstr ""
 
 #: apps/log_search/exceptions.py:196
-#, fuzzy
-#| msgid "索引字段不一致，无法添加索引到同一个索引集中"
 msgid "索引时间字段不同，无法添加索引到同一个索引集中"
-msgstr "Index fields are inconsistent and cannot be added to the same Indices"
+msgstr ""
 
 #: apps/log_search/exceptions.py:201
-#, fuzzy
-#| msgid "索引字段不一致，无法添加索引到同一个索引集中"
 msgid "索引时间字段类型不同，无法添加索引到同一个索引集中"
-msgstr "Index fields are inconsistent and cannot be added to the same Indices"
+msgstr ""
 
 #: apps/log_search/exceptions.py:206
 #, python-brace-format
 msgid "索引{result_table_id} mapping信息查询结果为空"
-msgstr "Index {result_table_id} mapping information query result is empty"
+msgstr ""
 
 #: apps/log_search/exceptions.py:211
-#, fuzzy
-#| msgid "您没有此业务的索引集管理权限"
 msgid "您没有此索引集的编辑权限"
-msgstr "You do not have permission to manage Indicess for this business"
+msgstr ""
 
 #: apps/log_search/exceptions.py:216
-#, fuzzy
-#| msgid "集群ID不能为空"
 msgid "索引集不能为空集"
-msgstr "Cluster ID cannot be empty"
+msgstr ""
 
 #: apps/log_search/exceptions.py:221
 msgid "索引集中的索引字段不能有冲突"
-msgstr "Index fields in an index set can not have conflicts"
+msgstr ""
 
 #: apps/log_search/exceptions.py:231
 msgid "检索模块异常"
-msgstr "Retrieval module exception"
+msgstr ""
 
 #: apps/log_search/exceptions.py:241
 #, python-brace-format
 msgid "找不到索引集\"{index_set_id}\"的时间字段信息，无法进行检索"
 msgstr ""
-"The time field information of the Indices \"{index_set_id}\" could not be "
-"found and could not be retrieved"
 
 #: apps/log_search/exceptions.py:246
 msgid "将时间字段转换成handler接口可用格式失败"
 msgstr ""
-"Failed to convert the time field into a format available to the handler "
-"interface"
 
 #: apps/log_search/exceptions.py:251
 msgid "参数中没有keyword"
-msgstr "No keyword in the parameter"
+msgstr ""
 
 #: apps/log_search/exceptions.py:256
 msgid "参数中没有开始指针"
-msgstr "No start pointer in parameter"
+msgstr ""
 
 #: apps/log_search/exceptions.py:261
 msgid "场景选择错误"
-msgstr "Scenario selection error"
+msgstr ""
 
 #: apps/log_search/exceptions.py:266
 msgid "查询上下文需要gseindex相关信息"
-msgstr "Query context requires gseindex related information"
+msgstr ""
 
 #: apps/log_search/exceptions.py:271
 msgid "链接到ES数据源失败"
-msgstr "Link to ES data source failed"
+msgstr ""
 
 #: apps/log_search/exceptions.py:276
 msgid "添加用户index字段时缺少相关参数"
-msgstr "Missing related parameters when adding user index field"
+msgstr ""
 
 #: apps/log_search/exceptions.py:281
 #, python-brace-format
 msgid "查询ES中索引下的fields字段失败,失败原因{fail_reason}"
 msgstr ""
-"Failed to query the fields under the index in ES, the reason for the failure "
-"{fail_reason}"
 
 #: apps/log_search/exceptions.py:296
 msgid "不需要输出"
-msgstr "No output required"
+msgstr ""
 
 #: apps/log_search/exceptions.py:301
 #, python-brace-format
 msgid "search dict empty错误{search_dict}"
-msgstr "search dict empty error {search_dict}"
+msgstr ""
 
 #: apps/log_search/exceptions.py:306
 #, python-brace-format
 msgid "该字段{sort_item}不支持排序"
-msgstr "{sort_item} field does not support sorting"
+msgstr ""
 
 #: apps/log_search/exceptions.py:311
 #, python-brace-format
 msgid "拉取schema错误{index}"
-msgstr "Pull schema error {index}"
+msgstr ""
 
 #: apps/log_search/exceptions.py:316
-#, fuzzy
-#| msgid "trace_id不存在"
 msgid "Trace查询time field不存在"
-msgstr "trace_id does not exist"
+msgstr ""
 
 #: apps/log_search/exceptions.py:321
 #, python-brace-format
 msgid "超出最大查询数量：{size}"
-msgstr "Maximum number of queries exceeded: {size}"
+msgstr ""
 
 #: apps/log_search/exceptions.py:326
-#, fuzzy
-#| msgid "字段类型"
 msgid "未知的时间字段类型"
-msgstr "Field Type"
+msgstr ""
 
 #: apps/log_search/exceptions.py:331
 msgid "未知的时间字段/时间字段类型/时间字段单位"
-msgstr "Unknown time field/time field type/time field unit"
+msgstr ""
 
 #: apps/log_search/exceptions.py:336
 #, python-brace-format
 msgid "用户无结果表 {result_tables} 的管理权限，无法添加到索引集中"
 msgstr ""
-"The user has no administrative rights for the result table {result_tables} "
-"and cannot be added to the index set"
 
 #: apps/log_search/exceptions.py:341
-#, fuzzy
-#| msgid "字段类型"
 msgid "此索引没有找到时间字段类型"
-msgstr "Field Type"
+msgstr ""
 
 #: apps/log_search/exceptions.py:346
 msgid "收藏查询不存在"
@@ -4872,15 +4437,15 @@ msgstr ""
 
 #: apps/log_search/exceptions.py:381
 msgid "请升级blueapps至最新版本"
-msgstr "Please upgrade blueapps to the latest version"
+msgstr ""
 
 #: apps/log_search/exceptions.py:386
 msgid "获取JWT信息异常"
-msgstr "Getting JWT information exception"
+msgstr ""
 
 #: apps/log_search/exceptions.py:391
 msgid "JWT校验失败"
-msgstr "JWT verification failed"
+msgstr ""
 
 #: apps/log_search/exceptions.py:396
 msgid "配置中menu对象异常"
@@ -4892,7 +4457,7 @@ msgstr ""
 
 #: apps/log_search/handlers/index_set.py:175 apps/log_search/models.py:567
 msgid "审批中"
-msgstr "Approval"
+msgstr ""
 
 #: apps/log_search/handlers/search/mapping_handlers.py:632
 msgid "必须path或者logfile字段"
@@ -4938,135 +4503,133 @@ msgstr ""
 
 #: apps/log_search/migrations/0002_bklog_initial.py:38
 msgid "ES"
-msgstr "ES"
+msgstr ""
 
 #: apps/log_search/migrations/0002_bklog_initial.py:39
 msgid "日志文件"
-msgstr "Log file"
+msgstr ""
 
 #: apps/log_search/migrations/0002_bklog_initial.py:59
 msgid "阈值监控"
-msgstr "Threshold monitoring"
+msgstr ""
 
 #: apps/log_search/models.py:80
 msgid "配置标识"
-msgstr "Configuration ID"
+msgstr ""
 
 #: apps/log_search/models.py:81
 msgid "具体配置"
-msgstr "Specific configuration"
+msgstr ""
 
 #: apps/log_search/models.py:128 apps/log_search/models.py:129
 msgid "00_全局配置"
-msgstr "00_GlobalConfiguration"
+msgstr ""
 
 #: apps/log_search/models.py:147 config/default.py:607
 msgid "采集接入"
-msgstr "Collector"
+msgstr ""
 
 #: apps/log_search/models.py:163
 msgid "项目名称"
-msgstr "Project name"
+msgstr ""
 
 #: apps/log_search/models.py:168
 msgid "是否可以使用ip快选"
-msgstr "Is it possible to use ip quick select"
+msgstr ""
 
 #: apps/log_search/models.py:169
 msgid "是否为 CMDB V3 业务"
-msgstr "Is it a CMDB V3 business"
+msgstr ""
 
 #: apps/log_search/models.py:170
 msgid "是否混合使用CMDB V3 业务"
-msgstr "Whether to mix CMDB V3 business"
+msgstr ""
 
 #: apps/log_search/models.py:171
 msgid "功能白名单"
-msgstr "Feature whitelist"
+msgstr ""
 
 #: apps/log_search/models.py:218
 msgid "项目列表"
-msgstr "Project list"
+msgstr ""
 
 #: apps/log_search/models.py:219
 msgid "02_项目列表"
-msgstr "02_ProjectList"
+msgstr ""
 
 #: apps/log_search/models.py:227 apps/log_search/models.py:296
 #: apps/log_search/serializers.py:77 apps/log_search/serializers.py:93
 msgid "数据源ID"
-msgstr "Data source ID"
+msgstr ""
 
 #: apps/log_search/models.py:229 apps/log_search/models.py:294
 msgid "接入场景标识"
-msgstr "Access scenario identification"
+msgstr ""
 
 #: apps/log_search/models.py:231
 msgid "属性"
-msgstr "Attributes"
+msgstr ""
 
 #: apps/log_search/models.py:232 apps/log_search/models.py:297
 msgid "顺序"
-msgstr "Order"
+msgstr ""
 
 #: apps/log_search/models.py:233
 msgid "是否可以编辑"
-msgstr "Is it editable"
+msgstr ""
 
 #: apps/log_search/models.py:252
 #, python-brace-format
 msgid "此项目[{self.project_id}]下已存在"
-msgstr "This project already exists under [{self.project_id}]"
+msgstr ""
 
 #: apps/log_search/models.py:271
 msgid "暂不支持除ES自定义场景意外的其它场景"
-msgstr "Other scenarios except ES custom scenarios are not supported"
+msgstr ""
 
 #: apps/log_search/models.py:275
 msgid "ES集群配置"
-msgstr "ES cluster configuration"
+msgstr ""
 
 #: apps/log_search/models.py:276
 msgid "03_ES集群配置"
-msgstr "03_ESClusterConfiguration"
+msgstr ""
 
 #: apps/log_search/models.py:292
 msgid "绑定的数据平台项目ID"
-msgstr "Bound data platform project ID"
+msgstr ""
 
 #: apps/log_search/models.py:293
 msgid "绑定Transfer采集ID"
-msgstr "Bound Transfer collection ID"
+msgstr ""
 
 #: apps/log_search/models.py:295 apps/log_search/serializers.py:114
 msgid "存储集群ID"
-msgstr "Storage cluster ID"
+msgstr ""
 
 #: apps/log_search/models.py:302
 msgid "是否通过"
-msgstr "Whether to pass"
+msgstr ""
 
 #: apps/log_search/models.py:303
 msgid "预查询描述"
-msgstr "Pre-query description"
+msgstr ""
 
 #: apps/log_search/models.py:306
-#, fuzzy
-#| msgid "字段名称"
 msgid "字段快照"
-msgstr "Field Name"
+msgstr ""
 
 #: apps/log_search/models.py:309
 msgid "是否trace"
-msgstr "Whether trace"
+msgstr ""
 
 #: apps/log_search/models.py:311
 msgid "来源系统"
-msgstr "Source system"
+msgstr ""
 
 #: apps/log_search/models.py:314 apps/log_search/models.py:578
 msgid "时间字段"
-msgstr "Time field"
+msgstr ""
 
 #: apps/log_search/models.py:317
 msgid "标签id记录"
@@ -5074,157 +4637,147 @@ msgstr ""
 
 #: apps/log_search/models.py:551
 msgid "索引集配置"
-msgstr "Indices Configuration"
+msgstr ""
 
 #: apps/log_search/models.py:552
 msgid "21_索引集配置"
-msgstr "21_IndexSetConfiguration"
+msgstr ""
 
 #: apps/log_search/models.py:569
 msgid "拒绝"
-msgstr "Refuse"
+msgstr ""
 
 #: apps/log_search/models.py:570
 msgid "异常"
-msgstr "Abnormal"
+msgstr ""
 
 #: apps/log_search/models.py:573
 msgid "索引ID"
-msgstr "Index ID"
+msgstr ""
 
 #: apps/log_search/models.py:576
 msgid "结果表"
-msgstr "Results table"
+msgstr ""
 
 #: apps/log_search/models.py:577
 msgid "结果表名称"
-msgstr "Result table name"
+msgstr ""
 
 #: apps/log_search/models.py:579
 msgid "审核状态"
-msgstr "Approval Status"
+msgstr ""
 
 #: apps/log_search/models.py:588
 msgid "索引集数据"
-msgstr "Indices data"
+msgstr ""
 
 #: apps/log_search/models.py:589
 msgid "22_索引集详情"
-msgstr "22_IndexSetDetails"
+msgstr ""
 
 #: apps/log_search/models.py:595 apps/log_search/serializers.py:211
 msgid "排序规则"
-msgstr "Collation"
+msgstr ""
 
 #: apps/log_search/models.py:596
 msgid "应用范围"
-msgstr "Application range"
+msgstr ""
 
 #: apps/log_search/models.py:599
 msgid "索引集自定义显示"
-msgstr "Indices Custom Display"
+msgstr ""
 
 #: apps/log_search/models.py:600
 msgid "31_搜索-索引集自定义显示"
-msgstr "31_Search-IndexSetCustomDisplay"
+msgstr ""
 
 #: apps/log_search/models.py:605
 msgid "检索条件"
-msgstr "Search condition"
+msgstr ""
 
 #: apps/log_search/models.py:606
-#, fuzzy
-#| msgid "清洗类型"
 msgid "检索类型"
-msgstr "Cleaning type"
+msgstr ""
 
 #: apps/log_search/models.py:607
-#, fuzzy
-#| msgid "耗时"
 msgid "查询耗时"
-msgstr "TimeConsuming"
+msgstr ""
 
 #: apps/log_search/models.py:608
-#, fuzzy
-#| msgid "排序规则"
 msgid "排序"
-msgstr "Collation"
+msgstr ""
 
 #: apps/log_search/models.py:611
 msgid "索引集用户检索记录"
-msgstr "Indices user search records"
+msgstr ""
 
 #: apps/log_search/models.py:612
 msgid "32_搜索-索引集用户检索记录"
-msgstr "32_Search-Indices user search records"
+msgstr ""
 
 #: apps/log_search/models.py:635
 msgid "用户组"
-msgstr "User group"
+msgstr ""
 
 #: apps/log_search/models.py:636
 msgid "资源"
-msgstr "Resources"
+msgstr ""
 
 #: apps/log_search/models.py:649
 msgid "待处理"
-msgstr "Pending"
+msgstr ""
 
 #: apps/log_search/models.py:650
 msgid "同步完成"
-msgstr "Sync complete"
+msgstr ""
 
 #: apps/log_search/models.py:651
 msgid "同步失败"
-msgstr "Sync failed"
+msgstr ""
 
 #: apps/log_search/models.py:664
 msgid "变更类型"
-msgstr "Change type"
+msgstr ""
 
 #: apps/log_search/models.py:666
 msgid "资源类型"
-msgstr "Resource Type"
+msgstr ""
 
 #: apps/log_search/models.py:667
 msgid "范围"
-msgstr "Scope"
+msgstr ""
 
 #: apps/log_search/models.py:668
 msgid "同步状态"
-msgstr "Synchronization status"
+msgstr ""
 
 #: apps/log_search/models.py:669
 msgid "同步时间"
-msgstr "Synchronised time"
+msgstr ""
 
 #: apps/log_search/models.py:689
 msgid "资源变更任务"
-msgstr "Resource change task"
+msgstr ""
 
 #: apps/log_search/models.py:690
 msgid "23_资源变更任务"
-msgstr "23_ResourceChangeTask"
+msgstr ""
 
 #: apps/log_search/models.py:696
-#, fuzzy
-#| msgid "索引集用户检索记录"
 msgid "用户检索历史记录ID"
-msgstr "Indices user search records"
+msgstr ""
 
 #: apps/log_search/models.py:698 apps/log_search/serializers.py:339
 msgid "收藏描述"
-msgstr "Collection description"
+msgstr ""
 
 #: apps/log_search/models.py:701 apps/log_search/models.py:711
 msgid "检索收藏记录"
-msgstr "Retrieve favorite records"
+msgstr ""
 
 #: apps/log_search/models.py:702 apps/log_search/models.py:712
-#, fuzzy
-#| msgid "32_搜索-索引集用户检索记录"
 msgid "33_搜索-检索收藏记录"
-msgstr "32_Search-Indices user search records"
+msgstr ""
 
 #: apps/log_search/models.py:706
 msgid "id"
@@ -5251,10 +4804,8 @@ msgid "标签表"
 msgstr ""
 
 #: apps/log_search/models.py:764
-#, fuzzy
-#| msgid "请求参数"
 msgid "检索请求参数"
-msgstr "Request parameter"
+msgstr ""
 
 #: apps/log_search/models.py:765
 msgid "异步导出排序字段"
@@ -5264,7 +4815,7 @@ msgstr ""
 #: apps/log_search/serializers.py:76 apps/log_search/serializers.py:92
 #: apps/log_search/serializers.py:113
 msgid "接入场景"
-msgstr "Access scenario"
+msgstr ""
 
 #: apps/log_search/models.py:768
 msgid "异步导出结果"
@@ -5275,10 +4826,8 @@ msgid "异步导出异常原因"
 msgstr ""
 
 #: apps/log_search/models.py:770
-#, fuzzy
-#| msgid "文件后缀"
 msgid "文件名"
-msgstr "File Type"
+msgstr ""
 
 #: apps/log_search/models.py:771
 msgid "文件大小"
@@ -5301,10 +4850,8 @@ msgid "导出选择请求时间"
 msgstr ""
 
 #: apps/log_search/models.py:776
-#, fuzzy
-#| msgid "过期时间 "
 msgid "导出选择结束时间"
-msgstr "Expire date"
+msgstr ""
 
 #: apps/log_search/models.py:777
 msgid "导出类型"
@@ -5352,79 +4899,73 @@ msgstr ""
 
 #: apps/log_search/serializers.py:46
 msgid "分页大小"
-msgstr "PagingSize"
+msgstr ""
 
 #: apps/log_search/serializers.py:59
 msgid "索引"
-msgstr "Index"
+msgstr ""
 
 #: apps/log_search/serializers.py:66
 msgid "业务ID不能为空"
-msgstr "Service ID cannot be empty"
+msgstr ""
 
 #: apps/log_search/serializers.py:69 apps/log_search/serializers.py:85
 #: apps/log_search/serializers.py:100 apps/log_search/serializers.py:124
 msgid "数据源ID不能为空"
-msgstr "Data source ID cannot be empty"
+msgstr ""
 
 #: apps/log_search/serializers.py:75
-#, fuzzy
-#| msgid "获取数据入库列表"
 msgid "索引列表"
-msgstr "Get data storage list"
+msgstr ""
 
 #: apps/log_search/serializers.py:87
-#, fuzzy
-#| msgid "action_id不能为空"
 msgid "indices不能为空"
-msgstr "action_id cannot be empty"
+msgstr ""
 
 #: apps/log_search/serializers.py:115 apps/log_search/serializers.py:116
 msgid "源索引"
-msgstr "Source index"
+msgstr ""
 
 #: apps/log_search/serializers.py:117
 msgid "待追加的索引"
-msgstr "Index to be appended"
+msgstr ""
 
 #: apps/log_search/serializers.py:131
 msgid "源索引时间字段不能为空"
-msgstr "The source index time field cannot be empty"
+msgstr ""
 
 #: apps/log_search/serializers.py:133
 msgid "源索引时间字段类型不能为空"
-msgstr "The source index time field type cannot be empty"
+msgstr ""
 
 #: apps/log_search/serializers.py:137
 msgid "待追加索引时间字段不能为空"
-msgstr "The index time field to be added cannot be empty"
+msgstr ""
 
 #: apps/log_search/serializers.py:139
 msgid "待追加索引时间字段类型不能为空"
-msgstr "The index time field type to be added cannot be empty"
+msgstr ""
 
 #: apps/log_search/serializers.py:180
 msgid "最大只支持查询7天数据"
-msgstr "Only support querying data for up to 7 days"
+msgstr ""
 
 #: apps/log_search/serializers.py:204 apps/log_search/serializers.py:365
 #: apps/log_trace/serializers.py:45
 msgid "请输入业务ID"
-msgstr "Please input bk_biz_id"
+msgstr ""
 
 #: apps/log_search/serializers.py:216
 msgid "sort_list参数格式有误"
-msgstr "Sort_list parameter is malformed"
+msgstr ""
 
 #: apps/log_search/serializers.py:219
 msgid "排序规则只支持升序asc或降序desc"
-msgstr "The collation only supports asc or desc"
+msgstr ""
 
 #: apps/log_search/serializers.py:251
-#, fuzzy
-#| msgid "文件修改时间范围"
 msgid "时间范围"
-msgstr "Time Range"
+msgstr ""
 
 #: apps/log_search/serializers.py:252
 msgid "起始时间"
@@ -5460,62 +5001,55 @@ msgstr ""
 
 #: apps/log_search/serializers.py:282
 msgid "ES 端口"
-msgstr "ES Port"
+msgstr ""
 
 #: apps/log_search/serializers.py:283
 msgid "ES 用户"
-msgstr "ES User"
+msgstr ""
 
 #: apps/log_search/serializers.py:284
 msgid "ES 密码"
-msgstr "ES Password"
+msgstr ""
 
 #: apps/log_search/serializers.py:292
 msgid "主机IP"
-msgstr "Host IP"
+msgstr ""
 
 #: apps/log_search/serializers.py:293
 msgid "云区域ID"
-msgstr "Cloud ID"
+msgstr ""
 
 #: apps/log_search/serializers.py:318
 msgid "实例id"
-msgstr "Instance id"
+msgstr ""
 
 #: apps/log_search/serializers.py:320
 msgid "类型id"
-msgstr "Type id"
+msgstr ""
 
 #: apps/log_search/serializers.py:346
-#, fuzzy
-#| msgid "集群ID不能为空"
 msgid "索引集ID不能为空"
-msgstr "Cluster ID cannot be empty"
+msgstr ""
 
 #: apps/log_search/serializers.py:348
-#, fuzzy
-#| msgid "group_id不能为空"
 msgid "项目id不能为空"
-msgstr "group_id cannot be empty"
+msgstr ""
 
 #: apps/log_search/serializers.py:375
 msgid "集群id"
-msgstr "Cluster id"
+msgstr ""
 
 #: apps/log_search/serializers.py:376
 msgid "容器id"
-msgstr "Container id"
+msgstr ""
 
 #: apps/log_search/serializers.py:380 apps/log_search/serializers.py:385
 msgid "模版类型"
-msgstr "Template type"
+msgstr ""
 
 #: apps/log_search/serializers.py:393
-#, fuzzy
-#| msgid "任务列表类型错误,请输入正确的整型数组"
 msgid "类型错误,请输入正确的整型数组"
 msgstr ""
-"The task list is of the wrong type, please enter the correct integer array."
 
 #: apps/log_search/serializers.py:398
 msgid "动态分组ID列表"
@@ -5537,33 +5071,29 @@ msgstr ""
 
 #: apps/log_search/views/index_set_views.py:111
 msgid "集群ID不能为空"
-msgstr "Cluster ID cannot be empty"
+msgstr ""
 
 #: apps/log_search/views/index_set_views.py:119
 #, python-brace-format
 msgid "业务({bk_biz_id})对应的项目信息不存在"
 msgstr ""
-"The project information corresponding to the business ({bk_biz_id}) does not "
-"exist"
 
 #: apps/log_search/views/index_set_views.py:122
 msgid "参数 bk_biz_id 和 project_id 请至少提供一项"
-msgstr "Please provide at least one of the parameters bk_biz_id and project_id"
+msgstr ""
 
 #: apps/log_search/views/meta_views.py:395
 #: apps/log_search/views/meta_views.py:420
-#, fuzzy
-#| msgid "bk_username不可为空"
 msgid "username 不能为空"
-msgstr "bk_username cannot be empty"
+msgstr ""
 
 #: apps/log_search/views/meta_views.py:470
 msgid "请选择语言"
-msgstr "Please select a language"
+msgstr ""
 
 #: apps/log_search/views/meta_views.py:519
 msgid "project_id不能为空"
-msgstr "project_id cannot be empty"
+msgstr ""
 
 #: apps/log_search/views/search_views.py:514
 #, python-brace-format
@@ -5574,10 +5104,8 @@ msgstr ""
 
 #: apps/log_search/views/search_views.py:682
 #: apps/log_search/views/search_views.py:745
-#, fuzzy
-#| msgid "scope取值范围：trace、trace_detail、trace_detail_log"
 msgid "scope取值范围：default、search_context"
-msgstr "scope value range: trace, trace_detail, trace_detail_log"
+msgstr ""
 
 #: apps/log_search/views/search_views.py:781
 msgid "is"
@@ -5597,19 +5125,19 @@ msgstr ""
 
 #: apps/log_search/views/search_views.py:785
 msgid "大于"
-msgstr "gt"
+msgstr ""
 
 #: apps/log_search/views/search_views.py:786
 msgid "大于等于"
-msgstr "gte"
+msgstr ""
 
 #: apps/log_search/views/search_views.py:787
 msgid "小于"
-msgstr "lt"
+msgstr ""
 
 #: apps/log_search/views/search_views.py:788
 msgid "小于等于"
-msgstr "lte"
+msgstr ""
 
 #: apps/log_search/views/search_views.py:789
 msgid "exists"
@@ -5628,10 +5156,8 @@ msgid "确认字段不存在"
 msgstr ""
 
 #: apps/log_trace/constants.py:29
-#, fuzzy
-#| msgid "日志平台"
 msgid "日志平台协议"
-msgstr "Log platform"
+msgstr ""
 
 #: apps/log_trace/constants.py:30
 msgid "opentelemetry协议"
@@ -5639,11 +5165,11 @@ msgstr ""
 
 #: apps/log_trace/constants.py:42
 msgid "关联"
-msgstr "Related"
+msgstr ""
 
 #: apps/log_trace/constants.py:42
 msgid "取消关联"
-msgstr "Unlink"
+msgstr ""
 
 #: apps/log_trace/constants.py:50
 msgid "traceID"
@@ -5663,7 +5189,7 @@ msgstr ""
 #: apps/log_trace/handlers/trace_field_handlers.py:89
 #: apps/log_trace/handlers/trace_field_handlers.py:130
 msgid "场景"
-msgstr "scenario"
+msgstr ""
 
 #: apps/log_trace/constants.py:91 apps/log_trace/handlers/proto/log.py:85
 #: apps/log_trace/handlers/proto/log.py:99
@@ -5671,22 +5197,20 @@ msgstr "scenario"
 #: apps/log_trace/handlers/trace_field_handlers.py:113
 #: apps/log_trace/handlers/trace_field_handlers.py:122
 msgid "返回码"
-msgstr "ReturnCode"
+msgstr ""
 
 #: apps/log_trace/constants.py:100
 #: apps/log_trace/handlers/trace_field_handlers.py:50
-#, fuzzy
-#| msgid "行日志"
 msgid "日志"
-msgstr "Line"
+msgstr ""
 
 #: apps/log_trace/constants.py:114
 msgid "数据时间"
-msgstr "Data time"
+msgstr ""
 
 #: apps/log_trace/constants.py:133
 msgid "平均聚合"
-msgstr "Average aggregation"
+msgstr ""
 
 #: apps/log_trace/constants.py:134
 msgid "最大聚合"
@@ -5710,21 +5234,19 @@ msgstr ""
 
 #: apps/log_trace/exceptions.py:35
 msgid "trace_id不存在"
-msgstr "trace_id does not exist"
+msgstr ""
 
 #: apps/log_trace/exceptions.py:40
 msgid "trace日志没有找到根节点"
-msgstr "The trace log does not find the root node"
+msgstr ""
 
 #: apps/log_trace/exceptions.py:45
 msgid "协议未支持"
 msgstr ""
 
 #: apps/log_trace/handlers/proto/log.py:33
-#, fuzzy
-#| msgid "执行成功"
 msgid "成功"
-msgstr "Execution succeed"
+msgstr ""
 
 #: apps/log_trace/handlers/proto/log.py:59
 #: apps/log_trace/handlers/proto/log.py:66
@@ -5738,90 +5260,84 @@ msgstr "Execution succeed"
 #: apps/log_trace/handlers/trace_field_handlers.py:102
 #: apps/log_trace/handlers/trace_field_handlers.py:160
 #: apps/log_trace/handlers/trace_field_handlers.py:167
-#, fuzzy
-#| msgid "请选择语言"
 msgid "请选择"
-msgstr "Please select a language"
+msgstr ""
 
 #: apps/log_trace/handlers/proto/log.py:69
 #: apps/log_trace/handlers/trace_field_handlers.py:98
 #: apps/log_trace/handlers/trace_field_handlers.py:163
 msgid "操作名"
-msgstr "Operation alias"
+msgstr ""
 
 #: apps/log_trace/handlers/proto/log.py:78
 #: apps/log_trace/handlers/trace_field_handlers.py:107
 #: apps/log_trace/handlers/trace_field_handlers.py:172
 msgid "耗时min_max"
-msgstr "TimeConsuming"
+msgstr ""
 
 #: apps/log_trace/handlers/proto/log.py:95
 #: apps/log_trace/handlers/trace_field_handlers.py:118
 #: apps/log_trace/handlers/trace_field_handlers.py:183
 msgid "曲线图"
-msgstr "Graph"
+msgstr ""
 
 #: apps/log_trace/handlers/proto/log.py:103
 #: apps/log_trace/handlers/proto/log.py:111
 #: apps/log_trace/handlers/trace_field_handlers.py:126
 #: apps/log_trace/handlers/trace_field_handlers.py:134
 msgid "耗时图"
-msgstr "TimeConsuming"
+msgstr ""
 
 #: apps/log_trace/handlers/proto/log.py:119
 #: apps/log_trace/handlers/proto/otlp.py:90
 #: apps/log_trace/handlers/trace_field_handlers.py:142
 #: apps/log_trace/handlers/trace_field_handlers.py:191
 msgid "调用关系图"
-msgstr "Call graph"
+msgstr ""
 
 #: apps/log_trace/handlers/proto/log.py:125
 #: apps/log_trace/handlers/proto/otlp.py:96
 #: apps/log_trace/handlers/trace_field_handlers.py:148
 #: apps/log_trace/handlers/trace_field_handlers.py:197
 msgid "operationName调用关系"
-msgstr "operationName call relationship"
+msgstr ""
 
 #: apps/log_trace/handlers/proto/otlp.py:66
-#, fuzzy
-#| msgid "集群名称"
 msgid "名称"
-msgstr "Cluster name"
+msgstr ""
 
 #: apps/log_trace/handlers/proto/otlp.py:80
 msgid "trace状态"
 msgstr ""
 
 #: apps/log_trace/serializers.py:134
-#, fuzzy
-#| msgid "action_id不能为空"
 msgid "metric_field字段不能为空"
-msgstr "action_id cannot be empty"
+msgstr ""
 
 #: apps/log_trace/views/trace_views.py:539
 #: apps/log_trace/views/trace_views.py:568
 msgid "scope取值范围：trace、trace_detail、trace_detail_log"
-msgstr "scope value range: trace, trace_detail, trace_detail_log"
+msgstr ""
 
 #: apps/middlewares.py:131
 msgid "S-mart应用仅支持正式环境部署！"
-msgstr "S-mart applications only support formal environment deployment!"
+msgstr ""
 
 #: apps/models.py:206
 msgid "更新时间"
-msgstr "UpdateTime"
+msgstr ""
 
 #: apps/models.py:207
 msgid "修改者"
-msgstr "UpdateBy"
+msgstr ""
 
 #: apps/models.py:266
 msgid "删除时间"
-msgstr "DeleteTime"
+msgstr ""
 
 #: apps/models.py:267
 msgid "删除者"
-msgstr "DeleteBy"
+msgstr ""
 
 #: apps/utils/cos.py:36
 msgid "请设置腾讯云cos SecretId"
@@ -5845,10 +5361,8 @@ msgid "    云区域ID {cloud_id} {service}"
 msgstr ""
 
 #: apps/utils/drf.py:42
-#, fuzzy
-#| msgid "JWT校验失败"
 msgid "参数校验失败:\n"
-msgstr "JWT verification failed\n"
+msgstr ""
 
 #: apps/utils/drf.py:76
 #, python-brace-format
@@ -5867,20 +5381,19 @@ msgid "开始{name} pipeline_id=>{pipeline_id} node_id=>{node_id} "
 msgstr ""
 
 #: apps/utils/pipline.py:65 apps/utils/pipline.py:97
-#, fuzzy, python-brace-format
-#| msgid "失败"
+#, python-brace-format
 msgid "{name}失败"
-msgstr "{name} Failed"
+msgstr ""
 
 #: apps/utils/pipline.py:68 apps/utils/pipline.py:100
 #, python-brace-format
 msgid "[{name}] {reason}"
-msgstr "[{name}] {reason}"
+msgstr ""
 
 #: apps/utils/pipline.py:70 apps/utils/pipline.py:101
 #, python-brace-format
 msgid "{name}失败: {reason}"
-msgstr "{name} failed: {reason}"
+msgstr ""
 
 #: apps/utils/pipline.py:89
 #, python-brace-format
@@ -5900,10 +5413,8 @@ msgid "定时"
 msgstr ""
 
 #: bk_monitor/handler/monitor.py:94
-#, fuzzy
-#| msgid "数据源ID不能为空"
 msgid "数据源名称不能为空"
-msgstr "Data source ID cannot be empty"
+msgstr ""
 
 #: bk_monitor/handler/monitor.py:125
 #, python-brace-format
@@ -5931,10 +5442,8 @@ msgid "{val} 数据源采集的数据为空"
 msgstr ""
 
 #: bk_monitor/models.py:12
-#, fuzzy
-#| msgid "日志平台"
 msgid "时序数据"
-msgstr "Log platform"
+msgstr ""
 
 #: bk_monitor/models.py:13
 msgid "事件数据"
@@ -5945,10 +5454,8 @@ msgid "监控数据源id"
 msgstr ""
 
 #: bk_monitor/models.py:17
-#, fuzzy
-#| msgid "业务id"
 msgid "指定业务id"
-msgstr "Business id"
+msgstr ""
 
 #: bk_monitor/models.py:19
 msgid "数据上报token"
@@ -5969,13 +5476,11 @@ msgstr ""
 
 #: config/default.py:451
 msgid "检索"
-msgstr "Search"
+msgstr ""
 
 #: config/default.py:454 config/default.py:460
-#, fuzzy
-#| msgid "调用链跟踪"
 msgid "调用链"
-msgstr "Trace"
+msgstr ""
 
 #: config/default.py:465
 msgid "调用链列表"
@@ -5986,20 +5491,16 @@ msgid "调用链详情"
 msgstr ""
 
 #: config/default.py:471
-#, fuzzy
-#| msgid "迁移监控策略"
 msgid "监控策略"
-msgstr "Migration monitoring strategy"
+msgstr ""
 
 #: config/default.py:474 config/default.py:480
 msgid "仪表盘"
-msgstr "dashboard"
+msgstr ""
 
 #: config/default.py:483
-#, fuzzy
-#| msgid "仪表盘"
 msgid "仪表"
-msgstr "dashboard"
+msgstr ""
 
 #: config/default.py:485
 msgid "默认仪表盘"
@@ -6007,47 +5508,47 @@ msgstr ""
 
 #: config/default.py:486
 msgid "新建仪表盘"
-msgstr "dash board"
+msgstr ""
 
 #: config/default.py:487
 msgid "新建目录"
-msgstr "New directory"
+msgstr ""
 
 #: config/default.py:488
 msgid "导入仪表盘"
-msgstr "Import dashboard"
+msgstr ""
 
 #: config/default.py:495
 msgid "管理"
-msgstr "Management"
+msgstr ""
 
 #: config/default.py:501
 msgid "日志接入"
-msgstr "Log Access"
+msgstr ""
 
 #: config/default.py:504
 msgid "接入"
-msgstr "DataAccess"
+msgstr ""
 
 #: config/default.py:508
 msgid "日志采集"
-msgstr "Log Collection"
+msgstr ""
 
 #: config/default.py:532
 msgid "日志清洗"
-msgstr "Log Clean"
+msgstr ""
 
 #: config/default.py:535
 msgid "清洗"
-msgstr "Clean"
+msgstr ""
 
 #: config/default.py:539
 msgid "清洗列表"
-msgstr "Clean List"
+msgstr ""
 
 #: config/default.py:554 config/default.py:593 config/default.py:596
 msgid "日志归档"
-msgstr "Log Archive"
+msgstr ""
 
 #: config/default.py:561
 msgid "归档仓库"
@@ -6063,23 +5564,23 @@ msgstr ""
 
 #: config/default.py:581
 msgid "日志提取"
-msgstr "Log Extract"
+msgstr ""
 
 #: config/default.py:583
 msgid "提取"
-msgstr "Extract"
+msgstr ""
 
 #: config/default.py:586
 msgid "日志提取配置"
-msgstr "Log Extract Conf"
+msgstr ""
 
 #: config/default.py:588
 msgid "提取链路管理"
-msgstr "Extract link Manage"
+msgstr ""
 
 #: config/default.py:600
 msgid "全链路追踪"
-msgstr "trace"
+msgstr ""
 
 #: config/default.py:620
 msgid "SDK接入"
@@ -6087,19 +5588,19 @@ msgstr ""
 
 #: config/default.py:625
 msgid "ES集群"
-msgstr "ES cluster"
+msgstr ""
 
 #: config/default.py:629
 msgid "集群管理"
-msgstr "Cluster Manage"
+msgstr ""
 
 #: config/default.py:633 config/default.py:636
 msgid "设置"
-msgstr "Settings"
+msgstr ""
 
 #: config/default.py:638
 msgid "采集链路管理"
-msgstr "Collection Link Manage"
+msgstr ""
 
 #: version_log/config.py:31
 msgid "版本日志"
@@ -6114,10 +5615,8 @@ msgid "版本日志访问记录"
 msgstr ""
 
 #: version_log/views.py:56
-#, fuzzy
-#| msgid "系统错误，请联系管理员"
 msgid "访问出错，请联系管理员。"
-msgstr "System error, please contact the administrator"
+msgstr ""
 
 #: version_log/views.py:57
 msgid "日志列表获取成功"
@@ -6130,1121 +5629,3 @@ msgstr ""
 #: version_log/views.py:69
 msgid "日志详情获取成功"
 msgstr ""
-
-#, python-brace-format
-#~ msgid "开始{name}"
-#~ msgstr "Start {name}"
-
-#, python-brace-format
-#~ msgid "开始轮询结果：{name}"
-#~ msgstr "Start of polling results: {name}"
-
-#~ msgid "您暂时不能访问该站点的后台管理，这是以下原因造成的："
-#~ msgstr ""
-#~ "You are temporarily unable to access the site's background management due "
-#~ "to the following reasons:"
-
-#~ msgid "你还没登录，请重新刷新页面！"
-#~ msgstr "You are not logged in, please refresh the page again!"
-
-#~ msgid "未激活！"
-#~ msgstr "Inactivated!"
-
-#, fuzzy
-#~| msgid "系统错误，请联系管理员"
-#~ msgid "没有管理员权限，请联系管理员！"
-#~ msgstr "System error, please contact the administrator"
-
-#~ msgid "如有需要，请联系管理员或开发者为您解决上述问题。"
-#~ msgstr ""
-#~ "If necessary, contact your administrator or developer to resolve the "
-#~ "issue for you."
-
-#, fuzzy
-#~| msgid "返回码"
-#~ msgid "返回"
-#~ msgstr "ReturnCode"
-
-#~ msgid "索引集管理"
-#~ msgstr "IndexSetManagement"
-
-#, fuzzy
-#~| msgid "用户管理"
-#~ msgid "用户组管理"
-#~ msgstr "UserManagement"
-
-#~ msgid "V3迁移"
-#~ msgstr "V3 migration"
-
-#~ msgid "数据链路管理"
-#~ msgstr "Data link management"
-
-#~ msgid "请求用户"
-#~ msgstr "Request user"
-
-#~ msgid "【平台日志】API调用日志"
-#~ msgstr "【Platform log】API call logs"
-
-#~ msgid "用户鉴权模块"
-#~ msgstr "User authentication module"
-
-#~ msgid "检查用户是否具有指定权限"
-#~ msgstr "Check whether the user has the specified permissions"
-
-#~ msgid "get auth token details"
-#~ msgstr "get auth token details"
-
-#~ msgid "update auth token"
-#~ msgstr "update auth token"
-
-#~ msgid "获取数据入库列表"
-#~ msgstr "Get data storage list"
-
-#~ msgid "结果表操作"
-#~ msgstr "Result table operation"
-
-#~ msgid "原始数据操作"
-#~ msgstr "Raw data manipulation"
-
-#, fuzzy
-#~| msgid "查询一个结果表的信息"
-#~ msgid "查询结果表的表结构"
-#~ msgstr "Query the information of a result table"
-
-#~ msgid "查询集群详情"
-#~ msgstr "Query cluster details"
-
-#~ msgid "es Get请求转发"
-#~ msgstr "es Get request route"
-
-#~ msgid "上传票据请求接口"
-#~ msgstr "Apply ticket"
-
-#~ msgid "文件下载链接创建接口"
-#~ msgstr "Download create"
-
-#~ msgid "ESB"
-#~ msgstr "ESB"
-
-#~ msgid "获取任务执行记录"
-#~ msgstr "Get task execution record"
-
-#, fuzzy
-#~| msgid "根据作业实例ID查询作业执行日志"
-#~ msgid "根据作业id获取作业执行记录"
-#~ msgstr "Get job execution record according to job id"
-
-#~ msgid "必要参数缺失"
-#~ msgstr "Required parameters are missing"
-
-#~ msgid "认证不通过，请提供合法的 BKData 认证信息"
-#~ msgstr ""
-#~ "Certification failed, please provide valid BKData certification "
-#~ "information"
-
-#~ msgid "内部模块调用请传递准确的 bk_app_code 和 bk_app_secret"
-#~ msgstr ""
-#~ "Internal module calls please pass accurate bk_app_code and bk_app_secret"
-
-#~ msgid "请传递合法的 data_token"
-#~ msgstr "Please pass a valid data_token"
-
-#~ msgid "非白名单 APP 不可直接访问接口"
-#~ msgstr "Non-whitelisted APP cannot directly access the interface"
-
-#~ msgid "未检测到有效的认证信息"
-#~ msgstr "No valid authentication information detected"
-
-#~ msgid "用户组不存在"
-#~ msgstr "User group does not exist"
-
-#~ msgid "参数异常：用户组ID不存在"
-#~ msgstr "Parameter exception: user group ID does not exist"
-
-#, fuzzy
-#~| msgid "此用户组不能编辑"
-#~ msgid "请求没有此用户组编辑权限"
-#~ msgstr "This user group cannot be edited"
-
-#~ msgid "group_id不能为空"
-#~ msgstr "group_id cannot be empty"
-
-#, fuzzy
-#~| msgid "日志平台"
-#~ msgid "骏鹰（日志平台）"
-#~ msgstr "Log platform"
-
-#~ msgid "字段类型必须为数组"
-#~ msgstr "Field type must be array"
-
-#~ msgid "字段类型必须为字典类型"
-#~ msgstr "Field type must be a dictionary type"
-
-#~ msgid "字段格式不对，必须符合json格式"
-#~ msgstr "The field format is incorrect. It must conform to the json format."
-
-#~ msgid "用户组已存在"
-#~ msgstr "User group already exists"
-
-#~ msgid "用户组成员同步异常"
-#~ msgstr "User group member synchronization error"
-
-#~ msgid "此用户组不能编辑"
-#~ msgstr "This user group cannot be edited"
-
-#~ msgid "请先取消此用户组在索引集的访问权限"
-#~ msgstr "Please cancel this user group's access to the Indices"
-
-#~ msgid "该用户组不属于您的应用，删除失败"
-#~ msgstr ""
-#~ "The user group does not belong to your application, the deletion failed"
-
-#~ msgid "项目"
-#~ msgstr "Project"
-
-#~ msgid "查看项目"
-#~ msgstr "View project"
-
-#~ msgid "管理项目"
-#~ msgstr "Management project"
-
-#~ msgid "查看索引集"
-#~ msgstr "View Indices"
-
-#~ msgid "资源标识"
-#~ msgstr "Resource identification"
-
-#~ msgid "资源别名"
-#~ msgstr "Resource alias"
-
-#~ msgid "系统资源配置"
-#~ msgstr "System resource allocation"
-
-#~ msgid "操作标识"
-#~ msgstr "Operation ID"
-
-#~ msgid "操作别名"
-#~ msgstr "Operation alias"
-
-#~ msgid "系统资源操作配置"
-#~ msgstr "System resource operation configuration"
-
-#~ msgid "开发人员"
-#~ msgstr "Developer"
-
-#~ msgid "产品人员"
-#~ msgstr "Productor"
-
-#~ msgid "手动"
-#~ msgstr "Manual"
-
-#~ msgid "用户组名称"
-#~ msgstr "User group name"
-
-#~ msgid "添加方式"
-#~ msgstr "Adding mode"
-
-#~ msgid "用户组标识"
-#~ msgstr "User group ID"
-
-#, fuzzy
-#~| msgid "是否可以编辑"
-#~ msgid "是否可以读取"
-#~ msgstr "Is it editable"
-
-#, fuzzy
-#~| msgid "数据源ID"
-#~ msgid "数据来源"
-#~ msgstr "Data source ID"
-
-#~ msgid "已拒绝"
-#~ msgstr "Rejected"
-
-#~ msgid "已审批"
-#~ msgstr "Approved"
-
-#~ msgid "权限状态"
-#~ msgstr "Permission status"
-
-#~ msgid "过期时间 "
-#~ msgstr "Expire date"
-
-#~ msgid "用户组-成员列表"
-#~ msgstr "User group-member list"
-
-#~ msgid "操作类型"
-#~ msgstr "Operation type"
-
-#~ msgid "用户组-权限配置"
-#~ msgstr "User group-permission configuration"
-
-#~ msgid "请求方法"
-#~ msgstr "Request method"
-
-#, fuzzy
-#~| msgid "ES地址"
-#~ msgid "请求地址"
-#~ msgstr "ES Address"
-
-#, fuzzy
-#~| msgid "请求用户"
-#~ msgid "请求结果"
-#~ msgstr "Request user"
-
-#~ msgid "请求说明"
-#~ msgstr "Request description"
-
-#, fuzzy
-#~| msgid "行日志"
-#~ msgid "审计日志"
-#~ msgstr "Line"
-
-#~ msgid "成员列表"
-#~ msgstr "Member list"
-
-#~ msgid "您没有此业务的采集项管理权限"
-#~ msgstr "You do not have collection management rights for this business"
-
-#~ msgid "采集项信息不存在"
-#~ msgstr "Collection item information does not exist"
-
-#~ msgid "分页大小不能超过100"
-#~ msgstr "Page size cannot exceed 100"
-
-#~ msgid "采集项不存在"
-#~ msgstr "Collection item does not exist"
-
-#~ msgid "请勿跨业务查询采集项信息"
-#~ msgstr "Do not query collection item information across businesses"
-
-#~ msgid "您没有此业务的集群管理权限"
-#~ msgstr "You do not have cluster management rights for this business"
-
-#~ msgid "索引健康度"
-#~ msgstr "Index health"
-
-#, fuzzy
-#~| msgid "您没有此业务的数据源管理权限"
-#~ msgid "您没有此业务的运营数据查看权限"
-#~ msgstr "You do not have data source management rights for this business"
-
-#~ msgid "统计频率"
-#~ msgstr "Statistical frequency"
-
-#~ msgid "统计频率设置有误"
-#~ msgstr "Incorrect statistical frequency setting"
-
-#~ msgid "您没有项目权限"
-#~ msgstr "You do not have project permissions"
-
-#~ msgid "您没有此业务的权限组管理权限"
-#~ msgstr ""
-#~ "You do not have permission group management rights for this business"
-
-#~ msgid "您没有此业务的数据源管理权限"
-#~ msgstr "You do not have data source management rights for this business"
-
-#~ msgid "您没有此业务的索引集管理权限"
-#~ msgstr "You do not have permission to manage Indicess for this business"
-
-#~ msgid "您没有此业务的索引集查看权限"
-#~ msgstr "You do not have permission to view the Indices for this business"
-
-#, fuzzy
-#~| msgid "您没有此业务的索引集查看权限"
-#~ msgid "您没有此业务的检索收藏权限"
-#~ msgstr "You do not have permission to view the Indices for this business"
-
-#~ msgid "清理cache失败"
-#~ msgstr "Failed to clear cache"
-
-#~ msgid "清理cache成功"
-#~ msgstr "Clear cache successfully"
-
-#, fuzzy
-#~| msgid "您没有此业务的采集项管理权限"
-#~ msgid "您没有此业务的日志提取项管理权限"
-#~ msgstr "You do not have collection management rights for this business"
-
-#, fuzzy
-#~| msgid "业务id"
-#~ msgid "业务机器"
-#~ msgstr "Business id"
-
-#~ msgid "传递的ip需要为bk_cloud_id:ip格式"
-#~ msgstr "The passed ip needs to be in bk_cloud_id: ip format"
-
-#, fuzzy
-#~| msgid "检索"
-#~ msgid "文件检索"
-#~ msgstr "Search"
-
-#, fuzzy
-#~| msgid "查询部署计划"
-#~ msgid "查询目录"
-#~ msgstr "Query deployment plan"
-
-#, fuzzy
-#~| msgid "查看项目"
-#~ msgid "查看子目录"
-#~ msgstr "View project"
-
-#~ msgid "脚本执行账户名"
-#~ msgstr "Operator"
-
-#, fuzzy
-#~| msgid "用户"
-#~ msgid "当前用户"
-#~ msgstr "User"
-
-#~ msgid "获取文件后缀类型失败：{}"
-#~ msgstr "Failed to fetch the file type: {}"
-
-#, fuzzy, python-format
-#~| msgid "任务状态"
-#~ msgid "获取任务状态失败%s"
-#~ msgstr "Task status%s"
-
-#, fuzzy
-#~| msgid "管理模块异常"
-#~ msgid "升级模块异常"
-#~ msgstr "Management module exception"
-
-#~ msgid "迁移任务正在执行，请勿重复操作"
-#~ msgstr "Migration task is in progress, please do not repeat"
-
-#~ msgid "采集范围同时包含主机和模块，不支持迁移"
-#~ msgstr ""
-#~ "The collection range includes both the host and the module, and does not "
-#~ "support migration"
-
-#~ msgid "采集范围为空，不支持迁移"
-#~ msgstr "The collection range is empty and does not support migration"
-
-#~ msgid "无法修改新索引启用时间"
-#~ msgstr "Unable to modify the new index activation time"
-
-#~ msgid "新索引为空"
-#~ msgstr "New index is empty"
-
-#~ msgid "采集器部署失败"
-#~ msgstr "Collector deployment failed"
-
-#~ msgid "可用集群为空"
-#~ msgstr "Available cluster is empty"
-
-#, python-brace-format
-#~ msgid "查询索引【{index}】文档数量失败：{msg}"
-#~ msgstr "Query index [{index}] The number of documents failed: {msg}"
-
-#~ msgid "日志关键字告警方式"
-#~ msgstr "Log keyword alarm method"
-
-#~ msgid "***** 【{self.data.get_task_step_display()}】 重试执行 *****"
-#~ msgstr "***** 【{self.data.get_task_step_display()}】 Retry execution *****"
-
-#~ msgid "***** 【{self.data.get_task_step_display()}】 开始执行 *****"
-#~ msgstr "***** 【{self.data.get_task_step_display()}】 Begin execution *****"
-
-#, python-brace-format
-#~ msgid "执行失败，原因：{e}"
-#~ msgstr "Execution failed, reason: {e}"
-
-#~ msgid "***** 【{self.data.get_task_step_display()}】 执行失败 *****"
-#~ msgstr ""
-#~ "***** 【{self.data.get_task_step_display()}】 Execution failed *****"
-
-#~ msgid ""
-#~ "执行过程发生发生异常，原因：{e}。堆栈信息如下：\n"
-#~ "{traceback.format_exc()}"
-#~ msgstr ""
-#~ "An exception occurred during the execution, the reason: {e}. The stack "
-#~ "information is as follows：\n"
-#~ "{traceback.format_exc()}"
-
-#~ msgid "***** 【{self.data.get_task_step_display()}】 执行成功 *****"
-#~ msgstr ""
-#~ "***** 【{self.data.get_task_step_display()}】 execution succeed *****"
-
-#~ msgid "正在创建采集项和部署任务"
-#~ msgstr "Creating collection items and deployment tasks"
-
-#, python-brace-format
-#~ msgid "创建新采集项成功，采集项ID({collector_config.collector_config_id})，"
-#~ msgstr ""
-#~ "Create new collection item successfully, collection item "
-#~ "ID({collector_config.collector_config_id})，"
-
-#~ msgid "正在配置权限组"
-#~ msgstr "Configuring permission group"
-
-#, python-brace-format
-#~ msgid "复用已有权限组：({group_id}){group_name}"
-#~ msgstr "Reuse existing permission groups：({group_id}){group_name}"
-
-#, python-brace-format
-#~ msgid "创建新的权限组：({group_id}){group_name}"
-#~ msgstr "Create a new permission group：({group_id}){group_name}"
-
-#~ msgid "正在查询可用ES集群"
-#~ msgstr "Querying available ES cluster"
-
-#~ msgid "警告：通过数据平台接口未能找到原集群信息，可能会影响后续的数据迁移"
-#~ msgstr ""
-#~ "Warning: Failure to find the original cluster information through the "
-#~ "data platform interface may affect subsequent data migration"
-
-#~ msgid ""
-#~ "从数据平台获取到老配置的集群信息：host(\"{}\"), port(\"{}\"), "
-#~ "user(\"{}\")，准备与新版元数据进行匹配"
-#~ msgstr ""
-#~ "Obtain the old configuration cluster information from the data platform："
-#~ "host(\"{}\"), port(\"{}\"), user(\"{}\")，Prepare to match the new "
-#~ "version of metadata"
-
-#~ msgid ""
-#~ "集群信息匹配成功，将使用以下集群进行存储 {cluster_to_use[\"cluster_config"
-#~ "\"]}"
-#~ msgstr ""
-#~ "Cluster information matching is successful, the following clusters will "
-#~ "be used for storage {cluster_to_use[\"cluster_config\"]}"
-
-#~ msgid ""
-#~ "集群信息匹配失败，默认使用以下集群进行存储 "
-#~ "{cluster_to_use[\"cluster_config\"]}"
-#~ msgstr ""
-#~ "Cluster information matching fails. The following clusters are used for "
-#~ "storage by default {cluster_to_use[\"cluster_config\"]}"
-
-#~ msgid "正在向元数据注册新索引"
-#~ msgstr "Registering new index with metadata"
-
-#, python-brace-format
-#~ msgid "新索引注册成功：{self.data.new_index_id}"
-#~ msgstr "New index registered successfully：{self.data.new_index_id}"
-
-#, fuzzy
-#~| msgid "部署任务ID"
-#~ msgid "正在创建部署任务"
-#~ msgstr "Deployment task ID"
-
-#, python-brace-format
-#~ msgid "部署任务创建成功，任务ID({task_id_list})"
-#~ msgstr ""
-#~ "The deployment task is created successfully，the task ID({task_id_list})"
-
-#, python-brace-format
-#~ msgid "轮询部署任务状态({retry_count}/{max_retry_count})"
-#~ msgstr "Polling deployment task status({retry_count}/{max_retry_count})"
-
-#~ msgid "检测到至少一个实例已经部署成功，退出任务轮询，可进行下一步"
-#~ msgstr ""
-#~ "It has been detected that at least one instance has been successfully "
-#~ "deployed, exit the task polling, and you can proceed to the next step"
-
-#~ msgid "该采集项包含的实例为空，可直接进行下一步"
-#~ msgstr ""
-#~ "The instance contained in this collection item is empty, you can proceed "
-#~ "directly to the next step"
-
-#~ msgid "本次任务全部实例均部署失败，请前往数据接入页面查看失败详情"
-#~ msgstr ""
-#~ "All instances of this task failed to be deployed, please go to the data "
-#~ "access page to view the details of the failure"
-
-#~ msgid "采集器部署超时"
-#~ msgstr "Collector deployment timeout"
-
-#~ msgid "正在进行数据迁移"
-#~ msgstr "Data migration in progress"
-
-#~ msgid "将使用以下集群进行存储 {cluster_info[\"domain_name\"]}"
-#~ msgstr ""
-#~ "Will use the following cluster for storage {cluster_info[\"domain_name\"]}"
-
-#~ msgid "ES集群健康状态不是green，请在ES集群恢复green后重试"
-#~ msgstr ""
-#~ "ES cluster health status is not green, please try again after ES cluster "
-#~ "recovers to green"
-
-#, python-brace-format
-#~ msgid ""
-#~ "旧索引{self.data.old_index_id}：以下索引设置别名成功{_index_name} -> "
-#~ "{alias_name}"
-#~ msgstr ""
-#~ "Old index {self.data.old_index_id}: The following indexes successfully "
-#~ "set aliases {_index_name}-> {alias_name}"
-
-#, python-brace-format
-#~ msgid ""
-#~ "旧索引{self.data.old_index_id}：以下索引设置别名失败{_index_name} -> "
-#~ "{alias_name}。"
-#~ msgstr ""
-#~ "Old index{self.data.old_index_id}：The following index failed to set an "
-#~ "alias{_index_name} -> {alias_name}。"
-
-#, python-brace-format
-#~ msgid ""
-#~ "旧索引{self.data.old_index_id}：以下索引删除数据成功{to_close_indices}"
-#~ msgstr ""
-#~ "Old index{self.data.old_index_id}：The following index successfully "
-#~ "deleted data{to_close_indices}"
-
-#, python-brace-format
-#~ msgid ""
-#~ "旧索引{self.data.old_index_id}：以下索引删除数据失败{to_close_indices}"
-#~ msgstr ""
-#~ "Old index{self.data.old_index_id}：The following index failed to delete "
-#~ "data{to_close_indices}"
-
-#, python-brace-format
-#~ msgid ""
-#~ "新索引{self.data.new_index_id}：以下索引数据删除成功{new_close_result}"
-#~ msgstr ""
-#~ "Old index{self.data.new_index_id}：The following index data was deleted "
-#~ "successfully{new_close_result}"
-
-#, python-brace-format
-#~ msgid ""
-#~ "新索引{self.data.new_index_id}：以下索引数据删除失败{new_close_result}"
-#~ msgstr ""
-#~ "New index {self.data.new_index_id}: The deletion of the following index "
-#~ "data failed {new_close_result}"
-
-#~ msgid "数据迁移完成"
-#~ msgstr "Data migration completed"
-
-#~ msgid "获取旧版本采集配置成功，准备进行停用操作"
-#~ msgstr ""
-#~ "Obtaining the acquisition configuration of the old version is successful, "
-#~ "ready for deactivation"
-
-#, python-brace-format
-#~ msgid "停用接口调用失败，原因：{e}"
-#~ msgstr "Failed to disable interface call, reason: {e}"
-
-#, python-brace-format
-#~ msgid "停用接口调用成功，返回结果为: {result} "
-#~ msgstr ""
-#~ "The deactivation interface call was successful and the returned result "
-#~ "was: {result}"
-
-#~ msgid "该环境未安装3.2版本以下的蓝鲸监控，无需进行迁移"
-#~ msgstr ""
-#~ "Blue whale monitoring below version 3.2 is not installed in this "
-#~ "environment, no migration is required"
-
-#~ msgid "获取该采集项配置的监控策略"
-#~ msgstr "Obtain the monitoring strategy configured by the collection item"
-
-#~ msgid "该采集项未配置监控策略，无需迁移"
-#~ msgstr ""
-#~ "No monitoring strategy is configured for this collection item and no "
-#~ "migration is required"
-
-#~ msgid "一共查询到 {len(matched_monitors)} 个已启用的监控项，开始迁移"
-#~ msgstr ""
-#~ "A total of {len (matched_monitors)} enabled monitoring items were queried "
-#~ "and migration started"
-
-#~ msgid ""
-#~ "正在迁移策略项：({monitor_info['monitor_id']}) {monitor_info['title']}"
-#~ msgstr ""
-#~ "Migrating policy items: ({monitor_info ['monitor_id']}) {monitor_info "
-#~ "['title']}"
-
-#~ msgid "策略项迁移成功，ID({save_result['id']})"
-#~ msgstr "Policy item migration succeeded, ID ({save_result ['id']})"
-
-#~ msgid "跳过数据迁移步骤"
-#~ msgstr "Skip the data migration step"
-
-#~ msgid "等待用户进行迁移数据确认..."
-#~ msgstr "Waiting for user to confirm migration data ..."
-
-#, python-brace-format
-#~ msgid "采集项【{self.data.data_alias}】已完成迁移！"
-#~ msgstr "Collection items [{self.data.data_alias}] have been migrated!"
-
-#~ msgid "已完成数据迁移，无法再次修改新索引启用时间"
-#~ msgstr ""
-#~ "Data migration has been completed and the new index activation time "
-#~ "cannot be modified again"
-
-#~ msgid ""
-#~ "用户({operator or self.data.operator}) 已将新索引启用日期设定为: "
-#~ "[{date}]，准备开始迁移数据"
-#~ msgstr ""
-#~ "The user ({operator or self.data.operator}) has set the new index "
-#~ "activation date to: [{date}]Ready to start migrating data"
-
-#~ msgid "等待执行"
-#~ msgstr "Waiting for execution"
-
-#~ msgid "执行失败"
-#~ msgstr "Execution failed"
-
-#~ msgid "待开始"
-#~ msgstr "To be started"
-
-#, fuzzy
-#~| msgid "采集配置ID"
-#~ msgid "迁移采集配置"
-#~ msgstr "Collection Configuration ID"
-
-#~ msgid "创建新索引"
-#~ msgstr "Create new index"
-
-#~ msgid "部署新版采集器"
-#~ msgstr "Deploy a new version of the collector"
-
-#~ msgid "数据待确认"
-#~ msgstr "Data to be confirmed"
-
-#~ msgid "迁移数据"
-#~ msgstr "Migrating data"
-
-#~ msgid "停用旧版采集器"
-#~ msgstr "Disable the old collector"
-
-#~ msgid "迁移监控策略"
-#~ msgstr "Migration monitoring strategy"
-
-#, fuzzy
-#~| msgid "同步完成"
-#~ msgid "完成"
-#~ msgstr "Sync complete"
-
-#~ msgid "数据名称"
-#~ msgstr "Data name"
-
-#~ msgid "数据别名"
-#~ msgstr "Data alias"
-
-#, fuzzy
-#~| msgid "日志字符集"
-#~ msgid "字符集"
-#~ msgstr "Log character set"
-
-#~ msgid "主机范围"
-#~ msgstr "Host range"
-
-#~ msgid "节点范围"
-#~ msgstr "Node range"
-
-#~ msgid "路径信息"
-#~ msgstr "Path information"
-
-#~ msgid "过滤字段"
-#~ msgstr "Filter field"
-
-#~ msgid "字段分隔符"
-#~ msgstr "Field separator"
-
-#~ msgid "数据权限"
-#~ msgstr "Data permission"
-
-#, fuzzy
-#~| msgid "接入数据平台data id"
-#~ msgid "接入数据平台结果表ID"
-#~ msgstr "Access data platform data id"
-
-#~ msgid "新索引启用日期"
-#~ msgstr "New index activation date"
-
-#~ msgid "当前处于的步骤"
-#~ msgstr "Current step"
-
-#~ msgid "日志流水"
-#~ msgstr "Log flow"
-
-#~ msgid "是否跳过数据迁移"
-#~ msgstr "Whether to skip data migration"
-
-#~ msgid "升级记录"
-#~ msgstr "Upgrade history"
-
-#, fuzzy
-#~| msgid "数据平台元数据模块"
-#~ msgid "数据平台数据ID"
-#~ msgstr "Data platform metadata module"
-
-#, fuzzy
-#~| msgid "数据分类"
-#~ msgid "数据分类ID"
-#~ msgstr "Data Classification"
-
-#~ msgid "根据作业实例ID查询作业执行日志"
-#~ msgstr "Get"
-
-#~ msgid "用户模块"
-#~ msgstr "User module"
-
-#, fuzzy
-#~| msgid "必要参数缺失"
-#~ msgid "关键参数缺失"
-#~ msgstr "Required parameters are missing"
-
-#, fuzzy
-#~| msgid "请求方法"
-#~ msgid "请求方法不支持"
-#~ msgstr "Request method"
-
-#, fuzzy
-#~| msgid "远程服务请求结果异常"
-#~ msgid "远程服务返回结果格式异常"
-#~ msgstr "Remote service request result exception"
-
-#, fuzzy
-#~| msgid "用户组名称"
-#~ msgid "组件名称"
-#~ msgstr "User group name"
-
-#, fuzzy
-#~| msgid "是否可用"
-#~ msgid "组件是否可用"
-#~ msgstr "Available"
-
-#, fuzzy
-#~| msgid "包含"
-#~ msgid "包源名"
-#~ msgstr "Include"
-
-#, fuzzy
-#~| msgid "清洗配置"
-#~ msgid "模块配置"
-#~ msgstr "Cleaning configuration"
-
-#, fuzzy
-#~| msgid "别名"
-#~ msgid "分支名"
-#~ msgstr "Alias"
-
-#, fuzzy
-#~| msgid "任务ID"
-#~ msgid "周期任务"
-#~ msgstr "Task ID"
-
-#, fuzzy
-#~| msgid "异常"
-#~ msgid "异常信息"
-#~ msgstr "Abnormal"
-
-#, fuzzy
-#~| msgid "是否可用"
-#~ msgid "是否启动成功"
-#~ msgstr "Available"
-
-#, fuzzy
-#~| msgid "节点类型"
-#~ msgid "节点ID"
-#~ msgstr "Node type"
-
-#, fuzzy
-#~| msgid "是否可用"
-#~ msgid "是否子流程引用"
-#~ msgstr "Available"
-
-#, fuzzy
-#~| msgid "执行成功"
-#~ msgid "是否执行成功"
-#~ msgstr "Execution succeed"
-
-#, fuzzy
-#~| msgid "是否通过"
-#~ msgid "是否跳过"
-#~ msgstr "Whether to pass"
-
-#, fuzzy
-#~| msgid "同步时间"
-#~ msgid "归档时间"
-#~ msgstr "Synchronised time"
-
-#, fuzzy
-#~| msgid "更新时间"
-#~ msgid "上次状态更新的时间"
-#~ msgstr "UpdateTime"
-
-#, fuzzy
-#~| msgid "异常"
-#~ msgid "异常数据"
-#~ msgstr "Abnormal"
-
-#, fuzzy
-#~| msgid "服务"
-#~ msgid "回调服务ID"
-#~ msgstr "Service"
-
-#, fuzzy
-#~| msgid "节点实例id"
-#~ msgid "节点 id"
-#~ msgstr "Node instance id"
-
-#, fuzzy
-#~| msgid "任务ID"
-#~ msgid "celery 任务 ID"
-#~ msgstr "Task ID"
-
-#, fuzzy
-#~| msgid "描述"
-#~ msgid "功能描述"
-#~ msgstr "Description"
-
-#, fuzzy
-#~| msgid "行日志"
-#~ msgid "日志等级"
-#~ msgstr "Line"
-
-#, fuzzy
-#~| msgid "创建时间"
-#~ msgid "输出时间"
-#~ msgstr "CreateTime"
-
-#, fuzzy
-#~| msgid "过期时间 "
-#~ msgid "修改时间"
-#~ msgstr "Expire date"
-
-#, fuzzy
-#~| msgid "迁移数据"
-#~ msgid "模板结构数据"
-#~ msgstr "Migrating data"
-
-#, fuzzy
-#~| msgid "字符串"
-#~ msgid "快照字符串的md5"
-#~ msgstr "String"
-
-#, fuzzy
-#~| msgid "数据源ID"
-#~ msgid "模板数据 ID"
-#~ msgstr "Data source ID"
-
-#, fuzzy
-#~| msgid "数据名称"
-#~ msgid "方案名称"
-#~ msgstr "Data name"
-
-#, fuzzy
-#~| msgid "无数据"
-#~ msgid "方案数据"
-#~ msgstr "No data"
-
-#, fuzzy
-#~| msgid "执行中"
-#~ msgid "执行者"
-#~ msgstr "Running"
-
-#, fuzzy
-#~| msgid "是否可用"
-#~ msgid "是否已经启动"
-#~ msgstr "Available"
-
-#, fuzzy
-#~| msgid "是否维度"
-#~ msgid "是否已经完成"
-#~ msgstr "Whether dimension"
-
-#, fuzzy
-#~| msgid "是否可用"
-#~ msgid "是否已经撤销"
-#~ msgstr "Available"
-
-#, fuzzy
-#~| msgid "是否删除"
-#~ msgid "是否已经删除"
-#~ msgstr "Delete or not"
-
-#, fuzzy
-#~| msgid "是否可用"
-#~ msgid "变量是否可用"
-#~ msgstr "Available"
-
-#, fuzzy
-#~| msgid "执行中"
-#~ msgid "执行作业"
-#~ msgstr "Running"
-
-#~ msgid "无法获取业务信息"
-#~ msgstr "Can not fetch the information of thr business"
-
-#, fuzzy
-#~| msgid "日志平台"
-#~ msgid "日志平台 | 蓝鲸"
-#~ msgstr "Log platform"
-
-#, fuzzy
-#~| msgid "数据平台"
-#~ msgid "数据格式"
-#~ msgstr "Data System"
-
-#~ msgid "查看角色不能为空"
-#~ msgstr "View role cannot be empty"
-
-#, fuzzy
-#~| msgid "索引集不存在"
-#~ msgid "索引存储"
-#~ msgstr "Indices does not exist"
-
-#, python-format
-#~ msgid "获取业务列表异常，args=%s"
-#~ msgstr "Get business list exception，args=%s"
-
-#~ msgid "初始化ES链接对象时缺少es类型"
-#~ msgstr "Missing es type when initializing ES link object"
-
-#~ msgid "初始化ES链接对象时缺少es_host_or_port类型"
-#~ msgstr "Missing es_host_or_port type when initializing ES link object"
-
-#~ msgid "端口不通"
-#~ msgstr "The port is disconnected"
-
-#~ msgid "EsClient查询失败,失败原因:{e}"
-#~ msgstr "EsClient query failed with reason:{e}"
-
-#~ msgid "查询原生ES失败,没有该index"
-#~ msgstr "Querying native ES failed with no index"
-
-#~ msgid "获取原生es索引下的字段信息时出错"
-#~ msgstr "Error getting field information under native ES index"
-
-#~ msgid ""
-#~ "索引{t_index}与{pre_index_name}的以下字段{','.join(real_diff_field_list)}"
-#~ "不一样"
-#~ msgstr ""
-#~ "The index {t_index} is different from the following fields {','. Join "
-#~ "(real_diff_field_list)} of {pre_index_name}"
-
-#~ msgid "查询原生ES5时解析mapping错误,index:{t_index}"
-#~ msgstr "Parsing mapping error when querying native ES5, index: {t_index}"
-
-#~ msgid "获取bk_es索引下的字段信息时出错"
-#~ msgstr "Error getting field information under bk_es index"
-
-#~ msgid "索引{index}查询不到字段信息"
-#~ msgstr "Index {index} cannot query field information"
-
-#~ msgid "获取bk_es索引下的字段信息时出错,Exception:{str(e)}"
-#~ msgstr ""
-#~ "Error getting field information under bk_es index, Exception: {str(e)}"
-
-#~ msgid "监控"
-#~ msgstr "Monitor"
-
-#~ msgid "用户{username}在{bk_biz_id}业务尚未配置策略"
-#~ msgstr "{username} have not configured strategies in this business"
-
-#~ msgid "获取下载ticket失败:{}"
-#~ msgstr "Failed to fetch the Cstone download ticket: {}"
-
-#~ msgid "获取分发任务ID失败:{}"
-#~ msgstr "Failed to fetch the task instance ID: {}"
-
-#~ msgid "获取任务状态失败：{}"
-#~ msgstr "Failed tp fetch the task status: {}"
-
-#~ msgid "文件下载链接生成"
-#~ msgstr "Generating the download link of file"
-
-#, fuzzy
-#~| msgid "权限状态"
-#~ msgid "下载状态"
-#~ msgstr "Permission status"
-
-#~ msgid "上传文件路径"
-#~ msgstr "Uploaded File Path"
-
-#~ msgid "云石操作业务ID"
-#~ msgstr "Cstone Business ID"
-
-#, fuzzy
-#~| msgid "产品人员"
-#~ msgid "云石操作人员"
-#~ msgstr "Productor"
-
-#, fuzzy
-#~| msgid "主机IP"
-#~ msgid "源IP"
-#~ msgstr "Host IP"
-
-#~ msgid "待上传的文件路径"
-#~ msgstr "Uploaded File Path"
-
-#~ msgid "云石ticket id"
-#~ msgstr "Cstone Ticket ID"
-
-#~ msgid "获取上传ticket失败：{}"
-#~ msgstr "Failed to fetch the Cstone ticket ID: {}"
-
-#~ msgid "获取云石上传ID失败：{}"
-#~ msgstr "Failed to fetch the Cstone upload ID: {}"
-
-#~ msgid "读取文件"
-#~ msgstr "Reading File"
-
-#~ msgid "请输入正确的ip列表"
-#~ msgstr "The entry of the list is not the IP format"
-
-#~ msgid "任务下载次数"
-#~ msgstr "Download count"
-
-#~ msgid "停止单个采集器"
-#~ msgstr "Stop a single collector"
-
-#~ msgid "骏鹰"
-#~ msgstr "HIPPOGRIFF"
-
-#, fuzzy
-#~| msgid "日志系统|蓝鲸智云企业版"
-#~ msgid "日志平台|蓝鲸智云企业版"
-#~ msgstr "BKLog | BlueKing Enterprise Edition"
-
-#, fuzzy
-#~| msgid "日志系统|蓝鲸智云腾讯版"
-#~ msgid "骏鹰|蓝鲸智云腾讯版"
-#~ msgstr "BKLog | BlueKing Tencent Edition"
-
-#, fuzzy
-#~| msgid "[{self.project_id}]日志系统--{self.index_set_name}"
-#~ msgid "[{self.project_id}]日志平台--{self.index_set_name}"
-#~ msgstr "[{self.project_id}]BKLog--{self.index_set_name}"
-
-#, fuzzy
-#~| msgid "此项目通过日志系统自动创建-{self.index_set_name}"
-#~ msgid "此项目通过日志平台自动创建-{self.index_set_name}"
-#~ msgstr "This item is created automatically by BKLog-{self.index_set_name}"
-
-#, fuzzy
-#~| msgid "{get_request_username()}在日志系统中发起请求"
-#~ msgid "{get_request_username()}在日志平台中发起请求"
-#~ msgstr "{get_request_username ()} initiate a request in BKLog"
-
-#, fuzzy
-#~| msgid "日志系统-{self.index_set_data.index_set_name}"
-#~ msgid "日志平台-{self.index_set_data.index_set_name}"
-#~ msgstr "BKLog-{self.index_set_data.index_set_name}"
-
-#~ msgid "申请单据失败，错误: {e}，参数：{json.dumps(params)}"
-#~ msgstr ""
-#~ "Application document failed, error: {e}, parameters:{json.dumps(params)}"
-
-#~ msgid "ES端口"
-#~ msgstr "ES Port"
-
-#~ msgid "ES用户名"
-#~ msgstr "ES Username"
-
-#~ msgid "ES密码"
-#~ msgstr "ES Password"
-
-#~ msgid "IEG日志系统"
-#~ msgstr "IEG BKLog"
-
-#~ msgid "日志系统"
-#~ msgstr "BKLog"
-
-#~ msgid "采集项结果表不存在"
-#~ msgstr "Collection item result table does not exist"
-
-#~ msgid "维度字段请勿设置为分词"
-#~ msgstr "Dimension field should not be set to word segmentation"
