@@ -67,6 +67,7 @@ const logPluginConfig = {
       window.TAM_AEGIS_KEY = '\${TAM_AEGIS_KEY}'
       window.BK_LOGIN_URL = '\${BK_LOGIN_URL}'
       window.BK_DOC_DATA_URL = '\${BK_DOC_DATA_URL}'
+      window.BK_PLAT_HOST = '\${BK_PLAT_HOST}'
     </script>
     % if TAM_AEGIS_KEY != "" :
       <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js?_bid=3977"></script>

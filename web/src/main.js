@@ -34,6 +34,7 @@ import 'vue-json-pretty/lib/styles.css';
 import '@icon-cool/bk-icon-log_search';
 import cursor from '@/directives/cursor';
 import LogButton from '@/components/log-button';
+import './common/global';
 // 接入OTLP
 import { WebTracerProvider } from '@opentelemetry/web';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
