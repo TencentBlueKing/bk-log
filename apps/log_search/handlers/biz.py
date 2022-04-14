@@ -40,7 +40,7 @@ from apps.log_search.constants import (
 )
 from apps.utils import APIModel
 from apps.utils.cache import cache_five_minute, cache_one_hour
-from apps.log_search.models import ProjectInfo
+from apps.log_search.models import ProjectInfo, BizProperty
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
 
@@ -1162,6 +1162,36 @@ class BizHandler(APIModel):
         host_dict = self.get_node_path(sets_info)
         host_result = self.get_service_category(host_dict, is_dynamic=True)
         return host_result
+
+    @staticmethod
+    def get_biz_properties() -> dict:
+        """
+        获取CMDB业务属性值信息
+        """
+        biz_properties_dict = {}
+        biz_properties = CCApi.search_object_attribute({"bk_obj_id": "biz"})
+        for bi in biz_properties:
+            biz_properties_dict[bi["bk_property_id"]] = bi["bk_property_name"]
+
+        params = {
+            "fields": [pi for pi in biz_properties_dict]
+        }
+        params["fields"].append("bk_biz_id")
+        biz_list = CCApi.get_app_list(params).get("info", [])
+        result = {}
+        for biz in biz_list:
+            bk_biz_id = int(biz["bk_biz_id"])
+            result[bk_biz_id] = {}
+            for bk_property_id in biz_properties_dict:
+                result[bk_biz_id][bk_property_id] = {
+                    "biz_property_name": biz_properties_dict[bk_property_id],
+                    "biz_property_value": biz.get(bk_property_id, "")
+                }
+
+        return result
+
+    def list_biz_property(self):
+        return BizProperty.list_biz_property()
 
 
 class ServiceCategorySearcher(object):

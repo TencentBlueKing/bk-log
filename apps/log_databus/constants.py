@@ -17,10 +17,14 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import markdown
+
 from django.conf import settings
+from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
 META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 RESTORE_INDEX_SET_PREFIX = "restore_"
@@ -35,6 +39,9 @@ CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE = "1306201"
 COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
 
 BULK_CLUSTER_INFOS_LIMIT = 20
+
+# ES集群类型配置特性开关key
+FEATURE_TOGGLE_ES_CLUSTER_TYPE = "es_cluster_type_setup"
 
 
 class VisibleEnum(ChoicesEnum):
@@ -71,6 +78,19 @@ class EsSourceType(ChoicesEnum):
         (GOOGLE, _("google")),
         (PRIVATE, _("私有自建")),
     )
+
+    def get_choices_list_dict(self):
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE).feature_config
+        return [{
+            "id": es_config[key]["id"],
+            "name": es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"],
+            "help_md": markdown.markdown(es_config[key]["help_md"])
+        } for key in es_config]
+
+    @classmethod
+    def get_keys(cls):
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE).feature_config
+        return [key for key in es_config]
 
 
 class StrategyKind(ChoicesEnum):
