@@ -90,7 +90,8 @@ class EsSourceType(ChoicesEnum):
             for key in es_config
         ]
 
-    def get_choices_list_dict(self):
+    @classmethod
+    def get_choices_list_dict(cls):
         es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
         if not es_config:
             return super().get_choices_list_dict()
