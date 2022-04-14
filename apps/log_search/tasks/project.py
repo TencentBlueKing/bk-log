@@ -118,24 +118,25 @@ def sync_biz_property():
                     bk_biz_id=bk_biz_id,
                     biz_property_id=biz_property_id,
                     biz_property_name=biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],
-                    biz_property_value=biz_properties[bk_biz_id][biz_property_id]["biz_property_value"]
+                    biz_property_value=biz_properties[bk_biz_id][biz_property_id]["biz_property_value"],
                 )
                 objs.append(item)
     else:
         for bi in exist_biz_properties:
             bk_biz_id = bi.bk_biz_id
             biz_property_id = bi.biz_property_id
-            if biz_properties.get(bk_biz_id) and biz_properties[bk_biz_id].get(biz_property_id):
+            if biz_properties.get(bk_biz_id) and biz_properties.get(bk_biz_id, {}).get(biz_property_id):
                 # 判断是否有满足bk_biz_id和biz_property_id的记录
-                if (bi.biz_property_name, bi.biz_property_value) == \
-                        (biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],
-                         biz_properties[bk_biz_id][biz_property_id]["biz_property_value"]):
+                if (bi.biz_property_name, bi.biz_property_value) == (
+                    biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],
+                    biz_properties[bk_biz_id][biz_property_id]["biz_property_value"],
+                ):
                     del biz_properties[bk_biz_id][biz_property_id]
                 else:
                     # 修改属性
                     BizProperty.objects.filter(bk_biz_id=bk_biz_id, biz_property_id=biz_property_id).update(
                         biz_property_name=biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],
-                        biz_property_value=biz_properties[bk_biz_id][biz_property_id]["biz_property_value"]
+                        biz_property_value=biz_properties[bk_biz_id][biz_property_id]["biz_property_value"],
                     )
                     del biz_properties[bk_biz_id][biz_property_id]
             else:
@@ -147,7 +148,8 @@ def sync_biz_property():
                     bk_biz_id=bk_biz_id,
                     biz_property_id=biz_property_id,
                     biz_property_name=biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],
-                    biz_property_value=biz_properties[bk_biz_id][biz_property_id]["biz_property_value"])
+                    biz_property_value=biz_properties[bk_biz_id][biz_property_id]["biz_property_value"],
+                )
                 objs.append(item)
 
     if objs:
@@ -161,6 +163,7 @@ def sync_biz_property():
 
     logger.info(
         "[sync_biz_properties] biz_properties=>{}, sync=>{}, delete=>{}".format(
-            len(biz_properties), len(objs), len(delete_biz_properties_items))
+            len(biz_properties), len(objs), len(delete_biz_properties_items)
+        )
     )
     return True
