@@ -24,8 +24,14 @@
   <div class="step-storage" v-bkloading="{ isLoading: basicLoading }">
     <bk-form :label-width="115" :model="formData" ref="validateForm" data-test-id="storage_form_storageBox">
       <div class="add-collection-title">{{ $t('集群选择') }}</div>
-      <cluster-table :table-list="tableList" :table-params="tableParams" />
-      <cluster-table :table-params="tableParams" />
+      <cluster-table
+        :table-list="clusterList"
+        :storage-cluster-id.sync="formData.storage_cluster_id"
+      />
+      <cluster-table
+        :table-list="exclusiveList"
+        :table-title-type="false"
+        :storage-cluster-id.sync="formData.storage_cluster_id" />
 
       <div class="add-collection-title">{{ $t('存储信息') }}</div>
       <!-- 存储索索引名 -->
@@ -140,14 +146,14 @@
         <bk-form-item required :label="$t('每日单台日志量')">
           <bk-input
             style="width: 320px;"
-            v-model="formData.storage_replies"
+            v-model="formData.assessment_config.log_assessment"
           ></bk-input>
         </bk-form-item>
 
         <div class="need-approval">
           <bk-checkbox
             class="bk-checkbox"
-            v-model="isNeedApproval">
+            v-model="formData.assessment_config.need_approval">
             {{$t('需要审批')}}
           </bk-checkbox>
           <bk-alert
@@ -185,7 +191,7 @@
           </bk-option>
         </bk-select>
       </bk-form-item> -->
-      <bk-form-item>
+      <bk-form-item style="margin-top: 32px">
         <bk-button
           theme="default"
           class="mr10"
@@ -274,6 +280,11 @@ export default {
         storage_replies: 1,
         allocation_min_days: '0',
         storage_cluster_id: '',
+        assessment_config: {
+          log_assessment: '',
+          need_approval: false,
+          approvals: [],
+        },
       },
       selectedStorageCluster: {}, // 选择的es集群
       retentionDaysList: [], // 过期天数列表
@@ -316,6 +327,8 @@ export default {
       tips_storage: [],
       tip_storage: [],
       storageList: [],
+      clusterList: [], // 平台集群
+      exclusiveList: [], // 独享集群
       dialogVisible: false,
       rowTemplate: {
         alias_name: '',
@@ -333,32 +346,8 @@ export default {
         },
       },
       stashCleanConf: null, // 清洗缓存,
-      tableList: [
-        {
-          ip: '公共集群1',
-          source: '123',
-          status: '创建中',
-          create_time: '2018-05-25 15:02:24',
-        },
-        {
-          ip: '公共集群2',
-          source: '456',
-          status: '创建中',
-          create_time: '2018-05-25 15:02:24',
-        },
-        {
-          ip: '公共集群3',
-          source: '789',
-          status: '创建中',
-          create_time: '2018-05-25 15:02:24',
-        },
-      ],
-      tableParams: {
-        clusterSelect: '公共集群1',
-      },
-      approval: ['admin1', 'admin'],
-      isNeedApproval: false,
       isShowAssessment: false,
+      activeItem: {},
     };
   },
   computed: {
@@ -378,11 +367,18 @@ export default {
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
     },
     getApprover() {
-      return this.approval.join(', ');
+      return this.formData.assessment_config.approvals.join(', ');
+    },
+  },
+  watch: {
+    'formData.storage_cluster_id': {
+      handler(val) {
+        this.activeItem = this.storageList.find(item => item.storage_cluster_id === val);
+      },
     },
   },
   async mounted() {
-    this.getStorage();
+    this.getStorage(true);
   },
   methods: {
     // 获取采集项清洗基础配置缓存 用于存储入库提交
@@ -412,6 +408,7 @@ export default {
         view_roles,
         fields,
         etl_params,
+        assessment_config,
       } = this.formData;
       this.isLoading = true;
       const data = {
@@ -428,6 +425,11 @@ export default {
           separator: etl_params.separator,
         },
         fields,
+        assessment_config: {
+          log_assessment: assessment_config.log_assessment,
+          need_approval: assessment_config.need_approval,
+          approvals: assessment_config.approvals,
+        },
       };
       /* eslint-disable */
       if (etl_config !== 'bk_log_text') {
