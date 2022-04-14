@@ -101,6 +101,7 @@ class EsSourceType(ChoicesEnum):
                 "id": es_config[key]["id"],
                 "name": es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"],
                 "help_md": markdown.markdown(es_config[key]["help_md"]),
+                "button_list": es_config[key].get("button_list", []),
             }
             for key in es_config
         ]
