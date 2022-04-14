@@ -96,9 +96,12 @@ class CleanTemplateHandler(object):
             "etl_params": params["etl_params"],
             "etl_fields": params["etl_fields"],
             "bk_biz_id": params["bk_biz_id"],
-            "visible_type": params["visible_type"],
-            "visible_bk_biz_id": self.build_str_visible_bk_biz_id(params["visible_bk_biz_id"]),
         }
+        if params.get("visible_type"):
+            model_fields["visible_type"] = params["visible_type"]
+        if params.get("visible_bk_biz_id"):
+            model_fields["visible_bk_biz_id"] = self.build_str_visible_bk_biz_id(params["visible_bk_biz_id"])
+
         if self._check_clean_template_exist(name=model_fields["name"], bk_biz_id=model_fields["bk_biz_id"]):
             biz = ProjectInfo.get_biz(model_fields["bk_biz_id"])
             raise CleanTemplateRepeatException(
