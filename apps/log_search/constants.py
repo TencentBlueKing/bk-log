@@ -80,6 +80,9 @@ RESULT_WINDOW_COST_TIME = 1 / 3
 # API请求异常编码
 API_RESULT_ERROR_AUTH = "40000"
 
+# 角色组
+BK_PROPERTY_GROUP_ROLE = "role"
+
 # cc api find_module_with_relation
 MAX_LIST_BIZ_HOSTS_PARAMS_COUNT = 200
 
