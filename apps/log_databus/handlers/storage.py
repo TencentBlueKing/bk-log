@@ -237,8 +237,8 @@ class StorageHandler(object):
                     "setup_config": {
                         "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
                         "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
-                        "number_of_replicas_max": 3,
-                        "number_of_replicas_default": 1,
+                        "number_of_replicas_max": es_config["ES_REPLICAS"],
+                        "number_of_replicas_default": es_config["ES_REPLICAS"],
                     },
                     "description": "",
                     "enable_archive": False,
@@ -292,8 +292,8 @@ class StorageHandler(object):
                         "setup_config": {
                             "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
                             "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
-                            "number_of_replicas_max": 3,
-                            "number_of_replicas_default": 1,
+                            "number_of_replicas_max": es_config["ES_REPLICAS"],
+                            "number_of_replicas_default": es_config["ES_REPLICAS"],
                         },
                         "description": "",
                         "enable_archive": False,
@@ -313,8 +313,8 @@ class StorageHandler(object):
                         "setup_config": {
                             "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
                             "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
-                            "number_of_replicas_max": 3,
-                            "number_of_replicas_default": 1,
+                            "number_of_replicas_max": es_config["ES_REPLICAS"],
+                            "number_of_replicas_default": es_config["ES_REPLICAS"],
                         },
                         "description": "",
                         "enable_archive": False,
