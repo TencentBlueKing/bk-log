@@ -153,8 +153,8 @@ def get_storage_usage_and_all(cluster_id):
     if not storage_config:
         return usage, total
     for _storage in storage_config:
-        usage += int(_storage.get("disk.total") or 0)
-        total += int(_storage.get("disk.used") or 0)
+        total += int(_storage.get("disk.total") or 0)
+        usage += int(_storage.get("disk.used") or 0)
     return int(usage / total), total
 
 
