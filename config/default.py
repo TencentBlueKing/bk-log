@@ -91,6 +91,8 @@ else:
 # 这里是默认的中间件，大部分情况下，不需要改动
 # 如果你已经了解每个默认 MIDDLEWARE 的作用，确实需要去掉某些 MIDDLEWARE，或者改动先后顺序，请去掉下面的注释，然后修改
 MIDDLEWARE = (
+    # http -> https 转换中间件
+    "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     # request instance provider
@@ -279,6 +281,7 @@ MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
 BK_DOC_QUERY_URL = "https://bk.tencent.com/docs/document/5.1/90/3822/"
 BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
+BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 # 计算平台文档地址
 BK_DOC_DATA_URL = ""
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
