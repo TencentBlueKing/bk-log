@@ -187,6 +187,6 @@ class HttpResponseIndexRedirect(HttpResponseRedirect):
 
 
 class HttpsMiddleware(MiddlewareMixin):
-    def process_request(self, request, view_func, view_args, view_kwargs):
+    def process_request(self, request):
         if not request.is_secure() and settings.DEFAULT_HTTPS_HOST:
             return HttpResponseIndexRedirect(request.path)
