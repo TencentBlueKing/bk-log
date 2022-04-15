@@ -92,7 +92,8 @@ else:
 # 如果你已经了解每个默认 MIDDLEWARE 的作用，确实需要去掉某些 MIDDLEWARE，或者改动先后顺序，请去掉下面的注释，然后修改
 MIDDLEWARE = (
     # http -> https 转换中间件
-    "apps.middlewares.HttpsMiddleware" "django.middleware.gzip.GZipMiddleware",
+    "apps.middlewares.HttpsMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
