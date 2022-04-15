@@ -39,6 +39,7 @@ from django.dispatch import Signal
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.utils.translation import ugettext as _
+from django.http import HttpResponseRedirect
 
 from apps.exceptions import BaseException
 from apps.utils.log import logger
@@ -177,3 +178,15 @@ class CommonMid(MiddlewareMixin):
         response.status_code = 500
 
         return response
+
+
+class HttpResponseIndexRedirect(HttpResponseRedirect):
+    def __init__(self, redirect_to, *args, **kwargs):
+        super(HttpResponseIndexRedirect, self).__init__(redirect_to, *args, **kwargs)
+        self["Location"] = os.path.join(settings.DEFAULT_HTTPS_HOST, redirect_to.lstrip("/"))
+
+
+class HttpsMiddleware(MiddlewareMixin):
+    def process_request(self, request, view_func, view_args, view_kwargs):
+        if not request.is_secure() and settings.DEFAULT_HTTPS_HOST:
+            return HttpResponseIndexRedirect(request.path)
