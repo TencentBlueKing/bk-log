@@ -762,6 +762,8 @@ export default {
   编辑数据源: 'Edit Data Source',
   新建集群: 'Create Cluster',
   编辑集群: 'Edit Cluster',
+  正在使用: 'Is Using',
+  业务独享集群: 'Business Exclusive Cluster',
   数据源名称: 'Cluster name',
   名称: 'Cluster name',
   地址: 'Domain name',
