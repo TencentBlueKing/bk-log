@@ -90,7 +90,7 @@ class StorageHandler(object):
                 q_filter &= functools.reduce(
                     operator.or_,
                     [
-                        Q(bk_biz_id=bk_biz_id, bk_property_id=label_key, bk_property_value=label_value)
+                        Q(bk_biz_id=bk_biz_id, biz_property_id=label_key, biz_property_value=label_value)
                         for label_value in label_values
                     ],
                 )
@@ -109,6 +109,7 @@ class StorageHandler(object):
             bk_biz_id,
             is_default=is_default,
             enable_archive=enable_archive,
+            post_visible=True,
         )
 
         cluster_groups = [
@@ -168,31 +169,33 @@ class StorageHandler(object):
         # 排序：第三方集群 > 默认集群
         cluster_groups.sort(key=lambda c: c["priority"])
 
-        # 获取公共集群使用情况
-        public_clusters = [
-            cluster["storage_cluster_id"]
-            for cluster in cluster_groups
-            if cluster.get("registered_system") == REGISTERED_SYSTEM_DEFAULT
-        ]
-        if not public_clusters:
-            return cluster_groups
+        # # 获取公共集群使用情况
+        # public_clusters = [
+        #     cluster["storage_cluster_id"]
+        #     for cluster in cluster_groups
+        #     if cluster.get("registered_system") == REGISTERED_SYSTEM_DEFAULT
+        # ]
+        # if not public_clusters:
+        #     return cluster_groups
 
-        es_config = get_es_config(bk_biz_id)
-        # 获取公共集群容易配额
-        storage_capacity = self.get_storage_capacity(bk_biz_id, public_clusters)
-        for cluster in cluster_groups:
-            if cluster.get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
-                cluster["storage_capacity"] = storage_capacity["storage_capacity"]
-                cluster["storage_used"] = storage_capacity["storage_used"]
-                cluster["max_retention"] = es_config["ES_PUBLIC_STORAGE_DURATION"]
-            else:
-                cluster["storage_capacity"] = 0
-                cluster["storage_used"] = 0
-                cluster["max_retention"] = es_config["ES_PRIVATE_STORAGE_DURATION"]
+        # es_config = get_es_config(bk_biz_id)
+        # # 获取公共集群容易配额
+        # storage_capacity = self.get_storage_capacity(bk_biz_id, public_clusters)
+        # for cluster in cluster_groups:
+        #     if cluster.get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
+        #         cluster["storage_capacity"] = storage_capacity["storage_capacity"]
+        #         cluster["storage_used"] = storage_capacity["storage_used"]
+        #         cluster["max_retention"] = es_config["ES_PUBLIC_STORAGE_DURATION"]
+        #     else:
+        #         cluster["storage_capacity"] = 0
+        #         cluster["storage_used"] = 0
+        #         cluster["max_retention"] = es_config["ES_PRIVATE_STORAGE_DURATION"]
         return cluster_groups
 
     @classmethod
-    def filter_cluster_groups(cls, cluster_groups, bk_biz_id, is_default=True, enable_archive=False):
+    def filter_cluster_groups(
+        cls, cluster_groups, bk_biz_id, is_default=True, enable_archive=False, post_visible=False
+    ):
         """
         筛选集群，并判断集群是否可编辑
         :param cluster_groups:
@@ -217,10 +220,11 @@ class StorageHandler(object):
             )
             cluster_obj["cluster_config"]["enable_hot_warm"] = enable_hot_warm
 
-            es_config = get_es_config(bk_biz_id)
             # 公共集群：凭据信息和域名置空处理，并添加不允许编辑标签
             if cluster_obj["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
                 if not is_default:
+                    continue
+                if not cls.storage_visible(bk_biz_id, settings.BLUEKING_BK_BIZ_ID, post_visible=post_visible):
                     continue
                 cluster_obj["is_editable"] = True
                 cluster_obj["auth_info"]["password"] = ""
@@ -254,7 +258,7 @@ class StorageHandler(object):
             custom_biz_id = custom_option.get("bk_biz_id")
             custom_visible_bk_biz = custom_option.get("visible_bk_biz", [])
 
-            if not cls.storage_visible(bk_biz_id, custom_biz_id):
+            if not cls.storage_visible(bk_biz_id, custom_biz_id, post_visible=post_visible):
                 continue
 
             cluster_obj["is_editable"] = True
@@ -341,7 +345,9 @@ class StorageHandler(object):
         ]
 
     @staticmethod
-    def storage_visible(bk_biz_id, custom_bk_biz_id) -> bool:
+    def storage_visible(bk_biz_id, custom_bk_biz_id, post_visible=False) -> bool:
+        if post_visible:
+            return True
         bk_biz_id = int(bk_biz_id)
         if not custom_bk_biz_id:
             return False
