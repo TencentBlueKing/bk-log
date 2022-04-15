@@ -19,9 +19,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import sys
 
-from config.log import get_logging_config_dict
-from blueapps.conf.default_settings import *  # noqa
+from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
+
+from blueapps.conf.default_settings import *  # noqa
+
+from config.log import get_logging_config_dict
 
 # 使用k8s部署模式
 IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
@@ -283,6 +287,20 @@ BK_HOT_WARM_CONFIG_URL = (
 )
 
 DEPLOY_MODE = os.environ.get("DEPLOY_MODE", "")
+
+
+# ===============================================================================
+# 企业版登录重定向
+# ===============================================================================
+
+
+def redirect_func(request):
+    login_page_url = reverse("account:login_page")
+    next_url = "{}?refer_url={}".format(login_page_url, request.path)
+    return HttpResponseRedirect(next_url)
+
+
+BLUEAPPS_PAGE_401_RESPONSE_FUNC = redirect_func
 
 # bulk_request limit
 BULK_REQUEST_LIMIT = int(os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500))
