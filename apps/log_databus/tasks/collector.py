@@ -155,7 +155,7 @@ def get_storage_usage_and_all(cluster_id):
     for _storage in storage_config:
         total += int(_storage.get("disk.total") or 0)
         usage += int(_storage.get("disk.used") or 0)
-    return int(usage / total), total
+    return int((usage / total) * 100), total
 
 
 def get_biz_storage_capacity(bk_biz_id, cluster):
