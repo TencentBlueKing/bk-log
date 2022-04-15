@@ -353,7 +353,7 @@ class CleanTemplate(SoftDeleteModel):
     etl_fields = models.JSONField(_("etl字段"), null=True, blank=True)
     bk_biz_id = models.IntegerField(_("业务id"))
     visible_type = models.CharField(_("可见类型"), max_length=64, default=VisibleEnum.CURRENT_BIZ.value)
-    visible_bk_biz_id = models.CharField(_("可见业务ID"), null=True, max_length=256, default="")
+    visible_bk_biz_id = models.TextField(_("可见业务ID"), default="")
 
     class Meta:
         verbose_name = _("清洗模板")

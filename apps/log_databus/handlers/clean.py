@@ -86,7 +86,7 @@ class CleanTemplateHandler(object):
 
     def retrieve(self):
         data = model_to_dict(self.data)
-        data["visible_bk_biz_id"] = [int(i) for i in data["visible_bk_biz_id"].split(",") if i != ""]
+        data["visible_bk_biz_id"] = [int(i) for i in data["visible_bk_biz_id"].split(",") if i]
         return data
 
     def create_or_update(self, params: dict):

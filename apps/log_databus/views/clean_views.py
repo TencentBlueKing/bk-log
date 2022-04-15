@@ -195,12 +195,13 @@ class CleanTemplateViewSet(ModelViewSet):
     def get_queryset(self):
         qs = self.model.objects
         if self.request.query_params.get("bk_biz_id"):
+            bk_biz_id = int(self.request.query_params.get("bk_biz_id"))
             qs = qs.filter(
-                Q(visible_type=VisibleEnum.CURRENT_BIZ.value)
+                Q(visible_type=VisibleEnum.CURRENT_BIZ.value, bk_biz_id=bk_biz_id)
                 | Q(visible_type=VisibleEnum.ALL_BIZ.value)
                 | Q(
                     visible_type=VisibleEnum.MULTI_BIZ.value,
-                    visible_bk_biz_id__contains=",%s," % self.request.query_params.get("bk_biz_id"),
+                    visible_bk_biz_id__contains=f",{bk_biz_id},",
                 )
             )
         return qs.all()
