@@ -140,8 +140,7 @@ export default {
       }, 300);
     },
     handleTitleClick() {
-      this.$emit('update:collapse', !this.collapse);
-      this.$emit('change', !this.collapse, this.type);
+      this.$emit('change');
     },
   },
 };
