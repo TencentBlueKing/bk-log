@@ -95,7 +95,9 @@ class TestCleanTemplate(TestCase):
 
     def test_destroy(self):
         create_result = self._test_create()
-        destroy_result = CleanTemplateHandler(clean_template_id=create_result["clean_template_id"]).destroy()
+        destroy_result = CleanTemplateHandler(clean_template_id=create_result["clean_template_id"]).destroy(
+            CREATE_PARAMS["bk_biz_id"]
+        )
         self.assertEqual(destroy_result, create_result["clean_template_id"])
 
     def test_CleanTemplateNotExistException(self):
