@@ -188,5 +188,7 @@ class HttpResponseIndexRedirect(HttpResponseRedirect):
 
 class HttpsMiddleware(MiddlewareMixin):
     def process_request(self, request):
+        if settings.BKAPP_IS_BKLOG_API:
+            return None
         if not request.is_secure() and settings.DEFAULT_HTTPS_HOST:
             return HttpResponseIndexRedirect(request.path)
