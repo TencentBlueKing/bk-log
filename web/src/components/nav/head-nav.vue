@@ -515,7 +515,7 @@ export default {
         if (item.id === 'search') {
           item.id = 'retrieve';
         }
-        item.id = item.id.replaceAll('_', '-');
+        item.id = item.id.replace(/_/g, '-');
         if (item.children) {
           this.replaceMenuId(item.children);
         }
@@ -623,12 +623,12 @@ export default {
       if (project?.permission?.view_business) {
         return true;
       }
-      this.$store.commit('updateProject', project.project_id);
+      this.$store.commit('updateProject', project?.project_id);
       this.$store.dispatch('getApplyData', {
         action_ids: ['view_business'],
         resources: [{
           type: 'biz',
-          id: project.bk_biz_id,
+          id: project?.bk_biz_id,
         }],
       }).then((res) => {
         this.$emit('auth', res.data);
@@ -755,7 +755,7 @@ export default {
           resMenu.children.forEach((item) => {
             item.id = this.routeMap[item.id] || item.id;
             if (resMenu.id === 'dashboard') {
-              item.id = item.id.replaceAll('-', '_');
+              item.id = item.id.replace(/-/g, '_');
             }
             const menu = oldMenu.children.find(menuItem => menuItem.id === item.id);
             if (menu) {
