@@ -513,11 +513,11 @@ export default {
         display: none;
       }
 
-      ::v-deep.bk-select {
+      ::v-deep .bk-select {
         border-radius: 0;
       }
 
-      ::v-deep.bk-form-control {
+      ::v-deep .bk-form-control {
         width: 140px;
         border-radius: 0;
       }
@@ -547,7 +547,7 @@ export default {
     }
 
     .rule-error {
-      ::v-deep.bk-form-input {
+      ::v-deep .bk-form-input {
         border-color: #ff5656;
       }
 
@@ -559,7 +559,7 @@ export default {
   }
 
   .submit-dialog {
-    ::v-deep.bk-dialog-tool {
+    ::v-deep .bk-dialog-tool {
       display: none;
     }
 
