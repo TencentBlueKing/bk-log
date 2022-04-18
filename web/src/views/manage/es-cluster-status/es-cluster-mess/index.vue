@@ -165,7 +165,6 @@
 
     <!-- <intro-panel
       :data="stateMap"
-      :set-width="320"
       :is-open-window="isOpenWindow"
       @handleActiveDetails="handleActiveDetails" /> -->
   </div>
@@ -174,7 +173,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
-// import IntroPanel from '../../manage-access/custom-report/components/intro-panel';
+// import IntroPanel from './components/intro-panel.vue';
 
 export default {
   name: 'EsClusterMess',
