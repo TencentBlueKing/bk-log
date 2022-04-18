@@ -80,17 +80,15 @@ class EsSourceType(ChoicesEnum):
     )
 
     @classmethod
-    def get_choices(cls) -> tuple:
+    def get_choices(cls):
         es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
         if not es_config:
             return super().get_choices()
         es_config = es_config.feature_config
-        return tuple(
-            [
-                (key, es_config[key]["name_en"]) if translation.get_language() == "en" else es_config[key]["name"]
-                for key in es_config
-            ]
-        )
+        return [
+            (key, es_config[key]["name_en"]) if translation.get_language() == "en" else es_config[key]["name"]
+            for key in es_config
+        ]
 
     @classmethod
     def get_choices_list_dict(cls):
