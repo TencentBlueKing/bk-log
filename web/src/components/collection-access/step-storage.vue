@@ -377,7 +377,7 @@ export default {
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
     },
     isCanUseAssessment() {
-      if (['editFinish', 'edit'].includes(this.operateType)) return false;
+      if (this.operateType === 'edit') return false;
       // itsm开启时 并且 当前选择的集群容量评估开启时 并且 不为采集成功时展示容量评估
       return this.isItsm && this.activeCluster.enable_assessment && this.curCollect.itsm_ticket_status !== 'success_apply';
     },

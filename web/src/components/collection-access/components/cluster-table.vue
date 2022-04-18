@@ -41,7 +41,7 @@
               <bk-radio-group v-model="clusterSelect">
                 <bk-radio
                   :value="row.storage_cluster_id"
-                  :disabled="rowIsDisable()">
+                  :disabled="rowIsDisable">
                   {{ row.storage_cluster_name }}
                 </bk-radio>
               </bk-radio-group>
@@ -127,6 +127,10 @@ export default {
     ...mapGetters({
       curCollect: 'collect/curCollect',
     }),
+    rowIsDisable() {
+      if (this.storageClusterId === '') return false;
+      return ['editFinish', 'edit'].includes(this.operateType);
+    },
   },
   watch: {
     storageClusterId(val) {
@@ -159,6 +163,7 @@ export default {
   },
   methods: {
     handleSelectCluster($row) {
+      if (this.rowIsDisable) return;
       this.$emit('update:storageClusterId', $row.storage_cluster_id);
     },
     handleCreateCluster() {
@@ -169,15 +174,6 @@ export default {
           isPass: true,
         },
       });
-    },
-    rowIsDisable() {
-      if (this.storageClusterId === '') {
-        return false;
-      }
-      if (['editFinish', 'edit'].includes(this.operateType)) {
-        return true;
-      }
-      return false;
     },
   },
 };
