@@ -90,7 +90,7 @@ class StorageHandler(object):
                 q_filter &= functools.reduce(
                     operator.or_,
                     [
-                        Q(bk_biz_id=bk_biz_id, bk_property_id=label_key, bk_property_value=label_value)
+                        Q(bk_biz_id=bk_biz_id, biz_property_id=label_key, biz_property_value=label_value)
                         for label_value in label_values
                     ],
                 )
@@ -109,6 +109,7 @@ class StorageHandler(object):
             bk_biz_id,
             is_default=is_default,
             enable_archive=enable_archive,
+            post_visible=True,
         )
 
         cluster_groups = [
@@ -192,7 +193,9 @@ class StorageHandler(object):
         return cluster_groups
 
     @classmethod
-    def filter_cluster_groups(cls, cluster_groups, bk_biz_id, is_default=True, enable_archive=False):
+    def filter_cluster_groups(
+        cls, cluster_groups, bk_biz_id, is_default=True, enable_archive=False, post_visible=False
+    ):
         """
         筛选集群，并判断集群是否可编辑
         :param cluster_groups:
@@ -217,10 +220,11 @@ class StorageHandler(object):
             )
             cluster_obj["cluster_config"]["enable_hot_warm"] = enable_hot_warm
 
-            es_config = get_es_config(bk_biz_id)
             # 公共集群：凭据信息和域名置空处理，并添加不允许编辑标签
             if cluster_obj["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
                 if not is_default:
+                    continue
+                if not cls.storage_visible(bk_biz_id, settings.BLUEKING_BK_BIZ_ID, post_visible=post_visible):
                     continue
                 cluster_obj["is_editable"] = True
                 cluster_obj["auth_info"]["password"] = ""
@@ -237,8 +241,8 @@ class StorageHandler(object):
                     "setup_config": {
                         "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
                         "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
-                        "number_of_replicas_max": 3,
-                        "number_of_replicas_default": 1,
+                        "number_of_replicas_max": es_config["ES_REPLICAS"],
+                        "number_of_replicas_default": es_config["ES_REPLICAS"],
                     },
                     "description": "",
                     "enable_archive": False,
@@ -254,7 +258,7 @@ class StorageHandler(object):
             custom_biz_id = custom_option.get("bk_biz_id")
             custom_visible_bk_biz = custom_option.get("visible_bk_biz", [])
 
-            if not cls.storage_visible(bk_biz_id, custom_biz_id):
+            if not cls.storage_visible(bk_biz_id, custom_biz_id, post_visible=post_visible):
                 continue
 
             cluster_obj["is_editable"] = True
@@ -292,8 +296,8 @@ class StorageHandler(object):
                         "setup_config": {
                             "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
                             "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
-                            "number_of_replicas_max": 3,
-                            "number_of_replicas_default": 1,
+                            "number_of_replicas_max": es_config["ES_REPLICAS"],
+                            "number_of_replicas_default": es_config["ES_REPLICAS"],
                         },
                         "description": "",
                         "enable_archive": False,
@@ -313,8 +317,8 @@ class StorageHandler(object):
                         "setup_config": {
                             "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
                             "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
-                            "number_of_replicas_max": 3,
-                            "number_of_replicas_default": 1,
+                            "number_of_replicas_max": es_config["ES_REPLICAS"],
+                            "number_of_replicas_default": es_config["ES_REPLICAS"],
                         },
                         "description": "",
                         "enable_archive": False,
@@ -341,7 +345,9 @@ class StorageHandler(object):
         ]
 
     @staticmethod
-    def storage_visible(bk_biz_id, custom_bk_biz_id) -> bool:
+    def storage_visible(bk_biz_id, custom_bk_biz_id, post_visible=False) -> bool:
+        if post_visible:
+            return True
         bk_biz_id = int(bk_biz_id)
         if not custom_bk_biz_id:
             return False

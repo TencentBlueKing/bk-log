@@ -42,24 +42,24 @@
             v-if="curStep === 1"
             :operate-type="operateType"
             @stepChange="stepChange" />
-          <step-capacity
+          <!-- <step-capacity
             v-if="curStep === 2"
             :operate-type="operateType"
-            @stepChange="stepChange" />
+            @stepChange="stepChange" /> -->
           <step-issued
-            v-if="curStep === 3"
+            v-if="curStep === 2"
             :operate-type="operateType"
             :is-switch="isSwitch"
             @stepChange="stepChange" />
           <step-field
-            v-if="curStep === 4"
+            v-if="curStep === 3"
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
             @changeClean="isCleaning = true" />
           <step-storage
-            v-if="curStep === 5"
+            v-if="curStep === 4"
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
@@ -114,7 +114,7 @@ import { mapState, mapGetters } from 'vuex';
 import { stepsConf, finishRefer } from './step';
 import AuthPage from '@/components/common/auth-page';
 import stepAdd from './step-add';
-import stepCapacity from './step-capacity';
+// import stepCapacity from './step-capacity';
 import stepIssued from './step-issued';
 import stepField from './step-field';
 import stepStorage from './step-storage.vue';
@@ -126,7 +126,7 @@ export default {
   components: {
     AuthPage,
     stepAdd,
-    stepCapacity,
+    // stepCapacity,
     stepIssued,
     stepField,
     stepStorage,
@@ -182,6 +182,10 @@ export default {
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
+    if (to.query?.isPass === true) {
+      next();
+      return;
+    }
     if (!this.isSubmit && !this.isSwitch && !this.showRouterLeaveTip) {
       this.$bkInfo({
         title: this.$t('pageLeaveTips'),
@@ -241,11 +245,11 @@ export default {
             // 准备中编辑时跳到第一步，所以不用修改步骤
           } else if (this.isItsm) {
             if (this.operateType === 'edit') { // 未完成编辑
-              this.curStep = this.curCollect.itsm_ticket_status === 'success_apply' ? 4 : 2;
+              this.curStep = this.curCollect.itsm_ticket_status === 'success_apply' ? 4 : 1;
             } else if (this.operateType === 'field') {
-              this.curStep = 4;
+              this.curStep = 3;
             } else if (this.operateType === 'storage') {
-              this.curStep = 5;
+              this.curStep = 4;
             }
             // 审批通过后编辑直接进入第三步字段提取，否则进入第二步容量评估
           } else if (this.operateType === 'field') {

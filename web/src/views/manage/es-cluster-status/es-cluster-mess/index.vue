@@ -474,7 +474,7 @@ export default {
     }
 
     .king-table {
-      ::v-deep .state-container {
+      .state-container {
         display: flex;
         align-items: center;
 

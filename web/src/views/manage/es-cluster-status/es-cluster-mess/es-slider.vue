@@ -139,14 +139,14 @@
           <bk-form-item>
             <div class="es-cluster-management button-text" @click="isShowManagement = !isShowManagement">
               <span>{{ $t('ES集群管理') }}</span>
-              <span :class="['bk-icon icon-angle-double-down', isShowManagement && 'is-active']"></span>
+              <span :class="['bk-icon icon-angle-double-down', isShowManagement && 'is-show']"></span>
             </div>
           </bk-form-item>
 
-          <div v-show="isShowManagement">
+          <div v-if="isShowManagement">
             <!-- 可见范围 -->
             <bk-form-item :label="$t('可见范围')" style="margin-top: 4px">
-              <bk-radio-group v-model="visibleScopeValue">
+              <bk-radio-group v-model="formData.visible_config.visible_type">
                 <bk-radio
                   class="scope-radio"
                   v-for="item of visibleScopeSelectList"
@@ -156,6 +156,7 @@
                 </bk-radio>
               </bk-radio-group>
               <bk-select
+                v-show="!isBizAttr"
                 v-model="visibleBkBiz"
                 searchable
                 multiple
@@ -184,9 +185,24 @@
                   :key="item.project_id"
                   :id="item.bk_biz_id"
                   :name="item.project_name">
-                  <div>{{item.project_name}}</div>
+                  <!-- eslint-disable-next-line vue/no-v-html -->
+                  <div class="project-option" v-html="getProjectOption(item)"></div>
                 </bk-option>
               </bk-select>
+              <bk-search-select
+                clearable
+                v-show="isBizAttr"
+                ext-cls="search-select"
+                :readonly="true"
+                :popover-zindex="2500"
+                :data="bizParentList"
+                :show-condition="false"
+                :remote-method="handleRemoteMethod"
+                @menu-select="handleMenuSelect"
+                @menu-child-select="handleChildMenuSelect"
+                @input-change="handleInputChange"
+                v-model="bkBizLabelsList">
+              </bk-search-select>
             </bk-form-item>
             <!-- 过期时间 -->
             <bk-form-item :label="$t('过期时间')" required>
@@ -195,11 +211,11 @@
                   <div class="space-item-label">{{$t('默认')}}</div>
                   <bk-select
                     style="width: 320px;"
-                    v-model="formData.retention_day"
+                    v-model="formData.setup_config.retention_days_default"
                     :clearable="false"
                     data-test-id="storageBox_select_selectExpiration">
                     <div slot="trigger" class="bk-select-name">
-                      {{ formData.retention_day + $t('天') }}
+                      {{ formData.setup_config.retention_days_default + $t('天') }}
                     </div>
                     <template v-for="(option, index) in retentionDaysList">
                       <bk-option
@@ -225,11 +241,11 @@
                   <div class="space-item-label">{{$t('最大')}}</div>
                   <bk-select
                     style="width: 320px;"
-                    v-model="formData.max_day"
+                    v-model="formData.setup_config.retention_days_max"
                     :clearable="false"
                     data-test-id="storageBox_select_selectExpiration">
                     <div slot="trigger" class="bk-select-name">
-                      {{ formData.max_day + $t('天') }}
+                      {{ formData.setup_config.retention_days_max + $t('天') }}
                     </div>
                     <template v-for="(option, index) in maxDaysList">
                       <bk-option
@@ -260,18 +276,17 @@
                   <div class="space-item-label">{{$t('默认')}}</div>
                   <bk-input
                     type="number"
-                    :max="formData.max_number - 1"
+                    :max="formData.setup_config.number_of_replicas_max"
                     :min="0"
-                    v-model="formData.retention_number">
+                    v-model="formData.setup_config.number_of_replicas_default">
                   </bk-input>
                 </div>
                 <div class="flex-space-item">
                   <div class="space-item-label">{{$t('最大')}}</div>
                   <bk-input
                     type="number"
-                    :max="7"
-                    :min="formData.retention_number + 1"
-                    v-model="formData.max_number">
+                    :min="formData.setup_config.number_of_replicas_default + 1"
+                    v-model="formData.setup_config.number_of_replicas_max">
                   </bk-input>
                 </div>
               </div>
@@ -324,7 +339,7 @@
                     <span class="bk-icon icon-eye"></span>{{ $t('查看实例列表') }}
                   </div>
                 </div>
-                <bk-select v-model="selectedColdId" style="width: 300px;" @change="handleColdSelected">
+                <bk-select v-model="selectedColdId" @change="handleColdSelected">
                   <template v-for="option in hotColdAttrSet">
                     <bk-option
                       :key="option.computedId"
@@ -340,25 +355,28 @@
             <div class="form-item-container">
               <bk-form-item :label="$t('日志归档')">
                 <div class="document-container">
-                  <bk-switcher v-model="switchOpen" size="large" theme="primary"></bk-switcher>
+                  <bk-switcher v-model="formData.enable_archive" size="large" theme="primary"></bk-switcher>
                   <div class="check-document button-text">
-                    <div class="rotate-div">
-                      <span class="bk-icon icon-text-file"></span>
-                    </div>
+                    <span class="bk-icon icon-text-file"></span>
                     <span>{{$t('查看说明文档')}}</span>
                   </div>
                 </div>
               </bk-form-item>
               <bk-form-item :label="$t('容量评估')">
-                <bk-switcher v-model="switchOpen" size="large" theme="primary"></bk-switcher>
+                <bk-switcher v-model="formData.enable_assessment" size="large" theme="primary"></bk-switcher>
               </bk-form-item>
             </div>
             <!-- 集群负责人 -->
             <bk-form-item :label="$t('集群负责人')" :desc="customDesc" required>
-              <bk-input
-                v-model="formData.cluster_principal"
-                maxlength="50"
-              ></bk-input>
+              <div class="principal">
+                <bk-user-selector
+                  :class="isAdminError && 'is-error'"
+                  :value="formData.admin"
+                  :api="userApi"
+                  @change="handleChange"
+                  @blur="handleBlur">
+                </bk-user-selector>
+              </div>
             </bk-form-item>
             <!-- 集群说明 -->
             <bk-form-item :label="$t('集群说明')" class="illustrate">
@@ -366,7 +384,7 @@
                 type="textarea"
                 :rows="3"
                 :maxlength="100"
-                v-model="customDesc">
+                v-model="formData.description">
               </bk-input>
             </bk-form-item>
           </div>
@@ -398,10 +416,12 @@
 <script>
 import EsDialog from './es-dialog';
 import { mapState, mapGetters } from 'vuex';
+import BkUserSelector from '@blueking/user-selector';
 
 export default {
   components: {
     EsDialog,
+    BkUserSelector,
   },
   props: {
     showSlider: {
@@ -434,11 +454,21 @@ export default {
         hot_attr_value: '', // 热节点属性值
         warm_attr_name: '', // 冷节点属性名称
         warm_attr_value: '', // 冷节点属性值
-        retention_day: 7,
-        max_day: 14,
-        retention_number: 3,
-        max_number: 7,
-        cluster_principal: 'admin',
+        setup_config: { // 过期时间 副本数
+          retention_days_max: 14,
+          retention_days_default: 7,
+          number_of_replicas_max: 3,
+          number_of_replicas_default: 1,
+        },
+        admin: [], // 负责人名单
+        description: '', // 集群说明
+        enable_archive: false, // 日志存档开关
+        enable_assessment: false, // 容量评估开关
+        visible_config: { // 可见范围配置
+          visible_type: 'current_biz', // 可见范围单选项
+          bk_biz_labels: {}, // 按照业务属性选择
+          visible_bk_biz: [], // 多个业务
+        },
       },
       visibleBkBiz: [],
       basicRules: {
@@ -472,27 +502,35 @@ export default {
       selectedColdId: '', // 冷 attr:value
       showInstanceDialog: false, // 查看实例列表
       viewInstanceType: '', // hot、cold 查看热数据/冷数据实例列表
-      visibleScopeValue: 1,
-      visibleScopeSelectList: [
-        { id: 1, name: '当前业务可见' },
-        { id: 2, name: '多业务选择' },
-        { id: 3, name: '全平台' },
-        { id: 4, name: '按照业务属性选择' },
+      visibleScopeSelectList: [ // 可见范围单选列表
+        { id: 'current_biz', name: '当前业务可见' },
+        { id: 'multi_biz', name: '多业务选择' },
+        { id: 'all_biz', name: '全平台' },
+        { id: 'biz_attr', name: '按照业务属性选择' },
       ],
-      visibleList: [], // 可见范围业务
+      visibleList: [], // 多业务选择下拉框
+      cacheVisibleList: [], // 缓存多业务选择下拉框
+      bizParentList: [],
+      bkBizLabelsList: [],
+      cacheBkBizLabelsList: [], // 缓存按照业务属性选择
+      bizChildrenList: {},
       visibleIsToggle: false,
-      switchOpen: false,
+      userApi: window.BK_LOGIN_URL, // 负责人api
       customDesc: '集群负责人',
-      isShowManagement: false,
-      retentionDaysList: [],
-      maxDaysList: [],
-      customRetentionDay: '',
-      customMaxDay: '',
+      isShowManagement: true, // 是否展示集群管理
+      retentionDaysList: [], // 默认过期时间列表
+      maxDaysList: [], // 最大过期时间列表
+      customRetentionDay: '', // 默认过期时间输入框
+      customMaxDay: '', // 最大过期时间输入框
+      isAdminError: false, // 集群负责人是否为空
+      bizSelectID: '',
+      bizInputStr: '',
     };
   },
   computed: {
     ...mapState({
       myProjectList: state => state.myProjectList,
+      userMeta: state => state.userMeta,
     }),
     ...mapGetters({
       bkBizId: 'bkBizId',
@@ -517,8 +555,13 @@ export default {
     },
     // 可见范围单选判断，禁用下拉框
     scopeValueType() {
-      if (this.visibleScopeValue === 1 || this.visibleScopeValue === 3) return true;
+      if (this.formData.visible_config.visible_type !== 'multi_biz') {
+        return true;
+      };
       return false;
+    },
+    isBizAttr() {
+      return this.formData.visible_config.visible_type === 'biz_attr';
     },
   },
   watch: {
@@ -527,8 +570,11 @@ export default {
         if (this.isEdit) {
           this.editDataSource();
         } else {
-          //
+          // 集群负责人默认本人
+          this.formData.admin = [this.userMeta.username];
         }
+        this.updateDaysList();
+        this.getBizPropertyId();
       } else {
         // 清空表单数据
         this.formData = {
@@ -547,23 +593,52 @@ export default {
           hot_attr_value: '', // 热节点属性值
           warm_attr_name: '', // 冷节点属性名称
           warm_attr_value: '', // 冷节点属性值
+          setup_config: {
+            retention_days_max: 14,
+            retention_days_default: 7,
+            number_of_replicas_max: 3,
+            number_of_replicas_default: 1,
+          },
+          admin: [],
+          description: '',
+          enable_archive: false,
+          enable_assessment: false,
+          visible_config: {
+            visible_type: 'current_biz',
+          // visible_bk_biz: []
+          // bk_biz_labels: {},
+          },
         };
         this.visibleBkBiz = [];
         this.visibleList = [];
+        this.cacheVisibleList = [];
         // 清空连通测试结果
         this.connectResult = '';
         this.connectFailedMessage = '';
       }
-      this.updateDaysList();
     },
-    'formData.retention_day': {
+    'formData.setup_config.retention_days_default': {
       handler() {
         this.daySelectAddToDisable();
       },
     },
-    'formData.max_day': {
+    'formData.setup_config.retention_days_max': {
       handler() {
         this.daySelectAddToDisable();
+      },
+    },
+    'formData.visible_config.visible_type': {
+      handler(val) {
+        if (val !== 'multi_biz') {
+          this.visibleList = [];
+        } else {
+          this.visibleList = JSON.parse(JSON.stringify(this.cacheVisibleList));
+        };
+        if (val !== 'biz_attr') {
+          this.bkBizLabelsList = [];
+        } else {
+          this.bkBizLabelsList = JSON.parse(JSON.stringify(this.cacheBkBizLabelsList));
+        }
       },
     },
   },
@@ -590,7 +665,7 @@ export default {
       this.visibleIsToggle = data;
       if (!data) {
         this.visibleBkBiz.forEach((val) => {
-          if (!this.visibleList.some(item => item.id === val)) {
+          if (!this.visibleList.some(item => String(item.id) === val)) {
             const target = this.myProjectList.find(project => project.bk_biz_id === val);
             this.visibleList.push({
               id: val,
@@ -614,8 +689,10 @@ export default {
         });
         this.formData = {
           cluster_name: res.data.cluster_config.cluster_name, // 集群名
-          source_type: res.data.source_type || '', // 来源
-          source_name: res.data.source_type === 'other' ? res.data.source_name : '',
+          source_type: res.data.cluster_config.custom_option?.source_type || '', // 来源
+          source_name: res.data.cluster_config.custom_option?.source_type === 'other'
+            ? res.data.cluster_config.custom_option?.source_name
+            : '',
           domain_name: res.data.cluster_config.domain_name, // 地址
           port: res.data.cluster_config.port, // 端口
           schema: res.data.cluster_config.schema, // 协议
@@ -628,15 +705,39 @@ export default {
           hot_attr_value: res.data.cluster_config.custom_option?.hot_warm_config?.hot_attr_value || '', // 热节点属性值
           warm_attr_name: res.data.cluster_config.custom_option?.hot_warm_config?.warm_attr_name || '', // 冷节点属性名称
           warm_attr_value: res.data.cluster_config.custom_option?.hot_warm_config?.warm_attr_value || '', // 冷节点属性值
+          setup_config: res.data.cluster_config.custom_option?.setup_config || {},
+          admin: res.data.cluster_config.custom_option?.admin || [],
+          description: res.data.cluster_config.custom_option?.description || '',
+          enable_archive: res.data.cluster_config.custom_option?.enable_archive || false,
+          enable_assessment: res.data.cluster_config.custom_option?.enable_assessment || false,
+          visible_config: res.data.cluster_config.custom_option?.visible_config || {},
         };
-        res.data.visible_bk_biz.forEach((val) => {
+        res.data.cluster_config.custom_option?.visible_config.visible_bk_biz.forEach((val) => {
           const target = this.myProjectList.find(project => Number(project.bk_biz_id) === val.bk_biz_id);
-          this.visibleList.push({
-            id: val.bk_biz_id,
-            name: target.project_name,
-            is_use: val.is_use,
-          });
+          if (target) {
+            target.is_use = val.is_use;
+            const targetObj = {
+              id: val.bk_biz_id,
+              name: target.project_name,
+              is_use: val.is_use,
+            };
+            this.visibleList.push(targetObj);
+            this.cacheVisibleList.push(targetObj);
+          }
         });
+
+        this.bkBizLabelsList = Object.entries(res.data.cluster_config.custom_option?.visible_config.bk_biz_labels)
+          .reduce((pre, cur) => {
+            const propertyName =  this.bizParentList.find(item => item.id ===  cur[0]);
+            const obj = {
+              name: `${propertyName.name}`,
+              id: cur[0],
+              values: cur[1].map(item => ({ id: item, name: item })),
+            };
+            pre.push(obj);
+            return pre;
+          }, []);
+        this.cacheBkBizLabelsList = JSON.parse(JSON.stringify(this.bkBizLabelsList));
       } catch (e) {
         console.warn(e);
       } finally {
@@ -737,6 +838,7 @@ export default {
           bk_biz_id: this.bkBizId,
         };
         const postData = JSON.parse(JSON.stringify(this.formData));
+        postData.bk_biz_id = this.bkBizId;
         if (!postData.enable_hot_warm) {
           delete postData.hot_attr_name;
           delete postData.hot_attr_value;
@@ -747,7 +849,14 @@ export default {
           delete postData.source_name;
         }
         if (this.visibleList.length) {
-          postData.visible_bk_biz = this.visibleList.map(item => item.id);
+          postData.visible_config.visible_bk_biz = this.visibleList.map(item => item.id);
+        } else {
+          postData.visible_config.visible_bk_biz = [];
+        }
+        if (this.bkBizLabelsList.length) {
+          postData.visible_config.bk_biz_labels = this.filterBzid();
+        } else {
+          postData.visible_config.bk_biz_labels = {};
         }
         if (this.isEdit) {
           url = '/source/update';
@@ -799,9 +908,11 @@ export default {
           isRetention ? this.customRetentionDay = '' : this.customMaxDay = '';
           this.messageError(this.$t('最大自定义天数为') + maxDays);
         } else {
-          const isExceed = isRetention ? this.formData.max_day <= numberVal : this.formData.retention_day >= numberVal;
+          const isExceed = isRetention
+            ? this.formData.setup_config.retention_days_max < numberVal
+            : this.formData.setup_config.retention_days_default > numberVal;
           if (isExceed) {
-            this.messageError(this.$t('默认天数不能大于或等于最大天数'));
+            this.messageError(this.$t('默认天数不能大于最大天数'));
             return;
           }
           if (isRetention) {
@@ -811,7 +922,7 @@ export default {
                 name: stringVal + this.$t('天'),
               });
             }
-            this.formData.retention_day = stringVal;
+            this.formData.setup_config.retention_days_default = stringVal;
             this.customRetentionDay = '';
           } else {
             if (!this.maxDaysList.some(item => item.id === stringVal)) {
@@ -820,7 +931,7 @@ export default {
                 name: stringVal + this.$t('天'),
               });
             }
-            this.formData.max_day = stringVal;
+            this.formData.setup_config.retention_days_max = stringVal;
             this.customMaxDay = '';
           }
           document.body.click();
@@ -834,8 +945,89 @@ export default {
      * @desc: 更新过期时间列表里禁止选中的情况
      */
     daySelectAddToDisable() {
-      this.retentionDaysList.forEach(el => el.disabled = Number(this.formData.max_day) <= Number(el.id));
-      this.maxDaysList.forEach(el => el.disabled = Number(this.formData.retention_day) >= Number(el.id));
+      const { retention_days_default: defaultDays, retention_days_max: maxDays } = this.formData.setup_config;
+      this.retentionDaysList.forEach(el => el.disabled = Number(maxDays) < Number(el.id));
+      this.maxDaysList.forEach(el => el.disabled = Number(defaultDays) > Number(el.id));
+    },
+    getProjectOption(item) {
+      const backgroundStr = `background: ${!!item.is_use ? '#2dcb56' : '#699df4'}`;
+      const styleStr = `display: inline-block; width: 4px; height: 4px; border-radius: 50%; margin-right: 4px; ${backgroundStr}; transform: translateY(-2px);`;
+      return `<span style="${styleStr}"></span> ${item.project_name}${item.is_use ? `（${this.$t('正在使用')}）` : ''}`;
+    },
+    handleChange(val) {
+      const realVal = val.filter(item => item !== undefined);
+      this.isAdminError = !realVal.length;
+      this.formData.admin = realVal;
+    },
+    handleBlur() {
+      this.isAdminError = !this.formData.admin.length;
+    },
+    getBizPropertyId() {
+      this.$http.request('/source/getProperty')
+        .then((res) => {
+          this.bizParentList = res.data.map((item) => {
+            return {
+              name: item.biz_property_name,
+              id: item.biz_property_id,
+              multiable: true,
+              remote: true,
+            };
+          });
+          res.data.forEach((item) => {
+            this.bizChildrenList[item.biz_property_id] = item.biz_property_value.map((item) => {
+              return {
+                id: item,
+                name: item,
+              };
+            });
+          });
+        });
+    },
+    handleRemoteMethod() {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          // item.project_name.toUpperCase().includes(this.keyword.toUpperCase());
+          if (!!this.bizInputStr) {
+            resolve(this.bizChildrenList[this.bizSelectID]
+              .filter(item => item.name.includes(this.bizInputStr)));
+          } else {
+            resolve(this.bizChildrenList[this.bizSelectID]);
+          }
+        }, 1000);
+      });
+      return ;
+    },
+    handleMenuSelect(item) {
+      this.bizSelectID = item.id;
+      this.bizInputStr = '';
+    },
+    handleChildMenuSelect() {
+      this.bizInputStr = '';
+    },
+    handleInputChange($event) {
+      this.bizInputStr = $event.data;
+    },
+    /**
+     * @desc: 过滤和去重按照业务属性选择
+     */
+    filterBzid() {
+      const parentSet = new Set();
+      const list = {};
+      this.bkBizLabelsList.forEach((item) => {
+        if (!parentSet.has(item.id)) {
+          parentSet.add(item.id);
+          list[item.id] = [];
+          const valuesList = item.values.map(item => item.id);
+          list[item.id] = list[item.id].concat(valuesList);
+        } else {
+          const valuesList = item.values.map(item => item.id);
+          const childSet = new Set();
+          valuesList.forEach(item => childSet.add(item));
+          list[item.id].forEach(item => childSet.add(item));
+          list[item.id] = [...childSet];
+        }
+      });
+      return list;
     },
   },
 };
@@ -927,12 +1119,13 @@ export default {
 
       .bk-form-item {
         position: relative;
-        width: 49%;
+        width: 48%;
       }
 
       .es-address {
-        width: 140%;
+        width: 108%;
       }
+
 
       .form-item-label {
         font-size: 14px;
@@ -958,11 +1151,7 @@ export default {
         .check-document {
           font-size: 12px;
           margin: 0 6px 0 20px;
-        }
-
-        .rotate-div {
-          display: inline-block;
-          transform: rotateZ(360deg) rotateX(180deg) translateY(-2px);
+          align-content: center;
         }
       }
     }
@@ -976,7 +1165,7 @@ export default {
       .icon-angle-double-down {
         font-size: 24px;
 
-        &.is-active {
+        &.is-show {
           transform: rotateZ(180deg);
         }
       }
@@ -1008,6 +1197,14 @@ export default {
       .icon-rotate {
         transform: rotateZ(-180deg);
       }
+    }
+
+    .principal .user-selector {
+      width: 100%;
+    }
+
+    ::v-deep .is-error .user-selector-container {
+      border-color: #ff5656;
     }
   }
 }
@@ -1087,4 +1284,7 @@ export default {
     @include flex-center;
   }
 }
+// ::v-deep .tippy-popper{
+//   z-index: 9999 !important;
+// }
 </style>

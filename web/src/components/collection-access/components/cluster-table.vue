@@ -23,29 +23,40 @@
 <template>
   <div class="cluster-container">
     <div class="cluster-title">
-      <span class="bk-icon icon-angle-up-fill"></span>
-      <p>{{ $t("平台集群") }}</p>
+      <div :class="['cluster-title-container' ,!isShowTable && 'is-active']"
+           @click="isShowTable = !isShowTable">
+        <span class="bk-icon icon-angle-up-fill"></span>
+        <p>{{ tableTitleType ? $t("平台集群") : $t('业务独享集群')}}</p>
+      </div>
     </div>
-    <div class="cluster-main">
+    <div class="cluster-main" v-show="isShowTable">
       <template v-if="tableList.length">
         <bk-table
           class="cluster-table"
           :data="tableList"
           :max-height="254"
           @row-click="handleSelectCluster">
-          <bk-table-column :label="$t('集群名')">
+          <bk-table-column :label="$t('集群名')" min-width="240">
             <template slot-scope="{ row }">
               <bk-radio-group v-model="clusterSelect">
-                <bk-radio :value="row.ip">
-                  {{ row.ip }}
+                <bk-radio :value="row.storage_cluster_id">
+                  {{ row.storage_cluster_name }}
                 </bk-radio>
               </bk-radio-group>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('总量')" prop="source"></bk-table-column>
-          <bk-table-column :label="$t('空闲率')" prop="status"></bk-table-column>
-          <bk-table-column :label="$t('索引数')" prop="create_time"></bk-table-column>
-          <bk-table-column :label="$t('业务数')" prop="create_time"></bk-table-column>
+          <bk-table-column :label="$t('总量')" min-width="100">
+            <template slot-scope="{ row }">
+              <span>{{formatFileSize(row.storage_total)}}</span>
+            </template>
+          </bk-table-column>
+          <bk-table-column :label="$t('空闲率')">
+            <template slot-scope="{ row }">
+              <span>{{`${100 - row.storage_usage}%`}}</span>
+            </template>
+          </bk-table-column>
+          <bk-table-column :label="$t('索引数')" prop="index_count"></bk-table-column>
+          <bk-table-column :label="$t('业务数')" prop="biz_count"></bk-table-column>
         </bk-table>
         <div class="cluster-illustrate">
           <p class="illustrate-title">{{$t('集群说明')}}</p>
@@ -55,8 +66,8 @@
               <span class="illustrate-value">{{value}}</span>
             </div>
           </div>
-          <p class="illustrate-list" v-for="(item,index) of illustrateData" :key="index">
-            {{item}}
+          <p class="illustrate-list">
+            {{description}}
           </p>
         </div>
       </template>
@@ -65,7 +76,7 @@
           <div class="noData-message">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
             <p class="empty-message">{{$t('createAClusterTips')}}</p>
-            <p class="button-text">{{$t('创建集群')}}</p>
+            <p class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
           </div>
         </div>
       </template>
@@ -73,39 +84,79 @@
   </div>
 </template>
 <script>
+import { formatFileSize } from '../../../common/util';
+
 export default {
   props: {
     tableList: {
       type: Array,
       default: () => [],
     },
-    tableParams: {
-      type: Object,
+    tableTitleType: {
+      type: Boolean,
+      default: true,
+    },
+    storageClusterId: {
+      type: [Number, String],
       require: true,
     },
   },
   data() {
     return {
+      isShowTable: true,
       clusterSelect: null,
       illustrateLabelData: {
-        副本数: '最大2天',
-        过期时间: '最大10天',
-        热冷数据: '是',
-        日志归档: '是',
+        副本数: '',
+        过期时间: '',
+        热冷数据: '',
+        日志归档: '',
       },
-      illustrateData: [
-        '11111',
-        '22222',
-        '22222',
-      ],
+      description: '',
+      activeItem: {},
+      isShow: false,
     };
   },
+  watch: {
+    storageClusterId(val) {
+      if (val === undefined) return;
+      this.clusterSelect = val;
+      this.activeItem = this.tableList.find(item => item.storage_cluster_id === val);
+      if (!!this.activeItem) {
+        const { number_of_replicas_max: replicasMax, retention_days_max: daysMax } = this.activeItem.setup_config;
+        const { enable_hot_warm: hotWarm, enable_archive: archive } =  this.activeItem;
+        this.illustrateLabelData = {
+          副本数: `最大${replicasMax}天`,
+          过期时间: `最大${daysMax}天`,
+          热冷数据: hotWarm ? '是' : '否',
+          日志归档: archive ? '是' : '否',
+        };
+        this.description = this.activeItem.description;
+      } else {
+        this.illustrateLabelData = {
+          副本数: '',
+          过期时间: '',
+          热冷数据: '',
+          日志归档: '',
+        };
+        this.description = '';
+      }
+    },
+  },
   mounted() {
-    this.clusterSelect = this.tableParams.clusterSelect;
+    this.formatFileSize = formatFileSize;
   },
   methods: {
     handleSelectCluster($row) {
-      this.clusterSelect = $row.ip;
+      this.$emit('update:storageClusterId', $row.storage_cluster_id);
+    },
+    handleCreateCluster() {
+      this.$router.push({
+        name: 'es-cluster-manage',
+        query: {
+          projectId: window.localStorage.getItem('project_id'),
+          isPass: true,
+        },
+      });
     },
   },
 };
@@ -125,7 +176,20 @@ export default {
     border: 1px solid #dcdee5;
     border-bottom: none;
 
-    @include flex-align;
+    .cluster-title-container {
+      height: 100%;
+      cursor: pointer;
+
+      @include flex-align;
+
+      &.is-active {
+        border-bottom: 1px solid #dcdee5;
+
+        .icon-angle-up-fill {
+          transform: rotateZ(-90deg);
+        }
+      }
+    }
 
     .icon-angle-up-fill {
       margin: 0 10px;
@@ -135,6 +199,7 @@ export default {
 
   .cluster-main {
     display: flex;
+    min-height: 170px;
 
     .cluster-table {
       width: 58%;

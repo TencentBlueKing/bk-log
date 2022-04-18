@@ -70,8 +70,11 @@ export default {
     },
   },
   methods: {
-    // 获取存储集群
-    getStorage() {
+    /**
+     * @desc: 获取存储集群
+     * @param { Boolean } isStorage // 是否是存储步骤
+     */
+    getStorage(isStorage = false) {
       const queryData = { bk_biz_id: this.bkBizId };
       if (this.curCollect?.data_link_id) {
         queryData.data_link_id = this.curCollect.data_link_id;
@@ -91,6 +94,11 @@ export default {
             }
           }
           this.storageList = s1.concat(s2);
+          if (isStorage) {
+            this.storageList.forEach(item => (item.is_platform
+              ? this.clusterList.push(item)
+              : this.exclusiveList.push(item)));
+          }
           if (this.isItsm && this.curCollect?.can_use_independent_es_cluster) {
             // itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
           } else {

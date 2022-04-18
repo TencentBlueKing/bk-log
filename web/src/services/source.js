@@ -43,6 +43,11 @@ const create = {
   method: 'post',
 };
 
+const getProperty = {
+  url: '/bizs/get_property/',
+  method: 'get',
+};
+
 const deleteEs = {
   url: '/databus/storage/:cluster_id/?bk_biz_id=:bk_biz_id',
   method: 'delete',
@@ -176,4 +181,5 @@ export {
   dataList,
   issuedRetry,
   scenario,
+  getProperty,
 };

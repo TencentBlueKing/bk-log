@@ -80,17 +80,15 @@ class EsSourceType(ChoicesEnum):
     )
 
     @classmethod
-    def get_choices(cls) -> tuple:
+    def get_choices(cls):
         es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
         if not es_config:
             return super().get_choices()
         es_config = es_config.feature_config
-        return tuple(
-            [
-                (key, es_config[key]["name_en"]) if translation.get_language() == "en" else es_config[key]["name"]
-                for key in es_config
-            ]
-        )
+        return [
+            (key, es_config[key]["name_en"]) if translation.get_language() == "en" else es_config[key]["name"]
+            for key, config in es_config.items()
+        ]
 
     @classmethod
     def get_choices_list_dict(cls):
@@ -105,7 +103,7 @@ class EsSourceType(ChoicesEnum):
                 "help_md": markdown.markdown(es_config[key]["help_md"]),
                 "button_list": es_config[key].get("button_list", []),
             }
-            for key in es_config
+            for key, config in es_config.items()
         ]
 
     @classmethod
@@ -114,7 +112,7 @@ class EsSourceType(ChoicesEnum):
         if not es_config:
             return super().get_keys()
         es_config = es_config.feature_config
-        return [key for key in es_config]
+        return [key for key in es_config.keys()]
 
 
 class StrategyKind(ChoicesEnum):
