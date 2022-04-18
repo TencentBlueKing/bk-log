@@ -974,8 +974,13 @@ def get_index_metrics(metrics, get, version, base_dimensions):
     index_stats_metrics = index_stats_for_version(version)
     health_stat = {"green": 0, "yellow": 1, "red": 2}
     reversed_health_stat = {"red": 0, "yellow": 1, "green": 2}
+    result_table_id_re = re.compile(RESULT_TABLE_ID_RE)
     for idx in index_resp:
-        dimensions = {**base_dimensions, "index_name": idx["index"]}
+        re_result = result_table_id_re.match(idx["index"])
+        if not re_result:
+            continue
+        result_table_id = re_result.groupdict()["result_table_id"]
+        dimensions = {**base_dimensions, "result_table_id": result_table_id}
 
         # we need to remap metric names because the ones from elastic
         # contain dots and that would confuse `_process_metric()` (sic)
