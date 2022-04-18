@@ -26,11 +26,13 @@
       <div class="add-collection-title">{{ $t('集群选择') }}</div>
       <cluster-table
         :table-list="clusterList"
+        :is-itsm="isItsm"
         :storage-cluster-id.sync="formData.storage_cluster_id"
       />
       <cluster-table
         :table-list="exclusiveList"
         :table-title-type="false"
+        :is-itsm="isItsm"
         :storage-cluster-id.sync="formData.storage_cluster_id" />
 
       <div class="add-collection-title">{{ $t('存储信息') }}</div>
@@ -124,7 +126,7 @@
           @blur="changeCopyNumber"
         ></bk-input>
       </bk-form-item>
-      <div class="capacity-assessment">
+      <div class="capacity-assessment" v-if="isCanUseAssessment">
         <div class="button-text" @click="isShowAssessment = !isShowAssessment">
           <span>{{ $t('容量评估') }}</span>
           <span :class="['bk-icon','icon-angle-double-down',isShowAssessment && 'is-active']"></span>
@@ -135,7 +137,7 @@
         </div>
       </div>
 
-      <div v-show="isShowAssessment">
+      <div v-show="isShowAssessment && isCanUseAssessment">
         <div class="capacity-illustrate">
           <p class="illustrate-title">{{$t('容量说明')}}</p>
           <p>容量计算公式：单机日志增量主机数量存储转化率分片数（日志保留天数 + 1）</p>
@@ -143,7 +145,10 @@
           <p>分片数（2）：1个主分片+1个副本数，避免节点故障导致数据丢失</p>
         </div>
 
-        <bk-form-item required :label="$t('每日单台日志量')">
+        <bk-form-item
+          required
+          :rules="rules.assessment_config"
+          :label="$t('每日单台日志量')">
           <bk-input
             style="width: 320px;"
             v-model="formData.assessment_config.log_assessment"
@@ -322,6 +327,11 @@ export default {
           },
           trigger: 'change',
         }],
+        assessment_config: [{
+          // 检测当前集群是否开启容量评估并且填写填写输入框
+          validator: this.checkAssessmentConfig,
+          trigger: 'change',
+        }],
       },
       storage_capacity: '',
       tips_storage: [],
@@ -346,8 +356,8 @@ export default {
         },
       },
       stashCleanConf: null, // 清洗缓存,
-      isShowAssessment: false,
-      activeItem: {},
+      isShowAssessment: true,
+      activeCluster: {},
     };
   },
   computed: {
@@ -366,14 +376,22 @@ export default {
       // eslint-disable-next-line camelcase
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
     },
+    isCanUseAssessment() {
+      // itsm开启时 并且 当前选择的集群容量评估开启时 并且 不为采集成功时展示容量评估
+      return this.isItsm && this.activeCluster.enable_assessment && this.curCollect.itsm_ticket_status !== 'success_apply';
+    },
     getApprover() {
-      return this.formData.assessment_config.approvals.join(', ');
+      if (this.isCanUseAssessment) {
+        this.formData.assessment_config.approvals = this.activeCluster?.admin || [];
+        return this.activeCluster?.admin.join(', ') || '';
+      }
+      return '';
     },
   },
   watch: {
     'formData.storage_cluster_id': {
       handler(val) {
-        this.activeItem = this.storageList.find(item => item.storage_cluster_id === val);
+        this.activeCluster = this.storageList.find(item => item.storage_cluster_id === val);
       },
     },
   },
@@ -430,7 +448,17 @@ export default {
           need_approval: assessment_config.need_approval,
           approvals: assessment_config.approvals,
         },
+        need_assessment: this.isCanUseAssessment,
       };
+      !this.isCanUseAssessment && (delete data.assessment_config);
+      if (this.formData.storage_cluster_id === '') {
+        this.isLoading = false;
+        this.$bkMessage({
+          theme: 'error',
+          message: this.$t('请选择集群'),
+        });
+        return false;
+      }
       /* eslint-disable */
       if (etl_config !== 'bk_log_text') {
         const etlParams = {
@@ -466,6 +494,9 @@ export default {
             this.messageSuccess(this.$t('保存成功'));
             this.$emit('stepChange', 'back');
           } else {
+            if (data.need_assessment) {
+              this.$emit('showApplyingIframe', res.data.iframe_ticket_url);
+            }
             this.$emit('stepChange');
           }
         }
@@ -576,6 +607,10 @@ export default {
         ? tsStorageId : this.formData.storage_cluster_id;
 
       this.basicLoading = false;
+    },
+    checkAssessmentConfig() {
+      if (this.isCanUseAssessment && !this.formData.assessment_config.log_assessment) return false;
+      return true;
     },
     cancel() {
       this.$router.push({

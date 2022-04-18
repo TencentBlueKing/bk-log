@@ -798,9 +798,9 @@ export default {
       let requestUrl;
       if (this.isUpdate) {
         urlParams.collector_config_id = Number(this.$route.params.collectorId);
-        requestUrl = this.isItsm ? 'collect/onlyUpdateCollection' : 'collect/updateCollection';
+        requestUrl = 'collect/updateCollection';
       } else {
-        requestUrl = this.isItsm ? 'collect/onlyCreateCollection' : 'collect/addCollection';
+        requestUrl = 'collect/addCollection';
       }
       const updateData = { params: urlParams, data: params };
       this.$http.request(requestUrl, updateData).then((res) => {

@@ -39,7 +39,9 @@
           <bk-table-column :label="$t('集群名')" min-width="240">
             <template slot-scope="{ row }">
               <bk-radio-group v-model="clusterSelect">
-                <bk-radio :value="row.storage_cluster_id">
+                <bk-radio
+                  :value="row.storage_cluster_id"
+                  :disabled="rowIsDisable(row)">
                   {{ row.storage_cluster_name }}
                 </bk-radio>
               </bk-radio-group>
@@ -75,7 +77,7 @@
         <div class="noData-container">
           <div class="noData-message">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p class="empty-message">{{$t('createAClusterTips')}}</p>
+            <p class="empty-message">{{ tableTitleType ? $t('createAClusterTips') : $t('createAPlatformTips')}}</p>
             <p class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
           </div>
         </div>
@@ -85,6 +87,7 @@
 </template>
 <script>
 import { formatFileSize } from '../../../common/util';
+import { mapGetters } from 'vuex';
 
 export default {
   props: {
@@ -100,21 +103,30 @@ export default {
       type: [Number, String],
       require: true,
     },
+    isItsm: {
+      type: Boolean,
+      require: true,
+    },
   },
   data() {
     return {
       isShowTable: true,
       clusterSelect: null,
       illustrateLabelData: {
-        副本数: '',
-        过期时间: '',
-        热冷数据: '',
-        日志归档: '',
+        [this.$t('副本数')]: '',
+        [this.$t('过期时间')]: '',
+        [this.$t('热冷数据')]: '',
+        [this.$t('日志归档')]: '',
       },
       description: '',
       activeItem: {},
       isShow: false,
     };
+  },
+  computed: {
+    ...mapGetters({
+      curCollect: 'collect/curCollect',
+    }),
   },
   watch: {
     storageClusterId(val) {
@@ -125,18 +137,18 @@ export default {
         const { number_of_replicas_max: replicasMax, retention_days_max: daysMax } = this.activeItem.setup_config;
         const { enable_hot_warm: hotWarm, enable_archive: archive } =  this.activeItem;
         this.illustrateLabelData = {
-          副本数: `最大${replicasMax}天`,
-          过期时间: `最大${daysMax}天`,
-          热冷数据: hotWarm ? '是' : '否',
-          日志归档: archive ? '是' : '否',
+          [this.$t('副本数')]: `${this.$t('最大')} ${replicasMax} ${this.$t('天')}`,
+          [this.$t('过期时间')]: `${this.$t('最大')} ${daysMax} ${this.$t('天')}`,
+          [this.$t('热冷数据')]: hotWarm ? this.$t('是') : this.$t('否'),
+          [this.$t('日志归档')]: archive ? this.$t('是') : this.$t('否'),
         };
         this.description = this.activeItem.description;
       } else {
         this.illustrateLabelData = {
-          副本数: '',
-          过期时间: '',
-          热冷数据: '',
-          日志归档: '',
+          [this.$t('副本数')]: '',
+          [this.$t('过期时间')]: '',
+          [this.$t('热冷数据')]: '',
+          [this.$t('日志归档')]: '',
         };
         this.description = '';
       }
@@ -147,6 +159,7 @@ export default {
   },
   methods: {
     handleSelectCluster($row) {
+      if (this.rowIsDisable($row)) return;
       this.$emit('update:storageClusterId', $row.storage_cluster_id);
     },
     handleCreateCluster() {
@@ -157,6 +170,10 @@ export default {
           isPass: true,
         },
       });
+    },
+    rowIsDisable(row) {
+      //  itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
+      return this.isItsm && this.curCollect.can_use_independent_es_cluster && row.registered_system === '_default';
     },
   },
 };
