@@ -103,7 +103,7 @@ class EsSourceType(ChoicesEnum):
                 "help_md": markdown.markdown(es_config[key]["help_md"]),
                 "button_list": es_config[key].get("button_list", []),
             }
-            for key in es_config
+            for key, config in es_config.items()
         ]
 
     @classmethod
@@ -112,7 +112,7 @@ class EsSourceType(ChoicesEnum):
         if not es_config:
             return super().get_keys()
         es_config = es_config.feature_config
-        return [key for key in es_config]
+        return [key for key in es_config.keys()]
 
 
 class StrategyKind(ChoicesEnum):
