@@ -497,17 +497,17 @@ class CollectorHandler(object):
                 )
             )
 
-        # 判断是否已存在同bk_data_name
+        # 判断是否已存在同bk_data_name 更新不判断
         bk_data_name = build_bk_data_name(bk_biz_id=bk_biz_id, collector_config_name_en=collector_config_name_en)
-        if CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name():
+        if not self.data and CollectorConfig(bk_data_name=bk_data_name).get_bk_data_by_name():
             logger.error(f"bk_data_name {bk_data_name} already exists")
             raise CollectorBkDataNameDuplicateException(
                 CollectorBkDataNameDuplicateException.MESSAGE.format(bk_data_name=bk_data_name)
             )
 
-        # 判断是否已存在同result_table_id
+        # 判断是否已存在同result_table_id 更新不判断
         result_table_id = build_result_table_id(bk_biz_id=bk_biz_id, collector_config_name_en=collector_config_name_en)
-        if CollectorConfig(table_id=result_table_id).get_result_table_by_id():
+        if not self.data and CollectorConfig(table_id=result_table_id).get_result_table_by_id():
             logger.error(f"result_table_id {result_table_id} already exists")
             raise CollectorResultTableIDDuplicateException(
                 CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=result_table_id)

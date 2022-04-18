@@ -285,6 +285,9 @@ BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
 # 日志归档文档
 BK_ARCHIVE_DOC_URL = os.getenv("BKAPP_ARCHIVE_DOC_URL", "")
 
+# 日志清洗文档
+BK_ETL_DOC_URL = os.getenv("BKAPP_ETL_DOC_URL", "")
+
 # 计算平台文档地址
 BK_DOC_DATA_URL = ""
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"

@@ -20,12 +20,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from rest_framework.response import Response
 from rest_framework import serializers
 
+from django.db.models import Q
+
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import insert_permission_field, ViewBusinessPermission
 from apps.generic import ModelViewSet
 from apps.log_databus.handlers.clean import CleanTemplateHandler, CleanHandler
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.models import BKDataClean, CleanTemplate
+from apps.log_databus.constants import VisibleEnum
 from apps.log_databus.serializers import (
     CleanTemplateSerializer,
     CleanTemplateListSerializer,
@@ -188,6 +191,20 @@ class CleanTemplateViewSet(ModelViewSet):
             "list": CleanTemplateListSerializer,
         }
         return action_serializer_map.get(self.action, serializers.Serializer)
+
+    def get_queryset(self):
+        qs = self.model.objects
+        if self.request.query_params.get("bk_biz_id"):
+            bk_biz_id = int(self.request.query_params.get("bk_biz_id"))
+            qs = qs.filter(
+                Q(visible_type=VisibleEnum.CURRENT_BIZ.value, bk_biz_id=bk_biz_id)
+                | Q(visible_type=VisibleEnum.ALL_BIZ.value)
+                | Q(
+                    visible_type=VisibleEnum.MULTI_BIZ.value,
+                    visible_bk_biz_id__contains=f",{bk_biz_id},",
+                )
+            )
+        return qs.all()
 
     def list(self, request, *args, **kwargs):
         """
