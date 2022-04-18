@@ -129,7 +129,7 @@ class ItsmHandler(object):
         if self._ticket_is_finish(ticket_info):
             if self._ticket_approve_result(ticket_detail_info):
                 collector_process.set_itsm_success()
-                self._create_task(collector_process.collector_config_id)
+                self._create_task(collector_process.collector_config_id, ticket_info.get("sn"))
                 return
             collector_process.set_itsm_fail()
 
