@@ -21,8 +21,12 @@
   -->
 
 <template>
-  <section class="access-wrapper" v-bkloading="{ isLoading: basicLoading }">
+  <section :class="['access-wrapper',itsmTicketIsApplying && 'iframe-container']"
+           v-bkloading="{ isLoading: basicLoading }">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
+    <div class="access-container" v-else-if="itsmTicketIsApplying">
+      <iframe :src="itsmApplyingUrl" style="width: 100%;" frameBorder="0"></iframe>
+    </div>
     <div class="access-container" v-else-if="!basicLoading && !isCleaning">
       <section class="access-step-wrapper">
         <div class="fixed-steps" :style="{ height: (stepList.length * 76) + 'px' }">
@@ -64,6 +68,7 @@
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
+            @showApplyingIframe="showApplyingIframe"
             @change-submit="changeSubmit" />
           <step-result
             v-if="isFinish"
@@ -95,6 +100,7 @@
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
+            @showApplyingIframe="showApplyingIframe"
             @change-submit="changeSubmit" />
           <step-result
             v-if="isFinish"
@@ -145,6 +151,8 @@ export default {
       indexSetId: '',
       stepList: [],
       globals: {},
+      itsmApplyingUrl: '',
+      itsmTicketIsApplying: false,
     };
   },
   computed: {
@@ -167,7 +175,7 @@ export default {
     },
     isFinish() {
       if (this.isItsmAndNotStartOrStop) {
-        return this.curStep === 6;
+        return this.curStep === 5;
       }
       return finishRefer[this.operateType] === this.curStep;
     },
@@ -245,7 +253,8 @@ export default {
             // 准备中编辑时跳到第一步，所以不用修改步骤
           } else if (this.isItsm) {
             if (this.operateType === 'edit') { // 未完成编辑
-              this.curStep = this.curCollect.itsm_ticket_status === 'success_apply' ? 4 : 1;
+              this.itsmApplyingUrl !== '' && (this.itsmTicketIsApplying = true);
+              this.curStep = 1;
             } else if (this.operateType === 'field') {
               this.curStep = 3;
             } else if (this.operateType === 'storage') {
@@ -308,6 +317,9 @@ export default {
             if (collect.collector_scenario_id !== 'wineventlog') {
               collect.params.paths = collect.params.paths.map(item => ({ value: item }));
             }
+            // 如果当前页面采集流程未完成 则展示流程服务页面
+            this.itsmApplyingUrl = collect.itsm_ticket_status === 'applying' ? collect.iframe_ticket_url : '';
+            this.itsmTicketIsApplying = false;
             this.$store.commit('collect/setCurCollect', collect);
             resolve(res.data);
           }
@@ -328,6 +340,10 @@ export default {
     changeSubmit(isSubmit) {
       this.isSubmit = isSubmit;
     },
+    showApplyingIframe(url) {
+      this.itsmTicketIsApplying = true;
+      this.itsmApplyingUrl = url;
+    },
   },
 };
 </script>
@@ -338,6 +354,10 @@ export default {
 
   .access-wrapper {
     padding: 20px 24px;
+  }
+
+  .iframe-container {
+    padding: 0;
   }
 
   .access-container {

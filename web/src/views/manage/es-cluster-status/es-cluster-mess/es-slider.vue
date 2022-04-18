@@ -136,7 +136,7 @@
             <div class="connect-message">{{ connectFailedMessage }}</div>
           </bk-form-item>
 
-          <bk-form-item>
+          <bk-form-item v-if="connectResult === 'success'">
             <div class="es-cluster-management button-text" @click="isShowManagement = !isShowManagement">
               <span>{{ $t('ES集群管理') }}</span>
               <span :class="['bk-icon icon-angle-double-down', isShowManagement && 'is-show']"></span>
@@ -353,12 +353,12 @@
             </div>
             <!-- 日志归档 容量评估 -->
             <div class="form-item-container">
-              <bk-form-item :label="$t('日志归档')">
+              <bk-form-item :label="$t('日志归档')" v-if="archiveDocUrl">
                 <div class="document-container">
                   <bk-switcher v-model="formData.enable_archive" size="large" theme="primary"></bk-switcher>
-                  <div class="check-document button-text">
+                  <div class="check-document button-text" @click="handleOpenDocument">
                     <span class="bk-icon icon-text-file"></span>
-                    <span>{{$t('查看说明文档')}}</span>
+                    <a>{{$t('查看说明文档')}}</a>
                   </div>
                 </div>
               </bk-form-item>
@@ -373,7 +373,7 @@
                   :class="isAdminError && 'is-error'"
                   :value="formData.admin"
                   :api="userApi"
-                  @change="handleChange"
+                  @change="handleChangePrincipal"
                   @blur="handleBlur">
                 </bk-user-selector>
               </div>
@@ -395,7 +395,7 @@
             theme="primary"
             class="king-button mr10"
             :loading="confirmLoading"
-            :disabled="connectResult !== 'success' || invalidHotSetting"
+            :disabled="connectResult !== 'success' || invalidHotSetting || isRulesCheckSubmit"
             @click.stop.prevent="handleConfirm"
             data-test-id="esAccessFromBox_button_confirm">
             {{ $t('提交') }}
@@ -436,6 +436,7 @@ export default {
   data() {
     return {
       configDocUrl: window.BK_HOT_WARM_CONFIG_URL,
+      archiveDocUrl: window.BK_ARCHIVE_DOC_URL, // 日志归档跳转链接
       confirmLoading: false,
       sliderLoading: false,
       formData: {
@@ -510,21 +511,21 @@ export default {
       ],
       visibleList: [], // 多业务选择下拉框
       cacheVisibleList: [], // 缓存多业务选择下拉框
-      bizParentList: [],
-      bkBizLabelsList: [],
+      bkBizLabelsList: [], // 按照业务属性选择列表
       cacheBkBizLabelsList: [], // 缓存按照业务属性选择
-      bizChildrenList: {},
-      visibleIsToggle: false,
+      bizParentList: [], // 按照业务属性父级列表
+      bizChildrenList: {}, // 业务属性选择子级键值对象
+      visibleIsToggle: false, // 多业务选择icon方向
       userApi: window.BK_LOGIN_URL, // 负责人api
       customDesc: '集群负责人',
-      isShowManagement: true, // 是否展示集群管理
+      isShowManagement: false, // 是否展示集群管理
       retentionDaysList: [], // 默认过期时间列表
       maxDaysList: [], // 最大过期时间列表
       customRetentionDay: '', // 默认过期时间输入框
       customMaxDay: '', // 最大过期时间输入框
       isAdminError: false, // 集群负责人是否为空
-      bizSelectID: '',
-      bizInputStr: '',
+      bizSelectID: '', // 选中的当前按照业务属性选择
+      bizInputStr: '', // 按照业务属性选择输入值
     };
   },
   computed: {
@@ -542,6 +543,9 @@ export default {
     // 冷热设置不对，禁用提交
     invalidHotSetting() {
       return this.formData.enable_hot_warm && !(this.formData.hot_attr_value && this.formData.warm_attr_value);
+    },
+    isRulesCheckSubmit() {
+      return !this.formData.admin.length;
     },
     // 标签数量不足，禁止开启冷热设置
     isDisableHotSetting() {
@@ -605,16 +609,19 @@ export default {
           enable_assessment: false,
           visible_config: {
             visible_type: 'current_biz',
-          // visible_bk_biz: []
-          // bk_biz_labels: {},
+            visible_bk_biz: [],
+            bk_biz_labels: {},
           },
         };
         this.visibleBkBiz = [];
         this.visibleList = [];
         this.cacheVisibleList = [];
+        this.bkBizLabelsList = [];
+        this.cacheBkBizLabelsList = [];
         // 清空连通测试结果
         this.connectResult = '';
         this.connectFailedMessage = '';
+        this.isShowManagement = false;
       }
     },
     'formData.setup_config.retention_days_default': {
@@ -627,6 +634,7 @@ export default {
         this.daySelectAddToDisable();
       },
     },
+    // 切换可见范围时 恢复缓存或清空业务选择
     'formData.visible_config.visible_type': {
       handler(val) {
         if (val !== 'multi_biz') {
@@ -712,7 +720,7 @@ export default {
           enable_assessment: res.data.cluster_config.custom_option?.enable_assessment || false,
           visible_config: res.data.cluster_config.custom_option?.visible_config || {},
         };
-        res.data.cluster_config.custom_option?.visible_config.visible_bk_biz.forEach((val) => {
+        res.data.cluster_config.custom_option.visible_config?.visible_bk_biz.forEach((val) => {
           const target = this.myProjectList.find(project => Number(project.bk_biz_id) === val.bk_biz_id);
           if (target) {
             target.is_use = val.is_use;
@@ -726,7 +734,7 @@ export default {
           }
         });
 
-        this.bkBizLabelsList = Object.entries(res.data.cluster_config.custom_option?.visible_config.bk_biz_labels)
+        this.bkBizLabelsList = Object.entries(res.data.cluster_config.custom_option.visible_config?.bk_biz_labels)
           .reduce((pre, cur) => {
             const propertyName =  this.bizParentList.find(item => item.id ===  cur[0]);
             const obj = {
@@ -831,6 +839,8 @@ export default {
 
     // 确认提交新增或编辑
     async handleConfirm() {
+      const isCanSubmit = this.checkSelectItem();
+      if (!isCanSubmit) return;
       try {
         await this.$refs.validateForm.validate();
         let url = '/source/create';
@@ -854,7 +864,7 @@ export default {
           postData.visible_config.visible_bk_biz = [];
         }
         if (this.bkBizLabelsList.length) {
-          postData.visible_config.bk_biz_labels = this.filterBzid();
+          postData.visible_config.bk_biz_labels = this.filterBzID();
         } else {
           postData.visible_config.bk_biz_labels = {};
         }
@@ -949,12 +959,17 @@ export default {
       this.retentionDaysList.forEach(el => el.disabled = Number(maxDays) < Number(el.id));
       this.maxDaysList.forEach(el => el.disabled = Number(defaultDays) > Number(el.id));
     },
+    /**
+     * @desc: 多业务选择下拉列表
+     * @param { Object } item // 当前元素
+     */
     getProjectOption(item) {
       const backgroundStr = `background: ${!!item.is_use ? '#2dcb56' : '#699df4'}`;
       const styleStr = `display: inline-block; width: 4px; height: 4px; border-radius: 50%; margin-right: 4px; ${backgroundStr}; transform: translateY(-2px);`;
       return `<span style="${styleStr}"></span> ${item.project_name}${item.is_use ? `（${this.$t('正在使用')}）` : ''}`;
     },
-    handleChange(val) {
+    handleChangePrincipal(val) {
+      // 集群负责人为空时报错警告
       const realVal = val.filter(item => item !== undefined);
       this.isAdminError = !realVal.length;
       this.formData.admin = realVal;
@@ -963,8 +978,10 @@ export default {
       this.isAdminError = !this.formData.admin.length;
     },
     getBizPropertyId() {
+      // 因搜索框如果直接搜索子级元素则返回值不带父级元素 传参需要父级元素则分开展示
       this.$http.request('/source/getProperty')
         .then((res) => {
+          // 父级键名
           this.bizParentList = res.data.map((item) => {
             return {
               name: item.biz_property_name,
@@ -973,6 +990,7 @@ export default {
               remote: true,
             };
           });
+          // 生成子级数组
           res.data.forEach((item) => {
             this.bizChildrenList[item.biz_property_id] = item.biz_property_value.map((item) => {
               return {
@@ -987,6 +1005,7 @@ export default {
       return new Promise((resolve) => {
         setTimeout(() => {
           // item.project_name.toUpperCase().includes(this.keyword.toUpperCase());
+          // 空值返回全部，搜索返回部分
           if (!!this.bizInputStr) {
             resolve(this.bizChildrenList[this.bizSelectID]
               .filter(item => item.name.includes(this.bizInputStr)));
@@ -998,36 +1017,58 @@ export default {
       return ;
     },
     handleMenuSelect(item) {
+      // 赋值当前选择的ItemID
       this.bizSelectID = item.id;
+      // 父选项选中后搜索设置为空
       this.bizInputStr = '';
     },
     handleChildMenuSelect() {
+      // 子选项选中后搜索设置为空
       this.bizInputStr = '';
     },
     handleInputChange($event) {
+      // 按照业务属性选择赋值
       this.bizInputStr = $event.data;
     },
     /**
      * @desc: 过滤和去重按照业务属性选择
      */
-    filterBzid() {
+    filterBzID() {
       const parentSet = new Set();
       const list = {};
       this.bkBizLabelsList.forEach((item) => {
+        // 若当前元素父级未重复则生成新键名并赋值
         if (!parentSet.has(item.id)) {
           parentSet.add(item.id);
           list[item.id] = [];
           const valuesList = item.values.map(item => item.id);
           list[item.id] = list[item.id].concat(valuesList);
         } else {
+        // 若当前元素父级重复则去重过滤
           const valuesList = item.values.map(item => item.id);
-          const childSet = new Set();
-          valuesList.forEach(item => childSet.add(item));
-          list[item.id].forEach(item => childSet.add(item));
+          const concatList = valuesList.concat(list[item.id]);
+          const childSet = new Set([...concatList]);
           list[item.id] = [...childSet];
         }
       });
       return list;
+    },
+    handleOpenDocument() {
+      window.open(this.archiveDocUrl, '_blank');
+    },
+    checkSelectItem() {
+      let messageType;
+      const { visible_type: visibleType } = this.formData.visible_config;
+      visibleType === 'multi_biz' && !this.visibleList.length && (messageType = this.$t('multiBizTip'));
+      visibleType === 'biz_attr' && !this.bkBizLabelsList.length && (messageType = this.$t('bizAttrTip'));
+      if (!!messageType) {
+        this.$bkMessage({
+          theme: 'error',
+          message: messageType,
+        });
+        return false;
+      }
+      return true;
     },
   },
 };
@@ -1151,7 +1192,7 @@ export default {
         .check-document {
           font-size: 12px;
           margin: 0 6px 0 20px;
-          align-content: center;
+          // align-content: center;
         }
       }
     }
