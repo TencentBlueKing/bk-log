@@ -256,7 +256,9 @@ class CleanTemplateViewSet(ModelViewSet):
                                 }
                             }
                         ],
-                        "bk_biz_id": 0
+                        "bk_biz_id": 0,
+                        "visible_bk_biz_id": "",
+                        "visible_type": "current_biz"
                     }
                 ]
             },
@@ -311,7 +313,9 @@ class CleanTemplateViewSet(ModelViewSet):
                         }
                     }
                 ],
-                "bk_biz_id": 0
+                "bk_biz_id": 0,
+                "visible_bk_biz_id": [],
+                "visible_type": "current_biz"
             },
             "result":true
         }
@@ -324,6 +328,8 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiName update_clean_template
         @apiGroup 23_clean_template
         @apiDescription 更新清洗模板
+        @apiParam {String} visible_type 可见类型, 支持 current_biz, multi_biz, all_biz
+        @apiParam {list} visible_bk_biz_id 可见业务id范围
         @apiParamExample {json} 成功请求
         {
             "name": "xxx",
@@ -359,7 +365,9 @@ class CleanTemplateViewSet(ModelViewSet):
                     }
                 }
             ],
-            "bk_biz_id": 0
+            "bk_biz_id": 0,
+            "visible_bk_biz_id": [1, 2, 3],
+            "visible_type": "multi_biz"
         }
         @apiSuccessExample {json} 成功返回
         {
@@ -379,6 +387,8 @@ class CleanTemplateViewSet(ModelViewSet):
         @api {post} /databus/clean_template/ 3_清洗模板-新建
         @apiName create_clean_template
         @apiGroup 23_clean_template
+        @apiParam {String} visible_type 可见类型, 支持 current_biz, multi_biz, all_biz
+        @apiParam {list} visible_bk_biz_id 可见业务id范围
         @apiDescription 新建清洗模板
         @apiParamExample {json} 成功请求
         {
@@ -415,7 +425,9 @@ class CleanTemplateViewSet(ModelViewSet):
                     }
                 }
             ],
-            "bk_biz_id": 0
+            "bk_biz_id": 0,
+            "visible_bk_biz_id": [1, 2, 3],
+            "visible_type": "multi_biz"
         }
         @apiSuccessExample {json} 成功返回
         {
