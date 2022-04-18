@@ -87,7 +87,7 @@ class EsSourceType(ChoicesEnum):
         es_config = es_config.feature_config
         return [
             (key, es_config[key]["name_en"]) if translation.get_language() == "en" else es_config[key]["name"]
-            for key in es_config
+            for key, config in es_config.items()
         ]
 
     @classmethod

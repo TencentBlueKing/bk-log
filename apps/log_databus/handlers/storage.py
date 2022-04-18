@@ -169,27 +169,27 @@ class StorageHandler(object):
         # 排序：第三方集群 > 默认集群
         cluster_groups.sort(key=lambda c: c["priority"])
 
-        # # 获取公共集群使用情况
-        # public_clusters = [
-        #     cluster["storage_cluster_id"]
-        #     for cluster in cluster_groups
-        #     if cluster.get("registered_system") == REGISTERED_SYSTEM_DEFAULT
-        # ]
-        # if not public_clusters:
-        #     return cluster_groups
+        # 获取公共集群使用情况
+        public_clusters = [
+            cluster["storage_cluster_id"]
+            for cluster in cluster_groups
+            if cluster.get("registered_system") == REGISTERED_SYSTEM_DEFAULT
+        ]
+        if not public_clusters:
+            return cluster_groups
 
-        # es_config = get_es_config(bk_biz_id)
-        # # 获取公共集群容易配额
-        # storage_capacity = self.get_storage_capacity(bk_biz_id, public_clusters)
-        # for cluster in cluster_groups:
-        #     if cluster.get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
-        #         cluster["storage_capacity"] = storage_capacity["storage_capacity"]
-        #         cluster["storage_used"] = storage_capacity["storage_used"]
-        #         cluster["max_retention"] = es_config["ES_PUBLIC_STORAGE_DURATION"]
-        #     else:
-        #         cluster["storage_capacity"] = 0
-        #         cluster["storage_used"] = 0
-        #         cluster["max_retention"] = es_config["ES_PRIVATE_STORAGE_DURATION"]
+        es_config = get_es_config(bk_biz_id)
+        # 获取公共集群容易配额
+        storage_capacity = self.get_storage_capacity(bk_biz_id, public_clusters)
+        for cluster in cluster_groups:
+            if cluster.get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
+                cluster["storage_capacity"] = storage_capacity["storage_capacity"]
+                cluster["storage_used"] = storage_capacity["storage_used"]
+                cluster["max_retention"] = es_config["ES_PUBLIC_STORAGE_DURATION"]
+            else:
+                cluster["storage_capacity"] = 0
+                cluster["storage_used"] = 0
+                cluster["max_retention"] = es_config["ES_PRIVATE_STORAGE_DURATION"]
         return cluster_groups
 
     @classmethod
