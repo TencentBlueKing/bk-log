@@ -110,7 +110,7 @@ export default {
   检索: 'Retrieve',
   复制: 'Copy',
   暂无数据: 'Empty Data',
-  总趋势: 'General Trend',
+  总趋势: 'Trend',
   // 日志提取
   日志提取: 'Log Extract',
   创建: 'Create',
