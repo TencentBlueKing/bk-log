@@ -223,7 +223,7 @@ export default {
     min-height: 363px;
     padding-right: 40px;
 
-    /deep/ .bk-form {
+    ::v-deep .bk-form {
       .bk-label {
         text-align: left;
       }

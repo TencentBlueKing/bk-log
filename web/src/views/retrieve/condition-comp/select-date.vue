@@ -259,7 +259,7 @@ export default {
       &.is-retrieve-home {
         width: 320px;
 
-        /deep/ .bk-date-picker-editor {
+        ::v-deep .bk-date-picker-editor {
           background: #fff;
           border-color: #fff;
           line-height: 30px;
@@ -269,7 +269,7 @@ export default {
           }
         }
 
-        /deep/ .icon-date-picker {
+        ::v-deep .icon-date-picker {
           position: absolute;
           left: 7px;
           top: 7px;
@@ -330,13 +330,13 @@ export default {
       &.is-defalut-picker {
         min-width: 268px;
 
-        /deep/ .bk-date-picker-editor {
+        ::v-deep .bk-date-picker-editor {
           padding-left: 5px;
           padding-right: 0;
           border: none;
         }
 
-        /deep/ .icon-wrapper {
+        ::v-deep .icon-wrapper {
           display: none;
         }
       }
@@ -362,7 +362,7 @@ export default {
     &.is-custom-picker:hover {
       .custom-clock,
       .icon-angle-down,
-      /deep/ .bk-date-picker-rel .bk-date-picker-editor {
+      ::v-deep .bk-date-picker-rel .bk-date-picker-editor {
         color: #3a84ff;
       }
     }
