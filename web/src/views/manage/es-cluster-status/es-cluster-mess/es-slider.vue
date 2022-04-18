@@ -353,10 +353,12 @@
             </div>
             <!-- 日志归档 容量评估 -->
             <div class="form-item-container">
-              <bk-form-item :label="$t('日志归档')" v-if="archiveDocUrl">
+              <bk-form-item :label="$t('日志归档')">
                 <div class="document-container">
                   <bk-switcher v-model="formData.enable_archive" size="large" theme="primary"></bk-switcher>
-                  <div class="check-document button-text" @click="handleOpenDocument">
+                  <div class="check-document button-text"
+                       v-if="archiveDocUrl"
+                       @click="handleOpenDocument">
                     <span class="bk-icon icon-text-file"></span>
                     <a>{{$t('查看说明文档')}}</a>
                   </div>
@@ -778,6 +780,7 @@ export default {
         const res = await this.$http.request('/source/connectivityDetect', { data: postData });
         if (res.data) {
           this.connectResult = 'success';
+          this.isShowManagement = true;
           // 连通性测试通过之后获取冷热数据
           const attrsRes = await this.$http.request('/source/getNodeAttrs', { data: postData });
           this.hotColdOriginList = attrsRes.data;

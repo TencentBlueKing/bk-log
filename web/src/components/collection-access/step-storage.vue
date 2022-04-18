@@ -26,13 +26,13 @@
       <div class="add-collection-title">{{ $t('集群选择') }}</div>
       <cluster-table
         :table-list="clusterList"
-        :is-itsm="isItsm"
+        :operate-type="operateType"
         :storage-cluster-id.sync="formData.storage_cluster_id"
       />
       <cluster-table
         :table-list="exclusiveList"
         :table-title-type="false"
-        :is-itsm="isItsm"
+        :operate-type="operateType"
         :storage-cluster-id.sync="formData.storage_cluster_id" />
 
       <div class="add-collection-title">{{ $t('存储信息') }}</div>
@@ -377,6 +377,7 @@ export default {
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
     },
     isCanUseAssessment() {
+      if (['editFinish', 'edit'].includes(this.operateType)) return false;
       // itsm开启时 并且 当前选择的集群容量评估开启时 并且 不为采集成功时展示容量评估
       return this.isItsm && this.activeCluster.enable_assessment && this.curCollect.itsm_ticket_status !== 'success_apply';
     },
@@ -494,7 +495,7 @@ export default {
             this.messageSuccess(this.$t('保存成功'));
             this.$emit('stepChange', 'back');
           } else {
-            if (data.need_assessment) {
+            if (data.need_assessment && data.assessment_config.need_approval) {
               this.$emit('showApplyingIframe', res.data.iframe_ticket_url);
             }
             this.$emit('stepChange');

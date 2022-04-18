@@ -41,7 +41,7 @@
               <bk-radio-group v-model="clusterSelect">
                 <bk-radio
                   :value="row.storage_cluster_id"
-                  :disabled="rowIsDisable(row)">
+                  :disabled="rowIsDisable()">
                   {{ row.storage_cluster_name }}
                 </bk-radio>
               </bk-radio-group>
@@ -103,8 +103,8 @@ export default {
       type: [Number, String],
       require: true,
     },
-    isItsm: {
-      type: Boolean,
+    operateType: {
+      type: String,
       require: true,
     },
   },
@@ -159,7 +159,6 @@ export default {
   },
   methods: {
     handleSelectCluster($row) {
-      if (this.rowIsDisable($row)) return;
       this.$emit('update:storageClusterId', $row.storage_cluster_id);
     },
     handleCreateCluster() {
@@ -171,9 +170,14 @@ export default {
         },
       });
     },
-    rowIsDisable(row) {
-      //  itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
-      return this.isItsm && this.curCollect.can_use_independent_es_cluster && row.registered_system === '_default';
+    rowIsDisable() {
+      if (this.storageClusterId === '') {
+        return false;
+      }
+      if (['editFinish', 'edit'].includes(this.operateType)) {
+        return true;
+      }
+      return false;
     },
   },
 };
