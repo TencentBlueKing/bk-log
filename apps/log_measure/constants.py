@@ -38,6 +38,8 @@ INDEX_REGEX = r"\d{1,}_bklog_.*?_\d{8}_\d{1,}"
 
 COMMON_INDEX_RE = r"^(v2_)?{}_(?P<datetime>\d+)_(?P<index>\d+)$"
 
+RESULT_TABLE_ID_RE = r"^(v2_)?(?P<result_table_id>\w+)_(?P<datetime>\d+)_(?P<index>\d+)$"
+
 COLUMN_DISPLAY_LIST = ["docs.count", "docs.deleted", "index", "pri", "pri.store.size", "rep", "store.size", "status"]
 INDEX_FORMAT = "*_bklog_*"
 

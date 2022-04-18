@@ -16,12 +16,14 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import re
 from collections import defaultdict
 
 from six import iteritems, itervalues
 
 from django.utils.translation import ugettext as _
 from apps.api import BkLogApi
+from apps.log_measure.constants import RESULT_TABLE_ID_RE
 from apps.log_measure.utils.metric import MetricUtils
 from apps.utils.log import logger
 from bk_monitor.constants import TimeFilterEnum
@@ -915,6 +917,18 @@ def process_pshard_stats_data(metrics, pshard_url, get, version, base_dimensions
         result_metric = process_metric(data, metric, *value, dimensions=base_dimensions)
         if result_metric:
             metrics.append(result_metric)
+
+    result_table_id_re = re.compile(RESULT_TABLE_ID_RE)
+    for index_name, index_data in data.get("indices", {}).items():
+        index_match = result_table_id_re.match(index_name)
+        if not index_match:
+            continue
+        result_table_id = index_match.groupdict()["result_table_id"]
+        dimensions = {**base_dimensions, "result_table_id": result_table_id}
+        for metric, value in pshard_stats_metrics.items():
+            result_metric = process_metric({"_all": index_data}, metric, *value, dimensions=dimensions)
+            if result_metric:
+                metrics.append(result_metric)
 
 
 def process_health_data(metrics, health_url, get, version, base_dimensions):
