@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import json
 import os
+import platform
 import subprocess
 
 from django.utils.translation import ugettext_lazy as _
@@ -36,7 +37,11 @@ def preview(separator_node_action, data, etl_only=False, **kwargs):
     :return:
     """
     try:
-        transfer_path = os.path.abspath(os.path.dirname(__file__)) + "/transfer-min"
+        sys_name = platform.system().lower()
+        if sys_name not in ["darwin", "linux"]:
+            raise ValidationError(_(f"字段提取预览不支持当前操作系统类型({sys_name})"))
+
+        transfer_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), sys_name, "transfer-min")
         os.chmod(transfer_path, 0o755)
         args = [
             transfer_path,

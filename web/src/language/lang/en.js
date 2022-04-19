@@ -1019,6 +1019,7 @@ export default {
   个: '',
   节点: 'node(s)',
   异常: 'Abnormal',
+  异常数: 'Abnormal',
   未安装: 'Not-exist',
   内网IP: 'Inner network IP',
   外网IP: 'External network IP',
