@@ -916,39 +916,33 @@ export default {
       const stringVal = numberVal.toString();
       const isRetention = type === 'retention';
       if (numberVal) {
-        const maxDays = 30;
-        if (numberVal > maxDays) { // 超过最大天数
-          isRetention ? this.customRetentionDay = '' : this.customMaxDay = '';
-          this.messageError(this.$t('最大自定义天数为') + maxDays);
-        } else {
-          const isExceed = isRetention
-            ? this.formData.setup_config.retention_days_max < numberVal
-            : this.formData.setup_config.retention_days_default > numberVal;
-          if (isExceed) {
-            this.messageError(this.$t('默认天数不能大于最大天数'));
-            return;
-          }
-          if (isRetention) {
-            if (!this.retentionDaysList.some(item => item.id === stringVal)) {
-              this.retentionDaysList.push({
-                id: stringVal,
-                name: stringVal + this.$t('天'),
-              });
-            }
-            this.formData.setup_config.retention_days_default = stringVal;
-            this.customRetentionDay = '';
-          } else {
-            if (!this.maxDaysList.some(item => item.id === stringVal)) {
-              this.maxDaysList.push({
-                id: stringVal,
-                name: stringVal + this.$t('天'),
-              });
-            }
-            this.formData.setup_config.retention_days_max = stringVal;
-            this.customMaxDay = '';
-          }
-          document.body.click();
+        const isExceed = isRetention
+          ? this.formData.setup_config.retention_days_max < numberVal
+          : this.formData.setup_config.retention_days_default > numberVal;
+        if (isExceed) {
+          this.messageError(this.$t('默认天数不能大于最大天数'));
+          return;
         }
+        if (isRetention) {
+          if (!this.retentionDaysList.some(item => item.id === stringVal)) {
+            this.retentionDaysList.push({
+              id: stringVal,
+              name: stringVal + this.$t('天'),
+            });
+          }
+          this.formData.setup_config.retention_days_default = stringVal;
+          this.customRetentionDay = '';
+        } else {
+          if (!this.maxDaysList.some(item => item.id === stringVal)) {
+            this.maxDaysList.push({
+              id: stringVal,
+              name: stringVal + this.$t('天'),
+            });
+          }
+          this.formData.setup_config.retention_days_max = stringVal;
+          this.customMaxDay = '';
+        }
+        document.body.click();
       } else {
         isRetention ? this.customRetentionDay = '' : this.customMaxDay = '';
         this.messageError(this.$t('请输入有效数值'));
@@ -1195,7 +1189,11 @@ export default {
         .check-document {
           font-size: 12px;
           margin: 0 6px 0 20px;
-          // align-content: center;
+        }
+
+        .icon-text-file {
+          display: inline-block;
+          transform: rotateX(180deg) translateY(2px);
         }
       }
     }

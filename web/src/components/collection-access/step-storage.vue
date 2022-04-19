@@ -147,7 +147,6 @@
 
         <bk-form-item
           required
-          :rules="rules.assessment_config"
           :label="$t('每日单台日志量')">
           <bk-input
             style="width: 320px;"
@@ -331,11 +330,6 @@ export default {
           },
           trigger: 'change',
         }],
-        assessment_config: [{
-          // 检测当前集群是否开启容量评估并且填写填写输入框
-          validator: this.checkAssessmentConfig,
-          trigger: 'change',
-        }],
       },
       storage_capacity: '',
       tips_storage: [],
@@ -456,14 +450,6 @@ export default {
         need_assessment: this.isCanUseAssessment,
       };
       !this.isCanUseAssessment && (delete data.assessment_config);
-      if (this.formData.storage_cluster_id === '') {
-        this.isLoading = false;
-        this.$bkMessage({
-          theme: 'error',
-          message: this.$t('请选择集群'),
-        });
-        return false;
-      }
       /* eslint-disable */
       if (etl_config !== 'bk_log_text') {
         const etlParams = {
@@ -512,6 +498,16 @@ export default {
     },
     // 完成按钮
     finish() {
+      const isNotSelectedID = this.formData.storage_cluster_id === '';
+      const isNotFillLogAssessment = this.isCanUseAssessment && !this.formData.assessment_config.log_assessment;
+      if (!isNotSelectedID || !isNotFillLogAssessment) {
+        const message = isNotSelectedID ? this.$t('请选择集群') : this.$t('请填写每日单台日志量');
+        this.$bkMessage({
+          theme: 'error',
+          message,
+        });
+        return;
+      }
       const promises = [this.checkStore()];
       Promise.all(promises).then(() => {
         this.fieldCollection();
@@ -612,10 +608,6 @@ export default {
         ? tsStorageId : this.formData.storage_cluster_id;
 
       this.basicLoading = false;
-    },
-    checkAssessmentConfig() {
-      if (this.isCanUseAssessment && !this.formData.assessment_config.log_assessment) return false;
-      return true;
     },
     cancel() {
       this.$router.push({

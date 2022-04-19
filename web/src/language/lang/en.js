@@ -1179,6 +1179,7 @@ export default {
   '当前主机数较多，建议进行容量评估': 'The current number of hosts is large, and capacity evaluation is recommended',
   每日单台日志量: 'Daily single log volume',
   需要审批: 'Need To Approval',
+  请填写每日单台日志量: 'Please fill in the daily single log',
   approvalTips: 'After checking Approval is required, the storage process will not continue until the approval is passed.',
   审批人: 'Approver',
   '容量计算公式：': 'Capacity calculation formula:',
