@@ -63,7 +63,8 @@
             :collapse-color="'#313238'"
             :title-bg-color="'#F0F1F5'"
             :collapse.sync="cluster.collapse"
-            :title="getRightPanelTitle(cluster)">
+            :title="getRightPanelTitle(cluster)"
+            @change="cluster.collapse = !cluster.collapse">
             <div
               :class="`heder-title-sign sign-${cluster.label_name}`"
               v-if="cluster.is_label && isEdit"
@@ -110,7 +111,7 @@
                   :label="$t('monitors.detail')">
                   <template slot-scope="props" class="row-detail">
                     <p>
-                      <span style="display: inline-block">{{ props.row.log }}</span>
+                      <span class="detail-text">{{ props.row.log }}</span>
                       <a href="javascript: ;" class="more" @click.stop="viewDetail(props.row)">
                         {{ $t('dataManage.more') }}
                       </a>
@@ -411,8 +412,8 @@ export default {
           if (timerNum === this.timerNum) {
             // 之前返回的 contents 为空
             if (!this.tableListAll.length) {
-              data.forEach((cluster, index) => {
-                cluster.collapse = index === 0;
+              data.forEach((cluster) => {
+                cluster.collapse = true;
                 cluster.child.forEach((host) => {
                   host.status = host.status === 'PENDING' ? 'running' : host.status.toLowerCase(); // pending-等待状态，与running不做区分
                 });
@@ -428,8 +429,8 @@ export default {
             }
           }
         } else {
-          data.forEach((cluster, index) => {
-            cluster.collapse = index === 0;
+          data.forEach((cluster) => {
+            cluster.collapse = true;
             cluster.child.forEach((host) => {
               host.status = host.status === 'PENDING' ? 'running' : host.status.toLowerCase(); // pending-等待状态，与running不做区分
             });
@@ -716,6 +717,13 @@ export default {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+
+          .detail-text {
+            display: inline-block;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
         }
       }
 
