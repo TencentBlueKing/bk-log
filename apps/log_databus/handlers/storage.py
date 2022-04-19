@@ -489,6 +489,13 @@ class StorageHandler(object):
 
         cluster_obj = TransferApi.modify_cluster_info(params)
         cluster_obj["auth_info"]["password"] = ""
+        if (
+            cluster_objs[0]["cluster_config"]["custom_option"]["hot_warm_config"]["is_enabled"]
+            and not params["custom_option"]["hot_warm_config"]["is_enabled"]
+        ):
+            from apps.log_databus.tasks.collector import shutdown_collector_warm_storage_config
+
+            shutdown_collector_warm_storage_config.delay(int(self.cluster_id))
 
         # add user_operation_record
         operation_record = {

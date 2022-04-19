@@ -141,6 +141,8 @@ class ItsmHandler(object):
         request_param = itsm_etl_config.request_param
         from apps.log_databus.handlers.etl import EtlHandler
 
+        for key in ["need_assessment", "assessment_config"]:
+            request_param.pop(key, None)
         EtlHandler(collector_config_id=collect_id).update_or_create(**request_param)
 
     def _ticket_is_finish(self, ticket_info: dict):
