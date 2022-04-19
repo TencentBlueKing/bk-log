@@ -464,7 +464,7 @@ class StorageViewSet(APIViewSet):
                 "cluster_id": kwargs["cluster_id"],
             }
         )
-
+        data.pop("description", None)
         return Response(StorageHandler(kwargs["cluster_id"]).update(data))
 
     def destroy(self, request, cluster_id):
