@@ -43,7 +43,7 @@ const openLoginDialog = function () {
 const closeLoginDialog = function () {
   try {
     window.parent.LoginModal && (window.parent.LoginModal.$data.visible = false);
-    window.parent.location.reload();
+    window.location.reload();
   } catch (err) {
     console.log(err);
   }
