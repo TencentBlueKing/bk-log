@@ -19,8 +19,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from apps.utils import ChoicesEnum
 from django.utils.translation import ugettext as _
+
+from apps.api import BkDataDataFlowApi
+from apps.utils import ChoicesEnum
 
 DEFAULT_CLUSTERING_FIELD = "log"
 NOT_CLUSTERING_FILTER_RULE = " where ip is null"
@@ -39,6 +41,24 @@ TSPIDER_STORAGE_NODE_NAME = _("回流数据(tspider_storage)")
 TSPIDER_STORAGE_INDEX_FIELDS = ["history_time", "event_time"]
 
 SPLIT_TYPE = "split"
+
+
+class ActionEnum(object):
+    START = "start"
+    RESTART = "restart"
+    STOP = "stop"
+
+
+class ActionHandler(object):
+    action_handler = {
+        ActionEnum.START: BkDataDataFlowApi.start_flow,
+        ActionEnum.RESTART: BkDataDataFlowApi.restart_flow,
+        ActionEnum.STOP: BkDataDataFlowApi.stop_flow,
+    }
+
+    @classmethod
+    def get_action_handler(cls, action_num):
+        return cls.action_handler.get(action_num, BkDataDataFlowApi.start_flow)
 
 
 class FlowMode(ChoicesEnum):
@@ -62,3 +82,13 @@ class FlowMode(ChoicesEnum):
 class NodeType(object):
     REALTIME = "realtime"
     UNIFIED_KV_SOURCE = "unified_kv_source"
+    ELASTIC_STORAGE = "elastic_storage"
+
+
+class RealTimeFlowNode(object):
+    PRE_TREAT_FILTER = "pre_treat_filter"
+    PRE_TREAT_NOT_CLUSTERING = "pre_treat_not_clustering"
+    PRE_TREAT_TRANSFORM = "pre_treat_transform"
+    PRE_TREAT_ADD_UUID = "pre_treat_add_uuid"
+    PRE_TREAT_SAMPLE_SET = "pre_treat_sample_set"
+    AFTER_TREAT_JOIN_AFTER_TREAT = "after_treat_join_after_treat_"

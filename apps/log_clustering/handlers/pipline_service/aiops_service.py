@@ -38,6 +38,7 @@ from apps.log_clustering.components.collections.aiops_model_component import (
     CommitResult,
     Release,
     SyncPattern,
+    CloseContinuousTraining,
 )
 from apps.log_clustering.components.collections.data_access_component import (
     ChangeDataStream,
@@ -60,6 +61,7 @@ from apps.log_clustering.components.collections.sample_set_component import (
 )
 from apps.log_clustering.constants import SAMPLE_SET_SLEEP_TIMER
 from apps.log_clustering.handlers.pipline_service.base_pipline_service import BasePipeLineService
+from apps.log_clustering.handlers.pipline_service.constants import OperatorServiceEnum
 from apps.log_clustering.models import ClusteringConfig
 from apps.utils.pipline import SleepTimer
 
@@ -224,11 +226,56 @@ class AiopsBkdataService(BasePipeLineService):
         )
 
 
-def create_aiops_service(index_set_id):
+class UpdateModelService(BasePipeLineService):
+    def build_data_context(self, params, *args, **kwargs) -> Data:
+        data_context = Data()
+        data_context.inputs["${sample_set_name}"] = Var(type=Var.PLAIN, value=params["sample_set_name"])
+        data_context.inputs["${description}"] = Var(type=Var.PLAIN, value=params["description"])
+        data_context.inputs["${model_name}"] = Var(type=Var.PLAIN, value=params["model_name"])
+        data_context.inputs["${experiment_alias}"] = Var(type=Var.PLAIN, value=params["experiment_alias"])
+        data_context.inputs["${min_members}"] = Var(type=Var.PLAIN, value=params["min_members"])
+        data_context.inputs["${max_dist_list}"] = Var(type=Var.PLAIN, value=params["max_dist_list"])
+        data_context.inputs["${predefined_varibles}"] = Var(type=Var.PLAIN, value=params["predefined_varibles"])
+        data_context.inputs["${delimeter}"] = Var(type=Var.PLAIN, value=params["delimeter"])
+        data_context.inputs["${max_log_length}"] = Var(type=Var.PLAIN, value=params["max_log_length"])
+        data_context.inputs["${is_case_sensitive}"] = Var(type=Var.PLAIN, value=params["is_case_sensitive"])
+        data_context.inputs["${topic_name}"] = Var(type=Var.PLAIN, value=params["topic_name"])
+        data_context.inputs["${project_id}"] = Var(type=Var.PLAIN, value=params["project_id"])
+        data_context.inputs["${bk_biz_id}"] = Var(type=Var.PLAIN, value=params["bk_biz_id"])
+        data_context.inputs["${index_set_id}"] = Var(type=Var.PLAIN, value=params["index_set_id"])
+        return data_context
+
+    def build_pipeline(self, data_context: Data, *args, **kwargs):
+        start = EmptyStartEvent()
+        end = EmptyEndEvent()
+        model_name = kwargs.get("model_name")
+        experiment_alias = kwargs.get("experiment_alias")
+        start.extend(CloseContinuousTraining(experiment_alias=experiment_alias).close_continuous_training).extend(
+            CreateExperiment(experiment_alias=experiment_alias).create_experiment
+        ).extend(UpdateExecuteConfig(experiment_alias=experiment_alias).update_execute_config).extend(
+            SampleSetLoading(experiment_alias=experiment_alias).sample_set_loading
+        ).extend(
+            SampleSetPreparation(experiment_alias=experiment_alias).sample_set_preparation
+        ).extend(
+            ModelTrain(experiment_alias=experiment_alias).model_train
+        ).extend(
+            ModelEvaluation(experiment_alias=experiment_alias).model_valuation
+        ).extend(
+            BasicModelEvaluationResult(experiment_alias=experiment_alias).basic_model_evaluation_result
+        ).extend(
+            CommitResult(experiment_alias=experiment_alias).commit
+        ).extend(
+            Release(experiment_alias=experiment_alias).release
+        ).extend(
+            SyncPattern(model_name=model_name).sync_pattern
+        ).extend(
+            end
+        )
+
+
+def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
     conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
     clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
-    if clustering_config.pre_treat_flow_id:
-        return
     rt_name = (
         clustering_config.collector_config_name_en
         if clustering_config.collector_config_name_en
@@ -251,7 +298,7 @@ def create_aiops_service(index_set_id):
         "min_members": clustering_config.min_members,
         "index_set_id": clustering_config.index_set_id,
     }
-    service = ClusteringService.get_instance(clustering_config=clustering_config)
+    service = ClusteringService.get_instance(clustering_config=clustering_config, operator=operator)
     data = service.build_data_context(params)
     pipeline = service.build_pipeline(data, **params)
     service.start_pipeline(pipeline)
@@ -259,7 +306,9 @@ def create_aiops_service(index_set_id):
 
 class ClusteringService(object):
     @classmethod
-    def get_instance(cls, clustering_config):
+    def get_instance(cls, clustering_config, operator):
+        if operator == OperatorServiceEnum.UPDATE:
+            return UpdateModelService()
         if clustering_config.collector_config_id:
             return AiopsLogService()
         return AiopsBkdataService()

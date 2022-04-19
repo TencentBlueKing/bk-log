@@ -119,6 +119,16 @@ class _BkDataAIOPSApi:
             after_request=None,
             default_timeout=300,
         )
+        self.put_experiment = DataAPI(
+            method="POST",
+            url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}",
+            module=self.MODULE,
+            url_keys=["model_id", "experiment_id"],
+            description=u"AIOps 更新实验",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
         self.experiments_config = DataAPI(
             method="GET",
             url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}/config/",

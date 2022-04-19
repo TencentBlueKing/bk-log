@@ -45,7 +45,7 @@ class CreateFlowCls(object):
 
 
 @dataclass
-class StartFlowCls(object):
+class OperatorFlowCls(object):
     """
     开启flow
     """

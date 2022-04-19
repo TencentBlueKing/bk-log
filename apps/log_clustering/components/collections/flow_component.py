@@ -49,7 +49,7 @@ class CreatePreTreatFlowService(BaseService):
     def _execute(self, data, parent_data):
         index_set_id = data.get_one_of_inputs("index_set_id")
         flow = DataFlowHandler().create_pre_treat_flow(index_set_id=index_set_id)
-        DataFlowHandler().start(flow_id=flow["flow_id"])
+        DataFlowHandler().operator_flow(flow_id=flow["flow_id"])
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):
@@ -93,7 +93,7 @@ class CreateAfterTreatFlowService(BaseService):
     def _execute(self, data, parent_data):
         index_set_id = data.get_one_of_inputs("index_set_id")
         flow = DataFlowHandler().create_after_treat_flow(index_set_id=index_set_id)
-        DataFlowHandler().start(flow_id=flow["flow_id"])
+        DataFlowHandler().operator_flow(flow_id=flow["flow_id"])
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):

@@ -27,7 +27,9 @@ from apps.log_clustering.constants import (
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
+from apps.log_clustering.handlers.pipline_service.constants import OperatorServiceEnum
 from apps.log_clustering.models import ClusteringConfig
+from apps.log_clustering.tasks.flow import update_filter_rules
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.models import CollectorConfig
@@ -82,7 +84,7 @@ class ClusteringConfigHandler(object):
         bk_biz_id = params["bk_biz_id"]
         filter_rules = params["filter_rules"]
         signature_enable = params["signature_enable"]
-        from apps.log_clustering.handlers.pipline_service.aiops_service import create_aiops_service
+        from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 
         if clustering_config:
             clustering_config.min_members = min_members
@@ -98,7 +100,22 @@ class ClusteringConfigHandler(object):
             clustering_config.source_rt_name = source_rt_name
             clustering_config.category_id = category_id
             clustering_config.save()
-            # todo 更新对应flow
+            change_filter_rules, change_model_config = self.check_clustering_config_update(
+                clustering_config=clustering_config,
+                filter_rules=filter_rules,
+                min_members=min_members,
+                max_dist_list=max_dist_list,
+                predefined_varibles=predefined_varibles,
+                delimeter=delimeter,
+                max_log_length=max_log_length,
+                is_case_sensitive=is_case_sensitive,
+            )
+            if change_filter_rules:
+                # 更新filter_rule
+                update_filter_rules.delay(index_set_id=index_set_id)
+            if change_model_config:
+                # 更新aiops model
+                operator_aiops_service(index_set_id, operator=OperatorServiceEnum.UPDATE)
             return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
         clustering_config = ClusteringConfig.objects.create(
             collector_config_id=collector_config_id,
@@ -118,7 +135,7 @@ class ClusteringConfigHandler(object):
             category_id=category_id,
         )
         if signature_enable:
-            create_aiops_service(index_set_id)
+            operator_aiops_service(index_set_id)
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def preview(
@@ -203,3 +220,39 @@ class ClusteringConfigHandler(object):
             etl_params=collector_detail["etl_params"],
             fields=collector_detail["fields"],
         )
+
+    @staticmethod
+    def check_clustering_config_update(
+        clustering_config,
+        filter_rules,
+        min_members,
+        max_dist_list,
+        predefined_varibles,
+        delimeter,
+        max_log_length,
+        is_case_sensitive,
+    ):
+        """
+        判断是否需要进行对应更新操作
+        """
+        change_filter_rules = clustering_config.filter_rules != filter_rules
+        change_model_config = model_to_dict(
+            clustering_config,
+            fields=[
+                "min_members",
+                "max_dist_list",
+                "predefined_varibles",
+                "delimeter",
+                "max_log_length",
+                "is_case_sensitive",
+            ],
+        ) != {
+            "min_members": min_members,
+            "max_dist_list": max_dist_list,
+            "predefined_varibles": predefined_varibles,
+            "delimeter": delimeter,
+            "max_log_length": max_log_length,
+            "is_case_sensitive": is_case_sensitive,
+        }
+
+        return change_filter_rules, change_model_config

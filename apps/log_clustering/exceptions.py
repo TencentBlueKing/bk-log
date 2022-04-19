@@ -72,3 +72,8 @@ class ClusteringIndexSetNotExistException(BaseClusteringException):
 class BkdataStorageNotExistException(BaseClusteringException):
     ERROR_CODE = "009"
     MESSAGE = _("计算平台落地存储不存在: {index_set_id}")
+
+
+class BkdataFlowException(BaseClusteringException):
+    ERROR_CODE = "010"
+    MESSAGE = _("计算平台flow返回异常: {flow_id}")

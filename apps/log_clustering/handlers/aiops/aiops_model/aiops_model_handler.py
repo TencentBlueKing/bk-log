@@ -1073,3 +1073,15 @@ class AiopsModelHandler(BaseAiopsHandler):
         )
         request_dict = self._set_username(aiops_experiment_debug_request)
         return BkDataAIOPSApi.aiops_experiments_debug(request_dict)
+
+    def close_continuous_training(self, model_id: str, experiment_id: int):
+        return BkDataAIOPSApi.put_experiment(
+            self._set_username(
+                {
+                    "model_id": model_id,
+                    "experiment_id": experiment_id,
+                    "protocol_version": "1.2",
+                    "continuous_training": False,
+                }
+            )
+        )
