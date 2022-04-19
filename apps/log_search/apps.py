@@ -93,10 +93,10 @@ class ApiConfig(AppConfig):
             from apps.api import BKPAASApi
 
             try:
-                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_MONITOR})
+                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_MONITOR, "format": "bk_std_json"})
                 is_deploy_monitor = bool(result and result[0])
 
-                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_BKDATA})
+                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_BKDATA, "format": "bk_std_json"})
                 is_deploy_bkdata = bool(result and result[0])
             except Exception as e:  # pylint: disable=broad-except
                 # 忽略这个API请求的错误, 避免错误导致整个APP启动失败
