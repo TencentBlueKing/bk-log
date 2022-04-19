@@ -465,8 +465,13 @@ class StorageHandler(object):
         #     raise StorageNotPermissionException()
 
         # 判断该集群是否属于该业务
-        if cluster_objs[0]["cluster_config"]["custom_option"].get("bk_biz_id") != bk_biz_id:
-            raise StorageNotPermissionException()
+        if cluster_objs[0]["cluster_config"].get("registered_system") != REGISTERED_SYSTEM_DEFAULT:
+            if cluster_objs[0]["cluster_config"]["custom_option"].get("bk_biz_id") != bk_biz_id:
+                raise StorageNotPermissionException()
+
+        if cluster_objs[0]["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
+            if bk_biz_id != settings.BLUEKING_BK_BIZ_ID:
+                raise StorageNotPermissionException()
 
         # 当前端传入的账号或密码为空时，取原账号密码
         if not params["auth_info"]["username"] or not params["auth_info"]["password"]:
