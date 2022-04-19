@@ -60,7 +60,7 @@
           <bk-table-column :label="$t('索引数')" prop="index_count"></bk-table-column>
           <bk-table-column :label="$t('业务数')" prop="biz_count"></bk-table-column>
         </bk-table>
-        <div class="cluster-illustrate">
+        <div class="cluster-illustrate" v-show="!!activeItem">
           <p class="illustrate-title">{{$t('集群说明')}}</p>
           <div class="illustrate-container">
             <div v-for="[key,value] of Object.entries(illustrateLabelData)" :key="key">
@@ -129,7 +129,7 @@ export default {
     }),
     rowIsDisable() {
       if (this.storageClusterId === '') return false;
-      return ['editFinish', 'edit'].includes(this.operateType);
+      return ['editFinish', 'edit', 'storage', undefined].includes(this.operateType);
     },
   },
   watch: {

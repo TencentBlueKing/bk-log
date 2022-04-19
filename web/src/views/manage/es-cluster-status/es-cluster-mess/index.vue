@@ -163,23 +163,22 @@
       @hidden="handleSliderHidden"
       @updated="handleUpdated" />
 
-    <!-- <intro-panel
-      :data="stateMap"
+    <intro-panel
       :is-open-window="isOpenWindow"
-      @handleActiveDetails="handleActiveDetails" /> -->
+      @handleActiveDetails="handleActiveDetails" />
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
-// import IntroPanel from './components/intro-panel.vue';
+import IntroPanel from './components/intro-panel.vue';
 
 export default {
   name: 'EsClusterMess',
   components: {
     EsSlider,
-    // IntroPanel,
+    IntroPanel,
   },
   data() {
     return {
@@ -200,8 +199,8 @@ export default {
       isRenderSlider: true, // 渲染侧边栏组件，关闭侧滑时销毁组件，避免接口在 pending 时关闭侧滑后又马上打开
       showSlider: false, // 显示编辑或新建ES源侧边栏
       editClusterId: null, // 编辑ES源ID,
-      isOpenWindow: false,
-      sourceStateFilters: [{ text: '正常', value: true }, { text: '失败', value: false }],
+      isOpenWindow: true,
+      sourceStateFilters: [{ text: this.$t('正常'), value: true }, { text: this.$t('失败'), value: false }],
     };
   },
   computed: {

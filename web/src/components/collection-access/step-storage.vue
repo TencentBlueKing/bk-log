@@ -140,14 +140,13 @@
       <div v-show="isShowAssessment && isCanUseAssessment">
         <div class="capacity-illustrate">
           <p class="illustrate-title">{{$t('容量说明')}}</p>
-          <p>容量计算公式：单机日志增量主机数量存储转化率分片数（日志保留天数 + 1）</p>
-          <p>存储转化率（1.5）：即原始日志增加日志采集元数据并存储到ES到实际占有的空间</p>
-          <p>分片数（2）：1个主分片+1个副本数，避免节点故障导致数据丢失</p>
+          <p>{{$t('clusterTips1')}}</p>
+          <p>{{$t('clusterTips2')}}</p>
+          <p>{{$t('clusterTips3_1')}} {{formData.storage_replies}} {{$t('clusterTips2')}}</p>
         </div>
 
         <bk-form-item
           required
-          :rules="rules.assessment_config"
           :label="$t('每日单台日志量')">
           <bk-input
             style="width: 320px;"
@@ -164,7 +163,11 @@
           <bk-alert
             style="width: 607px"
             type="warning"
-            title="勾选需要审批后需等待审批通过后，才会继续进行存储流程">
+            :show-icon="false">
+            <div class="approval-alert" slot="title">
+              <span class="bk-icon icon-exclamation-circle"></span>
+              <p>{{$t('approvalTips')}}</p>
+            </div>
           </bk-alert>
         </div>
 
@@ -251,7 +254,7 @@ export default {
       refresh: false,
       // eslint-disable-next-line no-useless-escape
       isLoading: false,
-      basicLoading: false,
+      basicLoading: true,
       isUnmodifiable: false,
       isUnmodfyIndexName: false,
       // roleList: [],
@@ -325,11 +328,6 @@ export default {
           validator(val) {
             return val.length >= 1;
           },
-          trigger: 'change',
-        }],
-        assessment_config: [{
-          // 检测当前集群是否开启容量评估并且填写填写输入框
-          validator: this.checkAssessmentConfig,
           trigger: 'change',
         }],
       },
@@ -452,14 +450,6 @@ export default {
         need_assessment: this.isCanUseAssessment,
       };
       !this.isCanUseAssessment && (delete data.assessment_config);
-      if (this.formData.storage_cluster_id === '') {
-        this.isLoading = false;
-        this.$bkMessage({
-          theme: 'error',
-          message: this.$t('请选择集群'),
-        });
-        return false;
-      }
       /* eslint-disable */
       if (etl_config !== 'bk_log_text') {
         const etlParams = {
@@ -508,6 +498,16 @@ export default {
     },
     // 完成按钮
     finish() {
+      const isNotSelectedID = this.formData.storage_cluster_id === '';
+      const isNotFillLogAssessment = this.isCanUseAssessment && !this.formData.assessment_config.log_assessment;
+      if (!isNotSelectedID || !isNotFillLogAssessment) {
+        const message = isNotSelectedID ? this.$t('请选择集群') : this.$t('请填写每日单台日志量');
+        this.$bkMessage({
+          theme: 'error',
+          message,
+        });
+        return;
+      }
       const promises = [this.checkStore()];
       Promise.all(promises).then(() => {
         this.fieldCollection();
@@ -608,10 +608,6 @@ export default {
         ? tsStorageId : this.formData.storage_cluster_id;
 
       this.basicLoading = false;
-    },
-    checkAssessmentConfig() {
-      if (this.isCanUseAssessment && !this.formData.assessment_config.log_assessment) return false;
-      return true;
     },
     cancel() {
       this.$router.push({
@@ -732,6 +728,15 @@ export default {
       .bk-checkbox-text {
         font-size: 12px;
         margin-right: 12px;
+      }
+      .approval-alert{
+        display: flex;
+        align-items: center;
+      }
+      .icon-exclamation-circle{
+        font-size: 16px;
+        margin-right: 8px;
+        color:#FF9C01;
       }
     }
 
