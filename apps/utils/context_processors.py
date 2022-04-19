@@ -33,8 +33,11 @@ from blueapps.account.conf import ConfFixture  # noqa
 
 def mysetting(request):
     bk_login_url_prefix = settings.PAAS_API_HOST if settings.DEPLOY_MODE == "kubernetes" else settings.BK_PAAS_HOST
-    if settings.DEFAULT_HTTPS_HOST:
-        bk_login_url_prefix = urlparse(bk_login_url_prefix)._replace(scheme="https").geturl()
+    if settings.DEFAULT_HTTPS_HOST and settings.BK_COMPONENT_API_URL:
+        bk_component_api_url_netloc = urlparse(settings.BK_COMPONENT_API_URL).netloc
+        bk_login_url_prefix = (
+            urlparse(bk_login_url_prefix)._replace(scheme="https", netloc=bk_component_api_url_netloc).geturl()
+        )
     return {
         "gettext": _,
         "_": _,

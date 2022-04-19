@@ -376,22 +376,19 @@ export default {
         case 'getNewStrategy': // 获取新类告警状态
           this.fingerOperateData.alarmObj = val;
           break;
-        case 'editAlarm': {
-          // 更新新类告警请求
+        case 'editAlarm': { // 更新新类告警请求
           const { alarmObj: { strategy_id: strategyID } } = this.fingerOperateData;
           if (strategyID) {
             this.$refs.fingerTableRef.policyEditing(strategyID);
           }
         }
           break;
-        default:
-          break;
       }
     },
     handleLeaveCurrent() {
       // 不显示字段提取时跳转计算平台
       if (this.indexSetItem.scenario_id !== 'log') {
-        const jumpUrl = `${window.BKDATA_URL}`;
+        const jumpUrl = window.BKDATA_URL;
         window.open(jumpUrl, '_blank');
         return;
       }
@@ -405,7 +402,10 @@ export default {
         this.$router.push({
           name: 'clean-edit',
           params: { collectorId: this.configID },
-          query: { projectId: window.localStorage.getItem('project_id') },
+          query: {
+            projectId: window.localStorage.getItem('project_id'),
+            backRoute: this.$route.name,
+          },
         });
       }
     },
@@ -438,9 +438,8 @@ export default {
      * @desc: 数据指纹请求
      */
     requestFinger() {
-      if (this.throttle) {
-        return;
-      }
+      if (this.throttle) return;
+
       this.throttle = true;
       this.tableLoading = true;
       this.$http.request('/logClustering/clusterSearch', {

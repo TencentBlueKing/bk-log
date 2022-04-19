@@ -61,6 +61,7 @@ from apps.log_databus.serializers import (
     ListCollectorSerlalizer,
     CustomCreateSerializer,
     CustomUpateSerializer,
+    PreCheckSerializer,
 )
 from apps.utils.function import ignored
 
@@ -1849,3 +1850,26 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.params_valid(CustomUpateSerializer)
         return Response(CollectorHandler(collector_config_id).custom_update(**data))
+
+    @list_route(methods=["GET"], url_path="pre_check")
+    def pre_check(self, request):
+        """
+        @api {get} /databus/collectors/pre_check/ 预检查创建采集项的参数
+        @apiName pre_check
+        @apiDescription 预检查采集项英文名是否可以使用
+        @apiGroup 10_Collector
+        @apiParam {Int} bk_biz_id 所属业务ID
+        @apiParam {String} collector_config_name_en 采集项英文名
+        @apiSuccess {bool} data.allowed 如果英文名不存在, 则返回True, 反之返回False
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "allowed": True,
+            },
+            "result": true
+        }
+        """
+        data = self.params_valid(PreCheckSerializer)
+        return Response(CollectorHandler().pre_check(data))

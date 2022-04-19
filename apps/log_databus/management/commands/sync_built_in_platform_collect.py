@@ -105,7 +105,7 @@ class Command(BaseCommand):
                     "bk_app_code": settings.APP_CODE,
                     "bk_data_id": data_id,
                     "collector_config_name": module_name,
-                    "collector_config_name_en": module_name,
+                    "collector_config_name_en": str(module_name).replace("-", "_"),
                     "target_object_type": TargetObjectTypeEnum.HOST.value,
                     "target_node_type": TargetNodeTypeEnum.INSTANCE.value,
                     "target_nodes": [],

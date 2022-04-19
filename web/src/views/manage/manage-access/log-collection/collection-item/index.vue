@@ -552,6 +552,7 @@ export default {
         return;
       }
 
+      let backRoute = undefined;
       const params = {};
       const query = {};
       const routeMap = {
@@ -583,6 +584,7 @@ export default {
       }
       if (operateType === 'clean') {
         params.collectorId = row.collector_config_id;
+        backRoute = this.$route.name;
       }
       this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
@@ -591,6 +593,7 @@ export default {
         query: {
           ...query,
           projectId: window.localStorage.getItem('project_id'),
+          backRoute,
         },
       });
     },
