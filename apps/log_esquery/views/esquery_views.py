@@ -220,7 +220,7 @@ class EsQueryViewSet(APIViewSet):
         data = self.params_valid(EsQuerySearchAttrSerializer)
         # 调用EsQuery实例
         esquery = EsQuery(data)
-        return Response(esquery.search())
+        return Response(esquery.search(), headers={"Content-Type": "application/json;charset=UTF-8"})
 
     @list_route(methods=["POST"], url_path="dsl/")
     def dsl(self, request):
