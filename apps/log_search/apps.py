@@ -22,7 +22,10 @@ import os
 from django.apps.config import AppConfig
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
+
+from apps.utils.local import activate_request
 from apps.utils.log import logger
+from apps.utils.thread import generate_request
 
 try:
     from blueapps.utils.esbclient import get_client_by_user
@@ -90,13 +93,14 @@ class ApiConfig(AppConfig):
         is_deploy_monitor = False
         is_deploy_bkdata = False
         if settings.IS_K8S_DEPLOY_MODE:
+            activate_request(generate_request())
             from apps.api import BKPAASApi
 
             try:
-                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_MONITOR})
+                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_MONITOR, "format": "bk_std_json"})
                 is_deploy_monitor = bool(result and result[0])
 
-                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_BKDATA})
+                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_BKDATA, "format": "bk_std_json"})
                 is_deploy_bkdata = bool(result and result[0])
             except Exception as e:  # pylint: disable=broad-except
                 # 忽略这个API请求的错误, 避免错误导致整个APP启动失败
