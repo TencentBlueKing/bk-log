@@ -38,16 +38,11 @@ const getTopWindow = function () {
 
 const topWindow = getTopWindow();
 const openLoginDialog = function () {
-  const loginData = {
-    loginUrl: '',
-    width: '400',
-    height: '400',
-  };
-  window.parent.bus.$emit('show-login-modal', loginData);
+  window.parent.LoginModal?.show?.();
 };
 const closeLoginDialog = function () {
   try {
-    window.parent.bus.$emit('close-login-modal');
+    window.parent.LoginModal && (window.parent.LoginModal.$data.visible = false);
     window.parent.location.reload();
   } catch (err) {
     console.log(err);

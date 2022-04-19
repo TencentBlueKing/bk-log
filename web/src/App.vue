@@ -76,31 +76,34 @@
         guide-page="default" />
     </div>
     <auth-dialog />
-    <login-modal v-if="loginData" :login-data="loginData" />
+    <bk-paas-login ref="login" />
+    <!-- <login-modal v-if="loginData" :login-data="loginData" /> -->
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from 'vuex';
 import headNav from '@/components/nav/head-nav';
-import LoginModal from '@/components/login-modal';
+// import LoginModal from '@/components/login-modal';
 import WelcomePage from '@/components/common/welcome-page';
 import AuthPage from '@/components/common/auth-page';
 import AuthDialog from '@/components/common/auth-dialog';
 import BizMenuSelect from '@/components/biz-menu';
 import NoviceGuide from '@/components/novice-guide';
 import jsCookie from 'js-cookie';
+import BkPaasLogin from '@blueking/paas-login';
 
 export default {
   name: 'App',
   components: {
     headNav,
-    LoginModal,
+    // LoginModal,
     AuthPage,
     AuthDialog,
     WelcomePage,
     BizMenuSelect,
     NoviceGuide,
+    BkPaasLogin,
   },
   data() {
     return {
@@ -176,6 +179,7 @@ export default {
     this.getUserGuide();
   },
   mounted() {
+    window.LoginModal = this.$refs.login;
     this.$store.dispatch('getBkBizList');
   },
   methods: {
