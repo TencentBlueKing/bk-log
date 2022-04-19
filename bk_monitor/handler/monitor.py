@@ -11,7 +11,6 @@ from bk_monitor.constants import (
     LABEL,
     OPTION,
     SOURCE_LABEL,
-    LOGGER_NAME,
     BATCH_SIZE,
     TIME_SERIES_TYPE,
     TIME_SERIES_ETL_CONFIG,
@@ -25,7 +24,7 @@ from bk_monitor.utils.data_name_builder import DataNameBuilder
 from bk_monitor.utils.event import EventTrigger
 from bk_monitor.utils.query import CustomTable, SqlSplice
 
-logger = logging.getLogger(LOGGER_NAME)
+logger = logging.getLogger("bk_monitor")
 
 
 class BKMonitor(object):

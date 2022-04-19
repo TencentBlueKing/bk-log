@@ -24,7 +24,7 @@ from . import BaseHandler
 from ..provisioning import DATASOURCE_NEED_CREATE
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("bk_dataview")
 
 
 class APIHandler(BaseHandler):

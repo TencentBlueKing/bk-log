@@ -23,7 +23,7 @@ from contextlib import contextmanager
 
 from django.conf import settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("bk_dataview")
 
 
 @contextmanager

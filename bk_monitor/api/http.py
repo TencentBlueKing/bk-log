@@ -5,9 +5,9 @@ import requests
 import curlify
 
 from bk_monitor.exceptions import MonitorReportRequestException
-from bk_monitor.constants import ErrorEnum, LOGGER_NAME
+from bk_monitor.constants import ErrorEnum
 
-logger = logging.getLogger(LOGGER_NAME)
+logger = logging.getLogger("bk_monitor")
 
 
 # headers 添加

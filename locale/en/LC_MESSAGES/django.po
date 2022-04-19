@@ -6003,11 +6003,11 @@ msgstr "dashboard"
 
 #: config/default.py:485
 msgid "默认仪表盘"
-msgstr ""
+msgstr "default dashboard"
 
 #: config/default.py:486
 msgid "新建仪表盘"
-msgstr "dash board"
+msgstr "new dashboard"
 
 #: config/default.py:487
 msgid "新建目录"
