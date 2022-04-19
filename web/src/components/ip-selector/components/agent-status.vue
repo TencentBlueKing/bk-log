@@ -36,11 +36,11 @@
         <span>{{ item.display || '--' }}</span>
       </div>
       <div v-else>
-        <span v-if="item.isFlag">
-          <span :class="['status-count', !!item.errorCount ? 'status-terminated' : 'status-2']">
-            {{ item.errorCount || 0 }}
-          </span>
+        <span v-if="item.isFlag" v-bk-tooltips="getAgentCountStatusTips(item)">
           <span>{{ item.count || 0 }}</span>
+          <span :class="['status-count', !!item.errorCount ? 'status-terminated' : 'status-2']">
+            {{ `(${$t('异常数')}${item.errorCount || 0})` }}
+          </span>     
         </span>
         <span v-else
           class="bk-icon icon-refresh"
@@ -59,6 +59,13 @@ import { IAgentStatusData } from '../types/selector-type'
 export default class AgentStatus extends Vue {
   @Prop({ default: 0, type: Number }) private readonly type!: 0 | 1 | 2
   @Prop({ default: () => [], type: Array }) private readonly data!: IAgentStatusData[]
+
+  getAgentCountStatusTips(item) {
+    return {
+      theme: 'light',
+      content: `(${item.errorCount || 0}${this.$t('异常')}/${item.count || 0}${this.$t('总数')})`
+    }
+  }
 }
 </script>
 
@@ -110,11 +117,6 @@ export default class AgentStatus extends Vue {
   .status-count {
     /* stylelint-disable-next-line declaration-no-important */
     background: unset !important;
-
-    &::after {
-      content: '/';
-      color: #63656e;
-    }
   }
 
   .status-running,

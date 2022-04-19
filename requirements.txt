@@ -93,7 +93,7 @@ bk-monitor-report==1.0.4
 django-prometheus==2.1.0
 
 # blueapps
-blueapps==4.1.2
+blueapps==4.2.3
 # blueapps依赖
 whitenoise==5.0
 
