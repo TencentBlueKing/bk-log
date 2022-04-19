@@ -200,7 +200,7 @@ export default {
       showSlider: false, // 显示编辑或新建ES源侧边栏
       editClusterId: null, // 编辑ES源ID,
       isOpenWindow: true,
-      sourceStateFilters: [{ text: '正常', value: true }, { text: '失败', value: false }],
+      sourceStateFilters: [{ text: this.$t('正常'), value: true }, { text: this.$t('失败'), value: false }],
     };
   },
   computed: {
