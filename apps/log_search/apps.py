@@ -22,7 +22,10 @@ import os
 from django.apps.config import AppConfig
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
+
+from apps.utils.local import activate_request
 from apps.utils.log import logger
+from apps.utils.thread import generate_request
 
 try:
     from blueapps.utils.esbclient import get_client_by_user
@@ -90,6 +93,7 @@ class ApiConfig(AppConfig):
         is_deploy_monitor = False
         is_deploy_bkdata = False
         if settings.IS_K8S_DEPLOY_MODE:
+            activate_request(generate_request())
             from apps.api import BKPAASApi
 
             try:
