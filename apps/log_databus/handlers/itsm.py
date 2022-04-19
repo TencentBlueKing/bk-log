@@ -129,7 +129,7 @@ class ItsmHandler(object):
         if self._ticket_is_finish(ticket_info):
             if self._ticket_approve_result(ticket_detail_info):
                 collector_process.set_itsm_success()
-                self._create_task(collector_process.collector_config_id)
+                self._create_task(collector_process.collector_config_id, ticket_info.get("sn"))
                 return
             collector_process.set_itsm_fail()
 
@@ -141,6 +141,8 @@ class ItsmHandler(object):
         request_param = itsm_etl_config.request_param
         from apps.log_databus.handlers.etl import EtlHandler
 
+        for key in ["need_assessment", "assessment_config"]:
+            request_param.pop(key, None)
         EtlHandler(collector_config_id=collect_id).update_or_create(**request_param)
 
     def _ticket_is_finish(self, ticket_info: dict):

@@ -22,7 +22,7 @@ from collections import defaultdict
 
 import pytz
 
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from celery.schedules import crontab
 
 from apps.api.modules.bkdata_databus import BkDataDatabusApi
@@ -39,6 +39,42 @@ from apps.log_measure.handlers.elastic import ElasticHandle
 from apps.utils.log import logger
 from apps.log_databus.models import StorageUsed
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+
+
+@task(ignore_result=True)
+def shutdown_collector_warm_storage_config(cluster_id):
+    """异步关闭冷热集群的采集项"""
+    result_table_list = []
+    for collector in CollectorConfig.objects.all():
+        if not collector.table_id:
+            continue
+        result_table_list.append(collector.table_id)
+
+    if not result_table_list:
+        return
+
+    cluster_infos = CollectorHandler.bulk_cluster_infos(result_table_list=result_table_list)
+    for collector in CollectorConfig.objects.all():
+        try:
+            if not collector.table_id:
+                continue
+            cluster_info = cluster_infos.get(collector.table_id)
+            if not cluster_info:
+                continue
+            if cluster_info["cluster_config"]["cluster_id"] != cluster_id:
+                continue
+            TransferApi.modify_result_table(
+                {
+                    "table_id": collector.table_id,
+                    "default_storage": "elasticsearch",
+                    "default_storage_config": {
+                        "warm_phase_days": 0,
+                    },
+                }
+            )
+        except Exception as e:
+            logger.error("refresh collector storage config error", e)
+            continue
 
 
 @periodic_task(run_every=crontab(minute="0", hour="1"))
