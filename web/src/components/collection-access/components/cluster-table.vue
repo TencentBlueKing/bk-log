@@ -129,7 +129,7 @@ export default {
     }),
     rowIsDisable() {
       if (this.storageClusterId === '') return false;
-      return ['editFinish', 'edit'].includes(this.operateType);
+      return ['editFinish', 'edit', 'storage', undefined].includes(this.operateType);
     },
   },
   watch: {

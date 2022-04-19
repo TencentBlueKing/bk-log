@@ -140,9 +140,9 @@
       <div v-show="isShowAssessment && isCanUseAssessment">
         <div class="capacity-illustrate">
           <p class="illustrate-title">{{$t('容量说明')}}</p>
-          <p>容量计算公式：单机日志增量主机数量存储转化率分片数（日志保留天数 + 1）</p>
-          <p>存储转化率（1.5）：即原始日志增加日志采集元数据并存储到ES到实际占有的空间</p>
-          <p>分片数（2）：1个主分片+1个副本数，避免节点故障导致数据丢失</p>
+          <p>{{$t('clusterTips1')}}</p>
+          <p>{{$t('clusterTips2')}}</p>
+          <p>{{$t('clusterTips3_1')}} {{formData.storage_replies}} {{$t('clusterTips2')}}</p>
         </div>
 
         <bk-form-item
@@ -164,7 +164,11 @@
           <bk-alert
             style="width: 607px"
             type="warning"
-            title="勾选需要审批后需等待审批通过后，才会继续进行存储流程">
+            :show-icon="false">
+            <div class="approval-alert" slot="title">
+              <span class="bk-icon icon-exclamation-circle"></span>
+              <p>{{$t('approvalTips')}}</p>
+            </div>
           </bk-alert>
         </div>
 
@@ -251,7 +255,7 @@ export default {
       refresh: false,
       // eslint-disable-next-line no-useless-escape
       isLoading: false,
-      basicLoading: false,
+      basicLoading: true,
       isUnmodifiable: false,
       isUnmodfyIndexName: false,
       // roleList: [],
@@ -732,6 +736,15 @@ export default {
       .bk-checkbox-text {
         font-size: 12px;
         margin-right: 12px;
+      }
+      .approval-alert{
+        display: flex;
+        align-items: center;
+      }
+      .icon-exclamation-circle{
+        font-size: 16px;
+        margin-right: 8px;
+        color:#FF9C01;
       }
     }
 
