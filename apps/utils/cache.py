@@ -39,7 +39,8 @@ def using_cache(key: str, duration, need_md5=False):
     def decorator(func):
         @functools.wraps(func)
         def inner(*args, **kwargs):
-
+            refresh = kwargs.get("refresh", False)
+            kwargs.pop("refresh", None)
             try:
                 actual_key = key.format(*args, **kwargs)
             except (IndexError, KeyError):
@@ -52,7 +53,7 @@ def using_cache(key: str, duration, need_md5=False):
 
             cache_result = cache.get(actual_key)
 
-            if cache_result:
+            if cache_result and not refresh:
                 return json.loads(cache_result)
 
             result = func(*args, **kwargs)
@@ -125,6 +126,7 @@ cache_one_minute = functools.partial(using_cache, duration=TimeEnum.ONE_MINUTE_S
 cache_five_minute = functools.partial(using_cache, duration=5 * TimeEnum.ONE_MINUTE_SECOND.value)
 cache_ten_minute = functools.partial(using_cache, duration=10 * TimeEnum.ONE_MINUTE_SECOND.value)
 cache_one_hour = functools.partial(using_cache, duration=TimeEnum.ONE_HOUR_SECOND.value)
+cache_half_hour = functools.partial(using_cache, duration=0.5 * TimeEnum.ONE_HOUR_SECOND.value)
 cache_one_day = functools.partial(using_cache, duration=TimeEnum.ONE_DAY_SECOND.value)
 
 caches_one_hour = functools.partial(using_caches, duration=TimeEnum.ONE_HOUR_SECOND.value)
