@@ -887,7 +887,7 @@ TEMPLATES = [
 CACHES = {
     "redis": {
         "BACKEND": "django_prometheus.cache.backends.redis.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/3",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWD},
         "KEY_PREFIX": APP_CODE,
         "VERSION": REDIS_VERSION,
