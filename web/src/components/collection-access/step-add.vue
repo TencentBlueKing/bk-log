@@ -745,6 +745,8 @@ export default {
       if (this.curCollect.params.conditions.type === 'separator') {
         this.type = this.curCollect.params.conditions.separator_filters[0].logic_op;
       }
+      // 编辑采集项时缓存初始数据 用于对比提交时是否发生变化 未修改则不重新提交 update 接口
+      this.localParams = this.handleParams();
     }
   },
   mounted() {
@@ -770,8 +772,14 @@ export default {
       if (this.eventSettingList.some(el => el.isCorrect === false) || this.outherRules) {
         return;
       }
+      const params = this.handleParams();
+      if (JSON.stringify(this.localParams) === JSON.stringify(params)) {
+        // 未修改表单 直接跳转下一步
+        this.$emit('stepChange');
+        this.isHandle = false;
+        return;
+      }
       this.$refs.validateForm.validate().then(() => {
-        const params = this.handleParams();
         if (this.isCloseDataLink) {
           delete params.data_link_id;
         }
