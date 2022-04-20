@@ -22,7 +22,6 @@ import arrow
 from django.test import TestCase
 from unittest.mock import patch
 
-from django_fakeredis import FakeRedis
 
 from apps.log_search.constants import LOG_ASYNC_FIELDS
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
@@ -66,7 +65,7 @@ SEARCH_RESULT = {
     "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
     lambda _, __: False,
 )
-@FakeRedis("apps.utils.cache.cache")
+@patch("apps.log_search.handlers.search.search_handlers_esquery.SearchHandler._host_info", lambda _: {})
 class TestSearchHandler(TestCase):
     @patch(
         "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
