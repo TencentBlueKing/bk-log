@@ -198,7 +198,7 @@ class CleanTemplateViewSet(ModelViewSet):
         if self.request.query_params.get("bk_biz_id"):
             bk_biz_id = int(self.request.query_params.get("bk_biz_id"))
             qs = qs.filter(
-                Q(visible_type=VisibleEnum.CURRENT_BIZ.value, bk_biz_id=bk_biz_id)
+                Q(bk_biz_id=bk_biz_id)
                 | Q(visible_type=VisibleEnum.ALL_BIZ.value)
                 | Q(
                     visible_type=VisibleEnum.MULTI_BIZ.value,

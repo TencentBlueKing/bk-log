@@ -17,8 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from copy import deepcopy
-from apps.log_databus.constants import AsyncStatus, VisibleEnum
+from apps.log_databus.constants import AsyncStatus
 from apps.log_databus.exceptions import (
     CleanTemplateNotExistException,
     CleanTemplateRepeatException,
@@ -101,11 +100,7 @@ class CleanTemplateHandler(object):
         if params.get("visible_type"):
             model_fields["visible_type"] = params["visible_type"]
         if params.get("visible_bk_biz_id"):
-            visible_bk_biz_id = deepcopy(params["visible_bk_biz_id"])
-            str_bk_biz_id = str(params["bk_biz_id"])
-            if params["visible_type"] == VisibleEnum.MULTI_BIZ.value and str_bk_biz_id not in visible_bk_biz_id:
-                visible_bk_biz_id.append(str_bk_biz_id)
-            model_fields["visible_bk_biz_id"] = self.build_str_visible_bk_biz_id(visible_bk_biz_id)
+            model_fields["visible_bk_biz_id"] = self.build_str_visible_bk_biz_id(params["visible_bk_biz_id"])
 
         if self._check_clean_template_exist(name=model_fields["name"], bk_biz_id=model_fields["bk_biz_id"]):
             biz = ProjectInfo.get_biz(model_fields["bk_biz_id"])
