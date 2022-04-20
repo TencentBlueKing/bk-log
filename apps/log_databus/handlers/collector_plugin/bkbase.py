@@ -86,7 +86,6 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
             "json_config": json.dumps(bkdata_json_config),
             "bk_username": get_request_username(),
         }
-
         result = BkDataDatabusApi.databus_cleans_post(params)
         self.collector_config.bkdata_etl_processing_id = result["processing_id"]
         self.collector_config.bkdata_etl_result_table_id = result["result_table_id"]
