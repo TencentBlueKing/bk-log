@@ -129,7 +129,8 @@ export default {
     }),
     rowIsDisable() {
       if (this.storageClusterId === '') return false;
-      return ['editFinish', 'edit', 'storage', undefined].includes(this.operateType);
+      if (this.operateType === undefined) return true;
+      return ['editFinish', 'edit', 'storage'].includes(this.operateType);
     },
   },
   watch: {
@@ -224,6 +225,7 @@ export default {
 
     .cluster-illustrate {
       width: 42%;
+      min-width: 430px;
       overflow-y: auto;
       max-height: 254px;
       padding: 16px;

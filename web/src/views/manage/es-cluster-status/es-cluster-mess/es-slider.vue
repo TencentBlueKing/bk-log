@@ -506,10 +506,10 @@ export default {
       showInstanceDialog: false, // 查看实例列表
       viewInstanceType: '', // hot、cold 查看热数据/冷数据实例列表
       visibleScopeSelectList: [ // 可见范围单选列表
-        { id: 'current_biz', name: '当前业务可见' },
-        { id: 'multi_biz', name: '多业务选择' },
-        { id: 'all_biz', name: '全平台' },
-        { id: 'biz_attr', name: '按照业务属性选择' },
+        { id: 'current_biz', name: this.$t('当前业务可见') },
+        { id: 'multi_biz', name: this.$t('多业务选择') },
+        { id: 'all_biz', name: this.$t('全平台') },
+        { id: 'biz_attr', name: this.$t('按照业务属性选择') },
       ],
       visibleList: [], // 多业务选择下拉框
       cacheVisibleList: [], // 缓存多业务选择下拉框
@@ -561,10 +561,7 @@ export default {
     },
     // 可见范围单选判断，禁用下拉框
     scopeValueType() {
-      if (this.formData.visible_config.visible_type !== 'multi_biz') {
-        return true;
-      };
-      return false;
+      return this.formData.visible_config.visible_type !== 'multi_biz';
     },
     isBizAttr() {
       return this.formData.visible_config.visible_type === 'biz_attr';
