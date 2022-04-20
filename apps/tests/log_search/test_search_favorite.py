@@ -30,7 +30,7 @@ from rest_framework.test import APITestCase, override_settings
 
 from apps.log_search.models import FavoriteSearch
 
-logger = logging.getLogger("root")
+logger = logging.getLogger()
 
 User = get_user_model()
 MOCK_USER_NAME = "test_user"

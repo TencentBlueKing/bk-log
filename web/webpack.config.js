@@ -22,6 +22,7 @@
 
 /* eslint-disable no-nested-ternary */
 const wepack = require('webpack');
+const WebpackBar = require('webpackbar');
 const path = require('path');
 const fs = require('fs');
 const LogWebpackPlugin = require('./webpack/log-webpack-plugin');
@@ -58,6 +59,7 @@ const logPluginConfig = {
       window.MENU_LOGO_URL = '\${MENU_LOGO_URL}'
       window.APP_CODE = '\${APP_CODE}'
       window.BK_DOC_URL = '\${BK_DOC_URL}'
+      window.BK_FAQ_URL = '\${BK_FAQ_URL}'
       window.BK_DOC_QUERY_URL = '\${BK_DOC_QUERY_URL}'
       window.BK_HOT_WARM_CONFIG_URL = '\${BK_HOT_WARM_CONFIG_URL}'
       window.BIZ_ACCESS_URL = '\${BIZ_ACCESS_URL}'
@@ -66,6 +68,7 @@ const logPluginConfig = {
       window.TAM_AEGIS_KEY = '\${TAM_AEGIS_KEY}'
       window.BK_LOGIN_URL = '\${BK_LOGIN_URL}'
       window.BK_DOC_DATA_URL = '\${BK_DOC_DATA_URL}'
+      window.BK_PLAT_HOST = '\${BK_PLAT_HOST}'
     </script>
     % if TAM_AEGIS_KEY != "" :
       <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js?_bid=3977"></script>
@@ -144,6 +147,12 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
         '@': path.resolve('src'),
       },
     },
+    plugins: baseConfig.plugins.map((plugin) => {
+      return plugin instanceof wepack.ProgressPlugin ?  new WebpackBar({
+        profile: true,
+        name: `日志平台 ${production ? 'Production模式' : 'Development模式'} 构建`,
+      }) : plugin;
+    }),
     cache: typeof devConfig.cache === 'boolean' ? devConfig.cache : config.cache,
   };
 };

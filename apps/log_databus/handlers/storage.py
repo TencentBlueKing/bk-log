@@ -723,5 +723,5 @@ class StorageHandler(object):
                     "create_time": format_user_time_zone(repository["create_time"], get_local_param("time_zone")),
                 }
             )
-            repository.pop("settings")
+            repository.pop("settings", None)
         return repository_info

@@ -249,9 +249,10 @@ export default {
 
       td mark {
         background: #f3e186;
+        color: #575961;
       }
 
-      /deep/ .result-table-loading {
+      ::v-deep .result-table-loading {
         width: calc(100% - 2px);
         height: calc(100% - 2px);
       }
@@ -394,7 +395,7 @@ export default {
       }
     }
 
-    /deep/ .render-header {
+    ::v-deep .render-header {
       .field-type-icon {
         width: 12px;
         margin: 0 4px 0 0;
@@ -405,7 +406,7 @@ export default {
   }
   // 日志全屏状态下的样式
   .log-full-dialog {
-    /deep/ .bk-dialog-content {
+    ::v-deep .bk-dialog-content {
       /* stylelint-disable-next-line declaration-no-important */
       margin-bottom: 0 !important;
     }

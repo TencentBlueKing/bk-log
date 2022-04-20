@@ -5,9 +5,9 @@ import json
 
 from bk_monitor.api.http import http_get, http_post
 from bk_monitor.exceptions import MonitorReportResultException
-from bk_monitor.constants import ErrorEnum, LOGGER_NAME
+from bk_monitor.constants import ErrorEnum
 
-logger = logging.getLogger(LOGGER_NAME)
+logger = logging.getLogger("bk_monitor")
 
 
 class Client(object):

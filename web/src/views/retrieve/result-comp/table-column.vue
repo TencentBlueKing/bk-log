@@ -172,7 +172,7 @@ export default {
       }
 
       &.mark {
-        background-color: #f3e186;
+        background: #f3e186;
         color: black;
       }
     }

@@ -36,7 +36,7 @@ from apps.iam.handlers import permission
 from django_fakeredis import FakeRedis
 
 logging.basicConfig(level=logging.NOTSET)
-logger = logging.getLogger("root")
+logger = logging.getLogger()
 
 BK_APP_CODE = "bk_log_search"
 BK_BIZ_ID = 2

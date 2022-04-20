@@ -6,10 +6,9 @@ import logging
 from collections import defaultdict
 import arrow
 
-from bk_monitor.constants import LOGGER_NAME
 from bk_monitor.utils.metric import REGISTERED_METRICS
 
-logger = logging.getLogger(LOGGER_NAME)
+logger = logging.getLogger("bk_monitor")
 
 
 class MetricCollector(object):

@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 
 from django.conf import settings
+from django.utils.translation import ugettext as _
 
 
 def patch_home_panels(home_config):
@@ -30,7 +31,10 @@ def patch_home_panels(home_config):
             "fieldConfig": {"defaults": {"custom": {}}, "overrides": []},
             "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
             "id": 2,
-            "options": {"content": "<br>\n<br>\n<br>\n<div><H1>Welcome 欢迎使用仪表盘</H1></div>", "mode": "html"},
+            "options": {
+                "content": "<br>\n<br>\n<br>\n<div><H1>Welcome {} </H1></div>".format(_("欢迎使用仪表盘")),
+                "mode": "html",
+            },
             "pluginVersion": "7.1.0",
             "targets": [],
             "timeFrom": None,
@@ -56,7 +60,7 @@ def patch_home_panels(home_config):
             "targets": [],
             "timeFrom": None,
             "timeShift": None,
-            "title": "所有仪表盘",
+            "title": _("所有仪表盘"),
             "type": "dashlist",
         },
         {
@@ -75,7 +79,7 @@ def patch_home_panels(home_config):
             "targets": [],
             "timeFrom": None,
             "timeShift": None,
-            "title": "收藏和最近查看的仪表盘",
+            "title": _("收藏和最近查看的仪表盘"),
             "type": "dashlist",
         },
         {
@@ -84,31 +88,40 @@ def patch_home_panels(home_config):
             "gridPos": {"h": 24, "w": 8, "x": 16, "y": 4},
             "id": 3,
             "options": {
-                "content": f"""
+                "content": """
 <br>
 <div>
-    <a href="{settings.GRAFANA['PREFIX']}dashboard/new"><H3>还没有仪表盘？快速创建您的仪表盘吧！</H3></a>
+    <a href="{}dashboard/new"><H3>{}</H3></a>
 </div>
 <br>
 <div>
-    <a href="{settings.GRAFANA['PREFIX']}dashboards/folder/new"><H3>为方便管理仪表盘，可以创建目录。</H3></a>
+    <a href="{}dashboards/folder/new"><H3>{}</H3></a>
 </div>
 <br>
 <div>
-    <a href="{settings.GRAFANA['PREFIX']}dashboard/import"><H3>本地有仪表盘配置文件，直接导入即可。</H3></a>
+    <a href="{}dashboard/import"><H3>{}</H3></a>
 </div>
 <br><br><br><br>
 <div>
-    <a href="{settings.BK_DOC_URL}" target="_blank">更多使用方法查看产品文档</a>
+    <a href="{}" target="_blank">{}</a>
 </div>
-                """,
+                """.format(
+                    settings.GRAFANA["PREFIX"],
+                    _("还没有仪表盘？快速创建您的仪表盘吧！"),
+                    settings.GRAFANA["PREFIX"],
+                    _("为方便管理仪表盘，可以创建目录。"),
+                    settings.GRAFANA["PREFIX"],
+                    _("本地有仪表盘配置文件，直接导入即可。"),
+                    settings.BK_DOC_URL,
+                    _("更多使用方法查看产品文档"),
+                ),
                 "mode": "html",
             },
             "pluginVersion": "7.1.0",
             "targets": [],
             "timeFrom": None,
             "timeShift": None,
-            "title": "仪表盘使用指引",
+            "title": _("仪表盘使用指引"),
             "type": "text",
         },
     ]

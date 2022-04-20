@@ -41,7 +41,7 @@ from django.utils import timezone, translation  # noqa
 from apps.utils.local import activate_request, get_request  # noqa
 from .local import local  # noqa
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 def run_func_with_local(items, tz, lang, request, func, *args, **kwargs):

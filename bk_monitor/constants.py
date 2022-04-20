@@ -14,8 +14,6 @@ LABEL = "application_check"
 # todo 这里目前是根据监控返回msg做的判断
 NOT_EXIST_MSG = "query does not exist"
 
-LOGGER_NAME = "bk_monitor"
-
 # custom_report 限制上报大小
 BATCH_SIZE = 100
 

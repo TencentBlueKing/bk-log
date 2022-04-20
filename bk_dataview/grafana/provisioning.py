@@ -31,7 +31,7 @@ import yaml
 from .settings import grafana_settings
 from .utils import os_env
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("bk_dataview")
 
 DATASOURCE_NEED_CREATE = -1
 
