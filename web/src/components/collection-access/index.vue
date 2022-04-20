@@ -24,8 +24,8 @@
   <section :class="['access-wrapper',itsmTicketIsApplying && 'iframe-container']"
            v-bkloading="{ isLoading: basicLoading }">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
-    <div class="access-container" v-else-if="itsmTicketIsApplying">
-      <iframe :src="itsmApplyingUrl" style="width: 100%;" frameBorder="0"></iframe>
+    <div class="access-container" v-else-if="itsmTicketIsApplying" v-bkloading="{ basicLoading }">
+      <iframe :src="itsmApplyingUrl" style="width: 100%;" frameBorder="0" @load="handleIframeLoad"></iframe>
     </div>
     <div class="access-container" v-else-if="!basicLoading && !isCleaning">
       <section class="access-step-wrapper">
@@ -343,6 +343,10 @@ export default {
     showApplyingIframe(url) {
       this.itsmTicketIsApplying = true;
       this.itsmApplyingUrl = url;
+      this.basicLoading = true;
+    },
+    handleIframeLoad() {
+      this.basicLoading = false;
     },
   },
 };

@@ -185,6 +185,11 @@ const getPreCheck = {
   method: 'get',
 };
 
+const createWeWork = {
+  url: '/esb_api/wework/create_chat/',
+  method: 'post',
+};
+
 export {
   getStorage,
   globals,
@@ -218,4 +223,5 @@ export {
   getDynamicGroupList,
   getDynamicGroup,
   getPreCheck,
+  createWeWork,
 };
