@@ -119,21 +119,12 @@ class StorageHandler(object):
             if self.can_visible(bk_biz_id, cluster["cluster_config"].get("custom_option"))
         ]
 
-        def get_storage_info(cluster_id):
-            used = StorageUsed.objects.filter(
-                bk_biz_id=StorageUsed.CLUSTER_INFO_BIZ_ID, storage_cluster_id=cluster_id
-            ).first()
-            if not used:
-                return {"storage_usage": 0, "storage_total": 0, "index_count": 0, "biz_count": 0}
-            return {
-                "storage_usage": used.storage_usage,
-                "storage_total": used.storage_total,
-                "index_count": used.index_count,
-                "biz_count": used.biz_count,
-            }
-
         return [
             {
+                "storage_usage": i["storage_usage"],
+                "storage_total": i["storage_total"],
+                "index_count": i["index_count"],
+                "biz_count": i["biz_count"],
                 "storage_cluster_id": i["cluster_config"].get("cluster_id"),
                 "storage_cluster_name": i["cluster_config"].get("cluster_name"),
                 "storage_version": i["cluster_config"].get("version"),
@@ -151,7 +142,6 @@ class StorageHandler(object):
                 "enable_archive": i["cluster_config"]["custom_option"]["enable_archive"],
                 "is_platform": i["cluster_config"]["custom_option"]["visible_config"]["visible_type"]
                 in [VisibleEnum.ALL_BIZ.value, VisibleEnum.BIZ_ATTR.value],
-                **get_storage_info(i["cluster_config"].get("cluster_id")),
             }
             for i in cluster_groups
             if i
@@ -208,7 +198,22 @@ class StorageHandler(object):
         projects = ProjectInfo.get_cmdb_projects()
         # 筛选集群 & 判断是否可编辑
         es_config = get_es_config(bk_biz_id)
+
+        def get_storage_info(cluster_id):
+            used = StorageUsed.objects.filter(
+                bk_biz_id=StorageUsed.CLUSTER_INFO_BIZ_ID, storage_cluster_id=cluster_id
+            ).first()
+            if not used:
+                return {"storage_usage": 0, "storage_total": 0, "index_count": 0, "biz_count": 0}
+            return {
+                "storage_usage": used.storage_usage,
+                "storage_total": used.storage_total,
+                "index_count": used.index_count,
+                "biz_count": used.biz_count,
+            }
+
         for cluster_obj in cluster_groups:
+            cluster_obj.update(get_storage_info(cluster_obj["cluster_config"].get("cluster_id")))
             cluster_obj["cluster_config"]["create_time"] = StorageHandler.convert_standard_time(
                 cluster_obj["cluster_config"]["create_time"]
             )
