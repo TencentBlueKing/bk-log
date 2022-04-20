@@ -19,14 +19,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from apps.api import TransferApi
+from apps.log_databus.constants import KAFKA_CLUSTER_TYPE, REGISTERED_SYSTEM_DEFAULT, STORAGE_CLUSTER_TYPE
 from apps.log_databus.exceptions import (
     DataLinkConfigNotExistException,
-    StorageNotExistException,
-    SameLinkNameException,
     EditLinkException,
+    SameLinkNameException,
+    StorageNotExistException,
 )
 from apps.log_databus.models import DataLinkConfig
-from apps.log_databus.constants import KAFKA_CLUSTER_TYPE, STORAGE_CLUSTER_TYPE, REGISTERED_SYSTEM_DEFAULT
 
 
 class DataLinkHandler(object):

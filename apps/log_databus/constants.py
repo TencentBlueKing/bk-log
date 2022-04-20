@@ -18,6 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.conf import settings
+from django.db.models import TextChoices
 from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
@@ -25,7 +26,7 @@ from apps.utils import ChoicesEnum
 META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 RESTORE_INDEX_SET_PREFIX = "restore_"
 
-BKLOG_RESULT_TABLE_PATTERN = fr"(\d*?_{settings.TABLE_ID_PREFIX}_.*)_.*_.*"
+BKLOG_RESULT_TABLE_PATTERN = rf"(\d*?_{settings.TABLE_ID_PREFIX}_.*)_.*_.*"
 
 NOT_FOUND_CODE = "[404]"
 
@@ -266,3 +267,8 @@ BKDATA_ES_TYPE_MAP = {
 }
 
 ETL_PARAMS = {"retain_original_text": True, "separator_regexp": "", "separator": ""}
+
+
+class ETLProcessorChoices(TextChoices):
+    TRANSFER = "transfer", _("transfer")
+    BKBASE = "bkbase", _("bkbase")

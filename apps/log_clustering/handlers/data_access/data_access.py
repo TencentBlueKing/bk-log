@@ -21,7 +21,7 @@ import copy
 import json
 
 import settings
-from apps.api import BkDataDatabusApi, BkDataMetaApi, BkDataAccessApi
+from apps.api import BkDataAccessApi, BkDataDatabusApi, BkDataMetaApi
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.constants import BKDATA_ES_TYPE_MAP

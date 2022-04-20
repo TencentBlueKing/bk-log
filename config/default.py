@@ -19,9 +19,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import sys
 
-from config.log import get_logging_config_dict
 from blueapps.conf.default_settings import *  # noqa
 from django.utils.translation import ugettext_lazy as _
+
+from config.log import get_logging_config_dict
 
 # 使用k8s部署模式
 IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
@@ -886,7 +887,7 @@ TEMPLATES = [
 CACHES = {
     "redis": {
         "BACKEND": "django_prometheus.cache.backends.redis.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/3",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWD},
         "KEY_PREFIX": APP_CODE,
         "VERSION": REDIS_VERSION,
