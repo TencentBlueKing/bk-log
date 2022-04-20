@@ -969,6 +969,15 @@ if IS_USE_CELERY:
     CELERY_ENABLE_UTC = True
     CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
+    from celery.signals import setup_logging
+
+    @setup_logging.connect
+    def config_loggers(*args, **kwags):
+        from logging.config import dictConfig
+
+        dictConfig(LOGGING)
+
+
 # remove disabled apps
 if locals().get("DISABLED_APPS"):
     INSTALLED_APPS = locals().get("INSTALLED_APPS", [])
