@@ -729,14 +729,16 @@ export default {
         font-size: 12px;
         margin-right: 12px;
       }
-      .approval-alert{
+
+      .approval-alert {
         display: flex;
         align-items: center;
       }
-      .icon-exclamation-circle{
+
+      .icon-exclamation-circle {
         font-size: 16px;
         margin-right: 8px;
-        color:#FF9C01;
+        color: #ff9c01;
       }
     }
 

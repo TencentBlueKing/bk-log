@@ -233,29 +233,32 @@ export default {
       }
 
       code {
-        color: #BF6F84;;
-        background: #F4EAEE;
+        color: #bf6f84;;
+        background: #f4eaee;
       }
 
-      .help-main{
+      .help-main {
         height: 100%;
         overflow-y: auto;
       }
 
-      .help-md-container{
+      .help-md-container {
         padding: 16px 0;
-        border-bottom: 1px solid #EAEBF0;
+        border-bottom: 1px solid #eaebf0;
+
         .help-a-link {
           display: inline-block;
           margin: 10px 0;
           font-size: 12px;
           color: #3a84ff;
+
           span {
             transform: translateY(-1px);
             display: inline-block;
           }
         }
-        .wx-button{
+
+        .wx-button {
           margin: 10px 0;
         }
       }
@@ -290,14 +293,20 @@ export default {
       }
     }
   }
-  .group-container{
-    .group-body-container{
+
+  .group-container {
+    .group-body-container {
       height: 100px;
-      & .user-selector{
+
+      & .user-selector {
         width: 100%;
+
+        /* stylelint-disable-next-line declaration-no-important */
         height: 100% !important;
       }
-      .user-selector-input{
+
+      .user-selector-input {
+        /* stylelint-disable-next-line declaration-no-important */
         height: 100% !important;
       }
     }
