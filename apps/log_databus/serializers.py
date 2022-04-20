@@ -22,20 +22,20 @@ the project delivered to anyone in the future.
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
+
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
 from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX
-from apps.log_databus.models import CleanTemplate, CollectorConfig
-
 from apps.log_databus.constants import EsSourceType
+from apps.log_databus.models import CleanTemplate, CollectorConfig, CollectorPlugin
 from apps.log_search.constants import (
     CollectorScenarioEnum,
-    EncodingsEnum,
     ConditionFilterTypeEnum,
     ConditionTypeEnum,
+    CustomTypeEnum,
+    EncodingsEnum,
     EtlConfigEnum,
     FieldBuiltInEnum,
-    CustomTypeEnum,
 )
 
 
@@ -719,6 +719,48 @@ class ListCollectorSerlalizer(serializers.Serializer):
 
 class BatchGetStateSerlalizer(serializers.Serializer):
     restore_config_ids = serializers.ListField(label=_("归档回溯配置list"), required=True)
+
+
+class CollectorPluginSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CollectorPlugin
+        fields = "__all__"
+
+
+class CollectorPluginCreateSerializer(serializers.ModelSerializer):
+    create_public_data_id = serializers.BooleanField(label=(_("创建DATAID")), default=False)
+    collector_plugin_name_en = serializers.RegexField(
+        label=_("采集插件英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+
+    class Meta:
+        model = CollectorPlugin
+        fields = "__all__"
+
+    def _is_create_data_id(self, attrs: dict) -> bool:
+        """
+        判断是否需要创建DATAID
+        1. 不允许独立DATAID时
+        2. 指定创建DATAID时
+        """
+        return not attrs.get("is_allow_alone_data_id", True) or attrs.get("create_public_data_id", False)
+
+    def validate(self, attrs: dict) -> dict:
+        # bk_biz_id 允许为空，默认置0
+        if not attrs.get("bk_biz_id"):
+            attrs["bk_biz_id"] = 0
+        # 不允许独立存储或有dataid时
+        if not attrs.get("is_allow_alone_storage", True) or self._is_create_data_id(attrs):
+            if not attrs.get("storage_cluster_id"):
+                raise serializers.ValidationError(_("存储集群ID不能为空"))
+        return attrs
+
+
+class CollectorPluginInitSerializer(CollectorCreateSerializer):
+    collector_scenario_id = serializers.CharField(label=_("日志类型"), default=CollectorScenarioEnum.CUSTOM.value)
+    bkdata_biz_id = serializers.IntegerField(label=_("数据平台业务ID"), required=False)
+    etl_params = serializers.JSONField(label=_("清洗规则参数"), required=False)
+    fields = serializers.JSONField(label=_("清洗字段"), required=False)
 
 
 class PreCheckSerializer(serializers.Serializer):

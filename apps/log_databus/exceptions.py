@@ -34,6 +34,11 @@ class BaseCollectorConfigException(BaseException):
     MESSAGE = _("采集配置模块异常")
 
 
+class BaseCollectorPluginException(BaseException):
+    MODULE_CODE = ErrorCode.BKLOG_COLLECTOR_PLUGIN
+    MESSAGE = _("采集插件模块异常")
+
+
 class CollectorConfigNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "001"
     MESSAGE = _("采集配置不存在")
@@ -42,6 +47,11 @@ class CollectorConfigNotExistException(BaseCollectorConfigException):
 class DataLinkConfigNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "002"
     MESSAGE = _("链路配置不存在")
+
+
+class CollectorPluginNotExistException(BaseCollectorPluginException):
+    ERROR_CODE = "003"
+    MESSAGE = _("采集插件不存在")
 
 
 class CollectorIdNotExistException(BaseCollectorConfigException):
@@ -112,6 +122,11 @@ class CollectorBkDataNameDuplicateException(BaseCollectorConfigException):
 class CollectorResultTableIDDuplicateException(BaseCollectorConfigException):
     ERROR_CODE = "114"
     MESSAGE = _("采集项{result_table_id}结果表ID重复")
+
+
+class CollectorPluginNameDuplicateException(BaseCollectorPluginException):
+    ERROR_CODE = "115"
+    MESSAGE = _("采集插件名称已存在")
 
 
 class StorageNotExistException(BaseCollectorConfigException):

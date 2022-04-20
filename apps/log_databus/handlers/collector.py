@@ -17,82 +17,83 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import re
 import copy
 import datetime
+import re
 from collections import defaultdict
+
 import arrow
+from django.conf import settings
 from django.db import IntegrityError
 from django.db import transaction
-from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import CCApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
+from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
+from apps.decorators import user_operation_record
+from apps.exceptions import ApiError, ApiRequestError, ApiResultError
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
-from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
-from apps.utils.cache import caches_one_hour
-from apps.utils.db import array_chunk
-from apps.utils.function import map_if
-from apps.utils.thread import MultiExecuteFunc
-from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
-from apps.iam import ResourceEnum, Permission
-from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_esquery.utils.es_route import EsRoute
-from apps.utils.log import logger
-from apps.exceptions import ApiError, ApiRequestError, ApiResultError
-from apps.utils.local import get_local_param, get_request_username
+from apps.iam import Permission, ResourceEnum
 from apps.log_databus.constants import (
-    TargetNodeTypeEnum,
-    CollectStatus,
-    RunStatus,
-    LogPluginInfo,
+    BIZ_TOPO_INDEX,
     BK_SUPPLIER_ACCOUNT,
+    BULK_CLUSTER_INFOS_LIMIT,
+    CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE,
+    CollectStatus,
+    INTERNAL_TOPO_INDEX,
+    LogPluginInfo,
     META_DATA_ENCODING,
     NOT_FOUND_CODE,
-    CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE,
+    RunStatus,
     SEARCH_BIZ_INST_TOPO_LEVEL,
-    INTERNAL_TOPO_INDEX,
-    BIZ_TOPO_INDEX,
-    BULK_CLUSTER_INFOS_LIMIT,
+    TargetNodeTypeEnum,
 )
+from apps.log_databus.constants import EtlConfig
 from apps.log_databus.exceptions import (
-    CollectorConfigNotExistException,
-    CollectorConfigNameDuplicateException,
-    CollectorConfigDataIdNotExistException,
-    SubscriptionInfoNotFoundException,
-    CollectorActiveException,
-    RegexMatchException,
-    RegexInvalidException,
-    CollectNotSuccessNotCanStart,
     CollectNotSuccess,
-    CollectorTaskRunningStatusException,
+    CollectNotSuccessNotCanStart,
+    CollectorActiveException,
+    CollectorConfigDataIdNotExistException,
+    CollectorConfigNameDuplicateException,
+    CollectorConfigNameENDuplicateException,
+    CollectorConfigNotExistException,
     CollectorCreateOrUpdateSubscriptionException,
     CollectorIllegalIPException,
-    CollectorConfigNameENDuplicateException,
+    CollectorTaskRunningStatusException,
+    RegexInvalidException,
+    RegexMatchException,
+    SubscriptionInfoNotFoundException,
     CollectorBkDataNameDuplicateException,
     CollectorResultTableIDDuplicateException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
+from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig, CleanStash
-from apps.log_search.handlers.biz import BizHandler
-from apps.log_search.handlers.index_set import IndexSetHandler
+from apps.log_databus.handlers.kafka import KafkaConsumerHandle
+from apps.log_databus.handlers.storage import StorageHandler
+from apps.log_databus.models import CleanStash, CollectorConfig
+from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
+from apps.log_esquery.utils.es_route import EsRoute
 from apps.log_search.constants import (
-    GlobalCategoriesEnum,
     CMDB_HOST_SEARCH_FIELDS,
     CollectorScenarioEnum,
     CustomTypeEnum,
+    GlobalCategoriesEnum,
 )
-from apps.models import model_to_dict
-from apps.log_databus.handlers.kafka import KafkaConsumerHandle
-from apps.log_databus.constants import EtlConfig
-from apps.decorators import user_operation_record
+from apps.log_search.handlers.biz import BizHandler
+from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario
+from apps.models import model_to_dict
+from apps.utils.cache import caches_one_hour
+from apps.utils.db import array_chunk
+from apps.utils.function import map_if
+from apps.utils.local import get_local_param, get_request_username
+from apps.utils.log import logger
+from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import format_user_time_zone
-from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 
 
 class CollectorHandler(object):
