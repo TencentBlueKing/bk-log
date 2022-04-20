@@ -36,6 +36,7 @@ from apps.log_databus.serializers import (
     CleanRefreshSerializer,
     CleanSerializer,
     CleanSyncSerializer,
+    CleanTemplateDestroySerializer,
 )
 from apps.log_databus.utils.clean import CleanFilterUtils
 from apps.utils.drf import detail_route, list_route
@@ -448,6 +449,7 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiName destry_clean_template
         @apiGroup 23_clean_template
         @apiDescription 删除清洗模板
+        @apiParam {Int} bk_biz_id 业务id
         @apiSuccessExample {json} 成功返回
         {
             "message": "",
@@ -456,7 +458,8 @@ class CleanTemplateViewSet(ModelViewSet):
             "result": true
         }
         """
-        return Response(CleanTemplateHandler(clean_template_id=clean_template_id).destroy())
+        data = self.params_valid(CleanTemplateDestroySerializer)
+        return Response(CleanTemplateHandler(clean_template_id=clean_template_id).destroy(data["bk_biz_id"]))
 
     @list_route(methods=["POST"])
     def etl_preview(self, request, collector_config_id=None):
