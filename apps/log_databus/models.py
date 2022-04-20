@@ -219,6 +219,9 @@ class CollectorConfig(SoftDeleteModel):
             CollectItsmStatus.SUCCESS_APPLY.value,
         ]
 
+    def itsm_has_appling(self):
+        return self.itsm_ticket_status == CollectItsmStatus.APPLYING.value
+
     def itsm_has_success(self):
         return self.itsm_ticket_status == CollectItsmStatus.SUCCESS_APPLY.value
 
