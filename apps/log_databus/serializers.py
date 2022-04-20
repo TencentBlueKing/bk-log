@@ -682,7 +682,7 @@ class CleanTemplateSerializer(serializers.Serializer):
     etl_params = serializers.DictField(label=_("清洗配置"), required=True)
     etl_fields = serializers.ListField(child=serializers.DictField(), label=_("字段配置"), required=True)
     bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
-    visible_type = serializers.IntegerField(label=_("可见类型"), required=False)
+    visible_type = serializers.CharField(label=_("可见类型"), required=False)
     visible_bk_biz_id = serializers.ListField(label=_("可见业务ID"), required=False)
 
 
