@@ -1115,7 +1115,7 @@ class SearchHandler(object):
 
     def _add_cmdb_fields(self, log):
         server_ip = log.get("serverIp", log.get("ip"))
-        bk_cloud_id = log.get("cloudId")
+        bk_cloud_id = log.get("cloudId", log.get("cloudid"))
         if not server_ip:
             return log
 
