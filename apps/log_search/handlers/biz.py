@@ -40,7 +40,7 @@ from apps.log_search.constants import (
     BK_PROPERTY_GROUP_ROLE,
 )
 from apps.utils import APIModel
-from apps.utils.cache import cache_five_minute, cache_one_hour
+from apps.utils.cache import cache_five_minute, cache_one_hour, cache_half_hour
 from apps.log_search.models import ProjectInfo, BizProperty
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
@@ -480,8 +480,16 @@ class BizHandler(APIModel):
         for host in host_list:
             host["bk_biz_id"] = self.bk_biz_id
             host["app_module"] = host["module"]
-
         return host_list
+
+    @cache_half_hour("cmdb:get_cache_hosts_{bk_biz_id}")
+    def get_cache_hosts(self, bk_biz_id):
+        host_info = self.get_hosts()
+        result = {}
+        for host in host_info:
+            result[host["host"]["bk_host_innerip"]] = host
+            result[f"{host['host']['bk_host_innerip']}:{host['host']['bk_cloud_id']}"] = host
+        return result
 
     @staticmethod
     def _remove_empty_nodes(node):

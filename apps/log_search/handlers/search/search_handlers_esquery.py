@@ -21,6 +21,7 @@ import json
 import copy
 import hashlib
 
+from django.utils.functional import cached_property
 from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
@@ -1112,6 +1113,29 @@ class SearchHandler(object):
         }
         return highlight
 
+    def _add_cmdb_fields(self, log):
+        server_ip = log.get("serverIp", log.get("ip"))
+        bk_cloud_id = log.get("cloudId")
+        if not server_ip:
+            return log
+
+        host_id = server_ip
+        if bk_cloud_id is not None:
+            host_id = f"{server_ip}:{bk_cloud_id}"
+        host_info = self._host_info
+        host_info = host_info.get(host_id, {})
+        if not host_info:
+            log["__module__"] = ""
+            log["__set__"] = ""
+            return log
+        log["__module__"] = " | ".join([module["bk_inst_name"] for module in host_info.get("module", [])])
+        log["__set__"] = " | ".join([set["bk_inst_name"] for set in host_info.get("set", [])])
+        return log
+
+    @cached_property
+    def _host_info(self):
+        return BizHandler(self.search_dict.get("bk_biz_id")).get_cache_hosts(self.search_dict.get("bk_biz_id"))
+
     def _deal_query_result(self, result_dict: dict) -> dict:
         result: dict = {
             "aggregations": result_dict.get("aggregations", {}),
@@ -1131,6 +1155,7 @@ class SearchHandler(object):
         for hit in result_dict["hits"]["hits"]:
             log = hit["_source"]
             origin_log = copy.deepcopy(log)
+            log = self._add_cmdb_fields(log)
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})
