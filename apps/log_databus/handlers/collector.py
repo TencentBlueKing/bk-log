@@ -512,10 +512,10 @@ class CollectorHandler(object):
                         )
 
                 # 2.2 meta-创建或更新数据源
+                collector_scenario = CollectorScenario.get_instance(
+                    collector_scenario_id=self.data.collector_scenario_id
+                )
                 if not params.get("bk_data_id"):
-                    collector_scenario = CollectorScenario.get_instance(
-                        collector_scenario_id=self.data.collector_scenario_id
-                    )
                     bk_data_id = collector_scenario.update_or_create_data_id(
                         bk_data_id=self.data.bk_data_id,
                         data_link_id=self.data.data_link_id,
@@ -528,7 +528,7 @@ class CollectorHandler(object):
                         encoding=META_DATA_ENCODING,
                     )
                 else:
-                    bk_data_id = params.get("bk_data_id")
+                    bk_data_id = params["bk_data_id"]
                 self.data.bk_data_id = bk_data_id
                 self.data.save()
 
@@ -555,7 +555,9 @@ class CollectorHandler(object):
             )
         finally:
             # 创建数据平台data_id
-            async_create_bkdata_data_id.delay(self.data.collector_config_id)
+            # 如果是插件传入的则不创建
+            if not params.get("bk_data_id"):
+                async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         return {
             "collector_config_id": self.data.collector_config_id,

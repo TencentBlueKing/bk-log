@@ -51,6 +51,8 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {String} description 采集插件描述
         @apiParam {Int} bk_biz_id 业务ID
         @apiParam {Bool} is_enabled_display_collector 是否显示采集项
+        @apiParam {String} collector_scenario_id 采集场景
+        @apiParam {String} category_id 类别
         @apiParam {Bool} is_allow_alone_data_id 是否允许独立DATAID
         @apiParam {Bool} is_allow_alone_etl_config 是否允许独立清洗配置
         @apiParam {Bool} is_allow_alone_storage 是否允许独立存储配置
@@ -61,7 +63,11 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {Int} [retention] 保留时间
         @apiParam {Int} [allocation_min_days] 冷热数据时间
         @apiParam {Int} [storage_replies] 副本数量
-        @apiParam {list} params 采集插件参数
+        @apiParam {Int} [storage_shards_size] 单shards分片大小
+        @apiParam {Int} [storage_shards_nums] 单shards分片数量
+        @apiParam {Object} params 采集插件参数
+        @apiParam {Objects} params.fields 清洗字段
+        @apiParam {Objects} params.etl_params 清洗入库参数
         @apiParamExample {json} 请求样例:
         {
             "create_public_data_id": true,
@@ -73,6 +79,8 @@ class CollectorPluginViewSet(ModelViewSet):
             "is_allow_alone_data_id": false,
             "is_allow_alone_etl_config": false,
             "is_allow_alone_storage": false,
+            "collector_scenario_id": "custom",
+            "category_id": "application_check",
             "storage_cluster_id": 2,
             "etl_processor": "transfer",
             "etl_config": "bk_log_text",
@@ -80,17 +88,7 @@ class CollectorPluginViewSet(ModelViewSet):
             "retention": 7,
             "allocation_min_days": 7,
             "storage_replies": 1,
-            "params": [
-                {
-                    "name": "join_result_table",
-                    "type": "string",
-                    "desc": "静态数据关联表",
-                    "required": false,
-                    "scope": [
-                        "etl"
-                    ]
-                }
-            ]
+            "params": {}
         }
         @apiSuccessExample {json} 成功返回:
         {

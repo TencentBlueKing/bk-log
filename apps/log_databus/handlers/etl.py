@@ -18,34 +18,33 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import arrow
-
-from django.utils.translation import ugettext_lazy as _
-from django.db import transaction
 from django.conf import settings
+from django.db import transaction
+from django.utils.translation import ugettext_lazy as _
 
-from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
+from apps.api import TransferApi
+from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
+from apps.decorators import user_operation_record
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
+from apps.log_databus.constants import ETL_PARAMS, EtlConfig, REGISTERED_SYSTEM_DEFAULT
 from apps.log_databus.exceptions import (
+    CollectorActiveException,
     CollectorConfigNotExistException,
     EtlParseTimeFormatException,
     EtlStorageUsedException,
-    CollectorActiveException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash
+from apps.log_databus.handlers.storage import StorageHandler
+from apps.log_databus.models import CleanStash, CollectorConfig, StorageCapacity, StorageUsed
+from apps.log_search.constants import CollectorScenarioEnum, FieldDateFormatEnum, ISO_8601_TIME_FORMAT_NAME
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import Scenario, ProjectInfo
-from apps.log_search.constants import FieldDateFormatEnum, CollectorScenarioEnum, ISO_8601_TIME_FORMAT_NAME
+from apps.log_search.models import ProjectInfo, Scenario
 from apps.models import model_to_dict
 from apps.utils.db import array_group
-from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.constants import REGISTERED_SYSTEM_DEFAULT, EtlConfig, ETL_PARAMS
-from apps.decorators import user_operation_record
 from apps.utils.local import get_request_username
-from apps.api import TransferApi
 
 
 class EtlHandler(object):
