@@ -375,7 +375,7 @@ export default {
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
     },
     isCanUseAssessment() {
-      if (this.operateType === 'edit') return false;
+      if (['editFinish', 'edit', 'storage'].includes(this.operateType)) return false;
       // itsm开启时 并且 当前选择的集群容量评估开启时 并且 不为采集成功时展示容量评估
       return this.isItsm && this.activeCluster.enable_assessment && this.curCollect.itsm_ticket_status !== 'success_apply';
     },
@@ -427,6 +427,7 @@ export default {
         etl_params,
         assessment_config,
       } = this.formData;
+      const isNeedAssessment = this.isCanUseAssessment;
       this.isLoading = true;
       const data = {
         etl_config,
@@ -447,7 +448,7 @@ export default {
           need_approval: assessment_config.need_approval,
           approvals: assessment_config.approvals,
         },
-        need_assessment: this.isCanUseAssessment,
+        need_assessment: isNeedAssessment,
       };
       !this.isCanUseAssessment && (delete data.assessment_config);
       /* eslint-disable */
@@ -498,9 +499,11 @@ export default {
     },
     // 完成按钮
     finish() {
+      // 未选择集群
       const isNotSelectedID = this.formData.storage_cluster_id === '';
-      const isNotFillLogAssessment = this.isCanUseAssessment && !this.formData.assessment_config.log_assessment;
-      if (!isNotSelectedID || !isNotFillLogAssessment) {
+      // 当前集群容量评估可用，但并未填写每日单台日志量
+      const isNotFillLogAssessment = this.isCanUseAssessment && this.formData.assessment_config.log_assessment === '';
+      if (isNotSelectedID || isNotFillLogAssessment) {
         const message = isNotSelectedID ? this.$t('请选择集群') : this.$t('请填写每日单台日志量');
         this.$bkMessage({
           theme: 'error',

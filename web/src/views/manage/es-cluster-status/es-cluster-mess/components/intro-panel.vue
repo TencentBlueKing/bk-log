@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="intro-panel">
+  <div class="illustrate-panel">
     <div :class="`right-window ${isOpenWindow ? 'window-active' : ''}`">
       <!-- <span class="bk-icon icon-more"></span> -->
       <div class="create-btn details" @click="handleActiveDetails(null)">
@@ -44,7 +44,7 @@
                  target="_blank"
                  :href="sItem.url">
                 {{$t('跳转至')}}{{item.name}}
-                <span class="log-icon icon-lianjie"></span>
+                <span class="log-icon icon-tiaozhuan"></span>
               </a>
               <bk-button
                 v-else
@@ -70,7 +70,7 @@
       <div class="group-container">
         <div class="group-title-container">
           <div class="qw-icon">
-            <span class="ag-doc-icon doc-qw"></span>
+            <span class="log-icon icon-qiyeweixin"></span>
           </div>
           <div class="hint">
             <p>{{$t('一键拉群功能')}}</p>
@@ -108,9 +108,9 @@ export default {
   data() {
     return {
       isShowDialog: false,
-      formDataAdmin: [],
+      formDataAdmin: [], // 用户英文名
       baseAdmin: [], // 本人和列表里的人物，不能够进行删除操作
-      chatName: '',
+      chatName: '', // 群聊名称
       userApi: window.BK_LOGIN_URL,
     };
   },
@@ -132,7 +132,16 @@ export default {
   methods: {
     filterSourceShow(list) {
       const filterList = list.filter(item => (item.help_md || item.button_list.length));
-      return filterList || [];
+      // help_md赋值标题
+      const showList =  filterList.reduce((pre, cur) => {
+        const helpMd = `<h1>${cur.name}</h1>\n${cur.help_md}`;
+        pre.push({
+          ...cur,
+          help_md: helpMd,
+        });
+        return pre;
+      }, []);
+      return showList || [];
     },
     handleActiveDetails(state) {
       this.$emit('handleActiveDetails', state ? state : !this.isOpenWindow);
@@ -140,8 +149,10 @@ export default {
     handleCreateAGroup(adminList) {
       this.isShowDialog = true;
       this.chatName = adminList.chat_name;
+      // 创建新的群聊时带上本人和默认人员
       this.formDataAdmin = adminList.users.concat([this.userMeta.username]);
-      this.baseAdmin = JSON.parse(JSON.stringify(this.formDataAdmin)); // 赋值最基础的人员
+      // 用于存储本人和默认人员 不能进行删除
+      this.baseAdmin = JSON.parse(JSON.stringify(this.formDataAdmin));
     },
     handleSubmitQWGroup() {
       const data = {
@@ -157,7 +168,13 @@ export default {
             message: this.$t('创建成功'),
           });
         }
-      });
+      })
+        .catch(() => {
+          this.$bkMessage({
+            theme: 'error',
+            message: this.$t('创建失败'),
+          });
+        });
     },
     handleCancelQWGroup() {
       this.formDataAdmin = [];
@@ -165,6 +182,7 @@ export default {
       this.chatName = '';
     },
     handleChangePrincipal(val) {
+      // 删除操作时保留原来的基础人员
       const setList = new Set([...this.baseAdmin, ...val]);
       this.formDataAdmin = [...setList];
     },
@@ -176,7 +194,7 @@ export default {
   @import '@/scss/mixins/flex';
   @import '@/scss/mixins/scroller';
 
-  .intro-panel {
+  .illustrate-panel {
     .right-window {
       width: 320px;
       height: 100vh;
@@ -188,7 +206,7 @@ export default {
       z-index: 99;
       color: #63656e;
       transition: right .5s;
-      padding: 16px 24px 0;
+      padding: 16px 0 0 24px;
 
       .top-title {
         height: 28px;
@@ -238,7 +256,8 @@ export default {
       }
 
       .help-main {
-        height: 100%;
+        height: calc(100vh - 180px);
+        padding-right: 24px;
         overflow-y: auto;
       }
 
