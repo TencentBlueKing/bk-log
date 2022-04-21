@@ -1,3 +1,23 @@
+# -*- coding: utf-8 -*-
+"""
+Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
+Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
+License for BK-LOG 蓝鲸日志平台:
+--------------------------------------------------------------------
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"""
+
 import logging
 from typing import Union
 
@@ -86,7 +106,7 @@ class CollectorPluginHandler:
             }
         )
 
-    def _create_collector_plugin_operation_log(self, action: str) -> None:
+    def _create_plugin_operation_log(self, action: str) -> None:
         """记录用户对采集插件操作"""
         self._create_operation_log(
             action,
@@ -95,7 +115,7 @@ class CollectorPluginHandler:
             self.collector_plugin,
         )
 
-    def _create_collector_config_operation_log(self, action: str) -> None:
+    def _create_config_operation_log(self, action: str) -> None:
         """记录用户对采集项操作"""
         self._create_operation_log(
             action,
@@ -205,7 +225,7 @@ class CollectorPluginHandler:
         self._create(params)
 
         # add user_operation_record
-        self._create_collector_plugin_operation_log(UserOperationActionEnum.CREATE.value)
+        self._create_plugin_operation_log(UserOperationActionEnum.CREATE.value)
 
         return {
             "collector_plugin_id": self.collector_plugin.collector_plugin_id,
