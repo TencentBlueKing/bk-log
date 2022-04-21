@@ -1134,7 +1134,9 @@ class SearchHandler(object):
 
     @cached_property
     def _host_info(self):
-        return BizHandler(self.search_dict.get("bk_biz_id")).get_cache_hosts(self.search_dict.get("bk_biz_id"))
+        return BizHandler(self.search_dict.get("bk_biz_id")).get_cache_hosts(
+            bk_biz_id=self.search_dict.get("bk_biz_id")
+        )
 
     def _deal_query_result(self, result_dict: dict) -> dict:
         result: dict = {
