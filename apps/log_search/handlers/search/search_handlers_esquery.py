@@ -1115,7 +1115,7 @@ class SearchHandler(object):
 
     def _add_cmdb_fields(self, log):
         server_ip = log.get("serverIp", log.get("ip"))
-        bk_cloud_id = log.get("cloudId")
+        bk_cloud_id = log.get("cloudId", log.get("cloudid"))
         if not server_ip:
             return log
 
@@ -1134,7 +1134,9 @@ class SearchHandler(object):
 
     @cached_property
     def _host_info(self):
-        return BizHandler(self.search_dict.get("bk_biz_id")).get_cache_hosts(self.search_dict.get("bk_biz_id"))
+        return BizHandler(self.search_dict.get("bk_biz_id")).get_cache_hosts(
+            bk_biz_id=self.search_dict.get("bk_biz_id")
+        )
 
     def _deal_query_result(self, result_dict: dict) -> dict:
         result: dict = {

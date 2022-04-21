@@ -128,7 +128,7 @@ class MappingHandlers(object):
 
     def virtual_fields(self, field_list):
         fields = {f["field_name"] for f in field_list}
-        virtual_predicate = [{"serverIp", "cloudId"}, {"ip"}]
+        virtual_predicate = [{"serverIp", "cloudId"}, {"ip", "cloudid"}, {"ip"}]
         if any([fields.issuperset(predicate) for predicate in virtual_predicate]):
             field_list.append(
                 {
