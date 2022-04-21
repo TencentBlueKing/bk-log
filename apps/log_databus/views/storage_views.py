@@ -599,7 +599,11 @@ class StorageViewSet(APIViewSet):
         }
         """
         data = self.params_valid(StorageListSerializer)
-        return Response(StorageHandler().get_cluster_groups(bk_biz_id=data["bk_biz_id"], is_default=False))
+        return Response(
+            StorageHandler().get_cluster_groups(
+                bk_biz_id=data["bk_biz_id"], is_default=False, enable_archive=data["enable_archive"]
+            )
+        )
 
     @list_route(methods=["POST"], url_path="batch_connectivity_detect")
     def batch_connectivity_detect(self, request, *args, **kwargs):
