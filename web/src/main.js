@@ -31,10 +31,10 @@ import i18n from '@/language/i18n';
 import methods from './plugins/methods';
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
-import '@icon-cool/bk-icon-log_search';
 import cursor from '@/directives/cursor';
 import LogButton from '@/components/log-button';
 import './common/global';
+import './static/icons/log-icons.css';
 // 接入OTLP
 import { WebTracerProvider } from '@opentelemetry/web';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
