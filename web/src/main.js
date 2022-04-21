@@ -31,7 +31,6 @@ import i18n from '@/language/i18n';
 import methods from './plugins/methods';
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
-import '@icon-cool/bk-icon-log_search';
 import cursor from '@/directives/cursor';
 import LogButton from '@/components/log-button';
 import './common/global';
