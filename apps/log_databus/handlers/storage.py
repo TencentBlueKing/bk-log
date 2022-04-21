@@ -155,7 +155,7 @@ class StorageHandler(object):
         :param data_link_id: 链路ID
         :return:
         """
-        cluster_groups = self.get_cluster_groups(bk_biz_id, is_default=is_default)
+        cluster_groups = self.get_cluster_groups(bk_biz_id, is_default=is_default, enable_archive=enable_archive)
 
         # 排序：第三方集群 > 默认集群
         cluster_groups.sort(key=lambda c: c["priority"])
