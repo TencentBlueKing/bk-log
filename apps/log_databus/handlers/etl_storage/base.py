@@ -20,20 +20,20 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import copy
+
+from django.conf import settings
+from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
-from django.utils.module_loading import import_string
-from django.conf import settings
-
-from apps.log_databus.utils.es_config import get_es_config
-from apps.utils import is_match_variate
 from apps.api import TransferApi
 from apps.exceptions import ValidationError
-from apps.log_search.constants import FieldBuiltInEnum, FieldDataTypeEnum
-from apps.log_databus.constants import EtlConfig, FIELD_TEMPLATE, BKDATA_ES_TYPE_MAP
-from apps.log_databus.models import CollectorConfig
-from apps.log_databus.handlers.collector_scenario import CollectorScenario
+from apps.log_databus.constants import BKDATA_ES_TYPE_MAP, EtlConfig, FIELD_TEMPLATE
 from apps.log_databus.exceptions import EtlParseTimeFieldException, HotColdCheckException
+from apps.log_databus.handlers.collector_scenario import CollectorScenario
+from apps.log_databus.models import CollectorConfig
+from apps.log_databus.utils.es_config import get_es_config
+from apps.log_search.constants import FieldBuiltInEnum, FieldDataTypeEnum
+from apps.utils import is_match_variate
 
 
 class EtlStorage(object):
@@ -244,10 +244,11 @@ class EtlStorage(object):
             param_mapping["_all"] = {"enabled": True}
             param_mapping["include_in_all"] = False
 
+        bk_biz_id = collector_config.bkdata_biz_id if collector_config.bkdata_biz_id else collector_config.bk_biz_id
         params = {
             "bk_data_id": collector_config.bk_data_id,
             # 必须为 库名.表名
-            "table_id": f"{collector_config.bk_biz_id}_{settings.TABLE_ID_PREFIX}.{table_id}",
+            "table_id": f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{table_id}",
             "is_enable": True,
             "table_name_zh": collector_config.collector_config_name,
             "is_custom_table": True,
@@ -326,7 +327,8 @@ class EtlStorage(object):
         if not collector_config.table_id:
             # 创建结果表
             collector_config.table_id = TransferApi.create_result_table(params)["table_id"]
-            collector_config.save()
+            if collector_config.collector_config_id:
+                collector_config.save()
         else:
             # 更新结果表
             params["table_id"] = collector_config.table_id

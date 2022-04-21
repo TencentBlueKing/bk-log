@@ -104,6 +104,7 @@ class CollectorConfig(SoftDeleteModel):
     bk_data_id = models.IntegerField(_("采集链路data_id"), null=True, default=None)
     bk_data_name = models.CharField(_("采集链路data_name"), null=True, default=None, max_length=64)
     table_id = models.CharField(_("结果表ID"), max_length=255, null=True, default=None)
+    processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)
     etl_processor = models.CharField(
         _("数据处理引擎"), max_length=32, choices=ETLProcessorChoices.choices, default=ETLProcessorChoices.TRANSFER.value
     )
@@ -128,8 +129,6 @@ class CollectorConfig(SoftDeleteModel):
     bkdata_data_id_sync_times = models.IntegerField(_("调用数据平台创建data_id失败数"), default=0)
     collector_config_name_en = models.CharField(_("采集项英文名"), max_length=255, null=True, blank=True, default="")
     is_display = models.BooleanField(_("采集项是否对用户可见"), default=True)
-    bkdata_etl_processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)
-    bkdata_etl_result_table_id = models.CharField(_("计算平台结果表id"), max_length=255, null=True, blank=True)
 
     @property
     def is_clustering(self) -> bool:
@@ -470,7 +469,10 @@ class CollectorPlugin(SoftDeleteModel):
     collector_plugin_id = models.BigAutoField(_("采集插件ID"), primary_key=True)
     collector_plugin_name = models.CharField(_("采集插件名称"), max_length=64)
     collector_plugin_name_en = models.CharField(_("英文采集插件名称"), max_length=64)
+    collector_scenario_id = models.CharField(_("采集场景ID"), max_length=64)
     description = models.CharField(_("插件描述"), max_length=64)
+    category_id = models.CharField(_("数据分类"), max_length=64)
+    data_encoding = models.CharField(_("日志字符集"), max_length=30, null=True, default=None)
     params = models.JSONField(_("采集插件参数"), default=dict, null=True)
     is_enabled_display_collector = models.BooleanField(_("采集项是否对用户可见"), default=False)
     is_allow_alone_data_id = models.BooleanField(_("是否允许使用独立DATAID"), default=True)
@@ -482,12 +484,13 @@ class CollectorPlugin(SoftDeleteModel):
         _("数据处理器"), max_length=32, choices=ETLProcessorChoices.choices, default=ETLProcessorChoices.TRANSFER.value
     )
     etl_config = models.CharField(_("清洗配置"), max_length=32, null=True, default=None)
-    etl_template = models.JSONField(_("清洗配置模板"), null=True)
     is_allow_alone_storage = models.BooleanField(_("是否允许独立存储"), default=True)
     storage_cluster_id = models.IntegerField(_("存储集群ID"), null=True)
     retention = models.IntegerField(_("数据有效时间"), null=True)
     allocation_min_days = models.IntegerField(_("冷热数据生效时间"), null=True)
     storage_replies = models.IntegerField(_("副本数量"), null=True)
+    storage_shards_nums = models.IntegerField(_("ES分片数量"), null=True, default=None, blank=True)
+    storage_shards_size = models.IntegerField(_("单shards分片大小"), null=True, default=None, blank=True)
 
     class Meta:
         verbose_name = _("用户采集插件")
@@ -497,6 +500,11 @@ class CollectorPlugin(SoftDeleteModel):
             ("collector_plugin_name", "bk_biz_id"),
             ("collector_plugin_name_en", "bk_biz_id"),
         ]
+
+    def get_updated_by(self):
+        if self.updated_by == ADMIN_REQUEST_USER:
+            return self.created_by
+        return self.updated_by
 
     @transaction.atomic()
     def change_collector_display_status(self, display_status: bool):

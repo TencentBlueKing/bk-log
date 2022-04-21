@@ -27,7 +27,11 @@ from django.utils.module_loading import import_string
 
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
 from apps.decorators import user_operation_record
-from apps.log_databus.constants import ETLProcessorChoices, META_DATA_ENCODING
+from apps.log_databus.constants import (
+    ADMIN_REQUEST_USER,
+    ETLProcessorChoices,
+    META_DATA_ENCODING,
+)
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
     CollectorPluginNameDuplicateException,
@@ -124,6 +128,38 @@ class CollectorPluginHandler:
             self.collector_config,
         )
 
+    def _create_bkdata_data_id(self):
+        """创建数据平台DATAID"""
+        maintainers = {self.collector_plugin.updated_by, self.collector_plugin.created_by}
+        maintainers.discard(ADMIN_REQUEST_USER)
+        # if not maintainers:
+        #    raise Exception(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
+        # BkDataAccessApi.deploy_plan_post(
+        #     params={
+        #         "bk_username": self.collector_plugin.get_updated_by(),
+        #         "data_scenario": BKDATA_DATA_SCENARIO,
+        #         "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
+        #         "permission": BKDATA_PERMISSION,
+        #         "bk_biz_id": self.collector_plugin.bk_biz_id,
+        #         "description": self.collector_plugin.description,
+        #         "access_raw_data": {
+        #             "tags": BKDATA_TAGS,
+        #             "raw_data_name": self.collector_plugin.collector_plugin_name_en,
+        #             "maintainer": ",".join(maintainers),
+        #             "raw_data_alias": self.collector_plugin.collector_plugin_name,
+        #             "data_source_tags": BKDATA_DATA_SOURCE_TAGS,
+        #             "data_region": BKDATA_DATA_REGION,
+        #             "data_source": BKDATA_DATA_SOURCE,
+        #             "data_encoding": self.collector_plugin.data_encoding
+        #             if self.collector_plugin.data_encoding
+        #             else META_DATA_ENCODING,
+        #             "sensitivity": BKDATA_DATA_SENSITIVITY,
+        #             "description": self.collector_plugin.description,
+        #             "preassigned_data_id": self.collector_plugin.bk_data_id,
+        #         },
+        #     }
+        # )
+
     def _create_data_id(self) -> int:
         """创建DATAID"""
         collector_scenario = CollectorScenario.get_instance(CollectorScenarioEnum.CUSTOM.value)
@@ -133,22 +169,23 @@ class CollectorPluginHandler:
             data_name="{bk_biz_id}_{table_id_prefix}_{name}".format(
                 bk_biz_id=self.collector_plugin.bk_biz_id,
                 table_id_prefix=settings.TABLE_ID_PREFIX,
-                name=self.collector_plugin.collector_plugin_name_en,
+                name=self.collector_plugin.collector_plugin_name,
             ),
             description=self.collector_plugin.description,
             encoding=META_DATA_ENCODING,
         )
+        self._create_bkdata_data_id()
         return bk_data_id
 
-    def _build_plugin_etl_template(self, params: dict) -> dict:
-        raise NotImplementedError
-
     def _pre_check_en_name(self, en_name: str) -> None:
-        # 校验英文名称，不能与插件或实例的名字重复
+        """校验英文名称，不能与插件或实例的名字重复"""
         config_name_duplicate = CollectorConfig.objects.filter(collector_config_name_en=en_name).exists()
         plugin_name_duplicate = CollectorPlugin.objects.filter(collector_plugin_name_en=en_name).exists()
         if config_name_duplicate or plugin_name_duplicate:
             raise CollectorPluginNameDuplicateException()
+
+    def _create_etl_storage(self, instance, params: dict) -> str:
+        raise NotImplementedError
 
     @transaction.atomic()
     def _create(self, params: dict) -> None:
@@ -164,14 +201,17 @@ class CollectorPluginHandler:
             "bk_biz_id": params["bk_biz_id"],
             "collector_plugin_name": params["collector_plugin_name"],
             "collector_plugin_name_en": params["collector_plugin_name_en"],
-            "description": params["description"],
+            "description": params["description"] if params.get("description") else params["collector_plugin_name"],
+            "category_id": params["category_id"],
+            "data_encoding": params.get("data_encoding"),
+            "params": params.get("params", {}),
+            "data_link_id": params.get("data_link_id"),
             "is_enabled_display_collector": params["is_enabled_display_collector"],
             "is_allow_alone_data_id": params["is_allow_alone_data_id"],
             "is_allow_alone_etl_config": params["is_allow_alone_etl_config"],
             "is_allow_alone_storage": params["is_allow_alone_storage"],
+            "collector_scenario_id": params["collector_scenario_id"],
             "etl_processor": params["etl_processor"],
-            "params": params.get("params", {}),
-            "data_link_id": params.get("data_link_id"),
         }
 
         # 校验英文名
@@ -184,7 +224,7 @@ class CollectorPluginHandler:
             logger.warning(f"collector plugin name duplicate => [{params.get('collector_plugin_name')}]")
             raise CollectorPluginNameDuplicateException()
 
-        # 创建 DATA_ID
+        # DATA_ID
         if not params["is_allow_alone_data_id"] or params.get("create_public_data_id", False):
             # 绑定链路
             if not self.collector_plugin.data_link_id:
@@ -195,20 +235,19 @@ class CollectorPluginHandler:
                     self.collector_plugin.data_link_id = data_links.first().data_link_id
             # 创建 DATA ID
             self.collector_plugin.bk_data_id = self._create_data_id()
-            # 指定结果表
-            self.collector_plugin.table_id = self.collector_plugin.collector_plugin_name_en
 
-        # 存储集群
+        # 存储
         if not params["is_allow_alone_storage"] or self.collector_plugin.bk_data_id:
             self.collector_plugin.storage_cluster_id = params["storage_cluster_id"]
             self.collector_plugin.retention = params["retention"]
             self.collector_plugin.allocation_min_days = params["allocation_min_days"]
             self.collector_plugin.storage_replies = params["storage_replies"]
+            self.collector_plugin.storage_shards_nums = params["storage_shards_nums"]
 
-        # 清洗规则
+        # 清洗
         if not params["is_allow_alone_etl_config"] or self.collector_plugin.bk_data_id:
             self.collector_plugin.etl_config = params["etl_config"]
-            self.collector_plugin.etl_template = self._build_plugin_etl_template(params)
+            self.collector_plugin.table_id = self._create_etl_storage(self.collector_plugin, params)
 
         self.collector_plugin.save()
 
@@ -232,29 +271,44 @@ class CollectorPluginHandler:
             "collector_plugin_name": self.collector_plugin.collector_plugin_name,
         }
 
+    def _update_config_params(self, params: dict, *args):
+        """批量更新多个参数为插件参数"""
+        for key in args:
+            try:
+                value = getattr(self.collector_plugin, key)
+                params[key] = value
+            except AttributeError:
+                pass
+        return params
+
     def _build_create_instance_params(self, params: dict) -> dict:
         """
         构造创建必须的参数
         """
         # 采集场景
-        params["collector_scenario_id"] = CollectorScenarioEnum.CUSTOM.value
+        params["collector_scenario_id"] = self.collector_plugin.collector_scenario_id
         # 是否展示采集项
         params["is_display"] = self.collector_plugin.is_enabled_display_collector
         # 不允许独立DATAID
         if not self.collector_plugin.is_allow_alone_data_id:
-            params["bk_data_id"] = self.collector_plugin.bk_data_id
-            params["data_link_id"] = self.collector_plugin.data_link_id
-            params["table_id"] = self.collector_plugin.table_id
-        # 不允许独立清洗配置
-        if not self.collector_plugin.is_allow_alone_etl_config:
-            params["etl_processor"] = self.collector_plugin.etl_processor
-            params["etl_config"] = self.collector_plugin.etl_config
+            self._update_config_params(params, "bk_data_id", "data_link_id")
         # 不允许独立存储
         if not self.collector_plugin.is_allow_alone_storage:
-            params["storage_cluster_id"] = self.collector_plugin.storage_cluster_id
-            params["retention"] = self.collector_plugin.retention
-            params["allocation_min_days"] = self.collector_plugin.allocation_min_days
-            params["storage_replies"] = self.collector_plugin.storage_replies
+            self._update_config_params(
+                params,
+                "storage_cluster_id",
+                "retention",
+                "allocation_min_days",
+                "storage_replies",
+                "storage_shards_nums",
+                "storage_shards_size",
+                "table_id",
+            )
+        # 不允许独立清洗配置
+        if not self.collector_plugin.is_allow_alone_etl_config:
+            self._update_config_params(params, "etl_processor", "etl_config", "etl_template")
+            params["fields"] = self.collector_plugin.params.get("fields")
+            params["etl_params"] = self.collector_plugin.params.get("etl_params")
         return params
 
     def _create_instance_etl_storage(self, params: dict):
@@ -287,6 +341,7 @@ class CollectorPluginHandler:
         self._get_collector_config(collector_config["collector_config_id"])
 
         # 创建清洗入库
-        self._create_instance_etl_storage(params)
+        if self.collector_plugin.is_allow_alone_etl_config:
+            self._create_instance_etl_storage(params)
 
         return collector_config

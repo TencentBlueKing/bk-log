@@ -745,14 +745,30 @@ class CollectorPluginCreateSerializer(serializers.ModelSerializer):
         """
         return not attrs.get("is_allow_alone_data_id", True) or attrs.get("create_public_data_id", False)
 
+    def _check_multi_attrs(self, attrs: dict, *args):
+        """校验多个参数是否存在"""
+        for key in args:
+            if not hasattr(attrs, key):
+                raise serializers.ValidationError(key + _("不存在"))
+
     def validate(self, attrs: dict) -> dict:
         # bk_biz_id 允许为空，默认置0
         if not attrs.get("bk_biz_id"):
             attrs["bk_biz_id"] = 0
+        # 不允许独立清洗规则或有dataid时
+        if not attrs.get("is_allow_alone_etl_config", True) or self._is_create_data_id(attrs):
+            self._check_multi_attrs(attrs, "etl_config")
         # 不允许独立存储或有dataid时
         if not attrs.get("is_allow_alone_storage", True) or self._is_create_data_id(attrs):
-            if not attrs.get("storage_cluster_id"):
-                raise serializers.ValidationError(_("存储集群ID不能为空"))
+            self._check_multi_attrs(
+                attrs,
+                "storage_cluster_id",
+                "retention",
+                "allocation_min_days",
+                "storage_replies",
+                "storage_shards_nums",
+                "storage_shards_size",
+            )
         return attrs
 
 
