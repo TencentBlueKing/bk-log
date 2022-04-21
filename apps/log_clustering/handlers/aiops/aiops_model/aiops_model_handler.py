@@ -1082,6 +1082,7 @@ class AiopsModelHandler(BaseAiopsHandler):
                     "experiment_id": experiment_id,
                     "protocol_version": "1.2",
                     "continuous_training": False,
+                    "project_id": self.conf.get("project_id"),
                 }
             )
         )

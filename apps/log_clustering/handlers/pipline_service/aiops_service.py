@@ -224,6 +224,10 @@ class AiopsBkdataService(BasePipeLineService):
         ).extend(
             end
         )
+        tree = build_tree(start, data=data_context)
+        parser = PipelineParser(pipeline_tree=tree)
+        pipeline = parser.parse()
+        return pipeline
 
 
 class UpdateModelService(BasePipeLineService):
@@ -271,6 +275,10 @@ class UpdateModelService(BasePipeLineService):
         ).extend(
             end
         )
+        tree = build_tree(start, data=data_context)
+        parser = PipelineParser(pipeline_tree=tree)
+        pipeline = parser.parse()
+        return pipeline
 
 
 def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
@@ -283,8 +291,8 @@ def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
     )
     params = {
         "bk_biz_id": conf["bk_biz_id"],
-        "sample_set_name": f"{clustering_config.bk_biz_id}_bklog_sample_set_" f"{rt_name}",
-        "model_name": f"{clustering_config.bk_biz_id}_bklog_model_{rt_name}",
+        "sample_set_name": f"{clustering_config.bk_biz_id}_bklog_sample_set_" f"{index_set_id}",
+        "model_name": f"{clustering_config.bk_biz_id}_bklog_model_{index_set_id}",
         "description": f"{clustering_config.bk_biz_id}_bklog_{rt_name}",
         "experiment_alias": f"{clustering_config.bk_biz_id}_bklog_" f"{rt_name}_experiment",
         "collector_config_id": clustering_config.collector_config_id,

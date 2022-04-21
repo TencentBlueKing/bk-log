@@ -174,6 +174,7 @@ class UpdateExecuteConfig(object):
         )
         self.update_execute_config.component.inputs.model_name = Var(type=Var.SPLICE, value="${model_name}")
         self.update_execute_config.component.inputs.experiment_alias = Var(type=Var.SPLICE, value="${experiment_alias}")
+        self.update_execute_config.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class SampleSetLoadingService(BaseService):
@@ -592,6 +593,7 @@ class CloseContinuousTrainingService(BaseService):
             logger.error(
                 f"could not find experiment : [model_name]: {model_name} [experiment_alias]: {experiment_alias}"
             )
+            return True
         AiopsModelHandler().close_continuous_training(
             model_id=aiops_model_experiment.model_id, experiment_id=aiops_model_experiment.experiment_id
         )
@@ -603,7 +605,7 @@ class CloseContinuousTrainingService(BaseService):
 class CloseContinuousTrainingComponent(Component):
     name = "CloseContinuousTraining"
     code = "close_continuous_training"
-    bound_service = CreateExperimentService
+    bound_service = CloseContinuousTrainingService
 
 
 class CloseContinuousTraining(object):

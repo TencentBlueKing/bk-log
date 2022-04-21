@@ -120,7 +120,7 @@ class _BkDataAIOPSApi:
             default_timeout=300,
         )
         self.put_experiment = DataAPI(
-            method="POST",
+            method="PUT",
             url=AIOPS_APIGATEWAY_ROOT + "models/{model_id}/experiments/{experiment_id}",
             module=self.MODULE,
             url_keys=["model_id", "experiment_id"],

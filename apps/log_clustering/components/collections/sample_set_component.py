@@ -65,6 +65,7 @@ class CreateSampleSet(object):
         self.create_sample_set.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.create_sample_set.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class AddRtToSampleSetService(BaseService):
@@ -103,6 +104,7 @@ class AddRtToSampleSet(object):
         self.add_rt_to_sample_set.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.add_rt_to_sample_set.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class CollectConfigsService(BaseService):

@@ -55,6 +55,7 @@ class BkLogDelimiterEtlStorage(EtlStorage):
 
         result = []
         separator_field_list = []
+        print(data)
         for index, key in enumerate(values):
             field_index = index + 1
             result.append({"field_index": field_index, "field_name": "", "value": values[index]})

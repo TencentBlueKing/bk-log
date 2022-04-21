@@ -172,7 +172,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 continue
             rule = [
                 all_fields_dict.get(filter_rule.get("fields_name")),
-                filter_rule.get("op"),
+                cls.change_op(filter_rule.get("op")),
                 "'{}'".format(filter_rule.get("value")),
                 filter_rule.get("logic_operator"),
             ]
@@ -184,6 +184,12 @@ class DataFlowHandler(BaseAiopsHandler):
         # 不参与聚类日志需要增加括号修改优先级
         not_clustering_rule_list.append(")")
         return " ".join(filter_rule_list), " ".join(not_clustering_rule_list)
+
+    @classmethod
+    def change_op(cls, op):
+        if op == "!=":
+            return "<>"
+        return op
 
     @classmethod
     def _init_default_filter_rule(cls, clustering_field):
@@ -658,10 +664,10 @@ class DataFlowHandler(BaseAiopsHandler):
         self.operator_flow(flow_id=flow_id, action=ActionEnum.RESTART)
 
     def get_flow_graph(self, flow_id):
-        return BkDataAIOPSApi.get_flow_graph(self._set_username(request_data_cls={"flow_id": flow_id}))
+        return BkDataDataFlowApi.get_flow_graph(self._set_username(request_data_cls={"flow_id": flow_id}))
 
     def update_flow_nodes(self, config, flow_id, node_id):
-        return BkDataAIOPSApi.patch_flow_nodes(
+        return BkDataDataFlowApi.patch_flow_nodes(
             self._set_username(request_data_cls={"flow_id": flow_id, "node_id": node_id, **config})
         )
 
@@ -669,10 +675,12 @@ class DataFlowHandler(BaseAiopsHandler):
     def get_flow_node_config(nodes, filter_table_names: list):
         result = {}
         for node in nodes:
-            for filter_table_name in filter_table_names:
-                if filter_table_name in node["node_config"]["table_name"]:
-                    result["filter_table_name"] = node
-                    continue
+            table_name = node["node_config"].get("table_name")
+            if not table_name:
+                continue
+            table_name_prefix = table_name.rsplit("_", 1)[0]
+            if table_name_prefix in filter_table_names:
+                result[table_name_prefix] = node
         return result
 
     def deal_update_filter_flow_node(self, target_nodes, filter_rule, not_clustering_rule, flow_id):
@@ -687,10 +695,13 @@ class DataFlowHandler(BaseAiopsHandler):
 
     @staticmethod
     def deal_filter_sql(sql, rule):
-        return f"{sql} where {rule}"
+        return f"{sql} {rule}"
 
     def update_flow(self, index_set_id):
         clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
+        if not clustering_config.after_treat_flow_id:
+            logger.info(f"update pre_treat flow not found: index_set_id -> {index_set_id}")
+            return
         if not ClusteringConfig:
             raise ClusteringConfigNotExistException()
         all_fields_dict = self.get_fields_dict(clustering_config=clustering_config)

@@ -56,7 +56,7 @@ class DataAccessHandler(BaseAiopsHandler):
         kafka_config = collector_config.get_result_table_kafka_config()
 
         # 计算平台要求，raw_data_name不能超过50个字符
-        raw_data_name = "{}_{}".format("bk_log", collector_config.collector_config_name_en)[-50:]
+        raw_data_name = "{}_{}".format("bk_log", collector_config.collector_config_name_en)[:50]
         params = {
             "bk_username": self.conf.get("bk_username"),
             "data_scenario": "queue",

@@ -172,7 +172,9 @@ class BkLogRegexpEtlStorage(EtlStorage):
                                                             else field["field_name"]
                                                             for field in fields
                                                         ],
-                                                        "regexp": etl_params.get("separator_regexp", ""),
+                                                        "regexp": etl_params.get("separator_regexp", "").replace(
+                                                            "(?P<", "(?<"
+                                                        ),
                                                     }
                                                 ],
                                                 "next": {

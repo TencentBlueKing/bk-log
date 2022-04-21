@@ -83,7 +83,7 @@ class ClusteringConfig(SoftDeleteModel):
     signature_enable = models.BooleanField(_("数据指纹开关"), default=False)
     pre_treat_flow_id = models.IntegerField(_("预处理flowid"), null=True, blank=True)
     after_treat_flow = models.JSONField(_("after_treat_flow配置"), null=True, blank=True)
-    after_treat_flow_id = models.IntegerField(_("预处理flowid"), null=True, blank=True)
+    after_treat_flow_id = models.IntegerField(_("模型应用flowid"), null=True, blank=True)
     source_rt_name = models.CharField(_("源rt名"), max_length=255, null=True, blank=True)
     category_id = models.CharField(_("数据分类"), max_length=64, null=True, blank=True, default=None)
     python_backend = models.JSONField(_("模型训练配置"), null=True, blank=True)

@@ -28,6 +28,7 @@ from django.db import transaction
 from django.conf import settings
 
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
+from apps.log_clustering.constants import DEFAULT_CLUSTERING_FIELDS
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.log_databus.exceptions import (
@@ -185,6 +186,7 @@ class EtlHandler(object):
 
     @staticmethod
     def etl_preview(etl_config, etl_params, data):
+
         etl_storage = EtlStorage.get_instance(etl_config=etl_config)
         fields = etl_storage.etl_preview(data, etl_params)
         return {"fields": fields}
@@ -287,6 +289,9 @@ class EtlHandler(object):
         """
         判断字段是否符合要求
         """
+
+        if clustering_fields == DEFAULT_CLUSTERING_FIELDS:
+            return True
         for field in fields:
             field_name = field.get("field_name")
             alias_name = field.get("alias_name") or field.get("field_name")
