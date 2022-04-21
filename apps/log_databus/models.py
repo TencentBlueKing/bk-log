@@ -18,6 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from apps.models import MultiStrSplitByCommaFieldText
 from apps.log_databus.exceptions import ArchiveNotFound
 from apps.exceptions import ApiResultError
 from apps.utils.log import logger
@@ -356,7 +357,7 @@ class CleanTemplate(SoftDeleteModel):
     etl_fields = models.JSONField(_("etl字段"), null=True, blank=True)
     bk_biz_id = models.IntegerField(_("业务id"))
     visible_type = models.CharField(_("可见类型"), max_length=64, default=VisibleEnum.CURRENT_BIZ.value)
-    visible_bk_biz_id = models.TextField(_("可见业务ID"), default="")
+    visible_bk_biz_id = MultiStrSplitByCommaFieldText(_("可见业务ID"), default="")
 
     class Meta:
         verbose_name = _("清洗模板")
