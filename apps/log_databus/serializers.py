@@ -686,6 +686,10 @@ class CleanTemplateSerializer(serializers.Serializer):
     visible_bk_biz_id = serializers.ListField(label=_("可见业务ID"), required=False)
 
 
+class CleanTemplateDestroySerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
+
+
 class CleanStashSerializer(serializers.Serializer):
     clean_type = serializers.CharField(label=_("清洗类型"), required=True)
     etl_params = serializers.DictField(label=_("清洗配置"), required=True)
