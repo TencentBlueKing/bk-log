@@ -35,6 +35,7 @@ import '@icon-cool/bk-icon-log_search';
 import cursor from '@/directives/cursor';
 import LogButton from '@/components/log-button';
 import './common/global';
+import './static/icons/log-icons.css';
 // 接入OTLP
 import { WebTracerProvider } from '@opentelemetry/web';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
