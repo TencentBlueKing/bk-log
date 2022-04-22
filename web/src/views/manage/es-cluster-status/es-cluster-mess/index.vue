@@ -132,6 +132,7 @@
       </bk-table-column>
       <bk-table-column
         v-if="checkcFields('storage_total')"
+        width="100"
         :label="$t('总量')">
         <template slot-scope="{ row }">
           <span>{{formatFileSize(row.storage_total)}}</span>
