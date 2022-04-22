@@ -20,6 +20,9 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import json
+import re
+
+from django.utils.translation import ugettext_lazy as _
 
 from apps.log_clustering.constants import (
     CLUSTERING_CONFIG_EXCLUDE,
@@ -29,7 +32,8 @@ from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.handlers.pipline_service.constants import OperatorServiceEnum
 from apps.log_clustering.models import ClusteringConfig
-from apps.log_clustering.tasks.flow import update_filter_rules
+from apps.log_clustering.tasks.flow import update_filter_rules, update_clustering_clean
+from apps.log_databus.constants import EtlConfig
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.models import CollectorConfig
@@ -37,6 +41,7 @@ from apps.log_search.models import LogIndexSet
 from apps.models import model_to_dict
 from apps.utils.function import map_if
 from apps.utils.local import activate_request
+from apps.utils.log import logger
 from apps.utils.thread import generate_request
 
 
@@ -87,7 +92,7 @@ class ClusteringConfigHandler(object):
         from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 
         if clustering_config:
-            change_filter_rules, change_model_config = self.check_clustering_config_update(
+            change_filter_rules, change_model_config, change_clustering_fields = self.check_clustering_config_update(
                 clustering_config=clustering_config,
                 filter_rules=filter_rules,
                 min_members=min_members,
@@ -96,6 +101,7 @@ class ClusteringConfigHandler(object):
                 delimeter=delimeter,
                 max_log_length=max_log_length,
                 is_case_sensitive=is_case_sensitive,
+                clustering_fields=clustering_fields,
             )
             if change_filter_rules:
                 # 更新filter_rule
@@ -103,6 +109,10 @@ class ClusteringConfigHandler(object):
             if change_model_config:
                 # 更新aiops model
                 operator_aiops_service(index_set_id, operator=OperatorServiceEnum.UPDATE)
+            if change_clustering_fields:
+                # 更新flow
+                update_clustering_clean(index_set_id)
+
             clustering_config.min_members = min_members
             clustering_config.max_dist_list = max_dist_list
             clustering_config.predefined_varibles = predefined_varibles
@@ -135,6 +145,10 @@ class ClusteringConfigHandler(object):
             category_id=category_id,
         )
         if signature_enable:
+            if collector_config_id:
+                collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
+                etl_config = collector_config.get_etl_config()
+                self.pre_check_fields(fields=etl_config["fields"])
             operator_aiops_service(index_set_id)
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
@@ -231,6 +245,7 @@ class ClusteringConfigHandler(object):
         delimeter,
         max_log_length,
         is_case_sensitive,
+        clustering_fields,
     ):
         """
         判断是否需要进行对应更新操作
@@ -254,5 +269,30 @@ class ClusteringConfigHandler(object):
             "max_log_length": max_log_length,
             "is_case_sensitive": is_case_sensitive,
         }
+        change_clustering_fields = clustering_config.clustering_fields != clustering_fields
 
-        return change_filter_rules, change_model_config
+        return change_filter_rules, change_model_config, change_clustering_fields
+
+    @classmethod
+    def pre_check_fields(cls, fields, etl_config, clustering_fields):
+        """
+        判断字段是否符合要求
+        """
+
+        if clustering_fields == DEFAULT_CLUSTERING_FIELDS:
+            return True
+        for field in fields:
+            field_name = field.get("field_name")
+            alias_name = field.get("alias_name") or field.get("field_name")
+            # 正则需要符合计算平台正则要求
+            if etl_config == EtlConfig.BK_LOG_REGEXP and not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9]*", field_name):
+                logger.error(_("正则表达式字段名: {}不符合计算平台标准[a-zA-Z][a-zA-Z0-9]*").format(field_name))
+                raise ValueError(_("正则表达式字段名: {}不符合计算平台标准[a-zA-Z][a-zA-Z0-9]*").format(field_name))
+            # 存在聚类字段则允许跳出循环
+            if alias_name == clustering_fields:
+                break
+        else:
+            logger.error(_("不允许删除参与日志聚类字段: {}").format(clustering_fields))
+            raise ValueError(_("不允许删除参与日志聚类字段: {}").format(clustering_fields))
+
+        return True

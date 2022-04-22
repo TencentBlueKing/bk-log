@@ -19,7 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import re
 
 import arrow
 
@@ -28,7 +27,6 @@ from django.db import transaction
 from django.conf import settings
 
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
-from apps.log_clustering.constants import DEFAULT_CLUSTERING_FIELDS
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.log_databus.exceptions import (
@@ -42,7 +40,7 @@ from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash
-from apps.log_databus.tasks.bkdata import update_clustering_clean
+from apps.log_clustering.tasks.flow import update_clustering_clean
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario, ProjectInfo
 from apps.log_search.constants import FieldDateFormatEnum, CollectorScenarioEnum, ISO_8601_TIME_FORMAT_NAME
@@ -113,7 +111,7 @@ class EtlHandler(object):
 
         if self.data.is_clustering:
             clustering_handler = ClusteringConfigHandler(collector_config_id=self.data.collector_config_id)
-            self.pre_check_fields(
+            ClusteringConfigHandler.pre_check_fields(
                 fields=fields, etl_config=etl_config, clustering_fields=clustering_handler.data.clustering_fields
             )
             if clustering_handler.data.bkdata_etl_processing_id:
@@ -283,27 +281,3 @@ class EtlHandler(object):
             fields=[],
         )
         return {"collector_config_id": self.collector_config_id}
-
-    @classmethod
-    def pre_check_fields(cls, fields, etl_config, clustering_fields):
-        """
-        判断字段是否符合要求
-        """
-
-        if clustering_fields == DEFAULT_CLUSTERING_FIELDS:
-            return True
-        for field in fields:
-            field_name = field.get("field_name")
-            alias_name = field.get("alias_name") or field.get("field_name")
-            # 正则需要符合计算平台正则要求
-            if etl_config == EtlConfig.BK_LOG_REGEXP and not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9]*", field_name):
-                logger.error(_("正则表达式字段名: {}不符合计算平台标准[a-zA-Z][a-zA-Z0-9]*").format(field_name))
-                raise ValueError(_("正则表达式字段名: {}不符合计算平台标准[a-zA-Z][a-zA-Z0-9]*").format(field_name))
-            # 存在聚类字段则允许跳出循环
-            if alias_name == clustering_fields:
-                break
-        else:
-            logger.error(_("不允许删除参与日志聚类字段: {}").format(clustering_fields))
-            raise ValueError(_("不允许删除参与日志聚类字段: {}").format(clustering_fields))
-
-        return True

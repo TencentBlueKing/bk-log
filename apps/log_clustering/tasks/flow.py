@@ -30,3 +30,10 @@ def update_filter_rules(index_set_id):
     logger.info(f"update filter rules beginning: index_set_id -> {index_set_id}")
     DataFlowHandler().update_filter_rules(index_set_id=index_set_id)
     logger.info(f"update filter rules success: index_set_id -> {index_set_id}")
+
+
+@task(ignore_result=True)
+def update_clustering_clean(index_set_id):
+    logger.info(f"update flow beginning: index_set_id -> {index_set_id}")
+    DataFlowHandler().update_flow(index_set_id=index_set_id)
+    logger.info(f"update flow success: index_set_id -> {index_set_id}")

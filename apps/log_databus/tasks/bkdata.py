@@ -23,7 +23,6 @@ the project delivered to anyone in the future.
 from celery.task import periodic_task, task
 from celery.schedules import crontab
 
-from apps.log_clustering.handlers.dataflow.dataflow_handler import DataFlowHandler
 from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
 from apps.utils.function import ignored
 from apps.utils.log import logger
@@ -167,10 +166,3 @@ def sync_clean(bk_biz_id: int):
         )
     finally:
         BKDataCleanUtils.unlock_sync_clean(bk_biz_id=bk_biz_id)
-
-
-@task(ignore_result=True)
-def update_clustering_clean(index_set_id):
-    logger.info(f"update flow beginning: index_set_id -> {index_set_id}")
-    DataFlowHandler().update_flow(index_set_id=index_set_id)
-    logger.info(f"update flow success: index_set_id -> {index_set_id}")
