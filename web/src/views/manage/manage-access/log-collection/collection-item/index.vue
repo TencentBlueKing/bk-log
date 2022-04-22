@@ -600,6 +600,7 @@ export default {
       // 克隆操作需要ID进行数据回显
       if (operateType === 'clone') {
         params.collectorId = row.collector_config_id;
+        query.collectorId = row.collector_config_id;
         query.type = 'clone';
       }
       this.$store.commit('collect/setCurCollect', row);

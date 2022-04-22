@@ -719,7 +719,11 @@ export default {
 
     // 采集项编辑进入
     await this.getDetail();
-    this.getCleanStash(this.curCollect.collector_config_id);
+    const isClone = this.$route.query?.type === 'clone';
+    const collectorID = isClone
+      ? (this.$route.query?.collectorId || this.curCollect.collector_config_id)
+      : this.curCollect.collector_config_id;
+    this.getCleanStash(collectorID);
     this.getDataLog('init');
   },
   methods: {
@@ -752,8 +756,7 @@ export default {
     },
     // 初始化清洗模板详情
     initCleanTemp() {
-      const isClone = this.$route.query?.type === 'clone';
-      if (this.isEditTemp || isClone) { // 克隆与编辑获取模板详情
+      if (this.isEditTemp) { // 克隆与编辑获取模板详情
         const { templateId } = this.$route.params;
         this.basicLoading = true;
         this.$http.request('clean/templateDetail', {
