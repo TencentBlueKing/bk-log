@@ -147,8 +147,12 @@ class ClusteringConfigHandler(object):
         if signature_enable:
             if collector_config_id:
                 collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
-                etl_config = collector_config.get_etl_config()
-                self.pre_check_fields(fields=etl_config["fields"])
+                all_etl_config = collector_config.get_etl_config()
+                self.pre_check_fields(
+                    fields=all_etl_config["fields"],
+                    etl_config=all_etl_config.etl_config,
+                    clustering_fields=clustering_fields,
+                )
             operator_aiops_service(index_set_id)
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
@@ -278,9 +282,6 @@ class ClusteringConfigHandler(object):
         """
         判断字段是否符合要求
         """
-
-        if clustering_fields == DEFAULT_CLUSTERING_FIELDS:
-            return True
         for field in fields:
             field_name = field.get("field_name")
             alias_name = field.get("alias_name") or field.get("field_name")
@@ -292,6 +293,8 @@ class ClusteringConfigHandler(object):
             if alias_name == clustering_fields:
                 break
         else:
+            if clustering_fields == DEFAULT_CLUSTERING_FIELDS:
+                return True
             logger.error(_("不允许删除参与日志聚类字段: {}").format(clustering_fields))
             raise ValueError(_("不允许删除参与日志聚类字段: {}").format(clustering_fields))
 
