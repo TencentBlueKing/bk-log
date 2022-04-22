@@ -41,12 +41,10 @@ class TransferCollectorPluginHandler(CollectorPluginHandler):
     def _create_etl_storage(self, instance, params: dict) -> str:
         # 集群信息
         cluster_info = StorageHandler(params["storage_cluster_id"]).get_cluster_info_by_id()
-
         # 创建清洗
         etl_storage: EtlStorage = EtlStorage.get_instance(params["etl_config"])
-        collector_config = self._get_mock_collector_config()
         table_id = etl_storage.update_or_create_result_table(
-            collector_config,
+            self._get_mock_collector_config(),
             instance.collector_plugin_name_en,
             instance.storage_cluster_id,
             instance.retention,

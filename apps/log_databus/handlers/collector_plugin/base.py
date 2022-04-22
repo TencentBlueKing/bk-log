@@ -25,10 +25,19 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils.module_loading import import_string
 
+from apps.api import BkDataAccessApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
 from apps.decorators import user_operation_record
 from apps.log_databus.constants import (
     ADMIN_REQUEST_USER,
+    BKDATA_DATA_REGION,
+    BKDATA_DATA_SCENARIO,
+    BKDATA_DATA_SCENARIO_ID,
+    BKDATA_DATA_SENSITIVITY,
+    BKDATA_DATA_SOURCE,
+    BKDATA_DATA_SOURCE_TAGS,
+    BKDATA_PERMISSION,
+    BKDATA_TAGS,
     ETLProcessorChoices,
     META_DATA_ENCODING,
 )
@@ -132,33 +141,33 @@ class CollectorPluginHandler:
         """创建数据平台DATAID"""
         maintainers = {self.collector_plugin.updated_by, self.collector_plugin.created_by}
         maintainers.discard(ADMIN_REQUEST_USER)
-        # if not maintainers:
-        #    raise Exception(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
-        # BkDataAccessApi.deploy_plan_post(
-        #     params={
-        #         "bk_username": self.collector_plugin.get_updated_by(),
-        #         "data_scenario": BKDATA_DATA_SCENARIO,
-        #         "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
-        #         "permission": BKDATA_PERMISSION,
-        #         "bk_biz_id": self.collector_plugin.bk_biz_id,
-        #         "description": self.collector_plugin.description,
-        #         "access_raw_data": {
-        #             "tags": BKDATA_TAGS,
-        #             "raw_data_name": self.collector_plugin.collector_plugin_name_en,
-        #             "maintainer": ",".join(maintainers),
-        #             "raw_data_alias": self.collector_plugin.collector_plugin_name,
-        #             "data_source_tags": BKDATA_DATA_SOURCE_TAGS,
-        #             "data_region": BKDATA_DATA_REGION,
-        #             "data_source": BKDATA_DATA_SOURCE,
-        #             "data_encoding": self.collector_plugin.data_encoding
-        #             if self.collector_plugin.data_encoding
-        #             else META_DATA_ENCODING,
-        #             "sensitivity": BKDATA_DATA_SENSITIVITY,
-        #             "description": self.collector_plugin.description,
-        #             "preassigned_data_id": self.collector_plugin.bk_data_id,
-        #         },
-        #     }
-        # )
+        if not maintainers:
+            raise Exception(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
+        BkDataAccessApi.deploy_plan_post(
+            params={
+                "bk_username": self.collector_plugin.get_updated_by(),
+                "data_scenario": BKDATA_DATA_SCENARIO,
+                "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
+                "permission": BKDATA_PERMISSION,
+                "bk_biz_id": self.collector_plugin.bk_biz_id,
+                "description": self.collector_plugin.description,
+                "access_raw_data": {
+                    "tags": BKDATA_TAGS,
+                    "raw_data_name": self.collector_plugin.collector_plugin_name_en,
+                    "maintainer": ",".join(maintainers),
+                    "raw_data_alias": self.collector_plugin.collector_plugin_name,
+                    "data_source_tags": BKDATA_DATA_SOURCE_TAGS,
+                    "data_region": BKDATA_DATA_REGION,
+                    "data_source": BKDATA_DATA_SOURCE,
+                    "data_encoding": self.collector_plugin.data_encoding
+                    if self.collector_plugin.data_encoding
+                    else META_DATA_ENCODING,
+                    "sensitivity": BKDATA_DATA_SENSITIVITY,
+                    "description": self.collector_plugin.description,
+                    "preassigned_data_id": self.collector_plugin.bk_data_id,
+                },
+            }
+        )
 
     def _create_data_id(self) -> int:
         """创建DATAID"""
@@ -174,7 +183,7 @@ class CollectorPluginHandler:
             description=self.collector_plugin.description,
             encoding=META_DATA_ENCODING,
         )
-        self._create_bkdata_data_id()
+        # self._create_bkdata_data_id()
         return bk_data_id
 
     def _pre_check_en_name(self, en_name: str) -> None:
