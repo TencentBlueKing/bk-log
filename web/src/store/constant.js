@@ -63,4 +63,8 @@ export const fieldTypeMap = {
     name: i18n.t('冲突字段'),
     icon: 'bk-icon icon-exclamation-triangle',
   },
+  __virtual__: {
+    name: i18n.t('unKnowIconTips'),
+    icon: 'log-icon icon-ext',
+  },
 };

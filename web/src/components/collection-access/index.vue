@@ -235,7 +235,8 @@ export default {
       }
 
       const routeType = this.$route.name.toLowerCase().replace('collect', '');
-      if (routeType !== 'add' && !this.$route.params.notAdd) {
+      const { query: { type } } = this.$route;
+      if ((routeType !== 'add' && !this.$route.params.notAdd) || type === 'clone') { // 克隆时 请求初始数据
         try {
           const detailRes = await this.getDetail();
           this.operateType = routeType === 'edit' && detailRes.table_id ? 'editFinish' : routeType; // 若存在table_id则只有三步

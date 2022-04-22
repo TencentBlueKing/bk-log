@@ -27,12 +27,14 @@
       <cluster-table
         :table-list="clusterList"
         :operate-type="operateType"
+        :is-change-select.sync="isChangeSelect"
         :storage-cluster-id.sync="formData.storage_cluster_id"
       />
       <cluster-table
         :table-list="exclusiveList"
         :table-title-type="false"
         :operate-type="operateType"
+        :is-change-select.sync="isChangeSelect"
         :storage-cluster-id.sync="formData.storage_cluster_id" />
 
       <div class="add-collection-title">{{ $t('存储信息') }}</div>
@@ -199,7 +201,7 @@
           </bk-option>
         </bk-select>
       </bk-form-item> -->
-      <bk-form-item style="margin-top: 32px">
+      <bk-form-item class="operate-container">
         <bk-button
           theme="default"
           class="mr10"
@@ -356,6 +358,7 @@ export default {
       stashCleanConf: null, // 清洗缓存,
       isShowAssessment: true,
       activeCluster: {},
+      isChangeSelect: false,
     };
   },
   computed: {
@@ -375,9 +378,11 @@ export default {
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
     },
     isCanUseAssessment() {
-      if (['editFinish', 'edit', 'storage'].includes(this.operateType)) return false;
-      // itsm开启时 并且 当前选择的集群容量评估开启时 并且 不为采集成功时展示容量评估
-      return this.isItsm && this.activeCluster.enable_assessment && this.curCollect.itsm_ticket_status !== 'success_apply';
+      /**
+       * itsm开启时, 当前选择的集群容量评估开启时
+       * isChangeSelect 当前步骤非新增,且进行集群切换满足上面条件则展示容量评估
+       */
+      return this.isItsm && this.activeCluster.enable_assessment && this.isChangeSelect;
     },
     getApprover() {
       if (this.isCanUseAssessment) {
@@ -396,6 +401,7 @@ export default {
   },
   async mounted() {
     this.getStorage(true);
+    this.operateType === 'add' && (this.isChangeSelect = true);
   },
   methods: {
     // 获取采集项清洗基础配置缓存 用于存储入库提交
@@ -747,6 +753,12 @@ export default {
 
     .approver {
       font-size: 12px;
+      color: #313238;
+    }
+
+    .operate-container {
+      margin-top: 32px;
+      transform: translateX(-115px);
     }
   }
 </style>

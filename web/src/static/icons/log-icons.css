@@ -332,3 +332,7 @@
 .icon-tiaozhuan:before {
   content: '\e172';
 }
+
+.icon-ext:before {
+  content: '\e175';
+}

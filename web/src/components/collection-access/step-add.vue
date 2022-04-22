@@ -696,7 +696,9 @@ export default {
   created() {
     this.getLinkData();
     this.isUpdate = this.$route.name !== 'collectAdd';
-    if (this.isUpdate) {
+    const isClone = this.$route.query?.type === 'clone';
+    // 克隆与编辑均进行数据回填
+    if (this.isUpdate || isClone) {
       this.formData = JSON.parse(JSON.stringify(this.curCollect));
       const { params } = this.formData;
       if (this.formData.target?.length) { // IP 选择器预览结果回填
@@ -745,8 +747,17 @@ export default {
       if (this.curCollect.params.conditions.type === 'separator') {
         this.type = this.curCollect.params.conditions.separator_filters[0].logic_op;
       }
-      // 编辑采集项时缓存初始数据 用于对比提交时是否发生变化 未修改则不重新提交 update 接口
-      this.localParams = this.handleParams();
+      // 克隆采集项的时候 清空以下回显或者重新赋值 保留其余初始数据
+      if (isClone) {
+        this.formData.collector_config_name = `${this.formData.collector_config_name}_clone`;
+        this.formData.description = this.formData.description ? `${this.formData.description}_clone` : '';
+        this.formData.collector_config_name_en = '';
+        this.formData.target_nodes = [];
+      } else {
+        // 克隆时不缓存初始数据
+        // 编辑采集项时缓存初始数据 用于对比提交时是否发生变化 未修改则不重新提交 update 接口
+        this.localParams = this.handleParams();
+      }
     }
   },
   mounted() {

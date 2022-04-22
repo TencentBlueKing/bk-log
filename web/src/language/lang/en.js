@@ -778,6 +778,7 @@ export default {
   多业务选择: 'Multiple business options',
   全平台: 'All platforms',
   按照业务属性选择: 'Select according to business attributes',
+  changeClusterTips: 'Switching clusters will cause historical data to fail to query',
   qwGroupTips: 'You can invite relevant personnel to a group for discussion through enterprise wechat',
   请选择群成员: 'Please select a group member',
   跳转至: '',
@@ -796,7 +797,7 @@ export default {
   索引数: 'Number Of Indexes',
   业务数: 'Number Of Business',
   createAClusterTips: 'There is currently no business-exclusive cluster, go and create it',
-  createAPlatformTips: 'There is no platform cluster yet, go and create it',
+  createAPlatformTips: 'There is currently no platform cluster, please contact the platform administrator to provide',
   multiBizTip: 'When the visible type is a business attribute, the business label cannot be empty',
   bizAttrTip: 'When the visible type is multi-service, the visible business scope cannot be empty',
   默认天数不能大于最大天数: 'The default number of days cannot be greater than the maximum number of days',
@@ -1396,4 +1397,5 @@ export default {
     indexSetID: 'indexSetID',
     btn: 'View all',
   },
+  unKnowIconTips: 'This field is supplemented by the platform Not searchable',
 };

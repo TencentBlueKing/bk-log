@@ -38,13 +38,9 @@
           @row-click="handleSelectCluster">
           <bk-table-column :label="$t('集群名')" min-width="240">
             <template slot-scope="{ row }">
-              <bk-radio-group v-model="clusterSelect">
-                <bk-radio
-                  :value="row.storage_cluster_id"
-                  :disabled="rowIsDisable">
-                  {{ row.storage_cluster_name }}
-                </bk-radio>
-              </bk-radio-group>
+              <bk-radio :checked="clusterSelect === row.storage_cluster_id">
+                {{ row.storage_cluster_name }}
+              </bk-radio>
             </template>
           </bk-table-column>
           <bk-table-column :label="$t('总量')" min-width="100">
@@ -68,17 +64,17 @@
               <span class="illustrate-value">{{value}}</span>
             </div>
           </div>
-          <p class="illustrate-list">
-            {{description}}
-          </p>
+          <div class="illustrate-list">
+            <pre>{{description}}</pre>
+          </div>
         </div>
       </template>
       <template v-else>
         <div class="noData-container">
           <div class="noData-message">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p class="empty-message">{{ tableTitleType ? $t('createAClusterTips') : $t('createAPlatformTips')}}</p>
-            <p class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
+            <p class="empty-message">{{ tableTitleType ? $t('createAPlatformTips') : $t('createAClusterTips')}}</p>
+            <p v-if="!tableTitleType" class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
           </div>
         </div>
       </template>
@@ -107,6 +103,10 @@ export default {
       type: String,
       require: true,
     },
+    isChangeSelect: {
+      type: Boolean,
+      require: true,
+    },
   },
   data() {
     return {
@@ -127,11 +127,6 @@ export default {
     ...mapGetters({
       curCollect: 'collect/curCollect',
     }),
-    rowIsDisable() {
-      if (this.storageClusterId === '') return false;
-      if (this.operateType === undefined) return true;
-      return ['editFinish', 'edit', 'storage'].includes(this.operateType);
-    },
   },
   watch: {
     storageClusterId(val) {
@@ -164,8 +159,19 @@ export default {
   },
   methods: {
     handleSelectCluster($row) {
-      if (this.rowIsDisable) return;
-      this.$emit('update:storageClusterId', $row.storage_cluster_id);
+      if (this.isChangeSelect || this.storageClusterId === '') {
+        this.$emit('update:isChangeSelect', true);
+        this.$emit('update:storageClusterId', $row.storage_cluster_id);
+        return;
+      }
+      this.$bkInfo({
+        type: 'warning',
+        title: this.$t('changeClusterTips'),
+        confirmFn: () => {
+          this.$emit('update:isChangeSelect', true);
+          this.$emit('update:storageClusterId', $row.storage_cluster_id);
+        },
+      });
     },
     handleCreateCluster() {
       this.$router.push({
@@ -247,12 +253,12 @@ export default {
       }
 
       .illustrate-label {
-        color: #66676b;
+        color: #acadb1;
       }
 
       .illustrate-list {
         margin-top: 8px;
-        color: #575961;
+        color: #67696d;
       }
     }
 

@@ -67,6 +67,7 @@
         </template>
       </bk-table-column>
       <bk-table-column
+        v-if="checkcFields('source_type')"
         :label="$t('来源')"
         prop="source_type"
         min-width="80"
@@ -80,16 +81,19 @@
         </template>
       </bk-table-column>
       <bk-table-column
+        v-if="checkcFields('port')"
         :label="$t('端口')"
         prop="cluster_config.port"
         min-width="80">
       </bk-table-column>
       <bk-table-column
+        v-if="checkcFields('schema')"
         :label="$t('协议')"
         prop="cluster_config.schema"
         min-width="80">
       </bk-table-column>
       <bk-table-column
+        v-if="checkcFields('cluster_config')"
         :label="$t('连接状态')"
         min-width="80"
         class-name="filter-column"
@@ -105,11 +109,13 @@
         </template>
       </bk-table-column>
       <bk-table-column
+        v-if="checkcFields('creator')"
         :label="$t('创建人')"
         prop="cluster_config.creator"
         min-width="80">
       </bk-table-column>
       <bk-table-column
+        v-if="checkcFields('create_time')"
         :label="$t('创建时间')"
         class-name="filter-column"
         prop="cluster_config.create_time"
@@ -117,10 +123,25 @@
         sortable>
       </bk-table-column>
       <bk-table-column
+        v-if="checkcFields('enable_hot_warm')"
         :label="$t('冷热数据')"
         min-width="80">
         <template slot-scope="{ row }">
           {{ row.cluster_config.enable_hot_warm ? $t('开') : $t('关') }}
+        </template>
+      </bk-table-column>
+      <bk-table-column
+        v-if="checkcFields('storage_total')"
+        :label="$t('总量')">
+        <template slot-scope="{ row }">
+          <span>{{formatFileSize(row.storage_total)}}</span>
+        </template>
+      </bk-table-column>
+      <bk-table-column
+        v-if="checkcFields('storage_usage')"
+        :label="$t('空闲率')">
+        <template slot-scope="{ row }">
+          <span>{{`${100 - row.storage_usage}%`}}</span>
         </template>
       </bk-table-column>
       <bk-table-column :label="$t('操作')" width="180">
@@ -154,6 +175,14 @@
           </log-button>
         </template>
       </bk-table-column>
+      <bk-table-column type="setting" :tippy-options="{ zIndex: 3000 }">
+        <bk-table-setting-content
+          :fields="clusterSetting.fields"
+          :selected="clusterSetting.selectedFields"
+          :max="clusterSetting.max"
+          @setting-change="handleSettingChange">
+        </bk-table-setting-content>
+      </bk-table-column>
     </bk-table>
     <!-- 编辑或新建ES源 -->
     <es-slider
@@ -173,6 +202,7 @@
 import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
 import IntroPanel from './components/intro-panel.vue';
+import { formatFileSize } from '../../../../common/util';
 
 export default {
   name: 'EsClusterMess',
@@ -181,6 +211,71 @@ export default {
     IntroPanel,
   },
   data() {
+    const settingFields = [
+      // 数据ID
+      {
+        id: 'cluster_id',
+        label: this.$t('ID'),
+        disabled: true,
+      },
+      // 集群名称
+      {
+        id: 'collector_config_name',
+        label: this.$t('名称'),
+        disabled: true,
+      },
+      // 地址
+      {
+        id: 'domain_name',
+        label: this.$t('地址'),
+        disabled: true,
+      },
+      // 来源
+      {
+        id: 'source_type',
+        label: this.$t('来源'),
+      },
+      // 端口
+      {
+        id: 'port',
+        label: this.$t('端口'),
+      },
+      // 协议
+      {
+        id: 'schema',
+        label: this.$t('协议'),
+      },
+      // 连接状态
+      {
+        id: 'cluster_config',
+        label: this.$t('连接状态'),
+      },
+      // 创建人
+      {
+        id: 'creator',
+        label: this.$t('创建人'),
+      },
+      // 创建时间
+      {
+        id: 'create_time',
+        label: this.$t('创建时间'),
+      },
+      // 冷热数据
+      {
+        id: 'enable_hot_warm',
+        label: this.$t('创建时间'),
+      },
+      // 总量
+      {
+        id: 'storage_total',
+        label: this.$t('总量'),
+      },
+      // 空闲率
+      {
+        id: 'storage_usage',
+        label: this.$t('空闲率'),
+      },
+    ];
     return {
       tableLoading: true,
       tableDataOrigin: [], // 原始数据
@@ -201,6 +296,10 @@ export default {
       editClusterId: null, // 编辑ES源ID,
       isOpenWindow: true,
       sourceStateFilters: [{ text: this.$t('正常'), value: true }, { text: this.$t('失败'), value: false }],
+      clusterSetting: {
+        fields: settingFields,
+        selectedFields: settingFields.slice(0, 12),
+      },
     };
   },
   computed: {
@@ -224,6 +323,7 @@ export default {
   created() {
     this.checkCreateAuth();
     this.getTableData();
+    this.formatFileSize = formatFileSize;
   },
   methods: {
     async checkCreateAuth() {
@@ -443,7 +543,7 @@ export default {
       });
     },
     handleSettingChange({ fields }) {
-      this.columnSetting.selectedFields = fields;
+      this.clusterSetting.selectedFields = fields;
     },
     handleActiveDetails(state) {
       this.isOpenWindow = state;
@@ -453,6 +553,9 @@ export default {
       const info = this.stateMap[row.cluster_config.cluster_id]; // 兼容接口布尔值和对象
       const state = (typeof info === 'boolean') ? info : info?.status;
       return state === value;
+    },
+    checkcFields(field) {
+      return this.clusterSetting.selectedFields.some(item => item.id === field);
     },
   },
 };
@@ -477,8 +580,8 @@ export default {
         align-items: center;
 
         .bk-badge {
-          width: 10px;
-          height: 10px;
+          width: 5px;
+          height: 5px;
           border-radius: 50%;
           margin-right: 4px;
         }
