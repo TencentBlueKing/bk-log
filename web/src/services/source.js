@@ -154,6 +154,12 @@ const issuedRetry = {
   method: 'post',
 };
 
+// es集群
+const getEsList = {
+  url: '/databus/storage/?bk_biz_id=:bk_biz_id',
+  method: 'get',
+};
+
 export {
   list,
   logList,
@@ -182,4 +188,5 @@ export {
   issuedRetry,
   scenario,
   getProperty,
+  getEsList,
 };

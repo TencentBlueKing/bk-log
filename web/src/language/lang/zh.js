@@ -778,6 +778,7 @@ export default {
   多业务选择: '多业务选择',
   全平台: '全平台',
   按照业务属性选择: '按照业务属性选择',
+  changeClusterTips: '切换集群将导致历史数据无法查询',
   qwGroupTips: '可以通过企业微信将需求的相关人员邀请到一个群里进行讨论',
   请选择群成员: '请选择群成员',
   集群负责人: '集群负责人',
@@ -795,7 +796,7 @@ export default {
   索引数: '索引数',
   业务数: '业务数',
   createAClusterTips: '当前还没有业务独享集群，快去创建吧',
-  createAPlatformTips: '当前还没有平台集群，快去创建吧',
+  createAPlatformTips: '当前还没有平台集群，请联系平台管理员提供',
   multiBizTip: '可见类型为业务属性时，业务标签不能为空',
   bizAttrTip: '可见类型为多业务时，可见业务范围不能为空',
   默认天数不能大于最大天数: '默认天数不能大于最大天数',
@@ -1396,4 +1397,5 @@ export default {
     indexSetID: '索引集ID',
     btn: '查看所有',
   },
+  unKnowIconTips: '该字段为平台补充 不可检索',
 };

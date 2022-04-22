@@ -129,18 +129,23 @@
           <!-- 模式选择 -->
           <div class="field-step field-method-step" style="margin-top: 20px;">
             <div class="step-head">
-              <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
-              <span
-                v-if="!isTempField"
-                data-test-id="fieldExtractionBox_span_applyTemp"
-                :class="{
-                  'template-text': true,
-                  'template-disabled': (isCleanField && !cleanCollector) || isSetDisabled
-                }"
-                @click="openTemplateDialog(false)">
-                <span class="log-icon icon-daoru"></span>
-                {{ $t('dataManage.applyTemp') }}
-              </span>
+              <div>
+                <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
+                <span
+                  v-if="!isTempField"
+                  data-test-id="fieldExtractionBox_span_applyTemp"
+                  :class="{
+                    'template-text': true,
+                    'template-disabled': (isCleanField && !cleanCollector) || isSetDisabled
+                  }"
+                  @click="openTemplateDialog(false)">
+                  <span class="log-icon icon-daoru"></span>
+                  {{ $t('dataManage.applyTemp') }}
+                </span>
+              </div>
+              <p class="documentation button-text" @click="handleOpenDocument">
+                <span>{{$t('说明文档')}}</span> <span class="log-icon icon-jump"></span>
+              </p>
             </div>
 
             <!-- 选择字段过滤方法 -->
@@ -247,7 +252,7 @@
           </div>
 
           <!-- 调试设置字段 -->
-          <div v-if="!isSetEdit" class="field-step field-method-step">
+          <div v-if="isClearTemplate" class="field-step field-method-step">
             <div class="step-head">
               <span class="step-text">{{ $t('可见范围') }}</span>
             </div>
@@ -579,6 +584,7 @@ export default {
       visibleList: [], // 多业务选择下拉框
       cacheVisibleList: [], // 缓存多业务选择下拉框
       visibleIsToggle: false,
+      docUrl: window.BK_ETL_DOC_URL,
     };
   },
   computed: {
@@ -643,6 +649,10 @@ export default {
     // 可见范围单选判断，禁用下拉框
     scopeValueType() {
       return this.formData.visible_type !== 'multi_biz';
+    },
+    // 入口是否是清洗模板
+    isClearTemplate() {
+      return ['clean-template-create', 'clean-template-edit'].includes(this.$route.name);
     },
   },
   watch: {
@@ -742,7 +752,8 @@ export default {
     },
     // 初始化清洗模板详情
     initCleanTemp() {
-      if (this.isEditTemp) { // 获取模板详情
+      const isClone = this.$route.query?.type === 'clone';
+      if (this.isEditTemp || isClone) { // 克隆与编辑获取模板详情
         const { templateId } = this.$route.params;
         this.basicLoading = true;
         this.$http.request('clean/templateDetail', {
@@ -783,7 +794,7 @@ export default {
         separator_regexp: etl_params.separator_regexp || '',
         separator: etl_params.separator || ''
       })
-      if(visibleBkBizList && visibleBkBizList.length){
+      if(Array.isArray(visibleBkBizList) && visibleBkBizList.length){
         // 多业务 业务列表获取名字回显
         visibleBkBizList.forEach((val) => {
           const target = this.myProjectList.find(project => Number(project.bk_biz_id) === val);
@@ -906,7 +917,6 @@ export default {
         data.bk_biz_id = this.bkBizId
         // 可见范围非多业务选择时删除visible_bk_biz_id
         data.visible_bk_biz_id = this.visibleList.map(item => item.id);
-        data.visible_bk_biz_id.push(this.bkBizId);
         data.visible_type !== 'multi_biz' && (delete data.visible_bk_biz_id);
         if (this.isEditTemp) urlParams.clean_template_id = this.$route.params.templateId
         requestUrl = this.isEditTemp ? 'clean/updateTemplate' : 'clean/createTemplate';
@@ -982,6 +992,12 @@ export default {
           theme: 'error',
           message: this.$t('dataManage.select_field'),
         });
+      }
+      const visibleList = this.visibleList.map(item => item.id);
+      // 清洗模板选择多业务时不能为空
+      if (this.formData.visible_type === 'multi_biz' && !visibleList.length && this.isClearTemplate) {
+        this.messageError(this.$t('multiBizTip'));
+        return
       }
       // const promises = [this.checkStore()];
       const promises = [];
@@ -1500,6 +1516,9 @@ export default {
     handleDeleteTag(index) {
       this.visibleList.splice(index, 1);
     },
+    handleOpenDocument() {
+      window.open(this.docUrl, '_blank');
+    },
   },
 };
 </script>
@@ -1765,8 +1784,17 @@ export default {
     }
 
     .step-head {
+      width: 256px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
+
+      .documentation {
+        color: #3a84ff;
+        font-size: 12px;
+        transform: translateY(2px);
+        cursor: pointer;
+      }
     }
 
     .field-method-link {

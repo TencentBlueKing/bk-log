@@ -314,6 +314,18 @@ export default {
   }
 
   .group-container {
+    .group-title-container {
+      display: flex;
+      align-items: center;
+      padding: 0 2px 10px;
+
+      .qw-icon {
+        font-size: 38px;
+        color: #3a84ff;
+        margin-right: 10px;
+      }
+    }
+
     .group-body-container {
       height: 100px;
 

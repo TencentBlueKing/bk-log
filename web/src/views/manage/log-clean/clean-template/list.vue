@@ -229,6 +229,8 @@ export default {
       this.$http.request('clean/deleteTemplate', {
         params: {
           clean_template_id: row.clean_template_id,
+        },
+        data: {
           bk_biz_id: this.bkBizId,
         },
       }).then((res) => {
