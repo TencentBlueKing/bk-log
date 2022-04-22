@@ -39,7 +39,7 @@
           <bk-table-column :label="$t('集群名')" min-width="240">
             <template slot-scope="{ row }">
               <bk-radio :checked="clusterSelect === row.storage_cluster_id">
-                {{ row.storage_cluster_name }}
+                <span @click.stop>{{ row.storage_cluster_name }}</span>
               </bk-radio>
             </template>
           </bk-table-column>

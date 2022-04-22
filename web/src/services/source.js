@@ -156,7 +156,7 @@ const issuedRetry = {
 
 // es集群
 const getEsList = {
-  url: '/databus/storage/',
+  url: '/databus/storage/cluster_groups',
   method: 'get',
 };
 
