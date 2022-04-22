@@ -97,5 +97,8 @@ blueapps==4.2.3
 # blueapps依赖
 whitenoise==5.0
 
+# pypinyin
+pypinyin==0.46.0
+
 # 各自环境所需的不同依赖, 通过 sites/${env}/deploy/requirements_env.txt得到
 -r requirements_env.txt
