@@ -28,7 +28,11 @@ from apps.log_clustering.constants import (
     CLUSTERING_CONFIG_EXCLUDE,
     DEFAULT_CLUSTERING_FIELDS,
 )
-from apps.log_clustering.exceptions import ClusteringConfigNotExistException
+from apps.log_clustering.exceptions import (
+    ClusteringConfigNotExistException,
+    BkdataRegexException,
+    BkdataFieldsException,
+)
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.handlers.pipline_service.constants import OperatorServiceEnum
 from apps.log_clustering.models import ClusteringConfig
@@ -288,7 +292,7 @@ class ClusteringConfigHandler(object):
             # 正则需要符合计算平台正则要求
             if etl_config == EtlConfig.BK_LOG_REGEXP and not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9]*", field_name):
                 logger.error(_("正则表达式字段名: {}不符合计算平台标准[a-zA-Z][a-zA-Z0-9]*").format(field_name))
-                raise ValueError(_("正则表达式字段名: {}不符合计算平台标准[a-zA-Z][a-zA-Z0-9]*").format(field_name))
+                raise BkdataRegexException(BkdataRegexException.MESSAGE.format(field_name=field_name))
             # 存在聚类字段则允许跳出循环
             if alias_name == clustering_fields:
                 break
@@ -296,6 +300,6 @@ class ClusteringConfigHandler(object):
             if clustering_fields == DEFAULT_CLUSTERING_FIELDS:
                 return True
             logger.error(_("不允许删除参与日志聚类字段: {}").format(clustering_fields))
-            raise ValueError(_("不允许删除参与日志聚类字段: {}").format(clustering_fields))
+            raise ValueError(BkdataFieldsException(BkdataFieldsException.MESSAGE.format(field=clustering_fields)))
 
         return True

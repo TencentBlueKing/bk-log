@@ -77,3 +77,13 @@ class BkdataStorageNotExistException(BaseClusteringException):
 class BkdataFlowException(BaseClusteringException):
     ERROR_CODE = "010"
     MESSAGE = _("计算平台flow返回异常: {flow_id}")
+
+
+class BkdataRegexException(BaseClusteringException):
+    ERROR_CODE = "011"
+    MESSAGE = _("正则表达式字段名: {field_name}不符合计算平台标准[a-zA-Z][a-zA-Z0-9]*")
+
+
+class BkdataFieldsException(BaseClusteringException):
+    ERROR_CODE = "012"
+    MESSAGE = _("不允许删除参与日志聚类字段: {field}")
