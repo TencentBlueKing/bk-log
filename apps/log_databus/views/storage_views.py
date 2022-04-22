@@ -172,7 +172,7 @@ class StorageViewSet(APIViewSet):
             "data": [
                 {
                     "cluster_config": {
-                        "domain_name": "9.134.94.206",
+                        "domain_name": "127.0.0.1",
                         "port": 9200,
                         "schema": "http",
                         "is_ssl_verify": false,
