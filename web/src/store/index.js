@@ -83,6 +83,10 @@ const store = new Vuex.Store({
     collectDetail: [0, {}],
     // 清除table表头宽度缓存
     clearTableWidth: 0,
+    showRouterLeaveTip: false,
+    // 新人指引
+    userGuideData: {},
+    curCustomReport: null,
   },
   // 公共 getters
   getters: {
@@ -110,8 +114,8 @@ const store = new Vuex.Store({
       state.userMeta = payload;
     },
     /**
-         * 设置初始化 loading 是否显示
-         */
+     * 设置初始化 loading 是否显示
+     */
     setPageLoading(state, loading) {
       state.pageLoading = loading;
     },
@@ -122,25 +126,25 @@ const store = new Vuex.Store({
       state.isFormatDate = payload;
     },
     /**
-         * 更新当前运行环境
-         * @param {Object} state store state
-         * @param {String} runVersion 运行环境
-         */
+     * 更新当前运行环境
+     * @param {Object} state store state
+     * @param {String} runVersion 运行环境
+     */
     updateRunVersion(state, runVersion) {
       state.runVersion = runVersion;
     },
     /**
-         * 更新当前用户 user
-         *
-         * @param {Object} state store state
-         * @param {Object} user user 对象
-         */
+     * 更新当前用户 user
+     *
+     * @param {Object} state store state
+     * @param {Object} user user 对象
+     */
     updateUser(state, user) {
       state.user = Object.assign({}, user);
     },
     /**
-         * 更新当前路由对应导航
-         */
+     * 更新当前路由对应导航
+     */
     updateCurrentMenu(state, current) {
       Vue.set(state, 'currentMenu', current);
     },
@@ -201,19 +205,25 @@ const store = new Vuex.Store({
     updateClearTableWidth(state, clearTableWidth) {
       state.clearTableWidth += clearTableWidth;
     },
+    updateRouterLeaveTip(state, isShow) {
+      state.showRouterLeaveTip = isShow;
+    },
+    setUserGuideData(state, userGuideData) {
+      state.userGuideData = userGuideData;
+    },
   },
   actions: {
     /**
-         * 获取用户信息
-         *
-         * @param {Function} commit store commit mutation handler
-         * @param {Object} state store state
-         * @param {Function} dispatch store dispatch action handler
-         * @param {Object} params 请求参数
-         * @param {Object} config 请求的配置
-         *
-         * @return {Promise} promise 对象
-         */
+     * 获取用户信息
+     *
+     * @param {Function} commit store commit mutation handler
+     * @param {Object} state store state
+     * @param {Function} dispatch store dispatch action handler
+     * @param {Object} params 请求参数
+     * @param {Object} config 请求的配置
+     *
+     * @return {Promise} promise 对象
+     */
     userInfo({ commit }, params, config = {}) {
       return http.request('userInfo/getUserInfo', { query: params, config }).then((response) => {
         const userData = response.data || {};
@@ -223,16 +233,16 @@ const store = new Vuex.Store({
     },
 
     /**
-         * 获取业务列表
-         *
-         * @param {Function} commit store commit mutation handler
-         * @param {Object} state store state
-         * @param {Function} dispatch store dispatch action handler
-         * @param {Object} params 请求参数
-         * @param {Object} config 请求的配置
-         *
-         * @return {Promise} promise 对象
-         */
+     * 获取业务列表
+     *
+     * @param {Function} commit store commit mutation handler
+     * @param {Object} state store state
+     * @param {Function} dispatch store dispatch action handler
+     * @param {Object} params 请求参数
+     * @param {Object} config 请求的配置
+     *
+     * @return {Promise} promise 对象
+     */
     getBkBizList({ commit }) {
       return http.request('biz/list', {}).then((response) => {
         const bizList = response.data || [];
@@ -245,16 +255,16 @@ const store = new Vuex.Store({
     },
 
     /**
-         * 获取菜单列表
-         *
-         * @param {Function} commit store commit mutation handler
-         * @param {Object} state store state
-         * @param {Function} dispatch store dispatch action handler
-         * @param {Object} params 请求参数
-         * @param {Object} config 请求的配置
-         *
-         * @return {Promise} promise 对象
-         */
+     * 获取菜单列表
+     *
+     * @param {Function} commit store commit mutation handler
+     * @param {Object} state store state
+     * @param {Function} dispatch store dispatch action handler
+     * @param {Object} params 请求参数
+     * @param {Object} config 请求的配置
+     *
+     * @return {Promise} promise 对象
+     */
     getMenuList({}, projectId) {
       return http.request('meta/menu', {
         query: {
@@ -364,7 +374,7 @@ store.dispatch = function (_type, _payload, config = {}) {
   const action = { type, payload, config };
   const entry = store._actions[type];
   if (!entry) {
-    if (NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       console.error(`[vuex] unknown action type: ${type}`);
     }
     return;

@@ -34,7 +34,7 @@ class JsonField(models.TextField):
     Json字段，入库json.dumps， 出库json.load
     """
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context=None):
         if not value:
             return {}
         try:
@@ -128,7 +128,7 @@ class MultiStrSplitByCommaField(models.CharField, MixinMultiStrSplitByCommaField
         kwargs.pop("sub_type", "")
         super().__init__(*args, **kwargs)
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context=None):
         return super().read_from_db(value, expression, connection, context)
 
     def get_prep_value(self, value):
@@ -145,7 +145,7 @@ class MultiStrSplitByCommaFieldText(models.TextField, MixinMultiStrSplitByCommaF
         kwargs.pop("sub_type", "")
         super().__init__(*args, **kwargs)
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context=None):
         return super().read_from_db(value, expression, connection, context)
 
     def get_prep_value(self, value):
@@ -228,6 +228,10 @@ class SoftDeleteModelManager(OperateRecordModelManager):
     """
     默认的查询和过滤方法, 不显示被标记为删除的记录
     """
+
+    def exclude(self, *args, **kwargs):
+        # 默认都不显示被标记为删除的数据
+        return super(SoftDeleteModelManager, self).filter(is_deleted=False).exclude(*args, **kwargs)
 
     def all(self, *args, **kwargs):
         # 默认都不显示被标记为删除的数据

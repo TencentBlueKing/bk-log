@@ -17,7 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-
+from dataclasses import dataclass
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
@@ -121,10 +121,12 @@ class ExtractLinkType(ChoicesEnum):
     if settings.FEATURE_TOGGLE["extract_cos"] == "on":
         COMMON = "common"
         QCLOUD_COS = "qcloud_cos"
-        _choices_labels = ((COMMON, _("内网链路")), (QCLOUD_COS, _("腾讯云cos链路")))
+        BK_REPO = "bk_repo"
+        _choices_labels = ((COMMON, _("内网链路")), (QCLOUD_COS, _("腾讯云cos链路")), (BK_REPO, _("bk repo链路")))
     else:
         COMMON = "common"
-        _choices_labels = ((COMMON, _("内网链路")),)
+        BK_REPO = "bk_repo"
+        _choices_labels = ((COMMON, _("内网链路")), (BK_REPO, _("bk repo链路")))
 
 
 class PreDateMode(ChoicesEnum):
@@ -135,6 +137,14 @@ class PreDateMode(ChoicesEnum):
     CUSTOM = "custom"
     _choices_labels = ((DAY, _("近一天")), (WEEK, _("近一周")), (MONTH, _("近一月")), (ALL, _("所有")), (CUSTOM, _("自定义")))
 
+
+class ScheduleStatus(object):
+    SUCCESS = "success"
+    EXECUTING = "executing"
+
+
+TASK_POLLING_INTERVAL = 5
+MAX_SCHEDULE_TIMES = int(10 * 60 / TASK_POLLING_INTERVAL)
 
 PREDATEMODE_CUSTOM_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -164,6 +174,7 @@ ALLOWED_FILTER_TYPES = ("line_range", "match_word", "tail_line", "match_range")
 
 TRANSIT_SERVER_DISTRIBUTION_PATH = settings.EXTRACT_DISTRIBUTION_DIR
 TRANSIT_SERVER_PACKING_PATH = "/data/bk_log_extract/distribution_packing/"
+BKREPO_CHILD_PACKING_PATH = "bk_log_extract/distribution"
 
 # 前端轮询任务列表时间
 POLLING_TIMEOUT = 5
@@ -194,3 +205,10 @@ PIPELINE_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # jobapi权限code
 JOB_API_PERMISSION_CODE = 9900403
+
+
+@dataclass
+class TransitServer(object):
+    ip: str
+    target_dir: str
+    bk_cloud_id: int

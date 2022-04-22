@@ -33,7 +33,7 @@ try:
 except ImportError:
     from django.utils.functional import wraps
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 def update_log_view(view_func):

@@ -24,11 +24,11 @@ from django.db import models
 from django.db.transaction import atomic
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import format_html
-from django_jsonfield_backport.models import JSONField
 from jinja2 import Environment, FileSystemLoader
 
 from apps.exceptions import BizNotExistError
 from apps.feature_toggle.handlers.toggle import feature_switch
+from apps.log_clustering.constants import PatternEnum, YearOnYearEnum
 from apps.log_databus.constants import EsSourceType
 from apps.log_search.exceptions import (
     SourceDuplicateException,
@@ -63,6 +63,7 @@ from apps.log_search.constants import (
     EncodingsEnum,
     TagColor,
     InnerTag,
+    CustomTypeEnum,
 )
 
 
@@ -116,6 +117,11 @@ class GlobalConfig(models.Model):
         configs[GlobalTypeEnum.DATA_ENCODING.value] = EncodingsEnum.get_choices_list_dict()
         # ES日志来源类型
         configs[GlobalTypeEnum.ES_SOURCE_TYPE.value] = EsSourceType.get_choices_list_dict()
+        # 日志聚类
+        configs[GlobalTypeEnum.LOG_CLUSTERING_LEVEL.value] = PatternEnum.get_choices()
+        configs[GlobalTypeEnum.LOG_CLUSTERING_YEAR_ON_YEAR.value] = YearOnYearEnum.get_choices_list_dict()
+        # 自定义上报
+        configs[GlobalTypeEnum.DATABUS_CUSTOM.value] = CustomTypeEnum.get_choices_list_dict()
         return configs
 
     class Meta:
@@ -201,11 +207,11 @@ class ProjectInfo(SoftDeleteModel):
 
     @classmethod
     def get_biz(cls, biz_id=None):
-        try:
-            project = ProjectInfo.objects.get(bk_biz_id=biz_id)
-        except ProjectInfo.DoesNotExist:
+        projects = ProjectInfo.objects.filter(bk_biz_id=biz_id)
+        if not projects.exists():
             raise BizNotExistError(BizNotExistError.MESSAGE.format(bk_biz_id=biz_id))
 
+        project = projects.first()
         return {"bk_biz_id": project.bk_biz_id, "bk_biz_name": project.project_name}
 
     class Meta:
@@ -752,11 +758,11 @@ class IndexSetTag(models.Model):
 
 class AsyncTask(OperateRecordModel):
     """
-    异步导出任务状态表
+    导出任务状态表
     """
 
-    request_param = JSONField(_("检索请求参数"))
-    sorted_param = JSONField(_("异步导出排序字段"), null=True, blank=True)
+    request_param = models.JSONField(_("检索请求参数"))
+    sorted_param = models.JSONField(_("异步导出排序字段"), null=True, blank=True)
     scenario_id = models.CharField(_("接入场景"), max_length=64)
     index_set_id = models.IntegerField(_("索引集id"))
     result = models.BooleanField(_("异步导出结果"), default=False)
@@ -765,10 +771,17 @@ class AsyncTask(OperateRecordModel):
     file_size = models.FloatField(_("文件大小"), null=True, blank=True)
     download_url = models.TextField(_("下载地址"), null=True, blank=True)
     is_clean = models.BooleanField(_("是否被清理"), default=False)
+    export_status = models.CharField(_("导出状态"), max_length=128, null=True, blank=True)
+    start_time = models.CharField(_("导出选择请求时间"), max_length=64, null=True, blank=True)
+    end_time = models.CharField(_("导出选择结束时间"), max_length=64, null=True, blank=True)
+    export_type = models.CharField(_("导出类型"), max_length=64, null=True, blank=True)
+    bk_biz_id = models.IntegerField(_("业务ID"), null=True, default=None)
+    completed_at = models.DateTimeField(_("任务完成时间"), null=True, blank=True)
 
     class Meta:
-        verbose_name = _("异步导出任务")
-        verbose_name_plural = _("42_异步导出任务")
+        db_table = "export_task"
+        verbose_name = _("导出任务")
+        verbose_name_plural = _("42_导出任务")
 
 
 class EmailTemplate(OperateRecordModel):
@@ -809,3 +822,14 @@ class EmailTemplate(OperateRecordModel):
     class Meta:
         verbose_name = _("邮件模板")
         verbose_name_plural = _("43_邮件模板")
+
+
+class UserMetaConf(models.Model):
+    username = models.CharField(_("创建者"), max_length=32, default="")
+    conf = models.JSONField(_("用户meta配置"), default=dict)
+    type = models.CharField(_("数据类型"), max_length=64)
+
+    class Meta:
+        verbose_name = _("用户元配置")
+        verbose_name_plural = _("44_用户元配置")
+        unique_together = (("username", "type"),)

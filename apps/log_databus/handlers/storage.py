@@ -29,6 +29,7 @@ from django.utils.translation import ugettext as _
 from django.db.models import Sum
 from elasticsearch import Elasticsearch
 
+from apps.log_databus.utils.es_config import get_es_config
 from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
@@ -129,17 +130,18 @@ class StorageHandler(object):
         if not public_clusters:
             return cluster_groups
 
+        es_config = get_es_config(bk_biz_id)
         # 获取公共集群容易配额
         storage_capacity = self.get_storage_capacity(bk_biz_id, public_clusters)
         for cluster in cluster_groups:
             if cluster.get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
                 cluster["storage_capacity"] = storage_capacity["storage_capacity"]
                 cluster["storage_used"] = storage_capacity["storage_used"]
-                cluster["max_retention"] = settings.ES_PUBLIC_STORAGE_DURATION
+                cluster["max_retention"] = es_config["ES_PUBLIC_STORAGE_DURATION"]
             else:
                 cluster["storage_capacity"] = 0
                 cluster["storage_used"] = 0
-                cluster["max_retention"] = settings.ES_PRIVATE_STORAGE_DURATION
+                cluster["max_retention"] = es_config["ES_PRIVATE_STORAGE_DURATION"]
         return cluster_groups
 
     @classmethod
@@ -167,13 +169,14 @@ class StorageHandler(object):
             )
             cluster_obj["cluster_config"]["enable_hot_warm"] = enable_hot_warm
 
+            es_config = get_es_config(bk_biz_id)
             # 公共集群：凭据信息和域名置空处理，并添加不允许编辑标签
             if cluster_obj["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
                 if not is_default:
                     continue
                 cluster_obj.update({"auth_info": {"username": "", "password": ""}, "is_editable": False})
                 cluster_obj["cluster_config"]["domain_name"] = ""
-                cluster_obj["cluster_config"]["max_retention"] = settings.ES_PUBLIC_STORAGE_DURATION
+                cluster_obj["cluster_config"]["max_retention"] = es_config["ES_PUBLIC_STORAGE_DURATION"]
                 # 默认集群权重：推荐集群 > 其他
                 cluster_obj["priority"] = 1 if cluster_obj["cluster_config"].get("is_default_cluster") else 2
                 cluster_obj["bk_biz_id"] = 0
@@ -184,7 +187,8 @@ class StorageHandler(object):
             custom_option = cluster_obj["cluster_config"]["custom_option"]
             custom_biz_id = custom_option.get("bk_biz_id")
             custom_visible_bk_biz = custom_option.get("visible_bk_biz", [])
-            cluster_obj["cluster_config"]["max_retention"] = settings.ES_PRIVATE_STORAGE_DURATION
+
+            cluster_obj["cluster_config"]["max_retention"] = es_config["ES_PRIVATE_STORAGE_DURATION"]
             if not cls.storage_visible(bk_biz_id, custom_biz_id, custom_visible_bk_biz):
                 continue
             cluster_obj["is_editable"] = True
@@ -478,7 +482,7 @@ class StorageHandler(object):
 
         http_auth = (username, password) if username and password else None
         es_client = Elasticsearch(
-            [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=True
+            [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=False
         )
 
         nodes = es_client.cat.nodeattrs(format="json", h="name,host,attr,value,id,ip")
@@ -565,7 +569,7 @@ class StorageHandler(object):
         cs.close()
         http_auth = (username, password) if username and password else None
         es_client = Elasticsearch(
-            [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=True
+            [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=False
         )
         if not es_client.ping():
             connect_result = False
@@ -704,6 +708,8 @@ class StorageHandler(object):
 
     def repository(self, bk_biz_id=None, cluster_id=None):
         cluster_info = self.list(bk_biz_id=bk_biz_id, cluster_id=cluster_id, is_default=False)
+        if not cluster_info:
+            return []
         cluster_info_by_id = {cluster["cluster_config"]["cluster_id"]: cluster for cluster in cluster_info}
         repository_info = TransferApi.list_es_snapshot_repository({"cluster_ids": list(cluster_info_by_id.keys())})
         for repository in repository_info:
@@ -715,5 +721,5 @@ class StorageHandler(object):
                     "create_time": format_user_time_zone(repository["create_time"], get_local_param("time_zone")),
                 }
             )
-            repository.pop("settings")
+            repository.pop("settings", None)
         return repository_info

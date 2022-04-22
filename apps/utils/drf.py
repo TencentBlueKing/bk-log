@@ -21,7 +21,7 @@ import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import ugettext_lazy as _
-from django.utils import six
+import six
 from django.db import models
 
 from rest_framework import serializers

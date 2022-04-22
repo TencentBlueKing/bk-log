@@ -66,6 +66,9 @@ class FakeCache:
         self._dict.pop(key, key)
         return True
 
+    def close(self):
+        return True
+
 
 fake_redis = FakeRedis()
 

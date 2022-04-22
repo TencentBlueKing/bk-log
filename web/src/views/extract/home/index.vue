@@ -21,7 +21,10 @@
   -->
 
 <template>
-  <div class="main-container" data-test-id="logExtraction_div_fromBox">
+  <div
+    class="main-container"
+    data-test-id="logExtraction_div_fromBox"
+    v-bkloading="{ isLoading }">
     <div class="option-container">
       <bk-button
         theme="primary"
@@ -57,19 +60,29 @@
           <span v-bk-overflow-tips>{{ row.file_path.join('; ') }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('创建时间')" prop="created_at" min-width="120"></bk-table-column>
+      <bk-table-column
+        :label="$t('创建时间')"
+        prop="created_at"
+        min-width="120">
+      </bk-table-column>
       <bk-table-column :label="$t('备注')" min-width="120">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.remark || '--' }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('创建人')" prop="created_by" min-width="100"></bk-table-column>
+      <bk-table-column
+        :label="$t('创建人')"
+        prop="created_by"
+        min-width="100">
+      </bk-table-column>
       <bk-table-column :label="$t('任务状态')" min-width="100">
-        <div slot-scope="{ row }" :class="{
-          'task-status-warning': true,
-          'task-status-success': row.download_status === 'downloadable' || row.download_status === 'redownloadable',
-          'task-status-error': row.download_status === 'expired' || row.download_status === 'failed'
-        }">
+        <div
+          slot-scope="{ row }"
+          :class="{
+            'task-status-warning': true,
+            'task-status-success': row.download_status === 'downloadable' || row.download_status === 'redownloadable',
+            'task-status-error': row.download_status === 'expired' || row.download_status === 'failed'
+          }">
           <span class="bk-icon icon-refresh" v-if="!notLoadingStatus.includes(row.download_status)"></span>
           <span>{{ row.download_status_display }}</span>
           <span
@@ -103,26 +116,26 @@
       </bk-table-column>
     </bk-table>
     <!-- 表格侧边栏 -->
-    <bk-sideslider :is-show.sync="sideSlider.isShow" :quick-close="true" :title="$t('详情')" :width="660">
+    <bk-sideslider :is-show.sync="sideSlider.isShow" :quick-close="true" :title="$t('详情')" :width="660" transfer>
       <div slot="content" class="task-detail-content" v-bkloading="{ isLoading: sideSlider.isLoading }">
-        <ListBox icon="log-icon icon-info-fill" :title="sideSlider.data.task_process_info" :mark="true" />
-        <TaskStatusDetail :status-data="sideSlider.data.task_step_status" />
-        <DownloadUrl :task-id="sideSlider.data.task_id" />
-        <ListBox icon="bk-icon icon-sitemap" :title="$t('文件路径')" :list="sideSlider.data.preview_directory" />
-        <ListBox icon="bk-icon icon-data" :title="$t('下载目标')" :list="sideSlider.data.ip_list" />
-        <ListBox icon="bk-icon icon-file" :title="$t('文件列表')" :list="sideSlider.data.file_path" />
-        <ListBox icon="bk-icon icon-clock" :title="$t('过期时间')" :list="sideSlider.data.expiration_date" />
-        <TextFilterDetail v-if="sideSlider.data.filter_type" :data="sideSlider.data" />
+        <list-box icon="log-icon icon-info-fill" :title="sideSlider.data.task_process_info" :mark="true" />
+        <task-status-detail :status-data="sideSlider.data.task_step_status" />
+        <download-url :task-id="sideSlider.data.task_id" />
+        <list-box icon="bk-icon icon-sitemap" :title="$t('文件路径')" :list="sideSlider.data.preview_directory" />
+        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="sideSlider.data.ip_list" />
+        <list-box icon="bk-icon icon-file" :title="$t('文件列表')" :list="sideSlider.data.file_path" />
+        <list-box icon="bk-icon icon-clock" :title="$t('过期时间')" :list="sideSlider.data.expiration_date" />
+        <text-filter-detail v-if="sideSlider.data.filter_type" :data="sideSlider.data" />
       </div>
     </bk-sideslider>
   </div>
 </template>
 
 <script>
-import ListBox from './ListBox';
-import DownloadUrl from './DownloadUrl';
-import TaskStatusDetail from './TaskStatusDetail';
-import TextFilterDetail from './TextFilterDetail';
+import ListBox from './list-box';
+import DownloadUrl from './download-url';
+import TaskStatusDetail from './task-status-detail';
+import TextFilterDetail from './text-filter-detail';
 
 export default {
   name: 'ExtractHome',
@@ -135,6 +148,7 @@ export default {
   data() {
     return {
       searchKeyword: '',
+      isLoading: false,
       // 列表数据
       taskList: [],
       pagination: {
@@ -177,7 +191,7 @@ export default {
     async initTaskList() {
       try {
         clearTimeout(this.timeoutID);
-        this.$emit('loading', true);
+        this.isLoading = true;
         const payload = {
           query: {
             bk_biz_id: this.$store.state.bkBizId,
@@ -196,7 +210,7 @@ export default {
       } catch (e) {
         console.warn(e);
       } finally {
-        this.$emit('loading', false);
+        this.isLoading = false;
       }
     },
     pollingTaskStatus() {
@@ -266,23 +280,14 @@ export default {
     },
     handleCreateTask() {
       this.$router.push({
-        path: '/extract',
-        query: {
-          create: '1',
-          projectId: window.localStorage.getItem('project_id'),
-        },
+        name: 'extract-create',
       });
     },
     // 克隆
     cloneTask(row) {
       sessionStorage.setItem('cloneData', JSON.stringify(row));
       this.$router.push({
-        path: '/extract',
-        query: {
-          create: '1',
-          clone: '1',
-          projectId: window.localStorage.getItem('project_id'),
-        },
+        name: 'extract-clone',
       });
     },
     // 下载文件
@@ -297,7 +302,7 @@ export default {
     // 重新下载
     async reDownloadFile({ task_id }) {
       try {
-        this.$emit('loading', true);
+        this.isLoading = true;
         await this.$http.request('extract/reDownloadFile', {
           data: {
             task_id,
@@ -307,7 +312,7 @@ export default {
         await this.initTaskList();
       } catch (e) {
         console.warn(e);
-        this.$emit('loading', false);
+        this.isLoading = false;
       }
     },
     ipList(ipList) {
@@ -333,7 +338,7 @@ export default {
       .king-input-search {
         width: 486px;
 
-        /deep/ .icon-search {
+        ::v-deep .icon-search {
           &:hover {
             color: #3b84ff;
             cursor: pointer;
@@ -343,11 +348,12 @@ export default {
     }
 
     /*表格内容样式*/
-    /deep/ .king-table {
+    ::v-deep .king-table {
       background-color: #fff;
 
       /*分页下拉*/
       .bk-select-name {
+        /* stylelint-disable-next-line declaration-no-important */
         width: 76px !important;
       }
 
@@ -392,63 +398,63 @@ export default {
         color: #ea3636;
       }
     }
+  }
 
-    /*侧边栏插槽*/
-    .task-detail-content {
-      height: calc(100vh - 60px);
-      padding-bottom: 20px;
-      overflow: auto;
+  /*侧边栏插槽*/
+  .task-detail-content {
+    height: calc(100vh - 60px);
+    padding-bottom: 20px;
+    overflow: auto;
 
-      /deep/ .list-box-container {
-        padding: 14px 20px 10px;
-        font-size: 15px;
-        line-height: 40px;
-        color: #63656e;
+    ::v-deep .list-box-container {
+      padding: 14px 20px 10px;
+      font-size: 15px;
+      line-height: 40px;
+      color: #63656e;
 
-        .list-title {
-          display: flex;
-          align-items: center;
+      .list-title {
+        display: flex;
+        align-items: center;
 
-          .bk-icon {
-            margin-right: 6px;
-            font-size: 14px;
+        .bk-icon {
+          margin-right: 6px;
+          font-size: 14px;
+        }
+
+        .text {
+          color: #313238;
+          margin: 0;
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 20px;
+          padding: 10px 0;
+          word-break: break-all;
+        }
+
+        &.mark {
+          .log-icon {
+            margin-right: 4px;
+            font-size: 16px;
+            color: #ea3636;
           }
 
           .text {
-            color: #313238;
-            margin: 0;
-            font-size: 16px;
-            font-weight: 500;
-            line-height: 20px;
-            padding: 10px 0;
-            word-break: break-all;
-          }
-
-          &.mark {
-            .log-icon {
-              margin-right: 4px;
-              font-size: 16px;
-              color: #ea3636;
-            }
-
-            .text {
-              color: #ea3636;
-            }
+            color: #ea3636;
           }
         }
+      }
 
-        .list-box {
-          border-top: 1px solid #dcdee5;
+      .list-box {
+        border-top: 1px solid #dcdee5;
 
-          .list-item {
-            padding: 10px 0;
-            line-height: 20px;
-            border-bottom: 1px solid #dcdee5;
-            word-break: break-all;
+        .list-item {
+          padding: 10px 0;
+          line-height: 20px;
+          border-bottom: 1px solid #dcdee5;
+          word-break: break-all;
 
-            &:hover {
-              background-color: #f0f1f5;
-            }
+          &:hover {
+            background-color: #f0f1f5;
           }
         }
       }

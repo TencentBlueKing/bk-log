@@ -259,7 +259,7 @@ class MetricCollector(BaseMetricCollector):
             http_auth=http_auth,
             scheme="http",
             port=port,
-            verify_certs=True,
+            verify_certs=False,
             timeout=10,
         )
         if not es_client.ping(params={"request_timeout": 10}):

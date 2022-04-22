@@ -29,18 +29,20 @@ import * as meta from './meta';
 import * as monitor from './monitor';
 import * as auth from './auth';
 import * as plugins from './plugins';
-import * as resultTables from './resultTables';
+import * as resultTables from './result-tables';
 import * as biz from './biz';
 import * as collect from './collect';
 import * as particulars from './particulars';
 import * as migrate from './migrate';
-import * as traceDetail from './traceDetail';
+import * as traceDetail from './trace-detail';
 import * as trace from './trace';
 import * as extract from './extract';
-import * as extractManage from './extractManage';
-import * as linkConfiguration from './linkConfiguration';
+import * as extractManage from './extract-manage';
+import * as linkConfiguration from './link-configuration';
 import * as clean from './clean';
 import * as archive from './archive';
+import * as logClustering from './log-clustering';
+import * as custom from './custom';
 
 const getMyProjectList = {
   url: '/meta/projects/mine/',
@@ -72,4 +74,6 @@ export default {
   linkConfiguration,
   clean,
   archive,
+  logClustering,
+  custom,
 };

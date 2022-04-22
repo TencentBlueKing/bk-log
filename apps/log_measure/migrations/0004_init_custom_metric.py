@@ -19,32 +19,19 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from django.db import migrations
-from django.conf import settings
-
 from apps.utils.log import logger
-from apps.log_measure.constants import DATA_NAMES
-from config.domains import MONITOR_APIGATEWAY_ROOT
-from bk_monitor.handler.monitor import BKMonitor
+from apps.log_measure.constants import DATA_NAMES, BK_MONITOR_CLIENT
 
 
 def forwards_func(apps, schema_editor):
     try:
-        Migration.bk_monitor_client.custom_metric().migrate(data_name_list=Migration.data_names)
+        BK_MONITOR_CLIENT.custom_metric().migrate(data_name_list=Migration.data_names)
     except Exception as e:  # pylint: disable=broad-except
         logger.error(f"custom_metric migrate error: {e}")
 
 
 class Migration(migrations.Migration):
     data_names = DATA_NAMES
-
-    bk_monitor_client = BKMonitor(
-        app_id=settings.APP_CODE,
-        app_token=settings.SECRET_KEY,
-        monitor_host=MONITOR_APIGATEWAY_ROOT,
-        report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
-        bk_username="admin",
-        bk_biz_id=settings.BLUEKING_BK_BIZ_ID,
-    )
 
     dependencies = [("log_measure", "0003_auto_20200605_1357")]
 

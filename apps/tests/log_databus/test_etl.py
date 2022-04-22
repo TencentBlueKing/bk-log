@@ -425,7 +425,7 @@ class TestEtl(TestCase):
             etl_params=ETL_PARAMS,
             hot_warm_config=HOT_WARM_CONFIG,
         )
-        doc_values_nums = [item for item in result["params"]["field_list"] if "es_doc_values" in item["option"]]
+        doc_values_nums = [item for item in result["params"]["field_list"] if "es_doc_values" in item.get("option", {})]
         self.assertEqual(result["params"]["time_alias_name"], "utctime")
         self.assertEqual(len(doc_values_nums), 0, "直接入库不需要设置任何doc_values")
         self.assertTrue("es_doc_values" not in result["params"]["time_option"], "time_option必须设置且不可设置doc_values")

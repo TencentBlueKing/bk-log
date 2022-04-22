@@ -6,71 +6,10 @@
       name="viewport"
       content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{ TITLE }}</title>
+    <link rel="icon" type="image/png" href="./src/images/new-logo.svg" />
+    <title>日志平台 | 蓝鲸</title>
   </head>
   <body>
     <div id="app"></div>
-    <script>
-      // baseUrl
-      window.SITE_URL = '{{ SITE_URL }}'
-      // ajax url
-      window.AJAX_URL_PREFIX = '{{ AJAX_URL_PREFIX }}'
-      // 资源请求路径
-      window.BK_STATIC_URL = '{{ BK_STATIC_URL }}'
-      // 401 登陆地址
-      window.LOGIN_SERVICE_URL = '{{ LOGIN_SERVICE_URL }}'
-      // 监控地址
-      window.MONITOR_URL = '{{ MONITOR_URL }}'
-      // 数据平台URL
-      window.BKDATA_URL = '{{ BKDATA_URL }}'
-      // 日志采集接入指引
-      window.COLLECTOR_GUIDE_URL = '{{ COLLECTOR_GUIDE_URL }}'
-      // scenario_log 处理新建采集接入的跳转 如果不等于 on ，则打开新窗口，跳到数据平台 window.BKDATA_URL
-      // trace 新建索引集是否为trace日志
-      window.FEATURE_TOGGLE = {{ FEATURE_TOGGLE | safe }}
-
-      // 实时日志最大长度
-      window.REAL_TIME_LOG_MAX_LENGTH = '{{ REAL_TIME_LOG_MAX_LENGTH }}'
-      // 超过此长度删除部分日志
-      window.REAL_TIME_LOG_SHIFT_LENGTH = '{{ REAL_TIME_LOG_SHIFT_LENGTH }}'
-
-      // openpaas:企业版
-      window.runVersion = '{{ RUN_VER }}'
-      // 首页左上角图标旁的文字
-      window.TITLE_MENU = '{{ TITLE_MENU }}'
-      // 顶部导航 logo
-      window.MENU_LOGO_URL = '{{ MENU_LOGO_URL }}'
-      // 获取仪表盘 url 需要用到
-      window.APP_CODE = '{{ APP_CODE }}'
-      // 文档中心地址
-      window.BK_DOC_URL = '{{ BK_DOC_URL }}'
-      // 检索查询语法
-      window.BK_DOC_QUERY_URL = '{{ BK_DOC_QUERY_URL }}'
-      // FAQ 问题反馈地址
-      window.BK_FAQ_URL = '{{ BK_FAQ_URL }}'
-      // 冷热集群配置指引地址
-      window.BK_HOT_WARM_CONFIG_URL = '{{ BK_HOT_WARM_CONFIG_URL }}'
-      // 无业务初始页面接入业务地址
-      window.BIZ_ACCESS_URL = '{{ BIZ_ACCESS_URL }}'
-      // demo业务id
-      window.DEMO_BIZ_ID = {{ DEMO_BIZ_ID }}
-      // 冷热集群配置方法连接
-      window.BK_HOT_WARM_CONFIG_URL = '{{ BK_HOT_WARM_CONFIG_URL }}'
-      // 是否显示采集接入指引
-      window.COLLECTOR_GUIDE_URL = '{{ COLLECTOR_GUIDE_URL }}'
-      // ES 容量评估，超过最大容量需申请独立集群
-      window.ES_STORAGE_CAPACITY = '{{ ES_STORAGE_CAPACITY }}'
-      // TAM监控key
-      window.TAM_AEGIS_KEY = '{{ TAM_AEGIS_KEY }}'
-      // 用户管理跳转地址
-      window.BK_LOGIN_URL = '{{ BK_LOGIN_URL }}'
-      // 首页ICON地址
-      window.MENU_LOGO_URL = '{{ MENU_LOGO_URL }}'
-      // 数据平台文档地址
-      window.BK_DOC_DATA_URL = '{{ BK_DOC_DATA_URL }}'
-    </script>
-    {% if TAM_AEGIS_KEY != "" %}
-    <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js?_bid=3977"></script>
-    {% endif %}
   </body>
 </html>

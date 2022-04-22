@@ -323,7 +323,10 @@ class GrafanaQueryHandler:
             if field not in fields:
                 fields.append(field)
 
-        rows = [[r.get(field) for field in fields] for r in result["list"]]
+        rows = []
+        for r in result["origin_log_list"]:
+            row = self._flat_row(r)
+            rows.append([row.get(field) for field in fields])
 
         # 按照 grafana 的要求，第一个字段的名称必须为time
         fields[0] = "time"
@@ -334,6 +337,17 @@ class GrafanaQueryHandler:
         }
 
         return table
+
+    def _flat_row(self, row: dict):
+        new_value = {}
+        for col_key, value in row.items():
+            if isinstance(value, dict):
+                next_row = self._flat_row(value)
+                for next_col_key, next_col_value in next_row.items():
+                    new_value[f"{col_key}.{next_col_key}"] = next_col_value
+                continue
+            new_value[col_key] = value
+        return new_value
 
     def get_metric_list(self, category_id=None):
         project_id = self.project_id

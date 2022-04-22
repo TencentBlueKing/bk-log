@@ -36,7 +36,7 @@ from .utils import requests_curl_log
 
 rpool = requests.Session()
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("bk_dataview")
 
 
 CACHE_HEADERS = ["Cache-Control", "Expires", "Pragma", "Last-Modified"]

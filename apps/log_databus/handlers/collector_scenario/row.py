@@ -187,6 +187,16 @@ class RowCollectorScenario(CollectorScenario):
             },
             "fields": [
                 {
+                    "field_name": "__ext",
+                    "field_type": "object",
+                    "tag": "dimension",
+                    "alias_name": "ext",
+                    "description": "额外信息字段",
+                    "option": {"es_type": "object", "es_include_in_all": False}
+                    if es_version.startswith("5.")
+                    else {"es_type": "object"},
+                },
+                {
                     "field_name": "cloudId",
                     "field_type": "float",
                     "tag": "dimension",
@@ -232,6 +242,7 @@ class RowCollectorScenario(CollectorScenario):
                     "tag": "dimension",
                     "alias_name": "iterationindex",
                     "description": "迭代ID",
+                    "flat_field": True,
                     "option": {"es_type": "integer", "es_include_in_all": False}
                     if es_version.startswith("5.")
                     else {"es_type": "integer"},
