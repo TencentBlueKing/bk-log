@@ -18,6 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import copy
+from pypinyin import lazy_pinyin
 from collections import defaultdict, namedtuple
 from inspect import signature
 from typing import List
@@ -826,6 +827,7 @@ class BizHandler(APIModel):
                         "labels": labels,
                     }
                 )
+        results = sorted(results, key=lambda e: lazy_pinyin(e["bk_inst_name"]))
         return results
 
     def search_module(self, bk_biz_id, bk_set_id):
