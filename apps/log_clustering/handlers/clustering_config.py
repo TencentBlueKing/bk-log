@@ -87,19 +87,6 @@ class ClusteringConfigHandler(object):
         from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 
         if clustering_config:
-            clustering_config.min_members = min_members
-            clustering_config.max_dist_list = max_dist_list
-            clustering_config.predefined_varibles = predefined_varibles
-            clustering_config.delimeter = delimeter
-            clustering_config.max_log_length = max_log_length
-            clustering_config.is_case_sensitive = is_case_sensitive
-            clustering_config.clustering_fields = clustering_fields
-            clustering_config.bk_biz_id = bk_biz_id
-            clustering_config.filter_rules = filter_rules
-            clustering_config.signature_enable = signature_enable
-            clustering_config.source_rt_name = source_rt_name
-            clustering_config.category_id = category_id
-            clustering_config.save()
             change_filter_rules, change_model_config = self.check_clustering_config_update(
                 clustering_config=clustering_config,
                 filter_rules=filter_rules,
@@ -116,6 +103,19 @@ class ClusteringConfigHandler(object):
             if change_model_config:
                 # 更新aiops model
                 operator_aiops_service(index_set_id, operator=OperatorServiceEnum.UPDATE)
+            clustering_config.min_members = min_members
+            clustering_config.max_dist_list = max_dist_list
+            clustering_config.predefined_varibles = predefined_varibles
+            clustering_config.delimeter = delimeter
+            clustering_config.max_log_length = max_log_length
+            clustering_config.is_case_sensitive = is_case_sensitive
+            clustering_config.clustering_fields = clustering_fields
+            clustering_config.bk_biz_id = bk_biz_id
+            clustering_config.filter_rules = filter_rules
+            clustering_config.signature_enable = signature_enable
+            clustering_config.source_rt_name = source_rt_name
+            clustering_config.category_id = category_id
+            clustering_config.save()
             return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
         clustering_config = ClusteringConfig.objects.create(
             collector_config_id=collector_config_id,
