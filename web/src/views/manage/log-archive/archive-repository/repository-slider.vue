@@ -378,6 +378,7 @@ export default {
       const res = await this.$http.request('/source/getEsList', {
         query: {
           bk_biz_id: this.bkBizId,
+          enable_archive: 1,
         },
       });
       if (res.data) {
