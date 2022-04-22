@@ -91,4 +91,4 @@ class RealTimeFlowNode(object):
     PRE_TREAT_TRANSFORM = "pre_treat_transform"
     PRE_TREAT_ADD_UUID = "pre_treat_add_uuid"
     PRE_TREAT_SAMPLE_SET = "pre_treat_sample_set"
-    AFTER_TREAT_JOIN_AFTER_TREAT = "after_treat_join_after_treat_"
+    AFTER_TREAT_JOIN_AFTER_TREAT = "after_treat_join_after_treat"
