@@ -85,9 +85,7 @@ class CleanTemplateHandler(object):
         return bk_biz_id == self.data.bk_biz_id
 
     def retrieve(self):
-        data = model_to_dict(self.data)
-        data["visible_bk_biz_id"] = [int(i) for i in data["visible_bk_biz_id"].split(",") if i]
-        return data
+        return model_to_dict(self.data)
 
     def create_or_update(self, params: dict):
         model_fields = {
@@ -100,7 +98,7 @@ class CleanTemplateHandler(object):
         if params.get("visible_type"):
             model_fields["visible_type"] = params["visible_type"]
         if params.get("visible_bk_biz_id"):
-            model_fields["visible_bk_biz_id"] = self.build_str_visible_bk_biz_id(params["visible_bk_biz_id"])
+            model_fields["visible_bk_biz_id"] = params["visible_bk_biz_id"]
 
         if self._check_clean_template_exist(name=model_fields["name"], bk_biz_id=model_fields["bk_biz_id"]):
             biz = ProjectInfo.get_biz(model_fields["bk_biz_id"])
@@ -159,7 +157,3 @@ class CleanTemplateHandler(object):
         if self.data:
             qs = qs.exclude(clean_template_id=self.clean_template_id)
         return qs.exists()
-
-    @staticmethod
-    def build_str_visible_bk_biz_id(visible_bk_biz_id: list) -> str:
-        return "," + ",".join(visible_bk_biz_id) + ","
