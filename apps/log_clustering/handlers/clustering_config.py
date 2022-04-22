@@ -115,7 +115,7 @@ class ClusteringConfigHandler(object):
                 operator_aiops_service(index_set_id, operator=OperatorServiceEnum.UPDATE)
             if change_clustering_fields:
                 # 更新flow
-                update_clustering_clean(index_set_id)
+                update_clustering_clean.delay(index_set_id=index_set_id)
 
             clustering_config.min_members = min_members
             clustering_config.max_dist_list = max_dist_list
