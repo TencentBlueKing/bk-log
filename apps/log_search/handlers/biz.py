@@ -827,7 +827,7 @@ class BizHandler(APIModel):
                         "labels": labels,
                     }
                 )
-        results = sorted(results, key=lambda e: lazy_pinyin(e.__getitem__("bk_inst_name")))
+        results = sorted(results, key=lambda e: lazy_pinyin(e["bk_inst_name"]))
         return results
 
     def search_module(self, bk_biz_id, bk_set_id):
