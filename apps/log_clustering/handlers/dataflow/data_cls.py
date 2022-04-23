@@ -373,6 +373,7 @@ class AfterTreatDataFlowCls(object):
     join_signature_tmp: RealTimeCls
     judge_new_class: RealTimeCls
     join_signature: RealTimeCls
+    change_clustering_field: RealTimeCls
     diversion_tspider: TspiderStorageCls
     ignite: IgniteStorageCls
     diversion: SplitCls

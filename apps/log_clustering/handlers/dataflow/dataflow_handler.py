@@ -58,6 +58,7 @@ from apps.log_clustering.handlers.dataflow.constants import (
     ActionEnum,
     ActionHandler,
     RealTimeFlowNode,
+    DIST_CLUSTERING_FIELDS,
 )
 from apps.log_clustering.handlers.dataflow.data_cls import (
     ExportFlowCls,
@@ -427,7 +428,9 @@ class DataFlowHandler(BaseAiopsHandler):
         ]
         _, transform_fields = self._generate_fields(is_dimension_fields, clustering_field=clustering_fields)
         change_fields = [field for field in transform_fields if field != UUID_FIELDS]
+        change_clustering_fields = copy.copy(change_fields)
         change_fields.extend(DIST_FIELDS)
+        change_clustering_fields.extend(DIST_CLUSTERING_FIELDS)
         after_treat_flow = AfterTreatDataFlowCls(
             add_uuid_stream_source=StreamSourceCls(result_table_id=add_uuid_result_table_id),
             sample_set_stream_source=StreamSourceCls(result_table_id=sample_set_result_table_id),
@@ -448,6 +451,14 @@ class DataFlowHandler(BaseAiopsHandler):
                 fields=", ".join(change_fields),
                 table_name="after_treat_change_field_{}".format(time_format),
                 result_table_id="{}_after_treat_change_field_{}".format(self.conf.get("bk_biz_id"), time_format),
+                filter_rule="",
+            ),
+            change_clustering_field=RealTimeCls(
+                fields=", ".join(change_clustering_fields),
+                table_name="after_treat_change_clustering_field_{}".format(time_format),
+                result_table_id="{}_after_treat_change_clustering_field_{}".format(
+                    self.conf.get("bk_biz_id"), time_format
+                ),
                 filter_rule="",
             ),
             merge_table=MergeNodeCls(
