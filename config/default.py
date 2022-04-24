@@ -292,6 +292,8 @@ BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
 # 日志归档文档
 BK_ARCHIVE_DOC_URL = os.getenv("BKAPP_ARCHIVE_DOC_URL", "")
 
+BK_ASSESSMEN_HOST_COUNT = int(os.getenv("BKAPP_ASSESSMEN_HOST_COUNT", 30))
+
 # 日志清洗文档
 BK_ETL_DOC_URL = os.getenv("BKAPP_ETL_DOC_URL", "")
 
