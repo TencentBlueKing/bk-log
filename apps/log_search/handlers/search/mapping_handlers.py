@@ -603,6 +603,13 @@ class MappingHandlers(object):
         context_search_usable: bool = False
         realtime_search_usable: bool = False
         fields_list = set(fields_list)
+        analyze_fields_type_result = cls._analyze_fields_type(final_fields_list)
+        if analyze_fields_type_result:
+            return {
+                "context_search_usable": context_search_usable,
+                "realtime_search_usable": realtime_search_usable,
+                "usable_reason": analyze_fields_type_result,
+            }
 
         context_and_realtime_judge_fields = [
             {"gseindex", "ip", "path", "_iteration_idx"},
@@ -624,6 +631,24 @@ class MappingHandlers(object):
             "realtime_search_usable": realtime_search_usable,
             "usable_reason": cls._analyze_require_fields(fields_list),
         }
+
+    @classmethod
+    def _analyze_fields_type(cls, final_fields_list: List[Dict[str, Any]]):
+        # 上下文实时日志校验字段类型
+        fields_type = {
+            "gseindex": ["integer", "long"],
+            "iteration": ["integer", "long"],
+            "iterationIndex": ["integer", "long"],
+        }
+        for x in final_fields_list:
+            field_name = x["field_name"]
+            if fields_type.get(field_name):
+                if x["field_type"] in fields_type.get(field_name):
+                    continue
+                else:
+                    type_msg = "或者".join(fields_type.get(x["field_name"]))
+                    return _(f"{field_name}必须为{type_msg}类型")
+        return None
 
     @classmethod
     def _analyze_require_fields(cls, fields_list):
