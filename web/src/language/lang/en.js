@@ -802,6 +802,7 @@ export default {
   bizAttrTip: 'When the visible type is multi-service, the visible business scope cannot be empty',
   默认天数不能大于最大天数: 'The default number of days cannot be greater than the maximum number of days',
   基于单台最大的日志存储量粗略评估: 'Rough assessment based on the maximum log storage capacity of a single machine',
+  容量评估进行中: 'Capacity assessment in progress',
   创建集群: 'Create A Cluster',
   可见范围: 'Visible range',
   默认: 'Default',
