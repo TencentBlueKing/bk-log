@@ -92,7 +92,7 @@
         <div slot="empty">
           <div class="empty-text">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p v-if="indexSetItem.scenario_id !== 'log'">
+            <p v-if="!isHaveText">
               {{$t('canNotFieldMessage1')}}
               <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
               {{$t('canNotFieldMessage2')}}
@@ -210,6 +210,7 @@ export default {
       allFingerList: [], // 所有数据指纹List
       showScrollTop: false, // 是否展示返回顶部icon
       throttle: false, // 请求防抖
+      isHaveText: false, // 是否含有text字段
     };
   },
   computed: {
@@ -225,14 +226,12 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      if (this.indexSetItem.scenario_id !== 'log') return '';
       return this.clusterSwitch
         ? (this.configID
           ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage'))
         : this.$t('goSettingMessage');
     },
     exhibitOperate() {
-      if (this.indexSetItem.scenario_id !== 'log') return '';
       return this.clusterSwitch
         ? (this.configID ? this.$t('跳转到日志清洗') : '')
         : this.$t('去设置');
@@ -274,16 +273,21 @@ export default {
       immediate: true,
       handler(newList) {
         if (newList.length) {
-          // 无字段提取或者聚类开关没开时直接不显示聚类nav和table
-          if (this.indexSetItem.scenario_id !== 'log' || !this.configData.is_active) {
+          /**
+           *  无字段提取或者聚类开关没开时直接不显示聚类nav和table
+              来源如果是数据平台并且日志聚类大开关有打开则进入text判断
+              有text则提示去开启日志聚类 无则显示跳转计算平台
+           */
+          this.isHaveText = newList.some(el => el.field_type === 'text');
+          if (!this.configData.is_active) {
             this.exhibitAll = false;
             return;
           }
           // 初始化分组下拉列表
           this.filterGroupList();
           this.initTable();
-          // 判断有无text字段 无则不显示日志聚类
-          this.exhibitAll = newList.some(el => el.field_type === 'text');
+          // 判断是否有text字段 无则提示当前不支持采集项清洗
+          this.exhibitAll = this.isHaveText;
         }
       },
     },
@@ -390,7 +394,7 @@ export default {
     },
     handleLeaveCurrent() {
       // 不显示字段提取时跳转计算平台
-      if (this.indexSetItem.scenario_id !== 'log') {
+      if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveText) {
         const jumpUrl = `${window.BKDATA_URL}`;
         window.open(jumpUrl, '_blank');
         return;
