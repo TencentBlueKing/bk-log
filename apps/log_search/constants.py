@@ -64,6 +64,8 @@ class TagColor(ChoicesEnum):
     )
 
 
+BIZ_PROPERTY_TYPE_ENUM = "enum"
+
 DEFAULT_TAG_COLOR = TagColor.BLUE
 
 DEFAULT_BK_CLOUD_ID = 0
