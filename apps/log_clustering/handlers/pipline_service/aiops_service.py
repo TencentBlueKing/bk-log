@@ -294,7 +294,7 @@ def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
         "sample_set_name": f"{clustering_config.bk_biz_id}_bklog_sample_set_" f"{index_set_id}",
         "model_name": f"{clustering_config.bk_biz_id}_bklog_model_{index_set_id}",
         "description": f"{clustering_config.bk_biz_id}_bklog_{rt_name}",
-        "experiment_alias": f"{clustering_config.bk_biz_id}_bklog_" f"{rt_name}_experiment",
+        "experiment_alias": f"{clustering_config.bk_biz_id}_bklog_" f"{index_set_id}_experiment",
         "collector_config_id": clustering_config.collector_config_id,
         "topic_name": f"queue_{conf['bk_biz_id']}_bklog_{settings.ENVIRONMENT}_" f"{rt_name}",
         "project_id": conf["project_id"],
