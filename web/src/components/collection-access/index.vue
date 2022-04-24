@@ -344,7 +344,10 @@ export default {
       this.isSubmit = isSubmit;
     },
     setAssessmentItem(url) {
-      this.applyData = { iframe_ticket_url: url };
+      this.applyData = {
+        iframe_ticket_url: url,
+        itsm_ticket_status: 'applying',
+      };
     },
   },
 };

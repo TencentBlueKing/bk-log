@@ -116,7 +116,7 @@ export default {
       return this.finish[this.operateType];
     },
     isNotApplyPage() {
-      return JSON.stringify(this.applyData) === '{}';
+      return this.applyData.itsm_ticket_status !== 'applying';
     },
   },
   methods: {
