@@ -253,6 +253,7 @@ class EtlStorage(object):
             "default_storage": "elasticsearch",
             "default_storage_config": {
                 "cluster_id": storage_cluster_id,
+                "storage_cluster_id": storage_cluster_id,
                 "retention": retention,
                 "date_format": date_format,
                 "slice_size": slice_size,
