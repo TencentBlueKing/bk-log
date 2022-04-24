@@ -31,13 +31,13 @@ OPERATOR_AND = "and"
 # 聚类不参与sql字段
 NOT_CONTAIN_SQL_FIELD_LIST = ["timestamp", "_startTime_", "_endTime_"]
 DIST_FIELDS = ["dist_01", "dist_03", "dist_05", "dist_07", "dist_09"]
-DIST_CLUSTERING_FIELDS = {
-    "dist_01": "dist_01 AS __dist_01",
-    "dist_03": "dist_03 AS __dist_03",
-    "dist_05": "dist_05 AS __dist_05",
-    "dist_07": "dist_07 AS __dist_07",
-    "dist_09": "dist_09 AS __dist_09",
-}
+DIST_CLUSTERING_FIELDS = [
+    "dist_01 AS __dist_01",
+    "dist_03 AS __dist_03",
+    "dist_05 AS __dist_05",
+    "dist_07 AS __dist_07",
+    "dist_09 AS __dist_09",
+]
 DEFAULT_SPARK_EXECUTOR_INSTANCES = 20
 DEFAULT_PSEUDO_SHUFFLE = 200
 DEFAULT_SPARK_LOCALITY_WAIT = "0s"
