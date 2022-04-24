@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import arrow
 from django.conf import settings
 from pipeline.builder import Data, EmptyStartEvent, EmptyEndEvent, Var, build_tree
 from pipeline.parser import PipelineParser
@@ -289,12 +290,13 @@ def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
         if clustering_config.collector_config_name_en
         else "bkdata_{}".format(clustering_config.source_rt_name.split("_", 2)[-1])
     )
+    time_format = arrow.now().format("YYYYMMDDHHmmssSSS")
     params = {
         "bk_biz_id": conf["bk_biz_id"],
-        "sample_set_name": f"{clustering_config.bk_biz_id}_bklog_sample_set_" f"{index_set_id}",
-        "model_name": f"{clustering_config.bk_biz_id}_bklog_model_{index_set_id}",
+        "sample_set_name": f"{clustering_config.bk_biz_id}_bklog_sample_set_{index_set_id}_{time_format}",
+        "model_name": f"{clustering_config.bk_biz_id}_bklog_model_{index_set_id}_{time_format}",
         "description": f"{clustering_config.bk_biz_id}_bklog_{rt_name}",
-        "experiment_alias": f"{clustering_config.bk_biz_id}_bklog_" f"{index_set_id}_experiment",
+        "experiment_alias": f"{clustering_config.bk_biz_id}_bklog_{index_set_id}_experiment_{time_format}",
         "collector_config_id": clustering_config.collector_config_id,
         "topic_name": f"queue_{conf['bk_biz_id']}_bklog_{settings.ENVIRONMENT}_" f"{rt_name}",
         "project_id": conf["project_id"],

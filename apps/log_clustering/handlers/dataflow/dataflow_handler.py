@@ -130,13 +130,14 @@ class DataFlowHandler(BaseAiopsHandler):
         filter_rule, not_clustering_rule = self._init_filter_rule(
             clustering_config.filter_rules, all_fields_dict, clustering_config.clustering_fields
         )
+        time_format = arrow.now().format("YYYYMMDDHHmmssSSS")
         pre_treat_flow_dict = asdict(
             self._init_pre_treat_flow(
                 result_table_id=clustering_config.bkdata_etl_result_table_id,
                 filter_rule=filter_rule,
                 not_clustering_rule=not_clustering_rule,
                 clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
-                time_format=arrow.now().format("YYYYMMDDHHmmssSSS"),
+                time_format=time_format,
             )
         )
         pre_treat_flow = self._render_template(
@@ -145,7 +146,7 @@ class DataFlowHandler(BaseAiopsHandler):
         flow = json.loads(pre_treat_flow)
         create_pre_treat_flow_request = CreateFlowCls(
             nodes=flow,
-            flow_name="{}_pre_treat_flow".format(clustering_config.index_set_id),
+            flow_name="{}_pre_treat_flow_{}".format(clustering_config.index_set_id, time_format),
             project_id=self.conf.get("project_id"),
         )
         request_dict = self._set_username(create_pre_treat_flow_request)
@@ -298,6 +299,7 @@ class DataFlowHandler(BaseAiopsHandler):
             if clustering_config.collector_config_name_en
             else clustering_config.source_rt_name
         )
+        time_format = arrow.now().format("YYYYMMDDHHmmssSSS")
         after_treat_flow_dict = asdict(
             self._init_after_treat_flow(
                 clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
@@ -309,7 +311,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 src_rt_name=source_rt_name,
                 target_bk_biz_id=clustering_config.bk_biz_id,
                 clustering_config=clustering_config,
-                time_format=arrow.now().format("YYYYMMDDHHmmssSSS"),
+                time_format=time_format,
             )
         )
         after_treat_flow = self._render_template(
@@ -325,7 +327,7 @@ class DataFlowHandler(BaseAiopsHandler):
             flow, new_cls_pattern_rt = self.deal_diversion_node(flow=flow, after_treat_flow_dict=after_treat_flow_dict)
         create_pre_treat_flow_request = CreateFlowCls(
             nodes=flow,
-            flow_name="{}_after_treat_flow".format(clustering_config.index_set_id),
+            flow_name="{}_after_treat_flow_{}".format(clustering_config.index_set_id, time_format),
             project_id=self.conf.get("project_id"),
         )
         request_dict = self._set_username(create_pre_treat_flow_request)
