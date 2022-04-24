@@ -26,7 +26,7 @@
       <div :class="['cluster-title-container' ,!isShowTable && 'is-active']"
            @click="isShowTable = !isShowTable">
         <span class="bk-icon icon-angle-up-fill"></span>
-        <p>{{ tableTitleType ? $t("平台集群") : $t('业务独享集群')}}</p>
+        <p>{{ tableTitleType ? $t("共享集群") : $t('业务独享集群')}}</p>
       </div>
     </div>
     <div class="cluster-main" v-show="isShowTable">
@@ -54,7 +54,7 @@
             </template>
           </bk-table-column>
           <bk-table-column :label="$t('索引数')" prop="index_count"></bk-table-column>
-          <bk-table-column :label="$t('业务数')" prop="biz_count"></bk-table-column>
+          <bk-table-column v-if="tableTitleType" :label="$t('业务数')" prop="biz_count"></bk-table-column>
         </bk-table>
         <div class="cluster-illustrate" v-show="!!activeItem">
           <p class="illustrate-title">{{$t('集群说明')}}</p>
@@ -137,7 +137,7 @@ export default {
         const { number_of_replicas_max: replicasMax, retention_days_max: daysMax } = this.activeItem.setup_config;
         const { enable_hot_warm: hotWarm, enable_archive: archive } =  this.activeItem;
         this.illustrateLabelData = {
-          [this.$t('副本数')]: `${this.$t('最大')} ${replicasMax} ${this.$t('天')}`,
+          [this.$t('副本数')]: `${replicasMax} ${this.$t('个')}`,
           [this.$t('过期时间')]: `${this.$t('最大')} ${daysMax} ${this.$t('天')}`,
           [this.$t('热冷数据')]: hotWarm ? this.$t('是') : this.$t('否'),
           [this.$t('日志归档')]: archive ? this.$t('是') : this.$t('否'),
