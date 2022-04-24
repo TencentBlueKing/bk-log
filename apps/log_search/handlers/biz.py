@@ -38,6 +38,7 @@ from apps.log_search.constants import (
     CCInstanceType,
     FIND_MODULE_WITH_RELATION_FIELDS,
     BK_PROPERTY_GROUP_ROLE,
+    BIZ_PROPERTY_TYPE_ENUM,
 )
 from apps.utils import APIModel
 from apps.utils.cache import cache_five_minute, cache_one_hour, cache_half_hour
@@ -1178,11 +1179,15 @@ class BizHandler(APIModel):
         获取CMDB业务属性值信息
         """
         biz_properties_dict = {}
+        biz_properties_enum_dict = defaultdict(dict)
         biz_properties = CCApi.search_object_attribute({"bk_obj_id": "biz"})
         for bi in biz_properties:
             if bi["bk_property_group"] == BK_PROPERTY_GROUP_ROLE:
                 continue
             biz_properties_dict[bi["bk_property_id"]] = bi["bk_property_name"]
+            if bi["bk_property_type"] == BIZ_PROPERTY_TYPE_ENUM:
+                for oi in bi["option"]:
+                    biz_properties_enum_dict[bi["bk_property_id"]][oi["id"]] = oi["name"]
 
         params = {"fields": [pi for pi in biz_properties_dict]}
         params["fields"].append("bk_biz_id")
@@ -1195,6 +1200,9 @@ class BizHandler(APIModel):
                 biz_property_value = biz.get(bk_property_id)
                 if not biz_property_value:
                     continue
+                biz_property_value = biz_properties_enum_dict.get(bk_property_id, {}).get(
+                    biz_property_value, biz_property_value
+                )
                 result[bk_biz_id][bk_property_id] = {
                     "biz_property_name": biz_properties_dict[bk_property_id],
                     "biz_property_value": biz_property_value,
