@@ -141,7 +141,7 @@ class StorageHandler(object):
                 "enable_assessment": i["cluster_config"]["custom_option"]["enable_assessment"],
                 "enable_archive": i["cluster_config"]["custom_option"]["enable_archive"],
                 "is_platform": i["cluster_config"]["custom_option"]["visible_config"]["visible_type"]
-                in [VisibleEnum.ALL_BIZ.value, VisibleEnum.BIZ_ATTR.value],
+                in [VisibleEnum.ALL_BIZ.value, VisibleEnum.BIZ_ATTR.value, VisibleEnum.MULTI_BIZ.value],
             }
             for i in cluster_groups
             if i
