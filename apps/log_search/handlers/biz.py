@@ -167,7 +167,21 @@ class BizHandler(APIModel):
                     module_dict[module["bk_inst_id"]].append(self.host_dict_with_os_type(host["host"]))
             if params.get("remove_empty_nodes"):
                 self.foreach_topo_tree(biz_inst_topo, self._remove_empty_nodes, order="desc")
+        biz_inst_topo = self.sort_topo_tree_by_pinyin(biz_inst_topo)
         return biz_inst_topo
+
+    @classmethod
+    def sort_topo_tree_by_pinyin(cls, topo_trees: list):
+        """
+        深度优先遍历, 将拓扑结构按拼音排序
+        """
+        if not topo_trees:
+            return topo_trees
+        topo_trees.sort(key=lambda topo: lazy_pinyin(topo.get("bk_inst_name", "")))
+        for topo_tree in topo_trees:
+            cls.sort_topo_tree_by_pinyin(topo_tree.get("child", []))
+
+        return topo_trees
 
     def _remove_child(self, topo):
         for child in topo:
@@ -1052,6 +1066,7 @@ class BizHandler(APIModel):
         if template_type == TemplateType.SET_TEMPLATE.value:
             response_data = CCApi.list_set_template.bulk_request(params)
         project = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first()
+        response_data = sorted(response_data, key=lambda e: lazy_pinyin(e.get("name", "")))
         result = {
             "bk_biz_id": self.bk_biz_id,
             "bk_biz_name": project.project_name,
