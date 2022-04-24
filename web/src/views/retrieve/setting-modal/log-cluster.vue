@@ -39,7 +39,7 @@
             data-test-id="LogCluster_div_selectField"
             v-model="formData.clustering_fields"
             style="width: 482px;"
-            :disabled="!globalEditable"
+            :disabled="!globalEditable || isEdit"
             :clearable="false">
             <bk-option
               v-for="option in clusterField"
@@ -303,6 +303,7 @@ export default {
         { id: 'and', name: 'AND' },
         { id: 'or', name: 'OR' },
       ],
+      isEdit: false,
     };
   },
   watch: {
@@ -335,7 +336,7 @@ export default {
       this.globalLoading = true;
       let res;
       try {
-        if (this.configID && !isDefault) {
+        if (!isDefault) {
           res =  await this.$http.request('/logClustering/getConfig', {
             params: {
               index_set_id: this.$route.params.indexId,
@@ -350,6 +351,9 @@ export default {
         res.data.filter_rules = res.data.filter_rules || [];
         Object.assign(this.formData, res.data);
         Object.assign(this.defaultData, res.data);
+        if (!isDefault) {
+          this.isEdit = !!res.data.clustering_fields;
+        }
       } catch (e) {
         console.warn(e);
       } finally {
@@ -364,7 +368,7 @@ export default {
       this.formData.clustering_fields = extra.clustering_fields;
 
       // 日志聚类且数据指纹同时打开则不请求默认值
-      if (isActive && configID) {
+      if (isActive) {
         this.requestCluster(false);
       }
 
@@ -390,6 +394,11 @@ export default {
         //   },
         // });
       } else {
+        if (this.indexSetItem.scenario_id === 'bkdata') {
+          this.fingerSwitch = true;
+          this.requestCluster(true);
+          return;
+        }
         if (!this.configID) {
           this.$bkInfo({
             title: this.$t('retrieveSetting.notCollector'),
@@ -423,12 +432,34 @@ export default {
         const { index_set_id, bk_biz_id } = this.indexSetItem;
         // 获取子组件传来的聚类规则数组base64字符串
         this.formData.predefined_varibles = this.$refs.ruleTableRef.ruleArrToBase64();
+        const {
+          collector_config_name_en,
+          min_members,
+          max_dist_list,
+          predefined_varibles,
+          delimeter,
+          max_log_length,
+          is_case_sensitive,
+          clustering_fields,
+          filter_rules,
+        } = this.formData;
+        const paramsData = {
+          collector_config_name_en,
+          min_members,
+          max_dist_list,
+          predefined_varibles,
+          delimeter,
+          max_log_length,
+          is_case_sensitive,
+          clustering_fields,
+          filter_rules,
+        };
         this.$http.request('/logClustering/changeConfig', {
           params: {
             index_set_id,
           },
           data: {
-            ...this.formData,
+            ...paramsData,
             signature_enable: this.fingerSwitch,
             collector_config_id: this.configID,
             index_set_id,
