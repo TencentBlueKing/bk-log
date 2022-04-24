@@ -652,19 +652,19 @@ export default {
   .log-style {
     height: 100px;
 
-    /deep/.bk-form-textarea:focus {
+    ::v-deep.bk-form-textarea:focus {
       /* stylelint-disable-next-line declaration-no-important */
       background-color: #313238 !important;
       border-radius: 2px;
     }
 
-    /deep/.bk-form-textarea[disabled] {
+    ::v-deep.bk-form-textarea[disabled] {
       /* stylelint-disable-next-line declaration-no-important */
       background-color: #313238 !important;
       border-radius: 2px;
     }
 
-    /deep/.bk-textarea-wrapper {
+    ::v-deep.bk-textarea-wrapper {
       border: none;
     }
   }
@@ -674,7 +674,7 @@ export default {
       margin-left: 15px;
       width: 560px;
 
-      /deep/.bk-label {
+      ::v-deep.bk-label {
         text-align: left;
       }
     }

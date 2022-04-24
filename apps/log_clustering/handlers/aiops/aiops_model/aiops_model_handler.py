@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import base64
 from typing import Dict
@@ -1071,3 +1073,16 @@ class AiopsModelHandler(BaseAiopsHandler):
         )
         request_dict = self._set_username(aiops_experiment_debug_request)
         return BkDataAIOPSApi.aiops_experiments_debug(request_dict)
+
+    def close_continuous_training(self, model_id: str, experiment_id: int):
+        return BkDataAIOPSApi.put_experiment(
+            self._set_username(
+                {
+                    "model_id": model_id,
+                    "experiment_id": experiment_id,
+                    "protocol_version": "1.2",
+                    "continuous_training": False,
+                    "project_id": self.conf.get("project_id"),
+                }
+            )
+        )

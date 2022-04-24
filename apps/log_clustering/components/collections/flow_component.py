@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.utils.translation import ugettext_lazy as _
 from pipeline.builder import ServiceActivity, Var
@@ -47,7 +49,7 @@ class CreatePreTreatFlowService(BaseService):
     def _execute(self, data, parent_data):
         index_set_id = data.get_one_of_inputs("index_set_id")
         flow = DataFlowHandler().create_pre_treat_flow(index_set_id=index_set_id)
-        DataFlowHandler().start(flow_id=flow["flow_id"])
+        DataFlowHandler().operator_flow(flow_id=flow["flow_id"])
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):
@@ -91,7 +93,7 @@ class CreateAfterTreatFlowService(BaseService):
     def _execute(self, data, parent_data):
         index_set_id = data.get_one_of_inputs("index_set_id")
         flow = DataFlowHandler().create_after_treat_flow(index_set_id=index_set_id)
-        DataFlowHandler().start(flow_id=flow["flow_id"])
+        DataFlowHandler().operator_flow(flow_id=flow["flow_id"])
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):

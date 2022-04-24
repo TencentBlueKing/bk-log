@@ -90,7 +90,7 @@ export default {
     width: 320px;
     font-weight: normal;
 
-    /deep/ .bk-date-picker-editor {
+    ::v-deep .bk-date-picker-editor {
       background: #fff;
       line-height: 30px;
 

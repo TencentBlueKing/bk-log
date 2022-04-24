@@ -16,8 +16,13 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
+
 from apps.log_databus.exceptions import ArchiveNotFound
+from apps.exceptions import ApiResultError
+from apps.utils.log import logger
 from apps.utils.cache import cache_one_hour
 from apps.utils.function import map_if
 from apps.utils.thread import MultiExecuteFunc
@@ -149,6 +154,24 @@ class CollectorConfig(SoftDeleteModel):
 
     def get_result_table_kafka_config(self):
         return TransferApi.get_data_id({"bk_data_id": self.bk_data_id})["mq_config"]
+
+    def get_bk_data_by_name(self):
+        try:
+            bk_data = TransferApi.get_data_id({"data_name": self.bk_data_name})
+            return bk_data
+        except ApiResultError:
+            logger.debug(f"bk_data_name: {self.bk_data_name} is not exist.")
+
+        return None
+
+    def get_result_table_by_id(self):
+        try:
+            result_table = TransferApi.get_result_table({"table_id": self.table_id})
+            return result_table
+        except ApiResultError:
+            logger.debug(f"result_table_id: {self.table_id} is not exist.")
+
+        return None
 
     @property
     def category_name(self):

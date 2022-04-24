@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import functools
 import re
@@ -708,6 +710,8 @@ class StorageHandler(object):
 
     def repository(self, bk_biz_id=None, cluster_id=None):
         cluster_info = self.list(bk_biz_id=bk_biz_id, cluster_id=cluster_id, is_default=False)
+        if not cluster_info:
+            return []
         cluster_info_by_id = {cluster["cluster_config"]["cluster_id"]: cluster for cluster in cluster_info}
         repository_info = TransferApi.list_es_snapshot_repository({"cluster_ids": list(cluster_info_by_id.keys())})
         for repository in repository_info:
@@ -719,5 +723,5 @@ class StorageHandler(object):
                     "create_time": format_user_time_zone(repository["create_time"], get_local_param("time_zone")),
                 }
             )
-            repository.pop("settings")
+            repository.pop("settings", None)
         return repository_info

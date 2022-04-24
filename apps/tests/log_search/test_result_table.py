@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 import json
@@ -38,7 +40,7 @@ from apps.log_search.exceptions import (
 )
 from apps.log_search.views.result_table_views import ResultTablesViewSet
 
-logger = logging.getLogger("root")
+logger = logging.getLogger()
 
 BK_BIZ_ID = 2
 SCENARIO_ID_ROW = "row"

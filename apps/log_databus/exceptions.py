@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.utils.translation import ugettext_lazy as _
 
@@ -100,6 +102,16 @@ class CollectorIllegalIPException(BaseCollectorConfigException):
 class CollectorConfigNameENDuplicateException(BaseCollectorConfigException):
     ERROR_CODE = "112"
     MESSAGE = _("采集项{collector_config_name_en}英文名重复")
+
+
+class CollectorBkDataNameDuplicateException(BaseCollectorConfigException):
+    ERROR_CODE = "113"
+    MESSAGE = _("采集项{bk_data_name}采集链路data_name重复")
+
+
+class CollectorResultTableIDDuplicateException(BaseCollectorConfigException):
+    ERROR_CODE = "114"
+    MESSAGE = _("采集项{result_table_id}结果表ID重复")
 
 
 class StorageNotExistException(BaseCollectorConfigException):

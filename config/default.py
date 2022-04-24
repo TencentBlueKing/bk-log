@@ -16,12 +16,18 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import sys
 
-from config.log import get_logging_config_dict
-from blueapps.conf.default_settings import *  # noqa
+from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
+
+from blueapps.conf.default_settings import *  # noqa
+
+from config.log import get_logging_config_dict
 
 # 使用k8s部署模式
 IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
@@ -87,6 +93,8 @@ else:
 # 这里是默认的中间件，大部分情况下，不需要改动
 # 如果你已经了解每个默认 MIDDLEWARE 的作用，确实需要去掉某些 MIDDLEWARE，或者改动先后顺序，请去掉下面的注释，然后修改
 MIDDLEWARE = (
+    # http -> https 转换中间件
+    "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     # request instance provider
@@ -188,7 +196,6 @@ if RUN_VER != "open":
     LOGGING["handlers"]["root"]["encoding"] = "utf-8"
     LOGGING["handlers"]["component"]["encoding"] = "utf-8"
     LOGGING["handlers"]["mysql"]["encoding"] = "utf-8"
-    LOGGING["handlers"]["blueapps"]["encoding"] = "utf-8"
     if not IS_LOCAL:
         logging_format = {
             "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
@@ -256,6 +263,13 @@ if IS_K8S_DEPLOY_MODE:
             },
             # 普通app日志
             "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            "bk_dataview": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            "iam": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
 
@@ -275,6 +289,7 @@ MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
 BK_DOC_QUERY_URL = "https://bk.tencent.com/docs/document/5.1/90/3822/"
 BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
+BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 # 计算平台文档地址
 BK_DOC_DATA_URL = ""
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
@@ -283,6 +298,20 @@ BK_HOT_WARM_CONFIG_URL = (
 )
 BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 DEPLOY_MODE = os.environ.get("DEPLOY_MODE", "")
+
+
+# ===============================================================================
+# 企业版登录重定向
+# ===============================================================================
+
+
+def redirect_func(request):
+    login_page_url = reverse("account:login_page")
+    next_url = "{}?refer_url={}".format(login_page_url, request.path)
+    return HttpResponseRedirect(next_url)
+
+
+BLUEAPPS_PAGE_401_RESPONSE_FUNC = redirect_func
 
 # bulk_request limit
 BULK_REQUEST_LIMIT = int(os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500))

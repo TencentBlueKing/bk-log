@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.utils.translation import ugettext_lazy as _
 
@@ -63,6 +65,7 @@ class CreateSampleSet(object):
         self.create_sample_set.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.create_sample_set.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class AddRtToSampleSetService(BaseService):
@@ -101,6 +104,7 @@ class AddRtToSampleSet(object):
         self.add_rt_to_sample_set.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.add_rt_to_sample_set.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class CollectConfigsService(BaseService):

@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
@@ -23,6 +25,7 @@ from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import A
 from apps.log_clustering.handlers.aiops.aiops_model.constants import StepName
 from apps.log_clustering.models import AiopsModel, AiopsModelExperiment, SampleSet, ClusteringConfig
 from apps.log_clustering.tasks.sync_pattern import sync
+from apps.utils.log import logger
 from apps.utils.pipline import BaseService
 from django.utils.translation import ugettext_lazy as _
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
@@ -171,6 +174,7 @@ class UpdateExecuteConfig(object):
         )
         self.update_execute_config.component.inputs.model_name = Var(type=Var.SPLICE, value="${model_name}")
         self.update_execute_config.component.inputs.experiment_alias = Var(type=Var.SPLICE, value="${experiment_alias}")
+        self.update_execute_config.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class SampleSetLoadingService(BaseService):
@@ -568,3 +572,48 @@ class SyncPattern(object):
     def __init__(self, model_name: str):
         self.sync_pattern = ServiceActivity(component_code="sync_pattern", name=f"sync_pattern:{model_name}")
         self.sync_pattern.component.inputs.model_name = Var(type=Var.SPLICE, value="${model_name}")
+
+
+class CloseContinuousTrainingService(BaseService):
+    name = _("删除持续训练")
+
+    def inputs_format(self):
+        return [
+            Service.InputItem(name="model name", key="model_name", type="str", required=True),
+            Service.InputItem(name="experiment alias", key="experiment_alias", type="str", required=True),
+        ]
+
+    def _execute(self, data, parent_data):
+        model_name = data.get_one_of_inputs("model_name")
+        experiment_alias = data.get_one_of_inputs("experiment_alias")
+        aiops_model_experiment = AiopsModelExperiment.get_experiment(
+            model_name=model_name, experiment_alias=experiment_alias
+        )
+        if not aiops_model_experiment:
+            logger.error(
+                f"could not find experiment : [model_name]: {model_name} [experiment_alias]: {experiment_alias}"
+            )
+            return True
+        AiopsModelHandler().close_continuous_training(
+            model_id=aiops_model_experiment.model_id, experiment_id=aiops_model_experiment.experiment_id
+        )
+        aiops_model_experiment.delete()
+        aiops_model_experiment.save()
+        return True
+
+
+class CloseContinuousTrainingComponent(Component):
+    name = "CloseContinuousTraining"
+    code = "close_continuous_training"
+    bound_service = CloseContinuousTrainingService
+
+
+class CloseContinuousTraining(object):
+    def __init__(self, experiment_alias: str):
+        self.close_continuous_training = ServiceActivity(
+            component_code="close_continuous_training", name=f"close_continuous_training:{experiment_alias}"
+        )
+        self.close_continuous_training.component.inputs.model_name = Var(type=Var.SPLICE, value="${model_name}")
+        self.close_continuous_training.component.inputs.experiment_alias = Var(
+            type=Var.SPLICE, value="${experiment_alias}"
+        )

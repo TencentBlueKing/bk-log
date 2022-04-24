@@ -179,6 +179,11 @@ const getDynamicGroup = {
   url: '/bizs/:bk_biz_id/get_dynamic_group/',
   method: 'post',
 };
+// 获取预检查创建采集项的参数
+const getPreCheck = {
+  url: '/databus/collectors/pre_check/?bk_biz_id=:bk_biz_id&collector_config_name_en=:collector_config_name_en',
+  method: 'get',
+};
 
 export {
   getStorage,
@@ -212,4 +217,5 @@ export {
   executDetails,
   getDynamicGroupList,
   getDynamicGroup,
+  getPreCheck,
 };
