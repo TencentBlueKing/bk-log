@@ -92,7 +92,7 @@
         <div slot="empty">
           <div class="empty-text">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p v-if="!isHaveText">
+            <p v-if="!isHaveText && indexSetItem.scenario_id !== 'log'">
               {{$t('canNotFieldMessage1')}}
               <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
               {{$t('canNotFieldMessage2')}}
@@ -275,8 +275,8 @@ export default {
         if (newList.length) {
           /**
            *  无字段提取或者聚类开关没开时直接不显示聚类nav和table
-              来源如果是数据平台并且日志聚类大开关有打开则进入text判断
-              有text则提示去开启日志聚类 无则显示跳转计算平台
+           *  来源如果是数据平台并且日志聚类大开关有打开则进入text判断
+           *  有text则提示去开启日志聚类 无则显示跳转计算平台
            */
           this.isHaveText = newList.some(el => el.field_type === 'text');
           if (!this.configData.is_active) {
