@@ -779,26 +779,26 @@ class CollectorPluginInitSerializer(CollectorCreateSerializer):
     fields = serializers.JSONField(label=_("清洗字段"), required=False)
 
 
-class CollectorPluginUpdateSerializer(serializers.Serializer):
-    collector_plugin_name = serializers.CharField(label=_("采集插件名称"), max_length=64, required=False)
-    description = serializers.CharField(
-        label=_("插件描述"), max_length=64, required=False, allow_null=True, allow_blank=True
-    )
-    data_encoding = serializers.CharField(label=_("日志字符集"), max_length=30, required=False)
-    params = serializers.JSONField(_("采集插件参数"), allow_null=True, required=False)
-    is_enabled_display_collector = serializers.BooleanField(label=_("采集项是否对用户可见"), required=False)
-    is_allow_alone_data_id = serializers.BooleanField(_("是否允许使用独立DATAID"), required=False)
-    is_allow_alone_etl_config = serializers.BooleanField(label=_("是否允许独立配置清洗规则"), required=False)
-    etl_config = serializers.CharField(
-        label=_("清洗配置"), max_length=32, allow_null=True, allow_blank=True, required=False
-    )
-    is_allow_alone_storage = serializers.BooleanField(label=_("是否允许独立存储"), required=False)
-    storage_cluster_id = serializers.IntegerField(label=_("存储集群ID"), required=False)
-    retention = serializers.IntegerField(label=_("数据有效时间"), required=False)
-    allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=False)
-    storage_replies = serializers.IntegerField(label=_("副本数量"), required=False)
-    storage_shards_nums = serializers.IntegerField(label=_("ES分片数量"), required=False)
-    storage_shards_size = serializers.IntegerField(label=_("单shards分片大小"), required=False)
+class CollectorPluginUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CollectorPlugin
+        fields = [
+            "collector_plugin_name",
+            "description",
+            "data_encoding",
+            "params",
+            "is_enabled_display_collector",
+            "is_allow_alone_data_id",
+            "is_allow_alone_etl_config",
+            "etl_config",
+            "is_allow_alone_storage",
+            "storage_cluster_id",
+            "retention",
+            "allocation_min_days",
+            "storage_replies",
+            "storage_shards_nums",
+            "storage_shards_size",
+        ]
 
     def _check_multi_attrs(self, attrs: dict, *args):
         """校验多个参数是否存在"""
