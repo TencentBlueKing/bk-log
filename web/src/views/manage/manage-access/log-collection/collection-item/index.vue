@@ -584,7 +584,7 @@ export default {
         storage: 'collectStorage',
         clone: 'collectAdd',
       };
-      const targetRoute = routeMap[operateType];
+      let targetRoute = routeMap[operateType];
       // 查看详情 - 如果处于未完成状态，应该跳转到编辑页面
       if (targetRoute === 'manage-collection') {
         if (!row.table_id) {
@@ -603,6 +603,9 @@ export default {
       }
       if (operateType === 'clean') {
         params.collectorId = row.collector_config_id;
+        if (row.itsm_ticket_status === 'applying') {
+          targetRoute = routeMap.field;
+        }
         backRoute = this.$route.name;
       }
       // 克隆操作需要ID进行数据回显
