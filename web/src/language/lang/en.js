@@ -1401,4 +1401,5 @@ export default {
     btn: 'View all',
   },
   unKnowIconTips: 'This field is supplemented by the platform Not searchable',
+  新开页: 'Open new page',
 };

@@ -1401,4 +1401,5 @@ export default {
     btn: '查看所有',
   },
   unKnowIconTips: '该字段为平台补充 不可检索',
+  新开页: '新开页',
 };

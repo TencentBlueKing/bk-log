@@ -200,7 +200,7 @@
         @handleActiveDetails="handleActiveDetails" />
     </div>
 
-    <div class="drag-item" :style="`right: ${introWidth - 18}px`">
+    <div :class="`drag-item ${!introWidth && 'hidden-drag'}`" :style="`right: ${introWidth - 18}px`">
       <span
         class="bk-icon icon-more"
         @mousedown.left="dragBegin"></span>
@@ -618,10 +618,6 @@ export default {
     display: flex;
     justify-content: space-between;
 
-    &.is-active-details {
-      width: calc(100% - 340px);
-    }
-
     .main-operator-container {
       margin-bottom: 20px;
     }
@@ -666,6 +662,8 @@ export default {
       position: relative;
       top: 2px;
       width: 400px;
+      height: calc(100vh - 104px);
+      overflow: hidden;
     }
 
     .drag-item {
@@ -678,6 +676,10 @@ export default {
       top: 48%;
       user-select: none;
       cursor: col-resize;
+
+      &.hidden-drag {
+        display: none;
+      }
 
       .icon-more::after {
         content: '\e189';
