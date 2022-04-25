@@ -26,10 +26,12 @@ export default {
     'formData.storage_cluster_id': {
       immediate: true,
       handler(val) {
+        this.handleSelectStorageCluster();
         this.storageList.forEach((res) => {
           const arr = [];
           if (res.storage_cluster_id === val) {
             this.selectedStorageCluster = res; // 当前选择的存储集群
+            this.replicasMax = res.setup_config.number_of_replicas_max;
             this.updateDaysList();
             this.$nextTick(() => { // 如果开启了冷热集群天数不能为0
               if (res.enable_hot_warm && this.formData.allocation_min_days === '0') {
@@ -213,10 +215,11 @@ export default {
       // 因为有最大天数限制，不同集群限制可能不同，所以切换集群时重置
       this.formData.retention = '7';
       this.formData.allocation_min_days = '0';
+      this.formData.storage_replies = 1;
     },
     updateDaysList() {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
-        return item.id <= (this.selectedStorageCluster.max_retention || 30);
+        return item.id <= (this.selectedStorageCluster.setup_config.retention_days_max || 30);
       });
       this.retentionDaysList = retentionDaysList;
       this.hotDataDaysList = [...retentionDaysList];

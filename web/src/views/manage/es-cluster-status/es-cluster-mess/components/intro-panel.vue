@@ -195,25 +195,19 @@ export default {
   @import '@/scss/mixins/scroller';
 
   .illustrate-panel {
+    width: 100%;
+
     .right-window {
-      width: 320px;
       height: 100vh;
       background: #fff;
       border: 1px solid #dcdee5;
-      position: fixed;
-      right: -400px;
-      top: 103px;
+      position: absolute;
       z-index: 99;
       color: #63656e;
-      transition: right .5s;
       padding: 16px 0 0 24px;
 
       .top-title {
         height: 28px;
-      }
-
-      &.window-active {
-        right: 0;
       }
 
       h1 {

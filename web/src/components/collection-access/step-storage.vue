@@ -120,7 +120,7 @@
           class="copy-number-input"
           v-model="formData.storage_replies"
           type="number"
-          :max="3"
+          :max="replicasMax"
           :min="0"
           :precision="0"
           :clearable="false"
@@ -133,12 +133,7 @@
           <span>{{ $t('容量评估') }}</span>
           <span :class="['bk-icon','icon-angle-double-down',isShowAssessment && 'is-active']"></span>
         </div>
-        <div class="capacity-message">
-          <span class="bk-icon icon-info"></span>
-          <span style="font-size: 12px;">{{ $t('当前主机数较多，建议进行容量评估') }}</span>
-        </div>
       </div>
-
       <div v-show="isShowAssessment && isCanUseAssessment">
         <div class="capacity-illustrate">
           <p class="illustrate-title">{{$t('容量说明')}}</p>
@@ -147,13 +142,18 @@
           <p>{{$t('clusterTips3_1')}} {{formData.storage_replies}} {{$t('clusterTips2')}}</p>
         </div>
 
-        <bk-form-item
-          required
-          :label="$t('每日单台日志量')">
-          <bk-input
-            style="width: 320px;"
-            v-model="formData.assessment_config.log_assessment"
-          ></bk-input>
+        <bk-form-item :label="$t('每日单台日志量')">
+          <div class="capacity-message">
+            <bk-input
+              class="capacity-input"
+              v-model="logAssessmentStr"
+              @blur="handleBlurAssessment"
+            ></bk-input>
+            <span>g</span>
+            <span v-bk-tooltips.right="$t('基于单台最大的日志存储量粗略评估')" class="right">
+              <i class="bk-icon icon-info"></i>
+            </span>
+          </div>
         </bk-form-item>
 
         <div class="need-approval">
@@ -253,6 +253,7 @@ export default {
   data() {
     return {
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
+      HOST_COUNT: window.BK_ASSESSMEN_HOST_COUNT,
       refresh: false,
       // eslint-disable-next-line no-useless-escape
       isLoading: false,
@@ -337,7 +338,7 @@ export default {
       tips_storage: [],
       tip_storage: [],
       storageList: [],
-      clusterList: [], // 平台集群
+      clusterList: [], // 共享集群
       exclusiveList: [], // 独享集群
       dialogVisible: false,
       rowTemplate: {
@@ -356,9 +357,11 @@ export default {
         },
       },
       stashCleanConf: null, // 清洗缓存,
-      isShowAssessment: true,
-      activeCluster: {},
+      isShowAssessment: false,
       isChangeSelect: false,
+      logAssessmentStr: '',
+      hostNumber: 0,
+      replicasMax: 7,
     };
   },
   computed: {
@@ -382,26 +385,25 @@ export default {
        * itsm开启时, 当前选择的集群容量评估开启时
        * isChangeSelect 当前步骤非新增,且进行集群切换满足上面条件则展示容量评估
        */
-      return this.isItsm && this.activeCluster.enable_assessment && this.isChangeSelect;
+      return this.isItsm && this.selectedStorageCluster.enable_assessment && this.isChangeSelect;
+    },
+    isForcedFillAssessment() {
+      return this.hostNumber > Number(this.HOST_COUNT);
     },
     getApprover() {
       if (this.isCanUseAssessment) {
-        this.formData.assessment_config.approvals = this.activeCluster?.admin || [];
-        return this.activeCluster?.admin.join(', ') || '';
+        this.formData.assessment_config.approvals = this.selectedStorageCluster?.admin || [];
+        return this.selectedStorageCluster?.admin.join(', ') || '';
       }
       return '';
-    },
-  },
-  watch: {
-    'formData.storage_cluster_id': {
-      handler(val) {
-        this.activeCluster = this.storageList.find(item => item.storage_cluster_id === val);
-      },
     },
   },
   async mounted() {
     this.getStorage(true);
     this.operateType === 'add' && (this.isChangeSelect = true);
+  },
+  created() {
+    this.getHostNumber();
   },
   methods: {
     // 获取采集项清洗基础配置缓存 用于存储入库提交
@@ -433,7 +435,7 @@ export default {
         etl_params,
         assessment_config,
       } = this.formData;
-      const isNeedAssessment = this.isCanUseAssessment;
+      const isNeedAssessment = this.getNeedAssessmentStatus();
       this.isLoading = true;
       const data = {
         etl_config,
@@ -456,7 +458,7 @@ export default {
         },
         need_assessment: isNeedAssessment,
       };
-      !this.isCanUseAssessment && (delete data.assessment_config);
+      !isNeedAssessment && (delete data.assessment_config);
       /* eslint-disable */
       if (etl_config !== 'bk_log_text') {
         const etlParams = {
@@ -493,7 +495,7 @@ export default {
             this.$emit('stepChange', 'back');
           } else {
             if (data.need_assessment && data.assessment_config.need_approval) {
-              this.$emit('showApplyingIframe', res.data.iframe_ticket_url);
+              this.$emit('setAssessmentItem', res.data.ticket_url);
             }
             this.$emit('stepChange');
           }
@@ -505,18 +507,8 @@ export default {
     },
     // 完成按钮
     finish() {
-      // 未选择集群
-      const isNotSelectedID = this.formData.storage_cluster_id === '';
-      // 当前集群容量评估可用，但并未填写每日单台日志量
-      const isNotFillLogAssessment = this.isCanUseAssessment && this.formData.assessment_config.log_assessment === '';
-      if (isNotSelectedID || isNotFillLogAssessment) {
-        const message = isNotSelectedID ? this.$t('请选择集群') : this.$t('请填写每日单台日志量');
-        this.$bkMessage({
-          theme: 'error',
-          message,
-        });
-        return;
-      }
+      const isCanSubmit = this.getSubmitAuthority();
+      if (!isCanSubmit) return;
       const promises = [this.checkStore()];
       Promise.all(promises).then(() => {
         this.fieldCollection();
@@ -626,6 +618,49 @@ export default {
         },
       });
     },
+    /**
+     * @desc: 判断每日单台数据量是否是正整数
+     * @param { String } value
+     */
+    handleBlurAssessment(value) {
+      const isPositiveInteger = /^\d+(\.\d+)?$/g.test(value);
+      this.formData.assessment_config.log_assessment = isPositiveInteger ? value : '';
+      this.logAssessmentStr = isPositiveInteger ? value : '';
+    },
+    /**
+     * @desc: 获取主机数数量 若主机数大于assessment_host_count则显示容量评估弹窗
+     */
+    getHostNumber() {
+      const curTaskIdList = new Set();
+      this.curCollect.task_id_list.forEach(id => curTaskIdList.add(id));
+      this.hostNumber = [...curTaskIdList].length;
+      this.isShowAssessment = this.hostNumber > this.HOST_COUNT;
+    },
+    getSubmitAuthority() {
+      /**
+       * 当前未选择集群 提示
+       * 主机数量 >= assessment_host_count 强制审批 提示
+       */
+      const { storage_cluster_id: clusterID, assessment_config: assessmentConfig } = this.formData;
+      const isNotSelectedID = clusterID === '';
+      const isNotFillLog = this.isForcedFillAssessment && this.isCanUseAssessment && assessmentConfig.log_assessment === '';
+      const isNotApproval = this.isForcedFillAssessment && this.isCanUseAssessment && assessmentConfig.need_approval;
+      if (isNotSelectedID || isNotFillLog || isNotApproval) {
+        const message = isNotSelectedID
+          ? this.$t('请选择集群')
+          : (isNotFillLog ?  this.$t('请填写每日单台日志量') : this.$t('请勾选需要审批')) ;
+        this.$bkMessage({
+          theme: 'error',
+          message,
+        });
+        return false;
+      }
+      return true;
+    },
+    getNeedAssessmentStatus() {
+      const { assessment_config: { log_assessment: logAssessment, need_approval: needApproval } } = this.formData;
+      return this.isCanUseAssessment && (logAssessment !== '' || needApproval);
+    },
   },
 };
 </script>
@@ -703,11 +738,6 @@ export default {
       .button-text {
         @include flex-align;
       }
-
-      .capacity-message {
-        color: #63656e;
-        margin-left: 20px;
-      }
     }
 
     .capacity-illustrate {
@@ -726,6 +756,19 @@ export default {
         color: #63656e;
         margin-bottom: 4px;
         font-size: 12px;
+      }
+    }
+
+    .capacity-message {
+      display: flex;
+
+      .capacity-input {
+        width: 320px;
+        margin-right: 8px;
+      }
+
+      .right {
+        margin-left: 8px;
       }
     }
 

@@ -156,12 +156,11 @@
                 </bk-radio>
               </bk-radio-group>
               <bk-select
-                v-show="!isBizAttr"
+                v-show="!scopeValueType"
                 v-model="visibleBkBiz"
                 searchable
                 multiple
                 display-tag
-                :disabled="scopeValueType"
                 @toggle="handleToggleVisible">
                 <template #trigger>
                   <div class="visible-scope-box">
@@ -192,8 +191,6 @@
               <bk-search-select
                 clearable
                 v-show="isBizAttr"
-                ext-cls="search-select"
-                :readonly="true"
                 :popover-zindex="2500"
                 :data="bizParentList"
                 :show-condition="false"
@@ -314,7 +311,7 @@
                   <div
                     v-if="formData.hot_attr_name && formData.hot_attr_value"
                     class="button-text"
-                    @click="handleViewInstanceList('cold')">
+                    @click="handleViewInstanceList('hot')">
                     <span class="bk-icon icon-eye"></span>{{ $t('查看实例列表') }}
                   </div>
                 </div>
@@ -364,7 +361,7 @@
                   </div>
                 </div>
               </bk-form-item>
-              <bk-form-item :label="$t('容量评估')">
+              <bk-form-item v-if="isItsm" :label="$t('容量评估')">
                 <bk-switcher v-model="formData.enable_assessment" size="large" theme="primary"></bk-switcher>
               </bk-form-item>
             </div>
@@ -439,6 +436,7 @@ export default {
     return {
       configDocUrl: window.BK_HOT_WARM_CONFIG_URL,
       archiveDocUrl: window.BK_ARCHIVE_DOC_URL, // 日志归档跳转链接
+      isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on', // 容量评估全局参数
       confirmLoading: false,
       sliderLoading: false,
       formData: {
@@ -1323,7 +1321,4 @@ export default {
     @include flex-center;
   }
 }
-// ::v-deep .tippy-popper{
-//   z-index: 9999 !important;
-// }
 </style>

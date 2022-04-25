@@ -421,6 +421,7 @@ export default {
           es_config: {
             type: es_config.type,
           },
+          bk_biz_id: this.bkBizId,
         };
         if (es_config.type === 'hdfs') {
           const { uri, path, isSecurity, security, compress  } = hdfsFormData;

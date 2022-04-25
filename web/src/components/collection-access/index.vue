@@ -24,9 +24,6 @@
   <section :class="['access-wrapper',itsmTicketIsApplying && 'iframe-container']"
            v-bkloading="{ isLoading: basicLoading }">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
-    <div class="access-container" v-else-if="itsmTicketIsApplying" v-bkloading="{ basicLoading }">
-      <iframe :src="itsmApplyingUrl" style="width: 100%;" frameBorder="0" @load="handleIframeLoad"></iframe>
-    </div>
     <div class="access-container" v-else-if="!basicLoading && !isCleaning">
       <section class="access-step-wrapper">
         <div class="fixed-steps" :style="{ height: (stepList.length * 76) + 'px' }">
@@ -47,7 +44,7 @@
             :operate-type="operateType"
             @stepChange="stepChange" />
           <!-- <step-capacity
-            v-if="curStep === 2"
+            v-if="curStep === 0"
             :operate-type="operateType"
             @stepChange="stepChange" /> -->
           <step-issued
@@ -68,13 +65,14 @@
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
-            @showApplyingIframe="showApplyingIframe"
+            @setAssessmentItem="setAssessmentItem"
             @change-submit="changeSubmit" />
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
             :is-switch="isSwitch"
             :index-set-id="indexSetId"
+            :apply-data="applyData"
             @stepChange="stepChange" />
         </template>
         <template v-else>
@@ -100,13 +98,14 @@
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
-            @showApplyingIframe="showApplyingIframe"
+            @setAssessmentItem="setAssessmentItem"
             @change-submit="changeSubmit" />
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
             :is-switch="isSwitch"
             :index-set-id="indexSetId"
+            :apply-data="applyData"
             @stepChange="stepChange" />
         </template>
       </section>
@@ -151,8 +150,8 @@ export default {
       indexSetId: '',
       stepList: [],
       globals: {},
-      itsmApplyingUrl: '',
       itsmTicketIsApplying: false,
+      applyData: {},
     };
   },
   computed: {
@@ -253,9 +252,8 @@ export default {
           if (statusRes.data[0].status === 'PREPARE') {
             // 准备中编辑时跳到第一步，所以不用修改步骤
           } else if (this.isItsm) {
-            if (this.operateType === 'edit') { // 未完成编辑
-              this.itsmApplyingUrl !== '' && (this.itsmTicketIsApplying = true);
-              this.curStep = 1;
+            if (['edit', 'editFinish'].includes(this.operateType)) { // 未完成编辑
+              this.curStep = this.applyData.itsm_ticket_status === 'applying' ? 5 : 1;
             } else if (this.operateType === 'field') {
               this.curStep = 3;
             } else if (this.operateType === 'storage') {
@@ -319,7 +317,11 @@ export default {
               collect.params.paths = collect.params.paths.map(item => ({ value: item }));
             }
             // 如果当前页面采集流程未完成 则展示流程服务页面
-            this.itsmApplyingUrl = collect.itsm_ticket_status === 'applying' ? collect.iframe_ticket_url : '';
+            const applyDataItem = {
+              iframe_ticket_url: collect.ticket_url,
+              itsm_ticket_status: collect.itsm_ticket_status,
+            };
+            this.applyData = collect.itsm_ticket_status === 'applying' ? applyDataItem : {};
             this.itsmTicketIsApplying = false;
             this.$store.commit('collect/setCurCollect', collect);
             resolve(res.data);
@@ -341,13 +343,11 @@ export default {
     changeSubmit(isSubmit) {
       this.isSubmit = isSubmit;
     },
-    showApplyingIframe(url) {
-      this.itsmTicketIsApplying = true;
-      this.itsmApplyingUrl = url;
-      this.basicLoading = true;
-    },
-    handleIframeLoad() {
-      this.basicLoading = false;
+    setAssessmentItem(url) {
+      this.applyData = {
+        iframe_ticket_url: url,
+        itsm_ticket_status: 'applying',
+      };
     },
   },
 };
