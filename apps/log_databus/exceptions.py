@@ -129,6 +129,11 @@ class CollectorPluginNameDuplicateException(BaseCollectorPluginException):
     MESSAGE = _("采集插件名称已存在")
 
 
+class CollectorPluginNotMatchException(BaseCollectorPluginException):
+    ERROR_CODE = "113"
+    MESSAGE = _("参数异常：采集插件不匹配")
+
+
 class StorageNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "201"
     MESSAGE = _("集群不存在")

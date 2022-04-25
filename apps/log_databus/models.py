@@ -516,14 +516,3 @@ class CollectorPlugin(SoftDeleteModel):
             is_display=display_status, updated_at=timezone.now(), updated_by=request_user
         )
         logger.info("[Change Collector Plugin Display Status] %s %s", self.id, request_user)
-
-    @transaction.atomic()
-    def change_collector_etl_processor(self, etl_processor: str):
-        """更改采集项ETL处理器"""
-        request_user = get_request_username()
-        self.etl_processor = etl_processor
-        self.save()
-        CollectorConfig.objects.filter(collector_plugin_id=self.collector_plugin_id).update(
-            etl_processor=etl_processor, updated_at=timezone.now(), updated_by=request_user
-        )
-        logger.info("[Change Collector Plugin ETL Processor] %s %s", self.id, request_user)

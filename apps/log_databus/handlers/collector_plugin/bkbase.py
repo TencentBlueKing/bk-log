@@ -49,97 +49,12 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler, EtlStorage):
             }
         )
 
-    def _get_bkdata_etl_config(self, fields, etl_params, built_in_config):
-        built_in_fields = built_in_config.get("fields", [])
-        result_table_fields = self.get_result_table_fields(fields, etl_params, copy.deepcopy(built_in_config))
-        time_field = result_table_fields.get("time_field")
-
-        return {
-            "extract": {
-                "method": "from_json",
-                "next": {
-                    "next": [
-                        {
-                            "default_type": "null",
-                            "default_value": "",
-                            "next": {
-                                "method": "iterate",
-                                "next": {
-                                    "next": None,
-                                    "subtype": "assign_obj",
-                                    "label": "labelb140f1",
-                                    "assign": [
-                                        {"key": "data", "assign_to": "data", "type": "text"},
-                                    ]
-                                    + [
-                                        self._to_bkdata_assign(built_in_field)
-                                        for built_in_field in built_in_fields
-                                        if built_in_field.get("flat_field", False)
-                                    ],
-                                    "type": "assign",
-                                },
-                                "label": "label21ca91",
-                                "result": "iter_item",
-                                "args": [],
-                                "type": "fun",
-                            },
-                            "label": "label36c8ad",
-                            "key": "items",
-                            "result": "item_data",
-                            "subtype": "access_obj",
-                            "type": "access",
-                        },
-                        {
-                            "next": None,
-                            "subtype": "assign_obj",
-                            "label": "labelf676c9",
-                            "assign": self._get_bkdata_default_fields(built_in_fields, time_field),
-                            "type": "assign",
-                        },
-                    ],
-                    "name": "",
-                    "label": None,
-                    "type": "branch",
-                },
-                "result": "json_data",
-                "label": "label04a222",
-                "args": [],
-                "type": "fun",
-            },
-            "conf": self._to_bkdata_conf(time_field),
-        }
-
-    def _get_result_table_config(self, fields, etl_params, built_in_config, es_version="5.X"):
-        """
-        配置清洗入库策略，需兼容新增、编辑
-        """
-        built_in_fields = built_in_config.get("fields", [])
-        return {
-            "option": built_in_config.get("option", {}),
-            "field_list": built_in_fields
-            + (fields or [])
-            + [built_in_config["time_field"]]
-            + [
-                {
-                    "field_name": "log",
-                    "field_type": "string",
-                    "tag": "metric",
-                    "alias_name": "data",
-                    "description": "original_text",
-                    "option": {"es_type": "text", "es_include_in_all": True}
-                    if es_version.startswith("5.")
-                    else {"es_type": "text"},
-                }
-            ],
-            "time_alias_name": built_in_config["time_field"]["alias_name"],
-            "time_option": built_in_config["time_field"]["option"],
-        }
-
     def _create_instance_etl_storage(self, params: dict) -> None:
-        self.collector_config.table_id = self._create_etl_storage(self.collector_config, params)
+        self.collector_config.table_id = self._update_or_create_etl(self.collector_config, params)
 
-    def _create_etl_storage(self, instance: Union[CollectorPlugin, CollectorConfig], params: dict) -> str:
+    def _update_or_create_etl(self, instance: Union[CollectorPlugin, CollectorConfig], params: dict) -> str:
         is_collector_plugin = True if isinstance(instance, CollectorPlugin) else False
+
         # 获取基础参数
         fields = params.get("params", {}).get("fields", [])
         etl_params = params.get("params", {}).get("etl_params", {})
@@ -147,10 +62,11 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler, EtlStorage):
         # 获取清洗配置
         collector_scenario = CollectorScenario.get_instance(collector_scenario_id=instance.collector_scenario_id)
         built_in_config = collector_scenario.get_built_in_config()
-        fields_config = self._get_result_table_config(fields, etl_params, copy.deepcopy(built_in_config)).get(
+        etl_storage = EtlStorage.get_instance(params["etl_config"])
+        fields_config = etl_storage.get_result_table_config(fields, etl_params, copy.deepcopy(built_in_config)).get(
             "field_list", []
         )
-        bkdata_json_config = self._get_bkdata_etl_config(fields, etl_params, built_in_config)
+        bkdata_json_config = etl_storage.get_bkdata_etl_config(fields, etl_params, built_in_config)
         # 固定有time字段
         fields_config.append({"alias_name": "time", "field_name": "time", "option": {"es_type": "long"}})
         # 构造请求参数
