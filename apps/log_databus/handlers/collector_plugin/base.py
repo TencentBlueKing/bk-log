@@ -155,19 +155,11 @@ class CollectorPluginHandler:
         if config_name_duplicate or plugin_name_duplicate:
             raise CollectorPluginNameDuplicateException()
 
-    def _update_or_create_etl(self, instance, params: dict) -> str:
+    def _update_or_create_etl(self, instance, params: dict, is_create: bool) -> str:
         raise NotImplementedError
 
     @transaction.atomic()
-    def update_or_create(self, params: dict) -> dict:
-        """
-        创建采集插件
-        1. 创建采集插件
-        2. 根据需要初始化 data id & 数据链路
-        3. 根据需要创建清洗规则
-        4. 根据需要创建存储集群
-        """
-
+    def _update_or_create(self, params: dict) -> bool:
         # 创建插件
         if not self.collector_plugin:
             model_fields = {
@@ -222,7 +214,14 @@ class CollectorPluginHandler:
                 "is_allow_alone_data_id",
                 "is_allow_alone_etl_config",
                 "is_allow_alone_storage",
+                "storage_cluster_id",
+                "retention",
+                "allocation_min_days",
+                "storage_replies",
+                "storage_shards_nums",
+                "etl_config",
             )
+            params.update(model_fields)
             for key, val in model_fields.items():
                 setattr(self.collector_plugin, key, val)
 
@@ -246,9 +245,22 @@ class CollectorPluginHandler:
         # 清洗
         if not params["is_allow_alone_etl_config"] or self.collector_plugin.bk_data_id:
             self.collector_plugin.etl_config = params["etl_config"]
-            self.collector_plugin.table_id = self._update_or_create_etl(self.collector_plugin, params)
+            self._update_or_create_etl(self.collector_plugin, params, is_create)
 
         self.collector_plugin.save()
+
+        return is_create
+
+    def update_or_create(self, params: dict) -> dict:
+        """
+        创建采集插件
+        1. 创建采集插件
+        2. 根据需要初始化 data id & 数据链路
+        3. 根据需要创建清洗规则
+        4. 根据需要创建存储集群
+        """
+
+        is_create = self._update_or_create(params)
 
         # add user_operation_record
         user_operation_record.delay(
@@ -316,12 +328,6 @@ class CollectorPluginHandler:
             params["etl_params"] = self.collector_plugin.params.get("etl_params")
         return params
 
-    def _create_instance_etl_storage(self, params: dict):
-        """
-        创建清洗入库
-        """
-        raise NotImplementedError
-
     @transaction.atomic()
     def create_instance(self, params: dict) -> dict:
         """
@@ -344,6 +350,6 @@ class CollectorPluginHandler:
 
         # 创建清洗入库
         if self.collector_plugin.is_allow_alone_etl_config:
-            self._create_instance_etl_storage(params)
+            self._update_or_create_etl(self.collector_config, params, True)
 
         return collector_config

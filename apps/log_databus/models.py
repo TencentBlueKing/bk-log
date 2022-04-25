@@ -456,6 +456,7 @@ class CollectorPlugin(SoftDeleteModel):
     bk_data_id = models.IntegerField(_("DATAID"), null=True)
     data_link_id = models.IntegerField(_("数据链路ID"), null=True)
     table_id = models.CharField(_("结果表ID"), max_length=255, null=True)
+    processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)
     is_allow_alone_etl_config = models.BooleanField(_("是否允许独立配置清洗规则"), default=True)
     etl_processor = models.CharField(
         _("数据处理器"), max_length=32, choices=ETLProcessorChoices.choices, default=ETLProcessorChoices.TRANSFER.value
@@ -492,4 +493,4 @@ class CollectorPlugin(SoftDeleteModel):
         CollectorConfig.objects.filter(collector_plugin_id=self.collector_plugin_id).update(
             is_display=display_status, updated_at=timezone.now(), updated_by=request_user
         )
-        logger.info("[Change Collector Plugin Display Status] %s %s", self.id, request_user)
+        logger.info("[Change Collector Plugin Display Status] %s %s", self.collector_plugin_id, request_user)

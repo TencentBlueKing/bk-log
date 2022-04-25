@@ -38,7 +38,7 @@ class CollectorPluginViewSet(ModelViewSet):
             return CollectorPluginCreateSerializer
         if self.action in ["instances"]:
             return CollectorPluginInitSerializer
-        if self.action in ["update"]:
+        if self.action in ["update", "partial_update"]:
             return CollectorPluginUpdateSerializer
         return CollectorPluginSerializer
 
@@ -162,7 +162,7 @@ class CollectorPluginViewSet(ModelViewSet):
         data = self.validated_data
         collector_plugin: CollectorPlugin = self.get_object()
         collector_plugin_handler: CollectorPluginHandler = get_collector_plugin_handler(
-            data["etl_processor"], collector_plugin_id=collector_plugin.collector_plugin_id
+            collector_plugin.etl_processor, collector_plugin_id=collector_plugin.collector_plugin_id
         )
         return Response(collector_plugin_handler.update_or_create(data))
 
