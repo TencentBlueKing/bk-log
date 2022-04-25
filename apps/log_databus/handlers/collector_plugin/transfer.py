@@ -38,7 +38,7 @@ class TransferCollectorPluginHandler(CollectorPluginHandler):
             collector_scenario_id=self.collector_plugin.collector_scenario_id,
         )
 
-    def _create_etl_storage(self, instance, params: dict) -> str:
+    def _update_or_create_etl(self, instance, params: dict) -> str:
         # 集群信息
         cluster_info = StorageHandler(params["storage_cluster_id"]).get_cluster_info_by_id()
         # 创建清洗

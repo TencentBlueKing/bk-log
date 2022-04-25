@@ -19,7 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import logging
-from typing import Union
 
 from django.conf import settings
 from django.db import IntegrityError, transaction
@@ -100,43 +99,6 @@ class CollectorPluginHandler:
         except CollectorConfig.DoesNotExist:
             raise CollectorConfigNotExistException()
 
-    def _create_operation_log(
-        self,
-        action: str,
-        bk_biz_id: int,
-        record_type: str,
-        obj: Union[CollectorPlugin, CollectorConfig],
-    ) -> None:
-        """记录用户操作"""
-        user_operation_record.delay(
-            {
-                "username": get_request_username(),
-                "biz_id": bk_biz_id,
-                "record_type": record_type,
-                "record_object_id": obj.pk,
-                "action": action,
-                "params": model_to_dict(obj, exclude=["deleted_at", "created_at", "updated_at"]),
-            }
-        )
-
-    def _create_plugin_operation_log(self, action: str) -> None:
-        """记录用户对采集插件操作"""
-        self._create_operation_log(
-            action,
-            self.collector_plugin.bk_biz_id,
-            UserOperationTypeEnum.COLLECTOR_PLUGIN.value,
-            self.collector_plugin,
-        )
-
-    def _create_config_operation_log(self, action: str) -> None:
-        """记录用户对采集项操作"""
-        self._create_operation_log(
-            action,
-            self.collector_config.bk_biz_id,
-            UserOperationTypeEnum.COLLECTOR.value,
-            self.collector_config,
-        )
-
     def _create_bkdata_data_id(self):
         """创建数据平台DATAID"""
         maintainers = {self.collector_plugin.updated_by, self.collector_plugin.created_by}
@@ -169,7 +131,7 @@ class CollectorPluginHandler:
             }
         )
 
-    def _create_data_id(self) -> int:
+    def _update_or_create_data_id(self) -> int:
         """创建DATAID"""
         collector_scenario = CollectorScenario.get_instance(CollectorScenarioEnum.CUSTOM.value)
         bk_data_id = collector_scenario.update_or_create_data_id(
@@ -193,11 +155,11 @@ class CollectorPluginHandler:
         if config_name_duplicate or plugin_name_duplicate:
             raise CollectorPluginNameDuplicateException()
 
-    def _create_etl_storage(self, instance, params: dict) -> str:
+    def _update_or_create_etl(self, instance, params: dict) -> str:
         raise NotImplementedError
 
     @transaction.atomic()
-    def _create(self, params: dict) -> None:
+    def update_or_create(self, params: dict) -> dict:
         """
         创建采集插件
         1. 创建采集插件
@@ -205,45 +167,73 @@ class CollectorPluginHandler:
         3. 根据需要创建清洗规则
         4. 根据需要创建存储集群
         """
-        # 必须的参数
-        model_fields = {
-            "bk_biz_id": params["bk_biz_id"],
-            "collector_plugin_name": params["collector_plugin_name"],
-            "collector_plugin_name_en": params["collector_plugin_name_en"],
-            "description": params["description"] if params.get("description") else params["collector_plugin_name"],
-            "category_id": params["category_id"],
-            "data_encoding": params.get("data_encoding"),
-            "params": params.get("params", {}),
-            "data_link_id": params.get("data_link_id"),
-            "is_enabled_display_collector": params["is_enabled_display_collector"],
-            "is_allow_alone_data_id": params["is_allow_alone_data_id"],
-            "is_allow_alone_etl_config": params["is_allow_alone_etl_config"],
-            "is_allow_alone_storage": params["is_allow_alone_storage"],
-            "collector_scenario_id": params["collector_scenario_id"],
-            "etl_processor": params["etl_processor"],
-        }
 
-        # 校验英文名
-        self._pre_check_en_name(params["collector_plugin_name_en"])
+        # 创建插件
+        if not self.collector_plugin:
+            model_fields = {
+                "bk_biz_id": params["bk_biz_id"],
+                "collector_plugin_name": params["collector_plugin_name"],
+                "collector_plugin_name_en": params["collector_plugin_name_en"],
+                "description": params["description"] if params.get("description") else params["collector_plugin_name"],
+                "category_id": params["category_id"],
+                "data_encoding": params.get("data_encoding"),
+                "params": params.get("params", {}),
+                "data_link_id": params.get("data_link_id"),
+                "is_enabled_display_collector": params["is_enabled_display_collector"],
+                "is_allow_alone_data_id": params["is_allow_alone_data_id"],
+                "is_allow_alone_etl_config": params["is_allow_alone_etl_config"],
+                "is_allow_alone_storage": params["is_allow_alone_storage"],
+                "collector_scenario_id": params["collector_scenario_id"],
+                "etl_processor": params["etl_processor"],
+            }
 
-        # 创建采集插件
-        try:
-            self.collector_plugin = CollectorPlugin.objects.create(**model_fields)
-        except IntegrityError:
-            logger.warning(f"collector plugin name duplicate => [{params.get('collector_plugin_name')}]")
-            raise CollectorPluginNameDuplicateException()
+            # 校验英文名
+            self._pre_check_en_name(params["collector_plugin_name_en"])
 
-        # DATA_ID
-        if not params["is_allow_alone_data_id"] or params.get("create_public_data_id", False):
-            # 绑定链路
-            if not self.collector_plugin.data_link_id:
-                data_links = DataLinkConfig.objects.filter(bk_biz_id__in=[0, self.collector_plugin.bk_biz_id]).order_by(
-                    "data_link_id"
-                )
-                if data_links.exists():
-                    self.collector_plugin.data_link_id = data_links.first().data_link_id
-            # 创建 DATA ID
-            self.collector_plugin.bk_data_id = self._create_data_id()
+            # 创建采集插件
+            try:
+                self.collector_plugin = CollectorPlugin.objects.create(**model_fields)
+            except IntegrityError:
+                logger.warning(f"collector plugin name duplicate => [{params.get('collector_plugin_name')}]")
+                raise CollectorPluginNameDuplicateException()
+
+            # DATA_ID
+            if not params["is_allow_alone_data_id"] or params.get("create_public_data_id", False):
+                # 绑定链路
+                if not self.collector_plugin.data_link_id:
+                    data_links = DataLinkConfig.objects.filter(
+                        bk_biz_id__in=[0, self.collector_plugin.bk_biz_id]
+                    ).order_by("data_link_id")
+                    if data_links.exists():
+                        self.collector_plugin.data_link_id = data_links.first().data_link_id
+                # 创建 DATA ID
+                self.collector_plugin.bk_data_id = self._update_or_create_data_id()
+
+            is_create = True
+        # 更新插件
+        else:
+            model_fields = self._build_model_fields(
+                params,
+                "collector_plugin_name",
+                "description",
+                "data_encoding",
+                "params",
+                "is_enabled_display_collector",
+                "is_allow_alone_data_id",
+                "is_allow_alone_etl_config",
+                "is_allow_alone_storage",
+            )
+            for key, val in model_fields.items():
+                setattr(self.collector_plugin, key, val)
+
+            # 更新可见性
+            self.collector_plugin.change_collector_display_status(params["is_enabled_display_collector"])
+
+            # DATA_ID
+            if not params["is_allow_alone_data_id"] or params.get("create_public_data_id", False):
+                self.collector_plugin.bk_data_id = self._update_or_create_data_id()
+
+            is_create = False
 
         # 存储
         if not params["is_allow_alone_storage"] or self.collector_plugin.bk_data_id:
@@ -256,29 +246,35 @@ class CollectorPluginHandler:
         # 清洗
         if not params["is_allow_alone_etl_config"] or self.collector_plugin.bk_data_id:
             self.collector_plugin.etl_config = params["etl_config"]
-            self.collector_plugin.table_id = self._create_etl_storage(self.collector_plugin, params)
+            self.collector_plugin.table_id = self._update_or_create_etl(self.collector_plugin, params)
 
         self.collector_plugin.save()
 
-    def create(self, params: dict) -> dict:
-        """
-        创建采集插件
-        :return:
-        {
-            "collector_plugin_id": 1,
-            "collector_plugin_name": "采集插件名称"
-        }
-        """
-        # create plugin
-        self._create(params)
-
         # add user_operation_record
-        self._create_plugin_operation_log(UserOperationActionEnum.CREATE.value)
+        user_operation_record.delay(
+            {
+                "username": get_request_username(),
+                "biz_id": self.collector_plugin.bk_biz_id,
+                "record_type": UserOperationTypeEnum.COLLECTOR_PLUGIN,
+                "record_object_id": self.collector_plugin.collector_plugin_id,
+                "action": UserOperationActionEnum.CREATE.value if is_create else UserOperationActionEnum.UPDATE.value,
+                "params": model_to_dict(self.collector_plugin, exclude=["deleted_at", "created_at", "updated_at"]),
+            }
+        )
 
         return {
             "collector_plugin_id": self.collector_plugin.collector_plugin_id,
             "collector_plugin_name": self.collector_plugin.collector_plugin_name,
         }
+
+    def _build_model_fields(self, params: dict, *args):
+        model_fields = {}
+        for key in args:
+            if key in params.keys():
+                model_fields[key] = params[key]
+            else:
+                model_fields[key] = getattr(self.collector_plugin, key)
+        return model_fields
 
     def _update_config_params(self, params: dict, *args):
         """批量更新多个参数为插件参数"""
@@ -336,9 +332,6 @@ class CollectorPluginHandler:
             "collector_config_name": "采集插件名称"
         }
         """
-        # 获取插件
-        self._get_collector_plugin(params["collector_plugin_id"])
-
         # 校验英文名
         self._pre_check_en_name(params["collector_config_name_en"])
 

@@ -746,7 +746,7 @@ class CollectorPluginCreateSerializer(serializers.ModelSerializer):
     def _check_multi_attrs(self, attrs: dict, *args):
         """校验多个参数是否存在"""
         for key in args:
-            if not hasattr(attrs, key):
+            if key not in attrs.keys():
                 raise serializers.ValidationError(key + _("不存在"))
 
     def validate(self, attrs: dict) -> dict:
@@ -775,3 +775,48 @@ class CollectorPluginInitSerializer(CollectorCreateSerializer):
     bkdata_biz_id = serializers.IntegerField(label=_("数据平台业务ID"), required=False)
     etl_params = serializers.JSONField(label=_("清洗规则参数"), required=False)
     fields = serializers.JSONField(label=_("清洗字段"), required=False)
+
+
+class CollectorPluginUpdateSerializer(serializers.Serializer):
+    collector_plugin_name = serializers.CharField(label=_("采集插件名称"), max_length=64, required=False)
+    description = serializers.CharField(
+        label=_("插件描述"), max_length=64, required=False, allow_null=True, allow_blank=True
+    )
+    data_encoding = serializers.CharField(label=_("日志字符集"), max_length=30, required=False)
+    params = serializers.JSONField(_("采集插件参数"), allow_null=True, required=False)
+    is_enabled_display_collector = serializers.BooleanField(label=_("采集项是否对用户可见"), required=False)
+    is_allow_alone_data_id = serializers.BooleanField(_("是否允许使用独立DATAID"), required=False)
+    is_allow_alone_etl_config = serializers.BooleanField(label=_("是否允许独立配置清洗规则"), required=False)
+    etl_config = serializers.CharField(
+        label=_("清洗配置"), max_length=32, allow_null=True, allow_blank=True, required=False
+    )
+    is_allow_alone_storage = serializers.BooleanField(label=_("是否允许独立存储"), required=False)
+    storage_cluster_id = serializers.IntegerField(label=_("存储集群ID"), required=False)
+    retention = serializers.IntegerField(label=_("数据有效时间"), required=False)
+    allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=False)
+    storage_replies = serializers.IntegerField(label=_("副本数量"), required=False)
+    storage_shards_nums = serializers.IntegerField(label=_("ES分片数量"), required=False)
+    storage_shards_size = serializers.IntegerField(label=_("单shards分片大小"), required=False)
+
+    def _check_multi_attrs(self, attrs: dict, *args):
+        """校验多个参数是否存在"""
+        for key in args:
+            if key not in attrs.keys():
+                raise serializers.ValidationError(key + _("不存在"))
+
+    def validate(self, attrs: dict) -> dict:
+        # 不允许独立清洗规则或有dataid时
+        if not attrs.get("is_allow_alone_etl_config", True) or attrs.get("is_allow_alone_data_id", True):
+            self._check_multi_attrs(attrs, "etl_config")
+        # 不允许独立存储或有dataid时
+        if not attrs.get("is_allow_alone_storage", True) or attrs.get("is_allow_alone_data_id", True):
+            self._check_multi_attrs(
+                attrs,
+                "storage_cluster_id",
+                "retention",
+                "allocation_min_days",
+                "storage_replies",
+                "storage_shards_nums",
+                "storage_shards_size",
+            )
+        return attrs
