@@ -27,7 +27,8 @@
       :title="isEdit ? $t('编辑集群') : $t('新建集群')"
       :is-show="showSlider"
       :width="640"
-      :quick-close="false"
+      :quick-close="true"
+      :before-close="handleCloseSideslider"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="king-slider-content">
@@ -43,7 +44,7 @@
           <bk-form-item :label="$t('数据源名称')" required property="cluster_name">
             <bk-input
               data-test-id="esAccessFromBox_input_fillName"
-              v-model="formData.cluster_name"
+              v-model="basicFormData.cluster_name"
               maxlength="50"
               :readonly="isEdit"
             ></bk-input>
@@ -54,7 +55,7 @@
               <div class="source-item">
                 <bk-select
                   style="width: 154px;margin-right: 10px;"
-                  v-model="formData.source_type"
+                  v-model="basicFormData.source_type"
                   @change="handleChangeSource">
                   <bk-option
                     v-for="option in globalsData.es_source_type"
@@ -69,7 +70,7 @@
               <bk-input
                 class="address-input"
                 data-test-id="esAccessFromBox_input_fillDomainName"
-                v-model="formData.domain_name"
+                v-model="basicFormData.domain_name"
                 :readonly="isEdit"
               ></bk-input>
             </bk-form-item>
@@ -79,7 +80,7 @@
             <bk-form-item :label="$t('端口')" required property="port">
               <bk-input
                 data-test-id="esAccessFromBox_input_fillPort"
-                v-model="formData.port"
+                v-model="basicFormData.port"
                 :readonly="isEdit"
                 type="number"
                 :min="0"
@@ -90,7 +91,7 @@
             <bk-form-item :label="$t('协议')" required>
               <bk-select
                 data-test-id="esAccessFromBox_select_selectProtocol"
-                v-model="formData.schema"
+                v-model="basicFormData.schema"
                 :clearable="false">
                 <bk-option id="http" name="http"></bk-option>
                 <bk-option id="https" name="https"></bk-option>
@@ -102,14 +103,14 @@
             <bk-form-item :label="$t('用户名')">
               <bk-input
                 data-test-id="esAccessFromBox_input_fillUsername"
-                v-model="formData.auth_info.username"
+                v-model="basicFormData.auth_info.username"
               ></bk-input>
             </bk-form-item>
             <bk-form-item :label="$t('密码')">
               <bk-input
                 data-test-id="esAccessFromBox_input_fillPassword"
                 type="password"
-                v-model="formData.auth_info.password"
+                v-model="basicFormData.auth_info.password"
               ></bk-input>
             </bk-form-item>
           </div>
@@ -143,7 +144,7 @@
             </div>
           </bk-form-item>
 
-          <div v-if="isShowManagement">
+          <div v-if="isShowManagement && connectResult === 'success'">
             <!-- 可见范围 -->
             <bk-form-item :label="$t('可见范围')" style="margin-top: 4px">
               <bk-radio-group v-model="formData.visible_config.visible_type">
@@ -394,7 +395,7 @@
             theme="primary"
             class="king-button mr10"
             :loading="confirmLoading"
-            :disabled="connectResult !== 'success' || invalidHotSetting || isRulesCheckSubmit"
+            :disabled="isDisableClickSubmit"
             @click.stop.prevent="handleConfirm"
             data-test-id="esAccessFromBox_button_confirm">
             {{ $t('提交') }}
@@ -471,7 +472,18 @@ export default {
           visible_bk_biz: [], // 多个业务
         },
       },
-      visibleBkBiz: [],
+      basicFormData: {
+        cluster_name: '', // 集群名
+        source_type: '', // 来源
+        source_name: '',
+        domain_name: '', // 地址
+        port: '', // 端口
+        schema: 'http', // 协议
+        auth_info: {
+          username: '', // 用户名
+          password: '', // 密码
+        },
+      },
       basicRules: {
         source_type: [
           {
@@ -509,6 +521,7 @@ export default {
         { id: 'all_biz', name: this.$t('全平台') },
         { id: 'biz_attr', name: this.$t('按照业务属性选择') },
       ],
+      visibleBkBiz: [], // 下拉框选中的值列表
       visibleList: [], // 多业务选择下拉框
       cacheVisibleList: [], // 缓存多业务选择下拉框
       bkBizLabelsList: [], // 按照业务属性选择列表
@@ -563,6 +576,10 @@ export default {
     },
     isBizAttr() {
       return this.formData.visible_config.visible_type === 'biz_attr';
+    },
+    // 提交按钮是否禁用
+    isDisableClickSubmit() {
+      return this.connectResult !== 'success' || this.invalidHotSetting || this.isRulesCheckSubmit;
     },
   },
   watch: {
@@ -621,6 +638,12 @@ export default {
         this.isShowManagement = false;
       }
     },
+    basicFormData: {
+      handler() {
+        this.connectResult = '';
+      },
+      deep: true,
+    },
     'formData.setup_config.retention_days_default': {
       handler() {
         this.daySelectAddToDisable();
@@ -645,6 +668,9 @@ export default {
           this.bkBizLabelsList = JSON.parse(JSON.stringify(this.cacheBkBizLabelsList));
         }
       },
+    },
+    visibleList(val) {
+      this.visibleBkBiz = val.map(item => item.id);
     },
   },
   methods: {
@@ -679,7 +705,6 @@ export default {
             });
           }
         });
-        this.visibleBkBiz = [];
       }
     },
     // 编辑 es 源，回填数据
@@ -692,7 +717,7 @@ export default {
             bk_biz_id: this.bkBizId,
           },
         });
-        this.formData = {
+        this.basicFormData = {
           cluster_name: res.data.cluster_config.cluster_name, // 集群名
           source_type: res.data.cluster_config.custom_option?.source_type || '', // 来源
           source_name: res.data.cluster_config.custom_option?.source_type === 'other'
@@ -705,6 +730,8 @@ export default {
             username: res.data.auth_info.username, // 用户名
             password: res.data.auth_info.password || '******', // 密码
           },
+        };
+        this.formData = {
           enable_hot_warm: res.data.cluster_config.enable_hot_warm, // 是否开启冷热数据
           hot_attr_name: res.data.cluster_config.custom_option?.hot_warm_config?.hot_attr_name || '', // 热节点属性名称
           hot_attr_value: res.data.cluster_config.custom_option?.hot_warm_config?.hot_attr_value || '', // 热节点属性值
@@ -717,6 +744,7 @@ export default {
           enable_assessment: res.data.cluster_config.custom_option?.enable_assessment || false,
           visible_config: res.data.cluster_config.custom_option?.visible_config || {},
         };
+        Object.assign(this.formData, this.basicFormData);
         res.data.cluster_config.custom_option.visible_config?.visible_bk_biz.forEach((val) => {
           const target = this.myProjectList.find(project => Number(project.bk_biz_id) === val.bk_biz_id);
           if (target) {
@@ -775,7 +803,9 @@ export default {
         const res = await this.$http.request('/source/connectivityDetect', { data: postData });
         if (res.data) {
           this.connectResult = 'success';
-          this.isShowManagement = true;
+          if (this.isEdit) {
+            this.isShowManagement = true;
+          }
           // 连通性测试通过之后获取冷热数据
           const attrsRes = await this.$http.request('/source/getNodeAttrs', { data: postData });
           this.hotColdOriginList = attrsRes.data;
@@ -845,6 +875,7 @@ export default {
         const paramsData = {
           bk_biz_id: this.bkBizId,
         };
+        Object.assign(this.formData, this.basicFormData);
         const postData = JSON.parse(JSON.stringify(this.formData));
         postData.bk_biz_id = this.bkBizId;
         if (!postData.enable_hot_warm) {
@@ -956,9 +987,18 @@ export default {
      * @param { Object } item // 当前元素
      */
     getProjectOption(item) {
+      const isSelect = this.visibleBkBiz.includes(item.bk_biz_id);
       const backgroundStr = `background: ${!!item.is_use ? '#2dcb56' : '#699df4'}`;
       const styleStr = `display: inline-block; width: 4px; height: 4px; border-radius: 50%; margin-right: 4px; ${backgroundStr}; transform: translateY(-2px);`;
-      return `<span style="${styleStr}"></span> ${item.project_name}${item.is_use ? `（${this.$t('正在使用')}）` : ''}`;
+      const styleContainer = 'display:flex; align-items: center; justify-content: space-between; width: 100%;';
+      const styleIcon = 'font-size: 20px';
+      return `<div style="${styleContainer}">
+      <div>
+        <span style="${styleStr}"></span> 
+        <span>${item.project_name}${item.is_use ? `（${this.$t('正在使用')}）` : ''}<span>
+      </div>
+      ${isSelect ? `<span class="bk-icon icon-check-1" style="${styleIcon}"></span>` : ''}
+      </div>`;
     },
     handleChangePrincipal(val) {
       // 集群负责人为空时报错警告
@@ -1061,6 +1101,27 @@ export default {
         return false;
       }
       return true;
+    },
+    async handleCloseSideslider() {
+      return await this.showAlert();
+    },
+    /**
+     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
+     */
+    showAlert() {
+      if (this.isDisableClickSubmit) return true;
+      return new Promise((reject) => {
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('pageLeaveTips'),
+          confirmFn: () => {
+            reject(true);
+          },
+          close: () => {
+            reject(false);
+          },
+        });
+      });
     },
   },
 };

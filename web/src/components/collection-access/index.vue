@@ -255,9 +255,9 @@ export default {
             if (['edit', 'editFinish'].includes(this.operateType)) { // 未完成编辑
               this.curStep = this.applyData.itsm_ticket_status === 'applying' ? 5 : 1;
             } else if (this.operateType === 'field') {
-              this.curStep = 3;
+              this.curStep = this.applyData.itsm_ticket_status === 'applying' ? 5 : 3;
             } else if (this.operateType === 'storage') {
-              this.curStep = 4;
+              this.curStep = this.applyData.itsm_ticket_status === 'applying' ? 5 : 4;
             }
             // 审批通过后编辑直接进入第三步字段提取，否则进入第二步容量评估
           } else if (this.operateType === 'field') {
@@ -343,11 +343,8 @@ export default {
     changeSubmit(isSubmit) {
       this.isSubmit = isSubmit;
     },
-    setAssessmentItem(url) {
-      this.applyData = {
-        iframe_ticket_url: url,
-        itsm_ticket_status: 'applying',
-      };
+    setAssessmentItem(item) {
+      this.applyData = item;
     },
   },
 };

@@ -99,6 +99,7 @@ export default {
         field: this.$t('dataManage.field'),
         start: this.$t('dataManage.start'),
         stop: this.$t('dataManage.stop'),
+        storage: this.$t('dataManage.editFinish'),
       },
     };
   },

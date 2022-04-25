@@ -238,7 +238,7 @@
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">{{ props.row.updated_at }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" class-name="operate-column" width="250">
+        <bk-table-column :label="$t('dataSource.operation')" class-name="operate-column" width="160">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 检索 -->
             <!-- 启用状态下 且存在 index_set_id 才能检索 -->
@@ -269,26 +269,6 @@
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'clean')">
               {{ $t('logClean.goToClean') }}
-            </bk-button>
-            <!-- 存储设置 -->
-            <bk-button
-              theme="primary"
-              text
-              class="king-button"
-              :disabled="!props.row.table_id"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-              @click.stop="operateHandler(props.row, 'storage')">
-              {{ $t('logClean.storageSetting') }}
-            </bk-button>
-            <!-- 克隆 -->
-            <bk-button
-              theme="primary"
-              text
-              class="king-button"
-              :disabled="!props.row.table_id"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-              @click.stop="operateHandler(props.row, 'clone')">
-              {{ $t('克隆') }}
             </bk-button>
             <bk-dropdown-menu ref="dropdown" align="right">
               <i
@@ -354,6 +334,34 @@
                     v-else
                     v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
                     @click.stop="operateHandler(props.row, 'delete')">{{$t('btn.delete')}}</a>
+                </li>
+                <!-- 存储设置 -->
+                <li>
+                  <a
+                    href="javascript:;"
+                    class="text-disabled"
+                    v-if="!props.row.table_id">
+                    {{$t('logClean.storageSetting')}}
+                  </a>
+                  <a
+                    href="javascript:;"
+                    v-else
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    @click.stop="operateHandler(props.row, 'storage')">{{$t('logClean.storageSetting')}}</a>
+                </li>
+                <!-- 克隆 -->
+                <li>
+                  <a
+                    href="javascript:;"
+                    class="text-disabled"
+                    v-if="!props.row.table_id">
+                    {{ $t('克隆') }}
+                  </a>
+                  <a
+                    href="javascript:;"
+                    v-else
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    @click.stop="operateHandler(props.row, 'clone')">{{ $t('克隆') }}</a>
                 </li>
               </ul>
             </bk-dropdown-menu>
@@ -595,6 +603,9 @@ export default {
       }
       if (operateType === 'clean') {
         params.collectorId = row.collector_config_id;
+        if (row.itsm_ticket_status === 'applying') {
+          return this.operateHandler(row, 'field');
+        }
         backRoute = this.$route.name;
       }
       // 克隆操作需要ID进行数据回显

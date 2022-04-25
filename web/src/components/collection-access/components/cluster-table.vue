@@ -48,9 +48,14 @@
               <span>{{formatFileSize(row.storage_total)}}</span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('空闲率')">
+          <bk-table-column min-width="110" :label="$t('空闲率')">
             <template slot-scope="{ row }">
-              <span>{{`${100 - row.storage_usage}%`}}</span>
+              <div class="percent">
+                <div class="percent-progress">
+                  <bk-progress :theme="'success'" :show-text="false" :percent="getPercent(row)"></bk-progress>
+                </div>
+                <span>{{`${100 - row.storage_usage}%`}}</span>
+              </div>
             </template>
           </bk-table-column>
           <bk-table-column :label="$t('索引数')" prop="index_count"></bk-table-column>
@@ -121,6 +126,7 @@ export default {
       description: '',
       activeItem: {},
       isShow: false,
+      throttle: false,
     };
   },
   computed: {
@@ -159,6 +165,12 @@ export default {
   },
   methods: {
     handleSelectCluster($row) {
+      if (this.throttle) return;
+
+      this.throttle = true;
+      setTimeout(() => {
+        this.throttle = false;
+      }, 300);
       if (this.isChangeSelect || this.storageClusterId === '') {
         this.$emit('update:isChangeSelect', true);
         this.$emit('update:storageClusterId', $row.storage_cluster_id);
@@ -181,6 +193,9 @@ export default {
           isPass: true,
         },
       });
+    },
+    getPercent($row) {
+      return (100 - $row.storage_usage) / 100;
     },
   },
 };
@@ -288,6 +303,16 @@ export default {
       .icon-empty {
         font-size: 65px;
         color: #c3cdd7;
+      }
+    }
+
+    .percent {
+      display: flex;
+      align-items: center;
+
+      .percent-progress {
+        width: 40px;
+        margin-right: 4px;
       }
     }
   }

@@ -147,9 +147,11 @@
             <bk-input
               class="capacity-input"
               v-model="logAssessmentStr"
-              @blur="handleBlurAssessment"
-            ></bk-input>
-            <span>g</span>
+              @blur="handleBlurAssessment">
+            </bk-input>
+            <div class="unit-container">
+              G
+            </div>
             <span v-bk-tooltips.right="$t('基于单台最大的日志存储量粗略评估')" class="right">
               <i class="bk-icon icon-info"></i>
             </span>
@@ -495,7 +497,12 @@ export default {
             this.$emit('stepChange', 'back');
           } else {
             if (data.need_assessment && data.assessment_config.need_approval) {
-              this.$emit('setAssessmentItem', res.data.ticket_url);
+              this.$emit('setAssessmentItem', {
+                iframe_ticket_url: res.data.ticket_url,
+                itsm_ticket_status: 'applying',
+              });
+            } else {
+              this.$emit('setAssessmentItem', {});
             }
             this.$emit('stepChange');
           }
@@ -764,11 +771,16 @@ export default {
 
       .capacity-input {
         width: 320px;
-        margin-right: 8px;
       }
 
-      .right {
-        margin-left: 8px;
+      .unit-container {
+        width: 40px;
+        border: 1px solid #c4c6cc ;
+        background: #f2f4f8;
+        color: #63656e;
+        text-align: center;
+        margin: 1px 0 0 -1px;
+        margin-right: 8px;
       }
     }
 
