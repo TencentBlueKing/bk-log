@@ -1134,6 +1134,8 @@ class SearchHandler(object):
 
     @cached_property
     def _host_info(self):
+        if not self.search_dict.get("bk_biz_id"):
+            return {}
         return BizHandler(self.search_dict.get("bk_biz_id")).get_cache_hosts(
             bk_biz_id=self.search_dict.get("bk_biz_id")
         )
