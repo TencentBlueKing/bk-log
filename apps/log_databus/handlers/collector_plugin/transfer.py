@@ -17,55 +17,62 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from typing import Union
 
 from apps.log_databus.handlers.collector_plugin import CollectorPluginHandler
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.models import CollectorConfig
+from apps.log_databus.models import CollectorConfig, CollectorPlugin
 
 
 class TransferCollectorPluginHandler(CollectorPluginHandler):
-    def _get_mock_collector_config(self):
-        return CollectorConfig(
-            bk_biz_id=self.collector_plugin.bk_biz_id,
-            bk_data_id=self.collector_plugin.bk_data_id,
-            collector_config_name=self.collector_plugin.collector_plugin_name,
-            storage_shards_nums=self.collector_plugin.storage_shards_nums,
-            storage_replies=self.collector_plugin.storage_replies,
-            storage_shards_size=self.collector_plugin.storage_shards_size,
-            category_id=self.collector_plugin.category_id,
-            collector_scenario_id=self.collector_plugin.collector_scenario_id,
+    def _get_mock_collector_config(self, instance, is_create):
+        collector_config = CollectorConfig(
+            bk_biz_id=instance.bk_biz_id,
+            bk_data_id=instance.bk_data_id,
+            collector_config_name=instance.collector_plugin_name,
+            storage_shards_nums=instance.storage_shards_nums,
+            storage_replies=instance.storage_replies,
+            storage_shards_size=instance.storage_shards_size,
+            category_id=instance.category_id,
+            collector_scenario_id=instance.collector_scenario_id,
         )
+        if not is_create:
+            collector_config.table_id = instance.table_id
+        return collector_config
 
-    def _update_or_create_etl(self, instance, params: dict) -> str:
-        # 集群信息
-        cluster_info = StorageHandler(params["storage_cluster_id"]).get_cluster_info_by_id()
-        # 创建清洗
-        etl_storage: EtlStorage = EtlStorage.get_instance(params["etl_config"])
-        table_id = etl_storage.update_or_create_result_table(
-            self._get_mock_collector_config(),
-            instance.collector_plugin_name_en,
-            instance.storage_cluster_id,
-            instance.retention,
-            instance.allocation_min_days,
-            instance.storage_replies,
-            params.get("fields", []),
-            params.get("etl_params", {}),
-            cluster_info["cluster_config"]["version"],
-            cluster_info["cluster_config"].get("custom_option", {}).get("hot_warm_config"),
-        )["table_id"]
-        return table_id
-
-    def _create_instance_etl_storage(self, params: dict) -> None:
-        etl_config = {
-            "etl_config": params.get("etl_config"),
-            "table_id": params.get("table_id"),
-            "etl_params": params.get("etl_params"),
-            "fields": params.get("fields"),
-            "storage_cluster_id": params.get("storage_cluster_id"),
-            "retention": params.get("retention"),
-            "allocation_min_days": params.get("allocation_min_days"),
-            "storage_replies": params.get("storage_replies"),
-        }
-        EtlHandler(self.collector_config_id).update_or_create(**etl_config)
+    def _update_or_create_etl(
+        self, instance: Union[CollectorConfig, CollectorPlugin], params: dict, is_create=True
+    ) -> None:
+        if isinstance(instance, CollectorPlugin):
+            # 集群信息
+            cluster_info = StorageHandler(params["storage_cluster_id"]).get_cluster_info_by_id()
+            # 创建清洗
+            etl_storage: EtlStorage = EtlStorage.get_instance(params["etl_config"])
+            table_id = etl_storage.update_or_create_result_table(
+                self._get_mock_collector_config(instance, is_create),
+                instance.collector_plugin_name_en,
+                instance.storage_cluster_id,
+                instance.retention,
+                instance.allocation_min_days,
+                instance.storage_replies,
+                params.get("fields", []),
+                params.get("etl_params", {}),
+                cluster_info["cluster_config"]["version"],
+                cluster_info["cluster_config"].get("custom_option", {}).get("hot_warm_config"),
+            )["table_id"]
+            instance.table_id = table_id
+            instance.save()
+        else:
+            etl_config = {
+                "etl_config": params.get("etl_config"),
+                "table_id": params.get("table_id"),
+                "etl_params": params.get("etl_params"),
+                "fields": params.get("fields"),
+                "storage_cluster_id": params.get("storage_cluster_id"),
+                "retention": params.get("retention"),
+                "allocation_min_days": params.get("allocation_min_days"),
+                "storage_replies": params.get("storage_replies"),
+            }
+            EtlHandler(self.collector_config_id).update_or_create(**etl_config)
