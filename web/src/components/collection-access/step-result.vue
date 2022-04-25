@@ -120,9 +120,6 @@ export default {
       return this.applyData.itsm_ticket_status !== 'applying';
     },
   },
-  created() {
-    console.log(this.applyData);
-  },
   methods: {
     routeChange(type) {
       let routeName = 'collection-item';
