@@ -158,7 +158,6 @@ class DataFlowHandler(BaseAiopsHandler):
 
     @classmethod
     def _init_filter_rule(cls, filter_rules, all_fields_dict, clustering_field):
-        # add default_filter_rule where data is not null and length(data) > 1
         default_filter_rule = cls._init_default_filter_rule(all_fields_dict.get(clustering_field))
         filter_rule_list = ["where", default_filter_rule]
         not_clustering_rule_list = ["where", "NOT", "(", default_filter_rule]

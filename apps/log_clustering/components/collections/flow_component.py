@@ -194,7 +194,7 @@ class CreateNewIndexSetService(BaseService):
             indexes=[
                 {
                     "bk_biz_id": index["bk_biz_id"],
-                    "result_table_id": clustering_config.after_treat_flow["merge_table"]["result_table_id"],
+                    "result_table_id": clustering_config.after_treat_flow["change_field"]["result_table_id"],
                     "result_table_name": _("合并日志"),
                     "time_field": "dtEventTimeStamp",
                 }
