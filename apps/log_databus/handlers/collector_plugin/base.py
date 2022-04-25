@@ -45,7 +45,6 @@ from apps.log_databus.exceptions import (
     CollectorPluginNameDuplicateException,
     CollectorPluginNotExistException,
 )
-from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.models import CollectorConfig, CollectorPlugin, DataLinkConfig
 from apps.log_search.constants import CollectorScenarioEnum
@@ -287,69 +286,3 @@ class CollectorPluginHandler:
             else:
                 model_fields[key] = getattr(self.collector_plugin, key)
         return model_fields
-
-    def _update_config_params(self, params: dict, *args):
-        """批量更新多个参数为插件参数"""
-        for key in args:
-            try:
-                value = getattr(self.collector_plugin, key)
-                params[key] = value
-            except AttributeError:
-                pass
-        return params
-
-    def _build_create_instance_params(self, params: dict) -> dict:
-        """
-        构造创建必须的参数
-        """
-        # 采集场景
-        params["collector_scenario_id"] = self.collector_plugin.collector_scenario_id
-        # 是否展示采集项
-        params["is_display"] = self.collector_plugin.is_enabled_display_collector
-        # 不允许独立DATAID
-        if not self.collector_plugin.is_allow_alone_data_id:
-            self._update_config_params(params, "bk_data_id", "data_link_id")
-        # 不允许独立存储
-        if not self.collector_plugin.is_allow_alone_storage:
-            self._update_config_params(
-                params,
-                "storage_cluster_id",
-                "retention",
-                "allocation_min_days",
-                "storage_replies",
-                "storage_shards_nums",
-                "storage_shards_size",
-                "table_id",
-            )
-        # 不允许独立清洗配置
-        if not self.collector_plugin.is_allow_alone_etl_config:
-            self._update_config_params(params, "etl_processor", "etl_config", "etl_template")
-            params["fields"] = self.collector_plugin.params.get("fields")
-            params["etl_params"] = self.collector_plugin.params.get("etl_params")
-        return params
-
-    @transaction.atomic()
-    def create_instance(self, params: dict) -> dict:
-        """
-        实例化采集插件
-        :return:
-        {
-            "collector_config_id": 1,
-            "collector_config_name": "采集插件名称"
-        }
-        """
-        # 校验英文名
-        self._pre_check_en_name(params["collector_config_name_en"])
-
-        # 构造基本参数
-        collector_config_params = self._build_create_instance_params(params)
-
-        # 创建采集项
-        collector_config = CollectorHandler().update_or_create(collector_config_params)
-        self._get_collector_config(collector_config["collector_config_id"])
-
-        # 创建清洗入库
-        if self.collector_plugin.is_allow_alone_etl_config:
-            self._update_or_create_etl(self.collector_config, params, True)
-
-        return collector_config
