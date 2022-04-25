@@ -270,10 +270,10 @@
                 </bk-radio-group>
                 <bk-select
                   v-model="visibleBkBiz"
+                  v-show="scopeValueType"
                   searchable
                   multiple
                   display-tag
-                  :disabled="scopeValueType"
                   @toggle="handleToggleVisible">
                   <template #trigger>
                     <div class="visible-scope-box">
@@ -648,7 +648,7 @@ export default {
     },
     // 可见范围单选判断，禁用下拉框
     scopeValueType() {
-      return this.formData.visible_type !== 'multi_biz';
+      return this.formData.visible_type === 'multi_biz';
     },
     // 入口是否是清洗模板
     isClearTemplate() {

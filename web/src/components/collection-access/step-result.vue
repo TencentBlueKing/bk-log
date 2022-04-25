@@ -99,6 +99,7 @@ export default {
         field: this.$t('dataManage.field'),
         start: this.$t('dataManage.start'),
         stop: this.$t('dataManage.stop'),
+        storage: this.$t('dataManage.editFinish'),
       },
     };
   },
@@ -118,6 +119,9 @@ export default {
     isNotApplyPage() {
       return this.applyData.itsm_ticket_status !== 'applying';
     },
+  },
+  created() {
+    console.log(this.applyData);
   },
   methods: {
     routeChange(type) {

@@ -131,7 +131,7 @@
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('storage_total')"
-          width="100"
+          width="90"
           :label="$t('总量')">
           <template slot-scope="{ row }">
             <span>{{formatFileSize(row.storage_total)}}</span>
@@ -139,9 +139,15 @@
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('storage_usage')"
+          width="110"
           :label="$t('空闲率')">
           <template slot-scope="{ row }">
-            <span>{{`${100 - row.storage_usage}%`}}</span>
+            <div class="percent">
+              <div class="percent-progress">
+                <bk-progress :theme="'success'" :show-text="false" :percent="getPercent(row)"></bk-progress>
+              </div>
+              <span>{{`${100 - row.storage_usage}%`}}</span>
+            </div>
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('操作')" width="180">
@@ -227,7 +233,7 @@ export default {
       // 数据ID
       {
         id: 'cluster_id',
-        label: this.$t('ID'),
+        label: 'ID',
         disabled: true,
       },
       // 集群名称
@@ -312,9 +318,9 @@ export default {
         fields: settingFields,
         selectedFields: settingFields.slice(0, 12),
       },
-      minIntroWidth: 320,
+      minIntroWidth: 300,
       maxIntroWidth: 480,
-      introWidth: 320,
+      introWidth: 360,
     };
   },
   computed: {
@@ -598,6 +604,9 @@ export default {
       window.removeEventListener('mousemove', this.dragMoving);
       window.removeEventListener('mouseup', this.dragStop);
     },
+    getPercent($row) {
+      return (100 - $row.storage_usage) / 100;
+    },
   },
 };
 </script>
@@ -675,6 +684,16 @@ export default {
         position: absolute;
         left: 0;
         top: 12px;
+      }
+    }
+
+    .percent {
+      display: flex;
+      align-items: center;
+
+      .percent-progress {
+        width: 40px;
+        margin-right: 4px;
       }
     }
   }
