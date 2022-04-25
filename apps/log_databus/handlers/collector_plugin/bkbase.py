@@ -49,10 +49,9 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler, EtlStorage):
             }
         )
 
-    def _create_instance_etl_storage(self, params: dict) -> None:
-        self.collector_config.table_id = self._update_or_create_etl(self.collector_config, params)
-
-    def _update_or_create_etl(self, instance: Union[CollectorPlugin, CollectorConfig], params: dict) -> str:
+    def _update_or_create_etl(
+        self, instance: Union[CollectorPlugin, CollectorConfig], params: dict, is_create: bool
+    ) -> None:
         is_collector_plugin = True if isinstance(instance, CollectorPlugin) else False
 
         # 获取基础参数
@@ -96,7 +95,16 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler, EtlStorage):
             "json_config": json.dumps(bkdata_json_config),
             "bk_username": get_request_username(),
         }
-        # 创建并启动清洗
-        result = BkDataDatabusApi.databus_cleans_post(params)
-        self._start_bkdata_clean(result["result_table_id"])
-        return result["result_table_id"]
+        if is_create:
+            # 创建并启动清洗
+            result = BkDataDatabusApi.databus_cleans_post(params)
+            self._start_bkdata_clean(result["result_table_id"])
+            instance.processing_id = result["processing_id"]
+            instance.table_id = result["result_table_id"]
+            instance.save()
+        else:
+            params.update({"processing_id": self.collector_plugin.processing_id})
+            BkDataDatabusApi.databus_cleans_put(params, request_cookies=False)
+            # 更新rt之后需要重启清洗任务
+            self._stop_bkdata_clean(instance.table_id)
+            self._start_bkdata_clean(instance.table_id)

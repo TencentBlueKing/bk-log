@@ -808,10 +808,10 @@ class CollectorPluginUpdateSerializer(serializers.Serializer):
 
     def validate(self, attrs: dict) -> dict:
         # 不允许独立清洗规则或有dataid时
-        if not attrs.get("is_allow_alone_etl_config", True) or attrs.get("is_allow_alone_data_id", True):
+        if attrs.get("is_allow_alone_etl_config") is False or attrs.get("is_allow_alone_data_id"):
             self._check_multi_attrs(attrs, "etl_config")
         # 不允许独立存储或有dataid时
-        if not attrs.get("is_allow_alone_storage", True) or attrs.get("is_allow_alone_data_id", True):
+        if attrs.get("is_allow_alone_storage") is False or attrs.get("is_allow_alone_data_id"):
             self._check_multi_attrs(
                 attrs,
                 "storage_cluster_id",
