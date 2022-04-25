@@ -162,7 +162,6 @@
                 searchable
                 multiple
                 display-tag
-                @selected="handleSelectVisible"
                 @toggle="handleToggleVisible">
                 <template #trigger>
                   <div class="visible-scope-box">
@@ -540,7 +539,6 @@ export default {
       isAdminError: false, // 集群负责人是否为空
       bizSelectID: '', // 选中的当前按照业务属性选择
       bizInputStr: '', // 按照业务属性选择输入值
-      selectList: [],
     };
   },
   computed: {
@@ -671,6 +669,9 @@ export default {
         }
       },
     },
+    visibleList(val) {
+      this.visibleBkBiz = val.map(item => item.id);
+    },
   },
   methods: {
     updateIsShow(val) {
@@ -704,11 +705,7 @@ export default {
             });
           }
         });
-        this.visibleBkBiz = [];
       }
-    },
-    handleSelectVisible(value) {
-      this.selectList = value;
     },
     // 编辑 es 源，回填数据
     async editDataSource() {
@@ -990,7 +987,7 @@ export default {
      * @param { Object } item // 当前元素
      */
     getProjectOption(item) {
-      const isSelect = this.selectList.includes(item.bk_biz_id);
+      const isSelect = this.visibleBkBiz.includes(item.bk_biz_id);
       const backgroundStr = `background: ${!!item.is_use ? '#2dcb56' : '#699df4'}`;
       const styleStr = `display: inline-block; width: 4px; height: 4px; border-radius: 50%; margin-right: 4px; ${backgroundStr}; transform: translateY(-2px);`;
       const styleContainer = 'display:flex; align-items: center; justify-content: space-between; width: 100%;';
