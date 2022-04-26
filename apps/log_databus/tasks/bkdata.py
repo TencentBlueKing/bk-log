@@ -37,7 +37,6 @@ from apps.log_databus.constants import (
     BKDATA_PERMISSION,
     BKDATA_TAGS,
     MAX_CREATE_BKDATA_DATA_ID_FAIL_COUNT,
-    META_DATA_ENCODING,
 )
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
@@ -93,9 +92,7 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
                 "data_source_tags": BKDATA_DATA_SOURCE_TAGS,
                 "data_region": BKDATA_DATA_REGION,
                 "data_source": BKDATA_DATA_SOURCE,
-                "data_encoding": collector_config.data_encoding
-                if collector_config.data_encoding
-                else META_DATA_ENCODING,
+                "data_encoding": collector_config.bk_biz_id,
                 "sensitivity": BKDATA_DATA_SENSITIVITY,
                 "description": collector_config.description,
                 "preassigned_data_id": collector_config.bk_data_id,
