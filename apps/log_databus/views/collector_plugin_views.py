@@ -12,6 +12,7 @@ from apps.log_databus.serializers import (
     CollectorPluginUpdateSerializer,
 )
 from apps.log_search.permission import Permission
+from apps.utils.drf import detail_route
 from apps.utils.function import ignored
 
 
@@ -47,51 +48,87 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiName create_collector_plugin
         @apiDescription 创建采集插件
         @apiGroup 12_CollectorPlugin
-        @apiParam {Bool} create_public_data_id 是否创建公共DATAID
+        @apiParam {Bool} is_create_public_data_id 是否创建公共DATAID
+        @apiParam {Int} bk_biz_id 业务ID
+        @apiParam {Int} bkdata_biz_id 数据归属业务ID
         @apiParam {String} collector_plugin_name 采集插件名称
         @apiParam {String} collector_plugin_name_en 采集插件英文名
-        @apiParam {String} description 采集插件描述
-        @apiParam {Int} bk_biz_id 业务ID
-        @apiParam {Bool} is_enabled_display_collector 是否显示采集项
         @apiParam {String} collector_scenario_id 采集场景
+        @apiParam {String} description 采集插件描述
         @apiParam {String} category_id 类别
+        @apiParam {String} data_encoding 日志字符集
+        @apiParam {Bool} is_enabled_display_collector 是否显示采集项
         @apiParam {Bool} is_allow_alone_data_id 是否允许独立DATAID
         @apiParam {Bool} is_allow_alone_etl_config 是否允许独立清洗配置
+        @apiParam {String} etl_processor 数据处理器
+        @apiParam {String} [etl_template] 清洗模板
+        @apiParam {String} [etl_config] 清洗配置
+        @apiParam {Object} [params] 采集插件参数
+        @apiParam {Objects} [params.fields] 清洗字段
+        @apiParam {Objects} [params.etl_params] 清洗入库参数
+        @apiParam {Objects} [params.template_params] 清洗入库模板参数
         @apiParam {Bool} is_allow_alone_storage 是否允许独立存储配置
         @apiParam {Int} [storage_cluster_id] 存储集群ID
-        @apiParam {String} etl_processor 数据处理器
-        @apiParam {String} [etl_config] 清洗配置
         @apiParam {Int} [retention] 保留时间
         @apiParam {Int} [allocation_min_days] 冷热数据时间
         @apiParam {Int} [storage_replies] 副本数量
         @apiParam {Int} [storage_shards_size] 单shards分片大小
         @apiParam {Int} [storage_shards_nums] 单shards分片数量
-        @apiParam {Object} params 采集插件参数
-        @apiParam {Objects} params.fields 清洗字段
-        @apiParam {Objects} params.etl_params 清洗入库参数
-        @apiParam {String} data_encoding 日志字符集
         @apiParamExample {json} 请求样例:
         {
-            "create_public_data_id": true,
+            "is_create_public_data_id": true,
+            "bk_biz_id": 0,
+            "bkdata_biz_id": 0,
             "collector_plugin_name": "采集插件名称",
             "collector_plugin_name_en": "collector_plugin_name",
+            "collector_scenario_id": "custom",
             "description": "采集插件描述",
-            "bk_biz_id": 2,
+            "category_id": "application_check",
+            "data_encoding": "UTF-8"
             "is_enabled_display_collector": false,
             "is_allow_alone_data_id": false,
             "is_allow_alone_etl_config": false,
+            "etl_processor": "bkbase",
+            "etl_config": "custom",
+            "etl_template": {
+                "fields": [
+                    {
+                        "id": 12159347,
+                        "field_name": "ip",
+                        "field_type": "string",
+                        "field_alias": "IP地址",
+                        "is_dimension": false,
+                        "field_index": 5
+                    },
+                    {
+                        "id": 12159348,
+                        "field_name": "datetime",
+                        "field_type": "string",
+                        "field_alias": "日志时间",
+                        "is_dimension": false,
+                        "field_index": 7
+                    }
+                ],
+                "json_config": "……"
+            },
+            "params": {
+                "template_fields": [
+                    {
+                        "key": "relate_result_table_id",
+                        "type": "string",
+                        "desc": "静态数据关联结果表",
+                        "required": true,
+                        "path": "xxx.xxx.xxx"
+                    }
+                ]
+            },
             "is_allow_alone_storage": false,
-            "collector_scenario_id": "custom",
-            "category_id": "application_check",
             "storage_cluster_id": 2,
-            "etl_processor": "transfer",
-            "etl_config": "bk_log_text",
-            "etl_template": {},
             "retention": 7,
-            "allocation_min_days": 7,
+            "allocation_min_days": 0,
             "storage_replies": 1,
-            "params": {},
-            "data_encoding": "UTF-8"
+            "storage_shards_nums": 1,
+            "storage_shards_size": 10,
         }
         @apiSuccessExample {json} 成功返回:
         {
@@ -114,38 +151,73 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiName update_collector_plugin
         @apiDescription 更新采集插件
         @apiGroup 12_CollectorPlugin
-        @apiParam {String} [collector_plugin_name] 采集插件名称
-        @apiParam {String} [description] 采集插件描述
-        @apiParam {Bool} [is_enabled_display_collector] 是否显示采集项
-        @apiParam {Bool} [is_allow_alone_data_id] 是否允许独立DATAID
-        @apiParam {Bool} [is_allow_alone_etl_config] 是否允许独立清洗配置
-        @apiParam {Bool} [is_allow_alone_storage] 是否允许独立存储配置
-        @apiParam {Int} [storage_cluster_id] 存储集群ID
+        @apiParam {String} collector_plugin_name 采集插件名称
+        @apiParam {String} description 采集插件描述
+        @apiParam {String} data_encoding 日志字符集
+        @apiParam {Bool} is_enabled_display_collector 是否显示采集项
+        @apiParam {Bool} is_allow_alone_data_id 是否允许独立DATAID
+        @apiParam {Bool} is_allow_alone_etl_config 是否允许独立清洗配置
+        @apiParam {String} [etl_template] 清洗模板
         @apiParam {String} [etl_config] 清洗配置
+        @apiParam {Object} [params] 采集插件参数
+        @apiParam {Objects} [params.fields] 清洗字段
+        @apiParam {Objects} [params.etl_params] 清洗入库参数
+        @apiParam {Objects} [params.template_params] 清洗入库模板参数
+        @apiParam {Bool} is_allow_alone_storage 是否允许独立存储配置
+        @apiParam {Int} [storage_cluster_id] 存储集群ID
         @apiParam {Int} [retention] 保留时间
         @apiParam {Int} [allocation_min_days] 冷热数据时间
         @apiParam {Int} [storage_replies] 副本数量
         @apiParam {Int} [storage_shards_size] 单shards分片大小
         @apiParam {Int} [storage_shards_nums] 单shards分片数量
-        @apiParam {Object} [params] 采集插件参数
-        @apiParam {Objects} params.fields 清洗字段
-        @apiParam {Objects} params.etl_params 清洗入库参数
-        @apiParam {String} data_encoding 日志字符集
         @apiParamExample {json} 请求样例:
         {
             "collector_plugin_name": "采集插件名称",
             "description": "采集插件描述",
+            "data_encoding": "UTF-8"
             "is_enabled_display_collector": false,
             "is_allow_alone_data_id": false,
             "is_allow_alone_etl_config": false,
+            "etl_config": "custom",
+            "etl_template": {
+                "fields": [
+                    {
+                        "id": 12159347,
+                        "field_name": "ip",
+                        "field_type": "string",
+                        "field_alias": "IP地址",
+                        "is_dimension": false,
+                        "field_index": 5
+                    },
+                    {
+                        "id": 12159348,
+                        "field_name": "datetime",
+                        "field_type": "string",
+                        "field_alias": "日志时间",
+                        "is_dimension": false,
+                        "field_index": 7
+                    }
+                ],
+                "json_config": "……"
+            },
+            "params": {
+                "template_fields": [
+                    {
+                        "key": "relate_result_table_id",
+                        "type": "string",
+                        "desc": "静态数据关联结果表",
+                        "required": true,
+                        "path": "xxx.xxx.xxx"
+                    }
+                ]
+            },
             "is_allow_alone_storage": false,
             "storage_cluster_id": 2,
-            "etl_config": "bk_log_text",
             "retention": 7,
-            "allocation_min_days": 7,
+            "allocation_min_days": 0,
             "storage_replies": 1,
-            "params": {}
-            "data_encoding": "UTF-8"
+            "storage_shards_nums": 1,
+            "storage_shards_size": 10,
         }
         @apiSuccessExample {json} 成功返回:
         {
@@ -161,6 +233,26 @@ class CollectorPluginViewSet(ModelViewSet):
         data = self.validated_data
         collector_plugin: CollectorPlugin = self.get_object()
         collector_plugin_handler: CollectorPluginHandler = get_collector_plugin_handler(
-            collector_plugin.etl_processor, collector_plugin_id=collector_plugin.collector_plugin_id
+            collector_plugin.etl_processor, collector_plugin.collector_plugin_id
         )
         return Response(collector_plugin_handler.update_or_create(data))
+
+    @detail_route(methods=["POST"])
+    def instances(self, request, *args, **kwargs):
+        """
+        @api {post} /databus/collector_plugins/$collector_plugin_id/instances/ 3_实例化采集插件
+        @apiName create_collector_plugin_instance
+        @apiDescription 实例化采集插件
+        @apiGroup 12_CollectorPlugin
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "collector_plugin_id": 1,
+                "collector_plugin_name": "采集插件"
+            },
+            "result": true
+        }
+        """
+        pass

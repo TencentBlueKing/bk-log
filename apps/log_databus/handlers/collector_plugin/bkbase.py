@@ -18,21 +18,76 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import copy
-import json
-from typing import Union
-
-from apps.api import BkDataDatabusApi
-from apps.log_databus.constants import BKDATA_ES_TYPE_MAP
+from apps.api import BkDataAccessApi, BkDataDatabusApi
+from apps.log_databus.constants import (
+    ADMIN_REQUEST_USER,
+    BKDATA_DATA_REGION,
+    BKDATA_DATA_SCENARIO,
+    BKDATA_DATA_SCENARIO_ID,
+    BKDATA_DATA_SENSITIVITY,
+    BKDATA_DATA_SOURCE,
+    BKDATA_DATA_SOURCE_TAGS,
+    BKDATA_PERMISSION,
+    BKDATA_TAGS,
+    META_DATA_ENCODING,
+)
 from apps.log_databus.handlers.collector_plugin import CollectorPluginHandler
-from apps.log_databus.handlers.collector_scenario import CollectorScenario
-from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig, CollectorPlugin
 from apps.utils.local import get_request_username
 
 
-class BKBaseCollectorPluginHandler(CollectorPluginHandler, EtlStorage):
+class BKBaseCollectorPluginHandler(CollectorPluginHandler):
+    """
+    数据平台
+    """
+
+    def _update_or_create_data_id(self) -> None:
+        """
+        更新或创建DATAID
+        """
+
+        maintainers = {self.collector_plugin.updated_by, self.collector_plugin.created_by}
+        maintainers.discard(ADMIN_REQUEST_USER)
+        if not maintainers:
+            raise Exception(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
+
+        bkdata_params = {
+            "bk_username": self.collector_plugin.get_updated_by(),
+            "data_scenario": BKDATA_DATA_SCENARIO,
+            "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
+            "permission": BKDATA_PERMISSION,
+            "bk_biz_id": self.collector_plugin.bk_biz_id,
+            "description": self.collector_plugin.description,
+            "access_raw_data": {
+                "tags": BKDATA_TAGS,
+                "raw_data_name": self.collector_plugin.collector_plugin_name_en,
+                "maintainer": ",".join(maintainers),
+                "raw_data_alias": self.collector_plugin.collector_plugin_name,
+                "data_source_tags": BKDATA_DATA_SOURCE_TAGS,
+                "data_region": BKDATA_DATA_REGION,
+                "data_source": BKDATA_DATA_SOURCE,
+                "data_encoding": (
+                    self.collector_plugin.data_encoding if self.collector_plugin.data_encoding else META_DATA_ENCODING
+                ),
+                "sensitivity": BKDATA_DATA_SENSITIVITY,
+                "description": self.collector_plugin.description,
+                "preassigned_data_id": self.collector_plugin.bk_data_id,
+            },
+        }
+
+        # 更新
+        if self.collector_plugin.bk_data_id:
+            bkdata_params.update({"raw_data_id": self.collector_plugin.bk_data_id})
+            BkDataAccessApi.deploy_plan_put(bkdata_params)
+            return
+
+        # 创建
+        result = BkDataAccessApi.deploy_plan_post(bkdata_params)
+        self.collector_plugin.bk_data_id = result["raw_data_id"]
+        self.collector_plugin.save()
+
     def _stop_bkdata_clean(self, bkdata_result_table_id: str) -> None:
+        """停止清洗任务"""
+
         BkDataDatabusApi.delete_tasks(
             params={
                 "result_table_id": bkdata_result_table_id,
@@ -41,6 +96,10 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler, EtlStorage):
         )
 
     def _start_bkdata_clean(self, bkdata_result_table_id: str) -> None:
+        """
+        启动清洗任务
+        """
+
         BkDataDatabusApi.post_tasks(
             params={
                 "result_table_id": bkdata_result_table_id,
@@ -49,62 +108,75 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler, EtlStorage):
             }
         )
 
-    def _update_or_create_etl(
-        self, instance: Union[CollectorPlugin, CollectorConfig], params: dict, is_create: bool
-    ) -> None:
-        is_collector_plugin = True if isinstance(instance, CollectorPlugin) else False
+    def _restart_bkdata_clean(self, bkdata_result_table_id: str) -> None:
+        """
+        重启清洗任务
+        """
 
-        # 获取基础参数
-        fields = params.get("params", {}).get("fields", [])
-        etl_params = params.get("params", {}).get("etl_params", {})
+        self._stop_bkdata_clean(bkdata_result_table_id)
+        self._start_bkdata_clean(bkdata_result_table_id)
 
-        # 获取清洗配置
-        collector_scenario = CollectorScenario.get_instance(collector_scenario_id=instance.collector_scenario_id)
-        built_in_config = collector_scenario.get_built_in_config()
-        etl_storage = EtlStorage.get_instance(params["etl_config"])
-        fields_config = etl_storage.get_result_table_config(fields, etl_params, copy.deepcopy(built_in_config)).get(
-            "field_list", []
-        )
-        bkdata_json_config = etl_storage.get_bkdata_etl_config(fields, etl_params, built_in_config)
-        # 固定有time字段
-        fields_config.append({"alias_name": "time", "field_name": "time", "option": {"es_type": "long"}})
-        # 构造请求参数
-        table_name = instance.collector_plugin_name_en if is_collector_plugin else instance.collector_config_name_en
-        clean_config_name = instance.collector_plugin_name if is_collector_plugin else instance.collector_config_name
-        if is_collector_plugin:
-            bk_biz_id = instance.bk_biz_id
-        else:
-            bk_biz_id = instance.bkdata_biz_id if instance.bkdata_biz_id else instance.bk_biz_id
-        params = {
-            "raw_data_id": instance.bk_data_id,
-            "result_table_name": table_name,
-            "result_table_name_alias": table_name,
-            "clean_config_name": clean_config_name,
-            "description": instance.description,
-            "bk_biz_id": bk_biz_id,
-            "fields": [
-                {
-                    "field_name": field.get("alias_name") if field.get("alias_name") else field.get("field_name"),
-                    "field_type": BKDATA_ES_TYPE_MAP.get(field.get("option").get("es_type"), "string"),
-                    "field_alias": field.get("description") if field.get("description") else field.get("field_name"),
-                    "is_dimension": field.get("tag", "dimension") == "dimension",
-                    "field_index": index,
-                }
-                for index, field in enumerate(fields_config, 1)
-            ],
-            "json_config": json.dumps(bkdata_json_config),
+    def _update_or_create_etl_storage(self, params: dict) -> None:
+        """
+        创建或更新清洗入库
+        """
+
+        bkdata_params = {
+            "raw_data_id": self.collector_plugin.bk_data_id,
+            "result_table_name": self.collector_plugin.collector_plugin_name_en,
+            "result_table_name_alias": self.collector_plugin.collector_plugin_name_en,
+            "clean_config_name": self.collector_plugin.collector_plugin_name,
+            "description": self.collector_plugin.description,
+            "bk_biz_id": self.collector_plugin.bk_biz_id,
             "bk_username": get_request_username(),
+            "fields": [],
+            "json_config": "",
         }
-        if is_create:
-            # 创建并启动清洗
-            result = BkDataDatabusApi.databus_cleans_post(params)
+        bkdata_params.update(self.collector_plugin.etl_template)
+
+        # 如参数不完整则不创建
+        template_params = params.get("params", {}).get("template_params", [])
+        if len(template_params):
+            return
+
+        # 创建清洗
+        if self.collector_plugin.processing_id:
+            result = BkDataDatabusApi.databus_cleans_post(bkdata_params)
             self._start_bkdata_clean(result["result_table_id"])
-            instance.processing_id = result["processing_id"]
-            instance.table_id = result["result_table_id"]
-            instance.save()
-        else:
-            params.update({"processing_id": self.collector_plugin.processing_id})
-            BkDataDatabusApi.databus_cleans_put(params, request_cookies=False)
-            # 更新rt之后需要重启清洗任务
-            self._stop_bkdata_clean(instance.table_id)
-            self._start_bkdata_clean(instance.table_id)
+            self.collector_plugin.processing_id = result["processing_id"]
+            self.collector_plugin.table_id = result["result_table_id"]
+            self.collector_plugin.save()
+            return
+
+        # 更新清洗
+        bkdata_params.update({"processing_id": self.collector_plugin.processing_id})
+        BkDataDatabusApi.databus_cleans_put(bkdata_params, request_cookies=False)
+        # 更新rt之后需要重启清洗任务
+        self._stop_bkdata_clean(self.collector_plugin.table_id)
+        self._start_bkdata_clean(self.collector_plugin.table_id)
+
+        # 入库参数
+        storage_params = {
+            "bk_biz_id": self.collector_plugin.bk_biz_id,
+            "raw_data_id": self.collector_plugin.bk_data_id,
+            "data_type": "clean",
+            "result_table_name": self.collector_plugin.collector_plugin_name_en,
+            "result_table_name_alias": self.collector_plugin.collector_plugin_name_en,
+            "storage_type": "es",
+            "storage_cluster": self.collector_plugin.storage_cluster_id,
+            "expires": f"{self.collector_plugin.retention}d",
+            "fields": self.collector_plugin.etl_template.get("fields", []),
+        }
+
+        # 更新入库
+        if self.collector_plugin.storage_table_id:
+            storage_params.update({"result_table_id": self.collector_plugin.storage_table_id})
+            BkDataDatabusApi.databus_data_storages_put(storage_params)
+            return
+
+        # 创建入库
+        BkDataDatabusApi.databus_data_storages_post(storage_params)
+        db_list = BkDataDatabusApi.get_config_db_list({"raw_data_id": self.collector_plugin.bk_data_id})
+        if len(db_list):
+            self.collector_plugin.storage_table_id = db_list[0]["result_table_id"]
+            self.collector_plugin.save()

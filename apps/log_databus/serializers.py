@@ -728,7 +728,8 @@ class CollectorPluginSerializer(serializers.ModelSerializer):
 
 
 class CollectorPluginCreateSerializer(serializers.ModelSerializer):
-    create_public_data_id = serializers.BooleanField(label=(_("创建DATAID")), default=False)
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), allow_null=True)
+    is_create_public_data_id = serializers.BooleanField(label=(_("创建DATAID")), default=False)
     collector_plugin_name_en = serializers.RegexField(
         label=_("采集插件英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
     )
@@ -743,10 +744,16 @@ class CollectorPluginCreateSerializer(serializers.ModelSerializer):
         1. 不允许独立DATAID时
         2. 指定创建DATAID时
         """
-        return not attrs.get("is_allow_alone_data_id", True) or attrs.get("create_public_data_id", False)
+
+        is_allow_alone_data_id = attrs.get("is_allow_alone_data_id", True)
+        create_public_data_id = attrs.get("create_public_data_id", False)
+        return not is_allow_alone_data_id or create_public_data_id
 
     def _check_multi_attrs(self, attrs: dict, *args):
-        """校验多个参数是否存在"""
+        """
+        校验多个参数是否存在
+        """
+
         for key in args:
             if key not in attrs.keys():
                 raise serializers.ValidationError(key + _("不存在"))
@@ -755,11 +762,10 @@ class CollectorPluginCreateSerializer(serializers.ModelSerializer):
         # bk_biz_id 允许为空，默认置0
         if not attrs.get("bk_biz_id"):
             attrs["bk_biz_id"] = 0
-        # 不允许独立清洗规则或有dataid时
-        if not attrs.get("is_allow_alone_etl_config", True) or self._is_create_data_id(attrs):
-            self._check_multi_attrs(attrs, "etl_config")
+
         # 不允许独立存储或有dataid时
-        if not attrs.get("is_allow_alone_storage", True) or self._is_create_data_id(attrs):
+        is_allow_alone_storage = attrs.get("is_allow_alone_storage", True)
+        if not is_allow_alone_storage or self._is_create_data_id(attrs):
             self._check_multi_attrs(
                 attrs,
                 "storage_cluster_id",
@@ -769,6 +775,12 @@ class CollectorPluginCreateSerializer(serializers.ModelSerializer):
                 "storage_shards_nums",
                 "storage_shards_size",
             )
+
+        # 不允许独立清洗规则或有dataid时
+        is_allow_alone_etl_config = attrs.get("is_allow_alone_etl_config", True)
+        if not is_allow_alone_etl_config or self._is_create_data_id(attrs):
+            self._check_multi_attrs(attrs, "etl_config", "etl_template")
+
         return attrs
 
 
@@ -786,11 +798,12 @@ class CollectorPluginUpdateSerializer(serializers.ModelSerializer):
             "collector_plugin_name",
             "description",
             "data_encoding",
-            "params",
             "is_enabled_display_collector",
             "is_allow_alone_data_id",
             "is_allow_alone_etl_config",
             "etl_config",
+            "etl_template",
+            "params",
             "is_allow_alone_storage",
             "storage_cluster_id",
             "retention",
@@ -801,15 +814,20 @@ class CollectorPluginUpdateSerializer(serializers.ModelSerializer):
         ]
 
     def _check_multi_attrs(self, attrs: dict, *args):
-        """校验多个参数是否存在"""
+        """
+        校验多个参数是否存在
+        """
+
         for key in args:
             if key not in attrs.keys():
                 raise serializers.ValidationError(key + _("不存在"))
 
     def validate(self, attrs: dict) -> dict:
+
         # 不允许独立清洗规则或有dataid时
         if attrs.get("is_allow_alone_etl_config") is False or attrs.get("is_allow_alone_data_id"):
-            self._check_multi_attrs(attrs, "etl_config")
+            self._check_multi_attrs(attrs, "etl_config", "etl_template")
+
         # 不允许独立存储或有dataid时
         if attrs.get("is_allow_alone_storage") is False or attrs.get("is_allow_alone_data_id"):
             self._check_multi_attrs(
@@ -821,6 +839,7 @@ class CollectorPluginUpdateSerializer(serializers.ModelSerializer):
                 "storage_shards_nums",
                 "storage_shards_size",
             )
+
         return attrs
 
 

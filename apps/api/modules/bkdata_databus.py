@@ -21,7 +21,6 @@ the project delivered to anyone in the future.
 """
 from django.utils.translation import ugettext_lazy as _
 
-
 from apps.api.base import DataAPI
 from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user
 from config.domains import DATABUS_APIGATEWAY_ROOT
@@ -35,17 +34,35 @@ class _BkDataDatabusApi:
             method="GET",
             url=DATABUS_APIGATEWAY_ROOT + "data_storages/",
             module=self.MODULE,
-            description=u"获取数据入库列表",
+            description="获取数据入库列表",
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
             cache_time=60,
         )
-
+        self.databus_data_storages_post = DataAPI(
+            method="POST",
+            url=DATABUS_APIGATEWAY_ROOT + "data_storages/",
+            module=self.MODULE,
+            description="创建入库",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            cache_time=60,
+        )
+        self.databus_data_storages_put = DataAPI(
+            method="PUT",
+            url=DATABUS_APIGATEWAY_ROOT + "data_storages/{result_table_id}/",
+            module=self.MODULE,
+            description="创建入库",
+            url_keys=["result_table_id"],
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            cache_time=60,
+        )
         self.get_cleans = DataAPI(
             method="GET",
             url=DATABUS_APIGATEWAY_ROOT + "cleans/",
             module=self.MODULE,
-            description=u"获取清洗配置列表",
+            description="获取清洗配置列表",
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
         )
@@ -53,7 +70,7 @@ class _BkDataDatabusApi:
             method="POST",
             url=DATABUS_APIGATEWAY_ROOT + "cleans/",
             module=self.MODULE,
-            description=u"创建清洗配置",
+            description="创建清洗配置",
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
         )
@@ -62,7 +79,7 @@ class _BkDataDatabusApi:
             url=DATABUS_APIGATEWAY_ROOT + "cleans/{processing_id}/",
             module=self.MODULE,
             url_keys=["processing_id"],
-            description=u"更新清洗配置",
+            description="更新清洗配置",
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
         )
@@ -70,7 +87,7 @@ class _BkDataDatabusApi:
             method="POST",
             url=DATABUS_APIGATEWAY_ROOT + "tasks/",
             module=self.MODULE,
-            description=u"创建清洗分发任务",
+            description="创建清洗分发任务",
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
         )
@@ -79,7 +96,7 @@ class _BkDataDatabusApi:
             url=DATABUS_APIGATEWAY_ROOT + "tasks/{result_table_id}/",
             module=self.MODULE,
             url_keys=["result_table_id"],
-            description=u"停止清洗，分发任务",
+            description="停止清洗，分发任务",
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
         )
