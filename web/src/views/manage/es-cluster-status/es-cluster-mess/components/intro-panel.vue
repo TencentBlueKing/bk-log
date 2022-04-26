@@ -196,6 +196,7 @@ export default {
 
   .illustrate-panel {
     width: 100%;
+    height: 100%;
 
     .right-window {
       height: 100vh;
