@@ -50,7 +50,7 @@ class _BkDataDatabusApi:
             method="PUT",
             url=DATABUS_APIGATEWAY_ROOT + "data_storages/{result_table_id}/",
             module=self.MODULE,
-            description="创建入库",
+            description="更新入库",
             url_keys=["result_table_id"],
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
