@@ -127,7 +127,7 @@ class ClusteringMonitorHandler(object):
         query_config = self._generate_query_config(
             index_set_id=self.index_set_id,
             pattern_level=pattern_level,
-            table_id=table_id or self.log_index_set_data.result_table_id,
+            table_id=table_id or self.log_index_set_data["result_table_id"],
             metric=metric,
             signature=signature,
             strategy_type=strategy_type,

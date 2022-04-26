@@ -112,7 +112,7 @@ class ChoicesEnum(Enum):
         return cls._choices_labels.value
 
     @classmethod
-    def get_choice_label(cls, key: str) -> dict:
+    def get_choice_label(cls, key: str) -> str:
         """
         获取_choices_labels的某个key值的value
         :param key: 获取choices的key值的value
