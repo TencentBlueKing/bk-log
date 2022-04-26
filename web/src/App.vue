@@ -52,7 +52,7 @@
                 :key="groupItem.id"
                 :group-name="isExpand ? groupItem.name : groupItem.keyword">
                 <template v-for="navItem in groupItem.children">
-                  <div class="nav-item" :key="navItem.id" @contextmenu.prevent="openMenu($event, navItem.id)">
+                  <a class="nav-item" :key="navItem.id" :href="getRouteHref(navItem.id)">
                     <bk-navigation-menu-item
                       :data-test-id="`navBox_nav_${navItem.id}`"
                       :id="navItem.id"
@@ -60,7 +60,7 @@
                       @click="handleClickNavItem(navItem.id)">
                       {{ isExpand ? navItem.name : '' }}
                     </bk-navigation-menu-item>
-                  </div>
+                  </a>
                 </template>
               </bk-navigation-menu-group>
             </template>
@@ -78,9 +78,6 @@
     </div>
     <auth-dialog />
     <bk-paas-login ref="login" />
-    <ul v-show="visible" :style="`left: ${left}px; top: ${top}px`" class="contextmenu">
-      <li @click="openNewPage">{{$t('新开页')}}</li>
-    </ul>
     <!-- <login-modal v-if="loginData" :login-data="loginData" /> -->
   </div>
 </template>
@@ -157,15 +154,6 @@ export default {
         this.isAsIframe = val;
       },
     },
-    visible(value) {
-      if (value) {
-        document.body.addEventListener('click', this.closeMenu);
-        document.body.addEventListener('mousewheel', this.closeMenu);
-      } else {
-        document.body.removeEventListener('click', this.closeMenu);
-        document.body.removeEventListener('mousewheel', this.closeMenu);
-      }
-    },
   },
   created() {
     const platform = window.navigator.platform.toLowerCase();
@@ -229,26 +217,14 @@ export default {
           console.warn(e);
         });
     },
-    openMenu(e, item) {
-      this.visible = true;
-      this.top = e.pageY;
-      this.left = e.pageX;
-      this.rightClickRouteName = item;
-    },
-    closeMenu() {
-      this.visible = false;
-    },
-    /**
-     * @desc: 右键点击获取当前的路由并跳转;
-     */
-    openNewPage() {
+    getRouteHref(pageName) {
       const newUrl = this.$router.resolve({
-        name: this.rightClickRouteName,
+        name: pageName,
         query: {
           projectId: window.localStorage.getItem('project_id'),
         },
       });
-      window.open(newUrl.href, '_blank');
+      return newUrl.href;
     },
   },
 };
@@ -404,7 +380,6 @@ export default {
 
     .bk-navigation-wrapper {
       height: 100%;
-      position: relative;
 
       .navigation-container {
         /* stylelint-disable-next-line declaration-no-important */
@@ -437,6 +412,7 @@ export default {
 
       .nav-item {
         width: 100%;
+        display: inline-block;
       }
     }
 
@@ -596,24 +572,6 @@ export default {
           }
         }
       }
-    }
-  }
-
-  .contextmenu {
-    margin: 0;
-    background: #fff;
-    z-index: 3000;
-    position: absolute;
-    list-style-type: none;
-    padding: 5px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 400;
-    color: #333;
-    box-shadow: 2px 2px 3px 0 rgba(0, 0, 0, .3);
-
-    li {
-      cursor: pointer;
     }
   }
 </style>

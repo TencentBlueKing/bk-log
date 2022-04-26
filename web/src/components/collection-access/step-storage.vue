@@ -150,8 +150,9 @@
           <div class="capacity-message">
             <bk-input
               class="capacity-input"
-              v-model="logAssessmentStr"
-              @blur="handleBlurAssessment">
+              type="number"
+              v-model="formData.assessment_config.log_assessment"
+              :min="0.1">
             </bk-input>
             <div class="unit-container">
               G
@@ -165,7 +166,8 @@
         <div class="need-approval">
           <bk-checkbox
             class="bk-checkbox"
-            v-model="formData.assessment_config.need_approval">
+            v-model="formData.assessment_config.need_approval"
+            :disabled="isForcedFillAssessment">
             {{$t('需要审批')}}
           </bk-checkbox>
           <bk-alert
@@ -259,7 +261,7 @@ export default {
   data() {
     return {
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
-      HOST_COUNT: window.BK_ASSESSMEN_HOST_COUNT,
+      HOST_COUNT: window.ASSESSMEN_HOST_COUNT,
       refresh: false,
       // eslint-disable-next-line no-useless-escape
       isLoading: false,
@@ -365,9 +367,9 @@ export default {
       stashCleanConf: null, // 清洗缓存,
       isShowAssessment: false,
       isChangeSelect: false,
-      logAssessmentStr: '',
       hostNumber: 0,
       replicasMax: 7,
+      isForcedFillAssessment: false, // 是否必须容量评估
     };
   },
   computed: {
@@ -392,9 +394,6 @@ export default {
        * isChangeSelect 当前步骤非新增,且进行集群切换满足上面条件则展示容量评估
        */
       return this.isItsm && this.selectedStorageCluster.enable_assessment && this.isChangeSelect;
-    },
-    isForcedFillAssessment() {
-      return this.hostNumber > Number(this.HOST_COUNT);
     },
     getApprover() {
       if (this.isCanUseAssessment) {
@@ -458,7 +457,7 @@ export default {
         },
         fields,
         assessment_config: {
-          log_assessment: assessment_config.log_assessment,
+          log_assessment: `${assessment_config.log_assessment}G`,
           need_approval: assessment_config.need_approval,
           approvals: assessment_config.approvals,
         },
@@ -630,16 +629,7 @@ export default {
       });
     },
     /**
-     * @desc: 判断每日单台数据量是否是正整数
-     * @param { String } value
-     */
-    handleBlurAssessment(value) {
-      const isPositiveInteger = /^\d+(\.\d+)?$/g.test(value);
-      this.formData.assessment_config.log_assessment = isPositiveInteger ? value : '';
-      this.logAssessmentStr = isPositiveInteger ? value : '';
-    },
-    /**
-     * @desc: 获取主机数数量 若主机数大于assessment_host_count则显示容量评估弹窗
+     * @desc: 获取主机数数量 若主机数大于assessment_host_count则显示容量评估
      */
     getHostNumber() {
       const curTaskIdList = new Set();
@@ -657,11 +647,16 @@ export default {
           hostLength += cluster.child.length;
         });
         // 这里获取主机总数量赋值并与HOST_COUNT比较如果主机数量大于最大值则必填容量评估内容
+        const isOverHost = hostLength > Number(this.HOST_COUNT);
         this.hostNumber = hostLength;
-        this.isShowAssessment = hostLength > Number(this.HOST_COUNT);
+        this.isShowAssessment = isOverHost;
+        this.isForcedFillAssessment = isOverHost;
+        this.formData.assessment_config.need_approval = isOverHost;
       })
         .catch(() => {
           this.hostNumber = 0;
+          this.isForcedFillAssessment = false;
+          this.formData.assessment_config.need_approval = false;
         });
     },
     getSubmitAuthority() {
@@ -672,11 +667,8 @@ export default {
       const { storage_cluster_id: clusterID, assessment_config: assessmentConfig } = this.formData;
       const isNotSelectedID = clusterID === '';
       const isNotFillLog = this.isForcedFillAssessment && this.isCanUseAssessment && assessmentConfig.log_assessment === '';
-      const isNotApproval = this.isForcedFillAssessment && this.isCanUseAssessment && assessmentConfig.need_approval;
-      if (isNotSelectedID || isNotFillLog || isNotApproval) {
-        const message = isNotSelectedID
-          ? this.$t('请选择集群')
-          : (isNotFillLog ?  this.$t('请填写容量评估的每日单台日志量') : this.$t('请勾选容量评估的需要审批')) ;
+      if (isNotSelectedID || isNotFillLog) {
+        const message = isNotSelectedID ? this.$t('请选择集群') : this.$t('请填写容量评估的每日单台日志量') ;
         this.$bkMessage({
           theme: 'error',
           message,
