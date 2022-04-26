@@ -165,7 +165,7 @@ export default {
   },
   methods: {
     handleSelectCluster($row) {
-      if (this.throttle) return;
+      if (this.throttle || this.storageClusterId === $row.storage_cluster_id) return;
 
       this.throttle = true;
       setTimeout(() => {
@@ -186,13 +186,13 @@ export default {
       });
     },
     handleCreateCluster() {
-      this.$router.push({
+      const newUrl = this.$router.resolve({
         name: 'es-cluster-manage',
         query: {
           projectId: window.localStorage.getItem('project_id'),
-          isPass: true,
         },
       });
+      window.open(newUrl.href, '_blank');
     },
     getPercent($row) {
       return (100 - $row.storage_usage) / 100;
