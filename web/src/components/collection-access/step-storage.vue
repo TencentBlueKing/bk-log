@@ -143,7 +143,11 @@
           <p class="illustrate-title">{{$t('容量说明')}}</p>
           <p>{{$t('clusterTips1')}}</p>
           <p>{{$t('clusterTips2')}}</p>
-          <p>{{$t('clusterTips3_1')}} {{formData.storage_replies}} {{$t('clusterTips2')}}</p>
+          <p>{{$t('clusterTips3_1_1')}}
+            {{formData.storage_replies * 1 + 1}}
+            {{$t('clusterTips3_1_2')}}
+            {{formData.storage_replies}}
+            {{$t('clusterTips3_2')}}</p>
         </div>
 
         <bk-form-item :label="$t('每日单台日志量')">

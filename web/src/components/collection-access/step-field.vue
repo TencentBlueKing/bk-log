@@ -803,7 +803,7 @@ export default {
           const target = this.myProjectList.find(project => Number(project.bk_biz_id) === val);
           if (target) {
             const targetObj = {
-              id: target.bk_biz_id,
+              id: Number(target.bk_biz_id),
               name: target.project_name,
             };
             this.visibleList.push(targetObj);
