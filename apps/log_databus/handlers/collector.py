@@ -551,14 +551,18 @@ class CollectorHandler(object):
                 collector_scenario = CollectorScenario.get_instance(
                     collector_scenario_id=self.data.collector_scenario_id
                 )
-
                 bk_data_id = collector_scenario.update_or_create_data_id(
                     bk_data_id=self.data.bk_data_id,
                     data_link_id=self.data.data_link_id,
-                    data_name=bk_data_name,
+                    data_name="{bk_biz_id}_{table_id_prefix}_{name}".format(
+                        bk_biz_id=self.data.bkdata_biz_id if self.data.bkdata_biz_id else self.data.bk_biz_id,
+                        table_id_prefix=settings.TABLE_ID_PREFIX,
+                        name=collector_config_name,
+                    ),
                     description=description,
                     encoding=META_DATA_ENCODING,
                 )
+
                 self.data.bk_data_id = bk_data_id
                 self.data.bk_data_name = bk_data_name
                 self.data.save()

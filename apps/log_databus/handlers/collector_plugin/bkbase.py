@@ -18,7 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from apps.api import BkDataAccessApi, BkDataDatabusApi
+from apps.api import BkDataAccessApi, BkDataDatabusApi, TransferApi
 from apps.log_databus.constants import (
     ADMIN_REQUEST_USER,
     BKDATA_DATA_REGION,
@@ -116,14 +116,25 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
         self._stop_bkdata_clean(bkdata_result_table_id)
         self._start_bkdata_clean(bkdata_result_table_id)
 
+    def _update_or_create_storage(self, params: dict) -> None:
+        """
+        创建或更新入库
+        """
+
+        TransferApi
+
     def _update_or_create_etl_storage(self, params: dict) -> None:
         """
         创建或更新清洗入库
         """
 
+        # 参数不完整则不创建
+        if len(params.get("params", [])):
+            return
+
         bkdata_params = {
             "raw_data_id": self.collector_plugin.bk_data_id,
-            "result_table_name": self.collector_plugin.collector_plugin_name_en,
+            "result_table_name": f"bklog_{self.collector_plugin.collector_plugin_name_en}",
             "result_table_name_alias": self.collector_plugin.collector_plugin_name_en,
             "clean_config_name": self.collector_plugin.collector_plugin_name,
             "description": self.collector_plugin.description,
@@ -133,11 +144,6 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
             "json_config": "",
         }
         bkdata_params.update(self.collector_plugin.etl_template)
-
-        # 如参数不完整则不创建
-        template_params = params.get("params", {}).get("template_params", [])
-        if len(template_params):
-            return
 
         # 创建清洗
         if self.collector_plugin.processing_id:
@@ -163,7 +169,7 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
             "result_table_name": self.collector_plugin.collector_plugin_name_en,
             "result_table_name_alias": self.collector_plugin.collector_plugin_name_en,
             "storage_type": "es",
-            "storage_cluster": self.collector_plugin.storage_cluster_id,
+            "storage_cluster": self.collector_plugin.storage_cluster_id,  # TODO 转 BASE
             "expires": f"{self.collector_plugin.retention}d",
             "fields": self.collector_plugin.etl_template.get("fields", []),
         }

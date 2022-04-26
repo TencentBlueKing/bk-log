@@ -88,6 +88,13 @@ class CollectorPluginHandler:
 
         raise NotImplementedError
 
+    def _update_or_create_storage(self, params: dict) -> None:
+        """
+        创建或更新入库
+        """
+
+        pass
+
     def _update_or_create_etl_storage(self, params: dict) -> None:
         """
         创建或更新清洗入库
@@ -103,7 +110,7 @@ class CollectorPluginHandler:
 
         # 通用参数，允许更新
         collector_plugin_name = params["collector_plugin_name"]
-        description = params["description"] if params.get("description") else params["collector_plugin_name"]
+        description = params.get("description")
         data_encoding = params.get("data_encoding")
         is_enabled_display_collector = params["is_enabled_display_collector"]
         is_allow_alone_data_id = params["is_allow_alone_data_id"]
@@ -189,6 +196,7 @@ class CollectorPluginHandler:
             self.collector_plugin.allocation_min_days = params["allocation_min_days"]
             self.collector_plugin.storage_replies = params["storage_replies"]
             self.collector_plugin.storage_shards_nums = params["storage_shards_nums"]
+            self._update_or_create_storage(params)
 
         # 清洗
         if not is_allow_alone_etl_config or self.collector_plugin.bk_data_id:
