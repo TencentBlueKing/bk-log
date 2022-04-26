@@ -395,10 +395,12 @@ export default {
           const { field_name: id, field_alias: alias } = el;
           return { id, name: alias ? `${id}(${alias})` : id };
         });
-      this.filterSelectList = this.totalFields.map((el) => {
-        const { field_name: id, field_alias: alias } = el;
-        return { id, name: alias ? `${id}(${alias})` : id };
-      });
+      this.filterSelectList = this.totalFields
+        .filter(item => !/^__dist/.test(item.field_name))
+        .map((el) => {
+          const { field_name: id, field_alias: alias } = el;
+          return { id, name: alias ? `${id}(${alias})` : id };
+        });
 
       // 日志聚类且数据指纹同时打开则不请求默认值
       if (isActive) {
