@@ -39,7 +39,7 @@
             data-test-id="LogCluster_div_selectField"
             v-model="formData.clustering_fields"
             style="width: 482px;"
-            :disabled="!globalEditable || isEdit"
+            :disabled="!globalEditable"
             :clearable="false">
             <bk-option
               v-for="option in clusterField"
@@ -349,10 +349,34 @@ export default {
           res = await this.$http.request('/logClustering/getDefaultConfig');
         }
         res.data.filter_rules = res.data.filter_rules || [];
-        Object.assign(this.formData, res.data);
-        Object.assign(this.defaultData, res.data);
-        if (!isDefault) {
-          this.isEdit = !!res.data.clustering_fields;
+        const {
+          collector_config_name_en,
+          min_members,
+          max_dist_list,
+          predefined_varibles,
+          delimeter,
+          max_log_length,
+          is_case_sensitive,
+          clustering_fields,
+          filter_rules,
+        } = res.data;
+        const assignObj = {
+          collector_config_name_en,
+          min_members,
+          max_dist_list,
+          predefined_varibles,
+          delimeter,
+          max_log_length,
+          is_case_sensitive,
+          clustering_fields,
+          filter_rules,
+        };
+        Object.assign(this.formData, assignObj);
+        Object.assign(this.defaultData, assignObj);
+        // 当前回填的字段如果在聚类字段列表里找不到则赋值为空需要用户重新赋值
+        const isHaveFieldsItem = this.clusterField.find(item => item.id === res.data.clustering_fields);
+        if (!isHaveFieldsItem) {
+          this.formData.clustering_fields = '';
         }
       } catch (e) {
         console.warn(e);
@@ -366,12 +390,6 @@ export default {
       this.configID = configID;
       this.fingerSwitch = extra.signature_switch;
       this.formData.clustering_fields = extra.clustering_fields;
-
-      // 日志聚类且数据指纹同时打开则不请求默认值
-      if (isActive) {
-        this.requestCluster(false);
-      }
-
       this.clusterField = this.totalFields.filter(item => item.is_analyzed)
         .map((el) => {
           const { field_name: id, field_alias: alias } = el;
@@ -381,6 +399,11 @@ export default {
         const { field_name: id, field_alias: alias } = el;
         return { id, name: alias ? `${id}(${alias})` : id };
       });
+
+      // 日志聚类且数据指纹同时打开则不请求默认值
+      if (isActive) {
+        this.requestCluster(false);
+      }
     },
     handleChangeFinger() {
       if (!this.globalEditable) return;
@@ -432,34 +455,12 @@ export default {
         const { index_set_id, bk_biz_id } = this.indexSetItem;
         // 获取子组件传来的聚类规则数组base64字符串
         this.formData.predefined_varibles = this.$refs.ruleTableRef.ruleArrToBase64();
-        const {
-          collector_config_name_en,
-          min_members,
-          max_dist_list,
-          predefined_varibles,
-          delimeter,
-          max_log_length,
-          is_case_sensitive,
-          clustering_fields,
-          filter_rules,
-        } = this.formData;
-        const paramsData = {
-          collector_config_name_en,
-          min_members,
-          max_dist_list,
-          predefined_varibles,
-          delimeter,
-          max_log_length,
-          is_case_sensitive,
-          clustering_fields,
-          filter_rules,
-        };
         this.$http.request('/logClustering/changeConfig', {
           params: {
             index_set_id,
           },
           data: {
-            ...paramsData,
+            ...this.formData,
             signature_enable: this.fingerSwitch,
             collector_config_id: this.configID,
             index_set_id,
