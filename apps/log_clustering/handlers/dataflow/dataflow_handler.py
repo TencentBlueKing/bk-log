@@ -26,6 +26,7 @@ import arrow
 from django.conf import settings
 from jinja2 import Environment, FileSystemLoader
 from dataclasses import asdict
+from retrying import retry
 
 from apps.log_search.models import LogIndexSet
 from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi
@@ -94,6 +95,7 @@ class DataFlowHandler(BaseAiopsHandler):
         request_dict = self._set_username(export_request)
         return BkDataDataFlowApi.export_flow(request_dict)
 
+    @retry(stop_max_attempt_number=3, wait_random_min=180000, wait_random_max=18000)
     def operator_flow(
         self, flow_id: int, consuming_mode: str = "continue", cluster_group: str = "default", action=ActionEnum.START
     ):
