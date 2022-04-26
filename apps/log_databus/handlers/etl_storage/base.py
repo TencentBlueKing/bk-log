@@ -242,11 +242,10 @@ class EtlStorage(object):
             param_mapping["_all"] = {"enabled": True}
             param_mapping["include_in_all"] = False
 
-        bk_biz_id = collector_config.bkdata_biz_id if collector_config.bkdata_biz_id else collector_config.bk_biz_id
         params = {
             "bk_data_id": collector_config.bk_data_id,
             # 必须为 库名.表名
-            "table_id": f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{table_id}",
+            "table_id": f"{collector_config.bk_biz_id}_{settings.TABLE_ID_PREFIX}.{table_id}",
             "is_enable": True,
             "table_name_zh": collector_config.collector_config_name,
             "is_custom_table": True,
@@ -325,8 +324,7 @@ class EtlStorage(object):
         if not collector_config.table_id:
             # 创建结果表
             collector_config.table_id = TransferApi.create_result_table(params)["table_id"]
-            if collector_config.collector_config_id:
-                collector_config.save()
+            collector_config.save()
         else:
             # 更新结果表
             params["table_id"] = collector_config.table_id
