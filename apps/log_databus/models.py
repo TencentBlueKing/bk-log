@@ -41,7 +41,6 @@ from django_jsonfield_backport.models import JSONField  # noqa
 from apps.api import CmsiApi, TransferApi  # noqa
 from apps.log_databus.constants import (  # noqa
     ETLProcessorChoices,  # noqa
-    EtlConfigChoices,
     TargetObjectTypeEnum,  # noqa
     TargetNodeTypeEnum,  # noqa
     CollectItsmStatus,  # noqa
