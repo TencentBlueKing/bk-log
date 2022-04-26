@@ -1853,7 +1853,7 @@ class CollectorHandler(object):
             LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(index_set_name=index_set_name)
 
         custom_config = get_custom(self.data.custom_type)
-        etl_params = custom_config.etl_config
+        etl_params = custom_config.etl_params
         etl_config = custom_config.etl_config
         fields = custom_config.fields
 
