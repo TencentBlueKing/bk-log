@@ -173,6 +173,7 @@ class AiopsBkdataService(BasePipeLineService):
         data_context.inputs["${project_id}"] = Var(type=Var.PLAIN, value=params["project_id"])
         data_context.inputs["${bk_biz_id}"] = Var(type=Var.PLAIN, value=params["bk_biz_id"])
         data_context.inputs["${index_set_id}"] = Var(type=Var.PLAIN, value=params["index_set_id"])
+        data_context.inputs["${collector_config_id}"] = Var(type=Var.PLAIN, value=params["collector_config_id"])
         return data_context
 
     def build_pipeline(self, data_context: Data, *args, **kwargs):

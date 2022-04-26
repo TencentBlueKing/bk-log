@@ -26,6 +26,7 @@ import arrow
 from django.conf import settings
 from jinja2 import Environment, FileSystemLoader
 from dataclasses import asdict
+from retrying import retry
 
 from apps.log_search.models import LogIndexSet
 from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi
@@ -94,6 +95,7 @@ class DataFlowHandler(BaseAiopsHandler):
         request_dict = self._set_username(export_request)
         return BkDataDataFlowApi.export_flow(request_dict)
 
+    @retry(stop_max_attempt_number=3, wait_random_min=180000, wait_random_max=18000)
     def operator_flow(
         self, flow_id: int, consuming_mode: str = "continue", cluster_group: str = "default", action=ActionEnum.START
     ):
@@ -158,7 +160,6 @@ class DataFlowHandler(BaseAiopsHandler):
 
     @classmethod
     def _init_filter_rule(cls, filter_rules, all_fields_dict, clustering_field):
-        # add default_filter_rule where data is not null and length(data) > 1
         default_filter_rule = cls._init_default_filter_rule(all_fields_dict.get(clustering_field))
         filter_rule_list = ["where", default_filter_rule]
         not_clustering_rule_list = ["where", "NOT", "(", default_filter_rule]

@@ -127,7 +127,6 @@ class ClusteringConfigHandler(object):
             clustering_config.bk_biz_id = bk_biz_id
             clustering_config.filter_rules = filter_rules
             clustering_config.signature_enable = signature_enable
-            clustering_config.source_rt_name = source_rt_name
             clustering_config.category_id = category_id
             clustering_config.save()
             return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
