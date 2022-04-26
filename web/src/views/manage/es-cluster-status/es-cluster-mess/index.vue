@@ -568,7 +568,7 @@ export default {
     },
     handleActiveDetails(state) {
       this.isOpenWindow = state;
-      this.introWidth = state ? 320 : 0;
+      this.introWidth = state ? 360 : 0;
     },
     // 状态过滤
     sourceStateFilterMethod(value, row) {

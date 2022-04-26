@@ -133,6 +133,10 @@
           <span>{{ $t('容量评估') }}</span>
           <span :class="['bk-icon','icon-angle-double-down',isShowAssessment && 'is-active']"></span>
         </div>
+        <div v-if="isForcedFillAssessment" class="capacity-message">
+          <span class="bk-icon icon-info"></span>
+          <span style="font-size: 12px;">{{ $t('当前主机数较多，请进行容量评估') }}</span>
+        </div>
       </div>
       <div v-show="isShowAssessment && isCanUseAssessment">
         <div class="capacity-illustrate">
@@ -640,8 +644,25 @@ export default {
     getHostNumber() {
       const curTaskIdList = new Set();
       this.curCollect.task_id_list.forEach(id => curTaskIdList.add(id));
-      this.hostNumber = [...curTaskIdList].length;
-      this.isShowAssessment = this.hostNumber > this.HOST_COUNT;
+      const params = {
+        collector_config_id: this.curCollect.collector_config_id,
+      };
+      this.$http.request('collect/getIssuedClusterList', {
+        params,
+        query: { task_id_list: [...curTaskIdList.keys()].join(',') },
+      }).then((res) => {
+        const data = res.data.contents;
+        let hostLength = 0;
+        data.forEach((cluster) => {
+          hostLength += cluster.child.length;
+        });
+        // 这里获取主机总数量赋值并与HOST_COUNT比较如果主机数量大于最大值则必填容量评估内容
+        this.hostNumber = hostLength;
+        this.isShowAssessment = hostLength > Number(this.HOST_COUNT);
+      })
+        .catch(() => {
+          this.hostNumber = 0;
+        });
     },
     getSubmitAuthority() {
       /**
@@ -655,7 +676,7 @@ export default {
       if (isNotSelectedID || isNotFillLog || isNotApproval) {
         const message = isNotSelectedID
           ? this.$t('请选择集群')
-          : (isNotFillLog ?  this.$t('请填写每日单台日志量') : this.$t('请勾选需要审批')) ;
+          : (isNotFillLog ?  this.$t('请填写容量评估的每日单台日志量') : this.$t('请勾选容量评估的需要审批')) ;
         this.$bkMessage({
           theme: 'error',
           message,
@@ -734,6 +755,11 @@ export default {
 
       @include flex-align;
 
+      .capacity-message {
+        color: #63656e;
+        margin-left: 20px;
+      }
+
       .icon-angle-double-down {
         font-size: 24px;
 
@@ -768,6 +794,7 @@ export default {
 
     .capacity-message {
       display: flex;
+      align-items: center;
 
       .capacity-input {
         width: 320px;
