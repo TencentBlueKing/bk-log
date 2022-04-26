@@ -18,7 +18,6 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from django.conf import settings
-from django.db.models import TextChoices
 from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
@@ -243,11 +242,20 @@ class RunStatus(object):
     PREPARE = _("准备中")
 
 
-class EtlConfig(object):
+class EtlConfig(ChoicesEnum):
     BK_LOG_TEXT = "bk_log_text"
     BK_LOG_JSON = "bk_log_json"
     BK_LOG_DELIMITER = "bk_log_delimiter"
     BK_LOG_REGEXP = "bk_log_regexp"
+    CUSTOM = "custom"
+
+    _choices_labels = (
+        (BK_LOG_TEXT, _("直接入库")),
+        (BK_LOG_JSON, _("Json")),
+        (BK_LOG_DELIMITER, _("分隔符")),
+        (BK_LOG_REGEXP, _("正则")),
+        (CUSTOM, _("自定义")),
+    )
 
 
 # 节点属性字段过滤黑名单
@@ -269,6 +277,15 @@ BKDATA_ES_TYPE_MAP = {
 ETL_PARAMS = {"retain_original_text": True, "separator_regexp": "", "separator": ""}
 
 
-class ETLProcessorChoices(TextChoices):
-    TRANSFER = "transfer", _("transfer")
-    BKBASE = "bkbase", _("bkbase")
+class ETLProcessorChoices(ChoicesEnum):
+    """
+    数据处理器
+    """
+
+    TRANSFER = "transfer"
+    BKBASE = "bkbase"
+
+    _choices_labels = (
+        (TRANSFER, _("Transfer")),
+        (BKBASE, _("数据平台")),
+    )

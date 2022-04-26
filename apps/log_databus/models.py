@@ -41,6 +41,7 @@ from django_jsonfield_backport.models import JSONField  # noqa
 from apps.api import CmsiApi, TransferApi  # noqa
 from apps.log_databus.constants import (  # noqa
     ETLProcessorChoices,  # noqa
+    EtlConfigChoices,
     TargetObjectTypeEnum,  # noqa
     TargetNodeTypeEnum,  # noqa
     CollectItsmStatus,  # noqa
@@ -101,7 +102,7 @@ class CollectorConfig(SoftDeleteModel):
     table_id = models.CharField(_("结果表ID"), max_length=255, null=True, default=None)
     processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)
     etl_processor = models.CharField(
-        _("数据处理引擎"), max_length=32, choices=ETLProcessorChoices.choices, default=ETLProcessorChoices.TRANSFER.value
+        _("数据处理引擎"), max_length=32, choices=ETLProcessorChoices.get_choices(), default=ETLProcessorChoices.TRANSFER
     )
     etl_config = models.CharField(_("清洗配置"), max_length=32, null=True, default=None)
     subscription_id = models.IntegerField(_("节点管理订阅ID"), null=True, default=None)
@@ -442,7 +443,8 @@ class CollectorPlugin(SoftDeleteModel):
     采集插件，控制采集项行为
     """
 
-    bk_biz_id = models.IntegerField(_("业务ID"))
+    bk_biz_id = models.BigIntegerField(_("业务ID"))
+    bkdata_biz_id = models.BigIntegerField(_("数据归属业务ID"), null=True, blank=True)
     collector_plugin_id = models.BigAutoField(_("采集插件ID"), primary_key=True)
     collector_plugin_name = models.CharField(_("采集插件名称"), max_length=64)
     collector_plugin_name_en = models.CharField(_("英文采集插件名称"), max_length=64)
@@ -450,19 +452,21 @@ class CollectorPlugin(SoftDeleteModel):
     description = models.CharField(_("插件描述"), max_length=64)
     category_id = models.CharField(_("数据分类"), max_length=64)
     data_encoding = models.CharField(_("日志字符集"), max_length=30, null=True, default=None)
-    params = models.JSONField(_("采集插件参数"), default=dict, null=True)
     is_enabled_display_collector = models.BooleanField(_("采集项是否对用户可见"), default=False)
     is_allow_alone_data_id = models.BooleanField(_("是否允许使用独立DATAID"), default=True)
     bk_data_id = models.IntegerField(_("DATAID"), null=True)
     data_link_id = models.IntegerField(_("数据链路ID"), null=True)
-    table_id = models.CharField(_("结果表ID"), max_length=255, null=True)
     processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)
     is_allow_alone_etl_config = models.BooleanField(_("是否允许独立配置清洗规则"), default=True)
     etl_processor = models.CharField(
-        _("数据处理器"), max_length=32, choices=ETLProcessorChoices.choices, default=ETLProcessorChoices.TRANSFER.value
+        _("数据处理器"), max_length=32, choices=ETLProcessorChoices.get_choices(), default=ETLProcessorChoices.TRANSFER
     )
-    etl_config = models.CharField(_("清洗配置"), max_length=32, null=True, default=None)
+    etl_config = models.CharField(_("清洗配置"), max_length=32, null=True, default=None, choices=EtlConfig.get_choices())
+    etl_template = models.JSONField(_("清洗模板"), null=True)
+    params = models.JSONField(_("采集插件参数"), default=dict, null=True)
+    table_id = models.CharField(_("结果表ID"), max_length=255, null=True)
     is_allow_alone_storage = models.BooleanField(_("是否允许独立存储"), default=True)
+    storage_table_id = models.CharField(_("入库结果表"), max_length=255, null=True)
     storage_cluster_id = models.IntegerField(_("存储集群ID"), null=True)
     retention = models.IntegerField(_("数据有效时间"), null=True)
     allocation_min_days = models.IntegerField(_("冷热数据生效时间"), null=True)
