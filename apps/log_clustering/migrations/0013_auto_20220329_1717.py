@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("log_clustering", "0011_signaturestrategysettings_strategy_type"),
+        ("log_clustering", "0012_auto_20220324_2213"),
     ]
 
     operations = [

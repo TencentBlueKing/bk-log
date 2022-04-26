@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import functools
 import re
@@ -228,6 +230,7 @@ class MappingHandlers(object):
                 continue
             if "type" in k_keys:
                 field_type: str = properties_dict[key]["type"]
+                latest_field_type: str = properties_dict[key]["latest_field_type"]
                 doc_values_farther_dict: dict = properties_dict[key]
                 doc_values = False
 
@@ -254,7 +257,8 @@ class MappingHandlers(object):
                         "description": "",
                         "es_doc_values": es_doc_values,
                         "tag": tag,
-                        "is_analyzed": cls._is_analyzed(field_type),
+                        "is_analyzed": cls._is_analyzed(latest_field_type),
+                        "latest_field_type": latest_field_type,
                     }
                 )
                 fields_result.append(data)
@@ -362,6 +366,9 @@ class MappingHandlers(object):
             for property_key, property_define in property.items():
                 if property_key not in merge_dict:
                     merge_dict[property_key] = property_define
+                    # 这里由于该函数会被调用两次，所以只有在第一次调用且为最新mapping的时候来赋值
+                    if not merge_dict[property_key].get("latest_field_type"):
+                        merge_dict[property_key]["latest_field_type"] = property_define["type"]
                     continue
                 if merge_dict[property_key]["type"] != property_define["type"]:
                     merge_dict[property_key]["type"] = "conflict"

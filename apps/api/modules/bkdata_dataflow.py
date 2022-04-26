@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.utils.translation import ugettext_lazy as _  # noqa
 from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user  # noqa
@@ -63,6 +65,15 @@ class _BkDataDataFlowApi:
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
+        self.restart_flow = DataAPI(
+            method="POST",
+            url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/restart/",
+            module=self.MODULE,
+            url_keys=["flow_id"],
+            description=u"重启flow",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+        )
         self.get_flow_graph = DataAPI(
             method="GET",
             url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/graph/",
@@ -96,6 +107,15 @@ class _BkDataDataFlowApi:
             module=self.MODULE,
             url_keys=["flow_id"],
             description=u"获取flow最近部署信息",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+        )
+        self.patch_flow_nodes = DataAPI(
+            method="PATCH",
+            url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/nodes/{node_id}/",
+            module=self.MODULE,
+            url_keys=["flow_id", "node_id"],
+            description=u"部分更新节点",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )

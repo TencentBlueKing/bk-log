@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.contrib import admin
 
@@ -77,6 +79,7 @@ class ClusteringConfigAdmin(AppModelAdmin):
         "after_treat_flow",
         "after_treat_flow_id",
         "modify_flow",
+        "source_rt_name",
     ]
     search_fields = [
         "collector_id",
@@ -96,6 +99,7 @@ class ClusteringConfigAdmin(AppModelAdmin):
         "bkdata_etl_processing_id",
         "log_bk_data_id",
         "signature_enable",
+        "source_rt_name",
     ]
 
 

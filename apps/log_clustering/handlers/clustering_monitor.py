@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 from django.utils.translation import ugettext as _
@@ -49,7 +51,6 @@ from apps.log_clustering.exceptions import ClusteringIndexSetNotExistException
 from apps.api import MonitorApi
 from apps.log_clustering.models import SignatureStrategySettings, ClusteringConfig
 from apps.log_clustering.utils.monitor import MonitorUtils
-from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import LogIndexSet
 
 
@@ -62,11 +63,7 @@ class ClusteringMonitorHandler(object):
             raise ClusteringIndexSetNotExistException(
                 ClusteringIndexSetNotExistException.MESSAGE.format(index_set_id=self.index_set_id)
             )
-        self.collector_config = CollectorConfig.objects.get(collector_config_id=self.index_set.collector_config_id)
-        if not self.collector_config:
-            raise ClusteringIndexSetNotExistException(
-                ClusteringIndexSetNotExistException.MESSAGE.format(index_set_id=self.index_set_id)
-            )
+        self.log_index_set_data, *_ = self.index_set.indexes
 
     def update_strategies(self, pattern_level, actions):
         result = True
@@ -130,7 +127,7 @@ class ClusteringMonitorHandler(object):
         query_config = self._generate_query_config(
             index_set_id=self.index_set_id,
             pattern_level=pattern_level,
-            table_id=table_id or self.collector_config.table_id,
+            table_id=table_id or self.log_index_set_data.result_table_id,
             metric=metric,
             signature=signature,
             strategy_type=strategy_type,
@@ -160,7 +157,6 @@ class ClusteringMonitorHandler(object):
                         "config": DEFAULT_ACTION_CONFIG,
                         "notice_group_ids": [
                             MonitorUtils.get_or_create_notice_group(
-                                collector_config_id=self.collector_config.collector_config_id,
                                 log_index_set_id=self.index_set_id,
                                 bk_biz_id=self.bk_biz_id,
                             )
