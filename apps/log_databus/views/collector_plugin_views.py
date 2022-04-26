@@ -63,7 +63,6 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {String} etl_processor 数据处理器
         @apiParam {String} [etl_template] 清洗模板
         @apiParam {String} [etl_config] 清洗配置
-        @apiParam {Object} [params] 采集插件参数
         @apiParam {Objects} [params.fields] 清洗字段
         @apiParam {Objects} [params.etl_params] 清洗入库参数
         @apiParam {Objects} [params.template_params] 清洗入库模板参数
@@ -111,17 +110,6 @@ class CollectorPluginViewSet(ModelViewSet):
                 ],
                 "json_config": "……"
             },
-            "params": {
-                "template_fields": [
-                    {
-                        "key": "relate_result_table_id",
-                        "type": "string",
-                        "desc": "静态数据关联结果表",
-                        "required": true,
-                        "path": "xxx.xxx.xxx"
-                    }
-                ]
-            },
             "is_allow_alone_storage": false,
             "storage_cluster_id": 2,
             "retention": 7,
@@ -159,7 +147,6 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {Bool} is_allow_alone_etl_config 是否允许独立清洗配置
         @apiParam {String} [etl_template] 清洗模板
         @apiParam {String} [etl_config] 清洗配置
-        @apiParam {Object} [params] 采集插件参数
         @apiParam {Objects} [params.fields] 清洗字段
         @apiParam {Objects} [params.etl_params] 清洗入库参数
         @apiParam {Objects} [params.template_params] 清洗入库模板参数
@@ -199,17 +186,6 @@ class CollectorPluginViewSet(ModelViewSet):
                     }
                 ],
                 "json_config": "……"
-            },
-            "params": {
-                "template_fields": [
-                    {
-                        "key": "relate_result_table_id",
-                        "type": "string",
-                        "desc": "静态数据关联结果表",
-                        "required": true,
-                        "path": "xxx.xxx.xxx"
-                    }
-                ]
             },
             "is_allow_alone_storage": false,
             "storage_cluster_id": 2,

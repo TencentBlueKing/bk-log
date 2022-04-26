@@ -486,9 +486,6 @@ class CollectorHandler(object):
                             "collector_scenario_id": params["collector_scenario_id"],
                             "bk_biz_id": params["bk_biz_id"],
                             "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
-                            "collector_plugin_id": params.get("collector_plugin_id", None),
-                            "bkdata_biz_id": params.get("bkdata_biz_id", None),
-                            "table_id": params.get("table_id", None),
                         }
                     )
                     model_fields["collector_scenario_id"] = params["collector_scenario_id"]
@@ -515,20 +512,17 @@ class CollectorHandler(object):
                 collector_scenario = CollectorScenario.get_instance(
                     collector_scenario_id=self.data.collector_scenario_id
                 )
-                if not params.get("bk_data_id"):
-                    bk_data_id = collector_scenario.update_or_create_data_id(
-                        bk_data_id=self.data.bk_data_id,
-                        data_link_id=self.data.data_link_id,
-                        data_name="{bk_biz_id}_{table_id_prefix}_{name}".format(
-                            bk_biz_id=self.data.bkdata_biz_id if self.data.bkdata_biz_id else self.data.bk_biz_id,
-                            table_id_prefix=settings.TABLE_ID_PREFIX,
-                            name=collector_config_name,
-                        ),
-                        description=description,
-                        encoding=META_DATA_ENCODING,
-                    )
-                else:
-                    bk_data_id = params["bk_data_id"]
+                bk_data_id = collector_scenario.update_or_create_data_id(
+                    bk_data_id=self.data.bk_data_id,
+                    data_link_id=self.data.data_link_id,
+                    data_name="{bk_biz_id}_{table_id_prefix}_{name}".format(
+                        bk_biz_id=self.data.bkdata_biz_id if self.data.bkdata_biz_id else self.data.bk_biz_id,
+                        table_id_prefix=settings.TABLE_ID_PREFIX,
+                        name=collector_config_name,
+                    ),
+                    description=description,
+                    encoding=META_DATA_ENCODING,
+                )
                 self.data.bk_data_id = bk_data_id
                 self.data.save()
 
@@ -555,9 +549,7 @@ class CollectorHandler(object):
             )
         finally:
             # 创建数据平台data_id
-            # 如果是插件传入的则不创建
-            if not params.get("bk_data_id"):
-                async_create_bkdata_data_id.delay(self.data.collector_config_id)
+            async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         return {
             "collector_config_id": self.data.collector_config_id,
