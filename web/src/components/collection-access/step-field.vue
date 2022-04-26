@@ -800,7 +800,7 @@ export default {
       if(Array.isArray(visibleBkBizList) && visibleBkBizList.length){
         // 多业务 业务列表获取名字回显
         visibleBkBizList.forEach((val) => {
-          const target = this.myProjectList.find(project => Number(project.bk_biz_id) === val);
+          const target = this.myProjectList.find(project => project.bk_biz_id === String(val));
           if (target) {
             const targetObj = {
               id: target.bk_biz_id,
