@@ -32,6 +32,7 @@ from apps.log_databus.exceptions import (
     CollectorPluginNameDuplicateException,
     CollectorPluginNotExistException,
 )
+from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.models import CollectorConfig, CollectorPlugin, DataLinkConfig
 from apps.models import model_to_dict
 from apps.utils.local import get_request_username
@@ -53,23 +54,21 @@ def get_collector_plugin_handler(etl_processor, collector_plugin_id=None):
 
 
 class CollectorPluginHandler:
-    collector_plugin_id: int = None
-    collector_plugin: CollectorPlugin = None
+    """
+    采集插件
+    """
 
     def __init__(self, collector_plugin_id=None):
+        """
+        初始化
+        """
+
+        self.collector_plugin_id = collector_plugin_id
         if collector_plugin_id:
-            self._get_collector_plugin(collector_plugin_id)
-
-    def _get_collector_plugin(self, collector_plugin_id: int) -> None:
-        """
-        绑定采集插件Model
-        """
-
-        try:
-            self.collector_plugin = CollectorPlugin.objects.get(collector_plugin_id=collector_plugin_id)
-            self.collector_plugin_id = collector_plugin_id
-        except CollectorPlugin.DoesNotExist:
-            raise CollectorPluginNotExistException()
+            try:
+                self.collector_plugin = CollectorPlugin.objects.get(collector_plugin_id=collector_plugin_id)
+            except CollectorPlugin.DoesNotExist:
+                raise CollectorPluginNotExistException()
 
     def _pre_check_en_name(self, en_name: str) -> None:
         """
@@ -81,16 +80,9 @@ class CollectorPluginHandler:
         if config_name_duplicate or plugin_name_duplicate:
             raise CollectorPluginNameDuplicateException()
 
-    def _update_or_create_data_id(self) -> None:
+    def _extra_operation(self, params: dict) -> None:
         """
-        创建或更新DATAID
-        """
-
-        raise NotImplementedError
-
-    def _update_or_create_storage(self, params: dict) -> None:
-        """
-        创建或更新入库
+        额外操作
         """
 
         pass
@@ -154,7 +146,7 @@ class CollectorPluginHandler:
 
             # 创建采集插件
             try:
-                self.collector_plugin = CollectorPlugin.objects.create(**model_fields)
+                self.collector_plugin: CollectorPlugin = CollectorPlugin.objects.create(**model_fields)
             except IntegrityError:
                 logger.warning(f"collector plugin name duplicate => [{collector_plugin_name}]")
                 raise CollectorPluginNameDuplicateException()
@@ -168,7 +160,7 @@ class CollectorPluginHandler:
                     if data_links.exists():
                         self.collector_plugin.data_link_id = data_links.first().data_link_id
                 # 创建 DATA ID
-                self._update_or_create_data_id()
+                self.collector_plugin.bk_data_id = CollectorHandler.update_or_create_data_id(self.collector_plugin)
 
             is_create = True
 
@@ -185,7 +177,7 @@ class CollectorPluginHandler:
             # DATA_ID
             is_create_public_data_id = params.get("create_public_data_id", False)
             if not is_allow_alone_data_id or is_create_public_data_id:
-                self._update_or_create_data_id()
+                self.collector_plugin.bk_data_id = CollectorHandler.update_or_create_data_id(self.collector_plugin)
 
             is_create = False
 
@@ -196,14 +188,17 @@ class CollectorPluginHandler:
             self.collector_plugin.allocation_min_days = params["allocation_min_days"]
             self.collector_plugin.storage_replies = params["storage_replies"]
             self.collector_plugin.storage_shards_nums = params["storage_shards_nums"]
-            self._update_or_create_storage(params)
 
         # 清洗
         if not is_allow_alone_etl_config or self.collector_plugin.bk_data_id:
             self.collector_plugin.etl_config = params["etl_config"]
-            self.collector_plugin.etl_template = params["etl_template"]
+            self.collector_plugin.etl_params = params["etl_params"]
+            self.collector_plugin.fields = params["fields"]
             self.collector_plugin.params = params["params"]
             self._update_or_create_etl_storage(params)
+
+        # 额外操作
+        self._extra_operation(params)
 
         self.collector_plugin.save()
 

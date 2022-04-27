@@ -17,21 +17,17 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import json
 
-from apps.api import BkDataAccessApi, BkDataDatabusApi, TransferApi
-from apps.log_databus.constants import (
-    ADMIN_REQUEST_USER,
-    BKDATA_DATA_REGION,
-    BKDATA_DATA_SCENARIO,
-    BKDATA_DATA_SCENARIO_ID,
-    BKDATA_DATA_SENSITIVITY,
-    BKDATA_DATA_SOURCE,
-    BKDATA_DATA_SOURCE_TAGS,
-    BKDATA_PERMISSION,
-    BKDATA_TAGS,
-    META_DATA_ENCODING,
-)
+from django.conf import settings
+
+from apps.api import BkDataDatabusApi
+from apps.log_databus.constants import ETLProcessorChoices
+from apps.log_databus.exceptions import BKBASEStorageNotExistException
+from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.collector_plugin import CollectorPluginHandler
+from apps.log_databus.handlers.etl_storage import EtlStorage
+from apps.log_databus.handlers.storage import StorageHandler
 from apps.utils.local import get_request_username
 
 
@@ -39,51 +35,6 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
     """
     数据平台
     """
-
-    def _update_or_create_data_id(self) -> None:
-        """
-        更新或创建DATAID
-        """
-
-        maintainers = {self.collector_plugin.updated_by, self.collector_plugin.created_by}
-        maintainers.discard(ADMIN_REQUEST_USER)
-        if not maintainers:
-            raise Exception(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
-
-        bkdata_params = {
-            "bk_username": self.collector_plugin.get_updated_by(),
-            "data_scenario": BKDATA_DATA_SCENARIO,
-            "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
-            "permission": BKDATA_PERMISSION,
-            "bk_biz_id": self.collector_plugin.bk_biz_id,
-            "description": self.collector_plugin.description,
-            "access_raw_data": {
-                "tags": BKDATA_TAGS,
-                "raw_data_name": self.collector_plugin.collector_plugin_name_en,
-                "maintainer": ",".join(maintainers),
-                "raw_data_alias": self.collector_plugin.collector_plugin_name,
-                "data_source_tags": BKDATA_DATA_SOURCE_TAGS,
-                "data_region": BKDATA_DATA_REGION,
-                "data_source": BKDATA_DATA_SOURCE,
-                "data_encoding": (
-                    self.collector_plugin.data_encoding if self.collector_plugin.data_encoding else META_DATA_ENCODING
-                ),
-                "sensitivity": BKDATA_DATA_SENSITIVITY,
-                "description": self.collector_plugin.description,
-                "preassigned_data_id": self.collector_plugin.bk_data_id,
-            },
-        }
-
-        # 更新
-        if self.collector_plugin.bk_data_id:
-            bkdata_params.update({"raw_data_id": self.collector_plugin.bk_data_id})
-            BkDataAccessApi.deploy_plan_put(bkdata_params)
-            return
-
-        # 创建
-        result = BkDataAccessApi.deploy_plan_post(bkdata_params)
-        self.collector_plugin.bk_data_id = result["raw_data_id"]
-        self.collector_plugin.save()
 
     def _stop_bkdata_clean(self, bkdata_result_table_id: str) -> None:
         """停止清洗任务"""
@@ -116,12 +67,38 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
         self._stop_bkdata_clean(bkdata_result_table_id)
         self._start_bkdata_clean(bkdata_result_table_id)
 
-    def _update_or_create_storage(self, params: dict) -> None:
+    def _create_transfer_result_table(self):
         """
-        创建或更新入库
+        创建 Transfer 结果表
         """
 
-        TransferApi
+        # 集群信息
+        cluster_info = StorageHandler(self.collector_plugin.storage_cluster_id).get_cluster_info_by_id()
+
+        # 创建结果表
+        etl_storage: EtlStorage = EtlStorage.get_instance(self.collector_plugin.etl_config)
+        etl_storage.update_or_create_result_table(
+            instance=self.collector_plugin,
+            table_id=self.collector_plugin.collector_plugin_name_en,
+            storage_cluster_id=self.collector_plugin.storage_cluster_id,
+            retention=self.collector_plugin.retention,
+            allocation_min_days=self.collector_plugin.allocation_min_days,
+            storage_replies=self.collector_plugin.storage_replies,
+            fields=self.collector_plugin.fields,
+            etl_params=self.collector_plugin.etl_params,
+            es_version=cluster_info["cluster_config"]["version"],
+            hot_warm_config=cluster_info["cluster_config"].get("custom_option", {}).get("hot_warm_config"),
+        )
+
+    def _extra_operation(self, params: dict) -> None:
+        """
+        额外操作
+        """
+
+        # 若不允许独立存储，则需要同时创建 Transfer 的结果表
+        if not self.collector_plugin.is_allow_alone_storage:
+            CollectorHandler.update_or_create_data_id(self.collector_plugin, ETLProcessorChoices.TRANSFER.value)
+            self._create_transfer_result_table()
 
     def _update_or_create_etl_storage(self, params: dict) -> None:
         """
@@ -134,16 +111,15 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
 
         bkdata_params = {
             "raw_data_id": self.collector_plugin.bk_data_id,
-            "result_table_name": f"bklog_{self.collector_plugin.collector_plugin_name_en}",
+            "result_table_name": f"{settings.TABLE_ID_PREFIX}_{self.collector_plugin.collector_plugin_name_en}",
             "result_table_name_alias": self.collector_plugin.collector_plugin_name_en,
             "clean_config_name": self.collector_plugin.collector_plugin_name,
             "description": self.collector_plugin.description,
             "bk_biz_id": self.collector_plugin.bk_biz_id,
             "bk_username": get_request_username(),
-            "fields": [],
-            "json_config": "",
+            "fields": self.collector_plugin.fields,
+            "json_config": json.dumps(self.collector_plugin.etl_params.get("json_config")),
         }
-        bkdata_params.update(self.collector_plugin.etl_template)
 
         # 创建清洗
         if self.collector_plugin.processing_id:
@@ -152,26 +128,30 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
             self.collector_plugin.processing_id = result["processing_id"]
             self.collector_plugin.table_id = result["result_table_id"]
             self.collector_plugin.save()
-            return
 
         # 更新清洗
-        bkdata_params.update({"processing_id": self.collector_plugin.processing_id})
-        BkDataDatabusApi.databus_cleans_put(bkdata_params, request_cookies=False)
-        # 更新rt之后需要重启清洗任务
-        self._stop_bkdata_clean(self.collector_plugin.table_id)
-        self._start_bkdata_clean(self.collector_plugin.table_id)
+        else:
+            bkdata_params.update({"processing_id": self.collector_plugin.processing_id})
+            BkDataDatabusApi.databus_cleans_put(bkdata_params, request_cookies=False)
+            self._stop_bkdata_clean(self.collector_plugin.table_id)
+            self._start_bkdata_clean(self.collector_plugin.table_id)
 
         # 入库参数
+        cluster_info = StorageHandler(self.collector_plugin.storage_cluster_id).get_cluster_info_by_id()
+        bkbase_cluster_id = cluster_info["cluster_config"].get("custom_option", {}).get("bkbase_cluster_id")
+        if bkbase_cluster_id is None:
+            raise BKBASEStorageNotExistException
+
         storage_params = {
             "bk_biz_id": self.collector_plugin.bk_biz_id,
             "raw_data_id": self.collector_plugin.bk_data_id,
             "data_type": "clean",
-            "result_table_name": self.collector_plugin.collector_plugin_name_en,
+            "result_table_name": f"{settings.TABLE_ID_PREFIX}_{self.collector_plugin.collector_plugin_name_en}",
             "result_table_name_alias": self.collector_plugin.collector_plugin_name_en,
             "storage_type": "es",
-            "storage_cluster": self.collector_plugin.storage_cluster_id,  # TODO 转 BASE
+            "storage_cluster": bkbase_cluster_id,
             "expires": f"{self.collector_plugin.retention}d",
-            "fields": self.collector_plugin.etl_template.get("fields", []),
+            "fields": self.collector_plugin.fields,
         }
 
         # 更新入库
@@ -182,7 +162,5 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
 
         # 创建入库
         BkDataDatabusApi.databus_data_storages_post(storage_params)
-        db_list = BkDataDatabusApi.get_config_db_list({"raw_data_id": self.collector_plugin.bk_data_id})
-        if len(db_list):
-            self.collector_plugin.storage_table_id = db_list[0]["result_table_id"]
-            self.collector_plugin.save()
+        self.collector_plugin.storage_table_id = self.collector_plugin.table_id
+        self.collector_plugin.save()
