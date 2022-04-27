@@ -868,8 +868,10 @@ class StorageHandler(object):
         cluster_info_by_id = {cluster["cluster_config"]["cluster_id"]: cluster for cluster in cluster_info}
         repository_info = TransferApi.list_es_snapshot_repository({"cluster_ids": list(cluster_info_by_id.keys())})
         name_prefix = f"{bk_biz_id}_bklog_"
+        result = []
 
         for repository in repository_info:
+            repository.pop("settings", None)
             # 需要兼容历史的仓库名称
             if (
                 not repository["repository_name"].startswith(name_prefix)
@@ -886,5 +888,5 @@ class StorageHandler(object):
                     "create_time": format_user_time_zone(repository["create_time"], get_local_param("time_zone")),
                 }
             )
-            repository.pop("settings", None)
-        return repository_info
+            result.append(repository)
+        return result
