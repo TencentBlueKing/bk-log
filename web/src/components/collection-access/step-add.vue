@@ -1031,7 +1031,7 @@ export default {
       });
     },
     async checkEnName(val) {
-      if (this.$route.name === 'collectEdit') return true;
+      if (this.isUpdate) return true;
       const result = await this.getEnNameIsRepeat(val);
       return result;
     },

@@ -438,7 +438,7 @@ export default {
         storage_cluster_id,
         retention,
         storage_replies,
-        allocation_min_days,
+        allocation_min_days: allMinDays,
         view_roles,
         fields,
         etl_params,
@@ -446,13 +446,14 @@ export default {
       } = this.formData;
       const isNeedAssessment = this.getNeedAssessmentStatus();
       this.isLoading = true;
+      const isOpenHotWarm = this.selectedStorageCluster.enable_hot_warm;
       const data = {
         etl_config,
         table_id,
         storage_cluster_id,
         retention: Number(retention),
         storage_replies: Number(storage_replies),
-        allocation_min_days: Number(allocation_min_days),
+        allocation_min_days: isOpenHotWarm ? Number(allMinDays) : 0,
         view_roles,
         etl_params: {
           retain_original_text: etl_params.retain_original_text,
@@ -804,6 +805,10 @@ export default {
         text-align: center;
         margin: 1px 0 0 -1px;
         margin-right: 8px;
+      }
+
+      .right {
+        color: #63656e;
       }
     }
 

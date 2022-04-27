@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="es-access-container" data-test-id="esAccess_div_esAccessBox">
+  <div class="es-access-container" data-test-id="esAccess_div_esAccessBox" ref="accessContainerRef">
     <div class="es-cluster-list-container" :style="`width: calc(100% - ${ introWidth }px);`">
       <div class="main-operator-container">
         <bk-button
@@ -193,7 +193,7 @@
     </div>
 
     <div
-      class="intro-container"
+      :class="['intro-container',isDraging && 'draging-move']"
       :style="`width: ${ introWidth }px`">
       <intro-panel
         :is-open-window="isOpenWindow"
@@ -321,6 +321,7 @@ export default {
       minIntroWidth: 300,
       maxIntroWidth: 480,
       introWidth: 360,
+      isDraging: false,
     };
   },
   computed: {
@@ -345,6 +346,9 @@ export default {
     this.checkCreateAuth();
     this.getTableData();
     this.formatFileSize = formatFileSize;
+    this.$nextTick(() => {
+      this.maxIntroWidth = this.$refs.accessContainerRef.clientWidth - 580;
+    });
   },
   methods: {
     async checkCreateAuth() {
@@ -587,11 +591,10 @@ export default {
       window.addEventListener('mouseup', this.dragStop, { passive: true });
     },
     dragMoving(e) {
+      this.isDraging = true;
       const newTreeBoxWidth = this.currentTreeBoxWidth - e.screenX + this.currentScreenX;
       if (newTreeBoxWidth < this.minIntroWidth) {
-        this.introWidth = 0;
-        this.isOpenWindow = false;
-        this.dragStop();
+        this.introWidth = this.minIntroWidth;
       } else if (newTreeBoxWidth >= this.maxIntroWidth) {
         this.introWidth = this.maxIntroWidth;
       } else {
@@ -599,6 +602,7 @@ export default {
       }
     },
     dragStop() {
+      this.isDraging = false;
       this.currentTreeBoxWidth = null;
       this.currentScreenX = null;
       window.removeEventListener('mousemove', this.dragMoving);
@@ -664,13 +668,19 @@ export default {
       width: 400px;
       height: calc(100vh - 104px);
       overflow: hidden;
+      border-left: 1px solid transparent;
+
+      &.draging-move {
+        border-left-color: #3a84ff;
+      }
     }
 
     .drag-item {
-      display: inline-block;
-      position: absolute;
       width: 20px;
       height: 40px;
+      display: inline-block;
+      color: #c4c6cc;
+      position: absolute;
       z-index: 99;
       right: 304px;
       top: 48%;
