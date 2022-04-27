@@ -488,7 +488,7 @@ class CollectorPlugin(SoftDeleteModel):
     description = models.CharField(_("插件描述"), max_length=64)
     category_id = models.CharField(_("数据分类"), max_length=64)
     data_encoding = models.CharField(_("日志字符集"), max_length=30, null=True, default=None)
-    is_enabled_display_collector = models.BooleanField(_("采集项是否对用户可见"), default=False)
+    is_display_collector = models.BooleanField(_("采集项是否对用户可见"), default=False)
     is_allow_alone_data_id = models.BooleanField(_("是否允许使用独立DATAID"), default=True)
     bk_data_id = models.IntegerField(_("DATAID"), null=True)
     data_link_id = models.IntegerField(_("数据链路ID"), null=True)

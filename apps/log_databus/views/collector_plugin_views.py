@@ -57,15 +57,14 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {String} description 采集插件描述
         @apiParam {String} category_id 类别
         @apiParam {String} data_encoding 日志字符集
-        @apiParam {Bool} is_enabled_display_collector 是否显示采集项
+        @apiParam {Bool} is_display_collector 是否显示采集项
         @apiParam {Bool} is_allow_alone_data_id 是否允许独立DATAID
         @apiParam {Bool} is_allow_alone_etl_config 是否允许独立清洗配置
         @apiParam {String} etl_processor 数据处理器
-        @apiParam {String} [etl_template] 清洗模板
         @apiParam {String} [etl_config] 清洗配置
-        @apiParam {String} [etl_params] 清洗配置
-        @apiParam {String} [fields] 清洗配置
-        @apiParam {Array} [params] 清洗字段
+        @apiParam {Object} [etl_params] 清洗参数
+        @apiParam {Array} [fields] 清洗字段
+        @apiParam {Array} [params] 插件参数
         @apiParam {Bool} is_allow_alone_storage 是否允许独立存储配置
         @apiParam {Int} [storage_cluster_id] 存储集群ID
         @apiParam {Int} [retention] 保留时间
@@ -144,13 +143,13 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {String} collector_plugin_name 采集插件名称
         @apiParam {String} description 采集插件描述
         @apiParam {String} data_encoding 日志字符集
-        @apiParam {Bool} is_enabled_display_collector 是否显示采集项
+        @apiParam {Bool} is_display_collector 是否显示采集项
         @apiParam {Bool} is_allow_alone_data_id 是否允许独立DATAID
         @apiParam {Bool} is_allow_alone_etl_config 是否允许独立清洗配置
-        @apiParam {String} [etl_params] 清洗模板
+        @apiParam {Object} [etl_params] 清洗模板
         @apiParam {String} [etl_config] 清洗配置
         @apiParam {Array} [fields] 清洗字段
-        @apiParam {Array} [params] 模板参数
+        @apiParam {Array} [params] 插件参数
         @apiParam {Bool} is_allow_alone_storage 是否允许独立存储配置
         @apiParam {Int} [storage_cluster_id] 存储集群ID
         @apiParam {Int} [retention] 保留时间

@@ -104,7 +104,7 @@ class CollectorPluginHandler:
         collector_plugin_name = params["collector_plugin_name"]
         description = params.get("description")
         data_encoding = params.get("data_encoding")
-        is_enabled_display_collector = params["is_enabled_display_collector"]
+        is_display_collector = params["is_display_collector"]
         is_allow_alone_data_id = params["is_allow_alone_data_id"]
         is_allow_alone_etl_config = params["is_allow_alone_etl_config"]
         is_allow_alone_storage = params["is_allow_alone_storage"]
@@ -112,7 +112,7 @@ class CollectorPluginHandler:
             "collector_plugin_name": collector_plugin_name,
             "description": description,
             "data_encoding": data_encoding,
-            "is_enabled_display_collector": is_enabled_display_collector,
+            "is_display_collector": is_display_collector,
             "is_allow_alone_data_id": is_allow_alone_data_id,
             "is_allow_alone_etl_config": is_allow_alone_etl_config,
             "is_allow_alone_storage": is_allow_alone_storage,
@@ -172,7 +172,7 @@ class CollectorPluginHandler:
                 setattr(self.collector_plugin, key, val)
 
             # 更新可见性
-            self.collector_plugin.change_collector_display_status(params["is_enabled_display_collector"])
+            self.collector_plugin.change_collector_display_status(params["is_display_collector"])
 
             # DATA_ID
             is_create_public_data_id = params.get("create_public_data_id", False)
@@ -241,7 +241,7 @@ class CollectorPluginHandler:
             "collector_scenario_id": self.collector_plugin.collector_scenario_id,
             "category_id": self.collector_plugin.category_id,
             "data_encoding": self.collector_plugin.data_encoding,
-            "is_display": self.collector_plugin.is_enabled_display_collector,
+            "is_display": self.collector_plugin.is_display_collector,
             "is_allow_alone_data_id": self.collector_plugin.is_allow_alone_data_id,
             "is_allow_alone_etl_config": self.collector_plugin.is_allow_alone_etl_config,
             "is_allow_alone_storage": self.collector_plugin.is_allow_alone_storage,
