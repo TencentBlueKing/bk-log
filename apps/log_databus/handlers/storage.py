@@ -140,6 +140,7 @@ class StorageHandler(object):
                 "setup_config": i["cluster_config"]["custom_option"]["setup_config"],
                 "admin": i["cluster_config"]["custom_option"]["admin"],
                 "description": i["cluster_config"]["custom_option"]["description"],
+                "source_type": i["cluster_config"]["custom_option"]["source_type"],
                 "enable_assessment": i["cluster_config"]["custom_option"]["enable_assessment"],
                 "enable_archive": i["cluster_config"]["custom_option"]["enable_archive"],
                 "is_platform": i["cluster_config"]["custom_option"]["visible_config"]["visible_type"]
@@ -862,10 +863,12 @@ class StorageHandler(object):
         return sorted(indices, key=functools.cmp_to_key(compare_indices_by_date), reverse=True)
 
     def repository(self, bk_biz_id=None, cluster_id=None):
-        cluster_info = self.list(bk_biz_id=bk_biz_id, cluster_id=cluster_id, is_default=False)
+        cluster_info = self.get_cluster_groups(bk_biz_id)
         if not cluster_info:
             return []
-        cluster_info_by_id = {cluster["cluster_config"]["cluster_id"]: cluster for cluster in cluster_info}
+        if cluster_id:
+            cluster_info = [cluster for cluster in cluster_info if cluster["storage_cluster_id"] == cluster_id]
+        cluster_info_by_id = {cluster["storage_cluster_id"]: cluster for cluster in cluster_info}
         repository_info = TransferApi.list_es_snapshot_repository({"cluster_ids": list(cluster_info_by_id.keys())})
         name_prefix = f"{bk_biz_id}_bklog_"
         result = []
@@ -877,7 +880,7 @@ class StorageHandler(object):
                 continue
             repository.update(
                 {
-                    "cluster_name": cluster_info_by_id[repository["cluster_id"]]["cluster_config"]["cluster_name"],
+                    "cluster_name": cluster_info_by_id[repository["cluster_id"]]["storage_cluster_name"],
                     "cluster_source_name": EsSourceType.get_choice_label(
                         cluster_info_by_id[repository["cluster_id"]].get("source_type")
                     ),
