@@ -79,7 +79,7 @@ class LogSearchMetricCollector(object):
                 metric_name="search_count_total",
                 metric_value=history_objs.count(),
                 dimensions={},
-                timestamp=start_time,
+                timestamp=MetricUtils.get_instance().report_ts,
             )
         )
 
@@ -88,10 +88,6 @@ class LogSearchMetricCollector(object):
     @staticmethod
     @register_metric("log_search", description=_("日志检索"), data_name="log_search", time_filter=TimeFilterEnum.MINUTE5)
     def favorite_count():
-        end_time = arrow.get(int(time.time())).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
-        start_time = (
-            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=6)
-        ).strftime("%Y-%m-%d %H:%M:%S%z")
         favorite_objs = (
             FavoriteSearch.objects.filter(
                 is_deleted=False,
@@ -131,7 +127,7 @@ class LogSearchMetricCollector(object):
                     "target_bk_biz_id": bk_biz_id,
                     "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                 },
-                timestamp=start_time,
+                timestamp=MetricUtils.get_instance().report_ts,
             )
             for bk_biz_id in aggregation_datas
             for index_set_id in aggregation_datas[bk_biz_id]
@@ -142,7 +138,7 @@ class LogSearchMetricCollector(object):
                 metric_name="favorite_count_total",
                 metric_value=favorite_objs.count(),
                 dimensions={},
-                timestamp=start_time,
+                timestamp=MetricUtils.get_instance().report_ts,
             )
         )
         return metrics

@@ -38,17 +38,18 @@ class CollectMetricCollector(object):
     @register_metric("collector_config", description=_("采集配置"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def collector_config():
         groups = (
-            CollectorConfig.objects.filter(is_active=True)
-            .values("bk_biz_id")
-            .order_by()
+            CollectorConfig.objects.filter()
+            .values("bk_biz_id", "is_active", "collector_scenario_id")
+            .order_by("bk_biz_id", "is_active", "collector_scenario_id")
             .annotate(count=Count("collector_config_id"))
         )
-
         metrics = [
             Metric(
                 metric_name="count",
                 metric_value=group["count"],
                 dimensions={
+                    "is_active": group["is_active"],
+                    "collect_scenario": group["collector_scenario_id"],
                     "target_bk_biz_id": group["bk_biz_id"],
                     "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
                 },
@@ -56,6 +57,14 @@ class CollectMetricCollector(object):
             )
             for group in groups
         ]
+        metrics.append(
+            Metric(
+                metric_name="count_total",
+                metric_value=sum([i["count"] for i in groups]),
+                dimensions={},
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
         return metrics
 
     @staticmethod
