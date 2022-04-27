@@ -130,7 +130,7 @@ class CollectorPluginNameDuplicateException(BaseCollectorPluginException):
 
 
 class CollectorPluginNotMatchException(BaseCollectorPluginException):
-    ERROR_CODE = "114"
+    ERROR_CODE = "116"
     MESSAGE = _("参数异常：采集插件不匹配")
 
 
