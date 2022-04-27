@@ -114,7 +114,6 @@ class DataAccessHandler(BaseAiopsHandler):
     def create_or_update_bkdata_etl(self, collector_config_id, fields, etl_params):
         clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
         collector_config = CollectorConfig.objects.get(collector_config_id=clustering_config.collector_config_id)
-        _, table_id = collector_config.table_id.split(".")
         etl_storage = EtlStorage.get_instance(etl_config=collector_config.etl_config)
 
         # 获取清洗配置
