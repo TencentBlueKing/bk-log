@@ -873,9 +873,7 @@ class StorageHandler(object):
         for repository in repository_info:
             repository.pop("settings", None)
             # 需要兼容历史的仓库名称
-            if not repository["repository_name"].startswith(name_prefix) or not (
-                "bklog" not in repository["repository_name"]
-            ):
+            if not repository["repository_name"].startswith(name_prefix) and "bklog" in repository["repository_name"]:
                 continue
             repository.update(
                 {
