@@ -21,6 +21,7 @@ import copy
 import datetime
 import re
 from collections import defaultdict
+from typing import Union
 
 import arrow
 from django.conf import settings
@@ -28,7 +29,7 @@ from django.db import IntegrityError
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 
-from apps.api import CCApi
+from apps.api import BkDataAccessApi, CCApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
@@ -38,11 +39,21 @@ from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
 from apps.iam import Permission, ResourceEnum
 from apps.log_databus.constants import (
+    ADMIN_REQUEST_USER,
     BIZ_TOPO_INDEX,
+    BKDATA_DATA_REGION,
+    BKDATA_DATA_SCENARIO,
+    BKDATA_DATA_SCENARIO_ID,
+    BKDATA_DATA_SENSITIVITY,
+    BKDATA_DATA_SOURCE,
+    BKDATA_DATA_SOURCE_TAGS,
+    BKDATA_PERMISSION,
+    BKDATA_TAGS,
     BK_SUPPLIER_ACCOUNT,
     BULK_CLUSTER_INFOS_LIMIT,
     CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE,
     CollectStatus,
+    ETLProcessorChoices,
     INTERNAL_TOPO_INDEX,
     LogPluginInfo,
     META_DATA_ENCODING,
@@ -72,7 +83,7 @@ from apps.log_databus.handlers.collector_scenario.custom_define import get_custo
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.handlers.kafka import KafkaConsumerHandle
 from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.models import CleanStash, CollectorConfig
+from apps.log_databus.models import CleanStash, CollectorConfig, CollectorPlugin
 from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 from apps.log_esquery.utils.es_route import EsRoute
 from apps.log_search.constants import (
@@ -421,6 +432,69 @@ class CollectorHandler(object):
             self._authorization_collector(collect_config)
         return model_to_dict(collect_config, fields=["collector_config_name", "collector_config_id"])
 
+    @classmethod
+    def update_or_create_data_id(
+        cls, instance: Union[CollectorConfig, CollectorPlugin], etl_processor: str = None
+    ) -> int:
+        """
+        创建或更新数据源
+        """
+
+        if etl_processor is None:
+            etl_processor = instance.etl_processor
+
+        bk_biz_id = instance.bkdata_biz_id if instance.bkdata_biz_id else instance.bk_biz_id
+
+        # 创建 Transfer
+        if etl_processor == ETLProcessorChoices.TRANSFER.value:
+            collector_scenario = CollectorScenario.get_instance(instance.collector_scenario_id)
+            bk_data_id = collector_scenario.update_or_create_data_id(
+                bk_data_id=instance.bk_data_id,
+                data_link_id=instance.data_link_id,
+                data_name=f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{instance.get_name()}",
+                description=instance.description,
+                encoding=META_DATA_ENCODING,
+            )
+            return bk_data_id
+
+        # 创建 BKBase
+        maintainers = {instance.updated_by, instance.created_by}
+        maintainers.discard(ADMIN_REQUEST_USER)
+        if not maintainers:
+            raise Exception(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
+
+        bkdata_params = {
+            "bk_username": instance.get_updated_by(),
+            "data_scenario": BKDATA_DATA_SCENARIO,
+            "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
+            "permission": BKDATA_PERMISSION,
+            "bk_biz_id": bk_biz_id,
+            "description": instance.description,
+            "access_raw_data": {
+                "tags": BKDATA_TAGS,
+                "raw_data_name": instance.get_en_name(),
+                "maintainer": ",".join(maintainers),
+                "raw_data_alias": instance.get_en_name(),
+                "data_source_tags": BKDATA_DATA_SOURCE_TAGS,
+                "data_region": BKDATA_DATA_REGION,
+                "data_source": BKDATA_DATA_SOURCE,
+                "data_encoding": (instance.data_encoding if instance.data_encoding else META_DATA_ENCODING),
+                "sensitivity": BKDATA_DATA_SENSITIVITY,
+                "description": instance.description,
+                "preassigned_data_id": instance.bk_data_id,
+            },
+        }
+
+        # 更新
+        if instance.bk_data_id:
+            bkdata_params.update({"raw_data_id": instance.bk_data_id})
+            BkDataAccessApi.deploy_plan_put(bkdata_params)
+            return instance.bk_data_id
+
+        # 创建
+        result = BkDataAccessApi.deploy_plan_post(bkdata_params)
+        return result["raw_data_id"]
+
     def update_or_create(self, params: dict) -> dict:
         """
         创建采集配置
@@ -509,17 +583,7 @@ class CollectorHandler(object):
                         )
 
                 # 2.2 meta-创建或更新数据源
-                collector_scenario = CollectorScenario.get_instance(
-                    collector_scenario_id=self.data.collector_scenario_id
-                )
-                bk_data_id = collector_scenario.update_or_create_data_id(
-                    bk_data_id=self.data.bk_data_id,
-                    data_link_id=self.data.data_link_id,
-                    data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name}",
-                    description=description,
-                    encoding=META_DATA_ENCODING,
-                )
-                self.data.bk_data_id = bk_data_id
+                self.data.bk_data_id = self.update_or_create_data_id(self.data)
                 self.data.save()
 
             except IntegrityError:
@@ -540,6 +604,7 @@ class CollectorHandler(object):
         if is_create:
             self._authorization_collector(self.data)
         try:
+            collector_scenario = CollectorScenario.get_instance(self.data.collector_scenario_id)
             self._update_or_create_subscription(
                 collector_scenario=collector_scenario, params=params["params"], is_create=is_create
             )

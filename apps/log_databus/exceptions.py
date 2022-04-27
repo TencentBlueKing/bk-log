@@ -118,7 +118,7 @@ class CollectorPluginNameDuplicateException(BaseCollectorPluginException):
 
 
 class CollectorPluginNotMatchException(BaseCollectorPluginException):
-    ERROR_CODE = "113"
+    ERROR_CODE = "114"
     MESSAGE = _("参数异常：采集插件不匹配")
 
 
@@ -165,6 +165,11 @@ class HotColdCheckException(BaseCollectorConfigException):
 class StorageHaveResource(BaseCollectorConfigException):
     ERROR_CODE = "209"
     MESSAGE = _("集群还有未删除的采集项、第三方集群索引集")
+
+
+class BKBASEStorageNotExistException(BaseCollectorPluginException):
+    ERROR_CODE = "210"
+    MESSAGE = _("集群未同步到数据平台")
 
 
 class EtlNotSupportedException(BaseCollectorConfigException):

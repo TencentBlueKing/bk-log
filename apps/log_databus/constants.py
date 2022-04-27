@@ -242,19 +242,21 @@ class RunStatus(object):
     PREPARE = _("准备中")
 
 
-class EtlConfig(ChoicesEnum):
+class EtlConfig(object):
     BK_LOG_TEXT = "bk_log_text"
     BK_LOG_JSON = "bk_log_json"
     BK_LOG_DELIMITER = "bk_log_delimiter"
     BK_LOG_REGEXP = "bk_log_regexp"
     CUSTOM = "custom"
 
+
+class EtlConfigChoices(ChoicesEnum):
     _choices_labels = (
-        (BK_LOG_TEXT, _("直接入库")),
-        (BK_LOG_JSON, _("Json")),
-        (BK_LOG_DELIMITER, _("分隔符")),
-        (BK_LOG_REGEXP, _("正则")),
-        (CUSTOM, _("自定义")),
+        (EtlConfig.BK_LOG_TEXT, _("直接入库")),
+        (EtlConfig.BK_LOG_JSON, _("Json")),
+        (EtlConfig.BK_LOG_DELIMITER, _("分隔符")),
+        (EtlConfig.BK_LOG_REGEXP, _("正则")),
+        (EtlConfig.CUSTOM, _("自定义")),
     )
 
 

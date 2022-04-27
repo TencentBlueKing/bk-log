@@ -41,6 +41,7 @@ from django_jsonfield_backport.models import JSONField  # noqa
 from apps.api import CmsiApi, TransferApi  # noqa
 from apps.log_databus.constants import (  # noqa
     ETLProcessorChoices,  # noqa
+    EtlConfigChoices,
     TargetObjectTypeEnum,  # noqa
     TargetNodeTypeEnum,  # noqa
     CollectItsmStatus,  # noqa
@@ -197,6 +198,23 @@ class CollectorConfig(SoftDeleteModel):
         verbose_name_plural = _("用户采集配置")
         ordering = ("-updated_at",)
         unique_together = [("collector_config_name", "bk_biz_id")]
+
+    def get_bk_biz_id(self):
+        bk_biz_id = self.bkdata_biz_id if self.bkdata_biz_id else self.bk_biz_id
+        return bk_biz_id
+
+    def get_name(self):
+        return self.collector_config_name
+
+    def get_en_name(self):
+        return self.collector_config_name_en
+
+    def get_transfer_table_id(self):
+        return self.table_id
+
+    def set_transfer_table_id(self, table_id: str):
+        self.table_id = table_id
+        self.save()
 
     def has_apply_itsm(self):
         if self.itsm_ticket_status:
@@ -460,10 +478,14 @@ class CollectorPlugin(SoftDeleteModel):
     etl_processor = models.CharField(
         _("数据处理器"), max_length=32, choices=ETLProcessorChoices.get_choices(), default=ETLProcessorChoices.TRANSFER
     )
-    etl_config = models.CharField(_("清洗配置"), max_length=32, null=True, default=None, choices=EtlConfig.get_choices())
-    etl_template = models.JSONField(_("清洗模板"), null=True)
+    etl_config = models.CharField(
+        _("清洗配置"), max_length=32, null=True, default=None, choices=EtlConfigChoices.get_choices()
+    )
+    etl_params = models.JSONField(_("清洗参数"), null=True)
+    fields = models.JSONField(_("清洗字段"), null=True)
     params = models.JSONField(_("采集插件参数"), default=dict, null=True)
     table_id = models.CharField(_("结果表ID"), max_length=255, null=True)
+    transfer_table_id = models.CharField(_("Tranfer结果表ID"), max_length=255, null=True)
     is_allow_alone_storage = models.BooleanField(_("是否允许独立存储"), default=True)
     storage_table_id = models.CharField(_("入库结果表"), max_length=255, null=True)
     storage_cluster_id = models.IntegerField(_("存储集群ID"), null=True)
@@ -486,6 +508,23 @@ class CollectorPlugin(SoftDeleteModel):
         if self.updated_by == ADMIN_REQUEST_USER:
             return self.created_by
         return self.updated_by
+
+    def get_bk_biz_id(self):
+        bk_biz_id = self.bkdata_biz_id if self.bkdata_biz_id else self.bk_biz_id
+        return bk_biz_id
+
+    def get_name(self):
+        return self.collector_plugin_name
+
+    def get_en_name(self):
+        return self.collector_plugin_name_en
+
+    def get_transfer_table_id(self):
+        return self.transfer_table_id
+
+    def set_transfer_table_id(self, table_id: str):
+        self.transfer_table_id = table_id
+        self.save()
 
     @transaction.atomic()
     def change_collector_display_status(self, display_status: bool):
