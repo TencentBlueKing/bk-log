@@ -84,7 +84,7 @@ def using_caches(key: str, need_deconstruction_name: str, duration, need_md5=Fal
             need_deconstruction_param = kwargs.get(need_deconstruction_name, list())
             temp_result = dict()
             in_cache_keys = set()
-            for index, value in enumerate(need_deconstruction_param):
+            for value in need_deconstruction_param:
                 actual_key = key.format(value)
 
                 if need_md5:

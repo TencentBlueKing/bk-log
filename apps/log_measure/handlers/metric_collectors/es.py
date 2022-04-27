@@ -47,7 +47,7 @@ def get_version(version: str):
     result_version = [int(p) for p in raw_version.split(".")]
     version_len = VERSION_LEN - len(result_version)
     if version_len > 0:
-        for i in range(version_len):
+        for index in range(version_len):
             result_version.append(0)
     return result_version
 
