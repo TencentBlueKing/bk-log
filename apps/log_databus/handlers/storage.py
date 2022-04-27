@@ -488,6 +488,7 @@ class StorageHandler(object):
             params["auth_info"]["username"] = cluster_objs[0]["auth_info"]["username"]
             params["auth_info"]["password"] = cluster_objs[0]["auth_info"]["password"]
 
+        hot_warm_config_is_enabled = params["custom_option"]["hot_warm_config"]["is_enabled"]
         BkLogApi.connectivity_detect(
             params={
                 "bk_biz_id": bk_biz_id,
@@ -506,7 +507,7 @@ class StorageHandler(object):
         cluster_obj["auth_info"]["password"] = ""
         if (
             cluster_objs[0]["cluster_config"]["custom_option"]["hot_warm_config"]["is_enabled"]
-            and not params["custom_option"]["hot_warm_config"]["is_enabled"]
+            and not hot_warm_config_is_enabled
         ):
             from apps.log_databus.tasks.collector import shutdown_collector_warm_storage_config
 
