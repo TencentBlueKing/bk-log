@@ -374,6 +374,7 @@ export default {
       hostNumber: 0,
       replicasMax: 7,
       isForcedFillAssessment: false, // 是否必须容量评估
+      isFirstRendering: true, // 是否是第一次渲染 用于回显热数据天数
     };
   },
   computed: {
