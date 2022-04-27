@@ -257,7 +257,7 @@ export default {
 
       .illustrate-title {
         font-weight: 700;
-        color: #66676b;
+        color: #63656e;
       }
 
       .illustrate-container {
@@ -268,12 +268,16 @@ export default {
       }
 
       .illustrate-label {
-        color: #acadb1;
+        color: #979ba5;
+      }
+
+      .illustrate-value {
+        color: #313238;
       }
 
       .illustrate-list {
         margin-top: 8px;
-        color: #67696d;
+        color: #63656e;
       }
     }
 

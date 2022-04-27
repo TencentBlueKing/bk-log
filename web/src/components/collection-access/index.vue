@@ -379,6 +379,14 @@ export default {
       max-height: 100%;
       margin-top: 40px;
 
+      .bk-steps {
+        :last-child {
+          &::after {
+            display: none;
+          }
+        }
+      }
+
       .bk-step {
         color: #7a7c85;
         height: 70px;
