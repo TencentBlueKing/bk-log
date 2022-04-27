@@ -27,8 +27,7 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 
 from apps.utils.db import array_group
-from apps.log_search.models import LogIndexSet
-from apps.log_search.models import UserIndexSetSearchHistory
+from apps.log_search.models import LogIndexSet, FavoriteSearch, UserIndexSetSearchHistory
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
@@ -56,7 +55,7 @@ class LogSearchMetricCollector(object):
         index_sets = array_group(
             LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
         )
-
+        # 带标签数据
         metrics = [
             Metric(
                 metric_name="search_count",
@@ -74,5 +73,76 @@ class LogSearchMetricCollector(object):
             )
             for history_obj in history_objs
         ]
+        # 搜索总数
+        metrics.append(
+            Metric(
+                metric_name="search_count_total",
+                metric_value=history_objs.count(),
+                dimensions={},
+                timestamp=start_time,
+            )
+        )
 
+        return metrics
+
+    @staticmethod
+    @register_metric("log_search", description=_("日志检索"), data_name="log_search", time_filter=TimeFilterEnum.MINUTE5)
+    def favorite_count():
+        end_time = arrow.get(int(time.time())).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
+        start_time = (
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=6)
+        ).strftime("%Y-%m-%d %H:%M:%S%z")
+        favorite_objs = (
+            FavoriteSearch.objects.filter(
+                is_deleted=False,
+            )
+            .order_by("id")
+            .values("id", "search_history_id", "project_id", "created_at")
+        )
+        history_objs = (
+            UserIndexSetSearchHistory.objects.filter(
+                is_deleted=False,
+                id__in=[i["search_history_id"] for i in favorite_objs],
+            )
+            .order_by("id")
+            .values("id", "index_set_id")
+        )
+        index_set_list = [history_obj["index_set_id"] for history_obj in history_objs]
+        index_sets = array_group(
+            LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
+        )
+        aggregation_datas = dict()
+        for index_set_id in index_set_list:
+            bk_biz_id = index_sets[index_set_id]["bk_biz_id"]
+            if not aggregation_datas.get(bk_biz_id):
+                aggregation_datas[bk_biz_id] = dict()
+            if not aggregation_datas.get(bk_biz_id).get(index_set_id):
+                aggregation_datas[bk_biz_id][index_set_id] = 0
+            aggregation_datas[bk_biz_id][index_set_id] += 1
+
+        # 收藏带标签数据
+        metrics = [
+            Metric(
+                metric_name="favorite_count",
+                metric_value=aggregation_datas[bk_biz_id][index_set_id],
+                dimensions={
+                    "index_set_id": index_set_id,
+                    "index_set_name": index_sets[index_set_id]["index_set_name"],
+                    "target_bk_biz_id": bk_biz_id,
+                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                },
+                timestamp=start_time,
+            )
+            for bk_biz_id in aggregation_datas
+            for index_set_id in aggregation_datas[bk_biz_id]
+        ]
+        # 收藏总数
+        metrics.append(
+            Metric(
+                metric_name="favorite_count_total",
+                metric_value=favorite_objs.count(),
+                dimensions={},
+                timestamp=start_time,
+            )
+        )
         return metrics
