@@ -63,9 +63,9 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {String} etl_processor 数据处理器
         @apiParam {String} [etl_template] 清洗模板
         @apiParam {String} [etl_config] 清洗配置
-        @apiParam {Objects} [params.fields] 清洗字段
-        @apiParam {Objects} [params.etl_params] 清洗入库参数
-        @apiParam {Objects} [params.template_params] 清洗入库模板参数
+        @apiParam {String} [etl_params] 清洗配置
+        @apiParam {String} [fields] 清洗配置
+        @apiParam {Array} [params] 清洗字段
         @apiParam {Bool} is_allow_alone_storage 是否允许独立存储配置
         @apiParam {Int} [storage_cluster_id] 存储集群ID
         @apiParam {Int} [retention] 保留时间
@@ -89,25 +89,27 @@ class CollectorPluginViewSet(ModelViewSet):
             "is_allow_alone_etl_config": false,
             "etl_processor": "bkbase",
             "etl_config": "custom",
-            "etl_template": {
-                "fields": [
-                    {
-                        "id": 12159347,
-                        "field_name": "ip",
-                        "field_type": "string",
-                        "field_alias": "IP地址",
-                        "is_dimension": false,
-                        "field_index": 5
-                    },
-                    {
-                        "id": 12159348,
-                        "field_name": "datetime",
-                        "field_type": "string",
-                        "field_alias": "日志时间",
-                        "is_dimension": false,
-                        "field_index": 7
-                    }
-                ],
+            "fields": [
+                {
+                    "id": 12159347,
+                    "field_name": "ip",
+                    "field_type": "string",
+                    "field_alias": "IP地址",
+                    "is_dimension": false,
+                    "field_index": 5
+                },
+                {
+                    "id": 12159348,
+                    "field_name": "datetime",
+                    "field_type": "string",
+                    "field_alias": "日志时间",
+                    "is_dimension": false,
+                    "field_index": 7
+                }
+            ],
+            "etl_params": {
+                "retain_original_text": false,
+                "separator_regexp": "",
                 "json_config": "……"
             },
             "is_allow_alone_storage": false,
@@ -145,11 +147,10 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {Bool} is_enabled_display_collector 是否显示采集项
         @apiParam {Bool} is_allow_alone_data_id 是否允许独立DATAID
         @apiParam {Bool} is_allow_alone_etl_config 是否允许独立清洗配置
-        @apiParam {String} [etl_template] 清洗模板
+        @apiParam {String} [etl_params] 清洗模板
         @apiParam {String} [etl_config] 清洗配置
-        @apiParam {Objects} [params.fields] 清洗字段
-        @apiParam {Objects} [params.etl_params] 清洗入库参数
-        @apiParam {Objects} [params.template_params] 清洗入库模板参数
+        @apiParam {Array} [fields] 清洗字段
+        @apiParam {Array} [params] 模板参数
         @apiParam {Bool} is_allow_alone_storage 是否允许独立存储配置
         @apiParam {Int} [storage_cluster_id] 存储集群ID
         @apiParam {Int} [retention] 保留时间
@@ -166,25 +167,27 @@ class CollectorPluginViewSet(ModelViewSet):
             "is_allow_alone_data_id": false,
             "is_allow_alone_etl_config": false,
             "etl_config": "custom",
-            "etl_template": {
-                "fields": [
-                    {
-                        "id": 12159347,
-                        "field_name": "ip",
-                        "field_type": "string",
-                        "field_alias": "IP地址",
-                        "is_dimension": false,
-                        "field_index": 5
-                    },
-                    {
-                        "id": 12159348,
-                        "field_name": "datetime",
-                        "field_type": "string",
-                        "field_alias": "日志时间",
-                        "is_dimension": false,
-                        "field_index": 7
-                    }
-                ],
+            "fields": [
+                {
+                    "id": 12159347,
+                    "field_name": "ip",
+                    "field_type": "string",
+                    "field_alias": "IP地址",
+                    "is_dimension": false,
+                    "field_index": 5
+                },
+                {
+                    "id": 12159348,
+                    "field_name": "datetime",
+                    "field_type": "string",
+                    "field_alias": "日志时间",
+                    "is_dimension": false,
+                    "field_index": 7
+                }
+            ],
+            "etl_params": {
+                "retain_original_text": false,
+                "separator_regexp": "",
                 "json_config": "……"
             },
             "is_allow_alone_storage": false,
