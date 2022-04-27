@@ -101,9 +101,13 @@ class CollectorConfig(SoftDeleteModel):
     bk_data_id = models.IntegerField(_("采集链路data_id"), null=True, default=None)
     bk_data_name = models.CharField(_("采集链路data_name"), null=True, default=None, max_length=64)
     table_id = models.CharField(_("结果表ID"), max_length=255, null=True, default=None)
+    bkbase_table_id = models.CharField(_("BKBASE结果表ID"), max_length=255, null=True, default=None)
     processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)
     etl_processor = models.CharField(
-        _("数据处理引擎"), max_length=32, choices=ETLProcessorChoices.get_choices(), default=ETLProcessorChoices.TRANSFER
+        _("数据处理引擎"),
+        max_length=32,
+        choices=ETLProcessorChoices.get_choices(),
+        default=ETLProcessorChoices.TRANSFER.value,
     )
     etl_config = models.CharField(_("清洗配置"), max_length=32, null=True, default=None)
     subscription_id = models.IntegerField(_("节点管理订阅ID"), null=True, default=None)
@@ -227,13 +231,6 @@ class CollectorConfig(SoftDeleteModel):
 
     def get_en_name(self):
         return self.collector_config_name_en
-
-    def get_transfer_table_id(self):
-        return self.table_id
-
-    def set_transfer_table_id(self, table_id: str):
-        self.table_id = table_id
-        self.save()
 
     def has_apply_itsm(self):
         if self.itsm_ticket_status:
@@ -495,7 +492,7 @@ class CollectorPlugin(SoftDeleteModel):
     processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)
     is_allow_alone_etl_config = models.BooleanField(_("是否允许独立配置清洗规则"), default=True)
     etl_processor = models.CharField(
-        _("数据处理器"), max_length=32, choices=ETLProcessorChoices.get_choices(), default=ETLProcessorChoices.TRANSFER
+        _("数据处理器"), max_length=32, choices=ETLProcessorChoices.get_choices(), default=ETLProcessorChoices.TRANSFER.value
     )
     etl_config = models.CharField(
         _("清洗配置"), max_length=32, null=True, default=None, choices=EtlConfigChoices.get_choices()
@@ -504,9 +501,8 @@ class CollectorPlugin(SoftDeleteModel):
     fields = models.JSONField(_("清洗字段"), null=True)
     params = models.JSONField(_("采集插件参数"), default=dict, null=True)
     table_id = models.CharField(_("结果表ID"), max_length=255, null=True)
-    transfer_table_id = models.CharField(_("Tranfer结果表ID"), max_length=255, null=True)
+    bkbase_table_id = models.CharField(_("BKBASE结果表ID"), max_length=255, null=True)
     is_allow_alone_storage = models.BooleanField(_("是否允许独立存储"), default=True)
-    storage_table_id = models.CharField(_("入库结果表"), max_length=255, null=True)
     storage_cluster_id = models.IntegerField(_("存储集群ID"), null=True)
     retention = models.IntegerField(_("数据有效时间"), null=True)
     allocation_min_days = models.IntegerField(_("冷热数据生效时间"), null=True)
@@ -544,6 +540,11 @@ class CollectorPlugin(SoftDeleteModel):
     def set_transfer_table_id(self, table_id: str):
         self.transfer_table_id = table_id
         self.save()
+
+    def get_table_id(self):
+        if self.etl_processor == ETLProcessorChoices.BKBASE.value:
+            return self.bkbase_table_id
+        return self.table_id
 
     @transaction.atomic()
     def change_collector_display_status(self, display_status: bool):

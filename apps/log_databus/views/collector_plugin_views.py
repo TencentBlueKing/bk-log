@@ -7,9 +7,9 @@ from apps.log_databus.handlers.collector_plugin.base import get_collector_plugin
 from apps.log_databus.models import CollectorPlugin
 from apps.log_databus.serializers import (
     CollectorPluginCreateSerializer,
-    CollectorPluginInitSerializer,
     CollectorPluginSerializer,
     CollectorPluginUpdateSerializer,
+    CreateCollectorPluginInstanceSerializer,
 )
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route
@@ -37,7 +37,7 @@ class CollectorPluginViewSet(ModelViewSet):
         if self.action in ["create"]:
             return CollectorPluginCreateSerializer
         if self.action in ["instances"]:
-            return CollectorPluginInitSerializer
+            return CreateCollectorPluginInstanceSerializer
         if self.action in ["update", "partial_update"]:
             return CollectorPluginUpdateSerializer
         return CollectorPluginSerializer
@@ -130,6 +130,7 @@ class CollectorPluginViewSet(ModelViewSet):
             "result": true
         }
         """
+
         data = self.validated_data
         collector_plugin_handler: CollectorPluginHandler = get_collector_plugin_handler(data["etl_processor"])
         return Response(collector_plugin_handler.update_or_create(data))
@@ -208,6 +209,7 @@ class CollectorPluginViewSet(ModelViewSet):
             "result": true
         }
         """
+
         data = self.validated_data
         collector_plugin: CollectorPlugin = self.get_object()
         collector_plugin_handler: CollectorPluginHandler = get_collector_plugin_handler(
@@ -227,10 +229,17 @@ class CollectorPluginViewSet(ModelViewSet):
             "message": "",
             "code": 0,
             "data": {
-                "collector_plugin_id": 1,
-                "collector_plugin_name": "采集插件"
+                "collector_config_id": 1,
+                "collector_config_name": "采集插件"
             },
             "result": true
         }
         """
-        pass
+
+        collector_plugin: CollectorPlugin = self.get_object()
+        data = self.validated_data
+        data.update({"collector_plugin_id": collector_plugin.collector_plugin_id})
+        collector_plugin_handler: CollectorPluginHandler = get_collector_plugin_handler(
+            collector_plugin.etl_processor, collector_plugin.collector_plugin_id
+        )
+        return Response(collector_plugin_handler.create_instance(data))

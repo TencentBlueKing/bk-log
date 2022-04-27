@@ -29,6 +29,7 @@ from apps.log_databus.constants import (
     ETLProcessorChoices,
 )
 from apps.log_databus.exceptions import (
+    CollectorConfigNotExistException,
     CollectorPluginNameDuplicateException,
     CollectorPluginNotExistException,
 )
@@ -66,7 +67,9 @@ class CollectorPluginHandler:
         self.collector_plugin_id = collector_plugin_id
         if collector_plugin_id:
             try:
-                self.collector_plugin = CollectorPlugin.objects.get(collector_plugin_id=collector_plugin_id)
+                self.collector_plugin: CollectorPlugin = CollectorPlugin.objects.get(
+                    collector_plugin_id=collector_plugin_id
+                )
             except CollectorPlugin.DoesNotExist:
                 raise CollectorPluginNotExistException()
 
@@ -87,9 +90,16 @@ class CollectorPluginHandler:
 
         pass
 
-    def _update_or_create_etl_storage(self, params: dict) -> None:
+    def _update_or_create_etl_storage(self, params: dict, is_create: bool) -> None:
         """
         创建或更新清洗入库
+        """
+
+        raise NotImplementedError
+
+    def _update_or_create_instance_etl(self, collect_config: CollectorConfig, params: dict) -> None:
+        """
+        创建或更新实例清洗入库
         """
 
         raise NotImplementedError
@@ -117,6 +127,8 @@ class CollectorPluginHandler:
             "is_allow_alone_etl_config": is_allow_alone_etl_config,
             "is_allow_alone_storage": is_allow_alone_storage,
         }
+
+        is_create_public_data_id = params.get("create_public_data_id", False)
 
         # 创建插件
         if not self.collector_plugin:
@@ -152,7 +164,6 @@ class CollectorPluginHandler:
                 raise CollectorPluginNameDuplicateException()
 
             # DATA_ID
-            is_create_public_data_id = params.get("create_public_data_id", False)
             if not is_allow_alone_data_id or is_create_public_data_id:
                 # 绑定链路
                 if not data_link_id:
@@ -175,7 +186,6 @@ class CollectorPluginHandler:
             self.collector_plugin.change_collector_display_status(params["is_display_collector"])
 
             # DATA_ID
-            is_create_public_data_id = params.get("create_public_data_id", False)
             if not is_allow_alone_data_id or is_create_public_data_id:
                 self.collector_plugin.bk_data_id = CollectorHandler.update_or_create_data_id(self.collector_plugin)
 
@@ -195,7 +205,7 @@ class CollectorPluginHandler:
             self.collector_plugin.etl_params = params["etl_params"]
             self.collector_plugin.fields = params["fields"]
             self.collector_plugin.params = params["params"]
-            self._update_or_create_etl_storage(params)
+            self._update_or_create_etl_storage(params, is_create)
 
         # 额外操作
         self._extra_operation(params)
@@ -238,6 +248,7 @@ class CollectorPluginHandler:
         """
 
         build_in_params = {
+            "etl_processor": self.collector_plugin.etl_processor,
             "collector_scenario_id": self.collector_plugin.collector_scenario_id,
             "category_id": self.collector_plugin.category_id,
             "data_encoding": self.collector_plugin.data_encoding,
@@ -271,6 +282,8 @@ class CollectorPluginHandler:
                     "storage_replies": self.collector_plugin.storage_replies,
                     "storage_shards_nums": self.collector_plugin.storage_shards_nums,
                     "storage_shards_size": self.collector_plugin.storage_shards_size,
+                    "table_id": self.collector_plugin.table_id,
+                    "bkbase_table_id": self.collector_plugin.bkbase_table_id,
                 }
             )
 
@@ -280,7 +293,34 @@ class CollectorPluginHandler:
                 {
                     "etl_processor": self.collector_plugin.etl_processor,
                     "etl_config": self.collector_plugin.etl_config,
+                    "etl_params": self.collector_plugin.etl_params,
+                    "fields": self.collector_plugin.fields,
                 }
             )
 
         return build_in_params
+
+    def create_instance(self, params: dict) -> dict:
+        """
+        采集插件实例化
+        """
+
+        # 构造参数
+        build_in_params = self.build_instance_params()
+        params.update(build_in_params)
+
+        # 创建采集项
+        result = CollectorHandler().update_or_create(params)
+        collector_config_id = result["collector_config_id"]
+        try:
+            collector_config: CollectorConfig = CollectorConfig.objects.get(collector_config_id=collector_config_id)
+        except CollectorConfig.DoesNotExist:
+            raise CollectorConfigNotExistException()
+
+        # 清洗入库
+        self._update_or_create_instance_etl(collector_config, params)
+
+        return {
+            "collector_config_id": collector_config.collector_config_id,
+            "collector_config_name": collector_config.collector_config_name,
+        }

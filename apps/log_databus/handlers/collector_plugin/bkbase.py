@@ -17,55 +17,20 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import json
 
-from django.conf import settings
-
-from apps.api import BkDataDatabusApi
 from apps.log_databus.constants import ETLProcessorChoices
-from apps.log_databus.exceptions import BKBASEStorageNotExistException
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.collector_plugin import CollectorPluginHandler
+from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.handlers.storage import StorageHandler
-from apps.utils.local import get_request_username
+from apps.log_databus.models import CollectorConfig
 
 
 class BKBaseCollectorPluginHandler(CollectorPluginHandler):
     """
     数据平台
     """
-
-    def _stop_bkdata_clean(self, bkdata_result_table_id: str) -> None:
-        """停止清洗任务"""
-
-        BkDataDatabusApi.delete_tasks(
-            params={
-                "result_table_id": bkdata_result_table_id,
-                "bk_username": get_request_username(),
-            }
-        )
-
-    def _start_bkdata_clean(self, bkdata_result_table_id: str) -> None:
-        """
-        启动清洗任务
-        """
-
-        BkDataDatabusApi.post_tasks(
-            params={
-                "result_table_id": bkdata_result_table_id,
-                "storages": ["kafka"],
-                "bk_username": get_request_username(),
-            }
-        )
-
-    def _restart_bkdata_clean(self, bkdata_result_table_id: str) -> None:
-        """
-        重启清洗任务
-        """
-
-        self._stop_bkdata_clean(bkdata_result_table_id)
-        self._start_bkdata_clean(bkdata_result_table_id)
 
     def _create_transfer_result_table(self):
         """
@@ -100,7 +65,7 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
             CollectorHandler.update_or_create_data_id(self.collector_plugin, ETLProcessorChoices.TRANSFER.value)
             self._create_transfer_result_table()
 
-    def _update_or_create_etl_storage(self, params: dict) -> None:
+    def _update_or_create_etl_storage(self, params: dict, is_create: bool) -> None:
         """
         创建或更新清洗入库
         """
@@ -109,58 +74,28 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
         if len(params.get("params", [])):
             return
 
-        bkdata_params = {
-            "raw_data_id": self.collector_plugin.bk_data_id,
-            "result_table_name": f"{settings.TABLE_ID_PREFIX}_{self.collector_plugin.collector_plugin_name_en}",
-            "result_table_name_alias": self.collector_plugin.collector_plugin_name_en,
-            "clean_config_name": self.collector_plugin.collector_plugin_name,
-            "description": self.collector_plugin.description,
-            "bk_biz_id": self.collector_plugin.bk_biz_id,
-            "bk_username": get_request_username(),
-            "fields": self.collector_plugin.fields,
-            "json_config": json.dumps(self.collector_plugin.etl_params.get("json_config")),
-        }
+        EtlHandler().update_or_create_bkbase_etl_storage(
+            instance=self.collector_plugin,
+            fields=self.collector_plugin.fields,
+            json_config=self.collector_plugin.etl_params.get("json_config", ""),
+            is_create=is_create,
+        )
 
-        # 创建清洗
-        if self.collector_plugin.processing_id:
-            result = BkDataDatabusApi.databus_cleans_post(bkdata_params)
-            self._start_bkdata_clean(result["result_table_id"])
-            self.collector_plugin.processing_id = result["processing_id"]
-            self.collector_plugin.table_id = result["result_table_id"]
-            self.collector_plugin.save()
+    def _update_or_create_instance_etl(self, collect_config: CollectorConfig, params: dict) -> None:
+        """
+        创建或更新实例清洗入库
+        """
 
-        # 更新清洗
-        else:
-            bkdata_params.update({"processing_id": self.collector_plugin.processing_id})
-            BkDataDatabusApi.databus_cleans_put(bkdata_params, request_cookies=False)
-            self._stop_bkdata_clean(self.collector_plugin.table_id)
-            self._start_bkdata_clean(self.collector_plugin.table_id)
+        # 允许独立清洗配置
+        if self.collector_plugin.is_allow_alone_etl_config:
+            EtlHandler().update_or_create_bkbase_etl_storage(
+                instance=collect_config,
+                fields=params.get("fields", []),
+                json_config=params.get("etl_params", {}).get("json_config", ""),
+                is_create=True,
+                params=params,
+            )
 
-        # 入库参数
-        cluster_info = StorageHandler(self.collector_plugin.storage_cluster_id).get_cluster_info_by_id()
-        bkbase_cluster_id = cluster_info["cluster_config"].get("custom_option", {}).get("bkbase_cluster_id")
-        if bkbase_cluster_id is None:
-            raise BKBASEStorageNotExistException
-
-        storage_params = {
-            "bk_biz_id": self.collector_plugin.bk_biz_id,
-            "raw_data_id": self.collector_plugin.bk_data_id,
-            "data_type": "clean",
-            "result_table_name": f"{settings.TABLE_ID_PREFIX}_{self.collector_plugin.collector_plugin_name_en}",
-            "result_table_name_alias": self.collector_plugin.collector_plugin_name_en,
-            "storage_type": "es",
-            "storage_cluster": bkbase_cluster_id,
-            "expires": f"{self.collector_plugin.retention}d",
-            "fields": self.collector_plugin.fields,
-        }
-
-        # 更新入库
-        if self.collector_plugin.storage_table_id:
-            storage_params.update({"result_table_id": self.collector_plugin.storage_table_id})
-            BkDataDatabusApi.databus_data_storages_put(storage_params)
-            return
-
-        # 创建入库
-        BkDataDatabusApi.databus_data_storages_post(storage_params)
-        self.collector_plugin.storage_table_id = self.collector_plugin.table_id
-        self.collector_plugin.save()
+        # 不允许独立清洗，但是存在参数
+        elif len(self.collector_plugin.params):
+            pass

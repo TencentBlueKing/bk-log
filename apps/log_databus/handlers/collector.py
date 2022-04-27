@@ -461,15 +461,13 @@ class CollectorHandler(object):
         if etl_processor is None:
             etl_processor = instance.etl_processor
 
-        bk_biz_id = instance.bkdata_biz_id if instance.bkdata_biz_id else instance.bk_biz_id
-
         # 创建 Transfer
         if etl_processor == ETLProcessorChoices.TRANSFER.value:
             collector_scenario = CollectorScenario.get_instance(instance.collector_scenario_id)
             bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=instance.bk_data_id,
                 data_link_id=instance.data_link_id,
-                data_name=f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{instance.get_name()}",
+                data_name=f"{instance.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}_{instance.get_name()}",
                 description=instance.description,
                 encoding=META_DATA_ENCODING,
             )
@@ -486,7 +484,7 @@ class CollectorHandler(object):
             "data_scenario": BKDATA_DATA_SCENARIO,
             "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
             "permission": BKDATA_PERMISSION,
-            "bk_biz_id": bk_biz_id,
+            "bk_biz_id": instance.get_bk_biz_id(),
             "description": instance.description,
             "access_raw_data": {
                 "tags": BKDATA_TAGS,
@@ -590,7 +588,12 @@ class CollectorHandler(object):
                             "category_id": params["category_id"],
                             "collector_scenario_id": params["collector_scenario_id"],
                             "bk_biz_id": bk_biz_id,
+                            "bkdata_biz_id": params.get("bkdata_biz_id"),
                             "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
+                            "bk_data_id": params.get("bk_data_id"),
+                            "table_id": params.get("table_id"),
+                            "etl_processor": params.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
+                            "etl_config": params.get("etl_config"),
                         }
                     )
                     model_fields["collector_scenario_id"] = params["collector_scenario_id"]
@@ -622,8 +625,9 @@ class CollectorHandler(object):
                         )
 
                 # 2.2 meta-创建或更新数据源
-                self.data.bk_data_id = self.update_or_create_data_id(self.data)
-                self.data.save()
+                if params.get("is_allow_alone_data_id", True):
+                    self.data.bk_data_id = self.update_or_create_data_id(self.data)
+                    self.data.save()
 
             except IntegrityError:
                 logger.warning(f"collector config name duplicate => [{collector_config_name}]")
@@ -648,8 +652,12 @@ class CollectorHandler(object):
                 collector_scenario=collector_scenario, params=params["params"], is_create=is_create
             )
         finally:
-            # 创建数据平台data_id
-            async_create_bkdata_data_id.delay(self.data.collector_config_id)
+            if (
+                params.get("is_allow_alone_data_id", True)
+                and params.get("etl_processor") != ETLProcessorChoices.BKBASE.value
+            ):
+                # 创建数据平台data_id
+                async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         return {
             "collector_config_id": self.data.collector_config_id,

@@ -328,17 +328,16 @@ class EtlStorage(object):
             del params["time_option"]["es_doc_values"]
 
         # 兼容插件与采集项
-        table_id = instance.get_transfer_table_id()
-        if not table_id:
+        if not instance.table_id:
             # 创建结果表
-            table_id = TransferApi.create_result_table(params)["table_id"]
-            instance.set_transfer_table_id(table_id)
+            instance.table_id = TransferApi.create_result_table(params)["table_id"]
+            instance.save()
         else:
             # 更新结果表
-            params["table_id"] = table_id
+            params["table_id"] = instance.table_id
             TransferApi.modify_result_table(params)
 
-        return {"table_id": table_id, "params": params}
+        return {"table_id": instance.table_id, "params": params}
 
     @classmethod
     def switch_result_table(cls, collector_config: CollectorConfig, is_enable=True):

@@ -784,11 +784,29 @@ class CollectorPluginCreateSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class CollectorPluginInitSerializer(CollectorCreateSerializer):
-    collector_scenario_id = serializers.CharField(label=_("日志类型"), default=CollectorScenarioEnum.CUSTOM.value)
+class CreateCollectorPluginInstanceSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"))
     bkdata_biz_id = serializers.IntegerField(label=_("数据平台业务ID"), required=False)
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+    description = serializers.CharField(
+        label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
+    )
+    data_link_id = serializers.CharField(label=_("数据链路id"), required=False, allow_blank=True, allow_null=True)
+    target_object_type = serializers.CharField(label=_("目标类型"))
+    target_node_type = serializers.CharField(label=_("节点类型"))
+    target_nodes = TargetNodeSerializer(label=_("目标节点"), many=True)
+    params = PluginParamSerializer()
+    etl_processor = serializers.JSONField(label=_("清洗规则参数"))
+    etl_config = serializers.JSONField(label=_("清洗规则参数"), required=False)
     etl_params = serializers.JSONField(label=_("清洗规则参数"), required=False)
     fields = serializers.JSONField(label=_("清洗字段"), required=False)
+    storage_cluster_id = serializers.IntegerField(label=_("存储集群ID"), required=False)
+    retention = serializers.IntegerField(label=_("有效天数"), required=False)
+    allocation_min_days = serializers.IntegerField(label=_("冷热天书"), required=False)
+    storage_replies = serializers.IntegerField(label=_("存储副本数"), required=False)
 
 
 class CollectorPluginUpdateSerializer(serializers.ModelSerializer):

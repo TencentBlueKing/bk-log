@@ -19,39 +19,41 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import json
+from typing import Union
 
 import arrow
-
-from django.utils.translation import ugettext_lazy as _
-from django.db import transaction
 from django.conf import settings
+from django.db import transaction
+from django.utils.translation import ugettext_lazy as _
 
-from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
+from apps.api import BkDataDatabusApi, TransferApi
+from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
+from apps.decorators import user_operation_record
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
+from apps.log_clustering.tasks.flow import update_clustering_clean
+from apps.log_databus.constants import ETL_PARAMS, EtlConfig, REGISTERED_SYSTEM_DEFAULT
 from apps.log_databus.exceptions import (
+    BKBASEStorageNotExistException,
+    CollectorActiveException,
     CollectorConfigNotExistException,
+    CollectorResultTableIDDuplicateException,
     EtlParseTimeFormatException,
     EtlStorageUsedException,
-    CollectorActiveException,
-    CollectorResultTableIDDuplicateException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash
-from apps.log_clustering.tasks.flow import update_clustering_clean
+from apps.log_databus.handlers.storage import StorageHandler
+from apps.log_databus.models import CleanStash, CollectorConfig, CollectorPlugin, StorageCapacity, StorageUsed
+from apps.log_search.constants import CollectorScenarioEnum, FieldDateFormatEnum, ISO_8601_TIME_FORMAT_NAME
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import Scenario, ProjectInfo
-from apps.log_search.constants import FieldDateFormatEnum, CollectorScenarioEnum, ISO_8601_TIME_FORMAT_NAME
+from apps.log_search.models import ProjectInfo, Scenario
 from apps.models import model_to_dict
 from apps.utils.db import array_group
-from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.constants import REGISTERED_SYSTEM_DEFAULT, EtlConfig, ETL_PARAMS
-from apps.decorators import user_operation_record
 from apps.utils.local import get_request_username
 from apps.utils.log import logger
-from apps.api import TransferApi
 
 
 class EtlHandler(object):
@@ -82,6 +84,112 @@ class EtlHandler(object):
                 if storage > 0:
                     if storage_used >= storage:
                         raise EtlStorageUsedException()
+
+    @classmethod
+    def stop_bkdata_clean(cls, bkdata_result_table_id: str) -> None:
+        """停止清洗任务"""
+
+        BkDataDatabusApi.delete_tasks(
+            params={
+                "result_table_id": bkdata_result_table_id,
+                "bk_username": get_request_username(),
+            }
+        )
+
+    @classmethod
+    def start_bkdata_clean(cls, bkdata_result_table_id: str) -> None:
+        """
+        启动清洗任务
+        """
+
+        BkDataDatabusApi.post_tasks(
+            params={
+                "result_table_id": bkdata_result_table_id,
+                "storages": ["kafka"],
+                "bk_username": get_request_username(),
+            }
+        )
+
+    @classmethod
+    def restart_bkdata_clean(cls, bkdata_result_table_id: str) -> None:
+        """
+        重启清洗任务
+        """
+
+        cls.stop_bkdata_clean(bkdata_result_table_id)
+        cls.start_bkdata_clean(bkdata_result_table_id)
+
+    @classmethod
+    def update_or_create_bkbase_etl_storage(
+        cls,
+        instance: Union[CollectorConfig, CollectorPlugin],
+        fields: list,
+        json_config: Union[str, dict],
+        is_create: bool,
+        params: dict = None,
+    ) -> None:
+        """
+        创建或更新清洗入库
+        """
+
+        # 类型适配
+        if params is None:
+            params = {}
+
+        json_config = json_config if isinstance(json_config, dict) else json.loads(json_config)
+
+        bkdata_params = {
+            "raw_data_id": instance.bk_data_id,
+            "result_table_name": f"{settings.TABLE_ID_PREFIX}_{instance.get_en_name()}",
+            "result_table_name_alias": instance.get_en_name(),
+            "clean_config_name": instance.get_name(),
+            "description": instance.description,
+            "bk_biz_id": instance.get_bk_biz_id(),
+            "bk_username": get_request_username(),
+            "fields": fields,
+            "json_config": json.dumps(json_config),
+        }
+
+        # 创建清洗
+        if is_create:
+            result = BkDataDatabusApi.databus_cleans_post(bkdata_params)
+            cls.start_bkdata_clean(result["result_table_id"])
+            instance.processing_id = result["processing_id"]
+            instance.bkbase_table_id = result["result_table_id"]
+            instance.save()
+
+        # 更新清洗
+        else:
+            bkdata_params.update({"processing_id": instance.processing_id})
+            BkDataDatabusApi.databus_cleans_put(bkdata_params, request_cookies=False)
+            cls.restart_bkdata_clean(instance.bkbase_table_id)
+
+        # 入库参数
+        cluster_info = StorageHandler(instance.storage_cluster_id).get_cluster_info_by_id()
+        bkbase_cluster_id = cluster_info["cluster_config"].get("custom_option", {}).get("bkbase_cluster_id")
+        if bkbase_cluster_id is None:
+            raise BKBASEStorageNotExistException
+
+        storage_params = {
+            "bk_biz_id": instance.get_bk_biz_id(),
+            "raw_data_id": instance.bk_data_id,
+            "data_type": "clean",
+            "result_table_name": f"{settings.TABLE_ID_PREFIX}_{instance.get_en_name()}",
+            "result_table_name_alias": instance.get_en_name(),
+            "storage_type": "es",
+            "storage_cluster": bkbase_cluster_id,
+            "expires": f"{instance.retention}d",
+            "fields": fields,
+        }
+
+        # 创建入库
+        if is_create:
+            BkDataDatabusApi.databus_data_storages_post(storage_params)
+            return
+
+        # 更新入库
+        storage_params.update({"result_table_id": instance.bkbase_table_id})
+        BkDataDatabusApi.databus_data_storages_put(storage_params)
 
     def update_or_create(
         self,
