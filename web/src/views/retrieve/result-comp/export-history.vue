@@ -453,7 +453,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import '@/scss/mixins/flex.scss';
 @import '@/scss/conf';
 
@@ -466,14 +466,6 @@ export default {
   width: 100%;
   text-align: right;
   margin: 10px 0 20px 0;
-}
-
-.icon-text-file {
-  position: absolute;
-  right: 10px;
-  font-size: 16px;
-  cursor: pointer;
-  transform: rotateZ(180deg);
 }
 
 .export-table {

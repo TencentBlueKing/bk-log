@@ -21,7 +21,9 @@ the project delivered to anyone in the future.
 """
 
 
-def cmp(src_json_obj, target_json_obj, ignore_keys=[]):
+def cmp(src_json_obj, target_json_obj, ignore_keys=None):
+    if not ignore_keys:
+        ignore_keys = []
     if isinstance(src_json_obj, list):
         if not isinstance(target_json_obj, list):
             print(
