@@ -20,14 +20,12 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
-import logging
-
-from apps.log_databus.exceptions import ArchiveNotFound
 from apps.exceptions import ApiResultError
-from apps.utils.log import logger
+from apps.log_databus.exceptions import ArchiveNotFound
 from apps.utils.cache import cache_one_hour
 from apps.utils.function import map_if
 from apps.utils.local import get_request_username
+from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
 
 """
@@ -56,8 +54,6 @@ from apps.log_databus.constants import (  # noqa
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
 from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
 from apps.models import MultiStrSplitByCommaField, JsonField, SoftDeleteModel, OperateRecordModel  # noqa
-
-logger = logging.getLogger("app")
 
 
 class CollectorConfig(SoftDeleteModel):

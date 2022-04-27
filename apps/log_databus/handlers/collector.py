@@ -21,6 +21,7 @@ import copy
 import datetime
 import re
 from collections import defaultdict
+from typing import Union
 
 import arrow
 from django.conf import settings
@@ -28,7 +29,7 @@ from django.db import IntegrityError
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 
-from apps.api import CCApi
+from apps.api import BkDataAccessApi, CCApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
@@ -38,11 +39,21 @@ from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
 from apps.iam import Permission, ResourceEnum
 from apps.log_databus.constants import (
+    ADMIN_REQUEST_USER,
     BIZ_TOPO_INDEX,
+    BKDATA_DATA_REGION,
+    BKDATA_DATA_SCENARIO,
+    BKDATA_DATA_SCENARIO_ID,
+    BKDATA_DATA_SENSITIVITY,
+    BKDATA_DATA_SOURCE,
+    BKDATA_DATA_SOURCE_TAGS,
+    BKDATA_PERMISSION,
+    BKDATA_TAGS,
     BK_SUPPLIER_ACCOUNT,
     BULK_CLUSTER_INFOS_LIMIT,
     CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE,
     CollectStatus,
+    ETLProcessorChoices,
     INTERNAL_TOPO_INDEX,
     LogPluginInfo,
     META_DATA_ENCODING,
@@ -56,25 +67,25 @@ from apps.log_databus.exceptions import (
     CollectNotSuccess,
     CollectNotSuccessNotCanStart,
     CollectorActiveException,
+    CollectorBkDataNameDuplicateException,
     CollectorConfigDataIdNotExistException,
     CollectorConfigNameDuplicateException,
     CollectorConfigNameENDuplicateException,
     CollectorConfigNotExistException,
     CollectorCreateOrUpdateSubscriptionException,
     CollectorIllegalIPException,
+    CollectorResultTableIDDuplicateException,
     CollectorTaskRunningStatusException,
     RegexInvalidException,
     RegexMatchException,
     SubscriptionInfoNotFoundException,
-    CollectorBkDataNameDuplicateException,
-    CollectorResultTableIDDuplicateException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.handlers.kafka import KafkaConsumerHandle
 from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.models import CleanStash, CollectorConfig
+from apps.log_databus.models import CleanStash, CollectorConfig, CollectorPlugin
 from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 from apps.log_esquery.utils.es_route import EsRoute
 from apps.log_search.constants import (
