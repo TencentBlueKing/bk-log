@@ -75,6 +75,7 @@
             </div>
             <div
               style="color: #3a84ff; cursor: pointer;"
+              v-if="isCollector"
               @click="handleClickDetail">
               {{$t('retrieveSetting.moreDetails')}}
               <span class="log-icon icon-lianjie"></span>

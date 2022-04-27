@@ -16,7 +16,10 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
+import copy
 from typing import Optional
 
 from django.conf import settings
@@ -261,3 +264,24 @@ class CollectorScenario(object):
             }
             for pattern_level in PatternEnum.get_choices()
         ]
+
+    @staticmethod
+    def fields_insert_field_index(source_fields, dst_fields) -> list:
+        """
+        给dst_field添加field_index并且组成新的field_index返回回去
+        @param source_fields list 包含field_index的原始数据
+        @param dst_fields list 不包含field_index的目标数据
+        """
+        field_index = 0
+        for field in source_fields:
+            source_field_index = field.get("field_index")
+            if source_field_index and source_field_index > field_index:
+                field_index = source_field_index
+
+        result_fields = copy.deepcopy(source_fields)
+        for field in dst_fields:
+            field_index += 1
+            field["field_index"] = field_index
+            result_fields.append(field)
+
+        return result_fields
