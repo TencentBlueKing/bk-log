@@ -15,6 +15,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import re
 from collections import defaultdict
@@ -45,7 +47,7 @@ def get_version(version: str):
     result_version = [int(p) for p in raw_version.split(".")]
     version_len = VERSION_LEN - len(result_version)
     if version_len > 0:
-        for i in range(version_len):
+        for index in range(version_len):
             result_version.append(0)
     return result_version
 

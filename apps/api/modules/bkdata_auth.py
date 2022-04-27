@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 """
 数据平台后端权限管理模块
@@ -78,6 +80,17 @@ class _BkDataAuthApi:
             module=self.MODULE,
             url_keys=["project_id"],
             description=u"添加项目数据",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+        )
+
+        self.add_cluster_group = DataAPI(
+            method="POST",
+            url=AUTH_APIGATEWAY_ROOT + "projects/{project_id}/cluster_group/",
+            module=self.MODULE,
+            url_keys=["project_id"],
+            description=u"申请资源组",
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,

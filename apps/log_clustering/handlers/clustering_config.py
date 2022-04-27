@@ -16,17 +16,28 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import json
+import re
 
+from django.utils.translation import ugettext_lazy as _
 
 from apps.log_clustering.constants import (
     CLUSTERING_CONFIG_EXCLUDE,
     DEFAULT_CLUSTERING_FIELDS,
 )
-from apps.log_clustering.exceptions import ClusteringConfigNotExistException
+from apps.log_clustering.exceptions import (
+    ClusteringConfigNotExistException,
+    BkdataRegexException,
+    BkdataFieldsException,
+)
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
+from apps.log_clustering.handlers.pipline_service.constants import OperatorServiceEnum
 from apps.log_clustering.models import ClusteringConfig
+from apps.log_clustering.tasks.flow import update_filter_rules, update_clustering_clean
+from apps.log_databus.constants import EtlConfig
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.models import CollectorConfig
@@ -34,6 +45,7 @@ from apps.log_search.models import LogIndexSet
 from apps.models import model_to_dict
 from apps.utils.function import map_if
 from apps.utils.local import activate_request
+from apps.utils.log import logger
 from apps.utils.thread import generate_request
 
 
@@ -57,9 +69,20 @@ class ClusteringConfigHandler(object):
 
     def update_or_create(self, params: dict):
         index_set_id = params["index_set_id"]
-        collector_config_id = LogIndexSet.objects.filter(index_set_id=index_set_id).first().collector_config_id
-        clustering_config = CollectorConfig.objects.filter(collector_config_id=collector_config_id).first()
-        collector_config_name_en = clustering_config.collector_config_name_en if clustering_config else None
+        log_index_set = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
+        collector_config_id = log_index_set.collector_config_id
+        category_id = log_index_set.category_id
+        log_index_set_data, *_ = log_index_set.indexes
+        collector_config_name_en = ""
+        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
+        if collector_config_id:
+            collector_config = CollectorConfig.objects.filter(collector_config_id=collector_config_id).first()
+            collector_config_name_en = (
+                clustering_config.collector_config_name_en
+                if clustering_config
+                else collector_config.collector_config_name_en
+            )
+        source_rt_name = log_index_set_data["result_table_id"]
         min_members = params["min_members"]
         max_dist_list = params["max_dist_list"]
         predefined_varibles = params["predefined_varibles"]
@@ -70,10 +93,30 @@ class ClusteringConfigHandler(object):
         bk_biz_id = params["bk_biz_id"]
         filter_rules = params["filter_rules"]
         signature_enable = params["signature_enable"]
-        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
-        from apps.log_clustering.handlers.pipline_service.aiops_service import create_aiops_service
+        from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 
         if clustering_config:
+            change_filter_rules, change_model_config, change_clustering_fields = self.check_clustering_config_update(
+                clustering_config=clustering_config,
+                filter_rules=filter_rules,
+                min_members=min_members,
+                max_dist_list=max_dist_list,
+                predefined_varibles=predefined_varibles,
+                delimeter=delimeter,
+                max_log_length=max_log_length,
+                is_case_sensitive=is_case_sensitive,
+                clustering_fields=clustering_fields,
+            )
+            if change_filter_rules:
+                # 更新filter_rule
+                update_filter_rules.delay(index_set_id=index_set_id)
+            if change_model_config:
+                # 更新aiops model
+                operator_aiops_service(index_set_id, operator=OperatorServiceEnum.UPDATE)
+            if change_clustering_fields:
+                # 更新flow
+                update_clustering_clean.delay(index_set_id=index_set_id)
+
             clustering_config.min_members = min_members
             clustering_config.max_dist_list = max_dist_list
             clustering_config.predefined_varibles = predefined_varibles
@@ -84,9 +127,8 @@ class ClusteringConfigHandler(object):
             clustering_config.bk_biz_id = bk_biz_id
             clustering_config.filter_rules = filter_rules
             clustering_config.signature_enable = signature_enable
+            clustering_config.category_id = category_id
             clustering_config.save()
-            if signature_enable:
-                create_aiops_service(collector_config_id)
             return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
         clustering_config = ClusteringConfig.objects.create(
             collector_config_id=collector_config_id,
@@ -102,9 +144,19 @@ class ClusteringConfigHandler(object):
             filter_rules=filter_rules,
             index_set_id=index_set_id,
             signature_enable=signature_enable,
+            source_rt_name=source_rt_name,
+            category_id=category_id,
         )
         if signature_enable:
-            create_aiops_service(collector_config_id)
+            if collector_config_id:
+                collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
+                all_etl_config = collector_config.get_etl_config()
+                self.pre_check_fields(
+                    fields=all_etl_config["fields"],
+                    etl_config=all_etl_config.etl_config,
+                    clustering_fields=clustering_fields,
+                )
+            operator_aiops_service(index_set_id)
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def preview(
@@ -170,14 +222,14 @@ class ClusteringConfigHandler(object):
                 collector_handler.data, mq_topic=topic, mq_partition=partition
             )
             self.data.save()
+        # 设置request线程变量
+        activate_request(generate_request())
+
         collector_detail = collector_handler.retrieve(use_request=False)
 
         # need drop built in field
         collector_detail["fields"] = map_if(collector_detail["fields"], if_func=lambda field: not field["is_built_in"])
         from apps.log_databus.handlers.etl import EtlHandler
-
-        # 设置request线程变量
-        activate_request(generate_request())
 
         EtlHandler(self.data.collector_config_id).update_or_create(
             collector_detail["etl_config"],
@@ -189,3 +241,64 @@ class ClusteringConfigHandler(object):
             etl_params=collector_detail["etl_params"],
             fields=collector_detail["fields"],
         )
+
+    @staticmethod
+    def check_clustering_config_update(
+        clustering_config,
+        filter_rules,
+        min_members,
+        max_dist_list,
+        predefined_varibles,
+        delimeter,
+        max_log_length,
+        is_case_sensitive,
+        clustering_fields,
+    ):
+        """
+        判断是否需要进行对应更新操作
+        """
+        change_filter_rules = clustering_config.filter_rules != filter_rules
+        change_model_config = model_to_dict(
+            clustering_config,
+            fields=[
+                "min_members",
+                "max_dist_list",
+                "predefined_varibles",
+                "delimeter",
+                "max_log_length",
+                "is_case_sensitive",
+            ],
+        ) != {
+            "min_members": min_members,
+            "max_dist_list": max_dist_list,
+            "predefined_varibles": predefined_varibles,
+            "delimeter": delimeter,
+            "max_log_length": max_log_length,
+            "is_case_sensitive": is_case_sensitive,
+        }
+        change_clustering_fields = clustering_config.clustering_fields != clustering_fields
+
+        return change_filter_rules, change_model_config, change_clustering_fields
+
+    @classmethod
+    def pre_check_fields(cls, fields, etl_config, clustering_fields):
+        """
+        判断字段是否符合要求
+        """
+        for field in fields:
+            field_name = field.get("field_name")
+            alias_name = field.get("alias_name") or field.get("field_name")
+            # 正则需要符合计算平台正则要求
+            if etl_config == EtlConfig.BK_LOG_REGEXP and not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9]*", field_name):
+                logger.error(_("正则表达式字段名: {}不符合计算平台标准[a-zA-Z][a-zA-Z0-9]*").format(field_name))
+                raise BkdataRegexException(BkdataRegexException.MESSAGE.format(field_name=field_name))
+            # 存在聚类字段则允许跳出循环
+            if alias_name == clustering_fields:
+                break
+        else:
+            if clustering_fields == DEFAULT_CLUSTERING_FIELDS:
+                return True
+            logger.error(_("不允许删除参与日志聚类字段: {}").format(clustering_fields))
+            raise ValueError(BkdataFieldsException(BkdataFieldsException.MESSAGE.format(field=clustering_fields)))
+
+        return True

@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import functools
 import operator
@@ -138,6 +140,7 @@ class StorageHandler(object):
                 "setup_config": i["cluster_config"]["custom_option"]["setup_config"],
                 "admin": i["cluster_config"]["custom_option"]["admin"],
                 "description": i["cluster_config"]["custom_option"]["description"],
+                "source_type": i["cluster_config"]["custom_option"]["source_type"],
                 "enable_assessment": i["cluster_config"]["custom_option"]["enable_assessment"],
                 "enable_archive": i["cluster_config"]["custom_option"]["enable_archive"],
                 "is_platform": i["cluster_config"]["custom_option"]["visible_config"]["visible_type"]
@@ -488,6 +491,7 @@ class StorageHandler(object):
             params["auth_info"]["username"] = cluster_objs[0]["auth_info"]["username"]
             params["auth_info"]["password"] = cluster_objs[0]["auth_info"]["password"]
 
+        hot_warm_config_is_enabled = params["custom_option"]["hot_warm_config"]["is_enabled"]
         BkLogApi.connectivity_detect(
             params={
                 "bk_biz_id": bk_biz_id,
@@ -506,7 +510,7 @@ class StorageHandler(object):
         cluster_obj["auth_info"]["password"] = ""
         if (
             cluster_objs[0]["cluster_config"]["custom_option"]["hot_warm_config"]["is_enabled"]
-            and not params["custom_option"]["hot_warm_config"]["is_enabled"]
+            and not hot_warm_config_is_enabled
         ):
             from apps.log_databus.tasks.collector import shutdown_collector_warm_storage_config
 
@@ -859,23 +863,24 @@ class StorageHandler(object):
         return sorted(indices, key=functools.cmp_to_key(compare_indices_by_date), reverse=True)
 
     def repository(self, bk_biz_id=None, cluster_id=None):
-        cluster_info = self.list(bk_biz_id=bk_biz_id, cluster_id=cluster_id, is_default=False)
+        cluster_info = self.get_cluster_groups(bk_biz_id)
         if not cluster_info:
             return []
-        cluster_info_by_id = {cluster["cluster_config"]["cluster_id"]: cluster for cluster in cluster_info}
+        if cluster_id:
+            cluster_info = [cluster for cluster in cluster_info if cluster["storage_cluster_id"] == cluster_id]
+        cluster_info_by_id = {cluster["storage_cluster_id"]: cluster for cluster in cluster_info}
         repository_info = TransferApi.list_es_snapshot_repository({"cluster_ids": list(cluster_info_by_id.keys())})
         name_prefix = f"{bk_biz_id}_bklog_"
+        result = []
 
         for repository in repository_info:
+            repository.pop("settings", None)
             # 需要兼容历史的仓库名称
-            if (
-                not repository["repository_name"].startswith(name_prefix)
-                or "bklog" not in repository["repository_name"]
-            ):
+            if not repository["repository_name"].startswith(name_prefix) and "bklog" in repository["repository_name"]:
                 continue
             repository.update(
                 {
-                    "cluster_name": cluster_info_by_id[repository["cluster_id"]]["cluster_config"]["cluster_name"],
+                    "cluster_name": cluster_info_by_id[repository["cluster_id"]]["storage_cluster_name"],
                     "cluster_source_name": EsSourceType.get_choice_label(
                         cluster_info_by_id[repository["cluster_id"]].get("source_type")
                     ),
@@ -883,5 +888,5 @@ class StorageHandler(object):
                     "create_time": format_user_time_zone(repository["create_time"], get_local_param("time_zone")),
                 }
             )
-            repository.pop("settings", None)
-        return repository_info
+            result.append(repository)
+        return result

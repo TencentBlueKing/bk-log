@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 """
@@ -48,6 +50,7 @@ BkDataQueryApi = SimpleLazyObject(lambda: new_api_module("bkdata_query", "_BkDat
 BkDataDatabusApi = SimpleLazyObject(lambda: new_api_module("bkdata_databus", "_BkDataDatabusApi"))
 BkDataAccessApi = SimpleLazyObject(lambda: new_api_module("bkdata_access", "_BkDataAccessApi"))
 BkDataAuthApi = SimpleLazyObject(lambda: new_api_module("bkdata_auth", "_BkDataAuthApi"))
+BkDataResourceCenterApi = SimpleLazyObject(lambda: new_api_module("bkdata_resource_center", "_BkDataResourceCenterApi"))
 BkDataStorekitApi = SimpleLazyObject(lambda: new_api_module("bkdata_storekit", "_BkDataStorekitApi"))
 TransferApi = SimpleLazyObject(lambda: new_api_module("transfer", "_TransferApi"))
 
@@ -56,7 +59,6 @@ MonitorApi = SimpleLazyObject(lambda: new_api_module("monitor", "_MonitorApi"))
 
 # CMSI
 CmsiApi = SimpleLazyObject(lambda: new_api_module("cmsi", "_CmsiApi"))
-
 
 # 节点管理
 NodeApi = SimpleLazyObject(lambda: new_api_module("bk_node", "_BKNodeApi"))

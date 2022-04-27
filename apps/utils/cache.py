@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import functools
 import json
@@ -82,7 +84,7 @@ def using_caches(key: str, need_deconstruction_name: str, duration, need_md5=Fal
             need_deconstruction_param = kwargs.get(need_deconstruction_name, list())
             temp_result = dict()
             in_cache_keys = set()
-            for index, value in enumerate(need_deconstruction_param):
+            for value in need_deconstruction_param:
                 actual_key = key.format(value)
 
                 if need_md5:

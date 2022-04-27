@@ -303,6 +303,7 @@ export default {
         { id: 'and', name: 'AND' },
         { id: 'or', name: 'OR' },
       ],
+      isEdit: false,
     };
   },
   watch: {
@@ -335,7 +336,7 @@ export default {
       this.globalLoading = true;
       let res;
       try {
-        if (this.configID && !isDefault) {
+        if (!isDefault) {
           res =  await this.$http.request('/logClustering/getConfig', {
             params: {
               index_set_id: this.$route.params.indexId,
@@ -348,8 +349,35 @@ export default {
           res = await this.$http.request('/logClustering/getDefaultConfig');
         }
         res.data.filter_rules = res.data.filter_rules || [];
-        Object.assign(this.formData, res.data);
-        Object.assign(this.defaultData, res.data);
+        const {
+          collector_config_name_en,
+          min_members,
+          max_dist_list,
+          predefined_varibles,
+          delimeter,
+          max_log_length,
+          is_case_sensitive,
+          clustering_fields,
+          filter_rules,
+        } = res.data;
+        const assignObj = {
+          collector_config_name_en,
+          min_members,
+          max_dist_list,
+          predefined_varibles,
+          delimeter,
+          max_log_length,
+          is_case_sensitive,
+          clustering_fields,
+          filter_rules,
+        };
+        Object.assign(this.formData, assignObj);
+        Object.assign(this.defaultData, assignObj);
+        // 当前回填的字段如果在聚类字段列表里找不到则赋值为空需要用户重新赋值
+        const isHaveFieldsItem = this.clusterField.find(item => item.id === res.data.clustering_fields);
+        if (!isHaveFieldsItem) {
+          this.formData.clustering_fields = '';
+        }
       } catch (e) {
         console.warn(e);
       } finally {
@@ -362,21 +390,22 @@ export default {
       this.configID = configID;
       this.fingerSwitch = extra.signature_switch;
       this.formData.clustering_fields = extra.clustering_fields;
-
-      // 日志聚类且数据指纹同时打开则不请求默认值
-      if (isActive && configID) {
-        this.requestCluster(false);
-      }
-
       this.clusterField = this.totalFields.filter(item => item.is_analyzed)
         .map((el) => {
           const { field_name: id, field_alias: alias } = el;
           return { id, name: alias ? `${id}(${alias})` : id };
         });
-      this.filterSelectList = this.totalFields.map((el) => {
-        const { field_name: id, field_alias: alias } = el;
-        return { id, name: alias ? `${id}(${alias})` : id };
-      });
+      this.filterSelectList = this.totalFields
+        .filter(item => !/^__dist/.test(item.field_name))
+        .map((el) => {
+          const { field_name: id, field_alias: alias } = el;
+          return { id, name: alias ? `${id}(${alias})` : id };
+        });
+
+      // 日志聚类且数据指纹同时打开则不请求默认值
+      if (isActive) {
+        this.requestCluster(false);
+      }
     },
     handleChangeFinger() {
       if (!this.globalEditable) return;
@@ -390,6 +419,11 @@ export default {
         //   },
         // });
       } else {
+        if (this.indexSetItem.scenario_id === 'bkdata') {
+          this.fingerSwitch = true;
+          this.requestCluster(true);
+          return;
+        }
         if (!this.configID) {
           this.$bkInfo({
             title: this.$t('retrieveSetting.notCollector'),
@@ -495,7 +529,7 @@ export default {
         cursor: pointer;
         border: 1px solid #c4c6cc;
 
-        ::v-deep.bk-select-name {
+        ::v-deep .bk-select-name {
           /* stylelint-disable-next-line declaration-no-important */
           padding: 0 !important;
         }
@@ -509,7 +543,7 @@ export default {
     .filter-rule-item {
       margin-bottom: 6px;
 
-      ::v-deep.bk-select-angle {
+      ::v-deep .bk-select-angle {
         display: none;
       }
 
@@ -578,7 +612,7 @@ export default {
         margin-bottom: 22px;
       }
 
-      ::v-deep.submit-dialog-btn {
+      ::v-deep .submit-dialog-btn {
         margin-left: 224px;
       }
     }
