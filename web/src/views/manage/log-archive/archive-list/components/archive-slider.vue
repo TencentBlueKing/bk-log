@@ -192,7 +192,7 @@ export default {
       return list;
     },
     getDaysStr() {
-      if (this.formData.snapshot_days === '0') {
+      if (String(this.formData.snapshot_days) === '0') {
         return this.$t('永久');
       }
       return !!this.formData.snapshot_days ? this.formData.snapshot_days + this.$t('天') : '';
