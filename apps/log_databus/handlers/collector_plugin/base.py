@@ -183,7 +183,7 @@ class CollectorPluginHandler:
                 setattr(self.collector_plugin, key, val)
 
             # 更新可见性
-            self.collector_plugin.change_collector_display_status(params["is_display_collector"])
+            self.collector_plugin.change_collector_display_status(is_display_collector)
 
             # DATA_ID
             if not is_allow_alone_data_id or is_create_public_data_id:

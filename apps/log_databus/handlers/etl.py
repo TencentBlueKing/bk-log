@@ -138,6 +138,8 @@ class EtlHandler(object):
 
         json_config = json_config if isinstance(json_config, dict) else json.loads(json_config)
 
+        # TODO 指定 result_table
+
         bkdata_params = {
             "raw_data_id": instance.bk_data_id,
             "result_table_name": f"{settings.TABLE_ID_PREFIX}_{instance.get_en_name()}",
@@ -165,6 +167,7 @@ class EtlHandler(object):
             cls.restart_bkdata_clean(instance.bkbase_table_id)
 
         # 入库参数
+        # TODO 同步集群信息到 BKBASE
         cluster_info = StorageHandler(instance.storage_cluster_id).get_cluster_info_by_id()
         bkbase_cluster_id = cluster_info["cluster_config"].get("custom_option", {}).get("bkbase_cluster_id")
         if bkbase_cluster_id is None:
