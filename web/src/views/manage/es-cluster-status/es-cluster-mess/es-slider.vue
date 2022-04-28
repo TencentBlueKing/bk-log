@@ -283,7 +283,7 @@
                   <div class="space-item-label">{{$t('最大')}}</div>
                   <bk-input
                     type="number"
-                    :min="formData.setup_config.number_of_replicas_default + 1"
+                    :min="formData.setup_config.number_of_replicas_default"
                     v-model="formData.setup_config.number_of_replicas_max">
                   </bk-input>
                 </div>
@@ -539,6 +539,7 @@ export default {
       isAdminError: false, // 集群负责人是否为空
       bizSelectID: '', // 选中的当前按照业务属性选择
       bizInputStr: '', // 按照业务属性选择输入值
+      isFirstShow: true, // 是否是第一次渲染
     };
   },
   computed: {
@@ -586,6 +587,7 @@ export default {
     showSlider(val) {
       if (val) {
         if (this.isEdit) {
+          this.isShowManagement = true;
           this.editDataSource();
         } else {
           // 集群负责人默认本人
@@ -636,11 +638,15 @@ export default {
         this.connectResult = '';
         this.connectFailedMessage = '';
         this.isShowManagement = false;
+        this.isFirstShow = true;
       }
     },
     basicFormData: {
       handler() {
-        this.connectResult = '';
+        if (!this.isFirstShow) {
+          this.connectResult = '';
+        }
+        this.isFirstShow = false;
       },
       deep: true,
     },
@@ -771,6 +777,7 @@ export default {
             return pre;
           }, []);
         this.cacheBkBizLabelsList = JSON.parse(JSON.stringify(this.bkBizLabelsList));
+        this.connectResult = 'success';
       } catch (e) {
         console.warn(e);
       } finally {
@@ -803,9 +810,7 @@ export default {
         const res = await this.$http.request('/source/connectivityDetect', { data: postData });
         if (res.data) {
           this.connectResult = 'success';
-          if (this.isEdit) {
-            this.isShowManagement = true;
-          }
+          this.isShowManagement = true;
           // 连通性测试通过之后获取冷热数据
           const attrsRes = await this.$http.request('/source/getNodeAttrs', { data: postData });
           this.hotColdOriginList = attrsRes.data;

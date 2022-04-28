@@ -143,7 +143,7 @@ export default {
         const { number_of_replicas_max: replicasMax, retention_days_max: daysMax } = this.activeItem.setup_config;
         const { enable_hot_warm: hotWarm, enable_archive: archive } =  this.activeItem;
         this.illustrateLabelData = {
-          [this.$t('副本数')]: `${replicasMax} ${this.$t('个')}`,
+          [this.$t('副本数')]: `${this.$t('最大')} ${replicasMax} ${this.$t('个')}`,
           [this.$t('过期时间')]: `${this.$t('最大')} ${daysMax} ${this.$t('天')}`,
           [this.$t('热冷数据')]: hotWarm ? this.$t('是') : this.$t('否'),
           [this.$t('日志归档')]: archive ? this.$t('是') : this.$t('否'),
