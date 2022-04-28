@@ -228,6 +228,8 @@ export default {
   全部业务: 'All biz',
   是: 'Yes',
   否: 'No',
+  支持: 'Support',
+  不支持: 'Not Support',
   字段过滤: 'Field Filter',
   可聚合: 'Polymerizable',
   不限: 'Unlimited',

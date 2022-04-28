@@ -501,7 +501,9 @@ export default {
         paramsData.predefined_varibles = this.$refs.ruleTableRef.ruleArrToBase64();
         // 过滤规则数组形式转成字符串形式传参
         paramsData.filter_rules = paramsData.filter_rules.map(item => ({
-          ...item,
+          fields_name: item.fields_name,
+          logic_operator: item.logic_operator,
+          op: item.op,
           value: (item.value.length ? item.value[0] : ''),
         }));
         this.$http.request('/logClustering/changeConfig', {
