@@ -367,7 +367,7 @@
               </bk-form-item>
             </div>
             <!-- 集群负责人 -->
-            <bk-form-item :label="$t('集群负责人')" :desc="customDesc" required>
+            <bk-form-item :label="$t('集群负责人')" :desc="$t('集群负责人Tips')" required>
               <div class="principal">
                 <bk-user-selector
                   :class="isAdminError && 'is-error'"
@@ -530,7 +530,6 @@ export default {
       bizChildrenList: {}, // 业务属性选择子级键值对象
       visibleIsToggle: false, // 多业务选择icon方向
       userApi: window.BK_LOGIN_URL, // 负责人api
-      customDesc: '集群负责人',
       isShowManagement: false, // 是否展示集群管理
       retentionDaysList: [], // 默认过期时间列表
       maxDaysList: [], // 最大过期时间列表
