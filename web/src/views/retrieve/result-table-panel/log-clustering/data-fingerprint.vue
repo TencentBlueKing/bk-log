@@ -599,7 +599,7 @@ export default {
       return !!str ? str : this.$t('未匹配');
     },
     getHeightLightList(str) {
-      return str.match(/\[\$\(.*?\)\]/g) || [];
+      return str.match(/#.*?#/g) || [];
     },
   },
 };
