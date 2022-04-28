@@ -19,8 +19,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import time
+import arrow
+import datetime
+
 from collections import defaultdict
 from django.utils.translation import ugettext as _
+from django.conf import settings
 from django.db.models import Count
 from apps.log_extract.models import Tasks, Strategies
 from apps.log_measure.utils.metric import MetricUtils
@@ -56,8 +61,12 @@ class LogExtractMetricCollector(object):
         "log_extract_task", description=_("日志提取任务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def log_extract_task():
+        end_time = arrow.get(int(time.time())).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
+        start_time = (
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=6)
+        ).strftime("%Y-%m-%d %H:%M:%S%z")
         groups = (
-            Tasks.objects.filter()
+            Tasks.objects.filter(created_at__range=[start_time, end_time])
             .values("bk_biz_id", "created_by")
             .order_by("bk_biz_id", "created_by")
             .annotate(count=Count("task_id"))

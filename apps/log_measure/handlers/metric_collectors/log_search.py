@@ -23,11 +23,12 @@ import time
 import arrow
 import datetime
 
+from django.db.models import Count
 from django.utils.translation import ugettext as _
 from django.conf import settings
 
 from apps.utils.db import array_group
-from apps.log_search.models import LogIndexSet, FavoriteSearch, UserIndexSetSearchHistory
+from apps.log_search.models import LogIndexSet, FavoriteSearch, UserIndexSetSearchHistory, AsyncTask
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
@@ -137,6 +138,56 @@ class LogSearchMetricCollector(object):
             Metric(
                 metric_name="favorite_count_total",
                 metric_value=favorite_objs.count(),
+                dimensions={},
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
+        return metrics
+
+
+class LogExportMetricCollector(object):
+    @staticmethod
+    @register_metric("log_export", description=_("日志导出"), data_name="log_export", time_filter=TimeFilterEnum.MINUTE60)
+    def export_count():
+        end_time = arrow.get(int(time.time())).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
+        start_time = (
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=61)
+        ).strftime("%Y-%m-%d %H:%M:%S%z")
+
+        history_objs = (
+            AsyncTask.objects.filter(
+                created_at__range=[start_time, end_time],
+            )
+            .values("bk_biz_id", "index_set_id", "export_type", "created_by", "created_at")
+            .order_by("bk_biz_id", "index_set_id", "export_type", "created_by")
+            .annotate(count=Count("id"))
+        )
+        index_set_list = [history_obj["index_set_id"] for history_obj in history_objs]
+        index_sets = array_group(
+            LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
+        )
+        # 带标签数据
+        metrics = [
+            Metric(
+                metric_name="export_count",
+                metric_value=history_obj["count"],
+                dimensions={
+                    "index_set_id": history_obj["index_set_id"],
+                    "index_set_name": index_sets[history_obj["index_set_id"]]["index_set_name"],
+                    "target_username": history_obj["created_by"],
+                    "export_type": history_obj["export_type"],
+                    "target_bk_biz_id": history_obj["bk_biz_id"],
+                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(history_obj["bk_biz_id"]),
+                },
+                timestamp=arrow.get(history_obj["created_at"]).float_timestamp,
+            )
+            for history_obj in history_objs
+        ]
+        # 导出总数
+        metrics.append(
+            Metric(
+                metric_name="export_count_total",
+                metric_value=history_objs.count(),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
             )
