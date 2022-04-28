@@ -19,6 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from collections import defaultdict
+
 from django.utils.translation import ugettext as _
 from django.conf import settings
 
@@ -86,15 +88,20 @@ class ClusterMetricCollector(object):
         return metrics
 
     @staticmethod
-    @register_metric("cluster_node", description=_("集群节点"), data_name="metric", time_filter=TimeFilterEnum.MINUTE10)
+    @register_metric("cluster_node", description=_("集群节点"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def cluster_node():
         metrics = []
+        cluster_count = defaultdict(int)
         for cluster_info in MetricUtils.get_instance().cluster_infos.values():
             try:
                 es_client = MetricUtils.get_instance().get_es_client(cluster_info)
                 if not es_client:
                     continue
-
+                bk_biz_id = (
+                    cluster_info.get("cluster_config", {}).get("custom_option", {}).get("bk_biz_id")
+                    or settings.BLUEKING_BK_BIZ_ID
+                )
+                cluster_count[bk_biz_id] += 1
                 allocations = es_client.cat.allocation(format="json", bytes="mb", params={"request_timeout": 10})
 
                 for allocation in allocations:
@@ -161,4 +168,27 @@ class ClusterMetricCollector(object):
 
             except Exception as e:  # pylint: disable=broad-except
                 logger.exception("fail to collect cluster_node metric for cluster->{}, {}".format(cluster_info, e))
+
+        for bk_biz_id in cluster_count:
+            metrics.append(
+                # 各个业务集群数
+                Metric(
+                    metric_name="cluster_count",
+                    metric_value=cluster_count[bk_biz_id],
+                    dimensions={
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+        metrics.append(
+            # 集群总数
+            Metric(
+                metric_name="cluster_count_total",
+                metric_value=sum(cluster_count.values()),
+                dimensions={},
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
         return metrics
