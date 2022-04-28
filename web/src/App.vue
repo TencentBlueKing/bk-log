@@ -52,14 +52,15 @@
                 :key="groupItem.id"
                 :group-name="isExpand ? groupItem.name : groupItem.keyword">
                 <template v-for="navItem in groupItem.children">
-                  <bk-navigation-menu-item
-                    :data-test-id="`navBox_nav_${navItem.id}`"
-                    :key="navItem.id"
-                    :id="navItem.id"
-                    :icon="getMenuIcon(navItem)"
-                    @click="handleClickNavItem(navItem.id)">
-                    {{ isExpand ? navItem.name : '' }}
-                  </bk-navigation-menu-item>
+                  <a class="nav-item" :key="navItem.id" :href="getRouteHref(navItem.id)">
+                    <bk-navigation-menu-item
+                      :data-test-id="`navBox_nav_${navItem.id}`"
+                      :id="navItem.id"
+                      :icon="getMenuIcon(navItem)"
+                      @click="handleClickNavItem(navItem.id)">
+                      {{ isExpand ? navItem.name : '' }}
+                    </bk-navigation-menu-item>
+                  </a>
                 </template>
               </bk-navigation-menu-group>
             </template>
@@ -115,6 +116,10 @@ export default {
       isExpand: true,
       curGuideStep: 0,
       isAsIframe: false,
+      rightClickRouteName: '', // 当前右键选中的路由
+      visible: false, // 是否展示右键菜单
+      top: 0, // 右键菜单定位top
+      left: 0, // 右键菜单定位left
     };
   },
   computed: {
@@ -211,6 +216,15 @@ export default {
         .catch((e) => {
           console.warn(e);
         });
+    },
+    getRouteHref(pageName) {
+      const newUrl = this.$router.resolve({
+        name: pageName,
+        query: {
+          projectId: window.localStorage.getItem('project_id'),
+        },
+      });
+      return newUrl.href;
     },
   },
 };
@@ -394,6 +408,11 @@ export default {
 
       .navigation-menu-item-icon.bk-icon {
         min-width: 28px;
+      }
+
+      .nav-item {
+        width: 100%;
+        display: inline-block;
       }
     }
 

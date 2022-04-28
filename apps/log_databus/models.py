@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
+from apps.models import MultiStrSplitByCommaFieldText
 from apps.log_databus.exceptions import ArchiveNotFound
 from apps.exceptions import ApiResultError
 from apps.utils.log import logger
@@ -47,6 +48,7 @@ from apps.log_databus.constants import (  # noqa
     CollectItsmStatus,  # noqa
     ADMIN_REQUEST_USER,
     EtlConfig,  # noqa
+    VisibleEnum,
 )
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
 from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
@@ -220,6 +222,9 @@ class CollectorConfig(SoftDeleteModel):
             CollectItsmStatus.SUCCESS_APPLY.value,
         ]
 
+    def itsm_has_appling(self):
+        return self.itsm_ticket_status == CollectItsmStatus.APPLYING.value
+
     def itsm_has_success(self):
         return self.itsm_ticket_status == CollectItsmStatus.SUCCESS_APPLY.value
 
@@ -264,6 +269,11 @@ class CollectorConfig(SoftDeleteModel):
         return TransferApi.get_data_id({"bk_data_id": bk_data_id, "no_request": True})
 
 
+class ItsmEtlConfig(SoftDeleteModel):
+    ticket_sn = models.CharField(_("itsm单据号"), max_length=255)
+    request_param = models.JSONField(_("请求参数"))
+
+
 class DataLinkConfig(SoftDeleteModel):
     """
     数据采集链路配置
@@ -301,9 +311,15 @@ class StorageCapacity(OperateRecordModel):
 
 
 class StorageUsed(OperateRecordModel):
+    CLUSTER_INFO_BIZ_ID = 0
+
     bk_biz_id = models.IntegerField(_("业务id"))
     storage_cluster_id = models.IntegerField(_("集群ID"))
-    storage_used = models.FloatField(_("已用容量"))
+    storage_used = models.FloatField(_("已用容量"), default=0)
+    storage_usage = models.IntegerField(_("容量使用率"), default=0)
+    storage_total = models.BigIntegerField(_("总容量"), default=0)
+    index_count = models.IntegerField(_("索引数量"), default=0)
+    biz_count = models.IntegerField(_("业务数量"), default=0)
 
     class Meta:
         verbose_name = _("业务已用容量")
@@ -342,6 +358,8 @@ class CleanTemplate(SoftDeleteModel):
     etl_params = models.JSONField(_("etl配置"), null=True, blank=True)
     etl_fields = models.JSONField(_("etl字段"), null=True, blank=True)
     bk_biz_id = models.IntegerField(_("业务id"))
+    visible_type = models.CharField(_("可见类型"), max_length=64, default=VisibleEnum.CURRENT_BIZ.value)
+    visible_bk_biz_id = MultiStrSplitByCommaFieldText(_("可见业务ID"), default="")
 
     class Meta:
         verbose_name = _("清洗模板")

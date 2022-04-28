@@ -154,6 +154,11 @@ export default {
         color: #979ba5;
       }
 
+      .icon-ext {
+        width: 18px;
+        transform: scale(.8)
+      }
+
       .field-count {
         min-width: 22px;
         line-height: 16px;

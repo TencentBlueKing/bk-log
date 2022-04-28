@@ -162,8 +162,7 @@
             data-test-id="addNewCustomBox_select_storageCluster"
             v-model="formData.storage_cluster_id"
             :clearable="false"
-            :disabled="submitLoading || isEdit"
-            @selected="handleSelectStorageCluster">
+            :disabled="submitLoading">
             <bk-option
               v-for="(item, index) in storageList"
               class="custom-no-padding-option"
@@ -241,7 +240,7 @@
             v-model="formData.storage_replies"
             class="copy-number-input"
             type="number"
-            :max="3"
+            :max="replicasMax"
             :min="0"
             :precision="0"
             :clearable="false"
@@ -344,6 +343,7 @@ export default {
         category_id: '',
         description: '',
       },
+      replicasMax: 7,
       tip_storage: [],
       baseRules: {
         collector_config_name: [ // 采集名称
@@ -413,6 +413,7 @@ export default {
           trigger: 'change',
         }],
       },
+      isFirstRendering: true, // 是否是第一次渲染 用于回显热数据天数
     };
   },
   computed: {

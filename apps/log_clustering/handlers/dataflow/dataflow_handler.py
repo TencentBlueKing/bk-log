@@ -148,7 +148,9 @@ class DataFlowHandler(BaseAiopsHandler):
         flow = json.loads(pre_treat_flow)
         create_pre_treat_flow_request = CreateFlowCls(
             nodes=flow,
-            flow_name="{}_pre_treat_flow_{}".format(clustering_config.index_set_id, time_format),
+            flow_name="{}_{}_pre_treat_flow_{}".format(
+                settings.ENVIRONMENT, clustering_config.index_set_id, time_format
+            ),
             project_id=self.conf.get("project_id"),
         )
         request_dict = self._set_username(create_pre_treat_flow_request)
@@ -328,7 +330,9 @@ class DataFlowHandler(BaseAiopsHandler):
             flow, new_cls_pattern_rt = self.deal_diversion_node(flow=flow, after_treat_flow_dict=after_treat_flow_dict)
         create_pre_treat_flow_request = CreateFlowCls(
             nodes=flow,
-            flow_name="{}_after_treat_flow_{}".format(clustering_config.index_set_id, time_format),
+            flow_name="{}_{}_after_treat_flow_{}".format(
+                settings.ENVIRONMENT, clustering_config.index_set_id, time_format
+            ),
             project_id=self.conf.get("project_id"),
         )
         request_dict = self._set_username(create_pre_treat_flow_request)

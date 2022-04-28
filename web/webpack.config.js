@@ -69,6 +69,9 @@ const logPluginConfig = {
       window.BK_LOGIN_URL = '\${BK_LOGIN_URL}'
       window.BK_DOC_DATA_URL = '\${BK_DOC_DATA_URL}'
       window.BK_PLAT_HOST = '\${BK_PLAT_HOST}'
+      window.BK_ARCHIVE_DOC_URL = '\${BK_ARCHIVE_DOC_URL}'
+      window.BK_ETL_DOC_URL = '\${BK_ETL_DOC_URL}'
+      window.ASSESSMEN_HOST_COUNT = \${BK_ASSESSMEN_HOST_COUNT}
     </script>
     % if TAM_AEGIS_KEY != "" :
       <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js?_bid=3977"></script>
