@@ -70,7 +70,10 @@
       <div class="setting-item ">
         <span class="left-word">{{$t('retrieveSetting.dataFingerprint')}}</span>
         <div @click="handleChangeFinger">
-          <span v-bk-tooltips="$t('fingerTips')" class="top-middle">
+          <span
+            v-bk-tooltips="$t('fingerTips')"
+            class="top-middle"
+            :disabled="!isShowFingerTips">
             <bk-switcher
               class="left-word"
               theme="primary"
@@ -321,6 +324,7 @@ export default {
         { id: 'or', name: 'OR' },
       ],
       operateIndex: 0, // 赋值过滤字段的操作的当前下标
+      isShowFingerTips: false,
     };
   },
   watch: {
@@ -399,6 +403,7 @@ export default {
       const { extra: { collector_config_id: configID } } = this.cleanConfig;
       this.configID = configID;
       this.fingerSwitch = extra.signature_switch;
+      this.isShowFingerTips = extra.signature_switch;
       this.formData.clustering_fields = extra.clustering_fields;
       this.clusterField = this.totalFields.filter(item => item.is_analyzed)
         .map((el) => {
@@ -549,12 +554,9 @@ export default {
       res.data.filter_rules = res.data.filter_rules || [];
       res.data.filter_rules.forEach((item) => {
         item.value = [item.value];
+        if (JSON.stringify(this.statisticalFieldsData) === '{}') return;
         const fieldValues = Object.keys(this.statisticalFieldsData[item.fields_name]);
-        if (fieldValues?.length) {
-          item.valueList =  fieldValues.map(item => ({ id: item, name: item }));
-        } else {
-          item.valueList = [];
-        }
+        item.valueList = fieldValues?.length ? fieldValues.map(item => ({ id: item, name: item })) : [] ;
       });
     },
     handleDeleteSelect(index) {

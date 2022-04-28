@@ -784,6 +784,7 @@ export default {
   请选择群成员: 'Please select a group member',
   跳转至: '',
   集群负责人: 'Cluster Principal',
+  集群负责人Tips: 'Cluster leaders can be used for capacity auditing etc.',
   日志归档: 'Log Archive',
   说明文档: 'Description Documentation',
   一键拉群: 'Create Group',

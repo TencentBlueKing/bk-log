@@ -49,6 +49,7 @@
             :default-active="activeManageNav.id">
             <template v-for="groupItem in menuList">
               <bk-navigation-menu-group
+                v-if="groupItem.children.length"
                 :key="groupItem.id"
                 :group-name="isExpand ? groupItem.name : groupItem.keyword">
                 <template v-for="navItem in groupItem.children">

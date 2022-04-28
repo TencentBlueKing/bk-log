@@ -268,16 +268,6 @@ export default {
         id: 'cluster_config',
         label: this.$t('连接状态'),
       },
-      // 创建人
-      {
-        id: 'creator',
-        label: this.$t('创建人'),
-      },
-      // 创建时间
-      {
-        id: 'create_time',
-        label: this.$t('创建时间'),
-      },
       // 冷热数据
       {
         id: 'enable_hot_warm',
@@ -292,6 +282,16 @@ export default {
       {
         id: 'storage_usage',
         label: this.$t('空闲率'),
+      },
+      // 创建人
+      {
+        id: 'creator',
+        label: this.$t('创建人'),
+      },
+      // 创建时间
+      {
+        id: 'create_time',
+        label: this.$t('创建时间'),
       },
     ];
     return {
@@ -316,7 +316,7 @@ export default {
       sourceStateFilters: [{ text: this.$t('正常'), value: true }, { text: this.$t('失败'), value: false }],
       clusterSetting: {
         fields: settingFields,
-        selectedFields: settingFields.slice(0, 12),
+        selectedFields: settingFields.slice(0, 10),
       },
       minIntroWidth: 300,
       maxIntroWidth: 480,
