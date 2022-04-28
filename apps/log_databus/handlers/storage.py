@@ -315,6 +315,10 @@ class StorageHandler(object):
                         "description": "",
                         "enable_archive": False,
                         "enable_assessment": False,
+                        "source_type": custom_option.get("source_type", EsSourceType.OTHER.value),
+                        "source_name": EsSourceType.get_choice_label(
+                            custom_option.get("source_type", EsSourceType.OTHER.value)
+                        ),
                     }
                 )
                 cluster_data.append(cluster_obj)
@@ -336,6 +340,10 @@ class StorageHandler(object):
                         "description": "",
                         "enable_archive": False,
                         "enable_assessment": False,
+                        "source_type": custom_option.get("source_type", EsSourceType.OTHER.value),
+                        "source_name": EsSourceType.get_choice_label(
+                            custom_option.get("source_type", EsSourceType.OTHER.value)
+                        ),
                     }
                 )
                 cluster_data.append(cluster_obj)
