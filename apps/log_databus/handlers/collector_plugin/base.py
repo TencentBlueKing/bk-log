@@ -126,6 +126,15 @@ class CollectorPluginHandler:
             "is_allow_alone_data_id": is_allow_alone_data_id,
             "is_allow_alone_etl_config": is_allow_alone_etl_config,
             "is_allow_alone_storage": is_allow_alone_storage,
+            "storage_cluster_id": params.get("storage_cluster_id"),
+            "retention": params.get("retention", 1),
+            "allocation_min_days": params.get("allocation_min_days", 0),
+            "storage_replies": params.get("storage_replies", 1),
+            "storage_shards_nums": params.get("storage_shards_nums", 1),
+            "etl_config": params.get("etl_config"),
+            "etl_params": params.get("etl_params", {}),
+            "fields": params.get("fields", []),
+            "params": params.get("params", []),
         }
 
         is_create_public_data_id = params.get("create_public_data_id", False)
@@ -191,20 +200,8 @@ class CollectorPluginHandler:
 
             is_create = False
 
-        # 存储
-        if not is_allow_alone_storage or self.collector_plugin.bk_data_id:
-            self.collector_plugin.storage_cluster_id = params["storage_cluster_id"]
-            self.collector_plugin.retention = params["retention"]
-            self.collector_plugin.allocation_min_days = params["allocation_min_days"]
-            self.collector_plugin.storage_replies = params["storage_replies"]
-            self.collector_plugin.storage_shards_nums = params["storage_shards_nums"]
-
         # 清洗
         if not is_allow_alone_etl_config or self.collector_plugin.bk_data_id:
-            self.collector_plugin.etl_config = params["etl_config"]
-            self.collector_plugin.etl_params = params["etl_params"]
-            self.collector_plugin.fields = params["fields"]
-            self.collector_plugin.params = params["params"]
             self._update_or_create_etl_storage(params, is_create)
 
         # 额外操作
@@ -291,7 +288,6 @@ class CollectorPluginHandler:
         if not self.collector_plugin.is_allow_alone_etl_config:
             build_in_params.update(
                 {
-                    "etl_processor": self.collector_plugin.etl_processor,
                     "etl_config": self.collector_plugin.etl_config,
                     "etl_params": self.collector_plugin.etl_params,
                     "fields": self.collector_plugin.fields,
@@ -299,6 +295,27 @@ class CollectorPluginHandler:
             )
 
         return build_in_params
+
+    def replenish_params(self, params: dict) -> dict:
+        """
+        补全不足的参数
+        """
+
+        all_param_keys = [
+            "storage_cluster_id",
+            "retention",
+            "allocation_min_days",
+            "storage_replies",
+            "storage_shards_nums",
+            "storage_shards_size",
+            "etl_params",
+            "fields",
+            "etl_config",
+        ]
+        for key in all_param_keys:
+            if key not in params.keys():
+                params[key] = getattr(self.collector_plugin, key)
+        return params
 
     def create_instance(self, params: dict) -> dict:
         """
@@ -308,6 +325,9 @@ class CollectorPluginHandler:
         # 构造参数
         build_in_params = self.build_instance_params()
         params.update(build_in_params)
+
+        # 补全不足的参数
+        params = self.replenish_params(params)
 
         # 创建采集项
         result = CollectorHandler().update_or_create(params)
