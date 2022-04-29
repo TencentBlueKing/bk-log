@@ -372,6 +372,7 @@ class StorageHandler(object):
         bk_biz_id = int(bk_biz_id)
         if not custom_bk_biz_id:
             return False
+
         custom_bk_biz_id = int(custom_bk_biz_id)
         return custom_bk_biz_id == bk_biz_id
 
@@ -516,7 +517,7 @@ class StorageHandler(object):
 
         cluster_obj = TransferApi.modify_cluster_info(params)
         cluster_obj["auth_info"]["password"] = ""
-        custom_option = cluster_obj[0]["cluster_config"]["custom_option"]
+        custom_option = cluster_objs[0]["cluster_config"]["custom_option"]
         if not isinstance(custom_option, dict):
             custom_option = {}
         current_hot_warm_config_is_enabled = custom_option.get("hot_warm_config", {}).get("is_enabled", False)
