@@ -274,7 +274,7 @@
                   <div class="space-item-label">{{$t('默认')}}</div>
                   <bk-input
                     type="number"
-                    :max="formData.setup_config.number_of_replicas_max"
+                    :max="Number(formData.setup_config.number_of_replicas_max)"
                     :min="0"
                     v-model="formData.setup_config.number_of_replicas_default">
                   </bk-input>
@@ -283,7 +283,7 @@
                   <div class="space-item-label">{{$t('最大')}}</div>
                   <bk-input
                     type="number"
-                    :min="formData.setup_config.number_of_replicas_default"
+                    :min="Number(formData.setup_config.number_of_replicas_default)"
                     v-model="formData.setup_config.number_of_replicas_max">
                   </bk-input>
                 </div>
@@ -764,7 +764,7 @@ export default {
           }
         });
 
-        this.bkBizLabelsList = Object.entries(res.data.cluster_config.custom_option.visible_config?.bk_biz_labels)
+        this.bkBizLabelsList = Object.entries(res.data.cluster_config.custom_option.visible_config?.bk_biz_labels || {})
           .reduce((pre, cur) => {
             const propertyName =  this.bizParentList.find(item => item.id ===  cur[0]);
             const obj = {
@@ -776,7 +776,10 @@ export default {
             return pre;
           }, []);
         this.cacheBkBizLabelsList = JSON.parse(JSON.stringify(this.bkBizLabelsList));
-        this.connectResult = 'success';
+        this.$nextTick(() => {
+          // 编辑的时候直接联通测试 通过则展开ES集群管理
+          this.handleTestConnect();
+        });
       } catch (e) {
         console.warn(e);
       } finally {
@@ -809,7 +812,6 @@ export default {
         const res = await this.$http.request('/source/connectivityDetect', { data: postData });
         if (res.data) {
           this.connectResult = 'success';
-          this.isShowManagement = true;
           // 连通性测试通过之后获取冷热数据
           const attrsRes = await this.$http.request('/source/getNodeAttrs', { data: postData });
           this.hotColdOriginList = attrsRes.data;
