@@ -25,7 +25,11 @@ from typing import List
 from django.utils.translation import ugettext as _
 from django.db.models import Count
 
+from apps.log_databus.constants import DEFAULT_ETL_CONFIG
+from apps.log_databus.utils.clean import CleanFilterUtils
 from apps.log_search.constants import CollectorScenarioEnum
+from apps.log_search.models import LogIndexSet
+from apps.utils.db import array_group
 from apps.utils.thread import MultiExecuteFunc
 from apps.log_databus.models import CollectorConfig
 from apps.log_measure.constants import INDEX_FORMAT, COMMON_INDEX_RE
@@ -150,3 +154,70 @@ class CollectMetricCollector(object):
             multi_execute_func.append(str(cluster_id), _get_indices, cluster, use_request=False)
         result = multi_execute_func.run()
         return [indices for cluster_indices in result.values() for indices in cluster_indices]
+
+
+class CleanMetricCollector(object):
+    @staticmethod
+    @register_metric("clean_config", description=_("清洗配置"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
+    def clean_config():
+        metrics = []
+        clean_config_count = defaultdict(int)
+        bk_data_clean_config_count = defaultdict(int)
+
+        for bk_biz_id in MetricUtils.get_instance().biz_info:
+            clean_filter = CleanFilterUtils(bk_biz_id=bk_biz_id)
+            clean_filter.get_collector_config()
+            clean_filter.get_bkdata_clean()
+            clean_configs = clean_filter.cleans
+            aggregation_datas = defaultdict(dict)
+            index_set_list = [i.index_set_id for i in clean_configs]
+            index_sets = array_group(
+                LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
+            )
+            for clean_config in clean_configs:
+
+                if clean_config.etl_config == DEFAULT_ETL_CONFIG:
+                    bk_data_clean_config_count[bk_biz_id] += 1
+                else:
+                    clean_config_count[bk_biz_id] += 1
+
+                if not aggregation_datas[clean_config.index_set_id].get(clean_config.etl_config):
+                    aggregation_datas[clean_config.index_set_id][clean_config.etl_config] = 0
+                aggregation_datas[clean_config.index_set_id][clean_config.etl_config] += 1
+
+            for index_set_id in aggregation_datas:
+                for etl_config in aggregation_datas[index_set_id]:
+                    metrics.append(
+                        # 上报以索引, 清洗类型为维度的数据
+                        Metric(
+                            metric_name="clean_config",
+                            metric_value=aggregation_datas[index_set_id][etl_config],
+                            dimensions={
+                                "target_bk_biz_id": bk_biz_id,
+                                "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                                "index_set_id": index_set_id,
+                                "index_set_name": index_sets[index_set_id]["index_set_name"],
+                                "clean_type": etl_config,
+                            },
+                            timestamp=MetricUtils.get_instance().report_ts,
+                        )
+                    )
+        # 上报两个清洗总数
+        metrics.append(
+            Metric(
+                metric_name="clean_config_total",
+                metric_value=sum(clean_config_count.values()),
+                dimensions={},
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
+        metrics.append(
+            Metric(
+                metric_name="bk_data_clean_config_total",
+                metric_value=sum(bk_data_clean_config_count.values()),
+                dimensions={},
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
+
+        return metrics
