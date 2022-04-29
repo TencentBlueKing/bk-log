@@ -315,6 +315,10 @@ class StorageHandler(object):
                         "description": "",
                         "enable_archive": False,
                         "enable_assessment": False,
+                        "source_type": custom_option.get("source_type", EsSourceType.OTHER.value),
+                        "source_name": EsSourceType.get_choice_label(
+                            custom_option.get("source_type", EsSourceType.OTHER.value)
+                        ),
                     }
                 )
                 cluster_data.append(cluster_obj)
@@ -336,6 +340,10 @@ class StorageHandler(object):
                         "description": "",
                         "enable_archive": False,
                         "enable_assessment": False,
+                        "source_type": custom_option.get("source_type", EsSourceType.OTHER.value),
+                        "source_name": EsSourceType.get_choice_label(
+                            custom_option.get("source_type", EsSourceType.OTHER.value)
+                        ),
                     }
                 )
                 cluster_data.append(cluster_obj)
@@ -508,10 +516,11 @@ class StorageHandler(object):
 
         cluster_obj = TransferApi.modify_cluster_info(params)
         cluster_obj["auth_info"]["password"] = ""
-        if (
-            cluster_objs[0]["cluster_config"]["custom_option"]["hot_warm_config"]["is_enabled"]
-            and not hot_warm_config_is_enabled
-        ):
+        custom_option = cluster_obj[0]["cluster_config"]["custom_option"]
+        if not isinstance(custom_option, dict):
+            custom_option = {}
+        current_hot_warm_config_is_enabled = custom_option.get("hot_warm_config", {}).get("is_enabled", False)
+        if current_hot_warm_config_is_enabled and not hot_warm_config_is_enabled:
             from apps.log_databus.tasks.collector import shutdown_collector_warm_storage_config
 
             shutdown_collector_warm_storage_config.delay(int(self.cluster_id))
