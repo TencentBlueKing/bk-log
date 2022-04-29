@@ -20,6 +20,8 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import time
+from collections import defaultdict
+
 import arrow
 import datetime
 
@@ -192,4 +194,61 @@ class LogExportMetricCollector(object):
                 timestamp=MetricUtils.get_instance().report_ts,
             )
         )
+        return metrics
+
+
+class IndexSetMetricCollector(object):
+    @staticmethod
+    @register_metric("index_set", description=_("索引集"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    def index_set():
+        metrics = []
+        groups = (
+            LogIndexSet.objects.values("project_id", "scenario_id", "is_active")
+            .order_by("project_id", "scenario_id", "is_active")
+            .annotate(count=Count("index_set_id"))
+        )
+        aggregation_index_set = defaultdict(int)
+        aggregation_active_index_set = defaultdict(int)
+        for group in groups:
+            if MetricUtils.get_instance().project_biz_info.get(group["project_id"]):
+                bk_biz_id = MetricUtils.get_instance().project_biz_info[group["project_id"]]["bk_biz_id"]
+                metrics.append(
+                    # 带bk_biz_id, scenario_id, is_active标签的数据
+                    Metric(
+                        metric_name="index_set_count",
+                        metric_value=group["count"],
+                        dimensions={
+                            "target_bk_biz_id": bk_biz_id,
+                            "target_bk_biz_name": MetricUtils.get_instance().project_biz_info[group["project_id"]][
+                                "bk_biz_name"
+                            ],
+                            "scenario_id": group["scenario_id"],
+                            "is_active": group["is_active"],
+                        },
+                        timestamp=MetricUtils.get_instance().report_ts,
+                    )
+                )
+                aggregation_index_set[bk_biz_id] += group["count"]
+                if group["is_active"]:
+                    aggregation_active_index_set[bk_biz_id] += group["count"]
+
+        for bk_biz_id in aggregation_index_set:
+            metrics.append(
+                # 有效索引集数量
+                Metric(
+                    metric_name="index_set_count_total",
+                    metric_value=aggregation_index_set[bk_biz_id],
+                    dimensions={},
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+            metrics.append(
+                # 有效索引集数量
+                Metric(
+                    metric_name="index_set_active_count_total",
+                    metric_value=aggregation_active_index_set[bk_biz_id],
+                    dimensions={},
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
         return metrics
