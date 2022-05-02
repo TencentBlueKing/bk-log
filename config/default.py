@@ -177,7 +177,8 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.bkdata",
     "apps.log_search.tasks.async_export",
     "apps.log_search.tasks.project",
-    "apps.log_search.tasks.cmdb",
+    # TODO，临时注释cmdb缓存定时任务
+    # "apps.log_search.tasks.cmdb",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
     "apps.log_search.tasks.no_data",
