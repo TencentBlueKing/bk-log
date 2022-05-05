@@ -87,7 +87,10 @@
         </bk-select>
       </bk-form-item>
       <!-- 热数据\冷热集群存储期限 -->
-      <bk-form-item :label="$t('热数据天数')" class="hot-data-form-item">
+      <bk-form-item
+        :label="$t('热数据天数')"
+        class="hot-data-form-item"
+        v-if="selectedStorageCluster.enable_hot_warm">
         <bk-select
           style="width: 320px;"
           data-test-id="storageBox_select_selectHotData"
@@ -374,6 +377,7 @@ export default {
       hostNumber: 0,
       replicasMax: 7,
       isForcedFillAssessment: false, // 是否必须容量评估
+      isFirstRendering: true, // 是否是第一次渲染 用于回显热数据天数
     };
   },
   computed: {

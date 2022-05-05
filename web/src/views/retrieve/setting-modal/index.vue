@@ -92,6 +92,7 @@
               :total-fields="totalFields"
               :config-data="configData"
               :clean-config="cleanConfig"
+              :statistical-fields-data="statisticalFieldsData"
               @resetPage="resetPage"
               @updateLogFields="updateLogFields"
               @debugRequestChange="debugRequestChange" />
@@ -137,6 +138,10 @@ export default {
     cleanConfig: {
       type: Object,
       require: true,
+    },
+    statisticalFieldsData: { // 过滤条件字段可选值关系表
+      type: Object,
+      required: true,
     },
   },
   data() {
@@ -385,7 +390,7 @@ export default {
       font-size: 16px;
       text-align: center;
       position: fixed;
-      z-index: 99;
+      z-index: 999;
       background-color: #fff;
       border-bottom: 1px solid #dcdee5;
       // box-shadow:0 3px 6px #DEE0E7 ;

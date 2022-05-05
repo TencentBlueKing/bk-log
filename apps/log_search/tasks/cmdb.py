@@ -17,23 +17,30 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from concurrent.futures import ThreadPoolExecutor
+import datetime
 
 from celery.schedules import crontab  # noqa
-from celery.task import periodic_task  # noqa
+from celery.task import periodic_task, task  # noqa
 
 from apps.log_search.handlers.biz import BizHandler
 from apps.utils.log import logger
 
 
-@periodic_task(run_every=crontab(minute="*/15"))
+@periodic_task(run_every=crontab(minute="*/30"))
 def refresh_cmdb():
     businesses = BizHandler.list()
     if not businesses:
         logger.error("[log_search][tasks]get business error")
         return False
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for business in businesses:
-            biz_handler = BizHandler(business["bk_biz_id"])
-            executor.submit(biz_handler.get_cache_hosts, bk_biz_id=business["bk_biz_id"], refresh=True)
+    for business in businesses:
+        refresh_biz_hosts.apply_async(
+            args=[business["bk_biz_id"]], expires=datetime.datetime.now() + datetime.timedelta(minutes=30)
+        )
     logger.info("[log_search][tasks]get business success, count: %s" % len(businesses))
+
+
+@task(
+    ignore_result=True,
+)
+def refresh_biz_hosts(bk_biz_id):
+    BizHandler(bk_biz_id).get_cache_hosts(bk_biz_id=bk_biz_id, refresh=True)

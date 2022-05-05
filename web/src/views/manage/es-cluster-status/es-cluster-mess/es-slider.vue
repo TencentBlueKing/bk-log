@@ -274,7 +274,7 @@
                   <div class="space-item-label">{{$t('默认')}}</div>
                   <bk-input
                     type="number"
-                    :max="formData.setup_config.number_of_replicas_max"
+                    :max="Number(formData.setup_config.number_of_replicas_max)"
                     :min="0"
                     v-model="formData.setup_config.number_of_replicas_default">
                   </bk-input>
@@ -283,7 +283,7 @@
                   <div class="space-item-label">{{$t('最大')}}</div>
                   <bk-input
                     type="number"
-                    :min="formData.setup_config.number_of_replicas_default + 1"
+                    :min="Number(formData.setup_config.number_of_replicas_default)"
                     v-model="formData.setup_config.number_of_replicas_max">
                   </bk-input>
                 </div>
@@ -367,7 +367,7 @@
               </bk-form-item>
             </div>
             <!-- 集群负责人 -->
-            <bk-form-item :label="$t('集群负责人')" :desc="customDesc" required>
+            <bk-form-item :label="$t('集群负责人')" :desc="$t('集群负责人Tips')" required>
               <div class="principal">
                 <bk-user-selector
                   :class="isAdminError && 'is-error'"
@@ -530,7 +530,6 @@ export default {
       bizChildrenList: {}, // 业务属性选择子级键值对象
       visibleIsToggle: false, // 多业务选择icon方向
       userApi: window.BK_LOGIN_URL, // 负责人api
-      customDesc: '集群负责人',
       isShowManagement: false, // 是否展示集群管理
       retentionDaysList: [], // 默认过期时间列表
       maxDaysList: [], // 最大过期时间列表
@@ -539,6 +538,7 @@ export default {
       isAdminError: false, // 集群负责人是否为空
       bizSelectID: '', // 选中的当前按照业务属性选择
       bizInputStr: '', // 按照业务属性选择输入值
+      isFirstShow: true, // 是否是第一次渲染
     };
   },
   computed: {
@@ -586,6 +586,7 @@ export default {
     showSlider(val) {
       if (val) {
         if (this.isEdit) {
+          this.isShowManagement = true;
           this.editDataSource();
         } else {
           // 集群负责人默认本人
@@ -636,11 +637,15 @@ export default {
         this.connectResult = '';
         this.connectFailedMessage = '';
         this.isShowManagement = false;
+        this.isFirstShow = true;
       }
     },
     basicFormData: {
       handler() {
-        this.connectResult = '';
+        if (!this.isFirstShow) {
+          this.connectResult = '';
+        }
+        this.isFirstShow = false;
       },
       deep: true,
     },
@@ -759,7 +764,7 @@ export default {
           }
         });
 
-        this.bkBizLabelsList = Object.entries(res.data.cluster_config.custom_option.visible_config?.bk_biz_labels)
+        this.bkBizLabelsList = Object.entries(res.data.cluster_config.custom_option.visible_config?.bk_biz_labels || {})
           .reduce((pre, cur) => {
             const propertyName =  this.bizParentList.find(item => item.id ===  cur[0]);
             const obj = {
@@ -771,6 +776,10 @@ export default {
             return pre;
           }, []);
         this.cacheBkBizLabelsList = JSON.parse(JSON.stringify(this.bkBizLabelsList));
+        this.$nextTick(() => {
+          // 编辑的时候直接联通测试 通过则展开ES集群管理
+          this.handleTestConnect();
+        });
       } catch (e) {
         console.warn(e);
       } finally {
@@ -803,9 +812,6 @@ export default {
         const res = await this.$http.request('/source/connectivityDetect', { data: postData });
         if (res.data) {
           this.connectResult = 'success';
-          if (this.isEdit) {
-            this.isShowManagement = true;
-          }
           // 连通性测试通过之后获取冷热数据
           const attrsRes = await this.$http.request('/source/getNodeAttrs', { data: postData });
           this.hotColdOriginList = attrsRes.data;

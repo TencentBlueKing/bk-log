@@ -413,6 +413,7 @@ export default {
           trigger: 'change',
         }],
       },
+      isFirstRendering: true, // 是否是第一次渲染 用于回显热数据天数
     };
   },
   computed: {

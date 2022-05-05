@@ -108,20 +108,6 @@
           </template>
         </bk-table-column>
         <bk-table-column
-          v-if="checkcFields('creator')"
-          :label="$t('创建人')"
-          prop="cluster_config.creator"
-          min-width="80">
-        </bk-table-column>
-        <bk-table-column
-          v-if="checkcFields('create_time')"
-          :label="$t('创建时间')"
-          class-name="filter-column"
-          prop="cluster_config.create_time"
-          min-width="170"
-          sortable>
-        </bk-table-column>
-        <bk-table-column
           v-if="checkcFields('enable_hot_warm')"
           :label="$t('冷热数据')"
           min-width="80">
@@ -149,6 +135,20 @@
               <span>{{`${100 - row.storage_usage}%`}}</span>
             </div>
           </template>
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('creator')"
+          :label="$t('创建人')"
+          prop="cluster_config.creator"
+          min-width="80">
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('create_time')"
+          :label="$t('创建时间')"
+          class-name="filter-column"
+          prop="cluster_config.create_time"
+          min-width="170"
+          sortable>
         </bk-table-column>
         <bk-table-column :label="$t('操作')" width="180">
           <template slot-scope="props">
@@ -268,16 +268,6 @@ export default {
         id: 'cluster_config',
         label: this.$t('连接状态'),
       },
-      // 创建人
-      {
-        id: 'creator',
-        label: this.$t('创建人'),
-      },
-      // 创建时间
-      {
-        id: 'create_time',
-        label: this.$t('创建时间'),
-      },
       // 冷热数据
       {
         id: 'enable_hot_warm',
@@ -292,6 +282,16 @@ export default {
       {
         id: 'storage_usage',
         label: this.$t('空闲率'),
+      },
+      // 创建人
+      {
+        id: 'creator',
+        label: this.$t('创建人'),
+      },
+      // 创建时间
+      {
+        id: 'create_time',
+        label: this.$t('创建时间'),
       },
     ];
     return {
@@ -316,7 +316,7 @@ export default {
       sourceStateFilters: [{ text: this.$t('正常'), value: true }, { text: this.$t('失败'), value: false }],
       clusterSetting: {
         fields: settingFields,
-        selectedFields: settingFields.slice(0, 12),
+        selectedFields: settingFields.slice(0, 10),
       },
       minIntroWidth: 300,
       maxIntroWidth: 480,
