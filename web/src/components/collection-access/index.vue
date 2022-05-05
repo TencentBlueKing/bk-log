@@ -21,7 +21,8 @@
   -->
 
 <template>
-  <section class="access-wrapper" v-bkloading="{ isLoading: basicLoading }">
+  <section :class="['access-wrapper',itsmTicketIsApplying && 'iframe-container']"
+           v-bkloading="{ isLoading: basicLoading }">
     <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
     <div class="access-container" v-else-if="!basicLoading && !isCleaning">
       <section class="access-step-wrapper">
@@ -42,34 +43,36 @@
             v-if="curStep === 1"
             :operate-type="operateType"
             @stepChange="stepChange" />
-          <step-capacity
-            v-if="curStep === 2"
+          <!-- <step-capacity
+            v-if="curStep === 0"
             :operate-type="operateType"
-            @stepChange="stepChange" />
+            @stepChange="stepChange" /> -->
           <step-issued
-            v-if="curStep === 3"
+            v-if="curStep === 2"
             :operate-type="operateType"
             :is-switch="isSwitch"
             @stepChange="stepChange" />
           <step-field
-            v-if="curStep === 4"
+            v-if="curStep === 3"
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
             @changeClean="isCleaning = true" />
           <step-storage
-            v-if="curStep === 5"
+            v-if="curStep === 4"
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
+            @setAssessmentItem="setAssessmentItem"
             @change-submit="changeSubmit" />
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
             :is-switch="isSwitch"
             :index-set-id="indexSetId"
+            :apply-data="applyData"
             @stepChange="stepChange" />
         </template>
         <template v-else>
@@ -95,12 +98,14 @@
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
+            @setAssessmentItem="setAssessmentItem"
             @change-submit="changeSubmit" />
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
             :is-switch="isSwitch"
             :index-set-id="indexSetId"
+            :apply-data="applyData"
             @stepChange="stepChange" />
         </template>
       </section>
@@ -114,7 +119,7 @@ import { mapState, mapGetters } from 'vuex';
 import { stepsConf, finishRefer } from './step';
 import AuthPage from '@/components/common/auth-page';
 import stepAdd from './step-add';
-import stepCapacity from './step-capacity';
+// import stepCapacity from './step-capacity';
 import stepIssued from './step-issued';
 import stepField from './step-field';
 import stepStorage from './step-storage.vue';
@@ -126,7 +131,7 @@ export default {
   components: {
     AuthPage,
     stepAdd,
-    stepCapacity,
+    // stepCapacity,
     stepIssued,
     stepField,
     stepStorage,
@@ -145,6 +150,8 @@ export default {
       indexSetId: '',
       stepList: [],
       globals: {},
+      itsmTicketIsApplying: false,
+      applyData: {},
     };
   },
   computed: {
@@ -167,7 +174,7 @@ export default {
     },
     isFinish() {
       if (this.isItsmAndNotStartOrStop) {
-        return this.curStep === 6;
+        return this.curStep === 5;
       }
       return finishRefer[this.operateType] === this.curStep;
     },
@@ -223,7 +230,8 @@ export default {
       }
 
       const routeType = this.$route.name.toLowerCase().replace('collect', '');
-      if (routeType !== 'add' && !this.$route.params.notAdd) {
+      const { query: { type } } = this.$route;
+      if ((routeType !== 'add' && !this.$route.params.notAdd) || type === 'clone') { // 克隆时 请求初始数据
         try {
           const detailRes = await this.getDetail();
           this.operateType = routeType === 'edit' && detailRes.table_id ? 'editFinish' : routeType; // 若存在table_id则只有三步
@@ -240,12 +248,12 @@ export default {
           if (statusRes.data[0].status === 'PREPARE') {
             // 准备中编辑时跳到第一步，所以不用修改步骤
           } else if (this.isItsm) {
-            if (this.operateType === 'edit') { // 未完成编辑
-              this.curStep = this.curCollect.itsm_ticket_status === 'success_apply' ? 4 : 2;
+            if (['edit', 'editFinish'].includes(this.operateType)) { // 未完成编辑
+              this.curStep = this.applyData.itsm_ticket_status === 'applying' ? 5 : 1;
             } else if (this.operateType === 'field') {
-              this.curStep = 4;
+              this.curStep = this.applyData.itsm_ticket_status === 'applying' ? 5 : 3;
             } else if (this.operateType === 'storage') {
-              this.curStep = 5;
+              this.curStep = this.applyData.itsm_ticket_status === 'applying' ? 5 : 4;
             }
             // 审批通过后编辑直接进入第三步字段提取，否则进入第二步容量评估
           } else if (this.operateType === 'field') {
@@ -304,6 +312,13 @@ export default {
             if (collect.collector_scenario_id !== 'wineventlog') {
               collect.params.paths = collect.params.paths.map(item => ({ value: item }));
             }
+            // 如果当前页面采集流程未完成 则展示流程服务页面
+            const applyDataItem = {
+              iframe_ticket_url: collect.ticket_url,
+              itsm_ticket_status: collect.itsm_ticket_status,
+            };
+            this.applyData = collect.itsm_ticket_status === 'applying' ? applyDataItem : {};
+            this.itsmTicketIsApplying = false;
             this.$store.commit('collect/setCurCollect', collect);
             resolve(res.data);
           }
@@ -324,6 +339,9 @@ export default {
     changeSubmit(isSubmit) {
       this.isSubmit = isSubmit;
     },
+    setAssessmentItem(item) {
+      this.applyData = item;
+    },
   },
 };
 </script>
@@ -334,6 +352,10 @@ export default {
 
   .access-wrapper {
     padding: 20px 24px;
+  }
+
+  .iframe-container {
+    padding: 0;
   }
 
   .access-container {
@@ -356,6 +378,14 @@ export default {
       width: 170px;
       max-height: 100%;
       margin-top: 40px;
+
+      .bk-steps {
+        :last-child {
+          &::after {
+            display: none;
+          }
+        }
+      }
 
       .bk-step {
         color: #7a7c85;

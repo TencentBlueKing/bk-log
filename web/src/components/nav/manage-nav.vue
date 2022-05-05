@@ -75,8 +75,9 @@ export default {
     },
     handleBack() {
       if (this.$route.meta.backName) {
+        const { query: { backRoute } } = this.$route;
         this.$router.push({
-          name: this.$route.meta.backName,
+          name: !!backRoute ? backRoute : this.$route.meta.backName,
           query: {
             projectId: window.localStorage.getItem('project_id'),
           },
@@ -136,7 +137,7 @@ export default {
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .10);
     position: fixed;
     top: 51px;
-    z-index: 999;
+    z-index: 9;
 
     .main-title {
       font-size: 16px;

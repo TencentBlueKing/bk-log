@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.utils.translation import ugettext_lazy as _
 
@@ -53,13 +55,14 @@ class ChangeDataStreamComponent(Component):
 
 
 class ChangeDataStream(object):
-    def __init__(self, collector_config_id: int):
+    def __init__(self, index_set_id: int, collector_config_id: int = None):
         self.change_data_stream = ServiceActivity(
-            component_code="change_data_stream", name=f"change_data_stream:{collector_config_id}"
+            component_code="change_data_stream", name=f"change_data_stream:{index_set_id}-{collector_config_id}"
         )
         self.change_data_stream.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.change_data_stream.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
         self.change_data_stream.component.inputs.topic_name = Var(type=Var.SPLICE, value="${topic_name}")
 
 
@@ -84,13 +87,14 @@ class CreateBkdataAccessComponent(Component):
 
 
 class CreateBkdataAccess(object):
-    def __init__(self, collector_config_id: int):
+    def __init__(self, index_set_id: int, collector_config_id: int = None):
         self.create_bkdata_access = ServiceActivity(
-            component_code="create_bkdata_access", name=f"create_bkdata_access:{collector_config_id}"
+            component_code="create_bkdata_access", name=f"create_bkdata_access:{index_set_id}_{collector_config_id}"
         )
         self.create_bkdata_access.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.create_bkdata_access.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class SyncBkdataEtlService(BaseService):
@@ -114,11 +118,12 @@ class SyncBkdataEtlComponent(Component):
 
 
 class SyncBkdataEtl(object):
-    def __init__(self, collector_config_id: int):
+    def __init__(self, index_set_id: int, collector_config_id: int = None):
         self.sync_bkdata_etl = ServiceActivity(
-            component_code="sync_bkdata_etl", name=f"sync_bkdata_etl:{collector_config_id}"
+            component_code="sync_bkdata_etl", name=f"sync_bkdata_etl:{index_set_id}_{collector_config_id}"
         )
         self.sync_bkdata_etl.component.inputs.collector_config_id = Var(type=Var.SPLICE, value="${collector_config_id}")
+        self.sync_bkdata_etl.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class AddProjectDataService(BaseService):
@@ -131,9 +136,13 @@ class AddProjectDataService(BaseService):
 
     def _execute(self, data, parent_data):
         bk_biz_id = data.get_one_of_inputs("bk_biz_id")
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
+        index_set_id = data.get_one_of_inputs("index_set_id")
         project_id = data.get_one_of_inputs("project_id")
-        clustering_config = ClusteringConfig.objects.filter(collector_config_id=collector_config_id).first()
+        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
+        # 当计算平台rt场景时需要将对应rt设置为相应字段
+        if not clustering_config.bkdata_etl_result_table_id:
+            clustering_config.bkdata_etl_result_table_id = clustering_config.source_rt_name
+            clustering_config.save()
         BkDataAuthApi.add_project_data(
             params={
                 "bk_biz_id": bk_biz_id,
@@ -151,12 +160,49 @@ class AddProjectDataComponent(Component):
 
 
 class AddProjectData(object):
-    def __init__(self, collector_config_id: int):
+    def __init__(self, index_set_id: int, collector_config_id: int = None):
         self.add_project_data = ServiceActivity(
-            component_code="add_project_data", name=f"add_project_data:{collector_config_id}"
+            component_code="add_project_data", name=f"add_project_data:{index_set_id}_{collector_config_id}"
         )
         self.add_project_data.component.inputs.bk_biz_id = Var(type=Var.SPLICE, value="${bk_biz_id}")
         self.add_project_data.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.add_project_data.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
         self.add_project_data.component.inputs.project_id = Var(type=Var.SPLICE, value="${project_id}")
+
+
+class AddResourceGroupService(BaseService):
+    name = _("项目添加资源组权限")
+
+    def inputs_format(self):
+        return [
+            Service.InputItem(name="collector config id", key="collector_config_id", type="int", required=True),
+        ]
+
+    def _execute(self, data, parent_data):
+        index_set_id = data.get_one_of_inputs("index_set_id")
+        clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
+        if clustering_config.es_storage:
+            return True
+        es_storage_name = DataAccessHandler().add_cluster_group(clustering_config.source_rt_name)
+        clustering_config.es_storage = es_storage_name
+        clustering_config.save()
+        return True
+
+
+class AddResourceGroupComponent(Component):
+    name = "AddResourceGroup"
+    code = "add_resource_group"
+    bound_service = AddResourceGroupService
+
+
+class AddResourceGroupSet(object):
+    def __init__(self, index_set_id: int, collector_config_id: int = None):
+        self.add_resource_group = ServiceActivity(
+            component_code="add_resource_group", name=f"create_new_index_set:{index_set_id}_{collector_config_id}"
+        )
+        self.add_resource_group.component.inputs.collector_config_id = Var(
+            type=Var.SPLICE, value="${collector_config_id}"
+        )
+        self.add_resource_group.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")

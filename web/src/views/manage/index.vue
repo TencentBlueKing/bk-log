@@ -103,8 +103,8 @@ export default {
     height: 100%;
 
     .manage-content {
-      // height: calc(100% - 52px);
-      height: 100%;
+      height: calc(100% - 52px);
+      // height: 100%;
       position: relative;
       top: 51px;
       overflow: auto;
@@ -116,7 +116,7 @@ export default {
       height: 100%;
     }
 
-    /deep/ .bk-table {
+    ::v-deep .bk-table {
       background: #fff;
 
       .cell {

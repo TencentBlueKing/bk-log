@@ -21,128 +21,190 @@
   -->
 
 <template>
-  <div class="es-access-container" data-test-id="esAccess_div_esAccessBox">
-    <div class="main-operator-container">
-      <bk-button
-        theme="primary"
-        style="width: 120px;"
-        :disabled="isAllowedCreate === null || tableLoading"
-        v-cursor="{ active: isAllowedCreate === false }"
-        data-test-id="esAccessBox_button_addNewEsAccess"
-        @click="addDataSource">{{ $t('新建') }}
-      </bk-button>
-      <bk-input
-        v-model="params.keyword"
-        style="width: 360px;float: right;"
-        right-icon="bk-icon icon-search"
-        data-test-id="esAccessBox_input_search"
-        :placeholder="$t('搜索ES源名称，地址，创建人')"
-        :clearable="true"
-        @change="handleSearch">
-      </bk-input>
-    </div>
-    <bk-table
-      v-bkloading="{ isLoading: tableLoading }"
-      data-test-id="esAccessBox_table_esAccessTableBox"
-      class="king-table"
-      :data="tableDataPaged"
-      :pagination="pagination"
-      @page-change="handlePageChange"
-      @page-limit-change="handleLimitChange">
-      <bk-table-column
-        label="ID"
-        prop="cluster_config.cluster_id"
-        min-width="60">
-      </bk-table-column>
-      <bk-table-column
-        :label="$t('名称')"
-        prop="cluster_config.cluster_name"
-        min-width="170">
-      </bk-table-column>
-      <bk-table-column :label="$t('地址')" min-width="170">
-        <template slot-scope="props">
-          {{ props.row.cluster_config.domain_name || '--' }}
-        </template>
-      </bk-table-column>
-      <bk-table-column
-        :label="$t('来源')"
-        prop="source_type"
-        min-width="80"
-        class-name="filter-column"
-        column-key="source_type"
-        :filters="sourceFilters"
-        :filter-multiple="false"
-        :filter-method="sourceFilterMethod">
-        <template slot-scope="props">
-          {{ props.row.source_name || '--' }}
-        </template>
-      </bk-table-column>
-      <bk-table-column
-        :label="$t('端口')"
-        prop="cluster_config.port"
-        min-width="80">
-      </bk-table-column>
-      <bk-table-column
-        :label="$t('协议')"
-        prop="cluster_config.schema"
-        min-width="80">
-      </bk-table-column>
-      <bk-table-column :label="$t('连接状态')" min-width="80">
-        <template slot-scope="{ row }">
-          <!-- eslint-disable-next-line vue/no-v-html -->
-          <div class="state-container" v-html="getStateText(row.cluster_config.cluster_id)"></div>
+  <div class="es-access-container" data-test-id="esAccess_div_esAccessBox" ref="accessContainerRef">
+    <div class="es-cluster-list-container" :style="`width: calc(100% - ${ introWidth }px);`">
+      <div class="main-operator-container">
+        <bk-button
+          theme="primary"
+          style="width: 120px;"
+          :disabled="isAllowedCreate === null || tableLoading"
+          v-cursor="{ active: isAllowedCreate === false }"
+          data-test-id="esAccessBox_button_addNewEsAccess"
+          @click="addDataSource">{{ $t('新建') }}
+        </bk-button>
+        <bk-input
+          v-model="params.keyword"
+          style="width: 360px;float: right;"
+          right-icon="bk-icon icon-search"
+          data-test-id="esAccessBox_input_search"
+          :placeholder="$t('搜索ES源名称，地址，创建人')"
+          :clearable="true"
+          @change="handleSearch">
+        </bk-input>
+      </div>
+      <bk-table
+        v-bkloading="{ isLoading: tableLoading }"
+        data-test-id="esAccessBox_table_esAccessTableBox"
+        class="king-table"
+        :data="tableDataPaged"
+        :pagination="pagination"
+        @page-change="handlePageChange"
+        @page-limit-change="handleLimitChange">
+        <bk-table-column
+          label="ID"
+          prop="cluster_config.cluster_id"
+          min-width="60">
+        </bk-table-column>
+        <bk-table-column
+          :label="$t('名称')"
+          prop="cluster_config.cluster_name"
+          min-width="170">
+        </bk-table-column>
+        <bk-table-column :label="$t('地址')" min-width="170">
+          <template slot-scope="props">
+            {{ props.row.cluster_config.domain_name || '--' }}
+          </template>
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('source_type')"
+          :label="$t('来源')"
+          prop="source_type"
+          min-width="80"
+          class-name="filter-column"
+          column-key="source_type"
+          :filters="sourceFilters"
+          :filter-multiple="false"
+          :filter-method="sourceFilterMethod">
+          <template slot-scope="props">
+            {{ props.row.source_name || '--' }}
+          </template>
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('port')"
+          :label="$t('端口')"
+          prop="cluster_config.port"
+          min-width="80">
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('schema')"
+          :label="$t('协议')"
+          prop="cluster_config.schema"
+          min-width="80">
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('cluster_config')"
+          :label="$t('连接状态')"
+          min-width="80"
+          class-name="filter-column"
+          prop="cluster_config.cluster_id"
+          column-key="cluster_config.cluster_id"
+          :filters="sourceStateFilters"
+          :filter-method="sourceStateFilterMethod"
+          :filter-multiple="false">
+          <template slot-scope="{ row }">
+            <!-- eslint-disable-next-line vue/no-v-html -->
+            <div class="state-container" v-html="getStateText(row.cluster_config.cluster_id)"></div>
           <!--eslint-enable-->
-        </template>
-      </bk-table-column>
-      <bk-table-column
-        :label="$t('创建人')"
-        prop="cluster_config.creator"
-        min-width="80">
-      </bk-table-column>
-      <bk-table-column
-        :label="$t('创建时间')"
-        prop="cluster_config.create_time"
-        min-width="170">
-      </bk-table-column>
-      <bk-table-column
-        :label="$t('冷热数据')"
-        min-width="80">
-        <template slot-scope="{ row }">
-          {{ row.cluster_config.enable_hot_warm ? $t('开') : $t('关') }}
-        </template>
-      </bk-table-column>
-      <bk-table-column :label="$t('操作')" width="180">
-        <template slot-scope="props">
-          <log-button
-            theme="primary"
-            text
-            class="mr10"
-            :tips-conf="$t('unableEditTip')"
-            :button-text="$t('建索引集')"
-            :disabled="!props.row.is_editable"
-            @on-click="createIndexSet(props.row)">>
-          </log-button>
-          <log-button
-            theme="primary"
-            text
-            class="mr10"
-            :tips-conf="$t('unableEditTip')"
-            :button-text="$t('编辑')"
-            :disabled="!props.row.is_editable"
-            @on-click="editDataSource(props.row)">
-          </log-button>
-          <log-button
-            theme="primary"
-            text
-            class="mr10"
-            :tips-conf="$t('unableEditTip')"
-            :button-text="$t('删除')"
-            :disabled="!props.row.is_editable"
-            @on-click="deleteDataSource(props.row)">
-          </log-button>
-        </template>
-      </bk-table-column>
-    </bk-table>
+          </template>
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('enable_hot_warm')"
+          :label="$t('冷热数据')"
+          min-width="80">
+          <template slot-scope="{ row }">
+            {{ row.cluster_config.enable_hot_warm ? $t('开') : $t('关') }}
+          </template>
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('storage_total')"
+          width="90"
+          :label="$t('总量')">
+          <template slot-scope="{ row }">
+            <span>{{formatFileSize(row.storage_total)}}</span>
+          </template>
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('storage_usage')"
+          width="110"
+          :label="$t('空闲率')">
+          <template slot-scope="{ row }">
+            <div class="percent">
+              <div class="percent-progress">
+                <bk-progress :theme="'success'" :show-text="false" :percent="getPercent(row)"></bk-progress>
+              </div>
+              <span>{{`${100 - row.storage_usage}%`}}</span>
+            </div>
+          </template>
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('creator')"
+          :label="$t('创建人')"
+          prop="cluster_config.creator"
+          min-width="80">
+        </bk-table-column>
+        <bk-table-column
+          v-if="checkcFields('create_time')"
+          :label="$t('创建时间')"
+          class-name="filter-column"
+          prop="cluster_config.create_time"
+          min-width="170"
+          sortable>
+        </bk-table-column>
+        <bk-table-column :label="$t('操作')" width="180">
+          <template slot-scope="props">
+            <log-button
+              theme="primary"
+              text
+              class="mr10"
+              :tips-conf="$t('unableEditTip')"
+              :button-text="$t('建索引集')"
+              :disabled="!props.row.is_editable"
+              @on-click="createIndexSet(props.row)">>
+            </log-button>
+            <log-button
+              theme="primary"
+              text
+              class="mr10"
+              :tips-conf="$t('unableEditTip')"
+              :button-text="$t('编辑')"
+              :disabled="!props.row.is_editable"
+              @on-click="editDataSource(props.row)">
+            </log-button>
+            <log-button
+              theme="primary"
+              text
+              class="mr10"
+              :tips-conf="$t('unableEditTip')"
+              :button-text="$t('删除')"
+              :disabled="!props.row.is_editable"
+              @on-click="deleteDataSource(props.row)">
+            </log-button>
+          </template>
+        </bk-table-column>
+        <bk-table-column type="setting" :tippy-options="{ zIndex: 3000 }">
+          <bk-table-setting-content
+            :fields="clusterSetting.fields"
+            :selected="clusterSetting.selectedFields"
+            :max="clusterSetting.max"
+            @setting-change="handleSettingChange">
+          </bk-table-setting-content>
+        </bk-table-column>
+      </bk-table>
+    </div>
+
+    <div
+      :class="['intro-container',isDraging && 'draging-move']"
+      :style="`width: ${ introWidth }px`">
+      <intro-panel
+        :is-open-window="isOpenWindow"
+        @handleActiveDetails="handleActiveDetails" />
+    </div>
+
+    <div :class="`drag-item ${!introWidth && 'hidden-drag'}`" :style="`right: ${introWidth - 18}px`">
+      <span
+        class="bk-icon icon-more"
+        @mousedown.left="dragBegin"></span>
+    </div>
     <!-- 编辑或新建ES源 -->
     <es-slider
       v-if="isRenderSlider"
@@ -150,19 +212,88 @@
       :edit-cluster-id="editClusterId"
       @hidden="handleSliderHidden"
       @updated="handleUpdated" />
+
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
+import IntroPanel from './components/intro-panel.vue';
+import { formatFileSize } from '../../../../common/util';
 
 export default {
   name: 'EsClusterMess',
   components: {
     EsSlider,
+    IntroPanel,
   },
   data() {
+    const settingFields = [
+      // 数据ID
+      {
+        id: 'cluster_id',
+        label: 'ID',
+        disabled: true,
+      },
+      // 集群名称
+      {
+        id: 'collector_config_name',
+        label: this.$t('名称'),
+        disabled: true,
+      },
+      // 地址
+      {
+        id: 'domain_name',
+        label: this.$t('地址'),
+        disabled: true,
+      },
+      // 来源
+      {
+        id: 'source_type',
+        label: this.$t('来源'),
+      },
+      // 端口
+      {
+        id: 'port',
+        label: this.$t('端口'),
+      },
+      // 协议
+      {
+        id: 'schema',
+        label: this.$t('协议'),
+      },
+      // 连接状态
+      {
+        id: 'cluster_config',
+        label: this.$t('连接状态'),
+      },
+      // 冷热数据
+      {
+        id: 'enable_hot_warm',
+        label: this.$t('创建时间'),
+      },
+      // 总量
+      {
+        id: 'storage_total',
+        label: this.$t('总量'),
+      },
+      // 空闲率
+      {
+        id: 'storage_usage',
+        label: this.$t('空闲率'),
+      },
+      // 创建人
+      {
+        id: 'creator',
+        label: this.$t('创建人'),
+      },
+      // 创建时间
+      {
+        id: 'create_time',
+        label: this.$t('创建时间'),
+      },
+    ];
     return {
       tableLoading: true,
       tableDataOrigin: [], // 原始数据
@@ -181,6 +312,16 @@ export default {
       isRenderSlider: true, // 渲染侧边栏组件，关闭侧滑时销毁组件，避免接口在 pending 时关闭侧滑后又马上打开
       showSlider: false, // 显示编辑或新建ES源侧边栏
       editClusterId: null, // 编辑ES源ID,
+      isOpenWindow: true,
+      sourceStateFilters: [{ text: this.$t('正常'), value: true }, { text: this.$t('失败'), value: false }],
+      clusterSetting: {
+        fields: settingFields,
+        selectedFields: settingFields.slice(0, 10),
+      },
+      minIntroWidth: 300,
+      maxIntroWidth: 480,
+      introWidth: 360,
+      isDraging: false,
     };
   },
   computed: {
@@ -204,6 +345,10 @@ export default {
   created() {
     this.checkCreateAuth();
     this.getTableData();
+    this.formatFileSize = formatFileSize;
+    this.$nextTick(() => {
+      this.maxIntroWidth = this.$refs.accessContainerRef.clientWidth - 580;
+    });
   },
   methods: {
     async checkCreateAuth() {
@@ -423,7 +568,48 @@ export default {
       });
     },
     handleSettingChange({ fields }) {
-      this.columnSetting.selectedFields = fields;
+      this.clusterSetting.selectedFields = fields;
+    },
+    handleActiveDetails(state) {
+      this.isOpenWindow = state;
+      this.introWidth = state ? 360 : 0;
+    },
+    // 状态过滤
+    sourceStateFilterMethod(value, row) {
+      const info = this.stateMap[row.cluster_config.cluster_id]; // 兼容接口布尔值和对象
+      const state = (typeof info === 'boolean') ? info : info?.status;
+      return state === value;
+    },
+    checkcFields(field) {
+      return this.clusterSetting.selectedFields.some(item => item.id === field);
+    },
+    // 控制页面布局宽度
+    dragBegin(e) {
+      this.currentTreeBoxWidth = this.introWidth;
+      this.currentScreenX = e.screenX;
+      window.addEventListener('mousemove', this.dragMoving, { passive: true });
+      window.addEventListener('mouseup', this.dragStop, { passive: true });
+    },
+    dragMoving(e) {
+      this.isDraging = true;
+      const newTreeBoxWidth = this.currentTreeBoxWidth - e.screenX + this.currentScreenX;
+      if (newTreeBoxWidth < this.minIntroWidth) {
+        this.introWidth = this.minIntroWidth;
+      } else if (newTreeBoxWidth >= this.maxIntroWidth) {
+        this.introWidth = this.maxIntroWidth;
+      } else {
+        this.introWidth = newTreeBoxWidth;
+      }
+    },
+    dragStop() {
+      this.isDraging = false;
+      this.currentTreeBoxWidth = null;
+      this.currentScreenX = null;
+      window.removeEventListener('mousemove', this.dragMoving);
+      window.removeEventListener('mouseup', this.dragStop);
+    },
+    getPercent($row) {
+      return (100 - $row.storage_usage) / 100;
     },
   },
 };
@@ -431,20 +617,23 @@ export default {
 
 <style lang="scss">
   .es-access-container {
-    padding: 20px 24px;
+    transition: padding .5s;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
 
     .main-operator-container {
       margin-bottom: 20px;
     }
 
     .king-table {
-      /deep/ .state-container {
+      .state-container {
         display: flex;
         align-items: center;
 
         .bk-badge {
-          width: 10px;
-          height: 10px;
+          width: 5px;
+          height: 5px;
           border-radius: 50%;
           margin-right: 4px;
         }
@@ -458,7 +647,7 @@ export default {
         }
       }
 
-      /deep/ .cell {
+      ::v-deep .cell {
         padding: 4px 15px;
       }
 
@@ -466,6 +655,57 @@ export default {
         .cell {
           display: flex;
         }
+      }
+    }
+
+    .es-cluster-list-container {
+      padding: 20px 24px;
+    }
+
+    .intro-container {
+      position: relative;
+      top: 2px;
+      width: 400px;
+      height: calc(100vh - 104px);
+      overflow: hidden;
+      border-left: 1px solid transparent;
+
+      &.draging-move {
+        border-left-color: #3a84ff;
+      }
+    }
+
+    .drag-item {
+      width: 20px;
+      height: 40px;
+      display: inline-block;
+      color: #c4c6cc;
+      position: absolute;
+      z-index: 99;
+      right: 304px;
+      top: 48%;
+      user-select: none;
+      cursor: col-resize;
+
+      &.hidden-drag {
+        display: none;
+      }
+
+      .icon-more::after {
+        content: '\e189';
+        position: absolute;
+        left: 0;
+        top: 12px;
+      }
+    }
+
+    .percent {
+      display: flex;
+      align-items: center;
+
+      .percent-progress {
+        width: 40px;
+        margin-right: 4px;
       }
     }
   }

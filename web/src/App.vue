@@ -49,17 +49,19 @@
             :default-active="activeManageNav.id">
             <template v-for="groupItem in menuList">
               <bk-navigation-menu-group
+                v-if="groupItem.children.length"
                 :key="groupItem.id"
                 :group-name="isExpand ? groupItem.name : groupItem.keyword">
                 <template v-for="navItem in groupItem.children">
-                  <bk-navigation-menu-item
-                    :data-test-id="`navBox_nav_${navItem.id}`"
-                    :key="navItem.id"
-                    :id="navItem.id"
-                    :icon="getMenuIcon(navItem)"
-                    @click="handleClickNavItem(navItem.id)">
-                    {{ isExpand ? navItem.name : '' }}
-                  </bk-navigation-menu-item>
+                  <a class="nav-item" :key="navItem.id" :href="getRouteHref(navItem.id)">
+                    <bk-navigation-menu-item
+                      :data-test-id="`navBox_nav_${navItem.id}`"
+                      :id="navItem.id"
+                      :icon="getMenuIcon(navItem)"
+                      @click="handleClickNavItem(navItem.id)">
+                      {{ isExpand ? navItem.name : '' }}
+                    </bk-navigation-menu-item>
+                  </a>
                 </template>
               </bk-navigation-menu-group>
             </template>
@@ -76,31 +78,34 @@
         guide-page="default" />
     </div>
     <auth-dialog />
-    <login-modal v-if="loginData" :login-data="loginData" />
+    <bk-paas-login ref="login" />
+    <!-- <login-modal v-if="loginData" :login-data="loginData" /> -->
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from 'vuex';
 import headNav from '@/components/nav/head-nav';
-import LoginModal from '@/components/login-modal';
+// import LoginModal from '@/components/login-modal';
 import WelcomePage from '@/components/common/welcome-page';
 import AuthPage from '@/components/common/auth-page';
 import AuthDialog from '@/components/common/auth-dialog';
 import BizMenuSelect from '@/components/biz-menu';
 import NoviceGuide from '@/components/novice-guide';
 import jsCookie from 'js-cookie';
+import BkPaasLogin from '@blueking/paas-login';
 
 export default {
   name: 'App',
   components: {
     headNav,
-    LoginModal,
+    // LoginModal,
     AuthPage,
     AuthDialog,
     WelcomePage,
     BizMenuSelect,
     NoviceGuide,
+    BkPaasLogin,
   },
   data() {
     return {
@@ -112,6 +117,10 @@ export default {
       isExpand: true,
       curGuideStep: 0,
       isAsIframe: false,
+      rightClickRouteName: '', // 当前右键选中的路由
+      visible: false, // 是否展示右键菜单
+      top: 0, // 右键菜单定位top
+      left: 0, // 右键菜单定位left
     };
   },
   computed: {
@@ -176,6 +185,7 @@ export default {
     this.getUserGuide();
   },
   mounted() {
+    window.LoginModal = this.$refs.login;
     this.$store.dispatch('getBkBizList');
   },
   methods: {
@@ -207,6 +217,15 @@ export default {
         .catch((e) => {
           console.warn(e);
         });
+    },
+    getRouteHref(pageName) {
+      const newUrl = this.$router.resolve({
+        name: pageName,
+        query: {
+          projectId: window.localStorage.getItem('project_id'),
+        },
+      });
+      return newUrl.href;
     },
   },
 };
@@ -390,6 +409,11 @@ export default {
 
       .navigation-menu-item-icon.bk-icon {
         min-width: 28px;
+      }
+
+      .nav-item {
+        width: 100%;
+        display: inline-block;
       }
     }
 

@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 # since each thread has its own greenlet we can just use those as identifiers
 # for the context.  If greenlets are not available we fall back to the
@@ -39,6 +41,7 @@ from django.dispatch import Signal
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.utils.translation import ugettext as _
+from django.http import HttpResponseRedirect
 
 from apps.exceptions import BaseException
 from apps.utils.log import logger
@@ -177,3 +180,17 @@ class CommonMid(MiddlewareMixin):
         response.status_code = 500
 
         return response
+
+
+class HttpResponseIndexRedirect(HttpResponseRedirect):
+    def __init__(self, redirect_to, *args, **kwargs):
+        super(HttpResponseIndexRedirect, self).__init__(redirect_to, *args, **kwargs)
+        self["Location"] = os.path.join(settings.DEFAULT_HTTPS_HOST, redirect_to.lstrip("/"))
+
+
+class HttpsMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        if settings.BKAPP_IS_BKLOG_API:
+            return None
+        if not request.is_secure() and settings.DEFAULT_HTTPS_HOST:
+            return HttpResponseIndexRedirect(request.path)

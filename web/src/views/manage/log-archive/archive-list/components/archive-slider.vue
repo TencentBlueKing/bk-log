@@ -101,7 +101,7 @@
               data-test-id="formContainer_select_selectExpireDate"
               :clearable="false">
               <div slot="trigger" class="bk-select-name">
-                {{ formData.snapshot_days ? formData.snapshot_days + $t('天') : '' }}
+                {{ getDaysStr }}
               </div>
               <template v-for="(option, index) in retentionDaysList">
                 <bk-option :key="index" :id="option.id" :name="option.name"></bk-option>
@@ -191,6 +191,12 @@ export default {
 
       return list;
     },
+    getDaysStr() {
+      if (String(this.formData.snapshot_days) === '0') {
+        return this.$t('永久');
+      }
+      return !!this.formData.snapshot_days ? this.formData.snapshot_days + this.$t('天') : '';
+    },
   },
   watch: {
     async showSlider(val) {
@@ -269,6 +275,11 @@ export default {
     updateDaysList() {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
         return item.id;
+      });
+      retentionDaysList.push({
+        default: false,
+        id: '0',
+        name: this.$t('永久'),
       });
       this.retentionDaysList = retentionDaysList;
     },

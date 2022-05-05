@@ -20,6 +20,34 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-module.exports = {
-  presets: ['@blueking/bkmonitor-cli/preset'],
+module.exports = function (api) {
+  api && api.cache.never();
+  const presets = [
+    [
+      '@babel/preset-env',
+      {
+        targets: {
+          browsers: ['> 1%', 'last 2 versions', 'not ie <= 8'],
+          node: 'current',
+        },
+        useBuiltIns: 'usage',
+        corejs: 3,
+        debug: false,
+      },
+    ],
+    '@vue/babel-preset-jsx',
+  ];
+  const plugins = [
+    '@babel/plugin-transform-runtime',
+    [
+      'babel-plugin-import-bk-magic-vue',
+      {
+        baseLibName: 'bk-magic-vue',
+      },
+    ],
+  ];
+  return {
+    presets,
+    plugins,
+  };
 };

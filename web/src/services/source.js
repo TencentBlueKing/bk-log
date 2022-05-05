@@ -43,6 +43,11 @@ const create = {
   method: 'post',
 };
 
+const getProperty = {
+  url: '/bizs/get_property/',
+  method: 'get',
+};
+
 const deleteEs = {
   url: '/databus/storage/:cluster_id/?bk_biz_id=:bk_biz_id',
   method: 'delete',
@@ -149,6 +154,12 @@ const issuedRetry = {
   method: 'post',
 };
 
+// es集群
+const getEsList = {
+  url: '/databus/storage/cluster_groups',
+  method: 'get',
+};
+
 export {
   list,
   logList,
@@ -176,4 +187,6 @@ export {
   dataList,
   issuedRetry,
   scenario,
+  getProperty,
+  getEsList,
 };

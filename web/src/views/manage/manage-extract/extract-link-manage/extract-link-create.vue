@@ -397,7 +397,7 @@ export default {
       .king-form {
         width: 680px;
 
-        /deep/ .bk-form-item {
+        ::v-deep .bk-form-item {
           padding: 10px 0;
           margin: 0;
         }
@@ -460,7 +460,7 @@ export default {
               .king-input {
                 width: 86%;
 
-                /deep/ .bk-form-input.error {
+                ::v-deep .bk-form-input.error {
                   border-color: #ea3636;
                 }
               }

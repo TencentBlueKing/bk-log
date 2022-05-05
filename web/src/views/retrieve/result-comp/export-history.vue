@@ -295,11 +295,10 @@ export default {
       const exportParams = encodeURIComponent(JSON.stringify({ ...params }));
       // eslint-disable-next-line max-len
       const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
-      // window.open(targetUrl);
       const net = window.open(targetUrl, '_blank', '', false);
       net.addEventListener('beforeunload', () => {
         this.getTableList(true);
-				 });
+      });
     },
     /**
      * @desc: 异步下载
@@ -399,12 +398,8 @@ export default {
      * @param { Boolean } isPolling 该次请求是否是轮询
      */
     getTableList(isReset = false, isPolling = false) {
-      if (isReset) {
-        this.pagination.current = 1;
-      }
-      if (!isPolling) {
-        this.tableLoading = true;
-      }
+      isReset && (this.pagination.current = 1);
+      !isPolling && (this.tableLoading = true);
       const { limit, current } = this.pagination;
       this.$http.request('retrieve/getExportHistoryList', {
         params: {
@@ -417,7 +412,6 @@ export default {
       }).then((res) => {
         if (res.result) {
           this.pagination.count = res.data.total;
-          // this.exportList = res.data.list;
           this.setExportListData(res.data.list, isPolling);
         }
         // 查询所有索引集时才显示索引集IDLabel
@@ -459,7 +453,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import '@/scss/mixins/flex.scss';
 @import '@/scss/conf';
 
@@ -472,14 +466,6 @@ export default {
   width: 100%;
   text-align: right;
   margin: 10px 0 20px 0;
-}
-
-.icon-text-file {
-  position: absolute;
-  right: 10px;
-  font-size: 16px;
-  cursor: pointer;
-  transform: rotateZ(180deg);
 }
 
 .export-table {

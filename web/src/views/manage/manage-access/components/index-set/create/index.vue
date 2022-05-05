@@ -513,7 +513,7 @@ export default {
       .king-form {
         width: 680px;
 
-        /deep/ .bk-form-item {
+        ::v-deep .bk-form-item {
           padding: 10px 0;
           margin: 0;
         }
@@ -547,7 +547,7 @@ export default {
           flex-flow: wrap;
           padding: 10px 0 0;
 
-          /deep/ .bk-tag {
+          ::v-deep .bk-tag {
             display: inline-flex;
             align-items: center;
             height: 32px;
