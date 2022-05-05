@@ -27,7 +27,8 @@
       :title="isEdit ? $t('logArchive.editRepository') : $t('logArchive.createRepository')"
       :is-show="showSlider"
       :width="676"
-      :quick-close="false"
+      :quick-close="true"
+      :before-close="handleCloseSideslider"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="repository-slider-content">
@@ -474,6 +475,26 @@ export default {
       } finally {
         this.$bkLoading.hide();
       }
+    },
+    async handleCloseSideslider() {
+      return await this.showDeleteAlert();
+    },
+    /**
+     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
+     */
+    showDeleteAlert() {
+      return new Promise((reject) => {
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('pageLeaveTips'),
+          confirmFn: () => {
+            reject(true);
+          },
+          close: () => {
+            reject(false);
+          },
+        });
+      });
     },
   },
 };

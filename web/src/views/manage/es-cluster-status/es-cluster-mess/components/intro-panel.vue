@@ -36,7 +36,7 @@
       <div class="help-main">
         <div class="help-md-container" v-for="(item, index) of customTypeIntro" :key="index">
           <!-- eslint-disable-next-line vue/no-v-html -->
-          <div v-html="item.help_md"></div>
+          <div class="help-md" v-html="item.help_md"></div>
           <template v-if="item.button_list.length">
             <div v-for="(sItem, sIndex) of item.button_list" :key="sIndex">
               <a class="help-a-link"
@@ -259,6 +259,13 @@ export default {
       .help-md-container {
         padding: 16px 0;
         border-bottom: 1px solid #eaebf0;
+
+        .help-md{
+          a {
+            display: inline-block;
+            color: #3a84ff;
+          }
+        }
 
         .help-a-link {
           display: inline-block;

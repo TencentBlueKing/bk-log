@@ -86,7 +86,8 @@ export default {
         const { bizId, projectId } = queryObj;
         const demoId = String(window.DEMO_BIZ_ID);
         const demoProject = projectList.find(item => item.bk_biz_id === demoId);
-        this.demoProjectUrl = demoProject ? this.getDemoProjectUrl(demoProject.project_id) : '';
+        const demoProjectUrl = demoProject ? this.getDemoProjectUrl(demoProject.project_id) : '';
+        this.$store.commit('setDemoUrl', demoProjectUrl);
         const isOnlyDemo = demoProject && projectList.length === 1;
         if (!projectList.length || isOnlyDemo) { // 没有一个业务或只有一个demo业务显示欢迎页面
           const args = {
@@ -100,7 +101,7 @@ export default {
               return this.checkProjectChange(demoProject.project_id);
             }
             args.demoBusiness = {
-              url: this.demoProjectUrl,
+              url: demoProjectUrl,
             };
           }
           if (projectId || bizId) { // 查询参数带非 demo 业务 id，获取业务名和权限链接
