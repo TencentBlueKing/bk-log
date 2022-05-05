@@ -317,7 +317,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('logArchive.Confirm_delete_repo'),
+          subTitle: `${this.$t('当前仓库名称为')} ${row.repository_name}，${this.$t('确认要删除')}`,
           confirmFn: () => {
             this.requestDeleteRepo(row);
           },

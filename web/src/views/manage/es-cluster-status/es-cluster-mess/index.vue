@@ -271,7 +271,7 @@ export default {
       // 冷热数据
       {
         id: 'enable_hot_warm',
-        label: this.$t('创建时间'),
+        label: this.$t('冷热数据'),
       },
       // 总量
       {
@@ -529,7 +529,7 @@ export default {
     deleteDataSource(row) {
       this.$bkInfo({
         type: 'warning',
-        title: this.$t('确认删除当前ES集群'),
+        subTitle: `${this.$t('当前集群为')} ${row.cluster_config.domain_name}， ${this.$t('确认要删除')}`,
         confirmFn: () => {
           this.handleDelete(row);
         },
