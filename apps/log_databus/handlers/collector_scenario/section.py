@@ -69,6 +69,20 @@ class SectionCollectorScenario(CollectorScenario):
         local_params = self._deal_text_public_params(local_params, params)
 
         return [
+            # 增加前置检测步骤，如果采集器不存在，则尝试安装
+            {
+                "id": f"main:{self.PLUGIN_NAME}",
+                "type": "PLUGIN",
+                "config": {
+                    "job_type": "MAIN_INSTALL_PLUGIN",
+                    "check_and_skip": True,
+                    "is_version_sensitive": False,
+                    "plugin_name": self.PLUGIN_NAME,
+                    "plugin_version": self.PLUGIN_VERSION,
+                    "config_templates": [{"name": f"{self.PLUGIN_NAME}.conf", "version": "latest", "is_main": True}],
+                },
+                "params": {"context": {}},
+            },
             {
                 "id": self.PLUGIN_NAME,
                 "type": "PLUGIN",
@@ -83,7 +97,7 @@ class SectionCollectorScenario(CollectorScenario):
                         "local": [local_params],
                     }
                 },
-            }
+            },
         ]
 
     @classmethod
