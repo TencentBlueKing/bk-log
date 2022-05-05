@@ -175,7 +175,7 @@ class MappingHandlers(object):
             }
             for field in fields_result
         ]
-        fields_list = self.virtual_fields(fields_list)
+        # fields_list = self.virtual_fields(fields_list)
         fields_list = self._combine_description_field(fields_list)
         # 处理editable关系
         final_fields_list: list = self._combine_fields(fields_list)
