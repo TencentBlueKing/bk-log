@@ -169,7 +169,7 @@ class CleanMetricCollector(object):
             clean_filter.get_collector_config()
             clean_filter.get_bkdata_clean()
             clean_configs = clean_filter.cleans
-            aggregation_datas = defaultdict(dict)
+            aggregation_datas = defaultdict(lambda: defaultdict(int))
             index_set_list = [i.index_set_id for i in clean_configs]
             index_sets = array_group(
                 LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
@@ -180,9 +180,6 @@ class CleanMetricCollector(object):
                     bk_data_clean_config_count[bk_biz_id] += 1
                 else:
                     clean_config_count[bk_biz_id] += 1
-
-                if not aggregation_datas[clean_config.index_set_id].get(clean_config.etl_config):
-                    aggregation_datas[clean_config.index_set_id][clean_config.etl_config] = 0
                 aggregation_datas[clean_config.index_set_id][clean_config.etl_config] += 1
 
             for index_set_id in aggregation_datas:

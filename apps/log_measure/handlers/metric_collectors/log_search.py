@@ -110,13 +110,9 @@ class LogSearchMetricCollector(object):
         index_sets = array_group(
             LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
         )
-        aggregation_datas = dict()
+        aggregation_datas = defaultdict(lambda: defaultdict(int))
         for index_set_id in index_set_list:
             bk_biz_id = index_sets[index_set_id]["bk_biz_id"]
-            if not aggregation_datas.get(bk_biz_id):
-                aggregation_datas[bk_biz_id] = dict()
-            if not aggregation_datas.get(bk_biz_id).get(index_set_id):
-                aggregation_datas[bk_biz_id][index_set_id] = 0
             aggregation_datas[bk_biz_id][index_set_id] += 1
 
         # 收藏带标签数据
