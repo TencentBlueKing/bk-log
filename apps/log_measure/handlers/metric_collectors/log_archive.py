@@ -19,10 +19,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from collections import defaultdict
 from django.utils.translation import ugettext as _
 from django.db.models import Count
 
+from apps.log_databus.handlers.storage import StorageHandler
 from apps.log_databus.models import ArchiveConfig
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
@@ -33,40 +33,22 @@ class ArchiveMetricCollector(object):
     @staticmethod
     @register_metric("log_archive", description=_("日志归档"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
     def archive_config():
+        metrics = []
         groups = (
             ArchiveConfig.objects.filter()
-            .values("bk_biz_id", "target_snapshot_repository_name")
-            .order_by("archive_config_id")
+            .values("bk_biz_id")
+            .order_by("bk_biz_id", "archive_config_id")
             .annotate(count=Count("archive_config_id"))
         )
-        aggregation_datas = defaultdict(dict)
         for group in groups:
-            bk_biz_id = group["bk_biz_id"]
-            target_snapshot_repository_name = group["target_snapshot_repository_name"]
-            aggregation_datas[bk_biz_id][target_snapshot_repository_name] = group["count"]
-
-        metrics = []
-        for bk_biz_id in aggregation_datas:
             metrics.append(
-                # 各个业务业务归档数量
+                # 各个业务业务归档配置数量
                 Metric(
                     metric_name="count",
-                    metric_value=sum(aggregation_datas[bk_biz_id].values()),
+                    metric_value=group["count"],
                     dimensions={
-                        "target_bk_biz_id": bk_biz_id,
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
-                    },
-                    timestamp=MetricUtils.get_instance().report_ts,
-                )
-            )
-            metrics.append(
-                # 各个业务归档仓库数量
-                Metric(
-                    metric_name="repository_count",
-                    metric_value=len(aggregation_datas[bk_biz_id].keys()),
-                    dimensions={
-                        "target_bk_biz_id": bk_biz_id,
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                        "target_bk_biz_id": group["bk_biz_id"],
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -80,13 +62,31 @@ class ArchiveMetricCollector(object):
                 timestamp=MetricUtils.get_instance().report_ts,
             )
         )
+        repository_count_total = 0
+        # 获取各个业务归档仓库列表
+        for bk_biz_id in MetricUtils.get_instance().biz_info:
+            repository_list = StorageHandler().repository(bk_biz_id=bk_biz_id)
+            metrics.append(
+                # 各个业务业务归档配置数量
+                Metric(
+                    metric_name="repository_count",
+                    metric_value=len(repository_list),
+                    dimensions={
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+            repository_count_total += len(repository_list)
+        # 归档仓库总数
         metrics.append(
-            # 全业务归档仓库数量
             Metric(
                 metric_name="repository_count_total",
-                metric_value=len({i["target_snapshot_repository_name"] for i in groups}),
+                metric_value=repository_count_total,
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
             )
         )
+
         return metrics
