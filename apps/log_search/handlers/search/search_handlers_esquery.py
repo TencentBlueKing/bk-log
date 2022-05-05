@@ -1161,7 +1161,8 @@ class SearchHandler(object):
         for hit in result_dict["hits"]["hits"]:
             log = hit["_source"]
             origin_log = copy.deepcopy(log)
-            log = self._add_cmdb_fields(log)
+            # TODO 临时注释CMDB虚拟字段补充功能
+            # log = self._add_cmdb_fields(log)
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})
