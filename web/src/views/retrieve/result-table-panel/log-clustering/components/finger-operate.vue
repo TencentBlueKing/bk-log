@@ -216,9 +216,7 @@ export default {
       this.interactType = true;
     },
     handleShowAlarmPopover(e) {
-      if (this.popoverInstance) {
-        return;
-      }
+      if (this.popoverInstance || !this.fingerOperateData.signatureSwitch) return;
       this.popoverInstance = this.$bkPopover(e.target, {
         content: this.$refs.alarmPopover,
         trigger: 'mouseenter',

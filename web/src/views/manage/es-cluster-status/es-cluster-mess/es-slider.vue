@@ -1109,12 +1109,12 @@ export default {
       return true;
     },
     async handleCloseSideslider() {
-      return await this.showAlert();
+      return await this.showDeleteAlert();
     },
     /**
      * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
      */
-    showAlert() {
+    showDeleteAlert() {
       if (this.isDisableClickSubmit) return true;
       return new Promise((reject) => {
         this.$bkInfo({
