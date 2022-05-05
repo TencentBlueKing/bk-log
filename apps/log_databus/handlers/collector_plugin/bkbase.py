@@ -17,7 +17,6 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-
 from apps.log_databus.constants import ETLProcessorChoices
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.collector_plugin import CollectorPluginHandler
@@ -55,7 +54,7 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
             hot_warm_config=cluster_info["cluster_config"].get("custom_option", {}).get("hot_warm_config"),
         )
 
-    def _extra_operation(self, params: dict) -> None:
+    def _post_operation(self, params: dict) -> None:
         """
         额外操作
         """
@@ -75,10 +74,7 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
             return
 
         EtlHandler().update_or_create_bkbase_etl_storage(
-            instance=self.collector_plugin,
-            fields=self.collector_plugin.fields,
-            json_config=self.collector_plugin.etl_params.get("json_config", ""),
-            is_create=is_create,
+            instance=self.collector_plugin, is_create=is_create, params=params
         )
 
     def _update_or_create_instance_etl(self, collect_config: CollectorConfig, params: dict) -> None:
@@ -86,16 +82,5 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
         创建或更新实例清洗入库
         """
 
-        # 允许独立清洗配置
-        if self.collector_plugin.is_allow_alone_etl_config:
-            EtlHandler().update_or_create_bkbase_etl_storage(
-                instance=collect_config,
-                fields=params.get("fields", []),
-                json_config=params.get("etl_params", {}).get("json_config", ""),
-                is_create=True,
-                params=params,
-            )
-
-        # 不允许独立清洗，但是存在参数
-        elif len(self.collector_plugin.params):
-            pass
+        # 使用对应的配置创建清洗与入库
+        EtlHandler().update_or_create_bkbase_etl_storage(instance=collect_config, is_create=True, params=params)

@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import copy
 import json
 from typing import Union
 
@@ -33,7 +34,7 @@ from apps.decorators import user_operation_record
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.log_clustering.tasks.flow import update_clustering_clean
-from apps.log_databus.constants import ETL_PARAMS, EtlConfig, REGISTERED_SYSTEM_DEFAULT
+from apps.log_databus.constants import BKDATA_ES_TYPE_MAP, ETL_PARAMS, EtlConfig, REGISTERED_SYSTEM_DEFAULT
 from apps.log_databus.exceptions import (
     BKBASEStorageNotExistException,
     CollectorActiveException,
@@ -123,8 +124,6 @@ class EtlHandler(object):
     def update_or_create_bkbase_etl_storage(
         cls,
         instance: Union[CollectorConfig, CollectorPlugin],
-        fields: list,
-        json_config: Union[str, dict],
         is_create: bool,
         params: dict = None,
     ) -> None:
@@ -136,10 +135,21 @@ class EtlHandler(object):
         if params is None:
             params = {}
 
-        json_config = json_config if isinstance(json_config, dict) else json.loads(json_config)
+        # 参数
+        fields = params.get("fields", [])
+        etl_params = params.get("etl_params", {})
+
+        # 获取清洗入库
+        collector_scenario = CollectorScenario.get_instance(collector_scenario_id=instance.collector_scenario_id)
+        built_in_config = collector_scenario.get_built_in_config()
+        etl_storage: EtlStorage = EtlStorage.get_instance(instance.etl_config)
+        fields_config = etl_storage.get_result_table_config(fields, etl_params, copy.deepcopy(built_in_config)).get(
+            "field_list", []
+        )
+        bkdata_json_config = etl_storage.get_bkdata_etl_config(fields, etl_params, built_in_config)
+        fields_config.append({"alias_name": "time", "field_name": "time", "option": {"es_type": "long"}})
 
         # TODO 指定 result_table
-
         bkdata_params = {
             "raw_data_id": instance.bk_data_id,
             "result_table_name": f"{settings.TABLE_ID_PREFIX}_{instance.get_en_name()}",
@@ -148,8 +158,17 @@ class EtlHandler(object):
             "description": instance.description,
             "bk_biz_id": instance.get_bk_biz_id(),
             "bk_username": get_request_username(),
-            "fields": fields,
-            "json_config": json.dumps(json_config),
+            "fields": [
+                {
+                    "field_name": field.get("alias_name") if field.get("alias_name") else field.get("field_name"),
+                    "field_type": BKDATA_ES_TYPE_MAP.get(field.get("option").get("es_type"), "string"),
+                    "field_alias": field.get("description") if field.get("description") else field.get("field_name"),
+                    "is_dimension": field.get("tag", "dimension") == "dimension",
+                    "field_index": index,
+                }
+                for index, field in enumerate(fields_config, 1)
+            ],
+            "json_config": json.dumps(bkdata_json_config),
         }
 
         # 创建清洗

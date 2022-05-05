@@ -64,8 +64,8 @@ class CollectorPluginHandler:
         初始化
         """
 
-        self.collector_plugin_id = collector_plugin_id
         if collector_plugin_id:
+            self.collector_plugin_id = collector_plugin_id
             try:
                 self.collector_plugin: CollectorPlugin = CollectorPlugin.objects.get(
                     collector_plugin_id=collector_plugin_id
@@ -83,16 +83,16 @@ class CollectorPluginHandler:
         if config_name_duplicate or plugin_name_duplicate:
             raise CollectorPluginNameDuplicateException()
 
-    def _extra_operation(self, params: dict) -> None:
+    def _post_operation(self, params: dict) -> None:
         """
-        额外操作
+        额外的自定义操作，在采集插件创建完成后执行
         """
 
         pass
 
     def _update_or_create_etl_storage(self, params: dict, is_create: bool) -> None:
         """
-        创建或更新清洗入库
+        创建或更新采集插件清洗入库
         """
 
         raise NotImplementedError
@@ -174,7 +174,7 @@ class CollectorPluginHandler:
 
             # DATA_ID
             if not is_allow_alone_data_id or is_create_public_data_id:
-                # 绑定链路
+                # 绑定采集链路
                 if not data_link_id:
                     data_links = DataLinkConfig.objects.filter(bk_biz_id__in=[0, bk_biz_id]).order_by("data_link_id")
                     if data_links.exists():
@@ -205,7 +205,7 @@ class CollectorPluginHandler:
             self._update_or_create_etl_storage(params, is_create)
 
         # 额外操作
-        self._extra_operation(params)
+        self._post_operation(params)
 
         self.collector_plugin.save()
 
@@ -255,12 +255,7 @@ class CollectorPluginHandler:
             "is_allow_alone_storage": self.collector_plugin.is_allow_alone_storage,
         }
 
-        # 数据归属Biz
-        bkdata_biz_id = self.collector_plugin.bkdata_biz_id
-        if bkdata_biz_id:
-            build_in_params.update({"bkdata_biz_id": bkdata_biz_id})
-
-        # 独立DATAID
+        # 不独立DATAID
         if not self.collector_plugin.is_allow_alone_data_id:
             build_in_params.update(
                 {
@@ -268,6 +263,11 @@ class CollectorPluginHandler:
                     "data_link_id": self.collector_plugin.data_link_id,
                 }
             )
+        # 允许独立DATAID，指定数据归属业务
+        else:
+            bkdata_biz_id = self.collector_plugin.bkdata_biz_id
+            if bkdata_biz_id:
+                build_in_params.update({"bkdata_biz_id": bkdata_biz_id})
 
         # 独立存储
         if not self.collector_plugin.is_allow_alone_storage:
@@ -338,7 +338,8 @@ class CollectorPluginHandler:
             raise CollectorConfigNotExistException()
 
         # 清洗入库
-        self._update_or_create_instance_etl(collector_config, params)
+        if self.collector_plugin.is_allow_alone_etl_config:
+            self._update_or_create_instance_etl(collector_config, params)
 
         return {
             "collector_config_id": collector_config.collector_config_id,

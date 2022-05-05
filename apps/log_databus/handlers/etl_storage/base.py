@@ -53,6 +53,7 @@ class EtlStorage(object):
             EtlConfig.BK_LOG_JSON: "BkLogJsonEtlStorage",
             EtlConfig.BK_LOG_DELIMITER: "BkLogDelimiterEtlStorage",
             EtlConfig.BK_LOG_REGEXP: "BkLogRegexpEtlStorage",
+            EtlConfig.CUSTOM: "CustomEtlStorage",
         }
         try:
             etl_storage = import_string(
