@@ -294,7 +294,7 @@ def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
     time_format = arrow.now().format("YYYYMMDDHHmmssSSS")
     if clustering_config.model_id:
         model_name = AiopsModel.objects.get(model_id=clustering_config.model_id).model_name
-        experiment_alias = AiopsModelExperiment.objects.filter(model_id=clustering_config.model_id).experiment_alias
+        experiment_alias = AiopsModelExperiment.objects.get(model_id=clustering_config.model_id).experiment_alias
     else:
         model_name = f"{clustering_config.bk_biz_id}_bklog_model_{index_set_id}_{time_format}"
         experiment_alias = f"{clustering_config.bk_biz_id}_bklog_{index_set_id}_experiment_{time_format}"
