@@ -25,6 +25,7 @@ from typing import List
 from django.utils.translation import ugettext as _
 from django.db.models import Count
 
+from apps.api import NodeApi
 from apps.utils.thread import MultiExecuteFunc
 from apps.log_databus.models import CollectorConfig
 from apps.log_measure.constants import INDEX_FORMAT, COMMON_INDEX_RE
@@ -107,3 +108,56 @@ class CollectMetricCollector(object):
             multi_execute_func.append(str(cluster_id), _get_indices, cluster, use_request=False)
         result = multi_execute_func.run()
         return [indices for cluster_indices in result.values() for indices in cluster_indices]
+
+    @register_metric("collector_host", description=_("采集主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
+    def collect_host(self):
+        configs = CollectorConfig.objects.filter(is_active=True).values(
+            "bk_biz_id", "subscription_id", "collector_config_id", "collector_config_name"
+        )
+
+        subscription_id_dict = {
+            config["subscription_id"]: config["collector_config_id"] for config in configs if config["subscription_id"]
+        }
+
+        groups = NodeApi.get_subscription_instance_status(
+            {"subscription_id_list": list(subscription_id_dict.keys()), "no_request": True}
+        )
+        collector_config_dict = {
+            config["collector_config_id"]: {
+                "bk_biz_id": config["bk_biz_id"],
+                "collector_config_name": config["collector_config_name"],
+            }
+            for config in configs
+        }
+
+        biz_collector_dict = defaultdict(int)
+        total = 0
+        for group in groups:
+            biz_collector_dict[subscription_id_dict[group["subscription_id"]]] += 1
+            total += 1
+        metrics = [
+            Metric(
+                metric_name="count",
+                metric_value=count,
+                dimensions={
+                    "collector_config_id": collector_config_id,
+                    "collector_config_name": collector_config_dict[collector_config_id]["collector_config_name"],
+                    "target_bk_biz_id": collector_config_dict[collector_config_id]["bk_biz_id"],
+                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(
+                        collector_config_dict[collector_config_id]["bk_biz_id"]
+                    ),
+                },
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+            for collector_config_id, count in biz_collector_dict.items()
+        ]
+
+        metrics.append(
+            Metric(
+                metric_name="total",
+                metric_value=total,
+                dimensions=None,
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
+        return metrics

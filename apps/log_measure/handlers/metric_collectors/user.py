@@ -59,6 +59,15 @@ class ThirdPartyMetricCollector(object):
             for user in recent_active_users
         ]
 
+        metrics.append(
+            Metric(
+                metric_name="total",
+                metric_value=len(recent_active_users),
+                dimensions=None,
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
+
         return metrics
 
     @staticmethod
