@@ -56,7 +56,7 @@ class ArchiveMetricCollector(object):
         metrics.append(
             # 全业务归档配置数量
             Metric(
-                metric_name="count_total",
+                metric_name="total",
                 metric_value=sum(i["count"] for i in groups),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -82,7 +82,7 @@ class ArchiveMetricCollector(object):
         # 归档仓库总数
         metrics.append(
             Metric(
-                metric_name="repository_count_total",
+                metric_name="repository_total",
                 metric_value=repository_count_total,
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,

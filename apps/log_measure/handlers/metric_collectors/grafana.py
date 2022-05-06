@@ -98,7 +98,7 @@ class GrafanaMetricCollector(object):
             metrics.append(
                 # 各个业务仪表盘试图总数
                 Metric(
-                    metric_name="panel_count_total",
+                    metric_name="panel_total",
                     metric_value=sum(panel_count.values()),
                     dimensions={
                         "target_bk_biz_id": int(org_name),

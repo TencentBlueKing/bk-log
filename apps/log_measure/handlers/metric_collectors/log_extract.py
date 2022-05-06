@@ -95,7 +95,7 @@ class LogExtractMetricCollector(object):
             # 各个业务提取配置总数
             metrics.append(
                 Metric(
-                    metric_name="count_total",
+                    metric_name="total",
                     metric_value=aggregation_datas[bk_biz_id],
                     dimensions={
                         "target_bk_biz_id": bk_biz_id,

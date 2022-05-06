@@ -79,7 +79,7 @@ class LogSearchMetricCollector(object):
         # 搜索总数
         metrics.append(
             Metric(
-                metric_name="search_count_total",
+                metric_name="search_total",
                 metric_value=history_objs.count(),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -134,7 +134,7 @@ class LogSearchMetricCollector(object):
         # 收藏总数
         metrics.append(
             Metric(
-                metric_name="favorite_count_total",
+                metric_name="favorite_total",
                 metric_value=favorite_objs.count(),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -184,7 +184,7 @@ class LogExportMetricCollector(object):
         # 导出总数
         metrics.append(
             Metric(
-                metric_name="export_count_total",
+                metric_name="export_total",
                 metric_value=history_objs.count(),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -232,7 +232,7 @@ class IndexSetMetricCollector(object):
             metrics.append(
                 # 有效索引集数量
                 Metric(
-                    metric_name="index_set_count_total",
+                    metric_name="index_set_total",
                     metric_value=aggregation_index_set[bk_biz_id],
                     dimensions={},
                     timestamp=MetricUtils.get_instance().report_ts,
@@ -241,7 +241,7 @@ class IndexSetMetricCollector(object):
             metrics.append(
                 # 有效索引集数量
                 Metric(
-                    metric_name="index_set_active_count_total",
+                    metric_name="index_set_active_total",
                     metric_value=aggregation_active_index_set[bk_biz_id],
                     dimensions={},
                     timestamp=MetricUtils.get_instance().report_ts,

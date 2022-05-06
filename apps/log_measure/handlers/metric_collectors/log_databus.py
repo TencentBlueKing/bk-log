@@ -44,7 +44,6 @@ class CollectMetricCollector(object):
     def collector_config():
         groups = (
             CollectorConfig.objects.filter()
-            .exclude(collector_scenario_id=CollectorScenarioEnum.CUSTOM.value)
             .values("bk_biz_id", "is_active", "collector_scenario_id")
             .order_by("bk_biz_id", "is_active", "collector_scenario_id")
             .annotate(count=Count("collector_config_id"))
@@ -65,7 +64,7 @@ class CollectMetricCollector(object):
         ]
         metrics.append(
             Metric(
-                metric_name="count_total",
+                metric_name="total",
                 metric_value=sum([i["count"] for i in groups]),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -74,7 +73,9 @@ class CollectMetricCollector(object):
         return metrics
 
     @staticmethod
-    @register_metric("collector_config", description=_("采集配置"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "custom_collector_config", description=_("自定义采集配置"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def custom_collector_config():
         groups = (
             CollectorConfig.objects.filter(collector_scenario_id=CollectorScenarioEnum.CUSTOM.value)
@@ -97,7 +98,7 @@ class CollectMetricCollector(object):
         ]
         metrics.append(
             Metric(
-                metric_name="custom_count_total",
+                metric_name="custom_total",
                 metric_value=sum([i["count"] for i in groups]),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -125,6 +126,7 @@ class CollectMetricCollector(object):
 
         for collect in has_table_id_collects:
             cur_cap = sum([float(indices["store.size"]) for indices in table_id_map_indices.get(collect.table_id, [])])
+            docs_count = sum([int(indices["docs.count"]) for indices in table_id_map_indices.get(collect.table_id, [])])
             metrics.append(
                 Metric(
                     metric_name="capacity",
@@ -133,6 +135,21 @@ class CollectMetricCollector(object):
                         "collector_config_id": collect.collector_config_id,
                         "collector_config_name": collect.collector_config_name,
                         "target_bk_biz_id": collect.bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(collect.bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+            # 指标docs.count
+            metrics.append(
+                Metric(
+                    metric_name="docs_count",
+                    metric_value=docs_count,
+                    dimensions={
+                        "collector_config_id": collect.collector_config_id,
+                        "collector_config_name": collect.collector_config_name,
+                        "target_bk_biz_id": collect.bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(collect.bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
