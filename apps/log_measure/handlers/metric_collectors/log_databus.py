@@ -131,7 +131,7 @@ class CollectMetricCollector(object):
             docs_count = sum([int(indices["docs.count"]) for indices in table_id_map_indices.get(collect.table_id, [])])
             metrics.append(
                 Metric(
-                    metric_name="capacity",
+                    metric_name="store_sum",
                     metric_value=cur_cap,
                     dimensions={
                         "collector_config_id": collect.collector_config_id,
@@ -215,7 +215,7 @@ class CleanMetricCollector(object):
         # 上报两个清洗总数
         metrics.append(
             Metric(
-                metric_name="clean_config_total",
+                metric_name="total",
                 metric_value=sum(clean_config_count.values()),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -223,7 +223,7 @@ class CleanMetricCollector(object):
         )
         metrics.append(
             Metric(
-                metric_name="bk_data_clean_config_total",
+                metric_name="bk_data_total",
                 metric_value=sum(bk_data_clean_config_count.values()),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
