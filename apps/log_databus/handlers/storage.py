@@ -24,42 +24,43 @@ import operator
 import re
 import socket
 from collections import defaultdict
-from typing import Union, List
-import arrow
+from typing import List, Union
 
+import arrow
 from django.conf import settings
+from django.db.models import Q, Sum
 from django.utils.translation import ugettext as _
-from django.db.models import Sum, Q
 from elasticsearch import Elasticsearch
 
-from apps.log_databus.utils.es_config import get_es_config
-from apps.utils.log import logger
-from apps.utils.thread import MultiExecuteFunc
-from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
+from apps.api import BkDataResourceCenterApi, BkDataStorekitApi, BkLogApi, TransferApi
+from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
+from apps.decorators import user_operation_record
 from apps.iam import Permission, ResourceEnum
-from apps.log_esquery.utils.es_route import EsRoute
-from apps.log_search.models import Scenario, ProjectInfo, BizProperty
-from apps.utils.cache import cache_five_minute
-from apps.utils.local import get_local_param, get_request_username
-from apps.api import TransferApi, BkLogApi
-from apps.log_databus.models import StorageCapacity, StorageUsed
 from apps.log_databus.constants import (
-    STORAGE_CLUSTER_TYPE,
-    REGISTERED_SYSTEM_DEFAULT,
-    DEFAULT_ES_SCHEMA,
-    NODE_ATTR_PREFIX_BLACKLIST,
     BKLOG_RESULT_TABLE_PATTERN,
-    VisibleEnum,
+    DEFAULT_ES_SCHEMA,
     EsSourceType,
+    NODE_ATTR_PREFIX_BLACKLIST,
+    REGISTERED_SYSTEM_DEFAULT,
+    STORAGE_CLUSTER_TYPE,
+    VisibleEnum,
 )
 from apps.log_databus.exceptions import (
+    StorageConnectInfoException,
+    StorageHaveResource,
     StorageNotExistException,
     StorageNotPermissionException,
-    StorageConnectInfoException,
     StorageUnKnowEsVersionException,
-    StorageHaveResource,
 )
-from apps.decorators import user_operation_record
+from apps.log_databus.models import StorageCapacity, StorageUsed
+from apps.log_databus.serializers import BKBASEResourceCreateSerializer, BKBASEStorageCreateSerializer
+from apps.log_databus.utils.es_config import get_es_config
+from apps.log_esquery.utils.es_route import EsRoute
+from apps.log_search.models import BizProperty, ProjectInfo, Scenario
+from apps.utils.cache import cache_five_minute
+from apps.utils.local import get_local_param, get_request_username
+from apps.utils.log import logger
+from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import format_user_time_zone
 
 CACHE_EXPIRE_TIME = 300
@@ -466,6 +467,9 @@ class StorageHandler(object):
                 es_source_id, attribute={"name": params["cluster_name"]}
             )
         )
+
+        if params.get("create_bkbase_storage"):
+            self.create_bkbase_storage(params)
 
         return es_source_id
 
@@ -900,3 +904,44 @@ class StorageHandler(object):
             )
             result.append(repository)
         return result
+
+    def create_bkbase_resource(self, params: dict) -> dict:
+        """
+        创建 BKBASE 资源
+        """
+
+        serializer = BKBASEResourceCreateSerializer(data=params)
+        serializer.is_valid(raise_exception=True)
+        api_params = serializer.validated_data
+        return BkDataResourceCenterApi.create_resource_set(api_params)
+
+    def create_bkbase_storage(self, params: dict) -> dict:
+        """
+        创建 BKBASE 存储集群
+        """
+
+        params.update(
+            {
+                "created_by": get_request_username(),
+                "tags": ["inland", "usr", "enable"],
+                "belongs_to": get_request_username(),
+                "connection_info": {
+                    "user": params["auth_info"]["username"],
+                    "enable_auth": True,
+                    "host": params["domain_name"],
+                    "password": params["auth_info"]["password"],
+                    "port": params["port"],
+                    "transport": 9300,
+                    "enable_replica": True,
+                    "hot_save_days": 7,
+                    "total_shards_per_node": 20,
+                    "max_shard_num": 20,
+                    "has_cold_nodes": False,
+                    "has_hot_node": True,
+                },
+            }
+        )
+        serializer = BKBASEStorageCreateSerializer(data=params)
+        serializer.is_valid(raise_exception=True)
+        api_params = serializer.validated_data
+        return BkDataStorekitApi.storekit_clusters_create(api_params)
