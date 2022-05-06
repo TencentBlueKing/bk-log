@@ -169,15 +169,15 @@ class ClusterMetricCollector(object):
             except Exception as e:  # pylint: disable=broad-except
                 logger.exception("fail to collect cluster_node metric for cluster->{}, {}".format(cluster_info, e))
 
-        for key, value in cluster_count.items():
+        for bk_biz_id, count in cluster_count.items():
             metrics.append(
                 # 各个业务集群数
                 Metric(
                     metric_name="cluster_count",
-                    metric_value=value,
+                    metric_value=count,
                     dimensions={
-                        "target_bk_biz_id": key,
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(key),
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )

@@ -25,13 +25,15 @@ from typing import List
 from django.utils.translation import ugettext as _
 from django.db.models import Count
 
-from apps.log_databus.constants import DEFAULT_ETL_CONFIG
-from apps.log_databus.utils.clean import CleanFilterUtils
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import SCENARIO_BKDATA
+from apps.log_databus.constants import DEFAULT_ETL_CONFIG, EtlConfig
 from apps.log_search.constants import CollectorScenarioEnum
 from apps.log_search.models import LogIndexSet
 from apps.utils.db import array_group
 from apps.utils.thread import MultiExecuteFunc
-from apps.log_databus.models import CollectorConfig
+from apps.utils.log import logger
+from apps.log_databus.models import CollectorConfig, BKDataClean
 from apps.log_measure.constants import INDEX_FORMAT, COMMON_INDEX_RE
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
@@ -181,30 +183,24 @@ class CleanMetricCollector(object):
         clean_config_count = defaultdict(int)
         bk_data_clean_config_count = defaultdict(int)
 
-        for bk_biz_id in MetricUtils.get_instance().biz_info:
-            clean_filter = CleanFilterUtils(bk_biz_id=bk_biz_id)
-            clean_filter.get_collector_config()
-            clean_filter.get_bkdata_clean()
-            clean_configs = clean_filter.cleans
+        for bk_biz_id, clean_configs in CleanMetricCollector.get_clean_config().items():
             aggregation_datas = defaultdict(lambda: defaultdict(int))
-            index_set_list = [i.index_set_id for i in clean_configs]
+            index_set_list = [i["index_set_id"] for i in clean_configs]
             index_sets = array_group(
                 LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
             )
             for clean_config in clean_configs:
-
-                if clean_config.etl_config == DEFAULT_ETL_CONFIG:
+                if clean_config["etl_config"] == DEFAULT_ETL_CONFIG:
                     bk_data_clean_config_count[bk_biz_id] += 1
                 else:
                     clean_config_count[bk_biz_id] += 1
-                aggregation_datas[clean_config.index_set_id][clean_config.etl_config] += 1
-
+                aggregation_datas[clean_config["index_set_id"]][clean_config["etl_config"]] += 1
             for index_set_id in aggregation_datas:
                 for etl_config in aggregation_datas[index_set_id]:
                     metrics.append(
                         # 上报以索引, 清洗类型为维度的数据
                         Metric(
-                            metric_name="clean_config",
+                            metric_name="count",
                             metric_value=aggregation_datas[index_set_id][etl_config],
                             dimensions={
                                 "target_bk_biz_id": bk_biz_id,
@@ -235,3 +231,55 @@ class CleanMetricCollector(object):
         )
 
         return metrics
+
+    @staticmethod
+    def get_clean_config() -> defaultdict:
+        """
+        获取全业务清洗列表
+        """
+        cleans = defaultdict(list)
+        collector_configs = (
+            CollectorConfig.objects.filter(
+                bk_biz_id__in=[bk_biz_id for bk_biz_id in MetricUtils.get_instance().biz_info]
+            )
+            .exclude(index_set_id__isnull=True)
+            .exclude(etl_config__isnull=True)
+            .exclude(etl_config=EtlConfig.BK_LOG_TEXT)
+        )
+        for collector_config in collector_configs:
+            cleans[collector_config.bk_biz_id].append(
+                {
+                    "bk_data_id": collector_config.bk_data_id,
+                    "collector_config_name": collector_config.collector_config_name,
+                    "result_table_id": collector_config.table_id.replace(".", "_"),
+                    "collector_config_id": collector_config.collector_config_id,
+                    "etl_config": collector_config.etl_config,
+                    "index_set_id": collector_config.index_set_id,
+                }
+            )
+
+        if not FeatureToggleObject.switch(name=SCENARIO_BKDATA):
+            return cleans
+        bk_data_cleans = BKDataClean.objects.filter(
+            bk_biz_id__in=[bk_biz_id for bk_biz_id in MetricUtils.get_instance().biz_info]
+        )
+        for bk_data_clean in bk_data_cleans:
+            collector_config = CollectorConfig.objects.filter(
+                collector_config_id=bk_data_clean.collector_config_id
+            ).first()
+            if not collector_config:
+                logger.error("can not find this collector_config {}".format(bk_data_clean.collector_config_id))
+                continue
+
+            cleans[collector_config.bk_biz_id].append(
+                {
+                    "bk_data_id": bk_data_clean.raw_data_id,
+                    "collector_config_name": collector_config.collector_config_name,
+                    "result_table_id": bk_data_clean.result_table_id,
+                    "collector_config_id": bk_data_clean.collector_config_id,
+                    "etl_config": DEFAULT_ETL_CONFIG,
+                    "index_set_id": bk_data_clean.log_index_set_id,
+                }
+            )
+
+        return cleans
