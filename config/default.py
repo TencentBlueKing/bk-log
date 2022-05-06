@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import sys
 
@@ -175,6 +177,8 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.bkdata",
     "apps.log_search.tasks.async_export",
     "apps.log_search.tasks.project",
+    # TODO，临时注释cmdb缓存定时任务
+    # "apps.log_search.tasks.cmdb",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
     "apps.log_search.tasks.no_data",
@@ -287,6 +291,15 @@ MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
 BK_DOC_QUERY_URL = "https://bk.tencent.com/docs/document/5.1/90/3822/"
 BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
+
+# 日志归档文档
+BK_ARCHIVE_DOC_URL = os.getenv("BKAPP_ARCHIVE_DOC_URL", "")
+
+BK_ASSESSMEN_HOST_COUNT = int(os.getenv("BKAPP_ASSESSMEN_HOST_COUNT", 30))
+
+# 日志清洗文档
+BK_ETL_DOC_URL = os.getenv("BKAPP_ETL_DOC_URL", "")
+
 BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 # 计算平台文档地址
 BK_DOC_DATA_URL = ""

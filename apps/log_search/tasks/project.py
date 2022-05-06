@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 """
@@ -30,7 +32,7 @@ from django.conf import settings  # noqa
 
 from apps.utils.log import logger  # noqa
 from apps.log_search.handlers.biz import BizHandler  # noqa
-from apps.log_search.models import ProjectInfo  # noqa
+from apps.log_search.models import ProjectInfo, BizProperty  # noqa
 from apps.utils.db import array_chunk  # noqa
 from apps.utils.lock import share_lock  # noqa
 
@@ -41,6 +43,7 @@ def sync():
     if settings.USING_SYNC_BUSINESS:
         # 同步CMDB业务信息
         sync_projects()
+        sync_biz_property()
         return True
     return False
 
@@ -92,5 +95,77 @@ def sync_projects():
 
     logger.info(
         "[sync_projects] businesses=>{}, sync=>{}, delete=>{}".format(len(businesses), len(objs), len(projects))
+    )
+    return True
+
+
+def sync_biz_property():
+    """
+    同步CMDB业务属性信息
+    """
+
+    biz_properties = BizHandler.get_biz_properties()
+    if not biz_properties:
+        logger.error("[log_search][tasks]get biz properties error")
+        return False
+
+    objs = []
+    delete_biz_properties_items = []
+    # 业务属性信息
+    exist_biz_properties = BizProperty.objects.all()
+    if not exist_biz_properties:
+        for bk_biz_id in biz_properties:
+            for biz_property_id in biz_properties[bk_biz_id]:
+                item = BizProperty(
+                    bk_biz_id=bk_biz_id,
+                    biz_property_id=biz_property_id,
+                    biz_property_name=biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],
+                    biz_property_value=biz_properties[bk_biz_id][biz_property_id]["biz_property_value"],
+                )
+                objs.append(item)
+    else:
+        for bi in exist_biz_properties:
+            bk_biz_id = bi.bk_biz_id
+            biz_property_id = bi.biz_property_id
+            if biz_properties.get(bk_biz_id) and biz_properties.get(bk_biz_id, {}).get(biz_property_id):
+                # 判断是否有满足bk_biz_id和biz_property_id的记录
+                if (bi.biz_property_name, bi.biz_property_value) == (
+                    biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],
+                    biz_properties[bk_biz_id][biz_property_id]["biz_property_value"],
+                ):
+                    del biz_properties[bk_biz_id][biz_property_id]
+                else:
+                    # 修改属性
+                    BizProperty.objects.filter(bk_biz_id=bk_biz_id, biz_property_id=biz_property_id).update(
+                        biz_property_name=biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],
+                        biz_property_value=biz_properties[bk_biz_id][biz_property_id]["biz_property_value"],
+                    )
+                    del biz_properties[bk_biz_id][biz_property_id]
+            else:
+                delete_biz_properties_items.append(bi.id)
+
+        for bk_biz_id in biz_properties:
+            for biz_property_id in biz_properties[bk_biz_id]:
+                item = BizProperty(
+                    bk_biz_id=bk_biz_id,
+                    biz_property_id=biz_property_id,
+                    biz_property_name=biz_properties[bk_biz_id][biz_property_id]["biz_property_name"],
+                    biz_property_value=biz_properties[bk_biz_id][biz_property_id]["biz_property_value"],
+                )
+                objs.append(item)
+
+    if objs:
+        chunks = array_chunk(objs)
+        for chunk in chunks:
+            BizProperty.objects.bulk_create(chunk)
+        logger.info("[log_search][tasks]sync biz_properties nums: {}".format(len(objs)))
+
+    if delete_biz_properties_items:
+        BizProperty.objects.filter(id__in=delete_biz_properties_items).delete()
+
+    logger.info(
+        "[sync_biz_properties] biz_properties=>{}, sync=>{}, delete=>{}".format(
+            len(biz_properties), len(objs), len(delete_biz_properties_items)
+        )
     )
     return True

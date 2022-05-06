@@ -16,12 +16,14 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import copy
 import json
 
 import settings
-from apps.api import BkDataDatabusApi, BkDataMetaApi, BkDataAccessApi
+from apps.api import BkDataDatabusApi, BkDataMetaApi, BkDataAccessApi, BkDataResourceCenterApi, BkDataAuthApi
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.constants import BKDATA_ES_TYPE_MAP
@@ -54,7 +56,7 @@ class DataAccessHandler(BaseAiopsHandler):
         kafka_config = collector_config.get_result_table_kafka_config()
 
         # 计算平台要求，raw_data_name不能超过50个字符
-        raw_data_name = "{}_{}".format("bk_log", collector_config.collector_config_name_en)[-50:]
+        raw_data_name = "{}_{}".format("bk_log", collector_config.collector_config_name_en)[:50]
         params = {
             "bk_username": self.conf.get("bk_username"),
             "data_scenario": "queue",
@@ -112,7 +114,6 @@ class DataAccessHandler(BaseAiopsHandler):
     def create_or_update_bkdata_etl(self, collector_config_id, fields, etl_params):
         clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
         collector_config = CollectorConfig.objects.get(collector_config_id=clustering_config.collector_config_id)
-        _, table_id = collector_config.table_id.split(".")
         etl_storage = EtlStorage.get_instance(etl_config=collector_config.etl_config)
 
         # 获取清洗配置
@@ -178,3 +179,22 @@ class DataAccessHandler(BaseAiopsHandler):
                 "bk_username": self.conf.get("bk_username"),
             }
         )
+
+    def add_cluster_group(self, result_table_id):
+        storage_config = BkDataMetaApi.result_tables.storages({"result_table_id": result_table_id})
+        cluster_resource_groups = BkDataResourceCenterApi.cluster_query_digest(
+            params={
+                "resource_type": "storage",
+                "service_type": "es",
+                "cluster_name": storage_config["es"]["storage_cluster"]["cluster_name"],
+            }
+        )
+        cluster_resource_group, *_ = cluster_resource_groups
+        BkDataAuthApi.add_cluster_group(
+            params={
+                "project_id": self.conf.get("project_id"),
+                "cluster_group_id": cluster_resource_group["resource_group_id"],
+            }
+        )
+
+        return storage_config["es"]["storage_cluster"]["cluster_name"]

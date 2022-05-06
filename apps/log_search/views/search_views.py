@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import copy
 import json
@@ -401,7 +403,7 @@ class SearchViewSet(APIViewSet):
         params = self.params_valid(SearchExportSerializer).get("export_dict")
         data = json.loads(params)
         index_set_id = int(index_set_id)
-        request_data = copy.copy(data)
+        request_data = copy.deepcopy(data)
 
         tmp_index_obj = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
         if tmp_index_obj:

@@ -16,7 +16,10 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
+
 import arrow
 
 from django.utils.translation import ugettext_lazy as _
@@ -24,18 +27,22 @@ from django.db import transaction
 from django.conf import settings
 
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
     EtlParseTimeFormatException,
     EtlStorageUsedException,
-    CollectorActiveException, CollectorResultTableIDDuplicateException,
+    CollectorActiveException,
+    CollectorResultTableIDDuplicateException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash
+from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash, ItsmEtlConfig
+from apps.log_clustering.tasks.flow import update_clustering_clean
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario, ProjectInfo
 from apps.log_search.constants import FieldDateFormatEnum, CollectorScenarioEnum, ISO_8601_TIME_FORMAT_NAME
@@ -78,6 +85,31 @@ class EtlHandler(object):
                     if storage_used >= storage:
                         raise EtlStorageUsedException()
 
+    def itsm_pre_hook(self, data, collect_config_id):
+        if not FeatureToggleObject.switch(name=FEATURE_COLLECTOR_ITSM):
+            return data, True
+
+        collect_config = CollectorConfig.objects.get(collector_config_id=collect_config_id)
+        if data["need_assessment"]:
+            from apps.log_databus.handlers.itsm import ItsmHandler
+
+            itsm_handler = ItsmHandler()
+            sn = itsm_handler.create_ticket(
+                {
+                    "title": collect_config.generate_itsm_title(),
+                    "bk_biz_id": collect_config.bk_biz_id,
+                    "approvals": ",".join(data["assessment_config"]["approvals"]),
+                    "log_assessment": data["assessment_config"]["log_assessment"],
+                    "collector_detail": itsm_handler.generate_collector_detail_itsm_form(collect_config),
+                }
+            )
+            collect_config.set_itsm_applying(sn)
+            if data["assessment_config"]["need_approval"]:
+                ItsmEtlConfig.objects.create(ticket_sn=sn, request_param=data)
+                return itsm_handler.collect_itsm_status(collect_config_id), False
+            collect_config.set_itsm_success()
+        return data, True
+
     def update_or_create(
         self,
         etl_config,
@@ -106,18 +138,21 @@ class EtlHandler(object):
 
         if self.data.is_clustering:
             clustering_handler = ClusteringConfigHandler(collector_config_id=self.data.collector_config_id)
+            ClusteringConfigHandler.pre_check_fields(
+                fields=fields, etl_config=etl_config, clustering_fields=clustering_handler.data.clustering_fields
+            )
             if clustering_handler.data.bkdata_etl_processing_id:
                 DataAccessHandler().create_or_update_bkdata_etl(self.data.collector_config_id, fields, etl_params)
             etl_params["etl_flat"] = True
-            fields += CollectorScenario.log_clustering_fields(cluster_info["cluster_config"]["version"])
+            log_clustering_fields = CollectorScenario.log_clustering_fields(cluster_info["cluster_config"]["version"])
+            fields = CollectorScenario.fields_insert_field_index(source_fields=fields, dst_fields=log_clustering_fields)
+            update_clustering_clean.delay(index_set_id=clustering_handler.data.index_set_id)
 
         # 判断是否已存在同result_table_id
         if CollectorConfig(table_id=table_id).get_result_table_by_id():
             logger.error(f"result_table_id {table_id} already exists")
             raise CollectorResultTableIDDuplicateException(
-                CollectorResultTableIDDuplicateException.MESSAGE.format(
-                    result_table_id=table_id
-                )
+                CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=table_id)
             )
 
         # 1. meta-创建/修改结果表
@@ -176,6 +211,7 @@ class EtlHandler(object):
 
     @staticmethod
     def etl_preview(etl_config, etl_params, data):
+
         etl_storage = EtlStorage.get_instance(etl_config=etl_config)
         fields = etl_storage.etl_preview(data, etl_params)
         return {"fields": fields}

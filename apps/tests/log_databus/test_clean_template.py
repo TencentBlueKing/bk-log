@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.test import TestCase
 
@@ -95,7 +97,9 @@ class TestCleanTemplate(TestCase):
 
     def test_destroy(self):
         create_result = self._test_create()
-        destroy_result = CleanTemplateHandler(clean_template_id=create_result["clean_template_id"]).destroy()
+        destroy_result = CleanTemplateHandler(clean_template_id=create_result["clean_template_id"]).destroy(
+            CREATE_PARAMS["bk_biz_id"]
+        )
         self.assertEqual(destroy_result, create_result["clean_template_id"])
 
     def test_CleanTemplateNotExistException(self):

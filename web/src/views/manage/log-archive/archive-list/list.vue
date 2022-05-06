@@ -70,7 +70,8 @@
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.expired')">
           <template slot-scope="props">
-            {{ `${props.row.snapshot_days}天` }}
+            <!-- `${props.row.snapshot_days}天` -->
+            {{ getExpiredDays(props) }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.totalSize')">
@@ -272,7 +273,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('logArchive.Confirm_delete_archive'),
+          subTitle: `${this.$t('当前归档ID为')} ${row.archive_config_id}，${this.$t('确认要删除')}`,
           confirmFn: () => {
             this.requestDelete(row);
           },
@@ -312,6 +313,9 @@ export default {
     },
     getFileSize(size) {
       return formatFileSize(size);
+    },
+    getExpiredDays(props) {
+      return props.row.snapshot_days ? `${props.row.snapshot_days}天` : this.$t('永久');
     },
   },
 };
