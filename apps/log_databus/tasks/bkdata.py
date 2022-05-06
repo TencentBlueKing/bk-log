@@ -20,29 +20,29 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
-from celery.task import periodic_task, task
 from celery.schedules import crontab
+from celery.task import periodic_task, task
 
+from apps.api.modules.bkdata_access import BkDataAccessApi
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import FEATURE_BKDATA_DATAID, SCENARIO_BKDATA
+from apps.log_databus.constants import (
+    ADMIN_REQUEST_USER,
+    BKDATA_DATA_REGION,
+    BKDATA_DATA_SCENARIO,
+    BKDATA_DATA_SCENARIO_ID,
+    BKDATA_DATA_SENSITIVITY,
+    BKDATA_DATA_SOURCE,
+    BKDATA_DATA_SOURCE_TAGS,
+    BKDATA_PERMISSION,
+    BKDATA_TAGS,
+    MAX_CREATE_BKDATA_DATA_ID_FAIL_COUNT,
+    META_DATA_ENCODING,
+)
+from apps.log_databus.models import CollectorConfig
 from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
 from apps.utils.function import ignored
 from apps.utils.log import logger
-from apps.api.modules.bkdata_access import BkDataAccessApi
-from apps.log_databus.constants import (
-    BKDATA_DATA_SCENARIO,
-    BKDATA_DATA_SCENARIO_ID,
-    BKDATA_PERMISSION,
-    BKDATA_TAGS,
-    BKDATA_DATA_SOURCE_TAGS,
-    BKDATA_DATA_REGION,
-    BKDATA_DATA_SOURCE,
-    BKDATA_DATA_SENSITIVITY,
-    MAX_CREATE_BKDATA_DATA_ID_FAIL_COUNT,
-    META_DATA_ENCODING,
-    ADMIN_REQUEST_USER,
-)
-from apps.feature_toggle.plugins.constants import FEATURE_BKDATA_DATAID, SCENARIO_BKDATA
-from apps.log_databus.models import CollectorConfig
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
 
 @task(ignore_result=True)
@@ -81,7 +81,9 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
             "data_scenario": BKDATA_DATA_SCENARIO,
             "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
             "permission": BKDATA_PERMISSION,
-            "bk_biz_id": collector_config.bk_biz_id,
+            "bk_biz_id": collector_config.bkdata_biz_id
+            if collector_config.bkdata_biz_id
+            else collector_config.bk_biz_id,
             "description": collector_config.description,
             "access_raw_data": {
                 "tags": BKDATA_TAGS,
