@@ -433,9 +433,10 @@ class DataFlowHandler(BaseAiopsHandler):
         change_fields = [field for field in transform_fields if field != UUID_FIELDS]
         change_clustering_fields = copy.copy(change_fields)
         change_fields.extend(DIST_FIELDS)
-        merge_table_table_id = "{}_bklog_{}_{}".format(self.conf.get("bk_biz_id"), settings.ENVIRONMENT, src_rt_name)
         change_clustering_fields = [field.split("as")[-1] for field in change_clustering_fields]
         change_clustering_fields.extend(DIST_CLUSTERING_FIELDS)
+        merge_table_table_id = "{}_bklog_{}_{}".format(self.conf.get("bk_biz_id"), settings.ENVIRONMENT, src_rt_name)
+        merge_table_table_name = "bklog_{}_{}".format(settings.ENVIRONMENT, src_rt_name)
 
         after_treat_flow = AfterTreatDataFlowCls(
             add_uuid_stream_source=StreamSourceCls(result_table_id=add_uuid_result_table_id),
@@ -466,7 +467,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 filter_rule="",
             ),
             merge_table=MergeNodeCls(
-                table_name="bklog_{}_{}".format(settings.ENVIRONMENT, src_rt_name),
+                table_name=merge_table_table_name,
                 result_table_id=merge_table_table_id,
             ),
             format_signature=RealTimeCls(
@@ -528,6 +529,11 @@ class DataFlowHandler(BaseAiopsHandler):
                 [f"{AGGS_FIELD_PREFIX}_{pattern_level}" for pattern_level in PatternEnum.get_choices()]
             )
             after_treat_flow.es.doc_values_fields = json.dumps(doc_values_fields)
+            # 这里是为了避免计算平台数据源场景源索引命名重复导致创建有问题
+            after_treat_flow.merge_table.table_name = "merge_table_{}".format(time_format)
+            after_treat_flow.merge_table.result_table_id = "{}_merge_table_{}".format(
+                self.conf.get("bk_biz_id"), time_format
+            )
         return after_treat_flow
 
     @classmethod

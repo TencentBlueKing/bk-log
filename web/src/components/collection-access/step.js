@@ -24,7 +24,6 @@ export const stepsConf = {
   // 采集新增或编辑未完成，itsm
   itsm: [
     { title: window.mainComponent.$t('采集配置'), icon: '' },
-    { title: window.mainComponent.$t('容量评估'), icon: '' },
     { title: window.mainComponent.$t('采集下发'), icon: '' },
     { title: window.mainComponent.$t('btn.Field'), icon: '' },
     { title: window.mainComponent.$t('dataManage.storage'), icon: '' },

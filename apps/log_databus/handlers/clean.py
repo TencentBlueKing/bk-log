@@ -24,6 +24,7 @@ from apps.log_databus.exceptions import (
     CleanTemplateNotExistException,
     CleanTemplateRepeatException,
     CollectorConfigNotExistException,
+    CleanTemplateVisibleException,
 )
 from apps.log_databus.models import CleanTemplate, BKDataClean, CollectorConfig
 from apps.log_databus.tasks.bkdata import sync_clean
@@ -81,6 +82,10 @@ class CleanTemplateHandler(object):
                     CleanTemplateNotExistException.MESSAGE.format(clean_template_id=clean_template_id)
                 )
 
+    def can_update_or_destroy(self, bk_biz_id) -> bool:
+        """只有创建该模板的业务才能修改或删除"""
+        return bk_biz_id == self.data.bk_biz_id
+
     def retrieve(self):
         return model_to_dict(self.data)
 
@@ -92,6 +97,11 @@ class CleanTemplateHandler(object):
             "etl_fields": params["etl_fields"],
             "bk_biz_id": params["bk_biz_id"],
         }
+        if params.get("visible_type"):
+            model_fields["visible_type"] = params["visible_type"]
+        if params.get("visible_bk_biz_id"):
+            model_fields["visible_bk_biz_id"] = params["visible_bk_biz_id"]
+
         if self._check_clean_template_exist(name=model_fields["name"], bk_biz_id=model_fields["bk_biz_id"]):
             biz = ProjectInfo.get_biz(model_fields["bk_biz_id"])
             raise CleanTemplateRepeatException(
@@ -107,14 +117,36 @@ class CleanTemplateHandler(object):
             logger.info("create clean template {}".format(clean_template.clean_template_id))
             return model_to_dict(clean_template)
 
+        # 判断是否可以编辑模板
+        if not self.can_update_or_destroy(bk_biz_id=params["bk_biz_id"]):
+            biz = ProjectInfo.get_biz(model_fields["bk_biz_id"])
+            raise CleanTemplateVisibleException(
+                CleanTemplateVisibleException.MESSAGE.format(
+                    bk_biz="[{bk_biz_id}]{bk_biz_name}".format(
+                        bk_biz_id=biz["bk_biz_id"], bk_biz_name=biz["bk_biz_name"]
+                    ),
+                    name=self.data.name,
+                )
+            )
+
         for key, value in model_fields.items():
             setattr(self.data, key, value)
         self.data.save()
         logger.info("update clean template {}".format(self.data.clean_template_id))
         return model_to_dict(self.data)
 
-    def destroy(self):
+    def destroy(self, bk_biz_id):
         clean_template_id = self.data.clean_template_id
+        if not self.can_update_or_destroy(bk_biz_id=bk_biz_id):
+            biz = ProjectInfo.get_biz(bk_biz_id)
+            raise CleanTemplateVisibleException(
+                CleanTemplateVisibleException.MESSAGE.format(
+                    bk_biz="[{bk_biz_id}]{bk_biz_name}".format(
+                        bk_biz_id=biz["bk_biz_id"], bk_biz_name=biz["bk_biz_name"]
+                    ),
+                    name=self.data.name,
+                )
+            )
         self.data.delete()
         logger.info("delete clean template {}".format(clean_template_id))
         return clean_template_id

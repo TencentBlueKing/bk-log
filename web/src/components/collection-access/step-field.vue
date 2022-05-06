@@ -129,18 +129,23 @@
           <!-- 模式选择 -->
           <div class="field-step field-method-step" style="margin-top: 20px;">
             <div class="step-head">
-              <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
-              <span
-                v-if="!isTempField"
-                data-test-id="fieldExtractionBox_span_applyTemp"
-                :class="{
-                  'template-text': true,
-                  'template-disabled': (isCleanField && !cleanCollector) || isSetDisabled
-                }"
-                @click="openTemplateDialog(false)">
-                <span class="log-icon icon-daoru"></span>
-                {{ $t('dataManage.applyTemp') }}
-              </span>
+              <div>
+                <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
+                <span
+                  v-if="!isTempField"
+                  data-test-id="fieldExtractionBox_span_applyTemp"
+                  :class="{
+                    'template-text': true,
+                    'template-disabled': (isCleanField && !cleanCollector) || isSetDisabled
+                  }"
+                  @click="openTemplateDialog(false)">
+                  <span class="log-icon icon-daoru"></span>
+                  {{ $t('dataManage.applyTemp') }}
+                </span>
+              </div>
+              <p class="documentation button-text" @click="handleOpenDocument">
+                <span>{{$t('说明文档')}}</span> <span class="log-icon icon-jump"></span>
+              </p>
             </div>
 
             <!-- 选择字段过滤方法 -->
@@ -242,6 +247,56 @@
                   @standard="dialogVisible = true"
                   @reset="getDetail">
                 </field-table>
+              </div>
+            </template>
+          </div>
+
+          <!-- 调试设置字段 -->
+          <div v-if="isClearTemplate" class="field-step field-method-step">
+            <div class="step-head">
+              <span class="step-text">{{ $t('可见范围') }}</span>
+            </div>
+
+            <template>
+              <div class="field-method-result visible-select">
+                <bk-radio-group v-model="formData.visible_type">
+                  <bk-radio
+                    class="scope-radio"
+                    v-for="item of visibleScopeSelectList"
+                    :key="item.id"
+                    :value="item.id">
+                    {{item.name}}
+                  </bk-radio>
+                </bk-radio-group>
+                <bk-select
+                  v-model="visibleBkBiz"
+                  v-show="scopeValueType"
+                  searchable
+                  multiple
+                  display-tag
+                  @toggle="handleToggleVisible">
+                  <template #trigger>
+                    <div class="visible-scope-box">
+                      <div class="selected-tag">
+                        <bk-tag
+                          v-for="(tag, index) in visibleList"
+                          :key="tag.id"
+                          closable
+                          @close="handleDeleteTag(index)">
+                          {{ tag.name }}
+                        </bk-tag>
+                      </div>
+                      <span class="please-select" v-if="!visibleList.length">{{$t('请选择')}}</span>
+                      <span :class="['bk-icon','icon-angle-down',!visibleIsToggle ? '' : 'icon-rotate']"></span>
+                    </div>
+                  </template>
+                  <bk-option
+                    v-for="item in myProjectList"
+                    :key="item.project_id"
+                    :id="item.bk_biz_id"
+                    :name="item.project_name">
+                  </bk-option>
+                </bk-select>
               </div>
             </template>
           </div>
@@ -412,7 +467,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters, mapState } from 'vuex';
 import fieldTable from './field-table';
 import AuthPage from '@/components/common/auth-page';
 import { projectManages } from '@/common/util';
@@ -468,6 +523,8 @@ export default {
           separator: '',
         },
         fields: [],
+        visible_type: 'current_biz', // 可见范围单选项
+        visible_bk_biz: [], // 多个业务
       },
       copyBuiltField: [],
       formatResult: true, // 验证结果是否通过
@@ -518,9 +575,22 @@ export default {
       renderKey: 0, // key-changing
       authPageInfo: null,
       docCenterUrl: window.BK_DOC_DATA_URL,
+      visibleScopeSelectList: [ // 可见范围单选列表
+        { id: 'current_biz', name: this.$t('当前业务可见') },
+        { id: 'multi_biz', name: this.$t('多业务选择') },
+        { id: 'all_biz', name: this.$t('全平台') },
+      ],
+      visibleBkBiz: [],
+      visibleList: [], // 多业务选择下拉框
+      cacheVisibleList: [], // 缓存多业务选择下拉框
+      visibleIsToggle: false,
+      docUrl: window.BK_ETL_DOC_URL,
     };
   },
   computed: {
+    ...mapState({
+      myProjectList: state => state.myProjectList,
+    }),
     ...mapGetters({
       bkBizId: 'bkBizId',
       projectId: 'projectId',
@@ -576,6 +646,14 @@ export default {
     isSetDisabled() {
       return this.isSetEdit && this.setDisabled;
     },
+    // 可见范围单选判断，禁用下拉框
+    scopeValueType() {
+      return this.formData.visible_type === 'multi_biz';
+    },
+    // 入口是否是清洗模板
+    isClearTemplate() {
+      return ['clean-template-create', 'clean-template-edit'].includes(this.$route.name);
+    },
   },
   watch: {
     'formData.fields'() {
@@ -583,6 +661,16 @@ export default {
     },
     'params.etl_config'() {
       this.formatResult = true;
+    },
+    // 切换可见范围时 恢复缓存或清空业务选择
+    'formData.visible_type': {
+      handler(val) {
+        if (val !== 'multi_biz') {
+          this.visibleList = [];
+        } else {
+          this.visibleList = JSON.parse(JSON.stringify(this.cacheVisibleList));
+        };
+      },
     },
   },
   created() {
@@ -631,7 +719,11 @@ export default {
 
     // 采集项编辑进入
     await this.getDetail();
-    this.getCleanStash(this.curCollect.collector_config_id);
+    const isClone = this.$route.query?.type === 'clone';
+    const collectorID = isClone
+      ? (this.$route.query?.collectorId || this.curCollect.collector_config_id)
+      : this.curCollect.collector_config_id;
+    this.getCleanStash(collectorID);
     this.getDataLog('init');
   },
   methods: {
@@ -664,7 +756,7 @@ export default {
     },
     // 初始化清洗模板详情
     initCleanTemp() {
-      if (this.isEditTemp) { // 获取模板详情
+      if (this.isEditTemp) { // 克隆与编辑获取模板详情
         const { templateId } = this.$route.params;
         this.basicLoading = true;
         this.$http.request('clean/templateDetail', {
@@ -695,6 +787,8 @@ export default {
         clean_type,
         etl_params,
         etl_fields,
+        visible_type,
+        visible_bk_biz_id: visibleBkBizList,
       } = data;
       this.saveTempName = name;
       /* eslint-disable */
@@ -703,6 +797,20 @@ export default {
         separator_regexp: etl_params.separator_regexp || '',
         separator: etl_params.separator || ''
       })
+      if(Array.isArray(visibleBkBizList) && visibleBkBizList.length){
+        // 多业务 业务列表获取名字回显
+        visibleBkBizList.forEach((val) => {
+          const target = this.myProjectList.find(project => project.bk_biz_id === String(val));
+          if (target) {
+            const targetObj = {
+              id: target.bk_biz_id,
+              name: target.project_name,
+            };
+            this.visibleList.push(targetObj);
+            this.cacheVisibleList.push(targetObj);
+          }
+        });
+      }
       this.fieldType = clean_type
       /* eslint-enable */
       Object.assign(this.formData, {
@@ -713,6 +821,7 @@ export default {
           separator: '',
         }, etl_params ? JSON.parse(JSON.stringify(etl_params)) : {}), // eslint-disable-line
         fields: etl_fields,
+        visible_type,
       });
     },
     // 高级清洗配置
@@ -753,6 +862,7 @@ export default {
         etl_config,
         fields,
         etl_params,
+        visible_type,
       } = this.formData;
       this.isLoading = true;
       this.basicLoading = true;
@@ -764,6 +874,7 @@ export default {
           separator: etl_params.separator,
         },
         etl_fields: fields,
+        visible_type,
       };
       /* eslint-disable */
       if (etl_config !== 'bk_log_text') {
@@ -802,10 +913,14 @@ export default {
       } else if (isCollect) { // 缓存采集项清洗配置
         urlParams.collector_config_id = this.curCollect.collector_config_id;
         data.bk_biz_id = this.bkBizId;
+        delete data.visible_type;
         requestUrl = 'clean/updateCleanStash';
       } else { // 新建/编辑清洗模板
         data.name = this.saveTempName
         data.bk_biz_id = this.bkBizId
+        // 可见范围非多业务选择时删除visible_bk_biz_id
+        data.visible_bk_biz_id = this.visibleList.map(item => item.id);
+        data.visible_type !== 'multi_biz' && (delete data.visible_bk_biz_id);
         if (this.isEditTemp) urlParams.clean_template_id = this.$route.params.templateId
         requestUrl = this.isEditTemp ? 'clean/updateTemplate' : 'clean/createTemplate';
       }
@@ -880,6 +995,12 @@ export default {
           theme: 'error',
           message: this.$t('dataManage.select_field'),
         });
+      }
+      const visibleList = this.visibleList.map(item => item.id);
+      // 清洗模板选择多业务时不能为空
+      if (this.formData.visible_type === 'multi_biz' && !visibleList.length && this.isClearTemplate) {
+        this.messageError(this.$t('multiBizTip'));
+        return
       }
       // const promises = [this.checkStore()];
       const promises = [];
@@ -1380,6 +1501,27 @@ export default {
         this.$bkLoading.hide();
       }
     },
+    handleToggleVisible(data) {
+      this.visibleIsToggle = data;
+      if (!data) {
+        this.visibleBkBiz.forEach((val) => {
+          if (!this.visibleList.some(item => String(item.id) === val)) {
+            const target = this.myProjectList.find(project => project.bk_biz_id === val);
+            this.visibleList.push({
+              id: val,
+              name: target.project_name,
+            });
+          }
+        });
+        this.visibleBkBiz = [];
+      }
+    },
+    handleDeleteTag(index) {
+      this.visibleList.splice(index, 1);
+    },
+    handleOpenDocument() {
+      window.open(this.docUrl, '_blank');
+    },
   },
 };
 </script>
@@ -1645,8 +1787,17 @@ export default {
     }
 
     .step-head {
+      width: 256px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
+
+      .documentation {
+        color: #3a84ff;
+        font-size: 12px;
+        transform: translateY(2px);
+        cursor: pointer;
+      }
     }
 
     .field-method-link {
@@ -1657,6 +1808,38 @@ export default {
 
     .field-method-result {
       margin-top: 8px;
+    }
+
+    .visible-select {
+      width: 560px;
+
+      .scope-radio {
+        margin: 0 26px 14px 0;
+      }
+
+      .visible-scope-box {
+        min-height: 30px;
+        display: flex;
+        position: relative;
+
+        .please-select {
+          color: #c3cdd7;
+          margin-left: 10px;
+        }
+
+        .icon-angle-down {
+          position: absolute;
+          font-size: 20px;
+          top: 4px;
+          right: 0;
+          transform: rotateZ(0deg);
+          transition: all .3s;
+        }
+
+        .icon-rotate {
+          transform: rotateZ(180deg);
+        }
+      }
     }
 
     .field-method-cause {

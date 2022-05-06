@@ -73,6 +73,11 @@ const updateNewClsStrategy = {
   method: 'post',
 };
 
+const checkRegexp = {
+  url: '/clustering_config/check_regexp/',
+  method: 'post',
+};
+
 export {
   getConfig,
   getDefaultConfig,
@@ -84,4 +89,5 @@ export {
   getFingerLabels,
   getNewClsStrategy,
   updateNewClsStrategy,
+  checkRegexp,
 };

@@ -27,6 +27,8 @@ from django.db import transaction
 from django.conf import settings
 
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.log_databus.exceptions import (
@@ -39,7 +41,7 @@ from apps.log_databus.exceptions import (
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash
+from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash, ItsmEtlConfig
 from apps.log_clustering.tasks.flow import update_clustering_clean
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario, ProjectInfo
@@ -82,6 +84,31 @@ class EtlHandler(object):
                 if storage > 0:
                     if storage_used >= storage:
                         raise EtlStorageUsedException()
+
+    def itsm_pre_hook(self, data, collect_config_id):
+        if not FeatureToggleObject.switch(name=FEATURE_COLLECTOR_ITSM):
+            return data, True
+
+        collect_config = CollectorConfig.objects.get(collector_config_id=collect_config_id)
+        if data["need_assessment"]:
+            from apps.log_databus.handlers.itsm import ItsmHandler
+
+            itsm_handler = ItsmHandler()
+            sn = itsm_handler.create_ticket(
+                {
+                    "title": collect_config.generate_itsm_title(),
+                    "bk_biz_id": collect_config.bk_biz_id,
+                    "approvals": ",".join(data["assessment_config"]["approvals"]),
+                    "log_assessment": data["assessment_config"]["log_assessment"],
+                    "collector_detail": itsm_handler.generate_collector_detail_itsm_form(collect_config),
+                }
+            )
+            collect_config.set_itsm_applying(sn)
+            if data["assessment_config"]["need_approval"]:
+                ItsmEtlConfig.objects.create(ticket_sn=sn, request_param=data)
+                return itsm_handler.collect_itsm_status(collect_config_id), False
+            collect_config.set_itsm_success()
+        return data, True
 
     def update_or_create(
         self,

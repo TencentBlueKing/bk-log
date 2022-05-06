@@ -274,6 +274,11 @@ class ProjectNoteExistException(BaseCollectorConfigException):
     MESSAGE = _("该业务{bk_biz_id}未找到对应project")
 
 
+class CleanTemplateVisibleException(BaseCollectorConfigException):
+    ERROR_CODE = "704"
+    MESSAGE = _("该业务{bk_biz} 不可编辑或删除该模板{name}")
+
+
 class ArchiveNotFound(BaseCollectorConfigException):
     ERROR_CODE = "800"
     MESSAGE = _("归档配置不存在")
