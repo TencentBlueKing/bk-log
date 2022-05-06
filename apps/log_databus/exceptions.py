@@ -159,6 +159,11 @@ class StorageHaveResource(BaseCollectorConfigException):
     MESSAGE = _("集群还有未删除的采集项、第三方集群索引集")
 
 
+class BKBaseStorageSyncFailed(BaseCollectorConfigException):
+    ERROR_CODE = "210"
+    MESSAGE = _("集群同步到数据平台失败")
+
+
 class EtlNotSupportedException(BaseCollectorConfigException):
     ERROR_CODE = "301"
     MESSAGE = _("暫不支持{separator_node_action}类清洗")

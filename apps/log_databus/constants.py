@@ -20,13 +20,12 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import markdown
-
 from django.conf import settings
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
-from apps.utils import ChoicesEnum
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.utils import ChoicesEnum
 
 META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 RESTORE_INDEX_SET_PREFIX = "restore_"
@@ -39,6 +38,7 @@ NOT_FOUND_CODE = "[404]"
 CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE = "1306201"
 
 COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
+CLUSTER_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
 
 BULK_CLUSTER_INFOS_LIMIT = 20
 

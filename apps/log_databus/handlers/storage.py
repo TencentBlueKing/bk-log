@@ -24,42 +24,43 @@ import operator
 import re
 import socket
 from collections import defaultdict
-from typing import Union, List
-import arrow
+from typing import List, Union
 
+import arrow
 from django.conf import settings
+from django.db.models import Q, Sum
 from django.utils.translation import ugettext as _
-from django.db.models import Sum, Q
 from elasticsearch import Elasticsearch
 
-from apps.log_databus.utils.es_config import get_es_config
-from apps.utils.log import logger
-from apps.utils.thread import MultiExecuteFunc
-from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
+from apps.api import BkDataResourceCenterApi, BkLogApi, TransferApi
+from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
+from apps.decorators import user_operation_record
 from apps.iam import Permission, ResourceEnum
-from apps.log_esquery.utils.es_route import EsRoute
-from apps.log_search.models import Scenario, ProjectInfo, BizProperty
-from apps.utils.cache import cache_five_minute
-from apps.utils.local import get_local_param, get_request_username
-from apps.api import TransferApi, BkLogApi
-from apps.log_databus.models import StorageCapacity, StorageUsed
 from apps.log_databus.constants import (
-    STORAGE_CLUSTER_TYPE,
-    REGISTERED_SYSTEM_DEFAULT,
-    DEFAULT_ES_SCHEMA,
-    NODE_ATTR_PREFIX_BLACKLIST,
     BKLOG_RESULT_TABLE_PATTERN,
-    VisibleEnum,
+    DEFAULT_ES_SCHEMA,
     EsSourceType,
+    NODE_ATTR_PREFIX_BLACKLIST,
+    REGISTERED_SYSTEM_DEFAULT,
+    STORAGE_CLUSTER_TYPE,
+    VisibleEnum,
 )
 from apps.log_databus.exceptions import (
+    BKBaseStorageSyncFailed,
+    StorageConnectInfoException,
+    StorageHaveResource,
     StorageNotExistException,
     StorageNotPermissionException,
-    StorageConnectInfoException,
     StorageUnKnowEsVersionException,
-    StorageHaveResource,
 )
-from apps.decorators import user_operation_record
+from apps.log_databus.models import StorageCapacity, StorageUsed
+from apps.log_databus.utils.es_config import get_es_config
+from apps.log_esquery.utils.es_route import EsRoute
+from apps.log_search.models import BizProperty, ProjectInfo, Scenario
+from apps.utils.cache import cache_five_minute
+from apps.utils.local import get_local_param, get_request_username
+from apps.utils.log import logger
+from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import format_user_time_zone
 
 CACHE_EXPIRE_TIME = 300
@@ -440,6 +441,55 @@ class StorageHandler(object):
             cluster["cluster_stats"] = cluster_stats
         return cluster_info
 
+    def sync_es_cluster(self, params: dict) -> str:
+        # 获取参数字典
+        setup_config = params["setup_config"]
+        bk_biz_id = params["bk_biz_id"]
+        username = get_request_username()
+        cluster_en_name = f"{bk_biz_id}_{params['cluster_en_name']}"
+        cluster_name = params.get("cluster_name", cluster_en_name)
+        # 构造请求参数
+        # TODO 获取热节点数量
+        # TODO Transport
+        bkbase_params = {
+            "bk_username": username,
+            "bk_biz_id": bk_biz_id,
+            "resource_set_id": cluster_en_name,
+            "resource_set_name": cluster_name,
+            "geog_area_code": "inland",
+            "category": "es",
+            "provider": "user",
+            "purpose": "BKLog集群同步",
+            "share": False,
+            "admin": [username],
+            "tag": ["BK_Audit"],
+            "connection_info": {
+                "username": params["auth_info"]["username"],
+                "password": params["auth_info"]["password"],
+                "enable_auth": True,
+                "host": params["domain_name"],
+                "port": params["port"],
+                "transport": 9300,
+                "enable_replica": True if setup_config.get("number_of_replicas_default", 0) else False,
+                "hot_save_days": 7,
+                "total_shards_per_node": 1,
+                "max_shard_num": 3,
+                "has_cold_nodes": False,
+                "has_hot_node": True,
+                "hot_node_num": 3,
+                "save_days": setup_config.get("retention_days_default", 1),
+                "cluster_type": "es",
+                "cluster_name": cluster_name,
+            },
+            "version": params["version"],
+        }
+        # 创建集群
+        bkbase_result = BkDataResourceCenterApi.create_resource_set(bkbase_params)
+        logger.info("BkDataResourceCreate Result %s", bkbase_result)
+        if not isinstance(bkbase_result, dict) or not bkbase_result.get("resource_capacity", {}).get("storage"):
+            raise BKBaseStorageSyncFailed(bkbase_result)
+        return bkbase_result["resource_capacity"]["storage"]["cluster_name"]
+
     def create(self, params):
         """
         创建集群
@@ -447,12 +497,17 @@ class StorageHandler(object):
         :return:
         """
 
+        if params.get("create_bkbase_cluster", False):
+            bkbase_cluster_id = self.sync_es_cluster(params)
+            params["custom_option"]["bkbase_cluster_id"] = bkbase_cluster_id
+
         bk_biz_id = int(params["custom_option"]["bk_biz_id"])
         es_source_id = TransferApi.create_cluster_info(params)
+        username = get_request_username()
 
         # add user_operation_record
         operation_record = {
-            "username": get_request_username(),
+            "username": username,
             "biz_id": bk_biz_id,
             "record_type": UserOperationTypeEnum.STORAGE,
             "record_object_id": int(es_source_id),
@@ -514,6 +569,13 @@ class StorageHandler(object):
                 },
             },
         )
+
+        # 更新BKBASE信息
+        # 原集群信息中有，新集群信息中没有时进行补充
+        if cluster_objs[0]["custom_option"].get("bkbase_cluster_id") and not params["custom_option"].get(
+            "bkbase_cluster_id"
+        ):
+            params["custom_option"]["bkbase_cluster_id"] = cluster_objs[0]["custom_option"]["bkbase_cluster_id"]
 
         cluster_obj = TransferApi.modify_cluster_info(params)
         cluster_obj["auth_info"]["password"] = ""
