@@ -34,7 +34,7 @@
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="king-slider-content">
         <bk-form
           v-if="!sliderLoading"
-          :model="formData"
+          :model="basicFormData"
           :label-width="150"
           :rules="basicRules"
           form-type="vertical"
