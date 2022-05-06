@@ -19,7 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import time
 import arrow
 import datetime
 
@@ -61,9 +60,11 @@ class LogExtractMetricCollector(object):
         "log_extract_task", description=_("日志提取任务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def log_extract_task():
-        end_time = arrow.get(int(time.time())).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
+        end_time = (
+            arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
+        )
         start_time = (
-            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=6)
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=5)
         ).strftime("%Y-%m-%d %H:%M:%S%z")
         groups = (
             Tasks.objects.filter(created_at__range=[start_time, end_time])

@@ -61,7 +61,7 @@ class LogSearchMetricCollector(object):
         # 带标签数据
         metrics = [
             Metric(
-                metric_name="search_count",
+                metric_name="count",
                 metric_value=history_obj["duration"],
                 dimensions={
                     "index_set_id": history_obj["index_set_id"],
@@ -79,7 +79,7 @@ class LogSearchMetricCollector(object):
         # 搜索总数
         metrics.append(
             Metric(
-                metric_name="search_total",
+                metric_name="total",
                 metric_value=history_objs.count(),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -89,7 +89,9 @@ class LogSearchMetricCollector(object):
         return metrics
 
     @staticmethod
-    @register_metric("log_search", description=_("日志检索"), data_name="log_search", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "search_favorite", description=_("检索收藏"), data_name="log_search", time_filter=TimeFilterEnum.MINUTE5
+    )
     def favorite_count():
         favorite_objs = (
             FavoriteSearch.objects.filter(
@@ -118,7 +120,7 @@ class LogSearchMetricCollector(object):
         # 收藏带标签数据
         metrics = [
             Metric(
-                metric_name="favorite_count",
+                metric_name="count",
                 metric_value=aggregation_datas[bk_biz_id][index_set_id],
                 dimensions={
                     "index_set_id": index_set_id,
@@ -134,7 +136,7 @@ class LogSearchMetricCollector(object):
         # 收藏总数
         metrics.append(
             Metric(
-                metric_name="favorite_total",
+                metric_name="total",
                 metric_value=favorite_objs.count(),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -167,7 +169,7 @@ class LogExportMetricCollector(object):
         # 带标签数据
         metrics = [
             Metric(
-                metric_name="export_count",
+                metric_name="count",
                 metric_value=history_obj["count"],
                 dimensions={
                     "index_set_id": history_obj["index_set_id"],
@@ -184,7 +186,7 @@ class LogExportMetricCollector(object):
         # 导出总数
         metrics.append(
             Metric(
-                metric_name="export_total",
+                metric_name="total",
                 metric_value=history_objs.count(),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -211,13 +213,11 @@ class IndexSetMetricCollector(object):
                 metrics.append(
                     # 带bk_biz_id, scenario_id, is_active标签的数据
                     Metric(
-                        metric_name="index_set_count",
+                        metric_name="count",
                         metric_value=group["count"],
                         dimensions={
                             "target_bk_biz_id": bk_biz_id,
-                            "target_bk_biz_name": MetricUtils.get_instance().project_biz_info[group["project_id"]][
-                                "bk_biz_name"
-                            ],
+                            "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                             "scenario_id": group["scenario_id"],
                             "is_active": group["is_active"],
                         },
@@ -230,18 +230,18 @@ class IndexSetMetricCollector(object):
 
         for bk_biz_id in aggregation_index_set:
             metrics.append(
-                # 有效索引集数量
+                # 总的索引集数量
                 Metric(
-                    metric_name="index_set_total",
+                    metric_name="total",
                     metric_value=aggregation_index_set[bk_biz_id],
                     dimensions={},
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
             )
             metrics.append(
-                # 有效索引集数量
+                # 有效的索引集数量
                 Metric(
-                    metric_name="index_set_active_total",
+                    metric_name="active_total",
                     metric_value=aggregation_active_index_set[bk_biz_id],
                     dimensions={},
                     timestamp=MetricUtils.get_instance().report_ts,

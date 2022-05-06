@@ -87,7 +87,7 @@ class CollectMetricCollector(object):
         )
         metrics = [
             Metric(
-                metric_name="custom_count",
+                metric_name="count",
                 metric_value=group["count"],
                 dimensions={
                     "custom_type": group["custom_type"],
@@ -100,7 +100,7 @@ class CollectMetricCollector(object):
         ]
         metrics.append(
             Metric(
-                metric_name="custom_total",
+                metric_name="total",
                 metric_value=sum([i["count"] for i in groups]),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
