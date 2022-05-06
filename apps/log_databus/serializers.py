@@ -813,7 +813,7 @@ class BKBASEStorageCreateSerializer(serializers.Serializer):
     version = serializers.CharField(label=_("集群版本"))
     belongs_to = serializers.CharField(label=_("集群负责人"))
     cluster_group = serializers.CharField(label=_("集群所属资源组名称"))
-    expires = serializers.JSONField(label=_("过期时间"))
+    expires = serializers.JSONField(label=_("过期时间下拉选项"))
     description = serializers.CharField(label=_("集群描述信息"))
 
     @property

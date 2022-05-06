@@ -468,6 +468,9 @@ class StorageHandler(object):
             )
         )
 
+        if params.get("create_bkbase_storage"):
+            self.create_bkbase_storage(params)
+
         return es_source_id
 
     def update(self, params):
@@ -917,6 +920,27 @@ class StorageHandler(object):
         创建 BKBASE 存储集群
         """
 
+        params.update(
+            {
+                "created_by": get_request_username(),
+                "tags": ["inland", "usr", "enable"],
+                "belongs_to": get_request_username(),
+                "connection_info": {
+                    "user": params["auth_info"]["username"],
+                    "enable_auth": True,
+                    "host": params["domain_name"],
+                    "password": params["auth_info"]["password"],
+                    "port": params["port"],
+                    "transport": 9300,
+                    "enable_replica": True,
+                    "hot_save_days": 7,
+                    "total_shards_per_node": 20,
+                    "max_shard_num": 20,
+                    "has_cold_nodes": False,
+                    "has_hot_node": True,
+                },
+            }
+        )
         serializer = BKBASEStorageCreateSerializer(data=params)
         serializer.is_valid(raise_exception=True)
         api_params = serializer.validated_data
