@@ -19,23 +19,25 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import json
+
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
+
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
 from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX, VisibleEnum
-from apps.log_databus.models import CleanTemplate, CollectorConfig
-
 from apps.log_databus.constants import EsSourceType
+from apps.log_databus.models import CleanTemplate, CollectorConfig
 from apps.log_search.constants import (
     CollectorScenarioEnum,
-    EncodingsEnum,
     ConditionFilterTypeEnum,
     ConditionTypeEnum,
+    CustomTypeEnum,
+    EncodingsEnum,
     EtlConfigEnum,
     FieldBuiltInEnum,
-    CustomTypeEnum,
 )
 
 
@@ -773,3 +775,53 @@ class PreCheckSerializer(serializers.Serializer):
     )
     bk_data_name = serializers.CharField(label=_("采集链路data_name"), required=False)
     result_table_id = serializers.CharField(label=_("结果表ID"), required=False)
+
+
+class BKBASEResourceCreateSerializer(serializers.Serializer):
+    """
+    BKBase 资源创建
+    """
+
+    bk_username = serializers.CharField(label=_("用户名"))
+    resource_set_id = serializers.CharField(label=_("资源英文标识"), max_length=45)
+    resource_set_name = serializers.CharField(label=_("资源中文名称"))
+    geog_area_code = serializers.CharField(label=_("区域"))
+    category = serializers.CharField(label=_("资源类型"))
+    provider = serializers.CharField(label=_("资源托管方"))
+    purpose = serializers.CharField(label=_("资源用途"))
+    share = serializers.BooleanField(label=_("是否共享"))
+    bk_biz_id = serializers.IntegerField(label=_("资源所属业务ID"))
+    admin = serializers.ListField(label=_("资源管理员"), child=serializers.CharField())
+    tag = serializers.ListField(label=_("资源标签"), child=serializers.CharField(), required=False)
+    resource_requirements = serializers.JSONField(label=_("资源需求"), required=False)
+    connection_info = serializers.CharField(label=_("连接信息"), required=False)
+    expires = serializers.CharField(label=_("过期时间"), required=False)
+    related_hdfs_cluster = serializers.CharField(label=_("关联HDFS资源ID"), required=False)
+    description = serializers.CharField(label=_("说明"), required=False)
+
+
+class BKBASEStorageCreateSerializer(serializers.Serializer):
+    """
+    BKBase 存储创建
+    """
+
+    created_by = serializers.CharField(label=_("创建人"))
+    tags = serializers.ListField(label=_("标签"), child=serializers.CharField())
+    cluster_type = serializers.CharField(label=_("集群类型"))
+    cluster_name = serializers.CharField(label=_("集群名称"))
+    connection_info = serializers.JSONField(label=_("连接信息"))
+    version = serializers.CharField(label=_("集群版本"))
+    belongs_to = serializers.CharField(label=_("集群负责人"))
+    cluster_group = serializers.CharField(label=_("集群所属资源组名称"))
+    expires = serializers.JSONField(label=_("过期时间"))
+    description = serializers.CharField(label=_("集群描述信息"))
+
+    @property
+    def validated_data(self):
+        # 转换为Json字符串
+        if hasattr(self, "_validated_data"):
+            connection_info = self._validated_data["connection_info"]
+            self._validated_data["connection_info"] = json.dumps(connection_info)
+            expires = self._validated_data["expires"]
+            self._validated_data["expires"] = json.dumps(expires)
+        return super().validated_data
