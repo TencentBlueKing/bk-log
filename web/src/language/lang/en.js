@@ -1408,4 +1408,12 @@ export default {
   unKnowIconTips: 'This field is supplemented by the platform Not searchable',
   新开页: 'Open new page',
   永久: 'Permanent',
+  确认要删除: 'Confirm deletion ?',
+  当前采集项名称为: 'The current collection item name is',
+  当前索引集为: 'The current index set is',
+  当前集群为: 'The current cluster is',
+  当前上报名称为: 'The current registration is called',
+  当前模板名称为: 'The current collection item name is',
+  当前仓库名称为: 'The current repository name is',
+  当前归档ID为: 'The current archive ID is',
 };

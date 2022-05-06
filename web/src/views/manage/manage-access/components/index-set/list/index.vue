@@ -316,7 +316,7 @@ export default {
         });
       } else if (type === 'delete') { // 删除索引集
         this.$bkInfo({
-          title: this.$t('shield.isdelete'),
+          subTitle: `${this.$t('当前索引集为')} ${row.index_set_name}，${this.$t('shield.isdelete')}`,
           maskClose: true,
           confirmFn: () => {
             this.$bkLoading({

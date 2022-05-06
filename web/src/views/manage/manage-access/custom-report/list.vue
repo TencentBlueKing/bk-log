@@ -323,7 +323,7 @@ export default {
     deleteCollect(row) {
       this.$bkInfo({
         type: 'warning',
-        title: this.$t('retrieve.Confirm_delete'),
+        subTitle: `${this.$t('当前上报名称为')} ${row.collector_config_name}，${this.$t('确认要删除')}`,
         confirmFn: () => {
           this.requestDeleteCollect(row);
         },

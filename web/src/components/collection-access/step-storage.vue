@@ -172,7 +172,6 @@
 
         <div class="need-approval">
           <bk-checkbox
-            class="bk-checkbox"
             v-model="formData.assessment_config.need_approval"
             :disabled="isForcedFillAssessment">
             {{$t('需要审批')}}
