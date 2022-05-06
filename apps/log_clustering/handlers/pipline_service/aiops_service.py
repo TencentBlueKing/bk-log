@@ -293,7 +293,7 @@ def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
     )
     time_format = arrow.now().format("YYYYMMDDHHmmssSSS")
     if operator == OperatorServiceEnum.UPDATE:
-        sample_set_name = SampleSet.objects.get(clustering_config.sample_set_id).sample_set_name
+        sample_set_name = SampleSet.objects.get(sample_set_id=clustering_config.sample_set_id).sample_set_name
         model_name = AiopsModel.objects.get(model_id=clustering_config.model_id).model_name
         experiment_alias = AiopsModelExperiment.objects.get(model_id=clustering_config.model_id).experiment_alias
     else:
