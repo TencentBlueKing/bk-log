@@ -561,7 +561,7 @@ export default {
         if (!row.is_active && row.status !== 'running') {
           this.$bkInfo({
             type: 'warning',
-            title: this.$t('retrieve.Confirm_delete'),
+            subTitle: `${this.$t('当前采集项名称为')} ${row.collector_config_name}，${this.$t('确认要删除')}`,
             confirmFn: () => {
               this.requestDeleteCollect(row);
             },

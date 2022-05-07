@@ -34,7 +34,7 @@
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="king-slider-content">
         <bk-form
           v-if="!sliderLoading"
-          :model="formData"
+          :model="basicFormData"
           :label-width="150"
           :rules="basicRules"
           form-type="vertical"
@@ -793,13 +793,13 @@ export default {
         await this.$refs.validateForm.validate();
         const postData = {
           bk_biz_id: this.bkBizId,
-          cluster_name: this.formData.cluster_name, // 集群名
-          domain_name: this.formData.domain_name, // 地址
-          port: this.formData.port, // 端口
-          schema: this.formData.schema, // 协议
+          cluster_name: this.basicFormData.cluster_name, // 集群名
+          domain_name: this.basicFormData.domain_name, // 地址
+          port: this.basicFormData.port, // 端口
+          schema: this.basicFormData.schema, // 协议
           es_auth_info: {
-            username: this.formData.auth_info.username,
-            password: this.formData.auth_info.password,
+            username: this.basicFormData.auth_info.username,
+            password: this.basicFormData.auth_info.password,
           },
         };
         if (this.isEdit) {
@@ -1109,12 +1109,12 @@ export default {
       return true;
     },
     async handleCloseSideslider() {
-      return await this.showAlert();
+      return await this.showDeleteAlert();
     },
     /**
      * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
      */
-    showAlert() {
+    showDeleteAlert() {
       if (this.isDisableClickSubmit) return true;
       return new Promise((reject) => {
         this.$bkInfo({
