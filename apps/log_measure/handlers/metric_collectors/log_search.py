@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import time
 from collections import defaultdict
 
 import arrow
@@ -39,9 +40,8 @@ class LogSearchMetricCollector(object):
     @staticmethod
     @register_metric("log_search", description=_("日志检索"), data_name="log_search", time_filter=TimeFilterEnum.MINUTE1)
     def search_count():
-        end_time = (
-            arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
-        )
+        now_min = int(time.time()) - int(time.time()) % 60
+        end_time = arrow.get(now_min).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
         start_time = (
             datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=1)
         ).strftime("%Y-%m-%d %H:%M:%S%z")
