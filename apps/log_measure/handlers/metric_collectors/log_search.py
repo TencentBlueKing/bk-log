@@ -37,7 +37,7 @@ from bk_monitor.utils.metric import register_metric, Metric
 
 class LogSearchMetricCollector(object):
     @staticmethod
-    @register_metric("log_search", description=_("日志检索"), data_name="log_search", time_filter=TimeFilterEnum.MINUTE1)
+    @register_metric("log_search", description=_("日志检索"), data_name="log_search", time_filter=TimeFilterEnum.MINUTE5)
     def search_count():
         end_time = (
             arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
