@@ -25,6 +25,7 @@ from typing import List
 from django.utils.translation import ugettext as _
 from django.db.models import Count
 
+from apps.api import NodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import SCENARIO_BKDATA
 from apps.log_databus.constants import DEFAULT_ETL_CONFIG, EtlConfig
@@ -283,3 +284,58 @@ class CleanMetricCollector(object):
             )
 
         return cleans
+
+    @staticmethod
+    @register_metric("collector_host", description=_("采集主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
+    def collect_host():
+        configs = CollectorConfig.objects.filter(is_active=True).values(
+            "bk_biz_id", "subscription_id", "collector_config_id", "collector_config_name"
+        )
+
+        subscription_id_dict = {}
+        collector_config_dict = {}
+        for config in configs:
+            if config["subscription_id"]:
+                subscription_id_dict[config["subscription_id"]] = config["collector_config_id"]
+
+            collector_config_dict[config["collector_config_id"]] = {
+                "bk_biz_id": config["bk_biz_id"],
+                "collector_config_name": config["collector_config_name"],
+            }
+
+        groups = NodeApi.get_subscription_instance_status(
+            {"subscription_id_list": list(subscription_id_dict.keys()), "no_request": True}
+        )
+
+        biz_collector_dict = defaultdict(int)
+        total = 0
+        for group in groups:
+            instance_count = len(group["instances"])
+            biz_collector_dict[subscription_id_dict[group["subscription_id"]]] += instance_count
+            total += instance_count
+        metrics = [
+            Metric(
+                metric_name="count",
+                metric_value=count,
+                dimensions={
+                    "collector_config_id": collector_config_id,
+                    "collector_config_name": collector_config_dict[collector_config_id]["collector_config_name"],
+                    "target_bk_biz_id": collector_config_dict[collector_config_id]["bk_biz_id"],
+                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(
+                        collector_config_dict[collector_config_id]["bk_biz_id"]
+                    ),
+                },
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+            for collector_config_id, count in biz_collector_dict.items()
+        ]
+
+        metrics.append(
+            Metric(
+                metric_name="total",
+                metric_value=total,
+                dimensions=None,
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
+        return metrics
