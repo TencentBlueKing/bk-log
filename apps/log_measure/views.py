@@ -19,11 +19,28 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.conf.urls import url, include
-from rest_framework import routers
+from rest_framework.response import Response
 
-from apps.log_measure.views import StatisticViewSet
+from apps.generic import APIViewSet
+from apps.log_measure.constants import COLLECTOR_IMPORT_PATHS
+from apps.log_measure.utils.metric import MetricUtils
+from apps.utils.drf import list_route
+from bk_monitor.utils.collector import MetricCollector
 
-router = routers.DefaultRouter(trailing_slash=True)
-router.register(r"log_measure", StatisticViewSet, basename="log_measure")
-urlpatterns = [url(r"", include(router.urls))]
+
+class StatisticViewSet(APIViewSet):
+    @list_route(methods=["GET"], url_path="statistic")
+    def get_statistic(self, request):
+        namespace = request.GET.get("namespace")
+        namespaces = self.get_list_obj(namespace)
+        data_name = request.GET.get("data_name")
+        data_names = self.get_list_obj(data_name)
+        data = MetricCollector(collector_import_paths=COLLECTOR_IMPORT_PATHS).collect(
+            namespaces=namespaces, time_filter_enable=False, data_names=data_names
+        )
+        MetricUtils.del_instance()
+        return Response(data)
+
+    @staticmethod
+    def get_list_obj(obj_str):
+        return obj_str.split(",") if obj_str else obj_str
