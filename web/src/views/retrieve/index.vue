@@ -591,7 +591,6 @@ export default {
       .catch((err) => {
         console.warn(err);
       });
-    // this.fetchPageData();
     this.getGlobalsData();
   },
   mounted() {
