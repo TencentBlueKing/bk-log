@@ -533,18 +533,14 @@ export default {
       window.open(`${window.MONITOR_URL}/?bizId=${this.bkBizId}#/strategy-config/edit/${strategyID}`, '_blank');
     },
     handleScroll() {
-      if (this.throttle) {
-        return;
-      }
+      if (this.throttle) return;
       this.throttle = true;
       setTimeout(() => {
         this.throttle = false;
         // scroll变化时判断是否展示返回顶部的Icon
         this.$emit('handleScrollIsShow');
         this.$refs.labelsPopover?.instance.hide();
-        if (this.fingerList.length >= this.allFingerList.length) {
-          return;
-        }
+        if (this.fingerList.length >= this.allFingerList.length) return;
         const el = document.querySelector('.result-scroll-container');
         if (el.scrollHeight - el.offsetHeight - el.scrollTop < 5) {
           el.scrollTop = el.scrollTop - 5;
@@ -599,7 +595,7 @@ export default {
       return !!str ? str : this.$t('未匹配');
     },
     getHeightLightList(str) {
-      return str.match(/\[\$\(.*?\)\]/g) || [];
+      return str.match(/#.*?#/g) || [];
     },
   },
 };

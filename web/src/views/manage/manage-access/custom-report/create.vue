@@ -162,22 +162,14 @@
             data-test-id="addNewCustomBox_select_storageCluster"
             v-model="formData.storage_cluster_id"
             :clearable="false"
-            :disabled="submitLoading || isEdit"
-            @selected="handleSelectStorageCluster">
+            :disabled="submitLoading">
             <bk-option
               v-for="(item, index) in storageList"
               class="custom-no-padding-option"
               :id="item.storage_cluster_id"
               :name="item.storage_cluster_name"
               :key="index">
-              <div
-                v-if="!(item.permission && item.permission.manage_es_source)"
-                class="option-slot-container no-authority"
-                @click.stop>
-                <span class="text">{{item.storage_cluster_name}}</span>
-                <span class="apply-text" @click="applySearchAccess(item)">{{$t('申请权限')}}</span>
-              </div>
-              <div v-else class="option-slot-container">
+              <div class="option-slot-container">
                 <span>{{ item.storage_cluster_name }}</span>
               </div>
             </bk-option>
@@ -241,7 +233,7 @@
             v-model="formData.storage_replies"
             class="copy-number-input"
             type="number"
-            :max="3"
+            :max="replicasMax"
             :min="0"
             :precision="0"
             :clearable="false"
@@ -344,6 +336,7 @@ export default {
         category_id: '',
         description: '',
       },
+      replicasMax: 7,
       tip_storage: [],
       baseRules: {
         collector_config_name: [ // 采集名称
@@ -413,6 +406,7 @@ export default {
           trigger: 'change',
         }],
       },
+      isFirstRendering: true, // 是否是第一次渲染 用于回显热数据天数
     };
   },
   computed: {

@@ -29,11 +29,12 @@ export default {
         this.storageList.forEach((res) => {
           const arr = [];
           if (res.storage_cluster_id === val) {
+            this.handleSelectStorageCluster(res);
             this.selectedStorageCluster = res; // 当前选择的存储集群
             this.updateDaysList();
             this.$nextTick(() => { // 如果开启了冷热集群天数不能为0
               if (res.enable_hot_warm && this.formData.allocation_min_days === '0') {
-                this.formData.allocation_min_days = '7';
+                this.formData.allocation_min_days = String(res.setup_config.retention_days_default);
               }
             });
 
@@ -70,8 +71,11 @@ export default {
     },
   },
   methods: {
-    // 获取存储集群
-    getStorage() {
+    /**
+     * @desc: 获取存储集群
+     * @param { Boolean } isStorage // 是否是存储步骤
+     */
+    getStorage(isStorage = false) {
       const queryData = { bk_biz_id: this.bkBizId };
       if (this.curCollect?.data_link_id) {
         queryData.data_link_id = this.curCollect.data_link_id;
@@ -91,6 +95,11 @@ export default {
             }
           }
           this.storageList = s1.concat(s2);
+          if (isStorage) {
+            this.storageList.forEach(item => (item.is_platform
+              ? this.clusterList.push(item)
+              : this.exclusiveList.push(item)));
+          }
           if (this.isItsm && this.curCollect?.can_use_independent_es_cluster) {
             // itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
           } else {
@@ -137,7 +146,7 @@ export default {
       const stringVal = numberVal.toString();
       const isRetention = type === 'retention'; // 过期时间 or 热数据存储时间
       if (numberVal) {
-        const maxDays = this.selectedStorageCluster.max_retention || 30;
+        const maxDays = this.selectedStorageCluster.setup_config.retention_days_max || 30;
         if (numberVal > maxDays) { // 超过最大天数
           isRetention ? this.customRetentionDay = '' : this.customHotDataDay = '';
           this.messageError(this.$t('最大自定义天数为') + maxDays);
@@ -201,14 +210,20 @@ export default {
       }
     },
     // 选择存储集群
-    handleSelectStorageCluster() {
-      // 因为有最大天数限制，不同集群限制可能不同，所以切换集群时重置
-      this.formData.retention = '7';
-      this.formData.allocation_min_days = '0';
+    handleSelectStorageCluster(res) {
+      // 因为有最大天数限制，不同集群限制可能不同，所以切换集群时展示默认
+      const { setup_config } = res;
+      this.formData.retention = setup_config?.retention_days_default || '7';
+      this.formData.storage_replies = setup_config?.number_of_replicas_default || 3;
+      this.replicasMax = setup_config?.number_of_replicas_max || 7;
+      if (!this.isFirstRendering) {
+        this.formData.allocation_min_days = '0';
+      }
+      this.isFirstRendering = false;
     },
     updateDaysList() {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
-        return item.id <= (this.selectedStorageCluster.max_retention || 30);
+        return item.id <= (this.selectedStorageCluster.setup_config.retention_days_max || 30);
       });
       this.retentionDaysList = retentionDaysList;
       this.hotDataDaysList = [...retentionDaysList];

@@ -27,7 +27,8 @@
       :title="isEdit ? $t('logArchive.editRepository') : $t('logArchive.createRepository')"
       :is-show="showSlider"
       :width="676"
-      :quick-close="false"
+      :quick-close="true"
+      :before-close="handleCloseSideslider"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="repository-slider-content">
@@ -53,20 +54,20 @@
               @change="handleChangeCluster">
               <bk-option
                 v-for="option in esClusterList"
-                :key="option.cluster_config.cluster_id"
-                :id="option.cluster_config.cluster_id"
-                :name="option.cluster_config.cluster_name">
+                :key="option.storage_cluster_id"
+                :id="option.storage_cluster_id"
+                :name="option.storage_cluster_name">
                 <div
                   v-if="!(option.permission && option.permission.manage_es_source)"
                   class="option-slot-container no-authority"
                   @click.stop>
                   <span class="text">
-                    <span>{{ option.cluster_config.cluster_name }}</span>
+                    <span>{{ option.storage_cluster_name }}</span>
                   </span>
                   <span class="apply-text" @click="applyProjectAccess(option)">{{ $t('申请权限') }}</span>
                 </div>
                 <div v-else v-bk-overflow-tips class="option-slot-container">
-                  <span>{{ option.cluster_config.cluster_name }}</span>
+                  <span>{{ option.storage_cluster_name }}</span>
                 </div>
               </bk-option>
             </bk-select>
@@ -375,9 +376,10 @@ export default {
   },
   methods: {
     async getEsClusterList() {
-      const res = await this.$http.request('/source/list', {
+      const res = await this.$http.request('/source/getEsList', {
         query: {
           bk_biz_id: this.bkBizId,
+          enable_archive: 1,
         },
       });
       if (res.data) {
@@ -420,6 +422,7 @@ export default {
           es_config: {
             type: es_config.type,
           },
+          bk_biz_id: this.bkBizId,
         };
         if (es_config.type === 'hdfs') {
           const { uri, path, isSecurity, security, compress  } = hdfsFormData;
@@ -472,6 +475,26 @@ export default {
       } finally {
         this.$bkLoading.hide();
       }
+    },
+    async handleCloseSideslider() {
+      return await this.showDeleteAlert();
+    },
+    /**
+     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
+     */
+    showDeleteAlert() {
+      return new Promise((reject) => {
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('pageLeaveTips'),
+          confirmFn: () => {
+            reject(true);
+          },
+          close: () => {
+            reject(false);
+          },
+        });
+      });
     },
   },
 };

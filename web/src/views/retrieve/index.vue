@@ -308,6 +308,7 @@
       :total-fields="totalFields"
       :clean-config="cleanConfig"
       :config-data="clusteringData"
+      :statistical-fields-data="statisticalFieldsData"
       @closeSetting="isShowSettingModal = false;"
       @updateLogFields="requestFields"
     />

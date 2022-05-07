@@ -132,12 +132,15 @@ export default {
     },
     checkDisable(id, field) {
       const type = this.getFieldType(field);
-      return ['is', 'not'].includes(id) && type === 'text' ? 'is-disabled' : '';
+      return (['is', 'not'].includes(id) && type === 'text') || type === '__virtual__'  ? 'is-disabled' : '';
     },
     handleMenuClick(operator, item, field) {
       let params = {};
       const curValue = this.tableRowDeepView(this.data, item, this.getFieldType(item), false);
-
+      if (!field) {  // disable时操作禁用
+        const disableStr = this.checkDisable(operator, item);
+        if (disableStr === 'is-disabled') return;
+      }
       if (['is', 'not'].includes(operator)) {
         if (!field && !this.getFieldType(item)) return;
 
@@ -190,6 +193,12 @@ export default {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+
+        ::v-deep .icon-ext {
+          width: 18px;
+          font-size: 12px;
+          transform: scale(.8);
+        }
       }
 
       .field-value {
@@ -237,7 +246,9 @@ export default {
         }
 
         .icon-close-circle,
-        .icon-minus-circle {
+        .icon-minus-circle,
+        .icon-arrows-up-circle,
+        .icon-copy {
           &.is-disabled {
             color: #dcdee5;
             cursor: not-allowed;

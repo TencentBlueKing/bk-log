@@ -217,7 +217,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('logClean.Confirm_delete_temp'),
+          subTitle: `${this.$t('当前模板名称为')} ${row.name}，${this.$t('确认要删除')}`,
           confirmFn: () => {
             this.requestDeleteTemp(row);
           },
@@ -229,6 +229,9 @@ export default {
       this.$http.request('clean/deleteTemplate', {
         params: {
           clean_template_id: row.clean_template_id,
+        },
+        data: {
+          bk_biz_id: this.bkBizId,
         },
       }).then((res) => {
         if (res.result) {

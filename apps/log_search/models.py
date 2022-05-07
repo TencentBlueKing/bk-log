@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import os
+from collections import defaultdict
 
 from django.conf import settings
 from django.db import models
@@ -835,3 +836,33 @@ class UserMetaConf(models.Model):
         verbose_name = _("用户元配置")
         verbose_name_plural = _("44_用户元配置")
         unique_together = (("username", "type"),)
+
+
+class BizProperty(models.Model):
+    bk_biz_id = models.IntegerField(_("业务ID"), null=True, default=None)
+    biz_property_id = models.CharField(_("业务属性ID"), max_length=64, null=True, default="")
+    biz_property_name = models.CharField(_("业务属性名称"), max_length=64, null=True, default="")
+    biz_property_value = models.CharField(_("业务属性值"), max_length=256, null=True, default="")
+
+    class Meta:
+        verbose_name = _("业务属性")
+        verbose_name_plural = _("45_业务属性")
+
+    @classmethod
+    def list_biz_property(cls) -> list:
+        biz_properties = BizProperty.objects.all()
+        biz_properties_dict = defaultdict(lambda: {
+            "biz_property_name": "",
+            "biz_property_value": []
+        })
+        for bi in biz_properties:
+            biz_properties_dict[bi.biz_property_id]["biz_property_name"] = bi.biz_property_name
+            biz_properties_dict[bi.biz_property_id]["biz_property_value"].append(bi.biz_property_value)
+
+        return [
+            {
+                "biz_property_id": biz_property_id,
+                "biz_property_name": biz_properties_dict[biz_property_id]["biz_property_name"],
+                "biz_property_value": list(set(biz_properties_dict[biz_property_id]["biz_property_value"]))
+            } for biz_property_id in biz_properties_dict
+        ]
