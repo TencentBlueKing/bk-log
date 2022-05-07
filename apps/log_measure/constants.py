@@ -51,6 +51,7 @@ COLLECTOR_IMPORT_PATHS = [
     "apps.log_measure.handlers.metric_collectors.es",
     "apps.log_measure.handlers.metric_collectors.grafana",
     "apps.log_measure.handlers.metric_collectors.log_archive",
+    "apps.log_measure.handlers.metric_collectors.log_clustering",
     "apps.log_measure.handlers.metric_collectors.log_databus",
     "apps.log_measure.handlers.metric_collectors.log_extract",
     "apps.log_measure.handlers.metric_collectors.log_search",

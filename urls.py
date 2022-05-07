@@ -57,6 +57,7 @@ urlpatterns = [
     url(r"^flower/", include("flower_proxy.urls")),
     url(r"^{}".format(config.ENTRANCE_URL), include("version_log.urls")),
     url(r"^api/v1/log_extract/", include("apps.log_extract.urls")),
+    url(r"^api/v1/", include("apps.log_measure.urls")),
 ]
 
 
