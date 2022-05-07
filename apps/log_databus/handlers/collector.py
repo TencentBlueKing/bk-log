@@ -156,6 +156,7 @@ class CollectorHandler(object):
         itsm_info = ItsmHandler().collect_itsm_status(collect_config_id=collector_config["collector_config_id"])
         collector_config.update(
             {
+                "iframe_ticket_url": itsm_info["iframe_ticket_url"],
                 "ticket_url": itsm_info["ticket_url"],
                 "itsm_ticket_status": itsm_info["collect_itsm_status"],
                 "itsm_ticket_status_display": itsm_info["collect_itsm_status_display"],
@@ -735,7 +736,7 @@ class CollectorHandler(object):
     def _itsm_start_judge(self):
         if self.data.collector_scenario_id == CollectorScenarioEnum.CUSTOM.value:
             return
-        if not self.data.itsm_has_success() and FeatureToggleObject.switch(name=FEATURE_COLLECTOR_ITSM):
+        if self.data.itsm_has_appling() and FeatureToggleObject.switch(name=FEATURE_COLLECTOR_ITSM):
             raise CollectNotSuccessNotCanStart
 
     @transaction.atomic
@@ -1756,6 +1757,7 @@ class CollectorHandler(object):
             raise CollectorResultTableIDDuplicateException(
                 CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=result_table_id)
             )
+
         with transaction.atomic():
             try:
                 self.data = CollectorConfig.objects.create(**collector_config_params)

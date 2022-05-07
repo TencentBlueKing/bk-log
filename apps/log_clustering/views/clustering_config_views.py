@@ -19,6 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import re
+
 from rest_framework.response import Response
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -29,6 +31,7 @@ from apps.log_clustering.exceptions import ClusteringClosedException
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.serializers import ClusteringConfigSerializer, ClusteringPreviewSerializer
 from apps.utils.drf import detail_route, list_route
+from apps.utils.log import logger
 
 
 class ClusteringConfigViewSet(APIViewSet):
@@ -222,7 +225,7 @@ class ClusteringConfigViewSet(APIViewSet):
         return Response(
             ClusteringConfigHandler().preview(
                 input_data=params["input_data"],
-                min_members=params["min_members"],
+                min_members=1,  # 这里是因为在调试的时候默认只有一条数据
                 max_dist_list=params["max_dist_list"],
                 predefined_varibles=params["predefined_varibles"],
                 delimeter=params["delimeter"],
@@ -230,3 +233,36 @@ class ClusteringConfigViewSet(APIViewSet):
                 is_case_sensitive=params["is_case_sensitive"],
             )
         )
+
+    @list_route(methods=["POST"], url_path="check_regexp")
+    def check(self, request, *args, **kwargs):
+        """
+        @api {post} /clustering_config/check_regexp/ 5_聚类设置-调试正则
+        @apiName check regexp invalid
+        @apiGroup log_clustering
+        @apiParam {Str} regexp 正则表达式
+        @apiSuccessExample {json} 正确的正则表达式:
+        {
+            "message":"",
+            "code":0,
+            "data":true,
+            "result":true
+        }
+        @apiSuccessExample {json} 错误的正则表达式
+        {
+            "message":"",
+            "code":0,
+            "data":false,
+            "result":true
+        }
+        """
+        regexp_str = request.data.get("regexp")
+        if not regexp_str:
+            return Response(False)
+
+        try:
+            re.compile(regexp_str)
+        except BaseException as e:  # pylint: disable=broad-except
+            logger.error("check regexp failed: ", e)
+            return Response(False)
+        return Response(True)

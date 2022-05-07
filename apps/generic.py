@@ -340,6 +340,11 @@ def custom_exception_handler(exc, context):
         logger.exception(_msg)
         return JsonResponse(_error(exc.code, exc.message, exc.data, exc.errors))
 
+    # 处理校验异常
+    if isinstance(exc, ValueError):
+        logger.exception(str(exc))
+        return JsonResponse(_error("500001", str(exc)))
+
     # 判断是否在debug模式中,
     # 在这里判断是防止阻止了用户原本主动抛出的异常
     if settings.DEBUG:

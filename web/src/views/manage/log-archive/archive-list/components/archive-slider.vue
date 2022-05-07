@@ -27,7 +27,8 @@
       :title="isEdit ? $t('logArchive.editArchive') : $t('logArchive.createArchive')"
       :is-show="showSlider"
       :width="676"
-      :quick-close="false"
+      :quick-close="true"
+      :before-close="handleCloseSideslider"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="archive-slider-content">
@@ -101,7 +102,7 @@
               data-test-id="formContainer_select_selectExpireDate"
               :clearable="false">
               <div slot="trigger" class="bk-select-name">
-                {{ formData.snapshot_days ? formData.snapshot_days + $t('天') : '' }}
+                {{ getDaysStr }}
               </div>
               <template v-for="(option, index) in retentionDaysList">
                 <bk-option :key="index" :id="option.id" :name="option.name"></bk-option>
@@ -191,6 +192,12 @@ export default {
 
       return list;
     },
+    getDaysStr() {
+      if (String(this.formData.snapshot_days) === '0') {
+        return this.$t('永久');
+      }
+      return !!this.formData.snapshot_days ? this.formData.snapshot_days + this.$t('天') : '';
+    },
   },
   watch: {
     async showSlider(val) {
@@ -270,6 +277,11 @@ export default {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
         return item.id;
       });
+      retentionDaysList.push({
+        default: false,
+        id: '0',
+        name: this.$t('永久'),
+      });
       this.retentionDaysList = retentionDaysList;
     },
     // 输入自定义过期天数
@@ -347,6 +359,26 @@ export default {
       } finally {
         this.confirmLoading = false;
       }
+    },
+    async handleCloseSideslider() {
+      return await this.showDeleteAlert();
+    },
+    /**
+     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
+     */
+    showDeleteAlert() {
+      return new Promise((reject) => {
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('pageLeaveTips'),
+          confirmFn: () => {
+            reject(true);
+          },
+          close: () => {
+            reject(false);
+          },
+        });
+      });
     },
   },
 };

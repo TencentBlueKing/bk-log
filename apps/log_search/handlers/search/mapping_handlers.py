@@ -128,6 +128,36 @@ class MappingHandlers(object):
             key = f"{last_key}.{property_key}" if last_key else property_key
             conflict_result[key].add(property_define["type"])
 
+    def virtual_fields(self, field_list):
+        fields = {f["field_name"] for f in field_list}
+        virtual_predicate = [{"serverIp", "cloudId"}, {"ip", "cloudid"}, {"ip"}]
+        if any([fields.issuperset(predicate) for predicate in virtual_predicate]):
+            field_list.append(
+                {
+                    "field_type": "__virtual__",
+                    "field_name": "__module__",
+                    "field_alias": _("模块"),
+                    "is_display": False,
+                    "is_editable": True,
+                    "tag": "dimension",
+                    "es_doc_values": False,
+                    "is_analyzed": False,
+                }
+            )
+            field_list.append(
+                {
+                    "field_type": "__virtual__",
+                    "field_name": "__set__",
+                    "field_alias": _("集群"),
+                    "is_display": False,
+                    "is_editable": True,
+                    "tag": "dimension",
+                    "es_doc_values": False,
+                    "is_analyzed": False,
+                }
+            )
+        return field_list
+
     def get_all_fields_by_index_id(self, scope="default"):
         mapping_list: list = self._get_mapping()
         property_dict: dict = self.find_merged_property(mapping_list)
@@ -145,6 +175,7 @@ class MappingHandlers(object):
             }
             for field in fields_result
         ]
+        # fields_list = self.virtual_fields(fields_list)
         fields_list = self._combine_description_field(fields_list)
         # 处理editable关系
         final_fields_list: list = self._combine_fields(fields_list)
