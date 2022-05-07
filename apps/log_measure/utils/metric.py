@@ -32,7 +32,6 @@ from apps.log_search.models import ProjectInfo
 from apps.utils.cache import cache_one_hour
 from bk_monitor.utils.metric import Metric
 
-
 REGISTERED_METRICS = []
 
 

@@ -100,9 +100,7 @@ class BusinessMetricCollector(object):
                     metric_value=collector_config["total"],
                     dimensions={
                         "target_bk_biz_id": collector_config["bk_biz_id"],
-                        "target_bk_biz_name": MetricUtils.get_instance().biz_info[collector_config["bk_biz_id"]][
-                            "bk_biz_name"
-                        ],
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(collector_config["bk_biz_id"]),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )

@@ -109,32 +109,34 @@ class CollectMetricCollector(object):
         result = multi_execute_func.run()
         return [indices for cluster_indices in result.values() for indices in cluster_indices]
 
+    @staticmethod
     @register_metric("collector_host", description=_("采集主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
-    def collect_host(self):
+    def collect_host():
         configs = CollectorConfig.objects.filter(is_active=True).values(
             "bk_biz_id", "subscription_id", "collector_config_id", "collector_config_name"
         )
 
-        subscription_id_dict = {
-            config["subscription_id"]: config["collector_config_id"] for config in configs if config["subscription_id"]
-        }
+        subscription_id_dict = {}
+        collector_config_dict = {}
+        for config in configs:
+            if config["subscription_id"]:
+                subscription_id_dict[config["subscription_id"]] = config["collector_config_id"]
+
+            collector_config_dict[config["collector_config_id"]] = {
+                "bk_biz_id": config["bk_biz_id"],
+                "collector_config_name": config["collector_config_name"],
+            }
 
         groups = NodeApi.get_subscription_instance_status(
             {"subscription_id_list": list(subscription_id_dict.keys()), "no_request": True}
         )
-        collector_config_dict = {
-            config["collector_config_id"]: {
-                "bk_biz_id": config["bk_biz_id"],
-                "collector_config_name": config["collector_config_name"],
-            }
-            for config in configs
-        }
 
         biz_collector_dict = defaultdict(int)
         total = 0
         for group in groups:
-            biz_collector_dict[subscription_id_dict[group["subscription_id"]]] += 1
-            total += 1
+            instance_count = len(group["instances"])
+            biz_collector_dict[subscription_id_dict[group["subscription_id"]]] += instance_count
+            total += instance_count
         metrics = [
             Metric(
                 metric_name="count",
