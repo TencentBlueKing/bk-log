@@ -1040,7 +1040,7 @@ def process_cat_allocation_data(metrics, get, version, base_dimensions):
 
 class EsMonitor:
     @staticmethod
-    @register_metric("es_monitor", description=_("es 监控信息"), data_name="metric", time_filter=TimeFilterEnum.MINUTE2)
+    @register_metric("es_monitor", description=_("es 监控信息"), data_name="es_monitor", time_filter=TimeFilterEnum.MINUTE2)
     def elastic():
         metrics = []
         for cluster_info in MetricUtils.get_instance().cluster_infos.values():
