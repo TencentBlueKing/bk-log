@@ -44,7 +44,7 @@ class LogSearchMetricCollector(object):
             arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
         )
         start_time = (
-            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=1)
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=5)
         ).strftime("%Y-%m-%d %H:%M:%S%z")
 
         history_objs = (

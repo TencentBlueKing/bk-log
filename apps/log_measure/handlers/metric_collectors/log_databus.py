@@ -111,7 +111,7 @@ class CollectMetricCollector(object):
 
     @staticmethod
     @register_metric(
-        "collector_capacity", description=_("采集项容量"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60
+        "collector_capacity", description=_("采集项容量"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def collector_capacity():
         has_table_id_collects: List[CollectorConfig] = CollectorConfig.objects.filter(
