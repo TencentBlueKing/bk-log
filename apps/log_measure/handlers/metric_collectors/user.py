@@ -19,7 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-
+import arrow
+from django.db.models import Count
 from django.utils.translation import ugettext as _
 from django.contrib.auth import get_user_model
 
@@ -29,7 +30,7 @@ from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
 
 
-class ThirdPartyMetricCollector(object):
+class UserMetricCollector(object):
     @staticmethod
     @register_metric("user_active", description=_("活跃用户"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def user_active():
@@ -62,4 +63,38 @@ class ThirdPartyMetricCollector(object):
             )
         )
 
+        return metrics
+
+    @staticmethod
+    @register_metric("unique_visitor", description=_("uv访问数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    def get_unique_visitor():
+        user_index_set_search_history_group = (
+            UserIndexSetSearchHistory.objects.filter(created_at__gte=arrow.now().replace(days=-1).datetime)
+            .values("created_by")
+            .annotate(total=Count("created_by"))
+            .order_by()
+        )
+        metrics = []
+        total = 0
+        for user_index_set_search_history in user_index_set_search_history_group:
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=user_index_set_search_history["total"],
+                    dimensions={
+                        "target_username": user_index_set_search_history["created_by"],
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+            total += user_index_set_search_history["total"]
+
+        metrics.append(
+            Metric(
+                metric_name="total",
+                metric_value=total,
+                dimensions=None,
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
         return metrics
