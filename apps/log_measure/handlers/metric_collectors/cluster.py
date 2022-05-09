@@ -49,6 +49,7 @@ class ClusterMetricCollector(object):
                 health_data = es_client.cluster.health(params={"request_timeout": 10})
                 dimensions = {
                     "target_bk_biz_id": bk_biz_id,
+                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     "origin_cluster_name": health_data["cluster_name"],
                     "cluster_id": cluster_info.get("cluster_config").get("cluster_id"),
                     "cluster_name": cluster_info.get("cluster_config").get("cluster_name"),
@@ -114,10 +115,8 @@ class ClusterMetricCollector(object):
                         "node": allocation["node"],
                         "cluster_id": cluster_info.get("cluster_config").get("cluster_id"),
                         "cluster_name": cluster_info.get("cluster_config").get("cluster_name"),
-                        "target_bk_biz_id": cluster_info.get("cluster_config", {})
-                        .get("custom_option", {})
-                        .get("bk_biz_id")
-                        or settings.BLUEKING_BK_BIZ_ID,
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     }
                     for key in ["shards", "disk.indices", "disk.used", "disk.avail", "disk.total", "disk.percent"]:
                         if key not in allocation:
@@ -149,10 +148,8 @@ class ClusterMetricCollector(object):
                         "node": node["name"],
                         "cluster_id": cluster_info.get("cluster_config").get("cluster_id"),
                         "cluster_name": cluster_info.get("cluster_config").get("cluster_name"),
-                        "target_bk_biz_id": cluster_info.get("cluster_config", {})
-                        .get("custom_option", {})
-                        .get("bk_biz_id")
-                        or settings.BLUEKING_BK_BIZ_ID,
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     }
                     for key in ["heap.percent", "ram.percent", "cpu", "load_1m", "load_5m", "load_15m"]:
                         if key not in node:
