@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -20,20 +19,29 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
-# 创建bkdata data_id 特性开关
-FEATURE_BKDATA_DATAID = "feature_bkdata_dataid"
+from django.conf import settings
 
-# 是否开启ITSM特性开关
-FEATURE_COLLECTOR_ITSM = "collect_itsm"
-ITSM_SERVICE_ID = "itsm_service_id"
-SCENARIO_BKDATA = "scenario_bkdata"
-# 是否使用数据平台超级token
-BKDATA_SUPER_TOKEN = "bkdata_super_token"
-# AIOPS相关配置
-BKDATA_CLUSTERING_TOGGLE = "bkdata_aiops_toggle"
-# es相关配置
-BKLOG_ES_CONFIG = "bklog_es_config"
-# 新人指引相关配置
-USER_GUIDE_CONFIG = "user_guide_config"
-# 采集下发的时候，是否自动安装采集器
-IS_AUTO_DEPLOY_PLUGIN = "is_auto_deploy_plugin"
+from apps.api.base import DataAPI
+
+from config.domains import BCS_APIGATEWAY_ROOT
+from apps.api.modules.utils import add_esb_info_before_request
+
+
+def bcs_before_request(params):
+    params = add_esb_info_before_request(params)
+    params["Authorization"] = f"Bearer {settings.BCS_API_GATEWAY_TOKEN}"
+    return params
+
+
+class _BcsApi:
+    MODULE = "BCS"
+
+    def __init__(self):
+        self.list_cluster_by_project_id = DataAPI(
+            method="GET",
+            url=f"{BCS_APIGATEWAY_ROOT}bcsapi/v4/clustermanager/v1/cluster",
+            module=self.MODULE,
+            description="根据项目id获取集群信息",
+            header_keys=["Authorization"],
+            before_request=bcs_before_request,
+        )

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -16,24 +15,19 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-We undertake not to change the open source license (MIT license) applicable to the current version of
-the project delivered to anyone in the future.
 """
 
-# 创建bkdata data_id 特性开关
-FEATURE_BKDATA_DATAID = "feature_bkdata_dataid"
 
-# 是否开启ITSM特性开关
-FEATURE_COLLECTOR_ITSM = "collect_itsm"
-ITSM_SERVICE_ID = "itsm_service_id"
-SCENARIO_BKDATA = "scenario_bkdata"
-# 是否使用数据平台超级token
-BKDATA_SUPER_TOKEN = "bkdata_super_token"
-# AIOPS相关配置
-BKDATA_CLUSTERING_TOGGLE = "bkdata_aiops_toggle"
-# es相关配置
-BKLOG_ES_CONFIG = "bklog_es_config"
-# 新人指引相关配置
-USER_GUIDE_CONFIG = "user_guide_config"
-# 采集下发的时候，是否自动安装采集器
-IS_AUTO_DEPLOY_PLUGIN = "is_auto_deploy_plugin"
+def version_cmp_greater(version1: str, version2: str) -> bool:
+    """
+    version: vx.xx.xx v1.12.3
+    v1.16 > v.12.3 True
+    v1.16 > v1.16 False
+    v1.16 > v1.17 False
+    """
+    versions = [version1, version2]
+    for version in versions:
+        version = version.strip("v")
+        version = version.split(".")
+        version = [int(n) for n in version]
+    return version1 > version2

@@ -16,24 +16,22 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-We undertake not to change the open source license (MIT license) applicable to the current version of
-the project delivered to anyone in the future.
 """
+from django.utils.translation import ugettext_lazy as _
 
-# 创建bkdata data_id 特性开关
-FEATURE_BKDATA_DATAID = "feature_bkdata_dataid"
+from apps.exceptions import BaseException, ErrorCode
 
-# 是否开启ITSM特性开关
-FEATURE_COLLECTOR_ITSM = "collect_itsm"
-ITSM_SERVICE_ID = "itsm_service_id"
-SCENARIO_BKDATA = "scenario_bkdata"
-# 是否使用数据平台超级token
-BKDATA_SUPER_TOKEN = "bkdata_super_token"
-# AIOPS相关配置
-BKDATA_CLUSTERING_TOGGLE = "bkdata_aiops_toggle"
-# es相关配置
-BKLOG_ES_CONFIG = "bklog_es_config"
-# 新人指引相关配置
-USER_GUIDE_CONFIG = "user_guide_config"
-# 采集下发的时候，是否自动安装采集器
-IS_AUTO_DEPLOY_PLUGIN = "is_auto_deploy_plugin"
+
+# =================================================
+# 采集配置
+# =================================================
+
+
+class BaseBcsException(BaseException):
+    MODULE_CODE = ErrorCode.BKLOG_BCS
+    MESSAGE = _("BCS容器模块异常")
+
+
+class ApplyConfigForBcsException(BaseException):
+    ERROR_CODE = "001"
+    MESSAGE = _("apply配置失败")
