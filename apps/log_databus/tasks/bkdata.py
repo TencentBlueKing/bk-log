@@ -81,9 +81,7 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
             "data_scenario": BKDATA_DATA_SCENARIO,
             "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
             "permission": BKDATA_PERMISSION,
-            "bk_biz_id": collector_config.bkdata_biz_id
-            if collector_config.bkdata_biz_id
-            else collector_config.bk_biz_id,
+            "bk_biz_id": collector_config.get_bk_biz_id(),
             "description": collector_config.description,
             "access_raw_data": {
                 "tags": BKDATA_TAGS,
