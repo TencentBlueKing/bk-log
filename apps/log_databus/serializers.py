@@ -793,7 +793,7 @@ class MultiAttrCheckSerializer:
                 msg = "{}{};".format(key, _("不存在"))
                 err_msg += msg
         if err_msg:
-            raise serializers.ValidationError()
+            raise serializers.ValidationError(err_msg)
 
 
 class CollectorPluginCreateSerializer(MultiAttrCheckSerializer, serializers.ModelSerializer):
