@@ -92,10 +92,17 @@
         <div slot="empty">
           <div class="empty-text">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p>{{exhibitText}}</p>
-            <span class="empty-leave" @click="handleLeaveCurrent">
-              {{exhibitOperate}}
-            </span>
+            <p v-if="!isHaveText && indexSetItem.scenario_id !== 'log'">
+              {{$t('canNotFieldMessage1')}}
+              <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
+              {{$t('canNotFieldMessage2')}}
+            </p>
+            <div v-else>
+              <p>{{exhibitText}}</p>
+              <span class="empty-leave" @click="handleLeaveCurrent">
+                {{exhibitOperate}}
+              </span>
+            </div>
           </div>
         </div>
       </bk-table>
@@ -144,6 +151,10 @@ export default {
     },
     originTableList: {
       type: Array,
+      required: true,
+    },
+    indexSetItem: {
+      type: Object,
       required: true,
     },
   },
@@ -199,6 +210,7 @@ export default {
       allFingerList: [], // 所有数据指纹List
       showScrollTop: false, // 是否展示返回顶部icon
       throttle: false, // 请求防抖
+      isHaveText: false, // 是否含有text字段
     };
   },
   computed: {
@@ -236,6 +248,7 @@ export default {
       deep: true,
       immediate: true,
       handler(val) {
+        this.globalLoading = true;
         // 日志聚类开关赋值
         this.clusterSwitch = val.is_active;
         // 数据指纹开关赋值
@@ -250,7 +263,6 @@ export default {
           this.allFingerList = [];
         }
         // 判断是否可以字段提取的全局loading
-        this.globalLoading = true;
         setTimeout(() => {
           this.globalLoading = false;
         }, 700);
@@ -261,15 +273,21 @@ export default {
       immediate: true,
       handler(newList) {
         if (newList.length) {
+          /**
+           *  无字段提取或者聚类开关没开时直接不显示聚类nav和table
+           *  来源如果是数据平台并且日志聚类大开关有打开则进入text判断
+           *  有text则提示去开启日志聚类 无则显示跳转计算平台
+           */
+          this.isHaveText = newList.some(el => el.field_type === 'text');
           if (!this.configData.is_active) {
             this.exhibitAll = false;
             return;
           }
           // 初始化分组下拉列表
           this.filterGroupList();
-          this.requestData.pattern_level === '' && this.initTable();
-          // 判断有无text字段 无则不显示日志聚类
-          this.exhibitAll = newList.some(el => el.field_type === 'text');
+          this.initTable();
+          // 判断是否有text字段 无则提示当前不支持采集项清洗
+          this.exhibitAll = this.isHaveText;
         }
       },
     },
@@ -307,7 +325,7 @@ export default {
         }
       }
     },
-    async initTable() {
+    initTable() {
       const {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
@@ -362,28 +380,36 @@ export default {
         case 'getNewStrategy': // 获取新类告警状态
           this.fingerOperateData.alarmObj = val;
           break;
-        case 'editAlarm': {
-          // 更新新类告警请求
+        case 'editAlarm': { // 更新新类告警请求
           const { alarmObj: { strategy_id: strategyID } } = this.fingerOperateData;
           if (strategyID) {
             this.$refs.fingerTableRef.policyEditing(strategyID);
           }
         }
           break;
-        default:
-          break;
       }
     },
     handleLeaveCurrent() {
+      // 不显示字段提取时跳转计算平台
+      if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveText) {
+        const jumpUrl = `${window.BKDATA_URL}`;
+        window.open(jumpUrl, '_blank');
+        return;
+      }
+      // 未开启日志聚类去设置
       if (!this.clusterSwitch) {
         this.$emit('showSettingLog');
         return;
       }
+      // 无清洗 去清洗
       if (this.configID && this.configID > 0) {
         this.$router.push({
           name: 'clean-edit',
           params: { collectorId: this.configID },
-          query: { projectId: window.localStorage.getItem('project_id') },
+          query: {
+            projectId: window.localStorage.getItem('project_id'),
+            backRoute: this.$route.name,
+          },
         });
       }
     },
@@ -416,9 +442,8 @@ export default {
      * @desc: 数据指纹请求
      */
     requestFinger() {
-      if (this.throttle) {
-        return;
-      }
+      if (this.throttle) return;
+
       this.throttle = true;
       this.tableLoading = true;
       this.$http.request('/logClustering/clusterSearch', {
@@ -513,7 +538,7 @@ export default {
      */
     filterGroupList() {
       const filterList = this.totalFields
-        .filter(el => el.es_doc_values && !/^__/.test(el.field_name)) // 过滤__dist字段
+        .filter(el => el.es_doc_values && !/^__dist/.test(el.field_name)) // 过滤__dist字段
         .map((item) => {
           const { field_name: id, field_alias: alias } = item;
           return { id, name: alias ? `${id}(${alias})` : id };

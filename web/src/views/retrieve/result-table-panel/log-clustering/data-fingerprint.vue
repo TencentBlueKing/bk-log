@@ -128,7 +128,11 @@
               :context="row.pattern"
               :tippy-options="{ offset: '0, 10', boundary: scrollContent }"
               @eventClick="(option) => handleMenuClick(option,row)">
-              <span>{{row.pattern ? row.pattern : $t('未匹配')}}</span>
+              <text-highlight
+                style="word-break: break-all;"
+                :queries="getHeightLightList(row.pattern)">
+                {{getHeightLightStr(row.pattern)}}
+              </text-highlight>
             </cluster-event-popover>
             <p
               v-if="!cacheExpandStr.includes($index)"
@@ -238,11 +242,13 @@ import ClusterEventPopover from './components/cluster-event-popover';
 import ClusteringLoader from '@/skeleton/clustering-loader';
 import fingerSelectColumn from './components/finger-select-column';
 import { copyMessage } from '@/common/util';
+import TextHighlight from 'vue-text-highlight';
 
 export default {
   components: {
     ClusterEventPopover,
     ClusteringLoader,
+    TextHighlight,
   },
   props: {
     fingerList: {
@@ -527,18 +533,14 @@ export default {
       window.open(`${window.MONITOR_URL}/?bizId=${this.bkBizId}#/strategy-config/edit/${strategyID}`, '_blank');
     },
     handleScroll() {
-      if (this.throttle) {
-        return;
-      }
+      if (this.throttle) return;
       this.throttle = true;
       setTimeout(() => {
         this.throttle = false;
         // scroll变化时判断是否展示返回顶部的Icon
         this.$emit('handleScrollIsShow');
         this.$refs.labelsPopover?.instance.hide();
-        if (this.fingerList.length >= this.allFingerList.length) {
-          return;
-        }
+        if (this.fingerList.length >= this.allFingerList.length) return;
         const el = document.querySelector('.result-scroll-container');
         if (el.scrollHeight - el.offsetHeight - el.scrollTop < 5) {
           el.scrollTop = el.scrollTop - 5;
@@ -589,6 +591,12 @@ export default {
       const el = document.querySelector('.result-scroll-container');
       this.$easeScroll(0, 300, el);
     },
+    getHeightLightStr(str) {
+      return !!str ? str : this.$t('未匹配');
+    },
+    getHeightLightList(str) {
+      return str.match(/#.*?#/g) || [];
+    },
   },
 };
 </script>
@@ -625,7 +633,7 @@ export default {
   }
 
   .finger-cluster-table {
-    /deep/ .bk-table-body-wrapper {
+    ::v-deep .bk-table-body-wrapper {
       margin-top: 32px;
       min-height: calc(100vh - 570px);
 
@@ -640,7 +648,7 @@ export default {
       display: none;
     }
 
-    /deep/.bk-table-row-last {
+    ::v-deep.bk-table-row-last {
       td {
         border: none;
       }
@@ -730,7 +738,7 @@ export default {
 }
 
 .table-no-data {
-  /deep/.bk-table-header-wrapper {
+  ::v-deep.bk-table-header-wrapper {
     tr {
       > th {
         /* stylelint-disable-next-line declaration-no-important */

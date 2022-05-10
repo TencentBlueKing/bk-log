@@ -16,12 +16,18 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import sys
 
-from config.log import get_logging_config_dict
-from blueapps.conf.default_settings import *  # noqa
+from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
+
+from blueapps.conf.default_settings import *  # noqa
+
+from config.log import get_logging_config_dict
 
 # 使用k8s部署模式
 IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
@@ -88,6 +94,8 @@ else:
 # 这里是默认的中间件，大部分情况下，不需要改动
 # 如果你已经了解每个默认 MIDDLEWARE 的作用，确实需要去掉某些 MIDDLEWARE，或者改动先后顺序，请去掉下面的注释，然后修改
 MIDDLEWARE = (
+    # http -> https 转换中间件
+    "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     # request instance provider
@@ -131,6 +139,8 @@ MIDDLEWARE = (
 #
 STATIC_VERSION = "1.0"
 
+DEFAULT_HTTPS_HOST = ""
+
 if IS_K8S_DEPLOY_MODE:
     STATIC_ROOT = "static"
 else:
@@ -168,6 +178,8 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.bkdata",
     "apps.log_search.tasks.async_export",
     "apps.log_search.tasks.project",
+    # TODO，临时注释cmdb缓存定时任务
+    # "apps.log_search.tasks.cmdb",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
     "apps.log_search.tasks.no_data",
@@ -187,7 +199,6 @@ if RUN_VER != "open":
     LOGGING["handlers"]["root"]["encoding"] = "utf-8"
     LOGGING["handlers"]["component"]["encoding"] = "utf-8"
     LOGGING["handlers"]["mysql"]["encoding"] = "utf-8"
-    LOGGING["handlers"]["blueapps"]["encoding"] = "utf-8"
     if not IS_LOCAL:
         logging_format = {
             "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
@@ -255,6 +266,13 @@ if IS_K8S_DEPLOY_MODE:
             },
             # 普通app日志
             "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            "bk_dataview": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            "iam": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
 
@@ -274,13 +292,38 @@ MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
 BK_DOC_QUERY_URL = "https://bk.tencent.com/docs/document/5.1/90/3822/"
 BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
+
+# 日志归档文档
+BK_ARCHIVE_DOC_URL = os.getenv("BKAPP_ARCHIVE_DOC_URL", "")
+
+BK_ASSESSMEN_HOST_COUNT = int(os.getenv("BKAPP_ASSESSMEN_HOST_COUNT", 30))
+
+# 日志清洗文档
+BK_ETL_DOC_URL = os.getenv("BKAPP_ETL_DOC_URL", "")
+
+BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 # 计算平台文档地址
 BK_DOC_DATA_URL = ""
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 BK_HOT_WARM_CONFIG_URL = (
     "https://www.elastic.co/guide/en/elasticsearch/reference/master/modules-cluster.html#shard-allocation-awareness"
 )
-
+BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 DEPLOY_MODE = os.environ.get("DEPLOY_MODE", "")
+
+
+# ===============================================================================
+# 企业版登录重定向
+# ===============================================================================
+
+
+def redirect_func(request):
+    login_page_url = reverse("account:login_page")
+    next_url = "{}?refer_url={}".format(login_page_url, request.path)
+    return HttpResponseRedirect(next_url)
+
+
+BLUEAPPS_PAGE_401_RESPONSE_FUNC = redirect_func
 
 # bulk_request limit
 BULK_REQUEST_LIMIT = int(os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500))
@@ -940,6 +983,15 @@ if "celery" in sys.argv:
 if IS_USE_CELERY:
     CELERY_ENABLE_UTC = True
     CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+    from celery.signals import setup_logging
+
+    @setup_logging.connect
+    def config_loggers(*args, **kwags):
+        from logging.config import dictConfig
+
+        dictConfig(LOGGING)
+
 
 # remove disabled apps
 if locals().get("DISABLED_APPS"):

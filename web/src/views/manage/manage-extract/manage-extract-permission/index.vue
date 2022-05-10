@@ -78,6 +78,8 @@
       transfer
       :is-show.sync="showManageDialog"
       :width="520"
+      :quick-close="true"
+      :before-close="handleCloseSideslider"
       :title="type === 'create' ? $t('新增') : $t('编辑')">
       <directory-manage
         v-bkloading="{ isLoading: isSliderLoading }"
@@ -258,6 +260,26 @@ export default {
         }
       }
     },
+    async handleCloseSideslider() {
+      return await this.showDeleteAlert();
+    },
+    /**
+     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
+     */
+    showDeleteAlert() {
+      return new Promise((reject) => {
+        this.$bkInfo({
+          type: 'warning',
+          title: this.$t('pageLeaveTips'),
+          confirmFn: () => {
+            reject(true);
+          },
+          close: () => {
+            reject(false);
+          },
+        });
+      });
+    },
   },
 };
 </script>
@@ -267,7 +289,7 @@ export default {
     padding: 0 24px 20px;
 
     /*表格内容样式*/
-    /deep/ .king-table {
+    ::v-deep .king-table {
       .task-operation-container {
         display: flex;
         align-items: center;

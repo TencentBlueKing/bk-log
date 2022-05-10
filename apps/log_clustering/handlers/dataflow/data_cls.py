@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 from dataclasses import dataclass, field
@@ -43,7 +45,7 @@ class CreateFlowCls(object):
 
 
 @dataclass
-class StartFlowCls(object):
+class OperatorFlowCls(object):
     """
     开启flow
     """
@@ -349,6 +351,15 @@ class SplitCls(object):
 
 
 @dataclass
+class ElasticsearchCls(object):
+    analyzed_fields: str = ""
+    doc_values_fields: str = ""
+    json_fields: str = ""
+    expires: str = ""
+    has_replica: bool = False
+
+
+@dataclass
 class AfterTreatDataFlowCls(object):
     add_uuid_stream_source: StreamSourceCls
     sample_set_stream_source: StreamSourceCls
@@ -362,12 +373,15 @@ class AfterTreatDataFlowCls(object):
     join_signature_tmp: RealTimeCls
     judge_new_class: RealTimeCls
     join_signature: RealTimeCls
+    change_clustering_field: RealTimeCls
     diversion_tspider: TspiderStorageCls
     ignite: IgniteStorageCls
     diversion: SplitCls
     queue_cluster: str
     bk_biz_id: int
     target_bk_biz_id: int
+    es: ElasticsearchCls = ElasticsearchCls()
+    es_cluster: str = ""
 
 
 @dataclass

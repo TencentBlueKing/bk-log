@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 from django.conf import settings
@@ -61,6 +63,7 @@ from apps.log_databus.serializers import (
     ListCollectorSerlalizer,
     CustomCreateSerializer,
     CustomUpateSerializer,
+    PreCheckSerializer,
 )
 from apps.utils.function import ignored
 
@@ -1163,6 +1166,11 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} retention 保留时间
         @apiParam {Int} [storage_replies] 副本数量
         @apiParam {list} view_roles 查看权限
+        @apiParam {Boolean} need_assessment 需要评估
+        @apiParam {Object} assessment_config 评估配置
+        @apiParam {String} assessment_config.log_assessment 单机日志量
+        @apiParam {Boolean} assessment_config.need_approval 需要审批
+        @apiParam {List} assessment_config.approvals 审批人
         @apiParamExample {json} 请求样例:
         {
             "table_id": "xxx",
@@ -1200,7 +1208,13 @@ class CollectorViewSet(ModelViewSet):
             ],
             "storage_cluster_id": 3,
             "retention": 1,
-            "view_roles": [1,2]
+            "view_roles": [1,2],
+            "need_assessment": true,
+            "assessment_config": {
+                "log_assessment": "10M",
+                "need_approval": true,
+                "approvals": ["admin"]
+            }
         }
         @apiSuccessExample {json} 成功返回:
         {
@@ -1213,6 +1227,11 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(CollectorEtlStorageSerializer)
+        data, can_apply = EtlHandler(collector_config_id=collector_config_id).itsm_pre_hook(data, collector_config_id)
+        if not can_apply:
+            return Response(data)
+        for key in ["need_assessment", "assessment_config"]:
+            data.pop(key, None)
         return Response(EtlHandler(collector_config_id=collector_config_id).update_or_create(**data))
 
     @detail_route(methods=["GET"], url_path="get_data_link_list")
@@ -1849,3 +1868,26 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.params_valid(CustomUpateSerializer)
         return Response(CollectorHandler(collector_config_id).custom_update(**data))
+
+    @list_route(methods=["GET"], url_path="pre_check")
+    def pre_check(self, request):
+        """
+        @api {get} /databus/collectors/pre_check/ 预检查创建采集项的参数
+        @apiName pre_check
+        @apiDescription 预检查采集项英文名是否可以使用
+        @apiGroup 10_Collector
+        @apiParam {Int} bk_biz_id 所属业务ID
+        @apiParam {String} collector_config_name_en 采集项英文名
+        @apiSuccess {bool} data.allowed 如果英文名不存在, 则返回True, 反之返回False
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "allowed": True,
+            },
+            "result": true
+        }
+        """
+        data = self.params_valid(PreCheckSerializer)
+        return Response(CollectorHandler().pre_check(data))

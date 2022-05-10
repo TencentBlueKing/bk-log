@@ -16,8 +16,14 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
+
+from apps.models import MultiStrSplitByCommaFieldText
 from apps.log_databus.exceptions import ArchiveNotFound
+from apps.exceptions import ApiResultError
+from apps.utils.log import logger
 from apps.utils.cache import cache_one_hour
 from apps.utils.function import map_if
 from apps.utils.thread import MultiExecuteFunc
@@ -42,6 +48,7 @@ from apps.log_databus.constants import (  # noqa
     CollectItsmStatus,  # noqa
     ADMIN_REQUEST_USER,
     EtlConfig,  # noqa
+    VisibleEnum,
 )
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
 from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
@@ -105,7 +112,7 @@ class CollectorConfig(SoftDeleteModel):
     can_use_independent_es_cluster = models.BooleanField(_("是否能够使用独立es集群"), default=True, blank=True)
     collector_package_count = models.IntegerField(_("采集打包数量"), null=True, default=10)
     collector_output_format = models.CharField(_("输出格式"), null=True, default=None, max_length=32, blank=True)
-    collector_config_overlay = JSONField(_("采集器配置覆盖"), null=True, default=None, max_length=32, blank=True)
+    collector_config_overlay = models.JSONField(_("采集器配置覆盖"), null=True, default=None, max_length=32, blank=True)
     storage_shards_nums = models.IntegerField(_("ES分片数量"), null=True, default=None, blank=True)
     storage_shards_size = models.IntegerField(_("单shards分片大小"), null=True, default=None, blank=True)
     storage_replies = models.IntegerField(_("ES副本数"), null=True, default=1, blank=True)
@@ -149,6 +156,24 @@ class CollectorConfig(SoftDeleteModel):
 
     def get_result_table_kafka_config(self):
         return TransferApi.get_data_id({"bk_data_id": self.bk_data_id})["mq_config"]
+
+    def get_bk_data_by_name(self):
+        try:
+            bk_data = TransferApi.get_data_id({"data_name": self.bk_data_name})
+            return bk_data
+        except ApiResultError:
+            logger.debug(f"bk_data_name: {self.bk_data_name} is not exist.")
+
+        return None
+
+    def get_result_table_by_id(self):
+        try:
+            result_table = TransferApi.get_result_table({"table_id": self.table_id})
+            return result_table
+        except ApiResultError:
+            logger.debug(f"result_table_id: {self.table_id} is not exist.")
+
+        return None
 
     @property
     def category_name(self):
@@ -197,6 +222,9 @@ class CollectorConfig(SoftDeleteModel):
             CollectItsmStatus.SUCCESS_APPLY.value,
         ]
 
+    def itsm_has_appling(self):
+        return self.itsm_ticket_status == CollectItsmStatus.APPLYING.value
+
     def itsm_has_success(self):
         return self.itsm_ticket_status == CollectItsmStatus.SUCCESS_APPLY.value
 
@@ -241,6 +269,11 @@ class CollectorConfig(SoftDeleteModel):
         return TransferApi.get_data_id({"bk_data_id": bk_data_id, "no_request": True})
 
 
+class ItsmEtlConfig(SoftDeleteModel):
+    ticket_sn = models.CharField(_("itsm单据号"), max_length=255)
+    request_param = models.JSONField(_("请求参数"))
+
+
 class DataLinkConfig(SoftDeleteModel):
     """
     数据采集链路配置
@@ -278,9 +311,15 @@ class StorageCapacity(OperateRecordModel):
 
 
 class StorageUsed(OperateRecordModel):
+    CLUSTER_INFO_BIZ_ID = 0
+
     bk_biz_id = models.IntegerField(_("业务id"))
     storage_cluster_id = models.IntegerField(_("集群ID"))
-    storage_used = models.FloatField(_("已用容量"))
+    storage_used = models.FloatField(_("已用容量"), default=0)
+    storage_usage = models.IntegerField(_("容量使用率"), default=0)
+    storage_total = models.BigIntegerField(_("总容量"), default=0)
+    index_count = models.IntegerField(_("索引数量"), default=0)
+    biz_count = models.IntegerField(_("业务数量"), default=0)
 
     class Meta:
         verbose_name = _("业务已用容量")
@@ -316,9 +355,11 @@ class CleanTemplate(SoftDeleteModel):
     clean_template_id = models.AutoField(_("清洗id"), primary_key=True)
     name = models.CharField(_("模板名"), max_length=128)
     clean_type = models.CharField(_("模板类型"), max_length=64)
-    etl_params = JSONField(_("etl配置"), null=True, blank=True)
-    etl_fields = JSONField(_("etl字段"), null=True, blank=True)
+    etl_params = models.JSONField(_("etl配置"), null=True, blank=True)
+    etl_fields = models.JSONField(_("etl字段"), null=True, blank=True)
     bk_biz_id = models.IntegerField(_("业务id"))
+    visible_type = models.CharField(_("可见类型"), max_length=64, default=VisibleEnum.CURRENT_BIZ.value)
+    visible_bk_biz_id = MultiStrSplitByCommaFieldText(_("可见业务ID"), default="")
 
     class Meta:
         verbose_name = _("清洗模板")
@@ -329,8 +370,8 @@ class CleanTemplate(SoftDeleteModel):
 class CleanStash(SoftDeleteModel):
     clean_stash_id = models.AutoField(_("清洗缓存id"), primary_key=True)
     clean_type = models.CharField(_("模板类型"), max_length=64)
-    etl_params = JSONField(_("etl配置"), null=True, blank=True)
-    etl_fields = JSONField(_("etl字段"), null=True, blank=True)
+    etl_params = models.JSONField(_("etl配置"), null=True, blank=True)
+    etl_fields = models.JSONField(_("etl字段"), null=True, blank=True)
     collector_config_id = models.IntegerField(_("采集项列表"), db_index=True)
     bk_biz_id = models.IntegerField(_("业务id"))
 

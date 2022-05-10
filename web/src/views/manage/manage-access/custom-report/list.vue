@@ -21,6 +21,7 @@
   -->
 
 <template>
+  <!-- 自定义上报列表页面 -->
   <div class="custom-item-container" data-test-id="custom_div_customContainer">
     <section class="operation">
       <div class="top-operation">
@@ -264,6 +265,7 @@ export default {
         return;
       }
 
+      let backRoute;
       const params = {};
       const query = {};
       const routeMap = {
@@ -283,6 +285,10 @@ export default {
         params.collectorId = row.collector_config_id;
       }
 
+      if (operateType === 'clean') {
+        backRoute = this.$route.name;
+      }
+
       const targetRoute = routeMap[operateType];
       // this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
@@ -291,6 +297,7 @@ export default {
         query: {
           ...query,
           projectId: window.localStorage.getItem('project_id'),
+          backRoute,
         },
       });
     },
@@ -316,7 +323,7 @@ export default {
     deleteCollect(row) {
       this.$bkInfo({
         type: 'warning',
-        title: this.$t('retrieve.Confirm_delete'),
+        subTitle: `${this.$t('当前上报名称为')} ${row.collector_config_name}，${this.$t('确认要删除')}`,
         confirmFn: () => {
           this.requestDeleteCollect(row);
         },

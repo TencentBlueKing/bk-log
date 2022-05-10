@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 import json
@@ -34,7 +36,7 @@ from apps.iam.handlers import permission
 from django_fakeredis import FakeRedis
 
 logging.basicConfig(level=logging.NOTSET)
-logger = logging.getLogger("root")
+logger = logging.getLogger()
 
 BK_APP_CODE = "bk_log_search"
 BK_BIZ_ID = 2

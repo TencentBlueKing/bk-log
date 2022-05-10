@@ -16,13 +16,15 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
-from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX
+from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX, VisibleEnum
 from apps.log_databus.models import CleanTemplate, CollectorConfig
 
 from apps.log_databus.constants import EsSourceType
@@ -344,7 +346,7 @@ class RetrySerializer(serializers.Serializer):
 
 class StorageListSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
-    data_link_id = serializers.IntegerField(label=_("链路ID"), default=0, allow_null=True)
+    enable_archive = serializers.BooleanField(label=_("是否启用归档"), required=False)
 
 
 class StorageIndicesInfoSerializer(serializers.Serializer):
@@ -354,6 +356,29 @@ class StorageIndicesInfoSerializer(serializers.Serializer):
 class AuthInfoSerializer(serializers.Serializer):
     username = serializers.CharField(label=_("用户名"), allow_blank=True)
     password = serializers.CharField(label=_("密码"), allow_blank=True)
+
+
+class VisibleSerializer(serializers.Serializer):
+    visible_type = serializers.ChoiceField(label=_("可见类型"), choices=VisibleEnum.get_choices())
+    visible_bk_biz = serializers.ListField(
+        label=_("可见业务范围"), child=serializers.IntegerField(), required=False, default=[]
+    )
+    bk_biz_labels = serializers.DictField(label=_("业务标签"), required=False, default={})
+
+    def validate(self, attrs):
+        if attrs["visible_type"] == VisibleEnum.MULTI_BIZ.value and not attrs.get("visible_bk_biz"):
+            raise ValidationError(_("可见类型为多业务时，可见业务范围不能为空"))
+
+        if attrs["visible_type"] == VisibleEnum.BIZ_ATTR.value and not attrs.get("bk_biz_labels"):
+            raise ValidationError(_("可见类型为业务属性时，业务标签不能为空"))
+        return attrs
+
+
+class SetupSerializer(serializers.Serializer):
+    retention_days_max = serializers.IntegerField(label=_("最大保留天数"), default=7)
+    retention_days_default = serializers.IntegerField(label=_("默认保留天数"), default=7)
+    number_of_replicas_max = serializers.IntegerField(label=_("最大副本数"), default=0)
+    number_of_replicas_default = serializers.IntegerField(label=_("默认副本数"), default=0)
 
 
 class StorageCreateSerializer(serializers.Serializer):
@@ -371,11 +396,15 @@ class StorageCreateSerializer(serializers.Serializer):
     hot_attr_value = serializers.CharField(label=_("热节点属性值"), default="", allow_blank=True)
     warm_attr_name = serializers.CharField(label=_("冷节点属性名称"), default="", allow_blank=True)
     warm_attr_value = serializers.CharField(label=_("冷节点属性值"), default="", allow_blank=True)
+
+    bk_biz_id = serializers.IntegerField(label=_("集群创建业务id"))
     source_type = serializers.ChoiceField(label=_("ES来源类型"), choices=EsSourceType.get_choices())
-    source_name = serializers.CharField(label=_("来源名称"), required=False)
-    visible_bk_biz = serializers.ListField(
-        label=_("可见业务范围"), child=serializers.IntegerField(), required=False, default=[]
-    )
+    visible_config = VisibleSerializer(label=_("可见范围配置"))
+    setup_config = SetupSerializer(label=_("es设置"))
+    admin = serializers.ListField(label=_("负责人"))
+    description = serializers.CharField(label=_("集群描述"), required=False, default="", allow_blank=True)
+    enable_archive = serializers.BooleanField(label=_("是否开启日志归档"))
+    enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
@@ -384,9 +413,6 @@ class StorageCreateSerializer(serializers.Serializer):
             [attrs["hot_attr_name"], attrs["hot_attr_value"], attrs["warm_attr_name"], attrs["warm_attr_value"]]
         ):
             raise ValidationError(_("当冷热数据处于开启状态时，冷热节点属性配置不能为空"))
-        if attrs["source_type"] in [EsSourceType.OTHER.value]:
-            if not attrs.get("source_name"):
-                raise ValidationError(_("当来源类型为其他时，需要传入来源名称"))
         return attrs
 
 
@@ -425,11 +451,15 @@ class StorageUpdateSerializer(serializers.Serializer):
     hot_attr_value = serializers.CharField(label=_("热节点属性值"), default="", allow_blank=True)
     warm_attr_name = serializers.CharField(label=_("冷节点属性名称"), default="", allow_blank=True)
     warm_attr_value = serializers.CharField(label=_("冷节点属性值"), default="", allow_blank=True)
+
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
     source_type = serializers.ChoiceField(label=_("ES来源类型"), choices=EsSourceType.get_choices())
-    source_name = serializers.CharField(label=_("来源名称"), required=False)
-    visible_bk_biz = serializers.ListField(
-        label=_("可见业务范围"), child=serializers.IntegerField(), required=False, default=[]
-    )
+    visible_config = VisibleSerializer(label=_("可见范围配置"))
+    setup_config = SetupSerializer(label=_("es设置"))
+    admin = serializers.ListField(label=_("负责人"))
+    description = serializers.CharField(label=_("集群描述"), required=False, default="", allow_blank=True)
+    enable_archive = serializers.BooleanField(label=_("是否开启日志归档"))
+    enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
@@ -438,10 +468,6 @@ class StorageUpdateSerializer(serializers.Serializer):
             [attrs["hot_attr_name"], attrs["hot_attr_value"], attrs["warm_attr_name"], attrs["warm_attr_value"]]
         ):
             raise ValidationError(_("当冷热数据处于开启状态时，冷热节点属性配置不能为空"))
-
-        if attrs["source_type"] in [EsSourceType.OTHER.value]:
-            if not attrs.get("source_name"):
-                raise ValidationError(_("当来源类型为其他时，需要传入来源名称"))
         return attrs
 
 
@@ -521,6 +547,12 @@ class CollectorEtlFieldsSerializer(serializers.Serializer):
         return True
 
 
+class AssessmentConfig(serializers.Serializer):
+    log_assessment = serializers.CharField(label=_("日志评估 （单机日志量）"))
+    need_approval = serializers.BooleanField(label=_("是否需要审批"), default=False)
+    approvals = serializers.ListField(label=_("审批人"), child=serializers.CharField(), required=True)
+
+
 class CollectorEtlStorageSerializer(serializers.Serializer):
     table_id = serializers.CharField(label=_("结果表ID"), required=True)
     etl_config = serializers.CharField(label=_("清洗类型"), required=True)
@@ -533,9 +565,14 @@ class CollectorEtlStorageSerializer(serializers.Serializer):
         label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
     )
     view_roles = serializers.ListField(label=_("查看权限"), required=False, default=[])
+    need_assessment = serializers.BooleanField(label=_("是否需要评估配置"), required=False, default=False)
+    assessment_config = AssessmentConfig(label=_("评估配置"), required=False)
 
     def validate(self, attrs):
         super().validate(attrs)
+
+        if attrs.get("need_assessment", False) and not attrs.get("assessment_config"):
+            raise ValidationError(_("评估配置不能为空"))
 
         if attrs["etl_config"] in EtlConfigEnum.get_dict_choices():
             if not attrs.get("fields"):
@@ -647,6 +684,12 @@ class CleanTemplateSerializer(serializers.Serializer):
     etl_params = serializers.DictField(label=_("清洗配置"), required=True)
     etl_fields = serializers.ListField(child=serializers.DictField(), label=_("字段配置"), required=True)
     bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
+    visible_type = serializers.CharField(label=_("可见类型"), required=False)
+    visible_bk_biz_id = serializers.ListField(label=_("可见业务ID"), required=False)
+
+
+class CleanTemplateDestroySerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
 
 
 class CleanStashSerializer(serializers.Serializer):
@@ -717,3 +760,16 @@ class ListCollectorSerlalizer(serializers.Serializer):
 
 class BatchGetStateSerlalizer(serializers.Serializer):
     restore_config_ids = serializers.ListField(label=_("归档回溯配置list"), required=True)
+
+
+class PreCheckSerializer(serializers.Serializer):
+    """
+    预检查bk_data_name
+    """
+
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"))
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+    bk_data_name = serializers.CharField(label=_("采集链路data_name"), required=False)
+    result_table_id = serializers.CharField(label=_("结果表ID"), required=False)

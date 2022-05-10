@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import hashlib
 import json
@@ -530,6 +532,9 @@ class DataAPI(object):
         # 如果第一次没拿完，根据请求总数并发请求
         pool = ThreadPool()
         futures = []
+        request = None
+        with ignored(Exception):
+            request = get_request()
         while start < count:
             request_params = {"page": {"limit": limit, "start": start}, "no_request": True}
             request_params.update(params)
@@ -538,7 +543,7 @@ class DataAPI(object):
                 pool.apply_async(
                     self.thread_activate_request,
                     args=(request_params,),
-                    kwds={"request": get_request(), "context": get_current()},
+                    kwds={"request": request, "context": get_current()},
                 )
             )
 
@@ -567,7 +572,8 @@ class DataAPI(object):
         """
         处理并发请求无法activate_request的封装
         """
-        activate_request(request)
+        if request:
+            activate_request(request)
         attach(context)
         return self.__call__(
             params=params,

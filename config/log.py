@@ -18,6 +18,7 @@ from blueapps.conf.default_settings import APP_CODE, BASE_DIR
 APP_CODE = os.environ.get("APP_ID", APP_CODE)
 
 
+# copy from blueapps
 def get_logging_config_dict(settings_module):
     log_class = "logging.handlers.RotatingFileHandler"
     log_level = settings_module.get("LOG_LEVEL", "INFO")
@@ -90,15 +91,6 @@ def get_logging_config_dict(settings_module):
                 "maxBytes": 1024 * 1024 * 10,
                 "backupCount": 5,
             },
-            "blueapps": {
-                "class": log_class,
-                "formatter": "verbose",
-                "filename": os.path.join(log_dir, "%s-django.log" % log_name_prefix),
-                # TODO blueapps log 等待平台提供单独的路径
-                # log_dir, '%s-blueapps.log' % log_name_prefix),
-                "maxBytes": 1024 * 1024 * 10,
-                "backupCount": 5,
-            },
         },
         "loggers": {
             "django": {"handlers": ["null"], "level": "INFO", "propagate": True},
@@ -117,23 +109,25 @@ def get_logging_config_dict(settings_module):
                 "level": log_level,
                 "propagate": True,
             },
-            # the root logger ,用于整个project的logger
-            "root": {"handlers": ["root"], "level": log_level, "propagate": True},
-            # 组件调用日志
             "component": {
                 "handlers": ["component"],
                 "level": log_level,
                 "propagate": True,
             },
             "celery": {"handlers": ["celery"], "level": log_level, "propagate": True},
-            # other loggers...
-            # blueapps
             "blueapps": {
-                "handlers": ["blueapps"],
+                "handlers": ["root"],
                 "level": log_level,
                 "propagate": True,
             },
-            # 普通app日志
+            "root": {"handlers": ["root"], "level": log_level, "propagate": True},
+            "iam": {
+                "handlers": ["root"],
+                "level": log_level,
+                "propagate": True,
+            },
             "app": {"handlers": ["root"], "level": log_level, "propagate": True},
+            "bk_dataview": {"handlers": ["root"], "level": log_level, "propagate": True},
+            "bk_monitor": {"handlers": ["root"], "level": log_level, "propagate": True},
         },
     }

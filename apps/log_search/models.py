@@ -16,15 +16,17 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import os
+from collections import defaultdict
 
 from django.conf import settings
 from django.db import models
 from django.db.transaction import atomic
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import format_html
-from django_jsonfield_backport.models import JSONField
 from jinja2 import Environment, FileSystemLoader
 
 from apps.exceptions import BizNotExistError
@@ -762,8 +764,8 @@ class AsyncTask(OperateRecordModel):
     导出任务状态表
     """
 
-    request_param = JSONField(_("检索请求参数"))
-    sorted_param = JSONField(_("异步导出排序字段"), null=True, blank=True)
+    request_param = models.JSONField(_("检索请求参数"))
+    sorted_param = models.JSONField(_("异步导出排序字段"), null=True, blank=True)
     scenario_id = models.CharField(_("接入场景"), max_length=64)
     index_set_id = models.IntegerField(_("索引集id"))
     result = models.BooleanField(_("异步导出结果"), default=False)
@@ -827,10 +829,40 @@ class EmailTemplate(OperateRecordModel):
 
 class UserMetaConf(models.Model):
     username = models.CharField(_("创建者"), max_length=32, default="")
-    conf = JSONField(_("用户meta配置"), default=dict)
+    conf = models.JSONField(_("用户meta配置"), default=dict)
     type = models.CharField(_("数据类型"), max_length=64)
 
     class Meta:
         verbose_name = _("用户元配置")
         verbose_name_plural = _("44_用户元配置")
         unique_together = (("username", "type"),)
+
+
+class BizProperty(models.Model):
+    bk_biz_id = models.IntegerField(_("业务ID"), null=True, default=None)
+    biz_property_id = models.CharField(_("业务属性ID"), max_length=64, null=True, default="")
+    biz_property_name = models.CharField(_("业务属性名称"), max_length=64, null=True, default="")
+    biz_property_value = models.CharField(_("业务属性值"), max_length=256, null=True, default="")
+
+    class Meta:
+        verbose_name = _("业务属性")
+        verbose_name_plural = _("45_业务属性")
+
+    @classmethod
+    def list_biz_property(cls) -> list:
+        biz_properties = BizProperty.objects.all()
+        biz_properties_dict = defaultdict(lambda: {
+            "biz_property_name": "",
+            "biz_property_value": []
+        })
+        for bi in biz_properties:
+            biz_properties_dict[bi.biz_property_id]["biz_property_name"] = bi.biz_property_name
+            biz_properties_dict[bi.biz_property_id]["biz_property_value"].append(bi.biz_property_value)
+
+        return [
+            {
+                "biz_property_id": biz_property_id,
+                "biz_property_name": biz_properties_dict[biz_property_id]["biz_property_name"],
+                "biz_property_value": list(set(biz_properties_dict[biz_property_id]["biz_property_value"]))
+            } for biz_property_id in biz_properties_dict
+        ]

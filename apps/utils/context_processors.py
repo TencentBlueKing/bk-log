@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 """
 context_processor for common(setting)
@@ -23,6 +25,7 @@ context_processor for common(setting)
 除setting外的其他context_processor内容，均采用组件的方式(string)
 """
 import datetime  # noqa
+from urllib.parse import urlparse  # noqa
 from django.utils import translation  # noqa
 from django.utils.translation import ugettext_lazy as _  # noqa
 from django.conf import settings  # noqa
@@ -31,6 +34,12 @@ from blueapps.account.conf import ConfFixture  # noqa
 
 
 def mysetting(request):
+    bk_login_url_prefix = settings.PAAS_API_HOST if settings.DEPLOY_MODE == "kubernetes" else settings.BK_PAAS_HOST
+    if settings.DEFAULT_HTTPS_HOST and settings.BK_COMPONENT_API_URL:
+        bk_component_api_url_netloc = urlparse(settings.BK_COMPONENT_API_URL).netloc
+        bk_login_url_prefix = (
+            urlparse(bk_login_url_prefix)._replace(scheme="https", netloc=bk_component_api_url_netloc).geturl()
+        )
     return {
         "gettext": _,
         "_": _,
@@ -77,9 +86,10 @@ def mysetting(request):
         "DEMO_BIZ_ID": str(settings.DEMO_BIZ_ID),
         "ES_STORAGE_CAPACITY": str(settings.ES_STORAGE_CAPACITY),
         "TAM_AEGIS_KEY": settings.TAM_AEGIS_KEY,
-        "BK_LOGIN_URL": "{}/api/c/compapi/v2/usermanage/fs_list_users/".format(
-            settings.PAAS_API_HOST if settings.DEPLOY_MODE == "kubernetes" else settings.BK_PAAS_HOST
-        ),
+        "BK_LOGIN_URL": "{}/api/c/compapi/v2/usermanage/fs_list_users/".format(bk_login_url_prefix),
         "MENU_LOGO_URL": f"{settings.STATIC_URL}{settings.MENU_LOGO_URL}",
         "BK_DOC_DATA_URL": settings.BK_DOC_DATA_URL,
+        "BK_ARCHIVE_DOC_URL": settings.BK_ARCHIVE_DOC_URL,
+        "BK_ASSESSMEN_HOST_COUNT": str(settings.BK_ASSESSMEN_HOST_COUNT),
+        "BK_ETL_DOC_URL": settings.BK_ETL_DOC_URL,
     }

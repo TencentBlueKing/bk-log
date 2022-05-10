@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.utils.translation import ugettext_lazy as _
 from pipeline.builder import ServiceActivity, Var
@@ -24,12 +26,11 @@ from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 
 from apps.api import CmsiApi
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
 from apps.log_clustering.handlers.clustering_monitor import ClusteringMonitorHandler
 from apps.log_clustering.handlers.dataflow.dataflow_handler import DataFlowHandler
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_search.constants import InnerTag
+from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import LogIndexSet
 from apps.utils.function import ignored
 from apps.utils.pipline import BaseService
@@ -46,14 +47,14 @@ class CreatePreTreatFlowService(BaseService):
         ]
 
     def _execute(self, data, parent_data):
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
-        flow = DataFlowHandler().create_pre_treat_flow(collector_config_id=collector_config_id)
-        DataFlowHandler().start(flow_id=flow["flow_id"])
+        index_set_id = data.get_one_of_inputs("index_set_id")
+        flow = DataFlowHandler().create_pre_treat_flow(index_set_id=index_set_id)
+        DataFlowHandler().operator_flow(flow_id=flow["flow_id"])
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
-        clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
+        index_set_id = data.get_one_of_inputs("index_set_id")
+        clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         deploy_data = DataFlowHandler().get_latest_deploy_data(flow_id=clustering_config.pre_treat_flow_id)
         if deploy_data["status"] == "failed":
             return False
@@ -69,13 +70,14 @@ class CreatePreTreatFlowComponent(Component):
 
 
 class CreatePreTreatFlow(object):
-    def __init__(self, collector_config_id: int):
+    def __init__(self, index_set_id: int, collector_config_id: int = None):
         self.create_pre_treat_flow = ServiceActivity(
-            component_code="create_pre_treat_flow", name=f"create_pre_treat_flow:{collector_config_id}"
+            component_code="create_pre_treat_flow", name=f"create_pre_treat_flow:{index_set_id}_{collector_config_id}"
         )
         self.create_pre_treat_flow.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.create_pre_treat_flow.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class CreateAfterTreatFlowService(BaseService):
@@ -89,14 +91,14 @@ class CreateAfterTreatFlowService(BaseService):
         ]
 
     def _execute(self, data, parent_data):
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
-        flow = DataFlowHandler().create_after_treat_flow(collector_config_id=collector_config_id)
-        DataFlowHandler().start(flow_id=flow["flow_id"])
+        index_set_id = data.get_one_of_inputs("index_set_id")
+        flow = DataFlowHandler().create_after_treat_flow(index_set_id=index_set_id)
+        DataFlowHandler().operator_flow(flow_id=flow["flow_id"])
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
-        clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
+        index_set_id = data.get_one_of_inputs("index_set_id")
+        clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         deploy_data = DataFlowHandler().get_latest_deploy_data(flow_id=clustering_config.after_treat_flow_id)
         if deploy_data["status"] == "failed":
             return False
@@ -120,13 +122,15 @@ class CreateAfterTreatFlowComponent(Component):
 
 
 class CreateAfterTreatFlow(object):
-    def __init__(self, collector_config_id: int):
+    def __init__(self, index_set_id, collector_config_id: int = None):
         self.create_after_treat_flow = ServiceActivity(
-            component_code="create_after_treat_flow", name=f"create_after_treat_flow:{collector_config_id}"
+            component_code="create_after_treat_flow",
+            name=f"create_after_treat_flow:{index_set_id}_{collector_config_id}",
         )
         self.create_after_treat_flow.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.create_after_treat_flow.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class CreateNewClsStrategyService(BaseService):
@@ -138,12 +142,12 @@ class CreateNewClsStrategyService(BaseService):
         ]
 
     def _execute(self, data, parent_data):
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
-        log_index_set = LogIndexSet.objects.filter(collector_config_id=collector_config_id).first()
+        index_set_id = data.get_one_of_inputs("index_set_id")
+        log_index_set = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
         LogIndexSet.set_tag(log_index_set.index_set_id, InnerTag.CLUSTERING.value)
+        clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         if log_index_set:
-            conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
-            bk_biz_id = conf.get("bk_biz_id")
+            bk_biz_id = clustering_config.bk_biz_id
             ClusteringMonitorHandler(
                 index_set_id=log_index_set.index_set_id, bk_biz_id=bk_biz_id
             ).create_new_cls_strategy()
@@ -157,10 +161,70 @@ class CreateNewClsStrategyComponent(Component):
 
 
 class CreateNewClsStrategy(object):
-    def __init__(self, collector_config_id: int):
+    def __init__(self, index_set_id: int, collector_config_id: int = None):
         self.create_new_cls_strategy = ServiceActivity(
-            component_code="create_new_cls_strategy", name=f"create_new_cls_strategy:{collector_config_id}"
+            component_code="create_new_cls_strategy",
+            name=f"create_new_cls_strategy:{index_set_id}_{collector_config_id}",
         )
         self.create_new_cls_strategy.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.create_new_cls_strategy.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
+
+
+class CreateNewIndexSetService(BaseService):
+    name = _("创建聚类索引集")
+
+    def inputs_format(self):
+        return [
+            Service.InputItem(name="collector config id", key="collector_config_id", type="int", required=True),
+        ]
+
+    def _execute(self, data, parent_data):
+        index_set_id = data.get_one_of_inputs("index_set_id")
+        clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
+        src_index_set = LogIndexSet.objects.get(index_set_id=clustering_config.index_set_id)
+        src_index_set_indexes = src_index_set.indexes
+        new_cls_index_set = IndexSetHandler.create(
+            index_set_name="{}_clustering".format(src_index_set.index_set_name),
+            project_id=src_index_set.project_id,
+            storage_cluster_id=src_index_set.storage_cluster_id,
+            scenario_id=src_index_set.scenario_id,
+            view_roles=None,
+            indexes=[
+                {
+                    "bk_biz_id": index["bk_biz_id"],
+                    "result_table_id": clustering_config.after_treat_flow["change_clustering_field"]["result_table_id"],
+                    "result_table_name": _("合并日志"),
+                    "time_field": "dtEventTimeStamp",
+                }
+                for index in src_index_set_indexes
+            ],
+            username=src_index_set.created_by,
+        )
+        clustering_config.index_set_id = new_cls_index_set.index_set_id
+        clustering_config.save()
+
+        # 创建新类策略
+        log_index_set = LogIndexSet.objects.filter(index_set_id=new_cls_index_set.index_set_id).first()
+        LogIndexSet.set_tag(log_index_set.index_set_id, InnerTag.CLUSTERING.value)
+        bk_biz_id = clustering_config.bk_biz_id
+        ClusteringMonitorHandler(index_set_id=log_index_set.index_set_id, bk_biz_id=bk_biz_id).create_new_cls_strategy()
+        return True
+
+
+class CreateNewIndexSetComponent(Component):
+    name = "CreateNewIndexSet"
+    code = "create_new_index_set"
+    bound_service = CreateNewIndexSetService
+
+
+class CreateNewIndexSet(object):
+    def __init__(self, index_set_id: int, collector_config_id: int = None):
+        self.create_new_index_set = ServiceActivity(
+            component_code="create_new_index_set", name=f"create_new_index_set:{index_set_id}_{collector_config_id}"
+        )
+        self.create_new_index_set.component.inputs.collector_config_id = Var(
+            type=Var.SPLICE, value="${collector_config_id}"
+        )
+        self.create_new_index_set.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
