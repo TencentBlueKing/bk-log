@@ -241,7 +241,7 @@ export default {
   #app {
     min-width: 1280px;
     height: 100%;
-    min-height: 730px;
+    // min-height: 730px;
     background: #f4f7fa;
   }
 
@@ -373,6 +373,8 @@ export default {
 
     /* stylelint-disable-next-line declaration-no-important */
     height: 100% !important;
+
+    min-height: 730px;
 
     .container-header {
       /* stylelint-disable-next-line declaration-no-important */
