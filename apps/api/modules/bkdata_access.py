@@ -25,10 +25,9 @@ Access 部署 + 采集模块
 """
 
 from django.utils.translation import ugettext_lazy as _  # noqa
-
-from apps.api.base import DataAPI  # noqa
 from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user  # noqa
 from config.domains import ACCESS_APIGATEWAY_ROOT  # noqa
+from apps.api.base import DataAPI  # noqa
 
 
 class _BkDataAccessApi:
@@ -39,7 +38,7 @@ class _BkDataAccessApi:
             method="GET",
             url=ACCESS_APIGATEWAY_ROOT + "rawdata/",
             module=self.MODULE,
-            description="源数据列表",
+            description=u"源数据列表",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
@@ -47,7 +46,7 @@ class _BkDataAccessApi:
             method="GET",
             url=ACCESS_APIGATEWAY_ROOT + "deploy_plan/{raw_data_id}/",
             module=self.MODULE,
-            description="查询部署计划",
+            description=u"查询部署计划",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
             url_keys=["raw_data_id"],
@@ -57,7 +56,7 @@ class _BkDataAccessApi:
             method="POST",
             url=ACCESS_APIGATEWAY_ROOT + "collectorhub/{raw_data_id}/stop/",
             module=self.MODULE,
-            description="停止单个采集器",
+            description=u"停止单个采集器",
             before_request=add_esb_info_before_request_for_bkdata_user,
             url_keys=["raw_data_id"],
             after_request=None,
@@ -66,18 +65,9 @@ class _BkDataAccessApi:
             method="POST",
             url=ACCESS_APIGATEWAY_ROOT + "deploy_plan/",
             module=self.MODULE,
-            description="创建部署计划",
+            description=u"创建部署计划",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
-        )
-        self.deploy_plan_put = DataAPI(
-            method="PUT",
-            url=ACCESS_APIGATEWAY_ROOT + "deploy_plan/{raw_data_id}/",
-            module=self.MODULE,
-            description="更新部署计划",
-            before_request=add_esb_info_before_request_for_bkdata_user,
-            after_request=None,
-            url_keys=["raw_data_id"],
         )
 
 
