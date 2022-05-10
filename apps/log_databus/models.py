@@ -58,7 +58,26 @@ from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
 from apps.models import MultiStrSplitByCommaField, JsonField, SoftDeleteModel, OperateRecordModel  # noqa
 
 
-class CollectorConfig(SoftDeleteModel):
+class CollectorBase:
+    """
+    采集插件&采集项基类
+    """
+
+    bkdata_biz_id = None
+    bk_biz_id = None
+
+    def get_bk_biz_id(self):
+        bk_biz_id = self.bkdata_biz_id or self.bk_biz_id
+        return bk_biz_id
+
+    def get_name(self):
+        raise NotImplementedError
+
+    def get_en_name(self):
+        raise NotImplementedError
+
+
+class CollectorConfig(CollectorBase, SoftDeleteModel):
     """
     配置后不能修改：collector_scenario_id、category_id、collector_plugin_id、bk_biz_id、target_object_type
     节点管理允许修改的字段
@@ -132,10 +151,6 @@ class CollectorConfig(SoftDeleteModel):
     bkdata_data_id_sync_times = models.IntegerField(_("调用数据平台创建data_id失败数"), default=0)
     collector_config_name_en = models.CharField(_("采集项英文名"), max_length=255, null=True, blank=True, default="")
     is_display = models.BooleanField(_("采集项是否对用户可见"), default=True)
-
-    def get_bk_biz_id(self):
-        bk_biz_id = self.bkdata_biz_id if self.bkdata_biz_id else self.bk_biz_id
-        return bk_biz_id
 
     def get_name(self):
         return self.collector_config_name
@@ -489,7 +504,7 @@ class RestoreConfig(SoftDeleteModel):
         return restore.archive.collector_config.collector_config_id
 
 
-class CollectorPlugin(SoftDeleteModel):
+class CollectorPlugin(CollectorBase, SoftDeleteModel):
     """
     采集插件，控制采集项行为
     """
@@ -541,10 +556,6 @@ class CollectorPlugin(SoftDeleteModel):
         if self.updated_by == ADMIN_REQUEST_USER:
             return self.created_by
         return self.updated_by
-
-    def get_bk_biz_id(self):
-        bk_biz_id = self.bkdata_biz_id if self.bkdata_biz_id else self.bk_biz_id
-        return bk_biz_id
 
     def get_name(self):
         return self.collector_plugin_name

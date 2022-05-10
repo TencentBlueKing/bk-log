@@ -781,7 +781,22 @@ class CollectorPluginSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CollectorPluginCreateSerializer(serializers.ModelSerializer):
+class MultiAttrCheckSerializer:
+    def _check_multi_attrs(self, attrs: dict, *args):
+        """
+        校验多个参数是否存在
+        """
+
+        err_msg = ""
+        for key in args:
+            if key not in attrs.keys():
+                msg = "{}{};".format(key, _("不存在"))
+                err_msg += msg
+        if err_msg:
+            raise serializers.ValidationError()
+
+
+class CollectorPluginCreateSerializer(MultiAttrCheckSerializer, serializers.ModelSerializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"), allow_null=True)
     is_create_public_data_id = serializers.BooleanField(label=(_("创建DATAID")), default=False)
     collector_plugin_name_en = serializers.RegexField(
@@ -802,15 +817,6 @@ class CollectorPluginCreateSerializer(serializers.ModelSerializer):
         is_allow_alone_data_id = attrs.get("is_allow_alone_data_id", True)
         create_public_data_id = attrs.get("create_public_data_id", False)
         return not is_allow_alone_data_id or create_public_data_id
-
-    def _check_multi_attrs(self, attrs: dict, *args):
-        """
-        校验多个参数是否存在
-        """
-
-        for key in args:
-            if key not in attrs.keys():
-                raise serializers.ValidationError(key + _("不存在"))
 
     def validate(self, attrs: dict) -> dict:
         # bk_biz_id 允许为空，默认置0
@@ -868,7 +874,7 @@ class CreateColelctorConfigEtlSerializer(serializers.Serializer):
     storage_shards_size = serializers.IntegerField(label=_("单shards分片大小"), required=False)
 
 
-class CollectorPluginUpdateSerializer(serializers.ModelSerializer):
+class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.ModelSerializer):
     class Meta:
         model = CollectorPlugin
         fields = [
@@ -889,15 +895,6 @@ class CollectorPluginUpdateSerializer(serializers.ModelSerializer):
             "storage_shards_nums",
             "storage_shards_size",
         ]
-
-    def _check_multi_attrs(self, attrs: dict, *args):
-        """
-        校验多个参数是否存在
-        """
-
-        for key in args:
-            if key not in attrs.keys():
-                raise serializers.ValidationError(key + _("不存在"))
 
     def validate(self, attrs: dict) -> dict:
 
