@@ -17,94 +17,82 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import re
 import copy
 import datetime
-import re
 from collections import defaultdict
-from typing import Union
-
 import arrow
-from django.conf import settings
 from django.db import IntegrityError
 from django.db import transaction
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
-from apps.api import BkDataAccessApi, CCApi
+from apps.api import CCApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
-from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
-from apps.decorators import user_operation_record
-from apps.exceptions import ApiError, ApiRequestError, ApiResultError
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
-from apps.iam import Permission, ResourceEnum
-from apps.log_databus.constants import (
-    ADMIN_REQUEST_USER,
-    BIZ_TOPO_INDEX,
-    BKDATA_DATA_REGION,
-    BKDATA_DATA_SCENARIO,
-    BKDATA_DATA_SCENARIO_ID,
-    BKDATA_DATA_SENSITIVITY,
-    BKDATA_DATA_SOURCE,
-    BKDATA_DATA_SOURCE_TAGS,
-    BKDATA_PERMISSION,
-    BKDATA_TAGS,
-    BK_SUPPLIER_ACCOUNT,
-    BULK_CLUSTER_INFOS_LIMIT,
-    CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE,
-    CollectStatus,
-    ETLProcessorChoices,
-    INTERNAL_TOPO_INDEX,
-    LogPluginInfo,
-    META_DATA_ENCODING,
-    NOT_FOUND_CODE,
-    RunStatus,
-    SEARCH_BIZ_INST_TOPO_LEVEL,
-    TargetNodeTypeEnum,
-)
-from apps.log_databus.constants import EtlConfig
-from apps.log_databus.exceptions import (
-    CollectNotSuccess,
-    CollectNotSuccessNotCanStart,
-    CollectorActiveException,
-    CollectorBkDataNameDuplicateException,
-    CollectorConfigDataIdNotExistException,
-    CollectorConfigNameDuplicateException,
-    CollectorConfigNameENDuplicateException,
-    CollectorConfigNotExistException,
-    CollectorCreateOrUpdateSubscriptionException,
-    CollectorIllegalIPException,
-    CollectorResultTableIDDuplicateException,
-    CollectorTaskRunningStatusException,
-    RegexInvalidException,
-    RegexMatchException,
-    SubscriptionInfoNotFoundException,
-)
-from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
-from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.handlers.kafka import KafkaConsumerHandle
-from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.models import CleanStash, CollectorConfig, CollectorPlugin
-from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
-from apps.log_esquery.utils.es_route import EsRoute
-from apps.log_search.constants import (
-    CMDB_HOST_SEARCH_FIELDS,
-    CollectorScenarioEnum,
-    CustomTypeEnum,
-    GlobalCategoriesEnum,
-)
-from apps.log_search.handlers.biz import BizHandler
-from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario
-from apps.models import model_to_dict
 from apps.utils.cache import caches_one_hour
 from apps.utils.db import array_chunk
 from apps.utils.function import map_if
-from apps.utils.local import get_local_param, get_request_username
-from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
+from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
+from apps.iam import ResourceEnum, Permission
+from apps.log_databus.handlers.storage import StorageHandler
+from apps.log_esquery.utils.es_route import EsRoute
+from apps.utils.log import logger
+from apps.exceptions import ApiError, ApiRequestError, ApiResultError
+from apps.utils.local import get_local_param, get_request_username
+from apps.log_databus.constants import (
+    TargetNodeTypeEnum,
+    CollectStatus,
+    RunStatus,
+    LogPluginInfo,
+    BK_SUPPLIER_ACCOUNT,
+    META_DATA_ENCODING,
+    NOT_FOUND_CODE,
+    CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE,
+    SEARCH_BIZ_INST_TOPO_LEVEL,
+    INTERNAL_TOPO_INDEX,
+    BIZ_TOPO_INDEX,
+    BULK_CLUSTER_INFOS_LIMIT,
+)
+from apps.log_databus.exceptions import (
+    CollectorConfigNotExistException,
+    CollectorConfigNameDuplicateException,
+    CollectorConfigDataIdNotExistException,
+    SubscriptionInfoNotFoundException,
+    CollectorActiveException,
+    RegexMatchException,
+    RegexInvalidException,
+    CollectNotSuccessNotCanStart,
+    CollectNotSuccess,
+    CollectorTaskRunningStatusException,
+    CollectorCreateOrUpdateSubscriptionException,
+    CollectorIllegalIPException,
+    CollectorConfigNameENDuplicateException,
+    CollectorBkDataNameDuplicateException,
+    CollectorResultTableIDDuplicateException,
+)
+from apps.log_databus.handlers.collector_scenario import CollectorScenario
+from apps.log_databus.handlers.etl_storage import EtlStorage
+from apps.log_databus.models import CollectorConfig, CleanStash
+from apps.log_search.handlers.biz import BizHandler
+from apps.log_search.handlers.index_set import IndexSetHandler
+from apps.log_search.constants import (
+    GlobalCategoriesEnum,
+    CMDB_HOST_SEARCH_FIELDS,
+    CollectorScenarioEnum,
+    CustomTypeEnum,
+)
+from apps.models import model_to_dict
+from apps.log_databus.handlers.kafka import KafkaConsumerHandle
+from apps.log_databus.constants import EtlConfig
+from apps.decorators import user_operation_record
+from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario
 from apps.utils.time_handler import format_user_time_zone
+from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 
 
 class CollectorHandler(object):
@@ -451,67 +439,6 @@ class CollectorHandler(object):
             self._authorization_collector(collect_config)
         return model_to_dict(collect_config, fields=["collector_config_name", "collector_config_id"])
 
-    @classmethod
-    def update_or_create_data_id(
-        cls, instance: Union[CollectorConfig, CollectorPlugin], etl_processor: str = None
-    ) -> int:
-        """
-        创建或更新数据源
-        """
-
-        if etl_processor is None:
-            etl_processor = instance.etl_processor
-
-        # 创建 Transfer
-        if etl_processor == ETLProcessorChoices.TRANSFER.value:
-            collector_scenario = CollectorScenario.get_instance(instance.collector_scenario_id)
-            bk_data_id = collector_scenario.update_or_create_data_id(
-                bk_data_id=instance.bk_data_id,
-                data_link_id=instance.data_link_id,
-                data_name=f"{instance.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}_{instance.get_name()}",
-                description=instance.description,
-                encoding=META_DATA_ENCODING,
-            )
-            return bk_data_id
-
-        # 创建 BKBase
-        maintainers = {instance.updated_by, instance.created_by}
-        maintainers.discard(ADMIN_REQUEST_USER)
-        if not maintainers:
-            raise Exception(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
-
-        bkdata_params = {
-            "bk_username": instance.get_updated_by(),
-            "data_scenario": BKDATA_DATA_SCENARIO,
-            "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
-            "permission": BKDATA_PERMISSION,
-            "bk_biz_id": instance.get_bk_biz_id(),
-            "description": instance.description,
-            "access_raw_data": {
-                "tags": BKDATA_TAGS,
-                "raw_data_name": instance.get_en_name(),
-                "maintainer": ",".join(maintainers),
-                "raw_data_alias": instance.get_en_name(),
-                "data_source_tags": BKDATA_DATA_SOURCE_TAGS,
-                "data_region": BKDATA_DATA_REGION,
-                "data_source": BKDATA_DATA_SOURCE,
-                "data_encoding": (instance.data_encoding if instance.data_encoding else META_DATA_ENCODING),
-                "sensitivity": BKDATA_DATA_SENSITIVITY,
-                "description": instance.description,
-                "preassigned_data_id": instance.bk_data_id,
-            },
-        }
-
-        # 更新
-        if instance.bk_data_id:
-            bkdata_params.update({"raw_data_id": instance.bk_data_id})
-            BkDataAccessApi.deploy_plan_put(bkdata_params)
-            return instance.bk_data_id
-
-        # 创建
-        result = BkDataAccessApi.deploy_plan_post(bkdata_params)
-        return result["raw_data_id"]
-
     def update_or_create(self, params: dict) -> dict:
         """
         创建采集配置
@@ -566,11 +493,8 @@ class CollectorHandler(object):
                 )
             )
         # 判断是否已存在同bk_data_name, result_table_id
-        bkdata_biz_id = params.get("bkdata_biz_id") or bk_biz_id
-        bk_data_name = build_bk_data_name(bk_biz_id=bkdata_biz_id, collector_config_name_en=collector_config_name_en)
-        result_table_id = build_result_table_id(
-            bk_biz_id=bkdata_biz_id, collector_config_name_en=collector_config_name_en
-        )
+        bk_data_name = build_bk_data_name(bk_biz_id=bk_biz_id, collector_config_name_en=collector_config_name_en)
+        result_table_id = build_result_table_id(bk_biz_id=bk_biz_id, collector_config_name_en=collector_config_name_en)
         if self._pre_check_bk_data_name(model_fields=model_fields, bk_data_name=bk_data_name):
             logger.error(f"bk_data_name {bk_data_name} already exists")
             raise CollectorBkDataNameDuplicateException(
@@ -592,12 +516,7 @@ class CollectorHandler(object):
                             "category_id": params["category_id"],
                             "collector_scenario_id": params["collector_scenario_id"],
                             "bk_biz_id": bk_biz_id,
-                            "bkdata_biz_id": params.get("bkdata_biz_id"),
                             "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
-                            "bk_data_id": params.get("bk_data_id"),
-                            "table_id": params.get("table_id"),
-                            "etl_processor": params.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
-                            "etl_config": params.get("etl_config"),
                         }
                     )
                     model_fields["collector_scenario_id"] = params["collector_scenario_id"]
@@ -629,9 +548,20 @@ class CollectorHandler(object):
                         )
 
                 # 2.2 meta-创建或更新数据源
-                if params.get("is_allow_alone_data_id", True):
-                    self.data.bk_data_id = self.update_or_create_data_id(self.data)
-                    self.data.save()
+                collector_scenario = CollectorScenario.get_instance(
+                    collector_scenario_id=self.data.collector_scenario_id
+                )
+
+                bk_data_id = collector_scenario.update_or_create_data_id(
+                    bk_data_id=self.data.bk_data_id,
+                    data_link_id=self.data.data_link_id,
+                    data_name=bk_data_name,
+                    description=description,
+                    encoding=META_DATA_ENCODING,
+                )
+                self.data.bk_data_id = bk_data_id
+                self.data.bk_data_name = bk_data_name
+                self.data.save()
 
             except IntegrityError:
                 logger.warning(f"collector config name duplicate => [{collector_config_name}]")
@@ -651,17 +581,12 @@ class CollectorHandler(object):
         if is_create:
             self._authorization_collector(self.data)
         try:
-            collector_scenario = CollectorScenario.get_instance(self.data.collector_scenario_id)
             self._update_or_create_subscription(
                 collector_scenario=collector_scenario, params=params["params"], is_create=is_create
             )
         finally:
-            if (
-                params.get("is_allow_alone_data_id", True)
-                and params.get("etl_processor") != ETLProcessorChoices.BKBASE.value
-            ):
-                # 创建数据平台data_id
-                async_create_bkdata_data_id.delay(self.data.collector_config_id)
+            # 创建数据平台data_id
+            async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         return {
             "collector_config_id": self.data.collector_config_id,
@@ -692,11 +617,7 @@ class CollectorHandler(object):
                 )
                 raise CollectorTaskRunningStatusException
             if params.get("run_task", True):
-                # if not has action, not do START
-                if self.data.task_id_list:
-                    self._run_subscription_task()
-                else:
-                    self._run_subscription_task("START")
+                self._run_subscription_task()
             # start nodeman subscription
             NodeApi.switch_subscription({"subscription_id": self.data.subscription_id, "action": "enable"})
         except Exception as error:  # pylint: disable=broad-except
@@ -805,7 +726,7 @@ class CollectorHandler(object):
         user_operation_record.delay(operation_record)
 
         if self.data.subscription_id:
-            return self._run_subscription_task("START")
+            return self._run_subscription_task()
         return True
 
     def _itsm_start_judge(self):
@@ -901,7 +822,7 @@ class CollectorHandler(object):
         重试部分实例或主机
         :return: task_id
         """
-        res = self._run_subscription_task("START", target_nodes)
+        res = self._run_subscription_task(nodes=target_nodes)
 
         # add user_operation_record
         operation_record = {
