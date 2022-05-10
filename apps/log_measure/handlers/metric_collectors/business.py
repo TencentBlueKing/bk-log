@@ -81,6 +81,19 @@ class BusinessMetricCollector(object):
                 timestamp=MetricUtils.get_instance().report_ts,
             )
         ]
+        for bk_biz_id in MetricUtils.get_instance().biz_info:
+            metrics.append(
+                Metric(
+                    metric_name="bk_biz_info",
+                    metric_value=1,
+                    dimensions={
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+
         return metrics
 
     @staticmethod
