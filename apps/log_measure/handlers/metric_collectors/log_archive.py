@@ -19,12 +19,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from collections import defaultdict
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.db.models import Count
 
-from apps.log_databus.handlers.storage import StorageHandler
+from apps.api import TransferApi
 from apps.log_databus.models import ArchiveConfig
 from apps.log_measure.utils.metric import MetricUtils
+from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
 
@@ -62,15 +65,33 @@ class ArchiveMetricCollector(object):
                 timestamp=MetricUtils.get_instance().report_ts,
             )
         )
-        repository_count_total = 0
+
+        repository_count = defaultdict(int)
+        # cluster_info, 存放cluster_id -> bk_biz_id
+        cluster_info = defaultdict(int)
+        clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE})
+        if not clusters:
+            return metrics
+        for cluster in clusters:
+            bk_biz_id = cluster.get("cluster_config", {}).get("custom_option", {}).get("bk_biz_id")
+            if not bk_biz_id:
+                bk_biz_id = settings.BLUEKING_BK_BIZ_ID
+            cluster_info[cluster["cluster_config"]["cluster_id"]] = bk_biz_id
+
+        repositories = TransferApi.list_es_snapshot_repository({"cluster_ids": [i for i in cluster_info]})
+        if not repositories:
+            return metrics
+        for repo in repositories:
+            bk_biz_id = cluster_info[repo["cluster_id"]]
+            repository_count[bk_biz_id] += 1
+
         # 获取各个业务归档仓库列表
-        for bk_biz_id in MetricUtils.get_instance().biz_info:
-            repository_list = StorageHandler().repository(bk_biz_id=bk_biz_id)
+        for bk_biz_id, count in repository_count.items():
             metrics.append(
                 # 各个业务业务归档配置数量
                 Metric(
                     metric_name="repository_count",
-                    metric_value=len(repository_list),
+                    metric_value=count,
                     dimensions={
                         "target_bk_biz_id": bk_biz_id,
                         "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
@@ -78,12 +99,11 @@ class ArchiveMetricCollector(object):
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
             )
-            repository_count_total += len(repository_list)
         # 归档仓库总数
         metrics.append(
             Metric(
                 metric_name="repository_total",
-                metric_value=repository_count_total,
+                metric_value=sum(repository_count.values()),
                 dimensions={},
                 timestamp=MetricUtils.get_instance().report_ts,
             )
