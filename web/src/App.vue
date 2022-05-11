@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div id="app" v-bkloading="{ isLoading: pageLoading }">
+  <div id="app" v-bkloading="{ isLoading: pageLoading }" :class="{ 'clear-min-height': $route.name === 'retrieve' }">
     <head-nav
       v-show="!isAsIframe && !pageLoading"
       @reloadRouter="routerKey += 1"
@@ -241,8 +241,13 @@ export default {
   #app {
     min-width: 1280px;
     height: 100%;
-    // min-height: 730px;
+    min-height: 730px;
     background: #f4f7fa;
+  }
+
+  .clear-min-height {
+    /* stylelint-disable-next-line declaration-no-important */
+    min-height: 0 !important;
   }
 
   .button-text {
@@ -373,8 +378,6 @@ export default {
 
     /* stylelint-disable-next-line declaration-no-important */
     height: 100% !important;
-
-    min-height: 730px;
 
     .container-header {
       /* stylelint-disable-next-line declaration-no-important */
