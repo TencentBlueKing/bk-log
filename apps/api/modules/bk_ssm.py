@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -16,14 +15,40 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-We undertake not to change the open source license (MIT license) applicable to the current version of
-the project delivered to anyone in the future.
 """
-from django.conf.urls import url, include
-from rest_framework import routers
 
-from apps.log_measure.views import StatisticViewSet
+from django.utils.translation import ugettext_lazy as _
 
-router = routers.DefaultRouter(trailing_slash=True)
-router.register(r"log_measure", StatisticViewSet, basename="log_measure")
-urlpatterns = [url(r"", include(router.urls))]
+from apps.api.modules.utils import add_esb_info_before_request
+from apps.log_search.constants import TimeEnum
+from config.domains import BK_SSM_ROOT
+
+from apps.api.base import DataAPI
+
+
+class _BkSSM:
+    MODULE = _("bkssm")
+
+    def __init__(self):
+        self.get_access_token = DataAPI(
+            method="POST",
+            url=BK_SSM_ROOT + "access-tokens",
+            module=self.MODULE,
+            description=_("获取access_token"),
+            before_request=add_esb_info_before_request,
+            cache_time=TimeEnum.ONE_DAY_SECOND.value,
+        )
+        self.verify_access_token = DataAPI(
+            method="POST",
+            url=BK_SSM_ROOT + "access-tokens/verify",
+            module=self.MODULE,
+            description=_("verify access_token"),
+            before_request=add_esb_info_before_request,
+        )
+        self.refresh_access_token = DataAPI(
+            method="POST",
+            url=BK_SSM_ROOT + "access-tokens/refresh",
+            module=self.MODULE,
+            description=_("refresh access_token"),
+            before_request=add_esb_info_before_request,
+        )

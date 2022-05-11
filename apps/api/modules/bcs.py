@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -19,38 +18,30 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext as _
-from django.db.models import Count
 
-from apps.log_search.models import LogIndexSet
-from apps.log_measure.utils.metric import MetricUtils
-from bk_monitor.constants import TimeFilterEnum
-from bk_monitor.utils.metric import register_metric, Metric
+from django.conf import settings
+
+from apps.api.base import DataAPI
+
+from config.domains import BCS_APIGATEWAY_ROOT
+from apps.api.modules.utils import add_esb_info_before_request
 
 
-class IndexMetricCollector(object):
-    @staticmethod
-    @register_metric("index_set", description=_("索引集"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
-    def index_set():
-        groups = (
-            LogIndexSet.objects.values("project_id", "scenario_id").order_by().annotate(count=Count("index_set_id"))
+def bcs_before_request(params):
+    params = add_esb_info_before_request(params)
+    params["Authorization"] = f"Bearer {settings.BCS_API_GATEWAY_TOKEN}"
+    return params
+
+
+class _BcsApi:
+    MODULE = "BCS"
+
+    def __init__(self):
+        self.list_cluster_by_project_id = DataAPI(
+            method="GET",
+            url=f"{BCS_APIGATEWAY_ROOT}bcsapi/v4/clustermanager/v1/cluster",
+            module=self.MODULE,
+            description="根据项目id获取集群信息",
+            header_keys=["Authorization"],
+            before_request=bcs_before_request,
         )
-
-        metrics = [
-            Metric(
-                metric_name="count",
-                metric_value=group["count"],
-                dimensions={
-                    "target_bk_biz_id": MetricUtils.get_instance().project_biz_info[group["project_id"]]["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().project_biz_info[group["project_id"]][
-                        "bk_biz_name"
-                    ],
-                    "scenario_id": group["scenario_id"],
-                },
-                timestamp=MetricUtils.get_instance().report_ts,
-            )
-            for group in groups
-            if MetricUtils.get_instance().project_biz_info.get(group["project_id"])
-        ]
-
-        return metrics

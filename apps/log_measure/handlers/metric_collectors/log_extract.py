@@ -19,10 +19,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import datetime
+
+import arrow
+
 from collections import defaultdict
 from django.utils.translation import ugettext as _
+from django.conf import settings
 from django.db.models import Count
-
+from apps.log_extract.models import Tasks, Strategies
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
@@ -34,8 +39,6 @@ class LogExtractMetricCollector(object):
         "log_extract_strategy", description=_("日志提取策略"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def log_extract_strategy():
-        from apps.log_extract.models import Strategies
-
         groups = Strategies.objects.all().values("bk_biz_id").order_by().annotate(count=Count("strategy_id"))
 
         metrics = [
@@ -58,44 +61,50 @@ class LogExtractMetricCollector(object):
         "log_extract_task", description=_("日志提取任务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def log_extract_task():
-        from apps.log_extract.models import Tasks
-
-        groups = Tasks.objects.all().values("bk_biz_id", "created_by").order_by().annotate(count=Count("task_id"))
-
-        # 每个业务的任务数
-        biz_count_groups = defaultdict(int)
-
-        # 每个业务的用户数
-        user_count_groups = defaultdict(int)
-
-        for group in groups:
-            biz_count_groups[group["bk_biz_id"]] += group["count"]
-            user_count_groups[group["bk_biz_id"]] += 1
+        end_time = (
+            arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
+        )
+        start_time = (
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=5)
+        ).strftime("%Y-%m-%d %H:%M:%S%z")
+        groups = (
+            Tasks.objects.filter(created_at__range=[start_time, end_time])
+            .values("bk_biz_id", "created_by")
+            .order_by("bk_biz_id", "created_by")
+            .annotate(count=Count("task_id"))
+        )
 
         metrics = [
+            # 各个业务, 各个用户使用量
             Metric(
                 metric_name="count",
-                metric_value=count,
+                metric_value=group["count"],
                 dimensions={
-                    "target_bk_biz_id": bk_biz_id,
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    "target_bk_biz_id": group["bk_biz_id"],
+                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
+                    "target_username": group["created_by"],
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
-            for bk_biz_id, count in biz_count_groups.items()
+            for group in groups
         ]
 
-        metrics += [
-            Metric(
-                metric_name="user_count",
-                metric_value=count,
-                dimensions={
-                    "target_bk_biz_id": bk_biz_id,
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
-                },
-                timestamp=MetricUtils.get_instance().report_ts,
+        aggregation_datas = defaultdict(int)
+        for group in groups:
+            aggregation_datas[group["bk_biz_id"]] += group["count"]
+
+        for bk_biz_id in aggregation_datas:
+            # 各个业务提取配置总数
+            metrics.append(
+                Metric(
+                    metric_name="total",
+                    metric_value=aggregation_datas[bk_biz_id],
+                    dimensions={
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
             )
-            for bk_biz_id, count in user_count_groups.items()
-        ]
 
         return metrics
