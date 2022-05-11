@@ -24,7 +24,7 @@ from django.utils.module_loading import import_string
 from apps.log_search.models import Scenario
 
 
-class QueryClient(object):
+class QueryClient(object):  # pylint: disable=invalid-name
     def __init__(
         self,
         scenario_id: str,

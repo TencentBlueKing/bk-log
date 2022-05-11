@@ -71,7 +71,7 @@ class Bcs:
             # 如果找不到crd，则直接退出
             logger.debug("dataid resource crd not found in k8s cluster, will not create any dataid resource")
             return False
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             # 异常捕获
             logger.error("unexpected error in ensure resource:{}".format(e))
             return False
