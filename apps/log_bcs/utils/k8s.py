@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -16,14 +15,19 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-We undertake not to change the open source license (MIT license) applicable to the current version of
-the project delivered to anyone in the future.
 """
-from django.conf.urls import url, include
-from rest_framework import routers
 
-from apps.log_measure.views import StatisticViewSet
 
-router = routers.DefaultRouter(trailing_slash=True)
-router.register(r"log_measure", StatisticViewSet, basename="log_measure")
-urlpatterns = [url(r"", include(router.urls))]
+def version_cmp_greater(version1: str, version2: str) -> bool:
+    """
+    version: vx.xx.xx v1.12.3
+    v1.16 > v.12.3 True
+    v1.16 > v1.16 False
+    v1.16 > v1.17 False
+    """
+    versions = [version1, version2]
+    for version in versions:
+        version = version.strip("v")
+        version = version.split(".")
+        version = [int(n) for n in version]
+    return version1 > version2

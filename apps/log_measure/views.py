@@ -19,25 +19,28 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext_lazy as _
+from rest_framework.response import Response
 
-from apps.api.modules.utils import add_esb_info_before_request
-from config.domains import PAASCC_APIGATEWAY_ROOT
-from apps.api.base import DataAPI
+from apps.generic import APIViewSet
+from apps.log_measure.constants import COLLECTOR_IMPORT_PATHS
+from apps.log_measure.utils.metric import MetricUtils
+from apps.utils.drf import list_route
+from bk_monitor.utils.collector import MetricCollector
 
 
-class _PaasCcApi(object):
-    MODULE = _(u" 蓝鲸 PaaS 3.0 配置中心")
-    URL_PREFIX = PAASCC_APIGATEWAY_ROOT
-
-    def __init__(self):
-        self.get_cluster_by_cluster_id = DataAPI(
-            method="GET",
-            url=PAASCC_APIGATEWAY_ROOT + "v1/clusters/{cluster_id}/",
-            module=self.MODULE,
-            url_keys=["cluster_id"],
-            description=u"根据集群id获取集群信息",
-            default_return_value=None,
-            before_request=add_esb_info_before_request,
-            after_request=None,
+class StatisticViewSet(APIViewSet):
+    @list_route(methods=["GET"], url_path="statistic")
+    def get_statistic(self, request):
+        namespace = request.GET.get("namespace")
+        namespaces = self.get_list_obj(namespace)
+        data_name = request.GET.get("data_name")
+        data_names = self.get_list_obj(data_name)
+        data = MetricCollector(collector_import_paths=COLLECTOR_IMPORT_PATHS).collect(
+            namespaces=namespaces, time_filter_enable=False, data_names=data_names
         )
+        MetricUtils.del_instance()
+        return Response(data)
+
+    @staticmethod
+    def get_list_obj(obj_str):
+        return obj_str.split(",") if obj_str else obj_str

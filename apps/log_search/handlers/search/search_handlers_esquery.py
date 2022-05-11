@@ -63,7 +63,7 @@ from apps.log_search.exceptions import (
 )
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-from apps.api import BkLogApi, PaasCcApi
+from apps.api import BkLogApi, BcsCcApi
 from apps.utils.cache import cache_five_minute
 from apps.utils.db import array_group
 from apps.utils.local import get_request_username
@@ -610,7 +610,7 @@ class SearchHandler(object):
     @staticmethod
     def get_bcs_manage_url(cluster_id, container_id):
 
-        bcs_cluster_info = PaasCcApi.get_cluster_by_cluster_id({"cluster_id": cluster_id.upper()})
+        bcs_cluster_info = BcsCcApi.get_cluster_by_cluster_id({"cluster_id": cluster_id.upper()})
         project_id = bcs_cluster_info["project_id"]
         url = (
             settings.BCS_WEB_CONSOLE_DOMAIN + "backend/web_console/projects/{project_id}/clusters/{cluster_id}/"

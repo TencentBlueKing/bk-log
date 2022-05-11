@@ -20,9 +20,11 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import arrow
+from django.db.models import Count
 
 from django.utils.translation import ugettext as _
 
+from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import UserIndexSetSearchHistory, LogIndexSet
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
@@ -56,5 +58,75 @@ class BusinessMetricCollector(object):
             for project_id in project_ids
             if MetricUtils.get_instance().project_biz_info.get(project_id)
         ]
+        metrics.append(
+            Metric(
+                metric_name="total",
+                metric_value=len(project_ids),
+                dimensions=None,
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
+
+        return metrics
+
+    @staticmethod
+    @register_metric("business", description=_("业务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    def business():
+        project_biz_info = MetricUtils.get_instance().project_biz_info
+        metrics = [
+            Metric(
+                metric_name="total",
+                metric_value=len(project_biz_info),
+                dimensions=None,
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        ]
+        for bk_biz_id in MetricUtils.get_instance().biz_info:
+            metrics.append(
+                Metric(
+                    metric_name="bk_biz_info",
+                    metric_value=1,
+                    dimensions={
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+
+        return metrics
+
+    @staticmethod
+    @register_metric(
+        "business_collector", description=_("有配置日志采集业务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
+    def business_collector():
+        collector_config_group = (
+            CollectorConfig.objects.all().values("bk_biz_id").annotate(total=Count("bk_biz_id")).order_by()
+        )
+        metrics = []
+        total = 0
+        for collector_config in collector_config_group:
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=collector_config["total"],
+                    dimensions={
+                        "target_bk_biz_id": collector_config["bk_biz_id"],
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(collector_config["bk_biz_id"]),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+            total += collector_config["total"]
+
+        metrics.append(
+            Metric(
+                metric_name="total",
+                metric_value=total,
+                dimensions=None,
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
 
         return metrics
