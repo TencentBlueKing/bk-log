@@ -47,7 +47,7 @@ class AiopsModelExperiment(SoftDeleteModel):
     @classmethod
     def get_experiment(cls, model_name: str, experiment_alias: str):
         model_id = AiopsModel.objects.get(model_name=model_name).model_id
-        return AiopsModelExperiment.objects.get(model_id=model_id, experiment_alias=experiment_alias)
+        return AiopsModelExperiment.objects.filter(model_id=model_id, experiment_alias=experiment_alias).first()
 
 
 class AiopsSignatureAndPattern(SoftDeleteModel):

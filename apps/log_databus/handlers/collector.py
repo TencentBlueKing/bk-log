@@ -617,11 +617,7 @@ class CollectorHandler(object):
                 )
                 raise CollectorTaskRunningStatusException
             if params.get("run_task", True):
-                # if not has action, not do START
-                if self.data.task_id_list:
-                    self._run_subscription_task()
-                else:
-                    self._run_subscription_task("START")
+                self._run_subscription_task()
             # start nodeman subscription
             NodeApi.switch_subscription({"subscription_id": self.data.subscription_id, "action": "enable"})
         except Exception as error:  # pylint: disable=broad-except
@@ -730,7 +726,7 @@ class CollectorHandler(object):
         user_operation_record.delay(operation_record)
 
         if self.data.subscription_id:
-            return self._run_subscription_task("START")
+            return self._run_subscription_task()
         return True
 
     def _itsm_start_judge(self):
@@ -826,7 +822,7 @@ class CollectorHandler(object):
         重试部分实例或主机
         :return: task_id
         """
-        res = self._run_subscription_task("START", target_nodes)
+        res = self._run_subscription_task(nodes=target_nodes)
 
         # add user_operation_record
         operation_record = {
