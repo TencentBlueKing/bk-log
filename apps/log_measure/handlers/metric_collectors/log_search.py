@@ -230,23 +230,23 @@ class IndexSetMetricCollector(object):
                 if group["is_active"]:
                     aggregation_active_index_set[bk_biz_id] += group["count"]
 
-        for bk_biz_id in aggregation_index_set:
-            metrics.append(
-                # 总的索引集数量
-                Metric(
-                    metric_name="total",
-                    metric_value=aggregation_index_set[bk_biz_id],
-                    dimensions={},
-                    timestamp=MetricUtils.get_instance().report_ts,
-                )
+        metrics.append(
+            # 总的索引集数量
+            Metric(
+                metric_name="total",
+                metric_value=sum(aggregation_index_set.values()),
+                dimensions={},
+                timestamp=MetricUtils.get_instance().report_ts,
             )
-            metrics.append(
-                # 有效的索引集数量
-                Metric(
-                    metric_name="active_total",
-                    metric_value=aggregation_active_index_set[bk_biz_id],
-                    dimensions={},
-                    timestamp=MetricUtils.get_instance().report_ts,
-                )
+        )
+        metrics.append(
+            # 有效的索引集数量
+            Metric(
+                metric_name="active_total",
+                metric_value=sum(aggregation_active_index_set.values()),
+                dimensions={},
+                timestamp=MetricUtils.get_instance().report_ts,
             )
+        )
+
         return metrics
