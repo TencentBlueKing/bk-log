@@ -217,7 +217,11 @@ export default {
       this.formData.storage_replies = setup_config?.number_of_replicas_default || 0;
       this.replicasMax = setup_config?.number_of_replicas_max || 0;
       if (!this.isFirstRendering) {
+        // 第一次进入时不重新赋值热数据天数回显热数据
         this.formData.allocation_min_days = '0';
+      } else {
+        // 编辑进入时 回填副本数
+        this.formData.storage_replies = this.curCollect.storage_replies;
       }
       this.isFirstRendering = false;
     },
