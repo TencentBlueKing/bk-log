@@ -1467,4 +1467,4 @@ class SearchHandler(object):
         raise SearchUnKnowTimeFieldType()
 
     def _enable_bcs_manage(self):
-        return settings.BCS_CC_APIGATEWAY_ROOT if settings.BCS_CC_APIGATEWAY_ROOT != "" else None
+        return settings.BCS_WEB_CONSOLE_DOMAIN if settings.BCS_WEB_CONSOLE_DOMAIN != "" else None
