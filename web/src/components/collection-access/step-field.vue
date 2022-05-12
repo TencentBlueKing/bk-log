@@ -1949,8 +1949,6 @@ export default {
     }
 
     .format-error {
-      position: absolute;
-      left: 280px;
       margin-top: 8px;
       font-size: 12px;
       color: #ea3636;

@@ -23,9 +23,9 @@ from collections import defaultdict
 from typing import List
 
 import sys
-import datetime as dt
 import arrow
 import humanize
+import datetime as dt
 from django.utils.translation import ugettext_lazy as _
 from apps.log_trace.constants import TraceProto
 from apps.log_trace.exceptions import TraceIDNotExistsException

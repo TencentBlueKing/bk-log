@@ -19,8 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-from apps.feature_toggle.plugins.constants import IS_AUTO_DEPLOY_PLUGIN
 from apps.log_databus.constants import LogPluginInfo
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.utils import build_es_option_type
@@ -42,7 +40,7 @@ class WinEventLogScenario(CollectorScenario):
                 for event_name in event_names
             ]
         }
-        steps = [
+        return [
             {
                 "id": self.PLUGIN_NAME,
                 "type": "PLUGIN",
@@ -57,29 +55,8 @@ class WinEventLogScenario(CollectorScenario):
                         "local": [local_params],
                     }
                 },
-            },
+            }
         ]
-        if FeatureToggleObject.switch(IS_AUTO_DEPLOY_PLUGIN):
-            steps.insert(
-                0,
-                # 增加前置检测步骤，如果采集器不存在，则尝试安装
-                {
-                    "id": f"main:{self.PLUGIN_NAME}",
-                    "type": "PLUGIN",
-                    "config": {
-                        "job_type": "MAIN_INSTALL_PLUGIN",
-                        "check_and_skip": True,
-                        "is_version_sensitive": False,
-                        "plugin_name": self.PLUGIN_NAME,
-                        "plugin_version": self.PLUGIN_VERSION,
-                        "config_templates": [
-                            {"name": f"{self.PLUGIN_NAME}.conf", "version": "latest", "is_main": True}
-                        ],
-                    },
-                    "params": {"context": {}},
-                },
-            )
-        return steps
 
     @classmethod
     def parse_steps(cls, steps):

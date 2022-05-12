@@ -63,7 +63,7 @@ from apps.log_clustering.components.collections.sample_set_component import (
 from apps.log_clustering.constants import SAMPLE_SET_SLEEP_TIMER
 from apps.log_clustering.handlers.pipline_service.base_pipline_service import BasePipeLineService
 from apps.log_clustering.handlers.pipline_service.constants import OperatorServiceEnum
-from apps.log_clustering.models import ClusteringConfig, AiopsModel, AiopsModelExperiment, SampleSet
+from apps.log_clustering.models import ClusteringConfig
 from apps.utils.pipline import SleepTimer
 
 
@@ -292,20 +292,12 @@ def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
         else "bkdata_{}".format(clustering_config.source_rt_name.split("_", 2)[-1])
     )
     time_format = arrow.now().format("YYYYMMDDHHmmssSSS")
-    if operator == OperatorServiceEnum.UPDATE:
-        sample_set_name = SampleSet.objects.get(sample_set_id=clustering_config.sample_set_id).sample_set_name
-        model_name = AiopsModel.objects.get(model_id=clustering_config.model_id).model_name
-        experiment_alias = AiopsModelExperiment.objects.get(model_id=clustering_config.model_id).experiment_alias
-    else:
-        model_name = f"{clustering_config.bk_biz_id}_bklog_model_{index_set_id}_{time_format}"
-        experiment_alias = f"{clustering_config.bk_biz_id}_bklog_{index_set_id}_experiment_{time_format}"
-        sample_set_name = f"{clustering_config.bk_biz_id}_bklog_sample_set_{index_set_id}_{time_format}"
     params = {
         "bk_biz_id": conf["bk_biz_id"],
-        "sample_set_name": sample_set_name,
-        "model_name": model_name,
+        "sample_set_name": f"{clustering_config.bk_biz_id}_bklog_sample_set_{index_set_id}_{time_format}",
+        "model_name": f"{clustering_config.bk_biz_id}_bklog_model_{index_set_id}_{time_format}",
         "description": f"{clustering_config.bk_biz_id}_bklog_{rt_name}",
-        "experiment_alias": experiment_alias,
+        "experiment_alias": f"{clustering_config.bk_biz_id}_bklog_{index_set_id}_experiment_{time_format}",
         "collector_config_id": clustering_config.collector_config_id,
         "topic_name": f"queue_{conf['bk_biz_id']}_bklog_{settings.ENVIRONMENT}_" f"{rt_name}",
         "project_id": conf["project_id"],

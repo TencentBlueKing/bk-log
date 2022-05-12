@@ -246,7 +246,7 @@ export default {
 
     .cluster-illustrate {
       width: 42%;
-      min-width: 460px;
+      min-width: 430px;
       overflow-y: auto;
       max-height: 254px;
       padding: 16px;

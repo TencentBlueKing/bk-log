@@ -169,7 +169,14 @@
               :id="item.storage_cluster_id"
               :name="item.storage_cluster_name"
               :key="index">
-              <div class="option-slot-container">
+              <div
+                v-if="!(item.permission && item.permission.manage_es_source)"
+                class="option-slot-container no-authority"
+                @click.stop>
+                <span class="text">{{item.storage_cluster_name}}</span>
+                <span class="apply-text" @click="applySearchAccess(item)">{{$t('申请权限')}}</span>
+              </div>
+              <div v-else class="option-slot-container">
                 <span>{{ item.storage_cluster_name }}</span>
               </div>
             </bk-option>

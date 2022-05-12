@@ -65,9 +65,6 @@ if (
         params["bk_app_code"] = settings.APP_CODE
         params["bk_app_secret"] = settings.SECRET_KEY
 
-        params["X-Bk-App-Code"] = settings.APP_CODE
-        params["X-Bk-App-Secret"] = settings.SECRET_KEY
-
         if "bk_username" not in params:
             params["bk_username"] = "admin"
 
@@ -124,10 +121,6 @@ else:
         params["uin"] = params["bk_username"]
         params["app_code"] = settings.APP_CODE
         params["app_secret"] = settings.SECRET_KEY
-
-        params["X-Bk-App-Code"] = settings.APP_CODE
-        params["X-Bk-App-Secret"] = settings.SECRET_KEY
-
         return params
 
     def add_esb_info_before_request_for_bkdata_token(params):  # pylint: disable=function-name-too-long
