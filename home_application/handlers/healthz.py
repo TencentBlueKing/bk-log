@@ -29,14 +29,6 @@ class HealthzHandler(object):
         super().__init__()
         self.data = []
 
-    def report(self, format_type=None, include=None, exclude=None):
-        self.get_data(include_namespaces=include, exclude_namespaces=exclude)
-
-        if format_type == "json":
-            return self._json_data()
-
-        return self._k8s_data()
-
     def get_data(self, include_namespaces: list = None, exclude_namespaces: list = None):
         """
         将已通过 register_healthz_metric 注册的对应metric收集, 按照format输出成不同的格式
@@ -46,11 +38,12 @@ class HealthzHandler(object):
         """
         self.data = HealthzMetricCollector(import_paths=HEALTHZ_METRICS_IMPORT_PATHS).collect(
             include_namespaces=include_namespaces, exclude_namespaces=exclude_namespaces
-            )
+        )
 
+    def report_k8s_data(self, include=None, exclude=None):
+        self.get_data(include_namespaces=include, exclude_namespaces=exclude)
+        raise "k8s data"
 
-    def _k8s_data(self):
-        raise Exception("返回k8s规范数据")
-
-    def _json_data(self):
+    def report_json_data(self, include=None, exclude=None):
+        self.get_data(include_namespaces=include, exclude_namespaces=exclude)
         return {"data": self.data}

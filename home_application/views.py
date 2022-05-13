@@ -22,7 +22,7 @@ the project delivered to anyone in the future.
 
 from django.conf import settings
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from blueapps.account.decorators import login_exempt
 
 # 开发框架中通过中间件默认是需要登录态的，如有不需要登录的，可添加装饰器login_exempt
@@ -55,8 +55,10 @@ def contact(request):
 
 @login_exempt
 def healthz(request):
-    # return JsonResponse({"format": request.GET.get("format")})
-    return JsonResponse(HealthzHandler().report(request.GET.get("format")))
+    if request.GET.get("format") == "json":
+        return JsonResponse(HealthzHandler().report_json_data(request.GET.get("include"), request.GET.get("exclude")))
+
+    return HttpResponse(HealthzHandler().report_k8s_data(request.GET.get("include"), request.GET.get("exclude")))
 
 
 @login_exempt

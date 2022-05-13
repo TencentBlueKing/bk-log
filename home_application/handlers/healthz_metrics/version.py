@@ -42,14 +42,10 @@ class VersionMetric(object):
                 f.close()
         except Exception as e:  # pylint: disable=broad-except
             logger.exception("open VERSION failed: {}".format(e))
+            version = ""
 
         data.append(
-            HealthzMetric(
-                metric_name="version",
-                metric_value=version,
-                dimensions={},
-                timestamp=int(time.time())
-            )
+            HealthzMetric(metric_name="version", metric_value=version, dimensions={}, timestamp=int(time.time()))
         )
 
         return data
