@@ -31,7 +31,7 @@ from apps.feature_toggle.plugins.constants import SCENARIO_BKDATA
 from apps.log_databus.constants import DEFAULT_ETL_CONFIG, EtlConfig
 from apps.log_search.constants import CollectorScenarioEnum
 from apps.log_search.models import LogIndexSet
-from apps.utils.db import array_group
+from apps.utils.db import array_group, array_chunk
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.log import logger
 from apps.log_databus.models import CollectorConfig, BKDataClean
@@ -306,22 +306,16 @@ class CleanMetricCollector(object):
         total = 0
         biz_collector_dict = defaultdict(int)
         subscription_id_list = list(subscription_id_dict.keys())
-        for i in range(0, len(subscription_id_list), MAX_QUERY_SUBSCRIPTION):
+        for i in array_chunk(subscription_id_list, MAX_QUERY_SUBSCRIPTION):
             try:
-                groups = NodeApi.get_subscription_instance_status(
-                    {"subscription_id_list": subscription_id_list[i : i + MAX_QUERY_SUBSCRIPTION], "no_request": True}
-                )
+                groups = NodeApi.get_subscription_instance_status({"subscription_id_list": i, "no_request": True})
                 for group in groups:
                     instance_count = len(group["instances"])
                     biz_collector_dict[subscription_id_dict[group["subscription_id"]]] += instance_count
                     total += instance_count
 
             except Exception as e:  # pylint: disable=W0703
-                logger.exception(
-                    "get subscription[ids: {}] instance status fail => {}".format(
-                        ",".join(subscription_id_list[i : i + MAX_QUERY_SUBSCRIPTION]), e
-                    )
-                )
+                logger.exception("get subscription[ids: {}] instance status fail => {}".format(",".join(i), e))
 
         metrics = [
             Metric(
