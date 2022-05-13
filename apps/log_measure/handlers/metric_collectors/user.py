@@ -19,7 +19,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import datetime
+
 import arrow
+from django.conf import settings
 from django.db.models import Count
 from django.utils.translation import ugettext as _
 from django.contrib.auth import get_user_model
@@ -68,8 +71,16 @@ class UserMetricCollector(object):
     @staticmethod
     @register_metric("unique_visitor", description=_("uv访问数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def get_unique_visitor():
+        end_time = (
+            arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
+        )
+        start_time = (
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z")
+            - datetime.timedelta(minutes=TimeFilterEnum.MINUTE5)
+        ).strftime("%Y-%m-%d %H:%M:%S%z")
+
         user_index_set_search_history_group = (
-            UserIndexSetSearchHistory.objects.filter(created_at__gte=arrow.now().replace(days=-1).datetime)
+            UserIndexSetSearchHistory.objects.filter(created_at__range=[start_time, end_time])
             .values("created_by")
             .annotate(total=Count("created_by"))
             .order_by()
