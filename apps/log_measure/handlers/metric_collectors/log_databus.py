@@ -207,7 +207,7 @@ class CleanMetricCollector(object):
                                 "target_bk_biz_id": bk_biz_id,
                                 "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                                 "index_set_id": index_set_id,
-                                "index_set_name": index_sets[index_set_id]["index_set_name"],
+                                "index_set_name": index_sets.get(index_set_id, {}).get("index_set_name", index_set_id),
                                 "clean_type": etl_config,
                             },
                             timestamp=MetricUtils.get_instance().report_ts,
