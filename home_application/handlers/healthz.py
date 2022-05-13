@@ -20,47 +20,37 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
-from django.conf import settings
-from django.shortcuts import render
-from django.http import JsonResponse
-from blueapps.account.decorators import login_exempt
-
-# 开发框架中通过中间件默认是需要登录态的，如有不需要登录的，可添加装饰器login_exempt
-# 装饰器引入 from blueapps.account.decorators import login_exempt
-from apps.utils.db import get_toggle_data
-from home_application.handlers.healthz import HealthzHandler
+from home_application.handlers.metrics import HealthzMetricCollector
+from home_application.constants import HEALTHZ_METRICS_IMPORT_PATHS
 
 
-def home(request):
-    """
-    首页
-    """
-    return render(request, settings.VUE_INDEX, get_toggle_data())
+class HealthzHandler(object):
+    def __init__(self) -> None:
+        super().__init__()
+        self.data = []
+
+    def report(self, format_type=None, include=None, exclude=None):
+        self.get_data(include_namespaces=include, exclude_namespaces=exclude)
+
+        if format_type == "json":
+            return self._json_data()
+
+        return self._k8s_data()
+
+    def get_data(self, include_namespaces: list = None, exclude_namespaces: list = None):
+        """
+        将已通过 register_healthz_metric 注册的对应metric收集, 按照format输出成不同的格式
+        Attributes:
+            include_namespaces: 允许上报的namespace列表
+            exclude_namespaces: 不允许上报的namespace列表
+        """
+        self.data = HealthzMetricCollector(import_paths=HEALTHZ_METRICS_IMPORT_PATHS).collect(
+            include_namespaces=include_namespaces, exclude_namespaces=exclude_namespaces
+            )
 
 
-def bkdata_auth(request):
-    """
-    鉴权页面
-    """
-    return render(request, "auth.html")
+    def _k8s_data(self):
+        raise Exception("返回k8s规范数据")
 
-
-@login_exempt
-def contact(request):
-    """
-    联系我们
-    """
-    return JsonResponse({"data": "login_exempt"})
-
-
-@login_exempt
-def healthz(request):
-    # return JsonResponse({"format": request.GET.get("format")})
-    return JsonResponse(HealthzHandler().report(request.GET.get("format")))
-
-
-@login_exempt
-def metrics(request):
-    from django_prometheus import exports
-
-    return exports.ExportToDjangoView(request)
+    def _json_data(self):
+        return {"data": self.data}

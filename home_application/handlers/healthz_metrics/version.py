@@ -19,48 +19,37 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import os
+import time
+import logging
 
-from django.conf import settings
-from django.shortcuts import render
-from django.http import JsonResponse
-from blueapps.account.decorators import login_exempt
+from django.utils.translation import ugettext as _
 
-# 开发框架中通过中间件默认是需要登录态的，如有不需要登录的，可添加装饰器login_exempt
-# 装饰器引入 from blueapps.account.decorators import login_exempt
-from apps.utils.db import get_toggle_data
-from home_application.handlers.healthz import HealthzHandler
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric
 
-
-def home(request):
-    """
-    首页
-    """
-    return render(request, settings.VUE_INDEX, get_toggle_data())
+logger = logging.getLogger()
 
 
-def bkdata_auth(request):
-    """
-    鉴权页面
-    """
-    return render(request, "auth.html")
+class VersionMetric(object):
+    @staticmethod
+    @register_healthz_metric(namespace="", metric_name="version", description=_("版本信息"))
+    def version():
+        data = []
+        cwd = os.getcwd()
+        try:
+            with open(os.path.join(cwd, "VERSION"), "r") as f:
+                version = f.read().split("\n")[0]
+                f.close()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.exception("open VERSION failed: {}".format(e))
 
+        data.append(
+            HealthzMetric(
+                metric_name="version",
+                metric_value=version,
+                dimensions={},
+                timestamp=int(time.time())
+            )
+        )
 
-@login_exempt
-def contact(request):
-    """
-    联系我们
-    """
-    return JsonResponse({"data": "login_exempt"})
-
-
-@login_exempt
-def healthz(request):
-    # return JsonResponse({"format": request.GET.get("format")})
-    return JsonResponse(HealthzHandler().report(request.GET.get("format")))
-
-
-@login_exempt
-def metrics(request):
-    from django_prometheus import exports
-
-    return exports.ExportToDjangoView(request)
+        return data
