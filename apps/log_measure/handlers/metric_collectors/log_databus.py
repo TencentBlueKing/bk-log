@@ -35,7 +35,7 @@ from apps.utils.db import array_group
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.log import logger
 from apps.log_databus.models import CollectorConfig, BKDataClean
-from apps.log_measure.constants import INDEX_FORMAT, COMMON_INDEX_RE
+from apps.log_measure.constants import INDEX_FORMAT, COMMON_INDEX_RE, MAX_QUERY_SUBSCRIPTION
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
@@ -303,16 +303,26 @@ class CleanMetricCollector(object):
                 "collector_config_name": config["collector_config_name"],
             }
 
-        groups = NodeApi.get_subscription_instance_status(
-            {"subscription_id_list": list(subscription_id_dict.keys()), "no_request": True}
-        )
-
-        biz_collector_dict = defaultdict(int)
         total = 0
-        for group in groups:
-            instance_count = len(group["instances"])
-            biz_collector_dict[subscription_id_dict[group["subscription_id"]]] += instance_count
-            total += instance_count
+        biz_collector_dict = defaultdict(int)
+        subscription_id_list = list(subscription_id_dict.keys())
+        for i in range(0, len(subscription_id_list), MAX_QUERY_SUBSCRIPTION):
+            try:
+                groups = NodeApi.get_subscription_instance_status(
+                    {"subscription_id_list": subscription_id_list[i : i + MAX_QUERY_SUBSCRIPTION], "no_request": True}
+                )
+                for group in groups:
+                    instance_count = len(group["instances"])
+                    biz_collector_dict[subscription_id_dict[group["subscription_id"]]] += instance_count
+                    total += instance_count
+
+            except Exception as e:  # pylint: disable=W0703
+                logger.exception(
+                    "get subscription[ids: {}] instance status fail => {}".format(
+                        ",".join(subscription_id_list[i : i + MAX_QUERY_SUBSCRIPTION]), e
+                    )
+                )
+
         metrics = [
             Metric(
                 metric_name="count",
