@@ -1121,11 +1121,9 @@ class SearchHandler(object):
         if not server_ip:
             return log
 
-        host_id = server_ip
-        if bk_cloud_id is not None:
-            host_id = f"{server_ip}:{bk_cloud_id}"
         host_info = self._host_info
-        host_info = host_info.get(host_id, {})
+        host = host_info.get(server_ip, {})
+        host_info = host.get(str(bk_cloud_id))
         if not host_info:
             log["__module__"] = ""
             log["__set__"] = ""
@@ -1161,8 +1159,7 @@ class SearchHandler(object):
         for hit in result_dict["hits"]["hits"]:
             log = hit["_source"]
             origin_log = copy.deepcopy(log)
-            # TODO 临时注释CMDB虚拟字段补充功能
-            # log = self._add_cmdb_fields(log)
+            log = self._add_cmdb_fields(log)
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})
