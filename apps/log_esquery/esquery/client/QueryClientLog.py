@@ -51,7 +51,7 @@ from apps.log_esquery.constants import DEFAULT_SCHEMA
 DATE_RE = re.compile("[0-9]{8}")
 
 
-class QueryClientLog(QueryClientTemplate):
+class QueryClientLog(QueryClientTemplate):  # pylint: disable=invalid-name
     def __init__(self):
         super(QueryClientLog, self).__init__()
         self._client: Elasticsearch

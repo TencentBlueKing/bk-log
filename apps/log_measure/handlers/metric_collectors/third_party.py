@@ -29,7 +29,7 @@ from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
 
 
-class UserMetricCollector(object):
+class ThirdPartyMetricCollector(object):
     @staticmethod
     @register_metric("third_party_es", description=_("第三方ES"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def third_party_es():

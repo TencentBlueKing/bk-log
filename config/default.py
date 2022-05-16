@@ -65,6 +65,7 @@ INSTALLED_APPS += (
     "apps.log_esquery",
     "apps.log_measure",
     "apps.log_trace",
+    "apps.log_bcs",
     "apps.esb",
     "apps.bk_log_admin",
     "apps.grafana",
@@ -740,7 +741,9 @@ ES_COMPATIBILITY = int(os.environ.get("BKAPP_ES_COMPATIBILITY", 0))
 FEATURE_EXPORT_SCROLL = os.environ.get("BKAPP_FEATURE_EXPORT_SCROLL", False)
 
 # BCS
-PAASCC_APIGATEWAY = ""
+BCS_API_GATEWAY_TOKEN = os.getenv("BKAPP_BCS_API_GATEWAY_TOKEN", "")
+BCS_CC_SSM_SWITCH = os.getenv("BKAPP_BCS_CC_SSM_SWITCH", "off") == "on"
+BCS_WEB_CONSOLE_DOMAIN = ""
 
 # 是否关闭权限中心校验
 IGNORE_IAM_PERMISSION = os.environ.get("BKAPP_IGNORE_IAM_PERMISSION", False)
