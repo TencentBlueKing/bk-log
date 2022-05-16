@@ -1123,7 +1123,11 @@ class SearchHandler(object):
 
         host_info = self._host_info
         host = host_info.get(server_ip, {})
-        host_info = host.get(str(bk_cloud_id))
+        host_info = None
+        if not bk_cloud_id and host:
+            host_info = next(iter(host.values()))
+        if bk_cloud_id:
+            host_info = host.get(str(bk_cloud_id))
         if not host_info:
             log["__module__"] = ""
             log["__set__"] = ""
