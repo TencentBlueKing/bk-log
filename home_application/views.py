@@ -55,10 +55,15 @@ def contact(request):
 
 @login_exempt
 def healthz(request):
-    if request.GET.get("format") == "json":
-        return JsonResponse(HealthzHandler().report_json_data(request.GET.get("include"), request.GET.get("exclude")))
+    format_type = request.GET.get("format")
+    include = request.GET.get("include")
+    exclude = request.GET.get("exclude")
 
-    return HttpResponse(HealthzHandler().report_k8s_data(request.GET.get("include"), request.GET.get("exclude")))
+    return HttpResponse(
+        content=HealthzHandler().get_data(
+            format_type=format_type, include_namespaces=include, exclude_namespaces=exclude
+        )
+    )
 
 
 @login_exempt

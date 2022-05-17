@@ -32,7 +32,7 @@ logger = logging.getLogger()
 
 class VersionMetric(object):
     @staticmethod
-    @register_healthz_metric(namespace="", metric_name="version", description=_("版本信息"))
+    @register_healthz_metric(namespace="", description=_("版本信息"))
     def version():
         data = []
         cwd = os.getcwd()
