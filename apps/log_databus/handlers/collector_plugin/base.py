@@ -62,6 +62,8 @@ class CollectorPluginHandler:
         """
         初始化
         """
+        self.collector_plugin = None
+        self.collector_plugin_id = None
 
         if collector_plugin_id:
             self.collector_plugin_id = collector_plugin_id
@@ -82,9 +84,16 @@ class CollectorPluginHandler:
         if config_name_duplicate or plugin_name_duplicate:
             raise CollectorPluginNameDuplicateException()
 
-    def _post_operation(self, params: dict) -> None:
+    def _create_metadata_dataid(self, params: dict) -> None:
         """
-        额外的自定义操作，在采集插件创建完成后执行
+        预置操作
+        """
+
+        pass
+
+    def _create_metadata_result_table(self) -> None:
+        """
+        滞后操作
         """
 
         pass
@@ -179,7 +188,10 @@ class CollectorPluginHandler:
                     if data_links.exists():
                         self.collector_plugin.data_link_id = data_links.first().data_link_id
                 # 创建 DATA ID
-                self.collector_plugin.bk_data_id = CollectorHandler.update_or_create_data_id(self.collector_plugin)
+                metadata_bk_data_id = self._create_metadata_dataid(params)
+                self.collector_plugin.bk_data_id = CollectorHandler.update_or_create_data_id(
+                    self.collector_plugin, bk_data_id=metadata_bk_data_id
+                )
 
             is_create = True
 
@@ -200,11 +212,10 @@ class CollectorPluginHandler:
             is_create = False
 
         # 清洗
-        if not is_allow_alone_etl_config or self.collector_plugin.bk_data_id:
+        if not is_allow_alone_etl_config:
             self._update_or_create_etl_storage(params, is_create)
 
-        # 额外操作
-        self._post_operation(params)
+        self._create_metadata_result_table()
 
         self.collector_plugin.save()
 

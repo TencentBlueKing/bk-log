@@ -453,7 +453,7 @@ class CollectorHandler(object):
 
     @classmethod
     def update_or_create_data_id(
-        cls, instance: Union[CollectorConfig, CollectorPlugin], etl_processor: str = None
+        cls, instance: Union[CollectorConfig, CollectorPlugin], etl_processor: str = None, bk_data_id: int = None
     ) -> int:
         """
         创建或更新数据源
@@ -498,12 +498,15 @@ class CollectorHandler(object):
                 "data_encoding": (instance.data_encoding if instance.data_encoding else META_DATA_ENCODING),
                 "sensitivity": BKDATA_DATA_SENSITIVITY,
                 "description": instance.description,
-                "preassigned_data_id": instance.bk_data_id,
             },
         }
 
+        if bk_data_id and not instance.bk_data_id:
+            bkdata_params["access_raw_data"]["preassigned_data_id"] = bk_data_id
+
         # 更新
         if instance.bk_data_id:
+            bkdata_params["access_raw_data"].update({"preassigned_data_id": instance.bk_data_id})
             bkdata_params.update({"raw_data_id": instance.bk_data_id})
             BkDataAccessApi.deploy_plan_put(bkdata_params)
             return instance.bk_data_id
@@ -598,6 +601,7 @@ class CollectorHandler(object):
                             "table_id": params.get("table_id"),
                             "etl_processor": params.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
                             "etl_config": params.get("etl_config"),
+                            "collector_plugin_id": params.get("collector_plugin_id"),
                         }
                     )
                     model_fields["collector_scenario_id"] = params["collector_scenario_id"]
