@@ -23,7 +23,6 @@ import datetime
 
 import arrow
 
-from collections import defaultdict
 from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.db.models import Count
@@ -89,22 +88,13 @@ class LogExtractMetricCollector(object):
             for group in groups
         ]
 
-        aggregation_datas = defaultdict(int)
-        for group in groups:
-            aggregation_datas[group["bk_biz_id"]] += group["count"]
-
-        for bk_biz_id in aggregation_datas:
-            # 各个业务提取配置总数
-            metrics.append(
-                Metric(
-                    metric_name="total",
-                    metric_value=aggregation_datas[bk_biz_id],
-                    dimensions={
-                        "target_bk_biz_id": bk_biz_id,
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
-                    },
-                    timestamp=MetricUtils.get_instance().report_ts,
-                )
+        metrics.append(
+            # 提取总数
+            Metric(
+                metric_name="total",
+                metric_value=sum([i["count"] for i in groups]),
+                dimensions={},
+                timestamp=MetricUtils.get_instance().report_ts,
             )
-
+        )
         return metrics
