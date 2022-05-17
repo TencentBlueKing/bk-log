@@ -110,11 +110,28 @@ class LogSearchMetricCollector(object):
         )
         index_set_list = [history_obj["index_set_id"] for history_obj in history_objs]
         index_sets = array_group(
-            LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
+            list(
+                LogIndexSet.objects.filter(index_set_id__in=index_set_list).values("project_id", "index_set_id").all()
+            ),
+            "index_set_id",
+            group=True,
+        )
+        # 需要把已经失效和删除的index_set信息也补上
+        index_sets.update(
+            array_group(
+                list(
+                    LogIndexSet.objects.filter(index_set_id__in=index_set_list, is_deleted=True)
+                    .values("project_id", "index_set_id")
+                    .all()
+                ),
+                "index_set_id",
+                group=True,
+            )
         )
         aggregation_datas = defaultdict(lambda: defaultdict(int))
         for index_set_id in index_set_list:
-            bk_biz_id = index_sets[index_set_id]["bk_biz_id"]
+            project_id = index_sets[index_set_id]["project_id"]
+            bk_biz_id = MetricUtils.get_instance().project_biz_info.get(project_id, {}).get("bk_biz_id", project_id)
             aggregation_datas[bk_biz_id][index_set_id] += 1
 
         # 收藏带标签数据
@@ -124,7 +141,7 @@ class LogSearchMetricCollector(object):
                 metric_value=aggregation_datas[bk_biz_id][index_set_id],
                 dimensions={
                     "index_set_id": index_set_id,
-                    "index_set_name": index_sets[index_set_id]["index_set_name"],
+                    "index_set_name": index_sets.get(index_set_id, {}).get("index_set_name", index_set_id),
                     "target_bk_biz_id": bk_biz_id,
                     "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                 },
