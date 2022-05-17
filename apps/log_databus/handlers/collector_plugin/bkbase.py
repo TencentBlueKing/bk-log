@@ -54,14 +54,19 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
             hot_warm_config=cluster_info["cluster_config"].get("custom_option", {}).get("hot_warm_config"),
         )
 
-    def _post_operation(self, params: dict) -> None:
+    def _create_metadata_dataid(self, params: dict) -> int:
         """
-        额外操作
+        预置操作
         """
 
-        # 若不允许独立存储，则需要同时创建 Transfer 的结果表
+        return CollectorHandler.update_or_create_data_id(self.collector_plugin, ETLProcessorChoices.TRANSFER.value)
+
+    def _create_metadata_result_table(self) -> None:
+        """
+        若不允许独立存储，则需要同时创建 Transfer 的结果表
+        """
+
         if not self.collector_plugin.is_allow_alone_storage:
-            CollectorHandler.update_or_create_data_id(self.collector_plugin, ETLProcessorChoices.TRANSFER.value)
             self._create_transfer_result_table()
 
     def _update_or_create_etl_storage(self, params: dict, is_create: bool) -> None:
@@ -79,7 +84,6 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
 
         # 使用对应的配置创建清洗与入库
         etl_handler = EtlHandler(
-            etl_processor=self.collector_plugin.etl_processor,
-            collector_config_id=collect_config.collector_config_id
+            etl_processor=self.collector_plugin.etl_processor, collector_config_id=collect_config.collector_config_id
         )
         etl_handler.update_or_create(instance=collect_config, is_create=True, params=params)
