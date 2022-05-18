@@ -140,6 +140,9 @@ class BKBaseEtlHandler(EtlHandler):
         if bkbase_cluster_id is None:
             raise BKBASEStorageNotExistException
 
+        for field in bkdata_params["fields"]:
+            field["physical_field"] = field["field_name"]
+
         storage_params = {
             "bk_biz_id": instance.get_bk_biz_id(),
             "raw_data_id": instance.bk_data_id,
@@ -149,7 +152,7 @@ class BKBaseEtlHandler(EtlHandler):
             "storage_type": "es",
             "storage_cluster": bkbase_cluster_id,
             "expires": f"{params.get('retention', 1)}d",
-            "fields": fields,
+            "fields": bkdata_params["fields"],
         }
 
         has_storage = BkDataDatabusApi.get_config_db_list({"raw_data_id": instance.bk_data_id})
