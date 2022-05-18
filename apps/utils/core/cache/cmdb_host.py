@@ -38,6 +38,14 @@ class CmdbHostCache(CacheBase):
         result = defaultdict(dict)
         for host in host_info:
             result[host["host"]["bk_host_innerip"]][str(host["host"]["bk_cloud_id"])] = host
+            # 按需使用
+            for key in ["topo", "host", "app_module", "biz"]:
+                host.pop(key, None)
+            # 去除children
+            for key in ["module", "set"]:
+                for target in host.get(key, []):
+                    target.pop("children", None)
+
         return result
 
     @classmethod
