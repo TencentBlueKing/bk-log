@@ -67,7 +67,7 @@ SEARCH_RESULT = {
     "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
     lambda _, __: False,
 )
-@patch("apps.log_search.handlers.search.search_handlers_esquery.SearchHandler._host_info", {})
+@patch("apps.utils.core.cache.cmdb_host.CmdbHostCache.get", lambda _: {})
 class TestSearchHandler(TestCase):
     @patch(
         "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
