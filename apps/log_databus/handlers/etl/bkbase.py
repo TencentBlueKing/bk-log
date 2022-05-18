@@ -75,12 +75,7 @@ class BKBaseEtlHandler(EtlHandler):
         BKBaseEtlHandler.stop_bkdata_clean(bkdata_result_table_id)
         BKBaseEtlHandler.start_bkdata_clean(bkdata_result_table_id)
 
-    def update_or_create(
-        self,
-        instance: Union[CollectorConfig, CollectorPlugin],
-        is_create=True,
-        params=None
-    ):
+    def update_or_create(self, instance: Union[CollectorConfig, CollectorPlugin], params=None):
         """
         创建或更新清洗入库
         """
@@ -115,8 +110,7 @@ class BKBaseEtlHandler(EtlHandler):
                 {
                     "field_name": field.get("alias_name") if field.get("alias_name") else field.get("field_name"),
                     "field_type": BKDATA_ES_TYPE_MAP.get(field.get("option").get("es_type"), "string"),
-                    "field_alias": field.get("description") if field.get("description") else field.get(
-                        "field_name"),
+                    "field_alias": field.get("description") if field.get("description") else field.get("field_name"),
                     "is_dimension": field.get("tag", "dimension") == "dimension",
                     "field_index": index,
                 }
@@ -126,7 +120,7 @@ class BKBaseEtlHandler(EtlHandler):
         }
 
         # 创建清洗
-        if is_create:
+        if not instance.bkbase_table_id:
             result = BkDataDatabusApi.databus_cleans_post(bkdata_params)
             self.start_bkdata_clean(result["result_table_id"])
             instance.processing_id = result["processing_id"]
@@ -141,7 +135,7 @@ class BKBaseEtlHandler(EtlHandler):
 
         # 入库参数
         # TODO 同步集群信息到 BKBASE
-        cluster_info = StorageHandler(instance.storage_cluster_id).get_cluster_info_by_id()
+        cluster_info = StorageHandler(params.get("storage_cluster_id")).get_cluster_info_by_id()
         bkbase_cluster_id = cluster_info["cluster_config"].get("custom_option", {}).get("bkbase_cluster_id")
         if bkbase_cluster_id is None:
             raise BKBASEStorageNotExistException
@@ -154,12 +148,13 @@ class BKBaseEtlHandler(EtlHandler):
             "result_table_name_alias": instance.get_en_name(),
             "storage_type": "es",
             "storage_cluster": bkbase_cluster_id,
-            "expires": f"{instance.retention}d",
+            "expires": f"{params.get('retention', 1)}d",
             "fields": fields,
         }
 
+        has_storage = BkDataDatabusApi.get_config_db_list({"raw_data_id": instance.bk_data_id})
         # 创建入库
-        if is_create:
+        if not has_storage:
             BkDataDatabusApi.databus_data_storages_post(storage_params)
             return
 

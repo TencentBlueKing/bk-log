@@ -145,7 +145,7 @@ class CollectorPluginHandler:
             "params": params.get("params", []),
         }
 
-        is_create_public_data_id = params.get("create_public_data_id", False)
+        is_create_public_data_id = params.get("is_create_public_data_id", False)
 
         # 创建插件
         if not self.collector_plugin:
@@ -181,7 +181,12 @@ class CollectorPluginHandler:
                 raise CollectorPluginNameDuplicateException()
 
             # DATA_ID
-            if not is_allow_alone_data_id or is_create_public_data_id:
+            if (
+                not is_allow_alone_data_id
+                or is_create_public_data_id
+                or not is_allow_alone_storage
+                or not is_allow_alone_etl_config
+            ):
                 # 绑定采集链路
                 if not data_link_id:
                     data_links = DataLinkConfig.objects.filter(bk_biz_id__in=[0, bk_biz_id]).order_by("data_link_id")
