@@ -1115,6 +1115,9 @@ class SearchHandler(object):
         return highlight
 
     def _add_cmdb_fields(self, log):
+        if not self.search_dict.get("bk_biz_id"):
+            return log
+        bk_biz_id = self.search_dict.get("bk_biz_id")
         server_ip = log.get("serverIp", log.get("ip"))
         bk_cloud_id = log.get("cloudId", log.get("cloudid"))
         if not server_ip:
@@ -1122,7 +1125,7 @@ class SearchHandler(object):
 
         from apps.utils.core.cache.cmdb_host import CmdbHostCache
 
-        host = CmdbHostCache.get(server_ip)
+        host = CmdbHostCache.get(bk_biz_id, server_ip)
         host_info = None
         if not bk_cloud_id and host:
             host_info = next(iter(host.values()))

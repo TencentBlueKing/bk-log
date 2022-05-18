@@ -13,14 +13,15 @@ class CmdbHostCache(CacheBase):
     CACHE_TIMEOUT = TimeEnum.ONE_DAY_SECOND.value
 
     @classmethod
-    def get(cls, host_ip):
-        host = local.host_info_cache.get(host_ip, None)
+    def get(cls, bk_biz_id, host_ip):
+        host_id = f"{bk_biz_id}:{host_ip}"
+        host = local.host_info_cache.get(host_id, None)
         if host is None:
-            result = cls.cache.hget(cls.CACHE_KEY, host_ip)
+            result = cls.cache.hget(cls.CACHE_KEY, host_id)
             if result:
-                local.host_info_cache[host_ip] = result
+                local.host_info_cache[host_id] = result
                 return cls.deserialize(result)
-            local.host_info_cache[host_ip] = {}
+            local.host_info_cache[host_id] = {}
             host = {}
         return host
 
@@ -62,8 +63,9 @@ class CmdbHostCache(CacheBase):
 
             pipeline = cls.cache.pipeline()
             for key, obj in objs.items():
-                pipeline.hset(cls.CACHE_KEY, key, cls.serialize(obj))
-                new_keys.append(key)
+                host_id = f"{bk_biz_id}:{key}"
+                pipeline.hset(cls.CACHE_KEY, host_id, cls.serialize(obj))
+                new_keys.append(host_id)
 
             pipeline.hset(biz_cache_key, str(bk_biz_id), cls.serialize(list(objs.keys())))
             pipeline.expire(cls.CACHE_KEY, cls.CACHE_TIMEOUT)
