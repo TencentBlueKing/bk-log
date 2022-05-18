@@ -23,7 +23,6 @@ import json
 import copy
 import hashlib
 
-from django.utils.functional import cached_property
 from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
@@ -1121,8 +1120,9 @@ class SearchHandler(object):
         if not server_ip:
             return log
 
-        host_info = self._host_info
-        host = host_info.get(server_ip, {})
+        from apps.utils.core.cache.cmdb_host import CmdbHostCache
+
+        host = CmdbHostCache.get(server_ip)
         host_info = None
         if not bk_cloud_id and host:
             host_info = next(iter(host.values()))
@@ -1135,14 +1135,6 @@ class SearchHandler(object):
         log["__module__"] = " | ".join([module["bk_inst_name"] for module in host_info.get("module", [])])
         log["__set__"] = " | ".join([set["bk_inst_name"] for set in host_info.get("set", [])])
         return log
-
-    @cached_property
-    def _host_info(self):
-        if not self.search_dict.get("bk_biz_id"):
-            return {}
-        return BizHandler(self.search_dict.get("bk_biz_id")).get_cache_hosts(
-            bk_biz_id=self.search_dict.get("bk_biz_id")
-        )
 
     def _deal_query_result(self, result_dict: dict) -> dict:
         result: dict = {
