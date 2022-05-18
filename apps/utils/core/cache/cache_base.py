@@ -10,7 +10,7 @@ from apps.log_search.constants import TimeEnum
 
 
 def prefix_cache_key():
-    return f"{settings.APP_CODE}:"
+    return f"{settings.APP_CODE}"
 
 
 class CacheBase(ABC):
