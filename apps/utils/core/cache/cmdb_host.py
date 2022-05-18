@@ -61,7 +61,7 @@ class CmdbHostCache(CacheBase):
             except Exception as e:
                 logger.error(f"get bk_biz_id[{bk_biz_id}] host info failed {e}")
 
-            pipeline = cls.cache.pipeline()
+            pipeline = cls.cache.pipeline(transaction=False)
             for key, obj in objs.items():
                 host_id = f"{bk_biz_id}:{key}"
                 pipeline.hset(cls.CACHE_KEY, host_id, cls.serialize(obj))
