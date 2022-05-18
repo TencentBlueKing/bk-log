@@ -19,8 +19,9 @@ class CmdbHostCache(CacheBase):
         if host is None:
             result = cls.cache.hget(cls.CACHE_KEY, host_id)
             if result:
+                result = cls.deserialize(result)
                 local.host_info_cache[host_id] = result
-                return cls.deserialize(result)
+                return result
             local.host_info_cache[host_id] = {}
             host = {}
         return host
