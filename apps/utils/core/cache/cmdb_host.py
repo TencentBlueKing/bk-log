@@ -71,7 +71,7 @@ class CmdbHostCache(CacheBase):
             pipeline.expire(cls.CACHE_KEY, cls.CACHE_TIMEOUT)
             pipeline.execute()
 
-        old_biz_ids = set(cls.cache.hkeys(biz_cache_key))
+        old_biz_ids = {biz_id.decode() for biz_id in cls.cache.hkeys(biz_cache_key)}
         new_biz_ids = {str(biz_id) for biz_id in biz_ids}
         delete_biz_ids = old_biz_ids - new_biz_ids
         if delete_biz_ids:
@@ -79,7 +79,7 @@ class CmdbHostCache(CacheBase):
 
         cls.cache.expire(biz_cache_key, cls.CACHE_TIMEOUT)
         # 清理业务下已被删除的对象数据
-        old_keys = cls.cache.hkeys(cls.CACHE_KEY)
+        old_keys = {key.decode() for key in cls.cache.hkeys(cls.CACHE_KEY)}
         deleted_keys = set(old_keys) - set(new_keys)
         if deleted_keys:
             cls.cache.hdel(cls.CACHE_KEY, *deleted_keys)
