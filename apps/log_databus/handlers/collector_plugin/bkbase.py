@@ -31,29 +31,6 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
     数据平台
     """
 
-    def _create_transfer_result_table(self):
-        """
-        创建 Transfer 结果表
-        """
-
-        # 集群信息
-        cluster_info = StorageHandler(self.collector_plugin.storage_cluster_id).get_cluster_info_by_id()
-
-        # 创建结果表
-        etl_storage: EtlStorage = EtlStorage.get_instance(self.collector_plugin.etl_config)
-        etl_storage.update_or_create_result_table(
-            instance=self.collector_plugin,
-            table_id=self.collector_plugin.collector_plugin_name_en,
-            storage_cluster_id=self.collector_plugin.storage_cluster_id,
-            retention=self.collector_plugin.retention,
-            allocation_min_days=self.collector_plugin.allocation_min_days,
-            storage_replies=self.collector_plugin.storage_replies,
-            fields=self.collector_plugin.fields,
-            etl_params=self.collector_plugin.etl_params,
-            es_version=cluster_info["cluster_config"]["version"],
-            hot_warm_config=cluster_info["cluster_config"].get("custom_option", {}).get("hot_warm_config"),
-        )
-
     def _create_metadata_dataid(self, params: dict) -> int:
         """
         预置操作
@@ -67,7 +44,23 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
         """
 
         if not self.collector_plugin.is_allow_alone_storage:
-            self._create_transfer_result_table()
+            # 集群信息
+            cluster_info = StorageHandler(self.collector_plugin.storage_cluster_id).get_cluster_info_by_id()
+
+            # 创建结果表
+            etl_storage: EtlStorage = EtlStorage.get_instance(self.collector_plugin.etl_config)
+            etl_storage.update_or_create_result_table(
+                instance=self.collector_plugin,
+                table_id=self.collector_plugin.collector_plugin_name_en,
+                storage_cluster_id=self.collector_plugin.storage_cluster_id,
+                retention=self.collector_plugin.retention,
+                allocation_min_days=self.collector_plugin.allocation_min_days,
+                storage_replies=self.collector_plugin.storage_replies,
+                fields=self.collector_plugin.fields,
+                etl_params=self.collector_plugin.etl_params,
+                es_version=cluster_info["cluster_config"]["version"],
+                hot_warm_config=cluster_info["cluster_config"].get("custom_option", {}).get("hot_warm_config"),
+            )
 
     def _update_or_create_etl_storage(self, params: dict, is_create: bool) -> None:
         """
@@ -86,4 +79,4 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
         etl_handler = EtlHandler(
             etl_processor=self.collector_plugin.etl_processor, collector_config_id=collect_config.collector_config_id
         )
-        etl_handler.update_or_create(instance=collect_config, is_create=True, params=params)
+        etl_handler.update_or_create(instance=collect_config, params=params)
