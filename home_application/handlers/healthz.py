@@ -46,25 +46,51 @@ class HealthzHandler(object):
         if format_type == "json":
             return self._json_data()
 
+        if format_type == "console":
+            return self._console_data()
+
         return self._k8s_data()
 
     def _k8s_data(self):
-        output = []
+        outputs = []
         for namespace in self.data:
             for metric in self.data[namespace]:
+                metric_name = metric["metric_name"]
+                output = f"{namespace}/{metric_name}"
+                if metric.get("dimensions"):
+                    dimensions = ",".join([f"{key}={value}" for key, value in metric["dimensions"].items()])
+                    output = f"{output} {dimensions}"
                 if not metric["status"]:
-                    output.append("[-]{} {} failed\n".format(metric["metric_name"], metric["timestamp"]))
+                    output = f"[-]{output} \n"
                     continue
-                output.append(
-                    "[+]{} {} {} ok\n".format(metric["metric_name"], metric["timestamp"], metric["metric_value"])
-                )
+                metric_value = metric["metric_value"]
+                output = f"[+]{output} {metric_value}\n"
+                outputs.append(output)
 
-        return "".join(output).encode("utf-8")
+        return "".join(outputs).encode("utf-8")
 
     def _json_data(self):
-        result = defaultdict(lambda: defaultdict(dict))
+        result = defaultdict(lambda: defaultdict(list))
         for namespace in self.data:
             for metric in self.data[namespace]:
-                result[namespace][metric["metric_name"]] = metric
+                result[namespace][metric["metric_name"]].append(metric)
 
         return json.dumps(result)
+
+    def _console_data(self):
+        outputs = []
+        for namespace in self.data:
+            for metric in self.data[namespace]:
+                metric_name = metric["metric_name"]
+                output = f"{namespace}/{metric_name}"
+                if metric.get("dimensions"):
+                    dimensions = ",".join([f"{key}={value}" for key, value in metric["dimensions"].items()])
+                    output = f"{output} {dimensions}"
+                if not metric["status"]:
+                    output = f"[-]{output} \n"
+                    continue
+                metric_value = metric["metric_value"]
+                output = f"[+]{output} {metric_value}\n"
+                outputs.append(output)
+
+        return "".join(outputs)

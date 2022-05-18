@@ -19,48 +19,39 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext_lazy as _
+import logging
 
-from apps.api.base import DataAPI
-from config.domains import JOB_APIGATEWAY_ROOT_V2
+import requests
 
+import settings
 
-def get_job_request_before(params):
-    return params
-
-
-class _JobApi:
-    MODULE = _("JOB")
-
-    def __init__(self):
-        self.fast_execute_script = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_execute_script",
-            description=_("快速执行脚本"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.fast_push_file = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_push_file",
-            description=_("快速分发文件"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_job_instance_log = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
-            description=_("根据作业id获取执行日志"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_public_script_list = DataAPI(
-            method="GET",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
-            description=_("查询公共脚本列表"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
+logger = logging.getLogger()
 
 
-JobApi = _JobApi()
+class RabbitMQClient(object):
+    def __init__(self) -> None:
+        try:
+            broker_url = settings.BROKER_URL.split("//")[1]
+            user_and_password, host_and_port_and_vhost = broker_url.split("@")
+            self.user, self.password = user_and_password.split(":")
+            host_and_port, self.vhost = host_and_port_and_vhost.split("/")
+            self.host, self.port = host_and_port.split(":")
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"Failed to get rabbitmq infomation, err: {e}")
+
+    def _call_api(self, path: str):
+        headers = {"content-type": "application/json"}
+        url = f"http://{self.host}:{self.port}/api/{path}"
+        try:
+            resp = requests.get(url, headers=headers, auth=(self.user, self.password))
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"Failed to call rabbitmq api[{path}], err: {e}")
+            return None
+
+    def get_queues(self):
+        if self.vhost == "/":
+            return self._call_api("queues")
+        return self._call_api(f"queues/{self.vhost}")

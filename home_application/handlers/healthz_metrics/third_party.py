@@ -19,48 +19,36 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext_lazy as _
-
-from apps.api.base import DataAPI
-from config.domains import JOB_APIGATEWAY_ROOT_V2
+import logging
 
 
-def get_job_request_before(params):
-    return params
+from django.utils.translation import ugettext as _
+
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric
+from home_application.utils.third_party import ThirdParty, THIRD_PARTY_CHECK_API
+
+logger = logging.getLogger()
 
 
-class _JobApi:
-    MODULE = _("JOB")
+class ThirdPartyCheck(object):
+    @staticmethod
+    @register_healthz_metric(namespace="ThirdParty", description=_("周边依赖健康检查"))
+    def third_party():
+        data = []
+        for module in THIRD_PARTY_CHECK_API:
+            status = ThirdParty.call_api(module)
+            data.append(HealthzMetric(status=status, metric_name=module, metric_value=status, dimensions={}))
 
-    def __init__(self):
-        self.fast_execute_script = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_execute_script",
-            description=_("快速执行脚本"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.fast_push_file = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_push_file",
-            description=_("快速分发文件"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_job_instance_log = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
-            description=_("根据作业id获取执行日志"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_public_script_list = DataAPI(
-            method="GET",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
-            description=_("查询公共脚本列表"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
+        # check paas
+        paas_status = False
+        if ThirdParty.check_paas():
+            paas_status = True
+        data.append(HealthzMetric(status=paas_status, metric_name="paas", metric_value=paas_status, dimensions={}))
 
+        # check esb, 只要有一个接口调成功, ESB就是正常的
+        esb_status = False
+        if [i.status for i in data].count(True):
+            esb_status = True
+        data.append(HealthzMetric(status=esb_status, metric_name="esb", metric_value=esb_status, dimensions={}))
 
-JobApi = _JobApi()
+        return data

@@ -21,5 +21,47 @@ the project delivered to anyone in the future.
 """
 
 HEALTHZ_METRICS_IMPORT_PATHS = [
-    "home_application.handlers.healthz_metrics.version"
+    "home_application.handlers.healthz_metrics.version",
+    "home_application.handlers.healthz_metrics.mysql",
+    "home_application.handlers.healthz_metrics.redis",
+    "home_application.handlers.healthz_metrics.rabbitmq",
+    "home_application.handlers.healthz_metrics.kafka",
+    "home_application.handlers.healthz_metrics.es",
+    "home_application.handlers.healthz_metrics.third_party",
 ]
+
+# MySQL metrics from command show global variables
+MYSQL_VARIABLES = ["version", "server_id", "max_connections"]
+
+# MySQL metrics from command show global status
+MYSQL_STATUS = ["Threads_connected", "slow_queries", "Questions"]
+
+# Redis metrics from info
+REDIS_VARIABLES = [
+    "redis_version",
+    "connected_clients",
+    "instantaneous_ops_per_sec",
+    "latest_fork_usec",
+    "mem_fragmentation_ratio",
+    "evicted_keys",
+]
+
+QUEUES = [
+    "default",
+    "celery",
+    "pipeline_additional_task",
+    "pipeline_additional_task_priority",
+    "service_schedule",
+    "service_schedule_priority",
+    "pipeline",
+    "pipeline_priority",
+    "async_export",
+]
+
+DEFAULT_SUBSCRIPTION_ID = 1
+DEFAULT_SYSTEM_ID = 1
+
+DEFAULT_PAGE = 1
+DEFAULT_PAGE_SIZE = 10
+
+DEFAULT_BK_DATA_ID = 1

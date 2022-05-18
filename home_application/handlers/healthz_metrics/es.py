@@ -19,48 +19,46 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext_lazy as _
+import logging
 
-from apps.api.base import DataAPI
-from config.domains import JOB_APIGATEWAY_ROOT_V2
+from socket import gaierror
 
+from django.utils.translation import ugettext as _
+from apps.log_measure.exceptions import EsConnectFailException
 
-def get_job_request_before(params):
-    return params
+from apps.log_measure.utils.metric import MetricUtils
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric
 
-
-class _JobApi:
-    MODULE = _("JOB")
-
-    def __init__(self):
-        self.fast_execute_script = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_execute_script",
-            description=_("快速执行脚本"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.fast_push_file = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_push_file",
-            description=_("快速分发文件"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_job_instance_log = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
-            description=_("根据作业id获取执行日志"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_public_script_list = DataAPI(
-            method="GET",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
-            description=_("查询公共脚本列表"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
+logger = logging.getLogger()
 
 
-JobApi = _JobApi()
+class ESMetric(object):
+    @staticmethod
+    @register_healthz_metric(namespace="ES", description=_("ES"))
+    def get_offsets():
+        data = []
+        try:
+            clusters = MetricUtils.get_instance().list_cluster_info()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"Failed to get es clusters, err: {e}")
+            return data
+
+        for cluster in clusters:
+            status = False
+            try:
+                es_client = MetricUtils.get_instance().get_es_client(cluster_info=cluster)
+                if es_client:
+                    status = True
+            except (EsConnectFailException, gaierror) as e:
+                logger.error(f"failed to get es client, err: {e}")
+
+            data.append(
+                HealthzMetric(
+                    status=status,
+                    metric_name="ping",
+                    metric_value=status,
+                    dimensions={"cluster_name": cluster.get("cluster_config").get("cluster_name")},
+                )
+            )
+
+        return data

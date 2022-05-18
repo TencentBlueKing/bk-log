@@ -19,48 +19,39 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
-from apps.api.base import DataAPI
-from config.domains import JOB_APIGATEWAY_ROOT_V2
-
-
-def get_job_request_before(params):
-    return params
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric
+from home_application.utils.kafka import KafkaClient
 
 
-class _JobApi:
-    MODULE = _("JOB")
+class KafkaMetric(object):
+    @staticmethod
+    @register_healthz_metric(namespace="Kafka", description=_("Kafka consumer group offsets"))
+    def get_offsets():
+        data = []
+        consumer_groups = KafkaClient.get_instance().get_consumer_groups()
+        if not consumer_groups:
+            return data
+        for group in consumer_groups:
+            group_name = group[0]
+            status = False
+            consumer_offsets = KafkaClient.get_instance().get_consumer_group_offsets(group_name=group_name)
+            if not consumer_offsets:
+                data.append(HealthzMetric(status=status, metric_name="consumer_offsets", metric_value=0, dimensions={}))
+                continue
+            for topic_partition, offset_metadata in consumer_offsets.items():
+                topic = topic_partition.topic
+                partition = topic_partition.partition
+                offset = offset_metadata.offset
+                status = True
+                data.append(
+                    HealthzMetric(
+                        status=status,
+                        metric_name="consumer_offsets",
+                        metric_value=offset,
+                        dimensions={"topic": topic, "partition": partition},
+                    )
+                )
 
-    def __init__(self):
-        self.fast_execute_script = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_execute_script",
-            description=_("快速执行脚本"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.fast_push_file = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_push_file",
-            description=_("快速分发文件"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_job_instance_log = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
-            description=_("根据作业id获取执行日志"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_public_script_list = DataAPI(
-            method="GET",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
-            description=_("查询公共脚本列表"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-
-
-JobApi = _JobApi()
+        return data

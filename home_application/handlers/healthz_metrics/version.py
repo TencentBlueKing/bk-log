@@ -20,7 +20,6 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import os
-import time
 import logging
 
 from django.utils.translation import ugettext as _
@@ -32,20 +31,19 @@ logger = logging.getLogger()
 
 class VersionMetric(object):
     @staticmethod
-    @register_healthz_metric(namespace="", description=_("版本信息"))
+    @register_healthz_metric(namespace="SAAS", description=_("版本信息"))
     def version():
         data = []
+        status = False
         cwd = os.getcwd()
         try:
             with open(os.path.join(cwd, "VERSION"), "r") as f:
                 version = f.read().split("\n")[0]
+                status = True
                 f.close()
         except Exception as e:  # pylint: disable=broad-except
             logger.exception("open VERSION failed: {}".format(e))
             version = ""
 
-        data.append(
-            HealthzMetric(metric_name="version", metric_value=version, dimensions={}, timestamp=int(time.time()))
-        )
-
+        data.append(HealthzMetric(status=status, metric_name="version", metric_value=version, dimensions={}))
         return data

@@ -26,6 +26,8 @@ import time
 import logging
 from collections import defaultdict
 
+import settings
+
 logger = logging.getLogger()
 
 HEALTHZ_REGISTERED_METRICS = defaultdict(list)
@@ -41,6 +43,9 @@ def register_healthz_metric(namespace: str, description: str = ""):
             result = func(*args, **kwargs)
             return result
 
+        if not settings.USE_REDIS and namespace == "Redis":
+            return
+
         HEALTHZ_REGISTERED_METRICS[namespace].append(
             {"namespace": namespace, "description": description, "method": wraps(func)(_wrapped_view)}
         )
@@ -53,29 +58,20 @@ def register_healthz_metric(namespace: str, description: str = ""):
 class HealthzMetric(object):
     """健康检查指标类"""
 
-    def __init__(self, metric_name, metric_value, dimensions=None, timestamp=None):
+    def __init__(self, status: bool, metric_name: str, metric_value: str, dimensions: dict = None):
+        self.status = status
         self.metric_name = metric_name
         self.metric_value = metric_value
         self.dimensions = dimensions
-        self.timestamp = timestamp
 
     def to_dict(self, namespace) -> dict:
-        if self.dimensions:
-            dimensions = {key: str(value) for key, value in self.dimensions.items()}
-        else:
-            dimensions = {}
-
         return {
-            "metric_name": self._get_actual_metric_name(namespace),
+            "status": self.status,
+            "namespace": namespace,
+            "metric_name": self.metric_name,
             "metric_value": self.metric_value,
-            "dimension": dimensions,
-            "timestamp": self.timestamp,
+            "dimensions": self.dimensions,
         }
-
-    def _get_actual_metric_name(self, namespace):
-        if namespace:
-            self.metric_name = namespace + "/" + self.metric_name
-        return self.metric_name
 
 
 class HealthzMetricCollector(object):
@@ -99,28 +95,25 @@ class HealthzMetricCollector(object):
         metric_groups = []
         for namespace in register_namespace_metrics:
             for metric in register_namespace_metrics[namespace]:
-                metric_group = {
-                    "namespace": metric["namespace"],
-                    "description": metric["description"],
-                    "status": False,
-                }
                 try:
                     begin_time = time.time()
-                    metric_group["metrics"] = metric["method"]()
+                    metric_group = {
+                        "namespace": metric["namespace"],
+                        "description": metric["description"],
+                        "metrics": metric["method"](),
+                    }
                     logger.info(
                         "[healthz_data] collect metric [{}] took {} ms".format(
                             metric["namespace"], int((time.time() - begin_time) * 1000)
                         ),
                     )
-                    metric_group["status"] = True
+                    metric_groups.append(metric_group)
                 except Exception as e:  # pylint: disable=broad-except
                     logger.exception("[healthz_data] collect metric [{}] failed: {}".format(metric["namespace"], e))
-                metric_groups.append(metric_group)
 
         for group in metric_groups:
             for metric in group["metrics"]:
                 metric = metric.to_dict(namespace=group["namespace"])
-                metric.update(group)
                 namespace_metric_datas[group["namespace"]].append(metric)
 
         return namespace_metric_datas
@@ -132,8 +125,9 @@ class HealthzMetricCollector(object):
             if exclude_namespaces and namespace not in exclude_namespaces:
                 metrics[namespace].extend(HEALTHZ_REGISTERED_METRICS[namespace])
                 continue
-            if include_namespaces and namespace in include_namespaces:
-                metrics[namespace].extend(HEALTHZ_REGISTERED_METRICS[namespace])
+            if include_namespaces:
+                if namespace in include_namespaces:
+                    metrics[namespace].extend(HEALTHZ_REGISTERED_METRICS[namespace])
                 continue
             metrics[namespace].extend(HEALTHZ_REGISTERED_METRICS[namespace])
 

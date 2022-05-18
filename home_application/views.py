@@ -59,10 +59,16 @@ def healthz(request):
     include = request.GET.get("include")
     exclude = request.GET.get("exclude")
 
+    if format_type == "json":
+        content_type = "application/json"
+    else:
+        content_type = "text/html"
+
     return HttpResponse(
         content=HealthzHandler().get_data(
             format_type=format_type, include_namespaces=include, exclude_namespaces=exclude
-        )
+        ),
+        content_type=content_type,
     )
 
 

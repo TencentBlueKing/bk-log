@@ -19,48 +19,29 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext_lazy as _
 
-from apps.api.base import DataAPI
-from config.domains import JOB_APIGATEWAY_ROOT_V2
-
-
-def get_job_request_before(params):
-    return params
+from django.core.management.base import BaseCommand
+from home_application.handlers.healthz import HealthzHandler
 
 
-class _JobApi:
-    MODULE = _("JOB")
+class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument("--include", type=str, default="", help="include namespaces")
+        parser.add_argument("--exclude", type=str, default="", help="exclude namespaces")
 
-    def __init__(self):
-        self.fast_execute_script = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_execute_script",
-            description=_("快速执行脚本"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
+    def handle(self, **options):
+        include_namespaces = options.get("include")
+        if include_namespaces:
+            include_namespaces = include_namespaces.split(",")
+        else:
+            include_namespaces = []
+        exclude_namespaces = options.get("exclude")
+        if exclude_namespaces:
+            exclude_namespaces = exclude_namespaces.split(",")
+        else:
+            exclude_namespaces = []
+        print(
+            HealthzHandler().get_data(
+                format_type="console", include_namespaces=include_namespaces, exclude_namespaces=exclude_namespaces
+            )
         )
-        self.fast_push_file = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_push_file",
-            description=_("快速分发文件"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_job_instance_log = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
-            description=_("根据作业id获取执行日志"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_public_script_list = DataAPI(
-            method="GET",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
-            description=_("查询公共脚本列表"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-
-
-JobApi = _JobApi()

@@ -19,48 +19,37 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
-from apps.api.base import DataAPI
-from config.domains import JOB_APIGATEWAY_ROOT_V2
-
-
-def get_job_request_before(params):
-    return params
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric
+from home_application.constants import MYSQL_VARIABLES, MYSQL_STATUS
+from home_application.utils.mysql import MySQLClient
 
 
-class _JobApi:
-    MODULE = _("JOB")
+class MySQLMetric(object):
+    @staticmethod
+    @register_healthz_metric(namespace="MySQL", description=_("MySQL SHOW VARIABLES"))
+    def get_variables():
+        data = []
+        for varieable_name in MYSQL_VARIABLES:
+            status = False
+            metric_value = MySQLClient.get_instance().get_variables(varieable_name)
+            if metric_value:
+                status = True
+            data.append(
+                HealthzMetric(status=status, metric_name=varieable_name, metric_value=metric_value, dimensions={})
+            )
 
-    def __init__(self):
-        self.fast_execute_script = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_execute_script",
-            description=_("快速执行脚本"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.fast_push_file = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_push_file",
-            description=_("快速分发文件"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_job_instance_log = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
-            description=_("根据作业id获取执行日志"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_public_script_list = DataAPI(
-            method="GET",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
-            description=_("查询公共脚本列表"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
+        return data
 
-
-JobApi = _JobApi()
+    @staticmethod
+    @register_healthz_metric(namespace="MySQL", description=_("MySQL SHOW STATUS"))
+    def get_status():
+        data = []
+        for status_name in MYSQL_STATUS:
+            status = False
+            metric_value = MySQLClient.get_instance().get_status(status_name)
+            if metric_value:
+                status = True
+            data.append(HealthzMetric(status=status, metric_name=status_name, metric_value=metric_value, dimensions={}))
+        return data
