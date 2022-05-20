@@ -42,6 +42,12 @@ def bcs_get_cluster_config_after(response):
     return response
 
 
+def list_project_after(response):
+    if "results" in response:
+        return response["results"]
+    return response
+
+
 class _BcsCcApi(object):
     MODULE = _(u"Bcs cc 配置中心")
 
@@ -85,5 +91,6 @@ class _BcsCcApi(object):
             url=bcs_cc_url + "projects/",
             module=self.MODULE,
             before_request=bcs_cc_before_request,
+            after_request=list_project_after,
             header_keys=["X-BKAPI-AUTHORIZATION"],
         )
