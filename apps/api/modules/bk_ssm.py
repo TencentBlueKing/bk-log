@@ -30,7 +30,7 @@ class _BkSSM:
     MODULE = _("bkssm")
 
     def __init__(self):
-        bk_ssm_root = settings.BK_SSM_HOST if settings.IS_K8S_DEPLOY_MODE else BK_SSM_ROOT
+        bk_ssm_root = settings.SSM_HOST if settings.IS_K8S_DEPLOY_MODE else BK_SSM_ROOT
         self.get_access_token = DataAPI(
             method="POST",
             url=bk_ssm_root + "access-tokens",
