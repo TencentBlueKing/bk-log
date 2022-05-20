@@ -69,6 +69,7 @@ class Bcs:
                 "namespace": self.BKLOG_CONFIG_NAMESPACE,
                 "labels": {"app.kubernetes.io/managed-by": "bk-log", **(labels if labels else {})},
             },
+            #
             "spec": bklog_config,
         }
         return self.ensure_resource(
