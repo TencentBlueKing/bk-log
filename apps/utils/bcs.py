@@ -32,6 +32,11 @@ class Bcs:
     API_KEY_CONTENT = settings.BCS_API_GATEWAY_TOKEN
     SERVER_ADDRESS_PATH = "clusters"
 
+    BKLOG_CONFIG_NAMESPACE = "default"
+    BKLOG_CONFIG_API_VERSION = settings.BKLOG_CONFIG_API_VERSION
+    BKLOG_CONFIG_KIND = settings.BKLOG_CONFIG_KIND
+    BCS_CLUSTER_NAME_KEY = "bk_bcs_cluster_id"
+
     def __init__(self, cluster_id: str):
         self._cluster_id = cluster_id
 
@@ -51,13 +56,39 @@ class Bcs:
     def dynamic_client(self):
         return dynamic_client.DynamicClient(self.k8s_client)
 
+    def save_bklog_config(self, bklog_config_name: str, bklog_config: dict, labels=None):
+        # 补充bcs cluster id
+        ext_meta = bklog_config.get("extMeta", {})
+        ext_meta[self.BCS_CLUSTER_NAME_KEY] = self._cluster_id
+        bklog_config["extMeta"] = ext_meta
+        resource_body = {
+            "apiVersion": self.BKLOG_CONFIG_API_VERSION,
+            "kind": self.BKLOG_CONFIG_KIND,
+            "metadata": {
+                "name": bklog_config_name,
+                "namespace": self.BKLOG_CONFIG_NAMESPACE,
+                "labels": {"app.kubernetes.io/managed-by": "bk-log", **(labels if labels else {})},
+            },
+            "spec": bklog_config,
+        }
+        return self.ensure_resource(
+            bklog_config_name, resource_body, self.BKLOG_CONFIG_API_VERSION, self.BKLOG_CONFIG_KIND
+        )
+
     def ensure_resource(self, resource_name: str, resource_body: dict, api_version: str, kind: str):
         try:
+
             d_client = self.dynamic_client
             resource = d_client.resources.get(
                 api_version=api_version,
                 kind=kind,
             )
+        except ResourceNotFoundError:
+            # 如果找不到crd，则直接退出
+            logger.debug(f"{api_version}/{kind} resource crd not found in k8s cluster, will not create any resource")
+            return False
+
+        try:
             action = "update"
             # 检查是否已存在,存在则更新
             data = d_client.get(resource=resource, name=resource_name)
@@ -67,15 +98,10 @@ class Bcs:
             # 不存在则新增
             action = "create"
             d_client.create(resource, body=resource_body)
-        except ResourceNotFoundError:
-            # 如果找不到crd，则直接退出
-            logger.debug("dataid resource crd not found in k8s cluster, will not create any dataid resource")
-            return False
         except Exception as e:  # pylint: disable=broad-except
             # 异常捕获
             logger.error("unexpected error in ensure resource:{}".format(e))
             return False
-
         logger.info(
             "[%s] datasource [%s]",
             action,
