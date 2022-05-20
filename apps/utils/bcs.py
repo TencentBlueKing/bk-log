@@ -77,12 +77,25 @@ class Bcs:
                 "namespace": self.BKLOG_CONFIG_NAMESPACE,
                 "labels": {"app.kubernetes.io/managed-by": "bk-log", **(labels if labels else {})},
             },
-            #
+            #  https://github.com/TencentBlueKing/bk-log-sidecar/blob/master/api/v1alpha1/bklogconfig_types.go
             "spec": bklog_config,
         }
         return self.ensure_resource(
             bklog_config_name, resource_body, self.BKLOG_CONFIG_API_VERSION, self.BKLOG_CONFIG_KIND
         )
+
+    def delete_bklog_config(self, *bklog_config_names: str):
+        for bklog_config_name in bklog_config_names:
+            try:
+                self.crd_api.delete_namespaced_custom_object(
+                    self.BKLOG_CONFIG_GROUP,
+                    self.BKLOG_CONFIG_VERSION,
+                    self.BKLOG_CONFIG_NAMESPACE,
+                    self.BKLOG_CONFIG_PLURAL,
+                    bklog_config_name,
+                )
+            except Exception as e:
+                logger.error(f"delete bklog config crd [{bklog_config_name}] error => {e}")
 
     def list_bklog_config(self):
         return self.crd_api.list_namespaced_custom_object(
