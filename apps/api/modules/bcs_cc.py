@@ -46,9 +46,10 @@ class _BcsCcApi(object):
     MODULE = _(u"Bcs cc 配置中心")
 
     def __init__(self):
+        bcs_cc_url = settings.BCS_CC_APIGATEWAY_HOST if settings.IS_K8S_DEPLOY_MODE else BCS_CC_APIGATEWAY_ROOT
         self.get_cluster_config_by_cluster_id = DataAPI(
             method="GET",
-            url=BCS_CC_APIGATEWAY_ROOT + "v1/clusters/{cluster_id}/cluster_config/",
+            url=bcs_cc_url + "v1/clusters/{cluster_id}/cluster_config/",
             module=self.MODULE,
             url_keys=["cluster_id"],
             description=u"根据集群id获取集群信息",
@@ -58,7 +59,7 @@ class _BcsCcApi(object):
         )
         self.get_cluster_by_cluster_id = DataAPI(
             method="GET",
-            url=BCS_CC_APIGATEWAY_ROOT + "clusters/{cluster_id}/",
+            url=bcs_cc_url + "clusters/{cluster_id}/",
             module=self.MODULE,
             url_keys=["cluster_id"],
             description=u"根据集群id获取集群信息",
@@ -67,21 +68,21 @@ class _BcsCcApi(object):
         )
         self.list_cluster = DataAPI(
             method="GET",
-            url=BCS_CC_APIGATEWAY_ROOT + "cluster_list/",
+            url=bcs_cc_url + "cluster_list/",
             module=self.MODULE,
             before_request=bcs_cc_before_request,
             header_keys=["X-BKAPI-AUTHORIZATION"],
         )
         self.list_area = DataAPI(
             method="GET",
-            url=BCS_CC_APIGATEWAY_ROOT + "areas/",
+            url=bcs_cc_url + "areas/",
             module=self.MODULE,
             before_request=bcs_cc_before_request,
             header_keys=["X-BKAPI-AUTHORIZATION"],
         )
         self.list_project = DataAPI(
             method="GET",
-            url=BCS_CC_APIGATEWAY_ROOT + "projects/",
+            url=bcs_cc_url + "projects/",
             module=self.MODULE,
             before_request=bcs_cc_before_request,
             header_keys=["X-BKAPI-AUTHORIZATION"],
