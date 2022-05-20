@@ -43,8 +43,8 @@ def bcs_get_cluster_config_after(response):
 
 
 def list_project_after(response):
-    if "results" in response:
-        return response["results"]
+    if "results" in response["data"]:
+        response["data"] = response["data"]["results"]
     return response
 
 
