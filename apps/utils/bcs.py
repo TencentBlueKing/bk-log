@@ -45,8 +45,9 @@ class Bcs:
 
     @property
     def k8s_config(self):
+        bcs_apigateway_host = settings.BCS_APIGATEWAY_HOST if settings.IS_K8S_DEPLOY_MODE else BCS_APIGATEWAY_ROOT
         return k8s_client.Configuration(
-            host=f"{BCS_APIGATEWAY_ROOT}/{self.SERVER_ADDRESS_PATH}/{self._cluster_id}",
+            host=f"{bcs_apigateway_host}{self.SERVER_ADDRESS_PATH}/{self._cluster_id}",
             api_key={self.API_KEY_TYPE: self.API_KEY_CONTENT},
             api_key_prefix={self.API_KEY_TYPE: self.API_KEY_PREFIX},
         )
