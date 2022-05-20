@@ -18,6 +18,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from django.conf import settings
+from django.utils.functional import cached_property
 from kubernetes import client as k8s_client
 from kubernetes.dynamic import client as dynamic_client
 from kubernetes.dynamic.exceptions import ResourceNotFoundError, NotFoundError
@@ -31,10 +32,12 @@ class Bcs:
     API_KEY_PREFIX = "Bearer"
     API_KEY_CONTENT = settings.BCS_API_GATEWAY_TOKEN
     SERVER_ADDRESS_PATH = "clusters"
-
     BKLOG_CONFIG_NAMESPACE = "default"
+    BKLOG_CONFIG_GROUP = "bk.tencent.com"
+    BKLOG_CONFIG_VERSION = settings.BKLOG_CONFIG_VERSION
     BKLOG_CONFIG_API_VERSION = settings.BKLOG_CONFIG_API_VERSION
     BKLOG_CONFIG_KIND = settings.BKLOG_CONFIG_KIND
+    BKLOG_CONFIG_PLURAL = "bklogconfigs"
     BCS_CLUSTER_NAME_KEY = "bk_bcs_cluster_id"
 
     def __init__(self, cluster_id: str):
@@ -48,13 +51,17 @@ class Bcs:
             api_key_prefix={self.API_KEY_TYPE: self.API_KEY_PREFIX},
         )
 
-    @property
+    @cached_property
     def k8s_client(self):
         return k8s_client.ApiClient(self.k8s_config)
 
-    @property
+    @cached_property
     def dynamic_client(self):
         return dynamic_client.DynamicClient(self.k8s_client)
+
+    @cached_property
+    def crd_api(self):
+        return k8s_client.CustomObjectsApi(self.k8s_client)
 
     def save_bklog_config(self, bklog_config_name: str, bklog_config: dict, labels=None):
         # 补充bcs cluster id
@@ -74,6 +81,11 @@ class Bcs:
         }
         return self.ensure_resource(
             bklog_config_name, resource_body, self.BKLOG_CONFIG_API_VERSION, self.BKLOG_CONFIG_KIND
+        )
+
+    def list_bklog_config(self):
+        return self.crd_api.list_namespaced_custom_object(
+            self.BKLOG_CONFIG_GROUP, self.BKLOG_CONFIG_VERSION, self.BKLOG_CONFIG_NAMESPACE, self.BKLOG_CONFIG_PLURAL
         )
 
     def ensure_resource(self, resource_name: str, resource_body: dict, api_version: str, kind: str):
