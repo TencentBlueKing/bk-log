@@ -95,6 +95,6 @@ def preview(separator_node_action, data, etl_only=False, **kwargs):
             return data
 
         return [{"field_name": k, "value": v} for k, v in data.items()]
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-except
         logger.exception(f"字段提取异常: {error})")
         raise exceptions.EtlPreviewException

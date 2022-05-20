@@ -44,7 +44,7 @@ class WinEventLogScenario(CollectorScenario):
         }
         steps = [
             {
-                "id": self.PLUGIN_NAME,
+                "id": self.PLUGIN_NAME,  # 这里的ID不能随意变更，需要同步修改解析的逻辑(parse_steps)
                 "type": "PLUGIN",
                 "config": {
                     "plugin_name": self.PLUGIN_NAME,
@@ -84,8 +84,13 @@ class WinEventLogScenario(CollectorScenario):
     @classmethod
     def parse_steps(cls, steps):
         try:
-            step, *_ = steps
-            config = step["params"]["context"]
+            for step in steps:
+                if step["id"] == cls.PLUGIN_NAME:
+                    config = step["params"]["context"]
+                    break
+            else:
+                config = steps[0]["params"]["context"]
+
             local, *_ = config["local"]
             event_logs = local["event_logs"]
             first_event, *_ = event_logs
