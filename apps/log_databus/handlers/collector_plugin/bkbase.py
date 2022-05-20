@@ -17,13 +17,15 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from typing import Union
+
 from apps.log_databus.constants import ETLProcessorChoices
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.collector_plugin import CollectorPluginHandler
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.models import CollectorConfig
+from apps.log_databus.models import CollectorConfig, CollectorPlugin
 
 
 class BKBaseCollectorPluginHandler(CollectorPluginHandler):
@@ -31,16 +33,19 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
     数据平台
     """
 
-    def _create_metadata_dataid(self, params: dict) -> int:
+    def _create_data_id(self, instance: Union[CollectorConfig, CollectorPlugin]) -> int:
         """
-        预置操作
+        创建metadata后赋值给数据平台
         """
 
-        return CollectorHandler.update_or_create_data_id(self.collector_plugin, ETLProcessorChoices.TRANSFER.value)
+        metadata_bk_data_id = CollectorHandler.update_or_create_data_id(
+            self.collector_plugin, etl_processor=ETLProcessorChoices.TRANSFER.value
+        )
+        return CollectorHandler.update_or_create_data_id(self.collector_plugin, bk_data_id=metadata_bk_data_id)
 
     def _create_metadata_result_table(self) -> None:
         """
-        若不允许独立存储，则需要同时创建 Transfer 的结果表
+        若不允许独立存储，则需要同时创建 metadata 的结果表
         """
 
         if not self.collector_plugin.is_allow_alone_storage:

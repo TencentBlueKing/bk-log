@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import logging
+from typing import Union
 
 from django.db import IntegrityError, transaction
 from django.utils.module_loading import import_string
@@ -93,7 +94,7 @@ class CollectorPluginHandler:
 
     def _create_metadata_result_table(self) -> None:
         """
-        滞后操作
+        创建metadata结果表
         """
 
         pass
@@ -111,6 +112,13 @@ class CollectorPluginHandler:
         """
 
         raise NotImplementedError
+
+    def _create_data_id(self, instance: Union[CollectorConfig, CollectorPlugin]) -> int:
+        """
+        创建数据源
+        """
+
+        return CollectorHandler.update_or_create_data_id(instance)
 
     @transaction.atomic()
     def _update_or_create(self, params: dict) -> bool:
@@ -193,10 +201,7 @@ class CollectorPluginHandler:
                     if data_links.exists():
                         self.collector_plugin.data_link_id = data_links.first().data_link_id
                 # 创建 DATA ID
-                metadata_bk_data_id = self._create_metadata_dataid(params)
-                self.collector_plugin.bk_data_id = CollectorHandler.update_or_create_data_id(
-                    self.collector_plugin, bk_data_id=metadata_bk_data_id
-                )
+                self.collector_plugin.bk_data_id = self._create_data_id(self.collector_plugin)
 
             is_create = True
 
@@ -220,7 +225,9 @@ class CollectorPluginHandler:
         if not is_allow_alone_etl_config:
             self._update_or_create_etl_storage(params, is_create)
 
-        self._create_metadata_result_table()
+        # 独立存储
+        if not is_allow_alone_storage:
+            self._create_metadata_result_table()
 
         self.collector_plugin.save()
 
