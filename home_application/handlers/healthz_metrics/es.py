@@ -19,46 +19,56 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import time
 import logging
 
 from socket import gaierror
 
-from django.utils.translation import ugettext as _
 from apps.log_measure.exceptions import EsConnectFailException
 
 from apps.log_measure.utils.metric import MetricUtils
-from home_application.handlers.metrics import register_healthz_metric, HealthzMetric
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
 
 logger = logging.getLogger()
 
 
 class ESMetric(object):
     @staticmethod
-    @register_healthz_metric(namespace="ES", description=_("ES"))
-    def get_offsets():
+    @register_healthz_metric(namespace="ES")
+    def check():
+        namespace_data = NamespaceData(namespace="es", status=False, data=[])
+        ping_result = ESMetric().ping()
+        namespace_data.status = [i.status for i in ping_result].count(True) == len(ping_result) and ping_result
+        if not namespace_data.status:
+            namespace_data.message = "see details"
+        namespace_data.data.extend(ping_result)
+
+        return namespace_data
+
+    @staticmethod
+    def ping():
         data = []
         try:
             clusters = MetricUtils.get_instance().list_cluster_info()
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"Failed to get es clusters, err: {e}")
+            data.append(HealthzMetric(status=False, metric_name="ping", message=str(e)))
             return data
 
         for cluster in clusters:
-            status = False
+            result = HealthzMetric(status=False, metric_name="ping")
+            start_time = time.time()
             try:
                 es_client = MetricUtils.get_instance().get_es_client(cluster_info=cluster)
                 if es_client:
-                    status = True
+                    result.status = True
+                    result.dimensions = {"cluster_name": cluster.get("cluster_config").get("cluster_name")}
             except (EsConnectFailException, gaierror) as e:
                 logger.error(f"failed to get es client, err: {e}")
+                result.message = str(e)
 
-            data.append(
-                HealthzMetric(
-                    status=status,
-                    metric_name="ping",
-                    metric_value=status,
-                    dimensions={"cluster_name": cluster.get("cluster_config").get("cluster_name")},
-                )
-            )
+            spend_time = time.time() - start_time
+            result.metric_value = "{}ms".format(int(spend_time * 1000))
 
+            data.append(result)
         return data

@@ -19,11 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from collections import defaultdict
 import json
 
 from home_application.handlers.metrics import HealthzMetricCollector
-from home_application.constants import HEALTHZ_METRICS_IMPORT_PATHS
 
 
 class HealthzHandler(object):
@@ -39,9 +37,9 @@ class HealthzHandler(object):
             include_namespaces: 允许上报的namespace列表
             exclude_namespaces: 不允许上报的namespace列表
         """
-        self.data = HealthzMetricCollector(import_paths=HEALTHZ_METRICS_IMPORT_PATHS).collect(
+        self.data = HealthzMetricCollector(
             include_namespaces=include_namespaces, exclude_namespaces=exclude_namespaces
-        )
+        ).collect()
 
         if format_type == "json":
             return self._json_data()
@@ -53,44 +51,62 @@ class HealthzHandler(object):
 
     def _k8s_data(self):
         outputs = []
-        for namespace in self.data:
-            for metric in self.data[namespace]:
-                metric_name = metric["metric_name"]
+        outputs.append("{}\n\n".format(self.data["message"]))
+        namespace_datas = self.data["data"]
+        for namespace in namespace_datas:
+            namespace_data = namespace_datas[namespace]
+            if namespace_data["status"]:
+                output = "[+]{} {}\n".format(namespace, namespace_data["message"])
+            else:
+                output = "[-]{} failed, message: {}\n".format(namespace, namespace_datas[namespace]["message"])
+            outputs.append(output)
+
+            for metric_data in namespace_data["data"]:
+                metric_name = metric_data["metric_name"]
                 output = f"{namespace}/{metric_name}"
-                if metric.get("dimensions"):
-                    dimensions = ",".join([f"{key}={value}" for key, value in metric["dimensions"].items()])
+                if metric_data.get("dimensions"):
+                    dimensions = ",".join([f"{key}={value}" for key, value in metric_data["dimensions"].items()])
                     output = f"{output} {dimensions}"
-                if not metric["status"]:
-                    output = f"[-]{output} \n"
-                    continue
-                metric_value = metric["metric_value"]
-                output = f"[+]{output} {metric_value}\n"
+                if metric_data["status"]:
+                    output = "[+]{} {}\n".format(output, metric_data["metric_value"])
+                else:
+                    output = "[-]{} {}\n".format(output, metric_data["message"])
                 outputs.append(output)
+            outputs.append("\n")
 
         return "".join(outputs).encode("utf-8")
 
     def _json_data(self):
-        result = defaultdict(lambda: defaultdict(list))
-        for namespace in self.data:
-            for metric in self.data[namespace]:
-                result[namespace][metric["metric_name"]].append(metric)
-
-        return json.dumps(result)
+        json_data = {
+            "status": self.data["status"],
+            "data": list(self.data["data"].values()),
+            "message": self.data["message"],
+        }
+        return json.dumps(json_data)
 
     def _console_data(self):
         outputs = []
-        for namespace in self.data:
-            for metric in self.data[namespace]:
-                metric_name = metric["metric_name"]
+        outputs.append("{}\n\n".format(self.data["message"]))
+        namespace_datas = self.data["data"]
+        for namespace in namespace_datas:
+            namespace_data = namespace_datas[namespace]
+            if namespace_data["status"]:
+                output = "[+]{} {}\n".format(namespace, namespace_data["message"])
+            else:
+                output = "[-]{} failed, message: {}\n".format(namespace, namespace_datas[namespace]["message"])
+            outputs.append(output)
+
+            for metric_data in namespace_data["data"]:
+                metric_name = metric_data["metric_name"]
                 output = f"{namespace}/{metric_name}"
-                if metric.get("dimensions"):
-                    dimensions = ",".join([f"{key}={value}" for key, value in metric["dimensions"].items()])
+                if metric_data.get("dimensions"):
+                    dimensions = ",".join([f"{key}={value}" for key, value in metric_data["dimensions"].items()])
                     output = f"{output} {dimensions}"
-                if not metric["status"]:
-                    output = f"[-]{output} \n"
-                    continue
-                metric_value = metric["metric_value"]
-                output = f"[+]{output} {metric_value}\n"
+                if metric_data["status"]:
+                    output = "[+]{} {}\n".format(output, metric_data["metric_value"])
+                else:
+                    output = "[-]{} {}\n".format(output, metric_data["message"])
                 outputs.append(output)
+            outputs.append("\n")
 
         return "".join(outputs)

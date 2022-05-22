@@ -24,7 +24,7 @@ import logging
 
 from django.utils.translation import ugettext as _
 
-from home_application.handlers.metrics import register_healthz_metric, HealthzMetric
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
 from home_application.utils.third_party import ThirdParty, THIRD_PARTY_CHECK_API
 
 logger = logging.getLogger()
@@ -32,23 +32,39 @@ logger = logging.getLogger()
 
 class ThirdPartyCheck(object):
     @staticmethod
-    @register_healthz_metric(namespace="ThirdParty", description=_("周边依赖健康检查"))
-    def third_party():
+    @register_healthz_metric(namespace="third_party")
+    def check() -> NamespaceData:
+        namespace_data = NamespaceData(namespace="third_party", status=False, data=[])
+        ping_result = ThirdPartyCheck().ping()
+        namespace_data.status = [i.status for i in ping_result].count(True) == len(ping_result)
+        if not namespace_data.status:
+            namespace_data.message = _("周边依赖检查失败, 请查看细节")
+
+        namespace_data.data.extend(ping_result)
+        return namespace_data
+
+    @staticmethod
+    def ping():
         data = []
         for module in THIRD_PARTY_CHECK_API:
-            status = ThirdParty.call_api(module)
-            data.append(HealthzMetric(status=status, metric_name=module, metric_value=status, dimensions={}))
+            result = ThirdParty.call_api(module)
+            data.append(
+                HealthzMetric(
+                    status=result["status"], metric_name=module, metric_value=result["data"], message=result["message"]
+                )
+            )
 
-        # check paas
-        paas_status = False
-        if ThirdParty.check_paas():
-            paas_status = True
-        data.append(HealthzMetric(status=paas_status, metric_name="paas", metric_value=paas_status, dimensions={}))
+        check_paas_result = ThirdParty.check_paas()
+        data.append(
+            HealthzMetric(
+                status=check_paas_result["status"],
+                metric_name="paas",
+                metric_value=check_paas_result["data"],
+                message=check_paas_result["message"],
+            )
+        )
 
         # check esb, 只要有一个接口调成功, ESB就是正常的
-        esb_status = False
-        if [i.status for i in data].count(True):
-            esb_status = True
-        data.append(HealthzMetric(status=esb_status, metric_name="esb", metric_value=esb_status, dimensions={}))
+        data.append(HealthzMetric(status=[i.status for i in data].count(True) > 0, metric_name="esb"))
 
         return data

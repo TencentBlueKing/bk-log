@@ -19,6 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import time
+import socket
 import logging
 
 import requests
@@ -40,16 +42,35 @@ class RabbitMQClient(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"Failed to get rabbitmq infomation, err: {e}")
 
+    def ping(self):
+        result = {"status": False, "data": None, "message": ""}
+        start_time = time.time()
+        s = socket.socket()
+        try:
+            _ = s.connect(self.host, self.port)
+            result["status"] = True
+        except socket.error as e:
+            result["message"] = str(e)
+        finally:
+            s.close()
+
+        spend_time = time.time() - start_time
+        result["data"] = "{}ms".format(int(spend_time * 1000))
+        return result
+
     def _call_api(self, path: str):
+        result = {"status": False, "data": None, "message": ""}
         headers = {"content-type": "application/json"}
         url = f"http://{self.host}:{self.port}/api/{path}"
         try:
             resp = requests.get(url, headers=headers, auth=(self.user, self.password))
             if resp.status_code == 200:
-                return resp.json()
+                result["status"] = True
+                result["data"] = resp.json()
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"Failed to call rabbitmq api[{path}], err: {e}")
-            return None
+            result["message"] = str(e)
+        return result
 
     def get_queues(self):
         if self.vhost == "/":

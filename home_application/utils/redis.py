@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import time
 import logging
 
 import redis
@@ -62,34 +63,54 @@ class RedisClient(object):
     def del_instance(cls):
         cls._instance = None
 
-    def get_variables(self, variable_name: str):
+    def __del__(self):
+        if self.rds:
+            self.rds.close()
+
+    def show_variables(self, variable_name: str):
+        result = {"status": False, "data": None, "message": ""}
         try:
             if self.rds.info:
-                return self.info[variable_name]
+                result["data"] = self.info[variable_name]
+                result["status"] = True
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to get redis info[{variable_name}], err: {e}")
-            return None
+            result["message"] = str(e)
+        return result
 
     def ping(self):
+        result = {"status": False, "data": None, "message": ""}
+        start_time = time.time()
         try:
-            return self.rds.ping()
+            result["status"] = self.rds.ping()
         except Exception as e:  # pylint: disable=broad-except
-            logger.error(f"failed to connect to redis, err: {e}")
-            return None
+            logger.error(f"failed to ping redis, err: {e}")
+            result["message"] = str(e)
+        spend_time = time.time() - start_time
+        result["data"] = "{}ms".format(int(spend_time * 1000))
+        return result
 
     def hit_rate(self):
+        result = {"status": False, "data": None, "message": ""}
         try:
             hits = self.info["keyspace_hits"]
             misses = self.info["keyspace_misses"]
             rate = float(hits) / float(int(hits) + int(misses))
-            return "%.2f" % (rate * 100)
+            result["data"] = "%.2f" % (rate * 100)
+            result["status"] = True
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to get hit_rate, err: {e}")
-            return None
+            result["message"] = str(e)
+
+        return result
 
     def queue_len(self, queue_name: str):
+        result = {"status": False, "data": None, "message": ""}
         try:
-            return self.rds.llen(queue_name)
+            result["data"] = self.rds.llen(queue_name)
+            result["status"] = True
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to get llen[{queue_name}], err: {e}")
-            return None
+            result["message"] = str(e)
+
+        return result

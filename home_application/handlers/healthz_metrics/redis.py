@@ -23,68 +23,80 @@ import settings
 
 from django.utils.translation import ugettext as _
 
-from home_application.handlers.metrics import register_healthz_metric, HealthzMetric
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
 from home_application.constants import REDIS_VARIABLES, QUEUES
 from home_application.utils.redis import RedisClient
 
 
 class RedisMetric(object):
     @staticmethod
-    @register_healthz_metric(namespace="Redis", description=_("Redis INFO"))
+    @register_healthz_metric(namespace="redis")
+    def check():
+        namespace_data = NamespaceData(namespace="redis", status=False, data=[])
+        ping_result = RedisMetric().ping()
+        if ping_result.status:
+            namespace_data.status = True
+        else:
+            namespace_data.message = ping_result.message
+            return namespace_data
+
+        namespace_data.data.append(ping_result)
+        namespace_data.data.extend(RedisMetric().get_variables())
+        namespace_data.data.append(RedisMetric().hit_rate())
+        namespace_data.data.extend(RedisMetric.queue())
+        return namespace_data
+
+    @staticmethod
     def get_variables():
         data = []
         for varieable_name in REDIS_VARIABLES:
-            status = False
-            metric_value = RedisClient.get_instance().get_variables(varieable_name)
-            if metric_value:
-                status = True
+            result = RedisClient.get_instance().show_variables(varieable_name)
             data.append(
-                HealthzMetric(status=status, metric_name=varieable_name, metric_value=metric_value, dimensions={})
+                HealthzMetric(
+                    status=result["status"],
+                    metric_name=varieable_name,
+                    metric_value=result["data"],
+                    message=result["message"],
+                )
             )
-
         return data
 
     @staticmethod
-    @register_healthz_metric(namespace="Redis", description=_("Redis PING"))
     def ping():
-        data = []
-        status = False
-        metric_value = RedisClient.get_instance().ping()
-        if metric_value:
-            status = True
-        data.append(HealthzMetric(status=status, metric_name="ping", metric_value=metric_value, dimensions={}))
-        return data
+        result = RedisClient.get_instance().ping()
+        return HealthzMetric(
+            status=result["status"], metric_name="ping", metric_value=result["data"], message=result["message"]
+        )
 
     @staticmethod
-    @register_healthz_metric(namespace="Redis", description=_("Redis HIT RATE"))
     def hit_rate():
-        data = []
-        status = False
-        metric_value = RedisClient.get_instance().hit_rate()
-        if metric_value:
-            status = True
-        data.append(HealthzMetric(status=status, metric_name="hit_rate", metric_value=metric_value, dimensions={}))
-        return data
+        result = RedisClient.get_instance().hit_rate()
+        return HealthzMetric(
+            status=result["status"], metric_name="hit_rate", metric_value=result["data"], message=result["message"]
+        )
 
     @staticmethod
-    @register_healthz_metric(namespace="Redis", description=_("Redis QUEUE"))
     def queue():
         data = []
         if not settings.BROKER_URL.startswith("redis://"):
-            return data
-        for queue_name in QUEUES:
-            status = False
-            metric_value = RedisClient.get_instance().queue_len(queue_name)
-            # 队列长度可能为0
-            if metric_value is not None:
-                status = True
             data.append(
                 HealthzMetric(
-                    status=status,
+                    status=True,
+                    metric_value=None,
+                    message=_("broker is not set to redis, skip this check"),
                     metric_name="queue_len",
-                    metric_value=metric_value,
+                )
+            )
+            return data
+        for queue_name in QUEUES:
+            result = RedisClient.get_instance().queue_len(queue_name)
+            data.append(
+                HealthzMetric(
+                    status=result["status"],
+                    metric_value=result["data"],
+                    message=result["message"],
+                    metric_name="queue_len",
                     dimensions={"queue_name": queue_name},
                 )
             )
-
         return data

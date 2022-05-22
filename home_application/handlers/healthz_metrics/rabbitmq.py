@@ -21,27 +21,49 @@ the project delivered to anyone in the future.
 """
 import settings
 
-from django.utils.translation import ugettext as _
-
-from home_application.handlers.metrics import register_healthz_metric, HealthzMetric
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
 from home_application.utils.rabbitmq import RabbitMQClient
 from home_application.constants import QUEUES
 
 
 class RabbitMQMetric(object):
     @staticmethod
-    @register_healthz_metric(namespace="RabbitMQ", description=_("RabbitMQ QUEUE"))
+    @register_healthz_metric(namespace="rabbitmq")
+    def check():
+        namespace_data = NamespaceData(namespace="rabbitmq", status=False, data=[])
+        if not settings.BROKER_URL.startswith("amqp://"):
+            namespace_data.status = True
+            namespace_data.message = "broker is not set to rabbitmq, skip this check"
+            return namespace_data
+
+        ping_result = RabbitMQMetric().ping()
+        if ping_result.status:
+            namespace_data.status = True
+        else:
+            namespace_data.message = ping_result.message
+            return namespace_data
+
+        namespace_data.data.append(ping_result)
+        namespace_data.data.extend(RabbitMQMetric().get_queue_data())
+
+        return namespace_data
+
+    @staticmethod
+    def ping():
+        result = RabbitMQClient().ping()
+        return HealthzMetric(
+            status=result["status"], metric_name="ping", metric_value=result["data"], message=result["message"]
+        )
+
+    @staticmethod
     def get_queue_data():
         data = []
-        if not settings.BROKER_URL.startswith("amqp://"):
+        get_queue_data = RabbitMQClient().get_queues()
+        if not get_queue_data["status"]:
+            data.append(HealthzMetric(status=False, metric_name="queue_len", message=get_queue_data["message"]))
             return data
 
-        queues = RabbitMQClient().get_queues()
-        if queues is None:
-            data.append(HealthzMetric(status=False, metric_name="queue_len", metric_value=0, dimensions={}))
-            return data
-
-        for queue in queues:
+        for queue in get_queue_data["data"]:
             if queue["name"] not in QUEUES:
                 continue
             for item in ["messages", "messages_ready", "messages_unacknowledged"]:

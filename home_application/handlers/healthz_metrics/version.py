@@ -22,28 +22,38 @@ the project delivered to anyone in the future.
 import os
 import logging
 
-from django.utils.translation import ugettext as _
-
-from home_application.handlers.metrics import register_healthz_metric, HealthzMetric
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
 
 logger = logging.getLogger()
 
 
 class VersionMetric(object):
     @staticmethod
-    @register_healthz_metric(namespace="SAAS", description=_("版本信息"))
+    @register_healthz_metric(namespace="SAAS")
+    def check():
+        namespace_data = NamespaceData(namespace="SAAS", status=False, data=[])
+        version_result = VersionMetric().version()
+        if version_result.status:
+            namespace_data.status = True
+        else:
+            namespace_data.message = version_result.message
+            return namespace_data
+
+        namespace_data.data.append(version_result)
+
+        return namespace_data
+
+    @staticmethod
     def version():
-        data = []
-        status = False
+        result = HealthzMetric(status=False, metric_name="version")
         cwd = os.getcwd()
         try:
             with open(os.path.join(cwd, "VERSION"), "r") as f:
-                version = f.read().split("\n")[0]
-                status = True
+                result.metric_value = f.read().split("\n")[0]
+                result.status = True
                 f.close()
         except Exception as e:  # pylint: disable=broad-except
             logger.exception("open VERSION failed: {}".format(e))
-            version = ""
+            result.message = str(e)
 
-        data.append(HealthzMetric(status=status, metric_name="version", metric_value=version, dimensions={}))
-        return data
+        return result

@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import time
 import logging
 
 import settings
@@ -54,43 +55,6 @@ except Exception:  # pylint: disable=broad-except
 logger = logging.getLogger()
 
 
-class ThirdParty(object):
-    @staticmethod
-    def call_api(module: str) -> bool:
-        try:
-            kwargs = THIRD_PARTY_CHECK_API[module].get("kwargs", {})
-            _ = THIRD_PARTY_CHECK_API[module]["method"](kwargs)
-            return True
-        except ApiResultError:
-            return True
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error(f"failed to check {module}, err: {e}")
-        return False
-
-    @staticmethod
-    def check_paas() -> bool:
-        if settings.IS_K8S_DEPLOY_MODE:
-            activate_request(generate_request())
-            from apps.api import BKPAASApi
-
-            try:
-                _ = BKPAASApi.get_app_info()
-                return True
-            except ApiResultError:
-                return True
-            except Exception as e:  # pylint: disable=broad-except
-                logger.error(f"failed to check paas, err: {e}")
-        else:
-            try:
-                client = get_client_by_user(user_or_username=settings.SYSTEM_USE_API_ACCOUNT)
-                _ = client.bk_paas.get_app_info()
-                return True
-            except Exception as e:  # pylint: disable=broad-except
-                logger.error(f"failed to check paas, err: {e}")
-
-        return False
-
-
 THIRD_PARTY_CHECK_API = {
     "cc": {"method": CCApi.get_app_list},
     "itsm": {"method": BkItsmApi.get_services},
@@ -113,3 +77,52 @@ THIRD_PARTY_CHECK_API = {
     },
     "bk_data": {"method": BkDataDatabusApi.get_cleans, "kwargs": {"raw_data_id": DEFAULT_BK_DATA_ID}},
 }
+
+
+class ThirdParty(object):
+    @staticmethod
+    def call_api(module: str):
+        result = {"status": False, "data": None, "message": ""}
+        start_time = time.time()
+        try:
+            kwargs = THIRD_PARTY_CHECK_API[module].get("kwargs", {})
+            _ = THIRD_PARTY_CHECK_API[module]["method"](kwargs)
+            result["status"] = True
+        except ApiResultError:
+            result["status"] = True
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"failed to check {module}, err: {e}")
+            result["message"] = str(e)
+
+        spend_time = time.time() - start_time
+        result["data"] = "{}ms".format(int(spend_time * 1000))
+        return result
+
+    @staticmethod
+    def check_paas():
+        result = {"status": False, "data": None, "message": ""}
+        start_time = time.time()
+        if settings.IS_K8S_DEPLOY_MODE:
+            activate_request(generate_request())
+            from apps.api import BKPAASApi
+
+            try:
+                _ = BKPAASApi.get_app_info()
+                result["status"] = True
+            except ApiResultError:
+                result["status"] = True
+            except Exception as e:  # pylint: disable=broad-except
+                logger.error(f"failed to check paas, err: {e}")
+                result["message"] = str(e)
+        else:
+            try:
+                client = get_client_by_user(user_or_username=settings.SYSTEM_USE_API_ACCOUNT)
+                _ = client.bk_paas.get_app_info()
+                result["status"] = True
+            except Exception as e:  # pylint: disable=broad-except
+                logger.error(f"failed to check paas, err: {e}")
+                result["message"] = str(e)
+
+        spend_time = time.time() - start_time
+        result["data"] = "{}ms".format(int(spend_time * 1000))
+        return result

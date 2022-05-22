@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import time
 import logging
 
 import pymysql
@@ -54,26 +55,52 @@ class MySQLClient(object):
             cls._instance = MySQLClient(*args, **kwargs)
             return cls._instance
 
+    def __del__(self):
+        """垃圾回收时关闭连接"""
+        if self.db:
+            self.db.close()
+
     @classmethod
     def del_instance(cls):
         cls._instance = None
 
-    def get_variables(self, variable_name: str):
+    def show_variables(self, variable_name: str):
+        result = {"status": False, "data": None, "message": ""}
         try:
             if self.cursor:
                 stmt = r"""show global variables like '{}';""".format(variable_name)
                 self.cursor.execute(stmt)
-                return self.cursor.fetchone()[1]
+                result["data"] = self.cursor.fetchone()[1]
+                result["status"] = True
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to get global variables[{variable_name}], err: {e}")
-            return None
+            result["message"] = str(e)
 
-    def get_status(self, status_name: str):
+        return result
+
+    def show_status(self, status_name: str):
+        result = {"status": False, "data": None, "message": ""}
         try:
             if self.cursor:
                 stmt = r"""show global status like '{}';""".format(status_name)
                 self.cursor.execute(stmt)
-                return self.cursor.fetchone()[1]
+                result["data"] = self.cursor.fetchone()[1]
+                result["status"] = True
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to get global status[{status_name}], err: {e}")
-            return None
+            result["message"] = str(e)
+        return result
+
+    def ping(self):
+        result = {"status": False, "data": None, "message": ""}
+        start_time = time.time()
+        try:
+            _ = self.db.ping()
+            result["status"] = True
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("failed to ping MySQL, err: {e}")
+            result["message"] = str(e)
+
+        spend_time = time.time() - start_time
+        result["data"] = "{}ms".format(int(spend_time * 1000))
+        return result

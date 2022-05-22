@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import time
 import logging
 
 from kafka import KafkaAdminClient
@@ -32,11 +33,17 @@ class KafkaClient(object):
     _instance = None
 
     def __init__(self) -> None:
+        start_time = time.time()
         try:
             self.client = KafkaAdminClient(bootstrap_servers=f"{settings.DEFAULT_KAFKA_HOST}:9092")
+            self.message = "ok"
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to connect to kafka, err: {e}")
             self.client = None
+            self.message = str(e)
+
+        spend_time = time.time() - start_time
+        self.ms = "{}ms".format(int(spend_time * 1000))
 
     @classmethod
     def get_instance(cls, *args, **kwargs):
@@ -49,6 +56,16 @@ class KafkaClient(object):
     @classmethod
     def del_instance(cls):
         cls._instance = None
+
+    def __del__(self):
+        if self.client:
+            self.client.close()
+
+    def ping(self):
+        result = {"status": False, "data": self.ms, "message": self.message}
+        if self.client:
+            result["status"] = True
+        return result
 
     def get_consumer_groups(self):
         if self.client:

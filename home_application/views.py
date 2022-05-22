@@ -55,9 +55,9 @@ def contact(request):
 
 @login_exempt
 def healthz(request):
-    format_type = request.GET.get("format")
-    include = request.GET.get("include")
-    exclude = request.GET.get("exclude")
+    format_type = request.GET.get("format_type")
+    include = request.GET.get("include", [])
+    exclude = request.GET.get("exclude", [])
 
     if format_type == "json":
         content_type = "application/json"

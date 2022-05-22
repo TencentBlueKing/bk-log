@@ -26,14 +26,16 @@ import time
 import logging
 from collections import defaultdict
 
-import settings
+from django.utils.translation import ugettext as _
+
+from home_application.constants import HEALTHZ_METRICS_IMPORT_PATHS
 
 logger = logging.getLogger()
 
-HEALTHZ_REGISTERED_METRICS = defaultdict(list)
+HEALTHZ_REGISTERED_METRICS = dict()
 
 
-def register_healthz_metric(namespace: str, description: str = ""):
+def register_healthz_metric(namespace: str):
     """
     注册healthz健康检查metric
     """
@@ -43,12 +45,7 @@ def register_healthz_metric(namespace: str, description: str = ""):
             result = func(*args, **kwargs)
             return result
 
-        if not settings.USE_REDIS and namespace == "Redis":
-            return
-
-        HEALTHZ_REGISTERED_METRICS[namespace].append(
-            {"namespace": namespace, "description": description, "method": wraps(func)(_wrapped_view)}
-        )
+        HEALTHZ_REGISTERED_METRICS[namespace] = wraps(func)(_wrapped_view)
 
         return wraps(func)(_wrapped_view)
 
@@ -56,79 +53,93 @@ def register_healthz_metric(namespace: str, description: str = ""):
 
 
 class HealthzMetric(object):
-    """健康检查指标类"""
+    """健康检查指标, 单个数据类"""
 
-    def __init__(self, status: bool, metric_name: str, metric_value: str, dimensions: dict = None):
+    def __init__(
+        self, status: bool, metric_name: str, metric_value: str = "", dimensions: dict = None, message: str = ""
+    ):
         self.status = status
         self.metric_name = metric_name
         self.metric_value = metric_value
         self.dimensions = dimensions
+        self.message = message
 
-    def to_dict(self, namespace) -> dict:
+    def to_dict(self) -> dict:
         return {
             "status": self.status,
-            "namespace": namespace,
             "metric_name": self.metric_name,
             "metric_value": self.metric_value,
             "dimensions": self.dimensions,
+            "message": self.message,
         }
 
 
+class NamespaceData(object):
+    """Namespace级别的数据类"""
+
+    def __init__(self, namespace: str, status: bool = False, data: list = None, message: str = "ok") -> None:
+        self.namespace = namespace
+        self.status = status
+        self.data = data if data else []
+        self.message = message
+
+    def to_dict(self):
+        dict_datas = []
+        for i in self.data:
+            dict_datas.append(i.to_dict())
+
+        return {"namespace": self.namespace, "status": self.status, "data": dict_datas, "message": self.message}
+
+
 class HealthzMetricCollector(object):
-    """
-    健康检查指标采集器
-    """
+    """健康检查指标采集器"""
 
-    def __init__(self, import_paths=None):
-        if import_paths:
-            for key in import_paths:
-                importlib.import_module(key)
+    def __init__(self, include_namespaces: list = None, exclude_namespaces: list = None):
+        self.register_metrics = defaultdict(list)
+        self.data = {"status": False, "data": defaultdict(dict), "message": ""}
+        for key in HEALTHZ_METRICS_IMPORT_PATHS:
+            importlib.import_module(key)
+        if include_namespaces:
+            for namespace in include_namespaces:
+                if HEALTHZ_REGISTERED_METRICS.get(namespace):
+                    self.register_metrics[namespace] = HEALTHZ_REGISTERED_METRICS[namespace]
+                else:
+                    self.data["data"][namespace] = NamespaceData(
+                        namespace=namespace, message=_(f"unsupported namespace[{namespace}]")
+                    )
+            return
+        for namespace in HEALTHZ_REGISTERED_METRICS:
+            if namespace in exclude_namespaces:
+                continue
+            self.register_metrics[namespace] = HEALTHZ_REGISTERED_METRICS[namespace]
 
-    def collect(self, include_namespaces=None, exclude_namespaces=None) -> defaultdict(list):
+    def collect(self) -> defaultdict(list):
         """
         采集入口
         """
-        namespace_metric_datas = defaultdict(list)
-        register_namespace_metrics = self.metric_filter(
-            include_namespaces=include_namespaces, exclude_namespaces=exclude_namespaces
-        )
-        metric_groups = []
-        for namespace in register_namespace_metrics:
-            for metric in register_namespace_metrics[namespace]:
-                try:
-                    begin_time = time.time()
-                    metric_group = {
-                        "namespace": metric["namespace"],
-                        "description": metric["description"],
-                        "metrics": metric["method"](),
-                    }
-                    logger.info(
-                        "[healthz_data] collect metric [{}] took {} ms".format(
-                            metric["namespace"], int((time.time() - begin_time) * 1000)
-                        ),
-                    )
-                    metric_groups.append(metric_group)
-                except Exception as e:  # pylint: disable=broad-except
-                    logger.exception("[healthz_data] collect metric [{}] failed: {}".format(metric["namespace"], e))
+        for namespace in self.register_metrics:
+            try:
+                begin_time = time.time()
+                namespace_data = self.register_metrics[namespace]()
+                logger.info(
+                    "[healthz_data] collect metric [{}] took {} ms".format(
+                        namespace, int((time.time() - begin_time) * 1000)
+                    ),
+                )
+                self.data["data"][namespace] = namespace_data.to_dict()
+            except Exception as e:  # pylint: disable=broad-except
+                logger.exception("[healthz_data] collect metric [{}] failed: {}".format(namespace, e))
 
-        for group in metric_groups:
-            for metric in group["metrics"]:
-                metric = metric.to_dict(namespace=group["namespace"])
-                namespace_metric_datas[group["namespace"]].append(metric)
+        self.data["status"] = [i["status"] for i in self.data["data"].values()].count(True) == len(self.data["data"])
+        if self.data["status"]:
+            self.data["message"] = "health check success"
+        else:
+            failed_namespaces = []
+            for namespace, value in self.data["data"].items():
+                if not value["status"]:
+                    failed_namespaces.append(namespace)
+            self.data["message"] = "health check failed, please check these namespace: {}".format(
+                ",".join(failed_namespaces)
+            )
 
-        return namespace_metric_datas
-
-    @classmethod
-    def metric_filter(cls, include_namespaces=None, exclude_namespaces=None) -> defaultdict(list):
-        metrics = defaultdict(list)
-        for namespace in HEALTHZ_REGISTERED_METRICS:
-            if exclude_namespaces and namespace not in exclude_namespaces:
-                metrics[namespace].extend(HEALTHZ_REGISTERED_METRICS[namespace])
-                continue
-            if include_namespaces:
-                if namespace in include_namespaces:
-                    metrics[namespace].extend(HEALTHZ_REGISTERED_METRICS[namespace])
-                continue
-            metrics[namespace].extend(HEALTHZ_REGISTERED_METRICS[namespace])
-
-        return metrics
+        return self.data
