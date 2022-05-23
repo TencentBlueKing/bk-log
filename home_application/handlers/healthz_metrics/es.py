@@ -25,8 +25,8 @@ import logging
 from socket import gaierror
 
 from apps.log_measure.exceptions import EsConnectFailException
-
 from apps.log_measure.utils.metric import MetricUtils
+from apps.log_databus.constants import VisibleEnum
 from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
 
 logger = logging.getLogger()
@@ -56,6 +56,14 @@ class ESMetric(object):
             return data
 
         for cluster in clusters:
+            if (
+                cluster.get("cluster_config", {})
+                .get("custom_option", {})
+                .get("visible_config", {})
+                .get("visible_type", "")
+                != VisibleEnum.ALL_BIZ.value
+            ):
+                continue
             result = HealthzMetric(status=False, metric_name="ping")
             start_time = time.time()
             try:
