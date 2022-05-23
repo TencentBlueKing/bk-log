@@ -63,6 +63,16 @@ class ThirdPartyCheck(object):
             )
         )
 
+        check_iam_result = ThirdParty.check_iam()
+        data.append(
+            HealthzMetric(
+                status=check_iam_result["status"],
+                metric_name="iam",
+                metric_value=check_iam_result["data"],
+                message=check_iam_result["message"],
+            )
+        )
+
         # check esb, 只要有一个接口调成功, ESB就是正常的
         data.append(HealthzMetric(status=[i.status for i in data].count(True) > 0, metric_name="esb"))
 

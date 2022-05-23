@@ -23,14 +23,12 @@ import time
 import logging
 
 import settings
-
 from apps.api import (
     BkItsmApi,
     CCApi,
     JobApi,
     NodeApi,
     BKLoginApi,
-    IAMApi,
     MonitorApi,
     BkDataDatabusApi,
 )
@@ -40,12 +38,13 @@ from apps.utils.thread import generate_request
 from apps.exceptions import ApiResultError
 
 from home_application.constants import (
-    DEFAULT_SYSTEM_ID,
     DEFAULT_SUBSCRIPTION_ID,
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
     DEFAULT_BK_DATA_ID,
 )
+
+from iam.api.client import Client
 
 try:
     from blueapps.utils.esbclient import get_client_by_user
@@ -66,7 +65,6 @@ THIRD_PARTY_CHECK_API = {
         "method": NodeApi.get_subscription_task_status,
         "kwargs": {"subscription_id": DEFAULT_SUBSCRIPTION_ID},
     },
-    "iam": {"method": IAMApi.share_system_info, "kwargs": {"system_id": DEFAULT_SYSTEM_ID}},
     "monitor": {
         "method": MonitorApi.search_alarm_strategy_v3,
         "kwargs": {
@@ -125,4 +123,27 @@ class ThirdParty(object):
 
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))
+        return result
+
+    @staticmethod
+    def check_iam():
+        result = {"status": False, "data": None, "message": ""}
+        app_code = settings.APP_CODE
+        app_secret = settings.SECRET_KEY
+        bk_iam_host = settings.BK_IAM_INNER_HOST
+        bk_paas_host = settings.BK_PAAS_HOST
+        start_time = time.time()
+        try:
+            client = Client(
+                app_code=app_code, app_secret=app_secret, bk_iam_host=bk_iam_host, bk_paas_host=bk_paas_host
+            )
+            status, data = client.ping()
+            result["status"] = status
+            result["message"] = data.get("message", "")
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"failed to ping iam, err: {e}")
+            result["message"] = str(e)
+        spend_time = time.time() - start_time
+        result["data"] = "{}ms".format(int(spend_time * 1000))
+
         return result
