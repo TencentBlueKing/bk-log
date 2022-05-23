@@ -19,48 +19,49 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext_lazy as _
 
-from apps.api.base import DataAPI
-from config.domains import JOB_APIGATEWAY_ROOT_V2
+HEALTHZ_METRICS_IMPORT_PATHS = [
+    "home_application.handlers.healthz_metrics.version",
+    "home_application.handlers.healthz_metrics.mysql",
+    "home_application.handlers.healthz_metrics.redis",
+    "home_application.handlers.healthz_metrics.rabbitmq",
+    "home_application.handlers.healthz_metrics.kafka",
+    "home_application.handlers.healthz_metrics.es",
+    "home_application.handlers.healthz_metrics.third_party",
+]
 
+# MySQL metrics from command show global variables
+MYSQL_VARIABLES = ["version", "server_id", "max_connections"]
 
-def get_job_request_before(params):
-    return params
+# MySQL metrics from command show global status
+MYSQL_STATUS = ["Threads_connected", "slow_queries", "Questions"]
 
+# Redis metrics from info
+REDIS_VARIABLES = [
+    "redis_version",
+    "connected_clients",
+    "instantaneous_ops_per_sec",
+    "latest_fork_usec",
+    "mem_fragmentation_ratio",
+    "evicted_keys",
+]
 
-class _JobApi:
-    MODULE = _("JOB")
+QUEUES = [
+    "default",
+    "celery",
+    "pipeline_additional_task",
+    "pipeline_additional_task_priority",
+    "service_schedule",
+    "service_schedule_priority",
+    "pipeline",
+    "pipeline_priority",
+    "async_export",
+]
 
-    def __init__(self):
-        self.fast_execute_script = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_execute_script",
-            description=_("快速执行脚本"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.fast_push_file = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_push_file",
-            description=_("快速分发文件"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_job_instance_log = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
-            description=_("根据作业id获取执行日志"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_public_script_list = DataAPI(
-            method="GET",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
-            description=_("查询公共脚本列表"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
+DEFAULT_SUBSCRIPTION_ID = 1
+DEFAULT_SYSTEM_ID = 1
 
+DEFAULT_PAGE = 1
+DEFAULT_PAGE_SIZE = 10
 
-JobApi = _JobApi()
+DEFAULT_BK_DATA_ID = 1

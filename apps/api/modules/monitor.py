@@ -38,7 +38,7 @@ class _MonitorApi(object):
             method="POST",
             url=MONITOR_APIGATEWAY_ROOT + "save_alarm_strategy/",
             module=self.MODULE,
-            description=u"保存告警策略",
+            description="保存告警策略",
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
@@ -46,7 +46,7 @@ class _MonitorApi(object):
             method="POST",
             url=MONITOR_APIGATEWAY_ROOT + "save_notice_group/",
             module=self.MODULE,
-            description=u"保存通知组",
+            description="保存通知组",
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
@@ -54,7 +54,7 @@ class _MonitorApi(object):
             method="POST",
             url=MONITOR_APIGATEWAY_ROOT + "save_alarm_strategy_v2/",
             module=self.MODULE,
-            description=u"保存告警策略V2",
+            description="保存告警策略V2",
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
@@ -62,7 +62,7 @@ class _MonitorApi(object):
             method="POST",
             url=MONITOR_APIGATEWAY_ROOT + "search_alarm_strategy_v2/",
             module=self.MODULE,
-            description=u"查询告警策略V2",
+            description="查询告警策略V2",
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
@@ -70,7 +70,15 @@ class _MonitorApi(object):
             method="POST",
             url=MONITOR_APIGATEWAY_ROOT + "delete_alarm_strategy_v2/",
             module=self.MODULE,
-            description=u"删除告警策略V2",
+            description="删除告警策略V2",
+            default_return_value=None,
+            before_request=add_esb_info_before_request,
+        )
+        self.search_alarm_strategy_v3 = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "search_alarm_strategy_v3",
+            module=self.MODULE,
+            description="查询告警策略V3",
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
