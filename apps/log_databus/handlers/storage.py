@@ -55,6 +55,7 @@ from apps.log_databus.exceptions import (
 )
 from apps.log_databus.models import StorageCapacity, StorageUsed
 from apps.log_databus.utils.es_config import get_es_config
+from apps.log_esquery.esquery.client.QueryClientEs import QueryClientEs
 from apps.log_esquery.utils.es_route import EsRoute
 from apps.log_search.models import BizProperty, ProjectInfo, Scenario
 from apps.utils.cache import cache_five_minute
@@ -441,6 +442,36 @@ class StorageHandler(object):
             cluster["cluster_stats"] = cluster_stats
         return cluster_info
 
+    def get_hot_warm_node_info(self, params: dict) -> (int, int):
+        hot_node_num = 0
+        warm_node_num = 0
+        es_client = QueryClientEs.get_es_client(
+            params["version"],
+            params["domain_name"],
+            params["auth_info"]["username"],
+            params["auth_info"]["password"],
+            params["port"],
+        )
+        if params.get("enable_hot_warm", False):
+            hot_attr_name = params.get("hot_attr_name")
+            hot_attr_value = params.get("hot_attr_value")
+            warm_attr_name = params.get("warm_attr_name")
+            warm_attr_value = params.get("warm_attr_value")
+            nodeattrs = es_client.cat.nodeattrs(format="json", h="host,attr,value,ip")
+            for nodeattr in nodeattrs:
+                if nodeattr["attr"] == hot_attr_name and nodeattr["value"] == hot_attr_value:
+                    hot_node_num += 1
+                elif nodeattr["attr"] == warm_attr_name and nodeattr["value"] == warm_attr_value:
+                    warm_node_num += 1
+        else:
+            nodes = es_client.cat.nodes(format="json")
+            for node in nodes:
+                if node.get("node.role", "").find("d") != -1:
+                    hot_node_num += 1
+                else:
+                    warm_node_num += 1
+        return hot_node_num, warm_node_num
+
     def sync_es_cluster(self, params: dict) -> str:
         # 获取参数字典
         setup_config = params["setup_config"]
@@ -448,9 +479,9 @@ class StorageHandler(object):
         username = get_request_username()
         cluster_en_name = f"{bk_biz_id}_{params['cluster_en_name']}"
         cluster_name = params.get("cluster_name", cluster_en_name)
+        # 获取节点信息
+        hot_node_num, warm_node_num = self.get_hot_warm_node_info(params)
         # 构造请求参数
-        # TODO 获取热节点数量
-        # TODO Transport
         bkbase_params = {
             "bk_username": username,
             "bk_biz_id": bk_biz_id,
@@ -471,12 +502,12 @@ class StorageHandler(object):
                 "port": params["port"],
                 "transport": 9300,
                 "enable_replica": True if setup_config.get("number_of_replicas_default", 0) else False,
-                "hot_save_days": 7,
+                "hot_save_days": setup_config.get("retention_days_default", 1),
                 "total_shards_per_node": 1,
-                "max_shard_num": 3,
-                "has_cold_nodes": False,
-                "has_hot_node": True,
-                "hot_node_num": 3,
+                "max_shard_num": hot_node_num,
+                "has_cold_nodes": True if warm_node_num else False,
+                "has_hot_node": True if hot_node_num else False,
+                "hot_node_num": hot_node_num,
                 "save_days": setup_config.get("retention_days_default", 1),
                 "cluster_type": "es",
                 "cluster_name": cluster_name,
