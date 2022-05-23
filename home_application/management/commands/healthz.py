@@ -19,7 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-
 from django.core.management.base import BaseCommand
 from home_application.handlers.healthz import HealthzHandler
 
@@ -40,6 +39,7 @@ class Command(BaseCommand):
             exclude_namespaces = exclude_namespaces.split(",")
         else:
             exclude_namespaces = []
+        print("\n开始healthz检查, 预计等待1分钟\n")
         print(
             HealthzHandler().get_data(
                 format_type="console", include_namespaces=include_namespaces, exclude_namespaces=exclude_namespaces

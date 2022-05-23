@@ -34,7 +34,7 @@ logger = logging.getLogger()
 
 class ESMetric(object):
     @staticmethod
-    @register_healthz_metric(namespace="ES")
+    @register_healthz_metric(namespace="es")
     def check():
         namespace_data = NamespaceData(namespace="es", status=False, data=[])
         ping_result = ESMetric().ping()
