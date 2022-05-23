@@ -24,6 +24,7 @@ import socket
 import logging
 
 import requests
+from kombu.utils.url import url_to_parts
 
 import settings
 
@@ -34,10 +35,14 @@ class RabbitMQClient(object):
     def __init__(self) -> None:
         try:
             broker_url = settings.BROKER_URL.split("//")[1]
-            user_and_password, host_and_port_and_vhost = broker_url.split("@")
-            self.user, self.password = user_and_password.split(":")
-            host_and_port, self.vhost = host_and_port_and_vhost.split("/")
-            self.host, self.port = host_and_port.split(":")
+            scheme, host, port, user, password, path, query = url_to_parts(broker_url)
+            self.scheme = scheme
+            self.host = host
+            self.port = int(port)
+            self.user = user
+            self.password = password
+            self.path = path
+            self.query = query
 
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"Failed to get rabbitmq infomation, err: {e}")
@@ -47,7 +52,7 @@ class RabbitMQClient(object):
         start_time = time.time()
         s = socket.socket()
         try:
-            _ = s.connect(self.host, self.port)
+            _ = s.connect((self.host, self.port))
             result["status"] = True
         except socket.error as e:
             result["message"] = str(e)
@@ -73,6 +78,6 @@ class RabbitMQClient(object):
         return result
 
     def get_queues(self):
-        if self.vhost == "/":
+        if self.path == "/":
             return self._call_api("queues")
-        return self._call_api(f"queues/{self.vhost}")
+        return self._call_api(f"queues/{self.path}")

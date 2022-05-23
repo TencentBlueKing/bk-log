@@ -21,7 +21,6 @@ the project delivered to anyone in the future.
 """
 import logging
 
-
 from django.utils.translation import ugettext as _
 
 from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData

@@ -24,6 +24,8 @@ import logging
 
 from socket import gaierror
 
+from django.utils.translation import ugettext as _
+
 from apps.log_measure.exceptions import EsConnectFailException
 from apps.log_measure.utils.metric import MetricUtils
 from apps.log_databus.constants import VisibleEnum
@@ -38,7 +40,11 @@ class ESMetric(object):
     def check():
         namespace_data = NamespaceData(namespace="es", status=False, data=[])
         ping_result = ESMetric().ping()
-        namespace_data.status = [i.status for i in ping_result].count(True) == len(ping_result) and ping_result
+        if not ping_result:
+            namespace_data.status = True
+            namespace_data.message = _("no pubilc es config")
+            return namespace_data
+        namespace_data.status = [i.status for i in ping_result].count(True) == len(ping_result)
         if not namespace_data.status:
             namespace_data.message = "see details"
         namespace_data.data.extend(ping_result)
