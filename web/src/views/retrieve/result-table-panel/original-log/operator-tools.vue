@@ -146,7 +146,6 @@ export default {
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
     },
     handleCheckClick(clickType) {
-      console.log(this.monitorIsActive);
       if (clickType === 'monitorWeb' && this.monitorIsActive) return this.handleClick(clickType);
       if (clickType === 'contextLog' && !this.isHaveReason) return this.handleClick(clickType);
       return;
