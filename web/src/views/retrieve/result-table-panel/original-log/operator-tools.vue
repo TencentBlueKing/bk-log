@@ -35,13 +35,19 @@
         @click.stop="handleClick('realTimeLog')">
       </span>
     </span>
+    <div v-if="showContextLog && !checkIsHide('showContextLog')" id="content-html">
+      <span>
+        <span v-if="isHaveReason" class="bk-icon icon-exclamation-circle-shape"></span>
+        <span>{{contentText}}</span>
+      </span>
+    </div>
     <span
-      v-bk-tooltips="{ content: $t('retrieve.context'), delay: 500 }"
+      v-bk-tooltips="{ allowHtml: true, content: '#content-html', delay: 500 }"
       class="handle-card"
       v-if="showContextLog && !checkIsHide('showContextLog')">
       <span
-        class="icon log-icon icon-handle icon-document"
-        @click.stop="handleClick('contextLog')">
+        :class="`icon log-icon icon-handle icon-document ${isHaveReason && 'is-disable'}`"
+        @click.stop="handleCheckClick('contextLog')">
       </span>
     </span>
     <span
@@ -49,8 +55,8 @@
       class="handle-card"
       v-if="showMonitorWeb && !checkIsHide('showMonitorWeb')">
       <span
-        class="icon icon-handle log-icon icon-inform"
-        @click.stop="handleClick('monitorWeb')"></span>
+        :class="`icon icon-handle log-icon icon-inform ${!monitorIsActive && 'is-disable'}`"
+        @click.stop="handleCheckClick('monitorWeb')"></span>
     </span>
     <span
       v-bk-tooltips="{ content: 'WebConsole', delay: 500 }"
@@ -91,6 +97,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    operatorConfig: {
+      type: Object,
+      required: true,
+    },
     handleClick: Function,
   },
   data() {
@@ -111,6 +121,17 @@ export default {
 
       return isShowMore;
     },
+    monitorIsActive() {
+      return this.operatorConfig?.bkmonitor.is_active;
+    },
+    contentText() {
+      return this.operatorConfig?.contextAndRealtime.extra.reason
+        ? this.operatorConfig?.contextAndRealtime.extra.reason
+        : this.$t('retrieve.context');
+    },
+    isHaveReason() {
+      return Boolean(this.operatorConfig.contextAndRealtime.extra.reason);
+    },
   },
   methods: {
     mouseenterHandle() {
@@ -123,6 +144,12 @@ export default {
     checkIsHide(key) {
       // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
       return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
+    },
+    handleCheckClick(clickType) {
+      console.log(this.monitorIsActive);
+      if (clickType === 'monitorWeb' && this.monitorIsActive) return this.handleClick(clickType);
+      if (clickType === 'contextLog' && !this.isHaveReason) return this.handleClick(clickType);
+      return;
     },
   },
 };
@@ -145,5 +172,17 @@ export default {
   .fix-content {
     width: auto;
     background-color: #f5f7fa;
+  }
+
+  .icon-exclamation-circle-shape {
+    color: #d7473f;
+  }
+
+  .is-disable {
+    /* stylelint-disable-next-line declaration-no-important */
+    color: #eceef2 !important;
+
+    /* stylelint-disable-next-line declaration-no-important */
+    cursor: no-drop !important;
   }
 </style>

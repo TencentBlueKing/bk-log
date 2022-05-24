@@ -226,15 +226,10 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      return this.clusterSwitch
-        ? (this.configID
-          ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage'))
-        : this.$t('goSettingMessage');
+      return this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage');
     },
     exhibitOperate() {
-      return this.clusterSwitch
-        ? (this.configID ? this.$t('跳转到日志清洗') : '')
-        : this.$t('去设置');
+      return this.configID ? this.$t('跳转到日志清洗') : '';
     },
     clusteringField() {
       return this.configData?.extra?.clustering_field || '';
@@ -279,10 +274,6 @@ export default {
            *  有text则提示去开启日志聚类 无则显示跳转计算平台
            */
           this.isHaveText = newList.some(el => el.field_type === 'text');
-          if (!this.configData.is_active) {
-            this.exhibitAll = false;
-            return;
-          }
           // 初始化分组下拉列表
           this.filterGroupList();
           this.initTable();
@@ -394,11 +385,6 @@ export default {
       if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveText) {
         const jumpUrl = `${window.BKDATA_URL}`;
         window.open(jumpUrl, '_blank');
-        return;
-      }
-      // 未开启日志聚类去设置
-      if (!this.clusterSwitch) {
-        this.$emit('showSettingLog');
         return;
       }
       // 无清洗 去清洗
