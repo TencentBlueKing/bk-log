@@ -20,30 +20,22 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import socket
+from typing import Any, Dict
 
-from typing import Dict, Any
-from elasticsearch import Elasticsearch as Elasticsearch
-from elasticsearch6 import Elasticsearch as Elasticsearch6
-from elasticsearch5 import Elasticsearch as Elasticsearch5
-
-from django.utils.translation import ugettext as _
 from django.conf import settings
+from django.utils.translation import ugettext as _
+from elasticsearch import Elasticsearch as Elasticsearch
+from elasticsearch5 import Elasticsearch as Elasticsearch5
+from elasticsearch6 import Elasticsearch as Elasticsearch6
 
-from apps.log_esquery.esquery.client.QueryClientTemplate import QueryClientTemplate
 from apps.api import TransferApi
-from apps.log_esquery.exceptions import (
-    EsClientMetaInfoException,
-    EsClientConnectInfoException,
-    EsClientSocketException,
-    EsClientSearchException,
-    BaseSearchFieldsException,
-    EsClientScrollException,
-    EsClientAliasException,
-    EsException,
-    EsClientCatIndicesException,
-)
-from apps.log_esquery.type_constants import type_mapping_dict
 from apps.log_esquery.constants import DEFAULT_SCHEMA
+from apps.log_esquery.esquery.client.QueryClientTemplate import QueryClientTemplate
+from apps.log_esquery.exceptions import (BaseSearchFieldsException, EsClientAliasException, EsClientCatIndicesException,
+                                         EsClientConnectInfoException, EsClientMetaInfoException,
+                                         EsClientScrollException, EsClientSearchException, EsClientSocketException,
+                                         EsException)
+from apps.log_esquery.type_constants import type_mapping_dict
 
 
 class QueryClientEs(QueryClientTemplate):
@@ -120,7 +112,7 @@ class QueryClientEs(QueryClientTemplate):
         if not self._active:
             self._get_connection()
             if not self._active:
-                raise EsClientSearchException(EsClientSearchException.MESSAGE.format(error=_(u"EsClient链接失败")))
+                raise EsClientSearchException(EsClientSearchException.MESSAGE.format(error=_("EsClient链接失败")))
             else:
                 pass
         else:
@@ -238,3 +230,19 @@ class QueryClientEs(QueryClientTemplate):
             "version": cluster_config["version"],
             "registered_system": cluster_config["registered_system"],
         }
+
+    @classmethod
+    def get_es_client(cls, version, host, username, password, port):
+        if version.startswith("5."):
+            es_client = Elasticsearch5
+        elif version.startswith("6."):
+            es_client = Elasticsearch6
+        else:
+            es_client = Elasticsearch
+        return es_client(
+            [host],
+            http_auth=(username, password),
+            port=port,
+            sniffer_timeout=600,
+            verify_certs=False,
+        )
