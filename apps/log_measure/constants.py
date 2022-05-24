@@ -69,3 +69,5 @@ DATA_NAMES = [
     {"name": "django_monitor", "custom_report_type": TIME_SERIES_TYPE},
     {"name": "bk_log_event", "custom_report_type": EVENT_TYPE},
 ]
+
+MAX_QUERY_SUBSCRIPTION = 10
