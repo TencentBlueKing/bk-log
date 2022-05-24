@@ -48,13 +48,15 @@ INDEX_FORMAT = "*_bklog_*"
 COLLECTOR_IMPORT_PATHS = [
     "apps.log_measure.handlers.metric_collectors.business",
     "apps.log_measure.handlers.metric_collectors.cluster",
-    "apps.log_measure.handlers.metric_collectors.collect",
+    "apps.log_measure.handlers.metric_collectors.es",
     "apps.log_measure.handlers.metric_collectors.grafana",
-    "apps.log_measure.handlers.metric_collectors.index",
+    "apps.log_measure.handlers.metric_collectors.log_archive",
+    "apps.log_measure.handlers.metric_collectors.log_clustering",
+    "apps.log_measure.handlers.metric_collectors.log_databus",
     "apps.log_measure.handlers.metric_collectors.log_extract",
+    "apps.log_measure.handlers.metric_collectors.log_search",
     "apps.log_measure.handlers.metric_collectors.third_party",
     "apps.log_measure.handlers.metric_collectors.user",
-    "apps.log_measure.handlers.metric_collectors.es",
 ]
 
 BK_LOG_EVENT_DATA_NAME = "bk_log_event"
@@ -67,3 +69,5 @@ DATA_NAMES = [
     {"name": "django_monitor", "custom_report_type": TIME_SERIES_TYPE},
     {"name": "bk_log_event", "custom_report_type": EVENT_TYPE},
 ]
+
+MAX_QUERY_SUBSCRIPTION = 10

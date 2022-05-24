@@ -19,6 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from collections import defaultdict
+
 from django.utils.translation import ugettext as _
 from django.conf import settings
 
@@ -47,6 +49,7 @@ class ClusterMetricCollector(object):
                 health_data = es_client.cluster.health(params={"request_timeout": 10})
                 dimensions = {
                     "target_bk_biz_id": bk_biz_id,
+                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     "origin_cluster_name": health_data["cluster_name"],
                     "cluster_id": cluster_info.get("cluster_config").get("cluster_id"),
                     "cluster_name": cluster_info.get("cluster_config").get("cluster_name"),
@@ -86,15 +89,20 @@ class ClusterMetricCollector(object):
         return metrics
 
     @staticmethod
-    @register_metric("cluster_node", description=_("集群节点"), data_name="metric", time_filter=TimeFilterEnum.MINUTE10)
+    @register_metric("cluster_node", description=_("集群节点"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def cluster_node():
         metrics = []
+        cluster_count = defaultdict(int)
         for cluster_info in MetricUtils.get_instance().cluster_infos.values():
             try:
                 es_client = MetricUtils.get_instance().get_es_client(cluster_info)
                 if not es_client:
                     continue
-
+                bk_biz_id = (
+                    cluster_info.get("cluster_config", {}).get("custom_option", {}).get("bk_biz_id")
+                    or settings.BLUEKING_BK_BIZ_ID
+                )
+                cluster_count[bk_biz_id] += 1
                 allocations = es_client.cat.allocation(format="json", bytes="mb", params={"request_timeout": 10})
 
                 for allocation in allocations:
@@ -107,10 +115,8 @@ class ClusterMetricCollector(object):
                         "node": allocation["node"],
                         "cluster_id": cluster_info.get("cluster_config").get("cluster_id"),
                         "cluster_name": cluster_info.get("cluster_config").get("cluster_name"),
-                        "target_bk_biz_id": cluster_info.get("cluster_config", {})
-                        .get("custom_option", {})
-                        .get("bk_biz_id")
-                        or settings.BLUEKING_BK_BIZ_ID,
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     }
                     for key in ["shards", "disk.indices", "disk.used", "disk.avail", "disk.total", "disk.percent"]:
                         if key not in allocation:
@@ -142,10 +148,8 @@ class ClusterMetricCollector(object):
                         "node": node["name"],
                         "cluster_id": cluster_info.get("cluster_config").get("cluster_id"),
                         "cluster_name": cluster_info.get("cluster_config").get("cluster_name"),
-                        "target_bk_biz_id": cluster_info.get("cluster_config", {})
-                        .get("custom_option", {})
-                        .get("bk_biz_id")
-                        or settings.BLUEKING_BK_BIZ_ID,
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     }
                     for key in ["heap.percent", "ram.percent", "cpu", "load_1m", "load_5m", "load_15m"]:
                         if key not in node:
@@ -161,4 +165,27 @@ class ClusterMetricCollector(object):
 
             except Exception as e:  # pylint: disable=broad-except
                 logger.exception("fail to collect cluster_node metric for cluster->{}, {}".format(cluster_info, e))
+
+        for bk_biz_id, count in cluster_count.items():
+            metrics.append(
+                # 各个业务集群数
+                Metric(
+                    metric_name="cluster_count",
+                    metric_value=count,
+                    dimensions={
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+        metrics.append(
+            # 集群总数
+            Metric(
+                metric_name="cluster_total",
+                metric_value=sum(cluster_count.values()),
+                dimensions={},
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
         return metrics
