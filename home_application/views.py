@@ -55,21 +55,27 @@ def contact(request):
 
 @login_exempt
 def healthz(request):
+    """
+    format_type: 格式化类型, 支持 json, 默认为k8s
+    include: 包含的namespace, include不为空时, exclude失效
+    exclude: 去除的namespace
+    """
     format_type = request.GET.get("format_type")
     include = request.GET.get("include", [])
     exclude = request.GET.get("exclude", [])
 
-    if format_type == "json":
-        content_type = "application/json"
-    else:
-        content_type = "text/html"
-
-    return HttpResponse(
+    response = HttpResponse(
         content=HealthzHandler().get_data(
             format_type=format_type, include_namespaces=include, exclude_namespaces=exclude
-        ),
-        content_type=content_type,
+        )
     )
+
+    if format_type == "json":
+        response["Content-Type"] = "application/json"
+    else:
+        response["Content-Type"] = "text/plain"
+
+    return response
 
 
 @login_exempt
