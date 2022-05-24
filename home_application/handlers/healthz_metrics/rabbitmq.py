@@ -50,7 +50,7 @@ class RabbitMQMetric(object):
 
     @staticmethod
     def ping():
-        result = RabbitMQClient().ping()
+        result = RabbitMQClient().get_instance().ping()
         return HealthzMetric(
             status=result["status"], metric_name="ping", metric_value=result["data"], message=result["message"]
         )
@@ -58,23 +58,16 @@ class RabbitMQMetric(object):
     @staticmethod
     def get_queue_data():
         data = []
-        get_queue_data = RabbitMQClient().get_queues()
-        if not get_queue_data["status"]:
-            data.append(HealthzMetric(status=False, metric_name="queue_len", message=get_queue_data["message"]))
-            return data
-
-        for queue in get_queue_data["data"]:
-            if queue["name"] not in QUEUES:
-                continue
-            for item in ["messages", "messages_ready", "messages_unacknowledged"]:
-                value = queue.get(item, 0)
-                data.append(
-                    HealthzMetric(
-                        status=True,
-                        metric_name=f"queue_{item}_len",
-                        metric_value=value,
-                        dimensions={"vhost": queue["vhost"], "queue": queue["name"]},
-                    )
+        for queue_name in QUEUES:
+            result = RabbitMQClient.get_instance().queue_len(queue_name)
+            data.append(
+                HealthzMetric(
+                    status=result["status"],
+                    metric_value=result["data"],
+                    message=result["message"],
+                    metric_name="queue_len",
+                    dimensions={"queue_name": queue_name},
                 )
+            )
 
         return data

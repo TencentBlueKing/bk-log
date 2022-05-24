@@ -20,10 +20,8 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import time
-import socket
 import logging
-
-import requests
+import pika
 from kombu.utils.url import url_to_parts
 
 import settings
@@ -32,13 +30,15 @@ logger = logging.getLogger()
 
 
 class RabbitMQClient(object):
+    _instance = None
+
     def __init__(self) -> None:
         try:
-            broker_url = settings.BROKER_URL.split("//")[1]
+            broker_url = settings.BROKER_URL
             scheme, host, port, user, password, path, query = url_to_parts(broker_url)
             self.scheme = scheme
             self.host = host
-            self.port = int(port)
+            self.port = port
             self.user = user
             self.password = password
             self.path = path
@@ -47,37 +47,43 @@ class RabbitMQClient(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"Failed to get rabbitmq infomation, err: {e}")
 
+    @classmethod
+    def get_instance(cls, *args, **kwargs):
+        if cls._instance:
+            return cls._instance
+        else:
+            cls._instance = RabbitMQClient(*args, **kwargs)
+            return cls._instance
+
+    @classmethod
+    def del_instance(cls):
+        cls._instance = None
+
     def ping(self):
         result = {"status": False, "data": None, "message": ""}
         start_time = time.time()
-        s = socket.socket()
         try:
-            _ = s.connect((self.host, self.port))
-            result["status"] = True
-        except socket.error as e:
+            auth = pika.PlainCredentials(self.user, self.password)
+            connection = pika.BlockingConnection(pika.ConnectionParameters(self.host, self.port, self.path, auth))
+            if connection:
+                result["status"] = True
+                self.connection = connection
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"failed to ping rabbitmq, msg: {e}")
             result["message"] = str(e)
-        finally:
-            s.close()
-
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))
         return result
 
-    def _call_api(self, path: str):
+    def queue_len(self, queue_name: str):
         result = {"status": False, "data": None, "message": ""}
-        headers = {"content-type": "application/json"}
-        url = f"http://{self.host}:{self.port}/api/{path}"
         try:
-            resp = requests.get(url, headers=headers, auth=(self.user, self.password))
-            if resp.status_code == 200:
-                result["status"] = True
-                result["data"] = resp.json()
+            channel = self.connection.channel()
+            declear_queue_result = channel.queue_declare(queue=queue_name, durable=True)
+            result["data"] = declear_queue_result.method.message_count
+            result["status"] = True
+            channel.close()
         except Exception as e:  # pylint: disable=broad-except
-            logger.error(f"Failed to call rabbitmq api[{path}], err: {e}")
+            logger.error(f"failed to get llen[{queue_name}], err: {e}")
             result["message"] = str(e)
         return result
-
-    def get_queues(self):
-        if self.path == "/":
-            return self._call_api("queues")
-        return self._call_api(f"queues/{self.path}")
