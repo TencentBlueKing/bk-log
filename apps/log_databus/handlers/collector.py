@@ -33,6 +33,7 @@ from apps.api.modules.bk_node import BKNodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM, BCS_COLLECTOR
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
+from apps.utils.bcs import Bcs
 from apps.utils.cache import caches_one_hour
 from apps.utils.db import array_chunk
 from apps.utils.function import map_if
@@ -2023,8 +2024,6 @@ class CollectorHandler(object):
         with transaction.atomic():
             try:
                 self.data = CollectorConfig.objects.create(**collector_config_params)
-                for config in data["config"]:
-                    self.create_container_release()
                 ContainerCollectorConfig.objects.bulk_create(
                     ContainerCollectorConfig(
                         collector_config_id=self.data.collector_config_id,
@@ -2088,6 +2087,11 @@ class CollectorHandler(object):
             "fields": custom_config.fields,
         }
         self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+        container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
+        for config in container_configs:
+            status = self.create_container_release(config)
+            config.status = status
+            config.save()
         custom_config.after_hook(self.data)
         return {
             "collector_config_id": self.data.collector_config_id,
@@ -2178,35 +2182,65 @@ class CollectorHandler(object):
                 container_configs[x].match_expressions = data["config"][x]["label_selector"]["match_expressions"]
                 container_configs[x].all_container = not data["config"][x]["container"]["workload_type"]
                 container_configs[x].save()
-            container_config = ContainerCollectorConfig(
-                collector_config_id=self.data.collector_config_id,
-                namespaces=data["config"][x]["namespaces"],
-                any_namespace=not data["config"][x]["namespaces"],
-                data_encoding=data["config"][x]["data_encoding"],
-                params={
-                    "paths": data["config"][x]["paths"],
-                    "conditions": {"type": "match", "match_type": "include", "match_content": ""},
-                },
-                workload_type=data["config"][x]["container"]["workload_type"],
-                workload_name=data["config"][x]["container"]["workload_name"],
-                container_name=data["config"][x]["container"]["container_name"],
-                match_labels=data["config"][x]["label_selector"]["match_labels"],
-                match_expressions=data["config"][x]["label_selector"]["match_expressions"],
-                all_container=not data["config"][x]["container"]["workload_type"],
-            )
+                container_config = container_configs[x]
+            else:
+                container_config = ContainerCollectorConfig(
+                    collector_config_id=self.data.collector_config_id,
+                    namespaces=data["config"][x]["namespaces"],
+                    any_namespace=not data["config"][x]["namespaces"],
+                    data_encoding=data["config"][x]["data_encoding"],
+                    params={
+                        "paths": data["config"][x]["paths"],
+                        "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                    },
+                    workload_type=data["config"][x]["container"]["workload_type"],
+                    workload_name=data["config"][x]["container"]["workload_name"],
+                    container_name=data["config"][x]["container"]["container_name"],
+                    match_labels=data["config"][x]["label_selector"]["match_labels"],
+                    match_expressions=data["config"][x]["label_selector"]["match_expressions"],
+                    all_container=not data["config"][x]["container"]["workload_type"],
+                )
+                container_config.save()
+                container_configs.append(container_config)
+            status = self.create_container_release(container_config=container_config)
+            container_config.status = status
             container_config.save()
-            container_configs.append(container_config)
-            self.create_container_release()
         delete_container_configs = container_configs[config_length::]
         for config in delete_container_configs:
-            self.delete_container_release()
+            self.delete_container_release(config)
             config.delete()
 
-    def create_container_release(self):
-        pass
+    def create_container_release(self, container_config: ContainerCollectorConfig):
+        request_params = {
+            "dataId": self.data.bk_data_id,
+            "path": container_config.params["paths"],
+            "encoding": container_config.params["encoding"],
+            "extMeta": {label["key"]: label["value"] for label in self.data.extra_labels},
+            "logConfigType": self.data.environment,
+            "allContainer": container_config.all_container,
+            "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
+            "workloadType": container_config.workload_type,
+            "workloadName": container_config.workload_name,
+            "containerNameMatch": container_config.container_name,
+            "labelSelector": {
+                "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
+                "matchExpressions": [
+                    {"key": expression["key"], "operator": expression["operator"], "values": [expression["value"]]}
+                    for expression in container_config.match_expressions
+                ],
+            },
+            "addPodLabel": self.data.add_pod_label,
+        }
+        name = self.generate_bklog_config_name(container_config.id)
+        status = Bcs(self.data.bcs_cluster_id).save_bklog_config(bklog_config_name=name, bklog_config=request_params)
+        return status
 
-    def delete_container_release(self):
-        pass
+    def generate_bklog_config_name(self, container_config_id) -> str:
+        return "{}_{}".format(self.data.collector_config_name, container_config_id)
+
+    def delete_container_release(self, container_config):
+        name = self.generate_bklog_config_name(container_config.id)
+        return Bcs(self.data.bcs_cluster_id).delete_bklog_config(name)
 
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
