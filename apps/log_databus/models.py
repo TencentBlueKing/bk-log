@@ -118,6 +118,10 @@ class CollectorConfig(SoftDeleteModel):
     storage_replies = models.IntegerField(_("ES副本数"), null=True, default=1, blank=True)
     bkdata_data_id_sync_times = models.IntegerField(_("调用数据平台创建data_id失败数"), default=0)
     collector_config_name_en = models.CharField(_("采集项英文名"), max_length=255, null=True, blank=True, default="")
+    environment = models.CharField(_("环境"), max_length=128, null=True, blank=True)
+    bcs_cluster_id = models.IntegerField(_("bcs集群id"), default=0)
+    extra_labels = models.JSONField(_("额外字段添加"), null=True, blank=True)
+    add_pod_label = models.BooleanField(_("是否自动添加pod中的labels"), default=False)
 
     @property
     def is_clustering(self) -> bool:
@@ -267,6 +271,21 @@ class CollectorConfig(SoftDeleteModel):
     @cache_one_hour("data_id_conf_{bk_data_id}", need_md5=True)
     def get_data_id_conf(bk_data_id):
         return TransferApi.get_data_id({"bk_data_id": bk_data_id, "no_request": True})
+
+
+class ContainerCollectorConfig(SoftDeleteModel):
+    collector_config_id = models.IntegerField(_("采集项id"), db_index=True)
+    namespaces = models.JSONField(_("namespace选择"), null=True, blank=True)
+    any_namespace = models.BooleanField(_("所有namespace"), default=False)
+    data_encoding = models.CharField(_("日志字符集"), max_length=30, null=True, default=None)
+    params = models.JSONField(_("params"), null=True, blank=True)
+    workload_type = models.CharField(_("应用类型"), max_length=128, null=True, blank=True)
+    workload_name = models.CharField(_("应用名称"), max_length=128, null=True, blank=True)
+    container_name = models.CharField(_("容器名"), max_length=128, null=True, blank=True)
+    match_labels = models.JSONField(_("匹配标签"), null=True, blank=True)
+    match_expressions = models.JSONField(_("匹配表达式"), null=True, blank=True)
+    all_container = models.BooleanField(_("所有容器"), default=False)
+    status = models.CharField(_("下发状态"), null=True, blank=True, max_length=30)
 
 
 class ItsmEtlConfig(SoftDeleteModel):
