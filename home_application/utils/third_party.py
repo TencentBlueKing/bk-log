@@ -23,15 +23,7 @@ import time
 import logging
 
 import settings
-from apps.api import (
-    BkItsmApi,
-    CCApi,
-    JobApi,
-    NodeApi,
-    BKLoginApi,
-    MonitorApi,
-    BkDataDatabusApi,
-)
+from apps.api import BkItsmApi, CCApi, JobApi, NodeApi, BKLoginApi, MonitorApi, BkDataDatabusApi, BKPAASApi
 
 from apps.utils.local import activate_request
 from apps.utils.thread import generate_request
@@ -42,19 +34,16 @@ from home_application.constants import (
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
     DEFAULT_BK_DATA_ID,
+    DEFAULT_BK_USERNAME,
 )
 
 from iam.api.client import Client
-
-try:
-    from blueapps.utils.esbclient import get_client_by_user
-except Exception:  # pylint: disable=broad-except
-    pass
 
 logger = logging.getLogger()
 
 
 THIRD_PARTY_CHECK_API = {
+    "paas": {"method": BKPAASApi.get_minimal_app_list, "kwargs": {"bk_username": DEFAULT_BK_USERNAME}},
     "cc": {"method": CCApi.get_app_list},
     "itsm": {"method": BkItsmApi.get_services},
     "job": {"method": JobApi.get_public_script_list, "kwargs": {"bk_biz_id": settings.BLUEKING_BK_BIZ_ID}},
@@ -83,6 +72,7 @@ class ThirdParty(object):
         result = {"status": False, "data": None, "message": ""}
         start_time = time.time()
         try:
+            activate_request(generate_request())
             kwargs = THIRD_PARTY_CHECK_API[module].get("kwargs", {})
             _ = THIRD_PARTY_CHECK_API[module]["method"](kwargs)
             result["status"] = True
@@ -91,35 +81,6 @@ class ThirdParty(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to check {module}, err: {e}")
             result["message"] = str(e)
-
-        spend_time = time.time() - start_time
-        result["data"] = "{}ms".format(int(spend_time * 1000))
-        return result
-
-    @staticmethod
-    def check_paas():
-        result = {"status": False, "data": None, "message": ""}
-        start_time = time.time()
-        if settings.IS_K8S_DEPLOY_MODE:
-            activate_request(generate_request())
-            from apps.api import BKPAASApi
-
-            try:
-                _ = BKPAASApi.get_app_info()
-                result["status"] = True
-            except ApiResultError:
-                result["status"] = True
-            except Exception as e:  # pylint: disable=broad-except
-                logger.error(f"failed to check paas, err: {e}")
-                result["message"] = str(e)
-        else:
-            try:
-                client = get_client_by_user(user_or_username=settings.SYSTEM_USE_API_ACCOUNT)
-                _ = client.bk_paas.get_app_info()
-                result["status"] = True
-            except Exception as e:  # pylint: disable=broad-except
-                logger.error(f"failed to check paas, err: {e}")
-                result["message"] = str(e)
 
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))

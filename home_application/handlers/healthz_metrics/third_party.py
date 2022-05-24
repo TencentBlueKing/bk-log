@@ -53,16 +53,6 @@ class ThirdPartyCheck(object):
                 )
             )
 
-        check_paas_result = ThirdParty.check_paas()
-        data.append(
-            HealthzMetric(
-                status=check_paas_result["status"],
-                metric_name="paas",
-                metric_value=check_paas_result["data"],
-                message=check_paas_result["message"],
-            )
-        )
-
         check_iam_result = ThirdParty.check_iam()
         data.append(
             HealthzMetric(
