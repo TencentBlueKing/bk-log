@@ -108,6 +108,10 @@ COLLECTORS_LIST = {
         "total": 1,
         "list": [
             {
+                "add_pod_label": False,
+                "bcs_cluster_id": 0,
+                "environment": None,
+                "extra_labels": None,
                 "collector_config_id": 231,
                 "collector_scenario_name": "行日志文件",
                 "category_name": "操作系统",
