@@ -2221,7 +2221,7 @@ class CollectorHandler(object):
             "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
             "workloadType": container_config.workload_type,
             "workloadName": container_config.workload_name,
-            "containerNameMatch": [container_config.container_name],
+            "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
             "labelSelector": {
                 "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
                 "matchExpressions": [
