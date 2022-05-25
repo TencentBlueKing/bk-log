@@ -24,7 +24,6 @@
 export default {
   watch: {
     'formData.storage_cluster_id': {
-      immediate: true,
       handler(val) {
         this.storageList.forEach((res) => {
           const arr = [];
@@ -222,9 +221,7 @@ export default {
       } else {
         // 编辑进入时 回填副本数
         const notPerformList = ['custom-report-create', 'custom-report-edit'];
-        if (notPerformList.includes(this.$route.name)) {
-          this.formData.storage_replies = setup_config?.number_of_replicas_default || 0;
-        } else {
+        if (!notPerformList.includes(this.$route.name)) {
           this.formData.storage_replies = this.curCollect.storage_replies;
         }
       }
