@@ -2214,14 +2214,14 @@ class CollectorHandler(object):
         request_params = {
             "dataId": self.data.bk_data_id,
             "path": container_config.params["paths"],
-            "encoding": container_config.params["encoding"],
+            "encoding": container_config.data_encoding,
             "extMeta": {label["key"]: label["value"] for label in self.data.extra_labels},
             "logConfigType": self.data.environment,
             "allContainer": container_config.all_container,
             "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
             "workloadType": container_config.workload_type,
             "workloadName": container_config.workload_name,
-            "containerNameMatch": container_config.container_name,
+            "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
             "labelSelector": {
                 "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
                 "matchExpressions": [
@@ -2236,7 +2236,9 @@ class CollectorHandler(object):
         return status
 
     def generate_bklog_config_name(self, container_config_id) -> str:
-        return "{}_{}".format(self.data.collector_config_name, container_config_id)
+        return "{}-{}-{}".format(self.data.collector_config_name_en, self.data.bk_biz_id, container_config_id).replace(
+            "_", "-"
+        )
 
     def delete_container_release(self, container_config):
         name = self.generate_bklog_config_name(container_config.id)

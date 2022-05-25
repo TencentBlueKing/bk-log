@@ -109,7 +109,7 @@ COLLECTORS_LIST = {
         "list": [
             {
                 "add_pod_label": False,
-                "bcs_cluster_id": 0,
+                "bcs_cluster_id": None,
                 "environment": None,
                 "extra_labels": None,
                 "collector_config_id": 231,
