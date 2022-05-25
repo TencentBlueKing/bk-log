@@ -37,3 +37,4 @@ BKLOG_ES_CONFIG = "bklog_es_config"
 USER_GUIDE_CONFIG = "user_guide_config"
 # 采集下发的时候，是否自动安装采集器
 IS_AUTO_DEPLOY_PLUGIN = "is_auto_deploy_plugin"
+BCS_COLLECTOR = "bcs_collector"

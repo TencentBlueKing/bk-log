@@ -64,6 +64,8 @@ from apps.log_databus.serializers import (
     CustomCreateSerializer,
     CustomUpateSerializer,
     PreCheckSerializer,
+    CreateBCSCollectorSerializer,
+    UpdateBCSCollectorSerializer,
 )
 from apps.utils.function import ignored
 
@@ -74,7 +76,7 @@ class CollectorViewSet(ModelViewSet):
     """
 
     lookup_field = "collector_config_id"
-    filter_fields_exclude = ["collector_config_overlay"]
+    filter_fields_exclude = ["collector_config_overlay", "extra_labels"]
     model = CollectorConfig
     search_fields = ("collector_config_name", "table_id", "bk_biz_id")
     ordering_fields = ("updated_at", "updated_by")
@@ -1891,3 +1893,33 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.params_valid(PreCheckSerializer)
         return Response(CollectorHandler().pre_check(data))
+
+    @list_route(methods=["GET"], url_path="list_bcs_collector")
+    def list_bcs_collector(self, request):
+        bk_biz_id = request.GET.get("bk_biz_id")
+        return CollectorHandler().list_bcs_collector(request=request, view=self, bk_biz_id=bk_biz_id)
+
+    @list_route(methods=["POST"], url_path="create_bcs_collector")
+    def create_bcs_collector(self, request):
+        # auth_info = Permission.get_auth_info(request, raise_exception=False)
+        # if not auth_info:
+        #     raise BkJwtVerifyException()
+        data = self.params_valid(CreateBCSCollectorSerializer)
+        return Response(
+            CollectorHandler().create_bcs_container_config(
+                data=data,
+                # bk_app_code=auth_info["bk_app_code"]
+            ),
+        )
+
+    @detail_route(methods=["POST"], url_path="update_bcs_collector")
+    def update_bcs_collector(self, request, collector_config_id):
+        # auth_info = Permission.get_auth_info(request, raise_exception=False)
+        # if not auth_info:
+        #     raise BkJwtVerifyException()
+        data = self.params_valid(UpdateBCSCollectorSerializer)
+        return Response(CollectorHandler(collector_config_id=collector_config_id).update_bcs_config(data=data))
+
+    @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")
+    def delete_bcs_collector(self, request, collector_config_id):
+        return Response(CollectorHandler(collector_config_id=collector_config_id).delete_bcs_config())

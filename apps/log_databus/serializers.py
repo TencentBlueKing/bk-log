@@ -177,6 +177,31 @@ class ClusterListSerializer(serializers.Serializer):
     cluster_type = serializers.CharField(label=_("集群种类"), required=True)
 
 
+class ContainerSerializer(serializers.Serializer):
+    workload_type = serializers.CharField(label=_("workload类型"), default="", allow_blank=True)
+    workload_name = serializers.CharField(label=_("workload名称"), allow_blank=True, default="")
+    container_name = serializers.CharField(label=_("容器名称"), required=False, allow_blank=True, default="")
+
+
+class LablesSerializer(serializers.Serializer):
+    key = serializers.CharField(label=_("标签key"))
+    operator = serializers.CharField(label=_("标签连接符"), required=False, default="=")
+    value = serializers.CharField(label=_("标签value"))
+
+
+class LabelSelectorSerializer(serializers.Serializer):
+    match_labels = serializers.ListSerializer(child=LablesSerializer(), label=_("指定标签"), required=False)
+    match_expressions = serializers.ListSerializer(child=LablesSerializer(), label=_("指定表达式"), required=False)
+
+
+class ContainerConfigSerializer(serializers.Serializer):
+    namespaces = serializers.ListSerializer(child=serializers.CharField(), required=False, label=_("命名空间"), default=[])
+    container = ContainerSerializer(required=False, label=_("指定容器"))
+    label_selector = LabelSelectorSerializer(required=False, label=_("标签"))
+    paths = serializers.ListSerializer(child=serializers.CharField(), required=False, label=_("日志路径"))
+    data_encoding = serializers.CharField(required=False, label=_("日志字符集"))
+
+
 class CustomCreateSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"))
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
@@ -773,3 +798,31 @@ class PreCheckSerializer(serializers.Serializer):
     )
     bk_data_name = serializers.CharField(label=_("采集链路data_name"), required=False)
     result_table_id = serializers.CharField(label=_("结果表ID"), required=False)
+
+
+class CreateBCSCollectorSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+    custom_type = serializers.CharField(label=_("日志类型"))
+    category_id = serializers.CharField(label=_("分类"))
+    description = serializers.CharField(label=_("解释说明"), allow_null=True, allow_blank=True, default="")
+    environment = serializers.CharField(label=_("环境"))
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
+    add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
+    config = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
+
+
+class UpdateBCSCollectorSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    category_id = serializers.CharField(label=_("分类"))
+    description = serializers.CharField(label=_("解释说明"), allow_null=True, allow_blank=True, default="")
+    environment = serializers.CharField(label=_("环境"))
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
+    add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
+    config = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())

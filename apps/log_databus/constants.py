@@ -45,6 +45,8 @@ BULK_CLUSTER_INFOS_LIMIT = 20
 # ES集群类型配置特性开关key
 FEATURE_TOGGLE_ES_CLUSTER_TYPE = "es_cluster_type_setup"
 
+DEFAULT_RETENTION = 14
+
 
 class VisibleEnum(ChoicesEnum):
     # 当前业务可见
@@ -328,3 +330,11 @@ BKDATA_ES_TYPE_MAP = {
 }
 
 ETL_PARAMS = {"retain_original_text": True, "separator_regexp": "", "separator": ""}
+
+
+class Environment(object):
+    LINUX = "Linux"
+    WINDOWS = "Windows"
+    CONTAINER = "container_log_config"
+    NODE = "node_log_config"
+    STDOUT = "std_log_config"

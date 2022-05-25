@@ -31,8 +31,9 @@ from apps.api import CCApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
+from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM, BCS_COLLECTOR
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
+from apps.utils.bcs import Bcs
 from apps.utils.cache import caches_one_hour
 from apps.utils.db import array_chunk
 from apps.utils.function import map_if
@@ -44,6 +45,7 @@ from apps.log_esquery.utils.es_route import EsRoute
 from apps.utils.log import logger
 from apps.exceptions import ApiError, ApiRequestError, ApiResultError
 from apps.utils.local import get_local_param, get_request_username
+from apps.utils.drf import DataPageNumberPagination
 from apps.log_databus.constants import (
     TargetNodeTypeEnum,
     CollectStatus,
@@ -57,6 +59,9 @@ from apps.log_databus.constants import (
     INTERNAL_TOPO_INDEX,
     BIZ_TOPO_INDEX,
     BULK_CLUSTER_INFOS_LIMIT,
+    Environment,
+    STORAGE_CLUSTER_TYPE,
+    DEFAULT_RETENTION,
 )
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
@@ -77,7 +82,7 @@ from apps.log_databus.exceptions import (
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig, CleanStash
+from apps.log_databus.models import CollectorConfig, CleanStash, ContainerCollectorConfig
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.constants import (
@@ -1936,6 +1941,307 @@ class CollectorHandler(object):
 
         return None
 
+    def list_bcs_collector(self, request, view, bk_biz_id):
+        pg = DataPageNumberPagination()
+        page_collectors = pg.paginate_queryset(
+            queryset=CollectorConfig.objects.exclude(bk_app_code="bk_log_search",).filter(
+                environment__in=[Environment.STDOUT, Environment.NODE, Environment.CONTAINER], bk_biz_id=bk_biz_id
+            ),
+            request=request,
+            view=view,
+        )
+        res = pg.get_paginated_response(
+            [self.generate_bcs_collector(collector=collector) for collector in page_collectors]
+        )
+        return res
+
+    def generate_bcs_collector(self, collector):
+        container_collector_config = ContainerCollectorConfig.objects.filter(
+            collector_config_id=collector.collector_config_id
+        )
+        return {
+            "collector_config_id": collector.collector_config_id,
+            "collector_config_name": collector.collector_config_name,
+            "bk_biz_id": collector.bk_biz_id,
+            "description": collector.description,
+            "bk_data_id": collector.bk_data_id,
+            "index_set_id": collector.index_set_id,
+            "collector_config_name_en": collector.collector_config_name_en,
+            "environment": collector.environment,
+            "bcs_cluster_id": collector.bcs_cluster_id,
+            "extra_labels": collector.extra_labels,
+            "add_pod_label": collector.add_pod_label,
+            "container_config": [model_to_dict(config) for config in container_collector_config],
+        }
+
+    def create_bcs_container_config(self, data, bk_app_code="bk_bcs"):
+        conf = self.get_bcs_config()
+        collector_config_params = {
+            "bk_biz_id": data["bk_biz_id"],
+            "collector_config_name": data["collector_config_name"],
+            "collector_config_name_en": data["collector_config_name_en"],
+            "collector_scenario_id": CollectorScenarioEnum.ROW.value,
+            "custom_type": data["custom_type"],
+            "category_id": data["category_id"],
+            "description": data["description"] or data["collector_config_name"],
+            "data_link_id": int(conf["data_link_id"]),
+            "bk_app_code": bk_app_code,
+            "environment": data["environment"],
+            "bcs_cluster_id": data["bcs_cluster_id"],
+            "add_pod_label": data["add_pod_label"],
+            "extra_labels": data["extra_labels"],
+        }
+        # 判断是否已存在同英文名collector
+        if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=data["bk_biz_id"]):
+            logger.error(
+                "collector_config_name_en {collector_config_name_en} already exists".format(
+                    collector_config_name_en=data["collector_config_name_en"]
+                )
+            )
+            raise CollectorConfigNameENDuplicateException(
+                CollectorConfigNameENDuplicateException.MESSAGE.format(
+                    collector_config_name_en=data["collector_config_name_en"]
+                )
+            )
+        # 判断是否已存在同bk_data_name, result_table_id
+        bk_data_name = build_bk_data_name(
+            bk_biz_id=data["bk_biz_id"], collector_config_name_en=data["collector_config_name_en"]
+        )
+        result_table_id = build_result_table_id(
+            bk_biz_id=data["bk_biz_id"], collector_config_name_en=data["collector_config_name_en"]
+        )
+        if self._pre_check_bk_data_name(model_fields=collector_config_params, bk_data_name=bk_data_name):
+            logger.error(f"bk_data_name {bk_data_name} already exists")
+            raise CollectorBkDataNameDuplicateException(
+                CollectorBkDataNameDuplicateException.MESSAGE.format(bk_data_name=bk_data_name)
+            )
+        if self._pre_check_result_table_id(model_fields=collector_config_params, result_table_id=result_table_id):
+            logger.error(f"result_table_id {result_table_id} already exists")
+            raise CollectorResultTableIDDuplicateException(
+                CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=result_table_id)
+            )
+
+        with transaction.atomic():
+            try:
+                self.data = CollectorConfig.objects.create(**collector_config_params)
+                ContainerCollectorConfig.objects.bulk_create(
+                    ContainerCollectorConfig(
+                        collector_config_id=self.data.collector_config_id,
+                        namespaces=config["namespaces"],
+                        any_namespace=not config["namespaces"],
+                        data_encoding=config["data_encoding"],
+                        params={
+                            "paths": config["paths"],
+                            "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                        },
+                        workload_type=config["container"]["workload_type"],
+                        workload_name=config["container"]["workload_name"],
+                        container_name=config["container"]["container_name"],
+                        match_labels=config["label_selector"]["match_labels"],
+                        match_expressions=config["label_selector"]["match_expressions"],
+                        all_container=not config["container"]["workload_type"],
+                    )
+                    for config in data["config"]
+                )
+            except IntegrityError:
+                logger.warning(f"collector config name duplicate => [{data['collector_config_name']}]")
+                raise CollectorConfigNameDuplicateException()
+
+            collector_scenario = CollectorScenario.get_instance(CollectorScenarioEnum.CUSTOM.value)
+            self.data.bk_data_id = collector_scenario.update_or_create_data_id(
+                bk_data_id=self.data.bk_data_id,
+                data_link_id=self.data.data_link_id,
+                data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{data['collector_config_name']}",
+                description=collector_config_params["description"],
+                encoding=META_DATA_ENCODING,
+            )
+            self.data.save()
+
+        # add user_operation_record
+        operation_record = {
+            "username": get_request_username(),
+            "biz_id": self.data.bk_biz_id,
+            "record_type": UserOperationTypeEnum.COLLECTOR,
+            "record_object_id": self.data.collector_config_id,
+            "action": UserOperationActionEnum.CREATE,
+            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
+        }
+        user_operation_record.delay(operation_record)
+
+        self._authorization_collector(self.data)
+        # 创建数据平台data_id
+        async_create_bkdata_data_id.delay(self.data.collector_config_id)
+
+        custom_config = get_custom(data["custom_type"])
+        from apps.log_databus.handlers.etl import EtlHandler
+
+        etl_handler = EtlHandler(self.data.collector_config_id)
+        etl_params = {
+            "table_id": data["collector_config_name_en"],
+            "storage_cluster_id": conf["storage_cluster_id"],
+            "retention": DEFAULT_RETENTION,
+            "allocation_min_days": 0,
+            "storage_replies": 0,
+            "etl_params": custom_config.etl_params,
+            "etl_config": custom_config.etl_config,
+            "fields": custom_config.fields,
+        }
+        self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+        container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
+        for config in container_configs:
+            status = self.create_container_release(config)
+            config.status = status
+            config.save()
+        custom_config.after_hook(self.data)
+        return {
+            "collector_config_id": self.data.collector_config_id,
+            "index_set_id": self.data.index_set_id,
+            "bk_data_id": self.data.bk_data_id,
+        }
+
+    def update_bcs_config(self, data):
+        collector_config_update = {
+            "collector_config_name": data["collector_config_name"],
+            "category_id": data["category_id"],
+            "description": data["description"] or data["collector_config_name"],
+            "environment": data["environment"],
+            "bcs_cluster_id": data["bcs_cluster_id"],
+            "add_pod_label": data["add_pod_label"],
+            "extra_labels": data["extra_labels"],
+        }
+
+        for key, value in collector_config_update.items():
+            setattr(self.data, key, value)
+        try:
+            self.data.save()
+        except IntegrityError:
+            logger.warning(f"collector config name duplicate => [{data['collector_config_name']}]")
+            raise CollectorConfigNameDuplicateException()
+
+        # collector_config_name更改后更新索引集名称
+        if data["collector_config_name"] != self.data.collector_config_name and self.data.index_set_id:
+            index_set_name = _("[采集项]") + self.data.collector_config_name
+            LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(index_set_name=index_set_name)
+
+        operation_record = {
+            "username": get_request_username(),
+            "biz_id": self.data.bk_biz_id,
+            "record_type": UserOperationTypeEnum.COLLECTOR,
+            "record_object_id": self.data.collector_config_id,
+            "action": UserOperationActionEnum.UPDATE,
+            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
+        }
+        user_operation_record.delay(operation_record)
+        self.compare_config(data, self.data.collector_config_id)
+
+        return {
+            "collector_config_id": self.data.collector_config_id,
+            "index_set_id": self.data.index_set_id,
+            "bk_data_id": self.data.bk_data_id,
+        }
+
+    def delete_bcs_config(self):
+        container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
+        for config in container_configs:
+            self.delete_container_release()
+            config.delete()
+        self.destroy()
+
+    def get_bcs_config(self):
+        toggle = FeatureToggleObject.toggle(BCS_COLLECTOR)
+        conf = toggle.feature_config if toggle else {}
+        data_link_id = conf.get("data_link_id", 0)
+        storage_cluster_id = conf.get("storage_cluster_id")
+        if not storage_cluster_id:
+            es_clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
+            for es in es_clusters:
+                if es["cluster_config"]["is_default_cluster"]:
+                    storage_cluster_id = es["cluster_config"]["cluster_id"]
+
+        if not storage_cluster_id:
+            raise ValueError("default es cluster not exists.")
+        return {"data_link_id": data_link_id, "storage_cluster_id": storage_cluster_id}
+
+    def compare_config(self, data, collector_config_id):
+        container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=collector_config_id)
+        container_configs = list(container_configs)
+        config_length = len(data["config"])
+        for x in range(config_length):
+            if x < len(container_configs):
+                container_configs[x].namespaces = data["config"][x]["namespaces"]
+                container_configs[x].any_namespace = not data["config"][x]["namespaces"]
+                container_configs[x].data_encoding = data["config"][x]["data_encoding"]
+                container_configs[x].params = {
+                    "paths": data["config"][x]["paths"],
+                    "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                }
+                container_configs[x].workload_type = data["config"][x]["container"]["workload_type"]
+                container_configs[x].workload_name = data["config"][x]["container"]["workload_name"]
+                container_configs[x].container_name = data["config"][x]["container"]["container_name"]
+                container_configs[x].match_labels = data["config"][x]["label_selector"]["match_labels"]
+                container_configs[x].match_expressions = data["config"][x]["label_selector"]["match_expressions"]
+                container_configs[x].all_container = not data["config"][x]["container"]["workload_type"]
+                container_configs[x].save()
+                container_config = container_configs[x]
+            else:
+                container_config = ContainerCollectorConfig(
+                    collector_config_id=self.data.collector_config_id,
+                    namespaces=data["config"][x]["namespaces"],
+                    any_namespace=not data["config"][x]["namespaces"],
+                    data_encoding=data["config"][x]["data_encoding"],
+                    params={
+                        "paths": data["config"][x]["paths"],
+                        "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                    },
+                    workload_type=data["config"][x]["container"]["workload_type"],
+                    workload_name=data["config"][x]["container"]["workload_name"],
+                    container_name=data["config"][x]["container"]["container_name"],
+                    match_labels=data["config"][x]["label_selector"]["match_labels"],
+                    match_expressions=data["config"][x]["label_selector"]["match_expressions"],
+                    all_container=not data["config"][x]["container"]["workload_type"],
+                )
+                container_config.save()
+                container_configs.append(container_config)
+            status = self.create_container_release(container_config=container_config)
+            container_config.status = status
+            container_config.save()
+        delete_container_configs = container_configs[config_length::]
+        for config in delete_container_configs:
+            self.delete_container_release(config)
+            config.delete()
+
+    def create_container_release(self, container_config: ContainerCollectorConfig):
+        request_params = {
+            "dataId": self.data.bk_data_id,
+            "path": container_config.params["paths"],
+            "encoding": container_config.params["encoding"],
+            "extMeta": {label["key"]: label["value"] for label in self.data.extra_labels},
+            "logConfigType": self.data.environment,
+            "allContainer": container_config.all_container,
+            "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
+            "workloadType": container_config.workload_type,
+            "workloadName": container_config.workload_name,
+            "containerNameMatch": container_config.container_name,
+            "labelSelector": {
+                "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
+                "matchExpressions": [
+                    {"key": expression["key"], "operator": expression["operator"], "values": [expression["value"]]}
+                    for expression in container_config.match_expressions
+                ],
+            },
+            "addPodLabel": self.data.add_pod_label,
+        }
+        name = self.generate_bklog_config_name(container_config.id)
+        status = Bcs(self.data.bcs_cluster_id).save_bklog_config(bklog_config_name=name, bklog_config=request_params)
+        return status
+
+    def generate_bklog_config_name(self, container_config_id) -> str:
+        return "{}_{}".format(self.data.collector_config_name, container_config_id)
+
+    def delete_container_release(self, container_config):
+        name = self.generate_bklog_config_name(container_config.id)
+        return Bcs(self.data.bcs_cluster_id).delete_bklog_config(name)
+
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
     """根据bk_biz_id和collector_config_name_en构建bk_data_name"""
@@ -1947,5 +2253,4 @@ def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
 def build_result_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
     """根据bk_biz_id和collector_config_name_en构建result_table_id"""
     result_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
-
     return result_table_id
