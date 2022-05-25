@@ -61,12 +61,15 @@ def healthz(request):
     exclude: 去除的namespace
     """
     format_type = request.GET.get("format_type")
-    include = request.GET.get("include", "")
-    exclude = request.GET.get("exclude", "")
-
+    include = request.GET.get("include", [])
+    if include:
+        include = include.split(",")
+    exclude = request.GET.get("exclude", [])
+    if exclude:
+        exclude = exclude.split(",")
     response = HttpResponse(
         content=HealthzHandler().get_data(
-            format_type=format_type, include_namespaces=include.split(","), exclude_namespaces=exclude.split(",")
+            format_type=format_type, include_namespaces=include, exclude_namespaces=exclude
         )
     )
 
