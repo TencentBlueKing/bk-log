@@ -51,8 +51,8 @@ THIRD_PARTY_CHECK_API = {
         "method": BKLoginApi.get_user,
     },
     "nodeman": {
-        "method": NodeApi.get_subscription_task_status,
-        "kwargs": {"subscription_id": DEFAULT_SUBSCRIPTION_ID},
+        "method": NodeApi.get_subscription_instance_status,
+        "kwargs": {"subscription_id_list": [DEFAULT_SUBSCRIPTION_ID], "no_request": True},
     },
     "monitor": {
         "method": MonitorApi.search_alarm_strategy_v3,
