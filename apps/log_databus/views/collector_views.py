@@ -30,7 +30,6 @@ from rest_framework.response import Response
 from apps.exceptions import ValidationError
 from apps.log_databus.constants import EtlConfig
 from apps.log_search.constants import HAVE_DATA_ID, BKDATA_OPEN, NOT_CUSTOM, CollectorScenarioEnum
-from apps.log_search.exceptions import BkJwtVerifyException
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.generic import ModelViewSet
@@ -1902,19 +1901,22 @@ class CollectorViewSet(ModelViewSet):
 
     @list_route(methods=["POST"], url_path="create_bcs_collector")
     def create_bcs_collector(self, request):
-        auth_info = Permission.get_auth_info(request, raise_exception=False)
-        if not auth_info:
-            raise BkJwtVerifyException()
+        # auth_info = Permission.get_auth_info(request, raise_exception=False)
+        # if not auth_info:
+        #     raise BkJwtVerifyException()
         data = self.params_valid(CreateBCSCollectorSerializer)
         return Response(
-            CollectorHandler().create_bcs_container_config(data=data, bk_app_code=auth_info["bk_app_code"]),
+            CollectorHandler().create_bcs_container_config(
+                data=data,
+                # bk_app_code=auth_info["bk_app_code"]
+            ),
         )
 
     @detail_route(methods=["POST"], url_path="update_bcs_collector")
     def update_bcs_collector(self, request, collector_config_id):
-        auth_info = Permission.get_auth_info(request, raise_exception=False)
-        if not auth_info:
-            raise BkJwtVerifyException()
+        # auth_info = Permission.get_auth_info(request, raise_exception=False)
+        # if not auth_info:
+        #     raise BkJwtVerifyException()
         data = self.params_valid(UpdateBCSCollectorSerializer)
         return Response(CollectorHandler(collector_config_id=collector_config_id).update_bcs_config(data=data))
 
