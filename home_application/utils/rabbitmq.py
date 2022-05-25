@@ -22,6 +22,7 @@ the project delivered to anyone in the future.
 import time
 import logging
 import pika
+from pika.exceptions import ChannelClosedByBroker
 from kombu.utils.url import url_to_parts
 
 import settings
@@ -80,6 +81,16 @@ class RabbitMQClient(object):
         try:
             channel = self.connection.channel()
             declear_queue_result = channel.queue_declare(queue=queue_name, durable=True)
+            result["data"] = declear_queue_result.method.message_count
+            result["status"] = True
+            channel.close()
+        except ChannelClosedByBroker as e:
+            x_max_priority = str(e).split("received none but current is the value '")[1].split("' of type")[0]
+            x_max_priority = int(x_max_priority)
+            channel = self.connection.channel()
+            declear_queue_result = channel.queue_declare(
+                queue=queue_name, durable=True, arguments={"x-max-priority": x_max_priority}
+            )
             result["data"] = declear_queue_result.method.message_count
             result["status"] = True
             channel.close()
