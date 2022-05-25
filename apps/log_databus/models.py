@@ -119,7 +119,7 @@ class CollectorConfig(SoftDeleteModel):
     bkdata_data_id_sync_times = models.IntegerField(_("调用数据平台创建data_id失败数"), default=0)
     collector_config_name_en = models.CharField(_("采集项英文名"), max_length=255, null=True, blank=True, default="")
     environment = models.CharField(_("环境"), max_length=128, null=True, blank=True)
-    bcs_cluster_id = models.IntegerField(_("bcs集群id"), default=0)
+    bcs_cluster_id = models.CharField(_("bcs集群id"), max_length=128, null=True, blank=True)
     extra_labels = models.JSONField(_("额外字段添加"), null=True, blank=True)
     add_pod_label = models.BooleanField(_("是否自动添加pod中的labels"), default=False)
 
