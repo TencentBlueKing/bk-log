@@ -128,7 +128,12 @@ class Bcs:
         except NotFoundError:
             # 不存在则新增
             action = "create"
-            d_client.create(resource, body=resource_body, namespace=namespace)
+            try:
+                d_client.create(resource, body=resource_body, namespace=namespace)
+            except Exception as e:  # pylint: disable=broad-except
+                # 异常捕获
+                logger.error("unexpected error in ensure resource:{}".format(e))
+                return False
         except Exception as e:  # pylint: disable=broad-except
             # 异常捕获
             logger.error("unexpected error in ensure resource:{}".format(e))
