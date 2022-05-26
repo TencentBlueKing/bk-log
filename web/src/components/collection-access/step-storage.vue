@@ -411,7 +411,7 @@ export default {
     },
   },
   async mounted() {
-    this.getStorage(true);
+    this.getStorage();
     this.operateType === 'add' && (this.isChangeSelect = true);
   },
   created() {
