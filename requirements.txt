@@ -71,6 +71,7 @@ jedi==0.17.2
 humanize==3.11.0
 
 # opentelemetry
+protobuf==3.19.4
 opentelemetry-api==1.6.0
 opentelemetry-sdk==1.6.0
 opentelemetry-exporter-otlp-proto-http==1.6.0
@@ -102,6 +103,12 @@ whitenoise==5.0
 
 # pypinyin
 pypinyin==0.46.0
+
+# pymysql
+pymysql==1.0.2
+
+# pika, rabbitmq client
+pika==1.2.1
 
 # 各自环境所需的不同依赖, 通过 sites/${env}/deploy/requirements_env.txt得到
 -r requirements_env.txt

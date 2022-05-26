@@ -22,12 +22,13 @@ the project delivered to anyone in the future.
 
 from django.conf import settings
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from blueapps.account.decorators import login_exempt
 
 # 开发框架中通过中间件默认是需要登录态的，如有不需要登录的，可添加装饰器login_exempt
 # 装饰器引入 from blueapps.account.decorators import login_exempt
 from apps.utils.db import get_toggle_data
+from home_application.handlers.healthz import HealthzHandler
 
 
 def home(request):
@@ -54,7 +55,30 @@ def contact(request):
 
 @login_exempt
 def healthz(request):
-    return JsonResponse({"server_up": 1})
+    """
+    format_type: 格式化类型, 支持 json, 默认为k8s
+    include: 包含的namespace, include不为空时, exclude失效
+    exclude: 去除的namespace
+    """
+    format_type = request.GET.get("format_type")
+    include = request.GET.get("include", [])
+    if include:
+        include = include.split(",")
+    exclude = request.GET.get("exclude", [])
+    if exclude:
+        exclude = exclude.split(",")
+    response = HttpResponse(
+        content=HealthzHandler().get_data(
+            format_type=format_type, include_namespaces=include, exclude_namespaces=exclude
+        )
+    )
+
+    if format_type == "json":
+        response["Content-Type"] = "application/json"
+    else:
+        response["Content-Type"] = "text/plain"
+
+    return response
 
 
 @login_exempt

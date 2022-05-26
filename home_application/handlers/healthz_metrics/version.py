@@ -19,48 +19,41 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext_lazy as _
+import os
+import logging
 
-from apps.api.base import DataAPI
-from config.domains import JOB_APIGATEWAY_ROOT_V2
+from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
 
-
-def get_job_request_before(params):
-    return params
+logger = logging.getLogger()
 
 
-class _JobApi:
-    MODULE = _("JOB")
+class VersionMetric(object):
+    @staticmethod
+    @register_healthz_metric(namespace="SAAS")
+    def check():
+        namespace_data = NamespaceData(namespace="SAAS", status=False, data=[])
+        version_result = VersionMetric().version()
+        if version_result.status:
+            namespace_data.status = True
+        else:
+            namespace_data.message = version_result.message
+            return namespace_data
 
-    def __init__(self):
-        self.fast_execute_script = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_execute_script",
-            description=_("快速执行脚本"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.fast_push_file = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_push_file",
-            description=_("快速分发文件"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_job_instance_log = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
-            description=_("根据作业id获取执行日志"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_public_script_list = DataAPI(
-            method="GET",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
-            description=_("查询公共脚本列表"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
+        namespace_data.data.append(version_result)
 
+        return namespace_data
 
-JobApi = _JobApi()
+    @staticmethod
+    def version():
+        result = HealthzMetric(status=False, metric_name="version")
+        cwd = os.getcwd()
+        try:
+            with open(os.path.join(cwd, "VERSION"), "r") as f:
+                result.metric_value = f.read().split("\n")[0]
+                result.status = True
+                f.close()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.exception("open VERSION failed: {}".format(e))
+            result.message = str(e)
+
+        return result
