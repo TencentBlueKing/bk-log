@@ -28,15 +28,23 @@ from django.utils.translation import ugettext_lazy as _
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_measure.events import NOTIFY_EVENT
 from apps.log_search.handlers.search.aggs_handlers import AggsViewAdapter
+from apps.log_search.models import LogIndexSet, ProjectInfo
 from apps.utils.local import set_local_param
 
 
 @task(ignore_result=True)
 def send(index_set_id):
     clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
+    log_index_set = LogIndexSet.objects.get(index_set_id=index_set_id)
     doc_count = get_doc_count(index_set_id=index_set_id, bk_biz_id=clustering_config.bk_biz_id)
-    msg = _("有新聚类创建，请关注！索引集id: {}, 创建者: {}, 过去一天的数据量doc_count为: {}").format(
-        index_set_id, clustering_config.created_by, doc_count
+    project = ProjectInfo.objects.get(bk_biz_id=clustering_config.bk_biz_id)
+    msg = _("有新聚类创建，请关注！索引集id: {}, 索引集名称: {}, 业务id: {}, 业务name: {}, 创建者: {}, 过去一天的数据量doc_count为: {}").format(
+        index_set_id,
+        log_index_set.index_set_name,
+        clustering_config.bk_biz_id,
+        project.project_name,
+        clustering_config.created_by,
+        doc_count,
     )
     NOTIFY_EVENT(
         content=f"{msg}",
