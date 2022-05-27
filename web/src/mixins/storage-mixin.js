@@ -24,7 +24,6 @@
 export default {
   watch: {
     'formData.storage_cluster_id': {
-      immediate: true,
       handler(val) {
         this.storageList.forEach((res) => {
           const arr = [];
@@ -73,9 +72,10 @@ export default {
   methods: {
     /**
      * @desc: 获取存储集群
-     * @param { Boolean } isStorage // 是否是存储步骤
+     * @param { String } environment ['storage','customize'] // 当前页
+     * @param { Boolean } isEdit // 是否是编辑
      */
-    getStorage(isStorage = false) {
+    getStorage(environment = 'storage', isEdit = false) {
       const queryData = { bk_biz_id: this.bkBizId };
       if (this.curCollect?.data_link_id) {
         queryData.data_link_id = this.curCollect.data_link_id;
@@ -95,12 +95,12 @@ export default {
             }
           }
           this.storageList = s1.concat(s2);
-          if (isStorage) {
+          if (environment === 'storage') {
             this.storageList.forEach(item => (item.is_platform
               ? this.clusterList.push(item)
               : this.exclusiveList.push(item)));
           }
-          if (this.isItsm && this.curCollect?.can_use_independent_es_cluster) {
+          if ((this.isItsm && this.curCollect?.can_use_independent_es_cluster) || isEdit) {
             // itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
           } else {
             const defaultItem = this.storageList.find(item => item.registered_system === '_default');
@@ -222,9 +222,7 @@ export default {
       } else {
         // 编辑进入时 回填副本数
         const notPerformList = ['custom-report-create', 'custom-report-edit'];
-        if (notPerformList.includes(this.$route.name)) {
-          this.formData.storage_replies = setup_config?.number_of_replicas_default || 0;
-        } else {
+        if (!notPerformList.includes(this.$route.name)) {
           this.formData.storage_replies = this.curCollect.storage_replies;
         }
       }
