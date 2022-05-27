@@ -408,6 +408,7 @@ class StorageCreateSerializer(serializers.Serializer):
     enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
     create_bkbase_cluster = serializers.BooleanField(label=_("是否同步到数据平台"), required=False)
     cluster_en_name = serializers.RegexField(label=_("集群英文名称"), regex=CLUSTER_NAME_EN_REGEX, required=False)
+    bk_audit_namespace = serializers.CharField(label=_("命名空间"), required=False)
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
