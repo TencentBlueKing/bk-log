@@ -528,6 +528,9 @@ class StorageHandler(object):
         :return:
         """
 
+        if params.get("bk_audit_namespace"):
+            params["custom_option"]["bk_audit_namespace"] = params["bk_audit_namespace"]
+
         if params.get("create_bkbase_cluster", False):
             bkbase_cluster_id = self.sync_es_cluster(params)
             params["custom_option"]["bkbase_cluster_id"] = bkbase_cluster_id
@@ -601,12 +604,16 @@ class StorageHandler(object):
             },
         )
 
-        # 更新BKBASE信息
+        # 更新信息
+        raw_custom_option = cluster_objs[0]["custom_option"]
+
         # 原集群信息中有，新集群信息中没有时进行补充
-        if cluster_objs[0]["custom_option"].get("bkbase_cluster_id") and not params["custom_option"].get(
-            "bkbase_cluster_id"
-        ):
-            params["custom_option"]["bkbase_cluster_id"] = cluster_objs[0]["custom_option"]["bkbase_cluster_id"]
+        if raw_custom_option.get("bkbase_cluster_id") and not params["custom_option"].get("bkbase_cluster_id"):
+            params["custom_option"]["bkbase_cluster_id"] = raw_custom_option["bkbase_cluster_id"]
+
+        # 更新Namespace信息
+        if raw_custom_option.get("bk_audit_namespace") and not params["custom_option"].get("bk_audit_namespace"):
+            params["custom_option"]["bk_audit_namespace"] = raw_custom_option["bk_audit_namespace"]
 
         cluster_obj = TransferApi.modify_cluster_info(params)
         cluster_obj["auth_info"]["password"] = ""
