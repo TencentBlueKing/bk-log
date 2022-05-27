@@ -22,6 +22,8 @@ the project delivered to anyone in the future.
 import time
 import logging
 
+from django.utils.translation import ugettext as _
+
 import settings
 from apps.api import BkItsmApi, CCApi, JobApi, NodeApi, BKLoginApi, MonitorApi, BkDataDatabusApi, BKPAASApi
 
@@ -100,7 +102,10 @@ class ThirdParty(object):
             )
             status, data = client.ping()
             result["status"] = status
-            result["message"] = data.get("message", "")
+            if data:
+                result["message"] = data.get("message", "")
+            else:
+                result["message"] = _("ping failed")
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to ping iam, err: {e}")
             result["message"] = str(e)

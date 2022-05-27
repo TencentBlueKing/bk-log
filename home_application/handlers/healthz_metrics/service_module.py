@@ -19,57 +19,54 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import settings
+import os
+import time
+import logging
 
+import requests
 from django.utils.translation import ugettext as _
 
 from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
-from home_application.utils.rabbitmq import RabbitMQClient
-from home_application.constants import QUEUES
+
+logger = logging.getLogger()
 
 
-class RabbitMQMetric(object):
+class HomeMetric(object):
     @staticmethod
-    @register_healthz_metric(namespace="rabbitmq")
+    @register_healthz_metric(namespace="service_module")
     def check():
-        namespace_data = NamespaceData(namespace="rabbitmq", status=False, data=[])
-        if not settings.BROKER_URL.startswith("amqp://"):
-            namespace_data.status = True
-            namespace_data.message = _("broker is not set to rabbitmq, skip this check")
-            return namespace_data
+        namespace_data = NamespaceData(namespace="service_module", status=False, data=[])
+        ping_result = HomeMetric().ping()
+        namespace_data.status = [i.status for i in ping_result].count(True) == len(ping_result)
+        if not namespace_data.status:
+            namespace_data.message = _("服务模块检查失败, 请查看细节")
 
-        ping_result = RabbitMQMetric().ping()
-        if ping_result.status:
-            namespace_data.status = True
-        else:
-            namespace_data.message = ping_result.message
-            return namespace_data
-
-        namespace_data.data.append(ping_result)
-        namespace_data.data.extend(RabbitMQMetric().get_queue_data())
-
+        namespace_data.data.extend(ping_result)
         return namespace_data
 
     @staticmethod
     def ping():
-        result = RabbitMQClient().get_instance().ping()
-        return HealthzMetric(
-            status=result["status"], metric_name="ping", metric_value=result["data"], message=result["message"]
-        )
-
-    @staticmethod
-    def get_queue_data():
         data = []
-        for queue_name in QUEUES:
-            result = RabbitMQClient.get_instance().queue_len(queue_name)
-            data.append(
-                HealthzMetric(
-                    status=result["status"],
-                    metric_value=result["data"],
-                    message=result["message"],
-                    metric_name="queue_len",
-                    dimensions={"queue_name": queue_name},
-                )
-            )
-
+        result = HealthzMetric(status=False, metric_name="home")
+        start_time = time.time()
+        try:
+            import sys
+            host = "localhost"
+            port = os.environ.get("PORT", 8000)
+            if "runserver" in sys.argv and len(sys.argv) > 2:
+                addr = sys.argv[2]
+                url = f"http://{addr}/"
+            else:
+                url = f"http://{host}:{port}/"
+            resp = requests.get(url)
+            if resp.status_code == 200:
+                result.status = True
+            else:
+                result.message = f"failed to call {url}, status_code: {resp.status_code}, msg: {resp.text}"
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"failed to call {url}, err: {e}")
+            return data
+        spend_time = time.time() - start_time
+        result.metric_value = "{}ms".format(int(spend_time * 1000))
+        data.append(result)
         return data

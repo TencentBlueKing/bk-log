@@ -130,7 +130,8 @@ class HealthzMetricCollector(object):
             except Exception as e:  # pylint: disable=broad-except
                 logger.exception("[healthz_data] collect metric [{}] failed: {}".format(namespace, e))
 
-        self.data["status"] = [i["status"] for i in self.data["data"].values()].count(True) == len(self.data["data"])
+        if self.data["data"]:
+            self.data["status"] = [i["status"] for i in self.data["data"].values()].count(True) == len(self.data["data"])
         if self.data["status"]:
             self.data["message"] = "health check success"
         else:
