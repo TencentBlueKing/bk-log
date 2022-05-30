@@ -81,7 +81,6 @@ INSTALLED_APPS += (
     "apps.log_extract",
     "apps.feature_toggle",
     "apps.log_clustering",
-    "blueapps.opentelemetry.instrument_app",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
@@ -98,6 +97,7 @@ MIDDLEWARE = (
     # http -> https 转换中间件
     "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
+    "blueapps.opentelemetry.metrics.middlewares.SaaSMetricsBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -121,6 +121,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
+    "blueapps.opentelemetry.metrics.middlewares.SaaSMetricsAfterMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
