@@ -39,13 +39,13 @@ class RabbitMQMetric(object):
             return namespace_data
 
         ping_result = RabbitMQMetric().ping()
+        namespace_data.data.append(ping_result)
         if ping_result.status:
             namespace_data.status = True
         else:
             namespace_data.message = ping_result.message
             return namespace_data
 
-        namespace_data.data.append(ping_result)
         namespace_data.data.extend(RabbitMQMetric().get_queue_data())
 
         return namespace_data
@@ -54,7 +54,11 @@ class RabbitMQMetric(object):
     def ping():
         result = RabbitMQClient().get_instance().ping()
         return HealthzMetric(
-            status=result["status"], metric_name="ping", metric_value=result["data"], message=result["message"]
+            status=result["status"],
+            metric_name="ping",
+            metric_value=result["data"],
+            message=result["message"],
+            suggestion=result["suggestion"],
         )
 
     @staticmethod

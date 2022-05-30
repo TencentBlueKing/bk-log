@@ -63,6 +63,7 @@ class HomeMetric(object):
                 result.status = True
             else:
                 result.message = f"failed to call {url}, status_code: {resp.status_code}, msg: {resp.text}"
+                result.suggestion = "确认服务是否异常, 若无异常, 则检查环境变量SERVICE_LISTENING_DOMAIN是否配置正确"
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to call {url}, err: {e}")
             return data
