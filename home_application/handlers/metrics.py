@@ -56,13 +56,20 @@ class HealthzMetric(object):
     """健康检查指标, 单个数据类"""
 
     def __init__(
-        self, status: bool, metric_name: str, metric_value: str = "", dimensions: dict = None, message: str = ""
+        self,
+        status: bool,
+        metric_name: str,
+        metric_value: str = "",
+        dimensions: dict = None,
+        message: str = "",
+        suggestion: str = "",
     ):
         self.status = status
         self.metric_name = metric_name
         self.metric_value = metric_value
         self.dimensions = dimensions
         self.message = message
+        self.suggestion = suggestion
 
     def to_dict(self) -> dict:
         return {
@@ -71,6 +78,7 @@ class HealthzMetric(object):
             "metric_value": self.metric_value,
             "dimensions": self.dimensions,
             "message": self.message,
+            "suggestion": self.suggestion,
         }
 
 
@@ -130,7 +138,10 @@ class HealthzMetricCollector(object):
             except Exception as e:  # pylint: disable=broad-except
                 logger.exception("[healthz_data] collect metric [{}] failed: {}".format(namespace, e))
 
-        self.data["status"] = [i["status"] for i in self.data["data"].values()].count(True) == len(self.data["data"])
+        if self.data["data"]:
+            self.data["status"] = [i["status"] for i in self.data["data"].values()].count(True) == len(
+                self.data["data"]
+            )
         if self.data["status"]:
             self.data["message"] = "health check success"
         else:

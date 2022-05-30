@@ -19,10 +19,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-
 from django.conf import settings
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
+from django.utils.translation import ugettext as _
 from blueapps.account.decorators import login_exempt
 
 # 开发框架中通过中间件默认是需要登录态的，如有不需要登录的，可添加装饰器login_exempt
@@ -84,5 +84,11 @@ def healthz(request):
 @login_exempt
 def metrics(request):
     from django_prometheus import exports
-
+    from settings import PROMETHEUS_METRICS_TOKEN
+    token = request.GET.get("token")
+    if PROMETHEUS_METRICS_TOKEN:
+        if token is None:
+            return HttpResponse(_("缺少参数token"))
+        if token != PROMETHEUS_METRICS_TOKEN:
+            return HttpResponse(_("token验证失败"))
     return exports.ExportToDjangoView(request)
