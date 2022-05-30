@@ -24,6 +24,7 @@ import time
 import logging
 
 import requests
+from settings import SERVICE_LISTENING_DOMAIN
 from django.utils.translation import ugettext as _
 
 from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
@@ -49,15 +50,14 @@ class HomeMetric(object):
         data = []
         result = HealthzMetric(status=False, metric_name="home")
         start_time = time.time()
+        if not SERVICE_LISTENING_DOMAIN:
+            result.status = True
+            result.message = _("监听域名未配置, 跳过检查")
+            data.append(result)
+            return data
+        port = os.environ.get("PORT", 8000)
         try:
-            import sys
-            host = "localhost"
-            port = os.environ.get("PORT", 8000)
-            if "runserver" in sys.argv and len(sys.argv) > 2:
-                addr = sys.argv[2]
-                url = f"http://{addr}/"
-            else:
-                url = f"http://{host}:{port}/"
+            url = f"{SERVICE_LISTENING_DOMAIN}:{port}/"
             resp = requests.get(url)
             if resp.status_code == 200:
                 result.status = True
