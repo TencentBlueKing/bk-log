@@ -19,25 +19,28 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import os
+import time
 import logging
 
+import requests
+from settings import SERVICE_LISTENING_DOMAIN
 from django.utils.translation import ugettext as _
 
 from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
-from home_application.utils.third_party import ThirdParty, THIRD_PARTY_CHECK_API
 
 logger = logging.getLogger()
 
 
-class ThirdPartyCheck(object):
+class HomeMetric(object):
     @staticmethod
-    @register_healthz_metric(namespace="third_party")
-    def check() -> NamespaceData:
-        namespace_data = NamespaceData(namespace="third_party", status=False, data=[])
-        ping_result = ThirdPartyCheck().ping()
+    @register_healthz_metric(namespace="service_module")
+    def check():
+        namespace_data = NamespaceData(namespace="service_module", status=False, data=[])
+        ping_result = HomeMetric().ping()
         namespace_data.status = [i.status for i in ping_result].count(True) == len(ping_result)
         if not namespace_data.status:
-            namespace_data.message = _("周边依赖检查失败, 请查看细节")
+            namespace_data.message = _("服务模块检查失败, 请查看细节")
 
         namespace_data.data.extend(ping_result)
         return namespace_data
@@ -45,30 +48,26 @@ class ThirdPartyCheck(object):
     @staticmethod
     def ping():
         data = []
-        for module in THIRD_PARTY_CHECK_API:
-            result = ThirdParty.call_api(module)
-            data.append(
-                HealthzMetric(
-                    status=result["status"],
-                    metric_name=module,
-                    metric_value=result["data"],
-                    message=result["message"],
-                    suggestion=result["suggestion"],
-                )
-            )
-
-        check_iam_result = ThirdParty.check_iam()
-        data.append(
-            HealthzMetric(
-                status=check_iam_result["status"],
-                metric_name="iam",
-                metric_value=check_iam_result["data"],
-                message=check_iam_result["message"],
-                suggestion=check_iam_result["suggestion"],
-            )
-        )
-
-        # check esb, 只要有一个接口调成功, ESB就是正常的
-        data.append(HealthzMetric(status=[i.status for i in data].count(True) > 0, metric_name="esb"))
-
+        result = HealthzMetric(status=False, metric_name="home")
+        start_time = time.time()
+        if not SERVICE_LISTENING_DOMAIN:
+            result.status = True
+            result.message = _("监听域名未配置, 跳过检查")
+            data.append(result)
+            return data
+        port = os.environ.get("PORT", 8000)
+        try:
+            url = f"{SERVICE_LISTENING_DOMAIN}:{port}/"
+            resp = requests.get(url)
+            if resp.status_code == 200:
+                result.status = True
+            else:
+                result.message = f"failed to call {url}, status_code: {resp.status_code}, msg: {resp.text}"
+                result.suggestion = "确认服务是否异常, 若无异常, 则检查环境变量SERVICE_LISTENING_DOMAIN是否配置正确"
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"failed to call {url}, err: {e}")
+            return data
+        spend_time = time.time() - start_time
+        result.metric_value = "{}ms".format(int(spend_time * 1000))
+        data.append(result)
         return data

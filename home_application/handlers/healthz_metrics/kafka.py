@@ -29,13 +29,13 @@ class KafkaMetric(object):
     def check() -> NamespaceData:
         namespace_data = NamespaceData(namespace="kafka", status=False, data=[])
         ping_result = KafkaMetric().ping()
+        namespace_data.data.append(ping_result)
         if ping_result.status:
             namespace_data.status = True
         else:
             namespace_data.message = ping_result.message
             return namespace_data
 
-        namespace_data.data.append(ping_result)
         namespace_data.data.extend(KafkaMetric().get_offsets())
 
         return namespace_data
@@ -44,7 +44,11 @@ class KafkaMetric(object):
     def ping():
         result = KafkaClient.get_instance().ping()
         return HealthzMetric(
-            status=result["status"], metric_name="ping", metric_value=result["data"], message=result["message"]
+            status=result["status"],
+            metric_name="ping",
+            metric_value=result["data"],
+            message=result["message"],
+            suggestion="确认Kafka集群是否可用",
         )
 
     @staticmethod

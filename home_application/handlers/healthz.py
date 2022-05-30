@@ -91,9 +91,11 @@ class HealthzHandler(object):
         for namespace in namespace_datas:
             namespace_data = namespace_datas[namespace]
             if namespace_data["status"]:
-                output = "[+]{} {}\n".format(namespace, namespace_data["message"])
+                output = "\033[32m[+]{} {}\033[0m\n".format(namespace, namespace_data["message"])
             else:
-                output = "[-]{} failed, message: {}\n".format(namespace, namespace_datas[namespace]["message"])
+                output = "\033[31m[-]{} failed, message: {}\033[0m\n".format(
+                    namespace, namespace_datas[namespace]["message"]
+                )
             outputs.append(output)
 
             for metric_data in namespace_data["data"]:
@@ -103,10 +105,13 @@ class HealthzHandler(object):
                     dimensions = ",".join([f"{key}={value}" for key, value in metric_data["dimensions"].items()])
                     output = f"{output} {dimensions}"
                 if metric_data["status"]:
-                    output = "[+]{} {}\n".format(output, metric_data["metric_value"])
+                    output = "\033[32m[+]{} {}\033[0m\n".format(output, metric_data["metric_value"])
                 else:
-                    output = "[-]{} {}\n".format(output, metric_data["message"])
+                    output = "\033[31m[-]{} {}\033[0m\n".format(output, metric_data["message"])
                 outputs.append(output)
+                if not metric_data["status"] and metric_data.get("suggestion", ""):
+                    output = "\033[33m[建议]: {}\033[0m\n".format(metric_data["suggestion"])
+                    outputs.append(output)
             outputs.append("\n")
 
         return "".join(outputs)
