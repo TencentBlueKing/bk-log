@@ -48,3 +48,13 @@ class _BkDataResourceCenterApi:
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
+        self.update_resource_set = DataAPI(
+            method="PATCH",
+            url=RESOURCE_CENTER_APIGATEWAY_ROOT + "resource_sets/{resource_set_id}/",
+            module=self.MODULE,
+            description="更新资源",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            url_keys=["resource_set_id"],
+        )

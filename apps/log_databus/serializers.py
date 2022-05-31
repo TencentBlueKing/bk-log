@@ -466,6 +466,7 @@ class StorageUpdateSerializer(serializers.Serializer):
     description = serializers.CharField(label=_("集群描述"), required=False, default="", allow_blank=True)
     enable_archive = serializers.BooleanField(label=_("是否开启日志归档"))
     enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
+    bk_audit_namespace = serializers.CharField(label=_("命名空间"), required=False)
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
