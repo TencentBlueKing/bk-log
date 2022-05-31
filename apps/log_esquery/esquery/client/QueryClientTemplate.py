@@ -29,7 +29,7 @@ from elasticsearch6 import exceptions as EsExceptions6
 from apps.log_esquery.exceptions import EsTimeoutException
 
 
-class QueryClientTemplate(object):
+class QueryClientTemplate(object):  # pylint: disable=invalid-name
     def __init__(self):
         self.host: str = ""
         self.port: int = -1

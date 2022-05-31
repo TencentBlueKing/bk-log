@@ -895,7 +895,9 @@ class StorageHandler(object):
                         cluster_info_by_id[repository["cluster_id"]].get("source_type")
                     ),
                     "cluster_source_type": cluster_info_by_id[repository["cluster_id"]].get("source_type"),
-                    "create_time": format_user_time_zone(repository["create_time"], get_local_param("time_zone")),
+                    "create_time": format_user_time_zone(
+                        repository["create_time"], get_local_param("time_zone", settings.TIME_ZONE)
+                    ),
                 }
             )
             result.append(repository)

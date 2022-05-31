@@ -36,6 +36,7 @@ from apps.log_clustering.exceptions import (
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.handlers.pipline_service.constants import OperatorServiceEnum
 from apps.log_clustering.models import ClusteringConfig
+from apps.log_clustering.tasks.msg import send
 from apps.log_clustering.tasks.flow import update_filter_rules, update_clustering_clean
 from apps.log_databus.constants import EtlConfig
 from apps.log_databus.handlers.collector import CollectorHandler
@@ -156,6 +157,7 @@ class ClusteringConfigHandler(object):
                     etl_config=all_etl_config.etl_config,
                     clustering_fields=clustering_fields,
                 )
+            send.delay(index_set_id=index_set_id)
             operator_aiops_service(index_set_id)
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 

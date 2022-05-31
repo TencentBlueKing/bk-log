@@ -226,18 +226,21 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      return this.clusterSwitch
-        ? (this.configID
-          ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage'))
-        : this.$t('goSettingMessage');
+      return this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage');
     },
     exhibitOperate() {
-      return this.clusterSwitch
-        ? (this.configID ? this.$t('跳转到日志清洗') : '')
-        : this.$t('去设置');
+      return this.configID ? this.$t('跳转到日志清洗') : '';
     },
     clusteringField() {
-      return this.configData?.extra?.clustering_field || '';
+      // 如果有聚类字段则使用设置的
+      if (this.configData?.extra?.clustering_field) return this.configData.extra.clustering_field;
+      // 如果有log字段则使用log类型字段
+      const logFieldItem = this.totalFields.find(item => item.field_name === 'log');
+      if (logFieldItem) return logFieldItem.field_alias;
+      // 如果没有设置聚类字段和log字段则使用text列表里的第一项值
+      const textTypeFieldList = this.totalFields.filter(item => item.is_analyzed) || [];
+      if (textTypeFieldList.length) return textTypeFieldList[0].field_alias;
+      return  '';
     },
     bkBizId() {
       return this.$store.state.bkBizId;
@@ -279,10 +282,6 @@ export default {
            *  有text则提示去开启日志聚类 无则显示跳转计算平台
            */
           this.isHaveText = newList.some(el => el.field_type === 'text');
-          if (!this.configData.is_active) {
-            this.exhibitAll = false;
-            return;
-          }
           // 初始化分组下拉列表
           this.filterGroupList();
           this.initTable();
@@ -394,11 +393,6 @@ export default {
       if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveText) {
         const jumpUrl = `${window.BKDATA_URL}`;
         window.open(jumpUrl, '_blank');
-        return;
-      }
-      // 未开启日志聚类去设置
-      if (!this.clusterSwitch) {
-        this.$emit('showSettingLog');
         return;
       }
       // 无清洗 去清洗

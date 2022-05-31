@@ -24,7 +24,7 @@
   <bk-dialog
     v-model="isShowDialog"
     theme="primary"
-    width="1600"
+    width="80%"
     render-directive="if"
     :position="position"
     :show-footer="false"

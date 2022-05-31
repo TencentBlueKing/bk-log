@@ -19,3 +19,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from django.conf.urls import url, include
+from rest_framework import routers
+
+from apps.log_measure.views import StatisticViewSet
+
+router = routers.DefaultRouter(trailing_slash=True)
+router.register(r"log_measure", StatisticViewSet, basename="log_measure")
+urlpatterns = [url(r"", include(router.urls))]

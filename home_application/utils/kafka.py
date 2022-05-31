@@ -19,38 +19,60 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext as _
-from django.db.models import Count
+import time
+import logging
 
-from apps.log_search.models import LogIndexSet
-from apps.log_measure.utils.metric import MetricUtils
-from bk_monitor.constants import TimeFilterEnum
-from bk_monitor.utils.metric import register_metric, Metric
+from kafka import KafkaAdminClient
+
+import settings
+
+logger = logging.getLogger()
 
 
-class IndexMetricCollector(object):
-    @staticmethod
-    @register_metric("index_set", description=_("索引集"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
-    def index_set():
-        groups = (
-            LogIndexSet.objects.values("project_id", "scenario_id").order_by().annotate(count=Count("index_set_id"))
-        )
+class KafkaClient(object):
+    _instance = None
 
-        metrics = [
-            Metric(
-                metric_name="count",
-                metric_value=group["count"],
-                dimensions={
-                    "target_bk_biz_id": MetricUtils.get_instance().project_biz_info[group["project_id"]]["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().project_biz_info[group["project_id"]][
-                        "bk_biz_name"
-                    ],
-                    "scenario_id": group["scenario_id"],
-                },
-                timestamp=MetricUtils.get_instance().report_ts,
-            )
-            for group in groups
-            if MetricUtils.get_instance().project_biz_info.get(group["project_id"])
-        ]
+    def __init__(self) -> None:
+        start_time = time.time()
+        try:
+            self.client = KafkaAdminClient(bootstrap_servers=f"{settings.DEFAULT_KAFKA_HOST}:9092")
+            self.message = "ok"
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"failed to connect to kafka, err: {e}")
+            self.client = None
+            self.message = str(e)
 
-        return metrics
+        spend_time = time.time() - start_time
+        self.ms = "{}ms".format(int(spend_time * 1000))
+
+    @classmethod
+    def get_instance(cls, *args, **kwargs):
+        if cls._instance:
+            return cls._instance
+        else:
+            cls._instance = KafkaClient(*args, **kwargs)
+            return cls._instance
+
+    @classmethod
+    def del_instance(cls):
+        cls._instance = None
+
+    def __del__(self):
+        if self.client:
+            self.client.close()
+
+    def ping(self):
+        result = {"status": False, "data": self.ms, "message": self.message}
+        if self.client:
+            result["status"] = True
+        return result
+
+    def get_consumer_groups(self):
+        if self.client:
+            return self.client.list_consumer_groups()
+        return None
+
+    def get_consumer_group_offsets(self, group_name: str):
+        if self.client:
+            return self.client.list_consumer_group_offsets(group_name)
+        return None

@@ -74,7 +74,7 @@ def shutdown_collector_warm_storage_config(cluster_id):
                     },
                 }
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("refresh collector storage config error", e)
             continue
 
