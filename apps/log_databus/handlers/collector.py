@@ -1868,7 +1868,7 @@ class CollectorHandler(object):
         custom_config = get_custom(custom_type)
         from apps.log_databus.handlers.etl import EtlHandler
 
-        etl_handler = EtlHandler(self.data.collector_config_id)
+        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
         etl_params = {
             "table_id": collector_config_name_en,
             "storage_cluster_id": storage_cluster_id,
@@ -1947,7 +1947,7 @@ class CollectorHandler(object):
 
         from apps.log_databus.handlers.etl import EtlHandler
 
-        etl_handler = EtlHandler(self.data.collector_config_id)
+        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
         etl_params = {
             "table_id": self.data.collector_config_name_en,
             "storage_cluster_id": storage_cluster_id,
