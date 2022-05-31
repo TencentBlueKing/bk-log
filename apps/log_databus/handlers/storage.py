@@ -472,12 +472,12 @@ class StorageHandler(object):
                     warm_node_num += 1
         return hot_node_num, warm_node_num
 
-    def sync_es_cluster(self, params: dict) -> str:
+    def sync_es_cluster(self, params: dict, is_create: bool = True) -> str:
         # 获取参数字典
         setup_config = params["setup_config"]
         bk_biz_id = params["bk_biz_id"]
         username = get_request_username()
-        cluster_en_name = f"{bk_biz_id}_{params['cluster_en_name']}"
+        cluster_en_name = f"{bk_biz_id}_{params['cluster_en_name']}" if is_create else params["cluster_en_name"]
         cluster_name = params.get("cluster_name", cluster_en_name)
         # 获取节点信息
         hot_node_num, warm_node_num = self.get_hot_warm_node_info(params)
@@ -514,9 +514,14 @@ class StorageHandler(object):
             },
             "version": params["version"],
         }
+
         # 创建集群
-        bkbase_result = BkDataResourceCenterApi.create_resource_set(bkbase_params)
-        logger.info("BkDataResourceCreate Result %s", bkbase_result)
+        if is_create:
+            bkbase_result = BkDataResourceCenterApi.create_resource_set(bkbase_params)
+        # 更新集群
+        else:
+            bkbase_result = BkDataResourceCenterApi.update_resource_set(bkbase_params)
+        logger.info("BkDataResourceAPI Result %s", bkbase_result)
         if not isinstance(bkbase_result, dict) or not bkbase_result.get("resource_capacity", {}).get("storage"):
             raise BKBaseStorageSyncFailed(bkbase_result)
         return bkbase_result["resource_capacity"]["storage"]["cluster_name"]
@@ -590,11 +595,12 @@ class StorageHandler(object):
             params["auth_info"]["password"] = cluster_objs[0]["auth_info"]["password"]
 
         hot_warm_config_is_enabled = params["custom_option"]["hot_warm_config"]["is_enabled"]
-        BkLogApi.connectivity_detect(
+        connect_result, version_num_str = BkLogApi.connectivity_detect(
             params={
                 "bk_biz_id": bk_biz_id,
                 "domain_name": params["domain_name"],
                 "port": params["port"],
+                "version_info": True,
                 "schema": params["schema"],
                 "cluster_id": self.cluster_id,
                 "es_auth_info": {
@@ -605,14 +611,19 @@ class StorageHandler(object):
         )
 
         # 更新信息
-        raw_custom_option = cluster_objs[0]["custom_option"]
+        raw_custom_option = cluster_objs[0]["cluster_config"]["custom_option"]
 
         # 原集群信息中有，新集群信息中没有时进行补充
-        if raw_custom_option.get("bkbase_cluster_id") and not params["custom_option"].get("bkbase_cluster_id"):
-            params["custom_option"]["bkbase_cluster_id"] = raw_custom_option["bkbase_cluster_id"]
+        if raw_custom_option.get("bkbase_cluster_id"):
+            params["cluster_en_name"] = raw_custom_option["bkbase_cluster_id"]
+            params["version"] = version_num_str
+            bkbase_cluster_id = self.sync_es_cluster(params, False)
+            params["custom_option"]["bkbase_cluster_id"] = bkbase_cluster_id
 
         # 更新Namespace信息
-        if raw_custom_option.get("bk_audit_namespace") and not params["custom_option"].get("bk_audit_namespace"):
+        if params.get("bk_audit_namespace"):
+            params["custom_option"]["bk_audit_namespace"] = params["bk_audit_namespace"]
+        elif raw_custom_option.get("bk_audit_namespace"):
             params["custom_option"]["bk_audit_namespace"] = raw_custom_option["bk_audit_namespace"]
 
         cluster_obj = TransferApi.modify_cluster_info(params)
