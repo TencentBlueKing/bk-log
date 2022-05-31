@@ -21,6 +21,8 @@ the project delivered to anyone in the future.
 """
 import settings
 
+from django.utils.translation import ugettext as _
+
 from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
 from home_application.utils.rabbitmq import RabbitMQClient
 from home_application.constants import QUEUES
@@ -33,17 +35,17 @@ class RabbitMQMetric(object):
         namespace_data = NamespaceData(namespace="rabbitmq", status=False, data=[])
         if not settings.BROKER_URL.startswith("amqp://"):
             namespace_data.status = True
-            namespace_data.message = "broker is not set to rabbitmq, skip this check"
+            namespace_data.message = _("broker is not set to rabbitmq, skip this check")
             return namespace_data
 
         ping_result = RabbitMQMetric().ping()
+        namespace_data.data.append(ping_result)
         if ping_result.status:
             namespace_data.status = True
         else:
             namespace_data.message = ping_result.message
             return namespace_data
 
-        namespace_data.data.append(ping_result)
         namespace_data.data.extend(RabbitMQMetric().get_queue_data())
 
         return namespace_data
@@ -52,7 +54,11 @@ class RabbitMQMetric(object):
     def ping():
         result = RabbitMQClient().get_instance().ping()
         return HealthzMetric(
-            status=result["status"], metric_name="ping", metric_value=result["data"], message=result["message"]
+            status=result["status"],
+            metric_name="ping",
+            metric_value=result["data"],
+            message=result["message"],
+            suggestion=result["suggestion"],
         )
 
     @staticmethod

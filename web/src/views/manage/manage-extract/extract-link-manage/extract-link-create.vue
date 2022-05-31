@@ -514,10 +514,12 @@ export default {
     }
 
   }
+
   ::v-deep .user-selector {
     width: 100%;
   }
+
   ::v-deep .is-error .user-selector-container {
-      border-color: #ff5656;
+    border-color: #ff5656;
   }
 </style>

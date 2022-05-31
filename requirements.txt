@@ -71,6 +71,7 @@ jedi==0.17.2
 humanize==3.11.0
 
 # opentelemetry
+protobuf==3.19.4
 opentelemetry-api==1.6.2
 opentelemetry-sdk==1.6.2
 opentelemetry-exporter-otlp-proto-http==1.6.2

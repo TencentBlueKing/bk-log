@@ -34,13 +34,13 @@ class RedisMetric(object):
     def check():
         namespace_data = NamespaceData(namespace="redis", status=False, data=[])
         ping_result = RedisMetric().ping()
+        namespace_data.data.append(ping_result)
         if ping_result.status:
             namespace_data.status = True
         else:
             namespace_data.message = ping_result.message
             return namespace_data
 
-        namespace_data.data.append(ping_result)
         namespace_data.data.extend(RedisMetric().get_variables())
         namespace_data.data.append(RedisMetric().hit_rate())
         namespace_data.data.extend(RedisMetric.queue())
@@ -65,7 +65,11 @@ class RedisMetric(object):
     def ping():
         result = RedisClient.get_instance().ping()
         return HealthzMetric(
-            status=result["status"], metric_name="ping", metric_value=result["data"], message=result["message"]
+            status=result["status"],
+            metric_name="ping",
+            metric_value=result["data"],
+            message=result["message"],
+            suggestion=result["suggestion"],
         )
 
     @staticmethod

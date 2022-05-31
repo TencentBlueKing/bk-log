@@ -969,6 +969,16 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
     CACHES["default"] = CACHES["redis_sentinel"]
     CACHES["login_db"] = CACHES["redis_sentinel"]
 
+# ==============================================================================
+# Prometheus metrics token
+PROMETHEUS_METRICS_TOKEN = os.environ.get("PROMETHEUS_METRICS_TOKEN", "")
+# ==============================================================================
+
+# ==============================================================================
+# Listening Domain, 格式 http(s)://domain_name
+SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
+# ==============================================================================
+
 """
 以下为框架代码 请勿修改
 """

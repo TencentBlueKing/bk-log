@@ -61,7 +61,7 @@ class RabbitMQClient(object):
         cls._instance = None
 
     def ping(self):
-        result = {"status": False, "data": None, "message": ""}
+        result = {"status": False, "data": None, "message": "", "suggestion": ""}
         start_time = time.time()
         try:
             auth = pika.PlainCredentials(self.user, self.password)
@@ -72,6 +72,7 @@ class RabbitMQClient(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to ping rabbitmq, msg: {e}")
             result["message"] = str(e)
+            result["suggestion"] = "确认RabbitMQ是否可用"
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))
         return result

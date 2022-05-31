@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 
 HEALTHZ_METRICS_IMPORT_PATHS = [
+    "home_application.handlers.healthz_metrics.service_module",
     "home_application.handlers.healthz_metrics.version",
     "home_application.handlers.healthz_metrics.mysql",
     "home_application.handlers.healthz_metrics.redis",
