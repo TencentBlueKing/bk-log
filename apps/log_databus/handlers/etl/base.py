@@ -67,10 +67,8 @@ class EtlHandler(object):
         except CollectorConfig.DoesNotExist:
             raise CollectorConfigNotExistException()
 
-    def __new__(cls, *args, **kwargs):
-        # 获取处理器信息
-        etl_processor = kwargs.get("etl_processor", ETLProcessorChoices.TRANSFER.value)
-        collector_config_id = kwargs.get("collector_config_id")
+    @classmethod
+    def get_instance(cls, collector_config_id=None, etl_processor=ETLProcessorChoices.TRANSFER.value):
         if collector_config_id:
             collect_config = cls._get_collect_config(collector_config_id)
             etl_processor = collect_config.etl_processor
@@ -84,7 +82,7 @@ class EtlHandler(object):
             etl_handler = import_string(
                 "apps.log_databus.handlers.etl.{}.{}".format(etl_processor, mapping.get(etl_processor))
             )
-            return object.__new__(etl_handler)
+            return etl_handler(collector_config_id=collector_config_id, etl_processor=etl_processor)
         except ImportError as error:
             raise NotImplementedError(f"EtlHandler of {etl_processor} not implement, error: {error}")
 

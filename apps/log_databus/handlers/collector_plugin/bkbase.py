@@ -72,7 +72,7 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
         创建或更新清洗入库
         """
 
-        etl_handler = EtlHandler(etl_processor=self.collector_plugin.etl_processor)
+        etl_handler = EtlHandler.get_instance(etl_processor=self.collector_plugin.etl_processor)
         etl_handler.update_or_create(instance=self.collector_plugin, is_create=is_create, params=params)
 
     def _update_or_create_instance_etl(self, collect_config: CollectorConfig, params: dict) -> None:
@@ -81,7 +81,7 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
         """
 
         # 使用对应的配置创建清洗与入库
-        etl_handler = EtlHandler(
+        etl_handler = EtlHandler.get_instance(
             etl_processor=self.collector_plugin.etl_processor, collector_config_id=collect_config.collector_config_id
         )
         etl_handler.update_or_create(instance=collect_config, params=params)
