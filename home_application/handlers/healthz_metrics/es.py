@@ -40,6 +40,7 @@ class ESMetric(object):
     def check():
         namespace_data = NamespaceData(namespace="es", status=False, data=[])
         ping_result = ESMetric().ping()
+        namespace_data.data.extend(ping_result)
         if not ping_result:
             namespace_data.status = True
             namespace_data.message = _("no pubilc es config")
@@ -74,12 +75,14 @@ class ESMetric(object):
             start_time = time.time()
             try:
                 es_client = MetricUtils.get_instance().get_es_client(cluster_info=cluster)
+                cluster_name = cluster.get("cluster_config").get("cluster_name")
                 if es_client:
                     result.status = True
-                    result.dimensions = {"cluster_name": cluster.get("cluster_config").get("cluster_name")}
+                    result.dimensions = {"cluster_name": cluster_name}
             except (EsConnectFailException, gaierror) as e:
                 logger.error(f"failed to get es client, err: {e}")
                 result.message = str(e)
+                result.suggestion = f"确认ES集群[{cluster_name}]是否可用"
 
             spend_time = time.time() - start_time
             result.metric_value = "{}ms".format(int(spend_time * 1000))

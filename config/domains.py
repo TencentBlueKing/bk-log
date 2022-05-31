@@ -71,6 +71,6 @@ API_ROOTS = [
 env_domains = load_domains(settings)
 for _root in API_ROOTS:
     with ignored(Exception):
-        locals()[_root] = env_domains.get(_root)
+        locals()[_root] = env_domains.get(_root, "")
 
 __all__ = API_ROOTS

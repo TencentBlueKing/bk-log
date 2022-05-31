@@ -79,13 +79,14 @@ class RedisClient(object):
         return result
 
     def ping(self):
-        result = {"status": False, "data": None, "message": ""}
+        result = {"status": False, "data": None, "message": "", "suggestion": ""}
         start_time = time.time()
         try:
             result["status"] = self.rds.ping()
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to ping redis, err: {e}")
             result["message"] = str(e)
+            result["suggestion"] = "确认Redis是否可用"
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))
         return result

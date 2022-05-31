@@ -33,13 +33,12 @@ class VersionMetric(object):
     def check():
         namespace_data = NamespaceData(namespace="SAAS", status=False, data=[])
         version_result = VersionMetric().version()
+        namespace_data.data.append(version_result)
         if version_result.status:
             namespace_data.status = True
         else:
             namespace_data.message = version_result.message
             return namespace_data
-
-        namespace_data.data.append(version_result)
 
         return namespace_data
 
@@ -55,5 +54,6 @@ class VersionMetric(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.exception("open VERSION failed: {}".format(e))
             result.message = str(e)
+            result.suggestion = "缺少VERSION, 请检查打包流程是否正确"
 
         return result
