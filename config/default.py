@@ -97,7 +97,7 @@ MIDDLEWARE = (
     # http -> https 转换中间件
     "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
-    "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "blueapps.opentelemetry.metrics.middlewares.SaaSMetricsBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -121,7 +121,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
-    "django_prometheus.middleware.PrometheusAfterMiddleware",
+    "blueapps.opentelemetry.metrics.middlewares.SaaSMetricsAfterMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
