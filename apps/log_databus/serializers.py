@@ -31,14 +31,12 @@ from apps.log_databus.constants import EsSourceType
 from apps.log_databus.models import CleanTemplate, CollectorConfig, CollectorPlugin
 from apps.log_search.constants import (
     CollectorScenarioEnum,
-    EncodingsEnum,
     ConditionFilterTypeEnum,
     ConditionTypeEnum,
     CustomTypeEnum,
     EncodingsEnum,
     EtlConfigEnum,
     FieldBuiltInEnum,
-    CustomTypeEnum,
 )
 
 
