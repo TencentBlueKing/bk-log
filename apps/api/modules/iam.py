@@ -50,6 +50,15 @@ class _IAMApi(object):
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
+        self.share_system_info = DataAPI(
+            method="GET",
+            url=IAM_APIGATEWAY_ROOT_V2 + "share/systems/{system_id}/",
+            module=self.MODULE,
+            url_keys=["system_id"],
+            description="系统共享信息",
+            default_return_value=None,
+            before_request=add_esb_info_before_request,
+        )
 
 
 IAMApi = _IAMApi()

@@ -54,6 +54,13 @@ class _JobApi:
             module=self.MODULE,
             before_request=get_job_request_before,
         )
+        self.get_public_script_list = DataAPI(
+            method="GET",
+            url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
+            description=_("查询公共脚本列表"),
+            module=self.MODULE,
+            before_request=get_job_request_before,
+        )
 
 
 JobApi = _JobApi()

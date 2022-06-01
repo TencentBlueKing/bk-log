@@ -957,7 +957,7 @@ class TestCollector(TestCase):
         collector1 = CollectorHandler(collector_config_id=collector_config_id)
         task_id_one = copy.deepcopy(collector1.data.task_id_list)
         task_id_one.append(str(LAST_TASK_ID))
-        result1 = collector1._run_subscription_task("START", target_nodes)
+        result1 = collector1._run_subscription_task(nodes=target_nodes)
         self.assertEqual(result1, task_id_one)
 
     @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": 6})

@@ -39,6 +39,7 @@ from apps.iam import Permission, ResourceEnum
 from apps.log_databus.constants import (
     BKLOG_RESULT_TABLE_PATTERN,
     DEFAULT_ES_SCHEMA,
+    DEFAULT_ES_TRANSPORT,
     EsSourceType,
     NODE_ATTR_PREFIX_BLACKLIST,
     REGISTERED_SYSTEM_DEFAULT,
@@ -55,7 +56,7 @@ from apps.log_databus.exceptions import (
 )
 from apps.log_databus.models import StorageCapacity, StorageUsed
 from apps.log_databus.utils.es_config import get_es_config
-from apps.log_esquery.esquery.client.QueryClientEs import QueryClientEs
+from apps.log_esquery.utils.es_client import get_es_client
 from apps.log_esquery.utils.es_route import EsRoute
 from apps.log_search.models import BizProperty, ProjectInfo, Scenario
 from apps.utils.cache import cache_five_minute
@@ -445,12 +446,13 @@ class StorageHandler(object):
     def get_hot_warm_node_info(self, params: dict) -> (int, int):
         hot_node_num = 0
         warm_node_num = 0
-        es_client = QueryClientEs.get_es_client(
-            params["version"],
-            params["domain_name"],
-            params["auth_info"]["username"],
-            params["auth_info"]["password"],
-            params["port"],
+        es_client = get_es_client(
+            version=params["version"],
+            hosts=[params["domain_name"]],
+            username=params["auth_info"]["username"],
+            password=params["auth_info"]["password"],
+            port=params["port"],
+            verify_certs=False,
         )
         if params.get("enable_hot_warm", False):
             hot_attr_name = params.get("hot_attr_name")
@@ -500,13 +502,13 @@ class StorageHandler(object):
                 "enable_auth": True,
                 "host": params["domain_name"],
                 "port": params["port"],
-                "transport": 9300,
+                "transport": DEFAULT_ES_TRANSPORT,
                 "enable_replica": True if setup_config.get("number_of_replicas_default", 0) else False,
                 "hot_save_days": setup_config.get("retention_days_default", 1),
                 "total_shards_per_node": 1,
                 "max_shard_num": hot_node_num,
-                "has_cold_nodes": True if warm_node_num else False,
-                "has_hot_node": True if hot_node_num else False,
+                "has_cold_nodes": bool(warm_node_num),
+                "has_hot_node": bool(hot_node_num),
                 "hot_node_num": hot_node_num,
                 "save_days": setup_config.get("retention_days_default", 1),
                 "cluster_type": "es",
@@ -595,7 +597,7 @@ class StorageHandler(object):
             params["auth_info"]["password"] = cluster_objs[0]["auth_info"]["password"]
 
         hot_warm_config_is_enabled = params["custom_option"]["hot_warm_config"]["is_enabled"]
-        connect_result, version_num_str = BkLogApi.connectivity_detect(
+        connect_result, version_num_str = BkLogApi.connectivity_detect(  # pylint: disable=unused-variable
             params={
                 "bk_biz_id": bk_biz_id,
                 "domain_name": params["domain_name"],
@@ -1006,7 +1008,9 @@ class StorageHandler(object):
                         cluster_info_by_id[repository["cluster_id"]].get("source_type")
                     ),
                     "cluster_source_type": cluster_info_by_id[repository["cluster_id"]].get("source_type"),
-                    "create_time": format_user_time_zone(repository["create_time"], get_local_param("time_zone")),
+                    "create_time": format_user_time_zone(
+                        repository["create_time"], get_local_param("time_zone", settings.TIME_ZONE)
+                    ),
                 }
             )
             result.append(repository)

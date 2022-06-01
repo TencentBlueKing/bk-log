@@ -65,6 +65,7 @@ INSTALLED_APPS += (
     "apps.log_esquery",
     "apps.log_measure",
     "apps.log_trace",
+    "apps.log_bcs",
     "apps.esb",
     "apps.bk_log_admin",
     "apps.grafana",
@@ -96,7 +97,7 @@ MIDDLEWARE = (
     # http -> https 转换中间件
     "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
-    "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "blueapps.opentelemetry.metrics.middlewares.SaaSMetricsBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -120,7 +121,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
-    "django_prometheus.middleware.PrometheusAfterMiddleware",
+    "blueapps.opentelemetry.metrics.middlewares.SaaSMetricsAfterMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -177,8 +178,7 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.bkdata",
     "apps.log_search.tasks.async_export",
     "apps.log_search.tasks.project",
-    # TODO，临时注释cmdb缓存定时任务
-    # "apps.log_search.tasks.cmdb",
+    "apps.log_search.tasks.cmdb",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
     "apps.log_search.tasks.no_data",
@@ -740,7 +740,9 @@ ES_COMPATIBILITY = int(os.environ.get("BKAPP_ES_COMPATIBILITY", 0))
 FEATURE_EXPORT_SCROLL = os.environ.get("BKAPP_FEATURE_EXPORT_SCROLL", False)
 
 # BCS
-PAASCC_APIGATEWAY = ""
+BCS_API_GATEWAY_TOKEN = os.getenv("BKAPP_BCS_API_GATEWAY_TOKEN", "")
+BCS_CC_SSM_SWITCH = os.getenv("BKAPP_BCS_CC_SSM_SWITCH", "off") == "on"
+BCS_WEB_CONSOLE_DOMAIN = ""
 
 # 是否关闭权限中心校验
 IGNORE_IAM_PERMISSION = os.environ.get("BKAPP_IGNORE_IAM_PERMISSION", False)
@@ -966,6 +968,16 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
     }
     CACHES["default"] = CACHES["redis_sentinel"]
     CACHES["login_db"] = CACHES["redis_sentinel"]
+
+# ==============================================================================
+# Prometheus metrics token
+PROMETHEUS_METRICS_TOKEN = os.environ.get("PROMETHEUS_METRICS_TOKEN", "")
+# ==============================================================================
+
+# ==============================================================================
+# Listening Domain, 格式 http(s)://domain_name
+SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
+# ==============================================================================
 
 """
 以下为框架代码 请勿修改

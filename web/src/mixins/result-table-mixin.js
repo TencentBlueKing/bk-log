@@ -103,6 +103,10 @@ export default {
       type: String,
       default: '',
     },
+    operatorConfig: {
+      type: Object,
+      required: true,
+    },
     handleClickTools: Function,
   },
   data() {

@@ -19,38 +19,28 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext as _
-from django.db.models import Count
+from rest_framework.response import Response
 
-from apps.log_search.models import LogIndexSet
+from apps.generic import APIViewSet
+from apps.log_measure.constants import COLLECTOR_IMPORT_PATHS
 from apps.log_measure.utils.metric import MetricUtils
-from bk_monitor.constants import TimeFilterEnum
-from bk_monitor.utils.metric import register_metric, Metric
+from apps.utils.drf import list_route
+from bk_monitor.utils.collector import MetricCollector
 
 
-class IndexMetricCollector(object):
-    @staticmethod
-    @register_metric("index_set", description=_("索引集"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
-    def index_set():
-        groups = (
-            LogIndexSet.objects.values("project_id", "scenario_id").order_by().annotate(count=Count("index_set_id"))
+class StatisticViewSet(APIViewSet):
+    @list_route(methods=["GET"], url_path="statistic")
+    def get_statistic(self, request):
+        namespace = request.GET.get("namespace")
+        namespaces = self.get_list_obj(namespace)
+        data_name = request.GET.get("data_name")
+        data_names = self.get_list_obj(data_name)
+        data = MetricCollector(collector_import_paths=COLLECTOR_IMPORT_PATHS).collect(
+            namespaces=namespaces, time_filter_enable=False, data_names=data_names
         )
+        MetricUtils.del_instance()
+        return Response(data)
 
-        metrics = [
-            Metric(
-                metric_name="count",
-                metric_value=group["count"],
-                dimensions={
-                    "target_bk_biz_id": MetricUtils.get_instance().project_biz_info[group["project_id"]]["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().project_biz_info[group["project_id"]][
-                        "bk_biz_name"
-                    ],
-                    "scenario_id": group["scenario_id"],
-                },
-                timestamp=MetricUtils.get_instance().report_ts,
-            )
-            for group in groups
-            if MetricUtils.get_instance().project_biz_info.get(group["project_id"])
-        ]
-
-        return metrics
+    @staticmethod
+    def get_list_obj(obj_str):
+        return obj_str.split(",") if obj_str else obj_str
