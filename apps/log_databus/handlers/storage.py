@@ -597,7 +597,7 @@ class StorageHandler(object):
             params["auth_info"]["password"] = cluster_objs[0]["auth_info"]["password"]
 
         hot_warm_config_is_enabled = params["custom_option"]["hot_warm_config"]["is_enabled"]
-        connect_result, version_num_str = BkLogApi.connectivity_detect(
+        connect_result, version_num_str = BkLogApi.connectivity_detect(  # pylint: disable=unused-variable
             params={
                 "bk_biz_id": bk_biz_id,
                 "domain_name": params["domain_name"],
