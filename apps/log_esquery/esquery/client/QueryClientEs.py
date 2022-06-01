@@ -26,16 +26,23 @@ from django.conf import settings
 from django.utils.translation import ugettext as _
 from elasticsearch import Elasticsearch as Elasticsearch
 from elasticsearch5 import Elasticsearch as Elasticsearch5
-from elasticsearch6 import Elasticsearch as Elasticsearch6
 
 from apps.api import TransferApi
 from apps.log_esquery.constants import DEFAULT_SCHEMA
 from apps.log_esquery.esquery.client.QueryClientTemplate import QueryClientTemplate
-from apps.log_esquery.exceptions import (BaseSearchFieldsException, EsClientAliasException, EsClientCatIndicesException,
-                                         EsClientConnectInfoException, EsClientMetaInfoException,
-                                         EsClientScrollException, EsClientSearchException, EsClientSocketException,
-                                         EsException)
+from apps.log_esquery.exceptions import (
+    BaseSearchFieldsException,
+    EsClientAliasException,
+    EsClientCatIndicesException,
+    EsClientConnectInfoException,
+    EsClientMetaInfoException,
+    EsClientScrollException,
+    EsClientSearchException,
+    EsClientSocketException,
+    EsException,
+)
 from apps.log_esquery.type_constants import type_mapping_dict
+from apps.log_esquery.utils.es_client import get_es_client
 
 
 class QueryClientEs(QueryClientTemplate):  # pylint: disable=invalid-name
@@ -139,18 +146,11 @@ class QueryClientEs(QueryClientTemplate):  # pylint: disable=invalid-name
             raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=e))
         cs.close()
 
-        # 根据版本加载客户端
-        if self.version.startswith("5."):
-            self.elastic_client = Elasticsearch5
-        elif self.version.startswith("6."):
-            self.elastic_client = Elasticsearch6
-        else:
-            self.elastic_client = Elasticsearch
-
-        http_auth = (self.username, self.password) if self.username and self.password else None
-        self._client: Elasticsearch = self.elastic_client(
-            [self.host],
-            http_auth=http_auth,
+        self._client: Elasticsearch = get_es_client(
+            version=self.version,
+            hosts=[self.host],
+            username=self.username,
+            password=self.password,
             scheme=self.schema,
             port=self.port,
             sniffer_timeout=600,
@@ -230,19 +230,3 @@ class QueryClientEs(QueryClientTemplate):  # pylint: disable=invalid-name
             "version": cluster_config["version"],
             "registered_system": cluster_config["registered_system"],
         }
-
-    @classmethod
-    def get_es_client(cls, version, host, username, password, port):
-        if version.startswith("5."):
-            es_client = Elasticsearch5
-        elif version.startswith("6."):
-            es_client = Elasticsearch6
-        else:
-            es_client = Elasticsearch
-        return es_client(
-            [host],
-            http_auth=(username, password),
-            port=port,
-            sniffer_timeout=600,
-            verify_certs=False,
-        )

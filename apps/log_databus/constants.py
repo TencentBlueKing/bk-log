@@ -353,3 +353,6 @@ class ETLProcessorChoices(ChoicesEnum):
         (TRANSFER, _("Transfer")),
         (BKBASE, _("数据平台")),
     )
+
+
+DEFAULT_ES_TRANSPORT = 9300
