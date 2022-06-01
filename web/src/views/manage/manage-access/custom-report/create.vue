@@ -169,14 +169,7 @@
               :id="item.storage_cluster_id"
               :name="item.storage_cluster_name"
               :key="index">
-              <div
-                v-if="!(item.permission && item.permission.manage_es_source)"
-                class="option-slot-container no-authority"
-                @click.stop>
-                <span class="text">{{item.storage_cluster_name}}</span>
-                <span class="apply-text" @click="applySearchAccess(item)">{{$t('申请权限')}}</span>
-              </div>
-              <div v-else class="option-slot-container">
+              <div class="option-slot-container">
                 <span>{{ item.storage_cluster_name }}</span>
               </div>
             </bk-option>
@@ -439,11 +432,21 @@ export default {
       },
     },
   },
+  created() {
+    const { params: { collectorId }, name } = this.$route;
+    if (collectorId && name === 'custom-report-edit') {
+      this.collectorId = collectorId;
+      this.isEdit = true;
+    }
+  },
   mounted() {
     this.containerLoading = true;
-    Promise.all([this.getLinkData(), this.getStorage(), this.initFormData()]).then(() => {
-      this.containerLoading = false;
-    });
+    Promise.all([this.getLinkData(), this.getStorage('customize', this.isEdit)]).then(() => {
+      this.initFormData();
+    })
+      .finally(() => {
+        this.containerLoading = false;
+      });
   },
   methods: {
     handleChangeType(id) {
@@ -490,13 +493,10 @@ export default {
       }
     },
     async initFormData() {
-      const { params: { collectorId }, name } = this.$route;
-      if (collectorId && name === 'custom-report-edit') {
-        this.isEdit = true;
-        this.collectorId = collectorId;
+      if (this.isEdit) {
         const res = await this.$http.request('collect/details', {
           params: {
-            collector_config_id: collectorId,
+            collector_config_id: this.collectorId,
           },
         });
         const {

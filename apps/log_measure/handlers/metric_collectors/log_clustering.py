@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from django.db.models import Count
 from django.utils.translation import ugettext as _
 
 from apps.log_clustering.models import ClusteringConfig
@@ -29,20 +30,36 @@ from bk_monitor.utils.metric import register_metric, Metric
 
 class ClusteringMetricCollector(object):
     @staticmethod
-    @register_metric("clustering_count", description=_("聚类计数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
+    @register_metric("clustering", description=_("聚类计数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def clustering_count():
-        clustering_query_set = ClusteringConfig.objects.filter(modify_flow__isnull=False)
-        metrics = [
+        clustering_query_set = (
+            ClusteringConfig.objects.filter(modify_flow__isnull=False)
+            .values("bk_biz_id")
+            .annotate(total=Count("bk_biz_id"))
+            .order_by()
+        )
+        metrics = []
+        total = 0
+        for clustering_obj in clustering_query_set:
+
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=clustering_obj["total"],
+                    dimensions={
+                        "target_bk_biz_id": clustering_obj["bk_biz_id"],
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(clustering_obj["bk_biz_id"]),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+            total += clustering_obj["total"]
+
+        metrics.append(
             Metric(
-                metric_name="count",
-                metric_value=1,
-                dimensions={
-                    "bk_biz_id": clustering_obj.bk_biz_id,
-                    "index_set_id": clustering_obj.index_set_id,
-                    "clustering_config_id": clustering_obj.id,
-                },
+                metric_name="total",
+                metric_value=total,
                 timestamp=MetricUtils.get_instance().report_ts,
             )
-            for clustering_obj in clustering_query_set
-        ]
+        )
         return metrics

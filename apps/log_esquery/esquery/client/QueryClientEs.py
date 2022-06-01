@@ -38,7 +38,7 @@ from apps.log_esquery.exceptions import (BaseSearchFieldsException, EsClientAlia
 from apps.log_esquery.type_constants import type_mapping_dict
 
 
-class QueryClientEs(QueryClientTemplate):
+class QueryClientEs(QueryClientTemplate):  # pylint: disable=invalid-name
     def __init__(self, storage_cluster_id: int):
         super(QueryClientEs, self).__init__()
 
