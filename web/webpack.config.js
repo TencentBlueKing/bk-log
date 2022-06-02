@@ -133,7 +133,8 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
       }),
     );
   }
-
+  // bkmonitor-cli里的monaco-editor-webpack-plugin版本低于monaco-yaml需要的版本 这里需要重新new一个新的实例
+  // 由于版本不同使用instanceof不能找到plugins的实例 后续写法需要优化
   const pluginArr = Object.values(config.plugins[config.plugins.length - 2]);
   pluginArr[0].languages.push('yaml');
   pluginArr[0].customLanguages = [
