@@ -21,13 +21,13 @@
   -->
 <template>
   <bk-dialog
-    :value="isShowDialog"
-    :mask-close="false"
     width="1250"
     header-position="left"
     theme="primary"
     title="日志目标"
     render-directive="if"
+    :value="isShowDialog"
+    :mask-close="false"
     @confirm="handelConfirmLabel"
     @cancel="handelCancelDialog">
     <div class="log-target-container">
@@ -95,7 +95,8 @@
         </div>
 
         <div class="result">
-          <div :class="['result-container',!preWidth && 'is-sliding-close']" :style="`width : ${preWidth}px`">
+          <div :class="['result-container',!preWidth && 'is-sliding-close']"
+               :style="`width : ${preWidth}px`">
             <div class="child-title">
               <span>{{$t('结果预览')}}</span>
               <span></span>
@@ -205,6 +206,9 @@ export default {
       range: [200, 600],
       preWidth: 280,
     };
+  },
+  watch: {
+
   },
   methods: {
     handleSelectTreeItem(treeItem) {

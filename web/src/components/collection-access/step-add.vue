@@ -85,7 +85,7 @@
       <div data-test-id="acquisitionConfigur_div_sourceLogBox">
         <div class="add-collection-title">{{ $t('dataSource.Source_log_information') }}</div>
         <!-- 环境选择 -->
-        <bk-form-item :label="$t('环境选择')">
+        <bk-form-item :label="$t('环境选择')" required>
           <div class="environment-box">
             <div class="environment-container"
                  v-for="(fItem,fIndex) of environmentList"
@@ -180,7 +180,7 @@
             @target-change="targetChange">
           </ip-selector-dialog>
         </div>
-        <!-- 物理环境 配置项 -->
+        <!-- 物理环境 配置 -->
         <config-log-set-item
           v-if="isPhysicsEnvironment"
           :scenario-id="formData.collector_scenario_id"
@@ -191,9 +191,10 @@
 
         <bk-form-item
           v-if="!isPhysicsEnvironment"
+          :label="$t('集群选择')"
+          :rules="rules.cluster"
           class="cluster-select-box"
-          required
-          :label="$t('集群选择')">
+          required>
           <div class="cluster-select">
             <bk-select v-model="formData.bcs_cluster_id"></bk-select>
             <span class="tips">123</span>
@@ -229,10 +230,13 @@
           </bk-form-item>
           <!-- 配置项  容器环境才显示配置项 -->
           <bk-form-item v-if="!isPhysicsEnvironment" :label="$t('配置项')" required>
-            <div class="config-box" v-for="(conItem,conIndex) of formData.container_config" :key="conIndex">
+            <div class="config-box" v-for="(conItem, conIndex) of formData.container_config" :key="conIndex">
               <div class="config-title">
                 <span>A</span>
-                <span class="bk-icon icon-close3-shape"></span>
+                <span
+                  v-if="formData.container_config.length > 1"
+                  class="bk-icon icon-close3-shape"
+                  @click="handleDeleteConfig(conIndex)"></span>
               </div>
 
               <div class="config-container">
@@ -275,7 +279,7 @@
                     <div class="specify-box">
                       <div
                         class="specify-container"
-                        v-for="([speKey,speValue], speIndex) in Object.entries(conItem.container)"
+                        v-for="([speKey, speValue], speIndex) in Object.entries(conItem.container)"
                         :key="speIndex">
                         <span v-if="speValue">
                           <span>{{specifyName[speKey]}}</span> : <span>{{speValue}}</span>
@@ -317,6 +321,7 @@
                     :scenario-id="formData.collector_scenario_id"
                     :current-environment="currentEnvironment"
                     :config-data="conItem"
+                    :config-length="formData.container_config.length"
                     @configChange="(val) => handelFormChange(val, 'containerConfig', conIndex)">
                   </config-log-set-item>
                 </div>
@@ -338,7 +343,8 @@
               size="small"
               outline
               icon="plus"
-              class="add-config-item">
+              class="add-config-item"
+              @click="handleAddNewContainerConfig">
               {{$t('添加配置项')}}
             </bk-button>
             <bk-form-item :label="$t('附加日志标签')">
@@ -386,13 +392,13 @@
       <label-target-dialog
         :is-show-dialog.sync="isShowLabelTargetDialog"
         :label-selector="currentSelector"
-        @configLabelChange="(val) => handelFormChange(val, 'containerConfig')">
+        @configLabelChange="(val) => handelFormChange(val, 'dialogChange')">
       </label-target-dialog>
 
       <container-target-dialog
         :is-show-dialog.sync="isShowContainerTargetDialog"
         :container="currentContainer"
-        @configContainerChange="(val) => handelFormChange(val, 'containerConfig')">
+        @configContainerChange="(val) => handelFormChange(val, 'dialogChange')">
       </container-target-dialog>
 
       <div class="page-operate">
@@ -427,6 +433,7 @@ import containerTargetDialog from './components/container-target-dialog';
 import yamlEditor from './components/yaml-editor';
 import { mapGetters, mapState } from 'vuex';
 import { projectManages } from '@/common/util';
+import { deepClone } from '../monitor-echarts/utils';
 
 export default {
   components: {
@@ -499,14 +506,14 @@ export default {
             },
             data_encoding: 'UTF-8',
             params: {
-              paths: [{ value: '/log/abc' }], // 日志路径
+              paths: [{ value: '' }], // 日志路径
               conditions: {
                 type: 'match', // 过滤方式类型
                 match_type: 'include',  // 过滤方式 可选字段 include, exclude
                 match_content: '',
                 separator: '',
                 separator_filters: [ // 分隔符过滤条件
-                  { fieldindex: 1, word: '', op: '=', logic_op: 'and' },
+                  { fieldindex: '', word: '', op: '=', logic_op: 'and' },
                 ],
               },
               multiline_pattern: '', // 行首正则, char
@@ -601,6 +608,12 @@ export default {
             trigger: 'change',
           },
         ],
+        cluster: [ // 集群
+          {
+            required: true,
+            trigger: 'blur',
+          },
+        ],
       },
       logUrl: [
         { value: '' },
@@ -623,6 +636,7 @@ export default {
         SET_TEMPLATE1: this.$t('configDetails.selected'),
         SET_TEMPLATE2: this.$t('configDetails.setTemplates'),
       },
+      configBaseObj: {}, // 新增配置项的基础对象
       configNameEnIsNotRepeat: true, // 英文名没有重复
       currentEnvironment: '', // 当前选择的环境
       isYaml: false, // 是否是yaml模式
@@ -661,29 +675,6 @@ export default {
     ...mapState({
       menuProject: state => state.menuProject,
     }),
-    // 分隔符字段过滤条件
-    separatorFilters() {
-      const { params } = this.formData;
-      return params.conditions.separator_filters || [{
-        fieldindex: '',
-        word: '',
-        op: '=',
-        logic_op: this.type,
-      }];
-    },
-    // 日志路径
-    logPaths() {
-      const { params } = this.formData;
-      return params.paths || [];
-    },
-    // 是否为字符串过滤
-    isString() {
-      return this.formData.params.conditions.type === 'match';
-    },
-    // 是否打开行首正则功能
-    hasMultilineReg() {
-      return this.formData.collector_scenario_id === 'section';
-    },
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
@@ -732,9 +723,11 @@ export default {
     this.getLinkData();
     this.isUpdate = this.$route.name !== 'collectAdd';
     const isClone = this.$route.query?.type === 'clone';
+    this.configBaseObj = deepClone(this.formData.container_config[0]); // 添加配置项基础对象赋值
     // 克隆与编辑均进行数据回填
     if (this.isUpdate || isClone) {
-      this.formData = JSON.parse(JSON.stringify(this.curCollect));
+      // this.formData = JSON.parse(JSON.stringify(this.curCollect));
+      Object.assign(this.formData, this.curCollect);
       const { params } = this.formData;
       if (this.formData.target?.length) { // IP 选择器预览结果回填
         this.formData.target_nodes = this.formData.target;
@@ -795,8 +788,7 @@ export default {
       }
     }
   },
-  mounted() {
-  },
+  mounted() {},
   methods: {
     async getLinkData() {
       try {
@@ -830,7 +822,6 @@ export default {
           delete params.data_link_id;
         }
         if (this.formData.collector_scenario_id === 'wineventlog') {
-          // win_log
           const winParams = {};
           if (this.selectLogSpeciesList.includes('Outher')) {
             this.selectLogSpeciesList.splice(this.selectLogSpeciesList.indexOf('Outher'), 1);
@@ -890,11 +881,11 @@ export default {
         params,
       } = formData;
       if (this.formData.collector_scenario_id !== 'wineventlog') {
-        if (!this.hasMultilineReg) { // 行首正则未开启
-          delete params.multiline_pattern;
-          delete params.multiline_max_lines;
-          delete params.multiline_timeout;
-        }
+        // if (!this.hasMultilineReg) { // 行首正则未开启
+        //   delete params.multiline_pattern;
+        //   delete params.multiline_max_lines;
+        //   delete params.multiline_timeout;
+        // }
         const { match_type, match_content, separator, separator_filters, type } = params.conditions;
         params.conditions = type === 'match' ? { type, match_type, match_content } : {
           type,
@@ -1022,17 +1013,19 @@ export default {
      */
     handelFormChange(val, operator, index) {
       const setIndex = index ? index : this.currentSetIndex;
+      const setTime = operator === 'dialogChange' ? 10 : 500;
       clearTimeout(this.formTime);
       this.formTime = setTimeout(() => {
         switch (operator) {
           case 'formConfig':
             Object.assign(this.formData, val);
             break;
+          case 'dialogChange':
           case 'containerConfig':
             Object.assign(this.formData.container_config[setIndex], val);
             break;
         }
-      }, 500);
+      }, setTime);
     },
     /**
      * @desc: 配置项点击所有容器
@@ -1059,6 +1052,12 @@ export default {
       type === 'label' ?  this.isShowLabelTargetDialog = true : this.isShowContainerTargetDialog = true;
       this.currentSelector = this.formData.container_config[index].label_selector;
       this.currentContainer = this.formData.container_config[index].container;
+    },
+    handleAddNewContainerConfig() {
+      this.formData.container_config.push(deepClone(this.configBaseObj));
+    },
+    handleDeleteConfig(index) {
+      this.formData.container_config.splice(index, 1);
     },
     isSelectorHaveValue(labelSelector) {
       return Object.values(labelSelector).some(item => item.length);
@@ -1564,6 +1563,7 @@ export default {
     border: 1px solid #dcdee5;
     border-radius: 2px;
     font-size: 14px;
+    margin-bottom: 20px;
 
     .config-title {
       display: flex;

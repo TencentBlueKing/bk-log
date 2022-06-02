@@ -23,21 +23,21 @@
   <div class="match-container">
     <div class="match-title">
       <span>{{isLabel ? $t('匹配标签') : $t('匹配表达式')}}</span>
-      <div class="flex-ac add-match" @click="isShowAdd = true">
+      <div class="flex-ac add-match" v-show="!isShowAdd" @click="isShowAdd = true">
         <span class="bk-icon icon-plus-circle"></span>
         <span>{{isLabel ? $t('添加标签') : $t('添加表达式')}}</span>
       </div>
     </div>
     <div v-show="isShowAdd" class="add-filling flex-ac">
       <div class="customize-box" v-if="isLabel">
-        <bk-input :class="`label-input ${isKeyError && 'input-error'}`" v-model="matchKey"></bk-input>
+        <bk-input :class="`label-input ${isKeyError && 'input-error'}`" v-model.trim="matchKey"></bk-input>
         <span>=</span>
-        <bk-input :class="`label-input ${isValueError && 'input-error'}`" v-model="matchValue"></bk-input>
+        <bk-input :class="`label-input ${isValueError && 'input-error'}`" v-model.trim="matchValue"></bk-input>
       </div>
       <div class="customize-box" v-else>
-        <bk-select :class="`fill-first ${isKeyError && 'select-error'}`" v-model="matchKey"></bk-select>
+        <bk-select :class="`fill-first ${isKeyError && 'select-error'}`" v-model.trim="matchKey"></bk-select>
         <bk-select class="fill-second" :clearable="false" v-model="matchOperator"></bk-select>
-        <bk-input :class="`fill-input ${isValueError && 'input-error'}`" v-model="matchValue"></bk-input>
+        <bk-input :class="`fill-input ${isValueError && 'input-error'}`" v-model.trim="matchValue"></bk-input>
       </div>
       <div class="add-operate flex-ac">
         <span class="bk-icon icon-check-line" @click="handleAddMatch"></span>
@@ -109,7 +109,6 @@ export default {
       isValueError: false,
       matchOperator: '=', // 自定义匹配操作
       activeItemID: -1, // 当前鼠标hover的列表元素ID
-      initMatchList: [],
     };
   },
   computed: {
@@ -166,9 +165,9 @@ export default {
       }
     },
     handleAddMatch() {
-      if (!this.matchKey.trim() || !this.matchValue.trim()) {
-        !this.matchKey.trim() && (this.isKeyError = true);
-        !this.matchValue.trim() && (this.isValueError = true);
+      if (!this.matchKey || !this.matchValue) {
+        !this.matchKey && (this.isKeyError = true);
+        !this.matchValue && (this.isValueError = true);
         return;
       }
       const isRepeat = this.matchList.some((item) => {
@@ -208,9 +207,9 @@ export default {
       copyMessage(text);
     },
     initMatch() {
-      this.initMatchList = this.matchSelector.map(item => ({ ...item, id: random(10) }));
-      this.matchList.push(...this.initMatchList);
-      this.matchSelectList.push(...this.initMatchList.map(item => item.id));
+      const initMatchList = this.matchSelector.map(item => ({ ...item, id: random(10) }));
+      this.matchList.push(...initMatchList);
+      this.matchSelectList.push(...initMatchList.map(item => item.id));
     },
   },
 };

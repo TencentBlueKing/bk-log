@@ -41,9 +41,8 @@
               ></bk-input>
               <div class="ml9">
                 <i class="bk-icon icon-plus-circle-shape icons"
-                   @click="addLog"
                    data-test-id="sourceLogBox_i_newAddLogPath"
-                ></i>
+                   @click="addLog"></i>
                 <i
                   :class="['bk-icon icon-minus-circle-shape icons ml9', { disable: logPaths.length === 1 }] "
                   data-test-id="sourceLogBox_i_deleteAddLogPath"
@@ -305,6 +304,10 @@ export default {
       type: String,
       require: true,
     },
+    configLength: {
+      type: Number,
+      require: true,
+    },
   },
   data() {
     return {
@@ -418,12 +421,16 @@ export default {
     subFormData: {
       deep: true,
       handler(val) {
-        this.$emit('configChange', val);
+        const { data_encoding, params } = val;
+        this.$emit('configChange', { data_encoding, params });
       },
+    },
+    configLength() {
+      Object.assign(this.subFormData, this.configData);
     },
   },
   created() {
-    this.subFormData = this.configData;
+    Object.assign(this.subFormData, this.configData);
   },
   methods: {
     // 修改分隔符过滤的并&或

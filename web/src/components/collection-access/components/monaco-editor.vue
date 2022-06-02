@@ -14,9 +14,9 @@
          :style="{ height: calcSize(renderHeight), width: calcSize(renderWidth), position: 'relative' }">
       <span
         v-if="isFull"
-        @click="exitFullScreen"
         class="bk-icon icon-un-full-screen"
         style="right: 20px"
+        @click="exitFullScreen"
       ></span>
 
       <div v-if="problemList.length"

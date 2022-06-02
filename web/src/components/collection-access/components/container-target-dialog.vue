@@ -31,7 +31,14 @@
     @cancel="handelCancelDialog">
     <bk-form class="specify-container" form-type="vertical">
       <bk-form-item :label="$t('Workload类型')" required>
-        <bk-select v-model="formData.workload_type"></bk-select>
+        <bk-select v-model="formData.workload_type">
+          <bk-option
+            v-for="option in selectList"
+            :key="option.id"
+            :id="option.id"
+            :name="option.name">
+          </bk-option>
+        </bk-select>
       </bk-form-item>
       <bk-form-item :label="$t('Workload名称')" required>
         <bk-select
@@ -90,15 +97,28 @@ export default {
       }],
     };
   },
-  created() {
-    Object.assign(this.formData, this.container);
+  watch: {
+    isShowDialog(val) {
+      if (val) {
+        Object.assign(this.formData, this.container);
+      } else {
+        Object.assign(this.formData, {
+          workload_type: '',
+          workload_name: '',
+          container_name: '',
+        });
+      }
+    },
   },
   methods: {
     handelCancelDialog() {
       this.$emit('update:isShowDialog', false);
     },
     handelConfirmContainer() {
-      // this.$emit();
+      const containerObj = {
+        container: JSON.parse(JSON.stringify(this.formData)),
+      };
+      this.$emit('configContainerChange', containerObj);
       this.$emit('update:isShowDialog', false);
     },
   },
