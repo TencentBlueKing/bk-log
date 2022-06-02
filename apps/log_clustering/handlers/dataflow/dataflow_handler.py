@@ -441,7 +441,7 @@ class DataFlowHandler(BaseAiopsHandler):
         change_fields = [field for field in transform_fields if field != UUID_FIELDS]
         change_clustering_fields = copy.copy(change_fields)
         change_fields.extend(DIST_FIELDS)
-        change_clustering_fields = [field.split("as")[-1] for field in change_clustering_fields]
+        change_clustering_fields = [field.split(" as ")[-1] for field in change_clustering_fields]
         change_clustering_fields.extend(DIST_CLUSTERING_FIELDS)
         merge_table_table_id = "{}_bklog_{}_{}".format(bk_biz_id, settings.ENVIRONMENT, src_rt_name)
         merge_table_table_name = "bklog_{}_{}".format(settings.ENVIRONMENT, src_rt_name)

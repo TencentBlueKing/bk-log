@@ -21,16 +21,21 @@ the project delivered to anyone in the future.
 """
 import functools
 import json
+import zlib
 
 from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.encoding import force_bytes
 
 from apps.utils.log import logger
 from apps.utils import md5_sum
 from apps.log_search.constants import TimeEnum
 
 
-def using_cache(key: str, duration, need_md5=False):
+MIN_LEN = 15
+
+
+def using_cache(key: str, duration, need_md5=False, compress=False):
     """
     :param key: key 名可以使用format进行格式
     :param duration:
@@ -56,11 +61,20 @@ def using_cache(key: str, duration, need_md5=False):
             cache_result = cache.get(actual_key)
 
             if cache_result and not refresh:
-                return json.loads(cache_result)
+                if compress:
+                    try:
+                        cache_result = zlib.decompress(cache_result)
+                    except Exception:
+                        pass
+                return json.loads(force_bytes(cache_result))
 
             result = func(*args, **kwargs)
             if result:
-                cache.set(actual_key, json.dumps(result, cls=DjangoJSONEncoder), duration)
+                value = json.dumps(result, cls=DjangoJSONEncoder)
+                if compress:
+                    if len(value) > MIN_LEN:
+                        value = zlib.compress(value.encode("utf-8"))
+                cache.set(actual_key, value, duration)
             return result
 
         return inner
