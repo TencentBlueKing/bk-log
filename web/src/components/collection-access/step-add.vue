@@ -43,6 +43,7 @@
           :rules="rules.collector_config_name"
           :property="'collector_config_name'">
           <bk-input
+            class="w520"
             data-test-id="baseMessage_input_fillName"
             v-model="formData.collector_config_name"
             show-word-limit
@@ -56,6 +57,7 @@
           :property="'collector_config_name_en'">
           <div class="config-enName-box">
             <bk-input
+              class="w520"
               v-model="formData.collector_config_name_en"
               show-word-limit
               maxlength="50"
@@ -70,8 +72,8 @@
         </bk-form-item>
         <bk-form-item :label="$t('configDetails.remarkExplain')">
           <bk-input
+            class="w520"
             type="textarea"
-            style="width: 320px;"
             v-model="formData.description"
             data-test-id="baseMessage_input_fillDetails"
             maxlength="100">
@@ -82,11 +84,30 @@
       <!-- 源日志信息 -->
       <div data-test-id="acquisitionConfigur_div_sourceLogBox">
         <div class="add-collection-title">{{ $t('dataSource.Source_log_information') }}</div>
-        <!-- 日志类型 -->
-        <bk-form-item :label="$t('configDetails.logType')" required>
+        <!-- 环境选择 -->
+        <bk-form-item :label="$t('环境选择')">
+          <div class="environment-box">
+            <div class="environment-container"
+                 v-for="(fItem,fIndex) of environmentList"
+                 :key="fIndex">
+              <span class="environment-category">{{fItem.category}}</span>
+              <div class="button-box">
+                <div
+                  v-for="(sItem,index) of fItem.btnList" :key="index"
+                  :class="['environment-button', sItem === currentEnvironment && 'active']"
+                  @click="handleSelectEnvironment(sItem)">
+                  <span></span>
+                  <p>{{sItem}}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </bk-form-item>
+        <!-- 物理环境 日志类型 -->
+        <bk-form-item v-if="isPhysicsEnvironment" :label="$t('configDetails.logType')" required>
           <div class="bk-button-group log-type">
             <bk-button
-              v-for="(item, index) in globalsData.collector_scenario"
+              v-for="(item, index) in getCollectorScenario"
               :data-test-id="`sourceLogBox_buttom_checkoutType${item.id}`"
               :key="index"
               :disabled="isUpdate"
@@ -124,50 +145,21 @@
             </template>
           </bk-select>
         </bk-form-item>
-        <!-- 日志种类 -->
-        <bk-form-item
-          v-if="formData.collector_scenario_id === 'wineventlog'"
-          :label="$t('configDetails.logSpecies')"
-          data-test-id="sourceLogBox_div_logSpecies"
-          required>
-          <bk-checkbox-group
-            v-model="selectLogSpeciesList"
-            @change="outherBlurRules">
-            <div class="species-item">
-              <bk-checkbox
-                v-for=" (item, index) in logSpeciesList"
-                :disabled="selectLogSpeciesList.length === 1 && selectLogSpeciesList[0] === item.id"
-                :value="item.id"
-                :key="index">
-                {{item.name}}
-              </bk-checkbox>
-              <bk-tag-input
-                v-model="outherSpeciesList"
-                :class="outherRules ? 'tagRulesColor' : ''"
-                @blur="outherBlurRules"
-                @remove="outherBlurRules"
-                :allow-auto-match="true"
-                :has-delete-icon="true"
-                :allow-create="true">
-              </bk-tag-input>
-            </div>
-          </bk-checkbox-group>
-        </bk-form-item>
         <!-- 采集目标 -->
-        <div class="form-div mt">
+        <div v-if="isPhysicsEnvironment" class="form-div mt">
           <bk-form-item
-            :label="$t('configDetails.target')"
             class="item-target"
+            ref="formItemTarget"
             required
+            :label="$t('configDetails.target')"
             :rules="rules.nodes"
-            :property="'target_nodes'"
-            ref="formItemTarget">
+            :property="'target_nodes'">
             <bk-button
               theme="default"
-              :title="$t('configDetails.newly_increased')"
               icon="plus"
               style="font-size: 12px"
               data-test-id="sourceLogBox_button_addCollectionTarget"
+              :title="$t('configDetails.newly_increased')"
               :class="colorRules ? 'rulesColor' : ''"
               :disabled="!formData.category_id"
               @click="showIpSelectorDialog = true">
@@ -188,223 +180,187 @@
             @target-change="targetChange">
           </ip-selector-dialog>
         </div>
-        <div v-if="formData.collector_scenario_id !== 'wineventlog'">
-          <!-- 日志路径 -->
-          <div class="form-div mt" v-for="(log, index) in logPaths" :key="index">
-            <bk-form-item
-              :label="index === 0 ? $t('retrieve.logPath') : ''" required
-              :rules="rules.paths"
-              :property="'params.paths.' + index + '.value'">
-              <bk-input
-                v-model="log.value"
-                data-test-id="sourceLogBox_input_addLogPath"
-              ></bk-input>
-            </bk-form-item>
-            <div class="ml9">
-              <i class="bk-icon icon-plus-circle icons"
-                 @click="addLog"
-                 data-test-id="sourceLogBox_i_newAddLogPath"
-              ></i>
-              <i
-                :class="['bk-icon icon-minus-circle icons ml9', { disable: logPaths.length === 1 }] "
-                data-test-id="sourceLogBox_i_deleteAddLogPath"
-                @click="delLog(index)"></i>
-            </div>
-            <div class="tips" v-if="index === 0">
-              {{ $t('retrieve.log_available') }}
-              <span class="font-gray">{{ $t('retrieve.log_wildcard_character') }}</span>
-            </div>
-          </div>
-          <!-- 日志字符集 -->
-          <bk-form-item :label="$t('configDetails.logSet')" required>
-            <bk-select
-              data-test-id="sourceLogBox_div_changeLogCharacterTet"
-              style="width: 320px;"
-              searchable
-              v-model="formData.data_encoding"
-              :clearable="false">
-              <bk-option
-                v-for="(option, ind) in globalsData.data_encoding"
-                :key="ind"
-                :id="option.id"
-                :name="option.name">
-              </bk-option>
-            </bk-select>
-          </bk-form-item>
-        </div>
-        <!-- 段日志正则调试 -->
-        <div v-if="hasMultilineReg" class="multiline-log-container">
-          <div class="row-container">
-            <bk-form-item
-              :label="$t('行首正则')"
-              :rules="rules.notEmptyForm"
-              required
-              property="params.multiline_pattern">
-              <bk-input
-                data-test-id="sourceLogBox_input_beginningRegular"
-                v-model.trim="formData.params.multiline_pattern"
-              ></bk-input>
-            </bk-form-item>
-            <bk-button
-              text size="small"
-              class="king-button"
-              data-test-id="sourceLogBox_button_debugging"
-              @click="showRegDialog = true">
-              {{ $t('调试') }}
-            </bk-button>
-          </div>
-          <div class="row-container second">
-            {{ $t('最多匹配') }}
-            <bk-form-item :rules="rules.maxLine" property="params.multiline_max_lines">
-              <bk-input
-                v-model="formData.params.multiline_max_lines"
-                type="number"
-                :precision="0"
-                data-test-id="sourceLogBox_input_mostMatches"
-                :show-controls="false">
-              </bk-input>
-            </bk-form-item>
-            {{ $t('行，最大耗时') }}
-            <bk-form-item :rules="rules.maxTimeout" property="params.multiline_timeout">
-              <bk-input
-                v-model="formData.params.multiline_timeout"
-                type="number"
-                :precision="0"
-                data-test-id="sourceLogBox_input_maximumTimeConsuming"
-                :show-controls="false">
-              </bk-input>
-            </bk-form-item>
-            {{ $t('秒') }}
-          </div>
-          <multiline-reg-dialog
-            :old-pattern.sync="formData.params.multiline_pattern"
-            :show-dialog.sync="showRegDialog">
-          </multiline-reg-dialog>
-        </div>
-      </div>
+        <!-- 物理环境 配置项 -->
+        <config-log-set-item
+          v-if="isPhysicsEnvironment"
+          :scenario-id="formData.collector_scenario_id"
+          :current-environment="currentEnvironment"
+          :config-data="formData"
+          @configChange="(val) => handelFormChange(val, 'formConfig')">
+        </config-log-set-item>
 
-      <!-- 日志内容过滤 -->
-      <div class="add-collection-title">{{ $t('retrieve.Log_content_filtering') }}</div>
-      <div class="hight-setting" data-test-id="acquisitionConfigur_div_contentFiltering">
-        <div v-if="formData.collector_scenario_id !== 'wineventlog'">
-          <div class="tips ml115">{{ $t('retrieve.suggest_clean') }}</div>
-          <div class="form-div">
-            <bk-form-item :label="$t('configDetails.filterContent')">
-              <bk-select
-                style="width: 129px; margin-right: 8px;"
-                :clearable="false"
-                v-model="formData.params.conditions.type"
-                @change="chooseType">
-                <bk-option id="match" :name="$t('retrieve.String_filtering')"></bk-option>
-                <bk-option id="separator" :name="$t('retrieve.Separator_filtering')"></bk-option>
-              </bk-select>
-            </bk-form-item>
-            <bk-input v-show="isString" v-model="formData.params.conditions.match_content"></bk-input>
-            <bk-select
-              style="width: 254px; margin-left: 8px; height: 32px"
-              :clearable="false"
-              v-if="isString" v-model="formData.params.conditions.match_type">
-              <bk-option id="include" :name="$t('retrieve.Keep_string')"></bk-option>
-              <bk-option id="exclude" :name="$t('retrieve.Keep_filtering')" disabled>
-                <span v-bk-tooltips.right="$t('正在开发中')">{{ $t('retrieve.Keep_filtering') }}</span>
-              </bk-option>
-            </bk-select>
-            <bk-select
-              style="width: 320px; margin-right: 8px; height: 32px"
-              v-if="!isString"
-              v-model="formData.params.conditions.separator">
-              <bk-option
-                v-for="(option, index) in globalsData.data_delimiter"
-                :key="index"
-                :id="option.id"
-                :name="option.name">
-              </bk-option>
-            </bk-select>
+        <bk-form-item
+          v-if="!isPhysicsEnvironment"
+          class="cluster-select-box"
+          required
+          :label="$t('集群选择')">
+          <div class="cluster-select">
+            <bk-select v-model="formData.bcs_cluster_id"></bk-select>
+            <span class="tips">123</span>
           </div>
-          <div class="tips ml115" v-show="!isString">{{ $t('retrieve.Complex_filtering') }}</div>
-          <div class="form-div" v-if="!isString">
-            <div class="choose-table">
-              <div class="choose-table-item choose-table-item-head">
-                <div class="left">{{ $t('retrieve.How_columns') }}</div>
-                <div class="main">{{ $t('retrieve.equal_to') }}</div>
-                <div class="right">{{ $t('retrieve.To_add_delete') }}</div>
+        </bk-form-item>
+
+        <bk-form-item
+          v-if="!isPhysicsEnvironment"
+          :label="$t('Yaml模式')"
+          class="mt8">
+          <bk-switcher v-model="isYaml" theme="primary"></bk-switcher>
+        </bk-form-item>
+
+        <yaml-editor v-if="isYaml && !isPhysicsEnvironment"></yaml-editor>
+        <template v-else>
+          <!-- 容器环境 日志类型 -->
+          <bk-form-item v-if="!isPhysicsEnvironment" :label="$t('configDetails.logType')" required>
+            <div class="bk-button-group log-type">
+              <bk-button
+                v-for="(item, index) in getCollectorScenario"
+                :data-test-id="`sourceLogBox_buttom_checkoutType${item.id}`"
+                :key="index"
+                :disabled="isUpdate"
+                :class="{
+                  'disable': !item.is_active,
+                  'is-selected': item.id === formData.collector_scenario_id,
+                  'is-updated': isUpdate && item.id === formData.collector_scenario_id
+                }"
+                @click="chooseLogType(item)"
+              >{{ item.name }}
+              </bk-button>
+            </div>
+          </bk-form-item>
+          <!-- 配置项  容器环境才显示配置项 -->
+          <bk-form-item v-if="!isPhysicsEnvironment" :label="$t('配置项')" required>
+            <div class="config-box" v-for="(conItem,conIndex) of formData.container_config" :key="conIndex">
+              <div class="config-title">
+                <span>A</span>
+                <span class="bk-icon icon-close3-shape"></span>
               </div>
-              <div class="choose-table-item-body">
-                <div class="choose-table-item" v-for="(item, index) in separatorFilters" :key="index">
-                  <div class="left">
-                    <bk-form-item
-                      label="" :rules="rules.separator_filters" style="width: 100px;"
-                      :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
-                      <bk-input style="width: 100px;" v-model="item.fieldindex"></bk-input>
-                    </bk-form-item>
-                  </div>
-                  <div :class="['main', { line: separatorFilters.length > 1 }] ">
-                    <bk-form-item
-                      label="" :rules="rules.separator_filters"
-                      :property="'params.conditions.separator_filters.' + index + '.word'">
-                      <bk-input v-model="item.word"></bk-input>
-                    </bk-form-item>
-                  </div>
-                  <div class="right">
-                    <i class="bk-icon icon-plus-circle icons" @click="addItem"></i>
-                    <i
-                      :class="['bk-icon icon-minus-circle icons ml9', { disable: separatorFilters.length === 1 }] "
-                      @click="delItem(index)">
-                    </i>
+
+              <div class="config-container">
+                <div class="config-item container-select">
+                  <span>{{$t('NameSpace选择')}}</span>
+                  <bk-select :disabled="isNode"></bk-select>
+                  <div class="mt8 justify-bt">
+                    <bk-checkbox
+                      v-model="conItem.isAllContainer"
+                      :disabled="isNode"
+                      @change="(state) => handelClickAllContainer(conIndex, state)">
+                      {{$t('所有容器')}}
+                    </bk-checkbox>
+                    <div class="justify-bt container-btn-container">
+                      <div
+                        v-if="!isContainerHaveValue(conItem.container)"
+                        :class="['container-btn', (isNode || conItem.isAllContainer) && 'disable']"
+                        @click="handelShowDialog(conIndex, 'container',(isNode || conItem.isAllContainer))">
+                        <span class="bk-icon icon-plus-circle-shape"></span>
+                        <span>{{$t('指定容器')}}</span>
+                      </div>
+                      <div
+                        v-if="!isSelectorHaveValue(conItem.label_selector)"
+                        :class="['container-btn', conItem.isAllContainer && 'disable']"
+                        @click="handelShowDialog(conIndex, 'label', conItem.isAllContainer)">
+                        <span class="bk-icon icon-plus-circle-shape"></span>
+                        <span>{{$t('指定标签')}}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div class="choose-select" v-if="separatorFilters && separatorFilters.length > 1">
-                  <bk-select class="select-div" v-model="type" @selected="changeType">
-                    <bk-option id="and" :name="$t('configDetails.and')"></bk-option>
-                    <bk-option id="or" :name="$t('configDetails.or')"></bk-option>
-                  </bk-select>
+
+                <div class="config-item" v-if="isContainerHaveValue(conItem.container)">
+                  <span>{{$t('指定容器')}}</span>
+                  <div class="specify">
+                    <div class="edit" @click="handelShowDialog(conIndex, 'container')">
+                      <span class="bk-icon icon-edit-line"></span>
+                      <span>{{$t('编辑')}}</span>
+                    </div>
+                    <div class="specify-box">
+                      <div
+                        class="specify-container"
+                        v-for="([speKey,speValue], speIndex) in Object.entries(conItem.container)"
+                        :key="speIndex">
+                        <span v-if="speValue">
+                          <span>{{specifyName[speKey]}}</span> : <span>{{speValue}}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="config-item" v-if="isSelectorHaveValue(conItem.label_selector)">
+                  <span>{{$t('指定标签')}}</span>
+                  <div class="specify">
+                    <div class="edit" @click="handelShowDialog(conIndex, 'label')">
+                      <span class="bk-icon icon-edit-line"></span>
+                      <span>{{$t('编辑')}}</span>
+                    </div>
+                    <template v-for="(labItem, labKey) in conItem.label_selector">
+                      <div class="specify-box"
+                           v-for="(matchItem, matchKey) of labItem"
+                           :key="`${labKey}_${matchKey}`">
+                        <div class="specify-container justify-bt">
+                          <span>{{matchItem.key}}</span>
+                          <div class="operator">{{matchItem.operator}}</div>
+                        </div>
+                        <div class="specify-container">
+                          <span>{{matchItem.value}}</span>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+
+                <div
+                  class="hight-setting"
+                  data-test-id="acquisitionConfigur_div_contentFiltering">
+                  <!-- 容器环境 配置项 -->
+                  <config-log-set-item
+                    show-type="vertical"
+                    :scenario-id="formData.collector_scenario_id"
+                    :current-environment="currentEnvironment"
+                    :config-data="conItem"
+                    @configChange="(val) => handelFormChange(val, 'containerConfig', conIndex)">
+                  </config-log-set-item>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-        <div v-else>
-          <div class="tips ml115">{{ $t('retrieve.suggest_clean') }}</div>
-          <div>
-            <bk-form-item :label="$t('configDetails.filterContent')">
-              <div class="form-div win-filter" v-for="(item, index) in eventSettingList" :key="index">
-                <bk-select
-                  class="select-div"
-                  :clearable="false"
-                  @selected="tagBlurRules(item,index)"
-                  v-model="item.type">
-                  <bk-option
-                    v-for="option in selectEventList"
-                    :key="option.id"
-                    :id="option.id"
-                    :disabled="option.isSelect"
-                    :name="option.name">
-                  </bk-option>
-                </bk-select>
-                <bk-tag-input
-                  class="tag-input"
-                  v-model="item.list"
-                  :class="item.isCorrect ? '' : 'tagRulesColor'"
-                  @blur="tagBlurRules(item,index)"
-                  @remove="tagBlurRules(item,index)"
-                  :allow-auto-match="true"
-                  :has-delete-icon="true"
-                  :allow-create="true">
-                </bk-tag-input>
+          </bk-form-item>
+
+          <div v-if="!isPhysicsEnvironment">
+            <div class="conflict-container flex-ac">
+              <span class="bk-icon icon-exclamation-circle"></span>
+              <span class="conflict-message">
+                <span>{{$t('冲突检查结果')}}</span> :
+                <span>目标重复</span>
+              </span>
+              <span v-for="index in 4" :key="index" class="collection-item">采集配置{{index}}</span>
+            </div>
+            <bk-button
+              theme="primary"
+              size="small"
+              outline
+              icon="plus"
+              class="add-config-item">
+              {{$t('添加配置项')}}
+            </bk-button>
+            <bk-form-item :label="$t('附加日志标签')">
+              <div class="add-log-label form-div" v-for="(item, index) in formData.extra_labels" :key="index">
+                <bk-input v-model="item.key"></bk-input>
+                <span>=</span>
+                <bk-input v-model="item.value"></bk-input>
                 <div class="ml9">
-                  <i :class="
-                       ['bk-icon icon-plus-circle icons',
-                        { disable: eventSettingList.length === selectEventList.length }]"
-                     @click="addWinEvent"
-                  ></i>
+                  <i :class="['bk-icon icon-plus-circle-shape icons']"
+                     @click="handleAddLabel"></i>
                   <i
-                    :class="['bk-icon icon-minus-circle icons ml9', { disable: eventSettingList.length === 1 }] "
-                    @click="delWinEvent(index)"></i>
+                    :class="['bk-icon icon-minus-circle-shape icons ml9',
+                             { disable: formData.extra_labels.length === 1 }]"
+                    @click="handleDeleteLabel(index)"></i>
                 </div>
               </div>
+              <bk-checkbox v-model="formData.add_pod_label">
+                {{$t('是否自动添加Pod中的labels')}}
+              </bk-checkbox>
             </bk-form-item>
           </div>
-        </div>
+        </template>
       </div>
 
       <!-- 上报链路配置 -->
@@ -413,7 +369,7 @@
         <bk-form-item required property="data_link_id" :label="$t('上报链路')" :rules="rules.linkConfig">
           <bk-select
             data-test-id="acquisitionConfigur_div_selectReportLink"
-            style="width: 320px;"
+            class="w520"
             v-model="formData.data_link_id"
             :clearable="false"
             :disabled="isUpdate">
@@ -427,39 +383,58 @@
         </bk-form-item>
       </template>
 
-      <bk-form-item>
+      <label-target-dialog
+        :is-show-dialog.sync="isShowLabelTargetDialog"
+        :label-selector="currentSelector"
+        @configLabelChange="(val) => handelFormChange(val, 'containerConfig')">
+      </label-target-dialog>
+
+      <container-target-dialog
+        :is-show-dialog.sync="isShowContainerTargetDialog"
+        :container="currentContainer"
+        @configContainerChange="(val) => handelFormChange(val, 'containerConfig')">
+      </container-target-dialog>
+
+      <div class="page-operate">
         <bk-button
           theme="primary"
           data-test-id="acquisitionConfigur_div_nextPage"
           :title="$t('retrieve.Start_collecting')"
-          @click.stop.prevent="startCollect"
           :loading="isHandle"
-          :disabled="!collectProject">
+          :disabled="!collectProject"
+          @click.stop.prevent="startCollect">
           {{ $t('retrieve.next') }}
         </bk-button>
         <bk-button
           theme="default"
           data-test-id="acquisitionConfigur_div_cancel"
-          :title="$t('indexSetList.cancel')"
           class="ml10"
+          :title="$t('indexSetList.cancel')"
           @click="cancel">
           {{ $t('indexSetList.cancel') }}
         </bk-button>
-      </bk-form-item>
+      </div>
     </bk-form>
   </div>
 </template>
 
 <script>
-import MultilineRegDialog from './multiline-reg-dialog';
+// import MultilineRegDialog from './multiline-reg-dialog';
 import ipSelectorDialog from './ip-selector-dialog';
+import configLogSetItem from './components/config-log-set-item';
+import labelTargetDialog from './components/label-target-dialog';
+import containerTargetDialog from './components/container-target-dialog';
+import yamlEditor from './components/yaml-editor';
 import { mapGetters, mapState } from 'vuex';
 import { projectManages } from '@/common/util';
 
 export default {
   components: {
-    MultilineRegDialog,
     ipSelectorDialog,
+    labelTargetDialog,
+    configLogSetItem,
+    containerTargetDialog,
+    yamlEditor,
   },
   data() {
     return {
@@ -499,8 +474,55 @@ export default {
           winlog_level: [], // windows事件等级
           winlog_event_id: [], // windows事件id
         },
+        environment: 'container_log_config', // 容器环境
+        bcs_cluster_id: '', // 集群ID
+        add_pod_label: false, // 是否自动添加Pod中的labels
+        extra_labels: [ // 附加日志标签
+          {
+            key: '',
+            value: '',
+          },
+        ],
+        yaml: '这是一个yaml', // yaml
+        container_config: [ // 配置项列表
+          {
+            isAllContainer: false,
+            namespaces: [],
+            container: {
+              workload_type: '',
+              workload_name: '',
+              container_name: '',
+            }, // 容器
+            label_selector: { // 指定标签或表达式
+              match_labels: [],
+              match_expressions: [],
+            },
+            data_encoding: 'UTF-8',
+            params: {
+              paths: [{ value: '/log/abc' }], // 日志路径
+              conditions: {
+                type: 'match', // 过滤方式类型
+                match_type: 'include',  // 过滤方式 可选字段 include, exclude
+                match_content: '',
+                separator: '',
+                separator_filters: [ // 分隔符过滤条件
+                  { fieldindex: 1, word: '', op: '=', logic_op: 'and' },
+                ],
+              },
+              multiline_pattern: '', // 行首正则, char
+              multiline_max_lines: '50', // 最多匹配行数, int
+              multiline_timeout: '2', // 最大耗时, int
+            },
+          },
+        ],
       },
       rules: {
+        category_id: [ // 数据分类
+          {
+            required: true,
+            trigger: 'blur',
+          },
+        ],
         notEmptyForm: [ // 不能为空的表单
           {
             required: true,
@@ -566,24 +588,6 @@ export default {
             trigger: 'blur',
           },
         ],
-        category_id: [ // 数据分类
-          {
-            required: true,
-            trigger: 'blur',
-          },
-        ],
-        paths: [ // 日志路径
-          {
-            required: true,
-            trigger: 'change',
-          },
-        ],
-        separator_filters: [ // 分隔符过滤条件
-          {
-            required: true,
-            trigger: 'blur',
-          },
-        ],
         // 上报链路配置
         linkConfig: [
           {
@@ -619,38 +623,33 @@ export default {
         SET_TEMPLATE1: this.$t('configDetails.selected'),
         SET_TEMPLATE2: this.$t('configDetails.setTemplates'),
       },
-      logSpeciesList: [{
-        id: 'Application',
-        name: this.$t('应用程序'),
-      }, {
-        id: 'Security',
-        name: this.$t('安全'),
-      }, {
-        id: 'System',
-        name: this.$t('win系统'),
-      }, {
-        id: 'Outher',
-        name: this.$t('其他'),
-      }],
-      outherRules: false,
-      selectLogSpeciesList: ['Application', 'Security', 'System', 'Outher'],
-      outherSpeciesList: [],
-      selectEventList: [
-        {
-          id: 'winlog_event_id',
-          name: this.$t('事件ID'),
-          isSelect: false,
-        },
-        {
-          id: 'winlog_level',
-          name: this.$t('级别'),
-          isSelect: false,
-        },
+      configNameEnIsNotRepeat: true, // 英文名没有重复
+      currentEnvironment: '', // 当前选择的环境
+      isYaml: false, // 是否是yaml模式
+      environmentList: [
+        { category: this.$t('物理环境'), btnList: ['Linux', 'Window'] },
+        { category: this.$t('容器环境'), btnList: [this.$t('标准输出'), 'container', 'node'] },
       ],
-      eventSettingList: [
-        { type: 'winlog_event_id', list: [], isCorrect: true },
-      ],
-      configNameEnIsNotRepeat: true,
+      specifyName: { // 指定容器中文名
+        workload_type: this.$t('应用类型'),
+        workload_name: this.$t('应用名称'),
+        container_name: this.$t('容器名称'),
+      },
+      allContainer: { // 所有容器时指定容器默认传空
+        workload_type: '',
+        workload_name: '',
+        container_name: '',
+      },
+      allLabelSelector: { // 所有容器时指定标签和表达式默认传空
+        match_labels: [],
+        match_expressions: [],
+      },
+      isShowLabelTargetDialog: false, // 是否展示指定标签dialog
+      isShowContainerTargetDialog: false, // 是否展示指定容器dialog
+      formTime: null, // form更改防抖timer
+      currentSelector: {}, // 当前操作的配置项指定标签值
+      currentContainer: {}, // 当前操作的配置项指定容器值
+      currentSetIndex: 0, // 档期那操作的配置项的下标
     };
   },
   computed: {
@@ -691,6 +690,42 @@ export default {
     isCloseDataLink() {
       // 没有可上报的链路时，编辑采集配置链路ID为0或null时，隐藏链路配置框，并且不做空值校验。
       return !this.linkConfigurationList.length || (this.isUpdate && !this.curCollect.data_link_id);
+    },
+    // 是否是物理环境
+    isPhysicsEnvironment() {
+      return ['Linux', 'Window'].includes(this.currentEnvironment);
+    },
+    // 是否是Node环境
+    isNode() {
+      if (this.currentEnvironment === 'node') {
+        this.formData.container_config.forEach((item) => {
+          item.isAllContainer = false; // node环境时 所有容器，指定容器禁用
+          item.container = this.allContainer;
+        });
+      }
+      return this.currentEnvironment === 'node';
+    },
+    // 获取日志类型列表
+    getCollectorScenario() {
+      try {
+        if (this.currentEnvironment === 'Window') return this.globalsData.collector_scenario;
+        const cloneList = JSON.parse(JSON.stringify(this.globalsData.collector_scenario));
+        const winIndex = cloneList.findIndex(item => item.id === 'wineventlog');
+        cloneList.splice(winIndex, 1);
+        return cloneList;
+      } catch (error) {
+        return [];
+      }
+    },
+  },
+  watch: {
+    currentEnvironment: {
+      handler(nval, oval) {
+        const collectorList = this.globalsData.collector_scenario;
+        if (oval === 'Window' && this.formData.collector_scenario_id === 'wineventlog') {
+          this.formData.collector_scenario_id = collectorList[0].id;
+        }
+      },
     },
   },
   created() {
@@ -780,9 +815,9 @@ export default {
     },
     // 开始采集
     startCollect() {
-      if (this.eventSettingList.some(el => el.isCorrect === false) || this.outherRules) {
-        return;
-      }
+      // if (this.eventSettingList.some(el => el.isCorrect === false) || this.outherRules) {
+      //   return;
+      // }
       const params = this.handleParams();
       if (JSON.stringify(this.localParams) === JSON.stringify(params)) {
         // 未修改表单 直接跳转下一步
@@ -909,95 +944,6 @@ export default {
       //     this.formData.target_object_type = 'HOST'
       // }
     },
-    // 切换选择过滤内容
-    chooseType(value) {
-      this.isString = value === 'match';
-      const conditions = this.formData.params.conditions || {};
-      if (!this.isString && conditions.separator_filters.length < 1) {
-        Object.assign(conditions, {
-          separator_filters: [ // 分隔符过滤条件
-            { fieldindex: '', word: '', op: '=', logic_op: this.type },
-          ],
-        });
-      }
-    },
-    // 修改分隔符过滤的并&或
-    changeType(value) {
-      this.type = value;
-      this.formData.params.conditions.separator_filters.map((item) => {
-        item.logic_op = value;
-      });
-    },
-    addLog() {
-      this.formData.params.paths.push({ value: '' });
-    },
-    delLog(index) {
-      if (this.formData.params.paths.length > 1) {
-        this.formData.params.paths.splice(this.formData.params.paths.findIndex((item, ind) => ind === index), 1);
-      }
-    },
-    addWinEvent() {
-      const e = this.eventSettingList.map(el => el.type);
-      const s = this.selectEventList.map(el => el.id);
-      if (e.length !== s.length) {
-        const selectFilter = s.filter(v => e.indexOf(v) === -1);
-        this.eventSettingList.push({ type: selectFilter[0], list: [], isCorrect: true });
-        this.selectDisabledChange(true);
-      }
-    },
-    delWinEvent(index) {
-      if (this.eventSettingList.length > 1) {
-        this.eventSettingList.splice(this.eventSettingList.findIndex((el, ind) => index === ind), 1);
-        this.selectDisabledChange(false);
-      }
-    },
-    selectDisabledChange(state = true) {
-      if (this.eventSettingList.length === 1) {
-        this.selectEventList.forEach(el => el.isSelect = false);
-      }
-      if (this.eventSettingList.length === this.selectEventList.length) {
-        this.selectEventList.forEach(el => el.isSelect = true);
-      }
-      for (const eItem of this.eventSettingList) {
-        for (const sItem of this.selectEventList) {
-          if (eItem.type === sItem.id) {
-            sItem.isSelect = state;
-          }
-        }
-      }
-    },
-    outherBlurRules(input, tags) {
-      this.outherRules = !tags.every(el => /^[a-zA-Z /]*$/.test(el));
-      tags.length === 0 && (this.outherRules = false);
-      const slist = this.selectLogSpeciesList;
-      if (slist.length === 1 && slist[0] === 'Outher' && this.outherSpeciesList.length === 0) {
-        this.outherRules = true;
-      }
-    },
-    tagBlurRules(item, index) {
-      switch (item.type) {
-        case 'winlog_event_id':
-          this.eventSettingList[index].isCorrect =  item.list.every(el => /^[\d -]+$/.test(el));
-          break;
-        case 'winlog_level':
-          this.eventSettingList[index].isCorrect =  item.list.every(el => /^[A-Za-z]+$/.test(el));
-          break;
-      }
-    },
-    addItem() {
-      this.formData.params.conditions.separator_filters.push({
-        fieldindex: '',
-        word: '',
-        op: '=',
-        logic_op: this.type,
-      });
-    },
-    delItem(index) {
-      const { separator_filters } = this.formData.params.conditions;
-      if (separator_filters.length > 1) {
-        separator_filters.splice(separator_filters.findIndex((item, ind) => index === ind), 1);
-      }
-    },
     // 取消操作
     cancel() {
       this.$router.push({
@@ -1055,375 +1001,755 @@ export default {
         this.configNameEnIsNotRepeat = true;
       }
     },
+    /**
+     * @desc: 环境选择
+     * @param name 环境名称
+     */
+    handleSelectEnvironment(name) {
+      this.currentEnvironment = name;
+    },
+    handleAddLabel() {
+      this.formData.extra_labels.push({ key: '', value: '' });
+    },
+    handleDeleteLabel(index) {
+      this.formData.extra_labels.length > 1 && (this.formData.extra_labels.splice(index, 1));
+    },
+    /**
+     * @desc: 用户操作合并form数据
+     * @param { Object } val 操作后返回值对象
+     * @param { String } operator 配置项还是form本身
+     * @param { Number } index 配置项下标
+     */
+    handelFormChange(val, operator, index) {
+      const setIndex = index ? index : this.currentSetIndex;
+      clearTimeout(this.formTime);
+      this.formTime = setTimeout(() => {
+        switch (operator) {
+          case 'formConfig':
+            Object.assign(this.formData, val);
+            break;
+          case 'containerConfig':
+            Object.assign(this.formData.container_config[setIndex], val);
+            break;
+        }
+      }, 500);
+    },
+    /**
+     * @desc: 配置项点击所有容器
+     * @param { Number } index 下标
+     * @param { Boolean } state 状态
+     */
+    handelClickAllContainer(index, state) {
+      this.currentSetIndex = index;
+      if (state) {
+        // 点击所有容器配置项的指定标签和容器都填为空
+        this.formData.container_config[index].container = this.allContainer;
+        this.formData.container_config[index].label_selector = this.allLabelSelector;
+      }
+    },
+    /**
+     * @desc: 指定操作弹窗
+     * @param { Number } index 下标
+     * @param { String } type 标签或容器
+     * @param { Boolean } disable 是否禁用
+     */
+    handelShowDialog(index, type, disable) {
+      if (disable) return;
+      this.currentSetIndex = index;
+      type === 'label' ?  this.isShowLabelTargetDialog = true : this.isShowContainerTargetDialog = true;
+      this.currentSelector = this.formData.container_config[index].label_selector;
+      this.currentContainer = this.formData.container_config[index].container;
+    },
+    isSelectorHaveValue(labelSelector) {
+      return Object.values(labelSelector).some(item => item.length);
+    },
+    isContainerHaveValue(container) {
+      return Object.values(container).some(item => item);
+    },
   },
 };
 </script>
 
 <style lang="scss">
-  .add-collection-container {
-    min-width: 950px;
-    max-height: 100%;
-    padding: 0 42px 42px;
-    overflow: auto;
+@import '@/scss/mixins/flex.scss';
 
-    .king-alert {
-      margin: 24px 0 -18px;
+.add-collection-container {
+  min-width: 950px;
+  max-height: 100%;
+  padding: 0 42px 42px;
+  overflow: auto;
 
-      .link {
-        color: #3a84ff;
-      }
+  .king-alert {
+    margin: 24px 0 -18px;
+
+    .link {
+      color: #3a84ff;
+    }
+  }
+
+  .add-collection-title {
+    width: 100%;
+    font-size: 14px;
+    font-weight: 600;
+    color: #63656e;
+    border-bottom: 1px solid #dcdee5;
+    padding-top: 38px;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  .tips,
+  .en-name-tips {
+    font-size: 12px;
+    color: #aeb0b7;
+    line-height: 32px;
+  }
+
+  .en-name-tips {
+    margin-left: 0;
+    margin-top: 8px;
+    line-height: 12px;
+  }
+
+  .hight-setting {
+    width: 100%;
+    min-height: 60px;
+
+    .icons-downs {
+      display: inline-block;
+      width: 9px;
+      height: 5px;
+      background: url('../../images/icons/triangle.png');
+      background-size: 100% 100%;
+      margin-right: 6px;
+      vertical-align: middle;
+      margin-top: -3px;
     }
 
-    .add-collection-title {
-      width: 100%;
-      font-size: 14px;
-      font-weight: 600;
-      color: #63656e;
-      border-bottom: 1px solid #dcdee5;
-      padding-top: 38px;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
+    .icon-left {
+      transform: rotate(-90deg);
     }
 
-    .tips,
-    .en-name-tips {
-      font-size: 12px;
-      color: #aeb0b7;
-      margin-left: 8px;
-      line-height: 32px;
-    }
-
-    .en-name-tips {
-      margin-left: 0;
-      margin-top: 8px;
-      line-height: 12px;
-    }
-
-    .hight-setting {
-      width: 100%;
-      min-height: 60px;
-      margin: 20px 0;
-
-      .icons-downs {
-        display: inline-block;
-        width: 9px;
-        height: 5px;
-        background: url('../../images/icons/triangle.png');
-        background-size: 100% 100%;
-        margin-right: 6px;
-        vertical-align: middle;
-        margin-top: -3px;
-      }
-
-      .icon-left {
-        transform: rotate(-90deg);
-      }
-    }
-
-    .bk-label {
-      color: #90929a;
-    }
-
-    .bk-form-control {
-      width: 320px;
-    }
-
-    .multiline-log-container {
-      margin: 20px 0;
-
-      .row-container {
-        display: flex;
-        align-items: center;
-
-        &.second {
-          padding-left: 115px;
-          margin-top: 10px;
-          font-size: 12px;
-          color: #63656e;
-
-          .bk-form-item {
-            /* stylelint-disable-next-line declaration-no-important */
-            margin: 0 !important;
-
-            .bk-form-content {
-              /* stylelint-disable-next-line declaration-no-important */
-              margin: 0 !important;
-
-              .bk-form-control {
-                width: 64px;
-                margin: 0 6px;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    .form-div {
-      display: flex;
-      margin-bottom: 20px;
-
-      .form-inline-div {
-        .bk-form-content {
-          display: flex;
-        }
-      }
-
-      .prefix {
-        font-size: 14px;
-        line-height: 32px;
-        color: #858790;
-        margin-right: 8px;
-      }
-
-      .count {
-        font-size: 12px;
-        line-height: 32px;
-        color: #7a7c85;
-        margin-left: 8px;
-      }
-
-      .font-blue {
-        color: #4e99ff;
-        font-weight: bold;
-      }
-
-      .font-gray {
-        color: #858790;
-      }
-
-      .icons {
-        font-size: 21px;
-        vertical-align: middle;
-        cursor: pointer;
-        color: #979ba5;
-        line-height: 32px;
-      }
-
-      .disable {
-        color: #dcdee5;
-        cursor: not-allowed;
-      }
-
-      .item-target {
-        &.is-error .bk-form-content {
-          padding-right: 30px;
-        }
-      }
-    }
-
-    .win-filter {
-      .select-div {
-        width: 129px;
-        margin-right: 8px;
-      }
-
-      .tag-input {
-        width: 320px;
-      }
-    }
-
-    .choose-table {
-      background: #fff;
-      width: 60%;
-      height: 100%;
-      border: 1px solid #dcdee5;
-      margin-left: 115px;
-      padding-bottom: 14px;
-
-      .bk-form-content {
-        /* stylelint-disable-next-line declaration-no-important */
-        margin-left: 0 !important;
-      }
-
-      label {
-        /* stylelint-disable-next-line declaration-no-important */
-        width: 0 !important;
-      }
-
-      .choose-table-item {
-        display: flex;
-        height: 32px;
-        line-height: 32px;
-        padding: 0 20px;
-        font-size: 13px;
-        color: #858790;
-        margin-top: 13px;
-        position: relative;
-
-        .left {
-          width: 110px;
-        }
-
-        .main {
-          flex: 1;
-          padding-right: 130px;
-          position: relative;
-
-          .bk-form-control {
-            width: 88%;
-          }
-        }
-
-        .line {
-          .bk-form-control {
-            &::before {
-              content: '';
-              width: 25px;
-              height: 1px;
-              border-top: 1px dashed #c4c6cc;
-              position: absolute;
-              left: 100%;
-              top: 16px;
-            }
-          }
-        }
-
-        .right {
-          width: 60px;
-        }
-      }
-
-      .choose-table-item-head {
-        height: 42px;
-        line-height: 42px;
-        background: #fafbfd;
-        border-bottom: 1px solid #dcdee5;
-        margin-top: 0;
-      }
-
-      .choose-table-item-body {
-        position: relative;
-        height: 100%;
-
-        .choose-select {
-          height: 100%;
-          position: absolute;
-          top: 0;
-          left: calc(88% - 120px);
-          display: flex;
-          align-items: center;
-
-          .select-div {
-            width: 80px;
-          }
-
-          &::before {
-            content: '';
-            width: 20px;
-            height: 1px;
-            border-top: 1px dashed #c4c6cc;
-            position: absolute;
-            right: 80px;
-            top: 50%;
-          }
-
-          &::after {
-            content: '';
-            width: 1px;
-            height: calc(100% - 32px);
-            border-left: 1px dashed #c4c6cc;
-            position: absolute;
-            right: 100px;
-            top: 17px;
-          }
-        }
-      }
-    }
-
-    .log-type {
-      height: 32px;
-      border-radius: 2px;
-
-      .bk-button {
-        min-width: 106px;
-        font-size: 12px;
-
-        span {
-          padding: 0 1px;
-        }
-      }
-
-      .disable {
-        color: #dcdee5;
-        cursor: not-allowed;
-        border-color: #dcdee5;
-      }
-
-      .is-updated {
-        background: #fafbfd;
-        border-color: #dcdee5;
-        color: #63656e;
-      }
-    }
-
-    .species-item {
-      display: flex;
-      flex-direction: column;
-      position: relative;
-
-      .bk-form-checkbox {
-        height: 30px;
-        line-height: 30px;
-      }
-
-      .bk-tag-selector {
-        position: absolute;
-        top: 89px;
-        left: 65px;
-        width: 320px;
-      }
-    }
-
-    .ml {
-      margin-left: -115px;
-    }
-
-    .mt {
-      margin-top: 20px;
-    }
-
-    .ml9 {
-      margin-left: 8px;
-    }
-
-    .ml10 {
-      margin-left: 10px;
-    }
-
-    .ml115 {
-      margin-left: 115px;
-    }
-
-    .is-selected {
-      /* stylelint-disable-next-line declaration-no-important */
-      z-index: 2 !important;
-    }
-
-    .bk-form .bk-form-content .tooltips-icon {
-      left: 330px;
-    }
-
-    .rulesColor {
-      /* stylelint-disable-next-line declaration-no-important */
-      border-color: #ff5656 !important;
-    }
-
-    .tagRulesColor {
-      .bk-tag-input {
-        /* stylelint-disable-next-line declaration-no-important */
-        border-color: #ff5656 !important;
-      }
-    }
-
-    .config-enName-box {
-      display: flex;
-
-      .repeat-message {
-        font-size: 14px;
-        margin-left: 6px;
-        color: #ff5656;
+    .log-paths {
+      .bk-form-control {
+        width: 460px;
       }
     }
   }
+
+  .bk-label {
+    color: #90929a;
+  }
+
+  .bk-form-control {
+    width: 320px;
+  }
+
+  .w520 {
+    &.bk-form-control {
+      width: 520px;
+    }
+
+    &.bk-select {
+      width: 520px;
+    }
+  }
+
+  .multiline-log-container {
+    margin-top: 20px;
+
+    .row-container {
+      display: flex;
+      align-items: center;
+
+      &.second {
+        // padding-left: 115px;
+        margin-top: 10px;
+        font-size: 12px;
+        color: #63656e;
+
+        .bk-form-item {
+          /* stylelint-disable-next-line declaration-no-important */
+          margin: 0 !important;
+
+          .bk-form-content {
+            /* stylelint-disable-next-line declaration-no-important */
+            margin: 0 !important;
+
+            .bk-form-control {
+              width: 64px;
+              margin: 0 6px;
+            }
+          }
+        }
+      }
+
+      .king-button {
+        margin-bottom: 4px;
+      }
+
+      &.pl115 {
+        padding-left: 115px;
+      }
+    }
+  }
+
+  .form-div {
+    display: flex;
+
+    .form-inline-div {
+      .bk-form-content {
+        display: flex;
+      }
+    }
+
+    .prefix {
+      font-size: 14px;
+      line-height: 32px;
+      color: #858790;
+      margin-right: 8px;
+    }
+
+    .count {
+      font-size: 12px;
+      line-height: 32px;
+      color: #7a7c85;
+      margin-left: 8px;
+    }
+
+    .font-blue {
+      color: #4e99ff;
+      font-weight: bold;
+    }
+
+    .font-gray {
+      color: #858790;
+    }
+
+    .icons {
+      font-size: 21px;
+      vertical-align: middle;
+      cursor: pointer;
+      color: #979ba5;
+      line-height: 32px;
+    }
+
+    .disable {
+      color: #dcdee5;
+      cursor: not-allowed;
+    }
+
+    .item-target {
+      &.is-error .bk-form-content {
+        padding-right: 30px;
+      }
+    }
+  }
+
+  .win-filter {
+    margin-top: 8px;
+
+    .select-div {
+      width: 129px;
+      margin-right: 8px;
+    }
+
+    .tag-input {
+      width: 320px;
+    }
+  }
+
+  .choose-table {
+    background: #fff;
+    width: 100%;
+    height: 100%;
+    max-width: 1170px;
+    border: 1px solid #dcdee5;
+    padding-bottom: 14px;
+
+    .bk-form-content {
+      /* stylelint-disable-next-line declaration-no-important */
+      margin-left: 0 !important;
+    }
+
+    label {
+      /* stylelint-disable-next-line declaration-no-important */
+      width: 0 !important;
+    }
+
+    .choose-table-item {
+      display: flex;
+      height: 32px;
+      line-height: 32px;
+      padding: 0 20px;
+      font-size: 13px;
+      color: #858790;
+      margin-top: 13px;
+      position: relative;
+
+      .left {
+        width: 110px;
+      }
+
+      .main {
+        flex: 1;
+        padding-right: 130px;
+        position: relative;
+
+        .bk-form-control {
+          width: 88%;
+        }
+      }
+
+      .line {
+        .bk-form-control {
+          &::before {
+            content: '';
+            width: 25px;
+            height: 1px;
+            border-top: 1px dashed #c4c6cc;
+            position: absolute;
+            left: 100%;
+            top: 16px;
+          }
+        }
+      }
+
+      .right {
+        width: 60px;
+      }
+    }
+
+    .choose-table-item-head {
+      height: 42px;
+      line-height: 42px;
+      background: #fafbfd;
+      border-bottom: 1px solid #dcdee5;
+      margin-top: 0;
+    }
+
+    .choose-table-item-body {
+      position: relative;
+      height: 100%;
+
+      .choose-select {
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: calc(88% - 120px);
+        display: flex;
+        align-items: center;
+
+        .select-div {
+          width: 80px;
+        }
+
+        &::before {
+          content: '';
+          width: 20px;
+          height: 1px;
+          border-top: 1px dashed #c4c6cc;
+          position: absolute;
+          right: 80px;
+          top: 50%;
+        }
+
+        &::after {
+          content: '';
+          width: 1px;
+          height: calc(100% - 32px);
+          border-left: 1px dashed #c4c6cc;
+          position: absolute;
+          right: 100px;
+          top: 17px;
+        }
+      }
+    }
+  }
+
+  .log-type {
+    height: 32px;
+    border-radius: 2px;
+
+    .bk-button {
+      min-width: 106px;
+      font-size: 12px;
+
+      span {
+        padding: 0 1px;
+      }
+    }
+
+    .disable {
+      color: #dcdee5;
+      cursor: not-allowed;
+      border-color: #dcdee5;
+    }
+
+    .is-updated {
+      background: #fafbfd;
+      border-color: #dcdee5;
+      color: #63656e;
+    }
+  }
+
+  .species-item {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+    .bk-form-checkbox {
+      height: 30px;
+      line-height: 30px;
+    }
+
+    .bk-tag-selector {
+      position: absolute;
+      top: 89px;
+      left: 65px;
+      width: 320px;
+    }
+  }
+
+  .ml {
+    margin-left: -115px;
+  }
+
+  .mt {
+    margin-top: 20px;
+  }
+
+  .ml9 {
+    margin-left: 8px;
+  }
+
+  .ml10 {
+    margin-left: 10px;
+  }
+
+  .ml115 {
+    margin-left: 115px;
+  }
+
+  .mt8 {
+    margin-top: 8px;
+  }
+
+  .is-selected {
+    /* stylelint-disable-next-line declaration-no-important */
+    z-index: 2 !important;
+  }
+
+  .bk-form .bk-form-content .tooltips-icon {
+    left: 330px;
+  }
+
+  .rulesColor {
+    /* stylelint-disable-next-line declaration-no-important */
+    border-color: #ff5656 !important;
+  }
+
+  .tagRulesColor {
+    .bk-tag-input {
+      /* stylelint-disable-next-line declaration-no-important */
+      border-color: #ff5656 !important;
+    }
+  }
+
+  .config-enName-box {
+    display: flex;
+
+    .repeat-message {
+      font-size: 14px;
+      margin-left: 6px;
+      color: #ff5656;
+    }
+  }
+
+  .win-content {
+    padding-bottom: 20px;
+    position: relative;
+    left: 115px;
+
+    > span {
+      color: #90929a;
+      font-size: 14px;
+      position: absolute;
+      left: -80px;
+      top: 6px;
+    }
+
+    .filter-select {
+      margin-top: 11px;
+    }
+
+    .bk-select {
+      width: 184px;
+      margin: 0 8px 12px 0;
+      height: 32px;
+    }
+  }
+
+  .environment-box {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+
+    .environment-container {
+      height: 68px;
+      margin-right: 8px;
+
+      .environment-category {
+        display: inline-block;
+        font-weight: lighter;
+        margin-bottom: 2px;
+        color: #63656e;
+      }
+
+      .button-box {
+        display: flex;
+
+        .environment-button {
+          width: 120px;
+          height: 40px;
+          margin-right: 16px;
+          color: #313238;
+          border: 1px solid #dcdee5;
+          border-radius: 2px;
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          user-select: none;
+
+          &.active {
+            background: #e1ecff;
+            border: 1px solid #3a84ff;
+          }
+        }
+      }
+
+      &:not(:first-child) {
+        margin-left: 24px;
+        position: relative;
+
+        &::before {
+          content: ' ';
+          width: 1px;
+          height: 32px;
+          background-color: #dcdee5;
+          position: absolute;
+          left: -24px;
+          top: 36px;
+        }
+      }
+    }
+  }
+
+  .cluster-select-box {
+    margin-top: 20px;
+
+    .bk-select {
+      width: 382px;
+    }
+
+    .tips {
+      font-size: 12px;
+      color: #979ba5;
+    }
+  }
+
+  .config-box {
+    width: 730px;
+    background: #fff;
+    border: 1px solid #dcdee5;
+    border-radius: 2px;
+    font-size: 14px;
+
+    .config-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 31px;
+      background: #f0f1f5;
+      border-radius: 1px 1px 0 0;
+      padding: 0 16px;
+
+      .icon-close3-shape {
+        color: #ea3636;
+        cursor: pointer;
+      }
+    }
+
+    .config-container {
+      padding: 16px 24px;
+      color: #63656e;
+
+      .config-item {
+        margin-bottom: 16px;
+
+        > span {
+          margin-bottom: 4px;
+        }
+      }
+
+      .container-select {
+        width: 300px;
+      }
+
+      .container-btn-container {
+        align-items: center;
+        position: relative;
+
+        .container-btn {
+          color: #3a84ff;
+          cursor: pointer;
+
+          &.disable {
+            color: #c4c6cc;
+            cursor: not-allowed;
+          }
+
+          &:not(:last-child) {
+            margin-right: 24px;
+            position: relative;
+
+            &::after {
+              content: ' ';
+              width: 1px;
+              height: 16px;
+              background-color: #dcdee5;
+              position: absolute;
+              left: 87px;
+              top: 8px;
+            }
+          }
+        }
+      }
+
+      .filter-content {
+        color: #979ba5;
+        margin-top: 24px;
+
+        > span {
+          color: #63656e;
+          margin-bottom: 0;
+        };
+      }
+
+      .filter-select {
+        margin-top: 11px;
+
+        .bk-select {
+          width: 184px;
+          height: 32px
+        }
+      }
+
+      .specify {
+        min-width: 573px;
+        position: relative;
+
+        .edit {
+          position: absolute;
+          right: 0;
+          top: -30px;
+          color: #3a84ff;
+          cursor: pointer;
+        }
+
+        .specify-box {
+          display: flex;
+          flex-flow: wrap;
+          padding: 8px 16px;
+          margin-bottom: 8px;
+          background: #f5f7fa;
+          border-radius: 2px;
+
+          .specify-container {
+            width: 50%;
+
+            .operator {
+              padding: 0 6px;
+              height: 24px;
+              line-height: 24px;
+              text-align: center;
+              color: #ff9c01;
+              background: #fff;
+              border-radius: 2px;
+            }
+
+            :last-child {
+              margin-left: 12px;
+            }
+          }
+        }
+      }
+
+      .bk-label {
+        color: #63656e;
+      }
+    }
+  }
+
+  .conflict-container {
+    width: 730px;
+    height: 32px;
+    margin: 12px 0 0 115px;
+    font-size: 12px;
+    background: #fff4e2;
+    border: 1px solid #ffdfac;
+    border-radius: 2px;
+    padding: 0 11px;
+
+    .icon-exclamation-circle {
+      color: #ff9c01;
+      font-size: 16px;
+    }
+
+    .conflict-message {
+      margin: 0 16px 0 9px;
+      color: #63656e;
+    }
+
+    .collection-item {
+      margin-left: 24px;
+      color: #3a84ff;
+    }
+  }
+
+  .add-config-item {
+    margin: 14px 0 14px 115px;
+  }
+
+  .add-log-label {
+    display: flex;
+
+    &:not(:first-child) {
+      margin-top: 20px;
+    }
+
+    span {
+      color: #ff9c01;
+      margin: 0 7px;
+    }
+
+    .bk-form-control {
+      width: 240px;
+    }
+  }
+
+  .page-operate {
+    margin-top: 36px;
+  }
+
+  .justify-bt {
+    align-items: center;
+
+    @include flex-justify(space-between);
+  }
+
+  .flex-ac {
+    @include flex-align();
+  }
+}
 </style>

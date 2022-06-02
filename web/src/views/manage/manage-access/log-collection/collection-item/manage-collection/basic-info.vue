@@ -22,159 +22,179 @@
 
 <template>
   <div class="basic-info-container">
-    <div class="deploy-sub">
-      <div>
-        <span>{{ $t('dataSource.dataId') }}</span>
-        <span>{{ collectorData.bk_data_id || '-' }}</span>
-      </div>
-      <div>
-        <span>{{ $t('configDetails.name') }}</span>
-        <span>{{ collectorData.collector_config_name || '-' }}</span>
-      </div>
-      <template v-if="isCustomReport">
+    <div>
+      <div class="deploy-sub" v-if="isContainer">
+        <!-- 数据ID -->
         <div>
-          <span>{{ $t('数据类型') }}</span>
-          <span>{{ collectorData.custom_name || '-' }}</span>
+          <span>{{ $t('dataSource.dataId') }}</span>
+          <span>{{ collectorData.bk_data_id || '-' }}</span>
         </div>
+        <!-- 名称 -->
         <div>
-          <span>{{ $t('dataSource.source_en_name') }}</span>
-          <span>{{ collectorData.collector_config_name_en || '-' }}</span>
+          <span>{{ $t('configDetails.name') }}</span>
+          <span>{{ collectorData.collector_config_name || '-' }}</span>
         </div>
-        <div>
-          <span>{{ $t('数据分类') }}</span>
-          <span>{{ collectorData.category_name || '-' }}</span>
-        </div>
-        <div>
-          <span>{{ $t('customReport.remark') }}</span>
-          <span>{{ collectorData.description || '-' }}</span>
-        </div>
-      </template>
-      <template v-else>
-        <div>
-          <span>{{ $t('configDetails.logType') }}</span>
-          <span>{{ collectorData.collector_scenario_name || '-' }}</span>
-        </div>
-        <div>
-          <span>{{ $t('configDetails.dataClassify') }}</span>
-          <span>{{ collectorData.category_name || '-' }}</span>
-        </div>
-        <div>
-          <span>
-            {{collectorData.collector_scenario_id === 'wineventlog' ?
-              $t('configDetails.logSpecies') : $t('configDetails.logPath') }}
-          </span>
-          <div v-if="collectorData.params.paths" class="deploy-path">
-            <p v-for="(val, key) in collectorData.params.paths" :key="key">{{ val }}</p>
-          </div>
-          <div v-else class="deploy-path">
-            <p>{{getLogSpeciesStr}}</p>
-          </div>
-        </div>
-        <div><span>{{ $t('configDetails.logSet') }}</span>
-          <span>{{ collectorData.data_encoding || '-' }}</span>
-        </div>
-        <div><span>{{ $t('configDetails.target') }}</span>
-          <span>{{ $t('configDetails.selected') }}
-            <p class="num-color" @click="handleClickTarget">{{ collectorData.target_nodes.length || '-' }}</p>
-            {{ collectorData.target_node_type !== 'INSTANCE' ?
-              $t('configDetails.Been') : $t('configDetails.staticHosts') }}
-          </span></div>
-        <div>
-          <span>{{ $t('configDetails.storageIndexName') }}</span>
-          <span v-if="collectorData.table_id">{{ collectorData.table_id_prefix }}{{ collectorData.table_id }}</span>
-          <span v-else>-</span>
-        </div>
-        <div><span>{{ $t('configDetails.remarkExplain') }}</span>
-          <span>{{ collectorData.description || '-' }}</span>
-        </div>
-        <div
-          class="content-style"
-          v-if="collectorData.params.conditions &&
-            collectorData.params.conditions.type === 'match' &&
-            collectorData.params.conditions.match_content !== ''">
-          <span>{{ $t('configDetails.filterContent') }}</span>
+        <template v-if="isCustomReport">
           <div>
-            <p>{{ $t('configDetails.strMatching') }}</p>
-            <p
-              v-if="collectorData.params.conditions.match_content">
-              {{ collectorData.params.conditions.match_content }}
-            </p>
-            <p>
-              {{ collectorData.params.conditions.match_type }}/{{
-                collectorData.params.conditions.match_type === 'include' ?
-                  $t('configDetails.keep') : $t('configDetails.Filter') }}
-            </p>
+            <span>{{ $t('数据类型') }}</span>
+            <span>{{ collectorData.custom_name || '-' }}</span>
           </div>
-        </div>
-        <div
-          class="content-style"
-          v-else-if="collectorData.params.conditions &&
-            collectorData.params.conditions.type === 'separator' &&
-            collectorData.params.conditions.separator_filters !== []">
-          <span>{{ $t('configDetails.filterContent') }}</span>
           <div>
-            <p>{{ $t('configDetails.sepMatching') }}</p>
-            <p v-if="collectorData.params.conditions.separator">{{ collectorData.params.conditions.separator }}</p>
-            <div class="condition-stylex">
-              <div>
-                <div class="the-column">
-                  <div
-                    v-for="(val, key) in collectorData.params.conditions.separator_filters"
-                    :key="key">
-                    {{ $t('configDetails.the') }} {{ val.fieldindex }} {{ $t('configDetails.column') }}
-                  </div>
-                </div>
+            <span>{{ $t('dataSource.source_en_name') }}</span>
+            <span>{{ collectorData.collector_config_name_en || '-' }}</span>
+          </div>
+          <div>
+            <span>{{ $t('数据分类') }}</span>
+            <span>{{ collectorData.category_name || '-' }}</span>
+          </div>
+          <div>
+            <span>{{ $t('customReport.remark') }}</span>
+            <span>{{ collectorData.description || '-' }}</span>
+          </div>
+        </template>
+        <template v-else>
+          <!-- 日志类型 -->
+          <div>
+            <span>{{ $t('configDetails.logType') }}</span>
+            <span>{{ collectorData.collector_scenario_name || '-' }}</span>
+          </div>
+          <!-- 数据分类 -->
+          <div>
+            <span>{{ $t('configDetails.dataClassify') }}</span>
+            <span>{{ collectorData.category_name || '-' }}</span>
+          </div>
+          <!-- 日志路径 -->
+          <div>
+            <span>
+              {{collectorData.collector_scenario_id === 'wineventlog' ?
+                $t('configDetails.logSpecies') : $t('configDetails.logPath') }}
+            </span>
+            <div v-if="collectorData.params.paths" class="deploy-path">
+              <p v-for="(val, key) in collectorData.params.paths" :key="key">{{ val }}</p>
+            </div>
+            <div v-else class="deploy-path">
+              <p>{{getLogSpeciesStr}}</p>
+            </div>
+          </div>
+          <!-- 日志字符集 -->
+          <div>
+            <span>{{ $t('configDetails.logSet') }}</span>
+            <span>{{ collectorData.data_encoding || '-' }}</span>
+          </div>
+          <!-- 采集目标 -->
+          <div>
+            <span>{{ $t('configDetails.target') }}</span>
+            <span>{{ $t('configDetails.selected') }}
+              <p class="num-color" @click="handleClickTarget">{{ collectorData.target_nodes.length || '-' }}</p>
+              {{ collectorData.target_node_type !== 'INSTANCE' ?
+                $t('configDetails.Been') : $t('configDetails.staticHosts') }}
+            </span>
+          </div>
+          <!-- 存储索引名 -->
+          <div>
+            <span>{{ $t('configDetails.storageIndexName') }}</span>
+            <span v-if="collectorData.table_id">{{ collectorData.table_id_prefix }}{{ collectorData.table_id }}</span>
+            <span v-else>-</span>
+          </div>
+          <!-- 备注说明 -->
+          <div>
+            <span>{{ $t('configDetails.remarkExplain') }}</span>
+            <span>{{ collectorData.description || '-' }}</span>
+          </div>
+          <!-- 过滤内容 -->
+          <div
+            class="content-style"
+            v-if="collectorData.params.conditions &&
+              collectorData.params.conditions.type === 'match' &&
+              collectorData.params.conditions.match_content !== ''">
+            <span>{{ $t('configDetails.filterContent') }}</span>
+            <div>
+              <p>{{ $t('configDetails.strMatching') }}</p>
+              <p
+                v-if="collectorData.params.conditions.match_content">
+                {{ collectorData.params.conditions.match_content }}
+              </p>
+              <p>
+                {{ collectorData.params.conditions.match_type }}/{{
+                  collectorData.params.conditions.match_type === 'include' ?
+                    $t('configDetails.keep') : $t('configDetails.Filter') }}
+              </p>
+            </div>
+          </div>
+          <div
+            class="content-style"
+            v-else-if="collectorData.params.conditions &&
+              collectorData.params.conditions.type === 'separator' &&
+              collectorData.params.conditions.separator_filters !== []">
+            <span>{{ $t('configDetails.filterContent') }}</span>
+            <div>
+              <p>{{ $t('configDetails.sepMatching') }}</p>
+              <p v-if="collectorData.params.conditions.separator">{{ collectorData.params.conditions.separator }}</p>
+              <div class="condition-stylex">
                 <div>
-                  <div v-for="(val, key) in collectorData.params.conditions.separator_filters" :key="key">
-                    <p @mouseenter="handleEnter" @mouseleave="handleLeave">{{ val.word }}</p>
+                  <div class="the-column">
                     <div
-                      :class="key === 0 ? 'line-styy' : 'line-sty'"
-                      v-if="collectorData.params.conditions.separator_filters.length > 1">
+                      v-for="(val, key) in collectorData.params.conditions.separator_filters"
+                      :key="key">
+                      {{ $t('configDetails.the') }} {{ val.fieldindex }} {{ $t('configDetails.column') }}
+                    </div>
+                  </div>
+                  <div>
+                    <div v-for="(val, key) in collectorData.params.conditions.separator_filters" :key="key">
+                      <p @mouseenter="handleEnter" @mouseleave="handleLeave">{{ val.word }}</p>
+                      <div
+                        :class="key === 0 ? 'line-styy' : 'line-sty'"
+                        v-if="collectorData.params.conditions.separator_filters.length > 1">
+                      </div>
                     </div>
                   </div>
                 </div>
+                <div class="con-text" v-if="collectorData.params.conditions.separator_filters.length > 1">
+                  <div class="line-styx"></div>
+                  <p>
+                    {{ collectorData.params.conditions.separator_filters[0].logic_op === 'and' ?
+                      $t('configDetails.and') : $t('configDetails.or') }}
+                  </p>
+                </div>
               </div>
-              <div class="con-text" v-if="collectorData.params.conditions.separator_filters.length > 1">
-                <div class="line-styx"></div>
-                <p>
-                  {{ collectorData.params.conditions.separator_filters[0].logic_op === 'and' ?
-                    $t('configDetails.and') : $t('configDetails.or') }}
-                </p>
+            </div>
+          </div>
+          <div class="content-style"
+               v-else-if="collectorData.collector_scenario_id === 'wineventlog' && isThereValue">
+            <span>{{ $t('configDetails.filterContent') }}</span>
+            <div class="win-log">
+              <div>
+                <p>{{$t('事件ID')}}:{{getEventIDStr}}</p>
+              </div>
+              <div>
+                <p>{{$t('级别')}}:{{getLevelStr}}</p>
               </div>
             </div>
           </div>
-        </div>
-        <div class="content-style"
-             v-else-if="collectorData.collector_scenario_id === 'wineventlog' && isThereValue">
-          <span>{{ $t('configDetails.filterContent') }}</span>
-          <div class="win-log">
+          <div class="content-style" v-else>
+            <span>{{ $t('configDetails.filterContent') }}</span>
             <div>
-              <p>{{$t('事件ID')}}:{{getEventIDStr}}</p>
-            </div>
-            <div>
-              <p>{{$t('级别')}}:{{getLevelStr}}</p>
+              --
             </div>
           </div>
+        </template>
+        <!-- 存储集群 -->
+        <div>
+          <span>{{ $t('configDetails.StorageCluster') }}</span>
+          <span>{{ collectorData.storage_cluster_name || '-' }}</span>
         </div>
-        <div class="content-style" v-else>
-          <span>{{ $t('configDetails.filterContent') }}</span>
-          <div>
-            --
-          </div>
+        <!-- 存储索引名 -->
+        <div>
+          <span>{{ $t('configDetails.storageIndexName') }}</span>
+          <span>{{ collectorData.table_id_prefix + collectorData.table_id || '-' }}</span>
         </div>
-      </template>
-      <div>
-        <span>{{ $t('configDetails.StorageCluster') }}</span>
-        <span>{{ collectorData.storage_cluster_name || '-' }}</span>
+        <!-- 过期时间 -->
+        <div>
+          <span>{{ $t('configDetails.expirationTime') }}</span>
+          <span>{{ collectorData.retention || '-' }} {{ $t('configDetails.day') }}</span>
+        </div>
       </div>
-      <div>
-        <span>{{ $t('configDetails.storageIndexName') }}</span>
-        <span>{{ collectorData.table_id_prefix + collectorData.table_id || '-' }}</span>
-      </div>
-      <div>
-        <span>{{ $t('configDetails.expirationTime') }}</span>
-        <span>{{ collectorData.retention || '-' }} {{ $t('configDetails.day') }}</span>
-      </div>
+      <container-base v-else :collector-data="collectorData"></container-base>
       <p class="button-place">
         <bk-button :theme="'primary'" @click="handleClickEdit" class="mr10">
           {{ $t('编辑') }}
@@ -193,8 +213,12 @@
 <script>
 import { mapState } from 'vuex';
 import { formatDate } from '@/common/util';
+import containerBase from './components/container-base';
 
 export default {
+  components: {
+    containerBase,
+  },
   props: {
     collectorData: {
       type: Object,
@@ -205,6 +229,7 @@ export default {
     return {
       // 右边展示的创建人、创建时间
       createAndTimeData: [],
+      isContainer: true,
     };
   },
   computed: {

@@ -25,6 +25,7 @@ const wepack = require('webpack');
 const WebpackBar = require('webpackbar');
 const path = require('path');
 const fs = require('fs');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const LogWebpackPlugin = require('./webpack/log-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const devProxyUrl = 'http://appdev.bktencent.com:9002';
@@ -132,6 +133,20 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
       }),
     );
   }
+
+  const pluginArr = Object.values(config.plugins[config.plugins.length - 2]);
+  pluginArr[0].languages.push('yaml');
+  pluginArr[0].customLanguages = [
+    {
+      label: 'yaml',
+      entry: 'monaco-yaml',
+      worker: {
+        id: 'monaco-yaml/yamlWorker',
+        entry: 'monaco-yaml/yaml.worker',
+      },
+    },
+  ];
+  config.plugins[config.plugins.length - 2] = new MonacoWebpackPlugin(pluginArr[0]);
 
   return {
     ...config,

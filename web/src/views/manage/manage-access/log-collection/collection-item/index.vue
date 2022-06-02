@@ -881,6 +881,7 @@ export default {
 
     .collect-table-operate {
       display: flex;
+      align-items: center;
 
       .king-button {
         margin-right: 14px;

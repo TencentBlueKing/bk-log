@@ -435,11 +435,8 @@ export default {
       }
 
       .icon-language-container {
-        height: 50px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 0 4px;
+        height: 40px;
+        margin: 4px;
         cursor: pointer;
 
         .icon-circle-container {
