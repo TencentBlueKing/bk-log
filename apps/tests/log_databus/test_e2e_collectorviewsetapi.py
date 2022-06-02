@@ -29,11 +29,11 @@ import arrow
 from django.conf import settings
 from django.test import TestCase, override_settings
 from django.utils.translation import ugettext_lazy as _
+from django_fakeredis import FakeRedis
 
+from apps.iam.handlers import permission
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.views import collector_views
-from apps.iam.handlers import permission
-from django_fakeredis import FakeRedis
 
 logging.basicConfig(level=logging.NOTSET)
 logger = logging.getLogger()
@@ -110,6 +110,7 @@ COLLECTORS_LIST = {
             {
                 "collector_config_id": 231,
                 "collector_scenario_name": "行日志文件",
+                "collector_plugin_id": None,
                 "category_name": "操作系统",
                 "target_nodes": [{"bk_inst_id": 52, "bk_obj_id": "module"}],
                 "task_id_list": ["1331697"],
@@ -127,6 +128,7 @@ COLLECTORS_LIST = {
                 "bk_app_code": "bk_log_search",
                 "collector_scenario_id": "row",
                 "bk_biz_id": 2,
+                "bkdata_biz_id": None,
                 "category_id": "os",
                 "target_object_type": "HOST",
                 "target_node_type": "TOPO",
@@ -136,6 +138,9 @@ COLLECTORS_LIST = {
                 "bk_data_id": 1500586,
                 "bk_data_name": None,
                 "table_id": "test3333",
+                "bkbase_table_id": None,
+                "processing_id": None,
+                "etl_processor": "transfer",
                 "etl_config": None,
                 "subscription_id": 2103,
                 "bkdata_data_id": None,
@@ -161,6 +166,7 @@ COLLECTORS_LIST = {
                 "create_clean_able": True,
                 "bkdata_index_set_ids": [],
                 "retention": 7,
+                "is_display": True,
             }
         ],
     },

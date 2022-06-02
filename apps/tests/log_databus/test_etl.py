@@ -21,15 +21,16 @@ the project delivered to anyone in the future.
 """
 import copy
 from unittest.mock import patch
-from django.test import TestCase
+
 from django.conf import settings
+from django.test import TestCase
 
 from apps.exceptions import ValidationError
-from apps.log_databus.models import CollectorConfig
-from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.handlers.etl import EtlHandler
-from apps.log_databus.serializers import CollectorEtlStorageSerializer
 from apps.log_databus.constants import ETL_DELIMITER_DELETE, ETL_DELIMITER_END, ETL_DELIMITER_IGNORE
+from apps.log_databus.handlers.etl import EtlHandler
+from apps.log_databus.handlers.etl_storage import EtlStorage
+from apps.log_databus.models import CollectorConfig
+from apps.log_databus.serializers import CollectorEtlStorageSerializer
 from apps.log_search.constants import FieldBuiltInEnum, FieldDateFormatEnum
 from apps.utils.db import array_group
 
@@ -359,7 +360,8 @@ class TestEtl(TestCase):
         formsts = FieldDateFormatEnum.get_choices_list_dict()
         for format in formsts:
             try:
-                etl_time = EtlHandler().etl_time(format["id"], 8, format["description"])
+                etl_handler = EtlHandler.get_instance()
+                etl_time = etl_handler.etl_time(format["id"], 8, format["description"])
             except Exception as e:  # pylint: disable=broad-except
                 etl_time = {"epoch_millis": "exception:" + str(e)}
             print(f'[{format["id"]}][{format["name"]}] {format["description"]} => {etl_time}')

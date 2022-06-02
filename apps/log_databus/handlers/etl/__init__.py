@@ -16,18 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-WSGI config for project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/1.8/howto/deployment/wsgi/
 """
 
-import os
-from django.core.wsgi import get_wsgi_application
+from apps.log_databus.handlers.etl.base import EtlHandler
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-
-application = get_wsgi_application()
+__all__ = ["EtlHandler"]

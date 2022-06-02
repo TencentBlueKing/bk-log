@@ -233,7 +233,8 @@ class ClusteringConfigHandler(object):
         collector_detail["fields"] = map_if(collector_detail["fields"], if_func=lambda field: not field["is_built_in"])
         from apps.log_databus.handlers.etl import EtlHandler
 
-        EtlHandler(self.data.collector_config_id).update_or_create(
+        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
+        etl_handler.update_or_create(
             collector_detail["etl_config"],
             collector_detail["table_id"],
             collector_detail["storage_cluster_id"],
