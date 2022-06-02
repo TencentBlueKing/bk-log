@@ -46,7 +46,7 @@ from apps.log_esquery.type_constants import type_mapping_dict
 from apps.log_esquery.constants import DEFAULT_SCHEMA
 
 
-class QueryClientEs(QueryClientTemplate):
+class QueryClientEs(QueryClientTemplate):  # pylint: disable=invalid-name
     def __init__(self, storage_cluster_id: int):
         super(QueryClientEs, self).__init__()
 

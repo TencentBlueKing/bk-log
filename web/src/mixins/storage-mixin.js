@@ -214,10 +214,19 @@ export default {
       // 因为有最大天数限制，不同集群限制可能不同，所以切换集群时展示默认
       const { setup_config } = res;
       this.formData.retention = setup_config?.retention_days_default || '7';
-      this.formData.storage_replies = setup_config?.number_of_replicas_default || 3;
-      this.replicasMax = setup_config?.number_of_replicas_max || 7;
+      this.formData.storage_replies = setup_config?.number_of_replicas_default || 0;
+      this.replicasMax = setup_config?.number_of_replicas_max || 0;
       if (!this.isFirstRendering) {
+        // 第一次进入时不重新赋值热数据天数回显热数据
         this.formData.allocation_min_days = '0';
+      } else {
+        // 编辑进入时 回填副本数
+        const notPerformList = ['custom-report-create', 'custom-report-edit'];
+        if (notPerformList.includes(this.$route.name)) {
+          this.formData.storage_replies = setup_config?.number_of_replicas_default || 0;
+        } else {
+          this.formData.storage_replies = this.curCollect.storage_replies;
+        }
       }
       this.isFirstRendering = false;
     },
