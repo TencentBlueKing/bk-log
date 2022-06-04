@@ -92,7 +92,7 @@
         <div slot="empty">
           <div class="empty-text">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p v-if="indexSetItem.scenario_id !== 'log'">
+            <p v-if="!isHaveText && indexSetItem.scenario_id !== 'log'">
               {{$t('canNotFieldMessage1')}}
               <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
               {{$t('canNotFieldMessage2')}}
@@ -210,6 +210,7 @@ export default {
       allFingerList: [], // 所有数据指纹List
       showScrollTop: false, // 是否展示返回顶部icon
       throttle: false, // 请求防抖
+      isHaveText: false, // 是否含有text字段
     };
   },
   computed: {
@@ -225,20 +226,21 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      if (this.indexSetItem.scenario_id !== 'log') return '';
-      return this.clusterSwitch
-        ? (this.configID
-          ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage'))
-        : this.$t('goSettingMessage');
+      return this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage');
     },
     exhibitOperate() {
-      if (this.indexSetItem.scenario_id !== 'log') return '';
-      return this.clusterSwitch
-        ? (this.configID ? this.$t('跳转到日志清洗') : '')
-        : this.$t('去设置');
+      return this.configID ? this.$t('跳转到日志清洗') : '';
     },
     clusteringField() {
-      return this.configData?.extra?.clustering_field || '';
+      // 如果有聚类字段则使用设置的
+      if (this.configData?.extra?.clustering_field) return this.configData.extra.clustering_field;
+      // 如果有log字段则使用log类型字段
+      const logFieldItem = this.totalFields.find(item => item.field_name === 'log');
+      if (logFieldItem) return logFieldItem.field_alias;
+      // 如果没有设置聚类字段和log字段则使用text列表里的第一项值
+      const textTypeFieldList = this.totalFields.filter(item => item.is_analyzed) || [];
+      if (textTypeFieldList.length) return textTypeFieldList[0].field_alias;
+      return  '';
     },
     bkBizId() {
       return this.$store.state.bkBizId;
@@ -274,16 +276,17 @@ export default {
       immediate: true,
       handler(newList) {
         if (newList.length) {
-          // 无字段提取或者聚类开关没开时直接不显示聚类nav和table
-          if (this.indexSetItem.scenario_id !== 'log' || !this.configData.is_active) {
-            this.exhibitAll = false;
-            return;
-          }
+          /**
+           *  无字段提取或者聚类开关没开时直接不显示聚类nav和table
+           *  来源如果是数据平台并且日志聚类大开关有打开则进入text判断
+           *  有text则提示去开启日志聚类 无则显示跳转计算平台
+           */
+          this.isHaveText = newList.some(el => el.field_type === 'text');
           // 初始化分组下拉列表
           this.filterGroupList();
           this.initTable();
-          // 判断有无text字段 无则不显示日志聚类
-          this.exhibitAll = newList.some(el => el.field_type === 'text');
+          // 判断是否有text字段 无则提示当前不支持采集项清洗
+          this.exhibitAll = this.isHaveText;
         }
       },
     },
@@ -387,14 +390,9 @@ export default {
     },
     handleLeaveCurrent() {
       // 不显示字段提取时跳转计算平台
-      if (this.indexSetItem.scenario_id !== 'log') {
-        const jumpUrl = window.BKDATA_URL;
+      if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveText) {
+        const jumpUrl = `${window.BKDATA_URL}`;
         window.open(jumpUrl, '_blank');
-        return;
-      }
-      // 未开启日志聚类去设置
-      if (!this.clusterSwitch) {
-        this.$emit('showSettingLog');
         return;
       }
       // 无清洗 去清洗
@@ -534,7 +532,7 @@ export default {
      */
     filterGroupList() {
       const filterList = this.totalFields
-        .filter(el => el.es_doc_values && !/^__/.test(el.field_name)) // 过滤__dist字段
+        .filter(el => el.es_doc_values && !/^__dist/.test(el.field_name)) // 过滤__dist字段
         .map((item) => {
           const { field_name: id, field_alias: alias } = item;
           return { id, name: alias ? `${id}(${alias})` : id };

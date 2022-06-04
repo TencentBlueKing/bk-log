@@ -223,9 +223,9 @@
       </template>
 
       <div slot="empty">
-        <div class="empty-text" v-if="clusterSwitch && !configData.extra.signature_switch">
+        <div class="empty-text" v-if="!clusterSwitch || !configData.extra.signature_switch">
           <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-          <p>{{$t('goFingerMessage')}}</p>
+          <p>{{getLeaveText}}</p>
           <span class="empty-leave" @click="handleLeaveCurrent">{{$t('去设置')}}</span>
         </div>
         <div class="empty-text" v-if="fingerList.length === 0 && configData.extra.signature_switch">
@@ -313,6 +313,9 @@ export default {
     },
     isShowBottomTips() {
       return this.fingerList.length >= 50 && this.fingerList.length === this.allFingerList.length;
+    },
+    getLeaveText() {
+      return !this.clusterSwitch ? this.$t('goSettingMessage') : this.$t('goFingerMessage');
     },
   },
   watch: {
@@ -533,18 +536,14 @@ export default {
       window.open(`${window.MONITOR_URL}/?bizId=${this.bkBizId}#/strategy-config/edit/${strategyID}`, '_blank');
     },
     handleScroll() {
-      if (this.throttle) {
-        return;
-      }
+      if (this.throttle) return;
       this.throttle = true;
       setTimeout(() => {
         this.throttle = false;
         // scroll变化时判断是否展示返回顶部的Icon
         this.$emit('handleScrollIsShow');
         this.$refs.labelsPopover?.instance.hide();
-        if (this.fingerList.length >= this.allFingerList.length) {
-          return;
-        }
+        if (this.fingerList.length >= this.allFingerList.length) return;
         const el = document.querySelector('.result-scroll-container');
         if (el.scrollHeight - el.offsetHeight - el.scrollTop < 5) {
           el.scrollTop = el.scrollTop - 5;
@@ -599,7 +598,7 @@ export default {
       return !!str ? str : this.$t('未匹配');
     },
     getHeightLightList(str) {
-      return str.match(/\[\$\(.*?\)\]/g) || [];
+      return str.match(/#.*?#/g) || [];
     },
   },
 };

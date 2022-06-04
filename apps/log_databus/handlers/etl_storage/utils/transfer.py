@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import json
 import os
@@ -93,6 +95,6 @@ def preview(separator_node_action, data, etl_only=False, **kwargs):
             return data
 
         return [{"field_name": k, "value": v} for k, v in data.items()]
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-except
         logger.exception(f"字段提取异常: {error})")
         raise exceptions.EtlPreviewException

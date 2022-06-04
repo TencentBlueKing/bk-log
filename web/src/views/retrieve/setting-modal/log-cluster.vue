@@ -70,15 +70,20 @@
       <div class="setting-item ">
         <span class="left-word">{{$t('retrieveSetting.dataFingerprint')}}</span>
         <div @click="handleChangeFinger">
-          <bk-switcher
-            class="left-word"
-            theme="primary"
-            size="large"
-            v-model="fingerSwitch"
-            data-test-id="LogCluster_div_isOpenSignature"
-            :disabled="!globalEditable || configData.extra.signature_switch"
-            :pre-check="() => false">
-          </bk-switcher>
+          <span
+            v-bk-tooltips="$t('fingerTips')"
+            class="top-middle"
+            :disabled="!isShowFingerTips">
+            <bk-switcher
+              class="left-word"
+              theme="primary"
+              size="large"
+              v-model="fingerSwitch"
+              data-test-id="LogCluster_div_isOpenSignature"
+              :disabled="!globalEditable || configData.extra.signature_switch"
+              :pre-check="() => false">
+            </bk-switcher>
+          </span>
         </div>
         <bk-alert style="width: 800px" type="info" :title="$t('retrieveSetting.dataFingerprintTips')"></bk-alert>
       </div>
@@ -136,7 +141,8 @@
                 :clearable="false"
                 :disabled="!globalEditable"
                 :popover-min-width="150"
-                :class="['min-100 mr-neg1 above',item.fields_name === '' && isFieldsError ? 'rule-error' : '']"
+                :class="['min-100 mr-neg1 above', item.fields_name === '' && isFieldsError ? 'rule-error' : '']"
+                @change="handleFieldChange(index)"
                 @blur="blurFilter">
                 <bk-option
                   v-for="option in filterSelectList"
@@ -165,13 +171,21 @@
                 </bk-option>
               </bk-select>
 
-              <bk-input
-                v-if="item.fields_name !== ''"
-                v-model="item.value"
-                :class="['mr-neg1 above',item.value === '' && isFilterRuleError ? 'rule-error' : '']"
-                :disabled="!globalEditable"
-                @blur="blurFilter">
-              </bk-input>
+              <div @click="handleInputTag(index)">
+                <bk-tag-input
+                  v-if="item.fields_name !== ''"
+                  v-model="item.value"
+                  allow-create
+                  allow-auto-match
+                  :placeholder="$t('form.pleaseEnter')"
+                  :class="['mr-neg1 min-100 above', !item.value.length && isFilterRuleError ? 'rule-error' : '']"
+                  :list="item.valueList"
+                  :content-width="232"
+                  :max-data="1"
+                  @blur="handleValueBlur"
+                  trigger="focus">
+                </bk-tag-input>
+              </div>
             </div>
             <button
               v-if="isShowAddFilterIcon"
@@ -188,7 +202,8 @@
           v-on="$listeners"
           :global-editable="globalEditable"
           :table-str="defaultData.predefined_varibles"
-          :default-data="defaultData" />
+          :default-data="defaultData"
+          :clean-config="cleanConfig" />
 
         <bk-form-item>
           <bk-button
@@ -260,6 +275,11 @@ export default {
       type: Object,
       require: true,
     },
+    statisticalFieldsData: { // 过滤条件字段可选值关系表
+      type: Object,
+      required: true,
+      default: {},
+    },
   },
   data() {
     return {
@@ -303,6 +323,8 @@ export default {
         { id: 'and', name: 'AND' },
         { id: 'or', name: 'OR' },
       ],
+      operateIndex: 0, // 赋值过滤字段的操作的当前下标
+      isShowFingerTips: false,
     };
   },
   watch: {
@@ -333,23 +355,43 @@ export default {
      */
     async requestCluster(isDefault = false) {
       this.globalLoading = true;
-      let res;
       try {
-        if (this.configID && !isDefault) {
-          res =  await this.$http.request('/logClustering/getConfig', {
-            params: {
-              index_set_id: this.$route.params.indexId,
-            },
-            data: {
-              collector_config_id: this.configID,
-            },
-          });
-        } else {
-          res = await this.$http.request('/logClustering/getDefaultConfig');
+        const params = { index_set_id: this.$route.params.indexId };
+        const data = { collector_config_id: this.configID };
+        const baseUrl = '/logClustering';
+        const requestBehindUrl = isDefault ? '/getDefaultConfig' : '/getConfig';
+        const requestUrl = `${baseUrl}${requestBehindUrl}`;
+        const res =  await this.$http.request(requestUrl, !isDefault && { params, data });
+        this.initFilterShow(res);
+        const {
+          collector_config_name_en,
+          min_members,
+          max_dist_list,
+          predefined_varibles,
+          delimeter,
+          max_log_length,
+          is_case_sensitive,
+          clustering_fields,
+          filter_rules,
+        } = res.data;
+        const assignObj = {
+          collector_config_name_en,
+          min_members,
+          max_dist_list,
+          predefined_varibles,
+          delimeter,
+          max_log_length,
+          is_case_sensitive,
+          clustering_fields,
+          filter_rules,
+        };
+        Object.assign(this.formData, assignObj);
+        Object.assign(this.defaultData, assignObj);
+        // 当前回填的字段如果在聚类字段列表里找不到则赋值为空需要用户重新赋值
+        const isHaveFieldsItem = this.clusterField.find(item => item.id === res.data.clustering_fields);
+        if (!isHaveFieldsItem) {
+          this.formData.clustering_fields = '';
         }
-        res.data.filter_rules = res.data.filter_rules || [];
-        Object.assign(this.formData, res.data);
-        Object.assign(this.defaultData, res.data);
       } catch (e) {
         console.warn(e);
       } finally {
@@ -361,23 +403,28 @@ export default {
       const { extra: { collector_config_id: configID } } = this.cleanConfig;
       this.configID = configID;
       this.fingerSwitch = extra.signature_switch;
+      this.isShowFingerTips = extra.signature_switch;
       this.formData.clustering_fields = extra.clustering_fields;
-
-      // 日志聚类且数据指纹同时打开则不请求默认值
-      if (isActive && configID) {
-        this.requestCluster(false);
-      }
-
       this.clusterField = this.totalFields.filter(item => item.is_analyzed)
         .map((el) => {
           const { field_name: id, field_alias: alias } = el;
           return { id, name: alias ? `${id}(${alias})` : id };
         });
-      this.filterSelectList = this.totalFields.map((el) => {
-        const { field_name: id, field_alias: alias } = el;
-        return { id, name: alias ? `${id}(${alias})` : id };
-      });
+      this.filterSelectList = this.totalFields
+        .filter(item => !/^__dist/.test(item.field_name))
+        .map((el) => {
+          const { field_name: id, field_alias: alias } = el;
+          return { id, name: alias ? `${id}(${alias})` : id };
+        });
+
+      // 日志聚类且数据指纹同时打开则不请求默认值
+      if (isActive) {
+        this.requestCluster(false);
+      }
     },
+    /**
+     * @desc: 数据指纹开关
+     */
     handleChangeFinger() {
       if (!this.globalEditable) return;
 
@@ -390,6 +437,12 @@ export default {
         //   },
         // });
       } else {
+        // 当前如果是计算平台则直接请求 计算平台无configID
+        if (this.indexSetItem.scenario_id === 'bkdata') {
+          this.fingerSwitch = true;
+          this.requestCluster(true);
+          return;
+        }
         if (!this.configID) {
           this.$bkInfo({
             title: this.$t('retrieveSetting.notCollector'),
@@ -405,13 +458,14 @@ export default {
       this.formData.filter_rules.push({
         fields_name: '', // 过滤规则字段名
         op: '=', // 过滤规则操作符号
-        value: '', // 过滤规则字段值
+        value: [], // 过滤规则字段值
         logic_operator: 'and',
+        valueList: [],
       });
     },
     blurFilter() {
       if (this.formData.filter_rules.length > 0) {
-        this.isFilterRuleError = this.formData.filter_rules.some(el => el.value === '');
+        this.isFilterRuleError = this.formData.filter_rules.some(el => el.value.length === 0);
         this.isFieldsError = this.formData.filter_rules.some(el => el.fields_name === '');
       };
     },
@@ -421,14 +475,43 @@ export default {
         if (this.isFilterRuleError || this.isFieldsError) return;
         this.isHandle = true;
         const { index_set_id, bk_biz_id } = this.indexSetItem;
+        const {
+          collector_config_name_en,
+          min_members,
+          max_dist_list,
+          predefined_varibles,
+          delimeter,
+          max_log_length,
+          is_case_sensitive,
+          clustering_fields,
+          filter_rules,
+        } = this.formData;
+        const paramsData = {
+          collector_config_name_en,
+          min_members,
+          max_dist_list,
+          predefined_varibles,
+          delimeter,
+          max_log_length,
+          is_case_sensitive,
+          clustering_fields,
+          filter_rules,
+        };
         // 获取子组件传来的聚类规则数组base64字符串
-        this.formData.predefined_varibles = this.$refs.ruleTableRef.ruleArrToBase64();
+        paramsData.predefined_varibles = this.$refs.ruleTableRef.ruleArrToBase64();
+        // 过滤规则数组形式转成字符串形式传参
+        paramsData.filter_rules = paramsData.filter_rules.map(item => ({
+          fields_name: item.fields_name,
+          logic_operator: item.logic_operator,
+          op: item.op,
+          value: (item.value.length ? item.value[0] : ''),
+        }));
         this.$http.request('/logClustering/changeConfig', {
           params: {
             index_set_id,
           },
           data: {
-            ...this.formData,
+            ...paramsData,
             signature_enable: this.fingerSwitch,
             collector_config_id: this.configID,
             index_set_id,
@@ -443,6 +526,40 @@ export default {
             this.isHandle = false;
           });
       }, () => {});
+    },
+    // 字段改变
+    handleFieldChange(index) {
+      this.operateItemIndex = index;
+      const operateItem = this.formData.filter_rules[index];
+      operateItem.value = [];
+      if (operateItem.fields_name && this.statisticalFieldsData[operateItem.fields_name]) {
+        const fieldValues = Object.keys(this.statisticalFieldsData[operateItem.fields_name]);
+        if (fieldValues?.length) {
+          operateItem.valueList = fieldValues.map(item => ({ id: item, name: item }));
+        }
+      }
+    },
+    /**
+     * @desc: 赋值过滤字段的下标
+     * @param { Number } index 下标
+     */
+    handleInputTag(index) {
+      this.operateIndex = index;
+    },
+    handleValueBlur(val) {
+      const operateItem = this.formData.filter_rules[this.operateIndex];
+      if (!operateItem.value.length && val !== '') {
+        operateItem.value.push(val);
+      }
+    },
+    initFilterShow(res) {
+      res.data.filter_rules = res.data.filter_rules || [];
+      res.data.filter_rules.forEach((item) => {
+        item.value = [item.value];
+        if (JSON.stringify(this.statisticalFieldsData) === '{}') return;
+        const fieldValues = Object.keys(this.statisticalFieldsData[item.fields_name]);
+        item.valueList = fieldValues?.length ? fieldValues.map(item => ({ id: item, name: item })) : [] ;
+      });
     },
     handleDeleteSelect(index) {
       this.formData.filter_rules.splice(index, 1);
@@ -495,7 +612,7 @@ export default {
         cursor: pointer;
         border: 1px solid #c4c6cc;
 
-        ::v-deep.bk-select-name {
+        ::v-deep .bk-select-name {
           /* stylelint-disable-next-line declaration-no-important */
           padding: 0 !important;
         }
@@ -509,15 +626,15 @@ export default {
     .filter-rule-item {
       margin-bottom: 6px;
 
-      ::v-deep.bk-select-angle {
+      ::v-deep .bk-select-angle {
         display: none;
       }
 
-      ::v-deep.bk-select {
+      ::v-deep .bk-select {
         border-radius: 0;
       }
 
-      ::v-deep.bk-form-control {
+      ::v-deep .bk-form-control {
         width: 140px;
         border-radius: 0;
       }
@@ -530,6 +647,7 @@ export default {
 
       .min-100 {
         min-width: 100px;
+        max-height: 32px;
       }
 
       .mr-neg1 {
@@ -547,7 +665,7 @@ export default {
     }
 
     .rule-error {
-      ::v-deep.bk-form-input {
+      ::v-deep .bk-tag-input {
         border-color: #ff5656;
       }
 
@@ -559,7 +677,7 @@ export default {
   }
 
   .submit-dialog {
-    ::v-deep.bk-dialog-tool {
+    ::v-deep .bk-dialog-tool {
       display: none;
     }
 
@@ -578,7 +696,7 @@ export default {
         margin-bottom: 22px;
       }
 
-      ::v-deep.submit-dialog-btn {
+      ::v-deep .submit-dialog-btn {
         margin-left: 224px;
       }
     }

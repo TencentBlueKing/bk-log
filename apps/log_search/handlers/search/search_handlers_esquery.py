@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import json
 import copy
@@ -60,7 +62,7 @@ from apps.log_search.exceptions import (
 )
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-from apps.api import BkLogApi, PaasCcApi
+from apps.api import BkLogApi, BcsCcApi
 from apps.utils.cache import cache_five_minute
 from apps.utils.db import array_group
 from apps.utils.local import get_request_username
@@ -607,7 +609,7 @@ class SearchHandler(object):
     @staticmethod
     def get_bcs_manage_url(cluster_id, container_id):
 
-        bcs_cluster_info = PaasCcApi.get_cluster_by_cluster_id({"cluster_id": cluster_id.upper()})
+        bcs_cluster_info = BcsCcApi.get_cluster_by_cluster_id({"cluster_id": cluster_id.upper()})
         project_id = bcs_cluster_info["project_id"]
         url = (
             settings.BCS_WEB_CONSOLE_DOMAIN + "backend/web_console/projects/{project_id}/clusters/{cluster_id}/"
@@ -1112,6 +1114,31 @@ class SearchHandler(object):
         }
         return highlight
 
+    def _add_cmdb_fields(self, log):
+        if not self.search_dict.get("bk_biz_id"):
+            return log
+        bk_biz_id = self.search_dict.get("bk_biz_id")
+        server_ip = log.get("serverIp", log.get("ip"))
+        bk_cloud_id = log.get("cloudId", log.get("cloudid"))
+        if not server_ip:
+            return log
+
+        from apps.utils.core.cache.cmdb_host import CmdbHostCache
+
+        host = CmdbHostCache.get(bk_biz_id, server_ip)
+        host_info = None
+        if not bk_cloud_id and host:
+            host_info = next(iter(host.values()))
+        if bk_cloud_id:
+            host_info = host.get(str(bk_cloud_id))
+        if not host_info:
+            log["__module__"] = ""
+            log["__set__"] = ""
+            return log
+        log["__module__"] = " | ".join([module["bk_inst_name"] for module in host_info.get("module", [])])
+        log["__set__"] = " | ".join([set["bk_inst_name"] for set in host_info.get("set", [])])
+        return log
+
     def _deal_query_result(self, result_dict: dict) -> dict:
         result: dict = {
             "aggregations": result_dict.get("aggregations", {}),
@@ -1131,6 +1158,7 @@ class SearchHandler(object):
         for hit in result_dict["hits"]["hits"]:
             log = hit["_source"]
             origin_log = copy.deepcopy(log)
+            log = self._add_cmdb_fields(log)
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})
@@ -1435,4 +1463,4 @@ class SearchHandler(object):
         raise SearchUnKnowTimeFieldType()
 
     def _enable_bcs_manage(self):
-        return settings.PAASCC_APIGATEWAY if settings.PAASCC_APIGATEWAY != "" else None
+        return settings.BCS_WEB_CONSOLE_DOMAIN if settings.BCS_WEB_CONSOLE_DOMAIN != "" else None

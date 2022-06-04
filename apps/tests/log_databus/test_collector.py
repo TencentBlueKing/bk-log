@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 import copy
@@ -23,14 +25,11 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 
 from apps.log_databus.exceptions import CollectorConfigNotExistException
-from apps.log_databus.handlers.collector import (
-    CollectorHandler,
-    build_bk_data_name
-)
+from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.constants import LogPluginInfo
 from apps.exceptions import ApiRequestError, ApiResultError
 from .test_collectorhandler import TestCollectorHandler
-from ...log_databus.serializers import CollectorCreateSerializer, PreCheckSerializer
+from ...log_databus.serializers import CollectorCreateSerializer
 from ...utils.drf import custom_params_valid
 
 BK_DATA_ID = 1
@@ -855,10 +854,14 @@ def subscription_statistic(params):
 
 @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollector(TestCase):
-    @patch("apps.api.TransferApi.get_data_id",
-           lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {})
-    @patch("apps.api.TransferApi.get_result_table",
-           lambda x: {"result_table_id": TABLE_ID} if x["table_id"] == TABLE_ID else {})
+    @patch(
+        "apps.api.TransferApi.get_data_id",
+        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+    )
+    @patch(
+        "apps.api.TransferApi.get_result_table",
+        lambda x: {"result_table_id": TABLE_ID} if x["table_id"] == TABLE_ID else {},
+    )
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.NodeApi.create_subscription", lambda _: {"subscription_id": SUBSCRIPTION_ID})
@@ -895,10 +898,14 @@ class TestCollector(TestCase):
         self._test_stop(result["collector_config_id"])
         self._test_destroy(result["collector_config_id"])
 
-    @patch("apps.api.TransferApi.get_data_id",
-           lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {})
-    @patch("apps.api.TransferApi.get_result_table",
-           lambda x: {"result_table_id": TABLE_ID} if x["table_id"] == TABLE_ID else {})
+    @patch(
+        "apps.api.TransferApi.get_data_id",
+        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+    )
+    @patch(
+        "apps.api.TransferApi.get_result_table",
+        lambda x: {"result_table_id": TABLE_ID} if x["table_id"] == TABLE_ID else {},
+    )
     @patch("apps.api.TransferApi.modify_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch("apps.api.TransferApi.modify_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.NodeApi.update_subscription_info", lambda _: {"subscription_id": SUBSCRIPTION_ID})
@@ -950,7 +957,7 @@ class TestCollector(TestCase):
         collector1 = CollectorHandler(collector_config_id=collector_config_id)
         task_id_one = copy.deepcopy(collector1.data.task_id_list)
         task_id_one.append(str(LAST_TASK_ID))
-        result1 = collector1._run_subscription_task("START", target_nodes)
+        result1 = collector1._run_subscription_task(nodes=target_nodes)
         self.assertEqual(result1, task_id_one)
 
     @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": 6})
@@ -1170,10 +1177,14 @@ class TestCollector(TestCase):
             CollectorHandler._check_task_ready_exception(BaseException())
 
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
-    @patch("apps.api.TransferApi.get_data_id",
-           lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {})
-    @patch("apps.api.TransferApi.get_result_table",
-           lambda x: {"result_table_id": TABLE_ID} if x["table_id"] == TABLE_ID else {})
+    @patch(
+        "apps.api.TransferApi.get_data_id",
+        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+    )
+    @patch(
+        "apps.api.TransferApi.get_result_table",
+        lambda x: {"result_table_id": TABLE_ID} if x["table_id"] == TABLE_ID else {},
+    )
     @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.NodeApi.create_subscription", lambda _: {"subscription_id": SUBSCRIPTION_ID})
     @patch("apps.api.NodeApi.subscription_statistic", subscription_statistic)
@@ -1188,26 +1199,23 @@ class TestCollector(TestCase):
     @override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}})
     def test_pre_check(self, *args, **kwargs):
         params = copy.deepcopy(PARAMS)
-        result = CollectorHandler().pre_check(params={
-            "bk_biz_id": params["bk_biz_id"],
-            "collector_config_name_en": params["collector_config_name_en"]
-        })
+        result = CollectorHandler().pre_check(
+            params={"bk_biz_id": params["bk_biz_id"], "collector_config_name_en": params["collector_config_name_en"]}
+        )
         self.assertEqual(result["allowed"], True)
 
         params = custom_params_valid(serializer=CollectorCreateSerializer, params=params)
         params["params"]["conditions"]["type"] = "separator"
-        create_collector_result = CollectorHandler().update_or_create(params)
+        CollectorHandler().update_or_create(params)
 
         # 测试collector_config_name_en同名
         params = copy.deepcopy(PARAMS)
-        result = CollectorHandler().pre_check(params={
-            "bk_biz_id": params["bk_biz_id"],
-            "collector_config_name_en": params["collector_config_name_en"]
-        })
+        result = CollectorHandler().pre_check(
+            params={"bk_biz_id": params["bk_biz_id"], "collector_config_name_en": params["collector_config_name_en"]}
+        )
         self.assertEqual(result["allowed"], False)
 
-        result = CollectorHandler().pre_check(params={
-            "bk_biz_id": params["bk_biz_id"],
-            "collector_config_name_en": '1'
-        })
+        result = CollectorHandler().pre_check(
+            params={"bk_biz_id": params["bk_biz_id"], "collector_config_name_en": "1"}
+        )
         self.assertEqual(result["allowed"], True)

@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from collections import defaultdict
 from django.utils.translation import ugettext as _
@@ -27,7 +29,7 @@ from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
 
 
-class UserMetricCollector(object):
+class ThirdPartyMetricCollector(object):
     @staticmethod
     @register_metric("third_party_es", description=_("第三方ES"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def third_party_es():

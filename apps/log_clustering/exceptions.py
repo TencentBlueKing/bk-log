@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.utils.translation import ugettext_lazy as _
 
@@ -65,3 +67,23 @@ class ClusteringConfigStrategyException(BaseClusteringException):
 class ClusteringIndexSetNotExistException(BaseClusteringException):
     ERROR_CODE = "007"
     MESSAGE = _("聚类配置对应索引集不存在: {index_set_id}")
+
+
+class BkdataStorageNotExistException(BaseClusteringException):
+    ERROR_CODE = "009"
+    MESSAGE = _("计算平台落地存储不存在: {index_set_id}")
+
+
+class BkdataFlowException(BaseClusteringException):
+    ERROR_CODE = "010"
+    MESSAGE = _("计算平台flow返回异常: {flow_id}")
+
+
+class BkdataRegexException(BaseClusteringException):
+    ERROR_CODE = "011"
+    MESSAGE = _("正则表达式字段名: {field_name}不符合计算平台标准[a-zA-Z][a-zA-Z0-9]*")
+
+
+class BkdataFieldsException(BaseClusteringException):
+    ERROR_CODE = "012"
+    MESSAGE = _("不允许删除参与日志聚类字段: {field}")

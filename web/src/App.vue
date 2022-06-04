@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div id="app" v-bkloading="{ isLoading: pageLoading }">
+  <div id="app" v-bkloading="{ isLoading: pageLoading }" :class="{ 'clear-min-height': $route.name === 'retrieve' }">
     <head-nav
       v-show="!isAsIframe && !pageLoading"
       @reloadRouter="routerKey += 1"
@@ -49,17 +49,19 @@
             :default-active="activeManageNav.id">
             <template v-for="groupItem in menuList">
               <bk-navigation-menu-group
+                v-if="groupItem.children.length"
                 :key="groupItem.id"
                 :group-name="isExpand ? groupItem.name : groupItem.keyword">
                 <template v-for="navItem in groupItem.children">
-                  <bk-navigation-menu-item
-                    :data-test-id="`navBox_nav_${navItem.id}`"
-                    :key="navItem.id"
-                    :id="navItem.id"
-                    :icon="getMenuIcon(navItem)"
-                    @click="handleClickNavItem(navItem.id)">
-                    {{ isExpand ? navItem.name : '' }}
-                  </bk-navigation-menu-item>
+                  <a class="nav-item" :key="navItem.id" :href="getRouteHref(navItem.id)">
+                    <bk-navigation-menu-item
+                      :data-test-id="`navBox_nav_${navItem.id}`"
+                      :id="navItem.id"
+                      :icon="getMenuIcon(navItem)"
+                      @click="handleClickNavItem(navItem.id)">
+                      {{ isExpand ? navItem.name : '' }}
+                    </bk-navigation-menu-item>
+                  </a>
                 </template>
               </bk-navigation-menu-group>
             </template>
@@ -115,6 +117,10 @@ export default {
       isExpand: true,
       curGuideStep: 0,
       isAsIframe: false,
+      rightClickRouteName: '', // 当前右键选中的路由
+      visible: false, // 是否展示右键菜单
+      top: 0, // 右键菜单定位top
+      left: 0, // 右键菜单定位left
     };
   },
   computed: {
@@ -212,6 +218,15 @@ export default {
           console.warn(e);
         });
     },
+    getRouteHref(pageName) {
+      const newUrl = this.$router.resolve({
+        name: pageName,
+        query: {
+          projectId: window.localStorage.getItem('project_id'),
+        },
+      });
+      return newUrl.href;
+    },
   },
 };
 </script>
@@ -228,6 +243,11 @@ export default {
     height: 100%;
     min-height: 730px;
     background: #f4f7fa;
+  }
+
+  .clear-min-height {
+    /* stylelint-disable-next-line declaration-no-important */
+    min-height: 0 !important;
   }
 
   .button-text {
@@ -394,6 +414,11 @@ export default {
 
       .navigation-menu-item-icon.bk-icon {
         min-width: 28px;
+      }
+
+      .nav-item {
+        width: 100%;
+        display: inline-block;
       }
     }
 

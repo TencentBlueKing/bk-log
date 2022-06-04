@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 """
 context_processor for common(setting)
@@ -87,4 +89,7 @@ def mysetting(request):
         "BK_LOGIN_URL": "{}/api/c/compapi/v2/usermanage/fs_list_users/".format(bk_login_url_prefix),
         "MENU_LOGO_URL": f"{settings.STATIC_URL}{settings.MENU_LOGO_URL}",
         "BK_DOC_DATA_URL": settings.BK_DOC_DATA_URL,
+        "BK_ARCHIVE_DOC_URL": settings.BK_ARCHIVE_DOC_URL,
+        "BK_ASSESSMEN_HOST_COUNT": str(settings.BK_ASSESSMEN_HOST_COUNT),
+        "BK_ETL_DOC_URL": settings.BK_ETL_DOC_URL,
     }

@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 
@@ -31,7 +33,7 @@ API_ROOTS = [
     "CC_APIGATEWAY_ROOT_V2",
     "GSE_APIGATEWAY_ROOT_V2",
     "MONITOR_APIGATEWAY_ROOT",
-    "PAASCC_APIGATEWAY_ROOT",
+    "BCS_CC_APIGATEWAY_ROOT",
     "USER_MANAGE_APIGATEWAY_ROOT",
     # 数据平台模块域名
     "ACCESS_APIGATEWAY_ROOT",
@@ -40,6 +42,7 @@ API_ROOTS = [
     "DATABUS_APIGATEWAY_ROOT",
     "STOREKIT_APIGATEWAY_ROOT",
     "META_APIGATEWAY_ROOT",
+    "RESOURCE_CENTER_APIGATEWAY_ROOT",
     # 节点管理
     "BK_NODE_APIGATEWAY_ROOT",
     # LOG_SEARCH
@@ -52,17 +55,22 @@ API_ROOTS = [
     "CMSI_APIGATEWAY_ROOT_V2",
     # JOB
     "JOB_APIGATEWAY_ROOT_V2",
+    "BK_SSM_ROOT",
+    # BCS
+    "BCS_APIGATEWAY_ROOT",
     # AIOPS
     "AIOPS_APIGATEWAY_ROOT",
     # DATAFLOW
     "DATAFLOW_APIGATEWAY_ROOT",
     # AIOPS modules
     "AIOPS_MODEL_APIGATEWAY_ROOT",
+    # Wework api
+    "WEWORK_APIGATEWAY_ROOT",
 ]
 
 env_domains = load_domains(settings)
 for _root in API_ROOTS:
     with ignored(Exception):
-        locals()[_root] = env_domains.get(_root)
+        locals()[_root] = env_domains.get(_root, "")
 
 __all__ = API_ROOTS

@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.utils.translation import ugettext_lazy as _
 
@@ -32,6 +34,11 @@ class BaseCollectorConfigException(BaseException):
     MESSAGE = _("采集配置模块异常")
 
 
+class BaseCollectorPluginException(BaseException):
+    MODULE_CODE = ErrorCode.BKLOG_COLLECTOR_PLUGIN
+    MESSAGE = _("采集插件模块异常")
+
+
 class CollectorConfigNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "001"
     MESSAGE = _("采集配置不存在")
@@ -40,6 +47,11 @@ class CollectorConfigNotExistException(BaseCollectorConfigException):
 class DataLinkConfigNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "002"
     MESSAGE = _("链路配置不存在")
+
+
+class CollectorPluginNotExistException(BaseCollectorPluginException):
+    ERROR_CODE = "003"
+    MESSAGE = _("采集插件不存在")
 
 
 class CollectorIdNotExistException(BaseCollectorConfigException):
@@ -112,6 +124,16 @@ class CollectorResultTableIDDuplicateException(BaseCollectorConfigException):
     MESSAGE = _("采集项{result_table_id}结果表ID重复")
 
 
+class CollectorPluginNameDuplicateException(BaseCollectorPluginException):
+    ERROR_CODE = "115"
+    MESSAGE = _("采集插件名称已存在")
+
+
+class CollectorPluginNotMatchException(BaseCollectorPluginException):
+    ERROR_CODE = "116"
+    MESSAGE = _("参数异常：采集插件不匹配")
+
+
 class StorageNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "201"
     MESSAGE = _("集群不存在")
@@ -155,6 +177,11 @@ class HotColdCheckException(BaseCollectorConfigException):
 class StorageHaveResource(BaseCollectorConfigException):
     ERROR_CODE = "209"
     MESSAGE = _("集群还有未删除的采集项、第三方集群索引集")
+
+
+class BKBASEStorageNotExistException(BaseCollectorPluginException):
+    ERROR_CODE = "210"
+    MESSAGE = _("集群未同步到数据平台")
 
 
 class EtlNotSupportedException(BaseCollectorConfigException):
@@ -270,6 +297,11 @@ class CleanTemplateRepeatException(BaseCollectorConfigException):
 class ProjectNoteExistException(BaseCollectorConfigException):
     ERROR_CODE = "703"
     MESSAGE = _("该业务{bk_biz_id}未找到对应project")
+
+
+class CleanTemplateVisibleException(BaseCollectorConfigException):
+    ERROR_CODE = "704"
+    MESSAGE = _("该业务{bk_biz} 不可编辑或删除该模板{name}")
 
 
 class ArchiveNotFound(BaseCollectorConfigException):

@@ -75,6 +75,7 @@
             </div>
             <div
               style="color: #3a84ff; cursor: pointer;"
+              v-if="isCollector"
               @click="handleClickDetail">
               {{$t('retrieveSetting.moreDetails')}}
               <span class="log-icon icon-lianjie"></span>
@@ -91,6 +92,7 @@
               :total-fields="totalFields"
               :config-data="configData"
               :clean-config="cleanConfig"
+              :statistical-fields-data="statisticalFieldsData"
               @resetPage="resetPage"
               @updateLogFields="updateLogFields"
               @debugRequestChange="debugRequestChange" />
@@ -136,6 +138,10 @@ export default {
     cleanConfig: {
       type: Object,
       require: true,
+    },
+    statisticalFieldsData: { // 过滤条件字段可选值关系表
+      type: Object,
+      required: true,
     },
   },
   data() {
@@ -353,13 +359,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  ::v-deep.bk-dialog-body {
+  ::v-deep .bk-dialog-body {
     background-color: #f5f6fa;
     overflow: hidden;
     padding: 0;
   }
 
-  ::v-deep.bk-dialog-tool {
+  ::v-deep .bk-dialog-tool {
     display: none;
   }
 
@@ -384,7 +390,7 @@ export default {
       font-size: 16px;
       text-align: center;
       position: fixed;
-      z-index: 99;
+      z-index: 999;
       background-color: #fff;
       border-bottom: 1px solid #dcdee5;
       // box-shadow:0 3px 6px #DEE0E7 ;

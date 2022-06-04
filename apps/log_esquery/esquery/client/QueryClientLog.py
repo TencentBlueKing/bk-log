@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import re
 import socket
@@ -49,7 +51,7 @@ from apps.log_esquery.constants import DEFAULT_SCHEMA
 DATE_RE = re.compile("[0-9]{8}")
 
 
-class QueryClientLog(QueryClientTemplate):
+class QueryClientLog(QueryClientTemplate):  # pylint: disable=invalid-name
     def __init__(self):
         super(QueryClientLog, self).__init__()
         self._client: Elasticsearch

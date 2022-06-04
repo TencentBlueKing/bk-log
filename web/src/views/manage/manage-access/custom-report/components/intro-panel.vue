@@ -99,8 +99,8 @@ export default {
       border: 1px solid #dcdee5;
       position: fixed;
       right: -400px;
-      top: 102px;
-      z-index: 1;
+      top: 103px;
+      z-index: 9999;
       color: #63656e;
       transition: right .5s;
       padding: 16px 24px 0;
@@ -158,7 +158,6 @@ export default {
       width: 24px;
       height: 24px;
       position: absolute;
-      z-index: 99;
 
       @include flex-center;
 
@@ -167,6 +166,8 @@ export default {
         right: 16px;
         position: fixed;
         transform: rotateZ(360deg) rotateX(180deg);
+
+        @include flex-center;
       }
 
       &.close {

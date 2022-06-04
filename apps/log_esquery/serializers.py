@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 from django.utils.translation import ugettext_lazy as _
@@ -374,10 +376,13 @@ def _init_index_info(*, index_set_id):
             index = [x.get("result_table_id", None) for x in index_set_data_obj_list]
             indices = ",".join(index)
             if scenario_id not in [Scenario.BKDATA, Scenario.LOG]:
-                time_field_list = [x.get("time_field", None) for x in index_set_data_obj_list]
-                if len(time_field_list) > 0:
-                    time_field = time_field_list[0]
-                else:
+                time_field = None
+                for x in index_set_data_obj_list:
+                    time_field = x.get("time_field")
+                    if time_field:
+                        break
+                time_field = time_field or tmp_index_obj.time_field
+                if time_field is None:
                     raise BaseSearchIndexSetIdTimeFieldException(
                         BaseSearchIndexSetIdTimeFieldException.MESSAGE.format(index_set_id=index_set_id)
                     )

@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import json
 import sys
@@ -62,6 +64,9 @@ if (
     def add_esb_info_before_request(params):
         params["bk_app_code"] = settings.APP_CODE
         params["bk_app_secret"] = settings.SECRET_KEY
+
+        params["X-Bk-App-Code"] = settings.APP_CODE
+        params["X-Bk-App-Secret"] = settings.SECRET_KEY
 
         if "bk_username" not in params:
             params["bk_username"] = "admin"
@@ -119,6 +124,10 @@ else:
         params["uin"] = params["bk_username"]
         params["app_code"] = settings.APP_CODE
         params["app_secret"] = settings.SECRET_KEY
+
+        params["X-Bk-App-Code"] = settings.APP_CODE
+        params["X-Bk-App-Secret"] = settings.SECRET_KEY
+
         return params
 
     def add_esb_info_before_request_for_bkdata_token(params):  # pylint: disable=function-name-too-long

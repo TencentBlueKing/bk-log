@@ -16,16 +16,21 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
+import markdown
 from django.conf import settings
+from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.utils import ChoicesEnum
 
 META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 RESTORE_INDEX_SET_PREFIX = "restore_"
 
-BKLOG_RESULT_TABLE_PATTERN = fr"(\d*?_{settings.TABLE_ID_PREFIX}_.*)_.*_.*"
+BKLOG_RESULT_TABLE_PATTERN = rf"(\d*?_{settings.TABLE_ID_PREFIX}_.*)_.*_.*"
 
 NOT_FOUND_CODE = "[404]"
 
@@ -35,6 +40,27 @@ CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE = "1306201"
 COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
 
 BULK_CLUSTER_INFOS_LIMIT = 20
+
+# ES集群类型配置特性开关key
+FEATURE_TOGGLE_ES_CLUSTER_TYPE = "es_cluster_type_setup"
+
+
+class VisibleEnum(ChoicesEnum):
+    # 当前业务可见
+    CURRENT_BIZ = "current_biz"
+    # 多业务可见
+    MULTI_BIZ = "multi_biz"
+    # 全业务
+    ALL_BIZ = "all_biz"
+    # 业务属性可见
+    BIZ_ATTR = "biz_attr"
+
+    _choices_labels = (
+        (CURRENT_BIZ, _("当前业务")),
+        (MULTI_BIZ, _("多业务")),
+        (ALL_BIZ, _("全业务")),
+        (BIZ_ATTR, _("业务属性")),
+    )
 
 
 class EsSourceType(ChoicesEnum):
@@ -53,6 +79,41 @@ class EsSourceType(ChoicesEnum):
         (GOOGLE, _("google")),
         (PRIVATE, _("私有自建")),
     )
+
+    @classmethod
+    def get_choices(cls):
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
+        if not es_config:
+            return super().get_choices()
+        es_config = es_config.feature_config
+        return [
+            (key, es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"])
+            for key, config in es_config.items()
+        ]
+
+    @classmethod
+    def get_choices_list_dict(cls):
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
+        if not es_config:
+            return super().get_choices_list_dict()
+        es_config = es_config.feature_config
+        return [
+            {
+                "id": es_config[key]["id"],
+                "name": es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"],
+                "help_md": markdown.markdown(es_config[key]["help_md"]),
+                "button_list": es_config[key].get("button_list", []),
+            }
+            for key, config in es_config.items()
+        ]
+
+    @classmethod
+    def get_keys(cls):
+        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
+        if not es_config:
+            return super().get_keys()
+        es_config = es_config.feature_config
+        return [key for key in es_config.keys()]
 
 
 class StrategyKind(ChoicesEnum):
@@ -247,6 +308,17 @@ class EtlConfig(object):
     BK_LOG_JSON = "bk_log_json"
     BK_LOG_DELIMITER = "bk_log_delimiter"
     BK_LOG_REGEXP = "bk_log_regexp"
+    CUSTOM = "custom"
+
+
+class EtlConfigChoices(ChoicesEnum):
+    _choices_labels = (
+        (EtlConfig.BK_LOG_TEXT, _("直接入库")),
+        (EtlConfig.BK_LOG_JSON, _("Json")),
+        (EtlConfig.BK_LOG_DELIMITER, _("分隔符")),
+        (EtlConfig.BK_LOG_REGEXP, _("正则")),
+        (EtlConfig.CUSTOM, _("自定义")),
+    )
 
 
 # 节点属性字段过滤黑名单
@@ -266,3 +338,17 @@ BKDATA_ES_TYPE_MAP = {
 }
 
 ETL_PARAMS = {"retain_original_text": True, "separator_regexp": "", "separator": ""}
+
+
+class ETLProcessorChoices(ChoicesEnum):
+    """
+    数据处理器
+    """
+
+    TRANSFER = "transfer"
+    BKBASE = "bkbase"
+
+    _choices_labels = (
+        (TRANSFER, _("Transfer")),
+        (BKBASE, _("数据平台")),
+    )

@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from rest_framework import serializers
 from rest_framework.response import Response
@@ -71,20 +73,58 @@ class StorageViewSet(APIViewSet):
         @apiSuccess {Int} storage_cluster_id 存储集群id
         @apiSuccess {String} storage_cluster_name 存储集群名称
         @apiSuccess {String} storage_type 存储集群类型（固定elasticsearch类型）
+        @apiSuccess {Object} setup_config 存储设置参数
+        @apiSuccess {Int} setup_config.retention_days_max 存储设置参数 最大天数
+        @apiSuccess {Int} setup_config.retention_days_default 存储设置参数 默认天数
+        @apiSuccess {Int} setup_config.number_of_replicas_max 存储设置参数 最大副本数量
+        @apiSuccess {Int} setup_config.number_of_replicas_default 存储设置参数 默认副本书
+        @apiSuccess {Array} admin 管理员
+        @apiSuccess {String} description 描述
+        @apiSuccess {Boolean} is_platform 是否是平台存储集群
+        @apiSuccess {Boolean} enable_archive 是否启用归档
+        @apiSuccess {Boolean} enable_assessment 是否启用评估
+        @apiSuccess {Boolean} enable_hot_warm 是否启用冷热集群
+        @apiSuccess {Int} storage_usage 存储使用量
+        @apiSuccess {Int} storage_total 存储总理 bytes
+        @apiSuccess {Int} index_count 索引数量
+        @apiSuccess {Int} biz_count 业务数量
+
         @apiSuccessExample {json} 成功返回:
         {
             "result": true,
             "data": [
                 {
-                    "storage_cluster_id": 3,
-                    "storage_cluster_name": "es_cluster1",
-                    "storage_type": "elasticsearch"
+                    "storage_cluster_id": 17,
+                    "storage_cluster_name": "bklog-test",
+                    "storage_version": "6.4.3",
+                    "storage_type": "elasticsearch",
+                    "priority": 0,
+                    "registered_system": "bklog",
+                    "bk_biz_id": 2,
+                    "enable_hot_warm": false,
+                    "setup_config": {
+                        "retention_days_max": 7,
+                        "retention_days_default": 7,
+                        "number_of_replicas_max": 3,
+                        "number_of_replicas_default": 1
+                    },
+                    "admin": [
+                        "xxxxx"
+                    ],
+                    "description": "",
+                    "enable_assessment": false,
+                    "enable_archive": false,
+                    "is_platform": false,
+                    "storage_usage": 0,
+                    "storage_total": 0,
+                    "index_count": 0,
+                    "biz_count": 0,
+                    "storage_capacity": 0,
+                    "storage_used": 0,
+                    "permission": {
+                        "manage_es_source": true
+                    }
                 },
-                {
-                    "storage_cluster_id": 8,
-                    "storage_cluster_name": "es_demo3",
-                    "storage_type": "elasticsearch"
-                }
             ],
             "code": 0,
             "message": ""
@@ -92,7 +132,9 @@ class StorageViewSet(APIViewSet):
         """
         data = self.params_valid(StorageListSerializer)
         return Response(
-            StorageHandler().get_cluster_groups_filter(bk_biz_id=data["bk_biz_id"], data_link_id=data["data_link_id"])
+            StorageHandler().get_cluster_groups_filter(
+                bk_biz_id=data["bk_biz_id"], enable_archive=data.get("enable_archive", False)
+            )
         )
 
     @insert_permission_field(
@@ -132,54 +174,58 @@ class StorageViewSet(APIViewSet):
             "data": [
                 {
                     "cluster_config": {
-                        "is_ssl_verify": false,
-                        "registered_system": "_default",
-                        "domain_name": "",
-                        "cluster_name": "es_cluster1",
-                        "version": "5.4",
-                        "cluster_id": 3,
-                        "custom_option": {
-                            "bk_biz_id": ""
-                        },
-                        "custom_option": "",
-                        "port": 10004,
-                        "schema": null
-                    },
-                    "auth_info": {
-                        "bk_username": "",
-                        "password": ""
-                    },
-                    "cluster_type": "elasticsearch",
-                    "is_editable": false
-                },
-                {
-                    "cluster_config": {
-                        "is_ssl_verify": false,
-                        "registered_system": "log-search-4",
                         "domain_name": "127.0.0.1",
-                        "cluster_name": "es_demo3",
-                        "version": "",
-                        "cluster_id": 8,
+                        "port": 9200,
+                        "schema": "http",
+                        "is_ssl_verify": false,
+                        "cluster_id": 17,
+                        "cluster_name": "bklog-test",
+                        "version": "6.4.3",
                         "custom_option": {
-                            "bk_biz_id": 2
+                            "bk_biz_id": 2,
+                            "hot_warm_config": {
+                                "is_enabled": false,
+                                "hot_attr_name": "",
+                                "hot_attr_value": "",
+                                "warm_attr_name": "",
+                                "warm_attr_value": ""
+                            },
+                            "visible_config": {
+                                "visible_type": "current_biz"
+                            },
+                            "admin": [
+                                "admin"
+                            ],
+                            "setup_config": {
+                                "retention_days_max": 7,
+                                "retention_days_default": 7,
+                                "number_of_replicas_max": 3,
+                                "number_of_replicas_default": 1
+                            },
+                            "description": "",
+                            "enable_archive": false,
+                            "enable_assessment": false
                         },
-                        "custom_option": "{\"bk_biz_id\": 2}",
-                        "port": 10004,
-                        "schema": ""
-                    },
-                    "auth_info": {
-                        "username": "",
-                        "password": "es_demo3"
+                        "registered_system": "bklog",
+                        "creator": "admin",
+                        "create_time": "2021-03-04 10:41:32+0800",
+                        "last_modify_user": "admin",
+                        "last_modify_time": "2021-04-30 15:06:43+0800",
+                        "is_default_cluster": false,
+                        "enable_hot_warm": false
                     },
                     "cluster_type": "elasticsearch",
-                    "is_editable": true,
-                    "cluster_stats": {
-                        "node_count": 2,
-                        "indices_count": 32,
-                        "indices_docs_count": 558327,
-                        "indices_store": 775942893,
-                        "status": "green"
+                    "auth_info": {
+                        "password": "",
+                        "username": "elastic"
                     },
+                    "is_editable": true,
+                    "priority": 0,
+                    "bk_biz_id": 2,
+                    "visible_bk_biz": [],
+                    "permission": {
+                        "manage_es_source": true
+                    }
                 }
             ],
             "code": 0,
@@ -187,7 +233,9 @@ class StorageViewSet(APIViewSet):
         }
         """
         data = self.params_valid(StorageListSerializer)
-        return Response(StorageHandler().list(bk_biz_id=data["bk_biz_id"]))
+        return Response(
+            StorageHandler().list(bk_biz_id=data["bk_biz_id"], enable_archive=data.get("enable_archive", False))
+        )
 
     def retrieve(self, request, *args, **kwargs):
         """
@@ -255,7 +303,20 @@ class StorageViewSet(APIViewSet):
         @apiParam {Object} auth_info 凭据信息
         @apiParam {String} auth_info.username 用户
         @apiParam {String} auth_info.password 密码
-        @apiParam {List} [visible_bk_biz] 可见业务范围
+        @apiParam {String} source_type 来源类型
+        @apiParam {Object} visible_config 可见业务配置
+        @apiParam {string} visible_config.visible_type 可见业务配置类型 current_biz 当前业务，all_biz 全部业务 biz_attr 业务属性multi_biz多个业务
+        @apiParam {List} [visible_config.visible_bk_biz] multi_biz类型设置该参数
+        @apiParam {Object} [visible_config.bk_biz_labels] biz_attr 类型设置该参数
+        @apiSuccess {Object} setup_config 存储设置参数
+        @apiSuccess {Int} setup_config.retention_days_max 存储设置参数 最大天数
+        @apiSuccess {Int} setup_config.retention_days_default 存储设置参数 默认天数
+        @apiSuccess {Int} setup_config.number_of_replicas_max 存储设置参数 最大副本数量
+        @apiSuccess {Int} setup_config.number_of_replicas_default 存储设置参数 默认副本书
+        @apiSuccess {List} admin 管理员
+        @apiSuccess {String} [description] 描述
+        @apiSuccess {Boolean} enable_archive 是否启用归档
+        @apiSuccess {Boolean} enable_assessment 是否启用评估
         @apiParamExample {Json} 请求参数
         {
             "cluster_name": "ES集群",
@@ -266,8 +327,22 @@ class StorageViewSet(APIViewSet):
                 "username": "",
                 "password": ""
             },
+            "bk_biz_id": 1,
             "enable_hot_warm": True,
-            "visible_bk_biz: [1, 2, 3]
+            "visible_config": {
+                "visible_type": "current_biz"
+            }
+            "source_type": "other",
+            "setup_config": {
+                "retention_days_max": 7,
+                "retention_days_default": 7,
+                "number_of_replicas_max": 3,
+                "number_of_replicas_default": 1
+            },
+            "admin": ["admin"],
+            "description": "xxxx",
+            "enable_archive": false,
+            "enable_assessment": false
         }
         @apiSuccess {Int} data 集群ID
         @apiSuccessExample {json} 成功返回:
@@ -278,14 +353,11 @@ class StorageViewSet(APIViewSet):
             "message": ""
         }
         """
-        bk_biz_id = request.GET.get("bk_biz_id", "")
-        if not bk_biz_id or not str(bk_biz_id).isdigit():
-            raise StorageCreateException()
         data = self.params_valid(StorageCreateSerializer)
 
         connect_result, version_num_str = BkLogApi.connectivity_detect(  # pylint: disable=unused-variable
             params={
-                "bk_biz_id": bk_biz_id,
+                "bk_biz_id": data["bk_biz_id"],
                 "domain_name": data["domain_name"],
                 "port": data["port"],
                 "version_info": True,
@@ -300,7 +372,7 @@ class StorageViewSet(APIViewSet):
             {
                 "cluster_type": STORAGE_CLUSTER_TYPE,
                 "custom_option": {
-                    "bk_biz_id": bk_biz_id,
+                    "bk_biz_id": data["bk_biz_id"],
                     "hot_warm_config": {
                         "is_enabled": data["enable_hot_warm"],
                         "hot_attr_name": data["hot_attr_name"],
@@ -309,8 +381,12 @@ class StorageViewSet(APIViewSet):
                         "warm_attr_value": data["warm_attr_value"],
                     },
                     "source_type": data["source_type"],
-                    "source_name": data.get("source_name", ""),
-                    "visible_bk_biz": data["visible_bk_biz"],
+                    "visible_config": data["visible_config"],
+                    "setup_config": data["setup_config"],
+                    "admin": data["admin"],
+                    "description": data.get("description", ""),
+                    "enable_archive": data["enable_archive"],
+                    "enable_assessment": data["enable_assessment"],
                 },
                 "version": version_num_str,
             }
@@ -367,14 +443,11 @@ class StorageViewSet(APIViewSet):
             "message": ""
         }
         """
-        bk_biz_id = request.GET.get("bk_biz_id", "")
-        if not bk_biz_id or not str(bk_biz_id).isdigit():
-            raise StorageCreateException()
         data = self.params_valid(StorageUpdateSerializer)
         data.update(
             {
                 "custom_option": {
-                    "bk_biz_id": bk_biz_id,
+                    "bk_biz_id": data["bk_biz_id"],
                     "hot_warm_config": {
                         "is_enabled": data["enable_hot_warm"],
                         "hot_attr_name": data["hot_attr_name"],
@@ -383,13 +456,17 @@ class StorageViewSet(APIViewSet):
                         "warm_attr_value": data["warm_attr_value"],
                     },
                     "source_type": data["source_type"],
-                    "source_name": data.get("source_name", ""),
-                    "visible_bk_biz": data["visible_bk_biz"],
+                    "visible_config": data["visible_config"],
+                    "setup_config": data["setup_config"],
+                    "admin": data["admin"],
+                    "description": data.get("description", ""),
+                    "enable_archive": data["enable_archive"],
+                    "enable_assessment": data["enable_assessment"],
                 },
                 "cluster_id": kwargs["cluster_id"],
             }
         )
-
+        data.pop("description", None)
         return Response(StorageHandler(kwargs["cluster_id"]).update(data))
 
     def destroy(self, request, cluster_id):
@@ -524,7 +601,11 @@ class StorageViewSet(APIViewSet):
         }
         """
         data = self.params_valid(StorageListSerializer)
-        return Response(StorageHandler().get_cluster_groups(bk_biz_id=data["bk_biz_id"], is_default=False))
+        return Response(
+            StorageHandler().get_cluster_groups(
+                bk_biz_id=data["bk_biz_id"], is_default=False, enable_archive=data["enable_archive"]
+            )
+        )
 
     @list_route(methods=["POST"], url_path="batch_connectivity_detect")
     def batch_connectivity_detect(self, request, *args, **kwargs):
