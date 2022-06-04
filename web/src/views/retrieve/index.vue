@@ -106,7 +106,7 @@
               <span class="bk-icon icon-angle-double-left-line" @click="closeRetrieveCondition"></span>
             </div>
           </div>
-          <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
+          <div class="tab-content">
             <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
               <!-- 选择索引集 -->
               <div class="tab-item-title">{{ $t('索引集') }}</div>
@@ -1763,6 +1763,10 @@ export default {
 
           &.as-iframe {
             height: calc(100% - 52px);
+
+            .tab-content {
+              height: 100%;
+            }
           }
 
           .tab-header {
