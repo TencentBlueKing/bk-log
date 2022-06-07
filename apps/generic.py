@@ -343,6 +343,7 @@ def custom_exception_handler(exc, context):
             message=exc.message, code=exc.code, args=exc.args, data=exc.data, errors=exc.errors
         )
         logger.exception(_msg)
+        _notify(context["request"], _msg)
         return JsonResponse(_error(exc.code, exc.message, exc.data, exc.errors))
 
     # 处理校验异常
@@ -357,19 +358,23 @@ def custom_exception_handler(exc, context):
 
     # 非预期异常
     logger.exception(getattr(exc, "message", exc))
+    _notify(context["request"], getattr(exc, "message", exc))
+    return JsonResponse(_error("500", _("系统错误，请联系管理员")))
+
+
+def _notify(request, msg):
     # 旁路告警
     with ignored(Exception):
         username = ""
         with ignored(Exception):
-            username = context["request"].user.username
+            username = request.user.username
         NOTIFY_EVENT(
-            content=getattr(exc, "message", exc),
+            content=msg,
             dimensions={
                 "trace_id": format_trace_id(trace.get_current_span().get_span_context().trace_id),
                 "username": username,
             },
         )
-    return JsonResponse(_error("500", _("系统错误，请联系管理员")))
 
 
 def _error(code=None, message="", data=None, errors=None):
