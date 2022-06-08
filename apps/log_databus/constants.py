@@ -356,3 +356,5 @@ class ETLProcessorChoices(ChoicesEnum):
 
 
 DEFAULT_ES_TRANSPORT = 9300
+
+DEFAULT_ES_TAGS = ["BK-LOG"]

@@ -407,8 +407,9 @@ class StorageCreateSerializer(serializers.Serializer):
     enable_archive = serializers.BooleanField(label=_("是否开启日志归档"))
     enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
     create_bkbase_cluster = serializers.BooleanField(label=_("是否同步到数据平台"), required=False)
-    cluster_en_name = serializers.RegexField(label=_("集群英文名称"), regex=CLUSTER_NAME_EN_REGEX, required=False)
-    bk_audit_namespace = serializers.CharField(label=_("命名空间"), required=False)
+    cluster_namespace = serializers.CharField(label=_("命名空间"), required=False)
+    bkbase_tags = serializers.ListField(label=_("标签"), required=False, child=serializers.CharField())
+    bkbase_cluster_en_name = serializers.RegexField(label=_("集群英文名称"), regex=CLUSTER_NAME_EN_REGEX, required=False)
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
@@ -417,7 +418,7 @@ class StorageCreateSerializer(serializers.Serializer):
             [attrs["hot_attr_name"], attrs["hot_attr_value"], attrs["warm_attr_name"], attrs["warm_attr_value"]]
         ):
             raise ValidationError(_("当冷热数据处于开启状态时，冷热节点属性配置不能为空"))
-        if attrs.get("create_bkbase_cluster") and not attrs.get("cluster_en_name"):
+        if attrs.get("create_bkbase_cluster") and not attrs.get("bkbase_cluster_en_name"):
             raise ValidationError(_("同步到数据平台需要提供集群英文名"))
         return attrs
 
@@ -466,7 +467,8 @@ class StorageUpdateSerializer(serializers.Serializer):
     description = serializers.CharField(label=_("集群描述"), required=False, default="", allow_blank=True)
     enable_archive = serializers.BooleanField(label=_("是否开启日志归档"))
     enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
-    bk_audit_namespace = serializers.CharField(label=_("命名空间"), required=False)
+    cluster_namespace = serializers.CharField(label=_("命名空间"), required=False)
+    bkbase_tags = serializers.ListField(label=_("标签"), required=False, child=serializers.CharField())
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:

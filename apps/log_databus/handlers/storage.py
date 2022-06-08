@@ -39,6 +39,7 @@ from apps.iam import Permission, ResourceEnum
 from apps.log_databus.constants import (
     BKLOG_RESULT_TABLE_PATTERN,
     DEFAULT_ES_SCHEMA,
+    DEFAULT_ES_TAGS,
     DEFAULT_ES_TRANSPORT,
     EsSourceType,
     NODE_ATTR_PREFIX_BLACKLIST,
@@ -495,7 +496,7 @@ class StorageHandler(object):
             "purpose": "BKLog集群同步",
             "share": False,
             "admin": [username],
-            "tag": ["BK_Audit"],
+            "tag": params.get("bkbase_tags", []) or DEFAULT_ES_TAGS,
             "connection_info": {
                 "username": params["auth_info"]["username"],
                 "password": params["auth_info"]["password"],
@@ -535,8 +536,8 @@ class StorageHandler(object):
         :return:
         """
 
-        if params.get("bk_audit_namespace"):
-            params["custom_option"]["bk_audit_namespace"] = params["bk_audit_namespace"]
+        if params.get("cluster_namespace"):
+            params["custom_option"]["cluster_namespace"] = params["cluster_namespace"]
 
         if params.get("create_bkbase_cluster", False):
             bkbase_cluster_id = self.sync_es_cluster(params)
@@ -623,10 +624,10 @@ class StorageHandler(object):
             params["custom_option"]["bkbase_cluster_id"] = bkbase_cluster_id
 
         # 更新Namespace信息
-        if params.get("bk_audit_namespace"):
-            params["custom_option"]["bk_audit_namespace"] = params["bk_audit_namespace"]
-        elif raw_custom_option.get("bk_audit_namespace"):
-            params["custom_option"]["bk_audit_namespace"] = raw_custom_option["bk_audit_namespace"]
+        if params.get("cluster_namespace"):
+            params["custom_option"]["cluster_namespace"] = params["cluster_namespace"]
+        elif raw_custom_option.get("cluster_namespace"):
+            params["custom_option"]["cluster_namespace"] = raw_custom_option["cluster_namespace"]
 
         cluster_obj = TransferApi.modify_cluster_info(params)
         cluster_obj["auth_info"]["password"] = ""
