@@ -480,7 +480,9 @@ class StorageHandler(object):
         setup_config = params["setup_config"]
         bk_biz_id = params["bk_biz_id"]
         username = get_request_username()
-        cluster_en_name = f"{bk_biz_id}_{params['cluster_en_name']}" if is_create else params["cluster_en_name"]
+        cluster_en_name = (
+            f"{bk_biz_id}_{params['bkbase_cluster_en_name']}" if is_create else params["bkbase_cluster_en_name"]
+        )
         cluster_name = params.get("cluster_name", cluster_en_name)
         # 获取节点信息
         hot_node_num, warm_node_num = self.get_hot_warm_node_info(params)
@@ -618,7 +620,7 @@ class StorageHandler(object):
 
         # 原集群信息中有，新集群信息中没有时进行补充
         if raw_custom_option.get("bkbase_cluster_id"):
-            params["cluster_en_name"] = raw_custom_option["bkbase_cluster_id"]
+            params["bkbase_cluster_en_name"] = raw_custom_option["bkbase_cluster_id"]
             params["version"] = version_num_str
             bkbase_cluster_id = self.sync_es_cluster(params, False)
             params["custom_option"]["bkbase_cluster_id"] = bkbase_cluster_id

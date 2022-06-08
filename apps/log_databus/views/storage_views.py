@@ -297,7 +297,7 @@ class StorageViewSet(APIViewSet):
         @apiName create_storage
         @apiGroup 09_StorageCluster
         @apiParam {String} cluster_name 集群名称
-        @apiParam {String} [cluster_en_name] 集群英文名
+        @apiParam {String} [bkbase_cluster_en_name] 集群英文名
         @apiParam {String} domain_name 集群域名（可以填入IP）
         @apiParam {Int} port 端口
         @apiParam {String} schema 协议
