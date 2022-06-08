@@ -541,6 +541,9 @@ class StorageHandler(object):
         if params.get("cluster_namespace"):
             params["custom_option"]["cluster_namespace"] = params["cluster_namespace"]
 
+        if params.get("option"):
+            params["custom_option"]["option"] = params["option"]
+
         if params.get("create_bkbase_cluster", False):
             bkbase_cluster_id = self.sync_es_cluster(params)
             params["custom_option"]["bkbase_cluster_id"] = bkbase_cluster_id
@@ -630,6 +633,12 @@ class StorageHandler(object):
             params["custom_option"]["cluster_namespace"] = params["cluster_namespace"]
         elif raw_custom_option.get("cluster_namespace"):
             params["custom_option"]["cluster_namespace"] = raw_custom_option["cluster_namespace"]
+
+        if params.get("option"):
+            params["custom_option"]["option"] = params["option"]
+        elif raw_custom_option.get("option"):
+            params["custom_option"]["option"] = raw_custom_option["option"]
+
 
         cluster_obj = TransferApi.modify_cluster_info(params)
         cluster_obj["auth_info"]["password"] = ""
