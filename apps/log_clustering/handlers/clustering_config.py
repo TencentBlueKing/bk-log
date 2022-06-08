@@ -113,36 +113,6 @@ class ClusteringConfigHandler(object):
                 is_case_sensitive=is_case_sensitive,
                 clustering_fields=clustering_fields,
             )
-            if create_service:
-                clustering_config.min_members = min_members
-                clustering_config.max_dist_list = max_dist_list
-                clustering_config.predefined_varibles = predefined_varibles
-                clustering_config.delimeter = delimeter
-                clustering_config.max_log_length = max_log_length
-                clustering_config.is_case_sensitive = is_case_sensitive
-                clustering_config.clustering_fields = clustering_fields
-                clustering_config.bk_biz_id = bk_biz_id
-                clustering_config.filter_rules = filter_rules
-                clustering_config.signature_enable = signature_enable
-                clustering_config.category_id = category_id
-                clustering_config.save()
-                self.create_service(
-                    index_set_id=index_set_id,
-                    collector_config_id=collector_config_id,
-                    clustering_fields=clustering_fields,
-                )
-                return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
-
-            if change_filter_rules:
-                # 更新filter_rule
-                update_filter_rules.delay(index_set_id=index_set_id)
-            if change_model_config:
-                # 更新aiops model
-                operator_aiops_service(index_set_id, operator=OperatorServiceEnum.UPDATE)
-            if change_clustering_fields:
-                # 更新flow
-                update_clustering_clean.delay(index_set_id=index_set_id)
-
             clustering_config.min_members = min_members
             clustering_config.max_dist_list = max_dist_list
             clustering_config.predefined_varibles = predefined_varibles
@@ -155,6 +125,24 @@ class ClusteringConfigHandler(object):
             clustering_config.signature_enable = signature_enable
             clustering_config.category_id = category_id
             clustering_config.save()
+
+            if create_service:
+                self.create_service(
+                    index_set_id=index_set_id,
+                    collector_config_id=collector_config_id,
+                    clustering_fields=clustering_fields,
+                )
+
+            if change_filter_rules:
+                # 更新filter_rule
+                update_filter_rules.delay(index_set_id=index_set_id)
+            if change_model_config:
+                # 更新aiops model
+                operator_aiops_service(index_set_id, operator=OperatorServiceEnum.UPDATE)
+            if change_clustering_fields:
+                # 更新flow
+                update_clustering_clean.delay(index_set_id=index_set_id)
+
             return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
         clustering_config = ClusteringConfig.objects.create(
             collector_config_id=collector_config_id,
