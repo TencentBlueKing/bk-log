@@ -97,7 +97,12 @@ class ClusteringConfigHandler(object):
         from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 
         if clustering_config:
-            change_filter_rules, change_model_config, change_clustering_fields = self.check_clustering_config_update(
+            (
+                change_filter_rules,
+                change_model_config,
+                change_clustering_fields,
+                create_service,
+            ) = self.check_clustering_config_update(
                 clustering_config=clustering_config,
                 filter_rules=filter_rules,
                 min_members=min_members,
@@ -108,16 +113,6 @@ class ClusteringConfigHandler(object):
                 is_case_sensitive=is_case_sensitive,
                 clustering_fields=clustering_fields,
             )
-            if change_filter_rules:
-                # 更新filter_rule
-                update_filter_rules.delay(index_set_id=index_set_id)
-            if change_model_config:
-                # 更新aiops model
-                operator_aiops_service(index_set_id, operator=OperatorServiceEnum.UPDATE)
-            if change_clustering_fields:
-                # 更新flow
-                update_clustering_clean.delay(index_set_id=index_set_id)
-
             clustering_config.min_members = min_members
             clustering_config.max_dist_list = max_dist_list
             clustering_config.predefined_varibles = predefined_varibles
@@ -130,6 +125,24 @@ class ClusteringConfigHandler(object):
             clustering_config.signature_enable = signature_enable
             clustering_config.category_id = category_id
             clustering_config.save()
+
+            if create_service:
+                self.create_service(
+                    index_set_id=index_set_id,
+                    collector_config_id=collector_config_id,
+                    clustering_fields=clustering_fields,
+                )
+
+            if change_filter_rules:
+                # 更新filter_rule
+                update_filter_rules.delay(index_set_id=index_set_id)
+            if change_model_config:
+                # 更新aiops model
+                operator_aiops_service(index_set_id, operator=OperatorServiceEnum.UPDATE)
+            if change_clustering_fields:
+                # 更新flow
+                update_clustering_clean.delay(index_set_id=index_set_id)
+
             return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
         clustering_config = ClusteringConfig.objects.create(
             collector_config_id=collector_config_id,
@@ -149,17 +162,24 @@ class ClusteringConfigHandler(object):
             category_id=category_id,
         )
         if signature_enable:
-            if collector_config_id:
-                collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
-                all_etl_config = collector_config.get_etl_config()
-                self.pre_check_fields(
-                    fields=all_etl_config["fields"],
-                    etl_config=all_etl_config.etl_config,
-                    clustering_fields=clustering_fields,
-                )
-            send.delay(index_set_id=index_set_id)
-            operator_aiops_service(index_set_id)
+            self.create_service(
+                index_set_id=index_set_id, clustering_fields=clustering_fields, collector_config_id=collector_config_id
+            )
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
+
+    def create_service(self, index_set_id, clustering_fields, collector_config_id=None):
+        from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
+
+        if collector_config_id:
+            collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
+            all_etl_config = collector_config.get_etl_config()
+            self.pre_check_fields(
+                fields=all_etl_config["fields"],
+                etl_config=collector_config.etl_config,
+                clustering_fields=clustering_fields,
+            )
+        send.delay(index_set_id=index_set_id)
+        operator_aiops_service(index_set_id)
 
     def preview(
         self, input_data, min_members, max_dist_list, predefined_varibles, delimeter, max_log_length, is_case_sensitive
@@ -259,6 +279,9 @@ class ClusteringConfigHandler(object):
         """
         判断是否需要进行对应更新操作
         """
+        # 此时需要创建service 而不是更新service
+        if not clustering_config.signature_enable:
+            return False, False, False, True
         change_filter_rules = clustering_config.filter_rules != filter_rules
         change_model_config = model_to_dict(
             clustering_config,
@@ -280,7 +303,7 @@ class ClusteringConfigHandler(object):
         }
         change_clustering_fields = clustering_config.clustering_fields != clustering_fields
 
-        return change_filter_rules, change_model_config, change_clustering_fields
+        return change_filter_rules, change_model_config, change_clustering_fields, False
 
     @classmethod
     def pre_check_fields(cls, fields, etl_config, clustering_fields):
