@@ -410,6 +410,7 @@ class StorageCreateSerializer(serializers.Serializer):
     cluster_namespace = serializers.CharField(label=_("命名空间"), required=False)
     bkbase_tags = serializers.ListField(label=_("标签"), required=False, child=serializers.CharField())
     bkbase_cluster_en_name = serializers.RegexField(label=_("集群英文名称"), regex=CLUSTER_NAME_EN_REGEX, required=False)
+    option = serializers.JSONField(label=_("第三方平台配置"), default=dict)
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
@@ -469,6 +470,7 @@ class StorageUpdateSerializer(serializers.Serializer):
     enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
     cluster_namespace = serializers.CharField(label=_("命名空间"), required=False)
     bkbase_tags = serializers.ListField(label=_("标签"), required=False, child=serializers.CharField())
+    option = serializers.JSONField(label=_("第三方平台配置"), default=dict)
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
