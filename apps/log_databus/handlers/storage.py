@@ -453,7 +453,7 @@ class StorageHandler(object):
             username=params["auth_info"]["username"],
             password=params["auth_info"]["password"],
             port=params["port"],
-            verify_certs=False,
+            scheme=params["schema"],
         )
         if params.get("enable_hot_warm", False):
             hot_attr_name = params.get("hot_attr_name")
@@ -638,7 +638,6 @@ class StorageHandler(object):
             params["custom_option"]["option"] = params["option"]
         elif raw_custom_option.get("option"):
             params["custom_option"]["option"] = raw_custom_option["option"]
-
 
         cluster_obj = TransferApi.modify_cluster_info(params)
         cluster_obj["auth_info"]["password"] = ""

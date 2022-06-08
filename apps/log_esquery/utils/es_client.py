@@ -24,7 +24,17 @@ from elasticsearch5 import Elasticsearch as Elasticsearch5
 from elasticsearch6 import Elasticsearch as Elasticsearch6
 
 
-def get_es_client(*, version: str, hosts: list, username: str, password: str, port: int, **kwargs) -> Elasticsearch:
+def get_es_client(
+    *,
+    version: str,
+    hosts: list,
+    username: str,
+    password: str,
+    port: int,
+    sniffer_timeout=600,
+    verify_certs=False,
+    **kwargs
+) -> Elasticsearch:
     # 根据版本加载客户端
     if version.startswith("5."):
         es_client = Elasticsearch5
@@ -34,4 +44,6 @@ def get_es_client(*, version: str, hosts: list, username: str, password: str, po
         es_client = Elasticsearch
 
     http_auth = (username, password) if password else None
-    return es_client(hosts, http_auth=http_auth, port=port, **kwargs)
+    return es_client(
+        hosts, http_auth=http_auth, port=port, sniffer_timeout=sniffer_timeout, verify_certs=verify_certs, **kwargs
+    )
