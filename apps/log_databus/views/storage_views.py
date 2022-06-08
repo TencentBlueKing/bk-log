@@ -389,7 +389,6 @@ class StorageViewSet(APIViewSet):
                     "description": data.get("description", ""),
                     "enable_archive": data["enable_archive"],
                     "enable_assessment": data["enable_assessment"],
-                    "option": data["option"],
                 },
                 "version": version_num_str,
             }
@@ -465,7 +464,6 @@ class StorageViewSet(APIViewSet):
                     "description": data.get("description", ""),
                     "enable_archive": data["enable_archive"],
                     "enable_assessment": data["enable_assessment"],
-                    "option": data["option"],
                 },
                 "cluster_id": kwargs["cluster_id"],
             }
