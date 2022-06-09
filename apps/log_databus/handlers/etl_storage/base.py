@@ -22,6 +22,7 @@ the project delivered to anyone in the future.
 import copy
 from typing import Union
 
+from django.core.cache import cache
 from django.conf import settings
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
@@ -337,6 +338,7 @@ class EtlStorage(object):
             # 更新结果表
             params["table_id"] = instance.table_id
             TransferApi.modify_result_table(params)
+            cache.delete(f"bulk_cluster_info_{instance.table_id}")
 
         return {"table_id": instance.table_id, "params": params}
 
