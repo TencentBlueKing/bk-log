@@ -789,6 +789,8 @@ ESQUERY_WHITE_LIST = [
     "data",
     "dataweb",
     "bk_bcs",
+    "bk-dbm",
+    "bk_dbm",
 ]
 
 # BK repo conf
