@@ -510,7 +510,9 @@ class GrafanaQueryHandler:
         biz_handler = BizHandler(bk_biz_id=self.bk_biz_id)
 
         if variable_type == "host":
-            host_fields = [c["field"] for c in conditions_config] + [label_field, value_field]
+            host_fields = [c["key"] for c in conditions_config] + [label_field, value_field]
+            if "bk_host_innerip" not in host_fields:
+                host_fields.append("bk_host_innerip")
             instances = biz_handler.get_hosts(host_fields)
             for instance in instances:
                 instance.update(instance["host"])
