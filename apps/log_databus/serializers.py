@@ -19,13 +19,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
-from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX, VisibleEnum
+from apps.log_databus.constants import CLUSTER_NAME_EN_REGEX, COLLECTOR_CONFIG_NAME_EN_REGEX, VisibleEnum
 from apps.log_databus.constants import EsSourceType
 from apps.log_databus.models import CleanTemplate, CollectorConfig, CollectorPlugin
 from apps.log_search.constants import (
@@ -405,6 +406,11 @@ class StorageCreateSerializer(serializers.Serializer):
     description = serializers.CharField(label=_("集群描述"), required=False, default="", allow_blank=True)
     enable_archive = serializers.BooleanField(label=_("是否开启日志归档"))
     enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
+    create_bkbase_cluster = serializers.BooleanField(label=_("是否同步到数据平台"), required=False)
+    cluster_namespace = serializers.CharField(label=_("命名空间"), required=False)
+    bkbase_tags = serializers.ListField(label=_("标签"), required=False, child=serializers.CharField())
+    bkbase_cluster_en_name = serializers.RegexField(label=_("集群英文名称"), regex=CLUSTER_NAME_EN_REGEX, required=False)
+    option = serializers.JSONField(label=_("第三方平台配置"), required=False)
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
@@ -413,6 +419,8 @@ class StorageCreateSerializer(serializers.Serializer):
             [attrs["hot_attr_name"], attrs["hot_attr_value"], attrs["warm_attr_name"], attrs["warm_attr_value"]]
         ):
             raise ValidationError(_("当冷热数据处于开启状态时，冷热节点属性配置不能为空"))
+        if attrs.get("create_bkbase_cluster") and not attrs.get("bkbase_cluster_en_name"):
+            raise ValidationError(_("同步到数据平台需要提供集群英文名"))
         return attrs
 
 
@@ -460,6 +468,9 @@ class StorageUpdateSerializer(serializers.Serializer):
     description = serializers.CharField(label=_("集群描述"), required=False, default="", allow_blank=True)
     enable_archive = serializers.BooleanField(label=_("是否开启日志归档"))
     enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
+    cluster_namespace = serializers.CharField(label=_("命名空间"), required=False)
+    bkbase_tags = serializers.ListField(label=_("标签"), required=False, child=serializers.CharField())
+    option = serializers.JSONField(label=_("第三方平台配置"), required=False)
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:

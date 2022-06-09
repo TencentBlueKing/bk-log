@@ -38,6 +38,7 @@ NOT_FOUND_CODE = "[404]"
 CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE = "1306201"
 
 COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
+CLUSTER_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
 
 BULK_CLUSTER_INFOS_LIMIT = 20
 
@@ -352,3 +353,8 @@ class ETLProcessorChoices(ChoicesEnum):
         (TRANSFER, _("Transfer")),
         (BKBASE, _("数据平台")),
     )
+
+
+DEFAULT_ES_TRANSPORT = 9300
+
+DEFAULT_ES_TAGS = ["BK-LOG"]
