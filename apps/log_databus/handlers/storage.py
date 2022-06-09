@@ -39,7 +39,6 @@ from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import Permission, ResourceEnum
 from apps.log_esquery.utils.es_route import EsRoute
 from apps.log_search.models import Scenario, ProjectInfo, BizProperty
-from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.utils.cache import cache_five_minute
 from apps.utils.local import get_local_param, get_request_username
 from apps.api import TransferApi, BkLogApi
@@ -215,6 +214,8 @@ class StorageHandler(object):
                 "index_count": used.index_count,
                 "biz_count": used.biz_count,
             }
+
+        from apps.log_search.handlers.index_set import IndexSetHandler
 
         for cluster_obj in cluster_groups:
             cluster_obj.update(get_storage_info(cluster_obj["cluster_config"].get("cluster_id")))
