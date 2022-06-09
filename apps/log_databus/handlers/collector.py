@@ -62,7 +62,7 @@ from apps.log_databus.constants import (
     SEARCH_BIZ_INST_TOPO_LEVEL,
     TargetNodeTypeEnum,
 )
-from apps.log_databus.constants import EtlConfig
+from apps.log_databus.constants import EtlConfig, CACHE_KEY_CLUSTER_INFO
 from apps.log_databus.exceptions import (
     CollectNotSuccess,
     CollectNotSuccessNotCanStart,
@@ -297,7 +297,7 @@ class CollectorHandler(object):
         return [node["bk_inst_id"] for node in nodes if node["bk_obj_id"] == node_type]
 
     @staticmethod
-    @caches_one_hour(key="bulk_cluster_info_{}", need_deconstruction_name="result_table_list")
+    @caches_one_hour(key=CACHE_KEY_CLUSTER_INFO, need_deconstruction_name="result_table_list")
     def bulk_cluster_infos(result_table_list: list):
         multi_execute_func = MultiExecuteFunc()
         table_chunk = array_chunk(result_table_list, BULK_CLUSTER_INFOS_LIMIT)

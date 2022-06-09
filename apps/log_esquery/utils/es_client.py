@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-from django.utils.translation import ugettext_lazy as _
+# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -19,42 +19,31 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-
-from django.utils.translation import ugettext_lazy as _
-
-from apps.api.base import DataAPI
-from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user
-from config.domains import STOREKIT_APIGATEWAY_ROOT
+from elasticsearch import Elasticsearch as Elasticsearch
+from elasticsearch5 import Elasticsearch as Elasticsearch5
+from elasticsearch6 import Elasticsearch as Elasticsearch6
 
 
-class _BkDataStorekitApi:
-    MODULE = _("数据平台存储模块")
+def get_es_client(
+    *,
+    version: str,
+    hosts: list,
+    username: str,
+    password: str,
+    port: int,
+    sniffer_timeout=600,
+    verify_certs=False,
+    **kwargs
+) -> Elasticsearch:
+    # 根据版本加载客户端
+    if version.startswith("5."):
+        es_client = Elasticsearch5
+    elif version.startswith("6."):
+        es_client = Elasticsearch6
+    else:
+        es_client = Elasticsearch
 
-    def __init__(self):
-        self.get_schema_and_sql = DataAPI(
-            url=STOREKIT_APIGATEWAY_ROOT + "result_tables/{result_table_id}/schema_and_sql/",
-            module=self.MODULE,
-            method="GET",
-            url_keys=["result_table_id"],
-            description="查询结果表的表结构",
-            default_return_value=None,
-            before_request=add_esb_info_before_request_for_bkdata_user,
-        )
-        self.get_cluster_config = DataAPI(
-            url=STOREKIT_APIGATEWAY_ROOT + "storage_cluster_configs/{cluster_name}/",
-            module=self.MODULE,
-            method="GET",
-            description="查询集群详情",
-            before_request=add_esb_info_before_request_for_bkdata_user,
-            url_keys=["cluster_name"],
-        )
-        self.storekit_es_route = DataAPI(
-            url=STOREKIT_APIGATEWAY_ROOT + "es/route/",
-            module=self.MODULE,
-            method="GET",
-            description="ES GET 请求转发",
-            before_request=add_esb_info_before_request_for_bkdata_user,
-        )
-
-
-BkDataStorekitApi = _BkDataStorekitApi()
+    http_auth = (username, password) if password else None
+    return es_client(
+        hosts, http_auth=http_auth, port=port, sniffer_timeout=sniffer_timeout, verify_certs=verify_certs, **kwargs
+    )
