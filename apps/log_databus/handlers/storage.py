@@ -219,6 +219,8 @@ class StorageHandler(object):
                 "biz_count": used.biz_count,
             }
 
+        from apps.log_search.handlers.index_set import IndexSetHandler
+
         for cluster_obj in cluster_groups:
             cluster_obj.update(get_storage_info(cluster_obj["cluster_config"].get("cluster_id")))
             cluster_obj["cluster_config"]["create_time"] = StorageHandler.convert_standard_time(
@@ -262,6 +264,23 @@ class StorageHandler(object):
                         "source_type": EsSourceType.OTHER.value,
                         "source_name": EsSourceType.get_choice_label(EsSourceType.OTHER.value),
                     }
+                index_sets = IndexSetHandler.get_index_set_for_storage(cluster_obj["cluster_config"]["cluster_id"])
+                if (
+                    cluster_obj["cluster_config"]
+                    .get("custom_option", {})
+                    .get("visible_config", {})
+                    .get("visible_type", "")
+                    == VisibleEnum.MULTI_BIZ.value
+                ):
+                    cluster_obj["cluster_config"]["custom_option"]["visible_config"]["visible_bk_biz"] = [
+                        {
+                            "bk_biz_id": bk_biz_id,
+                            "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                        }
+                        for bk_biz_id in cluster_obj["cluster_config"]["custom_option"]["visible_config"][
+                            "visible_bk_biz"
+                        ]
+                    ]
                 cluster_obj["cluster_config"]["custom_option"]["bk_biz_id"] = settings.BLUEKING_BK_BIZ_ID
                 cluster_obj["source_type"] = cluster_obj["cluster_config"]["custom_option"]["source_type"]
                 cluster_obj["source_name"] = EsSourceType.get_choice_label(cluster_obj["source_type"])
@@ -283,7 +302,6 @@ class StorageHandler(object):
             cluster_obj["bk_biz_id"] = custom_biz_id
             cluster_obj["source_type"] = custom_option.get("source_type", EsSourceType.OTHER.value)
             cluster_obj["source_name"] = EsSourceType.get_choice_label(cluster_obj["source_type"])
-            from apps.log_search.handlers.index_set import IndexSetHandler
 
             index_sets = IndexSetHandler.get_index_set_for_storage(cluster_obj["cluster_config"]["cluster_id"])
 

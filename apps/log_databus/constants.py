@@ -190,6 +190,9 @@ DEFAULT_ETL_CONFIG = "bkdata_clean"
 # 同步清洗最长ttl时间 60*10
 MAX_SYNC_CLEAN_TTL = 600
 
+# 缓存-集群信息key
+CACHE_KEY_CLUSTER_INFO = "bulk_cluster_info_{}"
+
 
 class AsyncStatus(object):
     RUNNING = "RUNNING"
