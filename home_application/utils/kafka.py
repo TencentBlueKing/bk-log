@@ -19,48 +19,60 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.utils.translation import ugettext_lazy as _
+import time
+import logging
 
-from apps.api.base import DataAPI
-from config.domains import JOB_APIGATEWAY_ROOT_V2
+from kafka import KafkaAdminClient
 
+import settings
 
-def get_job_request_before(params):
-    return params
-
-
-class _JobApi:
-    MODULE = _("JOB")
-
-    def __init__(self):
-        self.fast_execute_script = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_execute_script",
-            description=_("快速执行脚本"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.fast_push_file = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "fast_push_file",
-            description=_("快速分发文件"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_job_instance_log = DataAPI(
-            method="POST",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
-            description=_("根据作业id获取执行日志"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
-        self.get_public_script_list = DataAPI(
-            method="GET",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
-            description=_("查询公共脚本列表"),
-            module=self.MODULE,
-            before_request=get_job_request_before,
-        )
+logger = logging.getLogger()
 
 
-JobApi = _JobApi()
+class KafkaClient(object):
+    _instance = None
+
+    def __init__(self) -> None:
+        start_time = time.time()
+        try:
+            self.client = KafkaAdminClient(bootstrap_servers=f"{settings.DEFAULT_KAFKA_HOST}:9092")
+            self.message = "ok"
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"failed to connect to kafka, err: {e}")
+            self.client = None
+            self.message = str(e)
+
+        spend_time = time.time() - start_time
+        self.ms = "{}ms".format(int(spend_time * 1000))
+
+    @classmethod
+    def get_instance(cls, *args, **kwargs):
+        if cls._instance:
+            return cls._instance
+        else:
+            cls._instance = KafkaClient(*args, **kwargs)
+            return cls._instance
+
+    @classmethod
+    def del_instance(cls):
+        cls._instance = None
+
+    def __del__(self):
+        if self.client:
+            self.client.close()
+
+    def ping(self):
+        result = {"status": False, "data": self.ms, "message": self.message}
+        if self.client:
+            result["status"] = True
+        return result
+
+    def get_consumer_groups(self):
+        if self.client:
+            return self.client.list_consumer_groups()
+        return None
+
+    def get_consumer_group_offsets(self, group_name: str):
+        if self.client:
+            return self.client.list_consumer_group_offsets(group_name)
+        return None
