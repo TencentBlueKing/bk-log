@@ -62,7 +62,7 @@ from apps.log_databus.constants import (
     Environment,
     STORAGE_CLUSTER_TYPE,
     DEFAULT_RETENTION,
-)
+    ContainerCollectStatus)
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
     CollectorConfigNameDuplicateException,
@@ -101,6 +101,9 @@ from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 
 
 class CollectorHandler(object):
+
+    data: CollectorConfig
+
     def __init__(self, collector_config_id=None):
         super().__init__()
         self.collector_config_id = collector_config_id
@@ -709,6 +712,12 @@ class CollectorHandler(object):
             index_set_handler = IndexSetHandler(self.data.index_set_id)
             index_set_handler.start()
 
+        if self.data.is_container_environment:
+            container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id)
+            for container_config in container_configs:
+                self.create_container_release(container_config)
+            return True
+
         # 启动节点管理订阅功能
         if self.data.subscription_id:
             NodeApi.switch_subscription({"subscription_id": self.data.subscription_id, "action": "enable"})
@@ -753,6 +762,12 @@ class CollectorHandler(object):
         if self.data.index_set_id:
             index_set_handler = IndexSetHandler(self.data.index_set_id)
             index_set_handler.stop()
+
+        if self.data.is_container_environment:
+            container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id)
+            for container_config in container_configs:
+                self.delete_container_release(container_config)
+            return True
 
         if self.data.subscription_id:
             # 停止节点管理订阅功能
@@ -821,6 +836,20 @@ class CollectorHandler(object):
 
             return_data.append({"etl": etl_message, "origin": _message})
         return return_data
+
+    def retry(self, target_nodes=None, container_collector_config_id_list=None):
+        if self.data.is_container_environment:
+            return self.retry_container_collector(container_collector_config_id_list)
+        return self.retry_target_nodes(target_nodes)
+
+    def retry_container_collector(self, container_collector_config_id_list):
+        container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
+        if container_collector_config_id_list:
+            container_configs = container_configs.filter(id__in=container_collector_config_id_list)
+
+        for container_config in container_configs:
+            self.create_container_release(container_config)
+        return [config.id for config in container_configs]
 
     def retry_target_nodes(self, target_nodes):
         """
@@ -930,6 +959,35 @@ class CollectorHandler(object):
             for node in set(current_nodes_tuples) - set(target_nodes_tuples)
         ]
         return add_nodes + delete_nodes
+
+    def get_task_status(self, id_list):
+        if self.data.is_container_environment:
+            self.get_container_collect_status(container_collector_config_id_list=id_list)
+        return self.get_subscription_task_status(task_id_list=id_list)
+
+    def get_container_collect_status(self, container_collector_config_id_list):
+        """
+        查询容器采集任务状态
+        """
+        container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
+        if container_collector_config_id_list:
+            container_configs = container_configs.filter(id__in=container_collector_config_id_list)
+
+        contents = []
+        for container_config in container_configs:
+            contents.append({
+                "status": container_config.status,
+                "container_collector_config_id": container_config.id,
+            })
+        return {
+            "contents": [
+                {
+                    "collector_config_id": self.data.collector_config_id,
+                    "collector_config_name": self.data.collector_config_name,
+                    "child": contents,
+                }
+            ]
+        }
 
     def get_subscription_task_status(self, task_id_list):
         """
@@ -1298,10 +1356,54 @@ class CollectorHandler(object):
         collector_list = CollectorConfig.objects.filter(collector_config_id__in=collector_id_list).values(
             "collector_config_id", "subscription_id", "itsm_ticket_status", "target_nodes"
         )
+
+        # 获取主采集项到容器子采集项的映射关系
+        container_collector_mapping = defaultdict(list)
+        for config in ContainerCollectorConfig.objects.filter(collector_config_id__in=collector_id_list):
+            container_collector_mapping[config.collector_config_id].append(config)
+
         status_result = {}
         if multi_flag:
             multi_execute_func = MultiExecuteFunc()
         for collector_obj in collector_list:
+
+            if collector_obj.is_container_environment:
+                container_collector_configs = container_collector_mapping[collector_obj.id]
+
+                failed_count = 0
+                success_count = 0
+
+                for config in container_collector_configs:
+                    if config.status == ContainerCollectStatus.FAILED.value:
+                        failed_count += 1
+                    else:
+                        success_count += 1
+
+                # 默认是成功
+                status = CollectStatus.SUCCESS
+                status_name = CollectStatus.SUCCESS
+
+                if failed_count:
+                    status = CollectStatus.FAILED
+                    if success_count:
+                        # 失败和成功都有，那就是部分失败
+                        status_name = RunStatus.PARTFAILED
+                    else:
+                        status_name = RunStatus.FAILED
+
+                return_data.append(
+                    {
+                        "collector_id": collector_obj["collector_config_id"],
+                        "subscription_id": None,
+                        "status": status,
+                        "status_name": status_name,
+                        "total": len(container_collector_configs),
+                        "success": success_count,
+                        "failed": failed_count,
+                        "pending": 0,
+                    }
+                )
+                continue
 
             # 若订阅ID未写入
             if not collector_obj["subscription_id"]:
@@ -1442,6 +1544,28 @@ class CollectorHandler(object):
         查看订阅的插件运行状态
         :return:
         """
+        if self.data.is_container_environment:
+            # 容器采集特殊处理
+            container_configs = ContainerCollectorConfig.objects.filter(
+                collector_config_id=self.data.collector_config_id
+            )
+
+            contents = []
+            for container_config in container_configs:
+                contents.append({
+                    "status": container_config.status,
+                    "container_collector_config_id": container_config.id,
+                })
+            return {
+                "contents": [
+                    {
+                        "collector_config_id": self.data.collector_config_id,
+                        "collector_config_name": self.data.collector_config_name,
+                        "child": contents,
+                    }
+                ]
+            }
+
         if not self.data.subscription_id and not self.data.target_nodes:
             return {
                 "contents": [
@@ -2089,9 +2213,7 @@ class CollectorHandler(object):
         self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
         container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
         for config in container_configs:
-            status = self.create_container_release(config)
-            config.status = status
-            config.save()
+            self.create_container_release(config)
         custom_config.after_hook(self.data)
         return {
             "collector_config_id": self.data.collector_config_id,
@@ -2143,8 +2265,7 @@ class CollectorHandler(object):
     def delete_bcs_config(self):
         container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
         for config in container_configs:
-            self.delete_container_release()
-            config.delete()
+            self.delete_container_release(config)
         self.destroy()
 
     def get_bcs_config(self):
@@ -2202,13 +2323,10 @@ class CollectorHandler(object):
                 )
                 container_config.save()
                 container_configs.append(container_config)
-            status = self.create_container_release(container_config=container_config)
-            container_config.status = status
-            container_config.save()
+            self.create_container_release(container_config=container_config)
         delete_container_configs = container_configs[config_length::]
         for config in delete_container_configs:
             self.delete_container_release(config)
-            config.delete()
 
     def create_container_release(self, container_config: ContainerCollectorConfig):
         request_params = {
@@ -2232,8 +2350,18 @@ class CollectorHandler(object):
             "addPodLabel": self.data.add_pod_label,
         }
         name = self.generate_bklog_config_name(container_config.id)
-        status = Bcs(self.data.bcs_cluster_id).save_bklog_config(bklog_config_name=name, bklog_config=request_params)
-        return status
+
+        try:
+            result = Bcs(self.data.bcs_cluster_id).save_bklog_config(
+                bklog_config_name=name, bklog_config=request_params
+            )
+            container_config.status = (
+                ContainerCollectStatus.SUCCESS.value if result else ContainerCollectStatus.FAILED.value
+            )
+        except Exception as e:
+            logger.exception("[create_container_release] save bklog config failed: %s", e)
+            container_config.status = ContainerCollectStatus.FAILED.value
+        container_config.save()
 
     def generate_bklog_config_name(self, container_config_id) -> str:
         return "{}-{}-{}".format(self.data.collector_config_name_en, self.data.bk_biz_id, container_config_id).replace(
@@ -2242,7 +2370,14 @@ class CollectorHandler(object):
 
     def delete_container_release(self, container_config):
         name = self.generate_bklog_config_name(container_config.id)
-        return Bcs(self.data.bcs_cluster_id).delete_bklog_config(name)
+        try:
+            # 删除配置，如果没抛异常，则必定成功
+            Bcs(self.data.bcs_cluster_id).delete_bklog_config(name)
+        except Exception as e:
+            logger.exception("[delete_container_release] delete bklog config failed: %s", e)
+
+        # 无论成败与否，都要删掉
+        container_config.delete()
 
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:

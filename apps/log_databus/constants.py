@@ -338,3 +338,13 @@ class Environment(object):
     CONTAINER = "container_log_config"
     NODE = "node_log_config"
     STDOUT = "std_log_config"
+
+
+class ContainerCollectStatus(ChoicesEnum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+
+    _choices_labels = (
+        (SUCCESS, _("成功")),
+        (FAILED, _("失败")),
+    )

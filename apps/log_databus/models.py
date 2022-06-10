@@ -49,7 +49,7 @@ from apps.log_databus.constants import (  # noqa
     ADMIN_REQUEST_USER,
     EtlConfig,  # noqa
     VisibleEnum,
-)
+    ContainerCollectStatus, Environment)
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
 from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
 from apps.models import MultiStrSplitByCommaField, JsonField, SoftDeleteModel, OperateRecordModel  # noqa
@@ -272,6 +272,14 @@ class CollectorConfig(SoftDeleteModel):
     def get_data_id_conf(bk_data_id):
         return TransferApi.get_data_id({"bk_data_id": bk_data_id, "no_request": True})
 
+    @property
+    def is_container_environment(self):
+        """
+        是否为容器类型
+        """
+        # TODO: 枚举类型待定
+        return self.environment in [Environment.CONTAINER, Environment.STDOUT, Environment.NODE]
+
 
 class ContainerCollectorConfig(SoftDeleteModel):
     collector_config_id = models.IntegerField(_("采集项id"), db_index=True)
@@ -285,7 +293,8 @@ class ContainerCollectorConfig(SoftDeleteModel):
     match_labels = models.JSONField(_("匹配标签"), null=True, blank=True)
     match_expressions = models.JSONField(_("匹配表达式"), null=True, blank=True)
     all_container = models.BooleanField(_("所有容器"), default=False)
-    status = models.CharField(_("下发状态"), null=True, blank=True, max_length=30)
+    status = models.CharField(_("下发状态"), null=True, blank=True, max_length=30,
+                              choices=ContainerCollectStatus.get_choices())
 
 
 class ItsmEtlConfig(SoftDeleteModel):

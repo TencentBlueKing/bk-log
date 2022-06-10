@@ -331,6 +331,7 @@ class BatchSubscriptionStatusSerializer(serializers.Serializer):
 
 class TaskStatusSerializer(serializers.Serializer):
     task_id_list = serializers.CharField(label=_("部署任务ID"), allow_blank=True)
+    container_collector_config_id_list = serializers.CharField(label=_("容器采集配置ID"), allow_blank=True)
 
     def validate(self, attrs):
         # 当task_is_list为空的情况不需要做相关验证
@@ -367,6 +368,9 @@ class CollectorListSerializer(DataModelSerializer):
 
 class RetrySerializer(serializers.Serializer):
     target_nodes = serializers.ListField(label=_("采集目标"), required=False, default=[])
+    container_collector_config_id_list = serializers.ListField(
+        label=_("容器采集配置ID"), required=False, default=[], child=serializers.IntegerField()
+    )
 
 
 class StorageListSerializer(serializers.Serializer):
