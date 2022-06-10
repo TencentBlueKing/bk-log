@@ -376,7 +376,7 @@ export default {
       hostNumber: 0,
       replicasMax: 7,
       isForcedFillAssessment: false, // 是否必须容量评估
-      isFirstRendering: true, // 是否是第一次渲染 用于回显热数据天数
+      editStorageClusterID: null, // 存储页进入时判断是否有选择过存储集群
     };
   },
   computed: {
@@ -629,6 +629,7 @@ export default {
           fields: this.stashCleanConf.etl_fields,
         });
       }
+      this.editStorageClusterID = this.formData.storage_cluster_id;
       this.formData.storage_cluster_id = this.formData.storage_cluster_id === null
         ? tsStorageId : this.formData.storage_cluster_id;
 

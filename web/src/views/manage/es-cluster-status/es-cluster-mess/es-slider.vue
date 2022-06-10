@@ -751,11 +751,11 @@ export default {
         };
         Object.assign(this.formData, this.basicFormData);
         res.data.cluster_config.custom_option.visible_config?.visible_bk_biz.forEach((val) => {
-          const target = this.myProjectList.find(project => Number(project.bk_biz_id) === val.bk_biz_id);
+          const target = this.myProjectList.find(project => project.bk_biz_id === String(val.bk_biz_id));
           if (target) {
             target.is_use = val.is_use;
             const targetObj = {
-              id: val.bk_biz_id,
+              id: String(val.bk_biz_id),
               name: target.project_name,
               is_use: val.is_use,
             };

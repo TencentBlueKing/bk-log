@@ -24,11 +24,25 @@
 export default {
   watch: {
     'formData.storage_cluster_id': {
-      handler(val) {
+      handler(newVal, oldVal) {
         this.storageList.forEach((res) => {
           const arr = [];
-          if (res.storage_cluster_id === val) {
+          if (res.storage_cluster_id === newVal) {
             this.handleSelectStorageCluster(res);
+            if (oldVal === '') {
+              // 当oldVal为空时则表示第一次进入
+              const notPerformList = ['custom-report-create', 'custom-report-edit'];
+              // 编辑进入存储页时 回填副本数
+              if (this.editStorageClusterID !== null && !notPerformList.includes(this.$route.name)) {
+                this.formData.storage_replies = this.curCollect.storage_replies;
+              }
+              // 编辑自定义上报回填副本数
+              if (this.isEdit && notPerformList.includes(this.$route.name)) {
+                this.formData.storage_replies = this.cacheStorageReplies;
+              }
+            } else {
+              this.formData.allocation_min_days = '0';
+            }
             this.selectedStorageCluster = res; // 当前选择的存储集群
             this.updateDaysList();
             this.$nextTick(() => { // 如果开启了冷热集群天数不能为0
@@ -216,17 +230,6 @@ export default {
       this.formData.retention = setup_config?.retention_days_default || '7';
       this.formData.storage_replies = setup_config?.number_of_replicas_default || 0;
       this.replicasMax = setup_config?.number_of_replicas_max || 0;
-      if (!this.isFirstRendering) {
-        // 第一次进入时不重新赋值热数据天数回显热数据
-        this.formData.allocation_min_days = '0';
-      } else {
-        // 编辑进入时 回填副本数
-        const notPerformList = ['custom-report-create', 'custom-report-edit'];
-        if (!notPerformList.includes(this.$route.name)) {
-          this.formData.storage_replies = this.curCollect.storage_replies;
-        }
-      }
-      this.isFirstRendering = false;
     },
     updateDaysList() {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {

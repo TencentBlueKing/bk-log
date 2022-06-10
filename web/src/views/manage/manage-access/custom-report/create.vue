@@ -406,7 +406,7 @@ export default {
           trigger: 'change',
         }],
       },
-      isFirstRendering: true, // 是否是第一次渲染 用于回显热数据天数
+      cacheStorageReplies: null,
     };
   },
   computed: {
@@ -525,6 +525,8 @@ export default {
           description,
           bk_data_id,
         });
+        // 缓存编辑时的集群ID
+        this.cacheStorageReplies = res.data.storage_replies;
       } else {
         const { retention } =  this.formData;
         Object.assign(this.formData, {
