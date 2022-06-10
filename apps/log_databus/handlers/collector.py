@@ -62,7 +62,8 @@ from apps.log_databus.constants import (
     Environment,
     STORAGE_CLUSTER_TYPE,
     DEFAULT_RETENTION,
-    ContainerCollectStatus)
+    ContainerCollectStatus,
+)
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
     CollectorConfigNameDuplicateException,
@@ -606,8 +607,7 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"],
-            bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -975,10 +975,7 @@ class CollectorHandler(object):
 
         contents = []
         for container_config in container_configs:
-            contents.append({
-                "status": container_config.status,
-                "container_collector_config_id": container_config.id,
-            })
+            contents.append({"status": container_config.status, "container_collector_config_id": container_config.id})
         return {
             "contents": [
                 {
@@ -1552,10 +1549,9 @@ class CollectorHandler(object):
 
             contents = []
             for container_config in container_configs:
-                contents.append({
-                    "status": container_config.status,
-                    "container_collector_config_id": container_config.id,
-                })
+                contents.append(
+                    {"status": container_config.status, "container_collector_config_id": container_config.id}
+                )
             return {
                 "contents": [
                     {
@@ -1773,8 +1769,7 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id,
-                ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2358,7 +2353,7 @@ class CollectorHandler(object):
             container_config.status = (
                 ContainerCollectStatus.SUCCESS.value if result else ContainerCollectStatus.FAILED.value
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception("[create_container_release] save bklog config failed: %s", e)
             container_config.status = ContainerCollectStatus.FAILED.value
         container_config.save()
@@ -2373,7 +2368,7 @@ class CollectorHandler(object):
         try:
             # 删除配置，如果没抛异常，则必定成功
             Bcs(self.data.bcs_cluster_id).delete_bklog_config(name)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception("[delete_container_release] delete bklog config failed: %s", e)
 
         # 无论成败与否，都要删掉
