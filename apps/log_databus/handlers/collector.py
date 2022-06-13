@@ -1350,9 +1350,7 @@ class CollectorHandler(object):
         subscription_id_list = list()
         subscription_collector_map = dict()
 
-        collector_list = CollectorConfig.objects.filter(collector_config_id__in=collector_id_list).values(
-            "collector_config_id", "subscription_id", "itsm_ticket_status", "target_nodes"
-        )
+        collector_list = CollectorConfig.objects.filter(collector_config_id__in=collector_id_list)
 
         # 获取主采集项到容器子采集项的映射关系
         container_collector_mapping = defaultdict(list)
@@ -1365,7 +1363,7 @@ class CollectorHandler(object):
         for collector_obj in collector_list:
 
             if collector_obj.is_container_environment:
-                container_collector_configs = container_collector_mapping[collector_obj.id]
+                container_collector_configs = container_collector_mapping[collector_obj.collector_config_id]
 
                 failed_count = 0
                 success_count = 0
@@ -1390,7 +1388,7 @@ class CollectorHandler(object):
 
                 return_data.append(
                     {
-                        "collector_id": collector_obj["collector_config_id"],
+                        "collector_id": collector_obj.collector_config_id,
                         "subscription_id": None,
                         "status": status,
                         "status_name": status_name,
@@ -1403,13 +1401,13 @@ class CollectorHandler(object):
                 continue
 
             # 若订阅ID未写入
-            if not collector_obj["subscription_id"]:
+            if not collector_obj.subscription_id:
                 return_data.append(
                     {
-                        "collector_id": collector_obj["collector_config_id"],
+                        "collector_id": collector_obj.collector_config_id,
                         "subscription_id": None,
-                        "status": CollectStatus.PREPARE if collector_obj["target_nodes"] else CollectStatus.SUCCESS,
-                        "status_name": RunStatus.PREPARE if collector_obj["target_nodes"] else RunStatus.SUCCESS,
+                        "status": CollectStatus.PREPARE if collector_obj.target_nodes else CollectStatus.SUCCESS,
+                        "status_name": RunStatus.PREPARE if collector_obj.target_nodes else RunStatus.SUCCESS,
                         "total": 0,
                         "success": 0,
                         "failed": 0,
@@ -1419,23 +1417,20 @@ class CollectorHandler(object):
                 continue
 
             # 订阅ID和采集配置ID的映射关系 & 需要查询订阅ID列表
-            subscription_collector_map[collector_obj["subscription_id"]] = collector_obj["collector_config_id"]
-            subscription_id_list.append(collector_obj["subscription_id"])
+            subscription_collector_map[collector_obj.subscription_id] = collector_obj.collector_config_id
+            subscription_id_list.append(collector_obj.subscription_id)
             if multi_flag:
                 multi_execute_func.append(
-                    collector_obj["collector_config_id"],
+                    collector_obj.collector_config_id,
                     NodeApi.subscription_statistic,
                     params={
-                        "subscription_id_list": [collector_obj["subscription_id"]],
+                        "subscription_id_list": [collector_obj.subscription_id],
                         "plugin_name": LogPluginInfo.NAME,
                     },
                 )
             else:
-                status_result[collector_obj["collector_config_id"]] = NodeApi.subscription_statistic(
-                    params={
-                        "subscription_id_list": [collector_obj["subscription_id"]],
-                        "plugin_name": LogPluginInfo.NAME,
-                    }
+                status_result[collector_obj.collector_config_id] = NodeApi.subscription_statistic(
+                    params={"subscription_id_list": [collector_obj.subscription_id], "plugin_name": LogPluginInfo.NAME}
                 )
 
         # 如果没有订阅ID，则直接返回
