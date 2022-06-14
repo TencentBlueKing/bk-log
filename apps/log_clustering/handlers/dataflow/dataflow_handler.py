@@ -261,7 +261,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 table_name="pre_treat_not_clustering_{}".format(time_format), expires=self.conf.get("hdfs_expires")
             ),
             bk_biz_id=bk_biz_id,
-            cluster=self.conf.get("hdfs_cluster"),
+            cluster=self.get_model_available_storage_cluster(),
         )
         return pre_treat_flow
 
@@ -651,6 +651,19 @@ class DataFlowHandler(BaseAiopsHandler):
         return BkDataAIOPSApi.serving_data_processing_id_config(
             params={"data_processing_id": result_table_id, "bk_username": self.conf.get("bk_username")}
         )
+
+    def get_model_available_storage_cluster(self):
+        available_storage_cluster = self.conf.get("hdfs_cluster")
+        result = BkDataAIOPSApi.aiops_get_model_storage_cluster(params={"project_id": self.conf.get("project_id")})
+        if not result:
+            return available_storage_cluster
+
+        for cluster_group in result:
+            clusters = cluster_group.get("clusters", [])
+            if clusters:
+                available_storage_cluster = clusters[0]["cluster_name"]
+                break
+        return available_storage_cluster
 
     def update_model_instance(self, model_instance_id):
         update_model_instance_request = UpdateModelInstanceCls(
