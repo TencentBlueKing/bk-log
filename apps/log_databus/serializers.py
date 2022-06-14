@@ -869,6 +869,7 @@ class CreateCollectorPluginInstanceSerializer(serializers.Serializer):
     target_object_type = serializers.CharField(label=_("目标类型"))
     target_node_type = serializers.CharField(label=_("节点类型"))
     target_nodes = TargetNodeSerializer(label=_("目标节点"), many=True)
+    data_encoding = serializers.CharField(label=_("日志编码"))
     params = PluginParamSerializer()
 
 
