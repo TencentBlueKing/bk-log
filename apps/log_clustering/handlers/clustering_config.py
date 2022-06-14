@@ -112,6 +112,7 @@ class ClusteringConfigHandler(object):
                 max_log_length=max_log_length,
                 is_case_sensitive=is_case_sensitive,
                 clustering_fields=clustering_fields,
+                signature_enable=signature_enable,
             )
             clustering_config.min_members = min_members
             clustering_config.max_dist_list = max_dist_list
@@ -275,10 +276,14 @@ class ClusteringConfigHandler(object):
         max_log_length,
         is_case_sensitive,
         clustering_fields,
+        signature_enable,
     ):
         """
         判断是否需要进行对应更新操作
         """
+        # 此时不需要做任何更新动作
+        if not signature_enable:
+            return False, False, False, False
         # 此时需要创建service 而不是更新service
         if not clustering_config.signature_enable:
             return False, False, False, True
