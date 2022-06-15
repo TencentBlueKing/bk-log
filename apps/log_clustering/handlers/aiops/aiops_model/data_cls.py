@@ -38,7 +38,7 @@ class CreateModelCls(object):
     sensitivity: str = "private"
     run_env: str = "python"
     sample_type: str = "timeseries"
-    modeling_type: str = "modeling_type"
+    modeling_type: str = "aiops"
     protocol_version: str = "1.2"
 
 
