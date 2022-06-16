@@ -30,7 +30,7 @@ from retrying import retry
 
 from apps.log_search.models import LogIndexSet
 from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi
-from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum
+from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum, NOT_NEED_EDIT_NODES
 from apps.log_clustering.exceptions import (
     ClusteringConfigNotExistException,
     BkdataStorageNotExistException,
@@ -119,7 +119,7 @@ class DataFlowHandler(BaseAiopsHandler):
             ).get_all_etl_fields()
             return {field["field_name"]: field["alias_name"] or field["field_name"] for field in all_etl_fields}
         log_index_set_all_fields = LogIndexSet.objects.get(index_set_id=clustering_config.index_set_id).get_fields()
-        return {field["field_name"]: field["field_alias"] for field in log_index_set_all_fields["fields"]}
+        return {field["field_name"]: field["field_name"] for field in log_index_set_all_fields["fields"]}
 
     def create_pre_treat_flow(self, index_set_id: int):
         """
@@ -871,6 +871,8 @@ class DataFlowHandler(BaseAiopsHandler):
     def deal_after_treat_flow(self, nodes, flow):
         target_real_time_node_dict, source_real_time_node_dict = self.get_real_time_nodes(flow=flow, nodes=nodes)
         for table_name, node in source_real_time_node_dict.items():
+            if node["node_name"] in NOT_NEED_EDIT_NODES:
+                continue
             target_node = target_real_time_node_dict.get(table_name)
             if not target_node:
                 logger.error("could not find target_node --> [table_name]: ", table_name)
