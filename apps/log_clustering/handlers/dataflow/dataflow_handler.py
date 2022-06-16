@@ -30,7 +30,7 @@ from retrying import retry
 
 from apps.log_search.models import LogIndexSet
 from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi
-from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum, NONE_EDIT_NODE_NAME
+from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum, NOT_NEED_EDIT_NODES
 from apps.log_clustering.exceptions import (
     ClusteringConfigNotExistException,
     BkdataStorageNotExistException,
@@ -871,7 +871,7 @@ class DataFlowHandler(BaseAiopsHandler):
     def deal_after_treat_flow(self, nodes, flow):
         target_real_time_node_dict, source_real_time_node_dict = self.get_real_time_nodes(flow=flow, nodes=nodes)
         for table_name, node in source_real_time_node_dict.items():
-            if node["node_name"] in NONE_EDIT_NODE_NAME:
+            if node["node_name"] in NOT_NEED_EDIT_NODES:
                 continue
             target_node = target_real_time_node_dict.get(table_name)
             if not target_node:
