@@ -119,7 +119,7 @@ class DataFlowHandler(BaseAiopsHandler):
             ).get_all_etl_fields()
             return {field["field_name"]: field["alias_name"] or field["field_name"] for field in all_etl_fields}
         log_index_set_all_fields = LogIndexSet.objects.get(index_set_id=clustering_config.index_set_id).get_fields()
-        return {field["field_name"]: field["field_alias"] for field in log_index_set_all_fields["fields"]}
+        return {field["field_name"]: field["field_name"] for field in log_index_set_all_fields["fields"]}
 
     def create_pre_treat_flow(self, index_set_id: int):
         """
