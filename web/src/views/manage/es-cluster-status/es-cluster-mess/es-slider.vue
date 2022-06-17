@@ -192,14 +192,15 @@
               <bk-search-select
                 clearable
                 v-show="isBizAttr"
+                v-model="bkBizLabelsList"
                 :popover-zindex="2500"
                 :data="bizParentList"
                 :show-condition="false"
                 :remote-method="handleRemoteMethod"
+                :show-popover-tag-change="false"
                 @menu-select="handleMenuSelect"
                 @menu-child-select="handleChildMenuSelect"
-                @input-change="handleInputChange"
-                v-model="bkBizLabelsList">
+                @input-change="handleInputChange">
               </bk-search-select>
             </bk-form-item>
             <!-- 过期时间 -->
@@ -1042,7 +1043,6 @@ export default {
     handleRemoteMethod() {
       return new Promise((resolve) => {
         setTimeout(() => {
-          // item.project_name.toUpperCase().includes(this.keyword.toUpperCase());
           // 空值返回全部，搜索返回部分
           if (!!this.bizInputStr) {
             resolve(this.bizChildrenList[this.bizSelectID]
@@ -1052,7 +1052,6 @@ export default {
           }
         }, 1000);
       });
-      return ;
     },
     handleMenuSelect(item) {
       // 赋值当前选择的ItemID
