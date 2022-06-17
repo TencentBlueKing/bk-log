@@ -22,6 +22,7 @@ the project delivered to anyone in the future.
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.base import DataAPI
+from apps.api.modules.utils import add_esb_info_before_request
 from config.domains import JOB_APIGATEWAY_ROOT_V2
 
 
@@ -48,11 +49,11 @@ class _JobApi:
             before_request=get_job_request_before,
         )
         self.get_job_instance_log = DataAPI(
-            method="POST",
+            method="GET",
             url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
             description=_("根据作业id获取执行日志"),
             module=self.MODULE,
-            before_request=get_job_request_before,
+            before_request=add_esb_info_before_request,
         )
         self.get_public_script_list = DataAPI(
             method="GET",
@@ -60,6 +61,13 @@ class _JobApi:
             description=_("查询公共脚本列表"),
             module=self.MODULE,
             before_request=get_job_request_before,
+        )
+        self.get_job_instance_status = DataAPI(
+            method="GET",
+            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_status",
+            description=_("根据作业实例ID查询作业执行状态"),
+            module=self.MODULE,
+            before_request=add_esb_info_before_request,
         )
 
 

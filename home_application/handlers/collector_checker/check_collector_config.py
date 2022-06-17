@@ -19,54 +19,201 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import os
+import sys
+import time
+import base64
+import json
 import logging
+from blueapps.conf.default_settings import BASE_DIR
 from apps.api import JobApi
-from home_application.handlers.collector_checker.base import BaseSuggestion, BaseChecker, BaseResult
-from home_application.constants import SELF_CHECK_STEP_1
+from apps.log_databus.models import CollectorConfig
+from home_application.handlers.collector_checker.base import (
+    BaseStory,
+    BaseStep,
+    register_story,
+    register_step,
+    StepReport,
+)
+from home_application.constants import (
+    CHECK_STORY_1,
+    CHECK_STORY_1_STEP_1,
+    DEFAULT_BK_USERNAME,
+    DEFAULT_EXECUTE_SCRIPT_ACCOUNT,
+    SCRIPT_TYPE_PYTHON,
+)
 
 logger = logging.getLogger()
 
 
-class CheckCollectorConfig(BaseChecker):
-    step_name = SELF_CHECK_STEP_1
+@register_story()
+class CollectorConfigStory(BaseStory):
+    name = CHECK_STORY_1
 
-    def __init__(self, collector_config, hosts):
-        super().__init__()
-        self.collector_config = collector_config
-        self.hosts = hosts
+    def __init__(self):
+        self.hosts = []
+        for i in sys.argv:
+            if "collector_config_id" in i:
+                collector_config_id = i.split("=")[1]
+                self.collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
+                continue
+            if "hosts" in i:
+                try:
+                    # "0:ip1,0:ip2,1:ip3"
+                    ip_list = []
+                    hosts = i.split("=")[1].split(",")
+                    for host in hosts:
+                        ip_list.append({"bk_cloud_id": int(host.split(":")[0]), "ip": host.split(":")[1]})
+                    self.hosts = ip_list
+                except Exception as e:  # pylint: disable=broad-except
+                    print(f"输入合法的hosts, {e}")
 
-    def diff_config(self, content):
-        # TODO: 先拆分content, 然后对比collector_config和服务器对应目录上的配置文件内容是否一致
-        if content == self.collector_config:
-            return True, content
-        return False, content
 
-    def check_config(self):
-        result = BaseResult()
-        try:
-            fast_execute_script_params = {"bk_biz_id": self.collector_config.bk_biz_id}
-            fast_execute_script_result = JobApi.fast_execute_script(fast_execute_script_params)
-            get_job_instance_log_params = {
-                "bk_biz_id": self.collector_config.bk_biz_id,
-                "job_instance_id": fast_execute_script_result.get("job_instance_id", ""),
-            }
-            get_job_instance_log_result = JobApi.get_job_instance_log(get_job_instance_log_params)
-            content, status = self.diff_config(get_job_instance_log_result)
-            result.data.append(content)
-            if status:
-                result = True
-                return result
+@register_step(CollectorConfigStory)
+class DiffConfig(BaseStep):
+    name = CHECK_STORY_1_STEP_1
 
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error(f"[check_config] failed to call JobApi, err: {e}")
-            result.message = str(e)
+    def check(self):
+        step_r = StepReport(self)
+        if self.story.hosts:
+            target_server = {"ip_list": self.story.hosts}
+        else:
+            topo_node_list = [
+                {"id": i["bk_inst_id"], "node_type": i["bk_obj_id"]} for i in self.story.collector_config.target_nodes
+            ]
+            target_server = {"topo_node_list": topo_node_list}
+        fast_execute_script_result = fast_execute_script(
+            bk_biz_id=self.story.collector_config.bk_biz_id,
+            target_server=target_server,
+            subscription_id=self.story.collector_config.subscription_id,
+        )
+        if not fast_execute_script_result:
+            step_r.problem = fast_execute_script_result["message"]
+            return step_r
 
-        result.message = BaseSuggestion(f"请求JobAPI失败, 报错为: {result.message}", "检查请求JobAPI的参数以及Job的可用情况")
+        get_job_instance_log_result = get_job_instance_log(
+            bk_biz_id=self.story.collector_config.bk_biz_id,
+            job_instance_id=fast_execute_script_result["data"]["job_instance_id"],
+        )
+        step_r.message.extend(get_job_instance_log_result["data"])
+        if not get_job_instance_log_result:
+            step_r.problem = get_job_instance_log_result["message"]
+            return step_r
 
+        return step_r
+
+
+def fast_execute_script(bk_biz_id, target_server, subscription_id):
+    result = {"status": False, "data": {}, "message": ""}
+    script_param = f"--subscription_id={subscription_id}"
+    params = {
+        "bk_biz_id": bk_biz_id,
+        "bk_username": DEFAULT_BK_USERNAME,
+        "account": DEFAULT_EXECUTE_SCRIPT_ACCOUNT,
+        "script_content": "",
+        "target_server": target_server,
+        "script_type": SCRIPT_TYPE_PYTHON,
+        "script_param": base64.b64encode(script_param.encode()).decode(),
+        "timeout": 7200,
+        "task_name": "检查采集项配置",
+    }
+    script_pwd = os.path.join(BASE_DIR, "scripts/check_bkunifylogbeat/check.py")
+    try:
+        with open(script_pwd, "r") as f:
+            params["script_content"] = base64.b64encode(f.read().encode()).decode()
+            f.close()
+    except Exception as e:  # pylint: disable=broad-except
+        result["message"] = f"打开脚本{script_pwd}失败, 报错为: {e}"
         return result
 
-    def run(self):
-        result = self.check_config()
-        self.result.data.append(result)
-        if not result.status:
-            return self.result
+    try:
+        result["data"] = JobApi.fast_execute_script(params)
+        result["status"] = True
+    except Exception as e:  # pylint: disable=broad-except
+        result["message"] = f"快速执行脚本失败, 报错为: {e}"
+        return result
+
+    return result
+
+
+def get_job_instance_status(bk_biz_id, job_instance_id):
+    result = {"status": False, "data": [], "message": ""}
+    params = {"bk_biz_id": bk_biz_id, "job_instance_id": job_instance_id}
+    for i in range(3):
+        try:
+            get_job_instance_status_result = JobApi.get_job_instance_status(params)
+            if get_job_instance_status_result.get("is_finished", False):
+                result["data"] = get_job_instance_status_result["blocks"][0]["step_ip_status"]
+                result["status"] = True
+                break
+            time.sleep(10)
+        except Exception as e:  # pylint: disable=broad-except
+            result["message"] = f"获取作业执行状态失败, 报错为: {e}"
+            return result
+    if not result["status"]:
+        result["message"] = "获取作业执行状态超时"
+
+    return result
+
+
+def get_job_instance_log(bk_biz_id, job_instance_id):
+    result = {"status": False, "data": [], "message": ""}
+    params = {"bk_biz_id": bk_biz_id, "job_instance_id": job_instance_id}
+    instance_log = []
+    is_timeout = False
+    for i in range(3):
+        try:
+            get_job_instance_log_result = JobApi.get_job_instance_log(params)[0]
+            if get_job_instance_log_result.get("is_finished", False):
+                instance_log = get_job_instance_log_result["step_results"][0]["ip_logs"]
+                is_timeout = True
+                break
+            time.sleep(5)
+        except Exception as e:  # pylint: disable=broad-except
+            result["message"] = f"获取作业执行日志失败, 报错为: {e}"
+            return result
+    if not is_timeout:
+        result["message"] = "获取作业执行日志超时"
+        return result
+
+    # 处理执行日志
+    if [i["exit_code"] for i in instance_log].count(0) == len(instance_log):
+        result["status"] = True
+        result["message"] = "主机检查成功"
+    else:
+        result["message"] = "部分主机检查失败"
+
+    for i in instance_log:
+        bk_cloud_id = i["bk_cloud_id"]
+        ip = i["ip"]
+        is_success = "成功" if i["exit_code"] == 0 else "失败"
+        result["data"].extend(["", ""])
+        result["data"].append(f"主机: {bk_cloud_id}:{ip} {is_success}")
+        log_contents = i["log_content"].split("\n")
+        for log_content in log_contents:
+            if not log_content:
+                continue
+            try:
+                log_content = json.loads(log_content)
+                item = log_content["item"]
+                data = dict_to_str(log_content["data"])
+                message = log_content["message"]
+                if log_content["status"]:
+                    log_data = f"{item} 成功, data: {data}"
+                else:
+                    log_data = f"{item} 失败, data: {data}, 报错信息: {message}"
+            except Exception as e:  # pylint: disable=broad-except
+                log_data = f"获取脚本执行结果失败, 报错为: {e}"
+
+            result["data"].append(log_data)
+
+    return result
+
+
+def dict_to_str(data):
+    if data:
+        kv_list = []
+        for k, v in data.items():
+            kv_list.append(f"{k}={v}")
+        return ",".join(kv_list)
+    return ""
