@@ -184,6 +184,11 @@ class BKBASEStorageNotExistException(BaseCollectorPluginException):
     MESSAGE = _("集群未同步到数据平台")
 
 
+class BKBaseStorageSyncFailed(BaseCollectorConfigException):
+    ERROR_CODE = "211"
+    MESSAGE = _("集群同步到数据平台失败")
+
+
 class EtlNotSupportedException(BaseCollectorConfigException):
     ERROR_CODE = "301"
     MESSAGE = _("暫不支持{separator_node_action}类清洗")
