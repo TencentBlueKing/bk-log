@@ -85,7 +85,11 @@ class Bcs:
             "spec": bklog_config,
         }
         return self.ensure_resource(
-            bklog_config_name, resource_body, self.BKLOG_CONFIG_API_VERSION, self.BKLOG_CONFIG_KIND
+            bklog_config_name,
+            resource_body,
+            self.BKLOG_CONFIG_API_VERSION,
+            self.BKLOG_CONFIG_KIND,
+            self.BKLOG_CONFIG_NAMESPACE,
         )
 
     def delete_bklog_config(self, *bklog_config_names: str):
@@ -106,7 +110,7 @@ class Bcs:
             self.BKLOG_CONFIG_GROUP, self.BKLOG_CONFIG_VERSION, self.BKLOG_CONFIG_NAMESPACE, self.BKLOG_CONFIG_PLURAL
         )
 
-    def ensure_resource(self, resource_name: str, resource_body: dict, api_version: str, kind: str):
+    def ensure_resource(self, resource_name: str, resource_body: dict, api_version: str, kind: str, namespace=None):
         try:
 
             d_client = self.dynamic_client
@@ -122,13 +126,18 @@ class Bcs:
         try:
             action = "update"
             # 检查是否已存在,存在则更新
-            data = d_client.get(resource=resource, name=resource_name)
+            data = d_client.get(resource=resource, name=resource_name, namespace=namespace)
             resource_body["metadata"]["resourceVersion"] = data["metadata"]["resourceVersion"]
             d_client.replace(resource=resource, body=resource_body)
         except NotFoundError:
             # 不存在则新增
             action = "create"
-            d_client.create(resource, body=resource_body)
+            try:
+                d_client.create(resource, body=resource_body, namespace=namespace)
+            except Exception as e:  # pylint: disable=broad-except
+                # 异常捕获
+                logger.error("unexpected error in ensure resource:{}".format(e))
+                return False
         except Exception as e:  # pylint: disable=broad-except
             # 异常捕获
             logger.error("unexpected error in ensure resource:{}".format(e))
