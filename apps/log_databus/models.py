@@ -275,6 +275,7 @@ class CollectorConfig(SoftDeleteModel):
 
 class ContainerCollectorConfig(SoftDeleteModel):
     collector_config_id = models.IntegerField(_("采集项id"), db_index=True)
+    collector_type = models.CharField(_("容器采集类型"), null=True, blank=True)
     namespaces = models.JSONField(_("namespace选择"), null=True, blank=True)
     any_namespace = models.BooleanField(_("所有namespace"), default=False)
     data_encoding = models.CharField(_("日志字符集"), max_length=30, null=True, default=None)

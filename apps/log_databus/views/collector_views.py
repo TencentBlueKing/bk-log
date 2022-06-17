@@ -667,6 +667,74 @@ class CollectorViewSet(ModelViewSet):
                 }
             },
         }
+        @apiParamExample {json} 容器日志更新样例:
+        {
+            "collector_config_name": "测试采集项",
+            "collector_config_name_en": "test_collector",
+            "data_link_id": 1,
+            "category_id": "application",
+            "description": "test",
+            "environment": "container_log_config",
+            "bcs_cluster_id": "",
+            "add_pod_label": false,
+            "extra_labels":[
+                {
+                    "key": "test",
+                    "value": "haha"
+                }
+            ],
+            "yaml": "这是一个yaml",
+            "container_config":[
+                {
+                    "namespaces":[],
+                    "container": {
+                        "workload_type": "",
+                        "workload_name": "",
+                        "container_name": ""
+                    },
+                    "label_selector": {
+                        "match_labels": [
+                            {
+                                "key": "test",
+                                "operator": "=",
+                                "value": ""
+                            }
+                        ],
+                        "match_expressions":[
+                            {
+                                "key": "test",
+                                "operator": "=",
+                                "value": ""
+                            }
+                        ]
+                    },
+                    "params":{
+                        "paths": ["/log/abc"],
+                        "conditions": {
+                            "type": "match",
+                            "match_type": "include",
+                            "match_content": "delete",
+                            "separator": "|",
+                            "separator_filters": [
+                                {
+                                    "fieldindex": 1,
+                                    "word": "",
+                                    "op": "=",
+                                    "logic_op": "and"
+                                }
+                            ]
+                        },
+                        "multiline_pattern": "",
+                        "multiline_max_lines": 10,
+                        "multiline_timeout": 60,
+                        "winlog_name": ["Application", "Security"],
+                        "winlog_level": ["info", "error"],
+                        "winlog_event_id": ["-200", "123-1234", "123"]
+                    },
+                    "data_encoding": ""
+                }
+            ]
+        }
         @apiSuccess {Int} collector_config_id 采集配置ID
         @apiSuccess {Int} collector_config_name 采集配置名称
         @apiSuccess {Int} bk_data_id 采集链路data_id
@@ -689,6 +757,85 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.params_valid(CollectorUpdateSerializer)
         return Response(CollectorHandler(collector_config_id=collector_config_id).update_or_create(data))
+
+    @list_route(methods=["POST"], url_path="create/container")
+    def create_container_collector(self, request):
+        """
+        @api {POST}  /databus/collectors/create/container/ 36_采集项-创建容器下发采集项
+        @apiName create_container_collector
+        @apiDescription 创建容器下发采集项
+        @apiGroup 10_Collector
+        @apiParamExample {json} 容器日志请求样例：
+        {
+            "bk_biz_id": 1,
+            "collector_config_name": "测试采集项",
+            "collector_config_name_en": "test_collector",
+            "data_link_id": 1,
+            "collector_scenario_id": "line",
+            "category_id": "application",
+            "description": "test",
+            "environment": "container_log_config",
+            "bcs_cluster_id": "",
+            "add_pod_label": false,
+            "extra_labels":[
+                {
+                    "key": "test",
+                    "value": "haha"
+                }
+            ],
+            "container_config":[
+                {
+                    "namespaces":[],
+                    "container": {
+                        "workload_type": "",
+                        "workload_name": "",
+                        "container_name": ""
+                    },
+                    "label_selector": {
+                        "match_labels": [
+                            {
+                                "key": "test",
+                                "operator": "=",
+                                "value": ""
+                            }
+                        ],
+                        "match_expressions":[
+                            {
+                                "key": "test",
+                                "operator": "=",
+                                "value": ""
+                            }
+                        ]
+                    },
+                    "params":{
+                        "paths": ["/log/abc"],
+                        "conditions": {
+                            "type": "match",
+                            "match_type": "include",
+                            "match_content": "delete",
+                            "separator": "|",
+                            "separator_filters": [
+                                {
+                                    "fieldindex": 1,
+                                    "word": "",
+                                    "op": "=",
+                                    "logic_op": "and"
+                                }
+                            ]
+                        },
+                        "multiline_pattern": "",
+                        "multiline_max_lines": 10,
+                        "multiline_timeout": 60,
+                        "winlog_name": ["Application", "Security"],
+                        "winlog_level": ["info", "error"],
+                        "winlog_event_id": ["-200", "123-1234", "123"]
+                    },
+                    "data_encoding": ""
+                }
+            ]
+        }
+        """
+        # data = self.params_valid(CreatContainerCollectorSerializer)
 
     def destroy(self, request, *args, collector_config_id=None, **kwargs):
         """
@@ -1923,3 +2070,18 @@ class CollectorViewSet(ModelViewSet):
     @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")
     def delete_bcs_collector(self, request, collector_config_id):
         return Response(CollectorHandler(collector_config_id=collector_config_id).delete_bcs_config())
+
+    @list_route(methods=["GET"], url_path="list_bcs_clusters")
+    def list_bcs_clusters(self, request):
+        bk_biz_id = request.GET.get("bk_biz_id")
+        return Response(CollectorHandler().list_bcs_clusters(bk_biz_id=bk_biz_id))
+
+    @list_route(methods=["GET"], url_path="list_workload_type")
+    def list_workload_type(self, request):
+        return Response(CollectorHandler().list_workload_type())
+
+    @list_route(methods=["GET"], url_path="list_namespace")
+    def list_namespace(self, request):
+        # bk_biz_id = request.GET.get("bk_biz_id")
+        cluster_id = request.GET.get("cluster_id")
+        return Response(CollectorHandler().list_namespace(bcs_cluster_id=cluster_id))

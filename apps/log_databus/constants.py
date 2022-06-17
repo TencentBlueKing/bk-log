@@ -333,8 +333,12 @@ ETL_PARAMS = {"retain_original_text": True, "separator_regexp": "", "separator":
 
 
 class Environment(object):
-    LINUX = "Linux"
-    WINDOWS = "Windows"
+    LINUX = "linux"
+    WINDOWS = "windows"
+    CONTAINER = "container"
+
+
+class ContainerCollectorType(object):
     CONTAINER = "container_log_config"
     NODE = "node_log_config"
     STDOUT = "std_log_config"
