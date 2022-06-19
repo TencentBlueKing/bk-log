@@ -342,3 +342,8 @@ class ContainerCollectorType(object):
     CONTAINER = "container_log_config"
     NODE = "node_log_config"
     STDOUT = "std_log_config"
+
+
+class TopoType(object):
+    NODE = "node"
+    POD = "pod"

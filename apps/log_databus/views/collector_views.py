@@ -2085,3 +2085,12 @@ class CollectorViewSet(ModelViewSet):
         # bk_biz_id = request.GET.get("bk_biz_id")
         cluster_id = request.GET.get("cluster_id")
         return Response(CollectorHandler().list_namespace(bcs_cluster_id=cluster_id))
+
+    @list_route(methods=["GET"], url_path="list_topo")
+    def list_topo(self, request):
+        topo_type = request.GET.get("type")
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        namespace = request.GET.get("namespace", "")
+        return Response(
+            CollectorHandler().list_topo(topo_type=topo_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace)
+        )

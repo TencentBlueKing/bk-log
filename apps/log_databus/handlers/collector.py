@@ -64,6 +64,7 @@ from apps.log_databus.constants import (
     Environment,
     STORAGE_CLUSTER_TYPE,
     DEFAULT_RETENTION,
+    TopoType,
 )
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
@@ -81,6 +82,7 @@ from apps.log_databus.exceptions import (
     CollectorConfigNameENDuplicateException,
     CollectorBkDataNameDuplicateException,
     CollectorResultTableIDDuplicateException,
+    MissedNamespaceException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
@@ -2424,6 +2426,65 @@ class CollectorHandler(object):
             {"id": namespace["metadata"]["name"], "name": namespace["metadata"]["name"]}
             for namespace in namespaces["items"]
         ]
+
+    def list_topo(self, topo_type, bcs_cluster_id, namespace):
+        api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance
+        result = {"id": bcs_cluster_id, "name": bcs_cluster_id, "type": "cluster"}
+        if topo_type == TopoType.NODE:
+            node_result = []
+            nodes = api_instance.list_node().to_dict()
+            for node in nodes["items"]:
+                node_result.append({"id": node["metadata"]["name"], "name": node["metadata"]["name"], "type": "node"})
+            result["children"] = node_result
+            return result
+        if topo_type == TopoType.POD:
+            namespace_list = ",".split(namespace)
+            result["children"] = []
+            if namespace_list:
+                for namespace_item in namespace_list:
+                    namespace_result = {"id": namespace_item, "name": namespace_item, "type": "namespace"}
+                    pods = api_instance.list_namespaced_pod(namespace=namespace_item).to_dict()
+                    pod_result = []
+                    for pod in pods:
+                        pod_result.append(
+                            {"id": pod["metadata"]["name"], "name": pod["metadata"]["name"], "type": "pod"}
+                        )
+                    namespace_result["children"] = pod_result
+                    result["children"].append(namespace_result)
+                return result
+            pods = api_instance.list_pod_for_all_namespaces().to_dict()
+            namespaced_dict = defaultdict(list)
+            for pod in pods["items"]:
+                namespaced_dict[pod["metadata"]["namespace"]].append(
+                    {"id": pod["metadata"]["name"], "name": pod["metadata"]["name"], "type": "pod"}
+                )
+            for namespace, pod in namespaced_dict.items():
+                result["children"].append({"id": namespace, "name": namespace, "type": "namespace", "children": pod})
+            return result
+
+    def get_labels(self, topo_type, bcs_cluster_id, namespace, name):
+        api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance
+        if topo_type == TopoType.NODE:
+            nodes = api_instance.list_node(field_selector="metadata.name={}".format(name)).to_dict()
+            if not nodes["items"]:
+                return []
+            node, *_ = nodes["items"]
+            return [
+                {"key": label_key, "value": label_valus}
+                for label_key, label_valus in node["metadata"]["labels"].items()
+            ]
+        if topo_type == TopoType.POD:
+            if not namespace:
+                raise MissedNamespaceException()
+            pods = api_instance.list_namespaced_pod(
+                field_selector="metadata.name={}".format(name), namespace=namespace
+            ).to_dict()
+            if not pods["items"]:
+                return []
+            pod, *_ = pods["items"]
+            return [
+                {"key": label_key, "value": label_valus} for label_key, label_valus in pod["metadata"]["labels"].items()
+            ]
 
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:

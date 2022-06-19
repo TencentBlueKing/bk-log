@@ -292,3 +292,8 @@ class RestoreNotFound(BaseCollectorConfigException):
 class RestoreExpired(BaseCollectorConfigException):
     ERROR_CODE = "802"
     MESSAGE = _("归档回溯已经过期")
+
+
+class MissedNamespaceException(BaseCollectorConfigException):
+    ERROR_CODE = "901"
+    MESSAGE = _("缺少namespace参数")
