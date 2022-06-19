@@ -61,6 +61,10 @@ class Bcs:
         return dynamic_client.DynamicClient(self.k8s_client)
 
     @cached_property
+    def api_instance(self):
+        return k8s_client.CoreV1Api(self.k8s_client)
+
+    @cached_property
     def crd_api(self):
         return k8s_client.CustomObjectsApi(self.k8s_client)
 
@@ -98,7 +102,7 @@ class Bcs:
                     self.BKLOG_CONFIG_PLURAL,
                     bklog_config_name,
                 )
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.error(f"delete bklog config crd [{bklog_config_name}] error => {e}")
 
     def list_bklog_config(self):
