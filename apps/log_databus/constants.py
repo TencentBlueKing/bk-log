@@ -344,6 +344,18 @@ class ContainerCollectorType(object):
     STDOUT = "std_log_config"
 
 
-class TopoType(object):
+class TopoType(ChoicesEnum):
     NODE = "node"
     POD = "pod"
+
+    _choices_labels = (
+        (NODE, _("节点")),
+        (POD, _("pod")),
+    )
+
+
+class WorkLoadType(object):
+    DEPLOYMENT = "Deployment"
+    DAEMON_SET = "DaemonSset"
+    JOB = "Job"
+    STATEFUL_SET = "StatefulSet"

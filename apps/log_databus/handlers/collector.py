@@ -65,6 +65,7 @@ from apps.log_databus.constants import (
     STORAGE_CLUSTER_TYPE,
     DEFAULT_RETENTION,
     TopoType,
+    WorkLoadType,
 )
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
@@ -2417,10 +2418,14 @@ class CollectorHandler(object):
 
     def list_workload_type(self):
         toggle = FeatureToggleObject.toggle(BCS_DEPLOYMENT_TYPE)
-        return toggle.feature_config if toggle else []
+        return (
+            toggle.feature_config
+            if toggle
+            else [WorkLoadType.DEPLOYMENT, WorkLoadType.JOB, WorkLoadType.DAEMON_SET, WorkLoadType.STATEFUL_SET]
+        )
 
     def list_namespace(self, bcs_cluster_id):
-        api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance
+        api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         namespaces = api_instance.list_namespace().to_dict()
         return [
             {"id": namespace["metadata"]["name"], "name": namespace["metadata"]["name"]}
@@ -2428,16 +2433,16 @@ class CollectorHandler(object):
         ]
 
     def list_topo(self, topo_type, bcs_cluster_id, namespace):
-        api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance
+        api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         result = {"id": bcs_cluster_id, "name": bcs_cluster_id, "type": "cluster"}
-        if topo_type == TopoType.NODE:
+        if topo_type == TopoType.NODE.value:
             node_result = []
             nodes = api_instance.list_node().to_dict()
             for node in nodes["items"]:
                 node_result.append({"id": node["metadata"]["name"], "name": node["metadata"]["name"], "type": "node"})
             result["children"] = node_result
             return result
-        if topo_type == TopoType.POD:
+        if topo_type == TopoType.POD.value:
             namespace_list = ",".split(namespace)
             result["children"] = []
             if namespace_list:
@@ -2463,28 +2468,60 @@ class CollectorHandler(object):
             return result
 
     def get_labels(self, topo_type, bcs_cluster_id, namespace, name):
-        api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance
-        if topo_type == TopoType.NODE:
+        api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
+        if topo_type == TopoType.NODE.value:
             nodes = api_instance.list_node(field_selector="metadata.name={}".format(name)).to_dict()
-            if not nodes["items"]:
-                return []
-            node, *_ = nodes["items"]
-            return [
-                {"key": label_key, "value": label_valus}
-                for label_key, label_valus in node["metadata"]["labels"].items()
-            ]
-        if topo_type == TopoType.POD:
+            return self.generate_label(nodes)
+        if topo_type == TopoType.POD.value:
             if not namespace:
                 raise MissedNamespaceException()
             pods = api_instance.list_namespaced_pod(
                 field_selector="metadata.name={}".format(name), namespace=namespace
             ).to_dict()
-            if not pods["items"]:
-                return []
-            pod, *_ = pods["items"]
-            return [
-                {"key": label_key, "value": label_valus} for label_key, label_valus in pod["metadata"]["labels"].items()
-            ]
+            return self.generate_label(pods)
+
+    @classmethod
+    def generate_label(cls, obj_dict):
+        if not obj_dict["items"]:
+            return []
+        obj_item, *_ = obj_dict["items"]
+        return [
+            {"key": label_key, "value": label_valus}
+            for label_key, label_valus in obj_item["metadata"]["labels"].items()
+        ]
+
+    def match_labels(self, topo_type, bcs_cluster_id, namespace, label_selector):
+        api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
+        if topo_type == TopoType.NODE.value:
+            nodes = api_instance.list_node(label_selector=label_selector).to_dict()
+            return self.generate_objs(nodes)
+        if topo_type == TopoType.POD.value:
+            if not namespace:
+                raise MissedNamespaceException()
+            pods = api_instance.list_namespaced_pod(label_selector=label_selector, namespace=namespace).to_dict()
+            return self.generate_objs(pods)
+
+    @classmethod
+    def generate_objs(cls, objs_dict):
+        result = []
+        if not objs_dict["items"]:
+            return result
+        for item in objs_dict["items"]:
+            result.append(item["metadata"]["name"])
+        return result
+
+    def get_workload(self, workload_type, bcs_cluster_id, namespace):
+        bcs = Bcs(cluster_id=bcs_cluster_id)
+        workload_type_handler_dict = {
+            WorkLoadType.DEPLOYMENT: bcs.api_instance_apps_v1.list_namespaced_deployment,
+            WorkLoadType.STATEFUL_SET: bcs.api_instance_apps_v1.list_namespaced_stateful_set,
+            WorkLoadType.JOB: bcs.api_instance_batch_v1.list_namespaced_job,
+            WorkLoadType.DAEMON_SET: bcs.api_instance_apps_v1.list_namespaced_daemon_set,
+        }
+        workload_handler = workload_type_handler_dict.get(workload_type)
+        if not workload_handler:
+            return []
+        return self.generate_objs(workload_handler(namespace=namespace).to_dict())
 
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
