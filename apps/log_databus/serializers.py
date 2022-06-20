@@ -26,7 +26,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
-from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX, VisibleEnum, Environment
+from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX, VisibleEnum, Environment, TopoType
 from apps.log_databus.models import CleanTemplate, CollectorConfig
 
 from apps.log_databus.constants import EsSourceType
@@ -877,7 +877,30 @@ class UpdateBCSCollectorSerializer(serializers.Serializer):
     config = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
 
 
-class ValidateBCSCollectorYamlSerializer(serializers.Serializer):
+class MatchLabelsSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    type = serializers.ChoiceField(label=_("类型"), choices=TopoType.get_choices())
+    label_selector = LabelSelectorSerializer(
+        required=False, label=_("标签"), default={"match_labels": [], "match_expressions": []}
+    )
+    namespace = serializers.CharField(label=_("namespace"), default=False)
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
+
+    def validate(self, attrs):
+        super().validate(attrs)
+        match_labels = attrs["label_selector"]["match_labels"]
+        match_expressions = attrs["label_selector"]["match_expressions"]
+        match_labels_list = ["{} = {}".format(label["key"], label["value"]) for label in match_labels]
+        match_expressions_list = [
+            "{} {} {}".format(expression["key"], expression["operator"], expression["value"])
+            for expression in match_expressions
+        ]
+
+        attrs["label_selector"] = ", ".join(match_labels_list + match_expressions_list)
+        return attrs
+
+
+class ValidateContainerCollectorYamlSerializer(serializers.Serializer):
     yaml_config = serializers.CharField(label=_("YAML配置的base64"))
 
     def validate_yaml_config(self, value):
@@ -888,7 +911,7 @@ class ValidateBCSCollectorYamlSerializer(serializers.Serializer):
         return yaml_text
 
 
-class BCSCollectorYamlSerializer(serializers.Serializer):
+class ContainerCollectorYamlSerializer(serializers.Serializer):
     class NamespaceSelector(serializers.Serializer):
         any = serializers.BooleanField(label=_("是否匹配全部命名空间"), required=False)
         matchNames = serializers.ListField(label=_("关键字列表"), allow_empty=True, default=[])

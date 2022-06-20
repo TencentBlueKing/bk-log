@@ -66,7 +66,8 @@ from apps.log_databus.serializers import (
     PreCheckSerializer,
     CreateBCSCollectorSerializer,
     UpdateBCSCollectorSerializer,
-    ValidateBCSCollectorYamlSerializer,
+    MatchLabelsSerializer,
+    ValidateContainerCollectorYamlSerializer,
 )
 from apps.utils.function import ignored
 
@@ -2090,7 +2091,6 @@ class CollectorViewSet(ModelViewSet):
 
     @list_route(methods=["GET"], url_path="list_namespace")
     def list_namespace(self, request):
-        # bk_biz_id = request.GET.get("bk_biz_id")
         cluster_id = request.GET.get("cluster_id")
         return Response(CollectorHandler().list_namespace(bcs_cluster_id=cluster_id))
 
@@ -2103,7 +2103,42 @@ class CollectorViewSet(ModelViewSet):
             CollectorHandler().list_topo(topo_type=topo_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace)
         )
 
+    @list_route(methods=["GET"], url_path="get_labels")
+    def get_labels(self, request):
+        topo_type = request.GET.get("type")
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        namespace = request.GET.get("namespace")
+        name = request.GET.get("name")
+        return Response(
+            CollectorHandler().get_labels(
+                topo_type=topo_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace, name=name
+            )
+        )
+
+    @list_route(methods=["POST"], url_path="match_labels")
+    def match_labels(self, request):
+        data = self.params_valid(MatchLabelsSerializer)
+        return Response(
+            CollectorHandler().match_labels(
+                topo_type=data["type"],
+                bcs_cluster_id=data["bcs_cluster_id"],
+                namespace=data["namespace"],
+                label_selector=data["label_selector"],
+            )
+        )
+
+    @list_route(methods=["GET"], url_path="get_workload")
+    def get_workload(self, request):
+        workload_type = request.GET.get("type")
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        namespace = request.GET.get("namespace")
+        return Response(
+            CollectorHandler().get_workload(
+                workload_type=workload_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace
+            )
+        )
+
     @list_route(methods=["POST"], url_path="validate_yaml_bcs_collector")
-    def validate_bcs_collector_yaml(self, request):
-        data = self.params_valid(ValidateBCSCollectorYamlSerializer)
+    def validate_container_config_yaml(self, request):
+        data = self.params_valid(ValidateContainerCollectorYamlSerializer)
         return Response(CollectorHandler().validate_container_config_yaml(data["yaml_config"]))
