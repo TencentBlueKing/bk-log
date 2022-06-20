@@ -2118,3 +2118,14 @@ class CollectorViewSet(ModelViewSet):
                 label_selector=data["label_selector"],
             )
         )
+
+    @list_route(methods=["GET"], url_path="get_workload")
+    def get_workload(self, request):
+        workload_type = request.GET.get("type")
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        namespace = request.GET.get("namespace")
+        return Response(
+            CollectorHandler().get_workload(
+                workload_type=workload_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace
+            )
+        )

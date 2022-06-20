@@ -352,3 +352,10 @@ class TopoType(ChoicesEnum):
         (NODE, _("节点")),
         (POD, _("pod")),
     )
+
+
+class WorkLoadType(object):
+    DEPLOYMENT = "Deployment"
+    DAEMON_SET = "DaemonSset"
+    JOB = "Job"
+    STATEFUL_SET = "StatefulSet"
