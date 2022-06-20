@@ -278,7 +278,7 @@ class CollectorCreateSerializer(serializers.Serializer):
         return attrs
 
 
-class CreatContainerCollectorSerializer(serializers.Serializer):
+class CreateContainerCollectorSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"))
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
@@ -295,6 +295,8 @@ class CreatContainerCollectorSerializer(serializers.Serializer):
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
+    yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
+    yaml_config = serializers.CharField(label=_("yaml配置内容"), default="")
 
 
 class CollectorUpdateSerializer(serializers.Serializer):
@@ -329,6 +331,8 @@ class UpdateContainerCollectorSerializer(serializers.Serializer):
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
+    yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
+    yaml_config = serializers.CharField(label=_("yaml配置内容"), default="")
 
 
 class HostInstanceByIpSerializer(serializers.Serializer):
@@ -874,9 +878,9 @@ class UpdateBCSCollectorSerializer(serializers.Serializer):
 
 
 class ValidateBCSCollectorYamlSerializer(serializers.Serializer):
-    yaml = serializers.CharField(label=_("YAML配置的base64"))
+    yaml_config = serializers.CharField(label=_("YAML配置的base64"))
 
-    def validate_yaml(self, value):
+    def validate_yaml_config(self, value):
         try:
             yaml_text = base64.b64decode(value)
         except Exception:  # pylint: disable=broad-except

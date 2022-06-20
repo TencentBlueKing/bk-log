@@ -90,6 +90,7 @@ from apps.log_databus.exceptions import (
     CollectorBkDataNameDuplicateException,
     CollectorResultTableIDDuplicateException,
     MissedNamespaceException,
+    ContainerCollectConfigValidateYamlException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
@@ -2161,6 +2162,16 @@ class CollectorHandler(object):
                 logger.warning(f"collector config name duplicate => [{data['collector_config_name']}]")
                 raise CollectorConfigNameDuplicateException()
 
+            if self.data.yaml_config_enabled:
+                # yaml 模式，先反序列化解出来，再保存
+                result = self.validate_container_config_yaml(self.data.yaml_config)
+                if not result["parse_status"]:
+                    raise ContainerCollectConfigValidateYamlException()
+                container_configs = result["parse_result"]["container_config"]
+            else:
+                # 原生模式，直接通过结构化数据生成
+                container_configs = data["config"]
+
             ContainerCollectorConfig.objects.bulk_create(
                 ContainerCollectorConfig(
                     collector_config_id=self.data.collector_config_id,
@@ -2176,8 +2187,9 @@ class CollectorHandler(object):
                     match_expressions=config["label_selector"]["match_expressions"],
                     all_container=not config["container"]["workload_type"],
                 )
-                for config in data["config"]
+                for config in container_configs
             )
+
             collector_scenario = CollectorScenario.get_instance(CollectorScenarioEnum.CUSTOM.value)
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=self.data.bk_data_id,
@@ -2491,35 +2503,47 @@ class CollectorHandler(object):
         for config in delete_container_configs:
             self.delete_container_release(config)
 
-    def create_container_release(self, container_config: ContainerCollectorConfig):
-        filters, _ = deal_collector_scenario_param(container_config.params)
-        request_params = {
-            "dataId": self.data.bk_data_id,
-            "path": container_config.params["paths"],
-            "encoding": container_config.data_encoding,
-            "extMeta": {label["key"]: label["value"] for label in self.data.extra_labels},
-            "logConfigType": self.data.environment,
-            "allContainer": container_config.all_container,
-            "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
-            "workloadType": container_config.workload_type,
-            "workloadName": container_config.workload_name,
-            "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
-            "labelSelector": {
-                "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
-                "matchExpressions": [
-                    {"key": expression["key"], "operator": expression["operator"], "values": [expression["value"]]}
-                    for expression in container_config.match_expressions
-                ],
-            },
-            "multiline": {
-                "pattern": container_config.params.get("multiline_pattern"),
-                "maxLines": container_config.params.get("multiline_max_lines"),
-                "timeout": container_config.params.get("multiline_timeout"),
-            },
-            "delimiter": container_config.params.get("conditions", {}).get("separator", ""),
-            "filters": filters,
-            "addPodLabel": self.data.add_pod_label,
-        }
+    def create_container_release(self, container_config: ContainerCollectorConfig, raw_config: dict = None):
+        """
+        创建容器采集配置
+        :param container_config: 容器采集配置实例
+        :param raw_config: yaml模式下的原始配置，优先使用 raw_config 进行下发
+        """
+        if not container_config and not raw_config:
+            raise ValueError("param `container_config` or `raw_config` must be supplied")
+
+        if raw_config:
+            request_params = copy.deepcopy(raw_config)
+            request_params["dataId"] = self.data.bk_data_id
+        else:
+            filters, _ = deal_collector_scenario_param(container_config.params)
+            request_params = {
+                "dataId": self.data.bk_data_id,
+                "path": container_config.params["paths"],
+                "encoding": container_config.data_encoding,
+                "extMeta": {label["key"]: label["value"] for label in self.data.extra_labels},
+                "logConfigType": self.data.environment,
+                "allContainer": container_config.all_container,
+                "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
+                "workloadType": container_config.workload_type,
+                "workloadName": container_config.workload_name,
+                "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
+                "labelSelector": {
+                    "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
+                    "matchExpressions": [
+                        {"key": expression["key"], "operator": expression["operator"], "values": [expression["value"]]}
+                        for expression in container_config.match_expressions
+                    ],
+                },
+                "multiline": {
+                    "pattern": container_config.params.get("multiline_pattern"),
+                    "maxLines": container_config.params.get("multiline_max_lines"),
+                    "timeout": container_config.params.get("multiline_timeout"),
+                },
+                "delimiter": container_config.params.get("conditions", {}).get("separator", ""),
+                "filters": filters,
+                "addPodLabel": self.data.add_pod_label,
+            }
         name = self.generate_bklog_config_name(container_config.id)
 
         try:
@@ -2627,7 +2651,7 @@ class CollectorHandler(object):
                 {"key": label_key, "value": label_valus} for label_key, label_valus in pod["metadata"]["labels"].items()
             ]
 
-    def validate_bcs_config_yaml(self, yaml_config: str):
+    def validate_container_config_yaml(self, yaml_config: str):
         """
         解析容器日志yaml配置
         """
@@ -2696,11 +2720,12 @@ class CollectorHandler(object):
                         "multiline_timeout": config.get("multiline", {}).get("timeout", 60),
                     },
                     "data_encoding": config["encoding"],
+                    "collector_type": log_config_type,
                 }
             )
 
         return {
-            "parse_results": True,
+            "parse_status": True,
             "parse_result": {
                 "environment": log_config_type,
                 "extra_labels": [{"key": key, "value": value} for key, value in extra_labels.items()],

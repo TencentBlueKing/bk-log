@@ -2106,4 +2106,4 @@ class CollectorViewSet(ModelViewSet):
     @list_route(methods=["POST"], url_path="validate_yaml_bcs_collector")
     def validate_bcs_collector_yaml(self, request):
         data = self.params_valid(ValidateBCSCollectorYamlSerializer)
-        return Response(CollectorHandler().validate_bcs_config_yaml(data["yaml"]))
+        return Response(CollectorHandler().validate_container_config_yaml(data["yaml_config"]))
