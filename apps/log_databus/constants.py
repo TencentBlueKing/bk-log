@@ -344,6 +344,16 @@ class ContainerCollectorType(object):
     STDOUT = "std_log_config"
 
 
+class ContainerCollectStatus(ChoicesEnum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+
+    _choices_labels = (
+        (SUCCESS, _("成功")),
+        (FAILED, _("失败")),
+    )
+
+
 class TopoType(ChoicesEnum):
     NODE = "node"
     POD = "pod"

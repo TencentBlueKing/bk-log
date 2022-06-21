@@ -165,6 +165,8 @@ COLLECTORS_LIST = {
                 "create_clean_able": True,
                 "bkdata_index_set_ids": [],
                 "retention": 7,
+                "yaml_config_enabled": False,
+                "yaml_config": "",
             }
         ],
     },
