@@ -62,7 +62,7 @@ from apps.log_databus.constants import (
     SEARCH_BIZ_INST_TOPO_LEVEL,
     TargetNodeTypeEnum,
 )
-from apps.log_databus.constants import EtlConfig, CACHE_KEY_CLUSTER_INFO
+from apps.log_databus.constants import CACHE_KEY_CLUSTER_INFO, EtlConfig
 from apps.log_databus.exceptions import (
     CollectNotSuccess,
     CollectNotSuccessNotCanStart,
@@ -634,7 +634,13 @@ class CollectorHandler(object):
 
                 # 2.2 meta-创建或更新数据源
                 if params.get("is_allow_alone_data_id", True):
-                    self.data.bk_data_id = self.update_or_create_data_id(self.data)
+                    if self.data.etl_processor == ETLProcessorChoices.BKBASE.value:
+                        transfer_data_id = self.update_or_create_data_id(
+                            self.data, etl_processor=ETLProcessorChoices.TRANSFER.value
+                        )
+                        self.data.bk_data_id = self.update_or_create_data_id(self.data, bk_data_id=transfer_data_id)
+                    else:
+                        self.data.bk_data_id = self.update_or_create_data_id(self.data)
                     self.data.save()
 
             except IntegrityError:
