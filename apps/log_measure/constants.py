@@ -99,3 +99,7 @@ TIME_RANGE = {
     TimeRangeEnum.FOURTEEN_DAY.value: 14,
     TimeRangeEnum.THIRTY_DAY.value: 30,
 }
+
+TABLE_BKUNIFYBEAT_TASK = "bkunifylogbeat_task.base"
+FIELD_CRAWLER_RECEIVED = "crawler_received"
+FIELD_CRAWLER_STATE = "crawler_state"

@@ -22,8 +22,11 @@ the project delivered to anyone in the future.
 import re
 from collections import defaultdict
 from typing import List
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.db.models import Count
+
+from config.domains import MONITOR_APIGATEWAY_ROOT
 
 from apps.api import NodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -35,10 +38,17 @@ from apps.utils.db import array_group
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.log import logger
 from apps.log_databus.models import CollectorConfig, BKDataClean
-from apps.log_measure.constants import INDEX_FORMAT, COMMON_INDEX_RE
+from apps.log_measure.constants import (
+    INDEX_FORMAT,
+    COMMON_INDEX_RE,
+    TABLE_BKUNIFYBEAT_TASK,
+    FIELD_CRAWLER_RECEIVED,
+    FIELD_CRAWLER_STATE,
+)
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
+from bk_monitor.api.client import Client
 
 
 class CollectMetricCollector(object):
@@ -174,6 +184,53 @@ class CollectMetricCollector(object):
             multi_execute_func.append(str(cluster_id), _get_indices, cluster, use_request=False)
         result = multi_execute_func.run()
         return [indices for cluster_indices in result.values() for indices in cluster_indices]
+
+    @staticmethod
+    @register_metric("collector_crawler", description=_("采集行数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    def collector_line():
+        metrics = []
+        crawler_received_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_RECEIVED)
+        crawler_state_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_STATE)
+        for target in crawler_received_data:
+            for task_data_id in crawler_received_data[target]:
+                _received_count = crawler_received_data[target][task_data_id]
+                _state_count = crawler_state_data[target][task_data_id]
+                metrics.append(
+                    Metric(
+                        metric_name="count",
+                        metric_value=_received_count - _state_count,
+                        dimensions={"target": target, "task_data_id": task_data_id},
+                        timestamp=MetricUtils.get_instance().report_ts,
+                    )
+                )
+
+        return metrics
+
+    @staticmethod
+    def get_crawler_metric_data(field):
+        data = defaultdict(lambda: defaultdict(int))
+        bk_monitor_client = Client(
+            bk_app_code=settings.APP_CODE,
+            bk_app_secret=settings.SECRET_KEY,
+            monitor_host=MONITOR_APIGATEWAY_ROOT,
+            report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
+            bk_username="admin",
+        )
+        params = {
+            "sql": f"select sum({field}) as {field} from {TABLE_BKUNIFYBEAT_TASK} \
+            where time >= '5m' group by task_data_id,target"
+        }
+        try:
+            result = bk_monitor_client.get_ts_data(data=params)
+            for ts_data in result["list"]:
+                value = ts_data[field]
+                target = ts_data["target"]
+                task_data_id = ts_data["task_data_id"]
+                data[target][task_data_id] = value
+
+        except Exception as e:
+            logger.error(f"failed to get {field} data, err: {e}")
+        return data
 
 
 class CleanMetricCollector(object):
