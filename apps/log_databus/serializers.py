@@ -24,7 +24,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
-from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX, VisibleEnum
+from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX, VisibleEnum, Environment, TopoType
 from apps.log_databus.models import CleanTemplate, CollectorConfig
 
 from apps.log_databus.constants import EsSourceType
@@ -200,6 +200,8 @@ class ContainerConfigSerializer(serializers.Serializer):
     label_selector = LabelSelectorSerializer(required=False, label=_("标签"))
     paths = serializers.ListSerializer(child=serializers.CharField(), required=False, label=_("日志路径"))
     data_encoding = serializers.CharField(required=False, label=_("日志字符集"))
+    params = PluginParamSerializer(required=False, label=_("插件参数"))
+    collector_type = serializers.CharField(label=_("容器采集类型"))
 
 
 class CustomCreateSerializer(serializers.Serializer):
@@ -256,6 +258,9 @@ class CollectorCreateSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
+    environment = serializers.CharField(
+        label=_("环境"), max_length=64, required=False, allow_null=True, allow_blank=True, default=Environment.LINUX
+    )
     params = PluginParamSerializer()
 
     def validate(self, attrs):
@@ -269,6 +274,25 @@ class CollectorCreateSerializer(serializers.Serializer):
                 if field not in attrs["params"]:
                     raise ValidationError(_("{} 该字段为必填项").format(field))
         return attrs
+
+
+class CreatContainerCollectorSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"))
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+    data_link_id = serializers.CharField(label=_("数据链路id"), required=False, allow_blank=True, allow_null=True)
+    collector_scenario_id = serializers.ChoiceField(label=_("日志类型"), choices=CollectorScenarioEnum.get_choices())
+    category_id = serializers.CharField(label=_("分类ID"))
+    description = serializers.CharField(
+        label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
+    )
+    container_config = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
+    environment = serializers.CharField(label=_("环境"))
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
+    add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
 
 
 class CollectorUpdateSerializer(serializers.Serializer):
@@ -288,6 +312,21 @@ class CollectorUpdateSerializer(serializers.Serializer):
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
     params = PluginParamSerializer()
+
+
+class UpdateContainerCollectorSerializer(serializers.Serializer):
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+    description = serializers.CharField(
+        label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
+    )
+    container_config = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
+    environment = serializers.CharField(label=_("环境"))
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
+    add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
 
 
 class HostInstanceByIpSerializer(serializers.Serializer):
@@ -826,3 +865,26 @@ class UpdateBCSCollectorSerializer(serializers.Serializer):
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
     config = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
+
+
+class MatchLabelsSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    type = serializers.ChoiceField(label=_("类型"), choices=TopoType.get_choices())
+    label_selector = LabelSelectorSerializer(
+        required=False, label=_("标签"), default={"match_labels": [], "match_expressions": []}
+    )
+    namespace = serializers.CharField(label=_("namespace"), default=False)
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
+
+    def validate(self, attrs):
+        super().validate(attrs)
+        match_labels = attrs["label_selector"]["match_labels"]
+        match_expressions = attrs["label_selector"]["match_expressions"]
+        match_labels_list = ["{} = {}".format(label["key"], label["value"]) for label in match_labels]
+        match_expressions_list = [
+            "{} {} {}".format(expression["key"], expression["operator"], expression["value"])
+            for expression in match_expressions
+        ]
+
+        attrs["label_selector"] = ", ".join(match_labels_list + match_expressions_list)
+        return attrs

@@ -275,6 +275,7 @@ class CollectorConfig(SoftDeleteModel):
 
 class ContainerCollectorConfig(SoftDeleteModel):
     collector_config_id = models.IntegerField(_("采集项id"), db_index=True)
+    collector_type = models.CharField(_("容器采集类型"), max_length=64, null=True, blank=True)
     namespaces = models.JSONField(_("namespace选择"), null=True, blank=True)
     any_namespace = models.BooleanField(_("所有namespace"), default=False)
     data_encoding = models.CharField(_("日志字符集"), max_length=30, null=True, default=None)
@@ -286,6 +287,8 @@ class ContainerCollectorConfig(SoftDeleteModel):
     match_expressions = models.JSONField(_("匹配表达式"), null=True, blank=True)
     all_container = models.BooleanField(_("所有容器"), default=False)
     status = models.CharField(_("下发状态"), null=True, blank=True, max_length=30)
+    yaml_config_enabled = models.BooleanField(_("是否使用yaml配置"), default=False)
+    yaml_config = models.TextField(_("yaml配置"), null=True, blank=True)
 
 
 class ItsmEtlConfig(SoftDeleteModel):
