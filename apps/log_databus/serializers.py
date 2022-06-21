@@ -130,7 +130,7 @@ class PluginParamSerializer(serializers.Serializer):
 
     paths = serializers.ListField(label=_("日志路径"), child=serializers.CharField(max_length=255), required=False)
     conditions = PluginConditionSerializer(required=False)
-    multiline_pattern = serializers.CharField(label=_("行首正则"), required=False)
+    multiline_pattern = serializers.CharField(label=_("行首正则"), required=False, allow_blank=True)
     multiline_max_lines = serializers.IntegerField(label=_("最多匹配行数"), required=False, max_value=1000)
     multiline_timeout = serializers.IntegerField(label=_("最大耗时"), required=False, max_value=10)
     tail_files = serializers.BooleanField(label=_("是否增量采集"), required=False, default=True)
@@ -293,10 +293,10 @@ class CreateContainerCollectorSerializer(serializers.Serializer):
     configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
     environment = serializers.CharField(label=_("环境"))
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
-    add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
+    add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"), default=False)
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
     yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
-    yaml_config = serializers.CharField(label=_("yaml配置内容"), default="")
+    yaml_config = serializers.CharField(label=_("yaml配置内容"), default="", allow_blank=True)
 
 
 class CollectorUpdateSerializer(serializers.Serializer):

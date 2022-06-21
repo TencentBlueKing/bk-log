@@ -28,7 +28,7 @@ from django.db.models import Q
 from rest_framework.response import Response
 
 from apps.exceptions import ValidationError
-from apps.log_databus.constants import EtlConfig
+from apps.log_databus.constants import EtlConfig, Environment
 from apps.log_search.constants import HAVE_DATA_ID, BKDATA_OPEN, NOT_CUSTOM, CollectorScenarioEnum
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
@@ -68,6 +68,8 @@ from apps.log_databus.serializers import (
     UpdateBCSCollectorSerializer,
     MatchLabelsSerializer,
     ValidateContainerCollectorYamlSerializer,
+    CreateContainerCollectorSerializer,
+    UpdateContainerCollectorSerializer,
 )
 from apps.utils.function import ignored
 
@@ -599,6 +601,10 @@ class CollectorViewSet(ModelViewSet):
             "result": true
         }
         """
+        if request.data.get("environment") == Environment.CONTAINER:
+            data = self.params_valid(CreateContainerCollectorSerializer)
+            return Response(CollectorHandler().create_container_config(data))
+
         data = self.params_valid(CollectorCreateSerializer)
         return Response(CollectorHandler().update_or_create(data))
 
@@ -757,87 +763,12 @@ class CollectorViewSet(ModelViewSet):
             "result": true
         }
         """
+        if request.data.get("environment") == Environment.CONTAINER:
+            data = self.params_valid(UpdateContainerCollectorSerializer)
+            return Response(CollectorHandler(collector_config_id=collector_config_id).update_container_config(data))
+
         data = self.params_valid(CollectorUpdateSerializer)
         return Response(CollectorHandler(collector_config_id=collector_config_id).update_or_create(data))
-
-    @list_route(methods=["POST"], url_path="create/container")
-    def create_container_collector(self, request):
-        """
-        @api {POST}  /databus/collectors/create/container/ 36_采集项-创建容器下发采集项
-        @apiName create_container_collector
-        @apiDescription 创建容器下发采集项
-        @apiGroup 10_Collector
-        @apiParamExample {json} 容器日志请求样例：
-        {
-            "bk_biz_id": 1,
-            "collector_config_name": "测试采集项",
-            "collector_config_name_en": "test_collector",
-            "data_link_id": 1,
-            "collector_scenario_id": "line",
-            "category_id": "application",
-            "description": "test",
-            "environment": "container_log_config",
-            "bcs_cluster_id": "",
-            "add_pod_label": false,
-            "extra_labels":[
-                {
-                    "key": "test",
-                    "value": "haha"
-                }
-            ],
-            "container_config":[
-                {
-                    "namespaces":[],
-                    "container": {
-                        "workload_type": "",
-                        "workload_name": "",
-                        "container_name": ""
-                    },
-                    "label_selector": {
-                        "match_labels": [
-                            {
-                                "key": "test",
-                                "operator": "=",
-                                "value": ""
-                            }
-                        ],
-                        "match_expressions":[
-                            {
-                                "key": "test",
-                                "operator": "=",
-                                "value": ""
-                            }
-                        ]
-                    },
-                    "params":{
-                        "paths": ["/log/abc"],
-                        "conditions": {
-                            "type": "match",
-                            "match_type": "include",
-                            "match_content": "delete",
-                            "separator": "|",
-                            "separator_filters": [
-                                {
-                                    "fieldindex": 1,
-                                    "word": "",
-                                    "op": "=",
-                                    "logic_op": "and"
-                                }
-                            ]
-                        },
-                        "multiline_pattern": "",
-                        "multiline_max_lines": 10,
-                        "multiline_timeout": 60,
-                        "winlog_name": ["Application", "Security"],
-                        "winlog_level": ["info", "error"],
-                        "winlog_event_id": ["-200", "123-1234", "123"]
-                    },
-                    "data_encoding": ""
-                }
-            ]
-        }
-        """
-        # data = self.params_valid(CreatContainerCollectorSerializer)
 
     def destroy(self, request, *args, collector_config_id=None, **kwargs):
         """
@@ -2138,7 +2069,7 @@ class CollectorViewSet(ModelViewSet):
             )
         )
 
-    @list_route(methods=["POST"], url_path="validate_yaml_bcs_collector")
+    @list_route(methods=["POST"], url_path="validate_container_config_yaml")
     def validate_container_config_yaml(self, request):
         data = self.params_valid(ValidateContainerCollectorYamlSerializer)
         return Response(CollectorHandler().validate_container_config_yaml(data["yaml_config"]))

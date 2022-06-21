@@ -347,10 +347,12 @@ class ContainerCollectorType(object):
 class ContainerCollectStatus(ChoicesEnum):
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
+    TERMINATED = "TERMINATED"
 
     _choices_labels = (
         (SUCCESS, _("成功")),
         (FAILED, _("失败")),
+        (TERMINATED, _("已停用")),
     )
 
 

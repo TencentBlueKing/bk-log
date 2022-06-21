@@ -986,7 +986,7 @@ class CollectorHandler(object):
 
     def get_task_status(self, id_list):
         if self.data.is_container_environment:
-            self.get_container_collect_status(container_collector_config_id_list=id_list)
+            return self.get_container_collect_status(container_collector_config_id_list=id_list)
         return self.get_subscription_task_status(task_id_list=id_list)
 
     def get_container_collect_status(self, container_collector_config_id_list):
@@ -2118,7 +2118,7 @@ class CollectorHandler(object):
             "collector_config_name": data["collector_config_name"],
             "collector_config_name_en": data["collector_config_name_en"],
             "collector_scenario_id": CollectorScenarioEnum.ROW.value,
-            "custom_type": data["custom_type"],
+            "custom_type": CustomTypeEnum.LOG.value,
             "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
             "data_link_id": int(data["data_link_id"]),
@@ -2234,7 +2234,6 @@ class CollectorHandler(object):
     def update_container_config(self, data):
         collector_config_update = {
             "collector_config_name": data["collector_config_name"],
-            "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
             "environment": data["environment"],
             "bcs_cluster_id": data["bcs_cluster_id"],
@@ -2584,8 +2583,9 @@ class CollectorHandler(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.exception("[delete_container_release] delete bklog config failed: %s", e)
 
-        # 无论成败与否，都要删掉
-        container_config.delete()
+        # 无论成败与否，都设置为已停用
+        container_config.status = ContainerCollectStatus.TERMINATED.value
+        container_config.save()
 
     def list_bcs_clusters(self, bk_biz_id):
         if not bk_biz_id:
@@ -2707,10 +2707,16 @@ class CollectorHandler(object):
         try:
             # 验证是否为合法的 yaml 格式
             configs = yaml.load(yaml_config, Loader=yaml.FullLoader)
-        except Exception:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             return {
                 "parse_status": False,
-                "parse_result": [{"start_line_number": 0, "end_line_number": 0, "message": _("当前配置不是合法的 yaml 格式")}],
+                "parse_result": [
+                    {
+                        "start_line_number": 0,
+                        "end_line_number": 0,
+                        "message": _("当前配置不是合法的 yaml 格式: {err}").format(err=e),
+                    }
+                ],
             }
         try:
             slz = ContainerCollectorYamlSerializer(data=configs, many=True)
