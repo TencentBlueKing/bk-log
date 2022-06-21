@@ -180,7 +180,7 @@ class CollectorHandler(object):
         for config in ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id):
             container_configs.append(model_to_dict(config))
 
-        collector_config["container_config"] = container_configs
+        collector_config["configs"] = container_configs
         return collector_config
 
     def set_itsm_info(self, collector_config, context):  # noqa
@@ -2083,7 +2083,7 @@ class CollectorHandler(object):
         pg = DataPageNumberPagination()
         page_collectors = pg.paginate_queryset(
             queryset=CollectorConfig.objects.exclude(bk_app_code="bk_log_search",).filter(
-                environment__in=[Environment.STDOUT, Environment.NODE, Environment.CONTAINER], bk_biz_id=bk_biz_id
+                environment=Environment.CONTAINER, bk_biz_id=bk_biz_id
             ),
             request=request,
             view=view,
@@ -2109,7 +2109,7 @@ class CollectorHandler(object):
             "bcs_cluster_id": collector.bcs_cluster_id,
             "extra_labels": collector.extra_labels,
             "add_pod_label": collector.add_pod_label,
-            "container_config": [model_to_dict(config) for config in container_collector_config],
+            "configs": [model_to_dict(config) for config in container_collector_config],
         }
 
     def create_container_config(self, data):
@@ -2126,6 +2126,8 @@ class CollectorHandler(object):
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
+            "yaml_config_enabled": data["yaml_config_enabled"],
+            "yaml_config": data["yaml_config"],
         }
         if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=data["bk_biz_id"]):
             logger.error(
@@ -2168,10 +2170,10 @@ class CollectorHandler(object):
                 result = self.validate_container_config_yaml(self.data.yaml_config)
                 if not result["parse_status"]:
                     raise ContainerCollectConfigValidateYamlException()
-                container_configs = result["parse_result"]["container_config"]
+                container_configs = result["parse_result"]["configs"]
             else:
                 # 原生模式，直接通过结构化数据生成
-                container_configs = data["config"]
+                container_configs = data["configs"]
 
             ContainerCollectorConfig.objects.bulk_create(
                 ContainerCollectorConfig(
@@ -2187,6 +2189,8 @@ class CollectorHandler(object):
                     match_labels=config["label_selector"]["match_labels"],
                     match_expressions=config["label_selector"]["match_expressions"],
                     all_container=not config["container"]["workload_type"],
+                    # yaml 原始配置，如果启用了yaml，则把解析后的原始配置保存下来用于下发
+                    raw_config=config.get("raw_config") if self.data.yaml_config_enabled else None,
                 )
                 for config in container_configs
             )
@@ -2236,7 +2240,16 @@ class CollectorHandler(object):
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
+            "yaml_config_enabled": data["yaml_config_enabled"],
+            "yaml_config": data["yaml_config"],
         }
+
+        if data["yaml_config_enabled"]:
+            # yaml 模式，先反序列化解出来，覆盖到config字段上面
+            validate_result = self.validate_container_config_yaml(data["yaml_config"])
+            if not validate_result["parse_status"]:
+                raise ContainerCollectConfigValidateYamlException()
+            data["configs"] = validate_result["parse_result"]["configs"]
 
         for key, value in collector_config_update.items():
             setattr(self.data, key, value)
@@ -2339,7 +2352,7 @@ class CollectorHandler(object):
                     match_expressions=config["label_selector"]["match_expressions"],
                     all_container=not config["container"]["workload_type"],
                 )
-                for config in data["config"]
+                for config in data["configs"]
             )
             collector_scenario = CollectorScenario.get_instance(CollectorScenarioEnum.CUSTOM.value)
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
@@ -2456,46 +2469,48 @@ class CollectorHandler(object):
     def compare_config(self, data, collector_config_id):
         container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=collector_config_id)
         container_configs = list(container_configs)
-        config_length = len(data["config"])
+        config_length = len(data["configs"])
         for x in range(config_length):
             if x < len(container_configs):
-                container_configs[x].namespaces = data["config"][x]["namespaces"]
-                container_configs[x].any_namespace = not data["config"][x]["namespaces"]
-                container_configs[x].data_encoding = data["config"][x]["data_encoding"]
+                container_configs[x].namespaces = data["configs"][x]["namespaces"]
+                container_configs[x].any_namespace = not data["configs"][x]["namespaces"]
+                container_configs[x].data_encoding = data["configs"][x]["data_encoding"]
                 container_configs[x].params = (
                     {
-                        "paths": data["config"][x]["paths"],
+                        "paths": data["configs"][x]["paths"],
                         "conditions": {"type": "match", "match_type": "include", "match_content": ""},
                     }
-                    if not data["config"][x]["params"]
-                    else data["config"][x]["params"]
+                    if not data["configs"][x]["params"]
+                    else data["configs"][x]["params"]
                 )
-                container_configs[x].workload_type = data["config"][x]["container"]["workload_type"]
-                container_configs[x].workload_name = data["config"][x]["container"]["workload_name"]
-                container_configs[x].container_name = data["config"][x]["container"]["container_name"]
-                container_configs[x].match_labels = data["config"][x]["label_selector"]["match_labels"]
-                container_configs[x].match_expressions = data["config"][x]["label_selector"]["match_expressions"]
-                container_configs[x].all_container = not data["config"][x]["container"]["workload_type"]
+                container_configs[x].workload_type = data["configs"][x]["container"]["workload_type"]
+                container_configs[x].workload_name = data["configs"][x]["container"]["workload_name"]
+                container_configs[x].container_name = data["configs"][x]["container"]["container_name"]
+                container_configs[x].match_labels = data["configs"][x]["label_selector"]["match_labels"]
+                container_configs[x].match_expressions = data["configs"][x]["label_selector"]["match_expressions"]
+                container_configs[x].all_container = not data["configs"][x]["container"]["workload_type"]
+                container_configs[x].raw_config = data["configs"][x].get("raw_config")
                 container_configs[x].save()
                 container_config = container_configs[x]
             else:
                 container_config = ContainerCollectorConfig(
                     collector_config_id=self.data.collector_config_id,
-                    namespaces=data["config"][x]["namespaces"],
-                    any_namespace=not data["config"][x]["namespaces"],
-                    data_encoding=data["config"][x]["data_encoding"],
+                    namespaces=data["configs"][x]["namespaces"],
+                    any_namespace=not data["configs"][x]["namespaces"],
+                    data_encoding=data["configs"][x]["data_encoding"],
                     params={
-                        "paths": data["config"][x]["paths"],
+                        "paths": data["configs"][x]["paths"],
                         "conditions": {"type": "match", "match_type": "include", "match_content": ""},
                     }
-                    if not data["config"][x]["params"]
-                    else data["config"][x]["params"],
-                    workload_type=data["config"][x]["container"]["workload_type"],
-                    workload_name=data["config"][x]["container"]["workload_name"],
-                    container_name=data["config"][x]["container"]["container_name"],
-                    match_labels=data["config"][x]["label_selector"]["match_labels"],
-                    match_expressions=data["config"][x]["label_selector"]["match_expressions"],
-                    all_container=not data["config"][x]["container"]["workload_type"],
+                    if not data["configs"][x]["params"]
+                    else data["configs"][x]["params"],
+                    workload_type=data["configs"][x]["container"]["workload_type"],
+                    workload_name=data["configs"][x]["container"]["workload_name"],
+                    container_name=data["configs"][x]["container"]["container_name"],
+                    match_labels=data["configs"][x]["label_selector"]["match_labels"],
+                    match_expressions=data["configs"][x]["label_selector"]["match_expressions"],
+                    all_container=not data["configs"][x]["container"]["workload_type"],
+                    raw_config=data["configs"][x].get("raw_config"),
                 )
                 container_config.save()
                 container_configs.append(container_config)
@@ -2504,17 +2519,14 @@ class CollectorHandler(object):
         for config in delete_container_configs:
             self.delete_container_release(config)
 
-    def create_container_release(self, container_config: ContainerCollectorConfig, raw_config: dict = None):
+    def create_container_release(self, container_config: ContainerCollectorConfig):
         """
         创建容器采集配置
         :param container_config: 容器采集配置实例
-        :param raw_config: yaml模式下的原始配置，优先使用 raw_config 进行下发
         """
-        if not container_config and not raw_config:
-            raise ValueError("param `container_config` or `raw_config` must be supplied")
-
-        if raw_config:
-            request_params = copy.deepcopy(raw_config)
+        if self.data.yaml_config_enabled and container_config.raw_config:
+            # 如果开启了yaml模式且有原始配置，则优先使用
+            request_params = copy.deepcopy(container_config.raw_config)
             request_params["dataId"] = self.data.bk_data_id
         else:
             filters, _ = deal_collector_scenario_param(container_config.params)
@@ -2758,6 +2770,7 @@ class CollectorHandler(object):
                     },
                     "data_encoding": config["encoding"],
                     "collector_type": log_config_type,
+                    "raw_config": config,
                 }
             )
 
@@ -2767,7 +2780,7 @@ class CollectorHandler(object):
                 "environment": log_config_type,
                 "extra_labels": [{"key": key, "value": value} for key, value in extra_labels.items()],
                 "add_pod_label": add_pod_label,
-                "container_config": container_configs,
+                "configs": container_configs,
             },
         }
 

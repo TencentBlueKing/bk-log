@@ -290,7 +290,7 @@ class CreateContainerCollectorSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
-    container_config = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
+    configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
     environment = serializers.CharField(label=_("环境"))
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
@@ -326,7 +326,7 @@ class UpdateContainerCollectorSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
-    container_config = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
+    configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
     environment = serializers.CharField(label=_("环境"))
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
@@ -862,7 +862,7 @@ class CreateBCSCollectorSerializer(serializers.Serializer):
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
-    config = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
+    configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
 
 
 class UpdateBCSCollectorSerializer(serializers.Serializer):
@@ -874,7 +874,7 @@ class UpdateBCSCollectorSerializer(serializers.Serializer):
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
-    config = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
+    configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
 
 
 class MatchLabelsSerializer(serializers.Serializer):
@@ -921,14 +921,17 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
         maxLines = serializers.IntegerField(label=_("最多匹配行数"), required=False, max_value=1000)
         timeout = serializers.IntegerField(label=_("最大耗时"), required=False, max_value=10)
 
-    class ConditionSerializer(serializers.Serializer):
-        index = serializers.IntegerField()
-        key = serializers.CharField()
-        op = serializers.CharField()
-
     class LabelSelectorSerializer(serializers.Serializer):
         matchLabels = serializers.ListSerializer(child=LablesSerializer(), label=_("指定标签"), required=False)
         matchExpressions = serializers.ListSerializer(child=LablesSerializer(), label=_("指定表达式"), required=False)
+
+    class FilterSerializer(serializers.Serializer):
+        class ConditionSerializer(serializers.Serializer):
+            index = serializers.IntegerField()
+            key = serializers.CharField()
+            op = serializers.CharField()
+
+        conditions = ConditionSerializer(many=True)
 
     path = serializers.ListField(label=_("日志采集路径"), child=serializers.CharField(), default=[])
     encoding = serializers.ChoiceField(label=_("日志字符集"), choices=EncodingsEnum.get_choices())
@@ -944,7 +947,5 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     containerNameMatch = serializers.ListField(label=_("容器名称匹配"), child=serializers.CharField(), default=[])
     labelSelector = LabelSelectorSerializer(label=_("匹配标签"), required=False)
     delimiter = serializers.CharField(label=_("分隔符"), allow_blank=True, required=False)
-    filters = serializers.ListField(
-        label=_("过滤规则"), child=serializers.ListField(child=ConditionSerializer()), required=False, allow_empty=True
-    )
+    filters = FilterSerializer(label=_("过滤规则"), many=True)
     addPodLabel = serializers.CharField(label=_("上报时是否把标签带上"), default=False)

@@ -301,6 +301,7 @@ class ContainerCollectorConfig(SoftDeleteModel):
     status = models.CharField(
         _("下发状态"), null=True, blank=True, max_length=30, choices=ContainerCollectStatus.get_choices()
     )
+    raw_config = models.JSONField(_("原始配置"), null=True, blank=True)
 
 
 class ItsmEtlConfig(SoftDeleteModel):
