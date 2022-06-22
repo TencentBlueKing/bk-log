@@ -2450,7 +2450,7 @@ class CollectorHandler(object):
                     namespace_result = {"id": namespace_item, "name": namespace_item, "type": "namespace"}
                     pods = api_instance.list_namespaced_pod(namespace=namespace_item).to_dict()
                     pod_result = []
-                    for pod in pods:
+                    for pod in pods["items"]:
                         pod_result.append(
                             {"id": pod["metadata"]["name"], "name": pod["metadata"]["name"], "type": "pod"}
                         )
