@@ -26,14 +26,13 @@
       <div class="add-collection-title">{{ $t('集群选择') }}</div>
       <cluster-table
         :table-list="clusterList"
-        :operate-type="operateType"
         :is-change-select.sync="isChangeSelect"
         :storage-cluster-id.sync="formData.storage_cluster_id"
       />
       <cluster-table
+        table-type="exclusive"
+        style="margin-top: 20px;"
         :table-list="exclusiveList"
-        :table-title-type="false"
-        :operate-type="operateType"
         :is-change-select.sync="isChangeSelect"
         :storage-cluster-id.sync="formData.storage_cluster_id" />
 
