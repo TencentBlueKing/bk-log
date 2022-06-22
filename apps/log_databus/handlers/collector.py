@@ -1400,7 +1400,7 @@ class CollectorHandler(object):
 
                 # 默认是成功
                 status = CollectStatus.SUCCESS
-                status_name = CollectStatus.SUCCESS
+                status_name = RunStatus.SUCCESS
 
                 if failed_count:
                     status = CollectStatus.FAILED
