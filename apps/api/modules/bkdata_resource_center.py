@@ -34,8 +34,27 @@ class _BkDataResourceCenterApi:
             method="GET",
             url=RESOURCE_CENTER_APIGATEWAY_ROOT + "clusters/query_digest/",
             module=self.MODULE,
-            description=u"获取资源管理系统集群信息",
+            description="获取资源管理系统集群信息",
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
+        )
+        self.create_resource_set = DataAPI(
+            method="POST",
+            url=RESOURCE_CENTER_APIGATEWAY_ROOT + "resource_sets/",
+            module=self.MODULE,
+            description="创建资源",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+        )
+        self.update_resource_set = DataAPI(
+            method="PATCH",
+            url=RESOURCE_CENTER_APIGATEWAY_ROOT + "resource_sets/{resource_set_id}/",
+            module=self.MODULE,
+            description="更新资源",
+            default_return_value=None,
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            url_keys=["resource_set_id"],
         )
