@@ -2766,7 +2766,13 @@ class CollectorHandler(object):
                         "workload_name": config.get("workloadName", ""),
                         "container_name": config["containerNameMatch"][0] if config["containerNameMatch"] else "",
                     },
-                    "label_selector": config.get("labelSelector"),
+                    "label_selector": {
+                        "match_labels": [
+                            {"key": key, "operator": "=", "value": value}
+                            for key, value in config.get("labelSelector", {}).get("matchLabels", {}).items()
+                        ],
+                        "match_expressions": config.get("labelSelector", {}).get("matchExpressions", []),
+                    },
                     "params": {
                         "paths": config["path"],
                         "conditions": conditions,

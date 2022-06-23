@@ -298,6 +298,13 @@ class CreateContainerCollectorSerializer(serializers.Serializer):
     yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
     yaml_config = serializers.CharField(label=_("yaml配置内容"), default="", allow_blank=True)
 
+    def validate_yaml_config(self, value):
+        try:
+            yaml_text = base64.b64decode(value).decode("utf-8")
+        except Exception:  # pylint: disable=broad-except
+            raise ValidationError(_("base64编码解析失败"))
+        return yaml_text
+
 
 class CollectorUpdateSerializer(serializers.Serializer):
     """
@@ -333,6 +340,13 @@ class UpdateContainerCollectorSerializer(serializers.Serializer):
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
     yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
     yaml_config = serializers.CharField(label=_("yaml配置内容"), default="")
+
+    def validate_yaml_config(self, value):
+        try:
+            yaml_text = base64.b64decode(value).decode("utf-8")
+        except Exception:  # pylint: disable=broad-except
+            raise ValidationError(_("base64编码解析失败"))
+        return yaml_text
 
 
 class HostInstanceByIpSerializer(serializers.Serializer):
