@@ -68,6 +68,12 @@ class ClusteringConfigHandler(object):
     def retrieve(self):
         return model_to_dict(self.data, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
+    def start(self):
+        from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
+
+        operator_aiops_service(self.index_set_id)
+        return True
+
     def update_or_create(self, params: dict):
         index_set_id = params["index_set_id"]
         log_index_set = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
@@ -169,7 +175,6 @@ class ClusteringConfigHandler(object):
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def create_service(self, index_set_id, clustering_fields, collector_config_id=None):
-        from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 
         if collector_config_id:
             collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
@@ -180,7 +185,8 @@ class ClusteringConfigHandler(object):
                 clustering_fields=clustering_fields,
             )
         send.delay(index_set_id=index_set_id)
-        operator_aiops_service(index_set_id)
+        # 在这里限制住创建，由其他方式来控制创建
+        # operator_aiops_service(index_set_id)
 
     def preview(
         self, input_data, min_members, max_dist_list, predefined_varibles, delimeter, max_log_length, is_case_sensitive

@@ -24,6 +24,7 @@ import json
 
 from django.utils.translation import ugettext_lazy as _
 
+from apps.log_search.constants import FieldDataTypeEnum
 from apps.utils.db import array_group
 from apps.exceptions import ValidationError
 from apps.utils.log import logger
@@ -171,12 +172,17 @@ class BkLogDelimiterEtlStorage(EtlStorage):
                                                             "label": "labela2dfe3",
                                                             "assign": [
                                                                 {
-                                                                    "index": str(field["field_index"]),
+                                                                    # 这里是为了对齐计算平台和监控field_index与index
+                                                                    "index": str(field["field_index"] - 1),
                                                                     "assign_to": field["alias_name"]
                                                                     if field["alias_name"]
                                                                     else field["field_name"],
                                                                     "type": BKDATA_ES_TYPE_MAP.get(
-                                                                        field.get("option").get("es_type"), "string"
+                                                                        FieldDataTypeEnum.get_es_field_type(
+                                                                            field["field_type"],
+                                                                            is_analyzed=field["is_analyzed"],
+                                                                        ),
+                                                                        "string",
                                                                     ),
                                                                 }
                                                                 for field in bkdata_fields

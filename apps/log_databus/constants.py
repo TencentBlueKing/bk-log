@@ -320,7 +320,7 @@ NODE_ATTR_PREFIX_BLACKLIST = [
 BKDATA_ES_TYPE_MAP = {
     "integer": "int",
     "long": "long",
-    "keyword": "string",
+    "keyword": "text",
     "text": "text",
     "double": "double",
     "object": "text",
