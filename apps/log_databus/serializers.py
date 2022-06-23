@@ -192,7 +192,7 @@ class LablesSerializer(serializers.Serializer):
 
 
 class LabelSelectorSerializer(serializers.Serializer):
-    match_labels = serializers.ListSerializer(child=LablesSerializer(), label=_("指定标签"), required=False)
+    match_labels = serializers.DictField(child=serializers.CharField(), label=_("指定标签"), required=False)
     match_expressions = serializers.ListSerializer(child=LablesSerializer(), label=_("指定表达式"), required=False)
 
 
@@ -905,7 +905,7 @@ class ValidateContainerCollectorYamlSerializer(serializers.Serializer):
 
     def validate_yaml_config(self, value):
         try:
-            yaml_text = base64.b64decode(value)
+            yaml_text = base64.b64decode(value).decode("utf-8")
         except Exception:  # pylint: disable=broad-except
             raise ValidationError(_("base64编码解析失败"))
         return yaml_text
@@ -922,7 +922,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
         timeout = serializers.IntegerField(label=_("最大耗时"), required=False, max_value=10)
 
     class LabelSelectorSerializer(serializers.Serializer):
-        matchLabels = serializers.ListSerializer(child=LablesSerializer(), label=_("指定标签"), required=False)
+        matchLabels = serializers.DictField(child=serializers.CharField(), label=_("指定标签"), required=False)
         matchExpressions = serializers.ListSerializer(child=LablesSerializer(), label=_("指定表达式"), required=False)
 
     class FilterSerializer(serializers.Serializer):
@@ -947,5 +947,5 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     containerNameMatch = serializers.ListField(label=_("容器名称匹配"), child=serializers.CharField(), default=[])
     labelSelector = LabelSelectorSerializer(label=_("匹配标签"), required=False)
     delimiter = serializers.CharField(label=_("分隔符"), allow_blank=True, required=False)
-    filters = FilterSerializer(label=_("过滤规则"), many=True)
+    filters = FilterSerializer(label=_("过滤规则"), many=True, required=False)
     addPodLabel = serializers.CharField(label=_("上报时是否把标签带上"), default=False)
