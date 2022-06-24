@@ -2749,7 +2749,6 @@ class CollectorHandler(object):
 
         add_pod_label = False
         extra_labels = {}
-        log_config_type = ""
         container_configs = []
 
         for config in slz.validated_data:
@@ -2789,7 +2788,7 @@ class CollectorHandler(object):
         return {
             "parse_status": True,
             "parse_result": {
-                "environment": log_config_type,
+                "environment": Environment.CONTAINER,
                 "extra_labels": [{"key": key, "value": value} for key, value in extra_labels.items()],
                 "add_pod_label": add_pod_label,
                 "configs": container_configs,
