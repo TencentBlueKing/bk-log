@@ -2603,7 +2603,11 @@ class CollectorHandler(object):
 
     def list_namespace(self, bcs_cluster_id):
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
-        namespaces = api_instance.list_namespace().to_dict()
+        try:
+            namespaces = api_instance.list_namespace().to_dict()
+        except Exception as e:  # pylint:disable=broad-except
+            logger.error(f"call list_namespace{e}")
+            return []
         if not namespaces.get("items"):
             return []
         return [
