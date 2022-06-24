@@ -2590,7 +2590,7 @@ class CollectorHandler(object):
     def list_bcs_clusters(self, bk_biz_id):
         if not bk_biz_id:
             return []
-        bcs_clusters = BcsHandler.list_bcs_cluster(bk_biz_id=bk_biz_id)
+        bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
         return [{"name": cluster["cluster_name"], "id": cluster["cluster_id"]} for cluster in bcs_clusters]
 
     def list_workload_type(self):
@@ -2620,14 +2620,14 @@ class CollectorHandler(object):
             result["children"] = node_result
             return result
         if topo_type == TopoType.POD.value:
-            namespace_list = ",".split(namespace)
             result["children"] = []
-            if namespace_list:
+            if namespace:
+                namespace_list = namespace.split(",")
                 for namespace_item in namespace_list:
                     namespace_result = {"id": namespace_item, "name": namespace_item, "type": "namespace"}
                     pods = api_instance.list_namespaced_pod(namespace=namespace_item).to_dict()
                     pod_result = []
-                    for pod in pods:
+                    for pod in pods["items"]:
                         pod_result.append(
                             {"id": pod["metadata"]["name"], "name": pod["metadata"]["name"], "type": "pod"}
                         )
