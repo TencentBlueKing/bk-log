@@ -2427,7 +2427,7 @@ class CollectorHandler(object):
     def list_namespace(self, bcs_cluster_id):
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         namespaces = api_instance.list_namespace().to_dict()
-        if not namespaces.get("items", []):
+        if not namespaces.get("items"):
             return []
         return [
             {"id": namespace["metadata"]["name"], "name": namespace["metadata"]["name"]}
