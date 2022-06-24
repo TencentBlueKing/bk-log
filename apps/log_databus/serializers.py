@@ -875,6 +875,7 @@ class MatchLabelsSerializer(serializers.Serializer):
     )
     namespace = serializers.CharField(label=_("namespace"), default=False)
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
+    selector_expression = serializers.CharField(label=_("selector表达式"), default=False)
 
     def validate(self, attrs):
         super().validate(attrs)
@@ -886,5 +887,5 @@ class MatchLabelsSerializer(serializers.Serializer):
             for expression in match_expressions
         ]
 
-        attrs["label_selector"] = ", ".join(match_labels_list + match_expressions_list)
+        attrs["selector_expression"] = ", ".join(match_labels_list + match_expressions_list)
         return attrs
