@@ -181,10 +181,10 @@ export default {
         name: this.$t('数据指纹'),
       }],
       fingerOperateData: {
-        partterSize: 0, // slider当前值
-        sliderMaxVal: 0, // partter最大值
+        patternSize: 0, // slider当前值
+        sliderMaxVal: 0, // pattern最大值
         comparedList: [], // 同比List
-        partterList: [], // partter敏感度List
+        patternList: [], // pattern敏感度List
         isShowCustomize: true, // 是否显示自定义
         signatureSwitch: false, // 数据指纹开关
         groupList: [], // 缓存分组列表
@@ -339,9 +339,9 @@ export default {
         }
       }
       Object.assign(this.fingerOperateData, {
-        partterSize: patternLevel - 1,
+        patternSize: patternLevel - 1,
         sliderMaxVal: clusterLevel.length - 1,
-        partterList: clusterLevel,
+        patternList: clusterLevel,
         comparedList: yearOnYearList,
       });
       Object.assign(this.requestData, {
@@ -361,7 +361,7 @@ export default {
         case 'compared': // 同比操作
           this.requestData.year_on_year_hour = val;
           break;
-        case 'partterSize': // patter大小
+        case 'patternSize': // patter大小
           this.requestData.pattern_level = val;
           break;
         case 'isShowNear': // 是否展示近24小时
