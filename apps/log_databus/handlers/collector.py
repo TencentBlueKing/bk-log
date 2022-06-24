@@ -2427,6 +2427,8 @@ class CollectorHandler(object):
     def list_namespace(self, bcs_cluster_id):
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         namespaces = api_instance.list_namespace().to_dict()
+        if not namespaces.get("items", []):
+            return []
         return [
             {"id": namespace["metadata"]["name"], "name": namespace["metadata"]["name"]}
             for namespace in namespaces["items"]
@@ -2438,7 +2440,8 @@ class CollectorHandler(object):
         if topo_type == TopoType.NODE.value:
             node_result = []
             nodes = api_instance.list_node().to_dict()
-            for node in nodes["items"]:
+            items = nodes.get("items", [])
+            for node in items:
                 node_result.append({"id": node["metadata"]["name"], "name": node["metadata"]["name"], "type": "node"})
             result["children"] = node_result
             return result
@@ -2450,7 +2453,8 @@ class CollectorHandler(object):
                     namespace_result = {"id": namespace_item, "name": namespace_item, "type": "namespace"}
                     pods = api_instance.list_namespaced_pod(namespace=namespace_item).to_dict()
                     pod_result = []
-                    for pod in pods["items"]:
+                    items = pods.get("items", [])
+                    for pod in items:
                         pod_result.append(
                             {"id": pod["metadata"]["name"], "name": pod["metadata"]["name"], "type": "pod"}
                         )
@@ -2459,7 +2463,8 @@ class CollectorHandler(object):
                 return result
             pods = api_instance.list_pod_for_all_namespaces().to_dict()
             namespaced_dict = defaultdict(list)
-            for pod in pods["items"]:
+            items = pods.get("items", [])
+            for pod in items:
                 namespaced_dict[pod["metadata"]["namespace"]].append(
                     {"id": pod["metadata"]["name"], "name": pod["metadata"]["name"], "type": "pod"}
                 )
@@ -2504,7 +2509,7 @@ class CollectorHandler(object):
     @classmethod
     def generate_objs(cls, objs_dict):
         result = []
-        if not objs_dict["items"]:
+        if not objs_dict.get("items"):
             return result
         for item in objs_dict["items"]:
             result.append(item["metadata"]["name"])
@@ -2512,6 +2517,18 @@ class CollectorHandler(object):
 
     def get_workload(self, workload_type, bcs_cluster_id, namespace):
         bcs = Bcs(cluster_id=bcs_cluster_id)
+        if not namespace:
+            workload_type_handler_dict = {
+                WorkLoadType.DEPLOYMENT: bcs.api_instance_apps_v1.list_deployment_for_all_namespaces,
+                WorkLoadType.STATEFUL_SET: bcs.api_instance_apps_v1.list_stateful_set_for_all_namespaces,
+                WorkLoadType.JOB: bcs.api_instance_batch_v1.list_job_for_all_namespaces,
+                WorkLoadType.DAEMON_SET: bcs.api_instance_apps_v1.list_daemon_set_for_all_namespaces,
+            }
+            workload_handler = workload_type_handler_dict.get(workload_type)
+            if not workload_handler:
+                return []
+            return self.generate_objs(workload_handler().to_dict())
+
         workload_type_handler_dict = {
             WorkLoadType.DEPLOYMENT: bcs.api_instance_apps_v1.list_namespaced_deployment,
             WorkLoadType.STATEFUL_SET: bcs.api_instance_apps_v1.list_namespaced_stateful_set,
