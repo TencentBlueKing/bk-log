@@ -2676,15 +2676,15 @@ class CollectorHandler(object):
             for label_key, label_valus in obj_item["metadata"]["labels"].items()
         ]
 
-    def match_labels(self, topo_type, bcs_cluster_id, namespace, label_selector):
+    def match_labels(self, topo_type, bcs_cluster_id, namespace, selector_expression):
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         if topo_type == TopoType.NODE.value:
-            nodes = api_instance.list_node(label_selector=label_selector).to_dict()
+            nodes = api_instance.list_node(label_selector=selector_expression).to_dict()
             return self.generate_objs(nodes)
         if topo_type == TopoType.POD.value:
             if not namespace:
                 raise MissedNamespaceException()
-            pods = api_instance.list_namespaced_pod(label_selector=label_selector, namespace=namespace).to_dict()
+            pods = api_instance.list_namespaced_pod(label_selector=selector_expression, namespace=namespace).to_dict()
             return self.generate_objs(pods)
 
     @classmethod
