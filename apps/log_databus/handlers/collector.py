@@ -92,6 +92,7 @@ from apps.log_databus.exceptions import (
     CollectorBkDataNameDuplicateException,
     CollectorResultTableIDDuplicateException,
     MissedNamespaceException,
+    BCSApiException,
     ContainerCollectConfigValidateYamlException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
@@ -639,7 +640,8 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -1796,7 +1798,8 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id,
+                ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2090,9 +2093,9 @@ class CollectorHandler(object):
     def list_bcs_collector(self, request, view, bk_biz_id):
         pg = DataPageNumberPagination()
         page_collectors = pg.paginate_queryset(
-            queryset=CollectorConfig.objects.exclude(bk_app_code="bk_log_search",).filter(
-                environment=Environment.CONTAINER, bk_biz_id=bk_biz_id
-            ),
+            queryset=CollectorConfig.objects.exclude(
+                bk_app_code="bk_log_search",
+            ).filter(environment=Environment.CONTAINER, bk_biz_id=bk_biz_id),
             request=request,
             view=view,
         )
@@ -2615,7 +2618,7 @@ class CollectorHandler(object):
             namespaces = api_instance.list_namespace().to_dict()
         except Exception as e:  # pylint:disable=broad-except
             logger.error(f"call list_namespace{e}")
-            return []
+            raise BCSApiException(BCSApiException.MESSAGE.format(error=e))
         if not namespaces.get("items"):
             return []
         return [
@@ -2691,7 +2694,9 @@ class CollectorHandler(object):
             return self.generate_objs(nodes)
         if topo_type == TopoType.POD.value:
             if not namespace:
-                raise MissedNamespaceException()
+                return self.generate_objs(
+                    api_instance.list_pod_for_all_namespaces(label_selector=selector_expression).to_dict()
+                )
             pods = api_instance.list_namespaced_pod(label_selector=selector_expression, namespace=namespace).to_dict()
             return self.generate_objs(pods)
 
