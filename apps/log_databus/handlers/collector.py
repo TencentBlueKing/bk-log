@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import base64
 import re
 import copy
 import datetime
@@ -170,7 +171,14 @@ class CollectorHandler(object):
         "fields_is_empty",
         "deal_time",
         "add_container_configs",
+        "encode_yaml_config",
     ]
+
+    def encode_yaml_config(self, collector_config, context):
+        if not collector_config["yaml_config"]:
+            return collector_config
+        collector_config["yaml_config"] = base64.b64encode(collector_config["yaml_config"].encode("utf-8"))
+        return collector_config
 
     def add_container_configs(self, collector_config, context):
         if not self.data.is_container_environment:
