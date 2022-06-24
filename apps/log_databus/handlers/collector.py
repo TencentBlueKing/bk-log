@@ -84,6 +84,7 @@ from apps.log_databus.exceptions import (
     CollectorBkDataNameDuplicateException,
     CollectorResultTableIDDuplicateException,
     MissedNamespaceException,
+    BCSApiException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
@@ -2430,7 +2431,7 @@ class CollectorHandler(object):
             namespaces = api_instance.list_namespace().to_dict()
         except Exception as e:  # pylint:disable=broad-except
             logger.error(f"call list_namespace{e}")
-            return []
+            raise BCSApiException(BCSApiException.MESSAGE.format(error=e))
         if not namespaces.get("items"):
             return []
         return [
@@ -2506,7 +2507,9 @@ class CollectorHandler(object):
             return self.generate_objs(nodes)
         if topo_type == TopoType.POD.value:
             if not namespace:
-                raise MissedNamespaceException()
+                return self.generate_objs(
+                    api_instance.list_pod_for_all_namespaces(label_selector=selector_expression).to_dict()
+                )
             pods = api_instance.list_namespaced_pod(label_selector=selector_expression, namespace=namespace).to_dict()
             return self.generate_objs(pods)
 
