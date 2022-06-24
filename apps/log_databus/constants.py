@@ -344,6 +344,18 @@ class ContainerCollectorType(object):
     STDOUT = "std_log_config"
 
 
+class ContainerCollectStatus(ChoicesEnum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    TERMINATED = "TERMINATED"
+
+    _choices_labels = (
+        (SUCCESS, _("成功")),
+        (FAILED, _("失败")),
+        (TERMINATED, _("已停用")),
+    )
+
+
 class TopoType(ChoicesEnum):
     NODE = "node"
     POD = "pod"

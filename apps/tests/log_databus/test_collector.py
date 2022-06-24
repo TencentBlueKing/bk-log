@@ -47,9 +47,7 @@ PARAMS = {
     "category_id": "application",
     "target_object_type": "HOST",
     "target_node_type": "TOPO",
-    "target_nodes": [
-        {"bk_inst_id": 33, "bk_obj_id": "module"},
-    ],
+    "target_nodes": [{"bk_inst_id": 33, "bk_obj_id": "module"}],
     "data_encoding": "UTF-8",
     "bk_data_name": "abc",
     "description": "这是一个描述",
@@ -1219,3 +1217,28 @@ class TestCollector(TestCase):
             params={"bk_biz_id": params["bk_biz_id"], "collector_config_name_en": "1"}
         )
         self.assertEqual(result["allowed"], True)
+
+    def test_validate_container_config_yaml(self, *args, **kwargs):
+        yaml_config = """
+- encoding: UTF-8
+  labelSelector:
+    matchLabels:
+      app.kubernetes.io/component: api-support
+      app.kubernetes.io/instance: bk-apigateway
+      app.kubernetes.io/name: bk-apigateway
+  logConfigType: std_log_config
+  namespace: default
+
+- encoding: UTF-8
+  labelSelector:
+    matchLabels:
+      app.kubernetes.io/instance: bkmonitor
+      app.kubernetes.io/name: influxdb-proxy
+  logConfigType: container_log_config
+  path:
+    - /var/log/influxdb-proxy.log
+    - /var/log/influxdb.log
+  namespace: default
+        """
+        result = CollectorHandler().validate_container_config_yaml(yaml_config)
+        self.assertTrue(result["parse_status"])
