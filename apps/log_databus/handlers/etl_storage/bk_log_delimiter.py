@@ -24,7 +24,6 @@ import json
 
 from django.utils.translation import ugettext_lazy as _
 
-from apps.log_search.constants import FieldDataTypeEnum
 from apps.utils.db import array_group
 from apps.exceptions import ValidationError
 from apps.utils.log import logger
@@ -178,11 +177,7 @@ class BkLogDelimiterEtlStorage(EtlStorage):
                                                                     if field["alias_name"]
                                                                     else field["field_name"],
                                                                     "type": BKDATA_ES_TYPE_MAP.get(
-                                                                        FieldDataTypeEnum.get_es_field_type(
-                                                                            field["field_type"],
-                                                                            is_analyzed=field["is_analyzed"],
-                                                                        ),
-                                                                        "string",
+                                                                        field.get("option").get("es_type"), "string"
                                                                     ),
                                                                 }
                                                                 for field in bkdata_fields
