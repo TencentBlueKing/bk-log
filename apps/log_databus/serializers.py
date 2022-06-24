@@ -873,9 +873,11 @@ class MatchLabelsSerializer(serializers.Serializer):
     label_selector = LabelSelectorSerializer(
         required=False, label=_("标签"), default={"match_labels": [], "match_expressions": []}
     )
-    namespace = serializers.CharField(label=_("namespace"), default=False)
+    namespace = serializers.CharField(label=_("namespace"), default="")
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
-    selector_expression = serializers.CharField(label=_("selector表达式"), default=False)
+    selector_expression = serializers.CharField(
+        label=_("selector表达式"), required=False, allow_null=True, allow_blank=True
+    )
 
     def validate(self, attrs):
         super().validate(attrs)
