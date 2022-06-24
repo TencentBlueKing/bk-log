@@ -78,13 +78,18 @@ class ItsmHandler(object):
         return result[0].get("id")
 
     def create_ticket(self, apply_params):
+        username = get_request_username()
         params = {
             "service_id": FeatureToggleObject.toggle(FEATURE_COLLECTOR_ITSM).feature_config.get(
                 ITSM_SERVICE_ID, settings.COLLECTOR_ITSM_SERVICE_ID
             ),
-            "creator": get_request_username(),
+            "creator": username,
             "fields": [{"key": param_key, "value": param_value} for param_key, param_value in apply_params.items()],
             "meta": {"callback_url": self._generate_callback_url()},
+            # 这里是因为需要使用admin创建单据，方能越过创建单据的权限限制
+            "bk_username": "admin",
+            # operator和creator保持一致
+            "operator": username,
         }
         result = BkItsmApi.create_ticket(params)
         return result["sn"]
