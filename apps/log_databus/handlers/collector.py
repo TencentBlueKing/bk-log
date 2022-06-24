@@ -2764,7 +2764,7 @@ class CollectorHandler(object):
                     "container": {
                         "workload_type": config.get("workloadType", ""),
                         "workload_name": config.get("workloadName", ""),
-                        "container_name": config["containerNameMatch"][0] if config["containerNameMatch"] else "",
+                        "container_name": config["containerNameMatch"][0] if config.get("containerNameMatch") else "",
                     },
                     "label_selector": {
                         "match_labels": [
@@ -2774,7 +2774,7 @@ class CollectorHandler(object):
                         "match_expressions": config.get("labelSelector", {}).get("matchExpressions", []),
                     },
                     "params": {
-                        "paths": config["path"],
+                        "paths": config.get("path", []),
                         "conditions": conditions,
                         "multiline_pattern": config.get("multiline", {}).get("pattern", ""),
                         "multiline_max_lines": config.get("multiline", {}).get("maxLines", 10),
