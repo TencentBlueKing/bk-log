@@ -264,9 +264,7 @@ class CollectorCreateSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
-    environment = serializers.CharField(
-        label=_("环境"), max_length=64, required=False, allow_null=True, allow_blank=True, default=Environment.LINUX
-    )
+    environment = serializers.CharField(label=_("环境"), max_length=64, default=Environment.LINUX)
     params = PluginParamSerializer()
 
     def validate(self, attrs):
@@ -343,7 +341,7 @@ class UpdateContainerCollectorSerializer(serializers.Serializer):
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
     yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
-    yaml_config = serializers.CharField(label=_("yaml配置内容"), default="")
+    yaml_config = serializers.CharField(label=_("yaml配置内容"), default="", allow_blank=True)
 
     def validate_yaml_config(self, value):
         try:
@@ -919,7 +917,7 @@ class MatchLabelsSerializer(serializers.Serializer):
 
 
 class ValidateContainerCollectorYamlSerializer(serializers.Serializer):
-    yaml_config = serializers.CharField(label=_("YAML配置的base64"))
+    yaml_config = serializers.CharField(label=_("YAML配置的base64"), allow_blank=True)
 
     def validate_yaml_config(self, value):
         try:

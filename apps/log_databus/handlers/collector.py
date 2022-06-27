@@ -558,6 +558,7 @@ class CollectorHandler(object):
                             "collector_scenario_id": params["collector_scenario_id"],
                             "bk_biz_id": bk_biz_id,
                             "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
+                            "environment": params["environment"],
                         }
                     )
                     model_fields["collector_scenario_id"] = params["collector_scenario_id"]
