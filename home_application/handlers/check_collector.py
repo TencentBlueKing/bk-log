@@ -31,13 +31,14 @@ class CollectorCheckHandler(object):
     data = []
     steps = dict()
 
-    def __init__(self, collector_config_id, hosts):
+    def __init__(self, collector_config_id, hosts, debug):
         try:
             self.collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
         except CollectorConfig.DoesNotExist:
             print(f"不存在的采集项ID: {collector_config_id}")
             sys.exit(1)
         self.hosts = hosts
+        self.debug = debug
 
     def run(self):
         self.data = sc.run()
@@ -53,6 +54,7 @@ class CollectorCheckHandler(object):
             print(f"{icon} {story_m.name}")
             for story_problem in story_m.problem:
                 print(f"problem: {story_problem}")
-            for story_message in story_m.message:
-                print(story_message)
+            if self.debug:
+                for story_message in story_m.message:
+                    print(story_message)
             print("")

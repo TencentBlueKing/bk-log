@@ -28,13 +28,15 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--collector_config_id", type=str, default="", help="采集项ID")
         parser.add_argument("--hosts", type=str, default="", help="主机")
+        parser.add_argument("--debug", type=bool, default=False, help="是否开启DEBUG")
 
     def handle(self, **options):
         collector_config_id = options.get("collector_config_id")
         hosts = options.get("hosts")
+        debug = options.get("debug")
         os.system("clear")
         print("*" * 100)
         print("采集项健康状态检查工具\n")
-        c = CollectorCheckHandler(collector_config_id=collector_config_id, hosts=hosts)
+        c = CollectorCheckHandler(collector_config_id=collector_config_id, hosts=hosts, debug=debug)
         c.run()
         c.command_format()

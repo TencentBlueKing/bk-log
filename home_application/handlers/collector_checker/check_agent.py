@@ -47,7 +47,7 @@ logger = logging.getLogger()
 
 
 @register_story()
-class CollectorConfigStory(BaseStory):
+class CheckAgentStory(BaseStory):
     name = CHECK_STORY_1
 
     def __init__(self):
@@ -69,8 +69,8 @@ class CollectorConfigStory(BaseStory):
                     print(f"输入合法的hosts, {e}")
 
 
-@register_step(CollectorConfigStory)
-class DiffConfig(BaseStep):
+@register_step(CheckAgentStory)
+class CheckAgent(BaseStep):
     name = CHECK_STORY_1_STEP_1
 
     def check(self):
@@ -160,19 +160,19 @@ def get_job_instance_log(bk_biz_id, job_instance_id):
     result = {"status": False, "data": [], "message": ""}
     params = {"bk_biz_id": bk_biz_id, "job_instance_id": job_instance_id}
     instance_log = []
-    is_timeout = False
+    is_finished = False
     for i in range(3):
         try:
             get_job_instance_log_result = JobApi.get_job_instance_log(params)[0]
             if get_job_instance_log_result.get("is_finished", False):
                 instance_log = get_job_instance_log_result["step_results"][0]["ip_logs"]
-                is_timeout = True
+                is_finished = True
                 break
             time.sleep(5)
         except Exception as e:  # pylint: disable=broad-except
             result["message"] = f"获取作业执行日志失败, 报错为: {e}"
             return result
-    if not is_timeout:
+    if not is_finished:
         result["message"] = "获取作业执行日志超时"
         return result
 
@@ -195,13 +195,14 @@ def get_job_instance_log(bk_biz_id, job_instance_id):
                 continue
             try:
                 log_content = json.loads(log_content)
+                module = log_content["module"]
                 item = log_content["item"]
                 data = dict_to_str(log_content["data"])
                 message = log_content["message"]
                 if log_content["status"]:
-                    log_data = f"{item} 成功, data: {data}"
+                    log_data = f"{module}:{item} 成功, data: {data}, {message}"
                 else:
-                    log_data = f"{item} 失败, data: {data}, 报错信息: {message}"
+                    log_data = f"{module}:{item} 失败, data: {data}, 报错信息: {message}"
             except Exception as e:  # pylint: disable=broad-except
                 log_data = f"获取脚本执行结果失败, 报错为: {e}"
 

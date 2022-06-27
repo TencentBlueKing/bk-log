@@ -21,9 +21,9 @@ the project delivered to anyone in the future.
 """
 
 from .base import sc
-from .check_collector_config import CollectorConfigStory
+from .check_agent import CheckAgentStory
 
 __all__ = [
     "sc",
-    "CollectorConfigStory",
+    "CheckAgentStory",
 ]
