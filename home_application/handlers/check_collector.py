@@ -52,9 +52,11 @@ class CollectorCheckHandler(object):
             print("-" * 100)
             icon = "[-]" if story_m.has_problem() else "[+]"
             print(f"{icon} {story_m.name}")
-            for story_problem in story_m.problem:
-                print(f"problem: {story_problem}")
+            for story_error in story_m.error:
+                print(f"error: {story_error}")
+            for story_warning in story_m.warning:
+                print(f"warning: {story_warning}")
             if self.debug:
-                for story_message in story_m.message:
-                    print(story_message)
+                for story_info in story_m.info:
+                    print(story_info)
             print("")

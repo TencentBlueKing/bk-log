@@ -69,18 +69,12 @@ DEFAULT_BK_USERNAME = "admin"
 DEFAULT_EXECUTE_SCRIPT_ACCOUNT = "root"
 SCRIPT_TYPE_PYTHON = 4
 
-CHECK_STORY_1 = "检查服务器Agent状态"
+CHECK_STORY_1 = "检查Agent状态"
 CHECK_STORY_1_STEP_1 = "机器上的配置是否和页面配置一致"
-CHECK_STORY_2 = "检查Gse的DataServer"
+CHECK_STORY_2 = "检查路由配置是否正确"
 CHECK_STORY_2_STEP_1 = "通过bk_data_id检查路由是否配置正确"
-CHECK_STORY_3 = "检查Kafka"
-CHECK_STORY_4 = "检查Transfer"
-CHECK_STORY_5 = "检查ES"
+CHECK_STORY_2_STEP_2 = "检查kafka内是否有数据"
+CHECK_STORY_3 = "检查Transfer"
+CHECK_STORY_4 = "检查ES"
 
-CHECK_STORIES = [
-    CHECK_STORY_1,
-    CHECK_STORY_2,
-    CHECK_STORY_3,
-    CHECK_STORY_4,
-    CHECK_STORY_5,
-]
+CHECK_STORIES = [CHECK_STORY_1, CHECK_STORY_2, CHECK_STORY_3, CHECK_STORY_4]

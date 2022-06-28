@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import json
 from home_application.constants import CHECK_STORIES
 
 
@@ -76,31 +77,44 @@ def register_step(story_cls):
 
 
 class StepReport(object):
-    def __init__(self, step, message: list = None, problem: str = ""):
+    def __init__(self, step, info: list = None, warning: list = None, error: list = None):
         self.step = step
         self.name = step.name
-        self.message = message if message else []
-        self.problem = problem
+        self.info = info if info else []
+        self.warning = warning if warning else []
+        self.error = error if warning else []
 
     def has_problem(self):
-        return self.problem != ""
+        return self.error != []
 
     def __str__(self):
-        return "story: {}, message: {}, problem: {}".format(self.name, "\n".join(self.message), self.problem)
+        return json.dumps(
+            {"step_name": self.step.name, "info": self.info, "warning": self.warning, "error": self.error},
+            ensure_ascii=False,
+        )
 
 
 class StoryReport(object):
-    def __init__(self, story, message: list = None, problem: list = None):
+    def __init__(self, story, info: list = None, warning: list = None, error: list = None):
         self.story = story
         self.name = story.name
-        self.message = message if message else []
-        self.problem = problem if problem else []
+        self.info = info if info else []
+        self.warning = warning if warning else []
+        self.error = error if warning else []
 
     def has_problem(self):
-        return self.problem != []
+        return self.error != []
+
+    def add_step_report(self, step_report):
+        self.info.extend(step_report.info)
+        self.warning.extend(step_report.warning)
+        self.error.extend(step_report.error)
 
     def __str__(self):
-        return "story: {}, message: {}, problem: {}".format(self.name, ",".join(self.message), ",".join(self.problem))
+        return json.dumps(
+            {"story_name": self.story.name, "info": self.info, "warning": self.warning, "error": self.error},
+            ensure_ascii=False,
+        )
 
 
 class BaseStory(object):
@@ -110,17 +124,13 @@ class BaseStory(object):
     def check(self):
         story_r = StoryReport(self)
         for i, step in enumerate(self.steps):
+            story_r.name = f"步骤{i+1}: {story_r.name}"
             try:
                 step_r = step.check()
             except Exception as err:
                 step_r = StepReport(self)
-                step_r.problem = f"步骤{i+1}: [{self.name}] [{step_r.name}] 异常: {err}"
-            if step_r.has_problem():
-                story_r.problem.append(step_r.problem)
-                story_r.message.append(f"步骤{i+1}: [{self.name}] [{step_r.name}] 失败")
-            else:
-                story_r.message.append(f"步骤{i+1}: [{self.name}] [{step_r.name}] 成功")
-            story_r.message.extend(step_r.message)
+                step_r.error.append(f"步骤{i+1}: [{self.name}] [{step_r.name}] 异常: {err}")
+            story_r.add_step_report(step_r)
         return story_r
 
     def __str__(self):

@@ -87,19 +87,18 @@ class CheckAgent(BaseStep):
             target_server=target_server,
             subscription_id=self.story.collector_config.subscription_id,
         )
-        if not fast_execute_script_result:
-            step_r.problem = fast_execute_script_result["message"]
+        if not fast_execute_script_result["status"]:
+            step_r.error.append(fast_execute_script_result["message"])
             return step_r
 
         get_job_instance_log_result = get_job_instance_log(
             bk_biz_id=self.story.collector_config.bk_biz_id,
             job_instance_id=fast_execute_script_result["data"]["job_instance_id"],
         )
-        step_r.message.extend(get_job_instance_log_result["data"])
-        if not get_job_instance_log_result:
-            step_r.problem = get_job_instance_log_result["message"]
+        step_r.info.extend(get_job_instance_log_result["data"])
+        if not get_job_instance_log_result["status"]:
+            step_r.error.append(get_job_instance_log_result["message"])
             return step_r
-
         return step_r
 
 
