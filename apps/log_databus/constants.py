@@ -333,8 +333,41 @@ ETL_PARAMS = {"retain_original_text": True, "separator_regexp": "", "separator":
 
 
 class Environment(object):
-    LINUX = "Linux"
-    WINDOWS = "Windows"
+    LINUX = "linux"
+    WINDOWS = "windows"
+    CONTAINER = "container"
+
+
+class ContainerCollectorType(object):
     CONTAINER = "container_log_config"
     NODE = "node_log_config"
     STDOUT = "std_log_config"
+
+
+class ContainerCollectStatus(ChoicesEnum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    TERMINATED = "TERMINATED"
+
+    _choices_labels = (
+        (SUCCESS, _("成功")),
+        (FAILED, _("失败")),
+        (TERMINATED, _("已停用")),
+    )
+
+
+class TopoType(ChoicesEnum):
+    NODE = "node"
+    POD = "pod"
+
+    _choices_labels = (
+        (NODE, _("节点")),
+        (POD, _("pod")),
+    )
+
+
+class WorkLoadType(object):
+    DEPLOYMENT = "Deployment"
+    DAEMON_SET = "DaemonSset"
+    JOB = "Job"
+    STATEFUL_SET = "StatefulSet"

@@ -114,6 +114,11 @@ class CollectorResultTableIDDuplicateException(BaseCollectorConfigException):
     MESSAGE = _("采集项{result_table_id}结果表ID重复")
 
 
+class ContainerCollectConfigValidateYamlException(BaseCollectorConfigException):
+    ERROR_CODE = "115"
+    MESSAGE = _("容器采集配置 yaml 格式不合法")
+
+
 class StorageNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "201"
     MESSAGE = _("集群不存在")
@@ -292,3 +297,13 @@ class RestoreNotFound(BaseCollectorConfigException):
 class RestoreExpired(BaseCollectorConfigException):
     ERROR_CODE = "802"
     MESSAGE = _("归档回溯已经过期")
+
+
+class MissedNamespaceException(BaseCollectorConfigException):
+    ERROR_CODE = "901"
+    MESSAGE = _("缺少namespace参数")
+
+
+class BCSApiException(BaseCollectorConfigException):
+    ERROR_CODE = "902"
+    MESSAGE = _("bcs api错误: {error}")
