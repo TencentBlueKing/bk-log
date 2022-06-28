@@ -516,6 +516,11 @@ class CollectorHandler(object):
             "params": params["params"],
             "is_active": True,
         }
+
+        if "environment" in params:
+            # 如果传了 environment 就设置，不传就不设置
+            model_fields["environment"] = params["environment"]
+
         # 判断是否存在非法IP列表
         self.cat_illegal_ips(params)
 
@@ -558,7 +563,6 @@ class CollectorHandler(object):
                             "collector_scenario_id": params["collector_scenario_id"],
                             "bk_biz_id": bk_biz_id,
                             "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
-                            "environment": params["environment"],
                         }
                     )
                     model_fields["collector_scenario_id"] = params["collector_scenario_id"]

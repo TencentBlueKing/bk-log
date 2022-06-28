@@ -264,7 +264,9 @@ class CollectorCreateSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
-    environment = serializers.CharField(label=_("环境"), max_length=64, default=Environment.LINUX)
+    environment = serializers.ChoiceField(
+        label=_("环境"), max_length=64, default=Environment.LINUX, choices=[Environment.LINUX, Environment.WINDOWS]
+    )
     params = PluginParamSerializer()
 
     def validate(self, attrs):
@@ -323,6 +325,9 @@ class CollectorUpdateSerializer(serializers.Serializer):
     data_encoding = serializers.ChoiceField(label=_("日志字符集"), choices=EncodingsEnum.get_choices())
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
+    )
+    environment = serializers.ChoiceField(
+        label=_("环境"), max_length=64, required=False, choices=[Environment.LINUX, Environment.WINDOWS]
     )
     params = PluginParamSerializer()
 
