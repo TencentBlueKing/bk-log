@@ -61,8 +61,16 @@ class Bcs:
         return dynamic_client.DynamicClient(self.k8s_client)
 
     @cached_property
-    def api_instance(self):
+    def api_instance_core_v1(self):
         return k8s_client.CoreV1Api(self.k8s_client)
+
+    @cached_property
+    def api_instance_apps_v1(self):
+        return k8s_client.AppsV1Api(self.k8s_client)
+
+    @cached_property
+    def api_instance_batch_v1(self):
+        return k8s_client.BatchV1Api(self.k8s_client)
 
     @cached_property
     def crd_api(self):

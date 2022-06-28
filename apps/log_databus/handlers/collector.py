@@ -17,6 +17,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+import base64
 import re
 import copy
 import datetime
@@ -91,6 +92,7 @@ from apps.log_databus.exceptions import (
     CollectorBkDataNameDuplicateException,
     CollectorResultTableIDDuplicateException,
     MissedNamespaceException,
+    BCSApiException,
     ContainerCollectConfigValidateYamlException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
@@ -170,7 +172,14 @@ class CollectorHandler(object):
         "fields_is_empty",
         "deal_time",
         "add_container_configs",
+        "encode_yaml_config",
     ]
+
+    def encode_yaml_config(self, collector_config, context):
+        if not collector_config["yaml_config"]:
+            return collector_config
+        collector_config["yaml_config"] = base64.b64encode(collector_config["yaml_config"].encode("utf-8"))
+        return collector_config
 
     def add_container_configs(self, collector_config, context):
         if not self.data.is_container_environment:
@@ -631,7 +640,8 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -986,7 +996,7 @@ class CollectorHandler(object):
 
     def get_task_status(self, id_list):
         if self.data.is_container_environment:
-            self.get_container_collect_status(container_collector_config_id_list=id_list)
+            return self.get_container_collect_status(container_collector_config_id_list=id_list)
         return self.get_subscription_task_status(task_id_list=id_list)
 
     def get_container_collect_status(self, container_collector_config_id_list):
@@ -1400,7 +1410,7 @@ class CollectorHandler(object):
 
                 # 默认是成功
                 status = CollectStatus.SUCCESS
-                status_name = CollectStatus.SUCCESS
+                status_name = RunStatus.SUCCESS
 
                 if failed_count:
                     status = CollectStatus.FAILED
@@ -1788,7 +1798,8 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id,
+                ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2082,9 +2093,9 @@ class CollectorHandler(object):
     def list_bcs_collector(self, request, view, bk_biz_id):
         pg = DataPageNumberPagination()
         page_collectors = pg.paginate_queryset(
-            queryset=CollectorConfig.objects.exclude(bk_app_code="bk_log_search",).filter(
-                environment=Environment.CONTAINER, bk_biz_id=bk_biz_id
-            ),
+            queryset=CollectorConfig.objects.exclude(
+                bk_app_code="bk_log_search",
+            ).filter(environment=Environment.CONTAINER, bk_biz_id=bk_biz_id),
             request=request,
             view=view,
         )
@@ -2118,7 +2129,7 @@ class CollectorHandler(object):
             "collector_config_name": data["collector_config_name"],
             "collector_config_name_en": data["collector_config_name_en"],
             "collector_scenario_id": CollectorScenarioEnum.ROW.value,
-            "custom_type": data["custom_type"],
+            "custom_type": CustomTypeEnum.LOG.value,
             "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
             "data_link_id": int(data["data_link_id"]),
@@ -2234,7 +2245,6 @@ class CollectorHandler(object):
     def update_container_config(self, data):
         collector_config_update = {
             "collector_config_name": data["collector_config_name"],
-            "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
             "environment": data["environment"],
             "bcs_cluster_id": data["bcs_cluster_id"],
@@ -2584,13 +2594,14 @@ class CollectorHandler(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.exception("[delete_container_release] delete bklog config failed: %s", e)
 
-        # 无论成败与否，都要删掉
-        container_config.delete()
+        # 无论成败与否，都设置为已停用
+        container_config.status = ContainerCollectStatus.TERMINATED.value
+        container_config.save()
 
     def list_bcs_clusters(self, bk_biz_id):
         if not bk_biz_id:
             return []
-        bcs_clusters = BcsHandler.list_bcs_cluster(bk_biz_id=bk_biz_id)
+        bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
         return [{"name": cluster["cluster_name"], "id": cluster["cluster_id"]} for cluster in bcs_clusters]
 
     def list_workload_type(self):
@@ -2603,7 +2614,13 @@ class CollectorHandler(object):
 
     def list_namespace(self, bcs_cluster_id):
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
-        namespaces = api_instance.list_namespace().to_dict()
+        try:
+            namespaces = api_instance.list_namespace().to_dict()
+        except Exception as e:  # pylint:disable=broad-except
+            logger.error(f"call list_namespace{e}")
+            raise BCSApiException(BCSApiException.MESSAGE.format(error=e))
+        if not namespaces.get("items"):
+            return []
         return [
             {"id": namespace["metadata"]["name"], "name": namespace["metadata"]["name"]}
             for namespace in namespaces["items"]
@@ -2615,19 +2632,21 @@ class CollectorHandler(object):
         if topo_type == TopoType.NODE.value:
             node_result = []
             nodes = api_instance.list_node().to_dict()
-            for node in nodes["items"]:
+            items = nodes.get("items", [])
+            for node in items:
                 node_result.append({"id": node["metadata"]["name"], "name": node["metadata"]["name"], "type": "node"})
             result["children"] = node_result
             return result
         if topo_type == TopoType.POD.value:
-            namespace_list = ",".split(namespace)
             result["children"] = []
-            if namespace_list:
+            if namespace:
+                namespace_list = namespace.split(",")
                 for namespace_item in namespace_list:
                     namespace_result = {"id": namespace_item, "name": namespace_item, "type": "namespace"}
                     pods = api_instance.list_namespaced_pod(namespace=namespace_item).to_dict()
                     pod_result = []
-                    for pod in pods:
+                    items = pods.get("items", [])
+                    for pod in items:
                         pod_result.append(
                             {"id": pod["metadata"]["name"], "name": pod["metadata"]["name"], "type": "pod"}
                         )
@@ -2636,7 +2655,8 @@ class CollectorHandler(object):
                 return result
             pods = api_instance.list_pod_for_all_namespaces().to_dict()
             namespaced_dict = defaultdict(list)
-            for pod in pods["items"]:
+            items = pods.get("items", [])
+            for pod in items:
                 namespaced_dict[pod["metadata"]["namespace"]].append(
                     {"id": pod["metadata"]["name"], "name": pod["metadata"]["name"], "type": "pod"}
                 )
@@ -2667,21 +2687,23 @@ class CollectorHandler(object):
             for label_key, label_valus in obj_item["metadata"]["labels"].items()
         ]
 
-    def match_labels(self, topo_type, bcs_cluster_id, namespace, label_selector):
+    def match_labels(self, topo_type, bcs_cluster_id, namespace, selector_expression):
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         if topo_type == TopoType.NODE.value:
-            nodes = api_instance.list_node(label_selector=label_selector).to_dict()
+            nodes = api_instance.list_node(label_selector=selector_expression).to_dict()
             return self.generate_objs(nodes)
         if topo_type == TopoType.POD.value:
             if not namespace:
-                raise MissedNamespaceException()
-            pods = api_instance.list_namespaced_pod(label_selector=label_selector, namespace=namespace).to_dict()
+                return self.generate_objs(
+                    api_instance.list_pod_for_all_namespaces(label_selector=selector_expression).to_dict()
+                )
+            pods = api_instance.list_namespaced_pod(label_selector=selector_expression, namespace=namespace).to_dict()
             return self.generate_objs(pods)
 
     @classmethod
     def generate_objs(cls, objs_dict):
         result = []
-        if not objs_dict["items"]:
+        if not objs_dict.get("items"):
             return result
         for item in objs_dict["items"]:
             result.append(item["metadata"]["name"])
@@ -2689,6 +2711,18 @@ class CollectorHandler(object):
 
     def get_workload(self, workload_type, bcs_cluster_id, namespace):
         bcs = Bcs(cluster_id=bcs_cluster_id)
+        if not namespace:
+            workload_type_handler_dict = {
+                WorkLoadType.DEPLOYMENT: bcs.api_instance_apps_v1.list_deployment_for_all_namespaces,
+                WorkLoadType.STATEFUL_SET: bcs.api_instance_apps_v1.list_stateful_set_for_all_namespaces,
+                WorkLoadType.JOB: bcs.api_instance_batch_v1.list_job_for_all_namespaces,
+                WorkLoadType.DAEMON_SET: bcs.api_instance_apps_v1.list_daemon_set_for_all_namespaces,
+            }
+            workload_handler = workload_type_handler_dict.get(workload_type)
+            if not workload_handler:
+                return []
+            return self.generate_objs(workload_handler().to_dict())
+
         workload_type_handler_dict = {
             WorkLoadType.DEPLOYMENT: bcs.api_instance_apps_v1.list_namespaced_deployment,
             WorkLoadType.STATEFUL_SET: bcs.api_instance_apps_v1.list_namespaced_stateful_set,
@@ -2707,10 +2741,16 @@ class CollectorHandler(object):
         try:
             # 验证是否为合法的 yaml 格式
             configs = yaml.load(yaml_config, Loader=yaml.FullLoader)
-        except Exception:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             return {
                 "parse_status": False,
-                "parse_result": [{"start_line_number": 0, "end_line_number": 0, "message": _("当前配置不是合法的 yaml 格式")}],
+                "parse_result": [
+                    {
+                        "start_line_number": 0,
+                        "end_line_number": 0,
+                        "message": _("当前配置不是合法的 yaml 格式: {err}").format(err=e),
+                    }
+                ],
             }
         try:
             slz = ContainerCollectorYamlSerializer(data=configs, many=True)
@@ -2743,7 +2783,6 @@ class CollectorHandler(object):
 
         add_pod_label = False
         extra_labels = {}
-        log_config_type = ""
         container_configs = []
 
         for config in slz.validated_data:
@@ -2758,11 +2797,17 @@ class CollectorHandler(object):
                     "container": {
                         "workload_type": config.get("workloadType", ""),
                         "workload_name": config.get("workloadName", ""),
-                        "container_name": config["containerNameMatch"][0] if config["containerNameMatch"] else "",
+                        "container_name": config["containerNameMatch"][0] if config.get("containerNameMatch") else "",
                     },
-                    "label_selector": config.get("labelSelector"),
+                    "label_selector": {
+                        "match_labels": [
+                            {"key": key, "operator": "=", "value": value}
+                            for key, value in config.get("labelSelector", {}).get("matchLabels", {}).items()
+                        ],
+                        "match_expressions": config.get("labelSelector", {}).get("matchExpressions", []),
+                    },
                     "params": {
-                        "paths": config["path"],
+                        "paths": config.get("path", []),
                         "conditions": conditions,
                         "multiline_pattern": config.get("multiline", {}).get("pattern", ""),
                         "multiline_max_lines": config.get("multiline", {}).get("maxLines", 10),
@@ -2777,7 +2822,7 @@ class CollectorHandler(object):
         return {
             "parse_status": True,
             "parse_result": {
-                "environment": log_config_type,
+                "environment": Environment.CONTAINER,
                 "extra_labels": [{"key": key, "value": value} for key, value in extra_labels.items()],
                 "add_pod_label": add_pod_label,
                 "configs": container_configs,
