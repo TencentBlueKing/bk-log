@@ -2135,7 +2135,7 @@ class CollectorHandler(object):
             "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
             "data_link_id": int(data["data_link_id"]),
-            "environment": data["environment"],
+            "environment": Environment.CONTAINER,
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
@@ -2248,7 +2248,7 @@ class CollectorHandler(object):
         collector_config_update = {
             "collector_config_name": data["collector_config_name"],
             "description": data["description"] or data["collector_config_name"],
-            "environment": data["environment"],
+            "environment": Environment.CONTAINER,
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
@@ -2305,7 +2305,7 @@ class CollectorHandler(object):
             "description": data["description"] or data["collector_config_name"],
             "data_link_id": int(conf["data_link_id"]),
             "bk_app_code": bk_app_code,
-            "environment": data["environment"],
+            "environment": Environment.CONTAINER,
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
@@ -2421,7 +2421,7 @@ class CollectorHandler(object):
             "collector_config_name": data["collector_config_name"],
             "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
-            "environment": data["environment"],
+            "environment": Environment.CONTAINER,
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
@@ -2530,6 +2530,8 @@ class CollectorHandler(object):
         delete_container_configs = container_configs[config_length::]
         for config in delete_container_configs:
             self.delete_container_release(config)
+            # 增量比对后，需要真正删除配置
+            config.delete()
 
     def create_container_release(self, container_config: ContainerCollectorConfig):
         """
@@ -2547,7 +2549,7 @@ class CollectorHandler(object):
                 "path": container_config.params["paths"],
                 "encoding": container_config.data_encoding,
                 "extMeta": {label["key"]: label["value"] for label in self.data.extra_labels},
-                "logConfigType": self.data.environment,
+                "logConfigType": container_config.collector_type,
                 "allContainer": container_config.all_container,
                 "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
                 "workloadType": container_config.workload_type,
