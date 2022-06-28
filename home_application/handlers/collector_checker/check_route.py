@@ -19,56 +19,23 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import sys
 import logging
 from apps.api import GseApi
-from apps.log_databus.models import CollectorConfig
-from home_application.handlers.collector_checker.base import (
-    BaseStory,
-    BaseStep,
-    register_story,
-    register_step,
-    StepReport,
-)
 from home_application.constants import (
-    CHECK_STORY_2,
-    CHECK_STORY_2_STEP_1,
     DEFAULT_BK_USERNAME,
 )
 
 logger = logging.getLogger()
 
 
-@register_story()
-class CheckGseDSStory(BaseStory):
-    name = CHECK_STORY_2
-
-    def __init__(self):
-        for i in sys.argv:
-            if "collector_config_id" in i:
-                collector_config_id = i.split("=")[1]
-                self.bk_data_id = CollectorConfig.objects.get(collector_config_id=collector_config_id).bk_data_id
-                continue
-
-
-@register_step(CheckGseDSStory)
-class CheckRoute(BaseStep):
-    name = CHECK_STORY_2_STEP_1
-
-    def check(self):
-        step_r = StepReport(self)
-        bk_data_id = self.story.bk_data_id
-        get_route_result = get_route(bk_data_id)
-        if not get_route_result["status"]:
-            step_r.error.append(get_route_result["message"])
-            return step_r
-
-        return step_r
-
-
 def get_route(bk_data_id) -> dict:
     """
     bk_data_id -> stream_id -> kafka_address
+    {
+        "status": False,
+        "data": [],
+        "message": ""
+    }
     """
     result = {"status": False, "data": [], "message": ""}
     query_route_params = {"condition": {"channel_id": bk_data_id}, "operation": {"operator_name": DEFAULT_BK_USERNAME}}
@@ -98,9 +65,13 @@ def get_route(bk_data_id) -> dict:
                                     "route_name": r["name"],
                                     "stream_name": stream_name,
                                     "kafka_topic_name": r["stream_to"]["kafka"]["topic_name"],
-                                    "kafka_partition": r["stream_to"]["kafka"]["partition"],
+                                    "kafka_partition": r["stream_to"]["kafka"]["partition"] - 1,
                                     "ip": addr["ip"],
                                     "port": addr["port"],
+                                    "sasl_plain_username": query_stream_to_data[0].get("sasl_username", None),
+                                    "sasl_plain_password": query_stream_to_data[0].get("sasl_passwd", None),
+                                    "sasl_mechanism": query_stream_to_data[0].get("sasl_mechanisms", None),
+                                    "security_protocol": query_stream_to_data[0].get("security_protocol", None),
                                 }
                             )
                 except Exception as e:
