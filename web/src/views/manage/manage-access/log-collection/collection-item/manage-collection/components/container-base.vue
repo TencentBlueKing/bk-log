@@ -205,14 +205,16 @@
       <div>
         <span>{{$t('附加日志标签')}}</span>
         <template v-if="collectorData.extra_labels.length">
-          <div v-for="(extraItem, extraIndex) in collectorData.extra_labels" :key="extraIndex">
-            <div class="specify-box">
-              <div class="specify-container justify-bt">
-                <span>{{extraItem.key}}</span>
-                <div class="operator">=</div>
-              </div>
-              <div class="specify-container">
-                <span>{{extraItem.value}}</span>
+          <div>
+            <div v-for="(extraItem, extraIndex) in collectorData.extra_labels" :key="extraIndex">
+              <div class="specify-box">
+                <div class="specify-container justify-bt">
+                  <span>{{extraItem.key}}</span>
+                  <div class="operator">=</div>
+                </div>
+                <div class="specify-container">
+                  <span>{{extraItem.value}}</span>
+                </div>
               </div>
             </div>
           </div>

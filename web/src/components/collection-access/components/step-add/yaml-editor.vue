@@ -39,7 +39,6 @@
   </div>
 </template>
 <script>
-// base64Decode
 import { base64Encode, base64Decode } from '@/common/util';
 import { setDiagnosticsOptions } from 'monaco-yaml';
 import monacoEditor from './monaco-editor';

@@ -463,6 +463,7 @@
         theme="primary"
         header-position="left"
         :mask-close="false">
+        {{submitErrorMessage}}
       </bk-dialog>
 
       <div class="page-operate">
@@ -707,6 +708,7 @@ export default {
       isShowLabelTargetDialog: false, // 是否展示指定标签dialog
       isShowContainerTargetDialog: false, // 是否展示指定容器dialog
       isShowSubmitErrorDialog: false, // 是否展示容器提交出错弹窗
+      submitErrorMessage: '', // 容器日志提交出错弹窗信息
       formTime: null, // form更改防抖timer
       currentSelector: {}, // 当前操作的配置项指定标签值
       currentContainer: {}, // 当前操作的配置项指定容器值
@@ -888,6 +890,9 @@ export default {
           match_labels,
           match_expressions,
         };
+        if (!params.conditions?.separator_filters) {
+          params.conditions.separator_filters = [{ fieldindex: '', word: '', op: '=', logic_op: 'and' }];
+        }
         if (JSON.stringify(container) === JSON.stringify(this.allContainer)
         && JSON.stringify(label_selector) === JSON.stringify(this.allLabelSelector)) {
           isAllContainer = true;
@@ -970,20 +975,34 @@ export default {
       // 容器环境时 进行配置项检查
       if (!this.isPhysicsEnvironment) {
         let containerConfigValidate = true;
-        // 配置项里过滤内容是否有分隔符过滤 有则进行配置项form校验
-        const isHaveSeparator = this.$refs.containerConfigRef.some(item => item.subFormData.params.conditions.type === 'separator');
+        const configList = this.$refs.containerConfigRef;
+        // 标准输出环境下配置项里过滤内容是否有分隔符过滤 有则进行配置项form校验
+        const isCheckConfigItem = !(this.currentEnvironment === 'std_log_config' && this.formData.collector_scenario_id === 'row');
+        // 检查配置项中是否有分隔符过滤
+        const isHaveSeparator = configList.some(item => item.subFormData.params.conditions.type === 'separator');
         // 当容器环境不为标准输出且不为行日志文件时进行配置项form校验
-        if (!(this.currentEnvironment === 'std_log_config' && this.formData.collector_scenario_id === 'row') || isHaveSeparator) {
+        if (isCheckConfigItem || isHaveSeparator) {
+          // 检查是否含有字段提取
+          const matchIndexList = configList.reduce((pre, cur, index) => {
+            cur.subFormData.params.conditions.type === 'match' && pre.push(index);
+            return pre;
+          }, []);
+          // 获取应该检查的配置项的数量
+          const checkLength = matchIndexList.length ? (configList.length - matchIndexList.length) : configList.length;
           let validateLength = 0;
-          for (const item of this.$refs.containerConfigRef) {
+          for (const key in configList) {
+            const index = Number(key);
+            // 如果有字符串过滤的情况下则不进行验证直接跳过
+            if (matchIndexList.includes(index)) continue;
             try {
-              await item.$refs.validateForm.validate();
+              // 这里如果表单没有校验的dom元素会一直是padding状态 没有返回值
+              await configList[index].$refs.validateForm.validate();
               validateLength += 1;
             } catch (error) {
               continue;
             }
           }
-          validateLength !== this.$refs.containerConfigRef.length && (containerConfigValidate = false);
+          validateLength !== checkLength && (containerConfigValidate = false);
         }
         // 是否填写容器或标签
         const containerValidate = this.validateConfigContainer();
@@ -1039,7 +1058,7 @@ export default {
         requestUrl = 'container/create';
       }
       if (this.isYaml) {
-        this.yamlFormData.configs.forEach(item => this.filterParams(item.params));
+        this.yamlFormData.configs.forEach(item => this.filterParams(item.params, item.collector_type));
         subParams = Object.assign(params, this.yamlFormData, { yaml_config_enabled: true });
       } else {
         subParams = Object.assign(params, { yaml_config_enabled: false });
@@ -1053,6 +1072,11 @@ export default {
           this.setDetail(res.data.collector_config_id);
         }
       })
+        .catch((error) => {
+          console.warn(error);
+          // this.isShowSubmitErrorDialog = true;
+          // this.submitErrorMessage = error.message;
+        })
         .finally(() => {
           this.isHandle = false;
           this.$emit('update:containerLoading', false);
@@ -1079,7 +1103,6 @@ export default {
         extra_labels,
         configs,
         yaml_config,
-        yaml_config_enabled,
       } = formData;
       const containerFromData = {}; // 容器环境From数据
       const physicsFromData = {}; // 物理环境From数据
@@ -1100,14 +1123,14 @@ export default {
           extra_labels,
           configs,
           yaml_config,
-          yaml_config_enabled,
+          yaml_config_enabled: this.isYaml,
         });
         containerFromData.configs.forEach((item) => {
           JSON.stringify(item.namespaces) === '["*"]' && (item.namespaces = []);
           delete item.isAllContainer;
           delete item.letterIndex;
           item.collector_type = this.currentEnvironment;
-          this.filterParams(item.params);
+          this.filterParams(item.params, item.collector_type);
         });
         containerFromData.extra_labels = extra_labels.filter(item => !(item.key === '' && item.value === ''));
         if (this.isUpdate) {
@@ -1139,8 +1162,9 @@ export default {
     /**
      * @desc: 对表单的params传参参数进行处理
      * @param { Object } params
+     * @param { String } collectorType 配置项中的容器类型
      */
-    filterParams(params) {
+    filterParams(params, collectorType = '') {
       if (this.formData.collector_scenario_id !== 'wineventlog') {
         if (!this.hasMultilineReg) { // 行首正则未开启
           delete params.multiline_pattern;
@@ -1153,7 +1177,12 @@ export default {
           separator,
           separator_filters,
         };
-        params.paths = params.paths.map(item => (item.value ? item.value : item));
+        // 若为标准输出 则直接清空日志路径
+        if (collectorType === 'std_log_config') {
+          params.paths = [];
+        } else {
+          params.paths = params.paths.filter(item => item?.value).map(item => ({ value: item }));
+        }
       }
     },
     // 选择日志类型

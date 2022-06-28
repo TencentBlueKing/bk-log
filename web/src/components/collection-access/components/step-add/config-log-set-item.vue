@@ -453,7 +453,7 @@ export default {
     },
     // 是否是标准输出
     isStandardOutput() {
-      return this.currentEnvironment === 'Stdout';
+      return this.currentEnvironment === 'std_log_config';
     },
     // win日志类型是否有报错
     winCannotPass() {
