@@ -19,6 +19,7 @@
   - WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
   -->
+
 <template>
   <bk-dialog
     width="480"
@@ -27,14 +28,21 @@
     :value="isShowDialog"
     :mask-close="false"
     :title="$t('指定容器')"
-    @confirm="handelConfirmContainer"
+    :auto-close="false"
+    :confirm-fn="handelConfirmContainer"
     @cancel="handelCancelDialog">
-    <bk-form class="specify-container" form-type="vertical">
+    <bk-form
+      class="specify-container"
+      form-type="vertical"
+      ref="containerFormRef"
+      :model="formData">
       <bk-form-item :label="$t('Workload类型')" required>
-        <bk-select v-model="formData.workload_type">
+        <bk-select
+          :class="`${typeError && 'type-error'}`"
+          v-model="formData.workload_type">
           <bk-option
-            v-for="option in selectList"
-            :key="option.id"
+            v-for="(option, index) in typeList"
+            :key="index"
             :id="option.id"
             :name="option.name">
           </bk-option>
@@ -42,12 +50,14 @@
       </bk-form-item>
       <bk-form-item :label="$t('Workload名称')" required>
         <bk-select
+          :class="`${nameError && 'name-error'}`"
           v-model="formData.workload_name"
+          :disabled="nameIsLoading"
           allow-create
           searchable>
           <bk-option
-            v-for="option in selectList"
-            :key="option.id"
+            v-for="(option, index) in nameList"
+            :key="`${option}_${index}`"
             :id="option.id"
             :name="option.name">
           </bk-option>
@@ -73,53 +83,90 @@ export default {
   },
   data() {
     return {
-      selectValue: '',
       formData: {
         workload_type: '',
         workload_name: '',
         container_name: '',
       },
-      selectList: [{
-        name: '123',
-        id: '3',
-      },
-      {
-        name: '456',
-        id: '4',
-      },
-      {
-        name: '123',
-        id: '5',
-      },
-      {
-        name: '456',
-        id: '6',
-      }],
+      typeError: false,
+      nameError: false,
+      nameIsLoading: false,
+      typeList: [],
+      nameList: [],
     };
   },
+  computed: {},
   watch: {
     isShowDialog(val) {
       if (val) {
         Object.assign(this.formData, this.container);
+        this.getWorkLoadTypeList();
       } else {
-        Object.assign(this.formData, {
-          workload_type: '',
-          workload_name: '',
-          container_name: '',
-        });
+        setTimeout(() => {
+          Object.assign(this.formData, {
+            workload_type: '',
+            workload_name: '',
+            container_name: '',
+          });
+          this.nameList = [];
+          this.typeList = [];
+        }, 300);
       }
+    },
+    'formData.workload_type'(val) {
+      this.typeError = false;
+      // this.formData.workload_name = '';
+      this.getWorkLoadNameList(val);
+    },
+    'formData.workload_name'() {
+      this.nameError = false;
     },
   },
   methods: {
     handelCancelDialog() {
-      this.$emit('update:isShowDialog', false);
+      this.$emit('update:is-show-dialog', false);
     },
-    handelConfirmContainer() {
+    async handelConfirmContainer() {
+      const { workload_type: type, workload_name: name, container_name } = this.formData;
+      type === '' && (this.typeError = true);
+      name === '' && (this.nameError = true);
+      if (!name || !type) return;
       const containerObj = {
-        container: JSON.parse(JSON.stringify(this.formData)),
+        container: {
+          workload_type: type,
+          workload_name: name,
+          container_name,
+        },
       };
       this.$emit('configContainerChange', containerObj);
-      this.$emit('update:isShowDialog', false);
+      this.$emit('update:is-show-dialog', false);
+    },
+    getWorkLoadTypeList() {
+      this.$http.request('container/getWorkLoadType').then((res) => {
+        if (res.code === 0) {
+          this.typeList = res.data.map(item => ({ id: item, name: item }));
+        }
+      })
+        .catch((err) => {
+          console.warn(err);
+        });
+    },
+    getWorkLoadNameList(type) {
+      this.nameIsLoading = true;
+      const { bk_biz_id, namespace, bcs_cluster_id } =  this.container;
+      const requestUrl = `container/${!namespace ? 'getNotNameSpaceWorkLoadName' : 'getWorkLoadName'}`;
+      const params = { type, bk_biz_id, namespace, bcs_cluster_id };
+      this.$http.request(requestUrl, { params }).then((res) => {
+        if (res.code === 0) {
+          this.nameList = res.data.map(item => ({ id: item, name: item }));
+        }
+      })
+        .catch((err) => {
+          console.warn(err);
+        })
+        .finally(() => {
+          this.nameIsLoading = false;
+        });;
     },
   },
 };
@@ -128,6 +175,11 @@ export default {
 .specify-container {
   .bk-form-control {
     width: 100%;
+  }
+
+  .type-error,
+  .name-error {
+    border-color: #ff5656;
   }
 }
 </style>

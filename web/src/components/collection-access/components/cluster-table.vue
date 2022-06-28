@@ -64,7 +64,7 @@
         <div class="cluster-illustrate" v-show="!!activeItem">
           <p class="illustrate-title">{{$t('集群说明')}}</p>
           <div class="illustrate-container">
-            <div v-for="[key,value] of Object.entries(illustrateLabelData)" :key="key">
+            <div v-for="[key, value] of Object.entries(illustrateLabelData)" :key="key">
               <span class="illustrate-label">{{key}}：</span>
               <span class="illustrate-value">{{value}}</span>
             </div>

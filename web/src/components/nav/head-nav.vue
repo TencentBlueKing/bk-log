@@ -336,6 +336,7 @@ export default {
 <style lang="scss">
   @import '../../scss/mixins/clearfix';
   @import '../../scss/conf';
+  @import '../../scss/mixins/flex';
 
   .log-search-nav {
     height: 50px;
@@ -435,18 +436,19 @@ export default {
       }
 
       .icon-language-container {
-        height: 40px;
+        height: 50px;
         margin: 4px;
         cursor: pointer;
 
+        @include flex-center;
+
         .icon-circle-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
           width: 32px;
           height: 32px;
           border-radius: 16px;
           transition: all .2s;
+
+          @include flex-center;
 
           .log-icon {
             font-size: 16px;

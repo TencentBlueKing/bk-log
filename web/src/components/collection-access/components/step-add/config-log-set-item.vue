@@ -23,9 +23,10 @@
 <template>
   <div v-if="scenarioId !== 'wineventlog'">
     <bk-form
+      ref="validateForm"
       :label-width="getLabelWidth"
       :form-type="showType"
-      :model="configData">
+      :model="subFormData">
       <div v-if="!isStandardOutput">
         <!-- 日志路径 -->
         <div class="form-div mt log-paths" v-for="(log, index) in logPaths" :key="index">
@@ -176,9 +177,9 @@
           <bk-form-item :rules="rules.maxLine" property="params.multiline_max_lines">
             <bk-input
               v-model="subFormData.params.multiline_max_lines"
+              data-test-id="sourceLogBox_input_mostMatches"
               type="number"
               :precision="0"
-              data-test-id="sourceLogBox_input_mostMatches"
               :show-controls="false">
             </bk-input>
           </bk-form-item>
@@ -186,9 +187,9 @@
           <bk-form-item :rules="rules.maxTimeout" property="params.multiline_timeout">
             <bk-input
               v-model="subFormData.params.multiline_timeout"
+              data-test-id="sourceLogBox_input_maximumTimeConsuming"
               type="number"
               :precision="0"
-              data-test-id="sourceLogBox_input_maximumTimeConsuming"
               :show-controls="false">
             </bk-input>
           </bk-form-item>
@@ -205,9 +206,10 @@
   <div v-else>
     <!-- 日志种类 -->
     <bk-form
+      ref="validateForm"
       :label-width="getLabelWidth"
       :form-type="showType"
-      :model="configData"
+      :model="subFormData"
       class="mt">
       <bk-form-item
         :label="$t('configDetails.logSpecies')"
@@ -215,7 +217,7 @@
         required>
         <bk-checkbox-group
           v-model="selectLogSpeciesList"
-          @change="outherBlurRules">
+          @change="otherBlurRules">
           <div class="species-item">
             <bk-checkbox
               v-for=" (item, index) in logSpeciesList"
@@ -225,13 +227,13 @@
               {{item.name}}
             </bk-checkbox>
             <bk-tag-input
-              v-model="outherSpeciesList"
-              :class="outherRules ? 'tagRulesColor' : ''"
+              v-model="otherSpeciesList"
+              :class="otherRules ? 'tagRulesColor' : ''"
               :allow-auto-match="true"
               :has-delete-icon="true"
               :allow-create="true"
-              @blur="outherBlurRules"
-              @remove="outherBlurRules">
+              @blur="otherBlurRules"
+              @remove="otherBlurRules">
             </bk-tag-input>
           </div>
         </bk-checkbox-group>
@@ -245,9 +247,9 @@
       <div class="form-div win-filter" v-for="(item, index) in eventSettingList" :key="index">
         <bk-select
           class="select-div"
+          v-model="item.type"
           :clearable="false"
-          @selected="tagBlurRules(item,index)"
-          v-model="item.type">
+          @selected="tagBlurRules(item,index)">
           <bk-option
             v-for="option in selectEventList"
             :key="option.id"
@@ -260,11 +262,11 @@
           class="tag-input"
           v-model="item.list"
           :class="item.isCorrect ? '' : 'tagRulesColor'"
-          @blur="tagBlurRules(item,index)"
-          @remove="tagBlurRules(item,index)"
           :allow-auto-match="true"
           :has-delete-icon="true"
-          :allow-create="true">
+          :allow-create="true"
+          @blur="tagBlurRules(item,index)"
+          @remove="tagBlurRules(item,index)">
         </bk-tag-input>
         <div class="ml9">
           <i :class="
@@ -281,7 +283,7 @@
   </div>
 </template>
 <script>
-import MultilineRegDialog from '../multiline-reg-dialog';
+import MultilineRegDialog from './multiline-reg-dialog';
 import { mapGetters } from 'vuex';
 export default {
   components: {
@@ -308,6 +310,10 @@ export default {
       type: Number,
       require: true,
     },
+    isCloneOrUpdate: {
+      type: Boolean,
+      require: true,
+    },
   },
   data() {
     return {
@@ -321,6 +327,38 @@ export default {
         separator_filters: [ // 分隔符过滤条件
           {
             required: true,
+            trigger: 'blur',
+          },
+        ],
+        notEmptyForm: [ // 不能为空的表单
+          {
+            required: true,
+            trigger: 'blur',
+          },
+        ],
+        maxLine: [ // 最多匹配行数
+          {
+            validator: (val) => {
+              if (val > 1000) {
+                this.formData.params.multiline_max_lines = '1000';
+              } else if (val < 1) {
+                this.formData.params.multiline_max_lines = '1';
+              }
+              return true;
+            },
+            trigger: 'blur',
+          },
+        ],
+        maxTimeout: [ // 最大耗时
+          {
+            validator: (val) => {
+              if (val > 10) {
+                this.formData.params.multiline_timeout = '10';
+              } else if (val < 1) {
+                this.formData.params.multiline_timeout = '1';
+              }
+              return true;
+            },
             trigger: 'blur',
           },
         ],
@@ -350,7 +388,7 @@ export default {
       },
       type: 'and',
       showRegDialog: false, // 显示段日志调试弹窗
-      outherRules: false, // 是否有其他规则
+      otherRules: false, // 是否有其他规则
       logSpeciesList: [{
         id: 'Application',
         name: this.$t('应用程序'),
@@ -361,11 +399,11 @@ export default {
         id: 'System',
         name: this.$t('win系统'),
       }, {
-        id: 'Outher',
+        id: 'Other',
         name: this.$t('其他'),
       }],
-      selectLogSpeciesList: ['Application', 'Security', 'System', 'Outher'],
-      outherSpeciesList: [],
+      selectLogSpeciesList: ['Application', 'Security', 'System', 'Other'],
+      otherSpeciesList: [],
       selectEventList: [
         {
           id: 'winlog_event_id',
@@ -381,6 +419,7 @@ export default {
       eventSettingList: [
         { type: 'winlog_event_id', list: [], isCorrect: true },
       ],
+      isFirst: true,
     };
   },
   computed: {
@@ -414,7 +453,16 @@ export default {
     },
     // 是否是标准输出
     isStandardOutput() {
-      return this.currentEnvironment === '标准输出';
+      return this.currentEnvironment === 'Stdout';
+    },
+    // win日志类型是否有报错
+    winCannotPass() {
+      return this.eventSettingList.some(el => el.isCorrect === false) || this.otherRules;
+    },
+    // win日志类型是否在编辑的时候进行改变
+    winChangeItem() {
+      const { eventSettingList, selectLogSpeciesList, otherSpeciesList } = this;
+      return { eventSettingList, selectLogSpeciesList, otherSpeciesList };
     },
   },
   watch: {
@@ -428,9 +476,58 @@ export default {
     configLength() {
       Object.assign(this.subFormData, this.configData);
     },
+    winChangeItem: {
+      deep: true,
+      handler() {
+        if (!this.isFirst) this.$emit('update:isWinTypeFormChange', true);
+        this.isFirst = false;
+      },
+    },
   },
   created() {
     Object.assign(this.subFormData, this.configData);
+    if (this.isCloneOrUpdate) {
+      const { params } = this.subFormData;
+      // 分隔符过滤条件 and/or 初始值
+      if (params.conditions?.type === 'separator') {
+        this.type = params.conditions.separator_filters[0].logic_op;
+      }
+      if (this.scenarioId !== 'wineventlog') {
+        if (params.paths.length > 0) {
+          params.paths = typeof params.paths[0] === 'string' ? params.paths.map(item => ({ value: item })) : params.paths;
+        } else { // 兼容原日志路径为空列表
+          params.paths = [{ value: '' }];
+        }
+      } else {
+        const otherList = params.winlog_name.filter(v => ['Application', 'Security', 'System'].indexOf(v) === -1);
+        if (otherList.length > 0) {
+          this.otherSpeciesList = otherList;
+          this.selectLogSpeciesList = params.winlog_name;
+          this.selectLogSpeciesList.push('Other');
+        } else {
+          this.selectLogSpeciesList = params.winlog_name;
+        }
+
+        delete params.ignore_older;
+        delete params.max_bytes;
+        delete params.tail_files;
+
+        const newEventSettingList = [];
+        for (const [key, val] of Object.entries(params)) {
+          if (key !== 'winlog_name' && val[0] !== '') {
+            newEventSettingList.push({
+              type: key,
+              list: val,
+              isCorrect: true,
+            });
+          }
+        }
+        if (newEventSettingList.length !== 0) {
+          this.eventSettingList = newEventSettingList;
+        }
+        this.selectDisabledChange();
+      }
+    }
   },
   methods: {
     // 修改分隔符过滤的并&或
@@ -449,7 +546,6 @@ export default {
       }
     },
     chooseType(value) {
-      // this.isString = value === 'match';
       this.subFormData.params.conditions.type = value;
       const conditions = this.subFormData.params.conditions || {};
       if (!this.isString && conditions.separator_filters.length < 1) {
@@ -475,10 +571,10 @@ export default {
       };
     },
     addWinEvent() {
-      const e = this.eventSettingList.map(el => el.type);
-      const s = this.selectEventList.map(el => el.id);
-      if (e.length !== s.length) {
-        const selectFilter = s.filter(v => e.indexOf(v) === -1);
+      const eventType = this.eventSettingList.map(el => el.type);
+      const selectType = this.selectEventList.map(el => el.id);
+      if (eventType.length !== selectType.length) {
+        const selectFilter = selectType.filter(v => eventType.indexOf(v) === -1);
         this.eventSettingList.push({ type: selectFilter[0], list: [], isCorrect: true });
         this.selectDisabledChange(true);
       }
@@ -504,13 +600,13 @@ export default {
         }
       }
     },
-    outherBlurRules(input, tags) {
+    otherBlurRules(input, tags) {
       if (!tags) return;
-      this.outherRules = !tags.every(el => /^[a-zA-Z /]*$/.test(el));
-      tags.length === 0 && (this.outherRules = false);
+      this.otherRules = !tags.every(el => /^[a-zA-Z /]*$/.test(el));
+      tags.length === 0 && (this.otherRules = false);
       const slist = this.selectLogSpeciesList;
-      if (slist.length === 1 && slist[0] === 'Outher' && this.outherSpeciesList.length === 0) {
-        this.outherRules = true;
+      if (slist.length === 1 && slist[0] === 'Other' && !this.otherSpeciesList.length) {
+        this.otherRules = true;
       }
     },
     tagBlurRules(item, index) {
@@ -552,6 +648,8 @@ export default {
 }
 
 .filter-title {
+  display: inline-block;
   border-bottom: 1px dashed #000;
+  margin-bottom: 8px;
 }
 </style>

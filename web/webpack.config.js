@@ -28,6 +28,7 @@ const fs = require('fs');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const LogWebpackPlugin = require('./webpack/log-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CliMonacoWebpackPlugin = require('@blueking/bkmonitor-cli/node_modules/monaco-editor-webpack-plugin');
 const devProxyUrl = 'http://appdev.bktencent.com:9002';
 const devHost = 'appdev.bktencent.com';
 const loginHost = 'https://paas-dev.bktencent.com';
@@ -133,21 +134,23 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
       }),
     );
   }
-  // bkmonitor-cli里的monaco-editor-webpack-plugin版本低于monaco-yaml需要的版本 这里需要重新new一个新的实例
-  // 由于版本不同使用instanceof不能找到plugins的实例 后续写法需要优化
-  const pluginArr = Object.values(config.plugins[config.plugins.length - 2]);
-  pluginArr[0].languages.push('yaml');
-  pluginArr[0].customLanguages = [
-    {
-      label: 'yaml',
-      entry: 'monaco-yaml',
-      worker: {
-        id: 'monaco-yaml/yamlWorker',
-        entry: 'monaco-yaml/yaml.worker',
-      },
-    },
-  ];
-  config.plugins[config.plugins.length - 2] = new MonacoWebpackPlugin(pluginArr[0]);
+
+  config.plugins.forEach((item, index) => {
+    if (item instanceof CliMonacoWebpackPlugin) {
+      item.options.languages.push('yaml');
+      item.options.customLanguages = [
+        {
+          label: 'yaml',
+          entry: 'monaco-yaml',
+          worker: {
+            id: 'monaco-yaml/yamlWorker',
+            entry: 'monaco-yaml/yaml.worker',
+          },
+        },
+      ];
+      config.plugins[index] = new MonacoWebpackPlugin(item.options);
+    }
+  });
 
   return {
     ...config,

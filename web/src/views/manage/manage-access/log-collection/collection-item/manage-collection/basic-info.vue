@@ -23,7 +23,7 @@
 <template>
   <div class="basic-info-container">
     <div>
-      <div class="deploy-sub" v-if="isContainer">
+      <div class="deploy-sub" v-if="!isContainer">
         <!-- 数据ID -->
         <div>
           <span>{{ $t('dataSource.dataId') }}</span>
@@ -160,7 +160,7 @@
             </div>
           </div>
           <div class="content-style"
-               v-else-if="collectorData.collector_scenario_id === 'wineventlog' && isThereValue">
+               v-else-if="collectorData.collector_scenario_id === 'wineventlog' && isHaveEventValue">
             <span>{{ $t('configDetails.filterContent') }}</span>
             <div class="win-log">
               <div>
@@ -229,22 +229,24 @@ export default {
     return {
       // 右边展示的创建人、创建时间
       createAndTimeData: [],
-      isContainer: true,
     };
   },
   computed: {
     ...mapState(['projectId']),
     getEventIDStr() {
-      return this.collectorData.params.winlog_event_id.join(',');
+      return this.collectorData.params.winlog_event_id?.join(',') || '';
     },
     getLevelStr() {
-      return this.collectorData.params.winlog_level.join(',');
+      return this.collectorData.params.winlog_level?.join(',') || '';
     },
     getLogSpeciesStr() {
-      return this.collectorData.params.winlog_name.join(',');
+      return this.collectorData.params.winlog_name?.join(',') || '';
     },
-    isThereValue() {
-      return this.collectorData.params.winlog_event_id.length > 0 || this.collectorData.params.winlog_level.length > 0;
+    isHaveEventValue() {
+      return this.collectorData.params.winlog_event_id.length || this.collectorData.params.winlog_level.length;
+    },
+    isContainer() {
+      return this.collectorData.environment === 'container';
     },
     // 自定义上报基本信息
     isCustomReport() {
@@ -320,9 +322,6 @@ export default {
 
 <style lang="scss" scoped>
   .basic-info-container {
-    display: flex;
-    justify-content: space-between;
-
     .deploy-sub > div {
       display: flex;
       margin-bottom: 33px;
@@ -389,9 +388,13 @@ export default {
 
     .button-place {
       margin-left: 118px;
+      padding-bottom: 100px;
     }
 
     .create-name-and-time {
+      position: fixed;
+      top: 192px;
+      right: 60px;
       border-top: 1px solid #dcdee5;
       border-radius: 2px;
 

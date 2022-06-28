@@ -1,3 +1,25 @@
+<!--
+  - Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
+  - Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+  - BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
+  -
+  - License for BK-LOG 蓝鲸日志平台:
+  - -------------------------------------------------------------------
+  -
+  - Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+  - documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+  - the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+  - and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+  - The above copyright notice and this permission notice shall be included in all copies or substantial
+  - portions of the Software.
+  -
+  - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+  - LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+  - NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+  - WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+  - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+  -->
+
 <template>
   <div class="editor-container">
     <template>
@@ -10,7 +32,6 @@
       </div>
     </template>
     <div ref="editorRefs"
-         class="editor"
          :style="{ height: calcSize(renderHeight), width: calcSize(renderWidth), position: 'relative' }">
       <span
         v-if="isFull"
@@ -46,10 +67,10 @@ import * as monaco from 'monaco-editor';
 self.MonacoEnvironment = {
   getWorkerUrl(moduleId, label) {
     if (label === 'yaml') {
-      return process.env.NODE_ENV === 'production' ? `${window.static_url}log/yaml.worker.js` : './yaml.worker.js';
+      return process.env.NODE_ENV === 'production' ? `${window.static_url}/yaml.worker.js` : './yaml.worker.js';
     }
     return process.env.NODE_ENV === 'production'
-      ? `${window.static_url}log/editor.worker.js`
+      ? `${window.static_url}/editor.worker.js`
       : './editor.worker.js';
   },
 };
@@ -91,6 +112,14 @@ export default {
     isShowProblem: {
       type: Boolean,
       default: true,
+    },
+    fontFamily: {
+      type: String,
+      default: 'Microsoft YaHei',
+    },
+    warningList: {
+      type: Array,
+      default: () => [],
     },
   },
   data() {
@@ -135,6 +164,12 @@ export default {
       this.renderHeight = newVal;
       this.initHeight = this.height;
     },
+    warningList(newVal) {
+      this.setWaringMarker(newVal);
+    },
+    'problemList.length'(newVal) {
+      this.$emit('get-problem-state', !!newVal);
+    },
   },
   mounted() {
     this.initWidth = this.width;
@@ -146,7 +181,6 @@ export default {
       this.editor.layout();
     });
     window.addEventListener('resize', this.handleFullScreen);
-    // this.setWaringMarker();
   },
   beforeDestroy() {
     this.editor?.dispose();
@@ -166,8 +200,8 @@ export default {
           value: this.value,
           theme: this.theme,
           language: this.language,
+          fontFamily: this.fontFamily,
           fontSize: 16,
-          fontFamily: 'Microsoft YaHei',
           cursorBlinking: 'solid',
           automaticLayout: true,
         },
@@ -185,7 +219,6 @@ export default {
       this.editor.onDidChangeCursorSelection((event) => {
         this.$emit('selection', event);
       });
-      // this.editor.onDidChangeModel(event => this.$emit('model', event))
       this.editor.onDidChangeModelContent((event) => {
         const value = this.editor.getValue();
         if (this.value !== value) {
@@ -281,18 +314,14 @@ export default {
 
     /**
      * @desc: 设置警告提示
+     * Tips: 传参参数为 [{startLineNumber:xxx, endLineNumber:xxx, startColumn:xxx, endColumn:xxx, message:xxx}]
      */
-    setWaringMarker() {
-      const markers = [];
-      markers.push({
-        startLineNumber: 8,
-        endLineNumber: 8,
-        startColumn: 1,
-        endColumn: 12,
-        message: 'sdsadsad',
+    setWaringMarker(markers = []) {
+      const waringMarkers =  markers.map(item => ({
+        ...item,
         severity: monaco.MarkerSeverity.Warning,
-      });
-      monaco.editor.setModelMarkers(this.editor.getModel(), 'owner', markers);
+      }));
+      monaco.editor.setModelMarkers(this.editor.getModel(), 'owner', waringMarkers);
     },
     /**
      * @desc: 警告bottom点击鼠标事件
@@ -342,6 +371,8 @@ export default {
   width: 100%;
   padding: 6px 20px;
   position: absolute;
+  overflow-y: auto;
+  max-height: 500px;
   z-index: 999;
   background: #212121;
   bottom: 0;
@@ -354,28 +385,26 @@ export default {
   color: #dcdee5;
   cursor: pointer;
 
+  .problem-text {
+    margin-left: 10px;
+  }
+
   &:hover {
     color: #fff;
     background: #424242;
   }
 }
 
-.editor {
-  overflow: hidden;
-}
-
 .problems-drag {
-  position: absolute;
-  width: 25px;
+  position: sticky;
+  width: 26px;
   height: 6px;
-  display: flex;
-  align-items: center;
-  justify-items: center;
   border-radius: 3px;
-  top: 6px;
   transform: translateY(-50%);
-  left: 50%;
+  left: calc(50% - 13px);
   z-index: 100;
+
+  @include flex-center();
 
   &::after {
     content: ' ';
@@ -404,7 +433,6 @@ export default {
     @include flex-center();
   }
 }
-
 
 .icon-un-full-screen {
   position: absolute;

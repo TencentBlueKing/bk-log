@@ -46,10 +46,11 @@
         <bk-button
           v-if="hasFailed"
           class="fr"
+          icon="refresh"
           data-test-id="collectionDistribution_button_refresh"
           :title="$t('configDetails.batchRetry')"
           :disabled="hasRunning"
-          @click="issuedRetry">{{ $t('复制目标') }}
+          @click="issuedRetry">{{ $t('configDetails.batchRetry') }}
         </bk-button>
       </div>
       <section class="cluster-collaspse" v-if="tableList.length">
