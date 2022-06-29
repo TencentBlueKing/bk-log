@@ -368,6 +368,6 @@ class TopoType(ChoicesEnum):
 
 class WorkLoadType(object):
     DEPLOYMENT = "Deployment"
-    DAEMON_SET = "DaemonSset"
+    DAEMON_SET = "DaemonSet"
     JOB = "Job"
     STATEFUL_SET = "StatefulSet"
