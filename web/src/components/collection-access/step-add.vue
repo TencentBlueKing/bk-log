@@ -796,7 +796,9 @@ export default {
     yamlFormData: {
       deep: true,
       handler(val) {
-        val?.configs[0]?.collector_type && (this.currentEnvironment = val.configs[0].collector_type);
+        if (val && val.configs.length) {
+          this.currentEnvironment = val.configs[0].collector_type;
+        }
       },
     },
   },

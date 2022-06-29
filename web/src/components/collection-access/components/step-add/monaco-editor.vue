@@ -67,10 +67,10 @@ import * as monaco from 'monaco-editor';
 self.MonacoEnvironment = {
   getWorkerUrl(moduleId, label) {
     if (label === 'yaml') {
-      return process.env.NODE_ENV === 'production' ? `${window.static_url}/yaml.worker.js` : './yaml.worker.js';
+      return process.env.NODE_ENV === 'production' ? `${window.static_url}yaml.worker.js` : './yaml.worker.js';
     }
     return process.env.NODE_ENV === 'production'
-      ? `${window.static_url}/editor.worker.js`
+      ? `${window.static_url}editor.worker.js`
       : './editor.worker.js';
   },
 };

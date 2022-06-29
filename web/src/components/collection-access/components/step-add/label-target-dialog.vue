@@ -91,8 +91,10 @@
         </div>
 
         <div class="result">
-          <div :class="['result-container',!preWidth && 'is-sliding-close']"
-               :style="`width : ${preWidth}px`">
+          <div
+            v-bkloading="{ isLoading: resultLoading, zIndex: 10 }"
+            :class="['result-container',!preWidth && 'is-sliding-close']"
+            :style="`width : ${preWidth}px`">
             <div class="child-title">
               <span>{{$t('结果预览')}}</span>
               <span></span>
@@ -103,7 +105,9 @@
               {{$t('个内容')}}
             </span>
             <div class="hit-container">
-              <div class="hit-item" v-for="item of hitResultList" :key="item.id">{{item.name}}</div>
+              <div class="hit-item" v-for="item of hitResultList" :key="item.id">
+                <span :title="item.name">{{item.name}}</span>
+              </div>
             </div>
             <div class="bk-log-drag-simple" @mousedown="handleMouseDown"></div>
           </div>
@@ -164,6 +168,7 @@ export default {
       preWidth: 280,
       treeLoading: false, // 树loading
       labelLoading: false, // 标签loading
+      resultLoading: false, // 结果loading
       timer: null,
       currentNameSpaceStr: '',
     };
@@ -188,8 +193,6 @@ export default {
     isShowDialog(val) {
       if (val) {
         this.getTreeList();
-      } else {
-
       }
     },
   },
@@ -325,6 +328,7 @@ export default {
     getResultShow(val) {
       clearTimeout(this.timer);
       this.timer = setTimeout(() => {
+        this.resultLoading = true;
         // 表达式或标签是否有选中的值  获取结果请求
         if (Object.values(val).some(item => item.length)) {
           const data = {
@@ -341,9 +345,13 @@ export default {
           })
             .catch((err) => {
               console.warn(err);
+            })
+            .finally(() => {
+              this.resultLoading = false;
             });
         } else {
           this.hitResultList = [];
+          this.resultLoading = false;
         }
       }, 1000);
     },

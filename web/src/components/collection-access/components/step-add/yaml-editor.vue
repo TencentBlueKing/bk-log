@@ -170,9 +170,9 @@ export default {
       };
       this.$http.request('container/yamlJudgement', { data: { yaml_config: yaml } }).then((res) => {
         if (res.code === 0) {
-          const data = res.data;
-          if (data?.parse_result.length && !data?.parse_status) {
-            this.warningList = data.parse_result.map(item => ({
+          const { parse_result: parseResult, parse_status: parseStatus } = res.data;
+          if (Array.isArray(parseResult) && !parseStatus) {
+            this.warningList = parseResult.map(item => ({
               startLineNumber: item.start_line_number,
               endLineNumber: item.end_line_number,
               message: item.message,
@@ -180,9 +180,9 @@ export default {
             return;
           }
 
-          if (data?.parse_status) {
+          if (parseStatus) {
             this.warningList = [];
-            const yamlFormData = data.parse_result;
+            const yamlFormData = parseResult;
             yamlFormData.configs.forEach((item) => {
               delete item.raw_config;
             });
