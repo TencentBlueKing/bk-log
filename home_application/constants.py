@@ -84,7 +84,7 @@ KAFKA_TEST_GROUP = "kafka_test_group"
 DEFAULT_KAFKA_SECURITY_PROTOCOL = "PLAINTEXT"
 DEFAULT_KAFKA_SASL_MECHANISM = "PLAIN"
 
-TABLE_TRANSFER = "transfer.base"
+TABLE_TRANSFER = "pushgateway_transfer_metircs.base"
 
 # transfer metrics
 TRANSFER_METRICS = [

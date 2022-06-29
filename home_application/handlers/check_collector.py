@@ -32,6 +32,7 @@ from home_application.handlers.collector_checker.check_agent import (
 )
 from home_application.handlers.collector_checker.check_kafka import get_kafka_test_group_latest_log
 from home_application.handlers.collector_checker.check_route import CheckRouteStory
+from home_application.handlers.collector_checker.check_transfer import CheckTransferStory
 
 
 class CollectorCheckHandler(object):
@@ -41,6 +42,8 @@ class CollectorCheckHandler(object):
         except CollectorConfig.DoesNotExist:
             print(f"不存在的采集项ID: {collector_config_id}")
             sys.exit(1)
+        self.collector_config_id = collector_config_id
+        self.bk_data_id = self.collector_config.bk_data_id
         if hosts:
             try:
                 # "0:ip1,0:ip2,1:ip3"
@@ -73,6 +76,11 @@ class CollectorCheckHandler(object):
         check_kafka_report = self.check_kafka()
         self.story_report.append(check_kafka_report)
         if check_kafka_report.has_problem():
+            return
+
+        check_transfer_report = self.check_transfer()
+        self.story_report.append(check_transfer_report)
+        if check_transfer_report.has_problem():
             return
 
     def command_format(self):
@@ -166,7 +174,7 @@ class CollectorCheckHandler(object):
         """
         检查步骤第二步, 会把获得的kafka信息放到类实例里供第三步使用
         """
-        story = CheckRouteStory(self.collector_config.bk_data_id)
+        story = CheckRouteStory(self.bk_data_id)
         story_report = story.get_report()
         self.kafka = story.kafka
         return story_report
@@ -197,4 +205,7 @@ class CollectorCheckHandler(object):
         - 通过第三步获取到的数据, 进行清洗, 看清洗是不是成功
         - 获取transfer
         """
-        pass
+        story = CheckTransferStory(collector_config=self.collector_config, latest_log=self.latest_log)
+        story.clean_data()
+        story.get_metrics()
+        return story.get_report()

@@ -20,10 +20,12 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import logging
-from collections import defaultdict
 
 from django.conf import settings
+
+from apps.log_databus.constants import EtlConfig
 from config.domains import MONITOR_APIGATEWAY_ROOT
+from apps.log_databus.models import CleanStash
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from bk_monitor.api.client import Client
 from home_application.constants import CHECK_STORY_4, TABLE_TRANSFER, TRANSFER_METRICS
@@ -35,14 +37,22 @@ logger = logging.getLogger()
 class CheckTransferStory(BaseStory):
     name = CHECK_STORY_4
 
-    def __init__(self, bk_data_id: int, latest_log: list = None, etl_config: str = "", etl_params: dict = None):
+    def __init__(self, collector_config, latest_log):
         super().__init__()
-        self.bk_data_id = bk_data_id
+        self.collector_config_id = collector_config.collector_config_id
+        self.bk_data_id = collector_config.bk_data_id
         self.latest_log = latest_log
-        self.etl_config = etl_config
-        self.etl_params = etl_params
+        self.etl_config = collector_config.etl_config
+        try:
+            clean_stash = CleanStash.objects.get(collector_config_id=self.collector_config_id)
+            self.etl_params = clean_stash.etl_params
+        except CleanStash.DoesNotExist:
+            self.etl_params = None
 
     def clean_data(self):
+        if self.etl_config == EtlConfig.BK_LOG_TEXT or not self.etl_config:
+            self.report.add_info("[Transfer] [etl_preview] 无清洗规则, 跳过检查清洗")
+            return
         etl_storage = EtlStorage.get_instance(etl_config=self.etl_config)
         success_count = 0
         for data in self.latest_log:
@@ -54,13 +64,10 @@ class CheckTransferStory(BaseStory):
             self.report.add_error("[Transfer] [etl_preview] 清洗数据失败")
 
     def get_metrics(self):
-        datas = []
         for metric_name in TRANSFER_METRICS:
-            datas.append(self.get_transfer_metric(self.bk_data_id, metric_name))
+            self.get_transfer_metric(metric_name)
 
-    @staticmethod
-    def get_transfer_metric(bk_data_id: int, metric_name: str):
-        data = defaultdict(lambda: defaultdict(int))
+    def get_transfer_metric(self, metric_name: str):
         bk_monitor_client = Client(
             bk_app_code=settings.APP_CODE,
             bk_app_secret=settings.SECRET_KEY,
@@ -70,18 +77,19 @@ class CheckTransferStory(BaseStory):
         )
         params = {
             "sql": f"select sum({metric_name}) as {metric_name} from {TABLE_TRANSFER} \
-            where time >= '5m' and bk_data_id == {bk_data_id} group by task_data_id,target"
+            where time >= '1m' and id == {self.bk_data_id}"
         }
         try:
             result = bk_monitor_client.get_ts_data(data=params)
             for ts_data in result["list"]:
                 value = ts_data[metric_name]
-                target = ts_data["target"]
-                task_data_id = ts_data["task_data_id"]
-                data[target][task_data_id] = value
+                if ts_data["id"] == self.bk_data_id:
+                    self.report.add_info(f"[Transfer] [get_ts_data] {metric_name}: {value}")
+                    return
+            message = f"[Transfer] [get_ts_data] 获取 {metric_name} 数据为空"
+            self.report.add_warning(message)
 
         except Exception as e:
             message = f"[Transfer] [get_ts_data] 获取 {metric_name} 数据失败, err: {e}"
             logger.error(message)
-
-        return data
+            self.report.add_warning(message)
