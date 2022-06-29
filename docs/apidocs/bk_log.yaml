@@ -309,6 +309,17 @@
   dest_http_method: GET
   is_hidden: True
 
+- path: /v2/bk_log/databus_collectors/batch_subscription_status/
+  name: batch_subscription_status
+  label: 日志平台-获取采集订阅状态
+  label_en: bk_log list subscription status
+  method: GET
+  api_type: query
+  comp_codename: generic.v2.bk_log.bk_log_component
+  dest_path: /api/v1/databus/collectors/batch_subscription_status/
+  dest_http_method: GET
+  is_hidden: True
+
 - path: /v2/bk_log/databus_collector_plugins/
   name: create_collector_plugin
   label: 日志平台-创建采集插件
