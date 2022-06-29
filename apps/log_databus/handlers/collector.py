@@ -1724,7 +1724,7 @@ class CollectorHandler(object):
         collect_status = {
             status["collector_id"]: status
             for status in self.get_subscription_status_by_list(
-                [collector["index_set_id"] for collector in collectors], multi_flag=True
+                [collector["collector_config_id"] for collector in collectors], multi_flag=True
             )
         }
 
