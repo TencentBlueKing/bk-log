@@ -302,3 +302,8 @@ class RestoreExpired(BaseCollectorConfigException):
 class MissedNamespaceException(BaseCollectorConfigException):
     ERROR_CODE = "901"
     MESSAGE = _("缺少namespace参数")
+
+
+class BCSApiException(BaseCollectorConfigException):
+    ERROR_CODE = "902"
+    MESSAGE = _("bcs api错误: {error}")

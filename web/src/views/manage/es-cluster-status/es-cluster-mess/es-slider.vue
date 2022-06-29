@@ -1374,6 +1374,10 @@ export default {
     width: 48%;
 
     @include flex-justify(space-between);
+
+    ::v-deep .bk-form-input {
+      height: 34px;
+    }
   }
 
   .space-item-label {

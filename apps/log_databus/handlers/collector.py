@@ -92,6 +92,7 @@ from apps.log_databus.exceptions import (
     CollectorBkDataNameDuplicateException,
     CollectorResultTableIDDuplicateException,
     MissedNamespaceException,
+    BCSApiException,
     ContainerCollectConfigValidateYamlException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
@@ -644,7 +645,8 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -1801,7 +1803,8 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id,
+                ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2095,9 +2098,9 @@ class CollectorHandler(object):
     def list_bcs_collector(self, request, view, bk_biz_id):
         pg = DataPageNumberPagination()
         page_collectors = pg.paginate_queryset(
-            queryset=CollectorConfig.objects.exclude(bk_app_code="bk_log_search",).filter(
-                environment=Environment.CONTAINER, bk_biz_id=bk_biz_id
-            ),
+            queryset=CollectorConfig.objects.exclude(
+                bk_app_code="bk_log_search",
+            ).filter(environment=Environment.CONTAINER, bk_biz_id=bk_biz_id),
             request=request,
             view=view,
         )
@@ -2618,7 +2621,13 @@ class CollectorHandler(object):
 
     def list_namespace(self, bcs_cluster_id):
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
-        namespaces = api_instance.list_namespace().to_dict()
+        try:
+            namespaces = api_instance.list_namespace().to_dict()
+        except Exception as e:  # pylint:disable=broad-except
+            logger.error(f"call list_namespace{e}")
+            raise BCSApiException(BCSApiException.MESSAGE.format(error=e))
+        if not namespaces.get("items"):
+            return []
         return [
             {"id": namespace["metadata"]["name"], "name": namespace["metadata"]["name"]}
             for namespace in namespaces["items"]
@@ -2630,7 +2639,8 @@ class CollectorHandler(object):
         if topo_type == TopoType.NODE.value:
             node_result = []
             nodes = api_instance.list_node().to_dict()
-            for node in nodes["items"]:
+            items = nodes.get("items", [])
+            for node in items:
                 node_result.append({"id": node["metadata"]["name"], "name": node["metadata"]["name"], "type": "node"})
             result["children"] = node_result
             return result
@@ -2642,7 +2652,8 @@ class CollectorHandler(object):
                     namespace_result = {"id": namespace_item, "name": namespace_item, "type": "namespace"}
                     pods = api_instance.list_namespaced_pod(namespace=namespace_item).to_dict()
                     pod_result = []
-                    for pod in pods["items"]:
+                    items = pods.get("items", [])
+                    for pod in items:
                         pod_result.append(
                             {"id": pod["metadata"]["name"], "name": pod["metadata"]["name"], "type": "pod"}
                         )
@@ -2651,7 +2662,8 @@ class CollectorHandler(object):
                 return result
             pods = api_instance.list_pod_for_all_namespaces().to_dict()
             namespaced_dict = defaultdict(list)
-            for pod in pods["items"]:
+            items = pods.get("items", [])
+            for pod in items:
                 namespaced_dict[pod["metadata"]["namespace"]].append(
                     {"id": pod["metadata"]["name"], "name": pod["metadata"]["name"], "type": "pod"}
                 )
@@ -2682,21 +2694,23 @@ class CollectorHandler(object):
             for label_key, label_valus in obj_item["metadata"]["labels"].items()
         ]
 
-    def match_labels(self, topo_type, bcs_cluster_id, namespace, label_selector):
+    def match_labels(self, topo_type, bcs_cluster_id, namespace, selector_expression):
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         if topo_type == TopoType.NODE.value:
-            nodes = api_instance.list_node(label_selector=label_selector).to_dict()
+            nodes = api_instance.list_node(label_selector=selector_expression).to_dict()
             return self.generate_objs(nodes)
         if topo_type == TopoType.POD.value:
             if not namespace:
-                raise MissedNamespaceException()
-            pods = api_instance.list_namespaced_pod(label_selector=label_selector, namespace=namespace).to_dict()
+                return self.generate_objs(
+                    api_instance.list_pod_for_all_namespaces(label_selector=selector_expression).to_dict()
+                )
+            pods = api_instance.list_namespaced_pod(label_selector=selector_expression, namespace=namespace).to_dict()
             return self.generate_objs(pods)
 
     @classmethod
     def generate_objs(cls, objs_dict):
         result = []
-        if not objs_dict["items"]:
+        if not objs_dict.get("items"):
             return result
         for item in objs_dict["items"]:
             result.append(item["metadata"]["name"])
@@ -2704,6 +2718,18 @@ class CollectorHandler(object):
 
     def get_workload(self, workload_type, bcs_cluster_id, namespace):
         bcs = Bcs(cluster_id=bcs_cluster_id)
+        if not namespace:
+            workload_type_handler_dict = {
+                WorkLoadType.DEPLOYMENT: bcs.api_instance_apps_v1.list_deployment_for_all_namespaces,
+                WorkLoadType.STATEFUL_SET: bcs.api_instance_apps_v1.list_stateful_set_for_all_namespaces,
+                WorkLoadType.JOB: bcs.api_instance_batch_v1.list_job_for_all_namespaces,
+                WorkLoadType.DAEMON_SET: bcs.api_instance_apps_v1.list_daemon_set_for_all_namespaces,
+            }
+            workload_handler = workload_type_handler_dict.get(workload_type)
+            if not workload_handler:
+                return []
+            return self.generate_objs(workload_handler().to_dict())
+
         workload_type_handler_dict = {
             WorkLoadType.DEPLOYMENT: bcs.api_instance_apps_v1.list_namespaced_deployment,
             WorkLoadType.STATEFUL_SET: bcs.api_instance_apps_v1.list_namespaced_stateful_set,
