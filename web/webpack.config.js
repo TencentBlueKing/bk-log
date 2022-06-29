@@ -25,8 +25,10 @@ const wepack = require('webpack');
 const WebpackBar = require('webpackbar');
 const path = require('path');
 const fs = require('fs');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const LogWebpackPlugin = require('./webpack/log-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CliMonacoWebpackPlugin = require('@blueking/bkmonitor-cli/node_modules/monaco-editor-webpack-plugin');
 const devProxyUrl = 'http://appdev.bktencent.com:9002';
 const devHost = 'appdev.bktencent.com';
 const loginHost = 'https://paas-dev.bktencent.com';
@@ -132,6 +134,23 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
       }),
     );
   }
+
+  config.plugins.forEach((item, index) => {
+    if (item instanceof CliMonacoWebpackPlugin) {
+      item.options.languages.push('yaml');
+      item.options.customLanguages = [
+        {
+          label: 'yaml',
+          entry: 'monaco-yaml',
+          worker: {
+            id: 'monaco-yaml/yamlWorker',
+            entry: 'monaco-yaml/yaml.worker',
+          },
+        },
+      ];
+      config.plugins[index] = new MonacoWebpackPlugin(item.options);
+    }
+  });
 
   return {
     ...config,
