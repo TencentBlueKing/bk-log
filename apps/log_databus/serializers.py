@@ -24,6 +24,7 @@ import base64
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError as SlzValidationError
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
 from apps.log_databus.constants import (
@@ -985,5 +986,5 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs["logConfigType"] != ContainerCollectorType.STDOUT and not attrs.get("path"):
-            raise ValidationError(_("当日志类型不为标准输出时，日志采集路径不能为空"))
+            raise SlzValidationError(_("当日志类型不为标准输出时，日志采集路径不能为空"))
         return attrs
