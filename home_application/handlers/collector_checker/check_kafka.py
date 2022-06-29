@@ -42,7 +42,6 @@ def get_kafka_test_group_latest_log(kafka_info: dict):
         host = settings.DEFAULT_KAFKA_HOST
     port = kafka_info.get("port", 9092)
     topic = kafka_info.get("kafka_topic_name", "")
-    partition = kafka_info.get("kafka_partition", 0)
     try:
         consumer = KafkaConsumer(
             topic,
@@ -65,8 +64,6 @@ def get_kafka_test_group_latest_log(kafka_info: dict):
 
         log_content = []
         for _partition in topic_partitions:
-            if _partition != partition:
-                continue
             # 获取该分区最大偏移量
             tp = TopicPartition(topic=topic, partition=_partition)
             end_offset = consumer.end_offsets([tp])[tp]
@@ -101,6 +98,6 @@ def get_kafka_test_group_latest_log(kafka_info: dict):
         result["message"] = message
 
     if not result["data"]:
-        result["message"] = f"[kafka] {host}:{port}, topic: {topic}, partition: {partition}, 无数据"
+        result["message"] = f"[kafka] {host}:{port}, topic: {topic}, 无数据"
 
     return result

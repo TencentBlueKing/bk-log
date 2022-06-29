@@ -83,3 +83,18 @@ CHECK_STORIES = [CHECK_STORY_1, CHECK_STORY_2, CHECK_STORY_3, CHECK_STORY_4, CHE
 KAFKA_TEST_GROUP = "kafka_test_group"
 DEFAULT_KAFKA_SECURITY_PROTOCOL = "PLAINTEXT"
 DEFAULT_KAFKA_SASL_MECHANISM = "PLAIN"
+
+TABLE_TRANSFER = "transfer.base"
+
+# transfer metrics
+TRANSFER_METRICS = [
+    "transfer_pipeline_backend_handled_total",
+    "transfer_pipeline_frontend_handled_total",
+    "transfer_pipeline_processor_handled_total",
+    "transfer_pipeline_backend_dropped_total",
+    "transfer_pipeline_frontend_dropped_total",
+    "transfer_pipeline_processor_dropped_total",
+    "transfer_kafka_request_latency_milliseconds_bucket",
+    "transfer_kafka_request_latency_milliseconds_sum",
+    "transfer_kafka_request_latency_milliseconds_count",
+]

@@ -23,7 +23,7 @@ import sys
 import json
 
 from apps.log_databus.models import CollectorConfig
-from home_application.constants import CHECK_STORIES, CHECK_STORY_1, CHECK_STORY_2, CHECK_STORY_3
+from home_application.constants import CHECK_STORIES, CHECK_STORY_1, CHECK_STORY_3
 from home_application.handlers.collector_checker.base import Report
 from home_application.handlers.collector_checker.check_agent import (
     fast_execute_script,
@@ -31,16 +31,27 @@ from home_application.handlers.collector_checker.check_agent import (
     dict_to_str,
 )
 from home_application.handlers.collector_checker.check_kafka import get_kafka_test_group_latest_log
-from home_application.handlers.collector_checker.check_route import get_route
+from home_application.handlers.collector_checker.check_route import CheckRouteStory
 
 
 class CollectorCheckHandler(object):
-    def __init__(self, collector_config_id, hosts, debug):
+    def __init__(self, collector_config_id, hosts="", debug=False):
         try:
             self.collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
         except CollectorConfig.DoesNotExist:
             print(f"不存在的采集项ID: {collector_config_id}")
             sys.exit(1)
+        if hosts:
+            try:
+                # "0:ip1,0:ip2,1:ip3"
+                ip_list = []
+                hosts = hosts.split("=")[1].split(",")
+                for host in hosts:
+                    ip_list.append({"bk_cloud_id": int(host.split(":")[0]), "ip": host.split(":")[1]})
+                self.hosts = ip_list
+            except Exception as e:  # pylint: disable=broad-except
+                print(f"输入合法的hosts, err: {e}")
+                sys.exit(1)
         self.hosts = hosts
         self.debug = debug
 
@@ -155,20 +166,9 @@ class CollectorCheckHandler(object):
         """
         检查步骤第二步, 会把获得的kafka信息放到类实例里供第三步使用
         """
-        story_report = Report(CHECK_STORY_2)
-        get_route_result = get_route(self.collector_config.bk_data_id)
-        if not get_route_result["status"]:
-            story_report.add_error(get_route_result["message"])
-            return story_report
-
-        for r in get_route_result["data"]:
-            story_report.add_info(
-                "[ROUTE] route_name: {}, stream_name: {}, topic_name: {}, partition: {}, ip: {}, port: {}".format(
-                    r["route_name"], r["stream_name"], r["kafka_topic_name"], r["kafka_partition"], r["ip"], r["port"]
-                )
-            )
-
-        self.kafka = get_route_result["data"]
+        story = CheckRouteStory(self.collector_config.bk_data_id)
+        story_report = story.get_report()
+        self.kafka = story.kafka
         return story_report
 
     def check_kafka(self):
@@ -190,3 +190,11 @@ class CollectorCheckHandler(object):
             )
 
         return story_report
+
+    def check_transfer(self):
+        """
+        检查步骤第四步, 包含以下两个检查项目
+        - 通过第三步获取到的数据, 进行清洗, 看清洗是不是成功
+        - 获取transfer
+        """
+        pass

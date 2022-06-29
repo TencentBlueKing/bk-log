@@ -19,10 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import sys
 import json
-
-from apps.log_databus.models import CollectorConfig
 
 
 class Report(object):
@@ -60,19 +57,7 @@ class BaseStory(object):
     name = ""
 
     def __init__(self):
-        self.hosts = []
-        for i in sys.argv:
-            if "collector_config_id" in i:
-                collector_config_id = i.split("=")[1]
-                self.collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
-                continue
-            if "hosts" in i:
-                try:
-                    # "0:ip1,0:ip2,1:ip3"
-                    ip_list = []
-                    hosts = i.split("=")[1].split(",")
-                    for host in hosts:
-                        ip_list.append({"bk_cloud_id": int(host.split(":")[0]), "ip": host.split(":")[1]})
-                    self.hosts = ip_list
-                except Exception as e:  # pylint: disable=broad-except
-                    raise Exception(f"输入合法的hosts, err: {str(e)}")
+        self.report = Report(self.name)
+
+    def get_report(self):
+        return self.report
