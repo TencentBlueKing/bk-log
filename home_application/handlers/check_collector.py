@@ -127,9 +127,9 @@ class CollectorCheckHandler(object):
                 {"id": i["bk_inst_id"], "node_type": i["bk_obj_id"]} for i in self.collector_config.target_nodes
             ]
             target_server = {"topo_node_list": topo_node_list}
-        s = CheckAgentStory(self.bk_biz_id, target_server, self.subscription_id)
-        s.check()
-        return s.get_report()
+        story = CheckAgentStory(self.bk_biz_id, target_server, self.subscription_id)
+        story.check()
+        return story.get_report()
 
     def check_route(self):
         """
@@ -156,8 +156,7 @@ class CollectorCheckHandler(object):
         - 获取transfer
         """
         story = CheckTransferStory(collector_config=self.collector_config, latest_log=self.latest_log)
-        story.clean_data()
-        story.get_metrics()
+        story.check()
         return story.get_report()
 
     def check_es(self):

@@ -49,6 +49,10 @@ class CheckTransferStory(BaseStory):
         except CleanStash.DoesNotExist:
             self.etl_params = None
 
+    def check(self):
+        self.clean_data()
+        self.get_metrics()
+
     def clean_data(self):
         if self.etl_config == EtlConfig.BK_LOG_TEXT or not self.etl_config:
             self.report.add_info("[测试清洗] 无清洗规则, 跳过检查清洗")
