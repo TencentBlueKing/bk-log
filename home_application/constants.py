@@ -133,3 +133,5 @@ CHECK_AGENT_STEP = {
     "socket": _("检查socket文件是否存在"),
     "healthz": _("执行healthz自检查查看结果"),
 }
+
+INDEX_WRITE_PREFIX = "write_"
