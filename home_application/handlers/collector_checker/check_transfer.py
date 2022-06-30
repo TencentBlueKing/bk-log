@@ -51,17 +51,17 @@ class CheckTransferStory(BaseStory):
 
     def clean_data(self):
         if self.etl_config == EtlConfig.BK_LOG_TEXT or not self.etl_config:
-            self.report.add_info("[Transfer] [etl_preview] 无清洗规则, 跳过检查清洗")
+            self.report.add_info("[测试清洗] 无清洗规则, 跳过检查清洗")
             return
         etl_storage = EtlStorage.get_instance(etl_config=self.etl_config)
         success_count = 0
         for data in self.latest_log:
             fields = etl_storage.etl_preview(data, self.etl_params)
             if fields:
-                self.report.add_info(f"[Transfer] [etl_preview] data: [{fields}]")
+                self.report.add_info(f"[测试清洗] data: [{fields}]")
                 success_count += 1
         if success_count == 0:
-            self.report.add_error("[Transfer] [etl_preview] 清洗数据失败")
+            self.report.add_error("[测试清洗] 清洗数据失败")
 
     def get_metrics(self):
         for metric_name in TRANSFER_METRICS:
@@ -84,12 +84,12 @@ class CheckTransferStory(BaseStory):
             for ts_data in result["list"]:
                 value = ts_data[metric_name]
                 if ts_data["id"] == self.bk_data_id:
-                    self.report.add_info(f"[Transfer] [get_ts_data] {metric_name}: {value}")
+                    self.report.add_info(f"[请求监控接口] [get_ts_data] {metric_name}: {value}")
                     return
-            message = f"[Transfer] [get_ts_data] 获取 {metric_name} 数据为空"
+            message = f"[请求监控接口] [get_ts_data] 获取 {metric_name} 数据为空"
             self.report.add_warning(message)
 
         except Exception as e:
-            message = f"[Transfer] [get_ts_data] 获取 {metric_name} 数据失败, err: {e}"
+            message = f"[请求监控接口] [get_ts_data] 获取 {metric_name} 数据失败, err: {e}"
             logger.error(message)
             self.report.add_warning(message)

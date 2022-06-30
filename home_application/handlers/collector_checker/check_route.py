@@ -39,7 +39,10 @@ class CheckRouteStory(BaseStory):
 
         self.kafka = []
 
-    def get_report(self):
+    def check(self):
+        self.get_route()
+
+    def get_route(self):
         query_route_params = {
             "condition": {"channel_id": self.bk_data_id},
             "operation": {"operator_name": DEFAULT_BK_USERNAME},
@@ -79,23 +82,21 @@ class CheckRouteStory(BaseStory):
                                     }
                                 )
                     except Exception as e:
-                        message = f"[route] [GseAPI] [query_stream_to] failed get stream[{stream_id}], err: {e}"
+                        message = f"[请求GseAPI] [query_stream_to] 获取stream[{stream_id}]失败, err: {e}"
                         logger.error(message)
                         self.report.add_error(message)
 
         except Exception as e:
-            message = f"[route] [GseAPI] [query_route] failed to get route[bk_data_id: {self.bk_data_id}], err: {e}"
+            message = f"[请求GseAPI] [query_route] 获取route[bk_data_id: {self.bk_data_id}]失败, err: {e}"
             logger.error(message)
             self.report.add_error(message)
 
         if not self.kafka:
-            self.report.add_error(f"[route] bk_data_id[{self.bk_data_id}]对应的route为空")
+            self.report.add_error(f"bk_data_id[{self.bk_data_id}]对应的route为空")
 
         for r in self.kafka:
             self.report.add_info(
-                "[ROUTE] route_name: {}, stream_name: {}, topic_name: {}, ip: {}, port: {}".format(
+                "route_name: {}, stream_name: {}, topic_name: {}, ip: {}, port: {}".format(
                     r["route_name"], r["stream_name"], r["kafka_topic_name"], r["ip"], r["port"]
                 )
             )
-
-        return self.report
