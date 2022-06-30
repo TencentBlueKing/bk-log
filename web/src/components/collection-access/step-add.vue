@@ -997,7 +997,7 @@ export default {
             // 如果有字符串过滤的情况下则不进行验证直接跳过
             if (matchIndexList.includes(index)) continue;
             try {
-              // 这里如果表单没有校验的dom元素会一直是padding状态 没有返回值
+              // 这里如果表单没有校验的dom元素会一直是pending状态 没有返回值
               await configList[index].$refs.validateForm.validate();
               validateLength += 1;
             } catch (error) {
@@ -1034,9 +1034,6 @@ export default {
       const updateData = { params: urlParams, data: params };
       this.$http.request(requestUrl, updateData).then((res) => {
         if (res.code === 0) {
-          if (this.formData.collector_scenario_id !== 'wineventlog') {
-            params.params.paths = params.params.paths.map(item => ({ value: item }));
-          }
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`, Object.assign({}, this.formData, params, res.data));
           this.$emit('stepChange');
           this.setDetail(res.data.collector_config_id);
@@ -1179,11 +1176,14 @@ export default {
           separator,
           separator_filters,
         };
-        // 若为标准输出 则直接清空日志路径
-        if (collectorType === 'std_log_config') {
+        // 若为标准输出或者win日志 则直接清空日志路径
+        if (collectorType === 'std_log_config' || this.isWinEventLog) {
           params.paths = [];
         } else {
-          params.paths = params.paths.filter(item => item?.value).map(item => ({ value: item }));
+          params.paths = params.paths.map((item) => {
+            if (typeof item === 'string') return { value: item };
+            return item;
+          });
         }
       }
     },
