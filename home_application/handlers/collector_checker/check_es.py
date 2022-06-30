@@ -20,6 +20,9 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import logging
+
+from apps.api import TransferApi
+from apps.log_databus.handlers.storage import StorageHandler
 from home_application.constants import (
     CHECK_STORY_5,
 )
@@ -31,9 +34,32 @@ logger = logging.getLogger()
 class CheckESStory(BaseStory):
     name = CHECK_STORY_5
 
-    def __init__(self, bk_data_id):
+    def __init__(self, table_id, bk_data_name):
         super().__init__()
-        self.bk_data_id = bk_data_id
+        self.table_id = table_id
+        self.bk_data_name = bk_data_name
+        self.result_table = {}
+        self.cluster_id = 0
+        self.indices = []
+        try:
+            result = TransferApi.get_result_table_storage(
+                {"result_table_list": self.table_id, "storage_type": "elasticsearch"}
+            )
+            self.result_table = result.get(self.table_id, {})
+            self.cluster_id = self.result_table.get("cluster_config", {}).get("cluster_id", 0)
+        except Exception as e:
+            self.report.add_error(f"[TransferApi] [get_result_table_storage] 失败, err: {e}")
 
     def check(self):
-        pass
+        self.get_indices()
+
+    def get_indices(self):
+        indices = StorageHandler(self.cluster_id).indices()
+        for i in indices:
+            if i["index_pattern"] == self.bk_data_name:
+                self.indices = i["indices"]
+        if not self.indices:
+            self.report.add_error("获取索引为空")
+            return
+        for i in self.indices:
+            self.report.add_info("索引: {}, 健康: {}, 状态: {}".format(i["index"], i["health"], i["status"]))

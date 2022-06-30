@@ -42,6 +42,8 @@ class CollectorCheckHandler(object):
         self.collector_config_id = collector_config_id
         self.bk_biz_id = self.collector_config.bk_biz_id
         self.bk_data_id = self.collector_config.bk_data_id
+        self.bk_data_name = self.collector_config.bk_data_name
+        self.table_id = self.collector_config.table_id
         self.subscription_id = self.collector_config.subscription_id
         if hosts:
             try:
@@ -94,7 +96,7 @@ class CollectorCheckHandler(object):
         print(f"\n采集项检查{is_success}\n\n")
         for story_m in self.story_report:
             print("-" * 100)
-            if story_m.has_problem:
+            if story_m.has_problem():
                 self.error(f"{story_m.name} 存在问题, 查看详细报错")
             else:
                 self.info(f"{story_m.name} 正常")
@@ -160,6 +162,6 @@ class CollectorCheckHandler(object):
         return story.get_report()
 
     def check_es(self):
-        story = CheckESStory(self.bk_data_id)
+        story = CheckESStory(self.table_id, self.bk_data_name)
         story.check()
         return story.get_report()

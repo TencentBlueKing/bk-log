@@ -27,7 +27,7 @@ class Report(object):
         self.name = name
         self.info = info if info else []
         self.warning = warning if warning else []
-        self.error = error if warning else []
+        self.error = error if error else []
 
     def has_problem(self):
         return self.error != []
