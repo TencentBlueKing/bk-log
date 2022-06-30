@@ -1449,6 +1449,7 @@ export default {
   不是有效的yaml文件: 'Is not a valid yaml file',
   请先选择集群: 'Please select a cluster first',
   点击展开: 'Click Open',
+  复制目标: 'Copy The Target',
   yaml不能为空: 'Yaml Cannot be empty',
   unKnowIconTips: 'This field is supplemented by the platform Not searchable',
   永久: 'Permanent',
