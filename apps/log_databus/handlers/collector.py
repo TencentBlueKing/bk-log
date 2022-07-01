@@ -645,8 +645,7 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"],
-            bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -1014,7 +1013,13 @@ class CollectorHandler(object):
 
         contents = []
         for container_config in container_configs:
-            contents.append({"status": container_config.status, "container_collector_config_id": container_config.id})
+            contents.append(
+                {
+                    "status": container_config.status,
+                    "container_collector_config_id": container_config.id,
+                    "name": self.generate_bklog_config_name(container_config.id),
+                }
+            )
         return {
             "contents": [
                 {
@@ -1803,8 +1808,7 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id,
-                ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2098,9 +2102,9 @@ class CollectorHandler(object):
     def list_bcs_collector(self, request, view, bk_biz_id):
         pg = DataPageNumberPagination()
         page_collectors = pg.paginate_queryset(
-            queryset=CollectorConfig.objects.exclude(
-                bk_app_code="bk_log_search",
-            ).filter(environment=Environment.CONTAINER, bk_biz_id=bk_biz_id),
+            queryset=CollectorConfig.objects.exclude(bk_app_code="bk_log_search",).filter(
+                environment=Environment.CONTAINER, bk_biz_id=bk_biz_id
+            ),
             request=request,
             view=view,
         )
@@ -2219,6 +2223,12 @@ class CollectorHandler(object):
                 description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
+            self.data.task_id_list = list(
+                ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id).values_list(
+                    "id", flat=True
+                )
+            )
+
             self.data.save()
 
         # add user_operation_record
@@ -2289,6 +2299,13 @@ class CollectorHandler(object):
         }
         user_operation_record.delay(operation_record)
         self.compare_config(data, self.data.collector_config_id)
+
+        self.data.task_id_list = list(
+            ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id).values_list(
+                "id", flat=True
+            )
+        )
+        self.data.save()
 
         return {
             "collector_config_id": self.data.collector_config_id,
@@ -2568,7 +2585,11 @@ class CollectorHandler(object):
                 "multiline": {
                     "pattern": container_config.params.get("multiline_pattern"),
                     "maxLines": container_config.params.get("multiline_max_lines"),
-                    "timeout": container_config.params.get("multiline_timeout"),
+                    "timeout": (
+                        f"{container_config.params['multiline_timeout']}s"
+                        if "multiline_timeout" in container_config.params
+                        else None
+                    ),
                 },
                 "delimiter": container_config.params.get("conditions", {}).get("separator", ""),
                 "filters": filters,
@@ -2818,7 +2839,7 @@ class CollectorHandler(object):
                         "conditions": conditions,
                         "multiline_pattern": config.get("multiline", {}).get("pattern", ""),
                         "multiline_max_lines": config.get("multiline", {}).get("maxLines", 10),
-                        "multiline_timeout": config.get("multiline", {}).get("timeout", 60),
+                        "multiline_timeout": config.get("multiline", {}).get("timeout", "10s").rstrip("s"),
                     },
                     "data_encoding": config["encoding"],
                     "collector_type": log_config_type,
