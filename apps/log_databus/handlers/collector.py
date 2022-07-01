@@ -1013,7 +1013,13 @@ class CollectorHandler(object):
 
         contents = []
         for container_config in container_configs:
-            contents.append({"status": container_config.status, "container_collector_config_id": container_config.id})
+            contents.append(
+                {
+                    "status": container_config.status,
+                    "container_collector_config_id": container_config.id,
+                    "name": self.generate_bklog_config_name(container_config.id),
+                }
+            )
         return {
             "contents": [
                 {
@@ -2579,7 +2585,11 @@ class CollectorHandler(object):
                 "multiline": {
                     "pattern": container_config.params.get("multiline_pattern"),
                     "maxLines": container_config.params.get("multiline_max_lines"),
-                    "timeout": container_config.params.get("multiline_timeout"),
+                    "timeout": (
+                        f"{container_config.params['multiline_timeout']}s"
+                        if "multiline_timeout" in container_config.params
+                        else None
+                    ),
                 },
                 "delimiter": container_config.params.get("conditions", {}).get("separator", ""),
                 "filters": filters,
@@ -2829,7 +2839,7 @@ class CollectorHandler(object):
                         "conditions": conditions,
                         "multiline_pattern": config.get("multiline", {}).get("pattern", ""),
                         "multiline_max_lines": config.get("multiline", {}).get("maxLines", 10),
-                        "multiline_timeout": config.get("multiline", {}).get("timeout", 60),
+                        "multiline_timeout": config.get("multiline", {}).get("timeout", "10s").rstrip("s"),
                     },
                     "data_encoding": config["encoding"],
                     "collector_type": log_config_type,

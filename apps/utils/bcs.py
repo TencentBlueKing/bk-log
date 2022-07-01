@@ -122,10 +122,7 @@ class Bcs:
         try:
 
             d_client = self.dynamic_client
-            resource = d_client.resources.get(
-                api_version=api_version,
-                kind=kind,
-            )
+            resource = d_client.resources.get(api_version=api_version, kind=kind)
         except ResourceNotFoundError:
             # 如果找不到crd，则直接退出
             logger.debug(f"{api_version}/{kind} resource crd not found in k8s cluster, will not create any resource")
@@ -146,13 +143,11 @@ class Bcs:
                 # 异常捕获
                 logger.error("unexpected error in ensure resource:{}".format(e))
                 return False
-        except Exception as e:  # pylint: disable=broad-except
-            # 异常捕获
-            logger.error("unexpected error in ensure resource:{}".format(e))
-            return False
+        # except Exception as e:  # pylint: disable=broad-except
+        #     # 异常捕获
+        #     logger.error("unexpected error in ensure resource:{}".format(e))
+        #     return False
         logger.info(
-            "[%s] datasource [%s]",
-            action,
-            resource_name,
+            "[%s] datasource [%s]", action, resource_name,
         )
         return True

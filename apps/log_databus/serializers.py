@@ -945,7 +945,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     class MultilineSerializer(serializers.Serializer):
         pattern = serializers.CharField(label=_("行首正则"), required=False, allow_blank=True)
         maxLines = serializers.IntegerField(label=_("最多匹配行数"), required=False, max_value=1000)
-        timeout = serializers.IntegerField(label=_("最大耗时"), required=False, max_value=10)
+        timeout = serializers.CharField(label=_("最大耗时"), required=False)
 
     class LabelSelectorSerializer(serializers.Serializer):
         matchLabels = serializers.DictField(
