@@ -402,7 +402,6 @@ class BatchSubscriptionStatusSerializer(serializers.Serializer):
 
 class TaskStatusSerializer(serializers.Serializer):
     task_id_list = serializers.CharField(label=_("部署任务ID"), allow_blank=True)
-    container_collector_config_id_list = serializers.CharField(label=_("容器采集配置ID"), allow_blank=True)
 
     def validate(self, attrs):
         # 当task_is_list为空的情况不需要做相关验证
