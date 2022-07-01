@@ -309,6 +309,15 @@ class _BkDataAIOPSApi:
             after_request=None,
             default_timeout=300,
         )
+        self.aiops_get_model_storage_cluster = DataAPI(
+            method="GET",
+            url=AIOPS_APIGATEWAY_ROOT + "models/storage_clusters/",
+            module=self.MODULE,
+            description=u"获取模型存储集群列表",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
 
 
 BkDataAIOPSApi = _BkDataAIOPSApi()

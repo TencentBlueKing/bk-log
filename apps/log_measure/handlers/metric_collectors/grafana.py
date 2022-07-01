@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from collections import defaultdict
 from json import decoder
 
 from django.utils.translation import ugettext as _
@@ -50,6 +51,7 @@ class GrafanaMetricCollector(object):
                 return metrics
 
             metrics.append(
+                # 各个业务下的仪表盘数
                 Metric(
                     metric_name="count",
                     metric_value=len(dashboards),
@@ -60,9 +62,12 @@ class GrafanaMetricCollector(object):
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
             )
-
-            panel_count = 0
+            # 各个仪表盘的视图数
+            panel_count = defaultdict(int)
+            # 仪表盘id->name转换关系
+            dashboard_id_to_name_dict = dict()
             for dashboard in dashboards:
+                dashboard_id_to_name_dict[dashboard["uid"]] = dashboard["title"]
                 dashboard_info = (
                     grafana_client.get_dashboard_by_uid(org_id=org["id"], dashboard_uid=dashboard["uid"])
                     .json()
@@ -71,14 +76,30 @@ class GrafanaMetricCollector(object):
                 for panel in dashboard_info.get("panels", []):
                     if panel["type"] == "row":
                         # 如果是行类型，需要统计嵌套数量
-                        panel_count += len(panel.get("panels", []))
+                        panel_count[dashboard["uid"]] += len(panel.get("panels", []))
                     else:
-                        panel_count += 1
+                        panel_count[dashboard["uid"]] += 1
 
+            for dashboard_id in panel_count:
+                metrics.append(
+                    # 各个业务各个dashboard下的视图数
+                    Metric(
+                        metric_name="panel_count",
+                        metric_value=panel_count[dashboard_id],
+                        dimensions={
+                            "target_bk_biz_id": int(org_name),
+                            "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(org_name),
+                            "dashboard_id": dashboard_id,
+                            "dashboard_name": dashboard_id_to_name_dict[dashboard_id],
+                        },
+                        timestamp=MetricUtils.get_instance().report_ts,
+                    )
+                )
             metrics.append(
+                # 各个业务仪表盘试图总数
                 Metric(
-                    metric_name="panel_count",
-                    metric_value=panel_count,
+                    metric_name="panel_total",
+                    metric_value=sum(panel_count.values()),
                     dimensions={
                         "target_bk_biz_id": int(org_name),
                         "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(org_name),

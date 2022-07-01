@@ -64,7 +64,7 @@ def get_pattern(model_id, release_id) -> list:
             0.1: [
                 ['if', 'checker.check'],
                 3903,
-                ['if', 'checker.check', '*', Variable(name="ip", value='10.0.0.1')],
+                ['if', 'checker.check', '*', Variable(name="ip", value='127.0.0.1')],
                 ['if checker.check():', 'if checker.check()'],
                 [282. 1877],
                 27886975249790003104399390262688492018705644758766193963474214767849400520551

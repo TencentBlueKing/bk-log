@@ -411,7 +411,7 @@ export default {
     },
   },
   async mounted() {
-    this.getStorage(true);
+    this.getStorage();
     this.operateType === 'add' && (this.isChangeSelect = true);
   },
   created() {
@@ -593,12 +593,18 @@ export default {
       this.isUnmodifiable = !!(table_id || storage_cluster_id)
       this.isUnmodfyIndexName = !!(table_id || storage_cluster_id || collector_config_name_en)
       this.fieldType = etl_config || 'bk_log_text'
+      let default_exclusive_cluster_id;
+      if (!storage_cluster_id && this.exclusiveList.length) { // 新增时若有业务独享集群则直接赋值独享集群列表第一条id
+        this.isChangeSelect = true; // 不提示切换集群dialog 
+        default_exclusive_cluster_id = this.exclusiveList[0].storage_cluster_id;
+      }
       // this.switcher = etl_config ? etl_config !== 'bk_log_text' : false
       /* eslint-enable */
       Object.assign(this.formData, {
         // eslint-disable-next-line camelcase
         table_id: table_id ? table_id : collector_config_name_en ? collector_config_name_en : '',
-        storage_cluster_id,
+        // eslint-disable-next-line camelcase
+        storage_cluster_id: default_exclusive_cluster_id ? default_exclusive_cluster_id : storage_cluster_id,
         table_id_prefix,
         etl_config: this.fieldType,
         etl_params: Object.assign({
