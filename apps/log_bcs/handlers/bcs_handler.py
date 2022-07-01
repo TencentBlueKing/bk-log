@@ -38,6 +38,8 @@ class BcsHandler:
         bcs_result = multi_execute_func.run()
 
         for project_id, clusters in bcs_result.items():
+            if not clusters:
+                continue
             for cluster in clusters:
                 result.append(
                     {

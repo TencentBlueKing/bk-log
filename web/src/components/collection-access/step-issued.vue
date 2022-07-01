@@ -25,140 +25,148 @@
     class="step-issued-wrapper"
     v-bkloading="{ isLoading: loading | (hasRunning && !tableList.length) }"
     data-test-id="addNewCollectionItem_div_collectionDistribution">
-    <div class="step-issued-notice notice-primary" v-if="!curCollect.table_id">
-      <i class="bk-icon icon-info-circle-shape notice-icon"></i>
-      <span class="notice-text">{{ $t('dataManage.Within_stop') }}</span>
-    </div>
-    <template v-if="!isShowStepInfo">
-      <div class="step-issued-header">
-        <div class="tab-only-compact fl">
-          <template v-for="(tabItem) in tabList">
-            <li :class="['tab-item', { 'cur-tab': tabItem.type === curTab }]" :key="tabItem.type">
-              <a
-                href="javascript:void(0);"
-                class="tab-button"
-                @click="tabHandler(tabItem)">
-                {{ `${tabItem.name}(${tabItem.num})` }}
-              </a>
-            </li>
-          </template>
-        </div>
-        <bk-button
-          v-if="hasFailed"
-          class="fr"
-          icon="refresh"
-          data-test-id="collectionDistribution_button_refresh"
-          :title="$t('configDetails.batchRetry')"
-          :disabled="hasRunning"
-          @click="issuedRetry">{{ $t('configDetails.batchRetry') }}
-        </bk-button>
+    <!-- 容器日志显示状态页信息 -->
+    <template v-if="isContainer">
+      <container-status />
+    </template>
+    <!-- 物理环境显示下发页信息 -->
+    <template v-else>
+      <div class="step-issued-notice notice-primary" v-if="!curCollect.table_id">
+        <i class="bk-icon icon-info-circle-shape notice-icon"></i>
+        <span class="notice-text">{{ $t('dataManage.Within_stop') }}</span>
       </div>
-      <section class="cluster-collaspse" v-if="tableList.length">
-        <template v-for="cluster in tableList">
-          <right-panel
-            v-if="cluster.child.length"
-            :class="['cluster-menu', { 'has-title-sign': cluster.is_label && isEdit }]"
-            :key="cluster.id"
-            :need-border="true"
-            :collapse-color="'#313238'"
-            :title-bg-color="'#F0F1F5'"
-            :collapse.sync="cluster.collapse"
-            :title="getRightPanelTitle(cluster)"
-            @change="cluster.collapse = !cluster.collapse">
-            <div
-              :class="`heder-title-sign sign-${cluster.label_name}`"
-              v-if="cluster.is_label && isEdit"
-              slot="pre-panel">
-              {{ cluster.label_name === 'add' ?
-                $t('dataManage.add_btn') :
-                (cluster.label_name === 'modify' ?
-                  $t('dataManage.amend') : $t('btn.delete')) }}
-            </div>
-            <div class="header-info" slot="title">
-              <div class="header-title fl">{{ cluster.node_path }}</div>
-              <!-- eslint-disable-next-line vue/no-v-html -->
-              <p class="fl" v-html="collaspseHeadInfo(cluster)"></p>
+      <template v-if="!isShowStepInfo">
+        <div class="step-issued-header">
+          <div class="tab-only-compact fl">
+            <template v-for="(tabItem) in tabList">
+              <li :class="['tab-item', { 'cur-tab': tabItem.type === curTab }]" :key="tabItem.type">
+                <a
+                  href="javascript:void(0);"
+                  class="tab-button"
+                  @click="tabHandler(tabItem)">
+                  {{ `${tabItem.name}(${tabItem.num})` }}
+                </a>
+              </li>
+            </template>
+          </div>
+          <bk-button
+            v-if="hasFailed"
+            class="fr"
+            icon="refresh"
+            data-test-id="collectionDistribution_button_refresh"
+            :title="$t('configDetails.batchRetry')"
+            :disabled="hasRunning"
+            @click="issuedRetry">{{ $t('configDetails.batchRetry') }}
+          </bk-button>
+        </div>
+        <section class="cluster-collaspse" v-if="tableList.length">
+          <template v-for="cluster in tableList">
+            <right-panel
+              v-if="cluster.child.length"
+              :class="['cluster-menu', { 'has-title-sign': cluster.is_label && isEdit }]"
+              :key="cluster.id"
+              :need-border="true"
+              :collapse-color="'#313238'"
+              :title-bg-color="'#F0F1F5'"
+              :collapse.sync="cluster.collapse"
+              :title="getRightPanelTitle(cluster)"
+              @change="cluster.collapse = !cluster.collapse">
+              <div
+                :class="`heder-title-sign sign-${cluster.label_name}`"
+                v-if="cluster.is_label && isEdit"
+                slot="pre-panel">
+                {{ cluster.label_name === 'add' ?
+                  $t('dataManage.add_btn') :
+                  (cluster.label_name === 'modify' ?
+                    $t('dataManage.amend') : $t('btn.delete')) }}
+              </div>
+              <div class="header-info" slot="title">
+                <div class="header-title fl">{{ cluster.node_path }}</div>
+                <!-- eslint-disable-next-line vue/no-v-html -->
+                <p class="fl" v-html="collaspseHeadInfo(cluster)"></p>
               <!-- <span class="success">{{ cluster.success }}</span> 个成功
                 <span v-if="cluster.failed" class="failed">，{{ cluster.failed }}</span> 个失败 -->
-            </div>
-            <div class="cluster-table-wrapper" slot>
-              <bk-table
-                v-bkloading="{ isLoading: loading }"
-                class="cluster-table"
-                :resizable="true"
-                :empty-text="$t('btn.vacancy')"
-                :data="cluster.child"
-                :size="size"
-                :pagination="pagination">
-                <bk-table-column :label="$t('configDetails.goal')" prop="ip" width="180"></bk-table-column>
-                <bk-table-column :label="$t('dataManage.es_host')" width="120">
-                  <template slot-scope="props">
-                    <span :class="['status', 'status-' + props.row.status]">
-                      <i
-                        class="bk-icon icon-refresh"
-                        style="display: inline-block; animation: button-icon-loading 1s linear infinite;"
-                        v-if="props.row.status !== 'success' && props.row.status !== 'failed'">
-                      </i>
-                      {{ props.row.status === 'success' ?
-                        $t('configDetails.success') :
-                        props.row.status === 'failed' ?
-                          $t('dataSource.failed') : $t('configDetails.Pending') }}
-                    </span>
-                  </template>
-                </bk-table-column>
-                <bk-table-column
-                  :class-name="'row-detail'"
-                  :label="$t('monitors.detail')">
-                  <template slot-scope="props" class="row-detail">
-                    <p>
-                      <span class="detail-text">{{ props.row.log }}</span>
-                      <a href="javascript: ;" class="more" @click.stop="viewDetail(props.row)">
-                        {{ $t('dataManage.more') }}
+              </div>
+              <div class="cluster-table-wrapper" slot>
+                <bk-table
+                  v-bkloading="{ isLoading: loading }"
+                  class="cluster-table"
+                  :resizable="true"
+                  :empty-text="$t('btn.vacancy')"
+                  :data="cluster.child"
+                  :size="size"
+                  :pagination="pagination">
+                  <bk-table-column :label="$t('configDetails.goal')" prop="ip" width="180"></bk-table-column>
+                  <bk-table-column :label="$t('dataManage.es_host')" width="120">
+                    <template slot-scope="props">
+                      <span :class="['status', 'status-' + props.row.status]">
+                        <i
+                          class="bk-icon icon-refresh"
+                          style="display: inline-block; animation: button-icon-loading 1s linear infinite;"
+                          v-if="props.row.status !== 'success' && props.row.status !== 'failed'">
+                        </i>
+                        {{ props.row.status === 'success' ?
+                          $t('configDetails.success') :
+                          props.row.status === 'failed' ?
+                            $t('dataSource.failed') : $t('configDetails.Pending') }}
+                      </span>
+                    </template>
+                  </bk-table-column>
+                  <bk-table-column
+                    :class-name="'row-detail'"
+                    :label="$t('monitors.detail')">
+                    <template slot-scope="props" class="row-detail">
+                      <p>
+                        <span class="detail-text">{{ props.row.log }}</span>
+                        <a href="javascript: ;" class="more" @click.stop="viewDetail(props.row)">
+                          {{ $t('dataManage.more') }}
+                        </a>
+                      </p>
+                    </template>
+                  </bk-table-column>
+                  <bk-table-column width="80">
+                    <template slot-scope="props">
+                      <a
+                        href="javascript: ;" class="retry"
+                        v-if="props.row.status === 'failed'"
+                        @click.stop="issuedRetry(props.row, cluster)">
+                        {{ $t('configDetails.retry') }}
                       </a>
-                    </p>
-                  </template>
-                </bk-table-column>
-                <bk-table-column width="80">
-                  <template slot-scope="props">
-                    <a
-                      href="javascript: ;" class="retry"
-                      v-if="props.row.status === 'failed'"
-                      @click.stop="issuedRetry(props.row, cluster)">
-                      {{ $t('configDetails.retry') }}
-                    </a>
-                  </template>
-                </bk-table-column>
-              </bk-table>
-            </div>
-          </right-panel>
-        </template>
-      </section>
-    </template>
-    <template v-else>
-      <div class="empty-view">
-        <i class="bk-icon icon-info-circle-shape"></i>
-        <div class="hint-text">{{ $t('dataManage.StepInfo') }}</div>
-      </div>
+                    </template>
+                  </bk-table-column>
+                </bk-table>
+              </div>
+            </right-panel>
+          </template>
+        </section>
+      </template>
+      <template v-else>
+        <div class="empty-view">
+          <i class="bk-icon icon-info-circle-shape"></i>
+          <div class="hint-text">{{ $t('dataManage.StepInfo') }}</div>
+        </div>
+      </template>
     </template>
     <div class="step-issued-footer">
       <bk-button
         v-if="isSwitch"
         theme="primary"
+        :loading="isHandle"
         :disabled="hasRunning"
         @click="nextHandler">
-        {{ hasRunning ? $t('configDetails.Pending') : $t('dataManage.perform') }}
+        {{ getNextPageStr }}
       </bk-button>
       <template v-else>
         <bk-button
+          data-test-id="collectionDistribution_button_previous"
           :disabled="hasRunning"
           @click="prevHandler"
-          data-test-id="collectionDistribution_button_previous"
         >{{ $t('dataManage.last') }}</bk-button>
         <bk-button
           theme="primary"
+          data-test-id="collectionDistribution_button_nextStep"
           :disabled="hasRunning"
           @click="nextHandler"
-          data-test-id="collectionDistribution_button_nextStep"
         >{{ $t('dataManage.next') }}</bk-button>
       </template>
       <bk-button
@@ -188,11 +196,13 @@
 <script>
 import { mapGetters } from 'vuex';
 import rightPanel from '@/components/ip-select/right-panel';
+import containerStatus from '@/views/manage/manage-access/log-collection/collection-item/manage-collection/components/container-status';
 
 export default {
   name: 'StepIssued',
   components: {
     rightPanel,
+    containerStatus,
   },
   props: {
     operateType: String,
@@ -200,7 +210,7 @@ export default {
   },
   data() {
     return {
-      loading: true,
+      loading: false,
       notReady: false, // 节点管理准备好了吗
       detail: {
         isShow: false,
@@ -245,6 +255,7 @@ export default {
         limit: 100,
       },
       isShowStepInfo: false,
+      isHandle: false,
       // operateInfo: {}
     };
   },
@@ -258,6 +269,14 @@ export default {
     },
     isEdit() {
       return this.operateType === 'edit' || this.operateType === 'editFinish';
+    },
+    isContainer() {
+      return this.curCollect.environment === 'container';
+    },
+    getNextPageStr() {
+      if (this.hasRunning) return this.$t('configDetails.Pending');
+      if (this.operateType === 'stop') return this.$t('btn.block');
+      return this.$t('dataManage.perform');
     },
   },
   watch: {
@@ -277,9 +296,11 @@ export default {
     },
   },
   created() {
+    if (this.isContainer) return; // 容器日志展示容器日志的内容
     this.curCollect.task_id_list.forEach(id => this.curTaskIdList.add(id));
   },
   mounted() {
+    if (this.isContainer) return; // 容器日志展示容器日志的内容
     this.isShowStepInfo = false;
     this.requestIssuedClusterList();
   },
@@ -328,6 +349,25 @@ export default {
       this.$emit('stepChange', 1);
     },
     nextHandler() {
+      if (this.operateType === 'stop') { // 停用操作
+        this.isHandle = true;
+        this.$http.request('collect/stopCollect', {
+          params: {
+            collector_config_id: this.curCollect.collector_config_id,
+          },
+        }).then((res) => {
+          if (res.result) {
+            this.$emit('stepChange');
+          }
+        })
+          .catch((error) => {
+            console.warn(error);
+          })
+          .finally(() => {
+            this.isHandle = false;
+          });
+        return;
+      }
       this.$emit('stepChange');
     },
     cancel() {
@@ -394,14 +434,14 @@ export default {
     /**
      *  集群list，与轮询共用
      */
-    requestIssuedClusterList(isPolling) {
+    requestIssuedClusterList(isPolling = '') {
+      if (!isPolling) {
+        this.loading = true;
+      }
       const params = {
         collector_config_id: this.curCollect.collector_config_id,
       };
       const timerNum = this.timerNum;
-      if (!isPolling) {
-        this.loading = true;
-      }
       this.$http.request('collect/getIssuedClusterList', {
         params,
         query: { task_id_list: [...this.curTaskIdList.keys()].join(',') },
