@@ -110,6 +110,7 @@ __all__ = [
     "NodeApi",
     "BkLogApi",
     "BkDataDatabusApi",
+    "BkDataResourceCenterApi",
     "BkDataAccessApi",
     "OldMonitorApi",
     "MonitorApi",

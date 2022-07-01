@@ -97,7 +97,7 @@ MIDDLEWARE = (
     # http -> https 转换中间件
     "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
-    "blueapps.opentelemetry.metrics.middlewares.SaaSMetricsBeforeMiddleware",
+    "apps.middleware.user_middleware.BkLogMetricsBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -121,7 +121,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
-    "blueapps.opentelemetry.metrics.middlewares.SaaSMetricsAfterMiddleware",
+    "apps.middleware.user_middleware.BkLogMetricsAfterMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -789,6 +789,8 @@ ESQUERY_WHITE_LIST = [
     "data",
     "dataweb",
     "bk_bcs",
+    "bk-dbm",
+    "bk_dbm",
 ]
 
 # BK repo conf

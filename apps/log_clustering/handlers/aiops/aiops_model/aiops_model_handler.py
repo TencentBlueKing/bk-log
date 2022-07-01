@@ -138,7 +138,7 @@ class AiopsModelHandler(BaseAiopsHandler):
         self,
         experiment_id: int,
         window: str = "1h",
-        worker_nums: int = 16,
+        worker_nums: int = 6,
         memory: int = 8096,
         time_limit: int = 7200,
         core: int = 4,

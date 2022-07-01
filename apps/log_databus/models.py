@@ -170,12 +170,15 @@ class CollectorConfig(CollectorBase):
     def get_etl_config(self):
         multi_execute_func = MultiExecuteFunc()
         multi_execute_func.append(
-            "result_table_config", TransferApi.get_result_table, params={"table_id": self.table_id}, use_request=False
+            "result_table_config",
+            TransferApi.get_result_table,
+            params={"table_id": self.table_id, "no_request": True},
+            use_request=False,
         )
         multi_execute_func.append(
             "result_table_storage",
             TransferApi.get_result_table_storage,
-            params={"result_table_list": self.table_id, "storage_type": "elasticsearch"},
+            params={"result_table_list": self.table_id, "storage_type": "elasticsearch", "no_request": True},
             use_request=False,
         )
         result = multi_execute_func.run()
