@@ -360,6 +360,17 @@ class CollectorPluginHandler:
         # 创建采集项
         return CollectorHandler().update_or_create(params)
 
+    def update_instance(self, params: dict) -> dict:
+        """
+        更新采集插件
+        """
+
+        # 构造参数
+        params = self.build_instance_params(params)
+
+        # 更新采集项
+        return CollectorHandler(params["collector_config_id"]).update_or_create(params)
+
     def create_instance_etl(self, instance: CollectorConfig, params: dict) -> dict:
         """
         创建采集项清洗规则
