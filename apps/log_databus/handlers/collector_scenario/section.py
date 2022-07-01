@@ -70,7 +70,7 @@ class SectionCollectorScenario(CollectorScenario):
         local_params = self._deal_text_public_params(local_params, params)
         steps = [
             {
-                "id": self.PLUGIN_NAME,
+                "id": self.PLUGIN_NAME,  # 这里的ID不能随意变更，需要同步修改解析的逻辑(parse_steps)
                 "type": "PLUGIN",
                 "config": {
                     "plugin_name": self.PLUGIN_NAME,
@@ -147,7 +147,13 @@ class SectionCollectorScenario(CollectorScenario):
         :return:
         """
         try:
-            config = steps[0]["params"]["context"]
+            for step in steps:
+                if step["id"] == cls.PLUGIN_NAME:
+                    config = step["params"]["context"]
+                    break
+            else:
+                config = steps[0]["params"]["context"]
+
             try:
                 separator_filters = []
                 # 如果是逻辑或，会拆成多个配置下发

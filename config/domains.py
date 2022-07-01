@@ -55,6 +55,8 @@ API_ROOTS = [
     "CMSI_APIGATEWAY_ROOT_V2",
     # JOB
     "JOB_APIGATEWAY_ROOT_V2",
+    # JOBV3
+    "JOB_APIGATEWAY_ROOT_V3",
     "BK_SSM_ROOT",
     # BCS
     "BCS_APIGATEWAY_ROOT",
@@ -71,6 +73,6 @@ API_ROOTS = [
 env_domains = load_domains(settings)
 for _root in API_ROOTS:
     with ignored(Exception):
-        locals()[_root] = env_domains.get(_root)
+        locals()[_root] = env_domains.get(_root, "")
 
 __all__ = API_ROOTS

@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 
 import os
+
 import yaml
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -29,16 +30,16 @@ from django.utils.translation import ugettext as _
 from apps.api import TransferApi
 from apps.exceptions import ApiResultError
 from apps.log_databus.constants import (
-    TargetObjectTypeEnum,
-    TargetNodeTypeEnum,
-    BUILT_IN_MIN_DATAID,
     BUILT_IN_MAX_DATAID,
+    BUILT_IN_MIN_DATAID,
     STORAGE_CLUSTER_TYPE,
+    TargetNodeTypeEnum,
+    TargetObjectTypeEnum,
 )
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.serializers import CollectorEtlStorageSerializer
-from apps.log_search.constants import EncodingsEnum, CollectorScenarioEnum
+from apps.log_search.constants import CollectorScenarioEnum, EncodingsEnum
 
 
 class Command(BaseCommand):
@@ -181,4 +182,5 @@ class Command(BaseCommand):
         etl_storage.is_valid()
         params = etl_storage.data
         params["username"] = settings.SYSTEM_USE_API_ACCOUNT
-        EtlHandler(collect_config.collector_config_id).update_or_create(**params)
+        etl_handler = EtlHandler.get_instance(collect_config.collector_config_id)
+        etl_handler.update_or_create(**params)

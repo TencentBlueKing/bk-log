@@ -60,9 +60,15 @@
           :label="$t('执行人')"
           required
           property="operator">
-          <bk-input
-            v-model="formData.operator"
-            data-test-id="basicInformation_input_executive"></bk-input>
+          <bk-user-selector
+            data-test-id="basicInformation_input_executive"
+            :class="isAdminError && 'is-error'"
+            :value="formData.operator"
+            :api="userApi"
+            @focus="handleClearOperator"
+            @change="handleUserChange"
+            @blur="handleBlur">
+          </bk-user-selector>
         </bk-form-item>
         <bk-form-item
           :label="$t('执行bk_biz_id')"
@@ -188,18 +194,23 @@
 
 <script>
 import { mapState } from 'vuex';
+import BkUserSelector from '@blueking/user-selector';
 
 export default {
   name: 'ExtractLinkCreate',
+  components: {
+    BkUserSelector,
+  },
   data() {
     return {
       basicLoading: false,
       submitLoading: false,
       isSubmit: false,
+      userApi: window.BK_LOGIN_URL,
       formData: {
         name: '',
         link_type: 'common',
-        operator: '',
+        operator: [],
         op_bk_biz_id: '',
         qcloud_secret_id: '', // 腾讯云SecretId
         qcloud_secret_key: '', // 腾讯云SecretKey
@@ -215,10 +226,6 @@ export default {
       },
       formRules: {
         name: [{
-          required: true,
-          trigger: 'blur',
-        }],
-        operator: [{
           required: true,
           trigger: 'blur',
         }],
@@ -243,6 +250,8 @@ export default {
           trigger: 'blur',
         }],
       },
+      isAdminError: false, // 人员是否为空
+      cacheOperator: [], // 缓存的人员
     };
   },
   computed: {
@@ -282,6 +291,8 @@ export default {
           formData.hosts.forEach((item, index) => {
             item.keyId = index;
           });
+          // 字符串转成数组展示
+          formData.operator = [formData.operator];
           this.formData = Object.assign({}, this.formData, formData);
           this.basicLoading = false;
         } catch (e) {
@@ -326,7 +337,7 @@ export default {
           }
         }
         await this.$refs.formRef.validate();
-        if (isError) return;
+        if (isError || this.isAdminError) return;
         this.submitLoading = true;
         const requestData = { ...this.formData };
         if (requestData.link_type === 'common') {
@@ -338,6 +349,8 @@ export default {
         requestData.hosts.forEach((host) => {
           delete host.keyId;
         });
+        // 数组修改为字符串传参
+        requestData.operator = requestData.operator[0];
         const linkId = this.$route.params.linkId;
         if (linkId) {
           await this.$http.request('extractManage/updateLogExtractLink', {
@@ -363,6 +376,23 @@ export default {
       } catch (e) {
         console.warn(e);
         this.submitLoading = false;
+      }
+    },
+    handleUserChange(val) {
+      const realVal = val.filter(item => item !== undefined);
+      this.isAdminError = !realVal.length;
+      this.formData.operator = realVal;
+      this.cacheOperator = realVal;
+    },
+    handleClearOperator() {
+      if (this.formData.operator.length) {
+        this.cacheOperator = this.formData.operator;
+        this.formData.operator = [];
+      }
+    },
+    handleBlur() {
+      if (this.cacheOperator.length) {
+        this.formData.operator = this.cacheOperator;
       }
     },
   },
@@ -482,5 +512,14 @@ export default {
         }
       }
     }
+
+  }
+
+  ::v-deep .user-selector {
+    width: 100%;
+  }
+
+  ::v-deep .is-error .user-selector-container {
+    border-color: #ff5656;
   }
 </style>
