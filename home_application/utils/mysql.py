@@ -92,7 +92,7 @@ class MySQLClient(object):
         return result
 
     def ping(self):
-        result = {"status": False, "data": None, "message": ""}
+        result = {"status": False, "data": None, "message": "", "suggestion": ""}
         start_time = time.time()
         try:
             _ = self.db.ping()
@@ -100,6 +100,7 @@ class MySQLClient(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.error("failed to ping MySQL, err: {e}")
             result["message"] = str(e)
+            result["suggestion"] = "确认MySQL连接是否可用"
 
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))

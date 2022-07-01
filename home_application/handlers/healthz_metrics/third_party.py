@@ -49,7 +49,11 @@ class ThirdPartyCheck(object):
             result = ThirdParty.call_api(module)
             data.append(
                 HealthzMetric(
-                    status=result["status"], metric_name=module, metric_value=result["data"], message=result["message"]
+                    status=result["status"],
+                    metric_name=module,
+                    metric_value=result["data"],
+                    message=result["message"],
+                    suggestion=result["suggestion"],
                 )
             )
 
@@ -60,6 +64,7 @@ class ThirdPartyCheck(object):
                 metric_name="iam",
                 metric_value=check_iam_result["data"],
                 message=check_iam_result["message"],
+                suggestion=check_iam_result["suggestion"],
             )
         )
 

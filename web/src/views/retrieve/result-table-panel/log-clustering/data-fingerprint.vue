@@ -223,9 +223,9 @@
       </template>
 
       <div slot="empty">
-        <div class="empty-text" v-if="clusterSwitch && !configData.extra.signature_switch">
+        <div class="empty-text" v-if="!clusterSwitch || !configData.extra.signature_switch">
           <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-          <p>{{$t('goFingerMessage')}}</p>
+          <p>{{getLeaveText}}</p>
           <span class="empty-leave" @click="handleLeaveCurrent">{{$t('去设置')}}</span>
         </div>
         <div class="empty-text" v-if="fingerList.length === 0 && configData.extra.signature_switch">
@@ -313,6 +313,9 @@ export default {
     },
     isShowBottomTips() {
       return this.fingerList.length >= 50 && this.fingerList.length === this.allFingerList.length;
+    },
+    getLeaveText() {
+      return !this.clusterSwitch ? this.$t('goSettingMessage') : this.$t('goFingerMessage');
     },
   },
   watch: {

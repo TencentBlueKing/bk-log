@@ -22,6 +22,8 @@ the project delivered to anyone in the future.
 import time
 import logging
 
+from django.utils.translation import ugettext as _
+
 import settings
 from apps.api import BkItsmApi, CCApi, JobApi, NodeApi, BKLoginApi, MonitorApi, BkDataDatabusApi, BKPAASApi
 
@@ -69,7 +71,7 @@ THIRD_PARTY_CHECK_API = {
 class ThirdParty(object):
     @staticmethod
     def call_api(module: str):
-        result = {"status": False, "data": None, "message": ""}
+        result = {"status": False, "data": None, "message": "", "suggestion": ""}
         start_time = time.time()
         try:
             activate_request(generate_request())
@@ -81,6 +83,7 @@ class ThirdParty(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to check {module}, err: {e}")
             result["message"] = str(e)
+            result["suggestion"] = f"确认{module.upper()}的域名配置, 若配置无误, 则确认服务是否正常"
 
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))
@@ -88,7 +91,7 @@ class ThirdParty(object):
 
     @staticmethod
     def check_iam():
-        result = {"status": False, "data": None, "message": ""}
+        result = {"status": False, "data": None, "message": "", "suggestion": ""}
         app_code = settings.APP_CODE
         app_secret = settings.SECRET_KEY
         bk_iam_host = settings.BK_IAM_INNER_HOST
@@ -100,10 +103,14 @@ class ThirdParty(object):
             )
             status, data = client.ping()
             result["status"] = status
-            result["message"] = data.get("message", "")
+            if data:
+                result["message"] = data.get("message", "")
+            else:
+                result["message"] = _("ping failed")
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to ping iam, err: {e}")
             result["message"] = str(e)
+            result["suggestion"] = "确认IAM的域名配置, 若配置无误, 则确认服务是否正常"
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))
 
