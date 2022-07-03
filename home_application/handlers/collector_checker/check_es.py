@@ -40,10 +40,13 @@ class CheckESStory(BaseStory):
         self.table_id = table_id
         self.bk_data_name = bk_data_name
         self.result_table = {}
+        self.cluster_config = {}
         self.cluster_id = 0
         # 物理索引列表
         self.indices = []
         self.es_client = None
+
+    def pre_run(self):
         try:
             result = TransferApi.get_result_table_storage(
                 {"result_table_list": self.table_id, "storage_type": "elasticsearch"}
@@ -55,6 +58,7 @@ class CheckESStory(BaseStory):
             self.report.add_error(f"[TransferApi] [get_result_table_storage] 失败, err: {e}")
 
     def check(self):
+        self.pre_run()
         self.get_es_client()
         self.get_indices()
         self.get_index_alias()
@@ -76,7 +80,7 @@ class CheckESStory(BaseStory):
     def get_es_client(self):
         domain_name = self.cluster_config["domain_name"]
         port = self.cluster_config["port"]
-        auth_info = self.cluster_config.get("auth_info", {})
+        auth_info = self.result_table.get("auth_info", {})
         username = auth_info.get("username")
         password = auth_info.get("password")
         http_auth = (username, password) if username and password else None

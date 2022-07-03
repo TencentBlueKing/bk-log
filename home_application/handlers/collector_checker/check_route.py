@@ -21,10 +21,7 @@ the project delivered to anyone in the future.
 """
 import logging
 from apps.api import GseApi
-from home_application.constants import (
-    DEFAULT_BK_USERNAME,
-    CHECK_STORY_2,
-)
+from home_application.constants import DEFAULT_BK_USERNAME, CHECK_STORY_2, KAFKA_SSL_CONFIG_ITEMS
 from home_application.handlers.collector_checker.base import BaseStory
 
 logger = logging.getLogger()
@@ -68,19 +65,16 @@ class CheckRouteStory(BaseStory):
                             if not addrs:
                                 continue
                             for addr in addrs:
-                                self.kafka.append(
-                                    {
-                                        "route_name": r["name"],
-                                        "stream_name": stream_name,
-                                        "kafka_topic_name": r["stream_to"]["kafka"]["topic_name"],
-                                        "ip": addr["ip"],
-                                        "port": addr["port"],
-                                        "sasl_plain_username": query_stream_to_data[0].get("sasl_username", None),
-                                        "sasl_plain_password": query_stream_to_data[0].get("sasl_passwd", None),
-                                        "sasl_mechanism": query_stream_to_data[0].get("sasl_mechanisms", None),
-                                        "security_protocol": query_stream_to_data[0].get("security_protocol", None),
-                                    }
-                                )
+                                kafka_info = {
+                                    "route_name": r["name"],
+                                    "stream_name": stream_name,
+                                    "kafka_topic_name": r["stream_to"]["kafka"]["topic_name"],
+                                    "ip": addr["ip"],
+                                    "port": addr["port"],
+                                }
+                                for item in KAFKA_SSL_CONFIG_ITEMS:
+                                    if query_stream_to_data[0].get(item):
+                                        kafka_info[item] = query_stream_to_data[0][item]
                     except Exception as e:
                         message = f"[请求GseAPI] [query_stream_to] 获取stream[{stream_id}]失败, err: {e}"
                         logger.error(message)

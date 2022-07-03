@@ -26,7 +26,15 @@ from django.conf import settings
 from kafka import KafkaConsumer
 from kafka.structs import TopicPartition
 
-from home_application.constants import KAFKA_TEST_GROUP, DEFAULT_KAFKA_SECURITY_PROTOCOL, CHECK_STORY_3
+from home_application.constants import (
+    KAFKA_TEST_GROUP,
+    KAFKA_SSL_USERNAME,
+    KAFKA_SSL_PASSWORD,
+    KAFKA_SSL_MECHANISM,
+    KAFKA_SSL_PROTOCOL,
+    DEFAULT_KAFKA_SECURITY_PROTOCOL,
+    CHECK_STORY_3,
+)
 from home_application.handlers.collector_checker.base import BaseStory
 
 logger = logging.getLogger()
@@ -59,10 +67,10 @@ class CheckKafkaStory(BaseStory):
                 topic,
                 group_id=KAFKA_TEST_GROUP,
                 bootstrap_servers=f"{host}:{port}",
-                security_protocol=kafka_info.get("security_protocol", DEFAULT_KAFKA_SECURITY_PROTOCOL),
-                sasl_mechanism=kafka_info.get("sasl_mechanism", None),
-                sasl_plain_username=kafka_info.get("sasl_username", None),
-                sasl_plain_password=kafka_info.get("sasl_plain_password", None),
+                security_protocol=kafka_info.get(KAFKA_SSL_PROTOCOL, DEFAULT_KAFKA_SECURITY_PROTOCOL),
+                sasl_mechanism=kafka_info.get(KAFKA_SSL_MECHANISM, None),
+                sasl_plain_username=kafka_info.get(KAFKA_SSL_USERNAME, None),
+                sasl_plain_password=kafka_info.get(KAFKA_SSL_PASSWORD, None),
             )
 
             message_count = 10
