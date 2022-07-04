@@ -27,9 +27,9 @@ from django.conf import settings
 from apps.api import BkDataAuthApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import BKDATA_SUPER_TOKEN
-from apps.utils.log import logger
 from apps.log_esquery.permission import EsquerySearchPermissions
-from apps.utils.local import get_request_username, get_request
+from apps.utils.local import get_request, get_request_username
+from apps.utils.log import logger
 
 
 class BkDataAuthHandler(object):
@@ -151,25 +151,25 @@ class BkDataAuthHandler(object):
         if source_app_code == settings.APP_CODE:
             return
 
-        result = BkDataAuthApi.update_auth_token(
-            {
-                "token_id": settings.BKDATA_DATA_TOKEN_ID,
-                "data_token_bk_app_code": settings.BKDATA_DATA_APP_CODE,
-                "data_scope": {
-                    "permissions": [
-                        {
-                            "action_id": "result_table.query_data",
-                            "object_class": "result_table",
-                            "scope_id_key": "result_table_id",
-                            "scope_object_class": "result_table",
-                            "scope": {"result_table_id": result_table_id},
-                        }
-                        for result_table_id in result_tables
-                    ]
-                },
-                "reason": "Auto authorize from app => {}".format(source_app_code),
-                # 过期时间一年
-                "expire": 360,
-            }
-        )
+        params = {
+            "token_id": settings.BKDATA_DATA_TOKEN_ID,
+            "data_token_bk_app_code": settings.BKDATA_DATA_APP_CODE,
+            "data_scope": {
+                "permissions": [
+                    {
+                        "action_id": "result_table.query_data",
+                        "object_class": "result_table",
+                        "scope_id_key": "result_table_id",
+                        "scope_object_class": "result_table",
+                        "scope": {"result_table_id": result_table_id},
+                    }
+                    for result_table_id in result_tables
+                ]
+            },
+            "reason": "Auto authorize from app => {}".format(source_app_code),
+            # 过期时间一年
+            "expire": 360,
+        }
+        logger.info("[bkdata token auth] RT 授权参数：{}".format(params))
+        result = BkDataAuthApi.update_auth_token(params)
         logger.info("[bkdata token auth] RT 自动授权结果：{}".format(result))
