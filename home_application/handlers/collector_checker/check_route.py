@@ -75,6 +75,7 @@ class CheckRouteStory(BaseStory):
                                 for item in KAFKA_SSL_CONFIG_ITEMS:
                                     if query_stream_to_data[0].get(item):
                                         kafka_info[item] = query_stream_to_data[0][item]
+                                self.kafka.append(kafka_info)
                     except Exception as e:
                         message = f"[请求GseAPI] [query_stream_to] 获取stream[{stream_id}]失败, err: {e}"
                         logger.error(message)
