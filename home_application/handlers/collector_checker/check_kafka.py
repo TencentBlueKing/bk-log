@@ -49,6 +49,9 @@ class CheckKafkaStory(BaseStory):
         self.latest_log = []
 
     def check(self):
+        if not self.kafka_info_list:
+            self.report.add_info("没有kafka, 跳过检查")
+            return
         for kafka_info in self.kafka_info_list:
             self.get_kafka_test_group_latest_log(kafka_info)
 
