@@ -50,7 +50,10 @@ class CheckTransferStory(BaseStory):
             self.etl_params = None
 
     def check(self):
-        self.clean_data()
+        if not self.latest_log:
+            self.report.add_info("kafka内没有数据, 跳过清洗检查")
+        else:
+            self.clean_data()
         self.get_metrics()
 
     def clean_data(self):

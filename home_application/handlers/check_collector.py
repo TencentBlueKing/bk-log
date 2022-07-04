@@ -23,7 +23,6 @@ import sys
 
 from apps.log_databus.constants import TargetNodeTypeEnum
 from apps.log_databus.models import CollectorConfig
-from home_application.constants import CHECK_STORIES
 from home_application.handlers.collector_checker import (
     CheckAgentStory,
     CheckESStory,
@@ -96,66 +95,56 @@ class CollectorCheckHandler(object):
 
         check_agent_report = self.check_agent()
         self.story_report.append(check_agent_report)
-        if check_agent_report.has_problem():
-            return
 
         check_route_report = self.check_route()
         self.story_report.append(check_route_report)
-        if check_route_report.has_problem():
-            return
 
         check_kafka_report = self.check_kafka()
         self.story_report.append(check_kafka_report)
-        if check_kafka_report.has_problem():
-            return
 
         check_transfer_report = self.check_transfer()
         self.story_report.append(check_transfer_report)
-        if check_transfer_report.has_problem():
-            return
 
         check_es_report = self.check_es()
         self.story_report.append(check_es_report)
-        if check_es_report.has_problem():
-            return
 
     def command_format(self):
         is_success = "失败"
-        if len(self.story_report) == len(CHECK_STORIES):
+        if [i.has_problem() for i in self.story_report].count(True) == 0:
             is_success = "成功"
-        print(f"\n采集项检查{is_success}\n\n")
+        print(f"\n采集项检查{is_success}\n\n\n")
         for story_m in self.story_report:
             print("-" * 100)
             if story_m.has_problem():
-                self.error(f"{story_m.name} 存在问题, 查看详细报错")
+                self.error(story_m.name, "存在问题, 查看详细报错")
             else:
-                self.info(f"{story_m.name} 正常")
+                self.info(story_m.name, "正常")
             if self.debug:
                 for story_info in story_m.info:
-                    self.info(story_info)
+                    self.info(story_m.name, story_info)
             for story_warning in story_m.warning:
-                self.warning(story_warning)
+                self.warning(story_m.name, story_warning)
             for story_error in story_m.error:
-                self.error(story_error)
+                self.error(story_m.name, story_error)
             print("\n")
 
     @staticmethod
-    def info(message):
-        print(f"\033[32m[INFO]: \033[0m{message}")
+    def info(story_name, message):
+        print(f"\033[32m[INFO] [{story_name}]: \033[0m{message}")
 
     @staticmethod
-    def warning(message):
-        print(f"\033[33m[WARNING]: \033[0m{message}")
+    def warning(story_name, message):
+        print(f"\033[33m[WARNING] [{story_name}]: \033[0m{message}")
 
     @staticmethod
-    def error(message):
-        print(f"\033[31m[ERROR]: \033[0m{message}")
+    def error(story_name, message):
+        print(f"\033[31m[ERROR] [{story_name}]: \033[0m{message}")
 
     def check_agent(self):
         story = CheckAgentStory(
-            bk_biz_id=self.collector_config.bk_biz_id,
+            bk_biz_id=self.bk_biz_id,
             target_server=self.target_server,
-            subscription_id=self.collector_config.subscription_id,
+            subscription_id=self.subscription_id,
         )
         story.check()
         return story.get_report()

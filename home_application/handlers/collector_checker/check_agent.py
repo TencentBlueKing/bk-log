@@ -101,7 +101,6 @@ class CheckAgentStory(BaseStory):
         params = {
             "bk_biz_id": self.bk_biz_id,
             "job_instance_id": self.job_instance_id,
-            "bk_username": DEFAULT_BK_USERNAME,
             "return_ip_result": True,
         }
         for i in range(RETRY_TIMES):
