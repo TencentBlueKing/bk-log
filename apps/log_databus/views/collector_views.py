@@ -64,8 +64,7 @@ from apps.log_databus.serializers import (
     CustomCreateSerializer,
     CustomUpateSerializer,
     PreCheckSerializer,
-    CreateBCSCollectorSerializer,
-    UpdateBCSCollectorSerializer,
+    BCSCollectorSerializer,
     MatchLabelsSerializer,
     ValidateContainerCollectorYamlSerializer,
     CreateContainerCollectorSerializer,
@@ -1991,7 +1990,7 @@ class CollectorViewSet(ModelViewSet):
         # auth_info = Permission.get_auth_info(request, raise_exception=False)
         # if not auth_info:
         #     raise BkJwtVerifyException()
-        data = self.params_valid(CreateBCSCollectorSerializer)
+        data = self.params_valid(BCSCollectorSerializer)
         return Response(
             CollectorHandler().create_bcs_container_config(
                 data=data,
@@ -2004,7 +2003,7 @@ class CollectorViewSet(ModelViewSet):
         # auth_info = Permission.get_auth_info(request, raise_exception=False)
         # if not auth_info:
         #     raise BkJwtVerifyException()
-        data = self.params_valid(UpdateBCSCollectorSerializer)
+        data = self.params_valid(BCSCollectorSerializer)
         return Response(CollectorHandler(collector_config_id=collector_config_id).update_bcs_config(data=data))
 
     @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")

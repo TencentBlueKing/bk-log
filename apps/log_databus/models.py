@@ -302,6 +302,12 @@ class ContainerCollectorConfig(SoftDeleteModel):
         _("下发状态"), null=True, blank=True, max_length=30, choices=ContainerCollectStatus.get_choices()
     )
     raw_config = models.JSONField(_("原始配置"), null=True, blank=True)
+    parent_container_config_id = models.IntegerField(_("父配置id"), default=0)
+    rule_id = models.IntegerField(_("bcs规则集id"), default=0)
+
+
+class BcsRule(SoftDeleteModel):
+    rule_name = models.CharField(_("采集配置名称"), max_length=64)
 
 
 class ItsmEtlConfig(SoftDeleteModel):

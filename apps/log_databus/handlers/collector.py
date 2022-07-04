@@ -2300,7 +2300,7 @@ class CollectorHandler(object):
             "collector_scenario_id": CollectorScenarioEnum.ROW.value,
             "custom_type": data["custom_type"],
             "category_id": data["category_id"],
-            "description": data["description"] or data["collector_config_name"],
+            "description": data["description"],
             "data_link_id": int(conf["data_link_id"]),
             "bk_app_code": bk_app_code,
             "environment": data["environment"],
@@ -2355,12 +2355,12 @@ class CollectorHandler(object):
                         "paths": config["paths"],
                         "conditions": {"type": "match", "match_type": "include", "match_content": ""},
                     },
-                    workload_type=config["container"]["workload_type"],
-                    workload_name=config["container"]["workload_name"],
-                    container_name=config["container"]["container_name"],
-                    match_labels=config["label_selector"]["match_labels"],
-                    match_expressions=config["label_selector"]["match_expressions"],
-                    all_container=not config["container"]["workload_type"],
+                    workload_type=config["container"].get("workload_type", ""),
+                    workload_name=config["container"].get("workload_name", ""),
+                    container_name=config["container"].get("container_name"),
+                    match_labels=config["label_selector"].get("match_labels", []),
+                    match_expressions=config["label_selector"].get("match_expressions", []),
+                    all_container=not config["container"],
                 )
                 for config in data["configs"]
             )
