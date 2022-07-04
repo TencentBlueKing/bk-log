@@ -226,7 +226,7 @@
       <!-- 上报链路 -->
       <div>
         <span>{{$t('上报链路')}}</span>
-        <span>{{ collectorData.bk_data_id || '-' }}</span>
+        <span>{{ dataLinkName || '-' }}</span>
       </div>
     </div>
   </div>
@@ -249,11 +249,13 @@ export default {
         workload_name: this.$t('应用名称'),
         container_name: this.$t('容器名称'),
       },
+      dataLinkName: '--',
     };
   },
   computed: {
   },
-  created() {
+  async created() {
+    await this.getLinkData(this.collectorData);
     this.initContainerConfigData(this.collectorData);
   },
   methods: {
@@ -312,6 +314,21 @@ export default {
           params,
         };
       });
+    },
+    async getLinkData(collectorData) {
+      try {
+        this.tableLoading = true;
+        const res = await this.$http.request('linkConfiguration/getLinkList', {
+          query: {
+            bk_biz_id: this.$store.state.bkBizId,
+          },
+        });
+        this.dataLinkName = res.data.find(item => (item.data_link_id === collectorData.data_link_id))?.link_group_name || '--';
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        this.tableLoading = false;
+      }
     },
     getFromCharCode(index) {
       return String.fromCharCode(index + 65);

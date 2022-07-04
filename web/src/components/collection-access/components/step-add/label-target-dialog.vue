@@ -40,7 +40,7 @@
         <bk-input
           class="tree-search"
           right-icon="bk-icon icon-search"
-          v-model="filter"
+          v-model="filterStr"
           @change="search"
         ></bk-input>
         <bk-big-tree
@@ -150,7 +150,7 @@ export default {
   data() {
     return {
       treeList: [],
-      filter: '', // 搜索过滤字符串
+      filterStr: '', // 搜索过滤字符串
       matchExpressObj: {
         matchType: 'express', // 匹配类型
         treeList: [], // 树的值列表
@@ -196,6 +196,8 @@ export default {
     isShowDialog(val) {
       if (val) {
         this.getTreeList();
+      } else {
+        this.filterStr = '';
       }
     },
   },
@@ -333,11 +335,34 @@ export default {
         this.resultLoading = true;
         // 表达式或标签是否有选中的值  获取结果请求
         if (Object.values(val).some(item => item.length)) {
+          const selectorVal = JSON.parse(JSON.stringify(val));
+          if (selectorVal.match_expressions.length) {
+            const keyList = [];
+            const handleFilterExpressions = selectorVal.match_expressions
+              .reduce((pre, cur) => {
+                const { key, operator, value } = cur;
+                if (['!=', '='].includes(operator)) { // 等于，非等不需要加括号
+                  pre.push(cur);
+                  return pre;
+                }
+                if (!keyList.includes(key)) { // 没有key属性则新增对象
+                  keyList.push(key);
+                  pre.push(cur);
+                } else {
+                  const preIndex = pre.findIndex(preItem => preItem.key === key);
+                  // 有key值判断操作是否重复, 若是新操作则生成新的对象
+                  pre[preIndex].operator === operator ? pre[preIndex].value = `${pre[preIndex].value}, ${value}` : pre.push(cur);
+                }
+                return pre;
+              }, [])
+              .map(item => ({ ...item, value: ['notin', 'in'].includes(item.operator) ? `(${item.value})` : item.value }));
+            selectorVal.match_expressions = handleFilterExpressions;
+          }
           const data = {
             bcs_cluster_id: this.labelParams.bcs_cluster_id,
             bk_biz_id: this.labelParams.bk_biz_id,
             type: this.labelParams.type,
-            label_selector: val,
+            label_selector: selectorVal,
             namespace: this.currentNameSpaceStr,
           };
           this.$http.request('container/getHitResult', { data }).then((res) => {
@@ -387,7 +412,7 @@ export default {
       this.$emit('update:is-show-dialog', false);
     },
     search() {
-      this.$refs.labelTreeRef.filter(this.filter);
+      this.$refs.labelTreeRef.filter(this.filterStr);
     },
     handleResetWidth() {
       this.rightPreWidth = 280;

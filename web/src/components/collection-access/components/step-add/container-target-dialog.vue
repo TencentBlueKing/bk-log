@@ -39,7 +39,8 @@
       <bk-form-item :label="$t('Workload类型')" required>
         <bk-select
           :class="`${typeError && 'type-error'}`"
-          v-model="formData.workload_type">
+          v-model="formData.workload_type"
+          searchable>
           <bk-option
             v-for="(option, index) in typeList"
             :key="index"
@@ -50,8 +51,9 @@
       </bk-form-item>
       <bk-form-item :label="$t('Workload名称')" required>
         <bk-select
-          :class="`${nameError && 'name-error'}`"
+          ref="loadSelectRef"
           v-model="formData.workload_name"
+          :class="`${nameError && 'name-error'}`"
           :disabled="nameIsLoading"
           allow-create
           searchable>
@@ -120,6 +122,9 @@ export default {
     'formData.workload_name'() {
       this.nameError = false;
     },
+  },
+  mounted() {
+    this.$refs.loadSelectRef.$refs.createInput.placeholder = this.$t('请输入');
   },
   methods: {
     handelCancelDialog() {

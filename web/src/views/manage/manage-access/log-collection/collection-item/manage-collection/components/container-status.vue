@@ -173,7 +173,7 @@ export default {
      * @param { String } isPolling 是否是轮询状态
      */
     getContainerList(isPolling = '') {
-      if (isPolling !== 'polling') this.$emit('is-loading', true);
+      if (isPolling !== 'polling') this.$emit('update:is-loading', true);
       const params = { collector_config_id: this.curCollect.collector_config_id };
       this.$http.request('collect/getIssuedClusterList', {
         params,
@@ -202,7 +202,7 @@ export default {
           console.warn(err);
         })
         .finally(() => {
-          this.$emit('is-loading', true);
+          this.$emit('update:is-loading', false);
         });
     },
     issuedRetry(row = null) {
