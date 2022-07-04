@@ -24,6 +24,7 @@ import base64
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError as SlzValidationError
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
 from apps.log_databus.constants import (
@@ -31,6 +32,7 @@ from apps.log_databus.constants import (
     VisibleEnum,
     Environment,
     TopoType,
+    ContainerCollectorType,
 )
 from apps.log_databus.models import CleanTemplate, CollectorConfig
 
@@ -278,8 +280,8 @@ class CollectorCreateSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
-    environment = serializers.CharField(
-        label=_("环境"), max_length=64, required=False, allow_null=True, allow_blank=True, default=Environment.LINUX
+    environment = serializers.ChoiceField(
+        label=_("环境"), default=Environment.LINUX, choices=[Environment.LINUX, Environment.WINDOWS]
     )
     params = PluginParamSerializer()
 
@@ -309,7 +311,6 @@ class CreateContainerCollectorSerializer(serializers.Serializer):
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
     configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
-    environment = serializers.CharField(label=_("环境"))
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"), default=False)
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
@@ -340,6 +341,9 @@ class CollectorUpdateSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
+    environment = serializers.ChoiceField(
+        label=_("环境"), required=False, choices=[Environment.LINUX, Environment.WINDOWS]
+    )
     params = PluginParamSerializer()
 
 
@@ -352,12 +356,11 @@ class UpdateContainerCollectorSerializer(serializers.Serializer):
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
     configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
-    environment = serializers.CharField(label=_("环境"))
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
     yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
-    yaml_config = serializers.CharField(label=_("yaml配置内容"), default="")
+    yaml_config = serializers.CharField(label=_("yaml配置内容"), default="", allow_blank=True)
 
     def validate_yaml_config(self, value):
         try:
@@ -408,7 +411,6 @@ class BatchSubscriptionStatusSerializer(serializers.Serializer):
 
 class TaskStatusSerializer(serializers.Serializer):
     task_id_list = serializers.CharField(label=_("部署任务ID"), allow_blank=True)
-    container_collector_config_id_list = serializers.CharField(label=_("容器采集配置ID"), allow_blank=True)
 
     def validate(self, attrs):
         # 当task_is_list为空的情况不需要做相关验证
@@ -925,7 +927,7 @@ class MatchLabelsSerializer(serializers.Serializer):
 
 
 class ValidateContainerCollectorYamlSerializer(serializers.Serializer):
-    yaml_config = serializers.CharField(label=_("YAML配置的base64"))
+    yaml_config = serializers.CharField(label=_("YAML配置的base64"), allow_blank=True)
 
     def validate_yaml_config(self, value):
         try:
@@ -943,7 +945,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     class MultilineSerializer(serializers.Serializer):
         pattern = serializers.CharField(label=_("行首正则"), required=False, allow_blank=True)
         maxLines = serializers.IntegerField(label=_("最多匹配行数"), required=False, max_value=1000)
-        timeout = serializers.IntegerField(label=_("最大耗时"), required=False, max_value=10)
+        timeout = serializers.CharField(label=_("最大耗时"), required=False)
 
     class LabelSelectorSerializer(serializers.Serializer):
         matchLabels = serializers.DictField(
@@ -966,7 +968,8 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     multiline = MultilineSerializer(label=_("段日志配置"), required=False)
     extMeta = serializers.DictField(label=_("额外的元数据"), required=False, allow_empty=True)
     logConfigType = serializers.ChoiceField(
-        label=_("日志类型"), choices=["std_log_config", "container_log_config", "node_log_config"]
+        label=_("日志类型"),
+        choices=[ContainerCollectorType.STDOUT, ContainerCollectorType.CONTAINER, ContainerCollectorType.NODE],
     )
     allContainer = serializers.BooleanField(label=_("是否匹配全量容器"), default=False)
     namespaceSelector = NamespaceSelector(label=_("匹配命名空间"), required=False)
@@ -979,3 +982,8 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     delimiter = serializers.CharField(label=_("分隔符"), allow_blank=True, required=False)
     filters = FilterSerializer(label=_("过滤规则"), many=True, required=False)
     addPodLabel = serializers.CharField(label=_("上报时是否把标签带上"), default=False)
+
+    def validate(self, attrs):
+        if attrs["logConfigType"] != ContainerCollectorType.STDOUT and not attrs.get("path"):
+            raise SlzValidationError(_("当日志类型不为标准输出时，日志采集路径为必填项"))
+        return attrs

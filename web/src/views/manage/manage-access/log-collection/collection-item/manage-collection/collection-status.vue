@@ -21,7 +21,12 @@
   -->
 
 <template>
-  <div class="collection-status-container" v-bkloading="{ isLoading: basicLoading }">
+  <!-- 容器日志状态页 -->
+  <container-status v-if="isContainer" :is-loading.sync="basicLoading" />
+  <div
+    v-else
+    v-bkloading="{ isLoading: basicLoading }"
+    class="collection-status-container">
     <div class="collect" v-if="dataFir">
       <div class="mb15 nav-section">
         <div class="button-group">
@@ -148,11 +153,21 @@
 
 <script>
 import { projectManages } from '@/common/util';
+import containerStatus from './components/container-status.vue';
 
 export default {
+  components: {
+    containerStatus,
+  },
+  props: {
+    collectorData: {
+      type: Object,
+      required: true,
+    },
+  },
   data() {
     return {
-      basicLoading: true,
+      basicLoading: false,
       currentPage: 0,
       isPageOver: false, // 前端分页加载是否结束
       dataListPaged: [], // 将列表数据按 pageSize 分页
@@ -228,8 +243,13 @@ export default {
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
+    isContainer() {
+      return this.collectorData.environment === 'container';
+    },
   },
   created() {
+    // 容器日志展示容器日志的内容
+    if (this.isContainer) return;
     this.getCollectList();
   },
   beforeDestroy() {
@@ -237,6 +257,8 @@ export default {
     this.timer && clearInterval(this.timer);
   },
   mounted() {
+    // 容器日志展示容器日志的内容
+    if (this.isContainer) return;
     this.adadScrollEvent();
   },
   methods: {
@@ -254,6 +276,7 @@ export default {
     // 获取采集状态
     getCollectList() {
       this.reloadTable = true;
+      this.basicLoading = true;
       this.dataAll = { totalLenght: 0 };
       this.dataSec = { totalLenght: 0 };
       this.dataFal = { totalLenght: 0 };

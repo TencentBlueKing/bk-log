@@ -895,10 +895,8 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.validated_data
-        task_id_list = data.get("task_id_list").split(",")
-        container_collector_config_id_list = data.get("container_collector_config_id_list").split(",")
-        id_list = task_id_list or container_collector_config_id_list
-        return Response(CollectorHandler(collector_config_id).get_task_status(id_list))
+        task_id_list = [task_id for task_id in data.get("task_id_list", "").split(",") if task_id]
+        return Response(CollectorHandler(collector_config_id).get_task_status(task_id_list))
 
     @detail_route(methods=["GET"], url_path="task_detail")
     def task_detail(self, request, collector_config_id=None):

@@ -517,6 +517,11 @@ class CollectorHandler(object):
             "params": params["params"],
             "is_active": True,
         }
+
+        if "environment" in params:
+            # 如果传了 environment 就设置，不传就不设置
+            model_fields["environment"] = params["environment"]
+
         # 判断是否存在非法IP列表
         self.cat_illegal_ips(params)
 
@@ -1009,7 +1014,13 @@ class CollectorHandler(object):
 
         contents = []
         for container_config in container_configs:
-            contents.append({"status": container_config.status, "container_collector_config_id": container_config.id})
+            contents.append(
+                {
+                    "status": container_config.status,
+                    "container_collector_config_id": container_config.id,
+                    "name": self.generate_bklog_config_name(container_config.id),
+                }
+            )
         return {
             "contents": [
                 {
@@ -2133,7 +2144,7 @@ class CollectorHandler(object):
             "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
             "data_link_id": int(data["data_link_id"]),
-            "environment": data["environment"],
+            "environment": Environment.CONTAINER,
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
@@ -2214,6 +2225,12 @@ class CollectorHandler(object):
                 description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
+            self.data.task_id_list = list(
+                ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id).values_list(
+                    "id", flat=True
+                )
+            )
+
             self.data.save()
 
         # add user_operation_record
@@ -2246,7 +2263,7 @@ class CollectorHandler(object):
         collector_config_update = {
             "collector_config_name": data["collector_config_name"],
             "description": data["description"] or data["collector_config_name"],
-            "environment": data["environment"],
+            "environment": Environment.CONTAINER,
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
@@ -2285,6 +2302,13 @@ class CollectorHandler(object):
         user_operation_record.delay(operation_record)
         self.compare_config(data, self.data.collector_config_id)
 
+        self.data.task_id_list = list(
+            ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id).values_list(
+                "id", flat=True
+            )
+        )
+        self.data.save()
+
         return {
             "collector_config_id": self.data.collector_config_id,
             "index_set_id": self.data.index_set_id,
@@ -2303,7 +2327,7 @@ class CollectorHandler(object):
             "description": data["description"],
             "data_link_id": int(conf["data_link_id"]),
             "bk_app_code": bk_app_code,
-            "environment": data["environment"],
+            "environment": Environment.CONTAINER,
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
@@ -2419,7 +2443,7 @@ class CollectorHandler(object):
             "collector_config_name": data["collector_config_name"],
             "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
-            "environment": data["environment"],
+            "environment": Environment.CONTAINER,
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
@@ -2528,6 +2552,8 @@ class CollectorHandler(object):
         delete_container_configs = container_configs[config_length::]
         for config in delete_container_configs:
             self.delete_container_release(config)
+            # 增量比对后，需要真正删除配置
+            config.delete()
 
     def create_container_release(self, container_config: ContainerCollectorConfig):
         """
@@ -2545,7 +2571,7 @@ class CollectorHandler(object):
                 "path": container_config.params["paths"],
                 "encoding": container_config.data_encoding,
                 "extMeta": {label["key"]: label["value"] for label in self.data.extra_labels},
-                "logConfigType": self.data.environment,
+                "logConfigType": container_config.collector_type,
                 "allContainer": container_config.all_container,
                 "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
                 "workloadType": container_config.workload_type,
@@ -2561,7 +2587,11 @@ class CollectorHandler(object):
                 "multiline": {
                     "pattern": container_config.params.get("multiline_pattern"),
                     "maxLines": container_config.params.get("multiline_max_lines"),
-                    "timeout": container_config.params.get("multiline_timeout"),
+                    "timeout": (
+                        f"{container_config.params['multiline_timeout']}s"
+                        if "multiline_timeout" in container_config.params
+                        else None
+                    ),
                 },
                 "delimiter": container_config.params.get("conditions", {}).get("separator", ""),
                 "filters": filters,
@@ -2811,7 +2841,7 @@ class CollectorHandler(object):
                         "conditions": conditions,
                         "multiline_pattern": config.get("multiline", {}).get("pattern", ""),
                         "multiline_max_lines": config.get("multiline", {}).get("maxLines", 10),
-                        "multiline_timeout": config.get("multiline", {}).get("timeout", 60),
+                        "multiline_timeout": config.get("multiline", {}).get("timeout", "10s").rstrip("s"),
                     },
                     "data_encoding": config["encoding"],
                     "collector_type": log_config_type,
