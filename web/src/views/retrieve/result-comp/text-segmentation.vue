@@ -31,8 +31,10 @@
     <span v-else class="segment-content">
       <template
         v-for="(item, index) in splitList">
+        <!-- 换行 -->
+        <br :key="index" v-if="item === '\n'">
         <!-- 分割符 -->
-        <template v-if="segmentReg.test(item)">{{item}}</template>
+        <template v-else-if="segmentReg.test(item)">{{item}}</template>
         <!-- 高亮 -->
         <mark
           :key="index"
