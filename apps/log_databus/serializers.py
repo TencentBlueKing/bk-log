@@ -24,6 +24,7 @@ import base64
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError as SlzValidationError
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
 from apps.log_databus.constants import (
@@ -401,7 +402,6 @@ class BatchSubscriptionStatusSerializer(serializers.Serializer):
 
 class TaskStatusSerializer(serializers.Serializer):
     task_id_list = serializers.CharField(label=_("部署任务ID"), allow_blank=True)
-    container_collector_config_id_list = serializers.CharField(label=_("容器采集配置ID"), allow_blank=True)
 
     def validate(self, attrs):
         # 当task_is_list为空的情况不需要做相关验证
@@ -945,7 +945,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     class MultilineSerializer(serializers.Serializer):
         pattern = serializers.CharField(label=_("行首正则"), required=False, allow_blank=True)
         maxLines = serializers.IntegerField(label=_("最多匹配行数"), required=False, max_value=1000)
-        timeout = serializers.IntegerField(label=_("最大耗时"), required=False, max_value=10)
+        timeout = serializers.CharField(label=_("最大耗时"), required=False)
 
     class LabelSelectorSerializer(serializers.Serializer):
         matchLabels = serializers.DictField(
@@ -985,5 +985,5 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs["logConfigType"] != ContainerCollectorType.STDOUT and not attrs.get("path"):
-            raise ValidationError(_("当日志类型不为标准输出时，日志采集路径不能为空"))
+            raise SlzValidationError(_("当日志类型不为标准输出时，日志采集路径不能为空"))
         return attrs
