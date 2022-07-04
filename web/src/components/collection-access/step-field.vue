@@ -757,7 +757,6 @@ export default {
     },
     // 初始化清洗模板详情
     initCleanTemp() {
-      this.basicLoading = true;
       if (this.isEditTemp) { // 克隆与编辑获取模板详情
         const { templateId } = this.$route.params;
         this.basicLoading = true;

@@ -166,7 +166,7 @@ export default {
       this.timer = setInterval(() => {
         this.getContainerList('polling');
         if (!this.hasRunning) clearInterval(this.timer);
-      }, 50000);
+      }, 10000);
     },
     /**
      * @desc: 容器日志list，与轮询共用
@@ -206,12 +206,7 @@ export default {
         });
     },
     issuedRetry(row = null) {
-      let retrySubmitList;
-      if (row) {
-        retrySubmitList = [row.container_collector_config_id];
-      } else {
-        retrySubmitList = this.allFailedIDList;
-      }
+      const retrySubmitList = row ? [row.container_collector_config_id] :  this.allFailedIDList;
       // 无ID则不请求
       if (!retrySubmitList.length) return;
       this.$http.request('source/retryList', {
