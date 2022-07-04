@@ -309,7 +309,13 @@ export default {
             child.push(copyItem);
           }
         });
-        this.tableList.splice(0, this.tableList.length, ...child);
+        const data = child.map((val, index) => {
+          return {
+            ...val,
+            collapse: index < 5,
+          };
+        });
+        this.tableList.splice(0, this.tableList.length, ...data);
       }
     },
     prevHandler() {
@@ -412,8 +418,10 @@ export default {
           if (timerNum === this.timerNum) {
             // 之前返回的 contents 为空
             if (!this.tableListAll.length) {
+              let collapseCount = 0; // 展开前5个状态表格信息
               data.forEach((cluster) => {
-                cluster.collapse = true;
+                cluster.collapse = cluster.child.length && collapseCount < 5;
+                if (cluster.child.length) collapseCount += 1;
                 cluster.child.forEach((host) => {
                   host.status = host.status === 'PENDING' ? 'running' : host.status.toLowerCase(); // pending-等待状态，与running不做区分
                 });
@@ -429,8 +437,10 @@ export default {
             }
           }
         } else {
+          let collapseCount = 0; // 展开前5个状态表格信息
           data.forEach((cluster) => {
-            cluster.collapse = true;
+            cluster.collapse = cluster.child.length && collapseCount < 5;
+            if (cluster.child.length) collapseCount += 1;
             cluster.child.forEach((host) => {
               host.status = host.status === 'PENDING' ? 'running' : host.status.toLowerCase(); // pending-等待状态，与running不做区分
             });
