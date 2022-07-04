@@ -67,7 +67,7 @@
                  @mouseenter="activeItemID = item.id"
                  @mouseleave="activeItemID = -1">
               <div id="content-copy-html">
-                <span class="icon log-icon icon-copy" @click="copyContent(item.id)"></span>
+                <span class="icon log-icon icon-copy" @click="copyContent(item.key)"></span>
               </div>
               <div class="justify-sb">
                 <span

@@ -216,7 +216,7 @@
                 :name="cluItem.name">
               </bk-option>
             </bk-select>
-            <span class="tips">123</span>
+            <span class="tips">说明详情</span>
           </div>
         </bk-form-item>
 
@@ -1180,10 +1180,7 @@ export default {
         if (collectorType === 'std_log_config' || this.isWinEventLog) {
           params.paths = [];
         } else {
-          params.paths = params.paths.map((item) => {
-            if (typeof item === 'string') return { value: item };
-            return item;
-          });
+          params.paths = params.paths.map(item => (typeof item === 'object' ? item.value : item));
         }
       }
     },
@@ -1388,9 +1385,9 @@ export default {
     },
     getNameSpaceList(clusterID, isFirstUpdateSelect = false) {
       if (!clusterID) return;
-      const params = { cluster_id: clusterID, bk_biz_id: this.bkBizId };
+      const query = { cluster_id: clusterID, bk_biz_id: this.bkBizId };
       this.nameSpaceRequest = true;
-      this.$http.request('container/getNameSpace', { params }).then((res) => {
+      this.$http.request('container/getNameSpace', { query }).then((res) => {
         // 判断是否是第一次切换集群 如果是 则进行详情页namespace数据回显
         if (isFirstUpdateSelect) {
           const namespaceList = [];
@@ -1414,8 +1411,8 @@ export default {
         });
     },
     getBcsClusterList() {
-      const params = { bk_biz_id: this.bkBizId };
-      this.$http.request('container/getBcsList', { params }).then((res) => {
+      const query = { bk_biz_id: this.bkBizId };
+      this.$http.request('container/getBcsList', { query }).then((res) => {
         if (res.code === 0) {
           this.clusterList = res.data;
         }

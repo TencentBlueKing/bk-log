@@ -27,7 +27,7 @@
     data-test-id="addNewCollectionItem_div_collectionDistribution">
     <!-- 容器日志显示状态页信息 -->
     <template v-if="isContainer">
-      <container-status />
+      <container-status :is-loading.sync="loading" />
     </template>
     <!-- 物理环境显示下发页信息 -->
     <template v-else>
@@ -531,12 +531,14 @@ export default {
       }
       this.tabHandler({ type: this.curTab }, true);
       this.calcTabNum();
+      const containerConfigIdList = targetNodes.map(item => item.ip);
       this.$http.request('collect/retry', {
         // mock: true,
         // manualSchema: true,
         params: { collector_config_id: this.curCollect.collector_config_id },
         data: {
           target_nodes: targetNodes,
+          container_collector_config_id_list: containerConfigIdList,
         },
       }).then((res) => {
         if (res.data) {

@@ -497,7 +497,7 @@ export default {
       // eslint-disable-next-line no-useless-escape
       defaultRegex: '(?P<request_ip>[\d\.]+)[^[]+\[(?P<request_time>[^]]+)\]',
       isLoading: false,
-      basicLoading: true,
+      basicLoading: false,
       isUnmodifiable: false,
       fieldType: '',
       deletedVisible: true,
@@ -729,6 +729,7 @@ export default {
   methods: {
     // 初始化清洗项
     initCleanItem() {
+      this.basicLoading = true;
       const query = {
         bk_biz_id: this.bkBizId,
         have_data_id: 1,
@@ -756,6 +757,7 @@ export default {
     },
     // 初始化清洗模板详情
     initCleanTemp() {
+      this.basicLoading = true;
       if (this.isEditTemp) { // 克隆与编辑获取模板详情
         const { templateId } = this.$route.params;
         this.basicLoading = true;
