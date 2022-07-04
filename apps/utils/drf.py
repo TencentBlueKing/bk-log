@@ -105,10 +105,7 @@ def custom_params_valid(serializer, params, many=False):
         try:
             message = format_serializer_errors(_serializer.errors, _serializer.fields, params)
         except Exception as e:  # pylint: disable=broad-except
-            if isinstance(e.message, str):
-                message = e.message
-            else:
-                message = _("参数校验失败，详情请查看返回的errors")
+            message = _("参数校验失败: {err}").format(err=e)
         raise ValidationError(message)
     if many:
         return list(_serializer.data)
@@ -148,9 +145,7 @@ class GeneralSerializer(ModelSerializer):
             super(GeneralSerializer, self).is_valid(raise_exception)
         except ValidationError:
             if self._errors and raise_exception:
-                raise ValidationError(
-                    format_serializer_errors(self.errors, self.fields, self.initial_data),
-                )
+                raise ValidationError(format_serializer_errors(self.errors, self.fields, self.initial_data),)
 
         return not bool(self._errors)
 
