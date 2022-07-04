@@ -44,31 +44,19 @@ const getDetail = {
 
 // 获取namespace列表
 const getNameSpace = {
-  url: '/databus/collectors/list_namespace/?bk_biz_id=:bk_biz_id&cluster_id=:cluster_id',
+  url: '/databus/collectors/list_namespace/',
   method: 'get',
 };
 
-// 获取namespace 集群 pod 树列表
-const getPopTree = {
-  url: '/databus/collectors/list_topo/?type=:type&bk_biz_id=:bk_biz_id&namespace=:namespace&bcs_cluster_id=:bcs_cluster_id',
-  method: 'get',
-};
-
-// 获取 集群 node 树列表
-const getNodeTree = {
-  url: '/databus/collectors/list_topo/?type=:type&bk_biz_id=:bk_biz_id&bcs_cluster_id=:bcs_cluster_id',
+// 获取 集群-node树或集群-namespace-pod列表
+const getPodTree = {
+  url: '/databus/collectors/list_topo/',
   method: 'get',
 };
 
 // 获取node 标签列表
 const getNodeLabelList = {
-  url: '/databus/collectors/get_labels/?type=:type&name=:name&bcs_cluster_id=:bcs_cluster_id&bk_biz_id=:bk_biz_id',
-  method: 'get',
-};
-
-// 获取pod 标签列表
-const getPopLabelList = {
-  url: '/databus/collectors/get_labels/?type=:type&name=:name&bcs_cluster_id=:bcs_cluster_id&namespace=:namespace&bk_biz_id=:bk_biz_id',
+  url: '/databus/collectors/get_labels/',
   method: 'get',
 };
 
@@ -86,19 +74,13 @@ const getWorkLoadType = {
 
 // 获取workload name
 const getWorkLoadName = {
-  url: '/databus/collectors/get_workload/?type=:type&bk_biz_id=:bk_biz_id&bcs_cluster_id=:bcs_cluster_id&namespace=:namespace',
-  method: 'get',
-};
-
-// 无namespace 情况 获取workload name
-const getNotNameSpaceWorkLoadName = {
-  url: '/databus/collectors/get_workload/?type=:type&bk_biz_id=:bk_biz_id&bcs_cluster_id=:bcs_cluster_id',
+  url: '/databus/collectors/get_workload/',
   method: 'get',
 };
 
 // 获取bcs集群列表
 const getBcsList = {
-  url: '/databus/collectors/list_bcs_clusters/?bk_biz_id=:bk_biz_id',
+  url: '/databus/collectors/list_bcs_clusters/',
   method: 'get',
 };
 
@@ -113,14 +95,11 @@ export {
   update,
   getDetail,
   getNameSpace,
-  getPopTree,
-  getNodeTree,
+  getPodTree,
   getNodeLabelList,
-  getPopLabelList,
   getHitResult,
   getWorkLoadType,
   getWorkLoadName,
-  getNotNameSpaceWorkLoadName,
   getBcsList,
   yamlJudgement,
 };

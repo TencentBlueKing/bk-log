@@ -115,7 +115,6 @@ export default {
     },
     'formData.workload_type'(val) {
       this.typeError = false;
-      // this.formData.workload_name = '';
       this.getWorkLoadNameList(val);
     },
     'formData.workload_name'() {
@@ -154,9 +153,9 @@ export default {
     getWorkLoadNameList(type) {
       this.nameIsLoading = true;
       const { bk_biz_id, namespace, bcs_cluster_id } =  this.container;
-      const requestUrl = `container/${!namespace ? 'getNotNameSpaceWorkLoadName' : 'getWorkLoadName'}`;
-      const params = { type, bk_biz_id, namespace, bcs_cluster_id };
-      this.$http.request(requestUrl, { params }).then((res) => {
+      const query = { type, bk_biz_id, namespace, bcs_cluster_id };
+      if (!namespace) delete query.namespace;
+      this.$http.request('container/getWorkLoadName', { query }).then((res) => {
         if (res.code === 0) {
           this.nameList = res.data.map(item => ({ id: item, name: item }));
         }

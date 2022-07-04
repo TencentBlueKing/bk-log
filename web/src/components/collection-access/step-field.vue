@@ -497,7 +497,7 @@ export default {
       // eslint-disable-next-line no-useless-escape
       defaultRegex: '(?P<request_ip>[\d\.]+)[^[]+\[(?P<request_time>[^]]+)\]',
       isLoading: false,
-      basicLoading: true,
+      basicLoading: false,
       isUnmodifiable: false,
       fieldType: '',
       deletedVisible: true,
@@ -729,6 +729,7 @@ export default {
   methods: {
     // 初始化清洗项
     initCleanItem() {
+      this.basicLoading = true;
       const query = {
         bk_biz_id: this.bkBizId,
         have_data_id: 1,

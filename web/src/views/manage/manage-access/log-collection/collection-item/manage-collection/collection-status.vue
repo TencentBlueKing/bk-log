@@ -22,7 +22,7 @@
 
 <template>
   <!-- 容器日志状态页 -->
-  <container-status v-if="isContainer" />
+  <container-status v-if="isContainer" :is-loading.sync="basicLoading" />
   <div
     v-else
     v-bkloading="{ isLoading: basicLoading }"
