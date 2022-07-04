@@ -28,10 +28,10 @@
       :warning-list="warningList"
       @get-problem-state="getProblemState">
       <div class="load" slot="right">
-        <span v-bk-tooltips="{ distance: 20, content: 'tips' }" class="load-tips">
+        <span v-bk-tooltips="{ distance: 20, content: $t('上传') }" class="load-tips">
           <span class="bk-icon icon-upload-cloud" @click="updateYAMLDocument"></span>
         </span>
-        <span v-bk-tooltips="{ distance: 20, content: 'tips', }" class="load-tips">
+        <span v-bk-tooltips="{ distance: 20, content: $t('下载'), }" class="load-tips">
           <span class="bk-icon icon-download" @click="downloadYAMLDocument('yaml.yaml')"></span>
         </span>
       </div>
