@@ -228,7 +228,7 @@ class CollectMetricCollector(object):
                 task_data_id = ts_data["task_data_id"]
                 data[target][task_data_id] = value
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to get {field} data, err: {e}")
         return data
 
