@@ -818,6 +818,7 @@ export default {
         const initFormData = this.initContainerFormData(cloneCollect);
         Object.assign(this.formData, initFormData);
       } else { // 物理环境
+        this.currentEnvironment = cloneCollect.environment;
         Object.assign(this.formData, cloneCollect);
         if (this.formData.target?.length) { // IP 选择器预览结果回填
           this.formData.target_nodes = this.formData.target;
@@ -990,12 +991,14 @@ export default {
             return pre;
           }, []);
           // 获取应该检查的配置项的数量
-          const checkLength = matchIndexList.length ? (configList.length - matchIndexList.length) : configList.length;
+          const checkLength = !isCheckConfigItem && matchIndexList.length
+            ? (configList.length - matchIndexList.length)
+            : configList.length;
           let validateLength = 0;
           for (const key in configList) {
             const index = Number(key);
-            // 如果有字符串过滤的情况下则不进行验证直接跳过
-            if (matchIndexList.includes(index)) continue;
+            // 如果有字符串过滤且非标准输出非行日志的情况下则不进行验证直接跳过
+            if (!isCheckConfigItem && matchIndexList.includes(index)) continue;
             try {
               // 这里如果表单没有校验的dom元素会一直是pending状态 没有返回值
               await configList[index].$refs.validateForm.validate();

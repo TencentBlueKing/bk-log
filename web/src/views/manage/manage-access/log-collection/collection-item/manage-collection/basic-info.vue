@@ -322,6 +322,9 @@ export default {
 
 <style lang="scss" scoped>
   .basic-info-container {
+    display: flex;
+    justify-content: space-between;
+
     .deploy-sub > div {
       display: flex;
       margin-bottom: 33px;
@@ -392,9 +395,6 @@ export default {
     }
 
     .create-name-and-time {
-      position: fixed;
-      top: 192px;
-      right: 60px;
       border-top: 1px solid #dcdee5;
       border-radius: 2px;
 
