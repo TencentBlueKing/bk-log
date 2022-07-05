@@ -103,3 +103,4 @@ TIME_RANGE = {
 TABLE_BKUNIFYBEAT_TASK = "bkunifylogbeat_task.base"
 FIELD_CRAWLER_RECEIVED = "crawler_received"
 FIELD_CRAWLER_STATE = "crawler_state"
+MAX_QUERY_SUBSCRIPTION = 10
