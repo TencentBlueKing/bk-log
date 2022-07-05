@@ -2534,6 +2534,7 @@ class CollectorHandler(object):
                 container_configs[x].container_name = data["configs"][x]["container"]["container_name"]
                 container_configs[x].match_labels = data["configs"][x]["label_selector"]["match_labels"]
                 container_configs[x].match_expressions = data["configs"][x]["label_selector"]["match_expressions"]
+                container_configs[x].collector_type = data["configs"][x]["collector_type"]
                 container_configs[x].all_container = is_all_container
                 container_configs[x].raw_config = data["configs"][x].get("raw_config")
                 container_configs[x].save()
@@ -2555,6 +2556,7 @@ class CollectorHandler(object):
                     container_name=data["configs"][x]["container"]["container_name"],
                     match_labels=data["configs"][x]["label_selector"]["match_labels"],
                     match_expressions=data["configs"][x]["label_selector"]["match_expressions"],
+                    collector_type=data["configs"][x]["collector_type"],
                     all_container=is_all_container,
                     raw_config=data["configs"][x].get("raw_config"),
                 )
