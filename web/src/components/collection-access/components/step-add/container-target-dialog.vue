@@ -36,10 +36,10 @@
       form-type="vertical"
       ref="containerFormRef"
       :model="formData">
-      <bk-form-item :label="$t('Workload类型')" required>
+      <bk-form-item :label="$t('应用类型')">
         <bk-select
-          :class="`${typeError && 'type-error'}`"
-          v-model="formData.workload_type">
+          v-model="formData.workload_type"
+          searchable>
           <bk-option
             v-for="(option, index) in typeList"
             :key="index"
@@ -48,9 +48,9 @@
           </bk-option>
         </bk-select>
       </bk-form-item>
-      <bk-form-item :label="$t('Workload名称')" required>
+      <bk-form-item :label="$t('应用名称')">
         <bk-select
-          :class="`${nameError && 'name-error'}`"
+          ref="loadSelectRef"
           v-model="formData.workload_name"
           :disabled="nameIsLoading"
           allow-create
@@ -114,27 +114,22 @@ export default {
       }
     },
     'formData.workload_type'(val) {
-      this.typeError = false;
-      // this.formData.workload_name = '';
       this.getWorkLoadNameList(val);
     },
-    'formData.workload_name'() {
-      this.nameError = false;
-    },
+  },
+  mounted() {
+    this.$refs.loadSelectRef.$refs.createInput.placeholder = this.$t('请输入');
   },
   methods: {
     handelCancelDialog() {
       this.$emit('update:is-show-dialog', false);
     },
     async handelConfirmContainer() {
-      const { workload_type: type, workload_name: name, container_name } = this.formData;
-      type === '' && (this.typeError = true);
-      name === '' && (this.nameError = true);
-      if (!name || !type) return;
+      const { workload_type, workload_name, container_name } = this.formData;
       const containerObj = {
         container: {
-          workload_type: type,
-          workload_name: name,
+          workload_type,
+          workload_name,
           container_name,
         },
       };
@@ -154,9 +149,9 @@ export default {
     getWorkLoadNameList(type) {
       this.nameIsLoading = true;
       const { bk_biz_id, namespace, bcs_cluster_id } =  this.container;
-      const requestUrl = `container/${!namespace ? 'getNotNameSpaceWorkLoadName' : 'getWorkLoadName'}`;
-      const params = { type, bk_biz_id, namespace, bcs_cluster_id };
-      this.$http.request(requestUrl, { params }).then((res) => {
+      const query = { type, bk_biz_id, namespace, bcs_cluster_id };
+      if (!namespace) delete query.namespace;
+      this.$http.request('container/getWorkLoadName', { query }).then((res) => {
         if (res.code === 0) {
           this.nameList = res.data.map(item => ({ id: item, name: item }));
         }
@@ -175,11 +170,6 @@ export default {
 .specify-container {
   .bk-form-control {
     width: 100%;
-  }
-
-  .type-error,
-  .name-error {
-    border-color: #ff5656;
   }
 }
 </style>

@@ -22,7 +22,7 @@
 
 <template>
   <bk-dialog
-    width="1250"
+    width="1350"
     header-position="left"
     theme="primary"
     render-directive="if"
@@ -32,7 +32,7 @@
     @confirm="handelConfirmLabel"
     @cancel="handelCancelDialog">
     <div class="log-target-container" v-bkloading="{ isLoading: treeLoading, zIndex: 10 }">
-      <div class="label-tree">
+      <div class="label-tree" :style="`width : ${leftPreWidth}px`">
         <div class="child-title">
           <span>{{$t('获取标签')}}</span>
           <span>{{$t('选择Service以获取Label列表')}}</span>
@@ -40,7 +40,7 @@
         <bk-input
           class="tree-search"
           right-icon="bk-icon icon-search"
-          v-model="filter"
+          v-model="filterStr"
           @change="search"
         ></bk-input>
         <bk-big-tree
@@ -59,11 +59,12 @@
             </div>
           </div>
         </bk-big-tree>
+        <div class="left-drag bk-log-drag-simple" @mousedown="(e) => handleMouseDown(e, 'left')"></div>
       </div>
       <div class="label-operate">
         <div class="label-config"
              v-bkloading="{ isLoading: labelLoading, zIndex: 10 }"
-             :style="`width : calc( 100% - ${preWidth}px )`">
+             :style="`width : calc( 100% - ${rightPreWidth + 300}px )`">
           <div class="child-title">
             <span>{{$t('设置标签')}}</span>
             <span>{{$t('通过标签获取采集目标列表')}}</span>
@@ -93,8 +94,8 @@
         <div class="result">
           <div
             v-bkloading="{ isLoading: resultLoading, zIndex: 10 }"
-            :class="['result-container',!preWidth && 'is-sliding-close']"
-            :style="`width : ${preWidth}px`">
+            :class="['result-container',!rightPreWidth && 'is-sliding-close']"
+            :style="`width : ${rightPreWidth}px`">
             <div class="child-title">
               <span>{{$t('结果预览')}}</span>
               <span></span>
@@ -109,10 +110,10 @@
                 <span :title="item.name">{{item.name}}</span>
               </div>
             </div>
-            <div class="bk-log-drag-simple" @mousedown="handleMouseDown"></div>
+            <div class="right-drag bk-log-drag-simple" @mousedown="(e) => handleMouseDown(e, 'right')"></div>
           </div>
           <div
-            v-if="!preWidth"
+            v-if="!rightPreWidth"
             class="open-preview"
             v-bk-tooltips="{
               content: $t('点击展开'),
@@ -149,7 +150,7 @@ export default {
   data() {
     return {
       treeList: [],
-      filter: '', // 搜索过滤字符串
+      filterStr: '', // 搜索过滤字符串
       matchExpressObj: {
         matchType: 'express', // 匹配类型
         treeList: [], // 树的值列表
@@ -164,8 +165,10 @@ export default {
       resultStrList: [], // 结果展示拼接字符串数组
       hitResultList: [], // 命中的结果数组
       defaultExpandList: [], // 默认展开数组
-      range: [160, 600],
-      preWidth: 280,
+      rightRange: [160, 700],
+      leftRange: [300, 600],
+      rightPreWidth: 280,
+      leftPreWidth: 300,
       treeLoading: false, // 树loading
       labelLoading: false, // 标签loading
       resultLoading: false, // 结果loading
@@ -193,6 +196,8 @@ export default {
     isShowDialog(val) {
       if (val) {
         this.getTreeList();
+      } else {
+        this.filterStr = '';
       }
     },
   },
@@ -202,13 +207,13 @@ export default {
     handleSelectTreeItem(treeItem) {
       if (!['pod', 'node'].includes(treeItem.data.type)) return;
 
-      const { bk_biz_id, bcs_cluster_id, type } = this.labelParams;
       const [nameSpaceStr, nameStr] = this.getNameStrAndNameSpace(treeItem); // 获取当前树节点标签请求name字符串
       this.currentNameSpaceStr = nameSpaceStr;
-      const requestUrl = `container/${type === 'pod' ? 'getPopLabelList' : 'getNodeLabelList'}`;
-      const params = { namespace: nameSpaceStr, bcs_cluster_id, type, bk_biz_id,  name: nameStr  };
+      const { bk_biz_id, bcs_cluster_id, type } = this.labelParams;
+      const query = { namespace: nameSpaceStr, bcs_cluster_id, type, bk_biz_id,  name: nameStr  };
+      if (type === 'node') delete query.namespace;
       this.labelLoading = true;
-      this.$http.request(requestUrl, { params }).then((res) => {
+      this.$http.request('container/getNodeLabelList', { query }).then((res) => {
         if (res.code === 0) {
           this.matchLabelObj.treeList = res.data.map(item => ({ ...item, operator: '=' }));
         }
@@ -235,11 +240,10 @@ export default {
      */
     getTreeList() {
       const { bk_biz_id, bcs_cluster_id, type, namespace } = this.labelParams;
-      // 当namespace为空时即所有 则不传 参数则用getNodeTree
-      const requestUrl = `container/${(type === 'pod') ? 'getPopTree' : 'getNodeTree'}`;
-      const params = { namespace, bcs_cluster_id, type, bk_biz_id };
+      const query = { namespace, bcs_cluster_id, type, bk_biz_id };
+      if (type === 'node') delete query.namespace;
       this.treeLoading = true;
-      this.$http.request(requestUrl, { params }).then((res) => {
+      this.$http.request('container/getPodTree', { query }).then((res) => {
         if (res.code === 0) {
           // 树列表
           this.treeList = typeof res.data === 'object' ? [res.data] : res.data;
@@ -331,11 +335,34 @@ export default {
         this.resultLoading = true;
         // 表达式或标签是否有选中的值  获取结果请求
         if (Object.values(val).some(item => item.length)) {
+          const selectorVal = JSON.parse(JSON.stringify(val));
+          if (selectorVal.match_expressions.length) {
+            const keyList = [];
+            const handleFilterExpressions = selectorVal.match_expressions
+              .reduce((pre, cur) => {
+                const { key, operator, value } = cur;
+                if (['!=', '='].includes(operator)) { // 等于，非等不需要加括号
+                  pre.push(cur);
+                  return pre;
+                }
+                if (!keyList.includes(key)) { // 没有key属性则新增对象
+                  keyList.push(key);
+                  pre.push(cur);
+                } else {
+                  const filterIndex = pre.findIndex(preItem => preItem.key === key && preItem.operator === operator);
+                  // 有key值判断操作是否重复, 若是新操作则生成新的对象
+                  filterIndex < 0 ? pre.push(cur) : pre[filterIndex].value = `${pre[filterIndex].value}, ${value}`;
+                }
+                return pre;
+              }, [])
+              .map(item => ({ ...item, value: ['notin', 'in'].includes(item.operator) ? `(${item.value})` : item.value }));
+            selectorVal.match_expressions = handleFilterExpressions;
+          }
           const data = {
             bcs_cluster_id: this.labelParams.bcs_cluster_id,
             bk_biz_id: this.labelParams.bk_biz_id,
             type: this.labelParams.type,
-            label_selector: val,
+            label_selector: selectorVal,
             namespace: this.currentNameSpaceStr,
           };
           this.$http.request('container/getHitResult', { data }).then((res) => {
@@ -355,7 +382,7 @@ export default {
         }
       }, 1000);
     },
-    handleMouseDown(e) {
+    handleMouseDown(e, direction = 'right') {
       const node = e.target;
       const parentNode = node.parentNode;
 
@@ -364,12 +391,14 @@ export default {
       const nodeRect = node.getBoundingClientRect();
       const rect = parentNode.getBoundingClientRect();
       const handleMouseMove = (event) => {
-        const [min, max] = this.range;
-        const newWidth = rect.right - event.clientX + nodeRect.width;
-        if (newWidth < min) {
-          this.preWidth = 0;
+        if (direction === 'right') {
+          const [min, max] = this.rightRange;
+          const newWidth = rect.right - event.clientX + nodeRect.width;
+          this.rightPreWidth = newWidth < min ? 0 : Math.min(newWidth, max);
         } else {
-          this.preWidth = Math.min(newWidth, max);
+          const [min, max] = this.leftRange;
+          const newWidth = event.clientX - rect.left - nodeRect.width;
+          this.leftPreWidth = newWidth < min ? min : Math.min(newWidth, max);
         }
       };
       const handleMouseUp = () => {
@@ -383,10 +412,10 @@ export default {
       this.$emit('update:is-show-dialog', false);
     },
     search() {
-      this.$refs.labelTreeRef.filter(this.filter);
+      this.$refs.labelTreeRef.filter(this.filterStr);
     },
     handleResetWidth() {
-      this.preWidth = 280;
+      this.rightPreWidth = 280;
     },
     filterMethod(keyword, node) {
       return node.data.name.includes(keyword);
@@ -409,10 +438,13 @@ export default {
   .label-tree {
     min-width: 290px;
     padding: 14px 24px;
+    position: relative;
+    z-index: 99;
+    background: #fff;
     border-right: 1px solid #dcdee5;
 
     .tree-search {
-      width: 240px;
+      width: 100%;
     }
 
     .big-tree {
@@ -430,7 +462,7 @@ export default {
       @include flex-justify(space-between);
 
       .item-name {
-        width: 300px;
+        // width: 300px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -441,7 +473,7 @@ export default {
         width: 34px;
         height: 16px;
         padding: 2px 0;
-        margin-left: 12px;
+        margin: 0 12px;
         line-height: 12px;
         text-align: center;
         color: #979ba5;
@@ -466,8 +498,10 @@ export default {
 
   .label-operate {
     width: 100%;
+    height: 100%;
     display: flex;
-    position: relative;
+    position: absolute;
+    left: 300px;
 
     .express-container {
       padding-bottom: 16px;
@@ -630,7 +664,7 @@ export default {
   .result {
     position: absolute;
     height: 100%;
-    right: 0;
+    right: 300px;
   }
 
   .result-container {
@@ -694,6 +728,14 @@ export default {
     @include flex-justify(space-between);
   }
 
+  .left-drag {
+    right: 4px
+  }
+
+  .right-drag {
+    left: 4px;
+  }
+
   .bk-log-drag-simple {
     position: absolute;
     width: 6px;
@@ -704,7 +746,6 @@ export default {
     border-radius: 3px;
     top: 50%;
     transform: translateY(-50%);
-    left: 4px;
     z-index: 100;
 
     &::after {

@@ -27,7 +27,9 @@
         <div>{{$t('编辑器')}}</div>
         <div class="right-container">
           <slot name="right"></slot>
-          <span v-if="!isFull" class="bk-icon icon-full-screen" @click="openFullScreen"></span>
+          <span v-bk-tooltips="{ distance: 20, content: $t('全屏'), }">
+            <span v-if="!isFull" class="bk-icon icon-full-screen" @click="openFullScreen"></span>
+          </span>
         </div>
       </div>
     </template>
@@ -67,10 +69,10 @@ import * as monaco from 'monaco-editor';
 self.MonacoEnvironment = {
   getWorkerUrl(moduleId, label) {
     if (label === 'yaml') {
-      return process.env.NODE_ENV === 'production' ? `${window.static_url}/yaml.worker.js` : './yaml.worker.js';
+      return process.env.NODE_ENV === 'production' ? `${window.BK_STATIC_URL}/yaml.worker.js` : './yaml.worker.js';
     }
     return process.env.NODE_ENV === 'production'
-      ? `${window.static_url}/editor.worker.js`
+      ? `${window.BK_STATIC_URL}/editor.worker.js`
       : './editor.worker.js';
   },
 };
