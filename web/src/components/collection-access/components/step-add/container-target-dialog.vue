@@ -36,9 +36,8 @@
       form-type="vertical"
       ref="containerFormRef"
       :model="formData">
-      <bk-form-item :label="$t('Workload类型')" required>
+      <bk-form-item :label="$t('应用类型')">
         <bk-select
-          :class="`${typeError && 'type-error'}`"
           v-model="formData.workload_type"
           searchable>
           <bk-option
@@ -49,11 +48,10 @@
           </bk-option>
         </bk-select>
       </bk-form-item>
-      <bk-form-item :label="$t('Workload名称')" required>
+      <bk-form-item :label="$t('应用名称')">
         <bk-select
           ref="loadSelectRef"
           v-model="formData.workload_name"
-          :class="`${nameError && 'name-error'}`"
           :disabled="nameIsLoading"
           allow-create
           searchable>
@@ -116,11 +114,7 @@ export default {
       }
     },
     'formData.workload_type'(val) {
-      this.typeError = false;
       this.getWorkLoadNameList(val);
-    },
-    'formData.workload_name'() {
-      this.nameError = false;
     },
   },
   mounted() {
@@ -131,14 +125,11 @@ export default {
       this.$emit('update:is-show-dialog', false);
     },
     async handelConfirmContainer() {
-      const { workload_type: type, workload_name: name, container_name } = this.formData;
-      type === '' && (this.typeError = true);
-      name === '' && (this.nameError = true);
-      if (!name || !type) return;
+      const { workload_type, workload_name, container_name } = this.formData;
       const containerObj = {
         container: {
-          workload_type: type,
-          workload_name: name,
+          workload_type,
+          workload_name,
           container_name,
         },
       };
@@ -179,11 +170,6 @@ export default {
 .specify-container {
   .bk-form-control {
     width: 100%;
-  }
-
-  .type-error,
-  .name-error {
-    border-color: #ff5656;
   }
 }
 </style>

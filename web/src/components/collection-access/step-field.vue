@@ -1098,8 +1098,8 @@ export default {
       /* eslint-disable */
       this.params.etl_config = etl_config
       Object.assign(this.params.etl_params, {
-        separator_regexp: etl_params.separator_regexp || '',
-        separator: etl_params.separator || ''
+        separator_regexp: etl_params?.separator_regexp || '',
+        separator: etl_params?.separator || ''
       })
       this.isUnmodifiable = !!(table_id || storage_cluster_id)
       this.fieldType = etl_config || 'bk_log_text'
