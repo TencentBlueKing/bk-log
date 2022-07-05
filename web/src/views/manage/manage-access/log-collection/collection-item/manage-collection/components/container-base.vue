@@ -317,7 +317,6 @@ export default {
     },
     async getLinkData(collectorData) {
       try {
-        this.tableLoading = true;
         const res = await this.$http.request('linkConfiguration/getLinkList', {
           query: {
             bk_biz_id: this.$store.state.bkBizId,
@@ -326,8 +325,6 @@ export default {
         this.dataLinkName = res.data.find(item => (item.data_link_id === collectorData.data_link_id))?.link_group_name || '--';
       } catch (e) {
         console.warn(e);
-      } finally {
-        this.tableLoading = false;
       }
     },
     getFromCharCode(index) {

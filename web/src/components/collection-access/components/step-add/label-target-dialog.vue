@@ -349,9 +349,9 @@ export default {
                   keyList.push(key);
                   pre.push(cur);
                 } else {
-                  const preIndex = pre.findIndex(preItem => preItem.key === key);
+                  const filterIndex = pre.findIndex(preItem => preItem.key === key && preItem.operator === operator);
                   // 有key值判断操作是否重复, 若是新操作则生成新的对象
-                  pre[preIndex].operator === operator ? pre[preIndex].value = `${pre[preIndex].value}, ${value}` : pre.push(cur);
+                  filterIndex < 0 ? pre.push(cur) : pre[filterIndex].value = `${pre[filterIndex].value}, ${value}`;
                 }
                 return pre;
               }, [])
