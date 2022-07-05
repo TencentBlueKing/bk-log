@@ -93,11 +93,11 @@ class TimeRangeEnum(ChoicesEnum):
 
 TIME_RANGE = {
     TimeRangeEnum.FIVE_MIN.value: 5,
-    TimeRangeEnum.ONE_DAY.value: 1,
-    TimeRangeEnum.THREE_DAY.value: 3,
-    TimeRangeEnum.SEVEN_DAY.value: 7,
-    TimeRangeEnum.FOURTEEN_DAY.value: 14,
-    TimeRangeEnum.THIRTY_DAY.value: 30,
+    TimeRangeEnum.ONE_DAY.value: 60 * 24 * 1,
+    TimeRangeEnum.THREE_DAY.value: 60 * 24 * 3,
+    TimeRangeEnum.SEVEN_DAY.value: 60 * 24 * 7,
+    TimeRangeEnum.FOURTEEN_DAY.value: 60 * 24 * 14,
+    TimeRangeEnum.THIRTY_DAY.value: 60 * 24 * 30,
 }
 
 TABLE_BKUNIFYBEAT_TASK = "bkunifylogbeat_task.base"

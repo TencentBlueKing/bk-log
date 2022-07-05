@@ -28,7 +28,7 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.db.models import Count
 from apps.log_extract.models import Tasks, Strategies
-from apps.log_measure.constants import TimeRangeEnum, TIME_RANGE
+from apps.log_measure.constants import TIME_RANGE
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
@@ -74,14 +74,10 @@ class LogExtractMetricCollector(object):
             arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
         )
         timedelta_v = TIME_RANGE[timedelta]
-        if timedelta == TimeRangeEnum.FIVE_MIN.value:
-            start_time = (
-                datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=timedelta_v)
-            ).strftime("%Y-%m-%d %H:%M:%S%z")
-        else:
-            start_time = (
-                datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(days=timedelta_v)
-            ).strftime("%Y-%m-%d %H:%M:%S%z")
+        start_time = (
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=timedelta_v)
+        ).strftime("%Y-%m-%d %H:%M:%S%z")
+
         groups = (
             Tasks.objects.filter(created_at__range=[start_time, end_time])
             .values("bk_biz_id", "created_by")

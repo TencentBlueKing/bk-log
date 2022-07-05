@@ -29,7 +29,7 @@ from django.utils.translation import ugettext as _
 from django.contrib.auth import get_user_model
 
 from apps.log_search.models import UserIndexSetSearchHistory
-from apps.log_measure.constants import TimeRangeEnum, TIME_RANGE
+from apps.log_measure.constants import TIME_RANGE
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
@@ -85,14 +85,10 @@ class UserMetricCollector(object):
             arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
         )
         timedelta_v = TIME_RANGE[timedelta]
-        if timedelta == TimeRangeEnum.FIVE_MIN.value:
-            start_time = (
-                datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=timedelta_v)
-            ).strftime("%Y-%m-%d %H:%M:%S%z")
-        else:
-            start_time = (
-                datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(days=timedelta_v)
-            ).strftime("%Y-%m-%d %H:%M:%S%z")
+        start_time = (
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=timedelta_v)
+        ).strftime("%Y-%m-%d %H:%M:%S%z")
+
         user_index_set_search_history_group = (
             UserIndexSetSearchHistory.objects.filter(created_at__range=[start_time, end_time])
             .values("created_by")
