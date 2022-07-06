@@ -982,7 +982,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     labelSelector = LabelSelectorSerializer(label=_("匹配标签"), required=False)
     delimiter = serializers.CharField(label=_("分隔符"), allow_blank=True, required=False)
     filters = FilterSerializer(label=_("过滤规则"), many=True, required=False)
-    addPodLabel = serializers.CharField(label=_("上报时是否把标签带上"), default=False)
+    addPodLabel = serializers.BooleanField(label=_("上报时是否把标签带上"), default=False)
 
     def validate(self, attrs):
         if attrs["logConfigType"] != ContainerCollectorType.STDOUT and not attrs.get("path"):

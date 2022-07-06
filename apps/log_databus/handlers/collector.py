@@ -2787,6 +2787,7 @@ class CollectorHandler(object):
             configs = yaml.load(yaml_config, Loader=yaml.FullLoader)
         except Exception as e:  # pylint: disable=broad-except
             return {
+                "origin_text": yaml_config,
                 "parse_status": False,
                 "parse_result": [
                     {
@@ -2819,6 +2820,7 @@ class CollectorHandler(object):
             error_msg(err.detail, parse_result)
 
             return {
+                "origin_text": yaml_config,
                 "parse_status": False,
                 "parse_result": [
                     {"start_line_number": 0, "end_line_number": 0, "message": error} for error in parse_result
@@ -2864,6 +2866,7 @@ class CollectorHandler(object):
             )
 
         return {
+            "origin_text": yaml_config,
             "parse_status": True,
             "parse_result": {
                 "environment": Environment.CONTAINER,
