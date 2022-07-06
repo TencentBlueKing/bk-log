@@ -720,11 +720,8 @@ class StorageHandler(object):
             cluster_obj = clusters[0]
             # 比较集群bk_biz_id是否匹配
             cluster_config = cluster_obj["cluster_config"]
-            custom_option = cluster_config.get("custom_option", {})
-            custom_biz_id = custom_option.get("bk_biz_id")
-            if custom_biz_id:
-                if custom_biz_id != bk_biz_id:
-                    raise StorageNotPermissionException()
+            if not self.can_visible(bk_biz_id, cluster_config.get("custom_option", {})):
+                raise StorageNotPermissionException()
 
             # 集群不可以修改域名、端口
             domain_name = cluster_config["domain_name"]
