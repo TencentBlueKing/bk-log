@@ -94,6 +94,13 @@ class _TransferApi(object):
             description=_("创建数据源"),
             before_request=add_esb_info_before_request,
         )
+        self.get_data_id = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_get_data_id/",
+            module=self.MODULE,
+            description=_("获取监控数据源具体信息"),
+            before_request=add_esb_info_before_request,
+        )
         self.modify_data_id = DataAPI(
             method="POST",
             url=MONITOR_APIGATEWAY_ROOT + "metadata_modify_data_id/",

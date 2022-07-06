@@ -2275,7 +2275,7 @@ class CollectorHandler(object):
             "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
         }
         user_operation_record.delay(operation_record)
-        self.compare_config(data, self.data.collector_config_id)
+        self.compare_config(data=data, collector_config_id=self.data.collector_config_id)
 
         self.data.task_id_list = list(
             ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id).values_list(
@@ -2313,10 +2313,10 @@ class CollectorHandler(object):
                 rule_dict[collector.rule_id]["std_collector_config"] = collector
 
         path_container_config_list = ContainerCollectorConfig.objects.filter(
-            collector_config_id__in=[rule["path_collector_config"].collector_config_id for rule in rule_dict]
+            collector_config_id__in=[rule["path_collector_config"].collector_config_id for _, rule in rule_dict.items()]
         ).order_by("-updated_at")
         std_container_config_list = ContainerCollectorConfig.objects.filter(
-            collector_config_id__in=[rule["std_collector_config"].collector_config_id for rule in rule_dict]
+            collector_config_id__in=[rule["std_collector_config"].collector_config_id for _, rule in rule_dict.items()]
         ).order_by("-updated_at")
 
         path_container_config_dict = defaultdict(list)
@@ -2325,7 +2325,7 @@ class CollectorHandler(object):
             path_container_config_dict[path_container_config.collector_config_id].append(path_container_config)
         for std_container_config in std_container_config_list:
             std_container_config_dict[std_container_config.parent_container_config_id].append(std_container_config)
-        project_id = BcsRule.objects.get(id=list(rule_dict.keys())[0]).id
+        project_id = BcsRule.objects.get(id=list(rule_dict.keys())[0]).bcs_project_id
         bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=project_id)
         result = []
         for rule_id, collector in rule_dict.items():
@@ -2415,7 +2415,7 @@ class CollectorHandler(object):
                 "bcs_cluster_id": data["bcs_cluster_id"],
                 "add_pod_label": data["add_pod_label"],
                 "extra_labels": data["extra_labels"],
-                "rule_id": bcs_rule["id"],
+                "rule_id": bcs_rule.id,
             },
             conf=conf,
         )
@@ -2529,7 +2529,7 @@ class CollectorHandler(object):
                 category_id="kubernetes",
             )
             new_std_cls_index_set = IndexSetHandler.create(
-                index_set_name="bcs_stdout_log_{}_clustering".format(bcs_project_id),
+                index_set_name="bcs_stdout_log_{}".format(bcs_project_id),
                 project_id=project_id,
                 storage_cluster_id=None,
                 scenario_id="log",
@@ -2606,7 +2606,9 @@ class CollectorHandler(object):
             data_link_id=self.data.data_link_id,
             data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_"
             f"{collector_config_params['collector_config_name']}",
-            description=collector_config_params["description"],
+            description=collector_config_params["description"]
+            if collector_config_params["description"]
+            else collector_config_params["collector_config_name_en"],
             encoding=META_DATA_ENCODING,
         )
         self.data.save()
@@ -2640,7 +2642,9 @@ class CollectorHandler(object):
             "etl_config": custom_config.etl_config,
             "fields": custom_config.fields,
         }
-        self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+        etl_result = etl_handler.update_or_create(**etl_params)
+        self.data.index_set_id = etl_result["index_set_id"]
+        self.data.table_id = etl_result["table_id"]
         custom_config.after_hook(self.data)
         return self.data
 
@@ -2729,16 +2733,6 @@ class CollectorHandler(object):
                 collector.save()
                 std_collector = collector
 
-        operation_record = {
-            "username": get_request_username(),
-            "biz_id": self.data.bk_biz_id,
-            "record_type": UserOperationTypeEnum.COLLECTOR,
-            "record_object_id": self.data.collector_config_id,
-            "action": UserOperationActionEnum.UPDATE,
-            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
-        }
-        user_operation_record.delay(operation_record)
-
         path_container_config, std_container_config = self.get_container_configs(
             data["config"], path_collector=path_collector, rule_id=rule_id
         )
@@ -2746,13 +2740,13 @@ class CollectorHandler(object):
             collector_config_id=path_collector.collector_config_id,
             collector=path_collector,
             func=self.compare_config,
-            **{"data": {"configs": path_container_config}, "collector_config_id": path_collector.collector_config_id},
+            **{"data": {"configs": path_container_config}},
         )
         self.deal_self_call(
             collector_config_id=std_collector.collector_config_id,
             collector=std_collector,
             func=self.compare_config,
-            **{"data": {"configs": std_container_config}, "collector_config_id": std_collector.collector_config_id},
+            **{"data": {"configs": std_container_config}},
         )
 
         bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=data["project_id"])
@@ -2764,9 +2758,13 @@ class CollectorHandler(object):
             "stdout_conf": {"bk_data_id": std_collector.bk_data_id},
         }
 
-    def deal_self_call(self, collector_config_id, collector, func, **kwargs):
-        self.collector_config_id = collector_config_id
-        self.data = collector
+    def deal_self_call(self, **kwargs):
+        """
+        collector_config_id, collector, func 必传
+        """
+        self.collector_config_id = kwargs["collector_config_id"]
+        self.data = kwargs["collector"]
+        func = kwargs["func"]
         return func(**kwargs)
 
     @classmethod
@@ -2824,7 +2822,7 @@ class CollectorHandler(object):
         return path_container_config, std_container_config
 
     def delete_bcs_config(self, rule_id):
-        bcs_rule = BcsRule.objects.get(rule_id)
+        bcs_rule = BcsRule.objects.get(id=rule_id)
         collectors = CollectorConfig.objects.filter(rule_id=bcs_rule.id)
         if len(collectors) != DEFAULT_COLLECTOR_LENGTH:
             raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
@@ -2837,7 +2835,7 @@ class CollectorHandler(object):
         bcs_rule.delete()
         return {"rule_id": rule_id}
 
-    def delete_collector_bcs_config(self):
+    def delete_collector_bcs_config(self, **kwargs):
         container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
         for config in container_configs:
             self.delete_container_release(config)
@@ -2858,7 +2856,7 @@ class CollectorHandler(object):
             raise ValueError("default es cluster not exists.")
         return {"data_link_id": data_link_id, "storage_cluster_id": storage_cluster_id}
 
-    def compare_config(self, data, collector_config_id):
+    def compare_config(self, data, collector_config_id, **kwargs):
         container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=collector_config_id)
         container_configs = list(container_configs)
         config_length = len(data["configs"])

@@ -157,7 +157,7 @@ class EtlHandler(object):
 
         # 1. meta-创建/修改结果表
         etl_storage = EtlStorage.get_instance(etl_config=etl_config)
-        etl_storage.update_or_create_result_table(
+        rt_table_id, _ = etl_storage.update_or_create_result_table(
             self.data,
             table_id=table_id,
             storage_cluster_id=storage_cluster_id,
@@ -207,6 +207,7 @@ class EtlHandler(object):
             "scenario_id": index_set["scenario_id"],
             "storage_cluster_id": storage_cluster_id,
             "retention": retention,
+            "table_id": rt_table_id,
         }
 
     @staticmethod
