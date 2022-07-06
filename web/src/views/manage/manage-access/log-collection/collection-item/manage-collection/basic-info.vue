@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="basic-info-container">
+  <div class="basic-info-container" v-bkloading="{ isLoading: basicLoading }">
     <div>
       <div class="deploy-sub" v-if="!isContainer">
         <!-- 数据ID -->
@@ -194,7 +194,7 @@
           <span>{{ collectorData.retention || '-' }} {{ $t('configDetails.day') }}</span>
         </div>
       </div>
-      <container-base v-else :collector-data="collectorData"></container-base>
+      <container-base v-else :collector-data="collectorData" :is-loading.sync="basicLoading"></container-base>
       <p class="button-place">
         <bk-button :theme="'primary'" @click="handleClickEdit" class="mr10">
           {{ $t('编辑') }}
@@ -229,6 +229,7 @@ export default {
     return {
       // 右边展示的创建人、创建时间
       createAndTimeData: [],
+      basicLoading: false,
     };
   },
   computed: {
@@ -322,6 +323,9 @@ export default {
 
 <style lang="scss" scoped>
   .basic-info-container {
+    display: flex;
+    justify-content: space-between;
+
     .deploy-sub > div {
       display: flex;
       margin-bottom: 33px;
@@ -392,9 +396,6 @@ export default {
     }
 
     .create-name-and-time {
-      position: fixed;
-      top: 192px;
-      right: 60px;
       border-top: 1px solid #dcdee5;
       border-radius: 2px;
 

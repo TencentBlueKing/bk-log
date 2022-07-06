@@ -98,9 +98,9 @@
                   :class="{
                     'environment-button': true,
                     active: sItem.id === currentEnvironment,
-                    disable: isUpdate,
+                    disable: sItem.isDisable,
                   }"
-                  @click="handleSelectEnvironment(sItem.id)">
+                  @click="handleSelectEnvironment(sItem.id, sItem.isDisable)">
                   <img :src="sItem.img" />
                   <p>{{sItem.name}}</p>
                 </div>
@@ -677,12 +677,12 @@ export default {
       currentEnvironment: 'linux', // 当前选中的环境
       environmentList: [
         { category: this.$t('物理环境'), btnList: [
-          { id: 'linux', img: LinuxSvg, name: 'Linux' },
-          { id: 'windows', img: WindowsSvg, name: 'Windows' }] },
+          { id: 'linux', img: LinuxSvg, name: 'Linux', isDisable: false },
+          { id: 'windows', img: WindowsSvg, name: 'Windows' }], isDisable: false },
         { category: this.$t('容器环境'), btnList: [
-          { id: 'container_log_config', img: ContainerSvg, name: 'Container' },
-          { id: 'node_log_config', img: NodeSvg, name: 'Node' },
-          { id: 'std_log_config', img: StdoutSvg, name: this.$t('标准输出') }] },
+          { id: 'container_log_config', img: ContainerSvg, name: 'Container', isDisable: false },
+          { id: 'node_log_config', img: NodeSvg, name: 'Node', isDisable: false },
+          { id: 'std_log_config', img: StdoutSvg, name: this.$t('标准输出'), isDisable: false }] },
       ],
       specifyName: { // 指定容器中文名
         workload_type: this.$t('应用类型'),
@@ -818,6 +818,7 @@ export default {
         const initFormData = this.initContainerFormData(cloneCollect);
         Object.assign(this.formData, initFormData);
       } else { // 物理环境
+        this.currentEnvironment = cloneCollect.environment;
         Object.assign(this.formData, cloneCollect);
         if (this.formData.target?.length) { // IP 选择器预览结果回填
           this.formData.target_nodes = this.formData.target;
@@ -826,6 +827,8 @@ export default {
           this.formData.collector_config_name_en = this.formData.table_id || '';
         }
       }
+      // 禁用某种环境的btn
+      this.initBtnListDisable();
       // 克隆采集项的时候 清空以下回显或者重新赋值 保留其余初始数据
       if (this.isClone) {
         this.formData.collector_config_name = `${this.formData.collector_config_name}_clone`;
@@ -990,12 +993,14 @@ export default {
             return pre;
           }, []);
           // 获取应该检查的配置项的数量
-          const checkLength = matchIndexList.length ? (configList.length - matchIndexList.length) : configList.length;
+          const checkLength = !isCheckConfigItem && matchIndexList.length
+            ? (configList.length - matchIndexList.length)
+            : configList.length;
           let validateLength = 0;
           for (const key in configList) {
             const index = Number(key);
-            // 如果有字符串过滤的情况下则不进行验证直接跳过
-            if (matchIndexList.includes(index)) continue;
+            // 如果有字符串过滤且非标准输出非行日志的情况下则不进行验证直接跳过
+            if (!isCheckConfigItem && matchIndexList.includes(index)) continue;
             try {
               // 这里如果表单没有校验的dom元素会一直是pending状态 没有返回值
               await configList[index].$refs.validateForm.validate();
@@ -1266,9 +1271,10 @@ export default {
     /**
      * @desc: 环境选择
      * @param name 环境名称
+     * @param isDisable 是否禁用
      */
-    handleSelectEnvironment(name) {
-      if (this.isUpdate) return;
+    handleSelectEnvironment(name, isDisable) {
+      if (this.isUpdate && isDisable) return;
       this.currentEnvironment = name;
     },
     handleAddExtraLabel() {
@@ -1420,6 +1426,10 @@ export default {
         .catch((err) => {
           console.warn(err);
         });
+    },
+    initBtnListDisable() {
+      const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
+      this.environmentList[operateIndex].btnList.forEach(item => item.isDisable = true);
     },
     getFromCharCode(index) {
       return String.fromCharCode(index + 65);

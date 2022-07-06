@@ -42,7 +42,7 @@
           <span>{{statusNameList[item.id]}} {{item.listNum}}</span>
         </div>
       </div>
-      <bk-button @click.stop="issuedRetry()">
+      <bk-button @click.stop="issuedRetry">
         <!-- {{$t('复制目标')}} -->
         {{$t('configDetails.batchRetry')}}
       </bk-button>
@@ -57,19 +57,24 @@
         <div class="table-main" v-show="renderItem.isShowTable">
           <bk-table :data="renderItem[navActive]" size="small">
             <bk-table-column label="id" width="80" prop="container_collector_config_id"></bk-table-column>
+            <bk-table-column :label="$t('名称')" prop="name"></bk-table-column>
             <bk-table-column :label="$t('状态')">
               <template slot-scope="{ row }">
-                <span
-                  :class="['circle', row.status === 'running' ? 'rotate-icon' : 'nav-icon', colorClass[row.status]]"
-                  v-bkloading="{
-                    isLoading: row.status === 'running',
-                    opacity: 1,
-                    zIndex: 10,
-                    theme: 'primary',
-                    mode: 'spin',
-                    size: 'small'
-                  }"></span>
-                <span>{{statusNameList[row.status]}}</span>
+                <div :class="row.status === 'running' ? 'rotate-div' : ''">
+                  <span
+                    :class="['circle',
+                             row.status === 'running' ? 'rotate-icon' : 'nav-icon',
+                             colorClass[row.status]]"
+                    v-bkloading="{
+                      isLoading: row.status === 'running',
+                      opacity: 1,
+                      zIndex: 10,
+                      theme: 'primary',
+                      mode: 'spin',
+                      size: 'small'
+                    }"></span>
+                  <span>{{statusNameList[row.status]}}</span>
+                </div>
               </template>
             </bk-table-column>
             <bk-table-column width="80">
@@ -181,6 +186,7 @@ export default {
       }).then((res) => {
         const data = JSON.parse(JSON.stringify(res.data.contents)) || [];
         this.allFailedIDList = [];
+        this.navBtnList.forEach(item => item.listNum = 0);
         this.renderTitleList = data.reduce((pre, cur) => {
           cur.isShowTable = true;
           this.navBtnList.forEach(item => cur[item.id] = []);
@@ -313,6 +319,10 @@ export default {
         background: rgba(234, 54, 54, .16);
       }
     }
+  }
+
+  .rotate-div {
+    transform: translateX(12px);
   }
 
   .rotate-icon {
