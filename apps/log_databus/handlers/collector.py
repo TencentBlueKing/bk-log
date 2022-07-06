@@ -2679,7 +2679,7 @@ class CollectorHandler(object):
             )
 
     @transaction.atomic
-    def update_bcs_config(self, data, rule_id):
+    def update_bcs_container_config(self, data, rule_id):
         bcs_collector_config_name = self.generate_collector_config_name(
             collector_config_name=data["collector_config_name"], collector_config_name_en=data.get("")
         )

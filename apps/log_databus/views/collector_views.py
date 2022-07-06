@@ -2005,7 +2005,7 @@ class CollectorViewSet(ModelViewSet):
         # if not auth_info:
         #     raise BkJwtVerifyException()
         data = self.params_valid(BCSCollectorSerializer)
-        return Response(CollectorHandler().update_bcs_config(data=data, rule_id=rule_id))
+        return Response(CollectorHandler().update_bcs_container_config(data=data, rule_id=rule_id))
 
     @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")
     def delete_bcs_collector(self, request, rule_id):
