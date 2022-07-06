@@ -207,7 +207,7 @@ class PatternHandler:
                             "doc_count": group_bucket.get("doc_count", 0),
                             "group": (
                                 f"{iter_bucket.get('group', '')}|{group_bucket['key']}"
-                                if iter_bucket.get("group") != None  # noqa
+                                if iter_bucket.get("group") is not None  # noqa
                                 else group_bucket["key"]
                             ),
                         }
