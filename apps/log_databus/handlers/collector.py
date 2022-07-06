@@ -2534,6 +2534,7 @@ class CollectorHandler(object):
                 container_configs[x].container_name = data["configs"][x]["container"]["container_name"]
                 container_configs[x].match_labels = data["configs"][x]["label_selector"]["match_labels"]
                 container_configs[x].match_expressions = data["configs"][x]["label_selector"]["match_expressions"]
+                container_configs[x].collector_type = data["configs"][x]["collector_type"]
                 container_configs[x].all_container = is_all_container
                 container_configs[x].raw_config = data["configs"][x].get("raw_config")
                 container_configs[x].save()
@@ -2555,6 +2556,7 @@ class CollectorHandler(object):
                     container_name=data["configs"][x]["container"]["container_name"],
                     match_labels=data["configs"][x]["label_selector"]["match_labels"],
                     match_expressions=data["configs"][x]["label_selector"]["match_expressions"],
+                    collector_type=data["configs"][x]["collector_type"],
                     all_container=is_all_container,
                     raw_config=data["configs"][x].get("raw_config"),
                 )
@@ -2785,6 +2787,7 @@ class CollectorHandler(object):
             configs = yaml.load(yaml_config, Loader=yaml.FullLoader)
         except Exception as e:  # pylint: disable=broad-except
             return {
+                "origin_text": yaml_config,
                 "parse_status": False,
                 "parse_result": [
                     {
@@ -2817,6 +2820,7 @@ class CollectorHandler(object):
             error_msg(err.detail, parse_result)
 
             return {
+                "origin_text": yaml_config,
                 "parse_status": False,
                 "parse_result": [
                     {"start_line_number": 0, "end_line_number": 0, "message": error} for error in parse_result
@@ -2862,6 +2866,7 @@ class CollectorHandler(object):
             )
 
         return {
+            "origin_text": yaml_config,
             "parse_status": True,
             "parse_result": {
                 "environment": Environment.CONTAINER,
