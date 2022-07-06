@@ -216,7 +216,7 @@
                 :name="cluItem.name">
               </bk-option>
             </bk-select>
-            <span class="tips">说明详情</span>
+            <!-- <span class="tips">说明详情</span> -->
           </div>
         </bk-form-item>
 
@@ -678,7 +678,7 @@ export default {
       environmentList: [
         { category: this.$t('物理环境'), btnList: [
           { id: 'linux', img: LinuxSvg, name: 'Linux' },
-          { id: 'windows', img: WindowsSvg, name: 'Window' }] },
+          { id: 'windows', img: WindowsSvg, name: 'Windows' }] },
         { category: this.$t('容器环境'), btnList: [
           { id: 'container_log_config', img: ContainerSvg, name: 'Container' },
           { id: 'node_log_config', img: NodeSvg, name: 'Node' },
@@ -1868,7 +1868,8 @@ export default {
 
       .environment-category {
         display: inline-block;
-        font-weight: lighter;
+        font-weight: 400;
+        font-size: 14px;
         margin: 6px 0;
         color: #63656e;
       }

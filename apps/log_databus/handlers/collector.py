@@ -2107,7 +2107,7 @@ class CollectorHandler(object):
             "bk_biz_id": data["bk_biz_id"],
             "collector_config_name": data["collector_config_name"],
             "collector_config_name_en": data["collector_config_name_en"],
-            "collector_scenario_id": CollectorScenarioEnum.ROW.value,
+            "collector_scenario_id": data["collector_scenario_id"],
             "custom_type": CustomTypeEnum.LOG.value,
             "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
@@ -2178,7 +2178,13 @@ class CollectorHandler(object):
                     container_name=config["container"]["container_name"],
                     match_labels=config["label_selector"]["match_labels"],
                     match_expressions=config["label_selector"]["match_expressions"],
-                    all_container=not config["container"]["workload_type"],
+                    all_container=not any(
+                        [
+                            config["container"]["workload_type"],
+                            config["container"]["workload_name"],
+                            config["container"]["container_name"],
+                        ]
+                    ),
                     # yaml 原始配置，如果启用了yaml，则把解析后的原始配置保存下来用于下发
                     raw_config=config.get("raw_config") if self.data.yaml_config_enabled else None,
                 )
@@ -2232,6 +2238,7 @@ class CollectorHandler(object):
             "collector_config_name": data["collector_config_name"],
             "description": data["description"] or data["collector_config_name"],
             "environment": Environment.CONTAINER,
+            "collector_scenario_id": data["collector_scenario_id"],
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
@@ -2856,6 +2863,13 @@ class CollectorHandler(object):
         container_configs = list(container_configs)
         config_length = len(data["configs"])
         for x in range(config_length):
+            is_all_container = not any(
+                [
+                    data["configs"][x]["container"]["workload_type"],
+                    data["configs"][x]["container"]["workload_name"],
+                    data["configs"][x]["container"]["container_name"],
+                ]
+            )
             if x < len(container_configs):
                 container_configs[x].namespaces = data["configs"][x]["namespaces"]
                 container_configs[x].any_namespace = not data["configs"][x]["namespaces"]
@@ -2873,7 +2887,8 @@ class CollectorHandler(object):
                 container_configs[x].container_name = data["configs"][x]["container"]["container_name"]
                 container_configs[x].match_labels = data["configs"][x]["label_selector"]["match_labels"]
                 container_configs[x].match_expressions = data["configs"][x]["label_selector"]["match_expressions"]
-                container_configs[x].all_container = not data["configs"][x]["container"]["workload_type"]
+                container_configs[x].collector_type = data["configs"][x]["collector_type"]
+                container_configs[x].all_container = is_all_container
                 container_configs[x].raw_config = data["configs"][x].get("raw_config")
                 container_configs[x].parent_container_config_id = data["configs"][x].get(
                     "parent_container_config_id", 0
@@ -2898,7 +2913,8 @@ class CollectorHandler(object):
                     container_name=data["configs"][x]["container"]["container_name"],
                     match_labels=data["configs"][x]["label_selector"]["match_labels"],
                     match_expressions=data["configs"][x]["label_selector"]["match_expressions"],
-                    all_container=not data["configs"][x]["container"]["workload_type"],
+                    collector_type=data["configs"][x]["collector_type"],
+                    all_container=is_all_container,
                     raw_config=data["configs"][x].get("raw_config"),
                     parent_container_config_id=data["configs"][x].get("parent_container_config_id", 0),
                     rule_id=data["configs"][x].get("rule_id", 0),
@@ -3130,6 +3146,7 @@ class CollectorHandler(object):
             configs = yaml.load(yaml_config, Loader=yaml.FullLoader)
         except Exception as e:  # pylint: disable=broad-except
             return {
+                "origin_text": yaml_config,
                 "parse_status": False,
                 "parse_result": [
                     {
@@ -3162,6 +3179,7 @@ class CollectorHandler(object):
             error_msg(err.detail, parse_result)
 
             return {
+                "origin_text": yaml_config,
                 "parse_status": False,
                 "parse_result": [
                     {"start_line_number": 0, "end_line_number": 0, "message": error} for error in parse_result
@@ -3207,6 +3225,7 @@ class CollectorHandler(object):
             )
 
         return {
+            "origin_text": yaml_config,
             "parse_status": True,
             "parse_result": {
                 "environment": Environment.CONTAINER,
