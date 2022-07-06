@@ -29,6 +29,7 @@ from rest_framework.response import Response
 
 from apps.exceptions import ValidationError
 from apps.log_databus.constants import EtlConfig, Environment
+from apps.log_databus.exceptions import NeedBcsClusterIdException
 from apps.log_search.constants import HAVE_DATA_ID, BKDATA_OPEN, NOT_CUSTOM, CollectorScenarioEnum
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
@@ -1980,8 +1981,10 @@ class CollectorViewSet(ModelViewSet):
 
     @list_route(methods=["GET"], url_path="list_bcs_collector")
     def list_bcs_collector(self, request):
-        bk_biz_id = request.GET.get("bk_biz_id")
-        return CollectorHandler().list_bcs_collector(request=request, view=self, bk_biz_id=bk_biz_id)
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        if not bcs_cluster_id:
+            raise NeedBcsClusterIdException()
+        return CollectorHandler().list_bcs_collector(bcs_cluster_id=bcs_cluster_id)
 
     @list_route(methods=["POST"], url_path="create_bcs_collector")
     def create_bcs_collector(self, request):
@@ -1997,16 +2000,16 @@ class CollectorViewSet(ModelViewSet):
         )
 
     @detail_route(methods=["POST"], url_path="update_bcs_collector")
-    def update_bcs_collector(self, request, collector_config_id):
+    def update_bcs_collector(self, request, rule_id):
         # auth_info = Permission.get_auth_info(request, raise_exception=False)
         # if not auth_info:
         #     raise BkJwtVerifyException()
         data = self.params_valid(BCSCollectorSerializer)
-        return Response(CollectorHandler(collector_config_id=collector_config_id).update_bcs_config(data=data))
+        return Response(CollectorHandler().update_bcs_config(data=data, rule_id=rule_id))
 
     @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")
-    def delete_bcs_collector(self, request, collector_config_id):
-        return Response(CollectorHandler(collector_config_id=collector_config_id).delete_bcs_config())
+    def delete_bcs_collector(self, request, rule_id):
+        return Response(CollectorHandler().delete_bcs_config(rule_id=rule_id))
 
     @list_route(methods=["GET"], url_path="list_bcs_clusters")
     def list_bcs_clusters(self, request):

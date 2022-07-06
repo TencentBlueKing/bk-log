@@ -888,7 +888,7 @@ class BCSCollectorSerializer(serializers.Serializer):
     project_id = serializers.IntegerField(label=_("项目id"))
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
-        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX, required=False, default=""
     )
     custom_type = serializers.CharField(label=_("日志类型"), required=False, default="log")
     category_id = serializers.CharField(label=_("分类"), required=False, default="kubernetes")
