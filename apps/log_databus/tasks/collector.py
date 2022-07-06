@@ -74,7 +74,7 @@ def shutdown_collector_warm_storage_config(cluster_id):
                     },
                 }
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("refresh collector storage config error", e)
             continue
 
@@ -163,7 +163,7 @@ def sync_storage_capacity():
                     storage_cluster_id=_cluster["cluster_config"]["cluster_id"],
                     defaults={"storage_used": storage_used},
                 )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception("sync_storage_info error: %s" % e)
 
 

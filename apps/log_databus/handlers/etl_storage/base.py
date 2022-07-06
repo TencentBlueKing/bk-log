@@ -20,20 +20,22 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import copy
+from typing import Union
+
+from django.core.cache import cache
+from django.conf import settings
+from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
-from django.utils.module_loading import import_string
-from django.conf import settings
-
-from apps.log_databus.utils.es_config import get_es_config
-from apps.utils import is_match_variate
 from apps.api import TransferApi
 from apps.exceptions import ValidationError
-from apps.log_search.constants import FieldBuiltInEnum, FieldDataTypeEnum
-from apps.log_databus.constants import EtlConfig, FIELD_TEMPLATE, BKDATA_ES_TYPE_MAP
-from apps.log_databus.models import CollectorConfig
-from apps.log_databus.handlers.collector_scenario import CollectorScenario
+from apps.log_databus.constants import BKDATA_ES_TYPE_MAP, EtlConfig, FIELD_TEMPLATE, CACHE_KEY_CLUSTER_INFO
 from apps.log_databus.exceptions import EtlParseTimeFieldException, HotColdCheckException
+from apps.log_databus.handlers.collector_scenario import CollectorScenario
+from apps.log_databus.models import CollectorConfig, CollectorPlugin
+from apps.log_databus.utils.es_config import get_es_config
+from apps.log_search.constants import FieldBuiltInEnum, FieldDataTypeEnum
+from apps.utils import is_match_variate
 
 
 class EtlStorage(object):
@@ -188,7 +190,7 @@ class EtlStorage(object):
 
     def update_or_create_result_table(
         self,
-        collector_config: CollectorConfig,
+        instance: Union[CollectorConfig, CollectorPlugin],
         table_id: str,
         storage_cluster_id: int,
         retention: int,
@@ -201,31 +203,36 @@ class EtlStorage(object):
     ):
         """
         创建或更新结果表
-        :param collector_config: 采集项配置
+        :param instance: 采集项配置/采集插件
         :param table_id: 结果表ID
         :param storage_cluster_id: 存储集群id
         :param retention: 数据保留时间
         :param allocation_min_days: 执行分配的等待天数
+        :param storage_replies: 存储副本数量
         :param fields: 字段列表
         :param etl_params: 清洗配置
         :param es_version: es
         :param hot_warm_config: 冷热数据配置
         """
-        es_config = get_es_config(collector_config.bk_biz_id)
+
+        # ES 配置
+        es_config = get_es_config(instance.get_bk_biz_id())
+
         # 时间格式
         date_format = es_config["ES_DATE_FORMAT"]
+
         # ES-分片数
-        if not collector_config.storage_shards_nums:
-            collector_config.storage_shards_nums = es_config["ES_SHARDS"]
+        if not instance.storage_shards_nums:
+            instance.storage_shards_nums = es_config["ES_SHARDS"]
 
         # ES-副本数
-        collector_config.storage_replies = storage_replies
+        instance.storage_replies = storage_replies
 
         # 需要切分的大小阈值，单位（GB）
-        if not collector_config.storage_shards_size:
-            collector_config.storage_shards_size = es_config["ES_SHARDS_SIZE"]
+        if not instance.storage_shards_size:
+            instance.storage_shards_size = es_config["ES_SHARDS_SIZE"]
+        slice_size = instance.storage_shards_nums * instance.storage_shards_size
 
-        slice_size = collector_config.storage_shards_nums * collector_config.storage_shards_size
         # index分片时间间隔，单位（分钟）
         slice_gap = es_config["ES_SLICE_GAP"]
 
@@ -245,11 +252,11 @@ class EtlStorage(object):
             param_mapping["include_in_all"] = False
 
         params = {
-            "bk_data_id": collector_config.bk_data_id,
+            "bk_data_id": instance.bk_data_id,
             # 必须为 库名.表名
-            "table_id": f"{collector_config.bk_biz_id}_{settings.TABLE_ID_PREFIX}.{table_id}",
+            "table_id": f"{instance.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}.{table_id}",
             "is_enable": True,
-            "table_name_zh": collector_config.collector_config_name,
+            "table_name_zh": instance.get_name(),
             "is_custom_table": True,
             "schema_type": "free",
             "default_storage": "elasticsearch",
@@ -262,13 +269,13 @@ class EtlStorage(object):
                 "slice_gap": slice_gap,
                 "mapping_settings": param_mapping,
                 "index_settings": {
-                    "number_of_shards": collector_config.storage_shards_nums,
-                    "number_of_replicas": collector_config.storage_replies,
+                    "number_of_shards": instance.storage_shards_nums,
+                    "number_of_replicas": instance.storage_replies,
                 },
             },
             "is_time_field_only": True,
-            "bk_biz_id": collector_config.bk_biz_id,
-            "label": collector_config.category_id,
+            "bk_biz_id": instance.get_bk_biz_id(),
+            "label": instance.category_id,
             "option": {},
             "field_list": [],
             "warm_phase_days": 0,
@@ -302,9 +309,7 @@ class EtlStorage(object):
             )
 
         # 获取清洗配置
-        collector_scenario = CollectorScenario.get_instance(
-            collector_scenario_id=collector_config.collector_scenario_id
-        )
+        collector_scenario = CollectorScenario.get_instance(collector_scenario_id=instance.collector_scenario_id)
         built_in_config = collector_scenario.get_built_in_config(es_version)
         result_table_config = self.get_result_table_config(fields, etl_params, built_in_config, es_version=es_version)
 
@@ -324,16 +329,18 @@ class EtlStorage(object):
         if "time_option" in params and "es_doc_values" in params["time_option"]:
             del params["time_option"]["es_doc_values"]
 
-        if not collector_config.table_id:
+        # 兼容插件与采集项
+        if not instance.table_id:
             # 创建结果表
-            collector_config.table_id = TransferApi.create_result_table(params)["table_id"]
-            collector_config.save()
+            instance.table_id = TransferApi.create_result_table(params)["table_id"]
+            instance.save()
         else:
             # 更新结果表
-            params["table_id"] = collector_config.table_id
+            params["table_id"] = instance.table_id
             TransferApi.modify_result_table(params)
+            cache.delete(CACHE_KEY_CLUSTER_INFO.format(instance.table_id))
 
-        return {"table_id": collector_config.table_id, "params": params}
+        return {"table_id": instance.table_id, "params": params}
 
     @classmethod
     def switch_result_table(cls, collector_config: CollectorConfig, is_enable=True):

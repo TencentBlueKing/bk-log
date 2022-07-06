@@ -128,9 +128,25 @@
             :maxlength="100"></bk-input>
         </bk-form-item>
       </div>
-
+      <!-- 存储设置 -->
       <div class="create-form">
         <div class="form-title">{{$t('customReport.storageSettings')}}</div>
+        <!-- 存储集群 -->
+        <bk-form-item
+          required
+          :label="$t('dataSource.storage_cluster_name')"
+          :property="'data_link_id'">
+          <cluster-table
+            :table-list="clusterList"
+            :is-change-select="true"
+            :storage-cluster-id.sync="formData.storage_cluster_id" />
+          <cluster-table
+            table-type="exclusive"
+            style="margin-top: 20px;"
+            :table-list="exclusiveList"
+            :is-change-select="true"
+            :storage-cluster-id.sync="formData.storage_cluster_id" />
+        </bk-form-item>
         <!-- 数据链路 -->
         <bk-form-item
           required
@@ -150,35 +166,6 @@
               :name="item.link_group_name">
             </bk-option>
           </bk-select>
-        </bk-form-item>
-        <!-- 存储集群 -->
-        <bk-form-item
-          required
-          property="storage_cluster_id"
-          :label="$t('dataSource.storage_cluster_name')"
-          :rules="storageRules.cluster_id">
-          <bk-select
-            style="width: 320px;"
-            data-test-id="addNewCustomBox_select_storageCluster"
-            v-model="formData.storage_cluster_id"
-            :clearable="false"
-            :disabled="submitLoading">
-            <bk-option
-              v-for="(item, index) in storageList"
-              class="custom-no-padding-option"
-              :id="item.storage_cluster_id"
-              :name="item.storage_cluster_name"
-              :key="index">
-              <div class="option-slot-container">
-                <span>{{ item.storage_cluster_name }}</span>
-              </div>
-            </bk-option>
-          </bk-select>
-          <div class="tips_storage" v-if="formData.storage_cluster_id">
-            <!-- eslint-disable-next-line vue/camelcase -->
-            <div v-for="(tip, index) in tip_storage" :key="index">{{index + 1}}. {{tip}}</div>
-          <!--eslint-enable-->
-          </div>
         </bk-form-item>
         <!-- 索引集名称 -->
         <bk-form-item
@@ -243,13 +230,16 @@
           ></bk-input>
         </bk-form-item>
         <!-- 热数据\冷热集群存储期限 -->
-        <bk-form-item :label="$t('热数据')" class="hot-data-form-item">
+        <bk-form-item
+          :label="$t('热数据天数')"
+          class="hot-data-form-item"
+          v-if="selectedStorageCluster.enable_hot_warm">
           <bk-select
             style="width: 320px;"
             data-test-id="addNewCustomBox_select_selectHotData"
             v-model="formData.allocation_min_days"
             :clearable="false"
-            :disabled="!selectedStorageCluster.enable_hot_warm || submitLoading">
+            :disabled="!selectedStorageCluster.enable_hot_warm">
             <template v-for="(option, index) in hotDataDaysList">
               <bk-option :key="index" :id="option.id" :name="option.name"></bk-option>
             </template>
@@ -300,11 +290,13 @@
 import { mapGetters } from 'vuex';
 import storageMixin from '@/mixins/storage-mixin';
 import IntroPanel from './components/intro-panel';
+import clusterTable from '@/components/collection-access/components/cluster-table';
 
 export default {
   name: 'CustomReportCreate',
   components: {
     IntroPanel,
+    clusterTable,
   },
   mixins: [storageMixin],
   data() {
@@ -337,7 +329,6 @@ export default {
         description: '',
       },
       replicasMax: 7,
-      tip_storage: [],
       baseRules: {
         collector_config_name: [ // 采集名称
           {
@@ -406,7 +397,9 @@ export default {
           trigger: 'change',
         }],
       },
-      isFirstRendering: true, // 是否是第一次渲染 用于回显热数据天数
+      clusterList: [], // 共享集群
+      exclusiveList: [], // 独享集群
+      cacheStorageReplies: null,
     };
   },
   computed: {
@@ -432,17 +425,34 @@ export default {
       },
     },
   },
+  created() {
+    const { params: { collectorId }, name } = this.$route;
+    if (collectorId && name === 'custom-report-edit') {
+      this.collectorId = collectorId;
+      this.isEdit = true;
+    }
+  },
   mounted() {
     this.containerLoading = true;
-    Promise.all([this.getLinkData(), this.getStorage(), this.initFormData()]).then(() => {
-      this.containerLoading = false;
-    });
+    Promise.all([this.getLinkData(), this.getStorage(this.isEdit)]).then(() => {
+      this.initFormData();
+    })
+      .finally(() => {
+        this.containerLoading = false;
+      });
   },
   methods: {
     handleChangeType(id) {
       this.formData.custom_type = id;
     },
     handleSubmitChange() {
+      if (this.formData.storage_cluster_id === '') {
+        this.$bkMessage({
+          theme: 'error',
+          message: this.$t('请选择集群'),
+        });
+        return;
+      }
       this.$refs.validateForm.validate().then(() => {
         this.submitLoading = true;
         this.$http.request(`custom/${this.isEdit ? 'setCustom' : 'createCustom'}`, {
@@ -483,13 +493,10 @@ export default {
       }
     },
     async initFormData() {
-      const { params: { collectorId }, name } = this.$route;
-      if (collectorId && name === 'custom-report-edit') {
-        this.isEdit = true;
-        this.collectorId = collectorId;
+      if (this.isEdit) {
         const res = await this.$http.request('collect/details', {
           params: {
-            collector_config_id: collectorId,
+            collector_config_id: this.collectorId,
           },
         });
         const {
@@ -518,6 +525,8 @@ export default {
           description,
           bk_data_id,
         });
+        // 缓存编辑时的集群ID
+        this.cacheStorageReplies = res.data.storage_replies;
       } else {
         const { retention } =  this.formData;
         Object.assign(this.formData, {
@@ -568,6 +577,7 @@ export default {
       margin-top: 20px;
       border-radius: 2px;
       border: 1px solid #dcdee5;
+      overflow-x: hidden;
 
       .form-title {
         font-size: 14px;

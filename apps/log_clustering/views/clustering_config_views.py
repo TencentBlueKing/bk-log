@@ -88,6 +88,10 @@ class ClusteringConfigViewSet(APIViewSet):
         """
         return Response(ClusteringConfigHandler(index_set_id=index_set_id).retrieve())
 
+    @detail_route(methods=["GET"], url_path="start")
+    def start(self, request, *args, index_set_id=None, **kwargs):
+        return Response(ClusteringConfigHandler(index_set_id=index_set_id).start())
+
     @detail_route(methods=["POST"])
     def create_or_update(self, request, *args, **kwargs):
         """

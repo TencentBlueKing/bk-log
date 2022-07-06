@@ -28,12 +28,12 @@ from rest_framework.reverse import reverse
 from apps.api import BkItsmApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM, ITSM_SERVICE_ID
-from apps.utils.log import logger
 from apps.log_databus.constants import CollectItsmStatus
-from apps.log_databus.exceptions import CollectItsmTokenIllega, CollectItsmHasApply, CollectItsmNotExists
+from apps.log_databus.exceptions import CollectItsmHasApply, CollectItsmNotExists, CollectItsmTokenIllega
 from apps.log_databus.models import CollectorConfig, ItsmEtlConfig
 from apps.log_search.constants import CollectorScenarioEnum
 from apps.utils.local import get_request, get_request_username
+from apps.utils.log import logger
 
 
 class ItsmHandler(object):
@@ -78,13 +78,18 @@ class ItsmHandler(object):
         return result[0].get("id")
 
     def create_ticket(self, apply_params):
+        username = get_request_username()
         params = {
             "service_id": FeatureToggleObject.toggle(FEATURE_COLLECTOR_ITSM).feature_config.get(
                 ITSM_SERVICE_ID, settings.COLLECTOR_ITSM_SERVICE_ID
             ),
-            "creator": get_request_username(),
+            "creator": username,
             "fields": [{"key": param_key, "value": param_value} for param_key, param_value in apply_params.items()],
             "meta": {"callback_url": self._generate_callback_url()},
+            # 这里是因为需要使用admin创建单据，方能越过创建单据的权限限制
+            "bk_username": "admin",
+            # operator和creator保持一致
+            "operator": username,
         }
         result = BkItsmApi.create_ticket(params)
         return result["sn"]
@@ -145,7 +150,8 @@ class ItsmHandler(object):
 
         for key in ["need_assessment", "assessment_config"]:
             request_param.pop(key, None)
-        EtlHandler(collector_config_id=collect_id).update_or_create(**request_param)
+        etl_handler = EtlHandler.get_instance(collect_id)
+        etl_handler.update_or_create(**request_param)
 
     def _ticket_is_finish(self, ticket_info: dict):
         return "RUNNING" != ticket_info["current_status"]

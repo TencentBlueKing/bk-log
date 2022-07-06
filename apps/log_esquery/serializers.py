@@ -136,7 +136,7 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
                 value = __filter.get("value")
                 operator: str = __filter.get("method") if __filter.get("method") else __filter.get("operator")
 
-                if isinstance(value, list) and len(value):  # pylint:len-as-condition
+                if isinstance(value, list) and value:
                     value = ",".join([str(v) for v in value])
 
                 if field and operator and value or isinstance(value, str):
@@ -376,10 +376,13 @@ def _init_index_info(*, index_set_id):
             index = [x.get("result_table_id", None) for x in index_set_data_obj_list]
             indices = ",".join(index)
             if scenario_id not in [Scenario.BKDATA, Scenario.LOG]:
-                time_field_list = [x.get("time_field", None) for x in index_set_data_obj_list]
-                if len(time_field_list) > 0:
-                    time_field = time_field_list[0]
-                else:
+                time_field = None
+                for x in index_set_data_obj_list:
+                    time_field = x.get("time_field")
+                    if time_field:
+                        break
+                time_field = time_field or tmp_index_obj.time_field
+                if time_field is None:
                     raise BaseSearchIndexSetIdTimeFieldException(
                         BaseSearchIndexSetIdTimeFieldException.MESSAGE.format(index_set_id=index_set_id)
                     )

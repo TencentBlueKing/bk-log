@@ -500,13 +500,12 @@ class BizHandler(APIModel):
             host["app_module"] = host["module"]
         return host_list
 
-    @cache_half_hour("cmdb:get_cache_hosts_{bk_biz_id}")
+    @cache_half_hour("cmdb:get_cache_hosts_{bk_biz_id}", compress=True)
     def get_cache_hosts(self, bk_biz_id):
         host_info = self.get_hosts()
-        result = {}
+        result = defaultdict(dict)
         for host in host_info:
-            result[host["host"]["bk_host_innerip"]] = host
-            result[f"{host['host']['bk_host_innerip']}:{host['host']['bk_cloud_id']}"] = host
+            result[host["host"]["bk_host_innerip"]][str(host["host"]["bk_cloud_id"])] = host
         return result
 
     @staticmethod

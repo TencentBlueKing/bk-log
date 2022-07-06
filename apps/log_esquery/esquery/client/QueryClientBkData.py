@@ -36,7 +36,7 @@ from apps.log_esquery.type_constants import type_mapping_dict
 from apps.exceptions import ApiResultError
 
 
-class QueryClientBkData(QueryClientTemplate):
+class QueryClientBkData(QueryClientTemplate):  # pylint: disable=invalid-name
     def __init__(self, bkdata_authentication_method: str = "", bkdata_data_token: str = ""):
         super(QueryClientBkData, self).__init__()
         self._client = BkDataQueryApi
