@@ -22,14 +22,14 @@ the project delivered to anyone in the future.
 import copy
 from typing import Union
 
-from django.core.cache import cache
 from django.conf import settings
+from django.core.cache import cache
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import TransferApi
 from apps.exceptions import ValidationError
-from apps.log_databus.constants import BKDATA_ES_TYPE_MAP, EtlConfig, FIELD_TEMPLATE, CACHE_KEY_CLUSTER_INFO
+from apps.log_databus.constants import BKDATA_ES_TYPE_MAP, CACHE_KEY_CLUSTER_INFO, EtlConfig, FIELD_TEMPLATE
 from apps.log_databus.exceptions import EtlParseTimeFieldException, HotColdCheckException
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.models import CollectorConfig, CollectorPlugin
@@ -173,6 +173,9 @@ class EtlStorage(object):
                 time_field["option"]["field_index"] = field_option["field_index"]
                 # 删除原时间字段配置
                 field_option["es_doc_values"] = False
+
+            if field_option["es_type"] == FieldDataTypeEnum.OBJECT.value:
+                field_option.pop("es_doc_values", None)
 
             # 加入字段列表
             field_list.append(
