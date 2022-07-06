@@ -97,7 +97,6 @@ class BKBaseEtlHandler(EtlHandler):
         bkdata_json_config = etl_storage.get_bkdata_etl_config(fields, etl_params, built_in_config)
         fields_config.append({"alias_name": "time", "field_name": "time", "option": {"es_type": "long"}})
 
-        # TODO 指定 result_table
         bkdata_params = {
             "raw_data_id": instance.bk_data_id,
             "result_table_name": f"{settings.TABLE_ID_PREFIX}_{instance.get_en_name()}",
@@ -153,6 +152,17 @@ class BKBaseEtlHandler(EtlHandler):
             "expires": f"{params.get('retention', 1)}d",
             "fields": bkdata_params["fields"],
         }
+
+        # 合流入库
+        if not params.get("is_allow_alone_storage", True):
+            timestamp_format = "{%s}" % params.get("rt_timestamp_format", "yyyyMMdd")
+            if isinstance(instance, CollectorConfig) and instance.collector_plugin_id:
+                collector_plugin = CollectorPlugin.objects.get(collector_plugin_id=instance.collector_plugin_id)
+                table_name = collector_plugin.get_en_name()
+            else:
+                table_name = instance.get_en_name()
+            table_id = f"{instance.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}.{table_name}"
+            storage_params["physical_table_name"] = f"write_{timestamp_format}_{table_id}"
 
         has_storage = BkDataDatabusApi.get_config_db_list({"raw_data_id": instance.bk_data_id})
         # 创建入库

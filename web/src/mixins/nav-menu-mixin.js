@@ -127,8 +127,9 @@ export default {
           this.$emit('welcome', args);
         } else { // 正常业务
           this.$store.commit('updateMyProjectList', projectList);
-          // 首先从查询参数找，然后从storage里面找，还找不到就返回第一个不是demo的业务
-          const firstRealProjectId = projectList.find(item => item.bk_biz_id !== demoId).project_id;
+          // 首先从查询参数找，然后从storage里面找，还找不到就返回第一个不是demo且有权限的业务
+          // eslint-disable-next-line max-len
+          const firstRealProjectId = projectList.find(item => item.bk_biz_id !== demoId && item.permission?.view_business).project_id;
           if (projectId || bizId) {
             const matchProject = projectList.find(item => item.project_id === projectId || item.bk_biz_id === bizId);
             this.checkProjectChange(matchProject ? matchProject.project_id : firstRealProjectId);
