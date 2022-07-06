@@ -352,7 +352,7 @@ def custom_exception_handler(exc, context):
 
     # 非预期异常
     logger.exception(getattr(exc, "message", exc))
-    return JsonResponse(_error("500", _("系统错误，请联系管理员")))
+    return JsonResponse(_error("500", _("系统错误，请联系管理员"), errors=str(exc)))
 
 
 def _error(code=None, message="", data=None, errors=None):

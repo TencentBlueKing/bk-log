@@ -346,6 +346,7 @@ class UpdateContainerCollectorSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
+    collector_scenario_id = serializers.ChoiceField(label=_("日志类型"), choices=CollectorScenarioEnum.get_choices())
     configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
@@ -981,7 +982,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     labelSelector = LabelSelectorSerializer(label=_("匹配标签"), required=False)
     delimiter = serializers.CharField(label=_("分隔符"), allow_blank=True, required=False)
     filters = FilterSerializer(label=_("过滤规则"), many=True, required=False)
-    addPodLabel = serializers.CharField(label=_("上报时是否把标签带上"), default=False)
+    addPodLabel = serializers.BooleanField(label=_("上报时是否把标签带上"), default=False)
 
     def validate(self, attrs):
         if attrs["logConfigType"] != ContainerCollectorType.STDOUT and not attrs.get("path"):
