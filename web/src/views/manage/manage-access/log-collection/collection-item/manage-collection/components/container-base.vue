@@ -306,7 +306,6 @@ export default {
             label_selector: yamlSelector,
             namespaces,
           } = item;
-          let isAllContainer = false;
           let container;
           let labelSelector;
           if (data.yaml_config_enabled) {
@@ -323,12 +322,7 @@ export default {
               match_expressions,
             };
           }
-          if (JSON.stringify(container) === JSON.stringify(this.allContainer)
-        && JSON.stringify(labelSelector) === JSON.stringify(this.allLabelSelector)) {
-            isAllContainer = true;
-          }
           return {
-            isAllContainer,
             namespaces,
             data_encoding,
             container,
@@ -356,17 +350,21 @@ export default {
       return String.fromCharCode(index + 65);
     },
     async getYamlConfigData(yamlConfig) {
+      const defaultConfigData = {
+        configs: [],
+        extra_labels: [],
+      };
       try {
         const res = await this.$http.request('container/yamlJudgement', { data: { yaml_config: yamlConfig } });
         const { parse_result: parseResult, parse_status: parseStatus } = res.data;
-        if (Array.isArray(parseResult) && !parseStatus) return [];
+        if (Array.isArray(parseResult) && !parseStatus) return defaultConfigData; // 返回值若是数组则表示yaml解析出错
         if (parseStatus) return {
           configs: parseResult.configs,
           extra_labels: parseResult.extra_labels,
         };
       } catch (error) {
         console.warn(error);
-        return [];
+        return defaultConfigData;
       }
     },
     handleLeave() {

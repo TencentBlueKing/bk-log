@@ -42,7 +42,7 @@
           <span>{{statusNameList[item.id]}} {{item.listNum}}</span>
         </div>
       </div>
-      <bk-button @click.stop="issuedRetry">
+      <bk-button @click.stop="issuedRetry()">
         <!-- {{$t('复制目标')}} -->
         {{$t('configDetails.batchRetry')}}
       </bk-button>
@@ -167,10 +167,12 @@ export default {
      * @desc: 轮询状态
      */
     pollingStatus() {
-      if (!this.hasRunning) return;
       this.timer = setInterval(() => {
+        if (!this.hasRunning) {
+          clearInterval(this.timer);
+          return;
+        };
         this.getContainerList('polling');
-        if (!this.hasRunning) clearInterval(this.timer);
       }, 10000);
     },
     /**
