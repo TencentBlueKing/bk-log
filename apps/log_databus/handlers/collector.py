@@ -598,7 +598,6 @@ class CollectorHandler(object):
                             "bkdata_biz_id": params.get("bkdata_biz_id"),
                             "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
                             "bk_data_id": params.get("bk_data_id"),
-                            "table_id": params.get("table_id"),
                             "etl_processor": params.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
                             "etl_config": params.get("etl_config"),
                             "collector_plugin_id": params.get("collector_plugin_id"),
