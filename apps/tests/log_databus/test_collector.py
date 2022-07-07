@@ -807,6 +807,7 @@ CONFIG_DATA = {
         }
     ],
 }
+FAILED_SUBSCRIPTION_STATUS = [{"instance_id": "xxx", "status": "FAILED"}]
 
 
 class CCModuleTest(object):
@@ -972,7 +973,8 @@ class TestCollector(TestCase):
         result = collector.stop()
         self.assertEqual(result, ["7"])
 
-    @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": 8})
+    @patch("apps.api.NodeApi.get_subscription_task_status", lambda _: FAILED_SUBSCRIPTION_STATUS)
+    @patch("apps.api.NodeApi.retry_subscription", lambda _: {"task_id": 8})
     def _test_retry_target_nodes(self, collector_config_id):
         collector = CollectorHandler(collector_config_id=collector_config_id)
         task_id_list = copy.deepcopy(collector.data.task_id_list)
