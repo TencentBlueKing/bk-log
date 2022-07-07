@@ -682,7 +682,8 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -905,7 +906,7 @@ class CollectorHandler(object):
         重试部分实例或主机
         :return: task_id
         """
-        res = self._run_subscription_task(nodes=target_nodes)
+        res = self._retry_subscription()
 
         # add user_operation_record
         operation_record = {
@@ -946,6 +947,22 @@ class CollectorHandler(object):
             self.data.task_id_list = [str(task_id)]
         self.data.save()
         return self.data.task_id_list
+
+    def _retry_subscription(self):
+        params = {"subscription_id": self.data.subscription_id, "instance_id_list": self._get_failed_instance()}
+
+        task_id = str(NodeApi.retry_subscription(params)["task_id"])
+        self.data.task_id_list.append(task_id)
+        self.data.save()
+        return self.data.task_id_list
+
+    def _get_failed_instance(self):
+        params = {"subscription_id": self.data.subscription_id, "task_id_list": self.data.task_id_list}
+        result = NodeApi.get_subscription_task_status(params)
+        failed_instances_ids = [
+            item["instance_id"] for item in result if item["status"] in [CollectStatus.FAILED, CollectStatus.PENDING]
+        ]
+        return failed_instances_ids
 
     def _delete_subscription(self):
         """
@@ -1757,7 +1774,8 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id,
+                ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
