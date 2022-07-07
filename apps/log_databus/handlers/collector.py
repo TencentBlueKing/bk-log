@@ -901,12 +901,12 @@ class CollectorHandler(object):
             return_data.append({"etl": etl_message, "origin": _message})
         return return_data
 
-    def retry_target_nodes(self, target_nodes):
+    def retry_instances(self, instance_id_list):
         """
         重试部分实例或主机
         :return: task_id
         """
-        res = self._retry_subscription()
+        res = self._retry_subscription(instance_id_list=instance_id_list)
 
         # add user_operation_record
         operation_record = {
@@ -915,7 +915,7 @@ class CollectorHandler(object):
             "record_type": UserOperationTypeEnum.COLLECTOR,
             "record_object_id": self.data.collector_config_id,
             "action": UserOperationActionEnum.RETRY,
-            "params": {"target_nodes": target_nodes},
+            "params": {"instance_id_list": instance_id_list},
         }
         user_operation_record.delay(operation_record)
 
@@ -948,21 +948,13 @@ class CollectorHandler(object):
         self.data.save()
         return self.data.task_id_list
 
-    def _retry_subscription(self):
-        params = {"subscription_id": self.data.subscription_id, "instance_id_list": self._get_failed_instance()}
+    def _retry_subscription(self, instance_id_list):
+        params = {"subscription_id": self.data.subscription_id, "instance_id_list": instance_id_list}
 
         task_id = str(NodeApi.retry_subscription(params)["task_id"])
         self.data.task_id_list.append(task_id)
         self.data.save()
         return self.data.task_id_list
-
-    def _get_failed_instance(self):
-        params = {"subscription_id": self.data.subscription_id, "task_id_list": self.data.task_id_list}
-        result = NodeApi.get_subscription_task_status(params)
-        failed_instances_ids = [
-            item["instance_id"] for item in result if item["status"] in [CollectStatus.FAILED, CollectStatus.PENDING]
-        ]
-        return failed_instances_ids
 
     def _delete_subscription(self):
         """

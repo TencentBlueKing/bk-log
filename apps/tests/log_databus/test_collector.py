@@ -973,15 +973,13 @@ class TestCollector(TestCase):
         result = collector.stop()
         self.assertEqual(result, ["7"])
 
-    @patch("apps.api.NodeApi.get_subscription_task_status", lambda _: FAILED_SUBSCRIPTION_STATUS)
     @patch("apps.api.NodeApi.retry_subscription", lambda _: {"task_id": 8})
     def _test_retry_target_nodes(self, collector_config_id):
         collector = CollectorHandler(collector_config_id=collector_config_id)
         task_id_list = copy.deepcopy(collector.data.task_id_list)
         task_id_list.append("8")
-
-        target_nodes = [{"ip": "127.0.0.1", "bk_cloud_id": 0}]
-        result = collector.retry_target_nodes(target_nodes)
+        params = {"instance_id_list": [{"instance_id": "xxx"}]}
+        result = collector.retry_instances(params)
         self.assertEqual(result, task_id_list)
 
     @patch("apps.api.NodeApi.delete_subscription", lambda _: DELETE_MSG)
