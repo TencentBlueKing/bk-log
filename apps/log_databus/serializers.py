@@ -342,7 +342,7 @@ class CollectorListSerializer(DataModelSerializer):
 
 
 class RetrySerializer(serializers.Serializer):
-    target_nodes = serializers.ListField(label=_("采集目标"), required=False, default=[])
+    instance_id_list = serializers.ListField(label=_("实例ID列表"), required=False, default=[])
 
 
 class StorageListSerializer(serializers.Serializer):
