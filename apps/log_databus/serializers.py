@@ -903,6 +903,8 @@ class CreateColelctorConfigEtlSerializer(serializers.Serializer):
 
 
 class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.ModelSerializer):
+    collector_plugin_name = serializers.CharField()
+
     class Meta:
         model = CollectorPlugin
         fields = [
@@ -912,9 +914,6 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
             "is_display_collector",
             "is_allow_alone_data_id",
             "is_allow_alone_etl_config",
-            "etl_config",
-            "etl_template",
-            "params",
             "is_allow_alone_storage",
             "storage_cluster_id",
             "retention",
@@ -922,6 +921,10 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
             "storage_replies",
             "storage_shards_nums",
             "storage_shards_size",
+            "etl_config",
+            "etl_params",
+            "fields",
+            "params",
         ]
 
     def validate(self, attrs: dict) -> dict:
