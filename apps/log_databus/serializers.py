@@ -909,7 +909,7 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
             "collector_plugin_name",
             "description",
             "data_encoding",
-            "is_enabled_display_collector",
+            "is_display_collector",
             "is_allow_alone_data_id",
             "is_allow_alone_etl_config",
             "etl_config",
