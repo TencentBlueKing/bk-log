@@ -143,7 +143,7 @@
                   {{ $t('dataManage.applyTemp') }}
                 </span>
               </div>
-              <p class="documentation button-text" @click="handleOpenDocument">
+              <p class="documentation button-text" v-if="docUrl" @click="handleOpenDocument">
                 <span>{{$t('说明文档')}}</span> <span class="log-icon icon-jump"></span>
               </p>
             </div>
