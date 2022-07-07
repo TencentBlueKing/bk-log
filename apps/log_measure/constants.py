@@ -20,7 +20,9 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 from django.conf import settings
+from django.utils.translation import ugettext as _
 
+from apps.utils import ChoicesEnum
 from bk_monitor.constants import EVENT_TYPE, TIME_SERIES_TYPE
 from config.domains import MONITOR_APIGATEWAY_ROOT
 from bk_monitor.handler.monitor import BKMonitor
@@ -70,4 +72,35 @@ DATA_NAMES = [
     {"name": "bk_log_event", "custom_report_type": EVENT_TYPE},
 ]
 
+
+class TimeRangeEnum(ChoicesEnum):
+    FIVE_MIN = "5m"
+    ONE_DAY = "1d"
+    THREE_DAY = "3d"
+    SEVEN_DAY = "7d"
+    FOURTEEN_DAY = "14d"
+    THIRTY_DAY = "30d"
+
+    _choices_labels = (
+        (FIVE_MIN, _("5分钟")),
+        (ONE_DAY, _("1天")),
+        (THREE_DAY, _("3天")),
+        (SEVEN_DAY, _("7天")),
+        (FOURTEEN_DAY, _("14天")),
+        (THIRTY_DAY, _("30天")),
+    )
+
+
+TIME_RANGE = {
+    TimeRangeEnum.FIVE_MIN.value: 5,
+    TimeRangeEnum.ONE_DAY.value: 60 * 24 * 1,
+    TimeRangeEnum.THREE_DAY.value: 60 * 24 * 3,
+    TimeRangeEnum.SEVEN_DAY.value: 60 * 24 * 7,
+    TimeRangeEnum.FOURTEEN_DAY.value: 60 * 24 * 14,
+    TimeRangeEnum.THIRTY_DAY.value: 60 * 24 * 30,
+}
+
+TABLE_BKUNIFYBEAT_TASK = "bkunifylogbeat_task.base"
+FIELD_CRAWLER_RECEIVED = "crawler_received"
+FIELD_CRAWLER_STATE = "crawler_state"
 MAX_QUERY_SUBSCRIPTION = 10

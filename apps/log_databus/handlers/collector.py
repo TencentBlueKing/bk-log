@@ -598,7 +598,6 @@ class CollectorHandler(object):
                             "bkdata_biz_id": params.get("bkdata_biz_id"),
                             "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
                             "bk_data_id": params.get("bk_data_id"),
-                            "table_id": params.get("table_id"),
                             "etl_processor": params.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
                             "etl_config": params.get("etl_config"),
                             "collector_plugin_id": params.get("collector_plugin_id"),
@@ -683,8 +682,7 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"],
-            bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -1705,17 +1703,47 @@ class CollectorHandler(object):
 
         subscription_ids = [ip_subscription["source_id"] for ip_subscription in node_result]
         collectors = CollectorConfig.objects.filter(
-            subscription_id__in=subscription_ids, bk_biz_id=bk_biz_id, is_active=True, table_id__isnull=False
+            subscription_id__in=subscription_ids,
+            bk_biz_id=bk_biz_id,
+            is_active=True,
+            table_id__isnull=False,
+            index_set_id__isnull=False,
         )
+
+        collectors = [model_to_dict(c) for c in collectors]
+        collectors = self.add_cluster_info(collectors)
+
+        index_sets = {
+            index_set.index_set_id: index_set
+            for index_set in LogIndexSet.objects.filter(
+                index_set_id__in=[collector["index_set_id"] for collector in collectors]
+            )
+        }
+
+        collect_status = {
+            status["collector_id"]: status
+            for status in self.get_subscription_status_by_list(
+                [collector["collector_config_id"] for collector in collectors], multi_flag=True
+            )
+        }
+
         return [
             {
-                "collector_config_id": collector.collector_config_id,
-                "collector_config_name": collector.collector_config_name,
-                "collector_scenario_id": collector.collector_scenario_id,
-                "index_set_id": collector.index_set_id,
-                "description": collector.description,
+                "collector_config_id": collector["collector_config_id"],
+                "collector_config_name": collector["collector_config_name"],
+                "collector_scenario_id": collector["collector_scenario_id"],
+                "index_set_id": collector["index_set_id"],
+                "index_set_name": index_sets[collector["index_set_id"]].index_set_name,
+                "index_set_scenario_id": index_sets[collector["index_set_id"]].scenario_id,
+                "retention": collector["retention"],
+                "status": collect_status.get(collector["collector_config_id"], {}).get("status", CollectStatus.UNKNOWN),
+                "status_name": collect_status.get(collector["collector_config_id"], {}).get(
+                    "status_name", RunStatus.UNKNOWN
+                ),
+                "description": collector["description"],
             }
             for collector in collectors
+            if collector["index_set_id"] in index_sets
         ]
 
     def cat_illegal_ips(self, params: dict):
@@ -1729,8 +1757,7 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id,
-                ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))

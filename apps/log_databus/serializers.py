@@ -873,6 +873,22 @@ class CreateCollectorPluginInstanceSerializer(serializers.Serializer):
     params = PluginParamSerializer()
 
 
+class UpdateCollectorPluginInstanceSerializer(serializers.Serializer):
+    collector_config_id = serializers.IntegerField(label=_("采集项ID"))
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+    target_object_type = serializers.CharField(label=_("目标类型"))
+    target_node_type = serializers.CharField(label=_("节点类型"))
+    target_nodes = TargetNodeSerializer(label=_("目标节点"), many=True)
+    data_encoding = serializers.ChoiceField(label=_("日志字符集"), choices=EncodingsEnum.get_choices())
+    description = serializers.CharField(
+        label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
+    )
+    params = PluginParamSerializer()
+
+
 class CreateColelctorConfigEtlSerializer(serializers.Serializer):
     collector_config_id = serializers.IntegerField(label=_("采集项ID"))
     etl_config = serializers.JSONField(label=_("清洗规则参数"), required=False)
@@ -887,18 +903,17 @@ class CreateColelctorConfigEtlSerializer(serializers.Serializer):
 
 
 class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.ModelSerializer):
+    collector_plugin_name = serializers.CharField()
+
     class Meta:
         model = CollectorPlugin
         fields = [
             "collector_plugin_name",
             "description",
             "data_encoding",
-            "is_enabled_display_collector",
+            "is_display_collector",
             "is_allow_alone_data_id",
             "is_allow_alone_etl_config",
-            "etl_config",
-            "etl_template",
-            "params",
             "is_allow_alone_storage",
             "storage_cluster_id",
             "retention",
@@ -906,6 +921,10 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
             "storage_replies",
             "storage_shards_nums",
             "storage_shards_size",
+            "etl_config",
+            "etl_params",
+            "fields",
+            "params",
         ]
 
     def validate(self, attrs: dict) -> dict:

@@ -31,6 +31,7 @@ from django.conf import settings
 
 from apps.utils.db import array_group
 from apps.log_search.models import LogIndexSet, FavoriteSearch, UserIndexSetSearchHistory, AsyncTask
+from apps.log_measure.constants import TIME_RANGE
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
@@ -40,11 +41,20 @@ class LogSearchMetricCollector(object):
     @staticmethod
     @register_metric("log_search", description=_("日志检索"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def search_count():
+        metrics = []
+        for timedelta in TIME_RANGE:
+            metrics.extend(LogSearchMetricCollector().search_count_by_time_range(timedelta))
+
+        return metrics
+
+    @staticmethod
+    def search_count_by_time_range(timedelta: str):
         end_time = (
             arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
         )
+        timedelta_v = TIME_RANGE[timedelta]
         start_time = (
-            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=5)
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=timedelta_v)
         ).strftime("%Y-%m-%d %H:%M:%S%z")
 
         history_objs = (
@@ -73,6 +83,7 @@ class LogSearchMetricCollector(object):
                     "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(
                         index_sets[history_obj["index_set_id"]]["bk_biz_id"]
                     ),
+                    "time_range": timedelta,
                 },
                 timestamp=arrow.get(history_obj["created_at"]).float_timestamp,
             )
@@ -83,7 +94,7 @@ class LogSearchMetricCollector(object):
             Metric(
                 metric_name="total",
                 metric_value=history_objs.count(),
-                dimensions={},
+                dimensions={"time_range": timedelta},
                 timestamp=MetricUtils.get_instance().report_ts,
             )
         )
@@ -110,28 +121,11 @@ class LogSearchMetricCollector(object):
         )
         index_set_list = [history_obj["index_set_id"] for history_obj in history_objs]
         index_sets = array_group(
-            list(
-                LogIndexSet.objects.filter(index_set_id__in=index_set_list).values("project_id", "index_set_id").all()
-            ),
-            "index_set_id",
-            group=True,
-        )
-        # 需要把已经失效和删除的index_set信息也补上
-        index_sets.update(
-            array_group(
-                list(
-                    LogIndexSet.objects.filter(index_set_id__in=index_set_list, is_deleted=True)
-                    .values("project_id", "index_set_id")
-                    .all()
-                ),
-                "index_set_id",
-                group=True,
-            )
+            LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
         )
         aggregation_datas = defaultdict(lambda: defaultdict(int))
         for index_set_id in index_set_list:
-            project_id = index_sets[index_set_id]["project_id"]
-            bk_biz_id = MetricUtils.get_instance().project_biz_info.get(project_id, {}).get("bk_biz_id", project_id)
+            bk_biz_id = index_sets[index_set_id]["bk_biz_id"]
             aggregation_datas[bk_biz_id][index_set_id] += 1
 
         # 收藏带标签数据
@@ -141,7 +135,7 @@ class LogSearchMetricCollector(object):
                 metric_value=aggregation_datas[bk_biz_id][index_set_id],
                 dimensions={
                     "index_set_id": index_set_id,
-                    "index_set_name": index_sets.get(index_set_id, {}).get("index_set_name", index_set_id),
+                    "index_set_name": index_sets[index_set_id]["index_set_name"],
                     "target_bk_biz_id": bk_biz_id,
                     "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                 },
