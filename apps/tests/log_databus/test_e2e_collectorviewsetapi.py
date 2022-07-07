@@ -158,6 +158,7 @@ COLLECTORS_LIST = {
                 "bkdata_data_id_sync_times": 0,
                 "collector_config_name_en": "",
                 "storage_cluster_id": 1,
+                "rule_id": 0,
                 "storage_cluster_name": "",
                 "table_id_prefix": "2_bklog_",
                 "is_search": False,

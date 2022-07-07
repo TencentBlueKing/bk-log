@@ -127,6 +127,7 @@ class CollectorConfig(SoftDeleteModel):
 
     yaml_config_enabled = models.BooleanField(_("是否使用yaml配置模式"), default=False)
     yaml_config = models.TextField(_("yaml配置内容"), default="")
+    rule_id = models.IntegerField(_("bcs规则集id"), default=0)
 
     @property
     def is_clustering(self) -> bool:
@@ -302,6 +303,13 @@ class ContainerCollectorConfig(SoftDeleteModel):
         _("下发状态"), null=True, blank=True, max_length=30, choices=ContainerCollectStatus.get_choices()
     )
     raw_config = models.JSONField(_("原始配置"), null=True, blank=True)
+    parent_container_config_id = models.IntegerField(_("父配置id"), default=0)
+    rule_id = models.IntegerField(_("bcs规则集id"), default=0)
+
+
+class BcsRule(SoftDeleteModel):
+    rule_name = models.CharField(_("采集配置名称"), max_length=64)
+    bcs_project_id = models.IntegerField(_("项目ID"), default=0)
 
 
 class ItsmEtlConfig(SoftDeleteModel):
