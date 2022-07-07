@@ -215,7 +215,7 @@ class ProjectInfo(SoftDeleteModel):
             raise BizNotExistError(BizNotExistError.MESSAGE.format(bk_biz_id=biz_id))
 
         project = projects.first()
-        return {"project_id": project.project_id, "bk_biz_name": project.project_name}
+        return {"bk_biz_id": project.bk_biz_id, "bk_biz_name": project.project_name}
 
     @classmethod
     def get_project(cls, biz_id=None):
