@@ -346,11 +346,11 @@
   name: update_collector_plugin
   label: 日志平台-更新采集插件
   label_en: bk_log update collector plugin
-  method: PATCH
+  method: PUT
   api_type: query
   comp_codename: generic.v2.bk_log.bk_log_component
   dest_path: /api/v1/databus/collector_plugins/{collector_plugin_id}/
-  dest_http_method: PATCH
+  dest_http_method: PUT
   is_hidden: True
 
 - path: /v2/bk_log/databus_collector_plugins/{collector_plugin_id}/instances/
