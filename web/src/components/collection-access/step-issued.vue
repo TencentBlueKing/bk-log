@@ -456,7 +456,7 @@ export default {
      * 重试
      */
     issuedRetry(row, cluster) {
-      const targetNodes = [];
+      const instanceIDList = [];
       if (cluster) {
         // 单条重试
         row.status = 'running';
@@ -469,22 +469,14 @@ export default {
             });
           }
         });
-        targetNodes.push({
-          ip: row.ip,
-          bk_cloud_id: row.bk_cloud_id,
-          bk_supplier_id: row.bk_supplier_id,
-        });
+        instanceIDList.push(row.instance_id);
       } else {
         // 失败批量重试
         this.tableListAll.forEach((item) => {
           item.child && item.child.forEach((itemRow) => {
             if (itemRow.status === 'failed') {
               itemRow.status = 'running';
-              targetNodes.push({
-                ip: itemRow.ip,
-                bk_cloud_id: itemRow.bk_cloud_id,
-                bk_supplier_id: itemRow.bk_supplier_id,
-              });
+              instanceIDList.push(itemRow.instance_id);
             }
           });
         });
@@ -496,7 +488,7 @@ export default {
         // manualSchema: true,
         params: { collector_config_id: this.curCollect.collector_config_id },
         data: {
-          target_nodes: targetNodes,
+          instance_id_list: instanceIDList,
         },
       }).then((res) => {
         if (res.data) {

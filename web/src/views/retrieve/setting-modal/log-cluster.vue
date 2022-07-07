@@ -532,6 +532,7 @@ export default {
       this.operateItemIndex = index;
       const operateItem = this.formData.filter_rules[index];
       operateItem.value = [];
+      operateItem.valueList = [];
       if (operateItem.fields_name && this.statisticalFieldsData[operateItem.fields_name]) {
         const fieldValues = Object.keys(this.statisticalFieldsData[operateItem.fields_name]);
         if (fieldValues?.length) {

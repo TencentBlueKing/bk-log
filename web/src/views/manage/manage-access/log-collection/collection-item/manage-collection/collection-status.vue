@@ -212,11 +212,6 @@ export default {
         selected: 'all',
         data: '',
       },
-      retryData: {
-        ip: '',
-        bk_cloud_id: '',
-        bk_supplier_id: '',
-      },
       dataFir: null,
       dataSec: {},
       dataFal: {},
@@ -397,11 +392,7 @@ export default {
       this.reloadTable = true;
       const retryList = [];
       if (key === 'odd') {
-        const data = JSON.parse(JSON.stringify(this.retryData));
-        data.ip = val.ip;
-        data.bk_cloud_id = val.bk_cloud_id;
-        data.bk_supplier_id = val.bk_supplier_id;
-        retryList.push(data);
+        retryList.push(val.instance_id);
       } else {
         if (val.totalLenght === 0) { // 判断是否存在失败项
           this.reloadTable = false;
@@ -409,11 +400,7 @@ export default {
         }
         for (let y = 0; y < key; y++) {
           for (let i = 0; i < val[y].length; i++) {
-            const data = JSON.parse(JSON.stringify(this.retryData));
-            data.ip = val[y][i].ip;
-            data.bk_cloud_id = val[y][i].bk_cloud_id;
-            data.bk_supplier_id = val[y][i].bk_supplier_id;
-            retryList.push(data);
+            retryList.push(val[y][i].instance_id);
           }
         }
       }
@@ -422,8 +409,7 @@ export default {
           collector_config_id: this.$route.params.collectorId,
         },
         data: {
-          node_type: 'INSTANCE',
-          target_nodes: retryList,
+          instance_id_list: retryList,
         },
       }).then(() => {
         this.getCollectList();
