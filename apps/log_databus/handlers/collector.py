@@ -54,7 +54,6 @@ from apps.log_esquery.utils.es_route import EsRoute
 from apps.utils.log import logger
 from apps.exceptions import ApiError, ApiRequestError, ApiResultError
 from apps.utils.local import get_local_param, get_request_username
-from apps.utils.drf import DataPageNumberPagination
 from apps.log_databus.constants import (
     TargetNodeTypeEnum,
     CollectStatus,
@@ -74,6 +73,8 @@ from apps.log_databus.constants import (
     TopoType,
     WorkLoadType,
     ContainerCollectStatus,
+    DEFAULT_COLLECTOR_LENGTH,
+    ContainerCollectorType,
 )
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
@@ -94,10 +95,11 @@ from apps.log_databus.exceptions import (
     MissedNamespaceException,
     BCSApiException,
     ContainerCollectConfigValidateYamlException,
+    RuleCollectorException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig, CleanStash, ContainerCollectorConfig
+from apps.log_databus.models import CollectorConfig, CleanStash, ContainerCollectorConfig, BcsRule
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.constants import (
@@ -110,13 +112,12 @@ from apps.models import model_to_dict
 from apps.log_databus.handlers.kafka import KafkaConsumerHandle
 from apps.log_databus.constants import EtlConfig
 from apps.decorators import user_operation_record
-from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario
+from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario, ProjectInfo
 from apps.utils.time_handler import format_user_time_zone
 from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 
 
 class CollectorHandler(object):
-
     data: CollectorConfig
 
     def __init__(self, collector_config_id=None):
@@ -645,7 +646,8 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -1808,7 +1810,8 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id,
+                ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2099,39 +2102,6 @@ class CollectorHandler(object):
 
         return None
 
-    def list_bcs_collector(self, request, view, bk_biz_id):
-        pg = DataPageNumberPagination()
-        page_collectors = pg.paginate_queryset(
-            queryset=CollectorConfig.objects.exclude(bk_app_code="bk_log_search",).filter(
-                environment=Environment.CONTAINER, bk_biz_id=bk_biz_id
-            ),
-            request=request,
-            view=view,
-        )
-        res = pg.get_paginated_response(
-            [self.generate_bcs_collector(collector=collector) for collector in page_collectors]
-        )
-        return res
-
-    def generate_bcs_collector(self, collector):
-        container_collector_config = ContainerCollectorConfig.objects.filter(
-            collector_config_id=collector.collector_config_id
-        )
-        return {
-            "collector_config_id": collector.collector_config_id,
-            "collector_config_name": collector.collector_config_name,
-            "bk_biz_id": collector.bk_biz_id,
-            "description": collector.description,
-            "bk_data_id": collector.bk_data_id,
-            "index_set_id": collector.index_set_id,
-            "collector_config_name_en": collector.collector_config_name_en,
-            "environment": collector.environment,
-            "bcs_cluster_id": collector.bcs_cluster_id,
-            "extra_labels": collector.extra_labels,
-            "add_pod_label": collector.add_pod_label,
-            "configs": [model_to_dict(config) for config in container_collector_config],
-        }
-
     def create_container_config(self, data):
         collector_config_params = {
             "bk_biz_id": data["bk_biz_id"],
@@ -2305,7 +2275,7 @@ class CollectorHandler(object):
             "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
         }
         user_operation_record.delay(operation_record)
-        self.compare_config(data, self.data.collector_config_id)
+        self.compare_config(data=data, collector_config_id=self.data.collector_config_id)
 
         self.data.task_id_list = list(
             ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id).values_list(
@@ -2320,63 +2290,176 @@ class CollectorHandler(object):
             "bk_data_id": self.data.bk_data_id,
         }
 
+    def list_bcs_collector(self, bcs_cluster_id):
+        collectors = CollectorConfig.objects.filter(bcs_cluster_id=bcs_cluster_id).order_by("-updated_at")
+        rule_dict = {}
+        if not collectors:
+            return []
+
+        def is_path_collector_config(collector_config_name_en: str):
+            return collector_config_name_en.endswith("_path")
+
+        for collector in collectors:
+            if not collector.rule_id:
+                continue
+            if collector.rule_id not in rule_dict:
+                rule_dict[collector.rule_id] = {
+                    "path_collector_config": CollectorConfig(),
+                    "std_collector_config": CollectorConfig(),
+                }
+            if is_path_collector_config(collector.collector_config_name_en):
+                rule_dict[collector.rule_id]["path_collector_config"] = collector
+            else:
+                rule_dict[collector.rule_id]["std_collector_config"] = collector
+
+        path_container_config_list = ContainerCollectorConfig.objects.filter(
+            collector_config_id__in=[rule["path_collector_config"].collector_config_id for _, rule in rule_dict.items()]
+        ).order_by("-updated_at")
+        std_container_config_list = ContainerCollectorConfig.objects.filter(
+            collector_config_id__in=[rule["std_collector_config"].collector_config_id for _, rule in rule_dict.items()]
+        ).order_by("-updated_at")
+
+        path_container_config_dict = defaultdict(list)
+        std_container_config_dict = defaultdict(list)
+        for path_container_config in path_container_config_list:
+            path_container_config_dict[path_container_config.collector_config_id].append(path_container_config)
+        for std_container_config in std_container_config_list:
+            std_container_config_dict[std_container_config.parent_container_config_id].append(std_container_config)
+        project_id = BcsRule.objects.get(id=list(rule_dict.keys())[0]).bcs_project_id
+        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=project_id)
+        result = []
+        for rule_id, collector in rule_dict.items():
+            rule = {
+                "rule_id": rule_id,
+                "collector_config_name": collector["path_collector_config"].collector_config_name.rsplit("_", 1)[0],
+                "bk_biz_id": collector["path_collector_config"].bk_biz_id,
+                "description": collector["path_collector_config"].description,
+                "collector_config_name_en": collector["path_collector_config"].collector_config_name_en.rsplit("_", 1)[
+                    0
+                ],
+                "environment": collector["path_collector_config"].environment,
+                "bcs_cluster_id": collector["path_collector_config"].bcs_cluster_id,
+                "extra_labels": collector["path_collector_config"].extra_labels,
+                "add_pod_label": collector["path_collector_config"].add_pod_label,
+                "file_index_set_id": bcs_path_index_set.index_set_id,
+                "std_index_set_id": bcs_std_index_set.index_set_id,
+                "container_config": [],
+            }
+            if collector["path_collector_config"].collector_config_id not in path_container_config_dict:
+                result.append(rule)
+                continue
+            for path_container_config in path_container_config_dict[
+                collector["path_collector_config"].collector_config_id
+            ]:
+                rule["container_config"].append(
+                    {
+                        "id": path_container_config.id,
+                        "bk_data_id": collector["path_collector_config"].bk_data_id,
+                        "namespaces": path_container_config.namespaces,
+                        "any_namespace": path_container_config.any_namespace,
+                        "data_encoding": path_container_config.data_encoding,
+                        "params": path_container_config.params,
+                        "container": {
+                            "workload_type": path_container_config.workload_type,
+                            "workload_name": path_container_config.workload_name,
+                            "container_name": path_container_config.container_name,
+                        },
+                        "label_selector": {
+                            "match_labels": path_container_config.match_labels,
+                            "match_expressions": path_container_config.match_labels,
+                        },
+                        "all_container": path_container_config.all_container,
+                        "status": path_container_config.status,
+                        "enable_stdout": collector["path_collector_config"].collector_config_id
+                        in std_container_config_dict,
+                        "stdout_conf": {"bk_data_id": collector["std_collector_config"].bk_data_id},
+                    }
+                )
+            result.append(rule)
+        return result
+
+        # pg = DataPageNumberPagination()
+        # page_collectors = pg.paginate_queryset(
+        #     queryset=CollectorConfig.objects.exclude(
+        #         bk_app_code="bk_log_search",
+        #     ).filter(environment=Environment.CONTAINER, bk_biz_id=bk_biz_id),
+        #     request=request,
+        #     view=view,
+        # )
+        # res = pg.get_paginated_response(
+        #     [self.generate_bcs_collector(collector=collector) for collector in page_collectors]
+        # )
+        # return res
+
+    @transaction.atomic
     def create_bcs_container_config(self, data, bk_app_code="bk_bcs"):
         conf = self.get_bcs_config()
-        collector_config_params = {
-            "bk_biz_id": data["bk_biz_id"],
-            "collector_config_name": data["collector_config_name"],
-            "collector_config_name_en": data["collector_config_name_en"],
-            "collector_scenario_id": CollectorScenarioEnum.ROW.value,
-            "custom_type": data["custom_type"],
-            "category_id": data["category_id"],
-            "description": data["description"] or data["collector_config_name"],
-            "data_link_id": int(conf["data_link_id"]),
-            "bk_app_code": bk_app_code,
-            "environment": Environment.CONTAINER,
-            "bcs_cluster_id": data["bcs_cluster_id"],
-            "add_pod_label": data["add_pod_label"],
-            "extra_labels": data["extra_labels"],
-        }
-        # 判断是否已存在同英文名collector
-        if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=data["bk_biz_id"]):
-            logger.error(
-                "collector_config_name_en {collector_config_name_en} already exists".format(
-                    collector_config_name_en=data["collector_config_name_en"]
-                )
-            )
-            raise CollectorConfigNameENDuplicateException(
-                CollectorConfigNameENDuplicateException.MESSAGE.format(
-                    collector_config_name_en=data["collector_config_name_en"]
-                )
-            )
-        # 判断是否已存在同bk_data_name, result_table_id
-        bk_data_name = build_bk_data_name(
-            bk_biz_id=data["bk_biz_id"], collector_config_name_en=data["collector_config_name_en"]
+        bcs_collector_config_name = self.generate_collector_config_name(
+            collector_config_name=data["collector_config_name"],
+            collector_config_name_en=data["collector_config_name_en"],
         )
-        result_table_id = build_result_table_id(
-            bk_biz_id=data["bk_biz_id"], collector_config_name_en=data["collector_config_name_en"]
+        bcs_rule = BcsRule.objects.create(rule_name=data["collector_config_name"], bcs_project_id=data["project_id"])
+        # 创建路径采集项
+        path_collector_config = self.create_bcs_collector(
+            {
+                "bk_biz_id": data["bk_biz_id"],
+                "collector_config_name": bcs_collector_config_name["bcs_path_collector"]["collector_config_name"],
+                "collector_config_name_en": bcs_collector_config_name["bcs_path_collector"]["collector_config_name_en"],
+                "collector_scenario_id": CollectorScenarioEnum.ROW.value,
+                "custom_type": data["custom_type"],
+                "category_id": data["category_id"],
+                "description": data["description"],
+                "data_link_id": int(conf["data_link_id"]),
+                "bk_app_code": bk_app_code,
+                "environment": Environment.CONTAINER,
+                "bcs_cluster_id": data["bcs_cluster_id"],
+                "add_pod_label": data["add_pod_label"],
+                "extra_labels": data["extra_labels"],
+                "rule_id": bcs_rule.id,
+            },
+            conf=conf,
         )
-        if self._pre_check_bk_data_name(model_fields=collector_config_params, bk_data_name=bk_data_name):
-            logger.error(f"bk_data_name {bk_data_name} already exists")
-            raise CollectorBkDataNameDuplicateException(
-                CollectorBkDataNameDuplicateException.MESSAGE.format(bk_data_name=bk_data_name)
-            )
-        if self._pre_check_result_table_id(model_fields=collector_config_params, result_table_id=result_table_id):
-            logger.error(f"result_table_id {result_table_id} already exists")
-            raise CollectorResultTableIDDuplicateException(
-                CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=result_table_id)
-            )
-
-        with transaction.atomic():
-            try:
-                self.data = CollectorConfig.objects.create(**collector_config_params)
-            except IntegrityError:
-                logger.warning(f"collector config name duplicate => [{data['collector_config_name']}]")
-                raise CollectorConfigNameDuplicateException()
-
-            ContainerCollectorConfig.objects.bulk_create(
+        # 创建标准输出采集项
+        std_collector_config = self.create_bcs_collector(
+            {
+                "bk_biz_id": data["bk_biz_id"],
+                "collector_config_name": bcs_collector_config_name["bcs_std_collector"]["collector_config_name"],
+                "collector_config_name_en": bcs_collector_config_name["bcs_std_collector"]["collector_config_name_en"],
+                "collector_scenario_id": CollectorScenarioEnum.ROW.value,
+                "custom_type": data["custom_type"],
+                "category_id": data["category_id"],
+                "description": data["description"],
+                "data_link_id": int(conf["data_link_id"]),
+                "bk_app_code": bk_app_code,
+                "environment": Environment.CONTAINER,
+                "bcs_cluster_id": data["bcs_cluster_id"],
+                "add_pod_label": data["add_pod_label"],
+                "extra_labels": data["extra_labels"],
+                "rule_id": bcs_rule.id,
+            },
+            conf=conf,
+        )
+        new_path_cls_index_set, new_std_cls_index_set = self.create_or_update_bcs_project_index_set(
+            bcs_project_id=data["project_id"],
+            project_id=ProjectInfo.get_project(biz_id=data["bk_biz_id"])["project_id"],
+            path_index={
+                "bk_biz_id": data["bk_biz_id"],
+                "result_table_id": path_collector_config.table_id,
+                "result_table_name": path_collector_config.collector_config_name,
+                "time_field": "dtEventTimeStamp",
+            },
+            std_index={
+                "bk_biz_id": data["bk_biz_id"],
+                "result_table_id": std_collector_config.table_id,
+                "result_table_name": std_collector_config.collector_config_name,
+                "time_field": "dtEventTimeStamp",
+            },
+        )
+        container_collector_config_list = []
+        for config in data["config"]:
+            container_collector_config_list.append(
                 ContainerCollectorConfig(
-                    collector_config_id=self.data.collector_config_id,
+                    collector_config_id=path_collector_config.collector_config_id,
                     namespaces=config["namespaces"],
                     any_namespace=not config["namespaces"],
                     data_encoding=config["data_encoding"],
@@ -2384,24 +2467,151 @@ class CollectorHandler(object):
                         "paths": config["paths"],
                         "conditions": {"type": "match", "match_type": "include", "match_content": ""},
                     },
-                    workload_type=config["container"]["workload_type"],
-                    workload_name=config["container"]["workload_name"],
-                    container_name=config["container"]["container_name"],
-                    match_labels=config["label_selector"]["match_labels"],
-                    match_expressions=config["label_selector"]["match_expressions"],
-                    all_container=not config["container"]["workload_type"],
+                    workload_type=config["container"].get("workload_type", ""),
+                    workload_name=config["container"].get("workload_name", ""),
+                    container_name=config["container"].get("container_name", ""),
+                    match_labels=config["label_selector"].get("match_labels", []),
+                    match_expressions=config["label_selector"].get("match_expressions", []),
+                    all_container=not config["container"].get("workload_type", ""),
+                    rule_id=bcs_rule.id,
                 )
-                for config in data["configs"]
             )
-            collector_scenario = CollectorScenario.get_instance(CollectorScenarioEnum.CUSTOM.value)
-            self.data.bk_data_id = collector_scenario.update_or_create_data_id(
-                bk_data_id=self.data.bk_data_id,
-                data_link_id=self.data.data_link_id,
-                data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{data['collector_config_name']}",
-                description=collector_config_params["description"],
-                encoding=META_DATA_ENCODING,
+            if config["enable_stdout"]:
+                container_collector_config_list.append(
+                    ContainerCollectorConfig(
+                        collector_config_id=std_collector_config.collector_config_id,
+                        namespaces=config["namespaces"],
+                        any_namespace=not config["namespaces"],
+                        data_encoding=config["data_encoding"],
+                        params={
+                            "paths": [],
+                            "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                        },
+                        workload_type=config["container"].get("workload_type", ""),
+                        workload_name=config["container"].get("workload_name", ""),
+                        container_name=config["container"].get("container_name", ""),
+                        match_labels=config["label_selector"].get("match_labels", []),
+                        match_expressions=config["label_selector"].get("match_expressions", []),
+                        all_container=not config["container"],
+                        rule_id=bcs_rule.id,
+                        parent_container_config_id=path_collector_config.collector_config_id,
+                    )
+                )
+
+        ContainerCollectorConfig.objects.bulk_create(container_collector_config_list)
+        container_configs = ContainerCollectorConfig.objects.filter(
+            collector_config_id__in=[
+                path_collector_config.collector_config_id,
+                std_collector_config.collector_config_id,
+            ]
+        )
+        for config in container_configs:
+            self.create_container_release(config)
+        return {
+            "rule_id": bcs_rule.id,
+            "file_index_set_id": new_path_cls_index_set.index_set_id,
+            "std_index_set_id": new_std_cls_index_set.index_set_id,
+            "bk_data_id": path_collector_config.bk_data_id,
+            "stdout_conf": {"bk_data_id": std_collector_config.bk_data_id},
+        }
+
+    def create_or_update_bcs_project_index_set(self, bcs_project_id, path_index, std_index, project_id):
+        src_index_list = LogIndexSet.objects.filter(bcs_project_id=bcs_project_id)
+        if not src_index_list:
+            new_path_cls_index_set = IndexSetHandler.create(
+                index_set_name="bcs_path_log_{}".format(bcs_project_id),
+                project_id=project_id,
+                storage_cluster_id=None,
+                scenario_id="log",
+                view_roles=None,
+                indexes=[path_index],
+                username="admin",
+                category_id="kubernetes",
             )
-            self.data.save()
+            new_std_cls_index_set = IndexSetHandler.create(
+                index_set_name="bcs_stdout_log_{}".format(bcs_project_id),
+                project_id=project_id,
+                storage_cluster_id=None,
+                scenario_id="log",
+                view_roles=None,
+                indexes=[std_index],
+                username="admin",
+                category_id="kubernetes",
+            )
+            return new_path_cls_index_set, new_std_cls_index_set
+
+        for src_index in src_index_list:
+            if "bcs_path_log_" in src_index.index_set_name:
+                src_index_set_indexes = src_index.indexes
+                path_index_list = [path_index] + [
+                    {
+                        "bk_biz_id": index["bk_biz_id"],
+                        "result_table_id": index["result_table_id"],
+                        "result_table_name": index["result_table_name"],
+                        "time_field": index["time_field"],
+                    }
+                    for index in src_index_set_indexes
+                ]
+                new_path_cls_index_set = IndexSetHandler(index_set_id=src_index.index_set_id).update(
+                    index_set_name=src_index.index_set_name,
+                    storage_cluster_id=src_index.storage_cluster_id,
+                    view_roles=None,
+                    indexes=path_index_list,
+                    username=src_index.created_by,
+                )
+            if "bcs_stdout_log_" in src_index.index_set_name:
+                src_index_set_indexes = src_index.indexes
+                std_index_list = [std_index] + [
+                    {
+                        "bk_biz_id": index["bk_biz_id"],
+                        "result_table_id": index["result_table_id"],
+                        "result_table_name": index["result_table_name"],
+                        "time_field": index["time_field"],
+                    }
+                    for index in src_index_set_indexes
+                ]
+                new_std_cls_index_set = IndexSetHandler(index_set_id=src_index.index_set_id).update(
+                    index_set_name=src_index.index_set_name,
+                    storage_cluster_id=src_index.storage_cluster_id,
+                    view_roles=None,
+                    indexes=std_index_list,
+                    username=src_index.created_by,
+                )
+
+        return new_path_cls_index_set, new_std_cls_index_set
+
+    @classmethod
+    def generate_collector_config_name(cls, collector_config_name, collector_config_name_en):
+        return {
+            "bcs_path_collector": {
+                "collector_config_name": _("bcs_{}_路径").format(collector_config_name),
+                "collector_config_name_en": f"bcs_{collector_config_name_en}_path",
+            },
+            "bcs_std_collector": {
+                "collector_config_name": _("bcs_{}_标准输出").format(collector_config_name),
+                "collector_config_name_en": f"bcs_{collector_config_name_en}_std",
+            },
+        }
+
+    def create_bcs_collector(self, collector_config_params, conf):
+        self.check_collector_config(collector_config_params=collector_config_params)
+        try:
+            self.data = CollectorConfig.objects.create(**collector_config_params)
+        except IntegrityError:
+            logger.warning(f"collector config name duplicate => [{collector_config_params['collector_config_name']}]")
+            raise CollectorConfigNameDuplicateException()
+        collector_scenario = CollectorScenario.get_instance(CollectorScenarioEnum.CUSTOM.value)
+        self.data.bk_data_id = collector_scenario.update_or_create_data_id(
+            bk_data_id=self.data.bk_data_id,
+            data_link_id=self.data.data_link_id,
+            data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_"
+            f"{collector_config_params['collector_config_name']}",
+            description=collector_config_params["description"]
+            if collector_config_params["description"]
+            else collector_config_params["collector_config_name_en"],
+            encoding=META_DATA_ENCODING,
+        )
+        self.data.save()
 
         # add user_operation_record
         operation_record = {
@@ -2418,12 +2628,12 @@ class CollectorHandler(object):
         # 创建数据平台data_id
         async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
-        custom_config = get_custom(data["custom_type"])
+        custom_config = get_custom(collector_config_params["custom_type"])
         from apps.log_databus.handlers.etl import EtlHandler
 
         etl_handler = EtlHandler(self.data.collector_config_id)
         etl_params = {
-            "table_id": data["collector_config_name_en"],
+            "table_id": collector_config_params["collector_config_name_en"],
             "storage_cluster_id": conf["storage_cluster_id"],
             "retention": DEFAULT_RETENTION,
             "allocation_min_days": 0,
@@ -2432,59 +2642,200 @@ class CollectorHandler(object):
             "etl_config": custom_config.etl_config,
             "fields": custom_config.fields,
         }
-        self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
-        container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
-        for config in container_configs:
-            self.create_container_release(config)
+        etl_result = etl_handler.update_or_create(**etl_params)
+        self.data.index_set_id = etl_result["index_set_id"]
+        self.data.table_id = etl_result["table_id"]
         custom_config.after_hook(self.data)
+        return self.data
+
+    def check_collector_config(self, collector_config_params):
+        if self._pre_check_collector_config_en(
+            model_fields=collector_config_params, bk_biz_id=collector_config_params["bk_biz_id"]
+        ):
+            logger.error(
+                "collector_config_name_en {collector_config_name_en} already exists".format(
+                    collector_config_name_en=collector_config_params["collector_config_name_en"]
+                )
+            )
+            raise CollectorConfigNameENDuplicateException(
+                CollectorConfigNameENDuplicateException.MESSAGE.format(
+                    collector_config_name_en=collector_config_params["collector_config_name_en"]
+                )
+            )
+        # 判断是否已存在同bk_data_name, result_table_id
+        bk_data_name = build_bk_data_name(
+            bk_biz_id=collector_config_params["bk_biz_id"],
+            collector_config_name_en=collector_config_params["collector_config_name_en"],
+        )
+        result_table_id = build_result_table_id(
+            bk_biz_id=collector_config_params["bk_biz_id"],
+            collector_config_name_en=collector_config_params["collector_config_name_en"],
+        )
+        if self._pre_check_bk_data_name(model_fields=collector_config_params, bk_data_name=bk_data_name):
+            logger.error(f"bk_data_name {bk_data_name} already exists")
+            raise CollectorBkDataNameDuplicateException(
+                CollectorBkDataNameDuplicateException.MESSAGE.format(bk_data_name=bk_data_name)
+            )
+        if self._pre_check_result_table_id(model_fields=collector_config_params, result_table_id=result_table_id):
+            logger.error(f"result_table_id {result_table_id} already exists")
+            raise CollectorResultTableIDDuplicateException(
+                CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=result_table_id)
+            )
+
+    @transaction.atomic
+    def update_bcs_container_config(self, data, rule_id):
+        bcs_collector_config_name = self.generate_collector_config_name(
+            collector_config_name=data["collector_config_name"], collector_config_name_en=data.get("")
+        )
+
+        collectors = CollectorConfig.objects.filter(rule_id=rule_id)
+        if len(collectors) != DEFAULT_COLLECTOR_LENGTH:
+            raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
+        for collector in collectors:
+            if collector.collector_config_name_en.endswith("_path"):
+                if (
+                    collector.collector_config_name
+                    != bcs_collector_config_name["bcs_path_collector"]["collector_config_name"]
+                ):
+                    index_set_name = (
+                        _("[采集项]") + bcs_collector_config_name["bcs_path_collector"]["collector_config_name"]
+                    )
+                    LogIndexSet.objects.filter(index_set_id=collector.index_set_id).update(
+                        index_set_name=index_set_name
+                    )
+                collector.collector_config_name = bcs_collector_config_name["bcs_path_collector"][
+                    "collector_config_name"
+                ]
+                collector.description = data["description"]
+                collector.bcs_cluster_id = data["bcs_cluster_id"]
+                collector.add_pod_label = data["add_pod_label"]
+                collector.extra_labels = data["extra_labels"]
+                collector.save()
+                path_collector = collector
+            if collector.collector_config_name_en.endswith("_std"):
+                if (
+                    collector.collector_config_name
+                    != bcs_collector_config_name["bcs_std_collector"]["collector_config_name"]
+                ):
+                    index_set_name = (
+                        _("[采集项]") + bcs_collector_config_name["bcs_std_collector"]["collector_config_name"]
+                    )
+                    LogIndexSet.objects.filter(index_set_id=collector.index_set_id).update(
+                        index_set_name=index_set_name
+                    )
+                collector.collector_config_name = bcs_collector_config_name["bcs_std_collector"][
+                    "collector_config_name"
+                ]
+                collector.description = data["description"]
+                collector.bcs_cluster_id = data["bcs_cluster_id"]
+                collector.add_pod_label = data["add_pod_label"]
+                collector.extra_labels = data["extra_labels"]
+                collector.save()
+                std_collector = collector
+
+        path_container_config, std_container_config = self.get_container_configs(
+            data["config"], path_collector=path_collector, rule_id=rule_id
+        )
+        self.deal_self_call(
+            collector_config_id=path_collector.collector_config_id,
+            collector=path_collector,
+            func=self.compare_config,
+            **{"data": {"configs": path_container_config}},
+        )
+        self.deal_self_call(
+            collector_config_id=std_collector.collector_config_id,
+            collector=std_collector,
+            func=self.compare_config,
+            **{"data": {"configs": std_container_config}},
+        )
+
+        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=data["project_id"])
         return {
-            "collector_config_id": self.data.collector_config_id,
-            "index_set_id": self.data.index_set_id,
-            "bk_data_id": self.data.bk_data_id,
+            "rule_id": rule_id,
+            "file_index_set_id": bcs_path_index_set.index_set_id,
+            "std_index_set_id": bcs_std_index_set.index_set_id,
+            "bk_data_id": path_collector.bk_data_id,
+            "stdout_conf": {"bk_data_id": std_collector.bk_data_id},
         }
 
-    def update_bcs_config(self, data):
-        collector_config_update = {
-            "collector_config_name": data["collector_config_name"],
-            "category_id": data["category_id"],
-            "description": data["description"] or data["collector_config_name"],
-            "environment": Environment.CONTAINER,
-            "bcs_cluster_id": data["bcs_cluster_id"],
-            "add_pod_label": data["add_pod_label"],
-            "extra_labels": data["extra_labels"],
-        }
+    def deal_self_call(self, **kwargs):
+        """
+        collector_config_id, collector, func 必传
+        """
+        self.collector_config_id = kwargs["collector_config_id"]
+        self.data = kwargs["collector"]
+        func = kwargs["func"]
+        return func(**kwargs)
 
-        for key, value in collector_config_update.items():
-            setattr(self.data, key, value)
-        try:
-            self.data.save()
-        except IntegrityError:
-            logger.warning(f"collector config name duplicate => [{data['collector_config_name']}]")
-            raise CollectorConfigNameDuplicateException()
+    @classmethod
+    def get_container_configs(cls, config, path_collector, rule_id):
+        path_container_config = []
+        std_container_config = []
+        for conf in config:
+            path_container_config.append(
+                {
+                    "namespaces": conf["namespaces"],
+                    "any_namespace": not conf["namespaces"],
+                    "data_encoding": conf["data_encoding"],
+                    "params": {
+                        "paths": conf["paths"],
+                        "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                    },
+                    "container": {
+                        "workload_type": conf["container"].get("workload_type", ""),
+                        "workload_name": conf["container"].get("workload_type", ""),
+                        "container_name": conf["container"].get("container_name", ""),
+                    },
+                    "label_selector": {
+                        "match_labels": conf["label_selector"].get("match_labels", []),
+                        "match_expressions": conf["label_selector"].get("match_expressions", []),
+                    },
+                    "rule_id": rule_id,
+                    "parent_container_config_id": 0,
+                    "collector_type": ContainerCollectorType.CONTAINER,
+                }
+            )
+            if conf["enable_stdout"]:
+                std_container_config.append(
+                    {
+                        "namespaces": conf["namespaces"],
+                        "any_namespace": not conf["namespaces"],
+                        "data_encoding": conf["data_encoding"],
+                        "params": {
+                            "paths": [],
+                            "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                        },
+                        "container": {
+                            "workload_type": conf["container"].get("workload_type", ""),
+                            "workload_name": conf["container"].get("workload_type", ""),
+                            "container_name": conf["container"].get("container_name", ""),
+                        },
+                        "label_selector": {
+                            "match_labels": conf["label_selector"].get("match_labels", []),
+                            "match_expressions": conf["label_selector"].get("match_expressions", []),
+                        },
+                        "rule_id": rule_id,
+                        "parent_container_config_id": path_collector.collector_config_id,
+                        "collector_type": ContainerCollectorType.STDOUT,
+                    }
+                )
+        return path_container_config, std_container_config
 
-        # collector_config_name更改后更新索引集名称
-        if data["collector_config_name"] != self.data.collector_config_name and self.data.index_set_id:
-            index_set_name = _("[采集项]") + self.data.collector_config_name
-            LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(index_set_name=index_set_name)
+    def delete_bcs_config(self, rule_id):
+        bcs_rule = BcsRule.objects.get(id=rule_id)
+        collectors = CollectorConfig.objects.filter(rule_id=bcs_rule.id)
+        if len(collectors) != DEFAULT_COLLECTOR_LENGTH:
+            raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
+        for collector in collectors:
+            self.deal_self_call(
+                collector_config_id=collector.collector_config_id,
+                collector=collector,
+                func=self.delete_collector_bcs_config,
+            )
+        bcs_rule.delete()
+        return {"rule_id": rule_id}
 
-        operation_record = {
-            "username": get_request_username(),
-            "biz_id": self.data.bk_biz_id,
-            "record_type": UserOperationTypeEnum.COLLECTOR,
-            "record_object_id": self.data.collector_config_id,
-            "action": UserOperationActionEnum.UPDATE,
-            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
-        }
-        user_operation_record.delay(operation_record)
-        self.compare_config(data, self.data.collector_config_id)
-
-        return {
-            "collector_config_id": self.data.collector_config_id,
-            "index_set_id": self.data.index_set_id,
-            "bk_data_id": self.data.bk_data_id,
-        }
-
-    def delete_bcs_config(self):
+    def delete_collector_bcs_config(self, **kwargs):
         container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
         for config in container_configs:
             self.delete_container_release(config)
@@ -2505,7 +2856,7 @@ class CollectorHandler(object):
             raise ValueError("default es cluster not exists.")
         return {"data_link_id": data_link_id, "storage_cluster_id": storage_cluster_id}
 
-    def compare_config(self, data, collector_config_id):
+    def compare_config(self, data, collector_config_id, **kwargs):
         container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=collector_config_id)
         container_configs = list(container_configs)
         config_length = len(data["configs"])
@@ -2537,11 +2888,15 @@ class CollectorHandler(object):
                 container_configs[x].collector_type = data["configs"][x]["collector_type"]
                 container_configs[x].all_container = is_all_container
                 container_configs[x].raw_config = data["configs"][x].get("raw_config")
+                container_configs[x].parent_container_config_id = data["configs"][x].get(
+                    "parent_container_config_id", 0
+                )
+                container_configs[x].rule_id = data["configs"][x].get("rule_id", 0)
                 container_configs[x].save()
                 container_config = container_configs[x]
             else:
                 container_config = ContainerCollectorConfig(
-                    collector_config_id=self.data.collector_config_id,
+                    collector_config_id=collector_config_id,
                     namespaces=data["configs"][x]["namespaces"],
                     any_namespace=not data["configs"][x]["namespaces"],
                     data_encoding=data["configs"][x]["data_encoding"],
@@ -2559,6 +2914,8 @@ class CollectorHandler(object):
                     collector_type=data["configs"][x]["collector_type"],
                     all_container=is_all_container,
                     raw_config=data["configs"][x].get("raw_config"),
+                    parent_container_config_id=data["configs"][x].get("parent_container_config_id", 0),
+                    rule_id=data["configs"][x].get("rule_id", 0),
                 )
                 container_config.save()
                 container_configs.append(container_config)

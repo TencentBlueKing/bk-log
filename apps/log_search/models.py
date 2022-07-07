@@ -217,6 +217,14 @@ class ProjectInfo(SoftDeleteModel):
         project = projects.first()
         return {"bk_biz_id": project.bk_biz_id, "bk_biz_name": project.project_name}
 
+    @classmethod
+    def get_project(cls, biz_id=None):
+        projects = ProjectInfo.objects.filter(bk_biz_id=biz_id)
+        if not projects.exists():
+            raise BizNotExistError(BizNotExistError.MESSAGE.format(bk_biz_id=biz_id))
+        project = projects.first()
+        return {"project_id": project.project_id, "bk_biz_name": project.project_name}
+
     class Meta:
         verbose_name = _("项目列表")
         verbose_name_plural = _("02_项目列表")
@@ -318,6 +326,7 @@ class LogIndexSet(SoftDeleteModel):
     time_field_type = models.CharField(_("时间字段类型"), max_length=32, default=None, null=True)
     time_field_unit = models.CharField(_("时间字段单位"), max_length=32, default=None, null=True)
     tag_ids = MultiStrSplitByCommaField(_("标签id记录"), max_length=255, default="")
+    bcs_project_id = models.IntegerField(_("项目ID"), default=0)
 
     def list_operate(self):
         return format_html(
@@ -345,6 +354,19 @@ class LogIndexSet(SoftDeleteModel):
         :return:
         """
         return self.get_indexes()
+
+    @classmethod
+    def get_bcs_index_set(cls, bcs_project_id):
+        src_index_list = LogIndexSet.objects.filter(bcs_project_id=bcs_project_id)
+        bcs_path_index_set = None
+        bcs_std_index_set = None
+        for src_index in src_index_list:
+            if "bcs_path_log_" in src_index.index_set_name:
+                bcs_path_index_set = src_index
+                continue
+            if "bcs_stdout_log_" in src_index.index_set_name:
+                bcs_std_index_set = src_index
+        return bcs_path_index_set, bcs_std_index_set
 
     @property
     def scenario_name(self):
@@ -851,10 +873,7 @@ class BizProperty(models.Model):
     @classmethod
     def list_biz_property(cls) -> list:
         biz_properties = BizProperty.objects.all()
-        biz_properties_dict = defaultdict(lambda: {
-            "biz_property_name": "",
-            "biz_property_value": []
-        })
+        biz_properties_dict = defaultdict(lambda: {"biz_property_name": "", "biz_property_value": []})
         for bi in biz_properties:
             biz_properties_dict[bi.biz_property_id]["biz_property_name"] = bi.biz_property_name
             biz_properties_dict[bi.biz_property_id]["biz_property_value"].append(bi.biz_property_value)
@@ -863,6 +882,7 @@ class BizProperty(models.Model):
             {
                 "biz_property_id": biz_property_id,
                 "biz_property_name": biz_properties_dict[biz_property_id]["biz_property_name"],
-                "biz_property_value": list(set(biz_properties_dict[biz_property_id]["biz_property_value"]))
-            } for biz_property_id in biz_properties_dict
+                "biz_property_value": list(set(biz_properties_dict[biz_property_id]["biz_property_value"])),
+            }
+            for biz_property_id in biz_properties_dict
         ]
