@@ -82,7 +82,7 @@
                 <a
                   href="javascript: ;" class="retry"
                   v-if="row.status === 'failed'"
-                  @click.stop="issuedRetry(row)">
+                  @click.stop="issuedRetry(row, renderItem, renderIndex)">
                   {{ $t('configDetails.retry') }}
                 </a>
               </template>
@@ -167,13 +167,10 @@ export default {
      * @desc: 轮询状态
      */
     pollingStatus() {
+      clearInterval(this.timer);
       this.timer = setInterval(() => {
-        if (!this.hasRunning) {
-          clearInterval(this.timer);
-          return;
-        };
         this.getContainerList('polling');
-      }, 10000);
+      }, 5000);
     },
     /**
      * @desc: 容器日志list，与轮询共用
@@ -211,12 +208,31 @@ export default {
         })
         .finally(() => {
           this.$emit('update:is-loading', false);
+          if (isPolling === 'polling' && !this.hasRunning) clearInterval(this.timer);
         });
     },
-    issuedRetry(row = null) {
-      const retrySubmitList = row ? [row.container_collector_config_id] :  this.allFailedIDList;
-      // 无ID则不请求
-      if (!retrySubmitList.length) return;
+    issuedRetry(row = null, renderItem, renderIndex) {
+      const retrySubmitList = row ? [row.container_collector_config_id] : this.allFailedIDList;
+      // ID列表为空或者全局失败数为0时不请求
+      if (!retrySubmitList.length || !this.navBtnList[2].listNum) return;
+      if (row) {
+        row.status = 'running';// 单选 单独变成running状态
+        // 失败-1 执行中+1
+        renderItem.running.push(renderItem.failed[renderIndex]);
+        renderItem.failed.splice(renderIndex, 1);
+        this.navBtnList[3].listNum += 1;
+        this.navBtnList[2].listNum -= 1;
+      } else {
+        // 批量重试 清空失败 将所有的失败添加到执行中
+        this.renderTitleList.forEach((tableItem) => {
+          tableItem.all.forEach(item => item.status === 'failed' && (item.status = 'running'));
+          tableItem.failed.forEach(item => item.status = 'running');
+          tableItem.running.push(...tableItem.failed);
+          tableItem.failed = [];
+        });
+        this.navBtnList[3].listNum = this.navBtnList[3].listNum + this.navBtnList[2].listNum;
+        this.navBtnList[2].listNum = 0;
+      }
       this.$http.request('source/retryList', {
         params: {
           collector_config_id: this.$route.params.collectorId,
@@ -225,7 +241,7 @@ export default {
           container_collector_config_id_list: retrySubmitList,
         },
       }).then(() => {
-        this.getContainerList();
+        this.pollingStatus();
       })
         .catch((e) => {
           console.warn(e);
