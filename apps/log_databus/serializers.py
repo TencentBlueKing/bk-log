@@ -19,13 +19,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
-from apps.log_databus.constants import COLLECTOR_CONFIG_NAME_EN_REGEX, VisibleEnum
+from apps.log_databus.constants import CLUSTER_NAME_EN_REGEX, COLLECTOR_CONFIG_NAME_EN_REGEX, VisibleEnum
 from apps.log_databus.constants import EsSourceType
 from apps.log_databus.models import CleanTemplate, CollectorConfig, CollectorPlugin
 from apps.log_search.constants import (
@@ -341,7 +342,7 @@ class CollectorListSerializer(DataModelSerializer):
 
 
 class RetrySerializer(serializers.Serializer):
-    target_nodes = serializers.ListField(label=_("采集目标"), required=False, default=[])
+    instance_id_list = serializers.ListField(label=_("实例ID列表"), required=False, default=[])
 
 
 class StorageListSerializer(serializers.Serializer):
@@ -405,6 +406,11 @@ class StorageCreateSerializer(serializers.Serializer):
     description = serializers.CharField(label=_("集群描述"), required=False, default="", allow_blank=True)
     enable_archive = serializers.BooleanField(label=_("是否开启日志归档"))
     enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
+    create_bkbase_cluster = serializers.BooleanField(label=_("是否同步到数据平台"), required=False)
+    cluster_namespace = serializers.CharField(label=_("命名空间"), required=False)
+    bkbase_tags = serializers.ListField(label=_("标签"), required=False, child=serializers.CharField())
+    bkbase_cluster_en_name = serializers.RegexField(label=_("集群英文名称"), regex=CLUSTER_NAME_EN_REGEX, required=False)
+    option = serializers.JSONField(label=_("第三方平台配置"), required=False)
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
@@ -413,6 +419,8 @@ class StorageCreateSerializer(serializers.Serializer):
             [attrs["hot_attr_name"], attrs["hot_attr_value"], attrs["warm_attr_name"], attrs["warm_attr_value"]]
         ):
             raise ValidationError(_("当冷热数据处于开启状态时，冷热节点属性配置不能为空"))
+        if attrs.get("create_bkbase_cluster") and not attrs.get("bkbase_cluster_en_name"):
+            raise ValidationError(_("同步到数据平台需要提供集群英文名"))
         return attrs
 
 
@@ -460,6 +468,9 @@ class StorageUpdateSerializer(serializers.Serializer):
     description = serializers.CharField(label=_("集群描述"), required=False, default="", allow_blank=True)
     enable_archive = serializers.BooleanField(label=_("是否开启日志归档"))
     enable_assessment = serializers.BooleanField(label=_("是否开启容量评估"))
+    cluster_namespace = serializers.CharField(label=_("命名空间"), required=False)
+    bkbase_tags = serializers.ListField(label=_("标签"), required=False, child=serializers.CharField())
+    option = serializers.JSONField(label=_("第三方平台配置"), required=False)
 
     def validate(self, attrs):
         if not attrs["enable_hot_warm"]:
@@ -858,6 +869,23 @@ class CreateCollectorPluginInstanceSerializer(serializers.Serializer):
     target_object_type = serializers.CharField(label=_("目标类型"))
     target_node_type = serializers.CharField(label=_("节点类型"))
     target_nodes = TargetNodeSerializer(label=_("目标节点"), many=True)
+    data_encoding = serializers.CharField(label=_("日志编码"))
+    params = PluginParamSerializer()
+
+
+class UpdateCollectorPluginInstanceSerializer(serializers.Serializer):
+    collector_config_id = serializers.IntegerField(label=_("采集项ID"))
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+    target_object_type = serializers.CharField(label=_("目标类型"))
+    target_node_type = serializers.CharField(label=_("节点类型"))
+    target_nodes = TargetNodeSerializer(label=_("目标节点"), many=True)
+    data_encoding = serializers.ChoiceField(label=_("日志字符集"), choices=EncodingsEnum.get_choices())
+    description = serializers.CharField(
+        label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
+    )
     params = PluginParamSerializer()
 
 
@@ -875,18 +903,17 @@ class CreateColelctorConfigEtlSerializer(serializers.Serializer):
 
 
 class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.ModelSerializer):
+    collector_plugin_name = serializers.CharField()
+
     class Meta:
         model = CollectorPlugin
         fields = [
             "collector_plugin_name",
             "description",
             "data_encoding",
-            "is_enabled_display_collector",
+            "is_display_collector",
             "is_allow_alone_data_id",
             "is_allow_alone_etl_config",
-            "etl_config",
-            "etl_template",
-            "params",
             "is_allow_alone_storage",
             "storage_cluster_id",
             "retention",
@@ -894,6 +921,10 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
             "storage_replies",
             "storage_shards_nums",
             "storage_shards_size",
+            "etl_config",
+            "etl_params",
+            "fields",
+            "params",
         ]
 
     def validate(self, attrs: dict) -> dict:

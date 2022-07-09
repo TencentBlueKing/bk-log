@@ -270,7 +270,6 @@ class CollectorPluginHandler:
             "etl_processor": self.collector_plugin.etl_processor,
             "collector_scenario_id": self.collector_plugin.collector_scenario_id,
             "category_id": self.collector_plugin.category_id,
-            "data_encoding": self.collector_plugin.data_encoding,
             "is_display": self.collector_plugin.is_display_collector,
             "is_allow_alone_data_id": self.collector_plugin.is_allow_alone_data_id,
             "is_allow_alone_etl_config": self.collector_plugin.is_allow_alone_etl_config,
@@ -333,6 +332,7 @@ class CollectorPluginHandler:
             "etl_params",
             "fields",
             "etl_config",
+            "data_encoding",
         ]
         for key in all_param_keys:
             if key not in params.keys():
@@ -359,6 +359,17 @@ class CollectorPluginHandler:
 
         # 创建采集项
         return CollectorHandler().update_or_create(params)
+
+    def update_instance(self, params: dict) -> dict:
+        """
+        更新采集插件
+        """
+
+        # 构造参数
+        params = self.build_instance_params(params)
+
+        # 更新采集项
+        return CollectorHandler(params["collector_config_id"]).update_or_create(params)
 
     def create_instance_etl(self, instance: CollectorConfig, params: dict) -> dict:
         """

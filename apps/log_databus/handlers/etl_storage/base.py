@@ -22,13 +22,14 @@ the project delivered to anyone in the future.
 import copy
 from typing import Union
 
+from django.core.cache import cache
 from django.conf import settings
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import TransferApi
 from apps.exceptions import ValidationError
-from apps.log_databus.constants import BKDATA_ES_TYPE_MAP, EtlConfig, FIELD_TEMPLATE
+from apps.log_databus.constants import BKDATA_ES_TYPE_MAP, EtlConfig, FIELD_TEMPLATE, CACHE_KEY_CLUSTER_INFO
 from apps.log_databus.exceptions import EtlParseTimeFieldException, HotColdCheckException
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.models import CollectorConfig, CollectorPlugin
@@ -337,6 +338,7 @@ class EtlStorage(object):
             # 更新结果表
             params["table_id"] = instance.table_id
             TransferApi.modify_result_table(params)
+            cache.delete(CACHE_KEY_CLUSTER_INFO.format(instance.table_id))
 
         return {"table_id": instance.table_id, "params": params}
 

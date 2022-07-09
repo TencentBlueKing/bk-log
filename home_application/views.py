@@ -54,6 +54,12 @@ def contact(request):
 
 
 @login_exempt
+def liveness(request):
+    """存活探测接口"""
+    return JsonResponse({"server_up": 1})
+
+
+@login_exempt
 def healthz(request):
     """
     format_type: 格式化类型, 支持 json, 默认为k8s
@@ -85,6 +91,7 @@ def healthz(request):
 def metrics(request):
     from django_prometheus import exports
     from settings import PROMETHEUS_METRICS_TOKEN
+
     token = request.GET.get("token")
     if PROMETHEUS_METRICS_TOKEN:
         if token is None:

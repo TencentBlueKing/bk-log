@@ -62,7 +62,7 @@ from apps.log_databus.constants import (
     SEARCH_BIZ_INST_TOPO_LEVEL,
     TargetNodeTypeEnum,
 )
-from apps.log_databus.constants import EtlConfig
+from apps.log_databus.constants import CACHE_KEY_CLUSTER_INFO, EtlConfig
 from apps.log_databus.exceptions import (
     CollectNotSuccess,
     CollectNotSuccessNotCanStart,
@@ -297,7 +297,7 @@ class CollectorHandler(object):
         return [node["bk_inst_id"] for node in nodes if node["bk_obj_id"] == node_type]
 
     @staticmethod
-    @caches_one_hour(key="bulk_cluster_info_{}", need_deconstruction_name="result_table_list")
+    @caches_one_hour(key=CACHE_KEY_CLUSTER_INFO, need_deconstruction_name="result_table_list")
     def bulk_cluster_infos(result_table_list: list):
         multi_execute_func = MultiExecuteFunc()
         table_chunk = array_chunk(result_table_list, BULK_CLUSTER_INFOS_LIMIT)
@@ -598,7 +598,6 @@ class CollectorHandler(object):
                             "bkdata_biz_id": params.get("bkdata_biz_id"),
                             "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
                             "bk_data_id": params.get("bk_data_id"),
-                            "table_id": params.get("table_id"),
                             "etl_processor": params.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
                             "etl_config": params.get("etl_config"),
                             "collector_plugin_id": params.get("collector_plugin_id"),
@@ -634,7 +633,13 @@ class CollectorHandler(object):
 
                 # 2.2 meta-创建或更新数据源
                 if params.get("is_allow_alone_data_id", True):
-                    self.data.bk_data_id = self.update_or_create_data_id(self.data)
+                    if self.data.etl_processor == ETLProcessorChoices.BKBASE.value:
+                        transfer_data_id = self.update_or_create_data_id(
+                            self.data, etl_processor=ETLProcessorChoices.TRANSFER.value
+                        )
+                        self.data.bk_data_id = self.update_or_create_data_id(self.data, bk_data_id=transfer_data_id)
+                    else:
+                        self.data.bk_data_id = self.update_or_create_data_id(self.data)
                     self.data.save()
 
             except IntegrityError:
@@ -896,12 +901,12 @@ class CollectorHandler(object):
             return_data.append({"etl": etl_message, "origin": _message})
         return return_data
 
-    def retry_target_nodes(self, target_nodes):
+    def retry_instances(self, instance_id_list):
         """
         重试部分实例或主机
         :return: task_id
         """
-        res = self._run_subscription_task(nodes=target_nodes)
+        res = self._retry_subscription(instance_id_list=instance_id_list)
 
         # add user_operation_record
         operation_record = {
@@ -910,7 +915,7 @@ class CollectorHandler(object):
             "record_type": UserOperationTypeEnum.COLLECTOR,
             "record_object_id": self.data.collector_config_id,
             "action": UserOperationActionEnum.RETRY,
-            "params": {"target_nodes": target_nodes},
+            "params": {"instance_id_list": instance_id_list},
         }
         user_operation_record.delay(operation_record)
 
@@ -940,6 +945,14 @@ class CollectorHandler(object):
             self.data.task_id_list.append(task_id)
         else:
             self.data.task_id_list = [str(task_id)]
+        self.data.save()
+        return self.data.task_id_list
+
+    def _retry_subscription(self, instance_id_list):
+        params = {"subscription_id": self.data.subscription_id, "instance_id_list": instance_id_list}
+
+        task_id = str(NodeApi.retry_subscription(params)["task_id"])
+        self.data.task_id_list.append(task_id)
         self.data.save()
         return self.data.task_id_list
 
@@ -1699,17 +1712,47 @@ class CollectorHandler(object):
 
         subscription_ids = [ip_subscription["source_id"] for ip_subscription in node_result]
         collectors = CollectorConfig.objects.filter(
-            subscription_id__in=subscription_ids, bk_biz_id=bk_biz_id, is_active=True, table_id__isnull=False
+            subscription_id__in=subscription_ids,
+            bk_biz_id=bk_biz_id,
+            is_active=True,
+            table_id__isnull=False,
+            index_set_id__isnull=False,
         )
+
+        collectors = [model_to_dict(c) for c in collectors]
+        collectors = self.add_cluster_info(collectors)
+
+        index_sets = {
+            index_set.index_set_id: index_set
+            for index_set in LogIndexSet.objects.filter(
+                index_set_id__in=[collector["index_set_id"] for collector in collectors]
+            )
+        }
+
+        collect_status = {
+            status["collector_id"]: status
+            for status in self.get_subscription_status_by_list(
+                [collector["collector_config_id"] for collector in collectors], multi_flag=True
+            )
+        }
+
         return [
             {
-                "collector_config_id": collector.collector_config_id,
-                "collector_config_name": collector.collector_config_name,
-                "collector_scenario_id": collector.collector_scenario_id,
-                "index_set_id": collector.index_set_id,
-                "description": collector.description,
+                "collector_config_id": collector["collector_config_id"],
+                "collector_config_name": collector["collector_config_name"],
+                "collector_scenario_id": collector["collector_scenario_id"],
+                "index_set_id": collector["index_set_id"],
+                "index_set_name": index_sets[collector["index_set_id"]].index_set_name,
+                "index_set_scenario_id": index_sets[collector["index_set_id"]].scenario_id,
+                "retention": collector["retention"],
+                "status": collect_status.get(collector["collector_config_id"], {}).get("status", CollectStatus.UNKNOWN),
+                "status_name": collect_status.get(collector["collector_config_id"], {}).get(
+                    "status_name", RunStatus.UNKNOWN
+                ),
+                "description": collector["description"],
             }
             for collector in collectors
+            if collector["index_set_id"] in index_sets
         ]
 
     def cat_illegal_ips(self, params: dict):
