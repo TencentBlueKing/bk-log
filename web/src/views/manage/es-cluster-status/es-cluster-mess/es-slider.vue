@@ -193,6 +193,7 @@
                 clearable
                 v-show="isBizAttr"
                 v-model="bkBizLabelsList"
+                ref="searchSelectRef"
                 :popover-zindex="2500"
                 :data="bizParentList"
                 :show-condition="false"
@@ -200,7 +201,8 @@
                 :show-popover-tag-change="false"
                 @menu-select="handleMenuSelect"
                 @menu-child-select="handleChildMenuSelect"
-                @input-change="handleInputChange">
+                @input-change="handleInputChange"
+                @input-click-outside="handleClickOutside">
               </bk-search-select>
             </bk-form-item>
             <!-- 过期时间 -->
@@ -1062,6 +1064,20 @@ export default {
     handleChildMenuSelect() {
       // 子选项选中后搜索设置为空
       this.bizInputStr = '';
+    },
+    handleClickOutside() {
+      // searchSelect组件若没有点击确认则清除输入框和选中的值
+      if (!this.$refs.searchSelectRef.input.focus) {
+        this.$refs.searchSelectRef.input.value = '';
+        this.$refs.searchSelectRef.menu.active = -1;
+        this.$refs.searchSelectRef.menu.id = null;
+        this.$refs.searchSelectRef.updateInput();
+        this.$refs.searchSelectRef.clearInput();
+        this.$refs.searchSelectRef.menu.checked = {};
+        this.$refs.searchSelectRef.menuChildInstance
+        && (this.$refs.searchSelectRef.menuChildInstance.checked = {});
+        this.$refs.searchSelectRef.menuInstance = null;
+      }
     },
     handleInputChange($event) {
       // 按照业务属性选择赋值

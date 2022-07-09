@@ -581,7 +581,7 @@ class CollectorPlugin(CollectorBase):
     def change_collector_display_status(self, display_status: bool):
         """更改采集项可见状态"""
         request_user = get_request_username()
-        self.is_enabled_display_collector = display_status
+        self.is_display_collector = display_status
         self.save()
         CollectorConfig.objects.filter(collector_plugin_id=self.collector_plugin_id).update(
             is_display=display_status, updated_at=timezone.now(), updated_by=request_user
