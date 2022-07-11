@@ -1223,23 +1223,23 @@ class TestCollector(TestCase):
 ---
 encoding: UTF-8
 labelSelector:
-matchLabels:
-  app.kubernetes.io/component: api-support
-  app.kubernetes.io/instance: bk-apigateway
-  app.kubernetes.io/name: bk-apigateway
+  matchLabels:
+    app.kubernetes.io/component: api-support
+    app.kubernetes.io/instance: bk-apigateway
+    app.kubernetes.io/name: bk-apigateway
 logConfigType: std_log_config
 namespace: default
 
 ---
 encoding: UTF-8
 labelSelector:
-matchLabels:
-  app.kubernetes.io/instance: bkmonitor
-  app.kubernetes.io/name: influxdb-proxy
+  matchLabels:
+    app.kubernetes.io/instance: bkmonitor
+    app.kubernetes.io/name: influxdb-proxy
 logConfigType: container_log_config
 path:
-- /var/log/influxdb-proxy.log
-- /var/log/influxdb.log
+  - /var/log/influxdb-proxy.log
+  - /var/log/influxdb.log
 namespace: default
         """
         result = CollectorHandler().validate_container_config_yaml(yaml_config)
