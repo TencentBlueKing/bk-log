@@ -3143,9 +3143,25 @@ class CollectorHandler(object):
         """
         解析容器日志yaml配置
         """
+
+        class PatchedFullLoader(yaml.FullLoader):
+            """
+            yaml里面如果有 = 字符串会导致解析失败：https://github.com/yaml/pyyaml/issues/89
+            例如:
+              filters:
+              - conditions:
+                - index: "0"
+                  key: Jul
+                  op: =      # error!
+            需要通过这个 loader 去 patch 掉
+            """
+
+            yaml_implicit_resolvers = yaml.FullLoader.yaml_implicit_resolvers.copy()
+            yaml_implicit_resolvers.pop("=")
+
         try:
             # 验证是否为合法的 yaml 格式
-            configs = yaml.load(yaml_config, Loader=yaml.FullLoader)
+            configs = [conf for conf in yaml.load_all(yaml_config, Loader=PatchedFullLoader)]
         except Exception as e:  # pylint: disable=broad-except
             return {
                 "origin_text": yaml_config,
@@ -3159,7 +3175,9 @@ class CollectorHandler(object):
                 ],
             }
         try:
-            slz = ContainerCollectorYamlSerializer(data=configs, many=True)
+            # 兼容用户直接把整个yaml粘贴过来的情况，这个时候只取 spec 字段
+            configs_to_check = [conf["spec"] if "spec" in conf else conf for conf in configs]
+            slz = ContainerCollectorYamlSerializer(data=configs_to_check, many=True)
             slz.is_valid(raise_exception=True)
         except ValidationError as err:
 
