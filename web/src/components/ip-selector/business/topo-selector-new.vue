@@ -524,7 +524,13 @@
       const { selections = [], tableKeyword = '', parentNode } = params
       if (type === 'selection-change') {
         // 如果点击的是叶子节点，则显示叶子节点本身，否则就显示子节点
-        const curSelections = !selections.length && parentNode ? [parentNode.data] : selections
+        let curSelections = !selections.length && parentNode ? [parentNode.data] : selections        
+        if (this.targetObjectType !== 'SERVICE') { // 动态拓扑参数过滤children字段
+          curSelections = curSelections.map(val => {
+            val.children && delete val.children
+            return val
+          })
+        };
         this.topoTableData = this.targetObjectType === 'SERVICE'
             ? await getServiceInstanceByNode({ node_list: curSelections }).catch(() => [])
             : await getHostInstanceByNode({ node_list: curSelections }).catch(() => [])
