@@ -980,7 +980,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
         label=_("容器名称匹配"), child=serializers.CharField(), required=False, allow_empty=True
     )
     labelSelector = LabelSelectorSerializer(label=_("匹配标签"), required=False)
-    delimiter = serializers.CharField(label=_("分隔符"), allow_blank=True, required=False)
+    delimiter = serializers.CharField(label=_("分隔符"), allow_blank=True, required=False, trim_whitespace=False)
     filters = FilterSerializer(label=_("过滤规则"), many=True, required=False)
     addPodLabel = serializers.BooleanField(label=_("上报时是否把标签带上"), default=False)
 
