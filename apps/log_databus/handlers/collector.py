@@ -2183,6 +2183,8 @@ class CollectorHandler(object):
                             config["container"]["workload_type"],
                             config["container"]["workload_name"],
                             config["container"]["container_name"],
+                            config["label_selector"]["match_labels"],
+                            config["label_selector"]["match_expressions"],
                         ]
                     ),
                     # yaml 原始配置，如果启用了yaml，则把解析后的原始配置保存下来用于下发
@@ -2866,6 +2868,8 @@ class CollectorHandler(object):
                     data["configs"][x]["container"]["workload_type"],
                     data["configs"][x]["container"]["workload_name"],
                     data["configs"][x]["container"]["container_name"],
+                    data["configs"][x]["label_selector"]["match_labels"],
+                    data["configs"][x]["label_selector"]["match_expressions"],
                 ]
             )
             if x < len(container_configs):
