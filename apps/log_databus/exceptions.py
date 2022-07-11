@@ -307,3 +307,13 @@ class MissedNamespaceException(BaseCollectorConfigException):
 class BCSApiException(BaseCollectorConfigException):
     ERROR_CODE = "902"
     MESSAGE = _("bcs api错误: {error}")
+
+
+class RuleCollectorException(BaseCollectorConfigException):
+    ERROR_CODE = "903"
+    MESSAGE = _("rule: {rule_id}异常")
+
+
+class NeedBcsClusterIdException(BaseCollectorConfigException):
+    ERROR_CODE = "904"
+    MESSAGE = _("请求无bcs_cluster_id参数，请检查")

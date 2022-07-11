@@ -28,7 +28,7 @@ from apps.log_databus.exceptions import CollectorConfigNotExistException
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.constants import LogPluginInfo
 from apps.exceptions import ApiRequestError, ApiResultError
-from .test_collectorhandler import TestCollectorHandler
+from .test_collectorhandler import TestCollectorHandler, get_data_id
 from ...log_databus.serializers import CollectorCreateSerializer
 from ...utils.drf import custom_params_valid
 
@@ -854,7 +854,7 @@ def subscription_statistic(params):
 class TestCollector(TestCase):
     @patch(
         "apps.api.TransferApi.get_data_id",
-        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -898,7 +898,7 @@ class TestCollector(TestCase):
 
     @patch(
         "apps.api.TransferApi.get_data_id",
-        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -1177,7 +1177,7 @@ class TestCollector(TestCase):
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch(
         "apps.api.TransferApi.get_data_id",
-        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",

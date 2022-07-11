@@ -197,6 +197,10 @@ export default {
       if (val) {
         this.getTreeList();
       } else {
+        this.treeList = [];
+        this.defaultExpandList = [];
+        this.resultStrList = [];
+        this.hitResultList = [];
         this.filterStr = '';
       }
     },

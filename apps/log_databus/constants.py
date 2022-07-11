@@ -192,6 +192,8 @@ DEFAULT_ETL_CONFIG = "bkdata_clean"
 # 同步清洗最长ttl时间 60*10
 MAX_SYNC_CLEAN_TTL = 600
 
+DEFAULT_COLLECTOR_LENGTH = 2
+
 
 class AsyncStatus(object):
     RUNNING = "RUNNING"

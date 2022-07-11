@@ -139,13 +139,7 @@ export default {
     },
     inputFileEvent() {
       // 检查文件是否选择:
-      if (!this.inputDocument.value) {
-        this.$bkMessage({
-          theme: 'error',
-          message: this.$t('未选择文件'),
-        });
-        return;
-      }
+      if (!this.inputDocument.value) return;
       const file = this.inputDocument.files[0];
       if (!/.*(?<=\.yaml|\.yml)$/.test(file.name)) {
         this.$bkMessage({
