@@ -263,7 +263,8 @@ export default {
           } else if (this.operateType === 'storage') {
             this.curStep = 4;
           }
-          if (!this.isPhysics && !this.isSwitch) {
+          // 容器环境  非启用停用 非克隆状态则展示容器日志步骤
+          if (!this.isPhysics && !this.isSwitch && type !== 'clone') {
             this.operateType = 'container';
           }
         } catch (e) {
@@ -283,8 +284,8 @@ export default {
         // 容器环境 非启用 停用情况 当前页若是采集配置则跳过采集下发直接进入字段提取步骤展示
         this.showSteps = this.curStep === 1  ?  1 : this.curStep - 1;
       }
-      // 新增 并且为容器环境则步骤变为容器步骤
-      if (this.operateType === 'add' && !this.isPhysics) {
+      // 新增  并且为容器环境则步骤变为容器步骤 步骤为第一步时不判断
+      if (this.operateType === 'add' && !this.isPhysics && this.curStep !== 1) {
         this.operateType = 'container';
       }
       const stepList = stepsConf[this.operateType];

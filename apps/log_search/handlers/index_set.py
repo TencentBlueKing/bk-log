@@ -235,6 +235,7 @@ class IndexSetHandler(APIModel):
         time_field_unit=None,
         bk_app_code=None,
         username="",
+        bcs_project_id=0,
     ):
         # 创建索引
         index_set_handler = cls.get_index_set_handler(scenario_id)
@@ -255,6 +256,7 @@ class IndexSetHandler(APIModel):
             time_field_unit=time_field_unit,
             bk_app_code=bk_app_code,
             username=username,
+            bcs_project_id=bcs_project_id,
         ).create_index_set()
 
         # add user_operation_record
@@ -751,6 +753,7 @@ class BaseIndexSetHandler(object):
         action=None,
         bk_app_code=None,
         username="",
+        bcs_project_id=0,
     ):
         super().__init__()
 
@@ -770,6 +773,7 @@ class BaseIndexSetHandler(object):
         self.category_id = category_id
         self.bk_app_code = bk_app_code
         self.username = username
+        self.bcs_project_id = bcs_project_id
 
         # time_field
         self.time_field = time_field
@@ -856,6 +860,7 @@ class BaseIndexSetHandler(object):
             time_field_type=self.time_field_type,
             time_field_unit=self.time_field_unit,
             source_app_code=self.bk_app_code,
+            bcs_project_id=self.bcs_project_id,
         )
         logger.info(
             "[create_index_set][{}]index_set_name => {}, indexes => {}".format(
@@ -866,9 +871,9 @@ class BaseIndexSetHandler(object):
         # 创建索引集的同时添加索引
         for index in self.indexes:
             IndexSetHandler(index_set_id=self.index_set_obj.index_set_id).add_index(
-                index["bk_biz_id"],
-                index.get("time_field"),
-                index["result_table_id"],
+                bk_biz_id=index["bk_biz_id"],
+                time_filed=index.get("time_field"),
+                result_table_id=index["result_table_id"],
             )
 
         # 更新字段快照

@@ -204,9 +204,9 @@
       <!-- 附加日志标签 -->
       <div>
         <span>{{$t('附加日志标签')}}</span>
-        <template v-if="collectorData.extra_labels.length">
+        <template v-if="extraLabelList.length">
           <div>
-            <div v-for="(extraItem, extraIndex) in collectorData.extra_labels" :key="extraIndex">
+            <div v-for="(extraItem, extraIndex) in extraLabelList" :key="extraIndex">
               <div class="specify-box">
                 <div class="specify-container justify-bt">
                   <span>{{extraItem.key}}</span>
@@ -240,10 +240,15 @@ export default {
       type: Object,
       required: true,
     },
+    isLoading: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
-      collectorConfigs: [],
+      collectorConfigs: [], // config
+      extraLabelList: [], // 附加日志标签
       specifyName: { // 指定容器中文名
         workload_type: this.$t('应用类型'),
         workload_name: this.$t('应用名称'),
@@ -255,8 +260,15 @@ export default {
   computed: {
   },
   async created() {
-    await this.getLinkData(this.collectorData);
-    this.initContainerConfigData(this.collectorData);
+    this.$emit('update:is-loading', true);
+    try {
+      await this.getLinkData(this.collectorData);
+      await this.initContainerConfigData(this.collectorData);
+    } catch (error) {
+      console.warn(error);
+    } finally {
+      this.$emit('update:is-loading', false);
+    }
   },
   methods: {
     // 判断是否超出  超出提示
@@ -276,44 +288,51 @@ export default {
      * @desc: 初始化编辑的form表单值
      * @returns { Object } 返回初始化后的Form表单
      */
-    initContainerConfigData(data) {
-      this.collectorConfigs = data.configs.map((item, index) => {
-        const {
-          workload_name,
-          workload_type,
-          container_name,
-          match_expressions,
-          match_labels,
-          data_encoding,
-          params,
-          namespaces: itemNamespace,
-        } = item;
-        let isAllContainer = false;
-        const namespaces = item.any_namespace ? [] : itemNamespace;
-        const container =  {
-          workload_type,
-          workload_name,
-          container_name,
-        };
-        // eslint-disable-next-line camelcase
-        const label_selector = {
-          match_labels,
-          match_expressions,
-        };
-        if (JSON.stringify(container) === JSON.stringify(this.allContainer)
-        && JSON.stringify(label_selector) === JSON.stringify(this.allLabelSelector)) {
-          isAllContainer = true;
-        }
-        return {
-          letterIndex: index,
-          isAllContainer,
-          namespaces,
-          data_encoding,
-          container,
-          label_selector,
-          params,
-        };
-      });
+    async initContainerConfigData(data) {
+      // 分yaml模式和ui模式下的config展示
+      try {
+        const showData = data.yaml_config_enabled ? await this.getYamlConfigData(data.yaml_config) : data;
+        this.extraLabelList = showData.extra_labels;
+        this.collectorConfigs = showData.configs.map((item) => {
+          const {
+            workload_name,
+            workload_type,
+            container_name,
+            match_expressions,
+            match_labels,
+            data_encoding,
+            params,
+            container: yamlContainer,
+            label_selector: yamlSelector,
+            namespaces,
+          } = item;
+          let container;
+          let labelSelector;
+          if (data.yaml_config_enabled) {
+            container = yamlContainer;
+            labelSelector = yamlSelector;
+          } else {
+            container =  {
+              workload_type,
+              workload_name,
+              container_name,
+            };
+            labelSelector = {
+              match_labels,
+              match_expressions,
+            };
+          }
+          return {
+            namespaces,
+            data_encoding,
+            container,
+            label_selector: labelSelector,
+            params,
+          };
+        });
+      } catch (error) {
+        console.warn(error);
+      }
     },
     async getLinkData(collectorData) {
       try {
@@ -329,6 +348,24 @@ export default {
     },
     getFromCharCode(index) {
       return String.fromCharCode(index + 65);
+    },
+    async getYamlConfigData(yamlConfig) {
+      const defaultConfigData = {
+        configs: [],
+        extra_labels: [],
+      };
+      try {
+        const res = await this.$http.request('container/yamlJudgement', { data: { yaml_config: yamlConfig } });
+        const { parse_result: parseResult, parse_status: parseStatus } = res.data;
+        if (Array.isArray(parseResult) && !parseStatus) return defaultConfigData; // 返回值若是数组则表示yaml解析出错
+        if (parseStatus) return {
+          configs: parseResult.configs,
+          extra_labels: parseResult.extra_labels,
+        };
+      } catch (error) {
+        console.warn(error);
+        return defaultConfigData;
+      }
     },
     handleLeave() {
       this.instance && this.instance.destroy(true);

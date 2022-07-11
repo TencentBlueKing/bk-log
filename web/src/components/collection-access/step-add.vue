@@ -98,9 +98,9 @@
                   :class="{
                     'environment-button': true,
                     active: sItem.id === currentEnvironment,
-                    disable: isUpdate,
+                    disable: sItem.isDisable,
                   }"
-                  @click="handleSelectEnvironment(sItem.id)">
+                  @click="handleSelectEnvironment(sItem.id, sItem.isDisable)">
                   <img :src="sItem.img" />
                   <p>{{sItem.name}}</p>
                 </div>
@@ -590,6 +590,9 @@ export default {
               multiline_pattern: '', // 行首正则, char
               multiline_max_lines: '50', // 最多匹配行数, int
               multiline_timeout: '2', // 最大耗时, int
+              winlog_name: [], // windows事件名称
+              winlog_level: [], // windows事件等级
+              winlog_event_id: [], // windows事件id
             },
           },
         ],
@@ -677,12 +680,12 @@ export default {
       currentEnvironment: 'linux', // 当前选中的环境
       environmentList: [
         { category: this.$t('物理环境'), btnList: [
-          { id: 'linux', img: LinuxSvg, name: 'Linux' },
-          { id: 'windows', img: WindowsSvg, name: 'Windows' }] },
+          { id: 'linux', img: LinuxSvg, name: 'Linux', isDisable: false },
+          { id: 'windows', img: WindowsSvg, name: 'Windows' }], isDisable: false },
         { category: this.$t('容器环境'), btnList: [
-          { id: 'container_log_config', img: ContainerSvg, name: 'Container' },
-          { id: 'node_log_config', img: NodeSvg, name: 'Node' },
-          { id: 'std_log_config', img: StdoutSvg, name: this.$t('标准输出') }] },
+          { id: 'container_log_config', img: ContainerSvg, name: 'Container', isDisable: false },
+          { id: 'node_log_config', img: NodeSvg, name: 'Node', isDisable: false },
+          { id: 'std_log_config', img: StdoutSvg, name: this.$t('标准输出'), isDisable: false }] },
       ],
       specifyName: { // 指定容器中文名
         workload_type: this.$t('应用类型'),
@@ -817,7 +820,11 @@ export default {
         this.publicLetterIndex = cloneCollect.configs.length - 1;
         const initFormData = this.initContainerFormData(cloneCollect);
         Object.assign(this.formData, initFormData);
+        // 若是容器环境 克隆时 初始化物理环境的值
+        this.formData.params = this.configBaseObj.params;
+        this.formData.data_encoding = 'UTF-8';
       } else { // 物理环境
+        this.currentEnvironment = cloneCollect.environment;
         Object.assign(this.formData, cloneCollect);
         if (this.formData.target?.length) { // IP 选择器预览结果回填
           this.formData.target_nodes = this.formData.target;
@@ -832,13 +839,14 @@ export default {
         this.formData.collector_config_name_en = '';
         this.formData.target_nodes = [];
       } else {
+        // 编辑且非克隆则禁用另一边的环境按钮
+        this.initBtnListDisable();
         // 克隆时不缓存初始数据
         // 编辑采集项时缓存初始数据 用于对比提交时是否发生变化 未修改则不重新提交 update 接口
         this.localParams = this.handleParams();
       }
     }
   },
-  mounted() {},
   methods: {
     async getLinkData() {
       try {
@@ -964,8 +972,7 @@ export default {
       // 容器环境并且打开yaml模式时进行yaml语法检测
       if (this.isYaml && !this.isPhysicsEnvironment) {
         if (!this.$refs.yamlEditorRef.getSubmitState || this.formData.yaml_config === '') {
-          let message;
-          message = this.$refs.yamlEditorRef.isHaveErrorProblem
+          let message = this.$refs.yamlEditorRef.isHaveErrorProblem
             ? this.$t('yaml语法出错')
             : this.$t('yaml缺少必要的字段');
           this.formData.yaml_config === '' && (message = this.$t('yaml不能为空'));
@@ -990,12 +997,14 @@ export default {
             return pre;
           }, []);
           // 获取应该检查的配置项的数量
-          const checkLength = matchIndexList.length ? (configList.length - matchIndexList.length) : configList.length;
+          const checkLength = !isCheckConfigItem && matchIndexList.length
+            ? (configList.length - matchIndexList.length)
+            : configList.length;
           let validateLength = 0;
           for (const key in configList) {
             const index = Number(key);
-            // 如果有字符串过滤的情况下则不进行验证直接跳过
-            if (matchIndexList.includes(index)) continue;
+            // 如果有字符串过滤且非标准输出非行日志的情况下则不进行验证直接跳过
+            if (!isCheckConfigItem && matchIndexList.includes(index)) continue;
             try {
               // 这里如果表单没有校验的dom元素会一直是pending状态 没有返回值
               await configList[index].$refs.validateForm.validate();
@@ -1266,9 +1275,10 @@ export default {
     /**
      * @desc: 环境选择
      * @param name 环境名称
+     * @param isDisable 是否禁用
      */
-    handleSelectEnvironment(name) {
-      if (this.isUpdate) return;
+    handleSelectEnvironment(name, isDisable) {
+      if (this.isUpdate && isDisable) return;
       this.currentEnvironment = name;
     },
     handleAddExtraLabel() {
@@ -1420,6 +1430,10 @@ export default {
         .catch((err) => {
           console.warn(err);
         });
+    },
+    initBtnListDisable() {
+      const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
+      this.environmentList[operateIndex].btnList.forEach(item => item.isDisable = true);
     },
     getFromCharCode(index) {
       return String.fromCharCode(index + 65);
