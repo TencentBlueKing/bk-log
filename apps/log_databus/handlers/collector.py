@@ -646,8 +646,7 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"],
-            bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -1810,8 +1809,7 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id,
-                ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -3162,19 +3160,6 @@ class CollectorHandler(object):
         try:
             # 验证是否为合法的 yaml 格式
             configs = [conf for conf in yaml.load_all(yaml_config, Loader=PatchedFullLoader)]
-        except Exception as e:  # pylint: disable=broad-except
-            return {
-                "origin_text": yaml_config,
-                "parse_status": False,
-                "parse_result": [
-                    {
-                        "start_line_number": 0,
-                        "end_line_number": 0,
-                        "message": _("当前配置不是合法的 yaml 格式: {err}").format(err=e),
-                    }
-                ],
-            }
-        try:
             # 兼容用户直接把整个yaml粘贴过来的情况，这个时候只取 spec 字段
             configs_to_check = [conf["spec"] if "spec" in conf else conf for conf in configs]
             slz = ContainerCollectorYamlSerializer(data=configs_to_check, many=True)
@@ -3203,6 +3188,14 @@ class CollectorHandler(object):
                 "parse_status": False,
                 "parse_result": [
                     {"start_line_number": 0, "end_line_number": 0, "message": error} for error in parse_result
+                ],
+            }
+        except Exception as e:  # pylint: disable=broad-except
+            return {
+                "origin_text": yaml_config,
+                "parse_status": False,
+                "parse_result": [
+                    {"start_line_number": 0, "end_line_number": 0, "message": _("配置格式不合法: {err}").format(err=e)}
                 ],
             }
 
