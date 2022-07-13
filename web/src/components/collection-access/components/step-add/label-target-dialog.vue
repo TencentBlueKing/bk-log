@@ -174,6 +174,12 @@ export default {
       resultLoading: false, // 结果loading
       timer: null,
       currentNameSpaceStr: '',
+      cacheRequestParams: { // 缓存树结构传参
+        bk_biz_id: null,
+        bcs_cluster_id: null,
+        type: null,
+        namespace: null,
+      },
     };
   },
   computed: {
@@ -195,11 +201,17 @@ export default {
     },
     isShowDialog(val) {
       if (val) {
-        this.getTreeList();
+        const { bk_biz_id, bcs_cluster_id, type, namespace } = this.labelParams;
+        const requestParams = { bk_biz_id, bcs_cluster_id, type, namespace };
+        // 若传参参数有变则重新请求树结构列表
+        if (JSON.stringify(requestParams) !== JSON.stringify(this.cacheRequestParams)) {
+          this.treeList = [];
+          this.defaultExpandList = [];
+          this.resultStrList = [];
+          this.cacheRequestParams = requestParams;
+          this.getTreeList();
+        }
       } else {
-        this.treeList = [];
-        this.defaultExpandList = [];
-        this.resultStrList = [];
         this.hitResultList = [];
         this.filterStr = '';
       }

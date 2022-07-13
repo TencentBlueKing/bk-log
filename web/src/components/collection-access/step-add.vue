@@ -972,9 +972,9 @@ export default {
       // 容器环境并且打开yaml模式时进行yaml语法检测
       if (this.isYaml && !this.isPhysicsEnvironment) {
         if (!this.$refs.yamlEditorRef.getSubmitState || this.formData.yaml_config === '') {
-          let message = this.$refs.yamlEditorRef.isHaveErrorProblem
-            ? this.$t('yaml语法出错')
-            : this.$t('yaml缺少必要的字段');
+          let message = this.$refs.yamlEditorRef.isHaveCannotSubmitWaring
+            ? this.$t('yaml缺少必要的字段')
+            : this.$t('yaml语法出错');
           this.formData.yaml_config === '' && (message = this.$t('yaml不能为空'));
           this.$bkMessage({ theme: 'error', message });
           return false;
