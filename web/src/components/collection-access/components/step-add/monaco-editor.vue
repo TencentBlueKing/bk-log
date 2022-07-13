@@ -55,7 +55,9 @@
             <div :class="`bk-icon ${item.codiconClass}`"></div>
             <div class="problem-text">
               <span>{{ item.problemMessage }}</span>
-              <span class="problem-line">[{{item.lineNumber}}, {{item.column}}]</span>
+              <span class="problem-line" v-if="item.lineNumber && item.column">
+                [{{item.lineNumber}}, {{item.column}}]
+              </span>
             </div>
           </div>
         </template>
@@ -320,15 +322,20 @@ export default {
      */
     setWaringMarker(markers = []) {
       const waringMarkers =  markers.map(item => ({
-        ...item,
-        severity: monaco.MarkerSeverity.Warning,
+        lineNumber: item.startLineNumber,
+        column: item.startColumn,
+        problemMessage: item.message,
+        codiconClass: 'icon-exclamation-circle-shape',
       }));
-      monaco.editor.setModelMarkers(this.editor.getModel(), 'owner', waringMarkers);
+      this.problemList = this.problemList.concat(waringMarkers);
+      // 这是monaco编辑器自带的告警方法 行和列为0的话默认1-1 暂时不显示行列标记
+      // monaco.editor.setModelMarkers(this.editor.getModel(), 'owner', waringMarkers);
     },
     /**
      * @desc: 警告bottom点击鼠标事件
      */
     handelClickProblemBtn(lineNumber, column) {
+      if (!lineNumber || !column) return;
       this.editor.setPosition({
         lineNumber,
         column,
