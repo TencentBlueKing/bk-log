@@ -1837,7 +1837,7 @@ class CollectorHandler(object):
         retention=7,
         allocation_min_days=0,
         storage_replies=1,
-        es_shards=0,
+        es_shards=settings.ES_SHARDS,
         bk_app_code=settings.APP_CODE,
     ):
         collector_config_params = {
@@ -1941,7 +1941,7 @@ class CollectorHandler(object):
         retention=7,
         allocation_min_days=0,
         storage_replies=1,
-        es_shards=0,
+        es_shards=settings.ES_SHARDS,
     ):
 
         collector_config_update = {

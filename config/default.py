@@ -721,6 +721,7 @@ CELERY_QUEUES = PIPELINE_CELERY_QUEUES
 # ===============================================================================
 TABLE_ID_PREFIX = "bklog"
 
+DEFAULT_OPERATOR = os.environ.get("BKAPP_ES_OPERATOR", "admin")
 ES_DATE_FORMAT = os.environ.get("BKAPP_ES_DATE_FORMAT", "%Y%m%d")
 ES_SHARDS_SIZE = int(os.environ.get("BKAPP_ES_SHARDS_SIZE", 30))
 ES_SLICE_GAP = int(os.environ.get("BKAPP_ES_SLICE_GAP", 60))
