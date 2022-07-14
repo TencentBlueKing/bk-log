@@ -242,7 +242,7 @@ class StorageHandler(object):
                 _param = {
                     "cluster_id": cluster_obj["cluster_config"]["cluster_id"],
                     "cluster_name": cluster_obj["cluster_config"]["cluster_name"],
-                    "operator": "admin",
+                    "operator": settings.DEFAULT_OPERATOR,
                     "custom_option": custom_option,
                     "no_request": True,
                 }
