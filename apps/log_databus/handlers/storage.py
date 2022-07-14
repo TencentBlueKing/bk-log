@@ -75,11 +75,15 @@ class StorageHandler(object):
         super().__init__()
 
     def can_visible(self, bk_biz_id, custom_option) -> bool:
-        visible_config = custom_option["visible_config"]
+        # 兼容老数据没有visible_config的情况
+        if not custom_option.get("visible_config") and bk_biz_id != custom_option["bk_biz_id"]:
+            return False
 
         # 如果当前业务是创建业务 直接可见
         if bk_biz_id == custom_option["bk_biz_id"]:
             return True
+
+        visible_config = custom_option["visible_config"]
 
         # 全业务可见
         if visible_config["visible_type"] == VisibleEnum.ALL_BIZ.value:
