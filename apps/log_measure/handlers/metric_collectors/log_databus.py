@@ -128,8 +128,12 @@ class CollectMetricCollector(object):
                     table_id_map_indices[collect.table_id].append(indices)
 
         for collect in has_table_id_collects:
-            cur_cap = sum([float(indices["store.size"]) for indices in table_id_map_indices.get(collect.table_id, [])])
-            docs_count = sum([int(indices["docs.count"]) for indices in table_id_map_indices.get(collect.table_id, [])])
+            cur_cap = sum(
+                [float(indices.get("store.size", 0)) for indices in table_id_map_indices.get(collect.table_id, [])]
+            )
+            docs_count = sum(
+                [int(indices.get("docs.count", 0)) for indices in table_id_map_indices.get(collect.table_id, [])]
+            )
             metrics.append(
                 Metric(
                     metric_name="store_sum",
