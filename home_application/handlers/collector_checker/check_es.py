@@ -21,7 +21,9 @@ the project delivered to anyone in the future.
 """
 import logging
 
-from elasticsearch import Elasticsearch
+from apps.log_esquery.utils.es_client import get_es_client
+
+# from elasticsearch import Elasticsearch
 
 from apps.api import TransferApi
 from apps.log_databus.handlers.storage import StorageHandler
@@ -88,21 +90,20 @@ class CheckESStory(BaseStory):
 
     def get_es_client(self):
         es_client = None
-        domain_name = self.cluster_config["domain_name"]
-        port = self.cluster_config["port"]
         auth_info = self.result_table.get("auth_info", {})
         username = auth_info.get("username")
         password = auth_info.get("password")
-        http_auth = (username, password) if username and password else None
         for i in range(RETRY_TIMES):
             try:
-                es_client = Elasticsearch(
-                    hosts=[domain_name],
-                    http_auth=http_auth,
-                    scheme="http",
-                    port=port,
+                es_client = get_es_client(
+                    version=self.cluster_config["version"],
+                    hosts=[self.cluster_config["domain_name"]],
+                    username=username,
+                    password=password,
+                    scheme=self.cluster_config["schema"],
+                    port=self.cluster_config["port"],
+                    sniffer_timeout=600,
                     verify_certs=False,
-                    timeout=10,
                 )
                 if es_client is not None:
                     break
