@@ -160,14 +160,10 @@ class CheckAgentStory(BaseStory):
         format_ip_log = defaultdict(str)
 
         for i in self.ip_status:
-            bk_cloud_id = i["bk_cloud_id"]
-            ip = i["ip"]
-            format_ip_status[f"{bk_cloud_id}:{ip}"] = i["status"]
+            format_ip_status["{}:{}".format(i["bk_cloud_id"], i["ip"])] = i["status"]
 
         for i in self.ip_logs:
-            bk_cloud_id = i["bk_cloud_id"]
-            ip = i["ip"]
-            format_ip_log[f"{bk_cloud_id}:{ip}"] = i["log_content"]
+            format_ip_log["{}:{}".format(i["bk_cloud_id"], i["ip"])] = i["log_content"]
 
         for host, status in format_ip_status.items():
             if status == JOB_SUCCESS_STATUS:
