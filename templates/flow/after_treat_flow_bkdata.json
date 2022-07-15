@@ -1,22 +1,8 @@
 [
     {
-        "result_table_id":"{{after_treat.add_uuid_stream_source.result_table_id}}",
+        "result_table_id":"{{after_treat.clustering_stream_source.result_table_id}}",
         "bk_biz_id":{{after_treat.bk_biz_id }},
-        "name":"添加uuid",
-        "id":268067,
-        "from_nodes":[
-
-        ],
-        "node_type":"stream_source",
-        "frontend_info":{
-            "x":317,
-            "y":-65
-        }
-    },
-    {
-        "result_table_id":"{{after_treat.sample_set_stream_source.result_table_id}}",
-        "bk_biz_id":{{after_treat.bk_biz_id }},
-        "name":"样本集数据处理",
+        "name":"参与聚类日志",
         "id":268068,
         "from_nodes":[
 
@@ -42,10 +28,10 @@
         }
     },
     {
-        "bk_biz_id":{{after_treat.bk_biz_id }},
+        "bk_biz_id":{{after_treat.bk_biz_id}},
         "table_name":"{{after_treat.model.table_name}}",
         "output_name":"模型输出",
-        "name":"{{after_treat.model.table_name}}",
+        "name":"聚类模型应用",
         "model_release_id":{{after_treat.model.model_release_id}},
         "input_config":{
             "input_node":{
@@ -55,7 +41,7 @@
                 "sample_set_table_desc":null,
                 "sample_set_table_name":"sample_table",
                 "group_serving_enable":true,
-                "input_result_table":"{{after_treat.sample_set_stream_source.result_table_id}}",
+                "input_result_table":"{{after_treat.clustering_stream_source.result_table_id}}",
                 "group_serving":false,
                 "group_columns":[
 
@@ -259,7 +245,7 @@
             {
                 "id":268068,
                 "from_result_table_ids":[
-                    "{{after_treat.sample_set_stream_source.result_table_id}}"
+                    "{{after_treat.clustering_stream_source.result_table_id}}"
                 ]
             }
         ],
@@ -271,48 +257,7 @@
     },
     {
         "bk_biz_id":{{after_treat.bk_biz_id }},
-        "sql":"SELECT {{after_treat.join_after_treat.fields}}, model.log_signature FROM {{after_treat.add_uuid_stream_source.result_table_id}} param left join {{after_treat.model.result_table_id}} model  on param.uuid=model.uuid",
-        "table_name":"{{after_treat.join_after_treat.table_name}}",
-        "name":"数据join处理",
-        "count_freq":30,
-        "waiting_time":30,
-        "window_time":null,
-        "window_type":"scroll",
-        "counter":null,
-        "output_name":"数据join处理",
-        "session_gap":null,
-        "expired_time":null,
-        "window_lateness":{
-            "allowed_lateness":false,
-            "lateness_time":1,
-            "lateness_count_freq":60
-        },
-        "correct_config_id":null,
-        "is_open_correct":false,
-        "id":268072,
-        "from_nodes":[
-            {
-                "id":268067,
-                "from_result_table_ids":[
-                    "{{after_treat.add_uuid_stream_source.result_table_id}}"
-                ]
-            },
-            {
-                "id":268071,
-                "from_result_table_ids":[
-                    "{{after_treat.model.result_table_id}}"
-                ]
-            }
-        ],
-        "node_type":"realtime",
-        "frontend_info":{
-            "x":680,
-            "y":51
-        }
-    },
-    {
-        "bk_biz_id":{{after_treat.bk_biz_id }},
-        "sql":"select {{after_treat.change_field.fields}} from {{after_treat.join_after_treat.result_table_id}}, lateral table(udf_signature_format(log_signature)) as T(dist_01, dist_03, dist_05, dist_07, dist_09)",
+        "sql":"select {{after_treat.change_field.fields}} from {{after_treat.model.result_table_id}}, lateral table(udf_signature_format(log_signature)) as T(dist_01, dist_03, dist_05, dist_07, dist_09)",
         "table_name":"{{after_treat.change_field.table_name}}",
         "name":"字段转换处理",
         "count_freq":null,
@@ -333,9 +278,9 @@
         "id":268073,
         "from_nodes":[
             {
-                "id":268072,
+                "id":268071,
                 "from_result_table_ids":[
-                    "{{after_treat.join_after_treat.result_table_id}}"
+                    "{{after_treat.model.result_table_id}}"
                 ]
             }
         ],
@@ -379,7 +324,7 @@
         "bk_biz_id":{{after_treat.bk_biz_id}},
         "sql":"select {{after_treat.change_clustering_field.fields}} from {{ after_treat.merge_table.result_table_id}}",
         "table_name":"{{ after_treat.change_clustering_field.table_name }}",
-        "name":"change clustering fields",
+        "name":"改变聚类字段",
         "count_freq":null,
         "waiting_time":null,
         "window_time":null,

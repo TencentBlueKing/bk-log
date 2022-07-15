@@ -24,6 +24,7 @@ from django.utils.translation import ugettext as _
 from apps.api import BkDataDataFlowApi
 from apps.utils import ChoicesEnum
 
+DEFAULT_TIME_FIELD = "timestamp"
 DEFAULT_CLUSTERING_FIELD = "log"
 NOT_CLUSTERING_FILTER_RULE = " where ip is null"
 UUID_FIELDS = "uuid"

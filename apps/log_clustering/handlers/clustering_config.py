@@ -71,8 +71,8 @@ class ClusteringConfigHandler(object):
     def start(self):
         from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 
-        operator_aiops_service(self.index_set_id)
-        return True
+        pipeline_id = operator_aiops_service(self.index_set_id)
+        return pipeline_id
 
     def update_or_create(self, params: dict):
         index_set_id = params["index_set_id"]
