@@ -200,6 +200,7 @@ class EtlStorage(object):
         etl_params: dict = None,
         es_version: str = "5.X",
         hot_warm_config: dict = None,
+        es_shards: int = 0,
     ):
         """
         创建或更新结果表
@@ -213,6 +214,7 @@ class EtlStorage(object):
         :param etl_params: 清洗配置
         :param es_version: es
         :param hot_warm_config: 冷热数据配置
+        :param es_shards: es分片数
         """
 
         # ES 配置
@@ -222,8 +224,7 @@ class EtlStorage(object):
         date_format = es_config["ES_DATE_FORMAT"]
 
         # ES-分片数
-        if not instance.storage_shards_nums:
-            instance.storage_shards_nums = es_config["ES_SHARDS"]
+        instance.storage_shards_nums = es_shards
 
         # ES-副本数
         instance.storage_replies = storage_replies

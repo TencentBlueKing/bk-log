@@ -1837,6 +1837,7 @@ class CollectorHandler(object):
         retention=7,
         allocation_min_days=0,
         storage_replies=1,
+        es_shards=settings.ES_SHARDS,
         bk_app_code=settings.APP_CODE,
     ):
         collector_config_params = {
@@ -1918,6 +1919,7 @@ class CollectorHandler(object):
             "retention": retention,
             "allocation_min_days": allocation_min_days,
             "storage_replies": storage_replies,
+            "es_shards": es_shards,
             "etl_params": custom_config.etl_params,
             "etl_config": custom_config.etl_config,
             "fields": custom_config.fields,
@@ -1939,6 +1941,7 @@ class CollectorHandler(object):
         retention=7,
         allocation_min_days=0,
         storage_replies=1,
+        es_shards=settings.ES_SHARDS,
     ):
 
         collector_config_update = {
@@ -1995,6 +1998,7 @@ class CollectorHandler(object):
             "table_id": self.data.collector_config_name_en,
             "storage_cluster_id": storage_cluster_id,
             "retention": retention,
+            "es_shards": es_shards,
             "allocation_min_days": allocation_min_days,
             "storage_replies": storage_replies,
             "etl_params": etl_params,

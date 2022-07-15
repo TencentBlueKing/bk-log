@@ -1154,6 +1154,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
         @apiParam {Int} [storage_replies] 副本数量
+        @apiParam {Int} es_shards es分片数量
         @apiParam {list} view_roles 查看权限
         @apiParam {Boolean} need_assessment 需要评估
         @apiParam {Object} assessment_config 评估配置
