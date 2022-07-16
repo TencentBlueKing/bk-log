@@ -97,7 +97,7 @@ MIDDLEWARE = (
     # http -> https 转换中间件
     "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
-    "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "apps.middleware.user_middleware.BkLogMetricsBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -121,7 +121,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
-    "django_prometheus.middleware.PrometheusAfterMiddleware",
+    "apps.middleware.user_middleware.BkLogMetricsAfterMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -223,54 +223,24 @@ if IS_K8S_DEPLOY_MODE:
                 ),
             }
         },
-        "handlers": {
-            "stdout": {
-                "class": "logging.StreamHandler",
-                "formatter": "json",
-                "stream": sys.stdout,
-            },
-        },
+        "handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "json", "stream": sys.stdout,},},
         "loggers": {
             "django": {"handlers": ["stdout"], "level": "INFO", "propagate": True},
-            "django.server": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
-            "django.request": {
-                "handlers": ["stdout"],
-                "level": "ERROR",
-                "propagate": True,
-            },
-            "django.db.backends": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "django.server": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "django.request": {"handlers": ["stdout"], "level": "ERROR", "propagate": True,},
+            "django.db.backends": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             # the root logger ,用于整个project的logger
             "root": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # 组件调用日志
-            "component": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "component": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             "celery": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # other loggers...
             # blueapps
-            "blueapps": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "blueapps": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             # 普通app日志
             "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             "bk_dataview": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
-            "iam": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "iam": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
@@ -581,12 +551,7 @@ MENUS = [
                         "scenes": "scenario_log",
                         "icon": "info-fill--2",
                     },
-                    {
-                        "id": "clean_templates",
-                        "name": _("清洗模板"),
-                        "feature": "on",
-                        "icon": "moban",
-                    },
+                    {"id": "clean_templates", "name": _("清洗模板"), "feature": "on", "icon": "moban",},
                 ],
             },
             {
@@ -596,24 +561,9 @@ MENUS = [
                 "icon": "",
                 "keyword": "归档",
                 "children": [
-                    {
-                        "id": "archive_repository",
-                        "name": _("归档仓库"),
-                        "feature": "on",
-                        "icon": "new-_empty-fill",
-                    },
-                    {
-                        "id": "archive_list",
-                        "name": _("归档列表"),
-                        "feature": "on",
-                        "icon": "audit-fill",
-                    },
-                    {
-                        "id": "archive_restore",
-                        "name": _("归档回溯"),
-                        "feature": "on",
-                        "icon": "withdraw-fill",
-                    },
+                    {"id": "archive_repository", "name": _("归档仓库"), "feature": "on", "icon": "new-_empty-fill",},
+                    {"id": "archive_list", "name": _("归档列表"), "feature": "on", "icon": "audit-fill",},
+                    {"id": "archive_restore", "name": _("归档回溯"), "feature": "on", "icon": "withdraw-fill",},
                 ],
             },
             {
@@ -721,10 +671,12 @@ CELERY_QUEUES = PIPELINE_CELERY_QUEUES
 # ===============================================================================
 TABLE_ID_PREFIX = "bklog"
 
+DEFAULT_OPERATOR = os.environ.get("BKAPP_ES_OPERATOR", "admin")
 ES_DATE_FORMAT = os.environ.get("BKAPP_ES_DATE_FORMAT", "%Y%m%d")
 ES_SHARDS_SIZE = int(os.environ.get("BKAPP_ES_SHARDS_SIZE", 30))
 ES_SLICE_GAP = int(os.environ.get("BKAPP_ES_SLICE_GAP", 60))
 ES_SHARDS = int(os.environ.get("BKAPP_ES_SHARDS", 3))
+ES_SHARDS_MAX = int(os.environ.get("BKAPP_ES_SHARDS_MAX", 64))
 ES_REPLICAS = int(os.environ.get("BKAPP_ES_REPLICAS", 1))
 ES_STORAGE_DEFAULT_DURATION = int(os.environ.get("BKAPP_ES_STORAGE_DURATION", 7))
 ES_PRIVATE_STORAGE_DURATION = int(os.environ.get("BKAPP_ES_PRIVATE_STORAGE_DURATION", 365))
@@ -795,6 +747,8 @@ ESQUERY_WHITE_LIST = [
     "data",
     "dataweb",
     "bk_bcs",
+    "bk-dbm",
+    "bk_dbm",
 ]
 
 # BK repo conf
@@ -962,18 +916,23 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
         "OPTIONS": {
             "CLIENT_CLASS": "apps.utils.sentinel.SentinelClient",
             "PASSWORD": REDIS_PASSWD,
-            "SENTINELS": [
-                (
-                    REDIS_SENTINEL_HOST,
-                    REDIS_SENTINEL_PORT,
-                )
-            ],
+            "SENTINELS": [(REDIS_SENTINEL_HOST, REDIS_SENTINEL_PORT,)],
             "SENTINEL_KWARGS": {"password": REDIS_SENTINEL_PASSWORD},
         },
         "KEY_PREFIX": APP_CODE,
     }
     CACHES["default"] = CACHES["redis_sentinel"]
     CACHES["login_db"] = CACHES["redis_sentinel"]
+
+# ==============================================================================
+# Prometheus metrics token
+PROMETHEUS_METRICS_TOKEN = os.environ.get("PROMETHEUS_METRICS_TOKEN", "")
+# ==============================================================================
+
+# ==============================================================================
+# Listening Domain, 格式 http(s)://domain_name
+SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
+# ==============================================================================
 
 """
 以下为框架代码 请勿修改
