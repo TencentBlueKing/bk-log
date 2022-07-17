@@ -171,7 +171,8 @@ class BkLogDelimiterEtlStorage(EtlStorage):
                                                             "label": "labela2dfe3",
                                                             "assign": [
                                                                 {
-                                                                    "index": str(field["field_index"]),
+                                                                    # 这里是为了对齐计算平台和监控field_index与index
+                                                                    "index": str(field["field_index"] - 1),
                                                                     "assign_to": field["alias_name"]
                                                                     if field["alias_name"]
                                                                     else field["field_name"],

@@ -20,13 +20,12 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import markdown
-
 from django.conf import settings
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
-from apps.utils import ChoicesEnum
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.utils import ChoicesEnum
 
 META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 RESTORE_INDEX_SET_PREFIX = "restore_"
@@ -39,6 +38,7 @@ NOT_FOUND_CODE = "[404]"
 CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE = "1306201"
 
 COLLECTOR_CONFIG_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
+CLUSTER_NAME_EN_REGEX = r"^[A-Za-z0-9_]+$"
 
 BULK_CLUSTER_INFOS_LIMIT = 20
 
@@ -192,6 +192,9 @@ DEFAULT_ETL_CONFIG = "bkdata_clean"
 # 同步清洗最长ttl时间 60*10
 MAX_SYNC_CLEAN_TTL = 600
 
+# 缓存-集群信息key
+CACHE_KEY_CLUSTER_INFO = "bulk_cluster_info_{}"
+
 DEFAULT_COLLECTOR_LENGTH = 2
 
 
@@ -313,6 +316,17 @@ class EtlConfig(object):
     BK_LOG_JSON = "bk_log_json"
     BK_LOG_DELIMITER = "bk_log_delimiter"
     BK_LOG_REGEXP = "bk_log_regexp"
+    CUSTOM = "custom"
+
+
+class EtlConfigChoices(ChoicesEnum):
+    _choices_labels = (
+        (EtlConfig.BK_LOG_TEXT, _("直接入库")),
+        (EtlConfig.BK_LOG_JSON, _("Json")),
+        (EtlConfig.BK_LOG_DELIMITER, _("分隔符")),
+        (EtlConfig.BK_LOG_REGEXP, _("正则")),
+        (EtlConfig.CUSTOM, _("自定义")),
+    )
 
 
 # 节点属性字段过滤黑名单
@@ -332,6 +346,25 @@ BKDATA_ES_TYPE_MAP = {
 }
 
 ETL_PARAMS = {"retain_original_text": True, "separator_regexp": "", "separator": ""}
+
+
+class ETLProcessorChoices(ChoicesEnum):
+    """
+    数据处理器
+    """
+
+    TRANSFER = "transfer"
+    BKBASE = "bkbase"
+
+    _choices_labels = (
+        (TRANSFER, _("Transfer")),
+        (BKBASE, _("数据平台")),
+    )
+
+
+DEFAULT_ES_TRANSPORT = 9300
+
+DEFAULT_ES_TAGS = ["BK-LOG"]
 
 
 class Environment(object):
