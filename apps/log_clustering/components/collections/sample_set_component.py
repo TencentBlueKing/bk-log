@@ -85,7 +85,7 @@ class AddRtToSampleSetService(BaseService):
         clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         SampleSetHandler().add_rt_to_sample_set(
             sample_set_id=sample_set_id,
-            result_table_id=clustering_config.pre_treat_flow["clustering"]["result_table_id"],
+            result_table_id=clustering_config.pre_treat_flow["sample_set"]["result_table_id"],
             field_filter=[DEFAULT_TIME_FIELD, DEFAULT_CLUSTERING_FIELD],
         )
         return True

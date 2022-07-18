@@ -60,6 +60,8 @@ from apps.log_clustering.handlers.dataflow.constants import (
     ActionHandler,
     RealTimeFlowNode,
     DIST_CLUSTERING_FIELDS,
+    DEFAULT_MODEL_INPUT_FIELDS,
+    DEFAULT_MODEL_OUTPUT_FIELDS,
 )
 from apps.log_clustering.handlers.dataflow.data_cls import (
     ExportFlowCls,
@@ -221,14 +223,14 @@ class DataFlowHandler(BaseAiopsHandler):
         )
         pre_treat_flow = PreTreatDataFlowCls(
             stream_source=StreamSourceCls(result_table_id=result_table_id),
-            clustering=RealTimeCls(
+            sample_set=RealTimeCls(
                 fields=", ".join(transform_fields),
-                table_name="pre_treat_clustering_{}".format(time_format),
-                result_table_id="{}_pre_treat_clustering_{}".format(bk_biz_id, time_format),
+                table_name="pre_treat_sample_set_{}".format(time_format),
+                result_table_id="{}_pre_treat_sample_set_{}".format(bk_biz_id, time_format),
                 filter_rule=filter_rule,
             ),
-            clustering_hdfs=HDFSStorageCls(
-                table_name="pre_treat_clustering_{}".format(time_format), expires=self.conf.get("hdfs_expires")
+            sample_set_hdfs=HDFSStorageCls(
+                table_name="pre_treat_sample_set_{}".format(time_format), expires=self.conf.get("hdfs_expires")
             ),
             not_clustering=RealTimeCls(
                 fields=", ".join(is_dimension_fields),
@@ -289,7 +291,7 @@ class DataFlowHandler(BaseAiopsHandler):
         after_treat_flow_dict = asdict(
             self._init_after_treat_flow(
                 clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
-                clustering_result_table_id=clustering_config.pre_treat_flow["clustering"]["result_table_id"],
+                sample_set_result_table_id=clustering_config.pre_treat_flow["sample_set"]["result_table_id"],
                 non_clustering_result_table_id=clustering_config.pre_treat_flow["not_clustering"]["result_table_id"],
                 model_id=clustering_config.model_id,
                 model_release_id=self.get_latest_released_id(clustering_config.model_id),
@@ -397,7 +399,7 @@ class DataFlowHandler(BaseAiopsHandler):
 
     def _init_after_treat_flow(
         self,
-        clustering_result_table_id: str,
+        sample_set_result_table_id: str,
         non_clustering_result_table_id: str,
         model_release_id: int,
         model_id: str,
@@ -410,7 +412,7 @@ class DataFlowHandler(BaseAiopsHandler):
     ):
         # 这里是为了在新类中去除第一次启动24H内产生的大量异常新类
         new_cls_timestamp = int(arrow.now().shift(hours=DEFAULT_NEW_CLS_HOURS).float_timestamp * 1000)
-        all_fields = DataAccessHandler.get_fields(result_table_id=clustering_result_table_id)
+        all_fields = DataAccessHandler.get_fields(result_table_id=sample_set_result_table_id)
         is_dimension_fields = [
             field["field_name"] for field in all_fields if field["field_name"] not in NOT_CONTAIN_SQL_FIELD_LIST
         ]
@@ -423,13 +425,15 @@ class DataFlowHandler(BaseAiopsHandler):
         merge_table_table_id = "{}_bklog_{}_{}".format(bk_biz_id, settings.ENVIRONMENT, src_rt_name)
         merge_table_table_name = "bklog_{}_{}".format(settings.ENVIRONMENT, src_rt_name)
         after_treat_flow = AfterTreatDataFlowCls(
-            clustering_stream_source=StreamSourceCls(result_table_id=clustering_result_table_id),
+            sample_set_stream_source=StreamSourceCls(result_table_id=sample_set_result_table_id),
             non_clustering_stream_source=StreamSourceCls(result_table_id=non_clustering_result_table_id),
             model=ModelCls(
                 table_name="after_treat_model_{}".format(time_format),
                 model_release_id=model_release_id,
                 model_id=model_id,
                 result_table_id="{}_after_treat_model_{}".format(bk_biz_id, time_format),
+                input_fields=json.dumps(self.get_model_input_fields(all_fields)),
+                output_fields=json.dumps(self.get_model_output_fields(all_fields)),
             ),
             change_field=RealTimeCls(
                 fields=", ".join(change_fields),
@@ -509,6 +513,55 @@ class DataFlowHandler(BaseAiopsHandler):
         return after_treat_flow
 
     @classmethod
+    def get_model_input_fields(cls, rt_fields):
+        """
+        获取模型输入字段列表
+        :param rt_fields: 输入结果表字段列表
+        :return:
+        """
+        input_fields = copy.deepcopy(DEFAULT_MODEL_INPUT_FIELDS)
+        default_fields = [field["field_name"] for field in input_fields]
+        for field in rt_fields:
+            if field["field_name"] not in default_fields and field["field_name"] not in NOT_CONTAIN_SQL_FIELD_LIST:
+                input_fields.append(
+                    {
+                        "data_field_name": field["field_name"],
+                        "roles": ["passthrough"],
+                        "field_name": field["field_name"],
+                        "field_type": field["field_type"],
+                        "properties": {"roles": [], "role_changeable": True},
+                        "field_alias": field["field_alias"],
+                    }
+                )
+        return input_fields
+
+    @classmethod
+    def get_model_output_fields(cls, rt_fields):
+        """
+        获取模型输出字段列表
+        :param rt_fields: 输入结果表字段列表
+        :return:
+        """
+        output_fields = copy.deepcopy(DEFAULT_MODEL_OUTPUT_FIELDS)
+        default_fields = [field["field_name"] for field in output_fields]
+        for field in rt_fields:
+            if field["field_name"] not in default_fields and field["field_name"] not in NOT_CONTAIN_SQL_FIELD_LIST:
+                output_fields.append(
+                    {
+                        "data_field_name": field["field_name"],
+                        "roles": ["passthrough"],
+                        "field_name": field["field_name"],
+                        "field_type": field["field_type"],
+                        "properties": {"roles": [], "role_changeable": True, "passthrough": True},
+                        "field_alias": field["field_alias"],
+                    }
+                )
+        for field in output_fields:
+            # 统一加上output_mark
+            field["output_mark"] = True
+        return output_fields
+
+    @classmethod
     def get_es_storage_fields(cls, result_table_id):
         # 获取计算平台rt存储字段
         result = BkDataMetaApi.result_tables.storages({"result_table_id": result_table_id})
@@ -517,7 +570,12 @@ class DataFlowHandler(BaseAiopsHandler):
             return None
         storage_config = json.loads(es["storage_config"])
         # "expires": "3d"
-        storage_config["expires"] = int(es["expires"][:-1])
+        try:
+            # maybe is -1
+            storage_config["expires"] = int(es["expires"])
+        except ValueError:
+            storage_config["expires"] = int(es["expires"][:-1])
+
         return storage_config
 
     def add_kv_source_node(self, flow_id, kv_source_result_table_id, bk_biz_id):
@@ -804,7 +862,7 @@ class DataFlowHandler(BaseAiopsHandler):
         after_treat_flow_dict = asdict(
             self._init_after_treat_flow(
                 clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
-                clustering_result_table_id=clustering_config.pre_treat_flow["clustering"]["result_table_id"],
+                sample_set_result_table_id=clustering_config.pre_treat_flow["sample_set"]["result_table_id"],
                 non_clustering_result_table_id=clustering_config.pre_treat_flow["not_clustering"]["result_table_id"],
                 model_id=clustering_config.model_id,
                 model_release_id=self.get_latest_released_id(clustering_config.model_id),

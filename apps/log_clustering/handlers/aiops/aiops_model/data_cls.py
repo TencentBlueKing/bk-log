@@ -781,7 +781,7 @@ class UpdateTrainingScheduleCls(object):
             "training_freq": 1,
             "success_rate_threshold": 0.8,
             "training_freq_unit": "h",
-            "sample_change_count": "100",
+            "sample_change_count": 1,
         }
     )
     release_config: Dict = field(default_factory=lambda: {"release_mode": "auto"})

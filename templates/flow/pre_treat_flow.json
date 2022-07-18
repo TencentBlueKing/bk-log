@@ -15,8 +15,8 @@
     },
     {
         "bk_biz_id":{{pre_treat.bk_biz_id}},
-        "sql":"select {{pre_treat.clustering.fields}} from {{ pre_treat.stream_source.result_table_id }} {{pre_treat.clustering.filter_rule}}",
-        "table_name":"{{ pre_treat.clustering.table_name }}",
+        "sql":"select {{pre_treat.sample_set.fields}} from {{ pre_treat.stream_source.result_table_id }} {{pre_treat.sample_set.filter_rule}}",
+        "table_name":"{{ pre_treat.sample_set.table_name }}",
         "name":"参与聚类日志",
         "count_freq":null,
         "waiting_time":null,
@@ -49,17 +49,17 @@
         }
     },
     {
-        "result_table_id":"{{ pre_treat.clustering.result_table_id}}",
+        "result_table_id":"{{ pre_treat.sample_set.result_table_id}}",
         "name":"参与聚类日志(hdfs_storage)",
         "bk_biz_id":{{pre_treat.bk_biz_id}},
         "cluster":"{{pre_treat.cluster}}",
-        "expires":{{pre_treat.clustering_hdfs.expires}},
+        "expires":{{pre_treat.sample_set_hdfs.expires}},
         "id":268063,
         "from_nodes":[
             {
                 "id":268060,
                 "from_result_table_ids":[
-                    "{{ pre_treat.clustering.result_table_id }}"
+                    "{{ pre_treat.sample_set.result_table_id }}"
                 ]
             }
         ],

@@ -307,8 +307,8 @@ class HDFSStorageCls(object):
 @dataclass
 class PreTreatDataFlowCls(object):
     stream_source: StreamSourceCls
-    clustering: RealTimeCls
-    clustering_hdfs: HDFSStorageCls
+    sample_set: RealTimeCls
+    sample_set_hdfs: HDFSStorageCls
     not_clustering: RealTimeCls
     not_clustering_hdfs: HDFSStorageCls
     bk_biz_id: int
@@ -321,6 +321,8 @@ class ModelCls(object):
     model_release_id: int
     model_id: str
     result_table_id: str
+    input_fields: str
+    output_fields: str
 
 
 @dataclass
@@ -357,7 +359,7 @@ class ElasticsearchCls(object):
 
 @dataclass
 class AfterTreatDataFlowCls(object):
-    clustering_stream_source: StreamSourceCls
+    sample_set_stream_source: StreamSourceCls
     non_clustering_stream_source: StreamSourceCls
     model: ModelCls
     group_by: RealTimeCls
