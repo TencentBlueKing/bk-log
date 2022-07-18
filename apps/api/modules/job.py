@@ -56,11 +56,11 @@ class _JobApi:
             before_request=get_job_request_before,
         )
         self.get_job_instance_log = DataAPI(
-            method="GET",
+            method="POST",
             url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_log",
             description=_("根据作业id获取执行日志"),
             module=self.MODULE,
-            before_request=add_esb_info_before_request,
+            before_request=get_job_request_before,
         )
         self.get_job_instance_log_v3 = DataAPI(
             method="GET",
@@ -75,13 +75,6 @@ class _JobApi:
             description=_("查询公共脚本列表"),
             module=self.MODULE,
             before_request=get_job_request_before,
-        )
-        self.get_job_instance_status = DataAPI(
-            method="GET",
-            url=JOB_APIGATEWAY_ROOT_V2 + "get_job_instance_status",
-            description=_("根据作业实例ID查询作业执行状态"),
-            module=self.MODULE,
-            before_request=add_esb_info_before_request,
         )
         self.get_job_instance_status_v3 = DataAPI(
             method="GET",
