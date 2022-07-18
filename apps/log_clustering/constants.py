@@ -41,7 +41,7 @@ NEW_CLASS_FIELD_PREFIX = "dist"
 
 NEW_CLASS_SENSITIVITY_FIELD = "sensitivity"
 NEW_CLASS_QUERY_FIELDS = ["signature"]
-NEW_CLASS_QUERY_TIME_RANGE = "1d"
+NEW_CLASS_QUERY_TIME_RANGE = "customized"
 
 CLUSTERING_CONFIG_EXCLUDE = ["sample_set_id", "model_id"]
 CLUSTERING_CONFIG_DEFAULT = "default_clustering_config"
