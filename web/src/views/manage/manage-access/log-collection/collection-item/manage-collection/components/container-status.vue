@@ -82,7 +82,7 @@
                 <a
                   href="javascript: ;" class="retry"
                   v-if="row.status === 'failed'"
-                  @click.stop="issuedRetry('alone', renderItem, renderIndex)">
+                  @click.stop="issuedRetry('alone', renderItem, row)">
                   {{ $t('configDetails.retry') }}
                 </a>
               </template>
@@ -211,15 +211,15 @@ export default {
           if (isPolling === 'polling' && !this.hasRunning) clearInterval(this.timer);
         });
     },
-    issuedRetry(alone = '', renderItem, renderIndex) {
-      const aloneItem = renderItem.failed[renderIndex];
-      const retrySubmitList = alone ? [aloneItem.container_collector_config_id] : this.allFailedIDList;
+    issuedRetry(alone = '', renderItem, row) {
+      const retrySubmitList = alone ? [row.container_collector_config_id] : this.allFailedIDList;
       // ID列表为空或者全局失败数为0时不请求
       if (!retrySubmitList.length || !this.navBtnList[2].listNum) return;
-      if (aloneItem) {
-        aloneItem.status = 'running';// 单选 单独变成running状态
+      if (row) {
+        row.status = 'running';// 单选 单独变成running状态
         // 失败-1 执行中+1
-        renderItem.running.push(aloneItem);
+        renderItem.running.push(row);
+        const renderIndex =  renderItem.failed.findIndex(item => item.name === row.name);
         renderItem.failed.splice(renderIndex, 1);
         this.navBtnList[3].listNum += 1;
         this.navBtnList[2].listNum -= 1;
@@ -239,7 +239,7 @@ export default {
           collector_config_id: this.$route.params.collectorId,
         },
         data: {
-          container_collector_config_id_list: retrySubmitList,
+          instance_id_list: retrySubmitList,
         },
       }).then(() => {
         this.pollingStatus();
