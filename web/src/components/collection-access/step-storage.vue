@@ -26,14 +26,13 @@
       <div class="add-collection-title">{{ $t('集群选择') }}</div>
       <cluster-table
         :table-list="clusterList"
-        :operate-type="operateType"
         :is-change-select.sync="isChangeSelect"
         :storage-cluster-id.sync="formData.storage_cluster_id"
       />
       <cluster-table
+        table-type="exclusive"
+        style="margin-top: 20px;"
         :table-list="exclusiveList"
-        :table-title-type="false"
-        :operate-type="operateType"
         :is-change-select.sync="isChangeSelect"
         :storage-cluster-id.sync="formData.storage_cluster_id" />
 
@@ -376,7 +375,7 @@ export default {
       hostNumber: 0,
       replicasMax: 7,
       isForcedFillAssessment: false, // 是否必须容量评估
-      isFirstRendering: true, // 是否是第一次渲染 用于回显热数据天数
+      editStorageClusterID: null, // 存储页进入时判断是否有选择过存储集群
     };
   },
   computed: {
@@ -411,7 +410,7 @@ export default {
     },
   },
   async mounted() {
-    this.getStorage(true);
+    this.getStorage();
     this.operateType === 'add' && (this.isChangeSelect = true);
   },
   created() {
@@ -629,6 +628,7 @@ export default {
           fields: this.stashCleanConf.etl_fields,
         });
       }
+      this.editStorageClusterID = this.formData.storage_cluster_id;
       this.formData.storage_cluster_id = this.formData.storage_cluster_id === null
         ? tsStorageId : this.formData.storage_cluster_id;
 

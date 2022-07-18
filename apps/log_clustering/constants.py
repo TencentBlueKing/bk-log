@@ -94,6 +94,8 @@ DEFAULT_ACTION_CONFIG = {
     "send_recovery_alarm": False,
 }
 
+NOT_NEED_EDIT_NODES = ["format_signature"]
+
 DEFAULT_PATTERN_MONITOR_MSG = """{{content.level}}
 {{content.begin_time}}
 {{content.time}}

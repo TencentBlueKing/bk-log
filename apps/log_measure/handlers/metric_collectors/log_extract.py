@@ -23,10 +23,12 @@ import datetime
 
 import arrow
 
+from collections import defaultdict
 from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.db.models import Count
 from apps.log_extract.models import Tasks, Strategies
+from apps.log_measure.constants import TIME_RANGE
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
@@ -60,12 +62,22 @@ class LogExtractMetricCollector(object):
         "log_extract_task", description=_("日志提取任务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def log_extract_task():
+        metrics = []
+        for timedelta in TIME_RANGE:
+            metrics.extend(LogExtractMetricCollector().log_extract_task_by_time_range(timedelta))
+
+        return metrics
+
+    @staticmethod
+    def log_extract_task_by_time_range(timedelta: str):
         end_time = (
             arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
         )
+        timedelta_v = TIME_RANGE[timedelta]
         start_time = (
-            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=5)
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=timedelta_v)
         ).strftime("%Y-%m-%d %H:%M:%S%z")
+
         groups = (
             Tasks.objects.filter(created_at__range=[start_time, end_time])
             .values("bk_biz_id", "created_by")
@@ -82,19 +94,30 @@ class LogExtractMetricCollector(object):
                     "target_bk_biz_id": group["bk_biz_id"],
                     "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
                     "target_username": group["created_by"],
+                    "time_range": timedelta,
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
             for group in groups
         ]
 
-        metrics.append(
-            # 提取总数
-            Metric(
-                metric_name="total",
-                metric_value=sum([i["count"] for i in groups]),
-                dimensions={},
-                timestamp=MetricUtils.get_instance().report_ts,
+        aggregation_datas = defaultdict(int)
+        for group in groups:
+            aggregation_datas[group["bk_biz_id"]] += group["count"]
+
+        for bk_biz_id in aggregation_datas:
+            # 各个业务提取配置总数
+            metrics.append(
+                Metric(
+                    metric_name="total",
+                    metric_value=aggregation_datas[bk_biz_id],
+                    dimensions={
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                        "time_range": timedelta,
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
             )
-        )
+
         return metrics

@@ -34,6 +34,11 @@ class BaseCollectorConfigException(BaseException):
     MESSAGE = _("采集配置模块异常")
 
 
+class BaseCollectorPluginException(BaseException):
+    MODULE_CODE = ErrorCode.BKLOG_COLLECTOR_PLUGIN
+    MESSAGE = _("采集插件模块异常")
+
+
 class CollectorConfigNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "001"
     MESSAGE = _("采集配置不存在")
@@ -42,6 +47,11 @@ class CollectorConfigNotExistException(BaseCollectorConfigException):
 class DataLinkConfigNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "002"
     MESSAGE = _("链路配置不存在")
+
+
+class CollectorPluginNotExistException(BaseCollectorPluginException):
+    ERROR_CODE = "003"
+    MESSAGE = _("采集插件不存在")
 
 
 class CollectorIdNotExistException(BaseCollectorConfigException):
@@ -114,8 +124,18 @@ class CollectorResultTableIDDuplicateException(BaseCollectorConfigException):
     MESSAGE = _("采集项{result_table_id}结果表ID重复")
 
 
-class ContainerCollectConfigValidateYamlException(BaseCollectorConfigException):
+class CollectorPluginNameDuplicateException(BaseCollectorPluginException):
     ERROR_CODE = "115"
+    MESSAGE = _("采集插件名称已存在")
+
+
+class CollectorPluginNotMatchException(BaseCollectorPluginException):
+    ERROR_CODE = "116"
+    MESSAGE = _("参数异常：采集插件不匹配")
+
+
+class ContainerCollectConfigValidateYamlException(BaseCollectorConfigException):
+    ERROR_CODE = "117"
     MESSAGE = _("容器采集配置 yaml 格式不合法")
 
 
@@ -162,6 +182,16 @@ class HotColdCheckException(BaseCollectorConfigException):
 class StorageHaveResource(BaseCollectorConfigException):
     ERROR_CODE = "209"
     MESSAGE = _("集群还有未删除的采集项、第三方集群索引集")
+
+
+class BKBASEStorageNotExistException(BaseCollectorPluginException):
+    ERROR_CODE = "210"
+    MESSAGE = _("集群未同步到数据平台")
+
+
+class BKBaseStorageSyncFailed(BaseCollectorConfigException):
+    ERROR_CODE = "211"
+    MESSAGE = _("集群同步到数据平台失败")
 
 
 class EtlNotSupportedException(BaseCollectorConfigException):

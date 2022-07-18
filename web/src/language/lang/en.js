@@ -1441,6 +1441,8 @@ export default {
   下载: 'Download',
   全屏: 'Full Screen',
   请输入: 'Please Enter',
+  请输入应用名称: 'Please enter an app name',
+  支持正则匹配: 'Support regular matching',
   此浏览器不支持全屏操作: 'This browser does not support full screen operation',
   请使用chrome浏览器: 'Please use chrome browser',
   关联标签: 'Associated tags',
