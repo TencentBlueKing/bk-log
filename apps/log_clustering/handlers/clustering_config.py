@@ -34,7 +34,6 @@ from apps.log_clustering.exceptions import (
     BkdataFieldsException,
 )
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
-from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 from apps.log_clustering.handlers.pipline_service.constants import OperatorServiceEnum
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_clustering.tasks.msg import send
@@ -176,6 +175,7 @@ class ClusteringConfigHandler(object):
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def create_service(self, index_set_id, clustering_fields, collector_config_id=None):
+        from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 
         if collector_config_id:
             collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
