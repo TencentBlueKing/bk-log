@@ -91,13 +91,11 @@ class NodeType(object):
     REALTIME = "realtime"
     UNIFIED_KV_SOURCE = "unified_kv_source"
     ELASTIC_STORAGE = "elastic_storage"
+    MODEL = "model_ts_custom"
 
 
 class RealTimeFlowNode(object):
-    PRE_TREAT_FILTER = "pre_treat_filter"
     PRE_TREAT_NOT_CLUSTERING = "pre_treat_not_clustering"
-    PRE_TREAT_TRANSFORM = "pre_treat_transform"
-    PRE_TREAT_ADD_UUID = "pre_treat_add_uuid"
     PRE_TREAT_SAMPLE_SET = "pre_treat_sample_set"
     AFTER_TREAT_JOIN_AFTER_TREAT = "after_treat_join_after_treat"
 

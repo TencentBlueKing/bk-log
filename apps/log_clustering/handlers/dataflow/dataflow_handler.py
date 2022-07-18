@@ -468,8 +468,8 @@ class DataFlowHandler(BaseAiopsHandler):
             ),
             join_signature=RealTimeCls(
                 fields="",
-                table_name="after_treat_join_signature_{}".format(time_format),
-                result_table_id="{}_after_treat_join_signature_{}".format(bk_biz_id, time_format),
+                table_name="join_signature_{}".format(time_format),
+                result_table_id="{}_join_signature_{}".format(bk_biz_id, time_format),
                 filter_rule="",
             ),
             group_by=RealTimeCls(
@@ -708,7 +708,7 @@ class DataFlowHandler(BaseAiopsHandler):
         nodes = flow_graph["nodes"]
         target_nodes = self.get_flow_node_config(
             nodes=nodes,
-            filter_table_names=[RealTimeFlowNode.PRE_TREAT_FILTER, RealTimeFlowNode.PRE_TREAT_NOT_CLUSTERING],
+            filter_table_names=[RealTimeFlowNode.PRE_TREAT_SAMPLE_SET, RealTimeFlowNode.PRE_TREAT_NOT_CLUSTERING],
         )
 
         self.deal_update_filter_flow_node(
@@ -740,7 +740,7 @@ class DataFlowHandler(BaseAiopsHandler):
         return result
 
     def deal_update_filter_flow_node(self, target_nodes, filter_rule, not_clustering_rule, flow_id):
-        filter_nodes = target_nodes.get(RealTimeFlowNode.PRE_TREAT_FILTER)
+        filter_nodes = target_nodes.get(RealTimeFlowNode.PRE_TREAT_SAMPLE_SET)
         if filter_nodes:
             sql = self.deal_filter_sql(filter_nodes["node_config"]["sql"].split("where")[0], filter_rule)
             self.update_flow_nodes({"sql": sql}, flow_id=flow_id, node_id=filter_nodes["node_id"])
@@ -756,7 +756,7 @@ class DataFlowHandler(BaseAiopsHandler):
     def update_flow(self, index_set_id):
         clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         if not clustering_config.after_treat_flow_id:
-            logger.info(f"update pre_treat flow not found: index_set_id -> {index_set_id}")
+            logger.info(f"update after_treat flow not found: index_set_id -> {index_set_id}")
             return
         if not ClusteringConfig:
             raise ClusteringConfigNotExistException()
@@ -794,7 +794,7 @@ class DataFlowHandler(BaseAiopsHandler):
         flow_graph = self.get_flow_graph(flow_id=flow_id)
         nodes = flow_graph["nodes"]
         time_format = self.get_time_format(
-            nodes=nodes, table_name_prefix=RealTimeFlowNode.PRE_TREAT_FILTER, flow_id=flow_id
+            nodes=nodes, table_name_prefix=RealTimeFlowNode.PRE_TREAT_SAMPLE_SET, flow_id=flow_id
         )
         bk_biz_id = self.conf.get("bk_biz_id") if clustering_config.collector_config_id else clustering_config.bk_biz_id
         pre_treat_flow_dict = asdict(
@@ -845,6 +845,20 @@ class DataFlowHandler(BaseAiopsHandler):
             if node["node_type"] == NodeType.ELASTIC_STORAGE
         }
         return target_es_storage_node_dict, source_es_storage_node_dict
+
+    @classmethod
+    def get_model_node(cls, flow, nodes):
+        target_model_node = None
+        for node in flow:
+            if node["node_type"] == NodeType.MODEL:
+                target_model_node = node
+
+        source_model_node = None
+        for node in nodes:
+            if node["node_type"] == NodeType.MODEL:
+                source_model_node = node
+
+        return target_model_node, source_model_node
 
     def update_after_treat_flow(self, flow_id, all_fields_dict, clustering_config):
         flow_graph = self.get_flow_graph(flow_id=flow_id)
@@ -910,6 +924,23 @@ class DataFlowHandler(BaseAiopsHandler):
                 doc_values_fields=target_node["doc_values_fields"],
                 json_fields=target_node["json_fields"],
             )
+
+        # 模型应用节点更新
+        target_model_node, source_model_node = self.get_model_node(flow=flow, nodes=nodes)
+        if not target_model_node:
+            logger.error(f"could not find target model node, nodes: {nodes}")
+            return
+        self.deal_model_node(
+            flow_id=source_model_node["flow_id"],
+            node_id=source_model_node["node_id"],
+            input_config=target_model_node["input_config"],
+            output_config=target_model_node["output_config"],
+        )
+
+    def deal_model_node(self, flow_id, node_id, input_config, output_config):
+        return self.update_flow_nodes(
+            config={"input_config": input_config, "output_config": output_config}, flow_id=flow_id, node_id=node_id
+        )
 
     def deal_real_time_node(self, flow_id, node_id, sql):
         return self.update_flow_nodes(config={"sql": sql}, flow_id=flow_id, node_id=node_id)

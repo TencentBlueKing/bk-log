@@ -34,6 +34,7 @@ from apps.log_clustering.exceptions import (
     BkdataFieldsException,
 )
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
+from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 from apps.log_clustering.handlers.pipline_service.constants import OperatorServiceEnum
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_clustering.tasks.msg import send
@@ -185,8 +186,7 @@ class ClusteringConfigHandler(object):
                 clustering_fields=clustering_fields,
             )
         send.delay(index_set_id=index_set_id)
-        # 在这里限制住创建，由其他方式来控制创建
-        # operator_aiops_service(index_set_id)
+        operator_aiops_service(index_set_id)
 
     def preview(
         self, input_data, min_members, max_dist_list, predefined_varibles, delimeter, max_log_length, is_case_sensitive
