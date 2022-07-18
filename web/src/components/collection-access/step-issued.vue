@@ -533,7 +533,6 @@ export default {
       }
       this.tabHandler({ type: this.curTab }, true);
       this.calcTabNum();
-      const containerConfigIdList = targetNodes.map(item => item.ip);
       this.$http.request('collect/retry', {
         // mock: true,
         // manualSchema: true,
