@@ -128,7 +128,7 @@
               collectorData.params.conditions.separator_filters !== []">
             <span>{{ $t('configDetails.filterContent') }}</span>
             <div>
-              <p>{{ $t('configDetails.sepMatching') }}</p>
+              <p>{{ $t('configDetails.sepMarching') }}</p>
               <p v-if="collectorData.params.conditions.separator">{{ collectorData.params.conditions.separator }}</p>
               <div class="condition-stylex">
                 <div>
@@ -322,105 +322,107 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .basic-info-container {
+@import '@/scss/basic.scss';
+
+.basic-info-container {
+  display: flex;
+  justify-content: space-between;
+
+  .deploy-sub > div {
     display: flex;
-    justify-content: space-between;
+    margin-bottom: 33px;
 
-    .deploy-sub > div {
+    span:nth-child(1) {
+      display: block;
+      width: 98px;
+      color: #979ba5;
+      text-align: right;
+      font-size: 14px;
+    }
+
+    span:nth-child(2) {
+      margin-left: 24px;
+      color: #63656e;
+      font-size: 14px;
+    }
+
+    .deploy-path {
+      margin-left: 24px;
+      color: #63656e;
+      font-size: 14px;
+      line-height: 22px;
+    }
+
+    .num-color {
+      display: inline-block;
+      padding: 0;
+
+      /* stylelint-disable-next-line declaration-no-important */
+      color: #4e99ff !important;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  }
+
+  .content-style {
+    display: flex;
+
+    .win-log {
+      height: 60px;
       display: flex;
-      margin-bottom: 33px;
+      flex-direction: column;
+      justify-content: space-between;
+    }
 
-      span:nth-child(1) {
-        display: block;
-        width: 98px;
-        color: #979ba5;
-        text-align: right;
-        font-size: 14px;
-      }
+    > div {
+      font-size: 14px;
+      margin-left: 24px;
 
-      span:nth-child(2) {
-        margin-left: 24px;
-        color: #63656e;
-        font-size: 14px;
-      }
-
-      .deploy-path {
-        margin-left: 24px;
-        color: #63656e;
-        font-size: 14px;
-        line-height: 22px;
-      }
-
-      .num-color {
+      p {
         display: inline-block;
-        padding: 0;
-
-        /* stylelint-disable-next-line declaration-no-important */
-        color: #4e99ff !important;
-        font-weight: bold;
-        cursor: pointer;
-      }
-    }
-
-    .content-style {
-      display: flex;
-
-      .win-log {
-        height: 60px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-
-      > div {
-        font-size: 14px;
-        margin-left: 24px;
-
-        p {
-          display: inline-block;
-          margin-right: 2px;
-          background-color: #f0f1f5;
-          padding: 0 5px;
-          border-radius: 2px;
-          color: #63656e;
-          height: 20px;
-          text-align: center;
-          line-height: 20px;
-        }
-      }
-    }
-
-    .button-place {
-      margin-left: 118px;
-      padding-bottom: 100px;
-    }
-
-    .create-name-and-time {
-      border-top: 1px solid #dcdee5;
-      border-radius: 2px;
-
-      div {
-        height: 40px;
-        width: 260px;
-        border-bottom: 1px solid #dcdee5;
-        border-left: 1px solid #dcdee5;
-        border-right: 1px solid #dcdee5;
-        line-height: 40px;
-
-        span:nth-child(1) {
-          margin-left: 14px;
-          font-size: 12px;
-          color: #313238;
-          display: inline-block;
-          width: 48px;
-        }
-
-        span:nth-child(2) {
-          margin-left: 22px;
-          font-size: 12px;
-          color: #63656e;
-        }
+        margin-right: 2px;
+        background-color: #f0f1f5;
+        padding: 0 5px;
+        border-radius: 2px;
+        color: #63656e;
+        height: 20px;
+        text-align: center;
+        line-height: 20px;
       }
     }
   }
+
+  .button-place {
+    margin-left: 118px;
+    padding-bottom: 100px;
+  }
+
+  .create-name-and-time {
+    border-top: 1px solid #dcdee5;
+    border-radius: 2px;
+
+    div {
+      height: 40px;
+      width: 260px;
+      border-bottom: 1px solid #dcdee5;
+      border-left: 1px solid #dcdee5;
+      border-right: 1px solid #dcdee5;
+      line-height: 40px;
+
+      span:nth-child(1) {
+        margin-left: 14px;
+        font-size: 12px;
+        color: #313238;
+        display: inline-block;
+        width: 48px;
+      }
+
+      span:nth-child(2) {
+        margin-left: 22px;
+        font-size: 12px;
+        color: #63656e;
+      }
+    }
+  }
+}
 </style>

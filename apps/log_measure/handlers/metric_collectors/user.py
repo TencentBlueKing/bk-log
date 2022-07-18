@@ -22,12 +22,14 @@ the project delivered to anyone in the future.
 import datetime
 
 import arrow
+
 from django.conf import settings
 from django.db.models import Count
 from django.utils.translation import ugettext as _
 from django.contrib.auth import get_user_model
 
 from apps.log_search.models import UserIndexSetSearchHistory
+from apps.log_measure.constants import TIME_RANGE
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
@@ -71,12 +73,20 @@ class UserMetricCollector(object):
     @staticmethod
     @register_metric("unique_visitor", description=_("uv访问数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def get_unique_visitor():
+        metrics = []
+        for timedelta in TIME_RANGE:
+            metrics.extend(UserMetricCollector().get_unique_visitor_by_time_range(timedelta))
+
+        return metrics
+
+    @staticmethod
+    def get_unique_visitor_by_time_range(timedelta: str):
         end_time = (
             arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
         )
+        timedelta_v = TIME_RANGE[timedelta]
         start_time = (
-            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z")
-            - datetime.timedelta(minutes=TimeFilterEnum.MINUTE5)
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=timedelta_v)
         ).strftime("%Y-%m-%d %H:%M:%S%z")
 
         user_index_set_search_history_group = (
@@ -94,6 +104,7 @@ class UserMetricCollector(object):
                     metric_value=user_index_set_search_history["total"],
                     dimensions={
                         "target_username": user_index_set_search_history["created_by"],
+                        "time_range": timedelta,
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -104,7 +115,7 @@ class UserMetricCollector(object):
             Metric(
                 metric_name="total",
                 metric_value=total,
-                dimensions=None,
+                dimensions={"time_range": timedelta},
                 timestamp=MetricUtils.get_instance().report_ts,
             )
         )

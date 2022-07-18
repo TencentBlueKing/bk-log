@@ -330,7 +330,13 @@ export default {
             child.push(copyItem);
           }
         });
-        this.tableList.splice(0, this.tableList.length, ...child);
+        const data = child.map((val, index) => {
+          return {
+            ...val,
+            collapse: index < 5,
+          };
+        });
+        this.tableList.splice(0, this.tableList.length, ...data);
       }
     },
     prevHandler() {
@@ -452,8 +458,10 @@ export default {
           if (timerNum === this.timerNum) {
             // 之前返回的 contents 为空
             if (!this.tableListAll.length) {
+              let collapseCount = 0; // 展开前5个状态表格信息
               data.forEach((cluster) => {
-                cluster.collapse = true;
+                cluster.collapse = cluster.child.length && collapseCount < 5;
+                if (cluster.child.length) collapseCount += 1;
                 cluster.child.forEach((host) => {
                   host.status = host.status === 'PENDING' ? 'running' : host.status.toLowerCase(); // pending-等待状态，与running不做区分
                 });
@@ -469,8 +477,10 @@ export default {
             }
           }
         } else {
+          let collapseCount = 0; // 展开前5个状态表格信息
           data.forEach((cluster) => {
-            cluster.collapse = true;
+            cluster.collapse = cluster.child.length && collapseCount < 5;
+            if (cluster.child.length) collapseCount += 1;
             cluster.child.forEach((host) => {
               host.status = host.status === 'PENDING' ? 'running' : host.status.toLowerCase(); // pending-等待状态，与running不做区分
             });
@@ -496,7 +506,7 @@ export default {
      * 重试
      */
     issuedRetry(row, cluster) {
-      const targetNodes = [];
+      const instanceIDList = [];
       if (cluster) {
         // 单条重试
         row.status = 'running';
@@ -509,36 +519,26 @@ export default {
             });
           }
         });
-        targetNodes.push({
-          ip: row.ip,
-          bk_cloud_id: row.bk_cloud_id,
-          bk_supplier_id: row.bk_supplier_id,
-        });
+        instanceIDList.push(row.instance_id);
       } else {
         // 失败批量重试
         this.tableListAll.forEach((item) => {
           item.child && item.child.forEach((itemRow) => {
             if (itemRow.status === 'failed') {
               itemRow.status = 'running';
-              targetNodes.push({
-                ip: itemRow.ip,
-                bk_cloud_id: itemRow.bk_cloud_id,
-                bk_supplier_id: itemRow.bk_supplier_id,
-              });
+              instanceIDList.push(itemRow.instance_id);
             }
           });
         });
       }
       this.tabHandler({ type: this.curTab }, true);
       this.calcTabNum();
-      const containerConfigIdList = targetNodes.map(item => item.ip);
       this.$http.request('collect/retry', {
         // mock: true,
         // manualSchema: true,
         params: { collector_config_id: this.curCollect.collector_config_id },
         data: {
-          target_nodes: targetNodes,
-          container_collector_config_id_list: containerConfigIdList,
+          instance_id_list: instanceIDList,
         },
       }).then((res) => {
         if (res.data) {

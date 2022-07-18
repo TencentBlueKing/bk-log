@@ -103,6 +103,7 @@
           :show-context-log="showContextLog"
           :show-monitor-web="showMonitorWeb"
           :show-web-console="showWebConsole"
+          :operator-config="operatorConfig"
           :handle-click="(event) => handleClickTools(event, row)" />
       </template>
     </bk-table-column>

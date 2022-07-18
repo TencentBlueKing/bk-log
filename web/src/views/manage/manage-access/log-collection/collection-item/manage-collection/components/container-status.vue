@@ -42,7 +42,7 @@
           <span>{{statusNameList[item.id]}} {{item.listNum}}</span>
         </div>
       </div>
-      <bk-button @click.stop="issuedRetry">
+      <bk-button @click.stop="issuedRetry()">
         <!-- {{$t('复制目标')}} -->
         {{$t('configDetails.batchRetry')}}
       </bk-button>
@@ -54,7 +54,7 @@
           <span class="bk-icon icon-down-shape"></span>
           <span>{{renderItem.collector_config_name}}</span>
         </div>
-        <div class="table-main" v-show="renderItem.isShowTable">
+        <div :class="['table-main', renderItem.isShowTable ? 'show' : 'hidden']">
           <bk-table :data="renderItem[navActive]" size="small">
             <bk-table-column label="id" width="80" prop="container_collector_config_id"></bk-table-column>
             <bk-table-column :label="$t('名称')" prop="name"></bk-table-column>
@@ -82,7 +82,7 @@
                 <a
                   href="javascript: ;" class="retry"
                   v-if="row.status === 'failed'"
-                  @click.stop="issuedRetry(row)">
+                  @click.stop="issuedRetry('alone', renderItem, row)">
                   {{ $t('configDetails.retry') }}
                 </a>
               </template>
@@ -167,11 +167,10 @@ export default {
      * @desc: 轮询状态
      */
     pollingStatus() {
-      if (!this.hasRunning) return;
+      clearInterval(this.timer);
       this.timer = setInterval(() => {
         this.getContainerList('polling');
-        if (!this.hasRunning) clearInterval(this.timer);
-      }, 10000);
+      }, 5000);
     },
     /**
      * @desc: 容器日志list，与轮询共用
@@ -209,21 +208,41 @@ export default {
         })
         .finally(() => {
           this.$emit('update:is-loading', false);
+          if (isPolling === 'polling' && !this.hasRunning) clearInterval(this.timer);
         });
     },
-    issuedRetry(row = null) {
-      const retrySubmitList = row ? [row.container_collector_config_id] :  this.allFailedIDList;
-      // 无ID则不请求
-      if (!retrySubmitList.length) return;
+    issuedRetry(alone = '', renderItem, row) {
+      const retrySubmitList = alone ? [row.container_collector_config_id] : this.allFailedIDList;
+      // ID列表为空或者全局失败数为0时不请求
+      if (!retrySubmitList.length || !this.navBtnList[2].listNum) return;
+      if (row) {
+        row.status = 'running';// 单选 单独变成running状态
+        // 失败-1 执行中+1
+        renderItem.running.push(row);
+        const renderIndex =  renderItem.failed.findIndex(item => item.name === row.name);
+        renderItem.failed.splice(renderIndex, 1);
+        this.navBtnList[3].listNum += 1;
+        this.navBtnList[2].listNum -= 1;
+      } else {
+        // 批量重试 清空失败 将所有的失败添加到执行中
+        this.renderTitleList.forEach((tableItem) => {
+          tableItem.all.forEach(item => item.status === 'failed' && (item.status = 'running'));
+          tableItem.failed.forEach(item => item.status = 'running');
+          tableItem.running.push(...tableItem.failed);
+          tableItem.failed = [];
+        });
+        this.navBtnList[3].listNum = this.navBtnList[3].listNum + this.navBtnList[2].listNum;
+        this.navBtnList[2].listNum = 0;
+      }
       this.$http.request('source/retryList', {
         params: {
           collector_config_id: this.$route.params.collectorId,
         },
         data: {
-          container_collector_config_id_list: retrySubmitList,
+          instance_id_list: retrySubmitList,
         },
       }).then(() => {
-        this.getContainerList();
+        this.pollingStatus();
       })
         .catch((e) => {
           console.warn(e);
@@ -373,6 +392,14 @@ export default {
       .retry {
         color: #3a84ff;
       }
+    }
+
+    .hidden {
+      height: 0px;
+    }
+
+    .show {
+      height: auto;
     }
   }
 }

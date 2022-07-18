@@ -192,14 +192,17 @@
               <bk-search-select
                 clearable
                 v-show="isBizAttr"
+                v-model="bkBizLabelsList"
+                ref="searchSelectRef"
                 :popover-zindex="2500"
                 :data="bizParentList"
                 :show-condition="false"
                 :remote-method="handleRemoteMethod"
+                :show-popover-tag-change="false"
                 @menu-select="handleMenuSelect"
                 @menu-child-select="handleChildMenuSelect"
                 @input-change="handleInputChange"
-                v-model="bkBizLabelsList">
+                @input-click-outside="handleClickOutside">
               </bk-search-select>
             </bk-form-item>
             <!-- 过期时间 -->
@@ -751,11 +754,11 @@ export default {
         };
         Object.assign(this.formData, this.basicFormData);
         res.data.cluster_config.custom_option.visible_config?.visible_bk_biz.forEach((val) => {
-          const target = this.myProjectList.find(project => Number(project.bk_biz_id) === val.bk_biz_id);
+          const target = this.myProjectList.find(project => project.bk_biz_id === String(val.bk_biz_id));
           if (target) {
             target.is_use = val.is_use;
             const targetObj = {
-              id: val.bk_biz_id,
+              id: String(val.bk_biz_id),
               name: target.project_name,
               is_use: val.is_use,
             };
@@ -1042,7 +1045,6 @@ export default {
     handleRemoteMethod() {
       return new Promise((resolve) => {
         setTimeout(() => {
-          // item.project_name.toUpperCase().includes(this.keyword.toUpperCase());
           // 空值返回全部，搜索返回部分
           if (!!this.bizInputStr) {
             resolve(this.bizChildrenList[this.bizSelectID]
@@ -1052,7 +1054,6 @@ export default {
           }
         }, 1000);
       });
-      return ;
     },
     handleMenuSelect(item) {
       // 赋值当前选择的ItemID
@@ -1063,6 +1064,20 @@ export default {
     handleChildMenuSelect() {
       // 子选项选中后搜索设置为空
       this.bizInputStr = '';
+    },
+    handleClickOutside() {
+      // searchSelect组件若没有点击确认则清除输入框和选中的值
+      if (!this.$refs.searchSelectRef.input.focus) {
+        this.$refs.searchSelectRef.input.value = '';
+        this.$refs.searchSelectRef.menu.active = -1;
+        this.$refs.searchSelectRef.menu.id = null;
+        this.$refs.searchSelectRef.updateInput();
+        this.$refs.searchSelectRef.clearInput();
+        this.$refs.searchSelectRef.menu.checked = {};
+        this.$refs.searchSelectRef.menuChildInstance
+        && (this.$refs.searchSelectRef.menuChildInstance.checked = {});
+        this.$refs.searchSelectRef.menuInstance = null;
+      }
     },
     handleInputChange($event) {
       // 按照业务属性选择赋值

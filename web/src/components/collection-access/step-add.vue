@@ -590,6 +590,9 @@ export default {
               multiline_pattern: '', // 行首正则, char
               multiline_max_lines: '50', // 最多匹配行数, int
               multiline_timeout: '2', // 最大耗时, int
+              winlog_name: [], // windows事件名称
+              winlog_level: [], // windows事件等级
+              winlog_event_id: [], // windows事件id
             },
           },
         ],
@@ -817,6 +820,9 @@ export default {
         this.publicLetterIndex = cloneCollect.configs.length - 1;
         const initFormData = this.initContainerFormData(cloneCollect);
         Object.assign(this.formData, initFormData);
+        // 若是容器环境 克隆时 初始化物理环境的值
+        this.formData.params = this.configBaseObj.params;
+        this.formData.data_encoding = 'UTF-8';
       } else { // 物理环境
         this.currentEnvironment = cloneCollect.environment;
         Object.assign(this.formData, cloneCollect);
@@ -827,21 +833,20 @@ export default {
           this.formData.collector_config_name_en = this.formData.table_id || '';
         }
       }
-      // 禁用某种环境的btn
-      this.initBtnListDisable();
       // 克隆采集项的时候 清空以下回显或者重新赋值 保留其余初始数据
       if (this.isClone) {
         this.formData.collector_config_name = `${this.formData.collector_config_name}_clone`;
         this.formData.collector_config_name_en = '';
         this.formData.target_nodes = [];
       } else {
+        // 编辑且非克隆则禁用另一边的环境按钮
+        this.initBtnListDisable();
         // 克隆时不缓存初始数据
         // 编辑采集项时缓存初始数据 用于对比提交时是否发生变化 未修改则不重新提交 update 接口
         this.localParams = this.handleParams();
       }
     }
   },
-  mounted() {},
   methods: {
     async getLinkData() {
       try {
@@ -967,10 +972,9 @@ export default {
       // 容器环境并且打开yaml模式时进行yaml语法检测
       if (this.isYaml && !this.isPhysicsEnvironment) {
         if (!this.$refs.yamlEditorRef.getSubmitState || this.formData.yaml_config === '') {
-          let message;
-          message = this.$refs.yamlEditorRef.isHaveErrorProblem
-            ? this.$t('yaml语法出错')
-            : this.$t('yaml缺少必要的字段');
+          let message = this.$refs.yamlEditorRef.isHaveCannotSubmitWaring
+            ? this.$t('yaml缺少必要的字段')
+            : this.$t('yaml语法出错');
           this.formData.yaml_config === '' && (message = this.$t('yaml不能为空'));
           this.$bkMessage({ theme: 'error', message });
           return false;

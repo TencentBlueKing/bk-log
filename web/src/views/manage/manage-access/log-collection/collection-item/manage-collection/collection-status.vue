@@ -21,10 +21,10 @@
   -->
 
 <template>
-  <!-- 容器日志状态页 -->
   <div
     v-bkloading="{ isLoading: basicLoading }"
     class="collection-status-container">
+    <!-- 容器日志状态页 -->
     <container-status v-if="isContainer" :is-loading.sync="basicLoading" />
     <template v-else>
       <div class="collect" v-if="dataFir">
@@ -228,11 +228,6 @@ export default {
         selected: 'all',
         data: '',
       },
-      retryData: {
-        ip: '',
-        bk_cloud_id: '',
-        bk_supplier_id: '',
-      },
       dataFir: null,
       dataSec: {},
       dataFal: {},
@@ -421,11 +416,7 @@ export default {
       this.reloadTable = true;
       const retryList = [];
       if (key === 'odd') {
-        const data = JSON.parse(JSON.stringify(this.retryData));
-        data.ip = val.ip;
-        data.bk_cloud_id = val.bk_cloud_id;
-        data.bk_supplier_id = val.bk_supplier_id;
-        retryList.push(data);
+        retryList.push(val.instance_id);
       } else {
         if (val.totalLenght === 0) { // 判断是否存在失败项
           this.reloadTable = false;
@@ -433,11 +424,7 @@ export default {
         }
         for (let y = 0; y < key; y++) {
           for (let i = 0; i < val[y].length; i++) {
-            const data = JSON.parse(JSON.stringify(this.retryData));
-            data.ip = val[y][i].ip;
-            data.bk_cloud_id = val[y][i].bk_cloud_id;
-            data.bk_supplier_id = val[y][i].bk_supplier_id;
-            retryList.push(data);
+            retryList.push(val[y][i].instance_id);
           }
         }
       }
@@ -446,8 +433,7 @@ export default {
           collector_config_id: this.$route.params.collectorId,
         },
         data: {
-          node_type: 'INSTANCE',
-          target_nodes: retryList,
+          instance_id_list: retryList,
         },
       }).then(() => {
         this.getCollectList();
@@ -659,99 +645,6 @@ export default {
           text-align: center;
           line-height: 20px;
         }
-      }
-    }
-
-    .condition-stylex {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 16px;
-
-      > div:nth-child(1) {
-        display: flex;
-
-        .the-column {
-          > div {
-            margin-right: 2px;
-            background-color: #f0f1f5;
-            padding: 0 5px;
-            border-radius: 2px;
-            color: #63656e;
-            text-align: center;
-            margin-top: 16px;
-            font-size: 14px;
-            height: 20px;
-            line-height: 20px;
-          }
-
-          :nth-child(1) {
-            /* stylelint-disable-next-line declaration-no-important */
-            margin-top: 0 !important;
-          }
-        }
-
-        :nth-child(2) {
-          > div {
-            width: 225px;
-            position: relative;
-            height: 20px;
-            margin-top: 16px;
-
-            :nth-child(1) {
-              position: absolute;
-              left: 5px;
-              padding: 0 5px;
-              z-index: 100;
-
-              /* stylelint-disable-next-line declaration-no-important */
-              margin-right: 0 !important;
-              text-align: center;
-              max-width: 200px;
-              min-width: 50px;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-              font-size: 14px;
-            }
-
-            .line-sty {
-              position: absolute;
-              bottom: 10px;
-              right: 0;
-              height: 36px;
-              width: 180px;
-              border-bottom: 1px dashed #c4c6cc;
-              border-right: 1px dashed #c4c6cc;
-            }
-          }
-
-          :nth-child(1) {
-            /* stylelint-disable-next-line declaration-no-important */
-            margin-top: 0 !important;
-          }
-        }
-      }
-
-      .line-styy {
-        position: absolute;
-        bottom: 10px;
-        right: 0;
-        height: 36px;
-        width: 180px;
-        border-bottom: 1px dashed #c4c6cc;
-      }
-
-      .line-styx {
-        width: 20px;
-        height: 0;
-        border-bottom: 1px dashed #c4c6cc;
-      }
-
-      .con-text {
-        display: flex;
-        align-items: center;
-        margin-bottom: 2px;
       }
     }
 

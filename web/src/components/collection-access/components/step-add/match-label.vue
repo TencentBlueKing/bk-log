@@ -193,9 +193,18 @@ export default {
   methods: {
     handleDeleteMatch(id) {
       // 删除自定义时  应该把列表，缓存列表，选择ID列表都删除对应元素
-      this.matchList.splice(this.matchList.findIndex(item => item.id === id), 1);
-      this.matchCacheList.splice(this.matchCacheList.findIndex(item => item.id === id), 1);
-      this.matchSelectList.splice(this.matchSelectList.findIndex(item => item === id), 1);
+      this.spliceListElement(this.matchList, item => item.id === id);
+      this.spliceListElement(this.matchCacheList, item => item.id === id);
+      this.spliceListElement(this.matchSelectList, item => item === id);
+    },
+    /**
+     * @desc: 删除操作删除对应的元素值
+     * @param { Array } list 操作的列表
+     * @param { Function } callback 找到下标的回调函数
+     */
+    spliceListElement(list, callback) {
+      const index = list.findIndex(callback);
+      if (index >= 0) list.splice(index, 1);
     },
     /**
      * @desc: 切换不同的树的值时过滤展示标签和表达式
@@ -207,9 +216,9 @@ export default {
       if (!this.matchList.length) {
         this.matchList = treeIdList;
       } else {
-        const notCustomSelectList = [];
-        const customSelectList = [];
-        const customList = [];
+        const notCustomSelectList = []; // 非自定义选择的列表
+        const customSelectList = []; // 选择的自定义列表
+        const customList = []; // 没选择的自定义列表
         // 按照选择的标签  选择的自定义标签  未选择的自定义标签顺序排序
         this.matchList.forEach((item) => {
           const isSelect = this.matchSelectList.includes(item.id);
@@ -222,6 +231,7 @@ export default {
           }
         });
         this.matchCacheList = notCustomSelectList.concat(customSelectList, customList);
+        // 切换不同的列表时与当前自定义，选择的列表进行去重
         const filterList = this.comparedListItem(treeIdList, this.matchCacheList);
         this.matchList = this.matchCacheList.concat(filterList);
       }
