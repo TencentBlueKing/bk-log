@@ -193,7 +193,9 @@ class CustomCreateSerializer(serializers.Serializer):
     storage_replies = serializers.IntegerField(
         label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
     )
-    es_shards = serializers.IntegerField(label=_("ES分片数量"), required=False, default=3, min_value=0, max_value=64)
+    es_shards = serializers.IntegerField(
+        label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
+    )
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
@@ -576,9 +578,11 @@ class CollectorEtlStorageSerializer(serializers.Serializer):
     retention = serializers.IntegerField(label=_("有效时间"), required=True)
     allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=True)
     storage_replies = serializers.IntegerField(
-        label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
+        label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=1, max_value=3
     )
-    es_shards = serializers.IntegerField(label=_("ES分片数量"), required=False, default=3, min_value=0, max_value=64)
+    es_shards = serializers.IntegerField(
+        label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
+    )
     view_roles = serializers.ListField(label=_("查看权限"), required=False, default=[])
     need_assessment = serializers.BooleanField(label=_("是否需要评估配置"), required=False, default=False)
     assessment_config = AssessmentConfig(label=_("评估配置"), required=False)
