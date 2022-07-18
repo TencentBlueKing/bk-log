@@ -2419,8 +2419,10 @@ class CollectorHandler(object):
         }
 
     def list_bcs_collector(self, bcs_cluster_id, bk_app_code="bk_bcs"):
-        collectors = CollectorConfig.objects.filter(bcs_cluster_id=bcs_cluster_id, bk_app_code=bk_app_code).order_by(
-            "-updated_at"
+        collectors = (
+            CollectorConfig.objects.filter(bcs_cluster_id=bcs_cluster_id, bk_app_code=bk_app_code)
+            .exclude(bk_app_code="bk_log_search")
+            .order_by("-updated_at")
         )
         rule_dict = {}
         if not collectors:
