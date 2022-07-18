@@ -730,7 +730,8 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -1931,7 +1932,8 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id,
+                ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2416,8 +2418,12 @@ class CollectorHandler(object):
             "bk_data_id": self.data.bk_data_id,
         }
 
-    def list_bcs_collector(self, bcs_cluster_id):
-        collectors = CollectorConfig.objects.filter(bcs_cluster_id=bcs_cluster_id).order_by("-updated_at")
+    def list_bcs_collector(self, bcs_cluster_id, bk_app_code="bk_bcs"):
+        collectors = (
+            CollectorConfig.objects.filter(bcs_cluster_id=bcs_cluster_id, bk_app_code=bk_app_code)
+            .exclude(bk_app_code="bk_log_search")
+            .order_by("-updated_at")
+        )
         rule_dict = {}
         if not collectors:
             return []
