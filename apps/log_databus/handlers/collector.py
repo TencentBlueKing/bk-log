@@ -776,7 +776,7 @@ class CollectorHandler(object):
             )
 
     @transaction.atomic
-    def destroy(self):
+    def destroy(self, **kwargs):
         """
         删除采集配置
         :return: task_id
@@ -788,6 +788,9 @@ class CollectorHandler(object):
 
         # 2. 停止采集（删除配置文件）
         self.stop()
+
+        if self.data.is_container_environment:
+            ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id).delete()
 
         # 3. 节点管理-删除订阅配置
         self._delete_subscription()
@@ -2964,7 +2967,7 @@ class CollectorHandler(object):
             self.deal_self_call(
                 collector_config_id=collector.collector_config_id,
                 collector=collector,
-                func=self.delete_collector_bcs_config,
+                func=self.destroy,
             )
         bcs_rule.delete()
         return {"rule_id": rule_id}
