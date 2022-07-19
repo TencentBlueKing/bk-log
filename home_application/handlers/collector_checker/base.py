@@ -19,60 +19,45 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import json
 
 
-from django.conf import settings
+class Report(object):
+    def __init__(self, name, info: list = None, warning: list = None, error: list = None):
+        self.name = name
+        self.info = info if info else []
+        self.warning = warning if warning else []
+        self.error = error if error else []
 
-from apps.utils.function import ignored
-from config.env import load_domains
+    def has_problem(self):
+        return self.error != []
 
-API_ROOTS = [
-    # 蓝鲸平台模块域名
-    "BK_PAAS_APIGATEWAY_ROOT",
-    "BK_PAAS_V3_APIGATEWAY_ROOT",
-    "CC_APIGATEWAY_ROOT_V2",
-    "GSE_APIGATEWAY_ROOT_V2",
-    "MONITOR_APIGATEWAY_ROOT",
-    "BCS_CC_APIGATEWAY_ROOT",
-    "USER_MANAGE_APIGATEWAY_ROOT",
-    # 数据平台模块域名
-    "ACCESS_APIGATEWAY_ROOT",
-    "AUTH_APIGATEWAY_ROOT",
-    "DATAQUERY_APIGATEWAY_ROOT",
-    "DATABUS_APIGATEWAY_ROOT",
-    "STOREKIT_APIGATEWAY_ROOT",
-    "META_APIGATEWAY_ROOT",
-    "RESOURCE_CENTER_APIGATEWAY_ROOT",
-    # 节点管理
-    "BK_NODE_APIGATEWAY_ROOT",
-    # LOG_SEARCH
-    "LOG_SEARCH_APIGATEWAY_ROOT",
-    # IAM
-    "IAM_APIGATEWAY_ROOT_V2",
-    # ITSM
-    "ITSM_APIGATEWAY_ROOT_V2",
-    # CMSI
-    "CMSI_APIGATEWAY_ROOT_V2",
-    # JOB
-    "JOB_APIGATEWAY_ROOT_V2",
-    # JOBV3
-    "JOB_APIGATEWAY_ROOT_V3",
-    "BK_SSM_ROOT",
-    # BCS
-    "BCS_APIGATEWAY_ROOT",
-    # AIOPS
-    "AIOPS_APIGATEWAY_ROOT",
-    # DATAFLOW
-    "DATAFLOW_APIGATEWAY_ROOT",
-    # AIOPS modules
-    "AIOPS_MODEL_APIGATEWAY_ROOT",
-    # Wework api
-    "WEWORK_APIGATEWAY_ROOT",
-]
+    def add_info(self, message: str):
+        self.info.append(message)
 
-env_domains = load_domains(settings)
-for _root in API_ROOTS:
-    with ignored(Exception):
-        locals()[_root] = env_domains.get(_root, "")
+    def add_warning(self, message: str):
+        self.warning.append(message)
 
-__all__ = API_ROOTS
+    def add_error(self, message: str):
+        self.error.append(message)
+
+    def add_report(self, report):
+        self.info.extend(report.info)
+        self.warning.extend(report.warning)
+        self.error.extend(report.error)
+
+    def __str__(self):
+        return json.dumps(
+            {"report_name": self.name, "info": self.info, "warning": self.warning, "error": self.error},
+            ensure_ascii=False,
+        )
+
+
+class BaseStory(object):
+    name = ""
+
+    def __init__(self):
+        self.report = Report(self.name)
+
+    def get_report(self):
+        return self.report

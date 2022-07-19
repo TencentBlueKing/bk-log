@@ -146,7 +146,7 @@ class StorageHandler(object):
                 .get("hot_warm_config", {})
                 .get("is_enabled", False),
                 "setup_config": i["cluster_config"]["custom_option"]["setup_config"],
-                "admin": i["cluster_config"]["custom_option"]["admin"],
+                "admin": i["cluster_config"]["custom_option"].get("admin", [i["cluster_config"]["creator"]]),
                 "description": i["cluster_config"]["custom_option"]["description"],
                 "source_type": i["cluster_config"]["custom_option"]["source_type"],
                 "enable_assessment": i["cluster_config"]["custom_option"]["enable_assessment"],
@@ -295,7 +295,7 @@ class StorageHandler(object):
                 # 默认集群权重：推荐集群 > 其他
                 cluster_obj["priority"] = 1 if cluster_obj["cluster_config"].get("is_default_cluster") else 2
                 if not cluster_obj["cluster_config"].get("custom_option", {}).get("visible_config"):
-                    cluster_obj["cluster_config"]["custom_option"] = {
+                    custom_option = {
                         "visible_config": {
                             "visible_type": VisibleEnum.ALL_BIZ.value,
                         },
@@ -305,6 +305,8 @@ class StorageHandler(object):
                             "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
                             "number_of_replicas_max": es_config["ES_REPLICAS"],
                             "number_of_replicas_default": es_config["ES_REPLICAS"],
+                            "es_shards_default": settings.ES_SHARDS,
+                            "es_shards_max": settings.ES_SHARDS_MAX,
                         },
                         "description": "",
                         "enable_archive": False,
@@ -312,6 +314,8 @@ class StorageHandler(object):
                         "source_type": EsSourceType.OTHER.value,
                         "source_name": EsSourceType.get_choice_label(EsSourceType.OTHER.value),
                     }
+                    custom_option.update(cluster_obj["cluster_config"]["custom_option"])
+                    cluster_obj["cluster_config"]["custom_option"] = custom_option
                 index_sets = IndexSetHandler.get_index_set_for_storage(cluster_obj["cluster_config"]["cluster_id"])
                 if (
                     cluster_obj["cluster_config"]
@@ -336,9 +340,28 @@ class StorageHandler(object):
                 continue
 
             # 非公共集群， 筛选bk_biz_id，密码置空处理，并添加可编辑标签
-            custom_option = cluster_obj["cluster_config"]["custom_option"]
-            custom_biz_id = custom_option.get("bk_biz_id")
-            custom_visible_bk_biz = custom_option.get("visible_bk_biz", [])
+            custom_option = {
+                "admin": [cluster_obj["cluster_config"]["creator"]],
+                "setup_config": {
+                    "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
+                    "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
+                    "number_of_replicas_max": es_config["ES_REPLICAS"],
+                    "number_of_replicas_default": es_config["ES_REPLICAS"],
+                    "es_shards_default": settings.ES_SHARDS,
+                    "es_shards_max": settings.ES_SHARDS_MAX,
+                },
+                "description": "",
+                "enable_archive": False,
+                "enable_assessment": False,
+                "source_type": cluster_obj["cluster_config"]["custom_option"].get(
+                    "source_type", EsSourceType.OTHER.value
+                ),
+                "source_name": EsSourceType.get_choice_label(
+                    custom_option.get("source_type", EsSourceType.OTHER.value)
+                ),
+            }
+            custom_biz_id = cluster_obj["cluster_config"]["custom_option"].get("bk_biz_id")
+            custom_visible_bk_biz = cluster_obj["cluster_config"]["custom_option"].get("visible_bk_biz", [])
 
             if not cls.storage_visible(bk_biz_id, custom_biz_id, post_visible=post_visible):
                 continue
@@ -348,7 +371,9 @@ class StorageHandler(object):
             # 第三方es权重最高
             cluster_obj["priority"] = 0
             cluster_obj["bk_biz_id"] = custom_biz_id
-            cluster_obj["source_type"] = custom_option.get("source_type", EsSourceType.OTHER.value)
+            cluster_obj["source_type"] = cluster_obj["cluster_config"]["custom_option"].get(
+                "source_type", EsSourceType.OTHER.value
+            )
             cluster_obj["source_name"] = EsSourceType.get_choice_label(cluster_obj["source_type"])
 
             index_sets = IndexSetHandler.get_index_set_for_storage(cluster_obj["cluster_config"]["cluster_id"])
@@ -373,49 +398,15 @@ class StorageHandler(object):
                         for bk_biz_id in custom_visible_bk_biz
                     ],
                 }
-                custom_option.update(
-                    {
-                        "admin": [cluster_obj["cluster_config"]["creator"]],
-                        "setup_config": {
-                            "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
-                            "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
-                            "number_of_replicas_max": es_config["ES_REPLICAS"],
-                            "number_of_replicas_default": es_config["ES_REPLICAS"],
-                        },
-                        "description": "",
-                        "enable_archive": False,
-                        "enable_assessment": False,
-                        "source_type": custom_option.get("source_type", EsSourceType.OTHER.value),
-                        "source_name": EsSourceType.get_choice_label(
-                            custom_option.get("source_type", EsSourceType.OTHER.value)
-                        ),
-                    }
-                )
+                custom_option.update(cluster_obj["cluster_config"]["custom_option"])
                 cluster_data.append(cluster_obj)
                 continue
 
             if not custom_option.get("visible_config"):
-                custom_option.update(
-                    {
-                        "visible_config": {
-                            "visible_type": VisibleEnum.CURRENT_BIZ.value,
-                        },
-                        "admin": [cluster_obj["cluster_config"]["creator"]],
-                        "setup_config": {
-                            "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
-                            "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
-                            "number_of_replicas_max": es_config["ES_REPLICAS"],
-                            "number_of_replicas_default": es_config["ES_REPLICAS"],
-                        },
-                        "description": "",
-                        "enable_archive": False,
-                        "enable_assessment": False,
-                        "source_type": custom_option.get("source_type", EsSourceType.OTHER.value),
-                        "source_name": EsSourceType.get_choice_label(
-                            custom_option.get("source_type", EsSourceType.OTHER.value)
-                        ),
-                    }
-                )
+                custom_option["visible_config"] = {
+                    "visible_type": VisibleEnum.CURRENT_BIZ.value,
+                }
+                custom_option.update(cluster_obj["cluster_config"]["custom_option"])
                 cluster_data.append(cluster_obj)
                 continue
 
@@ -815,11 +806,8 @@ class StorageHandler(object):
 
             # 比较集群bk_biz_id是否匹配
             cluster_config = cluster_obj["cluster_config"]
-            custom_option = cluster_config.get("custom_option", {})
-            custom_biz_id = custom_option.get("bk_biz_id")
-            if custom_biz_id:
-                if int(custom_biz_id) != int(bk_biz_id):
-                    raise StorageNotPermissionException()
+            if not self.can_visible(bk_biz_id, cluster_config.get("custom_option", {})):
+                raise StorageNotPermissionException()
 
             # 集群不可以修改域名、端口
             domain_name = cluster_config["domain_name"]
