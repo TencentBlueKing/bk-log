@@ -146,7 +146,7 @@ class StorageHandler(object):
                 .get("hot_warm_config", {})
                 .get("is_enabled", False),
                 "setup_config": i["cluster_config"]["custom_option"]["setup_config"],
-                "admin": i["cluster_config"]["custom_option"]["admin"],
+                "admin": i["cluster_config"]["custom_option"].get("admin", [i["cluster_config"]["creator"]]),
                 "description": i["cluster_config"]["custom_option"]["description"],
                 "source_type": i["cluster_config"]["custom_option"]["source_type"],
                 "enable_assessment": i["cluster_config"]["custom_option"]["enable_assessment"],
