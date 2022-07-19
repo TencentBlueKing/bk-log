@@ -59,7 +59,8 @@
                       :id="navItem.id"
                       :icon="getMenuIcon(navItem)"
                       @click="handleClickNavItem(navItem.id)">
-                      {{ isExpand ? navItem.name : '' }}
+                      <span>{{ isExpand ? navItem.name : '' }}</span>
+                      <span v-if="navItem.id === 'custom-report'" class="beta-class">BETA</span>
                     </bk-navigation-menu-item>
                   </a>
                 </template>
@@ -579,5 +580,11 @@ export default {
         }
       }
     }
+  }
+
+  .beta-class {
+    color: #FFA228;
+    margin-left: 2px;
+    padding-top: 3px;
   }
 </style>

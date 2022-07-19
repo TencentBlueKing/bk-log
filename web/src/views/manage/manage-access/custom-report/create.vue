@@ -150,6 +150,7 @@
         <!-- 数据链路 -->
         <bk-form-item
           required
+          v-if="!isCloseDataLink"
           :label="$t('customReport.dataLink')"
           :rules="storageRules.data_link_id"
           :property="'data_link_id'">
@@ -430,6 +431,10 @@ export default {
       // eslint-disable-next-line camelcase
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
     },
+    isCloseDataLink() {
+      // 没有可上报的链路时，编辑采集配置链路ID为0或null时，隐藏链路配置框，并且不做空值校验。
+      return !this.linkConfigurationList.length || (this.isEdit && !this.formData.data_link_id);
+    },
   },
   watch: {
     linkConfigurationList: {
@@ -472,6 +477,7 @@ export default {
       }
       this.$refs.validateForm.validate().then(() => {
         this.submitLoading = true;
+        if (this.isCloseDataLink) delete this.formData.data_link_id;
         this.$http.request(`custom/${this.isEdit ? 'setCustom' : 'createCustom'}`, {
           params: {
             collector_config_id: this.collectorId,
