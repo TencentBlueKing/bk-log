@@ -399,6 +399,7 @@ class StorageHandler(object):
                     ],
                 }
                 custom_option.update(cluster_obj["cluster_config"]["custom_option"])
+                cluster_obj["cluster_config"]["custom_option"] = custom_option
                 cluster_data.append(cluster_obj)
                 continue
 
@@ -407,6 +408,7 @@ class StorageHandler(object):
                     "visible_type": VisibleEnum.CURRENT_BIZ.value,
                 }
                 custom_option.update(cluster_obj["cluster_config"]["custom_option"])
+                cluster_obj["cluster_config"]["custom_option"] = custom_option
                 cluster_data.append(cluster_obj)
                 continue
 
