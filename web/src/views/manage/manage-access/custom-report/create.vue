@@ -417,7 +417,6 @@ export default {
       },
       clusterList: [], // 共享集群
       exclusiveList: [], // 独享集群
-      cacheStorageReplies: {}, // 自定义上报回显副本数和分片数时保存的值
     };
   },
   computed: {
@@ -552,10 +551,8 @@ export default {
           es_shards: storage_shards_nums,
         });
         // 缓存编辑时的集群ID
-        this.cacheStorageReplies = {
-          storage_replies,
-          storage_shards_nums,
-        };
+        // eslint-disable-next-line camelcase
+        this.editStorageClusterID = storage_cluster_id;
       } else {
         const { retention } =  this.formData;
         Object.assign(this.formData, {
