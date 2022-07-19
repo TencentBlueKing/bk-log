@@ -29,6 +29,10 @@ export default {
     cacheDatePickerValue: [],
     cacheTimeRange: '',
     displayRetrieve: false,
+    modifyClustering: false, // 如果没有此参数则不能编辑保存日志聚类
+  },
+  getters: {
+    modifyClustering: state => state.modifyClustering,
   },
   mutations: {
     updateChartKey(state) {
@@ -42,6 +46,9 @@ export default {
     },
     updateDisplayRetrieve(state, display) {
       state.displayRetrieve = display;
+    },
+    updateModifyClustering(state, payload) {
+      state.modifyClustering = payload;
     },
   },
   actions: {},
