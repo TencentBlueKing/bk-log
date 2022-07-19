@@ -1096,10 +1096,7 @@ class AiopsModelHandler(BaseAiopsHandler):
             input_config=AiopsExperimentsDebugInputConfigCls(
                 algorithm_name=self.conf.get("debug_algorithm_name"),
                 input_data=input_data,
-                feature_columns=[
-                    {"field_name": "log", "data_field_name": clustering_field},
-                    {"field_name": "uuid", "data_field_name": "uuid"},
-                ],
+                feature_columns=[{"field_name": "log", "data_field_name": clustering_field}],
                 training_args=[
                     {"field_name": "min_members", "value": min_members},
                     {"field_name": "max_dist_list", "value": max_dist_list},
