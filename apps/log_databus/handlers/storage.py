@@ -229,47 +229,18 @@ class StorageHandler(object):
             custom_option = cluster_obj["cluster_config"]["custom_option"]
             # 判断是否有setup_config配置
             if not custom_option.get("setup_config", {}):
-                _param = {"auth_info": cluster_obj["auth_info"]}
-                _param.update(cluster_obj["cluster_config"])
-                try:
-                    es_shards_default, _ = StorageHandler.get_hot_warm_node_info(_param)
-                except Exception:  # pylint: disable=broad-except
-                    es_shards_default = es_config["ES_SHARDS"]
                 custom_option["setup_config"] = {
                     "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
                     "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
                     "number_of_replicas_max": es_config["ES_REPLICAS"],
                     "number_of_replicas_default": es_config["ES_REPLICAS"],
-                    "es_shards_default": es_shards_default,
+                    "es_shards_default": es_config["ES_SHARDS"],
                     "es_shards_max": es_config["ES_SHARDS_MAX"],
                 }
-                _param = {
-                    "cluster_id": cluster_obj["cluster_config"]["cluster_id"],
-                    "cluster_name": cluster_obj["cluster_config"]["cluster_name"],
-                    "operator": settings.DEFAULT_OPERATOR,
-                    "custom_option": custom_option,
-                    "no_request": True,
-                }
-                TransferApi.modify_cluster_info(_param)
             # 判断setup_config配置里是否有es_shards配置
             if not custom_option["setup_config"].get("es_shards_default"):
-                _param = {"auth_info": cluster_obj["auth_info"]}
-                _param.update(cluster_obj["cluster_config"])
-                try:
-                    es_shards_default, _ = StorageHandler.get_hot_warm_node_info(_param)
-                except Exception:  # pylint: disable=broad-except
-                    es_shards_default = es_config["ES_SHARDS"]
-                custom_option["setup_config"]["es_shards_default"] = es_shards_default
+                custom_option["setup_config"]["es_shards_default"] = es_config["ES_SHARDS"]
                 custom_option["setup_config"]["es_shards_max"] = es_config["ES_SHARDS_MAX"]
-                _param = {
-                    "cluster_id": cluster_obj["cluster_config"]["cluster_id"],
-                    "cluster_name": cluster_obj["cluster_config"]["cluster_name"],
-                    "operator": settings.DEFAULT_OPERATOR,
-                    "custom_option": custom_option,
-                    "no_request": True,
-                }
-                TransferApi.modify_cluster_info(_param)
-
             cluster_obj.update(get_storage_info(cluster_obj["cluster_config"].get("cluster_id")))
             cluster_obj["cluster_config"]["create_time"] = StorageHandler.convert_standard_time(
                 cluster_obj["cluster_config"]["create_time"]

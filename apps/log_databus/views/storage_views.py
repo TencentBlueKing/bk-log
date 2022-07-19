@@ -339,7 +339,9 @@ class StorageViewSet(APIViewSet):
                 "retention_days_max": 7,
                 "retention_days_default": 7,
                 "number_of_replicas_max": 3,
-                "number_of_replicas_default": 1
+                "number_of_replicas_default": 1,
+                "es_shards_default": 1,
+                "es_shards_max": 64
             },
             "admin": ["admin"],
             "description": "xxxx",
@@ -416,6 +418,14 @@ class StorageViewSet(APIViewSet):
             "auth_info":{
                 "username": "admin",
                 "password": "admin"
+            },
+            "setup_config": {
+                "retention_days_max": 7,
+                "retention_days_default": 7,
+                "number_of_replicas_max": 3,
+                "number_of_replicas_default": 1,
+                "es_shards_default": 1,
+                "es_shards_max": 64
             },
             "visible_bk_biz: [1, 2, 3]
         }
