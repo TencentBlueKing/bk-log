@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import re
 
+from pipeline.service import task_service
 from rest_framework.response import Response
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -91,6 +92,14 @@ class ClusteringConfigViewSet(APIViewSet):
     @detail_route(methods=["GET"], url_path="start")
     def start(self, request, *args, index_set_id=None, **kwargs):
         return Response(ClusteringConfigHandler(index_set_id=index_set_id).start())
+
+    @list_route(methods=["GET"], url_path="pipeline/state")
+    def get_pipeline_state(self, request, *args, **kwargs):
+        return Response(task_service.get_state(request.query_params.get("node_id", "")))
+
+    @list_route(methods=["GET"], url_path="pipeline/retry")
+    def retry_pipeline(self, request, *args, **kwargs):
+        return Response(task_service.retry_activity(request.query_params.get("node_id", "")).__dict__)
 
     @detail_route(methods=["POST"])
     def create_or_update(self, request, *args, **kwargs):
