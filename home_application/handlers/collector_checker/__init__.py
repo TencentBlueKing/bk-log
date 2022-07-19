@@ -20,59 +20,11 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
+from .base import BaseStory, Report
+from .check_agent import CheckAgentStory
+from .check_es import CheckESStory
+from .check_kafka import CheckKafkaStory
+from .check_route import CheckRouteStory
+from .check_transfer import CheckTransferStory
 
-from django.conf import settings
-
-from apps.utils.function import ignored
-from config.env import load_domains
-
-API_ROOTS = [
-    # 蓝鲸平台模块域名
-    "BK_PAAS_APIGATEWAY_ROOT",
-    "BK_PAAS_V3_APIGATEWAY_ROOT",
-    "CC_APIGATEWAY_ROOT_V2",
-    "GSE_APIGATEWAY_ROOT_V2",
-    "MONITOR_APIGATEWAY_ROOT",
-    "BCS_CC_APIGATEWAY_ROOT",
-    "USER_MANAGE_APIGATEWAY_ROOT",
-    # 数据平台模块域名
-    "ACCESS_APIGATEWAY_ROOT",
-    "AUTH_APIGATEWAY_ROOT",
-    "DATAQUERY_APIGATEWAY_ROOT",
-    "DATABUS_APIGATEWAY_ROOT",
-    "STOREKIT_APIGATEWAY_ROOT",
-    "META_APIGATEWAY_ROOT",
-    "RESOURCE_CENTER_APIGATEWAY_ROOT",
-    # 节点管理
-    "BK_NODE_APIGATEWAY_ROOT",
-    # LOG_SEARCH
-    "LOG_SEARCH_APIGATEWAY_ROOT",
-    # IAM
-    "IAM_APIGATEWAY_ROOT_V2",
-    # ITSM
-    "ITSM_APIGATEWAY_ROOT_V2",
-    # CMSI
-    "CMSI_APIGATEWAY_ROOT_V2",
-    # JOB
-    "JOB_APIGATEWAY_ROOT_V2",
-    # JOBV3
-    "JOB_APIGATEWAY_ROOT_V3",
-    "BK_SSM_ROOT",
-    # BCS
-    "BCS_APIGATEWAY_ROOT",
-    # AIOPS
-    "AIOPS_APIGATEWAY_ROOT",
-    # DATAFLOW
-    "DATAFLOW_APIGATEWAY_ROOT",
-    # AIOPS modules
-    "AIOPS_MODEL_APIGATEWAY_ROOT",
-    # Wework api
-    "WEWORK_APIGATEWAY_ROOT",
-]
-
-env_domains = load_domains(settings)
-for _root in API_ROOTS:
-    with ignored(Exception):
-        locals()[_root] = env_domains.get(_root, "")
-
-__all__ = API_ROOTS
+__ALL__ = [BaseStory, Report, CheckAgentStory, CheckESStory, CheckKafkaStory, CheckRouteStory, CheckTransferStory]
