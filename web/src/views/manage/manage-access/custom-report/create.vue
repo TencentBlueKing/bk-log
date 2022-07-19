@@ -237,7 +237,7 @@
             class="copy-number-input"
             type="number"
             :max="shardsMax"
-            :min="0"
+            :min="1"
             :precision="0"
             :clearable="false"
             :show-controls="true"
