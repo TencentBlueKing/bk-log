@@ -99,7 +99,13 @@ class ClusteringConfigViewSet(APIViewSet):
 
     @list_route(methods=["GET"], url_path="pipeline/retry")
     def retry_pipeline(self, request, *args, **kwargs):
-        return Response(task_service.retry_activity(request.query_params.get("node_id", "")).__dict__)
+        action_result = task_service.retry_activity(request.query_params.get("node_id", ""))
+        return Response({"result": action_result.result, "message": action_result.message})
+
+    @list_route(methods=["GET"], url_path="pipeline/skip")
+    def skip_pipeline(self, request, *args, **kwargs):
+        action_result = task_service.skip_activity(request.query_params.get("node_id", ""))
+        return Response({"result": action_result.result, "message": action_result.message})
 
     @detail_route(methods=["POST"])
     def create_or_update(self, request, *args, **kwargs):
