@@ -200,7 +200,7 @@ class EtlStorage(object):
         etl_params: dict = None,
         es_version: str = "5.X",
         hot_warm_config: dict = None,
-        es_shards: int = 1,
+        es_shards: int = settings.ES_SHARDS,
     ):
         """
         创建或更新结果表
