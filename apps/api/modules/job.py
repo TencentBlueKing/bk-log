@@ -22,7 +22,8 @@ the project delivered to anyone in the future.
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.base import DataAPI
-from config.domains import JOB_APIGATEWAY_ROOT_V2
+from apps.api.modules.utils import add_esb_info_before_request
+from config.domains import JOB_APIGATEWAY_ROOT_V2, JOB_APIGATEWAY_ROOT_V3
 
 
 def get_job_request_before(params):
@@ -40,6 +41,13 @@ class _JobApi:
             module=self.MODULE,
             before_request=get_job_request_before,
         )
+        self.fast_execute_script_v3 = DataAPI(
+            method="POST",
+            url=JOB_APIGATEWAY_ROOT_V3 + "fast_execute_script/",
+            description=_("快速执行脚本V3"),
+            module=self.MODULE,
+            before_request=add_esb_info_before_request,
+        )
         self.fast_push_file = DataAPI(
             method="POST",
             url=JOB_APIGATEWAY_ROOT_V2 + "fast_push_file",
@@ -54,12 +62,33 @@ class _JobApi:
             module=self.MODULE,
             before_request=get_job_request_before,
         )
+        self.get_job_instance_log_v3 = DataAPI(
+            method="GET",
+            url=JOB_APIGATEWAY_ROOT_V3 + "get_job_instance_log/",
+            description=_("根据作业id获取执行日志V3"),
+            module=self.MODULE,
+            before_request=add_esb_info_before_request,
+        )
         self.get_public_script_list = DataAPI(
             method="GET",
             url=JOB_APIGATEWAY_ROOT_V2 + "get_public_script_list",
             description=_("查询公共脚本列表"),
             module=self.MODULE,
             before_request=get_job_request_before,
+        )
+        self.get_job_instance_status_v3 = DataAPI(
+            method="GET",
+            url=JOB_APIGATEWAY_ROOT_V3 + "get_job_instance_status/",
+            description=_("根据作业实例ID查询作业执行状态V3"),
+            module=self.MODULE,
+            before_request=add_esb_info_before_request,
+        )
+        self.batch_get_job_instance_ip_log_v3 = DataAPI(
+            method="POST",
+            url=JOB_APIGATEWAY_ROOT_V3 + "batch_get_job_instance_ip_log/",
+            description=_("根据ip列表批量查询作业执行日志"),
+            module=self.MODULE,
+            before_request=add_esb_info_before_request,
         )
 
 
