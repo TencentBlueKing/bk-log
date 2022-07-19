@@ -237,7 +237,7 @@
             class="copy-number-input"
             type="number"
             :max="shardsMax"
-            :min="0"
+            :min="1"
             :precision="0"
             :clearable="false"
             :show-controls="true"
@@ -417,6 +417,7 @@ export default {
       },
       clusterList: [], // 共享集群
       exclusiveList: [], // 独享集群
+      editStorageClusterID: null,
     };
   },
   computed: {
