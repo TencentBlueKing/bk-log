@@ -468,8 +468,8 @@ class DataFlowHandler(BaseAiopsHandler):
             ),
             join_signature=RealTimeCls(
                 fields="",
-                table_name="join_signature_{}".format(time_format),
-                result_table_id="{}_join_signature_{}".format(bk_biz_id, time_format),
+                table_name="after_treat_join_signature_{}".format(time_format),
+                result_table_id="{}_after_treat_join_signature_{}".format(bk_biz_id, time_format),
                 filter_rule="",
             ),
             group_by=RealTimeCls(

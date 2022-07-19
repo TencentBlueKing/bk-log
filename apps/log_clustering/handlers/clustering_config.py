@@ -185,8 +185,8 @@ class ClusteringConfigHandler(object):
                 etl_config=collector_config.etl_config,
                 clustering_fields=clustering_fields,
             )
-        send.delay(index_set_id=index_set_id)
-        operator_aiops_service(index_set_id)
+        pipeline_id = operator_aiops_service(index_set_id)
+        send.delay(index_set_id=index_set_id, pipeline_id=pipeline_id)
 
     def preview(
         self, input_data, min_members, max_dist_list, predefined_varibles, delimeter, max_log_length, is_case_sensitive
