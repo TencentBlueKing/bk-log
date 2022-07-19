@@ -686,7 +686,7 @@ class CollectorEtlStorageSerializer(serializers.Serializer):
     retention = serializers.IntegerField(label=_("有效时间"), required=True)
     allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=True)
     storage_replies = serializers.IntegerField(
-        label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=1, max_value=3
+        label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
     )
     es_shards = serializers.IntegerField(
         label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
