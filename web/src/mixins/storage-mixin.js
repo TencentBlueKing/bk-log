@@ -29,6 +29,8 @@ export default {
           if (res.storage_cluster_id === newVal) {
             this.selectedStorageCluster = res; // 当前选择的存储集群
             if (oldVal === '') {  // 当oldVal为空时则表示第一次进入
+              this.replicasMax = res.setup_config?.number_of_replicas_max || 0;
+              this.shardsMax = res.setup_config?.es_shards_max || 0;
               if (!this.editStorageClusterID) this.handleSelectStorageCluster(res);
             } else {
               this.handleSelectStorageCluster(res);

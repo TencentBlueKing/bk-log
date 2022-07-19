@@ -416,6 +416,7 @@ export default {
       },
       clusterList: [], // 共享集群
       exclusiveList: [], // 独享集群
+      editStorageClusterID: null,
     };
   },
   computed: {
