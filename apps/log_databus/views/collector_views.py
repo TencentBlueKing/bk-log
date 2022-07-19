@@ -52,7 +52,7 @@ from apps.log_databus.serializers import (
     CollectorRegexDebugSerializer,
     CollectorUpdateSerializer,
     CustomCreateSerializer,
-    CustomUpateSerializer,
+    CustomUpdateSerializer,
     ListCollectorSerlalizer,
     ListCollectorsByHostSerializer,
     PreCheckSerializer,
@@ -1154,6 +1154,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
         @apiParam {Int} [storage_replies] 副本数量
+        @apiParam {Int} es_shards es分片数量
         @apiParam {list} view_roles 查看权限
         @apiParam {Boolean} need_assessment 需要评估
         @apiParam {Object} assessment_config 评估配置
@@ -1787,6 +1788,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
         @apiParam {Int} allocation_min_days 冷热数据时间
+        @apiParam {Int} es_shards es分片数量
         @apiParam {Int} [storage_replies] 副本数量
         @apiParam {String} category_id 数据分类 GlobalsConfig.category读取
         @apiParam {String} description 备注说明
@@ -1801,6 +1803,7 @@ class CollectorViewSet(ModelViewSet):
             "category_id": "xx",
             "storage_cluster_id": 3,
             "retention": 1,
+            "es_shards": 1,
             "storage_replies": 1,
             "allocation_min_days":  1
         }
@@ -1837,6 +1840,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
         @apiParam {Int} allocation_min_days 冷热数据时间
+        @apiParam {Int} es_shards es分片数量
         @apiParam {Int} [storage_replies] 副本数量
         @apiParamExample {json} 请求样例:
         {
@@ -1846,6 +1850,7 @@ class CollectorViewSet(ModelViewSet):
             "storage_cluster_id": 3,
             "retention": 1,
             "storage_replies": 1,
+            "es_shards":  1,
             "allocation_min_days":  1
         }
         @apiSuccessExample {json} 成功返回:
@@ -1857,7 +1862,7 @@ class CollectorViewSet(ModelViewSet):
             "result": true
         }
         """
-        data = self.params_valid(CustomUpateSerializer)
+        data = self.params_valid(CustomUpdateSerializer)
         return Response(CollectorHandler(collector_config_id).custom_update(**data))
 
     @list_route(methods=["GET"], url_path="pre_check")

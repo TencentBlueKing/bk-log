@@ -1575,11 +1575,15 @@ export default {
       this.hasExpandInitTipsShown = true;
       this.showExpandInitTips = false;
     },
-    // 获取全局数据
+    // 获取全局数据和 判断是否可以保存 已有的日志聚类
     getGlobalsData() {
-      if (Object.keys(this.globalsData).length) {
-        return;
+      const { query } = this.$route;
+      for (const key in query) {
+        if (key === 'modify_clustering') {
+          this.$store.commit('retrieve/updateModifyClustering', Boolean(query[key]));
+        }
       }
+      if (Object.keys(this.globalsData).length) return;
       this.$http.request('collect/globals').then((res) => {
         this.$store.commit('globals/setGlobalsData', res.data);
       })
@@ -1745,6 +1749,7 @@ export default {
 
             &:last-child {
               padding-top: 6px;
+              padding-bottom: 26px;
             }
           }
 
