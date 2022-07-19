@@ -23,24 +23,19 @@ import datetime
 from collections import defaultdict
 
 import pytz
-
-from celery.task import periodic_task, task
 from celery.schedules import crontab
+from celery.task import periodic_task, task
 
+from apps.api import BkLogApi, TransferApi
 from apps.api.modules.bkdata_databus import BkDataDatabusApi
-from apps.log_databus.models import CollectorConfig
-from apps.log_databus.handlers.collector import CollectorHandler
-from apps.api import TransferApi, BkLogApi
-from apps.log_databus.constants import (
-    STORAGE_CLUSTER_TYPE,
-    REGISTERED_SYSTEM_DEFAULT,
-    CollectItsmStatus,
-)
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_BKDATA_DATAID
+from apps.log_databus.constants import CollectItsmStatus, REGISTERED_SYSTEM_DEFAULT, STORAGE_CLUSTER_TYPE
+from apps.log_databus.handlers.collector import CollectorHandler
+from apps.log_databus.models import CollectorConfig
+from apps.log_databus.models import StorageUsed
 from apps.log_measure.handlers.elastic import ElasticHandle
 from apps.utils.log import logger
-from apps.log_databus.models import StorageUsed
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 
 
 @task(ignore_result=True)
@@ -88,9 +83,9 @@ def collector_status():
 
     # 筛选24小时未入库的采集项
     day_ago = datetime.datetime.now(pytz.timezone("UTC")) - datetime.timedelta(days=1)
-    collector_configs = CollectorConfig.objects.filter(table_id=None, is_active=True, created_at__lt=day_ago).exclude(
-        itsm_ticket_status=CollectItsmStatus.APPLYING
-    )
+    collector_configs = CollectorConfig.objects.filter(
+        table_id=None, is_active=True, created_at__lt=day_ago, collector_plugin_id=None
+    ).exclude(itsm_ticket_status=CollectItsmStatus.APPLYING)
     # 停止采集项
     for _collector in collector_configs:
         if (
@@ -163,7 +158,7 @@ def sync_storage_capacity():
                     storage_cluster_id=_cluster["cluster_config"]["cluster_id"],
                     defaults={"storage_used": storage_used},
                 )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception("sync_storage_info error: %s" % e)
 
 

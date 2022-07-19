@@ -25,7 +25,7 @@ from django.utils.translation import ugettext as _
 from django.db.models import Count
 
 from apps.api import TransferApi
-from apps.log_databus.models import ArchiveConfig
+from apps.log_databus.models import ArchiveConfig, RestoreConfig
 from apps.log_measure.utils.metric import MetricUtils
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from bk_monitor.constants import TimeFilterEnum
@@ -109,4 +109,38 @@ class ArchiveMetricCollector(object):
             )
         )
 
+        return metrics
+
+    @staticmethod
+    @register_metric("log_restore", description=_("日志回溯"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
+    def restore_config():
+        metrics = []
+        groups = (
+            RestoreConfig.objects.filter()
+            .values("bk_biz_id")
+            .order_by("bk_biz_id", "restore_config_id")
+            .annotate(count=Count("restore_config_id"))
+        )
+        for group in groups:
+            metrics.append(
+                # 各个业务业务回溯配置数量
+                Metric(
+                    metric_name="count",
+                    metric_value=group["count"],
+                    dimensions={
+                        "target_bk_biz_id": group["bk_biz_id"],
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+        metrics.append(
+            # 全业务回溯配置数量
+            Metric(
+                metric_name="total",
+                metric_value=sum(i["count"] for i in groups),
+                dimensions={},
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
         return metrics

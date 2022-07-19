@@ -318,15 +318,6 @@ class _BkDataAIOPSApi:
             after_request=None,
             default_timeout=300,
         )
-        self.aiops_get_model_release_info = DataAPI(
-            method="GET",
-            url=AIOPS_APIGATEWAY_ROOT + "releases/{model_release_id}/",
-            module=self.MODULE,
-            description=u"获取模型发布信息",
-            before_request=add_esb_info_before_request_for_bkdata_user,
-            after_request=None,
-            default_timeout=300,
-        )
 
 
 BkDataAIOPSApi = _BkDataAIOPSApi()

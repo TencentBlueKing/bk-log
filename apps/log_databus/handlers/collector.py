@@ -598,7 +598,6 @@ class CollectorHandler(object):
                             "bkdata_biz_id": params.get("bkdata_biz_id"),
                             "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
                             "bk_data_id": params.get("bk_data_id"),
-                            "table_id": params.get("table_id"),
                             "etl_processor": params.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
                             "etl_config": params.get("etl_config"),
                             "collector_plugin_id": params.get("collector_plugin_id"),
@@ -683,7 +682,8 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -901,12 +901,12 @@ class CollectorHandler(object):
             return_data.append({"etl": etl_message, "origin": _message})
         return return_data
 
-    def retry_target_nodes(self, target_nodes):
+    def retry_instances(self, instance_id_list):
         """
         重试部分实例或主机
         :return: task_id
         """
-        res = self._run_subscription_task(nodes=target_nodes)
+        res = self._retry_subscription(instance_id_list=instance_id_list)
 
         # add user_operation_record
         operation_record = {
@@ -915,7 +915,7 @@ class CollectorHandler(object):
             "record_type": UserOperationTypeEnum.COLLECTOR,
             "record_object_id": self.data.collector_config_id,
             "action": UserOperationActionEnum.RETRY,
-            "params": {"target_nodes": target_nodes},
+            "params": {"instance_id_list": instance_id_list},
         }
         user_operation_record.delay(operation_record)
 
@@ -945,6 +945,14 @@ class CollectorHandler(object):
             self.data.task_id_list.append(task_id)
         else:
             self.data.task_id_list = [str(task_id)]
+        self.data.save()
+        return self.data.task_id_list
+
+    def _retry_subscription(self, instance_id_list):
+        params = {"subscription_id": self.data.subscription_id, "instance_id_list": instance_id_list}
+
+        task_id = str(NodeApi.retry_subscription(params)["task_id"])
+        self.data.task_id_list.append(task_id)
         self.data.save()
         return self.data.task_id_list
 
@@ -1758,7 +1766,8 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id,
+                ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -1828,6 +1837,7 @@ class CollectorHandler(object):
         retention=7,
         allocation_min_days=0,
         storage_replies=1,
+        es_shards=settings.ES_SHARDS,
         bk_app_code=settings.APP_CODE,
     ):
         collector_config_params = {
@@ -1909,6 +1919,7 @@ class CollectorHandler(object):
             "retention": retention,
             "allocation_min_days": allocation_min_days,
             "storage_replies": storage_replies,
+            "es_shards": es_shards,
             "etl_params": custom_config.etl_params,
             "etl_config": custom_config.etl_config,
             "fields": custom_config.fields,
@@ -1930,6 +1941,7 @@ class CollectorHandler(object):
         retention=7,
         allocation_min_days=0,
         storage_replies=1,
+        es_shards=settings.ES_SHARDS,
     ):
 
         collector_config_update = {
@@ -1986,6 +1998,7 @@ class CollectorHandler(object):
             "table_id": self.data.collector_config_name_en,
             "storage_cluster_id": storage_cluster_id,
             "retention": retention,
+            "es_shards": es_shards,
             "allocation_min_days": allocation_min_days,
             "storage_replies": storage_replies,
             "etl_params": etl_params,

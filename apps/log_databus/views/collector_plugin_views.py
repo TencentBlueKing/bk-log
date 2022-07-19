@@ -91,7 +91,7 @@ class CollectorPluginViewSet(ModelViewSet):
             "description": "采集插件描述",
             "category_id": "application_check",
             "data_encoding": "UTF-8"
-            "is_enabled_display_collector": false,
+            "is_display_collector": false,
             "is_allow_alone_data_id": false,
             "is_allow_alone_etl_config": false,
             "etl_processor": "bkbase",
@@ -171,7 +171,7 @@ class CollectorPluginViewSet(ModelViewSet):
             "collector_plugin_name": "采集插件名称",
             "description": "采集插件描述",
             "data_encoding": "UTF-8"
-            "is_enabled_display_collector": false,
+            "is_display_collector": false,
             "is_allow_alone_data_id": false,
             "is_allow_alone_etl_config": false,
             "etl_config": "custom",

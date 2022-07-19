@@ -812,6 +812,7 @@ export default {
   默认: 'Default',
   最大: 'Maximum',
   副本数: 'Copy Number',
+  分片数: 'Fragment Number',
   用户名: 'Username',
   密码: 'Password',
   连通性测试: 'Connectivity test',
