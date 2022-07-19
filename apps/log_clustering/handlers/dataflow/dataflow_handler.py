@@ -30,7 +30,7 @@ from retrying import retry
 
 from apps.log_search.models import LogIndexSet
 from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi
-from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum
+from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum, NOT_NEED_EDIT_NODES
 from apps.log_clustering.exceptions import (
     ClusteringConfigNotExistException,
     BkdataStorageNotExistException,
@@ -60,6 +60,8 @@ from apps.log_clustering.handlers.dataflow.constants import (
     ActionHandler,
     RealTimeFlowNode,
     DIST_CLUSTERING_FIELDS,
+    DEFAULT_MODEL_INPUT_FIELDS,
+    DEFAULT_MODEL_OUTPUT_FIELDS,
 )
 from apps.log_clustering.handlers.dataflow.data_cls import (
     ExportFlowCls,
@@ -95,7 +97,7 @@ class DataFlowHandler(BaseAiopsHandler):
         request_dict = self._set_username(export_request)
         return BkDataDataFlowApi.export_flow(request_dict)
 
-    @retry(stop_max_attempt_number=3, wait_random_min=180000, wait_random_max=18000)
+    @retry(stop_max_attempt_number=3, wait_random_min=3 * 60 * 1000, wait_random_max=10 * 60 * 1000)
     def operator_flow(
         self, flow_id: int, consuming_mode: str = "continue", cluster_group: str = "default", action=ActionEnum.START
     ):
@@ -119,7 +121,7 @@ class DataFlowHandler(BaseAiopsHandler):
             ).get_all_etl_fields()
             return {field["field_name"]: field["alias_name"] or field["field_name"] for field in all_etl_fields}
         log_index_set_all_fields = LogIndexSet.objects.get(index_set_id=clustering_config.index_set_id).get_fields()
-        return {field["field_name"]: field["field_alias"] for field in log_index_set_all_fields["fields"]}
+        return {field["field_name"]: field["field_name"] for field in log_index_set_all_fields["fields"]}
 
     def create_pre_treat_flow(self, index_set_id: int):
         """
@@ -133,6 +135,7 @@ class DataFlowHandler(BaseAiopsHandler):
             clustering_config.filter_rules, all_fields_dict, clustering_config.clustering_fields
         )
         time_format = arrow.now().format("YYYYMMDDHHmmssSSS")
+        bk_biz_id = self.conf.get("bk_biz_id") if clustering_config.collector_config_id else clustering_config.bk_biz_id
         pre_treat_flow_dict = asdict(
             self._init_pre_treat_flow(
                 result_table_id=clustering_config.bkdata_etl_result_table_id,
@@ -140,6 +143,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 not_clustering_rule=not_clustering_rule,
                 clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
                 time_format=time_format,
+                bk_biz_id=bk_biz_id,
             )
         )
         pre_treat_flow = self._render_template(
@@ -148,7 +152,9 @@ class DataFlowHandler(BaseAiopsHandler):
         flow = json.loads(pre_treat_flow)
         create_pre_treat_flow_request = CreateFlowCls(
             nodes=flow,
-            flow_name="{}_pre_treat_flow_{}".format(clustering_config.index_set_id, time_format),
+            flow_name="{}_{}_pre_treat_flow_{}".format(
+                settings.ENVIRONMENT, clustering_config.index_set_id, time_format
+            ),
             project_id=self.conf.get("project_id"),
         )
         request_dict = self._set_username(create_pre_treat_flow_request)
@@ -202,6 +208,7 @@ class DataFlowHandler(BaseAiopsHandler):
         filter_rule: str,
         not_clustering_rule: str,
         time_format: str,
+        bk_biz_id: int,
         clustering_fields="log",
     ):
         """
@@ -216,47 +223,26 @@ class DataFlowHandler(BaseAiopsHandler):
         )
         pre_treat_flow = PreTreatDataFlowCls(
             stream_source=StreamSourceCls(result_table_id=result_table_id),
-            transform=RealTimeCls(
-                fields=", ".join(transform_fields),
-                table_name="pre_treat_transform_{}".format(time_format),
-                result_table_id="{}_pre_treat_transform_{}".format(self.conf.get("bk_biz_id"), time_format),
-                filter_rule="",
-            ),
-            add_uuid=RealTimeCls(
-                fields="{}, udf_gen_uuid(log) AS uuid".format(", ".join(dst_transform_fields)),
-                table_name="pre_treat_add_uuid_{}".format(time_format),
-                result_table_id="{}_pre_treat_add_uuid_{}".format(self.conf.get("bk_biz_id"), time_format),
-                filter_rule="",
-            ),
             sample_set=RealTimeCls(
-                fields="log, uuid",
+                fields=", ".join(transform_fields),
                 table_name="pre_treat_sample_set_{}".format(time_format),
-                result_table_id="{}_pre_treat_sample_set_{}".format(self.conf.get("bk_biz_id"), time_format),
-                filter_rule="",
+                result_table_id="{}_pre_treat_sample_set_{}".format(bk_biz_id, time_format),
+                filter_rule=filter_rule,
             ),
             sample_set_hdfs=HDFSStorageCls(
                 table_name="pre_treat_sample_set_{}".format(time_format), expires=self.conf.get("hdfs_expires")
             ),
-            filter=RealTimeCls(
-                fields=", ".join(is_dimension_fields),
-                table_name="pre_treat_filter_{}".format(time_format),
-                result_table_id="{}_pre_treat_filter_{}".format(self.conf.get("bk_biz_id"), time_format),
-                filter_rule=filter_rule,
-            ),
-            add_uuid_hdfs=HDFSStorageCls(
-                table_name="pre_treat_add_uuid_{}".format(time_format), expires=self.conf.get("hdfs_expires")
-            ),
             not_clustering=RealTimeCls(
                 fields=", ".join(is_dimension_fields),
                 table_name="pre_treat_not_clustering_{}".format(time_format),
-                result_table_id="{}_pre_treat_not_clustering_{}".format(self.conf.get("bk_biz_id"), time_format),
+                result_table_id="{}_pre_treat_not_clustering_{}".format(bk_biz_id, time_format),
                 filter_rule=not_clustering_rule if not_clustering_rule else NOT_CLUSTERING_FILTER_RULE,
             ),
             not_clustering_hdfs=HDFSStorageCls(
                 table_name="pre_treat_not_clustering_{}".format(time_format), expires=self.conf.get("hdfs_expires")
             ),
-            bk_biz_id=self.conf.get("bk_biz_id"),
-            cluster=self.conf.get("hdfs_cluster"),
+            bk_biz_id=bk_biz_id,
+            cluster=self.get_model_available_storage_cluster(),
         )
         return pre_treat_flow
 
@@ -301,10 +287,10 @@ class DataFlowHandler(BaseAiopsHandler):
             else clustering_config.source_rt_name
         )
         time_format = arrow.now().format("YYYYMMDDHHmmssSSS")
+        bk_biz_id = self.conf.get("bk_biz_id") if clustering_config.collector_config_id else clustering_config.bk_biz_id
         after_treat_flow_dict = asdict(
             self._init_after_treat_flow(
                 clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
-                add_uuid_result_table_id=clustering_config.pre_treat_flow["add_uuid"]["result_table_id"],
                 sample_set_result_table_id=clustering_config.pre_treat_flow["sample_set"]["result_table_id"],
                 non_clustering_result_table_id=clustering_config.pre_treat_flow["not_clustering"]["result_table_id"],
                 model_id=clustering_config.model_id,
@@ -313,6 +299,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 target_bk_biz_id=clustering_config.bk_biz_id,
                 clustering_config=clustering_config,
                 time_format=time_format,
+                bk_biz_id=bk_biz_id,
             )
         )
         after_treat_flow = self._render_template(
@@ -324,14 +311,16 @@ class DataFlowHandler(BaseAiopsHandler):
         flow = json.loads(after_treat_flow)
         new_cls_pattern_rt = after_treat_flow_dict["diversion"]["result_table_id"]
         # 这里是为了越过分流节点
-        if clustering_config.bk_biz_id == self.conf.get("bk_biz_id"):
+        if clustering_config.bk_biz_id == self.conf.get("bk_biz_id") or not clustering_config.collector_config_id:
             flow, new_cls_pattern_rt = self.deal_diversion_node(flow=flow, after_treat_flow_dict=after_treat_flow_dict)
-        create_pre_treat_flow_request = CreateFlowCls(
+        create_after_treat_flow_request = CreateFlowCls(
             nodes=flow,
-            flow_name="{}_after_treat_flow_{}".format(clustering_config.index_set_id, time_format),
+            flow_name="{}_{}_after_treat_flow_{}".format(
+                settings.ENVIRONMENT, clustering_config.index_set_id, time_format
+            ),
             project_id=self.conf.get("project_id"),
         )
-        request_dict = self._set_username(create_pre_treat_flow_request)
+        request_dict = self._set_username(create_after_treat_flow_request)
         result = BkDataDataFlowApi.create_flow(request_dict)
         clustering_config.after_treat_flow = after_treat_flow_dict
         clustering_config.after_treat_flow_id = result["flow_id"]
@@ -340,8 +329,9 @@ class DataFlowHandler(BaseAiopsHandler):
         self.add_kv_source_node(
             clustering_config.after_treat_flow_id,
             clustering_config.after_treat_flow["join_signature_tmp"]["result_table_id"],
+            bk_biz_id=bk_biz_id,
         )
-        if clustering_config.bk_biz_id != self.conf.get("bk_biz_id"):
+        if clustering_config.bk_biz_id != self.conf.get("bk_biz_id") and clustering_config.collector_config_id:
             stream_source_node = self.add_stream_source(
                 flow_id=clustering_config.after_treat_flow_id,
                 stream_source_table_id=clustering_config.after_treat_flow["diversion"]["result_table_id"],
@@ -362,6 +352,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 ignite_result_table_id=clustering_config.after_treat_flow["join_signature_tmp"]["result_table_id"],
                 modify_node_result_table_id=clustering_config.after_treat_flow["join_signature"]["result_table_id"],
                 modify_node_result_table_name=clustering_config.after_treat_flow["join_signature"]["table_name"],
+                bk_biz_id=bk_biz_id,
             )
         )
         modify_flow = self._render_template(
@@ -408,7 +399,6 @@ class DataFlowHandler(BaseAiopsHandler):
 
     def _init_after_treat_flow(
         self,
-        add_uuid_result_table_id: str,
         sample_set_result_table_id: str,
         non_clustering_result_table_id: str,
         model_release_id: int,
@@ -417,11 +407,12 @@ class DataFlowHandler(BaseAiopsHandler):
         src_rt_name: str,
         clustering_config,
         time_format: str,
+        bk_biz_id: int,
         clustering_fields: str = "log",
     ):
         # 这里是为了在新类中去除第一次启动24H内产生的大量异常新类
         new_cls_timestamp = int(arrow.now().shift(hours=DEFAULT_NEW_CLS_HOURS).float_timestamp * 1000)
-        all_fields = DataAccessHandler.get_fields(result_table_id=add_uuid_result_table_id)
+        all_fields = DataAccessHandler.get_fields(result_table_id=sample_set_result_table_id)
         is_dimension_fields = [
             field["field_name"] for field in all_fields if field["field_name"] not in NOT_CONTAIN_SQL_FIELD_LIST
         ]
@@ -429,70 +420,62 @@ class DataFlowHandler(BaseAiopsHandler):
         change_fields = [field for field in transform_fields if field != UUID_FIELDS]
         change_clustering_fields = copy.copy(change_fields)
         change_fields.extend(DIST_FIELDS)
-        merge_table_table_id = "{}_bklog_{}_{}".format(self.conf.get("bk_biz_id"), settings.ENVIRONMENT, src_rt_name)
-        change_clustering_fields = [field.split("as")[-1] for field in change_clustering_fields]
+        change_clustering_fields = [field.split(" as ")[-1] for field in change_clustering_fields]
         change_clustering_fields.extend(DIST_CLUSTERING_FIELDS)
-
+        merge_table_table_id = "{}_bklog_{}_{}".format(bk_biz_id, settings.ENVIRONMENT, src_rt_name)
+        merge_table_table_name = "bklog_{}_{}".format(settings.ENVIRONMENT, src_rt_name)
         after_treat_flow = AfterTreatDataFlowCls(
-            add_uuid_stream_source=StreamSourceCls(result_table_id=add_uuid_result_table_id),
             sample_set_stream_source=StreamSourceCls(result_table_id=sample_set_result_table_id),
             non_clustering_stream_source=StreamSourceCls(result_table_id=non_clustering_result_table_id),
             model=ModelCls(
                 table_name="after_treat_model_{}".format(time_format),
                 model_release_id=model_release_id,
                 model_id=model_id,
-                result_table_id="{}_after_treat_model_{}".format(self.conf.get("bk_biz_id"), time_format),
-            ),
-            join_after_treat=RealTimeCls(
-                table_name="after_treat_join_after_treat_{}".format(time_format),
-                fields="param.{}".format(", param.".join(is_dimension_fields)),
-                result_table_id="{}_after_treat_join_after_treat_{}".format(self.conf.get("bk_biz_id"), time_format),
-                filter_rule="",
+                result_table_id="{}_after_treat_model_{}".format(bk_biz_id, time_format),
+                input_fields=json.dumps(self.get_model_input_fields(all_fields)),
+                output_fields=json.dumps(self.get_model_output_fields(all_fields)),
             ),
             change_field=RealTimeCls(
                 fields=", ".join(change_fields),
                 table_name="after_treat_change_field_{}".format(time_format),
-                result_table_id="{}_after_treat_change_field_{}".format(self.conf.get("bk_biz_id"), time_format),
+                result_table_id="{}_after_treat_change_field_{}".format(bk_biz_id, time_format),
                 filter_rule="",
             ),
             change_clustering_field=RealTimeCls(
                 fields=", ".join(change_clustering_fields),
                 table_name="change_clustering_field_{}".format(time_format),
-                result_table_id="{}_change_clustering_field_{}".format(self.conf.get("bk_biz_id"), time_format),
+                result_table_id="{}_change_clustering_field_{}".format(bk_biz_id, time_format),
                 filter_rule="",
             ),
-            merge_table=MergeNodeCls(
-                table_name="bklog_{}_{}".format(settings.ENVIRONMENT, src_rt_name),
-                result_table_id=merge_table_table_id,
-            ),
+            merge_table=MergeNodeCls(table_name=merge_table_table_name, result_table_id=merge_table_table_id,),
             format_signature=RealTimeCls(
                 fields="",
                 table_name="after_treat_format_signature_{}".format(time_format),
-                result_table_id="{}_after_treat_format_signature_{}".format(self.conf.get("bk_biz_id"), time_format),
+                result_table_id="{}_after_treat_format_signature_{}".format(bk_biz_id, time_format),
                 filter_rule="",
             ),
             join_signature_tmp=RealTimeCls(
                 fields="",
                 table_name="after_treat_join_signature_tmp_{}".format(time_format),
-                result_table_id="{}_after_treat_join_signature_tmp_{}".format(self.conf.get("bk_biz_id"), time_format),
+                result_table_id="{}_after_treat_join_signature_tmp_{}".format(bk_biz_id, time_format),
                 filter_rule="",
             ),
             judge_new_class=RealTimeCls(
                 fields="",
                 table_name="after_treat_judge_new_class_{}".format(time_format),
-                result_table_id="{}_after_treat_judge_new_class_{}".format(self.conf.get("bk_biz_id"), time_format),
+                result_table_id="{}_after_treat_judge_new_class_{}".format(bk_biz_id, time_format),
                 filter_rule="AND event_time > {}".format(new_cls_timestamp),
             ),
             join_signature=RealTimeCls(
                 fields="",
                 table_name="after_treat_join_signature_{}".format(time_format),
-                result_table_id="{}_after_treat_join_signature_{}".format(self.conf.get("bk_biz_id"), time_format),
+                result_table_id="{}_after_treat_join_signature_{}".format(bk_biz_id, time_format),
                 filter_rule="",
             ),
             group_by=RealTimeCls(
                 fields="",
                 table_name="after_treat_group_by_{}".format(time_format),
-                result_table_id="{}_after_treat_group_by_{}".format(self.conf.get("bk_biz_id"), time_format),
+                result_table_id="{}_after_treat_group_by_{}".format(bk_biz_id, time_format),
                 filter_rule="",
             ),
             diversion=SplitCls(
@@ -504,7 +487,7 @@ class DataFlowHandler(BaseAiopsHandler):
             ),
             ignite=IgniteStorageCls(cluster=self.conf.get("ignite_cluster")),
             queue_cluster=self.conf.get("queue_cluster"),
-            bk_biz_id=self.conf.get("bk_biz_id"),
+            bk_biz_id=bk_biz_id,
             target_bk_biz_id=target_bk_biz_id,
         )
         if not clustering_config.collector_config_id:
@@ -524,7 +507,59 @@ class DataFlowHandler(BaseAiopsHandler):
                 [f"{AGGS_FIELD_PREFIX}_{pattern_level}" for pattern_level in PatternEnum.get_choices()]
             )
             after_treat_flow.es.doc_values_fields = json.dumps(doc_values_fields)
+            # 这里是为了避免计算平台数据源场景源索引命名重复导致创建有问题
+            after_treat_flow.merge_table.table_name = "merge_table_{}".format(time_format)
+            after_treat_flow.merge_table.result_table_id = "{}_merge_table_{}".format(bk_biz_id, time_format)
         return after_treat_flow
+
+    @classmethod
+    def get_model_input_fields(cls, rt_fields):
+        """
+        获取模型输入字段列表
+        :param rt_fields: 输入结果表字段列表
+        :return:
+        """
+        input_fields = copy.deepcopy(DEFAULT_MODEL_INPUT_FIELDS)
+        default_fields = [field["field_name"] for field in input_fields]
+        for field in rt_fields:
+            if field["field_name"] not in default_fields and field["field_name"] not in NOT_CONTAIN_SQL_FIELD_LIST:
+                input_fields.append(
+                    {
+                        "data_field_name": field["field_name"],
+                        "roles": ["passthrough"],
+                        "field_name": field["field_name"],
+                        "field_type": field["field_type"],
+                        "properties": {"roles": [], "role_changeable": True},
+                        "field_alias": field["field_alias"],
+                    }
+                )
+        return input_fields
+
+    @classmethod
+    def get_model_output_fields(cls, rt_fields):
+        """
+        获取模型输出字段列表
+        :param rt_fields: 输入结果表字段列表
+        :return:
+        """
+        output_fields = copy.deepcopy(DEFAULT_MODEL_OUTPUT_FIELDS)
+        default_fields = [field["field_name"] for field in output_fields]
+        for field in rt_fields:
+            if field["field_name"] not in default_fields and field["field_name"] not in NOT_CONTAIN_SQL_FIELD_LIST:
+                output_fields.append(
+                    {
+                        "data_field_name": field["field_name"],
+                        "roles": ["passthrough"],
+                        "field_name": field["field_name"],
+                        "field_type": field["field_type"],
+                        "properties": {"roles": [], "role_changeable": True, "passthrough": True},
+                        "field_alias": field["field_alias"],
+                    }
+                )
+        for field in output_fields:
+            # 统一加上output_mark
+            field["output_mark"] = True
+        return output_fields
 
     @classmethod
     def get_es_storage_fields(cls, result_table_id):
@@ -535,28 +570,27 @@ class DataFlowHandler(BaseAiopsHandler):
             return None
         storage_config = json.loads(es["storage_config"])
         # "expires": "3d"
-        storage_config["expires"] = int(es["expires"][:-1])
+        try:
+            # maybe is -1
+            storage_config["expires"] = int(es["expires"])
+        except ValueError:
+            storage_config["expires"] = int(es["expires"][:-1])
+
         return storage_config
 
-    def add_kv_source_node(self, flow_id, kv_source_result_table_id):
+    def add_kv_source_node(self, flow_id, kv_source_result_table_id, bk_biz_id):
         """
         给flow添加kv_source节点
         """
-        add_kv_source_node_request = AddFlowNodesCls(
-            flow_id=flow_id,
-            result_table_id=kv_source_result_table_id,
-        )
-        add_kv_source_node_request.config["bk_biz_id"] = self.conf.get("bk_biz_id")
+        add_kv_source_node_request = AddFlowNodesCls(flow_id=flow_id, result_table_id=kv_source_result_table_id,)
+        add_kv_source_node_request.config["bk_biz_id"] = bk_biz_id
         add_kv_source_node_request.config["from_result_table_ids"].append(kv_source_result_table_id)
         add_kv_source_node_request.config["result_table_id"] = kv_source_result_table_id
         request_dict = self._set_username(add_kv_source_node_request)
         return BkDataDataFlowApi.add_flow_nodes(request_dict)
 
     def add_stream_source(self, flow_id, stream_source_table_id, target_bk_biz_id):
-        add_stream_source_request = AddFlowNodesCls(
-            flow_id=flow_id,
-            result_table_id=stream_source_table_id,
-        )
+        add_stream_source_request = AddFlowNodesCls(flow_id=flow_id, result_table_id=stream_source_table_id,)
         add_stream_source_request.config["bk_biz_id"] = target_bk_biz_id
         add_stream_source_request.config["from_result_table_ids"].append(stream_source_table_id)
         add_stream_source_request.config["result_table_id"] = stream_source_table_id
@@ -568,10 +602,7 @@ class DataFlowHandler(BaseAiopsHandler):
     def add_tspider_storage(
         self, flow_id, tspider_storage_table_id, target_bk_biz_id, expires, cluster, source_node_id
     ):
-        add_tspider_storage_request = AddFlowNodesCls(
-            flow_id=flow_id,
-            result_table_id=tspider_storage_table_id,
-        )
+        add_tspider_storage_request = AddFlowNodesCls(flow_id=flow_id, result_table_id=tspider_storage_table_id,)
         add_tspider_storage_request.config["bk_biz_id"] = target_bk_biz_id
         add_tspider_storage_request.config["from_result_table_ids"].append(tspider_storage_table_id)
         add_tspider_storage_request.config["result_table_id"] = tspider_storage_table_id
@@ -600,6 +631,7 @@ class DataFlowHandler(BaseAiopsHandler):
         ignite_result_table_id: str,
         modify_node_result_table_id: str,
         modify_node_result_table_name: str,
+        bk_biz_id: int,
     ):
         graph = BkDataDataFlowApi.get_flow_graph(
             params={"flow_id": after_treat_flow_id, "bk_username": self.conf.get("bk_username")}
@@ -611,7 +643,7 @@ class DataFlowHandler(BaseAiopsHandler):
             flow_id=after_treat_flow_id,
             node_id=graph_nodes_dict.get((modify_node_result_table_id, NodeType.REALTIME)),
             id="ch_{}".format(graph_nodes_dict.get((modify_node_result_table_id, NodeType.REALTIME))),
-            bk_biz_id=self.conf.get("bk_biz_id"),
+            bk_biz_id=bk_biz_id,
             table_name=modify_node_result_table_name,
             group_by_node=RequireNodeCls(
                 node_id=graph_nodes_dict.get((group_by_result_table_id, NodeType.REALTIME)),
@@ -635,6 +667,19 @@ class DataFlowHandler(BaseAiopsHandler):
         return BkDataAIOPSApi.serving_data_processing_id_config(
             params={"data_processing_id": result_table_id, "bk_username": self.conf.get("bk_username")}
         )
+
+    def get_model_available_storage_cluster(self):
+        available_storage_cluster = self.conf.get("hdfs_cluster")
+        result = BkDataAIOPSApi.aiops_get_model_storage_cluster(params={"project_id": self.conf.get("project_id")})
+        if not result:
+            return available_storage_cluster
+
+        for cluster_group in result:
+            clusters = cluster_group.get("clusters", [])
+            if clusters:
+                available_storage_cluster = clusters[0]["cluster_name"]
+                break
+        return available_storage_cluster
 
     def update_model_instance(self, model_instance_id):
         update_model_instance_request = UpdateModelInstanceCls(
@@ -663,7 +708,7 @@ class DataFlowHandler(BaseAiopsHandler):
         nodes = flow_graph["nodes"]
         target_nodes = self.get_flow_node_config(
             nodes=nodes,
-            filter_table_names=[RealTimeFlowNode.PRE_TREAT_FILTER, RealTimeFlowNode.PRE_TREAT_NOT_CLUSTERING],
+            filter_table_names=[RealTimeFlowNode.PRE_TREAT_SAMPLE_SET, RealTimeFlowNode.PRE_TREAT_NOT_CLUSTERING],
         )
 
         self.deal_update_filter_flow_node(
@@ -695,7 +740,7 @@ class DataFlowHandler(BaseAiopsHandler):
         return result
 
     def deal_update_filter_flow_node(self, target_nodes, filter_rule, not_clustering_rule, flow_id):
-        filter_nodes = target_nodes.get(RealTimeFlowNode.PRE_TREAT_FILTER)
+        filter_nodes = target_nodes.get(RealTimeFlowNode.PRE_TREAT_SAMPLE_SET)
         if filter_nodes:
             sql = self.deal_filter_sql(filter_nodes["node_config"]["sql"].split("where")[0], filter_rule)
             self.update_flow_nodes({"sql": sql}, flow_id=flow_id, node_id=filter_nodes["node_id"])
@@ -711,7 +756,7 @@ class DataFlowHandler(BaseAiopsHandler):
     def update_flow(self, index_set_id):
         clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         if not clustering_config.after_treat_flow_id:
-            logger.info(f"update pre_treat flow not found: index_set_id -> {index_set_id}")
+            logger.info(f"update after_treat flow not found: index_set_id -> {index_set_id}")
             return
         if not ClusteringConfig:
             raise ClusteringConfigNotExistException()
@@ -726,6 +771,7 @@ class DataFlowHandler(BaseAiopsHandler):
             filter_rule=filter_rule,
             not_clustering_rule=not_clustering_rule,
             clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
+            clustering_config=clustering_config,
         )
         logger.info(f"update pre_treat flow success: flow_id -> {clustering_config.pre_treat_flow_id}")
         logger.info(f"update after_treat flow beginning: flow_id -> {clustering_config.after_treat_flow_id}")
@@ -737,16 +783,28 @@ class DataFlowHandler(BaseAiopsHandler):
         logger.info(f"update after_treat flow success: flow_id -> {clustering_config.after_treat_flow_id}")
 
     def update_pre_treat_flow(
-        self, flow_id, result_table_id: str, filter_rule: str, not_clustering_rule: str, clustering_fields="log"
+        self,
+        flow_id,
+        result_table_id: str,
+        filter_rule: str,
+        not_clustering_rule: str,
+        clustering_config,
+        clustering_fields="log",
     ):
         flow_graph = self.get_flow_graph(flow_id=flow_id)
         nodes = flow_graph["nodes"]
         time_format = self.get_time_format(
-            nodes=nodes, table_name_prefix=RealTimeFlowNode.PRE_TREAT_FILTER, flow_id=flow_id
+            nodes=nodes, table_name_prefix=RealTimeFlowNode.PRE_TREAT_SAMPLE_SET, flow_id=flow_id
         )
+        bk_biz_id = self.conf.get("bk_biz_id") if clustering_config.collector_config_id else clustering_config.bk_biz_id
         pre_treat_flow_dict = asdict(
             self._init_pre_treat_flow(
-                result_table_id, filter_rule, not_clustering_rule, time_format, clustering_fields=clustering_fields
+                result_table_id,
+                filter_rule,
+                not_clustering_rule,
+                time_format,
+                clustering_fields=clustering_fields,
+                bk_biz_id=bk_biz_id,
             )
         )
         pre_treat_flow = self._render_template(
@@ -788,6 +846,20 @@ class DataFlowHandler(BaseAiopsHandler):
         }
         return target_es_storage_node_dict, source_es_storage_node_dict
 
+    @classmethod
+    def get_model_node(cls, flow, nodes):
+        target_model_node = None
+        for node in flow:
+            if node["node_type"] == NodeType.MODEL:
+                target_model_node = node
+
+        source_model_node = None
+        for node in nodes:
+            if node["node_type"] == NodeType.MODEL:
+                source_model_node = node
+
+        return target_model_node, source_model_node
+
     def update_after_treat_flow(self, flow_id, all_fields_dict, clustering_config):
         flow_graph = self.get_flow_graph(flow_id=flow_id)
         nodes = flow_graph["nodes"]
@@ -800,10 +872,10 @@ class DataFlowHandler(BaseAiopsHandler):
             if clustering_config.collector_config_name_en
             else clustering_config.source_rt_name
         )
+        bk_biz_id = self.conf.get("bk_biz_id") if clustering_config.collector_config_id else clustering_config.bk_biz_id
         after_treat_flow_dict = asdict(
             self._init_after_treat_flow(
                 clustering_fields=all_fields_dict.get(clustering_config.clustering_fields),
-                add_uuid_result_table_id=clustering_config.pre_treat_flow["add_uuid"]["result_table_id"],
                 sample_set_result_table_id=clustering_config.pre_treat_flow["sample_set"]["result_table_id"],
                 non_clustering_result_table_id=clustering_config.pre_treat_flow["not_clustering"]["result_table_id"],
                 model_id=clustering_config.model_id,
@@ -812,6 +884,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 target_bk_biz_id=clustering_config.bk_biz_id,
                 clustering_config=clustering_config,
                 time_format=time_format,
+                bk_biz_id=bk_biz_id,
             )
         )
         after_treat_flow = self._render_template(
@@ -827,6 +900,8 @@ class DataFlowHandler(BaseAiopsHandler):
     def deal_after_treat_flow(self, nodes, flow):
         target_real_time_node_dict, source_real_time_node_dict = self.get_real_time_nodes(flow=flow, nodes=nodes)
         for table_name, node in source_real_time_node_dict.items():
+            if node["node_name"] in NOT_NEED_EDIT_NODES:
+                continue
             target_node = target_real_time_node_dict.get(table_name)
             if not target_node:
                 logger.error("could not find target_node --> [table_name]: ", table_name)
@@ -849,6 +924,23 @@ class DataFlowHandler(BaseAiopsHandler):
                 doc_values_fields=target_node["doc_values_fields"],
                 json_fields=target_node["json_fields"],
             )
+
+        # 模型应用节点更新
+        target_model_node, source_model_node = self.get_model_node(flow=flow, nodes=nodes)
+        if not target_model_node:
+            logger.error(f"could not find target model node, nodes: {nodes}")
+            return
+        self.deal_model_node(
+            flow_id=source_model_node["flow_id"],
+            node_id=source_model_node["node_id"],
+            input_config=target_model_node["input_config"],
+            output_config=target_model_node["output_config"],
+        )
+
+    def deal_model_node(self, flow_id, node_id, input_config, output_config):
+        return self.update_flow_nodes(
+            config={"input_config": input_config, "output_config": output_config}, flow_id=flow_id, node_id=node_id
+        )
 
     def deal_real_time_node(self, flow_id, node_id, sql):
         return self.update_flow_nodes(config={"sql": sql}, flow_id=flow_id, node_id=node_id)

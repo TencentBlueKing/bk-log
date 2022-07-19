@@ -271,6 +271,7 @@
           :picker-time-range="pickerTimeRange"
           :date-picker-value="datePickerValue"
           :index-set-item="indexSetItem"
+          :operator-config="operatorConfig"
           @request-table-data="requestTableData"
           @fieldsUpdated="handleFieldsUpdated"
           @shouldRetrieve="retrieveLog"
@@ -308,6 +309,7 @@
       :total-fields="totalFields"
       :clean-config="cleanConfig"
       :config-data="clusteringData"
+      :statistical-fields-data="statisticalFieldsData"
       @closeSetting="isShowSettingModal = false;"
       @updateLogFields="requestFields"
     />
@@ -473,6 +475,7 @@ export default {
       localIframeQuery: {},
       isFirstLoad: true,
       pickerTimeRange: ['now-15m', 'now'],
+      operatorConfig: {}, // 当前table操作的值
     };
   },
   computed: {
@@ -1240,6 +1243,10 @@ export default {
           clustering_config: clusteringConfig,
         } = localConfig;
 
+        this.operatorConfig = {
+          bkmonitor,
+          contextAndRealtime,
+        };
         this.cleanConfig = cleanConfig;
         this.clusteringData = clusteringConfig;
 

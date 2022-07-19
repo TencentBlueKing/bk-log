@@ -36,6 +36,7 @@ class ErrorCode(object):
     BKLOG_EXTRACT = "26"
     BKLOG_COLLECTOR_CONFIG = "31"
     BKLOG_ESQUERY = "32"
+    BKLOG_COLLECTOR_PLUGIN = "33"
     BKLOG_TENCENT_AUTH = "41"
     BKLOG_UPGRADE = "51"
     BKLOG_MEASURE = "61"
@@ -44,6 +45,7 @@ class ErrorCode(object):
     BKLOG_ESB = "100"
     BKLOG_ADMIN = "101"
     BKLOG_CLUSTERING = "102"
+    BKLOG_BCS = "103"
 
 
 class BaseException(Exception):

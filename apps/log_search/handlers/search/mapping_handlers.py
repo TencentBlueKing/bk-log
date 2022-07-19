@@ -128,6 +128,36 @@ class MappingHandlers(object):
             key = f"{last_key}.{property_key}" if last_key else property_key
             conflict_result[key].add(property_define["type"])
 
+    def virtual_fields(self, field_list):
+        fields = {f["field_name"] for f in field_list}
+        virtual_predicate = [{"serverIp", "cloudId"}, {"ip", "cloudid"}, {"ip"}]
+        if any([fields.issuperset(predicate) for predicate in virtual_predicate]):
+            field_list.append(
+                {
+                    "field_type": "__virtual__",
+                    "field_name": "__module__",
+                    "field_alias": _("模块"),
+                    "is_display": False,
+                    "is_editable": True,
+                    "tag": "dimension",
+                    "es_doc_values": False,
+                    "is_analyzed": False,
+                }
+            )
+            field_list.append(
+                {
+                    "field_type": "__virtual__",
+                    "field_name": "__set__",
+                    "field_alias": _("集群"),
+                    "is_display": False,
+                    "is_editable": True,
+                    "tag": "dimension",
+                    "es_doc_values": False,
+                    "is_analyzed": False,
+                }
+            )
+        return field_list
+
     def get_all_fields_by_index_id(self, scope="default"):
         mapping_list: list = self._get_mapping()
         property_dict: dict = self.find_merged_property(mapping_list)
@@ -145,6 +175,7 @@ class MappingHandlers(object):
             }
             for field in fields_result
         ]
+        fields_list = self.virtual_fields(fields_list)
         fields_list = self._combine_description_field(fields_list)
         # 处理editable关系
         final_fields_list: list = self._combine_fields(fields_list)
@@ -610,7 +641,6 @@ class MappingHandlers(object):
         context_search_usable: bool = False
         realtime_search_usable: bool = False
         fields_list = set(fields_list)
-
         context_and_realtime_judge_fields = [
             {"gseindex", "ip", "path", "_iteration_idx"},
             {"gseindex", "container_id", "logfile", "_iteration_idx"},
@@ -619,6 +649,13 @@ class MappingHandlers(object):
             {"gseIndex", "path", "iterationIndex", "__ext.container_id"},
         ]
         if any(fields_list.issuperset(judge) for judge in context_and_realtime_judge_fields):
+            analyze_fields_type_result = cls._analyze_fields_type(final_fields_list)
+            if analyze_fields_type_result:
+                return {
+                    "context_search_usable": context_search_usable,
+                    "realtime_search_usable": realtime_search_usable,
+                    "usable_reason": analyze_fields_type_result,
+                }
             context_search_usable = True
             realtime_search_usable = True
             return {
@@ -631,6 +668,23 @@ class MappingHandlers(object):
             "realtime_search_usable": realtime_search_usable,
             "usable_reason": cls._analyze_require_fields(fields_list),
         }
+
+    @classmethod
+    def _analyze_fields_type(cls, final_fields_list: List[Dict[str, Any]]):
+        # 上下文实时日志校验字段类型
+        fields_type = {
+            "gseindex": ["integer", "long"],
+            "iteration": ["integer", "long"],
+            "iterationIndex": ["integer", "long"],
+        }
+        for x in final_fields_list:
+            field_name = x["field_name"]
+            if fields_type.get(field_name):
+                if x["field_type"] in fields_type.get(field_name):
+                    continue
+                type_msg = str(_("或者")).join(fields_type.get(x["field_name"]))
+                return _(f"{field_name}必须为{type_msg}类型")
+        return None
 
     @classmethod
     def _analyze_require_fields(cls, fields_list):

@@ -21,16 +21,21 @@ the project delivered to anyone in the future.
 """
 import functools
 import json
+import zlib
 
 from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.encoding import force_bytes
 
 from apps.utils.log import logger
 from apps.utils import md5_sum
 from apps.log_search.constants import TimeEnum
 
 
-def using_cache(key: str, duration, need_md5=False):
+MIN_LEN = 15
+
+
+def using_cache(key: str, duration, need_md5=False, compress=False):
     """
     :param key: key 名可以使用format进行格式
     :param duration:
@@ -41,7 +46,8 @@ def using_cache(key: str, duration, need_md5=False):
     def decorator(func):
         @functools.wraps(func)
         def inner(*args, **kwargs):
-
+            refresh = kwargs.get("refresh", False)
+            kwargs.pop("refresh", None)
             try:
                 actual_key = key.format(*args, **kwargs)
             except (IndexError, KeyError):
@@ -54,12 +60,21 @@ def using_cache(key: str, duration, need_md5=False):
 
             cache_result = cache.get(actual_key)
 
-            if cache_result:
-                return json.loads(cache_result)
+            if cache_result and not refresh:
+                if compress:
+                    try:
+                        cache_result = zlib.decompress(cache_result)
+                    except Exception:
+                        pass
+                return json.loads(force_bytes(cache_result))
 
             result = func(*args, **kwargs)
             if result:
-                cache.set(actual_key, json.dumps(result, cls=DjangoJSONEncoder), duration)
+                value = json.dumps(result, cls=DjangoJSONEncoder)
+                if compress:
+                    if len(value) > MIN_LEN:
+                        value = zlib.compress(value.encode("utf-8"))
+                cache.set(actual_key, value, duration)
             return result
 
         return inner
@@ -83,7 +98,7 @@ def using_caches(key: str, need_deconstruction_name: str, duration, need_md5=Fal
             need_deconstruction_param = kwargs.get(need_deconstruction_name, list())
             temp_result = dict()
             in_cache_keys = set()
-            for index, value in enumerate(need_deconstruction_param):
+            for value in need_deconstruction_param:
                 actual_key = key.format(value)
 
                 if need_md5:
@@ -127,6 +142,7 @@ cache_one_minute = functools.partial(using_cache, duration=TimeEnum.ONE_MINUTE_S
 cache_five_minute = functools.partial(using_cache, duration=5 * TimeEnum.ONE_MINUTE_SECOND.value)
 cache_ten_minute = functools.partial(using_cache, duration=10 * TimeEnum.ONE_MINUTE_SECOND.value)
 cache_one_hour = functools.partial(using_cache, duration=TimeEnum.ONE_HOUR_SECOND.value)
+cache_half_hour = functools.partial(using_cache, duration=0.5 * TimeEnum.ONE_HOUR_SECOND.value)
 cache_one_day = functools.partial(using_cache, duration=TimeEnum.ONE_DAY_SECOND.value)
 
 caches_one_hour = functools.partial(using_caches, duration=TimeEnum.ONE_HOUR_SECOND.value)

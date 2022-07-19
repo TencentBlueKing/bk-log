@@ -21,50 +21,49 @@ the project delivered to anyone in the future.
 """
 
 from django.conf import settings
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
-from django.db.models import Q
-
 from rest_framework.response import Response
 
 from apps.exceptions import ValidationError
-from apps.log_databus.constants import EtlConfig
-from apps.log_search.constants import HAVE_DATA_ID, BKDATA_OPEN, NOT_CUSTOM, CollectorScenarioEnum
-from apps.log_search.permission import Permission
-from apps.utils.drf import detail_route, list_route
 from apps.generic import ModelViewSet
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import (
+    BusinessActionPermission,
     InstanceActionPermission,
     ViewBusinessPermission,
-    BusinessActionPermission,
     insert_permission_field,
 )
+from apps.log_databus.constants import EtlConfig
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.handlers.link import DataLinkHandler
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.serializers import (
-    RunSubscriptionSerializer,
     BatchSubscriptionStatusSerializer,
-    TaskStatusSerializer,
-    TaskDetailSerializer,
-    CollectorListSerializer,
-    RetrySerializer,
+    CleanStashSerializer,
+    CollectorCreateSerializer,
+    CollectorDataLinkListSerializer,
     CollectorEtlSerializer,
     CollectorEtlStorageSerializer,
-    CollectorCreateSerializer,
-    CollectorUpdateSerializer,
     CollectorEtlTimeSerializer,
-    CollectorDataLinkListSerializer,
+    CollectorListSerializer,
     CollectorRegexDebugSerializer,
-    ListCollectorsByHostSerializer,
-    CleanStashSerializer,
-    ListCollectorSerlalizer,
+    CollectorUpdateSerializer,
     CustomCreateSerializer,
     CustomUpateSerializer,
+    ListCollectorSerlalizer,
+    ListCollectorsByHostSerializer,
     PreCheckSerializer,
+    RetrySerializer,
+    RunSubscriptionSerializer,
+    TaskDetailSerializer,
+    TaskStatusSerializer,
 )
+from apps.log_search.constants import BKDATA_OPEN, CollectorScenarioEnum, HAVE_DATA_ID, NOT_CUSTOM
+from apps.log_search.permission import Permission
+from apps.utils.drf import detail_route, list_route
 from apps.utils.function import ignored
 
 
@@ -1135,7 +1134,8 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(CollectorEtlTimeSerializer)
-        return Response(EtlHandler(collector_config_id=collector_config_id).etl_time(**data))
+        etl_handler = EtlHandler.get_instance(collector_config_id)
+        return Response(etl_handler.etl_time(**data))
 
     @detail_route(methods=["POST"])
     def update_or_create_clean_config(self, request, collector_config_id=None):
@@ -1166,6 +1166,11 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} retention 保留时间
         @apiParam {Int} [storage_replies] 副本数量
         @apiParam {list} view_roles 查看权限
+        @apiParam {Boolean} need_assessment 需要评估
+        @apiParam {Object} assessment_config 评估配置
+        @apiParam {String} assessment_config.log_assessment 单机日志量
+        @apiParam {Boolean} assessment_config.need_approval 需要审批
+        @apiParam {List} assessment_config.approvals 审批人
         @apiParamExample {json} 请求样例:
         {
             "table_id": "xxx",
@@ -1203,7 +1208,13 @@ class CollectorViewSet(ModelViewSet):
             ],
             "storage_cluster_id": 3,
             "retention": 1,
-            "view_roles": [1,2]
+            "view_roles": [1,2],
+            "need_assessment": true,
+            "assessment_config": {
+                "log_assessment": "10M",
+                "need_approval": true,
+                "approvals": ["admin"]
+            }
         }
         @apiSuccessExample {json} 成功返回:
         {
@@ -1216,7 +1227,13 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(CollectorEtlStorageSerializer)
-        return Response(EtlHandler(collector_config_id=collector_config_id).update_or_create(**data))
+        etl_handler = EtlHandler.get_instance(collector_config_id)
+        data, can_apply = etl_handler.itsm_pre_hook(data, collector_config_id)
+        if not can_apply:
+            return Response(data)
+        for key in ["need_assessment", "assessment_config"]:
+            data.pop(key, None)
+        return Response(etl_handler.update_or_create(**data))
 
     @detail_route(methods=["GET"], url_path="get_data_link_list")
     def get_data_link_list(self, request):
@@ -1763,7 +1780,8 @@ class CollectorViewSet(ModelViewSet):
             "result": true
         }
         """
-        return Response(EtlHandler(collector_config_id=collector_config_id).close_clean())
+        etl_handler = EtlHandler.get_instance(collector_config_id)
+        return Response(etl_handler.close_clean())
 
     @list_route(methods=["POST"])
     def custom_create(self, request):

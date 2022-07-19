@@ -20,11 +20,18 @@ sync_upstream() {
   git merge upstream/$current_branch
 }
 
+sync_branch() {
+  git fetch upstream
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  git merge upstream/$1
+}
+
 check_upstream_config
 
 actions=(
   sync_upstream
   sync_stag
+  sync_branch
   create_branch
 )
 
@@ -49,6 +56,8 @@ elif [ "$action" = "sync_stag" ];then
   sync_stag
 elif [ "$action" = "sync_upstream" ];then
   sync_upstream
+elif [ "$action" = "sync_branch" ];then
+  sync_branch "$2"
 fi
 
 delete_upstream_config() {

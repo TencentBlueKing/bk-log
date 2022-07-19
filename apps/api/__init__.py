@@ -78,7 +78,16 @@ IAMApi = SimpleLazyObject(lambda: new_api_module("iam", "_IAMApi"))
 # ITSM
 BkItsmApi = SimpleLazyObject(lambda: new_api_module("bk_itsm", "_BkItsm"))
 
-PaasCcApi = SimpleLazyObject(lambda: new_api_module("paascc", "_PaasCcApi"))
+# BcsCC
+BcsCcApi = SimpleLazyObject(lambda: new_api_module("bcs_cc", "_BcsCcApi"))
+
+# BcsApi
+BcsApi = SimpleLazyObject(lambda: new_api_module("bcs", "_BcsApi"))
+
+# BkSSM
+BkSSMApi = SimpleLazyObject(lambda: new_api_module("bk_ssm", "_BkSSM"))
+# wework
+WeWorkApi = SimpleLazyObject(lambda: new_api_module("wework", "_WeWork"))
 
 # AIOPS
 BkDataAIOPSApi = SimpleLazyObject(lambda: new_api_module("bkdata_aiops", "_BkDataAIOPSApi"))
@@ -101,15 +110,19 @@ __all__ = [
     "NodeApi",
     "BkLogApi",
     "BkDataDatabusApi",
+    "BkDataResourceCenterApi",
     "BkDataAccessApi",
     "OldMonitorApi",
     "MonitorApi",
     "GrafanaApi",
     "IAMApi",
-    "PaasCcApi",
+    "BcsCcApi",
+    "BcsApi",
     "BkItsmApi",
+    "BkSSMApi",
     "BkDataAIOPSApi",
     "BkDataDataFlowApi",
+    "WeWorkApi",
 ]
 
 

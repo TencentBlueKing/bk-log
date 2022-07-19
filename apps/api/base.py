@@ -139,6 +139,7 @@ class DataAPI(object):
         max_query_params_record=5000,
         method_override=None,
         url_keys=None,
+        header_keys=None,
         after_serializer=None,
         cache_time=0,
         default_timeout=60,
@@ -178,6 +179,13 @@ class DataAPI(object):
 
         self.method_override = method_override
         self.url_keys = url_keys
+        common_headers = [
+            "X-Bk-App-Code",
+            "X-Bk-App-Secret",
+        ]
+        self.header_keys = common_headers
+        if header_keys:
+            self.header_keys = header_keys + common_headers
 
         self.cache_time = cache_time
         self.default_timeout = default_timeout
@@ -300,8 +308,10 @@ class DataAPI(object):
                 raise DataAPIException(self, _("返回数据格式不正确，结果格式非json."), response=raw_response)
             else:
                 # 只有正常返回才会调用 after_request 进行处理
-                if response_result["result"]:
-
+                if "result" not in response_result:
+                    # 说明返回不是蓝鲸标准
+                    response_result["result"] = True
+                if response_result.get("result"):
                     # 请求完成后的清洗处理
                     if self.after_request is not None:
                         response_result = self.after_request(response_result)
@@ -413,6 +423,12 @@ class DataAPI(object):
 
         session.headers.update({"blueking-language": translation.get_language(), "request-id": get_request_id()})
 
+        if self.header_keys:
+            headers = {key: params.get(key) for key in self.header_keys if key in params}
+            for key in self.header_keys:
+                params.pop(key, None)
+            session.headers.update(**headers)
+
         url = self.build_actual_url(params)
 
         # 发出请求并返回结果
@@ -516,6 +532,9 @@ class DataAPI(object):
         # 如果第一次没拿完，根据请求总数并发请求
         pool = ThreadPool()
         futures = []
+        request = None
+        with ignored(Exception):
+            request = get_request()
         while start < count:
             request_params = {"page": {"limit": limit, "start": start}, "no_request": True}
             request_params.update(params)
@@ -524,7 +543,7 @@ class DataAPI(object):
                 pool.apply_async(
                     self.thread_activate_request,
                     args=(request_params,),
-                    kwds={"request": get_request(), "context": get_current()},
+                    kwds={"request": request, "context": get_current()},
                 )
             )
 
@@ -553,7 +572,8 @@ class DataAPI(object):
         """
         处理并发请求无法activate_request的封装
         """
-        activate_request(request)
+        if request:
+            activate_request(request)
         attach(context)
         return self.__call__(
             params=params,

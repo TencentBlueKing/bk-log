@@ -33,7 +33,7 @@ API_ROOTS = [
     "CC_APIGATEWAY_ROOT_V2",
     "GSE_APIGATEWAY_ROOT_V2",
     "MONITOR_APIGATEWAY_ROOT",
-    "PAASCC_APIGATEWAY_ROOT",
+    "BCS_CC_APIGATEWAY_ROOT",
     "USER_MANAGE_APIGATEWAY_ROOT",
     # 数据平台模块域名
     "ACCESS_APIGATEWAY_ROOT",
@@ -55,17 +55,22 @@ API_ROOTS = [
     "CMSI_APIGATEWAY_ROOT_V2",
     # JOB
     "JOB_APIGATEWAY_ROOT_V2",
+    "BK_SSM_ROOT",
+    # BCS
+    "BCS_APIGATEWAY_ROOT",
     # AIOPS
     "AIOPS_APIGATEWAY_ROOT",
     # DATAFLOW
     "DATAFLOW_APIGATEWAY_ROOT",
     # AIOPS modules
     "AIOPS_MODEL_APIGATEWAY_ROOT",
+    # Wework api
+    "WEWORK_APIGATEWAY_ROOT",
 ]
 
 env_domains = load_domains(settings)
 for _root in API_ROOTS:
     with ignored(Exception):
-        locals()[_root] = env_domains.get(_root)
+        locals()[_root] = env_domains.get(_root, "")
 
 __all__ = API_ROOTS

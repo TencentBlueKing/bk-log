@@ -65,6 +65,7 @@ INSTALLED_APPS += (
     "apps.log_esquery",
     "apps.log_measure",
     "apps.log_trace",
+    "apps.log_bcs",
     "apps.esb",
     "apps.bk_log_admin",
     "apps.grafana",
@@ -96,7 +97,7 @@ MIDDLEWARE = (
     # http -> https 转换中间件
     "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
-    "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "apps.middleware.user_middleware.BkLogMetricsBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -120,7 +121,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
-    "django_prometheus.middleware.PrometheusAfterMiddleware",
+    "apps.middleware.user_middleware.BkLogMetricsAfterMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -177,6 +178,7 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.bkdata",
     "apps.log_search.tasks.async_export",
     "apps.log_search.tasks.project",
+    "apps.log_search.tasks.cmdb",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
     "apps.log_search.tasks.no_data",
@@ -289,6 +291,15 @@ MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
 BK_DOC_QUERY_URL = "https://bk.tencent.com/docs/document/5.1/90/3822/"
 BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
+
+# 日志归档文档
+BK_ARCHIVE_DOC_URL = os.getenv("BKAPP_ARCHIVE_DOC_URL", "")
+
+BK_ASSESSMEN_HOST_COUNT = int(os.getenv("BKAPP_ASSESSMEN_HOST_COUNT", 30))
+
+# 日志清洗文档
+BK_ETL_DOC_URL = os.getenv("BKAPP_ETL_DOC_URL", "")
+
 BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 # 计算平台文档地址
 BK_DOC_DATA_URL = ""
@@ -729,7 +740,9 @@ ES_COMPATIBILITY = int(os.environ.get("BKAPP_ES_COMPATIBILITY", 0))
 FEATURE_EXPORT_SCROLL = os.environ.get("BKAPP_FEATURE_EXPORT_SCROLL", False)
 
 # BCS
-PAASCC_APIGATEWAY = ""
+BCS_API_GATEWAY_TOKEN = os.getenv("BKAPP_BCS_API_GATEWAY_TOKEN", "")
+BCS_CC_SSM_SWITCH = os.getenv("BKAPP_BCS_CC_SSM_SWITCH", "off") == "on"
+BCS_WEB_CONSOLE_DOMAIN = ""
 
 # 是否关闭权限中心校验
 IGNORE_IAM_PERMISSION = os.environ.get("BKAPP_IGNORE_IAM_PERMISSION", False)
@@ -776,6 +789,8 @@ ESQUERY_WHITE_LIST = [
     "data",
     "dataweb",
     "bk_bcs",
+    "bk-dbm",
+    "bk_dbm",
 ]
 
 # BK repo conf
@@ -956,6 +971,16 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
     CACHES["default"] = CACHES["redis_sentinel"]
     CACHES["login_db"] = CACHES["redis_sentinel"]
 
+# ==============================================================================
+# Prometheus metrics token
+PROMETHEUS_METRICS_TOKEN = os.environ.get("PROMETHEUS_METRICS_TOKEN", "")
+# ==============================================================================
+
+# ==============================================================================
+# Listening Domain, 格式 http(s)://domain_name
+SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
+# ==============================================================================
+
 """
 以下为框架代码 请勿修改
 """
@@ -970,6 +995,15 @@ if "celery" in sys.argv:
 if IS_USE_CELERY:
     CELERY_ENABLE_UTC = True
     CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+    from celery.signals import setup_logging
+
+    @setup_logging.connect
+    def config_loggers(*args, **kwags):
+        from logging.config import dictConfig
+
+        dictConfig(LOGGING)
+
 
 # remove disabled apps
 if locals().get("DISABLED_APPS"):

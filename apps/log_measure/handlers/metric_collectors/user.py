@@ -20,12 +20,13 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import time
-import arrow
 import datetime
 
+import arrow
+from django.conf import settings
+from django.db.models import Count
 from django.utils.translation import ugettext as _
 from django.contrib.auth import get_user_model
-from django.conf import settings
 
 from apps.utils.db import array_group
 from apps.log_search.models import LogIndexSet
@@ -35,7 +36,7 @@ from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
 
 
-class ThirdPartyMetricCollector(object):
+class UserMetricCollector(object):
     @staticmethod
     @register_metric("user_active", description=_("活跃用户"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def user_active():
@@ -59,6 +60,57 @@ class ThirdPartyMetricCollector(object):
             for user in recent_active_users
         ]
 
+        metrics.append(
+            Metric(
+                metric_name="total",
+                metric_value=len(recent_active_users),
+                dimensions=None,
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
+
+        return metrics
+
+    @staticmethod
+    @register_metric("unique_visitor", description=_("uv访问数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    def get_unique_visitor():
+        end_time = (
+            arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
+        )
+        start_time = (
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z")
+            - datetime.timedelta(minutes=TimeFilterEnum.MINUTE5)
+        ).strftime("%Y-%m-%d %H:%M:%S%z")
+
+        user_index_set_search_history_group = (
+            UserIndexSetSearchHistory.objects.filter(created_at__range=[start_time, end_time])
+            .values("created_by")
+            .annotate(total=Count("created_by"))
+            .order_by()
+        )
+        metrics = []
+        total = 0
+        for user_index_set_search_history in user_index_set_search_history_group:
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=user_index_set_search_history["total"],
+                    dimensions={
+                        "target_username": user_index_set_search_history["created_by"],
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+            total += user_index_set_search_history["total"]
+
+        metrics.append(
+            Metric(
+                metric_name="total",
+                metric_value=total,
+                dimensions=None,
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        )
         return metrics
 
     @staticmethod
@@ -66,6 +118,10 @@ class ThirdPartyMetricCollector(object):
         "search_history", description=_("用户检索历史"), data_name="search_history", time_filter=TimeFilterEnum.MINUTE1
     )
     def search_history():
+        """
+        NOTICE: 这个是管理端->采集详情页->使用详情->使用统计功能
+        NOTICE: 请不要随意更改，更改时请注意双边联动查询问题
+        """
         end_time = arrow.get(int(time.time())).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
         start_time = (
             datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=2)

@@ -696,7 +696,9 @@ export default {
   created() {
     this.getLinkData();
     this.isUpdate = this.$route.name !== 'collectAdd';
-    if (this.isUpdate) {
+    const isClone = this.$route.query?.type === 'clone';
+    // 克隆与编辑均进行数据回填
+    if (this.isUpdate || isClone) {
       this.formData = JSON.parse(JSON.stringify(this.curCollect));
       const { params } = this.formData;
       if (this.formData.target?.length) { // IP 选择器预览结果回填
@@ -745,6 +747,17 @@ export default {
       if (this.curCollect.params.conditions.type === 'separator') {
         this.type = this.curCollect.params.conditions.separator_filters[0].logic_op;
       }
+      // 克隆采集项的时候 清空以下回显或者重新赋值 保留其余初始数据
+      if (isClone) {
+        this.formData.collector_config_name = `${this.formData.collector_config_name}_clone`;
+        this.formData.description = this.formData.description ? `${this.formData.description}_clone` : '';
+        this.formData.collector_config_name_en = '';
+        this.formData.target_nodes = [];
+      } else {
+        // 克隆时不缓存初始数据
+        // 编辑采集项时缓存初始数据 用于对比提交时是否发生变化 未修改则不重新提交 update 接口
+        this.localParams = this.handleParams();
+      }
     }
   },
   mounted() {
@@ -770,8 +783,14 @@ export default {
       if (this.eventSettingList.some(el => el.isCorrect === false) || this.outherRules) {
         return;
       }
+      const params = this.handleParams();
+      if (JSON.stringify(this.localParams) === JSON.stringify(params)) {
+        // 未修改表单 直接跳转下一步
+        this.$emit('stepChange');
+        this.isHandle = false;
+        return;
+      }
       this.$refs.validateForm.validate().then(() => {
-        const params = this.handleParams();
         if (this.isCloseDataLink) {
           delete params.data_link_id;
         }
@@ -798,9 +817,9 @@ export default {
       let requestUrl;
       if (this.isUpdate) {
         urlParams.collector_config_id = Number(this.$route.params.collectorId);
-        requestUrl = this.isItsm ? 'collect/onlyUpdateCollection' : 'collect/updateCollection';
+        requestUrl = 'collect/updateCollection';
       } else {
-        requestUrl = this.isItsm ? 'collect/onlyCreateCollection' : 'collect/addCollection';
+        requestUrl = 'collect/addCollection';
       }
       const updateData = { params: urlParams, data: params };
       this.$http.request(requestUrl, updateData).then((res) => {
@@ -1012,7 +1031,7 @@ export default {
       });
     },
     async checkEnName(val) {
-      if (this.$route.name === 'collectEdit') return true;
+      if (this.isUpdate) return true;
       const result = await this.getEnNameIsRepeat(val);
       return result;
     },

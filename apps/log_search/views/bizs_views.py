@@ -45,7 +45,7 @@ class BizsViewSet(APIViewSet):
     lookup_field = "bk_biz_id"
 
     def get_permissions(self):
-        if self.action not in ["list", "list_clouds"]:
+        if self.action not in ["list", "list_clouds", "get_property"]:
             return [InstanceActionPermission([ActionEnum.VIEW_BUSINESS], ResourceEnum.BUSINESS)]
         return []
 
@@ -520,3 +520,34 @@ class BizsViewSet(APIViewSet):
         """
         params = self.params_valid(DynamicGroupSerializer)
         return Response(BizHandler(int(bk_biz_id)).get_dynamic_group(params["dynamic_group_id_list"]))
+
+    @list_route(methods=["GET"], url_path="get_property")
+    def get_property(self, request):
+        """
+        @api {get} /bizs/get_property/ 10_获取业务属性列表
+        @apiName get_property
+        @apiGroup 02_Biz
+        @apiParamExample {json} 成功请求:
+        [{
+            "biz_property_id": "bk_biz_developer",
+            "biz_property_name": "开发人员",
+            "biz_property_values": [
+                "name_1"
+            ]
+        }]
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data": [{
+                "biz_property_id": "bk_biz_developer",
+                "biz_property_name": "开发人员",
+                "biz_property_values": [
+                    "name_1"
+                ]
+            }],
+            "code": 0,
+            "message": ""
+        }``
+        """
+
+        return Response(BizHandler(bk_biz_id=None).list_biz_property())
