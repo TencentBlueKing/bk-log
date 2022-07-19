@@ -33,12 +33,19 @@ export default {
               // 当oldVal为空时则表示第一次进入
               const notPerformList = ['custom-report-create', 'custom-report-edit'];
               // 编辑进入存储页时 回填副本数
-              if (this.editStorageClusterID !== null && !notPerformList.includes(this.$route.name)) {
-                this.formData.storage_replies = this.curCollect.storage_replies;
-              }
-              // 编辑自定义上报回填副本数
-              if (this.isEdit && notPerformList.includes(this.$route.name)) {
-                this.formData.storage_replies = this.cacheStorageReplies;
+              if (!notPerformList.includes(this.$route.name)) {
+                if (this.editStorageClusterID !== null) {
+                  this.formData.storage_replies = this.curCollect.storage_replies;
+                  this.formData.es_shards = this.curCollect.storage_shards_nums;
+                } else { // 若是新增 则回填默认选中的值
+                  this.formData.storage_replies = res.setup_config.number_of_replicas_default;
+                  this.formData.es_shards = res.setup_config.es_shards_default;
+                }
+              } else {
+                if (this.isEdit) { // 编辑自定义上报回填副本数
+                  this.formData.storage_replies = this.cacheStorageReplies.storage_replies;
+                  this.formData.es_shards = this.cacheStorageReplies.storage_shards_nums;
+                }
               }
             } else {
               this.formData.allocation_min_days = '0';
@@ -171,7 +178,11 @@ export default {
     },
     // 输入自定义副本数
     changeCopyNumber(val) {
-      val === '' && (this.formData.storage_replies = 1);
+      val === '' && (this.formData.storage_replies = this.selectedStorageCluster.setup_config.number_of_replicas_default);
+    },
+    // 输入自定义分片数
+    changeShardsNumber(val) {
+      val === '' && (this.formData.es_shards = this.selectedStorageCluster.setup_config.es_shards_default);
     },
     // 跳转到 es 源
     jumpToEsAccess() {
@@ -207,7 +218,9 @@ export default {
       const { setup_config } = res;
       this.formData.retention = setup_config?.retention_days_default || '7';
       this.formData.storage_replies = setup_config?.number_of_replicas_default || 0;
+      this.formData.es_shards = setup_config?.es_shards_default || 0;
       this.replicasMax = setup_config?.number_of_replicas_max || 0;
+      this.shardsMax = setup_config?.es_shards_max || 0;
     },
     updateDaysList() {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {

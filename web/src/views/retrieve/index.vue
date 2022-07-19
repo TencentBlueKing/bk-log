@@ -1746,6 +1746,7 @@ export default {
 
             &:last-child {
               padding-top: 6px;
+              padding-bottom: 26px;
             }
           }
 
