@@ -16,7 +16,7 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.modules.utils import add_esb_info_before_request
@@ -30,9 +30,10 @@ class _BkSSM:
     MODULE = _("bkssm")
 
     def __init__(self):
+        bk_ssm_root = settings.SSM_HOST if settings.IS_K8S_DEPLOY_MODE else BK_SSM_ROOT
         self.get_access_token = DataAPI(
             method="POST",
-            url=BK_SSM_ROOT + "access-tokens",
+            url=bk_ssm_root + "access-tokens",
             module=self.MODULE,
             description=_("获取access_token"),
             before_request=add_esb_info_before_request,
@@ -40,14 +41,14 @@ class _BkSSM:
         )
         self.verify_access_token = DataAPI(
             method="POST",
-            url=BK_SSM_ROOT + "access-tokens/verify",
+            url=bk_ssm_root + "access-tokens/verify",
             module=self.MODULE,
             description=_("verify access_token"),
             before_request=add_esb_info_before_request,
         )
         self.refresh_access_token = DataAPI(
             method="POST",
-            url=BK_SSM_ROOT + "access-tokens/refresh",
+            url=bk_ssm_root + "access-tokens/refresh",
             module=self.MODULE,
             description=_("refresh access_token"),
             before_request=add_esb_info_before_request,

@@ -70,6 +70,13 @@ export const stepsConf = {
     { title: window.mainComponent.$t('dataManage.storage'), icon: '' },
     { title: window.mainComponent.$t('完成'), icon: '' },
   ],
+  // 容器日志
+  container: [
+    { title: window.mainComponent.$t('采集配置'), icon: '' },
+    { title: window.mainComponent.$t('btn.Field'), icon: '' },
+    { title: window.mainComponent.$t('dataManage.storage'), icon: '' },
+    { title: window.mainComponent.$t('完成'), icon: '' },
+  ],
   // 开始采集
   start: [
     { title: window.mainComponent.$t('采集下发'), icon: '' },
@@ -88,6 +95,7 @@ export const finishRefer = {
   editFinish: 5,
   field: 5,
   storage: 5,
+  container: 5,
   start: 2,
   stop: 2,
 };
