@@ -859,25 +859,14 @@ class CollectorViewSet(ModelViewSet):
         @api {post} /databus/collectors/$collector_config_id/retry/ 18_任务重试
         @apiName collector_subscription_run
         @apiGroup 10_Collector
-        @apiDescription 订阅触发
-        @apiParam {Array(json)} target_nodes 采集目标
-        @apiParam {String} target_nodes.ip 主机实例ip
-        @apiParam {int} target_nodes.bk_cloud_id 蓝鲸云区域id
-        @apiParam {int} target_nodes.bk_supplier_id 供应商id
+        @apiDescription 重试任务
+        @apiParam {Array(string)} instance_id_list 实例ID列表
         @apiSuccess {int} task_id 任务ID（在采集下发界面，需要将task_id合并到）
         @apiParamExample {json} 请求样例:
         {
-            "target_nodes": [
-                {
-                    "ip": "127.0.0.1",
-                    "bk_cloud_id": 0,
-                    "bk_supplier_id":0,
-                },
-                {
-                    "ip": "127.0.0.1",
-                    "bk_cloud_id": 0,
-                    "bk_supplier_id":0,
-                }
+            "instance_id_list": [
+                "host|instance|host|3",
+                "host|instance|host|4"
             ],
         }
         @apiSuccessExample {json} 成功返回:
@@ -890,7 +879,7 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.validated_data
         return Response(
-            CollectorHandler(collector_config_id=collector_config_id).retry_target_nodes(data["target_nodes"])
+            CollectorHandler(collector_config_id=collector_config_id).retry_instances(data["instance_id_list"])
         )
 
     @detail_route(methods=["GET"], url_path="subscription_status")
@@ -1165,6 +1154,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
         @apiParam {Int} [storage_replies] 副本数量
+        @apiParam {Int} es_shards es分片数量
         @apiParam {list} view_roles 查看权限
         @apiParam {Boolean} need_assessment 需要评估
         @apiParam {Object} assessment_config 评估配置

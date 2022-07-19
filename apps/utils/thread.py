@@ -83,7 +83,7 @@ class MultiExecuteFunc(object):
         return self.results
 
 
-def generate_request():
+def generate_request(username=""):
     """
     获取一个简单request
     """
@@ -91,4 +91,6 @@ def generate_request():
     request = factory.get("/")
     r = Request(request)
     r.parsers = (FormParser(), MultiPartParser())
+    if username:
+        r.user.username = username
     return r

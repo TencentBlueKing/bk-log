@@ -67,7 +67,7 @@ class CmdbHostCache(CacheBase):
             objs = {}
             try:
                 objs = cls.refresh_by_biz(bk_biz_id)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.error(f"get bk_biz_id[{bk_biz_id}] host info failed {e}")
 
             pipeline = cls.cache.pipeline(transaction=False)
