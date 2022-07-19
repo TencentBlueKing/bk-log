@@ -235,7 +235,7 @@ class IndexSetHandler(APIModel):
         time_field_unit=None,
         bk_app_code=None,
         username="",
-        bcs_project_id=0,
+        bcs_project_id="",
     ):
         # 创建索引
         index_set_handler = cls.get_index_set_handler(scenario_id)

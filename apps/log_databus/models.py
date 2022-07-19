@@ -352,7 +352,7 @@ class ContainerCollectorConfig(SoftDeleteModel):
 
 class BcsRule(SoftDeleteModel):
     rule_name = models.CharField(_("采集配置名称"), max_length=64)
-    bcs_project_id = models.IntegerField(_("项目ID"), default=0)
+    bcs_project_id = models.CharField(_("项目ID"), max_length=64, default="")
 
 
 class ItsmEtlConfig(SoftDeleteModel):

@@ -2659,6 +2659,7 @@ class CollectorHandler(object):
                 indexes=[path_index],
                 username="admin",
                 category_id="kubernetes",
+                bcs_project_id=bcs_project_id,
             )
             new_std_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_stdout_log_{}".format(bcs_project_id),
@@ -2669,6 +2670,7 @@ class CollectorHandler(object):
                 indexes=[std_index],
                 username="admin",
                 category_id="kubernetes",
+                bcs_project_id=bcs_project_id,
             )
             return new_path_cls_index_set, new_std_cls_index_set
 
