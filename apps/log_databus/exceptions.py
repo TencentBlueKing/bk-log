@@ -134,6 +134,11 @@ class CollectorPluginNotMatchException(BaseCollectorPluginException):
     MESSAGE = _("参数异常：采集插件不匹配")
 
 
+class ContainerCollectConfigValidateYamlException(BaseCollectorConfigException):
+    ERROR_CODE = "117"
+    MESSAGE = _("容器采集配置 yaml 格式不合法")
+
+
 class StorageNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "201"
     MESSAGE = _("集群不存在")
@@ -322,3 +327,23 @@ class RestoreNotFound(BaseCollectorConfigException):
 class RestoreExpired(BaseCollectorConfigException):
     ERROR_CODE = "802"
     MESSAGE = _("归档回溯已经过期")
+
+
+class MissedNamespaceException(BaseCollectorConfigException):
+    ERROR_CODE = "901"
+    MESSAGE = _("缺少namespace参数")
+
+
+class BCSApiException(BaseCollectorConfigException):
+    ERROR_CODE = "902"
+    MESSAGE = _("bcs api错误: {error}")
+
+
+class RuleCollectorException(BaseCollectorConfigException):
+    ERROR_CODE = "903"
+    MESSAGE = _("rule: {rule_id}异常")
+
+
+class NeedBcsClusterIdException(BaseCollectorConfigException):
+    ERROR_CODE = "904"
+    MESSAGE = _("请求无bcs_cluster_id参数，请检查")

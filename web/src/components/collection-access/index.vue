@@ -31,22 +31,21 @@
             v-if="stepList.length"
             theme="primary"
             direction="vertical"
-            :cur-step.sync="curStep"
+            :cur-step.sync="showSteps"
             :steps="stepList">
           </bk-steps>
           <div class="step-arrow" :style="{ top: (curStep * 76 - 38) + 'px' }"></div>
         </div>
       </section>
-      <section class="access-step-container" v-if="operateType">
+      <section v-bkloading="{ isLoading: containerLoading, zIndex: 10 }"
+               class="access-step-container" v-if="operateType">
         <template v-if="isItsmAndNotStartOrStop">
           <step-add
             v-if="curStep === 1"
+            :container-loading.sync="containerLoading"
             :operate-type="operateType"
-            @stepChange="stepChange" />
-          <!-- <step-capacity
-            v-if="curStep === 0"
-            :operate-type="operateType"
-            @stepChange="stepChange" /> -->
+            :is-physics.sync="isPhysics"
+            @stepChange="(num) => stepChange(num, 'add')" />
           <step-issued
             v-if="curStep === 2"
             :operate-type="operateType"
@@ -79,7 +78,9 @@
           <step-add
             v-if="curStep === 1 && !isSwitch"
             :operate-type="operateType"
-            @stepChange="stepChange" />
+            :container-loading.sync="containerLoading"
+            :is-physics.sync="isPhysics"
+            @stepChange="(num) => stepChange(num, 'add')" />
           <step-issued
             v-if="(curStep === 2 && !isSwitch) || (curStep === 1 && isSwitch)"
             :operate-type="operateType"
@@ -119,7 +120,6 @@ import { mapState, mapGetters } from 'vuex';
 import { stepsConf, finishRefer } from './step';
 import AuthPage from '@/components/common/auth-page';
 import stepAdd from './step-add';
-// import stepCapacity from './step-capacity';
 import stepIssued from './step-issued';
 import stepField from './step-field';
 import stepStorage from './step-storage.vue';
@@ -131,7 +131,6 @@ export default {
   components: {
     AuthPage,
     stepAdd,
-    // stepCapacity,
     stepIssued,
     stepField,
     stepStorage,
@@ -146,12 +145,15 @@ export default {
       isSubmit: false,
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
       operateType: '',
-      curStep: 1,
+      curStep: 1, // 组件步骤
+      showSteps: 1, // 判断容器日志所用的展示步骤
+      isPhysics: true, // 采集配置是否是物理环境
       indexSetId: '',
       stepList: [],
       globals: {},
       itsmTicketIsApplying: false,
       applyData: {},
+      containerLoading: false, // 容器日志提交loading
     };
   },
   computed: {
@@ -259,7 +261,11 @@ export default {
           } else if (this.operateType === 'field') {
             this.curStep = 3;
           } else if (this.operateType === 'storage') {
-            this.curStep  = 4;
+            this.curStep = 4;
+          }
+          // 容器环境  非启用停用 非克隆状态则展示容器日志步骤
+          if (!this.isPhysics && !this.isSwitch && type !== 'clone') {
+            this.operateType = 'container';
           }
         } catch (e) {
           console.warn(e);
@@ -267,30 +273,38 @@ export default {
       } else {
         this.operateType = routeType;
       }
-      this.init();
+      this.setSteps();
       this.basicLoading = false;
     },
-    init() {
-      this.setSteps();
-    },
     setSteps() {
-      let stepList;
-      if (this.isItsmAndNotStartOrStop) {
-        stepList = stepsConf.itsm;
+      // 判断当前是否是物理环境 用于切换setp的数组
+      if (this.isPhysics || this.isSwitch) {
+        this.showSteps = this.curStep;
       } else {
-        stepList = stepsConf[this.operateType];
+        // 容器环境 非启用 停用情况 当前页若是采集配置则跳过采集下发直接进入字段提取步骤展示
+        this.showSteps = this.curStep === 1  ?  1 : this.curStep - 1;
       }
+      // 新增  并且为容器环境则步骤变为容器步骤 步骤为第一步时不判断
+      if (this.operateType === 'add' && !this.isPhysics && this.curStep !== 1) {
+        this.operateType = 'container';
+      }
+      const stepList = stepsConf[this.operateType];
+
       this.stepList = JSON.parse(JSON.stringify(stepList));
 
       this.stepList.forEach((step, index) => {
-        if (index < this.curStep - 1) {
+        if (index < this.showSteps - 1) {
           // step.icon = 'check-1'; // 组件bug。已完成的步骤无法为空icon。或者其它样式。需优化
         } else {
           step.icon = index + 1;
         }
       });
     },
-    stepChange(num) {
+    stepChange(num, type = null) {
+      if (type === 'add' && !this.isPhysics && !num) {
+        this.curStep = this.curStep + 2;
+        return;
+      }
       this.curStep = num || this.curStep + 1;
     },
     updateIndexSetId(indexId) {
@@ -306,10 +320,11 @@ export default {
           params: {
             collector_config_id: this.$route.params.collectorId,
           },
-        }).then((res) => {
+        }).then(async (res) => {
           if (res.data) {
             const collect = res.data;
-            if (collect.collector_scenario_id !== 'wineventlog') {
+            this.isPhysics = collect.environment !== 'container';
+            if (collect.collector_scenario_id !== 'wineventlog' && this.isPhysics) {
               collect.params.paths = collect.params.paths.map(item => ({ value: item }));
             }
             // 如果当前页面采集流程未完成 则展示流程服务页面

@@ -648,12 +648,16 @@ class MappingHandlers(object):
             {"gseIndex", "serverIp", "path", "iterationIndex"},
             {"gseIndex", "path", "iterationIndex", "__ext.container_id"},
         ]
-        if any(fields_list.issuperset(judge) for judge in context_and_realtime_judge_fields):
+        for judge in context_and_realtime_judge_fields:
+            if not fields_list.issuperset(judge):
+                continue
+
             analyze_fields_type_result = cls._analyze_fields_type(final_fields_list)
             if analyze_fields_type_result:
                 return {
                     "context_search_usable": context_search_usable,
                     "realtime_search_usable": realtime_search_usable,
+                    "context_fields": judge.copy(),
                     "usable_reason": analyze_fields_type_result,
                 }
             context_search_usable = True
@@ -661,11 +665,13 @@ class MappingHandlers(object):
             return {
                 "context_search_usable": context_search_usable,
                 "realtime_search_usable": realtime_search_usable,
+                "context_fields": judge.copy(),
                 "usable_reason": "",
             }
         return {
             "context_search_usable": context_search_usable,
             "realtime_search_usable": realtime_search_usable,
+            "context_fields": [],
             "usable_reason": cls._analyze_require_fields(fields_list),
         }
 
