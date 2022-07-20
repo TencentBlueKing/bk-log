@@ -87,10 +87,10 @@ export default {
           if ((this.isItsm && this.curCollect?.can_use_independent_es_cluster) || isEdit) {
             // itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
           } else {
-            const defaultItem = this.storageList.find(item => item.registered_system === '_default');
-            if (defaultItem?.permission?.manage_es_source) {
-              this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
-            }
+            // const defaultItem = this.storageList.find(item => item.registered_system === '_default');
+            // if (defaultItem?.permission?.manage_es_source) {
+            //   this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
+            // }
           }
           const notPerformList = ['custom-report-create', 'custom-report-edit'];
           if (!notPerformList.includes(this.$route.name)) {
@@ -205,7 +205,7 @@ export default {
       this.formData.storage_replies = setup_config?.number_of_replicas_default || 0;
       this.formData.es_shards = setup_config?.es_shards_default || 0;
       this.replicasMax = setup_config?.number_of_replicas_max || 0;
-      this.shardsMax = setup_config?.es_shards_max || 0;
+      this.shardsMax = setup_config?.es_shards_max || 1;
       this.formData.allocation_min_days = '0';
     },
     updateDaysList() {
