@@ -108,6 +108,10 @@ COLLECTORS_LIST = {
         "total": 1,
         "list": [
             {
+                "add_pod_label": False,
+                "bcs_cluster_id": None,
+                "environment": None,
+                "extra_labels": None,
                 "collector_config_id": 231,
                 "collector_scenario_name": "行日志文件",
                 "collector_plugin_id": None,
@@ -159,6 +163,7 @@ COLLECTORS_LIST = {
                 "bkdata_data_id_sync_times": 0,
                 "collector_config_name_en": "",
                 "storage_cluster_id": 1,
+                "rule_id": 0,
                 "storage_cluster_name": "",
                 "table_id_prefix": "2_bklog_",
                 "is_search": False,
@@ -167,6 +172,8 @@ COLLECTORS_LIST = {
                 "bkdata_index_set_ids": [],
                 "retention": 7,
                 "is_display": True,
+                "yaml_config_enabled": False,
+                "yaml_config": "",
             }
         ],
     },
