@@ -19,6 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from django.conf import settings
+
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
 from apps.decorators import user_operation_record
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
@@ -39,20 +41,20 @@ from apps.utils.log import logger
 
 class TransferEtlHandler(EtlHandler):
     def update_or_create(
-            self,
-            etl_config,
-            table_id,
-            storage_cluster_id,
-            retention,
-            allocation_min_days,
-            storage_replies,
-            es_shards,
-            view_roles=None,
-            etl_params=None,
-            fields=None,
-            username="",
-            *args,
-            **kwargs
+        self,
+        etl_config,
+        table_id,
+        storage_cluster_id,
+        retention,
+        allocation_min_days,
+        storage_replies,
+        es_shards=settings.ES_SHARDS,
+        view_roles=None,
+        etl_params=None,
+        fields=None,
+        username="",
+        *args,
+        **kwargs,
     ):
         # 停止状态下不能编辑
         if self.data and not self.data.is_active:
@@ -99,7 +101,7 @@ class TransferEtlHandler(EtlHandler):
             etl_params=etl_params,
             es_version=cluster_info["cluster_config"]["version"],
             hot_warm_config=cluster_info["cluster_config"].get("custom_option", {}).get("hot_warm_config"),
-            es_shards=es_shards
+            es_shards=es_shards,
         )
 
         if not view_roles:
@@ -124,7 +126,7 @@ class TransferEtlHandler(EtlHandler):
                 "view_roles": view_roles,
                 "etl_params": etl_params,
                 "fields": fields,
-                "es_shards": es_shards
+                "es_shards": es_shards,
             },
         }
         user_operation_record.delay(operation_record)
@@ -140,5 +142,5 @@ class TransferEtlHandler(EtlHandler):
             "scenario_id": index_set["scenario_id"],
             "storage_cluster_id": storage_cluster_id,
             "retention": retention,
-            "es_shards": es_shards
+            "es_shards": es_shards,
         }

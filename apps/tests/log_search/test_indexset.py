@@ -55,6 +55,7 @@ MAPPING_LIST = [
 CREATE_SUCCESS = {
     "result": True,
     "data": {
+        "bcs_project_id": "",
         "index_set_id": 5,
         "view_roles": [],
         "bkdata_project_id": None,
@@ -93,6 +94,7 @@ CREATE_SUCCESS = {
 DELETE_SUCCESS = {"message": "", "code": 0, "data": None, "result": True}
 
 UPDATE_INDEX_SET = {
+    "bcs_project_id": "",
     "index_set_id": 102,
     "view_roles": [],
     "bkdata_project_id": None,
@@ -158,6 +160,7 @@ INDEX_SET_LISTS = {
             "index_set_id": 31,
             "view_roles": [],
             "bkdata_project_id": None,
+            "bcs_project_id": "",
             "indexes": [
                 {
                     "index_id": 62,
@@ -278,6 +281,7 @@ SYSC_AUTH_STATUS_RESULT = [
 ]
 
 RETRIEVE_LIST = {
+    "bcs_project_id": "",
     "index_set_id": 63,
     "view_roles": [],
     "bkdata_project_id": None,

@@ -264,6 +264,7 @@ class ModelTrainContentNodeConfigCls(object):
 class ModelEvaluationContentNodeConfigCls(object):
     algorithm_node_id: NodeConfigCls
     evaluation_func: NodeConfigCls
+    evaluate_input: NodeConfigCls
 
 
 @dataclass
@@ -362,8 +363,8 @@ class AlgorithmConfigConfCls(object):
 class ModelTrainContentAlgorithmConfigCls(object):
     sample_set_table_name: Any
     sample_set_table_desc: Any
-    feature_columns: List[AlgorithmConfigConfCls]
-    predict_output: List[AlgorithmConfigConfCls]
+    training_input: List[AlgorithmConfigConfCls]
+    training_meta: Dict
     training_args: List[AlgorithmConfigConfCls]
     basic_model_id: str
     add_on_input: List[str] = field(default_factory=list)
@@ -432,6 +433,7 @@ class ContentCls(object):
     ]
     output_config: OutputConfigCls = OutputConfigCls()
     input_config: Dict = field(default_factory=dict)
+    prediction_algorithm_config: Dict = field(default_factory=dict)
 
 
 @dataclass
@@ -779,7 +781,7 @@ class UpdateTrainingScheduleCls(object):
             "training_freq": 1,
             "success_rate_threshold": 0.8,
             "training_freq_unit": "h",
-            "sample_change_count": "100",
+            "sample_change_count": 1,
         }
     )
     release_config: Dict = field(default_factory=lambda: {"release_mode": "auto"})

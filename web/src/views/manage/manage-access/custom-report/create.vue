@@ -150,6 +150,7 @@
         <!-- 数据链路 -->
         <bk-form-item
           required
+          v-if="!isCloseDataLink"
           :label="$t('customReport.dataLink')"
           :rules="storageRules.data_link_id"
           :property="'data_link_id'">
@@ -236,7 +237,7 @@
             class="copy-number-input"
             type="number"
             :max="shardsMax"
-            :min="0"
+            :min="1"
             :precision="0"
             :clearable="false"
             :show-controls="true"
@@ -416,7 +417,7 @@ export default {
       },
       clusterList: [], // 共享集群
       exclusiveList: [], // 独享集群
-      cacheStorageReplies: {}, // 自定义上报回显副本数和分片数时保存的值
+      editStorageClusterID: null,
     };
   },
   computed: {
@@ -429,6 +430,10 @@ export default {
       const { storage_duration_time } = this.globalsData;
       // eslint-disable-next-line camelcase
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
+    },
+    isCloseDataLink() {
+      // 没有可上报的链路时，编辑采集配置链路ID为0或null时，隐藏链路配置框，并且不做空值校验。
+      return !this.linkConfigurationList.length || (this.isEdit && !this.formData.data_link_id);
     },
   },
   watch: {
@@ -472,6 +477,7 @@ export default {
       }
       this.$refs.validateForm.validate().then(() => {
         this.submitLoading = true;
+        if (this.isCloseDataLink) delete this.formData.data_link_id;
         this.$http.request(`custom/${this.isEdit ? 'setCustom' : 'createCustom'}`, {
           params: {
             collector_config_id: this.collectorId,
@@ -546,10 +552,8 @@ export default {
           es_shards: storage_shards_nums,
         });
         // 缓存编辑时的集群ID
-        this.cacheStorageReplies = {
-          storage_replies,
-          storage_shards_nums,
-        };
+        // eslint-disable-next-line camelcase
+        this.editStorageClusterID = storage_cluster_id;
       } else {
         const { retention } =  this.formData;
         Object.assign(this.formData, {
