@@ -651,6 +651,8 @@ export default {
     quickOperation: 'Hot key  Esc: Quit; PageUp: Backward one screen; PageDn: Forward one screen',
     include: 'Include',
     uninclude: 'Uninclude',
+    traceRetrieve: 'Trace retrieve',
+    container: 'Container',
   },
   // 调用链跟踪
   trace: {
