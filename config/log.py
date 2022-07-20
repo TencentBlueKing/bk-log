@@ -49,7 +49,7 @@ def get_logging_config_dict(settings_module):
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    return {
+    logging_config = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
@@ -131,3 +131,17 @@ def get_logging_config_dict(settings_module):
             "bk_monitor": {"handlers": ["root"], "level": log_level, "propagate": True},
         },
     }
+
+    if os.getenv("BKAPP_UDP_LOG", "off") == "on":
+        log_udp_server_host = os.getenv("BKAPP_UDP_LOG_SERVER_HOST", "")
+        log_udp_server_port = int(os.getenv("BKAPP_UDP_LOG_SERVER_PORT", 0))
+        logging_config["handlers"]["udp"] = {
+            "formatter": "verbose",
+            "class": "apps.utils.log.UdpHandler",
+            "host": log_udp_server_host,
+            "port": log_udp_server_port,
+        }
+        for _, v in logging_config["loggers"].items():
+            v["handlers"].append("udp")
+
+    return logging_config
