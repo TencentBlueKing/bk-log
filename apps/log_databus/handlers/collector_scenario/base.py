@@ -27,12 +27,14 @@ from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import TransferApi, NodeApi
+from apps.exceptions import ApiResultError
 from apps.log_clustering.constants import PatternEnum
 from apps.log_databus.constants import META_DATA_ENCODING
 from apps.log_databus.handlers.collector_scenario.utils import build_es_option_type
 from apps.log_databus.models import CollectorConfig, DataLinkConfig
 from apps.log_databus.exceptions import BaseCollectorConfigException, DataLinkConfigPartitionException
 from apps.log_search.constants import CollectorScenarioEnum
+from apps.utils.function import ignored
 from apps.utils.log import logger
 
 
@@ -146,6 +148,10 @@ class CollectorScenario(object):
             "is_log_data": True,
             "allow_metrics_missing": True,
         }
+
+        with ignored(ApiResultError):
+            bk_data_id = TransferApi.get_data_id({"data_name": data_name, "no_request": True})["bk_data_id"]
+
         if not bk_data_id:
             # 创建数据源，创建时一定是BK_LOG_TEXT这种直接入库的方式，后面进行字段提取时再根据情况变更清洗方式
             if not data_name:

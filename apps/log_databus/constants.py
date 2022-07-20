@@ -45,6 +45,8 @@ BULK_CLUSTER_INFOS_LIMIT = 20
 # ES集群类型配置特性开关key
 FEATURE_TOGGLE_ES_CLUSTER_TYPE = "es_cluster_type_setup"
 
+DEFAULT_RETENTION = 14
+
 
 class VisibleEnum(ChoicesEnum):
     # 当前业务可见
@@ -192,6 +194,8 @@ MAX_SYNC_CLEAN_TTL = 600
 
 # 缓存-集群信息key
 CACHE_KEY_CLUSTER_INFO = "bulk_cluster_info_{}"
+
+DEFAULT_COLLECTOR_LENGTH = 2
 
 
 class AsyncStatus(object):
@@ -361,3 +365,44 @@ class ETLProcessorChoices(ChoicesEnum):
 DEFAULT_ES_TRANSPORT = 9300
 
 DEFAULT_ES_TAGS = ["BK-LOG"]
+
+
+class Environment(object):
+    LINUX = "linux"
+    WINDOWS = "windows"
+    CONTAINER = "container"
+
+
+class ContainerCollectorType(object):
+    CONTAINER = "container_log_config"
+    NODE = "node_log_config"
+    STDOUT = "std_log_config"
+
+
+class ContainerCollectStatus(ChoicesEnum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    TERMINATED = "TERMINATED"
+
+    _choices_labels = (
+        (SUCCESS, _("成功")),
+        (FAILED, _("失败")),
+        (TERMINATED, _("已停用")),
+    )
+
+
+class TopoType(ChoicesEnum):
+    NODE = "node"
+    POD = "pod"
+
+    _choices_labels = (
+        (NODE, _("节点")),
+        (POD, _("pod")),
+    )
+
+
+class WorkLoadType(object):
+    DEPLOYMENT = "Deployment"
+    DAEMON_SET = "DaemonSet"
+    JOB = "Job"
+    STATEFUL_SET = "StatefulSet"
