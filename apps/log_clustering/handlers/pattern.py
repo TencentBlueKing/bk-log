@@ -207,7 +207,7 @@ class PatternHandler:
                             "doc_count": group_bucket.get("doc_count", 0),
                             "group": (
                                 f"{iter_bucket.get('group', '')}|{group_bucket['key']}"
-                                if iter_bucket.get("group") != None  # noqa
+                                if iter_bucket.get("group") is not None  # noqa
                                 else group_bucket["key"]
                             ),
                         }
@@ -216,7 +216,9 @@ class PatternHandler:
         return bucket
 
     def _get_new_class(self):
-        start_time, end_time = generate_time_range(NEW_CLASS_QUERY_TIME_RANGE, "", "", get_local_param("time_zone"))
+        start_time, end_time = generate_time_range(
+            NEW_CLASS_QUERY_TIME_RANGE, self._query["start_time"], self._query["end_time"], get_local_param("time_zone")
+        )
         new_classes = (
             BkData(self._clustering_config.new_cls_pattern_rt)
             .select(*NEW_CLASS_QUERY_FIELDS)

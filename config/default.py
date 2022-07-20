@@ -97,7 +97,7 @@ MIDDLEWARE = (
     # http -> https 转换中间件
     "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
-    "blueapps.opentelemetry.metrics.middlewares.SaaSMetricsBeforeMiddleware",
+    "apps.middleware.user_middleware.BkLogMetricsBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -121,7 +121,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
-    "blueapps.opentelemetry.metrics.middlewares.SaaSMetricsAfterMiddleware",
+    "apps.middleware.user_middleware.BkLogMetricsAfterMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -721,10 +721,12 @@ CELERY_QUEUES = PIPELINE_CELERY_QUEUES
 # ===============================================================================
 TABLE_ID_PREFIX = "bklog"
 
+DEFAULT_OPERATOR = os.environ.get("BKAPP_ES_OPERATOR", "admin")
 ES_DATE_FORMAT = os.environ.get("BKAPP_ES_DATE_FORMAT", "%Y%m%d")
 ES_SHARDS_SIZE = int(os.environ.get("BKAPP_ES_SHARDS_SIZE", 30))
 ES_SLICE_GAP = int(os.environ.get("BKAPP_ES_SLICE_GAP", 60))
 ES_SHARDS = int(os.environ.get("BKAPP_ES_SHARDS", 3))
+ES_SHARDS_MAX = int(os.environ.get("BKAPP_ES_SHARDS_MAX", 64))
 ES_REPLICAS = int(os.environ.get("BKAPP_ES_REPLICAS", 1))
 ES_STORAGE_DEFAULT_DURATION = int(os.environ.get("BKAPP_ES_STORAGE_DURATION", 7))
 ES_PRIVATE_STORAGE_DURATION = int(os.environ.get("BKAPP_ES_PRIVATE_STORAGE_DURATION", 365))
