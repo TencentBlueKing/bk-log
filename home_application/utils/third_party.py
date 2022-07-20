@@ -72,6 +72,17 @@ class ThirdParty(object):
     @staticmethod
     def call_api(module: str):
         result = {"status": False, "data": None, "message": "", "suggestion": ""}
+        if module == "monitor":
+            from django.conf import settings
+
+            if settings.FEATURE_TOGGLE["monitor_report"] == "off":
+                return {"status": True, "data": "", "message": f"{module} is not deployed", "suggestion": ""}
+        if module == "bk_data":
+            from django.conf import settings
+
+            if settings.FEATURE_TOGGLE["scenario_bkdata"] == "off":
+                return {"status": True, "data": "", "message": f"{module} is not deployed", "suggestion": ""}
+
         start_time = time.time()
         try:
             activate_request(generate_request())
