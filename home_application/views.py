@@ -54,8 +54,8 @@ def contact(request):
 
 
 @login_exempt
-def liveness(request):
-    """存活探测接口"""
+def readiness(request):
+    """就绪探测接口"""
     return JsonResponse({"server_up": 1})
 
 
