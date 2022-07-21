@@ -130,6 +130,20 @@
           @blur="changeCopyNumber"
         ></bk-input>
       </bk-form-item>
+      <!-- 分片数 -->
+      <bk-form-item :label="$t('分片数')">
+        <bk-input
+          class="copy-number-input"
+          v-model="formData.es_shards"
+          type="number"
+          :max="shardsMax"
+          :min="1"
+          :precision="0"
+          :clearable="false"
+          :show-controls="true"
+          @blur="changeShardsNumber"
+        ></bk-input>
+      </bk-form-item>
       <div class="capacity-assessment" v-if="isCanUseAssessment">
         <div class="button-text" @click="isShowAssessment = !isShowAssessment">
           <span>{{ $t('容量评估') }}</span>
@@ -301,7 +315,8 @@ export default {
         fields: [],
         view_roles: [],
         retention: '',
-        storage_replies: 1,
+        storage_replies: 0,
+        es_shards: 0,
         allocation_min_days: '0',
         storage_cluster_id: '',
         assessment_config: {
@@ -374,6 +389,7 @@ export default {
       isChangeSelect: false,
       hostNumber: 0,
       replicasMax: 7,
+      shardsMax: 7,
       isForcedFillAssessment: false, // 是否必须容量评估
       editStorageClusterID: null, // 存储页进入时判断是否有选择过存储集群
     };
@@ -440,6 +456,7 @@ export default {
         storage_cluster_id,
         retention,
         storage_replies,
+        es_shards,
         allocation_min_days: allMinDays,
         view_roles,
         fields,
@@ -455,6 +472,7 @@ export default {
         storage_cluster_id,
         retention: Number(retention),
         storage_replies: Number(storage_replies),
+        es_shards: Number(es_shards),
         allocation_min_days: isOpenHotWarm ? Number(allMinDays) : 0,
         view_roles,
         etl_params: {
@@ -561,6 +579,7 @@ export default {
         storage_cluster_id,
         retention,
         storage_replies,
+        storage_shards_nums,
         allocation_min_days,
         table_id_prefix,
         view_roles,
@@ -604,6 +623,7 @@ export default {
         table_id: table_id ? table_id : collector_config_name_en ? collector_config_name_en : '',
         // eslint-disable-next-line camelcase
         storage_cluster_id: default_exclusive_cluster_id ? default_exclusive_cluster_id : storage_cluster_id,
+        es_shards: storage_shards_nums,
         table_id_prefix,
         etl_config: this.fieldType,
         etl_params: Object.assign({
@@ -628,7 +648,8 @@ export default {
           fields: this.stashCleanConf.etl_fields,
         });
       }
-      this.editStorageClusterID = this.formData.storage_cluster_id;
+      // eslint-disable-next-line camelcase
+      this.editStorageClusterID = storage_cluster_id;
       this.formData.storage_cluster_id = this.formData.storage_cluster_id === null
         ? tsStorageId : this.formData.storage_cluster_id;
 

@@ -306,7 +306,7 @@ class SearchHandler(object):
     def analyze_fields(self, field_result):
         result = MappingHandlers.analyze_fields(field_result)
         if result["context_search_usable"]:
-            return True, {"reason": ""}
+            return True, {"reason": "", "context_fields": result.get("context_fields", [])}
         return False, {"reason": result["usable_reason"]}
 
     @fields_config("bcs_web_console")

@@ -150,6 +150,7 @@
         <!-- 数据链路 -->
         <bk-form-item
           required
+          v-if="!isCloseDataLink"
           :label="$t('customReport.dataLink')"
           :rules="storageRules.data_link_id"
           :property="'data_link_id'">
@@ -227,6 +228,21 @@
             :show-controls="true"
             :disabled="submitLoading"
             @blur="changeCopyNumber"
+          ></bk-input>
+        </bk-form-item>
+        <!-- 分片数 -->
+        <bk-form-item :label="$t('分片数')">
+          <bk-input
+            v-model="formData.es_shards"
+            class="copy-number-input"
+            type="number"
+            :max="shardsMax"
+            :min="1"
+            :precision="0"
+            :clearable="false"
+            :show-controls="true"
+            :disabled="submitLoading"
+            @blur="changeShardsNumber"
           ></bk-input>
         </bk-form-item>
         <!-- 热数据\冷热集群存储期限 -->
@@ -324,11 +340,13 @@ export default {
         storage_cluster_id: '',
         retention: '',
         allocation_min_days: '0',
-        storage_replies: 1,
+        storage_replies: 0,
         category_id: '',
         description: '',
+        es_shards: 0,
       },
       replicasMax: 7,
+      shardsMax: 7,
       baseRules: {
         collector_config_name: [ // 采集名称
           {
@@ -399,7 +417,7 @@ export default {
       },
       clusterList: [], // 共享集群
       exclusiveList: [], // 独享集群
-      cacheStorageReplies: null,
+      editStorageClusterID: null,
     };
   },
   computed: {
@@ -412,6 +430,10 @@ export default {
       const { storage_duration_time } = this.globalsData;
       // eslint-disable-next-line camelcase
       return storage_duration_time && storage_duration_time.filter(item => item.default === true)[0].id;
+    },
+    isCloseDataLink() {
+      // 没有可上报的链路时，编辑采集配置链路ID为0或null时，隐藏链路配置框，并且不做空值校验。
+      return !this.linkConfigurationList.length || (this.isEdit && !this.formData.data_link_id);
     },
   },
   watch: {
@@ -434,7 +456,7 @@ export default {
   },
   mounted() {
     this.containerLoading = true;
-    Promise.all([this.getLinkData(), this.getStorage(this.isEdit)]).then(() => {
+    Promise.all([this.getLinkData(), this.getStorage()]).then(() => {
       this.initFormData();
     })
       .finally(() => {
@@ -455,6 +477,7 @@ export default {
       }
       this.$refs.validateForm.validate().then(() => {
         this.submitLoading = true;
+        if (this.isCloseDataLink) delete this.formData.data_link_id;
         this.$http.request(`custom/${this.isEdit ? 'setCustom' : 'createCustom'}`, {
           params: {
             collector_config_id: this.collectorId,
@@ -463,6 +486,7 @@ export default {
             ...this.formData,
             storage_replies: Number(this.formData.storage_replies),
             allocation_min_days: Number(this.formData.allocation_min_days),
+            es_shards: Number(this.formData.es_shards),
             bk_biz_id: Number(this.bkBizId),
           },
         })
@@ -511,6 +535,7 @@ export default {
           category_id,
           description,
           bk_data_id,
+          storage_shards_nums,
         } = res.data;
         Object.assign(this.formData, {
           collector_config_name,
@@ -524,9 +549,11 @@ export default {
           category_id,
           description,
           bk_data_id,
+          es_shards: storage_shards_nums,
         });
         // 缓存编辑时的集群ID
-        this.cacheStorageReplies = res.data.storage_replies;
+        // eslint-disable-next-line camelcase
+        this.editStorageClusterID = storage_cluster_id;
       } else {
         const { retention } =  this.formData;
         Object.assign(this.formData, {

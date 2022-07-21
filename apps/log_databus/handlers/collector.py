@@ -731,7 +731,8 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -776,7 +777,7 @@ class CollectorHandler(object):
             )
 
     @transaction.atomic
-    def destroy(self):
+    def destroy(self, **kwargs):
         """
         删除采集配置
         :return: task_id
@@ -788,6 +789,9 @@ class CollectorHandler(object):
 
         # 2. 停止采集（删除配置文件）
         self.stop()
+
+        if self.data.is_container_environment:
+            ContainerCollectorConfig.objects.filter(collector_config_id=self.collector_config_id).delete()
 
         # 3. 节点管理-删除订阅配置
         self._delete_subscription()
@@ -1932,7 +1936,8 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id,
+                ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2417,8 +2422,12 @@ class CollectorHandler(object):
             "bk_data_id": self.data.bk_data_id,
         }
 
-    def list_bcs_collector(self, bcs_cluster_id):
-        collectors = CollectorConfig.objects.filter(bcs_cluster_id=bcs_cluster_id).order_by("-updated_at")
+    def list_bcs_collector(self, bcs_cluster_id, bk_app_code="bk_bcs"):
+        collectors = (
+            CollectorConfig.objects.filter(bcs_cluster_id=bcs_cluster_id, bk_app_code=bk_app_code)
+            .exclude(bk_app_code="bk_log_search")
+            .order_by("-updated_at")
+        )
         rule_dict = {}
         if not collectors:
             return []
@@ -2458,12 +2467,14 @@ class CollectorHandler(object):
         for rule_id, collector in rule_dict.items():
             rule = {
                 "rule_id": rule_id,
-                "collector_config_name": collector["path_collector_config"].collector_config_name.rsplit("_", 1)[0],
+                "collector_config_name": collector["path_collector_config"]
+                .collector_config_name.rsplit("_", 1)[0]
+                .split("_", 1)[1],
                 "bk_biz_id": collector["path_collector_config"].bk_biz_id,
                 "description": collector["path_collector_config"].description,
-                "collector_config_name_en": collector["path_collector_config"].collector_config_name_en.rsplit("_", 1)[
-                    0
-                ],
+                "collector_config_name_en": collector["path_collector_config"]
+                .collector_config_name_en.rsplit("_", 1)[0]
+                .split("_", 1)[1],
                 "environment": collector["path_collector_config"].environment,
                 "bcs_cluster_id": collector["path_collector_config"].bcs_cluster_id,
                 "extra_labels": collector["path_collector_config"].extra_labels,
@@ -2493,7 +2504,7 @@ class CollectorHandler(object):
                         },
                         "label_selector": {
                             "match_labels": path_container_config.match_labels,
-                            "match_expressions": path_container_config.match_labels,
+                            "match_expressions": path_container_config.match_expressions,
                         },
                         "all_container": path_container_config.all_container,
                         "status": path_container_config.status,
@@ -2504,19 +2515,6 @@ class CollectorHandler(object):
                 )
             result.append(rule)
         return result
-
-        # pg = DataPageNumberPagination()
-        # page_collectors = pg.paginate_queryset(
-        #     queryset=CollectorConfig.objects.exclude(
-        #         bk_app_code="bk_log_search",
-        #     ).filter(environment=Environment.CONTAINER, bk_biz_id=bk_biz_id),
-        #     request=request,
-        #     view=view,
-        # )
-        # res = pg.get_paginated_response(
-        #     [self.generate_bcs_collector(collector=collector) for collector in page_collectors]
-        # )
-        # return res
 
     @transaction.atomic
     def create_bcs_container_config(self, data, bk_app_code="bk_bcs"):
@@ -2654,6 +2652,7 @@ class CollectorHandler(object):
                 indexes=[path_index],
                 username="admin",
                 category_id="kubernetes",
+                bcs_project_id=bcs_project_id,
             )
             new_std_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_stdout_log_{}".format(bcs_project_id),
@@ -2664,6 +2663,7 @@ class CollectorHandler(object):
                 indexes=[std_index],
                 username="admin",
                 category_id="kubernetes",
+                bcs_project_id=bcs_project_id,
             )
             return new_path_cls_index_set, new_std_cls_index_set
 
@@ -2957,7 +2957,7 @@ class CollectorHandler(object):
             self.deal_self_call(
                 collector_config_id=collector.collector_config_id,
                 collector=collector,
-                func=self.delete_collector_bcs_config,
+                func=self.destroy,
             )
         bcs_rule.delete()
         return {"rule_id": rule_id}

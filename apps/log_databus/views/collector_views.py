@@ -29,6 +29,7 @@ from rest_framework.response import Response
 from apps.exceptions import ValidationError
 from apps.log_databus.constants import EtlConfig, Environment
 from apps.log_databus.exceptions import NeedBcsClusterIdException
+from apps.log_search.exceptions import BkJwtVerifyException
 from apps.generic import ModelViewSet
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import (
@@ -53,7 +54,7 @@ from apps.log_databus.serializers import (
     CollectorRegexDebugSerializer,
     CollectorUpdateSerializer,
     CustomCreateSerializer,
-    CustomUpateSerializer,
+    CustomUpdateSerializer,
     ListCollectorSerlalizer,
     ListCollectorsByHostSerializer,
     PreCheckSerializer,
@@ -1871,6 +1872,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
         @apiParam {Int} allocation_min_days 冷热数据时间
+        @apiParam {Int} es_shards es分片数量
         @apiParam {Int} [storage_replies] 副本数量
         @apiParam {String} category_id 数据分类 GlobalsConfig.category读取
         @apiParam {String} description 备注说明
@@ -1885,6 +1887,7 @@ class CollectorViewSet(ModelViewSet):
             "category_id": "xx",
             "storage_cluster_id": 3,
             "retention": 1,
+            "es_shards": 1,
             "storage_replies": 1,
             "allocation_min_days":  1
         }
@@ -1921,6 +1924,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
         @apiParam {Int} allocation_min_days 冷热数据时间
+        @apiParam {Int} es_shards es分片数量
         @apiParam {Int} [storage_replies] 副本数量
         @apiParamExample {json} 请求样例:
         {
@@ -1930,6 +1934,7 @@ class CollectorViewSet(ModelViewSet):
             "storage_cluster_id": 3,
             "retention": 1,
             "storage_replies": 1,
+            "es_shards":  1,
             "allocation_min_days":  1
         }
         @apiSuccessExample {json} 成功返回:
@@ -1941,7 +1946,7 @@ class CollectorViewSet(ModelViewSet):
             "result": true
         }
         """
-        data = self.params_valid(CustomUpateSerializer)
+        data = self.params_valid(CustomUpdateSerializer)
         return Response(CollectorHandler(collector_config_id).custom_update(**data))
 
     @list_route(methods=["GET"], url_path="pre_check")
@@ -1969,34 +1974,41 @@ class CollectorViewSet(ModelViewSet):
 
     @list_route(methods=["GET"], url_path="list_bcs_collector")
     def list_bcs_collector(self, request):
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if not auth_info:
+            raise BkJwtVerifyException()
         bcs_cluster_id = request.GET.get("bcs_cluster_id")
         if not bcs_cluster_id:
             raise NeedBcsClusterIdException()
-        return CollectorHandler().list_bcs_collector(bcs_cluster_id=bcs_cluster_id)
+        return Response(
+            CollectorHandler().list_bcs_collector(bcs_cluster_id=bcs_cluster_id, bk_app_code=auth_info["bk_app_code"])
+        )
 
     @list_route(methods=["POST"], url_path="create_bcs_collector")
     def create_bcs_collector(self, request):
-        # auth_info = Permission.get_auth_info(request, raise_exception=False)
-        # if not auth_info:
-        #     raise BkJwtVerifyException()
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if not auth_info:
+            raise BkJwtVerifyException()
         data = self.params_valid(BCSCollectorSerializer)
         return Response(
-            CollectorHandler().create_bcs_container_config(
-                data=data,
-                # bk_app_code=auth_info["bk_app_code"]
-            ),
+            CollectorHandler().create_bcs_container_config(data=data, bk_app_code=auth_info["bk_app_code"]),
         )
 
     @detail_route(methods=["POST"], url_path="update_bcs_collector")
-    def update_bcs_collector(self, request, rule_id):
-        # auth_info = Permission.get_auth_info(request, raise_exception=False)
-        # if not auth_info:
-        #     raise BkJwtVerifyException()
+    def update_bcs_collector(self, request, collector_config_id=None):
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if not auth_info:
+            raise BkJwtVerifyException()
         data = self.params_valid(BCSCollectorSerializer)
+        rule_id = collector_config_id
         return Response(CollectorHandler().update_bcs_container_config(data=data, rule_id=rule_id))
 
     @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")
-    def delete_bcs_collector(self, request, rule_id):
+    def delete_bcs_collector(self, request, collector_config_id=None):
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if not auth_info:
+            raise BkJwtVerifyException()
+        rule_id = collector_config_id
         return Response(CollectorHandler().delete_bcs_config(rule_id=rule_id))
 
     @list_route(methods=["GET"], url_path="list_bcs_clusters")

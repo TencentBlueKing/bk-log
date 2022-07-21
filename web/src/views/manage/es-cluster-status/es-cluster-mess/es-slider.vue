@@ -292,6 +292,28 @@
                 </div>
               </div>
             </bk-form-item>
+            <!-- 分片数 -->
+            <bk-form-item :label="$t('分片数')" required>
+              <div class="flex-space">
+                <div class="flex-space-item">
+                  <div class="space-item-label">{{$t('默认')}}</div>
+                  <bk-input
+                    type="number"
+                    :max="Number(formData.setup_config.es_shards_max)"
+                    :min="1"
+                    v-model="formData.setup_config.es_shards_default">
+                  </bk-input>
+                </div>
+                <div class="flex-space-item">
+                  <div class="space-item-label">{{$t('最大')}}</div>
+                  <bk-input
+                    type="number"
+                    :min="Number(formData.setup_config.es_shards_default)"
+                    v-model="formData.setup_config.es_shards_max">
+                  </bk-input>
+                </div>
+              </div>
+            </bk-form-item>
             <!-- 冷热数据 -->
             <bk-form-item :label="$t('冷热数据')" v-if="connectResult === 'success'">
               <div class="form-flex-container">
@@ -464,6 +486,8 @@ export default {
           retention_days_default: 7,
           number_of_replicas_max: 3,
           number_of_replicas_default: 1,
+          es_shards_default: 1,
+          es_shards_max: 3,
         },
         admin: [], // 负责人名单
         description: '', // 集群说明
@@ -620,6 +644,8 @@ export default {
             retention_days_default: 7,
             number_of_replicas_max: 3,
             number_of_replicas_default: 1,
+            es_shards_default: 1,
+            es_shards_max: 3,
           },
           admin: [],
           description: '',
@@ -892,6 +918,9 @@ export default {
           delete postData.hot_attr_value;
           delete postData.warm_attr_name;
           delete postData.warm_attr_value;
+        }
+        for (const key in postData.setup_config) {
+          postData.setup_config[key] = Number(postData.setup_config[key]);
         }
         if (postData.source_type !== 'other') {
           delete postData.source_name;

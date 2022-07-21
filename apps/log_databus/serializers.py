@@ -242,13 +242,15 @@ class CustomCreateSerializer(serializers.Serializer):
     storage_replies = serializers.IntegerField(
         label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
     )
-    es_shards = serializers.IntegerField(label=_("ES分片数量"), required=False, default=3, min_value=0, max_value=64)
+    es_shards = serializers.IntegerField(
+        label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
+    )
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
 
 
-class CustomUpateSerializer(serializers.Serializer):
+class CustomUpdateSerializer(serializers.Serializer):
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     category_id = serializers.CharField(label=_("分类ID"))
     description = serializers.CharField(
@@ -259,6 +261,9 @@ class CustomUpateSerializer(serializers.Serializer):
     allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=True)
     storage_replies = serializers.IntegerField(
         label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
+    )
+    es_shards = serializers.IntegerField(
+        label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
     )
 
 
@@ -684,7 +689,9 @@ class CollectorEtlStorageSerializer(serializers.Serializer):
     storage_replies = serializers.IntegerField(
         label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
     )
-    es_shards = serializers.IntegerField(label=_("ES分片数量"), required=False, default=3, min_value=0, max_value=64)
+    es_shards = serializers.IntegerField(
+        label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
+    )
     view_roles = serializers.ListField(label=_("查看权限"), required=False, default=[])
     need_assessment = serializers.BooleanField(label=_("是否需要评估配置"), required=False, default=False)
     assessment_config = AssessmentConfig(label=_("评估配置"), required=False)
@@ -1060,7 +1067,7 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
 
 class BCSCollectorSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务id"))
-    project_id = serializers.IntegerField(label=_("项目id"))
+    project_id = serializers.CharField(label=_("项目id"))
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
         label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX, required=False, default=""

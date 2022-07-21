@@ -55,7 +55,9 @@
             <div :class="`bk-icon ${item.codiconClass}`"></div>
             <div class="problem-text">
               <span>{{ item.problemMessage }}</span>
-              <span class="problem-line">[{{item.lineNumber}}, {{item.column}}]</span>
+              <span class="problem-line" v-if="item.lineNumber && item.column">
+                [{{item.lineNumber}}, {{item.column}}]
+              </span>
             </div>
           </div>
         </template>
@@ -130,6 +132,7 @@ export default {
       renderWidth: '100%',
       renderHeight: 500,
       problemList: [],
+      isHaveError: false,
       isFull: false,
       problemHeight: null,
       range: [20, 500],
@@ -169,8 +172,9 @@ export default {
     warningList(newVal) {
       this.setWaringMarker(newVal);
     },
-    'problemList.length'(newVal) {
-      this.$emit('get-problem-state', !!newVal);
+    'problemList.length'() {
+      this.isHaveError = this.problemList.some(item => item.codiconClass === 'icon-close-circle-shape');
+      this.$emit('get-problem-state', this.isHaveError);
     },
   },
   mounted() {
@@ -319,16 +323,22 @@ export default {
      * Tips: 传参参数为 [{startLineNumber:xxx, endLineNumber:xxx, startColumn:xxx, endColumn:xxx, message:xxx}]
      */
     setWaringMarker(markers = []) {
-      const waringMarkers =  markers.map(item => ({
-        ...item,
-        severity: monaco.MarkerSeverity.Warning,
+      if (this.isHaveError) return;
+      const waringMarkers = markers.map(item => ({
+        lineNumber: item.startLineNumber,
+        column: item.startColumn,
+        problemMessage: item.message,
+        codiconClass: 'icon-exclamation-circle-shape',
       }));
-      monaco.editor.setModelMarkers(this.editor.getModel(), 'owner', waringMarkers);
+      this.problemList = waringMarkers;
+      // 这是monaco编辑器自带的告警方法 行和列为0的话默认1-1 暂时不显示行列标记
+      // monaco.editor.setModelMarkers(this.editor.getModel(), 'owner', waringMarkers);
     },
     /**
      * @desc: 警告bottom点击鼠标事件
      */
     handelClickProblemBtn(lineNumber, column) {
+      if (!lineNumber || !column) return;
       this.editor.setPosition({
         lineNumber,
         column,

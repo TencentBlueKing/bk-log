@@ -54,7 +54,7 @@
           <span class="bk-icon icon-down-shape"></span>
           <span>{{renderItem.collector_config_name}}</span>
         </div>
-        <div class="table-main" v-show="renderItem.isShowTable">
+        <div :class="['table-main', renderItem.isShowTable ? 'show' : 'hidden']">
           <bk-table :data="renderItem[navActive]" size="small">
             <bk-table-column label="id" width="80" prop="container_collector_config_id"></bk-table-column>
             <bk-table-column :label="$t('名称')" prop="name"></bk-table-column>
@@ -82,7 +82,7 @@
                 <a
                   href="javascript: ;" class="retry"
                   v-if="row.status === 'failed'"
-                  @click.stop="issuedRetry(row, renderItem, renderIndex)">
+                  @click.stop="issuedRetry('alone', renderItem, row)">
                   {{ $t('configDetails.retry') }}
                 </a>
               </template>
@@ -211,14 +211,15 @@ export default {
           if (isPolling === 'polling' && !this.hasRunning) clearInterval(this.timer);
         });
     },
-    issuedRetry(row = null, renderItem, renderIndex) {
-      const retrySubmitList = row ? [row.container_collector_config_id] : this.allFailedIDList;
+    issuedRetry(alone = '', renderItem, row) {
+      const retrySubmitList = alone ? [row.container_collector_config_id] : this.allFailedIDList;
       // ID列表为空或者全局失败数为0时不请求
       if (!retrySubmitList.length || !this.navBtnList[2].listNum) return;
       if (row) {
         row.status = 'running';// 单选 单独变成running状态
         // 失败-1 执行中+1
-        renderItem.running.push(renderItem.failed[renderIndex]);
+        renderItem.running.push(row);
+        const renderIndex =  renderItem.failed.findIndex(item => item.name === row.name);
         renderItem.failed.splice(renderIndex, 1);
         this.navBtnList[3].listNum += 1;
         this.navBtnList[2].listNum -= 1;
@@ -238,7 +239,7 @@ export default {
           collector_config_id: this.$route.params.collectorId,
         },
         data: {
-          container_collector_config_id_list: retrySubmitList,
+          instance_id_list: retrySubmitList,
         },
       }).then(() => {
         this.pollingStatus();
@@ -391,6 +392,14 @@ export default {
       .retry {
         color: #3a84ff;
       }
+    }
+
+    .hidden {
+      height: 0px;
+    }
+
+    .show {
+      height: auto;
     }
   }
 }

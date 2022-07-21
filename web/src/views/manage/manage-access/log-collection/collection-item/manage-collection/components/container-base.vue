@@ -160,7 +160,7 @@
                   configItem.params.conditions.separator_filters !== []">
                 <span>{{ $t('configDetails.filterContent') }}</span>
                 <div>
-                  <p>{{ $t('configDetails.sepMatching') }}</p>
+                  <p>{{ $t('configDetails.sepMarching') }}</p>
                   <p v-if="configItem.params.conditions.separator">{{ configItem.params.conditions.separator }}</p>
                   <div class="condition-stylex">
                     <div>
@@ -382,6 +382,7 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/scss/mixins/flex.scss';
+@import '@/scss/basic.scss';
 
 .basic-info-container {
   display: flex;
