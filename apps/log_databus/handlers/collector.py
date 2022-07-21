@@ -3362,6 +3362,11 @@ class CollectorHandler(object):
             log_config_type = config["logConfigType"]
             conditions = convert_filters_to_collector_condition(config.get("filters", []), config.get("delimiter", ""))
 
+            match_expressions = config.get("labelSelector", {}).get("matchExpressions", [])
+            for expr in match_expressions:
+                # 转换为字符串
+                expr["value"] = ",".join(expr.get("value") or [])
+
             container_configs.append(
                 {
                     "namespaces": config.get("namespaceSelector", {}).get("matchNames", []),
@@ -3375,7 +3380,7 @@ class CollectorHandler(object):
                             {"key": key, "operator": "=", "value": value}
                             for key, value in config.get("labelSelector", {}).get("matchLabels", {}).items()
                         ],
-                        "match_expressions": config.get("labelSelector", {}).get("matchExpressions", []),
+                        "match_expressions": match_expressions,
                     },
                     "params": {
                         "paths": config.get("path", []),
