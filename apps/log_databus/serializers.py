@@ -35,6 +35,7 @@ from apps.log_databus.constants import (
     ContainerCollectorType,
     CLUSTER_NAME_EN_REGEX,
     EsSourceType,
+    LabelSelectorOperator,
 )
 from apps.log_databus.models import CleanTemplate, CollectorConfig, CollectorPlugin
 from apps.log_search.constants import (
@@ -195,7 +196,7 @@ class ContainerSerializer(serializers.Serializer):
 class LablesSerializer(serializers.Serializer):
     key = serializers.CharField(label=_("标签key"))
     operator = serializers.CharField(label=_("标签连接符"), required=False, default="=")
-    value = serializers.CharField(label=_("标签value"))
+    value = serializers.CharField(label=_("标签value"), allow_blank=True)
 
 
 class LabelSelectorSerializer(serializers.Serializer):
@@ -1083,21 +1084,8 @@ class MatchLabelsSerializer(serializers.Serializer):
     namespace = serializers.CharField(label=_("namespace"), required=False, allow_null=True, allow_blank=True)
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     selector_expression = serializers.CharField(
-        label=_("selector表达式"), required=False, allow_null=True, allow_blank=True
+        label=_("selector表达式"), required=False, allow_null=True, allow_blank=True, default=""
     )
-
-    def validate(self, attrs):
-        super().validate(attrs)
-        match_labels = attrs["label_selector"]["match_labels"]
-        match_expressions = attrs["label_selector"]["match_expressions"]
-        match_labels_list = ["{} = {}".format(label["key"], label["value"]) for label in match_labels]
-        match_expressions_list = [
-            "{} {} {}".format(expression["key"], expression["operator"], expression["value"])
-            for expression in match_expressions
-        ]
-
-        attrs["selector_expression"] = ", ".join(match_labels_list + match_expressions_list)
-        return attrs
 
 
 class ValidateContainerCollectorYamlSerializer(serializers.Serializer):
@@ -1122,11 +1110,26 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
         timeout = serializers.CharField(label=_("最大耗时"), required=False)
 
     class LabelSelectorSerializer(serializers.Serializer):
+        class ExprSerializer(serializers.Serializer):
+            key = serializers.CharField(label=_("标签key"))
+            operator = serializers.ChoiceField(
+                label=_("标签连接符"),
+                choices=[
+                    LabelSelectorOperator.IN,
+                    LabelSelectorOperator.NOT_IN,
+                    LabelSelectorOperator.EXISTS,
+                    LabelSelectorOperator.DOES_NOT_EXIST,
+                ],
+            )
+            value = serializers.ListField(
+                label=_("标签value"), allow_empty=True, child=serializers.CharField(), required=False
+            )
+
         matchLabels = serializers.DictField(
             child=serializers.CharField(), label=_("指定标签"), required=False, allow_empty=True
         )
         matchExpressions = serializers.ListSerializer(
-            child=LablesSerializer(), label=_("指定表达式"), required=False, allow_empty=True
+            child=ExprSerializer(), label=_("指定表达式"), required=False, allow_empty=True
         )
 
     class FilterSerializer(serializers.Serializer):

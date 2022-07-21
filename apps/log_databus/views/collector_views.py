@@ -2042,6 +2042,7 @@ class CollectorViewSet(ModelViewSet):
                 topo_type=data["type"],
                 bcs_cluster_id=data["bcs_cluster_id"],
                 namespace=data["namespace"],
+                label_selector=data["label_selector"],
                 selector_expression=data["selector_expression"],
             )
         )
