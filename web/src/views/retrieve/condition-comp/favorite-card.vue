@@ -147,6 +147,8 @@ export default {
      * @desc 监听容器宽度
      */
     resizeObsever() {
+      if (!this.$refs.favList) return;
+
       this.resizeObserver = new ResizeObserver(() => {
         this.removeOverflow();
         this.handleOverflow();
