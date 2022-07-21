@@ -59,9 +59,8 @@ export default {
     /**
      * @desc: 获取存储集群
      * @param { String } environment ['storage','customize'] // 当前页
-     * @param { Boolean } isEdit // 是否是编辑
      */
-    getStorage(isEdit = false) {
+    getStorage() {
       const queryData = { bk_biz_id: this.bkBizId };
       if (this.curCollect?.data_link_id) {
         queryData.data_link_id = this.curCollect.data_link_id;
@@ -84,14 +83,6 @@ export default {
           this.storageList.forEach(item => (item.is_platform
             ? this.clusterList.push(item)
             : this.exclusiveList.push(item)));
-          if ((this.isItsm && this.curCollect?.can_use_independent_es_cluster) || isEdit) {
-            // itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
-          } else {
-            const defaultItem = this.storageList.find(item => item.registered_system === '_default');
-            if (defaultItem?.permission?.manage_es_source) {
-              this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
-            }
-          }
           const notPerformList = ['custom-report-create', 'custom-report-edit'];
           if (!notPerformList.includes(this.$route.name)) {
             this.getCleanStash();
@@ -104,25 +95,6 @@ export default {
             message: res.message,
           });
         });
-    },
-    // 存储集群管理权限
-    async applySearchAccess(item) {
-      this.$el.click(); // 因为下拉在loading上面所以需要关闭下拉
-      try {
-        this.basicLoading = true;
-        const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_es_source'],
-          resources: [{
-            type: 'es_source',
-            id: item.storage_cluster_id,
-          }],
-        });
-        window.open(res.data.apply_url);
-      } catch (err) {
-        console.warn(err);
-      } finally {
-        this.basicLoading = false;
-      }
     },
     // 输入自定义过期天数、冷热集群存储期限
     enterCustomDay(val, type) {
@@ -205,7 +177,7 @@ export default {
       this.formData.storage_replies = setup_config?.number_of_replicas_default || 0;
       this.formData.es_shards = setup_config?.es_shards_default || 0;
       this.replicasMax = setup_config?.number_of_replicas_max || 0;
-      this.shardsMax = setup_config?.es_shards_max || 0;
+      this.shardsMax = setup_config?.es_shards_max || 1;
       this.formData.allocation_min_days = '0';
     },
     updateDaysList() {
