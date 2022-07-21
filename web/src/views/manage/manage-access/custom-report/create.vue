@@ -456,7 +456,7 @@ export default {
   },
   mounted() {
     this.containerLoading = true;
-    Promise.all([this.getLinkData(), this.getStorage(this.isEdit)]).then(() => {
+    Promise.all([this.getLinkData(), this.getStorage()]).then(() => {
       this.initFormData();
     })
       .finally(() => {
