@@ -151,7 +151,7 @@ class LogTrace(Proto):
         start_time = arrow.get(data.get("startTime")[0:10]).shift(days=-1)
         query_data = {
             "addition": [
-                {"key": "traceID", "method": "is", "value": data["traceID"], "condition": "and", "type": "field"}
+                {"key": "traceID", "method": "is", "value": str(data["traceID"]), "condition": "and", "type": "field"}
             ],
             "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
             "end_time": start_time.shift(days=2).strftime("%Y-%m-%d %H:%M:%S"),
@@ -280,7 +280,7 @@ class LogTrace(Proto):
 
     def traces(self, index_set_id, params):
         result = super(LogTrace, self).traces(index_set_id, params)
-        trace_ids = [trace[self.TRACE_ID_FIELD] for trace in result.get("list", [])]
+        trace_ids = [str(trace[self.TRACE_ID_FIELD]) for trace in result.get("list", [])]
         if not trace_ids:
             return []
         search_dict = {
@@ -305,7 +305,7 @@ class LogTrace(Proto):
     def trace_detail(self, index_set_id, trace_id):
         search_dict = {
             "use_time_range": False,
-            "addition": [{"key": self.TRACE_ID_FIELD, "method": "is", "value": trace_id, "condition": "and"}],
+            "addition": [{"key": self.TRACE_ID_FIELD, "method": "is", "value": str(trace_id), "condition": "and"}],
             "begin": 0,
             "size": self.TRACE_SIZE,
             "keyword": "*",
