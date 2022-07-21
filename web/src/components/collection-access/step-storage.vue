@@ -430,7 +430,7 @@ export default {
     this.operateType === 'add' && (this.isChangeSelect = true);
   },
   created() {
-    this.getHostNumber();
+    this.curCollect.environment !== 'container' && this.getHostNumber();
   },
   methods: {
     // 获取采集项清洗基础配置缓存 用于存储入库提交

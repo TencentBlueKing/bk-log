@@ -136,7 +136,7 @@
               <bk-dropdown-menu ref="dropdown" align="right">
                 <i
                   class="bk-icon icon-more"
-                  style="margin-left: 5px; font-size: 14px; font-weight: bold;"
+                  style="font-size: 14px; font-weight: bold; display: inline-block;"
                   slot="dropdown-trigger">
                 </i>
                 <ul class="bk-dropdown-list" slot="dropdown-content">

@@ -542,16 +542,19 @@ export default {
       // running、prepare 状态不能启用、停用
       if (operateType === 'start' || operateType === 'stop') {
         if (!this.loadingStatus || row.status === 'running' || row.status === 'prepare' || !this.collectProject) return;
-        if (operateType === 'stop') {
-          this.$bkInfo({
-            type: 'warning',
-            title: this.$t('retrieve.Confirm_disable'),
-            confirmFn: () => {
-              this.toggleCollect(row, operateType);
+        if (operateType === 'start') { // 启用
+          this.toggleCollect(row);
+        } else {
+          // 如果是容器采集项则停用页显示状态页
+          this.$router.push({
+            name: 'collectStop',
+            params: {
+              collectorId: row.collector_config_id || '',
+            },
+            query: {
+              projectId: window.localStorage.getItem('project_id'),
             },
           });
-        } else {
-          this.toggleCollect(row, operateType);
         }
         return;
       }
@@ -740,12 +743,12 @@ export default {
           }
         });
     },
-    // 启用 || 停用
-    toggleCollect(row, type) {
+    // 启用
+    toggleCollect(row) {
       const { isActive, status, statusName } = row;
       row.status = 'running';
       row.status_name = '部署中';
-      this.$http.request(`collect/${type === 'start' ? 'startCollect' : 'stopCollect'}`, {
+      this.$http.request('collect/startCollect', {
         params: {
           collector_config_id: row.collector_config_id,
         },
@@ -753,15 +756,6 @@ export default {
         if (res.result) {
           row.is_active = !row.is_active;
           this.startStatusPolling();
-          this.$router.push({
-            name: type === 'start' ? 'collectStart' : 'collectStop',
-            params: {
-              collectorId: row.collector_config_id || '',
-            },
-            query: {
-              projectId: window.localStorage.getItem('project_id'),
-            },
-          });
         }
       })
         .catch(() => {
@@ -881,6 +875,7 @@ export default {
 
     .collect-table-operate {
       display: flex;
+      align-items: center;
 
       .king-button {
         margin-right: 14px;

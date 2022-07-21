@@ -566,7 +566,10 @@ class GlobalCategoriesEnum(ChoicesEnum):
     APPLICATIONS = {
         "id": "applications",
         "name": "应用",
-        "children": [{"id": "application_check", "name": _("业务应用"), "children": []}],
+        "children": [
+            {"id": "application_check", "name": _("业务应用"), "children": []},
+            {"id": "kubernetes", "name": "kubernetes", "children": []},
+        ],
     }
 
     OTHER = {"id": "others", "name": "其他", "children": [{"id": "other_rt", "name": _("其他"), "children": []}]}
