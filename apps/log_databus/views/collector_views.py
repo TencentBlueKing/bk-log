@@ -1995,15 +1995,20 @@ class CollectorViewSet(ModelViewSet):
         )
 
     @detail_route(methods=["POST"], url_path="update_bcs_collector")
-    def update_bcs_collector(self, request, rule_id):
+    def update_bcs_collector(self, request, collector_config_id=None):
         auth_info = Permission.get_auth_info(request, raise_exception=False)
         if not auth_info:
             raise BkJwtVerifyException()
         data = self.params_valid(BCSCollectorSerializer)
+        rule_id = collector_config_id
         return Response(CollectorHandler().update_bcs_container_config(data=data, rule_id=rule_id))
 
     @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")
-    def delete_bcs_collector(self, request, rule_id):
+    def delete_bcs_collector(self, request, collector_config_id=None):
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if not auth_info:
+            raise BkJwtVerifyException()
+        rule_id = collector_config_id
         return Response(CollectorHandler().delete_bcs_config(rule_id=rule_id))
 
     @list_route(methods=["GET"], url_path="list_bcs_clusters")
