@@ -2466,12 +2466,14 @@ class CollectorHandler(object):
         for rule_id, collector in rule_dict.items():
             rule = {
                 "rule_id": rule_id,
-                "collector_config_name": collector["path_collector_config"].collector_config_name.rsplit("_", 1)[0],
+                "collector_config_name": collector["path_collector_config"]
+                .collector_config_name.rsplit("_", 1)[0]
+                .split("_", 1)[1],
                 "bk_biz_id": collector["path_collector_config"].bk_biz_id,
                 "description": collector["path_collector_config"].description,
-                "collector_config_name_en": collector["path_collector_config"].collector_config_name_en.rsplit("_", 1)[
-                    0
-                ],
+                "collector_config_name_en": collector["path_collector_config"]
+                .collector_config_name_en.rsplit("_", 1)[0]
+                .split("_", 1)[1],
                 "environment": collector["path_collector_config"].environment,
                 "bcs_cluster_id": collector["path_collector_config"].bcs_cluster_id,
                 "extra_labels": collector["path_collector_config"].extra_labels,
@@ -2501,7 +2503,7 @@ class CollectorHandler(object):
                         },
                         "label_selector": {
                             "match_labels": path_container_config.match_labels,
-                            "match_expressions": path_container_config.match_labels,
+                            "match_expressions": path_container_config.match_expressions,
                         },
                         "all_container": path_container_config.all_container,
                         "status": path_container_config.status,
@@ -2512,19 +2514,6 @@ class CollectorHandler(object):
                 )
             result.append(rule)
         return result
-
-        # pg = DataPageNumberPagination()
-        # page_collectors = pg.paginate_queryset(
-        #     queryset=CollectorConfig.objects.exclude(
-        #         bk_app_code="bk_log_search",
-        #     ).filter(environment=Environment.CONTAINER, bk_biz_id=bk_biz_id),
-        #     request=request,
-        #     view=view,
-        # )
-        # res = pg.get_paginated_response(
-        #     [self.generate_bcs_collector(collector=collector) for collector in page_collectors]
-        # )
-        # return res
 
     @transaction.atomic
     def create_bcs_container_config(self, data, bk_app_code="bk_bcs"):
