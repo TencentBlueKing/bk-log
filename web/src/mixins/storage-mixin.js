@@ -80,9 +80,11 @@ export default {
             }
           }
           this.storageList = s1.concat(s2);
-          this.storageList.forEach(item => (item.is_platform
-            ? this.clusterList.push(item)
-            : this.exclusiveList.push(item)));
+          if (environment === 'storage') {
+            this.storageList.forEach(item => (item.is_platform
+              ? this.clusterList.push(item)
+              : this.exclusiveList.push(item)));
+          }
           const notPerformList = ['custom-report-create', 'custom-report-edit'];
           if (!notPerformList.includes(this.$route.name)) {
             this.getCleanStash();

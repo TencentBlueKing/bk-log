@@ -574,7 +574,6 @@
   dest_http_method: GET
   is_hidden: True
 
-
 - path: /v2/bk_log/bizs/
   name: bizs
   label: 日志平台-业务列表
@@ -695,4 +694,3 @@
   dest_path: /api/v1/databus/collectors/{rule_id}/delete_bcs_collector/
   dest_http_method: DELETE
   is_hidden: True
-
