@@ -651,6 +651,8 @@ export default {
     quickOperation: '快捷键  Esc:退出; PageUp: 向上翻页; PageDn: 向下翻页',
     include: '包含',
     uninclude: '不包含',
+    traceRetrieve: 'trace检索',
+    container: '容器',
   },
   // 调用链跟踪
   trace: {
