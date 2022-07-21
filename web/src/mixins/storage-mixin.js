@@ -81,16 +81,10 @@ export default {
             }
           }
           this.storageList = s1.concat(s2);
-          this.storageList.forEach(item => (item.is_platform
-            ? this.clusterList.push(item)
-            : this.exclusiveList.push(item)));
-          if ((this.isItsm && this.curCollect?.can_use_independent_es_cluster) || isEdit) {
-            // itsm 开启时，且可以使用独立集群的时候，默认集群 _default 被禁用选择
-          } else {
-            const defaultItem = this.storageList.find(item => item.registered_system === '_default');
-            if (defaultItem?.permission?.manage_es_source) {
-              this.formData.storage_cluster_id = defaultItem.storage_cluster_id;
-            }
+          if (environment === 'storage') {
+            this.storageList.forEach(item => (item.is_platform
+              ? this.clusterList.push(item)
+              : this.exclusiveList.push(item)));
           }
           const notPerformList = ['custom-report-create', 'custom-report-edit'];
           if (!notPerformList.includes(this.$route.name)) {
