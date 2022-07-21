@@ -55,7 +55,7 @@ curlify==2.2.1
 idna==2.9
 
 # qcloud cos
-cos-python-sdk-v5==1.9.0
+cos-python-sdk-v5==1.9.6
 
 # pipeline
 bamboo-pipeline==3.16.1
