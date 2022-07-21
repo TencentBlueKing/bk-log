@@ -406,3 +406,10 @@ class WorkLoadType(object):
     DAEMON_SET = "DaemonSet"
     JOB = "Job"
     STATEFUL_SET = "StatefulSet"
+
+
+class LabelSelectorOperator(object):
+    IN = "In"
+    NOT_IN = "NotIn"
+    EXISTS = "Exists"
+    DOES_NOT_EXIST = "DoesNotExist"
