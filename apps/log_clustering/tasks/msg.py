@@ -33,20 +33,37 @@ from apps.utils.local import set_local_param
 
 
 @task(ignore_result=True)
-def send(index_set_id, pipeline_id):
+def send(index_set_id):
     clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
     log_index_set = LogIndexSet.objects.get(index_set_id=index_set_id)
     doc_count = get_doc_count(index_set_id=index_set_id, bk_biz_id=clustering_config.bk_biz_id)
     project = ProjectInfo.objects.get(bk_biz_id=clustering_config.bk_biz_id)
-    msg = _("有新聚类创建，请关注！索引集id: {}, 索引集名称: {}, 业务id: {}, 业务名称: {}, 创建者: {}, 过去一天的数据量doc_count为: {}, 任务ID: {}").format(
-        index_set_id,
-        log_index_set.index_set_name,
-        clustering_config.bk_biz_id,
-        project.project_name,
-        clustering_config.created_by,
-        doc_count,
-        pipeline_id,
-    )
+    if doc_count > 10000000:
+        # 千万级别的需要人工审批
+        msg = _("[待审批] 有新聚类创建，请关注！索引集id: {}, 索引集名称: {}, 业务id: {}, 业务名称: {}, 创建者: {}, 过去一天的数据量doc_count={}").format(
+            index_set_id,
+            log_index_set.index_set_name,
+            clustering_config.bk_biz_id,
+            project.project_name,
+            clustering_config.created_by,
+            doc_count,
+        )
+    else:
+        from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
+
+        pipeline_id = operator_aiops_service(index_set_id)
+        msg = _(
+            "[自动接入] 有新聚类创建，请关注！索引集id: {}, 索引集名称: {}, 业务id: {}, 业务名称: {}, 创建者: {}, 过去一天的数据量doc_count={}，任务ID: {}"
+        ).format(
+            index_set_id,
+            log_index_set.index_set_name,
+            clustering_config.bk_biz_id,
+            project.project_name,
+            clustering_config.created_by,
+            doc_count,
+            pipeline_id,
+        )
+
     NOTIFY_EVENT(
         content=f"{msg}", dimensions={"index_set_id": clustering_config.index_set_id, "msg_type": "clustering_config"},
     )
