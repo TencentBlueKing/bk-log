@@ -28,7 +28,7 @@ from apps.log_databus.exceptions import CollectorConfigNotExistException
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.constants import LogPluginInfo
 from apps.exceptions import ApiRequestError, ApiResultError
-from .test_collectorhandler import TestCollectorHandler
+from .test_collectorhandler import TestCollectorHandler, get_data_id
 from ...log_databus.serializers import CollectorCreateSerializer
 from ...utils.drf import custom_params_valid
 
@@ -47,9 +47,7 @@ PARAMS = {
     "category_id": "application",
     "target_object_type": "HOST",
     "target_node_type": "TOPO",
-    "target_nodes": [
-        {"bk_inst_id": 33, "bk_obj_id": "module"},
-    ],
+    "target_nodes": [{"bk_inst_id": 33, "bk_obj_id": "module"}],
     "data_encoding": "UTF-8",
     "bk_data_name": "abc",
     "description": "这是一个描述",
@@ -807,6 +805,7 @@ CONFIG_DATA = {
         }
     ],
 }
+FAILED_SUBSCRIPTION_STATUS = [{"instance_id": "xxx", "status": "FAILED"}]
 
 
 class CCModuleTest(object):
@@ -855,8 +854,7 @@ def subscription_statistic(params):
 @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollector(TestCase):
     @patch(
-        "apps.api.TransferApi.get_data_id",
-        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+        "apps.api.TransferApi.get_data_id", get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -899,8 +897,7 @@ class TestCollector(TestCase):
         self._test_destroy(result["collector_config_id"])
 
     @patch(
-        "apps.api.TransferApi.get_data_id",
-        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+        "apps.api.TransferApi.get_data_id", get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -972,14 +969,13 @@ class TestCollector(TestCase):
         result = collector.stop()
         self.assertEqual(result, ["7"])
 
-    @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": 8})
+    @patch("apps.api.NodeApi.retry_subscription", lambda _: {"task_id": 8})
     def _test_retry_target_nodes(self, collector_config_id):
         collector = CollectorHandler(collector_config_id=collector_config_id)
         task_id_list = copy.deepcopy(collector.data.task_id_list)
         task_id_list.append("8")
-
-        target_nodes = [{"ip": "127.0.0.1", "bk_cloud_id": 0}]
-        result = collector.retry_target_nodes(target_nodes)
+        params = {"instance_id_list": [{"instance_id": "xxx"}]}
+        result = collector.retry_instances(params)
         self.assertEqual(result, task_id_list)
 
     @patch("apps.api.NodeApi.delete_subscription", lambda _: DELETE_MSG)
@@ -1178,8 +1174,7 @@ class TestCollector(TestCase):
 
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch(
-        "apps.api.TransferApi.get_data_id",
-        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+        "apps.api.TransferApi.get_data_id", get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -1219,3 +1214,30 @@ class TestCollector(TestCase):
             params={"bk_biz_id": params["bk_biz_id"], "collector_config_name_en": "1"}
         )
         self.assertEqual(result["allowed"], True)
+
+    def test_validate_container_config_yaml(self, *args, **kwargs):
+        yaml_config = """
+---
+encoding: UTF-8
+labelSelector:
+  matchLabels:
+    app.kubernetes.io/component: api-support
+    app.kubernetes.io/instance: bk-apigateway
+    app.kubernetes.io/name: bk-apigateway
+logConfigType: std_log_config
+namespace: default
+
+---
+encoding: UTF-8
+labelSelector:
+  matchLabels:
+    app.kubernetes.io/instance: bkmonitor
+    app.kubernetes.io/name: influxdb-proxy
+logConfigType: container_log_config
+path:
+  - /var/log/influxdb-proxy.log
+  - /var/log/influxdb.log
+namespace: default
+        """
+        result = CollectorHandler().validate_container_config_yaml(yaml_config)
+        self.assertTrue(result["parse_status"])

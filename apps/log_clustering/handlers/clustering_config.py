@@ -71,8 +71,8 @@ class ClusteringConfigHandler(object):
     def start(self):
         from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 
-        operator_aiops_service(self.index_set_id)
-        return True
+        pipeline_id = operator_aiops_service(self.index_set_id)
+        return pipeline_id
 
     def update_or_create(self, params: dict):
         index_set_id = params["index_set_id"]
@@ -175,6 +175,7 @@ class ClusteringConfigHandler(object):
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def create_service(self, index_set_id, clustering_fields, collector_config_id=None):
+        from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
 
         if collector_config_id:
             collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
@@ -184,9 +185,8 @@ class ClusteringConfigHandler(object):
                 etl_config=collector_config.etl_config,
                 clustering_fields=clustering_fields,
             )
-        send.delay(index_set_id=index_set_id)
-        # 在这里限制住创建，由其他方式来控制创建
-        # operator_aiops_service(index_set_id)
+        pipeline_id = operator_aiops_service(index_set_id)
+        send.delay(index_set_id=index_set_id, pipeline_id=pipeline_id)
 
     def preview(
         self, input_data, min_members, max_dist_list, predefined_varibles, delimeter, max_log_length, is_case_sensitive
@@ -260,7 +260,8 @@ class ClusteringConfigHandler(object):
         collector_detail["fields"] = map_if(collector_detail["fields"], if_func=lambda field: not field["is_built_in"])
         from apps.log_databus.handlers.etl import EtlHandler
 
-        EtlHandler(self.data.collector_config_id).update_or_create(
+        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
+        etl_handler.update_or_create(
             collector_detail["etl_config"],
             collector_detail["table_id"],
             collector_detail["storage_cluster_id"],

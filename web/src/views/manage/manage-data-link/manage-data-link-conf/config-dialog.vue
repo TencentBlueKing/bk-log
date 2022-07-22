@@ -58,6 +58,7 @@
           <bk-select
             data-test-id="linkConfigForm_select_selectPermitted"
             v-model="formData.bk_biz_id"
+            searchable
             :clearable="false"
             style="width: 380px;">
             <template v-for="item in projectList">

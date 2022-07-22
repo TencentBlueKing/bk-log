@@ -24,6 +24,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
+from apps.exceptions import ApiResultError
 from apps.log_databus.constants import LogPluginInfo
 from apps.log_databus.handlers.collector import CollectorHandler
 
@@ -228,12 +229,18 @@ def subscription_statistic(params):
     ]
 
 
+def get_data_id(x):
+    if x["data_name"] != BK_DATA_NAME:
+        raise ApiResultError()
+    return {"data_name": BK_DATA_NAME, "bk_data_id": BK_DATA_ID}
+
+
 @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollectorHandler(TestCase):
     @staticmethod
     @patch(
         "apps.api.TransferApi.get_data_id",
-        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
