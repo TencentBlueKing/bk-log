@@ -78,6 +78,7 @@ from apps.log_databus.constants import (
     ContainerCollectStatus,
     DEFAULT_COLLECTOR_LENGTH,
     ContainerCollectorType,
+    LabelSelectorOperator,
 )
 from apps.log_databus.constants import CACHE_KEY_CLUSTER_INFO, EtlConfig
 from apps.log_databus.exceptions import (
@@ -2466,12 +2467,14 @@ class CollectorHandler(object):
         for rule_id, collector in rule_dict.items():
             rule = {
                 "rule_id": rule_id,
-                "collector_config_name": collector["path_collector_config"].collector_config_name.rsplit("_", 1)[0],
+                "collector_config_name": collector["path_collector_config"]
+                .collector_config_name.rsplit("_", 1)[0]
+                .split("_", 1)[1],
                 "bk_biz_id": collector["path_collector_config"].bk_biz_id,
                 "description": collector["path_collector_config"].description,
-                "collector_config_name_en": collector["path_collector_config"].collector_config_name_en.rsplit("_", 1)[
-                    0
-                ],
+                "collector_config_name_en": collector["path_collector_config"]
+                .collector_config_name_en.rsplit("_", 1)[0]
+                .split("_", 1)[1],
                 "environment": collector["path_collector_config"].environment,
                 "bcs_cluster_id": collector["path_collector_config"].bcs_cluster_id,
                 "extra_labels": collector["path_collector_config"].extra_labels,
@@ -2501,7 +2504,7 @@ class CollectorHandler(object):
                         },
                         "label_selector": {
                             "match_labels": path_container_config.match_labels,
-                            "match_expressions": path_container_config.match_labels,
+                            "match_expressions": path_container_config.match_expressions,
                         },
                         "all_container": path_container_config.all_container,
                         "status": path_container_config.status,
@@ -2512,19 +2515,6 @@ class CollectorHandler(object):
                 )
             result.append(rule)
         return result
-
-        # pg = DataPageNumberPagination()
-        # page_collectors = pg.paginate_queryset(
-        #     queryset=CollectorConfig.objects.exclude(
-        #         bk_app_code="bk_log_search",
-        #     ).filter(environment=Environment.CONTAINER, bk_biz_id=bk_biz_id),
-        #     request=request,
-        #     view=view,
-        # )
-        # res = pg.get_paginated_response(
-        #     [self.generate_bcs_collector(collector=collector) for collector in page_collectors]
-        # )
-        # return res
 
     @transaction.atomic
     def create_bcs_container_config(self, data, bk_app_code="bk_bcs"):
@@ -3090,7 +3080,11 @@ class CollectorHandler(object):
                 "labelSelector": {
                     "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
                     "matchExpressions": [
-                        {"key": expression["key"], "operator": expression["operator"], "values": [expression["value"]]}
+                        {
+                            "key": expression["key"],
+                            "operator": expression["operator"],
+                            "values": [v.strip() for v in expression.get("value", "").split(",") if v.strip()],
+                        }
                         for expression in container_config.match_expressions
                     ],
                 },
@@ -3227,7 +3221,26 @@ class CollectorHandler(object):
             for label_key, label_valus in obj_item["metadata"]["labels"].items()
         ]
 
-    def match_labels(self, topo_type, bcs_cluster_id, namespace, selector_expression):
+    def match_labels(self, topo_type, bcs_cluster_id, namespace, label_selector, selector_expression=""):
+        if not selector_expression:
+            match_labels = label_selector["match_labels"]
+            match_expressions = label_selector["match_expressions"]
+            match_labels_list = ["{} = {}".format(label["key"], label["value"]) for label in match_labels]
+
+            for expression in match_expressions:
+                if expression["operator"] == LabelSelectorOperator.IN:
+                    expr = "{} in {}".format(expression["key"], expression["value"])
+                elif expression["operator"] == LabelSelectorOperator.NOT_IN:
+                    expr = "{} notin {}".format(expression["key"], expression["value"])
+                elif expression["operator"] == LabelSelectorOperator.EXISTS:
+                    expr = "{}".format(expression["key"])
+                elif expression["operator"] == LabelSelectorOperator.DOES_NOT_EXIST:
+                    expr = "!{}".format(expression["key"])
+                else:
+                    expr = "{} = {}".format(expression["key"], expression["value"])
+                match_labels_list.append(expr)
+            selector_expression = ", ".join(match_labels_list)
+
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         if topo_type == TopoType.NODE.value:
             nodes = api_instance.list_node(label_selector=selector_expression).to_dict()
@@ -3301,6 +3314,9 @@ class CollectorHandler(object):
             configs_to_check = [conf["spec"] if "spec" in conf else conf for conf in configs]
             slz = ContainerCollectorYamlSerializer(data=configs_to_check, many=True)
             slz.is_valid(raise_exception=True)
+
+            if not slz.validated_data:
+                raise ValueError(_("配置项不能为空"))
         except ValidationError as err:
 
             def error_msg(value, results):
@@ -3346,6 +3362,11 @@ class CollectorHandler(object):
             log_config_type = config["logConfigType"]
             conditions = convert_filters_to_collector_condition(config.get("filters", []), config.get("delimiter", ""))
 
+            match_expressions = config.get("labelSelector", {}).get("matchExpressions", [])
+            for expr in match_expressions:
+                # 转换为字符串
+                expr["value"] = ",".join(expr.get("value") or [])
+
             container_configs.append(
                 {
                     "namespaces": config.get("namespaceSelector", {}).get("matchNames", []),
@@ -3359,7 +3380,7 @@ class CollectorHandler(object):
                             {"key": key, "operator": "=", "value": value}
                             for key, value in config.get("labelSelector", {}).get("matchLabels", {}).items()
                         ],
-                        "match_expressions": config.get("labelSelector", {}).get("matchExpressions", []),
+                        "match_expressions": match_expressions,
                     },
                     "params": {
                         "paths": config.get("path", []),
