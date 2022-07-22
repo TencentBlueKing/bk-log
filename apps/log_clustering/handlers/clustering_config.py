@@ -175,8 +175,6 @@ class ClusteringConfigHandler(object):
         return model_to_dict(clustering_config, exclude=CLUSTERING_CONFIG_EXCLUDE)
 
     def create_service(self, index_set_id, clustering_fields, collector_config_id=None):
-        from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
-
         if collector_config_id:
             collector_config = CollectorConfig.objects.get(collector_config_id=collector_config_id)
             all_etl_config = collector_config.get_etl_config()
@@ -185,8 +183,7 @@ class ClusteringConfigHandler(object):
                 etl_config=collector_config.etl_config,
                 clustering_fields=clustering_fields,
             )
-        pipeline_id = operator_aiops_service(index_set_id)
-        send.delay(index_set_id=index_set_id, pipeline_id=pipeline_id)
+        send.delay(index_set_id=index_set_id)
 
     def preview(
         self, input_data, min_members, max_dist_list, predefined_varibles, delimeter, max_log_length, is_case_sensitive
