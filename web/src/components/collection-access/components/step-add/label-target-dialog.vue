@@ -357,7 +357,8 @@ export default {
             const handleFilterExpressions = selectorVal.match_expressions
               .reduce((pre, cur) => {
                 const { key, operator, value } = cur;
-                if (['!=', '='].includes(operator)) { // 等于，非等不需要加括号
+                if (['Exists', 'DoesNotExist'].includes(operator)) {
+                  cur.value = ''; // 清空value值
                   pre.push(cur);
                   return pre;
                 }
@@ -371,7 +372,7 @@ export default {
                 }
                 return pre;
               }, [])
-              .map(item => ({ ...item, value: ['notin', 'in'].includes(item.operator) ? `(${item.value})` : item.value }));
+              .map(item => ({ ...item, value: ['Notin', 'In'].includes(item.operator) ? `(${item.value})` : item.value }));
             selectorVal.match_expressions = handleFilterExpressions;
           }
           const data = {
@@ -667,6 +668,8 @@ export default {
       }
 
       .match-right {
+        display: inline-block;
+        min-width: 36px;
         color: #c4c6cc;
       }
 
