@@ -140,7 +140,7 @@ class ClusteringConfigHandler(object):
                     clustering_fields=clustering_fields,
                 )
 
-            if change_filter_rules:
+            if change_filter_rules and not change_clustering_fields:
                 # 更新filter_rule
                 update_filter_rules.delay(index_set_id=index_set_id)
             if change_model_config:

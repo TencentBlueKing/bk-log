@@ -97,7 +97,7 @@ class NodeType(object):
 class RealTimeFlowNode(object):
     PRE_TREAT_NOT_CLUSTERING = "pre_treat_not_clustering"
     PRE_TREAT_SAMPLE_SET = "pre_treat_sample_set"
-    AFTER_TREAT_JOIN_AFTER_TREAT = "after_treat_join_after_treat"
+    AFTER_TREAT_CHANGE_FIELD = "after_treat_change_field"
 
 
 DEFAULT_MODEL_INPUT_FIELDS = [
