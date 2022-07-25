@@ -864,7 +864,7 @@ class DataFlowHandler(BaseAiopsHandler):
         flow_graph = self.get_flow_graph(flow_id=flow_id)
         nodes = flow_graph["nodes"]
         time_format = self.get_time_format(
-            nodes=nodes, table_name_prefix=RealTimeFlowNode.AFTER_TREAT_JOIN_AFTER_TREAT, flow_id=flow_id
+            nodes=nodes, table_name_prefix=RealTimeFlowNode.AFTER_TREAT_CHANGE_FIELD, flow_id=flow_id
         )
 
         source_rt_name = (
@@ -898,6 +898,18 @@ class DataFlowHandler(BaseAiopsHandler):
         self.operator_flow(flow_id=flow_id, action=ActionEnum.RESTART)
 
     def deal_after_treat_flow(self, nodes, flow):
+        # 模型应用节点更新
+        target_model_node, source_model_node = self.get_model_node(flow=flow, nodes=nodes)
+        if not target_model_node:
+            logger.error(f"could not find target model node, nodes: {nodes}")
+            return
+        self.deal_model_node(
+            flow_id=source_model_node["flow_id"],
+            node_id=source_model_node["node_id"],
+            input_config=target_model_node["input_config"],
+            output_config=target_model_node["output_config"],
+        )
+
         target_real_time_node_dict, source_real_time_node_dict = self.get_real_time_nodes(flow=flow, nodes=nodes)
         for table_name, node in source_real_time_node_dict.items():
             if node["node_name"] in NOT_NEED_EDIT_NODES:
@@ -924,18 +936,6 @@ class DataFlowHandler(BaseAiopsHandler):
                 doc_values_fields=target_node["doc_values_fields"],
                 json_fields=target_node["json_fields"],
             )
-
-        # 模型应用节点更新
-        target_model_node, source_model_node = self.get_model_node(flow=flow, nodes=nodes)
-        if not target_model_node:
-            logger.error(f"could not find target model node, nodes: {nodes}")
-            return
-        self.deal_model_node(
-            flow_id=source_model_node["flow_id"],
-            node_id=source_model_node["node_id"],
-            input_config=target_model_node["input_config"],
-            output_config=target_model_node["output_config"],
-        )
 
     def deal_model_node(self, flow_id, node_id, input_config, output_config):
         return self.update_flow_nodes(
