@@ -181,4 +181,15 @@ class Command(BaseCommand):
         etl_storage.is_valid()
         params = etl_storage.data
         params["username"] = settings.SYSTEM_USE_API_ACCOUNT
-        EtlHandler(collect_config.collector_config_id).update_or_create(**params)
+        EtlHandler(collect_config.collector_config_id).update_or_create(
+            etl_config=params["etl_config"],
+            table_id=params["table_id"],
+            storage_cluster_id=params["storage_cluster_id"],
+            retention=params["retention"],
+            allocation_min_days=params["allocation_min_days"],
+            storage_replies=params["storage_replies"],
+            view_roles=params.get("view_roles"),
+            etl_params=params.get("etl_params"),
+            fields=params.get("fields"),
+            username=params.get("username", ""),
+        )
