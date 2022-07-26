@@ -3406,6 +3406,149 @@ class CollectorHandler(object):
             },
         }
 
+    def fast_create(self, params: dict) -> dict:
+        bk_biz_id = params["bk_biz_id"]
+        collector_config_name = params["collector_config_name"]
+        collector_config_name_en = params["collector_config_name_en"]
+        target_object_type = params["target_object_type"]
+        target_node_type = params["target_node_type"]
+        target_nodes = params["target_nodes"]
+        data_encoding = params["data_encoding"]
+        description = params.get("description") or collector_config_name
+
+        params["params"]["encoding"] = params["data_encoding"]
+
+        # 创建CollectorConfig记录
+        model_fields = {
+            "collector_config_name": collector_config_name,
+            "collector_config_name_en": collector_config_name_en,
+            "target_object_type": target_object_type,
+            "target_node_type": target_node_type,
+            "target_nodes": target_nodes,
+            "description": description,
+            "data_encoding": data_encoding,
+            "params": params["params"],
+            "is_active": True,
+        }
+
+        if "environment" in params:
+            # 如果传了 environment 就设置，不传就不设置
+            model_fields["environment"] = params["environment"]
+
+        self.cat_illegal_ips(params)
+        is_create = False
+
+        # 判断是否已存在同英文名collector
+        if self._pre_check_collector_config_en(model_fields=params, bk_biz_id=bk_biz_id):
+            logger.error(
+                "collector_config_name_en {collector_config_name_en} already exists".format(
+                    collector_config_name_en=collector_config_name_en
+                )
+            )
+            raise CollectorConfigNameENDuplicateException(
+                CollectorConfigNameENDuplicateException.MESSAGE.format(
+                    collector_config_name_en=collector_config_name_en
+                )
+            )
+        # 判断是否已存在同bk_data_name, result_table_id
+        bkdata_biz_id = params.get("bkdata_biz_id") or bk_biz_id
+        bk_data_name = build_bk_data_name(bk_biz_id=bkdata_biz_id, collector_config_name_en=collector_config_name_en)
+        result_table_id = build_result_table_id(
+            bk_biz_id=bkdata_biz_id, collector_config_name_en=collector_config_name_en
+        )
+        if self._pre_check_bk_data_name(model_fields=model_fields, bk_data_name=bk_data_name):
+            logger.error(f"bk_data_name {bk_data_name} already exists")
+            raise CollectorBkDataNameDuplicateException(
+                CollectorBkDataNameDuplicateException.MESSAGE.format(bk_data_name=bk_data_name)
+            )
+        if self._pre_check_result_table_id(model_fields=model_fields, result_table_id=result_table_id):
+            logger.error(f"result_table_id {result_table_id} already exists")
+            raise CollectorResultTableIDDuplicateException(
+                CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=result_table_id)
+            )
+
+        with transaction.atomic():
+            try:
+                model_fields.update(
+                    {
+                        "category_id": params["category_id"],
+                        "collector_scenario_id": params["collector_scenario_id"],
+                        "bk_biz_id": bk_biz_id,
+                        "bkdata_biz_id": params.get("bkdata_biz_id"),
+                        "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
+                        "bk_data_id": params.get("bk_data_id"),
+                        "bk_data_name": bk_data_name,
+                        "etl_processor": params.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
+                        "etl_config": params.get("etl_config"),
+                        "collector_plugin_id": params.get("collector_plugin_id"),
+                    }
+                )
+                model_fields["collector_scenario_id"] = params["collector_scenario_id"]
+                self.data = CollectorConfig.objects.create(**model_fields)
+                is_create = True
+
+                # 2.2 meta-创建或更新数据源
+                if params.get("is_allow_alone_data_id", True):
+                    if self.data.etl_processor == ETLProcessorChoices.BKBASE.value:
+                        transfer_data_id = self.update_or_create_data_id(
+                            self.data, etl_processor=ETLProcessorChoices.TRANSFER.value
+                        )
+                        self.data.bk_data_id = self.update_or_create_data_id(self.data, bk_data_id=transfer_data_id)
+                    else:
+                        self.data.bk_data_id = self.update_or_create_data_id(self.data)
+                    self.data.save()
+
+            except IntegrityError:
+                logger.warning(f"collector config name duplicate => [{collector_config_name}]")
+                raise CollectorConfigNameDuplicateException()
+
+        # add user_operation_record
+        operation_record = {
+            "username": get_request_username(),
+            "biz_id": self.data.bk_biz_id,
+            "record_type": UserOperationTypeEnum.COLLECTOR,
+            "record_object_id": self.data.collector_config_id,
+            "action": UserOperationActionEnum.CREATE,
+            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
+        }
+        user_operation_record.delay(operation_record)
+
+        if is_create:
+            self._authorization_collector(self.data)
+        try:
+            collector_scenario = CollectorScenario.get_instance(self.data.collector_scenario_id)
+            self._update_or_create_subscription(
+                collector_scenario=collector_scenario, params=params["params"], is_create=is_create
+            )
+        finally:
+            if (
+                params.get("is_allow_alone_data_id", True)
+                and params.get("etl_processor") != ETLProcessorChoices.BKBASE.value
+            ):
+                # 创建数据平台data_id
+                async_create_bkdata_data_id.delay(self.data.collector_config_id)
+
+        params["table_id"] = build_bk_table_id(bk_biz_id, collector_config_name_en)
+
+        from apps.log_databus.handlers.etl import EtlHandler
+
+        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
+        etl_handler.update_or_create(**params)
+
+        return {
+            "collector_config_id": self.data.collector_config_id,
+            "bk_data_id": self.data.bk_data_id,
+            "subscription_id": self.data.subscription_id,
+            "task_id_list": self.data.task_id_list,
+        }
+
+
+def build_bk_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
+    """根据bk_biz_id和collector_config_name_en构建table_id"""
+    bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+
+    return bk_data_name
+
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
     """根据bk_biz_id和collector_config_name_en构建bk_data_name"""
