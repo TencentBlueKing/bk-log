@@ -860,6 +860,12 @@ CLUSTER_INFO = {
     }
 }
 
+FAST_UPDATE_PARAMS = {"description": "xxxx"}
+
+RESULT_TABLE_STORAGE = {
+    "2_log.test_collector": {"cluster_config": {"cluster_id": 1}, "storage_config": {"retention": 4}}
+}
+
 
 class CCModuleTest(object):
     """
@@ -1311,10 +1317,16 @@ namespace: default
     @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
     @patch("apps.log_databus.handlers.storage.StorageHandler.get_cluster_info_by_id", lambda _: CLUSTER_INFO)
     @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
-    def test_fast_create(self, *args, **kwargs):
+    @patch("apps.api.TransferApi.get_result_table_storage", lambda _: RESULT_TABLE_STORAGE)
+    @patch("apps.api.TransferApi.modify_result_table")
+    def test_fast_collector_api(self, *args, **kwargs):
         result = CollectorHandler().fast_create(FAST_CREATE_PARAMS)
         collector_config_id = result["collector_config_id"]
-        from apps.log_databus.models import CollectorConfig
 
-        collector_config = CollectorConfig.objects.filter(collector_config_id=collector_config_id).first()
-        self.assertEqual(FAST_CREATE_PARAMS["collector_config_name_en"], collector_config.collector_config_name_en)
+        collector_handler = CollectorHandler(collector_config_id)
+        collector_config = collector_handler.retrieve()
+
+        self.assertEqual(FAST_CREATE_PARAMS["collector_config_name_en"], collector_config["collector_config_name_en"])
+
+        update_result = CollectorHandler(collector_config_id).fast_update(FAST_UPDATE_PARAMS)
+        self.assertEqual(FAST_UPDATE_PARAMS["description"], update_result["description"])
