@@ -3628,15 +3628,17 @@ class CollectorHandler(object):
         result_table = TransferApi.get_result_table_storage(
             {"result_table_list": self.data.table_id, "storage_type": "elasticsearch"}
         )[self.data.table_id]
-        params.update(
-            {
-                "etl_config": self.data.etl_config,
-                "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
-                "retention": result_table["storage_config"]["retention"],
-                "allocation_min_days": params.get("allocation_min_days", 0),
-                "storage_replies": self.data.storage_replies,
-            }
-        )
+        default_etl_params = {
+            "etl_config": self.data.etl_config,
+            "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
+            "storage_replies": result_table["storage_config"]["index_settings"]["number_of_replicas"],
+            "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
+            "retention": result_table["storage_config"]["retention"],
+            "allocation_min_days": params.get("allocation_min_days", 0),
+        }
+        default_etl_params.update(params)
+        params = default_etl_params
+
         etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
         etl_handler.update_or_create(**params)
 

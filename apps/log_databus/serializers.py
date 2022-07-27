@@ -1268,6 +1268,9 @@ class FastCollectorUpdateSerializer(serializers.Serializer):
     target_node_type = serializers.CharField(label=_("节点类型"), required=False)
     target_nodes = TargetNodeSerializer(label=_("目标节点"), required=False, many=True)
     params = PluginParamSerializer(required=False)
+    data_encoding = serializers.ChoiceField(
+        label=_("日志字符集"), choices=EncodingsEnum.get_choices(), required=False, default=EncodingsEnum.UTF.value
+    )
     etl_config = serializers.CharField(label=_("清洗类型"), required=False)
     etl_params = CollectorEtlParamsSerializer(required=False)
     fields = serializers.ListField(child=CollectorEtlFieldsSerializer(), label=_("字段配置"), required=False)
