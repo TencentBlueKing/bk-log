@@ -1324,14 +1324,12 @@ namespace: default
     @patch("apps.api.TransferApi.modify_result_table")
     @patch("apps.log_databus.models.CollectorConfig.get_bk_data_by_name", lambda _: {})
     @patch("apps.log_databus.models.CollectorConfig.get_result_table_by_id", lambda _: {})
+    @patch("apps.api.TransferApi.get_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     def test_fast_collector_api(self, *args, **kwargs):
         result = CollectorHandler().fast_create(FAST_CREATE_PARAMS)
         collector_config_id = result["collector_config_id"]
+        from apps.log_databus.models import CollectorConfig
 
-        collector_handler = CollectorHandler(collector_config_id)
-        collector_config = collector_handler.retrieve()
+        collector_config = CollectorConfig.objects.filter(collector_config_id=collector_config_id).first()
 
-        self.assertEqual(FAST_CREATE_PARAMS["collector_config_name_en"], collector_config["collector_config_name_en"])
-
-        update_result = CollectorHandler(collector_config_id).fast_update(FAST_UPDATE_PARAMS)
-        self.assertEqual(FAST_UPDATE_PARAMS["description"], update_result["description"])
+        self.assertEqual(FAST_CREATE_PARAMS["collector_config_name_en"], collector_config.collector_config_name_en)

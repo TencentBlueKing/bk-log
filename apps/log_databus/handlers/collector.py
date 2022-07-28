@@ -3642,8 +3642,6 @@ class CollectorHandler(object):
         etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
         etl_handler.update_or_create(**params)
 
-        return self.retrieve()
-
 
 def build_bk_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
     """根据bk_biz_id和collector_config_name_en构建table_id"""
