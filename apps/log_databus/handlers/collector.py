@@ -101,6 +101,7 @@ from apps.log_databus.exceptions import (
     BCSApiException,
     ContainerCollectConfigValidateYamlException,
     RuleCollectorException,
+    ModifyCollectorConfigException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
@@ -3405,6 +3406,250 @@ class CollectorHandler(object):
                 "configs": container_configs,
             },
         }
+
+    def fast_create(self, params: dict) -> dict:
+        bk_biz_id = params["bk_biz_id"]
+        collector_config_name = params["collector_config_name"]
+        collector_config_name_en = params["collector_config_name_en"]
+        target_object_type = params["target_object_type"]
+        target_node_type = params["target_node_type"]
+        target_nodes = params["target_nodes"]
+        data_encoding = params["data_encoding"]
+        description = params.get("description") or collector_config_name
+
+        params["params"]["encoding"] = params["data_encoding"]
+
+        # 创建CollectorConfig记录
+        model_fields = {
+            "collector_config_name": collector_config_name,
+            "collector_config_name_en": collector_config_name_en,
+            "target_object_type": target_object_type,
+            "target_node_type": target_node_type,
+            "target_nodes": target_nodes,
+            "description": description,
+            "data_encoding": data_encoding,
+            "params": params["params"],
+            "is_active": True,
+        }
+
+        if "environment" in params:
+            # 如果传了 environment 就设置，不传就不设置
+            model_fields["environment"] = params["environment"]
+
+        self.cat_illegal_ips(params)
+        is_create = False
+
+        # 判断是否已存在同英文名collector
+        if self._pre_check_collector_config_en(model_fields=params, bk_biz_id=bk_biz_id):
+            logger.error(
+                "collector_config_name_en {collector_config_name_en} already exists".format(
+                    collector_config_name_en=collector_config_name_en
+                )
+            )
+            raise CollectorConfigNameENDuplicateException(
+                CollectorConfigNameENDuplicateException.MESSAGE.format(
+                    collector_config_name_en=collector_config_name_en
+                )
+            )
+        # 判断是否已存在同bk_data_name, result_table_id
+        bkdata_biz_id = params.get("bkdata_biz_id") or bk_biz_id
+        bk_data_name = build_bk_data_name(bk_biz_id=bkdata_biz_id, collector_config_name_en=collector_config_name_en)
+        result_table_id = build_result_table_id(
+            bk_biz_id=bkdata_biz_id, collector_config_name_en=collector_config_name_en
+        )
+        if self._pre_check_bk_data_name(model_fields=model_fields, bk_data_name=bk_data_name):
+            logger.error(f"bk_data_name {bk_data_name} already exists")
+            raise CollectorBkDataNameDuplicateException(
+                CollectorBkDataNameDuplicateException.MESSAGE.format(bk_data_name=bk_data_name)
+            )
+        if self._pre_check_result_table_id(model_fields=model_fields, result_table_id=result_table_id):
+            logger.error(f"result_table_id {result_table_id} already exists")
+            raise CollectorResultTableIDDuplicateException(
+                CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=result_table_id)
+            )
+
+        with transaction.atomic():
+            try:
+                model_fields.update(
+                    {
+                        "category_id": params["category_id"],
+                        "collector_scenario_id": params["collector_scenario_id"],
+                        "bk_biz_id": bk_biz_id,
+                        "bkdata_biz_id": params.get("bkdata_biz_id"),
+                        "data_link_id": int(params["data_link_id"]) if params.get("data_link_id") else 0,
+                        "bk_data_id": params.get("bk_data_id"),
+                        "bk_data_name": bk_data_name,
+                        "etl_processor": params.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
+                        "etl_config": params.get("etl_config"),
+                        "collector_plugin_id": params.get("collector_plugin_id"),
+                    }
+                )
+                model_fields["collector_scenario_id"] = params["collector_scenario_id"]
+                self.data = CollectorConfig.objects.create(**model_fields)
+                is_create = True
+
+                # 2.2 meta-创建或更新数据源
+                if params.get("is_allow_alone_data_id", True):
+                    if self.data.etl_processor == ETLProcessorChoices.BKBASE.value:
+                        transfer_data_id = self.update_or_create_data_id(
+                            self.data, etl_processor=ETLProcessorChoices.TRANSFER.value
+                        )
+                        self.data.bk_data_id = self.update_or_create_data_id(self.data, bk_data_id=transfer_data_id)
+                    else:
+                        self.data.bk_data_id = self.update_or_create_data_id(self.data)
+                    self.data.save()
+
+            except IntegrityError:
+                logger.warning(f"collector config name duplicate => [{collector_config_name}]")
+                raise CollectorConfigNameDuplicateException()
+
+        # add user_operation_record
+        operation_record = {
+            "username": get_request_username(),
+            "biz_id": self.data.bk_biz_id,
+            "record_type": UserOperationTypeEnum.COLLECTOR,
+            "record_object_id": self.data.collector_config_id,
+            "action": UserOperationActionEnum.CREATE,
+            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
+        }
+        user_operation_record.delay(operation_record)
+
+        if is_create:
+            self._authorization_collector(self.data)
+        try:
+            collector_scenario = CollectorScenario.get_instance(self.data.collector_scenario_id)
+            self._update_or_create_subscription(
+                collector_scenario=collector_scenario, params=params["params"], is_create=is_create
+            )
+        finally:
+            if (
+                params.get("is_allow_alone_data_id", True)
+                and params.get("etl_processor") != ETLProcessorChoices.BKBASE.value
+            ):
+                # 创建数据平台data_id
+                async_create_bkdata_data_id.delay(self.data.collector_config_id)
+
+        params["table_id"] = build_bk_table_id(bk_biz_id, collector_config_name_en)
+
+        from apps.log_databus.handlers.etl import EtlHandler
+
+        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
+        etl_handler.update_or_create(**params)
+
+        return {
+            "collector_config_id": self.data.collector_config_id,
+            "bk_data_id": self.data.bk_data_id,
+            "subscription_id": self.data.subscription_id,
+            "task_id_list": self.data.task_id_list,
+        }
+
+    def fast_update(self, params: dict) -> dict:
+        if self.data and not self.data.is_active:
+            raise CollectorActiveException()
+        bkdata_biz_id = self.data.bkdata_biz_id if self.data.bkdata_biz_id else self.data.bk_biz_id
+        bk_data_name = build_bk_data_name(
+            bk_biz_id=bkdata_biz_id, collector_config_name_en=self.data.collector_config_name_en
+        )
+        self.cat_illegal_ips(params)
+
+        if params.get("data_encoding"):
+            params["params"]["encoding"] = params["data_encoding"]
+
+        collector_config_fields = ["collector_config_name", "description", "target_node_type", "target_nodes", "params"]
+        model_fields = {i: params[i] for i in collector_config_fields if params.get(i)}
+
+        with transaction.atomic():
+            try:
+                _collector_config_name = copy.deepcopy(self.data.collector_config_name)
+                if self.data.bk_data_id and self.data.bk_data_name != bk_data_name:
+                    TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
+                    logger.info(
+                        "[modify_data_name] bk_data_id=>{}, data_name {}=>{}".format(
+                            self.data.bk_data_id, self.data.bk_data_name, bk_data_name
+                        )
+                    )
+                    self.data.bk_data_name = bk_data_name
+
+                for key, value in model_fields.items():
+                    setattr(self.data, key, value)
+                self.data.save()
+
+                # collector_config_name更改后更新索引集名称
+                if _collector_config_name != self.data.collector_config_name and self.data.index_set_id:
+                    index_set_name = _("[采集项]") + self.data.collector_config_name
+                    LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(
+                        index_set_name=index_set_name
+                    )
+
+                # 更新数据源
+                if params.get("is_allow_alone_data_id", True):
+                    if self.data.etl_processor == ETLProcessorChoices.BKBASE.value:
+                        transfer_data_id = self.update_or_create_data_id(
+                            self.data, etl_processor=ETLProcessorChoices.TRANSFER.value
+                        )
+                        self.data.bk_data_id = self.update_or_create_data_id(self.data, bk_data_id=transfer_data_id)
+                    else:
+                        self.data.bk_data_id = self.update_or_create_data_id(self.data)
+                    self.data.save()
+
+            except Exception as e:
+                logger.warning(f"modify collector config name failed, err: {e}")
+                raise ModifyCollectorConfigException(ModifyCollectorConfigException.MESSAGE.format(e))
+
+        # add user_operation_record
+        operation_record = {
+            "username": get_request_username(),
+            "biz_id": self.data.bk_biz_id,
+            "record_type": UserOperationTypeEnum.COLLECTOR,
+            "record_object_id": self.data.collector_config_id,
+            "action": UserOperationActionEnum.UPDATE,
+            "params": model_to_dict(self.data, exclude=["deleted_at", "created_at", "updated_at"]),
+        }
+        user_operation_record.delay(operation_record)
+
+        try:
+            if params.get("params"):
+                collector_scenario = CollectorScenario.get_instance(self.data.collector_scenario_id)
+                self._update_or_create_subscription(
+                    collector_scenario=collector_scenario, params=params["params"], is_create=False
+                )
+        finally:
+            if (
+                params.get("is_allow_alone_data_id", True)
+                and params.get("etl_processor") != ETLProcessorChoices.BKBASE.value
+            ):
+                # 创建数据平台data_id
+                async_create_bkdata_data_id.delay(self.data.collector_config_id)
+
+        params["table_id"] = build_bk_table_id(self.data.bk_biz_id, self.data.collector_config_name_en)
+
+        from apps.log_databus.handlers.etl import EtlHandler
+
+        result_table = TransferApi.get_result_table_storage(
+            {"result_table_list": self.data.table_id, "storage_type": "elasticsearch"}
+        )[self.data.table_id]
+        default_etl_params = {
+            "etl_config": self.data.etl_config,
+            "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
+            "storage_replies": result_table["storage_config"]["index_settings"]["number_of_replicas"],
+            "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
+            "retention": result_table["storage_config"]["retention"],
+            "allocation_min_days": params.get("allocation_min_days", 0),
+        }
+        default_etl_params.update(params)
+        params = default_etl_params
+
+        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
+        etl_handler.update_or_create(**params)
+
+        return self.retrieve()
+
+
+def build_bk_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
+    """根据bk_biz_id和collector_config_name_en构建table_id"""
+    bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+
+    return bk_data_name
 
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
