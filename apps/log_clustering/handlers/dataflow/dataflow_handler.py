@@ -651,9 +651,9 @@ class DataFlowHandler(BaseAiopsHandler):
                 id="ch_{}".format(graph_nodes_dict.get((group_by_result_table_id, NodeType.REALTIME))),
             ),
             ignite_node=RequireNodeCls(
-                node_id=graph_nodes_dict.get((ignite_result_table_id, NodeType.UNIFIED_KV_SOURCE)),
+                node_id=graph_nodes_dict.get((ignite_result_table_id, NodeType.REDIS_KV_SOURCE)),
                 result_table_id=ignite_result_table_id,
-                id="ch_{}".format(graph_nodes_dict.get((ignite_result_table_id, NodeType.UNIFIED_KV_SOURCE))),
+                id="ch_{}".format(graph_nodes_dict.get((ignite_result_table_id, NodeType.REDIS_KV_SOURCE))),
             ),
         )
         return modify_flow_cls

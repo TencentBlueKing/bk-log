@@ -385,7 +385,7 @@ class AddFlowNodesCls(object):
     flow_id: int
     result_table_id: str
     from_links: List = field(default_factory=list)
-    node_type: str = "unified_kv_source"
+    node_type: str = "redis_kv_source"
     frontend_info: Dict = field(default_factory=lambda: {"x": 1247.0, "y": 426.0})
     config: Dict = field(
         default_factory=lambda: {

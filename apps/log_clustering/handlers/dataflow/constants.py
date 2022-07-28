@@ -89,9 +89,10 @@ class FlowMode(ChoicesEnum):
 
 class NodeType(object):
     REALTIME = "realtime"
-    UNIFIED_KV_SOURCE = "unified_kv_source"
+    REDIS_KV_SOURCE = "redis_kv_source"
     ELASTIC_STORAGE = "elastic_storage"
     MODEL = "model_ts_custom"
+    STREAM_SOURCE = "stream_source"
 
 
 class RealTimeFlowNode(object):
