@@ -137,7 +137,7 @@
           v-model="formData.es_shards"
           type="number"
           :max="shardsMax"
-          :min="0"
+          :min="1"
           :precision="0"
           :clearable="false"
           :show-controls="true"
@@ -430,7 +430,7 @@ export default {
     this.operateType === 'add' && (this.isChangeSelect = true);
   },
   created() {
-    this.getHostNumber();
+    this.curCollect.environment !== 'container' && this.getHostNumber();
   },
   methods: {
     // 获取采集项清洗基础配置缓存 用于存储入库提交

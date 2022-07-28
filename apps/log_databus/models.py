@@ -52,6 +52,8 @@ from apps.log_databus.constants import (  # noqa
     ADMIN_REQUEST_USER,
     EtlConfig,  # noqa
     VisibleEnum,
+    ContainerCollectStatus,
+    Environment,
 )
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
 from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
@@ -151,6 +153,14 @@ class CollectorConfig(CollectorBase):
     storage_replies = models.IntegerField(_("ES副本数"), null=True, default=1, blank=True)
     bkdata_data_id_sync_times = models.IntegerField(_("调用数据平台创建data_id失败数"), default=0)
     collector_config_name_en = models.CharField(_("采集项英文名"), max_length=255, null=True, blank=True, default="")
+    environment = models.CharField(_("环境"), max_length=128, null=True, blank=True)
+    bcs_cluster_id = models.CharField(_("bcs集群id"), max_length=128, null=True, blank=True)
+    extra_labels = models.JSONField(_("额外字段添加"), null=True, blank=True)
+    add_pod_label = models.BooleanField(_("是否自动添加pod中的labels"), default=False)
+
+    yaml_config_enabled = models.BooleanField(_("是否使用yaml配置模式"), default=False)
+    yaml_config = models.TextField(_("yaml配置内容"), default="")
+    rule_id = models.IntegerField(_("bcs规则集id"), default=0)
     is_display = models.BooleanField(_("采集项是否对用户可见"), default=True)
 
     def get_name(self):
@@ -310,6 +320,39 @@ class CollectorConfig(CollectorBase):
     @cache_one_hour("data_id_conf_{bk_data_id}", need_md5=True)
     def get_data_id_conf(bk_data_id):
         return TransferApi.get_data_id({"bk_data_id": bk_data_id, "no_request": True})
+
+    @property
+    def is_container_environment(self):
+        """
+        是否为容器类型
+        """
+        return self.environment == Environment.CONTAINER
+
+
+class ContainerCollectorConfig(SoftDeleteModel):
+    collector_config_id = models.IntegerField(_("采集项id"), db_index=True)
+    collector_type = models.CharField(_("容器采集类型"), max_length=64, null=True, blank=True)
+    namespaces = models.JSONField(_("namespace选择"), null=True, blank=True)
+    any_namespace = models.BooleanField(_("所有namespace"), default=False)
+    data_encoding = models.CharField(_("日志字符集"), max_length=30, null=True, default=None)
+    params = models.JSONField(_("params"), null=True, blank=True)
+    workload_type = models.CharField(_("应用类型"), max_length=128, null=True, blank=True)
+    workload_name = models.CharField(_("应用名称"), max_length=128, null=True, blank=True)
+    container_name = models.CharField(_("容器名"), max_length=128, null=True, blank=True)
+    match_labels = models.JSONField(_("匹配标签"), null=True, blank=True)
+    match_expressions = models.JSONField(_("匹配表达式"), null=True, blank=True)
+    all_container = models.BooleanField(_("所有容器"), default=False)
+    status = models.CharField(
+        _("下发状态"), null=True, blank=True, max_length=30, choices=ContainerCollectStatus.get_choices()
+    )
+    raw_config = models.JSONField(_("原始配置"), null=True, blank=True)
+    parent_container_config_id = models.IntegerField(_("父配置id"), default=0)
+    rule_id = models.IntegerField(_("bcs规则集id"), default=0)
+
+
+class BcsRule(SoftDeleteModel):
+    rule_name = models.CharField(_("采集配置名称"), max_length=64)
+    bcs_project_id = models.CharField(_("项目ID"), max_length=64, default="")
 
 
 class ItsmEtlConfig(SoftDeleteModel):

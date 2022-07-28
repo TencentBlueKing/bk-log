@@ -416,9 +416,9 @@
         }
     },
     {
-        "name":"join signature缓存(ignite)",
+        "name":"join signature缓存(redis)",
         "bk_biz_id":{{after_treat.bk_biz_id}},
-        "cluster":"{{after_treat.ignite.cluster}}",
+        "cluster":"{{after_treat.redis.cluster}}",
         "expires":-1,
         "expires_unit":"",
         "result_table_id":"{{after_treat.join_signature_tmp.result_table_id}}",
@@ -430,18 +430,15 @@
                 ]
             }
         ],
+        "separator":":",
+        "key_separator":"_",
         "storage_type":"join",
-        "indexed_fields":[
-            "signature",
-            "sensitivity"
-        ],
-        "storage_keys":[
+        "keys":[
             "sensitivity",
             "signature"
         ],
-        "max_records":1000000,
         "id":268244,
-        "node_type":"ignite",
+        "node_type":"redis_storage",
         "frontend_info":{
             "x":1941,
             "y":320

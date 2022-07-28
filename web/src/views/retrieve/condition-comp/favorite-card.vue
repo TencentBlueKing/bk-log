@@ -29,7 +29,7 @@
       <div class="card-title">
         <span>{{ $t('收藏') }}</span>
       </div>
-      <ul v-if="computedFavoriteList.length" class="favorite-list">
+      <ul v-if="computedFavoriteList.length" class="favorite-list" ref="favList">
         <template v-for="item in computedFavoriteList">
           <li
             :class="{
@@ -43,12 +43,16 @@
           </li>
         </template>
       </ul>
-      <span class="bk-icon expand-icon icon-angle-down" :class="isExpand ? 'is-flip' : ''"></span>
+      <span class="arrow-down-wrap">
+        <i class="bk-icon expand-icon icon-angle-down" :class="isExpand ? 'is-flip' : ''"></i>
+      </span>
     </template>
   </div>
 </template>
 
 <script>
+import { debounce } from 'throttle-debounce';
+
 export default {
   props: {
     favoriteList: {
@@ -64,6 +68,8 @@ export default {
     return {
       isExpand: false,
       computedFavoriteList: [],
+      handleOverflowDebounce: null,
+      resizeObserver: null,
     };
   },
   watch: {
@@ -78,6 +84,9 @@ export default {
           expanded: false,
           isLatest: this.latestFavoriteId === item.favorite_search_id,
         }));
+        this.$nextTick(() => {
+          this.handleOverflow();
+        });
       },
       immediate: true,
     },
@@ -88,7 +97,79 @@ export default {
       }));
     },
   },
+  created() {
+    this.handleOverflowDebounce = debounce(300, false, this.handleOverflow);
+  },
+  mounted() {
+    this.handleOverflowDebounce();
+    this.resizeObsever();
+  },
+  beforeDestroy() {
+    this.resizeObserver.unobserve(this.$refs.favList);
+  },
   methods: {
+    /**
+     * @desc 控制超出省略提示
+     */
+    async handleOverflow() {
+      this.removeOverflow();
+      const list = this.$refs.favList;
+      if (!list) return;
+      const childs = list.children;
+      const overflowTagWidth = 22;
+      const listWidth = list.offsetWidth;
+      let totalWidth = 0;
+      await this.$nextTick();
+      // eslint-disable-next-line no-restricted-syntax
+      for (const i in childs) {
+        const item = childs[i];
+        if (!item.className || item.className.indexOf('favorite-item') === -1) continue;
+        totalWidth += item.offsetWidth + 10;
+        // 超出省略
+        if (totalWidth + overflowTagWidth + 4 > listWidth) {
+          const hideNum = this.computedFavoriteList.length - +i;
+          this.insertOverflow(item, hideNum > 99 ? 99 : hideNum);
+          break;
+        }
+      }
+    },
+    /**
+     * @desc 移除超出提示
+     */
+    removeOverflow() {
+      const overflowList = this.$refs.favList?.querySelectorAll('.fav-overflow-item');
+      if (!overflowList?.length) return;
+      overflowList.forEach((item) => {
+        this.$refs.favList.removeChild(item);
+      });
+    },
+    /**
+     * @desc 监听容器宽度
+     */
+    resizeObsever() {
+      if (!this.$refs.favList) return;
+
+      this.resizeObserver = new ResizeObserver(() => {
+        this.removeOverflow();
+        this.handleOverflow();
+      });
+      this.resizeObserver.observe(this.$refs.favList);
+    },
+    /**
+     * @desc 插入超出提示
+     * @param { * } target
+     * @param { Number } num
+     */
+    insertOverflow(target, num) {
+      if (this.isExpand) return;
+      const li = document.createElement('li');
+      const div = document.createElement('div');
+      li.className = 'fav-overflow-item';
+      div.className = 'tag';
+      div.innerText = `+${num}`;
+      li.appendChild(div);
+      this.$refs.favList.insertBefore(li, target);
+    },
     toggleExpand() {
       this.isExpand = !this.isExpand;
     },
@@ -107,7 +188,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
   @import '../../../scss/mixins/scroller.scss';
 
   .retrieve-favorite-card {
@@ -131,6 +212,10 @@ export default {
     }
 
     .favorite-list {
+      margin: 0 10px;
+      display: flex;
+      flex-wrap: wrap;
+      flex: 1;
       padding: 14px 0;
     }
 
@@ -148,6 +233,23 @@ export default {
       border: 1px solid #dcdee5;
       border-radius: 3px;
       cursor: pointer;
+    }
+
+    .fav-overflow-item {
+      width: 22px;
+      height: 22px;
+      line-height: 18px;
+      margin: 0 4px 10px 0;
+      border: 1px solid rgba(151, 155, 165, .3);
+      border-radius: 3px;
+      background-color: #fafbfd;
+
+      .tag {
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+        padding: 0;
+      }
     }
 
     .is-latest {
@@ -177,10 +279,12 @@ export default {
       }
     }
 
+    .arrow-down-wrap {
+      padding-top: 16px;
+    }
+
     .expand-icon {
-      position: absolute;
-      top: 14px;
-      right: 12px;
+      display: inline-block;
       color: #63656e;
       font-size: 22px;
       cursor: pointer;

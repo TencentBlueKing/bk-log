@@ -93,9 +93,9 @@ export default {
       cloudAreaList: [],
       logList: [],
       // 日志最大长度
-      maxLength: window.REAL_TIME_LOG_MAX_LENGTH || 20000,
+      maxLength: Number(window.REAL_TIME_LOG_MAX_LENGTH) || 20000,
       // 超过此长度删除部分日志
-      shiftLength: window.REAL_TIME_LOG_SHIFT_LENGTH || 10000,
+      shiftLength: Number(window.REAL_TIME_LOG_SHIFT_LENGTH) || 10000,
       isScrollBottom: true,
       logWrapperEl: null,
       zero: true,
