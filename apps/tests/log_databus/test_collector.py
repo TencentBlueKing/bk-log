@@ -863,7 +863,10 @@ CLUSTER_INFO = {
 FAST_UPDATE_PARAMS = {"description": "xxxx"}
 
 RESULT_TABLE_STORAGE = {
-    "2_log.test_collector": {"cluster_config": {"cluster_id": 1}, "storage_config": {"retention": 4}}
+    "2_log.test_collector": {
+        "cluster_config": {"cluster_id": 1},
+        "storage_config": {"retention": 4, "index_settings": {"number_of_shards": 2, "number_of_replicas": 1}},
+    }
 }
 
 
@@ -1319,6 +1322,7 @@ namespace: default
     @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
     @patch("apps.api.TransferApi.get_result_table_storage", lambda _: RESULT_TABLE_STORAGE)
     @patch("apps.api.TransferApi.modify_result_table")
+    @patch("apps.log_databus.models.CollectorConfig.get_bk_data_by_name", lambda _: {})
     def test_fast_collector_api(self, *args, **kwargs):
         result = CollectorHandler().fast_create(FAST_CREATE_PARAMS)
         collector_config_id = result["collector_config_id"]
