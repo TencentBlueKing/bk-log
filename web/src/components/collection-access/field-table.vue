@@ -24,9 +24,7 @@
   <div class="field-table-container" v-bkloading="{ isLoading: isExtracting }">
     <div class="field-method-head" v-if="!isPreviewMode">
       <!-- <span class="field-method-link fr mr10" @click.stop="isReset = true">{{ $t('dataManage.Reset') }}</span> -->
-      <div
-        :class="{ 'table-setting': true, 'disabled-setting': isSettingDisable || isSetDisabled }"
-        v-if="extractMethod !== 'bk_log_regexp'">
+      <div :class="{ 'table-setting': true, 'disabled-setting': isSettingDisable || isSetDisabled }">
         <div class="fr form-item-flex bk-form-item">
           <!-- <label class="bk-label has-desc" v-bk-tooltips="$t('dataManage.confirm_append')">
             <span>{{ $t('dataManage.keep_log') }}</span>
