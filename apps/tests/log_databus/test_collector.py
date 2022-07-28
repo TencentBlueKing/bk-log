@@ -1323,6 +1323,7 @@ namespace: default
     @patch("apps.api.TransferApi.get_result_table_storage", lambda _: RESULT_TABLE_STORAGE)
     @patch("apps.api.TransferApi.modify_result_table")
     @patch("apps.log_databus.models.CollectorConfig.get_bk_data_by_name", lambda _: {})
+    @patch("apps.log_databus.models.CollectorConfig.get_result_table_by_id", lambda _: {})
     def test_fast_collector_api(self, *args, **kwargs):
         result = CollectorHandler().fast_create(FAST_CREATE_PARAMS)
         collector_config_id = result["collector_config_id"]
