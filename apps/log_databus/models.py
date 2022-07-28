@@ -543,7 +543,7 @@ class RestoreConfig(SoftDeleteModel):
             "title": str(_("【日志平台】")),
         }
         CmsiApi.send_mail(send_params)
-        CmsiApi.send_wechat(send_params)
+        CmsiApi.send_weixin(send_params)
 
     @classmethod
     def get_collector_config_id(cls, restore_config_id):

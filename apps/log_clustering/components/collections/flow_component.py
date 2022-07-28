@@ -112,7 +112,7 @@ class CreateAfterTreatFlowService(BaseService):
                     "title": str(_("【日志平台】")),
                 }
                 CmsiApi.send_mail(send_params)
-                CmsiApi.send_wechat(send_params)
+                CmsiApi.send_weixin(send_params)
             self.finish_schedule()
         return True
 
