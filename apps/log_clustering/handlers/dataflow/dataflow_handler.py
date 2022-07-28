@@ -75,7 +75,7 @@ from apps.log_clustering.handlers.dataflow.data_cls import (
     ModelCls,
     MergeNodeCls,
     TspiderStorageCls,
-    IgniteStorageCls,
+    RedisStorageCls,
     AddFlowNodesCls,
     ModifyFlowCls,
     RequireNodeCls,
@@ -278,7 +278,7 @@ class DataFlowHandler(BaseAiopsHandler):
 
     def create_after_treat_flow(self, index_set_id):
         clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
-        if not ClusteringConfig:
+        if not clustering_config:
             raise ClusteringConfigNotExistException()
         all_fields_dict = self.get_fields_dict(clustering_config=clustering_config)
         source_rt_name = (
@@ -349,7 +349,7 @@ class DataFlowHandler(BaseAiopsHandler):
             self.modify_flow(
                 after_treat_flow_id=clustering_config.after_treat_flow_id,
                 group_by_result_table_id=clustering_config.after_treat_flow["group_by"]["result_table_id"],
-                ignite_result_table_id=clustering_config.after_treat_flow["join_signature_tmp"]["result_table_id"],
+                redis_result_table_id=clustering_config.after_treat_flow["join_signature_tmp"]["result_table_id"],
                 modify_node_result_table_id=clustering_config.after_treat_flow["join_signature"]["result_table_id"],
                 modify_node_result_table_name=clustering_config.after_treat_flow["join_signature"]["table_name"],
                 bk_biz_id=bk_biz_id,
@@ -485,7 +485,7 @@ class DataFlowHandler(BaseAiopsHandler):
             diversion_tspider=TspiderStorageCls(
                 cluster=self.conf.get("tspider_cluster"), expires=self.conf.get("tspider_cluster_expire")
             ),
-            ignite=IgniteStorageCls(cluster=self.conf.get("ignite_cluster")),
+            redis=RedisStorageCls(cluster=self.conf.get("redis_cluster")),
             queue_cluster=self.conf.get("queue_cluster"),
             bk_biz_id=bk_biz_id,
             target_bk_biz_id=target_bk_biz_id,
@@ -628,7 +628,7 @@ class DataFlowHandler(BaseAiopsHandler):
         self,
         after_treat_flow_id: int,
         group_by_result_table_id: str,
-        ignite_result_table_id: str,
+        redis_result_table_id: str,
         modify_node_result_table_id: str,
         modify_node_result_table_name: str,
         bk_biz_id: int,
@@ -650,10 +650,10 @@ class DataFlowHandler(BaseAiopsHandler):
                 result_table_id=group_by_result_table_id,
                 id="ch_{}".format(graph_nodes_dict.get((group_by_result_table_id, NodeType.REALTIME))),
             ),
-            ignite_node=RequireNodeCls(
-                node_id=graph_nodes_dict.get((ignite_result_table_id, NodeType.REDIS_KV_SOURCE)),
-                result_table_id=ignite_result_table_id,
-                id="ch_{}".format(graph_nodes_dict.get((ignite_result_table_id, NodeType.REDIS_KV_SOURCE))),
+            redis_node=RequireNodeCls(
+                node_id=graph_nodes_dict.get((redis_result_table_id, NodeType.REDIS_KV_SOURCE)),
+                result_table_id=redis_result_table_id,
+                id="ch_{}".format(graph_nodes_dict.get((redis_result_table_id, NodeType.REDIS_KV_SOURCE))),
             ),
         )
         return modify_flow_cls

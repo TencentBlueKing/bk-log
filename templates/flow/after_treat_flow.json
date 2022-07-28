@@ -374,7 +374,7 @@
     {
         "name":"join signature缓存(redis)",
         "bk_biz_id":{{after_treat.bk_biz_id}},
-        "cluster":"{{after_treat.ignite.cluster}}",
+        "cluster":"{{after_treat.redis.cluster}}",
         "expires":-1,
         "expires_unit":"",
         "result_table_id":"{{after_treat.join_signature_tmp.result_table_id}}",
