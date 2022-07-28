@@ -483,6 +483,7 @@ export default {
     ...mapGetters({
       projectId: 'projectId',
       bkBizId: 'bkBizId',
+      authGlobalInfo: 'globals/authContainerInfo',
     }),
     ...mapGetters('globals', ['globalsData']),
     scenarioFilters() {
@@ -514,12 +515,12 @@ export default {
     },
   },
   created() {
-    this.checkCreateAuth();
+    !this.authGlobalInfo && this.checkCreateAuth();
   },
   mounted() {
     this.needGuide = !localStorage.getItem('needGuide');
     this.timerNum = 0;
-    this.search();
+    !this.authGlobalInfo && this.search();
   },
   destroyed() {
     this.timerNum = -1;
