@@ -1268,7 +1268,7 @@ export default {
   申请权限: 'Apply',
   系统: 'System',
   无权限访问: 'No access authority',
-  你没有相应资源的访问权限: 'You do not have access to the corresponding resource, please apply for permission or contact the administrator for authorization',
+  您没有相应资源的访问权限: 'You do not have access to the corresponding resource, please apply for permission or contact the administrator for authorization',
   去申请: 'Go to apply authority',
   该操作需要以下权限: 'This operation requires the following permissions',
   需要申请的权限: 'Permission to apply for',

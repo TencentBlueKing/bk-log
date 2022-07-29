@@ -29,6 +29,7 @@
           class="fl"
           theme="primary"
           data-test-id="customContainer_button_addNewCustom"
+          v-cursor="{ active: isAllowedCreate === false }"
           @click="operateHandler({}, 'add')"
           :disabled="!collectProject || isAllowedCreate === null || isRequest">
           {{ $t('customReport.reportCreate') }}
@@ -234,13 +235,14 @@ export default {
     ...mapGetters({
       projectId: 'projectId',
       bkBizId: 'bkBizId',
+      authGlobalInfo: 'globals/authContainerInfo',
     }),
   },
   created() {
-    this.checkCreateAuth();
+    !this.authGlobalInfo && this.checkCreateAuth();
   },
   mounted() {
-    this.search();
+    !this.authGlobalInfo && this.search();
   },
   methods: {
     search() {

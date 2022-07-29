@@ -22,7 +22,7 @@
 
 <template>
   <div class="access-manage-container" v-bkloading="{ isLoading: basicLoading }">
-    <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
+    <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <template v-if="!authPageInfo && !basicLoading && curIndexSet">
       <bk-tab :active.sync="activePanel" type="border-card">
         <bk-tab-panel
@@ -44,7 +44,7 @@
 
 <script>
 import { mapState } from 'vuex';
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import BasicInfo from './basic-info';
 import FieldInfo from './field-info';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
@@ -52,7 +52,7 @@ import UsageDetails from '@/views/manage/manage-access/components/usage-details'
 export default {
   name: 'IndexSetManage',
   components: {
-    AuthPage,
+    AuthContainerPage,
     BasicInfo,
     FieldInfo,
     UsageDetails,

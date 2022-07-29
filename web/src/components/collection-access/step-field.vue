@@ -22,7 +22,7 @@
 
 <template>
   <section class="step-field-container" data-test-id="addNewCollectionItem_section_fieldExtractionBox">
-    <auth-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-page>
+    <auth-container-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-container-page>
     <div class="step-field" v-bkloading="{ isLoading: basicLoading }" v-else>
       <bk-alert v-if="!isCleanField && !isTempField && !isSetEdit" class="king-alert" type="info">
         <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
@@ -469,13 +469,13 @@
 <script>
 import { mapGetters, mapState } from 'vuex';
 import fieldTable from './field-table';
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import { projectManages } from '@/common/util';
 
 export default {
   components: {
     fieldTable,
-    AuthPage,
+    AuthContainerPage,
   },
   props: {
     operateType: String,
