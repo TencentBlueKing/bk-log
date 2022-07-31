@@ -34,7 +34,7 @@ from apps.feature_toggle.plugins.constants import SCENARIO_BKDATA
 from apps.log_databus.constants import DEFAULT_ETL_CONFIG, EtlConfig
 from apps.log_search.constants import CollectorScenarioEnum
 from apps.log_search.models import LogIndexSet
-from apps.utils.db import array_group
+from apps.utils.db import array_group, array_chunk
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.log import logger
 from apps.log_databus.models import CollectorConfig, BKDataClean
@@ -364,9 +364,10 @@ class CleanMetricCollector(object):
                 "collector_config_name": config["collector_config_name"],
             }
 
-        groups = NodeApi.get_subscription_instance_status(
-            {"subscription_id_list": list(subscription_id_dict.keys()), "no_request": True}
-        )
+        subscription_id_list = list(subscription_id_dict.keys())
+        groups = []
+        for i in array_chunk(subscription_id_list):
+            groups.extend(NodeApi.get_subscription_instance_status({"subscription_id_list": i, "no_request": True}))
 
         biz_collector_dict = defaultdict(int)
         total = 0
