@@ -157,8 +157,7 @@ class ClusteringMonitorHandler(object):
                         "config": DEFAULT_ACTION_CONFIG,
                         "notice_group_ids": [
                             MonitorUtils.get_or_create_notice_group(
-                                log_index_set_id=self.index_set_id,
-                                bk_biz_id=self.bk_biz_id,
+                                log_index_set_id=self.index_set_id, bk_biz_id=self.bk_biz_id,
                             )
                         ],
                         "notice_template": {
@@ -225,7 +224,7 @@ class ClusteringMonitorHandler(object):
                     "functions": [],
                     "result_table_id": table_id,
                     "agg_method": DEFAULT_AGG_METHOD_BKDATA,
-                    "agg_interval": DEFAULT_AGG_INTERVAL,
+                    "agg_interval": 60 * 5,  # 新类告警聚类周期固定为5min
                     "agg_dimension": [],
                     "agg_condition": [],
                     "metric_field": metric,

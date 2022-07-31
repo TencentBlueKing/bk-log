@@ -127,9 +127,16 @@ class DataAccessHandler(BaseAiopsHandler):
         bkdata_json_config = etl_storage.get_bkdata_etl_config(fields, etl_params, built_in_config)
         # 固定有time字段
         fields_config.append({"alias_name": "time", "field_name": "time", "option": {"es_type": "long"}})
+
+        if collector_config.collector_config_name_en[0].isdigit():
+            # 日志平台的RT允许为数字开头，而计算平台RT限制只能以英文开头，所以遇到开头为数字的情况就补一个前缀
+            result_table_name = f"bklog_{collector_config.collector_config_name_en}"
+        else:
+            result_table_name = collector_config.collector_config_name_en
+
         params = {
             "raw_data_id": clustering_config.bkdata_data_id,
-            "result_table_name": collector_config.collector_config_name_en,
+            "result_table_name": result_table_name,
             "result_table_name_alias": collector_config.collector_config_name_en,
             "clean_config_name": collector_config.collector_config_name,
             "description": collector_config.description,
