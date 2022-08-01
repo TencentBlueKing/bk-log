@@ -2145,7 +2145,7 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(FastCollectorCreateSerializer)
-        return Response(CollectorHandler().fast_create(data))
+        return Response(CollectorHandler().fast_create_or_update(data))
 
     @detail_route(methods=["POST"])
     def fast_update(self, request, collector_config_id):
@@ -2206,4 +2206,4 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(FastCollectorUpdateSerializer)
-        return Response(CollectorHandler(collector_config_id).fast_update(data))
+        return Response(CollectorHandler(collector_config_id).fast_create_or_update(data))
