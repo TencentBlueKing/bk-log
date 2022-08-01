@@ -2947,7 +2947,12 @@ class CollectorHandler(object):
         return path_container_config, std_container_config
 
     def delete_bcs_config(self, rule_id):
-        bcs_rule = BcsRule.objects.get(id=rule_id)
+        try:
+            bcs_rule = BcsRule.objects.get(id=rule_id)
+        except BcsRule.DoesNotExist:
+            logger.info("[delete_bcs_config] rule_id({}) does not exist, skipped".format(rule_id))
+            return {"rule_id": rule_id}
+
         collectors = CollectorConfig.objects.filter(rule_id=bcs_rule.id)
         if len(collectors) != DEFAULT_COLLECTOR_LENGTH:
             raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
