@@ -8,7 +8,7 @@ from bk_monitor.constants import TimeFilterEnum
 REGISTERED_METRICS = []
 
 
-def register_metric(namespace, data_name, description="", time_filter=TimeFilterEnum.MINUTE1):
+def register_metric(namespace, data_name, prefix="", description="", time_filter=TimeFilterEnum.MINUTE1):
     """
     注册对应metric
     """
@@ -23,6 +23,7 @@ def register_metric(namespace, data_name, description="", time_filter=TimeFilter
                 "namespace": namespace,
                 "data_name": data_name,
                 "description": description,
+                "prefix": prefix,
                 "method": wraps(func)(_wrapped_view),
                 "time_filter": time_filter,
             }
@@ -44,7 +45,7 @@ class Metric(object):
         self.dimensions = dimensions
         self.timestamp = timestamp
 
-    def to_bkmonitor_report(self, namespace=None):
+    def to_bkmonitor_report(self, prefix=None, namespace=None):
         if self.dimensions:
             dimensions = {key: str(value) for key, value in self.dimensions.items()}
         else:
@@ -52,19 +53,21 @@ class Metric(object):
 
         if self.timestamp:
             return {
-                "metrics": {self._get_actual_metric_name(namespace): self.metric_value},
+                "metrics": {self._get_actual_metric_name(prefix, namespace): self.metric_value},
                 "target": settings.APP_CODE,
                 "dimension": dimensions,
                 "timestamp": int(self.timestamp * 1000),
             }
         else:
             return {
-                "metrics": {self._get_actual_metric_name(namespace): self.metric_value},
+                "metrics": {self._get_actual_metric_name(prefix, namespace): self.metric_value},
                 "target": settings.APP_CODE,
                 "dimension": dimensions,
             }
 
-    def _get_actual_metric_name(self, namespace=None):
+    def _get_actual_metric_name(self, prefix=None, namespace=None):
         if namespace:
-            return "{}_{}".format(namespace, self.metric_name)
+            self.metric_name = "{}_{}".format(namespace, self.metric_name)
+        if prefix:
+            self.metric_name = "{}_{}".format(prefix, self.metric_name)
         return self.metric_name

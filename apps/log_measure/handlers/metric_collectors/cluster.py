@@ -89,7 +89,9 @@ class ClusterMetricCollector(object):
         return metrics
 
     @staticmethod
-    @register_metric("cluster_node", description=_("集群节点"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "cluster_node", prefix="es", description=_("集群节点"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def cluster_node():
         metrics = []
         cluster_count = defaultdict(int)
