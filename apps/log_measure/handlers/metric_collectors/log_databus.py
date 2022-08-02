@@ -121,7 +121,11 @@ class CollectMetricCollector(object):
 
     @staticmethod
     @register_metric(
-        "collector_capacity", description=_("采集项容量"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+        "collector_capacity",
+        prefix="es",
+        description=_("采集项容量"),
+        data_name="metric",
+        time_filter=TimeFilterEnum.MINUTE5,
     )
     def collector_capacity():
         has_table_id_collects: List[CollectorConfig] = CollectorConfig.objects.filter(
@@ -190,7 +194,9 @@ class CollectMetricCollector(object):
         return [indices for cluster_indices in result.values() for indices in cluster_indices]
 
     @staticmethod
-    @register_metric("collector_crawler", description=_("采集行数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "row", prefix="bkunifylogbeat", description=_("采集行数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def collector_line():
         metrics = []
         crawler_received_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_RECEIVED)
@@ -347,7 +353,9 @@ class CleanMetricCollector(object):
         return cleans
 
     @staticmethod
-    @register_metric("collector_host", description=_("采集主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
+    @register_metric(
+        "host", prefix="bkunifylogbeat", description=_("采集主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60
+    )
     def collect_host():
         configs = CollectorConfig.objects.filter(is_active=True).values(
             "bk_biz_id", "subscription_id", "collector_config_id", "collector_config_name"

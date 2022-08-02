@@ -102,7 +102,9 @@ class LogSearchMetricCollector(object):
         return metrics
 
     @staticmethod
-    @register_metric("search_favorite", description=_("检索收藏"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "log_search_favorite", description=_("检索收藏"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def favorite_count():
         favorite_objs = (
             FavoriteSearch.objects.filter(

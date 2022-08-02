@@ -37,7 +37,9 @@ from bk_monitor.utils.metric import register_metric, Metric
 
 class BusinessMetricCollector(object):
     @staticmethod
-    @register_metric("business_active", description=_("活跃业务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "business_active", prefix="bklog", description=_("活跃业务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def business_active():
         metrics = []
         for timedelta in TIME_RANGE:
