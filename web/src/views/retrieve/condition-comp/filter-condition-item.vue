@@ -165,6 +165,7 @@ export default {
     filterFields() { // 剔除掉检索查询参数里面已有的过滤条件
       const result = [];
       this.totalFields.forEach((item) => {
+        if (item.field_type === '__virtual__') return;
         const fieldName = item.field_name;
         // if (item.field_type !== 'text' && !this.filterCondition.some(filterItem => filterItem.field === fieldName)) {
         // if (item.field_type !== 'text') { // 允许重复选择相同字段筛选条件

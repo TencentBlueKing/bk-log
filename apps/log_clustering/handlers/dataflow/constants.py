@@ -89,15 +89,16 @@ class FlowMode(ChoicesEnum):
 
 class NodeType(object):
     REALTIME = "realtime"
-    UNIFIED_KV_SOURCE = "unified_kv_source"
+    REDIS_KV_SOURCE = "redis_kv_source"
     ELASTIC_STORAGE = "elastic_storage"
     MODEL = "model_ts_custom"
+    STREAM_SOURCE = "stream_source"
 
 
 class RealTimeFlowNode(object):
     PRE_TREAT_NOT_CLUSTERING = "pre_treat_not_clustering"
     PRE_TREAT_SAMPLE_SET = "pre_treat_sample_set"
-    AFTER_TREAT_JOIN_AFTER_TREAT = "after_treat_join_after_treat"
+    AFTER_TREAT_CHANGE_FIELD = "after_treat_change_field"
 
 
 DEFAULT_MODEL_INPUT_FIELDS = [

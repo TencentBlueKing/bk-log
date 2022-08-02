@@ -1254,6 +1254,7 @@ export default {
         this.operatorConfig = {
           bkmonitor,
           contextAndRealtime,
+          timeField,
         };
         this.cleanConfig = cleanConfig;
         this.clusteringData = clusteringConfig;

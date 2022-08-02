@@ -338,7 +338,7 @@ class TspiderStorageCls(object):
 
 
 @dataclass
-class IgniteStorageCls(object):
+class RedisStorageCls(object):
     cluster: str
 
 
@@ -371,7 +371,7 @@ class AfterTreatDataFlowCls(object):
     join_signature: RealTimeCls
     change_clustering_field: RealTimeCls
     diversion_tspider: TspiderStorageCls
-    ignite: IgniteStorageCls
+    redis: RedisStorageCls
     diversion: SplitCls
     queue_cluster: str
     bk_biz_id: int
@@ -385,7 +385,7 @@ class AddFlowNodesCls(object):
     flow_id: int
     result_table_id: str
     from_links: List = field(default_factory=list)
-    node_type: str = "unified_kv_source"
+    node_type: str = "redis_kv_source"
     frontend_info: Dict = field(default_factory=lambda: {"x": 1247.0, "y": 426.0})
     config: Dict = field(
         default_factory=lambda: {
@@ -412,7 +412,7 @@ class ModifyFlowCls(object):
     bk_biz_id: int
     table_name: str
     group_by_node: RequireNodeCls
-    ignite_node: RequireNodeCls
+    redis_node: RequireNodeCls
 
 
 @dataclass
