@@ -311,7 +311,7 @@ class StorageHandler(object):
                 continue
 
             # 非公共集群， 筛选bk_biz_id，密码置空处理，并添加可编辑标签
-            custom_option = {
+            new_custom_option = {
                 "admin": [cluster_obj["cluster_config"]["creator"]],
                 "setup_config": {
                     "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
@@ -359,7 +359,7 @@ class StorageHandler(object):
 
             # 如果这个存在说明是老的可见范围配置
             if custom_visible_bk_biz:
-                custom_option["visible_config"] = {
+                new_custom_option["visible_config"] = {
                     "visible_type": VisibleEnum.MULTI_BIZ.value,
                     "visible_bk_biz": [
                         {
@@ -369,17 +369,18 @@ class StorageHandler(object):
                         for bk_biz_id in custom_visible_bk_biz
                     ],
                 }
-                custom_option.update(cluster_obj["cluster_config"]["custom_option"])
-                cluster_obj["cluster_config"]["custom_option"] = custom_option
+                new_custom_option.update(cluster_obj["cluster_config"]["custom_option"])
+                cluster_obj["cluster_config"]["custom_option"] = new_custom_option
                 cluster_data.append(cluster_obj)
                 continue
 
+            # 如果可见范围配置不存在，则直接为当前业务可见
             if not custom_option.get("visible_config"):
-                custom_option["visible_config"] = {
+                new_custom_option["visible_config"] = {
                     "visible_type": VisibleEnum.CURRENT_BIZ.value,
                 }
-                custom_option.update(cluster_obj["cluster_config"]["custom_option"])
-                cluster_obj["cluster_config"]["custom_option"] = custom_option
+                new_custom_option.update(cluster_obj["cluster_config"]["custom_option"])
+                cluster_obj["cluster_config"]["custom_option"] = new_custom_option
                 cluster_data.append(cluster_obj)
                 continue
 
