@@ -27,7 +27,6 @@ from apps.utils import ChoicesEnum
 DEFAULT_TIME_FIELD = "timestamp"
 DEFAULT_CLUSTERING_FIELD = "log"
 NOT_CLUSTERING_FILTER_RULE = " where ip is null"
-UUID_FIELDS = "uuid"
 OPERATOR_AND = "and"
 # 聚类不参与sql字段
 NOT_CONTAIN_SQL_FIELD_LIST = ["timestamp", "_startTime_", "_endTime_"]
