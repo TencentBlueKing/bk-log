@@ -42,7 +42,6 @@ from apps.log_clustering.handlers.dataflow.constants import (
     DEFAULT_CLUSTERING_FIELD,
     NOT_CLUSTERING_FILTER_RULE,
     NOT_CONTAIN_SQL_FIELD_LIST,
-    UUID_FIELDS,
     DIST_FIELDS,
     FlowMode,
     NodeType,
@@ -176,7 +175,7 @@ class DataFlowHandler(BaseAiopsHandler):
             if not all_fields_dict.get(filter_rule.get("fields_name")):
                 continue
             rule = [
-                all_fields_dict.get(filter_rule.get("fields_name")),
+                f"`{all_fields_dict.get(filter_rule.get('fields_name'))}`",
                 cls.change_op(filter_rule.get("op")),
                 "'{}'".format(filter_rule.get("value")),
                 filter_rule.get("logic_operator"),
@@ -200,7 +199,7 @@ class DataFlowHandler(BaseAiopsHandler):
     def _init_default_filter_rule(cls, clustering_field):
         if not clustering_field:
             return ""
-        return "{} is not null and length({}) > 1".format(clustering_field, clustering_field)
+        return "`{}` is not null and length(`{}`) > 1".format(clustering_field, clustering_field)
 
     def _init_pre_treat_flow(
         self,
@@ -233,7 +232,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 table_name="pre_treat_sample_set_{}".format(time_format), expires=self.conf.get("hdfs_expires")
             ),
             not_clustering=RealTimeCls(
-                fields=", ".join(is_dimension_fields),
+                fields=", ".join([f"`{field}`" for field in is_dimension_fields]),
                 table_name="pre_treat_not_clustering_{}".format(time_format),
                 result_table_id="{}_pre_treat_not_clustering_{}".format(bk_biz_id, time_format),
                 filter_rule=not_clustering_rule if not_clustering_rule else NOT_CLUSTERING_FILTER_RULE,
@@ -256,15 +255,15 @@ class DataFlowHandler(BaseAiopsHandler):
         transform_fields = []
         for field in is_dimension_fields:
             if field == clustering_field:
-                dst_transform_fields.append(DEFAULT_CLUSTERING_FIELD)
-                transform_fields.append("{} as {}".format(field, DEFAULT_CLUSTERING_FIELD))
+                dst_transform_fields.append(f"`{DEFAULT_CLUSTERING_FIELD}`")
+                transform_fields.append("`{}` as `{}`".format(field, DEFAULT_CLUSTERING_FIELD))
                 continue
             if field == DEFAULT_CLUSTERING_FIELD:
-                dst_transform_fields.append(clustering_field)
-                transform_fields.append("{} as {}".format(field, clustering_field))
+                dst_transform_fields.append(f"`{clustering_field}`")
+                transform_fields.append("`{}` as `{}`".format(field, clustering_field))
                 continue
-            dst_transform_fields.append(field)
-            transform_fields.append(field)
+            dst_transform_fields.append(f"`{field}`")
+            transform_fields.append(f"`{field}`")
         return dst_transform_fields, transform_fields
 
     @classmethod
@@ -417,9 +416,8 @@ class DataFlowHandler(BaseAiopsHandler):
             field["field_name"] for field in all_fields if field["field_name"] not in NOT_CONTAIN_SQL_FIELD_LIST
         ]
         _, transform_fields = self._generate_fields(is_dimension_fields, clustering_field=clustering_fields)
-        change_fields = [field for field in transform_fields if field != UUID_FIELDS]
-        change_clustering_fields = copy.copy(change_fields)
-        change_fields.extend(DIST_FIELDS)
+        change_clustering_fields = copy.copy(transform_fields)
+        transform_fields.extend(DIST_FIELDS)
         change_clustering_fields = [field.split(" as ")[-1] for field in change_clustering_fields]
         change_clustering_fields.extend(DIST_CLUSTERING_FIELDS)
         merge_table_table_id = "{}_bklog_{}_{}".format(bk_biz_id, settings.ENVIRONMENT, src_rt_name)
@@ -436,7 +434,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 output_fields=json.dumps(self.get_model_output_fields(all_fields)),
             ),
             change_field=RealTimeCls(
-                fields=", ".join(change_fields),
+                fields=", ".join(transform_fields),
                 table_name="after_treat_change_field_{}".format(time_format),
                 result_table_id="{}_after_treat_change_field_{}".format(bk_biz_id, time_format),
                 filter_rule="",
