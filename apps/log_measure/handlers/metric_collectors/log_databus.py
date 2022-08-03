@@ -22,8 +22,11 @@ the project delivered to anyone in the future.
 import re
 from collections import defaultdict
 from typing import List
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.db.models import Count
+
+from config.domains import MONITOR_APIGATEWAY_ROOT
 
 from apps.api import NodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -35,10 +38,17 @@ from apps.utils.db import array_group, array_chunk
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.log import logger
 from apps.log_databus.models import CollectorConfig, BKDataClean
-from apps.log_measure.constants import INDEX_FORMAT, COMMON_INDEX_RE, MAX_QUERY_SUBSCRIPTION
+from apps.log_measure.constants import (
+    INDEX_FORMAT,
+    COMMON_INDEX_RE,
+    TABLE_BKUNIFYBEAT_TASK,
+    FIELD_CRAWLER_RECEIVED,
+    FIELD_CRAWLER_STATE,
+)
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
+from bk_monitor.api.client import Client
 
 
 class CollectMetricCollector(object):
@@ -128,8 +138,12 @@ class CollectMetricCollector(object):
                     table_id_map_indices[collect.table_id].append(indices)
 
         for collect in has_table_id_collects:
-            cur_cap = sum([float(indices["store.size"]) for indices in table_id_map_indices.get(collect.table_id, [])])
-            docs_count = sum([int(indices["docs.count"]) for indices in table_id_map_indices.get(collect.table_id, [])])
+            cur_cap = sum(
+                [float(indices.get("store.size", 0)) for indices in table_id_map_indices.get(collect.table_id, [])]
+            )
+            docs_count = sum(
+                [int(indices.get("docs.count", 0)) for indices in table_id_map_indices.get(collect.table_id, [])]
+            )
             metrics.append(
                 Metric(
                     metric_name="store_sum",
@@ -175,6 +189,53 @@ class CollectMetricCollector(object):
         result = multi_execute_func.run()
         return [indices for cluster_indices in result.values() for indices in cluster_indices]
 
+    @staticmethod
+    @register_metric("collector_crawler", description=_("采集行数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    def collector_line():
+        metrics = []
+        crawler_received_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_RECEIVED)
+        crawler_state_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_STATE)
+        for target in crawler_received_data:
+            for task_data_id in crawler_received_data[target]:
+                _received_count = crawler_received_data[target][task_data_id]
+                _state_count = crawler_state_data[target][task_data_id]
+                metrics.append(
+                    Metric(
+                        metric_name="count",
+                        metric_value=_received_count - _state_count,
+                        dimensions={"target": target, "task_data_id": task_data_id},
+                        timestamp=MetricUtils.get_instance().report_ts,
+                    )
+                )
+
+        return metrics
+
+    @staticmethod
+    def get_crawler_metric_data(field):
+        data = defaultdict(lambda: defaultdict(int))
+        bk_monitor_client = Client(
+            bk_app_code=settings.APP_CODE,
+            bk_app_secret=settings.SECRET_KEY,
+            monitor_host=MONITOR_APIGATEWAY_ROOT,
+            report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
+            bk_username="admin",
+        )
+        params = {
+            "sql": f"select sum({field}) as {field} from {TABLE_BKUNIFYBEAT_TASK} \
+            where time >= '5m' group by task_data_id,target"
+        }
+        try:
+            result = bk_monitor_client.get_ts_data(data=params)
+            for ts_data in result["list"]:
+                value = ts_data[field]
+                target = ts_data["target"]
+                task_data_id = ts_data["task_data_id"]
+                data[target][task_data_id] = value
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"failed to get {field} data, err: {e}")
+        return data
+
 
 class CleanMetricCollector(object):
     @staticmethod
@@ -207,7 +268,7 @@ class CleanMetricCollector(object):
                                 "target_bk_biz_id": bk_biz_id,
                                 "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                                 "index_set_id": index_set_id,
-                                "index_set_name": index_sets.get(index_set_id, {}).get("index_set_name", index_set_id),
+                                "index_set_name": index_sets[index_set_id]["index_set_name"],
                                 "clean_type": etl_config,
                             },
                             timestamp=MetricUtils.get_instance().report_ts,
@@ -303,20 +364,17 @@ class CleanMetricCollector(object):
                 "collector_config_name": config["collector_config_name"],
             }
 
-        total = 0
-        biz_collector_dict = defaultdict(int)
         subscription_id_list = list(subscription_id_dict.keys())
-        for i in array_chunk(subscription_id_list, MAX_QUERY_SUBSCRIPTION):
-            try:
-                groups = NodeApi.get_subscription_instance_status({"subscription_id_list": i, "no_request": True})
-                for group in groups:
-                    instance_count = len(group["instances"])
-                    biz_collector_dict[subscription_id_dict[group["subscription_id"]]] += instance_count
-                    total += instance_count
+        groups = []
+        for i in array_chunk(subscription_id_list):
+            groups.extend(NodeApi.get_subscription_instance_status({"subscription_id_list": i, "no_request": True}))
 
-            except Exception as e:  # pylint: disable=W0703
-                logger.exception("get subscription[ids: {}] instance status fail => {}".format(",".join(i), e))
-
+        biz_collector_dict = defaultdict(int)
+        total = 0
+        for group in groups:
+            instance_count = len(group["instances"])
+            biz_collector_dict[subscription_id_dict[group["subscription_id"]]] += instance_count
+            total += instance_count
         metrics = [
             Metric(
                 metric_name="count",

@@ -143,7 +143,7 @@
                   {{ $t('dataManage.applyTemp') }}
                 </span>
               </div>
-              <p class="documentation button-text" @click="handleOpenDocument">
+              <p class="documentation button-text" v-if="docUrl" @click="handleOpenDocument">
                 <span>{{$t('说明文档')}}</span> <span class="log-icon icon-jump"></span>
               </p>
             </div>
@@ -497,7 +497,7 @@ export default {
       // eslint-disable-next-line no-useless-escape
       defaultRegex: '(?P<request_ip>[\d\.]+)[^[]+\[(?P<request_time>[^]]+)\]',
       isLoading: false,
-      basicLoading: true,
+      basicLoading: false,
       isUnmodifiable: false,
       fieldType: '',
       deletedVisible: true,
@@ -729,6 +729,7 @@ export default {
   methods: {
     // 初始化清洗项
     initCleanItem() {
+      this.basicLoading = true;
       const query = {
         bk_biz_id: this.bkBizId,
         have_data_id: 1,
@@ -1097,8 +1098,8 @@ export default {
       /* eslint-disable */
       this.params.etl_config = etl_config
       Object.assign(this.params.etl_params, {
-        separator_regexp: etl_params.separator_regexp || '',
-        separator: etl_params.separator || ''
+        separator_regexp: etl_params?.separator_regexp || '',
+        separator: etl_params?.separator || ''
       })
       this.isUnmodifiable = !!(table_id || storage_cluster_id)
       this.fieldType = etl_config || 'bk_log_text'

@@ -26,7 +26,7 @@
       <div :class="['cluster-title-container' ,!isShowTable && 'is-active']"
            @click="isShowTable = !isShowTable">
         <span class="bk-icon icon-angle-up-fill"></span>
-        <p>{{ tableTitleType ? $t("共享集群") : $t('业务独享集群')}}</p>
+        <p>{{ tableShowType ? $t("共享集群") : $t('业务独享集群')}}</p>
       </div>
     </div>
     <div class="cluster-main" v-show="isShowTable">
@@ -59,12 +59,12 @@
             </template>
           </bk-table-column>
           <bk-table-column :label="$t('索引数')" prop="index_count"></bk-table-column>
-          <bk-table-column v-if="tableTitleType" :label="$t('业务数')" prop="biz_count"></bk-table-column>
+          <bk-table-column v-if="tableShowType" :label="$t('业务数')" prop="biz_count"></bk-table-column>
         </bk-table>
         <div class="cluster-illustrate" v-show="!!activeItem">
           <p class="illustrate-title">{{$t('集群说明')}}</p>
           <div class="illustrate-container">
-            <div v-for="[key,value] of Object.entries(illustrateLabelData)" :key="key">
+            <div v-for="[key, value] of Object.entries(illustrateLabelData)" :key="key">
               <span class="illustrate-label">{{key}}：</span>
               <span class="illustrate-value">{{value}}</span>
             </div>
@@ -78,8 +78,8 @@
         <div class="noData-container">
           <div class="noData-message">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p class="empty-message">{{ tableTitleType ? $t('createAPlatformTips') : $t('createAClusterTips')}}</p>
-            <p v-if="!tableTitleType" class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
+            <p class="empty-message">{{ tableShowType ? $t('createAPlatformTips') : $t('createAClusterTips')}}</p>
+            <p v-if="!tableShowType" class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
           </div>
         </div>
       </template>
@@ -96,16 +96,12 @@ export default {
       type: Array,
       default: () => [],
     },
-    tableTitleType: {
-      type: Boolean,
-      default: true,
+    tableType: {
+      type: String,
+      default: 'shared',
     },
     storageClusterId: {
       type: [Number, String],
-      require: true,
-    },
-    operateType: {
-      type: String,
       require: true,
     },
     isChangeSelect: {
@@ -124,7 +120,7 @@ export default {
         [this.$t('日志归档')]: '',
       },
       description: '',
-      activeItem: {},
+      activeItem: null,
       isShow: false,
       throttle: false,
     };
@@ -133,6 +129,9 @@ export default {
     ...mapGetters({
       curCollect: 'collect/curCollect',
     }),
+    tableShowType() {
+      return this.tableType === 'exclusive';
+    },
   },
   watch: {
     storageClusterId(val) {
@@ -200,11 +199,12 @@ export default {
   },
 };
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 @import '@/scss/mixins/flex.scss';
 
 .cluster-container {
-  margin-top: 20px;
+  line-height: 14px;
+  min-width: 900px;
 
   .cluster-title {
     width: 100%;
@@ -242,18 +242,24 @@ export default {
 
     .cluster-table {
       width: 58%;
+      min-width: 420px;
+
+      ::v-deep .bk-form-radio {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
     }
 
     .cluster-illustrate {
       width: 42%;
       min-width: 460px;
-      overflow-y: auto;
       max-height: 254px;
       padding: 16px;
       font-size: 12px;
-      overflow-y: auto;
       border: 1px solid #dcdee5;
       border-left: none;
+      overflow: hidden;
 
       .illustrate-title {
         font-weight: 700;
@@ -276,7 +282,8 @@ export default {
       }
 
       .illustrate-list {
-        margin-top: 8px;
+        height: calc(100% - 46px);
+        overflow-y: auto;
         color: #63656e;
       }
     }

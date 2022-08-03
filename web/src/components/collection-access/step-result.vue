@@ -100,6 +100,7 @@ export default {
         start: this.$t('dataManage.start'),
         stop: this.$t('dataManage.stop'),
         storage: this.$t('dataManage.editFinish'),
+        container: this.$t('dataManage.editFinish'),
       },
     };
   },

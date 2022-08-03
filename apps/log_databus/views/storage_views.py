@@ -22,27 +22,27 @@ the project delivered to anyone in the future.
 from rest_framework import serializers
 from rest_framework.response import Response
 
+from apps.api import BkLogApi
 from apps.generic import APIViewSet
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import (
-    ViewBusinessPermission,
     BusinessActionPermission,
     InstanceActionPermission,
+    ViewBusinessPermission,
     insert_permission_field,
 )
-from apps.utils.drf import list_route, detail_route
-from apps.log_databus.handlers.storage import StorageHandler
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
+from apps.log_databus.exceptions import StorageCreateException, StorageNotExistException
+from apps.log_databus.handlers.storage import StorageHandler
 from apps.log_databus.serializers import (
-    StorageListSerializer,
+    StorageBathcDetectSerializer,
     StorageCreateSerializer,
     StorageDetectSerializer,
-    StorageUpdateSerializer,
-    StorageBathcDetectSerializer,
+    StorageListSerializer,
     StorageRepositorySerlalizer,
+    StorageUpdateSerializer,
 )
-from apps.log_databus.exceptions import StorageNotExistException, StorageCreateException
-from apps.api import BkLogApi
+from apps.utils.drf import detail_route, list_route
 
 
 class StorageViewSet(APIViewSet):
@@ -297,6 +297,7 @@ class StorageViewSet(APIViewSet):
         @apiName create_storage
         @apiGroup 09_StorageCluster
         @apiParam {String} cluster_name 集群名称
+        @apiParam {String} [bkbase_cluster_en_name] 集群英文名
         @apiParam {String} domain_name 集群域名（可以填入IP）
         @apiParam {Int} port 端口
         @apiParam {String} schema 协议
@@ -308,6 +309,7 @@ class StorageViewSet(APIViewSet):
         @apiParam {string} visible_config.visible_type 可见业务配置类型 current_biz 当前业务，all_biz 全部业务 biz_attr 业务属性multi_biz多个业务
         @apiParam {List} [visible_config.visible_bk_biz] multi_biz类型设置该参数
         @apiParam {Object} [visible_config.bk_biz_labels] biz_attr 类型设置该参数
+        @apiParam {Boolean} [create_bkbase_cluster] 同步创建数据平台集群
         @apiSuccess {Object} setup_config 存储设置参数
         @apiSuccess {Int} setup_config.retention_days_max 存储设置参数 最大天数
         @apiSuccess {Int} setup_config.retention_days_default 存储设置参数 默认天数
@@ -337,7 +339,9 @@ class StorageViewSet(APIViewSet):
                 "retention_days_max": 7,
                 "retention_days_default": 7,
                 "number_of_replicas_max": 3,
-                "number_of_replicas_default": 1
+                "number_of_replicas_default": 1,
+                "es_shards_default": 1,
+                "es_shards_max": 64
             },
             "admin": ["admin"],
             "description": "xxxx",
@@ -414,6 +418,14 @@ class StorageViewSet(APIViewSet):
             "auth_info":{
                 "username": "admin",
                 "password": "admin"
+            },
+            "setup_config": {
+                "retention_days_max": 7,
+                "retention_days_default": 7,
+                "number_of_replicas_max": 3,
+                "number_of_replicas_default": 1,
+                "es_shards_default": 1,
+                "es_shards_max": 64
             },
             "visible_bk_biz: [1, 2, 3]
         }
