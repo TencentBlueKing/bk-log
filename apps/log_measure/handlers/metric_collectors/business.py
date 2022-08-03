@@ -20,7 +20,6 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import datetime
-from collections import defaultdict
 
 import arrow
 from django.db.models import Count
@@ -197,26 +196,21 @@ class BusinessMetricCollector(object):
 
     @staticmethod
     def index_set_function_biz_usage():
-        groups = (
-            LogIndexSet.objects.values("project_id", "scenario_id")
-            .order_by("project_id", "scenario_id")
-            .annotate(count=Count("project_id"))
-        )
         metrics = []
-        aggregation_datas = defaultdict(list)
+        groups = (
+            LogIndexSet.objects.values("scenario_id")
+            .distinct()
+            .order_by("scenario_id")
+            .annotate(count=Count("project_id", distinct=True))
+        )
         for group in groups:
-            if MetricUtils.get_instance().project_biz_info.get(group["project_id"]):
-                bk_biz_id = MetricUtils.get_instance().project_biz_info[group["project_id"]]["bk_biz_id"]
-                if group["scenario_id"] == Scenario.LOG:
-                    continue
-                function_name = INDEX_SCENARIO[group["scenario_id"]]
-                aggregation_datas[function_name].append(bk_biz_id)
-        for function_name in aggregation_datas:
-            unique_bk_biz_id_list = list(set(aggregation_datas[function_name]))
+            if group["scenario_id"] == Scenario.LOG:
+                continue
+            function_name = INDEX_SCENARIO[group["scenario_id"]]
             metrics.append(
                 Metric(
                     metric_name="count",
-                    metric_value=len(unique_bk_biz_id_list),
+                    metric_value=group["count"],
                     dimensions={"function": function_name},
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -229,23 +223,16 @@ class BusinessMetricCollector(object):
             LogIndexSet.objects.values("project_id")
             .filter(is_trace_log=True)
             .order_by("project_id")
-            .annotate(count=Count("project_id"))
+            .annotate(count=Count("project_id", distinct=True))
         )
-        metrics = []
-        bk_biz_id_list = []
-        for group in groups:
-            if MetricUtils.get_instance().project_biz_info.get(group["project_id"]):
-                bk_biz_id = MetricUtils.get_instance().project_biz_info[group["project_id"]]["bk_biz_id"]
-                bk_biz_id_list.append(bk_biz_id)
-        unique_bk_biz_id_list = list(set(bk_biz_id_list))
-        metrics.append(
+        metrics = [
             Metric(
                 metric_name="count",
-                metric_value=len(unique_bk_biz_id_list),
+                metric_value=len(groups),
                 dimensions={
                     "function": "log_trace",
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
-        )
+        ]
         return metrics
