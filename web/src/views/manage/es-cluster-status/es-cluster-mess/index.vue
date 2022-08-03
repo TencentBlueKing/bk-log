@@ -165,6 +165,7 @@
               theme="primary"
               text
               class="mr10"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
               :tips-conf="$t('unableEditTip')"
               :button-text="$t('编辑')"
               :disabled="!props.row.is_editable"
@@ -174,6 +175,7 @@
               theme="primary"
               text
               class="mr10"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
               :tips-conf="$t('unableEditTip')"
               :button-text="$t('删除')"
               :disabled="!props.row.is_editable"
