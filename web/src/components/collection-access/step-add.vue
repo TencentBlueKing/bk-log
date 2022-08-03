@@ -207,6 +207,7 @@
           <div class="cluster-select">
             <bk-select
               v-model="formData.bcs_cluster_id"
+              searchable
               :disabled="isUpdate"
               :clearable="false">
               <bk-option
@@ -1394,7 +1395,7 @@ export default {
       }
     },
     getNameSpaceList(clusterID, isFirstUpdateSelect = false) {
-      if (!clusterID) return;
+      if (!clusterID || (this.isPhysicsEnvironment && this.isUpdate)) return;
       const query = { cluster_id: clusterID, bk_biz_id: this.bkBizId };
       this.nameSpaceRequest = true;
       this.$http.request('container/getNameSpace', { query }).then((res) => {
