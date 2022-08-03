@@ -3469,9 +3469,6 @@ class CollectorHandler(object):
         )
         self.cat_illegal_ips(params)
 
-        if params.get("data_encoding"):
-            params["params"]["encoding"] = params["data_encoding"]
-
         collector_config_fields = ["collector_config_name", "description", "target_node_type", "target_nodes", "params"]
         model_fields = {i: params[i] for i in collector_config_fields if params.get(i)}
 
@@ -3526,6 +3523,7 @@ class CollectorHandler(object):
 
         try:
             if params.get("params"):
+                params["params"]["encoding"] = params["data_encoding"]
                 collector_scenario = CollectorScenario.get_instance(self.data.collector_scenario_id)
                 self._update_or_create_subscription(
                     collector_scenario=collector_scenario, params=params["params"], is_create=False
