@@ -61,6 +61,8 @@ QUEUES = [
     "async_export",
 ]
 
+ALARM_QUEUE_LEN = 10000
+
 DEFAULT_SUBSCRIPTION_ID = 1
 DEFAULT_SYSTEM_ID = 1
 
