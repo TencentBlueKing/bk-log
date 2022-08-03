@@ -1306,30 +1306,3 @@ namespace: default
         """
         result = CollectorHandler().validate_container_config_yaml(yaml_config)
         self.assertTrue(result["parse_status"])
-
-    @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
-    @patch("apps.api.NodeApi.create_subscription", lambda _: {"subscription_id": SUBSCRIPTION_ID})
-    @patch("apps.api.NodeApi.subscription_statistic", subscription_statistic)
-    @patch("apps.api.NodeApi.run_subscription_task", lambda _: {"task_id": TASK_ID})
-    @patch("apps.api.NodeApi.switch_subscription", lambda _: {})
-    @patch("apps.api.NodeApi.check_subscription_task_ready", lambda _: True)
-    @patch("apps.api.TransferApi.modify_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
-    @patch("apps.api.CCApi.search_module", CCModuleTest())
-    @patch("apps.api.CCApi.list_biz_hosts", CCBizHostsTest())
-    @patch("apps.decorators.user_operation_record.delay", return_value=None)
-    @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
-    @patch("apps.log_databus.handlers.storage.StorageHandler.get_cluster_info_by_id", lambda _: CLUSTER_INFO)
-    @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
-    @patch("apps.api.TransferApi.get_result_table_storage", lambda _: RESULT_TABLE_STORAGE)
-    @patch("apps.api.TransferApi.modify_result_table")
-    @patch("apps.log_databus.models.CollectorConfig.get_bk_data_by_name", lambda _: {})
-    @patch("apps.log_databus.models.CollectorConfig.get_result_table_by_id", lambda _: {})
-    @patch("apps.api.TransferApi.get_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
-    def test_fast_collector_api(self, *args, **kwargs):
-        result = CollectorHandler().fast_create(FAST_CREATE_PARAMS)
-        collector_config_id = result["collector_config_id"]
-        from apps.log_databus.models import CollectorConfig
-
-        collector_config = CollectorConfig.objects.filter(collector_config_id=collector_config_id).first()
-
-        self.assertEqual(FAST_CREATE_PARAMS["collector_config_name_en"], collector_config.collector_config_name_en)
