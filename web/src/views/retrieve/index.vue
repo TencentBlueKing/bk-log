@@ -749,6 +749,16 @@ export default {
               }],
             }).then((res) => {
               this.authPageInfo = res.data;
+              this.$router.push({
+                name: 'retrieve',
+                params: {
+                  indexId: null,
+                },
+                query: {
+                  bizId: window.localStorage.getItem('bk_biz_id'),
+                  projectId: window.localStorage.getItem('project_id'),
+                },
+              });
             })
               .catch((err) => {
                 console.warn(err);
