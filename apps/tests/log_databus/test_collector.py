@@ -26,7 +26,7 @@ from django.test import TestCase, override_settings
 
 from apps.log_databus.exceptions import CollectorConfigNotExistException
 from apps.log_databus.handlers.collector import CollectorHandler
-from apps.log_databus.constants import LogPluginInfo, EtlConfig
+from apps.log_databus.constants import LogPluginInfo
 from apps.exceptions import ApiRequestError, ApiResultError
 from .test_collectorhandler import TestCollectorHandler, get_data_id
 from ...log_databus.serializers import CollectorCreateSerializer
@@ -806,68 +806,6 @@ CONFIG_DATA = {
     ],
 }
 FAILED_SUBSCRIPTION_STATUS = [{"instance_id": "xxx", "status": "FAILED"}]
-
-FAST_CREATE_PARAMS = {
-    "bk_biz_id": 706,
-    "collector_config_name": "采集项名称",
-    "collector_config_name_en": "test_collector",
-    "collector_scenario_id": "row",
-    "category_id": "application",
-    "target_object_type": "HOST",
-    "target_node_type": "TOPO",
-    "target_nodes": [{"bk_inst_id": 33, "bk_obj_id": "module"}],
-    "data_encoding": "UTF-8",
-    "bk_data_name": "abc",
-    "description": "这是一个描述",
-    "params": {
-        "paths": ["/log/abc"],
-        "conditions": {
-            "type": "match",
-            "match_type": "include",
-            "match_content": "delete",
-            "separator": "|",
-            "separator_filters": [
-                {"fieldindex": 1, "word": "val1", "op": "=", "logic_op": "or"},
-                {"fieldindex": 2, "word": "val2", "op": "=", "logic_op": "or"},
-            ],
-        },
-        "tail_files": True,
-        "ignore_older": 1,
-        "max_bytes": 1,
-    },
-    "storage_cluster_id": 1,
-    "es_shards": 2,
-    "etl_config": EtlConfig.BK_LOG_TEXT,
-    "retention": 4,
-    "allocation_min_days": 0,
-    "storage_replies": 1,
-}
-
-CLUSTER_INFO = {
-    "cluster_config": {
-        "cluster_id": 1,
-        "version": "7.16.1",
-        "es_shards_default": 3,
-        "es_shards_max": 64,
-        "setup_config": {
-            "retention_days_max": 7,
-            "retention_days_default": 7,
-            "number_of_replicas_max": 1,
-            "number_of_replicas_default": 1,
-            "es_shards_default": 3,
-            "es_shards_max": 64,
-        },
-    }
-}
-
-FAST_UPDATE_PARAMS = {"description": "xxxx"}
-
-RESULT_TABLE_STORAGE = {
-    "2_log.test_collector": {
-        "cluster_config": {"cluster_id": 1},
-        "storage_config": {"retention": 4, "index_settings": {"number_of_shards": 2, "number_of_replicas": 1}},
-    }
-}
 
 
 class CCModuleTest(object):
