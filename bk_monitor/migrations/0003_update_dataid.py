@@ -26,7 +26,7 @@ from django.conf import settings
 def forwards_func(apps, schema_editor):
     monitor_report_config = apps.get_model("bk_monitor", "MonitorReportConfig")
     if monitor_report_config.objects.filter(data_name="metric").exists():
-        monitor_report_config.objects.filter(data_name="metric").update(data_id=1100013)
+        monitor_report_config.objects.filter(data_name="metric").update(data_id=1100013, access_token=None)
     else:
         monitor_report_config.objects.create(
             **{"data_name": "metric", "data_id": 1100013, "bk_biz_id": settings.BLUEKING_BK_BIZ_ID}
