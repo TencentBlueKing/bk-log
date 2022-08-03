@@ -321,6 +321,7 @@ def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
     data = service.build_data_context(params)
     pipeline = service.build_pipeline(data, **params)
     service.start_pipeline(pipeline)
+    return pipeline.id
 
 
 class ClusteringService(object):

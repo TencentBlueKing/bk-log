@@ -37,9 +37,10 @@ class _BcsApi:
     MODULE = "BCS"
 
     def __init__(self):
+        bcs_apigateway_host = settings.BCS_APIGATEWAY_HOST if settings.IS_K8S_DEPLOY_MODE else BCS_APIGATEWAY_ROOT
         self.list_cluster_by_project_id = DataAPI(
             method="GET",
-            url=f"{BCS_APIGATEWAY_ROOT}bcsapi/v4/clustermanager/v1/cluster",
+            url=f"{bcs_apigateway_host}bcsapi/v4/clustermanager/v1/cluster",
             module=self.MODULE,
             description="根据项目id获取集群信息",
             header_keys=["Authorization"],

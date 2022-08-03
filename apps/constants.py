@@ -60,6 +60,7 @@ class RemoteStorageType(ChoicesEnum):
 
 class UserOperationTypeEnum(ChoicesEnum):
     COLLECTOR = "collector"
+    COLLECTOR_PLUGIN = "collector_plugin"
     STORAGE = "storage"
     INDEX_SET = "index_set"
     SEARCH = "search"

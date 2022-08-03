@@ -19,13 +19,17 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import datetime
+
 import arrow
 from django.db.models import Count
 
 from django.utils.translation import ugettext as _
+from django.conf import settings
 
 from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import UserIndexSetSearchHistory, LogIndexSet
+from apps.log_measure.constants import TIME_RANGE
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
@@ -35,10 +39,25 @@ class BusinessMetricCollector(object):
     @staticmethod
     @register_metric("business_active", description=_("活跃业务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def business_active():
+        metrics = []
+        for timedelta in TIME_RANGE:
+            metrics.extend(BusinessMetricCollector().business_active_by_time_range(timedelta))
+
+        return metrics
+
+    @staticmethod
+    def business_active_by_time_range(timedelta: str):
         # 一个星期内检索过日志的，才被认为是活跃业务
+        end_time = (
+            arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
+        )
+        timedelta_v = TIME_RANGE[timedelta]
+        start_time = (
+            datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=timedelta_v)
+        ).strftime("%Y-%m-%d %H:%M:%S%z")
 
         history_ids = UserIndexSetSearchHistory.objects.filter(
-            created_at__gte=arrow.now().replace(days=-7).datetime
+            created_at__range=[start_time, end_time],
         ).values_list("index_set_id", flat=True)
 
         project_ids = set(
@@ -52,6 +71,7 @@ class BusinessMetricCollector(object):
                 dimensions={
                     "target_bk_biz_id": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_id"],
                     "target_bk_biz_name": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_name"],
+                    "time_range": timedelta,
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -62,7 +82,7 @@ class BusinessMetricCollector(object):
             Metric(
                 metric_name="total",
                 metric_value=len(project_ids),
-                dimensions=None,
+                dimensions={"time_range": timedelta},
                 timestamp=MetricUtils.get_instance().report_ts,
             )
         )

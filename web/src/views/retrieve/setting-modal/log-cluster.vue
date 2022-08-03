@@ -210,7 +210,7 @@
             theme="primary"
             data-test-id="LogCluster_button_submit"
             :title="$t('保存')"
-            :disabled="!globalEditable"
+            :disabled="!globalEditable || !isCanEdit"
             :loading="isHandle"
             @click.stop.prevent="handleSubmit">
             {{ $t('保存') }}
@@ -249,6 +249,7 @@
 
 <script>
 import RuleTable from './rule-table';
+import { mapGetters } from 'vuex';
 
 export default {
   components: {
@@ -325,7 +326,16 @@ export default {
       ],
       operateIndex: 0, // 赋值过滤字段的操作的当前下标
       isShowFingerTips: false,
+      isActive: false,
     };
+  },
+  computed: {
+    ...mapGetters({
+      modifyClustering: 'retrieve/modifyClustering',
+    }),
+    isCanEdit() {
+      return this.isActive ? this.modifyClustering : true;
+    },
   },
   watch: {
     'formData.filter_rules': {
@@ -400,23 +410,24 @@ export default {
     },
     initList() {
       const { extra, is_active: isActive } = this.configData;
+      this.isActive = isActive;
       const { extra: { collector_config_id: configID } } = this.cleanConfig;
       this.configID = configID;
       this.fingerSwitch = extra.signature_switch;
       this.isShowFingerTips = extra.signature_switch;
       this.formData.clustering_fields = extra.clustering_fields;
-      this.clusterField = this.totalFields.filter(item => item.is_analyzed)
+      this.clusterField = this.totalFields
+        .filter(item => item.is_analyzed)
         .map((el) => {
           const { field_name: id, field_alias: alias } = el;
           return { id, name: alias ? `${id}(${alias})` : id };
         });
       this.filterSelectList = this.totalFields
-        .filter(item => !/^__dist/.test(item.field_name))
+        .filter(item => !/^__dist/.test(item.field_name) && item.field_type !== '__virtual__')
         .map((el) => {
           const { field_name: id, field_alias: alias } = el;
           return { id, name: alias ? `${id}(${alias})` : id };
         });
-
       // 日志聚类且数据指纹同时打开则不请求默认值
       if (isActive) {
         this.requestCluster(false);
@@ -532,6 +543,7 @@ export default {
       this.operateItemIndex = index;
       const operateItem = this.formData.filter_rules[index];
       operateItem.value = [];
+      operateItem.valueList = [];
       if (operateItem.fields_name && this.statisticalFieldsData[operateItem.fields_name]) {
         const fieldValues = Object.keys(this.statisticalFieldsData[operateItem.fields_name]);
         if (fieldValues?.length) {

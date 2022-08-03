@@ -89,7 +89,10 @@ class BkData(Sql):
         order_by = ""
         if self._order_by:
             order_by = f"ORDER BY {','.join([r.to_sql() for r in self._order_by])}"
-        return f"""SELECT {fields} FROM {self._rt} WHERE {" AND ".join([where.to_sql() for where in self._where])} {order_by} LIMIT {self._limit}"""  # pylint:line-too-long # noqa
+        where_conditions = " AND ".join([where.to_sql() for where in self._where])
+        return "SELECT {} FROM {} WHERE {} {} LIMIT {}".format(
+            fields, self._rt, where_conditions, order_by, self._limit
+        )
 
     def query(self) -> list:
         params = {

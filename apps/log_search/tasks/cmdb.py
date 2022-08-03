@@ -19,7 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from celery.schedules import crontab  # noqa
-from celery.task import periodic_task, task  # noqa
+from celery.task import periodic_task  # noqa
 
 
 @periodic_task(run_every=crontab(hour="*/12"))

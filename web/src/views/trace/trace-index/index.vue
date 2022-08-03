@@ -59,7 +59,6 @@
             <bk-date-picker
               class="search-area fl"
               style="width: 300px"
-              transfer
               :clearable="false"
               :editable="true"
               :open="openDatePanel"
@@ -512,7 +511,6 @@ export default {
       this.$nextTick(() => this.getIndexSet());
     },
     showShortText(val) {
-      this.openDatePanel = false;
       if (!val && val !== 0) {
         this.params.time_range = 'customized';
       } else {
@@ -595,7 +593,7 @@ export default {
     },
     dateChange(data, type) {
       this.initDateTimeRange = data;
-      if (type === 'date' || type === 'time' || type === 'datetimerange') {
+      if (type === 'date' || type === 'time' || type === 'datetimerange' || type) {
         this.showShortText = '';
       }
     },

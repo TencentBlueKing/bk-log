@@ -33,7 +33,9 @@ from apps.log_search.constants import InnerTag
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import LogIndexSet
 from apps.utils.function import ignored
+from apps.utils.local import activate_request
 from apps.utils.pipline import BaseService
+from apps.utils.thread import generate_request
 
 
 class CreatePreTreatFlowService(BaseService):
@@ -110,7 +112,7 @@ class CreateAfterTreatFlowService(BaseService):
                     "title": str(_("【日志平台】")),
                 }
                 CmsiApi.send_mail(send_params)
-                CmsiApi.send_wechat(send_params)
+                CmsiApi.send_weixin(send_params)
             self.finish_schedule()
         return True
 
@@ -196,7 +198,7 @@ class CreateNewIndexSetService(BaseService):
                     "bk_biz_id": index["bk_biz_id"],
                     "result_table_id": clustering_config.after_treat_flow["change_clustering_field"]["result_table_id"],
                     "result_table_name": _("合并日志"),
-                    "time_field": "dtEventTimeStamp",
+                    "time_field": index["time_field"],
                 }
                 for index in src_index_set_indexes
             ],
@@ -206,6 +208,9 @@ class CreateNewIndexSetService(BaseService):
         clustering_config.save()
 
         # 创建新类策略
+        new_cls_index_set.created_by = src_index_set.created_by
+        activate_request(generate_request(new_cls_index_set.updated_by))
+        new_cls_index_set.save()
         log_index_set = LogIndexSet.objects.filter(index_set_id=new_cls_index_set.index_set_id).first()
         LogIndexSet.set_tag(log_index_set.index_set_id, InnerTag.CLUSTERING.value)
         bk_biz_id = clustering_config.bk_biz_id

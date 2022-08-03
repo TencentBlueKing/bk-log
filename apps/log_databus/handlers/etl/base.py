@@ -21,16 +21,20 @@ the project delivered to anyone in the future.
 """
 
 import arrow
-
-from django.utils.translation import ugettext_lazy as _
-from django.db import transaction
 from django.conf import settings
+from django.db import transaction
+from django.utils.module_loading import import_string
+from django.utils.translation import ugettext_lazy as _
 
+from apps.api import TransferApi
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
+from apps.decorators import user_operation_record
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
+from apps.log_clustering.tasks.flow import update_clustering_clean
+from apps.log_databus.constants import ETLProcessorChoices, ETL_PARAMS, EtlConfig, REGISTERED_SYSTEM_DEFAULT
 from apps.log_databus.exceptions import (
     CollectorConfigNotExistException,
     EtlParseTimeFormatException,
@@ -41,31 +45,53 @@ from apps.log_databus.exceptions import (
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.models import CollectorConfig, StorageCapacity, StorageUsed, CleanStash, ItsmEtlConfig
-from apps.log_clustering.tasks.flow import update_clustering_clean
+from apps.log_databus.handlers.storage import StorageHandler
+from apps.log_databus.models import CollectorConfig, ItsmEtlConfig, StorageCapacity, StorageUsed, CleanStash
+from apps.log_search.constants import FieldDateFormatEnum, ISO_8601_TIME_FORMAT_NAME, CollectorScenarioEnum
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import Scenario, ProjectInfo
-from apps.log_search.constants import FieldDateFormatEnum, CollectorScenarioEnum, ISO_8601_TIME_FORMAT_NAME
+from apps.log_search.models import ProjectInfo, Scenario
 from apps.models import model_to_dict
 from apps.utils.db import array_group
-from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.constants import REGISTERED_SYSTEM_DEFAULT, EtlConfig, ETL_PARAMS
-from apps.decorators import user_operation_record
 from apps.utils.local import get_request_username
 from apps.utils.log import logger
-from apps.api import TransferApi
 
 
 class EtlHandler(object):
-    def __init__(self, collector_config_id=None):
+    def __init__(self, collector_config_id=None, etl_processor=ETLProcessorChoices.TRANSFER.value):
         super().__init__()
         self.collector_config_id = collector_config_id
         self.data = None
+        self.etl_processor = etl_processor
         if collector_config_id:
-            try:
-                self.data = CollectorConfig.objects.get(collector_config_id=self.collector_config_id)
-            except CollectorConfig.DoesNotExist:
-                raise CollectorConfigNotExistException()
+            self.data = self._get_collect_config(collector_config_id)
+            self.etl_processor = self.data.etl_processor
+
+    @staticmethod
+    def _get_collect_config(collector_config_id):
+        try:
+            collect_config: CollectorConfig = CollectorConfig.objects.get(collector_config_id=collector_config_id)
+            return collect_config
+        except CollectorConfig.DoesNotExist:
+            raise CollectorConfigNotExistException()
+
+    @classmethod
+    def get_instance(cls, collector_config_id=None, etl_processor=ETLProcessorChoices.TRANSFER.value):
+        if collector_config_id:
+            collect_config = cls._get_collect_config(collector_config_id)
+            etl_processor = collect_config.etl_processor
+        # 处理器映射关系
+        mapping = {
+            ETLProcessorChoices.BKBASE.value: "BKBaseEtlHandler",
+            ETLProcessorChoices.TRANSFER.value: "TransferEtlHandler",
+        }
+        # 获取处理器
+        try:
+            etl_handler = import_string(
+                "apps.log_databus.handlers.etl.{}.{}".format(etl_processor, mapping.get(etl_processor))
+            )
+            return etl_handler(collector_config_id=collector_config_id, etl_processor=etl_processor)
+        except ImportError as error:
+            raise NotImplementedError(f"EtlHandler of {etl_processor} not implement, error: {error}")
 
     def check_es_storage_capacity(self, cluster_info, storage_cluster_id):
         if self.data.table_id:
@@ -157,7 +183,7 @@ class EtlHandler(object):
 
         # 1. meta-创建/修改结果表
         etl_storage = EtlStorage.get_instance(etl_config=etl_config)
-        etl_storage.update_or_create_result_table(
+        rt_table_id, _ = etl_storage.update_or_create_result_table(
             self.data,
             table_id=table_id,
             storage_cluster_id=storage_cluster_id,
@@ -207,6 +233,7 @@ class EtlHandler(object):
             "scenario_id": index_set["scenario_id"],
             "storage_cluster_id": storage_cluster_id,
             "retention": retention,
+            "table_id": rt_table_id,
         }
 
     @staticmethod

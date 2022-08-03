@@ -236,10 +236,10 @@ export default {
       if (this.configData?.extra?.clustering_field) return this.configData.extra.clustering_field;
       // 如果有log字段则使用log类型字段
       const logFieldItem = this.totalFields.find(item => item.field_name === 'log');
-      if (logFieldItem) return logFieldItem.field_alias;
+      if (logFieldItem) return logFieldItem.field_name;
       // 如果没有设置聚类字段和log字段则使用text列表里的第一项值
       const textTypeFieldList = this.totalFields.filter(item => item.is_analyzed) || [];
-      if (textTypeFieldList.length) return textTypeFieldList[0].field_alias;
+      if (textTypeFieldList.length) return textTypeFieldList[0].field_name;
       return  '';
     },
     bkBizId() {
