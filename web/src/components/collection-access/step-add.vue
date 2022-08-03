@@ -295,7 +295,7 @@
                                disable: (isNode || conItem.isAllContainer)
                              }"
                              @click="handelShowDialog(conIndex, 'container',(isNode || conItem.isAllContainer))">
-                          <span class="bk-icon icon-plus-circle-shape"></span>
+                          <span class="bk-icon icon-plus-circle-yuan"></span>
                           <span>{{$t('指定容器')}}</span>
                         </div>
                       </span>
@@ -308,7 +308,7 @@
                                disable: conItem.isAllContainer
                              }"
                              @click="handelShowDialog(conIndex, 'label', conItem.isAllContainer,conItem)">
-                          <span class="bk-icon icon-plus-circle-shape"></span>
+                          <span class="bk-icon icon-plus-circle-yuan"></span>
                           <span>{{$t('指定标签')}}</span>
                         </div>
                       </span>
@@ -410,7 +410,7 @@
                   :class="{ 'extra-error': item.value === '' && isExtraError }"
                   @blur="isExtraError = false"></bk-input>
                 <div class="ml9">
-                  <i :class="['bk-icon icon-plus-circle-shape icons']"
+                  <i :class="['bk-icon icon-plus-circle-yuan icons']"
                      @click="handleAddExtraLabel"></i>
                   <i
                     :class="['bk-icon icon-minus-circle-shape icons ml9',
