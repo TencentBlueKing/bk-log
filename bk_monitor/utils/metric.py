@@ -45,7 +45,7 @@ class Metric(object):
         self.dimensions = dimensions
         self.timestamp = timestamp
 
-    def to_bkmonitor_report(self, prefix=None, namespace=None):
+    def to_bkmonitor_report(self, prefix="", namespace=""):
         if self.dimensions:
             dimensions = {key: str(value) for key, value in self.dimensions.items()}
         else:
@@ -65,7 +65,7 @@ class Metric(object):
                 "dimension": dimensions,
             }
 
-    def _get_actual_metric_name(self, prefix=None, namespace=None):
+    def _get_actual_metric_name(self, prefix="", namespace=""):
         if namespace:
             self.metric_name = "{}_{}".format(namespace, self.metric_name)
         if prefix:
