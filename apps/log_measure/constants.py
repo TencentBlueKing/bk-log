@@ -104,3 +104,5 @@ TABLE_BKUNIFYBEAT_TASK = "bkunifylogbeat_task.base"
 FIELD_CRAWLER_RECEIVED = "crawler_received"
 FIELD_CRAWLER_STATE = "crawler_state"
 MAX_QUERY_SUBSCRIPTION = 10
+
+INDEX_SCENARIO = {"bkdata": "数据平台", "es": "第三方ES"}
