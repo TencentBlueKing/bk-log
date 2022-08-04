@@ -81,6 +81,7 @@ INSTALLED_APPS += (
     "apps.log_extract",
     "apps.feature_toggle",
     "apps.log_clustering",
+    "bkm_space",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
@@ -122,6 +123,8 @@ MIDDLEWARE = (
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
     "apps.middleware.user_middleware.BkLogMetricsAfterMiddleware",
+    # 项目空间参数注入
+    "bkm_space.middleware.ParamInjectMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
