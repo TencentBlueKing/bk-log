@@ -128,6 +128,29 @@ class CollectorCheckHandler(object):
                 self.error(story_m.name, story_error)
             print("\n")
 
+    def api_format(self):
+        is_success = "失败"
+        outputs = []
+        if not any([i.has_problem() for i in self.story_report]):
+            is_success = "成功"
+        outputs.append(f"\n采集项检查{is_success}\n\n\n")
+        for story_m in self.story_report:
+            outputs.append("-" * 100 + "\n")
+            if story_m.has_problem():
+                outputs.append(f"[ERROR] [{story_m.name}] 存在问题, 查看详细报错\n")
+            else:
+                outputs.append(f"[INFO] [{story_m.name}] 正常\n")
+            if self.debug:
+                for story_info in story_m.info:
+                    outputs.append(f"[INFO] [{story_m.name}] {story_info}\n")
+            for story_warning in story_m.warning:
+                outputs.append(f"[WARNING] [{story_m.name}] {story_warning}\n")
+            for story_error in story_m.error:
+                outputs.append(f"[ERROR] [{story_m.name}] {story_error}\n")
+            outputs.append("\n")
+
+        return "".join(outputs).encode("utf-8")
+
     @staticmethod
     def info(story_name, message):
         print(f"\033[32m[INFO] [{story_name}]: \033[0m{message}")

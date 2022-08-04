@@ -149,3 +149,6 @@ INDEX_WRITE_PREFIX = "write_"
 
 # 调用GSE的'接收端配置接口'以及'路由接口'时使用
 DEFAULT_GSE_API_PLAT_NAME = "bkmonitor"  # GSE分配给监控的平台名称，不随APP_CODE变更，请不要修改
+
+# API_FORMAT_CONTENT_TYPE
+API_FORMAT_CONTENT_TYPE = "text/plain; charset=UTF-8"
