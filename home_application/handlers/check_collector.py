@@ -110,7 +110,7 @@ class CollectorCheckHandler(object):
 
     def command_format(self):
         is_success = "失败"
-        if [i.has_problem() for i in self.story_report].count(True) == 0:
+        if not any([i.has_problem() for i in self.story_report]):
             is_success = "成功"
         print(f"\n采集项检查{is_success}\n\n\n")
         for story_m in self.story_report:

@@ -48,7 +48,7 @@ class RabbitMQMetric(object):
 
         queue_len_result = RabbitMQMetric().get_queue_data()
         namespace_data.data.extend(queue_len_result)
-        if [i.status for i in queue_len_result].count(True) != len(queue_len_result):
+        if not all([i.status for i in queue_len_result]):
             namespace_data.status = False
             namespace_data.message = "queue_len is out of limit"
 
