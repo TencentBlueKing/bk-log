@@ -1,0 +1,35 @@
+# -*- coding: utf-8 -*-
+import abc
+from typing import Dict
+
+from django.conf import settings
+from django.utils.module_loading import import_string
+
+
+class AbstractSpaceApi(metaclass=abc.ABCMeta):
+    """
+    空间相关的接口实现
+    """
+
+    @classmethod
+    def get_space_detail(cls, space_uid: str = "", id: int = 0) -> Dict:
+        """
+        查看具体空间实例详情
+        :param space_uid: 空间唯一标识
+        :param id: 空间自增ID
+        """
+        # TODO: 需实现该接口
+        raise NotImplementedError
+
+
+SpaceApi = AbstractSpaceApi
+
+
+def load_space_api_class():
+    """
+    加载实际的空间API类
+    :return:
+    """
+    global SpaceApi
+    api_class = getattr(settings, "BKM_SPACE_API_CLASS", "bkm_space.api.AbstractSpaceApi")
+    SpaceApi = import_string(api_class)
