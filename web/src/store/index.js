@@ -386,7 +386,11 @@ store.dispatch = function (_type, _payload, config = {}) {
     return;
   }
 
-  store._actionSubscribers.forEach(sub => sub(action, store.state));
+  store._actionSubscribers
+    .slice()
+    .filter(sub => sub.before)
+    .forEach(sub => sub.before(action, store.state));
+  // store._actionSubscribers.forEach(sub => sub(action, store.state));
 
   return entry.length > 1
     ? Promise.all(entry.map(handler => handler(payload, config)))

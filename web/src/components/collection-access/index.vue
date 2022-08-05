@@ -23,7 +23,7 @@
 <template>
   <section :class="['access-wrapper',itsmTicketIsApplying && 'iframe-container']"
            v-bkloading="{ isLoading: basicLoading }">
-    <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
+    <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <div class="access-container" v-else-if="!basicLoading && !isCleaning">
       <section class="access-step-wrapper">
         <div class="fixed-steps" :style="{ height: (stepList.length * 76) + 'px' }">
@@ -118,7 +118,7 @@
 <script>
 import { mapState, mapGetters } from 'vuex';
 import { stepsConf, finishRefer } from './step';
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import stepAdd from './step-add';
 import stepIssued from './step-issued';
 import stepField from './step-field';
@@ -129,7 +129,7 @@ import advanceCleanLand from '@/components/collection-access/advance-clean-land'
 export default {
   name: 'AccessSteps',
   components: {
-    AuthPage,
+    AuthContainerPage,
     stepAdd,
     stepIssued,
     stepField,

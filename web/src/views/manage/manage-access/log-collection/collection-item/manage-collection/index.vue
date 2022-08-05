@@ -22,7 +22,7 @@
 
 <template>
   <div class="access-manage-container" v-bkloading="{ isLoading: basicLoading }">
-    <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
+    <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <template v-if="!authPageInfo && !basicLoading && collectorData">
       <bk-tab :active.sync="activePanel" type="border-card">
         <bk-tab-panel v-for="panel in panels" v-bind="panel" :key="panel.name"></bk-tab-panel>
@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import BasicInfo from './basic-info';
 import CollectionStatus from './collection-status';
 import DataStorage from './data-storage';
@@ -50,7 +50,7 @@ import UsageDetails from '@/views/manage/manage-access/components/usage-details'
 export default {
   name: 'CollectionItem',
   components: {
-    AuthPage,
+    AuthContainerPage,
     BasicInfo,
     CollectionStatus,
     DataStorage,
@@ -92,7 +92,7 @@ export default {
       // 进入路由需要先判断权限
       try {
         const paramData = {
-          action_ids: ['manage_collection'],
+          action_ids: ['view_collection'],
           resources: [{
             type: 'collection',
             id: this.$route.params.collectorId,

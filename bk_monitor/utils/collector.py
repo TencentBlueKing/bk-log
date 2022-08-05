@@ -34,6 +34,7 @@ class MetricCollector(object):
                 begin_time = time.time()
                 metric_groups.append(
                     {
+                        "prefix": metric_method["prefix"],
                         "namespace": metric_method["namespace"],
                         "description": metric_method["description"],
                         "metrics": metric_method["method"](),
@@ -53,7 +54,9 @@ class MetricCollector(object):
         res = defaultdict(list)
         for group in metric_groups:
             for metric in group["metrics"]:
-                res[group["date_name"]].append(metric.to_bkmonitor_report(namespace=group["namespace"]))
+                res[group["date_name"]].append(
+                    metric.to_bkmonitor_report(prefix=group["prefix"], namespace=group["namespace"])
+                )
         return res
 
     @classmethod

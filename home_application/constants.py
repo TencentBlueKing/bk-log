@@ -61,6 +61,8 @@ QUEUES = [
     "async_export",
 ]
 
+ALARM_QUEUE_LEN = 10000
+
 DEFAULT_SUBSCRIPTION_ID = 1
 DEFAULT_SYSTEM_ID = 1
 
@@ -82,6 +84,8 @@ JOB_STATUS = {
 RETRY_TIMES = 5
 WAIT_FOR_RETRY = 20
 
+
+CHECK_STORY_0 = "参数检验初始化检查"
 CHECK_STORY_1 = "检查Agent以及进程状态"
 CHECK_STORY_2 = "检查路由配置是否正确"
 CHECK_STORY_3 = "检查kafka内是否有数据"
@@ -147,3 +151,6 @@ INDEX_WRITE_PREFIX = "write_"
 
 # 调用GSE的'接收端配置接口'以及'路由接口'时使用
 DEFAULT_GSE_API_PLAT_NAME = "bkmonitor"  # GSE分配给监控的平台名称，不随APP_CODE变更，请不要修改
+
+# API_FORMAT_CONTENT_TYPE
+API_FORMAT_CONTENT_TYPE = "text/plain; charset=UTF-8"

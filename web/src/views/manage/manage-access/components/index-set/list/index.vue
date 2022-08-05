@@ -65,6 +65,7 @@
           </bk-button> -->
           <span
             class="indexSet-name"
+            v-cursor="{ active: !(row.permission && row.permission.manage_indices) }"
             :title="row.index_set_name"
             @click="manageIndexSet('manage', row)">
             {{ row.index_set_name }}
