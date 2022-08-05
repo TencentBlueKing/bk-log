@@ -35,6 +35,11 @@ from apps.utils.drf import GeneralSerializer
 
 
 def is_file_path_legal(file_path):
+    """
+    is_file_path_legal
+    @param file_path:
+    @return:
+    """
     if not file_path.startswith(constants.ALLOWED_DIR_PREFIX):
         return False
 
@@ -384,6 +389,9 @@ class StrategiesTopoSerializer(serializers.Serializer):
 
 
 class TaskPartialUpdateSerializer(serializers.Serializer):
+    """
+    TaskPartialUpdateSerializer
+    """
     remark = serializers.CharField(label=_("备注"), max_length=255)
 
     class Meta:
@@ -397,6 +405,9 @@ class TaskPartialUpdateSerializer(serializers.Serializer):
 
 
 class DownloadFileSerializer(serializers.Serializer):
+    """
+    DownloadFileSerializer
+    """
     target_file = serializers.CharField(label=_("加密的目标文件名"), max_length=255)
 
     def validate_target_file(self, value):
@@ -404,6 +415,9 @@ class DownloadFileSerializer(serializers.Serializer):
 
 
 class ExtractLinksSerializer(serializers.Serializer):
+    """
+    ExtractLinksSerializer
+    """
     name = serializers.CharField(label=_("链路名称"))
     link_id = serializers.IntegerField(label=_("链路id"))
     link_type = serializers.CharField(label=_("链路类型"))
@@ -416,12 +430,18 @@ class ExtractLinksSerializer(serializers.Serializer):
 
 
 class LinkHostsSerializer(serializers.Serializer):
+    """
+    LinkHostsSerializer
+    """
     target_dir = serializers.CharField(label=_("挂载目录"), required=True)
     bk_cloud_id = serializers.IntegerField(label=_("主机云区域id"), required=True)
     ip = serializers.IPAddressField(label=_("主机ip"), required=True)
 
 
 class ExtractLinkAndHostsSerializer(serializers.Serializer):
+    """
+    ExtractLinkAndHostsSerializer
+    """
     name = serializers.CharField(label=_("链路名称"), required=True, max_length=255)
     link_type = serializers.CharField(label=_("链路类型"), required=True, max_length=20)
     operator = serializers.CharField(label=_("执行人"), required=True, max_length=255)

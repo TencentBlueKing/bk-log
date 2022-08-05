@@ -29,11 +29,11 @@ from apps.utils.local import get_request_username
 from apps.utils.log import logger
 
 
-bk_jwt_backend = True
+BK_JWT_BACKEND = True
 try:
     from blueapps.account.components.bk_jwt.backends import BkJwtBackend
 except ImportError:
-    bk_jwt_backend = False
+    BK_JWT_BACKEND = False
 
 
 class Permission(BasePermission):
@@ -52,7 +52,7 @@ class Permission(BasePermission):
 
     @classmethod
     def get_auth_info(cls, request, raise_exception=True):
-        if not bk_jwt_backend:
+        if not BK_JWT_BACKEND:
             if raise_exception:
                 raise BkJwtClientException()
             return False

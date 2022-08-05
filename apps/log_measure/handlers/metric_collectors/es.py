@@ -39,11 +39,16 @@ def byte_to_mebibyte(byte):
 
 
 def get_version(version: str):
+    """
+    get_version
+    @param version:
+    @return:
+    """
     raw_version = version.split("-")[0]
     result_version = [int(p) for p in raw_version.split(".")]
     version_len = VERSION_LEN - len(result_version)
     if version_len > 0:
-        for i in range(version_len):
+        for i in range(version_len):  # pylint: disable=unused-variable
             result_version.append(0)
     return result_version
 
@@ -99,6 +104,7 @@ PRIMARY_SHARD_METRICS = {
     "elasticsearch.indices.count": ("gauge", "indices", lambda indices: len(indices)),
 }
 
+# PRIMARY_SHARD_METRICS_POST_7_2_0
 PRIMARY_SHARD_METRICS_POST_7_2_0 = {
     "elasticsearch.primaries.refresh.external.total": ("gauge", "_all.primaries.refresh.external_total"),
     "elasticsearch.primaries.refresh.external.total.time": (
@@ -108,6 +114,7 @@ PRIMARY_SHARD_METRICS_POST_7_2_0 = {
     ),
 }
 
+# PRIMARY_SHARD_METRICS_POST_1_0_0
 PRIMARY_SHARD_METRICS_POST_1_0_0 = {
     "elasticsearch.primaries.merges.current": ("gauge", "_all.primaries.merges.current"),
     "elasticsearch.primaries.merges.current.docs": ("gauge", "_all.primaries.merges.current_docs"),

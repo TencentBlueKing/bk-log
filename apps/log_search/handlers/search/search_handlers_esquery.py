@@ -79,10 +79,16 @@ from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilde
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
 
-max_len_dict = Dict[str, int]
+max_len_dict = Dict[str, int]  # pylint: disable=invalid-name
 
 
 def fields_config(name: str, is_active: bool = False):
+    """
+    fields_config
+    @param name:
+    @param is_active:
+    @return:
+    """
     def decorator(func):
         def func_decorator(*args, **kwargs):
             config = {"name": name, "is_active": is_active}
@@ -197,16 +203,16 @@ class SearchHandler(object):
 
         # context search
         self.gseindex: int = search_dict.get("gseindex")
-        self.gseIndex: int = search_dict.get("gseIndex")
-        self.serverIp: str = search_dict.get("serverIp")
+        self.gseIndex: int = search_dict.get("gseIndex")  # pylint: disable=invalid-name
+        self.serverIp: str = search_dict.get("serverIp")  # pylint: disable=invalid-name
         self.ip: str = search_dict.get("ip", "undefined")
         self.path: str = search_dict.get("path", "")
         self.container_id: str = search_dict.get("container_id", None)
         self.logfile: str = search_dict.get("logfile", None)
         self._iteration_idx: str = search_dict.get("_iteration_idx", None)
-        self.iterationIdx: str = search_dict.get("iterationIdx", None)
-        self.iterationIndex: str = search_dict.get("iterationIndex", None)
-        self.dtEventTimeStamp = search_dict.get("dtEventTimeStamp", None)
+        self.iterationIdx: str = search_dict.get("iterationIdx", None)  # pylint: disable=invalid-name
+        self.iterationIndex: str = search_dict.get("iterationIndex", None)  # pylint: disable=invalid-name
+        self.dtEventTimeStamp = search_dict.get("dtEventTimeStamp", None)  # pylint: disable=invalid-name
 
         # 上下文初始化标记
         self.zero: bool = search_dict.get("zero", False)
@@ -258,6 +264,11 @@ class SearchHandler(object):
 
     @fields_config("async_export")
     def async_export(self, field_result):
+        """
+        async_export
+        @param field_result:
+        @return:
+        """
         result = MappingHandlers.async_export_fields(field_result, self.scenario_id)
         if result["async_export_usable"]:
             return True, {"fields": result["async_export_fields"]}
@@ -265,6 +276,11 @@ class SearchHandler(object):
 
     @fields_config("bkmonitor")
     def bkmonitor(self, field_result_list):
+        """
+        bkmonitor
+        @param field_result_list:
+        @return:
+        """
         if "ip" in field_result_list or "serverIp" in field_result_list:
             return True
 
@@ -303,6 +319,11 @@ class SearchHandler(object):
 
     @fields_config("context_and_realtime")
     def analyze_fields(self, field_result):
+        """
+        analyze_fields
+        @param field_result:
+        @return:
+        """
         result = MappingHandlers.analyze_fields(field_result)
         if result["context_search_usable"]:
             return True, {"reason": ""}
@@ -310,12 +331,17 @@ class SearchHandler(object):
 
     @fields_config("bcs_web_console")
     def bcs_web_console(self, field_result_list):
+        """
+        bcs_web_console
+        @param field_result_list:
+        @return:
+        """
         if not self._enable_bcs_manage():
             return False
         if (
-            LogIndexSet.objects.get(index_set_id=self.index_set_id).source_app_code == BK_BCS_APP_CODE
-            and "cluster" in field_result_list
-            and "container_id" in field_result_list
+                LogIndexSet.objects.get(index_set_id=self.index_set_id).source_app_code == BK_BCS_APP_CODE
+                and "cluster" in field_result_list
+                and "container_id" in field_result_list
         ):
             return True
         return False
@@ -435,10 +461,10 @@ class SearchHandler(object):
 
     def _can_scroll(self, result) -> bool:
         return (
-            self.scenario_id != Scenario.BKDATA
-            and self.is_scroll
-            and result["hits"]["total"] > MAX_RESULT_WINDOW
-            and self.size > MAX_RESULT_WINDOW
+                self.scenario_id != Scenario.BKDATA
+                and self.is_scroll
+                and result["hits"]["total"] > MAX_RESULT_WINDOW
+                and self.size > MAX_RESULT_WINDOW
         )
 
     def _scroll(self, search_result):
@@ -472,6 +498,12 @@ class SearchHandler(object):
         return search_result
 
     def pre_get_result(self, sorted_fields: list, size: int):
+        """
+        pre_get_result
+        @param sorted_fields:
+        @param size:
+        @return:
+        """
         if self.scenario_id == Scenario.ES:
             result = BkLogApi.search(
                 {
@@ -535,6 +567,12 @@ class SearchHandler(object):
         return result
 
     def search_after_result(self, search_result, sorted_fields):
+        """
+        search_after_result
+        @param search_result:
+        @param sorted_fields:
+        @return:
+        """
         search_after_size = len(search_result["hits"]["hits"])
         result_size = search_after_size
         sorted_list = [[sorted_field, ASYNC_SORTED] for sorted_field in sorted_fields]
@@ -576,6 +614,11 @@ class SearchHandler(object):
             yield self._deal_query_result(search_result)
 
     def scroll_result(self, scroll_result):
+        """
+        scroll_result
+        @param scroll_result:
+        @return:
+        """
         scroll_size = len(scroll_result["hits"]["hits"])
         result_size = scroll_size
         while scroll_size == MAX_RESULT_WINDOW and result_size < self.size:
@@ -609,14 +652,19 @@ class SearchHandler(object):
 
     @staticmethod
     def get_bcs_manage_url(cluster_id, container_id):
-
+        """
+        get_bcs_manage_url
+        @param cluster_id:
+        @param container_id:
+        @return:
+        """
         bcs_cluster_info = PaasCcApi.get_cluster_by_cluster_id({"cluster_id": cluster_id})
         project_id = bcs_cluster_info["project_id"]
         url = (
-            settings.BCS_WEB_CONSOLE_DOMAIN + "backend/web_console/projects/{project_id}/clusters/{cluster_id}/"
-            "?container_id={container_id} ".format(
-                project_id=project_id, cluster_id=cluster_id.upper(), container_id=container_id
-            )
+                settings.BCS_WEB_CONSOLE_DOMAIN + "backend/web_console/projects/{project_id}/clusters/{cluster_id}/"
+                                                  "?container_id={container_id} ".format(
+            project_id=project_id, cluster_id=cluster_id.upper(), container_id=container_id
+        )
         )
         return url
 
@@ -700,11 +748,11 @@ class SearchHandler(object):
 
         if additions:
             query_string += (
-                " AND ("
-                + " AND ".join(
-                    [f'{addition["field"]} {addition["operator"]} {addition["value"]}' for addition in additions]
-                )
-                + ")"
+                    " AND ("
+                    + " AND ".join(
+                [f'{addition["field"]} {addition["operator"]} {addition["value"]}' for addition in additions]
+            )
+                    + ")"
             )
         history["query_string"] = query_string
         return history
@@ -1057,7 +1105,7 @@ class SearchHandler(object):
             fields: list = fields_from_es
             fields_list: list = [x["field"] for x in fields]
             if ("gseindex" in fields_list and "_iteration_idx" in fields_list) or (
-                "gseIndex" in fields_list and "iterationIndex" in fields_list
+                    "gseIndex" in fields_list and "iterationIndex" in fields_list
             ):
                 default_sort_tag: bool = True
                 return default_sort_tag
@@ -1068,7 +1116,7 @@ class SearchHandler(object):
         fields: list = fields_from_cache_dict.get("data", list())
         fields_list: list = [x["field"] for x in fields]
         if ("gseindex" in fields_list and "_iteration_idx" in fields_list) or (
-            "gseIndex" in fields_list and "iterationIndex" in fields_list
+                "gseIndex" in fields_list and "iterationIndex" in fields_list
         ):
             default_sort_tag: bool = True
             return default_sort_tag
@@ -1203,7 +1251,8 @@ class SearchHandler(object):
             self.field.update({_key: {"max_length": len(_key)}})
 
     def _analyze_context_result(
-        self, log_list: List[Dict[str, Any]], mark_gseindex: int = None, mark_gseIndex: int = None
+            self, log_list: List[Dict[str, Any]], mark_gseindex: int = None, mark_gseIndex: int = None
+            # pylint: disable=invalid-name
     ) -> Dict[str, Any]:
 
         log_list_reversed: list = log_list
@@ -1227,34 +1276,34 @@ class SearchHandler(object):
                         _count_start = index
 
                 if (
-                    self.gseindex == str(gseindex)
-                    and self.ip == ip
-                    and self.path == path
-                    and self._iteration_idx == str(_iteration_idx)
+                        self.gseindex == str(gseindex)
+                        and self.ip == ip
+                        and self.path == path
+                        and self._iteration_idx == str(_iteration_idx)
                 ) or (
-                    self.gseindex == str(gseindex)
-                    and self.container_id == container_id
-                    and self.logfile == logfile
-                    and self._iteration_idx == str(_iteration_idx)
+                        self.gseindex == str(gseindex)
+                        and self.container_id == container_id
+                        and self.logfile == logfile
+                        and self._iteration_idx == str(_iteration_idx)
                 ):
                     _index = index
                     break
 
         if self.scenario_id == Scenario.LOG:
             for index, item in enumerate(log_list):
-                gseIndex: str = item.get("gseIndex")
-                serverIp: str = item.get("serverIp")
+                gseIndex: str = item.get("gseIndex")  # pylint: disable=invalid-name
+                serverIp: str = item.get("serverIp")  # pylint: disable=invalid-name
                 path: str = item.get("path")
-                iterationIndex: str = item.get("iterationIndex")
+                iterationIndex: str = item.get("iterationIndex")  # pylint: disable=invalid-name
                 # find the counting range point
                 if _count_start == -1:
                     if str(gseIndex) == mark_gseIndex:
                         _count_start = index
                 if (
-                    self.gseIndex == str(gseIndex)
-                    and self.serverIp == serverIp
-                    and self.path == path
-                    and self.iterationIndex == str(iterationIndex)
+                        self.gseIndex == str(gseIndex)
+                        and self.serverIp == serverIp
+                        and self.path == path
+                        and self.iterationIndex == str(iterationIndex)
                 ):
                     _index = index
                     break

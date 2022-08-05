@@ -30,7 +30,7 @@ from apps.utils.log import logger
 from apps.log_search.constants import TimeEnum
 
 
-redis_client = None
+redis_client = None  # pylint: disable=invalid-name
 if settings.USE_REDIS:
     redis_client = get_redis_connection("default")
 

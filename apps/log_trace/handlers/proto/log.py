@@ -146,6 +146,12 @@ class LogTrace(Proto):
     }
 
     def trace_id(self, index_set_id: int, data: dict) -> dict:
+        """
+        trace_id
+        @param index_set_id:
+        @param data:
+        @return:
+        """
         start_time = arrow.get(data.get("startTime")[0:10]).shift(days=-1)
         query_data = {
             "addition": [
@@ -167,11 +173,21 @@ class LogTrace(Proto):
 
     @classmethod
     def result_to_tree(cls, result) -> dict:
+        """
+        result_to_tree
+        @param result:
+        @return:
+        """
         result_list: list = result.get("list", [])
         return cls.build_tree(result_list)
 
     @classmethod
     def build_tree(cls, nodes):
+        """
+        build_tree
+        @param nodes:
+        @return:
+        """
         if not nodes:
             return nodes
         first_root, *_ = nodes
@@ -216,6 +232,11 @@ class LogTrace(Proto):
 
     @classmethod
     def update_node(cls, child: dict) -> dict:
+        """
+        update_node
+        @param child:
+        @return:
+        """
         child.update(
             {
                 "group": child.get("spanID", ""),
@@ -229,11 +250,23 @@ class LogTrace(Proto):
         return child
 
     def search(self, index_set_id: int, data: dict) -> dict:
+        """
+        search
+        @param index_set_id:
+        @param data:
+        @return:
+        """
         data.update({"collapse": {"field": "traceID"}})
         search_handler = SearchHandlerEsquery(index_set_id, data, can_highlight=False)
         return search_handler.search(search_type="trace")
 
     def scatter(self, index_set_id: int, data: dict):
+        """
+        scatter
+        @param index_set_id:
+        @param data:
+        @return:
+        """
         data.update({"search_type": "trace_scatter"})
         search_handler = SearchHandlerEsquery(index_set_id, data)
         result: dict = search_handler.search(search_type=None)
@@ -242,6 +275,11 @@ class LogTrace(Proto):
 
     @classmethod
     def result_to_scatter(cls, result) -> list:
+        """
+        result_to_scatter
+        @param result:
+        @return:
+        """
         scatter_label_true_list: list = SCATTER_TEMPLATE[0]["data"]
         scatter_label_false_list: list = SCATTER_TEMPLATE[1]["data"]
         result_list: list = result.get("list", [])

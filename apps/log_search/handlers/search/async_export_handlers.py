@@ -19,7 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import copy
 import json
-
+from concurrent.futures import ThreadPoolExecutor
 import arrow
 from django.conf import settings
 from rest_framework.reverse import reverse
@@ -41,7 +41,6 @@ from apps.log_search.handlers.search.search_handlers_esquery import SearchHandle
 from apps.log_search.models import AsyncTask, ProjectInfo, LogIndexSet
 from apps.log_search.tasks.async_export import async_export
 from apps.utils.drf import DataPageNumberPagination
-from concurrent.futures import ThreadPoolExecutor
 
 
 class AsyncExportHandlers(object):

@@ -153,7 +153,7 @@ class GeneralSerializer(ModelSerializer):
         return not bool(self._errors)
 
     def create(self, validated_data):
-        ModelClass = self.Meta.model
+        ModelClass = self.Meta.model  # pylint: disable=invalid-name
 
         info = model_meta.get_field_info(ModelClass)
         many_to_many = {}

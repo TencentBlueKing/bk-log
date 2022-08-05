@@ -20,10 +20,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import copy
 import json
 import os
+from dataclasses import asdict
 import arrow
 from django.conf import settings
 from jinja2 import Environment, FileSystemLoader
-from dataclasses import asdict
 
 from apps.api import BkDataDataFlowApi, BkDataAIOPSApi
 from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS

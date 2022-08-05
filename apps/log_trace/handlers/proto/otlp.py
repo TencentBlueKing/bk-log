@@ -117,6 +117,12 @@ class OtlpTrace(Proto):
     }
 
     def trace_id(self, index_set_id: int, data: dict) -> dict:
+        """
+        trace_id
+        @param index_set_id:
+        @param data:
+        @return:
+        """
         start_time = arrow.get(data.get("startTime")[0:10]).shift(days=-1)
         query_data = {
             "addition": [
@@ -138,11 +144,21 @@ class OtlpTrace(Proto):
 
     @classmethod
     def result_to_tree(cls, result) -> dict:
+        """
+        result_to_tree
+        @param result:
+        @return:
+        """
         result_list: list = result.get("list", [])
         return cls.build_tree(result_list)
 
     @classmethod
     def build_tree(cls, nodes):
+        """
+        build_tree
+        @param nodes:
+        @return:
+        """
         if not nodes:
             return nodes
         first_root, *_ = nodes
@@ -188,6 +204,11 @@ class OtlpTrace(Proto):
 
     @classmethod
     def update_node(cls, child: dict) -> dict:
+        """
+        update_node
+        @param child:
+        @return:
+        """
         child.update(
             {
                 "start_time": cls.format_time(child.get("start_time")),
@@ -203,6 +224,12 @@ class OtlpTrace(Proto):
         return child
 
     def search(self, index_set_id: int, data: dict) -> dict:
+        """
+        search
+        @param index_set_id:
+        @param data:
+        @return:
+        """
         data.update({"collapse": {"field": "trace_id"}})
         search_handler = SearchHandlerEsquery(index_set_id, data, can_highlight=False)
         result = search_handler.search(search_type="trace")
@@ -221,6 +248,12 @@ class OtlpTrace(Proto):
         return trace_result
 
     def multi_search_trace(self, trace_ids: List[str], index_set_id):
+        """
+        multi_search_trace
+        @param trace_ids:
+        @param index_set_id:
+        @return:
+        """
         multi_execute = MultiExecuteFunc()
         for trace_id in trace_ids:
 
@@ -250,6 +283,11 @@ class OtlpTrace(Proto):
         return [self.transfer_trace_data(item) for item in field_list]
 
     def transfer_trace_data(self, trace_data):
+        """
+        transfer_trace_data
+        @param trace_data:
+        @return:
+        """
         trace_start_time = sys.maxsize
         trace_end_time = 0
         for span in trace_data["spans"]:
@@ -268,6 +306,12 @@ class OtlpTrace(Proto):
         }
 
     def trace_name(self, spans, process):
+        """
+        trace_name
+        @param spans:
+        @param process:
+        @return:
+        """
         candidate_span = None
         all_span_id = {span.get("spanID") for span in spans}
         for span in spans:
@@ -301,6 +345,12 @@ class OtlpTrace(Proto):
         pass
 
     def traces(self, index_set_id, params):
+        """
+        traces
+        @param index_set_id:
+        @param params:
+        @return:
+        """
         result = super(OtlpTrace, self).traces(index_set_id, params)
         trace_ids = [trace["trace_id"] for trace in result.get("list", [])]
         if not trace_ids:
@@ -380,6 +430,12 @@ class OtlpTrace(Proto):
         ]
 
     def trace_detail(self, index_set_id, trace_id):
+        """
+        trace_detail
+        @param index_set_id:
+        @param trace_id:
+        @return:
+        """
         search_dict = {
             "use_time_range": False,
             "addition": [{"key": "trace_id", "method": "is", "value": trace_id, "condition": "and", "type": "field"}],

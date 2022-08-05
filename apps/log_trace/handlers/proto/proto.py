@@ -111,6 +111,11 @@ class Proto(ABC):
 
     @classmethod
     def judge_trace_type(cls, field_list):
+        """
+        judge_trace_type
+        @param field_list:
+        @return:
+        """
         for proto_type in cls.PROTO_MAP.keys():
             if cls.get_proto(proto_type).match_field(field_list):
                 return proto_type
@@ -118,6 +123,11 @@ class Proto(ABC):
 
     @classmethod
     def get_proto(cls, proto_type) -> "Proto":
+        """
+        get_proto
+        @param proto_type:
+        @return:
+        """
         try:
             proto = import_string("apps.log_trace.handlers.proto.{}.{}".format(proto_type, cls.PROTO_MAP[proto_type]))
             return proto()
@@ -144,6 +154,12 @@ class Proto(ABC):
         pass
 
     def fields(self, index_set_id: int, scope: str) -> dict:
+        """
+        fields
+        @param index_set_id:
+        @param scope:
+        @return:
+        """
         data = {"search_type": scope}
         search_handler = SearchHandlerEsquery(index_set_id, data)
         result_dict = search_handler.fields(scope)
@@ -154,6 +170,11 @@ class Proto(ABC):
         return result_dict
 
     def match_field(self, field_list) -> bool:
+        """
+        match_field
+        @param field_list:
+        @return:
+        """
         if not self.MUST_MATCH_FIELDS:
             return False
         must_fields_len = len(self.MUST_MATCH_FIELDS.keys())
@@ -175,6 +196,11 @@ class Proto(ABC):
         return [bucket.get("key", "") for bucket in aggs.get(field_name, {}).get("buckets", [])]
 
     def services(self, index_set_id: int) -> list:
+        """
+        services
+        @param index_set_id:
+        @return:
+        """
         query_data = {
             "fields": [self.SERVICE_NAME_FIELD],
         }
@@ -182,6 +208,12 @@ class Proto(ABC):
         return self._deal_term_result(term_result, self.SERVICE_NAME_FIELD)
 
     def operations(self, index_set_id, service_name):
+        """
+        operations
+        @param index_set_id:
+        @param service_name:
+        @return:
+        """
         query_data = {
             "fields": [self.OPERATION_NAME_FIELD],
             "addition": [{"method": "is", "key": self.SERVICE_NAME_FIELD, "value": service_name}],
@@ -190,6 +222,12 @@ class Proto(ABC):
         return self._deal_term_result(term_result, self.OPERATION_NAME_FIELD)
 
     def traces(self, index_set_id, params):
+        """
+        traces
+        @param index_set_id:
+        @param params:
+        @return:
+        """
         search_dict = {
             "start_time": params["start"] / 1000000,
             "end_time": params["end"] / 1000000,
@@ -204,6 +242,11 @@ class Proto(ABC):
         return search_handler.search()
 
     def get_traces_additions(self, params):
+        """
+        get_traces_additions
+        @param params:
+        @return:
+        """
         addition = []
         for filter_key in self.TRACES_ADDITIONS.keys():
             if params.get(filter_key):

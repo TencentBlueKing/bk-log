@@ -21,6 +21,10 @@ from logging.handlers import DatagramHandler
 from opentelemetry import trace
 from opentelemetry.trace import format_trace_id
 
+import logging  # noqa
+
+from apps.utils.local import get_request_id  # noqa pylint: disable=unused-import
+
 """
 Usage:
 
@@ -36,9 +40,6 @@ Usage:
     except Exception:
         logger.exception("wrong3")
 """
-import logging  # noqa
-
-from apps.utils.local import get_request_id  # noqa
 
 logger_detail = logging.getLogger("root")
 

@@ -17,8 +17,8 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-from retrying import retry
 from abc import ABC, abstractmethod
+from retrying import retry
 
 from pipeline.builder import Data
 from pipeline.core.pipeline import Pipeline

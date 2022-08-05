@@ -17,9 +17,9 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
+from concurrent.futures import ThreadPoolExecutor
 from celery.task import periodic_task
 from celery.schedules import crontab
-from concurrent.futures import ThreadPoolExecutor
 
 from apps.log_clustering.constants import (
     PATTERN_INDEX,

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -147,7 +148,7 @@ class QueryClientLog(QueryClientTemplate):
             tmp_index: str = _index.replace("_%s_" % settings.TABLE_ID_PREFIX, "_%s." % settings.TABLE_ID_PREFIX)
             tmp_index = tmp_index.rstrip("_*")
             # 如果suffix是个日期，需要去掉后缀
-            new_index, no_use, suffix = tmp_index.rpartition("_")
+            new_index, no_use, suffix = tmp_index.rpartition("_")  # pylint: unused-variable
             if DATE_RE.match(suffix):
                 new_index_list.append(new_index)
             else:

@@ -18,4 +18,4 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-default_app_config = "apps.log_databus.apps.ApiConfig"
+default_app_config = "apps.log_databus.apps.ApiConfig"  # pylint: disable=invalid-name

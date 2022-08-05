@@ -34,7 +34,7 @@ class BaseCrypt(object):
     ROOT_IV = b"TencentBkApp--Iv"
 
     def __init__(self, instance_key=settings.SECRET_KEY):
-        self.INSTANCE_KEY = instance_key
+        self.INSTANCE_KEY = instance_key  # pylint: disable=invalid-name
 
     def encrypt(self, plaintext):
         """
