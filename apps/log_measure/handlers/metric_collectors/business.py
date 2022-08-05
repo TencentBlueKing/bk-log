@@ -27,17 +27,29 @@ from django.db.models import Count
 from django.utils.translation import ugettext as _
 from django.conf import settings
 
-from apps.log_databus.models import CollectorConfig
-from apps.log_search.models import UserIndexSetSearchHistory, LogIndexSet
-from apps.log_measure.constants import TIME_RANGE
+from apps.log_databus.models import CollectorConfig, ArchiveConfig
+from apps.log_search.models import UserIndexSetSearchHistory, LogIndexSet, Scenario
+from apps.log_extract.models import Tasks
+from apps.log_clustering.models import ClusteringConfig
+from apps.log_measure.constants import TIME_RANGE, INDEX_SCENARIO
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
 
 
+FUNCTION_MODEL = {
+    "log_collector": CollectorConfig,
+    "log_archive": ArchiveConfig,
+    "log_extract": Tasks,
+    "log_clustering": ClusteringConfig,
+}
+
+
 class BusinessMetricCollector(object):
     @staticmethod
-    @register_metric("business_active", description=_("活跃业务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "business_active", prefix="bklog", description=_("活跃业务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def business_active():
         metrics = []
         for timedelta in TIME_RANGE:
@@ -149,4 +161,78 @@ class BusinessMetricCollector(object):
             )
         )
 
+        return metrics
+
+    @staticmethod
+    @register_metric("biz_usage", description=_("功能使用的业务数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    def biz_usage():
+        metrics = []
+        for function_name in FUNCTION_MODEL:
+            metrics.extend(BusinessMetricCollector().function_biz_usage(function_name))
+
+        metrics.extend(BusinessMetricCollector().index_set_function_biz_usage())
+        metrics.extend(BusinessMetricCollector().trace_biz_usage())
+
+        return metrics
+
+    @staticmethod
+    def function_biz_usage(function_name: str):
+        groups = (
+            FUNCTION_MODEL[function_name]
+            .objects.all()
+            .values("bk_biz_id")
+            .annotate(count=Count("bk_biz_id"))
+            .order_by("bk_biz_id")
+        )
+        metrics = [
+            Metric(
+                metric_name="count",
+                metric_value=len(groups),
+                dimensions={"function": function_name},
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        ]
+        return metrics
+
+    @staticmethod
+    def index_set_function_biz_usage():
+        metrics = []
+        groups = (
+            LogIndexSet.objects.values("scenario_id")
+            .distinct()
+            .order_by("scenario_id")
+            .annotate(count=Count("project_id", distinct=True))
+        )
+        for group in groups:
+            if group["scenario_id"] == Scenario.LOG:
+                continue
+            function_name = INDEX_SCENARIO[group["scenario_id"]]
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=group["count"],
+                    dimensions={"function": function_name},
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+        return metrics
+
+    @staticmethod
+    def trace_biz_usage():
+        groups = (
+            LogIndexSet.objects.values("project_id")
+            .filter(is_trace_log=True)
+            .order_by("project_id")
+            .annotate(count=Count("project_id", distinct=True))
+        )
+        metrics = [
+            Metric(
+                metric_name="count",
+                metric_value=len(groups),
+                dimensions={
+                    "function": "log_trace",
+                },
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        ]
         return metrics

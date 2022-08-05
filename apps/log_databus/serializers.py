@@ -1128,7 +1128,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
                     LabelSelectorOperator.DOES_NOT_EXIST,
                 ],
             )
-            value = serializers.ListField(
+            values = serializers.ListField(
                 label=_("标签value"), allow_empty=True, child=serializers.CharField(), required=False
             )
 

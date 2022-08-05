@@ -46,7 +46,11 @@ class RabbitMQMetric(object):
             namespace_data.message = ping_result.message
             return namespace_data
 
-        namespace_data.data.extend(RabbitMQMetric().get_queue_data())
+        queue_len_result = RabbitMQMetric().get_queue_data()
+        namespace_data.data.extend(queue_len_result)
+        if not all([i.status for i in queue_len_result]):
+            namespace_data.status = False
+            namespace_data.message = "queue_len is out of limit"
 
         return namespace_data
 

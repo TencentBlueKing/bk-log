@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import abc
-from typing import Dict
+from typing import List, Union
 
 from django.conf import settings
 from django.utils.module_loading import import_string
+
+from bkm_space.define import Space
 
 
 class AbstractSpaceApi(metaclass=abc.ABCMeta):
@@ -12,13 +14,20 @@ class AbstractSpaceApi(metaclass=abc.ABCMeta):
     """
 
     @classmethod
-    def get_space_detail(cls, space_uid: str = "", id: int = 0) -> Dict:
+    def get_space_detail(cls, space_uid: str = "", id: int = 0) -> Union[None, Space]:
         """
         查看具体空间实例详情
         :param space_uid: 空间唯一标识
         :param id: 空间自增ID
         """
         # TODO: 需实现该接口
+        raise NotImplementedError
+
+    @classmethod
+    def list_spaces(cls) -> List[Space]:
+        """
+        查询空间列表
+        """
         raise NotImplementedError
 
 
