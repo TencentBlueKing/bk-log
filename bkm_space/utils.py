@@ -2,28 +2,33 @@
 from typing import Tuple, Union, Dict, List
 
 from bkm_space import api
-from bkm_space.constant import SpaceType
+from bkm_space.define import SpaceTypeEnum
 
 
-def space_uid_to_bk_biz_id(space_uid: str) -> int:
+def space_uid_to_bk_biz_id(space_uid: str, id: int = None) -> int:
     """
     空间唯一标识 转换为 业务ID
     规则：空间类型为业务的，直接返回业务ID；空间类型为其他，则返回空间自增ID的相反数
     :param space_uid: 空间唯一标识
+    :param id: 空间自增ID
     """
     space_type, space_id = parse_space_uid(space_uid)
 
-    if space_type == SpaceType.BKCC:
+    if space_type == SpaceTypeEnum.BKCC.value:
         # 遇到业务空间直接转换
         return int(space_id)
 
-    # 非业务空间通过API查询
+    if id is not None:
+        # 如果有传自增ID，就直接使用自增ID，对其取相反数，得到负数的业务ID
+        return -id
+
+    # 如果没有提供自增ID，非业务空间则通过API查询
     space = api.SpaceApi.get_space_detail(space_uid=space_uid)
 
     if not space:
         return 0
 
-    return -int(space["id"])
+    return -int(space.id)
 
 
 def bk_biz_id_to_space_uid(bk_biz_id: int) -> str:
@@ -41,14 +46,14 @@ def bk_biz_id_to_space_uid(bk_biz_id: int) -> str:
         return ""
 
     if bk_biz_id > 0:
-        return f"{SpaceType.BKCC}__{bk_biz_id}"
+        return f"{SpaceTypeEnum.BKCC.value}__{bk_biz_id}"
 
     space = api.SpaceApi.get_space_detail(id=-bk_biz_id)
 
     if not space:
         return ""
 
-    return space["space_uid"]
+    return space.space_uid
 
 
 def parse_space_uid(space_uid: str) -> Tuple[str, str]:

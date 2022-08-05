@@ -62,6 +62,45 @@ class MetaViewSet(APIViewSet):
         """
         return Response(MetaHandler.get_user())
 
+    @list_route(methods=["GET"], url_path="spaces/mine")
+    def list_spaces_mine(self, request):
+        """
+        @api {get} /meta/spaces/mine/ 获取我的项目空间
+        @apiName list_meta_spaces_mine
+        @apiGroup 01_Meta
+        @apiSuccess {Int} id 空间自增ID
+        @apiSuccess {String} space_uid 空间唯一标识
+        @apiSuccess {String} space_type_id 空间类型ID
+        @apiSuccess {String} space_id 空间ID
+        @apiSuccess {String} space_name 空间名称
+        @apiSuccess {String} space_code 空间编号
+        @apiSuccess {Int} bk_biz_id 业务ID
+        @apiSuccess {String} status 空间状态
+        @apiSuccess {String} time_zone 空间所在时区
+        @apiSuccess {String} permission 空间权限
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": [
+                {
+                    "id": 11,
+                    "space_type_id": "bkcc",
+                    "space_id": "2",
+                    "space_name": "蓝鲸",
+                    "status": "normal",
+                    "space_code": "2",
+                    "space_uid": "bkcc__2",
+                    "bk_biz_id": 2,
+                    "time_zone": "Asia/Shanghai",
+                    "permission": {"view_business": True},
+                }
+            ],
+            "result": true
+        }
+        """
+        return Response(MetaHandler.get_user_spaces(get_request_username()))
+
     @list_route(methods=["GET"], url_path="projects")
     def list_projects(self, request):
         """
