@@ -84,6 +84,8 @@ JOB_STATUS = {
 RETRY_TIMES = 5
 WAIT_FOR_RETRY = 20
 
+
+CHECK_STORY_0 = "参数检验初始化检查"
 CHECK_STORY_1 = "检查Agent以及进程状态"
 CHECK_STORY_2 = "检查路由配置是否正确"
 CHECK_STORY_3 = "检查kafka内是否有数据"
