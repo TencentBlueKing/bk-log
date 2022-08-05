@@ -25,6 +25,7 @@ import logging
 import redis
 
 import settings
+from home_application.constants import ALARM_QUEUE_LEN
 
 logger = logging.getLogger()
 
@@ -113,5 +114,7 @@ class RedisClient(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to get llen[{queue_name}], err: {e}")
             result["message"] = str(e)
-
+        if result["data"] >= ALARM_QUEUE_LEN:
+            result["status"] = False
+            result["message"] = f"queue_len is larger than {ALARM_QUEUE_LEN}"
         return result

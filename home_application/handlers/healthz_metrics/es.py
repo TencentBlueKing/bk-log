@@ -71,11 +71,11 @@ class ESMetric(object):
                 != VisibleEnum.ALL_BIZ.value
             ):
                 continue
+            cluster_name = cluster.get("cluster_config").get("cluster_name", "")
             result = HealthzMetric(status=False, metric_name="ping")
             start_time = time.time()
             try:
                 es_client = MetricUtils.get_instance().get_es_client(cluster_info=cluster)
-                cluster_name = cluster.get("cluster_config").get("cluster_name")
                 if es_client:
                     result.status = True
                     result.dimensions = {"cluster_name": cluster_name}
