@@ -30,6 +30,7 @@ from apps.exceptions import ValidationError
 from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
 from apps.log_trace.constants import TIME_DIMENSION_VALUE, MetricTypeEnum
 from apps.utils.local import get_local_param
+from bkm_space.serializers import SpaceUIDField
 
 
 class TraceIndexSetScopeSerializer(serializers.Serializer):
@@ -38,7 +39,7 @@ class TraceIndexSetScopeSerializer(serializers.Serializer):
     如果用户传的是bk_biz_id，直接转成对应的project_id, 新项目要求bk_biz_id
     """
 
-    space_uid = serializers.CharField(label=_("空间唯一标识"), required=True)
+    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
 
 
 class TraceSearchAttrSerializer(serializers.Serializer):

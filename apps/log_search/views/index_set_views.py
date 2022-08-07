@@ -39,6 +39,7 @@ from apps.exceptions import ValidationError
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
 from apps.log_search.tasks.bkdata import sync_auth_status
 from apps.log_search.exceptions import BkJwtVerifyException, IndexSetNotEmptyException
+from bkm_space.serializers import SpaceUIDField
 
 
 class IndexSetViewSet(ModelViewSet):
@@ -101,7 +102,7 @@ class IndexSetViewSet(ModelViewSet):
             storage_cluster_id = serializers.IntegerField(required=False)
             category_id = serializers.CharField(required=True)
             scenario_id = serializers.CharField(required=True)
-            space_uid = serializers.CharField(label=_("空间唯一标识"), required=True)
+            space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
             bkdata_auth_url = serializers.ReadOnlyField()
 
             def validate(self, attrs):
@@ -115,7 +116,7 @@ class IndexSetViewSet(ModelViewSet):
         class UpdateSerializer(CustomSerializer):
             storage_cluster_id = serializers.IntegerField(required=False, default=None)
             scenario_id = serializers.CharField(read_only=True)
-            space_uid = serializers.CharField(label=_("空间唯一标识"), read_only=True)
+            space_uid = SpaceUIDField(label=_("空间唯一标识"), read_only=True)
             bkdata_auth_url = serializers.ReadOnlyField()
 
         class ShowMoreSerializer(CustomSerializer):

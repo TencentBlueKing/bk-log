@@ -34,6 +34,7 @@ from apps.exceptions import ValidationError
 from apps.log_search.constants import InstanceTypeEnum, TemplateType
 from apps.log_search.models import ProjectInfo, Scenario, UserIndexSetConfig
 from apps.utils.local import get_local_param
+from bkm_space.serializers import SpaceUIDField
 
 HISTORY_MAX_DAYS = 7
 
@@ -194,7 +195,7 @@ class SearchIndexSetScopeSerializer(serializers.Serializer):
     获取索引集所属项目
     """
 
-    space_uid = serializers.CharField(label=_("空间唯一标识"), required=True)
+    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
 
 
 class SearchUserIndexSetConfigSerializer(serializers.Serializer):
@@ -325,7 +326,7 @@ class FavoriteSearchSerializer(serializers.Serializer):
     检索收藏序列化
     """
 
-    space_uid = serializers.CharField(label=_("空间唯一标识"), required=True)
+    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
     index_set_id = serializers.IntegerField(label=_("索引集ID"), required=True)
     description = serializers.CharField(label=_("收藏描述"), max_length=50)
     host_scopes = serializers.DictField(default={}, required=False)
@@ -338,7 +339,7 @@ class FavoriteSearchListSerializer(serializers.Serializer):
     获取收藏所属项目
     """
 
-    space_uid = serializers.CharField(label=_("空间唯一标识"), required=True)
+    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
 
 
 class BcsWebConsoleSerializer(serializers.Serializer):
