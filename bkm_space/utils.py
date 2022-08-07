@@ -12,7 +12,10 @@ def space_uid_to_bk_biz_id(space_uid: str, id: int = None) -> int:
     :param space_uid: 空间唯一标识
     :param id: 空间自增ID
     """
-    space_type, space_id = parse_space_uid(space_uid)
+    try:
+        space_type, space_id = parse_space_uid(space_uid)
+    except ValueError:
+        return 0
 
     if space_type == SpaceTypeEnum.BKCC.value:
         # 遇到业务空间直接转换
@@ -59,7 +62,10 @@ def parse_space_uid(space_uid: str) -> Tuple[str, str]:
     :param space_uid: 空间唯一标识
     :return: 二元组 space_type, space_id
     """
-    space_type, space_id = space_uid.split("__", 1)
+    parsed_data = space_uid.split("__", 1)
+    if not parsed_data:
+        raise ValueError("invalid space_uid format")
+    space_type, space_id = parsed_data
     return space_type, space_id
 
 
