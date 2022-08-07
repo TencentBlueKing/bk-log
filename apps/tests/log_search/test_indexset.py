@@ -31,7 +31,7 @@ from django.test import TestCase, override_settings
 from apps.log_search.models import LogIndexSet
 
 BK_BIZ_ID = 1
-PROJECT_ID = 1
+SPACE_UID = "bkcc__2"
 STORAGE_CLUSTER_ID = 1
 SUCCESS_STATUS_CODE = 200
 SOURCE_APP_CODE = "log-search-4"
@@ -68,7 +68,8 @@ CREATE_SUCCESS = {
         "storage_cluster_id": 1,
         "category_id": "other_rt",
         "scenario_id": "es",
-        "project_id": "1",
+        "project_id": 0,
+        "space_uid": "bkcc__2",
         "bkdata_auth_url": "",
         "created_at": "2021-06-26 16:06:18+0800",
         "created_by": "admin",
@@ -138,7 +139,8 @@ UPDATE_INDEX_SET = {
     "deleted_at": None,
     "deleted_by": None,
     "index_set_name": "登陆日志",
-    "project_id": 1,
+    "project_id": 0,
+    "space_uid": "bkcc__2",
     "category_id": "host",
     "collector_config_id": None,
     "scenario_id": "es",
@@ -201,7 +203,8 @@ INDEX_SET_LISTS = {
             "deleted_at": None,
             "deleted_by": None,
             "index_set_name": "登陆日志",
-            "project_id": 1,
+            "project_id": 0,
+            "space_uid": "bkcc__2",
             "category_id": "other_rt",
             "collector_config_id": None,
             "scenario_id": "es",
@@ -219,7 +222,7 @@ INDEX_SET_LISTS = {
             "storage_cluster_name": "",
             "apply_status": "normal",
             "apply_status_name": "正常",
-            "bk_biz_id": 0,
+            "bk_biz_id": 2,
             "permission": {},
         }
     ],
@@ -326,7 +329,8 @@ RETRIEVE_LIST = {
     "deleted_at": None,
     "deleted_by": None,
     "index_set_name": "登陆日志",
-    "project_id": 1,
+    "project_id": 0,
+    "space_uid": "bkcc__2",
     "category_id": "other_rt",
     "collector_config_id": None,
     "scenario_id": "es",
@@ -379,8 +383,7 @@ class TestIndexSet(TestCase):
     @patch("apps.log_search.tasks.mapping.sync_index_set_mapping_snapshot.delay", return_value=None)
     @patch("apps.utils.bk_data_auth.BkDataAuthHandler.filter_unauthorized_rt_by_user", return_value=[])
     @patch(
-        "apps.utils.bk_data_auth.BkDataAuthHandler.list_authorized_rt_by_token",
-        return_value=["591_xx", "log_xxx"],
+        "apps.utils.bk_data_auth.BkDataAuthHandler.list_authorized_rt_by_token", return_value=["591_xx", "log_xxx"],
     )
     @patch("apps.api.TransferApi.get_cluster_info", return_value=CLUSTER_INFO_WITH_AUTH)
     @patch("apps.api.BkLogApi.mapping", return_value=MAPPING_LIST)
@@ -393,7 +396,7 @@ class TestIndexSet(TestCase):
         """
         data = {
             "index_set_name": "登陆日志",
-            "project_id": PROJECT_ID,
+            "space_uid": SPACE_UID,
             "storage_cluster_id": STORAGE_CLUSTER_ID,
             "result_table_id": "591_xx",
             "category_id": "other_rt",
@@ -448,7 +451,7 @@ class TestIndexSet(TestCase):
         index_ids = [i["index_id"] for i in index_set.indexes]
 
         path = "/api/v1/index_set/"
-        data = {"project_id": PROJECT_ID, "storage_cluster_id": storage_cluster_id, "page": 1, "pagesize": 2}
+        data = {"space_uid": SPACE_UID, "storage_cluster_id": storage_cluster_id, "page": 1, "pagesize": 2}
 
         response = self.client.get(path=path, data=data)
         content = json.loads(response.content)
@@ -479,7 +482,7 @@ class TestIndexSet(TestCase):
         """
         data = {
             "index_set_name": "登陆日志",
-            "project_id": PROJECT_ID,
+            "space_uid": SPACE_UID,
             "storage_cluster_id": STORAGE_CLUSTER_ID,
             "result_table_id": "591_xx",
             "category_id": "other_rt",
@@ -534,13 +537,13 @@ class TestIndexSet(TestCase):
         # 获取插入索引集的一些信息
         index_set = LogIndexSet.objects.all().first()
         index_set_id = index_set.index_set_id
-        project_id = index_set.project_id
+        space_uid = index_set.space_uid
         storage_cluster_id = index_set.storage_cluster_id
         scenario_id = index_set.scenario_id
         index_ids = [i["index_id"] for i in index_set.indexes]
 
         data = {
-            "project_id": project_id,
+            "space_uid": space_uid,
             "scenario_id": scenario_id,
             "index_set_name": "登陆日志",
             "view_roles": [],

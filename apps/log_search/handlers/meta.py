@@ -28,10 +28,8 @@ from apps.feature_toggle.plugins.constants import USER_GUIDE_CONFIG
 from apps.iam import Permission, ActionEnum
 from apps.log_search.constants import UserMetaConfType
 from apps.utils import APIModel
-from apps.exceptions import BizNotExistError
 from apps.api import BKLoginApi, CmsiApi, TransferApi
 from apps.log_search.models import ProjectInfo, UserMetaConf
-from apps.utils.cache import cache_one_hour
 from apps.utils.local import get_request_username
 from apps.log_search import exceptions
 from apps.feature_toggle.handlers import toggle
@@ -99,31 +97,9 @@ class MetaHandler(APIModel):
         return CmsiApi.get_msg_type()
 
     @classmethod
-    def get_project_info(cls, bk_biz_id):
-        return cls._cache_project_info(bk_biz_id=bk_biz_id)
-
-    @staticmethod
-    @cache_one_hour("meta_biz_to_project_{bk_biz_id}")
-    def _cache_project_info(*, bk_biz_id):
-        try:
-            project = ProjectInfo.objects.filter(bk_biz_id=bk_biz_id).first()
-            if not project:
-                raise ProjectInfo.DoesNotExist
-            project_info = {
-                "bk_biz_id": bk_biz_id,
-                "project_id": project.pk,
-                "project_name": project.project_name,
-            }
-            return project_info
-        except ProjectInfo.DoesNotExist:
-            raise BizNotExistError(BizNotExistError.MESSAGE.format(bk_biz_id=bk_biz_id))
-
-    @classmethod
-    def get_menus(cls, project_id, is_superuser):
-
-        project = ProjectInfo.objects.get(project_id=project_id)
+    def get_menus(cls, space_uid, is_superuser):
         modules = copy.deepcopy(settings.MENUS)
-        cls.get_present_menus(modules, is_superuser, project)
+        cls.get_present_menus(modules, is_superuser)
         return modules
 
     @classmethod
@@ -168,33 +144,22 @@ class MetaHandler(APIModel):
         }
 
     @classmethod
-    def get_biz_maintainer(cls, bk_biz_id, project_id):
+    def get_biz_maintainer(cls, space_uid):
         """
         @summary:查询业务运维列表
         """
-        if bk_biz_id:
-            project = ProjectInfo.objects.filter(bk_biz_id=bk_biz_id, is_deleted=False).first()
-        elif project_id:
-            project = ProjectInfo.objects.filter(project_id=project_id, is_deleted=False).first()
-        else:
-            return {}
-
-        if not project:
-            return {}
-        project_name = project.project_name
-        maintainer = []
-        data = {"bk_biz_name": project_name, "maintainer": list(maintainer)}
-        return data
+        # TODO: 确认改函数是否已被废弃
+        return {"bk_biz_name": space_uid, "maintainer": []}
 
     @classmethod
-    def get_present_menus(cls, child_modules, is_superuser, project):
+    def get_present_menus(cls, child_modules, is_superuser):
         if not isinstance(child_modules, list):
             raise exceptions.SettingMenuException
 
         for child_module in child_modules[:]:
             if "feature" not in child_module:
                 raise exceptions.SettingMenuException
-            if not cls.check_menu_feature(child_module, is_superuser, project):
+            if not cls.check_menu_feature(child_module, is_superuser):
                 child_modules.remove(child_module)
                 continue
             if "scenes" in child_module and not toggle.feature_switch(child_module["scenes"]):
@@ -202,20 +167,16 @@ class MetaHandler(APIModel):
                 continue
             child_module["project_manage"] = True
             if "children" in child_module:
-                cls.get_present_menus(child_module["children"], is_superuser, project)
+                cls.get_present_menus(child_module["children"], is_superuser)
 
     @classmethod
-    def check_menu_feature(cls, module, is_superuser, project):
+    def check_menu_feature(cls, module, is_superuser):
         toggle = module["feature"]
         if toggle == "off":
             return False
 
         if toggle == "debug":
-            if (
-                settings.ENVIRONMENT not in ["dev", "stag"]
-                and not is_superuser
-                and module["id"] not in project.feature_toggle
-            ):
+            if settings.ENVIRONMENT not in ["dev", "stag"] and not is_superuser:
                 return False
 
         if module["id"] in ["manage_data_link", "extract_link_manage", "manage_data_link_conf"]:

@@ -12,7 +12,10 @@ def space_uid_to_bk_biz_id(space_uid: str, id: int = None) -> int:
     :param space_uid: 空间唯一标识
     :param id: 空间自增ID
     """
-    space_type, space_id = parse_space_uid(space_uid)
+    try:
+        space_type, space_id = parse_space_uid(space_uid)
+    except ValueError:
+        return 0
 
     if space_type == SpaceTypeEnum.BKCC.value:
         # 遇到业务空间直接转换
@@ -31,7 +34,7 @@ def space_uid_to_bk_biz_id(space_uid: str, id: int = None) -> int:
     return -int(space.id)
 
 
-def bk_biz_id_to_space_uid(bk_biz_id: int) -> str:
+def bk_biz_id_to_space_uid(bk_biz_id: Union[str, int]) -> str:
     """
     业务ID 转换为 空间唯一标识
     :param bk_biz_id: CMDB 业务ID
@@ -42,10 +45,7 @@ def bk_biz_id_to_space_uid(bk_biz_id: int) -> str:
     else:
         return ""
 
-    if not bk_biz_id:
-        return ""
-
-    if bk_biz_id > 0:
+    if bk_biz_id >= 0:
         return f"{SpaceTypeEnum.BKCC.value}__{bk_biz_id}"
 
     space = api.SpaceApi.get_space_detail(id=-bk_biz_id)
@@ -62,7 +62,10 @@ def parse_space_uid(space_uid: str) -> Tuple[str, str]:
     :param space_uid: 空间唯一标识
     :return: 二元组 space_type, space_id
     """
-    space_type, space_id = space_uid.split("__", 1)
+    parsed_data = space_uid.split("__", 1)
+    if len(parsed_data) != 2:
+        raise ValueError("invalid space_uid format")
+    space_type, space_id = parsed_data
     return space_type, space_id
 
 

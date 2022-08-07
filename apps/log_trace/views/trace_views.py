@@ -52,9 +52,7 @@ class TraceViewSet(APIViewSet):
         return [InstanceActionPermission([ActionEnum.SEARCH_LOG], ResourceEnum.INDICES)]
 
     @insert_permission_field(
-        actions=[ActionEnum.SEARCH_LOG],
-        resource_meta=ResourceEnum.INDICES,
-        id_field=lambda d: d["index_set_id"],
+        actions=[ActionEnum.SEARCH_LOG], resource_meta=ResourceEnum.INDICES, id_field=lambda d: d["index_set_id"],
     )
     def list(self, request, *args, **kwargs):
         """
@@ -88,9 +86,7 @@ class TraceViewSet(APIViewSet):
         }
         """
         data = self.params_valid(TraceIndexSetScopeSerializer)
-        return Response(
-            TraceConfigHandlers.get_user_trace_index_set(data.get("project_id"), data["bk_biz_id"], request)
-        )
+        return Response(TraceConfigHandlers.get_user_trace_index_set(data.get("space_uid"), data["bk_biz_id"], request))
 
     @detail_route(methods=["POST"], url_path="search/scatter")
     def scatter(self, request, index_set_id=None):

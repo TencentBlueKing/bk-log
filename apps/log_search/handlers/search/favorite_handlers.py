@@ -32,9 +32,9 @@ class FavoriteHandlers(object):
     def __init__(self, favorite_search_id=None):
         self.favorite_search_id = favorite_search_id
 
-    def favorite_search(self, project_id):
+    def favorite_search(self, space_uid):
         favorite_search_objs = (
-            FavoriteSearch.objects.filter(project_id=project_id)
+            FavoriteSearch.objects.filter(space_uid=space_uid)
             .order_by("-created_at")
             .values("id", "search_history_id", "description")
         )
@@ -59,13 +59,13 @@ class FavoriteHandlers(object):
         ]
 
     @classmethod
-    def create(cls, project_id, index_set_id, host_scopes, addition, keyword, description):
+    def create(cls, space_uid, index_set_id, host_scopes, addition, keyword, description):
         params = {"host_scopes": host_scopes, "addition": addition, "keyword": keyword}
         search_history_obj = UserIndexSetSearchHistory.objects.create(
             index_set_id=index_set_id, params=params, search_type=cls.SEARCH_HISTORY_TYPE
         )
         return FavoriteSearch.objects.create(
-            project_id=project_id, search_history_id=search_history_obj.id, description=description
+            space_uid=space_uid, search_history_id=search_history_obj.id, description=description
         )
 
     def delete(self):
