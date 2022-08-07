@@ -35,7 +35,7 @@ logger = logging.getLogger()
 User = get_user_model()
 MOCK_USER_NAME = "test_user"
 BK_BIZ_ID = 1
-PROJECT_ID = 2
+SPACE_UID = 2
 GROUP_ID_MAINTAINER = 11
 GROUP_ID_DEVELOPER = 12
 GROUP_ID_PRODUCTOR = 13
@@ -49,10 +49,10 @@ BIZ_LIST = [
     }
 ]
 
-CMDB_PROJECTS = {BK_BIZ_ID: PROJECT_ID}
+CMDB_PROJECTS = {BK_BIZ_ID: SPACE_UID}
 
 CMDB_GROUPS = {
-    PROJECT_ID: {
+    SPACE_UID: {
         "bk_biz_maintainer": GROUP_ID_MAINTAINER,
         "bk_biz_developer": GROUP_ID_DEVELOPER,
         "bk_biz_productor": GROUP_ID_PRODUCTOR,
@@ -65,7 +65,7 @@ CMDB_POLICYS = {GROUP_ID_MAINTAINER: {settings.ACTION_PROJECT_RETRIEVE: True}}
 
 CREATE_FAVORITE_DATA = {
     "index_set_id": 1,
-    "project_id": PROJECT_ID,
+    "space_uid": SPACE_UID,
     "description": "this is des",
     "keyword": "*",
     "host_scopes": {"modules": [], "ips": "127.0.0.1"},
@@ -97,7 +97,7 @@ class TestSearchFavorite(APITestCase):
         self.client.logout()
 
     def test_list(self, *args):
-        query_params = {"project_id": PROJECT_ID}
+        query_params = {"space_uid": SPACE_UID}
         url = reverse.reverse("apps.log_search:favorite-list")
         response = self.client.get(url, data=query_params)
 
@@ -106,7 +106,7 @@ class TestSearchFavorite(APITestCase):
         self.assertTrue(result["result"])
         self.assertEqual(len(result["data"]), 0)
 
-        query_params = {"project_id": 9999}
+        query_params = {"space_uid": "bkcc__2345"}
         response = self.client.get(url, data=query_params)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         result = json.loads(response.content)
