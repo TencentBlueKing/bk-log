@@ -35,7 +35,7 @@ logger = logging.getLogger()
 User = get_user_model()
 MOCK_USER_NAME = "test_user"
 BK_BIZ_ID = 1
-SPACE_UID = 2
+SPACE_UID = "bkcc__2"
 GROUP_ID_MAINTAINER = 11
 GROUP_ID_DEVELOPER = 12
 GROUP_ID_PRODUCTOR = 13
@@ -77,8 +77,9 @@ def get_test_user(**kwargs):
     return User.objects.create(**kwargs)
 
 
-# @patch("blueapps.account.components.bk_ticket.middlewares.LoginRequiredMiddleware.process_view", return_value=None)
+@patch("blueapps.account.components.bk_ticket.middlewares.LoginRequiredMiddleware.process_view", return_value=None)
 @patch("blueapps.account.components.bk_token.middlewares.LoginRequiredMiddleware.process_view", return_value=None)
+@patch("apps.iam.handlers.drf.ViewBusinessPermission.has_permission", return_value=True)
 @override_settings(
     CACHES={
         "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},

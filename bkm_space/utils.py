@@ -63,7 +63,7 @@ def parse_space_uid(space_uid: str) -> Tuple[str, str]:
     :return: 二元组 space_type, space_id
     """
     parsed_data = space_uid.split("__", 1)
-    if not parsed_data:
+    if len(parsed_data) != 2:
         raise ValueError("invalid space_uid format")
     space_type, space_id = parsed_data
     return space_type, space_id

@@ -106,7 +106,7 @@ class IndexSetViewSet(ModelViewSet):
             bkdata_auth_url = serializers.ReadOnlyField()
 
             def validate(self, attrs):
-                super().validate(attrs)
+                attrs = super().validate(attrs)
 
                 scenario_id = attrs["scenario_id"]
                 if scenario_id == Scenario.ES and not attrs.get("storage_cluster_id"):

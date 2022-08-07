@@ -61,7 +61,7 @@ class ResultTableListSerializer(serializers.Serializer):
     result_table_id = serializers.CharField(label=_("索引"), required=False, allow_blank=True)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         scenario_id = attrs["scenario_id"]
         if scenario_id in [Scenario.BKDATA, Scenario.LOG] and not attrs.get("bk_biz_id"):
@@ -79,7 +79,7 @@ class ResultTableTraceMatchSerializer(serializers.Serializer):
     storage_cluster_id = serializers.IntegerField(label=_("数据源ID"), required=False)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         scenario_id = attrs["scenario_id"]
         indices = attrs.get("indices")
@@ -95,7 +95,7 @@ class ResultTableDetailSerializer(serializers.Serializer):
     storage_cluster_id = serializers.IntegerField(label=_("数据源ID"), required=False)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         scenario_id = attrs["scenario_id"]
         if scenario_id == Scenario.ES and not attrs.get("storage_cluster_id"):
@@ -119,7 +119,7 @@ class ResultTableAdaptSerializer(serializers.Serializer):
     append_index = IndexSerializer(label=_("待追加的索引"))
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         scenario_id = attrs["scenario_id"]
         if scenario_id == Scenario.ES and not attrs.get("storage_cluster_id"):
@@ -161,7 +161,7 @@ class SearchAttrSerializer(serializers.Serializer):
     sort_list = serializers.ListField(required=False, allow_null=True, allow_empty=True)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         return attrs
 
 
@@ -170,7 +170,7 @@ class UserSearchHistorySerializer(serializers.Serializer):
     end_time = serializers.DateTimeField(required=False, format="%Y-%m-%d %H:%M:%S")
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         start_time = attrs.get("start_time")
         end_time = attrs.get("end_time")
@@ -220,7 +220,7 @@ class SearchExportSerializer(serializers.Serializer):
     export_dict = serializers.CharField(required=False, allow_blank=False, allow_null=False)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         export_dict_str = attrs["export_dict"]
         export_dict: dict = json.loads(export_dict_str)
 
@@ -250,7 +250,7 @@ class SearchAsyncExportSerializer(serializers.Serializer):
     interval = serializers.CharField(label=_("匹配规则"), required=False)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         # deal time
         start_time = attrs.get("start_time")

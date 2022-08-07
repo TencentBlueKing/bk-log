@@ -65,17 +65,10 @@ class TraceSearchAttrSerializer(serializers.Serializer):
     # 支持用户自定义排序，后续优化再考虑加入
     # sort_list = serializers.ListField(required=False, allow_null=True, allow_empty=True)
 
-    def validate(self, attrs):
-        super().validate(attrs)
-        return attrs
-
 
 class TraceSearchTraceIdAttrSerializer(serializers.Serializer):
     startTime = serializers.CharField(allow_null=False, allow_blank=False)
     traceID = serializers.CharField(allow_null=False, allow_blank=False)
-
-    def validate(self, attrs):
-        return attrs
 
 
 class AggsTermsSerializer(serializers.Serializer):
@@ -95,7 +88,7 @@ class AggsTermsSerializer(serializers.Serializer):
     order = serializers.DictField(required=False, default=AggsHandlers.DEFAULT_ORDER)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         # 查询全量数据
         if attrs["time_dimension"] == -1:
@@ -121,7 +114,7 @@ class DateHistogramSerializer(TraceSearchAttrSerializer):
         metric_field = serializers.CharField(required=False)
 
         def validate(self, attrs):
-            super().validate(attrs)
+            attrs = super().validate(attrs)
 
             metric_type = attrs.get("metric_type")
             metric_field = attrs.get("metric_field")
