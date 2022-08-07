@@ -136,7 +136,14 @@ class FavoriteSearchViewSet(APIViewSet):
         }
         """
         data = self.params_valid(FavoriteSearchSerializer)
-        favorite_search = FavoriteHandlers().create(**data)
+        favorite_search = FavoriteHandlers().create(
+            space_uid=data["space_uid"],
+            index_set_id=data["index_set_id"],
+            host_scopes=data["host_scopes"],
+            addition=data["addition"],
+            keyword=data["keyword"],
+            description=data["description"],
+        )
         return Response(model_to_dict(favorite_search, fields=["id"]))
 
     def destroy(self, request, *args, **kwargs):
