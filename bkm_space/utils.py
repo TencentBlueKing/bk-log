@@ -31,7 +31,7 @@ def space_uid_to_bk_biz_id(space_uid: str, id: int = None) -> int:
     return -int(space.id)
 
 
-def bk_biz_id_to_space_uid(bk_biz_id: int) -> str:
+def bk_biz_id_to_space_uid(bk_biz_id: Union[str, int]) -> str:
     """
     业务ID 转换为 空间唯一标识
     :param bk_biz_id: CMDB 业务ID
@@ -42,10 +42,7 @@ def bk_biz_id_to_space_uid(bk_biz_id: int) -> str:
     else:
         return ""
 
-    if not bk_biz_id:
-        return ""
-
-    if bk_biz_id > 0:
+    if bk_biz_id >= 0:
         return f"{SpaceTypeEnum.BKCC.value}__{bk_biz_id}"
 
     space = api.SpaceApi.get_space_detail(id=-bk_biz_id)

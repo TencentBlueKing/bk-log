@@ -44,11 +44,11 @@ class FavoriteSearchViewSet(APIViewSet):
 
     def list(self, request, *args, **kwargs):
         """
-        @api {get} /search/favorite/?project_id=$project_id 01_检索收藏-列表
+        @api {get} /search/favorite/?space_uid=$space_uid 01_检索收藏-列表
         @apiDescription 用户收藏的检索列表
         @apiName favorite_search
         @apiGroup 21_Favorite
-        @apiParam {Int} project_id 项目id
+        @apiParam {String} space_uid 空间唯一标识
         @apiSuccessExample {json} 成功返回：
         {
             "message": "",
@@ -84,7 +84,7 @@ class FavoriteSearchViewSet(APIViewSet):
         }
         """
         data = self.params_valid(FavoriteSearchListSerializer)
-        return Response(FavoriteHandlers().favorite_search(data.get("project_id")))
+        return Response(FavoriteHandlers().favorite_search(data.get("space_uid")))
 
     def create(self, request, *args, **kwargs):
         """
@@ -93,7 +93,7 @@ class FavoriteSearchViewSet(APIViewSet):
         @apiName create_favorite_search
         @apiGroup 21_Favorite
         @apiParam {Int} index_set_id 索引集id
-        @apiParam {Int} project_id 项目id
+        @apiParam {String} space_uid 空间唯一标识
         @apiParam {Int} description 收藏描述
         @apiParam {String} keyword 搜索关键字
         @apiParam {Json} host_scopes 主机维度
@@ -103,7 +103,7 @@ class FavoriteSearchViewSet(APIViewSet):
         @apiParamExample {json} 请求参数
         {
             "index_set_id": 12312,
-            "project_id": 123,
+            "space_uid": "bkcc__2",
             "description": "收藏描述",
             "keyword": "error",
             "host_scopes": {

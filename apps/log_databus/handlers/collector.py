@@ -126,8 +126,9 @@ from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
 from apps.log_databus.handlers.kafka import KafkaConsumerHandle
 from apps.decorators import user_operation_record
-from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario, ProjectInfo
+from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario
 from apps.utils.time_handler import format_user_time_zone
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class CollectorHandler(object):
@@ -2459,8 +2460,8 @@ class CollectorHandler(object):
             path_container_config_dict[path_container_config.collector_config_id].append(path_container_config)
         for std_container_config in std_container_config_list:
             std_container_config_dict[std_container_config.parent_container_config_id].append(std_container_config)
-        project_id = BcsRule.objects.get(id=list(rule_dict.keys())[0]).bcs_project_id
-        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=project_id)
+        bcs_project_id = BcsRule.objects.get(id=list(rule_dict.keys())[0]).bcs_project_id
+        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=bcs_project_id)
         result = []
         for rule_id, collector in rule_dict.items():
             rule = {
@@ -2564,7 +2565,7 @@ class CollectorHandler(object):
         )
         new_path_cls_index_set, new_std_cls_index_set = self.create_or_update_bcs_project_index_set(
             bcs_project_id=data["project_id"],
-            project_id=ProjectInfo.get_project(biz_id=data["bk_biz_id"])["project_id"],
+            space_uid=bk_biz_id_to_space_uid(data["bk_biz_id"]),
             path_index={
                 "bk_biz_id": data["bk_biz_id"],
                 "result_table_id": path_collector_config.table_id,
@@ -2638,12 +2639,12 @@ class CollectorHandler(object):
             "stdout_conf": {"bk_data_id": std_collector_config.bk_data_id},
         }
 
-    def create_or_update_bcs_project_index_set(self, bcs_project_id, path_index, std_index, project_id):
+    def create_or_update_bcs_project_index_set(self, bcs_project_id, path_index, std_index, space_uid):
         src_index_list = LogIndexSet.objects.filter(bcs_project_id=bcs_project_id)
         if not src_index_list:
             new_path_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_path_log_{}".format(bcs_project_id),
-                project_id=project_id,
+                space_uid=space_uid,
                 storage_cluster_id=None,
                 scenario_id="log",
                 view_roles=None,
@@ -2654,7 +2655,7 @@ class CollectorHandler(object):
             )
             new_std_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_stdout_log_{}".format(bcs_project_id),
-                project_id=project_id,
+                space_uid=space_uid,
                 storage_cluster_id=None,
                 scenario_id="log",
                 view_roles=None,

@@ -32,7 +32,6 @@ from rest_framework import serializers
 
 from apps.exceptions import ValidationError
 from apps.log_search.constants import InstanceTypeEnum, TemplateType
-from apps.log_search.handlers.meta import MetaHandler
 from apps.log_search.models import ProjectInfo, Scenario, UserIndexSetConfig
 from apps.utils.local import get_local_param
 
@@ -193,19 +192,9 @@ class UserSearchHistorySerializer(serializers.Serializer):
 class SearchIndexSetScopeSerializer(serializers.Serializer):
     """
     获取索引集所属项目
-    如果用户传的是bk_biz_id，直接转成对应的project_id
     """
 
-    project_id = serializers.IntegerField(label=_("项目ID"), required=False)
-    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=False)
-
-    def validate(self, attrs):
-        if attrs.get("project_id"):
-            return attrs
-        if not attrs.get("bk_biz_id"):
-            raise ValidationError(_("请输入业务ID"))
-
-        return MetaHandler.get_project_info(attrs["bk_biz_id"])
+    space_uid = serializers.CharField(label=_("空间唯一标识"), required=True)
 
 
 class SearchUserIndexSetConfigSerializer(serializers.Serializer):
@@ -336,37 +325,20 @@ class FavoriteSearchSerializer(serializers.Serializer):
     检索收藏序列化
     """
 
-    project_id = serializers.IntegerField(label=_("项目ID"), required=False)
-    index_set_id = serializers.IntegerField(label=_("索引集ID"), required=False)
+    space_uid = serializers.CharField(label=_("空间唯一标识"), required=True)
+    index_set_id = serializers.IntegerField(label=_("索引集ID"), required=True)
     description = serializers.CharField(label=_("收藏描述"), max_length=50)
     host_scopes = serializers.DictField(default={}, required=False)
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
-    def validate(self, attrs):
-        if not attrs.get("index_set_id"):
-            raise ValidationError(_("索引集ID不能为空"))
-        if not attrs.get("project_id"):
-            raise ValidationError(_("项目id不能为空"))
-        return attrs
-
 
 class FavoriteSearchListSerializer(serializers.Serializer):
     """
     获取收藏所属项目
-    如果用户传的是bk_biz_id，直接转成对应的project_id
     """
 
-    project_id = serializers.IntegerField(label=_("项目ID"), required=False)
-    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=False)
-
-    def validate(self, attrs):
-        if attrs.get("project_id"):
-            return attrs
-        if not attrs.get("bk_biz_id"):
-            raise ValidationError(_("请输入业务ID"))
-
-        return MetaHandler.get_project_info(attrs["bk_biz_id"])
+    space_uid = serializers.CharField(label=_("空间唯一标识"), required=True)
 
 
 class BcsWebConsoleSerializer(serializers.Serializer):

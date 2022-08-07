@@ -40,10 +40,12 @@ from apps.log_search.constants import (
 )
 from apps.log_search.exceptions import MissAsyncExportException
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
-from apps.log_search.models import AsyncTask, ProjectInfo, LogIndexSet
+from apps.log_search.models import AsyncTask, LogIndexSet
 from apps.log_search.tasks.async_export import async_export
 from apps.utils.drf import DataPageNumberPagination
 from concurrent.futures import ThreadPoolExecutor
+
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class AsyncExportHandlers(object):
@@ -105,9 +107,7 @@ class AsyncExportHandlers(object):
 
     def _get_search_url(self):
         request = get_request()
-        project_id = ProjectInfo.objects.filter(bk_biz_id=self.search_dict["bk_biz_id"]).first().project_id
         search_dict = copy.deepcopy(self.search_dict)
-        search_dict["projectId"] = project_id
         if "host_scopes" in search_dict:
             search_dict["host_scopes"] = json.dumps(search_dict["host_scopes"])
 
@@ -116,6 +116,7 @@ class AsyncExportHandlers(object):
 
         if "bk_biz_id" in search_dict:
             search_dict["bizId"] = search_dict["bk_biz_id"]
+            search_dict["spaceUid"] = bk_biz_id_to_space_uid(search_dict["bk_biz_id"])
 
         url_params = urlencode(search_dict)
         # 这里是为了拼接前端检索请求
