@@ -106,13 +106,6 @@ class TestSearchFavorite(APITestCase):
         self.assertTrue(result["result"])
         self.assertEqual(len(result["data"]), 0)
 
-        query_params = {"space_uid": "bkcc__2345"}
-        response = self.client.get(url, data=query_params)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        result = json.loads(response.content)
-        self.assertTrue(result["result"])
-        self.assertEqual(result["data"], [])
-
     def test_create(self, *args, **kwargs):
         url = reverse.reverse("apps.log_search:favorite-list")
         response = self.client.post(url, data=json.dumps(CREATE_FAVORITE_DATA), content_type="application/json")
