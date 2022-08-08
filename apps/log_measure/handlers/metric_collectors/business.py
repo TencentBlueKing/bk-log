@@ -201,7 +201,7 @@ class BusinessMetricCollector(object):
             LogIndexSet.objects.values("scenario_id")
             .distinct()
             .order_by("scenario_id")
-            .annotate(count=Count("project_id", distinct=True))
+            .annotate(count=Count("space_uid", distinct=True))
         )
         for group in groups:
             if group["scenario_id"] == Scenario.LOG:
@@ -220,10 +220,10 @@ class BusinessMetricCollector(object):
     @staticmethod
     def trace_biz_usage():
         groups = (
-            LogIndexSet.objects.values("project_id")
+            LogIndexSet.objects.values("space_uid")
             .filter(is_trace_log=True)
-            .order_by("project_id")
-            .annotate(count=Count("project_id", distinct=True))
+            .order_by("space_uid")
+            .annotate(count=Count("space_uid", distinct=True))
         )
         metrics = [
             Metric(
