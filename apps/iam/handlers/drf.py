@@ -19,6 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from bkm_space.utils import space_uid_to_bk_biz_id
+
 """
 DRF 插件
 """
@@ -109,8 +111,8 @@ class BusinessActionPermission(IAMPermission):
     def has_object_permission(self, request, view, obj):
         # 先查询对象中有没有业务ID相关属性
         bk_biz_id = None
-        if hasattr(obj, "project_id"):
-            bk_biz_id = self.convert_project_id_to_biz_id(obj.project_id)
+        if hasattr(obj, "space_uid"):
+            bk_biz_id = space_uid_to_bk_biz_id(obj.space_uid)
         elif hasattr(obj, "bk_biz_id"):
             bk_biz_id = obj.bk_biz_id
         if bk_biz_id:
