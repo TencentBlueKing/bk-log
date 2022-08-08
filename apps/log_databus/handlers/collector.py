@@ -518,16 +518,17 @@ class CollectorHandler(object):
             )
             return bk_data_id
 
+        # 兼容平台账户
+        bk_username = getattr(instance, "__bkdata_username", None) or instance.get_updated_by()
+
         # 创建 BKBase
-        maintainers = {instance.updated_by, instance.created_by}
+        maintainers = {bk_username} if bk_username else {instance.updated_by, instance.created_by}
         maintainers.discard(ADMIN_REQUEST_USER)
         if not maintainers:
             raise Exception(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
 
-        # 兼容平台账户
-        bk_username = getattr(instance, "__bkdata_username", None) or instance.get_updated_by()
-
         bkdata_params = {
+            "operator": bk_username,
             "bk_username": bk_username,
             "data_scenario": BKDATA_DATA_SCENARIO,
             "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
