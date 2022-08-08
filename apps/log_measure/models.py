@@ -28,7 +28,6 @@ from apps.models import OperateRecordModel
 
 class AccessIndexSet(OperateRecordModel):
     project_id = models.IntegerField(_("项目ID"))
-    space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
     index_set_id = models.IntegerField(_("索引集ID"))
     nums = models.IntegerField(_("访问次数"))
     static_date = models.DateField(_("访问日期"), db_index=True)
@@ -36,4 +35,4 @@ class AccessIndexSet(OperateRecordModel):
     class Meta:
         verbose_name = _("索引集搜索统计")
         verbose_name_plural = _("索引集搜索统计")
-        unique_together = (("space_uid", "index_set_id", "static_date", "created_by"),)
+        unique_together = (("project_id", "index_set_id", "static_date", "created_by"),)
