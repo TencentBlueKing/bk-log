@@ -102,6 +102,7 @@ from apps.log_databus.exceptions import (
     ContainerCollectConfigValidateYamlException,
     RuleCollectorException,
     ModifyCollectorConfigException,
+    ResultTableNotExistException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
@@ -479,7 +480,7 @@ class CollectorHandler(object):
                 self.data = CollectorConfig.objects.create(**model_fields)
                 is_create = True
             else:
-                _collector_config_name = copy.deepcopy(self.data.collector_config_name)
+                _collector_config_name = self.data.collector_config_name
                 if self.data.bk_data_id and self.data.bk_data_name != bk_data_name:
                     TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
                     logger.info(
@@ -520,9 +521,9 @@ class CollectorHandler(object):
         # add user_operation_record
         operation_record = {
             "username": get_request_username(),
-            "biz_id": self.data.bk_biz_id if not is_create else self.data.bk_biz_id,
+            "biz_id": self.data.bk_biz_id,
             "record_type": UserOperationTypeEnum.COLLECTOR,
-            "record_object_id": self.data.collector_config_id if not is_create else self.data.collector_config_id,
+            "record_object_id": self.data.collector_config_id,
             "action": UserOperationActionEnum.CREATE if is_create else UserOperationActionEnum.UPDATE,
             "params": params,
         }
@@ -3446,12 +3447,12 @@ class CollectorHandler(object):
 
     def fast_create(self, params: dict) -> dict:
         params["params"]["encoding"] = params["data_encoding"]
-        _ = self.only_create_or_update_model(params)
+        self.only_create_or_update_model(params)
 
         self.create_or_update_subscription(params)
 
         params["table_id"] = build_bk_table_id(params["bk_biz_id"], params["collector_config_name_en"])
-        _ = self.create_or_update_clean_config(params)
+        self.create_or_update_clean_config(params)
 
         return {
             "collector_config_id": self.data.collector_config_id,
@@ -3474,7 +3475,7 @@ class CollectorHandler(object):
 
         with transaction.atomic():
             try:
-                _collector_config_name = copy.deepcopy(self.data.collector_config_name)
+                _collector_config_name = self.data.collector_config_name
                 if self.data.bk_data_id and self.data.bk_data_name != bk_data_name:
                     TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
                     logger.info(
@@ -3543,6 +3544,9 @@ class CollectorHandler(object):
         result_table = TransferApi.get_result_table_storage(
             {"result_table_list": self.data.table_id, "storage_type": "elasticsearch"}
         )[self.data.table_id]
+        if not result_table:
+            raise ResultTableNotExistException(ResultTableNotExistException.MESSAGE.format(self.data.table_id))
+
         default_etl_params = {
             "etl_config": self.data.etl_config,
             "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
