@@ -2090,6 +2090,16 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} collector_scenario_id 场景ID row,section,wineventlog,custom
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {String} category_id 数据分类 GlobalsConfig.category读取
+        @apiParam {String}  target_object_type 对象类型，目前固定为 HOST
+        @apiParam {String}  target_node_type 节点类型 动态：TOPO  静态：INSTANCE
+        @apiParam {Array[Dict]} target 已选目标
+        @apiParam {Array(json)}  target_nodes 采集目标
+        @apiParam {Int} target_nodes.id 服务实例id （暂时没用到）
+        @apiParam {Int} target_nodes.bk_inst_id 节点实例id (动态)
+        @apiParam {String} target_nodes.bk_obj_id 节点对象id （动态）
+        @apiParam {String} target_nodes.ip 主机实例ip （静态）
+        @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
+        @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
         @apiParam {String} etl_config 清洗类型（格式化方式）
         @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
         @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
@@ -2155,6 +2165,13 @@ class CollectorViewSet(ModelViewSet):
         @apiDescription 简易修改采集项配置
         @apiGroup 10_Collector
         @apiParam {String} collector_config_name 采集项名称
+        @apiParam {Array(json)}  target_nodes 采集目标
+        @apiParam {Int} target_nodes.id 服务实例id （暂时没用到）
+        @apiParam {Int} target_nodes.bk_inst_id 节点实例id (动态)
+        @apiParam {String} target_nodes.bk_obj_id 节点对象id （动态）
+        @apiParam {String} target_nodes.ip 主机实例ip （静态）
+        @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
+        @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
         @apiParam {String} etl_config 清洗类型（格式化方式）
         @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
         @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
