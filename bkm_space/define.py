@@ -28,9 +28,12 @@ class Space:
     status: str
     space_code: Union[None, str]
     space_uid: str
+    type_name: Union[None, str]
 
     @classmethod
     def from_dict(cls, data):
         init_fields = {f.name for f in fields(cls) if f.init}
-        filtered_data = {k: v for k, v in data.items() if k in init_fields}
-        return cls(**filtered_data)
+        filtered_data = {k: data.pop(k, None) for k in init_fields}
+        instance = cls(**filtered_data)
+        setattr(instance, "extend", data)
+        return instance

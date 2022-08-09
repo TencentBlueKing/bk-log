@@ -138,9 +138,7 @@ class Permission(object):
 
                     related_resources.append(
                         RelatedResourceType(
-                            system_id=related_resource.system_id,
-                            type=related_resource.id,
-                            instances=instances,
+                            system_id=related_resource.system_id, type=related_resource.id, instances=instances,
                         )
                     )
 
@@ -255,9 +253,7 @@ class Permission(object):
         if not result and raise_exception:
             apply_data, apply_url = self.get_apply_data([action], resources)
             raise PermissionDeniedError(
-                action_name=action.name,
-                apply_url=apply_url,
-                permission=apply_data,
+                action_name=action.name, apply_url=apply_url, permission=apply_data,
             )
 
         return result
@@ -314,9 +310,9 @@ class Permission(object):
         """
         if business_list is None:
             # 获取业务列表
-            from apps.log_search.models import ProjectInfo
+            from apps.log_search.models import Space
 
-            business_list = ProjectInfo.objects.all()
+            business_list = Space.objects.all()
         # 跳过权限检验
         if settings.IGNORE_IAM_PERMISSION:
             return business_list

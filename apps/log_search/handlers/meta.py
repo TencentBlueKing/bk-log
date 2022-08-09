@@ -46,6 +46,7 @@ class MetaHandler(APIModel):
                 {
                     "id": space.id,
                     "space_type_id": space.space_type_id,
+                    "space_type_name": space.space_type_name,
                     "space_id": space.space_id,
                     "space_name": space.space_name,
                     "space_uid": space.space_uid,

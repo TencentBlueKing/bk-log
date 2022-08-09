@@ -68,6 +68,7 @@ from apps.log_search.constants import (
     InnerTag,
     CustomTypeEnum,
 )
+from bkm_space.api import AbstractSpaceApi
 from bkm_space.utils import space_uid_to_bk_biz_id
 
 
@@ -403,8 +404,10 @@ class LogIndexSet(SoftDeleteModel):
         bizs = {}
         if self.scenario_id == Scenario.BKDATA:
             if project_info is True:
-                bizs = array_group(index_set_data, "bk_biz_id", "index_id").keys()
-                bizs = array_hash(ProjectInfo.get_bizs(bizs), "bk_biz_id", "bk_biz_name")
+                bizs = {
+                    space.bk_biz_id: space.space_name
+                    for space in Space.objects.filter(bk_biz_id__in=list({data.bk_biz_id for data in index_set_data}))
+                }
         source_name = self.source_name
 
         return [
@@ -918,3 +921,22 @@ class Space(SoftDeleteModel):
     class Meta:
         verbose_name = _("空间信息")
         verbose_name_plural = _("空间信息")
+
+
+class SpaceApi(AbstractSpaceApi):
+    """
+    空间的API实现
+    """
+
+    @classmethod
+    def get_space_detail(cls, space_uid: str = "", id: int = 0):
+        space = None
+        if space_uid:
+            space = Space.objects.filter(space_uid=space_uid).first()
+        if not space and id:
+            space = Space.objects.filter(id=id).first()
+        return space
+
+    @classmethod
+    def list_spaces(cls):
+        return list(Space.objects.all())

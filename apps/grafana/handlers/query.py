@@ -37,7 +37,7 @@ from apps.log_search.exceptions import BaseSearchIndexSetDataDoseNotExists
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.aggs_handlers import AggsViewAdapter
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
-from apps.log_search.models import LogIndexSet, ProjectInfo, Scenario
+from apps.log_search.models import LogIndexSet, Scenario
 from bk_dataview.grafana import client
 from bkm_space.utils import bk_biz_id_to_space_uid
 

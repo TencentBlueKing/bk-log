@@ -138,7 +138,7 @@ class SearchViewSet(APIViewSet):
         }
         """
         data = self.params_valid(SearchIndexSetScopeSerializer)
-        return Response(IndexSetHandler().get_user_index_set(data.get("space_uid")))
+        return Response(IndexSetHandler().get_user_index_set(data["space_uid"]))
 
     @detail_route(methods=["GET"], url_path="bizs")
     def bizs(self, request, *args, **kwargs):
