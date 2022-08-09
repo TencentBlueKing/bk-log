@@ -854,7 +854,8 @@ def subscription_statistic(params):
 @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollector(TestCase):
     @patch(
-        "apps.api.TransferApi.get_data_id", get_data_id,
+        "apps.api.TransferApi.get_data_id",
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -897,7 +898,8 @@ class TestCollector(TestCase):
         self._test_destroy(result["collector_config_id"])
 
     @patch(
-        "apps.api.TransferApi.get_data_id", get_data_id,
+        "apps.api.TransferApi.get_data_id",
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -1174,7 +1176,8 @@ class TestCollector(TestCase):
 
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch(
-        "apps.api.TransferApi.get_data_id", get_data_id,
+        "apps.api.TransferApi.get_data_id",
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
