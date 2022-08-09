@@ -103,6 +103,7 @@ from apps.log_databus.exceptions import (
     RuleCollectorException,
     ModifyCollectorConfigException,
     ResultTableNotExistException,
+    PublicESClusterNotExistException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
@@ -770,7 +771,8 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -1974,7 +1976,8 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id,
+                ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2997,7 +3000,9 @@ class CollectorHandler(object):
             raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
         for collector in collectors:
             self.deal_self_call(
-                collector_config_id=collector.collector_config_id, collector=collector, func=self.destroy,
+                collector_config_id=collector.collector_config_id,
+                collector=collector,
+                func=self.destroy,
             )
         bcs_rule.delete()
         return {"rule_id": rule_id}
@@ -3448,13 +3453,19 @@ class CollectorHandler(object):
 
     def fast_create(self, params: dict) -> dict:
         params["params"]["encoding"] = params["data_encoding"]
+        if not params.get("storage_cluster_id"):
+            storage_cluster_id = get_random_public_cluster_id()
+            if not storage_cluster_id:
+                raise PublicESClusterNotExistException()
+            params["storage_cluster_id"] = storage_cluster_id
+
         self.only_create_or_update_model(params)
 
         self.create_or_update_subscription(params)
 
-        params["table_id"] = build_bk_table_id(params["bk_biz_id"], params["collector_config_name_en"])
+        params["table_id"] = params["collector_config_name_en"]
         self.create_or_update_clean_config(params)
-
+        #
         return {
             "collector_config_id": self.data.collector_config_id,
             "bk_data_id": self.data.bk_data_id,
@@ -3538,7 +3549,7 @@ class CollectorHandler(object):
                 # 创建数据平台data_id
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
-        params["table_id"] = build_bk_table_id(self.data.bk_biz_id, self.data.collector_config_name_en)
+        params["table_id"] = params["collector_config_name_en"]
 
         from apps.log_databus.handlers.etl import EtlHandler
 
@@ -3587,11 +3598,13 @@ class CollectorHandler(object):
         return etl_handler.update_or_create(**params)
 
 
-def build_bk_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
-    """根据bk_biz_id和collector_config_name_en构建table_id"""
-    bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+def get_random_public_cluster_id() -> int:
+    clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
+    for cluster in clusters:
+        if cluster["cluster_config"]["registered_system"] == "_default":
+            return cluster["cluster_config"]["cluster_id"]
 
-    return bk_data_name
+    return 0
 
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:

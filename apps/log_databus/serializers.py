@@ -1203,7 +1203,7 @@ class FastCollectorCreateSerializer(serializers.Serializer):
     etl_config = serializers.CharField(label=_("清洗类型"), required=False, default=EtlConfig.BK_LOG_TEXT)
     etl_params = CollectorEtlParamsSerializer(required=False)
     fields = serializers.ListField(child=CollectorEtlFieldsSerializer(), label=_("字段配置"), required=False)
-    storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=True)
+    storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=False)
     retention = serializers.IntegerField(label=_("有效时间"), required=False, default=settings.ES_PUBLIC_STORAGE_DURATION)
     allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=False, default=0)
     storage_replies = serializers.IntegerField(
