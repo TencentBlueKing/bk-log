@@ -36,7 +36,6 @@ from bkm_space.serializers import SpaceUIDField
 class TraceIndexSetScopeSerializer(serializers.Serializer):
     """
     获取索引集所属项目
-    如果用户传的是bk_biz_id，直接转成对应的project_id, 新项目要求bk_biz_id
     """
 
     space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)

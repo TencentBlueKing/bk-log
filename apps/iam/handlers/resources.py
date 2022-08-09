@@ -29,6 +29,7 @@ from django.utils.translation import ugettext_lazy as _lazy
 
 from apps.api import TransferApi
 from apps.iam.exceptions import ResourceNotExistError
+from bkm_space.utils import space_uid_to_bk_biz_id
 from iam import Resource
 
 
@@ -180,14 +181,14 @@ class Indices(ResourceMeta):
 
         try:
             index_set = LogIndexSet.objects.get(pk=instance_id)
-            project = ProjectInfo.objects.get(pk=index_set.project_id)
         except (LogIndexSet.DoesNotExist, ProjectInfo.DoesNotExist):
             return resource
+        bk_biz_id = space_uid_to_bk_biz_id(index_set.space_uid)
         resource.attribute = {
             "id": str(instance_id),
             "name": index_set.index_set_name,
-            "bk_biz_id": project.bk_biz_id,
-            "_bk_iam_path_": "/{},{}/".format(Business.id, project.bk_biz_id),
+            "bk_biz_id": bk_biz_id,
+            "_bk_iam_path_": "/{},{}/".format(Business.id, bk_biz_id),
         }
         return resource
 

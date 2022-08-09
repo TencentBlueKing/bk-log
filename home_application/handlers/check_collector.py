@@ -97,6 +97,9 @@ class CollectorCheckHandler(object):
             else:
                 init_check_report.add_error(f"暂不支持该target_node_type: {target_node_type}")
                 self.story_report.append(init_check_report)
+        if not self.story_report:
+            init_check_report.add_info("初始化检查成功")
+            self.story_report.append(init_check_report)
 
     def run(self):
         self.pre_run()
