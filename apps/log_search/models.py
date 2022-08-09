@@ -879,3 +879,42 @@ class BizProperty(models.Model):
             }
             for biz_property_id in biz_properties_dict
         ]
+
+
+class SpaceType(SoftDeleteModel):
+    """
+    空间类型
+    """
+
+    type_id = models.CharField(_("空间类型英文名称"), max_length=64, primary_key=True)
+    type_name = models.CharField(_("空间类型中文名称"), max_length=64, unique=True)
+
+    properties = models.JSONField(_("额外属性"), default=dict)
+
+    class Meta:
+        verbose_name = _("空间类型")
+        verbose_name_plural = _("空间类型")
+
+
+class Space(SoftDeleteModel):
+    """
+    空间信息
+    """
+
+    id = models.AutoField(_("空间自增ID"), primary_key=True)
+
+    space_uid = models.CharField(_("空间唯一标识"), max_length=256, unique=True)
+    bk_biz_id = models.IntegerField(_("业务ID"), unique=True)
+
+    space_type_id = models.CharField(_("空间类型英文名称"), max_length=64)
+    space_type_name = models.CharField(_("空间类型中文名称"), max_length=64)
+
+    space_id = models.CharField(_("空间 ID"), max_length=128)
+    space_name = models.CharField(_("空间中文名称"), max_length=128)
+    space_code = models.CharField(_("空间英文名称"), max_length=64, blank=True, null=True)
+
+    properties = models.JSONField(_("额外属性"), default=dict)
+
+    class Meta:
+        verbose_name = _("空间信息")
+        verbose_name_plural = _("空间信息")

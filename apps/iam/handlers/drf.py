@@ -30,7 +30,6 @@ from typing import List, Callable  # noqa
 from django.conf import settings  # noqa
 from rest_framework import permissions  # noqa
 
-from apps.log_search.models import ProjectInfo  # noqa
 from iam import Resource  # noqa
 from . import Permission  # noqa
 from .actions import ActionMeta, ActionEnum  # noqa
@@ -57,9 +56,7 @@ class IAMPermission(permissions.BasePermission):
         client = Permission()
         for action in self.actions:
             client.is_allowed(
-                action=action,
-                resources=self.resources,
-                raise_exception=True,
+                action=action, resources=self.resources, raise_exception=True,
             )
         return True
 
@@ -82,23 +79,8 @@ class BusinessActionPermission(IAMPermission):
         super(BusinessActionPermission, self).__init__(actions)
 
     @classmethod
-    def convert_project_id_to_biz_id(cls, project_id):
-        if not project_id:
-            return None
-        try:
-            project = ProjectInfo.objects.get(project_id=project_id)
-            bk_biz_id = project.bk_biz_id
-        except ProjectInfo.DoesNotExist:
-            bk_biz_id = None
-        return bk_biz_id
-
-    @classmethod
     def fetch_biz_id_by_request(cls, request):
         bk_biz_id = request.data.get("bk_biz_id", 0) or request.query_params.get("bk_biz_id", 0)
-        project_id = request.data.get("project_id") or request.query_params.get("project_id")
-
-        if not bk_biz_id:
-            bk_biz_id = cls.convert_project_id_to_biz_id(project_id)
         return bk_biz_id
 
     def has_permission(self, request, view):
@@ -163,10 +145,7 @@ class InstanceActionPermission(IAMPermission):
 
 class InstanceActionForDataPermission(InstanceActionPermission):
     def __init__(
-        self,
-        iam_instance_id_key,
-        *args,
-        get_instance_id: Callable = lambda _id: _id,
+        self, iam_instance_id_key, *args, get_instance_id: Callable = lambda _id: _id,
     ):
         self.iam_instance_id_key = iam_instance_id_key
         self.get_instance_id = get_instance_id

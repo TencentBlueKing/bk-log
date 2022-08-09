@@ -28,32 +28,31 @@ from apps.feature_toggle.plugins.constants import USER_GUIDE_CONFIG
 from apps.iam import Permission, ActionEnum
 from apps.log_search.constants import UserMetaConfType
 from apps.utils import APIModel
-from apps.api import BKLoginApi, CmsiApi, TransferApi
-from apps.log_search.models import ProjectInfo, UserMetaConf
+from apps.api import BKLoginApi, CmsiApi
+from apps.log_search.models import ProjectInfo, UserMetaConf, Space
 from apps.utils.local import get_request_username
 from apps.log_search import exceptions
 from apps.feature_toggle.handlers import toggle
-from bkm_space.utils import space_uid_to_bk_biz_id
 
 
 class MetaHandler(APIModel):
     @classmethod
     def get_user_spaces(cls, username):
-        spaces = TransferApi.list_spaces()
+        spaces = Space.objects.all()
 
         result = []
         for space in spaces:
             result.append(
                 {
-                    "id": space["id"],
-                    "space_type_id": space["space_type_id"],
-                    "space_id": space["space_id"],
-                    "space_name": space["space_name"],
-                    "status": space["status"],
-                    "space_uid": space["space_uid"],
-                    "space_code": space["space_code"] or space["space_id"],
-                    "bk_biz_id": space_uid_to_bk_biz_id(space_uid=space["space_uid"], id=space["id"]),
-                    "time_zone": "Asia/Shanghai",  # TODO: 时区逻辑完善
+                    "id": space.id,
+                    "space_type_id": space.space_type_id,
+                    "space_id": space.space_id,
+                    "space_name": space.space_name,
+                    "space_uid": space.space_uid,
+                    "space_code": space.space_code,
+                    "bk_biz_id": space.bk_biz_id,
+                    "time_zone": space.properties.get("time_zone", "Asia/Shanghai"),
+                    "is_sticky": False,  # TODO: 完成置顶检查逻辑
                     "permission": {ActionEnum.VIEW_BUSINESS.id: True},  # TODO: 完成权限校验
                 }
             )
