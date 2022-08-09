@@ -29,7 +29,7 @@ from apps.log_databus.exceptions import (
 from apps.log_databus.models import CleanTemplate, BKDataClean, CollectorConfig
 from apps.log_databus.tasks.bkdata import sync_clean
 from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
-from apps.log_search.models import ProjectInfo
+from apps.log_search.models import Space
 from apps.models import model_to_dict
 from apps.utils.log import logger
 
@@ -103,12 +103,10 @@ class CleanTemplateHandler(object):
             model_fields["visible_bk_biz_id"] = params["visible_bk_biz_id"]
 
         if self._check_clean_template_exist(name=model_fields["name"], bk_biz_id=model_fields["bk_biz_id"]):
-            biz = ProjectInfo.get_biz(model_fields["bk_biz_id"])
+            space = Space.objects.get(bk_biz_id=model_fields["bk_biz_id"])
             raise CleanTemplateRepeatException(
                 CleanTemplateRepeatException.MESSAGE.format(
-                    bk_biz="[{bk_biz_id}]{bk_biz_name}".format(
-                        bk_biz_id=biz["bk_biz_id"], bk_biz_name=biz["bk_biz_name"]
-                    ),
+                    bk_biz="[{bk_biz_id}]{bk_biz_name}".format(bk_biz_id=space.bk_biz_id, bk_biz_name=space.space_name),
                     name=model_fields["name"],
                 )
             )
@@ -119,12 +117,10 @@ class CleanTemplateHandler(object):
 
         # 判断是否可以编辑模板
         if not self.can_update_or_destroy(bk_biz_id=params["bk_biz_id"]):
-            biz = ProjectInfo.get_biz(model_fields["bk_biz_id"])
+            space = Space.objects.get(bk_biz_id=model_fields["bk_biz_id"])
             raise CleanTemplateVisibleException(
                 CleanTemplateVisibleException.MESSAGE.format(
-                    bk_biz="[{bk_biz_id}]{bk_biz_name}".format(
-                        bk_biz_id=biz["bk_biz_id"], bk_biz_name=biz["bk_biz_name"]
-                    ),
+                    bk_biz="[{bk_biz_id}]{bk_biz_name}".format(bk_biz_id=space.bk_biz_id, bk_biz_name=space.space_name),
                     name=self.data.name,
                 )
             )
@@ -138,12 +134,10 @@ class CleanTemplateHandler(object):
     def destroy(self, bk_biz_id):
         clean_template_id = self.data.clean_template_id
         if not self.can_update_or_destroy(bk_biz_id=bk_biz_id):
-            biz = ProjectInfo.get_biz(bk_biz_id)
+            space = Space.objects.get(bk_biz_id=bk_biz_id)
             raise CleanTemplateVisibleException(
                 CleanTemplateVisibleException.MESSAGE.format(
-                    bk_biz="[{bk_biz_id}]{bk_biz_name}".format(
-                        bk_biz_id=biz["bk_biz_id"], bk_biz_name=biz["bk_biz_name"]
-                    ),
+                    bk_biz="[{bk_biz_id}]{bk_biz_name}".format(bk_biz_id=space.bk_biz_id, bk_biz_name=space.space_name),
                     name=self.data.name,
                 )
             )

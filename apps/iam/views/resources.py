@@ -29,7 +29,7 @@ from apps.api import TransferApi
 from apps.iam import Permission
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE, REGISTERED_SYSTEM_DEFAULT
 from apps.log_databus.models import CollectorConfig
-from apps.log_search.models import LogIndexSet, ProjectInfo
+from apps.log_search.models import LogIndexSet, Space
 from iam import PathEqDjangoQuerySetConverter, make_expression, ObjectSet, DjangoQuerySetConverter
 from iam.eval.constants import KEYWORD_BK_IAM_PATH_FIELD_SUFFIX, OP
 from iam.resource.provider import ResourceProvider, ListResult
@@ -296,18 +296,8 @@ class IndicesResourceProvider(BaseResourceProvider):
         获取业务ID到项目ID的映射
         """
         mapping = defaultdict(list)
-        for project in ProjectInfo.objects.exclude(bk_biz_id__isnull=True).values("project_id", "bk_biz_id"):
-            mapping[str(project["bk_biz_id"])].append(project["project_id"])
-        return mapping
-
-    @classmethod
-    def get_project_id_mapping(cls) -> Dict[str, str]:
-        """
-        获取项目ID到业务ID的映射
-        """
-        mapping = defaultdict(str)
-        for project in ProjectInfo.objects.exclude(bk_biz_id__isnull=True).values("project_id", "bk_biz_id"):
-            mapping[str(project["project_id"])] = str(project["bk_biz_id"])
+        for space in Space.objects.values("space_uid", "bk_biz_id"):
+            mapping[str(space["bk_biz_id"])].append(space["space_uid"])
         return mapping
 
     def list_instance(self, filter, page, **options):
@@ -321,7 +311,7 @@ class IndicesResourceProvider(BaseResourceProvider):
         elif filter.parent:
             parent_id = filter.parent["id"]
             if parent_id:
-                queryset = LogIndexSet.objects.filter(project_id__in=biz_id_mapping[str(parent_id)])
+                queryset = LogIndexSet.objects.filter(space_uid__in=biz_id_mapping[str(parent_id)])
         elif filter.search and filter.resource_type_chain:
             # 返回结果需要带上资源拓扑路径信息
             with_path = True
@@ -340,7 +330,8 @@ class IndicesResourceProvider(BaseResourceProvider):
                 for item in queryset[page.slice_from : page.slice_to]
             ]
         else:
-            project_id_mapping = self.get_project_id_mapping()
+            spaces = Space.objects.values("space_uid", "space_id", "space_name")
+            spaces_mapping = {space["space_uid"]: space for space in spaces}
             results = [
                 {
                     "id": str(item.pk),
@@ -349,8 +340,8 @@ class IndicesResourceProvider(BaseResourceProvider):
                         [
                             {
                                 "type": "biz",
-                                "id": project_id_mapping[str(item.project_id)],
-                                "display_name": project_id_mapping[str(item.project_id)],
+                                "id": spaces_mapping[item.space_uid]["space_id"],
+                                "display_name": spaces_mapping[item.space_uid]["space_name"],
                             }
                         ]
                     ],
@@ -380,10 +371,10 @@ class IndicesResourceProvider(BaseResourceProvider):
         key_mapping = {
             "indices.id": "pk",
             "indices.owner": "created_by",
-            "indices._bk_iam_path_": "project_id",
+            "indices._bk_iam_path_": "space_uid",
         }
         converter = self.PathInDjangoQuerySetConverter(
-            key_mapping, {"project_id": lambda value: biz_id_mapping[value[1:-1].split(",")[1]]}
+            key_mapping, {"space_uid": lambda value: biz_id_mapping[value[1:-1].split(",")[1]]}
         )
         filters = converter.convert(expression)
         queryset = LogIndexSet.objects.filter(filters)
@@ -400,8 +391,8 @@ class IndicesResourceProvider(BaseResourceProvider):
             queryset = LogIndexSet.objects.filter(index_set_name__icontains=filter.keyword)
         else:
             parent_id = filter.parent.get("id")
-            project_id = biz_id_mapping[parent_id]
-            queryset = LogIndexSet.objects.filter(project_id__in=project_id, index_set_name__icontains=filter.keyword)
+            space_uid = biz_id_mapping[parent_id]
+            queryset = LogIndexSet.objects.filter(space_uid__in=space_uid, index_set_name__icontains=filter.keyword)
 
         return ListResult(
             results=[

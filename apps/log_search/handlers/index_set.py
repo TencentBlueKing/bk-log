@@ -47,7 +47,7 @@ from apps.log_search.exceptions import (
     IndexSetSourceException,
     BaseSearchParamNotExistException,
 )
-from apps.log_search.models import ProjectInfo, LogIndexSet, LogIndexSetData, Scenario, UserIndexSetConfig
+from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario, UserIndexSetConfig, Space
 from apps.utils import APIModel
 from apps.utils.local import get_request_username, get_request_app_code
 from apps.log_search.constants import GlobalCategoriesEnum, EsHealthStatus, COMMON_LOG_INDEX_RE, BKDATA_INDEX_RE
@@ -424,15 +424,19 @@ class IndexSetHandler(APIModel):
             return []
 
         # 返回业务列表
-        biz_ids = (
+        space_uids = (
             LogIndexSetData.objects.filter(index_set_id=self.index_set_id)
             .exclude(bk_biz_id=None)
-            .values_list("bk_biz_id", flat=True)
+            .values_list("space_uid", flat=True)
         )
 
-        if not biz_ids:
+        if not space_uids:
             return []
-        return ProjectInfo.get_bizs(biz_ids)
+
+        return [
+            {"bk_biz_id": space.bk_biz_id, "bk_biz_name": space.space_name}
+            for space in Space.objects.filter(space_uid__in=space_uids)
+        ]
 
     def indices(self):
         index_set_obj: LogIndexSet = self._get_data()
