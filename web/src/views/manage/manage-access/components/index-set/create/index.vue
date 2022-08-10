@@ -221,7 +221,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId', 'bkBizId', 'showRouterLeaveTip']),
+    ...mapState(['spaceUid', 'bkBizId', 'showRouterLeaveTip']),
     ...mapState('collect', ['curIndexSet']),
     ...mapGetters('globals', ['globalsData']),
     collectProject() {
@@ -412,8 +412,7 @@ export default {
         this.submitLoading = true;
         const requestBody = Object.assign({
           view_roles: [], // 兼容后端历史遗留代码
-          project_id: this.projectId,
-          bk_biz_id: this.bkBizId,
+          space_uid: this.spaceUid,
         }, this.formData);
         if (this.isShowTrace) {
           requestBody.is_trace_log = true;

@@ -44,12 +44,15 @@ export default {
     };
   },
   computed: {
+    spaceUid() {
+      return this.$store.state.spaceUid;
+    },
     bkBizId() {
       return this.$store.state.bkBizId;
     },
   },
   watch: {
-    '$route.query.projectId': {
+    '$route.query.spaceUid': {
       handler(val) {
         val && this.bkBizId && this.handleBizChange();
       },

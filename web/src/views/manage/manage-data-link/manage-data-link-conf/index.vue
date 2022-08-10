@@ -111,8 +111,8 @@ export default {
   computed: {
     projectList() {
       return [
-        { bk_biz_id: '0', project_name: this.$t('全部业务') },
-        ...this.$store.state.myProjectList,
+        { bk_biz_id: '0', space_name: this.$t('全部业务') },
+        ...this.$store.state.mySpaceList,
       ];
     },
   },
@@ -161,7 +161,7 @@ export default {
       }
     },
     filterProjectName(row) {
-      return this.projectList.find(item => item.bk_biz_id === row.bk_biz_id)?.project_name;
+      return this.projectList.find(item => item.bk_biz_id === row.bk_biz_id)?.space_name;
     },
     filterLinkInformation(row) {
       const kafkaName = this.selectData.kafka.find((item) => {

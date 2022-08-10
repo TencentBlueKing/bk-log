@@ -152,7 +152,7 @@ export default {
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
     }),
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
@@ -193,7 +193,7 @@ export default {
       const query = JSON.parse(JSON.stringify(this.searchParams));
       query.page = this.pagination.current;
       query.pagesize = this.pagination.limit;
-      query.project_id = this.projectId;
+      query.space_uid = this.spaceUid;
       this.$http.request('/indexSet/list', {
         query,
       }).then((res) => {
@@ -259,7 +259,7 @@ export default {
       this.$router.push({
         name: this.$route.name.replace('list', 'create'),
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
     },
@@ -291,7 +291,7 @@ export default {
             indexSetId: row.index_set_id,
           },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: window.localStorage.getItem('space_uid'),
           },
         });
       } else if (type === 'search') { // 检索
@@ -301,7 +301,7 @@ export default {
             indexId: row.index_set_id ? row.index_set_id : row.bkdata_index_set_ids[0],
           },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: window.localStorage.getItem('space_uid'),
           },
         });
       }  else if (type === 'edit') { // 编辑索引集
@@ -312,7 +312,7 @@ export default {
             indexSetId: row.index_set_id,
           },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: window.localStorage.getItem('space_uid'),
           },
         });
       } else if (type === 'delete') { // 删除索引集

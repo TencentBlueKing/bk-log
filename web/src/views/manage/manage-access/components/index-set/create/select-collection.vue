@@ -111,7 +111,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId', 'bkBizId']),
+    ...mapState(['spaceUid', 'bkBizId']),
   },
   mounted() {
     this.fetchCollectionList();

@@ -422,7 +422,6 @@ export default {
   },
   computed: {
     ...mapGetters({
-      projectId: 'projectId',
       bkBizId: 'bkBizId',
       globalsData: 'globals/globalsData',
     }),

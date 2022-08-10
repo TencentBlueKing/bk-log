@@ -491,7 +491,7 @@ export default {
   computed: {
     ...mapState({
       bkBizId: state => state.bkBizId,
-      projectId: state => state.projectId,
+      spaceUid: state => state.spaceUid,
       currentMenu: state => state.currentMenu,
       storedIndexID: state => state.indexId, // 路由切换时缓存当前选择的索引
     }),
@@ -537,7 +537,7 @@ export default {
       this.$store.commit('updateIndexId', val);
       val && this.requestSearchHistory(val);
     },
-    projectId: {
+    spaceUid: {
       async handler() {
         this.indexId = '';
         await this.requestFavoriteList();
@@ -665,7 +665,7 @@ export default {
     },
     fetchPageData() {
       // 有projectID且有业务权限时 才去请求索引集列表
-      if (!this.authMainPageInfo && this.projectId) {
+      if (!this.authMainPageInfo && this.spaceUid) {
         this.requestIndexSetList();
       } else {
         this.isFirstLoad = false;
@@ -674,7 +674,7 @@ export default {
     updateIndexSetList() {
       this.$http.request('retrieve/getIndexSetList', {
         query: {
-          project_id: this.projectId,
+          space_uid: this.spaceUid,
         },
       }).then((res) => {
         if (res.data.length) { // 有索引集
@@ -703,12 +703,12 @@ export default {
     },
     // 初始化索引集
     requestIndexSetList() {
-      const projectId = (this.$route.query.projectId && this.isFirstLoad)
-        ? this.$route.query.projectId : this.projectId;
+      const spaceUid = (this.$route.query.spaceUid && this.isFirstLoad)
+        ? this.$route.query.spaceUid : this.spaceUid;
       this.basicLoading = true;
       this.$http.request('retrieve/getIndexSetList', {
         query: {
-          project_id: projectId,
+          space_uid: spaceUid,
         },
       }).then((res) => {
         if (res.data.length) { // 有索引集
@@ -756,7 +756,7 @@ export default {
                 },
                 query: {
                   bizId: window.localStorage.getItem('bk_biz_id'),
-                  projectId: window.localStorage.getItem('project_id'),
+                  spaceUid: window.localStorage.getItem('space_uid'),
                 },
               });
             })
@@ -791,7 +791,7 @@ export default {
               this.retrieveLog();
             } else {
               const queryObj = {
-                projectId: window.localStorage.getItem('project_id'),
+                spaceUid: window.localStorage.getItem('space_uid'),
                 bizId: window.localStorage.getItem('bk_biz_id'),
               };
               if (this.$route.query.from) {
@@ -811,7 +811,7 @@ export default {
           this.isRetrieveHome = false;
           this.isNoIndexSet = true;
           const queryObj = {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: window.localStorage.getItem('space_uid'),
             bizId: window.localStorage.getItem('bk_biz_id'),
           };
           if (this.$route.query.from) {
@@ -967,9 +967,9 @@ export default {
     },
     // 收藏记录，和业务相关
     async requestFavoriteList(isAddLater = false) {
-      if (!!this.authMainPageInfo || !this.projectId) return; // 无业务权限 则不请求收藏
+      if (!!this.authMainPageInfo || !this.spaceUid) return; // 无业务权限 则不请求收藏
       try {
-        const query = { project_id: this.projectId };
+        const query = { space_uid: this.spaceUid };
         const res = await this.$http.request('retrieve/getRetrieveFavorite', { query });
         this.favoriteList = res.data;
         // 新增后需标记最新的高亮显示
@@ -1029,7 +1029,7 @@ export default {
       this.$http.request('retrieve/postRetrieveFavorite', {
         data: {
           index_set_id: this.indexId,
-          project_id: this.projectId,
+          space_uid: this.spaceUid,
           description,
           keyword: this.retrieveParams.keyword.trim(),
           host_scopes: this.retrieveParams.host_scopes,
@@ -1192,7 +1192,7 @@ export default {
       // 进入检索详情页
       this.isRetrieveHome = false;
       const queryObj = {
-        projectId: window.localStorage.getItem('project_id'),
+        spaceUid: window.localStorage.getItem('space_uid'),
         bizId: window.localStorage.getItem('bk_biz_id'),
         ...queryParamsStr,
       };

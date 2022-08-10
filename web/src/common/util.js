@@ -631,3 +631,36 @@ export const base64Decode = (str) => {
     .map(c => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
     .join(''));
 };
+
+export class Storage {
+  /** 过期时长 */
+  express = null;
+  constructor(express) {
+    this.express = express;
+  }
+  /** 设置缓存 */
+  set(key, value, express = this.express) {
+    const data = {
+      value,
+      updateTime: Date.now(),
+      express,
+    };
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+  /** 获取缓存 */
+  get(key) {
+    const dataStr = localStorage.getItem(key);
+    if (!dataStr) return null;
+    const data = JSON.parse(dataStr);
+    const nowTime = Date.now();
+    if (data.express && data.express < (nowTime - data.updateTime)) {
+      this.remove(key);
+      return null;
+    }
+    return data.value;
+  }
+  /** 移除缓存 */
+  remove(key) {
+    localStorage.removeItem(key);
+  }
+}
