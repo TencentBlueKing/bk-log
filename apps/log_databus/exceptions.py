@@ -204,6 +204,11 @@ class BKBaseStorageSyncFailed(BaseCollectorConfigException):
     MESSAGE = _("集群同步到数据平台失败")
 
 
+class PublicESClusterNotExistException(BaseCollectorConfigException):
+    ERROR_CODE = "212"
+    MESSAGE = _("不存在公共ES集群")
+
+
 class EtlNotSupportedException(BaseCollectorConfigException):
     ERROR_CODE = "301"
     MESSAGE = _("暫不支持{separator_node_action}类清洗")
