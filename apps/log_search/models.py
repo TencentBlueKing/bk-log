@@ -68,6 +68,7 @@ from apps.log_search.constants import (
     InnerTag,
     CustomTypeEnum,
 )
+from bkm_space.api import AbstractSpaceApi
 from bkm_space.utils import space_uid_to_bk_biz_id
 
 
@@ -403,8 +404,10 @@ class LogIndexSet(SoftDeleteModel):
         bizs = {}
         if self.scenario_id == Scenario.BKDATA:
             if project_info is True:
-                bizs = array_group(index_set_data, "bk_biz_id", "index_id").keys()
-                bizs = array_hash(ProjectInfo.get_bizs(bizs), "bk_biz_id", "bk_biz_name")
+                bizs = {
+                    space.bk_biz_id: space.space_name
+                    for space in Space.objects.filter(bk_biz_id__in=list({data.bk_biz_id for data in index_set_data}))
+                }
         source_name = self.source_name
 
         return [
@@ -879,3 +882,61 @@ class BizProperty(models.Model):
             }
             for biz_property_id in biz_properties_dict
         ]
+
+
+class SpaceType(SoftDeleteModel):
+    """
+    空间类型
+    """
+
+    type_id = models.CharField(_("空间类型英文名称"), max_length=64, primary_key=True)
+    type_name = models.CharField(_("空间类型中文名称"), max_length=64, unique=True)
+
+    properties = models.JSONField(_("额外属性"), default=dict)
+
+    class Meta:
+        verbose_name = _("空间类型")
+        verbose_name_plural = _("空间类型")
+
+
+class Space(SoftDeleteModel):
+    """
+    空间信息
+    """
+
+    id = models.AutoField(_("空间自增ID"), primary_key=True)
+
+    space_uid = models.CharField(_("空间唯一标识"), max_length=256, unique=True)
+    bk_biz_id = models.IntegerField(_("业务ID"), unique=True)
+
+    space_type_id = models.CharField(_("空间类型英文名称"), max_length=64)
+    space_type_name = models.CharField(_("空间类型中文名称"), max_length=64)
+
+    space_id = models.CharField(_("空间 ID"), max_length=128)
+    space_name = models.CharField(_("空间中文名称"), max_length=128)
+    space_code = models.CharField(_("空间英文名称"), max_length=64, blank=True, null=True)
+
+    properties = models.JSONField(_("额外属性"), default=dict)
+
+    class Meta:
+        verbose_name = _("空间信息")
+        verbose_name_plural = _("空间信息")
+
+
+class SpaceApi(AbstractSpaceApi):
+    """
+    空间的API实现
+    """
+
+    @classmethod
+    def get_space_detail(cls, space_uid: str = "", id: int = 0):
+        space = None
+        if space_uid:
+            space = Space.objects.filter(space_uid=space_uid).first()
+        if not space and id:
+            space = Space.objects.filter(id=id).first()
+        return space
+
+    @classmethod
+    def list_spaces(cls):
+        return list(Space.objects.all())
