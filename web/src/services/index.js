@@ -50,12 +50,20 @@ const getMyProjectList = {
   method: 'get',
 };
 
+const getMySpaceList = {
+  url: '/meta/spaces/mine/',
+  method: 'get',
+};
+
 export default {
   userInfo,
   example,
   retrieve,
   project: {
     getMyProjectList,
+  },
+  space: {
+    getMySpaceList,
   },
   indexSet,
   source,

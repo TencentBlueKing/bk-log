@@ -58,15 +58,14 @@ const store = new Vuex.Store({
     asIframe: false,
     iframeQuery: {},
     // 当前项目及Id
-    project: {},
-    projectId: '',
+    space: {},
+    spaceUid: '',
     indexId: '',
     traceIndexId: '',
     // 业务Id
     bkBizId: '',
-    bkBizList: [],
     // 我的项目列表
-    myProjectList: [],
+    mySpaceList: [],
     currentMenu: {},
     currentMenuItem: {},
     topMenu: [],
@@ -94,13 +93,12 @@ const store = new Vuex.Store({
   getters: {
     runVersion: state => state.runVersion,
     user: state => state.user,
-    project: state => state.project,
-    projectId: state => state.projectId,
+    space: state => state.space,
+    spaceUid: state => state.spaceUid,
     indexId: state => state.indexId,
     traceIndexId: state => state.traceIndexId,
     bkBizId: state => state.bkBizId,
-    bkBizList: state => state.bkBizList,
-    myProjectList: state => state.myProjectList,
+    mySpaceList: state => state.mySpaceList,
     pageLoading: state => state.pageLoading,
     globalsData: state => state.globalsData,
     // -- 返回数据
@@ -154,16 +152,13 @@ const store = new Vuex.Store({
     updateCurrentMenuItem(state, item) {
       Vue.set(state, 'currentMenuItem', item);
     },
-    updateProject(state, projectId) {
-      state.project = state.myProjectList.find(item => item.project_id === projectId) || {};
-      state.projectId = projectId;
-      state.bkBizId = state.project.bk_biz_id;
+    updateSpace(state, spaceUid) {
+      state.space = state.mySpaceList.find(item => item.space_uid === spaceUid) || {};
+      state.spaceUid = spaceUid;
+      state.bkBizId = state.space.bk_biz_id;
     },
-    updateMyProjectList(state, projectList) {
-      state.myProjectList = [...projectList];
-    },
-    updateBkBizList(state, bizList) {
-      state.bkBizList = bizList;
+    updateMySpaceList(state, spaceList) {
+      state.mySpaceList = [...spaceList];
     },
     updateIndexId(state, indexId) {
       state.indexId = indexId;
@@ -239,28 +234,6 @@ const store = new Vuex.Store({
     },
 
     /**
-     * 获取业务列表
-     *
-     * @param {Function} commit store commit mutation handler
-     * @param {Object} state store state
-     * @param {Function} dispatch store dispatch action handler
-     * @param {Object} params 请求参数
-     * @param {Object} config 请求的配置
-     *
-     * @return {Promise} promise 对象
-     */
-    getBkBizList({ commit }) {
-      return http.request('biz/list', {}).then((response) => {
-        const bizList = response.data || [];
-        commit('updateBkBizList', bizList);
-        return bizList;
-      })
-        .catch((err) => {
-          console.warn(err);
-        });
-    },
-
-    /**
      * 获取菜单列表
      *
      * @param {Function} commit store commit mutation handler
@@ -271,10 +244,10 @@ const store = new Vuex.Store({
      *
      * @return {Promise} promise 对象
      */
-    getMenuList({}, projectId) {
+    getMenuList({}, spaceUid) {
       return http.request('meta/menu', {
         query: {
-          project_id: projectId,
+          space_uid: spaceUid,
         },
       });
     },

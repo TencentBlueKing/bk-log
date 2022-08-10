@@ -348,7 +348,7 @@ export default {
             notAdd: true,
           },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: window.localStorage.getItem('space_uid'),
           },
         });
       }
@@ -380,7 +380,7 @@ export default {
       this.$router.push({
         name: 'collection-item',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
     },

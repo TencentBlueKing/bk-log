@@ -291,10 +291,10 @@
                     </div>
                   </template>
                   <bk-option
-                    v-for="item in myProjectList"
-                    :key="item.project_id"
+                    v-for="item in mySpaceList"
+                    :key="item.space_uid"
                     :id="item.bk_biz_id"
-                    :name="item.project_name">
+                    :name="item.space_name">
                   </bk-option>
                 </bk-select>
               </div>
@@ -589,11 +589,11 @@ export default {
   },
   computed: {
     ...mapState({
-      myProjectList: state => state.myProjectList,
+      mySpaceList: state => state.mySpaceList,
     }),
     ...mapGetters({
       bkBizId: 'bkBizId',
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
       curCollect: 'collect/curCollect',
       globalsData: 'globals/globalsData',
     }),
@@ -801,11 +801,11 @@ export default {
       if(Array.isArray(visibleBkBizList) && visibleBkBizList.length){
         // 多业务 业务列表获取名字回显
         visibleBkBizList.forEach((val) => {
-          const target = this.myProjectList.find(project => project.bk_biz_id === String(val));
+          const target = this.mySpaceList.find(project => project.bk_biz_id === String(val));
           if (target) {
             const targetObj = {
               id: target.bk_biz_id,
-              name: target.project_name,
+              name: target.space_name,
             };
             this.visibleList.push(targetObj);
             this.cacheVisibleList.push(targetObj);
@@ -1038,7 +1038,7 @@ export default {
       this.$router.push({
         name: routeName,
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
     },
@@ -1507,10 +1507,10 @@ export default {
       if (!data) {
         this.visibleBkBiz.forEach((val) => {
           if (!this.visibleList.some(item => String(item.id) === val)) {
-            const target = this.myProjectList.find(project => project.bk_biz_id === val);
+            const target = this.mySpaceList.find(project => project.bk_biz_id === val);
             this.visibleList.push({
               id: val,
-              name: target.project_name,
+              name: target.space_name,
             });
           }
         });

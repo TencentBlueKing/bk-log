@@ -491,10 +491,10 @@
 </template>
 
 <script>
-// import ContainerSvg from '@/images/container-icons/Container.svg';
+import ContainerSvg from '@/images/container-icons/Container.svg';
 import LinuxSvg from '@/images/container-icons/Linux.svg';
-// import NodeSvg from '@/images/container-icons/Node.svg';
-// import StdoutSvg from '@/images/container-icons/Stdout.svg';
+import NodeSvg from '@/images/container-icons/Node.svg';
+import StdoutSvg from '@/images/container-icons/Stdout.svg';
 import WindowsSvg from '@/images/container-icons/Windows.svg';
 import ipSelectorDialog from './ip-selector-dialog';
 import configLogSetItem from './components/step-add/config-log-set-item';
@@ -683,10 +683,10 @@ export default {
         { category: this.$t('物理环境'), btnList: [
           { id: 'linux', img: LinuxSvg, name: 'Linux', isDisable: false },
           { id: 'windows', img: WindowsSvg, name: 'Windows' }], isDisable: false },
-        // { category: this.$t('容器环境'), btnList: [
-        //   { id: 'container_log_config', img: ContainerSvg, name: 'Container', isDisable: false },
-        //   { id: 'node_log_config', img: NodeSvg, name: 'Node', isDisable: false },
-        //   { id: 'std_log_config', img: StdoutSvg, name: this.$t('标准输出'), isDisable: false }] },
+        { category: this.$t('容器环境'), btnList: [
+          { id: 'container_log_config', img: ContainerSvg, name: 'Container', isDisable: false },
+          { id: 'node_log_config', img: NodeSvg, name: 'Node', isDisable: false },
+          { id: 'std_log_config', img: StdoutSvg, name: this.$t('标准输出'), isDisable: false }] },
       ],
       specifyName: { // 指定容器中文名
         workload_type: this.$t('应用类型'),
@@ -1221,7 +1221,7 @@ export default {
       this.$router.push({
         name: 'collection-item',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
     },
@@ -1433,8 +1433,8 @@ export default {
         });
     },
     initBtnListDisable() {
-      // const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
-      this.environmentList[0].btnList.forEach(item => item.isDisable = true);
+      const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
+      this.environmentList[operateIndex].btnList.forEach(item => item.isDisable = true);
     },
     getFromCharCode(index) {
       return String.fromCharCode(index + 65);
