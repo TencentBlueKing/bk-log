@@ -33,6 +33,8 @@ from apps.log_search.models import (
     AsyncTask,
     EmailTemplate,
     UserMetaConf,
+    Space,
+    SpaceType,
 )
 
 
@@ -50,6 +52,42 @@ class ProjectInfoAdmin(AppModelAdmin):
         "is_deleted",
     ]
     search_fields = ["project_id", "bk_biz_id", "project_name", "bk_app_code"]
+
+
+@admin.register(SpaceType)
+class SpaceTypeAdmin(AppModelAdmin):
+    list_display = [
+        "type_id",
+        "type_name",
+    ]
+    search_fields = [
+        "type_id",
+        "type_name",
+    ]
+
+
+@admin.register(Space)
+class SpaceAdmin(AppModelAdmin):
+    list_display = [
+        "id",
+        "space_uid",
+        "bk_biz_id",
+        "space_type_id",
+        "space_type_name",
+        "space_id",
+        "space_name",
+        "space_code",
+    ]
+    search_fields = [
+        "id",
+        "space_uid",
+        "bk_biz_id",
+        "space_type_id",
+        "space_type_name",
+        "space_id",
+        "space_name",
+        "space_code",
+    ]
 
 
 @admin.register(AccessSourceConfig)

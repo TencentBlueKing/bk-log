@@ -108,9 +108,9 @@ def custom_params_valid(serializer, params, many=False):
             message = _("参数校验失败: {err}").format(err=e)
         raise ValidationError(message)
     if many:
-        return list(_serializer.validated_data)
+        return list(_serializer.data)
     else:
-        return dict(_serializer.validated_data)
+        return dict(_serializer.data)
 
 
 class CustomDateTimeField(DateTimeField):

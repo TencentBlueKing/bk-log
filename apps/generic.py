@@ -360,7 +360,7 @@ def _notify(request, msg):
         with ignored(Exception):
             username = request.user.username
         NOTIFY_EVENT(
-            content=msg,
+            content=str(msg),
             dimensions={
                 "trace_id": format_trace_id(trace.get_current_span().get_span_context().trace_id),
                 "username": username,
