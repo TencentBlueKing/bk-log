@@ -31,14 +31,19 @@ class AbstractSpaceApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-SpaceApi = AbstractSpaceApi
+class SpaceApiProxy(object):
+    def __init__(self):
+        self._api = None
+
+    def __getattr__(self, action):
+        if self._api is None:
+            self.init_api()
+        func = getattr(self._api, action)
+        return func
+
+    def init_api(self):
+        api_class = getattr(settings, "BKM_SPACE_API_CLASS", "bkm_space.api.AbstractSpaceApi")
+        self._api = import_string(api_class)
 
 
-def load_space_api_class():
-    """
-    加载实际的空间API类
-    :return:
-    """
-    global SpaceApi
-    api_class = getattr(settings, "BKM_SPACE_API_CLASS", "bkm_space.api.AbstractSpaceApi")
-    SpaceApi = import_string(api_class)
+SpaceApi = SpaceApiProxy()

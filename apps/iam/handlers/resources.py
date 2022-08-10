@@ -29,6 +29,7 @@ from django.utils.translation import ugettext_lazy as _lazy
 
 from apps.api import TransferApi
 from apps.iam.exceptions import ResourceNotExistError
+from bkm_space.utils import space_uid_to_bk_biz_id
 from iam import Resource
 
 
@@ -88,16 +89,17 @@ class Business(ResourceMeta):
 
     @classmethod
     def create_instance(cls, instance_id: str, attribute=None) -> Resource:
-        from apps.log_search.models import ProjectInfo
+        from apps.log_search.models import Space
 
         resource = cls.create_simple_instance(instance_id, attribute)
 
-        bk_biz_name = str(instance_id)
-        business = ProjectInfo.objects.filter(bk_biz_id=instance_id).first()
-        if business:
-            bk_biz_name = business.project_name
+        space_name = str(instance_id)
+        space = Space.objects.filter(bk_biz_id=instance_id).first()
 
-        resource.attribute = {"id": str(instance_id), "name": bk_biz_name}
+        if space:
+            space_name = space.space_name
+
+        resource.attribute = {"id": str(instance_id), "name": space_name}
         return resource
 
 
@@ -172,7 +174,7 @@ class Indices(ResourceMeta):
 
     @classmethod
     def create_simple_instance(cls, instance_id: str, attribute=None) -> Resource:
-        from apps.log_search.models import LogIndexSet, ProjectInfo
+        from apps.log_search.models import LogIndexSet
 
         resource = super().create_simple_instance(instance_id, attribute)
         if resource.attribute:
@@ -180,14 +182,14 @@ class Indices(ResourceMeta):
 
         try:
             index_set = LogIndexSet.objects.get(pk=instance_id)
-            project = ProjectInfo.objects.get(pk=index_set.project_id)
-        except (LogIndexSet.DoesNotExist, ProjectInfo.DoesNotExist):
+        except LogIndexSet.DoesNotExist:
             return resource
+        bk_biz_id = space_uid_to_bk_biz_id(index_set.space_uid)
         resource.attribute = {
             "id": str(instance_id),
             "name": index_set.index_set_name,
-            "bk_biz_id": project.bk_biz_id,
-            "_bk_iam_path_": "/{},{}/".format(Business.id, project.bk_biz_id),
+            "bk_biz_id": bk_biz_id,
+            "_bk_iam_path_": "/{},{}/".format(Business.id, bk_biz_id),
         }
         return resource
 

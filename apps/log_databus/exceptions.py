@@ -139,6 +139,16 @@ class ContainerCollectConfigValidateYamlException(BaseCollectorConfigException):
     MESSAGE = _("容器采集配置 yaml 格式不合法")
 
 
+class ModifyCollectorConfigException(BaseCollectorConfigException):
+    ERROR_CODE = "118"
+    MESSAGE = _("更新采集项配置异常: {e}")
+
+
+class ResultTableNotExistException(BaseCollectorConfigException):
+    ERROR_CODE = "119"
+    MESSAGE = _("采集项{result_table_id}结果表ID不存在")
+
+
 class StorageNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "201"
     MESSAGE = _("集群不存在")
