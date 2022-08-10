@@ -181,10 +181,10 @@
                   </div>
                 </template>
                 <bk-option
-                  v-for="item in myProjectList"
-                  :key="item.project_id"
+                  v-for="item in mySpaceList"
+                  :key="item.bk_biz_id"
                   :id="item.bk_biz_id"
-                  :name="item.project_name">
+                  :name="item.space_full_code_name">
                   <!-- eslint-disable-next-line vue/no-v-html -->
                   <div class="project-option" v-html="getProjectOption(item)"></div>
                 </bk-option>
@@ -570,7 +570,7 @@ export default {
   },
   computed: {
     ...mapState({
-      myProjectList: state => state.myProjectList,
+      mySpaceList: state => state.mySpaceList,
       userMeta: state => state.userMeta,
     }),
     ...mapGetters({
@@ -731,10 +731,10 @@ export default {
       if (!data) {
         this.visibleBkBiz.forEach((val) => {
           if (!this.visibleList.some(item => String(item.id) === val)) {
-            const target = this.myProjectList.find(project => project.bk_biz_id === val);
+            const target = this.mySpaceList.find(project => project.bk_biz_id === val);
             this.visibleList.push({
               id: val,
-              name: target.project_name,
+              name: target.space_full_code_name,
               is_use: false,
             });
           }
@@ -780,12 +780,12 @@ export default {
         };
         Object.assign(this.formData, this.basicFormData);
         res.data.cluster_config.custom_option.visible_config?.visible_bk_biz.forEach((val) => {
-          const target = this.myProjectList.find(project => project.bk_biz_id === String(val.bk_biz_id));
+          const target = this.mySpaceList.find(project => project.bk_biz_id === String(val.bk_biz_id));
           if (target) {
             target.is_use = val.is_use;
             const targetObj = {
               id: String(val.bk_biz_id),
-              name: target.project_name,
+              name: target.space_full_code_name,
               is_use: val.is_use,
             };
             this.visibleList.push(targetObj);
@@ -1026,17 +1026,17 @@ export default {
      */
     getProjectOption(item) {
       const isSelect = this.visibleBkBiz.includes(item.bk_biz_id);
-      const backgroundStr = `background: ${!!item.is_use ? '#2dcb56' : '#699df4'}`;
+      const backgroundStr = `background: ${item.is_use ? '#2dcb56' : '#699df4'}`;
       const styleStr = `display: inline-block; width: 4px; height: 4px; border-radius: 50%; margin-right: 4px; ${backgroundStr}; transform: translateY(-2px);`;
       const styleContainer = 'display:flex; align-items: center; justify-content: space-between; width: 100%;';
       const styleIcon = 'font-size: 20px';
       return `<div style="${styleContainer}">
-      <div>
-        <span style="${styleStr}"></span> 
-        <span>${item.project_name}${item.is_use ? `（${this.$t('正在使用')}）` : ''}<span>
-      </div>
-      ${isSelect ? `<span class="bk-icon icon-check-1" style="${styleIcon}"></span>` : ''}
-      </div>`;
+                <div>
+                  <span style="${styleStr}"></span> 
+                  <span>${item.space_full_code_name}${item.is_use ? `（${this.$t('正在使用')}）` : ''}<span>
+                </div>
+                ${isSelect ? `<span class="bk-icon icon-check-1" style="${styleIcon}"></span>` : ''}
+              </div>`;
     },
     handleChangePrincipal(val) {
       // 集群负责人为空时报错警告

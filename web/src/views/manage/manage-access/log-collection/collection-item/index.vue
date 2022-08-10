@@ -481,7 +481,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
       bkBizId: 'bkBizId',
       authGlobalInfo: 'globals/authContainerInfo',
     }),
@@ -553,7 +553,7 @@ export default {
               collectorId: row.collector_config_id || '',
             },
             query: {
-              projectId: window.localStorage.getItem('project_id'),
+              spaceUid: window.localStorage.getItem('space_uid'),
             },
           });
         }
@@ -624,7 +624,7 @@ export default {
         params,
         query: {
           ...query,
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
           backRoute,
         },
       });

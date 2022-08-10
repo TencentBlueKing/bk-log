@@ -329,6 +329,7 @@ export default {
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
+      spaceUid: 'spaceUid',
       globalsData: 'globals/globalsData',
     }),
     sourceFilters() {
@@ -496,7 +497,7 @@ export default {
       this.$router.push({
         name: 'es-index-set-create',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
           cluster: row.cluster_config.cluster_id,
         },
       });

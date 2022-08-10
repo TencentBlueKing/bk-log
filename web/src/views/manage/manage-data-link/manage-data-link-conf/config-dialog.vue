@@ -65,7 +65,7 @@
               <bk-option
                 :key="item.bk_biz_id"
                 :id="item.bk_biz_id"
-                :name="item.project_name">
+                :name="item.space_name">
               </bk-option>
             </template>
           </bk-select>
