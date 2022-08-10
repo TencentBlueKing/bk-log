@@ -3453,6 +3453,7 @@ class CollectorHandler(object):
 
     def fast_create(self, params: dict) -> dict:
         params["params"]["encoding"] = params["data_encoding"]
+        # 如果没传入集群ID, 则随机给一个公共集群
         if not params.get("storage_cluster_id"):
             storage_cluster_id = get_random_public_cluster_id()
             if not storage_cluster_id:
@@ -3465,7 +3466,7 @@ class CollectorHandler(object):
 
         params["table_id"] = params["collector_config_name_en"]
         self.create_or_update_clean_config(params)
-        #
+
         return {
             "collector_config_id": self.data.collector_config_id,
             "bk_data_id": self.data.bk_data_id,
