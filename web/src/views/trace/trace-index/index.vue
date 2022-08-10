@@ -483,7 +483,7 @@ export default {
   },
   computed: {
     ...mapState({
-      projectId: state => state.projectId,
+      spaceUid: state => state.spaceUid,
       bkBizId: state => state.bkBizId,
       indexIdCache: state => state.traceIndexId,
     }),
@@ -502,11 +502,7 @@ export default {
       this.searchHandle();
       this.$store.commit('updateTraceIndexId', this.indexId);
     },
-    '$route.query.bizId'() {
-      this.initDateTime();
-      this.$nextTick(() => this.getIndexSet());
-    },
-    '$route.query.projectId'() {
+    '$route.query.spaceUid'() {
       this.initDateTime();
       this.$nextTick(() => this.getIndexSet());
     },
@@ -602,7 +598,7 @@ export default {
         // const routeData = this.$router.resolve({
         //   path: `/trace?indexId=${this.indexId}&traceId=${row.traceID}&startTime=${row.startTime}`,
         //   query: {
-        //     projectId: this.projectId,
+        //     spaceUid: this.spaceUid,
         //   },
         // });
         // window.open(routeData.href, '_blank');

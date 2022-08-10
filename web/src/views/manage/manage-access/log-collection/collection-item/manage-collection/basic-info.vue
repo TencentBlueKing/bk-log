@@ -239,7 +239,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId']),
+    ...mapState(['spaceUid']),
     getEventIDStr() {
       return this.collectorData.params.winlog_event_id?.join(',') || '';
     },
@@ -324,7 +324,7 @@ export default {
         name: routeName,
         params,
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
     },

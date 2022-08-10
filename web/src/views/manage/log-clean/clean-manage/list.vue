@@ -166,7 +166,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
       bkBizId: 'bkBizId',
       globalsData: 'globals/globalsData',
     }),
@@ -254,7 +254,7 @@ export default {
       this.$router.push({
         name: 'clean-create',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
     },
@@ -313,7 +313,7 @@ export default {
       const query = {};
       if (operateType === 'edit') {
         routeName = 'clean-edit';
-        query.projectId = window.localStorage.getItem('project_id');
+        query.spaceUid = window.localStorage.getItem('space_uid');
         params.collectorId = row.collector_config_id;
       } else if (operateType === 'search') {
         routeName = 'retrieve';

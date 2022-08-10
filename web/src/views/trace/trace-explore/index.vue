@@ -40,7 +40,7 @@ export default {
     },
   },
   watch: {
-    '$route.query.projectId'() {
+    '$route.query.spaceUid'() {
       this.updateIframeSrc();
     },
   },

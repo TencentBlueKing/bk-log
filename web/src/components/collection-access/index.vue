@@ -162,6 +162,7 @@ export default {
     }),
     ...mapGetters('collect', ['curCollect']),
     ...mapGetters(['bkBizId']),
+    ...mapGetters(['spaceUid']),
     isCommon() {
       return ['add', 'edit'].some(item => item === this.operateType);
     },
