@@ -121,7 +121,11 @@ class CollectMetricCollector(object):
 
     @staticmethod
     @register_metric(
-        "collector_capacity", description=_("采集项容量"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+        "collector_capacity",
+        prefix="es",
+        description=_("采集项容量"),
+        data_name="metric",
+        time_filter=TimeFilterEnum.MINUTE5,
     )
     def collector_capacity():
         has_table_id_collects: List[CollectorConfig] = CollectorConfig.objects.filter(
@@ -190,29 +194,30 @@ class CollectMetricCollector(object):
         return [indices for cluster_indices in result.values() for indices in cluster_indices]
 
     @staticmethod
-    @register_metric("collector_crawler", description=_("采集行数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "row", prefix="bkunifylogbeat", description=_("采集行数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def collector_line():
         metrics = []
         crawler_received_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_RECEIVED)
         crawler_state_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_STATE)
-        for target in crawler_received_data:
-            for task_data_id in crawler_received_data[target]:
-                _received_count = crawler_received_data[target][task_data_id]
-                _state_count = crawler_state_data[target][task_data_id]
-                metrics.append(
-                    Metric(
-                        metric_name="count",
-                        metric_value=_received_count - _state_count,
-                        dimensions={"target": target, "task_data_id": task_data_id},
-                        timestamp=MetricUtils.get_instance().report_ts,
-                    )
+        for task_data_id in crawler_received_data:
+            _received_count = crawler_received_data[task_data_id]
+            _state_count = crawler_state_data[task_data_id]
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=_received_count - _state_count,
+                    dimensions={"task_data_id": task_data_id},
+                    timestamp=MetricUtils.get_instance().report_ts,
                 )
+            )
 
         return metrics
 
     @staticmethod
     def get_crawler_metric_data(field):
-        data = defaultdict(lambda: defaultdict(int))
+        data = defaultdict(int)
         bk_monitor_client = Client(
             bk_app_code=settings.APP_CODE,
             bk_app_secret=settings.SECRET_KEY,
@@ -222,15 +227,14 @@ class CollectMetricCollector(object):
         )
         params = {
             "sql": f"select sum({field}) as {field} from {TABLE_BKUNIFYBEAT_TASK} \
-            where time >= '5m' group by task_data_id,target"
+            where time >= '5m' group by task_data_id"
         }
         try:
             result = bk_monitor_client.get_ts_data(data=params)
             for ts_data in result["list"]:
                 value = ts_data[field]
-                target = ts_data["target"]
                 task_data_id = ts_data["task_data_id"]
-                data[target][task_data_id] = value
+                data[task_data_id] = value
 
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to get {field} data, err: {e}")
@@ -347,7 +351,9 @@ class CleanMetricCollector(object):
         return cleans
 
     @staticmethod
-    @register_metric("collector_host", description=_("采集主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
+    @register_metric(
+        "host", prefix="bkunifylogbeat", description=_("采集主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60
+    )
     def collect_host():
         configs = CollectorConfig.objects.filter(is_active=True).values(
             "bk_biz_id", "subscription_id", "collector_config_id", "collector_config_name"
