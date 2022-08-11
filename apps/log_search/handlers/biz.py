@@ -20,10 +20,10 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import copy
-from pypinyin import lazy_pinyin
 from collections import defaultdict, namedtuple
 from inspect import signature
 from typing import List
+from pypinyin import lazy_pinyin
 
 from django.core.cache import cache
 from django.utils.translation import ugettext_lazy as _
