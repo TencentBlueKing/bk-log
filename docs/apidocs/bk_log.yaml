@@ -221,6 +221,17 @@
   dest_http_method: POST
   is_hidden: True
 
+- path: /v2/bk_log/databus_collectors/{collector_config_id}/stop/
+  name: databus_collector_stop_subscription
+  label: 日志平台-停止采集
+  label_en: bk_log stop collector subscription
+  method: POST
+  api_type: query
+  comp_codename: generic.v2.bk_log.bk_log_component
+  dest_path: /api/v1/databus/collectors/{collector_config_id}/stop/
+  dest_http_method: POST
+  is_hidden: True
+
 - path: /v2/bk_log/databus_collectors/
   name: create_databus_collectors
   label: 日志平台-创建采集项
