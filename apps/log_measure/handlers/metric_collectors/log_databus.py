@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import re
+import time
 from collections import defaultdict
 from typing import List
 from django.conf import settings
@@ -44,6 +45,9 @@ from apps.log_measure.constants import (
     TABLE_BKUNIFYBEAT_TASK,
     FIELD_CRAWLER_RECEIVED,
     FIELD_CRAWLER_STATE,
+    MAX_RETRY_QUERY_SUBSCRIPTION_TIMES,
+    TIME_WAIT_QUERY_SUBSCRIPTION_EXCEPTION,
+    MAX_QUERY_SUBSCRIPTION,
 )
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
@@ -143,10 +147,18 @@ class CollectMetricCollector(object):
 
         for collect in has_table_id_collects:
             cur_cap = sum(
-                [float(indices.get("store.size", 0)) for indices in table_id_map_indices.get(collect.table_id, [])]
+                [
+                    float(indices.get("store.size", 0))
+                    for indices in table_id_map_indices.get(collect.table_id, [])
+                    if indices.get("store.size")
+                ]
             )
             docs_count = sum(
-                [int(indices.get("docs.count", 0)) for indices in table_id_map_indices.get(collect.table_id, [])]
+                [
+                    int(indices.get("docs.count", 0))
+                    for indices in table_id_map_indices.get(collect.table_id, [])
+                    if indices.get("docs.count")
+                ]
             )
             metrics.append(
                 Metric(
@@ -262,6 +274,8 @@ class CleanMetricCollector(object):
                     clean_config_count[bk_biz_id] += 1
                 aggregation_datas[clean_config["index_set_id"]][clean_config["etl_config"]] += 1
             for index_set_id in aggregation_datas:
+                if not index_sets.get(index_set_id):
+                    continue
                 for etl_config in aggregation_datas[index_set_id]:
                     metrics.append(
                         # 上报以索引, 清洗类型为维度的数据
@@ -370,10 +384,7 @@ class CleanMetricCollector(object):
                 "collector_config_name": config["collector_config_name"],
             }
 
-        subscription_id_list = list(subscription_id_dict.keys())
-        groups = []
-        for i in array_chunk(subscription_id_list):
-            groups.extend(NodeApi.get_subscription_instance_status({"subscription_id_list": i, "no_request": True}))
+        groups = get_subscription_instance_count(list(subscription_id_dict.keys()))
 
         biz_collector_dict = defaultdict(int)
         total = 0
@@ -407,3 +418,28 @@ class CleanMetricCollector(object):
             )
         )
         return metrics
+
+
+def get_subscription_instance_count(subscription_id_list: list) -> list:
+    # 有失败重试以及限制了单次查询订阅ID的函数
+    groups = []
+
+    def _get_subscription_instance(subscription_id_list_slice: list):
+        group = None
+        for __ in range(MAX_RETRY_QUERY_SUBSCRIPTION_TIMES):
+            try:
+                group = NodeApi.get_subscription_instance_status(
+                    {"subscription_id_list": subscription_id_list_slice, "no_request": True}
+                )
+                if group:
+                    break
+            except Exception:  # pylint: disable=broad-except
+                time.sleep(TIME_WAIT_QUERY_SUBSCRIPTION_EXCEPTION)
+        return group
+
+    for i in array_chunk(subscription_id_list, MAX_QUERY_SUBSCRIPTION):
+        group = _get_subscription_instance(i)
+        if group:
+            groups.extend(group)
+
+    return groups
