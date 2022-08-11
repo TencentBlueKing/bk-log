@@ -252,6 +252,66 @@ class CollectMetricCollector(object):
             logger.error(f"failed to get {field} data, err: {e}")
         return data
 
+    @staticmethod
+    @register_metric("business_host", description=_("业务主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
+    def business_unique_host():
+        metrics = []
+        biz_host = defaultdict(list)
+        biz_active_host = defaultdict(list)
+        bk_monitor_client = Client(
+            bk_app_code=settings.APP_CODE,
+            bk_app_secret=settings.SECRET_KEY,
+            monitor_host=MONITOR_APIGATEWAY_ROOT,
+            report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
+            bk_username="admin",
+        )
+        # 认为5分钟内采集到了数据的为可用的主机
+        params = {
+            "sql": f"select {FIELD_CRAWLER_RECEIVED}-{FIELD_CRAWLER_STATE} as row from {TABLE_BKUNIFYBEAT_TASK} \
+            where time >= '5m' group by bk_biz_id, target"
+        }
+        try:
+            result = bk_monitor_client.get_ts_data(data=params)
+            for ts_data in result["list"]:
+                row_count = ts_data["row"]
+                bk_biz_id = int(ts_data["bk_biz_id"])
+                target = ts_data["target"]
+                biz_host[bk_biz_id].append(target)
+                if row_count:
+                    biz_active_host[bk_biz_id].append(target)
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"failed to get biz_unique_host data, err: {e}")
+
+        for bk_biz_id in biz_host:
+            host_count = len(biz_host[bk_biz_id])
+            active_host_count = len(biz_active_host[bk_biz_id])
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=active_host_count,
+                    dimensions={
+                        "is_active": True,
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=host_count - active_host_count,
+                    dimensions={
+                        "is_active": False,
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+        return metrics
+
 
 class CleanMetricCollector(object):
     @staticmethod
