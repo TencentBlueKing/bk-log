@@ -47,7 +47,7 @@ def sync_spaces():
     # 获取类型ID到类型名称的映射
     type_names = {t["type_id"]: t["type_name"] for t in TransferApi.list_space_types()}
 
-    spaces = TransferApi.list_spaces()["list"]
+    spaces = TransferApi.list_spaces({"is_detail": True})["list"]
 
     all_spaces = []
 

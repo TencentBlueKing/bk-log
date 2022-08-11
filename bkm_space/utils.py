@@ -46,7 +46,7 @@ def bk_biz_id_to_space_uid(bk_biz_id: Union[str, int]) -> str:
         return ""
 
     if bk_biz_id >= 0:
-        return f"{SpaceTypeEnum.BKCC.value}__{bk_biz_id}"
+        return api.SpaceApi.gen_space_uid(SpaceTypeEnum.BKCC.value, bk_biz_id)
 
     space = api.SpaceApi.get_space_detail(id=-bk_biz_id)
 
@@ -57,16 +57,7 @@ def bk_biz_id_to_space_uid(bk_biz_id: Union[str, int]) -> str:
 
 
 def parse_space_uid(space_uid: str) -> Tuple[str, str]:
-    """
-    将 空间唯一标识 解析为 空间类型 和 空间ID
-    :param space_uid: 空间唯一标识
-    :return: 二元组 space_type, space_id
-    """
-    parsed_data = space_uid.split("__", 1)
-    if len(parsed_data) != 2:
-        raise ValueError("invalid space_uid format")
-    space_type, space_id = parsed_data
-    return space_type, space_id
+    return api.SpaceApi.parse_space_uid(space_uid)
 
 
 def _inject_space_field_recursive(data: Union[Dict, List], max_depth, depth=0):
