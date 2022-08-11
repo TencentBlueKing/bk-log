@@ -93,8 +93,8 @@ export default {
         const res = await this.$store.dispatch('getApplyData', {
           action_ids: ['view_business'],
           resources: [{
-            type: 'space',
-            id: item.space_uid,
+            type: 'biz',
+            id: item.bk_biz_id,
           }],
         });
         window.open(res.data.apply_url);
@@ -109,75 +109,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  .list-item-right {
-    flex-shrink: 0;
-
-    .list-item-tag {
-      display: inline-block;
-      height: 23px;
-      line-height: 23px;
-      padding: 0 10px;
-      border-radius: 2px;
-
-      &:not(:last-child) {
-        margin-right: 8px;
-      }
-    }
-
-    .light-theme {
-      &.bkcc {
-        color: #f85959;
-        background-color: #feebea;
-      }
-
-      &.bkdevops {
-        color: #3fc362;
-        background-color: #e4faf0;
-      }
-
-      &.bcs {
-        color: #fc943b;
-        background-color: #fff1db;
-      }
-
-      &.bksaas {
-        color: #478efc;
-        background-color: #edf4ff;
-      }
-
-      &.other-type {
-        color: #b3b3b3;
-        background-color: #f0f1f5;
-      }
-    }
-
-    .dark-theme {
-      &.bkcc {
-        color: #f85959;
-        background-color: #3c151d;
-      }
-
-      &.bkdevops {
-        color: #3fc362;
-        background-color: #183a28;
-      }
-
-      &.bcs {
-        color: #fc943b;
-        background-color: #3a2f18;
-      }
-
-      &.bksaas {
-        color: #478efc;
-        background-color: #1d2c4e;
-      }
-
-      &.other-type {
-        color: #b3b3b3;
-        background-color: #3d3d3d;
-      }
-    }
-  }
+  @import '@/scss/space-tag-option';
 
   .light-item-code {
     color: #c4c6cc;

@@ -664,7 +664,7 @@ export default {
       window.parent.postMessage('event-click', '*');
     },
     fetchPageData() {
-      // 有projectID且有业务权限时 才去请求索引集列表
+      // 有spaceUid且有业务权限时 才去请求索引集列表
       if (!this.authMainPageInfo && this.spaceUid) {
         this.requestIndexSetList();
       } else {
