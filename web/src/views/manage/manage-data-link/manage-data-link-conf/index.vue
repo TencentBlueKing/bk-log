@@ -40,7 +40,7 @@
         prop="link_group_name"
         min-width="20"></bk-table-column>
       <bk-table-column
-        :label="$t('允许的业务')"
+        :label="$t('允许的空间')"
         prop="bk_biz_id"
         min-width="20">
         <template slot-scope="{ row }">
@@ -111,7 +111,7 @@ export default {
   computed: {
     projectList() {
       return [
-        { bk_biz_id: '0', space_name: this.$t('全部业务') },
+        { bk_biz_id: '0', space_full_code_name: this.$t('全部空间') },
         ...this.$store.state.mySpaceList,
       ];
     },

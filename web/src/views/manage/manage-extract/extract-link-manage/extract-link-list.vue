@@ -133,7 +133,7 @@ export default {
         this.$router.push({
           name: 'extract-link-create',
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: window.localStorage.getItem('space_uid'),
           },
         });
       }
@@ -146,7 +146,7 @@ export default {
           linkId: row.link_id,
         },
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
     },

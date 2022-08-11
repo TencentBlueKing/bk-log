@@ -502,7 +502,7 @@ export default {
 
           .group-title {
             font-size: 12px;
-            color: #66768e;
+            color: #c4c6cc;
             margin: 0 0 7px 16px;
             display: inline-block;
           }
