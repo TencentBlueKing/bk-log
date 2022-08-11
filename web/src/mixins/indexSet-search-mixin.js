@@ -31,6 +31,7 @@ export default {
       pollingEndTime: 0,
       requestInterval: 0, // 请求间隔时间
       interval: 'auto',
+      chartInterval: 'auto',
       intervalMap: {
         '5s': 5,
         '1m': 60,
@@ -47,8 +48,8 @@ export default {
   methods: {
     // 坐标分片规则
     handleIntervalSplit(startTime, endTime) {
-      if (this.retrieveParams.interval !== 'auto') {
-        this.interval = this.retrieveParams.interval;
+      if (this.chartInterval !== 'auto') {
+        this.interval = this.chartInterval;
         return;
       }
       const duration = (endTime - startTime) / (3600 * 1000);
@@ -78,7 +79,7 @@ export default {
           startTimeStamp: new Date(this.retrieveParams.start_time.replace(/-/g, '/')).getTime(),
           endTimeStamp: new Date(this.retrieveParams.end_time.replace(/-/g, '/')).getTime(),
         };
-      }
+      };
 
       const tempList = handleTransformToTimestamp(this.datePickerValue);
       return {
@@ -88,8 +89,8 @@ export default {
     },
     // 获取轮询时间间隔
     getInterval() {
-      if (this.retrieveParams.interval !== 'auto') { // 若选择了汇聚周期则使用retrieveParams
-        this.interval = this.retrieveParams.interval;
+      if (this.chartInterval !== 'auto') { // 若选择了汇聚周期则使用retrieveParams
+        this.interval = this.chartInterval;
         return;
       }
 

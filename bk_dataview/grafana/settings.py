@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.conf import settings
 from django.utils.module_loading import import_string
@@ -33,24 +35,28 @@ DEFAULTS = {
     "CODE_INJECTIONS": {
         "<head>": """<head>
 <style>
-      .sidemenu {
+      .sidemenu {{
         display: none !important;
-      }
-      .navbar-page-btn .gicon-dashboard {
+      }}
+      .navbar-page-btn .gicon-dashboard {{
         display: none !important;
-      }
-      .navbar .navbar-buttons--tv {
+      }}
+      .navbar .navbar-buttons--tv {{
         display: none !important;
-      }
-    .css-1jrggg2 {
+      }}
+    .css-1jrggg2 {{
           left: 0 !important;
-      }
-      .css-9nwlx8 {
+      }}
+      .css-9nwlx8 {{
         display: none;
-      }
+      }}
 </style>
-<script src="http://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js?_bid=3977"></script>
-<script>"""
+{}
+<script>""".format(
+            """<script src="http://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js?_bid=3977"></script>"""
+            if settings.TAM_AEGIS_KEY
+            else ""
+        )
         + f"""window.ageisId = "{settings.TAM_AEGIS_KEY}";"""
         + """
 setTimeout(function(){
@@ -70,7 +76,6 @@ setTimeout(function(){
         })
     }
 },5000);
-
 var _wr = function(type) {
     var orig = history[type];
     return function() {
@@ -112,7 +117,6 @@ var _wr = function(type) {
 }
 
 IMPORT_STRINGS = ["AUTHENTICATION_CLASSES", "PERMISSION_CLASSES", "PROVISIONING_CLASSES", "BACKEND_CLASS"]
-
 
 APP_LABEL = "grafana"
 

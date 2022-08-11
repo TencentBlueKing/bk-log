@@ -16,12 +16,18 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import sys
 
-from blueapps.conf.log import get_logging_config_dict
-from blueapps.conf.default_settings import *  # noqa
+from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
+
+from blueapps.conf.default_settings import *  # noqa
+
+from config.log import get_logging_config_dict
 
 # 使用k8s部署模式
 IS_K8S_DEPLOY_MODE = os.getenv("DEPLOY_MODE") == "kubernetes"
@@ -59,6 +65,7 @@ INSTALLED_APPS += (
     "apps.log_esquery",
     "apps.log_measure",
     "apps.log_trace",
+    "apps.log_bcs",
     "apps.esb",
     "apps.bk_log_admin",
     "apps.grafana",
@@ -87,8 +94,10 @@ else:
 # 这里是默认的中间件，大部分情况下，不需要改动
 # 如果你已经了解每个默认 MIDDLEWARE 的作用，确实需要去掉某些 MIDDLEWARE，或者改动先后顺序，请去掉下面的注释，然后修改
 MIDDLEWARE = (
+    # http -> https 转换中间件
+    "apps.middlewares.HttpsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
-    "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "apps.middleware.user_middleware.BkLogMetricsBeforeMiddleware",
     # request instance provider
     "blueapps.middleware.request_provider.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -112,7 +121,7 @@ MIDDLEWARE = (
     "django.middleware.locale.LocaleMiddleware",
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
-    "django_prometheus.middleware.PrometheusAfterMiddleware",
+    "apps.middleware.user_middleware.BkLogMetricsAfterMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -129,6 +138,8 @@ MIDDLEWARE = (
 # 如果静态资源修改了以后，上线前改这个版本号即可
 #
 STATIC_VERSION = "1.0"
+
+DEFAULT_HTTPS_HOST = ""
 
 if IS_K8S_DEPLOY_MODE:
     STATIC_ROOT = "static"
@@ -167,6 +178,7 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.bkdata",
     "apps.log_search.tasks.async_export",
     "apps.log_search.tasks.project",
+    "apps.log_search.tasks.cmdb",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
     "apps.log_search.tasks.no_data",
@@ -177,6 +189,7 @@ CELERY_IMPORTS = (
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
     "apps.log_clustering.tasks.sync_pattern",
+    "apps.log_extract.tasks.extract",
 )
 
 # load logging settings
@@ -185,7 +198,6 @@ if RUN_VER != "open":
     LOGGING["handlers"]["root"]["encoding"] = "utf-8"
     LOGGING["handlers"]["component"]["encoding"] = "utf-8"
     LOGGING["handlers"]["mysql"]["encoding"] = "utf-8"
-    LOGGING["handlers"]["blueapps"]["encoding"] = "utf-8"
     if not IS_LOCAL:
         logging_format = {
             "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
@@ -211,48 +223,25 @@ if IS_K8S_DEPLOY_MODE:
                 ),
             }
         },
-        "handlers": {
-            "stdout": {
-                "class": "logging.StreamHandler",
-                "formatter": "json",
-                "stream": sys.stdout,
-            },
-        },
+        "handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "json", "stream": sys.stdout,},},
         "loggers": {
             "django": {"handlers": ["stdout"], "level": "INFO", "propagate": True},
-            "django.server": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
-            "django.request": {
-                "handlers": ["stdout"],
-                "level": "ERROR",
-                "propagate": True,
-            },
-            "django.db.backends": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "django.server": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "django.request": {"handlers": ["stdout"], "level": "ERROR", "propagate": True,},
+            "django.db.backends": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             # the root logger ,用于整个project的logger
             "root": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # 组件调用日志
-            "component": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "component": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             "celery": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # other loggers...
             # blueapps
-            "blueapps": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "blueapps": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             # 普通app日志
             "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            "bk_dataview": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
+            "iam": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
 
@@ -272,11 +261,38 @@ MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
 BK_DOC_QUERY_URL = "https://bk.tencent.com/docs/document/5.1/90/3822/"
 BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
+
+# 日志归档文档
+BK_ARCHIVE_DOC_URL = os.getenv("BKAPP_ARCHIVE_DOC_URL", "")
+
+BK_ASSESSMEN_HOST_COUNT = int(os.getenv("BKAPP_ASSESSMEN_HOST_COUNT", 30))
+
+# 日志清洗文档
+BK_ETL_DOC_URL = os.getenv("BKAPP_ETL_DOC_URL", "")
+
+BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 # 计算平台文档地址
 BK_DOC_DATA_URL = ""
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 BK_HOT_WARM_CONFIG_URL = (
     "https://www.elastic.co/guide/en/elasticsearch/reference/master/modules-cluster.html#shard-allocation-awareness"
 )
+BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
+DEPLOY_MODE = os.environ.get("DEPLOY_MODE", "")
+
+
+# ===============================================================================
+# 企业版登录重定向
+# ===============================================================================
+
+
+def redirect_func(request):
+    login_page_url = reverse("account:login_page")
+    next_url = "{}?refer_url={}".format(login_page_url, request.path)
+    return HttpResponseRedirect(next_url)
+
+
+BLUEAPPS_PAGE_401_RESPONSE_FUNC = redirect_func
 
 # bulk_request limit
 BULK_REQUEST_LIMIT = int(os.environ.get("BKAPP_BULK_REQUEST_LIMIT", 500))
@@ -535,12 +551,7 @@ MENUS = [
                         "scenes": "scenario_log",
                         "icon": "info-fill--2",
                     },
-                    {
-                        "id": "clean_templates",
-                        "name": _("清洗模板"),
-                        "feature": "on",
-                        "icon": "moban",
-                    },
+                    {"id": "clean_templates", "name": _("清洗模板"), "feature": "on", "icon": "moban",},
                 ],
             },
             {
@@ -550,24 +561,9 @@ MENUS = [
                 "icon": "",
                 "keyword": "归档",
                 "children": [
-                    {
-                        "id": "archive_repository",
-                        "name": _("归档仓库"),
-                        "feature": "on",
-                        "icon": "new-_empty-fill",
-                    },
-                    {
-                        "id": "archive_list",
-                        "name": _("归档列表"),
-                        "feature": "on",
-                        "icon": "audit-fill",
-                    },
-                    {
-                        "id": "archive_restore",
-                        "name": _("归档回溯"),
-                        "feature": "on",
-                        "icon": "withdraw-fill",
-                    },
+                    {"id": "archive_repository", "name": _("归档仓库"), "feature": "on", "icon": "new-_empty-fill",},
+                    {"id": "archive_list", "name": _("归档列表"), "feature": "on", "icon": "audit-fill",},
+                    {"id": "archive_restore", "name": _("归档回溯"), "feature": "on", "icon": "withdraw-fill",},
                 ],
             },
             {
@@ -675,10 +671,12 @@ CELERY_QUEUES = PIPELINE_CELERY_QUEUES
 # ===============================================================================
 TABLE_ID_PREFIX = "bklog"
 
+DEFAULT_OPERATOR = os.environ.get("BKAPP_ES_OPERATOR", "admin")
 ES_DATE_FORMAT = os.environ.get("BKAPP_ES_DATE_FORMAT", "%Y%m%d")
 ES_SHARDS_SIZE = int(os.environ.get("BKAPP_ES_SHARDS_SIZE", 30))
 ES_SLICE_GAP = int(os.environ.get("BKAPP_ES_SLICE_GAP", 60))
 ES_SHARDS = int(os.environ.get("BKAPP_ES_SHARDS", 3))
+ES_SHARDS_MAX = int(os.environ.get("BKAPP_ES_SHARDS_MAX", 64))
 ES_REPLICAS = int(os.environ.get("BKAPP_ES_REPLICAS", 1))
 ES_STORAGE_DEFAULT_DURATION = int(os.environ.get("BKAPP_ES_STORAGE_DURATION", 7))
 ES_PRIVATE_STORAGE_DURATION = int(os.environ.get("BKAPP_ES_PRIVATE_STORAGE_DURATION", 365))
@@ -694,7 +692,18 @@ ES_COMPATIBILITY = int(os.environ.get("BKAPP_ES_COMPATIBILITY", 0))
 FEATURE_EXPORT_SCROLL = os.environ.get("BKAPP_FEATURE_EXPORT_SCROLL", False)
 
 # BCS
-PAASCC_APIGATEWAY = ""
+BCS_API_GATEWAY_TOKEN = os.getenv("BKAPP_BCS_API_GATEWAY_TOKEN", "")
+BCS_CC_SSM_SWITCH = os.getenv("BKAPP_BCS_CC_SSM_SWITCH", "off") == "on"
+BCS_APIGATEWAY_HOST = os.getenv("BKAPP_BCS_APIGATEWAY_HOST", "")
+BCS_CC_APIGATEWAY_HOST = os.getenv("BKAPP_BCS_CC_APIGATEWAY_HOST", "")
+SSM_HOST = os.getenv("BKAPP_SSM_HOST", "")
+BCS_WEB_CONSOLE_DOMAIN = ""
+BKLOG_CONFIG_KIND = os.getenv("BKAPP_BKLOG_CONFIG_KIND", "BkLogConfig")
+BKLOG_CONFIG_API_VERSION = os.getenv("BKAPP_BKLOG_CONFIG_API_VERSION", "bk.tencent.com/v1alpha1")
+BKLOG_CONFIG_VERSION = os.getenv("BKAPP_BKLOG_CONFIG_VERSION", "v1alpha1")
+
+# 是否关闭权限中心校验
+IGNORE_IAM_PERMISSION = os.environ.get("BKAPP_IGNORE_IAM_PERMISSION", False)
 
 # 日志采集器配置
 # 日志文件多久没更新则不再读取
@@ -738,6 +747,8 @@ ESQUERY_WHITE_LIST = [
     "data",
     "dataweb",
     "bk_bcs",
+    "bk-dbm",
+    "bk_dbm",
 ]
 
 # BK repo conf
@@ -746,6 +757,12 @@ BKREPO_USERNAME = os.getenv("BKREPO_USERNAME") or os.getenv("BKAPP_BKREPO_USERNA
 BKREPO_PASSWORD = os.getenv("BKREPO_PASSWORD") or os.getenv("BKAPP_BKREPO_PASSWORD")
 BKREPO_PROJECT = os.getenv("BKREPO_PROJECT") or os.getenv("BKAPP_BKREPO_PROJECT")
 BKREPO_BUCKET = os.getenv("BKREPO_BUCKET") or os.getenv("BKAPP_BKREPO_BUCKET")
+
+BKLOG_NODE_IP = os.getenv("BK_BKLOG_NODE_IP")
+BKLOG_STORAGE_ROOT_PATH = os.getenv("BK_BKLOG_STORAGE_ROOT_PATH")
+BKLOG_CLOUD_ID = os.getenv("BK_BKLOG_CLOUD_ID", 0)
+# custom report
+CUSTOM_REPORT_TYPE = os.getenv("BKAPP_CUSTOM_REPORT_TYPE", "log")
 
 # ===============================================================================
 # Demo业务配置
@@ -899,18 +916,23 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
         "OPTIONS": {
             "CLIENT_CLASS": "apps.utils.sentinel.SentinelClient",
             "PASSWORD": REDIS_PASSWD,
-            "SENTINELS": [
-                (
-                    REDIS_SENTINEL_HOST,
-                    REDIS_SENTINEL_PORT,
-                )
-            ],
+            "SENTINELS": [(REDIS_SENTINEL_HOST, REDIS_SENTINEL_PORT,)],
             "SENTINEL_KWARGS": {"password": REDIS_SENTINEL_PASSWORD},
         },
         "KEY_PREFIX": APP_CODE,
     }
     CACHES["default"] = CACHES["redis_sentinel"]
     CACHES["login_db"] = CACHES["redis_sentinel"]
+
+# ==============================================================================
+# Prometheus metrics token
+PROMETHEUS_METRICS_TOKEN = os.environ.get("PROMETHEUS_METRICS_TOKEN", "")
+# ==============================================================================
+
+# ==============================================================================
+# Listening Domain, 格式 http(s)://domain_name
+SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
+# ==============================================================================
 
 """
 以下为框架代码 请勿修改
@@ -926,6 +948,15 @@ if "celery" in sys.argv:
 if IS_USE_CELERY:
     CELERY_ENABLE_UTC = True
     CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+    from celery.signals import setup_logging
+
+    @setup_logging.connect
+    def config_loggers(*args, **kwags):
+        from logging.config import dictConfig
+
+        dictConfig(LOGGING)
+
 
 # remove disabled apps
 if locals().get("DISABLED_APPS"):

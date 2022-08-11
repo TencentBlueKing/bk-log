@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import json
 import os
@@ -142,10 +144,12 @@ class MyTestCase(TestCase):
     recursion_type = [dict, list]
     string_type = [str]
 
-    def runTest(self):
+    def runTest(self):  # pylint: disable=invalid-name
         print(self)
 
-    def assertDataStructure(self, result_data, expected_data, value_eq=False, list_exempt=False):
+    def assertDataStructure(
+        self, result_data, expected_data, value_eq=False, list_exempt=False
+    ):  # pylint: disable=invalid-name
         """
         将数据的结构以及类型进行断言验证
         :param result_data: 后台返回的数据
@@ -208,7 +212,7 @@ class MyTestCase(TestCase):
         elif value_eq:
             self.assertEqual(result_data, expected_data)
 
-    def assertListEqual(self, list1, list2, msg=None, is_sort=False):
+    def assertListEqual(self, list1, list2, msg=None, is_sort=False):  # pylint: disable=invalid-name
         if is_sort:
             list1.sort()
             list2.sort()

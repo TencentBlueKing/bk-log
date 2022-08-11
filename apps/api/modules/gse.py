@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
@@ -56,6 +58,22 @@ class _GseApi:
             description=_("获取agent状态"),
             before_request=get_agent_status_before,
             after_request=get_agent_status_after,
+        )
+        self.query_route = DataAPI(
+            method="POST",
+            url=GSE_APIGATEWAY_ROOT_V2 + "config_query_route",
+            module=self.MODULE,
+            description=_("查询数据路由配置信息"),
+            before_request=add_esb_info_before_request,
+            after_request=None,
+        )
+        self.query_stream_to = DataAPI(
+            method="POST",
+            url=GSE_APIGATEWAY_ROOT_V2 + "config_query_streamto",
+            module=self.MODULE,
+            description=_("查询数据入库消息队列或第三方平台的配置"),
+            before_request=add_esb_info_before_request,
+            after_request=None,
         )
 
 

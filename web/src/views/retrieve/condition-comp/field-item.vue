@@ -111,16 +111,7 @@ export default {
   },
   methods: {
     getFieldIcon(fieldType) {
-      const iconMap = {
-        number: 'log-icon icon-number',
-        keyword: 'log-icon log-icon icon-string',
-        text: 'log-icon icon-text',
-        date: 'bk-icon icon-clock',
-      };
-      if (fieldType === 'long' || fieldType === 'integer') {
-        return iconMap.number;
-      }
-      return iconMap[fieldType];
+      return this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].icon : 'log-icon icon-unkown';
     },
     // 点击字段行，展开显示聚合信息
     handleClickItem() {
@@ -161,6 +152,11 @@ export default {
         margin: 0 5px 0 0;
         font-size: 12px;
         color: #979ba5;
+      }
+
+      .icon-ext {
+        width: 18px;
+        transform: scale(.8)
       }
 
       .field-count {

@@ -21,6 +21,7 @@
   -->
 
 <template>
+  <!-- 自定义上报列表页面 -->
   <div class="custom-item-container" data-test-id="custom_div_customContainer">
     <section class="operation">
       <div class="top-operation">
@@ -28,6 +29,7 @@
           class="fl"
           theme="primary"
           data-test-id="customContainer_button_addNewCustom"
+          v-cursor="{ active: isAllowedCreate === false }"
           @click="operateHandler({}, 'add')"
           :disabled="!collectProject || isAllowedCreate === null || isRequest">
           {{ $t('customReport.reportCreate') }}
@@ -84,6 +86,15 @@
               </span>
             </template>
           </bk-table-column>
+          <bk-table-column
+            :label="$t('dataSource.retention')"
+            min-width="50">
+            <template slot-scope="props">
+              <span>
+                {{ props.row.retention ? `${props.row.retention}${$t('天')}` : '--' }}
+              </span>
+            </template>
+          </bk-table-column>
           <bk-table-column :label="$t('customReport.createRecord')" prop="created_at">
             <template slot-scope="props">
               <span>
@@ -126,7 +137,7 @@
               <bk-dropdown-menu ref="dropdown" align="right">
                 <i
                   class="bk-icon icon-more"
-                  style="margin-left: 5px; font-size: 14px; font-weight: bold;"
+                  style="font-size: 14px; font-weight: bold; display: inline-block;"
                   slot="dropdown-trigger">
                 </i>
                 <ul class="bk-dropdown-list" slot="dropdown-content">
@@ -224,13 +235,14 @@ export default {
     ...mapGetters({
       projectId: 'projectId',
       bkBizId: 'bkBizId',
+      authGlobalInfo: 'globals/authContainerInfo',
     }),
   },
   created() {
-    this.checkCreateAuth();
+    !this.authGlobalInfo && this.checkCreateAuth();
   },
   mounted() {
-    this.search();
+    !this.authGlobalInfo && this.search();
   },
   methods: {
     search() {
@@ -255,6 +267,7 @@ export default {
         return;
       }
 
+      let backRoute;
       const params = {};
       const query = {};
       const routeMap = {
@@ -274,6 +287,10 @@ export default {
         params.collectorId = row.collector_config_id;
       }
 
+      if (operateType === 'clean') {
+        backRoute = this.$route.name;
+      }
+
       const targetRoute = routeMap[operateType];
       // this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
@@ -282,6 +299,7 @@ export default {
         query: {
           ...query,
           projectId: window.localStorage.getItem('project_id'),
+          backRoute,
         },
       });
     },
@@ -307,7 +325,7 @@ export default {
     deleteCollect(row) {
       this.$bkInfo({
         type: 'warning',
-        title: this.$t('retrieve.Confirm_delete'),
+        subTitle: `${this.$t('当前上报名称为')} ${row.collector_config_name}，${this.$t('确认要删除')}`,
         confirmFn: () => {
           this.requestDeleteCollect(row);
         },

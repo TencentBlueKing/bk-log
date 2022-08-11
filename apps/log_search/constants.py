@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from enum import Enum
 from django.conf import settings
@@ -64,6 +66,8 @@ class TagColor(ChoicesEnum):
     )
 
 
+BIZ_PROPERTY_TYPE_ENUM = "enum"
+
 DEFAULT_TAG_COLOR = TagColor.BLUE
 
 DEFAULT_BK_CLOUD_ID = 0
@@ -79,6 +83,9 @@ BK_BCS_APP_CODE = "bk_bcs"
 RESULT_WINDOW_COST_TIME = 1 / 3
 # API请求异常编码
 API_RESULT_ERROR_AUTH = "40000"
+
+# 角色组
+BK_PROPERTY_GROUP_ROLE = "role"
 
 # cc api find_module_with_relation
 MAX_LIST_BIZ_HOSTS_PARAMS_COUNT = 200
@@ -336,6 +343,8 @@ class CustomTypeEnum(ChoicesEnum):
         render_context = {"otlp_report_config": render_otlp_report_config()}
         result = []
         for key, value in cls.get_dict_choices().items():
+            if key not in settings.CUSTOM_REPORT_TYPE.split(","):
+                continue
             introduction = cls._custom_introductions.value.get(key, "").format(**render_context)
             result.append({"id": key, "name": value, "introduction": markdown.markdown(introduction)})
         return result
@@ -557,7 +566,10 @@ class GlobalCategoriesEnum(ChoicesEnum):
     APPLICATIONS = {
         "id": "applications",
         "name": "应用",
-        "children": [{"id": "application_check", "name": _("业务应用"), "children": []}],
+        "children": [
+            {"id": "application_check", "name": _("业务应用"), "children": []},
+            {"id": "kubernetes", "name": "kubernetes", "children": []},
+        ],
     }
 
     OTHER = {"id": "others", "name": "其他", "children": [{"id": "other_rt", "name": _("其他"), "children": []}]}

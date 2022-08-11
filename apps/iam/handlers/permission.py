@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 from typing import Union, List, Dict
@@ -315,6 +317,9 @@ class Permission(object):
             from apps.log_search.models import ProjectInfo
 
             business_list = ProjectInfo.objects.all()
+        # 跳过权限检验
+        if settings.IGNORE_IAM_PERMISSION:
+            return business_list
 
         # 拉取策略
         request = self.make_request(action=action)

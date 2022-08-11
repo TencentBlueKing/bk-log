@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from apps.utils import ChoicesEnum
 
@@ -39,7 +41,7 @@ NEW_CLASS_FIELD_PREFIX = "dist"
 
 NEW_CLASS_SENSITIVITY_FIELD = "sensitivity"
 NEW_CLASS_QUERY_FIELDS = ["signature"]
-NEW_CLASS_QUERY_TIME_RANGE = "1d"
+NEW_CLASS_QUERY_TIME_RANGE = "customized"
 
 CLUSTERING_CONFIG_EXCLUDE = ["sample_set_id", "model_id"]
 CLUSTERING_CONFIG_DEFAULT = "default_clustering_config"
@@ -91,6 +93,8 @@ DEFAULT_ACTION_CONFIG = {
     "alarm_interval": 1440,
     "send_recovery_alarm": False,
 }
+
+NOT_NEED_EDIT_NODES = ["format_signature"]
 
 DEFAULT_PATTERN_MONITOR_MSG = """{{content.level}}
 {{content.begin_time}}

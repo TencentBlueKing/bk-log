@@ -16,13 +16,14 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import json
 import base64
 
 from django.utils.translation import ugettext_lazy as _
 
-from apps.log_search.constants import TimeEnum
 from apps.api.base import DataAPI
 from apps.api.modules.utils import add_esb_info_before_request
 from config.domains import MONITOR_APIGATEWAY_ROOT
@@ -49,6 +50,12 @@ def create_cluster_info_before(params):
     """
     params = add_esb_info_before_request(params)
     params["custom_option"] = json.dumps(params["custom_option"])
+    return params
+
+
+def register_bcs_cluster_info_before_request(params):
+    params = add_esb_info_before_request(params)
+    params["creator"] = params["bk_username"]
     return params
 
 
@@ -182,7 +189,6 @@ class _TransferApi(object):
             description=_("查询一个结果表的存储信息"),
             before_request=add_esb_info_before_request,
             after_request=get_result_table_storage_after,
-            cache_time=TimeEnum.FIVE_MINUTE_SECOND.value,
         )
         self.get_cluster_info = DataAPI(
             method="GET",
@@ -338,6 +344,29 @@ class _TransferApi(object):
             url=MONITOR_APIGATEWAY_ROOT + "metadata_get_restore_result_table_snapshot_state/",
             module=self.MODULE,
             description=_("快照回溯状态"),
+            before_request=add_esb_info_before_request,
+        )
+
+        # bcs operate
+        self.register_bcs_cluster = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "register_bcs_cluster/",
+            module=self.MODULE,
+            description=_("注册bcs集群"),
+            before_request=register_bcs_cluster_info_before_request,
+        )
+        self.list_bcs_cluster_info = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "list_bcs_cluster_info/",
+            module=self.MODULE,
+            description=_("list bcs集群"),
+            before_request=add_esb_info_before_request,
+        )
+        self.apply_yaml_to_bcs_cluster = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "apply_yaml_to_bcs_cluster/",
+            module=self.MODULE,
+            description=_("apply yaml to bcs"),
             before_request=add_esb_info_before_request,
         )
 

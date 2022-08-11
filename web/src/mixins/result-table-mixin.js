@@ -103,6 +103,10 @@ export default {
       type: String,
       default: '',
     },
+    operatorConfig: {
+      type: Object,
+      required: true,
+    },
     handleClickTools: Function,
   },
   data() {
@@ -175,15 +179,15 @@ export default {
     },
     getMarkList(content) {
       // 匹配高亮标签
-      let value = content;
+      let markList = [];
 
       const markVal = content.match(/(<mark>).*?(<\/mark>)/g) || [];
       if (markVal.length) {
-        value = String(value).replace(/<mark>/g, '')
-          .replace(/<\/mark>/g, '');
+        markList = markVal.map(item => item.replace(/<mark>/g, '')
+          .replace(/<\/mark>/g, ''));
       }
 
-      return value;
+      return markList;
     },
     formatterStr(content) {
       // 匹配高亮标签
@@ -191,8 +195,6 @@ export default {
 
       const markVal = content.match(/(<mark>).*?(<\/mark>)/g) || [];
       if (markVal.length) {
-        this.markList = markVal.map(item => item.replace(/<mark>/g, '')
-          .replace(/<\/mark>/g, ''));
         value = String(value).replace(/<mark>/g, '')
           .replace(/<\/mark>/g, '');
       }
@@ -255,7 +257,7 @@ export default {
       if (field) {
         const fieldName = this.showFieldAlias ? this.fieldAliasMap[field.field_name] : field.field_name;
         const fieldType = field.field_type;
-        const fieldIcon = this.getFieldIcon(field.field_type) || 'log-icon icon-unkown';
+        const fieldIcon = this.getFieldIcon(field.field_type);
         const content = this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].name : undefined;
 
         return h('div', {
@@ -290,16 +292,7 @@ export default {
       }
     },
     getFieldIcon(fieldType) {
-      const iconMap = {
-        number: 'log-icon icon-number',
-        keyword: 'log-icon log-icon icon-string',
-        text: 'log-icon icon-text',
-        date: 'bk-icon icon-clock',
-      };
-      if (fieldType === 'long' || fieldType === 'integer') {
-        return iconMap.number;
-      }
-      return iconMap[fieldType];
+      return this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].icon : 'log-icon icon-unkown';
     },
     handleMenuClick(option) {
       switch (option.operation) {

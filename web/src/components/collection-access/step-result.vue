@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div class="step-result-wrapper">
+  <div class="step-result-wrapper" v-if="isNotApplyPage">
     <div class="step-result-container" data-test-id="finish_div_finishBox">
       <i class="bk-icon icon-check-circle"></i>
       <h3 class="title">{{ finishText }}</h3>
@@ -47,6 +47,22 @@
       </div>
     </div>
   </div>
+  <div
+    v-else
+    class="approval-detail-container">
+    <bk-exception v-if="applyData" type="building">
+      <div class="approval-text">
+        <span>{{ $t('容量评估进行中') }}</span>
+        <a :href="applyData.iframe_ticket_url"
+           class="button-text"
+           target="_blank"
+           data-test-id="capacityContaineBox_a_viewApprovalDetails">
+          {{ $t('点击查看审批详情') }}
+          <span class="log-icon icon-lianjie"></span>
+        </a>
+      </div>
+    </bk-exception>
+  </div>
 </template>
 
 <script>
@@ -69,6 +85,10 @@ export default {
         return {};
       },
     },
+    applyData: {
+      type: Object,
+      require: true,
+    },
   },
   data() {
     return {
@@ -79,6 +99,8 @@ export default {
         field: this.$t('dataManage.field'),
         start: this.$t('dataManage.start'),
         stop: this.$t('dataManage.stop'),
+        storage: this.$t('dataManage.editFinish'),
+        container: this.$t('dataManage.editFinish'),
       },
     };
   },
@@ -94,6 +116,9 @@ export default {
     // }
     finishText() {
       return this.finish[this.operateType];
+    },
+    isNotApplyPage() {
+      return this.applyData.itsm_ticket_status !== 'applying';
     },
   },
   methods: {
@@ -169,6 +194,22 @@ export default {
 
       .bk-button + .bk-button {
         margin-left: 10px;
+      }
+    }
+  }
+
+  .approval-detail-container {
+    height: 100%;
+    padding-top: 100px;
+    font-size: 14px;
+
+    .approval-text {
+      display: flex;
+      flex-flow: column;
+      font-size: 16px;
+
+      .button-text {
+        margin-top: 16px;
       }
     }
   }

@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import re
 from collections import defaultdict
@@ -233,6 +235,7 @@ class IndexSetHandler(APIModel):
         time_field_unit=None,
         bk_app_code=None,
         username="",
+        bcs_project_id="",
     ):
         # 创建索引
         index_set_handler = cls.get_index_set_handler(scenario_id)
@@ -253,6 +256,7 @@ class IndexSetHandler(APIModel):
             time_field_unit=time_field_unit,
             bk_app_code=bk_app_code,
             username=username,
+            bcs_project_id=bcs_project_id,
         ).create_index_set()
 
         # add user_operation_record
@@ -749,6 +753,7 @@ class BaseIndexSetHandler(object):
         action=None,
         bk_app_code=None,
         username="",
+        bcs_project_id=0,
     ):
         super().__init__()
 
@@ -768,6 +773,7 @@ class BaseIndexSetHandler(object):
         self.category_id = category_id
         self.bk_app_code = bk_app_code
         self.username = username
+        self.bcs_project_id = bcs_project_id
 
         # time_field
         self.time_field = time_field
@@ -835,14 +841,6 @@ class BaseIndexSetHandler(object):
         1.检查trace结构是否符合
         :return:
         """
-        # 检查索引是否字段冲突
-        # bkdata可能还没有授权导致无法获取mapping
-        MappingHandlers(
-            ",".join([index.get("result_table_id") for index in self.indexes]),
-            -1,
-            self.scenario_id,
-            self.storage_cluster_id,
-        ).check_fields_not_conflict()
         if self.is_trace_log:
             self.is_trace_log_pre_check()
 
@@ -862,6 +860,7 @@ class BaseIndexSetHandler(object):
             time_field_type=self.time_field_type,
             time_field_unit=self.time_field_unit,
             source_app_code=self.bk_app_code,
+            bcs_project_id=self.bcs_project_id,
         )
         logger.info(
             "[create_index_set][{}]index_set_name => {}, indexes => {}".format(
@@ -872,9 +871,9 @@ class BaseIndexSetHandler(object):
         # 创建索引集的同时添加索引
         for index in self.indexes:
             IndexSetHandler(index_set_id=self.index_set_obj.index_set_id).add_index(
-                index["bk_biz_id"],
-                index.get("time_field"),
-                index["result_table_id"],
+                bk_biz_id=index["bk_biz_id"],
+                time_filed=index.get("time_field"),
+                result_table_id=index["result_table_id"],
             )
 
         # 更新字段快照
@@ -893,12 +892,6 @@ class BaseIndexSetHandler(object):
         return True
 
     def pre_update(self):
-        MappingHandlers(
-            ",".join([index.get("result_table_id") for index in self.indexes]),
-            -1,
-            self.scenario_id,
-            self.storage_cluster_id,
-        ).check_fields_not_conflict()
         if self.is_trace_log:
             self.is_trace_log_pre_check()
 
@@ -973,7 +966,7 @@ class BaseIndexSetHandler(object):
                     "bkdata_authentication_method": "user",
                 }
             )
-            property_dict: dict = MappingHandlers.find_property_dict_first(mapping_list)
+            property_dict: dict = MappingHandlers.find_property_dict(mapping_list)
             field_list: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
             trace_proto_type = Proto.judge_trace_type(field_list)
             if trace_proto_type is not None:

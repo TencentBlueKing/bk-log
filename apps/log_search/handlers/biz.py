@@ -16,8 +16,11 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import copy
+from pypinyin import lazy_pinyin
 from collections import defaultdict, namedtuple
 from inspect import signature
 from typing import List
@@ -37,10 +40,12 @@ from apps.log_search.constants import (
     MAX_LIST_BIZ_HOSTS_PARAMS_COUNT,
     CCInstanceType,
     FIND_MODULE_WITH_RELATION_FIELDS,
+    BK_PROPERTY_GROUP_ROLE,
+    BIZ_PROPERTY_TYPE_ENUM,
 )
 from apps.utils import APIModel
-from apps.utils.cache import cache_five_minute, cache_one_hour
-from apps.log_search.models import ProjectInfo
+from apps.utils.cache import cache_five_minute, cache_one_hour, cache_half_hour
+from apps.log_search.models import ProjectInfo, BizProperty
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
 
@@ -64,7 +69,7 @@ class BizHandler(APIModel):
                 "bk_biz_productor",
             ]
         }
-        biz_list = CCApi.get_app_list(params).get("info", [])
+        biz_list = CCApi.get_app_list.bulk_request(params)
         if not fields or not biz_list:
             return biz_list
         business = []
@@ -166,7 +171,21 @@ class BizHandler(APIModel):
                     module_dict[module["bk_inst_id"]].append(self.host_dict_with_os_type(host["host"]))
             if params.get("remove_empty_nodes"):
                 self.foreach_topo_tree(biz_inst_topo, self._remove_empty_nodes, order="desc")
+        biz_inst_topo = self.sort_topo_tree_by_pinyin(biz_inst_topo)
         return biz_inst_topo
+
+    @classmethod
+    def sort_topo_tree_by_pinyin(cls, topo_trees: list):
+        """
+        深度优先遍历, 将拓扑结构按拼音排序
+        """
+        if not topo_trees:
+            return topo_trees
+        topo_trees.sort(key=lambda topo: lazy_pinyin(topo.get("bk_inst_name", "")))
+        for topo_tree in topo_trees:
+            cls.sort_topo_tree_by_pinyin(topo_tree.get("child", []))
+
+        return topo_trees
 
     def _remove_child(self, topo):
         for child in topo:
@@ -479,8 +498,15 @@ class BizHandler(APIModel):
         for host in host_list:
             host["bk_biz_id"] = self.bk_biz_id
             host["app_module"] = host["module"]
-
         return host_list
+
+    @cache_half_hour("cmdb:get_cache_hosts_{bk_biz_id}", compress=True)
+    def get_cache_hosts(self, bk_biz_id):
+        host_info = self.get_hosts()
+        result = defaultdict(dict)
+        for host in host_info:
+            result[host["host"]["bk_host_innerip"]][str(host["host"]["bk_cloud_id"])] = host
+        return result
 
     @staticmethod
     def _remove_empty_nodes(node):
@@ -826,6 +852,7 @@ class BizHandler(APIModel):
                         "labels": labels,
                     }
                 )
+        results = sorted(results, key=lambda e: lazy_pinyin(e["bk_inst_name"]))
         return results
 
     def search_module(self, bk_biz_id, bk_set_id):
@@ -1049,7 +1076,8 @@ class BizHandler(APIModel):
             response_data = CCApi.list_service_template.bulk_request(params)
         if template_type == TemplateType.SET_TEMPLATE.value:
             response_data = CCApi.list_set_template.bulk_request(params)
-        project = ProjectInfo.objects.get(bk_biz_id=self.bk_biz_id)
+        project = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first()
+        response_data = sorted(response_data, key=lambda e: lazy_pinyin(e.get("name", "")))
         result = {
             "bk_biz_id": self.bk_biz_id,
             "bk_biz_name": project.project_name,
@@ -1162,6 +1190,46 @@ class BizHandler(APIModel):
         host_dict = self.get_node_path(sets_info)
         host_result = self.get_service_category(host_dict, is_dynamic=True)
         return host_result
+
+    @staticmethod
+    def get_biz_properties() -> dict:
+        """
+        获取CMDB业务属性值信息
+        """
+        biz_properties_dict = {}
+        biz_properties_enum_dict = defaultdict(dict)
+        biz_properties = CCApi.search_object_attribute({"bk_obj_id": "biz"})
+        for bi in biz_properties:
+            if bi["bk_property_group"] == BK_PROPERTY_GROUP_ROLE:
+                continue
+            biz_properties_dict[bi["bk_property_id"]] = bi["bk_property_name"]
+            if bi["bk_property_type"] == BIZ_PROPERTY_TYPE_ENUM:
+                for oi in bi["option"]:
+                    biz_properties_enum_dict[bi["bk_property_id"]][oi["id"]] = oi["name"]
+
+        params = {"fields": [pi for pi in biz_properties_dict]}
+        params["fields"].append("bk_biz_id")
+        biz_list = CCApi.get_app_list.bulk_request(params)
+        result = {}
+        for biz in biz_list:
+            bk_biz_id = int(biz["bk_biz_id"])
+            result[bk_biz_id] = {}
+            for bk_property_id in biz_properties_dict:
+                biz_property_value = biz.get(bk_property_id)
+                if not biz_property_value:
+                    continue
+                biz_property_value = biz_properties_enum_dict.get(bk_property_id, {}).get(
+                    biz_property_value, biz_property_value
+                )
+                result[bk_biz_id][bk_property_id] = {
+                    "biz_property_name": biz_properties_dict[bk_property_id],
+                    "biz_property_value": biz_property_value,
+                }
+
+        return result
+
+    def list_biz_property(self):
+        return BizProperty.list_biz_property()
 
 
 class ServiceCategorySearcher(object):

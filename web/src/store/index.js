@@ -87,6 +87,8 @@ const store = new Vuex.Store({
     // 新人指引
     userGuideData: {},
     curCustomReport: null,
+    // demo 业务链接
+    demoUrl: '',
   },
   // 公共 getters
   getters: {
@@ -105,6 +107,7 @@ const store = new Vuex.Store({
     collectDetail: state => state.collectDetail[1],
     asIframe: state => state.asIframe,
     iframeQuery: state => state.iframeQuery,
+    demoUrl: state => state.demoUrl,
     accessUserManage: state => Boolean(state.topMenu.find(item => item.id === 'manage')?.
       children.some(item => (item.id === 'permissionGroup' && item.project_manage === true))),
   },
@@ -210,6 +213,9 @@ const store = new Vuex.Store({
     },
     setUserGuideData(state, userGuideData) {
       state.userGuideData = userGuideData;
+    },
+    setDemoUrl(state, demoUrl) {
+      state.demoUrl = demoUrl;
     },
   },
   actions: {
@@ -380,7 +386,11 @@ store.dispatch = function (_type, _payload, config = {}) {
     return;
   }
 
-  store._actionSubscribers.forEach(sub => sub(action, store.state));
+  store._actionSubscribers
+    .slice()
+    .filter(sub => sub.before)
+    .forEach(sub => sub.before(action, store.state));
+  // store._actionSubscribers.forEach(sub => sub(action, store.state));
 
   return entry.length > 1
     ? Promise.all(entry.map(handler => handler(payload, config)))

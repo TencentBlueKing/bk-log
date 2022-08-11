@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import copy
 import json
@@ -169,7 +171,8 @@ class BkLogDelimiterEtlStorage(EtlStorage):
                                                             "label": "labela2dfe3",
                                                             "assign": [
                                                                 {
-                                                                    "index": str(field["field_index"]),
+                                                                    # 这里是为了对齐计算平台和监控field_index与index
+                                                                    "index": str(field["field_index"] - 1),
                                                                     "assign_to": field["alias_name"]
                                                                     if field["alias_name"]
                                                                     else field["field_name"],

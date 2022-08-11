@@ -101,7 +101,8 @@
           :show-context-log="showContextLog"
           :show-monitor-web="showMonitorWeb"
           :show-web-console="showWebConsole"
-          :handle-click="(event) => handleClickTools(event, row)" />
+          :operator-config="operatorConfig"
+          :handle-click="(event) => handleClickTools(event, row, operatorConfig)" />
       </template>
     </bk-table-column>
     <!-- 初次加载骨架屏loading -->

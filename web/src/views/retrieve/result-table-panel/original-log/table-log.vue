@@ -192,9 +192,20 @@ export default {
 
       window.open(url);
     },
-    handleClickTools(event, row) {
+    handleClickTools(event, row, config = {}) {
+      const contextFields = config.contextAndRealtime.extra?.context_fields;
+      const dialogNewParams = {};
+      // 传参配置指定字段
+      if (Array.isArray(contextFields) && contextFields.length) {
+        contextFields.push(config.timeField);
+        for (const [key, val] of Object.entries(row)) {
+          if (contextFields.includes(key)) dialogNewParams[key] = val;
+        }
+      } else {
+        Object.assign(dialogNewParams, row);
+      }
       if (['realTimeLog', 'contextLog'].includes(event)) {
-        this.openLogDialog(row, event);
+        this.openLogDialog(dialogNewParams, event);
       } else if (event === 'monitorWeb') this.openMonitorWeb(row);
       else if (event === 'webConsole') this.openWebConsole(row);
     },
@@ -249,9 +260,10 @@ export default {
 
       td mark {
         background: #f3e186;
+        color: #575961;
       }
 
-      /deep/ .result-table-loading {
+      ::v-deep .result-table-loading {
         width: calc(100% - 2px);
         height: calc(100% - 2px);
       }
@@ -394,7 +406,7 @@ export default {
       }
     }
 
-    /deep/ .render-header {
+    ::v-deep .render-header {
       .field-type-icon {
         width: 12px;
         margin: 0 4px 0 0;
@@ -405,7 +417,7 @@ export default {
   }
   // 日志全屏状态下的样式
   .log-full-dialog {
-    /deep/ .bk-dialog-content {
+    ::v-deep .bk-dialog-content {
       /* stylelint-disable-next-line declaration-no-important */
       margin-bottom: 0 !important;
     }

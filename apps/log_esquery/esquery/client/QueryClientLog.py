@@ -17,39 +17,42 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import re
 import socket
+from typing import Any, Dict
 
-from typing import Dict, Any
-from elasticsearch import Elasticsearch as Elasticsearch
-from elasticsearch6 import Elasticsearch as Elasticsearch6
-from elasticsearch5 import Elasticsearch as Elasticsearch5
-from django.utils.translation import ugettext as _
 from django.conf import settings
+from django.utils.translation import ugettext as _
+from elasticsearch import Elasticsearch as Elasticsearch
+from elasticsearch5 import Elasticsearch as Elasticsearch5
 
-from apps.log_esquery.esquery.client.QueryClientTemplate import QueryClientTemplate
 from apps.api import TransferApi
+from apps.log_databus.models import CollectorConfig
+from apps.log_esquery.constants import DEFAULT_SCHEMA
+from apps.log_esquery.esquery.client.QueryClientTemplate import QueryClientTemplate
 from apps.log_esquery.exceptions import (
-    EsClientMetaInfoException,
-    EsClientConnectInfoException,
-    EsClientSocketException,
-    EsClientSearchException,
     BaseSearchFieldsException,
+    EsClientConnectInfoException,
+    EsClientMetaInfoException,
     EsClientScrollException,
+    EsClientSearchException,
+    EsClientSocketException,
     EsException,
 )
 from apps.log_esquery.type_constants import type_mapping_dict
-from apps.utils.log import logger
-from apps.log_databus.models import CollectorConfig
-from apps.utils.thread import MultiExecuteFunc
+from apps.log_esquery.utils.es_client import get_es_client
 from apps.log_search.exceptions import IndexResultTableApiException
-from apps.log_esquery.constants import DEFAULT_SCHEMA
+from apps.utils.cache import cache_five_minute
+from apps.utils.log import logger
+from apps.utils.thread import MultiExecuteFunc
 
 DATE_RE = re.compile("[0-9]{8}")
 
 
-class QueryClientLog(QueryClientTemplate):
+class QueryClientLog(QueryClientTemplate):  # pylint: disable=invalid-name
     def __init__(self):
         super(QueryClientLog, self).__init__()
         self._client: Elasticsearch
@@ -156,7 +159,7 @@ class QueryClientLog(QueryClientTemplate):
         return new_index_list[-1]
 
     def _get_connection(self, index: str):
-        self.host, self.port, self.username, self.password, self.version, self.schema = self._connect_info(index)
+        self.host, self.port, self.username, self.password, self.version, self.schema = self._connect_info(index=index)
         self._active: bool = False
 
         if not self.host or not self.port:
@@ -176,18 +179,11 @@ class QueryClientLog(QueryClientTemplate):
 
         logger.info(f"[esquery]get connection with {self.host}:{self.port} by {self.username}")
 
-        # 根绝版本加载客户端
-        if self.version.startswith("5."):
-            self.elastic_client = Elasticsearch5
-        elif self.version.startswith("6."):
-            self.elastic_client = Elasticsearch6
-        else:
-            self.elastic_client = Elasticsearch
-
-        http_auth = (self.username, self.password) if self.username and self.password else None
-        self._client: Elasticsearch = self.elastic_client(
-            [self.host],
-            http_auth=http_auth,
+        self._client: Elasticsearch = get_es_client(
+            version=self.version,
+            hosts=[self.host],
+            username=self.username,
+            password=self.password,
             scheme=self.schema,
             port=self.port,
             sniffer_timeout=600,
@@ -200,7 +196,8 @@ class QueryClientLog(QueryClientTemplate):
             self._active = True
 
     @staticmethod
-    def _connect_info(index: str) -> tuple:
+    @cache_five_minute("_connect_info_{index}", need_md5=True)
+    def _connect_info(index: str = "") -> tuple:
         transfer_api_response: dict = TransferApi.get_result_table_storage(
             {"result_table_list": index, "storage_type": "elasticsearch"}
         )
@@ -255,8 +252,8 @@ class QueryClientLog(QueryClientTemplate):
 
         # 补充索引集群信息
         if with_storage and index_list:
-            indices = ",".join([_collect.table_id for _collect in collect_obj])
-            storage_info = cls.bulk_cluster_infos(indices)
+            indices = [_collect.table_id for _collect in collect_obj]
+            storage_info = cls.bulk_cluster_infos(result_table_list=indices)
             for _index in index_list:
                 cluster_config = storage_info.get(_index["result_table_id"], {}).get("cluster_config", {})
                 _index.update(
@@ -268,7 +265,8 @@ class QueryClientLog(QueryClientTemplate):
         return index_list
 
     @staticmethod
-    def bulk_cluster_infos(result_table_list: list):
+    @cache_five_minute("bulk_cluster_info_{result_table_list}", need_md5=True)
+    def bulk_cluster_infos(result_table_list: list = None):
         multi_execute_func = MultiExecuteFunc()
         for rt in result_table_list:
             multi_execute_func.append(
@@ -280,7 +278,8 @@ class QueryClientLog(QueryClientTemplate):
             cluster_infos.update(cluster_info)
         return cluster_infos
 
-    def get_cluster_info(self, result_table_id):
+    @cache_five_minute("get_cluster_info_{result_table_id}", need_md5=True)
+    def get_cluster_info(self, result_table_id=None):
         result_table_id = result_table_id.split(",")[0]
         # 并发查询所需的配置
         multi_execute_func = MultiExecuteFunc()

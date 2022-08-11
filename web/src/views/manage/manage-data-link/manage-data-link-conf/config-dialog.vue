@@ -58,6 +58,7 @@
           <bk-select
             data-test-id="linkConfigForm_select_selectPermitted"
             v-model="formData.bk_biz_id"
+            searchable
             :clearable="false"
             style="width: 380px;">
             <template v-for="item in projectList">
@@ -264,7 +265,7 @@ export default {
 
 <style lang="scss" scoped>
   .link-config-form {
-    /deep/ .bk-form-content {
+    ::v-deep .bk-form-content {
       position: relative;
 
       .form-error-tip {

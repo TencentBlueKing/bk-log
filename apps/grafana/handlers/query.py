@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import copy
 import re
@@ -533,7 +535,9 @@ class GrafanaQueryHandler:
         biz_handler = BizHandler(bk_biz_id=self.bk_biz_id)
 
         if variable_type == "host":
-            host_fields = [c["field"] for c in conditions_config] + [label_field, value_field]
+            host_fields = [c["key"] for c in conditions_config] + [label_field, value_field]
+            if "bk_host_innerip" not in host_fields:
+                host_fields.append("bk_host_innerip")
             instances = biz_handler.get_hosts(host_fields)
             for instance in instances:
                 instance.update(instance["host"])

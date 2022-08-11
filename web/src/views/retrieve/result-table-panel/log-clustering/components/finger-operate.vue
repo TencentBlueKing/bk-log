@@ -105,18 +105,18 @@
       </div>
     </div>
 
-    <div class="partter fl-sb" style="width: 200px">
-      <span>Partter</span>
-      <div class="partter-slider-box fl-sb">
+    <div class="pattern fl-sb" style="width: 200px">
+      <span>Pattern</span>
+      <div class="pattern-slider-box fl-sb">
         <span>{{$t('少')}}</span>
         <bk-slider
-          class="partter-slider"
-          v-model="partterSize"
+          class="pattern-slider"
+          v-model="patternSize"
           data-test-id="fingerTable_slider_patterSize"
           :show-tip="false"
           :disable="!fingerOperateData.signatureSwitch"
           :max-value="fingerOperateData.sliderMaxVal"
-          @change="handleChangePartterSize"></bk-slider>
+          @change="handleChangepatternSize"></bk-slider>
         <span>{{$t('多')}}</span>
       </div>
     </div>
@@ -145,7 +145,7 @@ export default {
       alarmSwitch: false,
       group: [], // 当前选择分组的值
       isToggle: false, // 当前是否显示分组下拉框
-      partterSize: 0,
+      patternSize: 0,
       yearOnYearHour: 0,
       isNear24: false,
       isRequestAlarm: false,
@@ -185,8 +185,8 @@ export default {
     handleShowNearPattern(state) {
       this.$emit('handleFingerOperate', 'isShowNear', state);
     },
-    handleChangePartterSize(val) {
-      this.$emit('handleFingerOperate', 'partterSize', this.fingerOperateData.partterList[val]);
+    handleChangepatternSize(val) {
+      this.$emit('handleFingerOperate', 'patternSize', this.fingerOperateData.patternList[val]);
     },
     changeCustomizeState(val) {
       this.$emit('handleFingerOperate', 'customize', val);
@@ -216,9 +216,7 @@ export default {
       this.interactType = true;
     },
     handleShowAlarmPopover(e) {
-      if (this.popoverInstance) {
-        return;
-      }
+      if (this.popoverInstance || !this.fingerOperateData.signatureSwitch) return;
       this.popoverInstance = this.$bkPopover(e.target, {
         content: this.$refs.alarmPopover,
         trigger: 'mouseenter',
@@ -232,7 +230,7 @@ export default {
     },
     initCache() {
       // 赋值缓存
-      this.partterSize = this.fingerOperateData.partterSize;
+      this.patternSize = this.fingerOperateData.patternSize;
       this.group = this.requestData.group_by;
       this.yearOnYearHour = this.requestData.year_on_year_hour;
       this.isNear24 = this.requestData.show_new_pattern;
@@ -331,14 +329,14 @@ export default {
     }
   }
 
-  .partter {
+  .pattern {
     width: 200px;
 
-    .partter-slider-box {
+    .pattern-slider-box {
       width: 154px;
     }
 
-    .partter-slider {
+    .pattern-slider {
       width: 114px;
     }
   }

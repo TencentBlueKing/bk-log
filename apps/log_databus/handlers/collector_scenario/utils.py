@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 
@@ -45,6 +47,47 @@ def deal_collector_scenario_param(params):
             filters.append({"conditions": [{"index": "-1", "key": key, "op": "="}]})  # 目前只支持include
             params["conditions"].update({"separator": "|"})
     return filters, params
+
+
+def convert_filters_to_collector_condition(filters_config, delimiter=""):
+    """
+    将下发的过滤参数转换为页面显示的condition参数
+    :param filters_config: [[{"index": "1", "key": "xx", "op": "="}]]
+    :param delimiter: 分隔符
+    """
+    try:
+        separator_filters = []
+        # 如果是逻辑或，会拆成多个配置下发
+        logic_op = "and" if len(filters_config) <= 1 else "or"
+        for filter_item in filters_config:
+            for condition_item in filter_item["conditions"]:
+                separator_filters.append(
+                    {
+                        "fieldindex": condition_item["index"],
+                        "word": condition_item["key"],
+                        "op": condition_item["op"],
+                        "logic_op": logic_op,
+                    }
+                )
+    except (IndexError, KeyError, ValueError):
+        separator_filters = []
+
+    match_content = ""
+    if separator_filters and separator_filters[0]["fieldindex"] == "-1":
+        _type = "match"
+        match_content = separator_filters[0].get("word", "")
+        separator_filters = []
+    elif not separator_filters:
+        _type = "match"
+    else:
+        _type = "separator"
+    return {
+        "separator": delimiter,
+        "separator_filters": separator_filters,
+        "type": _type,
+        "match_type": "include",  # 目前只支持include
+        "match_content": match_content,
+    }
 
 
 def build_es_option_type(field_type, es_version="5.X") -> dict:

@@ -48,7 +48,7 @@
       <div class="setting-main">
         <div class="setting-left">
           <div
-            v-for="item of currentList"
+            v-for="item of showCurrentList"
             :key="item.id"
             :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
             :data-test-id="`settingContainer_div_select${item.id}`"
@@ -75,6 +75,7 @@
             </div>
             <div
               style="color: #3a84ff; cursor: pointer;"
+              v-if="isCollector"
               @click="handleClickDetail">
               {{$t('retrieveSetting.moreDetails')}}
               <span class="log-icon icon-lianjie"></span>
@@ -91,6 +92,7 @@
               :total-fields="totalFields"
               :config-data="configData"
               :clean-config="cleanConfig"
+              :statistical-fields-data="statisticalFieldsData"
               @resetPage="resetPage"
               @updateLogFields="updateLogFields"
               @debugRequestChange="debugRequestChange" />
@@ -137,6 +139,10 @@ export default {
       type: Object,
       require: true,
     },
+    statisticalFieldsData: { // 过滤条件字段可选值关系表
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
@@ -167,6 +173,7 @@ export default {
           isEditable: false,
           isDisabled: false,
         }],
+      showCurrentList: [],
     };
   },
   computed: {
@@ -174,7 +181,7 @@ export default {
       return this.isShowDialog;
     },
     globalEditable() {
-      return this.currentList.find(el => el.id === this.currentChoice)?.isEditable;
+      return this.showCurrentList.find(el => el.id === this.currentChoice)?.isEditable;
     },
     isCollector() { // 字段提取的索引集来源是否为采集项
       return this.cleanConfig?.extra?.collector_config_id !== null;
@@ -196,11 +203,17 @@ export default {
     isDialogVisiable(val) {
       val && this.handleMenuStatus();
     },
+    'indexSetItem.scenario_id': {
+      immediate: true,
+      handler(val) {
+        this.setIsShowExtract(val === 'log');
+      },
+    },
   },
   methods: {
     handleMenuStatus() {
       const { isExtractActive, isClusteringActive, isCollector } = this;
-      this.currentList = this.currentList.map((list) => {
+      this.showCurrentList = this.showCurrentList.map((list) => {
         return {
           ...list,
           isEditable: list.id === 'extract' ? isExtractActive : isClusteringActive,
@@ -233,7 +246,7 @@ export default {
     openPage() {
       if (this.isOpenPage) {
         this.currentChoice = this.selectChoice;
-        this.showComponent = this.currentList.find(el => el.id === this.selectChoice)?.componentsName;
+        this.showComponent = this.showCurrentList.find(el => el.id === this.selectChoice)?.componentsName;
         this.isOpenPage = false;
       }
     },
@@ -301,12 +314,12 @@ export default {
      */
     jumpCloseSwitch() {
       if (!this.isClusteringActive && this.currentChoice === 'clustering') {
-        this.currentList[1].isEditable = false;
+        this.showCurrentList[1].isEditable = false;
       }
       if (!this.isSubmit && this.currentChoice === 'extract'
-       && this.currentList[0].isDisabled !== true
+       && this.showCurrentList[0].isDisabled !== true
        && !this.isExtractActive) {
-        this.currentList[0].isEditable = false;
+        this.showCurrentList[0].isEditable = false;
       }
     },
     debugRequestChange(val) {
@@ -325,6 +338,16 @@ export default {
         : `/#/manage/log-collection/collection-item/manage/${collectorID}?projectId=${projectId}`;
       window.open(jumpUrl, '_blank');
     },
+    setIsShowExtract(state) {
+      if (state) {
+        this.showCurrentList = this.currentList;
+      } else {
+        const spliceIndex = this.currentList.findIndex(item => item.id === 'extract');
+        const sliceCurrentList = JSON.parse(JSON.stringify(this.currentList));
+        sliceCurrentList.splice(spliceIndex, 1);
+        this.showCurrentList = sliceCurrentList;
+      }
+    },
     resetPage() {
       this.isShowPage = false;
       this.$nextTick(() => {
@@ -336,13 +359,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  /deep/.bk-dialog-body {
+  ::v-deep .bk-dialog-body {
     background-color: #f5f6fa;
     overflow: hidden;
     padding: 0;
   }
 
-  /deep/.bk-dialog-tool {
+  ::v-deep .bk-dialog-tool {
     display: none;
   }
 
@@ -367,7 +390,7 @@ export default {
       font-size: 16px;
       text-align: center;
       position: fixed;
-      z-index: 99;
+      z-index: 999;
       background-color: #fff;
       border-bottom: 1px solid #dcdee5;
       // box-shadow:0 3px 6px #DEE0E7 ;

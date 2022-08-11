@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import json
 
@@ -307,7 +309,7 @@ class EsQuery(object):
             scenario_id,
             storage_cluster_id=storage_cluster_id,
         ).get_instance()
-        return client.get_cluster_info(indices)
+        return client.get_cluster_info(result_table_id=indices)
 
     def cat_indices(self):
         scenario_id, indices, storage_cluster_id = self._init_common_args()

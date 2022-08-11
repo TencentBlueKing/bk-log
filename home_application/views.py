@@ -16,16 +16,21 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
-
 from django.conf import settings
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+from django.utils.translation import ugettext as _
 from blueapps.account.decorators import login_exempt
 
 # 开发框架中通过中间件默认是需要登录态的，如有不需要登录的，可添加装饰器login_exempt
 # 装饰器引入 from blueapps.account.decorators import login_exempt
 from apps.utils.db import get_toggle_data
+from home_application.constants import API_FORMAT_CONTENT_TYPE
+from home_application.handlers.check_collector import CollectorCheckHandler
+from home_application.handlers.healthz import HealthzHandler
 
 
 def home(request):
@@ -51,12 +56,66 @@ def contact(request):
 
 
 @login_exempt
-def healthz(request):
+def readiness(request):
+    """就绪探测接口"""
     return JsonResponse({"server_up": 1})
+
+
+@login_exempt
+def healthz(request):
+    """
+    format_type: 格式化类型, 支持 json, 默认为k8s
+    include: 包含的namespace, include不为空时, exclude失效
+    exclude: 去除的namespace
+    """
+    format_type = request.GET.get("format_type")
+    include = request.GET.get("include", [])
+    if include:
+        include = include.split(",")
+    exclude = request.GET.get("exclude", [])
+    if exclude:
+        exclude = exclude.split(",")
+    response = HttpResponse(
+        content=HealthzHandler().get_data(
+            format_type=format_type, include_namespaces=include, exclude_namespaces=exclude
+        )
+    )
+
+    if format_type == "json":
+        response["Content-Type"] = "application/json"
+    else:
+        response["Content-Type"] = API_FORMAT_CONTENT_TYPE
+
+    return response
+
+
+@login_exempt
+def collector_check(request):
+    """
+    collector_config_id: 采集项id, int
+    hosts: 指定检查某些主机, 格式: "0:ip1,0:ip2,1:ip3"
+    debug: 是否开启DEBUG
+    """
+    collector_config_id = request.GET.get("collector_config_id")
+    hosts = request.GET.get("hosts", "")
+    debug = request.GET.get("debug", False)
+    c = CollectorCheckHandler(collector_config_id=collector_config_id, hosts=hosts, debug=debug)
+    c.run()
+    response = HttpResponse(content=c.api_format())
+    response["Content-Type"] = API_FORMAT_CONTENT_TYPE
+
+    return response
 
 
 @login_exempt
 def metrics(request):
     from django_prometheus import exports
+    from settings import PROMETHEUS_METRICS_TOKEN
 
+    token = request.GET.get("token")
+    if PROMETHEUS_METRICS_TOKEN:
+        if token is None:
+            return HttpResponse(_("缺少参数token"))
+        if token != PROMETHEUS_METRICS_TOKEN:
+            return HttpResponse(_("token验证失败"))
     return exports.ExportToDjangoView(request)

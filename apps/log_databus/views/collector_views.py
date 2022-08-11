@@ -16,26 +16,26 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 from django.conf import settings
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
-from django.db.models import Q
-
 from rest_framework.response import Response
 
 from apps.exceptions import ValidationError
-from apps.log_databus.constants import EtlConfig
-from apps.log_search.constants import HAVE_DATA_ID, BKDATA_OPEN, NOT_CUSTOM, CollectorScenarioEnum
-from apps.log_search.permission import Permission
-from apps.utils.drf import detail_route, list_route
+from apps.log_databus.constants import EtlConfig, Environment
+from apps.log_databus.exceptions import NeedBcsClusterIdException
+from apps.log_search.exceptions import BkJwtVerifyException
 from apps.generic import ModelViewSet
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import (
+    BusinessActionPermission,
     InstanceActionPermission,
     ViewBusinessPermission,
-    BusinessActionPermission,
     insert_permission_field,
 )
 from apps.log_databus.handlers.collector import CollectorHandler
@@ -43,25 +43,36 @@ from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.handlers.link import DataLinkHandler
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.serializers import (
-    RunSubscriptionSerializer,
     BatchSubscriptionStatusSerializer,
-    TaskStatusSerializer,
-    TaskDetailSerializer,
-    CollectorListSerializer,
-    RetrySerializer,
+    CleanStashSerializer,
+    CollectorCreateSerializer,
+    CollectorDataLinkListSerializer,
     CollectorEtlSerializer,
     CollectorEtlStorageSerializer,
-    CollectorCreateSerializer,
-    CollectorUpdateSerializer,
     CollectorEtlTimeSerializer,
-    CollectorDataLinkListSerializer,
+    CollectorListSerializer,
     CollectorRegexDebugSerializer,
-    ListCollectorsByHostSerializer,
-    CleanStashSerializer,
-    ListCollectorSerlalizer,
+    CollectorUpdateSerializer,
     CustomCreateSerializer,
-    CustomUpateSerializer,
+    CustomUpdateSerializer,
+    ListCollectorSerlalizer,
+    ListCollectorsByHostSerializer,
+    PreCheckSerializer,
+    RetrySerializer,
+    RunSubscriptionSerializer,
+    TaskDetailSerializer,
+    TaskStatusSerializer,
+    BCSCollectorSerializer,
+    MatchLabelsSerializer,
+    ValidateContainerCollectorYamlSerializer,
+    CreateContainerCollectorSerializer,
+    UpdateContainerCollectorSerializer,
+    FastCollectorCreateSerializer,
+    FastCollectorUpdateSerializer,
 )
+from apps.log_search.constants import BKDATA_OPEN, CollectorScenarioEnum, HAVE_DATA_ID, NOT_CUSTOM
+from apps.log_search.permission import Permission
+from apps.utils.drf import detail_route, list_route
 from apps.utils.function import ignored
 
 
@@ -71,7 +82,7 @@ class CollectorViewSet(ModelViewSet):
     """
 
     lookup_field = "collector_config_id"
-    filter_fields_exclude = ["collector_config_overlay"]
+    filter_fields_exclude = ["collector_config_overlay", "extra_labels"]
     model = CollectorConfig
     search_fields = ("collector_config_name", "table_id", "bk_biz_id")
     ordering_fields = ("updated_at", "updated_by")
@@ -592,6 +603,10 @@ class CollectorViewSet(ModelViewSet):
             "result": true
         }
         """
+        if request.data.get("environment") == Environment.CONTAINER:
+            data = self.params_valid(CreateContainerCollectorSerializer)
+            return Response(CollectorHandler().create_container_config(data))
+
         data = self.params_valid(CollectorCreateSerializer)
         return Response(CollectorHandler().update_or_create(data))
 
@@ -662,6 +677,74 @@ class CollectorViewSet(ModelViewSet):
                 }
             },
         }
+        @apiParamExample {json} 容器日志更新样例:
+        {
+            "collector_config_name": "测试采集项",
+            "collector_config_name_en": "test_collector",
+            "data_link_id": 1,
+            "category_id": "application",
+            "description": "test",
+            "environment": "container_log_config",
+            "bcs_cluster_id": "",
+            "add_pod_label": false,
+            "extra_labels":[
+                {
+                    "key": "test",
+                    "value": "haha"
+                }
+            ],
+            "yaml": "这是一个yaml",
+            "container_config":[
+                {
+                    "namespaces":[],
+                    "container": {
+                        "workload_type": "",
+                        "workload_name": "",
+                        "container_name": ""
+                    },
+                    "label_selector": {
+                        "match_labels": [
+                            {
+                                "key": "test",
+                                "operator": "=",
+                                "value": ""
+                            }
+                        ],
+                        "match_expressions":[
+                            {
+                                "key": "test",
+                                "operator": "=",
+                                "value": ""
+                            }
+                        ]
+                    },
+                    "params":{
+                        "paths": ["/log/abc"],
+                        "conditions": {
+                            "type": "match",
+                            "match_type": "include",
+                            "match_content": "delete",
+                            "separator": "|",
+                            "separator_filters": [
+                                {
+                                    "fieldindex": 1,
+                                    "word": "",
+                                    "op": "=",
+                                    "logic_op": "and"
+                                }
+                            ]
+                        },
+                        "multiline_pattern": "",
+                        "multiline_max_lines": 10,
+                        "multiline_timeout": 60,
+                        "winlog_name": ["Application", "Security"],
+                        "winlog_level": ["info", "error"],
+                        "winlog_event_id": ["-200", "123-1234", "123"]
+                    },
+                    "data_encoding": ""
+                }
+            ]
+        }
         @apiSuccess {Int} collector_config_id 采集配置ID
         @apiSuccess {Int} collector_config_name 采集配置名称
         @apiSuccess {Int} bk_data_id 采集链路data_id
@@ -682,6 +765,10 @@ class CollectorViewSet(ModelViewSet):
             "result": true
         }
         """
+        if request.data.get("environment") == Environment.CONTAINER:
+            data = self.params_valid(UpdateContainerCollectorSerializer)
+            return Response(CollectorHandler(collector_config_id=collector_config_id).update_container_config(data))
+
         data = self.params_valid(CollectorUpdateSerializer)
         return Response(CollectorHandler(collector_config_id=collector_config_id).update_or_create(data))
 
@@ -811,8 +898,8 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.validated_data
-        task_id_list = data.get("task_id_list").split(",")
-        return Response(CollectorHandler(collector_config_id).get_subscription_task_status(task_id_list))
+        task_id_list = [task_id for task_id in data.get("task_id_list", "").split(",") if task_id]
+        return Response(CollectorHandler(collector_config_id).get_task_status(task_id_list))
 
     @detail_route(methods=["GET"], url_path="task_detail")
     def task_detail(self, request, collector_config_id=None):
@@ -857,26 +944,16 @@ class CollectorViewSet(ModelViewSet):
         @api {post} /databus/collectors/$collector_config_id/retry/ 18_任务重试
         @apiName collector_subscription_run
         @apiGroup 10_Collector
-        @apiDescription 订阅触发
-        @apiParam {Array(json)} target_nodes 采集目标
-        @apiParam {String} target_nodes.ip 主机实例ip
-        @apiParam {int} target_nodes.bk_cloud_id 蓝鲸云区域id
-        @apiParam {int} target_nodes.bk_supplier_id 供应商id
+        @apiDescription 重试任务
+        @apiParam {Array(string)} instance_id_list 实例ID列表
         @apiSuccess {int} task_id 任务ID（在采集下发界面，需要将task_id合并到）
         @apiParamExample {json} 请求样例:
         {
-            "target_nodes": [
-                {
-                    "ip": "127.0.0.1",
-                    "bk_cloud_id": 0,
-                    "bk_supplier_id":0,
-                },
-                {
-                    "ip": "127.0.0.1",
-                    "bk_cloud_id": 0,
-                    "bk_supplier_id":0,
-                }
+            "instance_id_list": [
+                "host|instance|host|3",
+                "host|instance|host|4"
             ],
+            "container_collector_config_id_list": ["24484", "24702"]
         }
         @apiSuccessExample {json} 成功返回:
         {
@@ -888,7 +965,7 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.validated_data
         return Response(
-            CollectorHandler(collector_config_id=collector_config_id).retry_target_nodes(data["target_nodes"])
+            CollectorHandler(collector_config_id=collector_config_id).retry_instances(data["instance_id_list"])
         )
 
     @detail_route(methods=["GET"], url_path="subscription_status")
@@ -1132,7 +1209,8 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(CollectorEtlTimeSerializer)
-        return Response(EtlHandler(collector_config_id=collector_config_id).etl_time(**data))
+        etl_handler = EtlHandler.get_instance(collector_config_id)
+        return Response(etl_handler.etl_time(**data))
 
     @detail_route(methods=["POST"])
     def update_or_create_clean_config(self, request, collector_config_id=None):
@@ -1162,7 +1240,13 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
         @apiParam {Int} [storage_replies] 副本数量
+        @apiParam {Int} es_shards es分片数量
         @apiParam {list} view_roles 查看权限
+        @apiParam {Boolean} need_assessment 需要评估
+        @apiParam {Object} assessment_config 评估配置
+        @apiParam {String} assessment_config.log_assessment 单机日志量
+        @apiParam {Boolean} assessment_config.need_approval 需要审批
+        @apiParam {List} assessment_config.approvals 审批人
         @apiParamExample {json} 请求样例:
         {
             "table_id": "xxx",
@@ -1200,7 +1284,13 @@ class CollectorViewSet(ModelViewSet):
             ],
             "storage_cluster_id": 3,
             "retention": 1,
-            "view_roles": [1,2]
+            "view_roles": [1,2],
+            "need_assessment": true,
+            "assessment_config": {
+                "log_assessment": "10M",
+                "need_approval": true,
+                "approvals": ["admin"]
+            }
         }
         @apiSuccessExample {json} 成功返回:
         {
@@ -1213,7 +1303,13 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(CollectorEtlStorageSerializer)
-        return Response(EtlHandler(collector_config_id=collector_config_id).update_or_create(**data))
+        etl_handler = EtlHandler.get_instance(collector_config_id)
+        data, can_apply = etl_handler.itsm_pre_hook(data, collector_config_id)
+        if not can_apply:
+            return Response(data)
+        for key in ["need_assessment", "assessment_config"]:
+            data.pop(key, None)
+        return Response(etl_handler.update_or_create(**data))
 
     @detail_route(methods=["GET"], url_path="get_data_link_list")
     def get_data_link_list(self, request):
@@ -1760,7 +1856,8 @@ class CollectorViewSet(ModelViewSet):
             "result": true
         }
         """
-        return Response(EtlHandler(collector_config_id=collector_config_id).close_clean())
+        etl_handler = EtlHandler.get_instance(collector_config_id)
+        return Response(etl_handler.close_clean())
 
     @list_route(methods=["POST"])
     def custom_create(self, request):
@@ -1777,6 +1874,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
         @apiParam {Int} allocation_min_days 冷热数据时间
+        @apiParam {Int} es_shards es分片数量
         @apiParam {Int} [storage_replies] 副本数量
         @apiParam {String} category_id 数据分类 GlobalsConfig.category读取
         @apiParam {String} description 备注说明
@@ -1791,6 +1889,7 @@ class CollectorViewSet(ModelViewSet):
             "category_id": "xx",
             "storage_cluster_id": 3,
             "retention": 1,
+            "es_shards": 1,
             "storage_replies": 1,
             "allocation_min_days":  1
         }
@@ -1809,6 +1908,9 @@ class CollectorViewSet(ModelViewSet):
         }
         """
         data = self.params_valid(CustomCreateSerializer)
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if auth_info:
+            data["bk_app_code"] = auth_info["bk_app_code"]
         return Response(CollectorHandler().custom_create(**data))
 
     @detail_route(methods=["POST"])
@@ -1824,6 +1926,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} storage_cluster_id 存储集群ID
         @apiParam {Int} retention 保留时间
         @apiParam {Int} allocation_min_days 冷热数据时间
+        @apiParam {Int} es_shards es分片数量
         @apiParam {Int} [storage_replies] 副本数量
         @apiParamExample {json} 请求样例:
         {
@@ -1833,6 +1936,7 @@ class CollectorViewSet(ModelViewSet):
             "storage_cluster_id": 3,
             "retention": 1,
             "storage_replies": 1,
+            "es_shards":  1,
             "allocation_min_days":  1
         }
         @apiSuccessExample {json} 成功返回:
@@ -1844,5 +1948,279 @@ class CollectorViewSet(ModelViewSet):
             "result": true
         }
         """
-        data = self.params_valid(CustomUpateSerializer)
+        data = self.params_valid(CustomUpdateSerializer)
         return Response(CollectorHandler(collector_config_id).custom_update(**data))
+
+    @list_route(methods=["GET"], url_path="pre_check")
+    def pre_check(self, request):
+        """
+        @api {get} /databus/collectors/pre_check/ 预检查创建采集项的参数
+        @apiName pre_check
+        @apiDescription 预检查采集项英文名是否可以使用
+        @apiGroup 10_Collector
+        @apiParam {Int} bk_biz_id 所属业务ID
+        @apiParam {String} collector_config_name_en 采集项英文名
+        @apiSuccess {bool} data.allowed 如果英文名不存在, 则返回True, 反之返回False
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "allowed": True,
+            },
+            "result": true
+        }
+        """
+        data = self.params_valid(PreCheckSerializer)
+        return Response(CollectorHandler().pre_check(data))
+
+    @list_route(methods=["GET"], url_path="list_bcs_collector")
+    def list_bcs_collector(self, request):
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if not auth_info:
+            raise BkJwtVerifyException()
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        if not bcs_cluster_id:
+            raise NeedBcsClusterIdException()
+        return Response(
+            CollectorHandler().list_bcs_collector(bcs_cluster_id=bcs_cluster_id, bk_app_code=auth_info["bk_app_code"])
+        )
+
+    @list_route(methods=["POST"], url_path="create_bcs_collector")
+    def create_bcs_collector(self, request):
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if not auth_info:
+            raise BkJwtVerifyException()
+        data = self.params_valid(BCSCollectorSerializer)
+        return Response(
+            CollectorHandler().create_bcs_container_config(data=data, bk_app_code=auth_info["bk_app_code"]),
+        )
+
+    @detail_route(methods=["POST"], url_path="update_bcs_collector")
+    def update_bcs_collector(self, request, collector_config_id=None):
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if not auth_info:
+            raise BkJwtVerifyException()
+        data = self.params_valid(BCSCollectorSerializer)
+        rule_id = collector_config_id
+        return Response(CollectorHandler().update_bcs_container_config(data=data, rule_id=rule_id))
+
+    @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")
+    def delete_bcs_collector(self, request, collector_config_id=None):
+        auth_info = Permission.get_auth_info(request, raise_exception=False)
+        if not auth_info:
+            raise BkJwtVerifyException()
+        rule_id = collector_config_id
+        return Response(CollectorHandler().delete_bcs_config(rule_id=rule_id))
+
+    @list_route(methods=["GET"], url_path="list_bcs_clusters")
+    def list_bcs_clusters(self, request):
+        bk_biz_id = request.GET.get("bk_biz_id")
+        return Response(CollectorHandler().list_bcs_clusters(bk_biz_id=bk_biz_id))
+
+    @list_route(methods=["GET"], url_path="list_workload_type")
+    def list_workload_type(self, request):
+        return Response(CollectorHandler().list_workload_type())
+
+    @list_route(methods=["GET"], url_path="list_namespace")
+    def list_namespace(self, request):
+        cluster_id = request.GET.get("cluster_id")
+        return Response(CollectorHandler().list_namespace(bcs_cluster_id=cluster_id))
+
+    @list_route(methods=["GET"], url_path="list_topo")
+    def list_topo(self, request):
+        topo_type = request.GET.get("type")
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        namespace = request.GET.get("namespace", "")
+        return Response(
+            CollectorHandler().list_topo(topo_type=topo_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace)
+        )
+
+    @list_route(methods=["GET"], url_path="get_labels")
+    def get_labels(self, request):
+        topo_type = request.GET.get("type")
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        namespace = request.GET.get("namespace")
+        name = request.GET.get("name")
+        return Response(
+            CollectorHandler().get_labels(
+                topo_type=topo_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace, name=name
+            )
+        )
+
+    @list_route(methods=["POST"], url_path="match_labels")
+    def match_labels(self, request):
+        data = self.params_valid(MatchLabelsSerializer)
+        return Response(
+            CollectorHandler().match_labels(
+                topo_type=data["type"],
+                bcs_cluster_id=data["bcs_cluster_id"],
+                namespace=data["namespace"],
+                label_selector=data["label_selector"],
+                selector_expression=data["selector_expression"],
+            )
+        )
+
+    @list_route(methods=["GET"], url_path="get_workload")
+    def get_workload(self, request):
+        workload_type = request.GET.get("type")
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        namespace = request.GET.get("namespace")
+        return Response(
+            CollectorHandler().get_workload(
+                workload_type=workload_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace
+            )
+        )
+
+    @list_route(methods=["POST"], url_path="validate_container_config_yaml")
+    def validate_container_config_yaml(self, request):
+        data = self.params_valid(ValidateContainerCollectorYamlSerializer)
+        return Response(CollectorHandler().validate_container_config_yaml(data["yaml_config"]))
+
+    @list_route(methods=["POST"])
+    def fast_create(self, request):
+        """
+        @api {post} /databus/collectors/fast_create/ 简易创建采集配置
+        @apiName fast_create
+        @apiDescription 简易创建采集项配置
+        @apiGroup 10_Collector
+        @apiParam {Int} bk_biz_id 所属业务
+        @apiParam {String} collector_config_name 采集项名称
+        @apiParam {String} collector_config_name_en 采集项名称英文名
+        @apiParam {String} collector_scenario_id 场景ID row,section,wineventlog,custom
+        @apiParam {Int} storage_cluster_id 存储集群ID
+        @apiParam {String} category_id 数据分类 GlobalsConfig.category读取
+        @apiParam {String}  target_object_type 对象类型，目前固定为 HOST
+        @apiParam {String}  target_node_type 节点类型 动态：TOPO  静态：INSTANCE
+        @apiParam {Array[Dict]} target 已选目标
+        @apiParam {Array(json)}  target_nodes 采集目标
+        @apiParam {Int} target_nodes.id 服务实例id （暂时没用到）
+        @apiParam {Int} target_nodes.bk_inst_id 节点实例id (动态)
+        @apiParam {String} target_nodes.bk_obj_id 节点对象id （动态）
+        @apiParam {String} target_nodes.ip 主机实例ip （静态）
+        @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
+        @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {String} etl_config 清洗类型（格式化方式）
+        @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
+        @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
+        @apiParam {String} etl_params.separator_regexp 正则表达式，当etl_config=="bk_log_regexp"时需要传递
+        @apiParam {Bool} etl_params.retain_original_text 是否保留原文
+        @apiParam {list} fields 字段列表
+        @apiParam {String} fields.field_name 字段名称
+        @apiParam {String} [fields.alias_name] 别名
+        @apiParam {String} fields.field_type 字段类型
+        @apiParam {String} fields.description 字段说明
+        @apiParam {Bool} fields.is_analyzed 是否分词
+        @apiParam {Bool} fields.is_dimension 是否维度
+        @apiParam {Bool} fields.is_time 是否时间字段
+        @apiParam {Bool} fields.is_delete 是否删除
+        @apiParam {Json} [fields.option] 字段配置
+        @apiParam {Int} fields.option.time_zone 时间
+        @apiParam {String} fields.option.time_format 时间格式
+        @apiParam {Int} storage_cluster_id 存储集群ID
+        @apiParam {Int} retention 保留时间
+        @apiParam {Int} storage_replies 副本数量
+        @apiParam {Int} es_shards es分片数量
+        @apiParamExample {json} 请求样例:
+        {
+            "bk_biz_id": 2,
+            "collector_config_name": "xxx",
+            "collector_config_name_en": "xxx_en",
+            "collector_scenario_id": "row",
+            "category_id": "os",
+            "target_object_type": "HOST",
+            "target_node_type": "TOPO",
+            "target_nodes": [{"bk_inst_id": 1, "bk_obj_id": "biz"}],
+            "params": {
+                "paths": ["/var/log"],
+                "conditions": {
+                    "type": "match"
+                }
+            },
+            "storage_cluster_id": xx
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data": {
+                "collector_config_id": xx,
+                "bk_data_id": xxxx,
+                "subscription_id": xxx,
+                "task_id_list": [
+                    "xxx"
+                ]
+            },
+            "code": 0,
+            "message": ""
+        }
+        """
+        data = self.params_valid(FastCollectorCreateSerializer)
+        return Response(CollectorHandler().fast_create(data))
+
+    @detail_route(methods=["POST"])
+    def fast_update(self, request, collector_config_id):
+        """
+        @api {post} /databus/collectors/fast_update/ 简易修改采集配置
+        @apiName fast_update
+        @apiDescription 简易修改采集项配置
+        @apiGroup 10_Collector
+        @apiParam {String} collector_config_name 采集项名称
+        @apiParam {Array(json)}  target_nodes 采集目标
+        @apiParam {Int} target_nodes.id 服务实例id （暂时没用到）
+        @apiParam {Int} target_nodes.bk_inst_id 节点实例id (动态)
+        @apiParam {String} target_nodes.bk_obj_id 节点对象id （动态）
+        @apiParam {String} target_nodes.ip 主机实例ip （静态）
+        @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
+        @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {String} etl_config 清洗类型（格式化方式）
+        @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
+        @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
+        @apiParam {String} etl_params.separator_regexp 正则表达式，当etl_config=="bk_log_regexp"时需要传递
+        @apiParam {Bool} etl_params.retain_original_text 是否保留原文
+        @apiParam {list} fields 字段列表
+        @apiParam {String} fields.field_name 字段名称
+        @apiParam {String} [fields.alias_name] 别名
+        @apiParam {String} fields.field_type 字段类型
+        @apiParam {String} fields.description 字段说明
+        @apiParam {Bool} fields.is_analyzed 是否分词
+        @apiParam {Bool} fields.is_dimension 是否维度
+        @apiParam {Bool} fields.is_time 是否时间字段
+        @apiParam {Bool} fields.is_delete 是否删除
+        @apiParam {Json} [fields.option] 字段配置
+        @apiParam {Int} fields.option.time_zone 时间
+        @apiParam {String} fields.option.time_format 时间格式
+        @apiParam {Int} storage_cluster_id 存储集群ID
+        @apiParam {Int} retention 保留时间
+        @apiParam {Int} storage_replies 副本数量
+        @apiParam {Int} es_shards es分片数量
+        @apiParamExample {json} 请求样例:
+        {
+            "collector_config_name": "xxx",
+            "target_object_type": "HOST",
+            "target_node_type": "TOPO",
+            "target_nodes": [{"bk_inst_id": 1, "bk_obj_id": "biz"}],
+            "params": {
+                "paths": ["/var/log"],
+                "conditions": {
+                    "type": "match"
+                }
+            },
+            "storage_cluster_id": xx
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data": {
+                "collector_config_id": xx,
+                "bk_data_id": xxxx,
+                "subscription_id": xxx,
+                "task_id_list": [
+                    "xxx"
+                ]
+            },
+            "code": 0,
+            "message": ""
+        }
+        """
+        data = self.params_valid(FastCollectorUpdateSerializer)
+        return Response(CollectorHandler(collector_config_id).fast_update(data))

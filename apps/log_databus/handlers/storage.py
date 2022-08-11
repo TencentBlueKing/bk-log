@@ -16,46 +16,54 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import functools
+import operator
 import re
 import socket
 from collections import defaultdict
-from typing import Union, List
-import arrow
+from typing import List, Union
 
+import arrow
 from django.conf import settings
+from django.db.models import Q, Sum
 from django.utils.translation import ugettext as _
-from django.db.models import Sum
 from elasticsearch import Elasticsearch
 
-from apps.log_databus.utils.es_config import get_es_config
-from apps.utils.log import logger
-from apps.utils.thread import MultiExecuteFunc
-from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
+from apps.api import BkDataResourceCenterApi, BkLogApi, TransferApi
+from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
+from apps.decorators import user_operation_record
 from apps.iam import Permission, ResourceEnum
-from apps.log_esquery.utils.es_route import EsRoute
-from apps.log_search.models import Scenario, ProjectInfo
-from apps.utils.cache import cache_five_minute
-from apps.utils.local import get_local_param, get_request_username
-from apps.api import TransferApi, BkLogApi
-from apps.log_databus.models import StorageCapacity, StorageUsed, DataLinkConfig
 from apps.log_databus.constants import (
-    STORAGE_CLUSTER_TYPE,
-    REGISTERED_SYSTEM_DEFAULT,
-    DEFAULT_ES_SCHEMA,
-    NODE_ATTR_PREFIX_BLACKLIST,
     BKLOG_RESULT_TABLE_PATTERN,
+    DEFAULT_ES_SCHEMA,
+    DEFAULT_ES_TAGS,
+    DEFAULT_ES_TRANSPORT,
     EsSourceType,
+    NODE_ATTR_PREFIX_BLACKLIST,
+    REGISTERED_SYSTEM_DEFAULT,
+    STORAGE_CLUSTER_TYPE,
+    VisibleEnum,
 )
 from apps.log_databus.exceptions import (
+    BKBaseStorageSyncFailed,
+    StorageConnectInfoException,
+    StorageHaveResource,
     StorageNotExistException,
     StorageNotPermissionException,
-    StorageConnectInfoException,
     StorageUnKnowEsVersionException,
-    StorageHaveResource,
 )
-from apps.decorators import user_operation_record
+from apps.log_databus.models import StorageCapacity, StorageUsed
+from apps.log_databus.utils.es_config import get_es_config
+from apps.log_esquery.utils.es_client import get_es_client
+from apps.log_esquery.utils.es_route import EsRoute
+from apps.log_search.models import BizProperty, ProjectInfo, Scenario
+from apps.utils.cache import cache_five_minute
+from apps.utils.local import get_local_param, get_request_username
+from apps.utils.log import logger
+from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import format_user_time_zone
 
 CACHE_EXPIRE_TIME = 300
@@ -66,7 +74,41 @@ class StorageHandler(object):
         self.cluster_id = cluster_id
         super().__init__()
 
-    def get_cluster_groups(self, bk_biz_id, is_default=True):
+    def can_visible(self, bk_biz_id, custom_option) -> bool:
+        # 兼容老数据没有visible_config的情况
+        if not custom_option.get("visible_config") and bk_biz_id != custom_option["bk_biz_id"]:
+            return False
+
+        # 如果当前业务是创建业务 直接可见
+        if bk_biz_id == custom_option["bk_biz_id"]:
+            return True
+
+        visible_config = custom_option["visible_config"]
+
+        # 全业务可见
+        if visible_config["visible_type"] == VisibleEnum.ALL_BIZ.value:
+            return True
+
+        if visible_config["visible_type"] == VisibleEnum.MULTI_BIZ.value:
+            return str(bk_biz_id) in [str(bk_biz["bk_biz_id"]) for bk_biz in visible_config["visible_bk_biz"]]
+
+        if visible_config["visible_type"] == VisibleEnum.BIZ_ATTR.value:
+            bk_biz_labels = visible_config.get("bk_biz_labels", {})
+            if not bk_biz_labels:
+                return False
+            q_filter = Q()
+            for label_key, label_values in bk_biz_labels.items():
+                q_filter &= functools.reduce(
+                    operator.or_,
+                    [
+                        Q(bk_biz_id=bk_biz_id, biz_property_id=label_key, biz_property_value=label_value)
+                        for label_value in label_values
+                    ],
+                )
+            return BizProperty.objects.filter(q_filter).exists()
+        return False
+
+    def get_cluster_groups(self, bk_biz_id, is_default=True, enable_archive=False):
         """
         获取集群列表
         :param bk_biz_id:
@@ -74,26 +116,49 @@ class StorageHandler(object):
         :return:
         """
         cluster_groups = self.filter_cluster_groups(
-            TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE}), bk_biz_id, is_default=is_default
+            TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE}),
+            bk_biz_id,
+            is_default=is_default,
+            enable_archive=enable_archive,
+            post_visible=True,
         )
+
+        cluster_groups = [
+            cluster
+            for cluster in cluster_groups
+            if self.can_visible(bk_biz_id, cluster["cluster_config"].get("custom_option"))
+        ]
+
         return [
             {
+                "storage_usage": i["storage_usage"],
+                "storage_total": i["storage_total"],
+                "index_count": i["index_count"],
+                "biz_count": i["biz_count"],
                 "storage_cluster_id": i["cluster_config"].get("cluster_id"),
                 "storage_cluster_name": i["cluster_config"].get("cluster_name"),
                 "storage_version": i["cluster_config"].get("version"),
                 "storage_type": STORAGE_CLUSTER_TYPE,
                 "priority": i["priority"],
                 "registered_system": i["cluster_config"].get("registered_system"),
-                "bk_biz_id": i["bk_biz_id"],
+                "bk_biz_id": i["cluster_config"]["custom_option"]["bk_biz_id"],
                 "enable_hot_warm": i["cluster_config"]["custom_option"]
                 .get("hot_warm_config", {})
                 .get("is_enabled", False),
+                "setup_config": i["cluster_config"]["custom_option"]["setup_config"],
+                "admin": i["cluster_config"]["custom_option"].get("admin", [i["cluster_config"]["creator"]]),
+                "description": i["cluster_config"]["custom_option"]["description"],
+                "source_type": i["cluster_config"]["custom_option"]["source_type"],
+                "enable_assessment": i["cluster_config"]["custom_option"]["enable_assessment"],
+                "enable_archive": i["cluster_config"]["custom_option"]["enable_archive"],
+                "is_platform": i["cluster_config"]["custom_option"]["visible_config"]["visible_type"]
+                in [VisibleEnum.ALL_BIZ.value, VisibleEnum.BIZ_ATTR.value, VisibleEnum.MULTI_BIZ.value],
             }
             for i in cluster_groups
             if i
         ]
 
-    def get_cluster_groups_filter(self, bk_biz_id, is_default=True, data_link_id=0):
+    def get_cluster_groups_filter(self, bk_biz_id, is_default=True, enable_archive=False):
         """
         获取集群列表并过滤
         :param bk_biz_id:
@@ -101,22 +166,7 @@ class StorageHandler(object):
         :param data_link_id: 链路ID
         :return:
         """
-        cluster_groups = self.get_cluster_groups(bk_biz_id, is_default=is_default)
-
-        if data_link_id:
-            # 如果传了链路ID，则根据链路ID过滤
-            link_object = DataLinkConfig.objects.filter(data_link_id=data_link_id).first()
-            if link_object:
-                es_list = link_object.es_cluster_ids
-            else:
-                es_list = []
-
-            # 如果集群不是公共集群，则不过滤
-            cluster_groups = [
-                c
-                for c in cluster_groups
-                if c["storage_cluster_id"] in es_list or c.get("registered_system") != REGISTERED_SYSTEM_DEFAULT
-            ]
+        cluster_groups = self.get_cluster_groups(bk_biz_id, is_default=is_default, enable_archive=enable_archive)
 
         # 排序：第三方集群 > 默认集群
         cluster_groups.sort(key=lambda c: c["priority"])
@@ -145,7 +195,9 @@ class StorageHandler(object):
         return cluster_groups
 
     @classmethod
-    def filter_cluster_groups(cls, cluster_groups, bk_biz_id, is_default=True):
+    def filter_cluster_groups(
+        cls, cluster_groups, bk_biz_id, is_default=True, enable_archive=False, post_visible=False
+    ):
         """
         筛选集群，并判断集群是否可编辑
         :param cluster_groups:
@@ -156,7 +208,40 @@ class StorageHandler(object):
         cluster_data = list()
         projects = ProjectInfo.get_cmdb_projects()
         # 筛选集群 & 判断是否可编辑
+        es_config = get_es_config(bk_biz_id)
+
+        def get_storage_info(cluster_id):
+            used = StorageUsed.objects.filter(
+                bk_biz_id=StorageUsed.CLUSTER_INFO_BIZ_ID, storage_cluster_id=cluster_id
+            ).first()
+            if not used:
+                return {"storage_usage": 0, "storage_total": 0, "index_count": 0, "biz_count": 0}
+            return {
+                "storage_usage": used.storage_usage,
+                "storage_total": used.storage_total,
+                "index_count": used.index_count,
+                "biz_count": used.biz_count,
+            }
+
+        from apps.log_search.handlers.index_set import IndexSetHandler
+
         for cluster_obj in cluster_groups:
+            custom_option = cluster_obj["cluster_config"]["custom_option"]
+            # 判断是否有setup_config配置
+            if not custom_option.get("setup_config", {}):
+                custom_option["setup_config"] = {
+                    "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
+                    "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
+                    "number_of_replicas_max": es_config["ES_REPLICAS"],
+                    "number_of_replicas_default": es_config["ES_REPLICAS"],
+                    "es_shards_default": es_config["ES_SHARDS"],
+                    "es_shards_max": es_config["ES_SHARDS_MAX"],
+                }
+            # 判断setup_config配置里是否有es_shards配置
+            if not custom_option["setup_config"].get("es_shards_default"):
+                custom_option["setup_config"]["es_shards_default"] = es_config["ES_SHARDS"]
+                custom_option["setup_config"]["es_shards_max"] = es_config["ES_SHARDS_MAX"]
+            cluster_obj.update(get_storage_info(cluster_obj["cluster_config"].get("cluster_id")))
             cluster_obj["cluster_config"]["create_time"] = StorageHandler.convert_standard_time(
                 cluster_obj["cluster_config"]["create_time"]
             )
@@ -169,36 +254,101 @@ class StorageHandler(object):
             )
             cluster_obj["cluster_config"]["enable_hot_warm"] = enable_hot_warm
 
-            es_config = get_es_config(bk_biz_id)
             # 公共集群：凭据信息和域名置空处理，并添加不允许编辑标签
             if cluster_obj["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
                 if not is_default:
                     continue
-                cluster_obj.update({"auth_info": {"username": "", "password": ""}, "is_editable": False})
-                cluster_obj["cluster_config"]["domain_name"] = ""
+                if not cls.storage_visible(bk_biz_id, settings.BLUEKING_BK_BIZ_ID, post_visible=post_visible):
+                    continue
+                cluster_obj["is_editable"] = True
+                cluster_obj["auth_info"]["password"] = ""
                 cluster_obj["cluster_config"]["max_retention"] = es_config["ES_PUBLIC_STORAGE_DURATION"]
                 # 默认集群权重：推荐集群 > 其他
                 cluster_obj["priority"] = 1 if cluster_obj["cluster_config"].get("is_default_cluster") else 2
-                cluster_obj["bk_biz_id"] = 0
+                if not cluster_obj["cluster_config"].get("custom_option", {}).get("visible_config"):
+                    custom_option = {
+                        "visible_config": {
+                            "visible_type": VisibleEnum.ALL_BIZ.value,
+                        },
+                        "admin": [cluster_obj["cluster_config"]["creator"]],
+                        "setup_config": {
+                            "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
+                            "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
+                            "number_of_replicas_max": es_config["ES_REPLICAS"],
+                            "number_of_replicas_default": es_config["ES_REPLICAS"],
+                            "es_shards_default": settings.ES_SHARDS,
+                            "es_shards_max": settings.ES_SHARDS_MAX,
+                        },
+                        "description": "",
+                        "enable_archive": False,
+                        "enable_assessment": False,
+                        "source_type": EsSourceType.OTHER.value,
+                        "source_name": EsSourceType.get_choice_label(EsSourceType.OTHER.value),
+                    }
+                    custom_option.update(cluster_obj["cluster_config"]["custom_option"])
+                    cluster_obj["cluster_config"]["custom_option"] = custom_option
+                index_sets = IndexSetHandler.get_index_set_for_storage(cluster_obj["cluster_config"]["cluster_id"])
+                if (
+                    cluster_obj["cluster_config"]
+                    .get("custom_option", {})
+                    .get("visible_config", {})
+                    .get("visible_type", "")
+                    == VisibleEnum.MULTI_BIZ.value
+                ):
+                    cluster_obj["cluster_config"]["custom_option"]["visible_config"]["visible_bk_biz"] = [
+                        {
+                            "bk_biz_id": bk_biz_id,
+                            "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                        }
+                        for bk_biz_id in cluster_obj["cluster_config"]["custom_option"]["visible_config"][
+                            "visible_bk_biz"
+                        ]
+                    ]
+                cluster_obj["cluster_config"]["custom_option"]["bk_biz_id"] = settings.BLUEKING_BK_BIZ_ID
+                cluster_obj["source_type"] = cluster_obj["cluster_config"]["custom_option"]["source_type"]
+                cluster_obj["source_name"] = EsSourceType.get_choice_label(cluster_obj["source_type"])
                 cluster_data.append(cluster_obj)
                 continue
 
             # 非公共集群， 筛选bk_biz_id，密码置空处理，并添加可编辑标签
-            custom_option = cluster_obj["cluster_config"]["custom_option"]
-            custom_biz_id = custom_option.get("bk_biz_id")
-            custom_visible_bk_biz = custom_option.get("visible_bk_biz", [])
+            new_custom_option = {
+                "admin": [cluster_obj["cluster_config"]["creator"]],
+                "setup_config": {
+                    "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
+                    "retention_days_default": es_config["ES_PUBLIC_STORAGE_DURATION"],
+                    "number_of_replicas_max": es_config["ES_REPLICAS"],
+                    "number_of_replicas_default": es_config["ES_REPLICAS"],
+                    "es_shards_default": settings.ES_SHARDS,
+                    "es_shards_max": settings.ES_SHARDS_MAX,
+                },
+                "description": "",
+                "enable_archive": False,
+                "enable_assessment": False,
+                "source_type": cluster_obj["cluster_config"]["custom_option"].get(
+                    "source_type", EsSourceType.OTHER.value
+                ),
+                "source_name": EsSourceType.get_choice_label(
+                    custom_option.get("source_type", EsSourceType.OTHER.value)
+                ),
+            }
+            custom_biz_id = cluster_obj["cluster_config"]["custom_option"].get("bk_biz_id")
+            custom_visible_bk_biz = cluster_obj["cluster_config"]["custom_option"].get("visible_bk_biz", [])
 
-            cluster_obj["cluster_config"]["max_retention"] = es_config["ES_PRIVATE_STORAGE_DURATION"]
-            if not cls.storage_visible(bk_biz_id, custom_biz_id, custom_visible_bk_biz):
+            if not cls.storage_visible(bk_biz_id, custom_biz_id, post_visible=post_visible):
                 continue
+
             cluster_obj["is_editable"] = True
             cluster_obj["auth_info"]["password"] = ""
             # 第三方es权重最高
             cluster_obj["priority"] = 0
             cluster_obj["bk_biz_id"] = custom_biz_id
-            from apps.log_search.handlers.index_set import IndexSetHandler
+            cluster_obj["source_type"] = cluster_obj["cluster_config"]["custom_option"].get(
+                "source_type", EsSourceType.OTHER.value
+            )
+            cluster_obj["source_name"] = EsSourceType.get_choice_label(cluster_obj["source_type"])
 
             index_sets = IndexSetHandler.get_index_set_for_storage(cluster_obj["cluster_config"]["cluster_id"])
+
             cluster_obj["visible_bk_biz"] = [
                 {
                     "bk_biz_id": bk_biz_id,
@@ -206,23 +356,58 @@ class StorageHandler(object):
                 }
                 for bk_biz_id in custom_visible_bk_biz
             ]
-            # 处理来源
-            cluster_obj["source_type"] = custom_option.get("source_type", EsSourceType.PRIVATE.value)
-            cluster_obj["source_name"] = (
-                custom_option.get("source_name")
-                if cluster_obj["source_type"] == EsSourceType.OTHER.value
-                else EsSourceType.get_choice_label(cluster_obj["source_type"])
-            )
+
+            # 如果这个存在说明是老的可见范围配置
+            if custom_visible_bk_biz:
+                new_custom_option["visible_config"] = {
+                    "visible_type": VisibleEnum.MULTI_BIZ.value,
+                    "visible_bk_biz": [
+                        {
+                            "bk_biz_id": bk_biz_id,
+                            "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                        }
+                        for bk_biz_id in custom_visible_bk_biz
+                    ],
+                }
+                new_custom_option.update(cluster_obj["cluster_config"]["custom_option"])
+                cluster_obj["cluster_config"]["custom_option"] = new_custom_option
+                cluster_data.append(cluster_obj)
+                continue
+
+            # 如果可见范围配置不存在，则直接为当前业务可见
+            if not custom_option.get("visible_config"):
+                new_custom_option["visible_config"] = {
+                    "visible_type": VisibleEnum.CURRENT_BIZ.value,
+                }
+                new_custom_option.update(cluster_obj["cluster_config"]["custom_option"])
+                cluster_obj["cluster_config"]["custom_option"] = new_custom_option
+                cluster_data.append(cluster_obj)
+                continue
+
+            if custom_option["visible_config"]["visible_type"] == VisibleEnum.MULTI_BIZ.value:
+                custom_option["visible_config"]["visible_bk_biz"] = [
+                    {
+                        "bk_biz_id": bk_biz_id,
+                        "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                    }
+                    for bk_biz_id in custom_option["visible_config"]["visible_bk_biz"]
+                ]
+
             cluster_data.append(cluster_obj)
-        return cluster_data
+        return [
+            cluster
+            for cluster in cluster_data
+            if (not enable_archive) or (enable_archive and cluster["cluster_config"]["custom_option"]["enable_archive"])
+        ]
 
     @staticmethod
-    def storage_visible(bk_biz_id, custom_bk_biz_id, visible_bk_biz: List[int]) -> bool:
-        bk_biz_id = int(bk_biz_id)
-        if bk_biz_id in visible_bk_biz:
+    def storage_visible(bk_biz_id, custom_bk_biz_id, post_visible=False) -> bool:
+        if post_visible:
             return True
+        bk_biz_id = int(bk_biz_id)
         if not custom_bk_biz_id:
             return False
+
         custom_bk_biz_id = int(custom_bk_biz_id)
         return custom_bk_biz_id == bk_biz_id
 
@@ -234,7 +419,7 @@ class StorageHandler(object):
         except Exception:  # pylint: disable=broad-except
             return time_stamp
 
-    def list(self, bk_biz_id, cluster_id=None, is_default=True):
+    def list(self, bk_biz_id, cluster_id=None, is_default=True, enable_archive=False):
         """
         存储集群列表
         :return:
@@ -246,7 +431,7 @@ class StorageHandler(object):
         if cluster_id:
             cluster_info = self._get_cluster_nodes(cluster_info)
             cluster_info = self._get_cluster_detail_info(cluster_info)
-        return self.filter_cluster_groups(cluster_info, bk_biz_id, is_default)
+        return self.filter_cluster_groups(cluster_info, bk_biz_id, is_default, enable_archive)
 
     def _get_cluster_nodes(self, cluster_info: List[dict]):
         for cluster in cluster_info:
@@ -290,6 +475,94 @@ class StorageHandler(object):
             cluster["cluster_stats"] = cluster_stats
         return cluster_info
 
+    @staticmethod
+    def get_hot_warm_node_info(params: dict) -> (int, int):
+        hot_node_num = 0
+        warm_node_num = 0
+        es_client = get_es_client(
+            version=params["version"],
+            hosts=[params["domain_name"]],
+            username=params["auth_info"]["username"],
+            password=params["auth_info"]["password"],
+            port=params["port"],
+            scheme=params["schema"],
+        )
+        if params.get("enable_hot_warm", False):
+            hot_attr_name = params.get("hot_attr_name")
+            hot_attr_value = params.get("hot_attr_value")
+            warm_attr_name = params.get("warm_attr_name")
+            warm_attr_value = params.get("warm_attr_value")
+            nodeattrs = es_client.cat.nodeattrs(format="json", h="host,attr,value,ip")
+            for nodeattr in nodeattrs:
+                if nodeattr["attr"] == hot_attr_name and nodeattr["value"] == hot_attr_value:
+                    hot_node_num += 1
+                elif nodeattr["attr"] == warm_attr_name and nodeattr["value"] == warm_attr_value:
+                    warm_node_num += 1
+        else:
+            nodes = es_client.cat.nodes(format="json")
+            for node in nodes:
+                if node.get("node.role", "").find("d") != -1:
+                    hot_node_num += 1
+                else:
+                    warm_node_num += 1
+        return hot_node_num, warm_node_num
+
+    def sync_es_cluster(self, params: dict, is_create: bool = True) -> str:
+        # 获取参数字典
+        setup_config = params["setup_config"]
+        bk_biz_id = params["bk_biz_id"]
+        username = get_request_username()
+        cluster_en_name = (
+            f"{bk_biz_id}_{params['bkbase_cluster_en_name']}" if is_create else params["bkbase_cluster_en_name"]
+        )
+        cluster_name = params.get("cluster_name", cluster_en_name)
+        # 获取节点信息
+        hot_node_num, warm_node_num = self.get_hot_warm_node_info(params)
+        # 构造请求参数
+        bkbase_params = {
+            "bk_username": username,
+            "bk_biz_id": bk_biz_id,
+            "resource_set_id": cluster_en_name,
+            "resource_set_name": cluster_name,
+            "geog_area_code": "inland",
+            "category": "es",
+            "provider": "user",
+            "purpose": "BKLog集群同步",
+            "share": False,
+            "admin": [username],
+            "tag": params.get("bkbase_tags", []) or DEFAULT_ES_TAGS,
+            "connection_info": {
+                "username": params["auth_info"]["username"],
+                "password": params["auth_info"]["password"],
+                "enable_auth": True,
+                "host": params["domain_name"],
+                "port": params["port"],
+                "transport": DEFAULT_ES_TRANSPORT,
+                "enable_replica": True if setup_config.get("number_of_replicas_default", 0) else False,
+                "hot_save_days": setup_config.get("retention_days_default", 1),
+                "total_shards_per_node": 1,
+                "max_shard_num": hot_node_num,
+                "has_cold_nodes": bool(warm_node_num),
+                "has_hot_node": bool(hot_node_num),
+                "hot_node_num": hot_node_num,
+                "save_days": setup_config.get("retention_days_default", 1),
+                "cluster_type": "es",
+                "cluster_name": cluster_name,
+            },
+            "version": params["version"],
+        }
+
+        # 创建集群
+        if is_create:
+            bkbase_result = BkDataResourceCenterApi.create_resource_set(bkbase_params)
+        # 更新集群
+        else:
+            bkbase_result = BkDataResourceCenterApi.update_resource_set(bkbase_params)
+        logger.info("BkDataResourceAPI Result %s", bkbase_result)
+        if not isinstance(bkbase_result, dict) or not bkbase_result.get("resource_capacity", {}).get("storage"):
+            raise BKBaseStorageSyncFailed(bkbase_result)
+        return bkbase_result["resource_capacity"]["storage"]["cluster_name"]
+
     def create(self, params):
         """
         创建集群
@@ -297,12 +570,23 @@ class StorageHandler(object):
         :return:
         """
 
+        if params.get("cluster_namespace"):
+            params["custom_option"]["cluster_namespace"] = params["cluster_namespace"]
+
+        if params.get("option"):
+            params["custom_option"]["option"] = params["option"]
+
+        if params.get("create_bkbase_cluster", False):
+            bkbase_cluster_id = self.sync_es_cluster(params)
+            params["custom_option"]["bkbase_cluster_id"] = bkbase_cluster_id
+
         bk_biz_id = int(params["custom_option"]["bk_biz_id"])
         es_source_id = TransferApi.create_cluster_info(params)
+        username = get_request_username()
 
         # add user_operation_record
         operation_record = {
-            "username": get_request_username(),
+            "username": username,
             "biz_id": bk_biz_id,
             "record_type": UserOperationTypeEnum.STORAGE,
             "record_object_id": int(es_source_id),
@@ -331,23 +615,32 @@ class StorageHandler(object):
         cluster_objs = TransferApi.get_cluster_info(get_cluster_info_params)
         if not cluster_objs:
             raise StorageNotExistException()
-        # 判断该集群是否可编辑
-        if cluster_objs[0]["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
-            raise StorageNotPermissionException()
+
+        # # 判断该集群是否可编辑
+        # if cluster_objs[0]["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
+        #     raise StorageNotPermissionException()
+
         # 判断该集群是否属于该业务
-        if cluster_objs[0]["cluster_config"]["custom_option"].get("bk_biz_id") != bk_biz_id:
-            raise StorageNotPermissionException()
+        if cluster_objs[0]["cluster_config"].get("registered_system") != REGISTERED_SYSTEM_DEFAULT:
+            if cluster_objs[0]["cluster_config"]["custom_option"].get("bk_biz_id") != bk_biz_id:
+                raise StorageNotPermissionException()
+
+        if cluster_objs[0]["cluster_config"].get("registered_system") == REGISTERED_SYSTEM_DEFAULT:
+            if bk_biz_id != settings.BLUEKING_BK_BIZ_ID:
+                raise StorageNotPermissionException()
 
         # 当前端传入的账号或密码为空时，取原账号密码
         if not params["auth_info"]["username"] or not params["auth_info"]["password"]:
             params["auth_info"]["username"] = cluster_objs[0]["auth_info"]["username"]
             params["auth_info"]["password"] = cluster_objs[0]["auth_info"]["password"]
 
-        BkLogApi.connectivity_detect(
+        hot_warm_config_is_enabled = params["custom_option"]["hot_warm_config"]["is_enabled"]
+        connect_result, version_num_str = BkLogApi.connectivity_detect(  # pylint: disable=unused-variable
             params={
                 "bk_biz_id": bk_biz_id,
                 "domain_name": params["domain_name"],
                 "port": params["port"],
+                "version_info": True,
                 "schema": params["schema"],
                 "cluster_id": self.cluster_id,
                 "es_auth_info": {
@@ -357,8 +650,37 @@ class StorageHandler(object):
             },
         )
 
+        # 更新信息
+        raw_custom_option = cluster_objs[0]["cluster_config"]["custom_option"]
+
+        # 原集群信息中有，新集群信息中没有时进行补充
+        if raw_custom_option.get("bkbase_cluster_id"):
+            params["bkbase_cluster_en_name"] = raw_custom_option["bkbase_cluster_id"]
+            params["version"] = version_num_str
+            bkbase_cluster_id = self.sync_es_cluster(params, False)
+            params["custom_option"]["bkbase_cluster_id"] = bkbase_cluster_id
+
+        # 更新Namespace信息
+        if params.get("cluster_namespace"):
+            params["custom_option"]["cluster_namespace"] = params["cluster_namespace"]
+        elif raw_custom_option.get("cluster_namespace"):
+            params["custom_option"]["cluster_namespace"] = raw_custom_option["cluster_namespace"]
+
+        if params.get("option"):
+            params["custom_option"]["option"] = params["option"]
+        elif raw_custom_option.get("option"):
+            params["custom_option"]["option"] = raw_custom_option["option"]
+
         cluster_obj = TransferApi.modify_cluster_info(params)
         cluster_obj["auth_info"]["password"] = ""
+        custom_option = cluster_objs[0]["cluster_config"]["custom_option"]
+        if not isinstance(custom_option, dict):
+            custom_option = {}
+        current_hot_warm_config_is_enabled = custom_option.get("hot_warm_config", {}).get("is_enabled", False)
+        if current_hot_warm_config_is_enabled and not hot_warm_config_is_enabled:
+            from apps.log_databus.tasks.collector import shutdown_collector_warm_storage_config
+
+            shutdown_collector_warm_storage_config.delay(int(self.cluster_id))
 
         # add user_operation_record
         operation_record = {
@@ -412,11 +734,8 @@ class StorageHandler(object):
             cluster_obj = clusters[0]
             # 比较集群bk_biz_id是否匹配
             cluster_config = cluster_obj["cluster_config"]
-            custom_option = cluster_config.get("custom_option", {})
-            custom_biz_id = custom_option.get("bk_biz_id")
-            if custom_biz_id:
-                if custom_biz_id != bk_biz_id:
-                    raise StorageNotPermissionException()
+            if not self.can_visible(bk_biz_id, cluster_config.get("custom_option", {})):
+                raise StorageNotPermissionException()
 
             # 集群不可以修改域名、端口
             domain_name = cluster_config["domain_name"]
@@ -461,11 +780,8 @@ class StorageHandler(object):
 
             # 比较集群bk_biz_id是否匹配
             cluster_config = cluster_obj["cluster_config"]
-            custom_option = cluster_config.get("custom_option", {})
-            custom_biz_id = custom_option.get("bk_biz_id")
-            if custom_biz_id:
-                if int(custom_biz_id) != int(bk_biz_id):
-                    raise StorageNotPermissionException()
+            if not self.can_visible(bk_biz_id, cluster_config.get("custom_option", {})):
+                raise StorageNotPermissionException()
 
             # 集群不可以修改域名、端口
             domain_name = cluster_config["domain_name"]
@@ -707,17 +1023,32 @@ class StorageHandler(object):
         return sorted(indices, key=functools.cmp_to_key(compare_indices_by_date), reverse=True)
 
     def repository(self, bk_biz_id=None, cluster_id=None):
-        cluster_info = self.list(bk_biz_id=bk_biz_id, cluster_id=cluster_id, is_default=False)
-        cluster_info_by_id = {cluster["cluster_config"]["cluster_id"]: cluster for cluster in cluster_info}
+        cluster_info = self.get_cluster_groups(bk_biz_id)
+        if not cluster_info:
+            return []
+        if cluster_id:
+            cluster_info = [cluster for cluster in cluster_info if cluster["storage_cluster_id"] == cluster_id]
+        cluster_info_by_id = {cluster["storage_cluster_id"]: cluster for cluster in cluster_info}
         repository_info = TransferApi.list_es_snapshot_repository({"cluster_ids": list(cluster_info_by_id.keys())})
+        name_prefix = f"{bk_biz_id}_bklog_"
+        result = []
+
         for repository in repository_info:
+            repository.pop("settings", None)
+            # 需要兼容历史的仓库名称
+            if not repository["repository_name"].startswith(name_prefix) and "bklog" in repository["repository_name"]:
+                continue
             repository.update(
                 {
-                    "cluster_name": cluster_info_by_id[repository["cluster_id"]]["cluster_config"]["cluster_name"],
-                    "cluster_source_name": cluster_info_by_id[repository["cluster_id"]].get("source_name"),
+                    "cluster_name": cluster_info_by_id[repository["cluster_id"]]["storage_cluster_name"],
+                    "cluster_source_name": EsSourceType.get_choice_label(
+                        cluster_info_by_id[repository["cluster_id"]].get("source_type")
+                    ),
                     "cluster_source_type": cluster_info_by_id[repository["cluster_id"]].get("source_type"),
-                    "create_time": format_user_time_zone(repository["create_time"], get_local_param("time_zone")),
+                    "create_time": format_user_time_zone(
+                        repository["create_time"], get_local_param("time_zone", settings.TIME_ZONE)
+                    ),
                 }
             )
-            repository.pop("settings")
-        return repository_info
+            result.append(repository)
+        return result

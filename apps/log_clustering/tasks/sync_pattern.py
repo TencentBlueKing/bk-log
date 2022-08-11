@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from concurrent.futures import ThreadPoolExecutor
 from celery.task import periodic_task
@@ -62,7 +64,7 @@ def get_pattern(model_id, release_id) -> list:
             0.1: [
                 ['if', 'checker.check'],
                 3903,
-                ['if', 'checker.check', '*', Variable(name="ip", value='10.0.0.1')],
+                ['if', 'checker.check', '*', Variable(name="ip", value='127.0.0.1')],
                 ['if checker.check():', 'if checker.check()'],
                 [282. 1877],
                 27886975249790003104399390262688492018705644758766193963474214767849400520551

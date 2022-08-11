@@ -90,6 +90,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
   /** 面板选择时间范围 */
   dateTimeChange(date: [string, string]) {
     this.timestamp = date.map((item, index) => `${item} ${!index ? '00:00:00' : '23:59:59'}`) as TimeRangeType;
+    this.localValue = [...this.timestamp];
     this.isPanelTimeRange = true;
   }
 
@@ -172,7 +173,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
           open={this.isShow}
           type="daterange"
           disabled
-          transfer
+          // transfer
           placement={this.placement}
           on-change={this.dateTimeChange}
           on-pick-click={val => console.log(1111, val)}

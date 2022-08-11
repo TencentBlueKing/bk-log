@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.utils.translation import ugettext_lazy as _
 
@@ -24,6 +26,7 @@ from pipeline.component_framework.component import Component
 from pipeline.builder import ServiceActivity, Var
 
 from apps.log_clustering.handlers.aiops.sample_set.sample_set_handler import SampleSetHandler
+from apps.log_clustering.handlers.dataflow.constants import DEFAULT_CLUSTERING_FIELD, DEFAULT_TIME_FIELD
 from apps.log_clustering.models import SampleSet, ClusteringConfig
 from apps.utils.pipline import BaseService
 
@@ -40,10 +43,10 @@ class CreateSampleSetService(BaseService):
     def _execute(self, data, parent_data):
         sample_set_name = data.get_one_of_inputs("sample_set_name")
         description = data.get_one_of_inputs("description")
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
+        index_set_id = data.get_one_of_inputs("index_set_id")
         sample_set = SampleSetHandler().create(sample_set_name=sample_set_name, description=description)
         SampleSet.objects.create(**{"sample_set_id": sample_set["id"], "sample_set_name": sample_set_name})
-        ClusteringConfig.objects.filter(collector_config_id=collector_config_id).update(sample_set_id=sample_set["id"])
+        ClusteringConfig.objects.filter(index_set_id=index_set_id).update(sample_set_id=sample_set["id"])
         return True
 
 
@@ -63,6 +66,7 @@ class CreateSampleSet(object):
         self.create_sample_set.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.create_sample_set.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class AddRtToSampleSetService(BaseService):
@@ -76,12 +80,13 @@ class AddRtToSampleSetService(BaseService):
 
     def _execute(self, data, parent_data):
         sample_set_name = data.get_one_of_inputs("sample_set_name")
-        collector_config_id = data.get_one_of_inputs("collector_config_id")
+        index_set_id = data.get_one_of_inputs("index_set_id")
         sample_set_id = SampleSet.objects.get(sample_set_name=sample_set_name).sample_set_id
-        clustering_config = ClusteringConfig.objects.get(collector_config_id=collector_config_id)
+        clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         SampleSetHandler().add_rt_to_sample_set(
             sample_set_id=sample_set_id,
             result_table_id=clustering_config.pre_treat_flow["sample_set"]["result_table_id"],
+            field_filter=[DEFAULT_TIME_FIELD, DEFAULT_CLUSTERING_FIELD],
         )
         return True
 
@@ -101,6 +106,7 @@ class AddRtToSampleSet(object):
         self.add_rt_to_sample_set.component.inputs.collector_config_id = Var(
             type=Var.SPLICE, value="${collector_config_id}"
         )
+        self.add_rt_to_sample_set.component.inputs.index_set_id = Var(type=Var.SPLICE, value="${index_set_id}")
 
 
 class CollectConfigsService(BaseService):

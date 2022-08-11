@@ -27,7 +27,7 @@
         <div class="field-label">
           <span
             class="field-type-icon mr5"
-            :class="getFieldIcon(field) || 'log-icon icon-unkown'"
+            :class="getFieldIcon(field)"
             v-bk-tooltips="fieldTypePopover(field)"
           ></span>
           <span :title="field">{{ field }}</span>
@@ -44,7 +44,15 @@
           <text-segmentation
             :content="formatterStr(data, field)"
             :field-type="getFieldType(field)"
-            :menu-click="(type, content) => handleMenuClick(type, content, field)" />
+            :menu-click="(type, content) => handleMenuClick(type, content, field)"
+          />
+          <span
+            v-if="getRelationMonitorField(field)"
+            class="relation-monitor-btn"
+            @click="handleViewMonitor(field)">
+            <span>{{ getRelationMonitorField(field) }}</span>
+            <i class="log-icon icon-jump"></i>
+          </span>
         </div>
       </div>
     </div>
@@ -78,6 +86,10 @@ export default {
       type: Array,
       required: true,
     },
+    kvShowFieldsList: {
+      type: Array,
+      require: true,
+    },
   },
   data() {
     return {
@@ -92,8 +104,11 @@ export default {
   },
   computed: {
     ...mapState('globals', ['fieldTypeMap']),
+    bkBizId() {
+      return this.$store.state.bkBizId;
+    },
     fieldKeyMap() {
-      return this.totalFields.map(item => item.field_name);
+      return this.totalFields.filter(item => this.kvShowFieldsList.includes(item.field_name)).map(el => el.field_name);
     },
     hiddenFields() {
       return this.fieldList.filter(item => !this.visibleFields.some(visibleItem => item === visibleItem));
@@ -114,17 +129,8 @@ export default {
       return target ? target.field_type : '';
     },
     getFieldIcon(field) {
-      const iconMap = {
-        number: 'log-icon icon-number',
-        keyword: 'log-icon log-icon icon-string',
-        text: 'log-icon icon-text',
-        date: 'bk-icon icon-clock',
-      };
       const fieldType = this.getFieldType(field);
-      if (fieldType === 'long' || fieldType === 'integer') {
-        return iconMap.number;
-      }
-      return iconMap[fieldType];
+      return this.fieldTypeMap[fieldType] ? this.fieldTypeMap[fieldType].icon : 'log-icon icon-unkown';
     },
     fieldTypePopover(field) {
       const target = this.fieldList.find(item => item.field_name === field);
@@ -137,12 +143,15 @@ export default {
     },
     checkDisable(id, field) {
       const type = this.getFieldType(field);
-      return ['is', 'not'].includes(id) && type === 'text' ? 'is-disabled' : '';
+      return (['is', 'not'].includes(id) && type === 'text') || type === '__virtual__'  ? 'is-disabled' : '';
     },
     handleMenuClick(operator, item, field) {
       let params = {};
       const curValue = this.tableRowDeepView(this.data, item, this.getFieldType(item), false);
-
+      if (!field) {  // disable时操作禁用
+        const disableStr = this.checkDisable(operator, item);
+        if (disableStr === 'is-disabled') return;
+      }
       if (['is', 'not'].includes(operator)) {
         if (!field && !this.getFieldType(item)) return;
 
@@ -177,6 +186,59 @@ export default {
 
       if (Object.keys(params).length) this.$emit('menuClick', params);
     },
+    /**
+     * @desc 关联跳转
+     * @param { string } field
+     */
+    handleViewMonitor(field) {
+      let path = '';
+      switch (field) {
+        // trace检索
+        case 'trace_id':
+        case 'traceID':
+          path = `/trace/home?app_name=bkmonitor_production&search_type=accurate&trace_id=${this.data[field]}`;
+          break;
+        // 主机监控
+        case 'serverIp':
+        case 'ip':
+          path = `/performance/detail/${this.data[field]}-0`;
+          break;
+        // 容器
+        case 'container_id':
+        case '__ext.container_id':
+          path = '/k8s';
+          break;
+        default:
+          break;
+      }
+
+      if (path) {
+        const url = `${window.MONITOR_URL}/?bizId=${this.bkBizId}#${path}`;
+        window.open(url, '_blank');
+      }
+    },
+    /**
+     * @desc 判断是否有关联监控跳转
+     * @param { string } field
+     */
+    getRelationMonitorField(field) {
+      switch (field) {
+        // trace检索
+        case 'trace_id':
+        case 'traceID':
+          return this.$t('retrieve.traceRetrieve');
+        // 主机监控
+        case 'serverIp':
+        case 'ip':
+          return this.$t('retrieve.host');
+        // 容器
+        case 'container_id':
+        case '__ext.container_id':
+          return this.$t('retrieve.container');
+        default:
+          return;
+      }
+    },
   },
 };
 </script>
@@ -195,6 +257,12 @@ export default {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+
+        ::v-deep .icon-ext {
+          width: 18px;
+          font-size: 12px;
+          transform: scale(.8);
+        }
       }
 
       .field-value {
@@ -242,13 +310,21 @@ export default {
         }
 
         .icon-close-circle,
-        .icon-minus-circle {
+        .icon-minus-circle,
+        .icon-arrows-up-circle,
+        .icon-copy {
           &.is-disabled {
             color: #dcdee5;
             cursor: not-allowed;
           }
         }
       }
+    }
+
+    .relation-monitor-btn {
+      margin-left: 12px;
+      color: #3a84ff;
+      cursor: pointer;
     }
   }
 </style>

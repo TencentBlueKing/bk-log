@@ -220,31 +220,20 @@ function handleReject(error, config, url) {
     // 弹出登录框不需要出 bkMessage 提示
     if (status === 401) {
       // 窗口登录，页面跳转交给平台返回302
+      const handleLoginExpire = () => {
+        window.location.href = `${window.BK_PLAT_HOST.replace(/\/$/g, '')}/login/`;
+      };
       const loginData = error.response.data;
-      let loginUrl = loginData.login_url;
-      if (!loginUrl.includes('?')) {
-        loginUrl += '?';
+      if (loginData.has_plain) {
+        try {
+          window.LoginModal.$props.loginUrl = loginData.login_url;
+          window.LoginModal.show();
+        } catch (_) {
+          handleLoginExpire();
+        }
+      } else {
+        handleLoginExpire();
       }
-      if (!loginUrl.includes('app_code')) {
-        loginUrl += '&app_code=bk_log_search';
-      }
-      if (!loginUrl.includes('c_url')) {
-        loginUrl += `&c_url=${window.origin + window.SITE_URL}login_success/`;
-      }
-      loginData.loginUrl = loginUrl;
-      window.bus.$emit('show-login-modal', loginData);
-      // if (!loginUrl.includes(window.origin)) { // 登录弹窗 iframe 跨域，跳转登录
-      //     if (!loginUrl.includes('c_url')) {
-      //         loginUrl += `&c_url=${window.location}`
-      //     }
-      //     window.location.assign(loginUrl)
-      // } else { // 窗口登录
-      //     if (!loginUrl.includes('c_url')) {
-      //         loginUrl += `&c_url=${window.origin + window.SITE_URL}login_success/`
-      //     }
-      //     loginData.loginUrl = loginUrl
-      //     window.bus.$emit('show-login-modal', loginData)
-      // }
       return Promise.reject(nextError);
     } if (status === 500) {
       nextError.message = '系统出现异常';

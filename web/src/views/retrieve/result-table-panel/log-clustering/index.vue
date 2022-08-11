@@ -92,10 +92,17 @@
         <div slot="empty">
           <div class="empty-text">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p>{{exhibitText}}</p>
-            <span class="empty-leave" @click="handleLeaveCurrent">
-              {{exhibitOperate}}
-            </span>
+            <p v-if="!isHaveText && indexSetItem.scenario_id !== 'log'">
+              {{$t('canNotFieldMessage1')}}
+              <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
+              {{$t('canNotFieldMessage2')}}
+            </p>
+            <div v-else>
+              <p>{{exhibitText}}</p>
+              <span class="empty-leave" @click="handleLeaveCurrent">
+                {{exhibitOperate}}
+              </span>
+            </div>
           </div>
         </div>
       </bk-table>
@@ -146,6 +153,10 @@ export default {
       type: Array,
       required: true,
     },
+    indexSetItem: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
@@ -170,10 +181,10 @@ export default {
         name: this.$t('数据指纹'),
       }],
       fingerOperateData: {
-        partterSize: 0, // slider当前值
-        sliderMaxVal: 0, // partter最大值
+        patternSize: 0, // slider当前值
+        sliderMaxVal: 0, // pattern最大值
         comparedList: [], // 同比List
-        partterList: [], // partter敏感度List
+        patternList: [], // pattern敏感度List
         isShowCustomize: true, // 是否显示自定义
         signatureSwitch: false, // 数据指纹开关
         groupList: [], // 缓存分组列表
@@ -199,6 +210,7 @@ export default {
       allFingerList: [], // 所有数据指纹List
       showScrollTop: false, // 是否展示返回顶部icon
       throttle: false, // 请求防抖
+      isHaveText: false, // 是否含有text字段
     };
   },
   computed: {
@@ -214,18 +226,21 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      return this.clusterSwitch
-        ? (this.configID
-          ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage'))
-        : this.$t('goSettingMessage');
+      return this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage');
     },
     exhibitOperate() {
-      return this.clusterSwitch
-        ? (this.configID ? this.$t('跳转到日志清洗') : '')
-        : this.$t('去设置');
+      return this.configID ? this.$t('跳转到日志清洗') : '';
     },
     clusteringField() {
-      return this.configData?.extra?.clustering_field || '';
+      // 如果有聚类字段则使用设置的
+      if (this.configData?.extra?.clustering_field) return this.configData.extra.clustering_field;
+      // 如果有log字段则使用log类型字段
+      const logFieldItem = this.totalFields.find(item => item.field_name === 'log');
+      if (logFieldItem) return logFieldItem.field_name;
+      // 如果没有设置聚类字段和log字段则使用text列表里的第一项值
+      const textTypeFieldList = this.totalFields.filter(item => item.is_analyzed) || [];
+      if (textTypeFieldList.length) return textTypeFieldList[0].field_name;
+      return  '';
     },
     bkBizId() {
       return this.$store.state.bkBizId;
@@ -236,6 +251,7 @@ export default {
       deep: true,
       immediate: true,
       handler(val) {
+        this.globalLoading = true;
         // 日志聚类开关赋值
         this.clusterSwitch = val.is_active;
         // 数据指纹开关赋值
@@ -250,7 +266,6 @@ export default {
           this.allFingerList = [];
         }
         // 判断是否可以字段提取的全局loading
-        this.globalLoading = true;
         setTimeout(() => {
           this.globalLoading = false;
         }, 700);
@@ -261,15 +276,17 @@ export default {
       immediate: true,
       handler(newList) {
         if (newList.length) {
-          if (!this.configData.is_active) {
-            this.exhibitAll = false;
-            return;
-          }
+          /**
+           *  无字段提取或者聚类开关没开时直接不显示聚类nav和table
+           *  来源如果是数据平台并且日志聚类大开关有打开则进入text判断
+           *  有text则提示去开启日志聚类 无则显示跳转计算平台
+           */
+          this.isHaveText = newList.some(el => el.field_type === 'text');
           // 初始化分组下拉列表
           this.filterGroupList();
-          this.requestData.pattern_level === '' && this.initTable();
-          // 判断有无text字段 无则不显示日志聚类
-          this.exhibitAll = newList.some(el => el.field_type === 'text');
+          this.initTable();
+          // 判断是否有text字段 无则提示当前不支持采集项清洗
+          this.exhibitAll = this.isHaveText;
         }
       },
     },
@@ -307,7 +324,7 @@ export default {
         }
       }
     },
-    async initTable() {
+    initTable() {
       const {
         log_clustering_level_year_on_year: yearOnYearList,
         log_clustering_level: clusterLevel,
@@ -322,9 +339,9 @@ export default {
         }
       }
       Object.assign(this.fingerOperateData, {
-        partterSize: patternLevel - 1,
+        patternSize: patternLevel - 1,
         sliderMaxVal: clusterLevel.length - 1,
-        partterList: clusterLevel,
+        patternList: clusterLevel,
         comparedList: yearOnYearList,
       });
       Object.assign(this.requestData, {
@@ -344,7 +361,7 @@ export default {
         case 'compared': // 同比操作
           this.requestData.year_on_year_hour = val;
           break;
-        case 'partterSize': // patter大小
+        case 'patternSize': // patter大小
           this.requestData.pattern_level = val;
           break;
         case 'isShowNear': // 是否展示近24小时
@@ -362,28 +379,31 @@ export default {
         case 'getNewStrategy': // 获取新类告警状态
           this.fingerOperateData.alarmObj = val;
           break;
-        case 'editAlarm': {
-          // 更新新类告警请求
+        case 'editAlarm': { // 更新新类告警请求
           const { alarmObj: { strategy_id: strategyID } } = this.fingerOperateData;
           if (strategyID) {
             this.$refs.fingerTableRef.policyEditing(strategyID);
           }
         }
           break;
-        default:
-          break;
       }
     },
     handleLeaveCurrent() {
-      if (!this.clusterSwitch) {
-        this.$emit('showSettingLog');
+      // 不显示字段提取时跳转计算平台
+      if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveText) {
+        const jumpUrl = `${window.BKDATA_URL}`;
+        window.open(jumpUrl, '_blank');
         return;
       }
+      // 无清洗 去清洗
       if (this.configID && this.configID > 0) {
         this.$router.push({
           name: 'clean-edit',
           params: { collectorId: this.configID },
-          query: { projectId: window.localStorage.getItem('project_id') },
+          query: {
+            projectId: window.localStorage.getItem('project_id'),
+            backRoute: this.$route.name,
+          },
         });
       }
     },
@@ -416,9 +436,8 @@ export default {
      * @desc: 数据指纹请求
      */
     requestFinger() {
-      if (this.throttle) {
-        return;
-      }
+      if (this.throttle) return;
+
       this.throttle = true;
       this.tableLoading = true;
       this.$http.request('/logClustering/clusterSearch', {
@@ -513,7 +532,7 @@ export default {
      */
     filterGroupList() {
       const filterList = this.totalFields
-        .filter(el => el.es_doc_values && !/^__/.test(el.field_name)) // 过滤__dist字段
+        .filter(el => el.es_doc_values && !/^__dist/.test(el.field_name)) // 过滤__dist字段
         .map((item) => {
           const { field_name: id, field_alias: alias } = item;
           return { id, name: alias ? `${id}(${alias})` : id };

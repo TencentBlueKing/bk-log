@@ -105,7 +105,7 @@
     </div>
     <!-- 原始日志 -->
     <div class="container-item debug-container">
-      <div class="fl-jfsb debug-tool" @click="isClickAlertIcon = !isClickAlertIcon">
+      <div class="fl-jfsb debug-tool" @click="handleClickDebugButton">
         <p>{{$t('retrieveSetting.debuggingTool')}}</p>
         <span :class="['bk-icon','icon-angle-double-down', isClickAlertIcon ? 'bk-icon-rotate' : '']"></span>
       </div>
@@ -133,7 +133,7 @@
       <div class="log-style" v-show="isClickAlertIcon">
         <bk-input
           placeholder=" "
-          :disabled="!globalEditable"
+          :disabled="!globalEditable || logOriginalRequest"
           :type="'textarea'"
           :rows="3"
           :input-style="{
@@ -235,6 +235,10 @@ export default {
       type: String,
       require: true,
     },
+    cleanConfig: {
+      type: Object,
+      require: true,
+    },
   },
   data() {
     return {
@@ -257,14 +261,7 @@ export default {
       },
       rules: {
         regular: [{
-          validator(val) {
-            try {
-              // eslint-disable-next-line no-eval
-              return eval(`/${val}/`) instanceof RegExp;
-            } catch (e) {
-              return false;
-            }
-          },
+          validator: this.checkRegular,
           required: true,
           trigger: 'blur',
         }],
@@ -274,6 +271,8 @@ export default {
           trigger: 'blur',
         }],
       },
+      logOriginalRequest: false, // 原始日志是否正在请求
+      isFirstInitLogOrigin: false, // 是否第一次点击调试工具按钮
       dragOptions: {
         animation: 150,
         tag: 'ul',
@@ -460,6 +459,54 @@ export default {
         const [listKey, listVal] =  Object.entries(listItem)[0];
         return regexKey === listKey && regexVal === listVal;
       });
+    },
+    handleClickDebugButton() {
+      this.isClickAlertIcon = !this.isClickAlertIcon;
+      // 请求了一次原始日志后就不再请求
+      if (!this.isFirstInitLogOrigin) {
+        this.getLogOriginal();
+      }
+      this.isFirstInitLogOrigin = true;
+    },
+    /**
+     * @desc: 获取原始日志内容
+     */
+    getLogOriginal() {
+      const { extra: { collector_config_id: collectorConfigId } } = this.cleanConfig;
+      if (!collectorConfigId) return;
+      this.logOriginalRequest = true;
+      this.$http.request('source/dataList', {
+        params: {
+          collector_config_id: collectorConfigId,
+        },
+      }).then((res) => {
+        if (res.data && res.data.length) {
+          const data = res.data[0];
+          this.logOriginal = data.etl.data || '';
+        }
+      })
+        .catch(() => {
+        })
+        .finally(() => {
+          this.logOriginalRequest = false;
+        });
+    },
+    async checkRegular(val) {
+      const result = await this.checkRegularRequest(val);
+      return result;
+    },
+    // 检测英文名是否可用
+    async checkRegularRequest(val) {
+      try {
+        const res =  await this.$http.request('logClustering/checkRegexp', {
+          data: { regexp: val },
+        });
+        if (res.data) {
+          return res.data;
+        }
+      } catch (error) {
+        return false;
+      }
     },
     handleMenuClick(option, item) {
       copyMessage(Object.values(item)[0]);
@@ -652,19 +699,19 @@ export default {
   .log-style {
     height: 100px;
 
-    /deep/.bk-form-textarea:focus {
+    ::v-deep .bk-form-textarea:focus {
       /* stylelint-disable-next-line declaration-no-important */
       background-color: #313238 !important;
       border-radius: 2px;
     }
 
-    /deep/.bk-form-textarea[disabled] {
+    ::v-deep .bk-form-textarea[disabled] {
       /* stylelint-disable-next-line declaration-no-important */
       background-color: #313238 !important;
       border-radius: 2px;
     }
 
-    /deep/.bk-textarea-wrapper {
+    ::v-deep .bk-textarea-wrapper {
       border: none;
     }
   }
@@ -674,7 +721,7 @@ export default {
       margin-left: 15px;
       width: 560px;
 
-      /deep/.bk-label {
+      ::v-deep .bk-label {
         text-align: left;
       }
     }

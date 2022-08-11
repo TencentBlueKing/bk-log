@@ -22,10 +22,13 @@
 
 /* eslint-disable no-nested-ternary */
 const wepack = require('webpack');
+const WebpackBar = require('webpackbar');
 const path = require('path');
 const fs = require('fs');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const LogWebpackPlugin = require('./webpack/log-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CliMonacoWebpackPlugin = require('@blueking/bkmonitor-cli/node_modules/monaco-editor-webpack-plugin');
 const devProxyUrl = 'http://appdev.bktencent.com:9002';
 const devHost = 'appdev.bktencent.com';
 const loginHost = 'https://paas-dev.bktencent.com';
@@ -58,6 +61,7 @@ const logPluginConfig = {
       window.MENU_LOGO_URL = '\${MENU_LOGO_URL}'
       window.APP_CODE = '\${APP_CODE}'
       window.BK_DOC_URL = '\${BK_DOC_URL}'
+      window.BK_FAQ_URL = '\${BK_FAQ_URL}'
       window.BK_DOC_QUERY_URL = '\${BK_DOC_QUERY_URL}'
       window.BK_HOT_WARM_CONFIG_URL = '\${BK_HOT_WARM_CONFIG_URL}'
       window.BIZ_ACCESS_URL = '\${BIZ_ACCESS_URL}'
@@ -66,6 +70,10 @@ const logPluginConfig = {
       window.TAM_AEGIS_KEY = '\${TAM_AEGIS_KEY}'
       window.BK_LOGIN_URL = '\${BK_LOGIN_URL}'
       window.BK_DOC_DATA_URL = '\${BK_DOC_DATA_URL}'
+      window.BK_PLAT_HOST = '\${BK_PLAT_HOST}'
+      window.BK_ARCHIVE_DOC_URL = '\${BK_ARCHIVE_DOC_URL}'
+      window.BK_ETL_DOC_URL = '\${BK_ETL_DOC_URL}'
+      window.ASSESSMEN_HOST_COUNT = \${BK_ASSESSMEN_HOST_COUNT}
     </script>
     % if TAM_AEGIS_KEY != "" :
       <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js?_bid=3977"></script>
@@ -127,6 +135,23 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
     );
   }
 
+  config.plugins.forEach((item, index) => {
+    if (item instanceof CliMonacoWebpackPlugin) {
+      item.options.languages.push('yaml');
+      item.options.customLanguages = [
+        {
+          label: 'yaml',
+          entry: 'monaco-yaml',
+          worker: {
+            id: 'monaco-yaml/yamlWorker',
+            entry: 'monaco-yaml/yaml.worker',
+          },
+        },
+      ];
+      config.plugins[index] = new MonacoWebpackPlugin(item.options);
+    }
+  });
+
   return {
     ...config,
     output: {
@@ -144,6 +169,12 @@ module.exports = (baseConfig, { mobile, production, fta, email = false }) => {
         '@': path.resolve('src'),
       },
     },
+    plugins: baseConfig.plugins.map((plugin) => {
+      return plugin instanceof wepack.ProgressPlugin ?  new WebpackBar({
+        profile: true,
+        name: `日志平台 ${production ? 'Production模式' : 'Development模式'} 构建`,
+      }) : plugin;
+    }),
     cache: typeof devConfig.cache === 'boolean' ? devConfig.cache : config.cache,
   };
 };

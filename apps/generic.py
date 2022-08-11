@@ -16,12 +16,16 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from typing import List
 
 from django.conf import settings
 from django.http import JsonResponse, Http404
 from django.utils.translation import ugettext as _
+from opentelemetry import trace
+from opentelemetry.trace import format_trace_id
 from rest_framework import exceptions, filters
 from rest_framework import serializers
 from rest_framework import status
@@ -30,6 +34,9 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.viewsets import ModelViewSet as _ModelViewSet
 from django_filters import rest_framework as django_filters
+
+from apps.log_measure.events import NOTIFY_EVENT
+from apps.utils.function import ignored
 from apps.utils.log import logger
 from apps.exceptions import BaseException, ValidationError, ErrorCode
 from apps.iam import ActionEnum, ResourceEnum, Permission
@@ -64,7 +71,7 @@ class FlowMixin(object):
             response.status_code = status.HTTP_200_OK
 
         # 返回响应头禁用浏览器的类型猜测行为
-        response._headers["x-content-type-options"] = ("X-Content-Type-Options", "nosniff")
+        response.headers["x-content-type-options"] = ("X-Content-Type-Options", "nosniff")
         return super(FlowMixin, self).finalize_response(request, response, *args, **kwargs)
 
     def valid(self, form_class, filter_blank=False, filter_none=False):
@@ -336,7 +343,13 @@ def custom_exception_handler(exc, context):
             message=exc.message, code=exc.code, args=exc.args, data=exc.data, errors=exc.errors
         )
         logger.exception(_msg)
+        _notify(context["request"], _msg)
         return JsonResponse(_error(exc.code, exc.message, exc.data, exc.errors))
+
+    # 处理校验异常
+    if isinstance(exc, ValueError):
+        logger.exception(str(exc))
+        return JsonResponse(_error("500001", str(exc)))
 
     # 判断是否在debug模式中,
     # 在这里判断是防止阻止了用户原本主动抛出的异常
@@ -345,7 +358,23 @@ def custom_exception_handler(exc, context):
 
     # 非预期异常
     logger.exception(getattr(exc, "message", exc))
-    return JsonResponse(_error("500", _("系统错误，请联系管理员")))
+    _notify(context["request"], getattr(exc, "message", exc))
+    return JsonResponse(_error("500", _("系统错误，请联系管理员"), errors=str(exc)))
+
+
+def _notify(request, msg):
+    # 旁路告警
+    with ignored(Exception):
+        username = ""
+        with ignored(Exception):
+            username = request.user.username
+        NOTIFY_EVENT(
+            content=msg,
+            dimensions={
+                "trace_id": format_trace_id(trace.get_current_span().get_span_context().trace_id),
+                "username": username,
+            },
+        )
 
 
 def _error(code=None, message="", data=None, errors=None):

@@ -16,10 +16,17 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
+
+from apps.exceptions import ApiResultError
 from apps.log_databus.exceptions import ArchiveNotFound
+from apps.models import MultiStrSplitByCommaFieldText
 from apps.utils.cache import cache_one_hour
 from apps.utils.function import map_if
+from apps.utils.local import get_request_username
+from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
 
 """
@@ -29,7 +36,7 @@ databus
 3. 入库
 """
 
-from django.db import models  # noqa
+from django.db import models, transaction  # noqa
 from django.utils import timezone  # noqa
 from django.utils.functional import cached_property  # noqa
 from django.utils.translation import ugettext_lazy as _  # noqa
@@ -37,18 +44,45 @@ from django_jsonfield_backport.models import JSONField  # noqa  pylint: disable=
 
 from apps.api import CmsiApi, TransferApi  # noqa
 from apps.log_databus.constants import (  # noqa
+    ETLProcessorChoices,
+    EtlConfigChoices,
     TargetObjectTypeEnum,  # noqa
     TargetNodeTypeEnum,  # noqa
     CollectItsmStatus,  # noqa
     ADMIN_REQUEST_USER,
     EtlConfig,  # noqa
+    VisibleEnum,
+    ContainerCollectStatus,
+    Environment,
 )
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
 from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
 from apps.models import MultiStrSplitByCommaField, JsonField, SoftDeleteModel, OperateRecordModel  # noqa
 
 
-class CollectorConfig(SoftDeleteModel):
+class CollectorBase(SoftDeleteModel):
+    """
+    采集插件&采集项基类
+    """
+
+    bk_biz_id = models.BigIntegerField(_("业务id"))
+    bkdata_biz_id = models.BigIntegerField(_("数据归属业务ID"), null=True, blank=True)
+
+    class Meta:
+        abstract = True
+
+    def get_bk_biz_id(self):
+        bk_biz_id = self.bkdata_biz_id or self.bk_biz_id
+        return bk_biz_id
+
+    def get_name(self):
+        raise NotImplementedError
+
+    def get_en_name(self):
+        raise NotImplementedError
+
+
+class CollectorConfig(CollectorBase):
     """
     配置后不能修改：collector_scenario_id、category_id、collector_plugin_id、bk_biz_id、target_object_type
     节点管理允许修改的字段
@@ -70,12 +104,12 @@ class CollectorConfig(SoftDeleteModel):
 
     collector_config_id = models.AutoField(_("采集配置ID"), primary_key=True)
     collector_config_name = models.CharField(_("采集配置名称"), max_length=64)
+    collector_plugin_id = models.BigIntegerField(_("采集插件ID"), db_index=True, null=True)
     bk_app_code = models.CharField(_("接入的来源APP"), max_length=64, default="bk_log_search")
     collector_scenario_id = models.CharField(_("采集场景"), max_length=64)
     custom_type = models.CharField(
         _("自定义类型"), max_length=30, choices=CustomTypeEnum.get_choices(), default=CustomTypeEnum.LOG.value
     )
-    bk_biz_id = models.IntegerField(_("业务id"))
     category_id = models.CharField(_("数据分类"), max_length=64)
     target_object_type = models.CharField(
         _("对象类型"), max_length=32, choices=TargetObjectTypeEnum.get_choices(), default=TargetObjectTypeEnum.HOST.value
@@ -91,6 +125,14 @@ class CollectorConfig(SoftDeleteModel):
     bk_data_id = models.IntegerField(_("采集链路data_id"), null=True, default=None)
     bk_data_name = models.CharField(_("采集链路data_name"), null=True, default=None, max_length=64)
     table_id = models.CharField(_("结果表ID"), max_length=255, null=True, default=None)
+    bkbase_table_id = models.CharField(_("BKBASE结果表ID"), max_length=255, null=True, default=None)
+    processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)
+    etl_processor = models.CharField(
+        _("数据处理引擎"),
+        max_length=32,
+        choices=ETLProcessorChoices.get_choices(),
+        default=ETLProcessorChoices.TRANSFER.value,
+    )
     etl_config = models.CharField(_("清洗配置"), max_length=32, null=True, default=None)
     subscription_id = models.IntegerField(_("节点管理订阅ID"), null=True, default=None)
     task_id_list = MultiStrSplitByCommaField(_("最后一次部署任务"), max_length=255, null=True, default=None)
@@ -105,12 +147,27 @@ class CollectorConfig(SoftDeleteModel):
     can_use_independent_es_cluster = models.BooleanField(_("是否能够使用独立es集群"), default=True, blank=True)
     collector_package_count = models.IntegerField(_("采集打包数量"), null=True, default=10)
     collector_output_format = models.CharField(_("输出格式"), null=True, default=None, max_length=32, blank=True)
-    collector_config_overlay = JSONField(_("采集器配置覆盖"), null=True, default=None, max_length=32, blank=True)
+    collector_config_overlay = models.JSONField(_("采集器配置覆盖"), null=True, default=None, max_length=32, blank=True)
     storage_shards_nums = models.IntegerField(_("ES分片数量"), null=True, default=None, blank=True)
     storage_shards_size = models.IntegerField(_("单shards分片大小"), null=True, default=None, blank=True)
     storage_replies = models.IntegerField(_("ES副本数"), null=True, default=1, blank=True)
     bkdata_data_id_sync_times = models.IntegerField(_("调用数据平台创建data_id失败数"), default=0)
     collector_config_name_en = models.CharField(_("采集项英文名"), max_length=255, null=True, blank=True, default="")
+    environment = models.CharField(_("环境"), max_length=128, null=True, blank=True)
+    bcs_cluster_id = models.CharField(_("bcs集群id"), max_length=128, null=True, blank=True)
+    extra_labels = models.JSONField(_("额外字段添加"), null=True, blank=True)
+    add_pod_label = models.BooleanField(_("是否自动添加pod中的labels"), default=False)
+
+    yaml_config_enabled = models.BooleanField(_("是否使用yaml配置模式"), default=False)
+    yaml_config = models.TextField(_("yaml配置内容"), default="")
+    rule_id = models.IntegerField(_("bcs规则集id"), default=0)
+    is_display = models.BooleanField(_("采集项是否对用户可见"), default=True)
+
+    def get_name(self):
+        return self.collector_config_name
+
+    def get_en_name(self):
+        return self.collector_config_name_en
 
     @property
     def is_clustering(self) -> bool:
@@ -123,12 +180,15 @@ class CollectorConfig(SoftDeleteModel):
     def get_etl_config(self):
         multi_execute_func = MultiExecuteFunc()
         multi_execute_func.append(
-            "result_table_config", TransferApi.get_result_table, params={"table_id": self.table_id}, use_request=False
+            "result_table_config",
+            TransferApi.get_result_table,
+            params={"table_id": self.table_id, "no_request": True},
+            use_request=False,
         )
         multi_execute_func.append(
             "result_table_storage",
             TransferApi.get_result_table_storage,
-            params={"result_table_list": self.table_id, "storage_type": "elasticsearch"},
+            params={"result_table_list": self.table_id, "storage_type": "elasticsearch", "no_request": True},
             use_request=False,
         )
         result = multi_execute_func.run()
@@ -149,6 +209,24 @@ class CollectorConfig(SoftDeleteModel):
 
     def get_result_table_kafka_config(self):
         return TransferApi.get_data_id({"bk_data_id": self.bk_data_id})["mq_config"]
+
+    def get_bk_data_by_name(self):
+        try:
+            bk_data = TransferApi.get_data_id({"data_name": self.bk_data_name})
+            return bk_data
+        except ApiResultError:
+            logger.debug(f"bk_data_name: {self.bk_data_name} is not exist.")
+
+        return None
+
+    def get_result_table_by_id(self):
+        try:
+            result_table = TransferApi.get_result_table({"table_id": self.table_id})
+            return result_table
+        except ApiResultError:
+            logger.debug(f"result_table_id: {self.table_id} is not exist.")
+
+        return None
 
     @property
     def category_name(self):
@@ -197,6 +275,9 @@ class CollectorConfig(SoftDeleteModel):
             CollectItsmStatus.SUCCESS_APPLY.value,
         ]
 
+    def itsm_has_appling(self):
+        return self.itsm_ticket_status == CollectItsmStatus.APPLYING.value
+
     def itsm_has_success(self):
         return self.itsm_ticket_status == CollectItsmStatus.SUCCESS_APPLY.value
 
@@ -236,9 +317,47 @@ class CollectorConfig(SoftDeleteModel):
         return self.updated_by
 
     @staticmethod
-    @cache_one_hour("data_id_conf_{bk_data_id}")
+    @cache_one_hour("data_id_conf_{bk_data_id}", need_md5=True)
     def get_data_id_conf(bk_data_id):
         return TransferApi.get_data_id({"bk_data_id": bk_data_id, "no_request": True})
+
+    @property
+    def is_container_environment(self):
+        """
+        是否为容器类型
+        """
+        return self.environment == Environment.CONTAINER
+
+
+class ContainerCollectorConfig(SoftDeleteModel):
+    collector_config_id = models.IntegerField(_("采集项id"), db_index=True)
+    collector_type = models.CharField(_("容器采集类型"), max_length=64, null=True, blank=True)
+    namespaces = models.JSONField(_("namespace选择"), null=True, blank=True)
+    any_namespace = models.BooleanField(_("所有namespace"), default=False)
+    data_encoding = models.CharField(_("日志字符集"), max_length=30, null=True, default=None)
+    params = models.JSONField(_("params"), null=True, blank=True)
+    workload_type = models.CharField(_("应用类型"), max_length=128, null=True, blank=True)
+    workload_name = models.CharField(_("应用名称"), max_length=128, null=True, blank=True)
+    container_name = models.CharField(_("容器名"), max_length=128, null=True, blank=True)
+    match_labels = models.JSONField(_("匹配标签"), null=True, blank=True)
+    match_expressions = models.JSONField(_("匹配表达式"), null=True, blank=True)
+    all_container = models.BooleanField(_("所有容器"), default=False)
+    status = models.CharField(
+        _("下发状态"), null=True, blank=True, max_length=30, choices=ContainerCollectStatus.get_choices()
+    )
+    raw_config = models.JSONField(_("原始配置"), null=True, blank=True)
+    parent_container_config_id = models.IntegerField(_("父配置id"), default=0)
+    rule_id = models.IntegerField(_("bcs规则集id"), default=0)
+
+
+class BcsRule(SoftDeleteModel):
+    rule_name = models.CharField(_("采集配置名称"), max_length=64)
+    bcs_project_id = models.CharField(_("项目ID"), max_length=64, default="")
+
+
+class ItsmEtlConfig(SoftDeleteModel):
+    ticket_sn = models.CharField(_("itsm单据号"), max_length=255)
+    request_param = models.JSONField(_("请求参数"))
 
 
 class DataLinkConfig(SoftDeleteModel):
@@ -278,9 +397,15 @@ class StorageCapacity(OperateRecordModel):
 
 
 class StorageUsed(OperateRecordModel):
+    CLUSTER_INFO_BIZ_ID = 0
+
     bk_biz_id = models.IntegerField(_("业务id"))
     storage_cluster_id = models.IntegerField(_("集群ID"))
-    storage_used = models.FloatField(_("已用容量"))
+    storage_used = models.FloatField(_("已用容量"), default=0)
+    storage_usage = models.IntegerField(_("容量使用率"), default=0)
+    storage_total = models.BigIntegerField(_("总容量"), default=0)
+    index_count = models.IntegerField(_("索引数量"), default=0)
+    biz_count = models.IntegerField(_("业务数量"), default=0)
 
     class Meta:
         verbose_name = _("业务已用容量")
@@ -305,6 +430,7 @@ class BKDataClean(SoftDeleteModel):
     bk_biz_id = models.IntegerField(_("业务id"))
     log_index_set_id = models.IntegerField(_("索引集id"), blank=True, null=True, db_index=True)
     is_authorized = models.BooleanField(_("索引集是否被授权"), default=False)
+    etl_config = models.CharField(_("清洗配置"), max_length=32, null=True, blank=True)
 
     class Meta:
         verbose_name = _("高级清洗列表")
@@ -316,9 +442,11 @@ class CleanTemplate(SoftDeleteModel):
     clean_template_id = models.AutoField(_("清洗id"), primary_key=True)
     name = models.CharField(_("模板名"), max_length=128)
     clean_type = models.CharField(_("模板类型"), max_length=64)
-    etl_params = JSONField(_("etl配置"), null=True, blank=True)
-    etl_fields = JSONField(_("etl字段"), null=True, blank=True)
+    etl_params = models.JSONField(_("etl配置"), null=True, blank=True)
+    etl_fields = models.JSONField(_("etl字段"), null=True, blank=True)
     bk_biz_id = models.IntegerField(_("业务id"))
+    visible_type = models.CharField(_("可见类型"), max_length=64, default=VisibleEnum.CURRENT_BIZ.value)
+    visible_bk_biz_id = MultiStrSplitByCommaFieldText(_("可见业务ID"), default="")
 
     class Meta:
         verbose_name = _("清洗模板")
@@ -329,8 +457,8 @@ class CleanTemplate(SoftDeleteModel):
 class CleanStash(SoftDeleteModel):
     clean_stash_id = models.AutoField(_("清洗缓存id"), primary_key=True)
     clean_type = models.CharField(_("模板类型"), max_length=64)
-    etl_params = JSONField(_("etl配置"), null=True, blank=True)
-    etl_fields = JSONField(_("etl字段"), null=True, blank=True)
+    etl_params = models.JSONField(_("etl配置"), null=True, blank=True)
+    etl_fields = models.JSONField(_("etl字段"), null=True, blank=True)
     collector_config_id = models.IntegerField(_("采集项列表"), db_index=True)
     bk_biz_id = models.IntegerField(_("业务id"))
 
@@ -415,9 +543,90 @@ class RestoreConfig(SoftDeleteModel):
             "title": str(_("【日志平台】")),
         }
         CmsiApi.send_mail(send_params)
-        CmsiApi.send_wechat(send_params)
+        CmsiApi.send_weixin(send_params)
 
     @classmethod
     def get_collector_config_id(cls, restore_config_id):
         restore: "RestoreConfig" = cls.objects.get(restore_config_id=restore_config_id)
         return restore.archive.collector_config.collector_config_id
+
+
+class CollectorPlugin(CollectorBase):
+    """
+    采集插件，控制采集项行为
+    """
+
+    collector_plugin_id = models.BigAutoField(_("采集插件ID"), primary_key=True)
+    collector_plugin_name = models.CharField(_("采集插件名称"), max_length=64)
+    collector_plugin_name_en = models.CharField(_("英文采集插件名称"), max_length=64)
+    collector_scenario_id = models.CharField(_("采集场景ID"), max_length=64)
+    description = models.CharField(_("插件描述"), max_length=64)
+    category_id = models.CharField(_("数据分类"), max_length=64)
+    data_encoding = models.CharField(_("日志字符集"), max_length=30, null=True, default=None)
+    is_display_collector = models.BooleanField(_("采集项是否对用户可见"), default=False)
+    is_allow_alone_data_id = models.BooleanField(_("是否允许使用独立DATAID"), default=True)
+    bk_data_id = models.IntegerField(_("DATAID"), null=True)
+    data_link_id = models.IntegerField(_("数据链路ID"), null=True)
+    processing_id = models.CharField(_("计算平台清洗id"), max_length=255, null=True, blank=True)
+    is_allow_alone_etl_config = models.BooleanField(_("是否允许独立配置清洗规则"), default=True)
+    etl_processor = models.CharField(
+        _("数据处理器"), max_length=32, choices=ETLProcessorChoices.get_choices(), default=ETLProcessorChoices.TRANSFER.value
+    )
+    etl_config = models.CharField(
+        _("清洗配置"), max_length=32, null=True, default=None, choices=EtlConfigChoices.get_choices()
+    )
+    etl_params = models.JSONField(_("清洗参数"), null=True)
+    fields = models.JSONField(_("清洗字段"), null=True)
+    params = models.JSONField(_("采集插件参数"), default=dict, null=True)
+    table_id = models.CharField(_("结果表ID"), max_length=255, null=True)
+    bkbase_table_id = models.CharField(_("BKBASE结果表ID"), max_length=255, null=True)
+    is_allow_alone_storage = models.BooleanField(_("是否允许独立存储"), default=True)
+    storage_cluster_id = models.IntegerField(_("存储集群ID"), null=True)
+    retention = models.IntegerField(_("数据有效时间"), null=True)
+    allocation_min_days = models.IntegerField(_("冷热数据生效时间"), null=True)
+    storage_replies = models.IntegerField(_("副本数量"), null=True)
+    storage_shards_nums = models.IntegerField(_("ES分片数量"), null=True, default=None, blank=True)
+    storage_shards_size = models.IntegerField(_("单shards分片大小"), null=True, default=None, blank=True)
+
+    class Meta:
+        verbose_name = _("用户采集插件")
+        verbose_name_plural = verbose_name
+        ordering = ("-updated_at",)
+        unique_together = [
+            ("collector_plugin_name", "bk_biz_id"),
+            ("collector_plugin_name_en", "bk_biz_id"),
+        ]
+
+    def get_updated_by(self):
+        if self.updated_by == ADMIN_REQUEST_USER:
+            return self.created_by
+        return self.updated_by
+
+    def get_name(self):
+        return self.collector_plugin_name
+
+    def get_en_name(self):
+        return self.collector_plugin_name_en
+
+    def get_transfer_table_id(self):
+        return self.transfer_table_id
+
+    def set_transfer_table_id(self, table_id: str):
+        self.transfer_table_id = table_id
+        self.save()
+
+    def get_table_id(self):
+        if self.etl_processor == ETLProcessorChoices.BKBASE.value:
+            return self.bkbase_table_id
+        return self.table_id
+
+    @transaction.atomic()
+    def change_collector_display_status(self, display_status: bool):
+        """更改采集项可见状态"""
+        request_user = get_request_username()
+        self.is_display_collector = display_status
+        self.save()
+        CollectorConfig.objects.filter(collector_plugin_id=self.collector_plugin_id).update(
+            is_display=display_status, updated_at=timezone.now(), updated_by=request_user
+        )
+        logger.info("[Change Collector Plugin Display Status] %s %s", self.collector_plugin_id, request_user)

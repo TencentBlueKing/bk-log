@@ -15,13 +15,17 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
+import re
 from collections import defaultdict
 
 from six import iteritems, itervalues
 
 from django.utils.translation import ugettext as _
 from apps.api import BkLogApi
+from apps.log_measure.constants import RESULT_TABLE_ID_RE
 from apps.log_measure.utils.metric import MetricUtils
 from apps.utils.log import logger
 from bk_monitor.constants import TimeFilterEnum
@@ -48,7 +52,7 @@ def get_version(version: str):
     result_version = [int(p) for p in raw_version.split(".")]
     version_len = VERSION_LEN - len(result_version)
     if version_len > 0:
-        for i in range(version_len):  # pylint: disable=unused-variable
+        for index in range(version_len):  # pylint: disable=unused-variable
             result_version.append(0)
     return result_version
 
@@ -923,6 +927,18 @@ def process_pshard_stats_data(metrics, pshard_url, get, version, base_dimensions
         if result_metric:
             metrics.append(result_metric)
 
+    result_table_id_re = re.compile(RESULT_TABLE_ID_RE)
+    for index_name, index_data in data.get("indices", {}).items():
+        index_match = result_table_id_re.match(index_name)
+        if not index_match:
+            continue
+        result_table_id = index_match.groupdict()["result_table_id"]
+        dimensions = {**base_dimensions, "result_table_id": result_table_id}
+        for metric, value in pshard_stats_metrics.items():
+            result_metric = process_metric({"_all": index_data}, metric, *value, dimensions=dimensions)
+            if result_metric:
+                metrics.append(result_metric)
+
 
 def process_health_data(metrics, health_url, get, version, base_dimensions):
     data = get(health_url)
@@ -967,8 +983,13 @@ def get_index_metrics(metrics, get, version, base_dimensions):
     index_stats_metrics = index_stats_for_version(version)
     health_stat = {"green": 0, "yellow": 1, "red": 2}
     reversed_health_stat = {"red": 0, "yellow": 1, "green": 2}
+    result_table_id_re = re.compile(RESULT_TABLE_ID_RE)
     for idx in index_resp:
-        dimensions = {**base_dimensions, "index_name": idx["index"]}
+        re_result = result_table_id_re.match(idx["index"])
+        if not re_result:
+            continue
+        result_table_id = re_result.groupdict()["result_table_id"]
+        dimensions = {**base_dimensions, "result_table_id": result_table_id}
 
         # we need to remap metric names because the ones from elastic
         # contain dots and that would confuse `_process_metric()` (sic)

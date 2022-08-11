@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Union
@@ -36,7 +38,7 @@ class CreateModelCls(object):
     sensitivity: str = "private"
     run_env: str = "python"
     sample_type: str = "timeseries"
-    modeling_type: str = "modeling_type"
+    modeling_type: str = "aiops"
     protocol_version: str = "1.2"
 
 
@@ -119,10 +121,26 @@ class ChunkedReadSampleSet(object):
 
 
 @dataclass
+class SparkSessionCls(object):
+    worker_nums: int = 1
+    worker_group: str = "default"
+    core: int = 2
+    memory: int = 2048
+
+
+@dataclass
+class SessionWorkspaceCls(object):
+    worker_group: str = "default"
+    core: int = 2
+    memory: int = 1024
+    worker_nums: int = 1
+
+
+@dataclass
 class PipelineResourcesCls(object):
     python_backend: PythonBackendCls
-    session_agent: SessionAgentCls = SessionAgentCls()
-    session_server: SessionServerCls = SessionServerCls()
+    spark_session: SparkSessionCls = SparkSessionCls()
+    session_workspace: SessionWorkspaceCls = SessionWorkspaceCls()
 
 
 @dataclass
@@ -246,6 +264,7 @@ class ModelTrainContentNodeConfigCls(object):
 class ModelEvaluationContentNodeConfigCls(object):
     algorithm_node_id: NodeConfigCls
     evaluation_func: NodeConfigCls
+    evaluate_input: NodeConfigCls
 
 
 @dataclass
@@ -344,8 +363,8 @@ class AlgorithmConfigConfCls(object):
 class ModelTrainContentAlgorithmConfigCls(object):
     sample_set_table_name: Any
     sample_set_table_desc: Any
-    feature_columns: List[AlgorithmConfigConfCls]
-    predict_output: List[AlgorithmConfigConfCls]
+    training_input: List[AlgorithmConfigConfCls]
+    training_meta: Dict
     training_args: List[AlgorithmConfigConfCls]
     basic_model_id: str
     add_on_input: List[str] = field(default_factory=list)
@@ -414,6 +433,7 @@ class ContentCls(object):
     ]
     output_config: OutputConfigCls = OutputConfigCls()
     input_config: Dict = field(default_factory=dict)
+    prediction_algorithm_config: Dict = field(default_factory=dict)
 
 
 @dataclass
@@ -761,6 +781,7 @@ class UpdateTrainingScheduleCls(object):
             "training_freq": 1,
             "success_rate_threshold": 0.8,
             "training_freq_unit": "h",
+            "sample_change_count": 1,
         }
     )
     release_config: Dict = field(default_factory=lambda: {"release_mode": "auto"})

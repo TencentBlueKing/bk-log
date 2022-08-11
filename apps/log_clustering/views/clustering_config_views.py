@@ -16,7 +16,12 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
+import re
+
+from pipeline.service import task_service
 from rest_framework.response import Response
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -27,6 +32,7 @@ from apps.log_clustering.exceptions import ClusteringClosedException
 from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandler
 from apps.log_clustering.serializers import ClusteringConfigSerializer, ClusteringPreviewSerializer
 from apps.utils.drf import detail_route, list_route
+from apps.utils.log import logger
 
 
 class ClusteringConfigViewSet(APIViewSet):
@@ -82,6 +88,24 @@ class ClusteringConfigViewSet(APIViewSet):
         }
         """
         return Response(ClusteringConfigHandler(index_set_id=index_set_id).retrieve())
+
+    @detail_route(methods=["GET"], url_path="start")
+    def start(self, request, *args, index_set_id=None, **kwargs):
+        return Response(ClusteringConfigHandler(index_set_id=index_set_id).start())
+
+    @list_route(methods=["GET"], url_path="pipeline/state")
+    def get_pipeline_state(self, request, *args, **kwargs):
+        return Response(task_service.get_state(request.query_params.get("node_id", "")))
+
+    @list_route(methods=["GET"], url_path="pipeline/retry")
+    def retry_pipeline(self, request, *args, **kwargs):
+        action_result = task_service.retry_activity(request.query_params.get("node_id", ""))
+        return Response({"result": action_result.result, "message": action_result.message})
+
+    @list_route(methods=["GET"], url_path="pipeline/skip")
+    def skip_pipeline(self, request, *args, **kwargs):
+        action_result = task_service.skip_activity(request.query_params.get("node_id", ""))
+        return Response({"result": action_result.result, "message": action_result.message})
 
     @detail_route(methods=["POST"])
     def create_or_update(self, request, *args, **kwargs):
@@ -220,7 +244,7 @@ class ClusteringConfigViewSet(APIViewSet):
         return Response(
             ClusteringConfigHandler().preview(
                 input_data=params["input_data"],
-                min_members=params["min_members"],
+                min_members=1,  # 这里是因为在调试的时候默认只有一条数据
                 max_dist_list=params["max_dist_list"],
                 predefined_varibles=params["predefined_varibles"],
                 delimeter=params["delimeter"],
@@ -228,3 +252,36 @@ class ClusteringConfigViewSet(APIViewSet):
                 is_case_sensitive=params["is_case_sensitive"],
             )
         )
+
+    @list_route(methods=["POST"], url_path="check_regexp")
+    def check(self, request, *args, **kwargs):
+        """
+        @api {post} /clustering_config/check_regexp/ 5_聚类设置-调试正则
+        @apiName check regexp invalid
+        @apiGroup log_clustering
+        @apiParam {Str} regexp 正则表达式
+        @apiSuccessExample {json} 正确的正则表达式:
+        {
+            "message":"",
+            "code":0,
+            "data":true,
+            "result":true
+        }
+        @apiSuccessExample {json} 错误的正则表达式
+        {
+            "message":"",
+            "code":0,
+            "data":false,
+            "result":true
+        }
+        """
+        regexp_str = request.data.get("regexp")
+        if not regexp_str:
+            return Response(False)
+
+        try:
+            re.compile(regexp_str)
+        except BaseException as e:  # pylint: disable=broad-except
+            logger.error("check regexp failed: ", e)
+            return Response(False)
+        return Response(True)

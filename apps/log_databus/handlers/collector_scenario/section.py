@@ -16,8 +16,11 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
-
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import IS_AUTO_DEPLOY_PLUGIN
 from apps.utils.log import logger
 from apps.log_databus.handlers.collector_scenario.base import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.utils import deal_collector_scenario_param
@@ -65,10 +68,9 @@ class SectionCollectorScenario(CollectorScenario):
         }
 
         local_params = self._deal_text_public_params(local_params, params)
-
-        return [
+        steps = [
             {
-                "id": self.PLUGIN_NAME,
+                "id": self.PLUGIN_NAME,  # 这里的ID不能随意变更，需要同步修改解析的逻辑(parse_steps)
                 "type": "PLUGIN",
                 "config": {
                     "plugin_name": self.PLUGIN_NAME,
@@ -81,8 +83,30 @@ class SectionCollectorScenario(CollectorScenario):
                         "local": [local_params],
                     }
                 },
-            }
+            },
         ]
+
+        if FeatureToggleObject.switch(IS_AUTO_DEPLOY_PLUGIN):
+            steps.insert(
+                0,
+                # 增加前置检测步骤，如果采集器不存在，则尝试安装
+                {
+                    "id": f"main:{self.PLUGIN_NAME}",
+                    "type": "PLUGIN",
+                    "config": {
+                        "job_type": "MAIN_INSTALL_PLUGIN",
+                        "check_and_skip": True,
+                        "is_version_sensitive": False,
+                        "plugin_name": self.PLUGIN_NAME,
+                        "plugin_version": self.PLUGIN_VERSION,
+                        "config_templates": [
+                            {"name": f"{self.PLUGIN_NAME}.conf", "version": "latest", "is_main": True}
+                        ],
+                    },
+                    "params": {"context": {}},
+                },
+            )
+        return steps
 
     @classmethod
     def parse_steps(cls, steps):
@@ -123,7 +147,13 @@ class SectionCollectorScenario(CollectorScenario):
         :return:
         """
         try:
-            config = steps[0]["params"]["context"]
+            for step in steps:
+                if step["id"] == cls.PLUGIN_NAME:
+                    config = step["params"]["context"]
+                    break
+            else:
+                config = steps[0]["params"]["context"]
+
             try:
                 separator_filters = []
                 # 如果是逻辑或，会拆成多个配置下发

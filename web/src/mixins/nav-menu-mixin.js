@@ -86,7 +86,8 @@ export default {
         const { bizId, projectId } = queryObj;
         const demoId = String(window.DEMO_BIZ_ID);
         const demoProject = projectList.find(item => item.bk_biz_id === demoId);
-        this.demoProjectUrl = demoProject ? this.getDemoProjectUrl(demoProject.project_id) : '';
+        const demoProjectUrl = demoProject ? this.getDemoProjectUrl(demoProject.project_id) : '';
+        this.$store.commit('setDemoUrl', demoProjectUrl);
         const isOnlyDemo = demoProject && projectList.length === 1;
         if (!projectList.length || isOnlyDemo) { // 没有一个业务或只有一个demo业务显示欢迎页面
           const args = {
@@ -100,7 +101,7 @@ export default {
               return this.checkProjectChange(demoProject.project_id);
             }
             args.demoBusiness = {
-              url: this.demoProjectUrl,
+              url: demoProjectUrl,
             };
           }
           if (projectId || bizId) { // 查询参数带非 demo 业务 id，获取业务名和权限链接
@@ -127,6 +128,7 @@ export default {
         } else { // 正常业务
           this.$store.commit('updateMyProjectList', projectList);
           // 首先从查询参数找，然后从storage里面找，还找不到就返回第一个不是demo的业务
+          // eslint-disable-next-line max-len
           const firstRealProjectId = projectList.find(item => item.bk_biz_id !== demoId).project_id;
           if (projectId || bizId) {
             const matchProject = projectList.find(item => item.project_id === projectId || item.bk_biz_id === bizId);
@@ -170,13 +172,11 @@ export default {
      * 更新当前项目
      * @param  {String} projectId - 当前项目id
      */
-    projectChange(projectId = '') {
+    async projectChange(projectId = '') {
       this.$store.commit('updateProject', projectId);
       if (projectId) {
         const project = this.myProjectList.find(item => item.project_id === projectId);
-        if (!this.checkProjectAuth(project)) {
-          return;
-        }
+        await this.checkProjectAuth(project);
       }
       window.localStorage.setItem('project_id', projectId);
       let bizId = '';
@@ -190,27 +190,26 @@ export default {
       projectId && this.setRouter(projectId, bizId); // 项目id不为空时，获取菜单
     },
     // 选择的业务是否有权限
-    checkProjectAuth(project) {
+    async checkProjectAuth(project) {
       // eslint-disable-next-line camelcase
       if (project && project.permission && project.permission.view_business) {
-        return true;
-      }
-      this.$store.commit('updateProject', project.project_id);
-      this.$store.dispatch('getApplyData', {
-        action_ids: ['view_business'],
-        resources: [{
-          type: 'biz',
-          id: project.bk_biz_id,
-        }],
-      }).then((res) => {
-        this.$emit('auth', res.data);
-      })
-        .catch((err) => {
-          console.warn(err);
-        })
-        .finally(() => {
-          this.$store.commit('setPageLoading', false);
+        // 有权限 不显示无业务权限的页面
+        this.$store.commit('globals/updateAuthContainerInfo', null);
+        return;
+      };
+      try {
+        this.$store.commit('updateProject', project.project_id);
+        const res = await this.$store.dispatch('getApplyData', {
+          action_ids: ['view_business'],
+          resources: [{
+            type: 'biz',
+            id: project.bk_biz_id,
+          }],
         });
+        this.$store.commit('globals/updateAuthContainerInfo', res.data);
+      } catch (err) {
+        console.warn(err);
+      }
     },
     async setRouter(projectId, bizId) {
       try {
@@ -302,7 +301,6 @@ export default {
           });
         }
         setTimeout(() => {
-          this.$emit('auth', null); // 表示不显示无业务权限的页面
           this.$store.commit('setPageLoading', false);
           this.isFirstLoad = false;
           this.$store.commit('updateRouterLeaveTip', false);
@@ -319,9 +317,6 @@ export default {
         if (oldMenu.children) {
           resMenu.children.forEach((item) => {
             item.id = this.routeMap[item.id] || item.id;
-            // if (resMenu.id === 'dashboard') {
-            //   item.id = item.id.replaceAll('-', '_');
-            // }
             const menu = oldMenu.children.find(menuItem => menuItem.id === item.id);
             if (menu) {
               this.deepUpdateMenu(menu, item);
@@ -339,7 +334,7 @@ export default {
         if (item.id === 'search') {
           item.id = 'retrieve';
         }
-        item.id = item.id.replaceAll('_', '-');
+        item.id = item.id.replace(/_/g, '-');
         if (item.children) {
           this.replaceMenuId(item.children);
         }

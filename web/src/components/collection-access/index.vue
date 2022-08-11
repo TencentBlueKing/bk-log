@@ -21,8 +21,9 @@
   -->
 
 <template>
-  <section class="access-wrapper" v-bkloading="{ isLoading: basicLoading }">
-    <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
+  <section :class="['access-wrapper',itsmTicketIsApplying && 'iframe-container']"
+           v-bkloading="{ isLoading: basicLoading }">
+    <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <div class="access-container" v-else-if="!basicLoading && !isCleaning">
       <section class="access-step-wrapper">
         <div class="fixed-steps" :style="{ height: (stepList.length * 76) + 'px' }">
@@ -30,53 +31,56 @@
             v-if="stepList.length"
             theme="primary"
             direction="vertical"
-            :cur-step.sync="curStep"
+            :cur-step.sync="showSteps"
             :steps="stepList">
           </bk-steps>
           <div class="step-arrow" :style="{ top: (curStep * 76 - 38) + 'px' }"></div>
         </div>
       </section>
-      <section class="access-step-container" v-if="operateType">
+      <section v-bkloading="{ isLoading: containerLoading, zIndex: 10 }"
+               class="access-step-container" v-if="operateType">
         <template v-if="isItsmAndNotStartOrStop">
           <step-add
             v-if="curStep === 1"
+            :container-loading.sync="containerLoading"
             :operate-type="operateType"
-            @stepChange="stepChange" />
-          <step-capacity
-            v-if="curStep === 2"
-            :operate-type="operateType"
-            @stepChange="stepChange" />
+            :is-physics.sync="isPhysics"
+            @stepChange="(num) => stepChange(num, 'add')" />
           <step-issued
-            v-if="curStep === 3"
+            v-if="curStep === 2"
             :operate-type="operateType"
             :is-switch="isSwitch"
             @stepChange="stepChange" />
           <step-field
-            v-if="curStep === 4"
+            v-if="curStep === 3"
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
             @changeClean="isCleaning = true" />
           <step-storage
-            v-if="curStep === 5"
+            v-if="curStep === 4"
             :cur-step="curStep"
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
+            @setAssessmentItem="setAssessmentItem"
             @change-submit="changeSubmit" />
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
             :is-switch="isSwitch"
             :index-set-id="indexSetId"
+            :apply-data="applyData"
             @stepChange="stepChange" />
         </template>
         <template v-else>
           <step-add
             v-if="curStep === 1 && !isSwitch"
             :operate-type="operateType"
-            @stepChange="stepChange" />
+            :container-loading.sync="containerLoading"
+            :is-physics.sync="isPhysics"
+            @stepChange="(num) => stepChange(num, 'add')" />
           <step-issued
             v-if="(curStep === 2 && !isSwitch) || (curStep === 1 && isSwitch)"
             :operate-type="operateType"
@@ -95,12 +99,14 @@
             :operate-type="operateType"
             @changeIndexSetId="updateIndexSetId"
             @stepChange="stepChange"
+            @setAssessmentItem="setAssessmentItem"
             @change-submit="changeSubmit" />
           <step-result
             v-if="isFinish"
             :operate-type="operateType"
             :is-switch="isSwitch"
             :index-set-id="indexSetId"
+            :apply-data="applyData"
             @stepChange="stepChange" />
         </template>
       </section>
@@ -112,9 +118,8 @@
 <script>
 import { mapState, mapGetters } from 'vuex';
 import { stepsConf, finishRefer } from './step';
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import stepAdd from './step-add';
-import stepCapacity from './step-capacity';
 import stepIssued from './step-issued';
 import stepField from './step-field';
 import stepStorage from './step-storage.vue';
@@ -124,9 +129,8 @@ import advanceCleanLand from '@/components/collection-access/advance-clean-land'
 export default {
   name: 'AccessSteps',
   components: {
-    AuthPage,
+    AuthContainerPage,
     stepAdd,
-    stepCapacity,
     stepIssued,
     stepField,
     stepStorage,
@@ -141,10 +145,15 @@ export default {
       isSubmit: false,
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
       operateType: '',
-      curStep: 1,
+      curStep: 1, // 组件步骤
+      showSteps: 1, // 判断容器日志所用的展示步骤
+      isPhysics: true, // 采集配置是否是物理环境
       indexSetId: '',
       stepList: [],
       globals: {},
+      itsmTicketIsApplying: false,
+      applyData: {},
+      containerLoading: false, // 容器日志提交loading
     };
   },
   computed: {
@@ -167,7 +176,7 @@ export default {
     },
     isFinish() {
       if (this.isItsmAndNotStartOrStop) {
-        return this.curStep === 6;
+        return this.curStep === 5;
       }
       return finishRefer[this.operateType] === this.curStep;
     },
@@ -223,7 +232,8 @@ export default {
       }
 
       const routeType = this.$route.name.toLowerCase().replace('collect', '');
-      if (routeType !== 'add' && !this.$route.params.notAdd) {
+      const { query: { type } } = this.$route;
+      if ((routeType !== 'add' && !this.$route.params.notAdd) || type === 'clone') { // 克隆时 请求初始数据
         try {
           const detailRes = await this.getDetail();
           this.operateType = routeType === 'edit' && detailRes.table_id ? 'editFinish' : routeType; // 若存在table_id则只有三步
@@ -240,18 +250,22 @@ export default {
           if (statusRes.data[0].status === 'PREPARE') {
             // 准备中编辑时跳到第一步，所以不用修改步骤
           } else if (this.isItsm) {
-            if (this.operateType === 'edit') { // 未完成编辑
-              this.curStep = this.curCollect.itsm_ticket_status === 'success_apply' ? 4 : 2;
+            if (['edit', 'editFinish'].includes(this.operateType)) { // 未完成编辑
+              this.curStep = this.applyData.itsm_ticket_status === 'applying' ? 5 : 1;
             } else if (this.operateType === 'field') {
-              this.curStep = 4;
+              this.curStep = this.applyData.itsm_ticket_status === 'applying' ? 5 : 3;
             } else if (this.operateType === 'storage') {
-              this.curStep = 5;
+              this.curStep = this.applyData.itsm_ticket_status === 'applying' ? 5 : 4;
             }
             // 审批通过后编辑直接进入第三步字段提取，否则进入第二步容量评估
           } else if (this.operateType === 'field') {
             this.curStep = 3;
           } else if (this.operateType === 'storage') {
-            this.curStep  = 4;
+            this.curStep = 4;
+          }
+          // 容器环境  非启用停用 非克隆状态则展示容器日志步骤
+          if (!this.isPhysics && !this.isSwitch && type !== 'clone') {
+            this.operateType = 'container';
           }
         } catch (e) {
           console.warn(e);
@@ -259,30 +273,38 @@ export default {
       } else {
         this.operateType = routeType;
       }
-      this.init();
+      this.setSteps();
       this.basicLoading = false;
     },
-    init() {
-      this.setSteps();
-    },
     setSteps() {
-      let stepList;
-      if (this.isItsmAndNotStartOrStop) {
-        stepList = stepsConf.itsm;
+      // 判断当前是否是物理环境 用于切换setp的数组
+      if (this.isPhysics || this.isSwitch) {
+        this.showSteps = this.curStep;
       } else {
-        stepList = stepsConf[this.operateType];
+        // 容器环境 非启用 停用情况 当前页若是采集配置则跳过采集下发直接进入字段提取步骤展示
+        this.showSteps = this.curStep === 1  ?  1 : this.curStep - 1;
       }
+      // 新增  并且为容器环境则步骤变为容器步骤 步骤为第一步时不判断
+      if (this.operateType === 'add' && !this.isPhysics && this.curStep !== 1) {
+        this.operateType = 'container';
+      }
+      const stepList = stepsConf[this.operateType];
+
       this.stepList = JSON.parse(JSON.stringify(stepList));
 
       this.stepList.forEach((step, index) => {
-        if (index < this.curStep - 1) {
+        if (index < this.showSteps - 1) {
           // step.icon = 'check-1'; // 组件bug。已完成的步骤无法为空icon。或者其它样式。需优化
         } else {
           step.icon = index + 1;
         }
       });
     },
-    stepChange(num) {
+    stepChange(num, type = null) {
+      if (type === 'add' && !this.isPhysics && !num) {
+        this.curStep = this.curStep + 2;
+        return;
+      }
       this.curStep = num || this.curStep + 1;
     },
     updateIndexSetId(indexId) {
@@ -298,12 +320,20 @@ export default {
           params: {
             collector_config_id: this.$route.params.collectorId,
           },
-        }).then((res) => {
+        }).then(async (res) => {
           if (res.data) {
             const collect = res.data;
-            if (collect.collector_scenario_id !== 'wineventlog') {
+            this.isPhysics = collect.environment !== 'container';
+            if (collect.collector_scenario_id !== 'wineventlog' && this.isPhysics) {
               collect.params.paths = collect.params.paths.map(item => ({ value: item }));
             }
+            // 如果当前页面采集流程未完成 则展示流程服务页面
+            const applyDataItem = {
+              iframe_ticket_url: collect.ticket_url,
+              itsm_ticket_status: collect.itsm_ticket_status,
+            };
+            this.applyData = collect.itsm_ticket_status === 'applying' ? applyDataItem : {};
+            this.itsmTicketIsApplying = false;
             this.$store.commit('collect/setCurCollect', collect);
             resolve(res.data);
           }
@@ -324,6 +354,9 @@ export default {
     changeSubmit(isSubmit) {
       this.isSubmit = isSubmit;
     },
+    setAssessmentItem(item) {
+      this.applyData = item;
+    },
   },
 };
 </script>
@@ -334,6 +367,10 @@ export default {
 
   .access-wrapper {
     padding: 20px 24px;
+  }
+
+  .iframe-container {
+    padding: 0;
   }
 
   .access-container {
@@ -356,6 +393,14 @@ export default {
       width: 170px;
       max-height: 100%;
       margin-top: 40px;
+
+      .bk-steps {
+        :last-child {
+          &::after {
+            display: none;
+          }
+        }
+      }
 
       .bk-step {
         color: #7a7c85;

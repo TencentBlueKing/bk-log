@@ -16,9 +16,13 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from rest_framework.response import Response
 from rest_framework import serializers
+
+from django.db.models import Q
 
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import insert_permission_field, ViewBusinessPermission
@@ -26,6 +30,7 @@ from apps.generic import ModelViewSet
 from apps.log_databus.handlers.clean import CleanTemplateHandler, CleanHandler
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.models import BKDataClean, CleanTemplate
+from apps.log_databus.constants import VisibleEnum
 from apps.log_databus.serializers import (
     CleanTemplateSerializer,
     CleanTemplateListSerializer,
@@ -33,6 +38,7 @@ from apps.log_databus.serializers import (
     CleanRefreshSerializer,
     CleanSerializer,
     CleanSyncSerializer,
+    CleanTemplateDestroySerializer,
 )
 from apps.log_databus.utils.clean import CleanFilterUtils
 from apps.utils.drf import detail_route, list_route
@@ -189,6 +195,20 @@ class CleanTemplateViewSet(ModelViewSet):
         }
         return action_serializer_map.get(self.action, serializers.Serializer)
 
+    def get_queryset(self):
+        qs = self.model.objects
+        if self.request.query_params.get("bk_biz_id"):
+            bk_biz_id = int(self.request.query_params.get("bk_biz_id"))
+            qs = qs.filter(
+                Q(bk_biz_id=bk_biz_id)
+                | Q(visible_type=VisibleEnum.ALL_BIZ.value)
+                | Q(
+                    visible_type=VisibleEnum.MULTI_BIZ.value,
+                    visible_bk_biz_id__contains=f",{bk_biz_id},",
+                )
+            )
+        return qs.all()
+
     def list(self, request, *args, **kwargs):
         """
         @api {get} /databus/clean_template/?page=$page&pagesize=$pagesize&bk_biz_id=$bk_biz_id 1_清洗模板-列表
@@ -239,14 +259,23 @@ class CleanTemplateViewSet(ModelViewSet):
                                 }
                             }
                         ],
-                        "bk_biz_id": 0
+                        "bk_biz_id": 0,
+                        "visible_bk_biz_id": "",
+                        "visible_type": "current_biz"
                     }
                 ]
             },
             "result":true
         }
         """
-        return super().list(request, *args, **kwargs)
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def retrieve(self, request, *args, clean_template_id=None, **kwargs):
         """
@@ -294,7 +323,9 @@ class CleanTemplateViewSet(ModelViewSet):
                         }
                     }
                 ],
-                "bk_biz_id": 0
+                "bk_biz_id": 0,
+                "visible_bk_biz_id": [],
+                "visible_type": "current_biz"
             },
             "result":true
         }
@@ -307,6 +338,8 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiName update_clean_template
         @apiGroup 23_clean_template
         @apiDescription 更新清洗模板
+        @apiParam {String} visible_type 可见类型, 支持 current_biz, multi_biz, all_biz
+        @apiParam {list} visible_bk_biz_id 可见业务id范围
         @apiParamExample {json} 成功请求
         {
             "name": "xxx",
@@ -342,7 +375,9 @@ class CleanTemplateViewSet(ModelViewSet):
                     }
                 }
             ],
-            "bk_biz_id": 0
+            "bk_biz_id": 0,
+            "visible_bk_biz_id": [1, 2, 3],
+            "visible_type": "multi_biz"
         }
         @apiSuccessExample {json} 成功返回
         {
@@ -362,6 +397,8 @@ class CleanTemplateViewSet(ModelViewSet):
         @api {post} /databus/clean_template/ 3_清洗模板-新建
         @apiName create_clean_template
         @apiGroup 23_clean_template
+        @apiParam {String} visible_type 可见类型, 支持 current_biz, multi_biz, all_biz
+        @apiParam {list} visible_bk_biz_id 可见业务id范围
         @apiDescription 新建清洗模板
         @apiParamExample {json} 成功请求
         {
@@ -398,7 +435,9 @@ class CleanTemplateViewSet(ModelViewSet):
                     }
                 }
             ],
-            "bk_biz_id": 0
+            "bk_biz_id": 0,
+            "visible_bk_biz_id": [1, 2, 3],
+            "visible_type": "multi_biz"
         }
         @apiSuccessExample {json} 成功返回
         {
@@ -419,6 +458,7 @@ class CleanTemplateViewSet(ModelViewSet):
         @apiName destry_clean_template
         @apiGroup 23_clean_template
         @apiDescription 删除清洗模板
+        @apiParam {Int} bk_biz_id 业务id
         @apiSuccessExample {json} 成功返回
         {
             "message": "",
@@ -427,7 +467,8 @@ class CleanTemplateViewSet(ModelViewSet):
             "result": true
         }
         """
-        return Response(CleanTemplateHandler(clean_template_id=clean_template_id).destroy())
+        data = self.params_valid(CleanTemplateDestroySerializer)
+        return Response(CleanTemplateHandler(clean_template_id=clean_template_id).destroy(data["bk_biz_id"]))
 
     @list_route(methods=["POST"])
     def etl_preview(self, request, collector_config_id=None):

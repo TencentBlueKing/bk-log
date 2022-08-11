@@ -16,10 +16,14 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 
 
-def cmp(src_json_obj, target_json_obj, ignore_keys=[]):
+def cmp(src_json_obj, target_json_obj, ignore_keys=None):
+    if not ignore_keys:
+        ignore_keys = []
     if isinstance(src_json_obj, list):
         if not isinstance(target_json_obj, list):
             print(

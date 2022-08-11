@@ -50,7 +50,7 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column label="ID" width="80">
+        <bk-table-column :label="$t('logArchive.esID')" width="120">
           <template slot-scope="props">
             {{ props.row.cluster_id }}
           </template>
@@ -317,7 +317,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('logArchive.Confirm_delete_repo'),
+          subTitle: `${this.$t('当前仓库名称为')} ${row.repository_name}，${this.$t('确认要删除')}`,
           confirmFn: () => {
             this.requestDeleteRepo(row);
           },

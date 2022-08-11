@@ -21,18 +21,16 @@
   -->
 
 <template>
-  <div id="app" v-bkloading="{ isLoading: pageLoading }">
+  <div id="app" v-bkloading="{ isLoading: pageLoading }" :class="{ 'clear-min-height': $route.name === 'retrieve' }">
     <head-nav
       v-show="!isAsIframe && !pageLoading"
       @reloadRouter="routerKey += 1"
-      @welcome="welcomePageData = $event"
-      @auth="authPageInfo = $event" />
+      @welcome="welcomePageData = $event" />
     <div :class="['log-search-container', isAsIframe && 'as-iframe']">
-      <auth-page v-if="authPageInfo" :info="authPageInfo" />
-      <welcome-page v-else-if="welcomePageData" :data="welcomePageData" />
+      <welcome-page v-if="welcomePageData" :data="welcomePageData" />
       <!-- 导航改版 -->
       <bk-navigation
-        v-if="menuList && menuList.length"
+        v-else-if="menuList && menuList.length"
         class="bk-log-navigation"
         navigation-type="left-right"
         head-height="0"
@@ -49,69 +47,80 @@
             :default-active="activeManageNav.id">
             <template v-for="groupItem in menuList">
               <bk-navigation-menu-group
+                v-if="groupItem.children.length"
                 :key="groupItem.id"
                 :group-name="isExpand ? groupItem.name : groupItem.keyword">
                 <template v-for="navItem in groupItem.children">
-                  <bk-navigation-menu-item
-                    :data-test-id="`navBox_nav_${navItem.id}`"
-                    :key="navItem.id"
-                    :id="navItem.id"
-                    :icon="getMenuIcon(navItem)"
-                    @click="handleClickNavItem(navItem.id)">
-                    {{ isExpand ? navItem.name : '' }}
-                  </bk-navigation-menu-item>
+                  <a class="nav-item" :key="navItem.id" :href="getRouteHref(navItem.id)">
+                    <bk-navigation-menu-item
+                      :data-test-id="`navBox_nav_${navItem.id}`"
+                      :id="navItem.id"
+                      :icon="getMenuIcon(navItem)"
+                      @click="handleClickNavItem(navItem.id)">
+                      <span>{{ isExpand ? navItem.name : '' }}</span>
+                      <span v-if="navItem.id === 'custom-report'" class="beta-class">BETA</span>
+                    </bk-navigation-menu-item>
+                  </a>
                 </template>
               </bk-navigation-menu-group>
             </template>
           </bk-navigation-menu>
         </template>
         <div class="navigation-content" v-if="!pageLoading">
-          <router-view class="manage-content" :key="routerKey"></router-view>
+          <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
+          <router-view v-else class="manage-content" :key="routerKey"></router-view>
         </div>
       </bk-navigation>
-      <router-view v-else-if="!pageLoading" class="manage-content" :key="routerKey"></router-view>
+      <!-- 无侧边栏页面 -->
+      <router-view v-else-if="!pageLoading && !menuList" class="manage-content" :key="routerKey"></router-view>
       <novice-guide
         v-if="displayRetrieve"
         :data="guideStep"
         guide-page="default" />
     </div>
     <auth-dialog />
-    <login-modal v-if="loginData" :login-data="loginData" />
+    <bk-paas-login ref="login" />
+    <!-- <login-modal v-if="loginData" :login-data="loginData" /> -->
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from 'vuex';
 import headNav from '@/components/nav/head-nav';
-import LoginModal from '@/components/login-modal';
+// import LoginModal from '@/components/login-modal';
 import WelcomePage from '@/components/common/welcome-page';
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import AuthDialog from '@/components/common/auth-dialog';
 import BizMenuSelect from '@/components/biz-menu';
 import NoviceGuide from '@/components/novice-guide';
 import jsCookie from 'js-cookie';
+import BkPaasLogin from '@blueking/paas-login';
 
 export default {
   name: 'App',
   components: {
     headNav,
-    LoginModal,
-    AuthPage,
+    // LoginModal,
+    AuthContainerPage,
     AuthDialog,
     WelcomePage,
     BizMenuSelect,
     NoviceGuide,
+    BkPaasLogin,
   },
   data() {
     return {
       loginData: null,
-      authPageInfo: null,
       welcomePageData: null,
       routerKey: 0,
       navThemeColor: '#2c354d',
       isExpand: true,
       curGuideStep: 0,
       isAsIframe: false,
+      rightClickRouteName: '', // 当前右键选中的路由
+      visible: false, // 是否展示右键菜单
+      top: 0, // 右键菜单定位top
+      left: 0, // 右键菜单定位left
     };
   },
   computed: {
@@ -124,6 +133,7 @@ export default {
     ...mapGetters({
       pageLoading: 'pageLoading',
       asIframe: 'asIframe',
+      authPageInfo: 'globals/authContainerInfo',
     }),
     navActive() {
       return '';
@@ -176,6 +186,7 @@ export default {
     this.getUserGuide();
   },
   mounted() {
+    window.LoginModal = this.$refs.login;
     this.$store.dispatch('getBkBizList');
   },
   methods: {
@@ -208,6 +219,15 @@ export default {
           console.warn(e);
         });
     },
+    getRouteHref(pageName) {
+      const newUrl = this.$router.resolve({
+        name: pageName,
+        query: {
+          projectId: window.localStorage.getItem('project_id'),
+        },
+      });
+      return newUrl.href;
+    },
   },
 };
 </script>
@@ -224,6 +244,11 @@ export default {
     height: 100%;
     min-height: 730px;
     background: #f4f7fa;
+  }
+
+  .clear-min-height {
+    /* stylelint-disable-next-line declaration-no-important */
+    min-height: 0 !important;
   }
 
   .button-text {
@@ -391,6 +416,11 @@ export default {
       .navigation-menu-item-icon.bk-icon {
         min-width: 28px;
       }
+
+      .nav-item {
+        width: 100%;
+        display: inline-block;
+      }
     }
 
     .nav-slider-list {
@@ -550,5 +580,11 @@ export default {
         }
       }
     }
+  }
+
+  .beta-class {
+    color: #ffa228;
+    margin-left: 2px;
+    padding-top: 3px;
   }
 </style>

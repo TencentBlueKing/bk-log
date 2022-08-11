@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 """
 DRF 插件
@@ -23,6 +25,7 @@ DRF 插件
 from functools import wraps  # noqa
 from typing import List, Callable  # noqa
 
+from django.conf import settings  # noqa
 from rest_framework import permissions  # noqa
 
 from apps.log_search.models import ProjectInfo  # noqa
@@ -42,6 +45,10 @@ class IAMPermission(permissions.BasePermission):
         """
         Return `True` if permission is granted, `False` otherwise.
         """
+        # 跳过权限校验
+        if settings.IGNORE_IAM_PERMISSION:
+            return True
+
         if not self.actions:
             return True
 
@@ -58,6 +65,9 @@ class IAMPermission(permissions.BasePermission):
         """
         Return `True` if permission is granted, `False` otherwise.
         """
+        # 跳过权限校验
+        if settings.IGNORE_IAM_PERMISSION:
+            return True
         return self.has_permission(request, view)
 
 
@@ -129,6 +139,9 @@ class InstanceActionPermission(IAMPermission):
         super(InstanceActionPermission, self).__init__(actions)
 
     def has_permission(self, request, view):
+        # 跳过权限校验
+        if settings.IGNORE_IAM_PERMISSION:
+            return True
         instance_id = view.kwargs[self.get_look_url_kwarg(view)]
         resource = self.resource_meta.create_instance(instance_id)
         self.resources = [resource]
@@ -209,6 +222,12 @@ def insert_permission_field(
             ]
 
             if not resources:
+                return response
+
+            if settings.IGNORE_IAM_PERMISSION:
+                for item in result_list:
+                    item.setdefault("permission", {})
+                    item["permission"].update({action.id: True for action in actions})
                 return response
 
             permission_result = Permission().batch_is_allowed(actions, resources)

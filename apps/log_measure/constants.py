@@ -16,9 +16,13 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 from django.conf import settings
+from django.utils.translation import ugettext as _
 
+from apps.utils import ChoicesEnum
 from bk_monitor.constants import EVENT_TYPE, TIME_SERIES_TYPE
 from config.domains import MONITOR_APIGATEWAY_ROOT
 from bk_monitor.handler.monitor import BKMonitor
@@ -38,19 +42,23 @@ INDEX_REGEX = r"\d{1,}_bklog_.*?_\d{8}_\d{1,}"
 
 COMMON_INDEX_RE = r"^(v2_)?{}_(?P<datetime>\d+)_(?P<index>\d+)$"
 
+RESULT_TABLE_ID_RE = r"^(v2_)?(?P<result_table_id>\w+)_(?P<datetime>\d+)_(?P<index>\d+)$"
+
 COLUMN_DISPLAY_LIST = ["docs.count", "docs.deleted", "index", "pri", "pri.store.size", "rep", "store.size", "status"]
 INDEX_FORMAT = "*_bklog_*"
 
 COLLECTOR_IMPORT_PATHS = [
     "apps.log_measure.handlers.metric_collectors.business",
     "apps.log_measure.handlers.metric_collectors.cluster",
-    "apps.log_measure.handlers.metric_collectors.collect",
+    "apps.log_measure.handlers.metric_collectors.es",
     "apps.log_measure.handlers.metric_collectors.grafana",
-    "apps.log_measure.handlers.metric_collectors.index",
+    "apps.log_measure.handlers.metric_collectors.log_archive",
+    "apps.log_measure.handlers.metric_collectors.log_clustering",
+    "apps.log_measure.handlers.metric_collectors.log_databus",
     "apps.log_measure.handlers.metric_collectors.log_extract",
+    "apps.log_measure.handlers.metric_collectors.log_search",
     "apps.log_measure.handlers.metric_collectors.third_party",
     "apps.log_measure.handlers.metric_collectors.user",
-    "apps.log_measure.handlers.metric_collectors.es",
 ]
 
 BK_LOG_EVENT_DATA_NAME = "bk_log_event"
@@ -63,3 +71,38 @@ DATA_NAMES = [
     {"name": "django_monitor", "custom_report_type": TIME_SERIES_TYPE},
     {"name": "bk_log_event", "custom_report_type": EVENT_TYPE},
 ]
+
+
+class TimeRangeEnum(ChoicesEnum):
+    FIVE_MIN = "5m"
+    ONE_DAY = "1d"
+    THREE_DAY = "3d"
+    SEVEN_DAY = "7d"
+    FOURTEEN_DAY = "14d"
+    THIRTY_DAY = "30d"
+
+    _choices_labels = (
+        (FIVE_MIN, _("5分钟")),
+        (ONE_DAY, _("1天")),
+        (THREE_DAY, _("3天")),
+        (SEVEN_DAY, _("7天")),
+        (FOURTEEN_DAY, _("14天")),
+        (THIRTY_DAY, _("30天")),
+    )
+
+
+TIME_RANGE = {
+    TimeRangeEnum.FIVE_MIN.value: 5,
+    TimeRangeEnum.ONE_DAY.value: 60 * 24 * 1,
+    TimeRangeEnum.THREE_DAY.value: 60 * 24 * 3,
+    TimeRangeEnum.SEVEN_DAY.value: 60 * 24 * 7,
+    TimeRangeEnum.FOURTEEN_DAY.value: 60 * 24 * 14,
+    TimeRangeEnum.THIRTY_DAY.value: 60 * 24 * 30,
+}
+
+TABLE_BKUNIFYBEAT_TASK = "bkunifylogbeat_task.base"
+FIELD_CRAWLER_RECEIVED = "crawler_received"
+FIELD_CRAWLER_STATE = "crawler_state"
+MAX_QUERY_SUBSCRIPTION = 10
+
+INDEX_SCENARIO = {"bkdata": "数据平台", "es": "第三方ES"}

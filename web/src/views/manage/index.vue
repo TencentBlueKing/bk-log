@@ -104,6 +104,9 @@ export default {
 
     .manage-content {
       height: calc(100% - 52px);
+      // height: 100%;
+      position: relative;
+      top: 51px;
       overflow: auto;
 
       @include scroller($backgroundColor: #C4C6CC, $width: 4px);
@@ -113,7 +116,7 @@ export default {
       height: 100%;
     }
 
-    /deep/ .bk-table {
+    ::v-deep .bk-table {
       background: #fff;
 
       .cell {

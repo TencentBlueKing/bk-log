@@ -16,7 +16,10 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
+import copy
 from typing import Optional
 
 from django.conf import settings
@@ -24,12 +27,14 @@ from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import TransferApi, NodeApi
+from apps.exceptions import ApiResultError
 from apps.log_clustering.constants import PatternEnum
 from apps.log_databus.constants import META_DATA_ENCODING
 from apps.log_databus.handlers.collector_scenario.utils import build_es_option_type
 from apps.log_databus.models import CollectorConfig, DataLinkConfig
 from apps.log_databus.exceptions import BaseCollectorConfigException, DataLinkConfigPartitionException
 from apps.log_search.constants import CollectorScenarioEnum
+from apps.utils.function import ignored
 from apps.utils.log import logger
 
 
@@ -143,6 +148,10 @@ class CollectorScenario(object):
             "is_log_data": True,
             "allow_metrics_missing": True,
         }
+
+        with ignored(ApiResultError):
+            bk_data_id = TransferApi.get_data_id({"data_name": data_name, "no_request": True})["bk_data_id"]
+
         if not bk_data_id:
             # 创建数据源，创建时一定是BK_LOG_TEXT这种直接入库的方式，后面进行字段提取时再根据情况变更清洗方式
             if not data_name:
@@ -261,3 +270,24 @@ class CollectorScenario(object):
             }
             for pattern_level in PatternEnum.get_choices()
         ]
+
+    @staticmethod
+    def fields_insert_field_index(source_fields, dst_fields) -> list:
+        """
+        给dst_field添加field_index并且组成新的field_index返回回去
+        @param source_fields list 包含field_index的原始数据
+        @param dst_fields list 不包含field_index的目标数据
+        """
+        field_index = 0
+        for field in source_fields:
+            source_field_index = field.get("field_index")
+            if source_field_index and source_field_index > field_index:
+                field_index = source_field_index
+
+        result_fields = copy.deepcopy(source_fields)
+        for field in dst_fields:
+            field_index += 1
+            field["field_index"] = field_index
+            result_fields.append(field)
+
+        return result_fields

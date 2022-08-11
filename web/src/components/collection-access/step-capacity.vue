@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <div
+  <!-- <div
     v-if="!showApplyResult"
     v-bkloading="{ isLoading: applyLoading }"
     class="step-capacity-container"
@@ -221,12 +221,10 @@
         >{{ $t('返回列表') }}</bk-button>
       </template>
     </div>
-  </div>
+  </div> -->
   <div
-    v-else
-    v-bkloading="{ isLoading: applyLoading }"
     class="approval-detail-container">
-    <bk-exception v-if="applyData" type="building">
+    <bk-exception type="building">
       <div class="approval-text">
         <span>{{ applyData.collect_itsm_status_display }}</span>
         <a :href="applyData.ticket_url"
@@ -469,7 +467,7 @@ export default {
           margin: 0;
         }
 
-        /deep/ .bk-date-picker {
+        ::v-deep .bk-date-picker {
           width: 100%;
         }
       }
@@ -509,7 +507,7 @@ export default {
     }
 
     .button-container {
-      padding: 0 60px;
+      padding: 0 60px 100px;
 
       .king-submit-button {
         min-width: 86px;

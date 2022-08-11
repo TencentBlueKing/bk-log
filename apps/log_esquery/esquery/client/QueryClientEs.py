@@ -17,35 +17,36 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import socket
+from typing import Any, Dict
 
-from typing import Dict, Any
+from django.conf import settings
+from django.utils.translation import ugettext as _
 from elasticsearch import Elasticsearch as Elasticsearch
-from elasticsearch6 import Elasticsearch as Elasticsearch6
 from elasticsearch5 import Elasticsearch as Elasticsearch5
 
-from django.utils.translation import ugettext as _
-from django.conf import settings
-
-from apps.log_esquery.esquery.client.QueryClientTemplate import QueryClientTemplate
 from apps.api import TransferApi
+from apps.log_esquery.constants import DEFAULT_SCHEMA
+from apps.log_esquery.esquery.client.QueryClientTemplate import QueryClientTemplate
 from apps.log_esquery.exceptions import (
-    EsClientMetaInfoException,
-    EsClientConnectInfoException,
-    EsClientSocketException,
-    EsClientSearchException,
     BaseSearchFieldsException,
-    EsClientScrollException,
     EsClientAliasException,
-    EsException,
     EsClientCatIndicesException,
+    EsClientConnectInfoException,
+    EsClientMetaInfoException,
+    EsClientScrollException,
+    EsClientSearchException,
+    EsClientSocketException,
+    EsException,
 )
 from apps.log_esquery.type_constants import type_mapping_dict
-from apps.log_esquery.constants import DEFAULT_SCHEMA
+from apps.log_esquery.utils.es_client import get_es_client
 
 
-class QueryClientEs(QueryClientTemplate):
+class QueryClientEs(QueryClientTemplate):  # pylint: disable=invalid-name
     def __init__(self, storage_cluster_id: int):
         super(QueryClientEs, self).__init__()
 
@@ -119,7 +120,7 @@ class QueryClientEs(QueryClientTemplate):
         if not self._active:
             self._get_connection()
             if not self._active:
-                raise EsClientSearchException(EsClientSearchException.MESSAGE.format(error=_(u"EsClient链接失败")))
+                raise EsClientSearchException(EsClientSearchException.MESSAGE.format(error=_("EsClient链接失败")))
             else:
                 pass
         else:
@@ -146,18 +147,11 @@ class QueryClientEs(QueryClientTemplate):
             raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=e))
         cs.close()
 
-        # 根据版本加载客户端
-        if self.version.startswith("5."):
-            self.elastic_client = Elasticsearch5
-        elif self.version.startswith("6."):
-            self.elastic_client = Elasticsearch6
-        else:
-            self.elastic_client = Elasticsearch
-
-        http_auth = (self.username, self.password) if self.username and self.password else None
-        self._client: Elasticsearch = self.elastic_client(
-            [self.host],
-            http_auth=http_auth,
+        self._client: Elasticsearch = get_es_client(
+            version=self.version,
+            hosts=[self.host],
+            username=self.username,
+            password=self.password,
             scheme=self.schema,
             port=self.port,
             sniffer_timeout=600,

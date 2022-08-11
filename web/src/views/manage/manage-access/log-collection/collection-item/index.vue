@@ -135,6 +135,16 @@
           </template>
         </bk-table-column>
         <bk-table-column
+          v-if="checkcFields('retention')"
+          :label="$t('dataSource.retention')"
+          min-width="50">
+          <template slot-scope="props">
+            <span :class="{ 'text-disabled': props.row.status === 'stop' }">
+              {{ props.row.retention ? `${props.row.retention}${$t('天')}` : '--' }}
+            </span>
+          </template>
+        </bk-table-column>
+        <bk-table-column
           v-if="checkcFields('es_host_state')"
           :class-name="'td-status'"
           :label="$t('dataSource.es_host_state')"
@@ -162,7 +172,7 @@
                   v-else
                   :class="['status', 'status-' + props.row.status, { 'cursor-disabled': !loadingStatus }]">
                   <span v-if="props.row.status">
-                    <i class="bk-icon icon-circle-shape"></i>
+                    <i class="icon-circle"></i>
                     {{ props.row.status_name || '--' }}
                   </span>
                   <span class="status status-running" v-if="props.row.status === ''">
@@ -202,7 +212,7 @@
               </span>
               <span v-else :class="['status', 'status-' + props.row.status, { 'cursor-disabled': !loadingStatus }]">
                 <span v-if="props.row.status">
-                  <i class="bk-icon icon-circle-shape"></i>
+                  <i class="icon-circle"></i>
                   {{ props.row.status_name || '--' }}
                 </span>
                 <span class="status status-running" v-if="props.row.status === ''">
@@ -228,7 +238,7 @@
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">{{ props.row.updated_at }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" class-name="operate-column" width="220">
+        <bk-table-column :label="$t('dataSource.operation')" class-name="operate-column" width="160">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 检索 -->
             <!-- 启用状态下 且存在 index_set_id 才能检索 -->
@@ -259,16 +269,6 @@
               v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
               @click.stop="operateHandler(props.row, 'clean')">
               {{ $t('logClean.goToClean') }}
-            </bk-button>
-            <!-- 存储设置 -->
-            <bk-button
-              theme="primary"
-              text
-              class="king-button"
-              :disabled="!props.row.table_id"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
-              @click.stop="operateHandler(props.row, 'storage')">
-              {{ $t('logClean.storageSetting') }}
             </bk-button>
             <bk-dropdown-menu ref="dropdown" align="right">
               <i
@@ -335,6 +335,34 @@
                     v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
                     @click.stop="operateHandler(props.row, 'delete')">{{$t('btn.delete')}}</a>
                 </li>
+                <!-- 存储设置 -->
+                <li>
+                  <a
+                    href="javascript:;"
+                    class="text-disabled"
+                    v-if="!props.row.table_id">
+                    {{$t('logClean.storageSetting')}}
+                  </a>
+                  <a
+                    href="javascript:;"
+                    v-else
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    @click.stop="operateHandler(props.row, 'storage')">{{$t('logClean.storageSetting')}}</a>
+                </li>
+                <!-- 克隆 -->
+                <li>
+                  <a
+                    href="javascript:;"
+                    class="text-disabled"
+                    v-if="!props.row.table_id">
+                    {{ $t('克隆') }}
+                  </a>
+                  <a
+                    href="javascript:;"
+                    v-else
+                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    @click.stop="operateHandler(props.row, 'clone')">{{ $t('克隆') }}</a>
+                </li>
               </ul>
             </bk-dropdown-menu>
           </div>
@@ -382,6 +410,11 @@ export default {
       {
         id: 'collector_scenario_name',
         label: this.$t('dataSource.collector_scenario_name'),
+      },
+      // 过期时间
+      {
+        id: 'retention',
+        label: this.$t('dataSource.retention'),
       },
       // 采集状态
       {
@@ -450,6 +483,7 @@ export default {
     ...mapGetters({
       projectId: 'projectId',
       bkBizId: 'bkBizId',
+      authGlobalInfo: 'globals/authContainerInfo',
     }),
     ...mapGetters('globals', ['globalsData']),
     scenarioFilters() {
@@ -481,12 +515,12 @@ export default {
     },
   },
   created() {
-    this.checkCreateAuth();
+    !this.authGlobalInfo && this.checkCreateAuth();
   },
   mounted() {
     this.needGuide = !localStorage.getItem('needGuide');
     this.timerNum = 0;
-    this.search();
+    !this.authGlobalInfo && this.search();
   },
   destroyed() {
     this.timerNum = -1;
@@ -509,16 +543,19 @@ export default {
       // running、prepare 状态不能启用、停用
       if (operateType === 'start' || operateType === 'stop') {
         if (!this.loadingStatus || row.status === 'running' || row.status === 'prepare' || !this.collectProject) return;
-        if (operateType === 'stop') {
-          this.$bkInfo({
-            type: 'warning',
-            title: this.$t('retrieve.Confirm_disable'),
-            confirmFn: () => {
-              this.toggleCollect(row, operateType);
+        if (operateType === 'start') { // 启用
+          this.toggleCollect(row);
+        } else {
+          // 如果是容器采集项则停用页显示状态页
+          this.$router.push({
+            name: 'collectStop',
+            params: {
+              collectorId: row.collector_config_id || '',
+            },
+            query: {
+              projectId: window.localStorage.getItem('project_id'),
             },
           });
-        } else {
-          this.toggleCollect(row, operateType);
         }
         return;
       }
@@ -528,7 +565,7 @@ export default {
         if (!row.is_active && row.status !== 'running') {
           this.$bkInfo({
             type: 'warning',
-            title: this.$t('retrieve.Confirm_delete'),
+            subTitle: `${this.$t('当前采集项名称为')} ${row.collector_config_name}，${this.$t('确认要删除')}`,
             confirmFn: () => {
               this.requestDeleteCollect(row);
             },
@@ -537,6 +574,7 @@ export default {
         return;
       }
 
+      let backRoute = undefined;
       const params = {};
       const query = {};
       const routeMap = {
@@ -548,6 +586,7 @@ export default {
         search: 'retrieve',
         clean: 'clean-edit',
         storage: 'collectStorage',
+        clone: 'collectAdd',
       };
       const targetRoute = routeMap[operateType];
       // 查看详情 - 如果处于未完成状态，应该跳转到编辑页面
@@ -568,6 +607,16 @@ export default {
       }
       if (operateType === 'clean') {
         params.collectorId = row.collector_config_id;
+        if (row.itsm_ticket_status === 'applying') {
+          return this.operateHandler(row, 'field');
+        }
+        backRoute = this.$route.name;
+      }
+      // 克隆操作需要ID进行数据回显
+      if (operateType === 'clone') {
+        params.collectorId = row.collector_config_id;
+        query.collectorId = row.collector_config_id;
+        query.type = 'clone';
       }
       this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
@@ -576,6 +625,7 @@ export default {
         query: {
           ...query,
           projectId: window.localStorage.getItem('project_id'),
+          backRoute,
         },
       });
     },
@@ -694,12 +744,12 @@ export default {
           }
         });
     },
-    // 启用 || 停用
-    toggleCollect(row, type) {
+    // 启用
+    toggleCollect(row) {
       const { isActive, status, statusName } = row;
       row.status = 'running';
       row.status_name = '部署中';
-      this.$http.request(`collect/${type === 'start' ? 'startCollect' : 'stopCollect'}`, {
+      this.$http.request('collect/startCollect', {
         params: {
           collector_config_id: row.collector_config_id,
         },
@@ -707,15 +757,6 @@ export default {
         if (res.result) {
           row.is_active = !row.is_active;
           this.startStatusPolling();
-          this.$router.push({
-            name: type === 'start' ? 'collectStart' : 'collectStop',
-            params: {
-              collectorId: row.collector_config_id || '',
-            },
-            query: {
-              projectId: window.localStorage.getItem('project_id'),
-            },
-          });
         }
       })
         .catch(() => {
@@ -807,22 +848,35 @@ export default {
     .status {
       cursor: pointer;
 
+      .icon-circle {
+        width: 5px;
+        height: 5px;
+        display: inline-block;
+        border-radius: 50%;
+        transform: translateY(-2px);
+
+        &::before {
+          content: '';
+        }
+      }
+
       &.status-running i {
         display: inline-block;
         animation: button-icon-loading 1s linear infinite;
       }
 
       &.status-success i {
-        color: $iconSuccessColor;
+        background: $iconSuccessColor;
       }
 
       &.status-failed i {
-        color: $iconFailColor;
+        background: $iconFailColor;
       }
     }
 
     .collect-table-operate {
       display: flex;
+      align-items: center;
 
       .king-button {
         margin-right: 14px;

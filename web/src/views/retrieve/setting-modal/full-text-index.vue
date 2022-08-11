@@ -114,7 +114,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  /deep/ .bk-label {
+  ::v-deep .bk-label {
     text-align: left;
   }
 

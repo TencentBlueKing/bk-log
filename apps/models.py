@@ -16,6 +16,8 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+We undertake not to change the open source license (MIT license) applicable to the current version of
+the project delivered to anyone in the future.
 """
 import json
 
@@ -29,12 +31,19 @@ from apps.utils.base_crypt import BaseCrypt
 from apps.utils.local import get_request_username
 
 
+class JSONEncoderSupportSet(DjangoJSONEncoder):
+    def default(self, o):
+        if isinstance(o, set):
+            return list(o)
+        return super().default(o)
+
+
 class JsonField(models.TextField):
     """
     Json字段，入库json.dumps， 出库json.load
     """
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context=None):
         if not value:
             return {}
         try:
@@ -62,7 +71,7 @@ class JsonField(models.TextField):
         if value is None:
             return value
         try:
-            return json.dumps(value, cls=DjangoJSONEncoder)
+            return json.dumps(value, cls=JSONEncoderSupportSet)
         except (TypeError, ValueError):
             raise exceptions.ValidationError(
                 self.error_messages["invalid"],
@@ -128,7 +137,7 @@ class MultiStrSplitByCommaField(models.CharField, MixinMultiStrSplitByCommaField
         kwargs.pop("sub_type", "")
         super().__init__(*args, **kwargs)
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context=None):
         return super().read_from_db(value, expression, connection, context)
 
     def get_prep_value(self, value):
@@ -145,7 +154,7 @@ class MultiStrSplitByCommaFieldText(models.TextField, MixinMultiStrSplitByCommaF
         kwargs.pop("sub_type", "")
         super().__init__(*args, **kwargs)
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context=None):
         return super().read_from_db(value, expression, connection, context)
 
     def get_prep_value(self, value):
@@ -261,6 +270,8 @@ class SoftDeleteModel(OperateRecordModel):
     """
 
     objects = SoftDeleteModelManager()
+
+    origin_objects = models.Manager()
 
     is_deleted = models.BooleanField(_("是否删除"), default=False)
     deleted_at = models.DateTimeField(_("删除时间"), blank=True, null=True)
