@@ -37,6 +37,7 @@ from apps.log_databus.constants import (
     LabelSelectorOperator,
     TopoType,
     VisibleEnum,
+    EtlConfig,
 )
 from apps.log_databus.models import CleanTemplate, CollectorConfig, CollectorPlugin
 from apps.log_search.constants import (
@@ -1173,4 +1174,146 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs["logConfigType"] != ContainerCollectorType.STDOUT and not attrs.get("path"):
             raise SlzValidationError(_("当日志类型不为标准输出时，日志采集路径为必填项"))
+        return attrs
+
+
+class FastCollectorCreateSerializer(serializers.Serializer):
+    """
+    API快速创建采集项序列化
+    """
+
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"))
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+    data_link_id = serializers.CharField(label=_("数据链路id"), required=False, allow_blank=True, allow_null=True)
+    collector_scenario_id = serializers.ChoiceField(label=_("日志类型"), choices=CollectorScenarioEnum.get_choices())
+    category_id = serializers.CharField(label=_("分类ID"))
+    target_object_type = serializers.CharField(label=_("目标类型"))
+    target_node_type = serializers.CharField(label=_("节点类型"))
+    target_nodes = TargetNodeSerializer(label=_("目标节点"), many=True)
+    data_encoding = serializers.ChoiceField(
+        label=_("日志字符集"), choices=EncodingsEnum.get_choices(), required=False, default=EncodingsEnum.UTF.value
+    )
+    description = serializers.CharField(
+        label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
+    )
+    environment = serializers.ChoiceField(
+        label=_("环境"), default=Environment.LINUX, choices=[Environment.LINUX, Environment.WINDOWS]
+    )
+    params = PluginParamSerializer()
+    etl_config = serializers.CharField(label=_("清洗类型"), required=False, default=EtlConfig.BK_LOG_TEXT)
+    etl_params = CollectorEtlParamsSerializer(required=False)
+    fields = serializers.ListField(child=CollectorEtlFieldsSerializer(), label=_("字段配置"), required=False)
+    storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=False)
+    retention = serializers.IntegerField(label=_("有效时间"), required=False, default=settings.ES_PUBLIC_STORAGE_DURATION)
+    allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=False, default=0)
+    storage_replies = serializers.IntegerField(
+        label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
+    )
+    es_shards = serializers.IntegerField(
+        label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
+    )
+
+    def validate(self, attrs):
+        if attrs["collector_scenario_id"] == "section":
+            for field in ["multiline_pattern", "multiline_max_lines", "multiline_timeout"]:
+                if field not in attrs["params"]:
+                    raise ValidationError(_("{} 该字段为必填项").format(field))
+
+        if attrs["collector_scenario_id"] == "wineventlog":
+            for field in ["winlog_name"]:
+                if field not in attrs["params"]:
+                    raise ValidationError(_("{} 该字段为必填项").format(field))
+
+        if attrs["etl_config"] in EtlConfigEnum.get_dict_choices():
+            if not attrs.get("fields"):
+                raise ValidationError(_("[字段提取]请输入需要提取的字段信息"))
+
+            # 过滤掉标准字段，并检查time_field数量
+            fields = []
+            valid_fields = []
+            time_fields = []
+            for item in attrs["fields"]:
+                if item.get("is_built_in"):
+                    continue
+                if item.get("is_time"):
+                    time_fields.append(item)
+
+                # 分隔符必须必指field_index
+                if attrs["etl_config"] == EtlConfigEnum.BK_LOG_DELIMITER.value:
+                    if "field_index" not in item:
+                        raise ValidationError(_("分隔符必须指定field_index"))
+
+                # 字段检查
+                CollectorEtlFieldsSerializer().validate(item)
+                fields.append(item)
+
+                if not item.get("is_delete", False):
+                    valid_fields.append(item)
+            if len(time_fields) > 1:
+                raise ValidationError(_("仅可以设置一个时间字段"))
+
+            if len(valid_fields) == 0:
+                raise ValidationError(_("清洗需要配置有效字段"))
+            attrs["fields"] = fields
+        else:
+            attrs["fields"] = []
+        return attrs
+
+
+class FastCollectorUpdateSerializer(serializers.Serializer):
+    collector_config_name = serializers.CharField(label=_("采集名称"), required=False, max_length=50)
+    description = serializers.CharField(
+        label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
+    )
+    target_node_type = serializers.CharField(label=_("节点类型"), required=False)
+    target_nodes = TargetNodeSerializer(label=_("目标节点"), required=False, many=True)
+    params = PluginParamSerializer(required=False)
+    data_encoding = serializers.ChoiceField(
+        label=_("日志字符集"), choices=EncodingsEnum.get_choices(), required=False, default=EncodingsEnum.UTF.value
+    )
+    etl_config = serializers.CharField(label=_("清洗类型"), required=False)
+    etl_params = CollectorEtlParamsSerializer(required=False)
+    fields = serializers.ListField(child=CollectorEtlFieldsSerializer(), label=_("字段配置"), required=False)
+    retention = serializers.IntegerField(label=_("有效时间"), required=False)
+    allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=False)
+    storage_replies = serializers.IntegerField(label=_("ES副本数量"), required=False, min_value=0, max_value=3)
+    es_shards = serializers.IntegerField(label=_("ES分片数量"), required=False, min_value=1, max_value=64)
+
+    def validate(self, attrs):
+        if attrs.get("etl_config") and attrs["etl_config"] in EtlConfigEnum.get_dict_choices():
+            if not attrs.get("fields"):
+                raise ValidationError(_("[字段提取]请输入需要提取的字段信息"))
+
+            # 过滤掉标准字段，并检查time_field数量
+            fields = []
+            valid_fields = []
+            time_fields = []
+            for item in attrs["fields"]:
+                if item.get("is_built_in"):
+                    continue
+                if item.get("is_time"):
+                    time_fields.append(item)
+
+                # 分隔符必须必指field_index
+                if attrs["etl_config"] == EtlConfigEnum.BK_LOG_DELIMITER.value:
+                    if "field_index" not in item:
+                        raise ValidationError(_("分隔符必须指定field_index"))
+
+                # 字段检查
+                CollectorEtlFieldsSerializer().validate(item)
+                fields.append(item)
+
+                if not item.get("is_delete", False):
+                    valid_fields.append(item)
+            if len(time_fields) > 1:
+                raise ValidationError(_("仅可以设置一个时间字段"))
+
+            if len(valid_fields) == 0:
+                raise ValidationError(_("清洗需要配置有效字段"))
+            attrs["fields"] = fields
+        else:
+            attrs["fields"] = []
         return attrs
