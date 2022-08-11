@@ -26,29 +26,25 @@ from typing import Union
 
 import arrow
 import yaml
-from rest_framework.exceptions import ValidationError, ErrorDetail
 from django.conf import settings
 from django.db import IntegrityError
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
+from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apps.api import BkDataAccessApi, CCApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-from apps.feature_toggle.plugins.constants import FEATURE_COLLECTOR_ITSM, BCS_COLLECTOR, BCS_DEPLOYMENT_TYPE
-from apps.log_bcs.handlers.bcs_handler import BcsHandler
-from apps.log_databus.serializers import ContainerCollectorYamlSerializer
-from apps.log_databus.handlers.collector_scenario.utils import (
-    deal_collector_scenario_param,
-    convert_filters_to_collector_condition,
-)
-from apps.utils.bcs import Bcs
-from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
-from apps.iam import ResourceEnum, Permission
+from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
+from apps.decorators import user_operation_record
 from apps.exceptions import ApiError, ApiRequestError, ApiResultError
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BCS_COLLECTOR, BCS_DEPLOYMENT_TYPE, FEATURE_COLLECTOR_ITSM
+from apps.iam import Permission, ResourceEnum
+from apps.log_bcs.handlers.bcs_handler import BcsHandler
 from apps.log_databus.constants import (
     ADMIN_REQUEST_USER,
+    BIZ_TOPO_INDEX,
     BKDATA_DATA_REGION,
     BKDATA_DATA_SCENARIO,
     BKDATA_DATA_SCENARIO_ID,
@@ -58,30 +54,30 @@ from apps.log_databus.constants import (
     BKDATA_PERMISSION,
     BKDATA_TAGS,
     BK_SUPPLIER_ACCOUNT,
+    BULK_CLUSTER_INFOS_LIMIT,
     CHECK_TASK_READY_NOTE_FOUND_EXCEPTION_CODE,
     CollectStatus,
+    ContainerCollectStatus,
+    ContainerCollectorType,
+    DEFAULT_COLLECTOR_LENGTH,
+    DEFAULT_RETENTION,
     ETLProcessorChoices,
+    Environment,
+    INTERNAL_TOPO_INDEX,
+    LabelSelectorOperator,
     LogPluginInfo,
     META_DATA_ENCODING,
     NOT_FOUND_CODE,
     RunStatus,
     SEARCH_BIZ_INST_TOPO_LEVEL,
-    TargetNodeTypeEnum,
-    INTERNAL_TOPO_INDEX,
-    BIZ_TOPO_INDEX,
-    BULK_CLUSTER_INFOS_LIMIT,
-    Environment,
     STORAGE_CLUSTER_TYPE,
-    DEFAULT_RETENTION,
+    TargetNodeTypeEnum,
     TopoType,
     WorkLoadType,
-    ContainerCollectStatus,
-    DEFAULT_COLLECTOR_LENGTH,
-    ContainerCollectorType,
-    LabelSelectorOperator,
 )
 from apps.log_databus.constants import CACHE_KEY_CLUSTER_INFO, EtlConfig
 from apps.log_databus.exceptions import (
+    BCSApiException,
     CollectNotSuccess,
     CollectNotSuccessNotCanStart,
     CollectorActiveException,
@@ -94,24 +90,29 @@ from apps.log_databus.exceptions import (
     CollectorIllegalIPException,
     CollectorResultTableIDDuplicateException,
     CollectorTaskRunningStatusException,
+    ContainerCollectConfigValidateYamlException,
+    MissedNamespaceException,
+    ModifyCollectorConfigException,
+    PublicESClusterNotExistException,
     RegexInvalidException,
     RegexMatchException,
-    SubscriptionInfoNotFoundException,
-    MissedNamespaceException,
-    BCSApiException,
-    ContainerCollectConfigValidateYamlException,
-    RuleCollectorException,
-    ModifyCollectorConfigException,
     ResultTableNotExistException,
-    PublicESClusterNotExistException,
+    RuleCollectorException,
+    SubscriptionInfoNotFoundException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
+from apps.log_databus.handlers.collector_scenario.utils import (
+    convert_filters_to_collector_condition,
+    deal_collector_scenario_param,
+)
 from apps.log_databus.handlers.etl_storage import EtlStorage
+from apps.log_databus.handlers.kafka import KafkaConsumerHandle
 from apps.log_databus.handlers.storage import StorageHandler
+from apps.log_databus.models import BcsRule, CleanStash, CollectorConfig, CollectorPlugin, ContainerCollectorConfig
+from apps.log_databus.serializers import ContainerCollectorYamlSerializer
 from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 from apps.log_esquery.utils.es_route import EsRoute
-from apps.log_databus.models import CollectorConfig, CleanStash, ContainerCollectorConfig, BcsRule, CollectorPlugin
 from apps.log_search.constants import (
     CMDB_HOST_SEARCH_FIELDS,
     CollectorScenarioEnum,
@@ -120,16 +121,15 @@ from apps.log_search.constants import (
 )
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.index_set import IndexSetHandler
+from apps.log_search.models import LogIndexSet, LogIndexSetData, ProjectInfo, Scenario
 from apps.models import model_to_dict
+from apps.utils.bcs import Bcs
 from apps.utils.cache import caches_one_hour
 from apps.utils.db import array_chunk
 from apps.utils.function import map_if
 from apps.utils.local import get_local_param, get_request_username
 from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
-from apps.log_databus.handlers.kafka import KafkaConsumerHandle
-from apps.decorators import user_operation_record
-from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario, ProjectInfo
 from apps.utils.time_handler import format_user_time_zone
 
 
@@ -559,14 +559,18 @@ class CollectorHandler(object):
             )
             return bk_data_id
 
+        # 兼容平台账户
+        bk_username = getattr(instance, "__bkdata_username", None) or instance.get_updated_by()
+
         # 创建 BKBase
-        maintainers = {instance.updated_by, instance.created_by}
+        maintainers = {bk_username} if bk_username else {instance.updated_by, instance.created_by}
         maintainers.discard(ADMIN_REQUEST_USER)
         if not maintainers:
             raise Exception(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
 
         bkdata_params = {
-            "bk_username": instance.get_updated_by(),
+            "operator": bk_username,
+            "bk_username": bk_username,
             "data_scenario": BKDATA_DATA_SCENARIO,
             "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
             "permission": BKDATA_PERMISSION,
@@ -724,6 +728,10 @@ class CollectorHandler(object):
                 # 2.2 meta-创建或更新数据源
                 if params.get("is_allow_alone_data_id", True):
                     if self.data.etl_processor == ETLProcessorChoices.BKBASE.value:
+                        # 兼容平台账号
+                        if params.get("bkdata_username"):
+                            setattr(self.data, "__bkdata_username", params["bkdata_username"])
+                        # 创建
                         transfer_data_id = self.update_or_create_data_id(
                             self.data, etl_processor=ETLProcessorChoices.TRANSFER.value
                         )
