@@ -143,10 +143,18 @@ class CollectMetricCollector(object):
 
         for collect in has_table_id_collects:
             cur_cap = sum(
-                [float(indices.get("store.size", 0)) for indices in table_id_map_indices.get(collect.table_id, [])]
+                [
+                    float(indices.get("store.size", 0))
+                    for indices in table_id_map_indices.get(collect.table_id, [])
+                    if indices.get("store.size")
+                ]
             )
             docs_count = sum(
-                [int(indices.get("docs.count", 0)) for indices in table_id_map_indices.get(collect.table_id, [])]
+                [
+                    int(indices.get("docs.count", 0))
+                    for indices in table_id_map_indices.get(collect.table_id, [])
+                    if indices.get("docs.count")
+                ]
             )
             metrics.append(
                 Metric(
@@ -262,6 +270,8 @@ class CleanMetricCollector(object):
                     clean_config_count[bk_biz_id] += 1
                 aggregation_datas[clean_config["index_set_id"]][clean_config["etl_config"]] += 1
             for index_set_id in aggregation_datas:
+                if not index_sets.get(index_set_id):
+                    continue
                 for etl_config in aggregation_datas[index_set_id]:
                     metrics.append(
                         # 上报以索引, 清洗类型为维度的数据
