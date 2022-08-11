@@ -94,6 +94,10 @@ class CollectMetricCollector(object):
         "custom_collector_config", description=_("自定义采集配置"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def custom_collector_config():
+        """
+        custom_collector_config
+        @return:
+        """
         groups = (
             CollectorConfig.objects.filter(collector_scenario_id=CollectorScenarioEnum.CUSTOM.value)
             .values("bk_biz_id", "custom_type")
@@ -132,6 +136,10 @@ class CollectMetricCollector(object):
         time_filter=TimeFilterEnum.MINUTE5,
     )
     def collector_capacity():
+        """
+        collector_capacity
+        @return:
+        """
         has_table_id_collects: List[CollectorConfig] = CollectorConfig.objects.filter(
             table_id__isnull=False,
         ).all()
@@ -210,6 +218,10 @@ class CollectMetricCollector(object):
         "row", prefix="bkunifylogbeat", description=_("采集行数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def collector_line():
+        """
+        collector_line
+        @return:
+        """
         metrics = []
         crawler_received_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_RECEIVED)
         crawler_state_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_STATE)
@@ -229,6 +241,11 @@ class CollectMetricCollector(object):
 
     @staticmethod
     def get_crawler_metric_data(field):
+        """
+        get_crawler_metric_data
+        @param field:
+        @return:
+        """
         data = defaultdict(int)
         bk_monitor_client = Client(
             bk_app_code=settings.APP_CODE,
@@ -257,6 +274,10 @@ class CleanMetricCollector(object):
     @staticmethod
     @register_metric("clean_config", description=_("清洗配置"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
     def clean_config():
+        """
+        clean_config
+        @return:
+        """
         metrics = []
         clean_config_count = defaultdict(int)
         bk_data_clean_config_count = defaultdict(int)
@@ -316,6 +337,7 @@ class CleanMetricCollector(object):
     def get_clean_config() -> defaultdict:
         """
         获取全业务清洗列表
+        @return:
         """
         cleans = defaultdict(list)
         collector_configs = (
@@ -369,6 +391,10 @@ class CleanMetricCollector(object):
         "host", prefix="bkunifylogbeat", description=_("采集主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60
     )
     def collect_host():
+        """
+        collect_host
+        @return:
+        """
         configs = CollectorConfig.objects.filter(is_active=True).values(
             "bk_biz_id", "subscription_id", "collector_config_id", "collector_config_name"
         )
@@ -421,7 +447,11 @@ class CleanMetricCollector(object):
 
 
 def get_subscription_instance_count(subscription_id_list: list) -> list:
-    # 有失败重试以及限制了单次查询订阅ID的函数
+    """
+    有失败重试以及限制了单次查询订阅ID的函数
+    @param subscription_id_list:
+    @return:
+    """
     groups = []
 
     def _get_subscription_instance(subscription_id_list_slice: list):

@@ -31,11 +31,11 @@ from apps.utils.local import get_request_username
 from apps.utils.log import logger
 
 
-bk_jwt_backend = True
+bk_jwt_backend = True  # pylint: disable=invalid-name
 try:
     from blueapps.account.components.bk_jwt.backends import BkJwtBackend
 except ImportError:
-    bk_jwt_backend = False
+    bk_jwt_backend = False  # pylint: disable=invalid-name
 
 
 class Permission(BasePermission):
