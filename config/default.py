@@ -674,6 +674,7 @@ CELERY_QUEUES = PIPELINE_CELERY_QUEUES
 # databus
 # ===============================================================================
 TABLE_ID_PREFIX = "bklog"
+TABLE_SPACE_PREFIX = "space"
 
 DEFAULT_OPERATOR = os.environ.get("BKAPP_ES_OPERATOR", "admin")
 ES_DATE_FORMAT = os.environ.get("BKAPP_ES_DATE_FORMAT", "%Y%m%d")
