@@ -424,7 +424,7 @@ def get_subscription_instance_count(subscription_id_list: list) -> list:
     # 有失败重试以及限制了单次查询订阅ID的函数
     groups = []
 
-    def get_slice_subscription_instance_count(subscription_id_list_slice: list):
+    def _get_subscription_instance(subscription_id_list_slice: list):
         group = None
         for __ in range(MAX_RETRY_QUERY_SUBSCRIPTION_TIMES):
             try:
@@ -438,7 +438,7 @@ def get_subscription_instance_count(subscription_id_list: list) -> list:
         return group
 
     for i in array_chunk(subscription_id_list, MAX_QUERY_SUBSCRIPTION):
-        group = get_slice_subscription_instance_count(i)
+        group = _get_subscription_instance(i)
         if group:
             groups.extend(group)
 
