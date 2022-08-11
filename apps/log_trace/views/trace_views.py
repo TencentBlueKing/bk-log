@@ -86,7 +86,7 @@ class TraceViewSet(APIViewSet):
         }
         """
         data = self.params_valid(TraceIndexSetScopeSerializer)
-        return Response(TraceConfigHandlers.get_user_trace_index_set(data.get("space_uid"), data["bk_biz_id"], request))
+        return Response(TraceConfigHandlers.get_user_trace_index_set(data["space_uid"], request))
 
     @detail_route(methods=["POST"], url_path="search/scatter")
     def scatter(self, request, index_set_id=None):

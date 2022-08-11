@@ -181,6 +181,7 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.bkdata",
     "apps.log_search.tasks.async_export",
     "apps.log_search.tasks.project",
+    "apps.log_search.tasks.space",
     "apps.log_search.tasks.cmdb",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
@@ -839,6 +840,12 @@ BKLOG_QOS_LIMIT_TIME = int(os.getenv("BK_BKLOG_QOS_LIMIT_TIME", 5))
 
 # ajax请求401返回plain信息
 IS_AJAX_PLAIN_MODE = True
+
+# ===============
+# 项目空间配置
+# ===============
+BKM_SPACE_API_CLASS = "apps.log_search.models.SpaceApi"
+
 
 # ==============================================================================
 # Templates
