@@ -273,28 +273,21 @@
                   v-show="scopeValueType"
                   searchable
                   multiple
-                  display-tag
-                  @toggle="handleToggleVisible">
-                  <template #trigger>
-                    <div class="visible-scope-box">
-                      <div class="selected-tag">
-                        <bk-tag
-                          v-for="(tag, index) in visibleList"
-                          :key="tag.id"
-                          closable
-                          @close="handleDeleteTag(index)">
-                          {{ tag.name }}
-                        </bk-tag>
-                      </div>
-                      <span class="please-select" v-if="!visibleList.length">{{$t('请选择')}}</span>
-                      <span :class="['bk-icon','icon-angle-down',!visibleIsToggle ? '' : 'icon-rotate']"></span>
-                    </div>
-                  </template>
+                  display-tag>
                   <bk-option
                     v-for="item in mySpaceList"
                     :key="item.space_uid"
                     :id="item.bk_biz_id"
-                    :name="item.space_name">
+                    :name="item.space_full_code_name">
+                    <div class="space-code-option">
+                      <span class="code-name" :title="item.space_full_code_name">{{item.space_full_code_name}}</span>
+                      <div class="list-item-right">
+                        <span :class="['list-item-tag', 'light-theme', item.space_type_id || 'other-type']">
+                          {{item.space_type_name}}
+                        </span>
+                        <span :class="`${visibleBkBiz.includes(item.bk_biz_id) && 'bk-icon icon-check-1'}`"></span>
+                      </div>
+                    </div>
                   </bk-option>
                 </bk-select>
               </div>
@@ -576,12 +569,11 @@ export default {
       authPageInfo: null,
       docCenterUrl: window.BK_DOC_DATA_URL,
       visibleScopeSelectList: [ // 可见范围单选列表
-        { id: 'current_biz', name: this.$t('当前业务可见') },
-        { id: 'multi_biz', name: this.$t('多业务选择') },
+        { id: 'current_biz', name: this.$t('当前空间可见') },
+        { id: 'multi_biz', name: this.$t('多空间选择') },
         { id: 'all_biz', name: this.$t('全平台') },
       ],
-      visibleBkBiz: [],
-      visibleList: [], // 多业务选择下拉框
+      visibleBkBiz: [], // 多业务选择id列表
       cacheVisibleList: [], // 缓存多业务选择下拉框
       visibleIsToggle: false,
       docUrl: window.BK_ETL_DOC_URL,
@@ -665,11 +657,7 @@ export default {
     // 切换可见范围时 恢复缓存或清空业务选择
     'formData.visible_type': {
       handler(val) {
-        if (val !== 'multi_biz') {
-          this.visibleList = [];
-        } else {
-          this.visibleList = JSON.parse(JSON.stringify(this.cacheVisibleList));
-        };
+        this.visibleBkBiz = val !== 'multi_biz' ? [] : JSON.parse(JSON.stringify(this.cacheVisibleList));
       },
     },
   },
@@ -798,20 +786,8 @@ export default {
         separator_regexp: etl_params.separator_regexp || '',
         separator: etl_params.separator || ''
       })
-      if(Array.isArray(visibleBkBizList) && visibleBkBizList.length){
-        // 多业务 业务列表获取名字回显
-        visibleBkBizList.forEach((val) => {
-          const target = this.mySpaceList.find(project => project.bk_biz_id === String(val));
-          if (target) {
-            const targetObj = {
-              id: target.bk_biz_id,
-              name: target.space_name,
-            };
-            this.visibleList.push(targetObj);
-            this.cacheVisibleList.push(targetObj);
-          }
-        });
-      }
+      this.visibleBkBiz = visibleBkBizList;
+      this.cacheVisibleList = visibleBkBizList;
       this.fieldType = clean_type
       /* eslint-enable */
       Object.assign(this.formData, {
@@ -920,7 +896,7 @@ export default {
         data.name = this.saveTempName
         data.bk_biz_id = this.bkBizId
         // 可见范围非多业务选择时删除visible_bk_biz_id
-        data.visible_bk_biz_id = this.visibleList.map(item => item.id);
+        data.visible_bk_biz_id = this.visibleBkBiz;
         data.visible_type !== 'multi_biz' && (delete data.visible_bk_biz_id);
         if (this.isEditTemp) urlParams.clean_template_id = this.$route.params.templateId
         requestUrl = this.isEditTemp ? 'clean/updateTemplate' : 'clean/createTemplate';
@@ -997,9 +973,8 @@ export default {
           message: this.$t('dataManage.select_field'),
         });
       }
-      const visibleList = this.visibleList.map(item => item.id);
       // 清洗模板选择多业务时不能为空
-      if (this.formData.visible_type === 'multi_biz' && !visibleList.length && this.isClearTemplate) {
+      if (this.formData.visible_type === 'multi_biz' && !this.visibleBkBiz.length && this.isClearTemplate) {
         this.messageError(this.$t('multiBizTip'));
         return
       }
@@ -1502,24 +1477,6 @@ export default {
         this.$bkLoading.hide();
       }
     },
-    handleToggleVisible(data) {
-      this.visibleIsToggle = data;
-      if (!data) {
-        this.visibleBkBiz.forEach((val) => {
-          if (!this.visibleList.some(item => String(item.id) === val)) {
-            const target = this.mySpaceList.find(project => project.bk_biz_id === val);
-            this.visibleList.push({
-              id: val,
-              name: target.space_name,
-            });
-          }
-        });
-        this.visibleBkBiz = [];
-      }
-    },
-    handleDeleteTag(index) {
-      this.visibleList.splice(index, 1);
-    },
     handleOpenDocument() {
       window.open(this.docUrl, '_blank');
     },
@@ -1529,6 +1486,7 @@ export default {
 
 <style lang="scss">
   @import '@/scss/mixins/clearfix';
+  @import '@/scss/space-tag-option';
 
   .step-field-container {
     min-width: 950px;
@@ -1788,15 +1746,14 @@ export default {
     }
 
     .step-head {
-      width: 256px;
+      width: 242px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
 
       .documentation {
         color: #3a84ff;
         font-size: 12px;
-        transform: translateY(2px);
+        transform: translateX(45px) translateY(2px);
         cursor: pointer;
       }
     }

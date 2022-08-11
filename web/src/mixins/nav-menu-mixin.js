@@ -190,8 +190,8 @@ export default {
         const res = await this.$store.dispatch('getApplyData', {
           action_ids: ['view_business'],
           resources: [{
-            type: 'space',
-            id: space.space_uid,
+            type: 'biz',
+            id: space.bk_biz_id,
           }],
         });
         this.$store.commit('globals/updateAuthContainerInfo', res.data);
