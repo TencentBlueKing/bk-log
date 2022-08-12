@@ -270,9 +270,7 @@ class CollectorHandler(object):
         """
         result = context
         if not self.data.table_id:
-            collector_config.update(
-                {"table_id_prefix": f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_", "table_id": ""}
-            )
+            collector_config.update({"table_id_prefix": build_bk_table_id(self.data.bk_biz_id, ""), "table_id": ""})
             return collector_config
         table_id_prefix, table_id = self.data.table_id.split(".")
         collector_config.update({"table_id_prefix": table_id_prefix + "_", "table_id": table_id})
@@ -552,7 +550,7 @@ class CollectorHandler(object):
             bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=instance.bk_data_id,
                 data_link_id=instance.data_link_id,
-                data_name=f"{instance.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}_{instance.get_name()}",
+                data_name=build_bk_data_name(instance.get_bk_biz_id(), instance.get_name()),
                 description=instance.description,
                 encoding=META_DATA_ENCODING,
             )
@@ -2096,7 +2094,7 @@ class CollectorHandler(object):
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=self.data.bk_data_id,
                 data_link_id=self.data.data_link_id,
-                data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name}",
+                data_name=build_bk_data_name(self.data.bk_biz_id, collector_config_name),
                 description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
@@ -2365,7 +2363,7 @@ class CollectorHandler(object):
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=self.data.bk_data_id,
                 data_link_id=self.data.data_link_id,
-                data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{data['collector_config_name']}",
+                data_name=build_bk_data_name(self.data.bk_biz_id, data["collector_config_name"]),
                 description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
@@ -2769,8 +2767,7 @@ class CollectorHandler(object):
         self.data.bk_data_id = collector_scenario.update_or_create_data_id(
             bk_data_id=self.data.bk_data_id,
             data_link_id=self.data.data_link_id,
-            data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_"
-            f"{collector_config_params['collector_config_name']}",
+            data_name=build_bk_data_name(self.data.bk_biz_id, collector_config_params["collector_config_name"]),
             description=collector_config_params["description"]
             if collector_config_params["description"]
             else collector_config_params["collector_config_name_en"],
@@ -3590,19 +3587,35 @@ class CollectorHandler(object):
 
 def build_bk_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
     """根据bk_biz_id和collector_config_name_en构建table_id"""
-    bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
-
-    return bk_data_name
+    bk_biz_id = int(bk_biz_id)
+    if bk_biz_id >= 0:
+        bk_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+    else:
+        bk_table_id = (
+            f"{settings.TABLE_SPACE_PREFIX}_{-bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+        )
+    return bk_table_id
 
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
     """根据bk_biz_id和collector_config_name_en构建bk_data_name"""
-    bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
-
+    bk_biz_id = int(bk_biz_id)
+    if bk_biz_id >= 0:
+        bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+    else:
+        bk_data_name = (
+            f"{settings.TABLE_SPACE_PREFIX}_{-bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+        )
     return bk_data_name
 
 
 def build_result_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
     """根据bk_biz_id和collector_config_name_en构建result_table_id"""
-    result_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
+    bk_biz_id = int(bk_biz_id)
+    if bk_biz_id >= 0:
+        result_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
+    else:
+        result_table_id = (
+            f"{settings.TABLE_SPACE_PREFIX}_{-bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
+        )
     return result_table_id

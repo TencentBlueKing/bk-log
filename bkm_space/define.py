@@ -11,6 +11,8 @@ class SpaceTypeEnum(Enum):
     """
 
     BKCC = "bkcc"  # CMDB 业务
+    BCS = "bcs"  # BCS
+    BKDEVOPS = "bkdevops"  # 蓝盾
 
 
 @dataclass
@@ -29,11 +31,16 @@ class Space:
     space_code: Union[None, str]
     space_uid: str
     type_name: Union[None, str]
+    bk_biz_id: int
 
     @classmethod
     def from_dict(cls, data):
         init_fields = {f.name for f in fields(cls) if f.init}
         filtered_data = {k: data.pop(k, None) for k in init_fields}
+        if filtered_data["space_type_id"] == SpaceTypeEnum.BKCC.value:
+            filtered_data["bk_biz_id"] = int(filtered_data["space_id"])
+        else:
+            filtered_data["bk_biz_id"] = -int(filtered_data["id"])
         instance = cls(**filtered_data)
         setattr(instance, "extend", data)
         return instance

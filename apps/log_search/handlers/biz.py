@@ -55,6 +55,11 @@ class BizHandler(APIModel):
 
     def __init__(self, bk_biz_id=None):
         super().__init__()
+
+        if bk_biz_id and int(bk_biz_id) < 0:
+            # 业务ID为负数的情况，直接转为0
+            bk_biz_id = 0
+
         self.bk_biz_id = bk_biz_id
 
     @classmethod
