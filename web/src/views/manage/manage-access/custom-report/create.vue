@@ -184,7 +184,7 @@
             minlength="5"
             :placeholder="$t('dataManage.input_number')">
             <template slot="prepend">
-              <div class="group-text">{{`${bkBizId}_bklog_`}}</div>
+              <div class="group-text">{{showGroupText}}</div>
             </template>
           </bk-input>
         </bk-form-item>
@@ -433,6 +433,9 @@ export default {
     isCloseDataLink() {
       // 没有可上报的链路时，编辑采集配置链路ID为0或null时，隐藏链路配置框，并且不做空值校验。
       return !this.linkConfigurationList.length || (this.isEdit && !this.formData.data_link_id);
+    },
+    showGroupText() {
+      return Number(this.bkBizId) > 0 ? `${this.bkBizId}_bklog_` : `space_${Math.abs(Number(this.bkBizId))}_bklog_`;
     },
   },
   watch: {
