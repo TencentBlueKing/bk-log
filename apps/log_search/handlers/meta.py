@@ -39,6 +39,8 @@ class MetaHandler(APIModel):
     @classmethod
     def get_user_spaces(cls, username):
         spaces = Space.objects.all()
+        spaces = Permission(username).filter_space_list_by_action(ActionEnum.VIEW_BUSINESS, spaces)
+        allowed_space_mapping = {space.bk_biz_id for space in spaces}
 
         result = []
         for space in spaces:
@@ -54,7 +56,7 @@ class MetaHandler(APIModel):
                     "bk_biz_id": space.bk_biz_id,
                     "time_zone": space.properties.get("time_zone", "Asia/Shanghai"),
                     "is_sticky": False,  # TODO: 完成置顶检查逻辑
-                    "permission": {ActionEnum.VIEW_BUSINESS.id: True},  # TODO: 完成权限校验
+                    "permission": {ActionEnum.VIEW_BUSINESS.id: space.bk_biz_id in allowed_space_mapping},
                 }
             )
         return result
@@ -73,8 +75,7 @@ class MetaHandler(APIModel):
     def get_user_projects(cls, username):
         result = []
         business_list = MetaHandler.get_projects()
-        projects = Permission(username).filter_business_list_by_action(ActionEnum.VIEW_BUSINESS, business_list)
-        allowed_business_mapping = {project.bk_biz_id for project in projects}
+        allowed_business_mapping = {project.bk_biz_id for project in business_list}
 
         for project in business_list:
             result.append(
