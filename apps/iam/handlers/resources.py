@@ -117,8 +117,9 @@ class Business(ResourceMeta):
         from apps.log_search.models import Space
 
         space = Space.objects.filter(bk_biz_id=instance_id).first()
-
-        if space.space_type_id == SpaceTypeEnum.BKCC.value:
+        if not space:
+            resource_cls = Business
+        elif space.space_type_id == SpaceTypeEnum.BKCC.value:
             resource_cls = Business
         elif space.space_type_id == SpaceTypeEnum.BCS.value:
             resource_cls = BcsProject
@@ -126,9 +127,13 @@ class Business(ResourceMeta):
             resource_cls = DevopsProject
         else:
             resource_cls = Business
-        resource = resource_cls.create_simple_instance(instance_id, attribute)
-        resource.attribute = {"id": str(instance_id), "name": space.space_name}
-        return resource
+
+        return Resource(
+            system=resource_cls.system_id,
+            type=resource_cls.id,
+            id=str(instance_id),
+            attribute={"id": str(instance_id), "name": space.space_name if space else str(instance_id)},
+        )
 
 
 class BcsProject(Business):
