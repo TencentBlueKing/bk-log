@@ -25,18 +25,19 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as SlzValidationError
+
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
 from apps.log_databus.constants import (
-    COLLECTOR_CONFIG_NAME_EN_REGEX,
-    VisibleEnum,
-    Environment,
-    TopoType,
-    ContainerCollectorType,
     CLUSTER_NAME_EN_REGEX,
+    COLLECTOR_CONFIG_NAME_EN_REGEX,
+    ContainerCollectorType,
+    Environment,
     EsSourceType,
-    LabelSelectorOperator,
     EtlConfig,
+    LabelSelectorOperator,
+    TopoType,
+    VisibleEnum,
 )
 from apps.log_databus.models import CleanTemplate, CollectorConfig, CollectorPlugin
 from apps.log_search.constants import (
@@ -992,6 +993,7 @@ class CollectorPluginCreateSerializer(MultiAttrCheckSerializer, serializers.Mode
 class CreateCollectorPluginInstanceSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"))
     bkdata_biz_id = serializers.IntegerField(label=_("数据平台业务ID"), required=False)
+    bkdata_username = serializers.CharField(label=_("数据平台用户"), required=False)
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
         label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
@@ -1008,6 +1010,7 @@ class CreateCollectorPluginInstanceSerializer(serializers.Serializer):
 
 
 class UpdateCollectorPluginInstanceSerializer(serializers.Serializer):
+    bkdata_username = serializers.CharField(label=_("数据平台用户"), required=False)
     collector_config_id = serializers.IntegerField(label=_("采集项ID"))
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
@@ -1221,7 +1224,7 @@ class FastCollectorCreateSerializer(serializers.Serializer):
     etl_config = serializers.CharField(label=_("清洗类型"), required=False, default=EtlConfig.BK_LOG_TEXT)
     etl_params = CollectorEtlParamsSerializer(required=False)
     fields = serializers.ListField(child=CollectorEtlFieldsSerializer(), label=_("字段配置"), required=False)
-    storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=True)
+    storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=False)
     retention = serializers.IntegerField(label=_("有效时间"), required=False, default=settings.ES_PUBLIC_STORAGE_DURATION)
     allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=False, default=0)
     storage_replies = serializers.IntegerField(

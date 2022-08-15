@@ -30,6 +30,11 @@ from config.domains import MONITOR_APIGATEWAY_ROOT
 
 
 def get_cluster_info_after(response_result):
+    """
+    get_cluster_info_after
+    @param response_result:
+    @return:
+    """
     for cluster_obj in response_result["data"]:
         if not cluster_obj.get("cluster_config"):
             continue
@@ -38,18 +43,33 @@ def get_cluster_info_after(response_result):
 
 
 def create_cluster_info_before(params):
+    """
+    create_cluster_info_before
+    @param params:
+    @return:
+    """
     params = add_esb_info_before_request(params)
     params["custom_option"] = json.dumps(params["custom_option"])
     return params
 
 
 def register_bcs_cluster_info_before_request(params):
+    """
+    register_bcs_cluster_info_before_request
+    @param params:
+    @return:
+    """
     params = add_esb_info_before_request(params)
     params["creator"] = params["bk_username"]
     return params
 
 
 def get_result_table_storage_after(response_result):
+    """
+    get_result_table_storage_after
+    @param response_result:
+    @return:
+    """
     for cluster_obj in response_result["data"].values():
         if not cluster_obj.get("cluster_config"):
             continue
@@ -58,6 +78,11 @@ def get_result_table_storage_after(response_result):
 
 
 def parse_cluster_info(cluster_obj):
+    """
+    parse_cluster_info
+    @param cluster_obj:
+    @return:
+    """
     custom_option = cluster_obj["cluster_config"].get("custom_option", {})
     try:
         cluster_obj["cluster_config"]["custom_option"] = (
@@ -77,6 +102,11 @@ def parse_cluster_info(cluster_obj):
 
 
 def modify_result_table_before(params):
+    """
+    modify_result_table_before
+    @param params:
+    @return:
+    """
     params = add_esb_info_before_request(params)
     params.update({"external_storage": {"elasticsearch": params["default_storage_config"]}})
     del params["default_storage_config"]

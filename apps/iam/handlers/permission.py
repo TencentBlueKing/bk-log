@@ -35,6 +35,7 @@ from apps.iam.handlers.resources import (
     Business as BusinessResource,
 )
 from apps.utils.local import get_request, get_request_username
+from bkm_space.define import SpaceTypeEnum
 from iam import IAM, Request, Subject, Resource, make_expression, ObjectSet, MultiActionRequest
 from iam.apply.models import (
     ActionWithoutResources,
@@ -304,18 +305,18 @@ class Permission(object):
             raise GetSystemInfoError(_("获取系统信息错误：{message}").format(message))
         return data
 
-    def filter_business_list_by_action(self, action: Union[ActionMeta, str], business_list: List = None) -> List:
+    def filter_space_list_by_action(self, action: Union[ActionMeta, str], space_list: List = None) -> List:
         """
         根据动作过滤用户有权限的业务列表
         """
-        if business_list is None:
+        if space_list is None:
             # 获取业务列表
             from apps.log_search.models import Space
 
-            business_list = Space.objects.all()
+            space_list = Space.objects.all()
         # 跳过权限检验
         if settings.IGNORE_IAM_PERMISSION:
-            return business_list
+            return space_list
 
         # 拉取策略
         request = self.make_request(action=action)
@@ -328,25 +329,35 @@ class Permission(object):
 
         if not policies:
             # 如果策略是空，则说明没有任何权限，若存在Demo业务，返回Demo业务，否则返回空
-            for business in business_list:
-                if settings.DEMO_BIZ_ID == business.bk_biz_id:
-                    return [business]
+            for space in space_list:
+                if settings.DEMO_BIZ_ID == space.bk_biz_id:
+                    return [space]
             return []
 
         # 生成表达式
         expr = make_expression(policies)
 
         results = []
-        for business in business_list:
+        for space in space_list:
             obj_set = ObjectSet()
-            obj_set.add_object(ResourceEnum.BUSINESS.id, {"id": str(business.bk_biz_id)})
+
+            if space.space_type_id == SpaceTypeEnum.BKCC.value:
+                instance_type = ResourceEnum.BUSINESS.id
+            elif space.space_type_id == SpaceTypeEnum.BCS.value:
+                instance_type = ResourceEnum.BCS_PROJECT.id
+            elif space.space_type_id == SpaceTypeEnum.BKDEVOPS.value:
+                instance_type = ResourceEnum.DEVOPS_PROJECT.id
+            else:
+                continue
+
+            obj_set.add_object(instance_type, {"id": str(space.space_id)})
 
             # 计算表达式
             is_allowed = self.iam_client._eval_expr(expr, obj_set)
 
             # 针对demo业务权限豁免
-            if is_allowed or str(settings.DEMO_BIZ_ID) == str(business.bk_biz_id):
-                results.append(business)
+            if is_allowed or str(settings.DEMO_BIZ_ID) == str(space.bk_biz_id):
+                results.append(space)
 
         return results
 

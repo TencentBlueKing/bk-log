@@ -29,6 +29,7 @@ from django.utils.translation import ugettext_lazy as _lazy
 
 from apps.api import TransferApi
 from apps.iam.exceptions import ResourceNotExistError
+from bkm_space.define import SpaceTypeEnum
 from bkm_space.utils import space_uid_to_bk_biz_id
 from iam import Resource
 
@@ -54,6 +55,26 @@ class ResourceMeta(metaclass=abc.ABCMeta):
         }
 
     @classmethod
+    def get_biz_attribute(cls, bk_biz_id):
+        attribute = {}
+        from apps.log_search.models import Space
+
+        space = Space.objects.filter(bk_biz_id=bk_biz_id).first()
+        if space:
+            attribute.update({"id": str(space.space_id), "name": space.space_name})
+            instance_type = None
+            if space.space_type_id == SpaceTypeEnum.BKCC.value:
+                instance_type = Business.id
+            elif space.space_type_id == SpaceTypeEnum.BCS.value:
+                instance_type = BcsProject.id
+            elif space.space_type_id == SpaceTypeEnum.BKDEVOPS.value:
+                instance_type = DevopsProject.id
+            if instance_type:
+                # 补充路径信息
+                attribute.update({"_bk_iam_path_": "/{},{}/".format(instance_type, space.space_id)})
+        return attribute
+
+    @classmethod
     def create_simple_instance(cls, instance_id: str, attribute=None) -> Resource:
         """
         创建简单资源实例
@@ -62,8 +83,7 @@ class ResourceMeta(metaclass=abc.ABCMeta):
         """
         attribute = attribute or {}
         if "bk_biz_id" in attribute:
-            # 补充路径信息
-            attribute.update({"_bk_iam_path_": "/{},{}/".format(Business.id, attribute["bk_biz_id"])})
+            attribute.update(cls.get_biz_attribute(attribute["bk_biz_id"]))
         return Resource(cls.system_id, cls.id, str(instance_id), attribute)
 
     @classmethod
@@ -88,19 +108,56 @@ class Business(ResourceMeta):
     related_instance_selections = [{"system_id": system_id, "id": "business"}]
 
     @classmethod
-    def create_instance(cls, instance_id: str, attribute=None) -> Resource:
+    def create_simple_instance(cls, instance_id: str, attribute=None) -> Resource:
+        """
+        创建简单资源实例
+        :param instance_id: 实例ID
+        :param attribute: 属性kv对
+        """
         from apps.log_search.models import Space
 
-        resource = cls.create_simple_instance(instance_id, attribute)
-
-        space_name = str(instance_id)
         space = Space.objects.filter(bk_biz_id=instance_id).first()
+        if not space:
+            resource_cls = Business
+        elif space.space_type_id == SpaceTypeEnum.BKCC.value:
+            resource_cls = Business
+        elif space.space_type_id == SpaceTypeEnum.BCS.value:
+            resource_cls = BcsProject
+        elif space.space_type_id == SpaceTypeEnum.BKDEVOPS.value:
+            resource_cls = DevopsProject
+        else:
+            resource_cls = Business
 
-        if space:
-            space_name = space.space_name
+        return Resource(
+            system=resource_cls.system_id,
+            type=resource_cls.id,
+            id=str(instance_id),
+            attribute={"id": str(instance_id), "name": space.space_name if space else str(instance_id)},
+        )
 
-        resource.attribute = {"id": str(instance_id), "name": space_name}
-        return resource
+
+class BcsProject(Business):
+    """
+    BCS 项目
+    """
+
+    system_id = "bk_bcs_app"
+    id = "project"
+    name = _lazy("BCS项目")
+    selection_mode = "instance"
+    related_instance_selections = [{"system_id": system_id, "id": "project_list"}]
+
+
+class DevopsProject(Business):
+    """
+    蓝盾项目
+    """
+
+    system_id = "bk_ci"
+    id = "project"
+    name = _lazy("蓝盾项目")
+    selection_mode = "instance"
+    related_instance_selections = [{"system_id": system_id, "id": "project_instance"}]
 
 
 class Collection(ResourceMeta):
@@ -127,7 +184,7 @@ class Collection(ResourceMeta):
             "id": str(instance_id),
             "name": config.collector_config_name,
             "bk_biz_id": config.bk_biz_id,
-            "_bk_iam_path_": "/{},{}/".format(Business.id, config.bk_biz_id),
+            "_bk_iam_path_": cls.get_biz_attribute(config.bk_biz_id).get("_bk_iam_path_", ""),
         }
         return resource
 
@@ -159,7 +216,7 @@ class EsSource(ResourceMeta):
             "id": str(instance_id),
             "name": name,
             "bk_biz_id": bk_biz_id,
-            "_bk_iam_path_": "/{},{}/".format(Business.id, bk_biz_id),
+            "_bk_iam_path_": cls.get_biz_attribute(bk_biz_id).get("_bk_iam_path_", ""),
         }
         return resource
 
@@ -189,7 +246,7 @@ class Indices(ResourceMeta):
             "id": str(instance_id),
             "name": index_set.index_set_name,
             "bk_biz_id": bk_biz_id,
-            "_bk_iam_path_": "/{},{}/".format(Business.id, bk_biz_id),
+            "_bk_iam_path_": cls.get_biz_attribute(bk_biz_id).get("_bk_iam_path_", ""),
         }
         return resource
 
@@ -200,6 +257,8 @@ class ResourceEnum:
     """
 
     BUSINESS = Business
+    BCS_PROJECT = BcsProject
+    DEVOPS_PROJECT = DevopsProject
     COLLECTION = Collection
     ES_SOURCE = EsSource
     INDICES = Indices

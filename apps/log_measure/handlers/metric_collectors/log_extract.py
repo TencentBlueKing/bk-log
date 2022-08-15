@@ -21,9 +21,9 @@ the project delivered to anyone in the future.
 """
 import datetime
 
+from collections import defaultdict
 import arrow
 
-from collections import defaultdict
 from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.db.models import Count

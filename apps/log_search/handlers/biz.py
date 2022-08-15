@@ -20,10 +20,10 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import copy
-from pypinyin import lazy_pinyin
 from collections import defaultdict, namedtuple
 from inspect import signature
 from typing import List
+from pypinyin import lazy_pinyin
 
 from django.core.cache import cache
 from django.utils.translation import ugettext_lazy as _
@@ -58,7 +58,7 @@ class BizHandler(APIModel):
 
         if bk_biz_id and int(bk_biz_id) < 0:
             # 业务ID为负数的情况，直接转为0
-            bk_biz_id = 0
+            raise ValueError(_("当前空间类型不支持查询业务资源"))
 
         self.bk_biz_id = bk_biz_id
 
@@ -1073,7 +1073,7 @@ class BizHandler(APIModel):
             response_data = CCApi.list_service_template.bulk_request(params)
         if template_type == TemplateType.SET_TEMPLATE.value:
             response_data = CCApi.list_set_template.bulk_request(params)
-        space = Space.objects.filter(bk_biz_id=self.bk_biz_id).first()
+        space = Space.objects.get(bk_biz_id=self.bk_biz_id)
         response_data = sorted(response_data, key=lambda e: lazy_pinyin(e.get("name", "")))
         result = {
             "bk_biz_id": self.bk_biz_id,
