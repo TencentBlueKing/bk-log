@@ -269,6 +269,77 @@ class CollectMetricCollector(object):
             logger.error(f"failed to get {field} data, err: {e}")
         return data
 
+    @staticmethod
+    @register_metric("business_host", description=_("业务主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
+    def business_unique_host():
+        metrics = []
+        biz_host = defaultdict(int)
+        biz_active_host = defaultdict(int)
+        # 监控没办法执行select from (select from), 只能查两次
+        received_result = CollectMetricCollector()._get_unique_host_crawler(FIELD_CRAWLER_RECEIVED)
+        state_result = CollectMetricCollector()._get_unique_host_crawler(FIELD_CRAWLER_STATE)
+        for bk_biz_id in received_result:
+            for target in received_result[bk_biz_id]:
+                biz_host[bk_biz_id] += 1
+                if received_result[bk_biz_id][target] - state_result[bk_biz_id][target] > 0:
+                    biz_active_host[bk_biz_id] += 1
+
+        for bk_biz_id in biz_host:
+            host_count = biz_host[bk_biz_id]
+            active_host_count = biz_active_host[bk_biz_id]
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=active_host_count,
+                    dimensions={
+                        "is_active": True,
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=host_count - active_host_count,
+                    dimensions={
+                        "is_active": False,
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+        return metrics
+
+    @staticmethod
+    def _get_unique_host_crawler(field: str):
+        aggregation_datas = defaultdict(lambda: defaultdict(int))
+        bk_monitor_client = Client(
+            bk_app_code=settings.APP_CODE,
+            bk_app_secret=settings.SECRET_KEY,
+            monitor_host=MONITOR_APIGATEWAY_ROOT,
+            report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
+            bk_username="admin",
+        )
+        # group by 2h是为了保证数据只有一个
+        params = {
+            "sql": f"select sum({field}) as {field} from {TABLE_BKUNIFYBEAT_TASK} where time >= '1h' \
+            group by time(2h), bk_biz_id, target"
+        }
+        try:
+            result = bk_monitor_client.get_ts_data(data=params)
+            for ts_data in result["list"]:
+                row_count = ts_data[field]
+                bk_biz_id = int(ts_data["bk_biz_id"])
+                target = ts_data["target"]
+                aggregation_datas[bk_biz_id][target] = row_count
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("failed to execute sql {}, err: {}".format(params["sql"], e))
+        return aggregation_datas
+
 
 class CleanMetricCollector(object):
     @staticmethod
