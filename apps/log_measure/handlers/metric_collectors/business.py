@@ -255,7 +255,6 @@ class BusinessMetricCollector(object):
 
     @staticmethod
     def get_clean_biz_usage():
-        clean_biz_list = []
         etl_biz = (
             CollectorConfig.objects.filter(
                 bk_biz_id__in=[bk_biz_id for bk_biz_id in MetricUtils.get_instance().biz_info]
@@ -267,8 +266,7 @@ class BusinessMetricCollector(object):
             .values("bk_biz_id")
             .order_by("bk_biz_id")
         )
-        for i in etl_biz:
-            clean_biz_list.append(i["bk_biz_id"])
+        clean_biz_list = [i["bk_biz_id"] for i in etl_biz]
 
         if not FeatureToggleObject.switch(name=SCENARIO_BKDATA):
             return len(clean_biz_list)
