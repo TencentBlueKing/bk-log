@@ -107,4 +107,4 @@ MAX_QUERY_SUBSCRIPTION = 100
 MAX_RETRY_QUERY_SUBSCRIPTION_TIMES = 5
 TIME_WAIT_QUERY_SUBSCRIPTION_EXCEPTION = 10
 
-INDEX_SCENARIO = {"bkdata": "数据平台", "es": "第三方ES"}
+INDEX_SCENARIO = {"bkdata": "log_bkbase", "es": "log_third_es"}
