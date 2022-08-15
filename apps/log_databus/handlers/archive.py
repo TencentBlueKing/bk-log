@@ -57,6 +57,11 @@ class ArchiveHandler:
 
     @classmethod
     def list(cls, archives):
+        """
+        list
+        @param archives:
+        @return:
+        """
         archive_group = array_group(archives, "archive_config_id", True)
         archive_config_ids = list(archive_group.keys())
         archive_objs = ArchiveConfig.objects.filter(archive_config_id__in=archive_config_ids)
@@ -69,6 +74,12 @@ class ArchiveHandler:
         return archives
 
     def retrieve(self, page, pagesize):
+        """
+        retrieve
+        @param page:
+        @param pagesize:
+        @return:
+        """
         snapshot_info, *_ = TransferApi.list_result_table_snapshot_indices({"table_ids": [self.archive.table_id]})
         archive = model_to_dict(self.archive)
         indices = []
@@ -90,6 +101,11 @@ class ArchiveHandler:
 
     @atomic
     def create_or_update(self, params):
+        """
+        create_or_update
+        @param params:
+        @return:
+        """
         if self.archive:
             self.archive.snapshot_days = params.get("snapshot_days")
             self.archive.save()
@@ -119,6 +135,16 @@ class ArchiveHandler:
 
     @atomic
     def restore(self, bk_biz_id, index_set_name, start_time, end_time, expired_time, notice_user):
+        """
+        restore
+        @param bk_biz_id:
+        @param index_set_name:
+        @param start_time:
+        @param end_time:
+        @param expired_time:
+        @param notice_user:
+        @return:
+        """
         index_set = self._create_index_set(index_set_name)
         create_restore_config = RestoreConfig.objects.create(
             **{
@@ -180,6 +206,11 @@ class ArchiveHandler:
 
     @classmethod
     def list_archive(cls, bk_biz_id):
+        """
+        list_archive
+        @param bk_biz_id:
+        @return:
+        """
         return [
             {
                 "archive_config_id": archive.archive_config_id,
@@ -191,6 +222,11 @@ class ArchiveHandler:
 
     @classmethod
     def list_restore(cls, restore_list):
+        """
+        list_restore
+        @param restore_list:
+        @return:
+        """
         ret = []
         instances = restore_list.serializer.instance
         for instance in instances:
@@ -217,6 +253,12 @@ class ArchiveHandler:
     @classmethod
     @atomic
     def update_restore(cls, restore_config_id, expired_time):
+        """
+        update_restore
+        @param restore_config_id:
+        @param expired_time:
+        @return:
+        """
         try:
             restore: RestoreConfig = RestoreConfig.objects.get(restore_config_id=restore_config_id)
         except RestoreConfig.DoesNotExist:
@@ -233,6 +275,11 @@ class ArchiveHandler:
     @classmethod
     @atomic
     def delete_restore(cls, restore_config_id):
+        """
+        delete_restore
+        @param restore_config_id:
+        @return:
+        """
         try:
             restore: RestoreConfig = RestoreConfig.objects.get(restore_config_id=restore_config_id)
         except RestoreConfig.DoesNotExist:
@@ -247,6 +294,11 @@ class ArchiveHandler:
 
     @staticmethod
     def batch_get_restore_state(restore_config_ids: list):
+        """
+        batch_get_restore_state
+        @param restore_config_ids:
+        @return:
+        """
         restores = RestoreConfig.objects.filter(restore_config_id__in=restore_config_ids).values(
             "meta_restore_id", "restore_config_id"
         )
