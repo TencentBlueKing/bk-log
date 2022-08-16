@@ -19,9 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from concurrent.futures import ThreadPoolExecutor
 from celery.task import periodic_task
 from celery.schedules import crontab
-from concurrent.futures import ThreadPoolExecutor
 
 from apps.log_clustering.constants import (
     PATTERN_INDEX,

@@ -40,7 +40,7 @@ from django.db import models, transaction  # noqa
 from django.utils import timezone  # noqa
 from django.utils.functional import cached_property  # noqa
 from django.utils.translation import ugettext_lazy as _  # noqa
-from django_jsonfield_backport.models import JSONField  # noqa
+from django_jsonfield_backport.models import JSONField  # noqa  pylint: disable=unused-import
 
 from apps.api import CmsiApi, TransferApi  # noqa
 from apps.log_databus.constants import (  # noqa

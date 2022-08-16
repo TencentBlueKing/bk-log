@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import re
+import time
 from collections import defaultdict
 from typing import List
 from django.conf import settings
@@ -44,6 +45,9 @@ from apps.log_measure.constants import (
     TABLE_BKUNIFYBEAT_TASK,
     FIELD_CRAWLER_RECEIVED,
     FIELD_CRAWLER_STATE,
+    MAX_RETRY_QUERY_SUBSCRIPTION_TIMES,
+    TIME_WAIT_QUERY_SUBSCRIPTION_EXCEPTION,
+    MAX_QUERY_SUBSCRIPTION,
 )
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
@@ -90,6 +94,10 @@ class CollectMetricCollector(object):
         "custom_collector_config", description=_("自定义采集配置"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def custom_collector_config():
+        """
+        custom_collector_config
+        @return:
+        """
         groups = (
             CollectorConfig.objects.filter(collector_scenario_id=CollectorScenarioEnum.CUSTOM.value)
             .values("bk_biz_id", "custom_type")
@@ -128,6 +136,10 @@ class CollectMetricCollector(object):
         time_filter=TimeFilterEnum.MINUTE5,
     )
     def collector_capacity():
+        """
+        collector_capacity
+        @return:
+        """
         has_table_id_collects: List[CollectorConfig] = CollectorConfig.objects.filter(
             table_id__isnull=False,
         ).all()
@@ -143,10 +155,18 @@ class CollectMetricCollector(object):
 
         for collect in has_table_id_collects:
             cur_cap = sum(
-                [float(indices.get("store.size", 0)) for indices in table_id_map_indices.get(collect.table_id, [])]
+                [
+                    float(indices.get("store.size", 0))
+                    for indices in table_id_map_indices.get(collect.table_id, [])
+                    if indices.get("store.size")
+                ]
             )
             docs_count = sum(
-                [int(indices.get("docs.count", 0)) for indices in table_id_map_indices.get(collect.table_id, [])]
+                [
+                    int(indices.get("docs.count", 0))
+                    for indices in table_id_map_indices.get(collect.table_id, [])
+                    if indices.get("docs.count")
+                ]
             )
             metrics.append(
                 Metric(
@@ -198,27 +218,35 @@ class CollectMetricCollector(object):
         "row", prefix="bkunifylogbeat", description=_("采集行数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def collector_line():
+        """
+        collector_line
+        @return:
+        """
         metrics = []
         crawler_received_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_RECEIVED)
         crawler_state_data = CollectMetricCollector().get_crawler_metric_data(FIELD_CRAWLER_STATE)
-        for target in crawler_received_data:
-            for task_data_id in crawler_received_data[target]:
-                _received_count = crawler_received_data[target][task_data_id]
-                _state_count = crawler_state_data[target][task_data_id]
-                metrics.append(
-                    Metric(
-                        metric_name="count",
-                        metric_value=_received_count - _state_count,
-                        dimensions={"target": target, "task_data_id": task_data_id},
-                        timestamp=MetricUtils.get_instance().report_ts,
-                    )
+        for task_data_id in crawler_received_data:
+            _received_count = crawler_received_data[task_data_id]
+            _state_count = crawler_state_data[task_data_id]
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=_received_count - _state_count,
+                    dimensions={"task_data_id": task_data_id},
+                    timestamp=MetricUtils.get_instance().report_ts,
                 )
+            )
 
         return metrics
 
     @staticmethod
     def get_crawler_metric_data(field):
-        data = defaultdict(lambda: defaultdict(int))
+        """
+        get_crawler_metric_data
+        @param field:
+        @return:
+        """
+        data = defaultdict(int)
         bk_monitor_client = Client(
             bk_app_code=settings.APP_CODE,
             bk_app_secret=settings.SECRET_KEY,
@@ -228,25 +256,99 @@ class CollectMetricCollector(object):
         )
         params = {
             "sql": f"select sum({field}) as {field} from {TABLE_BKUNIFYBEAT_TASK} \
-            where time >= '5m' group by task_data_id,target"
+            where time >= '5m' group by task_data_id"
         }
         try:
             result = bk_monitor_client.get_ts_data(data=params)
             for ts_data in result["list"]:
                 value = ts_data[field]
-                target = ts_data["target"]
                 task_data_id = ts_data["task_data_id"]
-                data[target][task_data_id] = value
+                data[task_data_id] = value
 
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to get {field} data, err: {e}")
         return data
+
+    @staticmethod
+    @register_metric("business_host", description=_("业务主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
+    def business_unique_host():
+        metrics = []
+        biz_host = defaultdict(int)
+        biz_active_host = defaultdict(int)
+        # 监控没办法执行select from (select from), 只能查两次
+        received_result = CollectMetricCollector()._get_unique_host_crawler(FIELD_CRAWLER_RECEIVED)
+        state_result = CollectMetricCollector()._get_unique_host_crawler(FIELD_CRAWLER_STATE)
+        for bk_biz_id in received_result:
+            for target in received_result[bk_biz_id]:
+                biz_host[bk_biz_id] += 1
+                if received_result[bk_biz_id][target] - state_result[bk_biz_id][target] > 0:
+                    biz_active_host[bk_biz_id] += 1
+
+        for bk_biz_id in biz_host:
+            host_count = biz_host[bk_biz_id]
+            active_host_count = biz_active_host[bk_biz_id]
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=active_host_count,
+                    dimensions={
+                        "is_active": True,
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=host_count - active_host_count,
+                    dimensions={
+                        "is_active": False,
+                        "target_bk_biz_id": bk_biz_id,
+                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    },
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+        return metrics
+
+    @staticmethod
+    def _get_unique_host_crawler(field: str):
+        aggregation_datas = defaultdict(lambda: defaultdict(int))
+        bk_monitor_client = Client(
+            bk_app_code=settings.APP_CODE,
+            bk_app_secret=settings.SECRET_KEY,
+            monitor_host=MONITOR_APIGATEWAY_ROOT,
+            report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
+            bk_username="admin",
+        )
+        # group by 2h是为了保证数据只有一个
+        params = {
+            "sql": f"select sum({field}) as {field} from {TABLE_BKUNIFYBEAT_TASK} where time >= '1h' \
+            group by time(2h), bk_biz_id, target"
+        }
+        try:
+            result = bk_monitor_client.get_ts_data(data=params)
+            for ts_data in result["list"]:
+                row_count = ts_data[field]
+                bk_biz_id = int(ts_data["bk_biz_id"])
+                target = ts_data["target"]
+                aggregation_datas[bk_biz_id][target] = row_count
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("failed to execute sql {}, err: {}".format(params["sql"], e))
+        return aggregation_datas
 
 
 class CleanMetricCollector(object):
     @staticmethod
     @register_metric("clean_config", description=_("清洗配置"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
     def clean_config():
+        """
+        clean_config
+        @return:
+        """
         metrics = []
         clean_config_count = defaultdict(int)
         bk_data_clean_config_count = defaultdict(int)
@@ -264,6 +366,8 @@ class CleanMetricCollector(object):
                     clean_config_count[bk_biz_id] += 1
                 aggregation_datas[clean_config["index_set_id"]][clean_config["etl_config"]] += 1
             for index_set_id in aggregation_datas:
+                if not index_sets.get(index_set_id):
+                    continue
                 for etl_config in aggregation_datas[index_set_id]:
                     metrics.append(
                         # 上报以索引, 清洗类型为维度的数据
@@ -304,6 +408,7 @@ class CleanMetricCollector(object):
     def get_clean_config() -> defaultdict:
         """
         获取全业务清洗列表
+        @return:
         """
         cleans = defaultdict(list)
         collector_configs = (
@@ -357,6 +462,10 @@ class CleanMetricCollector(object):
         "host", prefix="bkunifylogbeat", description=_("采集主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60
     )
     def collect_host():
+        """
+        collect_host
+        @return:
+        """
         configs = CollectorConfig.objects.filter(is_active=True).values(
             "bk_biz_id", "subscription_id", "collector_config_id", "collector_config_name"
         )
@@ -372,10 +481,7 @@ class CleanMetricCollector(object):
                 "collector_config_name": config["collector_config_name"],
             }
 
-        subscription_id_list = list(subscription_id_dict.keys())
-        groups = []
-        for i in array_chunk(subscription_id_list):
-            groups.extend(NodeApi.get_subscription_instance_status({"subscription_id_list": i, "no_request": True}))
+        groups = get_subscription_instance_count(list(subscription_id_dict.keys()))
 
         biz_collector_dict = defaultdict(int)
         total = 0
@@ -409,3 +515,32 @@ class CleanMetricCollector(object):
             )
         )
         return metrics
+
+
+def get_subscription_instance_count(subscription_id_list: list) -> list:
+    """
+    有失败重试以及限制了单次查询订阅ID的函数
+    @param subscription_id_list:
+    @return:
+    """
+    groups = []
+
+    def _get_subscription_instance(subscription_id_list_slice: list):
+        group = None
+        for __ in range(MAX_RETRY_QUERY_SUBSCRIPTION_TIMES):
+            try:
+                group = NodeApi.get_subscription_instance_status(
+                    {"subscription_id_list": subscription_id_list_slice, "no_request": True}
+                )
+                if group:
+                    break
+            except Exception:  # pylint: disable=broad-except
+                time.sleep(TIME_WAIT_QUERY_SUBSCRIPTION_EXCEPTION)
+        return group
+
+    for i in array_chunk(subscription_id_list, MAX_QUERY_SUBSCRIPTION):
+        group = _get_subscription_instance(i)
+        if group:
+            groups.extend(group)
+
+    return groups

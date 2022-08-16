@@ -20,4 +20,4 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
-default_app_config = "apps.log_search.apps.ApiConfig"
+default_app_config = "apps.log_search.apps.ApiConfig"  # pylint: disable=invalid-name

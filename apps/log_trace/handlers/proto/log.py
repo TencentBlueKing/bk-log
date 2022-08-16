@@ -148,6 +148,12 @@ class LogTrace(Proto):
     }
 
     def trace_id(self, index_set_id: int, data: dict) -> dict:
+        """
+        trace_id
+        @param index_set_id:
+        @param data:
+        @return:
+        """
         start_time = arrow.get(data.get("startTime")[0:10]).shift(days=-1)
         query_data = {
             "addition": [
@@ -169,11 +175,21 @@ class LogTrace(Proto):
 
     @classmethod
     def result_to_tree(cls, result) -> dict:
+        """
+        result_to_tree
+        @param result:
+        @return:
+        """
         result_list: list = result.get("list", [])
         return cls.build_tree(result_list)
 
     @classmethod
     def build_tree(cls, nodes):
+        """
+        build_tree
+        @param nodes:
+        @return:
+        """
         if not nodes:
             return nodes
         first_root, *_ = nodes
@@ -231,11 +247,23 @@ class LogTrace(Proto):
         return child
 
     def search(self, index_set_id: int, data: dict) -> dict:
+        """
+        search
+        @param index_set_id:
+        @param data:
+        @return:
+        """
         data.update({"collapse": {"field": "traceID"}})
         search_handler = SearchHandlerEsquery(index_set_id, data, can_highlight=False)
         return search_handler.search(search_type="trace")
 
     def scatter(self, index_set_id: int, data: dict):
+        """
+        scatter
+        @param index_set_id:
+        @param data:
+        @return:
+        """
         data.update({"search_type": "trace_scatter"})
         search_handler = SearchHandlerEsquery(index_set_id, data)
         result: dict = search_handler.search(search_type=None)
@@ -244,6 +272,11 @@ class LogTrace(Proto):
 
     @classmethod
     def result_to_scatter(cls, result) -> list:
+        """
+        result_to_scatter
+        @param result:
+        @return:
+        """
         scatter_label_true_list: list = SCATTER_TEMPLATE[0]["data"]
         scatter_label_false_list: list = SCATTER_TEMPLATE[1]["data"]
         result_list: list = result.get("list", [])
@@ -273,12 +306,23 @@ class LogTrace(Proto):
 
     @classmethod
     def mills_to_timestamp(cls, mills: int) -> str:
+        """
+        mills_to_timestamp
+        @param mills:
+        @return:
+        """
         seconds = int(mills / 1000)
         d1 = arrow.get(seconds)
         time_format_str = d1.to(get_local_param("time_zone")).format("YYYY-MM-DD HH:mm:ss")
         return time_format_str
 
     def traces(self, index_set_id, params):
+        """
+        traces
+        @param index_set_id:
+        @param params:
+        @return:
+        """
         result = super(LogTrace, self).traces(index_set_id, params)
         trace_ids = [trace[self.TRACE_ID_FIELD] for trace in result.get("list", [])]
         if not trace_ids:
@@ -303,6 +347,12 @@ class LogTrace(Proto):
         return self._transform_to_jaeger(result.get("list", []))
 
     def trace_detail(self, index_set_id, trace_id):
+        """
+        trace_detail
+        @param index_set_id:
+        @param trace_id:
+        @return:
+        """
         search_dict = {
             "use_time_range": False,
             "addition": [{"key": self.TRACE_ID_FIELD, "method": "is", "value": trace_id, "condition": "and"}],
