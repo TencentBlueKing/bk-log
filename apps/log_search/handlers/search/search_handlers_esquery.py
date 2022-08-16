@@ -29,6 +29,7 @@ from django.conf import settings
 
 from apps.api import CCApi, MonitorApi
 from apps.api.base import DataApiRetryClass
+from apps.exceptions import ApiRequestError
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.constants import EtlConfig, TargetNodeTypeEnum
 from apps.log_databus.models import CollectorConfig
@@ -79,6 +80,7 @@ from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilder
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
+from apps.utils.log import logger
 
 max_len_dict = Dict[str, int]  # pylint: disable=invalid-name
 
@@ -281,7 +283,12 @@ class SearchHandler(object):
 
     @fields_config("apm_relation")
     def apm_relation(self):
-        res = MonitorApi.query_log_relation(params={"index_set_id": int(self.index_set_id)})
+        try:
+            res = MonitorApi.query_log_relation(params={"index_set_id": int(self.index_set_id)})
+        except ApiRequestError:
+            logger.warning("fail to request log relation")
+            return False
+
         if not res:
             return False
 
