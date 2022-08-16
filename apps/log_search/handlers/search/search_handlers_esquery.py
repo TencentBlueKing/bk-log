@@ -285,8 +285,8 @@ class SearchHandler(object):
     def apm_relation(self):
         try:
             res = MonitorApi.query_log_relation(params={"index_set_id": int(self.index_set_id)})
-        except ApiRequestError:
-            logger.warning("fail to request log relation")
+        except ApiRequestError as e:
+            logger.warning(f"fail to request log relation => index_set_id: {self.index_set_id}, exception => {e}")
             return False
 
         if not res:
