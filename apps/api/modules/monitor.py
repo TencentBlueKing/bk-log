@@ -82,6 +82,14 @@ class _MonitorApi(object):
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
+        self.query_log_relation = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "query_log_relation",
+            module=self.MODULE,
+            description="根据索引集id获取服务关联",
+            default_return_value=None,
+            before_request=add_esb_info_before_request,
+        )
 
 
 MonitorApi = _MonitorApi()

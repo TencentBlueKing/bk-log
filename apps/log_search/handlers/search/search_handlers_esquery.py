@@ -27,7 +27,7 @@ from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
 
-from apps.api import CCApi
+from apps.api import CCApi, MonitorApi
 from apps.api.base import DataApiRetryClass
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.constants import EtlConfig, TargetNodeTypeEnum
@@ -250,6 +250,7 @@ class SearchHandler(object):
             self.bkmonitor(field_result_list),
             self.async_export(field_result),
             self.ip_topo_switch(),
+            self.apm_relation(),
             self.clustering_config(),
             self.clean_config(),
         ]:
@@ -277,6 +278,14 @@ class SearchHandler(object):
     @fields_config("ip_topo_switch")
     def ip_topo_switch(self):
         return MappingHandlers.init_ip_topo_switch(self.index_set_id)
+
+    @fields_config("apm_relation")
+    def apm_relation(self):
+        res = MonitorApi.query_log_relation(params={"index_set_id": int(self.index_set_id)})
+        if not res:
+            return False
+
+        return True, res
 
     @fields_config("clustering_config")
     def clustering_config(self):
@@ -1275,8 +1284,11 @@ class SearchHandler(object):
             self.field.update({_key: {"max_length": len(_key)}})
 
     def _analyze_context_result(
-        self, log_list: List[Dict[str, Any]], mark_gseindex: int = None, mark_gseIndex: int = None
-            # pylint: disable=invalid-name
+        self,
+        log_list: List[Dict[str, Any]],
+        mark_gseindex: int = None,
+        mark_gseIndex: int = None
+        # pylint: disable=invalid-name
     ) -> Dict[str, Any]:
 
         log_list_reversed: list = log_list
