@@ -749,7 +749,6 @@ ESQUERY_WHITE_LIST = [
     "bk_bcs",
     "bk-dbm",
     "bk_dbm",
-    "bk-audit",
 ]
 
 # BK repo conf
