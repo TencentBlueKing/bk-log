@@ -1291,11 +1291,8 @@ class SearchHandler(object):
             self.field.update({_key: {"max_length": len(_key)}})
 
     def _analyze_context_result(
-        self,
-        log_list: List[Dict[str, Any]],
-        mark_gseindex: int = None,
-        mark_gseIndex: int = None
-        # pylint: disable=invalid-name
+        self, log_list: List[Dict[str, Any]], mark_gseindex: int = None, mark_gseIndex: int = None
+            # pylint: disable=invalid-name
     ) -> Dict[str, Any]:
 
         log_list_reversed: list = log_list
