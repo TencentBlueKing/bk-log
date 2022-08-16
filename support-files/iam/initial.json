@@ -80,7 +80,7 @@
             "operation":"upsert_instance_selection",
             "data":{
                 "id":"collection_list",
-                "name":"业务",
+                "name":"业务 - 采集项",
                 "name_en":"Collection List",
                 "resource_type_chain":[
                     {
@@ -98,7 +98,7 @@
             "operation":"upsert_instance_selection",
             "data":{
                 "id":"collection_list_bcs",
-                "name":"容器服务项目",
+                "name":"容器服务项目 - 采集项",
                 "name_en":"Collection List BCS",
                 "resource_type_chain":[
                     {
@@ -116,7 +116,7 @@
             "operation":"upsert_instance_selection",
             "data":{
                 "id":"es_source_list",
-                "name":"业务",
+                "name":"业务 - ES源",
                 "name_en":"ES Source List",
                 "resource_type_chain":[
                     {
@@ -134,7 +134,7 @@
             "operation":"upsert_instance_selection",
             "data":{
                 "id":"es_source_list_bcs",
-                "name":"容器服务项目",
+                "name":"容器服务项目 - ES源",
                 "name_en":"ES Source List BCS",
                 "resource_type_chain":[
                     {
@@ -152,7 +152,7 @@
             "operation":"upsert_instance_selection",
             "data":{
                 "id":"indices_list",
-                "name":"业务",
+                "name":"业务 - 索引集",
                 "name_en":"Indices List",
                 "resource_type_chain":[
                     {
@@ -170,7 +170,7 @@
             "operation":"upsert_instance_selection",
             "data":{
                 "id":"indices_list_bcs",
-                "name":"容器服务项目",
+                "name":"容器服务项目 - 索引集",
                 "name_en":"Indices List BCS",
                 "resource_type_chain":[
                     {

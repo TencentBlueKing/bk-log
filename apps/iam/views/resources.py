@@ -26,10 +26,11 @@ from typing import Dict, List
 from django.db.models import Q
 
 from apps.api import TransferApi
-from apps.iam import Permission
+from apps.iam import Permission, ResourceEnum
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE, REGISTERED_SYSTEM_DEFAULT
 from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import LogIndexSet, Space
+from bkm_space.define import SpaceTypeEnum
 from iam import PathEqDjangoQuerySetConverter, make_expression, ObjectSet, DjangoQuerySetConverter
 from iam.eval.constants import KEYWORD_BK_IAM_PATH_FIELD_SUFFIX, OP
 from iam.resource.provider import ResourceProvider, ListResult
@@ -51,7 +52,17 @@ class CollectionResourceProvider(BaseResourceProvider):
         if not (filter.parent or filter.search or filter.resource_type_chain):
             queryset = CollectorConfig.objects.all()
         elif filter.parent:
-            parent_id = filter.parent["id"]
+            if filter.parent["system_id"] == ResourceEnum.BCS_PROJECT.system_id:
+                space_type = SpaceTypeEnum.BCS.value
+            elif filter.parent["system_id"] == ResourceEnum.DEVOPS_PROJECT.system_id:
+                space_type = SpaceTypeEnum.BKDEVOPS.value
+            else:
+                space_type = SpaceTypeEnum.BKCC.value
+
+            if space_type != SpaceTypeEnum.BKCC.value:
+                parent_id = Space.objects.get(space_type=space_type, space_id=filter.parent["id"]).bk_biz_id
+            else:
+                parent_id = filter.parent["id"]
             if parent_id:
                 queryset = CollectorConfig.objects.filter(bk_biz_id=str(parent_id))
         elif filter.search and filter.resource_type_chain:

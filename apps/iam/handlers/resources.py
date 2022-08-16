@@ -129,10 +129,14 @@ class Business(ResourceMeta):
             resource_cls = Business
 
         return Resource(
-            system=resource_cls.system_id,
-            type=resource_cls.id,
+            system=cls.system_id,
+            type=cls.id,
             id=str(instance_id),
-            attribute={"id": str(instance_id), "name": space.space_name if space else str(instance_id)},
+            attribute={
+                "id": str(instance_id),
+                "name": space.space_name if space else str(instance_id),
+                "_bk_iam_path_": f"/{resource_cls.id},{space.space_id}/",
+            },
         )
 
 
@@ -143,7 +147,7 @@ class BcsProject(Business):
 
     system_id = "bk_bcs_app"
     id = "project"
-    name = _lazy("BCS项目")
+    name = _lazy("容器服务项目")
     selection_mode = "instance"
     related_instance_selections = [{"system_id": system_id, "id": "project_list"}]
 
@@ -155,7 +159,7 @@ class DevopsProject(Business):
 
     system_id = "bk_ci"
     id = "project"
-    name = _lazy("蓝盾项目")
+    name = _lazy("持续集成平台项目")
     selection_mode = "instance"
     related_instance_selections = [{"system_id": system_id, "id": "project_instance"}]
 
