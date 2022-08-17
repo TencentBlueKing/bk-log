@@ -70,34 +70,43 @@
       <!-- 检索详情页左侧 -->
       <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
         <!-- 监控显示的 tab 切换 -->
-        <div v-if="isAsIframe" class="bk-button-group">
+        <!-- <div v-if="isAsIframe" class="bk-button-group">
           <bk-button @click="handleCheckMonitor">{{ $t('指标检索') }}</bk-button>
           <bk-button class="is-selected">{{ $t('日志检索') }}</bk-button>
           <bk-button @click="handleCheckEvent">{{ $t('事件检索') }}</bk-button>
-        </div>
+        </div> -->
 
-        <div class="biz-menu-box" id="bizSelectorGuide">
+        <div class="biz-menu-box" id="bizSelectorGuide" v-if="!isAsIframe">
           <biz-menu-select theme="light"></biz-menu-select>
         </div>
 
         <div class="king-tab" :class="isAsIframe && 'as-iframe'">
-          <div class="tab-header">{{ $t('数据查询') }}
-            <bk-popover
-              ref="queryTipPopover"
-              placement="bottom"
-              theme="light"
-              :transfer="true"
-              trigger="click">
-              <span class="bk-icon icon-cog" @click="toggleCog"></span>
-              <div slot="content" class="auto-query-popover-content">
-                <span>{{ $t('是否开启自动查询') }}</span>
-                <span class="bk-icon icon-info"></span>
-                <bk-switcher v-model="isAutoQuery" theme="primary" size="small" @change="switchAutoQuery"></bk-switcher>
-                <span class="confirm-btn" v-if="!isHideAutoQueryTips" @click="toggleNotice">{{ $t('知道了') }}</span>
-              </div>
-            </bk-popover>
+          <div class="tab-header">
+            <span class="tab-title">{{ $t('数据查询') }}</span>
+            <div class="tab-operation">
+              <bk-popover
+                ref="queryTipPopover"
+                placement="bottom"
+                theme="light"
+                :transfer="true"
+                trigger="click">
+                <span class="bk-icon icon-cog" @click="toggleCog"></span>
+                <div slot="content" class="auto-query-popover-content">
+                  <span>{{ $t('是否开启自动查询') }}</span>
+                  <span class="bk-icon icon-info"></span>
+                  <bk-switcher
+                    v-model="isAutoQuery"
+                    theme="primary"
+                    size="small"
+                    @change="switchAutoQuery">
+                  </bk-switcher>
+                  <span class="confirm-btn" v-if="!isHideAutoQueryTips" @click="toggleNotice">{{ $t('知道了') }}</span>
+                </div>
+              </bk-popover>
+              <span class="bk-icon icon-angle-double-left-line" @click="closeRetrieveCondition"></span>
+            </div>
           </div>
-          <div class="tab-content">
+          <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
             <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
               <!-- 选择索引集 -->
               <div class="tab-item-title">{{ $t('索引集') }}</div>
@@ -1571,6 +1580,10 @@ export default {
       this.leftPanelWidth = this.leftPanelMinWidth;
       this.showRetrieveCondition = true;
     },
+    closeRetrieveCondition() {
+      this.leftPanelWidth = 0;
+      this.showRetrieveCondition = false;
+    },
     // 初始 tips 消失后显示普通的 tips
     handleInitTipsHidden() {
       this.hasExpandInitTipsShown = true;
@@ -1729,7 +1742,7 @@ export default {
           padding-top: 10px;
 
           .tab-content {
-            height: calc(100% - 60px);
+            height: calc(100% - 108px);
             overflow-y: auto;
             background-color: #fbfbfb;
 
@@ -1757,14 +1770,20 @@ export default {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 24px 10px;
+            padding: 10px 24px 18px;
             color: #313238;
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 16px;
 
             .icon-cog {
               font-size: 18px;
               color: #979ba5;
+              cursor: pointer;
+            }
+
+            .icon-angle-double-left-line {
+              margin-left: 8px;
+              color: #979ba5;
+              font-size: 16px;
               cursor: pointer;
             }
           }
