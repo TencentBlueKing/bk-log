@@ -88,6 +88,16 @@ export default {
       }));
     },
   },
+  created() {
+    this.handleOverflowDebounce = debounce(300, false, this.handleOverflow);
+  },
+  mounted() {
+    this.handleOverflowDebounce();
+    this.resizeObsever();
+  },
+  beforeDestroy() {
+    this.resizeObserver?.unobserve(this.$refs.favList);
+  },
   methods: {
     toggleExpand() {
       this.isExpand = !this.isExpand;
