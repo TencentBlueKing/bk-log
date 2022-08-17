@@ -538,9 +538,9 @@ export default {
       val && this.requestSearchHistory(val);
     },
     projectId: {
-      async handler() {
+      handler() {
         this.indexId = '';
-        await this.requestFavoriteList();
+        this.requestFavoriteList();
         this.indexSetList.splice(0);
         this.favoriteList.splice(0);
         this.totalFields.splice(0);
