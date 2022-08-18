@@ -44,7 +44,7 @@ def bk_monitor_report():
         report_path.delay(import_path)
 
 
-@task()
+@task(ignore_result=True)
 def report_path(import_path: str):
     """执行单个文件里的运营指标上报任务"""
     bk_monitor_client = BKMonitor(
