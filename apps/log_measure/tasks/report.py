@@ -23,7 +23,7 @@ import time
 
 from django.conf import settings
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 
 from apps.log_measure.utils.metric import MetricUtils
 from apps.log_measure.constants import COLLECTOR_IMPORT_PATHS
@@ -40,6 +40,13 @@ def bk_monitor_report():
 
     # 这里是为了兼容调度器由于beat与worker时间差异导致的微小调度异常
     time.sleep(2)
+    for import_path in COLLECTOR_IMPORT_PATHS:
+        report_path.delay(import_path)
+
+
+@task(ignore_result=True)
+def report_path(import_path: str):
+    """执行单个文件里的运营指标上报任务"""
     bk_monitor_client = BKMonitor(
         app_id=settings.APP_CODE,
         app_token=settings.SECRET_KEY,
@@ -48,6 +55,6 @@ def bk_monitor_report():
         bk_username="admin",
         bk_biz_id=settings.BLUEKING_BK_BIZ_ID,
     )
-    bk_monitor_client.custom_metric().report(collector_import_paths=COLLECTOR_IMPORT_PATHS)
+    bk_monitor_client.custom_metric().report(collector_import_paths=[import_path])
     # 此处是为了释放对应util资源 非必须
     MetricUtils.del_instance()
