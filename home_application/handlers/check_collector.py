@@ -73,7 +73,7 @@ class CollectorCheckHandler(object):
             try:
                 # "0:ip1,0:ip2,1:ip3"
                 ip_list = []
-                hosts = self.hosts.split("=")[1].split(",")
+                hosts = self.hosts.split(",")
                 for host in hosts:
                     ip_list.append({"bk_cloud_id": int(host.split(":")[0]), "ip": host.split(":")[1]})
                 self.target_server = {"ip_list": ip_list}
