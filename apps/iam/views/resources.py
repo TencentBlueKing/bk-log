@@ -52,7 +52,7 @@ class CollectionResourceProvider(BaseResourceProvider):
         elif filter.parent:
             parent_id = filter.parent["id"]
             if parent_id:
-                queryset = CollectorConfig.objects.filter(bk_biz_id=str(parent_id))
+                queryset = CollectorConfig.objects.filter(bk_biz_id=space_uid_to_bk_biz_id(parent_id))
         elif filter.search and filter.resource_type_chain:
             # 返回结果需要带上资源拓扑路径信息
             with_path = True
@@ -188,7 +188,10 @@ class EsSourceResourceProvider(BaseResourceProvider):
                 "display_name": cluster["cluster_config"]["cluster_name"],
                 "bk_biz_id": str(cluster["cluster_config"]["custom_option"]["bk_biz_id"]),
                 "owner": cluster["cluster_config"]["creator"],
-                "_bk_iam_path_": "/biz,{}/".format(cluster["cluster_config"]["custom_option"]["bk_biz_id"]),
+                "_bk_iam_path_": "/{},{}/".format(
+                    ResourceEnum.BUSINESS.id,
+                    bk_biz_id_to_space_uid(cluster["cluster_config"]["custom_option"]["bk_biz_id"]),
+                ),
             }
             for cluster in clusters
             if cluster["cluster_config"].get("registered_system") != REGISTERED_SYSTEM_DEFAULT
@@ -238,7 +241,7 @@ class EsSourceResourceProvider(BaseResourceProvider):
                             "_bk_iam_path_": [
                                 [
                                     {
-                                        "type": "biz",
+                                        "type": ResourceEnum.BUSINESS.id,
                                         "id": space_uid_mapping[item["bk_biz_id"]],
                                         "display_name": space_uid_mapping[item["bk_biz_id"]],
                                     }
@@ -347,7 +350,9 @@ class IndicesResourceProvider(BaseResourceProvider):
                 {
                     "id": str(item.pk),
                     "display_name": item.index_set_name,
-                    "_bk_iam_path_": [[{"type": "biz", "id": item.space_uid, "display_name": item.space_uid}]],
+                    "_bk_iam_path_": [
+                        [{"type": ResourceEnum.BUSINESS.id, "id": item.space_uid, "display_name": item.space_uid}]
+                    ],
                 }
                 for item in queryset[page.slice_from : page.slice_to]
             ]
