@@ -824,7 +824,7 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.validated_data
         collector_id_list = data.get("collector_id_list").split(",")
-        return Response(CollectorHandler().get_subscription_status_by_list(collector_id_list, multi_flag=True))
+        return Response(CollectorHandler().get_subscription_status_by_list(collector_id_list))
 
     @detail_route(methods=["GET"], url_path="task_status")
     def task_status(self, request, collector_config_id=None):
