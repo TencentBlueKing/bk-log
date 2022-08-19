@@ -135,7 +135,7 @@ class Business(ResourceMeta):
             attribute={
                 "id": str(instance_id),
                 "name": space.space_name if space else str(instance_id),
-                "_bk_iam_path_": f"/{resource_cls.id},{space.space_id}/",
+                "_bk_iam_path_": f"/{resource_cls.id},{space.space_id if space else ''}/",
             },
         )
 
