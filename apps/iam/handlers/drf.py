@@ -191,16 +191,19 @@ def insert_permission_field(
             if not many:
                 result_list = [result_list]
 
-            resources = [
-                [
-                    resource_meta.create_simple_instance(
-                        instance_id=id_field(item),
-                        attribute={"bk_biz_id": item["bk_biz_id"]} if "bk_biz_id" in item else None,
-                    )
-                ]
-                for item in result_list
-                if id_field(item)
-            ]
+            resources = []
+            for item in result_list:
+                if not id_field(item):
+                    continue
+                attribute = {}
+                if "bk_biz_id" in item:
+                    attribute["bk_biz_id"] = item["bk_biz_id"]
+                if "space_uid" in item:
+                    attribute["space_uid"] = item["space_uid"]
+
+                resources.append(
+                    [resource_meta.create_simple_instance(instance_id=id_field(item), attribute=attribute)]
+                )
 
             if not resources:
                 return response
