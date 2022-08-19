@@ -27,6 +27,7 @@ from celery.task import periodic_task, task
 
 from apps.log_measure.utils.metric import MetricUtils
 from apps.log_measure.constants import COLLECTOR_IMPORT_PATHS
+from bk_monitor.utils.metric import clear_registered_metrics
 
 from config.domains import MONITOR_APIGATEWAY_ROOT
 from bk_monitor.handler.monitor import BKMonitor
@@ -58,3 +59,6 @@ def report_path(import_path: str):
     bk_monitor_client.custom_metric().report(collector_import_paths=[import_path])
     # 此处是为了释放对应util资源 非必须
     MetricUtils.del_instance()
+
+    # 清理注册表里的内容，下一次运行的时候重新注册
+    clear_registered_metrics()
