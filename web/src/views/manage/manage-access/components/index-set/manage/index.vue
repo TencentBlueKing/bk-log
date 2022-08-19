@@ -48,6 +48,7 @@ import AuthContainerPage from '@/components/common/auth-container-page';
 import BasicInfo from './basic-info';
 import FieldInfo from './field-info';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   name: 'IndexSetManage',
@@ -91,7 +92,7 @@ export default {
       const indexSetId = this.$route.params.indexSetId.toString();
       try {
         const paramData = {
-          action_ids: ['manage_indices'],
+          action_ids: [authorityMap.MANAGE_INDICES_AUTH],
           resources: [{
             type: 'indices',
             id: indexSetId,

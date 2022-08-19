@@ -29,6 +29,7 @@
 
 <script>
 import AuthContainerPage from '@/components/common/auth-container-page';
+import * as authorityMap from '../../common/authority-map';
 
 export default {
   name: 'Dashboard',
@@ -107,10 +108,10 @@ export default {
     async checkViewAuth() {
       try {
         const res = await this.$store.dispatch('checkAndGetData', {
-          action_ids: ['view_dashboard'],
+          action_ids: [authorityMap.VIEW_DASHBOARD_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         });
         if (res.isAllowed === false) {
@@ -185,10 +186,10 @@ export default {
     async checkManageAuth() {
       try {
         const res = await this.$store.dispatch('checkAndGetData', {
-          action_ids: ['manage_dashboard'],
+          action_ids: [authorityMap.MANAGE_DASHBOARD_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         });
         if (res.isAllowed === false) {

@@ -113,7 +113,7 @@
               theme="primary"
               text
               class="mr10 king-button"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
+              v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_ES_SOURCE_AUTH]) }"
               @click.stop="operateHandler(props.row, 'delete')">
               {{ $t('btn.delete') }}
             </bk-button>
@@ -134,6 +134,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import RepositorySlider from './repository-slider.vue';
+import * as authorityMap from '../../../../common/authority-map';
 
 export default {
   name: 'ArchiveRepository',
@@ -176,6 +177,9 @@ export default {
       bkBizId: 'bkBizId',
       globalsData: 'globals/globalsData',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     repositoryFilters() {
       const target = [];
       Object.keys(this.repoTypeMap).map((item) => {
@@ -298,9 +302,9 @@ export default {
       this.getTableData();
     },
     operateHandler(row, operateType) {
-      if (!(row.permission?.manage_es_source)) {
+      if (!(row.permission?.[authorityMap.MANAGE_ES_SOURCE_AUTH])) {
         return this.getOptionApplyData({
-          action_ids: ['manage_es_source'],
+          action_ids: [authorityMap.MANAGE_ES_SOURCE_AUTH],
           resources: [{
             type: 'es_source',
             id: row.cluster_id,
