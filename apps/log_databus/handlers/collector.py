@@ -77,7 +77,6 @@ from apps.log_databus.constants import (
 )
 from apps.log_databus.constants import CACHE_KEY_CLUSTER_INFO, EtlConfig
 from apps.log_databus.exceptions import (
-    BCSApiException,
     CollectNotSuccess,
     CollectNotSuccessNotCanStart,
     CollectorActiveException,
@@ -90,15 +89,16 @@ from apps.log_databus.exceptions import (
     CollectorIllegalIPException,
     CollectorResultTableIDDuplicateException,
     CollectorTaskRunningStatusException,
-    ContainerCollectConfigValidateYamlException,
-    MissedNamespaceException,
-    ModifyCollectorConfigException,
-    PublicESClusterNotExistException,
     RegexInvalidException,
     RegexMatchException,
-    ResultTableNotExistException,
-    RuleCollectorException,
     SubscriptionInfoNotFoundException,
+    MissedNamespaceException,
+    BCSApiException,
+    ContainerCollectConfigValidateYamlException,
+    RuleCollectorException,
+    ModifyCollectorConfigException,
+    ResultTableNotExistException,
+    PublicESClusterNotExistException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom

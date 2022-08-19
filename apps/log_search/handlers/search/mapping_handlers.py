@@ -708,7 +708,7 @@ class MappingHandlers(object):
                 return {
                     "context_search_usable": context_search_usable,
                     "realtime_search_usable": realtime_search_usable,
-                    "context_fields": judge.copy(),
+                    "context_fields": list(judge.copy()),
                     "usable_reason": analyze_fields_type_result,
                 }
             context_search_usable = True
@@ -716,7 +716,7 @@ class MappingHandlers(object):
             return {
                 "context_search_usable": context_search_usable,
                 "realtime_search_usable": realtime_search_usable,
-                "context_fields": judge.copy(),
+                "context_fields": list(judge.copy()),
                 "usable_reason": "",
             }
         return {

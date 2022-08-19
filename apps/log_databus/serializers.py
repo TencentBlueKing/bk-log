@@ -34,10 +34,10 @@ from apps.log_databus.constants import (
     ContainerCollectorType,
     Environment,
     EsSourceType,
-    EtlConfig,
     LabelSelectorOperator,
     TopoType,
     VisibleEnum,
+    EtlConfig,
 )
 from apps.log_databus.models import CleanTemplate, CollectorConfig, CollectorPlugin
 from apps.log_search.constants import (
