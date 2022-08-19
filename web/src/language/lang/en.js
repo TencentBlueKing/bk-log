@@ -653,6 +653,7 @@ export default {
     uninclude: 'Uninclude',
     traceRetrieve: 'Trace retrieve',
     container: 'Container',
+    traceNoDataTips: 'No related applications are found, please confirm whether there is access to Trace data.',
   },
   // 调用链跟踪
   trace: {

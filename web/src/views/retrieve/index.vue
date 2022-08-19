@@ -276,6 +276,7 @@
             :statistical-fields-data="statisticalFieldsData"
             :time-field="timeField"
             :config-data="clusteringData"
+            :apm-relation="apmRelationData"
             :clean-config="cleanConfig"
             :picker-time-range="pickerTimeRange"
             :date-picker-value="datePickerValue"
@@ -479,6 +480,7 @@ export default {
           clustering_field: '',
         },
       },
+      apmRelationData: {},
       showIpSelectorDialog: false,
       isAsIframe: false,
       localIframeQuery: {},
@@ -1277,6 +1279,7 @@ export default {
           async_export: asyncExport,
           clean_config: cleanConfig,
           clustering_config: clusteringConfig,
+          apm_relation: apmRelation,
         } = localConfig;
 
         this.operatorConfig = {
@@ -1286,6 +1289,7 @@ export default {
         };
         this.cleanConfig = cleanConfig;
         this.clusteringData = clusteringConfig;
+        this.apmRelationData = apmRelation;
 
         fields.forEach((item) => {
           item.minWidth = 0;
