@@ -332,6 +332,9 @@ class CollectMetricCollector(object):
             result = bk_monitor_client.get_ts_data(data=params)
             for ts_data in result["list"]:
                 row_count = ts_data[field]
+                # row_count可能为None
+                if not row_count:
+                    row_count = 0
                 bk_biz_id = int(ts_data["bk_biz_id"])
                 target = ts_data["target"]
                 aggregation_datas[bk_biz_id][target] = row_count
