@@ -5,7 +5,11 @@ from django.conf import settings
 
 from bk_monitor.constants import TimeFilterEnum
 
-REGISTERED_METRICS = []
+REGISTERED_METRICS = {}
+
+
+def clear_registered_metrics():
+    REGISTERED_METRICS.clear()
 
 
 def register_metric(namespace, data_name, prefix="", description="", time_filter=TimeFilterEnum.MINUTE1):
@@ -18,8 +22,9 @@ def register_metric(namespace, data_name, prefix="", description="", time_filter
             result = func(*args, **kwargs)
             return result
 
-        REGISTERED_METRICS.append(
-            {
+        metric_id = f"{data_name}##{namespace}##{prefix}"
+        if metric_id not in REGISTERED_METRICS:
+            REGISTERED_METRICS[metric_id] = {
                 "namespace": namespace,
                 "data_name": data_name,
                 "description": description,
@@ -27,9 +32,8 @@ def register_metric(namespace, data_name, prefix="", description="", time_filter
                 "method": wraps(func)(_wrapped_view),
                 "time_filter": time_filter,
             }
-        )
 
-        return wraps(func)(_wrapped_view)
+        return REGISTERED_METRICS[metric_id]["method"]
 
     return wrapped_view
 

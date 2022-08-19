@@ -17,9 +17,9 @@ class MetricCollector(object):
     """
 
     def __init__(self, collector_import_paths=None):
-        if collector_import_paths:
+        if collector_import_paths and not REGISTERED_METRICS:
             for key in collector_import_paths:
-                importlib.import_module(key)
+                importlib.reload(importlib.import_module(key))
 
     def collect(self, namespaces=None, data_names=None, time_filter_enable=True):
         """
@@ -64,7 +64,7 @@ class MetricCollector(object):
         metric_methods = []
         time_now = arrow.now()
         time_now_minute = 60 * time_now.hour + time_now.minute
-        for metric in REGISTERED_METRICS:
+        for metric_id, metric in REGISTERED_METRICS.items():
             if data_names and metric["data_name"] not in data_names:
                 continue
 

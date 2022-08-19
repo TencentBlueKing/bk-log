@@ -25,7 +25,7 @@
     class="create-index-container"
     v-bkloading="{ isLoading: basicLoading }"
     data-test-id="logIndexSetBox_div_newlogIndexSetBox">
-    <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
+    <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <template v-else>
       <article class="article">
         <h3 class="title">{{ $t('基础信息') }}</h3>
@@ -172,7 +172,7 @@
 import SelectCollection from './select-collection';
 import TraceSelect from './trace-select';
 import SelectEs from './select-es';
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import { projectManages } from '@/common/util';
 import { mapGetters, mapState } from 'vuex';
 
@@ -182,7 +182,7 @@ export default {
     SelectCollection,
     TraceSelect,
     SelectEs,
-    AuthPage,
+    AuthContainerPage,
   },
   data() {
     const scenarioId = this.$route.name.split('-')[0];

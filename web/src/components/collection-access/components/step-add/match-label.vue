@@ -36,15 +36,21 @@
         <bk-input :class="`label-input ${isValueError && 'input-error'}`" v-model.trim="matchValue"></bk-input>
       </div>
       <div class="customize-box" v-else>
-        <bk-select :class="`fill-first ${isKeyError && 'select-error'}`" v-model.trim="matchKey">
+        <bk-select
+          :class="`fill-first ${isKeyError && 'select-error'}`"
+          v-model.trim="matchKey"
+          searchable>
           <bk-option
-            v-for="item of matchLabelOption"
+            v-for="item of matchExpressOption"
             :key="item.id"
             :name="item.key"
             :id="item.key">
           </bk-option>
         </bk-select>
-        <bk-select class="fill-second" :clearable="false" v-model="matchOperator">
+        <bk-select
+          class="fill-second"
+          :clearable="false"
+          v-model="matchOperator">
           <bk-option
             v-for="item of expressOperatorList"
             :key="item.id"
@@ -52,7 +58,10 @@
             :id="item.id">
           </bk-option>
         </bk-select>
-        <bk-input :class="`fill-input ${isValueError && 'input-error'}`" v-model.trim="matchValue"></bk-input>
+        <bk-input
+          v-model.trim="matchValue"
+          :class="`fill-input ${isValueError && 'input-error'}`"
+          :disabled="expressInputIsDisabled"></bk-input>
       </div>
       <div class="add-operate flex-ac">
         <span class="bk-icon icon-check-line" @click="handleAddMatch"></span>
@@ -131,28 +140,33 @@ export default {
       matchCacheList: [], // 存储的用户选择或自定义的标签值列表
       matchKey: '', // 自定义匹配键名
       matchValue: '', // 自定义匹配值
-      matchOperator: '=', // 自定义匹配操作
+      matchOperator: 'In', // 自定义匹配操作
       activeItemID: -1, // 当前鼠标hover的列表元素ID
       expressOperatorList: [{ // 表达式操作选项
-        id: '=',
-        name: '=',
-      }, {
-        id: '!=',
-        name: '!=',
-      }, {
-        id: 'in',
+        id: 'In',
         name: 'In',
       }, {
-        id: 'notin',
+        id: 'NotIn',
         name: 'NotIn',
+      },
+      {
+        id: 'Exists',
+        name: 'Exists',
+      }, {
+        id: 'DoesNotExist',
+        name: 'DoesNotExist',
       }],
       isKeyError: false,
       isValueError: false,
+      matchExpressOption: [],
     };
   },
   computed: {
     isLabel() {
-      return this.matchObj.matchType === 'label';
+      return this.matchType === 'label';
+    },
+    expressInputIsDisabled() {
+      return ['Exists', 'DoesNotExist'].includes(this.matchOperator);
     },
   },
   watch: {
@@ -170,10 +184,20 @@ export default {
     matchList: { // 获取label的key数组为表达式下拉框选项赋值
       deep: true,
       handler(val) {
-        if (this.matchType === 'label') {
+        if (this.isLabel) {
           const setList = new Set();
           const filterList = val.filter(item => !setList.has(item.key) && setList.add(item.key));
-          this.$emit('update:allMatchList',  filterList);
+          this.$emit('update:all-match-list',  filterList);
+        }
+      },
+    },
+    matchLabelOption: {
+      deep: true,
+      handler(val) {
+        if (!this.isLabel) {
+          const setList = new Set();
+          const allMatchVal = this.matchList.concat(val);
+          this.matchExpressOption = allMatchVal.filter(item => !setList.has(item.key) && setList.add(item.key));
         }
       },
     },
@@ -237,23 +261,33 @@ export default {
       }
     },
     handleAddMatch() {
-      // key value 不能为空
-      if (!this.matchKey || !this.matchValue) {
-        !this.matchKey && (this.isKeyError = true);
-        !this.matchValue && (this.isValueError = true);
-        return;
+      if (!this.expressInputIsDisabled) {
+        // key value 不能为空
+        if (!this.matchKey || !this.matchValue) {
+          !this.matchKey && (this.isKeyError = true);
+          !this.matchValue && (this.isValueError = true);
+          return;
+        }
+      } else {
+        // 输入框禁止的时候 value可以为空
+        if (!this.matchKey) {
+          !this.matchKey && (this.isKeyError = true);
+          return;
+        }
       }
       // 是否有重复
       const isRepeat = this.matchList.some((item) => {
         return this.matchKey === item.key
         && this.matchValue === item.value
-         && this.matchOperator === item.operator;
+        && (this.isLabel ? true : this.matchOperator === item.operator);
       });
       if (!isRepeat) {
         this.matchList.unshift({
           key: this.matchKey,
-          value: this.matchValue,
-          operator: this.matchOperator,
+          // 输入框禁止 value为空字符串
+          value: this.expressInputIsDisabled ? '' : this.matchValue,
+          // 匹配标签 操作则永远是等号
+          operator: this.isLabel ? '=' : this.matchOperator,
           customize: true,
           id: random(10),
         });
@@ -266,7 +300,7 @@ export default {
       this.isKeyError = false;
       this.isValueError = false;
       this.isShowAdd = false;
-      this.matchOperator = '=';
+      this.matchOperator = 'In';
     },
     /**
      * @desc: 判断两个list键 值 操作是否都相同
@@ -284,7 +318,7 @@ export default {
       });
     },
     getOperateShow(operate) {
-      return this.expressOperatorList.find(item => item.id === operate)?.name;
+      return this.expressOperatorList.find(item => item.id === operate)?.name || '=';
     },
     copyContent(text) {
       copyMessage(text);

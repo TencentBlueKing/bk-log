@@ -85,6 +85,11 @@ class MappingHandlers(object):
         self.time_zone: str = get_local_param("time_zone")
 
     def check_fields_not_conflict(self, raise_exception=True):
+        """
+        check_fields_not_conflict
+        @param raise_exception:
+        @return:
+        """
         if len(self.indices.split(",")) == 1:
             return True
 
@@ -112,6 +117,10 @@ class MappingHandlers(object):
 
     @cached_property
     def nested_fields(self):
+        """
+        nested_fields
+        @return:
+        """
         mapping_list: list = self._get_mapping()
         property_dict: dict = self.find_merged_property(mapping_list)
         nested_fields = set()
@@ -129,6 +138,11 @@ class MappingHandlers(object):
             conflict_result[key].add(property_define["type"])
 
     def virtual_fields(self, field_list):
+        """
+        virtual_fields
+        @param field_list:
+        @return:
+        """
         fields = {f["field_name"] for f in field_list}
         virtual_predicate = [{"serverIp", "cloudId"}, {"ip", "cloudid"}, {"ip"}]
         if any([fields.issuperset(predicate) for predicate in virtual_predicate]):
@@ -159,6 +173,11 @@ class MappingHandlers(object):
         return field_list
 
     def get_all_fields_by_index_id(self, scope="default"):
+        """
+        get_all_fields_by_index_id
+        @param scope:
+        @return:
+        """
         mapping_list: list = self._get_mapping()
         property_dict: dict = self.find_merged_property(mapping_list)
         fields_result: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
@@ -364,6 +383,12 @@ class MappingHandlers(object):
 
     @staticmethod
     def compare_indices_by_date(index_a, index_b):
+        """
+        compare_indices_by_date
+        @param index_a:
+        @param index_b:
+        @return:
+        """
         index_a = list(index_a.keys())[0]
         index_b = list(index_b.keys())[0]
 
@@ -382,6 +407,11 @@ class MappingHandlers(object):
         return (converted_index_a > converted_index_b) - (converted_index_a < converted_index_b)
 
     def find_merged_property(self, mapping_result) -> dict:
+        """
+        find_merged_property
+        @param mapping_result:
+        @return:
+        """
         return self._merge_property(self._get_all_property(mapping_result))
 
     def _get_all_property(self, mapping_result):
@@ -491,6 +521,11 @@ class MappingHandlers(object):
             return []
 
     def get_meta_schema(self, index: str) -> list:
+        """
+        get_meta_schema
+        @param index:
+        @return:
+        """
         index, *_ = index.split(",")
         return self._inner_get_meta_schema(index=index)
 
@@ -610,6 +645,12 @@ class MappingHandlers(object):
 
     @classmethod
     def get_sort_list_by_index_id(cls, index_set_id, scope="default"):
+        """
+        get_sort_list_by_index_id
+        @param index_set_id:
+        @param scope:
+        @return:
+        """
         username = get_request_username()
         index_config_obj = UserIndexSetConfig.objects.filter(
             index_set_id=index_set_id, created_by=username, scope=scope, is_deleted=False
@@ -622,6 +663,11 @@ class MappingHandlers(object):
 
     @classmethod
     def init_ip_topo_switch(cls, index_set_id: int) -> bool:
+        """
+        init_ip_topo_switch
+        @param index_set_id:
+        @return:
+        """
         log_index_set_obj = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
         project_id = log_index_set_obj.project_id
         if not project_id:
@@ -636,6 +682,11 @@ class MappingHandlers(object):
 
     @classmethod
     def analyze_fields(cls, final_fields_list: List[Dict[str, Any]]) -> dict:
+        """
+        analyze_fields
+        @param final_fields_list:
+        @return:
+        """
         # 上下文实时日志可否使用判断
         fields_list = [x["field_name"] for x in final_fields_list]
         context_search_usable: bool = False

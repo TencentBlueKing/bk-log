@@ -19,8 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from retrying import retry
 from abc import ABC, abstractmethod
+from retrying import retry
 
 from pipeline.builder import Data
 from pipeline.core.pipeline import Pipeline
