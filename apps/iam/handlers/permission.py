@@ -35,7 +35,6 @@ from apps.iam.handlers.resources import (
     Business as BusinessResource,
 )
 from apps.utils.local import get_request, get_request_username
-from bkm_space.define import SpaceTypeEnum
 from iam import IAM, Request, Subject, Resource, make_expression, ObjectSet, MultiActionRequest
 from iam.apply.models import (
     ActionWithoutResources,
@@ -340,20 +339,7 @@ class Permission(object):
         results = []
         for space in space_list:
             obj_set = ObjectSet()
-
-            if space.space_type_id == SpaceTypeEnum.BKCC.value:
-                instance_type = ResourceEnum.BUSINESS.id
-            elif space.space_type_id == SpaceTypeEnum.BCS.value:
-                instance_type = ResourceEnum.BCS_PROJECT.id
-            elif space.space_type_id == SpaceTypeEnum.BKDEVOPS.value:
-                instance_type = ResourceEnum.DEVOPS_PROJECT.id
-            else:
-                continue
-
-            obj_set.add_object(
-                _type=ResourceEnum.BUSINESS.id,
-                obj={"id": str(space.space_id), "_bk_iam_path_": f"/{instance_type},{space.space_id}/"},
-            )
+            obj_set.add_object(_type=ResourceEnum.BUSINESS.id, obj={"id": space.space_uid})
 
             # 计算表达式
             is_allowed = self.iam_client._eval_expr(expr, obj_set)

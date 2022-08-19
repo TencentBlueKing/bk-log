@@ -29,8 +29,7 @@ from django.utils.translation import ugettext_lazy as _lazy
 
 from apps.api import TransferApi
 from apps.iam.exceptions import ResourceNotExistError
-from bkm_space.define import SpaceTypeEnum
-from bkm_space.utils import space_uid_to_bk_biz_id
+from bkm_space.utils import bk_biz_id_to_space_uid, parse_space_uid
 from iam import Resource
 
 
@@ -55,26 +54,6 @@ class ResourceMeta(metaclass=abc.ABCMeta):
         }
 
     @classmethod
-    def get_biz_attribute(cls, bk_biz_id):
-        attribute = {}
-        from apps.log_search.models import Space
-
-        space = Space.objects.filter(bk_biz_id=bk_biz_id).first()
-        if space:
-            attribute.update({"id": str(space.space_id), "name": space.space_name})
-            instance_type = None
-            if space.space_type_id == SpaceTypeEnum.BKCC.value:
-                instance_type = Business.id
-            elif space.space_type_id == SpaceTypeEnum.BCS.value:
-                instance_type = BcsProject.id
-            elif space.space_type_id == SpaceTypeEnum.BKDEVOPS.value:
-                instance_type = DevopsProject.id
-            if instance_type:
-                # 补充路径信息
-                attribute.update({"_bk_iam_path_": "/{},{}/".format(instance_type, space.space_id)})
-        return attribute
-
-    @classmethod
     def create_simple_instance(cls, instance_id: str, attribute=None) -> Resource:
         """
         创建简单资源实例
@@ -82,8 +61,12 @@ class ResourceMeta(metaclass=abc.ABCMeta):
         :param attribute: 属性kv对
         """
         attribute = attribute or {}
-        if "bk_biz_id" in attribute:
-            attribute.update(cls.get_biz_attribute(attribute["bk_biz_id"]))
+        # 补充路径信息
+        if "space_uid" in attribute:
+            attribute.update({"_bk_iam_path_": "/{},{}/".format(Business.id, attribute["space_uid"])})
+        elif "bk_biz_id" in attribute:
+            space_uid = bk_biz_id_to_space_uid(attribute["bk_biz_id"])
+            attribute.update({"_bk_iam_path_": "/{},{}/".format(Business.id, space_uid)})
         return Resource(cls.system_id, cls.id, str(instance_id), attribute)
 
     @classmethod
@@ -101,11 +84,11 @@ class Business(ResourceMeta):
     CMDB业务
     """
 
-    system_id = "bk_cmdb"
-    id = "biz"
-    name = _lazy("业务")
+    system_id = "bk_monitorv3"
+    id = "space"
+    name = _lazy("项目空间")
     selection_mode = "instance"
-    related_instance_selections = [{"system_id": system_id, "id": "business"}]
+    related_instance_selections = [{"system_id": system_id, "id": "space_list"}]
 
     @classmethod
     def create_simple_instance(cls, instance_id: str, attribute=None) -> Resource:
@@ -116,52 +99,31 @@ class Business(ResourceMeta):
         """
         from apps.log_search.models import Space
 
-        space = Space.objects.filter(bk_biz_id=instance_id).first()
-        if not space:
-            resource_cls = Business
-        elif space.space_type_id == SpaceTypeEnum.BKCC.value:
-            resource_cls = Business
-        elif space.space_type_id == SpaceTypeEnum.BCS.value:
-            resource_cls = BcsProject
-        elif space.space_type_id == SpaceTypeEnum.BKDEVOPS.value:
-            resource_cls = DevopsProject
-        else:
-            resource_cls = Business
+        try:
+            parse_space_uid(instance_id)
+            space_uid = instance_id
+        except Exception:  # pylint: disable=broad-except
+            space_uid = None
 
-        return Resource(
-            system=cls.system_id,
-            type=cls.id,
-            id=str(instance_id),
-            attribute={
-                "id": str(instance_id),
-                "name": space.space_name if space else str(instance_id),
-                "_bk_iam_path_": f"/{resource_cls.id},{space.space_id if space else ''}/",
-            },
-        )
+        try:
+            if space_uid:
+                space = Space.objects.get(space_uid=space_uid)
+            else:
+                space = Space.objects.get(bk_biz_id=instance_id)
+            space_uid = space.space_uid
+            space_name = f"[{space.space_type_id}] {space.space_name}"
+        except Exception:  # pylint: disable=broad-except:
+            space_uid = instance_id
+            space_name = instance_id
 
+        attribute = attribute or {}
+        attribute.update({"id": space_uid, "name": space_name})
+        return Resource(cls.system_id, cls.id, space_uid, attribute)
 
-class BcsProject(Business):
-    """
-    BCS 项目
-    """
-
-    system_id = "bk_bcs_app"
-    id = "project"
-    name = _lazy("容器服务项目")
-    selection_mode = "instance"
-    related_instance_selections = [{"system_id": system_id, "id": "project_list"}]
-
-
-class DevopsProject(Business):
-    """
-    蓝盾项目
-    """
-
-    system_id = "bk_ci"
-    id = "project"
-    name = _lazy("持续集成平台项目")
-    selection_mode = "instance"
-    related_instance_selections = [{"system_id": system_id, "id": "project_instance"}]
+    @classmethod
+    def create_instance(cls, instance_id: str, attribute=None) -> Resource:
+        resource = cls.create_simple_instance(instance_id, attribute)
+        return resource
 
 
 class Collection(ResourceMeta):
@@ -184,11 +146,14 @@ class Collection(ResourceMeta):
             config = CollectorConfig.objects.get(pk=instance_id)
         except CollectorConfig.DoesNotExist:
             return resource
+
+        space_uid = bk_biz_id_to_space_uid(config.bk_biz_id)
+
         resource.attribute = {
             "id": str(instance_id),
             "name": config.collector_config_name,
-            "bk_biz_id": config.bk_biz_id,
-            "_bk_iam_path_": cls.get_biz_attribute(config.bk_biz_id).get("_bk_iam_path_", ""),
+            "space_uid": space_uid,
+            "_bk_iam_path_": "/{},{}/".format(Business.id, space_uid),
         }
         return resource
 
@@ -216,11 +181,14 @@ class EsSource(ResourceMeta):
             bk_biz_id = cluster_info["cluster_config"]["custom_option"].get("bk_biz_id", 0)
         except Exception:  # pylint: disable=broad-except
             return resource
+
+        space_uid = bk_biz_id_to_space_uid(bk_biz_id)
+
         resource.attribute = {
             "id": str(instance_id),
             "name": name,
-            "bk_biz_id": bk_biz_id,
-            "_bk_iam_path_": cls.get_biz_attribute(bk_biz_id).get("_bk_iam_path_", ""),
+            "space_uid": space_uid,
+            "_bk_iam_path_": "/{},{}/".format(Business.id, space_uid),
         }
         return resource
 
@@ -245,12 +213,11 @@ class Indices(ResourceMeta):
             index_set = LogIndexSet.objects.get(pk=instance_id)
         except LogIndexSet.DoesNotExist:
             return resource
-        bk_biz_id = space_uid_to_bk_biz_id(index_set.space_uid)
         resource.attribute = {
             "id": str(instance_id),
             "name": index_set.index_set_name,
-            "bk_biz_id": bk_biz_id,
-            "_bk_iam_path_": cls.get_biz_attribute(bk_biz_id).get("_bk_iam_path_", ""),
+            "space_uid": index_set.space_uid,
+            "_bk_iam_path_": "/{},{}/".format(Business.id, index_set.space_uid),
         }
         return resource
 
@@ -261,8 +228,6 @@ class ResourceEnum:
     """
 
     BUSINESS = Business
-    BCS_PROJECT = BcsProject
-    DEVOPS_PROJECT = DevopsProject
     COLLECTION = Collection
     ES_SOURCE = EsSource
     INDICES = Indices
