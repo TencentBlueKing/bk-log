@@ -202,7 +202,7 @@ def insert_permission_field(
                     attribute["space_uid"] = item["space_uid"]
 
                 resources.append(
-                    [resource_meta.create_simple_instance(instance_id=id_field(item), attribute=attribute,)]
+                    [resource_meta.create_simple_instance(instance_id=id_field(item), attribute=attribute)]
                 )
 
             if not resources:
