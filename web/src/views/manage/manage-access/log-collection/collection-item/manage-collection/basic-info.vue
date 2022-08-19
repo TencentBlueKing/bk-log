@@ -218,6 +218,7 @@
 import { mapState } from 'vuex';
 import { formatDate } from '@/common/util';
 import containerBase from './components/container-base';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   components: {
@@ -331,7 +332,7 @@ export default {
     async getEditAuth() {
       try {
         const paramData = {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: this.$route.params.collectorId,

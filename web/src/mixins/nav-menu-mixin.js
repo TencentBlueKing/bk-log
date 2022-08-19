@@ -22,6 +22,7 @@
 
 import { mapState } from 'vuex';
 import { menuArr } from '../components/nav/complete-menu';
+import * as authorityMap from '../common/authority-map';
 
 export default {
   data() {
@@ -99,7 +100,7 @@ export default {
             const [betaRes, authRes] = await Promise.all([
               this.$http.request('/meta/getMaintainerApi', { query }),
               this.$store.dispatch('getApplyData', {
-                action_ids: ['view_business'],
+                action_ids: [authorityMap.VIEW_BUSINESS],
                 resources: [], // todo 需要将 url query 改成 bizId
               }),
             ]);
@@ -107,7 +108,7 @@ export default {
             args.getAccess.url = authRes.data.apply_url;
           } else {
             const authRes = await this.$store.dispatch('getApplyData', {
-              action_ids: ['view_business'],
+              action_ids: [authorityMap.VIEW_BUSINESS],
               resources: [],
             });
             args.getAccess.url = authRes.data.apply_url;
@@ -180,7 +181,7 @@ export default {
     // 选择的业务是否有权限
     async checkSpaceAuth(space) {
       // eslint-disable-next-line camelcase
-      if (space && space.permission && space.permission.view_business) {
+      if (space && space.permission && space.permission[authorityMap.VIEW_BUSINESS]) {
         // 有权限 不显示无业务权限的页面
         this.$store.commit('globals/updateAuthContainerInfo', null);
         return;
@@ -188,10 +189,10 @@ export default {
       try {
         this.$store.commit('updateSpace', space.space_uid);
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['view_business'],
+          action_ids: [authorityMap.VIEW_BUSINESS],
           resources: [{
-            type: 'biz',
-            id: space.bk_biz_id,
+            type: 'space',
+            id: space.space_uid,
           }],
         });
         this.$store.commit('globals/updateAuthContainerInfo', res.data);

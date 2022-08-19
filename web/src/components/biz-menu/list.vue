@@ -29,7 +29,7 @@
         'list-item',
         {
           'is-select': item.space_uid === spaceUid,
-          'is-disable': !(item.permission && item.permission.view_business),
+          'is-disable': !(item.permission && item.permission[authorityMap.VIEW_BUSINESS]),
         },
       ]"
       @mousedown="handleProjectChange(item)"
@@ -44,7 +44,7 @@
         </span>
       </span>
       <span
-        v-if="!(item.permission && item.permission.view_business)"
+        v-if="!(item.permission && item.permission[authorityMap.VIEW_BUSINESS])"
         class="apply-text"
         @mousedown.stop="applyProjectAccess(item)">
         {{ $t("申请权限") }}
@@ -55,6 +55,7 @@
 
 <script>
 import navMenuMixin from '@/mixins/nav-menu-mixin';
+import * as authorityMap from '../../common/authority-map';
 
 export default {
   mixins: [navMenuMixin],
@@ -78,12 +79,16 @@ export default {
       },
     };
   },
-  computed: {},
+  computed: {
+    authorityMap() {
+      return authorityMap;
+    },
+  },
   watch: {},
   mounted() {},
   methods: {
     handleProjectChange(space) {
-      if (!(space.permission && space.permission.view_business)) return;
+      if (!(space.permission && space.permission[authorityMap.VIEW_BUSINESS])) return;
       this.$emit('click-menu-item', space);
     },
     // 业务列表点击申请业务权限
@@ -91,10 +96,10 @@ export default {
       try {
         this.$bkLoading();
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['view_business'],
+          action_ids: [authorityMap.VIEW_BUSINESS],
           resources: [{
-            type: 'biz',
-            id: item.bk_biz_id,
+            type: 'space',
+            id: item.space_uid,
           }],
         });
         window.open(res.data.apply_url);
