@@ -80,7 +80,7 @@
             "operation":"upsert_instance_selection",
             "data":{
                 "id":"collection_list",
-                "name":"业务",
+                "name":"采集项列表",
                 "name_en":"Collection List",
                 "resource_type_chain":[
                     {
@@ -97,26 +97,8 @@
         {
             "operation":"upsert_instance_selection",
             "data":{
-                "id":"collection_list_bcs",
-                "name":"容器服务项目",
-                "name_en":"Collection List BCS",
-                "resource_type_chain":[
-                    {
-                        "system_id":"bk_bcs_app",
-                        "id":"project"
-                    },
-                    {
-                        "system_id":"bk_log_search",
-                        "id":"collection"
-                    }
-                ]
-            }
-        },
-        {
-            "operation":"upsert_instance_selection",
-            "data":{
                 "id":"es_source_list",
-                "name":"业务",
+                "name":"ES源列表",
                 "name_en":"ES Source List",
                 "resource_type_chain":[
                     {
@@ -133,49 +115,13 @@
         {
             "operation":"upsert_instance_selection",
             "data":{
-                "id":"es_source_list_bcs",
-                "name":"容器服务项目",
-                "name_en":"ES Source List BCS",
-                "resource_type_chain":[
-                    {
-                        "system_id":"bk_bcs_app",
-                        "id":"project"
-                    },
-                    {
-                        "system_id":"bk_log_search",
-                        "id":"es_source"
-                    }
-                ]
-            }
-        },
-        {
-            "operation":"upsert_instance_selection",
-            "data":{
                 "id":"indices_list",
-                "name":"业务",
+                "name":"索引集列表",
                 "name_en":"Indices List",
                 "resource_type_chain":[
                     {
                         "system_id":"bk_cmdb",
                         "id":"biz"
-                    },
-                    {
-                        "system_id":"bk_log_search",
-                        "id":"indices"
-                    }
-                ]
-            }
-        },
-        {
-            "operation":"upsert_instance_selection",
-            "data":{
-                "id":"indices_list_bcs",
-                "name":"容器服务项目",
-                "name_en":"Indices List BCS",
-                "resource_type_chain":[
-                    {
-                        "system_id":"bk_bcs_app",
-                        "id":"project"
                     },
                     {
                         "system_id":"bk_log_search",
@@ -201,14 +147,6 @@
                             {
                                 "system_id":"bk_cmdb",
                                 "id":"business"
-                            },
-                            {
-                                "system_id":"bk_bcs_app",
-                                "id":"project_list"
-                            },
-                            {
-                                "system_id":"bk_ci",
-                                "id":"project_instance"
                             }
                         ],
                         "ignore_iam_path":true
@@ -239,11 +177,6 @@
                                 "system_id":"bk_log_search",
                                 "id":"indices_list",
                                 "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_log_search",
-                                "id":"indices_list_bcs",
-                                "ignore_iam_path":true
                             }
                         ]
                     }
@@ -272,11 +205,6 @@
                             {
                                 "system_id":"bk_log_search",
                                 "id":"collection_list",
-                                "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_log_search",
-                                "id":"collection_list_bcs",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -307,14 +235,6 @@
                                 "system_id":"bk_cmdb",
                                 "id":"business",
                                 "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_bcs_app",
-                                "id":"project_list"
-                            },
-                            {
-                                "system_id":"bk_ci",
-                                "id":"project_instance"
                             }
                         ]
                     }
@@ -343,11 +263,6 @@
                             {
                                 "system_id":"bk_log_search",
                                 "id":"collection_list",
-                                "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_log_search",
-                                "id":"collection_list_bcs",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -378,14 +293,6 @@
                                 "system_id":"bk_cmdb",
                                 "id":"business",
                                 "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_bcs_app",
-                                "id":"project_list"
-                            },
-                            {
-                                "system_id":"bk_ci",
-                                "id":"project_instance"
                             }
                         ]
                     }
@@ -414,11 +321,6 @@
                             {
                                 "system_id":"bk_log_search",
                                 "id":"es_source_list",
-                                "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_log_search",
-                                "id":"es_source_list_bcs",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -449,14 +351,6 @@
                                 "system_id":"bk_cmdb",
                                 "id":"business",
                                 "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_bcs_app",
-                                "id":"project_list"
-                            },
-                            {
-                                "system_id":"bk_ci",
-                                "id":"project_instance"
                             }
                         ]
                     }
@@ -485,11 +379,6 @@
                             {
                                 "system_id":"bk_log_search",
                                 "id":"indices_list",
-                                "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_log_search",
-                                "id":"indices_list_bcs",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -520,14 +409,6 @@
                                 "system_id":"bk_cmdb",
                                 "id":"business",
                                 "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_bcs_app",
-                                "id":"project_list"
-                            },
-                            {
-                                "system_id":"bk_ci",
-                                "id":"project_instance"
                             }
                         ]
                     }
@@ -557,14 +438,6 @@
                                 "system_id":"bk_cmdb",
                                 "id":"business",
                                 "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_bcs_app",
-                                "id":"project_list"
-                            },
-                            {
-                                "system_id":"bk_ci",
-                                "id":"project_instance"
                             }
                         ]
                     }
@@ -594,14 +467,6 @@
                                 "system_id":"bk_cmdb",
                                 "id":"business",
                                 "ignore_iam_path":true
-                            },
-                            {
-                                "system_id":"bk_bcs_app",
-                                "id":"project_list"
-                            },
-                            {
-                                "system_id":"bk_ci",
-                                "id":"project_instance"
                             }
                         ]
                     }

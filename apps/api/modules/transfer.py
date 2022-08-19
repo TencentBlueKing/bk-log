@@ -397,6 +397,13 @@ class _TransferApi(object):
             description=_("查看具体空间实例详情"),
             before_request=add_esb_info_before_request,
         )
+        self.list_sticky_spaces = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_list_sticky_spaces/",
+            module=self.MODULE,
+            description=_("查询置顶空间实例列表"),
+            before_request=add_esb_info_before_request,
+        )
 
 
 Transfer = _TransferApi()

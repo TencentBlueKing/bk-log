@@ -350,7 +350,10 @@ class Permission(object):
             else:
                 continue
 
-            obj_set.add_object(instance_type, {"id": str(space.space_id)})
+            obj_set.add_object(
+                _type=ResourceEnum.BUSINESS.id,
+                obj={"id": str(space.space_id), "_bk_iam_path_": f"/{instance_type},{space.space_id}/"},
+            )
 
             # 计算表达式
             is_allowed = self.iam_client._eval_expr(expr, obj_set)

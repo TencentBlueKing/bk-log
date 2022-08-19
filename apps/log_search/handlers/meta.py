@@ -28,7 +28,7 @@ from apps.feature_toggle.plugins.constants import USER_GUIDE_CONFIG
 from apps.iam import Permission, ActionEnum
 from apps.log_search.constants import UserMetaConfType
 from apps.utils import APIModel
-from apps.api import BKLoginApi, CmsiApi
+from apps.api import BKLoginApi, CmsiApi, TransferApi
 from apps.log_search.models import ProjectInfo, UserMetaConf, Space
 from apps.utils.local import get_request_username
 from apps.log_search import exceptions
@@ -41,6 +41,10 @@ class MetaHandler(APIModel):
         spaces = Space.objects.all()
         spaces = Permission(username).filter_space_list_by_action(ActionEnum.VIEW_BUSINESS, spaces)
         allowed_space_mapping = {space.bk_biz_id for space in spaces}
+
+        # 获取置顶空间列表
+        # 返回格式： space_uid 的列表
+        sticky_spaces = TransferApi.list_sticky_spaces({"username": username})
 
         result = []
         for space in spaces:
@@ -55,7 +59,7 @@ class MetaHandler(APIModel):
                     "space_code": space.space_code,
                     "bk_biz_id": space.bk_biz_id,
                     "time_zone": space.properties.get("time_zone", "Asia/Shanghai"),
-                    "is_sticky": False,  # TODO: 完成置顶检查逻辑
+                    "is_sticky": space.space_uid in sticky_spaces,
                     "permission": {ActionEnum.VIEW_BUSINESS.id: space.bk_biz_id in allowed_space_mapping},
                 }
             )
