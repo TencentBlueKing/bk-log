@@ -29,7 +29,7 @@ from django.utils.translation import ugettext_lazy as _lazy
 
 from apps.api import TransferApi
 from apps.iam.exceptions import ResourceNotExistError
-from bkm_space.utils import bk_biz_id_to_space_uid, parse_space_uid
+from bkm_space.utils import space_uid_to_bk_biz_id
 from iam import Resource
 
 
@@ -63,10 +63,10 @@ class ResourceMeta(metaclass=abc.ABCMeta):
         attribute = attribute or {}
         # 补充路径信息
         if "space_uid" in attribute:
-            attribute.update({"_bk_iam_path_": "/{},{}/".format(Business.id, attribute["space_uid"])})
+            bk_biz_id = space_uid_to_bk_biz_id(attribute["space_uid"])
+            attribute.update({"_bk_iam_path_": "/{},{}/".format(Business.id, bk_biz_id)})
         elif "bk_biz_id" in attribute:
-            space_uid = bk_biz_id_to_space_uid(attribute["bk_biz_id"])
-            attribute.update({"_bk_iam_path_": "/{},{}/".format(Business.id, space_uid)})
+            attribute.update({"_bk_iam_path_": "/{},{}/".format(Business.id, attribute["bk_biz_id"])})
         return Resource(cls.system_id, cls.id, str(instance_id), attribute)
 
     @classmethod
@@ -99,26 +99,27 @@ class Business(ResourceMeta):
         """
         from apps.log_search.models import Space
 
+        # 注意，此处 instance_id 有可能是 bk_biz_id，或者是space_uid，需要做统一转换
         try:
-            parse_space_uid(instance_id)
-            space_uid = instance_id
+            bk_biz_id = int(instance_id)
         except Exception:  # pylint: disable=broad-except
-            space_uid = None
+            bk_biz_id = None
 
         try:
-            if space_uid:
-                space = Space.objects.get(space_uid=space_uid)
+            if bk_biz_id is None:
+                # 不是数字，那就是space_uid
+                space = Space.objects.get(space_uid=bk_biz_id)
             else:
                 space = Space.objects.get(bk_biz_id=instance_id)
-            space_uid = space.space_uid
+            bk_biz_id = str(space.bk_biz_id)
             space_name = f"[{space.space_type_id}] {space.space_name}"
         except Exception:  # pylint: disable=broad-except:
-            space_uid = instance_id
+            bk_biz_id = str(instance_id)
             space_name = instance_id
 
         attribute = attribute or {}
-        attribute.update({"id": space_uid, "name": space_name})
-        return Resource(cls.system_id, cls.id, space_uid, attribute)
+        attribute.update({"id": bk_biz_id, "name": space_name})
+        return Resource(cls.system_id, cls.id, bk_biz_id, attribute)
 
     @classmethod
     def create_instance(cls, instance_id: str, attribute=None) -> Resource:
@@ -147,13 +148,11 @@ class Collection(ResourceMeta):
         except CollectorConfig.DoesNotExist:
             return resource
 
-        space_uid = bk_biz_id_to_space_uid(config.bk_biz_id)
-
         resource.attribute = {
             "id": str(instance_id),
             "name": config.collector_config_name,
-            "space_uid": space_uid,
-            "_bk_iam_path_": "/{},{}/".format(Business.id, space_uid),
+            "bk_biz_id": str(config.bk_biz_id),
+            "_bk_iam_path_": "/{},{}/".format(Business.id, config.bk_biz_id),
         }
         return resource
 
@@ -182,13 +181,11 @@ class EsSource(ResourceMeta):
         except Exception:  # pylint: disable=broad-except
             return resource
 
-        space_uid = bk_biz_id_to_space_uid(bk_biz_id)
-
         resource.attribute = {
             "id": str(instance_id),
             "name": name,
-            "space_uid": space_uid,
-            "_bk_iam_path_": "/{},{}/".format(Business.id, space_uid),
+            "bk_biz_id": str(bk_biz_id),
+            "_bk_iam_path_": "/{},{}/".format(Business.id, bk_biz_id),
         }
         return resource
 
@@ -213,11 +210,12 @@ class Indices(ResourceMeta):
             index_set = LogIndexSet.objects.get(pk=instance_id)
         except LogIndexSet.DoesNotExist:
             return resource
+        bk_biz_id = str(space_uid_to_bk_biz_id(index_set.space_uid))
         resource.attribute = {
             "id": str(instance_id),
             "name": index_set.index_set_name,
-            "space_uid": index_set.space_uid,
-            "_bk_iam_path_": "/{},{}/".format(Business.id, index_set.space_uid),
+            "bk_biz_id": bk_biz_id,
+            "_bk_iam_path_": "/{},{}/".format(Business.id, bk_biz_id),
         }
         return resource
 
