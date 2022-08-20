@@ -131,9 +131,9 @@ class CollectionResourceProvider(BaseResourceProvider):
         if not filter.parent or "id" not in filter.parent:
             queryset = CollectorConfig.objects.filter(collector_config_name__icontains=filter.keyword)
         else:
-            parent_id = int(filter.parent.get("id"))
+            parent_id = filter.parent.get("id")
             queryset = CollectorConfig.objects.filter(
-                bk_biz_id=parent_id, collector_config_name__icontains=filter.keyword
+                bk_biz_id=space_uid_to_bk_biz_id(parent_id), collector_config_name__icontains=filter.keyword
             )
 
         results = [
@@ -207,7 +207,11 @@ class EsSourceResourceProvider(BaseResourceProvider):
         if filter.parent:
             parent_id = filter.parent["id"]
             if parent_id:
-                clusters = [cluster for cluster in clusters if cluster["bk_biz_id"] == str(parent_id)]
+                clusters = [
+                    cluster
+                    for cluster in clusters
+                    if str(cluster["bk_biz_id"]) == str(space_uid_to_bk_biz_id(parent_id))
+                ]
         elif filter.search and filter.resource_type_chain:
             # 返回结果需要带上资源拓扑路径信息
             with_path = True
@@ -297,7 +301,7 @@ class EsSourceResourceProvider(BaseResourceProvider):
             clusters = [
                 cluster
                 for cluster in clusters
-                if str(cluster["bk_biz_id"]) == str(parent_id)
+                if str(cluster["bk_biz_id"]) == str(space_uid_to_bk_biz_id(parent_id))
                 and filter.keyword.lower() in cluster["display_name"].lower()
             ]
         else:
@@ -374,15 +378,13 @@ class IndicesResourceProvider(BaseResourceProvider):
         if not expression:
             return ListResult(results=[], count=0)
 
-        biz_id_mapping = self.get_biz_id_mapping()
-
         key_mapping = {
             "indices.id": "pk",
             "indices.owner": "created_by",
             "indices._bk_iam_path_": "space_uid",
         }
         converter = self.PathInDjangoQuerySetConverter(
-            key_mapping, {"space_uid": lambda value: biz_id_mapping[value[1:-1].split(",")[1]]}
+            key_mapping, {"space_uid": lambda value: value[1:-1].split(",")[1]}
         )
         filters = converter.convert(expression)
         queryset = LogIndexSet.objects.filter(filters)
@@ -394,13 +396,11 @@ class IndicesResourceProvider(BaseResourceProvider):
         return ListResult(results=results, count=queryset.count())
 
     def search_instance(self, filter, page, **options):
-        biz_id_mapping = self.get_biz_id_mapping()
         if not filter.parent or "id" not in filter.parent:
             queryset = LogIndexSet.objects.filter(index_set_name__icontains=filter.keyword)
         else:
             parent_id = filter.parent.get("id")
-            space_uid = biz_id_mapping[parent_id]
-            queryset = LogIndexSet.objects.filter(space_uid__in=space_uid, index_set_name__icontains=filter.keyword)
+            queryset = LogIndexSet.objects.filter(space_uid=parent_id, index_set_name__icontains=filter.keyword)
 
         return ListResult(
             results=[
