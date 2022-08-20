@@ -339,7 +339,7 @@ class Permission(object):
         results = []
         for space in space_list:
             obj_set = ObjectSet()
-            obj_set.add_object(_type=ResourceEnum.BUSINESS.id, obj={"id": space.space_uid})
+            obj_set.add_object(_type=ResourceEnum.BUSINESS.id, obj={"id": space.bk_biz_id})
 
             # 计算表达式
             is_allowed = self.iam_client._eval_expr(expr, obj_set)
@@ -361,7 +361,7 @@ class Permission(object):
         # 系统
         systems = [
             {"system_id": settings.BK_IAM_SYSTEM_ID, "system_name": settings.BK_IAM_SYSTEM_NAME},
-            {"system_id": "bk_cmdb", "system_name": _("配置平台")},
+            {"system_id": "bk_monitorv3", "system_name": _("监控平台")},
         ]
 
         for system in systems:
