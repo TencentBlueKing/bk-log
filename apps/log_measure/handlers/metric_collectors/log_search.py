@@ -79,8 +79,8 @@ class LogSearchMetricCollector(object):
                     "index_set_id": history_obj["index_set_id"],
                     "index_set_name": index_sets[history_obj["index_set_id"]]["index_set_name"],
                     "target_username": history_obj["created_by"],
-                    "target_bk_biz_id": index_sets[history_obj["index_set_id"]]["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(
+                    "target_biz_id": index_sets[history_obj["index_set_id"]]["bk_biz_id"],
+                    "target_biz_name": MetricUtils.get_instance().get_biz_name(
                         index_sets[history_obj["index_set_id"]]["bk_biz_id"]
                     ),
                     "time_range": timedelta,
@@ -143,8 +143,8 @@ class LogSearchMetricCollector(object):
                 dimensions={
                     "index_set_id": index_set_id,
                     "index_set_name": index_sets[index_set_id]["index_set_name"],
-                    "target_bk_biz_id": bk_biz_id,
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    "target_biz_id": bk_biz_id,
+                    "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -196,8 +196,8 @@ class LogExportMetricCollector(object):
                     "index_set_name": index_sets[history_obj["index_set_id"]]["index_set_name"],
                     "target_username": history_obj["created_by"],
                     "export_type": history_obj["export_type"],
-                    "target_bk_biz_id": history_obj["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(history_obj["bk_biz_id"]),
+                    "target_biz_id": history_obj["bk_biz_id"],
+                    "target_biz_name": MetricUtils.get_instance().get_biz_name(history_obj["bk_biz_id"]),
                 },
                 timestamp=arrow.get(history_obj["created_at"]).float_timestamp,
             )
@@ -236,8 +236,8 @@ class IndexSetMetricCollector(object):
                         metric_name="count",
                         metric_value=group["count"],
                         dimensions={
-                            "target_bk_biz_id": bk_biz_id,
-                            "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                            "target_biz_id": bk_biz_id,
+                            "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                             "scenario_id": group["scenario_id"],
                             "is_active": group["is_active"],
                         },
