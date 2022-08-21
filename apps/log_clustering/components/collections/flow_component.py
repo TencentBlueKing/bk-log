@@ -51,7 +51,16 @@ class CreatePreTreatFlowService(BaseService):
     def _execute(self, data, parent_data):
         index_set_id = data.get_one_of_inputs("index_set_id")
         flow = DataFlowHandler().create_pre_treat_flow(index_set_id=index_set_id)
-        DataFlowHandler().operator_flow(flow_id=flow["flow_id"])
+        is_collect_index_set = bool(data.get_one_of_inputs("collector_config_id"))
+
+        if is_collect_index_set:
+            # 采集项要继续消费，能跟历史数据无缝衔接，避免丢数据
+            consuming_mode = "continue"
+        else:
+            # 计算平台的索引由于是分开两个索引存储，因此无需关心历史数据，直接从最新数据开始消费能够避免追太多历史数据，加速样本构建速度
+            consuming_mode = "from_tail"
+        DataFlowHandler().operator_flow(flow_id=flow["flow_id"], consuming_mode=consuming_mode)
+
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):

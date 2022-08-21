@@ -162,3 +162,13 @@ class DeleteSampleSetCls(object):
 
     sample_set_id: int
     project_id: int
+
+
+@dataclass
+class SampleSetInfoCls(object):
+    """
+    获取样本集
+    """
+
+    sample_set_id: int
+    project_id: int

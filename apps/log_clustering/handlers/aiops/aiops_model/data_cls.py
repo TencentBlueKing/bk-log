@@ -88,6 +88,13 @@ class PythonBackendCls(object):
 
 
 @dataclass
+class MemoryStepScalingPolicyCls(object):
+    max_memory: int
+    step: int = 1024
+    target_worker_type: str = "python_backend"
+
+
+@dataclass
 class SessionAgentCls(object):
     worker_nums: int = 1
     worker_group: str = "default"
@@ -148,6 +155,7 @@ class ExecuteConfigCls(object):
     pipeline_resources: PipelineResourcesCls
     chunked_read_sample_set: ChunkedReadSampleSet
     pipeline_execute_config: Dict
+    resource_preference: Dict
     pipeline_mode: str = "chunked_training"
 
 
