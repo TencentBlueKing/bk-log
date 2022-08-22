@@ -82,8 +82,8 @@ class BusinessMetricCollector(object):
                 metric_name="count",
                 metric_value=1,
                 dimensions={
-                    "target_bk_biz_id": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_name"],
+                    "target_biz_id": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_id"],
+                    "target_biz_name": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_name"],
                     "time_range": timedelta,
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -120,8 +120,8 @@ class BusinessMetricCollector(object):
                     metric_name="bk_biz_info",
                     metric_value=1,
                     dimensions={
-                        "target_bk_biz_id": bk_biz_id,
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                        "target_biz_id": bk_biz_id,
+                        "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -145,8 +145,8 @@ class BusinessMetricCollector(object):
                     metric_name="count",
                     metric_value=collector_config["total"],
                     dimensions={
-                        "target_bk_biz_id": collector_config["bk_biz_id"],
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(collector_config["bk_biz_id"]),
+                        "target_biz_id": collector_config["bk_biz_id"],
+                        "target_biz_name": MetricUtils.get_instance().get_biz_name(collector_config["bk_biz_id"]),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )

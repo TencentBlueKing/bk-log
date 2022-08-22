@@ -653,6 +653,7 @@ export default {
     uninclude: '不包含',
     traceRetrieve: 'trace检索',
     container: '容器',
+    traceNoDataTips: '未找到相关的应用，请确认是否有Trace数据的接入。',
   },
   // 调用链跟踪
   trace: {

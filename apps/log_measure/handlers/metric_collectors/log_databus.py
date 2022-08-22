@@ -72,8 +72,8 @@ class CollectMetricCollector(object):
                 dimensions={
                     "is_active": group["is_active"],
                     "collect_scenario": group["collector_scenario_id"],
-                    "target_bk_biz_id": group["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
+                    "target_biz_id": group["bk_biz_id"],
+                    "target_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -110,8 +110,8 @@ class CollectMetricCollector(object):
                 metric_value=group["count"],
                 dimensions={
                     "custom_type": group["custom_type"],
-                    "target_bk_biz_id": group["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
+                    "target_biz_id": group["bk_biz_id"],
+                    "target_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -175,8 +175,8 @@ class CollectMetricCollector(object):
                     dimensions={
                         "collector_config_id": collect.collector_config_id,
                         "collector_config_name": collect.collector_config_name,
-                        "target_bk_biz_id": collect.bk_biz_id,
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(collect.bk_biz_id),
+                        "target_biz_id": collect.bk_biz_id,
+                        "target_biz_name": MetricUtils.get_instance().get_biz_name(collect.bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -189,8 +189,8 @@ class CollectMetricCollector(object):
                     dimensions={
                         "collector_config_id": collect.collector_config_id,
                         "collector_config_name": collect.collector_config_name,
-                        "target_bk_biz_id": collect.bk_biz_id,
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(collect.bk_biz_id),
+                        "target_biz_id": collect.bk_biz_id,
+                        "target_biz_name": MetricUtils.get_instance().get_biz_name(collect.bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -293,8 +293,8 @@ class CollectMetricCollector(object):
                     metric_value=active_host_count,
                     dimensions={
                         "is_active": True,
-                        "target_bk_biz_id": bk_biz_id,
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                        "target_biz_id": bk_biz_id,
+                        "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -305,8 +305,8 @@ class CollectMetricCollector(object):
                     metric_value=host_count - active_host_count,
                     dimensions={
                         "is_active": False,
-                        "target_bk_biz_id": bk_biz_id,
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                        "target_biz_id": bk_biz_id,
+                        "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -332,6 +332,9 @@ class CollectMetricCollector(object):
             result = bk_monitor_client.get_ts_data(data=params)
             for ts_data in result["list"]:
                 row_count = ts_data[field]
+                # row_count可能为None
+                if not row_count:
+                    row_count = 0
                 bk_biz_id = int(ts_data["bk_biz_id"])
                 target = ts_data["target"]
                 aggregation_datas[bk_biz_id][target] = row_count
@@ -375,8 +378,8 @@ class CleanMetricCollector(object):
                             metric_name="count",
                             metric_value=aggregation_datas[index_set_id][etl_config],
                             dimensions={
-                                "target_bk_biz_id": bk_biz_id,
-                                "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                                "target_biz_id": bk_biz_id,
+                                "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                                 "index_set_id": index_set_id,
                                 "index_set_name": index_sets[index_set_id]["index_set_name"],
                                 "clean_type": etl_config,
@@ -496,8 +499,8 @@ class CleanMetricCollector(object):
                 dimensions={
                     "collector_config_id": collector_config_id,
                     "collector_config_name": collector_config_dict[collector_config_id]["collector_config_name"],
-                    "target_bk_biz_id": collector_config_dict[collector_config_id]["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(
+                    "target_biz_id": collector_config_dict[collector_config_id]["bk_biz_id"],
+                    "target_biz_name": MetricUtils.get_instance().get_biz_name(
                         collector_config_dict[collector_config_id]["bk_biz_id"]
                     ),
                 },
