@@ -218,6 +218,7 @@
               <field-filter
                 :total-fields="totalFields"
                 :visible-fields="visibleFields"
+                :sort-list="sortList"
                 :field-alias-map="fieldAliasMap"
                 :show-field-alias="showFieldAlias"
                 :statistical-fields-data="statisticalFieldsData"
@@ -442,6 +443,7 @@ export default {
       // ipTopoSwitch: true, // IP快选功能相关
       totalFields: [], // 表格字段
       visibleFields: [], // 显示的排序后的字段
+      sortList: [], // 排序字段
       notTextTypeFields: [], // 字段类型不为 text 的字段
       fieldAliasMap: {},
       showFieldAlias: localStorage.getItem('showFieldAlias') === 'true',
@@ -1266,6 +1268,7 @@ export default {
           config,
           display_fields: displayFields,
           time_field: timeField,
+          sort_list: sortList,
         } = data;
         const localConfig = {};
         config.forEach((item) => {
@@ -1317,6 +1320,7 @@ export default {
             }
           }
         }).filter(Boolean);
+        this.sortList = sortList;
 
         const fieldAliasMap = {};
         fields.forEach((item) => {
@@ -1348,18 +1352,13 @@ export default {
           }
         }
       });
-      this.$http.request('retrieve/postFieldsConfig', {
-        params: { index_set_id: this.$route.params.indexId },
-        data: { display_fields: displayFieldNames, sort_list: [] },
-      }).catch((e) => {
-        console.warn(e);
-      });
       if (showFieldAlias !== undefined) {
         this.showFieldAlias = showFieldAlias;
         window.localStorage.setItem('showFieldAlias', showFieldAlias);
       }
       this.renderTable = false;
       await this.$nextTick();
+      this.requestFields();
       this.renderTable = true;
     },
     requestTableData() {
