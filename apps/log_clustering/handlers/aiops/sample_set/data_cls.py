@@ -172,3 +172,4 @@ class SampleSetInfoCls(object):
 
     sample_set_id: int
     project_id: int
+    related: str = "fields"
