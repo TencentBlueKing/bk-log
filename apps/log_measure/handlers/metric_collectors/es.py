@@ -1119,12 +1119,12 @@ class EsMonitor:
                 cluster_id = cluster_info["cluster_config"]["cluster_id"]
                 get_func = query(cluster_id)
                 cluster_name = cluster_info["cluster_config"]["cluster_name"]
-                target_bk_biz_id = cluster_info["cluster_config"]["custom_option"]["bk_biz_id"]
+                target_biz_id = cluster_info["cluster_config"]["custom_option"]["bk_biz_id"]
                 health_url, stats_url, pshard_stats_url, pending_tasks_url = get_url(version)
                 base_dimensions = {
                     "cluster_id": cluster_id,
                     "cluster_name": cluster_name,
-                    "target_bk_biz_id": target_bk_biz_id,
+                    "target_biz_id": target_biz_id,
                 }
                 process_stats_data(metrics, stats_url, get_func, version, base_dimensions)
                 process_pshard_stats_data(metrics, pshard_stats_url, get_func, version, base_dimensions)
