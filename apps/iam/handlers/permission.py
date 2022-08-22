@@ -339,7 +339,7 @@ class Permission(object):
         results = []
         for space in space_list:
             obj_set = ObjectSet()
-            obj_set.add_object(_type=ResourceEnum.BUSINESS.id, obj={"id": space.bk_biz_id})
+            obj_set.add_object(_type=ResourceEnum.BUSINESS.id, obj={"id": str(space.bk_biz_id)})
 
             # 计算表达式
             is_allowed = self.iam_client._eval_expr(expr, obj_set)

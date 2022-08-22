@@ -39,8 +39,8 @@ class MetaHandler(APIModel):
     @classmethod
     def get_user_spaces(cls, username):
         spaces = Space.objects.all()
-        spaces = Permission(username).filter_space_list_by_action(ActionEnum.VIEW_BUSINESS, spaces)
-        allowed_space_mapping = {space.bk_biz_id for space in spaces}
+        allowed_spaces = Permission(username).filter_space_list_by_action(ActionEnum.VIEW_BUSINESS, spaces)
+        allowed_space_mapping = {space.bk_biz_id for space in allowed_spaces}
 
         # 获取置顶空间列表
         # 返回格式： space_uid 的列表

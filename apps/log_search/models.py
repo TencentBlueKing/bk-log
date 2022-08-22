@@ -898,6 +898,13 @@ class SpaceType(SoftDeleteModel):
         verbose_name = _("空间类型")
         verbose_name_plural = _("空间类型")
 
+    @classmethod
+    def get_name_by_id(cls, type_id: str):
+        try:
+            return cls.objects.get(type_id=type_id).type_name
+        except cls.DoesNotExist:
+            return type_id
+
 
 class Space(SoftDeleteModel):
     """
