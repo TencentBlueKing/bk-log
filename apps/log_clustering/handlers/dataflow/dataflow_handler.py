@@ -29,7 +29,7 @@ from jinja2 import Environment, FileSystemLoader
 from retrying import retry
 
 from apps.log_search.models import LogIndexSet
-from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi
+from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi, BkDataDatabusApi
 from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum, NOT_NEED_EDIT_NODES
 from apps.log_clustering.exceptions import (
     ClusteringConfigNotExistException,
@@ -127,6 +127,18 @@ class DataFlowHandler(BaseAiopsHandler):
         log_index_set_all_fields = LogIndexSet.objects.get(index_set_id=clustering_config.index_set_id).get_fields()
         return {field["field_name"]: field["field_name"] for field in log_index_set_all_fields["fields"]}
 
+    def check_and_start_clean_task(self, result_table_id):
+        """
+        检查并启动清洗任务
+        """
+        result_table = BkDataMetaApi.result_tables.retrieve(self._set_username({"result_table_id": result_table_id}))
+        if result_table["processing_type"] == "clean":
+            logger.info(f"check_and_start_clean_task: result_table_id -> {result_table_id}")
+            result = BkDataDatabusApi.post_tasks(
+                self._set_username({"result_table_id": result_table_id, "storages": ["kafka"]})
+            )
+            logger.info(f"check_and_start_clean_task: result_table_id -> {result_table_id}, result -> {result}")
+
     def create_pre_treat_flow(self, index_set_id: int):
         """
         创建pre-treat flow
@@ -134,6 +146,9 @@ class DataFlowHandler(BaseAiopsHandler):
         clustering_config = ClusteringConfig.objects.filter(index_set_id=index_set_id).first()
         if not ClusteringConfig:
             raise ClusteringConfigNotExistException()
+
+        self.check_and_start_clean_task(clustering_config.bkdata_etl_result_table_id)
+
         all_fields_dict = self.get_fields_dict(clustering_config=clustering_config)
         filter_rule, not_clustering_rule = self._init_filter_rule(
             clustering_config.filter_rules, all_fields_dict, clustering_config.clustering_fields
