@@ -19,16 +19,16 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import sys
-
 from apps.log_databus.constants import TargetNodeTypeEnum
 from apps.log_databus.models import CollectorConfig
+from home_application.constants import CHECK_STORY_0
 from home_application.handlers.collector_checker import (
     CheckAgentStory,
     CheckESStory,
     CheckKafkaStory,
     CheckRouteStory,
     CheckTransferStory,
+    Report,
 )
 
 
@@ -37,13 +37,28 @@ class CollectorCheckHandler(object):
         self.collector_config_id = collector_config_id
         self.hosts = hosts
         self.debug = debug
+        # 先定义字段
+        self.subscription_id = None
+        self.table_id = None
+        self.bk_data_name = None
+        self.bk_data_id = None
+        self.bk_biz_id = None
+        self.target_server = None
+        self.collector_config = None
 
+        self.story_report = []
+        self.kafka = []
+        self.latest_log = []
+
+    def pre_run(self):
+        init_check_report = Report(CHECK_STORY_0)
         # 检查采集项ID是否存在
         try:
             self.collector_config = CollectorConfig.objects.get(collector_config_id=self.collector_config_id)
         except CollectorConfig.DoesNotExist:
-            print(f"不存在的采集项ID: {self.collector_config_id}")
-            sys.exit(1)
+            init_check_report.add_error(f"不存在的采集项ID: {self.collector_config_id}")
+            self.story_report.append(init_check_report)
+            return
 
         # 快速脚本执行的参数target_server
         self.target_server = {}
@@ -53,26 +68,19 @@ class CollectorCheckHandler(object):
         self.table_id = self.collector_config.table_id
         self.subscription_id = self.collector_config.subscription_id
 
-        self.story_report = []
-        self.kafka = []
-        self.latest_log = []
-
-    def pre_run(self):
-        self._init_target_server()
-
-    def _init_target_server(self):
         # 如果有输入host, 则覆盖, 否则使用collector_config.target_nodes
         if self.hosts:
             try:
                 # "0:ip1,0:ip2,1:ip3"
                 ip_list = []
-                hosts = self.hosts.split("=")[1].split(",")
+                hosts = self.hosts.split(",")
                 for host in hosts:
                     ip_list.append({"bk_cloud_id": int(host.split(":")[0]), "ip": host.split(":")[1]})
                 self.target_server = {"ip_list": ip_list}
             except Exception as e:  # pylint: disable=broad-except
-                print(f"输入合法的hosts, err: {e}")
-                sys.exit(1)
+                init_check_report.add_error(f"输入合法的hosts, err: {e}, 参考: 0:ip1,0:ip2,1:ip3")
+                self.story_report.append(init_check_report)
+                return
         else:
             # 不同的target_node_type
             target_node_type = self.collector_config.target_node_type
@@ -87,11 +95,16 @@ class CollectorCheckHandler(object):
             elif target_node_type == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
                 self.target_server = {"dynamic_group_list": self.collector_config.target_nodes}
             else:
-                print(f"暂不支持该target_node_type: {target_node_type}")
-                sys.exit(1)
+                init_check_report.add_error(f"暂不支持该target_node_type: {target_node_type}")
+                self.story_report.append(init_check_report)
+        if not self.story_report:
+            init_check_report.add_info("初始化检查成功")
+            self.story_report.append(init_check_report)
 
     def run(self):
         self.pre_run()
+        if self.story_report[0].has_problem():
+            return
 
         check_agent_report = self.check_agent()
         self.story_report.append(check_agent_report)
@@ -110,7 +123,7 @@ class CollectorCheckHandler(object):
 
     def command_format(self):
         is_success = "失败"
-        if [i.has_problem() for i in self.story_report].count(True) == 0:
+        if not any([i.has_problem() for i in self.story_report]):
             is_success = "成功"
         print(f"\n采集项检查{is_success}\n\n\n")
         for story_m in self.story_report:
@@ -127,6 +140,29 @@ class CollectorCheckHandler(object):
             for story_error in story_m.error:
                 self.error(story_m.name, story_error)
             print("\n")
+
+    def api_format(self):
+        is_success = "失败"
+        outputs = []
+        if not any([i.has_problem() for i in self.story_report]):
+            is_success = "成功"
+        outputs.append(f"\n采集项检查{is_success}\n\n\n")
+        for story_m in self.story_report:
+            outputs.append("-" * 100 + "\n")
+            if story_m.has_problem():
+                outputs.append(f"[ERROR] [{story_m.name}] 存在问题, 查看详细报错\n")
+            else:
+                outputs.append(f"[INFO] [{story_m.name}] 正常\n")
+            if self.debug:
+                for story_info in story_m.info:
+                    outputs.append(f"[INFO] [{story_m.name}] {story_info}\n")
+            for story_warning in story_m.warning:
+                outputs.append(f"[WARNING] [{story_m.name}] {story_warning}\n")
+            for story_error in story_m.error:
+                outputs.append(f"[ERROR] [{story_m.name}] {story_error}\n")
+            outputs.append("\n")
+
+        return "".join(outputs).encode("utf-8")
 
     @staticmethod
     def info(story_name, message):

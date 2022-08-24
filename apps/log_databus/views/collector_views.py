@@ -67,6 +67,8 @@ from apps.log_databus.serializers import (
     ValidateContainerCollectorYamlSerializer,
     CreateContainerCollectorSerializer,
     UpdateContainerCollectorSerializer,
+    FastCollectorCreateSerializer,
+    FastCollectorUpdateSerializer,
 )
 from apps.log_search.constants import BKDATA_OPEN, CollectorScenarioEnum, HAVE_DATA_ID, NOT_CUSTOM
 from apps.log_search.permission import Permission
@@ -822,7 +824,7 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.validated_data
         collector_id_list = data.get("collector_id_list").split(",")
-        return Response(CollectorHandler().get_subscription_status_by_list(collector_id_list, multi_flag=True))
+        return Response(CollectorHandler().get_subscription_status_by_list(collector_id_list))
 
     @detail_route(methods=["GET"], url_path="task_status")
     def task_status(self, request, collector_config_id=None):
@@ -2074,3 +2076,151 @@ class CollectorViewSet(ModelViewSet):
     def validate_container_config_yaml(self, request):
         data = self.params_valid(ValidateContainerCollectorYamlSerializer)
         return Response(CollectorHandler().validate_container_config_yaml(data["yaml_config"]))
+
+    @list_route(methods=["POST"])
+    def fast_create(self, request):
+        """
+        @api {post} /databus/collectors/fast_create/ 简易创建采集配置
+        @apiName fast_create
+        @apiDescription 简易创建采集项配置
+        @apiGroup 10_Collector
+        @apiParam {Int} bk_biz_id 所属业务
+        @apiParam {String} collector_config_name 采集项名称
+        @apiParam {String} collector_config_name_en 采集项名称英文名
+        @apiParam {String} collector_scenario_id 场景ID row,section,wineventlog,custom
+        @apiParam {Int} storage_cluster_id 存储集群ID
+        @apiParam {String} category_id 数据分类 GlobalsConfig.category读取
+        @apiParam {String}  target_object_type 对象类型，目前固定为 HOST
+        @apiParam {String}  target_node_type 节点类型 动态：TOPO  静态：INSTANCE
+        @apiParam {Array[Dict]} target 已选目标
+        @apiParam {Array(json)}  target_nodes 采集目标
+        @apiParam {Int} target_nodes.id 服务实例id （暂时没用到）
+        @apiParam {Int} target_nodes.bk_inst_id 节点实例id (动态)
+        @apiParam {String} target_nodes.bk_obj_id 节点对象id （动态）
+        @apiParam {String} target_nodes.ip 主机实例ip （静态）
+        @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
+        @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {String} etl_config 清洗类型（格式化方式）
+        @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
+        @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
+        @apiParam {String} etl_params.separator_regexp 正则表达式，当etl_config=="bk_log_regexp"时需要传递
+        @apiParam {Bool} etl_params.retain_original_text 是否保留原文
+        @apiParam {list} fields 字段列表
+        @apiParam {String} fields.field_name 字段名称
+        @apiParam {String} [fields.alias_name] 别名
+        @apiParam {String} fields.field_type 字段类型
+        @apiParam {String} fields.description 字段说明
+        @apiParam {Bool} fields.is_analyzed 是否分词
+        @apiParam {Bool} fields.is_dimension 是否维度
+        @apiParam {Bool} fields.is_time 是否时间字段
+        @apiParam {Bool} fields.is_delete 是否删除
+        @apiParam {Json} [fields.option] 字段配置
+        @apiParam {Int} fields.option.time_zone 时间
+        @apiParam {String} fields.option.time_format 时间格式
+        @apiParam {Int} storage_cluster_id 存储集群ID
+        @apiParam {Int} retention 保留时间
+        @apiParam {Int} storage_replies 副本数量
+        @apiParam {Int} es_shards es分片数量
+        @apiParamExample {json} 请求样例:
+        {
+            "bk_biz_id": 2,
+            "collector_config_name": "xxx",
+            "collector_config_name_en": "xxx_en",
+            "collector_scenario_id": "row",
+            "category_id": "os",
+            "target_object_type": "HOST",
+            "target_node_type": "TOPO",
+            "target_nodes": [{"bk_inst_id": 1, "bk_obj_id": "biz"}],
+            "params": {
+                "paths": ["/var/log"],
+                "conditions": {
+                    "type": "match"
+                }
+            },
+            "storage_cluster_id": xx
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data": {
+                "collector_config_id": xx,
+                "bk_data_id": xxxx,
+                "subscription_id": xxx,
+                "task_id_list": [
+                    "xxx"
+                ]
+            },
+            "code": 0,
+            "message": ""
+        }
+        """
+        data = self.params_valid(FastCollectorCreateSerializer)
+        return Response(CollectorHandler().fast_create(data))
+
+    @detail_route(methods=["POST"])
+    def fast_update(self, request, collector_config_id):
+        """
+        @api {post} /databus/collectors/fast_update/ 简易修改采集配置
+        @apiName fast_update
+        @apiDescription 简易修改采集项配置
+        @apiGroup 10_Collector
+        @apiParam {String} collector_config_name 采集项名称
+        @apiParam {Array(json)}  target_nodes 采集目标
+        @apiParam {Int} target_nodes.id 服务实例id （暂时没用到）
+        @apiParam {Int} target_nodes.bk_inst_id 节点实例id (动态)
+        @apiParam {String} target_nodes.bk_obj_id 节点对象id （动态）
+        @apiParam {String} target_nodes.ip 主机实例ip （静态）
+        @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
+        @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {String} etl_config 清洗类型（格式化方式）
+        @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
+        @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
+        @apiParam {String} etl_params.separator_regexp 正则表达式，当etl_config=="bk_log_regexp"时需要传递
+        @apiParam {Bool} etl_params.retain_original_text 是否保留原文
+        @apiParam {list} fields 字段列表
+        @apiParam {String} fields.field_name 字段名称
+        @apiParam {String} [fields.alias_name] 别名
+        @apiParam {String} fields.field_type 字段类型
+        @apiParam {String} fields.description 字段说明
+        @apiParam {Bool} fields.is_analyzed 是否分词
+        @apiParam {Bool} fields.is_dimension 是否维度
+        @apiParam {Bool} fields.is_time 是否时间字段
+        @apiParam {Bool} fields.is_delete 是否删除
+        @apiParam {Json} [fields.option] 字段配置
+        @apiParam {Int} fields.option.time_zone 时间
+        @apiParam {String} fields.option.time_format 时间格式
+        @apiParam {Int} storage_cluster_id 存储集群ID
+        @apiParam {Int} retention 保留时间
+        @apiParam {Int} storage_replies 副本数量
+        @apiParam {Int} es_shards es分片数量
+        @apiParamExample {json} 请求样例:
+        {
+            "collector_config_name": "xxx",
+            "target_object_type": "HOST",
+            "target_node_type": "TOPO",
+            "target_nodes": [{"bk_inst_id": 1, "bk_obj_id": "biz"}],
+            "params": {
+                "paths": ["/var/log"],
+                "conditions": {
+                    "type": "match"
+                }
+            },
+            "storage_cluster_id": xx
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data": {
+                "collector_config_id": xx,
+                "bk_data_id": xxxx,
+                "subscription_id": xxx,
+                "task_id_list": [
+                    "xxx"
+                ]
+            },
+            "code": 0,
+            "message": ""
+        }
+        """
+        data = self.params_valid(FastCollectorUpdateSerializer)
+        return Response(CollectorHandler(collector_config_id).fast_update(data))

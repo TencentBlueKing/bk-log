@@ -88,6 +88,8 @@ class LogSearchMetricCollector(object):
                 timestamp=arrow.get(history_obj["created_at"]).float_timestamp,
             )
             for history_obj in history_objs
+            # 可能检索的索引集已经不在了
+            if index_sets.get(history_obj["index_set_id"])
         ]
         # 搜索总数
         metrics.append(
@@ -102,7 +104,9 @@ class LogSearchMetricCollector(object):
         return metrics
 
     @staticmethod
-    @register_metric("search_favorite", description=_("检索收藏"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "log_search_favorite", description=_("检索收藏"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def favorite_count():
         favorite_objs = (
             FavoriteSearch.objects.filter(
@@ -125,6 +129,9 @@ class LogSearchMetricCollector(object):
         )
         aggregation_datas = defaultdict(lambda: defaultdict(int))
         for index_set_id in index_set_list:
+            # 可能检索的索引集已经不在了
+            if not index_sets.get(index_set_id):
+                continue
             bk_biz_id = index_sets[index_set_id]["bk_biz_id"]
             aggregation_datas[bk_biz_id][index_set_id] += 1
 

@@ -26,19 +26,19 @@ import copy
 
 from apps.log_search.constants import FieldDataTypeEnum
 
-type_match_phrase = Dict[str, Dict[str, Any]]
-type_match_phrase_query = Dict[str, Dict[str, Dict[str, Any]]]
-type_should_list = List[type_match_phrase]
-type_should = Dict[str, type_should_list]
-type_bool = Dict[str, type_should]
-type_query_string = Dict[str, Dict[str, Any]]
+type_match_phrase = Dict[str, Dict[str, Any]]  # pylint: disable=invalid-name
+type_match_phrase_query = Dict[str, Dict[str, Dict[str, Any]]]  # pylint: disable=invalid-name
+type_should_list = List[type_match_phrase]  # pylint: disable=invalid-name
+type_should = Dict[str, type_should_list]  # pylint: disable=invalid-name
+type_bool = Dict[str, type_should]  # pylint: disable=invalid-name
+type_query_string = Dict[str, Dict[str, Any]]  # pylint: disable=invalid-name
 
-filter_dict = Dict[str, Any]
+filter_dict = Dict[str, Any]  # pylint: disable=invalid-name
 
-type_query_bool_dict = Dict[str, Dict[str, Dict[str, List]]]
-type_bool_must_dict = Dict[str, Dict[str, List]]
-type_bool_should_dict = Dict[str, Dict[str, List]]
-type_range = Dict[str, Dict[str, Dict[str, Any]]]
+type_query_bool_dict = Dict[str, Dict[str, Dict[str, List]]]  # pylint: disable=invalid-name
+type_bool_must_dict = Dict[str, Dict[str, List]]  # pylint: disable=invalid-name
+type_bool_should_dict = Dict[str, Dict[str, List]]  # pylint: disable=invalid-name
+type_range = Dict[str, Dict[str, Dict[str, Any]]]  # pylint: disable=invalid-name
 
 query_final_dict_template: type_query_bool_dict = {
     "query": {"bool": {"must": [{"bool": {"should": []}}], "filter": [], "should": [], "must_not": []}}

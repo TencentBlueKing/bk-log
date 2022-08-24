@@ -105,7 +105,7 @@ export default {
     this.resizeObsever();
   },
   beforeDestroy() {
-    this.resizeObserver.unobserve(this.$refs.favList);
+    this.resizeObserver?.unobserve(this.$refs.favList);
   },
   methods: {
     /**
