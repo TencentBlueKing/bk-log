@@ -121,9 +121,7 @@ def sync_storage_capacity():
         try:
             usage, total = get_storage_usage_and_all(_cluster["cluster_config"]["cluster_id"])
 
-            index_count = LogIndexSet.objects.filter(
-                storage_cluster_id=_cluster["cluster_config"]["cluster_id"]
-            ).count()
+            index_count = count_storage_indices(_cluster["cluster_config"]["cluster_id"])
 
             StorageUsed.objects.update_or_create(
                 bk_biz_id=0,
@@ -189,6 +187,14 @@ def get_storage_usage_and_all(cluster_id):
         total += int(_storage.get("disk.total") or 0)
         usage += int(_storage.get("disk.used") or 0)
     return int((usage / total) * 100), total
+
+
+def count_storage_indices(cluster_id):
+    indices = query(cluster_id)("_cat/indices?bytes=b")
+    if not indices:
+        return 0
+
+    return len(indices) if indices else 0
 
 
 def get_biz_storage_capacity(bk_biz_id, cluster):
