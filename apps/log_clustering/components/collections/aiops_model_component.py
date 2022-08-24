@@ -215,7 +215,7 @@ class SampleSetLoadingService(BaseService):
             step_name=StepName.SAMPLE_LOADING, node_id_list=node_id_list, model_id=model_id, experiment_id=experiment_id
         )
         if get_execute_status_result["step_status"] == "failed":
-            raise Exception("poll execute status return failed: {}".format(get_execute_status_result["message"]))
+            raise Exception("poll execute status return failed: {}".format(get_execute_status_result))
         if get_execute_status_result["step_status"] == "finished":
             experiment_model.status = StepName.SAMPLE_LOADING
             experiment_model.save()
@@ -277,7 +277,7 @@ class SampleSetPreparationService(BaseService):
             experiment_id=experiment_id,
         )
         if get_execute_status_result["step_status"] == "failed":
-            raise Exception("poll execute status return failed: {}".format(get_execute_status_result["message"]))
+            raise Exception("poll execute status return failed: {}".format(get_execute_status_result))
         if get_execute_status_result["step_status"] == "finished":
             experiment_model.status = StepName.SAMPLE_PREPARATION
             experiment_model.save()
@@ -354,7 +354,7 @@ class ModelTrainService(BaseService):
         experiment_id = experiment_model.experiment_id
         training_status_result = AiopsModelHandler().training_status(model_id=model_id, experiment_id=experiment_id)
         if training_status_result["step_status"] == "failed":
-            raise Exception("poll execute status return failed: {}".format(training_status_result["message"]))
+            raise Exception("poll execute status return failed: {}".format(training_status_result))
         if training_status_result["step_status"] == "finished":
             experiment_model.status = StepName.MODEL_TRAIN
             experiment_model.save()
@@ -413,7 +413,7 @@ class ModelEvaluationService(BaseService):
             model_id=model_id, experiment_id=experiment_id
         )
         if get_execute_status_result["step_status"] == "failed":
-            raise Exception("poll execute status return failed: {}".format(get_execute_status_result["message"]))
+            raise Exception("poll execute status return failed: {}".format(get_execute_status_result))
         if get_execute_status_result["step_status"] == "finished":
             experiment_model.status = StepName.MODEL_EVALUATION
             basic_model, *_ = get_execute_status_result["list"]
