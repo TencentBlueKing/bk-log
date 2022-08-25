@@ -27,8 +27,9 @@ from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
 
-from apps.api import CCApi
+from apps.api import CCApi, MonitorApi
 from apps.api.base import DataApiRetryClass
+from apps.exceptions import ApiRequestError
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.constants import EtlConfig, TargetNodeTypeEnum
 from apps.log_databus.models import CollectorConfig
@@ -79,6 +80,7 @@ from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilder
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
+from apps.utils.log import logger
 
 max_len_dict = Dict[str, int]  # pylint: disable=invalid-name
 
@@ -250,6 +252,7 @@ class SearchHandler(object):
             self.bkmonitor(field_result_list),
             self.async_export(field_result),
             self.ip_topo_switch(),
+            self.apm_relation(),
             self.clustering_config(),
             self.clean_config(),
         ]:
@@ -277,6 +280,19 @@ class SearchHandler(object):
     @fields_config("ip_topo_switch")
     def ip_topo_switch(self):
         return MappingHandlers.init_ip_topo_switch(self.index_set_id)
+
+    @fields_config("apm_relation")
+    def apm_relation(self):
+        try:
+            res = MonitorApi.query_log_relation(params={"index_set_id": int(self.index_set_id)})
+        except ApiRequestError as e:
+            logger.warning(f"fail to request log relation => index_set_id: {self.index_set_id}, exception => {e}")
+            return False
+
+        if not res:
+            return False
+
+        return True, res
 
     @fields_config("clustering_config")
     def clustering_config(self):

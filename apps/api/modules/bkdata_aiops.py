@@ -90,6 +90,16 @@ class _BkDataAIOPSApi:
             after_request=None,
             default_timeout=300,
         )
+        self.sample_set_info = DataAPI(
+            method="GET",
+            url=AIOPS_APIGATEWAY_ROOT + "sample_set/{sample_set_id}/",
+            module=self.MODULE,
+            url_keys=["sample_set_id"],
+            description=u"获取样本集详情",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
         self.delete_sample_set = DataAPI(
             method="DELETE",
             url=AIOPS_APIGATEWAY_ROOT + "sample_set/{sample_set_id}/",

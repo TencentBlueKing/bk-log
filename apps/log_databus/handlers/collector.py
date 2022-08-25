@@ -76,7 +76,6 @@ from apps.log_databus.constants import (
 )
 from apps.log_databus.constants import CACHE_KEY_CLUSTER_INFO, EtlConfig
 from apps.log_databus.exceptions import (
-    BCSApiException,
     CollectNotSuccess,
     CollectNotSuccessNotCanStart,
     CollectorActiveException,
@@ -89,15 +88,16 @@ from apps.log_databus.exceptions import (
     CollectorIllegalIPException,
     CollectorResultTableIDDuplicateException,
     CollectorTaskRunningStatusException,
-    ContainerCollectConfigValidateYamlException,
-    MissedNamespaceException,
-    ModifyCollectorConfigException,
-    PublicESClusterNotExistException,
     RegexInvalidException,
     RegexMatchException,
-    ResultTableNotExistException,
-    RuleCollectorException,
     SubscriptionInfoNotFoundException,
+    MissedNamespaceException,
+    BCSApiException,
+    ContainerCollectConfigValidateYamlException,
+    RuleCollectorException,
+    ModifyCollectorConfigException,
+    ResultTableNotExistException,
+    PublicESClusterNotExistException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
@@ -1614,11 +1614,10 @@ class CollectorHandler(object):
                     return {"log_detail": "\n".join(log), "log_result": detail_result}
         return {"log_detail": "\n".join(log), "log_result": detail_result}
 
-    def get_subscription_status_by_list(self, collector_id_list: list, multi_flag=False) -> list:
+    def get_subscription_status_by_list(self, collector_id_list: list) -> list:
         """
         批量获取采集项订阅状态
         :param  [list] collector_id_list: 采集项ID列表
-        :param [Boolean] multi_flag:是否使用并发
         :return: [dict]
         """
         return_data = list()
@@ -1632,9 +1631,6 @@ class CollectorHandler(object):
         for config in ContainerCollectorConfig.objects.filter(collector_config_id__in=collector_id_list):
             container_collector_mapping[config.collector_config_id].append(config)
 
-        status_result = {}
-        if multi_flag:
-            multi_execute_func = MultiExecuteFunc()
         for collector_obj in collector_list:
 
             if collector_obj.is_container_environment:
@@ -1694,30 +1690,18 @@ class CollectorHandler(object):
             # 订阅ID和采集配置ID的映射关系 & 需要查询订阅ID列表
             subscription_collector_map[collector_obj.subscription_id] = collector_obj.collector_config_id
             subscription_id_list.append(collector_obj.subscription_id)
-            if multi_flag:
-                multi_execute_func.append(
-                    collector_obj.collector_config_id,
-                    NodeApi.subscription_statistic,
-                    params={
-                        "subscription_id_list": [collector_obj.subscription_id],
-                        "plugin_name": LogPluginInfo.NAME,
-                    },
-                )
-            else:
-                status_result[collector_obj.collector_config_id] = NodeApi.subscription_statistic(
-                    params={"subscription_id_list": [collector_obj.subscription_id], "plugin_name": LogPluginInfo.NAME}
-                )
+
+        status_result = NodeApi.subscription_statistic(
+            params={"subscription_id_list": subscription_id_list, "plugin_name": LogPluginInfo.NAME}
+        )
 
         # 如果没有订阅ID，则直接返回
         if not subscription_id_list:
             return self._clean_terminated(return_data)
 
-        # 并发查询所需的配置
-        if multi_flag:
-            status_result = multi_execute_func.run()
         # 接口查询到的数据进行处理
         subscription_status_data, subscription_id_list = self.format_subscription_status(
-            status_result, subscription_id_list
+            status_result, subscription_id_list, subscription_collector_map
         )
         return_data += subscription_status_data
 
@@ -1752,19 +1736,15 @@ class CollectorHandler(object):
                 _data["status_name"] = RunStatus.TERMINATED
         return data
 
-    def format_subscription_status(self, status_result, subscription_id_list):
+    def format_subscription_status(self, status_result, subscription_id_list, subscription_collector_map):
         return_data = list()
 
-        for collector_id, status_obj in status_result.items():
-            if not status_obj:
-                continue
-            total_count = int(status_obj[0]["instances"])
+        for status_obj in status_result:
+            total_count = int(status_obj["instances"])
             status_group = {
-                status["status"]: int(status["count"]) for status in status_obj[0]["status"] if status["count"]
+                status["status"]: int(status["count"]) for status in status_obj["status"] if status["count"]
             }
 
-            # status_group = array_group(self.format_subscription_instance_status(status_obj), "status")
-            #
             # 订阅状态
             group_status_keys = status_group.keys()
             if not status_group:
@@ -1791,11 +1771,11 @@ class CollectorHandler(object):
             failed_count = status_group.get(CollectStatus.FAILED, 0)
             success_count = status_group.get(CollectStatus.SUCCESS, 0)
 
-            subscription_id_list.remove(status_obj[0]["subscription_id"])
+            subscription_id_list.remove(status_obj["subscription_id"])
             return_data.append(
                 {
-                    "collector_id": collector_id,
-                    "subscription_id": status_obj[0]["subscription_id"],
+                    "collector_id": subscription_collector_map[status_obj["subscription_id"]],
+                    "subscription_id": status_obj["subscription_id"],
                     "status": status,
                     "status_name": status_name,
                     "total": total_count,
@@ -2035,7 +2015,7 @@ class CollectorHandler(object):
         collect_status = {
             status["collector_id"]: status
             for status in self.get_subscription_status_by_list(
-                [collector["collector_config_id"] for collector in collectors], multi_flag=True
+                [collector["collector_config_id"] for collector in collectors]
             )
         }
 

@@ -156,7 +156,10 @@ class ApplySampleSetService(BaseService):
         sample_set_id = SampleSet.objects.get(sample_set_name=sample_set_name).sample_set_id
         submit_status_result = SampleSetHandler().submit_status(sample_set_id=sample_set_id)
         if submit_status_result["status"] == "finished":
-            self.finish_schedule()
+            sample_set_info = SampleSetHandler().sample_set_info(sample_set_id=sample_set_id)
+            if sample_set_info["sample_size"] > 0:
+                # 当样本提交完成，且样本数大于0，说明样本已经生效
+                self.finish_schedule()
         return True
 
 

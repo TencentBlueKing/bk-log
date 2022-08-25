@@ -63,7 +63,7 @@ class QueryIndexOptimizer(object):
 
             map_func_map = {
                 Scenario.LOG: lambda x: f"{x}_*",
-                Scenario.BKDATA: lambda x: f"{x}*",
+                Scenario.BKDATA: lambda x: f"{x}_*",
                 Scenario.ES: lambda x: f"{x}",
             }
             result_table_id_list: List[str] = map_if(indices.split(","), map_func_map.get(scenario_id))
