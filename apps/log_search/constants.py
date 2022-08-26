@@ -1104,3 +1104,7 @@ class UserMetaConfType(object):
     """
 
     USER_GUIDE = "user_guide"
+
+
+ERROR_MSG_CHECK_FIELDS_FROM_BKDATA = _(", 请在计算平台清洗中调整")
+ERROR_MSG_CHECK_FIELDS_FROM_LOG = _(", 请联系平台管理员")
