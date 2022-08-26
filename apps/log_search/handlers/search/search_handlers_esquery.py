@@ -26,6 +26,7 @@ import hashlib
 from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 from apps.api import CCApi, MonitorApi
 from apps.api.base import DataApiRetryClass
@@ -49,6 +50,8 @@ from apps.log_search.constants import (
     FieldDataTypeEnum,
     MAX_EXPORT_REQUEST_RETRY,
     DEFAULT_BK_CLOUD_ID,
+    ERROR_MSG_CHECK_FIELDS_FROM_BKDATA,
+    ERROR_MSG_CHECK_FIELDS_FROM_LOG,
 )
 from apps.log_search.exceptions import (
     BaseSearchIndexSetException,
@@ -276,6 +279,8 @@ class SearchHandler(object):
     def bkmonitor(self, field_result_list):
         if "ip" in field_result_list or "serverIp" in field_result_list:
             return True
+        reason = _("缺少字段, ip 和 serverIp 不能同时为空") + self._get_message_by_scenario()
+        return False, {"reason": reason}
 
     @fields_config("ip_topo_switch")
     def ip_topo_switch(self):
@@ -343,12 +348,13 @@ class SearchHandler(object):
         @return:
         """
         if not self._enable_bcs_manage():
-            return False
+            return False, {"reason": _("未配置BCS WEB CONSOLE")}
         if ("cluster" in field_result_list and "container_id" in field_result_list) or (
             "__ext.container_id" in field_result_list and "__ext.io_tencent_bcs_cluster" in field_result_list
         ):
             return True
-        return False
+        reason = _("cluster, container_id 或 __ext.container_id, __ext.io_tencent_bcs_cluster 不能同时为空")
+        return False, {"reason": reason + self._get_message_by_scenario()}
 
     @fields_config("trace")
     def bk_log_to_trace(self):
@@ -1528,3 +1534,9 @@ class SearchHandler(object):
 
     def _enable_bcs_manage(self):
         return settings.BCS_WEB_CONSOLE_DOMAIN if settings.BCS_WEB_CONSOLE_DOMAIN != "" else None
+
+    def _get_message_by_scenario(self):
+        if self.scenario_id == Scenario.BKDATA:
+            return ERROR_MSG_CHECK_FIELDS_FROM_BKDATA
+        else:
+            return ERROR_MSG_CHECK_FIELDS_FROM_LOG
