@@ -71,7 +71,9 @@ class UserMetricCollector(object):
         return metrics
 
     @staticmethod
-    @register_metric("unique_visitor", description=_("uv访问数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "unique_visitor", prefix="bklog", description=_("uv访问数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def get_unique_visitor():
         metrics = []
         for timedelta in TIME_RANGE:

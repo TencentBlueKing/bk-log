@@ -196,7 +196,11 @@
       </div>
       <container-base v-else :collector-data="collectorData" :is-loading.sync="basicLoading"></container-base>
       <p class="button-place">
-        <bk-button :theme="'primary'" @click="handleClickEdit" class="mr10">
+        <bk-button
+          :theme="'primary'"
+          v-cursor="{ active: !editAuth }"
+          @click="handleClickEdit"
+          class="mr10">
           {{ $t('编辑') }}
         </bk-button>
       </p>
@@ -214,6 +218,7 @@
 import { mapState } from 'vuex';
 import { formatDate } from '@/common/util';
 import containerBase from './components/container-base';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   components: {
@@ -229,11 +234,13 @@ export default {
     return {
       // 右边展示的创建人、创建时间
       createAndTimeData: [],
+      editAuth: false,
+      authData: null,
       basicLoading: false,
     };
   },
   computed: {
-    ...mapState(['projectId']),
+    ...mapState(['spaceUid']),
     getEventIDStr() {
       return this.collectorData.params.winlog_event_id?.join(',') || '';
     },
@@ -256,6 +263,7 @@ export default {
   },
   created() {
     this.getCollectDetail();
+    this.getEditAuth();
   },
   methods: {
     getCollectDetail() {
@@ -306,6 +314,10 @@ export default {
       this.instance && this.instance.destroy(true);
     },
     handleClickEdit() {
+      if (!this.editAuth && this.authData) {
+        this.$store.commit('updateAuthDialogData', this.authData);
+        return;
+      };
       const params = {};
       params.collectorId = this.$route.params.collectorId;
       const routeName = this.isCustomReport ? 'custom-report-edit' : 'collectEdit';
@@ -313,9 +325,25 @@ export default {
         name: routeName,
         params,
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
+    },
+    async getEditAuth() {
+      try {
+        const paramData = {
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
+          resources: [{
+            type: 'collection',
+            id: this.$route.params.collectorId,
+          }],
+        };
+        const res = await this.$store.dispatch('checkAndGetData', paramData);
+        if (!res.isAllowed) this.authData = res.data;
+        this.editAuth = res.isAllowed;
+      } catch (error) {
+        this.editAuth = false;
+      }
     },
   },
 };

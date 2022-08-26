@@ -483,7 +483,7 @@ export default {
       //     collectorId: this.config_id,
       //   },
       //   query: {
-      //     projectId: window.localStorage.getItem('project_id'),
+      //     spaceUid: window.localStorage.getItem('space_uid'),
       //   },
       // });
     },

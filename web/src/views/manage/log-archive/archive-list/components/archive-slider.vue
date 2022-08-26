@@ -57,7 +57,7 @@
                 :key="option.collector_config_id"
                 :id="option.collector_config_id"
                 :name="option.collector_config_name"
-                :disabled="!option.permission.manage_collection">
+                :disabled="!option.permission[authorityMap.MANAGE_COLLECTION_AUTH]">
                 <!-- <div
                   v-if="!(option.permission && option.permission.manage_collection)"
                   class="option-slot-container no-authority"
@@ -88,7 +88,7 @@
                 :key="option.repository_name"
                 :id="option.repository_name"
                 :name="option.repository_name"
-                :disabled="!option.permission.manage_es_source">
+                :disabled="!option.permission[authorityMap.MANAGE_ES_SOURCE_AUTH]">
               </bk-option>
             </bk-select>
           </bk-form-item>
@@ -140,6 +140,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import * as authorityMap from '../../../../../common/authority-map';
 
 export default {
   props: {
@@ -178,6 +179,9 @@ export default {
       bkBizId: 'bkBizId',
       globalsData: 'globals/globalsData',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     isEdit() {
       return this.editArchive !== null;
     },
@@ -309,7 +313,7 @@ export default {
       try {
         this.$bkLoading();
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: item.collector_config_id,

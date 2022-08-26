@@ -25,7 +25,7 @@
     style="transition: padding .5s;"
     v-bkloading="{ isLoading: basicLoading }"
     :class="`custom-report-detail-container access-manage-container ${isOpenWindow ? 'is-active-details' : ''}`">
-    <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
+    <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <template v-if="!authPageInfo && !basicLoading && reportDetail">
       <bk-tab :active.sync="activePanel" type="border-card">
         <bk-tab-panel v-for="panel in panels" v-bind="panel" :key="panel.name"></bk-tab-panel>
@@ -48,17 +48,18 @@
 </template>
 
 <script>
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import BasicInfo from '../log-collection/collection-item/manage-collection/basic-info';
 import DataStorage from '../log-collection/collection-item/manage-collection/data-storage';
 import DataStatus from '../log-collection/collection-item/manage-collection/data-status';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
 import IntroPanel from './components/intro-panel';
+import * as authorityMap from '../../../../common/authority-map';
 
 export default {
   name: 'CollectionItem',
   components: {
-    AuthPage,
+    AuthContainerPage,
     BasicInfo,
     DataStorage,
     DataStatus,
@@ -99,7 +100,7 @@ export default {
       // 进入路由需要先判断权限
       try {
         const paramData = {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.VIEW_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: this.$route.params.collectorId,

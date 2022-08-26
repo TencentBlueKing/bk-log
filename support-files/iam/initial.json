@@ -134,8 +134,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"view_business",
-                "name":"业务访问",
-                "name_en":"View Business",
+                "name":"(已弃用)业务访问",
+                "name_en":"(Deprecated)View Business",
                 "type":"view",
                 "version":1,
                 "related_resource_types":[
@@ -163,8 +163,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"search_log",
-                "name":"日志检索",
-                "name_en":"Search Log",
+                "name":"(已弃用)日志检索",
+                "name_en":"(Deprecated)Search Log",
                 "type":"view",
                 "version":1,
                 "related_resource_types":[
@@ -192,8 +192,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"view_collection",
-                "name":"采集查看",
-                "name_en":"View Collection",
+                "name":"(已弃用)采集查看",
+                "name_en":"(Deprecated)View Collection",
                 "type":"view",
                 "version":1,
                 "related_resource_types":[
@@ -221,8 +221,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"create_collection",
-                "name":"采集新建",
-                "name_en":"Create Collection",
+                "name":"(已弃用)采集新建",
+                "name_en":"(Deprecated)Create Collection",
                 "type":"create",
                 "version":1,
                 "related_resource_types":[
@@ -250,8 +250,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"manage_collection",
-                "name":"采集管理",
-                "name_en":"Manage Collection",
+                "name":"(已弃用)采集管理",
+                "name_en":"(Deprecated)Manage Collection",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
@@ -279,8 +279,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"create_es_source",
-                "name":"ES源配置新建",
-                "name_en":"Create ES Source",
+                "name":"(已弃用)ES源配置新建",
+                "name_en":"(Deprecated)Create ES Source",
                 "type":"create",
                 "version":1,
                 "related_resource_types":[
@@ -308,8 +308,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"manage_es_source",
-                "name":"ES源配置管理",
-                "name_en":"Manage ES Source",
+                "name":"(已弃用)ES源配置管理",
+                "name_en":"(Deprecated)Manage ES Source",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
@@ -337,8 +337,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"create_indices",
-                "name":"索引集配置新建",
-                "name_en":"Create Indices",
+                "name":"(已弃用)索引集配置新建",
+                "name_en":"(Deprecated)Create Indices",
                 "type":"create",
                 "version":1,
                 "related_resource_types":[
@@ -366,8 +366,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"manage_indices",
-                "name":"索引集配置管理",
-                "name_en":"Manage Indices",
+                "name":"(已弃用)索引集配置管理",
+                "name_en":"(Deprecated)Manage Indices",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
@@ -395,8 +395,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"view_dashboard",
-                "name":"仪表盘查看",
-                "name_en":"View Dashboard",
+                "name":"(已弃用)仪表盘查看",
+                "name_en":"(Deprecated)View Dashboard",
                 "type":"view",
                 "version":1,
                 "related_resource_types":[
@@ -424,8 +424,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"manage_dashboard",
-                "name":"仪表盘管理",
-                "name_en":"Manage Dashboard",
+                "name":"(已弃用)仪表盘管理",
+                "name_en":"(Deprecated)Manage Dashboard",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
@@ -453,8 +453,8 @@
             "operation":"upsert_action",
             "data":{
                 "id":"manage_extract_config",
-                "name":"日志提取配置管理",
-                "name_en":"Manage Extract Config",
+                "name":"(已弃用)日志提取配置管理",
+                "name_en":"(Deprecated)Manage Extract Config",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
@@ -552,113 +552,6 @@
                                     "id":"manage_extract_config"
                                 }
                             ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "operation":"upsert_resource_creator_actions",
-            "data":{
-                "config":[
-                    {
-                        "id":"collection",
-                        "actions":[
-                            {
-                                "id":"view_collection",
-                                "required":true
-                            },
-                            {
-                                "id":"manage_collection",
-                                "required":true
-                            }
-                        ]
-                    },
-                    {
-                        "id":"indices",
-                        "actions":[
-                            {
-                                "id":"manage_indices",
-                                "required":true
-                            },
-                            {
-                                "id":"search_log",
-                                "required":false
-                            }
-                        ]
-                    },
-                    {
-                        "id":"es_source",
-                        "actions":[
-                            {
-                                "id":"manage_es_source",
-                                "required":false
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        {
-            "operation":"upsert_common_actions",
-            "data":[
-                {
-                    "name":"配置管理",
-                    "name_en":"Manage Settings",
-                    "actions":[
-                        {
-                            "id":"view_business"
-                        },
-                        {
-                            "id":"search_log"
-                        },
-                        {
-                            "id":"view_collection"
-                        },
-                        {
-                            "id":"create_collection"
-                        },
-                        {
-                            "id":"manage_collection"
-                        },
-                        {
-                            "id":"create_es_source"
-                        },
-                        {
-                            "id":"manage_es_source"
-                        },
-                        {
-                            "id":"create_indices"
-                        },
-                        {
-                            "id":"manage_indices"
-                        },
-                        {
-                            "id":"view_dashboard"
-                        },
-                        {
-                            "id":"manage_dashboard"
-                        },
-                        {
-                            "id":"manage_extract_config"
-                        }
-                    ]
-                },
-                {
-                    "name":"日志查看",
-                    "name_en":"View Log",
-                    "actions":[
-                        {
-                            "id":"view_business"
-                        },
-                        {
-                            "id":"search_log"
-                        },
-                        {
-                            "id":"view_collection"
-                        },
-                        {
-                            "id":"view_dashboard"
                         }
                     ]
                 }

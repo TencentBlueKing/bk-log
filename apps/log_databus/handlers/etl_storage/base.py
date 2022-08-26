@@ -69,11 +69,9 @@ class EtlStorage(object):
         根据RT表配置返回etl_config类型
         """
         separator_node_action = result_table_config.get("option", {}).get("separator_node_action")
-        return {
-            "regexp": "bk_log_regexp",
-            "delimiter": "bk_log_delimiter",
-            "json": "bk_log_json",
-        }.get(separator_node_action, "bk_log_text")
+        return {"regexp": "bk_log_regexp", "delimiter": "bk_log_delimiter", "json": "bk_log_json"}.get(
+            separator_node_action, "bk_log_text"
+        )
 
     def etl_preview(self, data, etl_params) -> list:
         """
@@ -216,6 +214,7 @@ class EtlStorage(object):
         :param hot_warm_config: 冷热数据配置
         :param es_shards: es分片数
         """
+        from apps.log_databus.handlers.collector import build_result_table_id
 
         # ES 配置
         es_config = get_es_config(instance.get_bk_biz_id())
@@ -255,7 +254,7 @@ class EtlStorage(object):
         params = {
             "bk_data_id": instance.bk_data_id,
             # 必须为 库名.表名
-            "table_id": f"{instance.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}.{table_id}",
+            "table_id": build_result_table_id(instance.get_bk_biz_id(), table_id),
             "is_enable": True,
             "table_name_zh": instance.get_name(),
             "is_custom_table": True,

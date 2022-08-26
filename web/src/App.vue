@@ -25,14 +25,12 @@
     <head-nav
       v-show="!isAsIframe && !pageLoading"
       @reloadRouter="routerKey += 1"
-      @welcome="welcomePageData = $event"
-      @auth="authPageInfo = $event" />
+      @welcome="welcomePageData = $event" />
     <div :class="['log-search-container', isAsIframe && 'as-iframe']">
-      <auth-page v-if="authPageInfo" :info="authPageInfo" />
-      <welcome-page v-else-if="welcomePageData" :data="welcomePageData" />
+      <welcome-page v-if="welcomePageData" :data="welcomePageData" />
       <!-- 导航改版 -->
       <bk-navigation
-        v-if="menuList && menuList.length"
+        v-else-if="menuList && menuList.length"
         class="bk-log-navigation"
         navigation-type="left-right"
         head-height="0"
@@ -69,10 +67,12 @@
           </bk-navigation-menu>
         </template>
         <div class="navigation-content" v-if="!pageLoading">
-          <router-view class="manage-content" :key="routerKey"></router-view>
+          <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
+          <router-view v-else class="manage-content" :key="routerKey"></router-view>
         </div>
       </bk-navigation>
-      <router-view v-else-if="!pageLoading && !authPageInfo" class="manage-content" :key="routerKey"></router-view>
+      <!-- 无侧边栏页面 -->
+      <router-view v-else-if="!pageLoading && !menuList" class="manage-content" :key="routerKey"></router-view>
       <novice-guide
         v-if="displayRetrieve"
         :data="guideStep"
@@ -89,7 +89,7 @@ import { mapState, mapGetters } from 'vuex';
 import headNav from '@/components/nav/head-nav';
 // import LoginModal from '@/components/login-modal';
 import WelcomePage from '@/components/common/welcome-page';
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import AuthDialog from '@/components/common/auth-dialog';
 import BizMenuSelect from '@/components/biz-menu';
 import NoviceGuide from '@/components/novice-guide';
@@ -101,7 +101,7 @@ export default {
   components: {
     headNav,
     // LoginModal,
-    AuthPage,
+    AuthContainerPage,
     AuthDialog,
     WelcomePage,
     BizMenuSelect,
@@ -111,7 +111,6 @@ export default {
   data() {
     return {
       loginData: null,
-      authPageInfo: null,
       welcomePageData: null,
       routerKey: 0,
       navThemeColor: '#2c354d',
@@ -134,6 +133,7 @@ export default {
     ...mapGetters({
       pageLoading: 'pageLoading',
       asIframe: 'asIframe',
+      authPageInfo: 'globals/authContainerInfo',
     }),
     navActive() {
       return '';
@@ -187,7 +187,6 @@ export default {
   },
   mounted() {
     window.LoginModal = this.$refs.login;
-    this.$store.dispatch('getBkBizList');
   },
   methods: {
     getMenuIcon(item) {
@@ -201,7 +200,7 @@ export default {
       this.$router.push({
         name: id,
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
       if (id === 'default-dashboard') {
@@ -223,7 +222,7 @@ export default {
       const newUrl = this.$router.resolve({
         name: pageName,
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
       return newUrl.href;
@@ -583,7 +582,7 @@ export default {
   }
 
   .beta-class {
-    color: #FFA228;
+    color: #ffa228;
     margin-left: 2px;
     padding-top: 3px;
   }

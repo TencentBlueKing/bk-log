@@ -59,9 +59,7 @@ class LogSearchMetricCollector(object):
 
         history_objs = (
             UserIndexSetSearchHistory.objects.filter(
-                is_deleted=False,
-                search_type="default",
-                created_at__range=[start_time, end_time],
+                is_deleted=False, search_type="default", created_at__range=[start_time, end_time],
             )
             .order_by("id")
             .values("id", "index_set_id", "duration", "created_by", "created_at", "search_type")
@@ -88,6 +86,8 @@ class LogSearchMetricCollector(object):
                 timestamp=arrow.get(history_obj["created_at"]).float_timestamp,
             )
             for history_obj in history_objs
+            # 可能检索的索引集已经不在了
+            if index_sets.get(history_obj["index_set_id"])
         ]
         # 搜索总数
         metrics.append(
@@ -102,19 +102,18 @@ class LogSearchMetricCollector(object):
         return metrics
 
     @staticmethod
-    @register_metric("search_favorite", description=_("检索收藏"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "log_search_favorite", description=_("检索收藏"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def favorite_count():
         favorite_objs = (
-            FavoriteSearch.objects.filter(
-                is_deleted=False,
-            )
+            FavoriteSearch.objects.filter(is_deleted=False,)
             .order_by("id")
-            .values("id", "search_history_id", "project_id", "created_at")
+            .values("id", "search_history_id", "space_uid", "created_at")
         )
         history_objs = (
             UserIndexSetSearchHistory.objects.filter(
-                is_deleted=False,
-                id__in=[i["search_history_id"] for i in favorite_objs],
+                is_deleted=False, id__in=[i["search_history_id"] for i in favorite_objs],
             )
             .order_by("id")
             .values("id", "index_set_id")
@@ -125,6 +124,9 @@ class LogSearchMetricCollector(object):
         )
         aggregation_datas = defaultdict(lambda: defaultdict(int))
         for index_set_id in index_set_list:
+            # 可能检索的索引集已经不在了
+            if not index_sets.get(index_set_id):
+                continue
             bk_biz_id = index_sets[index_set_id]["bk_biz_id"]
             aggregation_datas[bk_biz_id][index_set_id] += 1
 
@@ -168,9 +170,7 @@ class LogExportMetricCollector(object):
         ).strftime("%Y-%m-%d %H:%M:%S%z")
 
         history_objs = (
-            AsyncTask.objects.filter(
-                created_at__range=[start_time, end_time],
-            )
+            AsyncTask.objects.filter(created_at__range=[start_time, end_time],)
             .values("bk_biz_id", "index_set_id", "export_type", "created_by", "created_at")
             .order_by("bk_biz_id", "index_set_id", "export_type", "created_by")
             .annotate(count=Count("id"))
@@ -214,15 +214,15 @@ class IndexSetMetricCollector(object):
     def index_set():
         metrics = []
         groups = (
-            LogIndexSet.objects.values("project_id", "scenario_id", "is_active")
-            .order_by("project_id", "scenario_id", "is_active")
+            LogIndexSet.objects.values("space_uid", "scenario_id", "is_active")
+            .order_by("space_uid", "scenario_id", "is_active")
             .annotate(count=Count("index_set_id"))
         )
         aggregation_index_set = defaultdict(int)
         aggregation_active_index_set = defaultdict(int)
         for group in groups:
-            if MetricUtils.get_instance().project_biz_info.get(group["project_id"]):
-                bk_biz_id = MetricUtils.get_instance().project_biz_info[group["project_id"]]["bk_biz_id"]
+            if MetricUtils.get_instance().space_info.get(group["space_uid"]):
+                bk_biz_id = MetricUtils.get_instance().space_info[group["space_uid"]].bk_biz_id
                 metrics.append(
                     # 带bk_biz_id, scenario_id, is_active标签的数据
                     Metric(

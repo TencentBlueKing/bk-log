@@ -22,9 +22,8 @@
 
 <template>
   <div id="trace" v-bkloading="{ isLoading: false }">
-    <auth-page v-if="authPageInfo" :info="authPageInfo"></auth-page>
-    <top-nav v-show="authPageInfo === false" :menu="menu"></top-nav>
-    <div v-show="authPageInfo === false" class="trace-container">
+    <top-nav :menu="menu"></top-nav>
+    <div class="trace-container">
       <div class="search">
         <div class="search-item">
           <div class="search-trace">
@@ -43,7 +42,7 @@
                 :id="item.index_set_id"
                 :name="item.computedName">
                 <div
-                  v-if="!(item.permission && item.permission.search_log)"
+                  v-if="!(item.permission && item.permission[authorityMap.SEARCH_LOG_AUTH])"
                   class="option-slot-container no-authority"
                   @click.stop>
                   <span class="text">{{item.computedName}}</span>
@@ -60,7 +59,6 @@
             <bk-date-picker
               class="search-area fl"
               style="width: 300px"
-              transfer
               :clearable="false"
               :editable="true"
               :open="openDatePanel"
@@ -184,7 +182,7 @@
             <bk-button
               class="search-detail-button"
               theme="primary"
-              :disabled="searchDisabled"
+              :disabled="searchDisabled || !!authPageInfo"
               v-cursor="{ active: isSearchAllowed === false }"
               @click="searchHandle">
               {{$t('btn.search')}}
@@ -193,84 +191,91 @@
         </div>
       </div>
       <div style="border-bottom: 1px solid #dcdee5;">
-        <div
-          class="chart-view"
-          v-if="traceData.charts.length"
-          v-bkloading="{ isLoading: isChartLoading, zIndex: 1 }">
-          <div class="chart-click">
-            <span
-              v-for="(val, key) in traceData.charts" :key="key"
-              :class="fieldName === val.field_name && 'click-color'"
-              @click="handleCheckChartType(val)"
-            >{{val.tips}}</span>
+        <auth-container-page
+          style="margin-top: 50px"
+          v-if="authPageInfo"
+          :info="authPageInfo">
+        </auth-container-page>
+        <template v-else>
+          <div
+            class="chart-view"
+            v-if="traceData.charts.length"
+            v-bkloading="{ isLoading: isChartLoading, zIndex: 1 }">
+            <div class="chart-click">
+              <span
+                v-for="(val, key) in traceData.charts" :key="key"
+                :class="fieldName === val.field_name && 'click-color'"
+                @click="handleCheckChartType(val)"
+              >{{val.tips}}</span>
+            </div>
+            <chartView
+              :chart-data="chartData"
+              :field-name="fieldName"
+              :char-dot-data="charDotData"
+              :initial-call="initialCall"
+              :initial-call-show="initialCallShow"
+              :chart-cut="chartCut === 'line' ? 'line' : 'consuming'"
+              @toggle-call-show="handleToggleCallShow"></chartView>
           </div>
-          <chartView
-            :chart-data="chartData"
-            :field-name="fieldName"
-            :char-dot-data="charDotData"
-            :initial-call="initialCall"
-            :initial-call-show="initialCallShow"
-            :chart-cut="chartCut === 'line' ? 'line' : 'consuming'"
-            @toggle-call-show="handleToggleCallShow"></chartView>
-        </div>
-        <div class="table-search" v-bkloading="{ isLoading: isTableLoading, zIndex: 1 }">
-          <div class="log-switch">
-            <time-formatter></time-formatter>
-          </div>
-          <bk-table
-            style="margin-top: 15px;"
-            v-if="loaded"
-            ref="logDetailTable"
-            :empty-text="$t('retrieve.notData')"
-            :data="logTableList"
-            :size="size"
-            @cell-click="handleCellClick">
-            <template v-if="logTableList.length">
-              <!-- 展开详情 -->
-              <bk-table-column type="expand" width="30" align="center">
-                <template slot-scope="item">
-                  <div class="json-view-wrapper">
-                    <VueJsonPretty :deep="5" :data="logAllJsonList[item.$index]" />
-                  </div>
-                </template>
-              </bk-table-column>
-              <!-- 显示字段 -->
-              <template v-for="(field, index) in visibleFieldsInfo">
-                <bk-table-column
-                  v-if="field.field_name === 'tag.error'" :key="field.field_name"
-                  :label="field.field_alias || field.field_name">
-                  <div slot-scope="{ row }">
-                    <table-status :is-error="Boolean(row.tag.error)"></table-status>
-                  </div>
-                </bk-table-column>
-                <bk-table-column
-                  :key="index"
-                  :label="field.field_alias ? field.field_alias : field.field_name"
-                  :min-width="field.minWidth" v-else-if="field.field_name === 'traceID'">
+          <div class="table-search" v-bkloading="{ isLoading: isTableLoading, zIndex: 1 }">
+            <div class="log-switch">
+              <time-formatter></time-formatter>
+            </div>
+            <bk-table
+              style="margin-top: 15px;"
+              v-if="loaded"
+              ref="logDetailTable"
+              :empty-text="$t('retrieve.notData')"
+              :data="logTableList"
+              :size="size"
+              @cell-click="handleCellClick">
+              <template v-if="logTableList.length">
+                <!-- 展开详情 -->
+                <bk-table-column type="expand" width="30" align="center">
                   <template slot-scope="item">
-                    <div class="td-log-container">
-                      <span v-if="tableRowDeepView(item.row, field.field_name)">
-                        <span style="color: #3a84ff;cursor: pointer;">{{item.row.traceID}}</span>
-                      </span>
+                    <div class="json-view-wrapper">
+                      <VueJsonPretty :deep="5" :data="logAllJsonList[item.$index]" />
                     </div>
                   </template>
                 </bk-table-column>
-                <bk-table-column
-                  :key="index"
-                  :label="field.field_alias ? field.field_alias : field.field_name"
-                  :min-width="field.minWidth" v-else>
-                  <template slot-scope="{ row }">
-                    <div class="td-log-container">
-                      <span class="field-container add-to">
-                        {{tableRowDeepView(row, field.field_name, field.field_type)}}
-                      </span>
+                <!-- 显示字段 -->
+                <template v-for="(field, index) in visibleFieldsInfo">
+                  <bk-table-column
+                    v-if="field.field_name === 'tag.error'" :key="field.field_name"
+                    :label="field.field_alias || field.field_name">
+                    <div slot-scope="{ row }">
+                      <table-status :is-error="Boolean(row.tag.error)"></table-status>
                     </div>
-                  </template>
-                </bk-table-column>
+                  </bk-table-column>
+                  <bk-table-column
+                    :key="index"
+                    :label="field.field_alias ? field.field_alias : field.field_name"
+                    :min-width="field.minWidth" v-else-if="field.field_name === 'traceID'">
+                    <template slot-scope="item">
+                      <div class="td-log-container">
+                        <span v-if="tableRowDeepView(item.row, field.field_name)">
+                          <span style="color: #3a84ff;cursor: pointer;">{{item.row.traceID}}</span>
+                        </span>
+                      </div>
+                    </template>
+                  </bk-table-column>
+                  <bk-table-column
+                    :key="index"
+                    :label="field.field_alias ? field.field_alias : field.field_name"
+                    :min-width="field.minWidth" v-else>
+                    <template slot-scope="{ row }">
+                      <div class="td-log-container">
+                        <span class="field-container add-to">
+                          {{tableRowDeepView(row, field.field_name, field.field_type)}}
+                        </span>
+                      </div>
+                    </template>
+                  </bk-table-column>
+                </template>
               </template>
-            </template>
-          </bk-table>
-        </div>
+            </bk-table>
+          </div>
+        </template>
       </div>
     </div>
     <div class="fixed-scroll-top-btn" v-show="isShowScrollTop" @click="scrollToTop">
@@ -285,19 +290,20 @@
 
 <script>
 import topNav from '@/components/nav/top-nav';
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import TableStatus from '@/components/common/table-status';
-import { mapState } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 import chartView from './chart-view.vue';
 import TimeFormatter from '@/components/common/time-formatter';
 import tableRowDeepViewMixin from '@/mixins/table-row-deep-view-mixin';
 import TraceDetail from '@/components/trace-detail';
+import * as authorityMap from '../../../common/authority-map';
 
 export default {
   name: 'TraceIndex',
   components: {
     topNav,
-    AuthPage,
+    AuthContainerPage,
     TableStatus,
     chartView,
     TimeFormatter,
@@ -478,32 +484,33 @@ export default {
   },
   computed: {
     ...mapState({
-      projectId: state => state.projectId,
+      spaceUid: state => state.spaceUid,
       bkBizId: state => state.bkBizId,
       indexIdCache: state => state.traceIndexId,
     }),
+    ...mapGetters({
+      authGlobalInfo: 'globals/authContainerInfo',
+    }),
+    authorityMap() {
+      return authorityMap;
+    },
   },
   watch: {
     indexId(val) {
       const option = this.indexSetList.find(item => item.index_set_id === val);
       // eslint-disable-next-line camelcase
-      this.isSearchAllowed = Boolean(option?.permission?.search_log);
+      this.isSearchAllowed = Boolean(option?.permission?.[authorityMap.SEARCH_LOG_AUTH]);
       this.searchData = {};
       this.totalFields = [];
       this.initDateTime();
       this.searchHandle();
       this.$store.commit('updateTraceIndexId', this.indexId);
     },
-    '$route.query.bizId'() {
-      this.initDateTime();
-      this.$nextTick(() => this.getIndexSet());
-    },
-    '$route.query.projectId'() {
+    '$route.query.spaceUid'() {
       this.initDateTime();
       this.$nextTick(() => this.getIndexSet());
     },
     showShortText(val) {
-      this.openDatePanel = false;
       if (!val && val !== 0) {
         this.params.time_range = 'customized';
       } else {
@@ -521,7 +528,7 @@ export default {
     },
   },
   created() {
-    this.getIndexSet();
+    !this.authGlobalInfo && this.getIndexSet();
   },
   mounted() {
     this.registerScrollEvent();
@@ -548,7 +555,7 @@ export default {
       try {
         this.basicLoading = true;
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['search_log'],
+          action_ids: [authorityMap.SEARCH_LOG_AUTH],
           resources: [{
             type: 'indices',
             id: item.index_set_id,
@@ -586,7 +593,7 @@ export default {
     },
     dateChange(data, type) {
       this.initDateTimeRange = data;
-      if (type === 'date' || type === 'time' || type === 'datetimerange') {
+      if (type === 'date' || type === 'time' || type === 'datetimerange' || type) {
         this.showShortText = '';
       }
     },
@@ -595,7 +602,7 @@ export default {
         // const routeData = this.$router.resolve({
         //   path: `/trace?indexId=${this.indexId}&traceId=${row.traceID}&startTime=${row.startTime}`,
         //   query: {
-        //     projectId: this.projectId,
+        //     spaceUid: this.spaceUid,
         //   },
         // });
         // window.open(routeData.href, '_blank');
@@ -666,7 +673,7 @@ export default {
           const s2 = [];
           for (const item of res.data) {
             // eslint-disable-next-line camelcase
-            if (item.permission?.search_log) {
+            if (item.permission?.[authorityMap.SEARCH_LOG_AUTH]) {
               s1.push(item);
             } else {
               s2.push(item);
@@ -675,10 +682,13 @@ export default {
           this.indexSetList = s1.concat(s2);
           // 如果都没有权限直接显示页面无权限
           // eslint-disable-next-line camelcase
-          if (!this.indexSetList[0]?.permission?.search_log) {
+          if (!this.indexSetList[0]?.permission?.[authorityMap.SEARCH_LOG_AUTH]) {
             this.$store.dispatch('getApplyData', {
-              action_ids: ['search_log'],
-              resources: [],
+              action_ids: [authorityMap.SEARCH_LOG_AUTH],
+              resources: [{
+                type: 'indices',
+                id: this.indexSetList[0].index_set_id,
+              }],
             }).then((res) => {
               this.authPageInfo = res.data;
             })
@@ -690,7 +700,6 @@ export default {
               });
             return;
           }
-          this.authPageInfo = false;
 
           // 切换路由
           const cacheValid = this.indexSetList.some(item => item.index_set_id === this.indexIdCache);
@@ -708,7 +717,7 @@ export default {
     },
     async searchHandle() {
       const paramData = {
-        action_ids: ['search_log'],
+        action_ids: [authorityMap.SEARCH_LOG_AUTH],
         resources: [{
           type: 'indices',
           id: this.indexId,
@@ -1014,7 +1023,6 @@ export default {
         } finally {
           this.initialCall = true;
           setTimeout(() => {
-            this.isChartLoading = false;
             this.isChartLoading = false;
           }, 100);
         }

@@ -81,6 +81,7 @@ INSTALLED_APPS += (
     "apps.log_extract",
     "apps.feature_toggle",
     "apps.log_clustering",
+    "bkm_space",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
@@ -122,6 +123,8 @@ MIDDLEWARE = (
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
     "apps.middleware.user_middleware.BkLogMetricsAfterMiddleware",
+    # 项目空间参数注入
+    "bkm_space.middleware.ParamInjectMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -178,6 +181,7 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.bkdata",
     "apps.log_search.tasks.async_export",
     "apps.log_search.tasks.project",
+    "apps.log_search.tasks.space",
     "apps.log_search.tasks.cmdb",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
@@ -670,6 +674,7 @@ CELERY_QUEUES = PIPELINE_CELERY_QUEUES
 # databus
 # ===============================================================================
 TABLE_ID_PREFIX = "bklog"
+TABLE_SPACE_PREFIX = "space"
 
 DEFAULT_OPERATOR = os.environ.get("BKAPP_ES_OPERATOR", "admin")
 ES_DATE_FORMAT = os.environ.get("BKAPP_ES_DATE_FORMAT", "%Y%m%d")
@@ -749,6 +754,7 @@ ESQUERY_WHITE_LIST = [
     "bk_bcs",
     "bk-dbm",
     "bk_dbm",
+    "bk-audit",
 ]
 
 # BK repo conf
@@ -836,6 +842,12 @@ BKLOG_QOS_LIMIT_TIME = int(os.getenv("BK_BKLOG_QOS_LIMIT_TIME", 5))
 
 # ajax请求401返回plain信息
 IS_AJAX_PLAIN_MODE = True
+
+# ===============
+# 项目空间配置
+# ===============
+BKM_SPACE_API_CLASS = "apps.log_search.models.SpaceApi"
+
 
 # ==============================================================================
 # Templates

@@ -300,7 +300,7 @@ export default {
           this.$router.push({
             name: 'extract-link-list',
             query: {
-              projectId: window.localStorage.getItem('project_id'),
+              spaceUid: window.localStorage.getItem('space_uid'),
             },
           });
         }
@@ -370,7 +370,7 @@ export default {
         this.$router.push({
           name: 'extract-link-list',
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: window.localStorage.getItem('space_uid'),
           },
         });
       } catch (e) {

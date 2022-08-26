@@ -56,14 +56,14 @@ class HomeMetric(object):
             data.append(result)
             return data
         port = os.environ.get("PORT", 8000)
+        url = f"{SERVICE_LISTENING_DOMAIN}:{port}/"
         try:
-            url = f"{SERVICE_LISTENING_DOMAIN}:{port}/"
             resp = requests.get(url)
             if resp.status_code == 200:
                 result.status = True
             else:
                 result.message = f"failed to call {url}, status_code: {resp.status_code}, msg: {resp.text}"
-                result.suggestion = "确认服务是否异常, 若无异常, 则检查环境变量SERVICE_LISTENING_DOMAIN是否配置正确"
+                result.suggestion = _("确认服务是否异常, 若无异常, 则检查环境变量SERVICE_LISTENING_DOMAIN是否配置正确")
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to call {url}, err: {e}")
             return data

@@ -40,7 +40,7 @@ from django.db import models, transaction  # noqa
 from django.utils import timezone  # noqa
 from django.utils.functional import cached_property  # noqa
 from django.utils.translation import ugettext_lazy as _  # noqa
-from django_jsonfield_backport.models import JSONField  # noqa
+from django_jsonfield_backport.models import JSONField  # noqa  pylint: disable=unused-import
 
 from apps.api import CmsiApi, TransferApi  # noqa
 from apps.log_databus.constants import (  # noqa
@@ -56,7 +56,7 @@ from apps.log_databus.constants import (  # noqa
     Environment,
 )
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
-from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
+from apps.log_search.models import LogIndexSet, Space  # noqa
 from apps.models import MultiStrSplitByCommaField, JsonField, SoftDeleteModel, OperateRecordModel  # noqa
 
 
@@ -299,9 +299,9 @@ class CollectorConfig(CollectorBase):
         self.save()
 
     def generate_itsm_title(self):
-        bk_biz_name = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first().project_name
+        space = Space.objects.get(bk_biz_id=self.bk_biz_id)
         return str(
-            _("【日志采集】{}-{}-{}".format(bk_biz_name, self.collector_config_name, self.created_at.strftime("%Y%m%d")))
+            _("【日志采集】{}-{}-{}".format(space.space_name, self.collector_config_name, self.created_at.strftime("%Y%m%d")))
         )
 
     def get_cur_cap(self, bytes="mb"):
@@ -543,7 +543,7 @@ class RestoreConfig(SoftDeleteModel):
             "title": str(_("【日志平台】")),
         }
         CmsiApi.send_mail(send_params)
-        CmsiApi.send_wechat(send_params)
+        CmsiApi.send_weixin(send_params)
 
     @classmethod
     def get_collector_config_id(cls, restore_config_id):

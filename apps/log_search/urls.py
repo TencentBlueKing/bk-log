@@ -30,7 +30,7 @@ from apps.log_search.views import aggs_views
 
 from apps.log_search.views import result_table_views
 
-app_name = "apps.log_search"
+app_name = "apps.log_search"  # pylint: disable=invalid-name
 
 router = routers.DefaultRouter(trailing_slash=True)
 

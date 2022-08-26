@@ -29,6 +29,7 @@ from django.utils.translation import ugettext_lazy as _lazy
 
 from apps.api import TransferApi
 from apps.iam.exceptions import ResourceNotExistError
+from bkm_space.utils import space_uid_to_bk_biz_id
 from iam import Resource
 
 
@@ -60,8 +61,11 @@ class ResourceMeta(metaclass=abc.ABCMeta):
         :param attribute: 属性kv对
         """
         attribute = attribute or {}
-        if "bk_biz_id" in attribute:
-            # 补充路径信息
+        # 补充路径信息
+        if "space_uid" in attribute:
+            bk_biz_id = space_uid_to_bk_biz_id(attribute["space_uid"])
+            attribute.update({"_bk_iam_path_": "/{},{}/".format(Business.id, bk_biz_id)})
+        elif "bk_biz_id" in attribute:
             attribute.update({"_bk_iam_path_": "/{},{}/".format(Business.id, attribute["bk_biz_id"])})
         return Resource(cls.system_id, cls.id, str(instance_id), attribute)
 
@@ -80,24 +84,46 @@ class Business(ResourceMeta):
     CMDB业务
     """
 
-    system_id = "bk_cmdb"
-    id = "biz"
-    name = _lazy("业务")
+    system_id = "bk_monitorv3"
+    id = "space"
+    name = _lazy("项目空间")
     selection_mode = "instance"
-    related_instance_selections = [{"system_id": system_id, "id": "business"}]
+    related_instance_selections = [{"system_id": system_id, "id": "space_list"}]
+
+    @classmethod
+    def create_simple_instance(cls, instance_id: str, attribute=None) -> Resource:
+        """
+        创建简单资源实例
+        :param instance_id: 实例ID
+        :param attribute: 属性kv对
+        """
+        from apps.log_search.models import Space
+
+        # 注意，此处 instance_id 有可能是 bk_biz_id，或者是space_uid，需要做统一转换
+        try:
+            bk_biz_id = int(instance_id)
+        except Exception:  # pylint: disable=broad-except
+            bk_biz_id = None
+
+        try:
+            if bk_biz_id is None:
+                # 不是数字，那就是space_uid
+                space = Space.objects.get(space_uid=bk_biz_id)
+            else:
+                space = Space.objects.get(bk_biz_id=instance_id)
+            bk_biz_id = str(space.bk_biz_id)
+            space_name = f"[{space.space_type_id}] {space.space_name}"
+        except Exception:  # pylint: disable=broad-except:
+            bk_biz_id = str(instance_id)
+            space_name = instance_id
+
+        attribute = attribute or {}
+        attribute.update({"id": bk_biz_id, "name": space_name})
+        return Resource(cls.system_id, cls.id, bk_biz_id, attribute)
 
     @classmethod
     def create_instance(cls, instance_id: str, attribute=None) -> Resource:
-        from apps.log_search.models import ProjectInfo
-
         resource = cls.create_simple_instance(instance_id, attribute)
-
-        bk_biz_name = str(instance_id)
-        business = ProjectInfo.objects.filter(bk_biz_id=instance_id).first()
-        if business:
-            bk_biz_name = business.project_name
-
-        resource.attribute = {"id": str(instance_id), "name": bk_biz_name}
         return resource
 
 
@@ -121,10 +147,11 @@ class Collection(ResourceMeta):
             config = CollectorConfig.objects.get(pk=instance_id)
         except CollectorConfig.DoesNotExist:
             return resource
+
         resource.attribute = {
             "id": str(instance_id),
             "name": config.collector_config_name,
-            "bk_biz_id": config.bk_biz_id,
+            "bk_biz_id": str(config.bk_biz_id),
             "_bk_iam_path_": "/{},{}/".format(Business.id, config.bk_biz_id),
         }
         return resource
@@ -153,10 +180,11 @@ class EsSource(ResourceMeta):
             bk_biz_id = cluster_info["cluster_config"]["custom_option"].get("bk_biz_id", 0)
         except Exception:  # pylint: disable=broad-except
             return resource
+
         resource.attribute = {
             "id": str(instance_id),
             "name": name,
-            "bk_biz_id": bk_biz_id,
+            "bk_biz_id": str(bk_biz_id),
             "_bk_iam_path_": "/{},{}/".format(Business.id, bk_biz_id),
         }
         return resource
@@ -172,7 +200,7 @@ class Indices(ResourceMeta):
 
     @classmethod
     def create_simple_instance(cls, instance_id: str, attribute=None) -> Resource:
-        from apps.log_search.models import LogIndexSet, ProjectInfo
+        from apps.log_search.models import LogIndexSet
 
         resource = super().create_simple_instance(instance_id, attribute)
         if resource.attribute:
@@ -180,14 +208,14 @@ class Indices(ResourceMeta):
 
         try:
             index_set = LogIndexSet.objects.get(pk=instance_id)
-            project = ProjectInfo.objects.get(pk=index_set.project_id)
-        except (LogIndexSet.DoesNotExist, ProjectInfo.DoesNotExist):
+        except LogIndexSet.DoesNotExist:
             return resource
+        bk_biz_id = str(space_uid_to_bk_biz_id(index_set.space_uid))
         resource.attribute = {
             "id": str(instance_id),
             "name": index_set.index_set_name,
-            "bk_biz_id": project.bk_biz_id,
-            "_bk_iam_path_": "/{},{}/".format(Business.id, project.bk_biz_id),
+            "bk_biz_id": bk_biz_id,
+            "_bk_iam_path_": "/{},{}/".format(Business.id, bk_biz_id),
         }
         return resource
 

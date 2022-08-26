@@ -134,4 +134,4 @@ class ApiConfig(AppConfig):
         pass
 
 
-default_app_config = "apps.api.ApiConfig"
+default_app_config = "apps.api.ApiConfig"  # pylint: disable=invalid-name

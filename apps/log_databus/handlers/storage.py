@@ -59,12 +59,13 @@ from apps.log_databus.models import StorageCapacity, StorageUsed
 from apps.log_databus.utils.es_config import get_es_config
 from apps.log_esquery.utils.es_client import get_es_client
 from apps.log_esquery.utils.es_route import EsRoute
-from apps.log_search.models import BizProperty, ProjectInfo, Scenario
+from apps.log_search.models import BizProperty, Scenario
 from apps.utils.cache import cache_five_minute
 from apps.utils.local import get_local_param, get_request_username
 from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import format_user_time_zone
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 CACHE_EXPIRE_TIME = 300
 
@@ -206,7 +207,6 @@ class StorageHandler(object):
         :return:
         """
         cluster_data = list()
-        projects = ProjectInfo.get_cmdb_projects()
         # 筛选集群 & 判断是否可编辑
         es_config = get_es_config(bk_biz_id)
 
@@ -267,9 +267,7 @@ class StorageHandler(object):
                 cluster_obj["priority"] = 1 if cluster_obj["cluster_config"].get("is_default_cluster") else 2
                 if not cluster_obj["cluster_config"].get("custom_option", {}).get("visible_config"):
                     custom_option = {
-                        "visible_config": {
-                            "visible_type": VisibleEnum.ALL_BIZ.value,
-                        },
+                        "visible_config": {"visible_type": VisibleEnum.ALL_BIZ.value},
                         "admin": [cluster_obj["cluster_config"]["creator"]],
                         "setup_config": {
                             "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
@@ -298,7 +296,9 @@ class StorageHandler(object):
                     cluster_obj["cluster_config"]["custom_option"]["visible_config"]["visible_bk_biz"] = [
                         {
                             "bk_biz_id": bk_biz_id,
-                            "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                            "is_use": index_sets.filter(
+                                space_uid=bk_biz_id_to_space_uid(bk_biz_id), is_active=True
+                            ).exists(),
                         }
                         for bk_biz_id in cluster_obj["cluster_config"]["custom_option"]["visible_config"][
                             "visible_bk_biz"
@@ -311,7 +311,7 @@ class StorageHandler(object):
                 continue
 
             # 非公共集群， 筛选bk_biz_id，密码置空处理，并添加可编辑标签
-            custom_option = {
+            new_custom_option = {
                 "admin": [cluster_obj["cluster_config"]["creator"]],
                 "setup_config": {
                     "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
@@ -352,34 +352,37 @@ class StorageHandler(object):
             cluster_obj["visible_bk_biz"] = [
                 {
                     "bk_biz_id": bk_biz_id,
-                    "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                    "is_use": index_sets.filter(space_uid=bk_biz_id_to_space_uid(bk_biz_id), is_active=True).exists(),
                 }
                 for bk_biz_id in custom_visible_bk_biz
             ]
 
             # 如果这个存在说明是老的可见范围配置
             if custom_visible_bk_biz:
-                custom_option["visible_config"] = {
+                new_custom_option["visible_config"] = {
                     "visible_type": VisibleEnum.MULTI_BIZ.value,
                     "visible_bk_biz": [
                         {
                             "bk_biz_id": bk_biz_id,
-                            "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                            "is_use": index_sets.filter(
+                                space_uid=bk_biz_id_to_space_uid(bk_biz_id), is_active=True
+                            ).exists(),
                         }
                         for bk_biz_id in custom_visible_bk_biz
                     ],
                 }
-                custom_option.update(cluster_obj["cluster_config"]["custom_option"])
-                cluster_obj["cluster_config"]["custom_option"] = custom_option
+                new_custom_option.update(cluster_obj["cluster_config"]["custom_option"])
+                cluster_obj["cluster_config"]["custom_option"] = new_custom_option
                 cluster_data.append(cluster_obj)
                 continue
 
+            # 如果可见范围配置不存在，则直接为当前业务可见
             if not custom_option.get("visible_config"):
-                custom_option["visible_config"] = {
+                new_custom_option["visible_config"] = {
                     "visible_type": VisibleEnum.CURRENT_BIZ.value,
                 }
-                custom_option.update(cluster_obj["cluster_config"]["custom_option"])
-                cluster_obj["cluster_config"]["custom_option"] = custom_option
+                new_custom_option.update(cluster_obj["cluster_config"]["custom_option"])
+                cluster_obj["cluster_config"]["custom_option"] = new_custom_option
                 cluster_data.append(cluster_obj)
                 continue
 
@@ -387,7 +390,9 @@ class StorageHandler(object):
                 custom_option["visible_config"]["visible_bk_biz"] = [
                     {
                         "bk_biz_id": bk_biz_id,
-                        "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                        "is_use": index_sets.filter(
+                            space_uid=bk_biz_id_to_space_uid(bk_biz_id), is_active=True
+                        ).exists(),
                     }
                     for bk_biz_id in custom_option["visible_config"]["visible_bk_biz"]
                 ]
