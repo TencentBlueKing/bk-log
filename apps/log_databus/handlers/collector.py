@@ -22,7 +22,7 @@ import copy
 import datetime
 import re
 from collections import defaultdict
-from typing import Union
+from typing import Union, List, Dict
 
 import arrow
 import yaml
@@ -3067,41 +3067,7 @@ class CollectorHandler(object):
             request_params["dataId"] = self.data.bk_data_id
         else:
             filters, _ = deal_collector_scenario_param(container_config.params)
-            request_params = {
-                "dataId": self.data.bk_data_id,
-                "path": container_config.params["paths"],
-                "encoding": container_config.data_encoding,
-                "extMeta": {label["key"]: label["value"] for label in self.data.extra_labels},
-                "logConfigType": container_config.collector_type,
-                "allContainer": container_config.all_container,
-                "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
-                "workloadType": container_config.workload_type,
-                "workloadName": container_config.workload_name,
-                "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
-                "labelSelector": {
-                    "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
-                    "matchExpressions": [
-                        {
-                            "key": expression["key"],
-                            "operator": expression["operator"],
-                            "values": [v.strip() for v in expression.get("value", "").split(",") if v.strip()],
-                        }
-                        for expression in container_config.match_expressions
-                    ],
-                },
-                "multiline": {
-                    "pattern": container_config.params.get("multiline_pattern"),
-                    "maxLines": container_config.params.get("multiline_max_lines"),
-                    "timeout": (
-                        f"{container_config.params['multiline_timeout']}s"
-                        if "multiline_timeout" in container_config.params
-                        else None
-                    ),
-                },
-                "delimiter": container_config.params.get("conditions", {}).get("separator", ""),
-                "filters": filters,
-                "addPodLabel": self.data.add_pod_label,
-            }
+            request_params = collector_container_config_to_raw_config(self.data, container_config)
         name = self.generate_bklog_config_name(container_config.id)
 
         try:
@@ -3419,3 +3385,74 @@ def build_result_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
     """根据bk_biz_id和collector_config_name_en构建result_table_id"""
     result_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
     return result_table_id
+
+
+def collector_container_config_to_raw_config(collector_config: CollectorConfig,
+                                             container_config: ContainerCollectorConfig) -> dict:
+    """
+    根据采集配置和容器采集配置实例创建容器采集配置
+    @param collector_config: 采集配置
+    @param container_config: 容器采集配置实例
+    @return:
+    """
+    raw_config = container_config_to_raw_config(container_config)
+    raw_config.update({
+        "dataId": collector_config.bk_data_id,
+        "extMeta": {label["key"]: label["value"] for label in collector_config.extra_labels},
+        "addPodLabel": collector_config.add_pod_label,
+    })
+    return raw_config
+
+
+def container_config_to_raw_config(container_config: ContainerCollectorConfig) -> dict:
+    """
+    根据容器采集配置实例创建容器采集配置
+    @param container_config: 容器采集配置实例
+    @return:
+    """
+    filters, _ = deal_collector_scenario_param(container_config.params)
+    raw_config = {
+        "path": container_config.params["paths"],
+        "encoding": container_config.data_encoding,
+        "logConfigType": container_config.collector_type,
+        "allContainer": container_config.all_container,
+        "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
+        "workloadType": container_config.workload_type,
+        "workloadName": container_config.workload_name,
+        "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
+        "labelSelector": {
+            "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
+            "matchExpressions": [
+                {
+                    "key": expression["key"],
+                    "operator": expression["operator"],
+                    "values": [v.strip() for v in expression.get("value", "").split(",") if v.strip()],
+                }
+                for expression in container_config.match_expressions
+            ],
+        },
+        "multiline": {
+            "pattern": container_config.params.get("multiline_pattern"),
+            "maxLines": container_config.params.get("multiline_max_lines"),
+            "timeout": (
+                f"{container_config.params['multiline_timeout']}s"
+                if "multiline_timeout" in container_config.params
+                else None
+            ),
+        },
+        "delimiter": container_config.params.get("conditions", {}).get("separator", ""),
+        "filters": filters,
+    }
+    return raw_config
+
+
+def container_dict_configs_to_yaml(container_configs: List[Dict]) -> str:
+    """
+    将字典格式的容器采集配置转为yaml
+    @param container_configs:
+    @return:
+    """
+    container_configs = [container_config_to_raw_config(ContainerCollectorConfig(**container_config))
+                         for container_config in container_configs]
+
+    return yaml.safe_dump_all(container_configs)

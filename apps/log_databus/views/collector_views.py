@@ -38,7 +38,7 @@ from apps.iam.handlers.drf import (
     ViewBusinessPermission,
     insert_permission_field,
 )
-from apps.log_databus.handlers.collector import CollectorHandler
+from apps.log_databus.handlers.collector import CollectorHandler, container_dict_configs_to_yaml
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.handlers.link import DataLinkHandler
 from apps.log_databus.models import CollectorConfig
@@ -66,7 +66,7 @@ from apps.log_databus.serializers import (
     MatchLabelsSerializer,
     ValidateContainerCollectorYamlSerializer,
     CreateContainerCollectorSerializer,
-    UpdateContainerCollectorSerializer,
+    UpdateContainerCollectorSerializer, ContainerCollectorConfigToYamlSerializer,
 )
 from apps.log_search.constants import BKDATA_OPEN, CollectorScenarioEnum, HAVE_DATA_ID, NOT_CUSTOM
 from apps.log_search.permission import Permission
@@ -2074,3 +2074,8 @@ class CollectorViewSet(ModelViewSet):
     def validate_container_config_yaml(self, request):
         data = self.params_valid(ValidateContainerCollectorYamlSerializer)
         return Response(CollectorHandler().validate_container_config_yaml(data["yaml_config"]))
+
+    @list_route(methods=["POST"], url_path="container_configs_to_yaml")
+    def container_configs_to_yaml(self, request):
+        data = self.params_valid(ContainerCollectorConfigToYamlSerializer)
+        return Response(container_dict_configs_to_yaml(data["configs"]))

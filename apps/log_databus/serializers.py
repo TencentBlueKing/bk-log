@@ -1171,3 +1171,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
         if attrs["logConfigType"] != ContainerCollectorType.STDOUT and not attrs.get("path"):
             raise SlzValidationError(_("当日志类型不为标准输出时，日志采集路径为必填项"))
         return attrs
+
+
+class ContainerCollectorConfigToYamlSerializer:
+    configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
