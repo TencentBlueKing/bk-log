@@ -2080,6 +2080,7 @@ class CollectorViewSet(ModelViewSet):
         data = self.params_valid(ContainerCollectorConfigToYamlSerializer)
         return Response(
             CollectorHandler.container_dict_configs_to_yaml(
-                container_configs=data["configs"], add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+                container_configs=data["configs"],
+                add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
             )
         )
