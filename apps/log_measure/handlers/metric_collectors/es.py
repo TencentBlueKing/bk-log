@@ -43,11 +43,16 @@ def byte_to_mebibyte(byte):
 
 
 def get_version(version: str):
+    """
+    get_version
+    @param version:
+    @return:
+    """
     raw_version = version.split("-")[0]
     result_version = [int(p) for p in raw_version.split(".")]
     version_len = VERSION_LEN - len(result_version)
     if version_len > 0:
-        for index in range(version_len):
+        for index in range(version_len):  # pylint: disable=unused-variable
             result_version.append(0)
     return result_version
 
@@ -867,6 +872,16 @@ def query(cluster_id):
 
 
 def process_metric(data, metric, xtype, path, xform=None, dimensions=None):
+    """
+    process_metric
+    @param data:
+    @param metric:
+    @param xtype:
+    @param path:
+    @param xform:
+    @param dimensions:
+    @return:
+    """
     value = data
     # Traverse the nested dictionaries
     for key in path.split("."):
@@ -889,6 +904,15 @@ def process_metric(data, metric, xtype, path, xform=None, dimensions=None):
 
 
 def process_stats_data(metrics, stats_url, get, version, base_dimensions):
+    """
+    process_stats_data
+    @param metrics:
+    @param stats_url:
+    @param get:
+    @param version:
+    @param base_dimensions:
+    @return:
+    """
     data = get(stats_url)
     if not data:
         return
@@ -911,6 +935,15 @@ def process_stats_data(metrics, stats_url, get, version, base_dimensions):
 
 
 def process_pshard_stats_data(metrics, pshard_url, get, version, base_dimensions):
+    """
+    process_pshard_stats_data
+    @param metrics:
+    @param pshard_url:
+    @param get:
+    @param version:
+    @param base_dimensions:
+    @return:
+    """
     data = get(pshard_url)
     if not data:
         return
@@ -934,6 +967,15 @@ def process_pshard_stats_data(metrics, pshard_url, get, version, base_dimensions
 
 
 def process_health_data(metrics, health_url, get, version, base_dimensions):
+    """
+    process_health_data
+    @param metrics:
+    @param health_url:
+    @param get:
+    @param version:
+    @param base_dimensions:
+    @return:
+    """
     data = get(health_url)
     if not data:
         return
@@ -945,6 +987,14 @@ def process_health_data(metrics, health_url, get, version, base_dimensions):
 
 
 def process_pending_tasks_data(metrics, pending_tasks_url, get, base_dimensions):
+    """
+    process_pending_tasks_data
+    @param metrics:
+    @param pending_tasks_url:
+    @param get:
+    @param base_dimensions:
+    @return:
+    """
     data = get(pending_tasks_url)
     if not data:
         return
@@ -970,6 +1020,14 @@ def process_pending_tasks_data(metrics, pending_tasks_url, get, base_dimensions)
 
 
 def get_index_metrics(metrics, get, version, base_dimensions):
+    """
+    get_index_metrics
+    @param metrics:
+    @param get:
+    @param version:
+    @param base_dimensions:
+    @return:
+    """
     index_resp = get("_cat/indices?bytes=b")
     if not index_resp:
         return
@@ -1017,6 +1075,14 @@ def get_index_metrics(metrics, get, version, base_dimensions):
 
 
 def process_cat_allocation_data(metrics, get, version, base_dimensions):
+    """
+    process_cat_allocation_data
+    @param metrics:
+    @param get:
+    @param version:
+    @param base_dimensions:
+    @return:
+    """
     if version < [5, 0, 0]:
         logger.debug(
             "Collecting cat allocation metrics is not supported in version %s. Skipping",
@@ -1042,6 +1108,10 @@ class EsMonitor:
     @staticmethod
     @register_metric("es_monitor", description=_("es 监控信息"), data_name="es_monitor", time_filter=TimeFilterEnum.MINUTE2)
     def elastic():
+        """
+        elastic
+        @return:
+        """
         metrics = []
         for cluster_info in MetricUtils.get_instance().cluster_infos.values():
             try:
@@ -1049,12 +1119,12 @@ class EsMonitor:
                 cluster_id = cluster_info["cluster_config"]["cluster_id"]
                 get_func = query(cluster_id)
                 cluster_name = cluster_info["cluster_config"]["cluster_name"]
-                target_bk_biz_id = cluster_info["cluster_config"]["custom_option"]["bk_biz_id"]
+                target_biz_id = cluster_info["cluster_config"]["custom_option"]["bk_biz_id"]
                 health_url, stats_url, pshard_stats_url, pending_tasks_url = get_url(version)
                 base_dimensions = {
                     "cluster_id": cluster_id,
                     "cluster_name": cluster_name,
-                    "target_bk_biz_id": target_bk_biz_id,
+                    "target_biz_id": target_biz_id,
                 }
                 process_stats_data(metrics, stats_url, get_func, version, base_dimensions)
                 process_pshard_stats_data(metrics, pshard_stats_url, get_func, version, base_dimensions)

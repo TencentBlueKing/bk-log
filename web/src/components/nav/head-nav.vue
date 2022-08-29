@@ -162,10 +162,10 @@ export default {
       return Boolean(this.$route.name === 'trace' && this.$route.query.traceId);
     },
   },
-  created() {
+  async created() {
     this.language = jsCookie.get('blueking_language') || 'zh-cn';
     this.$store.commit('updateMenuList', menuArr);
-    this.getUserInfo();
+    await this.getUserInfo();
     setTimeout(() => this.requestMyProjectList(), 100);
   },
   methods: {

@@ -31,6 +31,13 @@ from apps.utils.base_crypt import BaseCrypt
 from apps.utils.local import get_request_username
 
 
+class JSONEncoderSupportSet(DjangoJSONEncoder):
+    def default(self, o):
+        if isinstance(o, set):
+            return list(o)
+        return super().default(o)
+
+
 class JsonField(models.TextField):
     """
     Json字段，入库json.dumps， 出库json.load
@@ -64,7 +71,7 @@ class JsonField(models.TextField):
         if value is None:
             return value
         try:
-            return json.dumps(value, cls=DjangoJSONEncoder)
+            return json.dumps(value, cls=JSONEncoderSupportSet)
         except (TypeError, ValueError):
             raise exceptions.ValidationError(
                 self.error_messages["invalid"],

@@ -43,7 +43,11 @@ class RedisMetric(object):
 
         namespace_data.data.extend(RedisMetric().get_variables())
         namespace_data.data.append(RedisMetric().hit_rate())
-        namespace_data.data.extend(RedisMetric.queue())
+        queue_len_result = RedisMetric.queue()
+        namespace_data.data.extend(queue_len_result)
+        if not all([i.status for i in queue_len_result]):
+            namespace_data.status = False
+            namespace_data.message = "queue_len is out of limit"
         return namespace_data
 
     @staticmethod

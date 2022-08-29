@@ -22,18 +22,18 @@
 
 <template>
   <div class="dashboard-container" v-bkloading="{ isLoading }">
+    <auth-container-page v-if="authPageInfo" :info="authPageInfo" />
     <iframe v-if="src" :src="src" ref="iframeRef" class="dashboard-iframe" @load="handleIframeLoad"></iframe>
-    <auth-page v-if="authPageInfo" :info="authPageInfo" />
   </div>
 </template>
 
 <script>
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 
 export default {
   name: 'Dashboard',
   components: {
-    AuthPage,
+    AuthContainerPage,
   },
   data() {
     return {

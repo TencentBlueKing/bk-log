@@ -82,6 +82,7 @@ from apps.log_clustering.handlers.aiops.aiops_model.data_cls import (
     AiopsReleaseModelReleaseIdModelFileCls,
     AiopsExperimentsDebugCls,
     AiopsExperimentsDebugInputConfigCls,
+    MemoryStepScalingPolicyCls,
 )
 
 
@@ -143,9 +144,10 @@ class AiopsModelHandler(BaseAiopsHandler):
         experiment_id: int,
         window: str = "1h",
         worker_nums: int = 6,
-        memory: int = 8096,
+        memory: int = 2048,
         time_limit: int = 7200,
         core: int = 4,
+        max_memory: int = 8192,
     ):
         """
         变更实验meta配置
@@ -155,15 +157,24 @@ class AiopsModelHandler(BaseAiopsHandler):
         @param memory int 使用内存大小
         @param time_limit 运行时间设置
         @param core 核数
+        @param max_memory 最大内存大小
         """
         update_execute_config_request = UpdateExecuteConfigCls(
             filter_id=experiment_id,
             execute_config=ExecuteConfigCls(
-                chunked_read_sample_set=ChunkedReadSampleSet(window=window,),
+                chunked_read_sample_set=ChunkedReadSampleSet(window=window),
                 pipeline_resources=PipelineResourcesCls(
                     python_backend=PythonBackendCls(worker_nums=worker_nums, memory=memory, core=core)
                 ),
                 pipeline_execute_config={"time_limit": time_limit},
+                resource_preference={
+                    "scaling_policy": [
+                        {
+                            "policy_name": "memory_step_scaling_policy",
+                            "extra_kwargs": MemoryStepScalingPolicyCls(max_memory=max_memory),
+                        }
+                    ]
+                },
             ),
         )
         update_execute_config_request.execute_config.chunked_read_sample_set.chunk_policy.config.partition_number = (
