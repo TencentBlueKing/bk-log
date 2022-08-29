@@ -1173,5 +1173,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
         return attrs
 
 
-class ContainerCollectorConfigToYamlSerializer:
+class ContainerCollectorConfigToYamlSerializer(serializers.Serializer):
     configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
+    add_pod_label = serializers.BooleanField(label=_("上报时是否把标签带上"), default=False)
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())

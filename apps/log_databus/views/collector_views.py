@@ -38,7 +38,7 @@ from apps.iam.handlers.drf import (
     ViewBusinessPermission,
     insert_permission_field,
 )
-from apps.log_databus.handlers.collector import CollectorHandler, container_dict_configs_to_yaml
+from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.handlers.link import DataLinkHandler
 from apps.log_databus.models import CollectorConfig
@@ -2078,4 +2078,8 @@ class CollectorViewSet(ModelViewSet):
     @list_route(methods=["POST"], url_path="container_configs_to_yaml")
     def container_configs_to_yaml(self, request):
         data = self.params_valid(ContainerCollectorConfigToYamlSerializer)
-        return Response(container_dict_configs_to_yaml(data["configs"]))
+        return Response(
+            CollectorHandler.container_dict_configs_to_yaml(
+                container_configs=data["configs"], add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+            )
+        )

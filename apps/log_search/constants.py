@@ -555,14 +555,16 @@ class GlobalCategoriesEnum(ChoicesEnum):
     数据分类枚举
     """
 
-    HOSTS = {"id": "hosts",
-             "name": _("主机&云平台"),
-             "children": [
-                 {"id": "host_process", "name": _("进程"), "children": []},
-                 {"id": "os", "name": _("操作系统"), "children": []},
-                 {"id": "host_device", "name": _("主机设备"), "children": []},
-                 {"id": "kubernetes", "name": "kubernetes", "children": []},
-             ]}
+    HOSTS = {
+        "id": "hosts",
+        "name": _("主机&云平台"),
+        "children": [
+            {"id": "host_process", "name": _("进程"), "children": []},
+            {"id": "os", "name": _("操作系统"), "children": []},
+            {"id": "host_device", "name": _("主机设备"), "children": []},
+            {"id": "kubernetes", "name": "kubernetes", "children": []},
+        ]
+    }
 
     SERVICES = {
         "id": "services",
