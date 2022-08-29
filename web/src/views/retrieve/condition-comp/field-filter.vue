@@ -120,6 +120,12 @@ export default {
         return [];
       },
     },
+    sortList: {
+      type: Array,
+      default() {
+        return [];
+      },
+    },
     fieldAliasMap: {
       type: Object,
       default() {
@@ -230,7 +236,7 @@ export default {
       }
       this.$http.request('retrieve/postFieldsConfig', {
         params: { index_set_id: this.$route.params.indexId },
-        data: { display_fields: displayFieldNames, sort_list: [] },
+        data: { display_fields: displayFieldNames, sort_list: this.sortList },
       }).catch((e) => {
         console.warn(e);
       });

@@ -218,6 +218,7 @@
               <field-filter
                 :total-fields="totalFields"
                 :visible-fields="visibleFields"
+                :sort-list="sortList"
                 :field-alias-map="fieldAliasMap"
                 :show-field-alias="showFieldAlias"
                 :statistical-fields-data="statisticalFieldsData"
@@ -276,6 +277,7 @@
             :statistical-fields-data="statisticalFieldsData"
             :time-field="timeField"
             :config-data="clusteringData"
+            :apm-relation="apmRelationData"
             :clean-config="cleanConfig"
             :picker-time-range="pickerTimeRange"
             :date-picker-value="datePickerValue"
@@ -442,6 +444,7 @@ export default {
       // ipTopoSwitch: true, // IP快选功能相关
       totalFields: [], // 表格字段
       visibleFields: [], // 显示的排序后的字段
+      sortList: [], // 排序字段
       notTextTypeFields: [], // 字段类型不为 text 的字段
       fieldAliasMap: {},
       showFieldAlias: localStorage.getItem('showFieldAlias') === 'true',
@@ -480,6 +483,7 @@ export default {
           clustering_field: '',
         },
       },
+      apmRelationData: {},
       showIpSelectorDialog: false,
       isAsIframe: false,
       localIframeQuery: {},
@@ -541,7 +545,7 @@ export default {
     spaceUid: {
       async handler() {
         this.indexId = '';
-        await this.requestFavoriteList();
+        this.requestFavoriteList();
         this.indexSetList.splice(0);
         this.favoriteList.splice(0);
         this.totalFields.splice(0);
@@ -1265,6 +1269,7 @@ export default {
           config,
           display_fields: displayFields,
           time_field: timeField,
+          sort_list: sortList,
         } = data;
         const localConfig = {};
         config.forEach((item) => {
@@ -1278,6 +1283,7 @@ export default {
           async_export: asyncExport,
           clean_config: cleanConfig,
           clustering_config: clusteringConfig,
+          apm_relation: apmRelation,
         } = localConfig;
 
         this.operatorConfig = {
@@ -1287,6 +1293,7 @@ export default {
         };
         this.cleanConfig = cleanConfig;
         this.clusteringData = clusteringConfig;
+        this.apmRelationData = apmRelation;
 
         fields.forEach((item) => {
           item.minWidth = 0;
@@ -1314,6 +1321,7 @@ export default {
             }
           }
         }).filter(Boolean);
+        this.sortList = sortList;
 
         const fieldAliasMap = {};
         fields.forEach((item) => {
@@ -1345,18 +1353,13 @@ export default {
           }
         }
       });
-      this.$http.request('retrieve/postFieldsConfig', {
-        params: { index_set_id: this.$route.params.indexId },
-        data: { display_fields: displayFieldNames, sort_list: [] },
-      }).catch((e) => {
-        console.warn(e);
-      });
       if (showFieldAlias !== undefined) {
         this.showFieldAlias = showFieldAlias;
         window.localStorage.setItem('showFieldAlias', showFieldAlias);
       }
       this.renderTable = false;
       await this.$nextTick();
+      this.requestFields();
       this.renderTable = true;
     },
     requestTableData() {

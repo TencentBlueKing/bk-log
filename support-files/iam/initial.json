@@ -269,7 +269,7 @@
                     }
                 ],
                 "related_actions":[
-
+                    "view_collection"
                 ],
                 "description":"",
                 "description_en":""
@@ -443,6 +443,7 @@
                     }
                 ],
                 "related_actions":[
+                    "view_dashboard",
                     "view_business"
                 ],
                 "description":"",

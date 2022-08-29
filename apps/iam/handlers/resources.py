@@ -97,7 +97,7 @@ class Business(ResourceMeta):
         :param instance_id: 实例ID
         :param attribute: 属性kv对
         """
-        from apps.log_search.models import Space
+        from apps.log_search.models import Space, SpaceType
 
         # 注意，此处 instance_id 有可能是 bk_biz_id，或者是space_uid，需要做统一转换
         try:
@@ -108,11 +108,11 @@ class Business(ResourceMeta):
         try:
             if bk_biz_id is None:
                 # 不是数字，那就是space_uid
-                space = Space.objects.get(space_uid=bk_biz_id)
+                space = Space.objects.get(space_uid=instance_id)
             else:
                 space = Space.objects.get(bk_biz_id=instance_id)
             bk_biz_id = str(space.bk_biz_id)
-            space_name = f"[{space.space_type_id}] {space.space_name}"
+            space_name = f"[{SpaceType.get_name_by_id(space.space_type_id)}] {space.space_name}"
         except Exception:  # pylint: disable=broad-except:
             bk_biz_id = str(instance_id)
             space_name = instance_id

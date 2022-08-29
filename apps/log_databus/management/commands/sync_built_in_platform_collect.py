@@ -140,7 +140,7 @@ class Command(BaseCommand):
 
     @classmethod
     def create_data_id(cls, collect_config):
-        data_name = build_bk_data_name(collect_config.bk_biz_id, collect_config.collector_config_name)
+        data_name = build_bk_data_name(collect_config.bk_biz_id, collect_config.collector_config_name_en)
         params = {
             "data_name": data_name,
             "etl_config": "bk_flat_batch",
@@ -172,7 +172,7 @@ class Command(BaseCommand):
         etl_storage = CollectorEtlStorageSerializer(
             data={
                 "etl_config": "bk_log_text",
-                "table_id": collect_config.collector_config_name,
+                "table_id": collect_config.collector_config_name_en,
                 "storage_cluster_id": storage_cluster_id,
                 "retention": settings.ES_STORAGE_DEFAULT_DURATION,
                 "allocation_min_days": 0,

@@ -130,7 +130,7 @@ export default {
       curCollect: 'collect/curCollect',
     }),
     tableShowType() {
-      return this.tableType === 'exclusive';
+      return this.tableType !== 'exclusive';
     },
   },
   watch: {
