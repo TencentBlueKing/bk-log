@@ -1125,16 +1125,6 @@ export default {
           console.warn('url 查询参数解析失败', e);
         }
       } else { // 兼容之前的语法
-        // const shouldCoverParamFields = ['keyword', 'host_scopes', 'addition']
-        // for (const field of shouldCoverParamFields) {
-        //     const param = this.$route.query[field] // 指定查询参数
-        //     if (param) {
-        //         queryParams[field] = field === 'keyword'
-        //             ? decodeURIComponent(param)
-        //             : JSON.parse(decodeURIComponent(param))
-        //     }
-        // }
-
         const shouldCoverParamFields = [
           'keyword',
           'host_scopes',
