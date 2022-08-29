@@ -27,8 +27,8 @@
       <cluster-table
         :table-list="clusterList"
         :is-change-select.sync="isChangeSelect"
-        :storage-cluster-id.sync="formData.storage_cluster_id"
-      />
+        :storage-cluster-id.sync="formData.storage_cluster_id" />
+
       <cluster-table
         table-type="exclusive"
         style="margin-top: 20px;"

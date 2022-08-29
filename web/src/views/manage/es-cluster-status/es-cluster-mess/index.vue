@@ -165,6 +165,7 @@
               theme="primary"
               text
               class="mr10"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
               :tips-conf="$t('unableEditTip')"
               :button-text="$t('编辑')"
               :disabled="!props.row.is_editable"
@@ -174,6 +175,7 @@
               theme="primary"
               text
               class="mr10"
+              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
               :tips-conf="$t('unableEditTip')"
               :button-text="$t('删除')"
               :disabled="!props.row.is_editable"
@@ -526,7 +528,28 @@ export default {
       this.editClusterId = id;
     },
     // 删除ES源
-    deleteDataSource(row) {
+    async deleteDataSource(row) {
+      this.tableLoading = true;
+      const id = row.cluster_config.cluster_id;
+      if (!(row.permission?.manage_es_source)) {
+        try {
+          const paramData = {
+            action_ids: ['manage_es_source'],
+            resources: [{
+              type: 'es_source',
+              id,
+            }],
+          };
+          const res = await this.$store.dispatch('getApplyData', paramData);
+          this.$store.commit('updateAuthDialogData', res.data);
+        } catch (err) {
+          console.warn(err);
+        } finally {
+          this.tableLoading = false;
+        }
+        return;
+      }
+
       this.$bkInfo({
         type: 'warning',
         subTitle: `${this.$t('当前集群为')} ${row.cluster_config.domain_name}， ${this.$t('确认要删除')}`,

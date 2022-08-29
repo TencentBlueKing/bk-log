@@ -45,7 +45,6 @@ logger = logging.getLogger()
 
 
 THIRD_PARTY_CHECK_API = {
-    "paas": {"method": BKPAASApi.get_minimal_app_list, "kwargs": {"bk_username": DEFAULT_BK_USERNAME}},
     "cc": {"method": CCApi.get_app_list},
     "itsm": {"method": BkItsmApi.get_services},
     "job": {"method": JobApi.get_public_script_list, "kwargs": {"bk_biz_id": settings.BLUEKING_BK_BIZ_ID}},
@@ -66,6 +65,16 @@ THIRD_PARTY_CHECK_API = {
     },
     "bk_data": {"method": BkDataDatabusApi.get_cleans, "kwargs": {"raw_data_id": DEFAULT_BK_DATA_ID}},
 }
+
+
+try:
+    if settings.PAASV3_API_HOST:
+        THIRD_PARTY_CHECK_API["paas"] = {
+            "method": BKPAASApi.get_minimal_app_list,
+            "kwargs": {"bk_username": DEFAULT_BK_USERNAME},
+        }
+except AttributeError:
+    THIRD_PARTY_CHECK_API["paas"] = {"method": BKPAASApi.get_app_info}
 
 
 class ThirdParty(object):

@@ -26,47 +26,49 @@
     v-if="curHoverIndex === index"
     @mouseenter="mouseenterHandle"
     @mouseleave="mouseleaveHandle">
-    <span
-      v-bk-tooltips="{ content: $t('retrieve.log'), delay: 500 }"
-      class="handle-card"
-      v-if="showRealtimeLog && !checkIsHide('showRealtimeLog')">
+    <span class="handle-card" v-bk-tooltips="{ allowHtml: true, content: '#realTimeLog-html', delay: 500 }">
       <span
-        class="icon log-icon icon-handle icon-time"
-        @click.stop="handleClick('realTimeLog')">
+        :class="`icon log-icon icon-handle icon-time ${!isActiveLog && 'is-disable'}`"
+        @click.stop="handleCheckClick('realTimeLog', isActiveLog)">
       </span>
     </span>
-    <div v-if="showContextLog && !checkIsHide('showContextLog')" id="content-html">
-      <span>
-        <span v-if="isHaveReason" class="bk-icon icon-exclamation-circle-shape"></span>
-        <span>{{contentText}}</span>
-      </span>
-    </div>
-    <span
-      v-bk-tooltips="{ allowHtml: true, content: '#content-html', delay: 500 }"
-      class="handle-card"
-      v-if="showContextLog && !checkIsHide('showContextLog')">
+    <span class="handle-card" v-bk-tooltips="{ allowHtml: true, content: '#contextLog-html', delay: 500 }">
       <span
-        :class="`icon log-icon icon-handle icon-document ${isHaveReason && 'is-disable'}`"
-        @click.stop="handleCheckClick('contextLog')">
+        :class="`icon log-icon icon-handle icon-document ${!isActiveLog && 'is-disable'}`"
+        @click.stop="handleCheckClick('contextLog', isActiveLog)">
       </span>
     </span>
-    <span
-      v-bk-tooltips="{ content: $t('retrieve.monitorAlarm'), delay: 500 }"
-      class="handle-card"
-      v-if="showMonitorWeb && !checkIsHide('showMonitorWeb')">
+    <span class="handle-card" v-bk-tooltips="{ allowHtml: true, content: '#monitorWeb-html', delay: 500 }">
       <span
-        :class="`icon icon-handle log-icon icon-inform ${!monitorIsActive && 'is-disable'}`"
-        @click.stop="handleCheckClick('monitorWeb')"></span>
+        :class="`icon icon-handle log-icon icon-inform ${!isActiveMonitorWeb && 'is-disable'}`"
+        @click.stop="handleCheckClick('monitorWeb', isActiveMonitorWeb)"></span>
     </span>
-    <span
-      v-bk-tooltips="{ content: 'WebConsole', delay: 500 }"
-      class="handle-card"
-      v-if="showWebConsole && !checkIsHide('showWebConsole')">
+    <span v-bk-tooltips="{ content: 'WebConsole', delay: 500 }"
+          class="handle-card"
+          v-if="isActiveWebConsole && showAllHandle">
       <span
         class="icon icon-handle log-icon icon-teminal"
         @click.stop="handleClick('webConsole')"></span>
     </span>
-    <span class="bk-icon icon-more handle-card icon-handle" v-if="showMoreHandle && !showAllHandle"></span>
+    <span class="bk-icon icon-more icon-handle" v-if="isActiveWebConsole && !showAllHandle"></span>
+    <div id="realTimeLog-html">
+      <span>
+        <span v-if="!isActiveLog" class="bk-icon icon-exclamation-circle-shape"></span>
+        <span>{{toolMessage.realTimeLog}}</span>
+      </span>
+    </div>
+    <div id="contextLog-html">
+      <span>
+        <span v-if="!isActiveLog" class="bk-icon icon-exclamation-circle-shape"></span>
+        <span>{{toolMessage.contextLog}}</span>
+      </span>
+    </div>
+    <div id="monitorWeb-html">
+      <span>
+        <span v-if="!isActiveMonitorWeb" class="bk-icon icon-exclamation-circle-shape"></span>
+        <span>{{toolMessage.monitorWeb}}</span>
+      </span>
+    </div>
   </div>
 </template>
 
@@ -81,22 +83,6 @@ export default {
       type: Number,
       default: -1,
     },
-    showRealtimeLog: {
-      type: Boolean,
-      default: false,
-    },
-    showContextLog: {
-      type: Boolean,
-      default: false,
-    },
-    showMonitorWeb: {
-      type: Boolean,
-      default: false,
-    },
-    showWebConsole: {
-      type: Boolean,
-      default: false,
-    },
     operatorConfig: {
       type: Object,
       required: true,
@@ -106,31 +92,20 @@ export default {
   data() {
     return {
       showAllHandle: false, // hove操作区域显示全部icon
-      overflowHandle: [], // 当操作按钮大于3个时 用于保存超出的icon key
     };
   },
   computed: {
-    showMoreHandle() {
-      const handleOptions = ['showRealtimeLog', 'showContextLog', 'showWebConsole', 'showMonitorWeb'];
-      const isShowOptions = handleOptions.filter(item => this[item]);
-      const isShowMore = isShowOptions.length > 3;
-
-      if (isShowMore) {
-        this.overflowHandle.push(...isShowOptions.slice(2));
-      }
-
-      return isShowMore;
+    isActiveLog() {
+      return this.operatorConfig?.contextAndRealtime.is_active;
     },
-    monitorIsActive() {
+    isActiveWebConsole() {
+      return this.operatorConfig?.bcsWebConsole.is_active;
+    },
+    isActiveMonitorWeb() {
       return this.operatorConfig?.bkmonitor.is_active;
     },
-    contentText() {
-      return this.operatorConfig?.contextAndRealtime.extra.reason
-        ? this.operatorConfig?.contextAndRealtime.extra.reason
-        : this.$t('retrieve.context');
-    },
-    isHaveReason() {
-      return Boolean(this.operatorConfig.contextAndRealtime.extra.reason);
+    toolMessage() {
+      return this.operatorConfig.toolMessage;
     },
   },
   methods: {
@@ -140,15 +115,9 @@ export default {
     mouseleaveHandle() {
       this.showAllHandle = false;
     },
-    // 区分当前是否超过第3个的icon
-    checkIsHide(key) {
-      // 当前未hover操作区域 当前超出3个操作icon 超出第3个icon
-      return !this.showAllHandle && this.showMoreHandle && this.overflowHandle.includes(key);
-    },
-    handleCheckClick(clickType) {
-      if (clickType === 'monitorWeb' && this.monitorIsActive) return this.handleClick(clickType);
-      if (clickType === 'contextLog' && !this.isHaveReason) return this.handleClick(clickType);
-      return;
+    handleCheckClick(clickType, isActive = false) {
+      if (!isActive) return;
+      return this.handleClick(clickType);
     },
   },
 };
@@ -175,6 +144,10 @@ export default {
 
   .icon-exclamation-circle-shape {
     color: #d7473f;
+  }
+
+  .icon-more {
+    transform: translateY(2px) translateX(4px);
   }
 
   .is-disable {

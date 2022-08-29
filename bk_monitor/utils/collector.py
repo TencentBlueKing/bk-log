@@ -17,9 +17,9 @@ class MetricCollector(object):
     """
 
     def __init__(self, collector_import_paths=None):
-        if collector_import_paths:
+        if collector_import_paths and not REGISTERED_METRICS:
             for key in collector_import_paths:
-                importlib.import_module(key)
+                importlib.reload(importlib.import_module(key))
 
     def collect(self, namespaces=None, data_names=None, time_filter_enable=True):
         """
@@ -34,6 +34,7 @@ class MetricCollector(object):
                 begin_time = time.time()
                 metric_groups.append(
                     {
+                        "prefix": metric_method["prefix"],
                         "namespace": metric_method["namespace"],
                         "description": metric_method["description"],
                         "metrics": metric_method["method"](),
@@ -53,7 +54,9 @@ class MetricCollector(object):
         res = defaultdict(list)
         for group in metric_groups:
             for metric in group["metrics"]:
-                res[group["date_name"]].append(metric.to_bkmonitor_report(namespace=group["namespace"]))
+                res[group["date_name"]].append(
+                    metric.to_bkmonitor_report(prefix=group["prefix"], namespace=group["namespace"])
+                )
         return res
 
     @classmethod
@@ -61,7 +64,7 @@ class MetricCollector(object):
         metric_methods = []
         time_now = arrow.now()
         time_now_minute = 60 * time_now.hour + time_now.minute
-        for metric in REGISTERED_METRICS:
+        for metric_id, metric in REGISTERED_METRICS.items():
             if data_names and metric["data_name"] not in data_names:
                 continue
 

@@ -33,7 +33,7 @@ class _BkDataQueryApi:
 
     def __init__(self):
         self.query = DataAPI(
-            url=DATAQUERY_APIGATEWAY_ROOT + "query/",
+            url=DATAQUERY_APIGATEWAY_ROOT + "query_sync/",
             method="POST",
             module=self.MODULE,
             description=u"原始数据操作",
