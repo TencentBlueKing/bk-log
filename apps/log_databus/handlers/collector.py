@@ -75,7 +75,7 @@ from apps.log_databus.constants import (
     TopoType,
     WorkLoadType,
 )
-from apps.log_databus.constants import CACHE_KEY_CLUSTER_INFO, EtlConfig
+from apps.log_databus.constants import CACHE_KEY_CLUSTER_INFO, EtlConfig, container_configs_to_yaml_exclude_fields
 from apps.log_databus.exceptions import (
     CollectNotSuccess,
     CollectNotSuccessNotCanStart,
@@ -3674,7 +3674,10 @@ class CollectorHandler(object):
             "workloadName": container_config.workload_name,
             "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
             "labelSelector": {
-                "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
+                "matchLabels": {
+                    label["key"]: label["value"]
+                    for label in container_config.match_labels
+                    } if container_config.match_labels else {},
                 "matchExpressions": [
                     {
                         "key": expression["key"],
@@ -3682,7 +3685,7 @@ class CollectorHandler(object):
                         "values": [v.strip() for v in expression.get("value", "").split(",") if v.strip()],
                     }
                     for expression in container_config.match_expressions
-                ],
+                ] if container_config.match_expressions else [],
             },
             "multiline": {
                 "pattern": container_config.params.get("multiline_pattern"),
@@ -3711,9 +3714,15 @@ class CollectorHandler(object):
         result = []
 
         for container_config in container_configs:
+
+            # 排除多的字段，防止在ContainerCollectorConfig作为参数时出现got an unexpected keyword argument
+            for field in container_configs_to_yaml_exclude_fields:
+                if field in container_config:
+                    container_config.pop(field)
+
             container_raw_config = cls.container_config_to_raw_config(ContainerCollectorConfig(**container_config))
             container_raw_config.update({
-                "extMeta": {label["key"]: label["value"] for label in extra_labels},
+                "extMeta": {label["key"]: label["value"] for label in extra_labels if label},
                 "addPodLabel": add_pod_label,
             })
             result.append(container_raw_config)

@@ -577,7 +577,6 @@ class GlobalCategoriesEnum(ChoicesEnum):
         "name": "应用",
         "children": [
             {"id": "application_check", "name": _("业务应用"), "children": []},
-            {"id": "kubernetes", "name": "kubernetes", "children": []},
         ],
     }
 

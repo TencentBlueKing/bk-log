@@ -413,3 +413,7 @@ class LabelSelectorOperator(object):
     NOT_IN = "NotIn"
     EXISTS = "Exists"
     DOES_NOT_EXIST = "DoesNotExist"
+
+
+# 容器采集配置项转yaml时需要排除的字段
+container_configs_to_yaml_exclude_fields = ("container", "label_selector")
