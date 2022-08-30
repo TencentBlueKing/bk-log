@@ -25,5 +25,3 @@ PaaS 平台：https://github.com/Tencent/bk-PaaS
 CI 平台：https://github.com/Tencent/bk-ci
 
 容器管理平台：https://github.com/Tencent/bk-bcs
-
-容器管理平台 SaaS：https://github.com/Tencent/bk-bcs-saas

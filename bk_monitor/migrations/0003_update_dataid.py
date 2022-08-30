@@ -19,4 +19,24 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-default_app_config = "apps.log_measure.apps.MeasureConfig"  # pylint: disable=invalid-name
+from django.db import migrations
+from django.conf import settings
+
+METRIC_DATA_ID = 1100013
+
+
+def forwards_func(apps, schema_editor):
+    monitor_report_config = apps.get_model("bk_monitor", "MonitorReportConfig")
+    if monitor_report_config.objects.filter(data_name="metric").exists():
+        monitor_report_config.objects.filter(data_name="metric").update(data_id=METRIC_DATA_ID, access_token=None)
+    else:
+        monitor_report_config.objects.create(
+            **{"data_name": "metric", "data_id": METRIC_DATA_ID, "bk_biz_id": settings.BLUEKING_BK_BIZ_ID}
+        )
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("bk_monitor", "0002_monitorreportconfig_custom_report_type"),
+    ]
+    operations = [migrations.RunPython(forwards_func)]

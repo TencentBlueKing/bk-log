@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 from logging.handlers import DatagramHandler
+import logging  # noqa
 from opentelemetry import trace
 from opentelemetry.trace import format_trace_id
 
@@ -38,9 +39,8 @@ Usage:
     except Exception:
         logger.exception("wrong3")
 """
-import logging  # noqa
 
-from apps.utils.local import get_request_id  # noqa
+from apps.utils.local import get_request_id  # noqa  pylint: disable=unused-import
 
 logger_detail = logging.getLogger("root")
 

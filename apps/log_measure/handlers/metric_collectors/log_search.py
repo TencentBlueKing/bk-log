@@ -49,6 +49,8 @@ class LogSearchMetricCollector(object):
 
     @staticmethod
     def search_count_by_time_range(timedelta: str):
+        search_count_total = 0
+        aggregation_datas = defaultdict(lambda: defaultdict(int))
         end_time = (
             arrow.get(MetricUtils.get_instance().report_ts).to(settings.TIME_ZONE).strftime("%Y-%m-%d %H:%M:%S%z")
         )
@@ -63,37 +65,44 @@ class LogSearchMetricCollector(object):
                 search_type="default",
                 created_at__range=[start_time, end_time],
             )
-            .order_by("id")
-            .values("id", "index_set_id", "duration", "created_by", "created_at", "search_type")
+            .order_by("index_set_id", "created_by")
+            .values("index_set_id", "created_by")
+            .annotate(count=Count("id"))
         )
         index_set_list = [history_obj["index_set_id"] for history_obj in history_objs]
         index_sets = array_group(
             LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
         )
+        # 将index_set_id --> bk_biz_id做一次聚合
+        for history_obj in history_objs:
+            if not index_sets.get(history_obj["index_set_id"]):
+                continue
+            target_biz_id = index_sets[history_obj["index_set_id"]]["bk_biz_id"]
+            target_username = history_obj["created_by"]
+            aggregation_datas[target_biz_id][target_username] += history_obj["count"]
+            search_count_total += history_obj["count"]
+
         # 带标签数据
         metrics = [
             Metric(
                 metric_name="count",
-                metric_value=history_obj["duration"],
+                metric_value=aggregation_datas[target_biz_id][target_username],
                 dimensions={
-                    "index_set_id": history_obj["index_set_id"],
-                    "index_set_name": index_sets[history_obj["index_set_id"]]["index_set_name"],
-                    "target_username": history_obj["created_by"],
-                    "target_bk_biz_id": index_sets[history_obj["index_set_id"]]["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(
-                        index_sets[history_obj["index_set_id"]]["bk_biz_id"]
-                    ),
+                    "target_username": target_username,
+                    "target_biz_id": target_biz_id,
+                    "target_biz_name": MetricUtils.get_instance().get_biz_name(target_biz_id),
                     "time_range": timedelta,
                 },
-                timestamp=arrow.get(history_obj["created_at"]).float_timestamp,
+                timestamp=MetricUtils.get_instance().report_ts,
             )
-            for history_obj in history_objs
+            for target_biz_id in aggregation_datas
+            for target_username in aggregation_datas[target_biz_id]
         ]
         # 搜索总数
         metrics.append(
             Metric(
                 metric_name="total",
-                metric_value=history_objs.count(),
+                metric_value=search_count_total,
                 dimensions={"time_range": timedelta},
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -102,7 +111,9 @@ class LogSearchMetricCollector(object):
         return metrics
 
     @staticmethod
-    @register_metric("search_favorite", description=_("检索收藏"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "log_search_favorite", description=_("检索收藏"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def favorite_count():
         favorite_objs = (
             FavoriteSearch.objects.filter(
@@ -125,6 +136,9 @@ class LogSearchMetricCollector(object):
         )
         aggregation_datas = defaultdict(lambda: defaultdict(int))
         for index_set_id in index_set_list:
+            # 可能检索的索引集已经不在了
+            if not index_sets.get(index_set_id):
+                continue
             bk_biz_id = index_sets[index_set_id]["bk_biz_id"]
             aggregation_datas[bk_biz_id][index_set_id] += 1
 
@@ -136,8 +150,8 @@ class LogSearchMetricCollector(object):
                 dimensions={
                     "index_set_id": index_set_id,
                     "index_set_name": index_sets[index_set_id]["index_set_name"],
-                    "target_bk_biz_id": bk_biz_id,
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    "target_biz_id": bk_biz_id,
+                    "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -189,8 +203,8 @@ class LogExportMetricCollector(object):
                     "index_set_name": index_sets[history_obj["index_set_id"]]["index_set_name"],
                     "target_username": history_obj["created_by"],
                     "export_type": history_obj["export_type"],
-                    "target_bk_biz_id": history_obj["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(history_obj["bk_biz_id"]),
+                    "target_biz_id": history_obj["bk_biz_id"],
+                    "target_biz_name": MetricUtils.get_instance().get_biz_name(history_obj["bk_biz_id"]),
                 },
                 timestamp=arrow.get(history_obj["created_at"]).float_timestamp,
             )
@@ -229,8 +243,8 @@ class IndexSetMetricCollector(object):
                         metric_name="count",
                         metric_value=group["count"],
                         dimensions={
-                            "target_bk_biz_id": bk_biz_id,
-                            "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                            "target_biz_id": bk_biz_id,
+                            "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                             "scenario_id": group["scenario_id"],
                             "is_active": group["is_active"],
                         },

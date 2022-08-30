@@ -78,7 +78,9 @@ class CheckESStory(BaseStory):
                     break
             except Exception as e:  # disable
                 self.report.add_warning(f"获取物理索引失败第{i+1}次, err: {e}")
-
+        if not indices:
+            self.report.add_error("获取物理索引为空")
+            return
         for i in indices:
             if i["index_pattern"] == self.bk_data_name:
                 self.indices = i["indices"]
@@ -110,7 +112,7 @@ class CheckESStory(BaseStory):
             except Exception as e:
                 self.report.add_warning(f"创建es_client失败第{i + 1}次, err: {e}")
 
-        if not es_client.ping(params={"request_timeout": 10}):
+        if es_client and not es_client.ping(params={"request_timeout": 10}):
             self.report.add_error(EsConnectFailException().message)
             return
 

@@ -19,9 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-
-import arrow
 from typing import List, Any
+import arrow
 from dateutil.rrule import rrule
 from dateutil.rrule import DAILY
 
