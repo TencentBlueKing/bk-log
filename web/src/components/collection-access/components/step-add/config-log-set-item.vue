@@ -119,7 +119,7 @@
               <div class="choose-table-item" v-for="(item, index) in separatorFilters" :key="index">
                 <div class="left">
                   <bk-form-item
-                    label="" :rules="rules.separator_filters" style="width: 100px;"
+                    label="" :rules="rules.separator_filters"
                     :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
                     <bk-input style="width: 100px;" v-model="item.fieldindex"></bk-input>
                   </bk-form-item>
@@ -326,7 +326,13 @@ export default {
         ],
         separator_filters: [ // 分隔符过滤条件
           {
-            required: true,
+            validator: (value) => {
+              const isFillOneSide = this.separatorFilters.some((item) => {
+                return (item.fieldindex && !item.word) || (!item.fieldindex && item.word);
+              });
+              if (isFillOneSide) return Boolean(value);
+              return true;
+            },
             trigger: 'blur',
           },
         ],
@@ -376,7 +382,7 @@ export default {
             type: 'match', // 过滤方式类型
             match_type: 'include', // 过滤方式 可选字段 include, exclude
             match_content: '',
-            separator: '',
+            separator: '|',
             separator_filters: [ // 分隔符过滤条件
               { fieldindex: '', word: '', op: '=', logic_op: 'and' },
             ],
