@@ -3639,15 +3639,6 @@ class CollectorHandler(object):
         etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
         return etl_handler.update_or_create(**params)
 
-
-def get_random_public_cluster_id() -> int:
-    clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
-    for cluster in clusters:
-        if cluster["cluster_config"]["registered_system"] == "_default":
-            return cluster["cluster_config"]["cluster_id"]
-
-    return 0
-
     @classmethod
     def collector_container_config_to_raw_config(cls, collector_config: CollectorConfig,
                                                  container_config: ContainerCollectorConfig) -> dict:
@@ -3728,6 +3719,15 @@ def get_random_public_cluster_id() -> int:
             result.append(container_raw_config)
 
         return yaml.safe_dump_all(result)
+
+
+def get_random_public_cluster_id() -> int:
+    clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
+    for cluster in clusters:
+        if cluster["cluster_config"]["registered_system"] == "_default":
+            return cluster["cluster_config"]["cluster_id"]
+
+    return 0
 
 
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
