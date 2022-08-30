@@ -69,6 +69,7 @@ from apps.log_databus.serializers import (
     UpdateContainerCollectorSerializer,
     FastCollectorCreateSerializer,
     FastCollectorUpdateSerializer,
+    ContainerCollectorConfigToYamlSerializer,
 )
 from apps.log_search.constants import BKDATA_OPEN, CollectorScenarioEnum, HAVE_DATA_ID, NOT_CUSTOM
 from apps.log_search.permission import Permission
@@ -2224,3 +2225,13 @@ class CollectorViewSet(ModelViewSet):
         """
         data = self.params_valid(FastCollectorUpdateSerializer)
         return Response(CollectorHandler(collector_config_id).fast_update(data))
+
+    @list_route(methods=["POST"], url_path="container_configs_to_yaml")
+    def container_configs_to_yaml(self, request):
+        data = self.params_valid(ContainerCollectorConfigToYamlSerializer)
+        return Response(
+            CollectorHandler.container_dict_configs_to_yaml(
+                container_configs=data["configs"],
+                add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+            )
+        )
