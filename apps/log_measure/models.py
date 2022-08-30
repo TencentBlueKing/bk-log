@@ -19,8 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-
 from django.db import models
+from django.db.models import Max
 from django.utils.translation import ugettext_lazy as _
 
 from apps.models import OperateRecordModel
@@ -36,3 +36,17 @@ class AccessIndexSet(OperateRecordModel):
         verbose_name = _("索引集搜索统计")
         verbose_name_plural = _("索引集搜索统计")
         unique_together = (("project_id", "index_set_id", "static_date", "created_by"),)
+
+
+class MetricDataHistory(models.Model):
+    metric_id = models.CharField(_("指标ID"), max_length=256)
+    metric_name = models.CharField(_("指标名"), max_length=256)
+    metric_value = models.CharField(_("指标值"), max_length=256)
+    dimension = models.JSONField(_("指标维度"), max_length=256)
+    timestamp = models.IntegerField(_("指标时间戳"))
+
+    @staticmethod
+    def get_metric_id_latest_timestamp(metric_id: str):
+        if MetricDataHistory.objects.filter(metric_id=metric_id).exists():
+            return MetricDataHistory.objects.filter(metric_id=metric_id).aggregate(Max("timestamp"))["timestamp__max"]
+        return None

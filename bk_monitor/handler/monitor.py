@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
+from collections import defaultdict
 from typing import List, Optional
-
+import arrow
 from django.utils.translation import ugettext_lazy as _
 
 from bk_monitor.api.client import Client
@@ -22,7 +23,11 @@ from bk_monitor.models import MonitorReportConfig
 from bk_monitor.utils.collector import MetricCollector
 from bk_monitor.utils.data_name_builder import DataNameBuilder
 from bk_monitor.utils.event import EventTrigger
+from bk_monitor.utils.metric import REGISTERED_METRICS, Metric
 from bk_monitor.utils.query import CustomTable, SqlSplice
+
+from apps.log_measure.models import MetricDataHistory
+from apps.log_measure.utils.metric import build_metric_id, MetricUtils, get_metric_id_info
 
 logger = logging.getLogger("bk_monitor")
 
@@ -165,17 +170,60 @@ class CustomReporter(object):
         self._enable_data_id([data_name_obj["name"] for data_name_obj in data_name_list])
         logger.info("enable data_id successful")
 
-    def report(self, collector_import_paths: list = None, namespaces: list = None):
+    def collect(self, collector_import_paths: list = None, namespaces: list = None):
         """
-        将已通过 register_metric 注册的对应metric收集发送给监控，可在tasks 任务中增加对应任务即可
+        将已通过 register_metric 注册的对应metric收集存入数据库
         Attributes:
             collector_import_paths: list 动态引用文件列表
             namespaces: 允许上报namespace列表
         """
+        metric_groups = MetricCollector(collector_import_paths=collector_import_paths).collect(namespaces=namespaces)
+        try:
+            for group in metric_groups:
+                metric_id = build_metric_id(
+                    data_name=group["data_name"], namespace=group["namespace"], prefix=group["prefix"]
+                )
+                MetricDataHistory.objects.bulk_create(
+                    [
+                        MetricDataHistory(
+                            metric_id=metric_id,
+                            metric_name=i.metric_name,
+                            metric_value=i.metric_value,
+                            dimension=i.dimension,
+                            timestamp=i.timestamp,
+                        )
+                        for i in group["metrics"]
+                    ]
+                )
+                logger.info(f"save metric_data[{metric_id}] successfully")
+        except Exception as e:
+            logger.error(f"Failed to save metric_data, msg: {e}")
 
-        data = MetricCollector(collector_import_paths=collector_import_paths).collect(namespaces=namespaces)
+    def report(self, collector_import_paths: list = None):
+        """
+        将collect中塞去数据库的数据上报至监控
+        """
+        # 此处实例化MetricCollector只是为了获取指标注册之后的REGISTERED_METRICS
+        aggregation_data_name_datas = defaultdict(list)
+        _ = MetricCollector(collector_import_paths=collector_import_paths)
+        metric_ids = self.metric_id_filter()
+        for metric_id in metric_ids:
+            data_name, namespace, prefix = get_metric_id_info(metric_id)
+            latest_timestamp = MetricDataHistory().get_metric_id_latest_timestamp(metric_id)
+            if not latest_timestamp:
+                continue
+            metric_id_datas = MetricDataHistory.objects.filter(metric_id=metric_id, timestamp=latest_timestamp)
+            for i in metric_id_datas:
+                aggregation_data_name_datas[data_name].append(
+                    Metric(
+                        metric_name=i.metric_name,
+                        metric_value=i.metric_value,
+                        dimensions=i.dimension,
+                        timestamp=MetricUtils.get_instance().report_ts,
+                    ).to_bkmonitor_report(prefix=prefix, namespace=namespace)
+                )
 
-        for key, val in data.items():
+        for key, val in aggregation_data_name_datas.items():
             if not self._report_params_verity(key, val):
                 continue
             try:
@@ -196,6 +244,16 @@ class CustomReporter(object):
                     )
             except Exception as e:  # pylint: disable=broad-except
                 logger.warning(f"custom_report error: {e}")
+
+    def metric_id_filter(self) -> list:
+        metric_ids = []
+        time_now = arrow.now()
+        time_now_minute = 60 * time_now.hour + time_now.minute
+        for metric_id, metric in REGISTERED_METRICS.items():
+            if metric["time_filter"] and time_now_minute % metric["time_filter"]:
+                continue
+            metric_ids.append(metric_id)
+        return metric_ids
 
     def trigger_event(self, data_name: str, event: dict):
         if not data_name:

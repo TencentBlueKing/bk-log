@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 import importlib
 import time
 import logging
-from collections import defaultdict
 import arrow
 
 from bk_monitor.utils.metric import REGISTERED_METRICS
@@ -51,13 +50,7 @@ class MetricCollector(object):
                     "[statistics_data] collect metric->[{}] failed: {}".format(metric_method["namespace"], e)
                 )
 
-        res = defaultdict(list)
-        for group in metric_groups:
-            for metric in group["metrics"]:
-                res[group["date_name"]].append(
-                    metric.to_bkmonitor_report(prefix=group["prefix"], namespace=group["namespace"])
-                )
-        return res
+        return metric_groups
 
     @classmethod
     def metric_filter(cls, namespaces=None, data_names=None, time_filter_enable=True):
