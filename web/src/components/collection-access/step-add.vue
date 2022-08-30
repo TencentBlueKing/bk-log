@@ -261,8 +261,9 @@
 
               <div class="config-container">
                 <div class="config-item container-select">
-                  <span>{{$t('NameSpace选择')}}</span>
+                  <span :class="{ 'none-hidden-dom': isNode }">{{$t('NameSpace选择')}}</span>
                   <div v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
+                       :class="{ 'none-hidden-dom': isNode }"
                        :disabled="!!formData.bcs_cluster_id">
                     <bk-select
                       v-model="conItem.namespaces"
@@ -282,12 +283,13 @@
                   <div class="mt8 justify-bt">
                     <bk-checkbox
                       v-model="conItem.isAllContainer"
-                      :disabled="isNode"
+                      :class="{ 'none-hidden-dom': isNode }"
                       @change="(state) => handelClickAllContainer(conIndex, state)">
                       {{$t('所有容器')}}
                     </bk-checkbox>
                     <div class="justify-bt container-btn-container">
-                      <span v-if="!isContainerHaveValue(conItem.container)" class="span-box"
+                      <span v-if="!isContainerHaveValue(conItem.container)"
+                            :class="{ 'span-box': true, 'none-hidden-dom': isNode }"
                             v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
                             :disabled="!!formData.bcs_cluster_id">
                         <div :class="{
@@ -542,7 +544,7 @@ export default {
             type: 'match', // 过滤方式类型
             match_type: 'include', // 过滤方式 可选字段 include, exclude
             match_content: '',
-            separator: '',
+            separator: '|',
             separator_filters: [ // 分隔符过滤条件
               { fieldindex: '', word: '', op: '=', logic_op: 'and' },
             ],
@@ -583,7 +585,7 @@ export default {
                 type: 'match', // 过滤方式类型
                 match_type: 'include',  // 过滤方式 可选字段 include, exclude
                 match_content: '',
-                separator: '',
+                separator: '|',
                 separator_filters: [ // 分隔符过滤条件
                   { fieldindex: '', word: '', op: '=', logic_op: 'and' },
                 ],
@@ -774,7 +776,7 @@ export default {
         return [];
       }
     },
-    // 是否时编辑或者克隆
+    // 是否是编辑或者克隆
     isCloneOrUpdate() {
       return this.isUpdate || this.isClone;
     },
@@ -1181,7 +1183,10 @@ export default {
           delete params.multiline_timeout;
         }
         const { match_type, match_content, separator, separator_filters, type } = params.conditions;
-        params.conditions = type === 'match' ? { type, match_type, match_content } : {
+        let finallyType = type; // 如果分隔符内容都没有填写的话则类型变成match不传过滤内容
+        const isUnFilled = separator_filters.every(item => !item.fieldindex && !item.word);
+        isUnFilled && (finallyType = 'match');
+        params.conditions = finallyType === 'match' ? { type, match_type, match_content } : {
           type,
           separator,
           separator_filters,
@@ -1196,9 +1201,7 @@ export default {
     },
     // 选择日志类型
     chooseLogType(item) {
-      if (item.is_active) {
-        this.formData.collector_scenario_id = item.id;
-      }
+      if (item.is_active) this.formData.collector_scenario_id = item.id;
     },
     // 选择数据分类
     chooseDataClass() {
@@ -1269,9 +1272,7 @@ export default {
       }
     },
     clearError() {
-      if (!this.configNameEnIsNotRepeat) {
-        this.configNameEnIsNotRepeat = true;
-      }
+      if (!this.configNameEnIsNotRepeat) this.configNameEnIsNotRepeat = true;
     },
     /**
      * @desc: 环境选择
@@ -1316,7 +1317,6 @@ export default {
      * @param { Boolean } state 状态
      */
     handelClickAllContainer(index, state) {
-      this.currentSetIndex = index;
       if (state) {
         // 点击所有容器配置项的指定标签和容器都填为空
         this.formData.configs[index].container = this.allContainer;
@@ -1385,8 +1385,7 @@ export default {
     handleNameSpaceSelect(option, index) {
       if (option[option.length - 1] === '*') { // 如果最后一步选择所有，则清空数组填所有
         const nameSpacesLength = this.formData.configs[index].namespaces.length;
-        this.formData.configs[index].namespaces.splice(0, nameSpacesLength);
-        this.formData.configs[index].namespaces.push('*');
+        this.formData.configs[index].namespaces.splice(0, nameSpacesLength, '*');
         return;
       }
       if (option.length > 1 && option.includes('*')) { // 如果选中其他的值 包含所有则去掉所有选项
@@ -1432,6 +1431,9 @@ export default {
           console.warn(err);
         });
     },
+    /**
+     * @desc: 编进进入时判断当前环境 禁用另一边环境选择
+     */
     initBtnListDisable() {
       const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
       this.environmentList[operateIndex].btnList.forEach(item => item.isDisable = true);
@@ -1443,7 +1445,7 @@ export default {
       return Object.values(labelSelector)?.some(item => item.length) || false;
     },
     isContainerHaveValue(container) {
-      return Object.values(container)?.some(item => !!item) || false;
+      return Object.values(container)?.some(Boolean) || false;
     },
   },
 };
@@ -1816,6 +1818,11 @@ export default {
     margin-top: 8px;
   }
 
+  .none-hidden-dom {
+    /* stylelint-disable-next-line declaration-no-important */
+    display: none !important;
+  }
+
   .is-selected {
     /* stylelint-disable-next-line declaration-no-important */
     z-index: 2 !important;
@@ -1987,7 +1994,7 @@ export default {
       }
 
       .container-select {
-        width: 300px;
+        width: 460px;
       }
 
       .container-btn-container {
@@ -2051,8 +2058,8 @@ export default {
 
         .edit {
           position: absolute;
-          right: 0;
-          top: -30px;
+          left: 70px;
+          top: -28px;
           color: #3a84ff;
           cursor: pointer;
         }

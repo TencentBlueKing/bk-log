@@ -74,7 +74,7 @@ from apps.log_databus.constants import (
     TopoType,
     WorkLoadType,
 )
-from apps.log_databus.constants import CACHE_KEY_CLUSTER_INFO, EtlConfig
+from apps.log_databus.constants import CACHE_KEY_CLUSTER_INFO, EtlConfig, CONTAINER_CONFIGS_TO_YAML_EXCLUDE_FIELDS
 from apps.log_databus.exceptions import (
     CollectNotSuccess,
     CollectNotSuccessNotCanStart,
@@ -3633,18 +3633,10 @@ class CollectorHandler(object):
         etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
         return etl_handler.update_or_create(**params)
 
-
-def get_random_public_cluster_id() -> int:
-    clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
-    for cluster in clusters:
-        if cluster["cluster_config"]["registered_system"] == "_default":
-            return cluster["cluster_config"]["cluster_id"]
-
-    return 0
-
     @classmethod
-    def collector_container_config_to_raw_config(cls, collector_config: CollectorConfig,
-                                                 container_config: ContainerCollectorConfig) -> dict:
+    def collector_container_config_to_raw_config(
+        cls, collector_config: CollectorConfig, container_config: ContainerCollectorConfig
+    ) -> dict:
         """
         根据采集配置和容器采集配置实例创建容器采集配置
         @param collector_config: 采集配置
@@ -3652,11 +3644,13 @@ def get_random_public_cluster_id() -> int:
         @return:
         """
         raw_config = cls.container_config_to_raw_config(container_config)
-        raw_config.update({
-            "dataId": collector_config.bk_data_id,
-            "extMeta": {label["key"]: label["value"] for label in collector_config.extra_labels},
-            "addPodLabel": collector_config.add_pod_label,
-        })
+        raw_config.update(
+            {
+                "dataId": collector_config.bk_data_id,
+                "extMeta": {label["key"]: label["value"] for label in collector_config.extra_labels},
+                "addPodLabel": collector_config.add_pod_label,
+            }
+        )
         return raw_config
 
     @classmethod
@@ -3677,7 +3671,9 @@ def get_random_public_cluster_id() -> int:
             "workloadName": container_config.workload_name,
             "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
             "labelSelector": {
-                "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels},
+                "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels}
+                if container_config.match_labels
+                else {},
                 "matchExpressions": [
                     {
                         "key": expression["key"],
@@ -3685,7 +3681,9 @@ def get_random_public_cluster_id() -> int:
                         "values": [v.strip() for v in expression.get("value", "").split(",") if v.strip()],
                     }
                     for expression in container_config.match_expressions
-                ],
+                ]
+                if container_config.match_expressions
+                else [],
             },
             "multiline": {
                 "pattern": container_config.params.get("multiline_pattern"),
@@ -3702,8 +3700,9 @@ def get_random_public_cluster_id() -> int:
         return raw_config
 
     @classmethod
-    def container_dict_configs_to_yaml(cls, container_configs: List[Dict], add_pod_label: bool,
-                                       extra_labels: List) -> str:
+    def container_dict_configs_to_yaml(
+        cls, container_configs: List[Dict], add_pod_label: bool, extra_labels: List
+    ) -> str:
         """
         将字典格式的容器采集配置转为yaml
         @param container_configs: 容器采集配置实例
@@ -3714,14 +3713,31 @@ def get_random_public_cluster_id() -> int:
         result = []
 
         for container_config in container_configs:
+
+            # 排除多的字段，防止在ContainerCollectorConfig作为参数时出现got an unexpected keyword argument
+            for field in CONTAINER_CONFIGS_TO_YAML_EXCLUDE_FIELDS:
+                if field in container_config:
+                    container_config.pop(field)
+
             container_raw_config = cls.container_config_to_raw_config(ContainerCollectorConfig(**container_config))
-            container_raw_config.update({
-                "extMeta": {label["key"]: label["value"] for label in extra_labels},
-                "addPodLabel": add_pod_label,
-            })
+            container_raw_config.update(
+                {
+                    "extMeta": {label["key"]: label["value"] for label in extra_labels if label},
+                    "addPodLabel": add_pod_label,
+                }
+            )
             result.append(container_raw_config)
 
         return yaml.safe_dump_all(result)
+
+
+def get_random_public_cluster_id() -> int:
+    clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
+    for cluster in clusters:
+        if cluster["cluster_config"]["registered_system"] == "_default":
+            return cluster["cluster_config"]["cluster_id"]
+
+    return 0
 
 
 def build_bk_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
