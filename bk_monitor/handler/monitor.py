@@ -189,7 +189,7 @@ class CustomReporter(object):
                             metric_id=metric_id,
                             metric_name=i.metric_name,
                             metric_value=i.metric_value,
-                            dimension=i.dimension,
+                            dimension=i.dimensions,
                             timestamp=i.timestamp,
                         )
                         for i in group["metrics"]

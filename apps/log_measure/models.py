@@ -42,7 +42,7 @@ class MetricDataHistory(models.Model):
     metric_id = models.CharField(_("指标ID"), max_length=256)
     metric_name = models.CharField(_("指标名"), max_length=256)
     metric_value = models.CharField(_("指标值"), max_length=256)
-    dimension = models.JSONField(_("指标维度"), max_length=256)
+    dimension = models.JSONField(_("指标维度"), blank=True, null=True)
     timestamp = models.IntegerField(_("指标时间戳"))
 
     @staticmethod
