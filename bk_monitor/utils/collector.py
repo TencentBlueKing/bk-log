@@ -37,7 +37,7 @@ class MetricCollector(object):
                         "namespace": metric_method["namespace"],
                         "description": metric_method["description"],
                         "metrics": metric_method["method"](),
-                        "date_name": metric_method["data_name"],
+                        "data_name": metric_method["data_name"],
                     }
                 )
                 logger.info(
