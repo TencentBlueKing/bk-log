@@ -205,7 +205,7 @@ class CustomReporter(object):
         """
         # 此处实例化MetricCollector只是为了获取指标注册之后的REGISTERED_METRICS
         aggregation_data_name_datas = defaultdict(list)
-        _ = MetricCollector(collector_import_paths=collector_import_paths)
+        __ = MetricCollector(collector_import_paths=collector_import_paths)  # noqa: F841
         metric_ids = self.metric_id_filter()
         for metric_id in metric_ids:
             data_name, namespace, prefix = get_metric_id_info(metric_id)
