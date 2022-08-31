@@ -3715,9 +3715,11 @@ class CollectorHandler(object):
         for container_config in container_configs:
 
             # 排除多的字段，防止在ContainerCollectorConfig作为参数时出现got an unexpected keyword argument
+            # 同时需要将该字段内的参数平铺，用来在生成默认的yaml时减少部分产生null值
             for field in CONTAINER_CONFIGS_TO_YAML_EXCLUDE_FIELDS:
                 if field in container_config:
-                    container_config.pop(field)
+                    exclude_field = container_config.pop(field)
+                    container_config.update(exclude_field)
 
             container_raw_config = cls.container_config_to_raw_config(ContainerCollectorConfig(**container_config))
             container_raw_config.update(
