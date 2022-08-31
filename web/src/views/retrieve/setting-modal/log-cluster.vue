@@ -162,7 +162,7 @@
                 style="color: #3a84ff;"
                 :disabled="!globalEditable"
                 :clearable="false"
-                :popover-min-width="60">
+                :popover-min-width="100">
                 <bk-option
                   v-for="option in conditionList"
                   :key="option.id"
@@ -319,6 +319,8 @@ export default {
       conditionList: [ // 过滤条件对比
         { id: '=', name: '=' },
         { id: '!=', name: '!=' },
+        { id: 'LIKE', name: 'LIKE' },
+        { id: 'NOT LIKE', name: 'NOT LIKE' },
       ],
       comparedList: [
         { id: 'and', name: 'AND' },
