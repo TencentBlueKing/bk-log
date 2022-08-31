@@ -563,7 +563,7 @@ class GlobalCategoriesEnum(ChoicesEnum):
             {"id": "os", "name": _("操作系统"), "children": []},
             {"id": "host_device", "name": _("主机设备"), "children": []},
             {"id": "kubernetes", "name": "kubernetes", "children": []},
-        ]
+        ],
     }
 
     SERVICES = {
@@ -577,7 +577,6 @@ class GlobalCategoriesEnum(ChoicesEnum):
         "name": "应用",
         "children": [
             {"id": "application_check", "name": _("业务应用"), "children": []},
-            {"id": "kubernetes", "name": "kubernetes", "children": []},
         ],
     }
 

@@ -138,7 +138,7 @@ class PluginParamSerializer(serializers.Serializer):
     插件参数序列化
     """
 
-    paths = serializers.ListField(label=_("日志路径"), child=serializers.CharField(max_length=255), required=False)
+    paths = serializers.ListField(label=_("日志路径"), child=serializers.CharField(max_length=255, allow_blank=True), required=False)
     conditions = PluginConditionSerializer(required=False)
     multiline_pattern = serializers.CharField(label=_("行首正则"), required=False, allow_blank=True)
     multiline_max_lines = serializers.IntegerField(label=_("最多匹配行数"), required=False, max_value=1000)
