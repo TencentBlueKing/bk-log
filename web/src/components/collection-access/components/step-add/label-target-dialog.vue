@@ -230,7 +230,7 @@ export default {
 
       const [nameSpaceStr, nameStr] = this.getNameStrAndNameSpace(treeItem); // 获取当前树节点标签请求name字符串
       this.currentNameSpaceStr = nameSpaceStr;
-      const { bk_biz_id, bcs_cluster_id, type, match_labels, match_expressions } = this.labelParams;
+      const { bk_biz_id, bcs_cluster_id, type } = this.labelParams;
       const query = { namespace: nameSpaceStr, bcs_cluster_id, type, bk_biz_id,  name: nameStr  };
       if (type === 'node') delete query.namespace;
       this.labelLoading = true;
@@ -244,7 +244,7 @@ export default {
         })
         .finally(() => {
           this.labelLoading = false;
-          this.getResultShow({ match_labels, match_expressions });
+          this.getResultShow(this.getMatchLabel);
         });
     },
     handelConfirmLabel() {
