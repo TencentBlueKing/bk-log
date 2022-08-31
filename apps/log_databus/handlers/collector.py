@@ -3708,7 +3708,7 @@ class CollectorHandler(object):
     @classmethod
     def container_dict_configs_to_yaml(
         cls, container_configs: List[Dict], add_pod_label: bool, extra_labels: List
-    ) -> bytes:
+    ) -> str:
         """
         将字典格式的容器采集配置转为yaml
         @param container_configs: 容器采集配置实例
@@ -3736,7 +3736,7 @@ class CollectorHandler(object):
             )
             result.append(container_raw_config)
 
-        return base64.b64encode(yaml.safe_dump_all(result).encode("utf-8"))
+        return yaml.safe_dump_all(result)
 
 
 def get_random_public_cluster_id() -> int:
