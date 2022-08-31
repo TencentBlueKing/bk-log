@@ -55,6 +55,7 @@
           v-model="formData.workload_name"
           allow-create
           searchable
+          :placeholder="placeHolderStr"
           @toggle="(status) => isOptionOpen = status">
           <bk-option
             v-for="(option, index) in nameList"
@@ -94,6 +95,7 @@ export default {
       nameCannotClick: false, // 应用列表是否正在请求中
       typeList: [],
       nameList: [],
+      placeHolderStr: `${this.$t('请输入应用名称')}, ${this.$t('支持正则匹配')}`,
     };
   },
   computed: {},
@@ -114,7 +116,7 @@ export default {
     },
   },
   mounted() {
-    this.$refs.loadSelectRef.$refs.createInput.placeholder = `${this.$t('请输入应用名称')}, ${this.$t('支持正则匹配')}`;
+    this.$refs.loadSelectRef.$refs.createInput.placeholder = this.placeHolderStr;
   },
   methods: {
     handelCancelDialog() {
@@ -174,7 +176,7 @@ export default {
 }
 
 .application:hover + .icon-angle-down {
-    display: none;
+  display: none;
 }
 
 .icon-angle-down {
