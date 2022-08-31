@@ -184,7 +184,7 @@ class CustomReporter(object):
                     data_name=group["data_name"], namespace=group["namespace"], prefix=group["prefix"]
                 )
                 MetricDataHistory.objects.bulk_create(
-                    [
+                    objs=[
                         MetricDataHistory(
                             metric_id=metric_id,
                             metric_name=i.metric_name,
@@ -193,7 +193,8 @@ class CustomReporter(object):
                             timestamp=i.timestamp,
                         )
                         for i in group["metrics"]
-                    ]
+                    ],
+                    batch_size=BATCH_SIZE,
                 )
                 logger.info(f"save metric_data[{metric_id}] successfully")
         except Exception as e:
@@ -222,6 +223,12 @@ class CustomReporter(object):
                         timestamp=MetricUtils.get_instance().report_ts,
                     ).to_bkmonitor_report(prefix=prefix, namespace=namespace)
                 )
+            expired_data_timestamp = latest_timestamp - REGISTERED_METRICS[metric_id]["time_filter"]
+            try:
+                MetricDataHistory.objects.filter(metric_id=metric_id, timestamp__lte=expired_data_timestamp).delete()
+                logger.info(f"Delete expired metric_data[{metric_id}] successfully")
+            except Exception as e:
+                logger.error(f"Failed to delete expired metric_data[{metric_id}], msg: {e}")
 
         for key, val in aggregation_data_name_datas.items():
             if not self._report_params_verity(key, val):
