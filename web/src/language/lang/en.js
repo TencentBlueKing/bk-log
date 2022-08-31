@@ -252,6 +252,7 @@ export default {
   提取链路: 'Extract Link',
   新建提取链路: 'Create Extract Link',
   链路类型: 'Link type',
+  bk_repo链路: 'Bk Repo Link',
   执行bk_biz_id: 'op_bk_biz_id',
   腾讯云SecretId: 'qcloud_secret_id',
   腾讯云SecretKey: 'qcloud_secret_key',
