@@ -416,14 +416,13 @@ class ApiAuthRequest(Request):
 class ApiBatchAuthRequest(Request):
     __slots__ = ("system", "subject", "actions", "resources", "operate")
 
-    def __init__(self, system, subject, actions, resources, operate, asynchronous=None, expired_at=None):
+    def __init__(self, system, subject, actions, resources, operate, asynchronous=None):
         self.system = system
         self.subject = subject
         self.actions = actions
         self.resources = resources
         self.operate = operate
         self.asynchronous = asynchronous
-        self.expired_at = expired_at
 
     def _validate_type(self):
         if not isinstance(self.operate, six.string_types):
@@ -456,8 +455,5 @@ class ApiBatchAuthRequest(Request):
 
         if self.asynchronous is not None:
             request_dict["asynchronous"] = self.asynchronous
-
-        if self.expired_at is not None:
-            request_dict["expired_at"] = self.expired_at
 
         return request_dict
