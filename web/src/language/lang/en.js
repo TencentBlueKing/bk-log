@@ -1411,6 +1411,7 @@ export default {
     btn: 'View all',
   },
   请添加表达式: 'Please add an expression',
+  请添加标签: 'Please add an label',
   环境选择: 'Environmental choice',
   Yaml模式: 'Yaml mode',
   配置项: 'Configuration item',

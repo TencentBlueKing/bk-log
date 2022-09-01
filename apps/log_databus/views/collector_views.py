@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import base64
 
 from django.conf import settings
 from django.db.models import Q
@@ -2230,8 +2231,10 @@ class CollectorViewSet(ModelViewSet):
     def container_configs_to_yaml(self, request):
         data = self.params_valid(ContainerCollectorConfigToYamlSerializer)
         return Response(
-            CollectorHandler.container_dict_configs_to_yaml(
-                container_configs=data["configs"],
-                add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+            base64.b64encode(
+                CollectorHandler.container_dict_configs_to_yaml(
+                    container_configs=data["configs"],
+                    add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+                ).encode("utf-8")
             )
         )
