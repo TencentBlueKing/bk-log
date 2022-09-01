@@ -268,9 +268,6 @@
             :total-fields="totalFields"
             :field-alias-map="fieldAliasMap"
             :show-field-alias="showFieldAlias"
-            :show-context-log="showContextLog"
-            :show-realtime-log="showRealtimeLog"
-            :show-web-console="showWebConsole"
             :bk-monitor-url="bkmonitorUrl"
             :async-export-usable="asyncExportUsable"
             :async-export-usable-reason="asyncExportUsableReason"
@@ -450,9 +447,6 @@ export default {
       tookTime: 0, // 耗时
       totalCount: 0, // 结果条数
       tableData: {}, // 表格结果
-      showContextLog: false, // 上下文
-      showRealtimeLog: false, // 实时日志
-      showWebConsole: false, // BCS 容器
       bkmonitorUrl: false, // 监控主机详情地址
       asyncExportUsable: true, // 是否支持异步导出
       asyncExportUsableReason: '', // 无法异步导出原因
@@ -1275,11 +1269,14 @@ export default {
           apm_relation: apmRelation,
         } = localConfig;
 
-        this.operatorConfig = {
+        this.operatorConfig = { // 操作按钮配置信息
           bkmonitor,
+          bcsWebConsole,
           contextAndRealtime,
           timeField,
         };
+        // 初始化操作按钮消息
+        this.operatorConfig.toolMessage = this.initToolTipsMessage(this.operatorConfig);
         this.cleanConfig = cleanConfig;
         this.clusteringData = clusteringConfig;
         this.apmRelationData = apmRelation;
@@ -1294,9 +1291,6 @@ export default {
         });
         this.notTextTypeFields = notTextTypeFields;
         this.ipTopoSwitch = ipTopoSwitch.is_active;
-        this.showContextLog = contextAndRealtime.is_active;
-        this.showRealtimeLog = contextAndRealtime.is_active;
-        this.showWebConsole = bcsWebConsole.is_active;
         this.bkmonitorUrl = bkmonitor.is_active;
         this.asyncExportUsable = asyncExport.is_active;
         this.asyncExportUsableReason = !asyncExport.is_active ? asyncExport.extra.usable_reason : '';
@@ -1320,9 +1314,6 @@ export default {
         this.isThollteField = false;
       } catch (e) {
         this.ipTopoSwitch = true;
-        this.showContextLog = false;
-        this.showRealtimeLog = false;
-        this.showWebConsole = false;
         this.bkmonitorUrl = false;
         this.asyncExportUsable = true;
         this.asyncExportUsableReason = '';
@@ -1625,6 +1616,14 @@ export default {
         .catch((e) => {
           console.warn(e);
         });
+    },
+    initToolTipsMessage(config) {
+      const { contextAndRealtime, bkmonitor } = config;
+      return {
+        monitorWeb: bkmonitor.is_active ? this.$t('retrieve.monitorAlarm') : bkmonitor?.extra.reason,
+        realTimeLog: contextAndRealtime.is_active ? this.$t('retrieve.log') : contextAndRealtime?.extra.reason,
+        contextLog: contextAndRealtime.is_active ? this.$t('retrieve.context') : contextAndRealtime?.extra.reason,
+      };
     },
   },
 };

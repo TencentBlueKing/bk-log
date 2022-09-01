@@ -32,7 +32,7 @@
           <span class="bk-icon icon-upload-cloud" @click="updateYAMLDocument"></span>
         </span>
         <span v-bk-tooltips="{ distance: 20, content: $t('下载'), }" class="load-tips">
-          <span class="bk-icon icon-download" @click="downloadYAMLDocument('yaml.yaml')"></span>
+          <span class="bk-icon icon-download" @click="downloadYAMLDocument('monaco-text.yaml')"></span>
         </span>
       </div>
     </monaco-editor>
@@ -90,7 +90,6 @@ export default {
       const base64Str = base64Encode(val);
       this.$emit('change', this.valueType === 'default' ? val : base64Str);
       clearTimeout(this.timer);
-      this.isHaveErrorProblem && (this.warningList = []);
       this.timer = setTimeout(() => {
         this.checkWarning(base64Str);
       }, 1000);

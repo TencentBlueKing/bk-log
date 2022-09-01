@@ -32,7 +32,8 @@
     @confirm="handelConfirmLabel"
     @cancel="handelCancelDialog">
     <div class="log-target-container" v-bkloading="{ isLoading: treeLoading, zIndex: 10 }">
-      <div class="label-tree" :style="`width : ${leftPreWidth}px`">
+      <div :class="['label-tree', activeStretchBtn === 'left' && 'right-border-light']"
+           :style="`width : ${leftPreWidth}px`">
         <div class="child-title">
           <span>{{$t('获取标签')}}</span>
           <span>{{$t('选择Service以获取Label列表')}}</span>
@@ -94,17 +95,22 @@
         <div class="result">
           <div
             v-bkloading="{ isLoading: resultLoading, zIndex: 10 }"
-            :class="['result-container',!rightPreWidth && 'is-sliding-close']"
+            :class="['result-container',
+                     !rightPreWidth && 'is-sliding-close',
+                     activeStretchBtn === 'right' && 'left-border-light']"
             :style="`width : ${rightPreWidth}px`">
             <div class="child-title">
               <span>{{$t('结果预览')}}</span>
               <span></span>
             </div>
-            <span class="hit-title">
-              {{$t('已命中')}}
-              <span class="hit-number">{{hitResultList.length}}</span>
-              {{$t('个内容')}}
-            </span>
+            <div class="hit-title">
+              <span>
+                {{$t('已命中')}}
+                <span class="hit-number">{{hitResultList.length}}</span>
+                {{$t('个内容')}}
+              </span>
+              <span class="hit-number" @click="() => hitResultList = []">{{$t('清空')}}</span>
+            </div>
             <div class="hit-container">
               <div class="hit-item" v-for="item of hitResultList" :key="item.id">
                 <span :title="item.name">{{item.name}}</span>
@@ -174,6 +180,7 @@ export default {
       resultLoading: false, // 结果loading
       timer: null,
       currentNameSpaceStr: '',
+      activeStretchBtn: '',
       cacheRequestParams: { // 缓存树结构传参
         bk_biz_id: null,
         bcs_cluster_id: null,
@@ -217,15 +224,13 @@ export default {
       }
     },
   },
-  created() {
-  },
   methods: {
     handleSelectTreeItem(treeItem) {
       if (!['pod', 'node'].includes(treeItem.data.type)) return;
 
       const [nameSpaceStr, nameStr] = this.getNameStrAndNameSpace(treeItem); // 获取当前树节点标签请求name字符串
       this.currentNameSpaceStr = nameSpaceStr;
-      const { bk_biz_id, bcs_cluster_id, type } = this.labelParams;
+      const { bk_biz_id, bcs_cluster_id, type, match_labels, match_expressions } = this.labelParams;
       const query = { namespace: nameSpaceStr, bcs_cluster_id, type, bk_biz_id,  name: nameStr  };
       if (type === 'node') delete query.namespace;
       this.labelLoading = true;
@@ -239,6 +244,7 @@ export default {
         })
         .finally(() => {
           this.labelLoading = false;
+          this.getResultShow({ match_labels, match_expressions });
         });
     },
     handelConfirmLabel() {
@@ -407,6 +413,7 @@ export default {
 
       const nodeRect = node.getBoundingClientRect();
       const rect = parentNode.getBoundingClientRect();
+      this.activeStretchBtn = direction;
       const handleMouseMove = (event) => {
         if (direction === 'right') {
           const [min, max] = this.rightRange;
@@ -419,6 +426,7 @@ export default {
         }
       };
       const handleMouseUp = () => {
+        this.activeStretchBtn = '';
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
       };
@@ -705,12 +713,14 @@ export default {
     }
 
     .hit-title {
-      display: inline-block;
+      display: flex;
+      justify-content: space-between;
       margin-bottom: 8px;
     }
 
     .hit-number {
       color: #3a84ff;
+      cursor: pointer;
     }
 
     .hit-item {
@@ -748,17 +758,17 @@ export default {
   }
 
   .left-drag {
-    right: 4px
+    right: 0px
   }
 
   .right-drag {
-    left: 4px;
+    left: -2px;
   }
 
   .bk-log-drag-simple {
     position: absolute;
-    width: 6px;
-    height: 25px;
+    width: 10px;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-items: center;
@@ -769,11 +779,11 @@ export default {
 
     &::after {
       content: ' ';
-      height: 100%;
+      height: 25px;
       width: 0;
       border-left: 3px dotted #63656e;
       position: absolute;
-      left: 2px;
+      left: 5px;
     }
 
     &:hover {
@@ -798,6 +808,14 @@ export default {
     background-color: #f0f1f5;
     z-index: 10;
     outline: 0;
+  }
+
+  .right-border-light {
+    border-right-color: #3a84ff;
+  }
+
+  .left-border-light {
+    border-left-color: #3a84ff;
   }
 
 }

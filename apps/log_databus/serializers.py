@@ -138,7 +138,7 @@ class PluginParamSerializer(serializers.Serializer):
     插件参数序列化
     """
 
-    paths = serializers.ListField(label=_("日志路径"), child=serializers.CharField(max_length=255), required=False)
+    paths = serializers.ListField(label=_("日志路径"), child=serializers.CharField(max_length=255, allow_blank=True), required=False)
     conditions = PluginConditionSerializer(required=False)
     multiline_pattern = serializers.CharField(label=_("行首正则"), required=False, allow_blank=True)
     multiline_max_lines = serializers.IntegerField(label=_("最多匹配行数"), required=False, max_value=1000)
@@ -1317,3 +1317,9 @@ class FastCollectorUpdateSerializer(serializers.Serializer):
         else:
             attrs["fields"] = []
         return attrs
+
+
+class ContainerCollectorConfigToYamlSerializer(serializers.Serializer):
+    configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
+    add_pod_label = serializers.BooleanField(label=_("上报时是否把标签带上"), default=False)
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())

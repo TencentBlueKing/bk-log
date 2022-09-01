@@ -75,22 +75,6 @@ export default {
       type: Object,
       required: true,
     },
-    showRealtimeLog: {
-      type: Boolean,
-      required: true,
-    },
-    showContextLog: {
-      type: Boolean,
-      required: true,
-    },
-    showWebConsole: {
-      type: Boolean,
-      required: true,
-    },
-    bkMonitorUrl: {
-      type: Boolean,
-      required: true,
-    },
     tableLoading: {
       type: Boolean,
       required: true,
@@ -120,12 +104,8 @@ export default {
   },
   computed: {
     ...mapState('globals', ['fieldTypeMap']),
-    showMonitorWeb() {
-      return this.bkMonitorUrl;
-    },
     showHandleOption() {
-      const { showRealtimeLog, showContextLog, showWebConsole, showMonitorWeb, visibleFields } = this;
-      if (visibleFields.length !== 0) {
+      if (this.visibleFields.length !== 0) {
         const columnObj = JSON.parse(localStorage.getItem('table_column_width_obj'));
         const { params: { indexId }, query: { bizId } } = this.$route;
         let widthObj = {};
@@ -138,14 +118,11 @@ export default {
           }
         }
 
-        visibleFields.forEach((el, index) => {
+        this.visibleFields.forEach((el, index) => {
           el.width = widthObj[index] === undefined ? 'default' : widthObj[index];
         });
       }
-      return (showRealtimeLog
-        || showContextLog
-        || showWebConsole
-        || showMonitorWeb) && this.tableList.length;
+      return this.tableList.length;
     },
   },
   watch: {
