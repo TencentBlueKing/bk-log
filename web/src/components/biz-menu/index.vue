@@ -83,6 +83,7 @@ import navMenuMixin from '@/mixins/nav-menu-mixin';
 import menuList from './list';
 import { deepClone } from '../monitor-echarts/utils';
 import { Storage } from '@/common/util';
+import * as authorityMap from '../../common/authority-map';
 
 export default {
   components: {
@@ -187,7 +188,7 @@ export default {
       this.groupDistributeList(correctList, 'top'); // 置顶赋值
       // 从置顶以外的挑出有权限的并赋值给notTopAuthGroupList
       const [perCorrectList, perFailureList] = this.filterGroupList(
-        failureList, item => item.permission.view_business,
+        failureList, item => item.permission[authorityMap.VIEW_BUSINESS],
       );
       this.groupDistributeList(perFailureList, 'remain');
       this.notTopAuthGroupList = perCorrectList;

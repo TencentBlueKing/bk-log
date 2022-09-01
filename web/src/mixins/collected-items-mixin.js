@@ -20,23 +20,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
+import * as authorityMap from '../common/authority-map';
+
 export default {
   methods: {
     async operateHandler(row, operateType) { // type: [view, status , search, edit, field, start, stop, delete]
       if (operateType === 'add') { // 新建权限控制
         if (!this.isAllowedCreate) {
           return this.getOptionApplyData({
-            action_ids: ['create_collection'],
+            action_ids: [authorityMap.CREATE_COLLECTION_AUTH],
             resources: [{
-              type: 'biz',
-              id: this.bkBizId,
+              type: 'space',
+              id: this.spaceUid,
             }],
           });
         }
       } else if (operateType === 'view') { // 查看权限
-        if (!(row.permission?.view_collection)) {
+        if (!(row.permission?.[authorityMap.VIEW_COLLECTION_AUTH])) {
           return this.getOptionApplyData({
-            action_ids: ['view_collection'],
+            action_ids: [authorityMap.VIEW_COLLECTION_AUTH],
             resources: [{
               type: 'collection',
               id: row.collector_config_id,
@@ -44,18 +46,18 @@ export default {
           });
         }
       } else if (operateType === 'search') { // 检索权限
-        if (!(row.permission?.search_log)) {
+        if (!(row.permission?.[authorityMap.SEARCH_LOG_AUTH])) {
           return this.getOptionApplyData({
-            action_ids: ['search_log'],
+            action_ids: [authorityMap.SEARCH_LOG_AUTH],
             resources: [{
               type: 'indices',
               id: row.index_set_id,
             }],
           });
         }
-      } else if (!(row.permission?.manage_collection)) { // 管理权限
+      } else if (!(row.permission?.[authorityMap.MANAGE_COLLECTION_AUTH])) { // 管理权限
         return this.getOptionApplyData({
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: row.collector_config_id,
@@ -125,10 +127,10 @@ export default {
     async checkCreateAuth() {
       try {
         const res = await this.$store.dispatch('checkAllowed', {
-          action_ids: ['create_collection'],
+          action_ids: [authorityMap.CREATE_COLLECTION_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         });
         this.isAllowedCreate = res.isAllowed;

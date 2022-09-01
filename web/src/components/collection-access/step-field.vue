@@ -45,7 +45,7 @@
             :id="option.collector_config_id"
             :name="option.collector_config_name">
             <div
-              v-if="!(option.permission && option.permission.manage_collection)"
+              v-if="!(option.permission && option.permission[authorityMap.MANAGE_COLLECTION_AUTH])"
               class="option-slot-container no-authority"
               @click.stop>
               <span class="text">
@@ -464,6 +464,7 @@ import { mapGetters, mapState } from 'vuex';
 import fieldTable from './field-table';
 import AuthContainerPage from '@/components/common/auth-container-page';
 import { projectManages } from '@/common/util';
+import * as authorityMap from '../../common/authority-map';
 
 export default {
   components: {
@@ -589,6 +590,9 @@ export default {
       curCollect: 'collect/curCollect',
       globalsData: 'globals/globalsData',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     isJsonOrOperator() {
       return this.params.etl_config === 'bk_log_json' || this.params.etl_config === 'bk_log_delimiter';
     },
@@ -1433,7 +1437,7 @@ export default {
       this.basicLoading = true;
       // 先校验有无采集项管理权限
       const paramData = {
-        action_ids: ['manage_collection'],
+        action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
         resources: [{
           type: 'collection',
           id,
@@ -1464,7 +1468,7 @@ export default {
       try {
         this.$bkLoading();
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: item.collector_config_id,

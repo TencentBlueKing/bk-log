@@ -347,6 +347,7 @@ import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/co
 import { handleTransformToTimestamp } from '../../components/time-range/utils';
 import indexSetSearchMixin from '@/mixins/indexSet-search-mixin';
 import axios from 'axios';
+import * as authorityMap from '../../common/authority-map';
 
 export default {
   name: 'Retrieve',
@@ -526,7 +527,7 @@ export default {
       const option = this.indexSetList.find(item => item.index_set_id === val);
       this.indexSetItem = option ? option : { index_set_name: '', indexName: '', scenario_name: '', scenario_id: '' };
       // eslint-disable-next-line camelcase
-      this.isSearchAllowed = !!option?.permission?.search_log;
+      this.isSearchAllowed = !!option?.permission?.[authorityMap.SEARCH_LOG_AUTH];
       if (this.isSearchAllowed) {
         this.authPageInfo = null;
         this.hasAuth = true;
@@ -681,7 +682,7 @@ export default {
           const s2 = [];
           for (const item of res.data) {
             // eslint-disable-next-line camelcase
-            if (item.permission?.search_log) {
+            if (item.permission?.[authorityMap.SEARCH_LOG_AUTH]) {
               s1.push(item);
             } else {
               s2.push(item);
@@ -715,7 +716,7 @@ export default {
           const s2 = [];
           for (const item of res.data) {
             // eslint-disable-next-line camelcase
-            if (item.permission?.search_log) {
+            if (item.permission?.[authorityMap.SEARCH_LOG_AUTH]) {
               s1.push(item);
             } else {
               s2.push(item);
@@ -733,14 +734,14 @@ export default {
 
           const indexId = this.$route.params.indexId?.toString();
           const routeIndexSet = indexSetList.find(item => item.index_set_id === indexId);
-          const isRouteIndex = !!routeIndexSet && !routeIndexSet?.permission?.search_log;
+          const isRouteIndex = !!routeIndexSet && !routeIndexSet?.permission?.[authorityMap.SEARCH_LOG_AUTH];
 
           // 如果都没有权限或者路由带过来的索引集无权限则显示索引集无权限
           // eslint-disable-next-line camelcase
-          if (!indexSetList[0]?.permission?.search_log || isRouteIndex) {
+          if (!indexSetList[0]?.permission?.[authorityMap.SEARCH_LOG_AUTH] || isRouteIndex) {
             const authIndexID = indexId || indexSetList[0].index_set_id;
             this.$store.dispatch('getApplyData', {
-              action_ids: ['search_log'],
+              action_ids: [authorityMap.SEARCH_LOG_AUTH],
               resources: [{
                 type: 'indices',
                 id: authIndexID,
@@ -1062,7 +1063,7 @@ export default {
 
       // 是否有检索的权限
       const paramData = {
-        action_ids: ['search_log'],
+        action_ids: [authorityMap.SEARCH_LOG_AUTH],
         resources: [{
           type: 'indices',
           id: this.indexId,

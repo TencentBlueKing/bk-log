@@ -111,7 +111,7 @@
               :tips-conf="getTipText(props.row)"
               :button-text="$t('nav.retrieve')"
               :disabled="(!props.row.is_active || !props.row.index_set_id)"
-              :cursor-active="!(props.row.permission && props.row.permission.search_log)"
+              :cursor-active="!(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH])"
               @on-click="operateHandler(props.row, 'search')">
             </log-button>
             <!-- 编辑 -->
@@ -119,7 +119,9 @@
               theme="primary"
               text
               class="mr10 king-button"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
@@ -131,7 +133,7 @@
               :tips-conf="''"
               :button-text="$t('btn.delete')"
               :disabled="props.row.etl_config !== 'bkdata_clean'"
-              :cursor-active="!(props.row.permission && props.row.permission.manage_collection)"
+              :cursor-active="!(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])"
               @on-click="operateHandler(props.row, 'delete')">
             </log-button>
           </div>
@@ -143,6 +145,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import * as authorityMap from '../../../../common/authority-map';
 
 export default {
   name: 'CleanList',
@@ -170,6 +173,9 @@ export default {
       bkBizId: 'bkBizId',
       globalsData: 'globals/globalsData',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     formatFilters() {
       const { etl_config } = this.globalsData;
       const target = [];
@@ -286,9 +292,9 @@ export default {
         return;
       }
       if (operateType === 'edit') { // 基础清洗
-        if (!(row.permission?.manage_collection)) { // 管理权限
+        if (!(row.permission?.[authorityMap.MANAGE_COLLECTION_AUTH])) { // 管理权限
           return this.getOptionApplyData({
-            action_ids: ['manage_collection'],
+            action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
             resources: [{
               type: 'collection',
               id: row.collector_config_id,
@@ -297,9 +303,9 @@ export default {
         }
       }
       if (operateType === 'search') {
-        if (!(row.permission?.search_log)) { // 检索权限
+        if (!(row.permission?.[authorityMap.SEARCH_LOG_AUTH])) { // 检索权限
           return this.getOptionApplyData({
-            action_ids: ['search_log'],
+            action_ids: [authorityMap.SEARCH_LOG_AUTH],
             resources: [{
               type: 'indices',
               id: row.index_set_id,

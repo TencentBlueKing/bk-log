@@ -165,7 +165,7 @@
               theme="primary"
               text
               class="mr10"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
+              v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_ES_SOURCE_AUTH]) }"
               :tips-conf="$t('unableEditTip')"
               :button-text="$t('编辑')"
               :disabled="!props.row.is_editable"
@@ -175,7 +175,7 @@
               theme="primary"
               text
               class="mr10"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
+              v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_ES_SOURCE_AUTH]) }"
               :tips-conf="$t('unableEditTip')"
               :button-text="$t('删除')"
               :disabled="!props.row.is_editable"
@@ -223,6 +223,7 @@ import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
 import IntroPanel from './components/intro-panel.vue';
 import { formatFileSize } from '../../../../common/util';
+import * as authorityMap from '../../../../common/authority-map';
 
 export default {
   name: 'EsClusterMess',
@@ -332,6 +333,9 @@ export default {
       spaceUid: 'spaceUid',
       globalsData: 'globals/globalsData',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     sourceFilters() {
       const { es_source_type } = this.globalsData;
       const target = [];
@@ -357,10 +361,10 @@ export default {
     async checkCreateAuth() {
       try {
         const res = await this.$store.dispatch('checkAllowed', {
-          action_ids: ['create_es_source'],
+          action_ids: [authorityMap.CREATE_ES_SOURCE_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         });
         this.isAllowedCreate = res.isAllowed;
@@ -478,10 +482,10 @@ export default {
         try {
           this.tableLoading = true;
           const res = await this.$store.dispatch('getApplyData', {
-            action_ids: ['create_es_source'],
+            action_ids: [authorityMap.CREATE_ES_SOURCE_AUTH],
             resources: [{
-              type: 'biz',
-              id: this.bkBizId,
+              type: 'space',
+              id: this.spaceUid,
             }],
           });
           this.$store.commit('updateAuthDialogData', res.data);
@@ -505,10 +509,10 @@ export default {
     // 编辑ES源
     async editDataSource(item) {
       const id = item.cluster_config.cluster_id;
-      if (!(item.permission?.manage_es_source)) {
+      if (!(item.permission?.[authorityMap.MANAGE_ES_SOURCE_AUTH])) {
         try {
           const paramData = {
-            action_ids: ['manage_es_source'],
+            action_ids: [authorityMap.MANAGE_ES_SOURCE_AUTH],
             resources: [{
               type: 'es_source',
               id,
@@ -532,10 +536,10 @@ export default {
     async deleteDataSource(row) {
       this.tableLoading = true;
       const id = row.cluster_config.cluster_id;
-      if (!(row.permission?.manage_es_source)) {
+      if (!(row.permission?.[authorityMap.MANAGE_ES_SOURCE_AUTH])) {
         try {
           const paramData = {
-            action_ids: ['manage_es_source'],
+            action_ids: [authorityMap.MANAGE_ES_SOURCE_AUTH],
             resources: [{
               type: 'es_source',
               id,
