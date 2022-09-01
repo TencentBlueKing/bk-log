@@ -222,7 +222,7 @@
         </bk-form-item>
 
         <bk-form-item v-if="!isPhysicsEnvironment" :label="$t('Yaml模式')">
-          <bk-switcher class="mt8" v-model="isYaml" theme="primary"></bk-switcher>
+          <bk-switcher class="mt8" v-model="isYaml" theme="primary" :pre-check="handelChangeYaml"></bk-switcher>
         </bk-form-item>
 
         <yaml-editor
@@ -721,6 +721,7 @@ export default {
       currentSetIndex: 0, // 当前操作的配置项的下标
       isExtraError: false, // 附加标签是否有出错
       nameSpaceRequest: false, // 是否正在请求namespace接口
+      uiconfigToYamlData: {}, // 切换成yaml时当前保存的ui配置
     };
   },
   computed: {
@@ -784,7 +785,7 @@ export default {
   watch: {
     currentEnvironment(nVal, oVal) {
       if (oVal === 'windows' && this.isWinEventLog) {
-        this.formData.collector_scenario_id =  this.globalsData.collector_scenario[0].id;
+        this.formData.collector_scenario_id = this.globalsData.collector_scenario[0].id;
       }
       if (['std_log_config', 'container_log_config', 'node_log_config'].includes(nVal)) {
         this.formData.environment = 'container';
@@ -871,9 +872,12 @@ export default {
     },
     /**
      * @desc: 初始化编辑的form表单值
+     * @param { Object } formData 基础表单
+     * @param { Boolean } isYamlData 是否是yaml解析出的表单数据
      * @returns { Object } 返回初始化后的Form表单
      */
-    initContainerFormData(curFormData) {
+    initContainerFormData(formData, isYamlData = false) {
+      const curFormData = deepClone(formData);
       if (!curFormData.extra_labels.length) {
         curFormData.extra_labels = [{
           key: '',
@@ -890,6 +894,9 @@ export default {
           data_encoding,
           params,
           namespaces: itemNamespace,
+          container: yamlContainer,
+          label_selector: yamlSelector,
+          collector_type,
         } = item;
         let isAllContainer = false;
         const namespaces = item.any_namespace ? ['*'] : itemNamespace;
@@ -903,8 +910,14 @@ export default {
           match_labels,
           match_expressions,
         };
-        if (!params.conditions?.separator_filters) {
-          params.conditions.separator_filters = [{ fieldindex: '', word: '', op: '=', logic_op: 'and' }];
+        if (isYamlData) {
+          Object.assign(container, yamlContainer);
+          Object.assign(label_selector, yamlSelector);
+          item.params.paths = item.params.paths.length ? item.paths.map(item => ({ value: item })) : [];
+        } else {
+          if (!params.conditions?.separator_filters) {
+            params.conditions.separator_filters = [{ fieldindex: '', word: '', op: '=', logic_op: 'and' }];
+          }
         }
         if (JSON.stringify(container) === JSON.stringify(this.allContainer)
         && JSON.stringify(label_selector) === JSON.stringify(this.allLabelSelector)) {
@@ -918,6 +931,7 @@ export default {
           container,
           label_selector,
           params,
+          collector_type,
         };
       });
       curFormData.configs = filterConfigs;
@@ -1191,6 +1205,13 @@ export default {
           separator,
           separator_filters,
         };
+        if (isUnFilled && type === 'separator') {  // 当前是分隔符过滤但内容都没有填写则传默认的字符串类型
+          Object.assign(params.conditions, {
+            type: 'match',
+            match_type: 'include',
+            match_content: '',
+          });
+        }
         // 若为标准输出或者win日志 则直接清空日志路径
         if (collectorType === 'std_log_config' || this.isWinEventLog) {
           params.paths = [];
@@ -1430,6 +1451,47 @@ export default {
         .catch((err) => {
           console.warn(err);
         });
+    },
+    /**
+     * @desc: 切换ui模式或yaml模式
+     * @param { Boolean } val
+     */
+    handelChangeYaml(val) {
+      return new Promise((resolve, reject) => {
+        if (val) {
+          const { add_pod_label, extra_labels, configs } = this.handleParams();
+          const data = { add_pod_label, extra_labels, configs };
+          // 传入处理后的参数 请求ui配置转yaml的数据
+          this.$http.request('container/containerConfigsToYaml', { data }).then((res) => {
+            this.formData.yaml_config = res.data;
+            // 保存进入yaml模式之前的ui配置参数
+            Object.assign(this.uiconfigToYamlData, {
+              add_pod_label: this.formData.add_pod_label,
+              extra_labels: this.formData.extra_labels,
+              configs: this.formData.configs,
+            });
+            resolve(true);
+          })
+            .catch((err) => {
+              console.warn(err);
+              reject(false);
+            });
+        } else {
+          try {
+            // 若有报错 则回填进入yaml模式之前的ui配置参数
+            if (!this.$refs.yamlEditorRef.getSubmitState) {
+              Object.assign(this.formData, this.uiconfigToYamlData);
+            } else {
+            // 无报错 回填yamlData的参数
+              const assignData = this.initContainerFormData(this.yamlFormData, true);
+              Object.assign(this.formData, assignData);
+            }
+            resolve(true);
+          } catch (error) {
+            resolve(false);
+          }
+        }
+      });
     },
     /**
      * @desc: 编进进入时判断当前环境 禁用另一边环境选择

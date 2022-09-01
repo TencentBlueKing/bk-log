@@ -75,6 +75,7 @@
             <div class="express-container">
               <match-label
                 match-type="express"
+                ref="matchExpressRef"
                 :match-label-option="expressOptionList"
                 :match-selector="labelParams.match_expressions"
                 :match-obj.sync="matchExpressObj">
@@ -84,6 +85,7 @@
             <div class="label-container">
               <match-label
                 match-type="label"
+                ref="matchLabelRef"
                 :all-match-list.sync="expressOptionList"
                 :match-selector="labelParams.match_labels"
                 :match-obj.sync="matchLabelObj">
@@ -109,7 +111,7 @@
                 <span class="hit-number">{{hitResultList.length}}</span>
                 {{$t('个内容')}}
               </span>
-              <span class="hit-number" @click="() => hitResultList = []">{{$t('清空')}}</span>
+              <span class="hit-number" @click="handleClearHit">{{$t('清空')}}</span>
             </div>
             <div class="hit-container">
               <div class="hit-item" v-for="item of hitResultList" :key="item.id">
@@ -230,7 +232,7 @@ export default {
 
       const [nameSpaceStr, nameStr] = this.getNameStrAndNameSpace(treeItem); // 获取当前树节点标签请求name字符串
       this.currentNameSpaceStr = nameSpaceStr;
-      const { bk_biz_id, bcs_cluster_id, type, match_labels, match_expressions } = this.labelParams;
+      const { bk_biz_id, bcs_cluster_id, type } = this.labelParams;
       const query = { namespace: nameSpaceStr, bcs_cluster_id, type, bk_biz_id,  name: nameStr  };
       if (type === 'node') delete query.namespace;
       this.labelLoading = true;
@@ -244,7 +246,7 @@ export default {
         })
         .finally(() => {
           this.labelLoading = false;
-          this.getResultShow({ match_labels, match_expressions });
+          this.getResultShow(this.getMatchLabel);
         });
     },
     handelConfirmLabel() {
@@ -441,6 +443,11 @@ export default {
     },
     handleResetWidth() {
       this.rightPreWidth = 280;
+    },
+    handleClearHit() {
+      this.hitResultList = [];
+      this.$refs.matchLabelRef.matchSelectList = [];
+      this.$refs.matchExpressRef.matchSelectList = [];
     },
     filterMethod(keyword, node) {
       return node.data.name.includes(keyword);
