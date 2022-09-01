@@ -26,8 +26,8 @@
                 "description_en":"",
                 "parents":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space"
+                        "system_id":"bk_cmdb",
+                        "id":"biz"
                     }
                 ],
                 "provider_config":{
@@ -46,8 +46,8 @@
                 "description_en":"",
                 "parents":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space"
+                        "system_id":"bk_cmdb",
+                        "id":"biz"
                     }
                 ],
                 "provider_config":{
@@ -66,8 +66,8 @@
                 "description_en":"",
                 "parents":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space"
+                        "system_id":"bk_cmdb",
+                        "id":"biz"
                     }
                 ],
                 "provider_config":{
@@ -84,8 +84,8 @@
                 "name_en":"Collection List",
                 "resource_type_chain":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space"
+                        "system_id":"bk_cmdb",
+                        "id":"biz"
                     },
                     {
                         "system_id":"bk_log_search",
@@ -102,8 +102,8 @@
                 "name_en":"ES Source List",
                 "resource_type_chain":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space"
+                        "system_id":"bk_cmdb",
+                        "id":"biz"
                     },
                     {
                         "system_id":"bk_log_search",
@@ -120,8 +120,8 @@
                 "name_en":"Indices List",
                 "resource_type_chain":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space"
+                        "system_id":"bk_cmdb",
+                        "id":"biz"
                     },
                     {
                         "system_id":"bk_log_search",
@@ -130,24 +130,23 @@
                 ]
             }
         },
-
         {
             "operation":"upsert_action",
             "data":{
-                "id":"view_business_v2",
-                "name":"业务访问",
-                "name_en":"View Business",
+                "id":"view_business",
+                "name":"(已弃用)业务访问",
+                "name_en":"(Deprecated)View Business",
                 "type":"view",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space",
+                        "id":"biz",
+                        "system_id":"bk_cmdb",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_monitorv3",
-                                "id":"space_list"
+                                "system_id":"bk_cmdb",
+                                "id":"business"
                             }
                         ],
                         "ignore_iam_path":true
@@ -163,9 +162,9 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"search_log_v2",
-                "name":"日志检索",
-                "name_en":"Search Log",
+                "id":"search_log",
+                "name":"(已弃用)日志检索",
+                "name_en":"(Deprecated)Search Log",
                 "type":"view",
                 "version":1,
                 "related_resource_types":[
@@ -192,9 +191,9 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"view_collection_v2",
-                "name":"采集查看",
-                "name_en":"View Collection",
+                "id":"view_collection",
+                "name":"(已弃用)采集查看",
+                "name_en":"(Deprecated)View Collection",
                 "type":"view",
                 "version":1,
                 "related_resource_types":[
@@ -221,27 +220,27 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"create_collection_v2",
-                "name":"采集新建",
-                "name_en":"Create Collection",
+                "id":"create_collection",
+                "name":"(已弃用)采集新建",
+                "name_en":"(Deprecated)Create Collection",
                 "type":"create",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space",
+                        "id":"biz",
+                        "system_id":"bk_cmdb",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_monitorv3",
-                                "id":"space_list"
+                                "system_id":"bk_cmdb",
+                                "id":"business",
+                                "ignore_iam_path":true
                             }
-                        ],
-                        "ignore_iam_path":true
+                        ]
                     }
                 ],
                 "related_actions":[
-                    "view_business_v2"
+                    "view_business"
                 ],
                 "description":"",
                 "description_en":""
@@ -250,9 +249,9 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"manage_collection_v2",
-                "name":"采集管理",
-                "name_en":"Manage Collection",
+                "id":"manage_collection",
+                "name":"(已弃用)采集管理",
+                "name_en":"(Deprecated)Manage Collection",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
@@ -270,7 +269,7 @@
                     }
                 ],
                 "related_actions":[
-                    "view_collection_v2"
+                    "view_collection"
                 ],
                 "description":"",
                 "description_en":""
@@ -279,27 +278,27 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"create_es_source_v2",
-                "name":"ES源配置新建",
-                "name_en":"Create ES Source",
+                "id":"create_es_source",
+                "name":"(已弃用)ES源配置新建",
+                "name_en":"(Deprecated)Create ES Source",
                 "type":"create",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space",
+                        "id":"biz",
+                        "system_id":"bk_cmdb",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_monitorv3",
-                                "id":"space_list"
+                                "system_id":"bk_cmdb",
+                                "id":"business",
+                                "ignore_iam_path":true
                             }
-                        ],
-                        "ignore_iam_path":true
+                        ]
                     }
                 ],
                 "related_actions":[
-                    "view_business_v2"
+                    "view_business"
                 ],
                 "description":"",
                 "description_en":""
@@ -308,9 +307,9 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"manage_es_source_v2",
-                "name":"ES源配置管理",
-                "name_en":"Manage ES Source",
+                "id":"manage_es_source",
+                "name":"(已弃用)ES源配置管理",
+                "name_en":"(Deprecated)Manage ES Source",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
@@ -337,27 +336,27 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"create_indices_v2",
-                "name":"索引集配置新建",
-                "name_en":"Create Indices",
+                "id":"create_indices",
+                "name":"(已弃用)索引集配置新建",
+                "name_en":"(Deprecated)Create Indices",
                 "type":"create",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space",
+                        "id":"biz",
+                        "system_id":"bk_cmdb",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_monitorv3",
-                                "id":"space_list"
+                                "system_id":"bk_cmdb",
+                                "id":"business",
+                                "ignore_iam_path":true
                             }
-                        ],
-                        "ignore_iam_path":true
+                        ]
                     }
                 ],
                 "related_actions":[
-                    "view_business_v2"
+                    "view_business"
                 ],
                 "description":"",
                 "description_en":""
@@ -366,9 +365,9 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"manage_indices_v2",
-                "name":"索引集配置管理",
-                "name_en":"Manage Indices",
+                "id":"manage_indices",
+                "name":"(已弃用)索引集配置管理",
+                "name_en":"(Deprecated)Manage Indices",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
@@ -395,27 +394,27 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"view_dashboard_v2",
-                "name":"仪表盘查看",
-                "name_en":"View Dashboard",
+                "id":"view_dashboard",
+                "name":"(已弃用)仪表盘查看",
+                "name_en":"(Deprecated)View Dashboard",
                 "type":"view",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space",
+                        "id":"biz",
+                        "system_id":"bk_cmdb",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_monitorv3",
-                                "id":"space_list"
+                                "system_id":"bk_cmdb",
+                                "id":"business",
+                                "ignore_iam_path":true
                             }
-                        ],
-                        "ignore_iam_path":true
+                        ]
                     }
                 ],
                 "related_actions":[
-                    "view_business_v2"
+                    "view_business"
                 ],
                 "description":"",
                 "description_en":""
@@ -424,28 +423,28 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"manage_dashboard_v2",
-                "name":"仪表盘管理",
-                "name_en":"Manage Dashboard",
+                "id":"manage_dashboard",
+                "name":"(已弃用)仪表盘管理",
+                "name_en":"(Deprecated)Manage Dashboard",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space",
+                        "id":"biz",
+                        "system_id":"bk_cmdb",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_monitorv3",
-                                "id":"space_list"
+                                "system_id":"bk_cmdb",
+                                "id":"business",
+                                "ignore_iam_path":true
                             }
-                        ],
-                        "ignore_iam_path":true
+                        ]
                     }
                 ],
                 "related_actions":[
-                    "view_business_v2",
-                    "view_dashboard_v2"
+                    "view_dashboard",
+                    "view_business"
                 ],
                 "description":"",
                 "description_en":""
@@ -454,23 +453,23 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"manage_extract_config_v2",
-                "name":"日志提取配置管理",
-                "name_en":"Manage Extract Config",
+                "id":"manage_extract_config",
+                "name":"(已弃用)日志提取配置管理",
+                "name_en":"(Deprecated)Manage Extract Config",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "system_id":"bk_monitorv3",
-                        "id":"space",
+                        "id":"biz",
+                        "system_id":"bk_cmdb",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_monitorv3",
-                                "id":"space_list"
+                                "system_id":"bk_cmdb",
+                                "id":"business",
+                                "ignore_iam_path":true
                             }
-                        ],
-                        "ignore_iam_path":true
+                        ]
                     }
                 ],
                 "related_actions":[
@@ -480,7 +479,6 @@
                 "description_en":""
             }
         },
-
         {
             "operation":"upsert_action_groups",
             "data":[
@@ -489,7 +487,7 @@
                     "name_en":"Business",
                     "actions":[
                         {
-                            "id":"view_business_v2"
+                            "id":"view_business"
                         }
                     ],
                     "sub_groups":[
@@ -498,13 +496,13 @@
                             "name_en":"Indices",
                             "actions":[
                                 {
-                                    "id":"search_log_v2"
+                                    "id":"search_log"
                                 },
                                 {
-                                    "id":"create_indices_v2"
+                                    "id":"create_indices"
                                 },
                                 {
-                                    "id":"manage_indices_v2"
+                                    "id":"manage_indices"
                                 }
                             ]
                         },
@@ -513,13 +511,13 @@
                             "name_en":"Collection",
                             "actions":[
                                 {
-                                    "id":"create_collection_v2"
+                                    "id":"create_collection"
                                 },
                                 {
-                                    "id":"view_collection_v2"
+                                    "id":"view_collection"
                                 },
                                 {
-                                    "id":"manage_collection_v2"
+                                    "id":"manage_collection"
                                 }
                             ]
                         },
@@ -528,10 +526,10 @@
                             "name_en":"ES Source",
                             "actions":[
                                 {
-                                    "id":"create_es_source_v2"
+                                    "id":"create_es_source"
                                 },
                                 {
-                                    "id":"manage_es_source_v2"
+                                    "id":"manage_es_source"
                                 }
                             ]
                         },
@@ -540,10 +538,10 @@
                             "name_en":"Dashboard",
                             "actions":[
                                 {
-                                    "id":"view_dashboard_v2"
+                                    "id":"view_dashboard"
                                 },
                                 {
-                                    "id":"manage_dashboard_v2"
+                                    "id":"manage_dashboard"
                                 }
                             ]
                         },
@@ -552,116 +550,9 @@
                             "name_en":"Log Extract",
                             "actions":[
                                 {
-                                    "id":"manage_extract_config_v2"
+                                    "id":"manage_extract_config"
                                 }
                             ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "operation":"upsert_resource_creator_actions",
-            "data":{
-                "config":[
-                    {
-                        "id":"collection",
-                        "actions":[
-                            {
-                                "id":"view_collection_v2",
-                                "required":true
-                            },
-                            {
-                                "id":"manage_collection_v2",
-                                "required":true
-                            }
-                        ]
-                    },
-                    {
-                        "id":"indices",
-                        "actions":[
-                            {
-                                "id":"manage_indices_v2",
-                                "required":true
-                            },
-                            {
-                                "id":"search_log_v2",
-                                "required":false
-                            }
-                        ]
-                    },
-                    {
-                        "id":"es_source",
-                        "actions":[
-                            {
-                                "id":"manage_es_source_v2",
-                                "required":false
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        {
-            "operation":"upsert_common_actions",
-            "data":[
-                {
-                    "name":"配置管理",
-                    "name_en":"Manage Settings",
-                    "actions":[
-                        {
-                            "id":"view_business_v2"
-                        },
-                        {
-                            "id":"search_log_v2"
-                        },
-                        {
-                            "id":"view_collection_v2"
-                        },
-                        {
-                            "id":"create_collection_v2"
-                        },
-                        {
-                            "id":"manage_collection_v2"
-                        },
-                        {
-                            "id":"create_es_source_v2"
-                        },
-                        {
-                            "id":"manage_es_source_v2"
-                        },
-                        {
-                            "id":"create_indices_v2"
-                        },
-                        {
-                            "id":"manage_indices_v2"
-                        },
-                        {
-                            "id":"view_dashboard_v2"
-                        },
-                        {
-                            "id":"manage_dashboard_v2"
-                        },
-                        {
-                            "id":"manage_extract_config_v2"
-                        }
-                    ]
-                },
-                {
-                    "name":"日志查看",
-                    "name_en":"View Log",
-                    "actions":[
-                        {
-                            "id":"view_business_v2"
-                        },
-                        {
-                            "id":"search_log_v2"
-                        },
-                        {
-                            "id":"view_collection_v2"
-                        },
-                        {
-                            "id":"view_dashboard_v2"
                         }
                     ]
                 }

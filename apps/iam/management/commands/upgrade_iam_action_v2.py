@@ -77,6 +77,16 @@ class Command(BaseCommand):
         self.iam_client = Permission.get_iam_client()
         self.system_id = settings.BK_IAM_SYSTEM_ID
 
+    def handle(self, **options):
+        print("[upgrade_iam_action_v2] ##### START #####")
+
+        self.upgrade_iam_model()
+        self.upgrade_policy()
+
+        print("[upgrade_iam_action_v2] ##### END #####")
+
+        self.check_upgrade_polices()
+
     def get_resource_name(self, resource_type, resource_id):
         if resource_type == ResourceEnum.BUSINESS.id:
             return self.spaces.get(resource_id, resource_id)
@@ -94,17 +104,26 @@ class Command(BaseCommand):
 
         sys.argv.append("migrate")  # enable migrator
 
+        IAMMigrator("legacy.json").migrate()
         IAMMigrator("initial.json").migrate()
-        IAMMigrator("space.json").migrate()
 
         print("[upgrade_iam_model] [END]")
 
     def upgrade_policy(self):
         print("[upgrade_policy] [START]")
 
+        global_total = 0
+        global_progress = 0
+        policies_by_actions = {}
         for action in ACTIONS_TO_UPGRADE:
             old_action_id = action.id.replace("_v2", "")
             policies = self.query_polices(old_action_id)
+            policies_by_actions[old_action_id] = policies
+            global_total += len(policies)
+
+        for action in ACTIONS_TO_UPGRADE:
+            old_action_id = action.id.replace("_v2", "")
+            policies = policies_by_actions[old_action_id]
             print("[grant_resource] [START] action[%s], policy count: %d" % (action.id, len(policies)))
 
             total = len(policies)
@@ -115,9 +134,19 @@ class Command(BaseCommand):
                 self.grant_resource(resource)
 
                 progress += 1
+                global_progress += 1
+
                 print(
-                    "[grant_resource] grant permission for action: %s, progress: %d%% (%d/%d)"
-                    % (action.id, progress / total * 100, progress, total)
+                    "[grant_resource] [%d%%(%d/%d)] grant permission for action: %s, progress: %d%% (%d/%d)"
+                    % (
+                        global_progress / global_total * 100,
+                        global_progress,
+                        global_total,
+                        action.id,
+                        progress / total * 100,
+                        progress,
+                        total,
+                    )
                 )
 
             print("[grant_resource] [END] action[%s]" % action.id)
@@ -147,17 +176,11 @@ class Command(BaseCommand):
 
         print("##### CHECK RESULT #####")
         if not no_ok_actions:
-            print("Everything is OK. IAM upgrade successfully!!!")
+            print("Congratulations! IAM upgrade successfully!!!")
         else:
-            print("Sorry, following actions not OK: %s" % ", ".join(no_ok_actions))
-
-    def handle(self, **options):
-        print("[upgrade_iam_action_v2] ##### START #####")
-
-        self.upgrade_iam_model()
-        self.upgrade_policy()
-
-        print("[upgrade_iam_action_v2] ##### END #####")
+            print(
+                "Sorry, maybe something wrong with IAM upgrade. Following actions not OK: %s" % ", ".join(no_ok_actions)
+            )
 
     def query_polices(self, action_id):
         """
@@ -313,13 +336,3 @@ class Command(BaseCommand):
         )
         result = self.iam_client.batch_grant_or_revoke_path_permission(request, bk_username=self.OPERATOR)
         return result
-
-    def delete_action(self, action_id):
-        """
-        删除IAM操作
-        注意！！！此为高危操作，请慎用！！！
-        """
-        result = self.iam_client._client.delete_action_policy(system_id=self.system_id, action_id=action_id)
-        print("delete iam action policy [{}], result: {}".format(action_id, result))
-        result = self.iam_client._client.batch_delete_actions(system_id=self.system_id, data=[{"id": action_id}])
-        print("delete iam action [{}], result: {}".format(action_id, result))
