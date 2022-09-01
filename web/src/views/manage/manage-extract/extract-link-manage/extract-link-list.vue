@@ -50,8 +50,7 @@
       </bk-table-column>
       <bk-table-column :label="$t('链路类型')" prop="created_at">
         <div slot-scope="{ row }">
-          <template v-if="row.link_type === 'common'">{{ $t('内网链路') }}</template>
-          <template v-else-if="row.link_type === 'qcloud_cos'">{{ $t('腾讯云链路') }}</template>
+          <template>{{linkNameMap[row.link_type]}}</template>
         </div>
       </bk-table-column>
       <bk-table-column :label="$t('操作')" width="200">
@@ -76,6 +75,11 @@ export default {
       extractLinkList: [],
       isAllowedManage: null, // 是否有管理权限
       isButtonLoading: false, // 没有权限时点击新增按钮请求权限链接
+      linkNameMap: {
+        common: this.$t('内网链路'),
+        qcloud_cos: this.$t('腾讯云链路'),
+        bk_repo: this.$t('bk_repo链路'),
+      },
     };
   },
   computed: {

@@ -3465,9 +3465,9 @@ class CollectorHandler(object):
                     "params": {
                         "paths": config.get("path", []),
                         "conditions": conditions,
-                        "multiline_pattern": config.get("multiline", {}).get("pattern", ""),
-                        "multiline_max_lines": config.get("multiline", {}).get("maxLines", 10),
-                        "multiline_timeout": config.get("multiline", {}).get("timeout", "10s").rstrip("s"),
+                        "multiline_pattern": config.get("multiline", {}).get("pattern") or "",
+                        "multiline_max_lines": config.get("multiline", {}).get("maxLines") or 10,
+                        "multiline_timeout": (config.get("multiline", {}).get("timeout") or "10s").rstrip("s"),
                     },
                     "data_encoding": config["encoding"],
                     "collector_type": log_config_type,
@@ -3721,6 +3721,22 @@ class CollectorHandler(object):
                     exclude_field = container_config.pop(field)
                     container_config.update(exclude_field)
 
+            # 与ContainerCollectorConfig创建时计算属性一致
+            computed_fields = {
+                "all_container": not any(
+                    [
+                        container_config["workload_type"],
+                        container_config["workload_name"],
+                        container_config["container_name"],
+                        container_config["match_labels"],
+                        container_config["match_expressions"],
+                    ]
+                ),
+                "any_namespace": not container_config["namespaces"],
+            }
+            container_config.update(computed_fields)
+
+            # 参数构造完成后生成raw_config
             container_raw_config = cls.container_config_to_raw_config(ContainerCollectorConfig(**container_config))
             container_raw_config.update(
                 {
