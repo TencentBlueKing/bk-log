@@ -23,7 +23,7 @@ from django.utils.translation import ugettext_lazy as _  # noqa
 
 from apps.api.modules.utils import add_esb_info_before_request_for_bkdata_user  # noqa
 from config.domains import AIOPS_APIGATEWAY_ROOT, AIOPS_MODEL_APIGATEWAY_ROOT  # noqa
-from apps.api.base import DataAPI, DataApiRetryClass  # noqa
+from apps.api.base import DataAPI, DataApiRetryClass  # noqa  pylint: disable=unused-import
 
 
 class _BkDataAIOPSApi:
@@ -86,6 +86,16 @@ class _BkDataAIOPSApi:
             module=self.MODULE,
             url_keys=["sample_set_id"],
             description=u"查询提交后的固化任务执行状态",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
+        self.sample_set_info = DataAPI(
+            method="GET",
+            url=AIOPS_APIGATEWAY_ROOT + "sample_set/{sample_set_id}/",
+            module=self.MODULE,
+            url_keys=["sample_set_id"],
+            description=u"获取样本集详情",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
             default_timeout=300,
@@ -314,6 +324,15 @@ class _BkDataAIOPSApi:
             url=AIOPS_APIGATEWAY_ROOT + "models/storage_clusters/",
             module=self.MODULE,
             description=u"获取模型存储集群列表",
+            before_request=add_esb_info_before_request_for_bkdata_user,
+            after_request=None,
+            default_timeout=300,
+        )
+        self.aiops_get_model_release_info = DataAPI(
+            method="GET",
+            url=AIOPS_APIGATEWAY_ROOT + "releases/{model_release_id}/",
+            module=self.MODULE,
+            description=u"获取模型发布信息",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
             default_timeout=300,

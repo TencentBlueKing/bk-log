@@ -22,23 +22,23 @@ the project delivered to anyone in the future.
 
 from typing import List, Dict, Any, Tuple, Union
 
-type_index_set_string = str
-type_index_set_list = List[str]
-type_scenario_id = str
-type_start_time = str
-type_end_time = str
-type_time_range = str
-type_keyword = str
-type_ips = str
-type_host_scopes = Dict[str, Any]
-type_a_addition = Dict[str, Any]
-type_addition = List[type_a_addition]
-type_begin = int
-type_size = int
-type_search_dict = Dict[str, Any]
-type_time_range_dict = Dict[str, Any]
-type_sort_tuple = Union[List[str], Tuple[str, str]]
-type_sort_multi_list = List[type_sort_tuple]
-type_sort_dict = Dict[str, Dict[str, str]]
-type_sort_multi_dict_list = List[type_sort_dict]
-type_mapping_dict = Dict[str, Any]
+type_index_set_string = str  # pylint: disable=invalid-name
+type_index_set_list = List[str]  # pylint: disable=invalid-name
+type_scenario_id = str  # pylint: disable=invalid-name
+type_start_time = str  # pylint: disable=invalid-name
+type_end_time = str  # pylint: disable=invalid-name
+type_time_range = str  # pylint: disable=invalid-name
+type_keyword = str  # pylint: disable=invalid-name
+type_ips = str  # pylint: disable=invalid-name
+type_host_scopes = Dict[str, Any]  # pylint: disable=invalid-name
+type_a_addition = Dict[str, Any]  # pylint: disable=invalid-name
+type_addition = List[type_a_addition]  # pylint: disable=invalid-name
+type_begin = int  # pylint: disable=invalid-name
+type_size = int  # pylint: disable=invalid-name
+type_search_dict = Dict[str, Any]  # pylint: disable=invalid-name
+type_time_range_dict = Dict[str, Any]  # pylint: disable=invalid-name
+type_sort_tuple = Union[List[str], Tuple[str, str]]  # pylint: disable=invalid-name
+type_sort_multi_list = List[type_sort_tuple]  # pylint: disable=invalid-name
+type_sort_dict = Dict[str, Dict[str, str]]  # pylint: disable=invalid-name
+type_sort_multi_dict_list = List[type_sort_dict]  # pylint: disable=invalid-name
+type_mapping_dict = Dict[str, Any]  # pylint: disable=invalid-name

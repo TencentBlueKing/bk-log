@@ -20,24 +20,37 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import datetime
-
 import arrow
 from django.db.models import Count
 
 from django.utils.translation import ugettext as _
 from django.conf import settings
 
-from apps.log_databus.models import CollectorConfig
-from apps.log_search.models import UserIndexSetSearchHistory, LogIndexSet
-from apps.log_measure.constants import TIME_RANGE
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import SCENARIO_BKDATA
+from apps.log_databus.models import CollectorConfig, ArchiveConfig, BKDataClean, EtlConfig
+from apps.log_search.models import UserIndexSetSearchHistory, LogIndexSet, Scenario
+from apps.log_extract.models import Tasks
+from apps.log_clustering.models import ClusteringConfig
+from apps.log_measure.constants import TIME_RANGE, INDEX_SCENARIO
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
 from bk_monitor.utils.metric import register_metric, Metric
 
 
+FUNCTION_MODEL = {
+    "log_collector": CollectorConfig,
+    "log_archive": ArchiveConfig,
+    "log_extract": Tasks,
+    "log_clustering": ClusteringConfig,
+}
+
+
 class BusinessMetricCollector(object):
     @staticmethod
-    @register_metric("business_active", description=_("活跃业务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    @register_metric(
+        "business_active", prefix="bklog", description=_("活跃业务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
+    )
     def business_active():
         metrics = []
         for timedelta in TIME_RANGE:
@@ -69,8 +82,8 @@ class BusinessMetricCollector(object):
                 metric_name="count",
                 metric_value=1,
                 dimensions={
-                    "target_bk_biz_id": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_id"],
-                    "target_bk_biz_name": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_name"],
+                    "target_biz_id": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_id"],
+                    "target_biz_name": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_name"],
                     "time_range": timedelta,
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -107,8 +120,8 @@ class BusinessMetricCollector(object):
                     metric_name="bk_biz_info",
                     metric_value=1,
                     dimensions={
-                        "target_bk_biz_id": bk_biz_id,
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                        "target_biz_id": bk_biz_id,
+                        "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -132,8 +145,8 @@ class BusinessMetricCollector(object):
                     metric_name="count",
                     metric_value=collector_config["total"],
                     dimensions={
-                        "target_bk_biz_id": collector_config["bk_biz_id"],
-                        "target_bk_biz_name": MetricUtils.get_instance().get_biz_name(collector_config["bk_biz_id"]),
+                        "target_biz_id": collector_config["bk_biz_id"],
+                        "target_biz_name": MetricUtils.get_instance().get_biz_name(collector_config["bk_biz_id"]),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -150,3 +163,122 @@ class BusinessMetricCollector(object):
         )
 
         return metrics
+
+    @staticmethod
+    @register_metric("biz_usage", description=_("功能使用的业务数"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
+    def biz_usage():
+        metrics = []
+        for function_name in FUNCTION_MODEL:
+            metrics.extend(BusinessMetricCollector().function_biz_usage(function_name))
+
+        metrics.extend(BusinessMetricCollector().index_set_function_biz_usage())
+        metrics.extend(BusinessMetricCollector().trace_biz_usage())
+        metrics.extend(BusinessMetricCollector().clean_biz_usage())
+
+        return metrics
+
+    @staticmethod
+    def function_biz_usage(function_name: str):
+        groups = (
+            FUNCTION_MODEL[function_name]
+            .objects.all()
+            .values("bk_biz_id")
+            .annotate(count=Count("bk_biz_id"))
+            .order_by("bk_biz_id")
+        )
+        metrics = [
+            Metric(
+                metric_name="count",
+                metric_value=len(groups),
+                dimensions={"function": function_name},
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        ]
+        return metrics
+
+    @staticmethod
+    def index_set_function_biz_usage():
+        metrics = []
+        groups = (
+            LogIndexSet.objects.values("scenario_id")
+            .distinct()
+            .order_by("scenario_id")
+            .annotate(count=Count("project_id", distinct=True))
+        )
+        for group in groups:
+            if group["scenario_id"] == Scenario.LOG:
+                continue
+            function_name = INDEX_SCENARIO[group["scenario_id"]]
+            metrics.append(
+                Metric(
+                    metric_name="count",
+                    metric_value=group["count"],
+                    dimensions={"function": function_name},
+                    timestamp=MetricUtils.get_instance().report_ts,
+                )
+            )
+        return metrics
+
+    @staticmethod
+    def trace_biz_usage():
+        groups = (
+            LogIndexSet.objects.values("project_id")
+            .filter(is_trace_log=True)
+            .order_by("project_id")
+            .annotate(count=Count("project_id", distinct=True))
+        )
+        metrics = [
+            Metric(
+                metric_name="count",
+                metric_value=len(groups),
+                dimensions={
+                    "function": "log_trace",
+                },
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        ]
+        return metrics
+
+    @staticmethod
+    def clean_biz_usage():
+        metrics = [
+            Metric(
+                metric_name="count",
+                metric_value=BusinessMetricCollector().get_clean_biz_usage(),
+                dimensions={
+                    "function": "log_clean",
+                },
+                timestamp=MetricUtils.get_instance().report_ts,
+            )
+        ]
+        return metrics
+
+    @staticmethod
+    def get_clean_biz_usage():
+        etl_biz = (
+            CollectorConfig.objects.filter(
+                bk_biz_id__in=[bk_biz_id for bk_biz_id in MetricUtils.get_instance().biz_info]
+            )
+            .distinct()
+            .exclude(index_set_id__isnull=True)
+            .exclude(etl_config__isnull=True)
+            .exclude(etl_config=EtlConfig.BK_LOG_TEXT)
+            .values("bk_biz_id")
+            .order_by("bk_biz_id")
+        )
+        clean_biz_list = [i["bk_biz_id"] for i in etl_biz]
+
+        if not FeatureToggleObject.switch(name=SCENARIO_BKDATA):
+            return len(clean_biz_list)
+        bk_data_cleans = BKDataClean.objects.filter(
+            bk_biz_id__in=[bk_biz_id for bk_biz_id in MetricUtils.get_instance().biz_info]
+        )
+        for bk_data_clean in bk_data_cleans:
+            collector_config = CollectorConfig.objects.filter(
+                collector_config_id=bk_data_clean.collector_config_id
+            ).first()
+            if not collector_config:
+                continue
+            clean_biz_list.append(collector_config.bk_biz_id)
+
+        return len(set(clean_biz_list))

@@ -28,7 +28,7 @@ from apps.log_databus.exceptions import CollectorConfigNotExistException
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.constants import LogPluginInfo
 from apps.exceptions import ApiRequestError, ApiResultError
-from .test_collectorhandler import TestCollectorHandler
+from .test_collectorhandler import TestCollectorHandler, get_data_id
 from ...log_databus.serializers import CollectorCreateSerializer
 from ...utils.drf import custom_params_valid
 
@@ -47,9 +47,7 @@ PARAMS = {
     "category_id": "application",
     "target_object_type": "HOST",
     "target_node_type": "TOPO",
-    "target_nodes": [
-        {"bk_inst_id": 33, "bk_obj_id": "module"},
-    ],
+    "target_nodes": [{"bk_inst_id": 33, "bk_obj_id": "module"}],
     "data_encoding": "UTF-8",
     "bk_data_name": "abc",
     "description": "这是一个描述",
@@ -857,7 +855,7 @@ def subscription_statistic(params):
 class TestCollector(TestCase):
     @patch(
         "apps.api.TransferApi.get_data_id",
-        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -901,7 +899,7 @@ class TestCollector(TestCase):
 
     @patch(
         "apps.api.TransferApi.get_data_id",
-        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -1179,7 +1177,7 @@ class TestCollector(TestCase):
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch(
         "apps.api.TransferApi.get_data_id",
-        lambda x: {"data_name": BK_DATA_NAME} if x["data_name"] == BK_DATA_NAME else {},
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -1219,3 +1217,30 @@ class TestCollector(TestCase):
             params={"bk_biz_id": params["bk_biz_id"], "collector_config_name_en": "1"}
         )
         self.assertEqual(result["allowed"], True)
+
+    def test_validate_container_config_yaml(self, *args, **kwargs):
+        yaml_config = """
+---
+encoding: UTF-8
+labelSelector:
+  matchLabels:
+    app.kubernetes.io/component: api-support
+    app.kubernetes.io/instance: bk-apigateway
+    app.kubernetes.io/name: bk-apigateway
+logConfigType: std_log_config
+namespace: default
+
+---
+encoding: UTF-8
+labelSelector:
+  matchLabels:
+    app.kubernetes.io/instance: bkmonitor
+    app.kubernetes.io/name: influxdb-proxy
+logConfigType: container_log_config
+path:
+  - /var/log/influxdb-proxy.log
+  - /var/log/influxdb.log
+namespace: default
+        """
+        result = CollectorHandler().validate_container_config_yaml(yaml_config)
+        self.assertTrue(result["parse_status"])

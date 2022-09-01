@@ -22,13 +22,6 @@
 
 <template>
   <div class="retrieve-container" v-bkloading="{ isLoading: false }">
-    <!-- 初始化加载时显示这个空的盒子 避免先显示内容 再显示无权限页面 -->
-    <div v-if="!hasAuth && !authPageInfo && !isNoIndexSet" style="height: 100%;background: #f4f7fa;"></div>
-    <!-- 单独的申请权限页面 -->
-    <auth-page
-      v-if="!hasAuth && authPageInfo && !isNoIndexSet"
-      :info="authPageInfo"
-      style="background: #f4f7fa;" />
     <!-- 检索页首页 -->
     <div v-if="hasAuth && isRetrieveHome" class="retrieve-home-container">
       <div class="retrieve-home" data-test-id="retrieve_div_frontPageSearchBox">
@@ -63,41 +56,50 @@
       <!--eslint-enable-->
     </div>
     <!-- 检索页详情页 -->
-    <div v-if="(hasAuth || isNoIndexSet) && !isRetrieveHome" class="retrieve-detail-container">
+    <div v-if="!isRetrieveHome" class="retrieve-detail-container">
       <div class="page-loading-wrap" v-if="basicLoading || tableLoading">
         <div class="page-loading-bar"></div>
       </div>
       <!-- 检索详情页左侧 -->
       <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
         <!-- 监控显示的 tab 切换 -->
-        <div v-if="isAsIframe" class="bk-button-group">
+        <!-- <div v-if="isAsIframe" class="bk-button-group">
           <bk-button @click="handleCheckMonitor">{{ $t('指标检索') }}</bk-button>
           <bk-button class="is-selected">{{ $t('日志检索') }}</bk-button>
           <bk-button @click="handleCheckEvent">{{ $t('事件检索') }}</bk-button>
-        </div>
+        </div> -->
 
-        <div class="biz-menu-box" id="bizSelectorGuide">
+        <div class="biz-menu-box" id="bizSelectorGuide" v-if="!isAsIframe">
           <biz-menu-select theme="light"></biz-menu-select>
         </div>
 
         <div class="king-tab" :class="isAsIframe && 'as-iframe'">
-          <div class="tab-header">{{ $t('数据查询') }}
-            <bk-popover
-              ref="queryTipPopover"
-              placement="bottom"
-              theme="light"
-              :transfer="true"
-              trigger="click">
-              <span class="bk-icon icon-cog" @click="toggleCog"></span>
-              <div slot="content" class="auto-query-popover-content">
-                <span>{{ $t('是否开启自动查询') }}</span>
-                <span class="bk-icon icon-info"></span>
-                <bk-switcher v-model="isAutoQuery" theme="primary" size="small" @change="switchAutoQuery"></bk-switcher>
-                <span class="confirm-btn" v-if="!isHideAutoQueryTips" @click="toggleNotice">{{ $t('知道了') }}</span>
-              </div>
-            </bk-popover>
+          <div class="tab-header">
+            <span class="tab-title">{{ $t('数据查询') }}</span>
+            <div class="tab-operation">
+              <bk-popover
+                ref="queryTipPopover"
+                placement="bottom"
+                theme="light"
+                :transfer="true"
+                trigger="click">
+                <span class="bk-icon icon-cog" @click="toggleCog"></span>
+                <div slot="content" class="auto-query-popover-content">
+                  <span>{{ $t('是否开启自动查询') }}</span>
+                  <span class="bk-icon icon-info"></span>
+                  <bk-switcher
+                    v-model="isAutoQuery"
+                    theme="primary"
+                    size="small"
+                    @change="switchAutoQuery">
+                  </bk-switcher>
+                  <span class="confirm-btn" v-if="!isHideAutoQueryTips" @click="toggleNotice">{{ $t('知道了') }}</span>
+                </div>
+              </bk-popover>
+              <span class="bk-icon icon-angle-double-left-line" @click="closeRetrieveCondition"></span>
+            </div>
           </div>
-          <div class="tab-content">
+          <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
             <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
               <!-- 选择索引集 -->
               <div class="tab-item-title">{{ $t('索引集') }}</div>
@@ -216,6 +218,7 @@
               <field-filter
                 :total-fields="totalFields"
                 :visible-fields="visibleFields"
+                :sort-list="sortList"
                 :field-alias-map="fieldAliasMap"
                 :show-field-alias="showFieldAlias"
                 :statistical-fields-data="statisticalFieldsData"
@@ -245,38 +248,47 @@
           @update:datePickerValue="handleDateChange"
           @datePickerChange="retrieveWhenDateChange"
           @settingMenuClick="handleSettingMenuClick" />
-        <no-index-set v-if="isNoIndexSet" />
-        <result-main
-          ref="resultMainRef"
-          v-else
-          :table-loading="tableLoading"
-          :retrieve-params="retrieveParams"
-          :took-time="tookTime"
-          :index-set-list="indexSetList"
-          :table-data="tableData"
-          :visible-fields="visibleFields"
-          :total-fields="totalFields"
-          :field-alias-map="fieldAliasMap"
-          :show-field-alias="showFieldAlias"
-          :show-context-log="showContextLog"
-          :show-realtime-log="showRealtimeLog"
-          :show-web-console="showWebConsole"
-          :bk-monitor-url="bkmonitorUrl"
-          :async-export-usable="asyncExportUsable"
-          :async-export-usable-reason="asyncExportUsableReason"
-          :statistical-fields-data="statisticalFieldsData"
-          :time-field="timeField"
-          :config-data="clusteringData"
-          :clean-config="cleanConfig"
-          :picker-time-range="pickerTimeRange"
-          :date-picker-value="datePickerValue"
-          :index-set-item="indexSetItem"
-          :operator-config="operatorConfig"
-          @request-table-data="requestTableData"
-          @fieldsUpdated="handleFieldsUpdated"
-          @shouldRetrieve="retrieveLog"
-          @addFilterCondition="addFilterCondition"
-          @showSettingLog="handleSettingMenuClick('clustering')" />
+        <!-- 无权限页面 -->
+        <auth-container-page v-if="showAuthInfo" :info="showAuthInfo" />
+        <template v-else>
+          <!-- 初始化加载时显示这个空的盒子 避免先显示内容 再显示无权限页面 -->
+          <div v-if="!hasAuth && !showAuthInfo && !isNoIndexSet" style="height: 100%;background: #f4f7fa;"></div>
+          <!-- 无索引集 申请索引集页面 -->
+          <no-index-set v-if="isNoIndexSet" />
+          <!-- 详情右侧 -->
+          <result-main
+            ref="resultMainRef"
+            v-else
+            :table-loading="tableLoading"
+            :retrieve-params="retrieveParams"
+            :took-time="tookTime"
+            :index-set-list="indexSetList"
+            :table-data="tableData"
+            :visible-fields="visibleFields"
+            :total-fields="totalFields"
+            :field-alias-map="fieldAliasMap"
+            :show-field-alias="showFieldAlias"
+            :show-context-log="showContextLog"
+            :show-realtime-log="showRealtimeLog"
+            :show-web-console="showWebConsole"
+            :bk-monitor-url="bkmonitorUrl"
+            :async-export-usable="asyncExportUsable"
+            :async-export-usable-reason="asyncExportUsableReason"
+            :statistical-fields-data="statisticalFieldsData"
+            :time-field="timeField"
+            :config-data="clusteringData"
+            :apm-relation="apmRelationData"
+            :clean-config="cleanConfig"
+            :picker-time-range="pickerTimeRange"
+            :date-picker-value="datePickerValue"
+            :index-set-item="indexSetItem"
+            :operator-config="operatorConfig"
+            @request-table-data="requestTableData"
+            @fieldsUpdated="handleFieldsUpdated"
+            @shouldRetrieve="retrieveLog"
+            @addFilterCondition="addFilterCondition"
+            @showSettingLog="handleSettingMenuClick('clustering')" />
+        </template>
       </div>
       <!-- 可拖拽页面布局宽度 -->
       <div
@@ -331,7 +343,7 @@ import FavoritePopper from './condition-comp/favorite-popper';
 import ResultHeader from './result-comp/result-header';
 import NoIndexSet from './result-comp/no-index-set';
 import ResultMain from './result-comp/result-main';
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import SettingModal from './setting-modal/index.vue';
 import BizMenuSelect from '@/components/biz-menu';
 import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/common/util';
@@ -354,10 +366,10 @@ export default {
     FavoritePopper,
     ResultHeader,
     ResultMain,
-    AuthPage,
     NoIndexSet,
     SettingModal,
     BizMenuSelect,
+    AuthContainerPage,
   },
   mixins: [indexSetSearchMixin],
   data() {
@@ -366,10 +378,9 @@ export default {
     const endTime = formatDate(currentTime);
     return {
       hasAuth: false,
-      authPageInfo: null,
       isSearchAllowed: null, // true 有权限，false 无权限，null 未知权限
       renderTable: true, // 显示字段更新后手动触发重新渲染表格
-      basicLoading: true, // view loading
+      basicLoading: false, // view loading
       tableLoading: false, // 表格 loading
       requesting: false,
       // isRetrieveHome: !this.$route.params.indexId?.toString() && !this.$route.params.from, // 检索首页
@@ -432,6 +443,7 @@ export default {
       // ipTopoSwitch: true, // IP快选功能相关
       totalFields: [], // 表格字段
       visibleFields: [], // 显示的排序后的字段
+      sortList: [], // 排序字段
       notTextTypeFields: [], // 字段类型不为 text 的字段
       fieldAliasMap: {},
       showFieldAlias: localStorage.getItem('showFieldAlias') === 'true',
@@ -470,12 +482,14 @@ export default {
           clustering_field: '',
         },
       },
+      apmRelationData: {},
       showIpSelectorDialog: false,
       isAsIframe: false,
       localIframeQuery: {},
       isFirstLoad: true,
       pickerTimeRange: ['now-15m', 'now'],
       operatorConfig: {}, // 当前table操作的值
+      authPageInfo: null,
     };
   },
   computed: {
@@ -486,6 +500,9 @@ export default {
       storedIndexID: state => state.indexId, // 路由切换时缓存当前选择的索引
     }),
     ...mapGetters(['asIframe', 'iframeQuery']),
+    ...mapGetters({
+      authMainPageInfo: 'globals/authContainerInfo',
+    }),
     // 是否显示IP快选功能模块
     // showIpQuick() {
     //   return this.ipTopoSwitch;
@@ -501,6 +518,9 @@ export default {
     showSearchPage() {
       return this.hasAuth || this.isNoIndexSet;
     },
+    showAuthInfo() { // 无业务权限则展示store里的 然后判断是否有索引集权限
+      return this.authMainPageInfo || this.authPageInfo;
+    },
   },
   provide() {
     return {
@@ -513,6 +533,10 @@ export default {
       this.indexSetItem = option ? option : { index_set_name: '', indexName: '', scenario_name: '', scenario_id: '' };
       // eslint-disable-next-line camelcase
       this.isSearchAllowed = !!option?.permission?.search_log;
+      if (this.isSearchAllowed) {
+        this.authPageInfo = null;
+        this.hasAuth = true;
+      }
       this.resetRetrieveCondition();
       this.$store.commit('updateIndexId', val);
       val && this.requestSearchHistory(val);
@@ -644,8 +668,11 @@ export default {
       window.parent.postMessage('event-click', '*');
     },
     fetchPageData() {
-      if (this.projectId) {
+      // 有projectID且有业务权限时 才去请求索引集列表
+      if (!this.authMainPageInfo && this.projectId) {
         this.requestIndexSetList();
+      } else {
+        this.isFirstLoad = false;
       }
     },
     updateIndexSetList() {
@@ -710,14 +737,32 @@ export default {
           });
           this.indexSetList = indexSetList;
 
-          // 如果都没有权限直接显示页面无权限
+          const indexId = this.$route.params.indexId?.toString();
+          const routeIndexSet = indexSetList.find(item => item.index_set_id === indexId);
+          const isRouteIndex = !!routeIndexSet && !routeIndexSet?.permission?.search_log;
+
+          // 如果都没有权限或者路由带过来的索引集无权限则显示索引集无权限
           // eslint-disable-next-line camelcase
-          if (!this.indexSetList[0]?.permission?.search_log) {
+          if (!indexSetList[0]?.permission?.search_log || isRouteIndex) {
+            const authIndexID = indexId || indexSetList[0].index_set_id;
             this.$store.dispatch('getApplyData', {
               action_ids: ['search_log'],
-              resources: [],
+              resources: [{
+                type: 'indices',
+                id: authIndexID,
+              }],
             }).then((res) => {
               this.authPageInfo = res.data;
+              this.$router.push({
+                name: 'retrieve',
+                params: {
+                  indexId: null,
+                },
+                query: {
+                  bizId: window.localStorage.getItem('bk_biz_id'),
+                  projectId: window.localStorage.getItem('project_id'),
+                },
+              });
             })
               .catch((err) => {
                 console.warn(err);
@@ -730,7 +775,6 @@ export default {
           this.hasAuth = true;
 
 
-          const indexId = this.$route.params.indexId?.toString();
           if (indexId) { // 1、初始进入页面带ID；2、检索ID时切换业务；
             const indexItem = indexSetList.find(item => item.index_set_id === indexId);
             this.indexId = indexItem ? indexItem.index_set_id : indexSetList[0].index_set_id;
@@ -926,21 +970,18 @@ export default {
       this.retrieveLog();
     },
     // 收藏记录，和业务相关
-    requestFavoriteList(isAddLater = false) {
-      this.$http.request('retrieve/getRetrieveFavorite', {
-        query: {
-          project_id: this.projectId,
-        },
-      }).then((res) => {
+    async requestFavoriteList(isAddLater = false) {
+      if (!!this.authMainPageInfo || !this.projectId) return; // 无业务权限 则不请求收藏
+      try {
+        const query = { project_id: this.projectId };
+        const res = await this.$http.request('retrieve/getRetrieveFavorite', { query });
         this.favoriteList = res.data;
-        if (isAddLater) { // 新增后需标记最新的高亮显示
-          this.latestFavoriteId = this.favoriteList[0] && this.favoriteList[0].favorite_search_id;
-        }
-      })
-        .catch((e) => {
-          console.warn(e);
-          this.favoriteList.splice(0);
-        });
+        // 新增后需标记最新的高亮显示
+        if (isAddLater) this.latestFavoriteId = this.favoriteList[0] && this.favoriteList[0].favorite_search_id;
+      } catch (e) {
+        console.warn(e);
+        this.favoriteList.splice(0);
+      }
     },
     // 搜索记录
     retrieveFavorite({ indexId, params, id }) {
@@ -1227,6 +1268,7 @@ export default {
           config,
           display_fields: displayFields,
           time_field: timeField,
+          sort_list: sortList,
         } = data;
         const localConfig = {};
         config.forEach((item) => {
@@ -1240,14 +1282,17 @@ export default {
           async_export: asyncExport,
           clean_config: cleanConfig,
           clustering_config: clusteringConfig,
+          apm_relation: apmRelation,
         } = localConfig;
 
         this.operatorConfig = {
           bkmonitor,
           contextAndRealtime,
+          timeField,
         };
         this.cleanConfig = cleanConfig;
         this.clusteringData = clusteringConfig;
+        this.apmRelationData = apmRelation;
 
         fields.forEach((item) => {
           item.minWidth = 0;
@@ -1275,6 +1320,7 @@ export default {
             }
           }
         }).filter(Boolean);
+        this.sortList = sortList;
 
         const fieldAliasMap = {};
         fields.forEach((item) => {
@@ -1306,18 +1352,13 @@ export default {
           }
         }
       });
-      this.$http.request('retrieve/postFieldsConfig', {
-        params: { index_set_id: this.$route.params.indexId },
-        data: { display_fields: displayFieldNames, sort_list: [] },
-      }).catch((e) => {
-        console.warn(e);
-      });
       if (showFieldAlias !== undefined) {
         this.showFieldAlias = showFieldAlias;
         window.localStorage.setItem('showFieldAlias', showFieldAlias);
       }
       this.renderTable = false;
       await this.$nextTick();
+      this.requestFields();
       this.renderTable = true;
     },
     requestTableData() {
@@ -1570,6 +1611,10 @@ export default {
       this.leftPanelWidth = this.leftPanelMinWidth;
       this.showRetrieveCondition = true;
     },
+    closeRetrieveCondition() {
+      this.leftPanelWidth = 0;
+      this.showRetrieveCondition = false;
+    },
     // 初始 tips 消失后显示普通的 tips
     handleInitTipsHidden() {
       this.hasExpandInitTipsShown = true;
@@ -1732,7 +1777,7 @@ export default {
           padding-top: 10px;
 
           .tab-content {
-            height: calc(100% - 60px);
+            height: calc(100% - 108px);
             overflow-y: auto;
             background-color: #fbfbfb;
 
@@ -1761,14 +1806,20 @@ export default {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 24px 10px;
+            padding: 10px 24px 18px;
             color: #313238;
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 16px;
 
             .icon-cog {
               font-size: 18px;
               color: #979ba5;
+              cursor: pointer;
+            }
+
+            .icon-angle-double-left-line {
+              margin-left: 8px;
+              color: #979ba5;
+              font-size: 16px;
               cursor: pointer;
             }
           }

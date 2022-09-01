@@ -24,9 +24,9 @@ from django.utils.translation import ugettext as _
 from apps.api import BkDataDataFlowApi
 from apps.utils import ChoicesEnum
 
+DEFAULT_TIME_FIELD = "timestamp"
 DEFAULT_CLUSTERING_FIELD = "log"
 NOT_CLUSTERING_FILTER_RULE = " where ip is null"
-UUID_FIELDS = "uuid"
 OPERATOR_AND = "and"
 # 聚类不参与sql字段
 NOT_CONTAIN_SQL_FIELD_LIST = ["timestamp", "_startTime_", "_endTime_"]
@@ -88,14 +88,297 @@ class FlowMode(ChoicesEnum):
 
 class NodeType(object):
     REALTIME = "realtime"
-    UNIFIED_KV_SOURCE = "unified_kv_source"
+    REDIS_KV_SOURCE = "redis_kv_source"
     ELASTIC_STORAGE = "elastic_storage"
+    MODEL = "model_ts_custom"
+    STREAM_SOURCE = "stream_source"
 
 
 class RealTimeFlowNode(object):
-    PRE_TREAT_FILTER = "pre_treat_filter"
     PRE_TREAT_NOT_CLUSTERING = "pre_treat_not_clustering"
-    PRE_TREAT_TRANSFORM = "pre_treat_transform"
-    PRE_TREAT_ADD_UUID = "pre_treat_add_uuid"
     PRE_TREAT_SAMPLE_SET = "pre_treat_sample_set"
-    AFTER_TREAT_JOIN_AFTER_TREAT = "after_treat_join_after_treat"
+    AFTER_TREAT_CHANGE_FIELD = "after_treat_change_field"
+
+
+DEFAULT_MODEL_INPUT_FIELDS = [
+    {
+        "field_index": 1,
+        "data_field_name": "__index__",
+        "field_alias": "系统索引",
+        "components": [],
+        "roles": ["system", "index"],
+        "data_field_alias": "index",
+        "properties": {
+            "constraint_type": None,
+            "name_inherited": True,
+            "value_fixed": False,
+            "passthrough": False,
+            "role_changeable": False,
+            "deletable": False,
+            "compatibility": False,
+            "extra": {},
+            "constraints": {},
+            "required": True,
+            "complex": False,
+        },
+        "field_name": "__index__",
+        "field_type": "string",
+    },
+    {
+        "field_name": "__id__",
+        "field_type": "string",
+        "components": ["__group_id__", "timestamp"],
+        "field_alias": "用户索引",
+        "data_field_name": "__id__",
+        "data_field_alias": "用户索引",
+        "roles": ["index"],
+        "field_index": 2,
+        "properties": {
+            "required": True,
+            "extra": {},
+            "constraint_type": None,
+            "compatibility": False,
+            "deletable": False,
+            "name_inherited": True,
+            "complex": True,
+            "role_changeable": False,
+            "passthrough": False,
+            "value_fixed": False,
+            "constraints": {},
+        },
+    },
+    {
+        "data_field_name": [],
+        "data_field_alias": "",
+        "field_alias": "分组字段",
+        "field_type": "string",
+        "properties": {
+            "name_inherited": True,
+            "role_changeable": False,
+            "deletable": False,
+            "passthrough": False,
+            "compatibility": False,
+            "complex": False,
+            "value_fixed": True,
+            "constraints": {},
+            "required": True,
+            "constraint_type": None,
+            "extra": {},
+        },
+        "roles": ["index_component", "group"],
+        "components": [],
+        "field_name": "__group_id__",
+        "field_index": 3,
+    },
+    {
+        "data_field_name": "log",
+        "field_name": "log",
+        "field_alias": "日志内容",
+        "field_type": "string",
+        "field_index": 4,
+        "data_field_alias": "",
+        "components": [],
+        "roles": ["passthrough", "feature"],
+        "properties": {
+            "complex": False,
+            "compatibility": False,
+            "passthrough": False,
+            "required": True,
+            "constraint_type": "",
+            "role_changeable": False,
+            "deletable": False,
+            "extra": {},
+            "value_fixed": False,
+            "name_inherited": False,
+            "constraints": {},
+        },
+    },
+    {
+        "roles": ["timestamp"],
+        "field_index": 5,
+        "properties": {
+            "constraint_type": "",
+            "deletable": False,
+            "name_inherited": False,
+            "passthrough": False,
+            "role_changeable": False,
+            "required": True,
+            "compatibility": False,
+            "constraints": {},
+            "extra": {},
+            "complex": False,
+            "value_fixed": False,
+        },
+        "field_name": "timestamp",
+        "data_field_name": "timestamp",
+        "data_field_alias": "",
+        "field_alias": "时间戳",
+        "components": [],
+        "field_type": "timestamp",
+    },
+]
+
+
+DEFAULT_MODEL_OUTPUT_FIELDS = [
+    {
+        "data_field_alias": "index",
+        "components": [],
+        "field_type": "string",
+        "properties": {
+            "complex": False,
+            "constraints": {},
+            "extra": {},
+            "compatibility": False,
+            "constraint_type": None,
+            "deletable": False,
+            "name_inherited": True,
+            "required": True,
+            "value_fixed": False,
+            "role_changeable": False,
+            "passthrough": False,
+        },
+        "field_alias": "系统索引",
+        "field_index": 1,
+        "roles": ["index"],
+        "field_name": "__index__",
+        "data_field_name": "__index__",
+    },
+    {
+        "field_alias": "用户索引",
+        "data_field_alias": "用户索引",
+        "components": ["__group_id__", "timestamp"],
+        "roles": ["index"],
+        "properties": {
+            "role_changeable": False,
+            "name_inherited": True,
+            "value_fixed": False,
+            "complex": True,
+            "deletable": False,
+            "passthrough": False,
+            "required": True,
+            "constraints": {},
+            "extra": {},
+            "constraint_type": None,
+            "compatibility": False,
+        },
+        "field_name": "__id__",
+        "field_index": 2,
+        "data_field_name": "__id__",
+        "field_type": "string",
+    },
+    {
+        "field_alias": "分组索引",
+        "roles": ["index_component", "group"],
+        "properties": {
+            "deletable": False,
+            "passthrough": False,
+            "complex": False,
+            "constraints": {},
+            "extra": {},
+            "name_inherited": True,
+            "compatibility": False,
+            "constraint_type": None,
+            "role_changeable": False,
+            "value_fixed": True,
+            "required": True,
+        },
+        "field_type": "string",
+        "field_name": "__group_id__",
+        "components": [],
+        "field_index": 3,
+        "data_field_name": "__group_id__",
+        "data_field_alias": "分组字段",
+    },
+    {
+        "roles": ["predict_result"],
+        "properties": {
+            "deletable": False,
+            "complex": False,
+            "constraint_type": "",
+            "role_changeable": False,
+            "extra": {},
+            "value_fixed": False,
+            "constraints": {},
+            "required": True,
+            "name_inherited": False,
+            "passthrough": False,
+            "compatibility": False,
+        },
+        "data_field_alias": None,
+        "field_index": 4,
+        "field_name": "token",
+        "field_type": "text",
+        "components": [],
+        "field_alias": "token",
+        "data_field_name": "",
+    },
+    {
+        "properties": {
+            "name_inherited": False,
+            "value_fixed": False,
+            "constraint_type": "",
+            "deletable": False,
+            "extra": {},
+            "passthrough": False,
+            "compatibility": False,
+            "role_changeable": False,
+            "required": True,
+            "complex": False,
+            "constraints": {},
+        },
+        "field_name": "log_signature",
+        "components": [],
+        "data_field_name": "",
+        "field_alias": "log_signature",
+        "field_type": "text",
+        "data_field_alias": None,
+        "field_index": 5,
+        "roles": ["predict_result"],
+    },
+    {
+        "field_name": "timestamp",
+        "roles": ["timestamp"],
+        "properties": {
+            "constraint_type": "",
+            "extra": {},
+            "compatibility": False,
+            "value_fixed": False,
+            "passthrough": False,
+            "complex": False,
+            "role_changeable": False,
+            "required": True,
+            "constraints": {},
+            "deletable": False,
+            "name_inherited": True,
+        },
+        "field_index": 6,
+        "data_field_name": "timestamp",
+        "components": [],
+        "data_field_alias": None,
+        "field_type": "timestamp",
+        "field_alias": "timestamp",
+    },
+    {
+        "components": [],
+        "field_index": 7,
+        "properties": {
+            "value_fixed": False,
+            "required": True,
+            "compatibility": False,
+            "constraint_type": "",
+            "constraints": {},
+            "name_inherited": False,
+            "role_changeable": False,
+            "deletable": False,
+            "passthrough": False,
+            "complex": False,
+            "extra": {},
+        },
+        "data_field_alias": None,
+        "field_type": "string",
+        "field_alias": "日志内容",
+        "roles": ["passthrough", "feature"],
+        "data_field_name": "log",
+        "field_name": "log",
+    },
+]

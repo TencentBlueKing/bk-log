@@ -416,13 +416,14 @@ export default {
       this.fingerSwitch = extra.signature_switch;
       this.isShowFingerTips = extra.signature_switch;
       this.formData.clustering_fields = extra.clustering_fields;
-      this.clusterField = this.totalFields.filter(item => item.is_analyzed)
+      this.clusterField = this.totalFields
+        .filter(item => item.is_analyzed)
         .map((el) => {
           const { field_name: id, field_alias: alias } = el;
           return { id, name: alias ? `${id}(${alias})` : id };
         });
       this.filterSelectList = this.totalFields
-        .filter(item => !/^__dist/.test(item.field_name))
+        .filter(item => !/^__dist/.test(item.field_name) && item.field_type !== '__virtual__')
         .map((el) => {
           const { field_name: id, field_alias: alias } = el;
           return { id, name: alias ? `${id}(${alias})` : id };

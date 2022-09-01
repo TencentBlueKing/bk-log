@@ -1,22 +1,8 @@
 [
     {
-        "result_table_id":"{{after_treat.add_uuid_stream_source.result_table_id}}",
-        "bk_biz_id":{{after_treat.bk_biz_id }},
-        "name":"添加uuid",
-        "id":268067,
-        "from_nodes":[
-
-        ],
-        "node_type":"stream_source",
-        "frontend_info":{
-            "x":317,
-            "y":-65
-        }
-    },
-    {
         "result_table_id":"{{after_treat.sample_set_stream_source.result_table_id}}",
         "bk_biz_id":{{after_treat.bk_biz_id }},
-        "name":"样本集数据处理",
+        "name":"参与聚类日志",
         "id":268068,
         "from_nodes":[
 
@@ -42,179 +28,34 @@
         }
     },
     {
-        "bk_biz_id":{{after_treat.bk_biz_id }},
+        "bk_biz_id":{{after_treat.bk_biz_id}},
         "table_name":"{{after_treat.model.table_name}}",
         "output_name":"模型输出",
-        "name":"{{after_treat.model.table_name}}",
+        "name":"聚类模型应用",
         "model_release_id":{{after_treat.model.model_release_id}},
         "input_config":{
-            "input_node":{
-                "input_fields":[
-
-                ],
+             "input_node":{
+                "fields": {{after_treat.model.input_fields}},
                 "sample_set_table_desc":null,
                 "sample_set_table_name":"sample_table",
                 "group_serving_enable":true,
                 "input_result_table":"{{after_treat.sample_set_stream_source.result_table_id}}",
                 "group_serving":false,
-                "group_columns":[
-
-                ],
-                "serving_fields_mapping":{
-                    "uuid":"uuid",
-                    "timestamp":"timestamp",
-                    "log":"log"
-                },
-                "add_on_input":[
-
-                ],
-                "grouped_training":false
+                "group_columns":[],
+                "add_on_input":[],
+                "grouped_training":false,
+                "input_columns_changeable":{
+                    "condition":"lt",
+                    "condition_value":"500",
+                    "value":true
+                }
             }
         },
         "output_config":{
             "output_node":{
                 "table_name":"{{after_treat.model.table_name}}",
                 "table_alias":"模型输出",
-                "output_fields":[
-                    {
-                        "data_field_alias":null,
-                        "allowed_values":[
-
-                        ],
-                        "properties":{
-                            "used_by":"user",
-                            "allow_modified":true,
-                            "is_advanced":false,
-                            "allow_null":true,
-                            "support":true
-                        },
-                        "field_name":"token",
-                        "field_index":1,
-                        "sample_value":null,
-                        "value":null,
-                        "data_field_name":null,
-                        "origin":[
-
-                        ],
-                        "description":null,
-                        "used_by":"user",
-                        "field_alias":"token",
-                        "default_value":null,
-                        "field_type":"text",
-                        "roles":{
-
-                        },
-                        "attr_type":"feature",
-                        "is_ts_field":false
-                    },
-                    {
-                        "field_index":2,
-                        "value":null,
-                        "data_field_name":null,
-                        "origin":[
-
-                        ],
-                        "used_by":"user",
-                        "field_alias":"log_signature",
-                        "default_value":null,
-                        "field_type":"text",
-                        "is_ts_field":false,
-                        "field_name":"log_signature",
-                        "sample_value":null,
-                        "data_field_alias":null,
-                        "allowed_values":[
-
-                        ],
-                        "properties":{
-
-                        },
-                        "description":null,
-                        "roles":{
-
-                        },
-                        "attr_type":"feature"
-                    },
-                    {
-                        "value":null,
-                        "data_field_alias":null,
-                        "field_type":"string",
-                        "origin":[
-
-                        ],
-                        "description":null,
-                        "used_by":"user",
-                        "field_name":"log",
-                        "data_field_name":null,
-                        "properties":{
-
-                        },
-                        "attr_type":"feature",
-                        "is_ts_field":false,
-                        "roles":{
-
-                        },
-                        "field_index":3,
-                        "default_value":null,
-                        "sample_value":null,
-                        "allowed_values":[
-
-                        ],
-                        "field_alias":"log"
-                    },
-                    {
-                        "default_value":null,
-                        "value":null,
-                        "field_type":"string",
-                        "field_index":4,
-                        "sample_value":null,
-                        "data_field_name":null,
-                        "origin":[
-
-                        ],
-                        "description":null,
-                        "used_by":"user",
-                        "field_name":"uuid",
-                        "data_field_alias":null,
-                        "allowed_values":[
-
-                        ],
-                        "roles":{
-
-                        },
-                        "properties":{
-
-                        },
-                        "is_ts_field":false,
-                        "field_alias":"唯一辨识id",
-                        "attr_type":"feature"
-                    },
-                    {
-                        "field_index":999,
-                        "origin":[
-                            "timestamp"
-                        ],
-                        "field_name":"timestamp",
-                        "is_dimension":false,
-                        "allowed_values":[
-
-                        ],
-                        "properties":{
-                            "input_type":"field"
-                        },
-                        "roles":{
-                            "timestamp":true
-                        },
-                        "used_by":"system",
-                        "field_type":"timestamp",
-                        "description":"timestamp",
-                        "data_field_name":"timestamp",
-                        "data_field_alias":"时间戳",
-                        "deletable":false,
-                        "is_ts_field":true,
-                        "field_alias":"时间戳",
-                        "attr_type":"ts_field"
-                    }
-                ],
+                "fields": {{after_treat.model.output_fields}},
                 "table_zh_name":"模型输出"
             }
         },
@@ -271,48 +112,7 @@
     },
     {
         "bk_biz_id":{{after_treat.bk_biz_id }},
-        "sql":"SELECT {{after_treat.join_after_treat.fields}}, model.log_signature FROM {{after_treat.add_uuid_stream_source.result_table_id}} param left join {{after_treat.model.result_table_id}} model  on param.uuid=model.uuid",
-        "table_name":"{{after_treat.join_after_treat.table_name}}",
-        "name":"数据join处理",
-        "count_freq":30,
-        "waiting_time":30,
-        "window_time":null,
-        "window_type":"scroll",
-        "counter":null,
-        "output_name":"数据join处理",
-        "session_gap":null,
-        "expired_time":null,
-        "window_lateness":{
-            "allowed_lateness":false,
-            "lateness_time":1,
-            "lateness_count_freq":60
-        },
-        "correct_config_id":null,
-        "is_open_correct":false,
-        "id":268072,
-        "from_nodes":[
-            {
-                "id":268067,
-                "from_result_table_ids":[
-                    "{{after_treat.add_uuid_stream_source.result_table_id}}"
-                ]
-            },
-            {
-                "id":268071,
-                "from_result_table_ids":[
-                    "{{after_treat.model.result_table_id}}"
-                ]
-            }
-        ],
-        "node_type":"realtime",
-        "frontend_info":{
-            "x":680,
-            "y":51
-        }
-    },
-    {
-        "bk_biz_id":{{after_treat.bk_biz_id }},
-        "sql":"select {{after_treat.change_field.fields}} from {{after_treat.join_after_treat.result_table_id}}, lateral table(udf_signature_format(log_signature)) as T(dist_01, dist_03, dist_05, dist_07, dist_09)",
+        "sql":"select {{after_treat.change_field.fields}} from {{after_treat.model.result_table_id}}, lateral table(udf_signature_format(log_signature)) as T(dist_01, dist_03, dist_05, dist_07, dist_09)",
         "table_name":"{{after_treat.change_field.table_name}}",
         "name":"字段转换处理",
         "count_freq":null,
@@ -333,9 +133,9 @@
         "id":268073,
         "from_nodes":[
             {
-                "id":268072,
+                "id":268071,
                 "from_result_table_ids":[
-                    "{{after_treat.join_after_treat.result_table_id}}"
+                    "{{after_treat.model.result_table_id}}"
                 ]
             }
         ],
@@ -379,7 +179,7 @@
         "bk_biz_id":{{after_treat.bk_biz_id}},
         "sql":"select {{after_treat.change_clustering_field.fields}} from {{ after_treat.merge_table.result_table_id}}",
         "table_name":"{{ after_treat.change_clustering_field.table_name }}",
-        "name":"change clustering fields",
+        "name":"改变聚类字段",
         "count_freq":null,
         "waiting_time":null,
         "window_time":null,
@@ -616,9 +416,9 @@
         }
     },
     {
-        "name":"join signature缓存(ignite)",
+        "name":"join signature缓存(redis)",
         "bk_biz_id":{{after_treat.bk_biz_id}},
-        "cluster":"{{after_treat.ignite.cluster}}",
+        "cluster":"{{after_treat.redis.cluster}}",
         "expires":-1,
         "expires_unit":"",
         "result_table_id":"{{after_treat.join_signature_tmp.result_table_id}}",
@@ -630,18 +430,15 @@
                 ]
             }
         ],
+        "separator":":",
+        "key_separator":"_",
         "storage_type":"join",
-        "indexed_fields":[
-            "signature",
-            "sensitivity"
-        ],
-        "storage_keys":[
+        "keys":[
             "sensitivity",
             "signature"
         ],
-        "max_records":1000000,
         "id":268244,
-        "node_type":"ignite",
+        "node_type":"redis_storage",
         "frontend_info":{
             "x":1941,
             "y":320

@@ -72,7 +72,6 @@
         <div
           v-if="!(item.permission && item.permission.search_log)"
           class="option-slot-container no-authority" @click.stop>
-          <span class="bk-icon ion-star"></span>
           <span class="text">{{ item.indexName + item.lightenName }}</span>
           <span class="apply-text" @click="applySearchAccess(item)">{{$t('申请权限')}}</span>
         </div>

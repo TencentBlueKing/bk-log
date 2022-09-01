@@ -31,7 +31,6 @@ from apps.utils.log import logger
 from apps.utils import md5_sum
 from apps.log_search.constants import TimeEnum
 
-
 MIN_LEN = 15
 
 

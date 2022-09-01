@@ -90,6 +90,10 @@ export default {
       type: Array,
       require: true,
     },
+    apmRelation: {
+      type: Object,
+      default: () => {},
+    },
   },
   data() {
     return {
@@ -196,24 +200,32 @@ export default {
         // trace检索
         case 'trace_id':
         case 'traceID':
-          path = `/trace/home?app_name=bkmonitor_production&search_type=accurate&trace_id=${this.data[field]}`;
+          if (this.apmRelation.is_active) {
+            const { app_name: appName, bk_biz_id: bkBizId } = this.apmRelation.extra;
+            path = `/?bizId=${bkBizId}#/trace/home?app_name=${appName}&search_type=accurate&trace_id=${this.data[field]}`;
+          } else {
+            this.$bkMessage({
+              theme: 'warning',
+              message: this.$t('retrieve.traceNoDataTips'),
+            });
+          }
           break;
         // 主机监控
         case 'serverIp':
         case 'ip':
-          path = `/performance/detail/${this.data[field]}-0`;
+          path = `/?bizId=${this.bkBizId}#/performance/detail/${this.data[field]}-0`;
           break;
         // 容器
         case 'container_id':
         case '__ext.container_id':
-          path = '/k8s';
+          path = `/?bizId=${this.bkBizId}#/k8s`;
           break;
         default:
           break;
       }
 
       if (path) {
-        const url = `${window.MONITOR_URL}/?bizId=${this.bkBizId}#${path}`;
+        const url = `${window.MONITOR_URL}${path}`;
         window.open(url, '_blank');
       }
     },

@@ -60,11 +60,9 @@ from apps.log_clustering.components.collections.sample_set_component import (
     CollectConfigs,
     ApplySampleSet,
 )
-from apps.log_clustering.constants import SAMPLE_SET_SLEEP_TIMER
 from apps.log_clustering.handlers.pipline_service.base_pipline_service import BasePipeLineService
 from apps.log_clustering.handlers.pipline_service.constants import OperatorServiceEnum
 from apps.log_clustering.models import ClusteringConfig, AiopsModel, AiopsModelExperiment, SampleSet
-from apps.utils.pipline import SleepTimer
 
 
 class AiopsLogService(BasePipeLineService):
@@ -113,8 +111,6 @@ class AiopsLogService(BasePipeLineService):
             CollectConfigs(sample_set_name=sample_set_name).collect_config
         ).extend(
             ApplySampleSet(sample_set_name=sample_set_name).apply_sample_set
-        ).extend(
-            SleepTimer(SAMPLE_SET_SLEEP_TIMER).sleep_timer
         ).extend(
             CreateModel(model_name=model_name).create_model
         ).extend(
@@ -193,8 +189,6 @@ class AiopsBkdataService(BasePipeLineService):
             CollectConfigs(sample_set_name=sample_set_name).collect_config
         ).extend(
             ApplySampleSet(sample_set_name=sample_set_name).apply_sample_set
-        ).extend(
-            SleepTimer(SAMPLE_SET_SLEEP_TIMER).sleep_timer
         ).extend(
             CreateModel(model_name=model_name).create_model
         ).extend(
@@ -321,6 +315,7 @@ def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
     data = service.build_data_context(params)
     pipeline = service.build_pipeline(data, **params)
     service.start_pipeline(pipeline)
+    return pipeline.id
 
 
 class ClusteringService(object):

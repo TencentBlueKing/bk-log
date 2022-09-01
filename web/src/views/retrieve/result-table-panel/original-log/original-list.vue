@@ -104,7 +104,7 @@
           :show-monitor-web="showMonitorWeb"
           :show-web-console="showWebConsole"
           :operator-config="operatorConfig"
-          :handle-click="(event) => handleClickTools(event, row)" />
+          :handle-click="(event) => handleClickTools(event, row, operatorConfig)" />
       </template>
     </bk-table-column>
     <!-- 初次加载骨架屏loading -->

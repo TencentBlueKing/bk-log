@@ -26,6 +26,7 @@ from pipeline.component_framework.component import Component
 from pipeline.builder import ServiceActivity, Var
 
 from apps.log_clustering.handlers.aiops.sample_set.sample_set_handler import SampleSetHandler
+from apps.log_clustering.handlers.dataflow.constants import DEFAULT_CLUSTERING_FIELD, DEFAULT_TIME_FIELD
 from apps.log_clustering.models import SampleSet, ClusteringConfig
 from apps.utils.pipline import BaseService
 
@@ -85,6 +86,7 @@ class AddRtToSampleSetService(BaseService):
         SampleSetHandler().add_rt_to_sample_set(
             sample_set_id=sample_set_id,
             result_table_id=clustering_config.pre_treat_flow["sample_set"]["result_table_id"],
+            field_filter=[DEFAULT_TIME_FIELD, DEFAULT_CLUSTERING_FIELD],
         )
         return True
 
@@ -154,7 +156,10 @@ class ApplySampleSetService(BaseService):
         sample_set_id = SampleSet.objects.get(sample_set_name=sample_set_name).sample_set_id
         submit_status_result = SampleSetHandler().submit_status(sample_set_id=sample_set_id)
         if submit_status_result["status"] == "finished":
-            self.finish_schedule()
+            sample_set_info = SampleSetHandler().sample_set_info(sample_set_id=sample_set_id)
+            if sample_set_info["sample_size"] > 0:
+                # 当样本提交完成，且样本数大于0，说明样本已经生效
+                self.finish_schedule()
         return True
 
 

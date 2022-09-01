@@ -173,7 +173,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
           open={this.isShow}
           type="daterange"
           disabled
-          transfer
+          // transfer
           placement={this.placement}
           on-change={this.dateTimeChange}
           on-pick-click={val => console.log(1111, val)}

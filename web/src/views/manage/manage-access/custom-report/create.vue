@@ -237,7 +237,7 @@
             class="copy-number-input"
             type="number"
             :max="shardsMax"
-            :min="0"
+            :min="1"
             :precision="0"
             :clearable="false"
             :show-controls="true"
@@ -417,7 +417,7 @@ export default {
       },
       clusterList: [], // 共享集群
       exclusiveList: [], // 独享集群
-      cacheStorageReplies: {}, // 自定义上报回显副本数和分片数时保存的值
+      editStorageClusterID: null,
     };
   },
   computed: {
@@ -456,7 +456,7 @@ export default {
   },
   mounted() {
     this.containerLoading = true;
-    Promise.all([this.getLinkData(), this.getStorage(this.isEdit)]).then(() => {
+    Promise.all([this.getLinkData(), this.getStorage()]).then(() => {
       this.initFormData();
     })
       .finally(() => {
@@ -552,10 +552,8 @@ export default {
           es_shards: storage_shards_nums,
         });
         // 缓存编辑时的集群ID
-        this.cacheStorageReplies = {
-          storage_replies,
-          storage_shards_nums,
-        };
+        // eslint-disable-next-line camelcase
+        this.editStorageClusterID = storage_cluster_id;
       } else {
         const { retention } =  this.formData;
         Object.assign(this.formData, {

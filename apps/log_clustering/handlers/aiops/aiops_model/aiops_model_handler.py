@@ -34,11 +34,15 @@ from apps.log_clustering.exceptions import (
 from apps.log_clustering.handlers.aiops.aiops_model.constants import (
     StepName,
     TRAINING_INPUT_VALUE,
-    ALGORITHM_CONFIG_FEATURE_COLUMNS,
-    ALGORITHM_CONFIG_PREDICT_OUTPUT,
     DELIMETER_DEFAULT_VALUE,
     PREDEFINED_VARIBLES_DEFAULT_VALUE,
     TRAINING_HOUR,
+    ALGORITHM_CONFIG_TRAINING_INPUT,
+    ALGORITHM_CONFIG_TRAINING_META,
+    EVALUATE_INPUT_VALUE,
+    ALGORITHM_CONFIG_PREDICT_META,
+    ALGORITHM_CONFIG_PREDICT_OUTPUT,
+    ALGORITHM_CONFIG_PREDICT_INPUT,
 )
 from apps.log_clustering.handlers.aiops.base import BaseAiopsHandler
 from apps.log_clustering.handlers.aiops.aiops_model.data_cls import (
@@ -78,6 +82,7 @@ from apps.log_clustering.handlers.aiops.aiops_model.data_cls import (
     AiopsReleaseModelReleaseIdModelFileCls,
     AiopsExperimentsDebugCls,
     AiopsExperimentsDebugInputConfigCls,
+    MemoryStepScalingPolicyCls,
 )
 
 
@@ -139,9 +144,10 @@ class AiopsModelHandler(BaseAiopsHandler):
         experiment_id: int,
         window: str = "1h",
         worker_nums: int = 6,
-        memory: int = 8096,
+        memory: int = 2048,
         time_limit: int = 7200,
         core: int = 4,
+        max_memory: int = 8192,
     ):
         """
         变更实验meta配置
@@ -151,17 +157,24 @@ class AiopsModelHandler(BaseAiopsHandler):
         @param memory int 使用内存大小
         @param time_limit 运行时间设置
         @param core 核数
+        @param max_memory 最大内存大小
         """
         update_execute_config_request = UpdateExecuteConfigCls(
             filter_id=experiment_id,
             execute_config=ExecuteConfigCls(
-                chunked_read_sample_set=ChunkedReadSampleSet(
-                    window=window,
-                ),
+                chunked_read_sample_set=ChunkedReadSampleSet(window=window),
                 pipeline_resources=PipelineResourcesCls(
                     python_backend=PythonBackendCls(worker_nums=worker_nums, memory=memory, core=core)
                 ),
                 pipeline_execute_config={"time_limit": time_limit},
+                resource_preference={
+                    "scaling_policy": [
+                        {
+                            "policy_name": "memory_step_scaling_policy",
+                            "extra_kwargs": MemoryStepScalingPolicyCls(max_memory=max_memory),
+                        }
+                    ]
+                },
             ),
         )
         update_execute_config_request.execute_config.chunked_read_sample_set.chunk_policy.config.partition_number = (
@@ -591,8 +604,8 @@ class AiopsModelHandler(BaseAiopsHandler):
                         algorithm_config=ModelTrainContentAlgorithmConfigCls(
                             sample_set_table_name=None,
                             sample_set_table_desc=None,
-                            feature_columns=ALGORITHM_CONFIG_FEATURE_COLUMNS,
-                            predict_output=ALGORITHM_CONFIG_PREDICT_OUTPUT,
+                            training_input=ALGORITHM_CONFIG_TRAINING_INPUT,
+                            training_meta=ALGORITHM_CONFIG_TRAINING_META,
                             training_args=self._generate_training_args(
                                 min_members=min_members,
                                 max_dist_list=max_dist_list,
@@ -884,8 +897,45 @@ class AiopsModelHandler(BaseAiopsHandler):
                                 ]["advance_config"],
                                 value=self.conf.get("evaluation_func"),
                             ),
+                            evaluate_input=NodeConfigCls(
+                                id=model_evaluation_steps_config["content"]["node_config"]["evaluate_input"]["id"],
+                                arg_name=model_evaluation_steps_config["content"]["node_config"]["evaluate_input"][
+                                    "arg_name"
+                                ],
+                                action_name=model_evaluation_steps_config["content"]["node_config"]["evaluate_input"][
+                                    "action_name"
+                                ],
+                                arg_alias=model_evaluation_steps_config["content"]["node_config"]["evaluate_input"][
+                                    "arg_alias"
+                                ],
+                                arg_index=model_evaluation_steps_config["content"]["node_config"]["evaluate_input"][
+                                    "arg_index"
+                                ],
+                                data_type=model_evaluation_steps_config["content"]["node_config"]["evaluate_input"][
+                                    "data_type"
+                                ],
+                                properties=model_evaluation_steps_config["content"]["node_config"]["evaluate_input"][
+                                    "properties"
+                                ],
+                                description=model_evaluation_steps_config["content"]["node_config"]["evaluate_input"][
+                                    "description"
+                                ],
+                                default_value=model_evaluation_steps_config["content"]["node_config"]["evaluate_input"][
+                                    "default_value"
+                                ],
+                                advance_config=model_evaluation_steps_config["content"]["node_config"][
+                                    "evaluate_input"
+                                ]["advance_config"],
+                                value=EVALUATE_INPUT_VALUE,
+                            ),
                         ),
                         algorithm_config=model_evaluation_steps_config["content"]["algorithm_config"],
+                        prediction_algorithm_config={
+                            "predict_input": ALGORITHM_CONFIG_PREDICT_INPUT,
+                            "predict_output": ALGORITHM_CONFIG_PREDICT_OUTPUT,
+                            "predict_meta": ALGORITHM_CONFIG_PREDICT_META,
+                            "algorithm_properties": {"algorithm_name": self.conf.get("model_train_algorithm")},
+                        },
                     ),
                 )
             ],
@@ -1057,10 +1107,7 @@ class AiopsModelHandler(BaseAiopsHandler):
             input_config=AiopsExperimentsDebugInputConfigCls(
                 algorithm_name=self.conf.get("debug_algorithm_name"),
                 input_data=input_data,
-                feature_columns=[
-                    {"field_name": "log", "data_field_name": clustering_field},
-                    {"field_name": "uuid", "data_field_name": "uuid"},
-                ],
+                feature_columns=[{"field_name": "log", "data_field_name": clustering_field}],
                 training_args=[
                     {"field_name": "min_members", "value": min_members},
                     {"field_name": "max_dist_list", "value": max_dist_list},

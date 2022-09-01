@@ -22,7 +22,7 @@
 
 <template>
   <section class="step-field-container" data-test-id="addNewCollectionItem_section_fieldExtractionBox">
-    <auth-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-page>
+    <auth-container-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-container-page>
     <div class="step-field" v-bkloading="{ isLoading: basicLoading }" v-else>
       <bk-alert v-if="!isCleanField && !isTempField && !isSetEdit" class="king-alert" type="info">
         <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
@@ -469,13 +469,13 @@
 <script>
 import { mapGetters, mapState } from 'vuex';
 import fieldTable from './field-table';
-import AuthPage from '@/components/common/auth-page';
+import AuthContainerPage from '@/components/common/auth-container-page';
 import { projectManages } from '@/common/util';
 
 export default {
   components: {
     fieldTable,
-    AuthPage,
+    AuthContainerPage,
   },
   props: {
     operateType: String,
@@ -497,7 +497,7 @@ export default {
       // eslint-disable-next-line no-useless-escape
       defaultRegex: '(?P<request_ip>[\d\.]+)[^[]+\[(?P<request_time>[^]]+)\]',
       isLoading: false,
-      basicLoading: true,
+      basicLoading: false,
       isUnmodifiable: false,
       fieldType: '',
       deletedVisible: true,
@@ -729,6 +729,7 @@ export default {
   methods: {
     // 初始化清洗项
     initCleanItem() {
+      this.basicLoading = true;
       const query = {
         bk_biz_id: this.bkBizId,
         have_data_id: 1,
@@ -1097,8 +1098,8 @@ export default {
       /* eslint-disable */
       this.params.etl_config = etl_config
       Object.assign(this.params.etl_params, {
-        separator_regexp: etl_params.separator_regexp || '',
-        separator: etl_params.separator || ''
+        separator_regexp: etl_params?.separator_regexp || '',
+        separator: etl_params?.separator || ''
       })
       this.isUnmodifiable = !!(table_id || storage_cluster_id)
       this.fieldType = etl_config || 'bk_log_text'

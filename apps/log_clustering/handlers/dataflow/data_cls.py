@@ -307,12 +307,8 @@ class HDFSStorageCls(object):
 @dataclass
 class PreTreatDataFlowCls(object):
     stream_source: StreamSourceCls
-    transform: RealTimeCls
-    add_uuid: RealTimeCls
     sample_set: RealTimeCls
     sample_set_hdfs: HDFSStorageCls
-    filter: RealTimeCls
-    add_uuid_hdfs: HDFSStorageCls
     not_clustering: RealTimeCls
     not_clustering_hdfs: HDFSStorageCls
     bk_biz_id: int
@@ -325,6 +321,8 @@ class ModelCls(object):
     model_release_id: int
     model_id: str
     result_table_id: str
+    input_fields: str
+    output_fields: str
 
 
 @dataclass
@@ -340,7 +338,7 @@ class TspiderStorageCls(object):
 
 
 @dataclass
-class IgniteStorageCls(object):
+class RedisStorageCls(object):
     cluster: str
 
 
@@ -361,11 +359,9 @@ class ElasticsearchCls(object):
 
 @dataclass
 class AfterTreatDataFlowCls(object):
-    add_uuid_stream_source: StreamSourceCls
     sample_set_stream_source: StreamSourceCls
     non_clustering_stream_source: StreamSourceCls
     model: ModelCls
-    join_after_treat: RealTimeCls
     group_by: RealTimeCls
     change_field: RealTimeCls
     merge_table: MergeNodeCls
@@ -375,7 +371,7 @@ class AfterTreatDataFlowCls(object):
     join_signature: RealTimeCls
     change_clustering_field: RealTimeCls
     diversion_tspider: TspiderStorageCls
-    ignite: IgniteStorageCls
+    redis: RedisStorageCls
     diversion: SplitCls
     queue_cluster: str
     bk_biz_id: int
@@ -389,7 +385,7 @@ class AddFlowNodesCls(object):
     flow_id: int
     result_table_id: str
     from_links: List = field(default_factory=list)
-    node_type: str = "unified_kv_source"
+    node_type: str = "redis_kv_source"
     frontend_info: Dict = field(default_factory=lambda: {"x": 1247.0, "y": 426.0})
     config: Dict = field(
         default_factory=lambda: {
@@ -416,7 +412,7 @@ class ModifyFlowCls(object):
     bk_biz_id: int
     table_name: str
     group_by_node: RequireNodeCls
-    ignite_node: RequireNodeCls
+    redis_node: RequireNodeCls
 
 
 @dataclass

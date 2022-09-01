@@ -28,6 +28,8 @@ from blueapps.account.decorators import login_exempt
 # 开发框架中通过中间件默认是需要登录态的，如有不需要登录的，可添加装饰器login_exempt
 # 装饰器引入 from blueapps.account.decorators import login_exempt
 from apps.utils.db import get_toggle_data
+from home_application.constants import API_FORMAT_CONTENT_TYPE
+from home_application.handlers.check_collector import CollectorCheckHandler
 from home_application.handlers.healthz import HealthzHandler
 
 
@@ -54,8 +56,8 @@ def contact(request):
 
 
 @login_exempt
-def liveness(request):
-    """存活探测接口"""
+def readiness(request):
+    """就绪探测接口"""
     return JsonResponse({"server_up": 1})
 
 
@@ -82,7 +84,25 @@ def healthz(request):
     if format_type == "json":
         response["Content-Type"] = "application/json"
     else:
-        response["Content-Type"] = "text/plain"
+        response["Content-Type"] = API_FORMAT_CONTENT_TYPE
+
+    return response
+
+
+@login_exempt
+def collector_check(request):
+    """
+    collector_config_id: 采集项id, int
+    hosts: 指定检查某些主机, 格式: "0:ip1,0:ip2,1:ip3"
+    debug: 是否开启DEBUG
+    """
+    collector_config_id = request.GET.get("collector_config_id")
+    hosts = request.GET.get("hosts", "")
+    debug = request.GET.get("debug", False)
+    c = CollectorCheckHandler(collector_config_id=collector_config_id, hosts=hosts, debug=debug)
+    c.run()
+    response = HttpResponse(content=c.api_format())
+    response["Content-Type"] = API_FORMAT_CONTENT_TYPE
 
     return response
 

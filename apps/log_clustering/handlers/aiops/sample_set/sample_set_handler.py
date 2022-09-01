@@ -42,6 +42,7 @@ from apps.log_clustering.handlers.aiops.sample_set.data_cls import (
     SubmitStatusCls,
     DeleteSampleSetCls,
     CollectConfigsCls,
+    SampleSetInfoCls,
 )
 from apps.api import BkDataAIOPSApi
 
@@ -137,10 +138,7 @@ class SampleSetHandler(BaseAiopsHandler):
         执行样本集提交
         @param sample_set_id int 样本集id
         """
-        apply_sample_request = CommitApplyCls(
-            sample_set_id=sample_set_id,
-            project_id=self.conf.get("project_id"),
-        )
+        apply_sample_request = CommitApplyCls(sample_set_id=sample_set_id, project_id=self.conf.get("project_id"))
         request_dict = self._set_username(apply_sample_request)
         return BkDataAIOPSApi.apply_sample_set(request_dict)
 
@@ -149,10 +147,7 @@ class SampleSetHandler(BaseAiopsHandler):
         轮询样本集提交状态
         @param sample_set_id int 样本集id
         """
-        submit_status_request = SubmitStatusCls(
-            sample_set_id=sample_set_id,
-            project_id=self.conf.get("project_id"),
-        )
+        submit_status_request = SubmitStatusCls(sample_set_id=sample_set_id, project_id=self.conf.get("project_id"))
         request_dict = self._set_username(submit_status_request)
         return BkDataAIOPSApi.submit_status(request_dict)
 
@@ -161,8 +156,15 @@ class SampleSetHandler(BaseAiopsHandler):
         删除样本集
         """
         delete_sample_set_request = DeleteSampleSetCls(
-            sample_set_id=sample_set_id,
-            project_id=self.conf.get("project_id"),
+            sample_set_id=sample_set_id, project_id=self.conf.get("project_id"),
         )
         request_dict = self._set_username(delete_sample_set_request)
         return BkDataAIOPSApi.delete_sample_set(request_dict)
+
+    def sample_set_info(self, sample_set_id: int):
+        """
+        删除样本集
+        """
+        sample_set_info_request = SampleSetInfoCls(sample_set_id=sample_set_id, project_id=self.conf.get("project_id"))
+        request_dict = self._set_username(sample_set_info_request)
+        return BkDataAIOPSApi.sample_set_info(request_dict)

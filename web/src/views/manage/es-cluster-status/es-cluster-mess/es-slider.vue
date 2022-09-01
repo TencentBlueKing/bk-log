@@ -300,7 +300,7 @@
                   <bk-input
                     type="number"
                     :max="Number(formData.setup_config.es_shards_max)"
-                    :min="0"
+                    :min="1"
                     v-model="formData.setup_config.es_shards_default">
                   </bk-input>
                 </div>
@@ -1418,6 +1418,10 @@ export default {
     width: 48%;
 
     @include flex-justify(space-between);
+
+    ::v-deep .bk-form-input {
+      height: 34px;
+    }
   }
 
   .space-item-label {

@@ -29,6 +29,7 @@
           class="fl"
           theme="primary"
           data-test-id="customContainer_button_addNewCustom"
+          v-cursor="{ active: isAllowedCreate === false }"
           @click="operateHandler({}, 'add')"
           :disabled="!collectProject || isAllowedCreate === null || isRequest">
           {{ $t('customReport.reportCreate') }}
@@ -136,7 +137,7 @@
               <bk-dropdown-menu ref="dropdown" align="right">
                 <i
                   class="bk-icon icon-more"
-                  style="margin-left: 5px; font-size: 14px; font-weight: bold;"
+                  style="font-size: 14px; font-weight: bold; display: inline-block;"
                   slot="dropdown-trigger">
                 </i>
                 <ul class="bk-dropdown-list" slot="dropdown-content">
@@ -234,13 +235,14 @@ export default {
     ...mapGetters({
       projectId: 'projectId',
       bkBizId: 'bkBizId',
+      authGlobalInfo: 'globals/authContainerInfo',
     }),
   },
   created() {
-    this.checkCreateAuth();
+    !this.authGlobalInfo && this.checkCreateAuth();
   },
   mounted() {
-    this.search();
+    !this.authGlobalInfo && this.search();
   },
   methods: {
     search() {

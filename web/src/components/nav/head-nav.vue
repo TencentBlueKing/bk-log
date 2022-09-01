@@ -162,10 +162,10 @@ export default {
       return Boolean(this.$route.name === 'trace' && this.$route.query.traceId);
     },
   },
-  created() {
+  async created() {
     this.language = jsCookie.get('blueking_language') || 'zh-cn';
     this.$store.commit('updateMenuList', menuArr);
-    this.getUserInfo();
+    await this.getUserInfo();
     setTimeout(() => this.requestMyProjectList(), 100);
   },
   methods: {
@@ -336,6 +336,7 @@ export default {
 <style lang="scss">
   @import '../../scss/mixins/clearfix';
   @import '../../scss/conf';
+  @import '../../scss/mixins/flex';
 
   .log-search-nav {
     height: 50px;
@@ -436,20 +437,18 @@ export default {
 
       .icon-language-container {
         height: 50px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 0 4px;
+        margin: 4px;
         cursor: pointer;
 
+        @include flex-center;
+
         .icon-circle-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
           width: 32px;
           height: 32px;
           border-radius: 16px;
           transition: all .2s;
+
+          @include flex-center;
 
           .log-icon {
             font-size: 16px;

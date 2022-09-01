@@ -25,6 +25,9 @@ from celery.task import task
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
+from apps.log_clustering.exceptions import ClusteringClosedException
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_measure.events import NOTIFY_EVENT
 from apps.log_search.handlers.search.aggs_handlers import AggsViewAdapter
@@ -38,17 +41,39 @@ def send(index_set_id):
     log_index_set = LogIndexSet.objects.get(index_set_id=index_set_id)
     doc_count = get_doc_count(index_set_id=index_set_id, bk_biz_id=clustering_config.bk_biz_id)
     project = ProjectInfo.objects.get(bk_biz_id=clustering_config.bk_biz_id)
-    msg = _("有新聚类创建，请关注！索引集id: {}, 索引集名称: {}, 业务id: {}, 业务名称: {}, 创建者: {}, 过去一天的数据量doc_count为: {}").format(
-        index_set_id,
-        log_index_set.index_set_name,
-        clustering_config.bk_biz_id,
-        project.project_name,
-        clustering_config.created_by,
-        doc_count,
-    )
+
+    if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
+        raise ClusteringClosedException()
+    conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
+
+    if doc_count > conf.get("auto_approve_doc_count", 0):
+        # 千万级别的需要人工审批
+        msg = _("[待审批] 有新聚类创建，请关注！索引集id: {}, 索引集名称: {}, 业务id: {}, 业务名称: {}, 创建者: {}, 过去一天的数据量doc_count={}").format(
+            index_set_id,
+            log_index_set.index_set_name,
+            clustering_config.bk_biz_id,
+            project.project_name,
+            clustering_config.created_by,
+            doc_count,
+        )
+    else:
+        from apps.log_clustering.handlers.pipline_service.aiops_service import operator_aiops_service
+
+        pipeline_id = operator_aiops_service(index_set_id)
+        msg = _(
+            "[自动接入] 有新聚类创建，请关注！索引集id: {}, 索引集名称: {}, 业务id: {}, 业务名称: {}, 创建者: {}, 过去一天的数据量doc_count={}，任务ID: {}"
+        ).format(
+            index_set_id,
+            log_index_set.index_set_name,
+            clustering_config.bk_biz_id,
+            project.project_name,
+            clustering_config.created_by,
+            doc_count,
+            pipeline_id,
+        )
+
     NOTIFY_EVENT(
-        content=f"{msg}",
-        dimensions={"index_set_id": clustering_config.index_set_id, "msg_type": "clustering_config"},
+        content=f"{msg}", dimensions={"index_set_id": clustering_config.index_set_id, "msg_type": "clustering_config"},
     )
 
 

@@ -40,8 +40,10 @@ class Client(object):
 
         _data = http_func(url, data, headers=headers, timeout=timeout)
 
-        logger.info("do http request: method=`%s`, url=`%s`, data=`%s`", http_func.__name__, url, json.dumps(data))
-        logger.info("http request took %s ms", int((time.time() - begin) * 1000))
+        logger.debug("do http request: method=`%s`, url=`%s`, data=`%s`", http_func.__name__, url, json.dumps(data))
+        logger.info(
+            "http request took %s ms, method=`%s`, url=`%s`", int((time.time() - begin) * 1000), http_func.__name__, url
+        )
 
         if not _data.get("result"):
             raise MonitorReportResultException(
