@@ -19,30 +19,27 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-"""testapp URL Configuration
+from django.conf import settings
+from django.http import HttpResponse, JsonResponse
+from blueapps.account.decorators import login_exempt
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/1.8/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  url(r'^$', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  url(r'^$', Home.as_view(), name='home')
-Including another URLconf
-    1. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
-"""
-from django.conf.urls import url  # noqa
 
-from home_application import views  # noqa
+# 用户白皮书在文档中心的根路径
+DOCS_USER_GUIDE_ROOT = "日志平台"
 
-urlpatterns = (
-    url(r"^$", views.home),
-    url(r"^bkdata_auth/$", views.bkdata_auth),
-    url(r"^contact/$", views.contact),
-    url(r"^healthz/$", views.healthz),
-    url(r"^collector_check/$", views.collector_check),
-    url(r"^readiness/$", views.readiness),
-    url(r"^metrics/$", views.metrics),
-)
+DOCS_LIST = ["产品白皮书", "应用运维文档", "开发架构文档"]
+
+DEFAULT_DOC = DOCS_LIST[0]
+
+
+@login_exempt
+def get_docs_link(request):
+    md_path = request.GET.get("md_path", "").strip("/")
+    if md_path:
+        return HttpResponse("md_path参数不能为空")
+
+    if not (md_path.split("/", 1)[0] in DOCS_LIST or md_path.startswith(DOCS_USER_GUIDE_ROOT)):
+        # 自动补全默认使用产品白皮书
+        md_path = "/".join([DOCS_USER_GUIDE_ROOT, DEFAULT_DOC, md_path])
+    doc_url = f"{settings.BK_DOC_URL.rstrip('/')}/markdown/{md_path.lstrip('/')}"
+    return JsonResponse({"result": True, "code": 200, "message": "OK", "data": doc_url})

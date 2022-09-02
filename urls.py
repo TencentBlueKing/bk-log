@@ -40,6 +40,8 @@ from version_log import config
 urlpatterns = [
     url(r"^bklog_manage/", admin.site.urls),
     url(r"^account/", include("blueapps.account.urls")),
+    # 通用
+    url(r"^api/v1/", include("apps.log_commons.urls")),
     # 接口
     url(r"^api/v1/iam/", include("apps.iam.urls")),
     url(r"^api/v1/databus/", include("apps.log_databus.urls")),
