@@ -529,7 +529,6 @@ export default {
     },
     // 删除ES源
     async deleteDataSource(row) {
-      this.tableLoading = true;
       const id = row.cluster_config.cluster_id;
       if (!(row.permission?.manage_es_source)) {
         try {
@@ -540,6 +539,7 @@ export default {
               id,
             }],
           };
+          this.tableLoading = true;
           const res = await this.$store.dispatch('getApplyData', paramData);
           this.$store.commit('updateAuthDialogData', res.data);
         } catch (err) {
