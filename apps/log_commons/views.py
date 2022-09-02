@@ -35,7 +35,7 @@ DEFAULT_DOC = DOCS_LIST[0]
 @login_exempt
 def get_docs_link(request):
     md_path = request.GET.get("md_path", "").strip("/")
-    if md_path:
+    if not md_path:
         return HttpResponse("md_path参数不能为空")
 
     if not (md_path.split("/", 1)[0] in DOCS_LIST or md_path.startswith(DOCS_USER_GUIDE_ROOT)):
