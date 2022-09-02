@@ -19,30 +19,3 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-"""testapp URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/1.8/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  url(r'^$', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  url(r'^$', Home.as_view(), name='home')
-Including another URLconf
-    1. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
-"""
-from django.conf.urls import url  # noqa
-
-from home_application import views  # noqa
-
-urlpatterns = (
-    url(r"^$", views.home),
-    url(r"^bkdata_auth/$", views.bkdata_auth),
-    url(r"^contact/$", views.contact),
-    url(r"^healthz/$", views.healthz),
-    url(r"^collector_check/$", views.collector_check),
-    url(r"^readiness/$", views.readiness),
-    url(r"^metrics/$", views.metrics),
-)

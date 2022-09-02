@@ -33,14 +33,6 @@ from home_application.handlers.check_collector import CollectorCheckHandler
 from home_application.handlers.healthz import HealthzHandler
 
 
-# 用户白皮书在文档中心的根路径
-DOCS_USER_GUIDE_ROOT = "日志平台"
-
-DOCS_LIST = ["产品白皮书", "应用运维文档", "开发架构文档"]
-
-DEFAULT_DOC = DOCS_LIST[0]
-
-
 def home(request):
     """
     首页
@@ -127,16 +119,3 @@ def metrics(request):
         if token != PROMETHEUS_METRICS_TOKEN:
             return HttpResponse(_("token验证失败"))
     return exports.ExportToDjangoView(request)
-
-
-@login_exempt
-def get_docs_link(request):
-    md_path = request.GET.get("md_path", "").strip("/")
-    if md_path:
-        return HttpResponse("md_path参数不能为空")
-
-    if not (md_path.split("/", 1)[0] in DOCS_LIST or md_path.startswith(DOCS_USER_GUIDE_ROOT)):
-        # 自动补全默认使用产品白皮书
-        md_path = "/".join([DOCS_USER_GUIDE_ROOT, DEFAULT_DOC, md_path])
-    doc_url = f"{settings.BK_DOC_URL.rstrip('/')}/markdown/{md_path.lstrip('/')}"
-    return JsonResponse({"result": True, "code": 200, "message": "OK", "data": doc_url})
