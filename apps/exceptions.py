@@ -34,6 +34,7 @@ class ErrorCode(object):
     BKLOG_SEARCH = "24"
     BKLOG_TRACE = "25"
     BKLOG_EXTRACT = "26"
+    BKLOG_COMMONS = "30"
     BKLOG_COLLECTOR_CONFIG = "31"
     BKLOG_ESQUERY = "32"
     BKLOG_COLLECTOR_PLUGIN = "33"
