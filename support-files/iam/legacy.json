@@ -80,8 +80,8 @@
             "operation":"upsert_instance_selection",
             "data":{
                 "id":"collection_list",
-                "name":"采集项列表",
-                "name_en":"Collection List",
+                "name":"(已弃用)采集项列表",
+                "name_en":"(Deprecated)Collection List",
                 "resource_type_chain":[
                     {
                         "system_id":"bk_cmdb",
@@ -98,8 +98,8 @@
             "operation":"upsert_instance_selection",
             "data":{
                 "id":"es_source_list",
-                "name":"ES源列表",
-                "name_en":"ES Source List",
+                "name":"(已弃用)ES源列表",
+                "name_en":"(Deprecated)ES Source List",
                 "resource_type_chain":[
                     {
                         "system_id":"bk_cmdb",
@@ -116,8 +116,8 @@
             "operation":"upsert_instance_selection",
             "data":{
                 "id":"indices_list",
-                "name":"索引集列表",
-                "name_en":"Indices List",
+                "name":"(已弃用)索引集列表",
+                "name_en":"(Deprecated)Indices List",
                 "resource_type_chain":[
                     {
                         "system_id":"bk_cmdb",
