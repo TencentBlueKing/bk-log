@@ -33,6 +33,7 @@ import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
 import cursor from '@/directives/cursor';
 import LogButton from '@/components/log-button';
+import docsLinkMixin from '@/mixins/docs-link-mixin';
 import './common/global';
 import './static/icons/log-icons.css';
 // 接入OTLP
@@ -85,6 +86,7 @@ router.onError((err) => {
 Vue.component('VueJsonPretty', VueJsonPretty);
 Vue.component('LogButton', LogButton);
 Vue.directive('cursor', cursor);
+Vue.mixin(docsLinkMixin);
 Vue.use(methods);
 
 if (process.env.NODE_ENV === 'development') {
