@@ -19,30 +19,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.conf import settings
-from django.http import JsonResponse
-from blueapps.account.decorators import login_exempt
+from django.utils.translation import ugettext_lazy as _
 
-from apps.log_commons.exceptions import BaseCommonsException
+from apps.exceptions import BaseException, ErrorCode
 
 
-# 用户白皮书在文档中心的根路径
-DOCS_USER_GUIDE_ROOT = "日志平台"
-
-DOCS_LIST = ["产品白皮书", "应用运维文档", "开发架构文档"]
-
-DEFAULT_DOC = DOCS_LIST[0]
-
-
-@login_exempt
-def get_docs_link(request):
-    md_path = request.GET.get("md_path", "").strip("/")
-    if not md_path:
-        e = BaseCommonsException("md_path参数不能为空")
-        return JsonResponse({"result": False, "code": e.code, "message": str(e)})
-
-    if not (md_path.split("/", 1)[0] in DOCS_LIST or md_path.startswith(DOCS_USER_GUIDE_ROOT)):
-        # 自动补全默认使用产品白皮书
-        md_path = "/".join([DOCS_USER_GUIDE_ROOT, DEFAULT_DOC, md_path])
-    doc_url = f"{settings.BK_DOC_URL.rstrip('/')}/markdown/{md_path.lstrip('/')}"
-    return JsonResponse({"result": True, "code": 0, "message": "OK", "data": doc_url})
+class BaseCommonsException(BaseException):
+    MODULE_CODE = ErrorCode.BKLOG_COMMONS
+    MESSAGE = _("日志通用模块异常")
