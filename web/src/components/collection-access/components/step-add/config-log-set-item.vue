@@ -285,6 +285,7 @@
 <script>
 import MultilineRegDialog from './multiline-reg-dialog';
 import { mapGetters } from 'vuex';
+import { deepClone } from '../../../monitor-echarts/utils';
 export default {
   components: {
     MultilineRegDialog,
@@ -465,10 +466,18 @@ export default {
     winCannotPass() {
       return this.eventSettingList.some(el => el.isCorrect === false) || this.otherRules;
     },
-    // win日志类型是否在编辑的时候进行改变
-    winChangeItem() {
-      const { eventSettingList, selectLogSpeciesList, otherSpeciesList } = this;
-      return { eventSettingList, selectLogSpeciesList, otherSpeciesList };
+    getWinParamsData() { // wineventlog日志类型时进行params属性修改
+      const winParams = {};
+      const { selectLogSpeciesList, otherSpeciesList, eventSettingList } = this;
+      const cloneSpeciesList = deepClone(selectLogSpeciesList);
+      if (cloneSpeciesList.includes('Other')) {
+        cloneSpeciesList.splice(cloneSpeciesList.indexOf('Other'), 1);
+      }
+      winParams.winlog_name = cloneSpeciesList.concat(otherSpeciesList);
+      eventSettingList.forEach((el) => {
+        winParams[el.type] = el.list;
+      });
+      return winParams;
     },
   },
   watch: {
@@ -481,13 +490,6 @@ export default {
     },
     configLength() {
       Object.assign(this.subFormData, this.configData);
-    },
-    winChangeItem: {
-      deep: true,
-      handler() {
-        if (!this.isFirst) this.$emit('update:isWinTypeFormChange', true);
-        this.isFirst = false;
-      },
     },
   },
   created() {
@@ -508,7 +510,7 @@ export default {
         const otherList = params.winlog_name.filter(v => ['Application', 'Security', 'System'].indexOf(v) === -1);
         if (otherList.length > 0) {
           this.otherSpeciesList = otherList;
-          this.selectLogSpeciesList = params.winlog_name;
+          this.selectLogSpeciesList = params.winlog_name.filter(v => ['Application', 'Security', 'System'].includes(v));
           this.selectLogSpeciesList.push('Other');
         } else {
           this.selectLogSpeciesList = params.winlog_name;
