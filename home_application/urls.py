@@ -45,4 +45,6 @@ urlpatterns = (
     url(r"^collector_check/$", views.collector_check),
     url(r"^readiness/$", views.readiness),
     url(r"^metrics/$", views.metrics),
+    # 获取文档链接地址
+    url(r"^get_docs_link/$", views.get_docs_link),
 )
