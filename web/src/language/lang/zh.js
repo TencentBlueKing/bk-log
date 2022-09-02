@@ -1303,7 +1303,7 @@ export default {
   },
   logAlertTips: '索引集允许用户可以跨多个采集的索引查看日志。',
   esAlertTips: '如果日志已经存储在Elasticsearch，可以在“集群管理”中添加Elasticsearch集群，就可以通过创建索引集来使用存储中的日志数据。',
-  bkdataAlertTips: '可以通过新建索引集将计算平台中的Elasticsearch中的索引，方便在日志平台中进行检索、分析、管理等。',
+  bkdataAlertTips: '通过新建索引集添加计算平台中的Elasticsearch的索引，就可以在日志平台中进行检索、告警、可视化等。',
   unableEditTip: '平台默认的集群不允许编辑和删除，请联系管理员。',
   pageLeaveTips: '是否放弃本次操作？',
   logArchive: {
