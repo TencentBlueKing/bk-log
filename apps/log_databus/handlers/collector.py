@@ -3420,7 +3420,21 @@ class CollectorHandler(object):
                             error_msg(v_msg, results)
 
             parse_result = []
-            error_msg(err.detail, parse_result)
+
+            def gen_err_topo_message(detail_item: Union[List, Dict, str], result_list: list, prefix: str = ""):
+                if isinstance(detail_item, str):
+                    result_list.append("{}: {}".format(prefix, detail_item))
+
+                elif isinstance(detail_item, list) and isinstance(detail_item[0], ErrorDetail):
+                    gen_err_topo_message(detail_item=detail_item[0], result_list=result_list, prefix=prefix)
+
+                elif isinstance(detail_item, dict):
+                    for k, v in detail_item.items():
+                        temp_prefix = ".".join([prefix, str(k)]) if prefix else k
+                        gen_err_topo_message(detail_item=v, result_list=result_list, prefix=temp_prefix)
+
+            for item in err.detail:
+                gen_err_topo_message(detail_item=item, result_list=parse_result)
 
             return {
                 "origin_text": yaml_config,
