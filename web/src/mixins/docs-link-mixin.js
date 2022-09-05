@@ -36,11 +36,11 @@ export default {
       if (link) {
         console.log(link);
         this.$http.request('docs/getDocLink', {
-          data: {
+          query: {
             md_path: link,
           },
-        }).then((data) => {
-          window.open(data, '_blank');
+        }).then((res) => {
+          window.open(res.data, '_blank');
         })
           .catch(() => false);
       }
