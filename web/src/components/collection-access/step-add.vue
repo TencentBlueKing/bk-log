@@ -22,10 +22,10 @@
 
 <template>
   <div class="add-collection-container">
-    <bk-alert v-if="guideUrl" class="king-alert" type="info" closable>
+    <bk-alert class="king-alert" type="info" closable>
       <div slot="title" class="slot-title-container">
         {{ $t('接入前请查看') }}
-        <a class="link" target="_blank" :href="guideUrl"> {{ $t('接入指引') }}</a>
+        <a class="link" @click="handleGotoLink('logCollection')"> {{ $t('接入指引') }}</a>
         {{ $t('，尤其是在日志量大的情况下请务必提前沟通。') }}
       </div>
     </bk-alert>
@@ -1467,6 +1467,7 @@ export default {
 
     .link {
       color: #3a84ff;
+      cursor: pointer;
     }
   }
 
