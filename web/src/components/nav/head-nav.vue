@@ -51,6 +51,7 @@
       <!-- 语言 -->
       <bk-dropdown-menu
         align="center"
+        trigger="click"
         @show="dropdownLanguageShow"
         @hide="dropdownLanguageHide">
         <div
@@ -75,6 +76,7 @@
       <!-- 版本日志和文档中心 -->
       <bk-dropdown-menu
         align="center"
+        trigger="click"
         @show="dropdownHelpShow"
         @hide="dropdownHelpHide"
         ref="dropdownHelp">
