@@ -3625,7 +3625,7 @@ class CollectorHandler(object):
                 # 创建数据平台data_id
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
-        params["table_id"] = params["collector_config_name_en"]
+        params["table_id"] = self.data.collector_config_name_en
 
         from apps.log_databus.handlers.etl import EtlHandler
 
