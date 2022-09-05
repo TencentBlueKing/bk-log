@@ -39,8 +39,8 @@ export default {
           query: {
             md_path: link,
           },
-        }).then((data) => {
-          window.open(data, '_blank');
+        }).then((res) => {
+          window.open(res.data, '_blank');
         })
           .catch(() => false);
       }
