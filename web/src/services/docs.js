@@ -22,7 +22,7 @@
 
 const getDocLink = {
   url: '/get_docs_link/',
-  method: 'post',
+  method: 'get',
 };
 
 export {
