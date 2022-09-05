@@ -1305,7 +1305,7 @@ export default {
   },
   logAlertTips: 'Index set allows users to view logs across multiple collected indexes.',
   esAlertTips: 'If the logs are already stored in Elasticsearch, you can add the Elasticsearch cluster in the "Cluster Management", and you can use the stored log data by creating an index set.',
-  bkdataAlertTips: 'The index in Elasticsearch in the computing platform can be created by creating a new index set to facilitate retrieval, analysis, management, etc. in the log platform.',
+  bkdataAlertTips: 'By creating a new index set and adding the Elasticsearch index in the computing platform, you can perform retrieval, alarm, and visualization in the log platform.',
   pageLeaveTips: 'Do you want to abandon this operation?',
   logArchive: {
     archive: 'Archive',
