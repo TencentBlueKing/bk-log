@@ -172,8 +172,7 @@ export default {
       this.keyword = v;
     },
     experienceDemo() {
-      const demoUrl = `${location.origin}${location.pathname}#${this.$route.path}?projectId=${this.demoUid}`;
-      window.open(demoUrl);
+      this.checkProjectChange(this.demoUid);
     },
   },
 };
