@@ -172,7 +172,13 @@ export default {
       this.keyword = v;
     },
     experienceDemo() {
-      const demoUrl = `${location.origin}${location.pathname}#${this.$route.path}?projectId=${this.demoUid}`;
+      const { meta, path } = this.$route;
+      let pathStr = path;
+      if (meta?.needBack) {
+        const pathReg = new RegExp(`${meta.backName}.*$`);
+        pathStr = pathStr.replace(pathReg, `${meta.backName}`);
+      };
+      const demoUrl = `${location.origin}${location.pathname}#${pathStr}?projectId=${this.demoUid}`;
       window.open(demoUrl);
     },
   },
