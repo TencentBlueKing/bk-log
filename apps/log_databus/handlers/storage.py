@@ -74,7 +74,11 @@ class StorageHandler(object):
         self.cluster_id = cluster_id
         super().__init__()
 
-    def can_visible(self, bk_biz_id, custom_option) -> bool:
+    def can_visible(self, bk_biz_id, custom_option, registered_system) -> bool:
+        # 兼容系统预置集群未设置集群ID的情况
+        if registered_system == REGISTERED_SYSTEM_DEFAULT and not custom_option["bk_biz_id"]:
+            return True
+
         # 兼容老数据没有visible_config的情况
         if not custom_option.get("visible_config") and bk_biz_id != custom_option["bk_biz_id"]:
             return False
@@ -126,7 +130,11 @@ class StorageHandler(object):
         cluster_groups = [
             cluster
             for cluster in cluster_groups
-            if self.can_visible(bk_biz_id, cluster["cluster_config"].get("custom_option"))
+            if self.can_visible(
+                bk_biz_id,
+                cluster["cluster_config"].get("custom_option"),
+                cluster["cluster_config"]["registered_system"],
+            )
         ]
 
         return [
@@ -734,7 +742,9 @@ class StorageHandler(object):
             cluster_obj = clusters[0]
             # 比较集群bk_biz_id是否匹配
             cluster_config = cluster_obj["cluster_config"]
-            if not self.can_visible(bk_biz_id, cluster_config.get("custom_option", {})):
+            if not self.can_visible(
+                bk_biz_id, cluster_config.get("custom_option", {}), cluster_config["registered_system"]
+            ):
                 raise StorageNotPermissionException()
 
             # 集群不可以修改域名、端口
@@ -780,7 +790,9 @@ class StorageHandler(object):
 
             # 比较集群bk_biz_id是否匹配
             cluster_config = cluster_obj["cluster_config"]
-            if not self.can_visible(bk_biz_id, cluster_config.get("custom_option", {})):
+            if not self.can_visible(
+                bk_biz_id, cluster_config.get("custom_option", {}), cluster_config["registered_system"]
+            ):
                 raise StorageNotPermissionException()
 
             # 集群不可以修改域名、端口
