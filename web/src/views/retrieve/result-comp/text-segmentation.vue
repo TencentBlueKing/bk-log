@@ -38,7 +38,7 @@
         <!-- 高亮 -->
         <mark
           :key="index"
-          v-else-if="markList.length && markList.includes(item)"
+          v-else-if="checkMark(item)"
           @click="handleClick($event, item)">{{item}}</mark>
         <!-- 可操作分词 -->
         <span
@@ -178,6 +178,11 @@ export default {
         },
       });
       this.popoverInstance && this.popoverInstance.show(10);
+    },
+    checkMark(splitItem) {
+      if (!this.markList.length) return false;
+      // 以句号开头或句号结尾的分词符匹配成功也高亮展示
+      return this.markList.some(item => item === splitItem || new RegExp(`^\\.${item}|${item}\\.$`).test(splitItem));
     },
     handleMenuClick(event) {
       this.menuClick(event, this.curValue);

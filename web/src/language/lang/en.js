@@ -252,6 +252,7 @@ export default {
   提取链路: 'Extract Link',
   新建提取链路: 'Create Extract Link',
   链路类型: 'Link type',
+  bk_repo链路: 'Bk Repo Link',
   执行bk_biz_id: 'op_bk_biz_id',
   腾讯云SecretId: 'qcloud_secret_id',
   腾讯云SecretKey: 'qcloud_secret_key',
@@ -287,6 +288,8 @@ export default {
   展开全部: 'Expand All',
   收起: 'Pack Up',
   过滤项: 'Filter item',
+  显示字段: 'Display field',
+  隐藏字段: 'Hidden field',
   空: 'Empty',
   // 检索设置弹窗
   retrieveSetting: {
@@ -1080,7 +1083,7 @@ export default {
     field: 'Modify complete',
     start: 'Enable complete',
     stop: 'Disable complete',
-    Within_stop: 'Make sure to finish step 3 "Fomart & Storage " ,if not will be forced to stop after 24H',
+    Within_stop: 'Make sure to finish step 4 "Storage" ,if not will be forced to stop after 24H',
     add_btn: 'Add',
     amend: 'Edit ',
     es_host: ' Status ',
@@ -1304,7 +1307,7 @@ export default {
   },
   logAlertTips: 'Index set allows users to view logs across multiple collected indexes.',
   esAlertTips: 'If the logs are already stored in Elasticsearch, you can add the Elasticsearch cluster in the "Cluster Management", and you can use the stored log data by creating an index set.',
-  bkdataAlertTips: 'The index in Elasticsearch in the computing platform can be created by creating a new index set to facilitate retrieval, analysis, management, etc. in the log platform.',
+  bkdataAlertTips: 'By creating a new index set and adding the Elasticsearch index in the computing platform, you can perform retrieval, alarm, and visualization in the log platform.',
   pageLeaveTips: 'Do you want to abandon this operation?',
   logArchive: {
     archive: 'Archive',
@@ -1409,6 +1412,8 @@ export default {
     indexSetID: 'indexSetID',
     btn: 'View all',
   },
+  请添加表达式: 'Please add an expression',
+  请添加标签: 'Please add an label',
   环境选择: 'Environmental choice',
   Yaml模式: 'Yaml mode',
   配置项: 'Configuration item',

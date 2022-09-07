@@ -252,6 +252,7 @@ export default {
   提取链路: '提取链路',
   新建提取链路: '新建提取链路',
   链路类型: '链路类型',
+  bk_repo链路: 'bk repo链路',
   执行bk_biz_id: '执行bk_biz_id',
   腾讯云SecretId: '腾讯云SecretId',
   腾讯云SecretKey: '腾讯云SecretKey',
@@ -287,6 +288,8 @@ export default {
   展开全部: '展开全部',
   收起: '收起',
   过滤项: '过滤项',
+  显示字段: '显示字段',
+  隐藏字段: '隐藏字段',
   空: '空',
   // 检索设置弹窗
   retrieveSetting: {
@@ -1079,7 +1082,7 @@ export default {
     field: '采集项修改完成',
     start: '采集项启用完成',
     stop: '采集项停用完成',
-    Within_stop: '采集完成后24小时内，没有配置第3步“字段提取&存储”，任务会被强制停用。',
+    Within_stop: '采集完成后24小时内，没有配置第4步“存储”，任务会被强制停用。',
     add_btn: '新增',
     amend: '修改',
     es_host: '运行状态',
@@ -1303,7 +1306,7 @@ export default {
   },
   logAlertTips: '索引集允许用户可以跨多个采集的索引查看日志。',
   esAlertTips: '如果日志已经存储在Elasticsearch，可以在“集群管理”中添加Elasticsearch集群，就可以通过创建索引集来使用存储中的日志数据。',
-  bkdataAlertTips: '可以通过新建索引集将计算平台中的Elasticsearch中的索引，方便在日志平台中进行检索、分析、管理等。',
+  bkdataAlertTips: '通过新建索引集添加计算平台中的Elasticsearch的索引，就可以在日志平台中进行检索、告警、可视化等。',
   unableEditTip: '平台默认的集群不允许编辑和删除，请联系管理员。',
   pageLeaveTips: '是否放弃本次操作？',
   logArchive: {
@@ -1409,6 +1412,8 @@ export default {
     indexSetID: '索引集ID',
     btn: '查看所有',
   },
+  请添加表达式: '请添加表达式',
+  请添加标签: '请添加标签',
   环境选择: '环境选择',
   Yaml模式: 'Yaml模式',
   配置项: '配置项',

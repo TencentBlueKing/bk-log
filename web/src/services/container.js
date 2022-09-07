@@ -90,6 +90,12 @@ const yamlJudgement = {
   method: 'post',
 };
 
+// ui配置转yaml base64
+const containerConfigsToYaml = {
+  url: 'databus/collectors/container_configs_to_yaml/',
+  method: 'post',
+};
+
 export {
   create,
   update,
@@ -102,4 +108,5 @@ export {
   getWorkLoadName,
   getBcsList,
   yamlJudgement,
+  containerConfigsToYaml,
 };

@@ -222,7 +222,7 @@
         </bk-form-item>
 
         <bk-form-item v-if="!isPhysicsEnvironment" :label="$t('Yaml模式')">
-          <bk-switcher class="mt8" v-model="isYaml" theme="primary"></bk-switcher>
+          <bk-switcher class="mt8" v-model="isYaml" theme="primary" :pre-check="handelChangeYaml"></bk-switcher>
         </bk-form-item>
 
         <yaml-editor
@@ -261,8 +261,9 @@
 
               <div class="config-container">
                 <div class="config-item container-select">
-                  <span>{{$t('NameSpace选择')}}</span>
+                  <span :class="{ 'none-hidden-dom': isNode }">{{$t('NameSpace选择')}}</span>
                   <div v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
+                       :class="{ 'none-hidden-dom': isNode }"
                        :disabled="!!formData.bcs_cluster_id">
                     <bk-select
                       v-model="conItem.namespaces"
@@ -282,12 +283,13 @@
                   <div class="mt8 justify-bt">
                     <bk-checkbox
                       v-model="conItem.isAllContainer"
-                      :disabled="isNode"
+                      :class="{ 'none-hidden-dom': isNode }"
                       @change="(state) => handelClickAllContainer(conIndex, state)">
                       {{$t('所有容器')}}
                     </bk-checkbox>
                     <div class="justify-bt container-btn-container">
-                      <span v-if="!isContainerHaveValue(conItem.container)" class="span-box"
+                      <span v-if="!isContainerHaveValue(conItem.container)"
+                            :class="{ 'span-box': true, 'none-hidden-dom': isNode }"
                             v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
                             :disabled="!!formData.bcs_cluster_id">
                         <div :class="{
@@ -542,7 +544,7 @@ export default {
             type: 'match', // 过滤方式类型
             match_type: 'include', // 过滤方式 可选字段 include, exclude
             match_content: '',
-            separator: '',
+            separator: '|',
             separator_filters: [ // 分隔符过滤条件
               { fieldindex: '', word: '', op: '=', logic_op: 'and' },
             ],
@@ -583,7 +585,7 @@ export default {
                 type: 'match', // 过滤方式类型
                 match_type: 'include',  // 过滤方式 可选字段 include, exclude
                 match_content: '',
-                separator: '',
+                separator: '|',
                 separator_filters: [ // 分隔符过滤条件
                   { fieldindex: '', word: '', op: '=', logic_op: 'and' },
                 ],
@@ -719,6 +721,7 @@ export default {
       currentSetIndex: 0, // 当前操作的配置项的下标
       isExtraError: false, // 附加标签是否有出错
       nameSpaceRequest: false, // 是否正在请求namespace接口
+      uiconfigToYamlData: {}, // 切换成yaml时当前保存的ui配置
     };
   },
   computed: {
@@ -774,7 +777,7 @@ export default {
         return [];
       }
     },
-    // 是否时编辑或者克隆
+    // 是否是编辑或者克隆
     isCloneOrUpdate() {
       return this.isUpdate || this.isClone;
     },
@@ -782,7 +785,7 @@ export default {
   watch: {
     currentEnvironment(nVal, oVal) {
       if (oVal === 'windows' && this.isWinEventLog) {
-        this.formData.collector_scenario_id =  this.globalsData.collector_scenario[0].id;
+        this.formData.collector_scenario_id = this.globalsData.collector_scenario[0].id;
       }
       if (['std_log_config', 'container_log_config', 'node_log_config'].includes(nVal)) {
         this.formData.environment = 'container';
@@ -869,9 +872,12 @@ export default {
     },
     /**
      * @desc: 初始化编辑的form表单值
+     * @param { Object } formData 基础表单
+     * @param { Boolean } isYamlData 是否是yaml解析出的表单数据
      * @returns { Object } 返回初始化后的Form表单
      */
-    initContainerFormData(curFormData) {
+    initContainerFormData(formData, isYamlData = false) {
+      const curFormData = deepClone(formData);
       if (!curFormData.extra_labels.length) {
         curFormData.extra_labels = [{
           key: '',
@@ -888,6 +894,9 @@ export default {
           data_encoding,
           params,
           namespaces: itemNamespace,
+          container: yamlContainer,
+          label_selector: yamlSelector,
+          collector_type,
         } = item;
         let isAllContainer = false;
         const namespaces = item.any_namespace ? ['*'] : itemNamespace;
@@ -901,8 +910,14 @@ export default {
           match_labels,
           match_expressions,
         };
-        if (!params.conditions?.separator_filters) {
-          params.conditions.separator_filters = [{ fieldindex: '', word: '', op: '=', logic_op: 'and' }];
+        if (isYamlData) {
+          Object.assign(container, yamlContainer);
+          Object.assign(label_selector, yamlSelector);
+          item.params.paths = item.params.paths.length ? item.paths.map(item => ({ value: item })) : [];
+        } else {
+          if (!params.conditions?.separator_filters) {
+            params.conditions.separator_filters = [{ fieldindex: '', word: '', op: '=', logic_op: 'and' }];
+          }
         }
         if (JSON.stringify(container) === JSON.stringify(this.allContainer)
         && JSON.stringify(label_selector) === JSON.stringify(this.allLabelSelector)) {
@@ -916,6 +931,7 @@ export default {
           container,
           label_selector,
           params,
+          collector_type,
         };
       });
       curFormData.configs = filterConfigs;
@@ -1181,11 +1197,21 @@ export default {
           delete params.multiline_timeout;
         }
         const { match_type, match_content, separator, separator_filters, type } = params.conditions;
-        params.conditions = type === 'match' ? { type, match_type, match_content } : {
+        let finallyType = type; // 如果分隔符内容都没有填写的话则类型变成match不传过滤内容
+        const isUnFilled = separator_filters.every(item => !item.fieldindex && !item.word);
+        isUnFilled && (finallyType = 'match');
+        params.conditions = finallyType === 'match' ? { type, match_type, match_content } : {
           type,
           separator,
           separator_filters,
         };
+        if (isUnFilled && type === 'separator') {  // 当前是分隔符过滤但内容都没有填写则传默认的字符串类型
+          Object.assign(params.conditions, {
+            type: 'match',
+            match_type: 'include',
+            match_content: '',
+          });
+        }
         // 若为标准输出或者win日志 则直接清空日志路径
         if (collectorType === 'std_log_config' || this.isWinEventLog) {
           params.paths = [];
@@ -1196,9 +1222,7 @@ export default {
     },
     // 选择日志类型
     chooseLogType(item) {
-      if (item.is_active) {
-        this.formData.collector_scenario_id = item.id;
-      }
+      if (item.is_active) this.formData.collector_scenario_id = item.id;
     },
     // 选择数据分类
     chooseDataClass() {
@@ -1269,9 +1293,7 @@ export default {
       }
     },
     clearError() {
-      if (!this.configNameEnIsNotRepeat) {
-        this.configNameEnIsNotRepeat = true;
-      }
+      if (!this.configNameEnIsNotRepeat) this.configNameEnIsNotRepeat = true;
     },
     /**
      * @desc: 环境选择
@@ -1316,7 +1338,6 @@ export default {
      * @param { Boolean } state 状态
      */
     handelClickAllContainer(index, state) {
-      this.currentSetIndex = index;
       if (state) {
         // 点击所有容器配置项的指定标签和容器都填为空
         this.formData.configs[index].container = this.allContainer;
@@ -1385,8 +1406,7 @@ export default {
     handleNameSpaceSelect(option, index) {
       if (option[option.length - 1] === '*') { // 如果最后一步选择所有，则清空数组填所有
         const nameSpacesLength = this.formData.configs[index].namespaces.length;
-        this.formData.configs[index].namespaces.splice(0, nameSpacesLength);
-        this.formData.configs[index].namespaces.push('*');
+        this.formData.configs[index].namespaces.splice(0, nameSpacesLength, '*');
         return;
       }
       if (option.length > 1 && option.includes('*')) { // 如果选中其他的值 包含所有则去掉所有选项
@@ -1432,6 +1452,50 @@ export default {
           console.warn(err);
         });
     },
+    /**
+     * @desc: 切换ui模式或yaml模式
+     * @param { Boolean } val
+     */
+    handelChangeYaml(val) {
+      return new Promise((resolve, reject) => {
+        if (val) {
+          const { add_pod_label, extra_labels, configs } = this.handleParams();
+          const data = { add_pod_label, extra_labels, configs };
+          // 传入处理后的参数 请求ui配置转yaml的数据
+          this.$http.request('container/containerConfigsToYaml', { data }).then((res) => {
+            this.formData.yaml_config = res.data;
+            // 保存进入yaml模式之前的ui配置参数
+            Object.assign(this.uiconfigToYamlData, {
+              add_pod_label: this.formData.add_pod_label,
+              extra_labels: this.formData.extra_labels,
+              configs: this.formData.configs,
+            });
+            resolve(true);
+          })
+            .catch((err) => {
+              console.warn(err);
+              reject(false);
+            });
+        } else {
+          try {
+            // 若有报错 则回填进入yaml模式之前的ui配置参数
+            if (!this.$refs.yamlEditorRef.getSubmitState) {
+              Object.assign(this.formData, this.uiconfigToYamlData);
+            } else {
+            // 无报错 回填yamlData的参数
+              const assignData = this.initContainerFormData(this.yamlFormData, true);
+              Object.assign(this.formData, assignData);
+            }
+            resolve(true);
+          } catch (error) {
+            resolve(false);
+          }
+        }
+      });
+    },
+    /**
+     * @desc: 编进进入时判断当前环境 禁用另一边环境选择
+     */
     initBtnListDisable() {
       // const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
       this.environmentList[0].btnList.forEach(item => item.isDisable = true);
@@ -1443,7 +1507,7 @@ export default {
       return Object.values(labelSelector)?.some(item => item.length) || false;
     },
     isContainerHaveValue(container) {
-      return Object.values(container)?.some(item => !!item) || false;
+      return Object.values(container)?.some(Boolean) || false;
     },
   },
 };
@@ -1816,6 +1880,11 @@ export default {
     margin-top: 8px;
   }
 
+  .none-hidden-dom {
+    /* stylelint-disable-next-line declaration-no-important */
+    display: none !important;
+  }
+
   .is-selected {
     /* stylelint-disable-next-line declaration-no-important */
     z-index: 2 !important;
@@ -1987,7 +2056,7 @@ export default {
       }
 
       .container-select {
-        width: 300px;
+        width: 460px;
       }
 
       .container-btn-container {
@@ -2051,8 +2120,8 @@ export default {
 
         .edit {
           position: absolute;
-          right: 0;
-          top: -30px;
+          left: 70px;
+          top: -28px;
           color: #3a84ff;
           cursor: pointer;
         }

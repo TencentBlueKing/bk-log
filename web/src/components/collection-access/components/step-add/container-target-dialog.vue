@@ -51,12 +51,12 @@
       <bk-form-item :label="$t('应用名称')">
         <bk-select
           ref="loadSelectRef"
-          :class="{
-            'no-click': nameCannotClick
-          }"
+          :class="{ 'application': formData.workload_name, 'no-click': nameCannotClick }"
           v-model="formData.workload_name"
           allow-create
-          searchable>
+          searchable
+          :placeholder="placeHolderStr"
+          @toggle="(status) => isOptionOpen = status">
           <bk-option
             v-for="(option, index) in nameList"
             :key="`${option.name}_${index}`"
@@ -64,6 +64,7 @@
             :name="option.name">
           </bk-option>
         </bk-select>
+        <span :class="['bk-icon', 'icon-angle-down', isOptionOpen && 'angle-rotate']"></span>
       </bk-form-item>
       <bk-form-item :label="$t('容器名称')">
         <bk-input v-model="formData.container_name"></bk-input>
@@ -90,11 +91,11 @@ export default {
         workload_name: '',
         container_name: '',
       },
-      typeError: false,
-      nameError: false,
+      isOptionOpen: false, // 是否展开了应用的下拉列表
       nameCannotClick: false, // 应用列表是否正在请求中
       typeList: [],
       nameList: [],
+      placeHolderStr: `${this.$t('请输入应用名称')}, ${this.$t('支持正则匹配')}`,
     };
   },
   computed: {},
@@ -115,7 +116,7 @@ export default {
     },
   },
   mounted() {
-    this.$refs.loadSelectRef.$refs.createInput.placeholder = `${this.$t('请输入应用名称')}, ${this.$t('支持正则匹配')}`;
+    this.$refs.loadSelectRef.$refs.createInput.placeholder = this.placeHolderStr;
   },
   methods: {
     handelCancelDialog() {
@@ -172,6 +173,23 @@ export default {
   .bk-form-control {
     width: 100%;
   }
+}
+
+.application:hover + .icon-angle-down {
+  display: none;
+}
+
+.icon-angle-down {
+  position: absolute;
+  font-size: 21px;
+  color: #979ba5;
+  right: 4px;
+  top: 6px;
+  transition: transform .3s;
+}
+
+.angle-rotate {
+  transform: rotateZ(-180deg);
 }
 
 .no-click {
