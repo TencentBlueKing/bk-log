@@ -580,11 +580,12 @@ class SearchHandler(object):
         )
         return result
 
-    def search_after_result(self, search_result, sorted_fields):
+    def search_after_result(self, search_result, sorted_fields, export_fields_list=None):
         """
         search_after_result
         @param search_result:
         @param sorted_fields:
+        @param export_fields_list:
         @return:
         """
         search_after_size = len(search_result["hits"]["hits"])
@@ -625,12 +626,13 @@ class SearchHandler(object):
 
             search_after_size = len(search_result["hits"]["hits"])
             result_size += search_after_size
-            yield self._deal_query_result(search_result)
+            yield self._deal_query_result(search_result, export_fields_list)
 
-    def scroll_result(self, scroll_result):
+    def scroll_result(self, scroll_result, export_fields_list=None):
         """
         scroll_result
         @param scroll_result:
+        @param export_fields_list:
         @return:
         """
         scroll_size = len(scroll_result["hits"]["hits"])
@@ -651,7 +653,7 @@ class SearchHandler(object):
             )
             scroll_size = len(scroll_result["hits"]["hits"])
             result_size += scroll_size
-            yield self._deal_query_result(scroll_result)
+            yield self._deal_query_result(scroll_result, export_fields_list)
 
     def _get_sort_list_by_index_id(self, scope="default"):
         username = get_request_username()
@@ -1208,7 +1210,11 @@ class SearchHandler(object):
         log["__set__"] = " | ".join([set["bk_inst_name"] for set in host_info.get("set", [])])
         return log
 
-    def _deal_query_result(self, result_dict: dict) -> dict:
+    def _deal_query_result(self, result_dict: dict, export_fields_list=None) -> dict:
+        if export_fields_list:
+            # 将导出字段和检索日志有的字段取交集
+            support_fields_list = [i["field_name"] for i in self.fields()["fields"]]
+            export_fields_list = list(set(export_fields_list).intersection(set(support_fields_list)))
         result: dict = {
             "aggregations": result_dict.get("aggregations", {}),
         }
@@ -1228,6 +1234,8 @@ class SearchHandler(object):
             log = hit["_source"]
             origin_log = copy.deepcopy(log)
             log = self._add_cmdb_fields(log)
+            if export_fields_list:
+                origin_log = {key: origin_log[key] for key in export_fields_list}
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})
@@ -1297,8 +1305,11 @@ class SearchHandler(object):
             self.field.update({_key: {"max_length": len(_key)}})
 
     def _analyze_context_result(
-        self, log_list: List[Dict[str, Any]], mark_gseindex: int = None, mark_gseIndex: int = None
-            # pylint: disable=invalid-name
+        self,
+        log_list: List[Dict[str, Any]],
+        mark_gseindex: int = None,
+        mark_gseIndex: int = None
+        # pylint: disable=invalid-name
     ) -> Dict[str, Any]:
 
         log_list_reversed: list = log_list

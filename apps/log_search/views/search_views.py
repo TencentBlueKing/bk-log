@@ -517,7 +517,10 @@ class SearchViewSet(APIViewSet):
             FeatureToggleObject.toggle(FEATURE_ASYNC_EXPORT_COMMON).feature_config.get(FEATURE_ASYNC_EXPORT_NOTIFY_TYPE)
         )
         task_id, size = AsyncExportHandlers(
-            index_set_id=int(index_set_id), bk_biz_id=data["bk_biz_id"], search_dict=data
+            index_set_id=int(index_set_id),
+            bk_biz_id=data["bk_biz_id"],
+            search_dict=data,
+            export_fields_list=data["export_fields_list"],
         ).async_export()
         return Response(
             {
