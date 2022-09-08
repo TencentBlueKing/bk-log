@@ -76,7 +76,7 @@ class Command(BaseCommand):
             config = yaml.load(f.read(), Loader=yaml.FullLoader)
         config = config or {}
 
-        for built_in_info in config["builtin_collect"]:
+        for built_in_info in config.get("builtin_collect", []):
             try:
                 if not (BUILT_IN_MIN_DATAID <= int(built_in_info["dataId"]) <= BUILT_IN_MAX_DATAID):
                     print("data id (%s) not valid, do nothing" % built_in_info["dataId"])
