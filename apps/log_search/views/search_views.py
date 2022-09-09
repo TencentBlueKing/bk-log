@@ -417,20 +417,12 @@ class SearchViewSet(APIViewSet):
             raise BaseSearchIndexSetException(BaseSearchIndexSetException.MESSAGE.format(index_set_id=index_set_id))
 
         output = StringIO()
-        search_handler = SearchHandlerEsquery(index_set_id, data)
+        export_fields = data.get("export_fields", [])
+        search_handler = SearchHandlerEsquery(index_set_id, search_dict=data, export_fields=export_fields)
         result = search_handler.search()
         result_list = result.get("origin_log_list")
-        # 将导出字段和检索日志有的字段取交集
-        export_fields_list = data.get("export_fields_list", [])
-        support_fields_list = [i["field_name"] for i in search_handler.fields()["fields"]]
-        export_fields_list = list(set(export_fields_list).intersection(set(support_fields_list)))
-        if export_fields_list:
-            for item in result_list:
-                _item = {key: item[key] for key in export_fields_list}
-                output.write(f"{json.dumps(_item, ensure_ascii=False)}\n")
-        else:
-            for item in result_list:
-                output.write(f"{json.dumps(item, ensure_ascii=False)}\n")
+        for item in result_list:
+            output.write(f"{json.dumps(item, ensure_ascii=False)}\n")
         response = HttpResponse(output.getvalue())
         response["Content-Type"] = "application/x-msdownload"
         file_name = f"bk_log_search_{index}.txt"
@@ -520,7 +512,7 @@ class SearchViewSet(APIViewSet):
             index_set_id=int(index_set_id),
             bk_biz_id=data["bk_biz_id"],
             search_dict=data,
-            export_fields_list=data["export_fields_list"],
+            export_fields=data["export_fields"],
         ).async_export()
         return Response(
             {

@@ -65,7 +65,6 @@ def async_export(
     url_path: str,
     search_url_path: str,
     language: str,
-    export_fields_list=None,
 ):
     """
     异步导出任务
@@ -75,7 +74,6 @@ def async_export(
     @param url_path {Str}
     @param search_url_path {Str}
     @param language {Str}
-    @param export_fields_list {List}
     """
     random_hash = get_random_string(length=10)
     time_now = arrow.now().format("YYYYMMDDHHmmss")
@@ -87,7 +85,6 @@ def async_export(
         sorted_fields=sorted_fields,
         file_name=file_name,
         tar_file_name=tar_file_name,
-        export_fields_list=export_fields_list,
     )
     try:
         if not async_task:
@@ -208,26 +205,17 @@ class AsyncExportUtils(object):
     async export utils(export_package, export_upload, generate_download_url, send_msg, clean_package)
     """
 
-    def __init__(
-        self,
-        search_handler: SearchHandler,
-        sorted_fields: list,
-        file_name: str,
-        tar_file_name: str,
-        export_fields_list=None,
-    ):
+    def __init__(self, search_handler: SearchHandler, sorted_fields: list, file_name: str, tar_file_name: str):
         """
         @param search_handler: the handler cls to search
         @param sorted_fields: the fields to sort search result
         @param file_name: the export file name
         @param tar_file_name: the file name which will be tar
-        @param export_fields_list: Specify export fields_list
         """
         self.search_handler = search_handler
         self.sorted_fields = sorted_fields
         self.file_name = file_name
         self.tar_file_name = tar_file_name
-        self.export_fields_list = export_fields_list
         self.file_path = f"{ASYNC_DIR}/{self.file_name}"
         self.tar_file_path = f"{ASYNC_DIR}/{self.tar_file_name}"
         self.storage = self.init_remote_storage()
@@ -242,17 +230,13 @@ class AsyncExportUtils(object):
 
         result = self.search_handler.pre_get_result(sorted_fields=self.sorted_fields, size=MAX_RESULT_WINDOW)
         with open(self.file_path, "a+", encoding="utf-8") as f:
-            result_list = self.search_handler._deal_query_result(
-                result_dict=result, export_fields_list=self.export_fields_list
-            ).get("origin_log_list")
+            result_list = self.search_handler._deal_query_result(result_dict=result).get("origin_log_list")
             for item in result_list:
                 f.write("%s\n" % json.dumps(item, ensure_ascii=False))
             if self.search_handler.scenario_id == Scenario.ES:
-                generate_result = self.search_handler.scroll_result(result, self.export_fields_list)
+                generate_result = self.search_handler.scroll_result(result)
             else:
-                generate_result = self.search_handler.search_after_result(
-                    result, self.sorted_fields, self.export_fields_list
-                )
+                generate_result = self.search_handler.search_after_result(result, self.sorted_fields)
             self.write_file(f, generate_result)
 
         with tarfile.open(self.tar_file_path, "w:gz") as tar:

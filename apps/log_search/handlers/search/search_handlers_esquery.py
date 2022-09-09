@@ -107,7 +107,9 @@ def fields_config(name: str, is_active: bool = False):
 
 
 class SearchHandler(object):
-    def __init__(self, index_set_id: int, search_dict: dict, pre_check_enable=True, can_highlight=True):
+    def __init__(
+        self, index_set_id: int, search_dict: dict, pre_check_enable=True, can_highlight=True, export_fields=None
+    ):
         self.search_dict: dict = search_dict
 
         # 透传查询类型
@@ -216,6 +218,9 @@ class SearchHandler(object):
 
         # 上下文初始化标记
         self.zero: bool = search_dict.get("zero", False)
+
+        # 导出字段
+        self.export_fields = export_fields
 
     def fields(self, scope="default"):
         # field_result, display_fields = self._get_all_fields_by_index_id(scope)
@@ -580,12 +585,11 @@ class SearchHandler(object):
         )
         return result
 
-    def search_after_result(self, search_result, sorted_fields, export_fields_list=None):
+    def search_after_result(self, search_result, sorted_fields):
         """
         search_after_result
         @param search_result:
         @param sorted_fields:
-        @param export_fields_list:
         @return:
         """
         search_after_size = len(search_result["hits"]["hits"])
@@ -626,13 +630,12 @@ class SearchHandler(object):
 
             search_after_size = len(search_result["hits"]["hits"])
             result_size += search_after_size
-            yield self._deal_query_result(search_result, export_fields_list)
+            yield self._deal_query_result(search_result)
 
-    def scroll_result(self, scroll_result, export_fields_list=None):
+    def scroll_result(self, scroll_result):
         """
         scroll_result
         @param scroll_result:
-        @param export_fields_list:
         @return:
         """
         scroll_size = len(scroll_result["hits"]["hits"])
@@ -653,7 +656,7 @@ class SearchHandler(object):
             )
             scroll_size = len(scroll_result["hits"]["hits"])
             result_size += scroll_size
-            yield self._deal_query_result(scroll_result, export_fields_list)
+            yield self._deal_query_result(scroll_result)
 
     def _get_sort_list_by_index_id(self, scope="default"):
         username = get_request_username()
@@ -1210,11 +1213,11 @@ class SearchHandler(object):
         log["__set__"] = " | ".join([set["bk_inst_name"] for set in host_info.get("set", [])])
         return log
 
-    def _deal_query_result(self, result_dict: dict, export_fields_list=None) -> dict:
-        if export_fields_list:
+    def _deal_query_result(self, result_dict: dict) -> dict:
+        if self.export_fields:
             # 将导出字段和检索日志有的字段取交集
             support_fields_list = [i["field_name"] for i in self.fields()["fields"]]
-            export_fields_list = list(set(export_fields_list).intersection(set(support_fields_list)))
+            self.export_fields = list(set(self.export_fields).intersection(set(support_fields_list)))
         result: dict = {
             "aggregations": result_dict.get("aggregations", {}),
         }
@@ -1234,8 +1237,8 @@ class SearchHandler(object):
             log = hit["_source"]
             origin_log = copy.deepcopy(log)
             log = self._add_cmdb_fields(log)
-            if export_fields_list:
-                origin_log = {key: origin_log[key] for key in export_fields_list}
+            if self.export_fields:
+                origin_log = {key: origin_log[key] for key in self.export_fields}
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})
@@ -1555,7 +1558,7 @@ class SearchHandler(object):
     def _get_user_sorted_list(self, sorted_fields):
         user_name = get_request_username()
         user_sort_list = (
-            UserIndexSetConfig.objects.filter(index_set_id=self.index_set_id, created_by=user_name, is_deleted=False)
+            UserIndexSetConfig.objects.filter(index_set_id=self.index_set_id, created_by=user_name)
             .values("sort_list")
             .first()
         )

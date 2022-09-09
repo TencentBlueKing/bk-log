@@ -47,14 +47,13 @@ from apps.utils.drf import DataPageNumberPagination
 
 
 class AsyncExportHandlers(object):
-    def __init__(self, index_set_id: int, bk_biz_id, search_dict: dict = None, export_fields_list=None):
+    def __init__(self, index_set_id: int, bk_biz_id, search_dict: dict = None, export_fields=None):
         self.index_set_id = index_set_id
         self.bk_biz_id = bk_biz_id
-        self.export_fields_list = export_fields_list
         if search_dict:
             self.search_dict = search_dict
             self.search_handler = SearchHandler(
-                index_set_id=self.index_set_id, search_dict=copy.deepcopy(self.search_dict)
+                index_set_id=self.index_set_id, search_dict=copy.deepcopy(self.search_dict), export_fields=export_fields
             )
 
     def async_export(self):
@@ -89,7 +88,6 @@ class AsyncExportHandlers(object):
             url_path=url,
             search_url_path=search_url,
             language=get_request_language_code(),
-            export_fields_list=self.export_fields_list,
         )
         return async_task.id, self.search_handler.size
 
