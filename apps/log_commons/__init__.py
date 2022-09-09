@@ -19,25 +19,3 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
-
-from apps.models import OperateRecordModel
-
-
-class AccessIndexSet(OperateRecordModel):
-    project_id = models.IntegerField(_("项目ID"))
-    index_set_id = models.IntegerField(_("索引集ID"))
-    nums = models.IntegerField(_("访问次数"))
-    static_date = models.DateField(_("访问日期"), db_index=True)
-
-    class Meta:
-        verbose_name = _("索引集搜索统计")
-        verbose_name_plural = _("索引集搜索统计")
-        unique_together = (("project_id", "index_set_id", "static_date", "created_by"),)
-
-
-class MetricDataHistory(models.Model):
-    metric_id = models.CharField(_("指标ID"), max_length=256)
-    metric_data = models.TextField(_("指标数据"))
-    updated_at = models.IntegerField(_("指标时间戳"))

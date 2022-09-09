@@ -59,6 +59,7 @@ INSTALLED_APPS += (
     "django_dbconn_retry",
     "apps.iam",
     "apps.api",
+    "apps.log_commons",
     "apps.log_search",
     "apps.log_audit",
     "apps.log_databus",

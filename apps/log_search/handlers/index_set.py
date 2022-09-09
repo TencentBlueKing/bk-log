@@ -893,7 +893,9 @@ class BaseIndexSetHandler(object):
             self.is_trace_log_pre_check()
 
     def update(self):
-        self.index_set_obj.category_id = self.category_id
+        if self.category_id:
+            self.index_set_obj.category_id = self.category_id
+
         self.index_set_obj.index_set_name = self.index_set_name
         self.index_set_obj.view_roles = self.view_roles
         self.index_set_obj.storage_cluster_id = self.storage_cluster_id

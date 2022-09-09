@@ -288,6 +288,8 @@ export default {
   展开全部: 'Expand All',
   收起: 'Pack Up',
   过滤项: 'Filter item',
+  显示字段: 'Display field',
+  隐藏字段: 'Hidden field',
   空: 'Empty',
   // 检索设置弹窗
   retrieveSetting: {
@@ -1305,7 +1307,7 @@ export default {
   },
   logAlertTips: 'Index set allows users to view logs across multiple collected indexes.',
   esAlertTips: 'If the logs are already stored in Elasticsearch, you can add the Elasticsearch cluster in the "Cluster Management", and you can use the stored log data by creating an index set.',
-  bkdataAlertTips: 'The index in Elasticsearch in the computing platform can be created by creating a new index set to facilitate retrieval, analysis, management, etc. in the log platform.',
+  bkdataAlertTips: 'By creating a new index set and adding the Elasticsearch index in the computing platform, you can perform retrieval, alarm, and visualization in the log platform.',
   pageLeaveTips: 'Do you want to abandon this operation?',
   logArchive: {
     archive: 'Archive',
@@ -1478,4 +1480,6 @@ export default {
   常用的: 'Common',
   有权限的: 'Have Auth',
   剩余的: 'Remain',
+  日志平台: 'Log Platform',
+  腾讯蓝鲸智云: 'Tencent Blue Whale Cloud Service',
 };

@@ -22,10 +22,10 @@
 
 <template>
   <div class="add-collection-container">
-    <bk-alert v-if="guideUrl" class="king-alert" type="info" closable>
+    <bk-alert class="king-alert" type="info" closable>
       <div slot="title" class="slot-title-container">
         {{ $t('接入前请查看') }}
-        <a class="link" target="_blank" :href="guideUrl"> {{ $t('接入指引') }}</a>
+        <a class="link" @click="handleGotoLink('logCollection')"> {{ $t('接入指引') }}</a>
         {{ $t('，尤其是在日志量大的情况下请务必提前沟通。') }}
       </div>
     </bk-alert>
@@ -193,7 +193,6 @@
           :scenario-id="formData.collector_scenario_id"
           :current-environment="currentEnvironment"
           :config-data="formData"
-          :is-win-type-form-change.sync="isWinTypeFormChange"
           @configChange="(val) => handelFormChange(val, 'formConfig')">
         </config-log-set-item>
 
@@ -709,7 +708,6 @@ export default {
         match_labels: [],
         match_expressions: [],
       },
-      isWinTypeFormChange: false, // 是否改变过win日志类型的值
       publicLetterIndex: 0, // 公共的字母下标
       isShowLabelTargetDialog: false, // 是否展示指定标签dialog
       isShowContainerTargetDialog: false, // 是否展示指定容器dialog
@@ -818,7 +816,7 @@ export default {
     if (this.isUpdate || this.isClone) {
       const cloneCollect = JSON.parse(JSON.stringify(this.curCollect));
       if (cloneCollect.environment === 'container') { // 容器环境
-        cloneCollect.yaml_config_enabled && (this.isYaml = true);
+        this.isYaml = cloneCollect.yaml_config_enabled;
         // yaml模式可能会有多种容器环境 选择第一项配置里的环境作为展示
         this.currentEnvironment = cloneCollect.configs[0].collector_type;
         this.publicLetterIndex = cloneCollect.configs.length - 1;
@@ -845,9 +843,11 @@ export default {
       } else {
         // 编辑且非克隆则禁用另一边的环境按钮
         this.initBtnListDisable();
+        this.$nextTick(() => {
         // 克隆时不缓存初始数据
         // 编辑采集项时缓存初始数据 用于对比提交时是否发生变化 未修改则不重新提交 update 接口
-        this.localParams = this.handleParams();
+          this.localParams = this.handleParams();
+        });
       }
     }
   },
@@ -942,7 +942,7 @@ export default {
       const isCanSubmit = await this.submitDataValidate();
       if (!isCanSubmit) return;
       const params = this.handleParams();
-      if (JSON.stringify(this.localParams) === JSON.stringify(params) && !this.isWinTypeFormChange) {
+      if (JSON.stringify(this.localParams) === JSON.stringify(params)) {
         // 未修改表单 直接跳转下一步
         this.$emit('stepChange');
         this.isHandle = false;
@@ -950,19 +950,6 @@ export default {
       }
       this.$refs.validateForm.validate().then(() => {
         this.isCloseDataLink && delete params.data_link_id;
-        // wineventlog日志类型时进行params属性修改
-        if (this.isWinEventLog) {
-          const winParams = {};
-          const { selectLogSpeciesList, otherSpeciesList, eventSettingList } = this.$refs.formConfigRef;
-          if (selectLogSpeciesList.includes('Other')) {
-            selectLogSpeciesList.splice(selectLogSpeciesList.indexOf('Other'), 1);
-          }
-          winParams.winlog_name = selectLogSpeciesList.concat(otherSpeciesList);
-          eventSettingList.forEach((el) => {
-            winParams[el.type] = el.list;
-          });
-          params.params = winParams;
-        }
         this.isPhysicsEnvironment ? this.setCollection(params) : this.setContainerCollection(params);
       }, () => {});
     },
@@ -1075,20 +1062,14 @@ export default {
       this.$emit('update:container-loading', true);
       const urlParams = {};
       let requestUrl;
-      let subParams;
       if (this.isUpdate) {
         urlParams.collector_config_id = Number(this.$route.params.collectorId);
         requestUrl = 'container/update';
       } else {
         requestUrl = 'container/create';
       }
-      if (this.isYaml) {
-        this.yamlFormData.configs.forEach(item => this.filterParams(item.params, item.collector_type));
-        subParams = Object.assign(params, this.yamlFormData, { yaml_config_enabled: true });
-      } else {
-        subParams = Object.assign(params, { yaml_config_enabled: false });
-      }
-      const updateData = { params: urlParams, data: subParams };
+      const data = Object.assign(params, this.isYaml ? this.yamlFormData : {}, { yaml_config_enabled: this.isYaml });
+      const updateData = { params: urlParams, data };
       this.$http.request(requestUrl, updateData).then((res) => {
         if (res.code === 0) {
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`,
@@ -1109,7 +1090,7 @@ export default {
     },
     // 处理提交参数
     handleParams() {
-      const formData = JSON.parse(JSON.stringify(this.formData));
+      const formData = deepClone(this.formData);
       const {
         collector_config_name,
         collector_config_name_en,
@@ -1155,7 +1136,9 @@ export default {
           delete item.isAllContainer;
           delete item.letterIndex;
           item.collector_type = this.currentEnvironment;
-          this.filterParams(item.params, item.collector_type);
+          // 若为标准输出 则直接清空日志路径
+          if (item.collector_type === 'std_log_config') item.params.paths = [];
+          item.params = this.filterParams(item.params, item.collector_type);
         });
         containerFromData.extra_labels = extra_labels.filter(item => !(item.key === '' && item.value === ''));
         if (this.isUpdate) {
@@ -1165,14 +1148,14 @@ export default {
           bk_biz_id: this.bkBizId,
         });
       }
-      this.filterParams(params);
+      const physicsParams = this.filterParams(params);
       // 物理环境
       Object.assign(physicsFromData, publicFromData, {
         target_node_type,
         target_object_type,
         target_nodes,
         data_encoding,
-        params,
+        params: physicsParams,
       });
       if (this.isUpdate) { // 物理环境编辑
         physicsFromData.collector_config_id = Number(this.$route.params.collectorId);
@@ -1186,39 +1169,38 @@ export default {
     },
     /**
      * @desc: 对表单的params传参参数进行处理
-     * @param { Object } params
+     * @param { Object } passParams
      * @param { String } collectorType 配置项中的容器类型
      */
-    filterParams(params, collectorType = '') {
-      if (this.formData.collector_scenario_id !== 'wineventlog') {
+    filterParams(passParams) {
+      let params = deepClone(passParams);
+      if (!this.isWinEventLog) {
         if (!this.hasMultilineReg) { // 行首正则未开启
           delete params.multiline_pattern;
           delete params.multiline_max_lines;
           delete params.multiline_timeout;
         }
         const { match_type, match_content, separator, separator_filters, type } = params.conditions;
-        let finallyType = type; // 如果分隔符内容都没有填写的话则类型变成match不传过滤内容
-        const isUnFilled = separator_filters.every(item => !item.fieldindex && !item.word);
-        isUnFilled && (finallyType = 'match');
+        let finallyType = type; // 如果是分隔符过滤，都没有填写或只填写一半的值，若过滤数组为空变成match不传过滤内容
+        const separatorEffectiveArr = separator_filters.filter(item => item.fieldindex && item.word);
+        !separatorEffectiveArr.length && (finallyType = 'match');
         params.conditions = finallyType === 'match' ? { type, match_type, match_content } : {
           type,
           separator,
-          separator_filters,
+          separator_filters: separatorEffectiveArr,
         };
-        if (isUnFilled && type === 'separator') {  // 当前是分隔符过滤但内容都没有填写则传默认的字符串类型
+        if (!separatorEffectiveArr.length && type === 'separator') {  // 当前是分隔符过滤但内容都没有填写则传默认的字符串类型
           Object.assign(params.conditions, {
             type: 'match',
             match_type: 'include',
             match_content: '',
           });
         }
-        // 若为标准输出或者win日志 则直接清空日志路径
-        if (collectorType === 'std_log_config' || this.isWinEventLog) {
-          params.paths = [];
-        } else {
-          params.paths = params.paths.map(item => (typeof item === 'object' ? item.value : item));
-        }
+        params.paths = params.paths.map(item => (typeof item === 'object' ? item.value : item));
+      } else {
+        params = this.$refs.formConfigRef.getWinParamsData;
       }
+      return params;
     },
     // 选择日志类型
     chooseLogType(item) {
@@ -1531,6 +1513,7 @@ export default {
 
     .link {
       color: #3a84ff;
+      cursor: pointer;
     }
   }
 

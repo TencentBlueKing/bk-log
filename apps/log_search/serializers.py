@@ -248,6 +248,7 @@ class SearchAsyncExportSerializer(serializers.Serializer):
     begin = serializers.IntegerField(label=_("检索开始 offset"), required=True)
     size = serializers.IntegerField(label=_("检索结果大小"), required=True)
     interval = serializers.CharField(label=_("匹配规则"), required=False)
+    export_fields = serializers.ListField(label=_("导出字段"), required=False, default=[])
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
