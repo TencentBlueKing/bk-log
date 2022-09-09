@@ -1801,7 +1801,7 @@ export default {
           }
 
           &.as-iframe {
-            height: calc(100% - 52px);
+            height: calc(100% + 10px);
           }
 
           .tab-header {
