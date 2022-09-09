@@ -2697,9 +2697,18 @@ class CollectorHandler(object):
         )
         container_collector_config_list = []
         for config in data["config"]:
+            workload_type = config["container"].get("workload_type", "")
+            workload_name = config["container"].get("workload_name", "")
+            container_name = config["container"].get("container_name", "")
+            match_labels = config["label_selector"].get("match_labels", [])
+            match_expressions = config["label_selector"].get("match_expressions", [])
+
+            is_all_container = not any([workload_type, workload_name, container_name, match_labels, match_expressions])
+
             container_collector_config_list.append(
                 ContainerCollectorConfig(
                     collector_config_id=path_collector_config.collector_config_id,
+                    collector_type=ContainerCollectorType.CONTAINER,
                     namespaces=config["namespaces"],
                     any_namespace=not config["namespaces"],
                     data_encoding=config["data_encoding"],
@@ -2707,12 +2716,12 @@ class CollectorHandler(object):
                         "paths": config["paths"],
                         "conditions": {"type": "match", "match_type": "include", "match_content": ""},
                     },
-                    workload_type=config["container"].get("workload_type", ""),
-                    workload_name=config["container"].get("workload_name", ""),
-                    container_name=config["container"].get("container_name", ""),
-                    match_labels=config["label_selector"].get("match_labels", []),
-                    match_expressions=config["label_selector"].get("match_expressions", []),
-                    all_container=not config["container"].get("workload_type", ""),
+                    workload_type=workload_type,
+                    workload_name=workload_name,
+                    container_name=container_name,
+                    match_labels=match_labels,
+                    match_expressions=match_expressions,
+                    all_container=is_all_container,
                     rule_id=bcs_rule.id,
                 )
             )
@@ -2720,6 +2729,7 @@ class CollectorHandler(object):
                 container_collector_config_list.append(
                     ContainerCollectorConfig(
                         collector_config_id=std_collector_config.collector_config_id,
+                        collector_type=ContainerCollectorType.STDOUT,
                         namespaces=config["namespaces"],
                         any_namespace=not config["namespaces"],
                         data_encoding=config["data_encoding"],
@@ -2727,12 +2737,12 @@ class CollectorHandler(object):
                             "paths": [],
                             "conditions": {"type": "match", "match_type": "include", "match_content": ""},
                         },
-                        workload_type=config["container"].get("workload_type", ""),
-                        workload_name=config["container"].get("workload_name", ""),
-                        container_name=config["container"].get("container_name", ""),
-                        match_labels=config["label_selector"].get("match_labels", []),
-                        match_expressions=config["label_selector"].get("match_expressions", []),
-                        all_container=not config["container"],
+                        workload_type=workload_type,
+                        workload_name=workload_name,
+                        container_name=container_name,
+                        match_labels=match_labels,
+                        match_expressions=match_expressions,
+                        all_container=is_all_container,
                         rule_id=bcs_rule.id,
                         parent_container_config_id=path_collector_config.collector_config_id,
                     )
