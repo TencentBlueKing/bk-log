@@ -51,23 +51,20 @@
           </bk-input>
         </bk-form-item>
         <bk-form-item
+          ext-cls="en-bk-form"
           :label="$t('dataSource.source_en_name')"
           :required="true"
           :rules="rules.collector_config_name_en"
           :property="'collector_config_name_en'">
-          <div class="config-enName-box">
-            <bk-input
-              class="w520"
-              v-model="formData.collector_config_name_en"
-              show-word-limit
-              maxlength="50"
-              data-test-id="baseMessage_input_fillEnglishName"
-              :disabled="isUpdate && !!(formData.collector_config_name_en)"
-              :placeholder="$t('dataSource.en_name_tips')"
-              @change="clearError">
-            </bk-input>
-            <p v-show="!configNameEnIsNotRepeat" class="repeat-message">{{$t('dataSource.en_name_repeat')}}</p>
-          </div>
+          <bk-input
+            class="w520"
+            v-model="formData.collector_config_name_en"
+            show-word-limit
+            maxlength="50"
+            data-test-id="baseMessage_input_fillEnglishName"
+            :disabled="isUpdate && !!(formData.collector_config_name_en) || isNotAdd"
+            :placeholder="$t('dataSource.en_name_tips')">
+          </bk-input>
           <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
         </bk-form-item>
         <bk-form-item :label="$t('configDetails.remarkExplain')">
@@ -612,6 +609,7 @@ export default {
           },
           {
             max: 50,
+            message: this.$t('不能多于50个字符'),
             trigger: 'blur',
           },
         ],
@@ -622,19 +620,23 @@ export default {
           },
           {
             max: 50,
+            message: this.$t('不能多于50个字符'),
             trigger: 'blur',
           },
           {
             min: 5,
+            message: this.$t('不能少于5个字符'),
             trigger: 'blur',
           },
           {
             regex: /^[A-Za-z0-9_]+$/,
+            message: this.$t('enNameValidatorTips'),
             trigger: 'blur',
           },
           {
             // 检查英文名是否可用
             validator: this.checkEnName,
+            message: this.$t('dataSource.en_name_repeat'),
             trigger: 'blur',
           },
         ],
@@ -661,6 +663,7 @@ export default {
       isUpdate: false,
       isHandle: false,
       isClone: false,
+      isNotAdd: false, // 是否是新建时点击采集下发上一步而返回
       globals: {},
       localParams: {}, // 缓存的初始数据 用于对比编辑时表单是否有属性更改
       showIpSelectorDialog: false,
@@ -675,7 +678,6 @@ export default {
         SET_TEMPLATE2: this.$t('configDetails.setTemplates'),
       },
       configBaseObj: {}, // 新增配置项的基础对象
-      configNameEnIsNotRepeat: true, // 英文名没有重复
       isYaml: false, // 是否是yaml模式
       yamlFormData: {}, // yaml请求成功时的表格数据
       currentEnvironment: 'linux', // 当前选中的环境
@@ -765,11 +767,11 @@ export default {
     // 获取日志类型列表
     getCollectorScenario() {
       try {
-        if (this.currentEnvironment === 'windows') return this.globalsData.collector_scenario;
-        const cloneList = JSON.parse(JSON.stringify(this.globalsData.collector_scenario));
-        const winIndex = cloneList.findIndex(item => item.id === 'wineventlog');
-        cloneList.splice(winIndex, 1);
-        return cloneList;
+        const activeScenario = this.globalsData.collector_scenario.filter(item => item.is_active);
+        if (this.currentEnvironment === 'windows') return activeScenario;
+        const winIndex = activeScenario.findIndex(item => item.id === 'wineventlog');
+        activeScenario.splice(winIndex, 1);
+        return activeScenario;
       } catch (error) {
         return [];
       }
@@ -782,7 +784,7 @@ export default {
   watch: {
     currentEnvironment(nVal, oVal) {
       if (oVal === 'windows' && this.isWinEventLog) {
-        this.formData.collector_scenario_id =  this.globalsData.collector_scenario[0].id;
+        this.formData.collector_scenario_id = this.globalsData.collector_scenario[0].id;
       }
       if (['std_log_config', 'container_log_config', 'node_log_config'].includes(nVal)) {
         this.formData.environment = 'container';
@@ -809,10 +811,12 @@ export default {
   created() {
     this.isUpdate = this.$route.name !== 'collectAdd';
     this.isClone = this.$route.query?.type === 'clone';
-    this.getLinkData();
+    this.isNotAdd = Boolean(this.$route.params.notAdd);
+    if (this.isNotAdd) this.$store.commit('updateRouterLeaveTip', false);
     this.configBaseObj = deepClone(this.formData.configs[0]); // 生成配置项的基础对象
+    this.getLinkData();
     // 克隆与编辑均进行数据回填
-    if (this.isUpdate || this.isClone) {
+    if (this.isUpdate || this.isClone || this.isNotAdd) {
       const cloneCollect = JSON.parse(JSON.stringify(this.curCollect));
       if (cloneCollect.environment === 'container') { // 容器环境
         cloneCollect.yaml_config_enabled && (this.isYaml = true);
@@ -1035,7 +1039,7 @@ export default {
       this.isHandle = true;
       const urlParams = {};
       let requestUrl;
-      if (this.isUpdate) {
+      if (this.isUpdate || this.isNotAdd) {
         urlParams.collector_config_id = Number(this.$route.params.collectorId);
         requestUrl = 'collect/updateCollection';
       } else {
@@ -1249,7 +1253,7 @@ export default {
       });
     },
     async checkEnName(val) {
-      if (this.isUpdate) return true;
+      if (this.isUpdate || this.isNotAdd) return true;
       const result = await this.getEnNameIsRepeat(val);
       return result;
     },
@@ -1259,18 +1263,9 @@ export default {
         const res =  await this.$http.request('collect/getPreCheck', {
           params: { collector_config_name_en: val, bk_biz_id: this.$store.state.bkBizId },
         });
-        if (res.data) {
-          this.configNameEnIsNotRepeat = res.data.allowed;
-          return res.data.allowed;
-        }
+        if (res.data) return res.data.allowed;
       } catch (error) {
-        this.configNameEnIsNotRepeat = true;
         return false;
-      }
-    },
-    clearError() {
-      if (!this.configNameEnIsNotRepeat) {
-        this.configNameEnIsNotRepeat = true;
       }
     },
     /**
@@ -1457,6 +1452,11 @@ export default {
   max-height: 100%;
   padding: 0 42px 42px;
   overflow: auto;
+
+  .en-bk-form {
+    position: relative;
+    width: 600px;
+  }
 
   .bk-form-content {
     line-height: 20px;
@@ -1822,10 +1822,6 @@ export default {
     z-index: 2 !important;
   }
 
-  .bk-form .bk-form-content .tooltips-icon {
-    left: 330px;
-  }
-
   .rulesColor {
     /* stylelint-disable-next-line declaration-no-important */
     border-color: #ff5656 !important;
@@ -1838,15 +1834,6 @@ export default {
     }
   }
 
-  .config-enName-box {
-    display: flex;
-
-    .repeat-message {
-      font-size: 14px;
-      margin-left: 6px;
-      color: #ff5656;
-    }
-  }
 
   .win-content {
     padding-bottom: 20px;

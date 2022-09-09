@@ -44,6 +44,7 @@
           :data="originTableList[$index]"
           :total-fields="totalFields"
           :visible-fields="visibleFields"
+          :retrieve-params="retrieveParams"
           @menuClick="handleMenuClick">
         </expand-view>
       </template>

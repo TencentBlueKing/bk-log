@@ -210,8 +210,8 @@ export default {
       // 根据前后行数缓存索引
       this.escapedReverseLogList.forEach((item, index) => {
         if (this.handleMatch(item)) {
-          const min = index - Number(this.interval.prev.join(','));
-          const max = index + Number(this.interval.next.join(','));
+          const min = index - Number(this.interval.prev);
+          const max = index + Number(this.interval.next);
           const minVal = min < 0 ? 0 : min;
           const maxVal = max >= reverListLen ? (reverListLen - 1) : max;
 
@@ -226,8 +226,8 @@ export default {
       // 根据前后行数缓存索引
       this.escapedLogList.forEach((item, index) => {
         if (this.handleMatch(item)) {
-          const min = index - Number(this.interval.prev.join(','));
-          const max = index + Number(this.interval.next.join(','));
+          const min = index - Number(this.interval.prev);
+          const max = index + Number(this.interval.next);
           const minVal = min < 0 ? 0 : min;
           const maxVal = max >= listLen ? (listLen - 1) : max;
 

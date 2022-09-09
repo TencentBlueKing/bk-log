@@ -35,24 +35,18 @@
       v-if="filterType === 'include'"
       style="margin-left: 20px">
       <span>{{ $t('retrieve.showPrev') }}</span>
-      <bk-tag-input
+      <bk-input
         style="width: 74px;margin-right: 10px"
         v-model="interval.prev"
-        placeholder="请输入"
-        :list="lineList"
-        :max-data="1"
-        :allow-create="false">
-      </bk-tag-input>
+        placeholder="请输入">
+      </bk-input>
       <span style="margin-right: 20px">{{ $t('行') }}</span>
       <span>{{ $t('retrieve.showNext') }}</span>
-      <bk-tag-input
+      <bk-input
         style="width: 74px;margin-right: 10px"
         v-model="interval.next"
-        placeholder="请输入"
-        :list="lineList"
-        :max-data="1"
-        :allow-create="false">
-      </bk-tag-input>
+        placeholder="请输入">
+      </bk-input>
       <span>{{ $t('行') }}</span>
     </div>
   </div>
@@ -73,8 +67,8 @@ export default {
         { id: 'uninclude', name: this.$t('retrieve.uninclude') },
       ],
       interval: {
-        prev: [0],
-        next: [0],
+        prev: 0,
+        next: 0,
       },
     };
   },
@@ -88,12 +82,6 @@ export default {
         this.$emit('handle-filter', 'interval', val);
       },
     },
-  },
-  created() {
-    this.lineList = Array.from({ length: 101 }, (v, k) => ({
-      id: k,
-      name: k.toString(),
-    }));
   },
   methods: {
     filterLog() {
