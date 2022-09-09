@@ -549,7 +549,7 @@ class SearchHandler(object):
             )
             return result
 
-        sorted_list = [[sorted_field, ASYNC_SORTED] for sorted_field in sorted_fields]
+        sorted_list = self._get_user_sorted_list(sorted_fields)
 
         result = BkLogApi.search(
             {
@@ -590,7 +590,7 @@ class SearchHandler(object):
         """
         search_after_size = len(search_result["hits"]["hits"])
         result_size = search_after_size
-        sorted_list = [[sorted_field, ASYNC_SORTED] for sorted_field in sorted_fields]
+        sorted_list = self._get_user_sorted_list(sorted_fields)
         while search_after_size == MAX_RESULT_WINDOW and result_size < self.size:
             search_after = []
             for sorted_field in sorted_fields:
@@ -1551,3 +1551,21 @@ class SearchHandler(object):
             return ERROR_MSG_CHECK_FIELDS_FROM_BKDATA
         else:
             return ERROR_MSG_CHECK_FIELDS_FROM_LOG
+
+    def _get_user_sorted_list(self, sorted_fields):
+        user_name = get_request_username()
+        user_sort_list = (
+            UserIndexSetConfig.objects.filter(index_set_id=self.index_set_id, created_by=user_name, is_deleted=False)
+            .values("sort_list")
+            .first()
+        )
+        if not user_sort_list:
+            return [[sorted_field, ASYNC_SORTED] for sorted_field in sorted_fields]
+        user_sort_list = user_sort_list["sort_list"]
+        user_sort_fields = [i[0] for i in user_sort_list]
+        for sorted_field in sorted_fields:
+            if sorted_field in user_sort_fields:
+                continue
+            user_sort_list.append([sorted_field, ASYNC_SORTED])
+
+        return user_sort_list
