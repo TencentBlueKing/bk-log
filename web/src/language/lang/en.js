@@ -1476,4 +1476,6 @@ export default {
   当前模板名称为: 'The current collection item name is',
   当前仓库名称为: 'The current repository name is',
   当前归档ID为: 'The current archive ID is',
+  日志平台: 'Log Platform',
+  腾讯蓝鲸智云: 'Tencent Blue Whale Cloud Service',
 };
