@@ -20,64 +20,30 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-import * as userInfo from './userInfo';
-import * as example from './example';
-import * as retrieve from './retrieve';
-import * as source from './source';
-import * as indexSet from './indexSet';
-import * as meta from './meta';
-import * as monitor from './monitor';
-import * as auth from './auth';
-import * as plugins from './plugins';
-import * as resultTables from './result-tables';
-import * as biz from './biz';
-import * as collect from './collect';
-import * as particulars from './particulars';
-import * as migrate from './migrate';
-import * as traceDetail from './trace-detail';
-import * as trace from './trace';
-import * as extract from './extract';
-import * as extractManage from './extract-manage';
-import * as linkConfiguration from './link-configuration';
-import * as clean from './clean';
-import * as archive from './archive';
-import * as logClustering from './log-clustering';
-import * as custom from './custom';
-import * as container from './container';
-import * as docs from './docs';
-
-const getMyProjectList = {
-  url: '/meta/projects/mine/',
-  method: 'get',
+const linkMap = {
+  logExtract: '产品白皮书/integrations-logs/log_simple_format.md', // 日志清洗
+  docCenter: '产品白皮书/intro/README.md', // 文档中心
+  logArchive: '产品白皮书/tools/log_archive.md', // 日志归档
+  logCollection: '产品白皮书/integrations-logs/logs_overview.md', // 日志采集接入
+  bkBase: '基础计算平台/产品白皮书/intro/intro.md', // 基础计算平台
+  queryString: '产品白皮书/data-visualization/query_string.md', // 查询语句语法
 };
 
 export default {
-  userInfo,
-  example,
-  retrieve,
-  project: {
-    getMyProjectList,
+  methods: {
+    handleGotoLink(id) {
+      const link = linkMap[id];
+      if (link) {
+        console.log(link);
+        this.$http.request('docs/getDocLink', {
+          query: {
+            md_path: link,
+          },
+        }).then((res) => {
+          window.open(res.data, '_blank');
+        })
+          .catch(() => false);
+      }
+    },
   },
-  indexSet,
-  source,
-  meta,
-  monitor,
-  auth,
-  plugins,
-  resultTables,
-  biz,
-  particulars,
-  collect,
-  migrate,
-  traceDetail,
-  trace,
-  extract,
-  extractManage,
-  linkConfiguration,
-  clean,
-  archive,
-  logClustering,
-  custom,
-  container,
-  docs,
 };

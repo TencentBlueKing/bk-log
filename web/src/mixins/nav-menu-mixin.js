@@ -271,6 +271,16 @@ export default {
               return matchedList.some(record => record.name === item.id);
             }) : {};
           this.$store.commit('updateActiveManageSubNav', activeManageSubNav);
+          // 动态更新title
+          let headTitle = '';
+          if (activeTopMenu.id === 'manage') {
+            headTitle = activeManageNav.name;
+          } else if (activeTopMenu.id === 'retrieve') {
+            headTitle = this.$t('日志检索');
+          } else {
+            headTitle = activeTopMenu.name;
+          }
+          document.title = `${headTitle} - ${this.$t('日志平台')} | ${this.$t('腾讯蓝鲸智云')}`;
         }, {
           immediate: true,
         });
