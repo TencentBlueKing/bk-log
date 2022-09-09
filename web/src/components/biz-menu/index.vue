@@ -140,7 +140,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      demoUrl: 'demoUrl',
+      demoUid: 'demoUid',
     }),
     bizName() {
       return this.mySpaceList.find(item => item.space_uid === this.spaceUid)?.space_full_code_name;
@@ -274,7 +274,7 @@ export default {
       this.keyword = v;
     },
     experienceDemo() {
-      window.open(this.demoUrl);
+      this.checkProjectChange(this.demoUid);
     },
   },
 };

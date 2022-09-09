@@ -24,6 +24,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from apps.iam import Permission, ActionEnum
+from iam.api.http import http_delete
 
 ACTIONS_TO_UPGRADE = [
     ActionEnum.VIEW_BUSINESS,
@@ -65,7 +66,14 @@ class Command(BaseCommand):
         根据操作ID删除操作策略及操作定义
         注意！！！此为高危操作，请慎用！！！
         """
-        result = self.iam_client._client.delete_action_policy(system_id=self.system_id, action_id=action_id)
+        result = self.delete_action_policy(system_id=self.system_id, action_id=action_id)
         print("delete iam action policy [{}], result: {}".format(action_id, result))
         result = self.iam_client._client.batch_delete_actions(system_id=self.system_id, data=[{"id": action_id}])
         print("delete iam action [{}], result: {}".format(action_id, result))
+
+    def delete_action_policy(self, system_id, action_id):
+        path = "/api/v1/model/systems/{system_id}/actions/{action_id}/policies".format(
+            system_id=system_id, action_id=action_id
+        )
+        ok, message, data = self.iam_client._client._call_iam_api(http_delete, path, data=None)
+        return ok, message

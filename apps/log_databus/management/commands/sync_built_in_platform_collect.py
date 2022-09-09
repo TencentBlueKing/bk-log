@@ -73,11 +73,11 @@ class Command(BaseCommand):
         #      name: bk-log-search-saas
         #    - dataid: 11000002
         #      name: bk-log-search-api
-        config = {}
         with open(builtin_collect_file_path, encoding="utf-8") as f:
             config = yaml.load(f.read(), Loader=yaml.FullLoader)
+        config = config or {}
 
-        for built_in_info in config["builtin_collect"]:
+        for built_in_info in config.get("builtin_collect") or []:
             try:
                 if not (BUILT_IN_MIN_DATAID <= int(built_in_info["dataId"]) <= BUILT_IN_MAX_DATAID):
                     print("data id (%s) not valid, do nothing" % built_in_info["dataId"])

@@ -31,7 +31,7 @@ from apps.iam.handlers.actions import ActionMeta
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import LogIndexSet, Space
-from iam.auth.models import ApiBatchAuthRequest, Subject, Action, ApiBatchAuthResourceWithPath
+from iam.auth.models import ApiBatchAuthRequest as OldApiBatchAuthRequest, Subject, Action, ApiBatchAuthResourceWithPath
 from iam.contrib.iam_migration.migrator import IAMMigrator
 
 ACTIONS_TO_UPGRADE = [
@@ -48,6 +48,18 @@ ACTIONS_TO_UPGRADE = [
     ActionEnum.MANAGE_DASHBOARD,
     ActionEnum.MANAGE_EXTRACT_CONFIG,
 ]
+
+
+class ApiBatchAuthRequest(OldApiBatchAuthRequest):
+    def __init__(self, *args, expired_at=None, **kwargs):
+        super(ApiBatchAuthRequest, self).__init__(*args, **kwargs)
+        self.expired_at = expired_at
+
+    def to_dict(self):
+        request_dict = super(ApiBatchAuthRequest, self).to_dict()
+        if self.expired_at is not None:
+            request_dict["expired_at"] = self.expired_at
+        return request_dict
 
 
 class Command(BaseCommand):

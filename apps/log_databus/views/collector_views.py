@@ -72,7 +72,13 @@ from apps.log_databus.serializers import (
     FastCollectorUpdateSerializer,
     ContainerCollectorConfigToYamlSerializer,
 )
-from apps.log_search.constants import BKDATA_OPEN, CollectorScenarioEnum, HAVE_DATA_ID, NOT_CUSTOM
+from apps.log_search.constants import (
+    BKDATA_OPEN,
+    CollectorScenarioEnum,
+    HAVE_DATA_ID,
+    IGNORE_DISPLAY_CONFIG,
+    NOT_CUSTOM,
+)
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.utils.function import ignored
@@ -133,7 +139,9 @@ class CollectorViewSet(ModelViewSet):
             qs = qs.filter(Q(etl_config=EtlConfig.BK_LOG_TEXT) | Q(etl_config__isnull=True))
         if self.request.query_params.get(NOT_CUSTOM):
             qs = qs.exclude(collector_scenario_id=CollectorScenarioEnum.CUSTOM.value)
-        return qs.all()
+        if self.request.query_params.get(IGNORE_DISPLAY_CONFIG):
+            return qs.all()
+        return qs.filter(is_display=True)
 
     def get_serializer_class(self, *args, **kwargs):
         action_serializer_map = {

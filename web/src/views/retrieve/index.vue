@@ -259,6 +259,7 @@
           <result-main
             ref="resultMainRef"
             v-else
+            :sort-list="sortList"
             :table-loading="tableLoading"
             :retrieve-params="retrieveParams"
             :took-time="tookTime"
@@ -1337,6 +1338,7 @@ export default {
     },
     // 字段设置更新了
     async handleFieldsUpdated(displayFieldNames, showFieldAlias) {
+      this.$store.commit('updateClearTableWidth', 1);
       this.visibleFields = displayFieldNames.map((displayName) => {
         for (const field of this.totalFields) {
           if (field.field_name === displayName) {
@@ -1799,7 +1801,7 @@ export default {
           }
 
           &.as-iframe {
-            height: calc(100% - 52px);
+            height: calc(100% + 10px);
           }
 
           .tab-header {

@@ -415,7 +415,8 @@ class SearchViewSet(APIViewSet):
             raise BaseSearchIndexSetException(BaseSearchIndexSetException.MESSAGE.format(index_set_id=index_set_id))
 
         output = StringIO()
-        search_handler = SearchHandlerEsquery(index_set_id, data)
+        export_fields = data.get("export_fields", [])
+        search_handler = SearchHandlerEsquery(index_set_id, search_dict=data, export_fields=export_fields)
         result = search_handler.search()
         result_list = result.get("origin_log_list")
         for item in result_list:
@@ -505,7 +506,10 @@ class SearchViewSet(APIViewSet):
             FeatureToggleObject.toggle(FEATURE_ASYNC_EXPORT_COMMON).feature_config.get(FEATURE_ASYNC_EXPORT_NOTIFY_TYPE)
         )
         task_id, size = AsyncExportHandlers(
-            index_set_id=int(index_set_id), bk_biz_id=data["bk_biz_id"], search_dict=data
+            index_set_id=int(index_set_id),
+            bk_biz_id=data["bk_biz_id"],
+            search_dict=data,
+            export_fields=data["export_fields"],
         ).async_export()
         return Response(
             {

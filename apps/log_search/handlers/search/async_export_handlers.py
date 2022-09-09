@@ -49,13 +49,13 @@ from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class AsyncExportHandlers(object):
-    def __init__(self, index_set_id: int, bk_biz_id, search_dict: dict = None):
+    def __init__(self, index_set_id: int, bk_biz_id, search_dict: dict = None, export_fields=None):
         self.index_set_id = index_set_id
         self.bk_biz_id = bk_biz_id
         if search_dict:
             self.search_dict = search_dict
             self.search_handler = SearchHandler(
-                index_set_id=self.index_set_id, search_dict=copy.deepcopy(self.search_dict)
+                index_set_id=self.index_set_id, search_dict=copy.deepcopy(self.search_dict), export_fields=export_fields
             )
 
     def async_export(self):

@@ -133,7 +133,7 @@ class Collection(ResourceMeta):
     id = "collection"
     name = _lazy("采集项")
     selection_mode = "instance"
-    related_instance_selections = [{"system_id": system_id, "id": "collection_list"}]
+    related_instance_selections = [{"system_id": system_id, "id": "collection_list_v2"}]
 
     @classmethod
     def create_simple_instance(cls, instance_id: str, attribute=None) -> Resource:
@@ -163,7 +163,7 @@ class EsSource(ResourceMeta):
     id = "es_source"
     name = _lazy("ES源")
     selection_mode = "instance"
-    related_instance_selections = [{"system_id": system_id, "id": "es_source_list"}]
+    related_instance_selections = [{"system_id": system_id, "id": "es_source_list_v2"}]
 
     @classmethod
     def create_simple_instance(cls, instance_id: str, attribute=None) -> Resource:
@@ -196,7 +196,7 @@ class Indices(ResourceMeta):
     id = "indices"
     name = _lazy("索引集")
     selection_mode = "instance"
-    related_instance_selections = [{"system_id": system_id, "id": "indices_list"}]
+    related_instance_selections = [{"system_id": system_id, "id": "indices_list_v2"}]
 
     @classmethod
     def create_simple_instance(cls, instance_id: str, attribute=None) -> Resource:

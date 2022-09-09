@@ -79,7 +79,7 @@
         {
             "operation":"upsert_instance_selection",
             "data":{
-                "id":"collection_list",
+                "id":"collection_list_v2",
                 "name":"采集项列表",
                 "name_en":"Collection List",
                 "resource_type_chain":[
@@ -97,7 +97,7 @@
         {
             "operation":"upsert_instance_selection",
             "data":{
-                "id":"es_source_list",
+                "id":"es_source_list_v2",
                 "name":"ES源列表",
                 "name_en":"ES Source List",
                 "resource_type_chain":[
@@ -115,7 +115,7 @@
         {
             "operation":"upsert_instance_selection",
             "data":{
-                "id":"indices_list",
+                "id":"indices_list_v2",
                 "name":"索引集列表",
                 "name_en":"Indices List",
                 "resource_type_chain":[
@@ -176,7 +176,7 @@
                         "related_instance_selections":[
                             {
                                 "system_id":"bk_log_search",
-                                "id":"indices_list",
+                                "id":"indices_list_v2",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -205,7 +205,7 @@
                         "related_instance_selections":[
                             {
                                 "system_id":"bk_log_search",
-                                "id":"collection_list",
+                                "id":"collection_list_v2",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -263,7 +263,7 @@
                         "related_instance_selections":[
                             {
                                 "system_id":"bk_log_search",
-                                "id":"collection_list",
+                                "id":"collection_list_v2",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -321,7 +321,7 @@
                         "related_instance_selections":[
                             {
                                 "system_id":"bk_log_search",
-                                "id":"es_source_list",
+                                "id":"es_source_list_v2",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -379,7 +379,7 @@
                         "related_instance_selections":[
                             {
                                 "system_id":"bk_log_search",
-                                "id":"indices_list",
+                                "id":"indices_list_v2",
                                 "ignore_iam_path":true
                             }
                         ]

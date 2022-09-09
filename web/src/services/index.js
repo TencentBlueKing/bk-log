@@ -44,6 +44,7 @@ import * as archive from './archive';
 import * as logClustering from './log-clustering';
 import * as custom from './custom';
 import * as container from './container';
+import * as docs from './docs';
 
 const getMyProjectList = {
   url: '/meta/projects/mine/',
@@ -86,4 +87,5 @@ export default {
   logClustering,
   custom,
   container,
+  docs,
 };
