@@ -187,8 +187,10 @@ class CustomReporter(object):
                 metric_data = [i.__dict__ for i in group["metrics"]]
                 MetricDataHistory.objects.update_or_create(
                     metric_id=metric_id,
-                    metric_data=json.dumps(metric_data),
-                    updated_at=MetricUtils.get_instance().report_ts,
+                    defaults={
+                        "metric_data": json.dumps(metric_data),
+                        "updated_at": MetricUtils.get_instance().report_ts,
+                    },
                 )
                 logger.info(f"save metric_data[{metric_id}] successfully")
         except Exception as e:

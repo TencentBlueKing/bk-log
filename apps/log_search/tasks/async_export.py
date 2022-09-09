@@ -81,7 +81,10 @@ def async_export(
     tar_file_name = f"{file_name}.tar.gz"
     async_task = AsyncTask.objects.filter(id=async_task_id).first()
     async_export_util = AsyncExportUtils(
-        search_handler=search_handler, sorted_fields=sorted_fields, file_name=file_name, tar_file_name=tar_file_name
+        search_handler=search_handler,
+        sorted_fields=sorted_fields,
+        file_name=file_name,
+        tar_file_name=tar_file_name,
     )
     try:
         if not async_task:
