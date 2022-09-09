@@ -98,12 +98,23 @@ class ApiConfig(AppConfig):
             activate_request(generate_request())
             from apps.api import BKPAASApi
 
-            try:
-                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_MONITOR, "format": "bk_std_json"})
-                is_deploy_monitor = bool(result and result[0])
+            uni_apps_query_by_id_part_params = {"format": "bk_std_json", "include_deploy_info": True}
 
-                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_BKDATA, "format": "bk_std_json"})
-                is_deploy_bkdata = bool(result and result[0])
+            def uni_apps_is_exist(query_result):
+                if not bool(query_result and query_result[0]):
+                    return False
+                return query_result[0].get("deploy_info", {}).get("prod", {}).get("deployed", False)
+
+            try:
+                result = BKPAASApi.uni_apps_query_by_id(
+                    {"id": settings.SAAS_MONITOR}.update(uni_apps_query_by_id_part_params)
+                )
+                is_deploy_monitor = uni_apps_is_exist(result)
+
+                result = BKPAASApi.uni_apps_query_by_id(
+                    {"id": settings.SAAS_BKDATA}.update(uni_apps_query_by_id_part_params)
+                )
+                is_deploy_bkdata = uni_apps_is_exist(result)
             except Exception as e:  # pylint: disable=broad-except
                 # 忽略这个API请求的错误, 避免错误导致整个APP启动失败
                 # 错误情况下，记录下日志，同时认为对应的APP未部署

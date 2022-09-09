@@ -29,7 +29,7 @@ from django.conf import settings
 
 from apps.api import CCApi, MonitorApi
 from apps.api.base import DataApiRetryClass
-from apps.exceptions import ApiRequestError
+from apps.exceptions import ApiRequestError, ApiResultError
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.constants import EtlConfig, TargetNodeTypeEnum
 from apps.log_databus.models import CollectorConfig
@@ -399,30 +399,33 @@ class SearchHandler(object):
         if self.size > MAX_RESULT_WINDOW:
             once_size = MAX_RESULT_WINDOW
 
-        result: dict = BkLogApi.search(
-            {
-                "indices": self.indices,
-                "scenario_id": self.scenario_id,
-                "storage_cluster_id": self.storage_cluster_id,
-                "start_time": self.start_time,
-                "end_time": self.end_time,
-                "query_string": self.query_string,
-                "filter": self.filter,
-                "sort_list": self.sort_list,
-                "start": self.start,
-                "size": once_size,
-                "aggs": self.aggs,
-                "highlight": self.highlight,
-                "use_time_range": self.use_time_range,
-                "time_zone": self.time_zone,
-                "time_range": self.time_range,
-                "time_field": self.time_field,
-                "time_field_type": self.time_field_type,
-                "time_field_unit": self.time_field_unit,
-                "scroll": self.scroll,
-                "collapse": self.collapse,
-            }
-        )
+        try:
+            result: dict = BkLogApi.search(
+                {
+                    "indices": self.indices,
+                    "scenario_id": self.scenario_id,
+                    "storage_cluster_id": self.storage_cluster_id,
+                    "start_time": self.start_time,
+                    "end_time": self.end_time,
+                    "query_string": self.query_string,
+                    "filter": self.filter,
+                    "sort_list": self.sort_list,
+                    "start": self.start,
+                    "size": once_size,
+                    "aggs": self.aggs,
+                    "highlight": self.highlight,
+                    "use_time_range": self.use_time_range,
+                    "time_zone": self.time_zone,
+                    "time_range": self.time_range,
+                    "time_field": self.time_field,
+                    "time_field_type": self.time_field_type,
+                    "time_field_unit": self.time_field_unit,
+                    "scroll": self.scroll,
+                    "collapse": self.collapse,
+                }
+            )
+        except ApiResultError as e:
+            raise ApiResultError("搜索出错，请检查查询语句是否正确", code=e.code, errors=e.errors)
 
         # 需要scroll滚动查询：is_scroll为True，size超出单次最大查询限制，total大于MAX_RESULT_WINDOW
         # @TODO bkdata暂不支持scroll查询
@@ -1291,8 +1294,11 @@ class SearchHandler(object):
             self.field.update({_key: {"max_length": len(_key)}})
 
     def _analyze_context_result(
-        self, log_list: List[Dict[str, Any]], mark_gseindex: int = None, mark_gseIndex: int = None
-            # pylint: disable=invalid-name
+        self,
+        log_list: List[Dict[str, Any]],
+        mark_gseindex: int = None,
+        mark_gseIndex: int = None
+        # pylint: disable=invalid-name
     ) -> Dict[str, Any]:
 
         log_list_reversed: list = log_list
