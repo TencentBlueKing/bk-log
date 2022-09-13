@@ -174,6 +174,12 @@ class EtlStorage(object):
                 # 删除原时间字段配置
                 field_option["es_doc_values"] = False
 
+            # 处理自定义 Option 兼容
+            origin_option = field.get("option", {})
+            if origin_option and isinstance(origin_option, dict):
+                origin_option = {key: val for key, val in origin_option.items() if key.startswith("es")}
+                field_option.update(origin_option)
+
             # 加入字段列表
             field_list.append(
                 {
@@ -201,6 +207,7 @@ class EtlStorage(object):
         es_version: str = "5.X",
         hot_warm_config: dict = None,
         es_shards: int = settings.ES_SHARDS,
+        index_settings: dict = None,
     ):
         """
         创建或更新结果表
@@ -215,6 +222,7 @@ class EtlStorage(object):
         :param es_version: es
         :param hot_warm_config: 冷热数据配置
         :param es_shards: es分片数
+        :param index_settings: 索引配置
         """
 
         # ES 配置
@@ -282,6 +290,8 @@ class EtlStorage(object):
             "warm_phase_days": 0,
             "warm_phase_settings": {},
         }
+        index_settings = index_settings or {}
+        params["default_storage_config"]["index_settings"].update(index_settings)
 
         # 是否启用冷热集群
         if allocation_min_days:

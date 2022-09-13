@@ -587,6 +587,7 @@ class CollectorPlugin(CollectorBase):
     storage_replies = models.IntegerField(_("副本数量"), null=True)
     storage_shards_nums = models.IntegerField(_("ES分片数量"), null=True, default=None, blank=True)
     storage_shards_size = models.IntegerField(_("单shards分片大小"), null=True, default=None, blank=True)
+    index_settings = models.JSONField(_("索引Settings"), default=dict)
 
     class Meta:
         verbose_name = _("用户采集插件")
