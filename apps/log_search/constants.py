@@ -135,6 +135,7 @@ ASYNC_EXPORT_EXPIRED = 86400
 HAVE_DATA_ID = "have_data_id"
 BKDATA_OPEN = "bkdata"
 NOT_CUSTOM = "not_custom"
+IGNORE_DISPLAY_CONFIG = "ignore_display_config"
 
 FIND_MODULE_WITH_RELATION_FIELDS = ["bk_module_id", "bk_module_name", "service_template_id"]
 
@@ -555,7 +556,16 @@ class GlobalCategoriesEnum(ChoicesEnum):
     数据分类枚举
     """
 
-    HOSTS = {"id": "hosts", "name": _("主机"), "children": [{"id": "os", "name": _("操作系统"), "children": []}]}
+    HOSTS = {
+        "id": "hosts",
+        "name": _("主机&云平台"),
+        "children": [
+            {"id": "host_process", "name": _("进程"), "children": []},
+            {"id": "os", "name": _("操作系统"), "children": []},
+            {"id": "host_device", "name": _("主机设备"), "children": []},
+            {"id": "kubernetes", "name": "kubernetes", "children": []},
+        ],
+    }
 
     SERVICES = {
         "id": "services",
@@ -568,7 +578,6 @@ class GlobalCategoriesEnum(ChoicesEnum):
         "name": "应用",
         "children": [
             {"id": "application_check", "name": _("业务应用"), "children": []},
-            {"id": "kubernetes", "name": "kubernetes", "children": []},
         ],
     }
 
@@ -1104,3 +1113,7 @@ class UserMetaConfType(object):
     """
 
     USER_GUIDE = "user_guide"
+
+
+ERROR_MSG_CHECK_FIELDS_FROM_BKDATA = _(", 请在计算平台清洗中调整")
+ERROR_MSG_CHECK_FIELDS_FROM_LOG = _(", 请联系平台管理员")
