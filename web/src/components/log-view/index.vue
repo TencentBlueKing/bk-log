@@ -107,6 +107,7 @@ export default {
     return {
       oldIndex: null,
       newIndex: null,
+      intervalTime: null,
       resRangeIndexs: [],
       reverseResRangeIndexs: [],
     };
@@ -154,9 +155,12 @@ export default {
     interval: {
       deep: true,
       handler() {
-        if (this.filterKey.length) {
-          this.setResRange();
-        }
+        clearTimeout(this.intervalTime);
+        this.intervalTime = setTimeout(() => {
+          if (this.filterKey.length) {
+            this.setResRange();
+          }
+        }, 500);
       },
     },
     ignoreCase() {

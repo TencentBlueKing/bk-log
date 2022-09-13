@@ -194,7 +194,8 @@
       </div>        <!-- eslint-disable-next-line vue/no-v-html -->
       <div v-html="detail.content"
            class="p20 detail-content"
-           slot="content"></div>
+           slot="content"
+           v-bkloading="{ isLoading: detail.loading }"></div>
     </bk-sideslider>
   </div>
 </template>

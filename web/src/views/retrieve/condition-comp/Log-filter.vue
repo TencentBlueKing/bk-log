@@ -38,6 +38,10 @@
       <bk-input
         style="width: 74px;margin-right: 10px"
         v-model="interval.prev"
+        type="number"
+        :show-controls="false"
+        :max="100"
+        :min="0"
         placeholder="请输入">
       </bk-input>
       <span style="margin-right: 20px">{{ $t('行') }}</span>
@@ -45,6 +49,10 @@
       <bk-input
         style="width: 74px;margin-right: 10px"
         v-model="interval.next"
+        type="number"
+        :show-controls="false"
+        :max="100"
+        :min="0"
         placeholder="请输入">
       </bk-input>
       <span>{{ $t('行') }}</span>
