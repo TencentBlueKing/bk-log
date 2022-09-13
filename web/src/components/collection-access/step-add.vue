@@ -1274,11 +1274,6 @@ export default {
         return false;
       }
     },
-    clearError() {
-      if (!this.configNameEnIsNotRepeat) {
-        this.configNameEnIsNotRepeat = true;
-      }
-    },
     /**
      * @desc: 环境选择
      * @param name 环境名称

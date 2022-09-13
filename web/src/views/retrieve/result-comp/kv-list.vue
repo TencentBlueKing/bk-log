@@ -288,7 +288,7 @@ export default {
       }
     },
     filterIsExist(id, field) {
-      if (this.retrieveParams.addition.length) {
+      if (this.retrieveParams?.addition.length) {
         if (id === 'not') id = 'is not';
         const curValue = this.tableRowDeepView(this.data, field, this.getFieldType(field), false);
         return this.retrieveParams.addition.some((addition) => {

@@ -124,7 +124,7 @@ export default {
     },
     filterIsExist(operator, value) {
       if (this.fieldType === '__virtual__') return true;
-      if (this.retrieveParams.addition.length) {
+      if (this.retrieveParams?.addition.length) {
         if (operator === 'not') operator = 'is not';
         return this.retrieveParams.addition.some((addition) => {
           return addition.field === this.fieldName
