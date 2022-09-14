@@ -631,3 +631,17 @@ export const base64Decode = (str) => {
     .map(c => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
     .join(''));
 };
+
+export const makeMessage = (message, traceId) => {
+  const resMsg = `
+    ${traceId || '--'} ：                                               
+    ${message}
+  `;
+  message && console.log(`
+  ------------------【日志】------------------
+  【TraceID】：${traceId}
+  【Message】：${message}
+  ----------------------------------------------
+  `);
+  return resMsg;
+};
