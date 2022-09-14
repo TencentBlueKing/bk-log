@@ -191,7 +191,8 @@
           @click="handleRefreshDetail">
           {{$t('刷新')}}
         </bk-button>
-      </div>        <!-- eslint-disable-next-line vue/no-v-html -->
+      </div>
+      <!-- eslint-disable-next-line vue/no-v-html -->
       <div v-html="detail.content"
            class="p20 detail-content"
            slot="content"
