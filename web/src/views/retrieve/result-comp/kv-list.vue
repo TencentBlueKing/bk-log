@@ -99,6 +99,10 @@ export default {
       type: Array,
       require: true,
     },
+    retrieveParams: {
+      type: Object,
+      require: true,
+    },
   },
   data() {
     return {
@@ -115,6 +119,8 @@ export default {
         hiddenField: this.$t('隐藏字段'),
         displayField: this.$t('显示字段'),
         copy: this.$t('复制'),
+        text_is: `${this.$t('文本类型')}${this.$t('不支持')} is ${this.$t('操作')}`,
+        text_not: `${this.$t('文本类型')}${this.$t('不支持')} is not ${this.$t('操作')}`,
       },
     };
   },
@@ -159,9 +165,14 @@ export default {
     },
     checkDisable(id, field) {
       const type = this.getFieldType(field);
-      return (['is', 'not'].includes(id) && type === 'text') || type === '__virtual__'  ? 'is-disabled' : '';
+      const isExist = this.filterIsExist(id, field);
+      return (['is', 'not'].includes(id) && type === 'text') || type === '__virtual__' || isExist  ? 'is-disabled' : '';
     },
     getIconPopover(id, field) {
+      const type = this.getFieldType(field);
+      if (type === 'text' && ['is', 'not'].includes(id)) return this.toolMenuTips[`text_${id}`];
+      if (type === '__virtual__' && ['is', 'not'].includes(id)) return this.$t('unKnowIconTips');
+      if (this.filterIsExist(id, field)) return this.$t('已添加过滤条件');
       if (id !== 'display') return this.toolMenuTips[id];
 
       const isDisplay = this.visibleFields.some(item => item.field_name === field);
@@ -275,6 +286,18 @@ export default {
         default:
           return;
       }
+    },
+    filterIsExist(id, field) {
+      if (this.retrieveParams?.addition.length) {
+        if (id === 'not') id = 'is not';
+        const curValue = this.tableRowDeepView(this.data, field, this.getFieldType(field), false);
+        return this.retrieveParams.addition.some((addition) => {
+          return addition.field === field
+        && addition.operator === id
+        && addition.value.toString() === curValue.toString();
+        });
+      }
+      return false;
     },
   },
 };

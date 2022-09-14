@@ -182,13 +182,20 @@
       :ext-cls="'issued-detail'"
       :is-show.sync="detail.isShow"
       @animation-end="closeSlider">
-      <div slot="header">{{ detail.title }}</div>
-      <!-- eslint-disable-next-line vue/no-v-html -->
+      <div class="header" slot="header">
+        <span>{{ detail.title }}</span>
+        <bk-button
+          class="header-refresh"
+          theme="primary"
+          :loading="detail.loading"
+          @click="handleRefreshDetail">
+          {{$t('刷新')}}
+        </bk-button>
+      </div>        <!-- eslint-disable-next-line vue/no-v-html -->
       <div v-html="detail.content"
            class="p20 detail-content"
            slot="content"
-           v-bkloading="{ isLoading: detail.loading }"
-      ></div>
+           v-bkloading="{ isLoading: detail.loading }"></div>
     </bk-sideslider>
   </div>
 </template>
@@ -215,10 +222,11 @@ export default {
       detail: {
         isShow: false,
         title: this.$t('monitors.detail'),
-        loading: true,
+        loading: false,
         content: '',
         log: '',
       },
+      currentRow: null,
       timer: null,
       timerNum: 0,
       tableListAll: [],
@@ -341,6 +349,7 @@ export default {
     },
     prevHandler() {
       if (this.operateType === 'add') {
+        this.$store.commit('updateRouterLeaveTip', true);
         this.$router.replace({
           name: 'collectEdit',
           params: {
@@ -386,8 +395,11 @@ export default {
     },
     viewDetail(row) {
       this.detail.isShow = true;
-      this.detail.loading = true;
+      this.currentRow = row;
       this.requestDetail(row);
+    },
+    handleRefreshDetail() {
+      this.requestDetail(this.currentRow);
     },
     closeSlider() {
       this.detail.content = '';
@@ -571,6 +583,7 @@ export default {
       });
     },
     requestDetail(row) {
+      this.detail.loading = true;
       this.$http.request('collect/executDetails', {
         params: {
           collector_id: this.curCollect.collector_config_id,
@@ -848,9 +861,20 @@ export default {
       color: #c4c6cc;
     }
 
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-refresh {
+      margin-right: 8px;
+    }
+
     .detail-content {
       min-height: calc(100vh - 60px);
       white-space: pre-wrap;
+      font-size: 12px;
     }
   }
 </style>
