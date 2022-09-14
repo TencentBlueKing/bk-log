@@ -116,7 +116,6 @@
           <bk-select
             data-test-id="linkConfigForm_select_selectPermitted"
             v-model="formData.bk_biz_id"
-            multiple
             searchable
             :clearable="false"
             style="width: 380px;">
