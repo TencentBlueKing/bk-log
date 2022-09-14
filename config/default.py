@@ -846,7 +846,7 @@ CONSUL_HTTPS_PORT = os.getenv("CONSUL_HTTPS_PORT")
 # 默认kafka域名，若提供了，则不再使用metadata返回的域名。
 # 用于 SaaS 没有 consul 域名解析的情况。需要手动给出
 DEFAULT_KAFKA_HOST = os.getenv("BKAPP_DEFAULT_KAFKA_HOST")
-DEFAULT_KAFKA_POLL_TIMEOUT = os.getenv("DEFAULT_KAFKA_POLL_TIMEOUT", 1000)
+DEFAULT_KAFKA_POLL_TIMEOUT = int(os.getenv("DEFAULT_KAFKA_POLL_TIMEOUT", 1000))
 
 # ==============================================================================
 # redis
