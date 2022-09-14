@@ -764,7 +764,7 @@ COLLECTOR_ROW_PACKAGE_COUNT = 100
 # 段日志一次上报条数
 COLLECTOR_SECTION_PACKAGE_COUNT = 10
 # 系统支持的清洗类型
-COLLECTOR_SCENARIOS = os.environ.get("BKAPP_COLLECTOR_SCENARIOS", "row,section").split(",")
+COLLECTOR_SCENARIOS = os.environ.get("BKAPP_COLLECTOR_SCENARIOS", "row,section,wineventlog").split(",")
 # 接入指引
 COLLECTOR_GUIDE_URL = os.environ.get("BKAPP_COLLECTOR_GUIDE_URL", "")
 # ITSM接入服务ID
