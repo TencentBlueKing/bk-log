@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import base64
 
 from django.conf import settings
 from django.db.models import Q
@@ -71,7 +72,13 @@ from apps.log_databus.serializers import (
     FastCollectorUpdateSerializer,
     ContainerCollectorConfigToYamlSerializer,
 )
-from apps.log_search.constants import BKDATA_OPEN, CollectorScenarioEnum, HAVE_DATA_ID, NOT_CUSTOM
+from apps.log_search.constants import (
+    BKDATA_OPEN,
+    CollectorScenarioEnum,
+    HAVE_DATA_ID,
+    IGNORE_DISPLAY_CONFIG,
+    NOT_CUSTOM,
+)
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.utils.function import ignored
@@ -132,7 +139,9 @@ class CollectorViewSet(ModelViewSet):
             qs = qs.filter(Q(etl_config=EtlConfig.BK_LOG_TEXT) | Q(etl_config__isnull=True))
         if self.request.query_params.get(NOT_CUSTOM):
             qs = qs.exclude(collector_scenario_id=CollectorScenarioEnum.CUSTOM.value)
-        return qs.all()
+        if self.request.query_params.get(IGNORE_DISPLAY_CONFIG):
+            return qs.all()
+        return qs.filter(is_display=True)
 
     def get_serializer_class(self, *args, **kwargs):
         action_serializer_map = {
@@ -2230,8 +2239,10 @@ class CollectorViewSet(ModelViewSet):
     def container_configs_to_yaml(self, request):
         data = self.params_valid(ContainerCollectorConfigToYamlSerializer)
         return Response(
-            CollectorHandler.container_dict_configs_to_yaml(
-                container_configs=data["configs"],
-                add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+            base64.b64encode(
+                CollectorHandler.container_dict_configs_to_yaml(
+                    container_configs=data["configs"],
+                    add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+                ).encode("utf-8")
             )
         )

@@ -19,25 +19,30 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
+from django.http import JsonResponse
+from blueapps.account.decorators import login_exempt
 
-from apps.models import OperateRecordModel
-
-
-class AccessIndexSet(OperateRecordModel):
-    project_id = models.IntegerField(_("项目ID"))
-    index_set_id = models.IntegerField(_("索引集ID"))
-    nums = models.IntegerField(_("访问次数"))
-    static_date = models.DateField(_("访问日期"), db_index=True)
-
-    class Meta:
-        verbose_name = _("索引集搜索统计")
-        verbose_name_plural = _("索引集搜索统计")
-        unique_together = (("project_id", "index_set_id", "static_date", "created_by"),)
+from apps.log_commons.exceptions import BaseCommonsException
 
 
-class MetricDataHistory(models.Model):
-    metric_id = models.CharField(_("指标ID"), max_length=256)
-    metric_data = models.TextField(_("指标数据"))
-    updated_at = models.IntegerField(_("指标时间戳"))
+# 用户白皮书在文档中心的根路径
+DOCS_USER_GUIDE_ROOT = "日志平台"
+
+DOCS_LIST = ["产品白皮书", "应用运维文档", "开发架构文档"]
+
+DEFAULT_DOC = DOCS_LIST[0]
+
+
+@login_exempt
+def get_docs_link(request):
+    md_path = request.GET.get("md_path", "").strip("/")
+    if not md_path:
+        e = BaseCommonsException("md_path参数不能为空")
+        return JsonResponse({"result": False, "code": e.code, "message": str(e)})
+
+    if not (md_path.split("/", 1)[0] in DOCS_LIST or md_path.startswith(DOCS_USER_GUIDE_ROOT)):
+        # 自动补全默认使用产品白皮书
+        md_path = "/".join([DOCS_USER_GUIDE_ROOT, DEFAULT_DOC, md_path])
+    doc_url = f"{settings.BK_DOC_URL.rstrip('/')}/markdown/{md_path.lstrip('/')}"
+    return JsonResponse({"result": True, "code": 0, "message": "OK", "data": doc_url})

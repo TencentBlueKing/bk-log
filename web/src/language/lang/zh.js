@@ -288,6 +288,8 @@ export default {
   展开全部: '展开全部',
   收起: '收起',
   过滤项: '过滤项',
+  显示字段: '显示字段',
+  隐藏字段: '隐藏字段',
   空: '空',
   // 检索设置弹窗
   retrieveSetting: {
@@ -1304,7 +1306,7 @@ export default {
   },
   logAlertTips: '索引集允许用户可以跨多个采集的索引查看日志。',
   esAlertTips: '如果日志已经存储在Elasticsearch，可以在“集群管理”中添加Elasticsearch集群，就可以通过创建索引集来使用存储中的日志数据。',
-  bkdataAlertTips: '可以通过新建索引集将计算平台中的Elasticsearch中的索引，方便在日志平台中进行检索、分析、管理等。',
+  bkdataAlertTips: '通过新建索引集添加计算平台中的Elasticsearch的索引，就可以在日志平台中进行检索、告警、可视化等。',
   unableEditTip: '平台默认的集群不允许编辑和删除，请联系管理员。',
   pageLeaveTips: '是否放弃本次操作？',
   logArchive: {
@@ -1411,6 +1413,7 @@ export default {
     btn: '查看所有',
   },
   请添加表达式: '请添加表达式',
+  请添加标签: '请添加标签',
   环境选择: '环境选择',
   Yaml模式: 'Yaml模式',
   配置项: '配置项',
@@ -1473,4 +1476,6 @@ export default {
   当前模板名称为: '当前模板名称为',
   当前仓库名称为: '当前仓库名称为',
   当前归档ID为: '当前归档ID为',
+  日志平台: '日志平台',
+  腾讯蓝鲸智云: '腾讯蓝鲸智云',
 };

@@ -73,7 +73,7 @@ def convert_filters_to_collector_condition(filters_config, delimiter=""):
         separator_filters = []
 
     match_content = ""
-    if separator_filters and separator_filters[0]["fieldindex"] == "-1":
+    if separator_filters and str(separator_filters[0]["fieldindex"]) == "-1":
         _type = "match"
         match_content = separator_filters[0].get("word", "")
         separator_filters = []

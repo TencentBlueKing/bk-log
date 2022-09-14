@@ -288,6 +288,8 @@ export default {
   展开全部: 'Expand All',
   收起: 'Pack Up',
   过滤项: 'Filter item',
+  显示字段: 'Display field',
+  隐藏字段: 'Hidden field',
   空: 'Empty',
   // 检索设置弹窗
   retrieveSetting: {
@@ -1305,7 +1307,7 @@ export default {
   },
   logAlertTips: 'Index set allows users to view logs across multiple collected indexes.',
   esAlertTips: 'If the logs are already stored in Elasticsearch, you can add the Elasticsearch cluster in the "Cluster Management", and you can use the stored log data by creating an index set.',
-  bkdataAlertTips: 'The index in Elasticsearch in the computing platform can be created by creating a new index set to facilitate retrieval, analysis, management, etc. in the log platform.',
+  bkdataAlertTips: 'By creating a new index set and adding the Elasticsearch index in the computing platform, you can perform retrieval, alarm, and visualization in the log platform.',
   pageLeaveTips: 'Do you want to abandon this operation?',
   logArchive: {
     archive: 'Archive',
@@ -1411,6 +1413,7 @@ export default {
     btn: 'View all',
   },
   请添加表达式: 'Please add an expression',
+  请添加标签: 'Please add an label',
   环境选择: 'Environmental choice',
   Yaml模式: 'Yaml mode',
   配置项: 'Configuration item',
@@ -1473,4 +1476,6 @@ export default {
   当前模板名称为: 'The current collection item name is',
   当前仓库名称为: 'The current repository name is',
   当前归档ID为: 'The current archive ID is',
+  日志平台: 'Log Platform',
+  腾讯蓝鲸智云: 'Tencent Blue Whale Cloud Service',
 };
