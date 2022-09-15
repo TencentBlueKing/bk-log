@@ -86,7 +86,6 @@
                 <span class="bk-icon icon-cog" @click="toggleCog"></span>
                 <div slot="content" class="auto-query-popover-content">
                   <span>{{ $t('是否开启自动查询') }}</span>
-                  <span class="bk-icon icon-info"></span>
                   <bk-switcher
                     v-model="isAutoQuery"
                     theme="primary"
@@ -110,14 +109,17 @@
                 @selected="handleSelectIndex"
                 @updateIndexSetList="updateIndexSetList" />
               <!-- 查询语句 -->
-              <query-statement />
+              <query-statement
+                v-model="retrieveParams.keyword"
+                :history-records="statementSearchrecords"
+                @updateSearchParam="updateSearchParam"
+                @retrieve="retrieveLog" />
               <retrieve-detail-input
                 v-model="retrieveParams.keyword"
                 :is-auto-query="isAutoQuery"
                 :retrieved-keyword="retrievedKeyword"
                 :dropdown-data="retrieveDropdownData"
                 :history-records="statementSearchrecords"
-                @updateSearchParam="updateSearchParam"
                 @retrieve="retrieveLog" />
               <!-- 添加过滤条件 -->
               <div class="tab-item-title flex-item-title">
@@ -216,6 +218,7 @@
               <!-- 字段过滤 -->
               <div class="tab-item-title field-filter-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
               <field-filter
+                :retrieve-params="retrieveParams"
                 :total-fields="totalFields"
                 :visible-fields="visibleFields"
                 :sort-list="sortList"
@@ -259,6 +262,7 @@
           <result-main
             ref="resultMainRef"
             v-else
+            :sort-list="sortList"
             :table-loading="tableLoading"
             :retrieve-params="retrieveParams"
             :took-time="tookTime"
@@ -268,9 +272,6 @@
             :total-fields="totalFields"
             :field-alias-map="fieldAliasMap"
             :show-field-alias="showFieldAlias"
-            :show-context-log="showContextLog"
-            :show-realtime-log="showRealtimeLog"
-            :show-web-console="showWebConsole"
             :bk-monitor-url="bkmonitorUrl"
             :async-export-usable="asyncExportUsable"
             :async-export-usable-reason="asyncExportUsableReason"
@@ -450,9 +451,6 @@ export default {
       tookTime: 0, // 耗时
       totalCount: 0, // 结果条数
       tableData: {}, // 表格结果
-      showContextLog: false, // 上下文
-      showRealtimeLog: false, // 实时日志
-      showWebConsole: false, // BCS 容器
       bkmonitorUrl: false, // 监控主机详情地址
       asyncExportUsable: true, // 是否支持异步导出
       asyncExportUsableReason: '', // 无法异步导出原因
@@ -463,7 +461,7 @@ export default {
       isPollingStart: false,
       startTimeStamp: 0,
       endTimeStamp: 0,
-      originLogList: [], // 当前搜索结果的原始日志
+      logList: [], // 当前搜索结果的日志
       isNextTime: false,
       timer: null,
       isShowSettingModal: false,
@@ -874,7 +872,7 @@ export default {
       // 过滤相关
       this.statisticalFieldsData = {};
       this.retrieveDropdownData = {};
-      this.originLogList = [];
+      this.logList = [];
       // 字段相关
       this.totalFields.splice(0);
     },
@@ -1285,11 +1283,14 @@ export default {
           apm_relation: apmRelation,
         } = localConfig;
 
-        this.operatorConfig = {
+        this.operatorConfig = { // 操作按钮配置信息
           bkmonitor,
+          bcsWebConsole,
           contextAndRealtime,
           timeField,
         };
+        // 初始化操作按钮消息
+        this.operatorConfig.toolMessage = this.initToolTipsMessage(this.operatorConfig);
         this.cleanConfig = cleanConfig;
         this.clusteringData = clusteringConfig;
         this.apmRelationData = apmRelation;
@@ -1304,9 +1305,6 @@ export default {
         });
         this.notTextTypeFields = notTextTypeFields;
         this.ipTopoSwitch = ipTopoSwitch.is_active;
-        this.showContextLog = contextAndRealtime.is_active;
-        this.showRealtimeLog = contextAndRealtime.is_active;
-        this.showWebConsole = bcsWebConsole.is_active;
         this.bkmonitorUrl = bkmonitor.is_active;
         this.asyncExportUsable = asyncExport.is_active;
         this.asyncExportUsableReason = !asyncExport.is_active ? asyncExport.extra.usable_reason : '';
@@ -1330,9 +1328,6 @@ export default {
         this.isThollteField = false;
       } catch (e) {
         this.ipTopoSwitch = true;
-        this.showContextLog = false;
-        this.showRealtimeLog = false;
-        this.showWebConsole = false;
         this.bkmonitorUrl = false;
         this.asyncExportUsable = true;
         this.asyncExportUsableReason = '';
@@ -1345,6 +1340,7 @@ export default {
     },
     // 字段设置更新了
     async handleFieldsUpdated(displayFieldNames, showFieldAlias) {
+      this.$store.commit('updateClearTableWidth', 1);
       this.visibleFields = displayFieldNames.map((displayName) => {
         for (const field of this.totalFields) {
           if (field.field_name === displayName) {
@@ -1432,9 +1428,9 @@ export default {
         this.retrievedKeyword = this.retrieveParams.keyword;
         this.tookTime = this.tookTime + Number(res.data.took) || 0;
         this.tableData = { ...res.data, finishPolling: this.finishPolling };
-        this.originLogList = this.originLogList.concat(parseBigNumberList(res.data.origin_log_list));
-        this.statisticalFieldsData = this.getStatisticalFieldsData(this.originLogList);
-        this.computeRetrieveDropdownData(this.originLogList);
+        this.logList = this.logList.concat(parseBigNumberList(res.data.list));
+        this.statisticalFieldsData = this.getStatisticalFieldsData(this.logList);
+        this.computeRetrieveDropdownData(this.logList);
       } catch (err) {
         this.$refs.resultMainRef.isPageOver = false;
       } finally {
@@ -1568,7 +1564,7 @@ export default {
       });
       // 字段值统计数据
       this.statisticalFieldsData = {};
-      this.originLogList = [];
+      this.logList = [];
     },
     // 控制页面布局宽度
     dragBegin(e) {
@@ -1635,6 +1631,14 @@ export default {
         .catch((e) => {
           console.warn(e);
         });
+    },
+    initToolTipsMessage(config) {
+      const { contextAndRealtime, bkmonitor } = config;
+      return {
+        monitorWeb: bkmonitor.is_active ? this.$t('retrieve.monitorAlarm') : bkmonitor?.extra.reason,
+        realTimeLog: contextAndRealtime.is_active ? this.$t('retrieve.log') : contextAndRealtime?.extra.reason,
+        contextLog: contextAndRealtime.is_active ? this.$t('retrieve.context') : contextAndRealtime?.extra.reason,
+      };
     },
   },
 };
@@ -1799,7 +1803,7 @@ export default {
           }
 
           &.as-iframe {
-            height: calc(100% - 52px);
+            height: calc(100% + 10px);
           }
 
           .tab-header {
@@ -1930,10 +1934,8 @@ export default {
     padding: 6px 0;
     color: #63656e;
 
-    .bk-icon {
+    > span {
       margin: 0 12px 0 4px;
-      color: #979ba5;
-      font-size: 14px;
     }
 
     .confirm-btn {

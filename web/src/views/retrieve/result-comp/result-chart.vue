@@ -109,6 +109,7 @@ export default {
   },
   data() {
     return {
+      timeRange: [],
       isFold: localStorage.getItem('chartIsFold') === 'true',
       intervalArr: [
         { id: 'auto', name: 'auto' },
@@ -210,6 +211,7 @@ export default {
     // 需要更新图表数据
     async getSeriesData(startTime, endTime) {
       if (startTime && endTime) {
+        this.timeRange = [startTime, endTime];
         this.finishPolling = false;
         this.isStart = false;
         this.totalCount = 0;
@@ -298,11 +300,9 @@ export default {
     // 双击回到初始化时间范围
     handleDbClick() {
       const { cacheDatePickerValue, cacheTimeRange } = this.$store.state.retrieve;
-      if (
-        cacheDatePickerValue[0] !== this.retrieveParams.start_time
-          || cacheDatePickerValue[1] !== this.retrieveParams.end_time
-          || cacheTimeRange !== this.retrieveParams.time_range
-      ) {
+
+      if (this.timeRange.length) {
+        this.timeRange = [];
         setTimeout(() => {
           window.bus.$emit('changeTimeByChart', cacheDatePickerValue, cacheTimeRange);
           this.finishPolling = true;

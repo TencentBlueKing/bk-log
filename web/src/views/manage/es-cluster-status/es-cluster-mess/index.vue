@@ -314,7 +314,7 @@ export default {
       isRenderSlider: true, // 渲染侧边栏组件，关闭侧滑时销毁组件，避免接口在 pending 时关闭侧滑后又马上打开
       showSlider: false, // 显示编辑或新建ES源侧边栏
       editClusterId: null, // 编辑ES源ID,
-      isOpenWindow: true,
+      isOpenWindow: false,
       sourceStateFilters: [{ text: this.$t('正常'), value: true }, { text: this.$t('失败'), value: false }],
       clusterSetting: {
         fields: settingFields,
@@ -322,7 +322,7 @@ export default {
       },
       minIntroWidth: 300,
       maxIntroWidth: 480,
-      introWidth: 360,
+      introWidth: 0,
       isDraging: false,
     };
   },

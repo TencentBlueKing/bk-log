@@ -101,7 +101,7 @@
       </template>
       <div class="match-empty" v-else>
         <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>{{$t('暂无数据')}}</p>
+        <p>{{!isLabel ? $t('请添加表达式') : $t('请添加标签')}}</p>
       </div>
     </div>
   </div>

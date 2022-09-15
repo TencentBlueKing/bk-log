@@ -41,13 +41,13 @@
           </div>
           <div class="operation-container">
             <span
-              v-bk-tooltips="'is'"
-              class="bk-icon icon-close-circle"
+              v-bk-tooltips="getIconPopover('is', item[0])"
+              :class="['bk-icon icon-close-circle', filterIsExist('is', item[0]) ? 'disable' : '']"
               @click="addCondition('is', item[0])">
             </span>
             <span
-              v-bk-tooltips="'not'"
-              class="bk-icon icon-minus-circle"
+              v-bk-tooltips="getIconPopover('is not', item[0])"
+              :class="['bk-icon icon-minus-circle', filterIsExist('is not', item[0]) ? 'disable' : '']"
               @click="addCondition('is not', item[0])">
             </span>
           </div>
@@ -75,9 +75,17 @@ export default {
       type: String,
       required: true,
     },
+    fieldType: {
+      type: String,
+      required: true,
+    },
     parentExpand: {
       type: Boolean,
       default: false,
+    },
+    retrieveParams: {
+      type: Object,
+      require: true,
     },
   },
   data() {
@@ -106,7 +114,25 @@ export default {
       return `${Math.round((count / this.statisticalFieldData.__validCount).toFixed(2) * 100)}%`;
     },
     addCondition(operator, value) {
+      if (this.fieldType === '__virtual__') return;
       this.addFilterCondition(this.fieldName, operator, value);
+    },
+    getIconPopover(operator, value) {
+      if (this.fieldType === '__virtual__') return this.$t('unKnowIconTips');
+      if (this.filterIsExist(operator, value)) return this.$t('已添加过滤条件');
+      return operator;
+    },
+    filterIsExist(operator, value) {
+      if (this.fieldType === '__virtual__') return true;
+      if (this.retrieveParams?.addition.length) {
+        if (operator === 'not') operator = 'is not';
+        return this.retrieveParams.addition.some((addition) => {
+          return addition.field === this.fieldName
+        && addition.operator === operator
+        && addition.value.toString() === value.toString();
+        });
+      }
+      return false;
     },
   },
 };
@@ -119,6 +145,11 @@ export default {
     .title {
       padding: 8px 0 4px;
       color: #979ba5;
+    }
+
+    .disable {
+      /* stylelint-disable-next-line declaration-no-important */
+      color: #dcdee5 !important;
     }
 
     .chart-list {

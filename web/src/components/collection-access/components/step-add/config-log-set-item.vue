@@ -119,7 +119,7 @@
               <div class="choose-table-item" v-for="(item, index) in separatorFilters" :key="index">
                 <div class="left">
                   <bk-form-item
-                    label="" :rules="rules.separator_filters" style="width: 100px;"
+                    label="" :rules="rules.separator_filters"
                     :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
                     <bk-input style="width: 100px;" v-model="item.fieldindex"></bk-input>
                   </bk-form-item>
@@ -285,6 +285,7 @@
 <script>
 import MultilineRegDialog from './multiline-reg-dialog';
 import { mapGetters } from 'vuex';
+import { deepClone } from '../../../monitor-echarts/utils';
 export default {
   components: {
     MultilineRegDialog,
@@ -326,7 +327,13 @@ export default {
         ],
         separator_filters: [ // 分隔符过滤条件
           {
-            required: true,
+            validator: (value) => {
+              const isFillOneSide = this.separatorFilters.some((item) => {
+                return (item.fieldindex && !item.word) || (!item.fieldindex && item.word);
+              });
+              if (isFillOneSide) return Boolean(value);
+              return true;
+            },
             trigger: 'blur',
           },
         ],
@@ -376,7 +383,7 @@ export default {
             type: 'match', // 过滤方式类型
             match_type: 'include', // 过滤方式 可选字段 include, exclude
             match_content: '',
-            separator: '',
+            separator: '|',
             separator_filters: [ // 分隔符过滤条件
               { fieldindex: '', word: '', op: '=', logic_op: 'and' },
             ],
@@ -459,10 +466,18 @@ export default {
     winCannotPass() {
       return this.eventSettingList.some(el => el.isCorrect === false) || this.otherRules;
     },
-    // win日志类型是否在编辑的时候进行改变
-    winChangeItem() {
-      const { eventSettingList, selectLogSpeciesList, otherSpeciesList } = this;
-      return { eventSettingList, selectLogSpeciesList, otherSpeciesList };
+    getWinParamsData() { // wineventlog日志类型时进行params属性修改
+      const winParams = {};
+      const { selectLogSpeciesList, otherSpeciesList, eventSettingList } = this;
+      const cloneSpeciesList = deepClone(selectLogSpeciesList);
+      if (cloneSpeciesList.includes('Other')) {
+        cloneSpeciesList.splice(cloneSpeciesList.indexOf('Other'), 1);
+      }
+      winParams.winlog_name = cloneSpeciesList.concat(otherSpeciesList);
+      eventSettingList.forEach((el) => {
+        winParams[el.type] = el.list;
+      });
+      return winParams;
     },
   },
   watch: {
@@ -475,13 +490,6 @@ export default {
     },
     configLength() {
       Object.assign(this.subFormData, this.configData);
-    },
-    winChangeItem: {
-      deep: true,
-      handler() {
-        if (!this.isFirst) this.$emit('update:isWinTypeFormChange', true);
-        this.isFirst = false;
-      },
     },
   },
   created() {
@@ -502,7 +510,7 @@ export default {
         const otherList = params.winlog_name.filter(v => ['Application', 'Security', 'System'].indexOf(v) === -1);
         if (otherList.length > 0) {
           this.otherSpeciesList = otherList;
-          this.selectLogSpeciesList = params.winlog_name;
+          this.selectLogSpeciesList = params.winlog_name.filter(v => ['Application', 'Security', 'System'].includes(v));
           this.selectLogSpeciesList.push('Other');
         } else {
           this.selectLogSpeciesList = params.winlog_name;
