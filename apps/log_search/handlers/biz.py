@@ -22,7 +22,6 @@ the project delivered to anyone in the future.
 import copy
 from collections import defaultdict, namedtuple
 from inspect import signature
-from threading import Thread
 from typing import List
 
 from pypinyin import lazy_pinyin
@@ -50,7 +49,7 @@ from apps.utils.cache import cache_five_minute, cache_one_hour, cache_half_hour
 from apps.log_search.models import ProjectInfo, BizProperty
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
-from apps.utils.local import get_request, set_local_param
+from apps.utils.thread import MultiExecuteFunc
 
 
 class BizHandler(APIModel):
@@ -593,13 +592,11 @@ class BizHandler(APIModel):
         node_service_category_id = self.get_service_category_id(node_and_bk_set_id_list)
         return self.get_service_category(node_service_instance, node_service_category_id)
 
-    def batch_get_hosts_by_inst_id(self, bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name, request, results):
-        set_local_param("request", request)
-        hosts_in_node = self.get_hosts_by_inst_id(bk_obj_id, bk_inst_id)
-        results[(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name)].extend(hosts_in_node)
+    def batch_get_hosts_by_inst_id(self, params):
+        return self.get_hosts_by_inst_id(*params)
 
-    def batch_get_agent_status(self, host_list, node, node_mapping, request, results):
-        set_local_param("request", request)
+    def batch_get_agent_status(self, params):
+        host_list, node, node_mapping = params
         map_key = "{}|{}".format(str(node[1]), str(node[2]))
         node_path = "/".join(
             [node_mapping.get(node).get("bk_inst_name") for node in node_mapping.get(map_key, {}).get("node_link", [])]
@@ -610,7 +607,7 @@ class BizHandler(APIModel):
             agent_error_count = len(
                 [status for status in list(agent_status_dict.values()) if status != AgentStatusEnum.ON.value]
             )
-        results[(node.bk_biz_id, node.bk_obj_id, node.bk_inst_id)] = {
+        return {
             "bk_obj_id": node.bk_obj_id,
             "bk_inst_id": node.bk_inst_id,
             "bk_inst_name": node.bk_inst_name,
@@ -641,27 +638,31 @@ class BizHandler(APIModel):
             for node in node_list
         }
 
-        request = get_request()
-
         # 获取节点主机信息
-        threads = [
-            Thread(
-                target=self.batch_get_hosts_by_inst_id,
-                args=(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name, request, result_dict),
+        host_multi_execute = MultiExecuteFunc()
+        [
+            host_multi_execute.append(
+                result_key=(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name),
+                func=self.batch_get_hosts_by_inst_id,
+                params=(bk_obj_id, bk_inst_id),
             )
             for bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name in result_dict.keys()
         ]
-        [thread.start() for thread in threads]
-        [thread.join() for thread in threads]
+        host_result_dict = host_multi_execute.run()
+        for key, host_result in host_result_dict.items():
+            result_dict[key].extend(host_result)
 
         # 获取节点Agent状态
-        results = {}
-        threads = [
-            Thread(target=self.batch_get_agent_status, args=(host_list, node, node_mapping, request, results))
+        agent_multi_execute = MultiExecuteFunc()
+        [
+            agent_multi_execute.append(
+                result_key=(node.bk_biz_id, node.bk_obj_id, node.bk_inst_id),
+                func=self.batch_get_agent_status,
+                params=(host_list, node, node_mapping),
+            )
             for node, host_list in result_dict.items()
         ]
-        [thread.start() for thread in threads]
-        [thread.join() for thread in threads]
+        results = agent_multi_execute.run()
 
         return results
 
