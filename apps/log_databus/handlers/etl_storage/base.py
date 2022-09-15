@@ -28,7 +28,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import TransferApi
-from apps.exceptions import ValidationError
+from apps.exceptions import ValidationError, ApiResultError
 from apps.log_databus.constants import BKDATA_ES_TYPE_MAP, EtlConfig, FIELD_TEMPLATE, CACHE_KEY_CLUSTER_INFO
 from apps.log_databus.exceptions import EtlParseTimeFieldException, HotColdCheckException
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
@@ -340,18 +340,25 @@ class EtlStorage(object):
         if "time_option" in params and "es_doc_values" in params["time_option"]:
             del params["time_option"]["es_doc_values"]
 
+        # 获取结果表是否已经创建，如果创建则选择更新
+        table_id = ""
+        try:
+            table_id = TransferApi.get_result_table({"table_id": params["table_id"]}).get("table_id")
+        except ApiResultError:
+            pass
+
         # 兼容插件与采集项
-        if not instance.table_id:
+        if not table_id:
             # 创建结果表
             instance.table_id = TransferApi.create_result_table(params)["table_id"]
             instance.save()
         else:
             # 更新结果表
-            params["table_id"] = instance.table_id
+            params["table_id"] = table_id
             TransferApi.modify_result_table(params)
-            cache.delete(CACHE_KEY_CLUSTER_INFO.format(instance.table_id))
+            cache.delete(CACHE_KEY_CLUSTER_INFO.format(table_id))
 
-        return {"table_id": instance.table_id, "params": params}
+        return {"table_id": instance.table_id if instance.table_id else table_id, "params": params}
 
     @classmethod
     def switch_result_table(cls, collector_config: CollectorConfig, is_enable=True):
