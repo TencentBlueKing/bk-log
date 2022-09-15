@@ -337,7 +337,7 @@ export default {
             s2.push(item);
           }
         }
-        this.clusterList = s1.concat(s2);
+        this.clusterList = s1.concat(s2).filter(item => !item.is_platform);
         if (this.$route.query.cluster) {
           const clusterId = this.$route.query.cluster;
           if (this.clusterList.some(item => item.storage_cluster_id === Number(clusterId))) {

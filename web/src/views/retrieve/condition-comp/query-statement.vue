@@ -156,15 +156,6 @@ export default {
     margin-left: 7px;
   }
 
-  .tips-link {
-    color: #3a84ff;
-    margin-left: 5px;
-
-    .icon-lianjie {
-      margin-left: 3px;
-    }
-  }
-
   .history-button {
     color: #3a84ff;
     cursor: pointer;
@@ -248,6 +239,15 @@ export default {
   color: #63656e;
   max-width: 264px;
   word-break: normal;
+
+  .tips-link {
+    color: #3a84ff;
+    margin-left: 5px;
+
+    .icon-lianjie {
+      margin-left: 3px;
+    }
+  }
 
   .title {
     font-weight: 600;

@@ -1484,5 +1484,6 @@ export default {
   文本类型: 'Text type',
   历史查询: 'Historical Query',
   暂无: 'None',
+  platformTip: 'The cluster handles the shared state and prohibits the creation of custom index sets',
   cannotCrossSetClusterTips: 'Multiple indexes cannot be added across clusters. Please clear the indexes first when switching clusters',
 };
