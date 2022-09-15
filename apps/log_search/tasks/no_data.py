@@ -1,7 +1,11 @@
+import time
+
 from celery.schedules import crontab
 from celery.task import periodic_task
 
-from apps.log_search.constants import InnerTag
+from django.core.cache import cache
+
+from apps.log_search.constants import InnerTag, TimeEnum, INDEX_SET_NO_DATA_CHECK_PREFIX
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 from apps.log_search.models import LogIndexSet
 from apps.utils.lock import share_lock
@@ -17,6 +21,9 @@ def no_data_check():
     index_set_id_list = LogIndexSet.objects.filter(is_active=True).values_list("index_set_id", flat=True)
     for index_set_id in index_set_id_list:
         multi_execute_func.append(index_set_id, index_set_no_data_check, index_set_id, use_request=False)
+        cache.set(
+            INDEX_SET_NO_DATA_CHECK_PREFIX + str(index_set_id), time.time(), TimeEnum.ONE_MINUTE_SECOND.value * 16
+        )
     multi_execute_func.run()
     logger.info("[no_data_check]  end check index set no data")
 
