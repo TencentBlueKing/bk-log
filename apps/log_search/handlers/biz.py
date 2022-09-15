@@ -22,7 +22,9 @@ the project delivered to anyone in the future.
 import copy
 from collections import defaultdict, namedtuple
 from inspect import signature
+from threading import Thread
 from typing import List
+
 from pypinyin import lazy_pinyin
 
 from django.core.cache import cache
@@ -48,6 +50,7 @@ from apps.utils.cache import cache_five_minute, cache_one_hour, cache_half_hour
 from apps.log_search.models import ProjectInfo, BizProperty
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
+from apps.utils.local import get_request, set_local_param
 
 
 class BizHandler(APIModel):
@@ -590,51 +593,77 @@ class BizHandler(APIModel):
         node_service_category_id = self.get_service_category_id(node_and_bk_set_id_list)
         return self.get_service_category(node_service_instance, node_service_category_id)
 
+    def batch_get_hosts_by_inst_id(self, bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name, request, results):
+        set_local_param("request", request)
+        hosts_in_node = self.get_hosts_by_inst_id(bk_obj_id, bk_inst_id)
+        results[(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name)].extend(hosts_in_node)
+
+    def batch_get_agent_status(self, host_list, node, node_mapping, request, results):
+        set_local_param("request", request)
+        map_key = "{}|{}".format(str(node[1]), str(node[2]))
+        node_path = "/".join(
+            [node_mapping.get(node).get("bk_inst_name") for node in node_mapping.get(map_key, {}).get("node_link", [])]
+        )
+        agent_error_count = 0
+        if host_list:
+            agent_status_dict = self.get_agent_status(host_list)
+            agent_error_count = len(
+                [status for status in list(agent_status_dict.values()) if status != AgentStatusEnum.ON.value]
+            )
+        results[(node.bk_biz_id, node.bk_obj_id, node.bk_inst_id)] = {
+            "bk_obj_id": node.bk_obj_id,
+            "bk_inst_id": node.bk_inst_id,
+            "bk_inst_name": node.bk_inst_name,
+            "count": len(host_list),
+            "agent_error_count": agent_error_count,
+            "bk_biz_id": node.bk_biz_id,
+            "node_path": node_path,
+        }
+
     def get_host_info(self, node_list):
         """
         获取主机信息
         :param node_list:
         :return:
         """
-        result_dict = {}
+
+        # 获取业务拓扑信息
         biz_topo = CCApi.search_biz_inst_topo({"bk_biz_id": self.bk_biz_id, "level": -1})
+        # 获取业务模块信息
         if biz_topo:
             internal_topo = self.get_biz_internal_module()
             biz_topo[0]["child"].insert(0, internal_topo)
+        # 节点Mapping
         node_mapping = self.get_node_mapping(biz_topo)
-        for node in node_list:
-            result_dict[self.Node(node["bk_biz_id"], node["bk_obj_id"], node["bk_inst_id"], node["bk_inst_name"])] = []
-        for bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name in result_dict.keys():
-            hosts_in_node = self.get_hosts_by_inst_id(bk_obj_id, bk_inst_id)
-            result_dict[(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name)].extend(hosts_in_node)
+        # 构造结果
+        result_dict = {
+            self.Node(node["bk_biz_id"], node["bk_obj_id"], node["bk_inst_id"], node["bk_inst_name"]): []
+            for node in node_list
+        }
 
-        result = {}
-        for node, host_list in result_dict.items():
-            map_key = "{}|{}".format(str(node[1]), str(node[2]))
-            node_path = "/".join(
-                [
-                    node_mapping.get(node).get("bk_inst_name")
-                    for node in node_mapping.get(map_key, {}).get("node_link", [])
-                ]
+        request = get_request()
+
+        # 获取节点主机信息
+        threads = [
+            Thread(
+                target=self.batch_get_hosts_by_inst_id,
+                args=(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name, request, result_dict),
             )
-            agent_error_count = 0
-            if host_list:
-                agent_status_dict = self.get_agent_status(host_list)
-                agent_error_count = len(
-                    [status for status in list(agent_status_dict.values()) if status != AgentStatusEnum.ON.value]
-                )
+            for bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name in result_dict.keys()
+        ]
+        [thread.start() for thread in threads]
+        [thread.join() for thread in threads]
 
-            result[(node.bk_biz_id, node.bk_obj_id, node.bk_inst_id)] = {
-                "bk_obj_id": node.bk_obj_id,
-                "bk_inst_id": node.bk_inst_id,
-                "bk_inst_name": node.bk_inst_name,
-                "count": len(host_list),
-                "agent_error_count": agent_error_count,
-                "bk_biz_id": node.bk_biz_id,
-                "node_path": node_path,
-            }
+        # 获取节点Agent状态
+        results = {}
+        threads = [
+            Thread(target=self.batch_get_agent_status, args=(host_list, node, node_mapping, request, results))
+            for node, host_list in result_dict.items()
+        ]
+        [thread.start() for thread in threads]
+        [thread.join() for thread in threads]
 
-        return result
+        return results
 
     def get_node_path(self, node_list):
         """
