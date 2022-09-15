@@ -109,14 +109,17 @@
                 @selected="handleSelectIndex"
                 @updateIndexSetList="updateIndexSetList" />
               <!-- 查询语句 -->
-              <query-statement />
+              <query-statement
+                v-model="retrieveParams.keyword"
+                :history-records="statementSearchrecords"
+                @updateSearchParam="updateSearchParam"
+                @retrieve="retrieveLog" />
               <retrieve-detail-input
                 v-model="retrieveParams.keyword"
                 :is-auto-query="isAutoQuery"
                 :retrieved-keyword="retrievedKeyword"
                 :dropdown-data="retrieveDropdownData"
                 :history-records="statementSearchrecords"
-                @updateSearchParam="updateSearchParam"
                 @retrieve="retrieveLog" />
               <!-- 添加过滤条件 -->
               <div class="tab-item-title flex-item-title">
@@ -458,7 +461,7 @@ export default {
       isPollingStart: false,
       startTimeStamp: 0,
       endTimeStamp: 0,
-      logList: [], // 当前搜索结果的原始日志
+      logList: [], // 当前搜索结果的日志
       isNextTime: false,
       timer: null,
       isShowSettingModal: false,
