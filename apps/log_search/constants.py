@@ -1115,8 +1115,11 @@ class UserMetaConfType(object):
     USER_GUIDE = "user_guide"
 
 
-INDEX_SET_NO_DATA_CHECK_PREFIX = "INDEX_SET_NO_DATA_CHECK_PREFIX_"
+# 索引集无数据检查缓存前缀
+INDEX_SET_NO_DATA_CHECK_PREFIX = "index_set_no_data_check_prefix"
 
+# 索引集无数据检查时间间隔
+INDEX_SET_NO_DATA_CHECK_INTERVAL = 15
 
 ERROR_MSG_CHECK_FIELDS_FROM_BKDATA = _(", 请在计算平台清洗中调整")
 ERROR_MSG_CHECK_FIELDS_FROM_LOG = _(", 请联系平台管理员")

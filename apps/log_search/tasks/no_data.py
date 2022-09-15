@@ -5,7 +5,12 @@ from celery.task import periodic_task
 
 from django.core.cache import cache
 
-from apps.log_search.constants import InnerTag, TimeEnum, INDEX_SET_NO_DATA_CHECK_PREFIX
+from apps.log_search.constants import (
+    InnerTag,
+    TimeEnum,
+    INDEX_SET_NO_DATA_CHECK_PREFIX,
+    INDEX_SET_NO_DATA_CHECK_INTERVAL,
+)
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 from apps.log_search.models import LogIndexSet
 from apps.utils.lock import share_lock
@@ -22,7 +27,10 @@ def no_data_check():
     for index_set_id in index_set_id_list:
         multi_execute_func.append(index_set_id, index_set_no_data_check, index_set_id, use_request=False)
         cache.set(
-            INDEX_SET_NO_DATA_CHECK_PREFIX + str(index_set_id), time.time(), TimeEnum.ONE_MINUTE_SECOND.value * 16
+            # 这里设置缓存时长为索引集无数据检查时间间隔+1的原因是作为时间冗余
+            INDEX_SET_NO_DATA_CHECK_PREFIX + str(index_set_id),
+            time.time(),
+            TimeEnum.ONE_MINUTE_SECOND.value * INDEX_SET_NO_DATA_CHECK_INTERVAL + 1,
         )
     multi_execute_func.run()
     logger.info("[no_data_check]  end check index set no data")

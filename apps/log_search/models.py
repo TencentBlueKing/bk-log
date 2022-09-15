@@ -71,8 +71,9 @@ from apps.log_search.constants import (
     InnerTag,
     CustomTypeEnum,
     INDEX_SET_NO_DATA_CHECK_PREFIX,
+    INDEX_SET_NO_DATA_CHECK_INTERVAL,
 )
-from apps.utils.time_handler import timestamp_to_datetime, datetime_to_timestamp
+from apps.utils.time_handler import timestamp_to_datetime, datetime_to_timestamp, timestamp_to_timeformat
 
 
 class GlobalConfig(models.Model):
@@ -404,9 +405,9 @@ class LogIndexSet(SoftDeleteModel):
     def no_data_check_time(self):
         result = cache.get(INDEX_SET_NO_DATA_CHECK_PREFIX + str(self.index_set_id))
         if result is None:
-            temp = timestamp_to_datetime(time.time()) - datetime.timedelta(minutes=15)
+            temp = timestamp_to_datetime(time.time()) - datetime.timedelta(minutes=INDEX_SET_NO_DATA_CHECK_INTERVAL)
             result = datetime_to_timestamp(temp)
-        return result
+        return timestamp_to_timeformat(result)
 
     def get_indexes(self, has_applied=None, project_info=True):
         """
