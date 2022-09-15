@@ -706,6 +706,7 @@ class CollectorHandler(object):
         data_encoding = params["data_encoding"]
         description = params.get("description") or collector_config_name
         bk_biz_id = params.get("bk_biz_id") or self.data.bk_biz_id
+        is_display = params.get("is_display", True)
         params["params"]["encoding"] = data_encoding
         params["params"]["run_task"] = params.get("run_task", True)
         # 1. 创建CollectorConfig记录
@@ -719,6 +720,7 @@ class CollectorHandler(object):
             "data_encoding": data_encoding,
             "params": params["params"],
             "is_active": True,
+            "is_display": is_display,
         }
 
         if "environment" in params:
