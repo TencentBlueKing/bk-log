@@ -1101,7 +1101,7 @@ export default {
     keep_log: '保留原始日志',
     Commissioning_setup: '调试&设置',
     try_methods: '格式解析失败，可以尝试其他提取方法',
-    regular_format1: '正则表达式需要匹配日志全文(golang语法)，如以下DEMO将从日志内容提取请求时间与内容',
+    regular_format1: '正则表达式(golang语法)需要匹配日志全文，如以下DEMO将从日志内容提取请求时间与内容',
     regular_format2: ' - 日志内容：[2006-01-02 15:04:05] content',
     regular_format3: ' - 表达式：\\[(?P<request_time>[^]]+)\\] (?P<content>.+)',
     Settings_Preview: '设置&预览',
@@ -1487,5 +1487,6 @@ export default {
   文本类型: '文本类型',
   历史查询: '历史查询',
   暂无: '暂无',
+  platformTip: '集群处理共用状态，禁止创建自定义索引集',
   cannotCrossSetClusterTips: '不能跨集群添加多个索引，切换集群请先清空索引',
 };

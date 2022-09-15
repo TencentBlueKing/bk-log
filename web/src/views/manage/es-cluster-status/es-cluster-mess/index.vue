@@ -152,13 +152,14 @@
         </bk-table-column>
         <bk-table-column :label="$t('操作')" width="180">
           <template slot-scope="props">
+            <!-- 共享集群，平台默认时 无法新建索引集 -->
             <log-button
               theme="primary"
               text
               class="mr10"
-              :tips-conf="$t('unableEditTip')"
+              :tips-conf="props.row.is_platform ? $t('platformTip') : $t('unableEditTip')"
               :button-text="$t('建索引集')"
-              :disabled="!props.row.is_editable"
+              :disabled="!props.row.is_editable || props.row.is_platform"
               @on-click="createIndexSet(props.row)">>
             </log-button>
             <log-button
