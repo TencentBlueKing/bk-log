@@ -30,6 +30,7 @@ from django.core.cache import cache
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import CCApi, GseApi
+from apps.constants import DEFAULT_MAX_WORKERS
 from apps.log_search.constants import (
     AgentStatusEnum,
     AgentStatusTranslationEnum,
@@ -599,7 +600,7 @@ class BizHandler(APIModel):
         host_list, node, node_mapping = params
         map_key = "{}|{}".format(str(node[1]), str(node[2]))
         node_path = "/".join(
-            [node_mapping.get(node).get("bk_inst_name") for node in node_mapping.get(map_key, {}).get("node_link", [])]
+            [node_mapping.get(node, {}).get("bk_inst_name") for node in node_mapping.get(map_key, {}).get("node_link", [])]
         )
         agent_error_count = 0
         if host_list:
@@ -639,29 +640,25 @@ class BizHandler(APIModel):
         }
 
         # 获取节点主机信息
-        host_multi_execute = MultiExecuteFunc()
-        [
+        host_multi_execute = MultiExecuteFunc(DEFAULT_MAX_WORKERS)
+        for bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name in result_dict.keys():
             host_multi_execute.append(
                 result_key=(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name),
                 func=self.batch_get_hosts_by_inst_id,
                 params=(bk_obj_id, bk_inst_id),
             )
-            for bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name in result_dict.keys()
-        ]
         host_result_dict = host_multi_execute.run()
         for key, host_result in host_result_dict.items():
             result_dict[key].extend(host_result)
 
         # 获取节点Agent状态
-        agent_multi_execute = MultiExecuteFunc()
-        [
+        agent_multi_execute = MultiExecuteFunc(DEFAULT_MAX_WORKERS)
+        for node, host_list in result_dict.items():
             agent_multi_execute.append(
                 result_key=(node.bk_biz_id, node.bk_obj_id, node.bk_inst_id),
                 func=self.batch_get_agent_status,
                 params=(host_list, node, node_mapping),
             )
-            for node, host_list in result_dict.items()
-        ]
         results = agent_multi_execute.run()
 
         return results
