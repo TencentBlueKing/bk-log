@@ -53,7 +53,10 @@
     </div>
     <div>
       <!-- 历史记录 -->
-      <span @click="handleClickHistoryButton" class="history-button">{{$t('历史查询')}}</span>
+      <div class="history-button">
+        <span class="log-icon icon-lishijilu"></span>
+        <span @click="handleClickHistoryButton">{{$t('历史查询')}}</span>
+      </div>
       <div v-show="false">
         <ul ref="historyUlRef" class="retrieve-history-list">
           <template v-if="historyRecords.length">
@@ -159,6 +162,12 @@ export default {
   .history-button {
     color: #3a84ff;
     cursor: pointer;
+
+    @include flex-center;
+
+    .icon-lishijilu {
+      margin-right: 3px;
+    }
   }
 }
 
