@@ -252,7 +252,7 @@ export default {
   提取链路: '提取链路',
   新建提取链路: '新建提取链路',
   链路类型: '链路类型',
-  bk_repo链路: 'bk repo链路',
+  bk_repo链路: 'bk_repo链路',
   执行bk_biz_id: '执行bk_biz_id',
   腾讯云SecretId: '腾讯云SecretId',
   腾讯云SecretKey: '腾讯云SecretKey',
@@ -1487,6 +1487,7 @@ export default {
   文本类型: '文本类型',
   历史查询: '历史查询',
   暂无: '暂无',
+  上次检测时间: '上次检测时间',
   platformTip: '集群处理共用状态，禁止创建自定义索引集',
   cannotCrossSetClusterTips: '不能跨集群添加多个索引，切换集群请先清空索引',
 };
