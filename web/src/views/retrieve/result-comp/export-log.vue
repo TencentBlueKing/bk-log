@@ -88,7 +88,7 @@
           <span>{{`${$t('retrieve.reasonFor')}${asyncExportUsableReason}${$t('retrieve.reasonDesc')}`}}</span>
           <div style="margin-top: 10px;">
             <bk-button theme="primary" @click="openDownloadUrl">{{ $t('retrieve.immediateExport') }}</bk-button>
-            <bk-button style="margin-left: 10px;">{{ $t('取消') }}</bk-button>
+            <bk-button style="margin-left: 10px;" @click="() => isShowExportDialog = false">{{ $t('取消') }}</bk-button>
           </div>
         </template>
         <template v-if="asyncExportUsable && isShowAsyncDownload">
@@ -151,7 +151,6 @@ export default {
       isShowExportDialog: false,
       exportLoading: false,
       showHistoryExport: false,
-      showAsyncCheckField: false,
       selectFiledList: [],
       selectFiledType: 'all',
       popoverInstance: null,
@@ -236,6 +235,7 @@ export default {
       // eslint-disable-next-line max-len
       const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
       this.selectFiledList = [];
+      this.isShowExportDialog = false;
       window.open(targetUrl);
     },
     downloadAsync() {
@@ -261,7 +261,7 @@ export default {
       })
         .finally(() => {
           this.exportLoading = false;
-          this.showAsyncCheckField = false;
+          this.isShowExportDialog = false;
           this.selectFiledList = [];
         });
     },
