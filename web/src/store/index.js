@@ -88,7 +88,7 @@ const store = new Vuex.Store({
     userGuideData: {},
     curCustomReport: null,
     // demo 业务链接
-    demoUrl: '',
+    demoUid: '',
   },
   // 公共 getters
   getters: {
@@ -107,7 +107,7 @@ const store = new Vuex.Store({
     collectDetail: state => state.collectDetail[1],
     asIframe: state => state.asIframe,
     iframeQuery: state => state.iframeQuery,
-    demoUrl: state => state.demoUrl,
+    demoUid: state => state.demoUid,
     accessUserManage: state => Boolean(state.topMenu.find(item => item.id === 'manage')?.
       children.some(item => (item.id === 'permissionGroup' && item.project_manage === true))),
   },
@@ -214,8 +214,8 @@ const store = new Vuex.Store({
     setUserGuideData(state, userGuideData) {
       state.userGuideData = userGuideData;
     },
-    setDemoUrl(state, demoUrl) {
-      state.demoUrl = demoUrl;
+    setDemoUid(state, demoUid) {
+      state.demoUid = demoUid;
     },
   },
   actions: {

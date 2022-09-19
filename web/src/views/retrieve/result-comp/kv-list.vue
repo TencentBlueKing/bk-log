@@ -37,6 +37,7 @@
             v-for="(option) in toolMenuList"
             :key="option.id"
             :class="`icon ${getHandleIcon(option, field)} ${checkDisable(option.id, field)}`"
+            v-bk-tooltips="{ content: getIconPopover(option.id, field), delay: 300 }"
             @click.stop="handleMenuClick(option.id, field)">
           </span>
         </div>
@@ -94,6 +95,10 @@ export default {
       type: Object,
       default: () => {},
     },
+    sortList: {
+      type: Array,
+      require: true,
+    },
   },
   data() {
     return {
@@ -104,6 +109,13 @@ export default {
         // { id: 'chart', icon: 'log-icon icon-chart' },
         { id: 'copy', icon: 'log-icon icon-copy' },
       ],
+      toolMenuTips: {
+        is: `${this.$t('添加')} is ${this.$t('过滤项')}`,
+        not: `${this.$t('添加')} is not ${this.$t('过滤项')}`,
+        hiddenField: this.$t('隐藏字段'),
+        displayField: this.$t('显示字段'),
+        copy: this.$t('复制'),
+      },
     };
   },
   computed: {
@@ -149,6 +161,12 @@ export default {
       const type = this.getFieldType(field);
       return (['is', 'not'].includes(id) && type === 'text') || type === '__virtual__'  ? 'is-disabled' : '';
     },
+    getIconPopover(id, field) {
+      if (id !== 'display') return this.toolMenuTips[id];
+
+      const isDisplay = this.visibleFields.some(item => item.field_name === field);
+      return this.toolMenuTips[isDisplay ? 'hiddenField' : 'displayField'];
+    },
     handleMenuClick(operator, item, field) {
       let params = {};
       const curValue = this.tableRowDeepView(this.data, item, this.getFieldType(item), false);
@@ -186,6 +204,13 @@ export default {
         }
         params.operation = 'display';
         params.displayFieldNames = displayFieldNames;
+        if (!displayFieldNames.length) return; // 可以设置为全部隐藏，但是不请求接口
+        this.$http.request('retrieve/postFieldsConfig', {
+          params: { index_set_id: this.$route.params.indexId },
+          data: { display_fields: displayFieldNames, sort_list: this.sortList },
+        }).catch((e) => {
+          console.warn(e);
+        });
       }
 
       if (Object.keys(params).length) this.$emit('menuClick', params);
