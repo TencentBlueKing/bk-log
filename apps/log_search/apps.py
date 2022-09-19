@@ -107,12 +107,12 @@ class ApiConfig(AppConfig):
 
             try:
                 result = BKPAASApi.uni_apps_query_by_id(
-                    {"id": settings.SAAS_MONITOR}.update(uni_apps_query_by_id_part_params)
+                    {"id": settings.SAAS_MONITOR, **uni_apps_query_by_id_part_params}
                 )
                 is_deploy_monitor = uni_apps_is_exist(result)
 
                 result = BKPAASApi.uni_apps_query_by_id(
-                    {"id": settings.SAAS_BKDATA}.update(uni_apps_query_by_id_part_params)
+                    {"id": settings.SAAS_BKDATA, **uni_apps_query_by_id_part_params}
                 )
                 is_deploy_bkdata = uni_apps_is_exist(result)
             except Exception as e:  # pylint: disable=broad-except
