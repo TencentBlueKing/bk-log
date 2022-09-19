@@ -706,6 +706,7 @@ class CollectorHandler(object):
         data_encoding = params["data_encoding"]
         description = params.get("description") or collector_config_name
         bk_biz_id = params.get("bk_biz_id") or self.data.bk_biz_id
+        is_display = params.get("is_display", True)
         params["params"]["encoding"] = data_encoding
         params["params"]["run_task"] = params.get("run_task", True)
         # 1. 创建CollectorConfig记录
@@ -719,6 +720,7 @@ class CollectorHandler(object):
             "data_encoding": data_encoding,
             "params": params["params"],
             "is_active": True,
+            "is_display": is_display,
         }
 
         if "environment" in params:
@@ -2697,9 +2699,18 @@ class CollectorHandler(object):
         )
         container_collector_config_list = []
         for config in data["config"]:
+            workload_type = config["container"].get("workload_type", "")
+            workload_name = config["container"].get("workload_name", "")
+            container_name = config["container"].get("container_name", "")
+            match_labels = config["label_selector"].get("match_labels", [])
+            match_expressions = config["label_selector"].get("match_expressions", [])
+
+            is_all_container = not any([workload_type, workload_name, container_name, match_labels, match_expressions])
+
             container_collector_config_list.append(
                 ContainerCollectorConfig(
                     collector_config_id=path_collector_config.collector_config_id,
+                    collector_type=ContainerCollectorType.CONTAINER,
                     namespaces=config["namespaces"],
                     any_namespace=not config["namespaces"],
                     data_encoding=config["data_encoding"],
@@ -2707,12 +2718,12 @@ class CollectorHandler(object):
                         "paths": config["paths"],
                         "conditions": {"type": "match", "match_type": "include", "match_content": ""},
                     },
-                    workload_type=config["container"].get("workload_type", ""),
-                    workload_name=config["container"].get("workload_name", ""),
-                    container_name=config["container"].get("container_name", ""),
-                    match_labels=config["label_selector"].get("match_labels", []),
-                    match_expressions=config["label_selector"].get("match_expressions", []),
-                    all_container=not config["container"].get("workload_type", ""),
+                    workload_type=workload_type,
+                    workload_name=workload_name,
+                    container_name=container_name,
+                    match_labels=match_labels,
+                    match_expressions=match_expressions,
+                    all_container=is_all_container,
                     rule_id=bcs_rule.id,
                 )
             )
@@ -2720,6 +2731,7 @@ class CollectorHandler(object):
                 container_collector_config_list.append(
                     ContainerCollectorConfig(
                         collector_config_id=std_collector_config.collector_config_id,
+                        collector_type=ContainerCollectorType.STDOUT,
                         namespaces=config["namespaces"],
                         any_namespace=not config["namespaces"],
                         data_encoding=config["data_encoding"],
@@ -2727,12 +2739,12 @@ class CollectorHandler(object):
                             "paths": [],
                             "conditions": {"type": "match", "match_type": "include", "match_content": ""},
                         },
-                        workload_type=config["container"].get("workload_type", ""),
-                        workload_name=config["container"].get("workload_name", ""),
-                        container_name=config["container"].get("container_name", ""),
-                        match_labels=config["label_selector"].get("match_labels", []),
-                        match_expressions=config["label_selector"].get("match_expressions", []),
-                        all_container=not config["container"],
+                        workload_type=workload_type,
+                        workload_name=workload_name,
+                        container_name=container_name,
+                        match_labels=match_labels,
+                        match_expressions=match_expressions,
+                        all_container=is_all_container,
                         rule_id=bcs_rule.id,
                         parent_container_config_id=path_collector_config.collector_config_id,
                     )
@@ -3420,7 +3432,21 @@ class CollectorHandler(object):
                             error_msg(v_msg, results)
 
             parse_result = []
-            error_msg(err.detail, parse_result)
+
+            def gen_err_topo_message(detail_item: Union[List, Dict, str], result_list: list, prefix: str = ""):
+                if isinstance(detail_item, str):
+                    result_list.append("{}: {}".format(prefix, detail_item))
+
+                elif isinstance(detail_item, list) and isinstance(detail_item[0], ErrorDetail):
+                    gen_err_topo_message(detail_item=detail_item[0], result_list=result_list, prefix=prefix)
+
+                elif isinstance(detail_item, dict):
+                    for k, v in detail_item.items():
+                        temp_prefix = ".".join([prefix, str(k)]) if prefix else k
+                        gen_err_topo_message(detail_item=v, result_list=result_list, prefix=temp_prefix)
+
+            for item in err.detail:
+                gen_err_topo_message(detail_item=item, result_list=parse_result)
 
             return {
                 "origin_text": yaml_config,

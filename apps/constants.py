@@ -23,6 +23,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.utils import ChoicesEnum
 
+DEFAULT_MAX_WORKERS = 5
+
 
 class NotifyType(ChoicesEnum):
     """

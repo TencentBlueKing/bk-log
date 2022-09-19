@@ -326,7 +326,8 @@ export default {
       if (type === 'logVersion') {
         this.showLogVersion = true;
       } else if (type === 'docCenter') {
-        window.open(window.BK_DOC_URL);
+        // window.open(window.BK_DOC_URL);
+        this.handleGotoLink('docCenter');
       } else if (type === 'feedback') {
         window.open(window.BK_FAQ_URL);
       }

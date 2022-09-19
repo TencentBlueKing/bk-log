@@ -65,9 +65,10 @@ class MultiExecuteFunc(object):
     基于多线程的批量并发执行函数
     """
 
-    def __init__(self):
+    def __init__(self, max_workers=None):
         self.results = {}
         self.task_list = []
+        self.max_workers = max_workers
 
     def append(self, result_key, func, params=None, use_request=True):
         if result_key in self.results:
@@ -78,7 +79,7 @@ class MultiExecuteFunc(object):
         self.task_list.append(task)
 
     def run(self):
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             executor.map(executor_wrap, self.task_list)
         return self.results
 
