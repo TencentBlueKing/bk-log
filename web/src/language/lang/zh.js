@@ -1492,6 +1492,6 @@ export default {
   历史查询: '历史查询',
   暂无: '暂无',
   上次检测时间: '上次检测时间',
-  platformTip: '集群处理共用状态，禁止创建自定义索引集',
+  platformTip: '公共集群，禁止创建自定义索引集',
   cannotCrossSetClusterTips: '不能跨集群添加多个索引，切换集群请先清空索引',
 };
