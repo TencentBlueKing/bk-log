@@ -41,7 +41,7 @@
           class="add-index-input-container">
           <bk-input
             v-model.trim="formData.resultTableId"
-            placeholder="log_search_*'"
+            placeholder="log_search_*"
             class="king-input"
             @focus="handleFocus"
             @enter="handleSearch"></bk-input>
