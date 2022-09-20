@@ -74,7 +74,8 @@
             v-model="selectFiledList"
             searchable
             display-tag
-            multiple>
+            multiple
+            :placeholder="$t('未选择则默认为全部字段')">
             <bk-option
               v-for="option in totalFields"
               :key="option.field_name"
