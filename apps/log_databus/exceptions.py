@@ -271,7 +271,7 @@ class KafkaConnectException(BaseCollectorConfigException):
 
 class KafkaPartitionException(BaseCollectorConfigException):
     ERROR_CODE = "402"
-    MESSAGE = _("Partition信息获取失败")
+    MESSAGE = _("最新数据获取失败, 可刷新重试一下")
 
 
 class DataLinkConfigPartitionException(BaseCollectorConfigException):
