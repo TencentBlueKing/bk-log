@@ -152,13 +152,14 @@
         </bk-table-column>
         <bk-table-column :label="$t('操作')" width="180">
           <template slot-scope="props">
+            <!-- 共享集群，平台默认时 无法新建索引集 -->
             <log-button
               theme="primary"
               text
               class="mr10"
-              :tips-conf="$t('unableEditTip')"
+              :tips-conf="props.row.is_platform ? $t('platformTip') : $t('unableEditTip')"
               :button-text="$t('建索引集')"
-              :disabled="!props.row.is_editable"
+              :disabled="!props.row.is_editable || props.row.is_platform"
               @on-click="createIndexSet(props.row)">>
             </log-button>
             <log-button
@@ -314,7 +315,7 @@ export default {
       isRenderSlider: true, // 渲染侧边栏组件，关闭侧滑时销毁组件，避免接口在 pending 时关闭侧滑后又马上打开
       showSlider: false, // 显示编辑或新建ES源侧边栏
       editClusterId: null, // 编辑ES源ID,
-      isOpenWindow: true,
+      isOpenWindow: false,
       sourceStateFilters: [{ text: this.$t('正常'), value: true }, { text: this.$t('失败'), value: false }],
       clusterSetting: {
         fields: settingFields,
@@ -322,7 +323,7 @@ export default {
       },
       minIntroWidth: 300,
       maxIntroWidth: 480,
-      introWidth: 360,
+      introWidth: 0,
       isDraging: false,
     };
   },
@@ -529,7 +530,6 @@ export default {
     },
     // 删除ES源
     async deleteDataSource(row) {
-      this.tableLoading = true;
       const id = row.cluster_config.cluster_id;
       if (!(row.permission?.manage_es_source)) {
         try {
@@ -540,6 +540,7 @@ export default {
               id,
             }],
           };
+          this.tableLoading = true;
           const res = await this.$store.dispatch('getApplyData', paramData);
           this.$store.commit('updateAuthDialogData', res.data);
         } catch (err) {

@@ -54,6 +54,7 @@
             :clearable="false">
             <bk-option id="common" :name="$t('内网链路')"></bk-option>
             <bk-option id="qcloud_cos" :name="$t('腾讯云链路')"></bk-option>
+            <bk-option id="bk_repo" :name="$t('bk_repo链路')"></bk-option>
           </bk-select>
         </bk-form-item>
         <bk-form-item

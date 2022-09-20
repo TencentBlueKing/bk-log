@@ -74,7 +74,7 @@
           <span class="icon bk-icon icon-plus-circle"></span>
           {{ $t('申请业务权限') }}
         </div>
-        <div class="menu-select-extension-item" v-if="demoUrl" @mousedown.stop="experienceDemo">
+        <div class="menu-select-extension-item" v-if="demoUid" @mousedown.stop="experienceDemo">
           <span class="icon log-icon icon-app-store"></span>
           {{ $t('体验DEMO') }}
         </div>
@@ -109,7 +109,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      demoUrl: 'demoUrl',
+      demoUid: 'demoUid',
     }),
     bizName() {
       return this.myProjectList.find(item => item.project_id === this.projectId)?.project_name;
@@ -172,7 +172,7 @@ export default {
       this.keyword = v;
     },
     experienceDemo() {
-      window.open(this.demoUrl);
+      this.checkProjectChange(this.demoUid);
     },
   },
 };

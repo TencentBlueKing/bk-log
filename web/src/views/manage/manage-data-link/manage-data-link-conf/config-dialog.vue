@@ -51,26 +51,6 @@
             style="width: 380px;"></bk-input>
         </bk-form-item>
         <bk-form-item
-          :label="$t('允许的业务')"
-          required
-          property="bk_biz_id"
-          error-display-type="normal">
-          <bk-select
-            data-test-id="linkConfigForm_select_selectPermitted"
-            v-model="formData.bk_biz_id"
-            searchable
-            :clearable="false"
-            style="width: 380px;">
-            <template v-for="item in projectList">
-              <bk-option
-                :key="item.bk_biz_id"
-                :id="item.bk_biz_id"
-                :name="item.project_name">
-              </bk-option>
-            </template>
-          </bk-select>
-        </bk-form-item>
-        <bk-form-item
           label="Kafka"
           required
           property="kafka_cluster_id"
@@ -124,6 +104,27 @@
                 :key="item.cluster_id"
                 :id="item.cluster_id"
                 :name="item.cluster_name">
+              </bk-option>
+            </template>
+          </bk-select>
+        </bk-form-item>
+        <bk-form-item
+          :label="$t('允许的业务')"
+          required
+          property="bk_biz_id"
+          error-display-type="normal">
+          <bk-select
+            data-test-id="linkConfigForm_select_selectPermitted"
+            v-model="formData.bk_biz_id"
+            searchable
+            :clearable="false"
+            style="width: 380px;">
+            <!-- @selected="handleSelectBiz" -->
+            <template v-for="item in projectList">
+              <bk-option
+                :key="item.bk_biz_id"
+                :id="item.bk_biz_id"
+                :name="item.project_name">
               </bk-option>
             </template>
           </bk-select>
@@ -253,6 +254,17 @@ export default {
         this.$emit('update:visible', true);
       } finally {
         this.confirmLoading = false;
+      }
+    },
+    handleSelectBiz(option) {
+      if (option[option.length - 1] === '0') { // 如果最后一步选择全部业务，则清空数组填所有
+        const nameSpacesLength = this.formData.bk_biz_id.length;
+        this.formData.bk_biz_id.splice(0, nameSpacesLength, '0');
+        return;
+      }
+      if (option.length > 1 && option.includes('0')) { // 如果选中其他的值 包含所有则去掉所有选项
+        const allIndex = option.findIndex(item => item === '0');
+        this.formData.bk_biz_id.splice(allIndex, 1);
       }
     },
     closeDialog() {

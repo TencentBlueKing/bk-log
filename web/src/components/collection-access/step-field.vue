@@ -143,7 +143,7 @@
                   {{ $t('dataManage.applyTemp') }}
                 </span>
               </div>
-              <p class="documentation button-text" v-if="docUrl" @click="handleOpenDocument">
+              <p class="documentation button-text" v-if="docUrl" @click="handleGotoLink('logExtract')">
                 <span>{{$t('说明文档')}}</span> <span class="log-icon icon-jump"></span>
               </p>
             </div>
@@ -322,7 +322,7 @@
               <div class="step-description">
                 <span class="step-num">2</span>
                 <span class="description-text">{{ $t('dataManage.advanceStep2') }}
-                  <a class="link" :href="docCenterUrl" target="_blank">
+                  <a class="link" @click="handleGotoLink('bkBase')">
                     {{ $t('dataManage.linkdocs') }}
                     <span class="log-icon icon-lianjie"></span>
                   </a>
@@ -1788,15 +1788,14 @@ export default {
     }
 
     .step-head {
-      width: 256px;
+      width: 242px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
 
       .documentation {
         color: #3a84ff;
         font-size: 12px;
-        transform: translateY(2px);
+        transform: translateX(45px) translateY(2px);
         cursor: pointer;
       }
     }

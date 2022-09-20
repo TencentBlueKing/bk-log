@@ -74,7 +74,11 @@ class StorageHandler(object):
         self.cluster_id = cluster_id
         super().__init__()
 
-    def can_visible(self, bk_biz_id, custom_option) -> bool:
+    def can_visible(self, bk_biz_id, custom_option, registered_system) -> bool:
+        # 兼容系统预置集群未设置集群ID的情况
+        if registered_system == REGISTERED_SYSTEM_DEFAULT and not custom_option["bk_biz_id"]:
+            return True
+
         # 兼容老数据没有visible_config的情况
         if not custom_option.get("visible_config") and bk_biz_id != custom_option["bk_biz_id"]:
             return False
@@ -126,7 +130,11 @@ class StorageHandler(object):
         cluster_groups = [
             cluster
             for cluster in cluster_groups
-            if self.can_visible(bk_biz_id, cluster["cluster_config"].get("custom_option"))
+            if self.can_visible(
+                bk_biz_id,
+                cluster["cluster_config"].get("custom_option"),
+                cluster["cluster_config"]["registered_system"],
+            )
         ]
 
         return [
@@ -151,8 +159,9 @@ class StorageHandler(object):
                 "source_type": i["cluster_config"]["custom_option"]["source_type"],
                 "enable_assessment": i["cluster_config"]["custom_option"]["enable_assessment"],
                 "enable_archive": i["cluster_config"]["custom_option"]["enable_archive"],
-                "is_platform": i["cluster_config"]["custom_option"]["visible_config"]["visible_type"]
-                in [VisibleEnum.ALL_BIZ.value, VisibleEnum.BIZ_ATTR.value, VisibleEnum.MULTI_BIZ.value],
+                "is_platform": self.is_platform_cluster(
+                    i["cluster_config"]["custom_option"]["visible_config"]["visible_type"]
+                ),
             }
             for i in cluster_groups
             if i
@@ -419,6 +428,10 @@ class StorageHandler(object):
         except Exception:  # pylint: disable=broad-except
             return time_stamp
 
+    @staticmethod
+    def is_platform_cluster(visible_type):
+        return visible_type in [VisibleEnum.ALL_BIZ.value, VisibleEnum.BIZ_ATTR.value, VisibleEnum.MULTI_BIZ.value]
+
     def list(self, bk_biz_id, cluster_id=None, is_default=True, enable_archive=False):
         """
         存储集群列表
@@ -431,7 +444,12 @@ class StorageHandler(object):
         if cluster_id:
             cluster_info = self._get_cluster_nodes(cluster_info)
             cluster_info = self._get_cluster_detail_info(cluster_info)
-        return self.filter_cluster_groups(cluster_info, bk_biz_id, is_default, enable_archive)
+        cluster_groups = self.filter_cluster_groups(cluster_info, bk_biz_id, is_default, enable_archive)
+        for cluster_info in cluster_groups:
+            cluster_info["is_platform"] = self.is_platform_cluster(
+                cluster_info["cluster_config"]["custom_option"]["visible_config"]["visible_type"]
+            )
+        return cluster_groups
 
     def _get_cluster_nodes(self, cluster_info: List[dict]):
         for cluster in cluster_info:
@@ -734,7 +752,9 @@ class StorageHandler(object):
             cluster_obj = clusters[0]
             # 比较集群bk_biz_id是否匹配
             cluster_config = cluster_obj["cluster_config"]
-            if not self.can_visible(bk_biz_id, cluster_config.get("custom_option", {})):
+            if not self.can_visible(
+                bk_biz_id, cluster_config.get("custom_option", {}), cluster_config["registered_system"]
+            ):
                 raise StorageNotPermissionException()
 
             # 集群不可以修改域名、端口
@@ -780,7 +800,9 @@ class StorageHandler(object):
 
             # 比较集群bk_biz_id是否匹配
             cluster_config = cluster_obj["cluster_config"]
-            if not self.can_visible(bk_biz_id, cluster_config.get("custom_option", {})):
+            if not self.can_visible(
+                bk_biz_id, cluster_config.get("custom_option", {}), cluster_config["registered_system"]
+            ):
                 raise StorageNotPermissionException()
 
             # 集群不可以修改域名、端口

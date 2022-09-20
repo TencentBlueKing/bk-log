@@ -43,6 +43,7 @@
           :data="originTableList[$index]"
           :total-fields="totalFields"
           :visible-fields="visibleFields"
+          :retrieve-params="retrieveParams"
           @menuClick="handleMenuClick">
         </expand-view>
       </template>
@@ -99,10 +100,6 @@
         <operator-tools
           :index="$index"
           :cur-hover-index="curHoverIndex"
-          :show-realtime-log="showRealtimeLog"
-          :show-context-log="showContextLog"
-          :show-monitor-web="showMonitorWeb"
-          :show-web-console="showWebConsole"
           :operator-config="operatorConfig"
           :handle-click="(event) => handleClickTools(event, row, operatorConfig)" />
       </template>
