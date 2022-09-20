@@ -103,6 +103,7 @@ import watermarkMaker from './utils/watermark-maker'
 import ChartInView from './utils/chart-in-view'
 import { getValueFormat } from './value-formats-package'
 import ChartTitle from './components/chart-title-new.vue'
+import { Debounce } from '../../components/ip-selector/common/util'
 interface ICurValue {
   xAxis: string | number; yAxis: string | number;
   dataIndex: number, color: string; name: string, seriesIndex: number}
@@ -494,6 +495,7 @@ export default class MonitorEcharts extends Vue {
     }, 500);
   }
 
+  @Debounce(300)
   // 获取seriesData
   async handleSeriesData(startTime?: string, endTime?: string) {
     if (this.isFinish) this.loading = true
@@ -512,10 +514,8 @@ export default class MonitorEcharts extends Vue {
         // await this.handleSetChartData(data)
         this.chartData.splice(0, this.chartData.length, ...data);
         if (!this.isFold) this.handleSetChartData(this.chartData)
-      } else {
-        if (this.isFinish) {
-          this.noData = true
-        }
+      } else if (this.isFinish){
+        this.noData = true
       }
     } catch (e) {
       console.info(e)
