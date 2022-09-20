@@ -1478,4 +1478,8 @@ export default {
   当前归档ID为: 'The current archive ID is',
   日志平台: 'Log Platform',
   腾讯蓝鲸智云: 'Tencent Blue Whale Cloud Service',
+  下载范围选择: 'Download range selection',
+  全部字段: 'All fields',
+  当前显示字段: 'Current display field',
+  指定字段: 'Specified field',
 };
