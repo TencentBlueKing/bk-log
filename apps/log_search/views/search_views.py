@@ -772,22 +772,22 @@ class SearchViewSet(APIViewSet):
                 {
                     "operator": "is",
                     "label": "is",
-                    "placeholder": _("请输入，注意空格符号")
+                    "placeholder": _("请选择或直接输入")
                 },
                 {
                     "operator": "is one of",
                     "label": "is one of "，
-                    "placeholder": _("逗号分隔")
+                    "placeholder": _("请选择或直接输入，逗号分隔")
                 },
             ],
             "result": true
         }
         """
         data = [
-            {"operator": "is", "label": _("is"), "placeholder": _("请输入，注意空格符号")},
-            {"operator": "is one of", "label": _("is one of"), "placeholder": _("逗号分隔")},
-            {"operator": "is not", "label": _("is not"), "placeholder": _("请输入，注意空格符号")},
-            {"operator": "is not one of", "label": _("is not one of"), "placeholder": _("逗号分隔")},
+            {"operator": "is", "label": _("is"), "placeholder": _("请选择或直接输入")},
+            {"operator": "is one of", "label": _("is one of"), "placeholder": _("请选择或直接输入，逗号分隔")},
+            {"operator": "is not", "label": _("is not"), "placeholder": _("请选择或直接输入")},
+            {"operator": "is not one of", "label": _("is not one of"), "placeholder": _("请选择或直接输入，逗号分隔")},
             {"operator": "gt", "label": _("大于"), "placeholder": _("请选择或直接输入")},
             {"operator": "gte", "label": _("大于等于"), "placeholder": _("请选择或直接输入")},
             {"operator": "lt", "label": _("小于"), "placeholder": _("请选择或直接输入")},
