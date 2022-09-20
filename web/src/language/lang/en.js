@@ -1487,4 +1487,8 @@ export default {
   上次检测时间: 'Last test time',
   platformTip: 'The cluster handles the shared state and prohibits the creation of custom index sets',
   cannotCrossSetClusterTips: 'Multiple indexes cannot be added across clusters. Please clear the indexes first when switching clusters',
+  下载范围选择: 'Download range selection',
+  全部字段: 'All fields',
+  当前显示字段: 'Current display field',
+  指定字段: 'Specified field',
 };
