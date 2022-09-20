@@ -1485,7 +1485,7 @@ export default {
   历史查询: 'Historical Query',
   暂无: 'None',
   上次检测时间: 'Last test time',
-  platformTip: 'The cluster handles the shared state and prohibits the creation of custom index sets',
+  platformTip: 'Public cluster, disable the creation of custom index sets',
   cannotCrossSetClusterTips: 'Multiple indexes cannot be added across clusters. Please clear the indexes first when switching clusters',
   下载范围选择: 'Download range selection',
   全部字段: 'All fields',
