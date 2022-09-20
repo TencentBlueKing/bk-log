@@ -770,6 +770,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 "spark.executor.instances": self.conf.get("spark.executor.instances", DEFAULT_SPARK_EXECUTOR_INSTANCES),
                 "pseudo_shuffle": self.conf.get("pseudo_shuffle", DEFAULT_PSEUDO_SHUFFLE),
                 "spark.locality.wait": self.conf.get("spark.locality.wait", DEFAULT_SPARK_LOCALITY_WAIT),
+                "dropna_enabled": False,
             },
         )
         request_dict = self._set_username(update_model_instance_request)
