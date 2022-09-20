@@ -38,7 +38,7 @@
             data-test-id="addIndex_select_selectIndex"
             @selected="handleCollectionSelected">
             <bk-option
-              v-for="item in collectionList"
+              v-for="item in getShowCollectionList"
               class="custom-no-padding-option"
               :disabled="parentData.indexes.some(selectedItem => item.result_table_id === selectedItem.result_table_id)"
               :key="item.result_table_id"
@@ -112,6 +112,12 @@ export default {
   },
   computed: {
     ...mapState(['projectId', 'bkBizId']),
+    getShowCollectionList() {
+      if (this.parentData.storage_cluster_id) {
+        return this.collectionList.filter(item => item.storage_cluster_id === this.parentData.storage_cluster_id);
+      }
+      return this.collectionList;
+    },
   },
   mounted() {
     this.fetchCollectionList();

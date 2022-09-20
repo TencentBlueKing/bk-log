@@ -1788,15 +1788,14 @@ export default {
     }
 
     .step-head {
-      width: 256px;
+      width: 242px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
 
       .documentation {
         color: #3a84ff;
         font-size: 12px;
-        transform: translateY(2px);
+        transform: translateX(45px) translateY(2px);
         cursor: pointer;
       }
     }
