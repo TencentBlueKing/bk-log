@@ -74,7 +74,8 @@
             v-model="selectFiledList"
             searchable
             display-tag
-            multiple>
+            multiple
+            :placeholder="$t('未选择则默认为全部字段')">
             <bk-option
               v-for="option in totalFields"
               :key="option.field_name"
@@ -82,7 +83,7 @@
               :name="option.field_name">
             </bk-option>
           </bk-select>
-          <div v-if="isShowAsyncDownload" class="style-line"></div>
+          <div v-if="asyncExportUsable && isShowAsyncDownload" class="style-line"></div>
         </div>
         <template v-if="!asyncExportUsable">
           <span>{{`${$t('retrieve.reasonFor')}${asyncExportUsableReason}${$t('retrieve.reasonDesc')}`}}</span>
@@ -151,8 +152,8 @@ export default {
       isShowExportDialog: false,
       exportLoading: false,
       showHistoryExport: false,
-      selectFiledList: [],
-      selectFiledType: 'all',
+      selectFiledList: [], // 手动选择字段列表
+      selectFiledType: 'all', // 字段下载类型
       popoverInstance: null,
       exportFirstComparedSize: 10000, // 显示异步下载的临界值
       exportSecondComparedSize: 2000000, // 可异步下载最大值
@@ -167,19 +168,19 @@ export default {
     ...mapGetters({
       bkBizId: 'bkBizId',
     }),
-    getAsyncText() {
-      return  this.totalCount > this.exportSecondComparedSize ? this.$t('retrieve.asyncExportMoreDesc') : this.$t('retrieve.asyncExportDesc');
+    getAsyncText() { // 异步下载按钮前的文案
+      return this.totalCount > this.exportSecondComparedSize ? this.$t('retrieve.asyncExportMoreDesc') : this.$t('retrieve.asyncExportDesc');
     },
-    getExportTitle() {
+    getExportTitle() { // 超过下载临界值，当前数据超过多少条文案
       return this.totalCount > this.exportSecondComparedSize ? this.$t('retrieve.dataMoreThanMillion') : this.$t('retrieve.dataMoreThan');
     },
-    getDialogTitle() {
+    getDialogTitle() { // 异步下载临界值，dialog标题
       return this.totalCount < this.exportFirstComparedSize ? this.$t('下载范围选择') : '';
     },
-    isShowAsyncDownload() {
+    isShowAsyncDownload() { // 是否展示异步下载
       return this.totalCount > this.exportFirstComparedSize;
     },
-    submitSelectFiledList() {
+    submitSelectFiledList() { // 下载时提交的字段
       if (this.selectFiledType === 'specify') return this.selectFiledList;
       if (this.selectFiledType === 'show') return this.visibleFields.map(item => item.field_name);
       return [];
@@ -350,6 +351,8 @@ export default {
 
   .async-export-dialog {
     .header {
+      text-align: center;
+
       /* stylelint-disable-next-line declaration-no-important */
       padding: 18px 0px 16px !important;
     }
@@ -365,9 +368,9 @@ export default {
       height: 58px;
       line-height: 58px;
       font-size: 30px;
-      color: #fff;
+      color: #ff9c01;
       border-radius: 50%;
-      background-color: #ffb848;
+      background-color: #ffe8c3;
     }
 
     .header {

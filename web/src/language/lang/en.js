@@ -1491,4 +1491,5 @@ export default {
   全部字段: 'All fields',
   当前显示字段: 'Current display field',
   指定字段: 'Specified field',
+  未选择则默认为全部字段: 'If not selected, it defaults to all fields',
 };
