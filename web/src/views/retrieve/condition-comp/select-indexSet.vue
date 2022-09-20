@@ -89,7 +89,14 @@
             <span
               v-for="(tag, tIndex) in item.tags"
               :key="tag.tag_id">
-              <span :class="['tag-card', `tag-card-${tag.color}`]" v-if="tIndex < 2">{{ tag.name }}</span>
+              <span
+                :class="['tag-card', `tag-card-${tag.color}`]"
+                v-if="tIndex < 2"
+                v-bk-tooltips.top="{
+                  content: `${$t('上次检测时间')}: ${item.no_data_check_time}`,
+                  disabled: tag.tag_id !== 4,
+                  delay: [300, 0]
+                }">{{ tag.name }}</span>
             </span>
           </div>
         </div>

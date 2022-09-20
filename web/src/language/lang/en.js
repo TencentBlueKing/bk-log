@@ -252,7 +252,7 @@ export default {
   提取链路: 'Extract Link',
   新建提取链路: 'Create Extract Link',
   链路类型: 'Link type',
-  bk_repo链路: 'Bk Repo Link',
+  bk_repo链路: 'bk_repo Link',
   执行bk_biz_id: 'op_bk_biz_id',
   腾讯云SecretId: 'qcloud_secret_id',
   腾讯云SecretKey: 'qcloud_secret_key',
@@ -1484,6 +1484,7 @@ export default {
   文本类型: 'Text type',
   历史查询: 'Historical Query',
   暂无: 'None',
+  上次检测时间: 'Last test time',
   platformTip: 'The cluster handles the shared state and prohibits the creation of custom index sets',
   cannotCrossSetClusterTips: 'Multiple indexes cannot be added across clusters. Please clear the indexes first when switching clusters',
 };
