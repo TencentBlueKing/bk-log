@@ -23,12 +23,14 @@ import copy
 from collections import defaultdict, namedtuple
 from inspect import signature
 from typing import List
+
 from pypinyin import lazy_pinyin
 
 from django.core.cache import cache
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import CCApi, GseApi
+from apps.constants import DEFAULT_MAX_WORKERS
 from apps.log_search.constants import (
     AgentStatusEnum,
     AgentStatusTranslationEnum,
@@ -48,6 +50,7 @@ from apps.utils.cache import cache_five_minute, cache_one_hour, cache_half_hour
 from apps.log_search.models import ProjectInfo, BizProperty
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
+from apps.utils.thread import MultiExecuteFunc
 
 
 class BizHandler(APIModel):
@@ -590,51 +593,75 @@ class BizHandler(APIModel):
         node_service_category_id = self.get_service_category_id(node_and_bk_set_id_list)
         return self.get_service_category(node_service_instance, node_service_category_id)
 
+    def batch_get_hosts_by_inst_id(self, params):
+        return self.get_hosts_by_inst_id(*params)
+
+    def batch_get_agent_status(self, params):
+        host_list, node, node_mapping = params
+        map_key = "{}|{}".format(str(node[1]), str(node[2]))
+        node_path = "/".join(
+            [node_mapping.get(node, {}).get("bk_inst_name") for node in node_mapping.get(map_key, {}).get("node_link", [])]
+        )
+        agent_error_count = 0
+        if host_list:
+            agent_status_dict = self.get_agent_status(host_list)
+            agent_error_count = len(
+                [status for status in list(agent_status_dict.values()) if status != AgentStatusEnum.ON.value]
+            )
+        return {
+            "bk_obj_id": node.bk_obj_id,
+            "bk_inst_id": node.bk_inst_id,
+            "bk_inst_name": node.bk_inst_name,
+            "count": len(host_list),
+            "agent_error_count": agent_error_count,
+            "bk_biz_id": node.bk_biz_id,
+            "node_path": node_path,
+        }
+
     def get_host_info(self, node_list):
         """
         获取主机信息
         :param node_list:
         :return:
         """
-        result_dict = {}
+
+        # 获取业务拓扑信息
         biz_topo = CCApi.search_biz_inst_topo({"bk_biz_id": self.bk_biz_id, "level": -1})
+        # 获取业务模块信息
         if biz_topo:
             internal_topo = self.get_biz_internal_module()
             biz_topo[0]["child"].insert(0, internal_topo)
+        # 节点Mapping
         node_mapping = self.get_node_mapping(biz_topo)
-        for node in node_list:
-            result_dict[self.Node(node["bk_biz_id"], node["bk_obj_id"], node["bk_inst_id"], node["bk_inst_name"])] = []
+        # 构造结果
+        result_dict = {
+            self.Node(node["bk_biz_id"], node["bk_obj_id"], node["bk_inst_id"], node["bk_inst_name"]): []
+            for node in node_list
+        }
+
+        # 获取节点主机信息
+        host_multi_execute = MultiExecuteFunc(DEFAULT_MAX_WORKERS)
         for bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name in result_dict.keys():
-            hosts_in_node = self.get_hosts_by_inst_id(bk_obj_id, bk_inst_id)
-            result_dict[(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name)].extend(hosts_in_node)
-
-        result = {}
-        for node, host_list in result_dict.items():
-            map_key = "{}|{}".format(str(node[1]), str(node[2]))
-            node_path = "/".join(
-                [
-                    node_mapping.get(node).get("bk_inst_name")
-                    for node in node_mapping.get(map_key, {}).get("node_link", [])
-                ]
+            host_multi_execute.append(
+                result_key=(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name),
+                func=self.batch_get_hosts_by_inst_id,
+                params=(bk_obj_id, bk_inst_id),
             )
-            agent_error_count = 0
-            if host_list:
-                agent_status_dict = self.get_agent_status(host_list)
-                agent_error_count = len(
-                    [status for status in list(agent_status_dict.values()) if status != AgentStatusEnum.ON.value]
-                )
+        host_result_dict = host_multi_execute.run()
+        for key, host_result in host_result_dict.items():
+            result_dict[key].extend(host_result)
 
-            result[(node.bk_biz_id, node.bk_obj_id, node.bk_inst_id)] = {
-                "bk_obj_id": node.bk_obj_id,
-                "bk_inst_id": node.bk_inst_id,
-                "bk_inst_name": node.bk_inst_name,
-                "count": len(host_list),
-                "agent_error_count": agent_error_count,
-                "bk_biz_id": node.bk_biz_id,
-                "node_path": node_path,
-            }
+        # 获取节点Agent状态
+        agent_multi_execute = MultiExecuteFunc(DEFAULT_MAX_WORKERS)
+        for node, host_list in result_dict.items():
+            agent_multi_execute.append(
+                result_key=(node.bk_biz_id, node.bk_obj_id, node.bk_inst_id),
+                func=self.batch_get_agent_status,
+                params=(host_list, node, node_mapping),
+            )
+        results = agent_multi_execute.run()
 
-        return result
+        return results
 
     def get_node_path(self, node_list):
         """

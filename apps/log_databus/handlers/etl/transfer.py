@@ -82,7 +82,7 @@ class TransferEtlHandler(EtlHandler):
             update_clustering_clean.delay(index_set_id=clustering_handler.data.index_set_id)
 
         # 判断是否已存在同result_table_id
-        if CollectorConfig(table_id=table_id).get_result_table_by_id():
+        if is_add and CollectorConfig(table_id=table_id).get_result_table_by_id():
             logger.error(f"result_table_id {table_id} already exists")
             raise CollectorResultTableIDDuplicateException(
                 CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=table_id)

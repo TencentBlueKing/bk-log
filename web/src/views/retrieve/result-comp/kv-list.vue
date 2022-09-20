@@ -319,9 +319,10 @@ export default {
         white-space: nowrap;
 
         ::v-deep .icon-ext {
-          width: 18px;
+          width: 13px;
+          display: inline-block;
           font-size: 12px;
-          transform: scale(.8);
+          transform: translateX(-1px) scale(.8);
         }
       }
 
