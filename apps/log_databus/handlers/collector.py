@@ -2696,6 +2696,7 @@ class CollectorHandler(object):
                 "result_table_name": std_collector_config.collector_config_name,
                 "time_field": "dtEventTimeStamp",
             },
+            storage_cluster_id=conf["storage_cluster_id"],
         )
         container_collector_config_list = []
         for config in data["config"]:
@@ -2767,13 +2768,15 @@ class CollectorHandler(object):
             "stdout_conf": {"bk_data_id": std_collector_config.bk_data_id},
         }
 
-    def create_or_update_bcs_project_index_set(self, bcs_project_id, path_index, std_index, project_id):
+    def create_or_update_bcs_project_index_set(
+        self, bcs_project_id, path_index, std_index, project_id, storage_cluster_id
+    ):
         src_index_list = LogIndexSet.objects.filter(bcs_project_id=bcs_project_id)
         if not src_index_list:
             new_path_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_path_log_{}".format(bcs_project_id),
                 project_id=project_id,
-                storage_cluster_id=None,
+                storage_cluster_id=storage_cluster_id,
                 scenario_id="log",
                 view_roles=None,
                 indexes=[path_index],
@@ -2784,7 +2787,7 @@ class CollectorHandler(object):
             new_std_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_stdout_log_{}".format(bcs_project_id),
                 project_id=project_id,
-                storage_cluster_id=None,
+                storage_cluster_id=storage_cluster_id,
                 scenario_id="log",
                 view_roles=None,
                 indexes=[std_index],
