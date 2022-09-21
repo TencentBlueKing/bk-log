@@ -466,6 +466,13 @@ class IndexSetViewSet(ModelViewSet):
         }
         """
         data = self.validated_data
+        if data["scenario_id"] == Scenario.BKDATA or settings.RUN_VER == "tencent":
+            storage_cluster_id = None
+        elif data["scenario_id"] == Scenario.ES:
+            storage_cluster_id = data["storage_cluster_id"]
+        else:
+            storage_cluster_id = IndexSetHandler.get_storage_by_table_list(data["indexes"])
+
         index_set = IndexSetHandler(index_set_id=kwargs["index_set_id"]).update(
             data["index_set_name"],
             data["view_roles"],
@@ -475,7 +482,7 @@ class IndexSetViewSet(ModelViewSet):
             time_field=data["time_field"],
             time_field_type=data["time_field_type"],
             time_field_unit=data["time_field_unit"],
-            storage_cluster_id=data.get("storage_cluster_id"),
+            storage_cluster_id=storage_cluster_id,
         )
         return Response(self.get_serializer_class()(instance=index_set).data)
 
