@@ -862,8 +862,7 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"],
-            bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -2053,8 +2052,7 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id,
-                ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2707,26 +2705,29 @@ class CollectorHandler(object):
 
             is_all_container = not any([workload_type, workload_name, container_name, match_labels, match_expressions])
 
-            container_collector_config_list.append(
-                ContainerCollectorConfig(
-                    collector_config_id=path_collector_config.collector_config_id,
-                    collector_type=ContainerCollectorType.CONTAINER,
-                    namespaces=config["namespaces"],
-                    any_namespace=not config["namespaces"],
-                    data_encoding=config["data_encoding"],
-                    params={
-                        "paths": config["paths"],
-                        "conditions": {"type": "match", "match_type": "include", "match_content": ""},
-                    },
-                    workload_type=workload_type,
-                    workload_name=workload_name,
-                    container_name=container_name,
-                    match_labels=match_labels,
-                    match_expressions=match_expressions,
-                    all_container=is_all_container,
-                    rule_id=bcs_rule.id,
+            if config["paths"]:
+                # 配置了文件路径才需要下发路径采集
+                container_collector_config_list.append(
+                    ContainerCollectorConfig(
+                        collector_config_id=path_collector_config.collector_config_id,
+                        collector_type=ContainerCollectorType.CONTAINER,
+                        namespaces=config["namespaces"],
+                        any_namespace=not config["namespaces"],
+                        data_encoding=config["data_encoding"],
+                        params={
+                            "paths": config["paths"],
+                            "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                        },
+                        workload_type=workload_type,
+                        workload_name=workload_name,
+                        container_name=container_name,
+                        match_labels=match_labels,
+                        match_expressions=match_expressions,
+                        all_container=is_all_container,
+                        rule_id=bcs_rule.id,
+                    )
                 )
-            )
+
             if config["enable_stdout"]:
                 container_collector_config_list.append(
                     ContainerCollectorConfig(
@@ -3026,29 +3027,31 @@ class CollectorHandler(object):
         path_container_config = []
         std_container_config = []
         for conf in config:
-            path_container_config.append(
-                {
-                    "namespaces": conf["namespaces"],
-                    "any_namespace": not conf["namespaces"],
-                    "data_encoding": conf["data_encoding"],
-                    "params": {
-                        "paths": conf["paths"],
-                        "conditions": {"type": "match", "match_type": "include", "match_content": ""},
-                    },
-                    "container": {
-                        "workload_type": conf["container"].get("workload_type", ""),
-                        "workload_name": conf["container"].get("workload_type", ""),
-                        "container_name": conf["container"].get("container_name", ""),
-                    },
-                    "label_selector": {
-                        "match_labels": conf["label_selector"].get("match_labels", []),
-                        "match_expressions": conf["label_selector"].get("match_expressions", []),
-                    },
-                    "rule_id": rule_id,
-                    "parent_container_config_id": 0,
-                    "collector_type": ContainerCollectorType.CONTAINER,
-                }
-            )
+            if conf["paths"]:
+                path_container_config.append(
+                    {
+                        "namespaces": conf["namespaces"],
+                        "any_namespace": not conf["namespaces"],
+                        "data_encoding": conf["data_encoding"],
+                        "params": {
+                            "paths": conf["paths"],
+                            "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                        },
+                        "container": {
+                            "workload_type": conf["container"].get("workload_type", ""),
+                            "workload_name": conf["container"].get("workload_type", ""),
+                            "container_name": conf["container"].get("container_name", ""),
+                        },
+                        "label_selector": {
+                            "match_labels": conf["label_selector"].get("match_labels", []),
+                            "match_expressions": conf["label_selector"].get("match_expressions", []),
+                        },
+                        "rule_id": rule_id,
+                        "parent_container_config_id": 0,
+                        "collector_type": ContainerCollectorType.CONTAINER,
+                    }
+                )
+
             if conf["enable_stdout"]:
                 std_container_config.append(
                     {
@@ -3087,9 +3090,7 @@ class CollectorHandler(object):
             raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
         for collector in collectors:
             self.deal_self_call(
-                collector_config_id=collector.collector_config_id,
-                collector=collector,
-                func=self.destroy,
+                collector_config_id=collector.collector_config_id, collector=collector, func=self.destroy,
             )
         bcs_rule.delete()
         return {"rule_id": rule_id}
