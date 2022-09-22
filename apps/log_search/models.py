@@ -73,6 +73,8 @@ from apps.log_search.constants import (
     INDEX_SET_NO_DATA_CHECK_PREFIX,
     INDEX_SET_NO_DATA_CHECK_INTERVAL,
 )
+from bkm_space.api import AbstractSpaceApi
+from bkm_space.utils import space_uid_to_bk_biz_id
 from apps.utils.time_handler import timestamp_to_datetime, datetime_to_timestamp, timestamp_to_timeformat
 
 
@@ -180,13 +182,6 @@ class ProjectInfo(SoftDeleteModel):
     feature_toggle = models.CharField(_("功能白名单"), max_length=255, default=None, null=True)
 
     @classmethod
-    def get_demo_project_ids(cls):
-        if not settings.DEMO_BIZ_ID:
-            return []
-        project_ids = ProjectInfo.objects.filter(bk_biz_id=settings.DEMO_BIZ_ID).values_list("project_id", flat=True)
-        return project_ids
-
-    @classmethod
     def get_cmdb_projects(cls):
         return array_hash(
             ProjectInfo.objects.exclude(bk_biz_id__isnull=True).values("project_id", "bk_biz_id"),
@@ -244,13 +239,15 @@ class AccessSourceConfig(SoftDeleteModel):
     source_id = models.AutoField(_("数据源ID"), primary_key=True)
     source_name = models.CharField(_("数据源名称"), max_length=64)
     scenario_id = models.CharField(_("接入场景标识"), max_length=64, choices=Scenario.CHOICES)
+    space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256)
     project_id = models.IntegerField(_("项目ID"), null=True, default=None)
+
     properties = JsonField(_("属性"), default=None, null=True)
     orders = models.IntegerField(_("顺序"), default=0)
     is_editable = models.BooleanField(_("是否可以编辑"), default=True)
 
     def save(self, *args, **kwargs):
-        queryset = AccessSourceConfig.objects.filter(project_id=self.project_id, source_name=self.source_name).first()
+        queryset = AccessSourceConfig.objects.filter(space_uid=self.space_uid, source_name=self.source_name).first()
 
         # 判断名称是否重复
         if queryset and queryset.source_id != self.source_id:
@@ -258,7 +255,7 @@ class AccessSourceConfig(SoftDeleteModel):
 
         if self.scenario_id == Scenario.ES and not self.is_deleted:
             # 同项目下，不允许添加相同ip和端口的数据源
-            for source in AccessSourceConfig.objects.filter(project_id=self.project_id):
+            for source in AccessSourceConfig.objects.filter(space_uid=self.space_uid):
                 if (
                     source.properties["es_host"] == self.properties["es_host"]
                     and source.properties["es_port"] == self.properties["es_port"]
@@ -266,7 +263,7 @@ class AccessSourceConfig(SoftDeleteModel):
                 ):
                     raise SourceDuplicateException(
                         _(
-                            f"此项目[{self.project_id}]下已存在"
+                            f"此空间[{self.space_uid}]下已存在"
                             f"{self.properties['es_host']}:{self.properties['es_port']}的ES数据源"
                             f"——名称为：[{source.source_name}]"
                         )
@@ -304,7 +301,8 @@ class LogIndexSet(SoftDeleteModel):
 
     index_set_id = models.AutoField(_("索引集ID"), primary_key=True)
     index_set_name = models.CharField(_("索引集名称"), max_length=64)
-    project_id = models.IntegerField(_("项目ID"), db_index=True)
+    space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
+    project_id = models.IntegerField(_("项目ID"), default=0, db_index=True)
     category_id = models.CharField(_("数据分类"), max_length=64, null=True, default=None)
     bkdata_project_id = models.IntegerField(_("绑定的数据平台项目ID"), null=True, default=None)
     collector_config_id = models.IntegerField(_("绑定Transfer采集ID"), null=True, default=None)
@@ -346,7 +344,7 @@ class LogIndexSet(SoftDeleteModel):
 
     def save(self, *args, **kwargs):
         queryset = LogIndexSet.objects.filter(
-            project_id=self.project_id, index_set_name=self.index_set_name, is_deleted=False
+            space_uid=self.space_uid, index_set_name=self.index_set_name, is_deleted=False
         )
         if queryset.exists() and queryset[0].index_set_id != self.index_set_id:
             raise IndexSetNameDuplicateException(
@@ -421,8 +419,10 @@ class LogIndexSet(SoftDeleteModel):
         bizs = {}
         if self.scenario_id == Scenario.BKDATA:
             if project_info is True:
-                bizs = array_group(index_set_data, "bk_biz_id", "index_id").keys()
-                bizs = array_hash(ProjectInfo.get_bizs(bizs), "bk_biz_id", "bk_biz_name")
+                bizs = {
+                    space.bk_biz_id: space.space_name
+                    for space in Space.objects.filter(bk_biz_id__in=list({data.bk_biz_id for data in index_set_data}))
+                }
         source_name = self.source_name
 
         return [
@@ -443,23 +443,21 @@ class LogIndexSet(SoftDeleteModel):
         ]
 
     @classmethod
-    def get_index_set(cls, index_set_ids=None, scenarios=None, project_id=None, is_trace_log=False, show_indices=True):
-        from apps.log_search.handlers.meta import MetaHandler
-
+    def get_index_set(cls, index_set_ids=None, scenarios=None, space_uid=None, is_trace_log=False, show_indices=True):
         qs = cls.objects.filter(is_active=True)
         if index_set_ids:
             qs = qs.filter(index_set_id__in=index_set_ids)
         if scenarios and isinstance(scenarios, list):
             qs = qs.filter(scenario_id__in=scenarios)
-        if project_id:
-            qs = qs.filter(project_id=project_id)
+        if space_uid:
+            qs = qs.filter(space_uid=space_uid)
         if is_trace_log:
             qs = qs.filter(is_trace_log=is_trace_log)
 
         no_data_check_time_list = [item.no_data_check_time for item in qs]
 
         index_sets = qs.values(
-            "project_id",
+            "space_uid",
             "index_set_id",
             "index_set_name",
             "scenario_id",
@@ -489,12 +487,8 @@ class LogIndexSet(SoftDeleteModel):
             "index_set_id",
         )
 
-        projects = array_group(MetaHandler.get_projects(), "project_id", group=True)
         result = []
         for index_set, no_data_check_time in zip(index_sets, no_data_check_time_list):
-            if index_set["project_id"] not in projects:
-                continue
-
             if show_indices:
                 index_set["indices"] = index_set_data.get(index_set["index_set_id"], [])
                 if not index_set["indices"]:
@@ -512,7 +506,7 @@ class LogIndexSet(SoftDeleteModel):
                 index_set["time_field"] = time_field
 
             index_set["scenario_name"] = scenarios.get(index_set["scenario_id"])
-            index_set["bk_biz_id"] = projects[index_set["project_id"]].bk_biz_id
+            index_set["bk_biz_id"] = space_uid_to_bk_biz_id(index_set["space_uid"])
 
             index_set["tags"] = IndexSetTag.batch_get_tags(index_set["tag_ids"])
             index_set["is_favorite"] = index_set["index_set_id"] in mark_index_set_ids
@@ -703,7 +697,8 @@ class ResourceChange(OperateRecordModel):
 
         ResourceTypeChoices = ((INDEX_SET, _("索引集")),)
 
-    project_id = models.IntegerField(_("项目ID"), db_index=True)
+    space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
+    project_id = models.IntegerField(_("项目ID"), default=0, db_index=True)
     change_type = models.CharField(_("变更类型"), max_length=64, choices=ChangeType.ChangeTypeChoices)
     group_id = models.IntegerField(_("用户组ID"), null=True, default=None)
     resource_id = models.CharField(_("资源类型"), max_length=64, choices=ResourceType.ResourceTypeChoices)
@@ -721,7 +716,7 @@ class ResourceChange(OperateRecordModel):
             return True
 
         return ResourceChange(
-            project_id=index_set.project_id,
+            space_uid=index_set.space_uid,
             change_type=cls.ChangeType.RESOURCE,
             resource_id=cls.ResourceType.INDEX_SET,
             resource_scope_id=index_set.index_set_id,
@@ -737,7 +732,8 @@ class FavoriteSearch(SoftDeleteModel):
     """检索收藏记录"""
 
     search_history_id = models.IntegerField(_("用户检索历史记录ID"), db_index=True)
-    project_id = models.IntegerField(_("项目ID"), db_index=True)
+    space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
+    project_id = models.IntegerField(_("项目ID"), default=0, db_index=True)
     description = models.CharField(_("收藏描述"), max_length=255)
 
     class Meta:
@@ -904,3 +900,68 @@ class BizProperty(models.Model):
             }
             for biz_property_id in biz_properties_dict
         ]
+
+
+class SpaceType(SoftDeleteModel):
+    """
+    空间类型
+    """
+
+    type_id = models.CharField(_("空间类型英文名称"), max_length=64, primary_key=True)
+    type_name = models.CharField(_("空间类型中文名称"), max_length=64, unique=True)
+
+    properties = models.JSONField(_("额外属性"), default=dict)
+
+    class Meta:
+        verbose_name = _("空间类型")
+        verbose_name_plural = _("空间类型")
+
+    @classmethod
+    def get_name_by_id(cls, type_id: str):
+        try:
+            return cls.objects.get(type_id=type_id).type_name
+        except cls.DoesNotExist:
+            return type_id
+
+
+class Space(SoftDeleteModel):
+    """
+    空间信息
+    """
+
+    id = models.AutoField(_("空间自增ID"), primary_key=True)
+
+    space_uid = models.CharField(_("空间唯一标识"), max_length=256, unique=True)
+    bk_biz_id = models.IntegerField(_("业务ID"), unique=True)
+
+    space_type_id = models.CharField(_("空间类型英文名称"), max_length=64)
+    space_type_name = models.CharField(_("空间类型中文名称"), max_length=64)
+
+    space_id = models.CharField(_("空间 ID"), max_length=128)
+    space_name = models.CharField(_("空间中文名称"), max_length=128)
+    space_code = models.CharField(_("空间英文名称"), max_length=64, blank=True, null=True)
+
+    properties = models.JSONField(_("额外属性"), default=dict)
+
+    class Meta:
+        verbose_name = _("空间信息")
+        verbose_name_plural = _("空间信息")
+
+
+class SpaceApi(AbstractSpaceApi):
+    """
+    空间的API实现
+    """
+
+    @classmethod
+    def get_space_detail(cls, space_uid: str = "", id: int = 0):
+        space = None
+        if space_uid:
+            space = Space.objects.filter(space_uid=space_uid).first()
+        if not space and id:
+            space = Space.objects.filter(id=id).first()
+        return space
+
+    @classmethod
+    def list_spaces(cls):
+        return list(Space.objects.all())

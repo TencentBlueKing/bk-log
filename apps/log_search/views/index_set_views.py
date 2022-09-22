@@ -33,12 +33,13 @@ from apps.iam.handlers.drf import (
     insert_permission_field,
 )
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import LogIndexSet, Scenario, ProjectInfo
+from apps.log_search.models import LogIndexSet, Scenario
 from apps.log_search.permission import Permission
 from apps.exceptions import ValidationError
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
 from apps.log_search.tasks.bkdata import sync_auth_status
 from apps.log_search.exceptions import BkJwtVerifyException, IndexSetNotEmptyException
+from bkm_space.serializers import SpaceUIDField
 
 
 class IndexSetViewSet(ModelViewSet):
@@ -101,35 +102,22 @@ class IndexSetViewSet(ModelViewSet):
             storage_cluster_id = serializers.IntegerField(required=False)
             category_id = serializers.CharField(required=True)
             scenario_id = serializers.CharField(required=True)
-            project_id = serializers.CharField(required=False)
-            bk_biz_id = serializers.IntegerField(required=False)
+            space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
             bkdata_auth_url = serializers.ReadOnlyField()
             is_editable = serializers.BooleanField(required=False, default=True)
 
             def validate(self, attrs):
-                super().validate(attrs)
+                attrs = super().validate(attrs)
 
                 scenario_id = attrs["scenario_id"]
                 if scenario_id == Scenario.ES and not attrs.get("storage_cluster_id"):
                     raise ValidationError(_("集群ID不能为空"))
-
-                if not attrs.get("project_id"):
-                    bk_biz_id = attrs.get("bk_biz_id")
-                    if bk_biz_id:
-                        # 如果用业务ID，则先转换为 project_id
-                        project = ProjectInfo.objects.filter(bk_biz_id=bk_biz_id).first()
-                        if not project:
-                            raise ValidationError(_(f"业务({bk_biz_id})对应的项目信息不存在"))
-                        attrs["project_id"] = project.project_id
-                    else:
-                        raise ValidationError(_("参数 bk_biz_id 和 project_id 请至少提供一项"))
-
                 return attrs
 
         class UpdateSerializer(CustomSerializer):
             storage_cluster_id = serializers.IntegerField(required=False, default=None)
             scenario_id = serializers.CharField(read_only=True)
-            project_id = serializers.CharField(read_only=True)
+            space_uid = SpaceUIDField(label=_("空间唯一标识"), read_only=True)
             bkdata_auth_url = serializers.ReadOnlyField()
 
         class ShowMoreSerializer(CustomSerializer):
@@ -163,15 +151,14 @@ class IndexSetViewSet(ModelViewSet):
         @apiName list_index_set
         @apiGroup 05_AccessIndexSet
         @apiDescription 未做分页处理; view_roles需同时返回角色名称； 需同时返回索引数据
-        @apiParam {Int} project_id 项目ID
+        @apiParam {String} space_uid 空间唯一标识
         @apiParam {Int} [storage_cluster_id] 数据源ID
         @apiParam {String} [keyword] 搜索关键字
         @apiParam {Int} page 当前页数
         @apiParam {Int} pagesize 分页大小
         @apiSuccess {Int} index_set_id 索引集ID
         @apiSuccess {String} index_set_name 索引集名称
-        @apiSuccess {Int} project_id 项目ID
-        @apiSuccess {Int} project_id 项目名称
+        @apiSuccess {String} space_uid 空间唯一标识
         @apiSuccess {Int} storage_cluster_id 数据源ID
         @apiSuccess {Int} source_name 数据源名称
         @apiSuccess {String} scenario_id 接入场景
@@ -203,8 +190,7 @@ class IndexSetViewSet(ModelViewSet):
                     {
                         "index_set_id": 1,
                         "index_set_name": "登陆日志",
-                        "project_id": 1,
-                        "project_name": "项目名称",
+                        "space_uid": "bkcc__2",
                         "storage_cluster_id": 1,
                         "source_name": "ES集群",
                         "scenario_id": "es",
@@ -272,8 +258,7 @@ class IndexSetViewSet(ModelViewSet):
         @apiParam {Int} index_set_id 索引集ID
         @apiSuccess {Int} index_set_id 索引集ID
         @apiSuccess {String} index_set_name 索引集名称
-        @apiSuccess {Int} project_id 项目ID
-        @apiSuccess {Int} project_id 项目名称
+        @apiSuccess {String} space_uid 空间唯一标识
         @apiSuccess {Int} storage_cluster_id 数据源ID
         @apiSuccess {Int} source_name 数据源名称
         @apiSuccess {String} scenario_id 接入场景
@@ -298,7 +283,7 @@ class IndexSetViewSet(ModelViewSet):
             "data": {
                 "index_set_id": 1,
                 "index_set_name": "登陆日志",
-                "project_id": 1,
+                "space_uid": "bkcc__2",
                 "storage_cluster_id": 1,
                 "source_name": "ES集群",
                 "scenario_id": "es",
@@ -351,8 +336,7 @@ class IndexSetViewSet(ModelViewSet):
         @apiDescription storage_cluster_id&view_roles校验、索引列表处理
         @apiGroup 05_AccessIndexSet
         @apiParam {String} index_set_name 索引集名称
-        @apiParam {Int} [project_id] 项目ID
-        @apiParam {Int} [bk_biz_id] 业务ID，若提供了项目ID，则优先使用项目ID
+        @apiParam {String} space_uid 空间唯一标识
         @apiParam {String} [is_editable] 此索引集是否可以编辑
         @apiParam {Int} storage_cluster_id 数据源ID
         @apiParam {String} result_table_id 数据源ID
@@ -370,7 +354,7 @@ class IndexSetViewSet(ModelViewSet):
         @apiParamExample {Json} 请求参数
         {
             "index_set_name": "登陆日志",
-            "project_id": 1,
+            "space_uid": "bkcc__2",
             "storage_cluster_id": 1,
             "scenario_id": "es",
             "view_roles": [1, 2, 3],
@@ -414,7 +398,7 @@ class IndexSetViewSet(ModelViewSet):
 
         index_set = IndexSetHandler.create(
             data["index_set_name"],
-            data["project_id"],
+            data["space_uid"],
             storage_cluster_id,
             data["scenario_id"],
             data["view_roles"],
@@ -494,8 +478,7 @@ class IndexSetViewSet(ModelViewSet):
         @apiDescription 索引集替换，仅用于第三方APP使用
         @apiGroup 05_AccessIndexSet
         @apiParam {String} index_set_name 索引集名称
-        @apiParam {Int} [project_id] 项目ID
-        @apiParam {Int} [bk_biz_id] 业务ID，若提供了项目ID，则优先使用项目ID
+        @apiParam {String} space_uid 空间唯一标识
         @apiParam {Int} storage_cluster_id 数据源ID
         @apiParam {String} result_table_id 数据源ID
         @apiParam {String} category_id 数据分类
@@ -512,7 +495,7 @@ class IndexSetViewSet(ModelViewSet):
         @apiParamExample {Json} 请求参数
         {
             "index_set_name": "登陆日志",
-            "project_id": 1,
+            "space_uid": "bkcc__2",
             "storage_cluster_id": 1,
             "scenario_id": "es",
             "view_roles": [1, 2, 3],
@@ -551,7 +534,7 @@ class IndexSetViewSet(ModelViewSet):
             data["view_roles"],
             data["indexes"],
             auth_info["bk_app_code"],
-            project_id=data.get("project_id"),
+            space_uid=data.get("space_uid"),
             storage_cluster_id=data.get("storage_cluster_id"),
             category_id=data.get("category_id"),
             collector_config_id=data.get("collector_config_id"),

@@ -1,0 +1,126 @@
+<!--
+  - Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
+  - Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+  - BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
+  -
+  - License for BK-LOG 蓝鲸日志平台:
+  - -------------------------------------------------------------------
+  -
+  - Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+  - documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+  - the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+  - and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+  - The above copyright notice and this permission notice shall be included in all copies or substantial
+  - portions of the Software.
+  -
+  - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+  - LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+  - NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+  - WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+  - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+  -->
+
+<template>
+  <ul>
+    <li
+      v-for="item in spaceList"
+      :key="item.id"
+      :class="[
+        'list-item',
+        {
+          'is-select': item.space_uid === spaceUid,
+          'is-disable': !(item.permission && item.permission[authorityMap.VIEW_BUSINESS]),
+        },
+      ]"
+      @mousedown="handleProjectChange(item)"
+    >
+      <span class="text" :title="item.space_name">
+        {{item.space_name}}
+        <span :class="`${theme}-item-code`">(#{{item.space_code}})</span>
+      </span>
+      <span class="list-item-right">
+        <span :class="['list-item-tag', `${theme}-theme`, eTagsType[item.space_type_id] || 'other-type']">
+          {{item.space_type_name}}
+        </span>
+      </span>
+      <span
+        v-if="!(item.permission && item.permission[authorityMap.VIEW_BUSINESS])"
+        class="apply-text"
+        @mousedown.stop="applyProjectAccess(item)">
+        {{ $t("申请权限") }}
+      </span>
+    </li>
+  </ul>
+</template>
+
+<script>
+import navMenuMixin from '@/mixins/nav-menu-mixin';
+import * as authorityMap from '../../common/authority-map';
+
+export default {
+  mixins: [navMenuMixin],
+  props: {
+    spaceList: {
+      type: Array,
+      require: true,
+    },
+    theme: {
+      type: String,
+      default: 'dark',
+    },
+  },
+  data() {
+    return {
+      eTagsType: {
+        bkcc: 'bkcc', /** 蓝鲸配置平台 */
+        bcs: 'bcs', /** 蓝鲸容器平台 */
+        bkdevops: 'bkdevops', /** 蓝盾 */
+        bksaas: 'bksaas', /** 蓝鲸应用 */
+      },
+    };
+  },
+  computed: {
+    authorityMap() {
+      return authorityMap;
+    },
+  },
+  watch: {},
+  mounted() {},
+  methods: {
+    handleProjectChange(space) {
+      if (!(space.permission && space.permission[authorityMap.VIEW_BUSINESS])) return;
+      this.$emit('click-menu-item', space);
+    },
+    // 业务列表点击申请业务权限
+    async applyProjectAccess(item) {
+      try {
+        this.$bkLoading();
+        const res = await this.$store.dispatch('getApplyData', {
+          action_ids: [authorityMap.VIEW_BUSINESS],
+          resources: [{
+            type: 'space',
+            id: item.space_uid,
+          }],
+        });
+        window.open(res.data.apply_url);
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        this.$bkLoading.hide();
+      }
+    },
+  },
+};
+</script>
+
+<style scoped lang="scss">
+  @import '@/scss/space-tag-option';
+
+  .light-item-code {
+    color: #c4c6cc;
+  }
+
+  .dark-item-code {
+    color: #66768e;
+  }
+</style>

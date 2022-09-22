@@ -88,7 +88,7 @@ const list = {
       group_id: 1,
       group_name: '运维',
       group_type: 'custom',
-      project_id: 1,
+      space_uid: 1,
       is_editable: false,
       users: ['admin', 'zhangyuting'],
       created_at: '2019-10-10 11:11:11',
