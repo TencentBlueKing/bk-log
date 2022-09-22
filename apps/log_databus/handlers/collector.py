@@ -109,7 +109,14 @@ from apps.log_databus.handlers.collector_scenario.utils import (
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.handlers.kafka import KafkaConsumerHandle
 from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.models import BcsRule, CleanStash, CollectorConfig, CollectorPlugin, ContainerCollectorConfig
+from apps.log_databus.models import (
+    BcsRule,
+    CleanStash,
+    CollectorConfig,
+    CollectorPlugin,
+    ContainerCollectorConfig,
+    DataLinkConfig,
+)
 from apps.log_databus.serializers import ContainerCollectorYamlSerializer
 from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 from apps.log_esquery.utils.es_route import EsRoute
@@ -2350,6 +2357,26 @@ class CollectorHandler(object):
         return None
 
     def create_container_config(self, data):
+        # 使用采集插件补全参数
+        collector_plugin_id = data.get("collector_plugin_id")
+        if collector_plugin_id:
+            from apps.log_databus.handlers.collector_plugin.base import (
+                CollectorPluginHandler,
+                get_collector_plugin_handler,
+            )
+
+            collector_plugin = CollectorPlugin.objects.get(collector_plugin_id=collector_plugin_id)
+            plugin_handler: CollectorPluginHandler = get_collector_plugin_handler(
+                collector_plugin.etl_processor, collector_plugin_id
+            )
+            data = plugin_handler.build_instance_params(data)
+        data_link_id = (
+            data.get("data_link_id")
+            or DataLinkConfig.objects.filter(bk_biz_id__in=[0, data["bk_biz_id"]])
+            .order_by("data_link_id")
+            .first()
+            .data_link_id
+        )
         collector_config_params = {
             "bk_biz_id": data["bk_biz_id"],
             "collector_config_name": data["collector_config_name"],
@@ -2358,15 +2385,20 @@ class CollectorHandler(object):
             "custom_type": CustomTypeEnum.LOG.value,
             "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
-            "data_link_id": int(data["data_link_id"]),
+            "data_link_id": int(data_link_id),
             "environment": Environment.CONTAINER,
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
             "yaml_config_enabled": data["yaml_config_enabled"],
             "yaml_config": data["yaml_config"],
+            "bkdata_biz_id": data.get("bkdata_biz_id"),
+            "collector_plugin_id": collector_plugin_id,
+            "is_display": data.get("is_display", True),
+            "etl_processor": data.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
         }
-        if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=data["bk_biz_id"]):
+        bkdata_biz_id = data.get("bkdata_biz_id") or data["bk_biz_id"]
+        if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=bkdata_biz_id):
             logger.error(
                 "collector_config_name_en {collector_config_name_en} already exists".format(
                     collector_config_name_en=data["collector_config_name_en"]
@@ -2379,10 +2411,10 @@ class CollectorHandler(object):
             )
         # 判断是否已存在同bk_data_name, result_table_id
         bk_data_name = build_bk_data_name(
-            bk_biz_id=data["bk_biz_id"], collector_config_name_en=data["collector_config_name_en"]
+            bk_biz_id=bkdata_biz_id, collector_config_name_en=data["collector_config_name_en"]
         )
         result_table_id = build_result_table_id(
-            bk_biz_id=data["bk_biz_id"], collector_config_name_en=data["collector_config_name_en"]
+            bk_biz_id=bkdata_biz_id, collector_config_name_en=data["collector_config_name_en"]
         )
         if self._pre_check_bk_data_name(model_fields=collector_config_params, bk_data_name=bk_data_name):
             logger.error(f"bk_data_name {bk_data_name} already exists")
@@ -2444,7 +2476,7 @@ class CollectorHandler(object):
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=self.data.bk_data_id,
                 data_link_id=self.data.data_link_id,
-                data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{data['collector_config_name']}",
+                data_name=f"{self.data.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}_{data['collector_config_name']}",
                 description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
