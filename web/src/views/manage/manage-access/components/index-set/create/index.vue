@@ -70,12 +70,16 @@
           <bk-form-item
             :label="$t('集群')"
             required
-            property="storage_cluster_id"
-            v-if="scenarioId === 'es'">
+            property="storage_cluster_id">
             <bk-select
               data-test-id="newlogIndexSetBox_select_selectCluster"
               v-model="formData.storage_cluster_id"
+              v-bk-tooltips.top="{
+                content: $t('cannotCrossSetClusterTips'),
+                delay: 300,
+                disabled: !formData.indexes.length }"
               :clearable="false"
+              :disabled="!!formData.indexes.length"
               searchable>
               <bk-option
                 v-for="option in clusterList"
@@ -243,6 +247,7 @@ export default {
   created() {
     this.checkAuth();
     this.fetchPageData();
+    this.getIndexStorage();
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
@@ -336,12 +341,36 @@ export default {
             s2.push(item);
           }
         }
-        this.clusterList = s1.concat(s2);
+        this.clusterList = s1.concat(s2).filter(item => !item.is_platform);
         if (this.$route.query.cluster) {
           const clusterId = this.$route.query.cluster;
           if (this.clusterList.some(item => item.storage_cluster_id === Number(clusterId))) {
             this.formData.storage_cluster_id = Number(clusterId);
           }
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    },
+    async getIndexStorage() { // 索引集列表的集群
+      try {
+        if (this.scenarioId !== 'log') return;
+        const queryData = { bk_biz_id: this.bkBizId };
+        const res = await  this.$http.request('collect/getStorage', {
+          query: queryData,
+        });
+        if (res.data) {
+        // 根据权限排序
+          const s1 = [];
+          const s2 = [];
+          for (const item of res.data) {
+            if (item.permission?.manage_es_source) {
+              s1.push(item);
+            } else {
+              s2.push(item);
+            }
+          }
+          this.clusterList = s1.concat(s2);
         }
       } catch (e) {
         console.warn(e);
@@ -374,6 +403,7 @@ export default {
       this.$refs.selectCollectionRef.openDialog();
     },
     addCollection(item) {
+      this.formData.storage_cluster_id = item.storage_cluster_id;
       this.formData.indexes.push(item);
     },
     // 删除采集项

@@ -1064,6 +1064,7 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
             "etl_params",
             "fields",
             "params",
+            "index_settings",
         ]
 
     def validate(self, attrs: dict) -> dict:

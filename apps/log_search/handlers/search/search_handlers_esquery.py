@@ -30,7 +30,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.api import CCApi, MonitorApi
 from apps.api.base import DataApiRetryClass
-from apps.exceptions import ApiRequestError
+from apps.exceptions import ApiRequestError, ApiResultError
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_databus.constants import EtlConfig, TargetNodeTypeEnum
 from apps.log_databus.models import CollectorConfig
@@ -222,6 +222,9 @@ class SearchHandler(object):
         # 导出字段
         self.export_fields = export_fields
 
+        # 请求用户名
+        self.request_username = get_request_username()
+
     def fields(self, scope="default"):
         # field_result, display_fields = self._get_all_fields_by_index_id(scope)
         # sort_list: list = self._get_sort_list_by_index_id(scope)
@@ -312,11 +315,14 @@ class SearchHandler(object):
         log_index_set = LogIndexSet.objects.get(index_set_id=self.index_set_id)
         clustering_config = ClusteringConfig.objects.filter(index_set_id=self.index_set_id).first()
         if clustering_config:
-            return True, {
-                "collector_config_id": log_index_set.collector_config_id,
-                "signature_switch": clustering_config.signature_enable,
-                "clustering_field": clustering_config.clustering_fields,
-            }
+            return (
+                True,
+                {
+                    "collector_config_id": log_index_set.collector_config_id,
+                    "signature_switch": clustering_config.signature_enable,
+                    "clustering_field": clustering_config.clustering_fields,
+                },
+            )
         return False, {"collector_config_id": None, "signature_switch": False, "clustering_field": None}
 
     @fields_config("clean_config")
@@ -328,10 +334,13 @@ class SearchHandler(object):
         if not log_index_set.collector_config_id:
             return False, {"collector_config_id": None}
         collector_config = CollectorConfig.objects.get(collector_config_id=log_index_set.collector_config_id)
-        return collector_config.etl_config != EtlConfig.BK_LOG_TEXT, {
-            "collector_scenario_id": collector_config.collector_scenario_id,
-            "collector_config_id": log_index_set.collector_config_id,
-        }
+        return (
+            collector_config.etl_config != EtlConfig.BK_LOG_TEXT,
+            {
+                "collector_scenario_id": collector_config.collector_scenario_id,
+                "collector_config_id": log_index_set.collector_config_id,
+            },
+        )
 
     @fields_config("context_and_realtime")
     def analyze_fields(self, field_result):
@@ -410,30 +419,33 @@ class SearchHandler(object):
         if self.size > MAX_RESULT_WINDOW:
             once_size = MAX_RESULT_WINDOW
 
-        result: dict = BkLogApi.search(
-            {
-                "indices": self.indices,
-                "scenario_id": self.scenario_id,
-                "storage_cluster_id": self.storage_cluster_id,
-                "start_time": self.start_time,
-                "end_time": self.end_time,
-                "query_string": self.query_string,
-                "filter": self.filter,
-                "sort_list": self.sort_list,
-                "start": self.start,
-                "size": once_size,
-                "aggs": self.aggs,
-                "highlight": self.highlight,
-                "use_time_range": self.use_time_range,
-                "time_zone": self.time_zone,
-                "time_range": self.time_range,
-                "time_field": self.time_field,
-                "time_field_type": self.time_field_type,
-                "time_field_unit": self.time_field_unit,
-                "scroll": self.scroll,
-                "collapse": self.collapse,
-            }
-        )
+        try:
+            result: dict = BkLogApi.search(
+                {
+                    "indices": self.indices,
+                    "scenario_id": self.scenario_id,
+                    "storage_cluster_id": self.storage_cluster_id,
+                    "start_time": self.start_time,
+                    "end_time": self.end_time,
+                    "query_string": self.query_string,
+                    "filter": self.filter,
+                    "sort_list": self.sort_list,
+                    "start": self.start,
+                    "size": once_size,
+                    "aggs": self.aggs,
+                    "highlight": self.highlight,
+                    "use_time_range": self.use_time_range,
+                    "time_zone": self.time_zone,
+                    "time_range": self.time_range,
+                    "time_field": self.time_field,
+                    "time_field_type": self.time_field_type,
+                    "time_field_unit": self.time_field_unit,
+                    "scroll": self.scroll,
+                    "collapse": self.collapse,
+                }
+            )
+        except ApiResultError as e:
+            raise ApiResultError("搜索出错，请检查查询语句是否正确", code=e.code, errors=e.errors)
 
         # 需要scroll滚动查询：is_scroll为True，size超出单次最大查询限制，total大于MAX_RESULT_WINDOW
         # @TODO bkdata暂不支持scroll查询
@@ -452,9 +464,12 @@ class SearchHandler(object):
 
     def _save_history(self, result, search_type):
         params = {"keyword": self.query_string, "host_scopes": self.host_scopes, "addition": self.addition}
-        username = get_request_username()
         self._cache_history(
-            username=username, index_set_id=self.index_set_id, params=params, search_type=search_type, result=result
+            username=self.request_username,
+            index_set_id=self.index_set_id,
+            params=params,
+            search_type=search_type,
+            result=result,
         )
 
     @cache_five_minute("search_history_{username}_{index_set_id}_{search_type}_{params}", need_md5=True)
@@ -597,8 +612,8 @@ class SearchHandler(object):
         sorted_list = self._get_user_sorted_list(sorted_fields)
         while search_after_size == MAX_RESULT_WINDOW and result_size < self.size:
             search_after = []
-            for sorted_field in sorted_fields:
-                search_after.append(search_result["hits"]["hits"][-1]["_source"].get(sorted_field))
+            for sorted_field in sorted_list:
+                search_after.append(search_result["hits"]["hits"][-1]["_source"].get(sorted_field[0]))
             search_result = BkLogApi.search(
                 {
                     "indices": self.indices,
@@ -659,9 +674,8 @@ class SearchHandler(object):
             yield self._deal_query_result(scroll_result)
 
     def _get_sort_list_by_index_id(self, scope="default"):
-        username = get_request_username()
         index_config_obj = UserIndexSetConfig.objects.filter(
-            index_set_id=self.index_set_id, created_by=username, scope=scope, is_deleted=False
+            index_set_id=self.index_set_id, created_by=self.request_username, scope=scope, is_deleted=False
         )
         if not index_config_obj.exists():
             return list()
@@ -1418,18 +1432,10 @@ class SearchHandler(object):
                 for each_instance in data or []:
                     if each_instance.get("bk_host_innerip"):
                         host_list.append(
-                            {
-                                "ip": each_instance["bk_host_innerip"],
-                                "bk_cloud_id": each_instance["bk_cloud_id"],
-                            }
+                            {"ip": each_instance["bk_host_innerip"], "bk_cloud_id": each_instance["bk_cloud_id"]}
                         )
                     else:
-                        conditions.append(
-                            {
-                                "bk_inst_id": each_instance["bk_set_id"],
-                                "bk_obj_id": "set",
-                            }
-                        )
+                        conditions.append({"bk_inst_id": each_instance["bk_set_id"], "bk_obj_id": "set"})
             host_result = BizHandler(bk_biz_id).search_host(conditions)
             host_list.extend(
                 [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
@@ -1517,12 +1523,7 @@ class SearchHandler(object):
             if isinstance(value, str) or value:
                 new_value = self._deal_normal_addition(value, _operator)
             new_addition.append(
-                {
-                    "field": field,
-                    "operator": _operator,
-                    "value": new_value,
-                    "condition": _add.get("condition", "and"),
-                }
+                {"field": field, "operator": _operator, "value": new_value, "condition": _add.get("condition", "and")}
             )
         return addition_ip_list, new_addition
 
@@ -1556,9 +1557,8 @@ class SearchHandler(object):
             return ERROR_MSG_CHECK_FIELDS_FROM_LOG
 
     def _get_user_sorted_list(self, sorted_fields):
-        user_name = get_request_username()
         user_sort_list = (
-            UserIndexSetConfig.objects.filter(index_set_id=self.index_set_id, created_by=user_name)
+            UserIndexSetConfig.objects.filter(index_set_id=self.index_set_id, created_by=self.request_username)
             .values("sort_list")
             .first()
         )

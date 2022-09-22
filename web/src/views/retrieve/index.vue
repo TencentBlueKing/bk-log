@@ -86,7 +86,6 @@
                 <span class="bk-icon icon-cog" @click="toggleCog"></span>
                 <div slot="content" class="auto-query-popover-content">
                   <span>{{ $t('是否开启自动查询') }}</span>
-                  <span class="bk-icon icon-info"></span>
                   <bk-switcher
                     v-model="isAutoQuery"
                     theme="primary"
@@ -110,14 +109,17 @@
                 @selected="handleSelectIndex"
                 @updateIndexSetList="updateIndexSetList" />
               <!-- 查询语句 -->
-              <query-statement />
+              <query-statement
+                v-model="retrieveParams.keyword"
+                :history-records="statementSearchrecords"
+                @updateSearchParam="updateSearchParam"
+                @retrieve="retrieveLog" />
               <retrieve-detail-input
                 v-model="retrieveParams.keyword"
                 :is-auto-query="isAutoQuery"
                 :retrieved-keyword="retrievedKeyword"
                 :dropdown-data="retrieveDropdownData"
                 :history-records="statementSearchrecords"
-                @updateSearchParam="updateSearchParam"
                 @retrieve="retrieveLog" />
               <!-- 添加过滤条件 -->
               <div class="tab-item-title flex-item-title">
@@ -216,6 +218,7 @@
               <!-- 字段过滤 -->
               <div class="tab-item-title field-filter-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
               <field-filter
+                :retrieve-params="retrieveParams"
                 :total-fields="totalFields"
                 :visible-fields="visibleFields"
                 :sort-list="sortList"
@@ -459,7 +462,7 @@ export default {
       isPollingStart: false,
       startTimeStamp: 0,
       endTimeStamp: 0,
-      originLogList: [], // 当前搜索结果的原始日志
+      logList: [], // 当前搜索结果的日志
       isNextTime: false,
       timer: null,
       isShowSettingModal: false,
@@ -870,7 +873,7 @@ export default {
       // 过滤相关
       this.statisticalFieldsData = {};
       this.retrieveDropdownData = {};
-      this.originLogList = [];
+      this.logList = [];
       // 字段相关
       this.totalFields.splice(0);
     },
@@ -1121,16 +1124,6 @@ export default {
           console.warn('url 查询参数解析失败', e);
         }
       } else { // 兼容之前的语法
-        // const shouldCoverParamFields = ['keyword', 'host_scopes', 'addition']
-        // for (const field of shouldCoverParamFields) {
-        //     const param = this.$route.query[field] // 指定查询参数
-        //     if (param) {
-        //         queryParams[field] = field === 'keyword'
-        //             ? decodeURIComponent(param)
-        //             : JSON.parse(decodeURIComponent(param))
-        //     }
-        // }
-
         const shouldCoverParamFields = [
           'keyword',
           'host_scopes',
@@ -1426,9 +1419,9 @@ export default {
         this.retrievedKeyword = this.retrieveParams.keyword;
         this.tookTime = this.tookTime + Number(res.data.took) || 0;
         this.tableData = { ...res.data, finishPolling: this.finishPolling };
-        this.originLogList = this.originLogList.concat(parseBigNumberList(res.data.origin_log_list));
-        this.statisticalFieldsData = this.getStatisticalFieldsData(this.originLogList);
-        this.computeRetrieveDropdownData(this.originLogList);
+        this.logList = this.logList.concat(parseBigNumberList(res.data.list));
+        this.statisticalFieldsData = this.getStatisticalFieldsData(this.logList);
+        this.computeRetrieveDropdownData(this.logList);
       } catch (err) {
         this.$refs.resultMainRef.isPageOver = false;
       } finally {
@@ -1562,7 +1555,7 @@ export default {
       });
       // 字段值统计数据
       this.statisticalFieldsData = {};
-      this.originLogList = [];
+      this.logList = [];
     },
     // 控制页面布局宽度
     dragBegin(e) {
@@ -1932,10 +1925,8 @@ export default {
     padding: 6px 0;
     color: #63656e;
 
-    .bk-icon {
+    > span {
       margin: 0 12px 0 4px;
-      color: #979ba5;
-      font-size: 14px;
     }
 
     .confirm-btn {

@@ -104,6 +104,7 @@ class IndexSetViewSet(ModelViewSet):
             scenario_id = serializers.CharField(required=True)
             space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
             bkdata_auth_url = serializers.ReadOnlyField()
+            is_editable = serializers.BooleanField(required=False, default=True)
 
             def validate(self, attrs):
                 attrs = super().validate(attrs)
@@ -336,6 +337,7 @@ class IndexSetViewSet(ModelViewSet):
         @apiGroup 05_AccessIndexSet
         @apiParam {String} index_set_name 索引集名称
         @apiParam {String} space_uid 空间唯一标识
+        @apiParam {String} [is_editable] 此索引集是否可以编辑
         @apiParam {Int} storage_cluster_id 数据源ID
         @apiParam {String} result_table_id 数据源ID
         @apiParam {String} category_id 数据分类
@@ -407,6 +409,7 @@ class IndexSetViewSet(ModelViewSet):
             time_field_type=data["time_field_type"],
             time_field_unit=data["time_field_unit"],
             bk_app_code=data.get("bk_app_code"),
+            is_editable=data.get("is_editable"),
         )
         return Response(self.get_serializer_class()(instance=index_set).data)
 
@@ -449,8 +452,12 @@ class IndexSetViewSet(ModelViewSet):
             "result": true
         }
         """
+        handler = IndexSetHandler(index_set_id=kwargs["index_set_id"])
+        if not handler.is_editable():
+            raise ValidationError(_(f"索引集{handler.data.index_set_name}禁止编辑"))
+
         data = self.validated_data
-        index_set = IndexSetHandler(index_set_id=kwargs["index_set_id"]).update(
+        index_set = handler.update(
             data["index_set_name"],
             data["view_roles"],
             data["indexes"],

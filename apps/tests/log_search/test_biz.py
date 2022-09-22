@@ -20,6 +20,8 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
+from collections import namedtuple
+
 from django.test import TestCase
 from unittest.mock import patch
 
@@ -172,7 +174,6 @@ DST_HOST_LIST = [
     },
 ]
 
-
 DYNAMIC_GROUP_ID_LIST = ["11c290dc-66e8-11ec-84ba-1e84cfcf753a", "fb40d723-66e7-11ec-84ba-1e84cfcf753a"]
 DYNAMIC_GROUP_LIST = [
     {
@@ -234,6 +235,39 @@ DYNAMIC_GROUP_TO_INSTANCE_RETURN = {
 }
 
 
+class NodeInstance:
+    bk_obj_id = NODE_LIST[0]["bk_obj_id"]
+    bk_inst_id = NODE_LIST[0]["bk_inst_id"]
+    bk_biz_id = NODE_LIST[0]["bk_biz_id"]
+    bk_inst_name = NODE_LIST[0]["bk_inst_name"]
+
+
+class HostInstance:
+    bk_host_id = HOST_LIST[0]["host"]["bk_host_id"]
+    host = HOST_LIST[0]["host"]
+
+
+NODE_INSTANCE_INFO = (NodeInstance.bk_obj_id, NodeInstance.bk_inst_id)
+NODE = namedtuple("Node", ["bk_biz_id", "bk_obj_id", "bk_inst_id", "bk_inst_name"])
+NODE_INSTANCE = NODE(NodeInstance.bk_biz_id, NodeInstance.bk_obj_id, NodeInstance.bk_inst_id, NodeInstance.bk_inst_name)
+NODE_NAME = "{}|{}".format(str(NodeInstance.bk_obj_id), str(NodeInstance.bk_inst_id))
+NODE_MAPPING = {NODE_NAME: {"node_link": [NODE_NAME], "bk_inst_name": NodeInstance.bk_inst_name}}
+
+HOST_LIST_AGENT = [HostInstance.host]
+HOST_DETAILS = [{"bk_host_id": HostInstance.bk_host_id}]
+
+AGENT_STATUS = [{"ip": "127.0.0.1", "plat_id": "0", "status": True}]
+AGENT_STATUS_RESULT = {
+    "bk_obj_id": NodeInstance.bk_obj_id,
+    "bk_inst_id": NodeInstance.bk_inst_id,
+    "bk_inst_name": NodeInstance.bk_inst_name,
+    "count": len(HOST_LIST_AGENT),
+    "agent_error_count": 0,
+    "bk_biz_id": NodeInstance.bk_biz_id,
+    "node_path": NodeInstance.bk_inst_name,
+}
+
+
 class ExecDynamicGroup(object):
     """
     mock CCApi.execute_dynamic_group
@@ -272,3 +306,13 @@ class TestBiz(TestCase):
     def test_list_dynamic_group(self):
         result = self.biz_handler.list_dynamic_group()
         self.assertEqual(result["list"], DYNAMIC_GROUP_LIST)
+
+    @patch("apps.api.CCApi.list_biz_hosts.bulk_request", lambda _: HOST_DETAILS)
+    def test_batch_get_hosts_by_inst_id(self):
+        result = self.biz_handler.batch_get_hosts_by_inst_id(NODE_INSTANCE_INFO)
+        self.assertEqual(result, HOST_DETAILS)
+
+    @patch("apps.api.GseApi.get_agent_status", lambda _: AGENT_STATUS)
+    def test_batch_get_agent_status(self):
+        result = self.biz_handler.batch_get_agent_status((HOST_LIST_AGENT, NODE_INSTANCE, NODE_MAPPING))
+        self.assertEqual(result, AGENT_STATUS_RESULT)

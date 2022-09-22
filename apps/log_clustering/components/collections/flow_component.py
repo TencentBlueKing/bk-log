@@ -67,7 +67,7 @@ class CreatePreTreatFlowService(BaseService):
         index_set_id = data.get_one_of_inputs("index_set_id")
         clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         deploy_data = DataFlowHandler().get_latest_deploy_data(flow_id=clustering_config.pre_treat_flow_id)
-        if deploy_data["status"] == "failed":
+        if deploy_data["status"] == "failure":
             return False
         if deploy_data["status"] == "success":
             self.finish_schedule()
@@ -111,7 +111,7 @@ class CreateAfterTreatFlowService(BaseService):
         index_set_id = data.get_one_of_inputs("index_set_id")
         clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         deploy_data = DataFlowHandler().get_latest_deploy_data(flow_id=clustering_config.after_treat_flow_id)
-        if deploy_data["status"] == "failed":
+        if deploy_data["status"] == "failure":
             return False
         if deploy_data["status"] == "success":
             with ignored(Exception):
