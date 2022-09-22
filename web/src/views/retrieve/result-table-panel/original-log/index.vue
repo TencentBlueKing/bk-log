@@ -45,6 +45,7 @@
         <time-formatter v-show="!showOriginalLog" />
         <div class="operation-icons">
           <export-log
+            v-bind="$attrs"
             :retrieve-params="retrieveParams"
             :total-count="totalCount"
             :queue-status="queueStatus"

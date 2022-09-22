@@ -114,21 +114,6 @@
           </div>
         </li>
       </template>
-      <!-- 历史记录 -->
-      <template v-if="showSearchRecord">
-        <li class="list-item history-list-item history-title-item">
-          <div class="item-text">{{ $t('历史记录') }}</div>
-        </li>
-        <li
-          class="list-item history-list-item"
-          v-for="item in historyRecords"
-          :key="item.id"
-          @click="handleClickHistoty(item)">
-          <div v-bk-overflow-tips="{ placement: 'right' }" class="item-text text-overflow-hidden">
-            {{ item.query_string }}
-          </div>
-        </li>
-      </template>
     </ul>
   </div>
 </template>
@@ -483,15 +468,6 @@ export default {
       this.$emit('change', `${this.value + type} `);
       this.showWhichDropdown('Fields');
       this.fieldList = [...this.originFieldList];
-    },
-    handleClickHistoty(item) {
-      this.$emit('change', item.params.keyword);
-      this.$emit('updateSearchParam', item.params.addition, item.params.host_scopes);
-      this.$nextTick(() => {
-        this.showDropdown = false;
-        this.isSearchRecord = true;
-        this.$emit('retrieve');
-      });
     },
   },
 };

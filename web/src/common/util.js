@@ -632,6 +632,20 @@ export const base64Decode = (str) => {
     .join(''));
 };
 
+export const makeMessage = (message, traceId) => {
+  const resMsg = `
+    ${traceId || '--'} ：
+    ${message}
+  `;
+  message && console.log(`
+  ------------------【日志】------------------
+  【TraceID】：${traceId}
+  【Message】：${message}
+  ----------------------------------------------
+  `);
+  return resMsg;
+};
+
 export class Storage {
   /** 过期时长 */
   express = null;

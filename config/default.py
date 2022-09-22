@@ -593,7 +593,7 @@ MENUS = [
             {
                 "id": "trace_track",
                 "name": _("全链路追踪"),
-                "feature": os.environ.get("BKAPP_FEATURE_TRACE", "on"),
+                "feature": os.environ.get("BKAPP_FEATURE_TRACE", "off"),
                 "icon": "",
                 "keyword": "trace",
                 "children": [
@@ -719,7 +719,7 @@ COLLECTOR_ROW_PACKAGE_COUNT = 100
 # 段日志一次上报条数
 COLLECTOR_SECTION_PACKAGE_COUNT = 10
 # 系统支持的清洗类型
-COLLECTOR_SCENARIOS = os.environ.get("BKAPP_COLLECTOR_SCENARIOS", "row,section").split(",")
+COLLECTOR_SCENARIOS = os.environ.get("BKAPP_COLLECTOR_SCENARIOS", "row,section,wineventlog").split(",")
 # 接入指引
 COLLECTOR_GUIDE_URL = os.environ.get("BKAPP_COLLECTOR_GUIDE_URL", "")
 # ITSM接入服务ID
@@ -801,6 +801,7 @@ CONSUL_HTTPS_PORT = os.getenv("CONSUL_HTTPS_PORT")
 # 默认kafka域名，若提供了，则不再使用metadata返回的域名。
 # 用于 SaaS 没有 consul 域名解析的情况。需要手动给出
 DEFAULT_KAFKA_HOST = os.getenv("BKAPP_DEFAULT_KAFKA_HOST")
+DEFAULT_KAFKA_POLL_TIMEOUT = int(os.getenv("BKAPP_DEFAULT_KAFKA_POLL_TIMEOUT", 1000))
 
 # ==============================================================================
 # redis

@@ -88,6 +88,9 @@ class AggsHandlers(AggsBase):
             if isinstance(field, list):
                 s = cls._build_level_terms_aggs(s, field, size, order)
                 continue
+            # 字段为空时将其丢弃，防止构建出不合法的aggs
+            if isinstance(field, str) and field == "":
+                continue
             s = cls._build_not_level_terms_aggs(s, field, size, order)
         return s
 

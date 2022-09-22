@@ -606,8 +606,8 @@
             "operation":"upsert_common_actions",
             "data":[
                 {
-                    "name":"配置管理",
-                    "name_en":"Manage Settings",
+                    "name":"业务运维",
+                    "name_en":"Ops Actions",
                     "actions":[
                         {
                             "id":"view_business_v2"
@@ -648,8 +648,8 @@
                     ]
                 },
                 {
-                    "name":"日志查看",
-                    "name_en":"View Log",
+                    "name":"业务只读",
+                    "name_en":"Read-only Actions",
                     "actions":[
                         {
                             "id":"view_business_v2"

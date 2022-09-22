@@ -24,6 +24,7 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.test import TestCase
+from django_fakeredis import FakeRedis
 
 from apps.exceptions import ValidationError
 from apps.log_databus.constants import ETL_DELIMITER_DELETE, ETL_DELIMITER_END, ETL_DELIMITER_IGNORE
@@ -410,7 +411,9 @@ class TestEtl(TestCase):
 
     @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.TransferApi.modify_result_table", lambda _: {"table_id": TABLE_ID})
+    @patch("apps.api.TransferApi.get_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.TransferApi.get_cluster_info", lambda _: [CLUSTER_INFO])
+    @FakeRedis("apps.utils.cache.cache")
     @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
     def test_bk_log_text(self, mock_index_set):
         collector_config = CollectorConfig.objects.create(**COLLECTOR_CONFIG)
@@ -441,7 +444,9 @@ class TestEtl(TestCase):
 
     @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.TransferApi.modify_result_table", lambda _: {"table_id": TABLE_ID})
+    @patch("apps.api.TransferApi.get_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.TransferApi.get_cluster_info", lambda _: [CLUSTER_INFO])
+    @FakeRedis("apps.utils.cache.cache")
     @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
     def test_bk_log_json(self, mock_index_set):
         """
@@ -500,7 +505,9 @@ class TestEtl(TestCase):
 
     @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.TransferApi.modify_result_table", lambda _: {"table_id": TABLE_ID})
+    @patch("apps.api.TransferApi.get_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.TransferApi.get_cluster_info", lambda _: [CLUSTER_INFO])
+    @FakeRedis("apps.utils.cache.cache")
     @patch("apps.log_databus.handlers.etl_storage.utils.transfer.preview")
     @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
     def test_bk_log_regexp(self, mock_index_set, mock_preview):
@@ -555,7 +562,9 @@ class TestEtl(TestCase):
 
     @patch("apps.api.TransferApi.create_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.TransferApi.modify_result_table", lambda _: {"table_id": TABLE_ID})
+    @patch("apps.api.TransferApi.get_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.TransferApi.get_cluster_info", lambda _: [CLUSTER_INFO])
+    @FakeRedis("apps.utils.cache.cache")
     @patch("apps.log_databus.handlers.etl_storage.utils.transfer.preview")
     @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
     def test_bk_log_delimiter(self, mock_index_set, mock_preview):

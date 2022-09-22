@@ -866,18 +866,18 @@ export default {
     },
     checkAliasNameItem(row) {
       const { field_name: fieldName, alias_name: aliasName, is_delete: isDelete } = row;
-
       if (isDelete) {
         return true;
       }
 
       if (aliasName) {
         // 设置了别名
-        if (!/^[^0-9][a-zA-Z0-9_]+$/ig.test(aliasName)) {
+        if (!/^(?!^\d)[\w]+$/ig.test(aliasName)) {
           // 别名只支持【英文、数字、下划线】，并且不能以数字开头
           row.aliasErr = this.$t('dataManage.Alias_only_supports');
           return false;
-        } if (this.globalsData.field_built_in.find(item => item.id === aliasName.toLocaleLowerCase())) {
+        }
+        if (this.globalsData.field_built_in.find(item => item.id === aliasName.toLocaleLowerCase())) {
           // 别名不能与内置字段名相同
           row.aliasErr = this.$t('dataManage.Alias_field');
           return false;
@@ -888,6 +888,7 @@ export default {
         return false;
       }
 
+      row.aliasErr = '';
       return true;
     },
     checkAliasName() {

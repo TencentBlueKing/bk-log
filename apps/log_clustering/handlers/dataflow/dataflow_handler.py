@@ -186,27 +186,31 @@ class DataFlowHandler(BaseAiopsHandler):
     @classmethod
     def _init_filter_rule(cls, filter_rules, all_fields_dict, clustering_field):
         default_filter_rule = cls._init_default_filter_rule(all_fields_dict.get(clustering_field))
-        filter_rule_list = ["where", default_filter_rule]
-        not_clustering_rule_list = ["where", "NOT", "(", default_filter_rule]
-        # 这里是因为默认连接符号需要
-        filter_rule_list.append(OPERATOR_AND)
-        not_clustering_rule_list.append(OPERATOR_AND)
-        for filter_rule in filter_rules:
+
+        rules = []
+        for index, filter_rule in enumerate(filter_rules):
             if not all_fields_dict.get(filter_rule.get("fields_name")):
                 continue
-            rule = [
-                f"`{all_fields_dict.get(filter_rule.get('fields_name'))}`",
-                cls.change_op(filter_rule.get("op")),
-                "'{}'".format(filter_rule.get("value")),
-                filter_rule.get("logic_operator"),
-            ]
-            filter_rule_list.extend(rule)
-            not_clustering_rule_list.extend(rule)
-        # 这里是因为需要去掉最后一个and（可能是前面添加的and）
-        filter_rule_list.pop(-1)
-        not_clustering_rule_list.pop(-1)
-        # 不参与聚类日志需要增加括号修改优先级
-        not_clustering_rule_list.append(")")
+
+            if index > 0:
+                # 如果不是第一个条件，则把运算符加进去
+                rules.append(filter_rule.get("logic_operator"))
+
+            rules.extend(
+                [
+                    f"`{all_fields_dict.get(filter_rule.get('fields_name'))}`",
+                    cls.change_op(filter_rule.get("op")),
+                    "'{}'".format(filter_rule.get("value")),
+                ]
+            )
+
+        if rules:
+            rules_str = " ".join([OPERATOR_AND, "(", *rules, ")"])
+        else:
+            rules_str = ""
+
+        filter_rule_list = ["where", default_filter_rule, rules_str]
+        not_clustering_rule_list = ["where", "NOT", "(", default_filter_rule, rules_str, ")"]
         return " ".join(filter_rule_list), " ".join(not_clustering_rule_list)
 
     @classmethod
@@ -770,6 +774,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 "spark.executor.instances": self.conf.get("spark.executor.instances", DEFAULT_SPARK_EXECUTOR_INSTANCES),
                 "pseudo_shuffle": self.conf.get("pseudo_shuffle", DEFAULT_PSEUDO_SHUFFLE),
                 "spark.locality.wait": self.conf.get("spark.locality.wait", DEFAULT_SPARK_LOCALITY_WAIT),
+                "dropna_enabled": False,
             },
         )
         request_dict = self._set_username(update_model_instance_request)

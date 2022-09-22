@@ -19,9 +19,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import datetime
 import os
+import time
 from collections import defaultdict
 
+from django.core.cache import cache
 from django.conf import settings
 from django.db import models
 from django.db.transaction import atomic
@@ -67,9 +70,12 @@ from apps.log_search.constants import (
     TagColor,
     InnerTag,
     CustomTypeEnum,
+    INDEX_SET_NO_DATA_CHECK_PREFIX,
+    INDEX_SET_NO_DATA_CHECK_INTERVAL,
 )
 from bkm_space.api import AbstractSpaceApi
 from bkm_space.utils import space_uid_to_bk_biz_id
+from apps.utils.time_handler import timestamp_to_datetime, datetime_to_timestamp, timestamp_to_timeformat
 
 
 class GlobalConfig(models.Model):
@@ -325,6 +331,7 @@ class LogIndexSet(SoftDeleteModel):
     time_field_unit = models.CharField(_("时间字段单位"), max_length=32, default=None, null=True)
     tag_ids = MultiStrSplitByCommaField(_("标签id记录"), max_length=255, default="")
     bcs_project_id = models.CharField(_("项目ID"), max_length=64, default="")
+    is_editable = models.BooleanField(_("是否可以编辑"), default=True)
 
     def list_operate(self):
         return format_html(
@@ -393,6 +400,14 @@ class LogIndexSet(SoftDeleteModel):
 
         return BkDataAuthHandler.get_auth_url(not_applied_indices)
 
+    @property
+    def no_data_check_time(self):
+        result = cache.get(INDEX_SET_NO_DATA_CHECK_PREFIX + str(self.index_set_id))
+        if result is None:
+            temp = timestamp_to_datetime(time.time()) - datetime.timedelta(minutes=INDEX_SET_NO_DATA_CHECK_INTERVAL)
+            result = datetime_to_timestamp(temp)
+        return timestamp_to_timeformat(result)
+
     def get_indexes(self, has_applied=None, project_info=True):
         """
         返回当前索引集下的索引列表
@@ -439,6 +454,8 @@ class LogIndexSet(SoftDeleteModel):
         if is_trace_log:
             qs = qs.filter(is_trace_log=is_trace_log)
 
+        no_data_check_time_list = [item.no_data_check_time for item in qs]
+
         index_sets = qs.values(
             "space_uid",
             "index_set_id",
@@ -471,7 +488,7 @@ class LogIndexSet(SoftDeleteModel):
         )
 
         result = []
-        for index_set in index_sets:
+        for index_set, no_data_check_time in zip(index_sets, no_data_check_time_list):
             if show_indices:
                 index_set["indices"] = index_set_data.get(index_set["index_set_id"], [])
                 if not index_set["indices"]:
@@ -493,6 +510,7 @@ class LogIndexSet(SoftDeleteModel):
 
             index_set["tags"] = IndexSetTag.batch_get_tags(index_set["tag_ids"])
             index_set["is_favorite"] = index_set["index_set_id"] in mark_index_set_ids
+            index_set["no_data_check_time"] = no_data_check_time
             for del_field in ["tag_ids"]:
                 index_set.pop(del_field)
             result.append(index_set)
