@@ -333,6 +333,7 @@ class LogIndexSet(SoftDeleteModel):
     time_field_unit = models.CharField(_("时间字段单位"), max_length=32, default=None, null=True)
     tag_ids = MultiStrSplitByCommaField(_("标签id记录"), max_length=255, default="")
     bcs_project_id = models.CharField(_("项目ID"), max_length=64, default="")
+    is_editable = models.BooleanField(_("是否可以编辑"), default=True)
 
     def list_operate(self):
         return format_html(

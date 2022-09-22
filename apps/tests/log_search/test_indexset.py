@@ -86,6 +86,7 @@ CREATE_SUCCESS = {
         "fields_snapshot": None,
         "source_app_code": settings.APP_CODE,
         "tag_ids": "",
+        "is_editable": True,
     },
     "code": 0,
     "message": "",
@@ -151,6 +152,15 @@ UPDATE_INDEX_SET = {
     "fields_snapshot": "{}",
     "source_app_code": settings.APP_CODE,
     "tag_ids": "[]",
+    "is_editable": True,
+}
+
+NOT_EDITABLE_RETURN = {
+    "result": False,
+    "code": "3600001",
+    "data": None,
+    "message": "索引集登陆日志禁止编辑（3600001）",
+    "errors": None,
 }
 
 INDEX_SET_LISTS = {
@@ -221,6 +231,7 @@ INDEX_SET_LISTS = {
             "apply_status_name": "正常",
             "bk_biz_id": 0,
             "permission": {},
+            "is_editable": True,
         }
     ],
 }
@@ -339,6 +350,7 @@ RETRIEVE_LIST = {
     "fields_snapshot": "{}",
     "source_app_code": settings.APP_CODE,
     "tag_ids": "[]",
+    "is_editable": True,
 }
 
 
@@ -572,6 +584,13 @@ class TestIndexSet(TestCase):
         self.assertEqual(response.status_code, SUCCESS_STATUS_CODE)
         self.maxDiff = 1000000
         self.assertEqual(content["data"], UPDATE_INDEX_SET)
+
+        # 测试不可编辑情况
+        index_set.is_editable = False
+        index_set.save()
+        response = self.client.patch(path=path, data=json.dumps(data), content_type="application/json")
+
+        self.assertEqual(json.loads(response.content), NOT_EDITABLE_RETURN)
 
     @override_settings(MIDDLEWARE=(OVERRIDE_MIDDLEWARE,))
     def test_delete_index_set(self, *args):
