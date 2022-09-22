@@ -1494,4 +1494,5 @@ export default {
   上次检测时间: '上次检测时间',
   platformTip: '公共集群，禁止创建自定义索引集',
   cannotCrossSetClusterTips: '不能跨集群添加多个索引，切换集群请先清空索引',
+  虚拟字段: '虚拟字段',
 };
