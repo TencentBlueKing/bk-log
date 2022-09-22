@@ -30,26 +30,11 @@ class _BkSSM:
     MODULE = _("bkssm")
 
     def __init__(self):
-        bk_ssm_root = settings.SSM_HOST if settings.IS_K8S_DEPLOY_MODE else BK_SSM_ROOT
         self.get_access_token = DataAPI(
             method="POST",
-            url=bk_ssm_root + "access-tokens",
+            url=f"{settings.SSM_HOST}access-tokens" if settings.IS_K8S_DEPLOY_MODE else BK_SSM_ROOT,
             module=self.MODULE,
             description=_("获取access_token"),
             before_request=add_esb_info_before_request,
             cache_time=TimeEnum.ONE_DAY_SECOND.value,
-        )
-        self.verify_access_token = DataAPI(
-            method="POST",
-            url=bk_ssm_root + "access-tokens/verify",
-            module=self.MODULE,
-            description=_("verify access_token"),
-            before_request=add_esb_info_before_request,
-        )
-        self.refresh_access_token = DataAPI(
-            method="POST",
-            url=bk_ssm_root + "access-tokens/refresh",
-            module=self.MODULE,
-            description=_("refresh access_token"),
-            before_request=add_esb_info_before_request,
         )
