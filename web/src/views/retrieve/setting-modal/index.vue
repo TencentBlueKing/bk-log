@@ -432,7 +432,6 @@ export default {
       }
 
       .setting-right {
-        width: 1200px;
         margin-left: 20px;
 
         .more-details {

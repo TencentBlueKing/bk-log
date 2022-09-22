@@ -68,7 +68,7 @@
           <span class="icon bk-icon icon-plus-circle"></span>
           {{ $t('申请业务权限') }}
         </div> -->
-        <div class="menu-select-extension-item" v-if="demoUrl" @mousedown.stop="experienceDemo">
+        <div class="menu-select-extension-item" v-if="demoUid" @mousedown.stop="experienceDemo">
           <span class="icon log-icon icon-app-store"></span>
           {{ $t('体验DEMO') }}
         </div>
@@ -274,7 +274,7 @@ export default {
       this.keyword = v;
     },
     experienceDemo() {
-      this.checkProjectChange(this.demoUid);
+      this.checkSpaceChange(this.demoUid);
     },
   },
 };

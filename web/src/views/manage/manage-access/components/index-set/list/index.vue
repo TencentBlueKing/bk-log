@@ -108,13 +108,23 @@
           </bk-button>
           <bk-button
             theme="primary" text style="margin-right: 4px;"
-            v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_INDICES_AUTH]) }"
-            @click="manageIndexSet('edit', props.row)">{{ $t('编辑') }}
+            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices) }"
+            :disabled="!props.row.is_editable"
+            @click="manageIndexSet('edit', props.row)">
+            <span v-bk-tooltips.top="{
+              content: `${$t('内置索引集')}, ${$t('不可编辑')}`,
+              disabled: props.row.is_editable
+            }">{{ $t('编辑') }}</span>
           </bk-button>
           <bk-button
             theme="primary" text
-            v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_INDICES_AUTH]) }"
-            @click="manageIndexSet('delete', props.row)" :disabled="!collectProject">{{ $t('删除') }}
+            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices) }"
+            :disabled="!props.row.is_editable || !collectProject"
+            @click="manageIndexSet('delete', props.row)">
+            <span v-bk-tooltips.top="{
+              content: `${$t('内置索引集')}, ${$t('不可删除')}`,
+              disabled: props.row.is_editable
+            }">{{ $t('删除') }}</span>
           </bk-button>
         </template>
       </bk-table-column>
