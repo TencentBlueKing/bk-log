@@ -36,5 +36,5 @@ class _BkSSM:
             module=self.MODULE,
             description=_("获取access_token"),
             before_request=add_esb_info_before_request,
-            cache_time=TimeEnum.ONE_DAY_SECOND.value,
+            cache_time=TimeEnum.ONE_MINUTE_SECOND.value,
         )
