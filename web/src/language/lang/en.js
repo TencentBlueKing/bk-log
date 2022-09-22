@@ -1496,4 +1496,7 @@ export default {
   当前显示字段: 'Current display field',
   指定字段: 'Specified field',
   未选择则默认为全部字段: 'If not selected, it defaults to all fields',
+  内置索引集: 'Built in Index',
+  不可编辑: 'not editable',
+  不可删除: 'not deleted',
 };
