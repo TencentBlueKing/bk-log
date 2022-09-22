@@ -78,7 +78,7 @@ export default {
         const demoId = String(window.DEMO_BIZ_ID);
         const demoProject = spaceList.find(item => item.bk_biz_id === demoId);
         const demoProjectUrl = demoProject ? this.getDemoProjectUrl(demoProject.space_uid) : '';
-        this.$store.commit('setDemoUrl', demoProjectUrl);
+        this.$store.commit('setDemoUid', demoProject ? demoProject.space_uid : '');
         const isOnlyDemo = demoProject && spaceList.length === 1;
         if (!spaceList.length || isOnlyDemo) { // 没有一个业务或只有一个demo业务显示欢迎页面
           const args = {
