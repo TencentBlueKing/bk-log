@@ -45,6 +45,7 @@
             :container-loading.sync="containerLoading"
             :operate-type="operateType"
             :is-physics.sync="isPhysics"
+            :is-update.sync="isUpdate"
             @stepChange="(num) => stepChange(num, 'add')" />
           <step-issued
             v-if="curStep === 2"
@@ -80,6 +81,7 @@
             :operate-type="operateType"
             :container-loading.sync="containerLoading"
             :is-physics.sync="isPhysics"
+            :is-update.sync="isUpdate"
             @stepChange="(num) => stepChange(num, 'add')" />
           <step-issued
             v-if="(curStep === 2 && !isSwitch) || (curStep === 1 && isSwitch)"
@@ -143,6 +145,7 @@ export default {
       basicLoading: true,
       isCleaning: false,
       isSubmit: false,
+      isUpdate: false, // 判断第一步是否是处于编辑状态
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
       operateType: '',
       curStep: 1, // 组件步骤
@@ -232,7 +235,8 @@ export default {
       }
 
       const routeType = this.$route.name.toLowerCase().replace('collect', '');
-      const { query: { type } } = this.$route;
+      const { query: { type }, name: routeName } = this.$route;
+      this.isUpdate = routeName !== 'collectAdd'; // 判断是否是更新
       if ((routeType !== 'add' && !this.$route.params.notAdd) || type === 'clone') { // 克隆时 请求初始数据
         try {
           const detailRes = await this.getDetail();

@@ -69,6 +69,7 @@
           </bk-form-item>
           <bk-form-item
             :label="$t('集群')"
+            v-if="scenarioId !== 'bkdata'"
             required
             property="storage_cluster_id">
             <bk-select
