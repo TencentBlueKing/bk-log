@@ -126,9 +126,12 @@ class IndexSetViewSet(ModelViewSet):
                 return attrs
 
         class UpdateSerializer(CustomSerializer):
+            index_set_name = serializers.CharField(required=True)
             storage_cluster_id = serializers.IntegerField(required=False, default=None)
-            scenario_id = serializers.CharField(read_only=True)
-            project_id = serializers.CharField(read_only=True)
+            scenario_id = serializers.CharField(required=True)
+            category_id = serializers.CharField(required=True)
+            project_id = serializers.CharField(required=False)
+            bk_biz_id = serializers.IntegerField(required=False)
             bkdata_auth_url = serializers.ReadOnlyField()
 
         class ShowMoreSerializer(CustomSerializer):
