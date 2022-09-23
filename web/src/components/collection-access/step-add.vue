@@ -207,7 +207,7 @@
               :disabled="isUpdate"
               :clearable="false">
               <bk-option
-                v-for="(cluItem,cluIndex) of clusterList"
+                v-for="(cluItem, cluIndex) of clusterList"
                 :key="cluIndex"
                 :id="cluItem.id"
                 :name="cluItem.name">
@@ -696,6 +696,7 @@ export default {
         workload_name: this.$t('应用名称'),
         container_name: this.$t('容器名称'),
       },
+      isRequestCluster: false, // 集群列表是否正在请求
       isConfigConflict: false, // 配置项是否有冲突
       conflictList: [], // 冲突列表
       conflictMessage: '', // 冲突信息
@@ -1421,6 +1422,8 @@ export default {
         });
     },
     getBcsClusterList() {
+      if (this.isRequestCluster) return;
+      this.isRequestCluster = true;
       const query = { bk_biz_id: this.bkBizId };
       this.$http.request('container/getBcsList', { query }).then((res) => {
         if (res.code === 0) {
@@ -1429,6 +1432,9 @@ export default {
       })
         .catch((err) => {
           console.warn(err);
+        })
+        .finally(() => {
+          this.isRequestCluster = false;
         });
     },
     /**

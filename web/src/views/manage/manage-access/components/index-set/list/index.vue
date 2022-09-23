@@ -108,7 +108,7 @@
           </bk-button>
           <bk-button
             theme="primary" text style="margin-right: 4px;"
-            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices) }"
+            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices_v2) }"
             :disabled="!props.row.is_editable"
             @click="manageIndexSet('edit', props.row)">
             <span v-bk-tooltips.top="{
@@ -118,7 +118,7 @@
           </bk-button>
           <bk-button
             theme="primary" text
-            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices) }"
+            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices_v2) }"
             :disabled="!props.row.is_editable || !collectProject"
             @click="manageIndexSet('delete', props.row)">
             <span v-bk-tooltips.top="{
