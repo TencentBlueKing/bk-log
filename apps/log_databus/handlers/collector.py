@@ -36,7 +36,6 @@ from apps.api import BkDataAccessApi, CCApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
-from apps.decorators import user_operation_record
 from apps.exceptions import ApiError, ApiRequestError, ApiResultError
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import BCS_COLLECTOR, BCS_DEPLOYMENT_TYPE, FEATURE_COLLECTOR_ITSM
@@ -107,7 +106,6 @@ from apps.log_databus.handlers.collector_scenario.utils import (
     deal_collector_scenario_param,
 )
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.handlers.kafka import KafkaConsumerHandle
 from apps.log_databus.handlers.storage import StorageHandler
 from apps.log_databus.models import (
     BcsRule,
@@ -128,7 +126,6 @@ from apps.log_search.constants import (
 )
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import LogIndexSet, LogIndexSetData, ProjectInfo, Scenario
 from apps.models import model_to_dict
 from apps.utils.bcs import Bcs
 from apps.utils.cache import caches_one_hour
@@ -137,7 +134,11 @@ from apps.utils.function import map_if
 from apps.utils.local import get_local_param, get_request_username
 from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
+from apps.log_databus.handlers.kafka import KafkaConsumerHandle
+from apps.decorators import user_operation_record
+from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario
 from apps.utils.time_handler import format_user_time_zone
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class CollectorHandler(object):
@@ -325,9 +326,7 @@ class CollectorHandler(object):
         """
         result = context
         if not self.data.table_id:
-            collector_config.update(
-                {"table_id_prefix": f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_", "table_id": ""}
-            )
+            collector_config.update({"table_id_prefix": build_bk_table_id(self.data.bk_biz_id, ""), "table_id": ""})
             return collector_config
         table_id_prefix, table_id = self.data.table_id.split(".")
         collector_config.update({"table_id_prefix": table_id_prefix + "_", "table_id": table_id})
@@ -640,7 +639,7 @@ class CollectorHandler(object):
             bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=instance.bk_data_id,
                 data_link_id=instance.data_link_id,
-                data_name=f"{instance.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}_{instance.get_name()}",
+                data_name=build_bk_data_name(instance.get_bk_biz_id(), instance.get_name()),
                 description=instance.description,
                 encoding=META_DATA_ENCODING,
             )
@@ -869,8 +868,7 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"],
-            bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -2060,8 +2058,7 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id,
-                ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2182,7 +2179,7 @@ class CollectorHandler(object):
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=self.data.bk_data_id,
                 data_link_id=self.data.data_link_id,
-                data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name}",
+                data_name=build_bk_data_name(self.data.bk_biz_id, collector_config_name),
                 description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
@@ -2476,7 +2473,7 @@ class CollectorHandler(object):
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=self.data.bk_data_id,
                 data_link_id=self.data.data_link_id,
-                data_name=f"{self.data.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}_{data['collector_config_name']}",
+                data_name=build_bk_data_name(self.data.get_bk_biz_id(), data["collector_config_name"]),
                 description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
@@ -2610,8 +2607,8 @@ class CollectorHandler(object):
             path_container_config_dict[path_container_config.collector_config_id].append(path_container_config)
         for std_container_config in std_container_config_list:
             std_container_config_dict[std_container_config.parent_container_config_id].append(std_container_config)
-        project_id = BcsRule.objects.get(id=list(rule_dict.keys())[0]).bcs_project_id
-        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=project_id)
+        bcs_project_id = BcsRule.objects.get(id=list(rule_dict.keys())[0]).bcs_project_id
+        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=bcs_project_id)
         result = []
         for rule_id, collector in rule_dict.items():
             rule = {
@@ -2715,7 +2712,7 @@ class CollectorHandler(object):
         )
         new_path_cls_index_set, new_std_cls_index_set = self.create_or_update_bcs_project_index_set(
             bcs_project_id=data["project_id"],
-            project_id=ProjectInfo.get_project(biz_id=data["bk_biz_id"])["project_id"],
+            space_uid=bk_biz_id_to_space_uid(data["bk_biz_id"]),
             path_index={
                 "bk_biz_id": data["bk_biz_id"],
                 "result_table_id": path_collector_config.table_id,
@@ -2799,12 +2796,12 @@ class CollectorHandler(object):
             "stdout_conf": {"bk_data_id": std_collector_config.bk_data_id},
         }
 
-    def create_or_update_bcs_project_index_set(self, bcs_project_id, path_index, std_index, project_id):
+    def create_or_update_bcs_project_index_set(self, bcs_project_id, path_index, std_index, space_uid):
         src_index_list = LogIndexSet.objects.filter(bcs_project_id=bcs_project_id)
         if not src_index_list:
             new_path_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_path_log_{}".format(bcs_project_id),
-                project_id=project_id,
+                space_uid=space_uid,
                 storage_cluster_id=None,
                 scenario_id="log",
                 view_roles=None,
@@ -2815,7 +2812,7 @@ class CollectorHandler(object):
             )
             new_std_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_stdout_log_{}".format(bcs_project_id),
-                project_id=project_id,
+                space_uid=space_uid,
                 storage_cluster_id=None,
                 scenario_id="log",
                 view_roles=None,
@@ -2890,8 +2887,7 @@ class CollectorHandler(object):
         self.data.bk_data_id = collector_scenario.update_or_create_data_id(
             bk_data_id=self.data.bk_data_id,
             data_link_id=self.data.data_link_id,
-            data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_"
-            f"{collector_config_params['collector_config_name']}",
+            data_name=build_bk_data_name(self.data.bk_biz_id, collector_config_params["collector_config_name"]),
             description=collector_config_params["description"]
             if collector_config_params["description"]
             else collector_config_params["collector_config_name_en"],
@@ -3119,9 +3115,7 @@ class CollectorHandler(object):
             raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
         for collector in collectors:
             self.deal_self_call(
-                collector_config_id=collector.collector_config_id,
-                collector=collector,
-                func=self.destroy,
+                collector_config_id=collector.collector_config_id, collector=collector, func=self.destroy,
             )
         bcs_rule.delete()
         return {"rule_id": rule_id}
@@ -3822,6 +3816,20 @@ def get_random_public_cluster_id() -> int:
     return 0
 
 
+def build_bk_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
+    """
+    根据bk_biz_id和collector_config_name_en构建table_id
+    """
+    bk_biz_id = int(bk_biz_id)
+    if bk_biz_id >= 0:
+        bk_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+    else:
+        bk_table_id = (
+            f"{settings.TABLE_SPACE_PREFIX}_{-bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+        )
+    return bk_table_id
+
+
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
     """
     根据bk_biz_id和collector_config_name_en构建bk_data_name
@@ -3829,8 +3837,13 @@ def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
     @param collector_config_name_en:
     @return:
     """
-    bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
-
+    bk_biz_id = int(bk_biz_id)
+    if bk_biz_id >= 0:
+        bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+    else:
+        bk_data_name = (
+            f"{settings.TABLE_SPACE_PREFIX}_{-bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+        )
     return bk_data_name
 
 
@@ -3841,5 +3854,11 @@ def build_result_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
     @param collector_config_name_en:
     @return:
     """
-    result_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
+    bk_biz_id = int(bk_biz_id)
+    if bk_biz_id >= 0:
+        result_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
+    else:
+        result_table_id = (
+            f"{settings.TABLE_SPACE_PREFIX}_{-bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
+        )
     return result_table_id

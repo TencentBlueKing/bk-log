@@ -17,7 +17,9 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from apps.api import BcsCcApi, BcsApi
+from apps.log_search.models import Space
 from apps.utils.thread import MultiExecuteFunc
+from bkm_space.define import SpaceTypeEnum
 
 
 class BcsHandler:
@@ -25,7 +27,13 @@ class BcsHandler:
         bcs_projects = BcsCcApi.list_project()
         bcs_project_name_map = {p["project_id"]: p["project_name"] for p in bcs_projects}
         if bk_biz_id:
-            bcs_projects = [p for p in bcs_projects if str(p["cc_app_id"]) == str(bk_biz_id)]
+            space = Space.objects.get(bk_biz_id=bk_biz_id)
+            if space.space_type_id == SpaceTypeEnum.BKCC.value:
+                bcs_projects = [p for p in bcs_projects if str(p["cc_app_id"]) == str(bk_biz_id)]
+            elif space.space_type_id == SpaceTypeEnum.BCS.value:
+                bcs_projects = [p for p in bcs_projects if p["project_id"] == space.space_id]
+            else:
+                bcs_projects = []
         result = []
         multi_execute_func = MultiExecuteFunc()
         for project in bcs_projects:

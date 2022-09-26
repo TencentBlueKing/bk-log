@@ -56,7 +56,7 @@ from apps.log_databus.constants import (  # noqa
     Environment,
 )
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
-from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
+from apps.log_search.models import LogIndexSet, Space  # noqa
 from apps.models import MultiStrSplitByCommaField, JsonField, SoftDeleteModel, OperateRecordModel  # noqa
 
 
@@ -299,9 +299,9 @@ class CollectorConfig(CollectorBase):
         self.save()
 
     def generate_itsm_title(self):
-        bk_biz_name = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first().project_name
+        space = Space.objects.get(bk_biz_id=self.bk_biz_id)
         return str(
-            _("【日志采集】{}-{}-{}".format(bk_biz_name, self.collector_config_name, self.created_at.strftime("%Y%m%d")))
+            _("【日志采集】{}-{}-{}".format(space.space_name, self.collector_config_name, self.created_at.strftime("%Y%m%d")))
         )
 
     def get_cur_cap(self, bytes="mb"):

@@ -99,7 +99,7 @@
               ext-cls="mr10 king-button"
               :button-text="$t('检索')"
               :disabled="props.row.is_expired"
-              :cursor-active="!(props.row.permission && props.row.permission.search_log)"
+              :cursor-active="!(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH])"
               @on-click="operateHandler(props.row, 'search')">
             </log-button>
             <!-- 编辑 -->
@@ -108,7 +108,9 @@
               text
               class="mr10 king-button"
               :disabled="props.row.is_expired"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
@@ -118,7 +120,9 @@
               text
               class="mr10 king-button"
               :disabled="props.row.is_expired"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'delete')">
               {{ $t('btn.delete') }}
             </bk-button>
@@ -140,6 +144,7 @@
 import { mapGetters } from 'vuex';
 import RestoreSlider from './restore-slider';
 import { formatFileSize } from '@/common/util';
+import * as authorityMap from '../../../../common/authority-map';
 
 export default {
   name: 'ArchiveRestore',
@@ -172,6 +177,9 @@ export default {
     ...mapGetters({
       bkBizId: 'bkBizId',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
   },
   created() {
     this.search();
@@ -327,9 +335,9 @@ export default {
     },
     operateHandler(row, operateType) {
       if (operateType === 'search') {
-        if (!(row.permission?.search_log)) {
+        if (!(row.permission?.[authorityMap.SEARCH_LOG_AUTH])) {
           return this.getOptionApplyData({
-            action_ids: ['search_log'],
+            action_ids: [authorityMap.SEARCH_LOG_AUTH],
             resources: [{
               type: 'indices',
               id: row.index_set_id,
@@ -339,9 +347,9 @@ export default {
       }
 
       if (operateType === 'edit' || operateType === 'delete') {
-        if (!(row.permission?.manage_collection)) {
+        if (!(row.permission?.[authorityMap.MANAGE_COLLECTION_AUTH])) {
           return this.getOptionApplyData({
-            action_ids: ['manage_collection'],
+            action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
             resources: [{
               type: 'collection',
               id: row.collector_config_id,

@@ -45,7 +45,8 @@
               :id="item.result_table_id"
               :name="`${item.result_table_name_alias}(${item.result_table_id})`">
               <div
-                v-if="scenarioId === 'log' && !(item.permission && item.permission.manage_collection)"
+                v-if="scenarioId === 'log'
+                  && !(item.permission && item.permission[authorityMap.MANAGE_COLLECTION_AUTH])"
                 class="option-slot-container no-authority" @click.stop>
                 <span class="text">{{ item.result_table_name_alias }}</span>
                 <span class="apply-text" @click="applyCollectorAccess(item)">{{ $t('申请权限') }}</span>
@@ -81,6 +82,7 @@
 
 <script>
 import { mapState } from 'vuex';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   props: {
@@ -111,7 +113,10 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId', 'bkBizId']),
+    ...mapState(['spaceUid', 'bkBizId']),
+    authorityMap() {
+      return authorityMap;
+    },
     getShowCollectionList() {
       if (this.parentData.storage_cluster_id) {
         return this.collectionList.filter(item => item.storage_cluster_id === this.parentData.storage_cluster_id);
@@ -181,7 +186,7 @@ export default {
         this.$el.click(); // 因为下拉在loading上面所以需要关闭下拉
         this.basicLoading = true;
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: option.collector_config_id,

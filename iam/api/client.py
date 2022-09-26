@@ -146,6 +146,13 @@ class Client(object):
         ok, message, data = self._call_iam_api(http_put, path, data)
         return ok, message
 
+    def delete_action_policy(self, system_id, action_id):
+        path = "/api/v1/model/systems/{system_id}/actions/{action_id}/policies".format(
+            system_id=system_id, action_id=action_id
+        )
+        ok, message, data = self._call_iam_api(http_delete, path, data=None)
+        return ok, message
+
     def batch_delete_actions(self, system_id, data):
         path = "/api/v1/model/systems/{system_id}/actions?check_existence=false".format(system_id=system_id)
         ok, message, data = self._call_iam_api(http_delete, path, data)

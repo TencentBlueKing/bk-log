@@ -71,7 +71,7 @@
             <div slot="content" class="fields-setting-container">
               <fields-setting
                 v-if="showFieldsSetting"
-                :field-alias-map="$attrs.fieldAliasMap"
+                :field-alias-map="$attrs['field-alias-map']"
                 :retrieve-params="retrieveParams"
                 @confirm="confirmModifyFields"
                 @cancel="closeDropdown" />
