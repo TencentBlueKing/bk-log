@@ -841,8 +841,8 @@ class CleanTemplateListFilterSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务id"), required=True)
     keyword = serializers.CharField(label=_("检索关键词"), required=False)
     clean_type = serializers.CharField(label=_("模板类型"), required=False)
-    page = serializers.IntegerField(label=_("页码"))
-    pagesize = serializers.IntegerField(label=_("页面大小"))
+    page = serializers.IntegerField(label=_("页码"), default=1)
+    pagesize = serializers.IntegerField(label=_("页面大小"), default=10)
 
     def validate(self, attrs):
         super().validate(attrs)
