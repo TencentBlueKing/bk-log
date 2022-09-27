@@ -55,16 +55,25 @@
           :label="$t('dataSource.source_en_name')"
           :required="true"
           :rules="rules.collector_config_name_en"
+          :icon-offset="120"
           :property="'collector_config_name_en'">
-          <bk-input
-            class="w520"
-            v-model="formData.collector_config_name_en"
-            show-word-limit
-            maxlength="50"
-            data-test-id="baseMessage_input_fillEnglishName"
-            :disabled="isUpdate && !!(formData.collector_config_name_en) || isNotAdd"
-            :placeholder="$t('dataSource.en_name_tips')">
-          </bk-input>
+          <div class="en-name-box">
+            <div>
+              <bk-input
+                class="w520"
+                v-model="formData.collector_config_name_en"
+                show-word-limit
+                maxlength="50"
+                data-test-id="baseMessage_input_fillEnglishName"
+                :disabled="isUpdate && !!(formData.collector_config_name_en) || isNotAdd"
+                :placeholder="$t('dataSource.en_name_tips')">
+              </bk-input>
+              <span v-if="!isTextValid" class="text-error">{{formData.collector_config_name_en}}</span>
+            </div>
+            <span v-bk-tooltips.top="$t('自动转换成正确的英文名格式')">
+              <bk-button v-if="!isTextValid" text @click="handleEnConvert">{{$t('自动转换')}}</bk-button>
+            </span>
+          </div>
           <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
         </bk-form-item>
         <bk-form-item :label="$t('configDetails.remarkExplain')">
@@ -630,13 +639,13 @@ export default {
             trigger: 'blur',
           },
           {
-            regex: /^[A-Za-z0-9_]+$/,
+            validator: this.checkEnNameValidator,
             message: this.$t('enNameValidatorTips'),
             trigger: 'blur',
           },
           {
             // 检查英文名是否可用
-            validator: this.checkEnName,
+            validator: this.checkEnNameRepeat,
             message: this.$t('dataSource.en_name_repeat'),
             trigger: 'blur',
           },
@@ -661,6 +670,7 @@ export default {
           },
         ],
       },
+      isTextValid: true,
       isUpdate: false,
       isHandle: false,
       isClone: false,
@@ -1259,7 +1269,7 @@ export default {
         }
       });
     },
-    async checkEnName(val) {
+    async checkEnNameRepeat(val) {
       if (this.isUpdate || this.isNotAdd) return true;
       const result = await this.getEnNameIsRepeat(val);
       return result;
@@ -1494,6 +1504,25 @@ export default {
     isContainerHaveValue(container) {
       return Object.values(container)?.some(Boolean) || false;
     },
+    checkEnNameValidator(val) {
+      this.isTextValid = new RegExp(/^[A-Za-z0-9_]+$/).test(val);
+      return this.isTextValid;
+    },
+    handleEnConvert() {
+      const str = this.formData.collector_config_name_en;
+      const convertStr = str.split('').reduce((pre, cur) => {
+        if (cur === '-') cur = '_'; // 中划线转化成下划线
+        if (!/\w/.test(cur)) cur = ''; // 不符合的值去掉
+        return pre += cur;
+      }, '');
+      this.formData.collector_config_name_en = convertStr;
+      this.$refs.validateForm.validate().then(() => {
+        this.isTextValid = true;
+      })
+        .catch(() => {
+          if (convertStr.length < 5) this.isTextValid = true;
+        });
+    },
   },
 };
 </script>
@@ -1508,8 +1537,22 @@ export default {
   overflow: auto;
 
   .en-bk-form {
-    position: relative;
-    width: 600px;
+    width: 710px;
+    .en-name-box {
+      align-items: center;
+      @include flex-justify(space-between);
+    }
+
+    .text-error {
+      display: inline-block;
+      position: absolute;
+      top: 6px;
+      left: 12px;
+      font-size: 12px;
+      color: transparent;
+      pointer-events:none;
+      text-decoration:  red wavy underline;
+    }
   }
 
   .bk-form-content {
