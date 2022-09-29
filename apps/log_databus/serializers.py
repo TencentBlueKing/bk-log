@@ -313,7 +313,6 @@ class CollectorCreateSerializer(serializers.Serializer):
 
 class CreateContainerCollectorSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"))
-    bkdata_biz_id = serializers.IntegerField(label=_("数据归属业务ID"), required=False)
     collector_plugin_id = serializers.IntegerField(label=_("采集插件ID"), required=False)
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
