@@ -288,6 +288,7 @@ class EtlStorage(object):
             "field_list": [],
             "warm_phase_days": 0,
             "warm_phase_settings": {},
+            "is_sync_db": False,  # ES的index创建，不做同步创建，走异步任务执行
         }
         index_settings = index_settings or {}
         params["default_storage_config"]["index_settings"].update(index_settings)
