@@ -175,6 +175,7 @@ class BluekingInstrumentor(BaseInstrumentor):
             resource=Resource.create(
                 {
                     "service.name": settings.APP_CODE + suffix,
+                    "service.version": settings.VERSION,
                     "bk_data_id": otlp_bk_data_id,
                     "bk.data.token": otlp_bk_data_token,
                 }

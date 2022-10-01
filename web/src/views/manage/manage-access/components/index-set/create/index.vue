@@ -400,7 +400,7 @@ export default {
       this.$refs.selectCollectionRef.openDialog();
     },
     addCollection(item) {
-      this.formData.storage_cluster_id = item.storage_cluster_id;
+      if (this.scenarioId === 'log') this.formData.storage_cluster_id = item.storage_cluster_id;
       this.formData.indexes.push(item);
     },
     // 删除采集项
