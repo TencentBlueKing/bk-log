@@ -60,12 +60,6 @@ class ApiConfig(AppConfig):
             return
         from apps.log_search.models import GlobalConfig
 
-        try:
-            with open(os.path.join(settings.PROJECT_ROOT, "VERSION"), encoding="utf-8") as fd:
-                version = fd.read().strip()
-        except Exception:  # pylint: disable=broad-except
-            version = ""
-
         if settings.BKAPP_IS_BKLOG_API:
             config_id = "BACKEND_VERSION"
         else:
@@ -75,14 +69,14 @@ class ApiConfig(AppConfig):
         try:
             config = GlobalConfig.objects.filter(config_id=config_id).first()
             if not config:
-                GlobalConfig.objects.create(config_id=config_id, configs=version)
+                GlobalConfig.objects.create(config_id=config_id, configs=settings.VERSION)
                 return
 
-            if config.configs == version:
+            if config.configs == settings.VERSION:
                 return
 
             # 更新版本
-            config.configs = version
+            config.configs = settings.VERSION
             config.save()
         except Exception:  # pylint: disable=broad-except
             pass
@@ -103,7 +97,14 @@ class ApiConfig(AppConfig):
             def uni_apps_is_exist(query_result):
                 if not bool(query_result and query_result[0]):
                     return False
-                return query_result[0].get("deploy_info", {}).get("prod", {}).get("deployed", False)
+
+                # 如果是第三方应用，没有部署信息，直接判断为已部署
+                deploy_info = query_result[0].get("deploy_info", {})
+                if not deploy_info:
+                    return True
+
+                # v3的应用需要继续判断部署状态
+                return deploy_info.get("prod", {}).get("deployed", False)
 
             try:
                 result = BKPAASApi.uni_apps_query_by_id(

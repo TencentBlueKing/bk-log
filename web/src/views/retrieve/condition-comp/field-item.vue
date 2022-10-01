@@ -115,7 +115,7 @@ export default {
       return Object.keys(this.statisticalFieldData).length && this.fieldItem.field_type !== 'text';
     },
     isShowFieldsCount() {
-      return this.fieldItem.field_type !== 'text';
+      return !['object', 'nested', 'text'].includes(this.fieldItem.field_type);
     },
   },
   methods: {
