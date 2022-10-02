@@ -62,7 +62,7 @@
             show-word-limit
             maxlength="50"
             data-test-id="baseMessage_input_fillEnglishName"
-            :disabled="isUpdate && !!(formData.collector_config_name_en) || isNotAdd"
+            :disabled="isUpdate && !!formData.collector_config_name_en"
             :placeholder="$t('dataSource.en_name_tips')">
           </bk-input>
           <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
@@ -207,7 +207,7 @@
               :disabled="isUpdate"
               :clearable="false">
               <bk-option
-                v-for="(cluItem,cluIndex) of clusterList"
+                v-for="(cluItem, cluIndex) of clusterList"
                 :key="cluIndex"
                 :id="cluItem.id"
                 :name="cluItem.name">
@@ -511,6 +511,12 @@ export default {
     containerTargetDialog,
     yamlEditor,
   },
+  props: {
+    isUpdate: {
+      type: Boolean,
+      require: true,
+    },
+  },
   data() {
     return {
       guideUrl: window.COLLECTOR_GUIDE_URL,
@@ -661,10 +667,8 @@ export default {
           },
         ],
       },
-      isUpdate: false,
       isHandle: false,
       isClone: false,
-      isNotAdd: false, // 是否是新建时点击采集下发上一步而返回
       globals: {},
       localParams: {}, // 缓存的初始数据 用于对比编辑时表单是否有属性更改
       showIpSelectorDialog: false,
@@ -696,6 +700,7 @@ export default {
         workload_name: this.$t('应用名称'),
         container_name: this.$t('容器名称'),
       },
+      isRequestCluster: false, // 集群列表是否正在请求
       isConfigConflict: false, // 配置项是否有冲突
       conflictList: [], // 冲突列表
       conflictMessage: '', // 冲突信息
@@ -810,14 +815,12 @@ export default {
     },
   },
   created() {
-    this.isUpdate = this.$route.name !== 'collectAdd';
     this.isClone = this.$route.query?.type === 'clone';
-    this.isNotAdd = Boolean(this.$route.params.notAdd);
-    if (this.isNotAdd) this.$store.commit('updateRouterLeaveTip', false);
+    this.$store.commit('updateRouterLeaveTip', false);
     this.configBaseObj = deepClone(this.formData.configs[0]); // 生成配置项的基础对象
     this.getLinkData();
     // 克隆与编辑均进行数据回填
-    if (this.isUpdate || this.isClone || this.isNotAdd) {
+    if (this.isUpdate || this.isClone) {
       const cloneCollect = JSON.parse(JSON.stringify(this.curCollect));
       if (cloneCollect.environment === 'container') { // 容器环境
         this.isYaml = cloneCollect.yaml_config_enabled;
@@ -1042,7 +1045,7 @@ export default {
       this.isHandle = true;
       const urlParams = {};
       let requestUrl;
-      if (this.isUpdate || this.isNotAdd) {
+      if (this.isUpdate) {
         urlParams.collector_config_id = Number(this.$route.params.collectorId);
         requestUrl = 'collect/updateCollection';
       } else {
@@ -1053,6 +1056,7 @@ export default {
         if (res.code === 0) {
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`, Object.assign({}, this.formData, params, res.data));
           this.$emit('stepChange');
+          this.$emit('update:is-update', true); // 新建成功,更新是否是编辑状态
           this.setDetail(res.data.collector_config_id);
         }
       })
@@ -1078,6 +1082,7 @@ export default {
         if (res.code === 0) {
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`,
             Object.assign({}, this.formData, params, res.data));
+          this.$emit('update:is-update', true); // 新建成功,更新是否是编辑状态
           this.$emit('stepChange');
           this.setDetail(res.data.collector_config_id);
         }
@@ -1259,7 +1264,7 @@ export default {
       });
     },
     async checkEnName(val) {
-      if (this.isUpdate || this.isNotAdd) return true;
+      if (this.isUpdate) return true;
       const result = await this.getEnNameIsRepeat(val);
       return result;
     },
@@ -1421,6 +1426,8 @@ export default {
         });
     },
     getBcsClusterList() {
+      if (this.isRequestCluster) return;
+      this.isRequestCluster = true;
       const query = { bk_biz_id: this.bkBizId };
       this.$http.request('container/getBcsList', { query }).then((res) => {
         if (res.code === 0) {
@@ -1429,6 +1436,9 @@ export default {
       })
         .catch((err) => {
           console.warn(err);
+        })
+        .finally(() => {
+          this.isRequestCluster = false;
         });
     },
     /**

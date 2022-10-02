@@ -27,7 +27,7 @@
         <div>{{$t('编辑器')}}</div>
         <div class="right-container">
           <slot name="right"></slot>
-          <span v-bk-tooltips="{ distance: 20, content: $t('全屏'), }">
+          <span v-bk-tooltips="{ distance: 20, content: $t('全屏'), delay: 300 }">
             <span v-if="!isFull" class="bk-icon icon-full-screen" @click="openFullScreen"></span>
           </span>
         </div>

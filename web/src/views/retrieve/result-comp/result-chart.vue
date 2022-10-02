@@ -308,12 +308,11 @@ export default {
           this.finishPolling = true;
           this.totalCount = 0;
           this.$refs.chartRef.handleCloseTimer();
-          this.$nextTick(() => {
+          setTimeout(() => {
             this.finishPolling = false;
             this.isStart = false;
-            // this.$refs.chartRef.handleChangeInterval();
             this.$store.commit('retrieve/updateChartKey');
-          });
+          }, 100);
         }, 100);
       }
     },
