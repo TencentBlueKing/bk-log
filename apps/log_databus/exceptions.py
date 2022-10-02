@@ -362,3 +362,18 @@ class RuleCollectorException(BaseCollectorConfigException):
 class NeedBcsClusterIdException(BaseCollectorConfigException):
     ERROR_CODE = "904"
     MESSAGE = _("请求无bcs_cluster_id参数，请检查")
+
+
+class BcsClusterIdNotValidException(BaseCollectorConfigException):
+    ERROR_CODE = "905"
+    MESSAGE = _("bcs_cluster_id不合法，请检查")
+
+
+class NamespaceNotValidException(BaseCollectorConfigException):
+    ERROR_CODE = "906"
+    MESSAGE = _("namespace不合法，请检查")
+
+
+class AllNamespaceNotAllowedException(BaseCollectorConfigException):
+    ERROR_CODE = "907"
+    MESSAGE = _("共享集群下namespace不允许设置为all，请检查")
