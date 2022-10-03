@@ -207,7 +207,7 @@
               :disabled="isUpdate"
               :clearable="false">
               <bk-option
-                v-for="(cluItem, cluIndex) of clusterList"
+                v-for="(cluItem, cluIndex) of localClusterList"
                 :key="cluIndex"
                 :id="cluItem.id"
                 :name="cluItem.name">
@@ -227,6 +227,7 @@
           ref="yamlEditorRef"
           value-type="base64"
           :yaml-form-data.sync="yamlFormData"
+          :cluster-id="formData.bcs_cluster_id"
         ></yaml-editor>
         <template v-else>
           <!-- 容器环境 日志类型 -->
@@ -570,7 +571,7 @@ export default {
           {
             letterIndex: 0, // 配置项字母下标
             isAllContainer: false, // 是否选中所有容器
-            namespaces: ['*'],
+            namespaces: [],
             container: {
               workload_type: '',
               workload_name: '',
@@ -705,7 +706,7 @@ export default {
       conflictList: [], // 冲突列表
       conflictMessage: '', // 冲突信息
       clusterList: [], // 集群列表
-      nameSpacesSelectList: [{ name: this.$t('所有'), id: '*' }], // namespace 列表
+      nameSpacesSelectList: [], // namespace 列表
       allContainer: { // 所有容器时指定容器默认传空
         workload_type: '',
         workload_name: '',
@@ -765,7 +766,7 @@ export default {
         this.formData.configs.forEach((item) => {
           item.isAllContainer = false; // node环境时 所有容器，指定容器禁用
           item.container = this.allContainer;
-          item.namespaces = ['*'];
+          item.namespaces = [];
         });
       }
       return this.currentEnvironment === 'node_log_config';
@@ -786,6 +787,9 @@ export default {
     isCloneOrUpdate() {
       return this.isUpdate || this.isClone;
     },
+    localClusterList() {
+      return this.clusterList.filter(val => (this.isNode ? !val.is_shared : true));
+    },
   },
   watch: {
     currentEnvironment(nVal, oVal) {
@@ -795,6 +799,9 @@ export default {
       if (['std_log_config', 'container_log_config', 'node_log_config'].includes(nVal)) {
         this.formData.environment = 'container';
         !this.clusterList.length && this.getBcsClusterList();
+        if (nVal === 'node_log_config' && this.getIsSharedCluster()) { // 选中node环境时 如果存在已选的共享集群 则清空
+          this.formData.bcs_cluster_id = '';
+        }
         return;
       };
       this.formData.environment = nVal;
@@ -1037,6 +1044,11 @@ export default {
           return extraFillLength === 1;
         });
         if (!containerConfigValidate || !containerValidate || this.isExtraError) return false;
+        if (this.getIsSharedCluster() && this.formData.configs.some(conf => !conf.namespaces.length)) {
+          // 容器环境下选择了共享集群 但NameSpace为空
+          this.$bkMessage({ theme: 'error', message: this.$t('配置项命名空间不能为空') });
+          return false;
+        }
       }
       return true;
     },
@@ -1398,9 +1410,13 @@ export default {
         this.formData.configs[index].namespaces.splice(allIndex, 1);
       }
     },
+    // 当前所选集群是否共享集群
+    getIsSharedCluster() {
+      return this.clusterList?.find(cluster => cluster.id === this.formData.bcs_cluster_id)?.is_shared ?? false;
+    },
     getNameSpaceList(clusterID, isFirstUpdateSelect = false) {
       if (!clusterID || (this.isPhysicsEnvironment && this.isUpdate)) return;
-      const query = { cluster_id: clusterID, bk_biz_id: this.bkBizId };
+      const query = { bcs_cluster_id: clusterID, bk_biz_id: this.bkBizId };
       this.nameSpaceRequest = true;
       this.$http.request('container/getNameSpace', { query }).then((res) => {
         // 判断是否是第一次切换集群 如果是 则进行详情页namespace数据回显
@@ -1413,10 +1429,16 @@ export default {
           const setList = new Set([...namespaceList, ...resIDList]);
           setList.delete('*');
           const allList = [...setList].map(item => ({ id: item, name: item }));
-          this.nameSpacesSelectList = [{ name: this.$t('所有'), id: '*' }, ...allList];
+          this.nameSpacesSelectList = [...allList];
+          if (!this.getIsSharedCluster()) {
+            this.nameSpacesSelectList.unshift({ name: this.$t('所有'), id: '*' });
+          }
           return;
         }
-        this.nameSpacesSelectList = [{ name: this.$t('所有'), id: '*' }, ...res.data];
+        this.nameSpacesSelectList = [...res.data];
+        if (!this.getIsSharedCluster()) {
+          this.nameSpacesSelectList.unshift({ name: this.$t('所有'), id: '*' });
+        }
       })
         .catch((err) => {
           console.warn(err);
