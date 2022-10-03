@@ -1321,7 +1321,7 @@ class TestCollector(TestCase):
     @patch("apps.api.BcsCcApi.list_shared_clusters_ns", lambda _: SHARED_CLUSTERS_NS)
     def test_validate_container_config_yaml(self, *args, **kwargs):
         bk_biz_id = -200
-        space_id = "1a193c8b5de5440a887a1c5126ceea77"
+        space_id = "1ce0ae294d63478ea46a2a1772acd8a7"
         space_uid = "bcs__{}".format(space_id)
         Space.objects.create(
             space_uid=space_uid,
