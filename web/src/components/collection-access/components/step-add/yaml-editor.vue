@@ -65,6 +65,10 @@ export default {
       type: Object,
       default: () => ({}),
     },
+    clusterId: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
@@ -161,7 +165,13 @@ export default {
         this.warningList = [];
         return;
       };
-      this.$http.request('container/yamlJudgement', { data: { yaml_config: yaml } }).then((res) => {
+      this.$http.request('container/yamlJudgement', {
+        data: {
+          bk_biz_id: this.$store.state.bkBizId,
+          bcs_cluster_id: this.clusterId,
+          yaml_config: yaml,
+        },
+      }).then((res) => {
         if (res.code === 0) {
           const { parse_result: parseResult, parse_status: parseStatus } = res.data;
           if (Array.isArray(parseResult) && !parseStatus) {
