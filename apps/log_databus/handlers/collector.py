@@ -2364,9 +2364,9 @@ class CollectorHandler(object):
 
         space = Space.objects.get(bk_biz_id=bk_biz_id)
         if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
-            ns = BcsHandler().list_bcs_shared_cluster_namespace(cluster_id=bcs_cluster_id)
-            # TODO translate
-            if set(namespace_list) - ns:
+            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(cluster_id=bcs_cluster_id)
+            # 配置的命名空间必须是有权限的命名空间的子集
+            if set(namespace_list) - set(project_id_to_ns.get(space.space_id)):
                 raise NamespaceNotValidException()
 
     def create_container_config(self, data):
@@ -3297,9 +3297,8 @@ class CollectorHandler(object):
 
         space = Space.objects.get(bk_biz_id=bk_biz_id)
         if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
-            BcsHandler().list_bcs_shared_cluster_namespace(cluster_id=bcs_cluster_id)
-            # TODO translate
-            return []
+            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(cluster_id=bcs_cluster_id)
+            return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_id, [])]
 
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         try:
