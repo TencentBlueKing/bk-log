@@ -100,6 +100,8 @@ from apps.log_databus.exceptions import (
     PublicESClusterNotExistException,
     BcsClusterIdNotValidException,
     NamespaceNotValidException,
+    NodeNotAllowedException,
+    AllNamespaceNotAllowedException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
@@ -2351,7 +2353,15 @@ class CollectorHandler(object):
 
         return None
 
-    def check_shared_cluster_namespace(self, bk_biz_id, bcs_cluster_id, namespace_list):
+    @classmethod
+    def check_shared_cluster_namespace(cls, bk_biz_id, collector_type, bcs_cluster_id, namespace_list):
+        """
+        检测共享集群相关配置是否合法
+        1. 集群在项目下可见
+        2. 不允许配置Node节点日志采集
+        3. 不允许设置为all，也不允许为空(namespace设置)
+        4. 不允许设置不可见的namespace
+        """
         bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
         cluster_info = None
         for c in bcs_clusters:
@@ -2364,7 +2374,13 @@ class CollectorHandler(object):
 
         space = Space.objects.get(bk_biz_id=bk_biz_id)
         if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
-            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(cluster_id=bcs_cluster_id)
+            if collector_type == ContainerCollectorType.NODE:
+                raise NodeNotAllowedException()
+
+            if not namespace_list:
+                raise AllNamespaceNotAllowedException()
+
+            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
             # 配置的命名空间必须是有权限的命名空间的子集
             if set(namespace_list) - set(project_id_to_ns.get(space.space_id)):
                 raise NamespaceNotValidException()
@@ -2433,7 +2449,10 @@ class CollectorHandler(object):
                 # 效验共享集群命名空间是否在允许的范围
                 for config in data["config"]:
                     self.check_shared_cluster_namespace(
-                        bk_biz_id=bk_biz_id, bcs_cluster_id=data["bcs_cluster_id"], namespace_list=config["namespaces"]
+                        bk_biz_id=bk_biz_id,
+                        collector_type=config["collector_type"],
+                        bcs_cluster_id=data["bcs_cluster_id"],
+                        namespace_list=config["namespaces"],
                     )
 
                 # 原生模式，直接通过结构化数据生成
@@ -2533,7 +2552,10 @@ class CollectorHandler(object):
         # 效验共享集群命名空间是否在允许的范围
         for config in data["config"]:
             self.check_shared_cluster_namespace(
-                bk_biz_id=bk_biz_id, bcs_cluster_id=data["bcs_cluster_id"], namespace_list=config["namespaces"]
+                bk_biz_id=bk_biz_id,
+                collector_type=config["collector_type"],
+                bcs_cluster_id=data["bcs_cluster_id"],
+                namespace_list=config["namespaces"],
             )
 
         for key, value in collector_config_update.items():
@@ -3297,7 +3319,7 @@ class CollectorHandler(object):
 
         space = Space.objects.get(bk_biz_id=bk_biz_id)
         if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
-            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(cluster_id=bcs_cluster_id)
+            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
             return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_id, [])]
 
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
@@ -3314,7 +3336,14 @@ class CollectorHandler(object):
             for namespace in namespaces["items"]
         ]
 
-    def list_topo(self, topo_type, bcs_cluster_id, namespace):
+    def list_topo(self, topo_type, bk_biz_id, bcs_cluster_id, namespace):
+        namespace_list = namespace.split(",")
+
+        collector_type = (
+            ContainerCollectorType.NODE if topo_type == TopoType.NODE.value else ContainerCollectorType.CONTAINER
+        )
+        self.check_shared_cluster_namespace(bk_biz_id, collector_type, bcs_cluster_id, namespace_list)
+
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         result = {"id": bcs_cluster_id, "name": bcs_cluster_id, "type": "cluster"}
         if topo_type == TopoType.NODE.value:
@@ -3327,8 +3356,7 @@ class CollectorHandler(object):
             return result
         if topo_type == TopoType.POD.value:
             result["children"] = []
-            if namespace:
-                namespace_list = namespace.split(",")
+            if namespace_list:
                 for namespace_item in namespace_list:
                     namespace_result = {"id": namespace_item, "name": namespace_item, "type": "namespace"}
                     pods = api_instance.list_namespaced_pod(namespace=namespace_item).to_dict()
@@ -3441,7 +3469,7 @@ class CollectorHandler(object):
             return []
         return self.generate_objs(workload_handler(namespace=namespace).to_dict())
 
-    def validate_container_config_yaml(self, yaml_config: str):
+    def validate_container_config_yaml(self, bk_biz_id, bcs_cluster_id, yaml_config: str):
         """
         解析容器日志yaml配置
         """
@@ -3525,14 +3553,18 @@ class CollectorHandler(object):
         container_configs = []
 
         for config in slz.validated_data:
-            # TODO 前端增加bk_biz_id, bcs_cluster_id参数后再增加下面的效验代码
-            # self.check_shared_cluster_namespace(
-            #     bk_biz_id=bk_biz_id, bcs_cluster_id=data["bcs_cluster_id"],
-            #     namespace_list=config.get("namespaceSelector", {}).get("matchNames", []),
-            # )
+            log_config_type = config["logConfigType"]
+
+            # 校验配置
+            self.check_shared_cluster_namespace(
+                bk_biz_id=bk_biz_id,
+                collector_type=log_config_type,
+                bcs_cluster_id=bcs_cluster_id,
+                namespace_list=config.get("namespaceSelector", {}).get("matchNames", []),
+            )
+
             add_pod_label = config["addPodLabel"]
             extra_labels = config.get("extMeta", {})
-            log_config_type = config["logConfigType"]
             conditions = convert_filters_to_collector_condition(config.get("filters", []), config.get("delimiter", ""))
 
             match_expressions = config.get("labelSelector", {}).get("matchExpressions", [])
