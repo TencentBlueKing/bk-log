@@ -894,6 +894,8 @@ PROJECT_CLUSTER_LIST = [
         "extraAddons": {},
         "systemID": "cls-system-id",
         "manageType": "INDEPENDENT_CLUSTER",
+        "status": "RUNNING",
+        "is_shared": True,
     }
 ]
 
