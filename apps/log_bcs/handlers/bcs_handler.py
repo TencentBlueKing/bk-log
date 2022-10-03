@@ -26,8 +26,8 @@ from bkm_space.define import SpaceTypeEnum
 
 class BcsHandler:
     @classmethod
-    def list_bcs_shared_cluster_namespace(cls, cluster_id):
-        namespaces = BcsCcApi.list_shared_clusters_ns(cluster_id=cluster_id)
+    def list_bcs_shared_cluster_namespace(cls, bcs_cluster_id):
+        namespaces = BcsCcApi.list_shared_clusters_ns({"cluster_id": bcs_cluster_id})
         project_id_to_ns = {}
         for ns in namespaces.get("results", []):
             project_id_to_ns.setdefault(ns["project_id"], []).append(ns["name"])

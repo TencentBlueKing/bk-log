@@ -1134,6 +1134,8 @@ class MatchLabelsSerializer(serializers.Serializer):
 
 
 class ValidateContainerCollectorYamlSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     yaml_config = serializers.CharField(label=_("YAML配置的base64"), allow_blank=True)
 
     def validate_yaml_config(self, value):

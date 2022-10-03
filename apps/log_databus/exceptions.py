@@ -376,4 +376,9 @@ class NamespaceNotValidException(BaseCollectorConfigException):
 
 class AllNamespaceNotAllowedException(BaseCollectorConfigException):
     ERROR_CODE = "907"
-    MESSAGE = _("共享集群下namespace不允许设置为all，请检查")
+    MESSAGE = _("共享集群下namespace不允许为空，或设置为all，请检查")
+
+
+class NodeNotAllowedException(BaseCollectorConfigException):
+    ERROR_CODE = "908"
+    MESSAGE = _("共享集群下不允许采集node的日志，请检查")
