@@ -2035,7 +2035,8 @@ class CollectorViewSet(ModelViewSet):
     @list_route(methods=["GET"], url_path="list_namespace")
     def list_namespace(self, request):
         cluster_id = request.GET.get("cluster_id")
-        return Response(CollectorHandler().list_namespace(bcs_cluster_id=cluster_id))
+        bk_biz_id = request.GET.get("bk_biz_id")
+        return Response(CollectorHandler().list_namespace(bk_biz_id=bk_biz_id, bcs_cluster_id=cluster_id))
 
     @list_route(methods=["GET"], url_path="list_topo")
     def list_topo(self, request):
@@ -2242,7 +2243,8 @@ class CollectorViewSet(ModelViewSet):
             base64.b64encode(
                 CollectorHandler.container_dict_configs_to_yaml(
                     container_configs=data["configs"],
-                    add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+                    add_pod_label=data["add_pod_label"],
+                    extra_labels=data["extra_labels"],
                 ).encode("utf-8")
             )
         )
