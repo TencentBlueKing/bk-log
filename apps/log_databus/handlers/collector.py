@@ -3558,12 +3558,21 @@ class CollectorHandler(object):
             log_config_type = config["logConfigType"]
 
             # 校验配置
-            self.check_shared_cluster_namespace(
-                bk_biz_id=bk_biz_id,
-                collector_type=log_config_type,
-                bcs_cluster_id=bcs_cluster_id,
-                namespace_list=config.get("namespaceSelector", {}).get("matchNames", []),
-            )
+            try:
+                self.check_shared_cluster_namespace(
+                    bk_biz_id=bk_biz_id,
+                    collector_type=log_config_type,
+                    bcs_cluster_id=bcs_cluster_id,
+                    namespace_list=config.get("namespaceSelector", {}).get("matchNames", []),
+                )
+            except Exception as e:  # noqa
+                return {
+                    "origin_text": yaml_config,
+                    "parse_status": False,
+                    "parse_result": [
+                        {"start_line_number": 0, "end_line_number": 0, "message": _("配置校验失败: {err}").format(err=e)}
+                    ],
+                }
 
             add_pod_label = config["addPodLabel"]
             extra_labels = config.get("extMeta", {})
