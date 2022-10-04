@@ -2441,13 +2441,13 @@ class CollectorHandler(object):
 
             if self.data.yaml_config_enabled:
                 # yaml 模式，先反序列化解出来，再保存
-                result = self.validate_container_config_yaml(self.data.yaml_config)
+                result = self.validate_container_config_yaml(bk_biz_id, data["bcs_cluster_id"], self.data.yaml_config)
                 if not result["parse_status"]:
                     raise ContainerCollectConfigValidateYamlException()
                 container_configs = result["parse_result"]["configs"]
             else:
                 # 效验共享集群命名空间是否在允许的范围
-                for config in data["config"]:
+                for config in data["configs"]:
                     self.check_shared_cluster_namespace(
                         bk_biz_id=bk_biz_id,
                         collector_type=config["collector_type"],
@@ -2544,13 +2544,15 @@ class CollectorHandler(object):
 
         if data["yaml_config_enabled"]:
             # yaml 模式，先反序列化解出来，覆盖到config字段上面
-            validate_result = self.validate_container_config_yaml(data["yaml_config"])
+            validate_result = self.validate_container_config_yaml(
+                bk_biz_id, data["bcs_cluster_id"], data["yaml_config"]
+            )
             if not validate_result["parse_status"]:
                 raise ContainerCollectConfigValidateYamlException()
             data["configs"] = validate_result["parse_result"]["configs"]
 
         # 效验共享集群命名空间是否在允许的范围
-        for config in data["config"]:
+        for config in data["configs"]:
             self.check_shared_cluster_namespace(
                 bk_biz_id=bk_biz_id,
                 collector_type=config["collector_type"],
