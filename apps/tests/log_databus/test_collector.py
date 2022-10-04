@@ -27,7 +27,7 @@ from django.test import TestCase, override_settings
 from apps.log_search.models import Space
 from apps.log_databus.exceptions import CollectorConfigNotExistException
 from apps.log_databus.handlers.collector import CollectorHandler
-from apps.log_databus.constants import LogPluginInfo
+from apps.log_databus.constants import LogPluginInfo, WorkLoadType
 from apps.exceptions import ApiRequestError, ApiResultError
 from bkm_space.define import SpaceTypeEnum
 from .test_collectorhandler import TestCollectorHandler, get_data_id
@@ -837,6 +837,9 @@ class CCSetTest(object):
         return []
 
 
+BK_BIZ_ID = -200
+SPACE_ID = "1ce0ae294d63478ea46a2a1772acd8a7"
+SPACE_UID = "bcs__{}".format(SPACE_ID)
 BCS_CLUSTER_ID = "BCS-K8S-10000"
 PROJECTS = [
     {
@@ -951,6 +954,17 @@ def subscription_statistic(params):
 
 @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollector(TestCase):
+    def setUp(self) -> None:
+        Space.objects.create(
+            space_uid=SPACE_UID,
+            bk_biz_id=BK_BIZ_ID,
+            space_type_id=SpaceTypeEnum.BCS.value,
+            space_type_name="容器项目",
+            space_id=SPACE_ID,
+            space_name="测试容器日志项目",
+            space_code="testproject",
+        )
+
     @patch(
         "apps.api.TransferApi.get_data_id",
         get_data_id,
@@ -1320,18 +1334,6 @@ class TestCollector(TestCase):
     @patch("apps.api.BcsCcApi.list_project", lambda _: PROJECTS)
     @patch("apps.api.BcsCcApi.list_shared_clusters_ns", lambda _: SHARED_CLUSTERS_NS)
     def test_validate_container_config_yaml(self, *args, **kwargs):
-        bk_biz_id = -200
-        space_id = "1ce0ae294d63478ea46a2a1772acd8a7"
-        space_uid = "bcs__{}".format(space_id)
-        Space.objects.create(
-            space_uid=space_uid,
-            bk_biz_id=bk_biz_id,
-            space_type_id=SpaceTypeEnum.BCS.value,
-            space_type_name="容器项目",
-            space_id=space_id,
-            space_name="测试容器日志项目",
-            space_code="testproject",
-        )
 
         yaml_config = """
 ---
@@ -1364,6 +1366,30 @@ namespaceSelector:
   - test-cluster-share-test2
         """
         result = CollectorHandler().validate_container_config_yaml(
-            bk_biz_id=bk_biz_id, bcs_cluster_id=BCS_CLUSTER_ID, yaml_config=yaml_config
+            bk_biz_id=BK_BIZ_ID, bcs_cluster_id=BCS_CLUSTER_ID, yaml_config=yaml_config
         )
         self.assertTrue(result["parse_status"])
+
+    @patch("apps.api.BcsApi.list_cluster_by_project_id", lambda _: PROJECT_CLUSTER_LIST)
+    @patch("apps.api.BcsCcApi.list_project", lambda _: PROJECTS)
+    def test_list_bcs_clusters(self, *args, **kwargs):
+        clusters = CollectorHandler().list_bcs_clusters(BK_BIZ_ID)
+        self.assertEqual(len(clusters), 1)
+        self.assertEqual(BCS_CLUSTER_ID, clusters[0]["id"])
+
+    def test_list_workload_type(self, *args, **kwargs):
+        workload_type_list = CollectorHandler().list_workload_type()
+        self.assertEqual(
+            workload_type_list,
+            [WorkLoadType.DEPLOYMENT, WorkLoadType.JOB, WorkLoadType.DAEMON_SET, WorkLoadType.STATEFUL_SET],
+        )
+
+    @patch("apps.api.BcsApi.list_cluster_by_project_id", lambda _: PROJECT_CLUSTER_LIST)
+    @patch("apps.api.BcsCcApi.list_project", lambda _: PROJECTS)
+    @patch("apps.api.BcsCcApi.list_shared_clusters_ns", lambda _: SHARED_CLUSTERS_NS)
+    def test_list_namespace(self, *args, **kwargs):
+        expect_namespace_list = {"test-cluster-share-test1", "test-cluster-share-test2"}
+
+        result = CollectorHandler().list_namespace(bk_biz_id=BK_BIZ_ID, bcs_cluster_id=BCS_CLUSTER_ID)
+        result_ns = {r["id"] for r in result}
+        self.assertSetEqual(expect_namespace_list, result_ns)
