@@ -2034,16 +2034,20 @@ class CollectorViewSet(ModelViewSet):
 
     @list_route(methods=["GET"], url_path="list_namespace")
     def list_namespace(self, request):
-        cluster_id = request.GET.get("cluster_id")
-        return Response(CollectorHandler().list_namespace(bcs_cluster_id=cluster_id))
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        bk_biz_id = request.GET.get("bk_biz_id")
+        return Response(CollectorHandler().list_namespace(bk_biz_id=bk_biz_id, bcs_cluster_id=bcs_cluster_id))
 
     @list_route(methods=["GET"], url_path="list_topo")
     def list_topo(self, request):
         topo_type = request.GET.get("type")
+        bk_biz_id = request.GET.get("bk_biz_id")
         bcs_cluster_id = request.GET.get("bcs_cluster_id")
         namespace = request.GET.get("namespace", "")
         return Response(
-            CollectorHandler().list_topo(topo_type=topo_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace)
+            CollectorHandler().list_topo(
+                topo_type=topo_type, bk_biz_id=bk_biz_id, bcs_cluster_id=bcs_cluster_id, namespace=namespace
+            )
         )
 
     @list_route(methods=["GET"], url_path="get_labels")
@@ -2085,7 +2089,11 @@ class CollectorViewSet(ModelViewSet):
     @list_route(methods=["POST"], url_path="validate_container_config_yaml")
     def validate_container_config_yaml(self, request):
         data = self.params_valid(ValidateContainerCollectorYamlSerializer)
-        return Response(CollectorHandler().validate_container_config_yaml(data["yaml_config"]))
+        return Response(
+            CollectorHandler().validate_container_config_yaml(
+                data["bk_biz_id"], data["bcs_cluster_id"], data["yaml_config"]
+            )
+        )
 
     @list_route(methods=["POST"])
     def fast_create(self, request):
@@ -2242,7 +2250,8 @@ class CollectorViewSet(ModelViewSet):
             base64.b64encode(
                 CollectorHandler.container_dict_configs_to_yaml(
                     container_configs=data["configs"],
-                    add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+                    add_pod_label=data["add_pod_label"],
+                    extra_labels=data["extra_labels"],
                 ).encode("utf-8")
             )
         )
