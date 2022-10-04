@@ -205,7 +205,8 @@
               v-model="formData.bcs_cluster_id"
               searchable
               :disabled="isUpdate"
-              :clearable="false">
+              :clearable="false"
+              @change="handelClusterChange">
               <bk-option
                 v-for="(cluItem, cluIndex) of localClusterList"
                 :key="cluIndex"
@@ -1519,6 +1520,15 @@ export default {
     },
     isContainerHaveValue(container) {
       return Object.values(container)?.some(Boolean) || false;
+    },
+    handelClusterChange() {
+      // 切换集群清空 namespaces
+      this.formData.configs = this.formData.configs.map((conf) => {
+        return {
+          ...conf,
+          namespaces: [],
+        };
+      });
     },
   },
 };
