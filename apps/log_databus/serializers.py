@@ -361,6 +361,7 @@ class CollectorUpdateSerializer(serializers.Serializer):
 
 
 class UpdateContainerCollectorSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"))
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
         label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
@@ -1134,6 +1135,8 @@ class MatchLabelsSerializer(serializers.Serializer):
 
 
 class ValidateContainerCollectorYamlSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     yaml_config = serializers.CharField(label=_("YAML配置的base64"), allow_blank=True)
 
     def validate_yaml_config(self, value):

@@ -96,3 +96,12 @@ class _BcsCcApi(object):
             after_request=list_project_after,
             header_keys=["X-BKAPI-AUTHORIZATION"],
         )
+        self.list_shared_clusters_ns = DataAPI(
+            method="GET",
+            url=bcs_cc_url + "shared_clusters/{cluster_id}/",
+            module=self.MODULE,
+            url_keys=["cluster_id"],
+            description="获取公共集群下的命名空间信息",
+            header_keys=["X-BKAPI-AUTHORIZATION"],
+            before_request=bcs_cc_before_request,
+        )
