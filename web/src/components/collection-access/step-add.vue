@@ -62,7 +62,7 @@
             show-word-limit
             maxlength="50"
             data-test-id="baseMessage_input_fillEnglishName"
-            :disabled="isUpdate && !!(formData.collector_config_name_en) || isNotAdd"
+            :disabled="isUpdate && !!formData.collector_config_name_en"
             :placeholder="$t('dataSource.en_name_tips')">
           </bk-input>
           <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
@@ -205,9 +205,10 @@
               v-model="formData.bcs_cluster_id"
               searchable
               :disabled="isUpdate"
-              :clearable="false">
+              :clearable="false"
+              @change="handelClusterChange">
               <bk-option
-                v-for="(cluItem, cluIndex) of clusterList"
+                v-for="(cluItem, cluIndex) of localClusterList"
                 :key="cluIndex"
                 :id="cluItem.id"
                 :name="cluItem.name">
@@ -227,6 +228,7 @@
           ref="yamlEditorRef"
           value-type="base64"
           :yaml-form-data.sync="yamlFormData"
+          :cluster-id="formData.bcs_cluster_id"
         ></yaml-editor>
         <template v-else>
           <!-- 容器环境 日志类型 -->
@@ -511,6 +513,12 @@ export default {
     containerTargetDialog,
     yamlEditor,
   },
+  props: {
+    isUpdate: {
+      type: Boolean,
+      require: true,
+    },
+  },
   data() {
     return {
       guideUrl: window.COLLECTOR_GUIDE_URL,
@@ -564,7 +572,7 @@ export default {
           {
             letterIndex: 0, // 配置项字母下标
             isAllContainer: false, // 是否选中所有容器
-            namespaces: ['*'],
+            namespaces: [],
             container: {
               workload_type: '',
               workload_name: '',
@@ -661,10 +669,8 @@ export default {
           },
         ],
       },
-      isUpdate: false,
       isHandle: false,
       isClone: false,
-      isNotAdd: false, // 是否是新建时点击采集下发上一步而返回
       globals: {},
       localParams: {}, // 缓存的初始数据 用于对比编辑时表单是否有属性更改
       showIpSelectorDialog: false,
@@ -701,7 +707,7 @@ export default {
       conflictList: [], // 冲突列表
       conflictMessage: '', // 冲突信息
       clusterList: [], // 集群列表
-      nameSpacesSelectList: [{ name: this.$t('所有'), id: '*' }], // namespace 列表
+      nameSpacesSelectList: [], // namespace 列表
       allContainer: { // 所有容器时指定容器默认传空
         workload_type: '',
         workload_name: '',
@@ -761,7 +767,7 @@ export default {
         this.formData.configs.forEach((item) => {
           item.isAllContainer = false; // node环境时 所有容器，指定容器禁用
           item.container = this.allContainer;
-          item.namespaces = ['*'];
+          item.namespaces = [];
         });
       }
       return this.currentEnvironment === 'node_log_config';
@@ -782,6 +788,9 @@ export default {
     isCloneOrUpdate() {
       return this.isUpdate || this.isClone;
     },
+    localClusterList() {
+      return this.clusterList.filter(val => (this.isNode ? !val.is_shared : true));
+    },
   },
   watch: {
     currentEnvironment(nVal, oVal) {
@@ -791,6 +800,9 @@ export default {
       if (['std_log_config', 'container_log_config', 'node_log_config'].includes(nVal)) {
         this.formData.environment = 'container';
         !this.clusterList.length && this.getBcsClusterList();
+        if (nVal === 'node_log_config' && this.getIsSharedCluster()) { // 选中node环境时 如果存在已选的共享集群 则清空
+          this.formData.bcs_cluster_id = '';
+        }
         return;
       };
       this.formData.environment = nVal;
@@ -811,14 +823,12 @@ export default {
     },
   },
   created() {
-    this.isUpdate = this.$route.name !== 'collectAdd';
     this.isClone = this.$route.query?.type === 'clone';
-    this.isNotAdd = Boolean(this.$route.params.notAdd);
-    if (this.isNotAdd) this.$store.commit('updateRouterLeaveTip', false);
+    this.$store.commit('updateRouterLeaveTip', false);
     this.configBaseObj = deepClone(this.formData.configs[0]); // 生成配置项的基础对象
     this.getLinkData();
     // 克隆与编辑均进行数据回填
-    if (this.isUpdate || this.isClone || this.isNotAdd) {
+    if (this.isUpdate || this.isClone) {
       const cloneCollect = JSON.parse(JSON.stringify(this.curCollect));
       if (cloneCollect.environment === 'container') { // 容器环境
         this.isYaml = cloneCollect.yaml_config_enabled;
@@ -1035,6 +1045,11 @@ export default {
           return extraFillLength === 1;
         });
         if (!containerConfigValidate || !containerValidate || this.isExtraError) return false;
+        if (this.getIsSharedCluster() && this.formData.configs.some(conf => !conf.namespaces.length)) {
+          // 容器环境下选择了共享集群 但NameSpace为空
+          this.$bkMessage({ theme: 'error', message: this.$t('配置项命名空间不能为空') });
+          return false;
+        }
       }
       return true;
     },
@@ -1043,7 +1058,7 @@ export default {
       this.isHandle = true;
       const urlParams = {};
       let requestUrl;
-      if (this.isUpdate || this.isNotAdd) {
+      if (this.isUpdate) {
         urlParams.collector_config_id = Number(this.$route.params.collectorId);
         requestUrl = 'collect/updateCollection';
       } else {
@@ -1054,6 +1069,7 @@ export default {
         if (res.code === 0) {
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`, Object.assign({}, this.formData, params, res.data));
           this.$emit('stepChange');
+          this.$emit('update:is-update', true); // 新建成功,更新是否是编辑状态
           this.setDetail(res.data.collector_config_id);
         }
       })
@@ -1079,6 +1095,7 @@ export default {
         if (res.code === 0) {
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`,
             Object.assign({}, this.formData, params, res.data));
+          this.$emit('update:is-update', true); // 新建成功,更新是否是编辑状态
           this.$emit('stepChange');
           this.setDetail(res.data.collector_config_id);
         }
@@ -1260,7 +1277,7 @@ export default {
       });
     },
     async checkEnName(val) {
-      if (this.isUpdate || this.isNotAdd) return true;
+      if (this.isUpdate) return true;
       const result = await this.getEnNameIsRepeat(val);
       return result;
     },
@@ -1394,9 +1411,13 @@ export default {
         this.formData.configs[index].namespaces.splice(allIndex, 1);
       }
     },
+    // 当前所选集群是否共享集群
+    getIsSharedCluster() {
+      return this.clusterList?.find(cluster => cluster.id === this.formData.bcs_cluster_id)?.is_shared ?? false;
+    },
     getNameSpaceList(clusterID, isFirstUpdateSelect = false) {
       if (!clusterID || (this.isPhysicsEnvironment && this.isUpdate)) return;
-      const query = { cluster_id: clusterID, bk_biz_id: this.bkBizId };
+      const query = { bcs_cluster_id: clusterID, bk_biz_id: this.bkBizId };
       this.nameSpaceRequest = true;
       this.$http.request('container/getNameSpace', { query }).then((res) => {
         // 判断是否是第一次切换集群 如果是 则进行详情页namespace数据回显
@@ -1409,10 +1430,16 @@ export default {
           const setList = new Set([...namespaceList, ...resIDList]);
           setList.delete('*');
           const allList = [...setList].map(item => ({ id: item, name: item }));
-          this.nameSpacesSelectList = [{ name: this.$t('所有'), id: '*' }, ...allList];
+          this.nameSpacesSelectList = [...allList];
+          if (!this.getIsSharedCluster()) {
+            this.nameSpacesSelectList.unshift({ name: this.$t('所有'), id: '*' });
+          }
           return;
         }
-        this.nameSpacesSelectList = [{ name: this.$t('所有'), id: '*' }, ...res.data];
+        this.nameSpacesSelectList = [...res.data];
+        if (!this.getIsSharedCluster()) {
+          this.nameSpacesSelectList.unshift({ name: this.$t('所有'), id: '*' });
+        }
       })
         .catch((err) => {
           console.warn(err);
@@ -1493,6 +1520,15 @@ export default {
     },
     isContainerHaveValue(container) {
       return Object.values(container)?.some(Boolean) || false;
+    },
+    handelClusterChange() {
+      // 切换集群清空 namespaces
+      this.formData.configs = this.formData.configs.map((conf) => {
+        return {
+          ...conf,
+          namespaces: [],
+        };
+      });
     },
   },
 };
