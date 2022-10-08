@@ -388,7 +388,7 @@ class Command(BaseCommand):
     def batch_path_authorization(self, request, bk_token=None, bk_username=None):
         data = request.to_dict()
         path = "/api/c/compapi/v2/iam/authorization/batch_path/"
-        ok, message, _data = self.iam_client._client._call_iam_api(http_post, path, data, bk_token, bk_username)
+        ok, message, _data = self.iam_client._client._call_esb_api(http_post, path, data, bk_token, bk_username)
         if not ok:
             raise AuthAPIError(message)
         return _data
