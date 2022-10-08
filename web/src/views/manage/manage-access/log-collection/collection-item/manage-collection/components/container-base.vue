@@ -355,7 +355,13 @@ export default {
         extra_labels: [],
       };
       try {
-        const res = await this.$http.request('container/yamlJudgement', { data: { yaml_config: yamlConfig } });
+        const res = await this.$http.request('container/yamlJudgement', {
+          data: {
+            bk_biz_id: this.$store.state.bkBizId,
+            bcs_cluster_id: this.collectorData.bcs_cluster_id,
+            yaml_config: yamlConfig,
+          },
+        });
         const { parse_result: parseResult, parse_status: parseStatus } = res.data;
         if (Array.isArray(parseResult) && !parseStatus) return defaultConfigData; // 返回值若是数组则表示yaml解析出错
         if (parseStatus) return {

@@ -54,10 +54,10 @@ class GrafanaQueryHandler:
     ]
 
     CONDITION_CHOICES = [
-        {"id": "is", "name": "is", "placeholder": _("请输入，注意空格符号")},
-        {"id": "is one of", "name": "is one of", "placeholder": _("逗号分隔")},
-        {"id": "is not", "name": "is not", "placeholder": _("请输入，注意空格符号")},
-        {"id": "is not one of", "name": "is not one of", "placeholder": _("逗号分隔")},
+        {"id": "is", "name": "is", "placeholder": _("请选择或直接输入")},
+        {"id": "is one of", "name": "is one of", "placeholder": _("请选择或直接输入，逗号分隔")},
+        {"id": "is not", "name": "is not", "placeholder": _("请选择或直接输入")},
+        {"id": "is not one of", "name": "is not one of", "placeholder": _("请选择或直接输入，逗号分隔")},
         {"id": "gt", "name": ">", "placeholder": _("请选择或直接输入")},
         {"id": "gte", "name": ">=", "placeholder": _("请选择或直接输入")},
         {"id": "lt", "name": "<", "placeholder": _("请选择或直接输入")},
