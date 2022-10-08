@@ -1163,9 +1163,7 @@ export default {
           item.params = this.filterParams(item.params, item.collector_type);
         });
         containerFromData.extra_labels = extra_labels.filter(item => !(item.key === '' && item.value === ''));
-        if (this.isUpdate) {
-          return containerFromData;
-        } // 容器环境新增
+        // 容器环境新增
         return Object.assign(containerFromData, {
           bk_biz_id: this.bkBizId,
         });
@@ -1183,8 +1181,11 @@ export default {
         physicsFromData.collector_config_id = Number(this.$route.params.collectorId);
         delete physicsFromData.category_id;
         delete physicsFromData.collector_scenario_id;
-        return physicsFromData;
-      } // 物理环境新增
+        return Object.assign(physicsFromData, {
+          bk_biz_id: this.bkBizId,
+        });;
+      }
+      // 物理环境新增
       return Object.assign(physicsFromData, {
         bk_biz_id: this.bkBizId,
       });
