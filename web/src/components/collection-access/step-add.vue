@@ -295,29 +295,33 @@
                       {{$t('所有容器')}}
                     </bk-checkbox>
                     <div class="justify-bt container-btn-container">
-                      <span v-if="!isContainerHaveValue(conItem.container)"
-                            :class="{ 'span-box': true, 'none-hidden-dom': isNode }"
-                            v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
-                            :disabled="!!formData.bcs_cluster_id">
-                        <div :class="{
-                               'container-btn': true,
-                               'cluster-not-select': !formData.bcs_cluster_id ,
-                               disable: (isNode || conItem.isAllContainer)
-                             }"
-                             @click="handelShowDialog(conIndex, 'container',(isNode || conItem.isAllContainer))">
+                      <span
+                        v-if="!isContainerHaveValue(conItem.container)"
+                        v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
+                        :class="{ 'span-box': true, 'none-hidden-dom': isNode }"
+                        :disabled="!!formData.bcs_cluster_id">
+                        <div
+                          :class="{
+                            'container-btn': true,
+                            'cluster-not-select': !formData.bcs_cluster_id ,
+                            disable: (isNode || conItem.isAllContainer)
+                          }"
+                          @click="handelShowDialog(conIndex, 'container',(isNode || conItem.isAllContainer))">
                           <span class="bk-icon icon-plus-circle-yuan"></span>
                           <span>{{$t('指定容器')}}</span>
                         </div>
                       </span>
-                      <span v-if="!isSelectorHaveValue(conItem.label_selector)" class="span-box"
-                            v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
-                            :disabled="!!formData.bcs_cluster_id">
-                        <div :class="{
-                               'container-btn': true,
-                               'cluster-not-select': !formData.bcs_cluster_id ,
-                               disable: conItem.isAllContainer
-                             }"
-                             @click="handelShowDialog(conIndex, 'label', conItem.isAllContainer,conItem)">
+                      <span
+                        v-if="!isSelectorHaveValue(conItem.label_selector)" class="span-box"
+                        v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
+                        :disabled="!!formData.bcs_cluster_id">
+                        <div
+                          :class="{
+                            'container-btn': true,
+                            'cluster-not-select': !formData.bcs_cluster_id ,
+                            disable: conItem.isAllContainer
+                          }"
+                          @click="handelShowDialog(conIndex, 'label', conItem.isAllContainer,conItem)">
                           <span class="bk-icon icon-plus-circle-yuan"></span>
                           <span>{{$t('指定标签')}}</span>
                         </div>
@@ -699,13 +703,21 @@ export default {
       yamlFormData: {}, // yaml请求成功时的表格数据
       currentEnvironment: 'linux', // 当前选中的环境
       environmentList: [
-        { category: this.$t('物理环境'), btnList: [
-          { id: 'linux', img: LinuxSvg, name: 'Linux', isDisable: false },
-          { id: 'windows', img: WindowsSvg, name: 'Windows' }], isDisable: false },
-        { category: this.$t('容器环境'), btnList: [
-          { id: 'container_log_config', img: ContainerSvg, name: 'Container', isDisable: false },
-          { id: 'node_log_config', img: NodeSvg, name: 'Node', isDisable: false },
-          { id: 'std_log_config', img: StdoutSvg, name: this.$t('标准输出'), isDisable: false }] },
+        {
+          category: this.$t('物理环境'),
+          btnList: [
+            { id: 'linux', img: LinuxSvg, name: 'Linux', isDisable: false },
+            { id: 'windows', img: WindowsSvg, name: 'Windows', isDisable: false },
+          ],
+        },
+        {
+          category: this.$t('容器环境'),
+          btnList: [
+            { id: 'container_log_config', img: ContainerSvg, name: 'Container', isDisable: false },
+            { id: 'node_log_config', img: NodeSvg, name: 'Node', isDisable: false },
+            { id: 'std_log_config', img: StdoutSvg, name: this.$t('标准输出'), isDisable: false },
+          ],
+        },
       ],
       specifyName: { // 指定容器中文名
         workload_type: this.$t('应用类型'),
@@ -1193,7 +1205,7 @@ export default {
         delete physicsFromData.collector_scenario_id;
         return Object.assign(physicsFromData, {
           bk_biz_id: this.bkBizId,
-        });;
+        });
       }
       // 物理环境新增
       return Object.assign(physicsFromData, {
