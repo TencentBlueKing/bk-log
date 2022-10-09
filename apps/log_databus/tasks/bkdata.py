@@ -91,9 +91,7 @@ def create_bkdata_data_id(collector_config: CollectorConfig):
                 "data_source_tags": BKDATA_DATA_SOURCE_TAGS,
                 "data_region": BKDATA_DATA_REGION,
                 "data_source": BKDATA_DATA_SOURCE,
-                "data_encoding": collector_config.data_encoding
-                if collector_config.data_encoding
-                else META_DATA_ENCODING,
+                "data_encoding": META_DATA_ENCODING,  # 接入到计算平台是经过的kafka，此时kafka中的数据已经是utf-8，所以这里应该固定编码
                 "sensitivity": BKDATA_DATA_SENSITIVITY,
                 "description": collector_config.description,
                 "preassigned_data_id": collector_config.bk_data_id,
