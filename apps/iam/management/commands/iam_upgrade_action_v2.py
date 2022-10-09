@@ -32,7 +32,7 @@ from apps.iam import Permission, ActionEnum, ResourceEnum
 from apps.iam.handlers.actions import ActionMeta, get_action_by_id
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.log_databus.models import CollectorConfig
-from apps.log_search.models import LogIndexSet, Space
+from apps.log_search.models import LogIndexSet, Space, GlobalConfig
 from iam.api.http import http_post
 from iam.auth.models import ApiBatchAuthRequest as OldApiBatchAuthRequest, Subject, Action, ApiBatchAuthResourceWithPath
 from iam.contrib.iam_migration.migrator import IAMMigrator
@@ -72,6 +72,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("-c", "--concurrency", help="Concurrency of grant resource")
         parser.add_argument("-a", "--action")
+        parser.add_argument("-u", "--username")
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
@@ -96,10 +97,13 @@ class Command(BaseCommand):
         }
         self.iam_client = Permission.get_iam_client()
         self.system_id = settings.BK_IAM_SYSTEM_ID
+        self.username = ""
 
-    def handle(self, action=None, concurrency=None, **options):
+    def handle(self, action=None, concurrency=None, username=None, **options):
         start_time = time.time()
         print("[upgrade_iam_action_v2] ##### START #####")
+
+        self.upgrade_iam_model()
 
         global ACTIONS_TO_UPGRADE
 
@@ -112,13 +116,19 @@ class Command(BaseCommand):
         concurrency = int(concurrency) if concurrency else 50
         print("upgrade with concurrency: %s" % concurrency)
 
-        self.upgrade_iam_model()
+        # 按用户名过滤
+        self.username = username
+        if username:
+            print("upgrade for user: %s" % username)
+
         self.upgrade_policy(concurrency)
 
         end_time = time.time()
         print("[upgrade_iam_action_v2] ##### END #####, Cost: %d" % (end_time - start_time))
 
-        self.check_upgrade_polices()
+        check_result = self.check_upgrade_polices()
+        if check_result:
+            GlobalConfig.objects.update_or_create(config_id="IAM_V1_COMPATIBLE", defaults={"configs": False})
 
     def get_resource_name(self, resource_type, resource_id):
         if resource_type == ResourceEnum.BUSINESS.id:
@@ -187,11 +197,11 @@ class Command(BaseCommand):
             print(
                 "[grant_resource] [%d%%(%d/%d)] grant permission for action: %s, progress: %d%% (%d/%d)"
                 % (
-                    global_progress / global_total * 100,
+                    global_progress / global_total * 100 if global_total > 0 else 0,
                     global_progress,
                     global_total,
                     action.id,
-                    progress / total * 100,
+                    progress / total * 100 if total > 0 else 0,
                     progress,
                     total,
                 )
@@ -225,10 +235,10 @@ class Command(BaseCommand):
         print("##### CHECK RESULT #####")
         if not no_ok_actions:
             print("Congratulations! IAM upgrade successfully!!!")
-        else:
-            print(
-                "Sorry, maybe something wrong with IAM upgrade. Following actions not OK: %s" % ", ".join(no_ok_actions)
-            )
+            return True
+
+        print("Sorry, maybe something wrong with IAM upgrade. Following actions not OK: %s" % ", ".join(no_ok_actions))
+        return False
 
     def query_polices(self, action_id):
         """
@@ -252,6 +262,10 @@ class Command(BaseCommand):
                 self.system_id, {"action_id": action_id, "page": page, "page_size": page_size}
             )
             policies.extend(query_result["results"])
+
+        if self.username:
+            policies = [policy for policy in policies if policy["subject"]["id"] == self.username]
+
         return policies
 
     def expression_to_resource_paths(self, expression, paths: List):
@@ -388,7 +402,7 @@ class Command(BaseCommand):
     def batch_path_authorization(self, request, bk_token=None, bk_username=None):
         data = request.to_dict()
         path = "/api/c/compapi/v2/iam/authorization/batch_path/"
-        ok, message, _data = self.iam_client._client._call_iam_api(http_post, path, data, bk_token, bk_username)
+        ok, message, _data = self.iam_client._client._call_esb_api(http_post, path, data, bk_token, bk_username)
         if not ok:
             raise AuthAPIError(message)
         return _data
