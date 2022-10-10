@@ -2472,7 +2472,9 @@ class CollectorHandler(object):
 
             if self.data.yaml_config_enabled:
                 # yaml 模式，先反序列化解出来，再保存
-                result = self.validate_container_config_yaml(data["bk_biz_id"], data["bcs_cluster_id"], self.data.yaml_config)
+                result = self.validate_container_config_yaml(
+                    data["bk_biz_id"], data["bcs_cluster_id"], self.data.yaml_config
+                )
                 if not result["parse_status"]:
                     raise ContainerCollectConfigValidateYamlException()
                 container_configs = result["parse_result"]["configs"]
@@ -2546,7 +2548,9 @@ class CollectorHandler(object):
 
         self._authorization_collector(self.data)
         # 创建数据平台data_id
-        async_create_bkdata_data_id.delay(self.data.collector_config_id)
+        # 兼容平台账号
+        bkdata_username = data.get("bkdata_username")
+        async_create_bkdata_data_id.delay(self.data.collector_config_id, bkdata_username)
 
         container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
         for config in container_configs:

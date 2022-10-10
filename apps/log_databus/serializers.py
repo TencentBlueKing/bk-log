@@ -330,6 +330,7 @@ class CreateContainerCollectorSerializer(serializers.Serializer):
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
     yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
     yaml_config = serializers.CharField(label=_("yaml配置内容"), default="", allow_blank=True)
+    bkdata_username = serializers.CharField(label=_("数据平台用户"), required=False)
 
     def validate_yaml_config(self, value):
         try:
