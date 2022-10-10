@@ -327,6 +327,7 @@ class CreateContainerCollectorSerializer(serializers.Serializer):
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
     yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
     yaml_config = serializers.CharField(label=_("yaml配置内容"), default="", allow_blank=True)
+    platform_username = serializers.CharField(label=_("数据平台用户"), required=False)
 
     def validate_yaml_config(self, value):
         try:
@@ -993,7 +994,7 @@ class CollectorPluginCreateSerializer(MultiAttrCheckSerializer, serializers.Mode
 class CreateCollectorPluginInstanceSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"))
     bkdata_biz_id = serializers.IntegerField(label=_("数据平台业务ID"), required=False)
-    bkdata_username = serializers.CharField(label=_("数据平台用户"), required=False)
+    platform_username = serializers.CharField(label=_("数据平台用户"), required=False)
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
         label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
@@ -1010,7 +1011,7 @@ class CreateCollectorPluginInstanceSerializer(serializers.Serializer):
 
 
 class UpdateCollectorPluginInstanceSerializer(serializers.Serializer):
-    bkdata_username = serializers.CharField(label=_("数据平台用户"), required=False)
+    platform_username = serializers.CharField(label=_("数据平台用户"), required=False)
     collector_config_id = serializers.IntegerField(label=_("采集项ID"))
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
