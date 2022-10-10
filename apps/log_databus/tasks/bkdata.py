@@ -46,11 +46,11 @@ from apps.utils.log import logger
 
 
 @task(ignore_result=True)
-def async_create_bkdata_data_id(collector_config_id: int, bkdata_username: str = None):
-    create_bkdata_data_id(CollectorConfig.objects.get(collector_config_id=collector_config_id), bkdata_username)
+def async_create_bkdata_data_id(collector_config_id: int, platform_username: str = None):
+    create_bkdata_data_id(CollectorConfig.objects.get(collector_config_id=collector_config_id), platform_username)
 
 
-def create_bkdata_data_id(collector_config: CollectorConfig, bkdata_username: str = None):
+def create_bkdata_data_id(collector_config: CollectorConfig, platform_username: str = None):
     # 对应开关未开启
     toggle_switch = FeatureToggleObject.switch(name=FEATURE_BKDATA_DATAID)
     if not toggle_switch:
@@ -60,8 +60,8 @@ def create_bkdata_data_id(collector_config: CollectorConfig, bkdata_username: st
         return
 
     maintainers = {collector_config.updated_by, collector_config.created_by}
-    if bkdata_username:
-        maintainers.add(bkdata_username)
+    if platform_username:
+        maintainers.add(platform_username)
     maintainers.discard(ADMIN_REQUEST_USER)
     if not maintainers:
         raise BaseException(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
@@ -79,7 +79,7 @@ def create_bkdata_data_id(collector_config: CollectorConfig, bkdata_username: st
 
     BkDataAccessApi.deploy_plan_post(
         params={
-            "bk_username": bkdata_username or collector_config.get_updated_by(),
+            "bk_username": platform_username or collector_config.get_updated_by(),
             "data_scenario": BKDATA_DATA_SCENARIO,
             "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
             "permission": BKDATA_PERMISSION,

@@ -651,7 +651,7 @@ class CollectorHandler(object):
             return bk_data_id
 
         # 兼容平台账户
-        bk_username = getattr(instance, "__bkdata_username", None) or instance.get_updated_by()
+        bk_username = getattr(instance, "__platform_username", None) or instance.get_updated_by()
 
         # 创建 BKBase
         maintainers = {bk_username} if bk_username else {instance.updated_by, instance.created_by}
@@ -822,8 +822,8 @@ class CollectorHandler(object):
                 if params.get("is_allow_alone_data_id", True):
                     if self.data.etl_processor == ETLProcessorChoices.BKBASE.value:
                         # 兼容平台账号
-                        if params.get("bkdata_username"):
-                            setattr(self.data, "__bkdata_username", params["bkdata_username"])
+                        if params.get("platform_username"):
+                            setattr(self.data, "__platform_username", params["platform_username"])
                         # 创建
                         transfer_data_id = self.update_or_create_data_id(
                             self.data, etl_processor=ETLProcessorChoices.TRANSFER.value
@@ -2549,8 +2549,7 @@ class CollectorHandler(object):
         self._authorization_collector(self.data)
         # 创建数据平台data_id
         # 兼容平台账号
-        bkdata_username = data.get("bkdata_username")
-        async_create_bkdata_data_id.delay(self.data.collector_config_id, bkdata_username)
+        async_create_bkdata_data_id.delay(self.data.collector_config_id, data.get("platform_username"))
 
         container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
         for config in container_configs:
