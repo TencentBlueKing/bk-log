@@ -40,6 +40,8 @@ class CompatibleIAM(IAM):
                 compatibility_mode = True
 
         setattr(CompatibleIAM, "__compatibility_mode", compatibility_mode)
+
+        logger.info("[CompatibleIAM] in compatibility mode: %s", compatibility_mode)
         return compatibility_mode
 
     def _patch_policy_expression(self, expression):
@@ -70,7 +72,7 @@ class CompatibleIAM(IAM):
             data["resources"] = []
 
         ok, message, policies = self._client.policy_query(data)
-        if not policies and data["action"]["id"].endswith("_v2"):
+        if data["action"]["id"].endswith("_v2"):
             v1_data = copy.deepcopy(data)
 
             # 替换action_id
@@ -81,10 +83,22 @@ class CompatibleIAM(IAM):
                 if resource["type"] == "space":
                     resource["system"] = "bk_cmdb"
                     resource["type"] = "biz"
+                iam_path = resource.get("attribute", {}).get("_bk_iam_path_", "")
+                if "space" in iam_path:
+                    resource["attribute"]["_bk_iam_path_"] = iam_path.replace("space", "biz")
 
             v1_ok, v1_message, v1_policies = self._client.policy_query(v1_data)
             self._patch_policy_expression(v1_policies)
-            policies = v1_policies
+
+            if v1_policies:
+                if not policies:
+                    policies = v1_policies
+                else:
+                    # 将两个版本的 action 的策略组合起来
+                    policies = {
+                        "op": "OR",
+                        "content": [policies, v1_policies],
+                    }
 
         if not policies and not ok:
             raise AuthAPIError(message)
@@ -121,8 +135,19 @@ class CompatibleIAM(IAM):
 
                 for policy in action_policies:
                     # 与V2的策略做比对，如果V2是空，就用V1的
-                    if v1_policy["action"]["id"] == policy["action"]["id"] and not policy["condition"]:
+                    if v1_policy["action"]["id"] != policy["action"]["id"]:
+                        continue
+
+                    if not v1_policy["condition"]:
+                        continue
+
+                    if not policy["condition"]:
                         policy["condition"] = v1_policy["condition"]
+                    else:
+                        policy["condition"] = {
+                            "op": "OR",
+                            "content": [policy["condition"], v1_policy["condition"]],
+                        }
 
         if not ok:
             raise AuthAPIError(message)
