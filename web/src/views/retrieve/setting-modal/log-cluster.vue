@@ -210,7 +210,7 @@
             theme="primary"
             data-test-id="LogCluster_button_submit"
             :title="$t('保存')"
-            :disabled="!globalEditable || !isCanEdit"
+            :disabled="!globalEditable"
             :loading="isHandle"
             @click.stop.prevent="handleSubmit">
             {{ $t('保存') }}
@@ -249,7 +249,6 @@
 
 <script>
 import RuleTable from './rule-table';
-import { mapGetters } from 'vuex';
 
 export default {
   components: {
@@ -330,14 +329,6 @@ export default {
       isShowFingerTips: false,
       isActive: false,
     };
-  },
-  computed: {
-    ...mapGetters({
-      modifyClustering: 'retrieve/modifyClustering',
-    }),
-    isCanEdit() {
-      return this.isActive ? this.modifyClustering : true;
-    },
   },
   watch: {
     'formData.filter_rules': {
