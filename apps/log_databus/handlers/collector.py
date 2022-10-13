@@ -2598,33 +2598,36 @@ class CollectorHandler(object):
                 "std_index_set_id": bcs_std_index_set.index_set_id,
                 "container_config": [],
             }
-            if collector["path_collector_config"].collector_config_id not in path_container_config_dict:
+
+            collector_config_id = collector["path_collector_config"].collector_config_id
+            container_configs = path_container_config_dict.get(collector_config_id) or std_container_config_dict.get(
+                collector_config_id
+            )
+
+            if not container_configs:
                 result.append(rule)
                 continue
-            for path_container_config in path_container_config_dict[
-                collector["path_collector_config"].collector_config_id
-            ]:
+            for container_config in container_configs:
                 rule["container_config"].append(
                     {
-                        "id": path_container_config.id,
+                        "id": container_config.id,
                         "bk_data_id": collector["path_collector_config"].bk_data_id,
-                        "namespaces": path_container_config.namespaces,
-                        "any_namespace": path_container_config.any_namespace,
-                        "data_encoding": path_container_config.data_encoding,
-                        "params": path_container_config.params,
+                        "namespaces": container_config.namespaces,
+                        "any_namespace": container_config.any_namespace,
+                        "data_encoding": container_config.data_encoding,
+                        "params": container_config.params,
                         "container": {
-                            "workload_type": path_container_config.workload_type,
-                            "workload_name": path_container_config.workload_name,
-                            "container_name": path_container_config.container_name,
+                            "workload_type": container_config.workload_type,
+                            "workload_name": container_config.workload_name,
+                            "container_name": container_config.container_name,
                         },
                         "label_selector": {
-                            "match_labels": path_container_config.match_labels,
-                            "match_expressions": path_container_config.match_expressions,
+                            "match_labels": container_config.match_labels,
+                            "match_expressions": container_config.match_expressions,
                         },
-                        "all_container": path_container_config.all_container,
-                        "status": path_container_config.status,
-                        "enable_stdout": collector["path_collector_config"].collector_config_id
-                        in std_container_config_dict,
+                        "all_container": container_config.all_container,
+                        "status": container_config.status,
+                        "enable_stdout": collector_config_id in std_container_config_dict,
                         "stdout_conf": {"bk_data_id": collector["std_collector_config"].bk_data_id},
                     }
                 )
