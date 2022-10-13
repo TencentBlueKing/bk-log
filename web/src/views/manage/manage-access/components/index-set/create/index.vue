@@ -69,6 +69,7 @@
           </bk-form-item>
           <bk-form-item
             :label="$t('集群')"
+            v-if="scenarioId !== 'bkdata'"
             required
             property="storage_cluster_id">
             <bk-select
@@ -89,7 +90,7 @@
                 :id="option.storage_cluster_id"
                 :name="option.storage_cluster_name">
                 <div
-                  v-if="!(option.permission && option.permission.manage_es_source)"
+                  v-if="!(option.permission && option.permission[authorityMap.MANAGE_ES_SOURCE_AUTH])"
                   class="option-slot-container no-authority"
                   @click.stop>
                   <span class="text">{{ option.storage_cluster_name }}</span>
@@ -179,6 +180,7 @@ import SelectEs from './select-es';
 import AuthContainerPage from '@/components/common/auth-container-page';
 import { projectManages } from '@/common/util';
 import { mapGetters, mapState } from 'vuex';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   name: 'IndexSetCreate',
@@ -225,9 +227,12 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId', 'bkBizId', 'showRouterLeaveTip']),
+    ...mapState(['spaceUid', 'bkBizId', 'showRouterLeaveTip']),
     ...mapState('collect', ['curIndexSet']),
     ...mapGetters('globals', ['globalsData']),
+    authorityMap() {
+      return authorityMap;
+    },
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
@@ -265,16 +270,16 @@ export default {
         const isEdit = this.$route.name.endsWith('edit');
         this.isEdit = isEdit;
         const paramData = isEdit ? {
-          action_ids: ['manage_indices'],
+          action_ids: [authorityMap.MANAGE_INDICES_AUTH],
           resources: [{
             type: 'indices',
             id: this.$route.params.indexSetId,
           }],
         } : {
-          action_ids: ['create_indices'],
+          action_ids: [authorityMap.CREATE_INDICES_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         };
         const res = await this.$store.dispatch('checkAndGetData', paramData);
@@ -331,7 +336,7 @@ export default {
         const s1 = [];
         const s2 = [];
         for (const item of clusterRes.data) {
-          if (item.permission?.manage_es_source) {
+          if (item.permission?.[authorityMap.MANAGE_ES_SOURCE_AUTH]) {
             s1.push(item);
           } else {
             s2.push(item);
@@ -378,7 +383,7 @@ export default {
         this.$el.click(); // 因为下拉在loading上面所以需要关闭下拉
         this.basicLoading = true;
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_es_source'],
+          action_ids: [authorityMap.MANAGE_ES_SOURCE_AUTH],
           resources: [{
             type: 'es_source',
             id: option.storage_cluster_id,
@@ -399,7 +404,7 @@ export default {
       this.$refs.selectCollectionRef.openDialog();
     },
     addCollection(item) {
-      this.formData.storage_cluster_id = item.storage_cluster_id;
+      if (this.scenarioId === 'log') this.formData.storage_cluster_id = item.storage_cluster_id;
       this.formData.indexes.push(item);
     },
     // 删除采集项
@@ -442,8 +447,7 @@ export default {
         this.submitLoading = true;
         const requestBody = Object.assign({
           view_roles: [], // 兼容后端历史遗留代码
-          project_id: this.projectId,
-          bk_biz_id: this.bkBizId,
+          space_uid: this.spaceUid,
         }, this.formData);
         if (this.isShowTrace) {
           requestBody.is_trace_log = true;

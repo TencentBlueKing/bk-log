@@ -36,7 +36,6 @@ from apps.api import BkDataAccessApi, CCApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
-from apps.decorators import user_operation_record
 from apps.exceptions import ApiError, ApiRequestError, ApiResultError
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import BCS_COLLECTOR, BCS_DEPLOYMENT_TYPE, FEATURE_COLLECTOR_ITSM
@@ -99,6 +98,10 @@ from apps.log_databus.exceptions import (
     ModifyCollectorConfigException,
     ResultTableNotExistException,
     PublicESClusterNotExistException,
+    BcsClusterIdNotValidException,
+    NamespaceNotValidException,
+    NodeNotAllowedException,
+    AllNamespaceNotAllowedException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
@@ -107,9 +110,15 @@ from apps.log_databus.handlers.collector_scenario.utils import (
     deal_collector_scenario_param,
 )
 from apps.log_databus.handlers.etl_storage import EtlStorage
-from apps.log_databus.handlers.kafka import KafkaConsumerHandle
 from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.models import BcsRule, CleanStash, CollectorConfig, CollectorPlugin, ContainerCollectorConfig
+from apps.log_databus.models import (
+    BcsRule,
+    CleanStash,
+    CollectorConfig,
+    CollectorPlugin,
+    ContainerCollectorConfig,
+    DataLinkConfig,
+)
 from apps.log_databus.serializers import ContainerCollectorYamlSerializer
 from apps.log_databus.tasks.bkdata import async_create_bkdata_data_id
 from apps.log_esquery.utils.es_route import EsRoute
@@ -121,7 +130,6 @@ from apps.log_search.constants import (
 )
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import LogIndexSet, LogIndexSetData, ProjectInfo, Scenario
 from apps.models import model_to_dict
 from apps.utils.bcs import Bcs
 from apps.utils.cache import caches_one_hour
@@ -130,7 +138,12 @@ from apps.utils.function import map_if
 from apps.utils.local import get_local_param, get_request_username
 from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
+from apps.log_databus.handlers.kafka import KafkaConsumerHandle
+from apps.decorators import user_operation_record
+from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario, Space
 from apps.utils.time_handler import format_user_time_zone
+from bkm_space.define import SpaceTypeEnum
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class CollectorHandler(object):
@@ -318,9 +331,7 @@ class CollectorHandler(object):
         """
         result = context
         if not self.data.table_id:
-            collector_config.update(
-                {"table_id_prefix": f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_", "table_id": ""}
-            )
+            collector_config.update({"table_id_prefix": build_bk_table_id(self.data.bk_biz_id, ""), "table_id": ""})
             return collector_config
         table_id_prefix, table_id = self.data.table_id.split(".")
         collector_config.update({"table_id_prefix": table_id_prefix + "_", "table_id": table_id})
@@ -633,14 +644,14 @@ class CollectorHandler(object):
             bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=instance.bk_data_id,
                 data_link_id=instance.data_link_id,
-                data_name=f"{instance.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}_{instance.get_name()}",
+                data_name=build_bk_data_name(instance.get_bk_biz_id(), instance.get_name()),
                 description=instance.description,
                 encoding=META_DATA_ENCODING,
             )
             return bk_data_id
 
         # 兼容平台账户
-        bk_username = getattr(instance, "__bkdata_username", None) or instance.get_updated_by()
+        bk_username = getattr(instance, "__platform_username", None) or instance.get_updated_by()
 
         # 创建 BKBase
         maintainers = {bk_username} if bk_username else {instance.updated_by, instance.created_by}
@@ -811,8 +822,8 @@ class CollectorHandler(object):
                 if params.get("is_allow_alone_data_id", True):
                     if self.data.etl_processor == ETLProcessorChoices.BKBASE.value:
                         # 兼容平台账号
-                        if params.get("bkdata_username"):
-                            setattr(self.data, "__bkdata_username", params["bkdata_username"])
+                        if params.get("platform_username"):
+                            setattr(self.data, "__platform_username", params["platform_username"])
                         # 创建
                         transfer_data_id = self.update_or_create_data_id(
                             self.data, etl_processor=ETLProcessorChoices.TRANSFER.value
@@ -2173,7 +2184,7 @@ class CollectorHandler(object):
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=self.data.bk_data_id,
                 data_link_id=self.data.data_link_id,
-                data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name}",
+                data_name=build_bk_data_name(self.data.bk_biz_id, collector_config_name),
                 description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
@@ -2347,7 +2358,59 @@ class CollectorHandler(object):
 
         return None
 
+    @classmethod
+    def check_shared_cluster_namespace(cls, bk_biz_id, collector_type, bcs_cluster_id, namespace_list):
+        """
+        检测共享集群相关配置是否合法
+        1. 集群在项目下可见
+        2. 不允许配置Node节点日志采集
+        3. 不允许设置为all，也不允许为空(namespace设置)
+        4. 不允许设置不可见的namespace
+        """
+        bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
+        cluster_info = None
+        for c in bcs_clusters:
+            if c["cluster_id"] == bcs_cluster_id:
+                cluster_info = c
+                break
+
+        if cluster_info is None:
+            raise BcsClusterIdNotValidException()
+
+        space = Space.objects.get(bk_biz_id=bk_biz_id)
+        if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
+            if collector_type == ContainerCollectorType.NODE:
+                raise NodeNotAllowedException()
+
+            if not namespace_list:
+                raise AllNamespaceNotAllowedException()
+
+            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
+            # 配置的命名空间必须是有权限的命名空间的子集
+            if set(namespace_list) - set(project_id_to_ns.get(space.space_id)):
+                raise NamespaceNotValidException()
+
     def create_container_config(self, data):
+        # 使用采集插件补全参数
+        collector_plugin_id = data.get("collector_plugin_id")
+        if collector_plugin_id:
+            from apps.log_databus.handlers.collector_plugin.base import (
+                CollectorPluginHandler,
+                get_collector_plugin_handler,
+            )
+
+            collector_plugin = CollectorPlugin.objects.get(collector_plugin_id=collector_plugin_id)
+            plugin_handler: CollectorPluginHandler = get_collector_plugin_handler(
+                collector_plugin.etl_processor, collector_plugin_id
+            )
+            data = plugin_handler.build_instance_params(data)
+        data_link_id = (
+            data.get("data_link_id")
+            or DataLinkConfig.objects.filter(bk_biz_id__in=[0, data["bk_biz_id"]])
+            .order_by("data_link_id")
+            .first()
+            .data_link_id
+        )
         collector_config_params = {
             "bk_biz_id": data["bk_biz_id"],
             "collector_config_name": data["collector_config_name"],
@@ -2356,15 +2419,20 @@ class CollectorHandler(object):
             "custom_type": CustomTypeEnum.LOG.value,
             "category_id": data["category_id"],
             "description": data["description"] or data["collector_config_name"],
-            "data_link_id": int(data["data_link_id"]),
+            "data_link_id": int(data_link_id),
             "environment": Environment.CONTAINER,
             "bcs_cluster_id": data["bcs_cluster_id"],
             "add_pod_label": data["add_pod_label"],
             "extra_labels": data["extra_labels"],
             "yaml_config_enabled": data["yaml_config_enabled"],
             "yaml_config": data["yaml_config"],
+            "bkdata_biz_id": data.get("bkdata_biz_id"),
+            "collector_plugin_id": collector_plugin_id,
+            "is_display": data.get("is_display", True),
+            "etl_processor": data.get("etl_processor", ETLProcessorChoices.TRANSFER.value),
         }
-        if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=data["bk_biz_id"]):
+        bkdata_biz_id = data.get("bkdata_biz_id") or data["bk_biz_id"]
+        if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=bkdata_biz_id):
             logger.error(
                 "collector_config_name_en {collector_config_name_en} already exists".format(
                     collector_config_name_en=data["collector_config_name_en"]
@@ -2377,10 +2445,10 @@ class CollectorHandler(object):
             )
         # 判断是否已存在同bk_data_name, result_table_id
         bk_data_name = build_bk_data_name(
-            bk_biz_id=data["bk_biz_id"], collector_config_name_en=data["collector_config_name_en"]
+            bk_biz_id=bkdata_biz_id, collector_config_name_en=data["collector_config_name_en"]
         )
         result_table_id = build_result_table_id(
-            bk_biz_id=data["bk_biz_id"], collector_config_name_en=data["collector_config_name_en"]
+            bk_biz_id=bkdata_biz_id, collector_config_name_en=data["collector_config_name_en"]
         )
         if self._pre_check_bk_data_name(model_fields=collector_config_params, bk_data_name=bk_data_name):
             logger.error(f"bk_data_name {bk_data_name} already exists")
@@ -2402,11 +2470,22 @@ class CollectorHandler(object):
 
             if self.data.yaml_config_enabled:
                 # yaml 模式，先反序列化解出来，再保存
-                result = self.validate_container_config_yaml(self.data.yaml_config)
+                result = self.validate_container_config_yaml(
+                    data["bk_biz_id"], data["bcs_cluster_id"], self.data.yaml_config
+                )
                 if not result["parse_status"]:
                     raise ContainerCollectConfigValidateYamlException()
                 container_configs = result["parse_result"]["configs"]
             else:
+                # 效验共享集群命名空间是否在允许的范围
+                for config in data["configs"]:
+                    self.check_shared_cluster_namespace(
+                        bk_biz_id=data["bk_biz_id"],
+                        collector_type=config["collector_type"],
+                        bcs_cluster_id=data["bcs_cluster_id"],
+                        namespace_list=config["namespaces"],
+                    )
+
                 # 原生模式，直接通过结构化数据生成
                 container_configs = data["configs"]
 
@@ -2442,7 +2521,7 @@ class CollectorHandler(object):
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=self.data.bk_data_id,
                 data_link_id=self.data.data_link_id,
-                data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{data['collector_config_name']}",
+                data_name=build_bk_data_name(self.data.get_bk_biz_id(), data["collector_config_name"]),
                 description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
@@ -2467,7 +2546,8 @@ class CollectorHandler(object):
 
         self._authorization_collector(self.data)
         # 创建数据平台data_id
-        async_create_bkdata_data_id.delay(self.data.collector_config_id)
+        # 兼容平台账号
+        async_create_bkdata_data_id.delay(self.data.collector_config_id, data.get("platform_username"))
 
         container_configs = ContainerCollectorConfig.objects.filter(collector_config_id=self.data.collector_config_id)
         for config in container_configs:
@@ -2481,6 +2561,7 @@ class CollectorHandler(object):
         }
 
     def update_container_config(self, data):
+        bk_biz_id = data["bk_biz_id"]
         collector_config_update = {
             "collector_config_name": data["collector_config_name"],
             "description": data["description"] or data["collector_config_name"],
@@ -2495,13 +2576,25 @@ class CollectorHandler(object):
 
         if data["yaml_config_enabled"]:
             # yaml 模式，先反序列化解出来，覆盖到config字段上面
-            validate_result = self.validate_container_config_yaml(data["yaml_config"])
+            validate_result = self.validate_container_config_yaml(
+                bk_biz_id, data["bcs_cluster_id"], data["yaml_config"]
+            )
             if not validate_result["parse_status"]:
                 raise ContainerCollectConfigValidateYamlException()
             data["configs"] = validate_result["parse_result"]["configs"]
 
+        # 效验共享集群命名空间是否在允许的范围
+        for config in data["configs"]:
+            self.check_shared_cluster_namespace(
+                bk_biz_id=bk_biz_id,
+                collector_type=config["collector_type"],
+                bcs_cluster_id=data["bcs_cluster_id"],
+                namespace_list=config["namespaces"],
+            )
+
         for key, value in collector_config_update.items():
             setattr(self.data, key, value)
+
         try:
             self.data.save()
         except IntegrityError:
@@ -2576,8 +2669,8 @@ class CollectorHandler(object):
             path_container_config_dict[path_container_config.collector_config_id].append(path_container_config)
         for std_container_config in std_container_config_list:
             std_container_config_dict[std_container_config.parent_container_config_id].append(std_container_config)
-        project_id = BcsRule.objects.get(id=list(rule_dict.keys())[0]).bcs_project_id
-        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=project_id)
+        bcs_project_id = BcsRule.objects.get(id=list(rule_dict.keys())[0]).bcs_project_id
+        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=bcs_project_id)
         result = []
         for rule_id, collector in rule_dict.items():
             rule = {
@@ -2684,7 +2777,7 @@ class CollectorHandler(object):
         )
         new_path_cls_index_set, new_std_cls_index_set = self.create_or_update_bcs_project_index_set(
             bcs_project_id=data["project_id"],
-            project_id=ProjectInfo.get_project(biz_id=data["bk_biz_id"])["project_id"],
+            space_uid=bk_biz_id_to_space_uid(data["bk_biz_id"]),
             path_index={
                 "bk_biz_id": data["bk_biz_id"],
                 "result_table_id": path_collector_config.table_id,
@@ -2697,6 +2790,7 @@ class CollectorHandler(object):
                 "result_table_name": std_collector_config.collector_config_name,
                 "time_field": "dtEventTimeStamp",
             },
+            storage_cluster_id=conf["storage_cluster_id"],
         )
         container_collector_config_list = []
         for config in data["config"]:
@@ -2771,13 +2865,15 @@ class CollectorHandler(object):
             "stdout_conf": {"bk_data_id": std_collector_config.bk_data_id},
         }
 
-    def create_or_update_bcs_project_index_set(self, bcs_project_id, path_index, std_index, project_id):
+    def create_or_update_bcs_project_index_set(
+        self, bcs_project_id, path_index, std_index, space_uid, storage_cluster_id
+    ):
         src_index_list = LogIndexSet.objects.filter(bcs_project_id=bcs_project_id)
         if not src_index_list:
             new_path_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_path_log_{}".format(bcs_project_id),
-                project_id=project_id,
-                storage_cluster_id=None,
+                space_uid=space_uid,
+                storage_cluster_id=storage_cluster_id,
                 scenario_id="log",
                 view_roles=None,
                 indexes=[path_index],
@@ -2787,8 +2883,8 @@ class CollectorHandler(object):
             )
             new_std_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_stdout_log_{}".format(bcs_project_id),
-                project_id=project_id,
-                storage_cluster_id=None,
+                space_uid=space_uid,
+                storage_cluster_id=storage_cluster_id,
                 scenario_id="log",
                 view_roles=None,
                 indexes=[std_index],
@@ -2862,8 +2958,7 @@ class CollectorHandler(object):
         self.data.bk_data_id = collector_scenario.update_or_create_data_id(
             bk_data_id=self.data.bk_data_id,
             data_link_id=self.data.data_link_id,
-            data_name=f"{self.data.bk_biz_id}_{settings.TABLE_ID_PREFIX}_"
-            f"{collector_config_params['collector_config_name']}",
+            data_name=build_bk_data_name(self.data.bk_biz_id, collector_config_params["collector_config_name"]),
             description=collector_config_params["description"]
             if collector_config_params["description"]
             else collector_config_params["collector_config_name_en"],
@@ -3238,7 +3333,10 @@ class CollectorHandler(object):
         if not bk_biz_id:
             return []
         bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
-        return [{"name": cluster["cluster_name"], "id": cluster["cluster_id"]} for cluster in bcs_clusters]
+        return [
+            {"name": cluster["cluster_name"], "id": cluster["cluster_id"], "is_shared": cluster["is_shared"]}
+            for cluster in bcs_clusters
+        ]
 
     def list_workload_type(self):
         toggle = FeatureToggleObject.toggle(BCS_DEPLOYMENT_TYPE)
@@ -3248,7 +3346,22 @@ class CollectorHandler(object):
             else [WorkLoadType.DEPLOYMENT, WorkLoadType.JOB, WorkLoadType.DAEMON_SET, WorkLoadType.STATEFUL_SET]
         )
 
-    def list_namespace(self, bcs_cluster_id):
+    def list_namespace(self, bk_biz_id, bcs_cluster_id):
+        bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
+        cluster_info = None
+        for c in bcs_clusters:
+            if c["cluster_id"] == bcs_cluster_id:
+                cluster_info = c
+                break
+
+        if cluster_info is None:
+            raise BcsClusterIdNotValidException()
+
+        space = Space.objects.get(bk_biz_id=bk_biz_id)
+        if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
+            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
+            return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_id, [])]
+
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         try:
             namespaces = api_instance.list_namespace().to_dict()
@@ -3257,12 +3370,20 @@ class CollectorHandler(object):
             raise BCSApiException(BCSApiException.MESSAGE.format(error=e))
         if not namespaces.get("items"):
             return []
+
         return [
             {"id": namespace["metadata"]["name"], "name": namespace["metadata"]["name"]}
             for namespace in namespaces["items"]
         ]
 
-    def list_topo(self, topo_type, bcs_cluster_id, namespace):
+    def list_topo(self, topo_type, bk_biz_id, bcs_cluster_id, namespace):
+        namespace_list = namespace.split(",")
+
+        collector_type = (
+            ContainerCollectorType.NODE if topo_type == TopoType.NODE.value else ContainerCollectorType.CONTAINER
+        )
+        self.check_shared_cluster_namespace(bk_biz_id, collector_type, bcs_cluster_id, namespace_list)
+
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         result = {"id": bcs_cluster_id, "name": bcs_cluster_id, "type": "cluster"}
         if topo_type == TopoType.NODE.value:
@@ -3275,8 +3396,7 @@ class CollectorHandler(object):
             return result
         if topo_type == TopoType.POD.value:
             result["children"] = []
-            if namespace:
-                namespace_list = namespace.split(",")
+            if namespace_list:
                 for namespace_item in namespace_list:
                     namespace_result = {"id": namespace_item, "name": namespace_item, "type": "namespace"}
                     pods = api_instance.list_namespaced_pod(namespace=namespace_item).to_dict()
@@ -3389,7 +3509,7 @@ class CollectorHandler(object):
             return []
         return self.generate_objs(workload_handler(namespace=namespace).to_dict())
 
-    def validate_container_config_yaml(self, yaml_config: str):
+    def validate_container_config_yaml(self, bk_biz_id, bcs_cluster_id, yaml_config: str):
         """
         解析容器日志yaml配置
         """
@@ -3473,9 +3593,27 @@ class CollectorHandler(object):
         container_configs = []
 
         for config in slz.validated_data:
+            log_config_type = config["logConfigType"]
+
+            # 校验配置
+            try:
+                self.check_shared_cluster_namespace(
+                    bk_biz_id=bk_biz_id,
+                    collector_type=log_config_type,
+                    bcs_cluster_id=bcs_cluster_id,
+                    namespace_list=config.get("namespaceSelector", {}).get("matchNames", []),
+                )
+            except Exception as e:  # noqa
+                return {
+                    "origin_text": yaml_config,
+                    "parse_status": False,
+                    "parse_result": [
+                        {"start_line_number": 0, "end_line_number": 0, "message": _("配置校验失败: {err}").format(err=e)}
+                    ],
+                }
+
             add_pod_label = config["addPodLabel"]
             extra_labels = config.get("extMeta", {})
-            log_config_type = config["logConfigType"]
             conditions = convert_filters_to_collector_condition(config.get("filters", []), config.get("delimiter", ""))
 
             match_expressions = config.get("labelSelector", {}).get("matchExpressions", [])
@@ -3794,6 +3932,20 @@ def get_random_public_cluster_id() -> int:
     return 0
 
 
+def build_bk_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
+    """
+    根据bk_biz_id和collector_config_name_en构建table_id
+    """
+    bk_biz_id = int(bk_biz_id)
+    if bk_biz_id >= 0:
+        bk_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+    else:
+        bk_table_id = (
+            f"{settings.TABLE_SPACE_PREFIX}_{-bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+        )
+    return bk_table_id
+
+
 def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
     """
     根据bk_biz_id和collector_config_name_en构建bk_data_name
@@ -3801,8 +3953,13 @@ def build_bk_data_name(bk_biz_id: int, collector_config_name_en: str) -> str:
     @param collector_config_name_en:
     @return:
     """
-    bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
-
+    bk_biz_id = int(bk_biz_id)
+    if bk_biz_id >= 0:
+        bk_data_name = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+    else:
+        bk_data_name = (
+            f"{settings.TABLE_SPACE_PREFIX}_{-bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collector_config_name_en}"
+        )
     return bk_data_name
 
 
@@ -3813,5 +3970,11 @@ def build_result_table_id(bk_biz_id: int, collector_config_name_en: str) -> str:
     @param collector_config_name_en:
     @return:
     """
-    result_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
+    bk_biz_id = int(bk_biz_id)
+    if bk_biz_id >= 0:
+        result_table_id = f"{bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
+    else:
+        result_table_id = (
+            f"{settings.TABLE_SPACE_PREFIX}_{-bk_biz_id}_{settings.TABLE_ID_PREFIX}.{collector_config_name_en}"
+        )
     return result_table_id

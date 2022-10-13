@@ -64,9 +64,7 @@ def shutdown_collector_warm_storage_config(cluster_id):
                 {
                     "table_id": collector.table_id,
                     "default_storage": "elasticsearch",
-                    "default_storage_config": {
-                        "warm_phase_days": 0,
-                    },
+                    "default_storage_config": {"warm_phase_days": 0},
                 }
             )
         except Exception as e:  # pylint: disable=broad-except
@@ -115,7 +113,7 @@ def sync_storage_capacity():
 
     cluster_biz_cnt_map = defaultdict(lambda: defaultdict(int))
     for index_set in LogIndexSet.objects.all():
-        cluster_biz_cnt_map[index_set.storage_cluster_id][index_set.project_id] += 1
+        cluster_biz_cnt_map[index_set.storage_cluster_id][index_set.space_uid] += 1
 
     for _cluster in cluster_obj:
         try:
@@ -163,13 +161,7 @@ def sync_storage_capacity():
 def query(cluster_id):
     def get(url):
         try:
-            return BkLogApi.es_route(
-                {
-                    "scenario_id": "es",
-                    "storage_cluster_id": cluster_id,
-                    "url": url,
-                }
-            )
+            return BkLogApi.es_route({"scenario_id": "es", "storage_cluster_id": cluster_id, "url": url})
         except Exception as e:  # pylint:disable=broad-except
             logger.exception(f"request es info error {e}")
             return None

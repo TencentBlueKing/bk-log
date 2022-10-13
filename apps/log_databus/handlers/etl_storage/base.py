@@ -69,11 +69,9 @@ class EtlStorage(object):
         根据RT表配置返回etl_config类型
         """
         separator_node_action = result_table_config.get("option", {}).get("separator_node_action")
-        return {
-            "regexp": "bk_log_regexp",
-            "delimiter": "bk_log_delimiter",
-            "json": "bk_log_json",
-        }.get(separator_node_action, "bk_log_text")
+        return {"regexp": "bk_log_regexp", "delimiter": "bk_log_delimiter", "json": "bk_log_json"}.get(
+            separator_node_action, "bk_log_text"
+        )
 
     def etl_preview(self, data, etl_params) -> list:
         """
@@ -224,6 +222,7 @@ class EtlStorage(object):
         :param es_shards: es分片数
         :param index_settings: 索引配置
         """
+        from apps.log_databus.handlers.collector import build_result_table_id
 
         # ES 配置
         es_config = get_es_config(instance.get_bk_biz_id())
@@ -263,7 +262,7 @@ class EtlStorage(object):
         params = {
             "bk_data_id": instance.bk_data_id,
             # 必须为 库名.表名
-            "table_id": f"{instance.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}.{table_id}",
+            "table_id": build_result_table_id(instance.get_bk_biz_id(), table_id),
             "is_enable": True,
             "table_name_zh": instance.get_name(),
             "is_custom_table": True,
@@ -289,6 +288,7 @@ class EtlStorage(object):
             "field_list": [],
             "warm_phase_days": 0,
             "warm_phase_settings": {},
+            "is_sync_db": False,  # ES的index创建，不做同步创建，走异步任务执行
         }
         index_settings = index_settings or {}
         params["default_storage_config"]["index_settings"].update(index_settings)

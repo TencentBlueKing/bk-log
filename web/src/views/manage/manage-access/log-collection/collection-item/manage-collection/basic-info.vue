@@ -218,6 +218,7 @@
 import { mapState } from 'vuex';
 import { formatDate } from '@/common/util';
 import containerBase from './components/container-base';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   components: {
@@ -239,7 +240,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId']),
+    ...mapState(['spaceUid']),
     getEventIDStr() {
       return this.collectorData.params.winlog_event_id?.join(',') || '';
     },
@@ -324,14 +325,14 @@ export default {
         name: routeName,
         params,
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
     },
     async getEditAuth() {
       try {
         const paramData = {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: this.$route.params.collectorId,

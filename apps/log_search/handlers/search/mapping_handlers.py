@@ -48,7 +48,6 @@ from apps.log_search.exceptions import (
 )
 from apps.log_search.models import (
     LogIndexSet,
-    ProjectInfo,
     Scenario,
     UserIndexSetConfig,
 )
@@ -669,16 +668,12 @@ class MappingHandlers(object):
         @return:
         """
         log_index_set_obj = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
-        project_id = log_index_set_obj.project_id
-        if not project_id:
-            return False
-        project_obj = ProjectInfo.objects.filter(project_id=project_id).first()
-        if not project_obj:
+        if not log_index_set_obj:
             return False
         # 如果第三方es的话设置为ip_topo_switch为False
         if log_index_set_obj.scenario_id == Scenario.ES:
             return False
-        return project_obj.ip_topo_switch
+        return True
 
     @classmethod
     def analyze_fields(cls, final_fields_list: List[Dict[str, Any]]) -> dict:

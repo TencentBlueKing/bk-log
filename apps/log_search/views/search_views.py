@@ -103,11 +103,11 @@ class SearchViewSet(APIViewSet):
     )
     def list(self, request, *args, **kwargs):
         """
-        @api {get} /search/index_set/?project_id=$project_id 01_搜索-索引集列表
+        @api {get} /search/index_set/?space_uid=$space_uid 01_搜索-索引集列表
         @apiDescription 用户有权限的索引集列表
         @apiName search_index_set
         @apiGroup 11_Search
-        @apiParam {Int} project_id 项目id
+        @apiParam {String} space_uid 空间唯一标识
         @apiSuccess {Int} index_set_id 索引集ID
         @apiSuccess {String} index_set_name 索引集名称
         @apiSuccess {Boolean} is_favorite 索引集为收藏索引集
@@ -140,7 +140,7 @@ class SearchViewSet(APIViewSet):
         }
         """
         data = self.params_valid(SearchIndexSetScopeSerializer)
-        return Response(IndexSetHandler().get_user_index_set(data.get("project_id")))
+        return Response(IndexSetHandler().get_user_index_set(data["space_uid"]))
 
     @detail_route(methods=["GET"], url_path="bizs")
     def bizs(self, request, *args, **kwargs):
@@ -445,8 +445,7 @@ class SearchViewSet(APIViewSet):
         # add user_operation_record
         operation_record = {
             "username": get_request_username(),
-            "biz_id": 0,
-            "project_id": tmp_index_obj.project_id,
+            "space_uid": tmp_index_obj.space_uid,
             "record_type": UserOperationTypeEnum.EXPORT,
             "record_object_id": index_set_id,
             "action": UserOperationActionEnum.START,
@@ -772,22 +771,22 @@ class SearchViewSet(APIViewSet):
                 {
                     "operator": "is",
                     "label": "is",
-                    "placeholder": _("请输入，注意空格符号")
+                    "placeholder": _("请选择或直接输入")
                 },
                 {
                     "operator": "is one of",
                     "label": "is one of "，
-                    "placeholder": _("逗号分隔")
+                    "placeholder": _("请选择或直接输入，逗号分隔")
                 },
             ],
             "result": true
         }
         """
         data = [
-            {"operator": "is", "label": _("is"), "placeholder": _("请输入，注意空格符号")},
-            {"operator": "is one of", "label": _("is one of"), "placeholder": _("逗号分隔")},
-            {"operator": "is not", "label": _("is not"), "placeholder": _("请输入，注意空格符号")},
-            {"operator": "is not one of", "label": _("is not one of"), "placeholder": _("逗号分隔")},
+            {"operator": "is", "label": _("is"), "placeholder": _("请选择或直接输入")},
+            {"operator": "is one of", "label": _("is one of"), "placeholder": _("请选择或直接输入，逗号分隔")},
+            {"operator": "is not", "label": _("is not"), "placeholder": _("请选择或直接输入")},
+            {"operator": "is not one of", "label": _("is not one of"), "placeholder": _("请选择或直接输入，逗号分隔")},
             {"operator": "gt", "label": _("大于"), "placeholder": _("请选择或直接输入")},
             {"operator": "gte", "label": _("大于等于"), "placeholder": _("请选择或直接输入")},
             {"operator": "lt", "label": _("小于"), "placeholder": _("请选择或直接输入")},

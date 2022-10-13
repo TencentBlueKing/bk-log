@@ -45,6 +45,7 @@
             :container-loading.sync="containerLoading"
             :operate-type="operateType"
             :is-physics.sync="isPhysics"
+            :is-update.sync="isUpdate"
             @stepChange="(num) => stepChange(num, 'add')" />
           <step-issued
             v-if="curStep === 2"
@@ -80,6 +81,7 @@
             :operate-type="operateType"
             :container-loading.sync="containerLoading"
             :is-physics.sync="isPhysics"
+            :is-update.sync="isUpdate"
             @stepChange="(num) => stepChange(num, 'add')" />
           <step-issued
             v-if="(curStep === 2 && !isSwitch) || (curStep === 1 && isSwitch)"
@@ -125,6 +127,7 @@ import stepField from './step-field';
 import stepStorage from './step-storage.vue';
 import stepResult from './step-result';
 import advanceCleanLand from '@/components/collection-access/advance-clean-land';
+import * as authorityMap from '../../common/authority-map';
 
 export default {
   name: 'AccessSteps',
@@ -143,6 +146,7 @@ export default {
       basicLoading: true,
       isCleaning: false,
       isSubmit: false,
+      isUpdate: false, // 判断第一步是否是处于编辑状态
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
       operateType: '',
       curStep: 1, // 组件步骤
@@ -162,6 +166,7 @@ export default {
     }),
     ...mapGetters('collect', ['curCollect']),
     ...mapGetters(['bkBizId']),
+    ...mapGetters(['spaceUid']),
     isCommon() {
       return ['add', 'edit'].some(item => item === this.operateType);
     },
@@ -207,13 +212,13 @@ export default {
     async initPage() {
       try {
         const paramData = this.$route.name === 'collectAdd' ? {
-          action_ids: ['create_collection'],
+          action_ids: [authorityMap.CREATE_COLLECTION_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         } : {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: this.$route.params.collectorId,
@@ -232,7 +237,8 @@ export default {
       }
 
       const routeType = this.$route.name.toLowerCase().replace('collect', '');
-      const { query: { type } } = this.$route;
+      const { query: { type }, name: routeName } = this.$route;
+      this.isUpdate = routeName !== 'collectAdd'; // 判断是否是更新
       if ((routeType !== 'add' && !this.$route.params.notAdd) || type === 'clone') { // 克隆时 请求初始数据
         try {
           const detailRes = await this.getDetail();

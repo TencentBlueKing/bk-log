@@ -28,7 +28,7 @@ from ...log_databus.handlers.clean import CleanHandler
 from ...log_databus.handlers.collector import CollectorHandler
 from ...log_databus.utils.bkdata_clean import BKDataCleanUtils
 from ...log_databus.utils.clean import CleanFilterUtils
-from ...log_search.models import ProjectInfo
+from ...log_search.models import ProjectInfo, Space
 
 CREATE_CLEAN_STASH_PARAMS = {
     "name": "test",
@@ -57,9 +57,7 @@ PARAMS = {
     "category_id": "application",
     "target_object_type": "HOST",
     "target_node_type": "TOPO",
-    "target_nodes": [
-        {"bk_inst_id": 33, "bk_obj_id": "module"},
-    ],
+    "target_nodes": [{"bk_inst_id": 33, "bk_obj_id": "module"}],
     "data_encoding": "UTF-8",
     "bk_data_name": "abc",
     "description": "这是一个描述",
@@ -110,6 +108,15 @@ PROJECT_INFO = {
     "bk_biz_id": 706,
     "bk_app_code": "log-search-4",
     "time_zone": "Asia/Shanghai",
+}
+
+SPACE_INFO = {
+    "space_uid": "bkcc__706",
+    "bk_biz_id": 706,
+    "space_type_id": "bkcc",
+    "space_type_name": "业务",
+    "space_id": "706",
+    "space_name": "test",
 }
 
 
@@ -206,3 +213,4 @@ class TestClean(TestCase):
     @classmethod
     def _init_project_info(cls):
         ProjectInfo.objects.create(**PROJECT_INFO)
+        Space.objects.create(**SPACE_INFO)

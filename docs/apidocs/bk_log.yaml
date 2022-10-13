@@ -151,7 +151,7 @@
   method: POST
   api_type: query
   comp_codename: generic.v2.bk_log.bk_log_component
-  dest_path: /api/v1/search/index_set/
+  dest_path: /api/v1/index_set/
   dest_http_method: POST
   is_hidden: True
 
@@ -162,7 +162,7 @@
   method: PUT
   api_type: query
   comp_codename: generic.v2.bk_log.bk_log_component
-  dest_path: /api/v1/search/index_set/
+  dest_path: /api/v1/index_set/
   dest_http_method: PUT
   is_hidden: True
 
@@ -173,7 +173,7 @@
   method: POST
   api_type: query
   comp_codename: generic.v2.bk_log.bk_log_component
-  dest_path: /api/v1/search/index_set/replace/
+  dest_path: /api/v1/index_set/replace/
   dest_http_method: POST
   is_hidden: True
 
@@ -186,6 +186,28 @@
   comp_codename: generic.v2.bk_log.bk_log_component
   dest_path: /api/v1/databus/collectors/{collector_config_id}/tail/
   dest_http_method: GET
+  is_hidden: True
+
+- path: /v2/bk_log/databus_collectors/list_bcs_clusters/
+  name: databus_collector_list_bcs_clusters
+  label: 日志平台-获取集群列表
+  label_en: bk_log list bcs clusters
+  method: GET
+  api_type: query
+  comp_codename: generic.v2.bk_log.bk_log_component
+  dest_path: /api/v1/databus/collectors/list_bcs_clusters/
+  dest_http_method: GET
+  is_hidden: True
+
+- path: /v2/bk_log/databus_collectors/validate_container_config_yaml/
+  name: databus_collector_validate_container_config_yaml
+  label: 日志平台-集群日志采集Yaml配置校验
+  label_en: bk_log validate container config yaml
+  method: POST
+  api_type: query
+  comp_codename: generic.v2.bk_log.bk_log_component
+  dest_path: /api/v1/databus/collectors/validate_container_config_yaml/
+  dest_http_method: POST
   is_hidden: True
 
 - path: /v2/bk_log/databus_collectors/{collector_config_id}/task_status/
