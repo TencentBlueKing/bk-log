@@ -2366,22 +2366,16 @@ class CollectorHandler(object):
         3. 不允许设置为all，也不允许为空(namespace设置)
         4. 不允许设置不可见的namespace
         """
-        bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
-        cluster_info = None
-        for c in bcs_clusters:
-            if c["cluster_id"] == bcs_cluster_id:
-                cluster_info = c
-                break
+        cluster_info = self.get_cluster_info(bk_biz_id, bcs_cluster_id)
 
-        if cluster_info is None:
-            raise BcsClusterIdNotValidException()
+        if not cluster_info["is_shared"]:
+            return
 
-        if cluster_info["is_shared"]:
-            if collector_type == ContainerCollectorType.NODE:
-                raise NodeNotAllowedException()
+        if collector_type == ContainerCollectorType.NODE:
+            raise NodeNotAllowedException()
 
-            if not namespace_list:
-                raise AllNamespaceNotAllowedException()
+        if not namespace_list:
+            raise AllNamespaceNotAllowedException()
 
         allowed_namespaces = {ns["id"] for ns in self.list_namespace(bk_biz_id, bcs_cluster_id)}
 
@@ -3348,7 +3342,7 @@ class CollectorHandler(object):
             else [WorkLoadType.DEPLOYMENT, WorkLoadType.JOB, WorkLoadType.DAEMON_SET, WorkLoadType.STATEFUL_SET]
         )
 
-    def list_namespace(self, bk_biz_id, bcs_cluster_id):
+    def get_cluster_info(self, bk_biz_id, bcs_cluster_id):
         bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
         cluster_info = None
         for c in bcs_clusters:
@@ -3358,7 +3352,10 @@ class CollectorHandler(object):
 
         if cluster_info is None:
             raise BcsClusterIdNotValidException()
+        return cluster_info
 
+    def list_namespace(self, bk_biz_id, bcs_cluster_id):
+        cluster_info = self.get_cluster_info(bk_biz_id, bcs_cluster_id)
         space = Space.objects.get(bk_biz_id=bk_biz_id)
         if cluster_info["is_shared"]:
             if space.space_type_id == SpaceTypeEnum.BCS.value:
