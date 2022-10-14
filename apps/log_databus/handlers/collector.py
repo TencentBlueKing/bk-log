@@ -32,7 +32,7 @@ from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
-from apps.api import BkDataAccessApi, CCApi
+from apps.api import BkDataAccessApi, CCApi, BcsCcApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
@@ -3358,9 +3358,24 @@ class CollectorHandler(object):
             raise BcsClusterIdNotValidException()
 
         space = Space.objects.get(bk_biz_id=bk_biz_id)
-        if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
-            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
-            return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_id, [])]
+        if cluster_info["is_shared"]:
+            if space.space_type_id == SpaceTypeEnum.BCS.value:
+                project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
+                return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_id, [])]
+            elif space.space_type_id == SpaceTypeEnum.BKCC.value:
+                # 如果是业务，先获取业务关联了哪些项目，再将每个项目有权限的ns过滤出来
+                bcs_projects = BcsCcApi.list_project()
+                project_ids = {p["project_id"] for p in bcs_projects if str(p["cc_app_id"]) == str(bk_biz_id)}
+                project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
+                namespaces = set()
+                for project_id, ns_list in project_id_to_ns.items():
+                    if project_id not in project_ids:
+                        continue
+                    for ns in ns_list:
+                        namespaces.add(ns)
+                return [{"id": n, "name": n} for n in namespaces]
+            else:
+                return []
 
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         try:
