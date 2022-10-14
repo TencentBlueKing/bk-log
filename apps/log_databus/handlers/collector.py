@@ -2358,8 +2358,7 @@ class CollectorHandler(object):
 
         return None
 
-    @classmethod
-    def check_shared_cluster_namespace(cls, bk_biz_id, collector_type, bcs_cluster_id, namespace_list):
+    def check_shared_cluster_namespace(self, bk_biz_id, collector_type, bcs_cluster_id, namespace_list):
         """
         检测共享集群相关配置是否合法
         1. 集群在项目下可见
@@ -2377,18 +2376,21 @@ class CollectorHandler(object):
         if cluster_info is None:
             raise BcsClusterIdNotValidException()
 
-        space = Space.objects.get(bk_biz_id=bk_biz_id)
-        if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
+        if cluster_info["is_shared"]:
             if collector_type == ContainerCollectorType.NODE:
                 raise NodeNotAllowedException()
 
             if not namespace_list:
                 raise AllNamespaceNotAllowedException()
 
-            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
-            # 配置的命名空间必须是有权限的命名空间的子集
-            if set(namespace_list) - set(project_id_to_ns.get(space.space_id)):
-                raise NamespaceNotValidException()
+        allowed_namespaces = {ns["id"] for ns in self.list_namespace(bk_biz_id, bcs_cluster_id)}
+
+        invalid_namespaces = set(namespace_list) - allowed_namespaces
+
+        if invalid_namespaces:
+            raise NamespaceNotValidException(
+                NamespaceNotValidException.MESSAGE.format(namespaces=", ".join(invalid_namespaces))
+            )
 
     def create_container_config(self, data):
         # 使用采集插件补全参数
