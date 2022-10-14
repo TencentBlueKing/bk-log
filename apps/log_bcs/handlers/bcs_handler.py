@@ -40,8 +40,7 @@ class BcsHandler:
 
         space = Space.objects.get(bk_biz_id=bk_biz_id)
         if space.space_type_id == SpaceTypeEnum.BKCC.value:
-            clusters = BcsApi.list_cluster_by_project_id()
-            clusters = [cluster for cluster in clusters if cluster["businessID"] == str(bk_biz_id)]
+            clusters = BcsApi.list_cluster_by_project_id({"businessID": bk_biz_id})
         elif space.space_type_id == SpaceTypeEnum.BCS.value:
             clusters = BcsApi.list_cluster_by_project_id({"projectID": space.space_id})
         else:

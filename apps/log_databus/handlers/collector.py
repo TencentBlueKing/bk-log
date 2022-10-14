@@ -32,7 +32,7 @@ from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
-from apps.api import BkDataAccessApi, CCApi
+from apps.api import BkDataAccessApi, CCApi, BcsCcApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
@@ -2358,8 +2358,7 @@ class CollectorHandler(object):
 
         return None
 
-    @classmethod
-    def check_shared_cluster_namespace(cls, bk_biz_id, collector_type, bcs_cluster_id, namespace_list):
+    def check_shared_cluster_namespace(self, bk_biz_id, collector_type, bcs_cluster_id, namespace_list):
         """
         检测共享集群相关配置是否合法
         1. 集群在项目下可见
@@ -2367,28 +2366,25 @@ class CollectorHandler(object):
         3. 不允许设置为all，也不允许为空(namespace设置)
         4. 不允许设置不可见的namespace
         """
-        bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
-        cluster_info = None
-        for c in bcs_clusters:
-            if c["cluster_id"] == bcs_cluster_id:
-                cluster_info = c
-                break
+        cluster_info = self.get_cluster_info(bk_biz_id, bcs_cluster_id)
 
-        if cluster_info is None:
-            raise BcsClusterIdNotValidException()
+        if not cluster_info["is_shared"]:
+            return
 
-        space = Space.objects.get(bk_biz_id=bk_biz_id)
-        if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
-            if collector_type == ContainerCollectorType.NODE:
-                raise NodeNotAllowedException()
+        if collector_type == ContainerCollectorType.NODE:
+            raise NodeNotAllowedException()
 
-            if not namespace_list:
-                raise AllNamespaceNotAllowedException()
+        if not namespace_list:
+            raise AllNamespaceNotAllowedException()
 
-            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
-            # 配置的命名空间必须是有权限的命名空间的子集
-            if set(namespace_list) - set(project_id_to_ns.get(space.space_id)):
-                raise NamespaceNotValidException()
+        allowed_namespaces = {ns["id"] for ns in self.list_namespace(bk_biz_id, bcs_cluster_id)}
+
+        invalid_namespaces = set(namespace_list) - allowed_namespaces
+
+        if invalid_namespaces:
+            raise NamespaceNotValidException(
+                NamespaceNotValidException.MESSAGE.format(namespaces=", ".join(invalid_namespaces))
+            )
 
     def create_container_config(self, data):
         # 使用采集插件补全参数
@@ -3346,7 +3342,7 @@ class CollectorHandler(object):
             else [WorkLoadType.DEPLOYMENT, WorkLoadType.JOB, WorkLoadType.DAEMON_SET, WorkLoadType.STATEFUL_SET]
         )
 
-    def list_namespace(self, bk_biz_id, bcs_cluster_id):
+    def get_cluster_info(self, bk_biz_id, bcs_cluster_id):
         bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
         cluster_info = None
         for c in bcs_clusters:
@@ -3356,11 +3352,29 @@ class CollectorHandler(object):
 
         if cluster_info is None:
             raise BcsClusterIdNotValidException()
+        return cluster_info
 
+    def list_namespace(self, bk_biz_id, bcs_cluster_id):
+        cluster_info = self.get_cluster_info(bk_biz_id, bcs_cluster_id)
         space = Space.objects.get(bk_biz_id=bk_biz_id)
-        if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
-            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
-            return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_id, [])]
+        if cluster_info["is_shared"]:
+            if space.space_type_id == SpaceTypeEnum.BCS.value:
+                project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
+                return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_id, [])]
+            elif space.space_type_id == SpaceTypeEnum.BKCC.value:
+                # 如果是业务，先获取业务关联了哪些项目，再将每个项目有权限的ns过滤出来
+                bcs_projects = BcsCcApi.list_project()
+                project_ids = {p["project_id"] for p in bcs_projects if str(p["cc_app_id"]) == str(bk_biz_id)}
+                project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
+                namespaces = set()
+                for project_id, ns_list in project_id_to_ns.items():
+                    if project_id not in project_ids:
+                        continue
+                    for ns in ns_list:
+                        namespaces.add(ns)
+                return [{"id": n, "name": n} for n in namespaces]
+            else:
+                return []
 
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         try:
