@@ -32,7 +32,7 @@ from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
-from apps.api import BkDataAccessApi, CCApi
+from apps.api import BkDataAccessApi, CCApi, BcsCcApi
 from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
@@ -873,8 +873,7 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"],
-            bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -2064,8 +2063,7 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id,
-                ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -2360,8 +2358,7 @@ class CollectorHandler(object):
 
         return None
 
-    @classmethod
-    def check_shared_cluster_namespace(cls, bk_biz_id, collector_type, bcs_cluster_id, namespace_list):
+    def check_shared_cluster_namespace(self, bk_biz_id, collector_type, bcs_cluster_id, namespace_list):
         """
         检测共享集群相关配置是否合法
         1. 集群在项目下可见
@@ -2369,28 +2366,25 @@ class CollectorHandler(object):
         3. 不允许设置为all，也不允许为空(namespace设置)
         4. 不允许设置不可见的namespace
         """
-        bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
-        cluster_info = None
-        for c in bcs_clusters:
-            if c["cluster_id"] == bcs_cluster_id:
-                cluster_info = c
-                break
+        cluster_info = self.get_cluster_info(bk_biz_id, bcs_cluster_id)
 
-        if cluster_info is None:
-            raise BcsClusterIdNotValidException()
+        if not cluster_info["is_shared"]:
+            return
 
-        space = Space.objects.get(bk_biz_id=bk_biz_id)
-        if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
-            if collector_type == ContainerCollectorType.NODE:
-                raise NodeNotAllowedException()
+        if collector_type == ContainerCollectorType.NODE:
+            raise NodeNotAllowedException()
 
-            if not namespace_list:
-                raise AllNamespaceNotAllowedException()
+        if not namespace_list:
+            raise AllNamespaceNotAllowedException()
 
-            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
-            # 配置的命名空间必须是有权限的命名空间的子集
-            if set(namespace_list) - set(project_id_to_ns.get(space.space_id)):
-                raise NamespaceNotValidException()
+        allowed_namespaces = {ns["id"] for ns in self.list_namespace(bk_biz_id, bcs_cluster_id)}
+
+        invalid_namespaces = set(namespace_list) - allowed_namespaces
+
+        if invalid_namespaces:
+            raise NamespaceNotValidException(
+                NamespaceNotValidException.MESSAGE.format(namespaces=", ".join(invalid_namespaces))
+            )
 
     def create_container_config(self, data):
         # 使用采集插件补全参数
@@ -2693,33 +2687,36 @@ class CollectorHandler(object):
                 "std_index_set_id": bcs_std_index_set.index_set_id,
                 "container_config": [],
             }
-            if collector["path_collector_config"].collector_config_id not in path_container_config_dict:
+
+            collector_config_id = collector["path_collector_config"].collector_config_id
+            container_configs = path_container_config_dict.get(collector_config_id) or std_container_config_dict.get(
+                collector_config_id
+            )
+
+            if not container_configs:
                 result.append(rule)
                 continue
-            for path_container_config in path_container_config_dict[
-                collector["path_collector_config"].collector_config_id
-            ]:
+            for container_config in container_configs:
                 rule["container_config"].append(
                     {
-                        "id": path_container_config.id,
+                        "id": container_config.id,
                         "bk_data_id": collector["path_collector_config"].bk_data_id,
-                        "namespaces": path_container_config.namespaces,
-                        "any_namespace": path_container_config.any_namespace,
-                        "data_encoding": path_container_config.data_encoding,
-                        "params": path_container_config.params,
+                        "namespaces": container_config.namespaces,
+                        "any_namespace": container_config.any_namespace,
+                        "data_encoding": container_config.data_encoding,
+                        "params": container_config.params,
                         "container": {
-                            "workload_type": path_container_config.workload_type,
-                            "workload_name": path_container_config.workload_name,
-                            "container_name": path_container_config.container_name,
+                            "workload_type": container_config.workload_type,
+                            "workload_name": container_config.workload_name,
+                            "container_name": container_config.container_name,
                         },
                         "label_selector": {
-                            "match_labels": path_container_config.match_labels,
-                            "match_expressions": path_container_config.match_expressions,
+                            "match_labels": container_config.match_labels,
+                            "match_expressions": container_config.match_expressions,
                         },
-                        "all_container": path_container_config.all_container,
-                        "status": path_container_config.status,
-                        "enable_stdout": collector["path_collector_config"].collector_config_id
-                        in std_container_config_dict,
+                        "all_container": container_config.all_container,
+                        "status": container_config.status,
+                        "enable_stdout": collector_config_id in std_container_config_dict,
                         "stdout_conf": {"bk_data_id": collector["std_collector_config"].bk_data_id},
                     }
                 )
@@ -2801,26 +2798,29 @@ class CollectorHandler(object):
 
             is_all_container = not any([workload_type, workload_name, container_name, match_labels, match_expressions])
 
-            container_collector_config_list.append(
-                ContainerCollectorConfig(
-                    collector_config_id=path_collector_config.collector_config_id,
-                    collector_type=ContainerCollectorType.CONTAINER,
-                    namespaces=config["namespaces"],
-                    any_namespace=not config["namespaces"],
-                    data_encoding=config["data_encoding"],
-                    params={
-                        "paths": config["paths"],
-                        "conditions": {"type": "match", "match_type": "include", "match_content": ""},
-                    },
-                    workload_type=workload_type,
-                    workload_name=workload_name,
-                    container_name=container_name,
-                    match_labels=match_labels,
-                    match_expressions=match_expressions,
-                    all_container=is_all_container,
-                    rule_id=bcs_rule.id,
+            if config["paths"]:
+                # 配置了文件路径才需要下发路径采集
+                container_collector_config_list.append(
+                    ContainerCollectorConfig(
+                        collector_config_id=path_collector_config.collector_config_id,
+                        collector_type=ContainerCollectorType.CONTAINER,
+                        namespaces=config["namespaces"],
+                        any_namespace=not config["namespaces"],
+                        data_encoding=config["data_encoding"],
+                        params={
+                            "paths": config["paths"],
+                            "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                        },
+                        workload_type=workload_type,
+                        workload_name=workload_name,
+                        container_name=container_name,
+                        match_labels=match_labels,
+                        match_expressions=match_expressions,
+                        all_container=is_all_container,
+                        rule_id=bcs_rule.id,
+                    )
                 )
-            )
+
             if config["enable_stdout"]:
                 container_collector_config_list.append(
                     ContainerCollectorConfig(
@@ -3121,29 +3121,31 @@ class CollectorHandler(object):
         path_container_config = []
         std_container_config = []
         for conf in config:
-            path_container_config.append(
-                {
-                    "namespaces": conf["namespaces"],
-                    "any_namespace": not conf["namespaces"],
-                    "data_encoding": conf["data_encoding"],
-                    "params": {
-                        "paths": conf["paths"],
-                        "conditions": {"type": "match", "match_type": "include", "match_content": ""},
-                    },
-                    "container": {
-                        "workload_type": conf["container"].get("workload_type", ""),
-                        "workload_name": conf["container"].get("workload_type", ""),
-                        "container_name": conf["container"].get("container_name", ""),
-                    },
-                    "label_selector": {
-                        "match_labels": conf["label_selector"].get("match_labels", []),
-                        "match_expressions": conf["label_selector"].get("match_expressions", []),
-                    },
-                    "rule_id": rule_id,
-                    "parent_container_config_id": 0,
-                    "collector_type": ContainerCollectorType.CONTAINER,
-                }
-            )
+            if conf["paths"]:
+                path_container_config.append(
+                    {
+                        "namespaces": conf["namespaces"],
+                        "any_namespace": not conf["namespaces"],
+                        "data_encoding": conf["data_encoding"],
+                        "params": {
+                            "paths": conf["paths"],
+                            "conditions": {"type": "match", "match_type": "include", "match_content": ""},
+                        },
+                        "container": {
+                            "workload_type": conf["container"].get("workload_type", ""),
+                            "workload_name": conf["container"].get("workload_type", ""),
+                            "container_name": conf["container"].get("container_name", ""),
+                        },
+                        "label_selector": {
+                            "match_labels": conf["label_selector"].get("match_labels", []),
+                            "match_expressions": conf["label_selector"].get("match_expressions", []),
+                        },
+                        "rule_id": rule_id,
+                        "parent_container_config_id": 0,
+                        "collector_type": ContainerCollectorType.CONTAINER,
+                    }
+                )
+
             if conf["enable_stdout"]:
                 std_container_config.append(
                     {
@@ -3182,9 +3184,7 @@ class CollectorHandler(object):
             raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
         for collector in collectors:
             self.deal_self_call(
-                collector_config_id=collector.collector_config_id,
-                collector=collector,
-                func=self.destroy,
+                collector_config_id=collector.collector_config_id, collector=collector, func=self.destroy,
             )
         bcs_rule.delete()
         return {"rule_id": rule_id}
@@ -3342,7 +3342,7 @@ class CollectorHandler(object):
             else [WorkLoadType.DEPLOYMENT, WorkLoadType.JOB, WorkLoadType.DAEMON_SET, WorkLoadType.STATEFUL_SET]
         )
 
-    def list_namespace(self, bk_biz_id, bcs_cluster_id):
+    def get_cluster_info(self, bk_biz_id, bcs_cluster_id):
         bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
         cluster_info = None
         for c in bcs_clusters:
@@ -3352,11 +3352,29 @@ class CollectorHandler(object):
 
         if cluster_info is None:
             raise BcsClusterIdNotValidException()
+        return cluster_info
 
+    def list_namespace(self, bk_biz_id, bcs_cluster_id):
+        cluster_info = self.get_cluster_info(bk_biz_id, bcs_cluster_id)
         space = Space.objects.get(bk_biz_id=bk_biz_id)
-        if cluster_info["is_shared"] and space.space_type_id == SpaceTypeEnum.BCS.value:
-            project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
-            return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_id, [])]
+        if cluster_info["is_shared"]:
+            if space.space_type_id == SpaceTypeEnum.BCS.value:
+                project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
+                return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_id, [])]
+            elif space.space_type_id == SpaceTypeEnum.BKCC.value:
+                # 如果是业务，先获取业务关联了哪些项目，再将每个项目有权限的ns过滤出来
+                bcs_projects = BcsCcApi.list_project()
+                project_ids = {p["project_id"] for p in bcs_projects if str(p["cc_app_id"]) == str(bk_biz_id)}
+                project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
+                namespaces = set()
+                for project_id, ns_list in project_id_to_ns.items():
+                    if project_id not in project_ids:
+                        continue
+                    for ns in ns_list:
+                        namespaces.add(ns)
+                return [{"id": n, "name": n} for n in namespaces]
+            else:
+                return []
 
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         try:

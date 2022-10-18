@@ -374,13 +374,19 @@ class Command(BaseCommand):
         size = 1000
 
         results = []
-        if not paths:
-            # path 为空，则为无限制授权
-            results.append(self.grant_resource_chunked(resource, []))
-        else:
-            chunked_paths = [paths[pos : pos + size] for pos in range(0, len(paths), size)]
-            for chunk in chunked_paths:
-                results.append(self.grant_resource_chunked(resource, chunk))
+        try:
+            if not paths:
+                # path 为空，则为无限制授权
+                results.append(self.grant_resource_chunked(resource, []))
+            else:
+                chunked_paths = [paths[pos : pos + size] for pos in range(0, len(paths), size)]
+                for chunk in chunked_paths:
+                    results.append(self.grant_resource_chunked(resource, chunk))
+        except Exception as e:  # pylint: disable=broad-except
+            print(
+                "grant permission error for action[%s], subject[%s]: %s"
+                % (resource["actions"][0]["id"], resource["subject"], e)
+            )
         return results
 
     def grant_resource_chunked(self, resource, paths):
