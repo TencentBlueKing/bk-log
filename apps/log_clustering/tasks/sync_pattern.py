@@ -116,6 +116,9 @@ def get_pattern(model_id, release_id) -> list:
                     value = pattern
                     name = pattern
                 idx = origin_log.find(value)
+                if idx == -1:
+                    pattern_str += origin_log
+                    break
                 pattern_str += origin_log[0:idx]
                 pattern_str += name
                 origin_log = origin_log[idx + len(value) :]
