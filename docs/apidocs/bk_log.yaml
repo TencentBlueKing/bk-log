@@ -265,14 +265,14 @@
   dest_http_method: POST
   is_hidden: True
 
-- path: /v2/bk_log/databus_collectors/
+- path: /v2/bk_log/databus_collectors/{collector_config_id}/
   name: update_databus_collectors
   label: 日志平台-更新采集项
   label_en: bk_log update collector
   method: PUT
   api_type: query
   comp_codename: generic.v2.bk_log.bk_log_component
-  dest_path: /api/v1/databus/collectors/
+  dest_path: /api/v1/databus/collectors/{collector_config_id}/
   dest_http_method: PUT
   is_hidden: True
 
