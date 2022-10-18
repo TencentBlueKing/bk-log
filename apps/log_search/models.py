@@ -27,6 +27,7 @@ from collections import defaultdict
 from django.core.cache import cache
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.db.transaction import atomic
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import format_html
@@ -42,12 +43,7 @@ from apps.log_search.exceptions import (
     ScenarioNotSupportedException,
     CouldNotFindTemplateException,
 )
-from apps.models import (
-    JsonField,
-    MultiStrSplitByCommaField,
-    SoftDeleteModel,
-    OperateRecordModel,
-)
+from apps.models import JsonField, MultiStrSplitByCommaField, SoftDeleteModel, OperateRecordModel, model_to_dict
 from apps.utils.base_crypt import BaseCrypt
 from apps.utils.db import array_group
 from apps.utils.db import array_hash
@@ -72,6 +68,9 @@ from apps.log_search.constants import (
     CustomTypeEnum,
     INDEX_SET_NO_DATA_CHECK_PREFIX,
     INDEX_SET_NO_DATA_CHECK_INTERVAL,
+    FavoriteGroupType,
+    FavoriteVisibleType,
+    FavoriteListOrderType,
 )
 from bkm_space.api import AbstractSpaceApi
 from bkm_space.utils import space_uid_to_bk_biz_id
@@ -736,9 +735,126 @@ class FavoriteSearch(SoftDeleteModel):
     project_id = models.IntegerField(_("项目ID"), default=0, db_index=True)
     description = models.CharField(_("收藏描述"), max_length=255)
 
+
+class Favorite(SoftDeleteModel):
+    space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
+    index_set_id = models.IntegerField(_("索引集ID"))
+    name = models.CharField(_("收藏名称"), max_length=64)
+    group_id = models.IntegerField(_("收藏组ID"), db_index=True)
+    params = JsonField(_("检索条件"), null=True, default=None)
+    visible_type = models.CharField(_("可见类型"), max_length=64)  # 个人 | 公开
+    display_fields = models.JSONField(_("显示字段"), blank=True, default=None)
+
     class Meta:
-        verbose_name = _("检索收藏记录")
-        verbose_name_plural = _("33_搜索-检索收藏记录")
+        verbose_name = _("检索收藏")
+        verbose_name_plural = _("34_搜索-检索收藏")
+        ordering = ("-updated_at",)
+
+    @classmethod
+    def get_user_favorite(
+        cls, space_uid: str, username: str, order_type: str = FavoriteListOrderType.NAME_ASC.value
+    ) -> list:
+        favorites = []
+        qs = cls.objects.filter(
+            Q(space_uid=space_uid, created_by=username, visible_type=str(FavoriteVisibleType.PRIVATE.value))
+            | Q(space_uid=space_uid, visible_type=str(FavoriteVisibleType.PUBLIC.value))
+        )
+        if order_type == FavoriteListOrderType.NAME_ASC.value:
+            qs = qs.order_by("name")
+        elif order_type == FavoriteListOrderType.NAME_DESC.value:
+            qs = qs.order_by("-name")
+        else:
+            qs = qs.order_by("-updated_at")
+
+        index_set_id_list = [i[0] for i in qs.all().values_list("index_set_id").distinct()]
+        active_index_set_id_dict = {
+            i[0]: True
+            for i in LogIndexSet.objects.filter(index_set_id__in=index_set_id_list)
+            .values_list("index_set_id")
+            .distinct()
+        }
+        for fi in qs.all():
+            fi_dict = model_to_dict(fi)
+            fi_dict["is_active"] = active_index_set_id_dict.get(fi.index_set_id, False)
+            favorites.append(fi_dict)
+
+        return favorites
+
+
+class FavoriteGroup(SoftDeleteModel):
+    """收藏组"""
+
+    name = models.CharField(_("收藏组名称"), max_length=64)
+    group_type = models.CharField(_("收藏组类型"), max_length=64)
+    space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
+
+    class Meta:
+        verbose_name = _("检索收藏组")
+        verbose_name_plural = _("34_搜索-检索收藏组")
+        ordering = ("-updated_at",)
+
+    @classmethod
+    def get_or_create_private_group(cls, space_uid: str, username: str) -> int:
+        obj, __ = cls.objects.get_or_create(
+            name=FavoriteGroupType.PRIVATE.value,
+            group_type=FavoriteGroupType.PRIVATE.value,
+            space_uid=space_uid,
+            created_by=username,
+        )
+        return obj.id
+
+    @classmethod
+    def get_or_create_unknown_group(cls, space_uid: str) -> int:
+        obj, __ = cls.objects.get_or_create(
+            name=FavoriteGroupType.UNKNOWN.value,
+            group_type=FavoriteGroupType.UNKNOWN.value,
+            space_uid=space_uid,
+        )
+        return obj.id
+
+    @classmethod
+    def get_user_groups(cls, space_uid: str, username: str) -> dict:
+        """获取用户所有能看到的组"""
+        groups = dict()
+        # 个人组，使用get_or_create是为了减少同步
+        private_group, __ = cls.objects.get_or_create(
+            name=FavoriteGroupType.PRIVATE.value,
+            group_type=FavoriteGroupType.PRIVATE.value,
+            space_uid=space_uid,
+            created_by=username,
+        )
+        groups[private_group.id] = model_to_dict(private_group)
+        # 未归类组，使用get_or_create是为了减少同步
+        unknown_group, __ = cls.objects.get_or_create(
+            name=FavoriteGroupType.UNKNOWN.value,
+            group_type=FavoriteGroupType.UNKNOWN.value,
+            space_uid=space_uid,
+        )
+        groups[unknown_group.id] = model_to_dict(unknown_group)
+        # 公共组
+        public_groups = cls.objects.filter(
+            group_type=FavoriteGroupType.PUBLIC.value,
+            space_uid=space_uid,
+        )
+        for gi in public_groups:
+            groups[gi.id] = model_to_dict(gi)
+        return groups
+
+
+class FavoriteGroupCustomOrder(models.Model):
+    """
+    space_uid: 空间唯一标识
+    username: 用户名
+    group_order: 用户自定义收藏组ID顺序
+    """
+
+    space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
+    username = models.CharField(_("用户名"), max_length=255, db_index=True)
+    group_order = models.JSONField(_("用户自定义收藏组ID顺序"), blank=True, null=True)
+
+    class Meta:
+        verbose_name = _("用户检索收藏组顺序")
+        verbose_name_plural = _("34_搜索-用户检索收藏组顺序")
 
 
 class IndexSetUserFavorite(models.Model):

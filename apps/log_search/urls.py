@@ -44,7 +44,8 @@ router.register(r"index_set", index_set_views.IndexSetViewSet, basename="index_s
 
 router.register(r"search/index_set", search_views.SearchViewSet, basename="search")
 router.register(r"search/index_set", aggs_views.AggsViewSet, basename="aggs")
-router.register(r"search/favorite", favorite_search_views.FavoriteSearchViewSet, basename="favorite")
+router.register(r"search/favorite", favorite_search_views.FavoriteViewSet, basename="favorite")
+router.register(r"search/favorite_group", favorite_search_views.FavoriteGroupViewSet, basename="favorite_group")
 
 router.register(r"result_table", result_table_views.ResultTablesViewSet, basename="result_table")
 
