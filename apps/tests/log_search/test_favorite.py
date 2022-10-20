@@ -101,41 +101,47 @@ GROUP_NAME_1 = "test_group_1"
 GROUP_NAME_2 = "test_group_2"
 # -------------------------------------------------------------------------------------------- #
 KEYWORD_FIELDS = [
-    {"name": "number", "type": "Word", "operator": ">=", "value": "83063"},
-    {"name": "title", "type": "Phrase", "operator": "=", "value": '"The Right Way"'},
-    {"name": "text", "type": "Word", "operator": "~=", "value": "go"},
-    {"name": "gseIndex", "type": "Range", "operator": "[]", "value": "[ 200 TO 600 ]"},
-    {"name": "log", "type": "Fuzzy", "operator": "~=", "value": "blue~"},
-    {"name": "time", "type": "Regex", "operator": "~=", "value": "/[L-N].*z*l{2}a/"},
+    {"pos": 0, "name": "number", "type": "Word", "operator": ">=", "value": "83063"},
+    {"pos": 19, "name": "title", "type": "Phrase", "operator": "=", "value": '"The Right Way"'},
+    {"pos": 46, "name": "text", "type": "Word", "operator": "~=", "value": "go"},
+    {"pos": 58, "name": "gseIndex", "type": "Range", "operator": "[]", "value": "[ 200 TO 600 ]"},
+    {"pos": 87, "name": "log", "type": "Fuzzy", "operator": "~=", "value": "blue~"},
+    {"pos": 102, "name": "time", "type": "Regex", "operator": "~=", "value": "/[L-N].*z*l{2}a/"},
 ]
 UPDATE_QUERY_PARAMS = [
     {
+        "pos": 0,
         "name": "number",
         "value": "10000",
     },
     {
+        "pos": 19,
         "name": "title",
         "value": '"hello"',
     },
     {
+        "pos": 46,
         "name": "text",
         "value": "hello",
     },
     {
+        "pos": 87,
         "name": "log",
         "value": "bk~",
     },
     {
+        "pos": 102,
         "name": "time",
         "value": "/[L-N]/",
     },
     {
+        "pos": 58,
         "name": "gseIndex",
-        "value": " 100 , 200 ",
+        "value": "100,200",
     },
 ]
-EXPECT_NEW_QUERY = """number: >=10000 OR title: "hello" AND text: hello OR gseIndex: [ 100 TO 200 ] AND log: bk~~0.5 \
-AND time: /[L-N]/ """
+EXPECT_NEW_QUERY = """number: >=10000  OR title: "hello"  AND text: hello  OR gseIndex: [100 TO 200]  \
+AND log: bk~0.5  AND time: /[L-N]/ """
 
 
 # 类全局使用USERNAME_1

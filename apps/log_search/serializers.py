@@ -414,12 +414,19 @@ class GetSearchFieldsSerializer(serializers.Serializer):
     keyword = serializers.CharField(label=_("检索关键词"), required=True)
 
 
+class GenerateQueryParam(serializers.Serializer):
+    name = serializers.CharField(label=_("字段名"), required=True)
+    value = serializers.CharField(label=_("替换的值"), required=True)
+    pos = serializers.IntegerField(label=_("字段坐标"), required=True)
+
+
 class GenerateQuerySerializer(serializers.Serializer):
     """
     生成Query中查询字段序列化
     """
 
     keyword = serializers.CharField(label=_("检索关键词"), required=True)
+    params = serializers.ListField(label=_("替换Query请求参数"), child=GenerateQueryParam())
 
 
 class FavoriteGroupListSerializer(serializers.Serializer):

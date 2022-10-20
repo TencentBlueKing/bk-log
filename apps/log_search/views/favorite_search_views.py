@@ -509,10 +509,12 @@ class FavoriteViewSet(APIViewSet):
             "keyword": 'number: >=83063 AND title: "The Right Way"'
             "params": [
                 {
+                    "pos": 1,
                     "name": number,
                     "value": 11111
                 },
                 {
+                    "pos": 17,
                     "name": title,
                     "value": '"The"'
                 }

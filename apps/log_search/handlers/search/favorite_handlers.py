@@ -20,15 +20,14 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import re
-from decimal import Decimal
 from collections import defaultdict
 from typing import Optional, Union
 
 from luqum.auto_head_tail import auto_head_tail
 from luqum.parser import parser, lexer
 from luqum.tree import Word
-from django.db.transaction import atomic
 from luqum.visitor import TreeTransformer
+from django.db.transaction import atomic
 
 from apps.log_esquery.constants import WILDCARD_PATTERN
 from apps.utils.local import get_request_username
@@ -233,13 +232,14 @@ class FavoriteHandler(object):
         query_tree = parser.parse(keyword, lexer=lexer)
         if not query_tree.children:
             return fields
-
-        for child in query_tree.children:
-            if isinstance(self._parse_node_expr(child), list):
-                fields.extend(self._parse_node_expr(child))
-            else:
-                fields.append(self._parse_node_expr(child))
-
+        if self._get_node_type(query_tree) == "SearchField":
+            fields.append(self._parse_node_expr(query_tree))
+        else:
+            for child in query_tree.children:
+                if isinstance(self._parse_node_expr(child), list):
+                    fields.extend(self._parse_node_expr(child))
+                else:
+                    fields.append(self._parse_node_expr(child))
         return fields
 
     @staticmethod
@@ -254,6 +254,11 @@ class FavoriteHandler(object):
             query_tree = transformer.visit(query_tree, param)
         query_tree = auto_head_tail(query_tree)
         return str(query_tree)
+
+    @staticmethod
+    def _get_node_type(node) -> str:
+        """获取解析语法名"""
+        return node.__class__.__name__
 
     @staticmethod
     def _get_node_expr_type(node) -> str:
@@ -323,7 +328,7 @@ class FavoriteGroupHandler(object):
             group_order = self.get_group_order()
             self.data = FavoriteGroup.objects.create(name=name, group_type=group_type, space_uid=self.space_uid)
             # 同时追加到用户自定义组的末尾
-            group_order.append(self.data.id)
+            group_order.insert(-1, self.data.id)
             self.update_group_order(group_order)
 
         return model_to_dict(self.data)
@@ -335,13 +340,17 @@ class FavoriteGroupHandler(object):
             raise FavoriteGroupNotAllowedDeleteException()
         # 将该组的收藏全部归到未分组
         unknown_group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=self.data.space_uid)
-        Favorite.objects.filter(group_id=self.group_id).update(group_id=unknown_group_id)
+        Favorite.objects.filter(group_id=self.group_id).update(group_id=unknown_group_id.id)
         self.data.delete()
 
     def get_group_order(self) -> list:
         """获取用户组排序"""
+        private_group = FavoriteGroup.get_or_create_private_group(space_uid=self.space_uid, username=self.username)
+        ungrouped_group = FavoriteGroup.get_or_create_ungrouped_group(space_uid=self.space_uid)
         obj, __ = FavoriteGroupCustomOrder.objects.get_or_create(
-            space_uid=self.space_uid, username=self.username, defaults={"group_order": []}
+            space_uid=self.space_uid,
+            username=self.username,
+            defaults={"group_order": [private_group.id, ungrouped_group.id]},
         )
 
         # 同步组排序内容，不会触发很频繁，只有创建了公共的组才会同步
@@ -380,7 +389,7 @@ class LuceneNodeExpr(object):
         self.node = node
         self.expr = node.expr
         self.expr_type = self.expr.__class__.__name__
-        self.field = {"name": self.node.name, "type": self.expr_type, "operator": "", "value": ""}
+        self.field = {"pos": self.node.pos, "name": self.node.name, "type": self.expr_type, "operator": "", "value": ""}
 
     def parse_expr(self):
         raise NotImplementedError
@@ -466,10 +475,8 @@ class FuzzyNodeExpr(LuceneNodeExpr):
 
     def update_expr(self, context: dict):
         self.parse_expr()
-        value = context["value"]
-        new_node = self.node.clone_item()
-        new_node.expr = self.node.expr.clone_item(term=Word(value), degree=Decimal(self.node.expr.degree))
-        return new_node
+        keyword = "{}: {} ".format(self.field["name"], context["value"])
+        return parser.parse(keyword, lexer=lexer)
 
 
 class RegexNodeExpr(LuceneNodeExpr):
@@ -480,15 +487,13 @@ class RegexNodeExpr(LuceneNodeExpr):
 
     def update_expr(self, context: dict):
         self.parse_expr()
-        value = context["value"]
-        new_node = self.node.clone_item()
-        new_node.expr = self.node.expr.clone_item(value=value)
-        return new_node
+        keyword = "{}: {} ".format(self.field["name"], context["value"])
+        return parser.parse(keyword, lexer=lexer)
 
 
 class Transformer(TreeTransformer):
     def visit_search_field(self, node, context):
-        if node.name == context.get("name"):
+        if node.name == context.get("name") and node.pos == context.get("pos"):
             node_type = node.expr.__class__.__name__
             if node_type == "Word":
                 new_node = WordNodeExpr(node=node).update_expr(context)
