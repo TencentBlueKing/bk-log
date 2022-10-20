@@ -71,6 +71,7 @@ from apps.log_search.constants import (
     FavoriteGroupType,
     FavoriteVisibleType,
     FavoriteListOrderType,
+    INDEX_SET_NOT_EXISTED,
 )
 from bkm_space.api import AbstractSpaceApi
 from bkm_space.utils import space_uid_to_bk_biz_id
@@ -742,7 +743,7 @@ class Favorite(SoftDeleteModel):
     name = models.CharField(_("收藏名称"), max_length=64)
     group_id = models.IntegerField(_("收藏组ID"), db_index=True)
     params = JsonField(_("检索条件"), null=True, default=None)
-    visible_type = models.CharField(_("可见类型"), max_length=64)  # 个人 | 公开
+    visible_type = models.CharField(_("可见类型"), max_length=64, choices=FavoriteVisibleType.get_choices())  # 个人 | 公开
     display_fields = models.JSONField(_("显示字段"), blank=True, default=None)
 
     class Meta:
@@ -756,8 +757,8 @@ class Favorite(SoftDeleteModel):
     ) -> list:
         favorites = []
         qs = cls.objects.filter(
-            Q(space_uid=space_uid, created_by=username, visible_type=str(FavoriteVisibleType.PRIVATE.value))
-            | Q(space_uid=space_uid, visible_type=str(FavoriteVisibleType.PUBLIC.value))
+            Q(space_uid=space_uid, created_by=username, visible_type=FavoriteVisibleType.PRIVATE.value)
+            | Q(space_uid=space_uid, visible_type=FavoriteVisibleType.PUBLIC.value)
         )
         if order_type == FavoriteListOrderType.NAME_ASC.value:
             qs = qs.order_by("name")
@@ -766,16 +767,21 @@ class Favorite(SoftDeleteModel):
         else:
             qs = qs.order_by("-updated_at")
 
-        index_set_id_list = [i[0] for i in qs.all().values_list("index_set_id").distinct()]
+        index_set_id_list = list(qs.all().values_list("index_set_id", flat=True).distinct())
         active_index_set_id_dict = {
-            i[0]: True
-            for i in LogIndexSet.objects.filter(index_set_id__in=index_set_id_list)
-            .values_list("index_set_id")
-            .distinct()
+            i["index_set_id"]: i["index_set_name"]
+            for i in LogIndexSet.objects.filter(index_set_id__in=index_set_id_list).values(
+                "index_set_id", "index_set_name"
+            )
         }
         for fi in qs.all():
             fi_dict = model_to_dict(fi)
-            fi_dict["is_active"] = active_index_set_id_dict.get(fi.index_set_id, False)
+            if active_index_set_id_dict.get(fi.index_set_id):
+                fi_dict["is_active"] = True
+                fi_dict["index_set_name"] = active_index_set_id_dict[fi.index_set_id]
+            else:
+                fi_dict["is_active"] = False
+                fi_dict["index_set_name"] = INDEX_SET_NOT_EXISTED
             favorites.append(fi_dict)
 
         return favorites
@@ -785,7 +791,7 @@ class FavoriteGroup(SoftDeleteModel):
     """收藏组"""
 
     name = models.CharField(_("收藏组名称"), max_length=64)
-    group_type = models.CharField(_("收藏组类型"), max_length=64)
+    group_type = models.CharField(_("收藏组类型"), max_length=64, choices=FavoriteGroupType.get_choices())
     space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
 
     class Meta:
@@ -794,43 +800,34 @@ class FavoriteGroup(SoftDeleteModel):
         ordering = ("-updated_at",)
 
     @classmethod
-    def get_or_create_private_group(cls, space_uid: str, username: str) -> int:
+    def get_or_create_private_group(cls, space_uid: str, username: str) -> "FavoriteGroup":
         obj, __ = cls.objects.get_or_create(
             name=FavoriteGroupType.PRIVATE.value,
             group_type=FavoriteGroupType.PRIVATE.value,
             space_uid=space_uid,
             created_by=username,
         )
-        return obj.id
+        return obj
 
     @classmethod
-    def get_or_create_unknown_group(cls, space_uid: str) -> int:
+    def get_or_create_ungrouped_group(cls, space_uid: str) -> "FavoriteGroup":
         obj, __ = cls.objects.get_or_create(
-            name=FavoriteGroupType.UNKNOWN.value,
-            group_type=FavoriteGroupType.UNKNOWN.value,
+            name=FavoriteGroupType.UNGROUPED.value,
+            group_type=FavoriteGroupType.UNGROUPED.value,
             space_uid=space_uid,
         )
-        return obj.id
+        return obj
 
     @classmethod
     def get_user_groups(cls, space_uid: str, username: str) -> dict:
         """获取用户所有能看到的组"""
         groups = dict()
         # 个人组，使用get_or_create是为了减少同步
-        private_group, __ = cls.objects.get_or_create(
-            name=FavoriteGroupType.PRIVATE.value,
-            group_type=FavoriteGroupType.PRIVATE.value,
-            space_uid=space_uid,
-            created_by=username,
-        )
+        private_group = cls.get_or_create_private_group(space_uid=space_uid, username=username)
         groups[private_group.id] = model_to_dict(private_group)
         # 未归类组，使用get_or_create是为了减少同步
-        unknown_group, __ = cls.objects.get_or_create(
-            name=FavoriteGroupType.UNKNOWN.value,
-            group_type=FavoriteGroupType.UNKNOWN.value,
-            space_uid=space_uid,
-        )
-        groups[unknown_group.id] = model_to_dict(unknown_group)
+        ungrouped_group = cls.get_or_create_ungrouped_group(space_uid=space_uid)
+        groups[ungrouped_group.id] = model_to_dict(ungrouped_group)
         # 公共组
         public_groups = cls.objects.filter(
             group_type=FavoriteGroupType.PUBLIC.value,

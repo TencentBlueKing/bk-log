@@ -1146,12 +1146,12 @@ class FavoriteGroupType(ChoicesEnum):
 
     PRIVATE = "private"
     PUBLIC = "public"
-    UNKNOWN = "unknown"
+    UNGROUPED = "unknown"
 
     _choices_labels = (
         (PRIVATE, _("个人组")),
         (PUBLIC, _("公共组")),
-        (UNKNOWN, _("未分组")),
+        (UNGROUPED, _("未分组")),
     )
 
 
@@ -1162,10 +1162,13 @@ class FavoriteListOrderType(ChoicesEnum):
 
     NAME_ASC = "NAME_ASC"
     NAME_DESC = "NAME_DESC"
-    UPDATED_AT = "UPDATED_AT"
+    UPDATED_AT_DESC = "UPDATED_AT_DESC"
 
     _choices_labels = (
         (NAME_ASC, _("名称升序")),
         (NAME_DESC, _("名称降序")),
-        (UPDATED_AT, _("更新时间")),
+        (UPDATED_AT_DESC, _("更新时间降序")),
     )
+
+
+INDEX_SET_NOT_EXISTED = _("索引集不存在")

@@ -376,7 +376,7 @@ class FavoriteListSerializer(serializers.Serializer):
         label=_("排序方式"),
         choices=FavoriteListOrderType.get_choices(),
         required=False,
-        default=FavoriteListOrderType.UPDATED_AT.value,
+        default=FavoriteListOrderType.UPDATED_AT_DESC.value,
     )
 
 

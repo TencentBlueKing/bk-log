@@ -56,7 +56,7 @@ CREATE_PRIVATE_FAVORITE_PARAMS = {
     "host_scopes": HOST_SCOPES,
     "addition": ADDITION,
     "keyword": KEYWORD,
-    "visible_type": str(FavoriteVisibleType.PRIVATE.value),
+    "visible_type": FavoriteVisibleType.PRIVATE.value,
     "search_fields": SEARCH_FIELDS,
     "display_fields": DISPLAY_FIELDS,
 }
@@ -68,7 +68,7 @@ CREATE_UNKNOWN_FAVORITE_PARAMS = {
     "host_scopes": HOST_SCOPES,
     "addition": ADDITION,
     "keyword": KEYWORD,
-    "visible_type": str(FavoriteVisibleType.PUBLIC.value),
+    "visible_type": FavoriteVisibleType.PUBLIC.value,
     "search_fields": SEARCH_FIELDS,
     "display_fields": DISPLAY_FIELDS,
 }
@@ -81,7 +81,7 @@ USER1_CREATE_FAVORITE_PARAM = {
     "host_scopes": HOST_SCOPES,
     "addition": ADDITION,
     "keyword": KEYWORD,
-    "visible_type": str(FavoriteVisibleType.PUBLIC.value),
+    "visible_type": FavoriteVisibleType.PUBLIC.value,
     "search_fields": SEARCH_FIELDS,
     "display_fields": DISPLAY_FIELDS,
 }
@@ -92,7 +92,7 @@ USER2_CREATE_FAVORITE_PARAM = {
     "host_scopes": HOST_SCOPES,
     "addition": ADDITION,
     "keyword": KEYWORD,
-    "visible_type": str(FavoriteVisibleType.PUBLIC.value),
+    "visible_type": FavoriteVisibleType.PUBLIC.value,
     "search_fields": SEARCH_FIELDS,
     "display_fields": DISPLAY_FIELDS,
 }
@@ -156,7 +156,7 @@ class TestFavorite(TestCase):
         objs = FavoriteGroupHandler(space_uid=SPACE_UID).list()
         self.assertEqual(len(objs), 4)
         # Step4: 检查组名
-        self._test_assert_private_and_unknown_group_name(objs)
+        self._test_assert_private_and_ungrouped_group_name(objs)
         # Step5: 修改组名
         self._test_update_group(objs)
         # Step6: 创建收藏
@@ -183,13 +183,13 @@ class TestFavorite(TestCase):
             self.assertEqual(GROUP_NAME_2, obj["name"])
             self.public_group[USERNAME_2] = obj["id"]
 
-    def _test_assert_private_and_unknown_group_name(self, objs: list):
+    def _test_assert_private_and_ungrouped_group_name(self, objs: list):
         """
         个人组名为private
         未分类组名为unknown
         """
         for obj in objs:
-            if obj["group_type"] in [FavoriteGroupType.PRIVATE.value, FavoriteGroupType.UNKNOWN.value]:
+            if obj["group_type"] in [FavoriteGroupType.PRIVATE.value, FavoriteGroupType.UNGROUPED.value]:
                 self.assertEqual(obj["name"], obj["group_type"])
 
     def _test_update_group(self, objs: list):
@@ -211,7 +211,7 @@ class TestFavorite(TestCase):
         unknown_favorite = FavoriteHandler(space_uid=SPACE_UID).create_or_update(**CREATE_UNKNOWN_FAVORITE_PARAMS)
         self.assertEqual(CREATE_UNKNOWN_FAVORITE_PARAMS["name"], unknown_favorite["name"])
         self.assertEqual(
-            FavoriteGroup.objects.get(pk=unknown_favorite["group_id"]).group_type, FavoriteGroupType.UNKNOWN.value
+            FavoriteGroup.objects.get(pk=unknown_favorite["group_id"]).group_type, FavoriteGroupType.UNGROUPED.value
         )
         USER1_CREATE_FAVORITE_PARAM["group_id"] = self.public_group[USERNAME_1]
         public_favorite = FavoriteHandler(space_uid=SPACE_UID).create_or_update(**USER1_CREATE_FAVORITE_PARAM)
@@ -235,6 +235,10 @@ class TestFavorite(TestCase):
     def _test_user1_list_favorites(self):
         """可见的收藏数，USER1 4个"""
         self.assertEqual(len(FavoriteHandler(space_uid=SPACE_UID).list_favorites()), 4)
+
+        groups = FavoriteGroupHandler(space_uid=SPACE_UID).list()
+        self.assertEqual(groups[0]["group_type"], FavoriteGroupType.PRIVATE.value)
+        self.assertEqual(groups[-1]["group_type"], FavoriteGroupType.UNGROUPED.value)
 
     @patch("apps.models.get_request_username", lambda: USERNAME_2)
     @patch("apps.log_search.handlers.search.favorite_handlers.get_request_username", lambda: USERNAME_2)
@@ -262,7 +266,7 @@ class TestFavorite(TestCase):
             favorites = i["favorites"]
             if i["group_name"] == FavoriteGroupType.PRIVATE.value:
                 self.assertEqual(len(favorites), 1)
-            if i["group_name"] == FavoriteGroupType.UNKNOWN.value:
+            if i["group_name"] == FavoriteGroupType.UNGROUPED.value:
                 # 剩3个收藏
                 self.assertEqual(len(favorites), 3)
                 # 2个由USER1创建

@@ -24,6 +24,7 @@ from decimal import Decimal
 from collections import defaultdict
 from typing import Optional, Union
 
+from luqum.auto_head_tail import auto_head_tail
 from luqum.parser import parser, lexer
 from luqum.tree import Word
 from django.db.transaction import atomic
@@ -72,15 +73,16 @@ class FavoriteHandler(object):
         # 将收藏分组
         favorites = Favorite.get_user_favorite(space_uid=self.space_uid, username=self.username, order_type=order_type)
         favorites_by_group = defaultdict(list)
-        for fi in favorites:
-            favorites_by_group[fi["group_id"]].append(fi)
+        for favorite in favorites:
+            favorites_by_group[favorite["group_id"]].append(favorite)
         return [
             {
-                "group_id": gi["id"],
-                "group_name": group_info[gi["id"]]["name"],
-                "favorites": favorites_by_group[gi["id"]],
+                "group_id": group["id"],
+                "group_name": group_info[group["id"]]["name"],
+                "group_type": group_info[group["id"]]["group_type"],
+                "favorites": favorites_by_group[group["id"]],
             }
-            for gi in groups
+            for group in groups
         ]
 
     def list_favorites(self, order_type: str = FavoriteListOrderType.NAME_ASC.value) -> list:
@@ -95,6 +97,8 @@ class FavoriteHandler(object):
                 "name": fi["name"],
                 "group_id": fi["group_id"],
                 "group_name": group_info[fi["group_id"]]["name"],
+                "index_set_id": fi["index_set_id"],
+                "index_set_name": fi["index_set_name"],
                 "visible_type": fi["visible_type"],
                 "search_fields": fi["params"].get("search_fields", []),
                 "display_fields": fi["display_fields"],
@@ -121,15 +125,16 @@ class FavoriteHandler(object):
 
         # 可见为个人时归类到个人组
         if visible_type == FavoriteVisibleType.PRIVATE.value:
-            group_id = FavoriteGroup.get_or_create_private_group(space_uid=self.space_uid, username=self.username)
+            group_id = FavoriteGroup.get_or_create_private_group(space_uid=self.space_uid, username=self.username).id
 
         # 未传组ID的时候, 可见为个人的时候设置为个人组，可见为公开的时候将组置为未分组
         if not group_id:
-            group_id = FavoriteGroup.get_or_create_unknown_group(space_uid=self.space_uid)
+            group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=self.space_uid).id
 
         if self.data:
-            if self.data.visible_type == str(FavoriteVisibleType.PUBLIC.value) and visible_type == str(
-                FavoriteVisibleType.PRIVATE.value
+            if (
+                self.data.visible_type == FavoriteVisibleType.PUBLIC.value
+                and visible_type == FavoriteVisibleType.PRIVATE.value
             ):
                 raise FavoriteVisibleTypeNotAllowedModifyException()
             # 名称检查
@@ -148,6 +153,8 @@ class FavoriteHandler(object):
             self.data.save()
 
         else:
+            if Favorite.objects.filter(name=name, space_uid=self.space_uid).exists():
+                raise FavoriteAlreadyExistException()
             self.data = Favorite.objects.create(
                 space_uid=self.space_uid,
                 index_set_id=index_set_id,
@@ -166,7 +173,7 @@ class FavoriteHandler(object):
             FavoriteHandler(favorite_id=param["id"]).create_or_update(**param)
 
     def delete(self):
-        Favorite.objects.delete(id=self.favorite_id)
+        self.data.delete()
 
     @staticmethod
     def _generate_query_string(params):
@@ -245,6 +252,7 @@ class FavoriteHandler(object):
         transformer = Transformer()
         for param in params:
             query_tree = transformer.visit(query_tree, param)
+        query_tree = auto_head_tail(query_tree)
         return str(query_tree)
 
     @staticmethod
@@ -299,7 +307,7 @@ class FavoriteGroupHandler(object):
     @atomic
     def create_or_update(self, name: str) -> dict:
         """创建和修改都是针对公开组的"""
-        group_type = str(FavoriteGroupType.PUBLIC.value)
+        group_type = FavoriteGroupType.PUBLIC.value
         # 检查name是否可用
         if self.data and self.data != name or not self.data:
             if FavoriteGroup.objects.filter(name=name, group_type=group_type, space_uid=self.space_uid).exists():
@@ -323,10 +331,10 @@ class FavoriteGroupHandler(object):
     @atomic
     def delete(self) -> None:
         """删除公开分组，并将组内收藏移到未分组"""
-        if self.data.group_type != str(FavoriteGroupType.PUBLIC.value):
+        if self.data.group_type != FavoriteGroupType.PUBLIC.value:
             raise FavoriteGroupNotAllowedDeleteException()
         # 将该组的收藏全部归到未分组
-        unknown_group_id = FavoriteGroup.get_or_create_unknown_group(space_uid=self.data.space_uid)
+        unknown_group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=self.data.space_uid)
         Favorite.objects.filter(group_id=self.group_id).update(group_id=unknown_group_id)
         self.data.delete()
 
@@ -346,10 +354,13 @@ class FavoriteGroupHandler(object):
         # 保持原有排序，删掉不存在的收藏组，追加缺少的收藏组
         group_ids = [i for i in order_group_ids if i in all_group_ids]
         missing_ids = list(set(all_group_ids).difference(set(order_group_ids)))
-        group_ids.extend(missing_ids)
+        # 永远保证最后一个组为未分组
+        new_group_ids = group_ids[:-1]
+        new_group_ids.extend(missing_ids)
+        new_group_ids.append(group_ids[-1])
 
         # 更新用户排序
-        obj.group_order = group_ids
+        obj.group_order = new_group_ids
         obj.save()
 
         return obj.group_order
