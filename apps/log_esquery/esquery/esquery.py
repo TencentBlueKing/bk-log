@@ -151,6 +151,8 @@ class EsQuery(object):
             indices, scenario_id, start_time, end_time, time_zone
         )
         size, start, aggs, highlight, scroll, collapse = self._init_other_args()
+        mappings = self.mapping()
+
         # 调用DSL生成器
         body = DslBuilder(
             search_string=query_string,
@@ -163,6 +165,7 @@ class EsQuery(object):
             highlight=highlight,
             collapse=collapse,
             search_after=search_after,
+            mappings=mappings,
         ).body
 
         logger.info(f"scenario_id => [{scenario_id}], indices => [{index}], body => [{body}]")
