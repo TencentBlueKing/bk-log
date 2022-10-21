@@ -30,7 +30,12 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=64, verbose_name="收藏名称")),
                 ("group_id", models.IntegerField(db_index=True, verbose_name="收藏组ID")),
                 ("params", apps.models.JsonField(default=None, null=True, verbose_name="检索条件")),
-                ("visible_type", models.CharField(max_length=64, verbose_name="可见类型")),
+                (
+                    "visible_type",
+                    models.CharField(
+                        choices=[("private", "个人可见"), ("public", "公开可见")], max_length=64, verbose_name="可见类型"
+                    ),
+                ),
                 ("display_fields", models.JSONField(blank=True, default=None, verbose_name="显示字段")),
             ],
             options={
@@ -51,7 +56,14 @@ class Migration(migrations.Migration):
                 ("deleted_at", models.DateTimeField(blank=True, null=True, verbose_name="删除时间")),
                 ("deleted_by", models.CharField(blank=True, max_length=32, null=True, verbose_name="删除者")),
                 ("name", models.CharField(max_length=64, verbose_name="收藏组名称")),
-                ("group_type", models.CharField(max_length=64, verbose_name="收藏组类型")),
+                (
+                    "group_type",
+                    models.CharField(
+                        choices=[("private", "个人组"), ("public", "公共组"), ("unknown", "未分组")],
+                        max_length=64,
+                        verbose_name="收藏组类型",
+                    ),
+                ),
                 (
                     "space_uid",
                     models.CharField(blank=True, db_index=True, default="", max_length=256, verbose_name="空间唯一标识"),

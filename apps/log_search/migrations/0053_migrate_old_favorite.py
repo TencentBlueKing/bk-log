@@ -9,10 +9,8 @@ from apps.log_search.handlers.search.favorite_handlers import FavoriteHandler
 def forwards_func(apps, schema_editor):
     old_favorite_model = apps.get_model("log_search", "FavoriteSearch")
     search_history_model = apps.get_model("log_search", "UserIndexSetSearchHistory")
-    index_set_model = apps.get_model("log_search", "LogIndexSet")
 
     old_favorite_cnt = old_favorite_model.objects.all().count()
-    delete_cnt = 0
     success_migrate_cnt = 0
     failed_migrate_cnt = 0
 
@@ -24,10 +22,6 @@ def forwards_func(apps, schema_editor):
 
             search_history = search_history_model.objects.get(pk=search_history_id)
             index_set_id = search_history.index_set_id
-            if not index_set_model.objects.filter(index_set_id=index_set_id).exists():
-                print(f"Old favorite [{name}]'s index_set: [{index_set_id}] is not exist, do not migrate it.")
-                delete_cnt += 1
-                continue
             params = search_history.params
             favorite_obj = FavoriteHandler(space_uid=space_uid).create_or_update(
                 name=name,
@@ -45,7 +39,7 @@ def forwards_func(apps, schema_editor):
             print(f"Migrate old favorite failed, err: {e}")
             failed_migrate_cnt += 1
 
-    print(f"All({old_favorite_cnt}),Success({success_migrate_cnt}),Failed({failed_migrate_cnt}),Delete({delete_cnt})")
+    print(f"All({old_favorite_cnt}),Success({success_migrate_cnt}),Failed({failed_migrate_cnt})")
 
 
 class Migration(migrations.Migration):

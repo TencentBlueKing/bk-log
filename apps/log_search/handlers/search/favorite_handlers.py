@@ -20,7 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import re
-from collections import defaultdict
+from collections import defaultdict, Counter
 from typing import Optional, Union
 
 from luqum.auto_head_tail import auto_head_tail
@@ -33,7 +33,13 @@ from apps.log_esquery.constants import WILDCARD_PATTERN
 from apps.utils.local import get_request_username
 from apps.models import model_to_dict
 from apps.log_databus.constants import TargetNodeTypeEnum
-from apps.log_search.constants import DEFAULT_BK_CLOUD_ID, FavoriteVisibleType, FavoriteGroupType, FavoriteListOrderType
+from apps.log_search.constants import (
+    DEFAULT_BK_CLOUD_ID,
+    FavoriteVisibleType,
+    FavoriteGroupType,
+    FavoriteListOrderType,
+    FULL_TEXT_SEARCH_FIELD_NAME,
+)
 from apps.log_search.exceptions import (
     FavoriteGroupNotExistException,
     FavoriteGroupNotAllowedDeleteException,
@@ -167,12 +173,18 @@ class FavoriteHandler(object):
         return model_to_dict(self.data)
 
     @staticmethod
+    @atomic
     def batch_update(params: list):
         for param in params:
             FavoriteHandler(favorite_id=param["id"]).create_or_update(**param)
 
     def delete(self):
         self.data.delete()
+
+    @staticmethod
+    @atomic
+    def batch_delete(id_list: list):
+        Favorite.objects.filter(id__in=id_list).delete()
 
     @staticmethod
     def _generate_query_string(params):
@@ -230,16 +242,30 @@ class FavoriteHandler(object):
         if not keyword or keyword == WILDCARD_PATTERN:
             return fields
         query_tree = parser.parse(keyword, lexer=lexer)
-        if not query_tree.children:
-            return fields
+        if self._get_node_type(query_tree) == "Word":
+            fields.append(self._parse_node_expr(query_tree))
         if self._get_node_type(query_tree) == "SearchField":
             fields.append(self._parse_node_expr(query_tree))
+        if not query_tree.children:
+            return fields
         else:
             for child in query_tree.children:
                 if isinstance(self._parse_node_expr(child), list):
                     fields.extend(self._parse_node_expr(child))
                 else:
                     fields.append(self._parse_node_expr(child))
+        # 以下逻辑为同名字段增加额外标识符
+        field_names = Counter([field["name"] for field in fields])
+        if not field_names:
+            return fields
+        for field_name, cnt in field_names.items():
+            if cnt > 1:
+                number = 1
+                for field in fields:
+                    if field["name"] == field_name:
+                        field["name"] = f"{field_name}({number})"
+                        number += 1
+
         return fields
 
     @staticmethod
@@ -267,6 +293,7 @@ class FavoriteHandler(object):
             return node.expr.__class__.__name__
         if hasattr(node, "operands"):
             return "operands"
+        return node.__class__.__name__
 
     def _parse_node_expr(self, node) -> Union[dict, list]:
         """不同的解析语法调用不用的类"""
@@ -361,7 +388,7 @@ class FavoriteGroupHandler(object):
             return order_group_ids
 
         # 保持原有排序，删掉不存在的收藏组，追加缺少的收藏组
-        group_ids = [i for i in order_group_ids if i in all_group_ids]
+        group_ids = [group_id for group_id in order_group_ids if group_id in all_group_ids]
         missing_ids = list(set(all_group_ids).difference(set(order_group_ids)))
         # 永远保证最后一个组为未分组
         new_group_ids = group_ids[:-1]
@@ -401,7 +428,35 @@ class LuceneNodeExpr(object):
 class WordNodeExpr(LuceneNodeExpr):
     """Word 关键词解析"""
 
+    def __init__(self, node) -> None:
+        self.node = node
+        if hasattr(node, "expr"):
+            self.expr = node.expr
+            self.expr_type = self.expr.__class__.__name__
+            self.field = {
+                "pos": self.node.pos,
+                "name": self.node.name,
+                "type": self.expr_type,
+                "operator": "",
+                "value": "",
+            }
+        else:
+            self.expr = None
+            self.expr_type = None
+            self.field = {
+                "pos": self.node.pos,
+                "name": FULL_TEXT_SEARCH_FIELD_NAME,
+                "type": FULL_TEXT_SEARCH_FIELD_NAME,
+                "operator": "",
+                "value": "",
+            }
+
     def parse_expr(self):
+        if not self.expr:
+            self.field["operator"] = "~="
+            self.field["value"] = self.node.value
+            return self.field
+
         match = re.search(r"<=|>=|<|>", self.expr.value)
         if match:
             operator = match.group(0)
@@ -417,6 +472,10 @@ class WordNodeExpr(LuceneNodeExpr):
         self.parse_expr()
         value = context["value"]
         new_node = self.node.clone_item()
+        if not self.expr:
+            new_node = self.node.clone_item(value=value)
+            return new_node
+
         if self.field["operator"] in ["<=", "<", ">=", ">"]:
             value = "{}{}".format(self.field["operator"], value)
         new_node.expr = self.node.expr.clone_item(value=value)
@@ -493,8 +552,12 @@ class RegexNodeExpr(LuceneNodeExpr):
 
 class Transformer(TreeTransformer):
     def visit_search_field(self, node, context):
-        if node.name == context.get("name") and node.pos == context.get("pos"):
-            node_type = node.expr.__class__.__name__
+        # 加个name双重保险, 存在多个同名字段, log(1), log(2)
+        if node.pos == context.get("pos"):
+            if hasattr(node, "expr"):
+                node_type = node.expr.__class__.__name__
+            else:
+                node_type = node.__class__.__name__
             if node_type == "Word":
                 new_node = WordNodeExpr(node=node).update_expr(context)
             elif node_type == "Phrase":

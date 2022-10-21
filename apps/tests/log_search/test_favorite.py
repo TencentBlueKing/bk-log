@@ -143,6 +143,20 @@ UPDATE_QUERY_PARAMS = [
 EXPECT_NEW_QUERY = """number: >=10000  OR title: "hello"  AND text: hello  OR gseIndex: [100 TO 200]  \
 AND log: bk~0.5  AND time: /[L-N]/ """
 
+FULL_TEXT_SEARCH_KEYWORD = "number AND keyword"
+FULL_TEXT_SEARCH_FIELDS = [
+    {"pos": 0, "name": "全文检索(1)", "type": "全文检索", "operator": "~=", "value": "number"},
+    {"pos": 11, "name": "全文检索(2)", "type": "全文检索", "operator": "~=", "value": "keyword"},
+]
+FULL_TEXT_SEARCH_UPDATE_QUERY_PARAMS = [
+    {
+        "pos": 0,
+        "name": "全文检索",
+        "value": "hello",
+    }
+]
+EXPECT_NEW_FULL_TEXT_SEARCH_QUERY = "hello AND keyword"
+
 
 # 类全局使用USERNAME_1
 @patch("apps.models.get_request_username", lambda: USERNAME_1)
@@ -196,7 +210,7 @@ class TestFavorite(TestCase):
         """
         for obj in objs:
             if obj["group_type"] in [FavoriteGroupType.PRIVATE.value, FavoriteGroupType.UNGROUPED.value]:
-                self.assertEqual(obj["name"], obj["group_type"])
+                self.assertEqual(obj["name"], FavoriteGroupType.get_choice_label(obj["group_type"]))
 
     def _test_update_group(self, objs: list):
         """测试修改组名"""
@@ -288,6 +302,7 @@ class TestLucene(TestCase):
     def test_get_search_fields(self):
         """测试获取Lucene Query字段"""
         self.assertEqual(FavoriteHandler().get_search_fields(keyword=KEYWORD), KEYWORD_FIELDS)
+        self.assertEqual(FavoriteHandler().get_search_fields(keyword=FULL_TEXT_SEARCH_KEYWORD), FULL_TEXT_SEARCH_FIELDS)
 
     def test_update_query(self):
         """测试更新Lucene Query"""

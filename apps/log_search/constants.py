@@ -1172,3 +1172,4 @@ class FavoriteListOrderType(ChoicesEnum):
 
 
 INDEX_SET_NOT_EXISTED = _("索引集不存在")
+FULL_TEXT_SEARCH_FIELD_NAME = _("全文检索")

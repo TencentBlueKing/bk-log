@@ -38,6 +38,7 @@ from apps.log_search.serializers import (
     UpdateFavoriteSerializer,
     GetSearchFieldsSerializer,
     GenerateQuerySerializer,
+    BatchUpdateFavoriteSerializer,
 )
 from apps.utils.drf import list_route
 
@@ -425,18 +426,9 @@ class FavoriteViewSet(APIViewSet):
             "result": true
             }
         """
-        data = self.params_valid(UpdateFavoriteSerializer)
-        favorite_search = FavoriteHandler(favorite_id=kwargs["id"]).create_or_update(
-            name=data["name"],
-            host_scopes=data["host_scopes"],
-            addition=data["addition"],
-            keyword=data["keyword"],
-            visible_type=data["visible_type"],
-            search_fields=data["search_fields"],
-            display_fields=data["display_fields"],
-            group_id=data["group_id"],
-        )
-        return Response(favorite_search)
+        data = self.params_valid(BatchUpdateFavoriteSerializer)
+        FavoriteHandler().batch_update(data)
+        return Response()
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -457,6 +449,30 @@ class FavoriteViewSet(APIViewSet):
             FavoriteHandler(favorite_id=self.get_object().id).delete()
         except Http404:
             raise FavoriteNotExistException
+        return Response()
+
+    @list_route(methods=["POST"], url_path="batch_delete")
+    def batch_delete(self, request, *args, **kwargs):
+        """
+        @api {POST} /search/favorite/ 02_检索收藏-批量删除
+        @apiDescription 批量删除用户检索收藏
+        @apiName batch_delete_favorite_search
+        @apiGroup 21_Favorite
+        @apiParam {List} id_list 收藏id列表
+        @apiParamExample {json} 请求参数
+        {
+            "id_list": [1， 2]
+        }
+        @apiSuccessExample {json} 成功返回：
+        {
+            "message": "",
+            "code": 0,
+            "data": ""，
+            "result": true
+            }
+        """
+        data = self.params_valid(BatchUpdateFavoriteSerializer)
+        FavoriteHandler().batch_delete(data["id_list"])
         return Response()
 
     @list_route(methods=["POST"], url_path="get_search_fields")

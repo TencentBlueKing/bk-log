@@ -366,6 +366,14 @@ class BatchUpdateFavoriteSerializer(serializers.Serializer):
     params = serializers.ListField(required=True, child=BatchUpdateFavoriteChildSerializer())
 
 
+class BatchDeleteFavoriteSerializer(serializers.Serializer):
+    """
+    批量删除收藏序列化
+    """
+
+    id_list = serializers.ListField(required=True, child=serializers.IntegerField())
+
+
 class FavoriteListSerializer(serializers.Serializer):
     """
     获取收藏

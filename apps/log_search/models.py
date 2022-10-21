@@ -802,7 +802,7 @@ class FavoriteGroup(SoftDeleteModel):
     @classmethod
     def get_or_create_private_group(cls, space_uid: str, username: str) -> "FavoriteGroup":
         obj, __ = cls.objects.get_or_create(
-            name=FavoriteGroupType.PRIVATE.value,
+            name=FavoriteGroupType.get_choice_label(str(FavoriteGroupType.PRIVATE.value)),
             group_type=FavoriteGroupType.PRIVATE.value,
             space_uid=space_uid,
             created_by=username,
@@ -812,7 +812,7 @@ class FavoriteGroup(SoftDeleteModel):
     @classmethod
     def get_or_create_ungrouped_group(cls, space_uid: str) -> "FavoriteGroup":
         obj, __ = cls.objects.get_or_create(
-            name=FavoriteGroupType.UNGROUPED.value,
+            name=FavoriteGroupType.get_choice_label(str(FavoriteGroupType.UNGROUPED.value)),
             group_type=FavoriteGroupType.UNGROUPED.value,
             space_uid=space_uid,
         )
