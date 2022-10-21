@@ -49,7 +49,7 @@ from apps.utils.cache import cache_five_minute
 from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
 
-DATE_RE = re.compile("[0-9]{8}")
+DATE_RE = re.compile("[0-9]{6,8}$")
 
 
 class QueryClientLog(QueryClientTemplate):  # pylint: disable=invalid-name
