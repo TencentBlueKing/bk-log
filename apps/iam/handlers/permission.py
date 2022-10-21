@@ -24,7 +24,7 @@ from typing import Union, List, Dict
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
-
+from apps.iam.handlers.compatible import CompatibleIAM
 from apps.utils.log import logger
 from apps.iam.exceptions import ActionNotExistError, PermissionDeniedError, GetSystemInfoError
 from apps.iam.handlers.actions import ActionMeta, get_action_by_id, _all_actions
@@ -35,7 +35,7 @@ from apps.iam.handlers.resources import (
     Business as BusinessResource,
 )
 from apps.utils.local import get_request, get_request_username
-from iam import IAM, Request, Subject, Resource, make_expression, ObjectSet, MultiActionRequest
+from iam import Request, Subject, Resource, make_expression, ObjectSet, MultiActionRequest
 from iam.apply.models import (
     ActionWithoutResources,
     Application,
@@ -71,7 +71,7 @@ class Permission(object):
 
     @classmethod
     def get_iam_client(cls):
-        return IAM(settings.APP_CODE, settings.SECRET_KEY, settings.BK_IAM_INNER_HOST, settings.PAAS_API_HOST)
+        return CompatibleIAM(settings.APP_CODE, settings.SECRET_KEY, settings.BK_IAM_INNER_HOST, settings.PAAS_API_HOST)
 
     def make_request(self, action: Union[ActionMeta, str], resources: List[Resource] = None) -> Request:
         """

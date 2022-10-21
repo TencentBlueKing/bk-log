@@ -1123,3 +1123,53 @@ INDEX_SET_NO_DATA_CHECK_INTERVAL = 15
 
 ERROR_MSG_CHECK_FIELDS_FROM_BKDATA = _(", 请在计算平台清洗中调整")
 ERROR_MSG_CHECK_FIELDS_FROM_LOG = _(", 请联系平台管理员")
+
+
+class FavoriteVisibleType(ChoicesEnum):
+    """
+    检索收藏可见类型枚举
+    """
+
+    PRIVATE = "private"
+    PUBLIC = "public"
+
+    _choices_labels = (
+        (PRIVATE, _("个人可见")),
+        (PUBLIC, _("公开可见")),
+    )
+
+
+class FavoriteGroupType(ChoicesEnum):
+    """
+    检索收藏组类型枚举
+    """
+
+    PRIVATE = "private"
+    PUBLIC = "public"
+    UNGROUPED = "unknown"
+
+    _choices_labels = (
+        (PRIVATE, _("个人组")),
+        (PUBLIC, _("公共组")),
+        (UNGROUPED, _("未分组")),
+    )
+
+
+class FavoriteListOrderType(ChoicesEnum):
+    """
+    检索列表排序类型
+    """
+
+    NAME_ASC = "NAME_ASC"
+    NAME_DESC = "NAME_DESC"
+    UPDATED_AT_DESC = "UPDATED_AT_DESC"
+
+    _choices_labels = (
+        (NAME_ASC, _("名称升序")),
+        (NAME_DESC, _("名称降序")),
+        (UPDATED_AT_DESC, _("更新时间降序")),
+    )
+
+
+INDEX_SET_NOT_EXISTED = _("索引集不存在")
+FULL_TEXT_SEARCH_FIELD_NAME = _("全文检索")

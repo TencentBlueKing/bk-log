@@ -1500,4 +1500,6 @@ export default {
   内置索引集: 'Built in Index',
   不可编辑: 'not editable',
   不可删除: 'not deleted',
+  自动转换成正确的英文名格式: 'Automatically convert to the correct English name format',
+  自动转换: 'Automatically convert',
 };
