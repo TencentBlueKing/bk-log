@@ -182,7 +182,6 @@ class FavoriteHandler(object):
         self.data.delete()
 
     @staticmethod
-    @atomic
     def batch_delete(id_list: list):
         Favorite.objects.filter(id__in=id_list).delete()
 
