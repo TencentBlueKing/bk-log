@@ -43,6 +43,7 @@ elasticsearch==7.0.0
 elasticsearch5==5.5.6
 elasticsearch6==6.4.2
 elasticsearch_dsl==7.0.0
+luqum==0.11.0
 
 # kafka
 kafka-python==1.4.6
