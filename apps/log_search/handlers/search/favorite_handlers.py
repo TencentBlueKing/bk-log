@@ -251,7 +251,18 @@ class FavoriteHandler(object):
     def get_search_fields(self, keyword: str) -> list:
         """获取检索语句中可以拆分的字段"""
         fields = []
-        if not keyword or keyword == WILDCARD_PATTERN:
+        if not keyword:
+            return fields
+        if keyword == WILDCARD_PATTERN:
+            fields.append(
+                {
+                    "pos": 0,
+                    "name": FULL_TEXT_SEARCH_FIELD_NAME,
+                    "type": FULL_TEXT_SEARCH_FIELD_NAME,
+                    "operator": "",
+                    "value": "*",
+                }
+            )
             return fields
         query_tree = parser.parse(keyword, lexer=lexer)
         if self._get_node_type(query_tree) == "Word":
@@ -285,6 +296,8 @@ class FavoriteHandler(object):
         """根据params里的参数名以及Value进行替换"""
         if not params or not keyword:
             return keyword
+        if keyword == WILDCARD_PATTERN:
+            return str(params[0]["value"])
 
         query_tree = parser.parse(keyword, lexer=lexer)
         transformer = Transformer()

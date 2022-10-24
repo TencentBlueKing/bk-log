@@ -58,6 +58,7 @@ CREATE_PRIVATE_FAVORITE_PARAMS = {
     "keyword": KEYWORD,
     "visible_type": FavoriteVisibleType.PRIVATE.value,
     "search_fields": SEARCH_FIELDS,
+    "is_enable_display_fields": True,
     "display_fields": DISPLAY_FIELDS,
 }
 
@@ -70,6 +71,7 @@ CREATE_UNKNOWN_FAVORITE_PARAMS = {
     "keyword": KEYWORD,
     "visible_type": FavoriteVisibleType.PUBLIC.value,
     "search_fields": SEARCH_FIELDS,
+    "is_enable_display_fields": True,
     "display_fields": DISPLAY_FIELDS,
 }
 
@@ -83,6 +85,7 @@ USER1_CREATE_FAVORITE_PARAM = {
     "keyword": KEYWORD,
     "visible_type": FavoriteVisibleType.PUBLIC.value,
     "search_fields": SEARCH_FIELDS,
+    "is_enable_display_fields": True,
     "display_fields": DISPLAY_FIELDS,
 }
 USER2_CREATE_FAVORITE_PARAM = {
@@ -94,6 +97,7 @@ USER2_CREATE_FAVORITE_PARAM = {
     "keyword": KEYWORD,
     "visible_type": FavoriteVisibleType.PUBLIC.value,
     "search_fields": SEARCH_FIELDS,
+    "is_enable_display_fields": True,
     "display_fields": DISPLAY_FIELDS,
 }
 
