@@ -262,6 +262,7 @@ class FavoriteViewSet(APIViewSet):
                     "search_fields": []
                 },
                 "visible_type": "private",
+                "is_enable_display_fields": True,
                 "display_fields": []
             },
             "result": true
@@ -276,6 +277,7 @@ class FavoriteViewSet(APIViewSet):
             keyword=data["keyword"],
             visible_type=data["visible_type"],
             search_fields=data["search_fields"],
+            is_enable_display_fields=data["is_enable_display_fields"],
             display_fields=data["display_fields"],
             group_id=data["group_id"],
         )
@@ -321,7 +323,8 @@ class FavoriteViewSet(APIViewSet):
                     "value": "127.0.0.1"
                 }
             ],
-            "search_fields": ["log"]
+            "search_fields": ["log"],
+            "is_enable_display_fields": True,
             "display_fields": ["log", "ip", "time"]
         }
         @apiSuccessExample {json} 成功返回：
@@ -349,6 +352,7 @@ class FavoriteViewSet(APIViewSet):
                         "search_fields": []
                     },
                     "visible_type": "private",
+                    "is_enable_display_fields": True,
                     "display_fields": []
                 },
                 "result": true
@@ -362,6 +366,7 @@ class FavoriteViewSet(APIViewSet):
             keyword=data["keyword"],
             visible_type=data["visible_type"],
             search_fields=data["search_fields"],
+            is_enable_display_fields=data["is_enable_display_fields"],
             display_fields=data["display_fields"],
             group_id=data["group_id"],
         )
@@ -412,7 +417,8 @@ class FavoriteViewSet(APIViewSet):
                             "value": "127.0.0.1"
                         }
                     ],
-                    "search_fields": ["log"]
+                    "search_fields": ["log"],
+                    "is_enable_display_fields": True,
                     "display_fields": ["log", "ip", "time"]
                 }
             ]
