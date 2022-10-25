@@ -346,15 +346,18 @@ class EtlStorage(object):
         # 兼容插件与采集项
         if not table_id:
             # 创建结果表
-            instance.table_id = TransferApi.create_result_table(params)["table_id"]
-            instance.save()
+            table_id = TransferApi.create_result_table(params)["table_id"]
         else:
             # 更新结果表
             params["table_id"] = table_id
             TransferApi.modify_result_table(params)
             cache.delete(CACHE_KEY_CLUSTER_INFO.format(table_id))
 
-        return {"table_id": instance.table_id if instance.table_id else table_id, "params": params}
+        if not instance.table_id:
+            instance.table_id = table_id
+            instance.save()
+
+        return {"table_id": instance.table_id, "params": params}
 
     @classmethod
     def switch_result_table(cls, collector_config: CollectorConfig, is_enable=True):
