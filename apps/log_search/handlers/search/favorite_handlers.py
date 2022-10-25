@@ -149,11 +149,15 @@ class FavoriteHandler(object):
             group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=space_uid).id
 
         if self.data:
+            # 公开收藏转个人收藏仅限于自己创建的
             if (
                 self.data.visible_type == FavoriteVisibleType.PUBLIC.value
                 and visible_type == FavoriteVisibleType.PRIVATE.value
             ):
-                raise FavoriteVisibleTypeNotAllowedModifyException()
+                if self.data.created_by != get_request_username():
+                    raise FavoriteVisibleTypeNotAllowedModifyException()
+                else:
+                    group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=space_uid).id
             # 名称检查
             if self.data.name != name and Favorite.objects.filter(name=name, space_uid=space_uid).exists():
                 raise FavoriteAlreadyExistException()
