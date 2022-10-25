@@ -336,7 +336,14 @@ class CreateFavoriteSerializer(serializers.Serializer):
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     search_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
+    is_enable_display_fields = serializers.BooleanField(required=False, default=False)
     display_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs["is_enable_display_fields"] and not attrs["display_fields"]:
+            raise serializers.ValidationError(_("同时显示字段开启时, 显示字段不能为空"))
+        return attrs
 
 
 class UpdateFavoriteSerializer(serializers.Serializer):
@@ -351,6 +358,7 @@ class UpdateFavoriteSerializer(serializers.Serializer):
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     search_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
+    is_enable_display_fields = serializers.BooleanField(required=False, default=False)
     display_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
 
 

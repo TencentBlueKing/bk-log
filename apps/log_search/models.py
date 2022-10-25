@@ -744,6 +744,7 @@ class Favorite(SoftDeleteModel):
     group_id = models.IntegerField(_("收藏组ID"), db_index=True)
     params = JsonField(_("检索条件"), null=True, default=None)
     visible_type = models.CharField(_("可见类型"), max_length=64, choices=FavoriteVisibleType.get_choices())  # 个人 | 公开
+    is_enable_display_fields = models.BooleanField(_("是否同时显示字段"), default=False)
     display_fields = models.JSONField(_("显示字段"), blank=True, default=None)
 
     class Meta:
@@ -802,19 +803,19 @@ class FavoriteGroup(SoftDeleteModel):
     @classmethod
     def get_or_create_private_group(cls, space_uid: str, username: str) -> "FavoriteGroup":
         obj, __ = cls.objects.get_or_create(
-            name=FavoriteGroupType.get_choice_label(str(FavoriteGroupType.PRIVATE.value)),
             group_type=FavoriteGroupType.PRIVATE.value,
             space_uid=space_uid,
             created_by=username,
+            defaults={"name": FavoriteGroupType.get_choice_label(str(FavoriteGroupType.PRIVATE.value))},
         )
         return obj
 
     @classmethod
     def get_or_create_ungrouped_group(cls, space_uid: str) -> "FavoriteGroup":
         obj, __ = cls.objects.get_or_create(
-            name=FavoriteGroupType.get_choice_label(str(FavoriteGroupType.UNGROUPED.value)),
             group_type=FavoriteGroupType.UNGROUPED.value,
             space_uid=space_uid,
+            defaults={"name": FavoriteGroupType.get_choice_label(str(FavoriteGroupType.UNGROUPED.value))},
         )
         return obj
 

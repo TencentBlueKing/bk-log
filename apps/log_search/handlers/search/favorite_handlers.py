@@ -39,6 +39,7 @@ from apps.log_search.constants import (
     FavoriteGroupType,
     FavoriteListOrderType,
     FULL_TEXT_SEARCH_FIELD_NAME,
+    INDEX_SET_NOT_EXISTED,
 )
 from apps.log_search.exceptions import (
     FavoriteGroupNotExistException,
@@ -48,7 +49,7 @@ from apps.log_search.exceptions import (
     FavoriteVisibleTypeNotAllowedModifyException,
     FavoriteAlreadyExistException,
 )
-from apps.log_search.models import Favorite, FavoriteGroup, FavoriteGroupCustomOrder
+from apps.log_search.models import Favorite, FavoriteGroup, FavoriteGroupCustomOrder, LogIndexSet
 
 
 class FavoriteHandler(object):
@@ -67,6 +68,13 @@ class FavoriteHandler(object):
     def retrieve(self) -> dict:
         """收藏详情"""
         result = model_to_dict(self.data)
+        if LogIndexSet.objects.filter(index_set_id=result["index_set_id"]).exists():
+            result["is_active"] = True
+            result["index_set_name"] = LogIndexSet.objects.get(index_set_id=result["index_set_id"]).index_set_name
+        else:
+            result["is_active"] = False
+            result["index_set_name"] = INDEX_SET_NOT_EXISTED
+
         result["query_string"] = self._generate_query_string(self.data.params)
         return result
 
@@ -106,6 +114,8 @@ class FavoriteHandler(object):
                 "index_set_name": fi["index_set_name"],
                 "visible_type": fi["visible_type"],
                 "search_fields": fi["params"].get("search_fields", []),
+                "keyword": fi["params"].get("keyword", ""),
+                "is_enable_display_fields": fi["is_enable_display_fields"],
                 "display_fields": fi["display_fields"],
                 "is_active": fi["is_active"],
             }
@@ -121,6 +131,7 @@ class FavoriteHandler(object):
         keyword: str,
         visible_type: str,
         search_fields: list,
+        is_enable_display_fields: bool,
         display_fields: list,
         index_set_id: int = None,
         group_id: int = None,
@@ -151,6 +162,7 @@ class FavoriteHandler(object):
                 "group_id": group_id,
                 "params": params,
                 "visible_type": visible_type,
+                "is_enable_display_fields": is_enable_display_fields,
                 "display_fields": display_fields,
             }
             for key, value in update_model_fields.items():
@@ -167,6 +179,7 @@ class FavoriteHandler(object):
                 group_id=group_id,
                 params=params,
                 visible_type=visible_type,
+                is_enable_display_fields=is_enable_display_fields,
                 display_fields=display_fields,
             )
 
@@ -238,7 +251,18 @@ class FavoriteHandler(object):
     def get_search_fields(self, keyword: str) -> list:
         """获取检索语句中可以拆分的字段"""
         fields = []
-        if not keyword or keyword == WILDCARD_PATTERN:
+        if not keyword:
+            return fields
+        if keyword == WILDCARD_PATTERN:
+            fields.append(
+                {
+                    "pos": 0,
+                    "name": FULL_TEXT_SEARCH_FIELD_NAME,
+                    "type": FULL_TEXT_SEARCH_FIELD_NAME,
+                    "operator": "",
+                    "value": "*",
+                }
+            )
             return fields
         query_tree = parser.parse(keyword, lexer=lexer)
         if self._get_node_type(query_tree) == "Word":
@@ -272,6 +296,8 @@ class FavoriteHandler(object):
         """根据params里的参数名以及Value进行替换"""
         if not params or not keyword:
             return keyword
+        if keyword == WILDCARD_PATTERN:
+            return str(params[0]["value"])
 
         query_tree = parser.parse(keyword, lexer=lexer)
         transformer = Transformer()
