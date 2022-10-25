@@ -785,7 +785,7 @@ export default {
         this.formData.configs.forEach((item) => {
           item.isAllContainer = false; // node环境时 所有容器，指定容器禁用
           item.container = this.allContainer;
-          item.namespaces = ['*'];
+          item.namespaces = [];
         });
       }
       return this.currentEnvironment === 'node_log_config';
@@ -1179,9 +1179,6 @@ export default {
           item.params = this.filterParams(item.params, item.collector_type);
         });
         containerFromData.extra_labels = extra_labels.filter(item => !(item.key === '' && item.value === ''));
-        if (this.isUpdate) { // 容器环境新增
-          return containerFromData;
-        }
         return Object.assign(containerFromData, { // 容器环境更新
           bk_biz_id: this.bkBizId,
         });
@@ -1199,7 +1196,9 @@ export default {
         physicsFromData.collector_config_id = Number(this.$route.params.collectorId);
         delete physicsFromData.category_id;
         delete physicsFromData.collector_scenario_id;
-        return physicsFromData;
+        return Object.assign(physicsFromData, {
+          bk_biz_id: this.bkBizId,
+        });
       } // 物理环境新增
       return Object.assign(physicsFromData, {
         bk_biz_id: this.bkBizId,
@@ -1526,12 +1525,8 @@ export default {
      * @desc: 编进进入时判断当前环境 禁用另一边环境选择
      */
     initBtnListDisable() {
-      if (['linux', 'windows'].includes(this.currentEnvironment)) {
-        this.environmentList.forEach(item => item.btnList.forEach(bItem => bItem.isDisable = true));
-        return;
-      }
-      // const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
-      this.environmentList[0].btnList.forEach(item => item.isDisable = true);
+      const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
+      this.environmentList[operateIndex].btnList.forEach(item => item.isDisable = true);
     },
     getFromCharCode(index) {
       return String.fromCharCode(index + 65);
