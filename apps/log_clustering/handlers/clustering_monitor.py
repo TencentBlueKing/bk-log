@@ -226,7 +226,7 @@ class ClusteringMonitorHandler(object):
                     "agg_method": DEFAULT_AGG_METHOD_BKDATA,
                     "agg_interval": 60 * 5,  # 新类告警聚类周期固定为5min
                     "agg_dimension": [],
-                    "agg_condition": [],
+                    "agg_condition": [{"key": "sensitivity", "method": "eq", "value": ["dist_09"], "condition": "and"}],
                     "metric_field": metric,
                     "unit": "",
                     "time_field": DEFAULT_TIME_FIELD,

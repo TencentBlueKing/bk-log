@@ -19,8 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import os
 import logging
+
+from django.conf import settings
 
 from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
 
@@ -45,14 +46,11 @@ class VersionMetric(object):
     @staticmethod
     def version():
         result = HealthzMetric(status=False, metric_name="version")
-        cwd = os.getcwd()
         try:
-            with open(os.path.join(cwd, "VERSION"), "r") as f:
-                result.metric_value = f.read().split("\n")[0]
-                result.status = True
-                f.close()
+            result.metric_value = settings.VERSION
+            result.status = True
         except Exception as e:  # pylint: disable=broad-except
-            logger.exception("open VERSION failed: {}".format(e))
+            logger.exception("get VERSION failed: {}".format(e))
             result.message = str(e)
             result.suggestion = "缺少VERSION, 请检查打包流程是否正确"
 

@@ -4,7 +4,7 @@
 importlib-metadata==3.4.0
 ujson==4.1.0
 
-Django==3.2.5
+Django==3.2.15
 # 单元测试
 django-fakeredis==0.1.2
 requests==2.23.0
@@ -29,7 +29,6 @@ python-dateutil==2.7.5
 djangorestframework==3.12.4
 django-filter==2.4.0
 arrow==0.14.2
-arrow==0.14.2
 mistune==0.8.4
 gevent==1.2.2
 python-consul==1.1.0
@@ -43,6 +42,7 @@ elasticsearch==7.0.0
 elasticsearch5==5.5.6
 elasticsearch6==6.4.2
 elasticsearch_dsl==7.0.0
+luqum==0.11.0
 
 # kafka
 kafka-python==1.4.6
@@ -65,13 +65,13 @@ mock==2.0.0
 jinja2==2.10.1
 
 # ipython
-ipython==7.13.0
+ipython==7.16.3
 jedi==0.17.2
 
 humanize==3.11.0
 
 # opentelemetry
-protobuf==3.19.4
+protobuf==3.19.5
 opentelemetry-api==1.6.2
 opentelemetry-sdk==1.6.2
 opentelemetry-exporter-otlp-proto-http==1.6.2

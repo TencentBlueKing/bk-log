@@ -150,6 +150,8 @@ class EtlStorage(object):
             field_option["es_type"] = FieldDataTypeEnum.get_es_field_type(
                 field["field_type"], is_analyzed=field["is_analyzed"]
             )
+            if field["is_analyzed"] and field.get("option", {}).get("es_analyzer"):
+                field_option["es_analyzer"] = field["option"]["es_analyzer"]
 
             # ES_INCLUDE_IN_ALL
             if field["is_analyzed"] and es_version.startswith("5."):
@@ -171,12 +173,6 @@ class EtlStorage(object):
                 time_field["option"]["field_index"] = field_option["field_index"]
                 # 删除原时间字段配置
                 field_option["es_doc_values"] = False
-
-            # 处理自定义 Option 兼容
-            origin_option = field.get("option", {})
-            if origin_option and isinstance(origin_option, dict):
-                origin_option = {key: val for key, val in origin_option.items() if key.startswith("es")}
-                field_option.update(origin_option)
 
             # 加入字段列表
             field_list.append(
@@ -288,6 +284,7 @@ class EtlStorage(object):
             "field_list": [],
             "warm_phase_days": 0,
             "warm_phase_settings": {},
+            "is_sync_db": False,  # ES的index创建，不做同步创建，走异步任务执行
         }
         index_settings = index_settings or {}
         params["default_storage_config"]["index_settings"].update(index_settings)
