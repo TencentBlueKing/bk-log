@@ -540,6 +540,10 @@ class StorageHandler(object):
         cluster_name = params.get("cluster_name", cluster_en_name)
         # 获取节点信息
         hot_node_num, warm_node_num = self.get_hot_warm_node_info(params)
+        # 获取管理员信息
+        admin = params.get("admin", [])
+        if username not in admin:
+            admin.append(username)
         # 构造请求参数
         bkbase_params = {
             "bk_username": username,
@@ -551,7 +555,7 @@ class StorageHandler(object):
             "provider": "user",
             "purpose": "BKLog集群同步",
             "share": False,
-            "admin": [username],
+            "admin": admin,
             "tag": params.get("bkbase_tags", []) or DEFAULT_ES_TAGS,
             "connection_info": {
                 "username": params["auth_info"]["username"],
