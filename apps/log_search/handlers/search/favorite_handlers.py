@@ -138,23 +138,28 @@ class FavoriteHandler(object):
     ) -> dict:
         # 构建params
         params = {"host_scopes": host_scopes, "addition": addition, "keyword": keyword, "search_fields": search_fields}
+        space_uid = self.space_uid if self.space_uid else self.data.space_uid
 
         # 可见为个人时归类到个人组
         if visible_type == FavoriteVisibleType.PRIVATE.value:
-            group_id = FavoriteGroup.get_or_create_private_group(space_uid=self.space_uid, username=self.username).id
+            group_id = FavoriteGroup.get_or_create_private_group(space_uid=space_uid, username=self.username).id
 
         # 未传组ID的时候, 可见为个人的时候设置为个人组，可见为公开的时候将组置为未分组
         if not group_id:
-            group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=self.space_uid).id
+            group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=space_uid).id
 
         if self.data:
+            # 公开收藏转个人收藏仅限于自己创建的
             if (
                 self.data.visible_type == FavoriteVisibleType.PUBLIC.value
                 and visible_type == FavoriteVisibleType.PRIVATE.value
             ):
-                raise FavoriteVisibleTypeNotAllowedModifyException()
+                if self.data.created_by != get_request_username():
+                    raise FavoriteVisibleTypeNotAllowedModifyException()
+                else:
+                    group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=space_uid).id
             # 名称检查
-            if self.data.name != name and Favorite.objects.filter(name=name, space_uid=self.space_uid).exists():
+            if self.data.name != name and Favorite.objects.filter(name=name, space_uid=space_uid).exists():
                 raise FavoriteAlreadyExistException()
 
             update_model_fields = {
@@ -170,10 +175,10 @@ class FavoriteHandler(object):
             self.data.save()
 
         else:
-            if Favorite.objects.filter(name=name, space_uid=self.space_uid).exists():
+            if Favorite.objects.filter(name=name, space_uid=space_uid).exists():
                 raise FavoriteAlreadyExistException()
             self.data = Favorite.objects.create(
-                space_uid=self.space_uid,
+                space_uid=space_uid,
                 index_set_id=index_set_id,
                 name=name,
                 group_id=group_id,
@@ -364,10 +369,11 @@ class FavoriteGroupHandler(object):
     @atomic
     def create_or_update(self, name: str) -> dict:
         """创建和修改都是针对公开组的"""
+        space_uid = self.space_uid if self.space_uid else self.data.space_uid
         group_type = FavoriteGroupType.PUBLIC.value
         # 检查name是否可用
         if self.data and self.data != name or not self.data:
-            if FavoriteGroup.objects.filter(name=name, group_type=group_type, space_uid=self.space_uid).exists():
+            if FavoriteGroup.objects.filter(name=name, group_type=group_type, space_uid=space_uid).exists():
                 raise FavoriteGroupAlreadyExistException()
 
         # 修改
@@ -378,7 +384,7 @@ class FavoriteGroupHandler(object):
         else:
             # get_group_order中包含get_or_create同步个人组和未分类组的逻辑
             group_order = self.get_group_order()
-            self.data = FavoriteGroup.objects.create(name=name, group_type=group_type, space_uid=self.space_uid)
+            self.data = FavoriteGroup.objects.create(name=name, group_type=group_type, space_uid=space_uid)
             # 同时追加到用户自定义组的末尾
             group_order.insert(-1, self.data.id)
             self.update_group_order(group_order)
