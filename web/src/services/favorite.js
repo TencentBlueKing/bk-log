@@ -23,7 +23,7 @@
 /**
  * 收藏详情
  */
- const getFavorite = {
+const getFavorite = {
   url: '/search/favorite/:id/',
   method: 'get',
 };
@@ -103,28 +103,28 @@ const getSearchFields = {
 const getGenerateQuery = {
   url: '/search/favorite/generate_query/',
   method: 'post',
-}
+};
 /**
  * 批量修改收藏
  */
 const batchFavoriteUpdate = {
   url: '/search/favorite/batch_update/',
   method: 'post',
-}
+};
 /**
  * 批量删除收藏
  */
 const batchFavoriteDelete = {
   url: '/search/favorite/batch_delete/',
   method: 'post',
-}
+};
 /**
  * 组排序
  */
- const groupUpdateOrder = {
+const groupUpdateOrder = {
   url: '/search/favorite_group/update_order/',
   method: 'post',
-}
+};
 
 export {
   getFavorite,
@@ -141,5 +141,5 @@ export {
   getGenerateQuery,
   batchFavoriteUpdate,
   batchFavoriteDelete,
-  groupUpdateOrder
+  groupUpdateOrder,
 };
