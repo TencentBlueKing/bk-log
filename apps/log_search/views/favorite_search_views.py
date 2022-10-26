@@ -39,6 +39,7 @@ from apps.log_search.serializers import (
     GetSearchFieldsSerializer,
     GenerateQuerySerializer,
     BatchUpdateFavoriteSerializer,
+    BatchDeleteFavoriteSerializer,
 )
 from apps.utils.drf import list_route
 
@@ -433,7 +434,7 @@ class FavoriteViewSet(APIViewSet):
             }
         """
         data = self.params_valid(BatchUpdateFavoriteSerializer)
-        FavoriteHandler().batch_update(data)
+        FavoriteHandler().batch_update(data["params"])
         return Response()
 
     def destroy(self, request, *args, **kwargs):
@@ -477,7 +478,7 @@ class FavoriteViewSet(APIViewSet):
             "result": true
             }
         """
-        data = self.params_valid(BatchUpdateFavoriteSerializer)
+        data = self.params_valid(BatchDeleteFavoriteSerializer)
         FavoriteHandler().batch_delete(data["id_list"])
         return Response()
 
