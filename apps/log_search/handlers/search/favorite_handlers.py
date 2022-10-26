@@ -158,7 +158,9 @@ class FavoriteHandler(object):
                 if self.data.created_by != get_request_username():
                     raise FavoriteVisibleTypeNotAllowedModifyException()
                 else:
-                    group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=space_uid).id
+                    group_id = FavoriteGroup.get_or_create_private_group(
+                        space_uid=space_uid, username=get_request_username()
+                    ).id
             # 名称检查
             if self.data.name != name and Favorite.objects.filter(name=name, space_uid=space_uid).exists():
                 raise FavoriteAlreadyExistException()
