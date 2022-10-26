@@ -21,12 +21,13 @@
   -->
 
 <template>
-  <div
-    class="favorite-popper-content">
-    <div class="title">{{ $t('是否替换当前收藏') }}？</div>
-    <div class="content">
-      <bk-button text size="small" @click="handleOperate('replace')">{{ $t('替换当前') }}</bk-button>
-      <bk-button text size="small" @click="handleOperate('add')">{{ $t('新建') }}</bk-button>
+  <div class="ui-query-container" v-bkloading="{ isLoading: loading }">
+    <div class="query-item-box" v-for="(item, index) in searchFieldsList" :key="index">
+      <div class="query-title">
+        <span>{{item.name}}</span>
+        <span>{{item.operator}}</span>
+      </div>
+      <bk-input v-model="item.value" @blur="handleChangeValue"></bk-input>
     </div>
   </div>
 </template>
@@ -34,59 +35,58 @@
 <script>
 export default {
   props: {
-    replaceFavoriteData: {
+    activeFavorite: {
       type: Object,
-      default: () => ({}),
+      required: true,
+    },
+    keyword: {
+      type: String,
+      required: true,
     },
   },
   data() {
     return {
-      value: '',
+      searchFieldsList: [],
+      loading: false,
     };
   },
-  computed: {
+  computed: {},
+  watch: {
+    activeFavorite: {
+      immediate: true,
+      deep: true,
+      handler() {
+        this.getSearchFieldsList(this.keyword);
+      },
+    },
   },
   methods: {
-    handleOperate(type) {
-      if (type === 'add') {
-        this.$emit('favoriteTipsOperate', 'add-new');
-      } else {
-        this.handleUpdateFavorite(this.replaceFavoriteData);
-        this.$emit('favoriteTipsOperate', 'replace');
+    async getSearchFieldsList(keyword) {
+      this.loading = true;
+      try {
+        const res = await this.$http.request('favorite/getSearchFields', {
+          data: { keyword },
+        });
+        this.searchFieldsList = res.data;
+      } catch (error) {} finally {
+        this.loading = false;
       }
     },
-    /** 更新收藏 */
-    async handleUpdateFavorite(subData) {
-      const {
-        index_set_id,
-        params,
-        name,
-        group_id,
-        display_fields,
-        visible_type,
-        id,
-      } = subData;
-      const { host_scopes, addition, keyword, search_fields } = params;
-      const data = {
-        index_set_id,
-        name,
-        group_id,
-        display_fields,
-        visible_type,
-        host_scopes,
-        addition,
-        keyword,
-        search_fields,
-        space_uid: this.spaceUid,
-      };
+    async handleChangeValue() {
+      const keyword = this.activeFavorite.params.keyword;
+      const params = this.searchFieldsList.map(item => ({
+        name: item.name,
+        value: item.value,
+        pos: item.pos,
+      }));
       try {
-        const res = await this.$http.request('favorite/updateFavorite', { params: { id }, data });
-        if (res.result) {
-          this.$bkMessage({
-            message: this.$t('替换成功'),
-            theme: 'success',
-          });
-        }
+        const res = await this.$http.request('favorite/getGenerateQuery', {
+          data: {
+            keyword,
+            params,
+          },
+        });
+        this.$emit('updateKeyWords', res.data);
       } catch (error) {}
     },
   },
@@ -94,23 +94,27 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .favorite-popper-content {
-    width: 200px;
-    padding: 2px;
+.ui-query-container {
+  min-height: 100px;
 
-    .title {
-      margin-bottom: 10px;
-      font-size: 12px;
-      line-height: 20px;
+  &:not(:last-child) .query-item-box {
+    margin-bottom: 16px;
+  }
+
+  .query-title {
+    font-size: 12px;
+    margin-bottom: 8px;
+
+    :first-child {
       color: #63656e;
+      margin-right: 9px;
     }
 
-    .content {
-      text-align: right;
-
-      .bk-button-text {
-        padding: 0 6px;
-      }
+    :last-child {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ff9c01;
     }
   }
+}
 </style>

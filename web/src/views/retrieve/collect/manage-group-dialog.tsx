@@ -1,0 +1,837 @@
+/*
+ * Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+ * BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
+ *
+ * License for BK-LOG 蓝鲸日志平台:
+ * --------------------------------------------------------------------
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+ * and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * The above copyright notice and this permission notice shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+ * NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+ */
+
+import { Component as tsc } from "vue-tsx-support";
+import {
+  Component,
+  Emit,
+  Ref,
+  Watch,
+  Model,
+} from "vue-property-decorator";
+import {
+  Button,
+  Dialog,
+  Switcher,
+  Option,
+  Table,
+  TableColumn,
+  Checkbox,
+  Input,
+  Select,
+  // TableSettingContent,
+  DropdownMenu,
+  Popover,
+  Pagination,
+} from "bk-magic-vue";
+import FingerSelectColumn from "../result-table-panel/log-clustering/components/finger-select-column.vue";
+import ManageInput from "./component/manage-input";
+import $http from "../../../api";
+import { deepClone } from "../../../common/util";
+import "./manage-group-dialog.scss";
+
+interface IProps {
+  value?: boolean;
+}
+
+interface IFavoriteItem {
+  id: number;
+  created_by: string;
+  space_uid: number;
+  index_set_id: number;
+  name: string;
+  group_id: number;
+  group_name: string;
+  keyword: string;
+  index_set_name: string;
+  search_fields: string[];
+  is_active: boolean;
+  visible_type: string;
+  display_fields: string[];
+  is_enable_display_fields: boolean;
+  search_fields_select_list?: any[];
+  visible_option: any[];
+  group_option: any[];
+}
+
+// const settingFields = [
+//   {
+//     id: "name",
+//     label: window.mainComponent.$t("收藏名"),
+//     disabled: true,
+//   },
+//   {
+//     id: "group_id",
+//     label: window.mainComponent.$t("所属组"),
+//     disabled: true,
+//   },
+//   {
+//     id: "visible_type",
+//     label: window.mainComponent.$t("可见范围"),
+//     disabled: true,
+//   },
+//   {
+//     id: "display_fields",
+//     label: window.mainComponent.$t("表单模式显示字段"),
+//     disabled: true,
+//   },
+//   {
+//     id: "source_type",
+//     label: window.mainComponent.$t("是否同时显示字段"),
+//     disabled: true,
+//   },
+//   {
+//     id: "update_by",
+//     label: window.mainComponent.$t("变更人"),
+//   },
+//   {
+//     id: "update_name",
+//     label: window.mainComponent.$t("变更时间"),
+//   },
+// ];
+
+@Component
+export default class GroupDialog extends tsc<IProps> {
+  @Ref("popoverGroup") popoverGroupRef: Popover;
+  @Model("change", { type: Boolean, default: false }) value: IProps["value"];
+  switchVal = true;
+  searchValue = "";
+  tableLoading = false;
+  searchSelectLoading = false;
+  isShowDeleteDialog = false;
+  showTableList: IFavoriteItem[] = []; // 展示用的表格数据
+  tableList: IFavoriteItem[] = []; // 表格数据;
+  operateTableList: IFavoriteItem[] = []; // 用户操作操作缓存表格数据;
+  submitTableList: IFavoriteItem[] = []; // 修改提交的表格数据;
+  deleteTableIDList = [];
+  tableDialog = false;
+  selectFavoriteList = []; // 列的头部的选择框收藏ID列表
+  groupList = []; // 组列表
+  unPrivateList = []; // 无个人组的收藏列表
+  checkValue = 0; // 0为不选 1为半选 2为全选
+  groupName = "";
+  unknownGroupID = 0;
+  privateGroupID = 0;
+  tippyOption = {
+    trigger: "click",
+    interactive: true,
+    theme: "light",
+  };
+  currentDeleteData = {};
+  paginationConfig = {
+    current: 1,
+    limit: 5,
+    count: 1,
+    location: "left",
+    align: "right",
+    showLimit: true,
+    limitList: [5, 10],
+  };
+  sourceFilters = [];
+
+  unPrivateOptionList = [{ name: this.$t("公开"), id: "public" }];
+  allOptionList = [
+    { name: this.$t("公开"), id: "public" },
+    { name: this.$t("仅本人"), id: "private" },
+  ];
+
+  // tableSetting = {
+  //   fields: settingFields,
+  //   selectedFields: settingFields.slice(0, 5),
+  // };
+
+  get spaceUid() {
+    return this.$store.state.spaceUid;
+  }
+
+  get userMeta() {
+    return this.$store.state.userMeta;
+  }
+
+  @Watch("selectFavoriteList", { deep: true })
+  watchSelectListLength(list) {
+    if (!list.length) {
+      this.checkValue = 0;
+      return;
+    }
+    if (list.length === this.tableList.length) {
+      this.checkValue = 2;
+      return;
+    }
+    this.checkValue = 1;
+  }
+
+  @Emit("change")
+  handleShowChange(value = false) {
+    return value;
+  }
+
+  @Emit("submit")
+  handleSubmitChange(value = false) {
+    return value;
+  }
+
+  async handleValueChange(value) {
+    if (value) {
+      await this.getGroupList();
+      this.getFavoriteList();
+    } else {
+      this.tableList = [];
+      this.operateTableList = [];
+      this.showTableList = [];
+      this.submitTableList = [];
+      this.selectFavoriteList = [];
+      this.groupList = [];
+      this.handleShowChange();
+    }
+  }
+
+  /** 多选是否选中 */
+  getCheckedStatus(row) {
+    return this.selectFavoriteList.includes(row.id);
+  }
+  /** 多选操作 */
+  handleRowCheckChange(row, status) {
+    if (status) {
+      this.selectFavoriteList.push(row.id);
+    } else {
+      const index = this.selectFavoriteList.findIndex(
+        (item) => item === row.id
+      );
+      this.selectFavoriteList.splice(index, 1);
+    }
+  }
+  /** 搜索 */
+  handleSearchFilter() {
+    if (this.tableLoading) return;
+    this.tableLoading = true;
+    let searchList;
+    if (this.searchValue !== "") {
+      searchList = this.operateTableList.filter((item) =>
+        item.name.includes(this.searchValue)
+      );
+    } else {
+      searchList = this.operateTableList;
+    }
+    setTimeout(() => {
+      const count = !!searchList.length ? searchList.length : 1;
+      Object.assign(this.paginationConfig, { current: 1, count });
+      this.showTableList = this.getShowTableListByPage(searchList);
+      this.tableLoading = false;
+    }, 500);
+  }
+  /** 全选操作 */
+  handleSelectionChange(value) {
+    this.selectFavoriteList = value
+      ? this.tableList.map((item) => item.id)
+      : [];
+  }
+
+  handleClickMoveGroup(value) {
+    this.selectFavoriteList.forEach((item) => {
+      this.operateListChange({ id: item }, { group_id: value.group_id });
+    });
+  }
+  /** 获取字段下拉框列表请求 */
+  async getSearchFieldsList(keyword: string) {
+    return await $http.request("favorite/getSearchFields", {
+      data: { keyword },
+    });
+  }
+  /** 获取收藏请求 */
+  async getFavoriteList() {
+    try {
+      this.tableLoading = true;
+      const res = await $http.request("favorite/getFavoriteList", {
+        query: {
+          space_uid: this.spaceUid,
+        },
+      });
+      // console.log(this.userMeta.username !==);
+      const initList = res.data.map((item) => {
+        const group_option =
+          item.created_by === this.userMeta.username
+            ? this.groupList
+            : this.unPrivateList;
+        const search_fields_select_list = item.search_fields.map((item) => ({
+          name: item,
+        }));
+        const visible_option =
+          item.visible_type === "private"
+            ? this.allOptionList
+            : this.unPrivateOptionList;
+        return {
+          ...item,
+          search_fields_select_list,
+          group_option,
+          visible_option,
+        };
+      });
+      this.tableList = res.data;
+      this.operateTableList = initList;
+      this.showTableList = this.getShowTableListByPage(initList);
+      Object.assign(this.paginationConfig, { count: this.tableList.length });
+    } catch (error) {
+    } finally {
+      this.tableLoading = false;
+    }
+  }
+  /** 获取组列表 */
+  async getGroupList() {
+    try {
+      const res = await $http.request("favorite/getGroupList", {
+        query: {
+          space_uid: this.spaceUid,
+        },
+      });
+      this.groupList = res.data.map((item) => ({
+        group_id: item.id,
+        group_name: item.name,
+        group_type: item.group_type,
+      }));
+      this.unPrivateList = this.groupList.slice(1);
+      this.sourceFilters = res.data.map((item) => ({
+        text: item.name,
+        value: item.name,
+      }));
+      this.unknownGroupID = this.groupList[this.groupList.length - 1]?.id;
+      this.privateGroupID = this.groupList[0]?.id;
+    } catch (error) {
+      console.warn(error);
+    }
+  }
+  /** 显示字段选择操作 */
+  handleChangeSearchList(row, nVal: string[]) {
+    this.operateListChange(row, { search_fields: nVal });
+  }
+  handleChangeFavoriteName(row, name) {
+    this.operateListChange(row, { name });
+  }
+  handleSwitchChange(row, value) {
+    this.operateListChange(row, { is_enable_display_fields: value });
+  }
+  /** 新增或更新组名 */
+  async handleAddGroupName() {
+    const data = { name: this.groupName, space_uid: this.spaceUid };
+    try {
+      const res = await $http.request("favorite/createGroup", { data });
+      if (res.result) {
+        this.$bkMessage({
+          theme: "success",
+          message: this.$t("新增成功"),
+        });
+        this.getGroupList();
+      }
+    } catch (error) {
+    } finally {
+      this.popoverGroupRef.hideHandler();
+    }
+  }
+  /** 获取显示字段下拉框列表 */
+  async handleClickFieldsList(row, status: boolean) {
+    if (status) {
+      try {
+        this.searchSelectLoading = true;
+        const res = await this.getSearchFieldsList(row.keyword);
+        this.operateListChange(row, { search_fields_select_list: res.data });
+      } catch (error) {
+        console.warn(error);
+      } finally {
+        this.searchSelectLoading = false;
+      }
+    }
+  }
+  /** 获取可选范围 */
+  getVisibleType(visibleStr: string) {
+    // 未分组包含在公开选项
+    if (visibleStr === "unknown") return "public";
+    return visibleStr;
+  }
+  /** 修改可选范围 */
+  handleChangeVisible(row, nVal: string) {
+    const visible_type = row.visible_type === "unknown" ? "unknown" : nVal;
+    if (nVal !== "public") {
+      this.operateListChange(row, {
+        visible_type,
+        group_id: this.privateGroupID,
+      });
+      return;
+    } else {
+      if (row.group_id === this.privateGroupID) {
+        this.operateListChange(row, {
+          visible_type,
+          group_id: this.unknownGroupID,
+        });
+        return;
+      }
+    }
+    this.operateListChange(row, { visible_type });
+  }
+  /** 单独修改组 */
+  handleChangeGroup(row) {
+    if (
+      row.visible_type === "private" &&
+      row.group_id === this.unknownGroupID
+    ) {
+      this.operateListChange(row, { visible_type: "unknown" });
+      return;
+    }
+    if (row.group_id === this.privateGroupID) {
+      this.operateListChange(row, { visible_type: "private" });
+      return;
+    }
+    this.operateListChange(row, { visible_type: "public" });
+  }
+  /** 用户操作 */
+  operateListChange(row, operateObj = {}) {
+    // 搜索展示用的列表和操作缓存的列表同时更新数据
+    for (const listName of ["showTableList", "operateTableList"]) {
+      const index = this[listName].findIndex((item) => item.id === row.id);
+      if (index >= 0) Object.assign(this[listName][index], row, operateObj);
+      if (listName === "operateTableList")
+        this.submitDataCompared(row, index, operateObj);
+    }
+  }
+
+  submitDataCompared(row, operateIndex, operateObj) {
+    const submitIndex = this.submitTableList.findIndex(
+      (item) => item.id === row.id
+    );
+    if (submitIndex >= 0) {
+      // 操作已添加到更新列表的值 进行数据对比
+      Object.assign(this.submitTableList[submitIndex], row, operateObj);
+      const comparedSubData = deepClone(this.submitTableList[submitIndex]);
+      delete comparedSubData.search_fields_select_list; // 获取的显示字段下拉框列表不做对比
+      delete comparedSubData.visible_option;
+      delete comparedSubData.group_option;
+      const tableData = this.tableList[operateIndex];
+      if (JSON.stringify(tableData) === JSON.stringify(comparedSubData)) {
+        this.submitTableList.splice(submitIndex, 1); // 判断数据是否相同 相同则删除提交更新里的值
+      }
+    } else {
+      // 第一次操作相同的列 添加到提交更新列表
+      const comparedData = deepClone(this.operateTableList[operateIndex]);
+      delete comparedData.search_fields_select_list; // 获取的显示字段下拉框列表不做对比
+      delete comparedData.visible_option;
+      delete comparedData.group_option;
+      const tableData = this.tableList[operateIndex];
+      // 判断操作过后的值和表格里的是否相同 不同则添加到提交更新列表
+      if (JSON.stringify(comparedData) !== JSON.stringify(tableData)) {
+        this.submitTableList.push(comparedData);
+      }
+    }
+  }
+
+  getShowTableListByPage(list) {
+    const { current, limit } = this.paginationConfig;
+    const sliceFirstIndex = (current - 1) * limit;
+    const sliceSecondIndex = current * limit;
+    return list.slice(sliceFirstIndex, sliceSecondIndex);
+  }
+
+  handleDeleteFavorite(row) {
+    this.$bkInfo({
+      subTitle: `${this.$t('当前收藏为')}${row.name}，${this.$t('是否删除')}？`,
+      type: "warning",
+      confirmFn: () => {
+        this.deleteTableIDList.push(row.id);
+        for (const listName of [
+          "showTableList",
+          "operateTableList",
+          "submitTableList",
+          "tableList",
+        ]) {
+          const index = this[listName].findIndex((item) => item.id === row.id);
+          if (index >= 0) this[listName].splice(index, 1);
+        }
+        const index = this.selectFavoriteList.findIndex(
+          (item) => item === row.id
+        );
+        if (index >= 0) this.selectFavoriteList.splice(index, 1);
+        this.showTableList = this.getShowTableListByPage(this.operateTableList);
+        Object.assign(this.paginationConfig, {
+          count: this.operateTableList.length,
+        });
+      },
+    });
+  }
+
+  handleSubmitTableData() {
+    this.tableLoading = true;
+    Promise.all([this.batchDeleteFavorite(), this.batchUpdateFavorite()])
+      .then(() => {
+        this.handleValueChange(false);
+        this.handleSubmitChange(true);
+      })
+      .finally(() => {
+        this.tableLoading = false;
+      });
+  }
+
+  async batchDeleteFavorite() {
+    if (!this.deleteTableIDList.length) return;
+    try {
+      await $http.request("favorite/batchFavoriteDelete", {
+        data: {
+          id_list: this.deleteTableIDList,
+        },
+      });
+    } catch (error) {}
+  }
+
+  async batchUpdateFavorite() {
+    if (!this.submitTableList.length) return;
+    const params = this.submitTableList.map(item=> ({
+      id: item.id,
+      space_uid: item.space_uid,
+      name: item.name,
+      keyword: item.keyword,
+      group_id: item.group_id,
+      group_name: item.group_name,
+      search_fields: item.search_fields,
+      visible_type: item.visible_type,
+      display_fields: item.display_fields,
+      is_enable_display_fields: item.is_enable_display_fields,
+    }))
+    try {
+      await $http.request("favorite/batchFavoriteUpdate", {
+        data: {
+          params,
+        },
+      });
+    } catch (error) {}
+  }
+
+  handlePageChange(current) {
+    Object.assign(this.paginationConfig, { current });
+    this.showTableList = this.getShowTableListByPage(this.operateTableList);
+  }
+
+  handlePageLimitChange(limit: number) {
+    Object.assign(this.paginationConfig, { limit });
+    this.showTableList = this.getShowTableListByPage(this.operateTableList);
+  }
+
+  sourceFilterMethod(value, row, column) {
+    const property = column.property;
+    return row[property] === value;
+  }
+
+  // handleSettingChange({ fields }) {
+  //   this.tableSetting.selectedFields = fields;
+  // }
+
+  // checkFields(field) {
+  //   return this.tableSetting.selectedFields.some((item) => item.id === field);
+  // }
+
+  renderHeader(h) {
+    return h(FingerSelectColumn, {
+      class: {
+        "header-checkbox": true,
+      },
+      props: {
+        value: this.checkValue,
+        disabled: false,
+      },
+      on: {
+        change: this.handleSelectionChange,
+      },
+    });
+  }
+
+  render() {
+    const expandSlot = {
+      default: ({ row }) => (
+        <div class="expand-container">
+          <div class="expand-information">
+            <span>{this.$t("索引集")}</span>
+            <span>{row.index_set_name}</span>
+          </div>
+          <div class="expand-information">
+            <span>{this.$t("查询语句")}</span>
+            <span>{row.keyword}</span>
+          </div>
+        </div>
+      ),
+    };
+    const nameSlot = {
+      default: ({ row }) => [
+        <div class="group-container">
+          <Checkbox
+            class="group-check-box"
+            checked={this.getCheckedStatus(row)}
+            on-change={(status) => this.handleRowCheckChange(row, status)}
+          ></Checkbox>
+          <ManageInput
+            favorite-data={row}
+            on-change={(val) => this.handleChangeFavoriteName(row, val)}
+          ></ManageInput>
+        </div>,
+      ],
+    };
+    const groupSlot = {
+      default: ({ row }) => [
+        <Select
+          vModel={row.group_id}
+          searchable
+          clearable={false}
+          on-change={() => this.handleChangeGroup(row)}
+        >
+          {row.group_option.map((item) => (
+            <Option
+              id={item.group_id}
+              key={item.group_id}
+              name={item.group_name}
+            ></Option>
+          ))}
+        </Select>,
+      ],
+    };
+    const visibleSlot = {
+      default: ({ row }) => [
+        <Select
+          value={this.getVisibleType(row.visible_type)}
+          on-change={(nVal) => this.handleChangeVisible(row, nVal)}
+          clearable={false}
+        >
+          {row.visible_option.map((item) => (
+            <Option id={item.id} key={item.id} name={item.name}></Option>
+          ))}
+        </Select>,
+      ],
+    };
+    const selectTagSlot = {
+      default: ({ row }) => [
+        <Select
+          vModel={row.search_fields}
+          searchable
+          multiple
+          display-tag
+          placeholder={" "}
+          clearable={false}
+          // loading={this.searchSelectLoading}
+          on-change={(nVal) => this.handleChangeSearchList(row, nVal)}
+          on-toggle={(status) => this.handleClickFieldsList(row, status)}
+        >
+          {row.search_fields_select_list.map((item) => (
+            <Option id={item.name} key={item.name} name={item.name}></Option>
+          ))}
+        </Select>,
+      ],
+    };
+    const switchSlot = {
+      default: ({ row }) => [
+        <div class="switcher-box">
+          <Switcher
+            vModel={row.is_enable_display_fields}
+            theme="primary"
+            on-change={(value) => this.handleSwitchChange(row, value)}
+          ></Switcher>
+          <div class="delete" onClick={() => this.handleDeleteFavorite(row)}>
+            <span class="bk-icon icon-delete"></span>
+          </div>
+        </div>,
+      ],
+    };
+    return (
+      <Dialog
+        value={this.value}
+        title={this.$t("管理")}
+        header-position="left"
+        mask-close={false}
+        ext-cls="manage-group"
+        width={1050}
+        confirm-fn={this.handleSubmitTableData}
+        on-value-change={this.handleValueChange}
+      >
+        <div class="top-operate">
+          <Popover
+            tippy-options={this.tippyOption}
+            placement="bottom-start"
+            ext-cls="new-group-popover"
+            ref="popoverGroup"
+          >
+            <Button theme="primary" outline>
+              + {this.$t("新建组")}
+            </Button>
+            <div slot="content">
+              <Input
+                clearable
+                placeholder={this.$t("请输入组名")}
+                vModel={this.groupName}
+                maxlength={10}
+              ></Input>
+              <div class="operate-button">
+                <Button
+                  text
+                  title="primary"
+                  onClick={() => this.handleAddGroupName()}
+                >
+                  {this.$t("确定")}
+                </Button>
+                <span onClick={() => this.popoverGroupRef.hideHandler()}>
+                  {this.$t("取消")}
+                </span>
+              </div>
+            </div>
+          </Popover>
+          <Input
+            class="operate-input"
+            right-icon="bk-icon icon-search"
+            vModel={this.searchValue}
+            on-enter={this.handleSearchFilter}
+            on-right-icon-click={this.handleSearchFilter}
+          ></Input>
+        </div>
+        <div class="table-top-operate">
+          <span>
+            {this.$t("当前已选择")}
+            <span class="operate-message">
+              {this.selectFavoriteList.length}
+            </span>
+            {this.$t("条数据")}
+          </span>
+          {this.selectFavoriteList.length ? (
+            <DropdownMenu trigger="click">
+              <div class="dropdown-trigger-text" slot="dropdown-trigger">
+                <span class="operate-click">
+                  ，&nbsp;{this.$t("移至分组")}
+                  <span class="bk-icon icon-down-shape"></span>
+                </span>
+              </div>
+              <div class="dropdown-list" slot="dropdown-content">
+                {/* <div class="search-box" onClick={(e) => e.stopPropagation()}>
+                  <Input></Input>
+                </div> */}
+                <ul class="search-li">
+                  {this.unPrivateList.map((item) => (
+                    <li onClick={() => this.handleClickMoveGroup(item)}>
+                      {item.group_name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </DropdownMenu>
+          ) : undefined}
+        </div>
+        <Table
+          data={this.showTableList}
+          size="small"
+          render-directive="if"
+          header-border={true}
+          border={true}
+          empty-text={this.$t("暂无数据")}
+          v-bkloading={{ isLoading: this.tableLoading }}
+        >
+          <TableColumn
+            width="64"
+            type="expand"
+            render-header={this.renderHeader}
+            scopedSlots={expandSlot}
+          ></TableColumn>
+
+          <TableColumn
+            label={this.$t("收藏名")}
+            width="226"
+            prop={"name"}
+            class-name="group-input"
+            label-class-name="group-title"
+            scopedSlots={nameSlot}
+          ></TableColumn>
+
+          <TableColumn
+            label={this.$t("所属组")}
+            width="112"
+            prop={"group_name"}
+            scopedSlots={groupSlot}
+            label-class-name="group-title"
+            class-name="group-select"
+            filters={this.sourceFilters}
+            filter-multiple={false}
+            filter-method={this.sourceFilterMethod}
+          ></TableColumn>
+
+          <TableColumn
+            label={this.$t("可见范围")}
+            width="112"
+            prop={"visible_type"}
+            scopedSlots={visibleSlot}
+            label-class-name="group-title"
+            class-name="group-select"
+          ></TableColumn>
+
+          <TableColumn
+            label={this.$t("表单模式显示字段")}
+            width="310"
+            prop={"search_fields"}
+            scopedSlots={selectTagSlot}
+            label-class-name="group-title"
+            class-name="group-select"
+          ></TableColumn>
+
+          {/* {this.checkFields("update_by") ? (
+            <TableColumn
+              label={this.$t("变更人")}
+              prop="id"
+            ></TableColumn>
+          ) : undefined}
+
+          {this.checkFields("update_time") ? (
+            <TableColumn
+              label={this.$t("变更时间")}
+              prop="id"
+            ></TableColumn>
+          ) : undefined} */}
+
+          <TableColumn
+            label={this.$t("是否同时显示字段")}
+            class-name="group-input"
+            label-class-name="group-title"
+            scopedSlots={switchSlot}
+          ></TableColumn>
+
+          {/* <TableColumn type="setting">
+            <TableSettingContent
+              fields={this.tableSetting.fields}
+              selected={this.tableSetting.selectedFields}
+              on-setting-change={this.handleSettingChange}
+            ></TableSettingContent>
+          </TableColumn> */}
+        </Table>
+        <Pagination
+          class="pagination"
+          size="small"
+          current={this.paginationConfig.current}
+          limit={this.paginationConfig.limit}
+          count={this.paginationConfig.count}
+          location={this.paginationConfig.location}
+          align={this.paginationConfig.align}
+          show-limit={this.paginationConfig.showLimit}
+          limit-list={this.paginationConfig.limitList}
+          on-change={this.handlePageChange}
+          on-limit-change={this.handlePageLimitChange}
+        ></Pagination>
+      </Dialog>
+    );
+  }
+}
