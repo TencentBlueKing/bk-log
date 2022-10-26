@@ -23,7 +23,7 @@
 <template>
   <div class="result-header">
     <!-- 重新展开 -->
-    <template v-if="!showRetrieveCondition">
+    <!-- <template>
       <div
         v-if="showExpandInitTips"
         key="1"
@@ -35,87 +35,99 @@
       <div v-else v-bk-tooltips="expandTips" key="2" class="open-condition" @click="$emit('open')">
         <span class="bk-icon icon-angle-double-right"></span>
       </div>
-    </template>
-    <!-- 收藏查询 -->
-    <favorite-card
-      :favorite-list="favoriteList"
-      :latest-favorite-id="latestFavoriteId"
-      @remove="removeFavorite"
-      @shouldRetrieve="retrieveFavorite" />
+    </template> -->
+    <!-- 检索左侧 -->
+    <div class="result-left">
+      <div class="icon-container">
+        <div
+          :class="['result-icon-box',{ 'light-icon': !isShowCollect }]"
+          @click="handleClickResultIcon('collect')">
+          <span class="bk-icon icon-star"></span>
+        </div>
+        <div
+          :class="['result-icon-box',{ 'light-icon': !showRetrieveCondition }]"
+          @click="handleClickResultIcon('search')">
+          <span class="log-icon icon-shoudongchaxun"></span>
+        </div>
+      </div>
+      <biz-menu-select v-if="!isAsIframe" theme="light"></biz-menu-select>
+    </div>
     <!-- 检索结果 -->
     <!-- <div class="result-text"></div> -->
     <!-- 检索日期 -->
-    <time-range :value="datePickerValue" @change="handleTimeRangeChange" />
-    <!-- 自动刷新 -->
-    <bk-popover
-      ref="autoRefreshPopper"
-      trigger="click"
-      placement="bottom-start"
-      theme="light bk-select-dropdown"
-      animation="slide-toggle"
-      :offset="0"
-      :distance="15"
-      :on-show="handleDropdownShow"
-      :on-hide="handleDropdownHide">
-      <slot name="trigger">
-        <div class="auto-refresh-trigger">
-          <span
-            :class="['log-icon', isAutoRefresh ? 'icon-auto-refresh' : 'icon-refresh-icon']"
-            data-test-id="retrieve_span_periodicRefresh"
-            @click.stop="$emit('shouldRetrieve')"></span>
-          <span :class="isAutoRefresh && 'active-text'">{{refreshTimeText}}</span>
-          <span class="bk-icon icon-angle-down" :class="refreshActive && 'active'"></span>
+    <div class="result-right">
+      <time-range :value="datePickerValue" @change="handleTimeRangeChange" />
+      <!-- 自动刷新 -->
+      <bk-popover
+        ref="autoRefreshPopper"
+        trigger="click"
+        placement="bottom-start"
+        theme="light bk-select-dropdown"
+        animation="slide-toggle"
+        :offset="0"
+        :distance="15"
+        :on-show="handleDropdownShow"
+        :on-hide="handleDropdownHide">
+        <slot name="trigger">
+          <div class="auto-refresh-trigger">
+            <span
+              :class="['log-icon', isAutoRefresh ? 'icon-auto-refresh' : 'icon-refresh-icon']"
+              data-test-id="retrieve_span_periodicRefresh"
+              @click.stop="$emit('shouldRetrieve')"></span>
+            <span :class="isAutoRefresh && 'active-text'">{{refreshTimeText}}</span>
+            <span class="bk-icon icon-angle-down" :class="refreshActive && 'active'"></span>
+          </div>
+        </slot>
+        <div slot="content" class="bk-select-dropdown-content auto-refresh-content">
+          <div class="bk-options-wrapper">
+            <ul class="bk-options bk-options-single">
+              <li v-for="item in refreshTimeList"
+                  :key="item.id"
+                  :class="['bk-option', refreshTimeout === item.id && 'is-selected']"
+                  @click="handleSelectRefreshTimeout(item.id)">
+                <div class="bk-option-content">{{item.name}}</div>
+              </li>
+            </ul>
+          </div>
         </div>
-      </slot>
-      <div slot="content" class="bk-select-dropdown-content auto-refresh-content">
-        <div class="bk-options-wrapper">
-          <ul class="bk-options bk-options-single">
-            <li v-for="item in refreshTimeList"
-                :key="item.id"
-                :class="['bk-option', refreshTimeout === item.id && 'is-selected']"
-                @click="handleSelectRefreshTimeout(item.id)">
-              <div class="bk-option-content">{{item.name}}</div>
+      </bk-popover>
+      <bk-popover
+        v-if="isAiopsToggle"
+        trigger="click"
+        placement="bottom-end"
+        theme="light bk-select-dropdown"
+        animation="slide-toggle"
+        :offset="0"
+        :distance="15">
+        <slot name="trigger">
+          <div class="more-operation">
+            <i class="bk-icon icon-more"></i>
+          </div>
+        </slot>
+        <div slot="content" class="retrieve-setting-container">
+          <ul class="list-menu" ref="menu">
+            <li
+              v-for="menu in showSettingMenuList"
+              class="list-menu-item"
+              :key="menu.id"
+              @click="handleMenuClick(menu.id)">
+              {{ menu.name }}
             </li>
           </ul>
         </div>
-      </div>
-    </bk-popover>
-    <bk-popover
-      v-if="isAiopsToggle"
-      trigger="click"
-      placement="bottom-end"
-      theme="light bk-select-dropdown"
-      animation="slide-toggle"
-      :offset="0"
-      :distance="15">
-      <slot name="trigger">
-        <div class="more-operation">
-          <i class="bk-icon icon-more"></i>
-        </div>
-      </slot>
-      <div slot="content" class="retrieve-setting-container">
-        <ul class="list-menu" ref="menu">
-          <li
-            v-for="menu in showSettingMenuList"
-            class="list-menu-item"
-            :key="menu.id"
-            @click="handleMenuClick(menu.id)">
-            {{ menu.name }}
-          </li>
-        </ul>
-      </div>
-    </bk-popover>
+      </bk-popover>
+    </div>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex';
-import FavoriteCard from '../condition-comp/favorite-card';
+import BizMenuSelect from '@/components/biz-menu';
 import TimeRange from '../../../components/time-range/time-range';
 
 export default {
   components: {
-    FavoriteCard,
+    BizMenuSelect,
     TimeRange,
   },
   props: {
@@ -139,16 +151,20 @@ export default {
       type: Array,
       required: true,
     },
-    favoriteList: {
-      type: Array,
-      required: true,
-    },
     latestFavoriteId: {
       type: [Number, String],
       default: '',
     },
     indexSetItem: {
       type: Object,
+      required: true,
+    },
+    isAsIframe: {
+      type: Boolean,
+      required: true,
+    },
+    isShowCollect: {
+      type: Boolean,
       required: true,
     },
   },
@@ -233,9 +249,9 @@ export default {
     removeFavorite(id) {
       this.$emit('remove', id);
     },
-    retrieveFavorite(data) {
-      this.$emit('retrieveFavorite', data);
-    },
+    // retrieveFavorite(data) {
+    //   this.$emit('retrieveFavorite', data);
+    // },
     // 日期变化
     handleTimeRangeChange(val) {
       this.$emit('update:datePickerValue', val);
@@ -287,6 +303,13 @@ export default {
         this.showSettingMenuList = sliceSettingMenuList;
       }
     },
+    handleClickResultIcon(type) {
+      if (type === 'collect') {
+        this.$emit('updateCollectCondition', !this.isShowCollect);
+      } else {
+        this.showRetrieveCondition ? this.$emit('closeRetrieveCondition') : this.$emit('open');
+      }
+    },
   },
 };
 </script>
@@ -295,6 +318,7 @@ export default {
   .result-header {
     position: absolute;
     display: flex;
+    justify-content: space-between;
     // align-items: center;
     width: 100%;
     height: 52px;
@@ -302,7 +326,56 @@ export default {
     background: #fff;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
     font-size: 12px;
-    z-index: 3000;
+    z-index: 1000;
+
+    .result-left {
+      display: flex;
+      align-items: center;
+
+      .icon-container {
+        position: relative;
+        margin: 17px 25px 17px 14px;
+        background: #f0f1f5;
+        border-radius: 2px;
+        display: flex;
+
+        > :first-child {
+          margin-right: 2px;
+        }
+
+        &::after {
+          content: '';
+          width: 1px;
+          height: 14px;
+          background-color: #dcdee5;
+          position: absolute;
+          right: -25px;
+          top: 6px;
+        }
+
+        .result-icon-box {
+          width: 32px;
+          height: 24px;
+          line-height: 20px;
+          text-align: center;
+          font-size: 14px;
+          color: #fff;
+          background: #979ba5;
+          border-radius: 2px;
+          cursor: pointer;
+
+          &.light-icon {
+            background: #f1f2f6;
+            color: #979ba5;
+          }
+        }
+      }
+    }
+
+    .result-right {
+      display: flex;
+      align-items: center;
+    }
 
     .open-condition {
       flex-shrink: 0;
@@ -337,7 +410,7 @@ export default {
         background-color: #dcdee5;
         position: absolute;
         left: 0;
-        top: 20px;
+        top: 8px;
       }
     }
 

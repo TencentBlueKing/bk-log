@@ -29,7 +29,7 @@
         v-if="isExpand" tabindex="{0}" class="menu-select-name" @mousedown="handleClickBizSelect">
         {{ bizName }}
         <i
-          :class="`bk-select-angle bk-icon ${theme === 'light' ? 'icon-angle-down' : 'icon-down-shape'} select-icon`"
+          :class="`bk-select-angle bk-icon icon-down-shape select-icon`"
           :style="{ transform: `rotate(${!showBizList ? '0deg' : '-180deg'})` }"
         />
       </span>
@@ -143,7 +143,7 @@ export default {
       demoUid: 'demoUid',
     }),
     bizName() {
-      return this.mySpaceList.find(item => item.space_uid === this.spaceUid)?.space_full_code_name;
+      return this.mySpaceList.find(item => item.space_uid === this.spaceUid)?.space_name;
     },
     bizNameIcon() {
       return this.bizName[0].toLocaleUpperCase();
@@ -488,8 +488,20 @@ export default {
 
   .light-theme {
     .menu-select {
-      background: #f0f1f5;
       border: 0;
+
+      .menu-select-name {
+        color: #313238;
+        font-size: 14px;
+      }
+
+      .select-icon {
+        /* stylelint-disable-next-line declaration-no-important */
+        top: 9px !important;
+
+        /* stylelint-disable-next-line declaration-no-important */
+        right: 2px !important;
+      }
 
       &-list {
         left: 16px;
