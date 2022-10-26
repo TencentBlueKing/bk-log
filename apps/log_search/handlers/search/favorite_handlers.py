@@ -158,7 +158,9 @@ class FavoriteHandler(object):
                 if self.data.created_by != get_request_username():
                     raise FavoriteVisibleTypeNotAllowedModifyException()
                 else:
-                    group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=space_uid).id
+                    group_id = FavoriteGroup.get_or_create_private_group(
+                        space_uid=space_uid, username=get_request_username()
+                    ).id
             # 名称检查
             if self.data.name != name and Favorite.objects.filter(name=name, space_uid=space_uid).exists():
                 raise FavoriteAlreadyExistException()
@@ -195,7 +197,18 @@ class FavoriteHandler(object):
     @atomic
     def batch_update(params: list):
         for param in params:
-            FavoriteHandler(favorite_id=param["id"]).create_or_update(**param)
+            FavoriteHandler(favorite_id=param["id"]).create_or_update(
+                name=param["name"],
+                host_scopes=param["host_scopes"],
+                addition=param["addition"],
+                keyword=param["keyword"],
+                visible_type=param["visible_type"],
+                search_fields=param["search_fields"],
+                is_enable_display_fields=param["is_enable_display_fields"],
+                display_fields=param["display_fields"],
+                index_set_id=param["index_set_id"],
+                group_id=param["group_id"],
+            )
 
     def delete(self):
         self.data.delete()

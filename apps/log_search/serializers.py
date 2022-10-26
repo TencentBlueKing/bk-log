@@ -351,9 +351,9 @@ class UpdateFavoriteSerializer(serializers.Serializer):
     修改收藏序列化
     """
 
-    name = serializers.CharField(label=_("收藏组名"), max_length=256, required=True)
+    name = serializers.CharField(label=_("收藏组名"), max_length=256, required=False)
     group_id = serializers.IntegerField(label=_("收藏组ID"), required=False)
-    visible_type = serializers.ChoiceField(choices=FavoriteVisibleType.get_choices(), required=True)
+    visible_type = serializers.ChoiceField(choices=FavoriteVisibleType.get_choices(), required=False)
     host_scopes = serializers.DictField(default={}, required=False)
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
