@@ -311,3 +311,7 @@ class TestLucene(TestCase):
     def test_update_query(self):
         """测试更新Lucene Query"""
         self.assertEqual(FavoriteHandler().generate_query_by_ui(KEYWORD, UPDATE_QUERY_PARAMS), EXPECT_NEW_QUERY)
+        self.assertEqual(
+            FavoriteHandler().generate_query_by_ui(FULL_TEXT_SEARCH_KEYWORD, FULL_TEXT_SEARCH_UPDATE_QUERY_PARAMS),
+            EXPECT_NEW_FULL_TEXT_SEARCH_QUERY,
+        )

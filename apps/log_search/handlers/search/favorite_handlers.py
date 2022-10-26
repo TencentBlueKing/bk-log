@@ -118,6 +118,7 @@ class FavoriteHandler(object):
                 "is_enable_display_fields": fi["is_enable_display_fields"],
                 "display_fields": fi["display_fields"],
                 "is_active": fi["is_active"],
+                "created_by": fi["created_by"],
             }
             for fi in favorites
         ]
@@ -605,3 +606,8 @@ class Transformer(TreeTransformer):
             yield new_node
         else:
             yield from self.generic_visit(node, context)
+
+    def visit_word(self, node, context):
+        if node.pos == context["pos"]:
+            node.value = str(context["value"])
+        yield from self.generic_visit(node, context)

@@ -33,9 +33,9 @@
       :label-width="115"
       :model="formData"
       ref="validateForm"
-      data-test-id="addNewCollectionItem_form_acquisitionConfigur">
+      data-test-id="addNewCollectionItem_form_acquisitionConfig">
       <!-- 基础信息 -->
-      <div data-test-id="acquisitionConfigur_div_baseMessageBox">
+      <div data-test-id="acquisitionConfig_div_baseMessageBox">
         <div class="add-collection-title">{{ $t('dataSource.basic_information') }}</div>
         <bk-form-item
           :label="$t('dataSource.source_name')"
@@ -88,7 +88,7 @@
       </div>
 
       <!-- 源日志信息 -->
-      <div data-test-id="acquisitionConfigur_div_sourceLogBox">
+      <div data-test-id="acquisitionConfig_div_sourceLogBox">
         <div class="add-collection-title">{{ $t('dataSource.Source_log_information') }}</div>
         <!-- 环境选择 -->
         <bk-form-item :label="$t('环境选择')" required>
@@ -119,7 +119,7 @@
           <div class="bk-button-group log-type">
             <bk-button
               v-for="(item, index) in getCollectorScenario"
-              :data-test-id="`sourceLogBox_buttom_checkoutType${item.id}`"
+              :data-test-id="`sourceLogBox_button_checkoutType${item.id}`"
               :key="index"
               :disabled="isUpdate"
               :class="{
@@ -375,7 +375,7 @@
 
                 <div
                   class="hight-setting"
-                  data-test-id="acquisitionConfigur_div_contentFiltering">
+                  data-test-id="acquisitionConfig_div_contentFiltering">
                   <!-- 容器环境 配置项 -->
                   <config-log-set-item
                     show-type="vertical"
@@ -426,10 +426,9 @@
                 <div class="ml9">
                   <i :class="['bk-icon icon-plus-circle-yuan icons']"
                      @click="handleAddExtraLabel"></i>
-                  <i
-                    :class="['bk-icon icon-minus-circle-shape icons ml9',
-                             { disable: formData.extra_labels.length === 1 }]"
-                    @click="handleDeleteExtraLabel(index)"></i>
+                  <i :class="['bk-icon icon-minus-circle-shape icons ml9',
+                              { disable: formData.extra_labels.length === 1 }]"
+                     @click="handleDeleteExtraLabel(index)"></i>
                 </div>
               </div>
               <bk-checkbox class="mt8" v-model="formData.add_pod_label">
@@ -445,7 +444,7 @@
         <div class="add-collection-title">{{ $t('上报链路配置') }}</div>
         <bk-form-item required property="data_link_id" :label="$t('上报链路')" :rules="rules.linkConfig">
           <bk-select
-            data-test-id="acquisitionConfigur_div_selectReportLink"
+            data-test-id="acquisitionConfig_div_selectReportLink"
             class="w520"
             v-model="formData.data_link_id"
             :clearable="false"
@@ -483,7 +482,7 @@
       <div class="page-operate">
         <bk-button
           theme="primary"
-          data-test-id="acquisitionConfigur_div_nextPage"
+          data-test-id="acquisitionConfig_div_nextPage"
           :title="$t('retrieve.Start_collecting')"
           :loading="isHandle"
           :disabled="!collectProject"
@@ -492,7 +491,7 @@
         </bk-button>
         <bk-button
           theme="default"
-          data-test-id="acquisitionConfigur_div_cancel"
+          data-test-id="acquisitionConfig_div_cancel"
           class="ml10"
           :title="$t('indexSetList.cancel')"
           @click="cancel">
@@ -514,7 +513,7 @@ import configLogSetItem from './components/step-add/config-log-set-item';
 import labelTargetDialog from './components/step-add/label-target-dialog';
 import containerTargetDialog from './components/step-add/container-target-dialog';
 import yamlEditor from './components/step-add/yaml-editor';
-import { mapGetters, mapState } from 'vuex';
+import { mapGetters } from 'vuex';
 import { projectManages } from '@/common/util';
 import { deepClone } from '../monitor-echarts/utils';
 
@@ -759,9 +758,6 @@ export default {
     }),
     ...mapGetters('collect', ['curCollect']),
     ...mapGetters('globals', ['globalsData']),
-    ...mapState({
-      menuProject: state => state.menuProject,
-    }),
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
@@ -935,7 +931,6 @@ export default {
           label_selector: yamlSelector,
           collector_type,
         } = item;
-        let isAllContainer = false;
         const namespaces = item.any_namespace ? ['*'] : itemNamespace;
         const container =  {
           workload_type,
@@ -950,16 +945,15 @@ export default {
         if (isYamlData) {
           Object.assign(container, yamlContainer);
           Object.assign(label_selector, yamlSelector);
-          item.params.paths = item.params.paths.length ? item.paths.map(item => ({ value: item })) : [];
+          params.paths = params.paths.length ? item.paths.map(item => ({ value: item })) : [{ value: '' }];
         } else {
           if (!params.conditions?.separator_filters) {
             params.conditions.separator_filters = [{ fieldindex: '', word: '', op: '=', logic_op: 'and' }];
           }
         }
-        if (JSON.stringify(container) === JSON.stringify(this.allContainer)
-        && JSON.stringify(label_selector) === JSON.stringify(this.allLabelSelector)) {
-          isAllContainer = true;
-        }
+        const conCompare = this.objCompare(container, this.allContainer);
+        const labelCompare = this.objCompare(label_selector, this.allLabelSelector);
+        const isAllContainer = (conCompare && labelCompare);
         return {
           letterIndex: index,
           isAllContainer,
@@ -979,7 +973,7 @@ export default {
       const isCanSubmit = await this.submitDataValidate();
       if (!isCanSubmit) return;
       const params = this.handleParams();
-      if (JSON.stringify(this.localParams) === JSON.stringify(params)) {
+      if (this.objCompare(this.localParams, params)) {
         // 未修改表单 直接跳转下一步
         this.$emit('stepChange');
         this.isHandle = false;
@@ -1185,8 +1179,7 @@ export default {
           item.params = this.filterParams(item.params, item.collector_type);
         });
         containerFromData.extra_labels = extra_labels.filter(item => !(item.key === '' && item.value === ''));
-        // 容器环境新增
-        return Object.assign(containerFromData, {
+        return Object.assign(containerFromData, { // 容器环境更新
           bk_biz_id: this.bkBizId,
         });
       }
@@ -1206,8 +1199,7 @@ export default {
         return Object.assign(physicsFromData, {
           bk_biz_id: this.bkBizId,
         });
-      }
-      // 物理环境新增
+      } // 物理环境新增
       return Object.assign(physicsFromData, {
         bk_biz_id: this.bkBizId,
       });
@@ -1410,10 +1402,8 @@ export default {
       // 所有容器 指定容器 指定标签 三选一
       return this.formData.configs.every((item) => {
         if (item.isAllContainer) return true;
-        let showContainerError = false;
-        let showLabelError = false;
-        JSON.stringify(item.container) === JSON.stringify(this.allContainer) && (showContainerError = true);
-        JSON.stringify(item.label_selector) === JSON.stringify(this.allLabelSelector) && (showLabelError = true);
+        const showContainerError = this.objCompare(item.container, this.allContainer);
+        const showLabelError = this.objCompare(item.label_selector, this.allLabelSelector);
         if (showContainerError && showLabelError) {
           this.$bkMessage({
             theme: 'error',
@@ -1471,6 +1461,9 @@ export default {
           this.nameSpaceRequest = false;
         });
     },
+    /**
+     * @desc: 获取bcs集群列表
+     */
     getBcsClusterList() {
       if (this.isRequestCluster) return;
       this.isRequestCluster = true;
@@ -1557,6 +1550,9 @@ export default {
       this.isTextValid = new RegExp(/^[A-Za-z0-9_]+$/).test(val);
       return this.isTextValid;
     },
+    objCompare(objectA = {}, objectB = {}) {
+      return JSON.stringify(objectA) === JSON.stringify(objectB);
+    },
     handleEnConvert() {
       const str = this.formData.collector_config_name_en;
       const convertStr = str.split('').reduce((pre, cur) => {
@@ -1587,8 +1583,10 @@ export default {
 
   .en-bk-form {
     width: 710px;
+
     .en-name-box {
       align-items: center;
+
       @include flex-justify(space-between);
     }
 
@@ -1599,8 +1597,8 @@ export default {
       left: 12px;
       font-size: 12px;
       color: transparent;
-      pointer-events:none;
-      text-decoration:  red wavy underline;
+      pointer-events: none;
+      text-decoration: red wavy underline;
     }
   }
 

@@ -143,7 +143,7 @@ export default {
       demoUid: 'demoUid',
     }),
     bizName() {
-      return this.mySpaceList.find(item => item.space_uid === this.spaceUid)?.space_full_code_name;
+      return this.mySpaceList.find(item => item.space_uid === this.spaceUid)?.space_name;
     },
     bizNameIcon() {
       return this.bizName[0].toLocaleUpperCase();
