@@ -25,6 +25,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from apps.log_databus.models import CollectorConfig
+from apps.log_esquery.esquery.dsl_builder.query_builder.query_builder_logic import EsQueryBuilder
 from apps.log_esquery.esquery.esquery import EsQuery
 from apps.log_search.exceptions import (
     ScenarioNotSupportedException,
@@ -165,6 +166,9 @@ SCROLL_RESULT_ES = {}
 QUERY_RESULT_LOG = {}
 QUERY_RESULT_BKDATA = {}
 QUERY_RESULT_ES = {}
+QUERY_MAPPING_RESULT_LOG = {}
+QUERY_MAPPING_RESULT_BKDATA = {}
+QUERY_MAPPING_RESULT_ES = {}
 DSL_RESULT_LOG = {"dsl": "{}"}
 DSL_RESULT_BKDATA = {"dsl": "{}"}
 DSL_RESULT_ES = {"dsl": "{}"}
@@ -213,10 +217,59 @@ GET_CLUSTER_INFO_RESULT = {
     "storage_cluster_name": STORAGE_CLUSTER_NAME,
 }
 
+NESTED_FIELDS_MAPPING = [
+    {
+        "2_bklog_student*": {
+            "mappings": {
+                "properties": {
+                    "name": {"type": "keyword"},
+                    "address": {"type": "nested"},
+                    "school": {"type": "nested", "properties": {"rank": {"type": "integer"}}},
+                }
+            }
+        }
+    }
+]
+
+STRING_WITHOUT_FIELD_DSL = {
+    "bool": {
+        "should": [
+            {"query_string": {"query": "Spongebob", "analyze_wildcard": True}},
+            {
+                "nested": {
+                    "path": "address",
+                    "query": {"query_string": {"query": "Spongebob", "analyze_wildcard": True}},
+                }
+            },
+            {"nested": {"path": "school", "query": {"query_string": {"query": "Spongebob", "analyze_wildcard": True}}}},
+        ]
+    }
+}
+
+STRING_WITH_NESTED_FIELD_DSL = {
+    "bool": {
+        "must": [
+            {"term": {"name": {"value": "Spongebob"}}},
+            {"nested": {"path": "address", "query": {"match_phrase": {"address.house": {"query": "pineapple house"}}}}},
+            {"nested": {"path": "school", "query": {"match_phrase": {"school.teacher.name": {"query": "puff"}}}}},
+        ]
+    }
+}
+
+STRING_WITH_FIELD_DSL = {"query_string": {"query": 'name: "Spongebob"', "analyze_wildcard": True}}
+
 
 @FakeRedis("apps.utils.cache.cache")
 class TestEsquery(TestCase):
-    def test_search_debug(self):
+    @patch(
+        "apps.log_esquery.esquery.client.QueryClientLog.QueryClientLog.mapping", return_value=QUERY_MAPPING_RESULT_LOG
+    )
+    @patch("apps.log_esquery.esquery.client.QueryClientEs.QueryClientEs.mapping", return_value=QUERY_MAPPING_RESULT_ES)
+    @patch(
+        "apps.log_esquery.esquery.client.QueryClientBkData.QueryClientBkData.mapping",
+        return_value=QUERY_MAPPING_RESULT_BKDATA,
+    )
+    def test_search_debug(self, *args, **kwargs):
         """
         测试 esquery.search()
         """
@@ -245,6 +298,14 @@ class TestEsquery(TestCase):
     @patch("apps.log_esquery.esquery.client.QueryClientEs.QueryClientEs.query", return_value=QUERY_RESULT_ES)
     @patch(
         "apps.log_esquery.esquery.client.QueryClientBkData.QueryClientBkData.query", return_value=QUERY_RESULT_BKDATA
+    )
+    @patch(
+        "apps.log_esquery.esquery.client.QueryClientLog.QueryClientLog.mapping", return_value=QUERY_MAPPING_RESULT_LOG
+    )
+    @patch("apps.log_esquery.esquery.client.QueryClientEs.QueryClientEs.mapping", return_value=QUERY_MAPPING_RESULT_ES)
+    @patch(
+        "apps.log_esquery.esquery.client.QueryClientBkData.QueryClientBkData.mapping",
+        return_value=QUERY_MAPPING_RESULT_BKDATA,
     )
     def test_search(self, *args, **kwargs):
         # 原生ES
@@ -439,3 +500,25 @@ class TestEsquery(TestCase):
         config_data.return_value = GET_CLUSTER_INFO_EXCEPTION_CONFIG_DATA
         with self.assertRaises(IndexResultTableApiException):
             EsQuery(params).get_cluster_info()
+
+    def test_query_string_convert(self):
+        """
+        测试query_string dsl转换
+        """
+        params = copy.deepcopy(NESTED_FIELDS_MAPPING)
+        res = EsQueryBuilder.build_query_string("Spongebob", params).to_dict().get("query")
+        self.assertEqual(res, STRING_WITHOUT_FIELD_DSL)
+
+        params = copy.deepcopy(NESTED_FIELDS_MAPPING)
+        res = (
+            EsQueryBuilder.build_query_string(
+                'name: "Spongebob" AND address.house: "pineapple house" AND school.teacher.name: "puff"', params
+            )
+            .to_dict()
+            .get("query")
+        )
+        self.assertEqual(res, STRING_WITH_NESTED_FIELD_DSL)
+
+        params = copy.deepcopy(NESTED_FIELDS_MAPPING)
+        res = EsQueryBuilder.build_query_string('name: "Spongebob"', params).to_dict().get("query")
+        self.assertEqual(res, STRING_WITH_FIELD_DSL)

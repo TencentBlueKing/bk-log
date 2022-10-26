@@ -95,6 +95,7 @@ class _BcsCcApi(object):
             before_request=bcs_cc_before_request,
             after_request=list_project_after,
             header_keys=["X-BKAPI-AUTHORIZATION"],
+            cache_time=60,
         )
         self.list_shared_clusters_ns = DataAPI(
             method="GET",
