@@ -206,7 +206,6 @@ class FavoriteHandler(object):
                 search_fields=param["search_fields"],
                 is_enable_display_fields=param["is_enable_display_fields"],
                 display_fields=param["display_fields"],
-                index_set_id=param["index_set_id"],
                 group_id=param["group_id"],
             )
 
