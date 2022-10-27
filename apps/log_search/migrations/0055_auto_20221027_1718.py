@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterUniqueTogether(
             name="favorite",
-            unique_together={("name", "space_uid", "index_set_id", "created_by")},
+            unique_together={("name", "space_uid", "index_set_id")},
         ),
         migrations.AlterUniqueTogether(
             name="favoritegroup",
