@@ -751,7 +751,7 @@ class Favorite(SoftDeleteModel):
         verbose_name = _("检索收藏")
         verbose_name_plural = _("34_搜索-检索收藏")
         ordering = ("-updated_at",)
-        unique_together = [("name", "space_uid", "index_set_id")]
+        unique_together = [("name", "space_uid")]
 
     @classmethod
     def get_user_favorite(
