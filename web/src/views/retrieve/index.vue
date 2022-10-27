@@ -1644,7 +1644,11 @@ export default {
           },
         };
         const comparedFavData = {
-          params: this.activeFavorite.params,
+          params: {
+            host_scopes: this.activeFavorite.params.host_scopes,
+            addition: this.activeFavorite.params.addition,
+            keyword: this.activeFavorite.params.keyword,
+          },
         };
         if (JSON.stringify(comparedSubData) === JSON.stringify(comparedFavData)) {
           this.addFavoriteData = favoriteData;
