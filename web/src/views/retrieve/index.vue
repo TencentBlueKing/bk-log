@@ -1645,7 +1645,8 @@ export default {
           // eslint-disable-next-line camelcase
           comparedSubData.search_fields = search_fields;
           const cloneFavorite = deepClone(this.activeFavorite);
-          Object.assign(this.replaceFavoriteData, cloneFavorite, comparedSubData);
+          cloneFavorite.params = this.retrieveParams;
+          Object.assign(this.replaceFavoriteData, cloneFavorite);
           this.showFavoritePopperContent = true; // 展示收藏是否替换Tips
           this.isShowAddNewCollectDialog = false;
         }
