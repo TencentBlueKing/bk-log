@@ -1659,7 +1659,7 @@ export default {
     favoriteTipsOperate(type) {
       this.closeFavoritePopper();
       if (type === 'add-new') {
-        this.activeFavorite = null;
+        this.activeFavorite = {};
         this.handleClickFavorite();
       } else {
         // Object.assign(this.activeFavorite, this.replaceFavoriteData);
