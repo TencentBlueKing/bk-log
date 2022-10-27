@@ -66,7 +66,10 @@ export default class CollectDialog extends tsc<IProps> {
     name: "",
     group_id: 0,
     params: {
-      host_scopes: {},
+      host_scopes: {
+        modules: [],
+        ips: '',
+      },
       addition: [],
       keyword: null,
       search_fields: [],
