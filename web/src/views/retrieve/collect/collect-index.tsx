@@ -97,15 +97,15 @@ export default class CollectIndex extends tsc<IProps> {
   groupSortList = [
     // 排序展示列表
     {
-      name: `${this.$t("按名称")} A - Z ${this.$t("排序")}`,
+      name: `${window.mainComponent.$t("按名称")} A - Z ${window.mainComponent.$t("排序")}`,
       id: "NAME_ASC",
     },
     {
-      name: `${this.$t("按名称")} Z - A ${this.$t("排序")}`,
+      name: `${window.mainComponent.$t("按名称")} Z - A ${window.mainComponent.$t("排序")}`,
       id: "NAME_DESC",
     },
     {
-      name: this.$t("按更新时间排序"),
+      name: window.mainComponent.$t("按更新时间排序"),
       id: "UPDATED_AT_DESC",
     },
   ];
@@ -127,7 +127,7 @@ export default class CollectIndex extends tsc<IProps> {
     if (value) {
       this.baseSortType = localStorage.getItem("favoriteSortType") || "NAME_ASC";
       this.sortType = this.baseSortType;
-      this.getFavoriteData();
+      this.getFavoriteList();
     } else {
       this.collectList = [];
       this.filterCollectList = [];
@@ -141,7 +141,7 @@ export default class CollectIndex extends tsc<IProps> {
     this.filterCollectList = [];
     this.groupList = [];
     if (!this.isShowCollect) return;
-    this.getFavoriteData();
+    this.getFavoriteList();
   }
 
   @Emit("handleClick")
@@ -157,18 +157,18 @@ export default class CollectIndex extends tsc<IProps> {
         break;
       case "add-group": // 新增组
         await this.handleUpdateGroupName({ group_new_name: value });
-        this.getFavoriteData();
+        this.getFavoriteList();
         break;
       case "reset-group-name": // 重命名
         await this.handleUpdateGroupName(value, false);
-        this.getFavoriteData();
+        this.getFavoriteList();
         break;
       case "move-favorite": // 移动收藏
         const visible_type =
           value.group_id === this.privateGroupID ? "private" : "public";
         Object.assign(value, { visible_type });
         await this.handleUpdateFavorite(value);
-        this.getFavoriteData();
+        this.getFavoriteList();
         break;
       case "remove-group": // 从组中移除收藏（移动至未分组）
         Object.assign(value, {
@@ -176,7 +176,7 @@ export default class CollectIndex extends tsc<IProps> {
           group_id: this.unknownGroupID,
         });
         await this.handleUpdateFavorite(value);
-        this.getFavoriteData();
+        this.getFavoriteList();
         break;
       case "edit-favorite": // 编辑收藏
         this.editFavoriteID = value.id;
@@ -184,11 +184,11 @@ export default class CollectIndex extends tsc<IProps> {
         break;
       case "delete-favorite": // 删除收藏
         await this.deleteFavorite(value.id);
-        this.getFavoriteData();
+        this.getFavoriteList();
         break;
       case "dismiss-group": // 解散分组
         await this.deleteGroup(value.group_id);
-        this.getFavoriteData();
+        this.getFavoriteList();
         break;
       case "share":
         let shareUrl = window.SITE_URL;
@@ -215,7 +215,7 @@ export default class CollectIndex extends tsc<IProps> {
   async handleClickGroupBtn(clickType: string) {
     if (clickType === "add") {
       await this.handleUpdateGroupName({ group_new_name: this.groupName });
-      this.getFavoriteData();
+      this.getFavoriteList();
     }
     setTimeout(() => {
       this.groupName = "";
@@ -228,7 +228,7 @@ export default class CollectIndex extends tsc<IProps> {
     if (clickType === "sort") {
       this.baseSortType = this.sortType;
       localStorage.setItem("favoriteSortType", this.sortType);
-      this.getFavoriteData();
+      this.getFavoriteList();
     } else {
       setTimeout(() => {
         this.sortType = this.baseSortType;
@@ -277,7 +277,7 @@ export default class CollectIndex extends tsc<IProps> {
   }
 
   /** 获取收藏列表 */
-  async getFavoriteList() {
+  async getFavoriteList(isInit = false) {
     try {
       this.collectLoading = true;
       const res = await $http.request("favorite/getFavoriteByGroupList", {
@@ -287,34 +287,22 @@ export default class CollectIndex extends tsc<IProps> {
         },
       });
       this.collectList = res.data;
-      this.handleSearchFavorite();
-      this.isShowGroupTitle = !(
-        this.collectList.length === 2 && !this.collectList[0].favorites.length
-      );
-    } catch (error) {
-    } finally {
-      this.collectLoading = false;
-    }
-  }
-
-  /** 获取组列表 */
-  async getGroupList(isInit = false) {
-    try {
-      const res = await $http.request("favorite/getGroupList", {
-        query: {
-          space_uid: this.spaceUid,
-        },
-      });
       this.groupList = res.data.map((item) => ({
-        group_id: item.id,
-        group_name: item.name,
+        group_id: item.group_id,
+        group_name: item.group_name,
         group_type: item.group_type,
       }));
       if (isInit) {
         this.unknownGroupID = this.groupList[this.groupList.length - 1]?.group_id;
         this.privateGroupID = this.groupList[0]?.group_id;
       }
-    } catch (error) {}
+      this.handleSearchFavorite();
+      this.isShowGroupTitle = !(this.collectList.length === 2 && !this.collectList[0].favorites.length);
+      this.filterCollectList = deepClone(this.collectList);
+    } catch (error) {
+    } finally {
+      this.collectLoading = false;
+    }
   }
 
   /** 解散分组 */
@@ -337,11 +325,6 @@ export default class CollectIndex extends tsc<IProps> {
     } catch (error) {}
   }
 
-  async getFavoriteData() {
-    Promise.all([this.getFavoriteList(), this.getGroupList(true)]).then(()=>{
-      this.filterCollectList = deepClone(this.collectList);
-    })
-  }
 
   showMessagePop(message, theme = "success") {
     this.$bkMessage({
@@ -511,11 +494,11 @@ export default class CollectIndex extends tsc<IProps> {
         ></div>
         <ManageGroupDialog 
           vModel={this.isShowManageDialog}
-          on-submit={(value) => value && this.getFavoriteData()} />
+          on-submit={(value) => value && this.getFavoriteList()} />
         <AddCollectDialog
           vModel={this.isShowAddNewFavoriteDialog}
           favoriteID={this.editFavoriteID}
-          on-submit={(value) => value && this.getFavoriteData()}
+          on-submit={(value) => value && this.getFavoriteList()}
         />
       </div>
     );

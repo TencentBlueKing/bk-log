@@ -83,6 +83,7 @@ export default class CollectDialog extends tsc<IProps> {
   privateGroupID = 0;
   switchVal = true;
   groupList = []; // 组列表
+  formLoading = false;
   public rules = {
     name: [
       {
@@ -121,6 +122,7 @@ export default class CollectDialog extends tsc<IProps> {
 
   async handleValueChange(value) {
     if (value) {
+      await this.requestGroupList(); // 获取组列表
       if (this.isCreateFavorite) {
         // 判断是否是新增
         Object.assign(this.favoriteData, this.addFavoriteData); // 合并新增收藏详情
@@ -128,7 +130,6 @@ export default class CollectDialog extends tsc<IProps> {
         await this.getFavoriteData(this.favoriteID); //获取收藏详情
       }
       this.getSearchFieldsList(this.favoriteData.params.keyword); // 获取表单模式显示字段
-      this.requestGroupList(); // 获取组列表
       this.isDisableSelect = this.favoriteData.visible_type === "private";
     } else {
       this.handleSubmitChange(false);
@@ -140,9 +141,11 @@ export default class CollectDialog extends tsc<IProps> {
     if (value === "private") {
       this.isDisableSelect = true;
       this.favoriteData.group_id = this.privateGroupID;
+      this.favoriteData.visible_type === "private";
     } else {
       this.isDisableSelect = false;
       this.favoriteData.group_id = this.unknownGroupID;
+      this.favoriteData.visible_type === "public";
     }
   }
 
@@ -225,12 +228,16 @@ export default class CollectDialog extends tsc<IProps> {
   }
   /** 获取收藏详情 */
   async getFavoriteData(id) {
+    this.formLoading = true;
     try {
       const res = await $http.request("favorite/getFavorite", {
         params: { id },
       });
       Object.assign(this.favoriteData, res.data);
     } catch (error) {}
+    finally {
+      this.formLoading = false;
+    }
   }
 
   render() {
@@ -252,6 +259,7 @@ export default class CollectDialog extends tsc<IProps> {
         <Form
           form-type="vertical"
           ref="validateForm"
+          v-bkloading={{ isLoading: this.formLoading }}
           {...{
             props: {
               model: this.favoriteData,
