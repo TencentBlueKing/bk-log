@@ -37,7 +37,7 @@ interface ICollectProps {
 @Component
 export default class CollectGroup extends tsc<ICollectProps> {
   @Prop({ type: Object, required: true }) collectItem: IGroupItem;
-  @Prop({ type: Number, required: true }) activeFavoriteID: Number;
+  @Prop({ type: Number, required: true }) activeFavoriteID: number;
   @Prop({ type: Boolean, default: true }) isShowGroupTitle: boolean;
   @Prop({ type: Boolean, default: false }) isSearchFilter: boolean;
   @Prop({ type: Array, default: () => [] }) groupList: IGroupItem[];
@@ -53,7 +53,6 @@ export default class CollectGroup extends tsc<ICollectProps> {
   get isShowTitleIcon() {
     return this.collectItem.group_type !== "unknown";
   }
-
   handleClickCollect(item: IFavoriteItem) {
     setTimeout(() => {
       this.clickDrop = false;

@@ -42,6 +42,7 @@ interface IProps {
   isShowCollect: boolean;
   indexId: string;
   activeFavorite: IFavoriteItem;
+  activeFavoriteID: number;
 }
 
 export interface IGroupItem {
@@ -71,6 +72,7 @@ export default class CollectIndex extends tsc<IProps> {
   @PropSync("width", { type: Number }) collectWidth: number;
   @PropSync("isShow", { type: Boolean }) isShowCollect: boolean;
   @Prop({ type: String, required: true }) indexId: string;
+  @Prop({ type: Number, required: true }) activeFavoriteID: number;
   @Prop({ type: Object, default: () => ({}) }) activeFavorite: IFavoriteItem;
   @Ref("popoverGroup") popoverGroupRef: Popover;
   @Ref("popoverSort") popoverSortRef: Popover;
@@ -89,7 +91,6 @@ export default class CollectIndex extends tsc<IProps> {
   groupName = ""; // 新增组
   privateGroupID = 0; // 私人组ID
   unknownGroupID = 0; // 公开组ID
-  activeFavoriteID = -1; // 当前点击的收藏ID
   baseSortType = "NAME_ASC"; // 排序参数
   sortType = "NAME_ASC"; // 展示的排序参数
   editFavoriteID = -1; // 点击编辑时的收藏ID
@@ -143,11 +144,6 @@ export default class CollectIndex extends tsc<IProps> {
     this.getFavoriteData();
   }
 
-  @Watch("activeFavorite", { deep: true })
-  handleWatchFavorite(value) {
-    this.activeFavoriteID = value !== null ? this.activeFavorite?.id : 0;
-  }
-
   @Emit("handleClick")
   handleClickFavorite(value) {
     return value;
@@ -157,7 +153,6 @@ export default class CollectIndex extends tsc<IProps> {
     const { type, value } = obj;
     switch (type) {
       case "click-favorite": // 点击收藏
-        this.activeFavoriteID = value.id;
         this.handleClickFavorite(value);
         break;
       case "add-group": // 新增组
@@ -419,99 +414,97 @@ export default class CollectIndex extends tsc<IProps> {
   render() {
     return (
       <div class="retrieve-collect-index">
-        {this.isShowCollect ? (
-          <CollectContainer
-            dataList={this.filterCollectList}
-            groupList={this.groupList}
-            isShowGroupTitle={this.isShowGroupTitle}
-            activeFavoriteID={this.activeFavoriteID}
-            isSearchFilter={this.isSearchFilter}
-            collectLoading={this.collectLoading}
-            on-change={this.handleUserOperate}
-          >
-            <div class="search-container">
-              <div class="fl-jcsb">
-                <span class="search-title">{this.$t("收藏查询")}</span>
-                <span
-                  class="bk-icon icon-cog"
-                  onClick={() => (this.isShowManageDialog = true)}
-                ></span>
-              </div>
-              <div class="search-box fl-jcsb">
-                <Input
-                  right-icon="bk-icon icon-search"
-                  vModel={this.searchVal}
-                  on-enter={this.handleSearchFavorite}
-                  on-right-icon-click={this.handleSearchFavorite}
-                ></Input>
-                <div class="fl-jcsb operate-box">
-                  <Popover
-                    ref="popoverGroup"
-                    tippy-options={this.tippyOption}
-                    placement="bottom-start"
-                    ext-cls="new-group-popover"
-                  >
-                    <span class="bk-icon icon-plus-circle"></span>
-                    <div slot="content">
-                      <Input
-                        clearable
-                        placeholder={this.$t("请输入组名")}
-                        vModel={this.groupName}
-                        maxlength={10}
-                      ></Input>
-                      <div class="operate-button">
-                        <Button
-                          text
-                          onClick={() => this.handleClickGroupBtn("add")}
-                        >
-                          {this.$t("确定")}
-                        </Button>
-                        <span
-                          onClick={() => this.handleClickGroupBtn("cancel")}
-                        >
-                          {this.$t("取消")}
-                        </span>
-                      </div>
-                    </div>
-                  </Popover>
-                  <Popover
-                    ref="popoverSort"
-                    tippy-options={this.tippyOption}
-                    placement="bottom-start"
-                    ext-cls="sort-group-popover"
-                  >
-                    <div class="icon-box">
-                      <span class="bk-icon icon-sort"></span>
-                    </div>
-                    <div slot="content">
-                      <RadioGroup
-                        vModel={this.sortType}
-                        class="sort-group-container"
+        <CollectContainer
+          dataList={this.filterCollectList}
+          groupList={this.groupList}
+          isShowGroupTitle={this.isShowGroupTitle}
+          activeFavoriteID={this.activeFavoriteID}
+          isSearchFilter={this.isSearchFilter}
+          collectLoading={this.collectLoading}
+          on-change={this.handleUserOperate}
+        >
+          <div class="search-container">
+            <div class="fl-jcsb">
+              <span class="search-title">{this.$t("收藏查询")}</span>
+              <span
+                class="bk-icon icon-cog"
+                onClick={() => (this.isShowManageDialog = true)}
+              ></span>
+            </div>
+            <div class="search-box fl-jcsb">
+              <Input
+                right-icon="bk-icon icon-search"
+                vModel={this.searchVal}
+                on-enter={this.handleSearchFavorite}
+                on-right-icon-click={this.handleSearchFavorite}
+              ></Input>
+              <div class="fl-jcsb operate-box">
+                <Popover
+                  ref="popoverGroup"
+                  tippy-options={this.tippyOption}
+                  placement="bottom-start"
+                  ext-cls="new-group-popover"
+                >
+                  <span class="bk-icon icon-plus-circle"></span>
+                  <div slot="content">
+                    <Input
+                      clearable
+                      placeholder={this.$t("请输入组名")}
+                      vModel={this.groupName}
+                      maxlength={10}
+                    ></Input>
+                    <div class="operate-button">
+                      <Button
+                        text
+                        onClick={() => this.handleClickGroupBtn("add")}
                       >
-                        {this.groupSortList.map((item) => (
-                          <Radio value={item.id}>{item.name}</Radio>
-                        ))}
-                      </RadioGroup>
-                      <div class="operate-button">
-                        <Button
-                          theme="primary"
-                          onClick={() => this.handleClickSortBtn("sort")}
-                        >
-                          {this.$t("确定")}
-                        </Button>
-                        <Button
-                          onClick={() => this.handleClickSortBtn("cancel")}
-                        >
-                          {this.$t("取消")}
-                        </Button>
-                      </div>
+                        {this.$t("确定")}
+                      </Button>
+                      <span
+                        onClick={() => this.handleClickGroupBtn("cancel")}
+                      >
+                        {this.$t("取消")}
+                      </span>
                     </div>
-                  </Popover>
-                </div>
+                  </div>
+                </Popover>
+                <Popover
+                  ref="popoverSort"
+                  tippy-options={this.tippyOption}
+                  placement="bottom-start"
+                  ext-cls="sort-group-popover"
+                >
+                  <div class="icon-box">
+                    <span class="bk-icon icon-sort"></span>
+                  </div>
+                  <div slot="content">
+                    <RadioGroup
+                      vModel={this.sortType}
+                      class="sort-group-container"
+                    >
+                      {this.groupSortList.map((item) => (
+                        <Radio value={item.id}>{item.name}</Radio>
+                      ))}
+                    </RadioGroup>
+                    <div class="operate-button">
+                      <Button
+                        theme="primary"
+                        onClick={() => this.handleClickSortBtn("sort")}
+                      >
+                        {this.$t("确定")}
+                      </Button>
+                      <Button
+                        onClick={() => this.handleClickSortBtn("cancel")}
+                      >
+                        {this.$t("取消")}
+                      </Button>
+                    </div>
+                  </div>
+                </Popover>
               </div>
             </div>
-          </CollectContainer>
-        ) : undefined}
+          </div>
+        </CollectContainer>
         <div
           class={["drag-border", { "drag-ing": this.isChangingWidth }]}
           onMousedown={this.dragBegin}

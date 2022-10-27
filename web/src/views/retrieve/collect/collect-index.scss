@@ -1,6 +1,7 @@
 .retrieve-collect-index {
   position: relative;
   display: flex;
+  overflow: hidden;
 
   .drag-border {
     width: 5px;

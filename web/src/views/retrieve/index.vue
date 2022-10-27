@@ -85,6 +85,7 @@
         :style="{ width: collectWidth + 'px' }"
         :index-id="`${spaceUid}_${favoriteRequestID}`"
         :active-favorite="activeFavorite"
+        :active-favorite-i-d="activeFavoriteID"
         @handleClick="handleClickFavoriteItem" />
       <!-- 检索详情页左侧 -->
       <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
@@ -382,6 +383,7 @@ import { handleTransformToTimestamp } from '../../components/time-range/utils';
 import indexSetSearchMixin from '@/mixins/indexSet-search-mixin';
 import axios from 'axios';
 import * as authorityMap from '../../common/authority-map';
+import { deepClone } from '../../components/monitor-echarts/utils';
 
 export default {
   name: 'Retrieve',
@@ -518,14 +520,15 @@ export default {
       pickerTimeRange: ['now-15m', 'now'],
       operatorConfig: {}, // 当前table操作的值
       authPageInfo: null,
-      isShowAddNewCollectDialog: false,
+      isShowAddNewCollectDialog: false, // 是否展示新增收藏弹窗
       collectWidth: 0, // 收藏默认栏宽度
       isShowCollect: false,
       isSqlSearchType: true, // 是否是sql模式
-      activeFavorite: null, // 当前点击的收藏参数
+      activeFavorite: {}, // 当前点击的收藏参数
+      activeFavoriteID: -1,
       addFavoriteData: {}, // 新增收藏所需的参数
       favoriteRequestID: 0, // 参数改变更新收藏
-      replaceFavoriteData: null, // 收藏判断不同后的替换参数
+      replaceFavoriteData: {}, // 收藏判断不同后的替换参数
       searchMap: { // 检索按钮
         search: { // 查询
           icon: 'bk-icon icon-play-shape',
@@ -560,10 +563,10 @@ export default {
     showFilterCutline() {
       const { host_scopes, addition } = this.retrieveParams;
       // return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
-      return (host_scopes.modules.length
-      || host_scopes.ips.length
-      || host_scopes.target_nodes?.length)
-      && addition.length;
+      return (host_scopes?.modules?.length
+      || host_scopes?.ips?.length
+      || host_scopes?.target_nodes?.length)
+      && addition?.length;
     },
     showSearchPage() {
       return this.hasAuth || this.isNoIndexSet;
@@ -579,7 +582,7 @@ export default {
       return this.searchMap[this.isAutoQuery ? 'autoSearch' : 'search'];
     },
     isCanUseUiType() {
-      return this.activeFavorite?.params.keyword === this.retrieveParams.keyword;
+      return this.activeFavorite?.params?.keyword === this.retrieveParams.keyword;
     },
   },
   provide() {
@@ -600,7 +603,6 @@ export default {
       this.resetRetrieveCondition();
       this.$store.commit('updateIndexId', val);
       val && this.requestSearchHistory(val);
-      // this.isShowCollect &&
     },
     spaceUid: {
       async handler() {
@@ -885,6 +887,8 @@ export default {
     // 切换索引
     handleSelectIndex(val) {
       this.indexId = val;
+      this.activeFavoriteID = -1;
+      this.activeFavorite = {};
       if (!this.isRetrieveHome) {
         this.retrieveLog();
       }
@@ -1010,7 +1014,7 @@ export default {
     },
     // 关闭收藏浮层
     closeFavoritePopper() {
-      this.$refs.favoritePopper.instance.hide();
+      this.$refs.favoritePopper.hideHandler();
     },
     // 检索日志
     async retrieveLog(historyParams) {
@@ -1604,10 +1608,8 @@ export default {
     // 点击新增收藏
     handleClickFavorite() {
       // 如果点击过收藏，进行参数判断
-      const { host_scopes, keyword, addition } = this.retrieveParams;
       const displayFields = this.visibleFields.map(item => item.field_name);
       const indexItem = this.indexSetList.find(item => item.index_set_id === String(this.indexId));
-      // const this.indexItem
       const favoriteData = {
         index_set_id: this.indexId,
         space_uid: this.spaceUid,
@@ -1617,24 +1619,23 @@ export default {
         name: '',
         is_enable_display_fields: true,
         params: {
-          host_scopes,
-          keyword,
-          addition,
+          host_scopes: this.retrieveParams.host_scopes,
+          keyword: this.retrieveParams.keyword,
+          addition: this.retrieveParams.addition,
           search_fields: [],
         },
       };
-      if (this.activeFavorite !== null) {
-        const { params, params: { search_fields } } = this.activeFavorite;
-        const { keyword, addition, host_scopes } = this.retrieveParams;
+      if (JSON.stringify(this.activeFavorite) !== '{}') {
+        const { params: { search_fields } } = this.activeFavorite;
         const comparedSubData = {
           params: {
-            keyword,
-            host_scopes,
-            addition,
+            host_scopes: this.retrieveParams.host_scopes,
+            addition: this.retrieveParams.addition,
+            keyword: this.retrieveParams.keyword,
           },
         };
         const comparedFavData = {
-          params,
+          params: this.activeFavorite.params,
         };
         if (JSON.stringify(comparedSubData) === JSON.stringify(comparedFavData)) {
           this.addFavoriteData = favoriteData;
@@ -1643,7 +1644,8 @@ export default {
         } else {
           // eslint-disable-next-line camelcase
           comparedSubData.search_fields = search_fields;
-          this.replaceFavoriteData = Object.assign(this.activeFavorite, comparedSubData);
+          const cloneFavorite = deepClone(this.activeFavorite);
+          Object.assign(this.replaceFavoriteData, cloneFavorite, comparedSubData);
           this.showFavoritePopperContent = true; // 展示收藏是否替换Tips
           this.isShowAddNewCollectDialog = false;
         }
@@ -1659,6 +1661,7 @@ export default {
         this.activeFavorite = null;
         this.handleClickFavorite();
       } else {
+        // Object.assign(this.activeFavorite, this.replaceFavoriteData);
         this.favoriteRequestID += 1;
       }
     },
@@ -1682,7 +1685,8 @@ export default {
     },
     // 点击收藏列表的收藏
     handleClickFavoriteItem(value) {
-      this.activeFavorite = value;
+      this.activeFavorite = deepClone(value);
+      this.activeFavoriteID = value.id;
       if (!value.params.host_scopes.target_node_type) {
         value.params.host_scopes.target_node_type = '';
         value.params.host_scopes.target_nodes = [];
