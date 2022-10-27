@@ -1610,6 +1610,15 @@ export default {
       // 如果点击过收藏，进行参数判断
       const displayFields = this.visibleFields.map(item => item.field_name);
       const indexItem = this.indexSetList.find(item => item.index_set_id === String(this.indexId));
+      const { modules, ips, target_node_type, target_nodes } =  this.retrieveParams.host_scopes;
+      // eslint-disable-next-line camelcase
+      const host_scopes = { modules, ips, target_node_type, target_nodes };
+      if (!modules) host_scopes.modules = [];
+      if (!ips) host_scopes.ips = '';
+      if (!host_scopes.target_node_type) {
+        host_scopes.target_node_type = '';
+        host_scopes.target_nodes = [];
+      }
       const favoriteData = {
         index_set_id: this.indexId,
         space_uid: this.spaceUid,
@@ -1619,7 +1628,7 @@ export default {
         name: '',
         is_enable_display_fields: true,
         params: {
-          host_scopes: this.retrieveParams.host_scopes,
+          host_scopes,
           keyword: this.retrieveParams.keyword,
           addition: this.retrieveParams.addition,
           search_fields: [],
@@ -1646,7 +1655,7 @@ export default {
           comparedSubData.search_fields = search_fields;
           const cloneFavorite = deepClone(this.activeFavorite);
           cloneFavorite.params = this.retrieveParams;
-          Object.assign(this.replaceFavoriteData, cloneFavorite);
+          Object.assign(this.replaceFavoriteData, cloneFavorite, comparedSubData);
           this.showFavoritePopperContent = true; // 展示收藏是否替换Tips
           this.isShowAddNewCollectDialog = false;
         }
@@ -1662,7 +1671,6 @@ export default {
         this.activeFavorite = {};
         this.handleClickFavorite();
       } else {
-        // Object.assign(this.activeFavorite, this.replaceFavoriteData);
         this.favoriteRequestID += 1;
       }
     },
