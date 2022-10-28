@@ -164,8 +164,7 @@ export default class CollectIndex extends tsc<IProps> {
         this.getFavoriteList();
         break;
       case "move-favorite": // 移动收藏
-        const visible_type =
-          value.group_id === this.privateGroupID ? "private" : "public";
+        const visible_type = value.group_id === this.privateGroupID ? "private" : "public";
         Object.assign(value, { visible_type });
         await this.handleUpdateFavorite(value);
         this.getFavoriteList();

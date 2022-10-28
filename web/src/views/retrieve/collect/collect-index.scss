@@ -11,17 +11,20 @@
     z-index: 99;
     user-select: none;
     cursor: col-resize;
+    &::after {
+      content: ' ';
+      position: absolute;
+      right: 0px;
+      display: inline-block;
+      background-color: #DBDCE0;
+      width: 1px;
+      height: 100%;
+    }
 
     &.drag-ing,
     &:hover {
       &::after {
-        content: ' ';
-        position: absolute;
-        right: 0px;
-        display: inline-block;
         background-color: #3a84ff;
-        width: 2px;
-        height: 100%;
       }
     }
   }

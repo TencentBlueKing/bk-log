@@ -40,7 +40,7 @@ import {
 import FingerSelectColumn from "../result-table-panel/log-clustering/components/finger-select-column.vue";
 import ManageInput from "./component/manage-input";
 import $http from "../../../api";
-import { deepClone, random } from "../../../common/util";
+import { deepClone, random, formatDate } from "../../../common/util";
 import "./manage-group-dialog.scss";
 
 interface IProps {
@@ -74,7 +74,7 @@ const settingFields = [
     disabled: true,
   },
   {
-    id: "group_id",
+    id: "group_name",
     label: window.mainComponent.$t("所属组"),
   },
   {
@@ -111,6 +111,7 @@ export default class GroupDialog extends tsc<IProps> {
   tableList: IFavoriteItem[] = []; // 表格数据;
   operateTableList: IFavoriteItem[] = []; // 用户操作操作缓存表格数据;
   submitTableList: IFavoriteItem[] = []; // 修改提交的表格数据;
+  searchAfterList: IFavoriteItem[] = []; // 用于全选或者多选或搜索过滤后的表格数组;
   deleteTableIDList = []; // 删除收藏的表格ID
   tableDialog = false;
   selectFavoriteList = []; // 列的头部的选择框收藏ID列表
@@ -172,7 +173,7 @@ export default class GroupDialog extends tsc<IProps> {
       this.checkValue = 0;
       return;
     }
-    if (list.length === this.tableList.length) {
+    if (list.length === this.searchAfterList.length) {
       this.checkValue = 2;
       return;
     }
@@ -227,9 +228,11 @@ export default class GroupDialog extends tsc<IProps> {
     } else {
       searchList = this.operateTableList;
     }
+    this.searchAfterList = searchList;
     setTimeout(() => {
       const count = !!searchList.length ? searchList.length : 1;
       Object.assign(this.paginationConfig, { current: 1, count });
+      this.selectFavoriteList = [];
       this.showTableList = this.getShowTableListByPage(searchList);
       this.tableLoading = false;
     }, 500);
@@ -237,7 +240,7 @@ export default class GroupDialog extends tsc<IProps> {
   /** 全选操作 */
   handleSelectionChange(value) {
     this.selectFavoriteList = value
-      ? this.tableList.map((item) => item.id)
+      ? this.searchAfterList.map((item) => item.id)
       : [];
   }
   /** 多选移动至分组操作 */
@@ -285,6 +288,7 @@ export default class GroupDialog extends tsc<IProps> {
       });
       this.tableList = res.data;
       this.operateTableList = initList;
+      this.searchAfterList = initList;
       this.showTableList = this.getShowTableListByPage(initList);
       Object.assign(this.paginationConfig, { count: this.tableList.length });
     } catch (error) {
@@ -779,6 +783,11 @@ export default class GroupDialog extends tsc<IProps> {
               label={this.$t("变更时间")}
               prop={"updated_at"}
               key={"column_update_time"}
+              scopedSlots={{
+                default: ({ row }) => [
+                  <span>{formatDate(row.updated_at)}</span>
+                ],
+              }}
             ></TableColumn>
           ) : undefined}
 

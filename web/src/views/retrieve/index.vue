@@ -105,7 +105,7 @@
             <span class="tab-title">{{ $t('数据检索') }}</span>
             <div class="tab-operation">
               <span
-                v-if="activeFavoriteID !== -1"
+                v-if="isShowUiType"
                 v-bk-tooltips.light="$t('表单Tips')"
                 :disabled="isCanUseUiType || !isSqlSearchType">
                 <div
@@ -216,7 +216,6 @@
                   :icon="getSearchType.icon"
                   @click="handleChangeSearchType">
                 </bk-button>
-                <!-- isAutoQuery -->
                 <bk-button
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
@@ -531,7 +530,7 @@ export default {
       replaceFavoriteData: {}, // 收藏判断不同后的替换参数
       searchMap: { // 检索按钮
         search: { // 查询
-          icon: 'bk-icon icon-play-shape',
+          icon: 'bk-icon log-icon icon-bofang',
           text: this.$t('查询'),
         },
         searchIng: { // 查询中
@@ -539,7 +538,7 @@ export default {
           text: `${this.$t('查询中')}...`,
         },
         autoSearch: { // 自动查询
-          icon: 'bk-icon icon-pause',
+          icon: 'bk-icon log-icon icon-zanting',
           text: this.$t('自动查询'),
         },
       },
@@ -574,16 +573,19 @@ export default {
     showAuthInfo() { // 无业务权限则展示store里的 然后判断是否有索引集权限
       return this.authMainPageInfo || this.authPageInfo;
     },
-    sumLeftWidth() {
+    sumLeftWidth() { // 收藏和检索左边的页面的合计宽度
       return this.collectWidth + this.leftPanelWidth;
     },
-    getSearchType() {
+    getSearchType() { // 获取搜索按钮状态
       if (this.tableLoading) return this.searchMap.searchIng;
       return this.searchMap[this.isAutoQuery ? 'autoSearch' : 'search'];
     },
-    isCanUseUiType() {
+    isCanUseUiType() { // 判断当前的检索语句是否与收藏的相对于 不相等的话不显示表单模式
       return this.activeFavorite?.params?.keyword === this.retrieveParams.keyword;
     },
+    isShowUiType() { // 判断当前点击的收藏是否展示表单字段
+      return this.activeFavorite?.params?.search_fields?.length;
+    }
   },
   provide() {
     return {
@@ -607,9 +609,10 @@ export default {
     spaceUid: {
       async handler() {
         this.indexId = '';
-        // this.requestFavoriteList();
         this.indexSetList.splice(0);
         this.totalFields.splice(0);
+        this.activeFavorite = {};
+        this.activeFavoriteID = -1;
         this.retrieveParams.bk_biz_id = this.bkBizId;
         this.fetchPageData();
       },
@@ -1698,14 +1701,14 @@ export default {
     },
     // 点击收藏列表的收藏
     handleClickFavoriteItem(value) {
-      this.activeFavorite = deepClone(value);
-      this.activeFavoriteID = value.id;
       if (!value.params.host_scopes.target_node_type) {
         value.params.host_scopes.target_node_type = '';
         value.params.host_scopes.target_nodes = [];
       }
+      this.activeFavorite = deepClone(value);
+      this.activeFavoriteID = value.id;
       this.isFavoriteSearch = true;
-      this.retrieveFavorite(value);
+      this.retrieveFavorite(deepClone(value));
     },
   },
 };
@@ -1848,7 +1851,7 @@ export default {
           padding-top: 10px;
 
           .tab-content {
-            height: calc(100% - 108px);
+            height: calc(100% - 52px);
             overflow-y: auto;
             background-color: #fbfbfb;
 
@@ -1970,17 +1973,23 @@ export default {
             background-color: #fff;
             // z-index: 1;
             ::v-deep .query-btn {
+              width: 32px;
+              height: 32px;
+              background: #FFFFFF;
               margin-right: 2px;
               color: #c4c6cc;
-
-              .bk-icon {
+              display: flex;
+              justify-content: center;
+              div {
                 transform: translateY(-2px);
-                font-size: 12px;
+              }
+              .bk-icon {
+                font-size: 16px;
               }
             }
 
             .query-search {
-              min-width: 100px;
+              width: 80px;
               font-size: 12px
             }
 
@@ -1996,14 +2005,15 @@ export default {
             }
 
             .loading-box {
-              width: 36px;
+              width: 32px;
               height: 32px;
               cursor: pointer;
               border: 1px solid #c4c6cc;
+              border-radius: 2px;
               margin-right: 2px;
 
               .loading {
-                transform: scale(.3) translateY(52px);
+                transform: scale(.2) translateY(78px);
               }
             }
           }

@@ -1,8 +1,14 @@
 @import '@/scss/mixins/flex.scss';
 
 .manage-group {
+  .bk-dialog-header {
+    padding: 3px 24px 18px;
+  }
+  .bk-dialog-body {
+    padding: 3px 40px 26px;
+  }
   .top-operate {
-    margin-bottom: 20px;
+    margin-bottom: -16px;
 
     @include flex-justify(space-between);
 
@@ -16,7 +22,7 @@
   
   .is-not-select {
     &.top-operate {
-      margin-bottom: 52px;
+      margin-bottom: 16px;
     }
     .bk-table-body-wrapper {
       margin-top: 0;
