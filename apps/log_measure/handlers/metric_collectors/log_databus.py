@@ -48,6 +48,7 @@ from apps.log_measure.constants import (
     MAX_RETRY_QUERY_SUBSCRIPTION_TIMES,
     TIME_WAIT_QUERY_SUBSCRIPTION_EXCEPTION,
     MAX_QUERY_SUBSCRIPTION,
+    SECONDS_ONE_HOUR,
 )
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
@@ -273,9 +274,6 @@ class CollectMetricCollector(object):
     @register_metric("business_host", description=_("业务主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
     def business_unique_host():
         metrics = []
-        if not settings.BK_MONITOR_BK_BIZ_ID:
-            logger.error("未配置BK_MONITOR_BK_BIZ_ID, 跳过统计业务主机")
-            return metrics
         total_host = 0
         active_host = 0
         # 监控没办法执行select from (select from), 只能查两次
@@ -317,7 +315,7 @@ class CollectMetricCollector(object):
             report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
             bk_username="admin",
         )
-        start_time = MetricUtils.get_instance().report_ts - 3600
+        start_time = MetricUtils.get_instance().report_ts - SECONDS_ONE_HOUR
         end_time = MetricUtils.get_instance().report_ts
         params = {
             "down_sample_range": "5s",
@@ -334,7 +332,7 @@ class CollectMetricCollector(object):
                     "group_by": ["target"],
                     "display": True,
                     "where": [],
-                    "interval": 3600,
+                    "interval": SECONDS_ONE_HOUR,
                     "interval_unit": "s",
                     "time_field": "time",
                     "filter_dict": {},
@@ -344,8 +342,6 @@ class CollectMetricCollector(object):
             "target": [],
             "bk_biz_id": str(settings.BLUEKING_BK_BIZ_ID),
         }
-        # group by 2h是为了保证数据只有一个
-
         try:
             result = bk_monitor_client.unify_query(data=params)
             for ts_data in result["series"]:
