@@ -91,11 +91,11 @@ const settingFields = [
     disabled: true,
   },
   {
-    id: "update_by",
+    id: "updated_by",
     label: window.mainComponent.$t("变更人"),
   },
   {
-    id: "update_time",
+    id: "updated_at",
     label: window.mainComponent.$t("变更时间"),
   },
 ];
@@ -758,7 +758,7 @@ export default class GroupDialog extends tsc<IProps> {
           {this.checkFields("update_by") ? (
             <TableColumn
              label={this.$t("变更人")} 
-             prop={"update_by"}
+             prop={"updated_by"}
              key={'column_update_by'}
              ></TableColumn>
           ) : undefined}
@@ -766,7 +766,7 @@ export default class GroupDialog extends tsc<IProps> {
           {this.checkFields("update_time") ? (
             <TableColumn 
             label={this.$t("变更时间")} 
-            prop={"update_time"}
+            prop={"updated_at"}
             key={'column_update_time'}
             ></TableColumn>
           ) : undefined}
