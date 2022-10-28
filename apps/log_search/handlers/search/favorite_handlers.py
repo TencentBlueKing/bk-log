@@ -287,10 +287,10 @@ class FavoriteHandler(object):
         query_tree = parser.parse(keyword, lexer=lexer)
         if self._get_node_type(query_tree) == "Word":
             fields.append(self._parse_node_expr(query_tree))
-        if self._get_node_type(query_tree) == "SearchField":
-            fields.append(self._parse_node_expr(query_tree))
         if not query_tree.children:
             return fields
+        if self._get_node_type(query_tree) == "SearchField":
+            fields.append(self._parse_node_expr(query_tree))
         else:
             for child in query_tree.children:
                 if isinstance(self._parse_node_expr(child), list):
