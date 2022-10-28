@@ -119,6 +119,8 @@ class FavoriteHandler(object):
                 "display_fields": fi["display_fields"],
                 "is_active": fi["is_active"],
                 "created_by": fi["created_by"],
+                "updated_by": fi["updated_by"],
+                "updated_at": fi["updated_at"],
             }
             for fi in favorites
         ]
