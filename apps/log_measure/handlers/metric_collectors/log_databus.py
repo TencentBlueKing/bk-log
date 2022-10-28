@@ -355,7 +355,7 @@ class CollectMetricCollector(object):
                 aggregation_datas[target] = row_count
 
         except Exception as e:  # pylint: disable=broad-except
-            logger.error("failed to execute sql {}, err: {}".format(params["sql"], e))
+            logger.error("failed to unify_query, params: {}, err: {}".format(params, e))
         return aggregation_datas
 
 
