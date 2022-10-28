@@ -585,7 +585,7 @@ export default {
     },
     isShowUiType() { // 判断当前点击的收藏是否展示表单字段
       return this.activeFavorite?.params?.search_fields?.length;
-    }
+    },
   },
   provide() {
     return {
@@ -1851,7 +1851,8 @@ export default {
           padding-top: 10px;
 
           .tab-content {
-            height: calc(100% - 52px);
+            /* stylelint-disable-next-line declaration-no-important */
+            height: calc(100% - 52px) !important;
             overflow-y: auto;
             background-color: #fbfbfb;
 
