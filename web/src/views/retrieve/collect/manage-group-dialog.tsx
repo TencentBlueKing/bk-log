@@ -104,22 +104,20 @@ const settingFields = [
 export default class GroupDialog extends tsc<IProps> {
   @Ref("popoverGroup") popoverGroupRef: Popover;
   @Model("change", { type: Boolean, default: false }) value: IProps["value"];
-  switchVal = true;
-  searchValue = "";
+  searchValue = ""; // 搜索字段
   tableLoading = false;
-  searchSelectLoading = false;
   isShowDeleteDialog = false;
   showTableList: IFavoriteItem[] = []; // 展示用的表格数据
   tableList: IFavoriteItem[] = []; // 表格数据;
   operateTableList: IFavoriteItem[] = []; // 用户操作操作缓存表格数据;
   submitTableList: IFavoriteItem[] = []; // 修改提交的表格数据;
-  deleteTableIDList = [];
+  deleteTableIDList = []; // 删除收藏的表格ID
   tableDialog = false;
   selectFavoriteList = []; // 列的头部的选择框收藏ID列表
   groupList = []; // 组列表
   unPrivateList = []; // 无个人组的收藏列表
   checkValue = 0; // 0为不选 1为半选 2为全选
-  groupName = "";
+  groupName = ""; // 输入框组名
   unknownGroupID = 0;
   privateGroupID = 0;
   isCannotValueChange = false; // 用于分组时不进行数据更新
@@ -142,7 +140,9 @@ export default class GroupDialog extends tsc<IProps> {
 
   tableKey = random(10);
 
-  unPrivateOptionList = [{ name: window.mainComponent.$t("公开"), id: "public" }];
+  unPrivateOptionList = [
+    { name: window.mainComponent.$t("公开"), id: "public" },
+  ];
   allOptionList = [
     { name: window.mainComponent.$t("公开"), id: "public" },
     { name: window.mainComponent.$t("仅本人"), id: "private" },
@@ -151,7 +151,7 @@ export default class GroupDialog extends tsc<IProps> {
   tableSetting = {
     fields: settingFields,
     selectedFields: settingFields.slice(0, 5),
-    size: 'small'
+    size: "small",
   };
 
   get spaceUid() {
@@ -213,7 +213,7 @@ export default class GroupDialog extends tsc<IProps> {
     if (status) {
       this.selectFavoriteList.push(row.id);
     } else {
-      const index = this.selectFavoriteList.findIndex(item => item === row.id);
+      const index = this.selectFavoriteList.findIndex((item) => item === row.id);
       this.selectFavoriteList.splice(index, 1);
     }
   }
@@ -223,7 +223,7 @@ export default class GroupDialog extends tsc<IProps> {
     this.tableLoading = true;
     let searchList;
     if (this.searchValue !== "") {
-      searchList = this.operateTableList.filter(item => item.name.includes(this.searchValue));
+      searchList = this.operateTableList.filter((item) => item.name.includes(this.searchValue));
     } else {
       searchList = this.operateTableList;
     }
@@ -240,7 +240,7 @@ export default class GroupDialog extends tsc<IProps> {
       ? this.tableList.map((item) => item.id)
       : [];
   }
-
+  /** 多选移动至分组操作 */
   handleClickMoveGroup(value) {
     this.selectFavoriteList.forEach((item) => {
       this.operateListChange({ id: item }, { group_id: value.group_id });
@@ -303,7 +303,7 @@ export default class GroupDialog extends tsc<IProps> {
         group_name: item.name,
         group_type: item.group_type,
       }));
-      this.unPrivateList = this.groupList.slice(1);
+      this.unPrivateList = this.groupList.slice(1); // 去除个人组的列表
       this.sourceFilters = res.data.map((item) => ({
         text: item.name,
         value: item.name,
@@ -318,9 +318,11 @@ export default class GroupDialog extends tsc<IProps> {
   handleChangeSearchList(row, nVal: string[]) {
     this.operateListChange(row, { search_fields: nVal });
   }
+  /** 更改收藏名 */
   handleChangeFavoriteName(row, name) {
     this.operateListChange(row, { name });
   }
+  /** 是否同时显示字段操作 */
   handleSwitchChange(row, value) {
     this.operateListChange(row, { is_enable_display_fields: value });
   }
@@ -345,30 +347,30 @@ export default class GroupDialog extends tsc<IProps> {
   async handleClickFieldsList(row, status: boolean) {
     if (status) {
       try {
-        this.searchSelectLoading = true;
         const res = await this.getSearchFieldsList(row.keyword);
         this.operateListChange(row, { search_fields_select_list: res.data });
       } catch (error) {
         console.warn(error);
-      } finally {
-        this.searchSelectLoading = false;
       }
     }
   }
   /** 修改可选范围 */
   handleChangeVisible(row, nVal: string) {
-    this.operateListChange(row, { visible_type: nVal, group_id: nVal !== "public" ? this.privateGroupID : this.unknownGroupID });
+    this.operateListChange(row, {
+      visible_type: nVal,
+      group_id: nVal !== "public" ? this.privateGroupID : this.unknownGroupID,
+    });
   }
   /** 单独修改组 */
   handleChangeGroup(row) {
     const visible_type = row.group_id === this.privateGroupID ? "private" : "public";
-    const group_name = this.groupList.find(item=> item.group_id === row.group_id)?.group_name;
+    const group_name = this.groupList.find((item) => item.group_id === row.group_id)?.group_name;
     this.operateListChange(row, { visible_type, group_name });
   }
   /** 用户操作 */
   operateListChange(row, operateObj = {}) {
     if (this.isCannotValueChange) return;
-    
+
     // 搜索展示用的列表和操作缓存的列表同时更新数据
     for (const listName of ["showTableList", "operateTableList"]) {
       const index = this[listName].findIndex((item) => item.id === row.id);
@@ -420,6 +422,7 @@ export default class GroupDialog extends tsc<IProps> {
       type: "warning",
       confirmFn: () => {
         this.deleteTableIDList.push(row.id);
+        // 删除收藏 把展示的表格, 操作表格, 提交表格, 以及基础表格统一删除
         for (const listName of [
           "showTableList",
           "operateTableList",
@@ -429,7 +432,8 @@ export default class GroupDialog extends tsc<IProps> {
           const index = this[listName].findIndex((item) => item.id === row.id);
           if (index >= 0) this[listName].splice(index, 1);
         }
-        const index = this.selectFavoriteList.findIndex(item => item === row.id);
+        // 当前选中选择删除
+        const index = this.selectFavoriteList.findIndex((item) => item === row.id);
         if (index >= 0) this.selectFavoriteList.splice(index, 1);
         this.showTableList = this.getShowTableListByPage(this.operateTableList);
         Object.assign(this.paginationConfig, {
@@ -438,7 +442,7 @@ export default class GroupDialog extends tsc<IProps> {
       },
     });
   }
-
+  /** 点击确定提交管理弹窗数据 */
   handleSubmitTableData() {
     this.tableLoading = true;
     Promise.all([this.batchDeleteFavorite(), this.batchUpdateFavorite()])
@@ -492,11 +496,11 @@ export default class GroupDialog extends tsc<IProps> {
     Object.assign(this.paginationConfig, { limit });
     this.showTableList = this.getShowTableListByPage(this.operateTableList);
   }
-
+  /** 所属组分组操作 */
   sourceFilterMethod(value, row, column) {
     const property = column.property;
     this.isCannotValueChange = true;
-    setTimeout(() => {
+    setTimeout(() => { // 因为操作组会导致数据更变 即不改变数据
       this.isCannotValueChange = false;
     }, 500);
     return row[property] === value;
@@ -576,7 +580,7 @@ export default class GroupDialog extends tsc<IProps> {
     const visibleSlot = {
       default: ({ row }) => [
         <Select
-        vModel={row.visible_type}
+          vModel={row.visible_type}
           on-change={(nVal) => this.handleChangeVisible(row, nVal)}
           clearable={false}
         >
@@ -629,7 +633,7 @@ export default class GroupDialog extends tsc<IProps> {
         confirm-fn={this.handleSubmitTableData}
         on-value-change={this.handleValueChange}
       >
-        <div class={`top-operate ${!this.selectCount && 'is-not-select'}`}>
+        <div class={`top-operate ${!this.selectCount && "is-not-select"}`}>
           <Popover
             tippy-options={this.tippyOption}
             placement="bottom-start"
@@ -668,39 +672,39 @@ export default class GroupDialog extends tsc<IProps> {
             on-right-icon-click={this.handleSearchFilter}
           ></Input>
         </div>
-        {this.selectCount ? <div class="table-top-operate">
-          <span>
-            {this.$t("当前已选择")}
-            <span class="operate-message">
-              {this.selectCount}
+        {this.selectCount ? (
+          <div class="table-top-operate">
+            <span>
+              {this.$t("当前已选择")}
+              <span class="operate-message">{this.selectCount}</span>
+              {this.$t("条数据")}
             </span>
-            {this.$t("条数据")}
-          </span>
-          <DropdownMenu trigger="click">
-            <div class="dropdown-trigger-text" slot="dropdown-trigger">
-              <span class="operate-click">
-                ，&nbsp;{this.$t("移至分组")}
-                <span class="bk-icon icon-down-shape"></span>
-              </span>
-            </div>
-            <div class="dropdown-list" slot="dropdown-content">
-              <ul class="search-li">
-                {this.unPrivateList.map((item) => (
-                  <li onClick={() => this.handleClickMoveGroup(item)}>
-                    {item.group_name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </DropdownMenu>
-        </div> : undefined}
+            <DropdownMenu trigger="click">
+              <div class="dropdown-trigger-text" slot="dropdown-trigger">
+                <span class="operate-click">
+                  ，&nbsp;{this.$t("移至分组")}
+                  <span class="bk-icon icon-down-shape"></span>
+                </span>
+              </div>
+              <div class="dropdown-list" slot="dropdown-content">
+                <ul class="search-li">
+                  {this.unPrivateList.map((item) => (
+                    <li onClick={() => this.handleClickMoveGroup(item)}>
+                      {item.group_name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </DropdownMenu>
+          </div>
+        ) : undefined}
         <Table
           data={this.showTableList}
           size="small"
           render-directive="if"
           header-border={true}
           border={true}
-          ext-cls={`${!this.selectCount && 'is-not-select'}`}
+          ext-cls={`${!this.selectCount && "is-not-select"}`}
           empty-text={this.$t("暂无数据")}
           v-bkloading={{ isLoading: this.tableLoading }}
         >
@@ -713,7 +717,7 @@ export default class GroupDialog extends tsc<IProps> {
 
           <TableColumn
             label={this.$t("收藏名")}
-            key={'column_name'}
+            key={"column_name"}
             width="200"
             prop={"name"}
             class-name="group-input"
@@ -725,7 +729,7 @@ export default class GroupDialog extends tsc<IProps> {
             <TableColumn
               label={this.$t("所属组")}
               width="112"
-              key={'column_group_name'}
+              key={"column_group_name"}
               prop={"group_name"}
               scopedSlots={groupSlot}
               label-class-name="group-title"
@@ -740,7 +744,7 @@ export default class GroupDialog extends tsc<IProps> {
             <TableColumn
               label={this.$t("可见范围")}
               width="112"
-              key={'column_visible_type'}
+              key={"column_visible_type"}
               prop={"visible_type"}
               scopedSlots={visibleSlot}
               label-class-name="group-title"
@@ -751,7 +755,7 @@ export default class GroupDialog extends tsc<IProps> {
           {this.checkFields("display_fields") ? (
             <TableColumn
               label={this.$t("表单模式显示字段")}
-              key={'column_search_fields'}
+              key={"column_search_fields"}
               prop={"search_fields"}
               scopedSlots={selectTagSlot}
               label-class-name="group-title"
@@ -761,17 +765,17 @@ export default class GroupDialog extends tsc<IProps> {
 
           {this.checkFields("updated_by") ? (
             <TableColumn
-             label={this.$t("变更人")} 
-             prop={"updated_by"}
-             key={'column_update_by'}
-             ></TableColumn>
+              label={this.$t("变更人")}
+              prop={"updated_by"}
+              key={"column_update_by"}
+            ></TableColumn>
           ) : undefined}
-          
+
           {this.checkFields("updated_at") ? (
-            <TableColumn 
-            label={this.$t("变更时间")} 
-            prop={"updated_at"}
-            key={'column_update_time'}
+            <TableColumn
+              label={this.$t("变更时间")}
+              prop={"updated_at"}
+              key={"column_update_time"}
             ></TableColumn>
           ) : undefined}
 
@@ -780,7 +784,7 @@ export default class GroupDialog extends tsc<IProps> {
             class-name="group-input"
             width="140"
             label-class-name="group-title"
-            key={'column_switch'}
+            key={"column_switch"}
             scopedSlots={switchSlot}
           ></TableColumn>
 
