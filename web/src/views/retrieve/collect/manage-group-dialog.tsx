@@ -158,16 +158,16 @@ export default class GroupDialog extends tsc<IProps> {
     return this.$store.state.spaceUid;
   }
 
-  get userMeta() {
+  get userMeta() { // 当前用户数据
     return this.$store.state.userMeta;
   }
 
-  get selectCount() {
+  get selectCount() { // 当前选择的数据的数量
     return this.selectFavoriteList.length;
   }
 
   @Watch("selectFavoriteList", { deep: true })
-  watchSelectListLength(list) {
+  watchSelectListLength(list) { // 监听选择数据的数量 改变全选的check状态
     if (!list.length) {
       this.checkValue = 0;
       return;
@@ -190,10 +190,10 @@ export default class GroupDialog extends tsc<IProps> {
   }
 
   async handleValueChange(value) {
-    if (value) {
+    if (value) { // 展开
       await this.getGroupList();
       this.getFavoriteList();
-    } else {
+    } else { // 关闭
       this.tableList = [];
       this.operateTableList = [];
       this.showTableList = [];
@@ -264,6 +264,7 @@ export default class GroupDialog extends tsc<IProps> {
       const initList = res.data.map((item) => {
         let group_option;
         let visible_option;
+        // 初始化表格, 判断当前的收藏是否是个人创建 若不是个人则不显示个人组
         if (item.created_by === this.userMeta.username) {
           group_option = this.groupList;
           visible_option = this.allOptionList;
@@ -271,6 +272,7 @@ export default class GroupDialog extends tsc<IProps> {
           group_option = this.unPrivateList;
           visible_option = this.unPrivateOptionList;
         }
+        // 初始化表单字段
         const search_fields_select_list = item.search_fields.map((item) => ({
           name: item,
         }));
@@ -375,11 +377,10 @@ export default class GroupDialog extends tsc<IProps> {
     for (const listName of ["showTableList", "operateTableList"]) {
       const index = this[listName].findIndex((item) => item.id === row.id);
       if (index >= 0) Object.assign(this[listName][index], row, operateObj);
-      if (listName === "operateTableList")
-        this.submitDataCompared(row, index, operateObj);
+      if (listName === "operateTableList") this.submitDataCompared(row, index, operateObj);
     }
   }
-
+  /** 提交数据对比 */
   submitDataCompared(row, operateIndex, operateObj) {
     const submitIndex = this.submitTableList.findIndex(
       (item) => item.id === row.id
@@ -408,7 +409,7 @@ export default class GroupDialog extends tsc<IProps> {
       }
     }
   }
-
+  /** 分页操作 */
   getShowTableListByPage(list) {
     const { current, limit } = this.paginationConfig;
     const sliceFirstIndex = (current - 1) * limit;
@@ -455,7 +456,8 @@ export default class GroupDialog extends tsc<IProps> {
       });
   }
 
-  async batchDeleteFavorite() {
+  async batchDeleteFavorite() { // 删除接口
+    // 若没有删除则不请求
     if (!this.deleteTableIDList.length) return;
     try {
       await $http.request("favorite/batchFavoriteDelete", {
@@ -466,7 +468,8 @@ export default class GroupDialog extends tsc<IProps> {
     } catch (error) {}
   }
 
-  async batchUpdateFavorite() {
+  async batchUpdateFavorite() { //更新收藏接口  
+    // 若没有更新收藏则不请求
     if (!this.submitTableList.length) return;
     const params = this.submitTableList.map((item) => ({
       id: item.id,
@@ -486,12 +489,12 @@ export default class GroupDialog extends tsc<IProps> {
       });
     } catch (error) {}
   }
-
+  /** 分页操作 */
   handlePageChange(current) {
     Object.assign(this.paginationConfig, { current });
     this.showTableList = this.getShowTableListByPage(this.operateTableList);
   }
-
+  /** 每页多少数据操作 */
   handlePageLimitChange(limit: number) {
     Object.assign(this.paginationConfig, { limit });
     this.showTableList = this.getShowTableListByPage(this.operateTableList);
