@@ -342,7 +342,7 @@ class CollectMetricCollector(object):
                 }
             ],
             "target": [],
-            "bk_biz_id": str(settings.BK_MONITOR_BK_BIZ_ID),
+            "bk_biz_id": str(settings.BLUEKING_BK_BIZ_ID),
         }
         # group by 2h是为了保证数据只有一个
 

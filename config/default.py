@@ -1002,12 +1002,6 @@ PROMETHEUS_METRICS_TOKEN = os.environ.get("PROMETHEUS_METRICS_TOKEN", "")
 SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
 # ==============================================================================
 
-# ==============================================================================
-# BK Monitor bk_biz_id
-BK_MONITOR_BK_BIZ_ID = os.environ.get("BK_MONITOR_BK_BIZ_ID", "")
-# ==============================================================================
-
-
 """
 以下为框架代码 请勿修改
 """
