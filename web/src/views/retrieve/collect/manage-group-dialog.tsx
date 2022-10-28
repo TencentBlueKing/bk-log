@@ -142,10 +142,10 @@ export default class GroupDialog extends tsc<IProps> {
 
   tableKey = random(10);
 
-  unPrivateOptionList = [{ name: this.$t("公开"), id: "public" }];
+  unPrivateOptionList = [{ name: window.mainComponent.$t("公开"), id: "public" }];
   allOptionList = [
-    { name: this.$t("公开"), id: "public" },
-    { name: this.$t("仅本人"), id: "private" },
+    { name: window.mainComponent.$t("公开"), id: "public" },
+    { name: window.mainComponent.$t("仅本人"), id: "private" },
   ];
 
   tableSetting = {
@@ -429,9 +429,7 @@ export default class GroupDialog extends tsc<IProps> {
           const index = this[listName].findIndex((item) => item.id === row.id);
           if (index >= 0) this[listName].splice(index, 1);
         }
-        const index = this.selectFavoriteList.findIndex(
-          (item) => item === row.id
-        );
+        const index = this.selectFavoriteList.findIndex(item => item === row.id);
         if (index >= 0) this.selectFavoriteList.splice(index, 1);
         this.showTableList = this.getShowTableListByPage(this.operateTableList);
         Object.assign(this.paginationConfig, {
@@ -723,39 +721,45 @@ export default class GroupDialog extends tsc<IProps> {
             scopedSlots={nameSlot}
           ></TableColumn>
 
-          <TableColumn
-            label={this.$t("所属组")}
-            width="112"
-            key={'column_group_name'}
-            prop={"group_name"}
-            scopedSlots={groupSlot}
-            label-class-name="group-title"
-            class-name="group-select"
-            filters={this.sourceFilters}
-            filter-multiple={false}
-            filter-method={this.sourceFilterMethod}
-          ></TableColumn>
+          {this.checkFields("group_name") ? (
+            <TableColumn
+              label={this.$t("所属组")}
+              width="112"
+              key={'column_group_name'}
+              prop={"group_name"}
+              scopedSlots={groupSlot}
+              label-class-name="group-title"
+              class-name="group-select"
+              filters={this.sourceFilters}
+              filter-multiple={false}
+              filter-method={this.sourceFilterMethod}
+            ></TableColumn>
+          ) : undefined}
 
-          <TableColumn
-            label={this.$t("可见范围")}
-            width="112"
-            key={'column_visible_type'}
-            prop={"visible_type"}
-            scopedSlots={visibleSlot}
-            label-class-name="group-title"
-            class-name="group-select"
-          ></TableColumn>
+          {this.checkFields("visible_type") ? (
+            <TableColumn
+              label={this.$t("可见范围")}
+              width="112"
+              key={'column_visible_type'}
+              prop={"visible_type"}
+              scopedSlots={visibleSlot}
+              label-class-name="group-title"
+              class-name="group-select"
+            ></TableColumn>
+          ) : undefined}
 
-          <TableColumn
-            label={this.$t("表单模式显示字段")}
-            key={'column_search_fields'}
-            prop={"search_fields"}
-            scopedSlots={selectTagSlot}
-            label-class-name="group-title"
-            class-name="group-select"
-          ></TableColumn>
+          {this.checkFields("display_fields") ? (
+            <TableColumn
+              label={this.$t("表单模式显示字段")}
+              key={'column_search_fields'}
+              prop={"search_fields"}
+              scopedSlots={selectTagSlot}
+              label-class-name="group-title"
+              class-name="group-select"
+            ></TableColumn>
+          ) : undefined}
 
-          {this.checkFields("update_by") ? (
+          {this.checkFields("updated_by") ? (
             <TableColumn
              label={this.$t("变更人")} 
              prop={"updated_by"}
@@ -763,7 +767,7 @@ export default class GroupDialog extends tsc<IProps> {
              ></TableColumn>
           ) : undefined}
           
-          {this.checkFields("update_time") ? (
+          {this.checkFields("updated_at") ? (
             <TableColumn 
             label={this.$t("变更时间")} 
             prop={"updated_at"}

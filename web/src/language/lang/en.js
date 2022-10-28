@@ -1540,4 +1540,6 @@ export default {
   数据检索: 'Data retrieval',
   当前收藏为: 'Current Favorites are',
   是否删除: 'Delete or not',
+  变更人: 'Updated by',
+  变更时间: 'Updated at',
 };
