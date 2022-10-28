@@ -29,14 +29,15 @@ import {
   Watch,
 } from "vue-property-decorator";
 import { Input } from "bk-magic-vue";
+import { IFavoriteItem } from '../collect-index';
 import "./manage-input.scss";
 
 interface IProps {
-  favoriteData?: object;
+  favoriteData?: IFavoriteItem;
 }
 @Component
 export default class ManageInput extends tsc<IProps> {
-  @Prop({ type: Object, default: () => ({}) }) favoriteData: object;
+  @Prop({ type: Object, default: () => ({}) }) favoriteData: IFavoriteItem;
   @Ref() inputRef: any;
 
   inputStr = "";
@@ -71,7 +72,12 @@ export default class ManageInput extends tsc<IProps> {
             onBlur={this.blurInput}
           ></Input>
         ) : (
-          <div class="collect-name">{this.inputStr}</div>
+          <div class="collect-name">
+            {this.inputStr}
+            {!this.favoriteData.is_active ? (
+              <span class="bk-icon log-icon icon-shixiao"></span>
+            ) : undefined}
+          </div>
         )}
       </div>
     );
