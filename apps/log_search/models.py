@@ -751,6 +751,7 @@ class Favorite(SoftDeleteModel):
         verbose_name = _("检索收藏")
         verbose_name_plural = _("34_搜索-检索收藏")
         ordering = ("-updated_at",)
+        unique_together = [("name", "space_uid")]
 
     @classmethod
     def get_user_favorite(
@@ -799,6 +800,7 @@ class FavoriteGroup(SoftDeleteModel):
         verbose_name = _("检索收藏组")
         verbose_name_plural = _("34_搜索-检索收藏组")
         ordering = ("-updated_at",)
+        unique_together = [("name", "space_uid", "created_by")]
 
     @classmethod
     def get_or_create_private_group(cls, space_uid: str, username: str) -> "FavoriteGroup":
