@@ -13,9 +13,5 @@ class Migration(migrations.Migration):
         migrations.AlterUniqueTogether(
             name="favorite",
             unique_together={("name", "space_uid")},
-        ),
-        migrations.AlterUniqueTogether(
-            name="favoritegroup",
-            unique_together={("name", "space_uid", "created_by")},
-        ),
+        )
     ]
