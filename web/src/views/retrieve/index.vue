@@ -105,7 +105,7 @@
             <span class="tab-title">{{ $t('数据检索') }}</span>
             <div class="tab-operation">
               <span
-                v-if="!!activeFavorite"
+                v-if="activeFavoriteID !== -1"
                 v-bk-tooltips.light="$t('表单Tips')"
                 :disabled="isCanUseUiType || !isSqlSearchType">
                 <div
