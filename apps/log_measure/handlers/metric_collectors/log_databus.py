@@ -33,7 +33,7 @@ from apps.api import NodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import SCENARIO_BKDATA
 from apps.log_databus.constants import DEFAULT_ETL_CONFIG, EtlConfig
-from apps.log_search.constants import CollectorScenarioEnum
+from apps.log_search.constants import CollectorScenarioEnum, TimeEnum
 from apps.log_search.models import LogIndexSet
 from apps.utils.db import array_group, array_chunk
 from apps.utils.thread import MultiExecuteFunc
@@ -48,7 +48,6 @@ from apps.log_measure.constants import (
     MAX_RETRY_QUERY_SUBSCRIPTION_TIMES,
     TIME_WAIT_QUERY_SUBSCRIPTION_EXCEPTION,
     MAX_QUERY_SUBSCRIPTION,
-    SECONDS_ONE_HOUR,
 )
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
@@ -315,7 +314,7 @@ class CollectMetricCollector(object):
             report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
             bk_username="admin",
         )
-        start_time = MetricUtils.get_instance().report_ts - SECONDS_ONE_HOUR
+        start_time = MetricUtils.get_instance().report_ts - TimeEnum.ONE_HOUR_SECOND.value
         end_time = MetricUtils.get_instance().report_ts
         params = {
             "down_sample_range": "5s",
@@ -332,7 +331,7 @@ class CollectMetricCollector(object):
                     "group_by": ["target"],
                     "display": True,
                     "where": [],
-                    "interval": SECONDS_ONE_HOUR,
+                    "interval": TimeEnum.ONE_HOUR_SECOND.value,
                     "interval_unit": "s",
                     "time_field": "time",
                     "filter_dict": {},
