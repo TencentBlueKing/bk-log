@@ -25,6 +25,7 @@ from django.test import TestCase
 from unittest.mock import patch
 
 from apps.log_search.constants import FavoriteGroupType, FavoriteVisibleType
+from apps.log_search.exceptions import FavoriteGroupNotAllowedDeleteException
 from apps.log_search.handlers.search.favorite_handlers import FavoriteGroupHandler, FavoriteHandler
 from apps.log_search.models import FavoriteGroup
 
@@ -281,10 +282,11 @@ class TestFavorite(TestCase):
     def _test_delete_group(self):
         """删除公共组，公共组的收藏会归类到未分组"""
         FavoriteGroupHandler(space_uid=SPACE_UID, group_id=self.public_group[USERNAME_1]).delete()
-        FavoriteGroupHandler(space_uid=SPACE_UID, group_id=self.public_group[USERNAME_2]).delete()
+        with self.assertRaises(FavoriteGroupNotAllowedDeleteException):
+            FavoriteGroupHandler(space_uid=SPACE_UID, group_id=self.public_group[USERNAME_2]).delete()
         # 只能看到一个个人组和一个未分组
         favorites_by_group = FavoriteHandler(space_uid=SPACE_UID).list_group_favorites()
-        self.assertEqual(len(favorites_by_group), 2)
+        self.assertEqual(len(favorites_by_group), 3)
 
         for i in favorites_by_group:
             favorites = i["favorites"]
