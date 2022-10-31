@@ -107,12 +107,12 @@
               <span
                 v-if="isShowUiType"
                 v-bk-tooltips.light="$t('表单Tips')"
-                :disabled="isCanUseUiType || !isSqlSearchType">
+                :disabled="isCanUseUiType || !isTableSearchType">
                 <div
                   class="search-type"
                   @click="handleClickSearchType">
                   <span class="bk-icon icon-sort"></span>
-                  <span>{{isSqlSearchType ? 'SQL' : $t('表单')}}</span>
+                  <span>{{isTableSearchType ? $t('表单') : 'SQL'}}</span>
                 </div>
               </span>
               <!-- <bk-popover
@@ -138,7 +138,7 @@
           </div>
           <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
             <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
-              <template v-if="isSqlSearchType">
+              <template v-if="isTableSearchType">
                 <!-- 选择索引集 -->
                 <div class="tab-item-title">{{ $t('索引集') }}</div>
                 <select-indexSet
@@ -158,7 +158,6 @@
                   :is-auto-query="isAutoQuery"
                   :retrieved-keyword="retrievedKeyword"
                   :dropdown-data="retrieveDropdownData"
-                  :history-records="statementSearchrecords"
                   @retrieve="retrieveLog" />
               </template>
               <template v-else>
@@ -522,7 +521,7 @@ export default {
       isShowAddNewCollectDialog: false, // 是否展示新增收藏弹窗
       collectWidth: 0, // 收藏默认栏宽度
       isShowCollect: false,
-      isSqlSearchType: true, // 是否是sql模式
+      isTableSearchType: true, // 是否是sql模式
       activeFavorite: {}, // 当前点击的收藏参数
       activeFavoriteID: -1,
       addFavoriteData: {}, // 新增收藏所需的参数
@@ -1615,7 +1614,7 @@ export default {
       const indexItem = this.indexSetList.find(item => item.index_set_id === String(this.indexId));
       const { modules, ips, target_node_type, target_nodes } =  this.retrieveParams.host_scopes;
       // eslint-disable-next-line camelcase
-      const host_scopes = { modules, ips, target_node_type, target_nodes };
+      const host_scopes = { modules, ips, target_node_type, target_nodes }; // 初始化host传参
       if (!modules) host_scopes.modules = [];
       if (!ips) host_scopes.ips = '';
       if (!host_scopes.target_node_type) {
@@ -1632,7 +1631,7 @@ export default {
         is_enable_display_fields: true,
         params: {
           host_scopes,
-          keyword: this.retrieveParams.keyword,
+          keyword: Boolean(this.retrieveParams.keyword) ? this.retrieveParams.keyword : '*',
           addition: this.retrieveParams.addition,
           search_fields: [],
         },
@@ -1687,8 +1686,8 @@ export default {
       localStorage.setItem('closeAutoQuery', !this.isAutoQuery);
     },
     handleClickSearchType() {
-      if (this.isSqlSearchType && !this.isCanUseUiType) return;
-      this.isSqlSearchType = !this.isSqlSearchType;
+      if (this.isTableSearchType && !this.isCanUseUiType) return;
+      this.isTableSearchType = !this.isTableSearchType;
     },
     updateKeyWords(keyword) {
       Object.assign(this.retrieveParams, { keyword });
@@ -1897,6 +1896,7 @@ export default {
                 margin-right: 10px;
                 color: #3a84ff;
                 transform: translateY(-1px);
+                text-align: right;
                 cursor: pointer;
               }
 

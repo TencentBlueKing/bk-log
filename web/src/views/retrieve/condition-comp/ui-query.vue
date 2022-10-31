@@ -76,7 +76,7 @@ export default {
       const keyword = this.activeFavorite.params.keyword;
       const params = this.searchFieldsList.map(item => ({
         name: item.name,
-        value: item.value,
+        value: Boolean(item.value) ? item.value : '*',
         pos: item.pos,
       }));
       try {

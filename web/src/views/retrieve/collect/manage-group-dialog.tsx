@@ -528,7 +528,7 @@ export default class GroupDialog extends tsc<IProps> {
       },
       props: {
         value: this.checkValue,
-        disabled: false,
+        disabled: !this.searchAfterList.length,
       },
       on: {
         change: this.handleSelectionChange,

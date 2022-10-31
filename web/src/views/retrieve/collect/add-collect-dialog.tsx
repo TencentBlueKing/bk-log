@@ -65,6 +65,7 @@ export default class CollectDialog extends tsc<IProps> {
     index_set_id: -1,
     name: "",
     group_id: 0,
+    created_by: '',
     params: {
       host_scopes: {
         modules: [],
@@ -97,9 +98,16 @@ export default class CollectDialog extends tsc<IProps> {
     return this.$store.state.spaceUid;
   }
 
-  get isCreateFavorite() {
-    // 新增还是编辑
+  get isCreateFavorite() { // 根据传参判断新增还是编辑
     return Boolean(Object.keys(this.addFavoriteData).length);
+  }
+
+  get userName() { // 当前用户数据
+    return this.$store.state.userMeta?.username;
+  }
+
+  get isCannotChangeVisible() {
+    return !this.isCreateFavorite && this.favoriteData.created_by !== this.userName;
   }
 
   handleSelectGroup(nVal) {
@@ -154,9 +162,7 @@ export default class CollectDialog extends tsc<IProps> {
       () => {
         if (!this.unknownGroupID) return;
         const isCreate = this.favoriteID === -1;
-        if (isCreate && !this.favoriteData.group_id) {
-          this.favoriteData.group_id = this.unknownGroupID;
-        }
+        if (!this.favoriteData.group_id) this.favoriteData.group_id = this.unknownGroupID;
         this.handleUpdateFavorite(this.favoriteData, isCreate);
       },
       () => {}
@@ -234,6 +240,7 @@ export default class CollectDialog extends tsc<IProps> {
         params: { id },
       });
       Object.assign(this.favoriteData, res.data);
+      console.log(res.data);
     } catch (error) {}
     finally {
       this.formLoading = false;
@@ -280,7 +287,8 @@ export default class CollectDialog extends tsc<IProps> {
               <Input
                 class="collect-name"
                 vModel={this.favoriteData.name}
-                maxlength={15}
+                placeholder={`${this.$t('最多输入')} 20 ${this.$t('个字符')}`}
+                maxlength={20}
               ></Input>
             </FormItem>
             <FormItem
@@ -293,7 +301,7 @@ export default class CollectDialog extends tsc<IProps> {
                 on-change={this.handleClickRadio}
               >
                 <Radio value={"public"}>{this.$t("公开")}</Radio>
-                <Radio value={"private"}>{this.$t("仅本人")}</Radio>
+                <Radio value={"private"} disabled={this.isCannotChangeVisible}>{this.$t("仅本人")}</Radio>
               </RadioGroup>
             </FormItem>
           </div>
