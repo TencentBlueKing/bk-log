@@ -29,6 +29,7 @@ from luqum.tree import Word
 from luqum.visitor import TreeTransformer
 from django.db.transaction import atomic
 
+from apps.utils.time_handler import timestamp_to_timeformat, datetime_to_timestamp
 from apps.log_esquery.constants import WILDCARD_PATTERN
 from apps.utils.local import get_request_username
 from apps.models import model_to_dict
@@ -76,6 +77,8 @@ class FavoriteHandler(object):
             result["index_set_name"] = INDEX_SET_NOT_EXISTED
 
         result["query_string"] = self._generate_query_string(self.data.params)
+        result["created_at"] = timestamp_to_timeformat(datetime_to_timestamp(result["created_at"]))
+        result["updated_at"] = timestamp_to_timeformat(datetime_to_timestamp(result["updated_at"]))
         return result
 
     def list_group_favorites(self, order_type: str = FavoriteListOrderType.NAME_ASC.value) -> list:
@@ -409,6 +412,10 @@ class FavoriteGroupHandler(object):
     @atomic
     def delete(self) -> None:
         """删除公开分组，并将组内收藏移到未分组"""
+        # 只有公开组的创建者才能删除
+        if self.data.created_by != self.username:
+            raise FavoriteGroupNotAllowedDeleteException()
+        # 只有公开组可以被删除
         if self.data.group_type != FavoriteGroupType.PUBLIC.value:
             raise FavoriteGroupNotAllowedDeleteException()
         # 将该组的收藏全部归到未分组
