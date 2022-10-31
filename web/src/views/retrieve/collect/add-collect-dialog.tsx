@@ -149,11 +149,11 @@ export default class CollectDialog extends tsc<IProps> {
     if (value === "private") {
       this.isDisableSelect = true;
       this.favoriteData.group_id = this.privateGroupID;
-      this.favoriteData.visible_type === "private";
+      this.favoriteData.visible_type = "private";
     } else {
       this.isDisableSelect = false;
       this.favoriteData.group_id = this.unknownGroupID;
-      this.favoriteData.visible_type === "public";
+      this.favoriteData.visible_type = "public";
     }
   }
 
@@ -240,7 +240,6 @@ export default class CollectDialog extends tsc<IProps> {
         params: { id },
       });
       Object.assign(this.favoriteData, res.data);
-      console.log(res.data);
     } catch (error) {}
     finally {
       this.formLoading = false;

@@ -132,6 +132,7 @@ export default class CollectIndex extends tsc<IProps> {
       this.collectList = [];
       this.filterCollectList = [];
       this.groupList = [];
+      this.searchVal = "";
     }
   }
 

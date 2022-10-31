@@ -152,7 +152,6 @@ export default class GroupDialog extends tsc<IProps> {
   tableSetting = {
     fields: settingFields,
     selectedFields: settingFields.slice(0, 5),
-    size: "small",
   };
 
   get spaceUid() {
@@ -804,7 +803,7 @@ export default class GroupDialog extends tsc<IProps> {
             <TableSettingContent
               key={`${this.tableKey}__settings`}
               fields={this.tableSetting.fields}
-              size={this.tableSetting.size}
+              size={''}
               selected={this.tableSetting.selectedFields}
               on-setting-change={this.handleSettingChange}
             ></TableSettingContent>
