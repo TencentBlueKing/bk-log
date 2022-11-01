@@ -4,8 +4,7 @@ import time
 from django.db import migrations
 
 from apps.log_search.constants import FavoriteVisibleType
-from apps.log_search.models import Favorite
-from apps.log_search.handlers.search.favorite_handlers import FavoriteHandler
+from apps.log_search.models import Favorite, FavoriteGroup
 
 
 def forwards_func(apps, schema_editor):
@@ -26,24 +25,29 @@ def forwards_func(apps, schema_editor):
             params = search_history.params
 
             if Favorite.objects.filter(name=name, space_uid=space_uid).exists():
-                random_suffix = str(time.time_ns())[-8:]
+                random_suffix = str(int(time.time()))
                 if len(name) >= 50:
                     name = name[:50]
                 name = f"{index_set_id}_{name}_{random_suffix}"
 
-            favorite_obj = FavoriteHandler(space_uid=space_uid).create_or_update(
+            params["search_fields"] = []
+            group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=space_uid).id
+            favorite_obj = Favorite.objects.create(
+                space_uid=space_uid,
+                index_set_id=index_set_id,
                 name=name,
-                host_scopes=params.get("host_scopes"),
-                addition=params.get("addition"),
-                keyword=params.get("keyword"),
+                group_id=group_id,
+                params=params,
                 visible_type=str(FavoriteVisibleType.PUBLIC.value),
-                search_fields=[],
                 is_enable_display_fields=False,
                 display_fields=[],
-                index_set_id=index_set_id,
             )
-            if favorite_obj["name"] == name:
+            favorite_obj.created_by = old_favorite_obj.created_by
+            favorite_obj.updated_by = old_favorite_obj.updated_by
+            favorite_obj.save()
+            if favorite_obj.name == name:
                 success_migrate_cnt += 1
+
         except Exception as e:
             print(f"Migrate old favorite failed, err: {e}")
             failed_migrate_cnt += 1
@@ -54,7 +58,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("log_search", "0052_auto_20221017_0232"),
+        ("log_search", "0056_alter_favoritegroup_unique_together"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]

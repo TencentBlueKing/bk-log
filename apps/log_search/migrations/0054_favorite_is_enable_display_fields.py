@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("log_search", "0053_migrate_old_favorite"),
+        ("log_search", "0052_auto_20221017_0232"),
     ]
 
     operations = [

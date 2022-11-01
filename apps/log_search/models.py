@@ -784,6 +784,8 @@ class Favorite(SoftDeleteModel):
             else:
                 fi_dict["is_active"] = False
                 fi_dict["index_set_name"] = INDEX_SET_NOT_EXISTED
+            fi_dict["created_at"] = timestamp_to_timeformat(datetime_to_timestamp(fi_dict["created_at"]))
+            fi_dict["updated_at"] = timestamp_to_timeformat(datetime_to_timestamp(fi_dict["updated_at"]))
             favorites.append(fi_dict)
 
         return favorites
