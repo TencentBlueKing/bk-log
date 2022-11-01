@@ -25,10 +25,10 @@ from typing import Optional, Union
 
 from luqum.auto_head_tail import auto_head_tail
 from luqum.parser import parser, lexer
-from luqum.tree import Word
 from luqum.visitor import TreeTransformer
 from django.db.transaction import atomic
 
+from apps.utils.time_handler import timestamp_to_timeformat, datetime_to_timestamp
 from apps.log_esquery.constants import WILDCARD_PATTERN
 from apps.utils.local import get_request_username
 from apps.models import model_to_dict
@@ -48,6 +48,7 @@ from apps.log_search.exceptions import (
     FavoriteNotExistException,
     FavoriteVisibleTypeNotAllowedModifyException,
     FavoriteAlreadyExistException,
+    FavoriteNotAllowedDeleteException,
 )
 from apps.log_search.models import Favorite, FavoriteGroup, FavoriteGroupCustomOrder, LogIndexSet
 
@@ -76,6 +77,8 @@ class FavoriteHandler(object):
             result["index_set_name"] = INDEX_SET_NOT_EXISTED
 
         result["query_string"] = self._generate_query_string(self.data.params)
+        result["created_at"] = timestamp_to_timeformat(datetime_to_timestamp(result["created_at"]))
+        result["updated_at"] = timestamp_to_timeformat(datetime_to_timestamp(result["updated_at"]))
         return result
 
     def list_group_favorites(self, order_type: str = FavoriteListOrderType.NAME_ASC.value) -> list:
@@ -212,6 +215,9 @@ class FavoriteHandler(object):
             )
 
     def delete(self):
+        # 只有收藏的创建者才可以删除
+        if self.data.created_by != self.username:
+            raise FavoriteNotAllowedDeleteException()
         self.data.delete()
 
     @staticmethod
@@ -409,6 +415,10 @@ class FavoriteGroupHandler(object):
     @atomic
     def delete(self) -> None:
         """删除公开分组，并将组内收藏移到未分组"""
+        # 只有公开组的创建者才能删除
+        if self.data.created_by != self.username:
+            raise FavoriteGroupNotAllowedDeleteException()
+        # 只有公开组可以被删除
         if self.data.group_type != FavoriteGroupType.PUBLIC.value:
             raise FavoriteGroupNotAllowedDeleteException()
         # 将该组的收藏全部归到未分组
@@ -562,12 +572,8 @@ class RangeNodeExpr(LuceneNodeExpr):
 
     def update_expr(self, context: dict):
         self.parse_expr()
-        value = context["value"]
-        new_node = self.node.clone_item()
-        low = value.split(",")[0]
-        high = value.split(",")[1]
-        new_node.expr = self.node.expr.clone_item(low=Word(low), high=Word(high))
-        return new_node
+        keyword = "{}: {} ".format(self.field["name"], context["value"])
+        return parser.parse(keyword, lexer=lexer)
 
 
 class FuzzyNodeExpr(LuceneNodeExpr):

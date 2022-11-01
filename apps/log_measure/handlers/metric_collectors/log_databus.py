@@ -33,7 +33,7 @@ from apps.api import NodeApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import SCENARIO_BKDATA
 from apps.log_databus.constants import DEFAULT_ETL_CONFIG, EtlConfig
-from apps.log_search.constants import CollectorScenarioEnum
+from apps.log_search.constants import CollectorScenarioEnum, TimeEnum
 from apps.log_search.models import LogIndexSet
 from apps.utils.db import array_group, array_chunk
 from apps.utils.thread import MultiExecuteFunc
@@ -273,49 +273,40 @@ class CollectMetricCollector(object):
     @register_metric("business_host", description=_("业务主机"), data_name="metric", time_filter=TimeFilterEnum.MINUTE60)
     def business_unique_host():
         metrics = []
-        biz_host = defaultdict(int)
-        biz_active_host = defaultdict(int)
+        total_host = 0
+        active_host = 0
         # 监控没办法执行select from (select from), 只能查两次
         received_result = CollectMetricCollector()._get_unique_host_crawler(FIELD_CRAWLER_RECEIVED)
         state_result = CollectMetricCollector()._get_unique_host_crawler(FIELD_CRAWLER_STATE)
-        for bk_biz_id in received_result:
-            for target in received_result[bk_biz_id]:
-                biz_host[bk_biz_id] += 1
-                if received_result[bk_biz_id][target] - state_result[bk_biz_id][target] > 0:
-                    biz_active_host[bk_biz_id] += 1
-
-        for bk_biz_id in biz_host:
-            host_count = biz_host[bk_biz_id]
-            active_host_count = biz_active_host[bk_biz_id]
-            metrics.append(
-                Metric(
-                    metric_name="count",
-                    metric_value=active_host_count,
-                    dimensions={
-                        "is_active": True,
-                        "target_biz_id": bk_biz_id,
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
-                    },
-                    timestamp=MetricUtils.get_instance().report_ts,
-                )
+        for target in received_result:
+            total_host += 1
+            if received_result[target] - state_result[target] > 0:
+                active_host += 1
+        metrics.append(
+            Metric(
+                metric_name="count",
+                metric_value=active_host,
+                dimensions={
+                    "is_active": True,
+                },
+                timestamp=MetricUtils.get_instance().report_ts,
             )
-            metrics.append(
-                Metric(
-                    metric_name="count",
-                    metric_value=host_count - active_host_count,
-                    dimensions={
-                        "is_active": False,
-                        "target_biz_id": bk_biz_id,
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
-                    },
-                    timestamp=MetricUtils.get_instance().report_ts,
-                )
+        )
+        metrics.append(
+            Metric(
+                metric_name="count",
+                metric_value=total_host - active_host,
+                dimensions={
+                    "is_active": False,
+                },
+                timestamp=MetricUtils.get_instance().report_ts,
             )
+        )
         return metrics
 
     @staticmethod
     def _get_unique_host_crawler(field: str):
-        aggregation_datas = defaultdict(lambda: defaultdict(int))
+        aggregation_datas = defaultdict(int)
         bk_monitor_client = Client(
             bk_app_code=settings.APP_CODE,
             bk_app_secret=settings.SECRET_KEY,
@@ -323,24 +314,47 @@ class CollectMetricCollector(object):
             report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
             bk_username="admin",
         )
-        # group by 2h是为了保证数据只有一个
+        start_time = MetricUtils.get_instance().report_ts - TimeEnum.ONE_HOUR_SECOND.value
+        end_time = MetricUtils.get_instance().report_ts
         params = {
-            "sql": f"select sum({field}) as {field} from {TABLE_BKUNIFYBEAT_TASK} where time >= '1h' \
-            group by time(2h), bk_biz_id, target"
+            "down_sample_range": "5s",
+            "start_time": start_time,
+            "end_time": end_time,
+            "expression": "a",
+            "display": True,
+            "query_configs": [
+                {
+                    "data_source_label": "custom",
+                    "data_type_label": "time_series",
+                    "metrics": [{"field": field, "method": "SUM", "alias": "a"}],
+                    "table": TABLE_BKUNIFYBEAT_TASK,
+                    "group_by": ["target"],
+                    "display": True,
+                    "where": [],
+                    "interval": TimeEnum.ONE_HOUR_SECOND.value,
+                    "interval_unit": "s",
+                    "time_field": "time",
+                    "filter_dict": {},
+                    "functions": [],
+                }
+            ],
+            "target": [],
+            "bk_biz_id": str(settings.BLUEKING_BK_BIZ_ID),
         }
         try:
-            result = bk_monitor_client.get_ts_data(data=params)
-            for ts_data in result["list"]:
-                row_count = ts_data[field]
-                # row_count可能为None
-                if not row_count:
+            result = bk_monitor_client.unify_query(data=params)
+            for ts_data in result["series"]:
+                target = ts_data["dimensions"]["target"]
+                try:
+                    row_count = ts_data["datapoints"][0][0]
+                    if not row_count:
+                        row_count = 0
+                except Exception:  # pylint: disable=broad-except
                     row_count = 0
-                bk_biz_id = int(ts_data["bk_biz_id"])
-                target = ts_data["target"]
-                aggregation_datas[bk_biz_id][target] = row_count
+                aggregation_datas[target] = row_count
 
         except Exception as e:  # pylint: disable=broad-except
-            logger.error("failed to execute sql {}, err: {}".format(params["sql"], e))
+            logger.error("failed to unify_query, params: {}, err: {}".format(params, e))
         return aggregation_datas
 
 

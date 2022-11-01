@@ -96,3 +96,7 @@ class Client(object):
     def get_ts_data(self, data):
         path = "get_ts_data/"
         return self._call_esb_api(http_post, path, data)
+
+    def unify_query(self, data):
+        path = "time_series/unify_query/"
+        return self._call_esb_api(http_post, path, data)

@@ -155,14 +155,14 @@
   dest_http_method: POST
   is_hidden: True
 
-- path: /v2/bk_log/update_index_set/
+- path: /v2/bk_log/update_index_set/{index_set_id}/
   name: update_index_set
   label: 日志平台-更新索引集
   label_en: bk_log update index-set
   method: PUT
   api_type: query
   comp_codename: generic.v2.bk_log.bk_log_component
-  dest_path: /api/v1/index_set/
+  dest_path: /api/v1/index_set/{index_set_id}/
   dest_http_method: PUT
   is_hidden: True
 
