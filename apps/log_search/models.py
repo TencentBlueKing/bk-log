@@ -737,7 +737,7 @@ class FavoriteSearch(SoftDeleteModel):
     description = models.CharField(_("收藏描述"), max_length=255)
 
 
-class Favorite(SoftDeleteModel):
+class Favorite(OperateRecordModel):
     space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
     index_set_id = models.IntegerField(_("索引集ID"))
     name = models.CharField(_("收藏名称"), max_length=64)
@@ -784,14 +784,14 @@ class Favorite(SoftDeleteModel):
             else:
                 fi_dict["is_active"] = False
                 fi_dict["index_set_name"] = INDEX_SET_NOT_EXISTED
-            fi_dict["created_at"] = timestamp_to_timeformat(datetime_to_timestamp(fi_dict["created_at"]))
-            fi_dict["updated_at"] = timestamp_to_timeformat(datetime_to_timestamp(fi_dict["updated_at"]))
+            fi_dict["created_at"] = fi_dict["created_at"]
+            fi_dict["updated_at"] = fi_dict["updated_at"]
             favorites.append(fi_dict)
 
         return favorites
 
 
-class FavoriteGroup(SoftDeleteModel):
+class FavoriteGroup(OperateRecordModel):
     """收藏组"""
 
     name = models.CharField(_("收藏组名称"), max_length=64)
