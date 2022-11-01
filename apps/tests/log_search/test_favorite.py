@@ -142,7 +142,7 @@ UPDATE_QUERY_PARAMS = [
     {
         "pos": 58,
         "name": "gseIndex",
-        "value": "100,200",
+        "value": "[100 TO 200]",
     },
 ]
 EXPECT_NEW_QUERY = """number: >=10000  OR title: "hello"  AND text: hello  OR gseIndex: [100 TO 200]  \

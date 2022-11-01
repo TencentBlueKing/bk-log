@@ -25,7 +25,6 @@ from typing import Optional, Union
 
 from luqum.auto_head_tail import auto_head_tail
 from luqum.parser import parser, lexer
-from luqum.tree import Word
 from luqum.visitor import TreeTransformer
 from django.db.transaction import atomic
 
@@ -573,12 +572,8 @@ class RangeNodeExpr(LuceneNodeExpr):
 
     def update_expr(self, context: dict):
         self.parse_expr()
-        value = context["value"]
-        new_node = self.node.clone_item()
-        low = value.split(",")[0]
-        high = value.split(",")[1]
-        new_node.expr = self.node.expr.clone_item(low=Word(low), high=Word(high))
-        return new_node
+        keyword = "{}: {} ".format(self.field["name"], context["value"])
+        return parser.parse(keyword, lexer=lexer)
 
 
 class FuzzyNodeExpr(LuceneNodeExpr):
