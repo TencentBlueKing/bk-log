@@ -302,6 +302,8 @@ class FavoriteHandler(object):
                     fields.extend(self._parse_node_expr(child))
                 else:
                     fields.append(self._parse_node_expr(child))
+        # 去除相同field
+        fields = sorted(fields, key=lambda i: i["pos"])
         # 以下逻辑为同名字段增加额外标识符
         field_names = Counter([field["name"] for field in fields])
         if not field_names:
@@ -360,6 +362,22 @@ class FavoriteHandler(object):
             return FuzzyNodeExpr(node=node).parse_expr()
         if expr_type == "Regex":
             return RegexNodeExpr(node=node).parse_expr()
+        if expr_type == "OrOperation" or expr_type == "AndOperation":
+            fields = []
+            for operand in node.expr.operands:
+                if isinstance(self._parse_node_expr(operand), list):
+                    fields.extend(self._parse_node_expr(operand))
+                else:
+                    fields.append(self._parse_node_expr(operand))
+            return fields
+        if expr_type == "FieldGroup":
+            fields = []
+            for operand in node.expr.expr.operands:
+                if isinstance(self._parse_node_expr(operand), list):
+                    fields.extend(self._parse_node_expr(operand))
+                else:
+                    fields.append(self._parse_node_expr(operand))
+            return fields
         raise Exception("Unsupported expr type: {}".format(expr_type))
 
 

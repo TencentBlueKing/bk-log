@@ -25,7 +25,6 @@ from django.test import TestCase
 from unittest.mock import patch
 
 from apps.log_search.constants import FavoriteGroupType, FavoriteVisibleType
-from apps.log_search.exceptions import FavoriteGroupNotAllowedDeleteException
 from apps.log_search.handlers.search.favorite_handlers import FavoriteGroupHandler, FavoriteHandler
 from apps.log_search.models import FavoriteGroup
 
@@ -43,7 +42,7 @@ FAVORITE_NAME_4 = "test_favorite_4"
 FAVORITE_NAME_5 = "test_favorite_5"
 
 KEYWORD = """number: >=83063 OR title: "The Right Way" AND text: go OR gseIndex: [ 200 TO 600 ] \
-AND log: blue~ AND time: /[L-N].*z*l{2}a/ """
+AND log: blue~ AND time: /[L-N].*z*l{2}a/ AND a: b AND c: d OR (a: (b OR c AND d) OR x: y ) """
 
 HOST_SCOPES = {"modules": [], "ips": "", "target_nodes": [], "target_node_type": ""}
 ADDITION = [{"field": "cloudId", "operator": "is", "value": "0"}]
@@ -112,41 +111,65 @@ KEYWORD_FIELDS = [
     {"pos": 58, "name": "gseIndex", "type": "Range", "operator": "[]", "value": "[ 200 TO 600 ]"},
     {"pos": 87, "name": "log", "type": "Fuzzy", "operator": "~=", "value": "blue~"},
     {"pos": 102, "name": "time", "type": "Regex", "operator": "~=", "value": "/[L-N].*z*l{2}a/"},
+    {"pos": 129, "name": "a", "operator": "~=", "type": "Word", "value": "b"},
+    {"pos": 138, "name": "c", "operator": "~=", "type": "Word", "value": "d"},
+    {"pos": 151, "name": "全文检索(1)", "operator": "~=", "type": "全文检索", "value": "b"},
+    {"pos": 156, "name": "全文检索(2)", "operator": "~=", "type": "全文检索", "value": "c"},
+    {"pos": 162, "name": "全文检索(3)", "operator": "~=", "type": "全文检索", "value": "d"},
+    {"pos": 168, "name": "x", "operator": "~=", "type": "Word", "value": "y"},
 ]
 UPDATE_QUERY_PARAMS = [
     {
         "pos": 0,
-        "name": "number",
         "value": "10000",
     },
     {
         "pos": 19,
-        "name": "title",
         "value": '"hello"',
     },
     {
         "pos": 46,
-        "name": "text",
         "value": "hello",
     },
     {
+        "pos": 58,
+        "value": "[100 TO 200]",
+    },
+    {
         "pos": 87,
-        "name": "log",
         "value": "bk~",
     },
     {
         "pos": 102,
-        "name": "time",
         "value": "/[L-N]/",
     },
     {
-        "pos": 58,
-        "name": "gseIndex",
-        "value": "[100 TO 200]",
+        "pos": 129,
+        "value": "bb",
+    },
+    {
+        "pos": 138,
+        "value": "dd",
+    },
+    {
+        "pos": 151,
+        "value": "bb",
+    },
+    {
+        "pos": 156,
+        "value": "cc",
+    },
+    {
+        "pos": 162,
+        "value": "dd",
+    },
+    {
+        "pos": 168,
+        "value": "yy",
     },
 ]
 EXPECT_NEW_QUERY = """number: >=10000  OR title: "hello"  AND text: hello  OR gseIndex: [100 TO 200]  \
-AND log: bk~0.5  AND time: /[L-N]/ """
+AND log: bk~0.5  AND time: /[L-N]/  AND a: bb  AND c: dd  OR (a: (bb OR cc AND dd)  OR x: yy ) """
 
 FULL_TEXT_SEARCH_KEYWORD = "number AND keyword"
 FULL_TEXT_SEARCH_FIELDS = [
@@ -282,11 +305,10 @@ class TestFavorite(TestCase):
     def _test_delete_group(self):
         """删除公共组，公共组的收藏会归类到未分组"""
         FavoriteGroupHandler(space_uid=SPACE_UID, group_id=self.public_group[USERNAME_1]).delete()
-        with self.assertRaises(FavoriteGroupNotAllowedDeleteException):
-            FavoriteGroupHandler(space_uid=SPACE_UID, group_id=self.public_group[USERNAME_2]).delete()
+        FavoriteGroupHandler(space_uid=SPACE_UID, group_id=self.public_group[USERNAME_2]).delete()
         # 只能看到一个个人组和一个未分组
         favorites_by_group = FavoriteHandler(space_uid=SPACE_UID).list_group_favorites()
-        self.assertEqual(len(favorites_by_group), 3)
+        self.assertEqual(len(favorites_by_group), 2)
 
         for i in favorites_by_group:
             favorites = i["favorites"]
@@ -307,8 +329,12 @@ class TestLucene(TestCase):
 
     def test_get_search_fields(self):
         """测试获取Lucene Query字段"""
-        self.assertEqual(FavoriteHandler().get_search_fields(keyword=KEYWORD), KEYWORD_FIELDS)
-        self.assertEqual(FavoriteHandler().get_search_fields(keyword=FULL_TEXT_SEARCH_KEYWORD), FULL_TEXT_SEARCH_FIELDS)
+        search_fields_result = FavoriteHandler().get_search_fields(keyword=KEYWORD)
+        for i in range(len(KEYWORD_FIELDS)):
+            self.assertDictEqual(search_fields_result[i], KEYWORD_FIELDS[i])
+        full_text_search_fields_result = FavoriteHandler().get_search_fields(keyword=FULL_TEXT_SEARCH_KEYWORD)
+        for i in range(len(FULL_TEXT_SEARCH_FIELDS)):
+            self.assertDictEqual(full_text_search_fields_result[i], FULL_TEXT_SEARCH_FIELDS[i])
 
     def test_update_query(self):
         """测试更新Lucene Query"""
