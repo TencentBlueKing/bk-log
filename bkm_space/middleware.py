@@ -29,7 +29,7 @@ class ParamInjectMiddleware(MiddlewareMixin):
             try:
                 body = json.loads(request.body)
                 request._body = json.dumps(inject_space_field(body)).encode("utf-8")
-            except Exception:
+            except TypeError:
                 pass
 
     def process_response(self, request, response):
@@ -40,6 +40,6 @@ class ParamInjectMiddleware(MiddlewareMixin):
             try:
                 content = json.loads(request.content)
                 request.content = json.dumps(inject_space_field(content)).encode("utf-8")
-            except Exception:
+            except TypeError:
                 pass
         return response
