@@ -393,7 +393,7 @@ class FavoriteGroupHandler(object):
         group_type = FavoriteGroupType.PUBLIC.value
         # 检查name是否可用
         if self.data and self.data != name or not self.data:
-            if FavoriteGroup.objects.filter(name=name, group_type=group_type, space_uid=space_uid).exists():
+            if FavoriteGroup.objects.filter(name=name, space_uid=space_uid).exists():
                 raise FavoriteGroupAlreadyExistException()
 
         # 修改
@@ -414,9 +414,6 @@ class FavoriteGroupHandler(object):
     @atomic
     def delete(self) -> None:
         """删除公开分组，并将组内收藏移到未分组"""
-        # 只有公开组的创建者才能删除
-        if self.data.created_by != self.username:
-            raise FavoriteGroupNotAllowedDeleteException()
         # 只有公开组可以被删除
         if self.data.group_type != FavoriteGroupType.PUBLIC.value:
             raise FavoriteGroupNotAllowedDeleteException()
