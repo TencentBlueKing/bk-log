@@ -28,7 +28,6 @@ from luqum.parser import parser, lexer
 from luqum.visitor import TreeTransformer
 from django.db.transaction import atomic
 
-from apps.utils.time_handler import timestamp_to_timeformat, datetime_to_timestamp
 from apps.log_esquery.constants import WILDCARD_PATTERN
 from apps.utils.local import get_request_username
 from apps.models import model_to_dict
@@ -77,8 +76,8 @@ class FavoriteHandler(object):
             result["index_set_name"] = INDEX_SET_NOT_EXISTED
 
         result["query_string"] = self._generate_query_string(self.data.params)
-        result["created_at"] = timestamp_to_timeformat(datetime_to_timestamp(result["created_at"]))
-        result["updated_at"] = timestamp_to_timeformat(datetime_to_timestamp(result["updated_at"]))
+        result["created_at"] = result["created_at"]
+        result["updated_at"] = result["updated_at"]
         return result
 
     def list_group_favorites(self, order_type: str = FavoriteListOrderType.NAME_ASC.value) -> list:
