@@ -1631,7 +1631,7 @@ export default {
         is_enable_display_fields: true,
         params: {
           host_scopes,
-          keyword: Boolean(this.retrieveParams.keyword) ? this.retrieveParams.keyword : '*',
+          keyword: this.retrieveParams.keyword,
           addition: this.retrieveParams.addition,
           search_fields: [],
         },

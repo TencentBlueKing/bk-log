@@ -74,11 +74,12 @@ export default {
     },
     async handleChangeValue() {
       const keyword = this.activeFavorite.params.keyword;
-      const params = this.searchFieldsList.map(item => ({
-        name: item.name,
-        value: Boolean(item.value) ? item.value : '*',
-        pos: item.pos,
-      }));
+      const params = this.searchFieldsList
+        .filter(item => Boolean(item.value))
+        .map(item => ({
+          value: item.value,
+          pos: item.pos,
+        }));
       try {
         const res = await this.$http.request('favorite/getGenerateQuery', {
           data: {
