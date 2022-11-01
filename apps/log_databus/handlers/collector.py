@@ -3373,6 +3373,9 @@ class CollectorHandler(object):
                     for ns in ns_list:
                         namespaces.add(ns)
                 return [{"id": n, "name": n} for n in namespaces]
+            elif space.space_type_id == SpaceTypeEnum.BKCI.value and space.space_code:
+                project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
+                return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_code, [])]
             else:
                 return []
 
