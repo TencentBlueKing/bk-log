@@ -702,4 +702,3 @@ export const deepClone = (obj, hash = new WeakMap()) => {
   }
   return Object.assign(result, ...Object.keys(obj).map(key => ({ [key]: deepClone(obj[key], hash) })));
 };
-

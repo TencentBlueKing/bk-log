@@ -130,9 +130,9 @@ export default class CollectGroup extends tsc<ICollectProps> {
               <div class="group-item-left">
                 <div>
                   <p>
-                    <span>{item.name}</span>
+                    <span class={{ 'active-name': item.id === this.activeFavoriteID }} >{item.name}</span>
                     {!item.is_active ? (
-                      <span class="bk-icon icon-play-shape"></span>
+                      <span class="bk-icon log-icon icon-shixiao"></span>
                     ) : undefined}
                   </p>
                   <p class="creator">{item.created_by || "--"}</p>

@@ -22,7 +22,7 @@
 
   .group-title {
     height: 24px;
-    background: #f0f1f5;
+    background: #EFF1F5;
     padding: 0 16px;
     margin-bottom: 8px;
 
@@ -61,7 +61,7 @@
       border-bottom: none;
 
       &:hover {
-        background: #f0f1f5;
+        background: #F0F1F5;
       }
 
       .more-box {
@@ -87,9 +87,21 @@
         .creator {
           color: #979ba5;
         }
+
+        .active-name {
+          color: #3A84FF;
+        }
+
+        .icon-shixiao {
+          font-size: 12px;
+          margin-left: 4px;
+          color: #FF9C01;
+        }
       }
 
       &.active {
+        position: relative;
+        z-index: 999;
         background: #edf4ff;
         border-color: #3a84ff;
         border-bottom: 1px solid #3a84ff;

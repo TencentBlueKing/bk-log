@@ -47,7 +47,7 @@
         <div
           :class="['result-icon-box',{ 'light-icon': !showRetrieveCondition }]"
           @click="handleClickResultIcon('search')">
-          <span class="log-icon icon-shoudongchaxun"></span>
+          <span class="bk-icon log-icon icon-jiansuo"></span>
         </div>
       </div>
       <biz-menu-select v-if="!isAsIframe" theme="light"></biz-menu-select>
@@ -367,6 +367,12 @@ export default {
           &.light-icon {
             background: #f1f2f6;
             color: #979ba5;
+          }
+
+          .icon-jiansuo {
+            display: inline-block;
+            transform: translateY(2px);
+            font-size: 18px;
           }
         }
       }

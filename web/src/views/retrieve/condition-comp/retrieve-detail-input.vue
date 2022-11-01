@@ -168,11 +168,7 @@ export default {
              && (this.showFields
               || this.showValue
               || this.showColon
-              || this.showContinue
-              || this.showSearchRecord);
-    },
-    showSearchRecord() {
-      return this.historyRecords.length;
+              || this.showContinue);
     },
   },
   watch: {

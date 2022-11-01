@@ -1542,4 +1542,6 @@ export default {
   是否删除: 'Delete or not',
   变更人: 'Updated by',
   变更时间: 'Updated at',
+  最多输入: 'Enter up to ',
+  个字符: ' size',
 };

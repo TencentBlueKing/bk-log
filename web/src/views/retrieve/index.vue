@@ -105,14 +105,14 @@
             <span class="tab-title">{{ $t('数据检索') }}</span>
             <div class="tab-operation">
               <span
-                v-if="activeFavoriteID !== -1"
+                v-if="isShowUiType"
                 v-bk-tooltips.light="$t('表单Tips')"
-                :disabled="isCanUseUiType || !isSqlSearchType">
+                :disabled="isCanUseUiType || !isTableSearchType">
                 <div
                   class="search-type"
                   @click="handleClickSearchType">
                   <span class="bk-icon icon-sort"></span>
-                  <span>{{isSqlSearchType ? 'SQL' : $t('表单')}}</span>
+                  <span>{{isTableSearchType ? $t('表单') : 'SQL'}}</span>
                 </div>
               </span>
               <!-- <bk-popover
@@ -138,7 +138,7 @@
           </div>
           <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
             <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
-              <template v-if="isSqlSearchType">
+              <template v-if="isTableSearchType">
                 <!-- 选择索引集 -->
                 <div class="tab-item-title">{{ $t('索引集') }}</div>
                 <select-indexSet
@@ -158,7 +158,6 @@
                   :is-auto-query="isAutoQuery"
                   :retrieved-keyword="retrievedKeyword"
                   :dropdown-data="retrieveDropdownData"
-                  :history-records="statementSearchrecords"
                   @retrieve="retrieveLog" />
               </template>
               <template v-else>
@@ -216,7 +215,6 @@
                   :icon="getSearchType.icon"
                   @click="handleChangeSearchType">
                 </bk-button>
-                <!-- isAutoQuery -->
                 <bk-button
                   v-cursor="{ active: isSearchAllowed === false }"
                   theme="primary"
@@ -523,7 +521,7 @@ export default {
       isShowAddNewCollectDialog: false, // 是否展示新增收藏弹窗
       collectWidth: 0, // 收藏默认栏宽度
       isShowCollect: false,
-      isSqlSearchType: true, // 是否是sql模式
+      isTableSearchType: true, // 是否是sql模式
       activeFavorite: {}, // 当前点击的收藏参数
       activeFavoriteID: -1,
       addFavoriteData: {}, // 新增收藏所需的参数
@@ -531,7 +529,7 @@ export default {
       replaceFavoriteData: {}, // 收藏判断不同后的替换参数
       searchMap: { // 检索按钮
         search: { // 查询
-          icon: 'bk-icon icon-play-shape',
+          icon: 'bk-icon log-icon icon-bofang',
           text: this.$t('查询'),
         },
         searchIng: { // 查询中
@@ -539,7 +537,7 @@ export default {
           text: `${this.$t('查询中')}...`,
         },
         autoSearch: { // 自动查询
-          icon: 'bk-icon icon-pause',
+          icon: 'bk-icon log-icon icon-zanting',
           text: this.$t('自动查询'),
         },
       },
@@ -574,15 +572,18 @@ export default {
     showAuthInfo() { // 无业务权限则展示store里的 然后判断是否有索引集权限
       return this.authMainPageInfo || this.authPageInfo;
     },
-    sumLeftWidth() {
+    sumLeftWidth() { // 收藏和检索左边的页面的合计宽度
       return this.collectWidth + this.leftPanelWidth;
     },
-    getSearchType() {
+    getSearchType() { // 获取搜索按钮状态
       if (this.tableLoading) return this.searchMap.searchIng;
       return this.searchMap[this.isAutoQuery ? 'autoSearch' : 'search'];
     },
-    isCanUseUiType() {
+    isCanUseUiType() { // 判断当前的检索语句是否与收藏的相对于 不相等的话不显示表单模式
       return this.activeFavorite?.params?.keyword === this.retrieveParams.keyword;
+    },
+    isShowUiType() { // 判断当前点击的收藏是否展示表单字段
+      return this.activeFavorite?.params?.search_fields?.length;
     },
   },
   provide() {
@@ -607,9 +608,10 @@ export default {
     spaceUid: {
       async handler() {
         this.indexId = '';
-        // this.requestFavoriteList();
         this.indexSetList.splice(0);
         this.totalFields.splice(0);
+        this.activeFavorite = {};
+        this.activeFavoriteID = -1;
         this.retrieveParams.bk_biz_id = this.bkBizId;
         this.fetchPageData();
       },
@@ -1612,7 +1614,7 @@ export default {
       const indexItem = this.indexSetList.find(item => item.index_set_id === String(this.indexId));
       const { modules, ips, target_node_type, target_nodes } =  this.retrieveParams.host_scopes;
       // eslint-disable-next-line camelcase
-      const host_scopes = { modules, ips, target_node_type, target_nodes };
+      const host_scopes = { modules, ips, target_node_type, target_nodes }; // 初始化host传参
       if (!modules) host_scopes.modules = [];
       if (!ips) host_scopes.ips = '';
       if (!host_scopes.target_node_type) {
@@ -1684,8 +1686,8 @@ export default {
       localStorage.setItem('closeAutoQuery', !this.isAutoQuery);
     },
     handleClickSearchType() {
-      if (this.isSqlSearchType && !this.isCanUseUiType) return;
-      this.isSqlSearchType = !this.isSqlSearchType;
+      if (this.isTableSearchType && !this.isCanUseUiType) return;
+      this.isTableSearchType = !this.isTableSearchType;
     },
     updateKeyWords(keyword) {
       Object.assign(this.retrieveParams, { keyword });
@@ -1698,14 +1700,14 @@ export default {
     },
     // 点击收藏列表的收藏
     handleClickFavoriteItem(value) {
-      this.activeFavorite = deepClone(value);
-      this.activeFavoriteID = value.id;
       if (!value.params.host_scopes.target_node_type) {
         value.params.host_scopes.target_node_type = '';
         value.params.host_scopes.target_nodes = [];
       }
+      this.activeFavorite = deepClone(value);
+      this.activeFavoriteID = value.id;
       this.isFavoriteSearch = true;
-      this.retrieveFavorite(value);
+      this.retrieveFavorite(deepClone(value));
     },
   },
 };
@@ -1848,7 +1850,8 @@ export default {
           padding-top: 10px;
 
           .tab-content {
-            height: calc(100% - 108px);
+            /* stylelint-disable-next-line declaration-no-important */
+            height: calc(100% - 52px) !important;
             overflow-y: auto;
             background-color: #fbfbfb;
 
@@ -1893,6 +1896,7 @@ export default {
                 margin-right: 10px;
                 color: #3a84ff;
                 transform: translateY(-1px);
+                text-align: right;
                 cursor: pointer;
               }
 
@@ -1970,17 +1974,23 @@ export default {
             background-color: #fff;
             // z-index: 1;
             ::v-deep .query-btn {
+              width: 32px;
+              height: 32px;
+              background: #FFFFFF;
               margin-right: 2px;
               color: #c4c6cc;
-
-              .bk-icon {
+              display: flex;
+              justify-content: center;
+              div {
                 transform: translateY(-2px);
-                font-size: 12px;
+              }
+              .bk-icon {
+                font-size: 16px;
               }
             }
 
             .query-search {
-              min-width: 100px;
+              width: 80px;
               font-size: 12px
             }
 
@@ -1996,14 +2006,15 @@ export default {
             }
 
             .loading-box {
-              width: 36px;
+              width: 32px;
               height: 32px;
               cursor: pointer;
               border: 1px solid #c4c6cc;
+              border-radius: 2px;
               margin-right: 2px;
 
               .loading {
-                transform: scale(.3) translateY(52px);
+                transform: scale(.2) translateY(78px);
               }
             }
           }
