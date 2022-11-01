@@ -12,7 +12,7 @@ class SpaceTypeEnum(Enum):
 
     BKCC = "bkcc"  # CMDB 业务
     BCS = "bcs"  # BCS
-    BKDEVOPS = "bkdevops"  # 蓝盾
+    BKCI = "bkci"  # 蓝盾
 
 
 @dataclass
