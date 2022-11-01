@@ -737,7 +737,7 @@ class FavoriteSearch(SoftDeleteModel):
     description = models.CharField(_("收藏描述"), max_length=255)
 
 
-class Favorite(SoftDeleteModel):
+class Favorite(OperateRecordModel):
     space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
     index_set_id = models.IntegerField(_("索引集ID"))
     name = models.CharField(_("收藏名称"), max_length=64)
@@ -791,7 +791,7 @@ class Favorite(SoftDeleteModel):
         return favorites
 
 
-class FavoriteGroup(SoftDeleteModel):
+class FavoriteGroup(OperateRecordModel):
     """收藏组"""
 
     name = models.CharField(_("收藏组名称"), max_length=64)
