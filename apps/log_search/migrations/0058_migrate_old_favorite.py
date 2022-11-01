@@ -58,7 +58,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("log_search", "0056_alter_favoritegroup_unique_together"),
+        ("log_search", "0057_auto_20221101_1547"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]
