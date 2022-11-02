@@ -3106,8 +3106,8 @@ class CollectorHandler(object):
         )
         return {
             "rule_id": rule_id,
-            "file_index_set_id": bcs_path_index_set.index_set_id,
-            "std_index_set_id": bcs_std_index_set.index_set_id,
+            "file_index_set_id": bcs_path_index_set.index_set_id if bcs_path_index_set else None,
+            "std_index_set_id": bcs_std_index_set.index_set_id if bcs_std_index_set else None,
             "bk_data_id": path_collector.bk_data_id,
             "stdout_conf": {"bk_data_id": std_collector.bk_data_id},
         }

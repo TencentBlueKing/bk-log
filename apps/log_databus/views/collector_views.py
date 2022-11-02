@@ -2012,7 +2012,7 @@ class CollectorViewSet(ModelViewSet):
         if not auth_info:
             raise BkJwtVerifyException()
         data = self.params_valid(BCSCollectorSerializer)
-        rule_id = collector_config_id
+        rule_id = int(collector_config_id)
         return Response(CollectorHandler().update_bcs_container_config(data=data, rule_id=rule_id))
 
     @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")
