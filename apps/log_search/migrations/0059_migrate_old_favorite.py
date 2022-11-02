@@ -26,8 +26,8 @@ def forwards_func(apps, schema_editor):
 
             if Favorite.objects.filter(name=name, space_uid=space_uid).exists():
                 random_suffix = str(int(time.time()))
-                if len(name) >= 50:
-                    name = name[:50]
+                if len(name) + len(str(index_set_id)) + len(random_suffix) > Favorite.name.field.max_length:
+                    name = name[: Favorite.name.field.max_length - len(str(index_set_id)) - len(random_suffix)]
                 name = f"{index_set_id}_{name}_{random_suffix}"
 
             params["search_fields"] = []
@@ -58,7 +58,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("log_search", "0057_auto_20221101_1547"),
+        ("log_search", "0058_alter_favorite_name"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]
