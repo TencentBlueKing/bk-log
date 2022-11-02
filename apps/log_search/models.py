@@ -361,8 +361,8 @@ class LogIndexSet(SoftDeleteModel):
         return self.get_indexes()
 
     @classmethod
-    def get_bcs_index_set(cls, bcs_project_id):
-        src_index_list = LogIndexSet.objects.filter(bcs_project_id=bcs_project_id)
+    def get_bcs_index_set(cls, space_uid, bcs_project_id):
+        src_index_list = LogIndexSet.objects.filter(space_uid=space_uid, bcs_project_id=bcs_project_id)
         bcs_path_index_set = None
         bcs_std_index_set = None
         for src_index in src_index_list:

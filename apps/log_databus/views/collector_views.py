@@ -29,7 +29,6 @@ from rest_framework.response import Response
 
 from apps.exceptions import ValidationError
 from apps.log_databus.constants import EtlConfig, Environment
-from apps.log_databus.exceptions import NeedBcsClusterIdException
 from apps.log_search.exceptions import BkJwtVerifyException
 from apps.generic import ModelViewSet
 from apps.iam import ActionEnum, ResourceEnum
@@ -71,6 +70,7 @@ from apps.log_databus.serializers import (
     FastCollectorCreateSerializer,
     FastCollectorUpdateSerializer,
     ContainerCollectorConfigToYamlSerializer,
+    ListBCSCollectorSerializer,
 )
 from apps.log_search.constants import (
     BKDATA_OPEN,
@@ -1989,11 +1989,11 @@ class CollectorViewSet(ModelViewSet):
         auth_info = Permission.get_auth_info(request, raise_exception=False)
         if not auth_info:
             raise BkJwtVerifyException()
-        bcs_cluster_id = request.GET.get("bcs_cluster_id")
-        if not bcs_cluster_id:
-            raise NeedBcsClusterIdException()
+        data = self.params_valid(ListBCSCollectorSerializer)
         return Response(
-            CollectorHandler().list_bcs_collector(bcs_cluster_id=bcs_cluster_id, bk_app_code=auth_info["bk_app_code"])
+            CollectorHandler().list_bcs_collector(
+                bk_biz_id=data["bk_biz_id"], bcs_cluster_id=data["bcs_cluster_id"], bk_app_code=auth_info["bk_app_code"]
+            )
         )
 
     @list_route(methods=["POST"], url_path="create_bcs_collector")
