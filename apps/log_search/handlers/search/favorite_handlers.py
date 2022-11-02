@@ -372,12 +372,15 @@ class FavoriteHandler(object):
                     fields.append(self._parse_node_expr(operand))
             return fields
         if expr_type == "FieldGroup":
-            fields = []
-            for operand in node.expr.expr.operands:
-                if isinstance(self._parse_node_expr(operand), list):
-                    fields.extend(self._parse_node_expr(operand))
-                else:
-                    fields.append(self._parse_node_expr(operand))
+            fields = [
+                {
+                    "pos": node.pos,
+                    "name": node.name,
+                    "type": expr_type,
+                    "operator": "()",
+                    "value": str(node.expr),
+                }
+            ]
             return fields
         raise Exception("Unsupported expr type: {}".format(expr_type))
 
@@ -635,6 +638,9 @@ class Transformer(TreeTransformer):
                 new_node = FuzzyNodeExpr(node=node).update_expr(context)
             elif node_type == "Regex":
                 new_node = RegexNodeExpr(node=node).update_expr(context)
+            elif node_type == "FieldGroup":
+                keyword = "{}: {} ".format(node.name, context["value"])
+                new_node = parser.parse(keyword, lexer=lexer)
             else:
                 raise Exception(f"Unsupported node_type: {node_type}")
 

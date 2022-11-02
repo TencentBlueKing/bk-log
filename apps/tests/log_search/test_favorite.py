@@ -111,11 +111,9 @@ KEYWORD_FIELDS = [
     {"pos": 58, "name": "gseIndex", "type": "Range", "operator": "[]", "value": "[ 200 TO 600 ]"},
     {"pos": 87, "name": "log", "type": "Fuzzy", "operator": "~=", "value": "blue~"},
     {"pos": 102, "name": "time", "type": "Regex", "operator": "~=", "value": "/[L-N].*z*l{2}a/"},
-    {"pos": 129, "name": "a", "operator": "~=", "type": "Word", "value": "b"},
+    {"pos": 129, "name": "a(1)", "operator": "~=", "type": "Word", "value": "b"},
     {"pos": 138, "name": "c", "operator": "~=", "type": "Word", "value": "d"},
-    {"pos": 151, "name": "全文检索(1)", "operator": "~=", "type": "全文检索", "value": "b"},
-    {"pos": 156, "name": "全文检索(2)", "operator": "~=", "type": "全文检索", "value": "c"},
-    {"pos": 162, "name": "全文检索(3)", "operator": "~=", "type": "全文检索", "value": "d"},
+    {"pos": 147, "name": "a(2)", "operator": "()", "type": "FieldGroup", "value": "(b OR c AND d)"},
     {"pos": 168, "name": "x", "operator": "~=", "type": "Word", "value": "y"},
 ]
 UPDATE_QUERY_PARAMS = [
@@ -152,16 +150,8 @@ UPDATE_QUERY_PARAMS = [
         "value": "dd",
     },
     {
-        "pos": 151,
-        "value": "bb",
-    },
-    {
-        "pos": 156,
-        "value": "cc",
-    },
-    {
-        "pos": 162,
-        "value": "dd",
+        "pos": 147,
+        "value": "(bb OR cc AND dd)",
     },
     {
         "pos": 168,
