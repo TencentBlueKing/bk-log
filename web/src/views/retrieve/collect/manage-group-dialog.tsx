@@ -361,10 +361,7 @@ export default class GroupDialog extends tsc<IProps> {
   }
   /** 修改可选范围 */
   handleChangeVisible(row, nVal: string) {
-    this.operateListChange(row, {
-      visible_type: nVal,
-      group_id: nVal !== "public" ? this.privateGroupID : this.unknownGroupID,
-    });
+    this.operateListChange(row, { visible_type: nVal });
   }
   /** 单独修改组 */
   handleChangeGroup(row) {
