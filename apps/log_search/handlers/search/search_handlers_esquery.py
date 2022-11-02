@@ -809,10 +809,14 @@ class SearchHandler(object):
                 return False
             host_scopes_op1: dict = op1_params["host_scopes"]
             host_scopes_op2: dict = op2_params["host_scopes"]
-            if host_scopes_op1["ips"] != host_scopes_op2["ips"]:
+
+            if host_scopes_op1.keys() != host_scopes_op2.keys():
                 return False
-            if host_scopes_op1["modules"] != host_scopes_op2["modules"]:
-                return False
+
+            for k in host_scopes_op1:
+                if host_scopes_op1[k] != host_scopes_op2[k]:
+                    return False
+
             return True
 
         def _not_repeat(history):

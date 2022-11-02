@@ -115,6 +115,7 @@ class FavoriteHandler(object):
                 "index_set_id": fi["index_set_id"],
                 "index_set_name": fi["index_set_name"],
                 "visible_type": fi["visible_type"],
+                "params": fi["params"],
                 "search_fields": fi["params"].get("search_fields", []),
                 "keyword": fi["params"].get("keyword", ""),
                 "is_enable_display_fields": fi["is_enable_display_fields"],
@@ -302,6 +303,8 @@ class FavoriteHandler(object):
                     fields.extend(self._parse_node_expr(child))
                 else:
                     fields.append(self._parse_node_expr(child))
+        # 去除相同field
+        fields = sorted(fields, key=lambda i: i["pos"])
         # 以下逻辑为同名字段增加额外标识符
         field_names = Counter([field["name"] for field in fields])
         if not field_names:
@@ -360,6 +363,25 @@ class FavoriteHandler(object):
             return FuzzyNodeExpr(node=node).parse_expr()
         if expr_type == "Regex":
             return RegexNodeExpr(node=node).parse_expr()
+        if expr_type == "OrOperation" or expr_type == "AndOperation":
+            fields = []
+            for operand in node.expr.operands:
+                if isinstance(self._parse_node_expr(operand), list):
+                    fields.extend(self._parse_node_expr(operand))
+                else:
+                    fields.append(self._parse_node_expr(operand))
+            return fields
+        if expr_type == "FieldGroup":
+            fields = [
+                {
+                    "pos": node.pos,
+                    "name": node.name,
+                    "type": expr_type,
+                    "operator": "()",
+                    "value": str(node.expr),
+                }
+            ]
+            return fields
         raise Exception("Unsupported expr type: {}".format(expr_type))
 
 
@@ -393,7 +415,7 @@ class FavoriteGroupHandler(object):
         group_type = FavoriteGroupType.PUBLIC.value
         # 检查name是否可用
         if self.data and self.data != name or not self.data:
-            if FavoriteGroup.objects.filter(name=name, group_type=group_type, space_uid=space_uid).exists():
+            if FavoriteGroup.objects.filter(name=name, space_uid=space_uid).exists():
                 raise FavoriteGroupAlreadyExistException()
 
         # 修改
@@ -414,9 +436,6 @@ class FavoriteGroupHandler(object):
     @atomic
     def delete(self) -> None:
         """删除公开分组，并将组内收藏移到未分组"""
-        # 只有公开组的创建者才能删除
-        if self.data.created_by != self.username:
-            raise FavoriteGroupNotAllowedDeleteException()
         # 只有公开组可以被删除
         if self.data.group_type != FavoriteGroupType.PUBLIC.value:
             raise FavoriteGroupNotAllowedDeleteException()
@@ -619,6 +638,9 @@ class Transformer(TreeTransformer):
                 new_node = FuzzyNodeExpr(node=node).update_expr(context)
             elif node_type == "Regex":
                 new_node = RegexNodeExpr(node=node).update_expr(context)
+            elif node_type == "FieldGroup":
+                keyword = "{}: {} ".format(node.name, context["value"])
+                new_node = parser.parse(keyword, lexer=lexer)
             else:
                 raise Exception(f"Unsupported node_type: {node_type}")
 

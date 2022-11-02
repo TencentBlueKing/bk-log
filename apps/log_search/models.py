@@ -740,7 +740,7 @@ class FavoriteSearch(SoftDeleteModel):
 class Favorite(OperateRecordModel):
     space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
     index_set_id = models.IntegerField(_("索引集ID"))
-    name = models.CharField(_("收藏名称"), max_length=64)
+    name = models.CharField(_("收藏名称"), max_length=255)
     group_id = models.IntegerField(_("收藏组ID"), db_index=True)
     params = JsonField(_("检索条件"), null=True, default=None)
     visible_type = models.CharField(_("可见类型"), max_length=64, choices=FavoriteVisibleType.get_choices())  # 个人 | 公开
