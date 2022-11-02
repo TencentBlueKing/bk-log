@@ -115,6 +115,7 @@ class FavoriteHandler(object):
                 "index_set_id": fi["index_set_id"],
                 "index_set_name": fi["index_set_name"],
                 "visible_type": fi["visible_type"],
+                "params": fi["params"],
                 "search_fields": fi["params"].get("search_fields", []),
                 "keyword": fi["params"].get("keyword", ""),
                 "is_enable_display_fields": fi["is_enable_display_fields"],
