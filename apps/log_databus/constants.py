@@ -380,11 +380,15 @@ class ContainerCollectorType(object):
 
 
 class ContainerCollectStatus(ChoicesEnum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
     TERMINATED = "TERMINATED"
 
     _choices_labels = (
+        (PENDING, _("等待中")),
+        (RUNNING, _("部署中")),
         (SUCCESS, _("成功")),
         (FAILED, _("失败")),
         (TERMINATED, _("已停用")),

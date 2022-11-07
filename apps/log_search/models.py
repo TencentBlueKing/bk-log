@@ -361,8 +361,8 @@ class LogIndexSet(SoftDeleteModel):
         return self.get_indexes()
 
     @classmethod
-    def get_bcs_index_set(cls, bcs_project_id):
-        src_index_list = LogIndexSet.objects.filter(bcs_project_id=bcs_project_id)
+    def get_bcs_index_set(cls, space_uid, bcs_project_id):
+        src_index_list = LogIndexSet.objects.filter(space_uid=space_uid, bcs_project_id=bcs_project_id)
         bcs_path_index_set = None
         bcs_std_index_set = None
         for src_index in src_index_list:
@@ -771,16 +771,16 @@ class Favorite(OperateRecordModel):
 
         index_set_id_list = list(qs.all().values_list("index_set_id", flat=True).distinct())
         active_index_set_id_dict = {
-            i["index_set_id"]: i["index_set_name"]
+            i["index_set_id"]: {"index_set_name": i["index_set_name"], "is_active": i["is_active"]}
             for i in LogIndexSet.objects.filter(index_set_id__in=index_set_id_list).values(
-                "index_set_id", "index_set_name"
+                "index_set_id", "index_set_name", "is_active"
             )
         }
         for fi in qs.all():
             fi_dict = model_to_dict(fi)
             if active_index_set_id_dict.get(fi.index_set_id):
-                fi_dict["is_active"] = True
-                fi_dict["index_set_name"] = active_index_set_id_dict[fi.index_set_id]
+                fi_dict["is_active"] = active_index_set_id_dict[fi.index_set_id]["is_active"]
+                fi_dict["index_set_name"] = active_index_set_id_dict[fi.index_set_id]["index_set_name"]
             else:
                 fi_dict["is_active"] = False
                 fi_dict["index_set_name"] = INDEX_SET_NOT_EXISTED
