@@ -1652,16 +1652,21 @@ class CollectorHandler(object):
 
                 failed_count = 0
                 success_count = 0
-
-                for config in container_collector_configs:
-                    if config.status == ContainerCollectStatus.FAILED.value:
-                        failed_count += 1
-                    else:
-                        success_count += 1
+                pending_count = 0
 
                 # 默认是成功
                 status = CollectStatus.SUCCESS
                 status_name = RunStatus.SUCCESS
+
+                for config in container_collector_configs:
+                    if config.status == ContainerCollectStatus.FAILED.value:
+                        failed_count += 1
+                    elif config.status in [ContainerCollectStatus.PENDING.value, ContainerCollectStatus.RUNNING.value]:
+                        pending_count += 1
+                        status = CollectStatus.RUNNING
+                        status_name = RunStatus.RUNNING
+                    else:
+                        success_count += 1
 
                 if failed_count:
                     status = CollectStatus.FAILED
@@ -1680,7 +1685,7 @@ class CollectorHandler(object):
                         "total": len(container_collector_configs),
                         "success": success_count,
                         "failed": failed_count,
-                        "pending": 0,
+                        "pending": pending_count,
                     }
                 )
                 continue
