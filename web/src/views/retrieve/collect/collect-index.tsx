@@ -43,6 +43,8 @@ interface IProps {
   indexId: string;
   activeFavoriteID: number;
   visibleFields: Array<any>;
+  favoriteList: any;
+  favoriteLoading: boolean;
 }
 
 export interface IGroupItem {
@@ -72,6 +74,8 @@ export default class CollectIndex extends tsc<IProps> {
   @PropSync("width", { type: Number }) collectWidth: number;
   @PropSync("isShow", { type: Boolean }) isShowCollect: boolean;
   @Prop({ type: String, required: true }) indexId: string;
+  @Prop({ type: Boolean, required: true }) favoriteLoading: boolean;
+  @Prop({ type: Array, required: true }) favoriteList: any;
   @Prop({ type: Number, required: true }) activeFavoriteID: number;
   @Prop({ type: Array, default: () => [] }) visibleFields: Array<any>;
   @Ref("popoverGroup") popoverGroupRef: Popover;
@@ -126,7 +130,7 @@ export default class CollectIndex extends tsc<IProps> {
     return this.editFavoriteID === this.activeFavoriteID;
   }
 
-  @Watch("isShowCollect", { immediate: true})
+  @Watch("isShowCollect")
   async handleShowCollect(value) {
     if (value) {
       this.baseSortType = localStorage.getItem("favoriteSortType") || "NAME_ASC";
@@ -140,13 +144,19 @@ export default class CollectIndex extends tsc<IProps> {
     }
   }
 
+  @Watch('favoriteList', { deep: true })
+  watchFavoriteData(value) {
+    this.handleInitFavoriteList(value);
+  }
+
+
   @Watch("indexId")
   async handleChangeIndexSet() {
     this.collectList = [];
     this.filterCollectList = [];
     this.groupList = [];
     if (!this.isShowCollect) return;
-    this.getFavoriteList();
+    await this.getFavoriteList();
   }
 
   @Emit("handleClick")
@@ -299,7 +309,7 @@ export default class CollectIndex extends tsc<IProps> {
   }
 
   /** 获取收藏列表 */
-  async getFavoriteList(isInit = false) {
+  async getFavoriteList() {
     try {
       this.collectLoading = true;
       const res = await $http.request("favorite/getFavoriteByGroupList", {
@@ -308,33 +318,35 @@ export default class CollectIndex extends tsc<IProps> {
           order_type: this.baseSortType,
         },
       });
-      this.collectList = res.data;
-      this.groupList = res.data.map((item) => ({
-        group_id: item.group_id,
-        group_name: item.group_name,
-        group_type: item.group_type,
-      }));
-      if (isInit) {
-        this.unknownGroupID = this.groupList[this.groupList.length - 1]?.group_id;
-        this.privateGroupID = this.groupList[0]?.group_id;
-      }
-      this.handleSearchFavorite();
-      this.isShowGroupTitle = !(this.collectList.length === 2 && !this.collectList[0].favorites.length);
-      this.filterCollectList = deepClone(this.collectList);
-      if (this.activeFavoriteID >= 0) { // 获取列表后 判断当前是否有点击的活跃收藏 如果有 则进行数据更新
-        this.collectList.forEach(item => {
-          item.favorites.forEach(fItem=>{
-            if(fItem.id === this.activeFavoriteID) {
-              this.handleUpdateActiveFavoriteData(fItem);
-            }
-          })
-        })
-      }
+      this.handleInitFavoriteList(res.data);
     } catch (error) {
     } finally {
       this.collectLoading = false;
     }
   }
+
+  handleInitFavoriteList(value) {
+    this.collectList = value;
+    this.groupList = value.map((item) => ({
+      group_id: item.group_id,
+      group_name: item.group_name,
+      group_type: item.group_type,
+    }));
+    this.unknownGroupID = this.groupList[this.groupList.length - 1]?.group_id;
+    this.privateGroupID = this.groupList[0]?.group_id;
+    this.handleSearchFavorite();
+    this.isShowGroupTitle = !(this.collectList.length === 2 && !this.collectList[0].favorites.length);
+    this.filterCollectList = deepClone(this.collectList);
+    if (this.activeFavoriteID >= 0) { // 获取列表后 判断当前是否有点击的活跃收藏 如果有 则进行数据更新
+      this.collectList.forEach(item => {
+        item.favorites.forEach(fItem=>{
+          if(fItem.id === this.activeFavoriteID) {
+            this.handleUpdateActiveFavoriteData(fItem);
+          }
+        })
+      })
+    }
+  };
 
   /** 解散分组 */
   async deleteGroup(group_id) {
@@ -434,7 +446,7 @@ export default class CollectIndex extends tsc<IProps> {
           isShowGroupTitle={this.isShowGroupTitle}
           activeFavoriteID={this.activeFavoriteID}
           isSearchFilter={this.isSearchFilter}
-          collectLoading={this.collectLoading}
+          collectLoading={this.collectLoading || this.favoriteLoading}
           on-change={this.handleUserOperate}
         >
           <div class="search-container">

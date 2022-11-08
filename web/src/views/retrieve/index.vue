@@ -82,8 +82,10 @@
       <collect-index
         :width.sync="collectWidth"
         :is-show.sync="isShowCollect"
+        :favorite-loading="favoriteLoading"
+        :favorite-list="favoriteList"
         :style="{ width: collectWidth + 'px' }"
-        :index-id="`${spaceUid}_${favoriteRequestID}`"
+        :index-id="`${favoriteRequestID}`"
         :active-favorite="activeFavorite"
         :active-favorite-i-d="activeFavoriteID"
         :visible-fields="visibleFields"
@@ -525,12 +527,13 @@ export default {
       authPageInfo: null,
       isShowAddNewCollectDialog: false, // 是否展示新增收藏弹窗
       collectWidth: localStorage.getItem('isAutoShowCollect') === 'true' ? 240 : 0, // 收藏默认栏宽度
-      // isShowCollect: false,
       isShowCollect: localStorage.getItem('isAutoShowCollect') === 'true',
       isSqlSearchType: true, // 是否是sql模式
       cacheKeywords: '', // 切换表单模式之前缓存的查询语句，用于切回sql模式时回填
       activeFavorite: {}, // 当前点击的收藏参数
       activeFavoriteID: -1,
+      favoriteList: [],
+      favoriteLoading: false,
       addFavoriteData: {}, // 新增收藏所需的参数
       favoriteRequestID: 0, // 参数改变更新收藏
       replaceFavoriteData: {}, // 收藏判断不同后的替换参数
@@ -609,10 +612,10 @@ export default {
         this.hasAuth = true;
       }
       this.cacheKeywords = '';
+      this.isSqlSearchType = true;
       this.resetRetrieveCondition();
       this.$store.commit('updateIndexId', val);
       val && this.requestSearchHistory(val);
-      this.isSqlSearchType = !this.isShowUiType;
     },
     spaceUid: {
       async handler() {
@@ -625,6 +628,7 @@ export default {
         this.isSqlSearchType = true;
         this.cacheKeywords = '';
         this.fetchPageData();
+        this.getFavoriteList();
       },
       immediate: true,
     },
@@ -711,9 +715,10 @@ export default {
     handleCheckEvent() {
       window.parent.postMessage('event-click', '*');
     },
-    fetchPageData() {
+    async fetchPageData() {
       // 有spaceUid且有业务权限时 才去请求索引集列表
       if (!this.authMainPageInfo && this.spaceUid) {
+        await this.getFavoriteList(); // 先获取到收藏列表再获取索引集列表
         this.requestIndexSetList();
       } else {
         this.isFirstLoad = false;
@@ -1017,13 +1022,9 @@ export default {
     },
     // 搜索记录
     retrieveFavorite({ index_set_id: indexSetID, params }) {
-      // if (this.indexSetList.find(item => item.index_set_id === String(indexSetID))) {
       delete params.search_fields;
       this.indexId = String(indexSetID);
       this.retrieveLog(params);
-      // } else {
-      //   this.messageError(this.$t('没有找到该记录下相关索引集'));
-      // }
     },
     // 关闭收藏浮层
     closeFavoritePopper() {
@@ -1219,6 +1220,12 @@ export default {
               }
             }
           }).filter(Boolean);
+          this.isSqlSearchType = !this.isShowUiType; // 判断是否有表单模式的数组值 如果有 则切换为表单模式
+          if (this.isSqlSearchType) {
+            this.retrieveParams.keyword = this.cacheKeywords;
+          } else {
+            this.cacheKeywords = this.retrieveParams.keyword;
+          }
         }
         // 搜索完毕后，如果开启了自动刷新，会在 timeout 后自动刷新
         this.$refs.resultHeader && this.$refs.resultHeader.setRefreshTime();
@@ -1700,6 +1707,24 @@ export default {
       if (this.tableLoading) return;
       this.isAutoQuery = !this.isAutoQuery;
       localStorage.setItem('closeAutoQuery', !this.isAutoQuery);
+    },
+    /** 获取收藏列表 */
+    async getFavoriteList() {
+      // 第一次显示收藏列表时因路由更变原因 在本页面第一次请求
+      try {
+        this.favoriteLoading = true;
+        const res = await this.$http.request('favorite/getFavoriteByGroupList', {
+          query: {
+            space_uid: this.spaceUid,
+            order_type: this.baseSortType,
+          },
+        });
+        this.favoriteList = res.data;
+      } catch (error) {
+        console.warn(error);
+      } finally {
+        this.favoriteLoading = false;
+      }
     },
     handleClickSearchType() {
       // 如果当前为sql模式，且检索的keywords和收藏的keywords不一致 则不允许切换
