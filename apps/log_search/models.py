@@ -361,8 +361,8 @@ class LogIndexSet(SoftDeleteModel):
         return self.get_indexes()
 
     @classmethod
-    def get_bcs_index_set(cls, bcs_project_id):
-        src_index_list = LogIndexSet.objects.filter(bcs_project_id=bcs_project_id)
+    def get_bcs_index_set(cls, space_uid, bcs_project_id):
+        src_index_list = LogIndexSet.objects.filter(space_uid=space_uid, bcs_project_id=bcs_project_id)
         bcs_path_index_set = None
         bcs_std_index_set = None
         for src_index in src_index_list:
@@ -737,10 +737,10 @@ class FavoriteSearch(SoftDeleteModel):
     description = models.CharField(_("收藏描述"), max_length=255)
 
 
-class Favorite(SoftDeleteModel):
+class Favorite(OperateRecordModel):
     space_uid = models.CharField(_("空间唯一标识"), blank=True, default="", max_length=256, db_index=True)
     index_set_id = models.IntegerField(_("索引集ID"))
-    name = models.CharField(_("收藏名称"), max_length=64)
+    name = models.CharField(_("收藏名称"), max_length=255)
     group_id = models.IntegerField(_("收藏组ID"), db_index=True)
     params = JsonField(_("检索条件"), null=True, default=None)
     visible_type = models.CharField(_("可见类型"), max_length=64, choices=FavoriteVisibleType.get_choices())  # 个人 | 公开
@@ -771,27 +771,27 @@ class Favorite(SoftDeleteModel):
 
         index_set_id_list = list(qs.all().values_list("index_set_id", flat=True).distinct())
         active_index_set_id_dict = {
-            i["index_set_id"]: i["index_set_name"]
+            i["index_set_id"]: {"index_set_name": i["index_set_name"], "is_active": i["is_active"]}
             for i in LogIndexSet.objects.filter(index_set_id__in=index_set_id_list).values(
-                "index_set_id", "index_set_name"
+                "index_set_id", "index_set_name", "is_active"
             )
         }
         for fi in qs.all():
             fi_dict = model_to_dict(fi)
             if active_index_set_id_dict.get(fi.index_set_id):
-                fi_dict["is_active"] = True
-                fi_dict["index_set_name"] = active_index_set_id_dict[fi.index_set_id]
+                fi_dict["is_active"] = active_index_set_id_dict[fi.index_set_id]["is_active"]
+                fi_dict["index_set_name"] = active_index_set_id_dict[fi.index_set_id]["index_set_name"]
             else:
                 fi_dict["is_active"] = False
                 fi_dict["index_set_name"] = INDEX_SET_NOT_EXISTED
-            fi_dict["created_at"] = timestamp_to_timeformat(datetime_to_timestamp(fi_dict["created_at"]))
-            fi_dict["updated_at"] = timestamp_to_timeformat(datetime_to_timestamp(fi_dict["updated_at"]))
+            fi_dict["created_at"] = fi_dict["created_at"]
+            fi_dict["updated_at"] = fi_dict["updated_at"]
             favorites.append(fi_dict)
 
         return favorites
 
 
-class FavoriteGroup(SoftDeleteModel):
+class FavoriteGroup(OperateRecordModel):
     """收藏组"""
 
     name = models.CharField(_("收藏组名称"), max_length=64)

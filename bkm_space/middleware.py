@@ -15,8 +15,12 @@ class ParamInjectMiddleware(MiddlewareMixin):
 
     def __init__(self, *args, **kwargs):
         super(ParamInjectMiddleware, self).__init__(*args, **kwargs)
-        self.inject_request_enabled = getattr(settings, "BKM_SPACE_INJECT_REQUEST_ENABLED", True)
-        self.inject_response_enabled = getattr(settings, "BKM_SPACE_INJECT_RESPONSE_ENABLED", False)
+        self.inject_request_enabled = getattr(
+            settings, "BKM_SPACE_INJECT_REQUEST_ENABLED", True
+        )
+        self.inject_response_enabled = getattr(
+            settings, "BKM_SPACE_INJECT_RESPONSE_ENABLED", False
+        )
 
     def process_request(self, request, **kwargs):
         if not self.inject_request_enabled:
@@ -39,7 +43,9 @@ class ParamInjectMiddleware(MiddlewareMixin):
         if isinstance(response, Response):
             try:
                 content = json.loads(request.content)
-                request.content = json.dumps(inject_space_field(content)).encode("utf-8")
+                request.content = json.dumps(inject_space_field(content)).encode(
+                    "utf-8"
+                )
             except Exception:
                 pass
         return response
