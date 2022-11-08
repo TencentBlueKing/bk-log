@@ -109,9 +109,10 @@
           :label="$t('dataSource.collector_scenario_name')"
           min-width="50"
           class-name="filter-column"
-          prop="collector_scenario_name"
+          prop="collector_scenario_id"
           column-key="collector_scenario_id"
           :filters="checkcFields('collector_scenario_name') ? scenarioFilters : []"
+          :filter-method="scenarioFiltersMethod"
           :filter-multiple="false">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -124,9 +125,10 @@
           :label="$t('dataSource.category_name')"
           min-width="50"
           class-name="filter-column"
-          prop="category_name"
+          prop="category_id"
           column-key="category_id"
           :filters="checkcFields('category_name') ? categoryFilters : []"
+          :filter-method="categoryFiltersMethod"
           :filter-multiple="false">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -670,6 +672,14 @@ export default {
     },
     stopStatusPolling() {
       clearTimeout(this.timer);
+    },
+    scenarioFiltersMethod(value, row, column) {
+      const property = column.property;
+      return row[property] === value;
+    },
+    categoryFiltersMethod(value, row, column) {
+      const property = column.property;
+      return row[property] === value;
     },
     requestData() {
       this.isTableLoading = true;
