@@ -69,7 +69,7 @@ interface IFavoriteItem {
   params: object;
 }
 
-const settingFields = [
+const settingFields = [ // 设置显示的字段
   {
     id: "name",
     label: window.mainComponent.$t("收藏名"),
@@ -131,8 +131,7 @@ export default class GroupDialog extends tsc<IProps> {
     interactive: true,
     theme: "light",
   };
-  currentDeleteData = {};
-  paginationConfig = {
+  paginationConfig = { // 页数设置对象
     current: 1,
     limit: 5,
     count: 1,
@@ -140,23 +139,23 @@ export default class GroupDialog extends tsc<IProps> {
     showLimit: false,
     limitList: [...Array(51).keys()].splice(1),
   };
-  cannotComparedData = [
+  cannotComparedData = [ // 不进行对比的字段 （前端操作缓存自加的字段）
     "search_fields_select_list",
     "visible_option",
     "group_option",
     "group_option_private",
     "is_group_disabled",
   ];
-  sourceFilters = [];
-  updateSourceFilters = [];
-  pageSizeList = [...Array(51).keys()].splice(1);
+  sourceFilters = []; // 所属组数组
+  updateSourceFilters = []; // 更变人过滤数组
+  pageSizeList = [...Array(51).keys()].splice(1); // 页数
 
   tableKey = random(10);
 
-  unPrivateOptionList = [
+  unPrivateOptionList = [ // 非本人创建的收藏的可见范围数组
     { name: window.mainComponent.$t("公开"), id: "public" },
   ];
-  allOptionList = [
+  allOptionList = [ // 本人创建的收藏的可见范围数组
     { name: window.mainComponent.$t("公开"), id: "public" },
     { name: window.mainComponent.$t("仅本人"), id: "private" },
   ];
@@ -195,12 +194,12 @@ export default class GroupDialog extends tsc<IProps> {
     this.checkValue = 1;
   }
 
-  @Emit("change")
+  @Emit("change") // 展示或者隐藏弹窗
   handleShowChange(value = false) {
     return value;
   }
 
-  @Emit("submit")
+  @Emit("submit") // 更新成功
   handleSubmitChange(value = false) {
     return value;
   }
@@ -232,9 +231,7 @@ export default class GroupDialog extends tsc<IProps> {
     if (status) {
       this.selectFavoriteList.push(row.id);
     } else {
-      const index = this.selectFavoriteList.findIndex(
-        (item) => item === row.id
-      );
+      const index = this.selectFavoriteList.findIndex((item) => item === row.id);
       this.selectFavoriteList.splice(index, 1);
     }
   }
@@ -250,8 +247,10 @@ export default class GroupDialog extends tsc<IProps> {
     } else {
       searchList = this.operateTableList;
     }
+    // 赋值搜索过后的列表
     this.searchAfterList = searchList;
     setTimeout(() => {
+      // 页数最少为1
       const count = !!searchList.length ? searchList.length : 1;
       Object.assign(this.paginationConfig, { current: 1, count });
       this.selectFavoriteList = [];
@@ -290,7 +289,7 @@ export default class GroupDialog extends tsc<IProps> {
       const updateSourceFiltersSet = new Set();
       const initList = res.data.map((item) => {
         const group_option = this.unPrivateList;
-        let group_option_private = [];
+        let group_option_private = []; // 这里存两个分组数组的原因是切换可见范围时 所属组也会切换成对应的可见范围所属组
         let visible_option;
         // 初始化表格, 判断当前的收藏是否是个人创建 若不是个人则不显示个人组
         if (item.created_by === this.userMeta.username) {
@@ -342,7 +341,7 @@ export default class GroupDialog extends tsc<IProps> {
         group_type: item.group_type,
       }));
       this.unPrivateList = this.groupList.slice(1); // 去除个人组的列表
-      this.privateList = this.groupList.slice(0, 1);
+      this.privateList = this.groupList.slice(0, 1); // 个人组列表
       this.sourceFilters = res.data.map((item) => ({
         text: item.name,
         value: item.name,
@@ -919,7 +918,7 @@ export default class GroupDialog extends tsc<IProps> {
             on-change={this.handlePageChange}
           ></Pagination>
           <div class="page-limit">
-            <span>共计{this.searchAfterList.length}条 每页</span>
+            <span>{this.$t('共计')}{this.searchAfterList.length}{this.$t('条')} {this.$t('每页')}</span>
             <Select
               class="page-select"
               vModel={this.paginationConfig.limit}

@@ -37,13 +37,13 @@ interface IProps {
 export default class CollectGroup extends tsc<IProps> {
   @Inject("handleUserOperate") handleUserOperate;
 
-  @Prop({ type: String, default: "group" }) dropType: string;
-  @Prop({ type: Boolean, default: false }) isHoverTitle: boolean;
-  @Prop({ type: Array, default: () => [] }) groupList: IGroupItem[];
-  @Prop({ type: Object, required: true }) data: IGroupItem | IFavoriteItem;
-  @Ref("operate") private readonly operatePopoverRef: Popover;
-  @Ref("groupMoveList") private readonly groupMoveListPopoverRef: Popover;
-  tippyOption = {
+  @Prop({ type: String, default: "group" }) dropType: string; // 分组类型
+  @Prop({ type: Boolean, default: false }) isHoverTitle: boolean; // 鼠标是否经过表头
+  @Prop({ type: Array, default: () => [] }) groupList: IGroupItem[]; // 组列表
+  @Prop({ type: Object, required: true }) data: IGroupItem | IFavoriteItem; // 所有数据
+  @Ref("operate") private readonly operatePopoverRef: Popover; // 操作列表实例
+  @Ref("groupMoveList") private readonly groupMoveListPopoverRef: Popover; // 移动到分组实例
+  tippyOption = { //操作列表配置项
     trigger: "click",
     interactive: true,
     theme: "light",
@@ -54,7 +54,8 @@ export default class CollectGroup extends tsc<IProps> {
     placement: "bottom-start",
     extCls: "more-container",
   };
-  groupTippyOption = {
+  groupTippyOption = { //移动到其他组配置项
+    trigger: "click",
     interactive: true,
     theme: "light",
     arrow: false,
@@ -62,30 +63,27 @@ export default class CollectGroup extends tsc<IProps> {
     boundary: "viewport",
     distance: 4,
   };
-  isExpand = false;
-  nameValue = "";
-  isShowNewGroupInput = false;
-  isShowGroupUl = false;
-  isShowResetGroupName = false;
-  groupName = "";
-  operatePopoverInstance = null;
-  groupListPopoverInstance = null;
+  isShowNewGroupInput = false; // 是否展示新建分组
+  isShowResetGroupName = false; // 是否展示重命名组名
+  groupName = ""; // 创建分组名称
+  operatePopoverInstance = null; // 收藏操作实例例
+  groupListPopoverInstance = null; // 分组列表实例
 
-  get unPrivateGroupList() {
+  get unPrivateGroupList() { // 去掉个人组的组列表
     return this.groupList.slice(1);
   }
 
-  get userMeta() {
+  get userMeta() { // 用户信息
     return this.$store.state.userMeta;
   }
 
-  get showGroupList() {
+  get showGroupList() { // 根据用户名判断是否时自己创建的收藏 若不是自己的则去除个人组选项
     return this.userMeta.username !== this.data.created_by
       ? this.unPrivateGroupList
       : this.groupList;
   }
 
-  get isGroupDrop() {
+  get isGroupDrop() { // 是否是组操作
     return this.dropType === "group";
   }
   /** 重命名 */
@@ -105,18 +103,20 @@ export default class CollectGroup extends tsc<IProps> {
     this.isShowNewGroupInput = false;
   }
   handleClickLi(type: string, value?: any) {
-    if (type === "move-favorite") {
+    if (type === "move-favorite") { // 如果是移动到其他组 则更新移动的ID
       Object.assign(this.data, { group_id: value });
     }
     this.handleUserOperate(type, this.data);
+    // 进行完操作时 清除组或者操作列表实例
     this.operatePopoverInstance?.destroy();
     this.operatePopoverInstance = null;
     this.groupListPopoverInstance?.destroy();
     this.groupListPopoverInstance = null;
-    this.clearStatus();
+    this.clearStatus(); // 清空状态
   }
-
+  /** 点击移动分组操作 */
   handleClickMoveGroup(e) {
+    // 判断当前是否有实例 如果有实例 则给操作列表常驻显示
     if (!this.groupListPopoverInstance) {
       this.groupListPopoverInstance = this.$bkPopover(e.target, {
         content: this.groupMoveListPopoverRef,
@@ -132,6 +132,7 @@ export default class CollectGroup extends tsc<IProps> {
         placement: "right-start",
         extCls: "more-container",
         onHidden: () => {
+          // 删除实例
           if (!this.operatePopoverInstance.props.hideOnClick) {
             this.operatePopoverInstance?.destroy();
             this.operatePopoverInstance = null;
@@ -141,16 +142,17 @@ export default class CollectGroup extends tsc<IProps> {
         },
       });
       this.groupListPopoverInstance.show(100);
+      // 点击移动到其他分组时 操作列表要不受移动到分组的点击影响
+      this.operatePopoverInstance.set({
+        hideOnClick: false,
+      });
     } else {
       this.operatePopoverInstance.set({
         hideOnClick: true,
       });
-      return;
     }
-    this.operatePopoverInstance.set({
-      hideOnClick: false,
-    });
   }
+  /** 点击收藏的icon  显示更多操作 */
   handleClickIcon(e) {
     if (!this.operatePopoverInstance) {
       this.operatePopoverInstance = this.$bkPopover(e.target, {
@@ -160,7 +162,7 @@ export default class CollectGroup extends tsc<IProps> {
         theme: "light shield",
         arrow: false,
         boundary: "viewport",
-        hideOnClick: true,
+        hideOnClick: true, // 先是可被外部点击隐藏
         distance: 4,
         sticky: true,
         placement: "bottom-start",
@@ -168,7 +170,7 @@ export default class CollectGroup extends tsc<IProps> {
         onHidden: () => {
           this.operatePopoverInstance?.destroy();
           this.operatePopoverInstance = null;
-          this.clearStatus();
+          this.clearStatus(); // 清空状态
         },
       });
       this.operatePopoverInstance.show(100);
@@ -176,8 +178,6 @@ export default class CollectGroup extends tsc<IProps> {
   }
 
   clearStatus() {
-    this.isExpand = false;
-    this.isShowGroupUl = false;
     this.isShowNewGroupInput = false;
     this.isShowResetGroupName = false;
     this.groupName = "";
@@ -243,9 +243,7 @@ export default class CollectGroup extends tsc<IProps> {
       <div style={{ display: "none" }}>
         <ul class="group-dropdown-list" ref="groupMoveList">
           {this.showGroupList.map((item) => (
-            <li
-              onClick={() => this.handleClickLi("move-favorite", item.group_id)}
-            >
+            <li onClick={() => this.handleClickLi("move-favorite", item.group_id)}>
               {item.group_name}
             </li>
           ))}
@@ -258,26 +256,16 @@ export default class CollectGroup extends tsc<IProps> {
                 maxlength={10}
               ></Input>
               <div class="operate-button">
-                <Button
-                  text
-                  onClick={(e) => this.handleChangeGroupInputStatus(e, "add")}
-                >
+                <Button text onClick={(e) => this.handleChangeGroupInputStatus(e, "add")}>
                   {this.$t("确定")}
                 </Button>
-                <span
-                  onClick={(e) =>
-                    this.handleChangeGroupInputStatus(e, "cancel")
-                  }
-                >
+                <span onClick={(e) => this.handleChangeGroupInputStatus(e, "cancel")}>
                   {this.$t("取消")}
                 </span>
               </div>
             </li>
           ) : (
-            <li
-              class="add-new-group"
-              onClick={() => (this.isShowNewGroupInput = true)}
-            >
+            <li class="add-new-group" onClick={() => (this.isShowNewGroupInput = true)}>
               <span>
                 <span class="bk-icon icon-close-circle"></span>
                 <span>{this.$t("新建分组")}</span>
@@ -295,10 +283,7 @@ export default class CollectGroup extends tsc<IProps> {
             tippy-options={this.groupTippyOption}
             placement="right-start"
             ext-cls="more-container"
-            on-hide={() => {
-              this.clearStatus();
-            }}
-          >
+            on-hide={() => this.clearStatus()}>
             <div class="more-container">
               {!this.isHoverTitle ? (
                 <span class="title-number">
@@ -317,10 +302,8 @@ export default class CollectGroup extends tsc<IProps> {
             <div class="more-container">
               {this.$slots.default ?? (
                 <div
-                  class={["more-box", 
-                        { "is-click": !!this.operatePopoverInstance }]}
-                  onClick={this.handleClickIcon}
-                >
+                  class={["more-box", { "is-click": !!this.operatePopoverInstance }]}
+                  onClick={this.handleClickIcon}>
                   <span class="bk-icon icon-more"></span>
                 </div>
               )}

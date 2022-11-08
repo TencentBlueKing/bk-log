@@ -1549,4 +1549,7 @@ export default {
   当前分组为: 'The current group is',
   是否解散: 'Whether to dissolve',
   解散文案: 'After disbanding the group, the favorites in the original group will be moved to the ungrouped.',
+  共计: 'Total',
+  条: 'piece',
+  每页: 'per page',
 };
