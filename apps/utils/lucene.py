@@ -15,6 +15,7 @@ from apps.constants import (
     LOW_CHAR,
     HIGH_CHAR,
     LuceneSyntaxEnum,
+    WORD_RANGE_OPERATORS,
 )
 
 
@@ -27,26 +28,21 @@ class LuceneField(object):
     """Lucene解析出的Field类"""
 
     def __init__(
-        self,
-        pos: int = 0,
-        field_name: str = "",
-        field_type: str = "",
-        operator: str = DEFAULT_FIELD_OPERATOR,
-        field_value: str = "",
+        self, pos: int = 0, name: str = "", type: str = "", operator: str = DEFAULT_FIELD_OPERATOR, value: str = ""
     ):
         self.pos = pos
-        self.field_name = field_name
-        self.field_type = field_type
+        self.name = name
+        self.type = type
         self.operator = operator
-        self.field_value = field_value
+        self.value = value
 
     def to_dict(self) -> dict:
         return {
             "pos": self.pos,
-            "field_name": self.field_name,
-            "field_type": self.field_type,
+            "name": self.name,
+            "type": self.type,
             "operator": self.operator,
-            "field_value": self.field_value,
+            "value": self.value,
         }
 
 
@@ -58,18 +54,18 @@ class LuceneParser(object):
 
     def parsing(self) -> List[LuceneField]:
         """解析lucene语法入口函数"""
-        fields = self._get_method(self.keyword)
+        fields = self._get_method(parser.parse(self.keyword, lexer=lexer))
         if isinstance(fields, list):
             # 以下逻辑为同名字段增加额外标识符
-            field_names = Counter([field["name"] for field in fields])
-            if not field_names:
+            names = Counter([field.name for field in fields])
+            if not names:
                 return fields
-            for field_name, cnt in field_names.items():
+            for name, cnt in names.items():
                 if cnt > 1:
                     number = 1
                     for field in fields:
-                        if field["name"] == field_name:
-                            field["name"] = f"{field_name}({number})"
+                        if field.name == name:
+                            field.name = f"{name}({number})"
                             number += 1
             return fields
         else:
@@ -86,16 +82,16 @@ class LuceneParser(object):
         """解析单词"""
         field = LuceneField(
             pos=node.pos,
-            field_name=FULL_TEXT_SEARCH_FIELD_NAME,
+            name=FULL_TEXT_SEARCH_FIELD_NAME,
             operator="~=",
-            field_type=LuceneSyntaxEnum.WORD,
-            field_value=node.value,
+            type=LuceneSyntaxEnum.WORD,
+            value=node.value,
         )
-        match = re.search(r"<=|>=|<|>", node.value)
+        match = re.search(WORD_RANGE_OPERATORS, node.value)
         if match:
             operator = match.group(0)
             field.operator = operator
-            field.field_value = node.value.split(operator)[-1]
+            field.value = node.value.split(operator)[-1]
         return field
 
     @staticmethod
@@ -103,20 +99,20 @@ class LuceneParser(object):
         """解析短语"""
         field = LuceneField(
             pos=node.pos,
-            field_name=FULL_TEXT_SEARCH_FIELD_NAME,
+            name=FULL_TEXT_SEARCH_FIELD_NAME,
             operator="=",
-            field_type=LuceneSyntaxEnum.PHRASE,
-            field_value=node.value,
+            type=LuceneSyntaxEnum.PHRASE,
+            value=node.value,
         )
         return field
 
     def parsing_searchfield(self, node):
         """解析搜索字段"""
-        field = LuceneField(pos=node.pos, field_name=node.name, field_type=LuceneSyntaxEnum.SEARCH_FIELD)
+        field = LuceneField(pos=node.pos, name=node.name, type=LuceneSyntaxEnum.SEARCH_FIELD)
         new_field = self._get_method(node.expr)
-        field.field_type = new_field.field_type
+        field.type = new_field.type
         field.operator = new_field.operator
-        field.field_value = new_field.field_value
+        field.value = new_field.value
         return field
 
     @staticmethod
@@ -124,9 +120,9 @@ class LuceneParser(object):
         """解析字段组"""
         field = LuceneField(
             pos=node.pos,
-            field_type=LuceneSyntaxEnum.FIELD_GROUP,
+            type=LuceneSyntaxEnum.FIELD_GROUP,
             operator=FIELD_GROUP_OPERATOR,
-            field_value=str(node.expr),
+            value="({})".format(str(node.expr)),
         )
         return field
 
@@ -144,24 +140,20 @@ class LuceneParser(object):
     @staticmethod
     def parsing_range(node):
         """"""
-        field = LuceneField(pos=node.pos, field_type=LuceneSyntaxEnum.RANGE, field_value=str(node))
+        field = LuceneField(pos=node.pos, type=LuceneSyntaxEnum.RANGE, value=str(node))
         field.operator = "{}{}".format(LOW_CHAR[node.include_low], HIGH_CHAR[node.include_high])
         return field
 
     @staticmethod
     def parsing_fuzzy(node):
         """"""
-        field = LuceneField(
-            pos=node.pos, operator=DEFAULT_FIELD_OPERATOR, field_type=LuceneSyntaxEnum.FUZZY, field_value=str(node)
-        )
+        field = LuceneField(pos=node.pos, operator=DEFAULT_FIELD_OPERATOR, type=LuceneSyntaxEnum.FUZZY, value=str(node))
         return field
 
     @staticmethod
     def parsing_regex(node):
         """"""
-        field = LuceneField(
-            pos=node.pos, operator=DEFAULT_FIELD_OPERATOR, field_type=LuceneSyntaxEnum.REGEX, field_value=str(node)
-        )
+        field = LuceneField(pos=node.pos, operator=DEFAULT_FIELD_OPERATOR, type=LuceneSyntaxEnum.REGEX, value=str(node))
         return field
 
     def parsing_oroperation(self, node):
@@ -190,10 +182,10 @@ class LuceneParser(object):
         """"""
         field = LuceneField(
             pos=node.pos,
-            field_name=FULL_TEXT_SEARCH_FIELD_NAME,
+            name=FULL_TEXT_SEARCH_FIELD_NAME,
             operator=NOT_OPERATOR,
-            field_type=LuceneSyntaxEnum.NOT,
-            field_value=self._get_method(node.a).field_value,
+            type=LuceneSyntaxEnum.NOT,
+            value=self._get_method(node.a).value,
         )
         return field
 
@@ -201,10 +193,10 @@ class LuceneParser(object):
         """"""
         field = LuceneField(
             pos=node.pos,
-            field_name=FULL_TEXT_SEARCH_FIELD_NAME,
+            name=FULL_TEXT_SEARCH_FIELD_NAME,
             operator=PLUS_OPERATOR,
-            field_type=LuceneSyntaxEnum.PLUS,
-            field_value=self._get_method(node.a).field_value,
+            type=LuceneSyntaxEnum.PLUS,
+            value=self._get_method(node.a).value,
         )
         return field
 
@@ -212,10 +204,10 @@ class LuceneParser(object):
         """解析减号"""
         field = LuceneField(
             pos=node.pos,
-            field_name=FULL_TEXT_SEARCH_FIELD_NAME,
+            name=FULL_TEXT_SEARCH_FIELD_NAME,
             operator=PROHIBIT_OPERATOR,
-            field_type=LuceneSyntaxEnum.PROHIBIT,
-            field_value=self._get_method(node.a).field_value,
+            type=LuceneSyntaxEnum.PROHIBIT,
+            value=self._get_method(node.a).value,
         )
         return field
 
@@ -230,9 +222,15 @@ class LuceneTransformer(TreeTransformer):
     def visit_search_field(self, node, context):
         """SEARCH_FIELD 类型转换"""
         if node.pos == context["pos"]:
-            field_name = node.name
-            value = context["value"]
-            node = parser.parse(f"{field_name}: {value}", lexer=lexer)
+            name, value = node.name, context["value"]
+            if get_node_lucene_syntax(node.expr) == LuceneSyntaxEnum.WORD:
+                operator = LuceneParser(keyword=str(node)).parsing()[0].operator
+                if operator in WORD_RANGE_OPERATORS:
+                    node = parser.parse(f"{name}: {operator}{value}", lexer=lexer)
+                else:
+                    node = parser.parse(f"{name}: {value}", lexer=lexer)
+            else:
+                node = parser.parse(f"{name}: {value}", lexer=lexer)
 
         yield from self.generic_visit(node, context)
 

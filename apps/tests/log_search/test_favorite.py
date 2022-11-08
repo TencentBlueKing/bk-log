@@ -42,7 +42,7 @@ FAVORITE_NAME_4 = "test_favorite_4"
 FAVORITE_NAME_5 = "test_favorite_5"
 
 KEYWORD = """number: >=83063 OR title: "The Right Way" AND text: go OR gseIndex: [ 200 TO 600 ] \
-AND log: blue~ AND time: /[L-N].*z*l{2}a/ AND a: b AND c: d OR (a: (b OR c AND d) OR x: y ) """
+AND log: blue~ AND time: /[L-N].*z*l{2}a/ AND a: b AND c: d OR (a: (b OR c AND d) OR x: y ) AND INFO AND ERROR"""
 
 HOST_SCOPES = {"modules": [], "ips": "", "target_nodes": [], "target_node_type": ""}
 ADDITION = [{"field": "cloudId", "operator": "is", "value": "0"}]
@@ -115,6 +115,8 @@ KEYWORD_FIELDS = [
     {"pos": 138, "name": "c", "operator": "~=", "type": "Word", "value": "d"},
     {"pos": 147, "name": "a(2)", "operator": "()", "type": "FieldGroup", "value": "(b OR c AND d)"},
     {"pos": 168, "name": "x", "operator": "~=", "type": "Word", "value": "y"},
+    {"pos": 179, "name": "全文检索(1)", "operator": "~=", "type": "Word", "value": "INFO"},
+    {"pos": 188, "name": "全文检索(2)", "operator": "~=", "type": "Word", "value": "ERROR"},
 ]
 UPDATE_QUERY_PARAMS = [
     {
@@ -157,23 +159,17 @@ UPDATE_QUERY_PARAMS = [
         "pos": 168,
         "value": "yy",
     },
-]
-EXPECT_NEW_QUERY = """number: >=10000  OR title: "hello"  AND text: hello  OR gseIndex: [100 TO 200]  \
-AND log: bk~0.5  AND time: /[L-N]/  AND a: bb  AND c: dd  OR (a: (bb OR cc AND dd)  OR x: yy ) """
-
-FULL_TEXT_SEARCH_KEYWORD = "number AND keyword"
-FULL_TEXT_SEARCH_FIELDS = [
-    {"pos": 0, "name": "全文检索(1)", "type": "全文检索", "operator": "~=", "value": "number"},
-    {"pos": 11, "name": "全文检索(2)", "type": "全文检索", "operator": "~=", "value": "keyword"},
-]
-FULL_TEXT_SEARCH_UPDATE_QUERY_PARAMS = [
     {
-        "pos": 0,
-        "name": "全文检索",
-        "value": "hello",
-    }
+        "pos": 179,
+        "value": "hello1",
+    },
+    {
+        "pos": 188,
+        "value": "hello2",
+    },
 ]
-EXPECT_NEW_FULL_TEXT_SEARCH_QUERY = "hello AND keyword"
+EXPECT_NEW_QUERY = """number: >=10000 OR title: "hello" AND text: hello OR gseIndex: [100 TO 200] \
+AND log: bk~0.5 AND time: /[L-N]/ AND a: bb AND c: dd OR (a: (bb OR cc AND dd) OR x: yy) AND hello1 AND hello2"""
 
 
 # 类全局使用USERNAME_1
@@ -322,14 +318,7 @@ class TestLucene(TestCase):
         search_fields_result = FavoriteHandler().get_search_fields(keyword=KEYWORD)
         for i in range(len(KEYWORD_FIELDS)):
             self.assertDictEqual(search_fields_result[i], KEYWORD_FIELDS[i])
-        full_text_search_fields_result = FavoriteHandler().get_search_fields(keyword=FULL_TEXT_SEARCH_KEYWORD)
-        for i in range(len(FULL_TEXT_SEARCH_FIELDS)):
-            self.assertDictEqual(full_text_search_fields_result[i], FULL_TEXT_SEARCH_FIELDS[i])
 
     def test_update_query(self):
         """测试更新Lucene Query"""
         self.assertEqual(FavoriteHandler().generate_query_by_ui(KEYWORD, UPDATE_QUERY_PARAMS), EXPECT_NEW_QUERY)
-        self.assertEqual(
-            FavoriteHandler().generate_query_by_ui(FULL_TEXT_SEARCH_KEYWORD, FULL_TEXT_SEARCH_UPDATE_QUERY_PARAMS),
-            EXPECT_NEW_FULL_TEXT_SEARCH_QUERY,
-        )

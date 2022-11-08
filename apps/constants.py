@@ -137,3 +137,5 @@ PROHIBIT_OPERATOR = "-"
 
 LOW_CHAR = {True: "[", False: "{"}
 HIGH_CHAR = {True: "]", False: "}"}
+
+WORD_RANGE_OPERATORS = r"<=|>=|<|>"
