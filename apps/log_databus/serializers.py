@@ -1107,7 +1107,7 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
 
 
 class ListBCSCollectorSerializer(serializers.Serializer):
-    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    bk_biz_id = serializers.IntegerField(label=_("业务id"), required=False)
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
 
 
