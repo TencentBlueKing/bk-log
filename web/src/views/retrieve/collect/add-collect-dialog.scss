@@ -76,6 +76,25 @@
     }
   }
 
+  .add-new-group-input {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 12px;
+
+    .operate-button {
+      margin-top: 4px;
+      .bk-button-text {
+        font-size: 12px;
+      }
+
+      span {
+        margin-left: 6px;
+        cursor: pointer;
+      }
+    }
+  }
+
   .fl-jcsb {
     display: flex;
     align-items: center;

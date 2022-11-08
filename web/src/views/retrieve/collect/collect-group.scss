@@ -93,9 +93,11 @@
         }
 
         .icon-shixiao {
+          display: inline-block;
           font-size: 12px;
           margin-left: 4px;
           color: #FF9C01;
+          transform: translateY(-1px);
         }
       }
 

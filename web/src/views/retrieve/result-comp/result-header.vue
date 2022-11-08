@@ -40,11 +40,31 @@
     <div class="result-left">
       <div class="icon-container">
         <div
+          v-if="showCollectInitTips"
+          v-bk-tooltips="collectInitTips"
           :class="['result-icon-box',{ 'light-icon': !isShowCollect }]"
           @click="handleClickResultIcon('collect')">
           <span class="bk-icon icon-star"></span>
         </div>
         <div
+          v-else
+          v-bk-tooltips="{ content: `${$t('点击重新展开')}${$t('收藏')}`, disabled: isShowCollect, }"
+          :class="['result-icon-box',{ 'light-icon': !isShowCollect }]"
+          @click="handleClickResultIcon('collect')">
+          <span class="bk-icon icon-star"></span>
+        </div>
+        <div
+          v-if="showExpandInitTips"
+          key="1"
+          v-bk-tooltips="expandInitTips"
+          :class="['result-icon-box',{ 'light-icon': !showRetrieveCondition }]"
+          @click="handleClickResultIcon('search')">
+          <span class="bk-icon log-icon icon-jiansuo"></span>
+        </div>
+        <div
+          v-else
+          key="2"
+          v-bk-tooltips.bottom="{ content: `${$t('点击重新展开')}${$t('检索')}`, disabled: showRetrieveCondition, }"
           :class="['result-icon-box',{ 'light-icon': !showRetrieveCondition }]"
           @click="handleClickResultIcon('search')">
           <span class="bk-icon log-icon icon-jiansuo"></span>
@@ -171,7 +191,7 @@ export default {
   data() {
     return {
       expandInitTips: {
-        content: this.$t('点击重新展开'),
+        content: `${this.$t('点击重新展开')}${this.$t('检索')}`,
         trigger: 'click',
         showOnInit: true,
         placement: 'bottom',
@@ -180,10 +200,25 @@ export default {
         },
       },
       expandTips: {
-        content: this.$t('点击重新展开'),
+        content: `${this.$t('点击重新展开')}${this.$t('检索')}`,
         placement: 'bottom',
+        disabled: !this.showRetrieveCondition,
       },
-
+      collectInitTips: {
+        content: `${this.$t('点击重新展开')}${this.$t('检索')}`,
+        trigger: 'click',
+        showOnInit: true,
+        placement: 'bottom',
+        onHidden: () => {
+          this.isFirstCloseCollect = true;
+        },
+      },
+      collectTips: {
+        content: `${this.$t('点击重新展开')}${this.$t('收藏')}`,
+        placement: 'bottom',
+        disabled: this.isShowCollect,
+      },
+      showCollectInitTips: false,
       refreshActive: false, // 自动刷新下拉激活
       refreshTimer: null, // 自动刷新定时器
       refreshTimeout: 0, // 0 这里表示关闭自动刷新
@@ -209,6 +244,7 @@ export default {
         { id: 'extract', name: '字段清洗' },
         { id: 'clustering', name: '日志聚类' },
       ],
+      isFirstCloseCollect: false,
       showSettingMenuList: [],
     };
   },
@@ -305,6 +341,7 @@ export default {
     },
     handleClickResultIcon(type) {
       if (type === 'collect') {
+        this.showCollectInitTips = !this.isFirstCloseCollect;
         this.$emit('updateCollectCondition', !this.isShowCollect);
       } else {
         this.showRetrieveCondition ? this.$emit('closeRetrieveCondition') : this.$emit('open');

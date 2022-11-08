@@ -23,7 +23,7 @@
 <template>
   <div
     class="favorite-popper-content">
-    <div class="title">{{ $t('是否替换当前收藏') }}？</div>
+    <div class="title">{{ $t('是否替换当前收藏') }}({{activeFavorite.name}})？</div>
     <div class="content">
       <bk-button text size="small" @click="handleOperate('replace')">{{ $t('替换当前') }}</bk-button>
       <bk-button text size="small" @click="handleOperate('add')">{{ $t('新建') }}</bk-button>
@@ -34,10 +34,10 @@
 <script>
 export default {
   props: {
-    replaceFavoriteData: {
+    activeFavorite: {
       type: Object,
-      default: () => ({}),
-    },
+      required: true,
+    }
   },
   data() {
     return {
@@ -51,43 +51,8 @@ export default {
       if (type === 'add') {
         this.$emit('favoriteTipsOperate', 'add-new');
       } else {
-        this.handleUpdateFavorite(this.replaceFavoriteData);
         this.$emit('favoriteTipsOperate', 'replace');
       }
-    },
-    /** 更新收藏 */
-    async handleUpdateFavorite(subData) {
-      const {
-        index_set_id,
-        params,
-        name,
-        group_id,
-        display_fields,
-        visible_type,
-        id,
-      } = subData;
-      const { host_scopes, addition, keyword, search_fields } = params;
-      const data = {
-        index_set_id,
-        name,
-        group_id,
-        display_fields,
-        visible_type,
-        host_scopes,
-        addition,
-        keyword,
-        search_fields,
-        space_uid: this.spaceUid,
-      };
-      try {
-        const res = await this.$http.request('favorite/updateFavorite', { params: { id }, data });
-        if (res.result) {
-          this.$bkMessage({
-            message: this.$t('替换成功'),
-            theme: 'success',
-          });
-        }
-      } catch (error) {}
     },
   },
 };
@@ -95,8 +60,9 @@ export default {
 
 <style lang="scss" scoped>
   .favorite-popper-content {
-    width: 200px;
+    min-width: 200px;
     padding: 2px;
+    // word-wrap: ;
 
     .title {
       margin-bottom: 10px;

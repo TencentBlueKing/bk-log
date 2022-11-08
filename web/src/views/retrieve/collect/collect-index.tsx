@@ -41,8 +41,8 @@ interface IProps {
   collectWidth: number;
   isShowCollect: boolean;
   indexId: string;
-  activeFavorite: IFavoriteItem;
   activeFavoriteID: number;
+  visibleFields: Array<any>;
 }
 
 export interface IGroupItem {
@@ -73,12 +73,12 @@ export default class CollectIndex extends tsc<IProps> {
   @PropSync("isShow", { type: Boolean }) isShowCollect: boolean;
   @Prop({ type: String, required: true }) indexId: string;
   @Prop({ type: Number, required: true }) activeFavoriteID: number;
-  @Prop({ type: Object, default: () => ({}) }) activeFavorite: IFavoriteItem;
+  @Prop({ type: Array, default: () => [] }) visibleFields: Array<any>;
   @Ref("popoverGroup") popoverGroupRef: Popover;
   @Ref("popoverSort") popoverSortRef: Popover;
 
-  collectMinWidth = 240; // 收藏最小栏宽度
-  collectMaxWidth = 500; // 收藏栏最大宽度
+  collectMinWidth = 160; // 收藏最小栏宽度
+  collectMaxWidth = 400; // 收藏栏最大宽度
   currentTreeBoxWidth = null; // 当前收藏容器的宽度
   currentScreenX = null;
   isChangingWidth = false; // 是否正在拖拽
@@ -122,7 +122,11 @@ export default class CollectIndex extends tsc<IProps> {
     return this.$store.state.spaceUid;
   }
 
-  @Watch("isShowCollect")
+  get isClickFavoriteEdit() {
+    return this.editFavoriteID === this.activeFavoriteID;
+  }
+
+  @Watch("isShowCollect", { immediate: true})
   async handleShowCollect(value) {
     if (value) {
       this.baseSortType = localStorage.getItem("favoriteSortType") || "NAME_ASC";
@@ -137,7 +141,7 @@ export default class CollectIndex extends tsc<IProps> {
   }
 
   @Watch("indexId")
-  async handleChangeIndexSet(value) {
+  async handleChangeIndexSet() {
     this.collectList = [];
     this.filterCollectList = [];
     this.groupList = [];
@@ -147,6 +151,11 @@ export default class CollectIndex extends tsc<IProps> {
 
   @Emit("handleClick")
   handleClickFavorite(value) {
+    return value;
+  }
+
+  @Emit("isRefreshFavorite")
+  handleUpdateActiveFavoriteData(value) {
     return value;
   }
 
@@ -183,12 +192,25 @@ export default class CollectIndex extends tsc<IProps> {
         this.isShowAddNewFavoriteDialog = true;
         break;
       case "delete-favorite": // 删除收藏
-        await this.deleteFavorite(value.id);
-        this.getFavoriteList();
+        this.$bkInfo({
+          subTitle: `${this.$t("当前收藏为")}${value.name}，${this.$t("是否删除")}？`,
+          type: "warning",
+          confirmFn: async () => {
+            await this.deleteFavorite(value.id);
+            this.getFavoriteList();
+          },
+        });
         break;
       case "dismiss-group": // 解散分组
-        await this.deleteGroup(value.group_id);
-        this.getFavoriteList();
+        this.$bkInfo({
+          title: `${this.$t("当前分组为")}${value.group_name}，${this.$t("是否解散")}？`,
+          subTitle: `${this.$t('解散文案')}。`,
+          type: "warning",
+          confirmFn: async () => {
+            await this.deleteGroup(value.group_id);
+            this.getFavoriteList();
+          },
+        });
         break;
       case "share":
         let shareUrl = window.SITE_URL;
@@ -299,6 +321,15 @@ export default class CollectIndex extends tsc<IProps> {
       this.handleSearchFavorite();
       this.isShowGroupTitle = !(this.collectList.length === 2 && !this.collectList[0].favorites.length);
       this.filterCollectList = deepClone(this.collectList);
+      if (this.activeFavoriteID >= 0) { // 获取列表后 判断当前是否有点击的活跃收藏 如果有 则进行数据更新
+        this.collectList.forEach(item => {
+          item.favorites.forEach(fItem=>{
+            if(fItem.id === this.activeFavoriteID) {
+              this.handleUpdateActiveFavoriteData(fItem);
+            }
+          })
+        })
+      }
     } catch (error) {
     } finally {
       this.collectLoading = false;
@@ -498,6 +529,8 @@ export default class CollectIndex extends tsc<IProps> {
         <AddCollectDialog
           vModel={this.isShowAddNewFavoriteDialog}
           favoriteID={this.editFavoriteID}
+          isClickFavoriteEdit={this.isClickFavoriteEdit}
+          visibleFields={this.visibleFields}
           on-submit={(value) => value && this.getFavoriteList()}
         />
       </div>

@@ -1,6 +1,7 @@
 .more-container {
-  position: relative;
-  display: inline-block;
+  .tippy-tooltip {
+    padding: 0;
+  }
 
   &.is-group {
     &:hover .dropdown-list {
@@ -28,24 +29,16 @@
     }
   }
 
-  .more-group-container {
-    &:hover .group-dropdown-list {
-      display: block;
-    }
-  }
-
   .group-div {
     height: 31px;
     width: 6px;
     position: absolute;
-    transform: translate3d(104px, -32px, 0);
   }
 
   .group-dropdown-list {
     min-width: 170px;
     max-height: 300px;
     overflow-y: auto;
-    transform: translate3d(108px, -33px, 0) !important;
     padding-bottom: 0 !important;
 
     @extend .dropdown-list;
@@ -67,10 +60,6 @@
 
   .dropdown-list {
     padding: 4px 0;
-    display: none;
-    position: fixed;
-    transform: translateY(4px);
-    z-index: 9999;
     background: #fff;
     border: 1px solid #dcdee5;
     box-shadow: 0 2px 6px 0 rgba(0, 0, 0, .1);
@@ -81,11 +70,19 @@
       padding: 6px 12px;
       white-space: nowrap;
       cursor: pointer;
+      font-size: 12px;
 
       &:hover {
         background: #f5f7fa;
       }
     }
+  }
+
+  .eye-catching {
+    // margin: 0 6px;
+    border-top: 1px solid #dcdee5;
+    color: #F56350 !important;
+    // padding: 6px 6px !important;
   }
 
   .add-new-group-input {

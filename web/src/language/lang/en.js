@@ -1517,7 +1517,7 @@ export default {
   仅本人: 'Private',
   所属组: 'Group',
   查询变更字段: 'Query change field',
-  表单模式显示字段: 'Form modal display fields',
+  表单模式: 'Form modal',
   表单模式显示字段文案: 'Obtain the corresponding fields from the query statement. When the field of the display form is selected, when using this collection, only the selected fields are displayed for query by default. (Note: When there is no field, it is full-text search; the repeated fields are displayed with a serial number (N). When no fields are checked, this form mode will not be displayed)',
   是否同时显示字段: 'Whether to display fields at the same time',
   是否同时显示字段文案: 'When open, the following fields will be displayed at the same time when using this collection, without affecting the user field display settings.',
@@ -1544,4 +1544,9 @@ export default {
   变更时间: 'Updated at',
   最多输入: 'Enter up to ',
   个字符: ' size',
+  查询显示字段: 'Query display field',
+  本人: 'Myself',
+  当前分组为: 'The current group is',
+  是否解散: 'Whether to dissolve',
+  解散文案: 'After disbanding the group, the favorites in the original group will be moved to the ungrouped.',
 };
